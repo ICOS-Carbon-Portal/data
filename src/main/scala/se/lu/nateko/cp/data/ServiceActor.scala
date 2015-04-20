@@ -11,7 +11,7 @@ class ServiceActor extends Actor with ActorLogging {
 		// when a new connection comes in we register ourselves as the connection handler
 		case _: Http.Connected => sender ! Http.Register(self)
 		
-		case HttpRequest(GET, Uri.Path("/ping"), _, _, _) => sender ! HttpResponse(entity = "PONG!")
+		case HttpRequest(GET, Uri.Path("/ping"), _, _, _) => sender ! HttpResponse(entity = "PONG!!!")
 		
 		case _: HttpRequest => sender ! HttpResponse(status = 404, entity = "Unknown resource!")
 		
