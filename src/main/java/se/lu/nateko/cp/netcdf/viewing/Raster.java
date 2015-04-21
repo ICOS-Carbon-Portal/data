@@ -13,5 +13,17 @@ public interface Raster {
 
 	double getMin();
 	double getMax();
+	
+	default double[][] to2DArray(){
+		int nx = getSizeX(), ny = getSizeY();
+		double[][] res = new double[ny][nx];
+		for(int j = 0; j < ny; j++){
+			double[] row = res[j];
+			for(int i = 0; i < nx; i++){
+				row[i] = get(i, j);
+			}
+		}
+		return res;
+	}
 
 }

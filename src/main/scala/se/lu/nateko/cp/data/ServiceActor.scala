@@ -29,7 +29,7 @@ class ServiceActor extends Actor with ActorLogging {
 
 	def makeStaticResourceHandler(pathsToResponses: Map[String, HttpResponse]) =
 		new PartialFunction[Any, Unit]{
-	
+
 			override def isDefinedAt(x: Any): Boolean = x match{
 				case HttpRequest(GET, Uri.Path(path), _, _, _) => pathsToResponses.contains(path)
 				case _ => false
