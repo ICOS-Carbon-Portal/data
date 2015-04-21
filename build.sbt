@@ -4,10 +4,20 @@ version := "0.1"
 
 scalaVersion := "2.11.6"
 
-//resolvers += "UNIDATA Releases" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases/"
+resolvers += "UNIDATA Releases" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases/"
 
 libraryDependencies ++= Seq(
-	"edu.ucar"           % "cdm"               % "4.5.3",// intransitive(),
+	"edu.ucar"           % "cdm"               % "4.5.5" excludeAll(
+		ExclusionRule(organization = "com.beust"),
+		ExclusionRule(organization = "com.google.guava"),
+		ExclusionRule(organization = "com.google.protobuf"),
+		ExclusionRule(organization = "net.sf.ehcache"),
+		ExclusionRule(organization = "org.apache.httpcomponents"),
+		ExclusionRule(organization = "org.itadaki"),
+		ExclusionRule(organization = "org.jdom"),
+		ExclusionRule(organization = "org.quartz-scheduler"),
+		ExclusionRule(organization = "org.slf4j")
+	),
 	"io.spray"           %% "spray-can"        % "1.3.3",
 	"io.spray"           %% "spray-json"       % "1.3.1",
 	"com.typesafe.akka"  %% "akka-actor"       % "2.3.9",
