@@ -62,9 +62,11 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Variable ncVar = ds.findVariable(spec.dimensions.sliceVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 			
-			//TODO Figure out in what order lat and lon are stored in
-			int sizeX = ncVar.getDimension(2).getLength();
-			int sizeY = ncVar.getDimension(1).getLength();
+			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
+			int latDimInd = ncVar.findDimensionIndex(spec.dimensions.latDimension);
+			
+			int sizeX = ncVar.getDimension(lonDimInd).getLength();
+			int sizeY = ncVar.getDimension(latDimInd).getLength();
 			
 			StringBuilder sb = new StringBuilder();
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
