@@ -10,5 +10,5 @@ import ucar.nc2.time.CalendarDate;
 public interface NetCdfViewService {
 
 	Raster getRaster(String time) throws IOException, InvalidRangeException;
-	Calendar[] getAvailableDates() throws IOException;
+	String[] getAvailableDates() throws IOException;
 }

@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
 
 import se.lu.nateko.cp.netcdf.viewing.*;
 import ucar.ma2.Array;
@@ -28,7 +30,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 	}
 	
 	@Override
-	public Calendar[] getAvailableDates() throws IOException {
+	public String[] getAvailableDates() throws IOException {
 		NetcdfDataset ds = null;
 		
 		try {
@@ -41,8 +43,10 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
 			
-			return sliceAxis.getCalendarDates().toArray(new Calendar[0]);
-			
+			return sliceAxis.getCalendarDates()
+					.stream()
+					.map(calendarDate -> calendarDate.toString())
+					.toArray(n -> new String[n]); 
 		} catch (IOException ioe) {
 			throw new IOException("Could not open file " + file.getAbsolutePath());
 		}finally{

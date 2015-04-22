@@ -5,13 +5,41 @@ import spray.can.Http
 import spray.http._
 import HttpMethods._
 import StaticResources._
+import se.lu.nateko.cp.netcdf.viewing.ViewServiceFactory
+import spray.json._
+import DefaultJsonProtocol._
 
-class ServiceActor extends Actor with ActorLogging {
+class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging {
 
 	def receive = handleStatic(
 		"/carbontracker/" -> carbonTrackerWidgetPage,
 		"/carbontracker/script.js" -> carbonTrackerScript
 	).orElse{
+
+		case HttpRequest(GET, Uri.Path("/listServices"), _, _, _) =>
+			sender ! JsonSerializer.toResponse(factory.getAvailableServices)
+
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/listSlices"), query, _), _, _, _) => query.get("service") match {
+			case Some(service) =>
+				val dates = factory.getService(service).getAvailableDates
+				sender ! JsonSerializer.toResponse(dates)
+			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
+		}
+
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/getSlice"), query, _), _, _, _) => {
+
+			val serviceAndSlice = for(
+				service <- query.get("service");
+				slice <- query.get("slice")
+			) yield ((service, slice))
+			
+			serviceAndSlice  match {
+				case Some((service, slice)) =>
+					val raster = factory.getService(service).getRaster(slice)
+					sender ! JsonSerializer.toJson(raster)
+				case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' and/or 'slice' query parameter(s)")
+			}
+		}
 
 		case _: HttpRequest => sender ! HttpResponse(status = 404, entity = "Unknown resource!")
 
