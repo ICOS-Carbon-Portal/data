@@ -10,6 +10,7 @@ public class ServiceSpecification {
 	
 	public ServiceSpecification(File file, String varName, DimensionsSpecification dimensions){
 		this.file = file;
+		//The variable we want to extract from the NetCDF file
 		this.varName = varName;
 		this.dimensions = dimensions;
 	}

@@ -34,7 +34,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 			
-			Variable ncVar = ds.findVariable(spec.dimensions.sliceVariable);
+			Variable ncVar = ds.findVariable(spec.dimensions.dateVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 			
 			StringBuilder sb = new StringBuilder();
@@ -58,6 +58,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 			
 			Variable ncVar = ds.findVariable(spec.varName);
+			//TODO What does boolean enhance do
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 			
 			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
