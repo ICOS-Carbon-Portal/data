@@ -41,9 +41,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
 			
-			Calendar[] cal = null;
-			
-			return sliceAxis.getCalendarDates().toArray(cal);
+			return sliceAxis.getCalendarDates().toArray(new Calendar[0]);
 			
 		} catch (IOException ioe) {
 			throw new IOException("Could not open file " + file.getAbsolutePath());
@@ -59,7 +57,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 			
-			Variable ncVar = ds.findVariable(spec.dimensions.sliceVariable);
+			Variable ncVar = ds.findVariable(spec.varName);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 			
 			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
