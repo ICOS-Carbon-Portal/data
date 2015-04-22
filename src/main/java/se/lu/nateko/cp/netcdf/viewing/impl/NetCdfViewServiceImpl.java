@@ -2,21 +2,20 @@ package se.lu.nateko.cp.netcdf.viewing.impl;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Formatter;
-import java.util.List;
 import java.util.Locale;
 
 import se.lu.nateko.cp.netcdf.viewing.*;
 import ucar.ma2.Array;
-import ucar.nc2.NetcdfFile;
+import ucar.ma2.InvalidRangeException;
+import ucar.ma2.MAMath;
+import ucar.ma2.Section;
 import ucar.nc2.Variable;
-import ucar.nc2.dataset.CoordinateAxis;
-import ucar.nc2.dataset.CoordinateAxis1D;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.VariableDS;
 import ucar.nc2.time.CalendarDate;
-import ucar.nc2.ReduceReader;
 
 public class NetCdfViewServiceImpl implements NetCdfViewService{
 
@@ -29,7 +28,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 	}
 	
 	@Override
-	public List<CalendarDate> getAvailableDates() throws IOException {
+	public Calendar[] getAvailableDates() throws IOException {
 		NetcdfDataset ds = null;
 		
 		try {
@@ -42,7 +41,9 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
 			
-			return sliceAxis.getCalendarDates();
+			Calendar[] cal = null;
+			
+			return sliceAxis.getCalendarDates().toArray(cal);
 			
 		} catch (IOException ioe) {
 			throw new IOException("Could not open file " + file.getAbsolutePath());
@@ -52,7 +53,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 	}
 
 	@Override
-	public Raster getRaster(String time) throws IOException {
+	public Raster getRaster(String time) throws IOException, InvalidRangeException {
 		NetcdfDataset ds = null;
 		
 		try {
@@ -61,15 +62,32 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Variable ncVar = ds.findVariable(spec.dimensions.sliceVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 			
+			//TODO Figure out in what order lat and lon are stored in
+			int sizeX = ncVar.getDimension(2).getLength();
+			int sizeY = ncVar.getDimension(1).getLength();
+			
 			StringBuilder sb = new StringBuilder();
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
 			
+			int dateTimeInd = sliceAxis.findTimeIndexFromCalendarDate(CalendarDate.parseISOformat("gregorian", time));
 			
-			return new RasterImpl();
+			int[] origin = new int[] {dateTimeInd, 0, 0};
+			int[] size = new int[] {1, sizeY, sizeX};
+			Section sec = new Section(origin, size);
+			
+			Array arrFullDim = ncVar.read(sec);
+			Array arrReduced = arrFullDim.reduce();
+			
+			double min = MAMath.getMinimum(arrReduced);
+			double max = MAMath.getMaximum(arrReduced);
+			
+			return new RasterImpl(arrReduced, sizeX, sizeY, min, max);
 			
 		} catch (IOException ioe) {
 			throw new IOException("Could not open file " + file.getAbsolutePath());
+		} catch (InvalidRangeException e) {
+			throw new InvalidRangeException("Invalid range working with file " + file.getAbsolutePath());
 		}finally{
 			if(ds != null) ds.close();
 		}
