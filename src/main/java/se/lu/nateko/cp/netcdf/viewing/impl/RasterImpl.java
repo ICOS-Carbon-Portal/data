@@ -2,15 +2,19 @@ package se.lu.nateko.cp.netcdf.viewing.impl;
 
 import se.lu.nateko.cp.netcdf.viewing.Raster;
 import ucar.ma2.Array;
+import ucar.ma2.Index;
+import ucar.ma2.Index2D;
 
 public class RasterImpl implements Raster {
 	
-	private final double arr[][];
+	private final Array arr;
+	private final Index index;
 	private final int sizeX, sizeY;
 	private final double min, max;
 	
 	public RasterImpl(Array ucarArr, int sizeX, int sizeY, double min, double max){
-		this.arr = (double[][]) ucarArr.copyToNDJavaArray();
+		arr = ucarArr;
+		index = new Index2D(new int[]{sizeX, sizeY});
 		this.sizeX = sizeX;
 		this.sizeY = sizeY;
 		this.min = min;
@@ -19,7 +23,8 @@ public class RasterImpl implements Raster {
 
 	@Override
 	public double get(int x, int y) {
-		return arr[x][y];
+		index.set(x, y);
+		return arr.getDouble(index);
 	}
 
 	@Override
