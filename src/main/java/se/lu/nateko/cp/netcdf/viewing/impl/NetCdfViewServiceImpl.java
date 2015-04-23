@@ -57,13 +57,14 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
-			
+
 			Variable ncVar = ds.findVariable(spec.varName);
 			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
 			int latDimInd = ncVar.findDimensionIndex(spec.dimensions.latDimension);
 			
-			int sizeX = ncVar.getDimension(lonDimInd).getLength();
-			int sizeY = ncVar.getDimension(latDimInd).getLength();
+			int sizeLon = ncVar.getDimension(lonDimInd).getLength();
+			int sizeLat = ncVar.getDimension(latDimInd).getLength();
+			boolean latFirst = latDimInd < lonDimInd;
 
 			Variable dateVar = ds.findVariable(spec.dimensions.dateVariable);
 			//TODO What does boolean enhance do
@@ -74,23 +75,21 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, dateVarDS, formatter);
 			CalendarDate date = CalendarDate.parseISOformat("gregorian", time);
 			int dateTimeInd = sliceAxis.findTimeIndexFromCalendarDate(date);
-			
+
 			int[] origin = new int[] {dateTimeInd, 0, 0};
-			int[] size = new int[] {1, sizeY, sizeX};
+			int[] size = new int[] {1, latFirst ? sizeLat : sizeLon, latFirst ? sizeLon : sizeLat};
 			Section sec = new Section(origin, size);
-			
+
 			Array arrFullDim = ncVar.read(sec);
 			Array arrReduced = arrFullDim.reduce();
 
 			double min = MAMath.getMinimum(arrReduced);
 			double max = MAMath.getMaximum(arrReduced);
 			
-			return new RasterImpl(arrReduced, sizeX, sizeY, min, max);
+			return new RasterImpl(arrReduced, sizeLon, sizeLat, min, max, latFirst);
 
 		} catch (IOException ioe) {
-			throw new IOException("Could not open file " + file.getAbsolutePath());
-		} catch (InvalidRangeException e) {
-			throw new InvalidRangeException("Invalid range working with file " + file.getAbsolutePath());
+			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
 		}finally{
 			if(ds != null) ds.close();
 		}

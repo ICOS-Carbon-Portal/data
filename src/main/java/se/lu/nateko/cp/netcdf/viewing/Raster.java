@@ -3,19 +3,19 @@ package se.lu.nateko.cp.netcdf.viewing;
 public interface Raster {
 
 	/**
-	 * @param x latitude coordinate index
-	 * @param y longitude coordinate index
+	 * @param lon longitude coordinate index
+	 * @param lat latitude coordinate index
 	 * @return the value
 	 */
-	double get(int x, int y);
-	int getSizeX();
-	int getSizeY();
+	double get(int lon, int lat);
+	int getSizeLon();
+	int getSizeLat();
 
 	double getMin();
 	double getMax();
 	
 	default double[][] to2DArray(){
-		int nx = getSizeX(), ny = getSizeY();
+		int nx = getSizeLon(), ny = getSizeLat();
 		double[][] res = new double[ny][nx];
 		for(int j = 0; j < ny; j++){
 			double[] row = res[j];

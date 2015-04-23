@@ -1,57 +1,69 @@
 function whenDoneLoading(){
 
-	var width = 800;
-	var height = 600;
+	var width = 360;
+	var height = 180;
 
 	var canvas = document.getElementById('c');
 	var ctx = canvas.getContext('2d');
-//	ctx.scale(2, 2);
+	var rasterCache;
 
 	var button = document.getElementById('b');
-
 	button.onclick = function () {
 		var start = Date.now();
 
-		var colorMaker = getColorMaker(width, height);
-
-		var imgData = ctx.createImageData(width, height);
-		var data = imgData.data;
-	
-		for(var i = 0; i < data.length ; i+=4){
-			var rgb = colorMaker(i / 4);
-		    data[i] = rgb[0];
-		    data[i + 1] = rgb[1];
-		    data[i + 2] = rgb[2];
-		    data[i + 3] = 255;
-		}
+		d3.json("/getSlice?service=service1&slice=2001-07-01T17:04:15.484Z", function(err, raster){
+			rasterCache = raster;
+			makeImage(ctx, raster);
+			var elapsed = Date.now() - start;
+			document.getElementById('output').innerHTML = "Done in " + elapsed;
+		});
 		
-		ctx.putImageData(imgData, 0, 0);
+	}
+	var redrawButton = document.getElementById('redrawButton');
+	redrawButton.onclick = function(){
+		var start = Date.now();
+		makeImage(ctx, rasterCache);
 		var elapsed = Date.now() - start;
 		document.getElementById('output').innerHTML = "Done in " + elapsed;
-	}
-}
-
-function getColorMaker(width, height){
-	return function(i){
-		var x = i % width;
-		var y = Math.floor(i / width);
-		var dx = x - width / 2;
-		var dy = y - height / 2;
-		var dist = Math.sqrt(dx * dx + dy * dy);
-		return getRgb((dist % 100) / 100);
 	};
 }
 
-function getRgb(value){
-	var red = getChannelValue(value, 0.2, 0.3);
-	var green = getChannelValue(value, 0.5, 0.3);
-	var blue = getChannelValue(value, 0.8, 0.3);
-	return [red, green, blue];
+function makeImage(context, raster){
+		var gamma = document.getElementById('gammaValue').value;
+		var colorMaker = getColorMaker(raster.min, raster.max, gamma);
+
+		var array = raster.array;
+		var height = array.length;
+		var width = array[0].length;
+
+		var imgData = context.createImageData(width, height);
+		var data = imgData.data;
+
+		var i = 0;
+		for(var ib = 0; ib < data.length ; ib+=4){
+			var x = i % width;
+			var y = ~~(i / width);
+			var value = array[height - 1 - y][x];
+			var rgb = colorMaker(value);
+			data[ib] = rgb.r;
+			data[ib + 1] = rgb.g;
+			data[ib + 2] = rgb.b;
+			data[ib + 3] = 255;
+			i++;
+		}
+		
+		context.putImageData(imgData, 0, 0);
 }
 
-function getChannelValue(value, valOfMax, distForZero){
-	var chanVal = 255 * (1 - Math.abs(valOfMax - value) / distForZero);
-	chanVal = chanVal < 0 ? 0 : chanVal;
-	return Math.round(chanVal);
+function getColorMaker(minVal, maxVal, gamma){
+	var interpolator = d3.scale.linear()
+		.domain([minVal, maxVal])
+		.range([0, 1]);
+
+	return function(value){
+		var corrected = Math.pow(interpolator(value), gamma);
+		var v = 255 - Math.round(255 * corrected);
+		return {r:v, g:v, b:v};
+	};
 }
 
