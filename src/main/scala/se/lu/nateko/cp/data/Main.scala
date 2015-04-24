@@ -25,8 +25,8 @@ object Main extends App {
 
 	val factoryDef: Map[String, ServiceSpecification] = Map(
 		"service1" -> new ServiceSpecification(
-			new File("/home/paul/yearly_1x1_fluxes.nc"),
-			"fossil_flux_imp",
+			new File("/disk/ICOS/carbontracker/yearly_1x1_fluxes.nc"),
+			"bio_flux_prior_ensemble",
 			new DimensionsSpecification(
 				"date", "latitude", "longitude"
 			)

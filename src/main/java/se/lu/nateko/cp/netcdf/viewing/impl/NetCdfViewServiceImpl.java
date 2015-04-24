@@ -59,6 +59,8 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 
 			Variable ncVar = ds.findVariable(spec.varName);
+			
+			int dateDimInd = ncVar.findDimensionIndex(spec.dimensions.dateVariable);
 			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
 			int latDimInd = ncVar.findDimensionIndex(spec.dimensions.latDimension);
 			
@@ -74,10 +76,18 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, dateVarDS, formatter);
 			CalendarDate date = CalendarDate.parseISOformat("gregorian", time);
-			int dateTimeInd = sliceAxis.findTimeIndexFromCalendarDate(date);
+			int dateVarInd = sliceAxis.findTimeIndexFromCalendarDate(date);
 
-			int[] origin = new int[] {dateTimeInd, 0, 0};
-			int[] size = new int[] {1, latFirst ? sizeLat : sizeLon, latFirst ? sizeLon : sizeLat};
+			int[] origin = new int[ncVar.getRank()];
+			origin[dateDimInd] = dateVarInd;
+			origin[lonDimInd] = 0;
+			origin[latDimInd] = 0;
+			
+			int[] size = new int[ncVar.getRank()];
+			size[dateDimInd] = 1;
+			size[lonDimInd] = sizeLon;
+			size[latDimInd] = sizeLat;
+			
 			Section sec = new Section(origin, size);
 
 			Array arrFullDim = ncVar.read(sec);
