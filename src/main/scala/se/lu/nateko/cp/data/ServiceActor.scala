@@ -16,6 +16,9 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 		"/carbontracker/script.js" -> carbonTrackerScript
 	).orElse{
 
+		case HttpRequest(GET, Uri.Path("/listNetCdfFiles"), _, _, _) =>
+			sender ! JsonSerializer.toResponse(factory.getNetCdfFiles)
+			
 		case HttpRequest(GET, Uri.Path("/listServices"), _, _, _) =>
 			sender ! JsonSerializer.toResponse(factory.getAvailableServices)
 
