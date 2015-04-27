@@ -11,4 +11,5 @@ public interface NetCdfViewService {
 
 	Raster getRaster(String time) throws IOException, InvalidRangeException;
 	String[] getAvailableDates() throws IOException;
+	String[] getVariables() throws IOException;
 }
