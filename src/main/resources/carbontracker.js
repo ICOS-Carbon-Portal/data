@@ -1,3 +1,55 @@
+var files = [];
+var service = 'CO2_EUROPE_LSCE.nc';
+var dates = [];
+var variables = [];
+
+function loadFiles() {
+	d3.json("/carbontracker/listNetCdfFiles", function(err, data){
+		
+		files = data;
+		
+		for (var i=0; i < files.length; i++) {
+			var element = document.createElement('p');
+			var content = document.createTextNode(files[i]);
+			element.appendChild(content);
+			document.getElementById('files').appendChild(element);
+		}
+	
+	});
+}
+
+function loadDates(service) {
+	d3.json("/carbontracker/listDates?service=" + 'CO2_EUROPE_LSCE.nc', function(err, data){
+		
+		dates = data;
+		
+		for (var i=0; i < dates.length; i++) {
+			var element = document.createElement('p');
+			var content = document.createTextNode(dates[i]);
+			element.appendChild(content);
+			document.getElementById('dates').appendChild(element);
+		}
+	
+	});
+}
+
+function loadVariables(service) {
+	d3.json("/carbontracker/listVariables?service=" + 'CO2_EUROPE_LSCE.nc', function(err, data){
+		
+		dates = data;
+		
+		for (var i=0; i < dates.length; i++) {
+			var element = document.createElement('p');
+			var content = document.createTextNode(dates[i]);
+			element.appendChild(content);
+			document.getElementById('variables').appendChild(element);
+		}
+	
+	});
+}
+
+
+
 function whenDoneLoading(){
 
 	var width = 360;
@@ -8,10 +60,16 @@ function whenDoneLoading(){
 	var rasterCache;
 
 	var button = document.getElementById('b');
+	
+	
+	
+	
+	
+	
 	button.onclick = function () {
 		var start = Date.now();
 
-		d3.json("/getSlice?service=service1&slice=2001-07-01T17:04:15.484Z", function(err, raster){
+		d3.json("/carbontracker/getSlice?service=CO2_EUROPE_LSCE.nc&date=2010-08-07T01:00:00Z&varName=psurf", function(err, raster){
 			rasterCache = raster;
 			makeImage(ctx, raster);
 			var elapsed = Date.now() - start;
@@ -19,6 +77,7 @@ function whenDoneLoading(){
 		});
 		
 	}
+	
 	var redrawButton = document.getElementById('redrawButton');
 	redrawButton.onclick = function(){
 		var start = Date.now();

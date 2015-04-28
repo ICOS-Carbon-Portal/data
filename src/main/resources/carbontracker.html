@@ -11,12 +11,23 @@
 			canvas { border: 1px solid black; }
 		</style>
 	</head>
+	
 	<body onload="whenDoneLoading();">
+	
+		
+	
+	<div id="files"><button onClick="loadFiles()">Load files</button></div>
+	<div id="dates"><button onClick="loadDates()">Load dates</button></div>
+	<div id="variables"><button onClick="loadVariables()">Load variables</button></div>
+		
+	
+	
 		<span>Set gamma: </span>
 		<input type="text" id="gammaValue" value="0.5" size="4">
 		<button id="b">Fetch and draw!</button>
 		<button id="redrawButton">Redraw!</button>
 		<p id="output"></p>
 		<canvas id="c" width="360" height="180"></canvas>
+		
 	</body>
 </html>

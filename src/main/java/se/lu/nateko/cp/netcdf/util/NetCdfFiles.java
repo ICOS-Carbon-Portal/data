@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.netcdf.viewing.impl;
+package se.lu.nateko.cp.netcdf.util;
 
 import java.io.File;
 import java.util.ArrayList;

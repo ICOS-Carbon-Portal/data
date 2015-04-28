@@ -14,35 +14,61 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 	def receive = handleStatic(
 		"/carbontracker/" -> carbonTrackerWidgetPage,
 		"/carbontracker/script.js" -> carbonTrackerScript
+		
 	).orElse{
 
-		case HttpRequest(GET, Uri.Path("/listNetCdfFiles"), _, _, _) =>
+		// List of NetCdf files
+		case HttpRequest(GET, Uri.Path("/carbontracker/listNetCdfFiles"), _, _, _) =>
 			sender ! JsonSerializer.toResponse(factory.getNetCdfFiles)
+		
 			
-		case HttpRequest(GET, Uri.Path("/listServices"), _, _, _) =>
-			sender ! JsonSerializer.toResponse(factory.getAvailableServices)
-
-		case HttpRequest(GET, Uri(_, _, Uri.Path("/listSlices"), query, _), _, _, _) => query.get("service") match {
-			case Some(service) =>
-				val dates = factory.getService(service).getAvailableDates
+		// List of dates in a specific NetCdf file
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/listDates"), query, _), _, _, _) => query.get("service") match {
+			case Some(fileName) =>
+				val dates = factory.getNetCdfViewService(fileName).getAvailableDates()
 				sender ! JsonSerializer.toResponse(dates)
 			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
-		}
+		}	
+		
+		// List of variables in a specific NetCdf file
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/listVariables"), query, _), _, _, _) => query.get("service") match {
+			case Some(fileName) =>
+				val variables = factory.getNetCdfViewService(fileName).getVariables()
+				sender ! JsonSerializer.toResponse(variables)
+			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
+		}	
 
-		case HttpRequest(GET, Uri(_, _, Uri.Path("/getSlice"), query, _), _, _, _) => {
+		// Raster
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/getSlice"), query, _), _, _, _) => {
 
 			val serviceAndSlice = for(
 				service <- query.get("service");
-				slice <- query.get("slice")
-			) yield ((service, slice))
+				date <- query.get("date");
+				varName <- query.get("varName")
+			) yield ((service, date, varName))
 			
 			serviceAndSlice  match {
-				case Some((service, slice)) =>
-					val raster = factory.getService(service).getRaster(slice)
+				case Some((service, date, varName)) =>
+					val raster = factory.getNetCdfViewService(service).getRaster(date, varName)
 					sender ! JsonSerializer.toJson(raster)
 				case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' and/or 'slice' query parameter(s)")
 			}
 		}
+		
+		
+		
+//		case HttpRequest(GET, Uri.Path("/listServices"), _, _, _) =>
+//			sender ! JsonSerializer.toResponse(factory.getAvailableServices)
+
+		
+//		case HttpRequest(GET, Uri(_, _, Uri.Path("/listSlices"), query, _), _, _, _) => query.get("service") match {
+//			case Some(service) =>
+//				val dates = factory.getService(service).getAvailableDates
+//				sender ! JsonSerializer.toResponse(dates)
+//			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
+//		}
+
+
 
 		case _: HttpRequest => sender ! HttpResponse(status = 404, entity = "Unknown resource!")
 

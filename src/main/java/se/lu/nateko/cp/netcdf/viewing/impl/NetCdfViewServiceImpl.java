@@ -21,12 +21,12 @@ import ucar.nc2.time.CalendarDate;
 
 public class NetCdfViewServiceImpl implements NetCdfViewService{
 
-	private final ServiceSpecification spec;
-	private final File file;
+	//private final DimensionsSpecification dimension = new DimensionsSpecification("date", "latitude", "longitude");
+	private final DimensionsSpecification dimensions = new DimensionsSpecification("time", "degrees_north", "degrees_east");
+	private File file = null;
 
-	public NetCdfViewServiceImpl(ServiceSpecification spec){
-		this.spec = spec;
-		this.file = spec.file;
+	public NetCdfViewServiceImpl(String fileName){
+		file = new File("/disk/data/netcdf/" + fileName);
 	}
 
 	@Override
@@ -36,7 +36,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 
-			Variable ncVar = ds.findVariable(spec.dimensions.dateVariable);
+			Variable ncVar = ds.findVariable(dimensions.dateVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 
 			StringBuilder sb = new StringBuilder();
@@ -53,25 +53,54 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			if(ds != null) ds.close();
 		}
 	}
-
+	
 	@Override
-	public Raster getRaster(String time) throws IOException, InvalidRangeException {
+	public String[] getVariables() throws IOException {
+		NetcdfDataset ds = null;
+
+		try {
+			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+			
+			List<String> varList = new ArrayList<String>();
+			
+			for (Variable var : ds.getVariables()) {
+				
+				if (var.getRank() == 3
+						&& var.getDimension(0).getShortName().equals(dimensions.dateVariable)
+						&& var.getDimension(1).getShortName().equals(dimensions.latDimension)
+						&& var.getDimension(2).getShortName().equals(dimensions.lonDimension)){
+
+					varList.add(var.getShortName());
+				}
+			}
+			
+			return varList.toArray(new String[varList.size()]);
+
+		} catch (IOException ioe) {
+			throw new IOException("Could not open file " + file.getAbsolutePath());
+		}finally{
+			if(ds != null) ds.close();
+		}
+	}	
+	
+	@Override
+	public Raster getRaster(String time, String varName) throws IOException, InvalidRangeException {
 		NetcdfDataset ds = null;
 
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 
-			Variable ncVar = ds.findVariable(spec.varName);
+			Variable ncVar = ds.findVariable(varName);
 			
-			int dateDimInd = ncVar.findDimensionIndex(spec.dimensions.dateVariable);
-			int lonDimInd = ncVar.findDimensionIndex(spec.dimensions.lonDimension);
-			int latDimInd = ncVar.findDimensionIndex(spec.dimensions.latDimension);
+			int dateDimInd = ncVar.findDimensionIndex(dimensions.dateVariable);
+			int lonDimInd = ncVar.findDimensionIndex(dimensions.lonDimension);
+			int latDimInd = ncVar.findDimensionIndex(dimensions.latDimension);
 			
 			int sizeLon = ncVar.getDimension(lonDimInd).getLength();
 			int sizeLat = ncVar.getDimension(latDimInd).getLength();
 			boolean latFirst = latDimInd < lonDimInd;
 
-			Variable dateVar = ds.findVariable(spec.dimensions.dateVariable);
+			Variable dateVar = ds.findVariable(dimensions.dateVariable);
 			//TODO What does boolean enhance do
 			VariableDS dateVarDS = new VariableDS(null, dateVar, false);
 			StringBuilder sb = new StringBuilder();
@@ -108,33 +137,6 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 		}
 	}
 
-	@Override
-	public String[] getVariables() throws IOException {
-		NetcdfDataset ds = null;
 
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
-			
-			List<String> varList = new ArrayList<String>();
-			
-			for (Variable var : ds.getVariables()) {
-				
-				if (var.getRank() == 3
-						&& var.getDimension(0).getShortName().equals(spec.dimensions.dateVariable)
-						&& var.getDimension(1).getShortName().equals(spec.dimensions.latDimension)
-						&& var.getDimension(2).getShortName().equals(spec.dimensions.lonDimension)){
-
-					varList.add(var.getShortName());
-				}
-			}
-			
-			return varList.toArray(new String[varList.size()]);
-
-		} catch (IOException ioe) {
-			throw new IOException("Could not open file " + file.getAbsolutePath());
-		}finally{
-			if(ds != null) ds.close();
-		}
-	}
 
 }
