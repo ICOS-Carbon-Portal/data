@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
-
 import se.lu.nateko.cp.netcdf.viewing.*;
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
@@ -21,12 +20,64 @@ import ucar.nc2.time.CalendarDate;
 
 public class NetCdfViewServiceImpl implements NetCdfViewService{
 
-	//private final DimensionsSpecification dimension = new DimensionsSpecification("date", "latitude", "longitude");
-	private final DimensionsSpecification dimensions = new DimensionsSpecification("time", "degrees_north", "degrees_east");
+	private DimensionsSpecification dimensions = new DimensionsSpecification();
+	private VariableSpecification variables;
+	
+	
 	private File file = null;
 
 	public NetCdfViewServiceImpl(String fileName){
-		file = new File("/disk/data/netcdf/" + fileName);
+		file = new File(fileName);
+		NetcdfDataset ds = null;
+
+		try {
+			variables = new VariableSpecification();
+			variables = new VariableSpecification("time", "degrees_north", "degrees_east");
+			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+			
+			// 
+			if (ds.findVariable("date") != null) {
+				variables.setDateVariable("date");
+			}
+			
+			if (ds.findVariable("latitude") != null) {
+				variables.setLatVariable("latitude");
+			}
+			
+			if (ds.findVariable("longitude") != null) {
+				variables.setLonVariable("longitude");
+			}
+			
+			
+			//
+			if (ds.findVariable("time") != null) {
+				variables.setDateVariable("time");
+			}
+			
+			if (ds.findVariable("lat") != null) {
+				variables.setLatVariable("lat");
+			}
+			
+			if (ds.findVariable("lon") != null) {
+				variables.setLonVariable("lon");
+			}
+			
+			dimensions.setDateDimension(ds.findVariable(variables.getDateVariable()).getDimension(0).getShortName());
+			dimensions.setLatDimension(ds.findVariable(variables.getLatVariable()).getDimension(0).getShortName());
+			dimensions.setLonDimension(ds.findVariable(variables.getLonVariable()).getDimension(0).getShortName());
+			
+		} catch (Exception e) {
+			
+		} finally {
+			if(ds != null)
+				try {
+					ds.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+		
 	}
 
 	@Override
@@ -36,7 +87,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 
-			Variable ncVar = ds.findVariable(dimensions.dateVariable);
+			Variable ncVar = ds.findVariable(variables.dateVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
 
 			StringBuilder sb = new StringBuilder();
@@ -66,9 +117,16 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			for (Variable var : ds.getVariables()) {
 				
 				if (var.getRank() == 3
-						&& var.getDimension(0).getShortName().equals(dimensions.dateVariable)
-						&& var.getDimension(1).getShortName().equals(dimensions.latDimension)
-						&& var.getDimension(2).getShortName().equals(dimensions.lonDimension)){
+						&& var.getDimension(0).getShortName().equals(dimensions.getDateDimension())
+						&& var.getDimension(1).getShortName().equals(dimensions.getLatDimension())
+						&& var.getDimension(2).getShortName().equals(dimensions.getLonDimension())){
+
+					varList.add(var.getShortName());
+					
+				} else if (var.getRank() == 3
+						&& var.getDimension(0).getShortName().equals(dimensions.getDateDimension())
+						&& var.getDimension(1).getShortName().equals(dimensions.getLonDimension())
+						&& var.getDimension(2).getShortName().equals(dimensions.getLatDimension())){
 
 					varList.add(var.getShortName());
 				}
@@ -92,15 +150,15 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 			Variable ncVar = ds.findVariable(varName);
 			
-			int dateDimInd = ncVar.findDimensionIndex(dimensions.dateVariable);
-			int lonDimInd = ncVar.findDimensionIndex(dimensions.lonDimension);
-			int latDimInd = ncVar.findDimensionIndex(dimensions.latDimension);
+			int dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension());
+			int lonDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
+			int latDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension());
 			
 			int sizeLon = ncVar.getDimension(lonDimInd).getLength();
 			int sizeLat = ncVar.getDimension(latDimInd).getLength();
 			boolean latFirst = latDimInd < lonDimInd;
 
-			Variable dateVar = ds.findVariable(dimensions.dateVariable);
+			Variable dateVar = ds.findVariable(variables.dateVariable);
 			//TODO What does boolean enhance do
 			VariableDS dateVarDS = new VariableDS(null, dateVar, false);
 			StringBuilder sb = new StringBuilder();

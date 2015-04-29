@@ -56,20 +56,6 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 		}
 		
 		
-		
-//		case HttpRequest(GET, Uri.Path("/listServices"), _, _, _) =>
-//			sender ! JsonSerializer.toResponse(factory.getAvailableServices)
-
-		
-//		case HttpRequest(GET, Uri(_, _, Uri.Path("/listSlices"), query, _), _, _, _) => query.get("service") match {
-//			case Some(service) =>
-//				val dates = factory.getService(service).getAvailableDates
-//				sender ! JsonSerializer.toResponse(dates)
-//			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
-//		}
-
-
-
 		case _: HttpRequest => sender ! HttpResponse(status = 404, entity = "Unknown resource!")
 
 		// when a new connection comes in we register ourselves as the connection handler

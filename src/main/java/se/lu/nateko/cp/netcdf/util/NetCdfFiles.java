@@ -7,12 +7,11 @@ public class NetCdfFiles {
 	
 	private final ArrayList<String> netCdfFiles;
 
-	public NetCdfFiles() {
+	public NetCdfFiles(String netCdfFolder) {
 		netCdfFiles = new ArrayList<String>();
 		
-		File folder = new File("/disk/data/netcdf");
+		File folder = new File(netCdfFolder);
 		if (folder.isDirectory()) {
-			
 			for (String file : folder.list()) {
 				if (file.endsWith(".nc") && new File(folder + "/" + file).isFile()) {
 					netCdfFiles.add(file);
