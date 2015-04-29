@@ -1,16 +1,18 @@
 var files = [];
-var service = 'CO2_EUROPE_LSCE.nc';
+var service;
 var dates = [];
 var variables = [];
 
 function loadFiles() {
-	d3.json("/carbontracker/listNetCdfFiles", function(err, data){
+	d3.json("/carbontracker/listNetCdfFiles", function(err, data) {
 		
 		files = data;
 		
 		for (var i=0; i < files.length; i++) {
-			var element = document.createElement('p');
+			var element = document.createElement('a');
 			var content = document.createTextNode(files[i]);
+			element.title = "";
+			element.setAttribute('onclick', 'loadVariables(\'' + files[i] + '\');');
 			element.appendChild(content);
 			document.getElementById('files').appendChild(element);
 		}
@@ -19,7 +21,7 @@ function loadFiles() {
 }
 
 function loadDates(service) {
-	d3.json("/carbontracker/listDates?service=" + 'CO2_EUROPE_LSCE.nc', function(err, data){
+	d3.json("/carbontracker/listDates?service=" + service, function(err, data) {
 		
 		dates = data;
 		
@@ -34,13 +36,13 @@ function loadDates(service) {
 }
 
 function loadVariables(service) {
-	d3.json("/carbontracker/listVariables?service=" + 'CO2_EUROPE_LSCE.nc', function(err, data){
+	d3.json("/carbontracker/listVariables?service=" + service, function(err, data) {
 		
-		dates = data;
+		variables = data;
 		
-		for (var i=0; i < dates.length; i++) {
+		for (var i=0; i < variables.length; i++) {
 			var element = document.createElement('p');
-			var content = document.createTextNode(dates[i]);
+			var content = document.createTextNode(variables[i]);
 			element.appendChild(content);
 			document.getElementById('variables').appendChild(element);
 		}
@@ -69,7 +71,7 @@ function whenDoneLoading(){
 	button.onclick = function () {
 		var start = Date.now();
 
-		d3.json("/carbontracker/getSlice?service=CO2_EUROPE_LSCE.nc&date=2010-08-07T01:00:00Z&varName=psurf", function(err, raster){
+		d3.json("/carbontracker/getSlice?service=yearly_1x1_fluxes_limited.nc&date=2002-07-01T17:01:09.677Z&varName=fossil_flux_imp", function(err, raster){
 			rasterCache = raster;
 			makeImage(ctx, raster);
 			var elapsed = Date.now() - start;

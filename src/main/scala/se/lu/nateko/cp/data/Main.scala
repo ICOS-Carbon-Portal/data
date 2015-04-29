@@ -23,23 +23,12 @@ object Main extends App {
 	implicit val timeout = Timeout(5 seconds)
 	implicit val dispatcher = system.dispatcher
 
-	val factoryDef: Map[String, ServiceSpecification] = Map(
-		"service1" -> new ServiceSpecification(
-			new File("/home/paul/Downloads/NetCDF/yearly_1x1_fluxes.nc"),
-			"fossil_flux_imp",
-			
-			new DimensionsSpecification(
-				"date", "latitude", "longitude"
-			)
-		)
-	)
-	
 	val netCdfFolder: String = "/disk/data/netcdf/"
 	val dates: java.util.List[String] = List("date", "time").asJava
-//	val lats : ArrayList<String> = new ArrayList<String>()
-//	val longs : ArrayList<String> = new ArrayList<String>()
+	val lats : java.util.List[String] = List("latitude", "lat").asJava
+	val longs : java.util.List[String] = List("longitude", "lon").asJava
 	
-	val factory = new ViewServiceFactoryImpl(netCdfFolder)
+	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs)
 	
 	val handler = system.actorOf(Props(new ServiceActor(factory)), name = "handler")
 	

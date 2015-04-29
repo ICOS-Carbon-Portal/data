@@ -1,33 +1,53 @@
 <!DOCTYPE html>
 <html>
-	<head>
-   	<meta charset="utf-8"/>
+
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
    	<title>Canvas test</title>
 
-   	<script src="script.js"></script>
-		<script src="https://static.icos-cp.eu/constant/d3/3.5.5/d3.min.js"></script>
-
-		<style type="text/css">
-			canvas { border: 1px solid black; }
-		</style>
-	</head>
+	<script src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
 	
-	<body onload="whenDoneLoading();">
+	<link href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" />
+	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+
+	<script src="https://static.icos-cp.eu/constant/d3/3.5.5/d3.min.js"></script>
+	
+   	<script src="script.js"></script>
+		
+
+	<style type="text/css">
+			canvas { border: 1px solid black; }
+	</style>
+</head>
+	
+<body>
 	
 		
 	
 	<div id="files"><button onClick="loadFiles()">Load files</button></div>
+	
+	
+	
 	<div id="dates"><button onClick="loadDates()">Load dates</button></div>
 	<div id="variables"><button onClick="loadVariables()">Load variables</button></div>
 		
 	
 	
+
+		
+</body>
+		
+</html>
+
+
+
+<!-- 
 		<span>Set gamma: </span>
 		<input type="text" id="gammaValue" value="0.5" size="4">
 		<button id="b">Fetch and draw!</button>
 		<button id="redrawButton">Redraw!</button>
 		<p id="output"></p>
 		<canvas id="c" width="360" height="180"></canvas>
-		
-	</body>
-</html>
+ -->

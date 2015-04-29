@@ -9,9 +9,15 @@ import se.lu.nateko.cp.netcdf.viewing.*;
 public class ViewServiceFactoryImpl implements ViewServiceFactory{
 	
 	private String netCdfFolder = "";
+	private List<String> dates = null;
+	private List<String> lats = null;
+	private List<String> longs = null;
 	
-	public ViewServiceFactoryImpl(String netCdfFolder) {
+	public ViewServiceFactoryImpl(String netCdfFolder, List<String> dates, List<String> lats, List<String> longs) {
 		this.netCdfFolder = netCdfFolder;
+		this.dates = dates;
+		this.lats = lats;
+		this.longs = longs;
 	}
 	
 	public String[] getNetCdfFiles() {
@@ -19,7 +25,7 @@ public class ViewServiceFactoryImpl implements ViewServiceFactory{
 	}
 	
 	public NetCdfViewService getNetCdfViewService(String fileName){
-		return new NetCdfViewServiceImpl(netCdfFolder + fileName);
+		return new NetCdfViewServiceImpl(netCdfFolder + fileName, dates, lats, longs);
 	}
 
 }

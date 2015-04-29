@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
+
 import se.lu.nateko.cp.netcdf.viewing.*;
 import ucar.ma2.Array;
 import ucar.ma2.InvalidRangeException;
 import ucar.ma2.MAMath;
 import ucar.ma2.Section;
-import ucar.nc2.Dimension;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
 import ucar.nc2.dataset.NetcdfDataset;
@@ -21,45 +21,42 @@ import ucar.nc2.time.CalendarDate;
 public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 	private DimensionsSpecification dimensions = new DimensionsSpecification();
-	private VariableSpecification variables;
-	
-	
+	private VariableSpecification variables = new VariableSpecification();
+		
 	private File file = null;
 
-	public NetCdfViewServiceImpl(String fileName){
+	public NetCdfViewServiceImpl(String fileName, List<String> dates, List<String> lats, List<String> longs){
 		file = new File(fileName);
 		NetcdfDataset ds = null;
 
 		try {
-			variables = new VariableSpecification();
-			variables = new VariableSpecification("time", "degrees_north", "degrees_east");
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 			
-			// 
-			if (ds.findVariable("date") != null) {
-				variables.setDateVariable("date");
+			if (dates != null) {
+				for (String value : dates) {
+					if (ds.findVariable(value) != null) {
+						variables.setDateVariable(value);
+						break;
+					}
+				}
+			} 
+			
+			if (lats != null) {
+				for (String value : lats) {
+					if (ds.findVariable(value) != null) {
+						variables.setLatVariable(value);
+						break;
+					}
+				}
 			}
 			
-			if (ds.findVariable("latitude") != null) {
-				variables.setLatVariable("latitude");
-			}
-			
-			if (ds.findVariable("longitude") != null) {
-				variables.setLonVariable("longitude");
-			}
-			
-			
-			//
-			if (ds.findVariable("time") != null) {
-				variables.setDateVariable("time");
-			}
-			
-			if (ds.findVariable("lat") != null) {
-				variables.setLatVariable("lat");
-			}
-			
-			if (ds.findVariable("lon") != null) {
-				variables.setLonVariable("lon");
+			if (longs != null) {
+				for (String value : longs) {
+					if (ds.findVariable(value) != null) {
+						variables.setLonVariable(value);
+						break;
+					}
+				}
 			}
 			
 			dimensions.setDateDimension(ds.findVariable(variables.getDateVariable()).getDimension(0).getShortName());
@@ -73,8 +70,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 				try {
 					ds.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					
 				}
 		}
 		
