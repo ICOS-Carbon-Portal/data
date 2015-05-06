@@ -20,7 +20,7 @@ object JsonSerializer extends DefaultJsonProtocol {
 	}
 	
 	def toResponse(json: JsValue): HttpResponse = {
-		val jsonTxt = json.toJson.compactPrint
+		val jsonTxt = json.compactPrint
 
 		val responseEntity = HttpEntity(ContentTypes.`application/json`, jsonTxt)
 

@@ -147,8 +147,8 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Variable ncVar = ds.findVariable(varName);
 			
 			int dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension());
-			int lonDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
-			int latDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension());
+			int lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension());
+			int latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
 			
 			int sizeLon = ncVar.getDimension(lonDimInd).getLength();
 			int sizeLat = ncVar.getDimension(latDimInd).getLength();
@@ -177,12 +177,15 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Section sec = new Section(origin, size);
 
 			Array arrFullDim = ncVar.read(sec);
-			Array arrReduced = arrFullDim.reduce();
-
-			double min = MAMath.getMinimum(arrReduced);
-			double max = MAMath.getMaximum(arrReduced);
+			double fullMin = MAMath.getMinimum(arrFullDim);
+			double fullMax = MAMath.getMaximum(arrFullDim);
 			
-			return new RasterImpl(arrReduced, sizeLon, sizeLat, min, max, latFirst);
+			//Array arrReduced = arrFullDim.reduce();
+			//double min = MAMath.getMinimum(arrReduced);
+			//double max = MAMath.getMaximum(arrReduced);
+			
+			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst);
+			//return new RasterImpl(arrReduced, sizeLon, sizeLat, min, max, latFirst);
 
 		} catch (IOException ioe) {
 			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
