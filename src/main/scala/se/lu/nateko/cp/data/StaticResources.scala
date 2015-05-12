@@ -9,6 +9,7 @@ object StaticResources {
 
 	val carbonTrackerWidgetPage = getResponse("/carbontracker.html", `text/html`)
 	val carbonTrackerScript = getResponse("/carbontracker.js", `application/javascript`)
+	val dataFetcherScript = getResponse("/datafetcher.js", `application/javascript`)
 
 	def getResponse(resourcePath: String, mediaType: MediaType): HttpResponse = {
 		val stream = getClass.getResourceAsStream(resourcePath)

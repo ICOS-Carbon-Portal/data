@@ -13,7 +13,8 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 
 	def receive = handleStatic(
 		"/carbontracker/" -> carbonTrackerWidgetPage,
-		"/carbontracker/script.js" -> carbonTrackerScript
+		"/carbontracker/script.js" -> carbonTrackerScript,
+		"/carbontracker/datafetcher.js" -> dataFetcherScript
 		
 	).orElse{
 
