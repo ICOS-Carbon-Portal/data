@@ -1,6 +1,6 @@
 function carbonTrackerApp(){
 	
-	function loadServices() {
+	function loadServices(service) {
 		d3.json('/carbontracker/listNetCdfFiles', function(error, data) {
 			var select = document.getElementById('services');
 			
@@ -17,12 +17,17 @@ function carbonTrackerApp(){
 				var option = document.createElement('option');
 				var content = document.createTextNode(data[i]);
 				option.appendChild(content);
+				
+				if (service && service == data[i]) {
+					option.setAttribute('selected', 'selected');
+				}
+				
 				select.appendChild(option);	
 			}
 		});
 	}
 	
-	function loadDates(service) {
+	function loadDates(service, date) {
 		d3.json('/carbontracker/listDates?service=' + service, function(error, data) {
 			var select = document.getElementById('dates');
 			
@@ -38,13 +43,18 @@ function carbonTrackerApp(){
 			for (var i=0; i < data.length; i++) {
 				var option = document.createElement('option');
 				var content = document.createTextNode(data[i]);
+				
+				if (date && date == data[i]) {
+					option.setAttribute('selected', 'selected');
+				}
+				
 				option.appendChild(content);
 				select.appendChild(option);
 			}
 		});
 	}
 	
-	function loadVariables(service) {
+	function loadVariables(service, variable) {
 		d3.json('/carbontracker/listVariables?service=' + service, function(error, data) {
 			var select = document.getElementById('variables');
 			
@@ -61,6 +71,11 @@ function carbonTrackerApp(){
 			for (var i=0; i < data.length; i++) {
 				var option = document.createElement('option');
 				var content = document.createTextNode(data[i]);
+				
+				if (variable && variable == data[i]) {
+					option.setAttribute('selected', 'selected');
+				}
+				
 				option.appendChild(content);
 				select.appendChild(option);
 			}
@@ -75,7 +90,7 @@ function carbonTrackerApp(){
 	}
 	
 	function setService() {
-		var service = document.getElementById('services').options[document.getElementById('services').selectedIndex].value;
+		var service = getSelectedValue('services');
 		
 		if (service.match(/----/) < 1) {
 			loadDates(service);
@@ -83,48 +98,33 @@ function carbonTrackerApp(){
 		}
 	}
 	
-	function illustrate() {
+	function tryToIllustrate() {
 		var service = getSelectedValue('services');
 		var date = getSelectedValue('dates');
 		var variable = getSelectedValue('variables');
+		var scale = getSelectedValue('scale');
 		var gamma = getSelectedValue('gamma');
 		
 		if (service.match(/----/) < 1 && date.match(/----/) < 1 && variable.match(/----/) < 1) {
-			
-			var request = {
-					service: service,
-					date: date,
-					variable: variable
-			};
-			
-			dataFetcher.fetch(request, function(error, data) {	
-				var sliceContext = document.getElementById('slice').getContext('2d');
-				
-				sliceContext.putImageData(makeImage(sliceContext, data, gamma), 0, 0);
-				
-				scale();	
-			});
-		
-		}
-			
-	}
-		
-	function scale() {
-		var scale = getSelectedValue('scale');
-		
-		var img = document.getElementById('slice');
-		var width = img.width;
-		var height = img.height;
-				
-		document.getElementById('canvas').width = width * scale;
-		document.getElementById('canvas').height = height * scale;
-		
-		var context = document.getElementById('canvas').getContext('2d');
-		context.scale(scale, scale);
-		context.drawImage(img, 0, 0);
-		
+			createIllustration(service, date, variable, scale, gamma);
+		}		
 	}
 	
+	function createIllustration(service, date, variable, scale, gamma) {
+		var request = {
+				service: service,
+				date: date,
+				variable: variable
+		};
+		
+		dataFetcher.fetch(request, function(error, data) {	
+			var sliceContext = document.getElementById('slice').getContext('2d');
+			sliceContext.putImageData(makeImage(sliceContext, data, gamma), 0, 0);
+			draw(scale);	
+		});	
+		
+	}
+			
 	function makeImage(context, raster, gamma) {
 		var colorMaker = getColorMaker(raster.min, raster.max, Math.abs(gamma));
 			
@@ -189,6 +189,78 @@ function carbonTrackerApp(){
 			return d3.rgb(colorString);
 		};
 	}
+	
+	function draw(scale) {
+		var img = document.getElementById('slice');
+		var width = img.width;
+		var height = img.height;
+				
+		document.getElementById('canvas').width = width * scale;
+		document.getElementById('canvas').height = height * scale;
+		
+		var context = document.getElementById('canvas').getContext('2d');
+		context.scale(scale, scale);
+		context.drawImage(img, 0, 0);
+	}
+	
+	function preload(querystring) {
+		// ?cppreloadslice=1&service=yearly_1x1_fluxes.nc&date=2012-07-01T14:11:43.982Z&variable=bio_flux_opt&scale=1.5&gamma=0.4
+		
+		if (querystring.match(/cppreloadslice=1/)) {
+			var service = '', date = '', variable = '', scale = '0', gamma = '4';
+			
+			var querys = querystring.split('&');
+			console.log(querys);
+			console.log(querystring);
+			for (var i=0; i<querys.length; i++) {
+				var query = querys[i];
+				
+				if (query.match(/service/)) {
+					var value = query.split('=');
+					service = value[1];	
+				}
+				
+				if (query.match(/date/)) {
+					var value = query.split('=');
+					date = value[1];	
+				}
+				
+				if (query.match(/variable/)) {
+					var value = query.split('=');
+					variable = value[1];		
+				}
+				
+				if (query.match(/scale/)) {
+					var value = query.split('=');
+					var options = document.getElementById('scale').options;
+					for (var j=0; j<options.length; j++) {
+						if (options[j].text == value[1]) {
+							scale = options[j].index;
+							document.getElementById('scale').selectedIndex = scale;
+						}
+					}
+				}
+				
+				if (query.match(/gamma/)) {console.log('in gamma');
+					var value = query.split('=');
+					var options = document.getElementById('gamma').options;
+					for (var a=0; a<options.length; a++) {
+						if (options[a].value == value[1]) {
+							gamma = options[a].index;
+							document.getElementById('gamma').selectedIndex = gamma;
+						}
+					}
+				}
+				
+			}
+			
+			loadServices(service);
+			loadDates(service, date);
+			loadVariables(service, variable);
+			
+			createIllustration(service, date, variable, scale, gamma);	
+		}	
+	}
 
 	function init() {
 		loadServices();
@@ -198,9 +270,10 @@ function carbonTrackerApp(){
 		});
 		
 		['dates', 'variables', 'scale', 'gamma'].forEach(function(elemId){
-			document.getElementById(elemId).addEventListener('change', illustrate);
+			document.getElementById(elemId).addEventListener('change', tryToIllustrate);
 		});
 		
+		preload(window.location.search);
 		
 	}
 	

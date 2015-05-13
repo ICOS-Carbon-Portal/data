@@ -29,9 +29,9 @@
 		
 		.gamma { float: left; margin-left: 20px;}
 		
-		.illustration { text-align: center; border: 40px solid #ffffff; }
+		.illustration { float: left; margin-left: 20px; margin-top: 20px; }
 		
-		#canvas { border: 20px solid #ffffff; }
+		#canvas {  }
 	</style>
 </head>
 	
@@ -57,10 +57,17 @@
 		<div class="scale">
 			<p>Scale</p>
 			<select id="scale">
-				<option>1</option>
-				<option>2</option>
-				<option>3</option>
-				<option>4</option>
+				<option selected="selected">1.0</option>
+				<option>1.5</option>
+				<option>2.0</option>
+				<option>2.5</option>
+				<option>3.0</option>
+				<option>3.5</option>
+				<option>4.0</option>
+				<option>5.0</option>
+				<option>6.0</option>
+				<option>7.0</option>
+				<option>8.0</option>
 			</select>
 		</div>
 		
@@ -71,7 +78,7 @@
 				<option>0.2</option>
 				<option>0.3</option>
 				<option>0.4</option>
-				<option>0.5</option>
+				<option selected="selected">0.5</option>
 				<option>0.6</option>
 				<option>0.7</option>
 				<option>0.8</option>
@@ -85,11 +92,14 @@
 			</select>
 		</div>
 		
+		
+		<div class="illustration">
+			<canvas id="canvas"></canvas>
+		</div>
+		
 	</div>	
 	
-	<div class="illustration">
-		<canvas id="canvas"></canvas>
-	</div>
+	
 
 
 	<canvas id="slice" style="display: none"></canvas>
