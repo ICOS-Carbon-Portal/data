@@ -9,7 +9,7 @@ resolvers += "UNIDATA Releases" at "https://artifacts.unidata.ucar.edu/content/r
 libraryDependencies ++= Seq(
 	"edu.ucar"           % "cdm"               % "4.5.5" excludeAll(
 		ExclusionRule(organization = "com.beust"),
-		ExclusionRule(organization = "com.google.guava"),
+		//ExclusionRule(organization = "com.google.guava"),
 		ExclusionRule(organization = "com.google.protobuf"),
 		ExclusionRule(organization = "net.sf.ehcache"),
 		ExclusionRule(organization = "org.apache.httpcomponents"),

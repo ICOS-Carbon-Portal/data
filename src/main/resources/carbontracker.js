@@ -118,20 +118,25 @@ function carbonTrackerApp(){
 		};
 		
 		dataFetcher.fetch(request, function(error, data) {	
-			var sliceContext = document.getElementById('slice').getContext('2d');
-			sliceContext.putImageData(makeImage(sliceContext, data, gamma), 0, 0);
+			makeImage(data, gamma);
 			draw(scale);	
 		});	
 		
 	}
 			
-	function makeImage(context, raster, gamma) {
+	function makeImage(raster, gamma) {
+		
 		var colorMaker = getColorMaker(raster.min, raster.max, Math.abs(gamma));
-			
+		
 		var array = raster.array;
 		var height = array.length;
 		var width = array[0].length;
-	
+		
+		document.getElementById('dataimage').width = width;
+		document.getElementById('dataimage').height = height;
+		
+		var context = document.getElementById('dataimage').getContext('2d');
+		
 		var imgData = context.createImageData(width, height);
 		var data = imgData.data;
 	
@@ -150,8 +155,8 @@ function carbonTrackerApp(){
 			
 			i++;
 		}
-			
-		return imgData;
+		
+		context.putImageData(imgData, 0, 0);	
 	}
 	
 	function getColorMaker(minVal, maxVal, gamma) {
@@ -177,11 +182,11 @@ function carbonTrackerApp(){
 		var color = biLinear
 			? d3.scale.linear()
 				.domain([-1, 0, 1])
-				.range(["blue", "white", "red"])
+				.range(['blue', 'white', 'red'])
 				
 			: d3.scale.linear()
 				.domain([0, 1])
-				.range(["white", "red"]);
+				.range(['white', 'red']);
 		
 		return function(value) {
 			var transformed = toTransformed(value);
@@ -191,16 +196,85 @@ function carbonTrackerApp(){
 	}
 	
 	function draw(scale) {
-		var img = document.getElementById('slice');
-		var width = img.width;
-		var height = img.height;
-				
-		document.getElementById('canvas').width = width * scale;
-		document.getElementById('canvas').height = height * scale;
+		var width = document.getElementById('dataimage').width;
+		var height = document.getElementById('dataimage').height;	
+		var scaledWidth = width * scale;
+		var scaledHeight = height * scale;
 		
-		var context = document.getElementById('canvas').getContext('2d');
-		context.scale(scale, scale);
-		context.drawImage(img, 0, 0);
+		
+		console.log('org är ' + width + '    ' + height + '    skalan är ' + scale);	
+		console.log('efter skalningen ' + scaledWidth + '  ' + scaledHeight);
+		
+		
+		if (document.getElementById('canvas')) {
+			document.getElementById('illustration').removeChild(document.getElementById('canvas'));	
+		}
+		
+		var canvas = document.createElement('canvas');
+		canvas.setAttribute('id', 'canvas');
+		canvas.width = scaledWidth;
+		canvas.height = scaledHeight;
+		
+		console.log('canvas ' + canvas.width + '  ' + canvas.height);
+		document.getElementById('illustration').appendChild(canvas);
+		
+		var context = canvas.getContext('2d');
+		context.drawImage(document.getElementById('dataimage'), 0, 0, scaledWidth, scaledHeight);
+		
+		
+		
+		
+		if (document.getElementById('map')) {
+			document.getElementById('illustration').removeChild(document.getElementById('map'));
+		}
+		
+		var x_position = canvas.offsetLeft;
+		var y_position = canvas.offsetTop;
+		
+		var map = document.createElement('div');
+		map.setAttribute('id', 'map');
+		document.getElementById('illustration').appendChild(map);
+		map.style.width = scaledWidth + 'px';
+		map.style.height = scaledHeight + 'px';
+		map.style.position = 'absolute';
+		map.style.left = x_position + 'px';
+		map.style.top = y_position + 'px';
+		map.style.opacity = '0.4';
+		
+		
+		
+		console.log('placering ' + x_position + '  ' + y_position);
+		
+		//-179.5, 89.5
+		var translateWidth = width / 2 * scale;
+		var translateHeight = height / 2 * scale;
+		console.log(translateWidth + '   ' + translateHeight);
+		
+		var datamap = new Datamap({
+			element: map,
+			done: function(datamap) {
+				datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
+						alert(geography.properties.name);
+				});
+			},			
+			geographyConfig: {
+				highlightOnHover: false,
+				popupOnHover: false,
+				borderWidth: 2,
+				borderColor: '#000000'
+			},
+			setProjection: function(element, options) {
+				var projection, path;
+				projection = d3.geo.equirectangular()
+					.scale(57*scale)
+					.translate([translateWidth, translateHeight]);
+
+					path = d3.geo.path()
+						.projection(projection);
+				
+				return {path: path, projection: projection};
+			}				
+		});			
 	}
 	
 	function preload(querystring) {
