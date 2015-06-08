@@ -4,14 +4,14 @@ import se.lu.nateko.cp.netcdf.viewing.Raster
 import spray.http._
 import spray.json._
 
-case class RasterMessage(min: Double, max: Double, array: Array[Array[Double]])
+case class RasterMessage(min: Double, max: Double, array: Array[Array[Double]], latMin: Double, latMax: Double, lonMin: Double, lonMax: Double)
 
 object JsonSerializer extends DefaultJsonProtocol {
 
-	implicit val rasterFormat = jsonFormat3(RasterMessage)
+	implicit val rasterFormat = jsonFormat7(RasterMessage) // add with one for each argument
 	
 	def toJson(raster: Raster): HttpResponse = {
-		val msg = RasterMessage(raster.getMin, raster.getMax, raster.to2DArray)
+		val msg = RasterMessage(raster.getMin, raster.getMax, raster.to2DArray, raster.getLatMin, raster.getLatMax, raster.getLonMin, raster.getLonMax)
 		toResponse(msg.toJson)
 	}
 	

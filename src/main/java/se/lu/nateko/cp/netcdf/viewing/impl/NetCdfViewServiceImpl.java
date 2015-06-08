@@ -180,23 +180,15 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			double fullMin = MAMath.getMinimum(arrFullDim);
 			double fullMax = MAMath.getMaximum(arrFullDim);
 			
-			
-			
-			
-			
 			ucar.nc2.dt.grid.GridDataset griddataset = new ucar.nc2.dt.grid.GridDataset(ds);
 			ucar.unidata.geoloc.LatLonRect latLonRect = griddataset.getBoundingBox();
 			
-			System.out.println(latLonRect.getLatMin());
-			System.out.println(latLonRect.getLatMax());
-			System.out.println(latLonRect.getLonMin());
-			System.out.println(latLonRect.getLonMax());
+			double latMin = latLonRect.getLatMin();
+			double latMax = latLonRect.getLatMax();
+			double lonMin = latLonRect.getLonMin();
+			double lonMax = latLonRect.getLonMax();
 			
-			
-			
-			
-			
-			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst);
+			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latMin, latMax, lonMin, lonMax);
 
 		} catch (IOException ioe) {
 			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);

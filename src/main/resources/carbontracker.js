@@ -119,7 +119,7 @@ function carbonTrackerApp(){
 		
 		dataFetcher.fetch(request, function(error, data) {	
 			makeImage(data, gamma);
-			draw(scale);	
+			draw(scale, data);	
 		});	
 		
 	}
@@ -195,15 +195,11 @@ function carbonTrackerApp(){
 		};
 	}
 	
-	function draw(scale) {
+	function draw(scale, raster) {
 		var width = document.getElementById('dataimage').width;
 		var height = document.getElementById('dataimage').height;	
 		var scaledWidth = width * scale;
 		var scaledHeight = height * scale;
-		
-		
-		console.log('org är ' + width + '    ' + height + '    skalan är ' + scale);	
-		console.log('efter skalningen ' + scaledWidth + '  ' + scaledHeight);
 		
 		
 		if (document.getElementById('canvas')) {
@@ -215,13 +211,10 @@ function carbonTrackerApp(){
 		canvas.width = scaledWidth;
 		canvas.height = scaledHeight;
 		
-		console.log('canvas ' + canvas.width + '  ' + canvas.height);
 		document.getElementById('illustration').appendChild(canvas);
 		
 		var context = canvas.getContext('2d');
 		context.drawImage(document.getElementById('dataimage'), 0, 0, scaledWidth, scaledHeight);
-		
-		
 		
 		
 		if (document.getElementById('map')) {
@@ -242,13 +235,10 @@ function carbonTrackerApp(){
 		map.style.opacity = '0.4';
 		
 		
+		var resolution = (height - 1) / (raster.latMax - raster.latMin) * scale;
 		
-		console.log('placering ' + x_position + '  ' + y_position);
-		
-		//-179.5, 89.5
-		var translateWidth = width / 2 * scale;
-		var translateHeight = height / 2 * scale;
-		console.log(translateWidth + '   ' + translateHeight);
+		var translateWidth =  - raster.lonMin * resolution;
+		var translateHeight = raster.latMax * resolution; 
 		
 		var datamap = new Datamap({
 			element: map,
@@ -266,9 +256,9 @@ function carbonTrackerApp(){
 			setProjection: function(element, options) {
 				var projection, path;
 				projection = d3.geo.equirectangular()
-					.scale(57*scale)
-					.translate([translateWidth, translateHeight]);
-
+					.scale(57 * resolution)
+					.translate([translateWidth, translateHeight])
+					
 					path = d3.geo.path()
 						.projection(projection);
 				

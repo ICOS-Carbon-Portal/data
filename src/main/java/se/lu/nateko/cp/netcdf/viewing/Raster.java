@@ -13,6 +13,10 @@ public interface Raster {
 
 	double getMin();
 	double getMax();
+	double getLatMin();
+	double getLatMax();
+	double getLonMin();
+	double getLonMax();
 	
 	default double[][] to2DArray(){
 		int nx = getSizeLon(), ny = getSizeLat();
