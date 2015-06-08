@@ -250,9 +250,12 @@ function carbonTrackerApp(){
 			geographyConfig: {
 				highlightOnHover: false,
 				popupOnHover: false,
-				borderWidth: 2,
+				borderWidth: 1,
 				borderColor: '#000000'
 			},
+			fills: {
+				defaultFill: '#ffffff'
+			},			
 			setProjection: function(element, options) {
 				var projection, path;
 				projection = d3.geo.equirectangular()
