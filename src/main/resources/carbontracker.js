@@ -1,5 +1,7 @@
 function carbonTrackerApp(){
-	
+
+	var dataFetcher, currentBoundingBox;
+
 	function loadServices(service) {
 		d3.json('/carbontracker/listNetCdfFiles', function(error, data) {
 			var select = document.getElementById('services');
@@ -81,8 +83,6 @@ function carbonTrackerApp(){
 			}
 		});
 	}
-	
-	var dataFetcher = new DataFetcher('/carbontracker/getSlice');
 
 	function getSelectedValue(elemId){
 		var elem = document.getElementById(elemId); 
@@ -102,52 +102,51 @@ function carbonTrackerApp(){
 		var service = getSelectedValue('services');
 		var date = getSelectedValue('dates');
 		var variable = getSelectedValue('variables');
-		var scale = getSelectedValue('scale');
 		var gamma = getSelectedValue('gamma');
-		
+
 		if (service.match(/----/) < 1 && date.match(/----/) < 1 && variable.match(/----/) < 1) {
-			createIllustration(service, date, variable, scale, gamma);
-		}		
+			createIllustration(service, date, variable, gamma);
+		}
 	}
-	
-	function createIllustration(service, date, variable, scale, gamma) {
+
+	function createIllustration(service, date, variable, gamma) {
 		var request = {
 				service: service,
 				date: date,
 				variable: variable
 		};
-		
-		dataFetcher.fetch(request, function(error, data) {	
-			makeImage(data, gamma);
-			draw(scale, data);	
-		});	
-		
+
+		dataFetcher.fetch(request, function(error, raster) {
+			currentBoundingBox = raster.boundingBox;
+			makeImage(raster, gamma);
+		});
+
 	}
-			
+
 	function makeImage(raster, gamma) {
-		
-		var colorMaker = getColorMaker(raster.min, raster.max, Math.abs(gamma));
-		
+		var stats = raster.stats;
+		var colorMaker = getColorMaker(stats.min, stats.max, Math.abs(gamma));
+
 		var array = raster.array;
 		var height = array.length;
 		var width = array[0].length;
 		
 		document.getElementById('dataimage').width = width;
 		document.getElementById('dataimage').height = height;
-		
+
 		var context = document.getElementById('dataimage').getContext('2d');
-		
+
 		var imgData = context.createImageData(width, height);
 		var data = imgData.data;
-	
+
 		var i = 0;
 		for(var ib = 0; ib < data.length ; ib+=4){
 			var x = i % width;
 			var y = ~~(i / width); // ~~ rounds towards zero
 			var value = array[height - 1 - y][x];
-				
+
 			var rgb = colorMaker(value);
-				
+
 			data[ib] = rgb.r;
 			data[ib + 1] = rgb.g;
 			data[ib + 2] = rgb.b;
@@ -155,20 +154,21 @@ function carbonTrackerApp(){
 			
 			i++;
 		}
-		
-		context.putImageData(imgData, 0, 0);	
+
+		context.putImageData(imgData, 0, 0);
+		draw(raster.boundingBox);
 	}
-	
+
 	function getColorMaker(minVal, maxVal, gamma) {
-		
+
 		var biLinear = (minVal < 0 && maxVal > 0);
-		
+
 		function transformed(value, minVal, maxVal){
 			var unitIntervalValue = (value - minVal) / (maxVal - minVal);
 			var gammaTransformed = Math.pow(unitIntervalValue, gamma);
 			return gammaTransformed;
 		}
-		
+
 		var toTransformed = biLinear
 			? function(value){
 				return value < 0
@@ -178,171 +178,139 @@ function carbonTrackerApp(){
 			: function(value){
 				return transformed(value, minVal, maxVal);
 			};
-		
+
 		var color = biLinear
 			? d3.scale.linear()
 				.domain([-1, 0, 1])
 				.range(['blue', 'white', 'red'])
-				
+
 			: d3.scale.linear()
 				.domain([0, 1])
-				.range(['white', 'red']);
-		
+				.range(['white', 'black']);
+
 		return function(value) {
 			var transformed = toTransformed(value);
 			var colorString = color(transformed);
 			return d3.rgb(colorString);
 		};
 	}
-	
-	function draw(scale, raster) {
-		var width = document.getElementById('dataimage').width;
-		var height = document.getElementById('dataimage').height;	
-		var scaledWidth = width * scale;
-		var scaledHeight = height * scale;
-		
-		
-		if (document.getElementById('canvas')) {
-			document.getElementById('illustration').removeChild(document.getElementById('canvas'));	
-		}
-		
-		var canvas = document.createElement('canvas');
-		canvas.setAttribute('id', 'canvas');
-		canvas.width = scaledWidth;
-		canvas.height = scaledHeight;
-		
-		document.getElementById('illustration').appendChild(canvas);
-		
-		var context = canvas.getContext('2d');
-		context.drawImage(document.getElementById('dataimage'), 0, 0, scaledWidth, scaledHeight);
-		
-		
-		if (document.getElementById('map')) {
-			document.getElementById('illustration').removeChild(document.getElementById('map'));
-		}
-		
-		var x_position = canvas.offsetLeft;
-		var y_position = canvas.offsetTop;
-		
-		var map = document.createElement('div');
-		map.setAttribute('id', 'map');
-		document.getElementById('illustration').appendChild(map);
-		map.style.width = scaledWidth + 'px';
-		map.style.height = scaledHeight + 'px';
-		map.style.position = 'absolute';
-		map.style.left = x_position + 'px';
-		map.style.top = y_position + 'px';
-		map.style.opacity = '0.4';
-		
-		
-		var resolution = (height - 1) / (raster.latMax - raster.latMin) * scale;
-		
-		var translateWidth =  - raster.lonMin * resolution;
-		var translateHeight = raster.latMax * resolution; 
-		
+
+	function draw(bbox) {
+		var parent = document.getElementById('illustration');
+		var canvas = document.getElementById('dataimage');
+
+		var scale = Math.min(parent.clientWidth / canvas.width, window.innerHeight / canvas.height);
+
+		var width = canvas.width * scale;
+		var height = canvas.height * scale;
+
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+
+		var map = document.getElementById('map');
+		map.innerHTML = '';
+		map.style.width = width + 'px';
+		map.style.height = height + 'px';
+
+		var centerLat = (bbox.latMin + bbox.latMax) / 2;
+		var centerLon = (bbox.lonMin + bbox.lonMax) / 2;
+		var latStep = (bbox.latMax - bbox.latMin) / (canvas.height - 1);
+		var latRange = canvas.height * latStep;
+
 		var datamap = new Datamap({
 			element: map,
-			done: function(datamap) {
-				datamap.svg.selectAll('.datamaps-subunit').on('click', function(geography) {
-						alert(geography.properties.name);
-				});
-			},			
 			geographyConfig: {
 				highlightOnHover: false,
 				popupOnHover: false,
-				borderWidth: 1,
-				borderColor: '#000000'
+				borderColor: '#000000',
+				hideAntarctica: false
 			},
 			fills: {
-				defaultFill: '#ffffff'
-			},			
+				defaultFill: 'rgba(0,0,0,0)'
+			},
 			setProjection: function(element, options) {
-				var projection, path;
-				projection = d3.geo.equirectangular()
-					.scale(57 * resolution)
-					.translate([translateWidth, translateHeight])
-					
-					path = d3.geo.path()
-						.projection(projection);
-				
+				var projection = d3.geo.equirectangular()
+					.scale(height * 180 / latRange / Math.PI)
+					.translate([width / 2, height / 2])
+					.center([centerLon, centerLat]);
+
+				var path = d3.geo.path()
+					.projection(projection);
+
 				return {path: path, projection: projection};
-			}				
-		});			
+			}
+		});
 	}
-	
+
 	function preload(querystring) {
-		// ?cppreloadslice=1&service=yearly_1x1_fluxes.nc&date=2012-07-01T14:11:43.982Z&variable=bio_flux_opt&scale=1.5&gamma=0.4
-		
+		// ?cppreloadslice=1&service=yearly_1x1_fluxes.nc&date=2012-07-01T14:11:43.982Z&variable=bio_flux_opt&gamma=0.2
+		// ?cppreloadslice=1&service=CO2_EUROPE_LSCE.nc&date=2010-08-07T00:00:00Z&variable=FF_CO2_FLUX&gamma=0.2
+
 		if (querystring.match(/cppreloadslice=1/)) {
-			var service = '', date = '', variable = '', scale = '0', gamma = '4';
-			
+			var service = '', date = '', variable = '', gamma = '1';
+
 			var querys = querystring.split('&');
-			console.log(querys);
-			console.log(querystring);
+
 			for (var i=0; i<querys.length; i++) {
 				var query = querys[i];
-				
+
 				if (query.match(/service/)) {
 					var value = query.split('=');
 					service = value[1];	
 				}
-				
+
 				if (query.match(/date/)) {
 					var value = query.split('=');
 					date = value[1];	
 				}
-				
+
 				if (query.match(/variable/)) {
 					var value = query.split('=');
 					variable = value[1];		
 				}
-				
-				if (query.match(/scale/)) {
-					var value = query.split('=');
-					var options = document.getElementById('scale').options;
-					for (var j=0; j<options.length; j++) {
-						if (options[j].text == value[1]) {
-							scale = options[j].index;
-							document.getElementById('scale').selectedIndex = scale;
-						}
-					}
-				}
-				
-				if (query.match(/gamma/)) {console.log('in gamma');
-					var value = query.split('=');
-					var options = document.getElementById('gamma').options;
-					for (var a=0; a<options.length; a++) {
-						if (options[a].value == value[1]) {
-							gamma = options[a].index;
-							document.getElementById('gamma').selectedIndex = gamma;
+
+				if (query.match(/gamma/)) {
+					var value = query.split('=')[1];
+					var elem = document.getElementById('gamma');
+					var options = elem.options;
+
+					for (var a = 0; a < options.length; a++) {
+						if (options[a].value == value) {
+							gamma = Number.parseFloat(value);
+							elem.selectedIndex = a;
 						}
 					}
 				}
 				
 			}
-			
+
 			loadServices(service);
 			loadDates(service, date);
 			loadVariables(service, variable);
-			
-			createIllustration(service, date, variable, scale, gamma);	
-		}	
+
+			createIllustration(service, date, variable, gamma);
+		}
 	}
 
 	function init() {
+		dataFetcher = new DataFetcher('/carbontracker/getSlice');
+
 		loadServices();
 		
 		document.getElementById('services').addEventListener('change', function() {
 			setService();
 		});
 		
-		['dates', 'variables', 'scale', 'gamma'].forEach(function(elemId){
+		['dates', 'variables', 'gamma'].forEach(function(elemId){
 			document.getElementById(elemId).addEventListener('change', tryToIllustrate);
 		});
-		
+
+		window.addEventListener('resize', function(){
+			draw(currentBoundingBox);
+		});
+
 		preload(window.location.search);
-		
 	}
-	
+
 	init();
 }
