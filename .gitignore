@@ -1,6 +1,10 @@
 *.class
 *.log
 
+# Node.js specific
+node_modules/
+src/main/resources/bundle.js
+
 # sbt specific
 .cache/
 .history/

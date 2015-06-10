@@ -13,16 +13,15 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 
 	def receive = handleStatic(
 		"/carbontracker/" -> carbonTrackerWidgetPage,
-		"/carbontracker/carbontracker.js" -> carbonTrackerScript,
-		"/carbontracker/datafetcher.js" -> dataFetcherScript
+		"/carbontracker/bundle.js" -> bundleScript
 		
 	).orElse{
 
 		// List of NetCdf files
 		case HttpRequest(GET, Uri.Path("/carbontracker/listNetCdfFiles"), _, _, _) =>
 			sender ! JsonSerializer.toResponse(factory.getNetCdfFiles)
-		
-			
+
+
 		// List of dates in a specific NetCdf file
 		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/listDates"), query, _), _, _, _) => query.get("service") match {
 			case Some(fileName) =>

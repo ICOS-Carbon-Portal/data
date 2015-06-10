@@ -9,22 +9,28 @@
 
 	<script src="https://static.icos-cp.eu/constant/d3/3.5.5/d3.min.js"></script>
 	<script src="https://static.icos-cp.eu/constant/d3/topojson/1.6.19/topojson.min.js"></script>
-
 	<script src="https://static.icos-cp.eu/constant/d3/datamaps/0.4.0/datamaps.none.min.js"></script>
+	<script src="https://static.icos-cp.eu/constant/react/0.13.3/react.js"></script>
+	<script src="https://static.icos-cp.eu/constant/reflux/0.2.7/reflux.min.js"></script>
 
-	<script src="datafetcher.js"></script>
-	<script src="carbontracker.js"></script>
+<!--
+	<script src="https://static.icos-cp.eu/constant/ajax/es6-promise/2.1.1/es6-promise.min.js"></script>
+	<script src="https://static.icos-cp.eu/constant/underscore.js/1.7.0/underscore-min.js"></script>
+-->
 
 	<meta charset="utf-8"/>
+<!--
 	<meta name="viewport" content="width=device-width, initial-scale=1">
+-->
 
-	<title>Canvas test</title>
+	<title>Carbon Portal's NetCDF Viewer</title>
 
 	<style type="text/css">
 
 		.services, .dates, .variables, .gamma {
 			display: inline;
 			margin-left: 10px;
+			margin-bottom: 5px;
 		}
 
 		canvas {
@@ -49,11 +55,12 @@
 		}
 
 	</style>
-	
+
 </head>
-	
-<body onload="carbonTrackerApp()">
-	
+
+<body>
+
+<!--
 	<div class="container">
 		
 		<div class="services">
@@ -75,31 +82,25 @@
 			<span>Gamma:</span>
 			<select id="gamma">
 				<option>0.1</option>
-				<option>0.2</option>
-				<option>0.3</option>
-				<option>0.4</option>
-				<option selected="selected">0.5</option>
-				<option>0.6</option>
-				<option>0.7</option>
-				<option>0.8</option>
-				<option>0.9</option>
+				<option selected="selected">0.2</option>
+				<option>0.5</option>
 				<option>1.0</option>
-				<option>1.2</option>
-				<option>1.5</option>
 				<option>2.0</option>
-				<option>3.0</option>
-				<option>4.0</option>
+				<option>5.0</option>
 			</select>
 		</div>
 		
 	</div>
 
-	<br/><br/>
+	<br/>
 
 	<div id="illustration">
 		<canvas id="dataimage"></canvas>
 		<div id="map"></div>
 	</div>
+-->
+	<div id="main"></div>
+	<script src="bundle.js"></script>
 
 </body>
 
