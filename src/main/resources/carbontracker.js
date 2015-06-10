@@ -220,11 +220,13 @@ function carbonTrackerApp(){
 		var datamap = new Datamap({
 			element: map,
 			geographyConfig: {
+				dataUrl: 'https://static.icos-cp.eu/js/topojson/readme-world.json',
 				highlightOnHover: false,
 				popupOnHover: false,
 				borderColor: '#000000',
 				hideAntarctica: false
 			},
+			scope: 'countries',
 			fills: {
 				defaultFill: 'rgba(0,0,0,0)'
 			},

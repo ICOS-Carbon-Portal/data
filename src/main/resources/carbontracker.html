@@ -2,35 +2,31 @@
 <html>
 
 <head>
-	<script src="https://static.icos-cp.eu/constant/jquery/1.11.2/jquery.min.js"></script>
-	
+<!--
 	<link href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" />
 	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+-->
 
 	<script src="https://static.icos-cp.eu/constant/d3/3.5.5/d3.min.js"></script>
-	
-   	<script src="datafetcher.js"></script>
-   	<script src="carbontracker.js"></script>
-   	
-   	<script src="https://static.icos-cp.eu/constant/datamaps/topojson.v1.min.js"></script>
-   	<script src="https://static.icos-cp.eu/constant/datamaps/datamaps.world.min.js"></script>
-   	
-   	<meta charset="utf-8"/>
+	<script src="https://static.icos-cp.eu/constant/d3/topojson/1.6.19/topojson.min.js"></script>
+
+	<script src="https://static.icos-cp.eu/constant/d3/datamaps/0.4.0/datamaps.none.min.js"></script>
+
+	<script src="datafetcher.js"></script>
+	<script src="carbontracker.js"></script>
+
+	<meta charset="utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	
-   	<title>Canvas test</title>
-   	
-   	
+
+	<title>Canvas test</title>
+
 	<style type="text/css">
-		.services { float: left; }
-		
-		.dates { float: left; margin-left: 10px; }
-		
-		.variables { float: left; margin-left: 10px; }
-		
-		.scale { float: left; margin-left: 20px; }
-		
-		.gamma { float: left; margin-left: 20px; }
+
+		.services, .dates, .variables, .gamma {
+			display: inline;
+			margin-left: 10px;
+		}
+
 		canvas {
 			image-rendering: optimizeSpeed;             /* Older versions of FF          */
 			image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
@@ -42,11 +38,10 @@
 
 		#illustration{
 			position: relative;
-/*			border: 1px solid black;
-			margin: 10px; */
 			width: 100%;
 			max-height: 100%;
 		}
+
 		#map{
 			position: absolute;
 			left: 0;
@@ -62,22 +57,22 @@
 	<div class="container">
 		
 		<div class="services">
-			<p>Services</p>
+			<span>Services:</span>
 			<select id="services"></select>
 		</div>	
 		
 		<div class="dates">
-			<p>Dates</p>
+			<span>Dates:</span>
 			<select id="dates"><option>---------------------</option></select>
 		</div>
 		
 		<div class="variables">
-			<p>Variables</p>
+			<span>Variables:</span>
 			<select id="variables"><option>-------------------------</option></select>
 		</div>
 
 		<div class="gamma">
-			<p>Gamma</p>
+			<span>Gamma:</span>
 			<select id="gamma">
 				<option>0.1</option>
 				<option>0.2</option>
