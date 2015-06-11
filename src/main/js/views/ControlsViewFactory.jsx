@@ -1,6 +1,4 @@
-function isTruthy(any){
-	return any || any !== null && (typeof any !== 'undefined') && !isNaN(any);
-}
+var Utils = require('../Utils.js');
 
 var Selector = React.createClass({
 
@@ -10,12 +8,12 @@ var Selector = React.createClass({
 
 	changeHandler: function(){
 		var value = React.findDOMNode(this.refs.selector).value;
-		if(isTruthy(value)) this.props.action(value);
+		if(Utils.isTruthy(value)) this.props.action(value);
 	},
 
 	render: function(){
 		var selectedOption = this.props.selectedOption;
-		var selected = isUndefined(selectedOption) ? this.props.options[0] : selectedOption;
+		var selected = Utils.isUndefined(selectedOption) ? this.props.options[0] : selectedOption;
 
 		return <div className={this.props.className}>
 
