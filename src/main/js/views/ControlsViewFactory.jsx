@@ -1,3 +1,38 @@
+function isTruthy(any){
+	return any || any !== null && (typeof any !== 'undefined') && !isNaN(any);
+}
+
+var Selector = React.createClass({
+
+	componentDidUpdate: function(){
+		this.changeHandler();
+	},
+
+	changeHandler: function(){
+		var value = React.findDOMNode(this.refs.selector).value;
+		if(isTruthy(value)) this.props.action(value);
+	},
+
+	render: function(){
+		var selectedOption = this.props.selectedOption;
+		var selected = isUndefined(selectedOption) ? this.props.options[0] : selectedOption;
+
+		return <div className={this.props.className}>
+
+			<span>{this.props.caption + ": "}</span>
+
+			<select ref="selector" defaultValue={selected} onChange={this.changeHandler}>{
+
+				this.props.options.map(function(optionValue, i){
+					return <option key={optionValue}>{optionValue}</option>;
+				})
+
+			}</select>
+
+		</div>;
+	}
+});
+
 module.exports = function(controlsStore){
 
 	var serviceAction = controlsStore.serviceSelectedAction;
@@ -10,49 +45,24 @@ module.exports = function(controlsStore){
 
 		mixins: [Reflux.connect(controlsStore)],
 
-		componentDidUpdate: function(){
-			if(!this.state.selectedService){
-				var options = React.findDOMNode(this.refs.serviceSelector).options;
-				if(options.length > 0){
-					serviceAction(options[0].value);
-				}
-			}
-		},
-
-		serviceChangeHandler: function(){
-			var service = this.getSelectedOption(this.refs.serviceSelector);
-			if(service) serviceAction(service);
-		},
-
-		getSelectedOption: function(ref){
-			var elem = React.findDOMNode(ref);
-			var index = elem.selectedIndex;
-			return index >= 0 ? elem.options[index].value : null;
-		},
-
 		render: function(){
-			var self = this;
+
+			var defaultGammaIndex = Math.floor(this.state.gammas.length / 2);
+			var defaultGamma = this.state.gammas[defaultGammaIndex];
+
 			return <div>
 
-				<div className="services">
-					<span>Services: </span>
-					<select ref="serviceSelector" onChange={this.serviceChangeHandler}>{
-						self.state.services.map(function(service){
-							return service = self.state.selectedService
-								? <option key={service} selected="selected">{service}</option>
-								: <option key={service}>{service}</option>;
-						})
-					}</select>
-				</div>
+				<Selector className="services" caption="Service" options={this.state.services}
+					selectedOption={this.state.selectedService} action={serviceAction} />
 
-				<div className="variables">
-					<span>Variables: </span>
-					<select onChange={this.serviceChangeHandler}>{
-						this.state.variables.map(function(varName){
-							return <option key={varName}>{varName}</option>;
-						})
-					}</select>
-				</div>
+				<Selector className="variables" caption="Variable" options={this.state.variables}
+					action={actions.variableSelected} />
+
+				<Selector className="dates" caption="Date" options={this.state.dates}
+					action={actions.dateSelected} />
+
+				<Selector className="gammas" caption="Gamma" options={this.state.gammas}
+					selectedOption={defaultGamma} action={actions.gammaSelected} />
 
 			</div>;
 		}
@@ -63,3 +73,4 @@ module.exports = function(controlsStore){
 		actions: actions
 	};
 };
+

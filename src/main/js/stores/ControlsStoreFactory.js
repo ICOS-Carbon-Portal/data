@@ -21,13 +21,15 @@ module.exports = function(Backend, errorHandler){
 		},
 
 		serviceSelectionListener: function(selectedService){
-			this.state.selectedService = selectedService;
+			if(this.state.selectedService !== selectedService){
+				this.state.selectedService = selectedService;
 
-			var datesSuccess = this.datesListHandler.bind(this);
-			Backend.getDates(selectedService, datesSuccess, errorHandler);
+				var datesSuccess = this.datesListHandler.bind(this);
+				Backend.getDates(selectedService, datesSuccess, errorHandler);
 
-			var varsSuccess = this.variablesListHandler.bind(this);
-			Backend.getVariables(selectedService, varsSuccess, errorHandler);
+				var varsSuccess = this.variablesListHandler.bind(this);
+				Backend.getVariables(selectedService, varsSuccess, errorHandler);
+			}
 		},
 
 		serviceListHandler: function(services){
@@ -48,7 +50,6 @@ module.exports = function(Backend, errorHandler){
 		publishIfReady: function(){
 			if(this.state.dates.length > 0 && this.state.variables.length > 0){
 				this.trigger(this.state);
-				console.log(this.state);
 			}
 		}
 

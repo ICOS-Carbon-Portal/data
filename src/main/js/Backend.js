@@ -24,27 +24,25 @@ function getJson(url, resolve, reject){
 	req.send();
 }
 
-function nop(){}
-
 module.exports = {
 
 	getServices: function(resolve, reject){
-		getJson('/carbontracker/listNetCdfFiles', resolve, reject || nop);
+		getJson('/carbontracker/listNetCdfFiles', resolve, reject);
 	},
 
 	getDates: function(service, resolve, reject){
-		getJson('/carbontracker/listDates?service=' + service, resolve, reject || nop);
+		getJson('/carbontracker/listDates?service=' + service, resolve, reject);
 	},
 
 	getVariables: function(service, resolve, reject){
-		getJson('/carbontracker/listVariables?service=' + service, resolve, reject || nop);
+		getJson('/carbontracker/listVariables?service=' + service, resolve, reject);
 	},
 
 	getRaster: function(service, variable, date, resolve, reject){
 		var url = '/carbontracker/getSlice?service=' + encodeURIComponent(service) +
 			"&varName=" + encodeURIComponent(variable) +
 			"&date=" + encodeURIComponent(date);
-		getJson(url, resolve, reject || nop);
+		getJson(url, resolve, reject);
 	}
 };
 

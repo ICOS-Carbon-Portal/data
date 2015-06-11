@@ -1,8 +1,8 @@
 {
-  "name": "cpmeta-frontend",
+  "name": "cpdata-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Frontend to Carbon Portal Metadata Service",
+  "description": "Carbon Portal NetCDF viewer",
   "main": "gulpfile.js",
   "scripts": {
     "gulp": "gulp",
@@ -11,20 +11,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/meta.git"
+    "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/data.git"
   },
   "keywords": [
     "ICOS",
     "Carbon",
     "Portal",
-    "metadata"
+    "NetCDF"
   ],
-  "author": "Oleg Mirzov",
+  "author": ["Paul Hedberg", "Oleg Mirzov"],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ICOS-Carbon-Portal/meta/issues"
+    "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
   },
-  "homepage": "https://github.com/ICOS-Carbon-Portal/meta#readme",
+  "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "devDependencies": {
     "browserify": "^10.1.3",
     "del": "^1.1.1",
