@@ -8,7 +8,7 @@ var Selector = React.createClass({
 
 	changeHandler: function(){
 		var value = React.findDOMNode(this.refs.selector).value;
-		if(Utils.isTruthy(value)) this.props.action(value);
+		if(Utils.isLengthy(value)) this.props.action(value);
 	},
 
 	render: function(){
@@ -43,10 +43,23 @@ module.exports = function(controlsStore){
 
 		mixins: [Reflux.connect(controlsStore)],
 
+		wrapAction: function(action){
+			var service = this.state.selectedService;
+			return function(payload){
+				action({
+					payload: payload,
+					service: service
+				});
+			};
+		},
+
 		render: function(){
 
 			var defaultGammaIndex = Math.floor(this.state.gammas.length / 2);
 			var defaultGamma = this.state.gammas[defaultGammaIndex];
+
+			var variableSelected = this.wrapAction(actions.variableSelected);
+			var dateSelected = this.wrapAction(actions.dateSelected);
 
 			return <div>
 
@@ -54,10 +67,10 @@ module.exports = function(controlsStore){
 					selectedOption={this.state.selectedService} action={serviceAction} />
 
 				<Selector className="variables" caption="Variable" options={this.state.variables}
-					action={actions.variableSelected} />
+					action={variableSelected} />
 
 				<Selector className="dates" caption="Date" options={this.state.dates}
-					action={actions.dateSelected} />
+					action={dateSelected} />
 
 				<Selector className="gammas" caption="Gamma" options={this.state.gammas}
 					selectedOption={defaultGamma} action={actions.gammaSelected} />

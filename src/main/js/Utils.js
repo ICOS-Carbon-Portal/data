@@ -1,5 +1,5 @@
-function isTruthy(any){
-	return any || any !== null && (typeof any !== 'undefined') && !isNaN(any);
+function isLengthy(any){
+	return any && any.length;
 }
 
 module.exports = {
@@ -18,13 +18,13 @@ module.exports = {
 		};
 	},
 
-	isTruthy: isTruthy,
+	isLengthy: isLengthy,
 
 	isUndefined: function(any){
 		return !any && (typeof any === 'undefined');
 	},
 
-	propertiesAreTruthy: function(obj, props){
+	propertiesAreLengthy: function(obj, props){
 		return props.every(function(prop){
 			return obj[prop];
 		});

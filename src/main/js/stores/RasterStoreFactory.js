@@ -1,6 +1,6 @@
 var Utils = require('../Utils.js');
 
-module.exports = function(Backend, serviceAction, variableAction, dateAction, errorHandler){
+module.exports = function(Backend, variableAction, dateAction, errorHandler){
 
 	return Reflux.createStore({
 
@@ -10,7 +10,6 @@ module.exports = function(Backend, serviceAction, variableAction, dateAction, er
 
 		init: function(){
 			this.state = {};
-			this.listenTo(serviceAction, this.getUpdateHandler('service'));
 			this.listenTo(variableAction, this.getUpdateHandler('variable'));
 			this.listenTo(dateAction, this.getUpdateHandler('date'));
 		},
@@ -18,8 +17,12 @@ module.exports = function(Backend, serviceAction, variableAction, dateAction, er
 		getUpdateHandler: function(prop){
 			var self = this;
 			return function(update){
-				if(self.state[prop] !== update){
-					self.state[prop] = update;
+
+				if(self.state.service != update.service){
+					self.state = {service: update.service};
+					self.state[prop] = update.payload;
+				} else if(self.state[prop] !== update.payload){
+					self.state[prop] = update.payload;
 					self.fetchIfReady();
 				}
 			};
@@ -27,7 +30,7 @@ module.exports = function(Backend, serviceAction, variableAction, dateAction, er
 
 		fetchIfReady: function(){
 			var state = this.state;
-			if(Utils.propertiesAreTruthy(state, ['service', 'variable', 'date'])){
+			if(Utils.propertiesAreLengthy(state, ['service', 'variable', 'date'])){
 				Backend.getRaster(state.service, state.variable, state.date, this.trigger.bind(this), errorHandler);
 			}
 		}

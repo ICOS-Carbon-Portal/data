@@ -5,16 +5,17 @@ module.exports = function(Backend, errorHandler){
 	var store = Reflux.createStore({
 
 		getInitialState: function(){
-			this.state = {
+			return {
 				services: [],
 				dates: [],
 				variables: [],
 				gammas: [0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 5.0]
 			};
-			return this.state;
 		},
 
 		init: function(){
+			this.state = this.getInitialState();
+
 			this.listenTo(serviceSelectedAction, this.serviceSelectionListener);
 			var successHandler = this.serviceListHandler.bind(this);
 			Backend.getServices(successHandler, errorHandler);
@@ -23,6 +24,8 @@ module.exports = function(Backend, errorHandler){
 		serviceSelectionListener: function(selectedService){
 			if(this.state.selectedService !== selectedService){
 				this.state.selectedService = selectedService;
+				this.state.dates = [];
+				this.state.variables = [];
 
 				var datesSuccess = this.datesListHandler.bind(this);
 				Backend.getDates(selectedService, datesSuccess, errorHandler);
