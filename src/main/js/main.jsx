@@ -9,15 +9,23 @@ var Controls = require('./views/ControlsViewFactory.jsx')(ControlsStore);
 
 var RasterStore = require('./stores/RasterStoreFactory.js')(
 	Backend,
-	ControlsStore.serviceSelectedAction,
 	Controls.actions.variableSelected,
 	Controls.actions.dateSelected,
+	Controls.actions.gammaSelected,
 	handleError
 );
 
-RasterStore.listen(handleError);
+var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
+var Map = require('./views/MapViewFactory.jsx')(RasterStore);
+
+//			<Raster/>
 
 React.render(
-	React.createElement(Controls.View, null),
+	<div>
+		<Controls.View/>
+		<div className="illustration">
+			<Map/>
+		</div>
+	</div>,
 	document.getElementById('main')
 );

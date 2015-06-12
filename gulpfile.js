@@ -8,7 +8,7 @@ var source = require('vinyl-source-stream');
 var jasmine = require('gulp-jasmine');
 
 var paths = {
-	main: 'src/main/js/main.js',
+	main: 'src/main/js/main.jsx',
 	jsx: ['src/main/js/**/*.jsx'],
 	js: ['src/main/js/**/*.js'],
 	testjs: ['src/test/js/**/*.js'],
