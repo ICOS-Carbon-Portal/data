@@ -15,15 +15,16 @@ var RasterStore = require('./stores/RasterStoreFactory.js')(
 	handleError
 );
 
-var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
-var Map = require('./views/MapViewFactory.jsx')(RasterStore);
+var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, handleError);
 
-//			<Raster/>
+var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
+var Map = require('./views/MapViewFactory.jsx')(MapStore);
 
 React.render(
 	<div>
 		<Controls.View/>
 		<div className="illustration">
+			<Raster/>
 			<Map/>
 		</div>
 	</div>,

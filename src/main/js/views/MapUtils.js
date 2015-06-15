@@ -82,7 +82,6 @@ function draw(elem, bbox, rasterHeight) {
 		element: elem,
 		//responsive: true,
 		geographyConfig: {
-			dataUrl: 'https://static.icos-cp.eu/js/topojson/readme-world.json',
 			highlightOnHover: false,
 			popupOnHover: false,
 			borderColor: '#000000',
@@ -110,8 +109,26 @@ function draw(elem, bbox, rasterHeight) {
 	});
 }
 
+function getMapSizeStyle(illustrationElem, rasterWidth, rasterHeight){
+
+	var scale = Math.min(
+		illustrationElem.clientWidth / rasterWidth,
+		(window.innerHeight - illustrationElem.offsetTop) / rasterHeight
+	);
+
+	var width = rasterWidth * scale;
+	var height = rasterHeight * scale;
+
+	return {
+		width: width + 'px',
+		height: height + 'px'
+	};
+}
+
 module.exports = {
 	getColorMaker: getColorMaker,
 	makeImage: makeImage,
-	draw: draw
+	draw: draw,
+	getMapSizeStyle: getMapSizeStyle
 };
+

@@ -43,6 +43,11 @@ module.exports = {
 			"&varName=" + encodeURIComponent(variable) +
 			"&date=" + encodeURIComponent(date);
 		getJson(url, resolve, reject);
+	},
+
+	getCountriesTopoJson: function(resolve, reject){
+		var url = 'https://static.icos-cp.eu/js/topojson/readme-world.json';
+		getJson(url, resolve, reject);
 	}
 };
 

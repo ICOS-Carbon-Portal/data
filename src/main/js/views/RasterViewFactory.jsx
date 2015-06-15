@@ -1,4 +1,4 @@
-var Map = require('../models/Map.js');
+var MapUtils = require('./MapUtils.js');
 
 module.exports = function(rasterStore){
 
@@ -18,23 +18,15 @@ module.exports = function(rasterStore){
 			var canvas = React.findDOMNode(this.refs.canvas);
 
 			var raster = this.state;
-			Map.makeImage(canvas, this.state.raster, this.state.gamma);
+			MapUtils.makeImage(canvas, this.state.raster, this.state.gamma);
 			this.resizeCanvas();
 		},
 
 		resizeCanvas: function(){
 			var canvas = React.findDOMNode(this.refs.canvas);
-			var offsetTop = canvas.offsetParent.offsetTop;
-			var scale = Math.min(
-				canvas.parentElement.clientWidth / canvas.width,
-				(window.innerHeight - offsetTop) / canvas.height
-			);
-
-			var width = canvas.width * scale;
-			var height = canvas.height * scale;
-
-			canvas.style.width = width + 'px';
-			canvas.style.height = height + 'px';
+			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, canvas.width, canvas.height);
+			canvas.style.width = canvasSize.width;
+			canvas.style.height = canvasSize.height;
 		},
 
 		render: function(){

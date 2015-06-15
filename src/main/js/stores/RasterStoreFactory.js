@@ -1,5 +1,13 @@
 var Utils = require('../Utils.js');
 
+function getRasterSize(raster){
+	if(!raster || !raster.array || !raster.array.length) return {width: 0, height: 0};
+	return {
+		width: raster.array[0].length,
+		height: raster.array.length
+	};
+}
+
 module.exports = function(Backend, variableAction, dateAction, gammaAction, errorHandler){
 
 	return Reflux.createStore({
@@ -57,7 +65,8 @@ module.exports = function(Backend, variableAction, dateAction, gammaAction, erro
 			if(this.state.gamma && this.state.raster){
 				this.trigger({
 					raster: this.state.raster,
-					gamma: this.state.gamma
+					gamma: this.state.gamma,
+					rasterSize: getRasterSize(this.state.raster)
 				});
 			}
 		}

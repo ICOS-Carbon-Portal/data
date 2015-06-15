@@ -1,4 +1,4 @@
-var Map = require('../models/Map.js');
+var MapUtils = require('./MapUtils.js');
 
 module.exports = function(mapStore){
 
@@ -7,23 +7,28 @@ module.exports = function(mapStore){
 		mixins: [Reflux.connect(mapStore)],
 
 		componentDidMount: function(){
-			window.addEventListener('resize', this.resizeMap);
+			window.addEventListener('resize', this.drawMap);
 		},
 
 		componentWillUnmount: function(){
-			window.removeEventListener('resize', this.resizeMap);
+			window.removeEventListener('resize', this.drawMap);
 		},
 
 		componentDidUpdate: function(){
-			var map = React.findDOMNode(this.refs.map);
-
-			var raster = this.state.raster;
-			this.dataMap = Map.draw(map, raster.boundingBox, raster.array.length);
-			this.resizeMap();
+			this.drawMap();
 		},
 
-		resizeMap: function(){
-			this.dataMap && this.dataMap.resize();
+		drawMap: function(){
+			var rasterSize = this.state.rasterSize;
+			var boundingBox = this.state.boundingBox;
+
+			if(rasterSize && boundingBox){
+				var map = React.findDOMNode(this.refs.map);
+				var sizeStyle = MapUtils.getMapSizeStyle(map.offsetParent, rasterSize.width, rasterSize.height);
+				map.style.width = sizeStyle.width;
+				map.style.height = sizeStyle.height;
+				MapUtils.draw(map, boundingBox, rasterSize.height);
+			}
 		},
 
 		render: function(){
