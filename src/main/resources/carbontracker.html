@@ -32,7 +32,7 @@
 			margin-left: 10px;
 		}
 
-		canvas {
+		canvas.raster {
 			image-rendering: optimizeSpeed;             /* Older versions of FF          */
 			image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
 			image-rendering: -webkit-optimize-contrast; /* Safari                        */
@@ -52,6 +52,11 @@
 			position: absolute;
 			left: 0;
 			top: 0;
+		}
+
+		.axis path, .axis line{
+			fill: none;
+			stroke: black;
 		}
 
 	</style>

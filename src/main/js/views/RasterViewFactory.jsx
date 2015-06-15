@@ -30,7 +30,7 @@ module.exports = function(rasterStore){
 		},
 
 		render: function(){
-			return <canvas ref="canvas"></canvas>;
+			return <canvas ref="canvas" className="raster"></canvas>;
 		}
 	});
 
