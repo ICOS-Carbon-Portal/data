@@ -21,11 +21,11 @@ function getColorMaker(minVal, maxVal, gamma) {
 	var color = biLinear
 		? d3.scale.linear()
 			.domain([-1, 0, 1])
-			.range(['#91bfdb', '#ffffbf', '#fc8d59'])
+			.range(['#2c7bb6', '#ffffbf', '#d7191c'])
 
 		: d3.scale.linear()
 			.domain([0, 0.5, 1])
-			.range(['#ffeda0', '#feb24c', '#f03b20']);
+			.range(['#ffffb2', '#fd8d3c', '#bd0026']);
 
 	return function(value) {
 		var transformed = toTransformed(value);
@@ -69,18 +69,27 @@ function makeImage(canvas, raster, gamma) {
 	context.putImageData(imgData, 0, 0);
 }
 
-function draw(elem, bbox, rasterHeight) {
+function draw(elem, bbox, rasterSize) {
 
 	elem.innerHTML = '';
 
-	var centerLat = (bbox.latMin + bbox.latMax) / 2;
 	var centerLon = (bbox.lonMin + bbox.lonMax) / 2;
-	var latStep = (bbox.latMax - bbox.latMin) / (rasterHeight - 1);
-	var latRange = rasterHeight * latStep;
+	var centerLat = (bbox.latMin + bbox.latMax) / 2;
+	var lonStep = (bbox.lonMax - bbox.lonMin) / (rasterSize.width - 1);
+	var latStep = (bbox.latMax - bbox.latMin) / (rasterSize.height - 1);
+	var lonRange = rasterSize.width * lonStep;
+	var latRange = rasterSize.height * latStep;
+
+	var lonMin = centerLon - lonRange / 2;
+	var lonMax = lonMin + lonRange;
+	var latMin = centerLat - latRange / 2;
+	var latMax = latMin + latRange;
+
+	var rotateLon = lonMax > 180 ? 180 - lonMax : lonMin < -180 ? -180 - lonMin : 0;
+	var rotateLat = latMax > 90 ? 90 - latMax : latMin < -90 ? -90 - latMin : 0;
 
 	return new Datamap({
 		element: elem,
-		//responsive: true,
 		geographyConfig: {
 			highlightOnHover: false,
 			popupOnHover: false,
@@ -97,9 +106,10 @@ function draw(elem, bbox, rasterHeight) {
 			var height = element.clientHeight;
 
 			var projection = d3.geo.equirectangular()
+				.rotate([rotateLon, rotateLat])
+				.center([centerLon + rotateLon, centerLat + rotateLat])
 				.scale(height * 180 / latRange / Math.PI)
-				.translate([width / 2, height / 2])
-				.center([centerLon, centerLat]);
+				.translate([width / 2, height / 2]);
 
 			return {
 				path: d3.geo.path().projection(projection),
@@ -109,15 +119,15 @@ function draw(elem, bbox, rasterHeight) {
 	});
 }
 
-function getMapSizeStyle(illustrationElem, rasterWidth, rasterHeight){
+function getMapSizeStyle(illustrationElem, rasterSize){
 
 	var scale = Math.min(
-		illustrationElem.clientWidth / rasterWidth,
-		(window.innerHeight - illustrationElem.offsetTop) / rasterHeight
+		illustrationElem.clientWidth / rasterSize.width,
+		(window.innerHeight - illustrationElem.offsetTop) / rasterSize.height
 	);
 
-	var width = rasterWidth * scale;
-	var height = rasterHeight * scale;
+	var width = rasterSize.width * scale;
+	var height = rasterSize.height * scale;
 
 	return {
 		width: width + 'px',

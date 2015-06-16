@@ -24,7 +24,7 @@ module.exports = function(rasterStore){
 
 		resizeCanvas: function(){
 			var canvas = React.findDOMNode(this.refs.canvas);
-			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, canvas.width, canvas.height);
+			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, canvas); //canvas has width and height
 			canvas.style.width = canvasSize.width;
 			canvas.style.height = canvasSize.height;
 		},

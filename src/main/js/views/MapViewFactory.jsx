@@ -24,10 +24,10 @@ module.exports = function(mapStore){
 
 			if(rasterSize && boundingBox){
 				var map = React.findDOMNode(this.refs.map);
-				var sizeStyle = MapUtils.getMapSizeStyle(map.offsetParent, rasterSize.width, rasterSize.height);
+				var sizeStyle = MapUtils.getMapSizeStyle(map.offsetParent, rasterSize);
 				map.style.width = sizeStyle.width;
 				map.style.height = sizeStyle.height;
-				MapUtils.draw(map, boundingBox, rasterSize.height);
+				MapUtils.draw(map, boundingBox, rasterSize);
 			}
 		},
 
