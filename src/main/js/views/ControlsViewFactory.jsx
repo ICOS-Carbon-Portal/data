@@ -61,7 +61,7 @@ module.exports = function(controlsStore){
 			var variableSelected = this.wrapAction(actions.variableSelected);
 			var dateSelected = this.wrapAction(actions.dateSelected);
 
-			return <div>
+			return <div className="controls">
 
 				<Selector className="services" caption="Service" options={this.state.services}
 					selectedOption={this.state.selectedService} action={serviceAction} />

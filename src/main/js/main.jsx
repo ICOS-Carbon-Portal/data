@@ -24,7 +24,7 @@ var Map = require('./views/MapViewFactory.jsx')(MapStore);
 React.render(
 	<div>
 		<Controls.View/>
-		<Legend width="1000" height="40"/>
+		<Legend width={1000} height={45}/>
 		<div className="illustration">
 			<Raster/>
 			<Map/>

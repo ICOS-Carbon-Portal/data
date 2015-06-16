@@ -21,11 +21,11 @@ function getColorMaker(minVal, maxVal, gamma) {
 	var color = biLinear
 		? d3.scale.linear()
 			.domain([-1, 0, 1])
-			.range(['blue', 'white', 'red'])
+			.range(['#91bfdb', '#ffffbf', '#fc8d59'])
 
 		: d3.scale.linear()
-			.domain([0, 1])
-			.range(['white', 'black']);
+			.domain([0, 0.5, 1])
+			.range(['#ffeda0', '#feb24c', '#f03b20']);
 
 	return function(value) {
 		var transformed = toTransformed(value);

@@ -9,7 +9,7 @@ module.exports = function(Backend, errorHandler){
 				services: [],
 				dates: [],
 				variables: [],
-				gammas: [0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 5.0]
+				gammas: [0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0]
 			};
 		},
 
