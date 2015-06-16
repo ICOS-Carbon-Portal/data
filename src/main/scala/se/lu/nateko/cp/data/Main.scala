@@ -24,7 +24,10 @@ object Main extends App {
 	implicit val dispatcher = system.dispatcher
 
 	val netCdfFolder: String = "/disk/data/netcdf/"
-	val dates: java.util.List[String] = List("date", "time").asJava
+	//val netCdfFolder: String = "/home/maintenance/workspace/"
+	//val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
+	
+	val dates: java.util.List[String] = List("date", "time", "tstep").asJava
 	val lats : java.util.List[String] = List("latitude", "lat").asJava
 	val longs : java.util.List[String] = List("longitude", "lon").asJava
 	

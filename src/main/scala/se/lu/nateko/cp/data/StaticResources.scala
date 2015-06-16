@@ -12,8 +12,12 @@ object StaticResources {
 	
 	def getResponse(resourcePath: String, mediaType: MediaType): HttpResponse = {
 		val stream = getClass.getResourceAsStream(resourcePath)
-		val bytes = readAll(stream)
-		HttpResponse(entity = HttpEntity(ContentType(mediaType), bytes))
+
+		if(stream == null) HttpResponse(status = StatusCodes.NotFound)
+		else {
+			val bytes = readAll(stream)
+			HttpResponse(entity = HttpEntity(ContentType(mediaType), bytes))
+		}
 	}
 	
 	def readAll(stream: InputStream): Array[Byte] = {

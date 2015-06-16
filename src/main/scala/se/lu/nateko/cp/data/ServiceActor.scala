@@ -11,7 +11,17 @@ import DefaultJsonProtocol._
 
 class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging {
 
-	def receive = handleStatic(
+	override def receive = {
+		case req => try{
+			receiveInner(req)
+		}catch{
+			case ex: Throwable =>
+				val message = ex.getMessage + "\n" + ex.getStackTrace.map(_.toString).mkString("\n")
+				sender ! HttpResponse(status = StatusCodes.InternalServerError, entity = message)
+		}
+	}
+
+	private def receiveInner: PartialFunction[Any, Unit] = handleStatic(
 		"/carbontracker/" -> carbonTrackerWidgetPage,
 		"/carbontracker/bundle.js" -> bundleScript
 		
