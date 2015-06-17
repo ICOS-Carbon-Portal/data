@@ -51,12 +51,13 @@ function makeImage(canvas, raster, gamma) {
 	var data = imgData.data;
 
 	var i = 0;
+	var white = d3.rgb('white');
 	for(var ib = 0; ib < data.length ; ib+=4){
 		var x = i % width;
 		var y = ~~(i / width); // ~~ rounds towards zero
 		var value = array[height - 1 - y][x];
 
-		var rgb = colorMaker(value);
+		var rgb = value === null ? white : colorMaker(value);
 
 		data[ib] = rgb.r;
 		data[ib + 1] = rgb.g;
