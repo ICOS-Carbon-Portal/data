@@ -21,12 +21,14 @@ var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
 var Legend = require('./views/LegendViewFactory.jsx')(RasterStore);
 var Map = require('./views/MapViewFactory.jsx')(MapStore);
 
+Raster.highlightedValueAction.listen(handleError);
+
 React.render(
 	<div>
 		<Controls.View/>
 		<Legend width={1000} height={45}/>
 		<div className="illustration">
-			<Raster/>
+			<Raster.View/>
 			<Map/>
 		</div>
 	</div>,
