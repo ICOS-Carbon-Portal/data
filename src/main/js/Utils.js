@@ -24,6 +24,10 @@ module.exports = {
 		return !any && (typeof any === 'undefined');
 	},
 
+	isUndefinedOrNull: function(any){
+		return any === null || !any && (typeof any === 'undefined');
+	},
+
 	propertiesAreLengthy: function(obj, props){
 		return props.every(function(prop){
 			return obj[prop];

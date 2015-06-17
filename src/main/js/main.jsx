@@ -18,10 +18,9 @@ var RasterStore = require('./stores/RasterStoreFactory.js')(
 var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, handleError);
 
 var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
-var Legend = require('./views/LegendViewFactory.jsx')(RasterStore);
-var Map = require('./views/MapViewFactory.jsx')(MapStore);
+var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, Raster.highlightedValueAction);
 
-Raster.highlightedValueAction.listen(handleError);
+var Map = require('./views/MapViewFactory.jsx')(MapStore);
 
 React.render(
 	<div>

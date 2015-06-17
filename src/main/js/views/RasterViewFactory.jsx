@@ -2,31 +2,31 @@ var MapUtils = require('./MapUtils.js');
 
 module.exports = function(rasterStore){
 
-	var highlightedValueAction = Reflux.createAction();	
+	var highlightedValueAction = Reflux.createAction();
 
 	var view = React.createClass({
 
 		mixins: [Reflux.connect(rasterStore)],
 
 		componentDidMount: function(){
-			window.addEventListener('resize', this.resizeCanvas);	
-			window.addEventListener('click', this.currentPosition);
+			window.addEventListener('resize', this.resizeCanvas);
+			var illustration = this.getCanvas().parentNode;
+			illustration.addEventListener('mousemove', this.reportHighlightedValue);
 		},
 
 		componentWillUnmount: function(){
 			window.removeEventListener('resize', this.resizeCanvas);
-			window.removeEventListener('click', this.currentPosition);
+			var illustration = this.getCanvas().parentNode;
+			illustration.removeEventListener('mousemove', this.reportHighlightedValue);
 		},
 
 		componentDidUpdate: function(){
-			var canvas = React.findDOMNode(this.refs.canvas);
-
-			MapUtils.makeImage(canvas, this.state.raster, this.state.gamma);
+			MapUtils.makeImage(this.getCanvas(), this.state.raster, this.state.gamma);
 			this.resizeCanvas();
 		},
 
 		resizeCanvas: function(){
-			var canvas = React.findDOMNode(this.refs.canvas);
+			var canvas = this.getCanvas();
 			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, canvas); //canvas has width and height
 			canvas.style.width = canvasSize.width;
 			canvas.style.height = canvasSize.height;
@@ -36,8 +36,12 @@ module.exports = function(rasterStore){
 			return <canvas ref="canvas" className="raster"></canvas>;
 		},
 
-		currentPosition: function(event) {
-			var canvas = React.findDOMNode(this.refs.canvas);
+		getCanvas: function(){
+			return React.findDOMNode(this.refs.canvas);
+		},
+
+		reportHighlightedValue: function(event) {
+			var canvas = this.getCanvas();
 
 			var x_cof = canvas.style.width.replace(/px/, '') / canvas.width;
 			var y_cof = canvas.style.height.replace(/px/, '') / canvas.height;
@@ -50,9 +54,9 @@ module.exports = function(rasterStore){
 
 				var array = this.state.raster.array;
 				var value = array[canvas.height - 1 - y_position][x_position];
-			
+
 				highlightedValueAction({value: value});
-			}	
+			}
 		}
 
 	});
