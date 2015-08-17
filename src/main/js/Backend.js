@@ -27,32 +27,29 @@ function getJson(url, resolve, reject){
 module.exports = {
 
 	getServices: function(resolve, reject){
-		getJson('/carbontracker/listNetCdfFiles', resolve, reject);
+		getJson('/netcdf/listNetCdfFiles', resolve, reject);
 	},
 
 	getDates: function(service, resolve, reject){
-		getJson('/carbontracker/listDates?service=' + service, resolve, reject);
+		getJson('/netcdf/listDates?service=' + service, resolve, reject);
 	},
 
 	getVariables: function(service, resolve, reject){
-		getJson('/carbontracker/listVariables?service=' + service, resolve, reject);
+		getJson('/netcdf/listVariables?service=' + service, resolve, reject);
 	},
 
 	getElevations: function(service, variable, resolve, reject){
-		var url = '/carbontracker/listElevations?service=' + encodeURIComponent(service) +
+		var url = '/netcdf/listElevations?service=' + encodeURIComponent(service) +
 			"&varName=" + encodeURIComponent(variable);
 		getJson(url, resolve, reject);
 	},
 
 	getRaster: function(service, variable, date, elevation, resolve, reject){
-		if (elevation == undefined){
-			elevation = "null";
-		}
-
-		var url = '/carbontracker/getSlice?service=' + encodeURIComponent(service) +
+		var url = '/netcdf/getSlice?service=' + encodeURIComponent(service) +
 			"&varName=" + encodeURIComponent(variable) +
 			"&date=" + encodeURIComponent(date) +
-			"&elevation=" + encodeURIComponent(elevation);
+			//TODO Do the undefined-controll for all variables (write own encode-function)
+			"&elevation=" + encodeURIComponent(elevation == undefined ? null : elevation);
 		getJson(url, resolve, reject);
 	},
 

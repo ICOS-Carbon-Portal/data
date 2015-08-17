@@ -14,22 +14,10 @@ object JsonSerializer extends DefaultJsonProtocol {
 	implicit val boundingBoxFormat = jsonFormat4(BoundingBox)
 	implicit val rasterFormat = jsonFormat3(RasterMessage)
 
-	def toJson(raster: Raster): HttpResponse = {
+	def toRasterMessage(raster: Raster) = {
 		val stats = Stats(raster.getMin, raster.getMax)
 		val box = BoundingBox(raster.getLatMin, raster.getLatMax, raster.getLonMin, raster.getLonMax)
-		val msg = RasterMessage(stats, box, raster.to2DArray)
-		toResponse(msg.toJson)
+		RasterMessage(stats, box, raster.to2DArray)
 	}
 	
-	def toResponse(array: Array[String]): HttpResponse = {
-		toResponse(array.toJson)
-	}
-	
-	def toResponse(json: JsValue): HttpResponse = {
-		val jsonTxt = json.compactPrint
-
-		val responseEntity = HttpEntity(ContentTypes.`application/json`, jsonTxt)
-
-		HttpResponse(entity = responseEntity)
-	}
 }

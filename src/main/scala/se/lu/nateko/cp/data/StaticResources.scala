@@ -7,21 +7,19 @@ import MediaTypes._
 
 object StaticResources {
 
-	val carbonTrackerWidgetPage = getResponse("/carbontracker.html", `text/html`)
+	private val bufferSize = 8192
+
+	val netcdfWidgetPage = getResponse("/netcdf.html", `text/html`)
 	val bundleScript = getResponse("/bundle.js", `application/javascript`)
-	
+
 	def getResponse(resourcePath: String, mediaType: MediaType): HttpResponse = {
 		val stream = getClass.getResourceAsStream(resourcePath)
 
 		if(stream == null) HttpResponse(status = StatusCodes.NotFound)
-		else {
-			val bytes = readAll(stream)
-			HttpResponse(entity = HttpEntity(ContentType(mediaType), bytes))
-		}
+		else HttpResponse(entity = HttpEntity(ContentType(mediaType), readAll(stream)))
 	}
-	
+
 	def readAll(stream: InputStream): Array[Byte] = {
-		val bufferSize = 10000
 		val acc = ArrayBuffer[Byte]()
 		val buffer = Array.ofDim[Byte](bufferSize)
 

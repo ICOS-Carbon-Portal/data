@@ -6,22 +6,17 @@ import akka.stream.scaladsl._
 import akka.http.scaladsl.Http
 
 import scala.collection.JavaConverters._
-import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-import se.lu.nateko.cp.netcdf.viewing.ViewServiceFactory
-import se.lu.nateko.cp.netcdf.viewing.ServiceSpecification
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
-import se.lu.nateko.cp.netcdf.viewing.DimensionsSpecification
 
 object Main extends App {
 
-	implicit val system = ActorSystem("cpauth")
-	implicit val materializer = ActorMaterializer()
+	implicit val system = ActorSystem("cpdata")
+	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
-	//implicit val timeout = Timeout(5 seconds)
 
 	//Production server
 	val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
@@ -38,20 +33,19 @@ object Main extends App {
 	
 	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs, elevations)
 	
-	val handler = new RequestHandler(factory)
+	val route = DataRoute(factory)
 
-	val serverSource: Source[Http.IncomingConnection, Future[Http.ServerBinding]] =
-		Http().bind(interface = "localhost", port = 9010)
-
-	val bindingFuture = serverSource.to(Sink.foreach{
-		connection => connection.handleWithSyncHandler(handler)
-	}).run()
-
-	bindingFuture.onSuccess{ case binding =>
-			sys.addShutdownHook{
-				val doneFuture = binding.unbind().andThen{case _ => system.shutdown()}
-				Await.result(doneFuture, 3 seconds)
-			}
+	Http()
+		.bindAndHandle(route, "localhost", 9010)
+		.onSuccess{
+			case binding =>
+				sys.addShutdownHook{
+					val doneFuture = binding.unbind().andThen{
+						case _ => system.shutdown()
+					}
+					Await.result(doneFuture, 3 seconds)
+				}
+				println(binding)
 		}
 
 }
