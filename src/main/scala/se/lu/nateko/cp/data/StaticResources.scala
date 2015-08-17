@@ -1,9 +1,9 @@
 package se.lu.nateko.cp.data
 
-import spray.http._
-import MediaTypes._
 import java.io.InputStream
 import scala.collection.mutable.ArrayBuffer
+import akka.http.scaladsl.model._
+import MediaTypes._
 
 object StaticResources {
 

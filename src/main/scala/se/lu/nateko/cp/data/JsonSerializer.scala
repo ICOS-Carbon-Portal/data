@@ -1,8 +1,8 @@
 package se.lu.nateko.cp.data
 
 import se.lu.nateko.cp.netcdf.viewing.Raster
-import spray.http._
 import spray.json._
+import akka.http.scaladsl.model._
 
 case class RasterMessage(stats: Stats, boundingBox: BoundingBox, array: Array[Array[Double]])
 case class BoundingBox(latMin: Double, latMax: Double, lonMin: Double, lonMax: Double)

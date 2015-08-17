@@ -1,27 +1,27 @@
 package se.lu.nateko.cp.data
 
-import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
-import spray.http.StatusCodes
-import spray.can.Http
+import akka.actor.ActorSystem
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl._
+import akka.http.scaladsl.Http
+
+import scala.collection.JavaConverters._
+import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import akka.io.IO
-import spray.can.Http
-import akka.util.Timeout
+
 import se.lu.nateko.cp.netcdf.viewing.ViewServiceFactory
 import se.lu.nateko.cp.netcdf.viewing.ServiceSpecification
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
-import scala.collection.JavaConverters._
-import java.io.File
 import se.lu.nateko.cp.netcdf.viewing.DimensionsSpecification
-import scala.collection.JavaConverters._
 
 object Main extends App {
 
 	implicit val system = ActorSystem("cpauth")
-	implicit val timeout = Timeout(5 seconds)
+	implicit val materializer = ActorMaterializer()
 	implicit val dispatcher = system.dispatcher
+	//implicit val timeout = Timeout(5 seconds)
 
 	//Production server
 	val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
@@ -38,14 +38,19 @@ object Main extends App {
 	
 	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs, elevations)
 	
-	val handler = system.actorOf(Props(new ServiceActor(factory)), name = "handler")
-	
-	IO(Http).ask(Http.Bind(handler, interface = "localhost", port = 9010))
-		.onSuccess{ case _ =>
+	val handler = new RequestHandler(factory)
+
+	val serverSource: Source[Http.IncomingConnection, Future[Http.ServerBinding]] =
+		Http().bind(interface = "localhost", port = 9010)
+
+	val bindingFuture = serverSource.to(Sink.foreach{
+		connection => connection.handleWithSyncHandler(handler)
+	}).run()
+
+	bindingFuture.onSuccess{ case binding =>
 			sys.addShutdownHook{
-				akka.io.IO(Http) ! akka.actor.PoisonPill
-				Thread.sleep(1000)
-				system.shutdown()
+				val doneFuture = binding.unbind().andThen{case _ => system.shutdown()}
+				Await.result(doneFuture, 3 seconds)
 			}
 		}
 
