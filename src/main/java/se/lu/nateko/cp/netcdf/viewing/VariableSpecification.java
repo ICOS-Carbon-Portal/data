@@ -4,20 +4,23 @@ public class VariableSpecification {
 	public String dateVariable;
 	public String latVariable;
 	public String lonVariable;
-	
+	public String elevationVariable;
+
 	public VariableSpecification() {
 		
 	}
 	
 	// Lat and long are not always in the same order but usually lat, lon
 	// See http://ferret.wrc.noaa.gov/noaa_coop/coop_cdf_profile.html
-	public VariableSpecification(String dateVariable, String lat, String lon){
+	public VariableSpecification(String dateVariable, String lat, String lon, String elevationVariable){
 		// Variable name
 		this.dateVariable = dateVariable;
 		// Variable name
 		this.latVariable = lat;
 		// Variable name
 		this.lonVariable = lon;
+		// Variable name
+		this.elevationVariable = elevationVariable;
 	}
 
 	public String getDateVariable() {
@@ -42,5 +45,13 @@ public class VariableSpecification {
 
 	public void setLonVariable(String lonVariable) {
 		this.lonVariable = lonVariable;
+	}
+
+	public void setElevationVariable(String elevationVariable){
+		this.elevationVariable = elevationVariable;
+	}
+
+	public String getElevationVariable() {
+		return elevationVariable;
 	}
 }

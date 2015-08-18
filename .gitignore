@@ -27,3 +27,5 @@ project/plugins/project/
 nohup.out
 *.*~
 \#*\#
+
+.idea

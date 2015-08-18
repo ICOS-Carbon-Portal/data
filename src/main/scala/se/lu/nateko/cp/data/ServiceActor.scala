@@ -38,7 +38,23 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 				val dates = factory.getNetCdfViewService(fileName).getAvailableDates()
 				sender ! JsonSerializer.toResponse(dates)
 			case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' query parameter")
-		}	
+		}
+
+		// List of elevations in a specific NetCdf file and variable
+		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/listElevations"), query, _), _, _, _) => {
+
+			val serviceAndVar = for(
+				service <- query.get("service");
+				varName <- query.get("varName")
+			) yield ((service, varName))
+
+			serviceAndVar  match {
+				case Some((service, varName)) =>
+					val elevations = factory.getNetCdfViewService(service).getAvailableElevations(varName)
+					sender ! JsonSerializer.toResponse(elevations)
+				case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' and/or 'varName' query parameter(s)")
+			}
+		}
 		
 		// List of variables in a specific NetCdf file
 		case HttpRequest(GET, Uri(_, _, Uri.Path("/carbontracker/listVariables"), query, _), _, _, _) => query.get("service") match {
@@ -54,12 +70,13 @@ class ServiceActor(factory: ViewServiceFactory) extends Actor with ActorLogging 
 			val serviceAndSlice = for(
 				service <- query.get("service");
 				date <- query.get("date");
-				varName <- query.get("varName")
-			) yield ((service, date, varName))
+				varName <- query.get("varName");
+				elevation <- query.get("elevation")
+			) yield ((service, date, varName, elevation))
 			
 			serviceAndSlice  match {
-				case Some((service, date, varName)) =>
-					val raster = factory.getNetCdfViewService(service).getRaster(date, varName)
+				case Some((service, date, varName, elevation)) =>
+					val raster = factory.getNetCdfViewService(service).getRaster(date, varName, elevation)
 					sender ! JsonSerializer.toJson(raster)
 				case None => sender ! HttpResponse(status = 400, entity = "Missing 'service' and/or 'slice' query parameter(s)")
 			}

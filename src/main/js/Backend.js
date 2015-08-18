@@ -38,10 +38,21 @@ module.exports = {
 		getJson('/carbontracker/listVariables?service=' + service, resolve, reject);
 	},
 
-	getRaster: function(service, variable, date, resolve, reject){
+	getElevations: function(service, variable, resolve, reject){
+		var url = '/carbontracker/listElevations?service=' + encodeURIComponent(service) +
+			"&varName=" + encodeURIComponent(variable);
+		getJson(url, resolve, reject);
+	},
+
+	getRaster: function(service, variable, date, elevation, resolve, reject){
+		if (elevation == undefined){
+			elevation = "null";
+		}
+
 		var url = '/carbontracker/getSlice?service=' + encodeURIComponent(service) +
 			"&varName=" + encodeURIComponent(variable) +
-			"&date=" + encodeURIComponent(date);
+			"&date=" + encodeURIComponent(date) +
+			"&elevation=" + encodeURIComponent(elevation);
 		getJson(url, resolve, reject);
 	},
 

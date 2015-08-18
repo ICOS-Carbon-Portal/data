@@ -1,6 +1,4 @@
-module.exports = function(Backend, errorHandler){
-
-	var serviceSelectedAction = Reflux.createAction();
+module.exports = function(Backend, errorHandler, actions){
 
 	var store = Reflux.createStore({
 
@@ -9,14 +7,17 @@ module.exports = function(Backend, errorHandler){
 				services: [],
 				dates: [],
 				variables: [],
+				elevations: [],
 				gammas: [0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0]
 			};
 		},
 
 		init: function(){
 			this.state = this.getInitialState();
+			this.lastVariable = null;
 
-			this.listenTo(serviceSelectedAction, this.serviceSelectionListener);
+			this.listenTo(actions.serviceSelected, this.serviceSelectionListener);
+			this.listenTo(actions.variableSelected, this.varSelectionListener);
 			var successHandler = this.serviceListHandler.bind(this);
 			Backend.getServices(successHandler, errorHandler);
 		},
@@ -24,14 +25,27 @@ module.exports = function(Backend, errorHandler){
 		serviceSelectionListener: function(selectedService){
 			if(this.state.selectedService !== selectedService){
 				this.state.selectedService = selectedService;
+				this.state.selectedVariable = null;
 				this.state.dates = [];
 				this.state.variables = [];
+				this.state.elevations = [];
 
 				var datesSuccess = this.datesListHandler.bind(this);
 				Backend.getDates(selectedService, datesSuccess, errorHandler);
 
 				var varsSuccess = this.variablesListHandler.bind(this);
 				Backend.getVariables(selectedService, varsSuccess, errorHandler);
+			}
+		},
+
+		varSelectionListener: function(selectedVariable){
+			var service = this.state.selectedService;
+			var variable = selectedVariable.payload;
+
+			if (this.lastVariable != variable) {
+				this.lastVariable = variable;
+				var elevationsSuccess = this.elevationListHandler.bind(this);
+				Backend.getElevations(service, variable, elevationsSuccess, errorHandler);
 			}
 		},
 
@@ -47,6 +61,16 @@ module.exports = function(Backend, errorHandler){
 
 		variablesListHandler: function(variables){
 			this.state.variables = variables;
+
+			if(this.state.selectedVariable == null){
+				this.state.selectedVariable = variables[0];
+			}
+
+			this.publishIfReady();
+		},
+
+		elevationListHandler: function(elevations){
+			this.state.elevations = elevations;
 			this.publishIfReady();
 		},
 
@@ -57,8 +81,6 @@ module.exports = function(Backend, errorHandler){
 		}
 
 	});
-
-	store.serviceSelectedAction = serviceSelectedAction;
 
 	return store;
 };

@@ -12,12 +12,14 @@ public class ViewServiceFactoryImpl implements ViewServiceFactory{
 	private List<String> dates = null;
 	private List<String> lats = null;
 	private List<String> longs = null;
-	
-	public ViewServiceFactoryImpl(String netCdfFolder, List<String> dates, List<String> lats, List<String> longs) {
+	private List<String> elevations = null;
+
+	public ViewServiceFactoryImpl(String netCdfFolder, List<String> dates, List<String> lats, List<String> longs, List<String> elevations) {
 		this.netCdfFolder = netCdfFolder;
 		this.dates = dates;
 		this.lats = lats;
 		this.longs = longs;
+		this.elevations = elevations;
 	}
 	
 	public String[] getNetCdfFiles() {
@@ -25,7 +27,7 @@ public class ViewServiceFactoryImpl implements ViewServiceFactory{
 	}
 	
 	public NetCdfViewService getNetCdfViewService(String fileName){
-		return new NetCdfViewServiceImpl(netCdfFolder + fileName, dates, lats, longs);
+		return new NetCdfViewServiceImpl(netCdfFolder + fileName, dates, lats, longs, elevations);
 	}
 
 }

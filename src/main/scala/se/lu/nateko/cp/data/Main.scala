@@ -23,15 +23,20 @@ object Main extends App {
 	implicit val timeout = Timeout(5 seconds)
 	implicit val dispatcher = system.dispatcher
 
-	val netCdfFolder: String = "/disk/data/netcdf/"
+	//Production server
+	val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
+
+	//Local server
+	//val netCdfFolder: String = "/disk/data/netcdf/"
 	//val netCdfFolder: String = "/home/maintenance/workspace/"
-	//val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
-	
+
+	//Define lists of acceptable variable names
 	val dates: java.util.List[String] = List("date", "time", "tstep").asJava
 	val lats : java.util.List[String] = List("latitude", "lat").asJava
 	val longs : java.util.List[String] = List("longitude", "lon").asJava
+	val elevations : java.util.List[String] = List("nz").asJava
 	
-	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs)
+	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs, elevations)
 	
 	val handler = system.actorOf(Props(new ServiceActor(factory)), name = "handler")
 	

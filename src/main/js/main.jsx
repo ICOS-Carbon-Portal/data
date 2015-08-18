@@ -3,17 +3,16 @@ function handleError(error){
 	console.log(error);
 }
 
-var Backend = require('./Backend.js');
-var ControlsStore = require('./stores/ControlsStoreFactory.js')(Backend, handleError);
-var Controls = require('./views/ControlsViewFactory.jsx')(ControlsStore);
+var actions = Reflux.createActions([
+	"dateSelected", "variableSelected", "elevationSelected", "gammaSelected", "serviceSelected"
+]);
 
-var RasterStore = require('./stores/RasterStoreFactory.js')(
-	Backend,
-	Controls.actions.variableSelected,
-	Controls.actions.dateSelected,
-	Controls.actions.gammaSelected,
-	handleError
-);
+
+var Backend = require('./Backend.js');
+var ControlsStore = require('./stores/ControlsStoreFactory.js')(Backend, handleError, actions);
+var Controls = require('./views/ControlsViewFactory.jsx')(ControlsStore, actions);
+
+var RasterStore = require('./stores/RasterStoreFactory.js')(Backend, actions, handleError);
 
 var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, handleError);
 

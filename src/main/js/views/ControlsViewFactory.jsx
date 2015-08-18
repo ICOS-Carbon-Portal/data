@@ -14,8 +14,9 @@ var Selector = React.createClass({
 	render: function(){
 		var selectedOption = this.props.selectedOption;
 		var selected = Utils.isUndefined(selectedOption) ? this.props.options[0] : selectedOption;
+		var style = {display: this.props.options.length && this.props.options != "null" ? "inline" : "none"};
 
-		return <div className={this.props.className}>
+		return <div className={this.props.className} style={style}>
 
 			<span>{this.props.caption + ": "}</span>
 
@@ -31,13 +32,7 @@ var Selector = React.createClass({
 	}
 });
 
-module.exports = function(controlsStore){
-
-	var serviceAction = controlsStore.serviceSelectedAction;
-
-	var actions = Reflux.createActions([
-		"dateSelected", "variableSelected", "gammaSelected"
-	]);
+module.exports = function(controlsStore, actions){
 
 	var view = React.createClass({
 
@@ -60,17 +55,21 @@ module.exports = function(controlsStore){
 
 			var variableSelected = this.wrapAction(actions.variableSelected);
 			var dateSelected = this.wrapAction(actions.dateSelected);
+			var elevationSelected = this.wrapAction(actions.elevationSelected);
 
 			return <div className="controls">
 
 				<Selector className="services" caption="Service" options={this.state.services}
-					selectedOption={this.state.selectedService} action={serviceAction} />
+					selectedOption={this.state.selectedService} action={actions.serviceSelected} />
 
 				<Selector className="variables" caption="Variable" options={this.state.variables}
 					action={variableSelected} />
 
 				<Selector className="dates" caption="Date" options={this.state.dates}
 					action={dateSelected} />
+
+				<Selector className="elevations" caption="Elevations" options={this.state.elevations}
+						  action={elevationSelected} />
 
 				<Selector className="gammas" caption="Gamma" options={this.state.gammas}
 					selectedOption={defaultGamma} action={actions.gammaSelected} />

@@ -10,6 +10,7 @@ import ucar.nc2.time.CalendarDate;
 public interface NetCdfViewService {
 
 	String[] getAvailableDates() throws IOException;
+	String[] getAvailableElevations(String varName) throws IOException;
 	String[] getVariables() throws IOException;
-	Raster getRaster(String time, String varName) throws IOException, InvalidRangeException;	
+	Raster getRaster(String time, String varName, String elevation) throws IOException, InvalidRangeException;
 }

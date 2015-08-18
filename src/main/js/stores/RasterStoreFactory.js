@@ -8,7 +8,7 @@ function getRasterSize(raster){
 	};
 }
 
-module.exports = function(Backend, variableAction, dateAction, gammaAction, errorHandler){
+module.exports = function(Backend, actions, errorHandler){
 
 	return Reflux.createStore({
 
@@ -18,9 +18,10 @@ module.exports = function(Backend, variableAction, dateAction, gammaAction, erro
 
 		init: function(){
 			this.state = {};
-			this.listenTo(variableAction, this.getUpdateHandler('variable'));
-			this.listenTo(dateAction, this.getUpdateHandler('date'));
-			this.listenTo(gammaAction, this.gammaHandler);
+			this.listenTo(actions.variableSelected, this.getUpdateHandler('variable'));
+			this.listenTo(actions.dateSelected, this.getUpdateHandler('date'));
+			this.listenTo(actions.elevationSelected, this.getUpdateHandler('elevation'));
+			this.listenTo(actions.gammaSelected, this.gammaHandler);
 		},
 
 		getUpdateHandler: function(prop){
@@ -29,7 +30,7 @@ module.exports = function(Backend, variableAction, dateAction, gammaAction, erro
 				var state = self.state;
 				if(state.service != update.service){
 					state.service = update.service;
-					state.date = state.variable = state.raster = undefined;
+					state.date = state.variable = state.elevation = state.raster = undefined;
 					state[prop] = update.payload;
 				} else if(state[prop] !== update.payload){
 					state[prop] = update.payload;
@@ -45,14 +46,15 @@ module.exports = function(Backend, variableAction, dateAction, gammaAction, erro
 
 		fetchIfReady: function(){
 			var state = this.state;
-			if(Utils.propertiesAreLengthy(state, ['service', 'variable', 'date'])){
+			if(Utils.propertiesAreLengthy(state, ['service', 'variable', 'date', 'elevation'])){
 				var doIfRelevant = Utils.doIfConditionHolds.bind(this, function(){
 					return this.state.service === state.service &&
 						this.state.variable === state.variable &&
+						this.state.elevation &&
 						this.state.date === state.date;
 				});
 				var successHandler = doIfRelevant(this.rasterHandler);
-				Backend.getRaster(state.service, state.variable, state.date, successHandler, errorHandler);
+				Backend.getRaster(state.service, state.variable, state.date, state.elevation, successHandler, errorHandler);
 			}
 		},
 
