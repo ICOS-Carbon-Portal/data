@@ -33,9 +33,14 @@ object DataRoute {
 					complete(factory.getNetCdfViewService(service).getVariables())
 				}
 			} ~
+			path("listElevations"){
+				parameter('service, 'varName){ (service, varName) =>
+					complete(factory.getNetCdfViewService(service).getAvailableElevations(varName))
+				}
+			} ~
 			path("getSlice"){
-				parameters('service, 'date, 'varName){(service, date, varName) =>
-					val raster = factory.getNetCdfViewService(service).getRaster(date, varName)
+				parameters('service, 'date, 'varName, 'elevation?){(service, date, varName, elevation) =>
+					val raster = factory.getNetCdfViewService(service).getRaster(date, varName, elevation.getOrElse(null))
 					complete(toRasterMessage(raster))
 				}
 			}
