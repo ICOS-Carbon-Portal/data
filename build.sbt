@@ -21,7 +21,8 @@ libraryDependencies ++= Seq(
 	"com.typesafe.akka"  %% "akka-http-core-experimental"        % "1.0",
 	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "1.0",
 	"com.typesafe.akka"  %% "akka-slf4j"       % "2.3.12",
-	"ch.qos.logback"     % "logback-classic"   % "1.1.2",
+	"ch.qos.logback"     %  "logback-classic"   % "1.1.2",
+	"se.lu.nateko.cp"    %% "cpauth-core"       % "0.2",
 	"org.scalatest"      %% "scalatest"        % "2.2.1" % "test"
 )
 
@@ -34,5 +35,10 @@ scalacOptions ++= Seq(
   "-target:jvm-1.8",
   "-encoding", "UTF-8"
 )
+
+assemblyMergeStrategy in assembly := {
+	case "application.conf" => MergeStrategy.concat
+	case x => ((assemblyMergeStrategy in assembly).value)(x)
+}
 
 Revolver.settings

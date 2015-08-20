@@ -1,16 +1,15 @@
 package se.lu.nateko.cp.data
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl._
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.server.Directives._
+import akka.stream.ActorMaterializer
 
-import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
+import se.lu.nateko.cp.data.routes._
 
 object Main extends App {
 
@@ -18,22 +17,16 @@ object Main extends App {
 	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
 
-	//Production server
-	val netCdfFolder: String = "/disk/data/common/netcdf/dataDemo/"
+	val config = ConfigReader.getDefault
 
-	//Local server
-	//val netCdfFolder: String = "/disk/data/netcdf/"
-	//val netCdfFolder: String = "/home/maintenance/workspace/"
+	val factory = {
+		import config.netcdf._
+		import scala.collection.JavaConversions._
+		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
+	}
 
-	//Define lists of acceptable variable names
-	val dates: java.util.List[String] = List("date", "time", "tstep").asJava
-	val lats : java.util.List[String] = List("latitude", "lat").asJava
-	val longs : java.util.List[String] = List("longitude", "lon").asJava
-	val elevations : java.util.List[String] = List("nz").asJava
-	
-	val factory = new ViewServiceFactoryImpl(netCdfFolder, dates, lats, longs, elevations)
-	
-	val route = DataRoute(factory)
+	val dataRoutes = new DataRoutes(config.auth)
+	val route = NetcdfRoute(factory) ~ dataRoutes.upload
 
 	Http()
 		.bindAndHandle(route, "localhost", 9010)

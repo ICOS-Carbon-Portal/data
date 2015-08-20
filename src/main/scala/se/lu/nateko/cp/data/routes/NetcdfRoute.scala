@@ -1,17 +1,14 @@
-package se.lu.nateko.cp.data
+package se.lu.nateko.cp.data.routes
 
 import se.lu.nateko.cp.netcdf.viewing.ViewServiceFactory
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import JsonSerializer._
-import akka.stream.scaladsl.Sink
-import akka.stream.Materializer
-import scala.concurrent.Future
+import se.lu.nateko.cp.data.JsonSerializer._
+import se.lu.nateko.cp.data.StaticResources
 
-object DataRoute {
-
-	def apply(factory: ViewServiceFactory)(implicit mat: Materializer): Route = {
+object NetcdfRoute {
+	def apply(factory: ViewServiceFactory): Route = {
 
 		(get & pathPrefix("netcdf")){
 			pathEndOrSingleSlash{
@@ -44,18 +41,7 @@ object DataRoute {
 					complete(toRasterMessage(raster))
 				}
 			}
-		} ~
-		put{
-			extractRequest{ req =>
-				val lengthFuture: Future[Long] = req.entity.dataBytes
-					.map(_.size)
-					.runWith(Sink.fold(0L){_ + _})
-
-				onSuccess(lengthFuture){length =>
-					complete(length.toString)
-				}
-			}
 		}
-		
+
 	}
 }
