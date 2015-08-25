@@ -14,18 +14,33 @@ import scala.util.Failure
 import akka.http.scaladsl.server.MissingCookieRejection
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.StandardRoute
+import akka.util.ByteString
+import java.security.MessageDigest
 
 class DataRoutes(authConfig: PublicAuthConfig)(implicit mat: Materializer) {
+
+	private implicit val ex = mat.executionContext
+
+	private def shaSink: Sink[ByteString, Future[String]] = {
+		val md = MessageDigest.getInstance("SHA-256")
+
+		def getDigest(in: Future[Unit]): Future[String] = in.map{_ =>
+			md.digest.map("%02x" format _).mkString
+		}
+
+		Sink.foreach[ByteString]{bstr =>
+			bstr.asByteBuffers.foreach(md.update)
+		}.mapMaterializedValue(getDigest)
+	}
 
 	val upload: Route = user{ uinfo =>
 		put{
 			extractRequest{ req =>
-				val lengthFuture: Future[Long] = req.entity.dataBytes
-					.map(_.size)
-					.runWith(Sink.fold(0L){_ + _})
+				val shaFuture: Future[String] = req.entity.dataBytes
+					.runWith(shaSink)
 
-				onSuccess(lengthFuture){length =>
-					complete(s"\nHi, ${uinfo.givenName}! You have uploaded $length bytes.\n")
+				onSuccess(shaFuture){sha =>
+					complete(s"\nHi, ${uinfo.givenName}! You uploaded a file with SHA-256 hash $sha\n")
 				}
 			}
 		}
