@@ -1,4 +1,5 @@
 /application.conf
+/fileStorage/
 *.class
 *.log
 

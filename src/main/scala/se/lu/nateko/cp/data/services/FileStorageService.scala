@@ -22,14 +22,16 @@ class FileStorageService(folder: File) {
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
-	def getFileSavingSink(hash256Sum: String)(implicit ctxt: ExecutionContext): Sink[ByteString, Future[Long]] = {
-		val path = Paths.get(folder.getAbsolutePath, hash256Sum)
+	def getFile(hash256Sum: String) = Paths.get(folder.getAbsolutePath, hash256Sum).toFile
 
-		if(path.toFile.exists)
+	def getFileSavingSink(hash256Sum: String)(implicit ctxt: ExecutionContext): Sink[ByteString, Future[Long]] = {
+		val file = getFile(hash256Sum)
+
+		if(file.exists)
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(0))
 		else {
 			val hashSink = sha256DigestSink.mapMaterializedValue(_.map(getDigestString))
-			val fileSink = SynchronousFileSink(path.toFile)
+			val fileSink = SynchronousFileSink(file)
 
 			Flow[ByteString]
 				.alsoToMat(hashSink)(Keep.right)
@@ -43,7 +45,7 @@ class FileStorageService(folder: File) {
 							Future.failed(new Exception(msg))
 						}
 					).andThen{
-						case Failure(_) => if(path.toFile.exists) path.toFile.delete()
+						case Failure(_) => if(file.exists) file.delete()
 					}
 				)
 		}

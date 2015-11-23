@@ -9,6 +9,8 @@ import scala.concurrent.duration._
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.FileStorageService
+import akka.http.scaladsl.server.ExceptionHandler
+import akka.http.scaladsl.model.StatusCodes
 
 object Main extends App {
 
@@ -25,8 +27,20 @@ object Main extends App {
 	}
 
 	val fileService = new FileStorageService(new java.io.File(config.upload.folder))
-	val dataRoutes = new DataRoutes(config.auth, fileService)
-	val route = NetcdfRoute(factory) ~ dataRoutes.upload
+	val authRouting = new AuthRouting(config.auth)
+	val fileRouting = new FileRouting(authRouting, fileService)
+
+	val exceptionHandler = ExceptionHandler{
+		case ex =>
+			val exMsg = ex.getMessage
+			val msg = if(exMsg == null || exMsg.isEmpty) ex.getClass.getName else exMsg
+			complete((StatusCodes.InternalServerError, msg))
+	}
+
+	val route = handleExceptions(exceptionHandler){
+		NetcdfRoute(factory) ~
+		fileRouting.route
+	}
 
 	Http()
 		.bindAndHandle(route, "localhost", 9010)
