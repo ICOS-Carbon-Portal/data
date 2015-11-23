@@ -18,9 +18,9 @@ libraryDependencies ++= Seq(
 		ExclusionRule(organization = "org.quartz-scheduler"),
 		ExclusionRule(organization = "org.slf4j")
 	),
-	"com.typesafe.akka"  %% "akka-http-core-experimental"        % "1.0",
-	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "1.0",
-	"com.typesafe.akka"  %% "akka-slf4j"       % "2.3.12",
+	"com.typesafe.akka"  %% "akka-http-core-experimental"        % "2.0-M1",
+	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.0-M1",
+	"com.typesafe.akka"  %% "akka-slf4j"       % "2.3.14",
 	"ch.qos.logback"     %  "logback-classic"   % "1.1.2",
 	"se.lu.nateko.cp"    %% "cpauth-core"       % "0.2",
 	"org.scalatest"      %% "scalatest"        % "2.2.1" % "test"

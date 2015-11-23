@@ -4,12 +4,11 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.routes._
+import se.lu.nateko.cp.data.services.FileStorageService
 
 object Main extends App {
 
@@ -25,7 +24,8 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
-	val dataRoutes = new DataRoutes(config.auth)
+	val fileService = new FileStorageService(new java.io.File(config.upload.folder))
+	val dataRoutes = new DataRoutes(config.auth, fileService)
 	val route = NetcdfRoute(factory) ~ dataRoutes.upload
 
 	Http()
