@@ -8,7 +8,6 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 
-import akka.stream.io.SynchronousFileSink
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
@@ -31,7 +30,7 @@ class FileStorageService(folder: File) {
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(0))
 		else {
 			val hashSink = sha256DigestSink.mapMaterializedValue(_.map(getDigestString))
-			val fileSink = SynchronousFileSink(file)
+			val fileSink = Sink.file(file)
 
 			Flow[ByteString]
 				.alsoToMat(hashSink)(Keep.right)

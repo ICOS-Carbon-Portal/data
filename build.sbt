@@ -4,9 +4,13 @@ version := "0.1"
 
 scalaVersion := "2.11.7"
 
-resolvers += "UNIDATA Releases" at "https://artifacts.unidata.ucar.edu/content/repositories/unidata-releases/"
-
 libraryDependencies ++= Seq(
+	"com.typesafe.akka"  %% "akka-http-core-experimental"        % "2.0-M2",
+	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.0-M2",
+	"com.typesafe.akka"  %% "akka-slf4j"       % "2.3.14",
+	"ch.qos.logback"      % "logback-classic"   % "1.1.2",
+	"se.lu.nateko.cp"    %% "cpauth-core"       % "0.2",
+	// *** manually published on CP Nexus 3rd party repo ***
 	"edu.ucar"           % "cdm"               % "4.5.5" excludeAll(
 		ExclusionRule(organization = "com.beust"),
 		//ExclusionRule(organization = "com.google.guava"),
@@ -18,11 +22,12 @@ libraryDependencies ++= Seq(
 		ExclusionRule(organization = "org.quartz-scheduler"),
 		ExclusionRule(organization = "org.slf4j")
 	),
-	"com.typesafe.akka"  %% "akka-http-core-experimental"        % "2.0-M1",
-	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.0-M1",
-	"com.typesafe.akka"  %% "akka-slf4j"       % "2.3.14",
-	"ch.qos.logback"     %  "logback-classic"   % "1.1.2",
-	"se.lu.nateko.cp"    %% "cpauth-core"       % "0.2",
+	"org.irods.jargon"    % "jargon-core"      % "4.0.2.4", //IRODS client core features
+	"org.globus.jglobus"  % "cog-jglobus"      % "1.8.0",   //jargon-core dependency
+	"com.claymoresystems" % "puretls"          % "1.1",     //cog-jglobus dependency
+	// other dependencies of jargon-core are commons-io and commons-codec,
+	// but they are already present in this project transitively
+	// *** end of manually published on CP Nexus 3rd party repo ***
 	"org.scalatest"      %% "scalatest"        % "2.2.1" % "test"
 )
 

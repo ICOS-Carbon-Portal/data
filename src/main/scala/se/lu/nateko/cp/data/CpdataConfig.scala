@@ -14,14 +14,24 @@ case class NetCdfConfig(
 	elevationVars: Seq[String]
 )
 
-case class UploadConfig(folder: String)
+case class IrodsConfig(
+	host: String,
+	port: Int,
+	username: String,
+	password: String,
+	homeDirectory: String,
+	zone: String,
+	defaultResource: String
+)
+case class UploadConfig(folder: String, irods: IrodsConfig)
 case class CpdataConfig(auth: PublicAuthConfig, netcdf: NetCdfConfig, upload: UploadConfig)
 
 object ConfigReader extends DefaultJsonProtocol{
 
-	implicit val uploadConfigFormat = jsonFormat1(UploadConfig)
-	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
+	implicit val irodsConfigFormat = jsonFormat7(IrodsConfig)
+	implicit val uploadConfigFormat = jsonFormat2(UploadConfig)
+	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
 	implicit val cpdataConfigFormat = jsonFormat3(CpdataConfig)
 
 	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
