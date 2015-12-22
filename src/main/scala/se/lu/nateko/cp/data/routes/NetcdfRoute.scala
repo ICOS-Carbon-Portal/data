@@ -5,17 +5,16 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import se.lu.nateko.cp.data.JsonSerializer._
-import se.lu.nateko.cp.data.StaticResources
 
 object NetcdfRoute {
 	def apply(factory: ViewServiceFactory): Route = {
 
 		(get & pathPrefix("netcdf")){
 			pathEndOrSingleSlash{
-				complete(StaticResources.netcdfWidgetPage)
+				getFromResource("netcdf.html")
 			} ~
 			path("bundle.js"){
-				complete(StaticResources.bundleScript)
+				getFromResource("bundle.js")
 			} ~
 			path("listNetCdfFiles"){
 				complete(factory.getNetCdfFiles)

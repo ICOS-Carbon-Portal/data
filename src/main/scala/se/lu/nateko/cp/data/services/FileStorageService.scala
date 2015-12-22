@@ -3,15 +3,14 @@ package se.lu.nateko.cp.data.services
 import java.io.File
 import java.nio.file.Paths
 import java.security.MessageDigest
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
-
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
+import akka.stream.scaladsl.FileIO
 
 class FileStorageService(folder: File) {
 	import FileStorageService._
@@ -30,7 +29,7 @@ class FileStorageService(folder: File) {
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(0))
 		else {
 			val hashSink = sha256DigestSink.mapMaterializedValue(_.map(getDigestString))
-			val fileSink = Sink.file(file)
+			val fileSink = FileIO.toFile(file)
 
 			Flow[ByteString]
 				.alsoToMat(hashSink)(Keep.right)
