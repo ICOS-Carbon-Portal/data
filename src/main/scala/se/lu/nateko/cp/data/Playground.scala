@@ -11,31 +11,42 @@ import akka.http.scaladsl.Http
 import scala.concurrent.duration._
 import akka.util.ByteString
 import scala.collection.immutable.Iterable
+import scala.concurrent.Future
 
 object Playground {
 
 	implicit val system = ActorSystem("playgr")
 	implicit val materializer = ActorMaterializer(namePrefix = Some("playgr_mat"))
+	val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
-	def uploadFile(): Unit = {
-		val irodsConfig = ConfigReader.getDefault.upload.irods
-		val client = new IrodsClient(irodsConfig)
+	val irodsConfig = ConfigReader.getDefault.upload.irods
+	val client = new IrodsClient(irodsConfig)
 
-		val sink = client.getNewFileSink("test.txt")
-		val source = Source(() => Iterator.fill(1000000)(ByteString("bebe meme!\n")))
-		val uploadedFut = source.runWith(sink)
+	def repeat(str: String, n: Int) = Source(Iterable.fill(n)(ByteString(str)))
+	def largeSrc = repeat("bebe meme!\n", 1000000)
+	def smallSrc = repeat("bebe meme!\n", 5)
+	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
+	def failingLater = smallSrc.concat(failing)
+
+	def uploadFile(path: String, src: Source[ByteString, Any]): Long = {
+
+		val sink = client.getNewFileSink(path)(blockingExeCtxt)
+		val uploadedFut = src.runWith(sink)
 		Await.result(uploadedFut, Duration.Inf)
 
-//		val out = client.getNewFileOutputStream("test.txt")
-//		out.write("bebe".getBytes)
-//		out.close()
-	}
-
-	def testUrl(url: String): Unit = {
-		val request = HttpRequest(uri = url)//"https://epic.pdc.kth.se/v2/handles/11676"), headers = List(authorization, accept))
-		val respFut = Http().singleRequest(request)
-		val resp = Await.result(respFut, 10 second)
-		println(resp)
 	}
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
