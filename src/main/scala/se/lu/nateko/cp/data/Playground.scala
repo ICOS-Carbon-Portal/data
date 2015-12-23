@@ -17,7 +17,7 @@ object Playground {
 
 	implicit val system = ActorSystem("playgr")
 	implicit val materializer = ActorMaterializer(namePrefix = Some("playgr_mat"))
-	val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
+	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
 	val irodsConfig = ConfigReader.getDefault.upload.irods
 	val client = new IrodsClient(irodsConfig)
@@ -28,11 +28,16 @@ object Playground {
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 
-	def uploadFile(path: String, src: Source[ByteString, Any]): Long = {
+	def uploadFile(path1: String, path2: String, src: Source[ByteString, Any]): Long = {
 
-		val sink = client.getNewFileSink(path)(blockingExeCtxt)
-		val uploadedFut = src.runWith(sink)
-		Await.result(uploadedFut, Duration.Inf)
+		val sink1 = client.getNewFileSink(path1)(blockingExeCtxt)
+		val sink2 = client.getNewFileSink(path2)(blockingExeCtxt)
+		val uploadedFut1 = src.runWith(sink1)
+		val uploadedFut2 = src.runWith(sink2)
+		uploadedFut1.onSuccess{case n => println(s"Run1: $n")}
+		uploadedFut2.onSuccess{case n => println(s"Run2: $n")}
+		Await.result(uploadedFut1, Duration.Inf) +
+		Await.result(uploadedFut2, Duration.Inf)
 
 	}
 

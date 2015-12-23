@@ -1,18 +1,23 @@
 package se.lu.nateko.cp.data.irods
 
 import java.io.OutputStream
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.{Try, Success, Failure}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.irods.jargon.core.connection.IRODSAccount
+import org.irods.jargon.core.exception.JargonException
 import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
-import org.irods.jargon.core.pub.IRODSFileSystem
 import org.irods.jargon.core.pub.io.IRODSFileFactory
+import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
+
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.IrodsConfig
-import org.irods.jargon.core.exception.JargonException
 
 class IrodsClient(config: IrodsConfig){
 
@@ -37,7 +42,7 @@ class IrodsClient(config: IrodsConfig){
 			})
 
 	def deleteFile(filePath: String): Try[Unit] = {
-		val (fileSystem, fileFactory) = getIrodsFileApi
+		val (fileFactory, cleanUp) = getIrodsFileApi
 		try{
 			val file = fileFactory.instanceIRODSFile(filePath)
 			if(file.deleteWithForceOption())
@@ -47,27 +52,27 @@ class IrodsClient(config: IrodsConfig){
 		}catch{
 			case e: Throwable => Failure(e)
 		}finally{
-			fileSystem.close()
+			cleanUp()
 		}
 	}
 
 	def getNewFileOutputStream(filePath: String): Try[OutputStream] = {
-		val (fileSystem, fileFactory) = getIrodsFileApi
+		val (fileFactory, cleanUp) = getIrodsFileApi
 
 		Try{
 			val irodsOut = fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.READ_WRITE_FAIL_IF_EXISTS)
 			val bufferedOut = new java.io.BufferedOutputStream(irodsOut, IrodsClient.bufSize)
-			new OutputStreamWithCleanup(bufferedOut, fileSystem.close)
+			new OutputStreamWithCleanup(bufferedOut, cleanUp)
 		}.recoverWith{
-			case e => fileSystem.close(); Failure(e)
+			case e => cleanUp(); Failure(e)
 		}
 	}
 
-	private def getIrodsFileApi = {
+	private def getIrodsFileApi: (IRODSFileFactory, () => Unit) = {
 		val connPool = new IRODSConnectionPool
-		val fileSystem = new IRODSFileSystem(connPool)
-		val fileFactory = fileSystem.getIRODSFileFactory(account)
-		(fileSystem, fileFactory)
+		val session = new LocalIrodsSession(connPool)
+		val fileFactory = new IRODSFileFactoryImpl(session, account)
+		(fileFactory, session.closeSession)
 	}
 }
 
