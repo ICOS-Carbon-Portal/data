@@ -10,6 +10,6 @@
     <appender-ref ref="STDOUT" />
   </root>
 
-  <logger name="se.lu.nateko.cp.data.irods.OutputStreamWithCleanup" level="debug" />
+  <!-- <logger name="se.lu.nateko.cp.data.irods.OutputStreamWithCleanup" level="debug" />  -->
 
 </configuration>

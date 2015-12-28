@@ -12,9 +12,12 @@ private class OutputStreamWithCleanup(inner: OutputStream, cleanup: () => Unit) 
 
 	override def close(): Unit = {
 		try{
+			logger.debug(s"Will close the inner stream now...")
 			inner.close()
+			logger.debug(s"Inner stream closed.")
 		} finally{
 			cleanup()
+			logger.debug(s"Cleanup done.")
 		}
 	}
 
@@ -23,6 +26,7 @@ private class OutputStreamWithCleanup(inner: OutputStream, cleanup: () => Unit) 
 	}
 
 	override def write(b: Array[Byte]): Unit = {
+		logger.debug(s"Writing ${b.length} bytes")
 		inner.write(b)
 	}
 

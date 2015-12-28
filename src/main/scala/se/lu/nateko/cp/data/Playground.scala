@@ -12,6 +12,8 @@ import scala.concurrent.duration._
 import akka.util.ByteString
 import scala.collection.immutable.Iterable
 import scala.concurrent.Future
+import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Keep
 
 object Playground {
 
@@ -28,17 +30,17 @@ object Playground {
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 
-	def uploadFile(path1: String, path2: String, src: Source[ByteString, Any]): Long = {
-
+	def uploadFile(path1: String, src: Source[ByteString, Any]): Future[Long] = {
 		val sink1 = client.getNewFileSink(path1)(blockingExeCtxt)
-		val sink2 = client.getNewFileSink(path2)(blockingExeCtxt)
-		val uploadedFut1 = src.runWith(sink1)
-		val uploadedFut2 = src.runWith(sink2)
-		uploadedFut1.onSuccess{case n => println(s"Run1: $n")}
-		uploadedFut2.onSuccess{case n => println(s"Run2: $n")}
-		Await.result(uploadedFut1, Duration.Inf) +
-		Await.result(uploadedFut2, Duration.Inf)
+		src.runWith(sink1)
+	}
 
+	def errorTest: Future[Int] = {
+		val disrupted = Source(1 to 3).concat(failing)
+		val summer = Sink.fold[Int, Int](0)((sum, next) => if(next > 2) throw new Exception("sink failure!") else sum + next)
+
+		val runnable = disrupted.toMat(summer)(Keep.right)
+		runnable.run()
 	}
 
 }
