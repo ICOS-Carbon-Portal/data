@@ -5,7 +5,6 @@ import akka.stream.scaladsl.Source
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.Http
 import scala.concurrent.duration._
@@ -14,6 +13,8 @@ import scala.collection.immutable.Iterable
 import scala.concurrent.Future
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Flow
+import akka.stream.ThrottleMode
 
 object Playground {
 
@@ -24,9 +25,13 @@ object Playground {
 	val irodsConfig = ConfigReader.getDefault.upload.irods
 	val client = new IrodsClient(irodsConfig)
 
-	def repeat(str: String, n: Int) = Source(Iterable.fill(n)(ByteString(str)))
-	def largeSrc = repeat("bebe meme!\n", 1000000)
-	def smallSrc = repeat("bebe meme!\n", 5)
+	def repeat(str: String, n: Int) = {
+		val bs = ByteString(str)
+		Source.fromIterator(() => Iterator.fill(n)(bs))
+//			.via(Flow[ByteString].throttle(1000, 1 second, 1, ThrottleMode.Shaping))
+	}
+	def largeSrc = repeat("bebe meme\n", 1000000)
+	def smallSrc = repeat("bebe meme\n", 5)
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 

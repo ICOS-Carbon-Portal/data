@@ -1,23 +1,38 @@
 package se.lu.nateko.cp.data.irods
 
 import java.io.OutputStream
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.Promise
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
 import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
 import org.irods.jargon.core.pub.io.IRODSFileFactory
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
+
+import akka.stream.Attributes
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.IrodsConfig
-import scala.concurrent.Promise
+import se.lu.nateko.cp.data.streams.ByteStringBuffer
+import se.lu.nateko.cp.data.streams.ErrorSwallower
+import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
+
+object IrodsClient{
+	val bufferSize: Int = 2 << 19 //1 MB
+
+	def apply(config: IrodsConfig) = new IrodsClient(config)
+}
 
 class IrodsClient(config: IrodsConfig){
+	import IrodsClient._
 
 	private val account = IRODSAccount.instance(
 		config.host,
@@ -37,16 +52,18 @@ class IrodsClient(config: IrodsConfig){
 
 		val irodsSink = StreamConverters.fromOutputStream(
 			() => getNewFileOutputStreamAndCompletion(filePath, streamClosed).get
-		)
+		).withAttributes(Attributes.inputBuffer(1, 1))
 
-		//need to swallow upstream errors to avoid OutputStreamSink crash, hence the usage of StreamRecoverer
-		val upstreamErrorsHandlingSink = StreamRecoverer[ByteString]().toMat(irodsSink)(
-			(upStreamFut, downStreamFut) => for(
-				_ <- streamClosed.future;     //FIRST, need to wait for the iRODS OutputStream closure
-				_ <- upStreamFut;             //want to be able to react to the upstream errors later on
-				bytesWritten <- downStreamFut //ok only if everything else is ok
-			) yield bytesWritten
-		)
+		//need to swallow upstream errors to avoid OutputStreamSink crash, hence the usage of ErrorSwallower
+		val upstreamErrorsHandlingSink = ByteStringBuffer(bufferSize)
+			.viaMat(ErrorSwallower[ByteString]())(Keep.right)
+			.toMat(irodsSink)(
+				(upStreamFut, downStreamFut) => for(
+					_ <- streamClosed.future;     //FIRST, need to wait for the iRODS OutputStream closure
+					_ <- upStreamFut;             //want to be able to react to the upstream errors later on
+					bytesWritten <- downStreamFut //ok only if everything else is ok
+				) yield bytesWritten
+			)
 
 		//ensure cleanup on iRODS if there is either up- or downstream error
 		upstreamErrorsHandlingSink.mapMaterializedValue(countFuture => countFuture.andThen{
@@ -78,9 +95,8 @@ class IrodsClient(config: IrodsConfig){
 
 		Try{
 			val irodsOut = fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.READ_WRITE_FAIL_IF_EXISTS)
-			val bufferedOut = new java.io.BufferedOutputStream(irodsOut, IrodsClient.bufSize)
 
-			new OutputStreamWithCleanup(bufferedOut, () => {
+			new OutputStreamWithCleanup(irodsOut, () => {
 				cleanUp()
 				done.complete(Success(()))
 			})
@@ -99,8 +115,4 @@ class IrodsClient(config: IrodsConfig){
 		val fileFactory = new IRODSFileFactoryImpl(session, account)
 		(fileFactory, session.closeSession)
 	}
-}
-
-object IrodsClient{
-	val bufSize: Int = 2 << 18 //512 KB
 }

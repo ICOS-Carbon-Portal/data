@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.irods
+package se.lu.nateko.cp.data.streams
 
 import java.io.OutputStream
 import org.slf4j.LoggerFactory
@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 /**
  * Performs the cleanup when close() method is called, after closing the inner stream.
  */
-private class OutputStreamWithCleanup(inner: OutputStream, cleanup: () => Unit) extends OutputStream{
+class OutputStreamWithCleanup(inner: OutputStream, cleanup: () => Unit) extends OutputStream{
 
 	private[this] val logger = LoggerFactory.getLogger(getClass)
 
@@ -26,13 +26,15 @@ private class OutputStreamWithCleanup(inner: OutputStream, cleanup: () => Unit) 
 	}
 
 	override def write(b: Array[Byte]): Unit = {
-		logger.debug(s"Writing ${b.length} bytes")
+		logger.debug(s"Writing ${b.length} bytes ...")
 		inner.write(b)
+		logger.debug(s"Done writing!")
 	}
 
 	override def write(b: Array[Byte], off: Int, len: Int): Unit = {
-		logger.debug(s"Writing $len bytes")
+		logger.debug(s"Writing $len bytes with offset $off")
 		inner.write(b, off, len)
+		logger.debug(s"Done writing!")
 	}
 
 	override def write(b: Int): Unit = {

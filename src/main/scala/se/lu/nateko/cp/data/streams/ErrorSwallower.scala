@@ -1,10 +1,9 @@
-package se.lu.nateko.cp.data.irods
+package se.lu.nateko.cp.data.streams
 
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
 import scala.util.Success
-
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
@@ -15,16 +14,16 @@ import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 
-object StreamRecoverer{
+object ErrorSwallower{
 
-	def apply[T](): Flow[T, T, Future[Unit]] = Flow.fromGraph(new StreamRecoverer[T])
+	def apply[T](): Flow[T, T, Future[Unit]] = Flow.fromGraph(new ErrorSwallower[T])
 
 }
 
-private class StreamRecoverer[T] extends GraphStageWithMaterializedValue[FlowShape[T, T], Future[Unit]]{
+private class ErrorSwallower[T] extends GraphStageWithMaterializedValue[FlowShape[T, T], Future[Unit]]{
 
-	private[this] val in: Inlet[T] = Inlet("RecoveredStreamInput")
-	private[this] val out: Outlet[T] = Outlet("RecoveredStreamOutput")
+	private[this] val in: Inlet[T] = Inlet("ErrorSwallowerInput")
+	private[this] val out: Outlet[T] = Outlet("ErrorSwallowerOutput")
 
 	override val shape = FlowShape(in, out)
 
