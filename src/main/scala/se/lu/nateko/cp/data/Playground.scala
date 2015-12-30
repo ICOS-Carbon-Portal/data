@@ -28,16 +28,21 @@ object Playground {
 	def repeat(str: String, n: Int) = {
 		val bs = ByteString(str)
 		Source.fromIterator(() => Iterator.fill(n)(bs))
-//			.via(Flow[ByteString].throttle(1000, 1 second, 1, ThrottleMode.Shaping))
+//			.via(Flow[ByteString].throttle(100, 1 second, 2, ThrottleMode.Shaping))
 	}
-	def largeSrc = repeat("bebe meme\n", 1000000)
-	def smallSrc = repeat("bebe meme\n", 5)
+
+	val row = Iterator.fill(10)("bebe meme").mkString("", "\t", "\n")
+	val rowBlock = Iterator.fill(100)(row).mkString("", "", "\n")
+
+	def largeSrc = repeat(rowBlock, 1000)
+	def smallSrc = repeat(rowBlock, 5)
+
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 
-	def uploadFile(path1: String, src: Source[ByteString, Any]): Future[Long] = {
-		val sink1 = client.getNewFileSink(path1)(blockingExeCtxt)
-		src.runWith(sink1)
+	def uploadFile(path: String, src: Source[ByteString, Any]): Future[String] = {
+		val sink = client.getNewFileSink(path)(blockingExeCtxt)
+		src.runWith(sink)
 	}
 
 	def errorTest: Future[Int] = {

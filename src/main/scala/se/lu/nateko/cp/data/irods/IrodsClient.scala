@@ -7,21 +7,22 @@ import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
 import scala.util.Success
-import scala.util.Try
 
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
 import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
+import org.irods.jargon.core.pub.IRODSAccessObjectFactory
+import org.irods.jargon.core.pub.IRODSAccessObjectFactoryImpl
 import org.irods.jargon.core.pub.io.IRODSFileFactory
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
 
 import akka.stream.Attributes
-import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
+import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
 
@@ -45,74 +46,114 @@ class IrodsClient(config: IrodsConfig){
 	)
 
 	/**
-	 * The implicit argument should be an ExecutionContext suitable for running thread-blocking tasks
+	 * Creates a `ByteString` sink to upload the contents to a new iRODS file.
+	 * Materialization fails if the file exists already.
+	 * Verifies hash of the uploaded file (compares with the hash of the incoming stream).
+	 * Deletes the uploaded file if any problem or hash mismatch occurs.
+	 * Materializes a `Future` of Base64-encoded SHA-256 file hash. The `Future` is successful if upload is successful.
+	 * 
+	 * @param filePath path to the new file on iRODS
+	 * @param executor should be an `ExecutionContext` suitable for running thread-blocking tasks
+	 * @return the `ByteString` sink
 	 */
-	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Long]] = {
+	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[String]] = {
 		val streamClosed = Promise[Unit]()
 
-		val irodsSink = StreamConverters.fromOutputStream(
-			() => getNewFileOutputStreamAndCompletion(filePath, streamClosed).get
-		).withAttributes(Attributes.inputBuffer(1, 1))
+		val irodsSink = StreamConverters
+			.fromOutputStream(
+				() => getNewFileOutputStreamAndCompletion(filePath, streamClosed)
+			)
+			//disabling buffer here as we'll be buffering ourselves
+			.withAttributes(Attributes.inputBuffer(1, 1))
 
 		//need to swallow upstream errors to avoid OutputStreamSink crash, hence the usage of ErrorSwallower
-		val upstreamErrorsHandlingSink = ByteStringBuffer(bufferSize)
-			.viaMat(ErrorSwallower[ByteString]())(Keep.right)
+		val robustIrodsSink: Sink[ByteString, Future[Unit]] = ErrorSwallower[ByteString]()
 			.toMat(irodsSink)(
 				(upStreamFut, downStreamFut) => for(
-					_ <- streamClosed.future;     //FIRST, need to wait for the iRODS OutputStream closure
-					_ <- upStreamFut;             //want to be able to react to the upstream errors later on
-					bytesWritten <- downStreamFut //ok only if everything else is ok
-				) yield bytesWritten
+					_ <- streamClosed.future; //FIRST, need to wait for the iRODS OutputStream closure
+					_ <- upStreamFut;         //want to be able to react to the upstream errors later on
+					_ <- downStreamFut        //ok only if everything is ok
+				) yield ()
 			)
 
-		//ensure cleanup on iRODS if there is either up- or downstream error
-		upstreamErrorsHandlingSink.mapMaterializedValue(countFuture => countFuture.andThen{
-				case f: Failure[Long] => deleteFile(filePath)
-				case _ =>
+		DigestFlow.sha256
+			.via(ByteStringBuffer(bufferSize))
+			.toMat(robustIrodsSink)((shaFut, uploadFut) => {
+
+				//compare checksums on iRODS and of the stream
+				def ensureEquality(streamDigest: String, irodsDigest: String) =
+					if(streamDigest == irodsDigest) Future.successful(streamDigest)
+					else Future.failed(new JargonException(
+						s"Carbon Portal's checksum $streamDigest did not match EUDAT's checksum $irodsDigest"
+					))
+
+				val digestFuture = for(
+					streamDigest <- shaFut.map(DigestFlow.toBase64);
+					_ <- uploadFut; //need to wait for the upload to complete before asking for checksum
+					irodsDigest <- Future(getChecksum(filePath));
+					digest <- ensureEquality(streamDigest, irodsDigest)
+				) yield digest
+
+				digestFuture.andThen{
+					//delete the file on iRODS if there is either up- or downstream error or checksum mismatch
+					case Failure(_) => deleteFile(filePath)
+				}
 			})
 	}
 
-	def deleteFile(filePath: String): Try[Unit] = {
-		val (fileFactory, cleanUp) = getIrodsFileApi
+	def deleteFile(filePath: String): Unit = {
+		val api = getIrodsFileApi
 		try{
-			val file = fileFactory.instanceIRODSFile(filePath)
-			if(file.deleteWithForceOption())
-				Success(())
-			else
-				Failure(new JargonException("Deletion operation reports failure"))
-		}catch{
-			case e: Throwable => Failure(e)
+			val file = api.fileFactory.instanceIRODSFile(filePath)
+			if(!file.deleteWithForceOption())
+				throw new JargonException("File deletion failure")
 		}finally{
-			cleanUp()
+			api.cleanUp()
 		}
 	}
 
-	def getNewFileOutputStream(filePath: String): Try[OutputStream] =
+	def getChecksum(filePath: String): String = {
+		val api = getIrodsFileApi
+		try{
+			val file = api.fileFactory.instanceIRODSFile(filePath)
+			val doap = api.accessObjFactory.getDataObjectAO(account)
+			doap.computeChecksumOnDataObject(file).getChecksumStringValue
+		}finally{
+			api.cleanUp()
+		}
+	}
+
+	def getNewFileOutputStream(filePath: String): OutputStream =
 		getNewFileOutputStreamAndCompletion(filePath, Promise())
 
-	private def getNewFileOutputStreamAndCompletion(filePath: String, done: Promise[Unit]): Try[OutputStream] = {
-		val (fileFactory, cleanUp) = getIrodsFileApi
+	private def getNewFileOutputStreamAndCompletion(filePath: String, done: Promise[Unit]): OutputStream = {
+		val api = getIrodsFileApi
 
-		Try{
-			val irodsOut = fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.READ_WRITE_FAIL_IF_EXISTS)
+		try{
+			val irodsOut = api.fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.WRITE_FAIL_IF_EXISTS)
 
 			new OutputStreamWithCleanup(irodsOut, () => {
-				cleanUp()
+				api.cleanUp()
 				done.complete(Success(()))
 			})
-		}.recoverWith{
-			case e =>
-				cleanUp()
-				val fail = Failure(e)
-				done.complete(fail)
-				fail
+		}catch{
+			case e: Throwable =>
+				api.cleanUp()
+				done.complete(Failure(e))
+				throw e
 		}
 	}
 
-	private def getIrodsFileApi: (IRODSFileFactory, () => Unit) = {
-		val connPool = new IRODSConnectionPool
-		val session = new LocalIrodsSession(connPool)
-		val fileFactory = new IRODSFileFactoryImpl(session, account)
-		(fileFactory, session.closeSession)
+	private def getIrodsFileApi = new IrodsApi
+
+	private class IrodsApi{
+		private val connPool = new IRODSConnectionPool
+		private val session = new LocalIrodsSession(connPool)
+
+		lazy val fileFactory: IRODSFileFactory = new IRODSFileFactoryImpl(session, account)
+		lazy val accessObjFactory: IRODSAccessObjectFactory = IRODSAccessObjectFactoryImpl.instance(session)
+
+		def cleanUp(): Unit = session.closeSession()
 	}
+
 }
