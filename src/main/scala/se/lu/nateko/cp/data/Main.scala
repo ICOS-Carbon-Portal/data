@@ -1,16 +1,24 @@
 package se.lu.nateko.cp.data
 
+import scala.collection.JavaConversions
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives._
-import akka.stream.ActorMaterializer
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
-import se.lu.nateko.cp.data.routes._
-import se.lu.nateko.cp.data.services.FileStorageService
-import akka.http.scaladsl.server.ExceptionHandler
+import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directive
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.ExceptionHandler
+import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
+import akka.stream.ActorMaterializer
+import se.lu.nateko.cp.data.irods.IrodsClient
+import se.lu.nateko.cp.data.routes.AuthRouting
+import se.lu.nateko.cp.data.routes.FileRouting
+import se.lu.nateko.cp.data.routes.NetcdfRoute
+import se.lu.nateko.cp.data.services.FileStorageService
+import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
 
 object Main extends App {
 
@@ -26,8 +34,9 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
-	val fileService = new FileStorageService(new java.io.File(config.upload.folder))
 	val authRouting = new AuthRouting(config.auth)
+	val irodsClient = IrodsClient(config.upload.irods)
+	val fileService = new FileStorageService(new java.io.File(config.upload.folder), irodsClient)
 	val fileRouting = new FileRouting(authRouting, fileService)
 
 	val exceptionHandler = ExceptionHandler{

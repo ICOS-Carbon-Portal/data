@@ -10,16 +10,19 @@ import akka.stream.Materializer
 import se.lu.nateko.cp.data.services.FileStorageService
 import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.http.scaladsl.model.ContentTypes
+import se.lu.nateko.cp.data.api.Sha256Sum
+import akka.http.scaladsl.server.ValidationRejection
+import akka.http.scaladsl.model.StatusCodes
 
 class FileRouting(authRouting: AuthRouting, fileService: FileStorageService)(implicit mat: Materializer) {
 
 	private implicit val ex = mat.executionContext
-	private[this] val shaPattern = """[0-9a-fA-F]{64}""".r.pattern
 
-	private def ensureSha256(inner: String => Route): String => Route = hashSum => {
-		if(shaPattern.matcher(hashSum).matches) inner(hashSum.toLowerCase)
-		else throw new Exception("Invalid SHA-256 sum, expecting a 32-byte hexadecimal string")
-	}
+	private def ensureSha256(inner: Sha256Sum => Route): String => Route =
+		hash => Sha256Sum.fromBase64Url(hash).orElse(Sha256Sum.fromHex(hash)) match{
+			case Success(hash) => inner(hash)
+			case Failure(ex) => complete((StatusCodes.BadRequest, s"Expected base64Url- or hex-encoded SHA-256 hash, got $hash"))
+		}
 
 	private val upload: Route = path(Segment){
 		ensureSha256{ hashsum =>
