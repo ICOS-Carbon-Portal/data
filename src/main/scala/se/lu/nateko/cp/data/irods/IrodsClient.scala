@@ -1,13 +1,11 @@
 package se.lu.nateko.cp.data.irods
 
 import java.io.OutputStream
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
 import scala.util.Success
-
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
 import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
@@ -15,11 +13,11 @@ import org.irods.jargon.core.pub.IRODSAccessObjectFactory
 import org.irods.jargon.core.pub.IRODSAccessObjectFactoryImpl
 import org.irods.jargon.core.pub.io.IRODSFileFactory
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
-
 import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
+import se.lu.nateko.cp.data.api.Sha256Sum
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.data.streams.DigestFlow
@@ -50,13 +48,13 @@ class IrodsClient(config: IrodsConfig){
 	 * Materialization fails if the file exists already.
 	 * Verifies hash of the uploaded file (compares with the hash of the incoming stream).
 	 * Deletes the uploaded file if any problem or hash mismatch occurs.
-	 * Materializes a `Future` of Base64-encoded SHA-256 file hash. The `Future` is successful if upload is successful.
+	 * Materializes a `Future[Sha256Sum]`. The `Future` is successful if upload is successful.
 	 * 
 	 * @param filePath path to the new file on iRODS
 	 * @param executor should be an `ExecutionContext` suitable for running thread-blocking tasks
 	 * @return the `ByteString` sink
 	 */
-	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[String]] = {
+	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Sha256Sum]] = {
 		val streamClosed = Promise[Unit]()
 
 		val irodsSink = StreamConverters
@@ -81,14 +79,14 @@ class IrodsClient(config: IrodsConfig){
 			.toMat(robustIrodsSink)((shaFut, uploadFut) => {
 
 				//compare checksums on iRODS and of the stream
-				def ensureEquality(streamDigest: String, irodsDigest: String) =
+				def ensureEquality(streamDigest: Sha256Sum, irodsDigest: Sha256Sum) =
 					if(streamDigest == irodsDigest) Future.successful(streamDigest)
 					else Future.failed(new JargonException(
 						s"Carbon Portal's checksum $streamDigest did not match EUDAT's checksum $irodsDigest"
 					))
 
 				val digestFuture = for(
-					streamDigest <- shaFut.map(DigestFlow.toBase64);
+					streamDigest <- shaFut;
 					_ <- uploadFut; //need to wait for the upload to complete before asking for checksum
 					irodsDigest <- Future(getChecksum(filePath));
 					digest <- ensureEquality(streamDigest, irodsDigest)
@@ -112,12 +110,13 @@ class IrodsClient(config: IrodsConfig){
 		}
 	}
 
-	def getChecksum(filePath: String): String = {
+	def getChecksum(filePath: String): Sha256Sum = {
 		val api = getIrodsFileApi
 		try{
 			val file = api.fileFactory.instanceIRODSFile(filePath)
 			val doap = api.accessObjFactory.getDataObjectAO(account)
-			doap.computeChecksumOnDataObject(file).getChecksumStringValue
+			val base64 = doap.computeChecksumOnDataObject(file).getChecksumStringValue
+			Sha256Sum.fromBase64(base64).get
 		}finally{
 			api.cleanUp()
 		}

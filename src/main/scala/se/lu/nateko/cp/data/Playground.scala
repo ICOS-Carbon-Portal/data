@@ -15,6 +15,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Flow
 import akka.stream.ThrottleMode
+import se.lu.nateko.cp.data.api.Sha256Sum
 
 object Playground {
 
@@ -40,7 +41,7 @@ object Playground {
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 
-	def uploadFile(path: String, src: Source[ByteString, Any]): Future[String] = {
+	def uploadFile(path: String, src: Source[ByteString, Any]): Future[Sha256Sum] = {
 		val sink = client.getNewFileSink(path)(blockingExeCtxt)
 		src.runWith(sink)
 	}
