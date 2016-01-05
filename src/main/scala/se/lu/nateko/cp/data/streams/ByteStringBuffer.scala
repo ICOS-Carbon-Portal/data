@@ -11,6 +11,7 @@ import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
+import java.util.Arrays
 
 object ByteStringBuffer {
 
@@ -35,39 +36,58 @@ private class ByteStringBuffer(nBytes: Int) extends GraphStage[FlowShape[ByteStr
 
 	override def createLogic(inheritedAttributes: Attributes) = new GraphStageLogic(shape){
 
-		private[this] var buffer = ByteString.empty
+		private[this] var buff: Array[Byte] = Array.ofDim(nBytes)
+		private[this] var bufSize: Int = 0
+		private[this] var residual = ByteString.empty
 
 		private def flush(): Unit =
 			if(isClosed(in)) {
-				if(buffer.isEmpty) completeStage()
+				if(bufSize == 0 && residual.isEmpty) completeStage()
 				else if(isAvailable(out)) {
-					logger.debug(s"About to push ${buffer.length} bytes")
-					push(out, buffer)
+					logger.debug(s"About to push ${bufSize + residual.size} bytes")
+					push(out, ByteString.fromArray(buff, 0, bufSize) ++ residual)
 					completeStage()
 				}
-			}else if(isAvailable(out) && buffer.length >= nBytes) {
+			}else if(isAvailable(out) && bufSize == nBytes) {
 				logger.debug(s"About to push $nBytes bytes")
-				push(out, buffer.take(nBytes))
-				buffer = buffer.drop(nBytes)
-				if(!hasBeenPulled(in)) pull(in)
+				push(out, ByteString(buff))
+				buff = Array.ofDim(nBytes)
+				bufSize = 0
+				appendToBuffer(residual)
+				if(bufSize < nBytes && !hasBeenPulled(in)) pull(in)
 			}
+
+		private def appendToBuffer(bs: ByteString): Unit = {
+			val bytesToAppend = Math.min(bs.size, nBytes - bufSize)
+			if(bytesToAppend > 0){
+				bs.copyToArray(buff, bufSize, bytesToAppend)
+				bufSize += bytesToAppend
+				residual = if(bytesToAppend == bs.size)
+						ByteString.empty
+					else bs.drop(bytesToAppend)
+			} else residual = bs
+		}
 
 		setHandler(in, new InHandler{
 			override def onPush(): Unit = {
-				buffer ++= grab(in)
-				if(buffer.length < nBytes) pull(in)
+				val next = grab(in)
+
+				if(bufSize < nBytes) appendToBuffer(next)
+				else residual ++= next
+
+				if(bufSize < nBytes) pull(in)
 				else flush()
 			}
 
 			override def onUpstreamFinish(): Unit = {
-				if(isAvailable(in)) buffer ++= grab(in)
+				if(isAvailable(in)) residual ++= grab(in)
 				flush()
 			}
 		})
 
 		setHandler(out, new OutHandler {
 			override def onPull(): Unit = {
-				if(buffer.isEmpty && !isClosed(in) && !hasBeenPulled(in)) pull(in) //initial pull
+				if(bufSize == 0 && !isClosed(in) && !hasBeenPulled(in)) pull(in) //initial pull
 				else flush()
 			}
 		})

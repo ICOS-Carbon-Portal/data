@@ -26,7 +26,7 @@ import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
 import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 
 object IrodsClient{
-	val bufferSize: Int = 2 << 19 //1 MB
+	val bufferSize: Int = 2 << 22 //8 MB
 
 	def apply(config: IrodsConfig) = new IrodsClient(config)
 }

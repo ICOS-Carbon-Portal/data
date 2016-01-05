@@ -16,6 +16,7 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Flow
 import akka.stream.ThrottleMode
 import se.lu.nateko.cp.data.api.Sha256Sum
+import akka.stream.scaladsl.FileIO
 
 object Playground {
 
@@ -44,6 +45,20 @@ object Playground {
 	def uploadFile(path: String, src: Source[ByteString, Any]): Future[Sha256Sum] = {
 		val sink = client.getNewFileSink(path)(blockingExeCtxt)
 		src.runWith(sink)
+	}
+
+	def fromDisk(path: String): Future[Sha256Sum] = {
+		val file = new java.io.File(path)
+		val src = FileIO.fromFile(file)
+		val sink = client.getNewFileSink(file.getName)(blockingExeCtxt)
+		src.runWith(sink)
+	}
+
+	def writeZeros(path: String): Unit = {
+		val out = client.getNewFileOutputStream(path)
+		val arr = Array.ofDim[Byte](100000000)
+		(1 to 1).foreach(_ => out.write(arr))
+		out.close()
 	}
 
 	def errorTest: Future[Int] = {

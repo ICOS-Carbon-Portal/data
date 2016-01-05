@@ -9,12 +9,14 @@ import org.irods.jargon.core.connection.AbstractIRODSMidLevelProtocol
  */
 private class LocalIrodsSession(connManager: IRODSConnectionPool) extends IRODSSession(connManager) {
 
+	private val pipelineConfig = buildPipelineConfigurationBasedOnJargonProperties()
+
 	override def closeSession(): Unit = connManager.close()
 
 	override def closeSession(account: IRODSAccount): Unit = connManager.closeForAccount(account)
 
 	override def currentConnection(account: IRODSAccount): AbstractIRODSMidLevelProtocol =
-		connManager.getIRODSProtocol(account, buildPipelineConfigurationBasedOnJargonProperties(), this)
+		connManager.getIRODSProtocol(account, pipelineConfig, this)
 
 	override def discardSessionForErrors(account: IRODSAccount): Unit = connManager.closeForAccount(account)
 
