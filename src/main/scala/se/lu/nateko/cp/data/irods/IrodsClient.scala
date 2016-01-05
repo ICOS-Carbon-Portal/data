@@ -23,6 +23,7 @@ import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
+import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 19 //1 MB
@@ -78,19 +79,15 @@ class IrodsClient(config: IrodsConfig){
 			.via(ByteStringBuffer(bufferSize))
 			.toMat(robustIrodsSink)((shaFut, uploadFut) => {
 
-				//compare checksums on iRODS and of the stream
-				def ensureEquality(streamDigest: Sha256Sum, irodsDigest: Sha256Sum) =
-					if(streamDigest == irodsDigest) Future.successful(streamDigest)
-					else Future.failed(new JargonException(
-						s"Carbon Portal's checksum $streamDigest did not match EUDAT's checksum $irodsDigest"
-					))
-
 				val digestFuture = for(
 					streamDigest <- shaFut;
-					_ <- uploadFut; //need to wait for the upload to complete before asking for checksum
-					irodsDigest <- Future(getChecksum(filePath));
-					digest <- ensureEquality(streamDigest, irodsDigest)
-				) yield digest
+					_ <- uploadFut; //need to wait for the upload to succeed before asking for checksum
+					irodsDigest <- Future(getChecksum(filePath))
+				) yield
+					if(streamDigest == irodsDigest) streamDigest
+					else throw new JargonException(
+						s"Carbon Portal's checksum $streamDigest did not match EUDAT's checksum $irodsDigest"
+					)
 
 				digestFuture.andThen{
 					//delete the file on iRODS if there is either up- or downstream error or checksum mismatch
@@ -113,10 +110,21 @@ class IrodsClient(config: IrodsConfig){
 	def getChecksum(filePath: String): Sha256Sum = {
 		val api = getIrodsFileApi
 		try{
-			val file = api.fileFactory.instanceIRODSFile(filePath)
-			val doap = api.accessObjFactory.getDataObjectAO(account)
-			val base64 = doap.computeChecksumOnDataObject(file).getChecksumStringValue
-			Sha256Sum.fromBase64(base64).get
+			val docuao = api.accessObjFactory.getDataObjectChecksumUtilitiesAO(account)
+
+			val checksum = try{
+				docuao.retrieveExistingChecksumForDataObject(filePath)
+			}catch{
+				case ex: Throwable =>
+					val file = api.fileFactory.instanceIRODSFile(filePath)
+					docuao.computeChecksumOnDataObject(file)
+			}
+
+			val hashKind = checksum.getChecksumEncoding
+			if(hashKind != ChecksumEncodingEnum.SHA256)
+				throw new Exception(s"Expected iRODS checksum to be SHA-256, got $hashKind")
+
+			Sha256Sum.fromBase64(checksum.getChecksumStringValue).get
 		}finally{
 			api.cleanUp()
 		}
