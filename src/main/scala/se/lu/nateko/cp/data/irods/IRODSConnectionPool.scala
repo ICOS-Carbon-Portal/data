@@ -10,6 +10,8 @@ import scala.collection.concurrent.TrieMap
 import java.io.Closeable
 import akka.actor.ActorSystem
 import akka.actor.Cancellable
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 /**
  * A special IRODSProtocolManager implementation to make Jargon work in multi-threaded situations when
@@ -18,6 +20,7 @@ import akka.actor.Cancellable
  */
 class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolManager with Closeable{
 
+	import system.dispatcher
 	system.registerOnTermination(close)
 
 	private[this] val inner = IRODSSimpleProtocolManager.instance()
@@ -38,7 +41,8 @@ class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolMan
 			pipeConf: PipelineConfiguration,
 			session: IRODSSession): AbstractIRODSMidLevelProtocol = {
 
-		getPool(irodsAccount).getConnection(pipeConf, session)
+		val connFut = getPool(irodsAccount).getConnection(pipeConf, session)
+		Await.result(connFut, 10 minutes)
 	}
 
 	override def returnIRODSProtocol(conn: AbstractIRODSMidLevelProtocol): Unit = {

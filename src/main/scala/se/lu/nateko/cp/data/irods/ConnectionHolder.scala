@@ -21,6 +21,8 @@ private class ConnectionHolder(
 		_closing = scheduler.scheduleOnce(5 minutes)(closeConnection)
 	}
 
+	def session: IRODSSession = synchronized(_session)
+
 	def takeForSession(session: IRODSSession): AbstractIRODSMidLevelProtocol = synchronized{
 
 		if(!conn.isConnected) throw new Exception("Connection has been closed, cannot use it any more")
@@ -36,6 +38,7 @@ private class ConnectionHolder(
 		cancelClosing()
 
 		if(conn.isConnected){
+			println(s"DISCONNECTING $conn") 
 			conn.disconnect()
 			onClose(this)
 		}
