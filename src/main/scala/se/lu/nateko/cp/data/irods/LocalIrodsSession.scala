@@ -11,9 +11,9 @@ private class LocalIrodsSession(connManager: IRODSConnectionPool) extends IRODSS
 
 	private val pipelineConfig = buildPipelineConfigurationBasedOnJargonProperties()
 
-	override def closeSession(): Unit = connManager.close()
+	override def closeSession(): Unit = connManager.releaseForSession(this)
 
-	override def closeSession(account: IRODSAccount): Unit = connManager.closeForAccount(account)
+	override def closeSession(account: IRODSAccount): Unit = connManager.releaseForSession(this)
 
 	override def currentConnection(account: IRODSAccount): AbstractIRODSMidLevelProtocol =
 		connManager.getIRODSProtocol(account, pipelineConfig, this)

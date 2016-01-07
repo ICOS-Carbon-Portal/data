@@ -27,11 +27,9 @@ import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
-
-	def apply(config: IrodsConfig) = new IrodsClient(config)
 }
 
-class IrodsClient(config: IrodsConfig){
+class IrodsClient(config: IrodsConfig, connPool: IRODSConnectionPool){
 	import IrodsClient._
 
 	private val account = IRODSAccount.instance(
@@ -154,7 +152,6 @@ class IrodsClient(config: IrodsConfig){
 	private def getIrodsFileApi = new IrodsApi
 
 	private class IrodsApi{
-		private val connPool = new IRODSConnectionPool
 		private val session = new LocalIrodsSession(connPool)
 
 		lazy val fileFactory: IRODSFileFactory = new IRODSFileFactoryImpl(session, account)

@@ -8,41 +8,53 @@ import org.irods.jargon.core.connection.AbstractIRODSMidLevelProtocol
 import org.irods.jargon.core.connection.IRODSSession
 import scala.collection.concurrent.TrieMap
 import java.io.Closeable
+import akka.actor.ActorSystem
+import akka.actor.Cancellable
 
 /**
- * A special IRODSProtocolManager implementation to make Jargon work in multi-threaded situations
+ * A special IRODSProtocolManager implementation to make Jargon work in multi-threaded situations when
+ * the same connection may be used by different threads (at least, non-concurrently)
  * Internally, it wraps an IRODSSimpleProtocolManager and delegates to it connection creation
  */
-private class IRODSConnectionPool extends IRODSProtocolManager with Closeable{
+class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolManager with Closeable{
+
+	system.registerOnTermination(close)
 
 	private[this] val inner = IRODSSimpleProtocolManager.instance()
 
-	private[this] val connections = TrieMap.empty[String, AbstractIRODSMidLevelProtocol]
+	private[this] val pools = TrieMap.empty[String, PerAccountPool]
+
+	private def getPool(account: IRODSAccount): PerAccountPool = pools.getOrElseUpdate(
+		account.toString,
+		new PerAccountPool(inner.getIRODSProtocol(account, _, _))
+	)
+
+	private def removePool(account: IRODSAccount): Option[PerAccountPool] = {
+		pools.remove(account.toString)
+	}
 
 	override def getIRODSProtocol(
 			irodsAccount: IRODSAccount,
-			pipelineConfiguration: PipelineConfiguration,
-			irodsSession: IRODSSession): AbstractIRODSMidLevelProtocol = {
+			pipeConf: PipelineConfiguration,
+			session: IRODSSession): AbstractIRODSMidLevelProtocol = {
 
-		connections.getOrElseUpdate(
-			irodsAccount.toString,
-			inner.getIRODSProtocol(irodsAccount, pipelineConfiguration, irodsSession)
-		)
+		getPool(irodsAccount).getConnection(pipeConf, session)
 	}
 
-	override def returnIRODSProtocol(abstractIRODSMidLevelProtocol: AbstractIRODSMidLevelProtocol): Unit = {
-		inner.returnIRODSProtocol(abstractIRODSMidLevelProtocol)
+	override def returnIRODSProtocol(conn: AbstractIRODSMidLevelProtocol): Unit = {
+		getPool(conn.getIrodsAccount).releaseConnection(conn.getIrodsSession)
 	}
 
-	override def close(): Unit = {
-		connections.values.foreach(returnIRODSProtocol)
-		connections.clear()
+	override def close(): Unit = synchronized{
+		pools.values.foreach(_.close())
+		pools.clear()
 	}
 
 	def closeForAccount(account: IRODSAccount): Unit = {
-		val key = account.toString
-		connections.get(key).foreach(returnIRODSProtocol)
-		connections -= key
+		removePool(account).foreach(_.close())
 	}
 
+	def releaseForSession(session: IRODSSession): Unit = {
+		pools.values.foreach(_.releaseConnection(session))
+	}
 }

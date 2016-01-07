@@ -17,6 +17,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.ThrottleMode
 import se.lu.nateko.cp.data.api.Sha256Sum
 import akka.stream.scaladsl.FileIO
+import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 
 object Playground {
 
@@ -25,7 +26,8 @@ object Playground {
 	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
 	val irodsConfig = ConfigReader.getDefault.upload.irods
-	val client = new IrodsClient(irodsConfig)
+	val irodsConnPool = new IRODSConnectionPool
+	val client = new IrodsClient(irodsConfig, irodsConnPool)
 
 	def repeat(str: String, n: Int) = {
 		val bs = ByteString(str)
