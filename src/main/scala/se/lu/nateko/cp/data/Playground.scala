@@ -63,6 +63,12 @@ object Playground {
 		out.close()
 	}
 
+	def writeParallel(prefix: String, n: Int): Future[Seq[Sha256Sum]] = {
+		val extraLargeSrc = repeat(rowBlock, 10000)
+		val futsFut = Future.traverse(0 to n)(i => Future{uploadFile(s"$prefix$i.txt", extraLargeSrc)})
+		futsFut.flatMap(futs => Future.sequence(futs))
+	}
+
 	def errorTest: Future[Int] = {
 		val disrupted = Source(1 to 3).concat(failing)
 		val summer = Sink.fold[Int, Int](0)((sum, next) => if(next > 2) throw new Exception("sink failure!") else sum + next)

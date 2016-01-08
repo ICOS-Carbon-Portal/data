@@ -35,10 +35,6 @@ class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolMan
 		)
 	)
 
-	private def removePool(account: IRODSAccount): Option[PerAccountPool] = {
-		pools.remove(account.toString)
-	}
-
 	override def getIRODSProtocol(
 			irodsAccount: IRODSAccount,
 			pipeConf: PipelineConfiguration,
@@ -57,11 +53,11 @@ class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolMan
 		pools.clear()
 	}
 
-	def closeForAccount(account: IRODSAccount): Unit = {
-		removePool(account).foreach(_.close())
+	def closeForSession(session: IRODSSession): Unit = {
+		pools.values.foreach(_.releaseConnection(session, close = true))
 	}
 
 	def releaseForSession(session: IRODSSession): Unit = {
-		pools.values.foreach(_.releaseConnection(session))
+		pools.values.foreach(_.releaseConnection(session, close = false))
 	}
 }

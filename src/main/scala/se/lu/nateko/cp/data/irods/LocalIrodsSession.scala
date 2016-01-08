@@ -5,7 +5,14 @@ import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.connection.AbstractIRODSMidLevelProtocol
 
 /**
- * The purpose of this class is to stop using the global mutable state in <code>IRODSSession.sessionMap</code>
+ * The purpose of this class is to stop using the global mutable state in `IRODSSession.sessionMap`
+ *
+ * This session is supposed to be very short-lived, created and closed for every `IrodsClient` operation.
+ *
+ * Also, every instance of it is meant to be used with a single `IRODSAccount` and a single connection
+ * (`AbstractIRODSMidLevelProtocol`).
+ *
+ * `IRODSConnectionPool` is supposed to handle connection lifecycle and reuse.
  */
 private class LocalIrodsSession(connManager: IRODSConnectionPool) extends IRODSSession(connManager) {
 
@@ -18,7 +25,7 @@ private class LocalIrodsSession(connManager: IRODSConnectionPool) extends IRODSS
 	override def currentConnection(account: IRODSAccount): AbstractIRODSMidLevelProtocol =
 		connManager.getIRODSProtocol(account, pipelineConfig, this)
 
-	override def discardSessionForErrors(account: IRODSAccount): Unit = connManager.closeForAccount(account)
+	override def discardSessionForErrors(account: IRODSAccount): Unit = connManager.closeForSession(this)
 
 	override def getIRODSCommandsMap: java.util.Map[String, AbstractIRODSMidLevelProtocol] = null
 }
