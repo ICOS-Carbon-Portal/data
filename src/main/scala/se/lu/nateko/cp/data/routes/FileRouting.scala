@@ -13,6 +13,7 @@ import akka.http.scaladsl.model.ContentTypes
 import se.lu.nateko.cp.data.api.Sha256Sum
 import akka.http.scaladsl.server.ValidationRejection
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.Connection
 
 class FileRouting(authRouting: AuthRouting, fileService: FileStorageService)(implicit mat: Materializer) {
 
@@ -32,10 +33,12 @@ class FileRouting(authRouting: AuthRouting, fileService: FileStorageService)(imp
 						.runWith(fileService.getFileSavingSink(hashsum))
 
 					onSuccess(nbytesFuture){nbytes =>
-						val msg = if(nbytes == 0)
-							"This file is already there, upload aborted"
-						else s"Successfully uploaded $nbytes bytes"
-						complete(s"\nHi, ${uinfo.givenName}! $msg\n")
+						if(nbytes == 0)
+							respondWithHeader(Connection("close")){
+								complete((StatusCodes.Conflict, "This file is already there, upload aborted\n"))
+							}
+						else
+							complete(s"\nHi, ${uinfo.givenName}! Successfully uploaded $nbytes bytes\n")
 					}
 				}
 			}
