@@ -15,7 +15,8 @@ object PerAccountPool{
 }
 
 private class PerAccountPool(
-		creator: (PipelineConfiguration, IRODSSession) => AbstractIRODSMidLevelProtocol
+		creator: (PipelineConfiguration, IRODSSession) => AbstractIRODSMidLevelProtocol,
+		connShutdowner: AbstractIRODSMidLevelProtocol => Unit
 	)(implicit system: ActorSystem){
 
 	import PerAccountPool._
@@ -30,10 +31,10 @@ private class PerAccountPool(
 	 */
 	def getConnection(pipeConf: PipelineConfiguration, session: IRODSSession): Future[AbstractIRODSMidLevelProtocol] = synchronized{
 		_occupied.get(session) match{
-			case Some(connHolder) => Future.successful(connHolder.takeForSession(session))
+			case Some(connHolder) => Future.successful(connHolder.connection)
 			case None =>
 				if(_available.isEmpty){
-					createNewConn(creator(pipeConf, session))
+					createNewConn(() => creator(pipeConf, session))
 				}else {
 					val holder = _available.head
 					_available -= holder
@@ -63,12 +64,13 @@ private class PerAccountPool(
 		_available = Set.empty
 	}
 
-	private def createNewConn(conn: => AbstractIRODSMidLevelProtocol): Future[AbstractIRODSMidLevelProtocol] = {
+	private def createNewConn(connMaker: () => AbstractIRODSMidLevelProtocol): Future[AbstractIRODSMidLevelProtocol] = {
 		_canGetConnection.future.map(_ => synchronized{
 			if(_occupied.size >= MaxConnections) throw new IllegalStateException(
 				"Probably the connections were asked for to eagerly. " +
 				"Try waiting for connection before asking for another one"
 			)
+			val conn = connMaker()
 			val holder = new ConnectionHolder(conn, removeConn)
 			_occupied += ((conn.getIrodsSession, holder))
 			_canGetConnection = if(_occupied.size < MaxConnections) yes else later
@@ -79,5 +81,6 @@ private class PerAccountPool(
 	private def removeConn(holder: ConnectionHolder): Unit = synchronized{
 		_available -= holder
 		_occupied -= holder.session
+		connShutdowner(holder.connection)
 	}
 }

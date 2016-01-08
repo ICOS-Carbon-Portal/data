@@ -29,7 +29,10 @@ class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolMan
 
 	private def getPool(account: IRODSAccount): PerAccountPool = pools.getOrElseUpdate(
 		account.toString,
-		new PerAccountPool(inner.getIRODSProtocol(account, _, _))
+		new PerAccountPool(
+			inner.getIRODSProtocol(account, _, _),
+			inner.returnIRODSProtocol
+		)
 	)
 
 	private def removePool(account: IRODSAccount): Option[PerAccountPool] = {

@@ -18,10 +18,13 @@ private class ConnectionHolder(
 	private[this] var _session = conn.getIrodsSession
 
 	def release(): Unit = synchronized{
-		_closing = scheduler.scheduleOnce(5 minutes)(closeConnection)
+		if(conn.isConnected) {
+			_closing = scheduler.scheduleOnce(5 minutes)(closeConnection)
+		}
 	}
 
 	def session: IRODSSession = synchronized(_session)
+	def connection = synchronized(conn)
 
 	def takeForSession(session: IRODSSession): AbstractIRODSMidLevelProtocol = synchronized{
 
@@ -34,12 +37,8 @@ private class ConnectionHolder(
 	}
 
 	def closeConnection(): Unit = synchronized{
-
 		cancelClosing()
-
-		if(conn.isConnected){
-			println(s"DISCONNECTING $conn") 
-			conn.disconnect()
+		if(conn.isConnected) {
 			onClose(this)
 		}
 	}
