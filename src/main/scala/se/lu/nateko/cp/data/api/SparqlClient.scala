@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.headers.HttpEncodings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.data.{SparqlEndpointConfig, ConfigReader}
@@ -13,7 +14,7 @@ import SparqlClient.Binding
 
 
 sealed trait BoundValue
-case class BoundLiteral(value: String, dataType: Option[Uri]) extends BoundValue
+case class BoundLiteral(value: String, datatype: Option[Uri]) extends BoundValue
 case class BoundUri(value: Uri) extends BoundValue
 
 case class SparqlResultHead(vars: Seq[String])
@@ -64,12 +65,14 @@ class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
 	import system.dispatcher
 	import SparqlClient._
 
+	private val sparqlJson = MediaType.custom("application/sparql-results+json", false)
+
 	private def httpPost(entity: String): Future[HttpResponse] = {
 		Http().singleRequest(
 			HttpRequest(
 				method = HttpMethods.POST,
 				uri = config.url,
-				headers = headers.Accept(MediaTypes.`application/json`) :: Nil,
+				headers = headers.Accept(MediaTypes.`application/json`, sparqlJson) :: Nil,
 				entity = entity
 			)
 		)
@@ -79,10 +82,12 @@ class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
 		httpPost(selectQuery).flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>
-					resp.entity.contentType.toString() match {
-						case "application/sparql-results+json" =>
+					resp.entity.contentType.mediaType match {
+						case `sparqlJson` =>
 							val entity = resp.entity.withContentType(ContentTypes.`application/json`)
 							Unmarshal(entity).to[SparqlSelectResult]
+						case MediaTypes.`application/json` =>
+							Unmarshal(resp.entity).to[SparqlSelectResult]
 
 						case _ => Future.failed(new Exception(s"Server responded with Content Type ${resp.entity.contentType.toString()}"))
 					}
