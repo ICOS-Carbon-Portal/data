@@ -24,15 +24,17 @@ case class IrodsConfig(
 	defaultResource: String
 )
 case class UploadConfig(folder: String, irods: IrodsConfig)
-case class CpdataConfig(auth: PublicAuthConfig, netcdf: NetCdfConfig, upload: UploadConfig)
+case class SparqlEndpointConfig(url: String)
+case class CpdataConfig(auth: PublicAuthConfig, netcdf: NetCdfConfig, upload: UploadConfig, meta: SparqlEndpointConfig)
 
 object ConfigReader extends DefaultJsonProtocol{
 
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
 	implicit val irodsConfigFormat = jsonFormat7(IrodsConfig)
 	implicit val uploadConfigFormat = jsonFormat2(UploadConfig)
+	implicit val sparqlConfigFormat = jsonFormat1(SparqlEndpointConfig)
 	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
-	implicit val cpdataConfigFormat = jsonFormat3(CpdataConfig)
+	implicit val cpdataConfigFormat = jsonFormat4(CpdataConfig)
 
 	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
 
