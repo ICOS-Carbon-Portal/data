@@ -9,55 +9,17 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.data.{SparqlEndpointConfig, ConfigReader}
 import scala.concurrent.Future
-import spray.json._
-import SparqlClient.Binding
+import se.lu.nateko.cp.meta.core.sparql.BoundValue
+import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
+import se.lu.nateko.cp.meta.core.sparql.JsonSupport._
 
 
-sealed trait BoundValue
-case class BoundLiteral(value: String, datatype: Option[Uri]) extends BoundValue
-case class BoundUri(value: Uri) extends BoundValue
-
-case class SparqlResultHead(vars: Seq[String])
-case class SparqlResultResults(bindings: Seq[Binding])
-case class SparqlSelectResult(head: SparqlResultHead, results: SparqlResultResults)
-
-object SparqlClient extends DefaultJsonProtocol{
-
-	type Binding = Map[String, BoundValue]
+object SparqlClient {
 
 	def default(implicit system: ActorSystem) = new SparqlClient(ConfigReader.getDefault.meta)
 
 	def apply(config: SparqlEndpointConfig)(implicit system: ActorSystem) = new SparqlClient(config)
 
-	implicit object uriFormat extends RootJsonFormat[Uri] {
-		def write(uri: Uri) = JsString(uri.toString)
-		def read(value: JsValue): Uri = value match{
-			case JsString(s) => Uri(s)
-			case _ => deserializationError("String expected")
-		}
-	}
-
-	implicit val boundLitFormat = jsonFormat2(BoundLiteral)
-	implicit val boundUriFormat = jsonFormat1(BoundUri)
-
-	implicit object boundValueFormat extends RootJsonFormat[BoundValue] {
-		def write(bv: BoundValue) = bv match{
-			case uri: BoundUri => uri.toJson
-			case lit: BoundLiteral => lit.toJson
-		}
-
-		def read(value: JsValue) = value match {
-			case JsObject(fields) => fields.get("type") match {
-				case Some(JsString("uri")) => value.convertTo[BoundUri]
-				case Some(JsString("literal")) => value.convertTo[BoundLiteral]
-				case _ => deserializationError("Expected a URI or a Literal")
-			}
-			case _ => deserializationError("JsObject expected")
-		}
-	}
-	implicit val sparqlResultHeadFormat = jsonFormat1(SparqlResultHead)
-	implicit val sparqlResultResultsFormat = jsonFormat1(SparqlResultResults)
-	implicit val sparqlSelectResultFormat = jsonFormat2(SparqlSelectResult)
 }
 
 class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
@@ -82,16 +44,17 @@ class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
 		httpPost(selectQuery).flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>
-					resp.entity.contentType.mediaType match {
+					val entity = resp.entity.contentType.mediaType match {
 						case `sparqlJson` =>
-							val entity = resp.entity.withContentType(ContentTypes.`application/json`)
-							Unmarshal(entity).to[SparqlSelectResult]
+							resp.entity.withContentType(ContentTypes.`application/json`)
 						case MediaTypes.`application/json` =>
-							Unmarshal(resp.entity).to[SparqlSelectResult]
-
-						case _ => Future.failed(new Exception(s"Server responded with Content Type ${resp.entity.contentType.toString()}"))
+							resp.entity
+						case _ =>
+							throw new Exception(s"Server responded with Content Type ${resp.entity.contentType}")
 					}
-				case _ => Future.failed(new Exception(s"Got ${resp.status} from the server"))
+					Unmarshal(entity).to[SparqlSelectResult]
+				case _ =>
+					Future.failed(new Exception(s"Got ${resp.status} from the server"))
 			}
 		)
 	}

@@ -15,9 +15,9 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Flow
 import akka.stream.ThrottleMode
-import se.lu.nateko.cp.data.api.Sha256Sum
 import akka.stream.scaladsl.FileIO
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 object Playground {
 

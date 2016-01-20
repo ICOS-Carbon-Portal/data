@@ -17,13 +17,13 @@ import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import se.lu.nateko.cp.data.api.Sha256Sum
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
 import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB

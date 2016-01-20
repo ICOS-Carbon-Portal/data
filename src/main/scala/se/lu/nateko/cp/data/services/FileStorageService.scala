@@ -11,10 +11,10 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import akka.stream.scaladsl.FileIO
-import se.lu.nateko.cp.data.api.Sha256Sum
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.api.Utils
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 class FileStorageService(folder: File, irods: IrodsClient) {
 

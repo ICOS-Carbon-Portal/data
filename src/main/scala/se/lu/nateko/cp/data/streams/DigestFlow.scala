@@ -15,7 +15,7 @@ import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.ByteString
-import se.lu.nateko.cp.data.api.Sha256Sum
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 object DigestFlow{
 
