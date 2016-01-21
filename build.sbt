@@ -51,4 +51,3 @@ assemblyMergeStrategy in assembly := {
 	case x => ((assemblyMergeStrategy in assembly).value)(x)
 }
 
-Revolver.settings
