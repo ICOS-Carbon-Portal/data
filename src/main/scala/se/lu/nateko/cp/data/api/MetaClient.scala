@@ -1,67 +1,66 @@
 package se.lu.nateko.cp.data.api
 
-import java.net.URI
-import scala.concurrent.Future
-import se.lu.nateko.cp.cpauth.core.UserInfo
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.ActorMaterializer
+
+import scala.concurrent.Future
+
+import se.lu.nateko.cp.cpauth.core.UserInfo
 import se.lu.nateko.cp.meta.core.data._
-import se.lu.nateko.cp.meta.core.sparql._
-import java.time.Instant
+import se.lu.nateko.cp.meta.core.data.JsonSupport._
+import se.lu.nateko.cp.data.MetaServiceConfig
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
+import spray.json._
 
-class MetaClient(sparql: SparqlClient)(implicit system: ActorSystem) {
-	import system.dispatcher
+class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
+	implicit val dispatcher = system.dispatcher
+	implicit val materializer = ActorMaterializer(None, Some("metaClientMat"))
+	import config.{baseUrl, uploadApiPath}
 
-	def lookupPackage(packageUri: URI): Future[DataPackage] = {
-		val query = s"""
-		PREFIX cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		select ?format ?encoding ?dataLevel ?submitter
-		from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
-		from <http://meta.icos-cp.eu/ontologies/cpmeta/instances/>
-		where{
-			<$packageUri> cpmeta:hasPackageSpec ?packageSpec .
-			<$packageUri> cpmeta:wasSubmittedBy ?submission .
-
-			?packageSpec cpmeta:hasFormat ?format .
-			?packageSpec cpmeta:hasEncoding ?encoding .
-			?packageSpec cpmeta:hasDataLevel ?dataLevel .
-
-			?submission ?cpmeta:wasAssociatedWith ?submitter
-		}"""
-		sparql.select(query).map(parsePackageInfo)
+	private def get(uri: Uri): Future[HttpResponse] = {
+		Http().singleRequest(HttpRequest(uri = uri))
 	}
 
-	def userIsAllowedUpload(submittingOrg: URI, user: UserInfo): Future[Boolean] = {
-		???
+	def lookupPackage(hash: Sha256Sum): Future[DataPackage] = {
+		val url = baseUrl + "objects/" + hash.base64Url
+		get(url).flatMap(
+			resp => resp.status match {
+				case StatusCodes.OK =>
+					Unmarshal(resp.entity).to[DataPackage]
+				case StatusCodes.NotFound =>
+					throw new MetadataObjectNotFound(hash)
+				case _ =>
+					Future.failed(new Exception(s"Got ${resp.status} from the server"))
+			}
+		)
 	}
 
-	private def parsePackageInfo(sparqlRes: SparqlSelectResult): DataPackage = {
-		val bindings = sparqlRes.results.bindings
-		assert(bindings.length == 1, "Expecting a one-row answer to the DataPackage query")
-
-		val Seq(formatVar, encodingVar, dataLevelVar, submitterVar) = sparqlRes.head.vars
-
-		val sol = bindings.head
-
-		val submissionOpt = for(
-			BoundUri(uri) <- sol.get(submitterVar)
-			//TODO Add fetching the submission start/stop instants
-		) yield PackageSubmission(UriResource(uri, None), Instant.now, None)
-
-		val submission = submissionOpt.getOrElse{
-			throw new Error("Expected submitter to be specified and be an RDF Resource")
-		}
-
-		val packageSpecOpt = for(
-			BoundUri(format) <- sol.get(formatVar);
-			BoundUri(encoding) <- sol.get(encodingVar);
-			BoundLiteral(dataLevel, Some(dtype)) <- sol.get(dataLevelVar) if(dtype.getFragment == "integer")
-		) yield DataPackageSpec(format, encoding, dataLevel.toInt)
-
-		val packageSpec = packageSpecOpt.getOrElse{
-			throw new Exception("Expected format and encoding URIs and dataLevel Int to be present on Package Spec")
-		}
-		//TODO Complete with hash and production info
-		DataPackage(null, null, submission, packageSpec)
+	def userIsAllowedUpload(dataObj: DataPackage, user: UserInfo): Future[Unit] = {
+		val submitter = dataObj.submission.submittingOrg
+		val submitterUri = submitter.uri.toString
+		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
+			Uri.Query("submitter" -> submitterUri, "userId" -> user.mail)
+		)
+		get(uri).flatMap(
+			resp => resp.status match {
+				case StatusCodes.OK =>
+					Unmarshal(resp.entity).to[JsValue].map(_ match {
+						case JsBoolean(b) =>
+							if(!b) throw new UnauthorizedUpload({
+								val submitterName = submitter.label.getOrElse(submitterUri)
+								s"User '${user.mail}' is not authorized to upload on behalf of $submitterName"
+							})
+						case js => throw new Exception(s"Expected a JSON boolean, got $js")
+					})
+				case _ =>
+					Future.failed(new Exception(s"Got ${resp.status} from the server"))
+			}
+		)
 	}
+
 }

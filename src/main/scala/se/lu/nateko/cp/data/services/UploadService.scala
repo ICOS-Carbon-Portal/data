@@ -15,8 +15,13 @@ import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.meta.core.data.DataPackage
+import se.lu.nateko.cp.cpauth.core.UserInfo
 
-class FileStorageService(folder: File, irods: IrodsClient) {
+class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
+
+	import meta.dispatcher
 
 	if(!folder.exists) {
 		assert(folder.mkdirs(), "Failed to create directory " + folder.getAbsolutePath)
@@ -25,7 +30,7 @@ class FileStorageService(folder: File, irods: IrodsClient) {
 
 	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.base64Url).toFile
 
-	def getFileSavingSink(hash: Sha256Sum)(implicit ctxt: ExecutionContext): Sink[ByteString, Future[Long]] = {
+	def getFileSavingSink(hash: Sha256Sum): Sink[ByteString, Future[Long]] = {
 		val file = getFile(hash)
 
 		if(file.exists)
@@ -54,5 +59,12 @@ class FileStorageService(folder: File, irods: IrodsClient) {
 					}
 				}
 		}
+	}
+
+	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[Long]]] = {
+		for(
+			dataObj <- meta.lookupPackage(hash);
+			_ <- meta.userIsAllowedUpload(dataObj, user)
+		) yield getFileSavingSink(hash)
 	}
 }

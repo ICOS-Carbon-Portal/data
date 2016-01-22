@@ -14,11 +14,12 @@ import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.routes.AuthRouting
-import se.lu.nateko.cp.data.routes.FileRouting
+import se.lu.nateko.cp.data.routes.UploadRouting
 import se.lu.nateko.cp.data.routes.NetcdfRoute
-import se.lu.nateko.cp.data.services.FileStorageService
+import se.lu.nateko.cp.data.services.UploadService
 import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
+import se.lu.nateko.cp.data.api.MetaClient
 
 object Main extends App {
 
@@ -36,9 +37,10 @@ object Main extends App {
 
 	val irodsConnPool = new IRODSConnectionPool
 	val irodsClient = new IrodsClient(config.upload.irods, irodsConnPool)
-	val fileService = new FileStorageService(new java.io.File(config.upload.folder), irodsClient)
+	val metaClient = new MetaClient(config.meta)
+	val uploadService = new UploadService(new java.io.File(config.upload.folder), irodsClient, metaClient)
 	val authRouting = new AuthRouting(config.auth)
-	val fileRouting = new FileRouting(authRouting, fileService)
+	val uploadRouting = new UploadRouting(authRouting, uploadService)
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
@@ -49,7 +51,7 @@ object Main extends App {
 
 	val route = handleExceptions(exceptionHandler){
 		NetcdfRoute(factory) ~
-		fileRouting.route
+		uploadRouting.route
 	}
 
 	Http()

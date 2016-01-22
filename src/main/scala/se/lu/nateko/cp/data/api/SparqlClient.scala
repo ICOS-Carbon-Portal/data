@@ -7,25 +7,16 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.headers.HttpEncodings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import se.lu.nateko.cp.data.{SparqlEndpointConfig, ConfigReader}
+import se.lu.nateko.cp.data.ConfigReader
 import scala.concurrent.Future
 import se.lu.nateko.cp.meta.core.sparql.BoundValue
 import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
 import se.lu.nateko.cp.meta.core.sparql.JsonSupport._
+import java.net.URL
 
-
-object SparqlClient {
-
-	def default(implicit system: ActorSystem) = new SparqlClient(ConfigReader.getDefault.meta)
-
-	def apply(config: SparqlEndpointConfig)(implicit system: ActorSystem) = new SparqlClient(config)
-
-}
-
-class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
+class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	implicit val materializer = ActorMaterializer()
 	import system.dispatcher
-	import SparqlClient._
 
 	private val sparqlJson = MediaType.custom("application/sparql-results+json", false)
 
@@ -33,7 +24,7 @@ class SparqlClient(config: SparqlEndpointConfig)(implicit system: ActorSystem) {
 		Http().singleRequest(
 			HttpRequest(
 				method = HttpMethods.POST,
-				uri = config.url,
+				uri = url.toString,
 				headers = headers.Accept(MediaTypes.`application/json`, sparqlJson) :: Nil,
 				entity = entity
 			)
