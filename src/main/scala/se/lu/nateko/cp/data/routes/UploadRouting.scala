@@ -26,18 +26,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		authRouting.user{ uinfo =>
 			extractRequest{ req =>
-				val nbytesFuture: Future[Long] = uploadService
+				val pidFuture: Future[String] = uploadService
 					.getSink(hashsum, uinfo)
 					.flatMap(req.entity.dataBytes.runWith)
 
-				onSuccess(nbytesFuture){nbytes =>
-					if(nbytes == 0)
-						complete((StatusCodes.Conflict, "\nThis file is already there, upload aborted\n"))
-					else
-						complete(
-							s"\nHi, ${uinfo.givenName}! Successfully uploaded $nbytes bytes\n" +
-							s"The file is available at https://data.icos-cp.eu/objects/$hashsum\n"
-						)
+				onSuccess(pidFuture){pid =>
+					complete(s"The data object is available at http://dx.doi.org/$pid")
 				}
 			}
 		}

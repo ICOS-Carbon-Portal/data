@@ -16,7 +16,6 @@ import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.api.MetaClient
-import se.lu.nateko.cp.meta.core.data.DataPackage
 import se.lu.nateko.cp.cpauth.core.UserInfo
 
 class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
@@ -30,11 +29,12 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 
 	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.base64Url).toFile
 
-	def getFileSavingSink(hash: Sha256Sum): Sink[ByteString, Future[Long]] = {
+	def getFileSavingSink(hash: Sha256Sum): Sink[ByteString, Future[String]] = {
 		val file = getFile(hash)
 
 		if(file.exists)
-			Sink.cancelled.mapMaterializedValue(_ => Future.successful(0))
+			//TODO Develop a proper workflow for re-submission, re-upload, etc
+			Sink.cancelled.mapMaterializedValue(_ => meta.completeUpload(hash))
 		else {
 			val irodsSink = irods.getNewFileSink(hash.base64Url)
 			val fileSink = FileIO.toFile(file)
@@ -56,12 +56,12 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 						case Failure(_) => if(file.exists) file.delete()
 					}.andThen{
 						case Failure(_) => irods.deleteFile(hash.base64Url)
-					}
+					}.flatMap(_ => meta.completeUpload(hash))
 				}
 		}
 	}
 
-	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[Long]]] = {
+	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[String]]] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dataObj, user)

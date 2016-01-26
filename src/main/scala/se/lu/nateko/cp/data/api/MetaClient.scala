@@ -6,15 +6,13 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-
 import scala.concurrent.Future
-
+import scala.concurrent.duration.DurationInt
 import se.lu.nateko.cp.cpauth.core.UserInfo
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-
 import spray.json._
 
 class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
@@ -23,15 +21,24 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 	import config.{baseUrl, uploadApiPath}
 
 	private def get(uri: Uri): Future[HttpResponse] = {
-		Http().singleRequest(HttpRequest(uri = uri))
+		Http().singleRequest(
+			HttpRequest(
+				uri = uri,
+				headers = headers.Accept(MediaTypes.`application/json`) :: Nil
+			)
+		)
 	}
 
-	def lookupPackage(hash: Sha256Sum): Future[DataPackage] = {
+	private def post(uri: Uri): Future[HttpResponse] = {
+		Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST))
+	}
+
+	def lookupPackage(hash: Sha256Sum): Future[DataObject] = {
 		val url = baseUrl + "objects/" + hash.base64Url
 		get(url).flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>
-					Unmarshal(resp.entity).to[DataPackage]
+					Unmarshal(resp.entity).to[DataObject]
 				case StatusCodes.NotFound =>
 					throw new MetadataObjectNotFound(hash)
 				case _ =>
@@ -40,8 +47,8 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 		)
 	}
 
-	def userIsAllowedUpload(dataObj: DataPackage, user: UserInfo): Future[Unit] = {
-		val submitter = dataObj.submission.submittingOrg
+	def userIsAllowedUpload(dataObj: DataObject, user: UserInfo): Future[Unit] = {
+		val submitter = dataObj.submission.submitter
 		val submitterUri = submitter.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
 			Uri.Query("submitter" -> submitterUri, "userId" -> user.mail)
@@ -57,10 +64,27 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 							})
 						case js => throw new Exception(s"Expected a JSON boolean, got $js")
 					})
-				case _ =>
-					Future.failed(new Exception(s"Got ${resp.status} from the server"))
+				case notOk =>
+					failWithReturnedMessage(notOk, resp)
 			}
 		)
 	}
 
+	def completeUpload(hash: Sha256Sum): Future[String] = {
+		val url = config.baseUrl + config.uploadApiPath + "/" + hash.base64Url
+
+		post(url).flatMap(resp => resp.status match {
+			case StatusCodes.OK =>
+				Unmarshal(resp.entity).to[String]
+			case notOk =>
+				failWithReturnedMessage(notOk, resp)
+		})
+	}
+
+	private def failWithReturnedMessage[T](status: StatusCode, resp: HttpResponse): Future[T] = {
+		resp.entity.toStrict(3 seconds)            //making sure the response is not chunked
+			.map(strict => strict.data.toString)   //extracting the response body as string, to treat is as error message later
+			.recover{case _: Throwable => s"Got $status from the metadata server"}  //fallback error message
+			.flatMap(msg => Future.failed(new CpDataException(msg)))   //failing with the error message
+	}
 }

@@ -24,10 +24,13 @@ project/plugins/project/
 .project
 .settings/
 .classpath
-.cache
+.cache-main
+.cache-tests
+/bin/
 
 nohup.out
 *.*~
 \#*\#
 
 .idea
+
