@@ -27,7 +27,7 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
-	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.base64Url).toFile
+	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.id).toFile
 
 	def getFileSavingSink(hash: Sha256Sum): Sink[ByteString, Future[String]] = {
 		val file = getFile(hash)
@@ -36,7 +36,7 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 			//TODO Develop a proper workflow for re-submission, re-upload, etc
 			Sink.cancelled.mapMaterializedValue(_ => meta.completeUpload(hash))
 		else {
-			val irodsSink = irods.getNewFileSink(hash.base64Url)
+			val irodsSink = irods.getNewFileSink(hash.id)
 			val fileSink = FileIO.toFile(file)
 
 			ErrorSwallower[ByteString]()
@@ -49,13 +49,13 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 						nBytes <- nbytesFut;
 						_ <- upstreamFut
 					) yield
-						if(actualHash == hash) nBytes
+						if(actualHash.truncate == hash.truncate) nBytes
 						else throw new Exception(s"Got hashsum $actualHash, expected $hash")
 
 					uploadedBytesFut.andThen{
 						case Failure(_) => if(file.exists) file.delete()
 					}.andThen{
-						case Failure(_) => irods.deleteFile(hash.base64Url)
+						case Failure(_) => irods.deleteFile(hash.id)
 					}.flatMap(_ => meta.completeUpload(hash))
 				}
 		}

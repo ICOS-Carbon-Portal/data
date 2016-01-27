@@ -34,7 +34,7 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 	}
 
 	def lookupPackage(hash: Sha256Sum): Future[DataObject] = {
-		val url = baseUrl + "objects/" + hash.base64Url
+		val url = baseUrl + "objects/" + hash.id
 		get(url).flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>
@@ -71,7 +71,7 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 	}
 
 	def completeUpload(hash: Sha256Sum): Future[String] = {
-		val url = config.baseUrl + config.uploadApiPath + "/" + hash.base64Url
+		val url = config.baseUrl + config.uploadApiPath + "/" + hash.id
 
 		post(url).flatMap(resp => resp.status match {
 			case StatusCodes.OK =>

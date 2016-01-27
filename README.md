@@ -26,5 +26,9 @@ Using the data upload functionality
 -----------------------------------
 Upload is done using HTTP PUT with chunked transfer encoding and cookie authentication. The cookie can be obtained from https://cpauth.icos-cp.eu .
 
-`curl -v -H "Transfer-Encoding: chunked" -H "Cookie: cpauthToken=<base64-encoded signed token>" --upload-file <file> <host>`
+`curl -v -H "Transfer-Encoding: chunked" -H "Cookie: cpauthToken=<base64-encoded signed token>" --upload-file <file> https://data.icos-cp.eu/objects/<data object id>`
+
+Alternatively, if you previously logged in to CPauth with `curl` and wrote the authentication cookie to `cookies.txt`, you can run
+
+`curl -v --cookie cookies.txt -H "Transfer-Encoding: chunked" --upload-file <file> https://data.icos-cp.eu/objects/<data object id>`
 
