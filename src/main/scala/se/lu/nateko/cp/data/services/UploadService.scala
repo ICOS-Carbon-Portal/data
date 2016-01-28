@@ -49,7 +49,7 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 						nBytes <- nbytesFut;
 						_ <- upstreamFut
 					) yield
-						if(actualHash.truncate == hash.truncate) nBytes
+						if(actualHash == hash) nBytes
 						else throw new Exception(s"Got hashsum $actualHash, expected $hash")
 
 					uploadedBytesFut.andThen{
@@ -65,6 +65,6 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 		for(
 			dataObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dataObj, user)
-		) yield getFileSavingSink(hash)
+		) yield getFileSavingSink(dataObj.hash) //dataObj is a complete hash (not truncated)
 	}
 }
