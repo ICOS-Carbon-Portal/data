@@ -3,14 +3,12 @@ package se.lu.nateko.cp.data.formats.csv
 import scala.collection.mutable.ArrayBuffer
 
 object CsvParser{
-	object State extends Enumeration{
-		val Init, Text, Esc, Quote, Sep, Error = Value
-		type State = Value
-	}
+	type State = Int
+	val Init = 0; val Text = 1; val Esc = 2; val Quote = 3; val Sep = 4; val Error = 5
 
-	class Accumulator(val cells: Array[String], val lastState: State.State)
+	class Accumulator(val cells: Array[String], val lastState: State)
 
-	def seed = new Accumulator(Array.empty, State.Init)
+	def seed = new Accumulator(Array.empty, Init)
 
 	def apply(opts: CsvOptions) = new CsvParser(opts)
 	def default = new CsvParser(CsvOptions.default)
@@ -20,12 +18,16 @@ object CsvParser{
 class CsvParser(opts: CsvOptions) {
 	import opts._
 	import CsvParser._
-	import State._
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 
 		var state: State = acc.lastState
 		val cells = ArrayBuffer.empty[StringBuilder]
+
+		if(state == Quote) { //multi-line value continues
+			acc.cells.foreach(cell => cells.append(new StringBuilder(cell)))
+		}
+
 		val errors = new ArrayBuffer[String](1)
 
 		var i = 0
@@ -37,17 +39,9 @@ class CsvParser(opts: CsvOptions) {
 		state = nextState(state, cells, errors, 0, 0)
 
 		if(state == Error) throw new CsvParsingException(errors.headOption.getOrElse("Unexpected error"))
+		if(state != Init && state != Quote) throw new CsvParsingException("Unexpected parser state at the end of line")
 
-		val newCells = cells.map(_.toString).toArray
-		val finalCells: Array[String] =
-			if(acc.lastState == Init || acc.cells.isEmpty) newCells
-			else if(cells.isEmpty) acc.cells
-			else {
-				val multilineCell: String = acc.cells.last + '\n' + newCells.head
-				(acc.cells.init :+ multilineCell) ++ newCells.tail
-			}
-
-		new Accumulator(finalCells, state)
+		new Accumulator(cells.map(_.toString).toArray, state)
 	}
 
 	private def nextState(
@@ -78,7 +72,7 @@ class CsvParser(opts: CsvOptions) {
 		case 0 => state match { //line ended
 			case Init | Text => Init //entry done, 0 or more cells parced
 			case Esc => errors.append("Unexpected end of line while in escape mode"); Error
-			case Quote => Quote //line ended while quoting => multi-line entry
+			case Quote => cells.last.append('\n'); Quote //line ended while quoting => multi-line entry
 			case Sep => Init //entry done, last cell empty
 		}
 		case c => state match {

@@ -6,7 +6,6 @@ import se.lu.nateko.cp.data.formats.csv.CsvParser
 class CsvParserTests extends FunSpec{
 
 	import CsvParser._
-	import State._
 
 	def parse(csv: String, parser: CsvParser): IndexedSeq[Accumulator] = {
 		val lines = csv.stripMargin.trim.split("\n")
@@ -52,6 +51,16 @@ class CsvParserTests extends FunSpec{
 			"""
 			val accs = parse(csv, parser)
 			assertCells(accs(1), "plain, quoted value", "nice, \"escaped\" value")
+		}
+
+		it("Supports values with a line break inside quoted cells"){
+			val csv = """
+				|c1,c2
+				|"value with
+				| a line break",plain value
+			"""
+			val accs = parse(csv, parser)
+			assertCells(accs(2), "value with\n a line break", "plain value")
 		}
 	}
 }
