@@ -47,7 +47,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 			val contentResolver = implicitly[ContentTypeResolver]
 			val contentType = contentResolver(fileName)
 			getFromFile(file, contentType)
-		})
+		}) ~
+		complete(StatusCodes.NotFound)
 	} ~ requireShaHash
 
 	val route = pathPrefix("objects"){

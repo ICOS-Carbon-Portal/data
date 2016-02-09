@@ -17,7 +17,7 @@ import se.lu.nateko.cp.data.routes.AuthRouting
 import se.lu.nateko.cp.data.routes.UploadRouting
 import se.lu.nateko.cp.data.routes.NetcdfRoute
 import se.lu.nateko.cp.data.services.UploadService
-import se.lu.nateko.cp.netcdf.viewing.impl.ViewServiceFactoryImpl
+import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
 

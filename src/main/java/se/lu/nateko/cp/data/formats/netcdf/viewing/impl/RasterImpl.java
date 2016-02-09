@@ -1,6 +1,6 @@
-package se.lu.nateko.cp.netcdf.viewing.impl;
+package se.lu.nateko.cp.data.formats.netcdf.viewing.impl;
 
-import se.lu.nateko.cp.netcdf.viewing.Raster;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster;
 import ucar.ma2.Array;
 
 public class RasterImpl implements Raster {

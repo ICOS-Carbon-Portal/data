@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.netcdf.viewing;
+package se.lu.nateko.cp.data.formats.netcdf.viewing;
 
 public class VariableSpecification {
 	public String dateVariable;

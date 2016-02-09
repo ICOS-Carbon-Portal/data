@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.netcdf.viewing;
+package se.lu.nateko.cp.data.formats.netcdf.viewing;
 
 public interface ViewServiceFactory {
 	String[] getNetCdfFiles();

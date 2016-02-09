@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.netcdf.viewing.impl;
+package se.lu.nateko.cp.data.formats.netcdf.viewing.impl;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,10 +7,12 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Locale;
 
-import se.lu.nateko.cp.netcdf.viewing.*;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.DimensionsSpecification;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.VariableSpecification;
 import ucar.ma2.*;
 import ucar.nc2.Variable;
-import ucar.nc2.dataset.CoordinateAxis;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.VariableDS;

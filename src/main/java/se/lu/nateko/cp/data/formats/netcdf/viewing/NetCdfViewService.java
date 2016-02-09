@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.netcdf.viewing;
+package se.lu.nateko.cp.data.formats.netcdf.viewing;
 
 import java.io.IOException;
 import java.util.Calendar;

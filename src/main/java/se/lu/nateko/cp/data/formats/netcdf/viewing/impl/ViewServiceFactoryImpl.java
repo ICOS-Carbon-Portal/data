@@ -1,9 +1,10 @@
-package se.lu.nateko.cp.netcdf.viewing.impl;
+package se.lu.nateko.cp.data.formats.netcdf.viewing.impl;
 
 import java.util.List;
 
-import se.lu.nateko.cp.netcdf.util.NetCdfFiles;
-import se.lu.nateko.cp.netcdf.viewing.*;
+import se.lu.nateko.cp.data.formats.netcdf.util.NetCdfFiles;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService;
+import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory;
 
 
 public class ViewServiceFactoryImpl implements ViewServiceFactory{

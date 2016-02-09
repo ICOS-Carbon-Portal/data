@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.routes
 
-import se.lu.nateko.cp.netcdf.viewing.ViewServiceFactory
+import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._

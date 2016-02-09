@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data
 
-import se.lu.nateko.cp.netcdf.viewing.Raster
+import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 import spray.json._
 import akka.http.scaladsl.model._
 
