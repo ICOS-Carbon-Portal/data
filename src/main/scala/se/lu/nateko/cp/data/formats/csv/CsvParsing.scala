@@ -13,7 +13,7 @@ object CsvParser{
 	def apply(opts: CsvOptions) = new CsvParser(opts)
 	def default = new CsvParser(CsvOptions.default)
 	def tsv = new CsvParser(CsvOptions.tsv)
-}
+ }
 
 class CsvParser(opts: CsvOptions) {
 	import opts._
@@ -35,8 +35,8 @@ class CsvParser(opts: CsvOptions) {
 			state = nextState(state, cells, errors, line.charAt(i), line.charAt(i + 1))
 			i += 1
 		}
-		state = nextState(state, cells, errors, line.charAt(i), 0)
-		state = nextState(state, cells, errors, 0, 0)
+		state = nextState(state, cells, errors, line.charAt(i), '\u0000')
+		state = nextState(state, cells, errors, '\u0000', '\u0000')
 
 		if(state == Error) throw new CsvParsingException(errors.headOption.getOrElse("Unexpected error"))
 		if(state != Init && state != Quote) throw new CsvParsingException("Unexpected parser state at the end of line")
@@ -69,7 +69,7 @@ class CsvParser(opts: CsvOptions) {
 			case Esc => cells.last.append(escape); Quote //self-escaping of the escape symbol
 			case Quote => Esc
 		}
-		case 0 => state match { //line ended
+		case '\u0000' => state match { //line ended
 			case Init | Text => Init //entry done, 0 or more cells parced
 			case Esc => errors.append("Unexpected end of line while in escape mode"); Error
 			case Quote => cells.last.append('\n'); Quote //line ended while quoting => multi-line entry

@@ -6,6 +6,8 @@ class CsvOptions(
 	val escape: Char
 ){
 	assert(sep != quote, "Separator symbol and quote symbol must differ")
+	assert(sep != escape, "Separator symbol and escape symbol must differ")
+	assert(sep != '\u0000' && quote != '\u0000' && escape != '\u0000', "None of the special symbols can be '\\u0000'")
 }
 
 object CsvOptions{

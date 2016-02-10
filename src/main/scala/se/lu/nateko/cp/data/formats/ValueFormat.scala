@@ -30,4 +30,12 @@ class ValueFormatParser(locale: Locale){
 		case Iso8601TimeOfDayValue =>
 			Int.box(LocalTime.parse(value).toSecondOfDay)
 	}
+
+	def getBinTableDataType(format: ValueFormat): DataType = format match {
+		case IntValue => DataType.INT
+		case FloatValue => DataType.FLOAT
+		case StringValue => DataType.STRING
+		case Iso8601DateValue => DataType.INT
+		case Iso8601TimeOfDayValue => DataType.INT
+	}
 }
