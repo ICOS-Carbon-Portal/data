@@ -1,8 +1,5 @@
 package se.lu.nateko.cp.data.formats.csv
 
-import java.io._
-import au.com.bytecode.opencsv.CSVReader
-import scala.Stream
 import scala.io.Source
 
 trait TextTableRow extends IndexedSeq[String] {
