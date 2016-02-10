@@ -4,12 +4,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.headers.HttpEncodings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
-import se.lu.nateko.cp.data.ConfigReader
 import scala.concurrent.Future
-import se.lu.nateko.cp.meta.core.sparql.BoundValue
 import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
 import se.lu.nateko.cp.meta.core.sparql.JsonSupport._
 import java.net.URL
@@ -18,7 +15,7 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 
-	private val sparqlJson = MediaType.custom("application/sparql-results+json", false)
+	private val sparqlJson = MediaType.custom("application/sparql-results+json", binary = false)
 
 	private def httpPost(entity: String): Future[HttpResponse] = {
 		Http().singleRequest(
