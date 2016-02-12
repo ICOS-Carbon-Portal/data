@@ -55,7 +55,7 @@ class TimeSeriesParser(locale: Locale, val schema: (String, ValueFormat)*) {
 			//One single line: the column names
 			val columnNames = parseOneLine(line).toSeq.drop(1)
 
-			val colPositions = columnNames.zipWithIndex.groupBy(_._1).mapValues(_.minBy(_._2)._2)
+			val colPositions = columnNames.zipWithIndex.groupBy(_._1).mapValues(_.map(_._2).min).toSeq.toMap
 
 			new Accumulator(acc.headerLength, acc.totLength, colPositions, acc.lineNumber + 1, Array.empty)
 		}
