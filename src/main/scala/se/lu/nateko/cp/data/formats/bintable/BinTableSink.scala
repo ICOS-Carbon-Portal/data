@@ -68,6 +68,8 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 						new Exception(s"Got $count rows while expected ${schema.size}")
 					)
 				}
+
+				override def onUpstreamFailure(ex: Throwable): Unit = failBinTable(ex)
 			})
 
 			private def writeRow(row: BinTableRow): Unit =
@@ -80,7 +82,7 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 					count += 1
 				}catch{
 					case err: Throwable => failBinTable(
-						new Exception(s"Failed to write row #$count to $file . " + err.getMessage, err)
+						new Exception(s"Failed to write row #$count to $file . ${err.getClass.getName}: ${err.getMessage}", err)
 					)
 				}
 
