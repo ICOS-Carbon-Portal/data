@@ -1,68 +1,37 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
-import java.util.Locale
-
-import se.lu.nateko.cp.data.formats.{ValueFormatParser, ValueFormat}
-import se.lu.nateko.cp.data.formats.csv.CsvParser
-
 object TimeSeriesParser {
 
-	class Accumulator(val headerLength: Int, val totLength: Int, val columnPositions: Map[String, Int], val lineNumber: Int, val cells: Array[Object]){
-		def isOnData = (headerLength > 0 && lineNumber > headerLength)
+	case class Accumulator(
+			headerLength: Int,
+			totLength: Int,
+			columnNames: Array[String],
+			lineNumber: Int,
+			cells: Array[String]
+		){
+		def isOnData = (headerLength > 0 && lineNumber >= headerLength)
+		def incrementLine = copy(lineNumber = lineNumber + 1)
 	}
-
-	def seed = new Accumulator(0, 0, Map.empty, 1, Array.empty)
-}
-
-class TimeSeriesParser(locale: Locale, val schema: (String, ValueFormat)*) {
-
-	import TimeSeriesParser._
-
-	private val csvParser = CsvParser.default
-	val valueFormatParser = new ValueFormatParser(locale)
 
 	private val totLinesPattern = """^C\d+\s+TOTAL\s+LINES:\s+(\d+)""".r.unanchored
 	private val headLinesPattern = """^C\d+\s+HEADER\s+LINES:\s+(\d+)""".r.unanchored
+	private val wsPattern = "\\s+".r
+
+	def seed = Accumulator(0, 0, Array.empty, 0, Array.empty)
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 
-		if(acc.headerLength == 0 || (acc.headerLength > 0 && acc.lineNumber < acc.headerLength)){
-			//In the header but not the last header line that contains the column names
-			line match {
-				case totLinesPattern(n) =>
-					new Accumulator(acc.headerLength, n.toInt, acc.columnPositions, acc.lineNumber + 1, Array.empty)
+		if(acc.isOnData)
+			acc.copy(cells = wsPattern.split(line), lineNumber = acc.lineNumber + 1)
 
-				case headLinesPattern(n) =>
-					new Accumulator(n.toInt, acc.totLength, acc.columnPositions, acc.lineNumber + 1, Array.empty)
+		else if(acc.headerLength == acc.lineNumber + 1)//the column names line
+			acc.copy(columnNames = wsPattern.split(line).drop(1)).incrementLine
 
-				case _ => new Accumulator(acc.headerLength, acc.totLength, acc.columnPositions, acc.lineNumber + 1, Array.empty)
-			}
-
-		} else if(acc.isOnData){
-			//In the data section
-			val cells = parseOneLine(line)
-
-			val parsedCells: Array[Object] = schema.map{
-					case (colName, valFormat) =>
-						val colPos = acc.columnPositions(colName)
-						val cellValue = cells(colPos)
-						valueFormatParser.parse(cellValue, valFormat)
-				}.toArray
-
-			new Accumulator(acc.headerLength, acc.totLength, acc.columnPositions, acc.lineNumber + 1, parsedCells)
-
-		} else {
-			//One single line: the column names
-			val columnNames = parseOneLine(line).toSeq.drop(1)
-
-			val colPositions = columnNames.zipWithIndex.groupBy(_._1).mapValues(_.map(_._2).min).toSeq.toMap
-
-			new Accumulator(acc.headerLength, acc.totLength, colPositions, acc.lineNumber + 1, Array.empty)
+		else line match {
+			case headLinesPattern(n) => acc.copy(headerLength = n.toInt).incrementLine
+			case totLinesPattern(n) => acc.copy(totLength = n.toInt).incrementLine
+			case _ => acc.incrementLine
 		}
 	}
-
-	private def parseOneLine(line: String): Array[String] = {
-		val csvLine = line.trim.replaceAll("\\s+", ",")
-		csvParser.parseLine(CsvParser.seed, csvLine).cells
-	}
 }
+
