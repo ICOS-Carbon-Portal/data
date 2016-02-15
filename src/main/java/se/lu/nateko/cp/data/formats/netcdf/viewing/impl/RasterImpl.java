@@ -51,7 +51,7 @@ public class RasterImpl implements Raster {
 		return max;
 	}
 
-		@Override
+	@Override
 	public double getLatMin() {
 		return latMin;
 	}
@@ -64,11 +64,10 @@ public class RasterImpl implements Raster {
 	@Override
 	public double getLonMin() {
 		return lonMin;
-	}	
+	}
 	
 	@Override
 	public double getLonMax() {
 		return lonMax;
-	}	
-
+	}
 }
