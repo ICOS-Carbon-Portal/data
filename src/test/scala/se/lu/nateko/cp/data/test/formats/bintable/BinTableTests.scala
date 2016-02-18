@@ -14,25 +14,26 @@ class BinTableTest extends FunSuite{
 
 		val n = 100000
 
-		val schema = new Schema(Array(DataType.INT, DataType.LONG), n)
+		val schema = new Schema(Array(DataType.INT, DataType.LONG, DataType.FLOAT), n)
 
 		val writer = new BinTableWriter(file, schema)
 
 		for(i <- 1 to n){
-			writer.write((i, i.toLong << 16))
+			writer.write((i, i.toLong << 16, i.toFloat))
 		}
 
 		writer.close()
 
 		val reader = new BinTableReader(file, schema)
 
-		val first = PlainColumn(reader.read(0, 0, 1000)).flatMap(_.asInt).get.values
-		val second = PlainColumn(reader.read(1, 0, 1000)).flatMap(_.asLong).get.values
+		val first = PlainColumn(reader.read(0, 0, n)).flatMap(_.asInt).get.values
+		val second = PlainColumn(reader.read(1, 0, n)).flatMap(_.asLong).get.values
+		val third = PlainColumn(reader.read(2, 0, n)).flatMap(_.asFloat).get.values
 
-		val size = first.zip(second).size
+		val size = first.zip(second).zip(third).size
 		reader.close()
 
-		assert(size === 1000)
+		assert(size === n)
 	}
 	
 	test("Write with a string column, then read"){
@@ -65,6 +66,5 @@ class BinTableTest extends FunSuite{
 
 		assert(tbl.get === Array((1, "bla"), (2, "bla"), (3, "meme"), (4, "meme")))
 	}
-
 
 }

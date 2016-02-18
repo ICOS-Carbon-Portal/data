@@ -9,10 +9,11 @@ object TimeSeriesParser {
 			lineNumber: Int,
 			cells: Array[String]
 		){
-		def isOnData = (headerLength > 0 && lineNumber >= headerLength)
+		def isOnData = (headerLength > 0 && lineNumber > headerLength)
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 	}
 
+	private val headerPattern = "^C\\d+".r.unanchored
 	private val totLinesPattern = """^C\d+\s+TOTAL\s+LINES:\s+(\d+)""".r.unanchored
 	private val headLinesPattern = """^C\d+\s+HEADER\s+LINES:\s+(\d+)""".r.unanchored
 	private val wsPattern = "\\s+".r
@@ -21,7 +22,7 @@ object TimeSeriesParser {
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 
-		if(acc.isOnData)
+		if(acc.headerLength > 0 && acc.lineNumber >= acc.headerLength)
 			acc.copy(cells = wsPattern.split(line), lineNumber = acc.lineNumber + 1)
 
 		else if(acc.headerLength == acc.lineNumber + 1)//the column names line
@@ -30,7 +31,8 @@ object TimeSeriesParser {
 		else line match {
 			case headLinesPattern(n) => acc.copy(headerLength = n.toInt).incrementLine
 			case totLinesPattern(n) => acc.copy(totLength = n.toInt).incrementLine
-			case _ => acc.incrementLine
+			case _ if headerPattern.findFirstIn(line).isDefined => acc.incrementLine
+			case _ => acc
 		}
 	}
 }

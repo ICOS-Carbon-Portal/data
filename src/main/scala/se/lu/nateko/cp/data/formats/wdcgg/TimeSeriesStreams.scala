@@ -18,7 +18,10 @@ object TimeSeriesStreams{
 	def wdcggParser: Flow[String, WdcggRow, Unit] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.dropWhile(acc => !acc.isOnData)
-		.map(acc => new WdcggRow(acc.columnNames, acc.totLength - acc.headerLength, acc.cells))
+		.collect{
+			case acc if (acc.cells.length == acc.columnNames.length) =>
+				new WdcggRow(acc.columnNames, acc.totLength - acc.headerLength, acc.cells)
+		}
 
 	def wdcggToBinTableConverter(formats: Map[String, ValueFormat]): Flow[WdcggRow, BinTableRow, Unit] = Flow[WdcggRow]
 		.scan((ToBinTableConverter.empty, emptyRow)){

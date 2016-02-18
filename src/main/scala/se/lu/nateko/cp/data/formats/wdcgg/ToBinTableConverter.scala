@@ -4,8 +4,7 @@ import java.util.Locale
 
 import scala.annotation.migration
 
-import se.lu.nateko.cp.data.formats.ValueFormat
-import se.lu.nateko.cp.data.formats.ValueFormatParser
+import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
 
 class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[String]) {
@@ -31,7 +30,8 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[
 			val valFormat = colFormats(colName)
 			val colPos = colPositions(colName)
 			val cellValue = cells(colPos)
-			valueFormatParser.parse(cellValue, valFormat)
+			val nullHandled = ToBinTableConverter.handleNulls(cellValue, valFormat)
+			valueFormatParser.parse(nullHandled, valFormat)
 		}
 	}
 
@@ -40,4 +40,12 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[
 
 object ToBinTableConverter{
 	def empty = new ToBinTableConverter(Map.empty, Array.empty)
+
+	def handleNulls(original: String, format: ValueFormat): String = format match {
+		case IntValue => if(original == "-9999") Int.MinValue.toString else original
+		case FloatValue => if(original == "-99.999") Float.MinValue.toString else original
+		case StringValue => original
+		case Iso8601DateValue => if(original == "9999-99-99") Int.MinValue.toString else original
+		case Iso8601TimeOfDayValue => if(original == "99:99") Int.MinValue.toString else original
+	}
 }
