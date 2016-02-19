@@ -1,27 +1,26 @@
 package se.lu.nateko.cp.data.test.formats.bintable
 
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSuite
-import java.io.File
-import se.lu.nateko.cp.data.formats.bintable._
-import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
-import akka.stream.scaladsl.Source
+
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import org.scalatest.BeforeAndAfterAll
-import scala.concurrent.Future
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-import akka.stream.scaladsl.StreamConverters
-import se.lu.nateko.cp.data.formats.csv.CsvParser
 import akka.stream.io.Framing
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import akka.stream.scaladsl.Sink
+import se.lu.nateko.cp.data.formats.bintable._
+import se.lu.nateko.cp.data.formats.csv.CsvParser
+import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
+import se.lu.nateko.cp.data.test.TestUtils._
 
 class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 
-	def getFileInTarget(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
-
-	private implicit val system = ActorSystem("bintabletest")
+	private implicit val system = ActorSystem("binTableSinkTests")
 	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll() {
@@ -80,12 +79,16 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 
 		val parser = CsvParser.default
 
-		val schema = new Schema(Array(DataType.INT, DataType.FLOAT), 344)
+		val schema = new Schema(Array(DataType.INT, DataType.FLOAT, DataType.DOUBLE), 344)
+
+		def toInt(s: String): AnyRef = Int.box(s.toInt)
+		def toFloat(s: String): AnyRef = Float.box(s.toFloat)
+		def toDouble(s: String): AnyRef = Double.box(s.toDouble)
 
 		val rowsSource = linesSource.drop(4).take(schema.size).scan(CsvParser.seed)(parser.parseLine).collect{
 			case acc if !acc.cells.isEmpty =>
 				new BinTableRow(
-					Array(Int.box(acc.cells(1).toInt), Float.box(acc.cells(2).toFloat)),
+					Array(toInt(acc.cells(1)), toFloat(acc.cells(2)), toDouble(acc.cells(4))),
 					schema
 				)
 		}

@@ -38,27 +38,40 @@ public class BinTableReader extends BinTableFile {
 	}
 
 	public Buffer read(int column) throws IOException{
-		if(schema.size > Integer.MAX_VALUE)
-			throw new IOException("The table is too large, cannot read whole column into a buffer");
+		ensureSizeIsInteger();
 		return read(column, 0, (int)schema.size);
 	}
 
-	public Buffer read(int column, long offset, int size) throws IOException{
+	public ByteBuffer readBytes(int column) throws IOException{
+		ensureSizeIsInteger();
+		return readBytes(column, 0, (int)schema.size);
+	}
+
+	private void ensureSizeIsInteger() throws IOException{
+		if(schema.size > Integer.MAX_VALUE)
+			throw new IOException("The table is too large, cannot read whole column into a buffer");
+	}
+
+	public ByteBuffer readBytes(int column, long offset, int size) throws IOException{
 		DataType dt = schema.columns[column];
 
 		int valueSize = Utils.getDataTypeSize(dt);
 		long byteOffset = columnOffsets[column] + offset * valueSize;
 		int byteSize = valueSize * size;
 
-		ByteBuffer bytes;
-
 		if(byteSize < 10000){
 			file.seek(byteOffset);
 			byte[] barray = new byte[byteSize];
 			file.read(barray);
-			bytes = ByteBuffer.wrap(barray);
+			return ByteBuffer.wrap(barray);
 		}else
-			bytes = file.getChannel().map(MapMode.READ_ONLY, byteOffset, byteSize);
+			return file.getChannel().map(MapMode.READ_ONLY, byteOffset, byteSize);
+	}
+
+	public Buffer read(int column, long offset, int size) throws IOException{
+		ByteBuffer bytes = readBytes(column, offset, size);
+
+		DataType dt = schema.columns[column];
 
 		switch(dt){
 			case INT: return bytes.asIntBuffer();

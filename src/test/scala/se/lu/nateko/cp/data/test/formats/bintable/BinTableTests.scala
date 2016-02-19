@@ -4,10 +4,9 @@ import org.scalatest.FunSuite
 import java.io.File
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
+import se.lu.nateko.cp.data.test.TestUtils._
 
 class BinTableTest extends FunSuite{
-
-	def getFileInTarget(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 
 	test("Simple write, then read test"){
 		val file = getFileInTarget("binTableWriterTest.cpb")
