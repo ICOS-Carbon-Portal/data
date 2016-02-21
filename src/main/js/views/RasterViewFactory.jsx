@@ -52,9 +52,7 @@ module.exports = function(rasterStore){
 			if(x_position >= 0 && x_position < canvas.width
 				&& y_position >= 0 && y_position < canvas.height) {
 
-				var array = this.state.raster.array;
-				var value = array[canvas.height - 1 - y_position][x_position];
-
+				var value = this.state.raster.getValue(y_position, x_position);
 				highlightedValueAction({value: value});
 			}
 		}

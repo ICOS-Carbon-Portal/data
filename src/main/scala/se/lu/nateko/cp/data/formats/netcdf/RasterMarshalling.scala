@@ -68,7 +68,7 @@ object RasterMarshalling {
 		headerNums.put(raster.getLonMin)
 		headerNums.put(raster.getLonMax)
 
-		def rowsAsBinary: Iterator[ByteString] =
+		def rasterAsBinary: Iterator[ByteString] =
 			Iterator.single(ByteString(headerBytes)) ++
 			Iterator.range(0, nLat).map(rowAsBinary)
 
@@ -78,7 +78,7 @@ object RasterMarshalling {
 			entity = HttpEntity(
 				MediaTypes.`application/octet-stream`.withComp(MediaType.Compressible),
 				size,
-				Source.fromIterator(() => rowsAsBinary)
+				Source.fromIterator(() => rasterAsBinary)
 			)
 		)
 	}

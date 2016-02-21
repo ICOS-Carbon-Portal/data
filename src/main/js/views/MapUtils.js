@@ -35,35 +35,32 @@ function getColorMaker(minVal, maxVal, gamma) {
 }
 
 function makeImage(canvas, raster, gamma) {
-	var stats = raster.stats;
-	var colorMaker = getColorMaker(stats.min, stats.max, Math.abs(gamma));
+	var colorMaker = getColorMaker(raster.stats.min, raster.stats.max, Math.abs(gamma));
 
-	var array = raster.array;
-	var height = array.length;
-	var width = array[0].length;
-	
+	var width = raster.width;
 	canvas.width = width;
-	canvas.height = height;
+	canvas.height = raster.height;
 
 	var context = canvas.getContext('2d');
 
-	var imgData = context.createImageData(width, height);
+	var imgData = context.createImageData(width, raster.height);
 	var data = imgData.data;
 
 	var i = 0;
 	var white = d3.rgb('white');
+
 	for(var ib = 0; ib < data.length ; ib+=4){
 		var x = i % width;
 		var y = ~~(i / width); // ~~ rounds towards zero
-		var value = array[height - 1 - y][x];
 
-		var rgb = value === null ? white : colorMaker(value);
+		var value = raster.getValue(y, x);
+		var rgb = isNaN(value) ? white : colorMaker(value);
 
 		data[ib] = rgb.r;
 		data[ib + 1] = rgb.g;
 		data[ib + 2] = rgb.b;
 		data[ib + 3] = 255;
-		
+
 		i++;
 	}
 

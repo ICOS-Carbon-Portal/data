@@ -24,7 +24,10 @@ module.exports = function(Backend, RasterStore, errorHandler){
 		},
 
 		handleRaster: function(rasterState){
-			var newSize = rasterState.rasterSize;
+			var newSize = {
+				width: rasterState.raster.width,
+				height: rasterState.raster.height
+			};
 			var oldSize = this.state.rasterSize;
 
 			var newBbox = rasterState.raster.boundingBox;
