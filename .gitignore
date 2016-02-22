@@ -5,7 +5,8 @@
 
 # Node.js specific
 node_modules/
-src/main/resources/bundle.js
+src/main/resources/netcdf.js
+src/main/resources/portal.js
 
 # sbt specific
 .cache/

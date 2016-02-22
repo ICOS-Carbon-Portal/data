@@ -18,8 +18,8 @@ object NetcdfRoute {
 			pathEndOrSingleSlash{
 				getFromResource("netcdf.html")
 			} ~
-			path("bundle.js"){
-				getFromResource("bundle.js")
+			path("netcdf.js"){
+				getFromResource("netcdf.js")
 			} ~
 			path("listNetCdfFiles"){
 				complete(factory.getNetCdfFiles)

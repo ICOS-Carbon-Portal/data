@@ -2,37 +2,29 @@
   "name": "cpdata-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Carbon Portal NetCDF viewer",
+  "description": "Carbon Portal Data Service",
   "main": "gulpfile.js",
   "scripts": {
-    "gulp": "gulp",
-    "js": "gulp js",
-    "test": "gulp test"
+    "netcdf": "gulp netcdf",
+    "portal": "gulp portal",
+    "gulp": "gulp"
   },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/data.git"
   },
-  "keywords": [
-    "ICOS",
-    "Carbon",
-    "Portal",
-    "NetCDF"
-  ],
-  "author": [
-    "Paul Hedberg",
-    "Oleg Mirzov"
-  ],
+  "keywords": ["ICOS", "Carbon", "Portal", "NetCDF", "data"],
+  "author": ["Oleg Mirzov", "Roger Groth", "Paul Hedberg"],
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
   },
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "devDependencies": {
-    "browserify": "^10.1.3",
+    "babelify": "^6.3.0",
+    "browserify": "^11.1.0",
     "del": "^1.1.1",
-    "gulp": "^3.8.11",
-    "reactify": "^1.1.0",
+    "gulp": "^3.9.0",
     "vinyl-source-stream": "^1.1.0",
     "gulp-jasmine": "^2.0.1"
   },
