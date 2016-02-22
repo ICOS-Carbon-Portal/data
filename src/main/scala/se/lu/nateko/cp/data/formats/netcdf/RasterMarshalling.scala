@@ -44,7 +44,7 @@ object RasterMarshalling {
 		val nLat = raster.getSizeLat
 
 		def makeBuffer(size: Int) =
-			ByteBuffer.allocate(size * 8).order(ByteOrder.LITTLE_ENDIAN)
+			ByteBuffer.allocate(size * 8).order(ByteOrder.BIG_ENDIAN)
 
 		def rowAsBinary(lat: Int): ByteString = {
 			val buffer = makeBuffer(nLon)

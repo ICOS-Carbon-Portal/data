@@ -2,7 +2,7 @@ module.exports = function(arrayBuf){
 	var data = new DataView(arrayBuf);
 
 	function getHeaderValue(i){
-		return data.getFloat64(i << 3, true);
+		return data.getFloat64(i << 3, false);
 	}
 
 	var height = getHeaderValue(0);
@@ -11,7 +11,7 @@ module.exports = function(arrayBuf){
 	return {
 		getValue: function(y, x){ //e.g. y for lat, x for lon
 			var i = (height - 1 - y) * width + x;
-			return data.getFloat64((i << 3) + 64, true);
+			return data.getFloat64((i << 3) + 64, false);
 		},
 		stats: {
 			min: getHeaderValue(2),

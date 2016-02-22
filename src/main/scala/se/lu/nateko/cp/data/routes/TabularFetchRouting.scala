@@ -13,17 +13,25 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 
 class TabularFetchRouting(fetcher: FromBinTableFetcher)(implicit mat: Materializer) {
 
-	val route = (post & path("tabular")){
-		entity(as[BinTableRequest]){ tableRequest =>
-			complete(
-				HttpEntity(
-					ContentTypes.`application/octet-stream`,
-					fetcher.getResponseSize(tableRequest),
-					fetcher.getSource(tableRequest)
-				)
-			)
+	val route = pathPrefix("portal"){
+		path("portal.js"){
+			getFromResource("portal.js")
 		} ~
-		complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
+		pathSingleSlash{
+			getFromResource("portal.html")
+		} ~
+		(post & path("tabular")){
+			entity(as[BinTableRequest]){ tableRequest =>
+				complete(
+					HttpEntity(
+						ContentTypes.`application/octet-stream`,
+						fetcher.getResponseSize(tableRequest),
+						fetcher.getSource(tableRequest)
+					)
+				)
+			} ~
+			complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
+		}
 	}
 }
 
