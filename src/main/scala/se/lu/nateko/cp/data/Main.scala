@@ -3,23 +3,22 @@ package se.lu.nateko.cp.data
 import scala.collection.JavaConversions
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshalling.ToResponseMarshallable.apply
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
+
 import se.lu.nateko.cp.data.irods.IrodsClient
-import se.lu.nateko.cp.data.routes.AuthRouting
-import se.lu.nateko.cp.data.routes.UploadRouting
-import se.lu.nateko.cp.data.routes.NetcdfRoute
+import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 
 object Main extends App {
 
@@ -38,7 +37,13 @@ object Main extends App {
 	val irodsConnPool = new IRODSConnectionPool
 	val irodsClient = new IrodsClient(config.upload.irods, irodsConnPool)
 	val metaClient = new MetaClient(config.meta)
-	val uploadService = new UploadService(new java.io.File(config.upload.folder), irodsClient, metaClient)
+
+	val uploadFolder = new java.io.File(config.upload.folder)
+	val uploadService = new UploadService(uploadFolder, irodsClient, metaClient)
+
+	val binTableFetcher = new FromBinTableFetcher(uploadFolder)
+	val tabularRouting = new TabularFetchRouting(binTableFetcher)
+
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRouting = new UploadRouting(authRouting, uploadService)
 
@@ -51,7 +56,8 @@ object Main extends App {
 
 	val route = handleExceptions(exceptionHandler){
 		NetcdfRoute(factory) ~
-		uploadRouting.route
+		uploadRouting.route ~
+		tabularRouting.route
 	}
 
 	Http()

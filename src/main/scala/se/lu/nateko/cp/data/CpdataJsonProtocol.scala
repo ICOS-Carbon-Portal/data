@@ -1,17 +1,22 @@
 package se.lu.nateko.cp.data
 
-import spray.json._
-import se.lu.nateko.cp.data.formats.netcdf.RasterMessage
-import se.lu.nateko.cp.data.formats.netcdf.BoundingBox
-import se.lu.nateko.cp.data.formats.netcdf.Stats
+import se.lu.nateko.cp.data.formats.bintable.BinTableSlice
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
+import se.lu.nateko.cp.data.formats.netcdf.BoundingBox
+import se.lu.nateko.cp.data.formats.netcdf.RasterMessage
+import se.lu.nateko.cp.data.formats.netcdf.Stats
+import se.lu.nateko.cp.data.services.fetch.BinTableRequest
+import se.lu.nateko.cp.meta.core.CommonJsonSupport
+import spray.json._
 
-object CpdataJsonProtocol extends DefaultJsonProtocol {
+object CpdataJsonProtocol extends CommonJsonSupport {
 
 	implicit val statsFormat = jsonFormat2(Stats)
 	implicit val boundingBoxFormat = jsonFormat4(BoundingBox)
 	implicit val rasterFormat = jsonFormat3(RasterMessage)
+
+	implicit val binTableSliceFormat = jsonFormat2(BinTableSlice)
 
 	implicit object binTableDataTypeFormat extends JsonFormat[DataType]{
 		override def write(dt: DataType) = JsString(dt.name())
@@ -43,4 +48,6 @@ object CpdataJsonProtocol extends DefaultJsonProtocol {
 				case _ => deserializationError("Expected a BinTable scheme with 'columns' and 'size'-number")
 			}
 	}
+
+	implicit val binTableRequestFormat = jsonFormat4(BinTableRequest)
 }
