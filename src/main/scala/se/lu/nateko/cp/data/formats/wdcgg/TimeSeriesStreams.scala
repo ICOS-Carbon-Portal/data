@@ -13,7 +13,7 @@ object TimeSeriesStreams{
 
 	def linesFromBinary: Flow[ByteString, String, Unit] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
-		.map(_.utf8String.trim)
+		.map(_.utf8String.replace("\r", ""))
 
 	def wdcggParser: Flow[String, WdcggRow, Unit] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)

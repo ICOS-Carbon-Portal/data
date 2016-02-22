@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.test.formats.wdcgg
 
 import java.io.File
+import akka.util.ByteString
 import org.scalatest.FunSuite
 import akka.stream.scaladsl._
 import se.lu.nateko.cp.data.formats._
@@ -62,9 +63,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val binTableExport: RunnableGraph[Future[(Long, Long)]] = rowsSource
 			.via(wdcggToBinTableConverter(formats))
-			.toMat(binTableSink)(Keep.both).mapMaterializedValue{
-				case (fut1, fut2) => for(nBytes <- fut1; nRows <- fut2) yield (nBytes, nRows)
-			}
+			.toMat(binTableSink)(_ zip _)
 
 		val rowCountsFut = rowsSource.runFold[(Int, Int)]((0, 0)){
 			case ((0, _), firstRow) => (firstRow.nRows, 1)
@@ -99,11 +98,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	test("Parsing (single pass) and writing using broadcast of an example WDCGG time series data set"){
 
 		val g = RunnableGraph.fromGraph(GraphDSL.create(Sink.head[Int], binTableSink)(
-			(schemaNRowsFut, nRowsWrittenFut) =>
-				for(
-					schemaNRows <- schemaNRowsFut;
-					nRowsWritten <- nRowsWrittenFut
-				) yield (schemaNRows, nRowsWritten)
+			(_ zip _)
 		) { implicit builder =>
 			(schemaNRowsSinkShape, binTableSinkShape) =>
 				import GraphDSL.Implicits._
@@ -122,4 +117,31 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 		assert(schemaNRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
 	}
+
+	test("linesFromBinary Flow handles Unix style new lines correctly"){
+		val binSource = Source.apply(
+			ByteString("first line\n") ::
+					ByteString(" second\n") ::
+					ByteString("third \n") ::
+					ByteString(" forth \n") ::
+					ByteString("fi\rfth\n") :: Nil
+		)
+		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1 second)
+		assert(lines === Seq("first line", " second", "third ", " forth ", "fifth"))
+	}
+
+	test("linesFromBinary Flow handles Windows style new lines correctly"){
+		val binSource = Source.apply(
+			ByteString("first line\r\n") ::
+			ByteString(" second\r\n") ::
+			ByteString("third \r\n") ::
+			ByteString(" forth \r\n") ::
+			ByteString("fi\rfth\r\n") :: Nil
+
+		)
+		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1 second)
+		assert(lines === Seq("first line", " second", "third ", " forth ", "fifth"))
+	}
+
+
 }
