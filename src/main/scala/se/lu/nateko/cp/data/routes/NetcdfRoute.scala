@@ -44,7 +44,7 @@ object NetcdfRoute {
 					val raster = factory
 						.getNetCdfViewService(service)
 						.getRaster(date, varName, elevation.getOrElse(null))
-					encodeResponse(complete(raster))
+					complete(raster)
 				}
 			}
 		}

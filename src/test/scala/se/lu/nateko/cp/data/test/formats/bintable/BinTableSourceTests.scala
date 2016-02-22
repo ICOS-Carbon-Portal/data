@@ -48,4 +48,7 @@ class BinTableSourceTests extends FunSuite with BeforeAndAfterAll{
 		assert(thirdCol.get(n - 1) === 202.5468)
 	}
 
+	test("Empty file gives BinTableSource that cancels downstream immediately"){
+		pending
+	}
 }

@@ -84,19 +84,14 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	test("Parsing (single pass) and writing using 'alsoToMat' of an example WDCGG time series data set"){
 
 		val g = rowsSource
-			.alsoToMat(Sink.head[WdcggRow])(Keep.right)
+			.alsoToMat(Sink.head[WdcggRow])(_ zip _)
 			.via(wdcggToBinTableConverter(formats))
-			.toMat(binTableSink) {
-				(firstRowsFut, nRowsWrittenFut) =>
-					for (
-						firstRow <- firstRowsFut;
-						nRowsWritten <- nRowsWrittenFut
-					) yield (firstRow.nRows, nRowsWritten)
-			}
+			.toMat(binTableSink)(_ zip _)
 
-		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 3 seconds)
+		val ((bytesRead, firstRow), nRowsWritten) = Await.result(g.run(), 3 seconds)
 
-		assert(schemaNRows === expectedNRows)
+		assert(bytesRead === 29454)
+		assert(firstRow.nRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
 
 	}
