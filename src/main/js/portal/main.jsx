@@ -1,12 +1,11 @@
 import BinTable from './models/BinTable.js';
-
+import Backend from './Backend.js';
 
 function handleError(error){
 	console.log(error);
 }
 
-
-let requests = [[0]].map(cols => {
+const requests = [[0], [1], [2]].map(cols => {
 	return {
 		"tableId": "aaaaaaaaaaaaaaaaaaaaaa01",
 		"schema": {
@@ -20,17 +19,21 @@ let requests = [[0]].map(cols => {
 function computeNextState(oldState = {reqNum: 0}, action){
 	switch(action.type){
 		case 'FETCHNEXT':
-			let reqNum = oldState.reqNum;
-			let tblRequest = requests[reqNum];
+			const reqNum = oldState.reqNum;
+			const tblRequest = requests[reqNum];
 			Backend.getBinaryTable(
 				tblRequest,
 				tbl => {
-					let binTable = new BinTable(tbl, tblRequest.schema, tblRequest.columnNumbers);
+					const schema = {
+						columns: tblRequest.columnNumbers.map(i => tblRequest.schema.columns[i]),
+						size: tblRequest.schema.size
+					};
+					const binTable = new BinTable(tbl, schema);
 					console.log(`Fetched request ${reqNum} successfully!`);
 					console.log(`Fetched ${binTable.length} rows`);
 					console.log('First value is ' + binTable.column(0).value(0));
 				},
-				err => console.log(err)
+				handleError
 			);
 			return {reqNum: (reqNum + 1) % requests.length};
 		default:
@@ -38,9 +41,7 @@ function computeNextState(oldState = {reqNum: 0}, action){
 	}
 }
 
-let store = Redux.createStore(computeNextState);
-
-let Backend = require('./Backend.js');
+const store = Redux.createStore(computeNextState);
 
 function fetchData(){
 	store.dispatch({type: 'FETCHNEXT'});
