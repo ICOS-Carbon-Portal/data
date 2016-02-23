@@ -1,11 +1,17 @@
 import BinTable from './models/BinTable.js';
 import Backend from './Backend.js';
+import React from 'react';
+import ReactDom from 'react-dom';
+import {LineChart} from 'react-d3-basic';
+import {createStore} from 'redux';
+
+//var Chart = require('react-d3-core').Chart;
 
 function handleError(error){
 	console.log(error);
 }
 
-const requests = [[0], [1], [2]].map(cols => {
+const requests = [[0,1]].map(cols => {
 	return {
 		"tableId": "aaaaaaaaaaaaaaaaaaaaaa01",
 		"schema": {
@@ -31,7 +37,20 @@ function computeNextState(oldState = {reqNum: 0}, action){
 					const binTable = new BinTable(tbl, schema);
 					console.log(`Fetched request ${reqNum} successfully!`);
 					console.log(`Fetched ${binTable.length} rows`);
-					console.log('First value is ' + binTable.column(0).value(0));
+					console.log(`Fetched columns: ${binTable.nCols}`);
+					console.log('First value is  ' + binTable.column(0).value(0));
+
+					let data = [];
+					for (let i=0; i<binTable.column(0).length; i++) {
+						data.push({X: binTable.column(0).value(i), Y: binTable.column(1).value(i)});
+						//console.log(i +  " - " + binTable.column(0).value(i));
+					}
+
+					console.log(data);
+
+					//for (let i=0; i<binTable.column(1).length; i++) {
+					//	console.log(i +  " - " + binTable.column(1).value(i));
+					//}
 				},
 				handleError
 			);
@@ -41,13 +60,13 @@ function computeNextState(oldState = {reqNum: 0}, action){
 	}
 }
 
-const store = Redux.createStore(computeNextState);
+const store = createStore(computeNextState);
 
 function fetchData(){
 	store.dispatch({type: 'FETCHNEXT'});
 }
 
-React.render(
+ReactDom.render(
 	<div>
 		<button onClick={fetchData}>Fetch!</button>
 	</div>,

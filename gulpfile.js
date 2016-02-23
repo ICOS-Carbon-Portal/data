@@ -4,8 +4,7 @@ var gulp = require('gulp');
 var browserify = require('browserify');
 var del = require('del');
 var source = require('vinyl-source-stream');
-var babel = require('babelify');
-var jasmine = require('gulp-jasmine');
+var babelify = require('babelify');
 
 ['netcdf', 'portal'].forEach(function(project){
 
@@ -23,32 +22,26 @@ var jasmine = require('gulp-jasmine');
 		del([paths.target + paths.bundleFile], done);
 	});
 
-	gulp.task('js' + project, ['clean' + project], function() {
+	gulp.task('js' + project, function() {
 
 		return browserify({
 				entries: [paths.main],
-				debug: false,
-				transform: [babel]
+				debug: false
 			})
+			.transform(babelify, {presets: ["es2015", "react"]})
 			.bundle()
 			.on('error', function(err){
-				console.log(err);
-				this.emit('end');
-			})
+                        	console.log(err);
+                        	this.emit('end');
+		       	})
 			.pipe(source(paths.bundleFile))
 			.pipe(gulp.dest(paths.target));
 
 	});
 
-	gulp.task('test' + project, function () {
-		return gulp
-			.src(paths.testjs)
-			.pipe(jasmine());
-	});
-
 	gulp.task('watch' + project, function() {
 		var sources = paths.js.concat(paths.jsx, paths.common);
-		gulp.watch(sources, ['js' + project]);
+		gulp.watch(sources, ['clean' + project, 'js' + project]);
 	});
 
 	gulp.task(project, ['watch' + project, 'js' + project]);
