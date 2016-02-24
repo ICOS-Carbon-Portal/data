@@ -67,6 +67,7 @@ object UploadRouting{
 		complete((StatusCodes.BadRequest, s"Expected base64Url- or hex-encoded SHA-256 hash"))
 
 	private val errHandler = ExceptionHandler{
+		//TODO Handle the case of data object metadata not found, and the case of metadata service being down
 		case authErr: UnauthorizedUpload =>
 			complete((StatusCodes.Unauthorized, authErr.getMessage))
 		case userErr: UploadUserError =>

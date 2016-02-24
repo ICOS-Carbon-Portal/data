@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
 	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.0.3",
 	"com.typesafe.akka"  %% "akka-slf4j"                         % "2.3.14",
 	"ch.qos.logback"      % "logback-classic"                    % "1.1.2",
-	"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.2",
+	"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.3-SNAPSHOT",
 	"se.lu.nateko.cp"    %% "meta-core"                          % "0.1.0-SNAPSHOT",
 
 // *** manually published on CP Nexus 3rd party repo ***
@@ -45,9 +45,3 @@ scalacOptions ++= Seq(
   "-target:jvm-1.8",
   "-encoding", "UTF-8"
 )
-
-assemblyMergeStrategy in assembly := {
-	case "application.conf" => MergeStrategy.concat
-	case x => ((assemblyMergeStrategy in assembly).value)(x)
-}
-
