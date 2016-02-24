@@ -1,8 +1,8 @@
 'use strict';
 
-function getBinaryTable(url, tblRequest, resolve, reject){
+export function getBinaryTable(tblRequest, resolve, reject){
 	var req = new XMLHttpRequest();
-	req.open('POST', url);
+	req.open('POST', 'tabular');
 	req.responseType = 'arraybuffer';
 	req.setRequestHeader('Accept', 'application/octet-stream');
 	req.setRequestHeader('Content-Type', 'application/json');
@@ -22,14 +22,6 @@ function getBinaryTable(url, tblRequest, resolve, reject){
 		}
 	};
 
-	req.send(tblRequest);
+	req.send(JSON.stringify(tblRequest));
 }
-
-export default {
-
-	getBinaryTable: function(tblRequest, resolve, reject){
-		getBinaryTable('tabular', JSON.stringify(tblRequest), resolve, reject);
-	}
-
-};
 
