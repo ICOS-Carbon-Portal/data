@@ -1,5 +1,4 @@
 import {getBinaryTable} from './backend'
-import BinTable from './models/BinTable'
 
 export const FETCHING_STARTED = 'FETCHING_STARTED';
 export const ERROR = 'ERROR';
@@ -35,9 +34,8 @@ export function fetchTable(dispatch, getState) {
 
 		dispatch({type: FETCHING_STARTED});
 
-		getBinaryTable(
-			request,
-			tbl => dispatch(gotTable(new BinTable(tbl, request.schema))),
+		getBinaryTable(request).then(
+			tbl => dispatch(gotTable(tbl)),
 			err => dispatch(failWithError(err))
 		);
 

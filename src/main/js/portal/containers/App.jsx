@@ -9,8 +9,10 @@ class App extends Component {
 
 	render() {
 		const status = this.props.status;
-
-		if(status !== 'FETCHED') return <div>{status}</div>;
+		if(status !== 'FETCHED') {
+			const error = (status === 'ERROR') ? ': ' + this.props.error.message : '';
+			return <div>{status + error}</div>;
+		}
 
 		const tbl = this.props.binTable;
 
