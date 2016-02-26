@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data
 import scala.collection.JavaConversions
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
-
+import scala.concurrent.ExecutionContext
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
@@ -11,7 +11,6 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
-
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.UploadService
@@ -65,9 +64,10 @@ object Main extends App {
 		.onSuccess{
 			case binding =>
 				sys.addShutdownHook{
-					val doneFuture = binding.unbind().andThen{
-						case _ => system.shutdown()
-					}
+					val exeCtxt = ExecutionContext.Implicits.global
+					val doneFuture = binding
+						.unbind()
+						.flatMap(_ => system.terminate())(exeCtxt)
 					Await.result(doneFuture, 3 seconds)
 				}
 				println(binding)

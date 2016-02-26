@@ -21,7 +21,7 @@ class BinTableSourceTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll() {
-		system.shutdown()
+		system.terminate()
 	}
 
 	test("Reading columns from BinTable sequentially as ByteString streams"){

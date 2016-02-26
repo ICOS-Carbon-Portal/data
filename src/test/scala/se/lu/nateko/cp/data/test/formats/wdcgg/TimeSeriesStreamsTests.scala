@@ -1,15 +1,15 @@
 package se.lu.nateko.cp.data.test.formats.wdcgg
 
-import java.io.File
-import akka.util.ByteString
-import org.scalatest.FunSuite
+import akka.actor.ActorSystem
+import akka.stream.{ClosedShape, ActorMaterializer}
+import akka.stream.IOResult
 import akka.stream.scaladsl._
+import akka.util.ByteString
+import java.io.File
+import org.scalatest.FunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams._
-import akka.actor.ActorSystem
-import akka.stream.{ClosedShape, ActorMaterializer}
-import akka.stream.scaladsl.Broadcast
 import org.scalatest.BeforeAndAfterAll
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggRow
 import scala.concurrent.{Future, Await}
@@ -22,7 +22,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	import system.dispatcher
 
 	override def afterAll() {
-		system.shutdown()
+		system.terminate()
 	}
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
@@ -55,7 +55,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 	test("Parsing and writing of an example WDCGG time series data set"){
 
-		val binTableExport: RunnableGraph[Future[(Long, Long)]] = rowsSource
+		val binTableExport: RunnableGraph[Future[(IOResult, Long)]] = rowsSource
 			.via(wdcggToBinTableConverter(formats))
 			.toMat(binTableSink)(_ zip _)
 
@@ -66,12 +66,12 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val (schemaNRows, nRowsInSource) = Await.result(rowCountsFut, 1 second)
 
-		val (nBytesRead, nRowsWritten) = Await.result(binTableExport.run(), 1 second)
+		val (readResult, nRowsWritten) = Await.result(binTableExport.run(), 1 second)
 
 		assert(schemaNRows === nRowsInSource)
 		assert(nRowsWritten === nRowsInSource)
 		assert(nRowsWritten === expectedNRows)
-		assert(nBytesRead === 29454)
+		assert(readResult.count === 29454)
 	}
 
 	test("Parsing (single pass) and writing using 'alsoToMat' of an example WDCGG time series data set"){
@@ -81,9 +81,9 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(wdcggToBinTableConverter(formats))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((bytesRead, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
 
-		assert(bytesRead === 29454)
+		assert(readResult.count === 29454)
 		assert(firstRow.nRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
 

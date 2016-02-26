@@ -3,13 +3,12 @@ package se.lu.nateko.cp.data.test.formats.bintable
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSuite
-
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.io.Framing
+import akka.stream.IOResult
+import akka.stream.scaladsl.Framing
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
@@ -24,7 +23,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll() {
-		system.shutdown()
+		system.terminate()
 	}
 
 	test("Write from memory, then read with BinTableReader and verify"){
@@ -72,7 +71,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 		val file = getFileInTarget("binTableSinkFromCsvTest.cpb")
 		if(file.exists) file.delete()
 
-		val linesSource: Source[String, Future[Long]] = csvFileSource.via(
+		val linesSource: Source[String, Future[IOResult]] = csvFileSource.via(
 				Framing.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
 			)
 			.map(_.utf8String)

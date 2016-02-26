@@ -1,7 +1,8 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
-import akka.stream.io.Framing
+import akka.NotUsed
 import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Framing
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
@@ -14,11 +15,11 @@ class WdcggRow(val columnNames: Array[String], val nRows: Int, val cells: Array[
 
 object TimeSeriesStreams{
 
-	def linesFromBinary: Flow[ByteString, String, Unit] = Framing
+	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
 		.map(_.utf8String.replace("\r", ""))
 
-	def wdcggParser: Flow[String, WdcggRow, Unit] = Flow[String]
+	def wdcggParser: Flow[String, WdcggRow, NotUsed] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.dropWhile(acc => !acc.isOnData)
 		.collect{
@@ -26,7 +27,7 @@ object TimeSeriesStreams{
 				new WdcggRow(acc.columnNames, acc.totLength - acc.headerLength, acc.cells)
 		}
 
-	def wdcggToBinTableConverter(formats: Map[String, ValueFormat]): Flow[WdcggRow, BinTableRow, Unit] = Flow[WdcggRow]
+	def wdcggToBinTableConverter(formats: Map[String, ValueFormat]): Flow[WdcggRow, BinTableRow, NotUsed] = Flow[WdcggRow]
 		.scan((ToBinTableConverter.empty, emptyRow)){
 			case ((conv, row), nextRow) =>
 				if(conv.isEmpty){

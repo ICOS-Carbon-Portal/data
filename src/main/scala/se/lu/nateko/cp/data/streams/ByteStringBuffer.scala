@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.streams
 
+import akka.NotUsed
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
@@ -19,7 +20,7 @@ object ByteStringBuffer {
 	 * Flow buffer of ByteStrings which buffers by the total number of bytes
 	 * the ByteStrings contain instead of buffering by the number of the ByteStrings
 	 */
-	def apply(nBytes: Int): Flow[ByteString, ByteString, Unit] = Flow.fromGraph(new ByteStringBuffer(nBytes))
+	def apply(nBytes: Int): Flow[ByteString, ByteString, NotUsed] = Flow.fromGraph(new ByteStringBuffer(nBytes))
 
 }
 
