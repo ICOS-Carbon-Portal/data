@@ -3,15 +3,7 @@ import {getBinaryTable} from './backend'
 export const FETCHING_STARTED = 'FETCHING_STARTED';
 export const ERROR = 'ERROR';
 export const FETCHED_TABLE = 'FETCHED_TABLE';
-
-const request = {
-	"tableId": "aaaaaaaaaaaaaaaaaaaaaa01",
-	"schema": {
-		"columns": ["INT", "FLOAT", "DOUBLE"],
-		"size": 344
-	},
-	"columnNumbers": [0,1,2]
-};
+export const TABLE_CHOSEN = 'TABLE_CHOSEN';
 
 function failWithError(error){
 	return {
@@ -20,25 +12,37 @@ function failWithError(error){
 	};
 }
 
-function gotTable(table){
+function gotTable(table, tableIndex){
 	return {
 		type: FETCHED_TABLE,
-		table
+		table,
+		tableIndex
 	};
 }
 
-export function fetchTable(dispatch, getState) {
+const fetchTable = tableIndex => (dispatch, getState) => {
 	const state = getState();
 
-	if(state.status !== 'FETCHING'){
+	if(state.status !== 'FETCHING' && state.chosenTable >= 0){
 
 		dispatch({type: FETCHING_STARTED});
 
+		const request = state.tables[state.chosenTable].request;
+
 		getBinaryTable(request).then(
-			tbl => dispatch(gotTable(tbl)),
+			tbl => dispatch(gotTable(tbl, tableIndex)),
 			err => dispatch(failWithError(err))
 		);
 
 	}
+}
+
+export const chooseTable = tableIndex => dispatch => {
+	dispatch({
+		type: TABLE_CHOSEN,
+		tableIndex
+	});
+
+	dispatch(fetchTable(tableIndex));
 }
 
