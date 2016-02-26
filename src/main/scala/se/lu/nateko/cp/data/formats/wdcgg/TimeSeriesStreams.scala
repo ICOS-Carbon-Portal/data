@@ -1,11 +1,14 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
+import akka.stream.io.Framing
 import akka.stream.scaladsl.Flow
-import se.lu.nateko.cp.data.formats.ValueFormat
+import akka.stream.scaladsl.Sink
+import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.Schema
-import akka.util.ByteString
-import akka.stream.io.Framing
+import se.lu.nateko.cp.data.formats.ValueFormat
+import akka.stream.scaladsl.Keep
+import scala.concurrent.Future
 
 class WdcggRow(val columnNames: Array[String], val nRows: Int, val cells: Array[String])
 
@@ -37,4 +40,10 @@ object TimeSeriesStreams{
 		.map(_._2)
 
 	private def emptyRow = new BinTableRow(Array.empty, new Schema(Array.empty, 0))
+
+	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
+		.takeWhile(TimeSeriesParser.isHeaderLine)
+		.fold(TimeSeriesParser.headerSeed)(TimeSeriesParser.parseHeaderLine)
+		.map(_.result)
+		.toMat(Sink.head)(Keep.right)
 }

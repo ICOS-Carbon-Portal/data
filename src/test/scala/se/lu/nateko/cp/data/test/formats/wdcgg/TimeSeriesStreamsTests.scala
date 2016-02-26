@@ -26,7 +26,6 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
-	def wdcggStream = getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat")
 	val expectedNRows = 360
 
 	val formats = Map(
@@ -37,23 +36,18 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 		"SD" -> FloatValue
 	)
 
-	val rowsSource = StreamConverters
-			.fromInputStream(() => wdcggStream)
-			.via(linesFromBinary)
-			.via(wdcggParser)
+	val linesSource = StreamConverters
+		.fromInputStream(() => getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat"))
+		.via(linesFromBinary)
+	val rowsSource = linesSource.via(wdcggParser)
 
 	val binTableSink = BinTableSink(outFile("/wdcggBinTest.cpb"), true)
 
-
 	test("Parsing of an example WDCGG time series data set"){
 
-		val rowsFut = StreamConverters
-			.fromInputStream(() => wdcggStream)
-			.via(linesFromBinary)
-			.via(wdcggParser)
-			.runWith(Sink.seq)
+		val rowsFut = rowsSource.runWith(Sink.seq)
 
-		val rows = Await.result(rowsFut, 3 seconds)
+		val rows = Await.result(rowsFut, 1 second)
 
 		assert(rows.size === rows.head.nRows)
 		assert(rows.size === expectedNRows)
@@ -70,9 +64,9 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 			case ( (schemaNRows, count), _) => (schemaNRows, count + 1)
 		}
 
-		val (schemaNRows, nRowsInSource) = Await.result(rowCountsFut, 3 seconds)
+		val (schemaNRows, nRowsInSource) = Await.result(rowCountsFut, 1 second)
 
-		val (nBytesRead, nRowsWritten) = Await.result(binTableExport.run(), 3 seconds)
+		val (nBytesRead, nRowsWritten) = Await.result(binTableExport.run(), 1 second)
 
 		assert(schemaNRows === nRowsInSource)
 		assert(nRowsWritten === nRowsInSource)
@@ -87,7 +81,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(wdcggToBinTableConverter(formats))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((bytesRead, firstRow), nRowsWritten) = Await.result(g.run(), 3 seconds)
+		val ((bytesRead, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
 
 		assert(bytesRead === 29454)
 		assert(firstRow.nRows === expectedNRows)
@@ -112,7 +106,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 				ClosedShape
 		})
 
-		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 3 seconds)
+		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 1 second)
 
 		assert(schemaNRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
@@ -131,17 +125,19 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("linesFromBinary Flow handles Windows style new lines correctly"){
-		val binSource = Source.apply(
-			ByteString("first line\r\n") ::
-			ByteString(" second\r\n") ::
-			ByteString("third \r\n") ::
-			ByteString(" forth \r\n") ::
-			ByteString("fi\rfth\r\n") :: Nil
+		val strLines = List("first line\r\n", " second\r\n", "third \r\n", " forth \r\n", "fi\rfth\r\n")
+		val binSource = Source(strLines).map(ByteString(_))
 
-		)
 		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1 second)
 		assert(lines === Seq("first line", " second", "third ", " forth ", "fifth"))
 	}
 
+	test("Header key-values are parsed successfully"){
+		val kv = Await.result(linesSource.runWith(wdcggHeaderSink), 1 second)
+
+		assert(kv("PARAMETER") === "CO2")
+		assert(kv("CREDIT FOR USE").split("\n").length === 4)
+		assert(kv.size === 27)
+	}
 
 }
