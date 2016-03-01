@@ -4,6 +4,7 @@ export const FETCHING_STARTED = 'FETCHING_STARTED';
 export const ERROR = 'ERROR';
 export const FETCHED_TABLE = 'FETCHED_TABLE';
 export const TABLE_CHOSEN = 'TABLE_CHOSEN';
+export const YAXIS_CHOSEN = 'YAXIS_CHOSEN';
 
 function failWithError(error){
 	return {
@@ -34,6 +35,13 @@ const fetchTable = tableIndex => (dispatch, getState) => {
 			err => dispatch(failWithError(err))
 		);
 
+	}
+}
+
+export function yAxisChosen(yAxisColumn){
+	return {
+		type: YAXIS_CHOSEN,
+		yAxisColumn
 	}
 }
 

@@ -5,6 +5,7 @@ import {chooseTable} from './actions'
 
 const tables = [{
 	columnNames: ['RECORD', 'SWC1_IRR_Avg', 'Rnet_NCOR_Avg'],
+	columnUnits: ['Time', 'mV', 'ppm'],
 	request: {
 		"tableId": "aaaaaaaaaaaaaaaaaaaaaa01",
 		"schema": {
@@ -21,6 +22,7 @@ const initialState = {
 	xAxisColumn: -1,
 	yAxisColumn: -1,
 	binTable: null,
+	chartData: null,
 	status: 'INIT',
 	error: null
 };

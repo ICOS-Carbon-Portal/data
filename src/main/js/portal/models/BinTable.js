@@ -82,6 +82,16 @@ export default class BinTable{
 		return this._columns.map(col => col.value(i));
 	}
 
+	value(row, column){
+		return this._columns[column].value(row);
+	}
+
+	chartValues(xCol, yCol){
+		return Array.from({length: this._length}, (_, i) => {
+			return {x: this.value(i, xCol), y: this.value(i, yCol)};
+		});
+	}
+
 	static get empty(){
 		return new BinTable(null, {columns: [], size: 0}, []);
 	}

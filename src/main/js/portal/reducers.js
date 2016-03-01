@@ -1,4 +1,4 @@
-import { FETCHING_STARTED, ERROR, FETCHED_TABLE, TABLE_CHOSEN } from './actions'
+import { FETCHING_STARTED, ERROR, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
 
 export default function(state, action){
 
@@ -14,14 +14,32 @@ export default function(state, action){
 			return (state.chosenTable === action.tableIndex)
 				? Object.assign({}, state, {
 					status: 'FETCHED',
-					xAxisColumn: -1,
-					yAxisColumn: -1,
+					xAxisColumn: 0,
 					binTable: action.table
 				})
 				: state; //ignore the fetched table if another one got chosen while fetching
 
 		case TABLE_CHOSEN:
 			return Object.assign({}, state, {chosenTable: action.tableIndex});
+
+		case YAXIS_CHOSEN:
+			if(state.chosenTable >= 0 && state.xAxisColumn >= 0){
+				const lineData = [{
+					name: state.tables[state.chosenTable].columnNames[action.yAxisColumn],
+					values: state.binTable.chartValues(state.xAxisColumn, action.yAxisColumn)
+				}];
+
+				const yAxisLabel = state.tables[state.chosenTable].columnUnits[state.yAxisColumn];
+
+				return Object.assign({}, state, {
+					chartData: {
+						lineData: lineData,
+						yAxisLabel: yAxisLabel
+					},
+					yAxisColumn: action.yAxisColumn
+				});
+			}
+			else return Object.assign({}, state, {yAxisColumn: action.yAxisColumn});
 
 		default:
 			return state;
