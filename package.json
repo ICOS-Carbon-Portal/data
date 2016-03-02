@@ -6,6 +6,7 @@
   "main": "gulpfile.js",
   "scripts": {
     "netcdf": "gulp netcdf",
+    "portalPublish": "gulp publishportal",
     "portal": "gulp portal",
     "gulp": "gulp"
   },
@@ -41,12 +42,14 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.5.0",
+    "gulp-uglify": "^1.5.3",
     "react": "^0.14.7",
     "react-d3": "^0.4.0",
     "react-dom": "^0.14.7",
     "react-redux": "^4.4.0",
     "redux": "^3.3.1",
     "redux-thunk": "^1.0.3",
+    "vinyl-buffer": "^1.0.0",
     "whatwg-fetch": "^0.11.0"
   }
 }
