@@ -1,4 +1,4 @@
-import { FETCHING_STARTED, ERROR, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
+import { FETCHING_STARTED, ERROR, FETCHED_META, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
 
 export default function(state, action){
 
@@ -9,6 +9,12 @@ export default function(state, action){
 
 		case ERROR:
 			return Object.assign({}, state, {status: ERROR, error: action.error});
+
+		case FETCHED_META:
+			return Object.assign({}, state, {
+				status: 'FETCHED',
+				tables: action.tables
+			});
 
 		case FETCHED_TABLE:
 			return (state.chosenTable === action.tableIndex)

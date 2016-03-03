@@ -7,6 +7,28 @@ function checkStatus(response) {
 		else throw new Error(response.statusText || "Ajax response status: " + response.status);
 }
 
+export function getMetaData(searchObj){
+	const tables = [{
+		columnNames: ['RECORD', 'SWC1_IRR_Avg', 'Rnet_NCOR_Avg'],
+		columnUnits: ['Time', 'mV', 'ppm'],
+		request: {
+			"tableId": "aaaaaaaaaaaaaaaaaaaaaa01",
+			"schema": {
+				"columns": ["INT", "FLOAT", "DOUBLE"],
+				"size": 344
+			},
+			"columnNumbers": [0, 1, 2]
+		}
+	}];
+
+	return new Promise(function(resolve, reject){
+			resolve(tables);
+		})
+		.then(response => {
+			return response;
+		});
+}
+
 export function getBinaryTable(tblRequest){
 	return fetch('tabular', {
 			method: 'post',
