@@ -7,7 +7,7 @@ import scala.util.Try
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
-import se.lu.nateko.cp.data.services.UploadService
+import se.lu.nateko.cp.data.services.upload.UploadService
 import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.server.ValidationRejection
@@ -17,6 +17,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
+import se.lu.nateko.cp.data.services.upload.UploadResult
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(implicit mat: Materializer) {
 	import UploadRouting._
@@ -26,12 +27,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		authRouting.user{ uinfo =>
 			extractRequest{ req =>
-				val pidFuture: Future[String] = uploadService
+				val resFuture: Future[UploadResult] = uploadService
 					.getSink(hashsum, uinfo)
 					.flatMap(req.entity.dataBytes.runWith)
 
-				onSuccess(pidFuture){pid =>
-					complete(s"The data object is available at http://dx.doi.org/$pid")
+				onSuccess(resFuture){res =>
+					complete(s"The data object is available at http://dx.doi.org/${res.makeReport}")
 				}
 			}
 		}

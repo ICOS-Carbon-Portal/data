@@ -13,7 +13,7 @@ import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.routes._
-import se.lu.nateko.cp.data.services.UploadService
+import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient

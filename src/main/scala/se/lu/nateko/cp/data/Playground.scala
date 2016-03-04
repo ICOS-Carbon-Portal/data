@@ -56,12 +56,6 @@ object Playground {
 		src.runWith(sink)
 	}
 
-	def writeZeros(path: String): Unit = {
-		val out = client.getNewFileOutputStream(path)
-		val arr = Array.ofDim[Byte](100000000)
-		(1 to 1).foreach(_ => out.write(arr))
-		out.close()
-	}
 
 	def writeParallel(prefix: String, n: Int): Future[Seq[Sha256Sum]] = {
 		val extraLargeSrc = repeat(rowBlock, 10000)

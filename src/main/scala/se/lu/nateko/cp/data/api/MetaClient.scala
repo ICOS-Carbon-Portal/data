@@ -14,6 +14,7 @@ import se.lu.nateko.cp.meta.core.data.JsonSupport._
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
+import akka.http.scaladsl.marshalling.Marshal
 
 class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 	implicit val dispatcher = system.dispatcher
@@ -29,8 +30,12 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 		)
 	}
 
-	private def post(uri: Uri): Future[HttpResponse] = {
-		Http().singleRequest(HttpRequest(uri = uri, method = HttpMethods.POST))
+	private def post(uri: Uri, completionInfo: UploadCompletionInfo): Future[HttpResponse] = {
+		Marshal(completionInfo).to[RequestEntity].flatMap( entity =>
+			Http().singleRequest(
+				HttpRequest(uri = uri, method = HttpMethods.POST, entity = entity)
+			)
+		)
 	}
 
 	def lookupPackage(hash: Sha256Sum): Future[DataObject] = {
@@ -70,10 +75,10 @@ class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
 		)
 	}
 
-	def completeUpload(hash: Sha256Sum): Future[String] = {
+	def completeUpload(hash: Sha256Sum, completionInfo: UploadCompletionInfo): Future[String] = {
 		val url = config.baseUrl + config.uploadApiPath + "/" + hash.id
 
-		post(url).flatMap(resp => resp.status match {
+		post(url, completionInfo).flatMap(resp => resp.status match {
 			case StatusCodes.OK =>
 				Unmarshal(resp.entity).to[String]
 			case notOk =>
