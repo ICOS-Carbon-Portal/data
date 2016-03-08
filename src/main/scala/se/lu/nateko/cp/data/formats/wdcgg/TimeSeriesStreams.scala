@@ -10,10 +10,17 @@ import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.formats.ValueFormat
 import akka.stream.scaladsl.Keep
 import scala.concurrent.Future
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Broadcast
+import akka.stream.scaladsl.ZipWith
+import akka.stream.FlowShape
 
 class WdcggRow(val columnNames: Array[String], val nRows: Int, val cells: Array[String])
 
 object TimeSeriesStreams{
+
+	type Formats = Map[String, ValueFormat]
 
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
@@ -27,20 +34,31 @@ object TimeSeriesStreams{
 				new WdcggRow(acc.columnNames, acc.totLength - acc.headerLength, acc.cells)
 		}
 
-	def wdcggToBinTableConverter(formats: Map[String, ValueFormat]): Flow[WdcggRow, BinTableRow, NotUsed] = Flow[WdcggRow]
-		.scan((ToBinTableConverter.empty, emptyRow)){
-			case ((conv, row), nextRow) =>
-				if(conv.isEmpty){
-					val converter = new ToBinTableConverter(formats, nextRow.columnNames)
-					val schema = converter.getBinTableSchema(nextRow.nRows)
-					val cells = converter.parseCells(nextRow.cells)
-					(converter, new BinTableRow(cells, schema))
-				} else (conv, new BinTableRow(conv.parseCells(nextRow.cells), row.schema))
-		}
-		.drop(1)
-		.map(_._2)
+	def wdcggToBinTableConverter(formatsFut: Future[Formats]): Flow[WdcggRow, BinTableRow, NotUsed] =
+		Flow.fromGraph(GraphDSL.create(){ implicit b =>
+			import GraphDSL.Implicits._
 
-	private def emptyRow = new BinTableRow(Array.empty, new Schema(Array.empty, 0))
+			val formats = b.add(Source.fromFuture(formatsFut))
+			val inputs = b.add(Broadcast.apply[WdcggRow](2))
+
+			val zipToConverter = b.add(ZipWith[Formats, WdcggRow, ToBinTableConverter](
+				(formats, row) => new ToBinTableConverter(formats, row.columnNames, row.nRows)
+			))
+
+			formats.out ~> zipToConverter.in0
+			inputs.out(0) ~> zipToConverter.in1
+
+			val infRepeater = b.add(Flow.apply[ToBinTableConverter].mapConcat(Stream.continually(_)))
+			val zipToResult = b.add(ZipWith[ToBinTableConverter, WdcggRow, BinTableRow](
+				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
+			))
+
+			zipToConverter.out ~> infRepeater.in
+			infRepeater.out ~> zipToResult.in0
+			inputs.out(1) ~> zipToResult.in1
+
+			FlowShape(inputs.in, zipToResult.out)
+		})
 
 	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
 		.takeWhile(TimeSeriesParser.isHeaderLine)

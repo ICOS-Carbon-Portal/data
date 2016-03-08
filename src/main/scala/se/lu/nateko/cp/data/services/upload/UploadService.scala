@@ -1,35 +1,33 @@
 package se.lu.nateko.cp.data.services.upload
 
-import java.io.File
 import java.nio.file.Paths
+
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Failure
-import akka.stream.scaladsl.Keep
+
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import akka.stream.scaladsl.FileIO
-import se.lu.nateko.cp.data.irods.IrodsClient
-import se.lu.nateko.cp.data.streams.ErrorSwallower
-import se.lu.nateko.cp.data.api.Utils
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.cpauth.core.UserInfo
-import se.lu.nateko.cp.meta.core.data.DataObject
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Broadcast
-import akka.stream.SinkShape
+import se.lu.nateko.cp.data.UploadConfig
+import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
-import scala.concurrent.ExecutionContext
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.DataObject
 
-class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
+class UploadService(config: UploadConfig, meta: MetaClient) {
 
-	import meta.dispatcher
+	import meta.{system, dispatcher}
 	import UploadService._
+
+	val folder = new java.io.File(config.folder)
 
 	if(!folder.exists) {
 		assert(folder.mkdirs(), "Failed to create directory " + folder.getAbsolutePath)
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
+
+	private val irods = IrodsClient(config.irods)
 
 	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[UploadResult]]] = {
 		for(
@@ -76,7 +74,7 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 			case 2 =>
 				hashAndIrods :+
 				new FileSavingUploadTask(file) :+
-				new IngestionUploadTask(dataObj, file)
+				new IngestionUploadTask(dataObj, file, meta.sparql)
 			case 3 =>
 				hashAndIrods :+
 				new FileSavingUploadTask(file)

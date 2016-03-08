@@ -1,10 +1,7 @@
 package se.lu.nateko.cp.data.formats
 
-import se.lu.nateko.cp.data.formats.bintable.ValueParser
-import java.util.Locale
-import se.lu.nateko.cp.data.formats.bintable.DataType
-import java.time.LocalDate
-import java.time.LocalTime
+import se.lu.nateko.cp.data.api.CpMetaVocab
+import se.lu.nateko.cp.data.api.CpDataException
 
 sealed trait ValueFormat
 
@@ -14,28 +11,17 @@ case object StringValue extends ValueFormat
 case object Iso8601DateValue extends ValueFormat
 case object Iso8601TimeOfDayValue extends ValueFormat
 
-class ValueFormatParser(locale: Locale){
+object ValueFormat{
 
-	private[this] val parser = new ValueParser(locale)
+	import CpMetaVocab._
 
-	def parse(value: String, format: ValueFormat): Object = format match {
-		case IntValue =>
-			parser.parse(value, DataType.INT)
-		case FloatValue =>
-			parser.parse(value, DataType.FLOAT)
-		case StringValue =>
-			value
-		case Iso8601DateValue =>
-			Int.box(LocalDate.parse(value).toEpochDay.toInt)
-		case Iso8601TimeOfDayValue =>
-			Int.box(LocalTime.parse(value).toSecondOfDay)
-	}
-
-	def getBinTableDataType(format: ValueFormat): DataType = format match {
-		case IntValue => DataType.INT
-		case FloatValue => DataType.FLOAT
-		case StringValue => DataType.STRING
-		case Iso8601DateValue => DataType.INT
-		case Iso8601TimeOfDayValue => DataType.INT
+	def fromUri(uri: java.net.URI): ValueFormat = uri match {
+		case `int32` => IntValue
+		case `float32` => FloatValue
+		case `string` => StringValue
+		case `iso8601date` => Iso8601DateValue
+		case `iso8601timeOfDay` => Iso8601TimeOfDayValue
+		case _ => throw new CpDataException(s"Unsupported value format $uri")
 	}
 }
+

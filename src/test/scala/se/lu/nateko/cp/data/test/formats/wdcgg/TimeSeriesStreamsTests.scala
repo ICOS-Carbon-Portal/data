@@ -28,13 +28,13 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val expectedNRows = 360
 
-	val formats = Map(
+	val formats = Future.successful(Map(
 		"DATE" -> Iso8601DateValue,
 		"TIME" -> Iso8601TimeOfDayValue,
 		"CO2" -> FloatValue,
 		"ND" -> IntValue,
 		"SD" -> FloatValue
-	)
+	))
 
 	val linesSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat"))

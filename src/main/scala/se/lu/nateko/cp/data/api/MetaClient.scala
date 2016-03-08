@@ -16,10 +16,12 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
 import akka.http.scaladsl.marshalling.Marshal
 
-class MetaClient(config: MetaServiceConfig)(implicit system: ActorSystem) {
+class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 	implicit val dispatcher = system.dispatcher
 	implicit val materializer = ActorMaterializer(None, Some("metaClientMat"))
-	import config.{baseUrl, uploadApiPath}
+	import config.{baseUrl, uploadApiPath, sparqlEndpointPath}
+
+	val sparql = new SparqlClient(new java.net.URL(baseUrl + sparqlEndpointPath))
 
 	private def get(uri: Uri): Future[HttpResponse] = {
 		Http().singleRequest(

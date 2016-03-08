@@ -33,13 +33,11 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
-	val irodsClient = IrodsClient(config.upload.irods)
 	val metaClient = new MetaClient(config.meta)
 
-	val uploadFolder = new java.io.File(config.upload.folder)
-	val uploadService = new UploadService(uploadFolder, irodsClient, metaClient)
+	val uploadService = new UploadService(config.upload, metaClient)
 
-	val binTableFetcher = new FromBinTableFetcher(uploadFolder)
+	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRouting = new TabularFetchRouting(binTableFetcher)
 
 	val authRouting = new AuthRouting(config.auth)
