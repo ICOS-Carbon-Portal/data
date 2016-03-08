@@ -24,12 +24,15 @@ import se.lu.nateko.cp.data.streams.ErrorSwallower
 import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
 import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import akka.actor.ActorSystem
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
+
+	def apply(config: IrodsConfig)(implicit system: ActorSystem) = new IrodsClient(config, new IRODSConnectionPool)
 }
 
-class IrodsClient(config: IrodsConfig, connPool: IRODSConnectionPool){
+class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 	import IrodsClient._
 
 	private val account = IRODSAccount.instance(

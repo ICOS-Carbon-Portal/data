@@ -33,8 +33,7 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
-	val irodsConnPool = new IRODSConnectionPool
-	val irodsClient = new IrodsClient(config.upload.irods, irodsConnPool)
+	val irodsClient = IrodsClient(config.upload.irods)
 	val metaClient = new MetaClient(config.meta)
 
 	val uploadFolder = new java.io.File(config.upload.folder)

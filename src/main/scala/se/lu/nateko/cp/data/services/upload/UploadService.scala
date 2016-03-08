@@ -38,7 +38,6 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 		) yield getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
 	}
 
-	//TODO Remove the following method
 	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.id).toFile
 
 	private def getSpecificSink(dataObj: DataObject): Sink[ByteString, Future[UploadResult]] = {
@@ -64,41 +63,32 @@ class UploadService(folder: File, irods: IrodsClient, meta: MetaClient) {
 		}))
 	}
 
-	private def getUploadTasks(dataObj: DataObject): IndexedSeq[UploadTask] = ???
+	private def getUploadTasks(dataObj: DataObject): IndexedSeq[UploadTask] = {
+		val file = getFile(dataObj.hash)
+
+		def hashAndIrods = IndexedSeq.empty :+
+			new HashsumCheckingUploadTask(dataObj.hash) :+
+			new IrodsUploadTask(dataObj.hash.id, irods)
+
+		dataObj.specification.dataLevel match{
+			case 0 =>
+				hashAndIrods
+			case 2 =>
+				hashAndIrods :+
+				new FileSavingUploadTask(file) :+
+				new IngestionUploadTask(dataObj, file)
+			case 3 =>
+				hashAndIrods :+
+				new FileSavingUploadTask(file)
+			case dataLevel =>
+				IndexedSeq.empty :+
+				new NotSupportedUploadTask(s"Upload of data objects of level $dataLevel is not supported")
+		}
+	}
 
 	private def getPostUploadTasks(dataObj: DataObject): Seq[PostUploadTask] =
 		Seq(new MetaCompletionPostUploadTask(dataObj.hash, meta))
 
-/*	private def getFileSavingSink(hash: Sha256Sum): Sink[ByteString, Future[String]] = {
-		val file = getFile(hash)
-
-		if(file.exists)
-			//TODO Develop a proper workflow for re-submission, re-upload, etc
-			Sink.cancelled.mapMaterializedValue(_ => meta.completeUpload(hash))
-		else {
-			val irodsSink = irods.getNewFileSink(hash.id)
-			val fileSink = FileIO.toFile(file)
-
-			ErrorSwallower[ByteString]()
-				.alsoToMat(irodsSink)(Keep.both)
-				.toMat(fileSink){ case ((upstreamFut, hashFut), nbytesFut) =>
-	
-					val uploadedBytesFut = for(
-						_ <- Utils.waitForAll(hashFut, nbytesFut, upstreamFut);
-						actualHash <- hashFut;
-						nBytes <- nbytesFut
-					) yield
-						if(actualHash == hash) nBytes
-						else throw new Exception(s"Got hashsum $actualHash, expected $hash")
-
-					uploadedBytesFut.andThen{
-						case Failure(_) => if(file.exists) file.delete()
-					}.andThen{
-						case Failure(_) => irods.deleteFile(hash.id)
-					}.flatMap(_ => meta.completeUpload(hash))
-				}
-		}
-	}*/
 }
 
 object UploadService{

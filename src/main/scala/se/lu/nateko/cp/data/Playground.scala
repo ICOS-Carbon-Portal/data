@@ -26,8 +26,7 @@ object Playground {
 	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
 	val irodsConfig = ConfigReader.getDefault.upload.irods
-	val irodsConnPool = new IRODSConnectionPool
-	val client = new IrodsClient(irodsConfig, irodsConnPool)
+	val client = IrodsClient(irodsConfig)
 
 	def repeat(str: String, n: Int) = {
 		val bs = ByteString(str)

@@ -31,7 +31,9 @@ sealed trait UploadTaskCancellation extends UploadTaskResult
 sealed trait UploadTaskFailure extends UploadTaskResult{
 	val error: Throwable
 }
-
+case class NotImplementedFailure(message: String) extends UploadTaskFailure{
+	val error = new CpDataException(message)
+}
 case class CancelledBecauseOfOthers(errors: Seq[UploadTaskFailure]) extends UploadTaskCancellation
 
 case class HashsumCheckSuccess(actual: Sha256Sum) extends UploadTaskSuccess

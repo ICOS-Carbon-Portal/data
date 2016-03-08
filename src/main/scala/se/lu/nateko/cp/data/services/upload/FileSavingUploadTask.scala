@@ -15,9 +15,7 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-class FileSavingUploadTask(hash: Sha256Sum, folder: File)(implicit ctxt: ExecutionContext) extends UploadTask{
-
-	private val file = Paths.get(folder.getAbsolutePath, hash.id).toFile
+class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends UploadTask{
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		if(file.exists)

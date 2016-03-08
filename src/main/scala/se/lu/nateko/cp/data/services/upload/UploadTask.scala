@@ -44,3 +44,7 @@ object UploadTask{
 
 }
 
+class NotSupportedUploadTask(message: String) extends UploadTask{
+	override def sink = Sink.cancelled.mapMaterializedValue(_ => Future.successful(NotImplementedFailure(message)))
+	override def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = Future.successful(ownResult)
+}
