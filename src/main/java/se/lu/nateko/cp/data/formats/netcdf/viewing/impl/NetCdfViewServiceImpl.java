@@ -280,7 +280,9 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			double latMax = latLonRect.getLatMax();
 			double lonMin = latLonRect.getLonMin();
 			double lonMax = latLonRect.getLonMax();
-			
+
+			griddataset.close();
+
 			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latMin, latMax, lonMin, lonMax);
 
 		} catch (IOException ioe) {
