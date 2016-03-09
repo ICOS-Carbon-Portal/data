@@ -18,6 +18,7 @@ import akka.stream.ThrottleMode
 import akka.stream.scaladsl.FileIO
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.streams.DigestFlow
 
 object Playground {
 
@@ -26,8 +27,7 @@ object Playground {
 	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
 	val irodsConfig = ConfigReader.getDefault.upload.irods
-	val irodsConnPool = new IRODSConnectionPool
-	val client = new IrodsClient(irodsConfig, irodsConnPool)
+	val client = IrodsClient(irodsConfig)
 
 	def repeat(str: String, n: Int) = {
 		val bs = ByteString(str)
@@ -56,12 +56,13 @@ object Playground {
 		src.runWith(sink)
 	}
 
-	def writeZeros(path: String): Unit = {
-		val out = client.getNewFileOutputStream(path)
-		val arr = Array.ofDim[Byte](100000000)
-		(1 to 1).foreach(_ => out.write(arr))
-		out.close()
+	def digestFileFromDisk(path: String): Future[Sha256Sum] = {
+		val file = new java.io.File(path)
+		val src = FileIO.fromFile(file)
+		val sink = DigestFlow.sha256.to(Sink.ignore)
+		src.runWith(sink)
 	}
+
 
 	def writeParallel(prefix: String, n: Int): Future[Seq[Sha256Sum]] = {
 		val extraLargeSrc = repeat(rowBlock, 10000)

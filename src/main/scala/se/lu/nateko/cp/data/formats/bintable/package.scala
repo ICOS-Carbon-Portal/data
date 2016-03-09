@@ -8,4 +8,5 @@ package object bintable{
 		}
 	}
 
+	val FileExtension = ".cpb"
 }

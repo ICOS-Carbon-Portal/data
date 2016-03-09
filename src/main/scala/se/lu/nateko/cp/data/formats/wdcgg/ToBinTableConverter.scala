@@ -7,7 +7,7 @@ import scala.annotation.migration
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
 
-class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[String]) {
+class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[String], nRows: Int) {
 
 	private val colPositions: Map[String, Int] = colNames.zipWithIndex.groupBy(_._1).map{
 		case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
@@ -17,10 +17,9 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[
 	assert(missingColumns.isEmpty, "Missing columns: " + missingColumns.mkString(", "))
 
 	private val valueFormatParser = new ValueFormatParser(Locale.UK)
-
 	private val sortedColumns = colFormats.keys.toArray.sorted
 
-	def getBinTableSchema(nRows: Int): Schema = {
+	val schema = {
 		val dataTypes = sortedColumns.map(colFormats).map(valueFormatParser.getBinTableDataType)
 		new Schema(dataTypes, nRows)
 	}
@@ -30,22 +29,23 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[
 			val valFormat = colFormats(colName)
 			val colPos = colPositions(colName)
 			val cellValue = cells(colPos)
-			val nullHandled = ToBinTableConverter.handleNulls(cellValue, valFormat)
-			valueFormatParser.parse(nullHandled, valFormat)
+
+			if(ToBinTableConverter.isNull(cellValue, valFormat))
+				valueFormatParser.getNullRepresentation(valFormat)
+			else valueFormatParser.parse(cellValue, valFormat)
 		}
 	}
-
-	val isEmpty = colNames.isEmpty
 }
 
 object ToBinTableConverter{
-	def empty = new ToBinTableConverter(Map.empty, Array.empty)
 
-	def handleNulls(original: String, format: ValueFormat): String = format match {
-		case IntValue => if(original == "-9999") Int.MinValue.toString else original
-		case FloatValue => if(original == "-99.999") Float.MinValue.toString else original
-		case StringValue => original
-		case Iso8601DateValue => if(original == "9999-99-99") Int.MinValue.toString else original
-		case Iso8601TimeOfDayValue => if(original == "99:99") Int.MinValue.toString else original
+	private val floatNullRegex = "^\\-9+\\.9*$".r
+
+	def isNull(value: String, format: ValueFormat): Boolean = format match {
+		case IntValue => value == "-9999"
+		case FloatValue => floatNullRegex.findFirstIn(value).isDefined
+		case StringValue => value == null
+		case Iso8601DateValue => value == "9999-99-99"
+		case Iso8601TimeOfDayValue => value == "99:99"
 	}
 }

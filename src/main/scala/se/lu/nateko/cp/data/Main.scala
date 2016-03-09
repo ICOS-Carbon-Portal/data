@@ -13,7 +13,7 @@ import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.routes._
-import se.lu.nateko.cp.data.services.UploadService
+import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
@@ -33,14 +33,11 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
-	val irodsConnPool = new IRODSConnectionPool
-	val irodsClient = new IrodsClient(config.upload.irods, irodsConnPool)
 	val metaClient = new MetaClient(config.meta)
 
-	val uploadFolder = new java.io.File(config.upload.folder)
-	val uploadService = new UploadService(uploadFolder, irodsClient, metaClient)
+	val uploadService = new UploadService(config.upload, metaClient)
 
-	val binTableFetcher = new FromBinTableFetcher(uploadFolder)
+	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRouting = new TabularFetchRouting(binTableFetcher)
 
 	val authRouting = new AuthRouting(config.auth)
