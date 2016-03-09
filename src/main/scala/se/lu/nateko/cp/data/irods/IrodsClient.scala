@@ -1,30 +1,24 @@
 package se.lu.nateko.cp.data.irods
 
-import java.io.OutputStream
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
-import scala.util.Failure
-import scala.util.Success
+
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
-import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
+import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 import org.irods.jargon.core.pub.IRODSAccessObjectFactory
 import org.irods.jargon.core.pub.IRODSAccessObjectFactoryImpl
 import org.irods.jargon.core.pub.io.IRODSFileFactory
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
+
+import akka.actor.ActorSystem
 import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
-import se.lu.nateko.cp.data.streams.DigestFlow
-import se.lu.nateko.cp.data.streams.ErrorSwallower
-import se.lu.nateko.cp.data.streams.OutputStreamWithCleanup
-import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import akka.actor.ActorSystem
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
