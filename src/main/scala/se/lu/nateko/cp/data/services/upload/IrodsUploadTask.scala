@@ -18,22 +18,23 @@ class IrodsUploadTask(filePath: String, client: IrodsClient)(implicit ctxt: Exec
 		)
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] =
-		UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-			client.deleteFile(filePath)
-			Done
-		}).map(result => {
-
+		(ownResult match{
+			case IrodsSuccess(_) =>
+				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
+					client.deleteFile(filePath)
+					Done
+				})
+			case _ => Future.successful(ownResult)
+		})
+		.map(result => {
 			val hashOpt = otherTaskResults.collectFirst{
 				case HashsumCheckSuccess(hash) => hash
 			}
 
 			(result, hashOpt) match{
-				case (IrodsSuccess(actualHash), Some(hash)) =>
-					if(hash == actualHash) result
-					else {
-						client.deleteFile(filePath)
-						HashsumCheckFailure(hash, actualHash)
-					}
+				case (IrodsSuccess(actualHash), Some(hash)) if(hash != actualHash) =>
+					client.deleteFile(filePath)
+					HashsumCheckFailure(hash, actualHash)
 				case _ => result
 			}
 		})

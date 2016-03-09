@@ -48,7 +48,6 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 	/**
 	 * Creates a `ByteString` sink to upload the contents to a new iRODS file.
 	 * Fetches the hash of the uploaded file.
-	 * Deletes the uploaded file if any problem occurs.
 	 * Materializes a `Future[Sha256Sum]`. The `Future` is successful if upload is successful.
 	 * Upload will fail if the file already exists.
 	 * 
@@ -64,17 +63,12 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 			.withAttributes(Attributes.inputBuffer(1, 1))
 
 		ByteStringBuffer(bufferSize)
-			.toMat(irodsSink)((_, uploadFut) => {
-
-				val hashsumFuture = for(
+			.toMat(irodsSink){(_, uploadFut) =>
+				for(
 					_ <- uploadFut; //need to wait for the upload to succeed before asking for checksum
 					irodsDigest <- Future(getChecksum(filePath))
 				) yield irodsDigest
-
-				hashsumFuture.andThen{
-					case Failure(_) => deleteFile(filePath)
-				}
-			})
+			}
 	}
 
 	def deleteFile(filePath: String): Unit = {

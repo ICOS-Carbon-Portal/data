@@ -61,10 +61,15 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 
 				override def onUpstreamFinish(): Unit = {
 					if(isAvailable(in)) writeRow(grab(in))
-					closeOutStream()
+
+					closeOutStreamAndSession()
+
+					if(!countPromise.isCompleted){
+						countPromise.success(count)
+					}
 				}
 
-				override def onUpstreamFailure(ex: Throwable): Unit = failIrodsSink(ex)
+				override def onUpstreamFailure(exc: Throwable): Unit = failIrodsSink(exc)
 			})
 
 			private def writeRow(row: ByteString): Unit =
@@ -72,35 +77,47 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 					if(outStream == null){
 						Await.result(init, 10 seconds)
 					}
-					val bytes = row.asByteBuffer.array
+					val bytes = Array.ofDim[Byte](row.length)
+					row.copyToArray(bytes)
 					outStream.write(bytes)
 					count += bytes.length
 				}catch{
-					case err: Throwable => failIrodsSink(err)
+					case exc: Throwable => failIrodsSink(exc)
 				}
 
 			private def failIrodsSink(exc: Throwable): Unit = {
 				failStage(exc)
-				try{
-					closeOutStream()
+				closeOutStreamAndSession()
+				failResult(exc)
+			}
+
+			private def failResult(exc: Throwable): Unit =
+				if(!countPromise.isCompleted){
 					countPromise.failure(exc)
+				}
+
+			private def closeOutStreamAndSession(): Unit = {
+				doOrFailResult{
+					if(outStream != null){
+						outStream.flush()
+						outStream.close()
+						outStream = null
+					}
+				}
+				doOrFailResult{
+					if(session != null){
+						session.closeSession()
+						session = null
+					}
+				}
+			}
+
+			private def doOrFailResult(todo: => Unit): Unit =
+				try{
+					todo
 				}catch{
-					case irodsExc: Throwable => countPromise.failure(irodsExc)
+					case exc: Throwable => failResult(exc)
 				}
-			}
-
-			private def closeOutStream(): Unit = {
-				if(outStream != null){
-					outStream.flush()
-					outStream.close()
-					outStream = null
-				}
-				if(session != null){ 
-					session.closeSession()
-					session = null
-				}
-			}
-
 		}
 		(logic, logic.countPromise.future)
 	}
