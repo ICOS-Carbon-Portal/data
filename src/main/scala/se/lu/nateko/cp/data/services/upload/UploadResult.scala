@@ -18,8 +18,10 @@ class UploadResult(val taskResults: Seq[UploadTaskResult]){
 				case UploadCompletionSuccess(info) => info
 			}.getOrElse("NOT SPECIFIED")
 
-		} else
-			failures.head.error.getMessage
+		} else {
+			val messages = failures.map(_.error.getMessage).mkString("\n")
+			throw new CpDataException(messages)
+		}
 	}
 
 }

@@ -44,3 +44,11 @@ scalacOptions ++= Seq(
   "-target:jvm-1.8",
   "-encoding", "UTF-8"
 )
+
+initialCommands in console := """
+	import se.lu.nateko.cp.data.MassUpload._
+"""
+
+cleanupCommands in console := """
+	system.terminate()
+"""
