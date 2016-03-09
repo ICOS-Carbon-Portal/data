@@ -39,7 +39,7 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[
 
 object ToBinTableConverter{
 
-	private val floatNullRegex = "^\\-9+\\.9+$".r
+	private val floatNullRegex = "^\\-9+\\.9*$".r
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case IntValue => value == "-9999"

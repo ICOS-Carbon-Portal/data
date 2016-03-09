@@ -32,7 +32,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 					.flatMap(req.entity.dataBytes.runWith)
 
 				onSuccess(resFuture){res =>
-					complete(s"The data object is available at http://dx.doi.org/${res.makeReport}")
+					complete(s"The data object is available at ${res.makeReport}")
 				}
 			}
 		}

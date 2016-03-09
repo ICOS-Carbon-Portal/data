@@ -1,10 +1,8 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.nio.file.Paths
-
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserInfo
@@ -14,6 +12,7 @@ import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.data.api.CpMetaVocab
 
 class UploadService(config: UploadConfig, meta: MetaClient) {
 
@@ -72,9 +71,15 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 			case 0 =>
 				hashAndIrods
 			case 2 =>
-				hashAndIrods :+
-				new FileSavingUploadTask(file) :+
-				new IngestionUploadTask(dataObj, file, meta.sparql)
+				if(dataObj.specification.format.uri == CpMetaVocab.asciiWdcggTimeSer){
+					IndexedSeq.empty :+
+					new HashsumCheckingUploadTask(dataObj.hash) :+
+					new FileSavingUploadTask(file) :+
+					new IngestionUploadTask(dataObj, file, meta.sparql)
+				}else {
+					hashAndIrods :+
+					new FileSavingUploadTask(file)
+				}
 			case 3 =>
 				hashAndIrods :+
 				new FileSavingUploadTask(file)

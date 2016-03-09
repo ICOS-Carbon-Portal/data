@@ -49,4 +49,5 @@ case class FileWriteFailure(error: Throwable) extends UploadTaskFailure
 case object FileExists extends UploadTaskCancellation
 
 case class IngestionSuccess(completionInfo: UploadCompletionInfo) extends UploadTaskSuccess
+case class IngestionFailure(error: Throwable) extends UploadTaskFailure
 case class UploadCompletionSuccess(response: String) extends UploadTaskSuccess

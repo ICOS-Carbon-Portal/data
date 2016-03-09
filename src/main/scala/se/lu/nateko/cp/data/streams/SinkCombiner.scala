@@ -6,6 +6,9 @@ import akka.stream.scaladsl.Broadcast
 import akka.stream.SinkShape
 
 object SinkCombiner {
+
+	private val EagerCancel = true
+
 	/**
 	 * Combines multiple sinks with compatible inputs and materialization values into a single sink by broadcasting.
 	 * The resulting sink's materialization value is a sequence of the underlying sinks' materialization values.
@@ -22,7 +25,7 @@ object SinkCombiner {
 		case Seq(first, second) => Sink.fromGraph(
 			GraphDSL.create(first, second)(Seq(_, _)){ implicit b =>
 				import GraphDSL.Implicits._
-				val bcast = b.add(Broadcast[In](2, true))
+				val bcast = b.add(Broadcast[In](2, EagerCancel))
 				(sink1, sink2) => {
 					bcast.out(0) ~> sink1.in
 					bcast.out(1) ~> sink2.in
@@ -34,7 +37,7 @@ object SinkCombiner {
 		case Seq(first, second, third) => Sink.fromGraph(
 			GraphDSL.create(first, second, third)(Seq(_, _, _)){ implicit b =>
 				import GraphDSL.Implicits._
-				val bcast = b.add(Broadcast[In](3, true))
+				val bcast = b.add(Broadcast[In](3, EagerCancel))
 				(sink1, sink2, sink3) => {
 					bcast.out(0) ~> sink1.in
 					bcast.out(1) ~> sink2.in
@@ -47,7 +50,7 @@ object SinkCombiner {
 		case Seq(first, second, third, fourth) => Sink.fromGraph(
 			GraphDSL.create(first, second, third, fourth)(Seq(_, _, _, _)){ implicit b =>
 				import GraphDSL.Implicits._
-				val bcast = b.add(Broadcast[In](4, true))
+				val bcast = b.add(Broadcast[In](4, EagerCancel))
 				(sink1, sink2, sink3, sink4) => {
 					bcast.out(0) ~> sink1.in
 					bcast.out(1) ~> sink2.in
@@ -65,7 +68,7 @@ object SinkCombiner {
 			Sink.fromGraph(
 				GraphDSL.create(firstHalf, secondHalf)(_ ++ _){ implicit b =>
 					import GraphDSL.Implicits._
-					val bcast = b.add(Broadcast[In](2, true))
+					val bcast = b.add(Broadcast[In](2, EagerCancel))
 					(sink1, sink2) => {
 						bcast.out(0) ~> sink1.in
 						bcast.out(1) ~> sink2.in

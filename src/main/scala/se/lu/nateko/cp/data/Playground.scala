@@ -18,6 +18,7 @@ import akka.stream.ThrottleMode
 import akka.stream.scaladsl.FileIO
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.streams.DigestFlow
 
 object Playground {
 
@@ -52,6 +53,13 @@ object Playground {
 		val file = new java.io.File(path)
 		val src = FileIO.fromFile(file)
 		val sink = client.getNewFileSink(file.getName)(blockingExeCtxt)
+		src.runWith(sink)
+	}
+
+	def digestFileFromDisk(path: String): Future[Sha256Sum] = {
+		val file = new java.io.File(path)
+		val src = FileIO.fromFile(file)
+		val sink = DigestFlow.sha256.to(Sink.ignore)
 		src.runWith(sink)
 	}
 
