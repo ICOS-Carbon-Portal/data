@@ -41,18 +41,29 @@ object TimeSeriesParser {
 		}
 	}
 
+	private val headerKeys = Set(
+		"STATION NAME", "COUNTRY/TERRITORY", "PARAMETER", "TIME INTERVAL",
+		"MEASUREMENT UNIT", "MEASUREMENT METHOD", "SAMPLING TYPE", "TIME ZONE",
+		"MEASUREMENT SCALE", "CONTRIBUTOR"
+	)
+
+	private val keyRenamings = Map("COUNTRY/TERITORY" -> "COUNTRY/TERRITORY")
+
 	class HeaderAccumulator(lastKv: Option[(String, String)], kvPairs: Map[String, String]){
-		def result: Map[String, String] = lastKv match {
+
+		def result: Map[String, String] = (lastKv match {
 			case None => kvPairs
 			case Some(kv) => kvPairs + kv
-		}
+		}).filterKeys(headerKeys.contains)
 
-		def addKv(key: String, value: String) = new HeaderAccumulator(Some((key, value)), result)
+		def addKv(key: String, value: String) = new HeaderAccumulator(Some((mapKey(key), value)), result)
 
 		def append(value: String) = lastKv match{
 			case Some((key, currValue)) => new HeaderAccumulator(Some((key, currValue + "\n" + value)), kvPairs)
 			case _ => this
 		}
+
+		private def mapKey(key: String): String = keyRenamings.getOrElse(key, key)
 	}
 
 	def headerSeed = new HeaderAccumulator(None, Map.empty)

@@ -73,6 +73,7 @@ object MassUpload extends CommonJsonSupport{
 			.to(Sink.ignore).run()
 
 		hashFut.map{hash =>
+println(s"Submitting ${file.getName} with hash ${hash.id}")
 			UploadMetadataDto(
 				hashSum = hash,
 				submitterId = "CP",
@@ -132,7 +133,6 @@ object MassUpload extends CommonJsonSupport{
 	}
 
 	def processFile(file: File): Future[String] = {
-		println("Processing " + file.getName)
 		(for(
 			meta <- makeMeta(file);
 			resMeta <- submitMeta(meta);

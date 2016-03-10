@@ -15,6 +15,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.ZipWith
 import akka.stream.FlowShape
+import java.nio.charset.Charset
 
 class WdcggRow(val columnNames: Array[String], val nRows: Int, val cells: Array[String])
 
@@ -22,9 +23,11 @@ object TimeSeriesStreams{
 
 	type Formats = Map[String, ValueFormat]
 
+	private val charSet = Charset.forName("Windows-1252").name()
+
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
-		.map(_.utf8String.replace("\r", ""))
+		.map(_.decodeString(charSet).replace("\r", ""))
 
 	def wdcggParser: Flow[String, WdcggRow, NotUsed] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
