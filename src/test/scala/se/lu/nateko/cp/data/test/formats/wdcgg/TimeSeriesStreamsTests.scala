@@ -31,7 +31,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	val formats = Future.successful(Map(
 		"DATE" -> Iso8601DateValue,
 		"TIME" -> Iso8601TimeOfDayValue,
-		"CO2" -> FloatValue,
+		"PARAMETER" -> FloatValue,
 		"ND" -> IntValue,
 		"SD" -> FloatValue
 	))
@@ -136,8 +136,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 		val kv = Await.result(linesSource.runWith(wdcggHeaderSink), 1 second)
 
 		assert(kv("PARAMETER") === "CO2")
-		assert(kv("CREDIT FOR USE").split("\n").length === 4)
-		assert(kv.size === 27)
+		assert(kv("TIME INTERVAL") === "monthly")
 	}
 
 }

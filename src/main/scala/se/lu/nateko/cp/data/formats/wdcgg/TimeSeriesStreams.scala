@@ -33,8 +33,8 @@ object TimeSeriesStreams{
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.dropWhile(acc => !acc.isOnData)
 		.collect{
-			case acc if (acc.cells.length == acc.columnNames.length) =>
-				new WdcggRow(acc.columnNames, acc.totLength - acc.headerLength, acc.cells)
+			case acc if (acc.cells.length == acc.header.columnNames.length) =>
+				new WdcggRow(acc.header.columnNames, acc.header.totLength - acc.header.headerLength, acc.cells)
 		}
 
 	def wdcggToBinTableConverter(formatsFut: Future[Formats]): Flow[WdcggRow, BinTableRow, NotUsed] =
@@ -64,8 +64,8 @@ object TimeSeriesStreams{
 		})
 
 	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
-		.takeWhile(TimeSeriesParser.isHeaderLine)
-		.fold(TimeSeriesParser.headerSeed)(TimeSeriesParser.parseHeaderLine)
-		.map(_.result)
-		.toMat(Sink.head)(Keep.right)
+		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
+		.takeWhile(!_.isOnData)
+		.map(_.header.kvPairs)
+		.toMat(Sink.last)(Keep.right)
 }

@@ -35,11 +35,11 @@ object MassUpload extends CommonJsonSupport{
 
 	val Username = "test@upload"
 	val Producer = "http://meta.icos-cp.eu/ontologies/cpmeta/CP"
-	val ObjSpec = "http://meta.icos-cp.eu/ontologies/cpmeta/instances/co2WdcggDataObject"
+	val ObjSpec = "http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject"
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
 	val MetaSubmitUrl = "http://localhost:9094/upload"
 	val FileSubmitUrl = "http://localhost:9010/objects/"
-	val RootFolder = "/home/maintenance/Documents/CP/wdcgg/co2"
+	val RootFolder = "/home/maintenance/Documents/CP/wdcgg"
 
 	case class UploadMetadataDto(
 		hashSum: Sha256Sum,
@@ -58,7 +58,7 @@ object MassUpload extends CommonJsonSupport{
 
 	def processFiles() =
 		Source(getFiles(new File(RootFolder)))
-			.mapAsyncUnordered(2)(processFile)
+			.mapAsyncUnordered(12)(processFile)
 			.runForeach(println)
 
 

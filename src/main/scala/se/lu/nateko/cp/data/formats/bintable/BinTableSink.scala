@@ -62,7 +62,7 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 
 					closeWriter()
 
-					if(count == schema.size)
+					if(schema == null || count == schema.size)
 						countPromise.success(count)
 					else failBinTable(
 						new Exception(s"Got $count rows while expected ${schema.size}")

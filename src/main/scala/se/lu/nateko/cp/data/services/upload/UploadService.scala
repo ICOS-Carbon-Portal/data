@@ -74,7 +74,6 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 				if(dataObj.specification.format.uri == CpMetaVocab.asciiWdcggTimeSer){
 					IndexedSeq.empty :+
 					new HashsumCheckingUploadTask(dataObj.hash) :+
-					new FileSavingUploadTask(file) :+
 					new IngestionUploadTask(dataObj, file, meta.sparql)
 				}else {
 					hashAndIrods :+

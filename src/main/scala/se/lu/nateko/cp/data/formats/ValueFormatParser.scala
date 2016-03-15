@@ -3,9 +3,9 @@ package se.lu.nateko.cp.data.formats
 import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
-
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
+import java.time.format.DateTimeParseException
 
 class ValueFormatParser(locale: Locale){
 
@@ -19,7 +19,11 @@ class ValueFormatParser(locale: Locale){
 		case StringValue =>
 			value
 		case Iso8601DateValue =>
-			Int.box(LocalDate.parse(value).toEpochDay.toInt)
+			try{
+				Int.box(LocalDate.parse(value).toEpochDay.toInt)
+			} catch{
+				case exc: DateTimeParseException => getNullRepresentation(format)
+			}
 		case Iso8601TimeOfDayValue =>
 			if(value == "24:00") Int.box(86400)
 			else Int.box(LocalTime.parse(value).toSecondOfDay)
