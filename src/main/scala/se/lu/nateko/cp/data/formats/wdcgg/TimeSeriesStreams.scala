@@ -16,8 +16,9 @@ import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.ZipWith
 import akka.stream.FlowShape
 import java.nio.charset.Charset
+import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
 
-class WdcggRow(val columnNames: Array[String], val nRows: Int, val cells: Array[String])
+class WdcggRow(val header: Header, val cells: Array[String])
 
 object TimeSeriesStreams{
 
@@ -34,7 +35,7 @@ object TimeSeriesStreams{
 		.dropWhile(acc => !acc.isOnData)
 		.collect{
 			case acc if (acc.cells.length == acc.header.columnNames.length) =>
-				new WdcggRow(acc.header.columnNames, acc.header.totLength - acc.header.headerLength, acc.cells)
+				new WdcggRow(acc.header, acc.cells)
 		}
 
 	def wdcggToBinTableConverter(formatsFut: Future[Formats]): Flow[WdcggRow, BinTableRow, NotUsed] =
@@ -45,7 +46,7 @@ object TimeSeriesStreams{
 			val inputs = b.add(Broadcast.apply[WdcggRow](2))
 
 			val zipToConverter = b.add(ZipWith[Formats, WdcggRow, ToBinTableConverter](
-				(formats, row) => new ToBinTableConverter(formats, row.columnNames, row.nRows)
+				(formats, row) => new ToBinTableConverter(formats, row.header)
 			))
 
 			formats.out ~> zipToConverter.in0

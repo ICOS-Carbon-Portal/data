@@ -29,8 +29,9 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 	val expectedNRows = 360
 
 	val formats = Future.successful(Map(
-		"DATE" -> Iso8601DateValue,
-		"TIME" -> Iso8601TimeOfDayValue,
+		"DATE" -> Iso8601Date,
+		"TIMESTAMP" -> Iso8601DateTime,
+		"TIME" -> Iso8601TimeOfDay,
 		"PARAMETER" -> FloatValue,
 		"ND" -> IntValue,
 		"SD" -> FloatValue
@@ -49,7 +50,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val rows = Await.result(rowsFut, 1 second)
 
-		assert(rows.size === rows.head.nRows)
+		assert(rows.size === rows.head.header.nRows)
 		assert(rows.size === expectedNRows)
 	}
 
@@ -60,7 +61,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.toMat(binTableSink)(_ zip _)
 
 		val rowCountsFut = rowsSource.runFold[(Int, Int)]((0, 0)){
-			case ((0, _), firstRow) => (firstRow.nRows, 1)
+			case ((0, _), firstRow) => (firstRow.header.nRows, 1)
 			case ( (schemaNRows, count), _) => (schemaNRows, count + 1)
 		}
 
@@ -84,7 +85,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
 
 		assert(readResult.count === 29454)
-		assert(firstRow.nRows === expectedNRows)
+		assert(firstRow.header.nRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
 
 	}
@@ -100,7 +101,7 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 				val bCast = builder.add(Broadcast[WdcggRow](2))
 				rowsSource ~> bCast
 
-				bCast ~> Flow[WdcggRow].map(_.nRows) ~> schemaNRowsSinkShape.in
+				bCast ~> Flow[WdcggRow].map(_.header.nRows) ~> schemaNRowsSinkShape.in
 				bCast ~> wdcggToBinTableConverter(formats) ~> binTableSinkShape
 
 				ClosedShape

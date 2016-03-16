@@ -9,7 +9,9 @@ object TimeSeriesParser {
 		parameter: String,
 		offsetFromUtc: Int,
 		kvPairs: Map[String, String]
-	)
+	){
+		def nRows = totLength - headerLength
+	}
 
 	case class Accumulator(
 			header: Header,
@@ -35,6 +37,8 @@ object TimeSeriesParser {
 	private val totLinesPattern = """C\d\d TOTAL LINES: (\d+)""".r
 	private val headLinesPattern = """C\d\d HEADER LINES: (\d+)""".r
 	private val wsPattern = "\\s+".r
+	private val paramKey = "PARAMETER"
+	private val timeZoneKey = "TIME ZONE"
 
 	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, Map.empty), 0, Array.empty)
 
@@ -56,10 +60,10 @@ object TimeSeriesParser {
 				acc.changeHeader(columnNames = colNames).incrementLine
 			}else{
 				//bad file, missing the column names row; amending it with standard column names
-				val fakeColNames = Array("DATE", "TIME", "DATE", "TIME", paramName, "ND", "SD", "F", "CS", "REM")
-				val colNames = mapColNames(fakeColNames, paramName)
-				acc.changeHeader(headerLength = acc.header.headerLength - 1, columnNames = colNames)
-					.copy(cells = colNamesAttempt).incrementLine
+				acc.changeHeader(
+					headerLength = acc.header.headerLength - 1,
+					columnNames = Array("DATE", "TIME", "DATE", "TIME", paramKey, "ND", "SD", "F", "CS", "REM")
+				).copy(cells = colNamesAttempt).incrementLine
 			}
 		}
 
@@ -73,35 +77,41 @@ object TimeSeriesParser {
 			case headerKvPattern(key, value) =>
 
 				val withSpecialKvs =
-					if(key == "TIME ZONE")
+					if(key == timeZoneKey)
 						acc.changeHeader(offsetFromUtc = parseUtcOffset(value))
-					else if(key == "PARAMETER")
+					else if(key == paramKey)
 						acc.changeHeader(parameter = value)
 					else acc
 
-				if(headerKeys.contains(key))
-					withSpecialKvs.changeHeader(kvPairs = acc.header.kvPairs + ((mapKey(key), value)))
-				else withSpecialKvs
+				if(headerKeys.contains(key)) {
+					val updatedKvs = acc.header.kvPairs + makeKv(key, value)
+					withSpecialKvs.changeHeader(kvPairs = updatedKvs)
+				} else withSpecialKvs
 
 			case _ if isHeaderLine(line) => acc
 		}).incrementLine
 	}
 
-	def parseUtcOffset(offset: String): Int = {
+	private def parseUtcOffset(offset: String): Int = {
 		val stripped = offset.stripPrefix("Other").stripPrefix("Local time").trim.stripPrefix("UTC").trim
 		//TODO Check if absent time zone info does imply UTC
 		if(stripped.isEmpty) 0 else stripped.toInt
 	}
 
 	private def mapColNames(origColNames: Array[String], paramColName: String) = {
-		origColNames.map(col => if(col == paramColName) "PARAMETER" else col)
+		origColNames.map(col => if(col == paramColName) paramKey else col)
 	}
 
 	private val headerKeys = Set(
-		"STATION NAME", "OBSERVATION CATEGORY", "COUNTRY/TERRITORY", "PARAMETER",
+		"STATION NAME", "OBSERVATION CATEGORY", "COUNTRY/TERRITORY", paramKey,
 		"TIME INTERVAL", "MEASUREMENT UNIT", "MEASUREMENT METHOD", "SAMPLING TYPE",
 		"MEASUREMENT SCALE", "CONTRIBUTOR"
 	)
+
+	private def makeKv(key: String, value: String): (String, String) = {
+		//TODO Harmonize country names
+		(mapKey(key), value)
+	}
 
 	private val keyRenamings = Map("COUNTRY/TERITORY" -> "COUNTRY/TERRITORY")
 	private def mapKey(key: String): String = keyRenamings.getOrElse(key, key)

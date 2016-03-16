@@ -42,7 +42,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 				.alsoToMat(wdcggHeaderSink)(Keep.right)
 				.toMat(firstRowSink){(kvFut, rowFut) =>
 					for(kv <- kvFut; row <- rowFut) yield {
-						val complInfo = WdcggUploadCompletion(row.nRows, kv)
+						val complInfo = WdcggUploadCompletion(row.header.nRows, kv)
 						IngestionSuccess(complInfo)
 					}
 				}

@@ -8,8 +8,9 @@ sealed trait ValueFormat
 case object IntValue extends ValueFormat
 case object FloatValue extends ValueFormat
 case object StringValue extends ValueFormat
-case object Iso8601DateValue extends ValueFormat
-case object Iso8601TimeOfDayValue extends ValueFormat
+case object Iso8601Date extends ValueFormat
+case object Iso8601DateTime extends ValueFormat
+case object Iso8601TimeOfDay extends ValueFormat
 
 object ValueFormat{
 
@@ -19,8 +20,9 @@ object ValueFormat{
 		case `int32` => IntValue
 		case `float32` => FloatValue
 		case `string` => StringValue
-		case `iso8601date` => Iso8601DateValue
-		case `iso8601timeOfDay` => Iso8601TimeOfDayValue
+		case `iso8601date` => Iso8601Date
+		case `iso8601dateTime` => Iso8601DateTime
+		case `iso8601timeOfDay` => Iso8601TimeOfDay
 		case _ => throw new CpDataException(s"Unsupported value format $uri")
 	}
 }

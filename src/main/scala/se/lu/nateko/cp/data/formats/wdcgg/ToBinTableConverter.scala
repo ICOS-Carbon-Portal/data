@@ -1,51 +1,99 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneOffset
 import java.util.Locale
-
-import scala.annotation.migration
 
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
+import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
 
-class ToBinTableConverter(colFormats: Map[String, ValueFormat], colNames: Array[String], nRows: Int) {
+class ToBinTableConverter(colFormats: Map[String, ValueFormat], header: Header) {
+	import ToBinTableConverter._
 
-	private val colPositions: Map[String, Int] = colNames.zipWithIndex.groupBy(_._1).map{
-		case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
+	private val colPositions: Map[String, Int] = computeIndices(header.columnNames)
+
+	private val missingColumns = {
+		val expectedCols = (colFormats.keys.toSeq :+ timeCol :+ dateCol).distinct
+		expectedCols.filterNot(colPositions.contains).filter(_ != timeStampCol)
 	}
-
-	private val missingColumns = colFormats.keys.filterNot(colPositions.contains)
 	assert(missingColumns.isEmpty, "Missing columns: " + missingColumns.mkString(", "))
 
-	private val valueFormatParser = new ValueFormatParser(Locale.UK)
 	private val sortedColumns = colFormats.keys.toArray.sorted
+
+	private val valueFormatParser = new ValueFormatParser(Locale.UK)
 
 	val schema = {
 		val dataTypes = sortedColumns.map(colFormats).map(valueFormatParser.getBinTableDataType)
-		new Schema(dataTypes, nRows)
+		new Schema(dataTypes, header.nRows)
+	}
+
+	private val Seq(stampPos, timePos, datePos) = {
+		val sortedColPositions = computeIndices(sortedColumns)
+		Seq(timeStampCol, timeCol, dateCol).map(sortedColPositions.apply)
 	}
 
 	def parseCells(cells: Array[String]): Array[AnyRef] = {
-		sortedColumns.map{ colName =>
-			val valFormat = colFormats(colName)
-			val colPos = colPositions(colName)
-			val cellValue = cells(colPos)
+		val parsed = sortedColumns.map{ colName =>
+			if(colName == timeStampCol) null else {
+				val valFormat = colFormats(colName)
+				val colPos = colPositions(colName)
+				val cellValue = cells(colPos)
 
-			if(ToBinTableConverter.isNull(cellValue, valFormat))
-				valueFormatParser.getNullRepresentation(valFormat)
-			else valueFormatParser.parse(cellValue, valFormat)
+				if(isNull(cellValue, valFormat)) getNull(valFormat)
+				else valueFormatParser.parse(cellValue, valFormat)
+			}
 		}
+		val date = parsed(datePos).asInstanceOf[Int]
+		val time = parsed(timePos).asInstanceOf[Int]
+		parsed(stampPos) = getTimeStamp(date, time)
+		parsed
 	}
+
+	private val Seq(dateNull, timeNull, stampNull) = Seq(dateCol, timeCol, timeStampCol)
+		.map(col => getNull(colFormats(col)))
+
+	private def getTimeStamp(date: Int, time: Int): AnyRef =
+		if(date == dateNull || time == timeNull) stampNull
+		else{
+			val locDate = LocalDate.ofEpochDay(date)
+
+			val dt =
+				if(time == 86400){
+					val locTime = LocalTime.ofSecondOfDay(0)
+					LocalDateTime.of(locDate, locTime).plusHours(24 - header.offsetFromUtc)
+				} else {
+					val locTime = LocalTime.ofSecondOfDay(time)
+					LocalDateTime.of(locDate, locTime).minusHours(header.offsetFromUtc)
+				}
+			Long.box(dt.toEpochSecond(ZoneOffset.UTC))
+		}
+
+	private def getNull(valFormat: ValueFormat) = valueFormatParser.getNullRepresentation(valFormat)
 }
 
 object ToBinTableConverter{
 
+	private val timeStampCol = "TIMESTAMP"
+	private val timeCol = "TIME"
+	private val dateCol = "DATE"
 	private val floatNullRegex = "^\\-9+\\.9*$".r
+	private val nullDates = Set("99-99", "02-30", "04-31", "06-31", "09-31", "11-31")
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case IntValue => value == "-9999"
 		case FloatValue => floatNullRegex.findFirstIn(value).isDefined
 		case StringValue => value == null
-		case Iso8601DateValue => value == "9999-99-99"
-		case Iso8601TimeOfDayValue => value == "99:99"
+		case Iso8601Date => nullDates.contains(value.substring(5))
+		case Iso8601DateTime => false //does not occur in WDCGG
+		case Iso8601TimeOfDay => value == "99:99"
+	}
+
+	def computeIndices(strings: Array[String]): Map[String, Int] = {
+		strings.zipWithIndex.groupBy(_._1).map{
+			case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
+		}
 	}
 }
