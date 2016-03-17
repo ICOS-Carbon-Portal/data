@@ -68,7 +68,7 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 					val locTime = LocalTime.ofSecondOfDay(time)
 					LocalDateTime.of(locDate, locTime).minusHours(header.offsetFromUtc)
 				}
-			Long.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli)
+			Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli)
 		}
 
 	private def getNull(valFormat: ValueFormat) = valueFormatParser.getNullRepresentation(valFormat)
@@ -103,8 +103,8 @@ object ToBinTableConverter{
 		val sortedCols = getSortedColumns(formats)
 		val stampColIndex = sortedCols.indexOf(timeStampCol)
 		assert(stampColIndex >= 0, timeStampCol + " not found in:  ." + sortedCols.mkString(", "))
-		val epochMilli = cells(stampColIndex).asInstanceOf[Long]
-		Instant.ofEpochMilli(epochMilli)
+		val epochMilli = cells(stampColIndex).asInstanceOf[Double]
+		Instant.ofEpochMilli(epochMilli.toLong)
 	}
 
 	private def getSortedColumns(formats: Formats): Array[String] =

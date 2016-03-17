@@ -75,7 +75,6 @@ public class BinTableReader extends BinTableFile {
 
 		switch(dt){
 			case INT: return bytes.asIntBuffer();
-			case LONG: return bytes.asLongBuffer();
 			case FLOAT: return bytes.asFloatBuffer();
 			case DOUBLE: return bytes.asDoubleBuffer();
 			case SHORT: return bytes.asShortBuffer();

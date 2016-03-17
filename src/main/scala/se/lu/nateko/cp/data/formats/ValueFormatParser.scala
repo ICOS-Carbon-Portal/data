@@ -22,7 +22,7 @@ class ValueFormatParser(locale: Locale){
 		case Iso8601Date =>
 			Int.box(LocalDate.parse(value).toEpochDay.toInt)
 		case Iso8601DateTime =>
-			Long.box(Instant.parse(value).toEpochMilli)
+			Double.box(Instant.parse(value).toEpochMilli)
 		case Iso8601TimeOfDay =>
 			if(value == "24:00") Int.box(86400)
 			else Int.box(LocalTime.parse(value).toSecondOfDay)
@@ -33,7 +33,7 @@ class ValueFormatParser(locale: Locale){
 		case FloatValue => DataType.FLOAT
 		case StringValue => DataType.STRING
 		case Iso8601Date => DataType.INT
-		case Iso8601DateTime => DataType.LONG
+		case Iso8601DateTime => DataType.DOUBLE
 		case Iso8601TimeOfDay => DataType.INT
 	}
 
@@ -42,7 +42,7 @@ class ValueFormatParser(locale: Locale){
 		case FloatValue => Float.box(Float.NaN)
 		case StringValue => ""
 		case Iso8601Date => Int.box(Int.MinValue)
-		case Iso8601DateTime => Long.box(Long.MinValue)
+		case Iso8601DateTime => Double.box(Double.NaN)
 		case Iso8601TimeOfDay => Int.box(Int.MinValue)
 	}
 }

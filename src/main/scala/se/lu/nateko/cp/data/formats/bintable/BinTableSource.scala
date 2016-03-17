@@ -32,19 +32,18 @@ object BinTableSource {
 				case None => reader.readBytes(col)
 			}
 
-			slices(buffer.capacity, MAX_CHUNK_SIZE).map{
-				case (offset, length) =>
-					val arr = Array.ofDim[Byte](length)
-					buffer.get(arr, offset, length)
-					ByteString(arr)
+			slices(buffer.capacity, MAX_CHUNK_SIZE).map{ length =>
+				val arr = Array.ofDim[Byte](length)
+				buffer.get(arr, 0, length)
+				ByteString(arr)
 			}
 		})
 
-	def slices(totalSize: Int, step: Int): Iterator[(Int, Int)] = {
+	def slices(totalSize: Int, step: Int): Iterator[Int] = {
 		(0 until totalSize by step).iterator.map(offset => {
 			val restSize = totalSize - offset
 			val length = if(restSize > step) step else restSize
-			(offset, length)
+			length
 		})
 	}
 }

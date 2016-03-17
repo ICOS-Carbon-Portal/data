@@ -35,7 +35,7 @@ export default function(state, action){
 					values: state.binTable.chartValues(state.xAxisColumn, action.yAxisColumn)
 				}];
 
-				const yAxisLabel = state.tables[state.chosenTable].columnUnits[state.yAxisColumn];
+				const yAxisLabel = state.tables[state.chosenTable].columnUnits[action.yAxisColumn];
 
 				return Object.assign({}, state, {
 					chartData: {

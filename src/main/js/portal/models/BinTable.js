@@ -3,7 +3,6 @@
 function dataTypeSize(dtype){
 	switch (dtype){
 		case 'DOUBLE': return 8;
-		case 'LONG': return 8;
 		case 'BYTE': return 1;
 		case 'CHAR': return 2;
 		case 'SHORT': return 2;
@@ -28,7 +27,6 @@ function dtypeToAccessor(dtype, view){
 		case 'DOUBLE': return i => view.getFloat64(i * 8, false);
 		case 'FLOAT': return i => view.getFloat32(i * 4, false);
 		case 'INT': return i => view.getInt32(i * 4, false);
-		case 'LONG': return i => view.getInt64(i * 8, false);
 		case 'BYTE': return i => view.getInt8(i, false);
 		case 'CHAR': return i => String.fromCharCode(view.getUint16(i * 2, false));
 		case 'SHORT': return i => view.getInt16(i * 2, false);

@@ -7,7 +7,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.Buffer;
 import java.nio.IntBuffer;
-import java.nio.LongBuffer;
 import java.nio.FloatBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.ShortBuffer;
@@ -44,8 +43,6 @@ public class BinTableWriter extends BinTableFile{
 			switch(dt){
 				case INT:
 					typedBuffers[i] = buffers[i].asIntBuffer(); break;
-				case LONG:
-					typedBuffers[i] = buffers[i].asLongBuffer(); break;
 				case FLOAT:
 					typedBuffers[i] = buffers[i].asFloatBuffer(); break;
 				case DOUBLE:
@@ -74,8 +71,6 @@ public class BinTableWriter extends BinTableFile{
 			switch(dt){
 				case INT:
 					((IntBuffer)typedBuffers[i]).put((Integer)row[i]); break;
-				case LONG:
-					((LongBuffer)typedBuffers[i]).put((Long)row[i]); break;
 				case FLOAT:
 					((FloatBuffer)typedBuffers[i]).put((Float)row[i]); break;
 				case DOUBLE:
