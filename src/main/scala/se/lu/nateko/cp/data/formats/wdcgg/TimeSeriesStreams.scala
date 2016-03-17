@@ -17,12 +17,15 @@ import akka.stream.scaladsl.ZipWith
 import akka.stream.FlowShape
 import java.nio.charset.Charset
 import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
+import java.time.Instant
+import se.lu.nateko.cp.meta.core.data.WdcggUploadCompletion
+import scala.concurrent.ExecutionContext
+import se.lu.nateko.cp.meta.core.data.TimeInterval
 
 class WdcggRow(val header: Header, val cells: Array[String])
 
 object TimeSeriesStreams{
-
-	type Formats = Map[String, ValueFormat]
+	import ToBinTableConverter._
 
 	private val charSet = Charset.forName("Windows-1252").name()
 
@@ -34,39 +37,74 @@ object TimeSeriesStreams{
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.dropWhile(acc => !acc.isOnData)
 		.collect{
+			//TODO Check if the following is needed
 			case acc if (acc.cells.length == acc.header.columnNames.length) =>
 				new WdcggRow(acc.header, acc.cells)
 		}
 
-	def wdcggToBinTableConverter(formatsFut: Future[Formats]): Flow[WdcggRow, BinTableRow, NotUsed] =
-		Flow.fromGraph(GraphDSL.create(){ implicit b =>
+	def wdcggToBinTableConverter(formatsFut: Future[Formats])(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
+		val graph = GraphDSL.create(Sink.head[Formats], Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo){ implicit b =>
+			(formatsSink, firstWdcggSink, firstRowSink, lastRowSink) =>
+
 			import GraphDSL.Implicits._
 
-			val formats = b.add(Source.fromFuture(formatsFut))
-			val inputs = b.add(Broadcast.apply[WdcggRow](2))
+			val formats = b.add(Broadcast[Formats](2))
+			formats.out(0) ~> formatsSink.in
+			b.add(Source.fromFuture(formatsFut)).out ~> formats.in
+
+			val inputs = b.add(Broadcast[WdcggRow](3))
+			inputs.out(0) ~> firstWdcggSink.in
 
 			val zipToConverter = b.add(ZipWith[Formats, WdcggRow, ToBinTableConverter](
 				(formats, row) => new ToBinTableConverter(formats, row.header)
 			))
 
-			formats.out ~> zipToConverter.in0
-			inputs.out(0) ~> zipToConverter.in1
+			formats.out(1) ~> zipToConverter.in0
+			inputs.out(1) ~> zipToConverter.in1
 
-			val infRepeater = b.add(Flow.apply[ToBinTableConverter].mapConcat(Stream.continually(_)))
-			val zipToResult = b.add(ZipWith[ToBinTableConverter, WdcggRow, BinTableRow](
+			val converterRepeater = b.add(infiniteRepeater[ToBinTableConverter])
+			zipToConverter.out ~> converterRepeater.in
+
+			val zipToBinRow = b.add(ZipWith[ToBinTableConverter, WdcggRow, BinTableRow](
 				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
 			))
 
-			zipToConverter.out ~> infRepeater.in
-			infRepeater.out ~> zipToResult.in0
-			inputs.out(1) ~> zipToResult.in1
+			converterRepeater.out ~> zipToBinRow.in0
+			inputs.out(2) ~> zipToBinRow.in1
 
-			FlowShape(inputs.in, zipToResult.out)
-		})
+			val outputs = b.add(Broadcast[BinTableRow](3))
+			outputs.out(0) ~> firstRowSink.in
+			outputs.out(1) ~> lastRowSink.in
+			zipToBinRow.out ~> outputs.in
+
+			FlowShape(inputs.in, outputs.out(2))
+		}
+		Flow.fromGraph(graph)
+	}
 
 	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.takeWhile(!_.isOnData)
 		.map(_.header.kvPairs)
 		.toMat(Sink.last)(Keep.right)
+
+	private def infiniteRepeater[T]: Flow[T, T, NotUsed] = Flow.apply[T].mapConcat(Stream.continually(_))
+
+	private def getCompletionInfo(
+			formatsFut: Future[Formats],
+			firstWdcggFut: Future[WdcggRow],
+			firstBinFut: Future[BinTableRow],
+			lastBinFut: Future[BinTableRow]
+		)(implicit ctxt: ExecutionContext): Future[WdcggUploadCompletion] =
+		for(
+			formats <- formatsFut;
+			firstWdcgg <- firstWdcggFut;
+			firstBin <- firstBinFut;
+			lastBin <- lastBinFut
+		) yield{
+			val start = recoverTimeStamp(firstBin.cells, formats)
+			val stop = recoverTimeStamp(lastBin.cells, formats)
+			val header = firstWdcgg.header
+			WdcggUploadCompletion(header.nRows, TimeInterval(start, stop), header.kvPairs)
+		}
 }

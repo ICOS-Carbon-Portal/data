@@ -22,7 +22,7 @@ class ValueFormatParser(locale: Locale){
 		case Iso8601Date =>
 			Int.box(LocalDate.parse(value).toEpochDay.toInt)
 		case Iso8601DateTime =>
-			Long.box(Instant.parse(value).getEpochSecond)
+			Long.box(Instant.parse(value).toEpochMilli)
 		case Iso8601TimeOfDay =>
 			if(value == "24:00") Int.box(86400)
 			else Int.box(LocalTime.parse(value).toSecondOfDay)

@@ -5,13 +5,13 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.util.Locale
-
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
+import ToBinTableConverter._
+import java.time.Instant
 
-class ToBinTableConverter(colFormats: Map[String, ValueFormat], header: Header) {
-	import ToBinTableConverter._
+class ToBinTableConverter(colFormats: Formats, header: Header) {
 
 	private val colPositions: Map[String, Int] = computeIndices(header.columnNames)
 
@@ -21,7 +21,7 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], header: Header) 
 	}
 	assert(missingColumns.isEmpty, "Missing columns: " + missingColumns.mkString(", "))
 
-	private val sortedColumns = colFormats.keys.toArray.sorted
+	private val sortedColumns = getSortedColumns(colFormats)
 
 	private val valueFormatParser = new ValueFormatParser(Locale.UK)
 
@@ -68,7 +68,7 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], header: Header) 
 					val locTime = LocalTime.ofSecondOfDay(time)
 					LocalDateTime.of(locDate, locTime).minusHours(header.offsetFromUtc)
 				}
-			Long.box(dt.toEpochSecond(ZoneOffset.UTC))
+			Long.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli)
 		}
 
 	private def getNull(valFormat: ValueFormat) = valueFormatParser.getNullRepresentation(valFormat)
@@ -76,7 +76,9 @@ class ToBinTableConverter(colFormats: Map[String, ValueFormat], header: Header) 
 
 object ToBinTableConverter{
 
-	private val timeStampCol = "TIMESTAMP"
+	type Formats = Map[String, ValueFormat]
+
+	val timeStampCol = "TIMESTAMP"
 	private val timeCol = "TIME"
 	private val dateCol = "DATE"
 	private val floatNullRegex = "^\\-9+\\.9*$".r
@@ -96,4 +98,15 @@ object ToBinTableConverter{
 			case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
 		}
 	}
+
+	def recoverTimeStamp(cells: Array[AnyRef], formats: Formats): Instant = {
+		val sortedCols = getSortedColumns(formats)
+		val stampColIndex = sortedCols.indexOf(timeStampCol)
+		assert(stampColIndex >= 0, timeStampCol + " not found in:  ." + sortedCols.mkString(", "))
+		val epochMilli = cells(stampColIndex).asInstanceOf[Long]
+		Instant.ofEpochMilli(epochMilli)
+	}
+
+	private def getSortedColumns(formats: Formats): Array[String] =
+		formats.keys.toArray.sorted
 }

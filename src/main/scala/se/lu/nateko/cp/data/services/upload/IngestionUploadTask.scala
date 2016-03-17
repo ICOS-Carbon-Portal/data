@@ -34,31 +34,18 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 			import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams._
 
 			val columnFormats = getColumnFormats(dataObj.hash)
-			val rowParser = wdcggParser
 
-			val firstRowSink = rowParser.toMat(Sink.head)(Keep.right)
-
-			val taskResultSink = Flow.apply[String]
-				.alsoToMat(wdcggHeaderSink)(Keep.right)
-				.toMat(firstRowSink){(kvFut, rowFut) =>
-					for(kv <- kvFut; row <- rowFut) yield {
-						val complInfo = WdcggUploadCompletion(row.header.nRows, kv)
-						IngestionSuccess(complInfo)
-					}
-				}
-
-			val toBinTableSink: Sink[String, Future[Long]] = rowParser
-				.via(wdcggToBinTableConverter(columnFormats))
-				.toMat(BinTableSink(file))(Keep.right)
-
-			linesFromBinary
-				.alsoToMat(toBinTableSink)(Keep.right)
-				.toMat(taskResultSink){(bytesFut, successFut) =>
-					val resultFut = for(_ <- bytesFut; success <- successFut) yield success
-					resultFut.recover{
+			val toBinTableSink: Sink[String, Future[UploadTaskResult]] = wdcggParser
+				.viaMat(wdcggToBinTableConverter(columnFormats))(Keep.right)
+				.to(BinTableSink(file))
+				.mapMaterializedValue(
+					_.map(IngestionSuccess(_)).recover{
 						case exc: Throwable => IngestionFailure(exc)
 					}
-				}
+				)
+
+			linesFromBinary
+				.toMat(toBinTableSink)(Keep.right)
 
 		} else Sink.cancelled.mapMaterializedValue(_ =>
 			Future.successful(
