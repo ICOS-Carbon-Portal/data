@@ -58,7 +58,7 @@ object MassUpload extends CommonJsonSupport{
 
 	def processFiles() =
 		Source(getFiles(new File(RootFolder)))
-			.mapAsyncUnordered(12)(processFile)
+			.mapAsyncUnordered(8)(processFile)
 			.runForeach(println)
 
 

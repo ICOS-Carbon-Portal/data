@@ -24,7 +24,10 @@ class ValueFormatParser(locale: Locale){
 		case Iso8601DateTime =>
 			Double.box(Instant.parse(value).toEpochMilli)
 		case Iso8601TimeOfDay =>
-			if(value == "24:00") Int.box(86400)
+			if(value.startsWith("24:")) {
+				val residualTime = "00:" + value.substring(3)
+				Int.box(86400 + LocalTime.parse(residualTime).toSecondOfDay)
+			}
 			else Int.box(LocalTime.parse(value).toSecondOfDay)
 	}
 

@@ -9,15 +9,15 @@ function checkStatus(response) {
 
 export function getMetaData(searchObj){
 	const tables = [{
-		columnNames: ['DATE', 'PARAMETER', 'TIME', 'TIMESTAMP'],
-		columnUnits: ['date', 'ppm', 'time', 'ms since epoch'],
+		columnNames: ['DATE', 'PARAMETER', 'SD', 'TIME', 'TIMESTAMP'],
+		columnUnits: ['date', 'ppm', 'ppm', 'time', 'ms since epoch'],
 		request: {
 			"tableId": "IjFdgIJ7gEqJDBxB-r8N06jW",
 			"schema": {
-				"columns": ["INT", "FLOAT", "INT", "DOUBLE"],
+				"columns": ["INT", "FLOAT", "FLOAT", "INT", "DOUBLE"],
 				"size": 15341
 			},
-			"columnNumbers": [0, 1, 2, 3]
+			"columnNumbers": [0, 1, 2, 3, 4]
 		}
 	}];
 

@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -9,7 +10,6 @@ import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
 import ToBinTableConverter._
-import java.time.Instant
 
 class ToBinTableConverter(colFormats: Formats, header: Header) {
 
@@ -43,7 +43,7 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 				val cellValue = cells(colPos)
 
 				if(isNull(cellValue, valFormat)) getNull(valFormat)
-				else valueFormatParser.parse(cellValue, valFormat)
+				else valueFormatParser.parse(amend(cellValue, valFormat), valFormat)
 			}
 		}
 		val date = parsed(datePos).asInstanceOf[Int]
@@ -61,8 +61,8 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 			val locDate = LocalDate.ofEpochDay(date)
 
 			val dt =
-				if(time == 86400){
-					val locTime = LocalTime.ofSecondOfDay(0)
+				if(time >= 86400){
+					val locTime = LocalTime.ofSecondOfDay(time - 86400)
 					LocalDateTime.of(locDate, locTime).plusHours(24 - header.offsetFromUtc)
 				} else {
 					val locTime = LocalTime.ofSecondOfDay(time)
@@ -81,7 +81,8 @@ object ToBinTableConverter{
 	val timeStampCol = "TIMESTAMP"
 	private val timeCol = "TIME"
 	private val dateCol = "DATE"
-	private val floatNullRegex = "^\\-9+\\.9*$".r
+	private val floatNullRegex = "\\-9+\\.9*".r
+	private val timeRegex = "(\\d\\d):(\\d\\d)".r
 	private val nullDates = Set("99-99", "02-30", "04-31", "06-31", "09-31", "11-31")
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
@@ -90,7 +91,22 @@ object ToBinTableConverter{
 		case StringValue => value == null
 		case Iso8601Date => nullDates.contains(value.substring(5))
 		case Iso8601DateTime => false //does not occur in WDCGG
-		case Iso8601TimeOfDay => value == "99:99"
+		case Iso8601TimeOfDay => value == "99:99" || value.startsWith("25:") || value.startsWith("26:")
+	}
+
+	def amend(value: String, format: ValueFormat): String = format match {
+		case Iso8601TimeOfDay => value match{
+			case timeRegex(hourStr, minStr) =>
+				minStr.toInt match{
+					case 60 =>
+						val hours = "%02d".format(hourStr.toInt + 1)
+						s"$hours:00"
+					case mins if mins > 60 => s"$hourStr:00"
+					case _ => value
+				}
+			case _ => value
+		}
+		case _ => value
 	}
 
 	def computeIndices(strings: Array[String]): Map[String, Int] = {
