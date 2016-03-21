@@ -1,14 +1,28 @@
 import { FETCHING_STARTED, ERROR, FETCHED_META, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
 
 function getLabels(binTable, xAxisColumn){
+	const threshHold = Math.ceil(binTable.length / 20);
+
 	return Array.from({length: binTable.length}, (_, i) => {
-		return new Date(binTable.value(i, xAxisColumn)).toISOString();
+		if (i % threshHold == 0) {
+			return new Date(binTable.value(i, xAxisColumn)).toISOString();
+		} else {
+			return "";
+		}
 	});
 }
 
 function getdata(binTable, yAxisColumn){
+	let val = 0;
+
 	return Array.from({length: binTable.length}, (_, i) => {
-		return binTable.value(i, yAxisColumn);
+		const testVal = binTable.value(i, yAxisColumn);
+
+		if (testVal){
+			val = testVal;
+		}
+
+		return val;
 	});
 }
 
@@ -53,7 +67,7 @@ export default function(state, action){
 					datasets: [{
 						label: "My First dataset",
 						fillColor: "rgba(220,220,220,0.2)",
-						strokeColor: "rgba(220,220,220,1)",
+						strokeColor: "rgba(20,20,20,1)",
 						pointColor: "rgba(220,220,220,1)",
 						pointStrokeColor: "#fff",
 						pointHighlightFill: "#fff",

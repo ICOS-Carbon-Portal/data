@@ -26,25 +26,20 @@ class App extends Component {
 		return <div>
 			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select Y-axis column" />
 			{props.chartData
-				? <Line data={props.chartData.lineData} width="700" height="400" />
-				// ? <LineChart
-				// 	legend={true}
-				// 	data={props.chartData.lineData}
-				// 	width={700}
-				// 	height={400}
-				// 	margins={{top: 10, right: 20, bottom: 50, left: 100}}
-				// 	viewBoxObject={{
-				// 		x: 0,
-				// 		y: 0,
-				// 		width: 600,
-				// 		height: 400
-				// 	}}
-				// 	title={props.status}
-				// 	//xAxisLabel={xAxisLabel}
-				// 	yAxisLabel={props.chartData.yAxisLabel}
-				// 	yAxisLabelOffset={80}
-				// 	gridHorizontal={true}
-				// />
+				? <Line
+					data={props.chartData.lineData}
+					options={{
+						animation: false,
+						showTooltips: false,
+						datasetFill: false,
+						bezierCurve: false,
+						pointDot: false,
+						scaleShowHorizontalLines: true,
+						scaleShowVerticalLines: false
+					}}
+					width="700"
+					height="400"
+				/>
 				: null}
 		</div>;
 	}
