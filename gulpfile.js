@@ -12,6 +12,8 @@ var babelify = require('babelify');
 
 	var paths = {
 		main: 'src/main/js/' + project + '/main.jsx',
+		configProd: 'src/main/js/' + project + '/config/prod.js',
+		configDev: 'src/main/js/' + project + '/config/dev.js',
 		jsx: ['src/main/js/' + project + '/**/*.jsx'],
 		js: ['src/main/js/' + project + '/**/*.js'],
 		testjs: ['src/test/js/' + project + '/**/*.js'],
@@ -30,8 +32,11 @@ var babelify = require('babelify');
 
 	gulp.task('js' + project, function() {
 
+		var configPath = (process.env.NODE_ENV == 'production')
+			? paths.configProd : paths.configDev;
+
 		var browser = browserify({
-			entries: [paths.main],
+			entries: [configPath, paths.main],
 			debug: false
 		})
 			.transform(babelify, {presets: ["es2015", "react"]})
