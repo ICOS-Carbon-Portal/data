@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
+import java.nio.file.FileAlreadyExistsException
 
 import scala.concurrent.Future
 
@@ -54,11 +55,17 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 		)
 	}
 
-	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) =
-		UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-			if(file.exists) file.delete()
-			Done
-		})
+	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = {
+		ownResult match {
+			case IngestionFailure(fexc: FileAlreadyExistsException) =>
+				Future.successful(ownResult)
+			case _ =>
+				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
+					if(file.exists) file.delete()
+					Done
+				})
+		}
+	}
 
 	def getColumnFormats(dataObjHash: Sha256Sum): Future[Map[String, ValueFormat]] = {
 		val dataObjUri = CpMetaVocab.getDataObject(dataObjHash)

@@ -23,12 +23,16 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 		else FileIO.toFile(file).mapMaterializedValue(_.map(ioResultToTaskResult))
 	}
 
-	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] =
-		UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-			if(file.exists) file.delete()
-			Done
-		})
-
+	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] = {
+		ownResult match {
+			case FileExists => Future.successful(FileExists)
+			case _ =>
+				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
+					if(file.exists) file.delete()
+					Done
+				})
+		}
+	}
 
 	private def ioResultToTaskResult(ioRes: IOResult): UploadTaskResult = ioRes.status match{
 		case Success(_) => FileWriteSuccess(ioRes.count)
