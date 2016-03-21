@@ -21,7 +21,7 @@ export default function(){
 		applyMiddleware(thunkMiddleware)
 	);
 
-	store.dispatch(fetchMetaData({}));
+	store.dispatch(fetchMetaData({tableId:"q0viA4eOf259emLJs9oVU1MI"}));
 
 	return store;
 }

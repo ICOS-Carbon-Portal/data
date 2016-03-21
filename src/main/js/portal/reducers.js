@@ -1,5 +1,17 @@
 import { FETCHING_STARTED, ERROR, FETCHED_META, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
 
+function getLabels(binTable, xAxisColumn){
+	return Array.from({length: binTable.length}, (_, i) => {
+		return new Date(binTable.value(i, xAxisColumn)).toISOString();
+	});
+}
+
+function getdata(binTable, yAxisColumn){
+	return Array.from({length: binTable.length}, (_, i) => {
+		return binTable.value(i, yAxisColumn);
+	});
+}
+
 export default function(state, action){
 
 	switch(action.type){
@@ -20,7 +32,7 @@ export default function(state, action){
 			return (state.chosenTable === action.tableIndex)
 				? Object.assign({}, state, {
 					status: 'FETCHED',
-					xAxisColumn: 0,
+					xAxisColumn: state.tables[state.chosenTable].columnNames.indexOf("TIMESTAMP"),
 					binTable: action.table
 				})
 				: state; //ignore the fetched table if another one got chosen while fetching
@@ -34,12 +46,28 @@ export default function(state, action){
 					name: state.tables[state.chosenTable].columnNames[action.yAxisColumn],
 					values: state.binTable.chartValues(state.xAxisColumn, action.yAxisColumn)
 				}];
+				console.log({"state.tables": state.tables});
+
+				const data = {
+					labels: getLabels(state.binTable, state.xAxisColumn),
+					datasets: [{
+						label: "My First dataset",
+						fillColor: "rgba(220,220,220,0.2)",
+						strokeColor: "rgba(220,220,220,1)",
+						pointColor: "rgba(220,220,220,1)",
+						pointStrokeColor: "#fff",
+						pointHighlightFill: "#fff",
+						pointHighlightStroke: "rgba(220,220,220,1)",
+						data: getdata(state.binTable, action.yAxisColumn)
+					}]
+				}
 
 				const yAxisLabel = state.tables[state.chosenTable].columnUnits[action.yAxisColumn];
+				console.log({"data": data});
 
 				return Object.assign({}, state, {
 					chartData: {
-						lineData: lineData,
+						lineData: data,
 						yAxisLabel: yAxisLabel
 					},
 					yAxisColumn: action.yAxisColumn

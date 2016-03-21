@@ -1,4 +1,4 @@
-import {getMetaData, getBinaryTable} from './backend'
+import {getTableSchema, getBinaryTable} from './backend'
 
 export const FETCHING_STARTED = 'FETCHING_STARTED';
 export const ERROR = 'ERROR';
@@ -8,6 +8,7 @@ export const TABLE_CHOSEN = 'TABLE_CHOSEN';
 export const YAXIS_CHOSEN = 'YAXIS_CHOSEN';
 
 function failWithError(error){
+	// console.log({"failWithError": error});
 	return {
 		type: ERROR,
 		error
@@ -22,6 +23,7 @@ function gotMeta(tables){
 }
 
 function gotTable(table, tableIndex){
+	// console.log("gotTable");
 	return {
 		type: FETCHED_TABLE,
 		table,
@@ -36,8 +38,9 @@ export const fetchMetaData = searchObj => (dispatch, getState) => {
 
 		dispatch({type: FETCHING_STARTED});
 
-		getMetaData(searchObj).then(
+		getTableSchema(searchObj).then(
 			meta => {
+				// console.log(meta);
 				dispatch(gotMeta(meta));
 				dispatch(chooseTable(0));
 			},
@@ -50,12 +53,14 @@ export const fetchMetaData = searchObj => (dispatch, getState) => {
 
 const fetchTable = tableIndex => (dispatch, getState) => {
 	const state = getState();
+	// console.log({"fetchTable": state.status});
 
 	if(state.status !== 'FETCHING' && state.chosenTable >= 0){
 
 		dispatch({type: FETCHING_STARTED});
 
 		const request = state.tables[state.chosenTable].request;
+		// console.log({"request": request});
 
 		getBinaryTable(request).then(
 			tbl => dispatch(gotTable(tbl, tableIndex)),

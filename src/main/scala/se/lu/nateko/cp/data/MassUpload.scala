@@ -39,7 +39,7 @@ object MassUpload extends CommonJsonSupport{
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
 	val MetaSubmitUrl = "http://localhost:9094/upload"
 	val FileSubmitUrl = "http://localhost:9010/objects/"
-	val RootFolder = "/home/maintenance/Documents/CP/wdcgg"
+	val RootFolder = "/disk/data/wdcgg"
 
 	case class UploadMetadataDto(
 		hashSum: Sha256Sum,

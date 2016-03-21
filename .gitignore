@@ -1,4 +1,5 @@
 /application.conf
+/sparql.query
 /fileStorage/
 *.class
 *.log

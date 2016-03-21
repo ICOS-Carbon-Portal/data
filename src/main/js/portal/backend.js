@@ -1,5 +1,7 @@
 import 'whatwg-fetch';
 import BinTable from './models/BinTable';
+import TableFormat from './models/TableFormat';
+import * as sparqlQueries from './sparqlQueries';
 
 function checkStatus(response) {
 	if(response.status >= 200 && response.status < 300)
@@ -7,25 +9,35 @@ function checkStatus(response) {
 		else throw new Error(response.statusText || "Ajax response status: " + response.status);
 }
 
-export function getMetaData(searchObj){
-	const tables = [{
-		columnNames: ['DATE', 'PARAMETER', 'SD', 'TIME', 'TIMESTAMP'],
-		columnUnits: ['date', 'ppm', 'ppm', 'time', 'ms since epoch'],
-		request: {
-			"tableId": "IjFdgIJ7gEqJDBxB-r8N06jW",
-			"schema": {
-				"columns": ["INT", "FLOAT", "FLOAT", "INT", "DOUBLE"],
-				"size": 15341
+export function getTableSchema(searchObj){
+	return fetch(window.cpConfig.sparqlEndpoint, {
+			method: 'post',
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'text/plain'
 			},
-			"columnNumbers": [0, 1, 2, 3, 4]
-		}
-	}];
-
-	return new Promise(function(resolve, reject){
-			resolve(tables);
+			body: sparqlQueries.queryTableSchema(searchObj.tableId)
 		})
+		.then(checkStatus)
+		.then(response => response.json())
 		.then(response => {
-			return response;
+			return new TableFormat(searchObj.tableId, response).table;
+		});
+}
+
+export function getGlobalDSMeta(searchObj) {
+	return fetch(window.cpConfig.sparqlEndpoint, {
+		method: 'post',
+		headers: {
+			'Accept': 'application/json',
+			'Content-Type': 'text/plain'
+		},
+		body: sparqlQueries.queryDatasetGlobalParams(searchObj.tableId)
+	})
+		.then(checkStatus)
+		.then(response => response.json())
+		.then(response => {
+			return new TableFormat(searchObj.tableId, response).table;
 		});
 }
 

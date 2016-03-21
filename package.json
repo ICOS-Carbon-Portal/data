@@ -42,8 +42,10 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.5.0",
+    "chart.js": "^1.0.2",
     "gulp-uglify": "^1.5.3",
     "react": "^0.14.7",
+    "react-chartjs": "^0.7.3",
     "react-d3": "^0.4.0",
     "react-dom": "^0.14.7",
     "react-redux": "^4.4.0",
