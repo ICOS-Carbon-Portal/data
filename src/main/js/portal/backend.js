@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import BinTable from './models/BinTable';
-import parseTableFormat from './models/TableFormat';
+import {parseTableFormat} from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
@@ -61,9 +61,9 @@ export function getBinaryTable(tblRequest){
 			body: JSON.stringify(tblRequest)
 		})
 		.then(checkStatus)
+		.then(response => response.arrayBuffer())
 		.then(response => {
-			var bytes = response.arrayBuffer();
-			return new BinTable(bytes, tblRequest.schema);
+			return new BinTable(response, tblRequest.schema);
 		});
 }
 

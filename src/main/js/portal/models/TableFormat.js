@@ -26,7 +26,7 @@ export function parseTableFormat(tableId, sparqlResult){
 }
 
 function lastUrlPart(url){
-	return rdfDataType.split("/").pop();
+	return url.split("/").pop();
 }
 
 function mapDataTypes(rdfDataType){
