@@ -46,3 +46,14 @@ WHERE {
 	?dobj ?p ?val .
 }`;
 }
+
+export function getAllDataObjects(objSpec){
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select ?dobj ?fileName
+from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+where {
+	?dobj cpmeta:hasObjectSpec <${objSpec}> .
+	?dobj cpmeta:hasName ?fileName .
+} order by ?fileName`;
+}
+

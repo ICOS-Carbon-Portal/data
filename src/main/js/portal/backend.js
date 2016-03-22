@@ -10,33 +10,28 @@ function checkStatus(response) {
 		else throw new Error(response.statusText || "Ajax response status: " + response.status);
 }
 
-export function getTableSchema(searchObj){
+function sparql(query){
 	return fetch(config.sparqlEndpoint, {
 			method: 'post',
 			headers: {
 				'Accept': 'application/json',
 				'Content-Type': 'text/plain'
 			},
-			body: sparqlQueries.queryTableSchema(searchObj.tableId)
+			body: query
 		})
 		.then(checkStatus)
-		.then(response => response.json())
+		.then(response => response.json());
+}
+
+export function getTableSchema(searchObj){
+	return sparql(sparqlQueries.queryTableSchema(searchObj.tableId))
 		.then(response => {
 			return new TableFormat(searchObj.tableId, response).table;
 		});
 }
 
 export function getGlobalDSMeta(searchObj) {
-	return fetch(config.sparqlEndpoint, {
-		method: 'post',
-		headers: {
-			'Accept': 'application/json',
-			'Content-Type': 'text/plain'
-		},
-		body: sparqlQueries.queryDatasetGlobalParams(searchObj.tableId)
-	})
-		.then(checkStatus)
-		.then(response => response.json())
+	return sparql(sparqlQueries.queryDatasetGlobalParams(searchObj.tableId))
 		.then(response => {
 			return new TableFormat(searchObj.tableId, response).table;
 		});
