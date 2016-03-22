@@ -1,32 +1,36 @@
 'use strict';
 
-function parseJson(tableId, json){
+export function parseTableFormat(tableId, sparqlResult){
+	const bindings = sparqlResult.results.bindings;
+
 	return [{
-		columnNames: json.results.bindings.map(function(binding){
+		columnNames: bindings.map(function(binding){
 			return binding.colName.value;
 		}),
-		columnUnits: json.results.bindings.map(function(binding){
+		columnUnits: bindings.map(function(binding){
 			return binding.unit ? binding.unit.value : "?";
 		}),
 		request: {
 			"tableId": tableId,
 			"schema": {
-				"columns": json.results.bindings.map(function(binding){
+				"columns": bindings.map(function(binding){
 					return mapDataTypes(binding.valFormat.value);
 				}),
-				"size": parseInt(json.results.bindings[0].nrows.value)
+				"size": parseInt(bindings[0].nrows.value)
 			},
-			"columnNumbers": json.results.bindings.map(function(binding, i){
+			"columnNumbers": bindings.map(function(binding, i){
 				return i;
 			})
 		}
 	}];
 }
 
-function mapDataTypes(rdfsUnit){
-	const dType = rdfsUnit.split("/").pop();
+function lastUrlPart(url){
+	return rdfDataType.split("/").pop();
+}
 
-	switch(dType){
+function mapDataTypes(rdfDataType){
+	switch(lastUrlPart(rdfDataType)){
 		case "float32":
 			return "FLOAT";
 
@@ -44,12 +48,22 @@ function mapDataTypes(rdfsUnit){
 	}
 }
 
-export default class TableFormat{
-	constructor(tableId, sparqlResult){
-		this._table = parseJson(tableId, sparqlResult);
+export class TableFormat{
+	constructor(columnsInfo){
+		this._columnsInfo = columnsInfo;
 	}
 
-	get table(){
-		return this._table;
+	getRequest(id, nRows, columnIndices){
+		const cols = this._columnsInfo.map(colInfo => colInfo.type)
+		return {
+			tableId: lastUrlPart(id),
+			schema: {
+				columns: cols,
+				size: nRows
+			},
+			columnNumbers: columnIndices || Array.from(cols, (_, i) => i)
+		};
 	}
 }
+
+

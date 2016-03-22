@@ -19,6 +19,24 @@ WHERE {
 }`;
 }
 
+export function simpleObjectSchema(spec){
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
+WHERE {
+	<${spec}> cpmeta:containsDataset ?dset .
+	?dset cpmeta:hasColumn ?column  .
+	?column cpmeta:hasColumnTitle ?colName .
+	?column cpmeta:hasValueFormat ?valFormat .
+	?column cpmeta:hasValueType ?valType .
+	?valType rdfs:label ?valueType .
+	optional{?valType rdfs:comment ?colTip }
+	optional{
+		?valType cpmeta:hasUnit ?unit .
+		?valType cpmeta:hasQuantityKind [rdfs:label ?qKind ].
+	}
+}`;
+}
+
 export function queryDatasetGlobalMeta(id){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -47,13 +65,14 @@ WHERE {
 }`;
 }
 
-export function getAllDataObjects(objSpec){
+export function simpleDataObjects(objSpec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select ?dobj ?fileName
+select *
 from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
 where {
-	?dobj cpmeta:hasObjectSpec <${objSpec}> .
-	?dobj cpmeta:hasName ?fileName .
+	?id cpmeta:hasObjectSpec <${objSpec}> .
+	?id cpmeta:hasName ?fileName .
+	?id cpmeta:hasNumberOfRows ?nRows .
 } order by ?fileName`;
 }
 

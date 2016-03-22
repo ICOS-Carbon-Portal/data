@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import BinTable from './models/BinTable';
-import TableFormat from './models/TableFormat';
+import parseTableFormat from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
@@ -26,15 +26,29 @@ function sparql(query){
 export function getTableSchema(searchObj){
 	return sparql(sparqlQueries.queryTableSchema(searchObj.tableId))
 		.then(response => {
-			return new TableFormat(searchObj.tableId, response).table;
+			return parseTableFormat(searchObj.tableId, response);
 		});
 }
 
 export function getGlobalDSMeta(searchObj) {
 	return sparql(sparqlQueries.queryDatasetGlobalParams(searchObj.tableId))
 		.then(response => {
-			return new TableFormat(searchObj.tableId, response).table;
+			return parseTableFormat(searchObj.tableId, response);
 		});
+}
+
+function dataObjectsBySpecies(objSpecies){
+	const query = sparqlQueries.simpleDataObjects(objSpecies);
+
+	return sparql(query).then(response =>
+		response.bindings.map(binding => {
+			return {
+				id: binding.id.value,
+				fileName: binding.fileName.value,
+				nRows: parseInt(binding.nRows.value)
+			};
+		})
+	);
 }
 
 export function getBinaryTable(tblRequest){
@@ -47,9 +61,9 @@ export function getBinaryTable(tblRequest){
 			body: JSON.stringify(tblRequest)
 		})
 		.then(checkStatus)
-		.then(response => response.arrayBuffer())
 		.then(response => {
-			return new BinTable(response, tblRequest.schema);
+			var bytes = response.arrayBuffer();
+			return new BinTable(bytes, tblRequest.schema);
 		});
 }
 
