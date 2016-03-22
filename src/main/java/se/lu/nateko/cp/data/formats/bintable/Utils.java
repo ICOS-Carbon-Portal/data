@@ -30,7 +30,6 @@ public class Utils {
 	public static int getDataTypeSize(DataType dt){
 		switch(dt){
 			case INT: return 4;
-			case LONG: return 8;
 			case FLOAT: return 4;
 			case DOUBLE: return 8;
 			case SHORT: return 2;

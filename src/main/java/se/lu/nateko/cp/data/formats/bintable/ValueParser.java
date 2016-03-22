@@ -55,12 +55,6 @@ public class ValueParser {
 					throw new NumberFormatException(value + " is outside the range for Double.");
 				else
 					return dbl;
-			case LONG:
-				try {
-					return Long.parseLong(value);
-				} catch (NumberFormatException e) {
-					throw new NumberFormatException("Could not parse " + value + " to LONG");
-				}
 			case BYTE:
 				try {
 					return Byte.parseByte(value);
