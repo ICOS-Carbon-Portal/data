@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import BinTable from './models/BinTable';
 import TableFormat from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
+import config from './config';
 
 function checkStatus(response) {
 	if(response.status >= 200 && response.status < 300)
@@ -10,7 +11,7 @@ function checkStatus(response) {
 }
 
 export function getTableSchema(searchObj){
-	return fetch(window.cpConfig.sparqlEndpoint, {
+	return fetch(config.sparqlEndpoint, {
 			method: 'post',
 			headers: {
 				'Accept': 'application/json',
@@ -26,7 +27,7 @@ export function getTableSchema(searchObj){
 }
 
 export function getGlobalDSMeta(searchObj) {
-	return fetch(window.cpConfig.sparqlEndpoint, {
+	return fetch(config.sparqlEndpoint, {
 		method: 'post',
 		headers: {
 			'Accept': 'application/json',

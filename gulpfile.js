@@ -1,19 +1,18 @@
 'use strict';
 
-var gulp = require('gulp'),
-	gp_uglify = require('gulp-uglify');
+var gulp = require('gulp');
+var gp_uglify = require('gulp-uglify');
 var browserify = require('browserify');
 var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
 var babelify = require('babelify');
+var preprocessify = require('preprocessify');
 
 ['netcdf', 'portal'].forEach(function(project){
 
 	var paths = {
 		main: 'src/main/js/' + project + '/main.jsx',
-		configProd: 'src/main/js/' + project + '/config/prod.js',
-		configDev: 'src/main/js/' + project + '/config/dev.js',
 		jsx: ['src/main/js/' + project + '/**/*.jsx'],
 		js: ['src/main/js/' + project + '/**/*.js'],
 		testjs: ['src/test/js/' + project + '/**/*.js'],
@@ -32,13 +31,11 @@ var babelify = require('babelify');
 
 	gulp.task('js' + project, function() {
 
-		var configPath = (process.env.NODE_ENV == 'production')
-			? paths.configProd : paths.configDev;
-
 		var browser = browserify({
-			entries: [configPath, paths.main],
-			debug: false
-		})
+				entries: [paths.main],
+				debug: false
+			})
+			.transform(preprocessify({NODE_ENV: process.env.NODE_ENV}))
 			.transform(babelify, {presets: ["es2015", "react"]})
 			.bundle()
 			.on('error', function(err){
