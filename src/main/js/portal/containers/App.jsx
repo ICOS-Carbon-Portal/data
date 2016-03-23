@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import {Line} from 'react-chartjs'
 import Select from '../components/Select.jsx'
+import Chart from '../components/Chart.jsx'
 import {chooseDataObject} from '../actions.js'
 import { FETCHED_META, FETCHED_DATA } from '../actions'
 
@@ -21,22 +21,7 @@ class App extends Component {
 
 		return <div>
 			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select data object" /> <br />
-			{props.chartData
-				? <Line
-					data={props.chartData.lineData}
-					options={{
-						animation: false,
-						showTooltips: false,
-						datasetFill: false,
-						bezierCurve: false,
-						pointDot: false,
-						scaleShowHorizontalLines: true,
-						scaleShowVerticalLines: false
-					}}
-					width="700"
-					height="400"
-				/>
-				: null}
+			<Chart binTable={props.binTable} />
 		</div>;
 	}
 }

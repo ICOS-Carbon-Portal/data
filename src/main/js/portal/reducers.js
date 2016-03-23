@@ -21,7 +21,7 @@ export default function(state, action){
 			return (state.chosenObjectIdx === action.dataObjIdx)
 				? Object.assign({}, state, {
 					status: FETCHED_DATA,
-					chartData: makeChartData(action.table, state.meta.tableFormat)
+					binTable: action.table
 				})
 				: state; //ignore the fetched data obj if another one got chosen while fetching
 

@@ -6,7 +6,7 @@ import {fetchMetaData} from './actions'
 const initialState = {
 	meta: null,
 	chosenObjectIdx: -1,
-	chartData: null,
+	binTable: null,
 	status: 'INIT',
 	error: null
 };
