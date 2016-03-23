@@ -13,12 +13,12 @@ class BinTableTest extends FunSuite{
 
 		val n = 100000
 
-		val schema = new Schema(Array(DataType.INT, DataType.LONG, DataType.FLOAT), n)
+		val schema = new Schema(Array(DataType.INT, DataType.DOUBLE, DataType.FLOAT), n)
 
 		val writer = new BinTableWriter(file, schema)
 
 		for(i <- 1 to n){
-			writer.write((i, i.toLong << 16, i.toFloat))
+			writer.write((i, (i.toLong << 16).toDouble, i.toFloat))
 		}
 
 		writer.close()
@@ -26,7 +26,7 @@ class BinTableTest extends FunSuite{
 		val reader = new BinTableReader(file, schema)
 
 		val first = PlainColumn(reader.read(0, 0, n)).flatMap(_.asInt).get.values
-		val second = PlainColumn(reader.read(1, 0, n)).flatMap(_.asLong).get.values
+		val second = PlainColumn(reader.read(1, 0, n)).flatMap(_.asDouble).get.values
 		val third = PlainColumn(reader.read(2, 0, n)).flatMap(_.asFloat).get.values
 
 		val size = first.zip(second).zip(third).size

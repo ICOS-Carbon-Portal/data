@@ -31,9 +31,9 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 		val file = getFileInTarget("binTableSinkTest.cpb")
 		if(file.exists) file.delete()
 
-		val schema = new Schema(Array(DataType.INT, DataType.LONG), 1000)
+		val schema = new Schema(Array(DataType.INT, DataType.DOUBLE), 1000)
 
-		def getRow(i: Int): Array[AnyRef] = Array(Int.box(i), Long.box(i.toLong << 16))
+		def getRow(i: Int): Array[AnyRef] = Array(Int.box(i), Double.box(i.toLong << 16))
 		def getRowIterator = Iterator.from(1).take(schema.size.toInt).map(getRow)
 
 		val source = Source.fromIterator(() => getRowIterator)
@@ -54,8 +54,8 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 			case (readBack, initial) => readBack == initial
 		})
 
-		val secondCol = PlainColumn(reader.read(1, 0, schema.size.toInt)).flatMap(_.asLong).get.values
-		val initSecondCol = getRowIterator.map(_.apply(1).asInstanceOf[Long])
+		val secondCol = PlainColumn(reader.read(1, 0, schema.size.toInt)).flatMap(_.asDouble).get.values
+		val initSecondCol = getRowIterator.map(_.apply(1).asInstanceOf[Double])
 
 		assert(secondCol.zip(initSecondCol).forall{
 			case (readBack, initial) => readBack == initial
