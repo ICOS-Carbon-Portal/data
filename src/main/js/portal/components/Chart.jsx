@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import {Dygraph} from 'react-dygraphs';
-import {binTable2Dygraph} from '../models/BinTable2Dygraph';
+import {binTable2Dygraph, getLabels} from '../models/chartDataMaker';
 
 class Chart extends React.Component {
 	constructor(props){
@@ -12,6 +12,7 @@ class Chart extends React.Component {
 
 		if(props.binTable) {
 			const data = binTable2Dygraph(props.binTable)
+			const labels = getLabels(props.tableFormat, props.dataObjInfo);
 
 			return (
 				<div>
@@ -19,7 +20,7 @@ class Chart extends React.Component {
 						data={data}
 						width={800}
 						strokeWidth={1}
-						labels={['X', 'Y']}
+						labels={labels}
 						labelsKMB={true}
 						legend={'always'}
 					/>

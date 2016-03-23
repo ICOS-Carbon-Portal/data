@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
-import Graph from '../components/Graph.jsx'
 import {chooseDataObject} from '../actions.js'
 import { FETCHED_META, FETCHED_DATA } from '../actions'
 
@@ -21,8 +20,8 @@ class App extends Component {
 		}
 
 		return <div>
-			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select data object" /> <br /><br />
-			<Chart binTable={props.binTable} />
+			<Select {...props.selectorPartialProps} {...props.selectorProps} title="Select data object" /> <br /><br />
+			<Chart {...props.forChart} />
 		</div>;
 	}
 }
@@ -33,17 +32,28 @@ function stateToProps(state){
 		? state.meta.dataObjects.map(dobj => `${dobj.fileName} (${dobj.nRows})`)
 		: [];
 
-	return Object.assign({}, state, {
+	const dataObjSelected = (state.chosenObjectIdx >= 0);
+
+	return {
+		status: state.status,
+		error: state.error,
+		forChart: dataObjSelected
+			? {
+				tableFormat: state.meta.tableFormat,
+				binTable: state.binTable,
+				dataObjInfo: state.meta.dataObjects[state.chosenObjectIdx],
+			}
+			: null,
 		selectorPartialProps: {
-			selectedIndex: (state.chosenObjectIdx > 0 ? (state.chosenObjectIdx + 1) : 0),
+			selectedIndex: dataObjSelected ? (state.chosenObjectIdx + 1) : 0,
 			options: fileNames
 		}
-	});
+	};
 }
 
 function dispatchToProps(dispatch){
 	return {
-		indexChanged: {
+		selectorProps: {
 			indexChanged: function(dataObjIdxPlus1){
 				dispatch(chooseDataObject(dataObjIdxPlus1 - 1));
 			}

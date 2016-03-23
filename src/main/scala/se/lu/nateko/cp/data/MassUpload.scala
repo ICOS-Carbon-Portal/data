@@ -37,6 +37,8 @@ object MassUpload extends CommonJsonSupport{
 	val Producer = "http://meta.icos-cp.eu/ontologies/cpmeta/CP"
 	val ObjSpec = "http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject"
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
+	//val MetaSubmitUrl = "https://meta.icos-cp.eu/upload"
+	//val FileSubmitUrl = "https://data.icos-cp.eu/objects/"
 	val MetaSubmitUrl = "http://localhost:9094/upload"
 	val FileSubmitUrl = "http://localhost:9010/objects/"
 	val RootFolder = "/disk/data/wdcgg"

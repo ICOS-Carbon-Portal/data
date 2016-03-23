@@ -3,6 +3,7 @@ export function parseTableFormat(sparqlResult){
 	const columnsInfo = sparqlResult.results.bindings.map(binding => {
 		return {
 			name: binding.colName.value,
+			label: binding.valueType.value,
 			unit: binding.unit ? binding.unit.value : "?",
 			type: mapDataTypes(binding.valFormat.value)
 		};

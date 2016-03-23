@@ -14,52 +14,16 @@ export function makeTableRequest(tableFormat, dataObjInfo){
 	return tableFormat.getRequest(tableId, dataObjInfo.nRows, axisIndices);
 }
 
-export function makeChartData(binTable, tableFormat){
-	const [xIdx, yIdx] = axisColumnIndices(tableFormat);
-
-	const data = {
-		labels: getLabels(binTable),
-		datasets: [{
-			label: "My First dataset",
-			fillColor: "rgba(220,220,220,0.2)",
-			strokeColor: "rgba(20,20,20,1)",
-			pointColor: "rgba(220,220,220,1)",
-			pointStrokeColor: "#fff",
-			pointHighlightFill: "#fff",
-			pointHighlightStroke: "rgba(220,220,220,1)",
-			data: getdata(binTable)
-		}]
-	}
-
-	return {
-		lineData: data,
-		yAxisLabel: tableFormat.columns(yIdx).name.unit
-	};
-}
-
-function getLabels(binTable){
-	const threshHold = Math.ceil(binTable.length / 20);
-
+export function binTable2Dygraph(binTable){
 	return Array.from({length: binTable.length}, (_, i) => {
-		if (i % threshHold == 0) {
-			return new Date(binTable.value(i, 0)).toISOString();
-		} else {
-			return "";
-		}
+		return [
+			new Date(binTable.value(i, 0)),
+			binTable.value(i, 1),
+		];
 	});
 }
 
-function getdata(binTable){
-	let val = 0;
-
-	return Array.from({length: binTable.length}, (_, i) => {
-		const testVal = binTable.value(i, 1);
-
-		if (testVal){
-			val = testVal;
-		}
-
-		return val;
-	});
+export function getLabels(tableFormat, dataObjInfo){
+	const axisIndices = axisColumnIndices(tableFormat);
+	return axisIndices.map(i => tableFormat.columns(i).label);
 }
-
