@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
+import Graph from '../components/Graph.jsx'
 import {chooseDataObject} from '../actions.js'
 import { FETCHED_META, FETCHED_DATA } from '../actions'
 
@@ -20,7 +21,7 @@ class App extends Component {
 		}
 
 		return <div>
-			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select data object" /> <br />
+			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select data object" /> <br /><br />
 			<Chart binTable={props.binTable} />
 		</div>;
 	}

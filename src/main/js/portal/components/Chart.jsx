@@ -11,17 +11,19 @@ class Chart extends React.Component {
 		const props = this.props;
 
 		if(props.binTable) {
-			console.log("Chart rendering ...");
 			const data = binTable2Dygraph(props.binTable)
-			console.log("Data converted ...");
 
 			return (
 				<div>
 					<Dygraph
 						data={data}
+						width={800}
 						strokeWidth={1}
-						interactionModel={false}
+						labels={['X', 'Y']}
+						labelsKMB={true}
+						legend={'always'}
 					/>
+					<div id="legendDiv" style={{width:200, fontSize:0.8 + 'em', paddingTop:5}}></div>
 				</div>
 			);
 		} else {
