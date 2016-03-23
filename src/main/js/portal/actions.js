@@ -1,87 +1,64 @@
-import {getTableSchema, getBinaryTable} from './backend'
+import {getMetaForObjectSpecies, getBinaryTable} from './backend';
+import {makeTableRequest} from './models/chartDataMaker';
 
-export const FETCHING_STARTED = 'FETCHING_STARTED';
-export const ERROR = 'ERROR';
+export const FETCHING_META = 'FETCHING_META';
+export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
-export const FETCHED_TABLE = 'FETCHED_TABLE';
-export const TABLE_CHOSEN = 'TABLE_CHOSEN';
-export const YAXIS_CHOSEN = 'YAXIS_CHOSEN';
+export const FETCHED_DATA = 'FETCHED_DATA';
+export const DATA_CHOSEN = 'DATA_CHOSEN';
+export const ERROR = 'ERROR';
 
 function failWithError(error){
-	// console.log({"failWithError": error});
 	return {
 		type: ERROR,
 		error
 	};
 }
 
-function gotMeta(tables){
+function gotMeta(meta){
 	return {
 		type: FETCHED_META,
-		tables
+		meta
 	};
 }
 
-function gotTable(table, tableIndex){
-	// console.log("gotTable");
+function gotData(table, dataObjIdx){
 	return {
-		type: FETCHED_TABLE,
+		type: FETCHED_DATA,
 		table,
-		tableIndex
+		dataObjIdx
 	};
 }
 
-export const fetchMetaData = searchObj => (dispatch, getState) => {
-	const state = getState();
+export const fetchMetaData = dataObjSpec => dispatch => {
+	dispatch({type: FETCHING_META});
 
-	if(state.status !== 'FETCHING'){
-
-		dispatch({type: FETCHING_STARTED});
-
-		getTableSchema(searchObj).then(
-			meta => {
-				// console.log(meta);
-				dispatch(gotMeta(meta));
-				dispatch(chooseTable(0));
-			},
-			err => {
-				dispatch(failWithError(err));
-			}
-		);
-	}
+	getMetaForObjectSpecies(dataObjSpec).then(
+		meta => dispatch(gotMeta(meta)),
+		err => dispatch(failWithError(err))
+	);
 }
 
-const fetchTable = tableIndex => (dispatch, getState) => {
-	const state = getState();
-	// console.log({"fetchTable": state.status});
+const fetchData = dataObjIdx => (dispatch, getState) => {
+	const meta = getState().meta;
 
-	if(state.status !== 'FETCHING' && state.chosenTable >= 0){
+	const dataObjInfo = meta.dataObjects[dataObjIdx];
+	const request = makeTableRequest(meta.tableFormat, dataObjInfo);
 
-		dispatch({type: FETCHING_STARTED});
+	dispatch({type: FETCHING_DATA});
 
-		const request = state.tables[state.chosenTable].request;
-		// console.log({"request": request});
-
-		getBinaryTable(request).then(
-			tbl => dispatch(gotTable(tbl, tableIndex)),
-			err => dispatch(failWithError(err))
-		);
-	}
+	getBinaryTable(request).then(
+		tbl => dispatch(gotData(tbl, dataObjIdx)),
+		err => dispatch(failWithError(err))
+	);
 }
 
-export function yAxisChosen(yAxisColumn){
-	return {
-		type: YAXIS_CHOSEN,
-		yAxisColumn
-	}
-}
-
-export const chooseTable = tableIndex => dispatch => {
+export const chooseDataObject = dataObjIdx => dispatch => {
 	dispatch({
-		type: TABLE_CHOSEN,
-		tableIndex
+		type: DATA_CHOSEN,
+		dataObjIdx
 	});
 
-	dispatch(fetchTable(tableIndex));
+	dispatch(fetchData(dataObjIdx));
 }
 

@@ -1,31 +1,16 @@
-'use strict';
 
-export function parseTableFormat(tableId, sparqlResult){
-	const bindings = sparqlResult.results.bindings;
-
-	return [{
-		columnNames: bindings.map(function(binding){
-			return binding.colName.value;
-		}),
-		columnUnits: bindings.map(function(binding){
-			return binding.unit ? binding.unit.value : "?";
-		}),
-		request: {
-			"tableId": tableId,
-			"schema": {
-				"columns": bindings.map(function(binding){
-					return mapDataTypes(binding.valFormat.value);
-				}),
-				"size": parseInt(bindings[0].nrows.value)
-			},
-			"columnNumbers": bindings.map(function(binding, i){
-				return i;
-			})
-		}
-	}];
+export function parseTableFormat(sparqlResult){
+	const columnsInfo = sparqlResult.results.bindings.map(binding => {
+		return {
+			name: binding.colName.value,
+			unit: binding.unit ? binding.unit.value : "?",
+			type: mapDataTypes(binding.valFormat.value)
+		};
+	});
+	return new TableFormat(columnsInfo);
 }
 
-function lastUrlPart(url){
+export function lastUrlPart(url){
 	return url.split("/").pop();
 }
 
@@ -48,22 +33,46 @@ function mapDataTypes(rdfDataType){
 	}
 }
 
-export class TableFormat{
-	constructor(columnsInfo){
-		this._columnsInfo = columnsInfo;
+class TableRequest{
+	constructor(tableId, schema, columnNumbers){
+		this.tableId = tableId;
+		this.schema = schema;
+		this.columnNumbers = columnNumbers;
 	}
 
-	getRequest(id, nRows, columnIndices){
-		const cols = this._columnsInfo.map(colInfo => colInfo.type)
+	get returnedTableSchema(){
 		return {
-			tableId: lastUrlPart(id),
-			schema: {
-				columns: cols,
-				size: nRows
-			},
-			columnNumbers: columnIndices || Array.from(cols, (_, i) => i)
+			columns: this.columnNumbers.map(i => this.schema.columns[i]),
+			size: this.schema.size
 		};
 	}
 }
 
+export class TableFormat{
+
+	constructor(columnsInfo){
+		this._columnsInfo = columnsInfo;
+	}
+
+	getColumnIndex(colName){
+		return this._columnsInfo.findIndex(colInfo => colName == colInfo.name);
+	}
+
+	columns(i){
+		return this._columnsInfo[i];
+	}
+
+	getRequest(id, nRows, columnIndices){
+		const cols = this._columnsInfo.map(colInfo => colInfo.type)
+
+		return new TableRequest(
+			lastUrlPart(id),
+			{
+				columns: cols,
+				size: nRows
+			},
+			columnIndices || Array.from(cols, (_, i) => i)
+		);
+	}
+}
 

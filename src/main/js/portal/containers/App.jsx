@@ -1,9 +1,9 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-// import {LineChart} from 'react-d3'
 import {Line} from 'react-chartjs'
 import Select from '../components/Select.jsx'
-import {yAxisChosen} from '../actions.js'
+import {chooseDataObject} from '../actions.js'
+import { FETCHED_META, FETCHED_DATA } from '../actions'
 
 class App extends Component {
 	constructor(props){
@@ -14,17 +14,13 @@ class App extends Component {
 		const status = this.props.status;
 		const props = this.props;
 
-		if(status !== 'FETCHED') {
-			const error = (status === 'ERROR') ? ': ' + props.error.message : '';
+		if(status !== FETCHED_META && status !== FETCHED_DATA) {
+			const error = (status === 'ERROR') ? (': ' + props.error.message + '\n' + props.error.stack): '';
 			return <div>{status + error}</div>;
 		}
 
-		if(props.chartData) {
-			console.log({lineData: props.chartData.lineData});
-		}
-
 		return <div>
-			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select Y-axis column" />
+			<Select {...props.selectorPartialProps} {...props.indexChanged} title="Select data object" /> <br />
 			{props.chartData
 				? <Line
 					data={props.chartData.lineData}
@@ -47,26 +43,23 @@ class App extends Component {
 
 function stateToProps(state){
 
-	const columnNames = state.chosenTable >= 0
-		? state.tables[state.chosenTable].columnNames.slice(1)
+	const fileNames = state.meta
+		? state.meta.dataObjects.map(dobj => `${dobj.fileName} (${dobj.nRows})`)
 		: [];
 
-	return {
-		status: state.status,
-		yAxisColumn: state.yAxisColumn,
-		chartData: state.chartData,
+	return Object.assign({}, state, {
 		selectorPartialProps: {
-			selectedIndex: (state.yAxisColumn > 0 ? state.yAxisColumn : 0),
-			options: columnNames
+			selectedIndex: (state.chosenObjectIdx > 0 ? (state.chosenObjectIdx + 1) : 0),
+			options: fileNames
 		}
-	};
+	});
 }
 
 function dispatchToProps(dispatch){
 	return {
 		indexChanged: {
-			indexChanged: function(columnIndex){
-				dispatch(yAxisChosen(columnIndex));
+			indexChanged: function(dataObjIdxPlus1){
+				dispatch(chooseDataObject(dataObjIdxPlus1 - 1));
 			}
 		}
 	};

@@ -23,33 +23,43 @@ function sparql(query){
 		.then(response => response.json());
 }
 
-export function getTableSchema(searchObj){
-	return sparql(sparqlQueries.queryTableSchema(searchObj.tableId))
-		.then(response => {
-			return parseTableFormat(searchObj.tableId, response);
-		});
-}
-
-export function getGlobalDSMeta(searchObj) {
-	return sparql(sparqlQueries.queryDatasetGlobalParams(searchObj.tableId))
-		.then(response => {
-			return parseTableFormat(searchObj.tableId, response);
-		});
-}
-
-function dataObjectsBySpecies(objSpecies){
+function dataObjectsOfSpecies(objSpecies){
 	const query = sparqlQueries.simpleDataObjects(objSpecies);
 
 	return sparql(query).then(response =>
-		response.bindings.map(binding => {
+		response.results.bindings.map(binding => {
 			return {
 				id: binding.id.value,
 				fileName: binding.fileName.value,
 				nRows: parseInt(binding.nRows.value)
 			};
-		})
+		}).sort((o1, o2) => Math.sign(o2.nRows - o1.nRows))
 	);
 }
+
+function tableFormatForSpecies(objSpecies){
+	const query = sparqlQueries.simpleObjectSchema(objSpecies);
+	return sparql(query).then(parseTableFormat);
+}
+
+export function getMetaForObjectSpecies(objSpecies){
+	return Promise.all([
+		dataObjectsOfSpecies(objSpecies),
+		tableFormatForSpecies(objSpecies)
+	]).then(([dataObjects, tableFormat]) => {
+		return {dataObjects, tableFormat};
+	});
+}
+
+function getStandardDataObjMeta(dobjId) {
+	return sparql(sparqlQueries.standardDataObjProps(dobjId))
+		.then(response => {
+			const bindings = response.results.bindings;
+			const metaFound = bindings.length == 1;
+			return null;
+		});
+}
+
 
 export function getBinaryTable(tblRequest){
 	return fetch('tabular', {
@@ -63,7 +73,7 @@ export function getBinaryTable(tblRequest){
 		.then(checkStatus)
 		.then(response => response.arrayBuffer())
 		.then(response => {
-			return new BinTable(response, tblRequest.schema);
+			return new BinTable(response, tblRequest.returnedTableSchema);
 		});
 }
 

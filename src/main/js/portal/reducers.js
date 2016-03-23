@@ -1,93 +1,35 @@
-import { FETCHING_STARTED, ERROR, FETCHED_META, FETCHED_TABLE, TABLE_CHOSEN, YAXIS_CHOSEN } from './actions'
-
-function getLabels(binTable, xAxisColumn){
-	const threshHold = Math.ceil(binTable.length / 20);
-
-	return Array.from({length: binTable.length}, (_, i) => {
-		if (i % threshHold == 0) {
-			return new Date(binTable.value(i, xAxisColumn)).toISOString();
-		} else {
-			return "";
-		}
-	});
-}
-
-function getdata(binTable, yAxisColumn){
-	let val = 0;
-
-	return Array.from({length: binTable.length}, (_, i) => {
-		const testVal = binTable.value(i, yAxisColumn);
-
-		if (testVal){
-			val = testVal;
-		}
-
-		return val;
-	});
-}
+import { FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actions';
+import {makeChartData} from './models/chartDataMaker';
 
 export default function(state, action){
 
 	switch(action.type){
 
-		case FETCHING_STARTED:
-			return Object.assign({}, state, {status: 'FETCHING'});
+		case FETCHING_META:
+			return Object.assign({}, state, {status: FETCHING_META});
 
-		case ERROR:
-			return Object.assign({}, state, {status: ERROR, error: action.error});
+		case FETCHING_DATA:
+			return Object.assign({}, state, {status: FETCHING_DATA});
 
 		case FETCHED_META:
 			return Object.assign({}, state, {
-				status: 'FETCHED',
-				tables: action.tables
+				status: FETCHED_META,
+				meta: action.meta
 			});
 
-		case FETCHED_TABLE:
-			return (state.chosenTable === action.tableIndex)
+		case FETCHED_DATA:
+			return (state.chosenObjectIdx === action.dataObjIdx)
 				? Object.assign({}, state, {
-					status: 'FETCHED',
-					xAxisColumn: state.tables[state.chosenTable].columnNames.indexOf("TIMESTAMP"),
-					binTable: action.table
+					status: FETCHED_DATA,
+					chartData: makeChartData(action.table, state.meta.tableFormat)
 				})
-				: state; //ignore the fetched table if another one got chosen while fetching
+				: state; //ignore the fetched data obj if another one got chosen while fetching
 
-		case TABLE_CHOSEN:
-			return Object.assign({}, state, {chosenTable: action.tableIndex});
+		case DATA_CHOSEN:
+			return Object.assign({}, state, {chosenObjectIdx: action.dataObjIdx});
 
-		case YAXIS_CHOSEN:
-			if(state.chosenTable >= 0 && state.xAxisColumn >= 0){
-				const lineData = [{
-					name: state.tables[state.chosenTable].columnNames[action.yAxisColumn],
-					values: state.binTable.chartValues(state.xAxisColumn, action.yAxisColumn)
-				}];
-				console.log({"state.tables": state.tables});
-
-				const data = {
-					labels: getLabels(state.binTable, state.xAxisColumn),
-					datasets: [{
-						label: "My First dataset",
-						fillColor: "rgba(220,220,220,0.2)",
-						strokeColor: "rgba(20,20,20,1)",
-						pointColor: "rgba(220,220,220,1)",
-						pointStrokeColor: "#fff",
-						pointHighlightFill: "#fff",
-						pointHighlightStroke: "rgba(220,220,220,1)",
-						data: getdata(state.binTable, action.yAxisColumn)
-					}]
-				}
-
-				const yAxisLabel = state.tables[state.chosenTable].columnUnits[action.yAxisColumn];
-				console.log({"data": data});
-
-				return Object.assign({}, state, {
-					chartData: {
-						lineData: data,
-						yAxisLabel: yAxisLabel
-					},
-					yAxisColumn: action.yAxisColumn
-				});
-			}
-			else return Object.assign({}, state, {yAxisColumn: action.yAxisColumn});
+		case ERROR:
+			return Object.assign({}, state, {status: ERROR, error: action.error});
 
 		default:
 			return state;
