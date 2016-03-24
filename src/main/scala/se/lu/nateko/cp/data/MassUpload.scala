@@ -34,7 +34,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 object MassUpload extends CommonJsonSupport{
 
 	val Username = "test@upload"
-	val Producer = "http://meta.icos-cp.eu/ontologies/cpmeta/CP"
+	val Producer = "http://meta.icos-cp.eu/ontologies/cpmeta/instances/WDCGG"
 	val ObjSpec = "http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject"
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
 	//val MetaSubmitUrl = "https://meta.icos-cp.eu/upload"

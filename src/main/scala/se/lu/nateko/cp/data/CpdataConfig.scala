@@ -62,3 +62,7 @@ object ConfigReader extends DefaultJsonProtocol{
 		confJson.parseJson.convertTo[CpdataConfig]
 	}
 }
+
+object HardConfig{
+	val ioDispatcher = "akka.io.pinned-dispatcher"
+}

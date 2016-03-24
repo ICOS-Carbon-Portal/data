@@ -47,9 +47,9 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 				case StatusCodes.OK =>
 					Unmarshal(resp.entity).to[DataObject]
 				case StatusCodes.NotFound =>
-					throw new MetadataObjectNotFound(hash)
+					Future.failed(new MetadataObjectNotFound(hash))
 				case _ =>
-					Future.failed(new Exception(s"Got ${resp.status} from the server"))
+					Future.failed(new Exception(s"Got '${resp.status}' from $url"))
 			}
 		)
 	}

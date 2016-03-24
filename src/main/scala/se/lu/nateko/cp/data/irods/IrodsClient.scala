@@ -13,9 +13,11 @@ import org.irods.jargon.core.pub.io.IRODSFileFactory
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
 
 import akka.actor.ActorSystem
+import akka.stream.ActorAttributes
 import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
+import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -55,6 +57,8 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 		val irodsSink = Sink.fromGraph(new IrodsSink(filePath, account, connPool))
 			//disabling buffer here as we'll be buffering ourselves
 			.withAttributes(Attributes.inputBuffer(1, 1))
+			.withAttributes(ActorAttributes.dispatcher(HardConfig.ioDispatcher))
+
 
 		ByteStringBuffer(bufferSize)
 			.toMat(irodsSink){(_, uploadFut) =>

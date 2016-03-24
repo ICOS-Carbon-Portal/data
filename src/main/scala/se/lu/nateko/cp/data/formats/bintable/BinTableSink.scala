@@ -1,16 +1,20 @@
 package se.lu.nateko.cp.data.formats.bintable
 
 import java.io.File
+import java.nio.file.FileAlreadyExistsException
+
+import scala.concurrent.Future
+import scala.concurrent.Promise
+
+import akka.stream.ActorAttributes
 import akka.stream.Attributes
 import akka.stream.Inlet
 import akka.stream.SinkShape
 import akka.stream.scaladsl.Sink
 import akka.stream.stage.GraphStageLogic
-import akka.stream.stage.InHandler
-import scala.concurrent.Future
 import akka.stream.stage.GraphStageWithMaterializedValue
-import scala.concurrent.Promise
-import java.nio.file.FileAlreadyExistsException
+import akka.stream.stage.InHandler
+import se.lu.nateko.cp.data.HardConfig
 
 class BinTableRow(val cells: Array[AnyRef], val schema: Schema)
 
@@ -18,6 +22,7 @@ object BinTableSink {
 
 	def apply(file: File, overwrite: Boolean = false): Sink[BinTableRow, Future[Long]] =
 		Sink.fromGraph(new BinTableSink(file, overwrite))
+			.withAttributes(ActorAttributes.dispatcher(HardConfig.ioDispatcher))
 
 }
 
