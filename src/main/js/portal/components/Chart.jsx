@@ -18,13 +18,26 @@ class Chart extends React.Component {
 				<div>
 					<Dygraph
 						data={data}
-						width={800}
+						strokeBorderWidth={2}
+						width={props.width ? props.width : 800}
 						strokeWidth={1}
 						labels={labels}
+						ylabel={labels[1]}
+						labelsDiv={'legendDiv'}
+						axes={{
+							x: {
+								valueFormatter: function(ms){
+									return new Date(ms).toISOString()
+								}
+							}
+
+						}}
+						drawXGrid={false} //TODO: This is not implemented in react-dygraphs
+						labelsSeparateLines={false}
 						labelsKMB={true}
 						legend={'always'}
 					/>
-					<div id="legendDiv" style={{width:200, fontSize:0.8 + 'em', paddingTop:5}}></div>
+					<div id="legendDiv" style={{width:100 + '%', fontSize:0.9 + 'em', marginTop:5}}></div>
 				</div>
 			);
 		} else {
@@ -32,6 +45,25 @@ class Chart extends React.Component {
 		}
 	}
 }
+
+(function () {
+	function pad(number) {
+		if (number < 10) {
+			return '0' + number;
+		}
+		return number;
+	}
+
+	Date.prototype.toISOString = function () {
+		return '<b></b>' + this.getUTCFullYear() +
+			'-' + pad(this.getUTCMonth() + 1) +
+			'-' + pad(this.getUTCDate()) +
+			' ' + pad(this.getUTCHours()) +
+			':' + pad(this.getUTCMinutes()) +
+			':' + pad(this.getUTCSeconds());
+	};
+
+}());
 
 // Chart.PropTypes = {
 // 	binTable: PropTypes.Object.isRequired

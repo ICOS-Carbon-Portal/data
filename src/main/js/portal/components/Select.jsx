@@ -15,7 +15,9 @@ class Select extends Component {
 		const props = this.props;
 		const optionTexts = [props.title].concat(props.options);
 
-		return <select onChange={this.indChanged.bind(this)} value={props.selectedIndex}>{
+		return <select onChange={this.indChanged.bind(this)} value={props.selectedIndex}
+			   className={props.className}
+			   size={props.size}>{
 			optionTexts.map(function (optionText, i) {
 				return <option key={i} value={i}>{optionText}</option>;
 			})

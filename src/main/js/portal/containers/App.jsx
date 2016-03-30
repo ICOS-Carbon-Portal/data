@@ -3,26 +3,58 @@ import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
 import {chooseDataObject} from '../actions.js'
-import { FETCHED_META, FETCHED_DATA } from '../actions'
+import { FETCHING_META, ERROR, INIT, FETCHED_DATA } from '../actions'
 
 class App extends Component {
 	constructor(props){
 		super(props);
 	}
 
+	componentWillReceiveProps() {
+		// setTimeout(this.getWidth.bind(this));
+	}
+
+	getWidth() {
+		if(this.refs.chartDiv) {
+			const chartDiv = this.refs.chartDiv;
+			return chartDiv.getBoundingClientRect().width;
+		}
+	}
+
 	render() {
 		const status = this.props.status;
 		const props = this.props;
 
-		if(status !== FETCHED_META && status !== FETCHED_DATA) {
-			const error = (status === 'ERROR') ? (': ' + props.error.message + '\n' + props.error.stack): '';
-			return <div>{status + error}</div>;
+		if(status === ERROR) {
+			return <div>
+				<div>{ERROR + ': ' + props.error.message}</div>
+				<div>{props.error.stack}</div>
+			</div>;
 		}
 
-		return <div>
-			<Select {...props.selectorPartialProps} {...props.selectorProps} title="Select data object" /> <br /><br />
-			<Chart {...props.forChart} />
-		</div>;
+		if(status === FETCHING_META || status === INIT) {
+			return <div>{status}</div>;
+		}
+
+		return (
+			<div className="container-fluid">
+				<div className="row">
+					<div className="col-md-3">
+						<Select {...props.selectorPartialProps} {...props.selectorProps} size="10" className={"form-control"} title="Select data object" />
+					</div>
+				</div>
+
+				<div className="row">
+					<div ref="chartDiv" id="chartDiv" className="col-md-5">
+						{status === FETCHED_DATA
+							? <Chart {...props.forChart} width={this.getWidth()} />
+							: null
+						}
+					</div>
+					<div ref="metaDiv" id="metaDiv" className="col-md-3"></div>
+				</div>
+			</div>
+		);
 	}
 }
 
