@@ -1,6 +1,7 @@
 import {getMetaForObjectSpecies, getBinaryTable} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 
+export const ROUTE_UPDATED = 'ROUTE_UPDATED';
 export const FETCHING_META = 'FETCHING_META';
 export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
@@ -27,6 +28,13 @@ function gotData(table, dataObjIdx){
 		type: FETCHED_DATA,
 		table,
 		dataObjIdx
+	};
+}
+
+export function routeUpdated(){
+	return {
+		type: ROUTE_UPDATED,
+		route: window.location.hash.substr(1)
 	};
 }
 
