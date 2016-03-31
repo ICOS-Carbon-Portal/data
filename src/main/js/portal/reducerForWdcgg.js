@@ -1,12 +1,16 @@
-import { ROUTE_UPDATED, FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actions';
-import {makeChartData} from './models/chartDataMaker';
+import { FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actionsForWdcgg';
 
-export default function(state, action){
+const initState = {
+	meta: null,
+	chosenObjectIdx: -1,
+	binTable: null,
+	status: 'INIT',
+	error: null
+};
+
+export default function(state = initState, action){
 
 	switch(action.type){
-		case ROUTE_UPDATED:
-			return Object.assign({}, state, {route: action.route});
-
 		case FETCHING_META:
 			return Object.assign({}, state, {status: FETCHING_META});
 

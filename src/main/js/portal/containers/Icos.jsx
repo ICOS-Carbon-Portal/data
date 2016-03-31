@@ -14,5 +14,5 @@ class Icos extends Component {
 	}
 }
 
-export default connect(state => state)(Icos);
+export default connect(state => state.icos)(Icos);
 

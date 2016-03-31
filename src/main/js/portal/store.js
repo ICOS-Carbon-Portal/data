@@ -1,26 +1,12 @@
 import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
-import rootReducer from './reducers'
+import reducer from './reducer'
 import {routeUpdated} from './actions'
 
-const initialState = {
-	meta: null,
-	chosenObjectIdx: -1,
-	binTable: null,
-	status: 'INIT',
-	error: null,
-	route: null
-};
+const store = createStore(reducer, {}, applyMiddleware(thunkMiddleware));
 
 export default function(){
-	const store = createStore(
-		rootReducer,
-		initialState,
-		applyMiddleware(thunkMiddleware)
-	);
-
 	store.dispatch(routeUpdated());
-
 	return store;
 }
 

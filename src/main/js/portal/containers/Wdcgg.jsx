@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
-import {chooseDataObject, fetchMetaData} from '../actions.js'
-import { FETCHING_META, ERROR, INIT, FETCHED_DATA } from '../actions'
+import {chooseDataObject, fetchMetaData} from '../actionsForWdcgg'
+import { FETCHING_META, ERROR, INIT, FETCHED_DATA } from '../actionsForWdcgg'
 
 class Wdcgg extends Component {
 	constructor(props){
@@ -102,5 +102,5 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(stateToProps, dispatchToProps)(Wdcgg);
+export default connect(state => stateToProps(state.wdcgg), dispatchToProps)(Wdcgg);
 
