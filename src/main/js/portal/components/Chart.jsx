@@ -18,7 +18,6 @@ class Chart extends React.Component {
 				<div>
 					<Dygraph
 						data={data}
-						strokeBorderWidth={2}
 						width={props.width ? props.width : 800}
 						strokeWidth={1}
 						labels={labels}
