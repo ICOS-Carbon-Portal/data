@@ -18,6 +18,7 @@ import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
 import se.lu.nateko.cp.data.services.upload.UploadResult
+import akka.stream.scaladsl.Sink
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(implicit mat: Materializer) {
 	import UploadRouting._
@@ -35,6 +36,11 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 					complete(s"The data object is available at ${res.makeReport}")
 				}
 			}
+		}
+	} ~ (path("dump") & extractRequest) { req =>
+		val doneFut = req.entity.dataBytes.runWith(Sink.ignore)
+		onSuccess(doneFut){ done =>
+			complete(StatusCodes.OK)
 		}
 	} ~ requireShaHash
 
