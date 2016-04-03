@@ -5,9 +5,9 @@ version := "0.2"
 scalaVersion := "2.11.8"
 
 libraryDependencies ++= Seq(
-	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.4.2",
-	"com.typesafe.akka"  %% "akka-slf4j"                         % "2.4.2",
-	"ch.qos.logback"      % "logback-classic"                    % "1.1.2",
+	"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % "2.4.3",
+	"com.typesafe.akka"  %% "akka-slf4j"                         % "2.4.3",
+	"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 	"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.3-SNAPSHOT",
 	"se.lu.nateko.cp"    %% "meta-core"                          % "0.1.0-SNAPSHOT",
 
