@@ -41,7 +41,7 @@ class Wdcgg extends Component {
 		return (
 			<div className="container-fluid">
 				<div className="row">
-					<a href="#prototype">To ICOS Data Service prototype</a>
+					<a href="#icos">To ICOS Data Service prototype</a>
 				</div>
 				<div className="row">
 					<div className="col-md-3">

@@ -9,10 +9,16 @@ class Icos extends Component {
 	render() {
 		return <div>
 			<a href="#wdcgg">To WDCGG demo service</a>
-			<h1>ICOS Data Service Prototype</h1>
+			{ this.props.route == 'subview'
+				? <h1>ICOS Data Service Subview</h1>
+				: <h1>ICOS Data Service Prototype</h1>}
 		</div>;
 	}
 }
 
-export default connect(state => state.icos)(Icos);
+function stateToProps(state){
+	return Object.assign({route: state.route}, state.icos);
+}
+
+export default connect(stateToProps)(Icos);
 

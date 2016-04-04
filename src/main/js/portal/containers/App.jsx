@@ -9,9 +9,9 @@ class App extends Component {
 	}
 
 	render() {
-		return this.props.route === 'prototype'
-			? <Icos />
-			: <Wdcgg /> ;
+		return this.props.route === 'wdcgg'
+			? <Wdcgg />
+			: <Icos /> ;
 	}
 }
 
