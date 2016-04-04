@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 import BinTable from './models/BinTable';
-import {parseTableFormat} from './models/TableFormat';
+import {parseTableFormat, parseFormat} from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
@@ -33,7 +33,7 @@ function dataObjectsOfSpecies(objSpecies){
 				fileName: binding.fileName.value,
 				nRows: parseInt(binding.nRows.value)
 			};
-		}).sort((o1, o2) => Math.sign(o2.nRows - o1.nRows))
+		}).sort((o1, o2) => Math.sign(o1.nRows - o2.nRows))
 	);
 }
 
@@ -51,6 +51,29 @@ export function getMetaForObjectSpecies(objSpecies){
 	});
 }
 
+export function getDataObjectData(dobjId, tblRequest){
+	return Promise.all([
+		getFormatSpecificProps(dobjId),
+		getBinaryTable(tblRequest)
+	]).then(([format, binTable]) => {
+		return {format, binTable};
+	});
+}
+
+function getFormatSpecificProps(dobjId){
+	const query = sparqlQueries.formatSpecificProps(dobjId);
+	
+	return sparql(query).then(sparqlResult => {
+		return sparqlResult.results.bindings.map(binding => {
+			return {
+				label: binding.label.value,
+				value: binding.value.value
+			};
+		});
+	});
+}
+
+/*
 function getStandardDataObjMeta(dobjId) {
 	return sparql(sparqlQueries.standardDataObjProps(dobjId))
 		.then(response => {
@@ -59,9 +82,9 @@ function getStandardDataObjMeta(dobjId) {
 			return null;
 		});
 }
+*/
 
-
-export function getBinaryTable(tblRequest){
+function getBinaryTable(tblRequest){
 	return fetch('tabular', {
 			method: 'post',
 			headers: {

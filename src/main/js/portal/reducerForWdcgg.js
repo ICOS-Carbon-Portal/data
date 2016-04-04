@@ -1,4 +1,5 @@
 import { FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actionsForWdcgg';
+import {makeChartData} from './models/chartDataMaker';
 
 const initState = {
 	meta: null,
@@ -27,7 +28,8 @@ export default function(state = initState, action){
 			return (state.chosenObjectIdx === action.dataObjIdx)
 				? Object.assign({}, state, {
 					status: FETCHED_DATA,
-					binTable: action.table
+					binTable: action.binTable,
+					format: action.format
 				})
 				: state; //ignore the fetched data obj if another one got chosen while fetching
 

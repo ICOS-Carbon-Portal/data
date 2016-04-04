@@ -1,4 +1,4 @@
-import {getMetaForObjectSpecies, getBinaryTable} from './backend';
+import {getMetaForObjectSpecies, getDataObjectData} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 
 export const FETCHING_META = 'FETCHING_META';
@@ -22,12 +22,11 @@ function gotMeta(meta){
 	};
 }
 
-function gotData(table, dataObjIdx){
-	return {
+function gotData(data, dataObjIdx){
+	return Object.assign({
 		type: FETCHED_DATA,
-		table,
 		dataObjIdx
-	};
+	}, data);
 }
 
 export const fetchMetaData = dataObjSpec => dispatch => {
@@ -47,8 +46,8 @@ const fetchData = dataObjIdx => (dispatch, getState) => {
 
 	dispatch({type: FETCHING_DATA});
 
-	getBinaryTable(request).then(
-		tbl => dispatch(gotData(tbl, dataObjIdx)),
+	getDataObjectData(dataObjInfo.id, request).then(
+		data => dispatch(gotData(data, dataObjIdx)),
 		err => dispatch(failWithError(err))
 	);
 }

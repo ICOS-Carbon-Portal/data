@@ -47,7 +47,7 @@ WHERE {
 
 export function formatSpecificProps(dobjId){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-SELECT ?property ?value
+SELECT ?label ?value
 FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
 WHERE {
 	<${dobjId}> ?p ?value .

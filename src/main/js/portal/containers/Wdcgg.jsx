@@ -56,7 +56,23 @@ class Wdcgg extends Component {
 							: null
 						}
 					</div>
-					<div ref="metaDiv" id="metaDiv" className="col-md-3"></div>
+					<div ref="metaDiv" id="metaDiv" className="col-md-4" style={{marginLeft: 20}}>
+						<table className="table table-striped table-condensed table-bordered">
+							<tbody>
+						{status === FETCHED_DATA
+							? props.forChart.format.map((rowData, i) =>{
+								return (
+									<tr key={"row" + i}>
+										<th>{rowData.label}</th>
+										<td>{rowData.value}</td>
+									</tr>
+								);
+							})
+							: null
+						}
+							</tbody>
+						</table>
+					</div>
 				</div>
 			</div>
 		);
@@ -79,6 +95,7 @@ function stateToProps(state){
 				tableFormat: state.meta.tableFormat,
 				binTable: state.binTable,
 				dataObjInfo: state.meta.dataObjects[state.chosenObjectIdx],
+				format: state.format
 			}
 			: null,
 		selectorPartialProps: {
