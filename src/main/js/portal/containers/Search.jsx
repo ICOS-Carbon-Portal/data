@@ -1,0 +1,56 @@
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import DatePicker from 'react-bootstrap-date-picker';
+import {fromDateSet, toDateSet, countrySet} from '../actionsForIcos';
+
+class Search extends Component {
+	constructor(props){
+		super(props);
+	}
+
+	render() {
+		return <div id="cp_data_search" className="container-fluid">
+			<h1>ICOS Data Service search</h1>
+			
+			<div className="row">
+				<div className="col-md-6"> <DatePicker clearButtonElement="clear" value={this.props.fromDate} onChange={this.props.fromDateChange} /> </div>
+				<div className="col-md-6"> <DatePicker clearButtonElement="clear" value={this.props.toDate} onChange={this.props.toDateChange} /> </div>				
+			</div>
+			
+			<div className="row">
+				<div className="col-md-12">
+					<select className="form-control" value={this.props.country} onChange={this.props.countryChange}>
+						<option value="sweden">Sweden</option>
+						<option value="norway">Norway</option>
+					</select>
+				</div>
+			</div>
+			
+		</div>
+			
+			
+		;
+	}
+}
+
+function stateToProps(state){
+	return Object.assign({route: state.route}, state.icos);
+}
+
+function dispatchToProps(dispatch){
+	return {
+		fromDateChange: function(date){
+			dispatch(fromDateSet(date));
+		},
+		
+		toDateChange: function(date){
+			dispatch(toDateSet(date));
+		},
+		
+		countryChange: function(country){
+			dispatch(countrySet(country.value));
+		}
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(Search);

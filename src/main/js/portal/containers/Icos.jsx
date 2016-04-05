@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
+import Search from './Search.jsx';
 
 class Icos extends Component {
 	constructor(props){
@@ -7,13 +8,20 @@ class Icos extends Component {
 	}
 
 	render() {
-		return <div>
-			<a href="#wdcgg">To WDCGG demo service</a>
-			{ this.props.route == 'subview'
-				? <h1>ICOS Data Service Subview</h1>
-				: <h1>ICOS Data Service Prototype</h1>}
-		</div>;
+				
+		switch(this.props.route){
+
+			case 'search':
+				return <Search />;
+
+			default:
+				return <h1>ICOS Data Service Protot</h1>;
+		}				
+				
+				
 	}
+		
+
 }
 
 function stateToProps(state){

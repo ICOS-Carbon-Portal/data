@@ -45,25 +45,6 @@ class Chart extends React.Component {
 	}
 }
 
-(function () {
-	function pad(number) {
-		if (number < 10) {
-			return '0' + number;
-		}
-		return number;
-	}
-
-	Date.prototype.toISOString = function () {
-		return '<b></b>' + this.getUTCFullYear() +
-			'-' + pad(this.getUTCMonth() + 1) +
-			'-' + pad(this.getUTCDate()) +
-			' ' + pad(this.getUTCHours()) +
-			':' + pad(this.getUTCMinutes()) +
-			':' + pad(this.getUTCSeconds());
-	};
-
-}());
-
 // Chart.PropTypes = {
 // 	binTable: PropTypes.Object.isRequired
 // }
