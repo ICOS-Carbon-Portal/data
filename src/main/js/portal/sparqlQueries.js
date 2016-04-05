@@ -56,3 +56,37 @@ WHERE {
 }`;
 }
 
+export function getCountriesForTimeInterval(spec, minDate, maxDate){
+return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+select distinct ?country
+from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+where{
+	{
+		select ?dobj where {
+			?dobj cpmeta:hasObjectSpec <${spec}> .
+			?dobj cpmeta:wasProducedBy ?prod .
+			?prod  prov:startedAtTime ?startTime .
+			FILTER(?startTime <= "${maxDate}"^^xsd:dateTime)
+			?prod  prov:endedAtTime ?endTime .
+			FILTER(?endTime >= "${minDate}"^^xsd:dateTime)
+		}
+	}
+	?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/COUNTRY%2FTERRITORY> ?country .
+}
+order by ?country`;
+}
+
+export function getGlobalTimeInterval(spec){
+return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+select  (min(?startTime) as ?startMin) (max(?endTime) as ?endMax)
+from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+where{
+	?dobj cpmeta:hasObjectSpec <${spec}> .
+	?dobj cpmeta:wasProducedBy ?prod .
+	?prod  prov:startedAtTime ?startTime .
+	?prod  prov:endedAtTime ?endTime .
+}`;
+}
+

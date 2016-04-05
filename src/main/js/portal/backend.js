@@ -100,3 +100,28 @@ function getBinaryTable(tblRequest){
 		});
 }
 
+export function getCountriesForTimeInterval(spec, minDate, maxDate){
+	const query = sparqlQueries.getCountriesForTimeInterval(spec, minDate, maxDate);
+
+	return sparql(query).then(sparqlResult => {
+		return sparqlResult.results.bindings.map(binding => binding.country.value);
+	});
+}
+
+export function getGlobalTimeInterval(spec){
+	const query = sparqlQueries.getGlobalTimeInterval(spec);
+
+	return sparql(query).then(sparqlResult => {
+		const binding = sparqlResult.results.bindings[0];
+
+		return !binding
+			? Promise.reject(
+				new Error(`Got empty reply for min and max timestamps of ${spec} datasets`)
+			)
+			: {
+				min: binding.startMin.value,
+				max: binding.endMax.value
+			};
+	});
+}
+

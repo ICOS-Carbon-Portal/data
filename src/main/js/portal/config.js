@@ -5,5 +5,6 @@ endpoint = 'https://meta.icos-cp.eu/sparql';
 // @endif
 
 export default {
-	sparqlEndpoint: endpoint
+	sparqlEndpoint: endpoint,
+	wdcggSpec: 'http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject'
 }

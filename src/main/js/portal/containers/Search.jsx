@@ -1,11 +1,17 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import DatePicker from 'react-bootstrap-date-picker';
-import {fromDateSet, toDateSet, countrySet} from '../actionsForIcos';
+import {fromDateSet, toDateSet, countrySet, fetchGlobalTimeInterval} from '../actionsForIcos';
 
 class Search extends Component {
 	constructor(props){
 		super(props);
+	}
+
+	componentDidMount() {
+		if(!this.props.fromDate) {
+			this.props.globalIntervalFetch();
+		}
 	}
 
 	render() {
@@ -49,8 +55,13 @@ function dispatchToProps(dispatch){
 		
 		countryChange: function(country){
 			dispatch(countrySet(country.value));
+		},
+
+		globalIntervalFetch(){
+			dispatch(fetchGlobalTimeInterval);
 		}
 	};
 }
 
 export default connect(stateToProps, dispatchToProps)(Search);
+

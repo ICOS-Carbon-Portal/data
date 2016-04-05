@@ -4,6 +4,7 @@ import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
 import {chooseDataObject, fetchMetaData} from '../actionsForWdcgg'
 import { FETCHING_META, ERROR, INIT, FETCHED_DATA } from '../actionsForWdcgg'
+import config from '../config';
 
 class Wdcgg extends Component {
 	constructor(props){
@@ -12,7 +13,7 @@ class Wdcgg extends Component {
 
 	componentDidMount() {
 		if(this.props.selectorPartialProps.options.length === 0) {
-			this.props.fetchMeta('http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject');
+			this.props.fetchMeta(config.wdcggSpec);
 		}
 	}
 
