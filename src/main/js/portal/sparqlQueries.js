@@ -90,3 +90,26 @@ where{
 }`;
 }
 
+
+/*
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+SELECT distinct ?label ?value
+FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+WHERE {
+	{
+		select ?dobj where {
+			?dobj cpmeta:hasObjectSpec <http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject> .
+			?dobj cpmeta:wasProducedBy ?prod .
+			?prod  prov:startedAtTime ?startTime .
+			FILTER(?startTime <= "2013"^^xsd:dateTime)
+			?prod  prov:endedAtTime ?endTime .
+			FILTER(?endTime >= "2010"^^xsd:dateTime)
+		}
+	}
+	?p rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
+	?dobj ?p ?value .
+	?p rdfs:label ?label .
+}
+order by ?label ?value
+*/

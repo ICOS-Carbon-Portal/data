@@ -5,19 +5,22 @@ export const TO_DATE_SET = 'TO_DATE_SET';
 export const COUNTRY_SET = 'COUNTRY_SET';
 export const ERROR = 'ERROR';
 export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
+export const GOT_COUNTRIES = 'GOT_COUNTRIES';
 
-export function fromDateSet(date){
-	return {
+export const fromDateSet = (date) => dispatch => {
+	dispatch({
 		type: FROM_DATE_SET,
 		date
-	};
+	});
+	dispatch(fetchCountryList);
 }
 
-export function toDateSet(date){
-	return {
+export const toDateSet = (date) => dispatch => {
+	dispatch({
 		type: TO_DATE_SET,
 		date
-	};
+	});
+	dispatch(fetchCountryList);
 }
 
 export function countrySet(country){
@@ -31,7 +34,10 @@ export function fetchGlobalTimeInterval(dispatch, getState){
 	const objSpec = getState().icos.objectSpecification;
 
 	getGlobalTimeInterval(objSpec).then(
-		interval => dispatch(gotGlobalTimeInterval(objSpec, interval)),
+		interval => {
+			dispatch(gotGlobalTimeInterval(objSpec, interval));
+			dispatch(fetchCountryList);
+		},
 		err => dispatch(gotError(err))
 	);
 }
@@ -51,5 +57,24 @@ function gotGlobalTimeInterval(objectSpecification, interval){
 		},
 		interval
 	);
+}
+
+function fetchCountryList(dispatch, getState){
+	const {objectSpecification, fromDate, toDate} = getState().icos;
+
+	getCountriesForTimeInterval(objectSpecification, fromDate, toDate).then(
+		countries => dispatch(gotCountries(objectSpecification, fromDate, toDate, countries)),
+		err => dispatch(gotError(err))
+	);
+}
+
+function gotCountries(objectSpecification, minDate, maxDate, countries){
+	return {
+		type: GOT_COUNTRIES,
+		objectSpecification,
+		minDate,
+		maxDate,
+		countries
+	};
 }
 

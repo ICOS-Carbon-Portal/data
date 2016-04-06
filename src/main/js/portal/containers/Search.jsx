@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import DatePicker from 'react-bootstrap-date-picker';
-import {fromDateSet, toDateSet, countrySet, fetchGlobalTimeInterval} from '../actionsForIcos';
+import {fromDateSet, toDateSet, countrySet, fetchGlobalTimeInterval, fetchCountryList} from '../actionsForIcos';
 
 class Search extends Component {
 	constructor(props){
@@ -19,16 +19,15 @@ class Search extends Component {
 			<h1>ICOS Data Service search</h1>
 			
 			<div className="row">
-				<div className="col-md-6"> <DatePicker clearButtonElement="clear" value={this.props.fromDate} onChange={this.props.fromDateChange} /> </div>
-				<div className="col-md-6"> <DatePicker clearButtonElement="clear" value={this.props.toDate} onChange={this.props.toDateChange} /> </div>				
+				<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={this.props.fromDate} onChange={this.props.fromDateChange} /> </div>
+				<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={this.props.toDate} onChange={this.props.toDateChange} /> </div>
 			</div>
 			
 			<div className="row">
 				<div className="col-md-12">
-					<select className="form-control" value={this.props.country} onChange={this.props.countryChange}>
-						<option value="sweden">Sweden</option>
-						<option value="norway">Norway</option>
-					</select>
+					<select className="form-control" value={this.props.country} onChange={this.props.countryChange}>{
+						this.props.countries.map((country, i) => <option key={i} value={country}>{country}</option>)
+					}</select>
 				</div>
 			</div>
 			
