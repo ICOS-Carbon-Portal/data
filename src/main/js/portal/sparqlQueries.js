@@ -47,13 +47,26 @@ WHERE {
 
 export function formatSpecificProps(dobjId){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-SELECT ?label ?value
+prefix prov: <http://www.w3.org/ns/prov#>
+SELECT distinct ?label (str(?value) as ?val)
 FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
 WHERE {
-	<${dobjId}> ?p ?value .
-	?p rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
-	?p rdfs:label ?label .
-}`;
+	BIND (<${dobjId}> AS ?dobj)
+	?dobj cpmeta:wasProducedBy ?prod . {
+		{
+			?prod prov:startedAtTime ?value .
+			BIND ("SAMPLING START" AS ?label)
+		} UNION {
+			?prod prov:endedAtTime ?value .
+			BIND ("SAMPLING STOP" AS ?label)
+		} UNION {
+			?p rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
+			?dobj ?p ?value .
+			?p rdfs:label ?label .
+		}
+	}
+}
+ORDER BY ?label`;
 }
 
 export function getCountriesForTimeInterval(spec, minDate, maxDate){

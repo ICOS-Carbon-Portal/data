@@ -62,12 +62,12 @@ export function getDataObjectData(dobjId, tblRequest){
 
 function getFormatSpecificProps(dobjId){
 	const query = sparqlQueries.formatSpecificProps(dobjId);
-	
+
 	return sparql(query).then(sparqlResult => {
 		return sparqlResult.results.bindings.map(binding => {
 			return {
 				label: binding.label.value,
-				value: binding.value.value
+				value: binding.val.value
 			};
 		});
 	});

@@ -26,7 +26,8 @@ class Chart extends React.Component {
 						axes={{
 							x: {
 								valueFormatter: function(ms){
-									return new Date(ms).toISOString()
+									//Firefox hack: add empty bold string
+									return '<b></b>' + toISOString(ms);
 								}
 							}
 
@@ -43,6 +44,24 @@ class Chart extends React.Component {
 			return <div></div>
 		}
 	}
+}
+
+function toISOString(ms){
+	const date = new Date(ms);
+
+	function pad(number) {
+		if (number < 10) {
+			return '0' + number;
+		}
+		return number;
+	}
+
+	return date.getUTCFullYear() +
+		'-' + pad(date.getUTCMonth() + 1) +
+		'-' + pad(date.getUTCDate()) +
+		' ' + pad(date.getUTCHours()) +
+		':' + pad(date.getUTCMinutes()) +
+		':' + pad(date.getUTCSeconds());
 }
 
 // Chart.PropTypes = {

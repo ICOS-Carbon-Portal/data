@@ -1,4 +1,6 @@
 import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
+import {Grid, Row, Col, Table} from 'react-bootstrap'
 import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
@@ -9,6 +11,7 @@ import config from '../config';
 class Wdcgg extends Component {
 	constructor(props){
 		super(props);
+		this.state = {};
 	}
 
 	componentDidMount() {
@@ -17,10 +20,12 @@ class Wdcgg extends Component {
 		}
 	}
 
-	getWidth() {
+	componentWillReceiveProps(){
 		if(this.refs.chartDiv) {
-			const chartDiv = this.refs.chartDiv;
-			return chartDiv.getBoundingClientRect().width;
+			const chartDiv = ReactDOM.findDOMNode(this.refs.chartDiv);
+			const chartDivWidth = chartDiv.getBoundingClientRect().width - 44;
+			// console.log({chartDiv, chartDivWidth, status: this.props.status});
+			this.setState({chartDivWidth});
 		}
 	}
 
@@ -40,28 +45,45 @@ class Wdcgg extends Component {
 		}
 
 		return (
-			<div className="container-fluid">
-				<div className="row">
-					<a href="#icos">To ICOS Data Service prototype</a>
-				</div>
-				<div className="row">
-					<div className="col-md-3">
-						<Select {...props.selectorPartialProps} {...props.selectorProps} size="10" className={"form-control"} title="Select data object" />
-					</div>
-				</div>
+			<Grid fluid>
+				<Row>
+					<Col md={12}>
+						<a href="#icos">To ICOS Data Service prototype</a>
+					</Col>
+				</Row>
+				<Row>
+					<Col md={5}>
+						<Select {...props.selectorPartialProps} {...props.selectorProps} size="10" title="Select data object" />
+					</Col>
+				</Row>
 
-				<div className="row">
-					<div ref="chartDiv" id="chartDiv" className="col-md-5">
-						{status === FETCHED_DATA
-							? <Chart {...props.forChart} width={this.getWidth()} />
+				<Row>
+					<Col ref="chartDiv" id="chartDiv" md={12}>
+						{(status === FETCHED_DATA && this.state.chartDivWidth)
+							? <Chart {...props.forChart} width={this.state.chartDivWidth} />
 							: null
 						}
-					</div>
-					<div ref="metaDiv" id="metaDiv" className="col-md-4" style={{marginLeft: 20}}>
-						<table className="table table-striped table-condensed table-bordered">
+					</Col>
+				</Row>
+				<Row>
+					<Col ref="metaDiv" id="metaDiv" md={12}>
+						<Table striped condensed bordered>
 							<tbody>
-						{status === FETCHED_DATA
-							? props.forChart.format.map((rowData, i) =>{
+							{status === FETCHED_DATA
+								? [{label: "LANDING PAGE", value: props.forChart.dataObjInfo.id}].map((rowData) =>{
+								return (
+									<tr key="lp">
+										<th>{rowData.label}</th>
+										<td>
+											<a href={rowData.value} target="_blank">{rowData.value}</a>
+										</td>
+									</tr>
+								);
+							})
+								: null
+							}
+							{status === FETCHED_DATA
+								? props.forChart.format.map((rowData, i) =>{
 								return (
 									<tr key={"row" + i}>
 										<th>{rowData.label}</th>
@@ -69,13 +91,64 @@ class Wdcgg extends Component {
 									</tr>
 								);
 							})
-							: null
-						}
+								: null
+							}
 							</tbody>
-						</table>
-					</div>
-				</div>
-			</div>
+						</Table>
+					</Col>
+				</Row>
+			</Grid>
+			// <div className="container-fluid">
+			// 	<div className="row">
+			// 		<a href="#icos">To ICOS Data Service prototype</a>
+			// 	</div>
+			// 	<div className="row">
+			// 		<div className="col-md-5">
+			// 			<Select {...props.selectorPartialProps} {...props.selectorProps} size="10" title="Select data object" />
+			// 		</div>
+			// 	</div>
+			//
+			// 	<div className="row">
+			// 		<div ref="chartDiv" id="chartDiv" className="col-md-12">
+			// 			{status === FETCHED_DATA
+			// 				? <Chart {...props.forChart} width={1876} />
+			// 				: null
+			// 			}
+			// 		</div>
+			// 	</div>
+			// 	<div className="row">
+			// 		<div ref="metaDiv" id="metaDiv" className="col-md-12">
+			// 			<table className="table table-striped table-condensed table-bordered">
+			// 				<tbody>
+			// 				{status === FETCHED_DATA
+			// 					? [{label: "LANDING PAGE", value: props.forChart.dataObjInfo.id}].map((rowData) =>{
+			// 						return (
+			// 							<tr key="lp">
+			// 								<th>{rowData.label}</th>
+			// 								<td>
+			// 									<a href={rowData.value} target="_blank">{rowData.value}</a>
+			// 								</td>
+			// 							</tr>
+			// 						);
+			// 					})
+			// 					: null
+			// 				}
+			// 				{status === FETCHED_DATA
+			// 					? props.forChart.format.map((rowData, i) =>{
+			// 						return (
+			// 							<tr key={"row" + i}>
+			// 								<th>{rowData.label}</th>
+			// 								<td>{rowData.value}</td>
+			// 							</tr>
+			// 						);
+			// 					})
+			// 					: null
+			// 				}
+			// 				</tbody>
+			// 			</table>
+			// 		</div>
+			// 	</div>
+			// </div>
 		);
 	}
 }
