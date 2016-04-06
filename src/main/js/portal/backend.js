@@ -3,6 +3,7 @@ import BinTable from './models/BinTable';
 import {parseTableFormat, parseFormat} from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
+import _ from 'lodash';
 
 function checkStatus(response) {
 	if(response.status >= 200 && response.status < 300)
@@ -123,5 +124,25 @@ export function getGlobalTimeInterval(spec){
 				max: binding.endMax.value
 			};
 	});
+}
+
+export function getPropValueCounts(spec, props, filters){
+	const query = sparqlQueries.getPropValueCounts(spec, props, filters);
+
+	function bindingToValueCount(binding){
+		return {
+			value: binding.value.value,
+			count: Number.parseInt(binding.count.value)
+		};
+	}
+
+	const sortByValue = arr => _.sortBy(arr, 'value');
+
+	return sparql(query).then(sparqlResult => _
+		.chain(sparqlResult.results.bindings)
+		.groupBy(binding => binding.prop.value)
+		.mapValues(bindings => sortByValue(bindings.map(bindingToValueCount)))
+		.value()
+	);
 }
 
