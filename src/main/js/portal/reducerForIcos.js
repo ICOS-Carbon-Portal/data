@@ -1,5 +1,13 @@
-import {FROM_DATE_SET, TO_DATE_SET, COUNTRY_SET, ERROR, GOT_GLOBAL_TIME_INTERVAL, GOT_COUNTRIES} from './actionsForIcos';
+import {FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, ERROR, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS} from './actionsForIcos';
 import config from './config';
+import { EmptyFilter } from './models/Filters';
+
+const initCounts = {};
+const initFilters = {};
+config.wdcggProps.forEach(prop => {
+	initCounts[prop.uri] = [];
+	initFilters[prop.uri] = new EmptyFilter();
+});
 
 const initState = {
 	objectSpecification: config.wdcggSpec,
@@ -7,8 +15,8 @@ const initState = {
 	toDateMax: '2030-12-13T12:00:00Z',
 	fromDate: null,
 	toDate: null,
-	countries: [],
-	country: null
+	propValueCounts: initCounts,
+	filters: initFilters
 };
 
 function makeAllowedDate(proposedValue, defaultValue, state){
@@ -34,27 +42,28 @@ export default function(state = initState, action){
 			let newDate = makeAllowedDate(action.date, state.toDateMax, state);
 			return Object.assign({}, state, {toDate: newDate});
 		}
-		case COUNTRY_SET:
-			return Object.assign({}, state, {country: action.country});
+
+		case FILTER_UPDATED:
+			return Object.assign({}, state, {
+				filters: Object.assign({}, state.filters, action.update)
+			});
 
 		case GOT_GLOBAL_TIME_INTERVAL:
 			return state.objectSpecification === action.objectSpecification
 				? Object.assign({}, state, {
-					fromDate: action.min,
 					fromDateMin: action.min,
-					toDate: action.max,
 					toDateMax: action.max
 				})
 				: state;
 
-		case GOT_COUNTRIES:
+		case GOT_PROP_VAL_COUNTS:
 			return (
 				state.objectSpecification === action.objectSpecification &&
-				state.fromDate === action.minDate &&
-				state.toDate === action.maxDate
+				state.fromDate === action.fromDate &&
+				state.toDate === action.toDate
 			)
 			? Object.assign({}, state, {
-				countries: action.countries
+				propValueCounts: action.counts
 			})
 			: state;
 

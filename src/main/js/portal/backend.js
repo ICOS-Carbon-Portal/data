@@ -100,6 +100,7 @@ function getBinaryTable(tblRequest){
 		});
 }
 
+/*
 export function getCountriesForTimeInterval(spec, minDate, maxDate){
 	const query = sparqlQueries.getCountriesForTimeInterval(spec, minDate, maxDate);
 
@@ -107,6 +108,7 @@ export function getCountriesForTimeInterval(spec, minDate, maxDate){
 		return sparqlResult.results.bindings.map(binding => binding.country.value);
 	});
 }
+*/
 
 export function getGlobalTimeInterval(spec){
 	const query = sparqlQueries.getGlobalTimeInterval(spec);
@@ -124,4 +126,36 @@ export function getGlobalTimeInterval(spec){
 			};
 	});
 }
+
+export function getPropValueCounts(spec, filters, fromDate, toDate){
+	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
+
+	function bindingToValueCount(binding){
+		return {
+			value: binding.value.value,
+			count: Number.parseInt(binding.count.value)
+		};
+	}
+
+	const sortByValue = arr => _.sortBy(arr, 'value');
+
+	return sparql(query).then(sparqlResult => groupBy(
+		sparqlResult.results.bindings,
+		binding => binding.prop.value,
+		bindingToValueCount
+	));
+}
+
+function groupBy(arr, keyMaker, valueMaker){
+	return arr.reduce(function(acc, elem){
+		const key = keyMaker(elem);
+		const value = valueMaker(elem);
+
+		if(acc.hasOwnProperty(key)) acc[key].push(value)
+		else acc[key] = [value];
+
+		return acc;
+	}, {});
+}
+
 

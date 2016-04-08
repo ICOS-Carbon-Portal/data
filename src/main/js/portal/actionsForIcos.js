@@ -1,18 +1,21 @@
-import {getGlobalTimeInterval, getCountriesForTimeInterval} from './backend';
+import {getGlobalTimeInterval, getPropValueCounts} from './backend';
 
 export const FROM_DATE_SET = 'FROM_DATE_SET';
 export const TO_DATE_SET = 'TO_DATE_SET';
-export const COUNTRY_SET = 'COUNTRY_SET';
+//export const COUNTRY_SET = 'COUNTRY_SET';
 export const ERROR = 'ERROR';
 export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
-export const GOT_COUNTRIES = 'GOT_COUNTRIES';
+//export const GOT_COUNTRIES = 'GOT_COUNTRIES';
+export const FILTER_UPDATED = 'FILTER_UPDATED';
+export const GOT_PROP_VAL_COUNTS = 'GOT_PROP_VAL_COUNTS';
+
 
 export const fromDateSet = (date) => dispatch => {
 	dispatch({
 		type: FROM_DATE_SET,
 		date
 	});
-	dispatch(fetchCountryList);
+	dispatch(fetchPropValueCounts);
 }
 
 export const toDateSet = (date) => dispatch => {
@@ -20,15 +23,17 @@ export const toDateSet = (date) => dispatch => {
 		type: TO_DATE_SET,
 		date
 	});
-	dispatch(fetchCountryList);
+	dispatch(fetchPropValueCounts);
 }
 
+/*
 export function countrySet(country){
 	return {
 		type: COUNTRY_SET,
 		country
 	};
 }
+*/
 
 export function fetchGlobalTimeInterval(dispatch, getState){
 	const objSpec = getState().icos.objectSpecification;
@@ -36,7 +41,7 @@ export function fetchGlobalTimeInterval(dispatch, getState){
 	getGlobalTimeInterval(objSpec).then(
 		interval => {
 			dispatch(gotGlobalTimeInterval(objSpec, interval));
-			dispatch(fetchCountryList);
+			dispatch(fetchPropValueCounts);
 		},
 		err => dispatch(gotError(err))
 	);
@@ -59,7 +64,7 @@ function gotGlobalTimeInterval(objectSpecification, interval){
 	);
 }
 
-function fetchCountryList(dispatch, getState){
+/*function fetchCountryList(dispatch, getState){
 	const {objectSpecification, fromDate, toDate} = getState().icos;
 
 	getCountriesForTimeInterval(objectSpecification, fromDate, toDate).then(
@@ -76,5 +81,29 @@ function gotCountries(objectSpecification, minDate, maxDate, countries){
 		maxDate,
 		countries
 	};
+}*/
+
+export const updateFilter = (filterId, filter) => dispatch => {
+	dispatch({
+		type: FILTER_UPDATED,
+		update: {[filterId]: filter}
+	});
+
+	dispatch(fetchPropValueCounts);
+};
+
+function fetchPropValueCounts(dispatch, getState){
+	const {objectSpecification, filters, fromDate, toDate} = getState().icos;
+
+	getPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
+		counts => dispatch({
+			type: GOT_PROP_VAL_COUNTS,
+			counts,
+			objectSpecification,
+			fromDate,
+			toDate
+		}),
+		err => dispatch(gotError(err))
+	);
 }
 
