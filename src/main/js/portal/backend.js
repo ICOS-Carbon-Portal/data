@@ -3,7 +3,6 @@ import BinTable from './models/BinTable';
 import {parseTableFormat, parseFormat} from './models/TableFormat';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
-import _ from 'lodash';
 
 function checkStatus(response) {
 	if(response.status >= 200 && response.status < 300)
@@ -101,6 +100,7 @@ function getBinaryTable(tblRequest){
 		});
 }
 
+/*
 export function getCountriesForTimeInterval(spec, minDate, maxDate){
 	const query = sparqlQueries.getCountriesForTimeInterval(spec, minDate, maxDate);
 
@@ -108,6 +108,7 @@ export function getCountriesForTimeInterval(spec, minDate, maxDate){
 		return sparqlResult.results.bindings.map(binding => binding.country.value);
 	});
 }
+*/
 
 export function getGlobalTimeInterval(spec){
 	const query = sparqlQueries.getGlobalTimeInterval(spec);
@@ -126,8 +127,8 @@ export function getGlobalTimeInterval(spec){
 	});
 }
 
-export function getPropValueCounts(spec, props, filters){
-	const query = sparqlQueries.getPropValueCounts(spec, props, filters);
+export function getPropValueCounts(spec, filters, fromDate, toDate){
+	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
 
 	function bindingToValueCount(binding){
 		return {
@@ -138,11 +139,23 @@ export function getPropValueCounts(spec, props, filters){
 
 	const sortByValue = arr => _.sortBy(arr, 'value');
 
-	return sparql(query).then(sparqlResult => _
-		.chain(sparqlResult.results.bindings)
-		.groupBy(binding => binding.prop.value)
-		.mapValues(bindings => sortByValue(bindings.map(bindingToValueCount)))
-		.value()
-	);
+	return sparql(query).then(sparqlResult => groupBy(
+		sparqlResult.results.bindings,
+		binding => binding.prop.value,
+		bindingToValueCount
+	));
 }
+
+function groupBy(arr, keyMaker, valueMaker){
+	return arr.reduce(function(acc, elem){
+		const key = keyMaker(elem);
+		const value = valueMaker(elem);
+
+		if(acc.hasOwnProperty(key)) acc[key].push(value)
+		else acc[key] = [value];
+
+		return acc;
+	}, {});
+}
+
 

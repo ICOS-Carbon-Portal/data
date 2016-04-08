@@ -69,6 +69,8 @@ WHERE {
 ORDER BY ?label`;
 }
 
+/*
+
 export function getCountriesForTimeInterval(spec, minDate, maxDate){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -90,6 +92,8 @@ where{
 order by ?country`;
 }
 
+*/
+
 export function getGlobalTimeInterval(spec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -103,9 +107,22 @@ where{
 }`;
 }
 
-export function getPropValueCounts(spec, props, filters){
+export function getPropValueCounts(spec, filters, fromDate, toDate){
+	const props = Object.keys(filters);
 	const propsList = '<' + props.join('> <') + '>';
-	const filterClauses = filters.map(f => f.sparql).join('\n');
+	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
+
+	const fromDateClause = fromDate
+		? `
+			?dobj cpmeta:wasProducedBy/prov:endedAtTime ?endTime .
+			FILTER(?endTime >= "${fromDate}"^^xsd:dateTime)`
+		: "";
+
+	const toDateClause = toDate
+		? `
+			?dobj cpmeta:wasProducedBy/prov:startedAtTime ?startTime .
+			FILTER(?startTime <= "${toDate}"^^xsd:dateTime)`
+		: "";
 
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -115,12 +132,13 @@ WHERE {
 	{
 		select ?dobj where {
 			?dobj cpmeta:hasObjectSpec <${spec}> .
-			${filterClauses}
+			${filterClauses} ${fromDateClause} ${toDateClause}
 		}
 	}
 	VALUES ?prop {${propsList}}
 	?dobj ?prop ?value .
 }
-group by ?prop ?value`;
+group by ?prop ?value
+order by ?prop ?value`;
 }
 

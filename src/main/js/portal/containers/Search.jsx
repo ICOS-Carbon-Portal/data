@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import DatePicker from 'react-bootstrap-date-picker';
-import {fromDateSet, toDateSet, countrySet, fetchGlobalTimeInterval, fetchCountryList} from '../actionsForIcos';
+import { fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInterval } from '../actionsForIcos';
+import config from '../config';
+import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
 
 class Search extends Component {
 	constructor(props){
@@ -15,26 +17,29 @@ class Search extends Component {
 	}
 
 	render() {
+		const props = this.props;
+		const fromDate = props.fromDate || props.fromDateMin;
+		const toDate = props.toDate || props.toDateMax;
+
 		return <div id="cp_data_search" className="container-fluid">
 			<h1>ICOS Data Service search</h1>
 			
 			<div className="row">
-				<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={this.props.fromDate} onChange={this.props.fromDateChange} /> </div>
-				<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={this.props.toDate} onChange={this.props.toDateChange} /> </div>
-			</div>
-			
-			<div className="row">
-				<div className="col-md-12">
-					<select className="form-control" value={this.props.country} onChange={this.props.countryChange}>{
-						this.props.countries.map((country, i) => <option key={i} value={country}>{country}</option>)
-					}</select>
-				</div>
-			</div>
-			
-		</div>
-			
-			
-		;
+				<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={fromDate} onChange={props.fromDateChange} /> </div>
+				<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={toDate} onChange={props.toDateChange} /> </div>
+			</div>{
+			config.wdcggProps.map(
+				({label, uri}, i) =>
+					<PropertyValueSelect
+						label={label}
+						prop={uri}
+						filter={props.filters[uri]}
+						valueCounts={props.propValueCounts[uri]}
+						filterUpdate={props.filterUpdate}
+						key={i}
+					/>
+			)
+		}</div>;
 	}
 }
 
@@ -51,9 +56,9 @@ function dispatchToProps(dispatch){
 		toDateChange: function(date){
 			dispatch(toDateSet(date));
 		},
-		
-		countryChange: function(country){
-			dispatch(countrySet(country.value));
+
+		filterUpdate: function(propUri, filter){
+			dispatch(updateFilter(propUri, filter));
 		},
 
 		globalIntervalFetch(){
