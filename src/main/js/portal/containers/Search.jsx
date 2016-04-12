@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import DatePicker from 'react-bootstrap-date-picker';
 import { fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInterval } from '../actionsForIcos';
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
+import DatePicker from '../components/DatePickerEncloser.jsx';
 
 class Search extends Component {
 	constructor(props){
@@ -24,10 +24,13 @@ class Search extends Component {
 		return <div id="cp_data_search" className="container-fluid">
 			<h1>ICOS Data Service search</h1>
 			
-			<div className="row">
-				<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={fromDate} onChange={props.fromDateChange} /> </div>
-				<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={toDate} onChange={props.toDateChange} /> </div>
-			</div>{
+			<DatePicker 
+				date1={ this.props.fromDate } 
+				date2={ this.props.toDate } 
+				onChange1={ this.props.fromDateChange } 
+				onChange2={ this.props.toDateChange } 
+				minDate={ this.props.fromDateMin } 
+				maxDate={ this.props.toDateMax } />{
 			config.wdcggProps.map(
 				({label, uri}, i) =>
 					<PropertyValueSelect
@@ -43,13 +46,9 @@ class Search extends Component {
 	}
 }
 
-function stateToProps(state){
-	return Object.assign({route: state.route}, state.icos);
-}
-
 function dispatchToProps(dispatch){
 	return {
-		fromDateChange: function(date){
+		fromDateChange: function(date){console.log(date);
 			dispatch(fromDateSet(date));
 		},
 		
@@ -67,5 +66,5 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(stateToProps, dispatchToProps)(Search);
+export default connect(state => state.icos, dispatchToProps)(Search);
 

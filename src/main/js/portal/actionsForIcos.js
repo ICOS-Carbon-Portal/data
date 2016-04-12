@@ -2,7 +2,6 @@ import {getGlobalTimeInterval, getPropValueCounts} from './backend';
 
 export const FROM_DATE_SET = 'FROM_DATE_SET';
 export const TO_DATE_SET = 'TO_DATE_SET';
-//export const COUNTRY_SET = 'COUNTRY_SET';
 export const ERROR = 'ERROR';
 export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
 //export const GOT_COUNTRIES = 'GOT_COUNTRIES';
@@ -34,6 +33,13 @@ export function countrySet(country){
 	};
 }
 */
+
+export function stationSet(station){
+	return {
+		type: STATION_SET,
+		station
+	};
+}
 
 export function fetchGlobalTimeInterval(dispatch, getState){
 	const objSpec = getState().icos.objectSpecification;
