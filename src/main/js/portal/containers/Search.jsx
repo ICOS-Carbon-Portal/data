@@ -17,32 +17,35 @@ class Search extends Component {
 	}
 
 	render() {
+	
 		const props = this.props;
-		const fromDate = props.fromDate || props.fromDateMin;
-		const toDate = props.toDate || props.toDateMax;
+		const fromDate = props.fromDate || this.props.fromDateMin;
+		const toDate = props.toDate || this.props.toDateMax;
 
 		return <div id="cp_data_search" className="container-fluid">
 			<h1>ICOS Data Service search</h1>
 			
 			<DatePicker 
-				date1={ this.props.fromDate } 
-				date2={ this.props.toDate } 
+				date1={ fromDate } 
+				date2={ toDate } 
 				onChange1={ this.props.fromDateChange } 
 				onChange2={ this.props.toDateChange } 
 				minDate={ this.props.fromDateMin } 
-				maxDate={ this.props.toDateMax } />{
-			config.wdcggProps.map(
-				({label, uri}, i) =>
-					<PropertyValueSelect
-						label={label}
-						prop={uri}
-						filter={props.filters[uri]}
-						valueCounts={props.propValueCounts[uri]}
-						filterUpdate={props.filterUpdate}
-						key={i}
-					/>
-			)
-		}</div>;
+				maxDate={ this.props.toDateMax } />
+				{
+					config.wdcggProps.map(
+						({label, uri}, i) =>
+							<PropertyValueSelect
+								label={label}
+								prop={uri}
+								filter={props.filters[uri]}
+								valueCounts={props.propValueCounts[uri]}
+								filterUpdate={props.filterUpdate}
+								key={i}
+							/>
+					)
+				}
+		</div>;
 	}
 }
 

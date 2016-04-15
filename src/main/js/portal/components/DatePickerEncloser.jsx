@@ -12,7 +12,7 @@ class DatePickerEncloser extends Component {
 					
 				<div className="col-md-6">
 				 	<div className="panel panel-default">
-				    	<div className="panel-heading">Panel heading without title</div>
+				    	<div className="panel-heading">Date from { dateAsIso(this.props.date1) }</div>
 				    	<div className="panel-body">
 							<DatePicker
 								date={ this.props.date1 } 
@@ -27,7 +27,7 @@ class DatePickerEncloser extends Component {
 				
 				<div className="col-md-6">
 					<div className="panel panel-default">
-						<div className="panel-heading">Panel heading without title</div>
+						<div className="panel-heading">Date to { dateAsIso(this.props.date2) }</div>
 				    	<div className="panel-body">
 							<DatePicker
 								date={ this.props.date2 } 
@@ -41,6 +41,14 @@ class DatePickerEncloser extends Component {
 				
 			</div>;
 	}
+}
+
+function dateAsIso(dateString) {
+	let dateObj = new Date(dateString);
+	let month = dateObj.getMonth() + 1;
+	month = month.toString().length === 1 ? '0' + month.toString() : month.toString(); 
+	let date = dateObj.getDate().toString().length === 1 ? '0' + dateObj.getDate() : dateObj.getDate();
+	return dateObj.getFullYear() + ' - ' + month + ' - ' + date;
 }
 
 export default DatePickerEncloser;
