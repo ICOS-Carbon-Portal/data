@@ -46,14 +46,15 @@
   "dependencies": {
     "babel-polyfill": "^6.5.0",
     "dygraphs": "^1.1.1",
+    "leaflet": "^0.7.7",
     "react": "^0.14.7",
+    "react-bootstrap": "^0.28.1",
+    "react-bootstrap-date-picker": "~1.1.0",
     "react-dom": "^0.14.7",
     "react-dygraphs": "0.0.1",
     "react-redux": "^4.4.0",
     "redux": "^3.3.1",
     "redux-thunk": "^1.0.3",
-    "whatwg-fetch": "^0.11.0",
-    "react-bootstrap-date-picker": "~1.1.0",
-    "react-bootstrap": "^0.28.1"
+    "whatwg-fetch": "^0.11.0"
   }
 }

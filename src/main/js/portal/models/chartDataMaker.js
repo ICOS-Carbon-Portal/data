@@ -7,11 +7,10 @@ function axisColumnIndices(tableFormat){
 	return [xColumn, yColumn].map(idx => tableFormat.getColumnIndex(idx));
 }
 
-export function makeTableRequest(tableFormat, dataObjInfo){
+export function makeTableRequest(tableFormat, dataObjectInfo){
 	const axisIndices = axisColumnIndices(tableFormat);
-	const tableId = lastUrlPart(dataObjInfo.id);
 
-	return tableFormat.getRequest(tableId, dataObjInfo.nRows, axisIndices);
+	return tableFormat.getRequest(dataObjectInfo.id, dataObjectInfo.nRows, axisIndices);
 }
 
 export function binTable2Dygraph(binTable){

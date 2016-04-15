@@ -1,4 +1,4 @@
-import {getMetaForObjectSpecies, getDataObjectData} from './backend';
+import {tableFormatForSpecies, getDataObjectData} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 
 export const FETCHING_META = 'FETCHING_META';
@@ -15,49 +15,56 @@ function failWithError(error){
 	};
 }
 
-function gotMeta(meta){
+function gotMeta(tableFormat){
 	return {
 		type: FETCHED_META,
-		meta
+		tableFormat
 	};
 }
 
-function gotData(data, dataObjIdx){
+function gotData(data, dataObjId){
 	return Object.assign({
 		type: FETCHED_DATA,
-		dataObjIdx
+		dataObjId
 	}, data);
 }
 
-export const fetchMetaData = dataObjSpec => dispatch => {
+// export const fetchMetaData = (dataObjSpec, dataObjectId) => dispatch => {
+// 	dispatch({type: FETCHING_META});
+//
+// 	getMetaForObjectSpecies(dataObjSpec, dataObjectId).then(
+// 		meta => dispatch(gotMeta(meta)),
+// 		err => dispatch(failWithError(err))
+// 	);
+// }
+
+export const fetchTableFormat = (dataObjSpec) => dispatch => {
 	dispatch({type: FETCHING_META});
 
-	getMetaForObjectSpecies(dataObjSpec).then(
-		meta => dispatch(gotMeta(meta)),
+	tableFormatForSpecies(dataObjSpec).then(
+		tableFormat => dispatch(gotMeta(tableFormat)),
 		err => dispatch(failWithError(err))
 	);
 }
 
-const fetchData = dataObjIdx => (dispatch, getState) => {
-	const meta = getState().wdcgg.meta;
-
-	const dataObjInfo = meta.dataObjects[dataObjIdx];
-	const request = makeTableRequest(meta.tableFormat, dataObjInfo);
+const fetchData = dataObjectInfo => (dispatch, getState) => {
+	const tableFormat = getState().wdcgg.tableFormat;
+	const request = makeTableRequest(tableFormat, dataObjectInfo);
 
 	dispatch({type: FETCHING_DATA});
 
-	getDataObjectData(dataObjInfo.id, request).then(
-		data => dispatch(gotData(data, dataObjIdx)),
+	getDataObjectData(dataObjectInfo.id, request).then(
+		data => dispatch(gotData(data, dataObjectInfo.id)),
 		err => dispatch(failWithError(err))
 	);
 }
 
-export const chooseDataObject = dataObjIdx => dispatch => {
+export const chooseDataObject = dataObjectInfo => dispatch => {
 	dispatch({
 		type: DATA_CHOSEN,
-		dataObjIdx
+		dataObjectId: dataObjectInfo.id
 	});
 
-	dispatch(fetchData(dataObjIdx));
+	dispatch(fetchData(dataObjectInfo));
 }
 

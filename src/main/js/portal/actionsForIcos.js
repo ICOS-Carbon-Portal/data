@@ -1,4 +1,4 @@
-import {getGlobalTimeInterval, getPropValueCounts} from './backend';
+import {getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 
 export const FROM_DATE_SET = 'FROM_DATE_SET';
 export const TO_DATE_SET = 'TO_DATE_SET';
@@ -48,6 +48,7 @@ export function fetchGlobalTimeInterval(dispatch, getState){
 }
 
 function gotError(error){
+	console.log({error});
 	return {
 		type: ERROR,
 		error
@@ -95,10 +96,10 @@ export const updateFilter = (filterId, filter) => dispatch => {
 function fetchPropValueCounts(dispatch, getState){
 	const {objectSpecification, filters, fromDate, toDate} = getState().icos;
 
-	getPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
-		counts => dispatch({
+	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
+		propsAndVals => dispatch({
 			type: GOT_PROP_VAL_COUNTS,
-			counts,
+			propsAndVals,
 			objectSpecification,
 			fromDate,
 			toDate

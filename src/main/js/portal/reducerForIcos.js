@@ -63,7 +63,8 @@ export default function(state = initState, action){
 				state.toDate === action.toDate
 			)
 			? Object.assign({}, state, {
-				propValueCounts: action.counts
+				propValueCounts: action.propsAndVals.propValCount,
+				filteredDataObjects: action.propsAndVals.filteredDataObjects
 			})
 			: state;
 

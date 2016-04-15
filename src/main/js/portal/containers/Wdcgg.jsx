@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
+import Leaflet from '../components/Leaflet.jsx'
 import { connect } from 'react-redux'
 import Select from '../components/Select.jsx'
 import Chart from '../components/Chart.jsx'
@@ -24,6 +25,12 @@ class Wdcgg extends Component {
 			const chartDiv = ReactDOM.findDOMNode(this.refs.chartDiv);
 			const chartDivWidth = chartDiv.getBoundingClientRect().width - 44;
 			this.setState({chartDivWidth});
+		}
+
+		if(this.refs.mapDiv) {
+			const mapDiv = ReactDOM.findDOMNode(this.refs.mapDiv);
+			const mapDivWidth = mapDiv.getBoundingClientRect().width;
+			this.setState({mapDivWidth});
 		}
 	}
 
@@ -63,7 +70,7 @@ class Wdcgg extends Component {
 		}
 
 		return (
-			<div className="container-fluid">
+			<div className="container-fluid fill">
 				<div className="row">
 					<a href="#icos">To ICOS Data Service prototype</a>
 				</div>
@@ -74,9 +81,15 @@ class Wdcgg extends Component {
 				</div>
 
 				<div className="row">
-					<div ref="chartDiv" id="chartDiv" className="col-md-7">
+					<div ref="chartDiv" id="chartDiv" className="col-md-8">
 						{status === FETCHED_DATA
 							? <Chart {...props.forChart} width={this.state.chartDivWidth} />
+							: null
+						}
+					</div>
+					<div ref="mapDiv" id="mapDiv" className="col-md-4">
+						{status === FETCHED_DATA
+							? <Leaflet lat={props.forMap.geom.lat} lon={props.forMap.geom.lon} width={this.state.mapDivWidth} />
 							: null
 						}
 					</div>
@@ -101,7 +114,7 @@ class Wdcgg extends Component {
 }
 
 function stateToProps(state){
-
+	console.log({state});
 	const fileNames = state.meta
 		? state.meta.dataObjects.map(dobj => `${dobj.fileName} (${dobj.nRows})`)
 		: [];
@@ -117,6 +130,14 @@ function stateToProps(state){
 				binTable: state.binTable,
 				dataObjInfo: state.meta.dataObjects[state.chosenObjectIdx],
 				format: [{label: "LANDING PAGE", value: state.meta.dataObjects[state.chosenObjectIdx].id}].concat(state.format)
+			}
+			: null,
+		forMap: dataObjSelected
+			? {
+				geom: {
+					lat: Math.floor(Math.random() * 60),
+					lon: Math.floor(Math.random() * 60)
+				}
 			}
 			: null,
 		selectorPartialProps: {

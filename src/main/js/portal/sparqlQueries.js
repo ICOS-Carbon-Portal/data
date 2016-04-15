@@ -10,6 +10,17 @@ where {
 } order by ?fileName`;
 }
 
+export function simpleDataObject(objSpec, dobjId){
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select *
+FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+where {
+	<${dobjId}> cpmeta:hasObjectSpec <${objSpec}> .
+	<${dobjId}> cpmeta:hasName ?fileName .
+	<${dobjId}> cpmeta:hasNumberOfRows ?nRows .
+} order by ?fileName`;
+}
+
 export function simpleObjectSchema(spec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
@@ -69,31 +80,6 @@ WHERE {
 ORDER BY ?label`;
 }
 
-/*
-
-export function getCountriesForTimeInterval(spec, minDate, maxDate){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-prefix prov: <http://www.w3.org/ns/prov#>
-select distinct ?country
-from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
-where{
-	{
-		select ?dobj where {
-			?dobj cpmeta:hasObjectSpec <${spec}> .
-			?dobj cpmeta:wasProducedBy ?prod .
-			?prod  prov:startedAtTime ?startTime .
-			FILTER(?startTime <= "${maxDate}"^^xsd:dateTime)
-			?prod  prov:endedAtTime ?endTime .
-			FILTER(?endTime >= "${minDate}"^^xsd:dateTime)
-		}
-	}
-	?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/COUNTRY%2FTERRITORY> ?country .
-}
-order by ?country`;
-}
-
-*/
-
 export function getGlobalTimeInterval(spec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -110,6 +96,29 @@ where{
 export function getPropValueCounts(spec, filters, fromDate, toDate){
 	const props = Object.keys(filters);
 	const propsList = '<' + props.join('> <') + '>';
+
+	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+SELECT ?prop ?value (count(?dobj) as ?count)
+FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+WHERE {
+	{
+		select ?dobj where {
+			${dobjsQueryStatements} 
+		}
+	}
+	VALUES ?prop {${propsList}}
+	?dobj ?prop ?value .
+}
+group by ?prop ?value
+order by ?prop ?value`;
+}
+
+function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
+	const props = Object.keys(filters);
+	const propsList = '<' + props.join('> <') + '>';
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
 
 	const fromDateClause = fromDate
@@ -124,21 +133,20 @@ export function getPropValueCounts(spec, filters, fromDate, toDate){
 			FILTER(?startTime <= "${toDate}"^^xsd:dateTime)`
 		: "";
 
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-prefix prov: <http://www.w3.org/ns/prov#>
-SELECT ?prop ?value (count(?dobj) as ?count)
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
-WHERE {
-	{
-		select ?dobj where {
-			?dobj cpmeta:hasObjectSpec <${spec}> .
-			${filterClauses} ${fromDateClause} ${toDateClause}
-		}
-	}
-	VALUES ?prop {${propsList}}
-	?dobj ?prop ?value .
-}
-group by ?prop ?value
-order by ?prop ?value`;
+	return `?dobj cpmeta:hasObjectSpec <${spec}> .
+	${filterClauses} ${fromDateClause} ${toDateClause}`;
 }
 
+export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
+	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?dobj ?fileName ?nRows
+FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+where {
+	${dobjsQueryStatements}
+	?dobj cpmeta:hasName ?fileName .
+	?dobj cpmeta:hasNumberOfRows ?nRows .
+} order by ?fileName`;
+
+}

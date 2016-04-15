@@ -23,32 +23,9 @@ function sparql(query){
 		.then(response => response.json());
 }
 
-function dataObjectsOfSpecies(objSpecies){
-	const query = sparqlQueries.simpleDataObjects(objSpecies);
-
-	return sparql(query).then(response =>
-		response.results.bindings.map(binding => {
-			return {
-				id: binding.id.value,
-				fileName: binding.fileName.value,
-				nRows: parseInt(binding.nRows.value)
-			};
-		}).sort((o1, o2) => Math.sign(o1.nRows - o2.nRows))
-	);
-}
-
-function tableFormatForSpecies(objSpecies){
+export function tableFormatForSpecies(objSpecies){
 	const query = sparqlQueries.simpleObjectSchema(objSpecies);
 	return sparql(query).then(parseTableFormat);
-}
-
-export function getMetaForObjectSpecies(objSpecies){
-	return Promise.all([
-		dataObjectsOfSpecies(objSpecies),
-		tableFormatForSpecies(objSpecies)
-	]).then(([dataObjects, tableFormat]) => {
-		return {dataObjects, tableFormat};
-	});
 }
 
 export function getDataObjectData(dobjId, tblRequest){
@@ -127,7 +104,16 @@ export function getGlobalTimeInterval(spec){
 	});
 }
 
-export function getPropValueCounts(spec, filters, fromDate, toDate){
+export function getFilteredPropValueCounts(spec, filters, fromDate, toDate){
+	return Promise.all([
+		getPropValueCounts(spec, filters, fromDate, toDate),
+		getFilteredDataObjects(spec, filters, fromDate, toDate)
+	]).then(([propValCount, filteredDataObjects]) => {
+		return {propValCount, filteredDataObjects};
+	});
+}
+
+function getPropValueCounts(spec, filters, fromDate, toDate){
 	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
 
 	function bindingToValueCount(binding){
@@ -137,11 +123,26 @@ export function getPropValueCounts(spec, filters, fromDate, toDate){
 		};
 	}
 
-	const sortByValue = arr => _.sortBy(arr, 'value');
-
 	return sparql(query).then(sparqlResult => groupBy(
 		sparqlResult.results.bindings,
 		binding => binding.prop.value,
+		bindingToValueCount
+	));
+}
+
+function getFilteredDataObjects(spec, filters, fromDate, toDate){
+	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate);
+
+	function bindingToValueCount(binding){
+		return {
+			value: binding.fileName.value,
+			count: Number.parseInt(binding.nRows.value)
+		};
+	}
+
+	return sparql(query).then(sparqlResult => groupBy(
+		sparqlResult.results.bindings,
+		binding => binding.dobj.value,
 		bindingToValueCount
 	));
 }

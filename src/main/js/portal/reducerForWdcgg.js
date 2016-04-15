@@ -3,7 +3,8 @@ import {makeChartData} from './models/chartDataMaker';
 
 const initState = {
 	meta: null,
-	chosenObjectIdx: -1,
+	format: null,
+	tableFormat: null,
 	binTable: null,
 	status: 'INIT',
 	error: null
@@ -21,11 +22,11 @@ export default function(state = initState, action){
 		case FETCHED_META:
 			return Object.assign({}, state, {
 				status: FETCHED_META,
-				meta: action.meta
+				tableFormat: action.tableFormat
 			});
 
 		case FETCHED_DATA:
-			return (state.chosenObjectIdx === action.dataObjIdx)
+			return (state.dataObjectId === action.dataObjId)
 				? Object.assign({}, state, {
 					status: FETCHED_DATA,
 					binTable: action.binTable,
@@ -34,7 +35,7 @@ export default function(state = initState, action){
 				: state; //ignore the fetched data obj if another one got chosen while fetching
 
 		case DATA_CHOSEN:
-			return Object.assign({}, state, {chosenObjectIdx: action.dataObjIdx});
+			return Object.assign({}, state, {dataObjectId: action.dataObjectId});
 
 		case ERROR:
 			return Object.assign({}, state, {status: ERROR, error: action.error});
