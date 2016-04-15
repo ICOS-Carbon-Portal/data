@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
-import DatePicker from 'react-bootstrap-date-picker';
 import { fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInterval } from '../actionsForIcos';
 import {chooseDataObject, fetchTableFormat, FETCHED_DATA} from '../actionsForWdcgg';
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
 import Chart from '../components/Chart.jsx'
 import Leaflet from '../components/Leaflet.jsx'
+import DatePicker from '../components/DatePickerEncloser.jsx';
+
 
 class Search extends Component {
 	constructor(props){
@@ -78,20 +79,22 @@ class Search extends Component {
 	}
 
 	render() {
+	
 		const props = this.props;
-		const fromDate = props.fromDate || props.fromDateMin;
-		const toDate = props.toDate || props.toDateMax;
-		const DOArr = this.filteredDO2Arr(props.filteredDataObjects);
-		const status = this.props.status;
 
-		return (
-			<div id="cp_data_search" className="container-fluid">
-				<h1>ICOS Data Service search</h1>
+		const fromDate = props.fromDate || this.props.fromDateMin;
+		const toDate = props.toDate || this.props.toDateMax;
 
-				<div className="row">
-					<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={fromDate} onChange={props.fromDateChange} /> </div>
-					<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={toDate} onChange={props.toDateChange} /> </div>
-				</div>
+		return <div id="cp_data_search" className="container-fluid">
+			<h1>ICOS Data Service search</h1>
+			
+			<DatePicker 
+				date1={ fromDate } 
+				date2={ toDate } 
+				onChange1={ this.props.fromDateChange } 
+				onChange2={ this.props.toDateChange } 
+				minDate={ this.props.fromDateMin } 
+				maxDate={ this.props.toDateMax } />
 				{
 					config.wdcggProps.map(
 						({label, uri}, i) =>
@@ -105,6 +108,7 @@ class Search extends Component {
 							/>
 					)
 				}
+
 				<div className="row">
 					<div className="col-md-3" style={{maxHeight: 420, overflow: 'auto'}}>
 						{DOArr && DOArr.length < 500
@@ -191,9 +195,10 @@ function stateToProps(state){
 	);
 }
 
+
 function dispatchToProps(dispatch){
 	return {
-		fromDateChange: function(date){
+		fromDateChange: function(date){console.log(date);
 			dispatch(fromDateSet(date));
 		},
 		
@@ -219,5 +224,5 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(stateToProps, dispatchToProps)(Search);
+export default connect(state => state.icos, dispatchToProps)(Search);
 
