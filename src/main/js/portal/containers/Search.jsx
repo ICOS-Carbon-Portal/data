@@ -84,6 +84,8 @@ class Search extends Component {
 
 		const fromDate = props.fromDate || this.props.fromDateMin;
 		const toDate = props.toDate || this.props.toDateMax;
+		const DOArr = this.filteredDO2Arr(props.filteredDataObjects);
+		const status = this.props.status;
 
 		return <div id="cp_data_search" className="container-fluid">
 			<h1>ICOS Data Service search</h1>
@@ -161,8 +163,7 @@ class Search extends Component {
 				<div className="row">
 
 				</div>
-			</div>
-		);
+		</div>;
 	}
 }
 
@@ -224,5 +225,5 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state.icos, dispatchToProps)(Search);
+export default connect(stateToProps, dispatchToProps)(Search);
 
