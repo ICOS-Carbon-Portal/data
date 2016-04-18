@@ -9,6 +9,12 @@ function routeReducer(state = initState, action){
 	switch(action.type){
 
 		case ROUTE_UPDATED:
+			const currentRoute = window.location.hash.substr(1);
+
+			if (currentRoute != action.route) {
+				window.location.hash = action.route;
+			}
+
 			return action.route;
 
 		default:

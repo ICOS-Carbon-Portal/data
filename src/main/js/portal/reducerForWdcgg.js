@@ -1,5 +1,4 @@
 import { FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actionsForWdcgg';
-import {makeChartData} from './models/chartDataMaker';
 
 const initState = {
 	meta: null,

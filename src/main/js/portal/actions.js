@@ -1,10 +1,10 @@
 
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
 
-export function routeUpdated(){
+export function routeUpdated(route){
 	return {
 		type: ROUTE_UPDATED,
-		route: window.location.hash.substr(1)
+		route: route ? route : window.location.hash.substr(1)
 	};
 }
 

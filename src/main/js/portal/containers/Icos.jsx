@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Search from './Search.jsx';
+import View from './View.jsx';
 
 class Icos extends Component {
 	constructor(props){
@@ -13,6 +14,9 @@ class Icos extends Component {
 
 			case 'search':
 				return <Search />;
+
+			case 'view':
+				return <View />;
 
 			default:
 				return <h1>ICOS Data Service Protot</h1>;

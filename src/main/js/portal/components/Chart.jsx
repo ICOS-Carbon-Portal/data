@@ -11,7 +11,7 @@ class Chart extends React.Component {
 		const props = this.props;
 
 		if(props.binTable) {
-			const data = binTable2Dygraph(props.binTable)
+			const data = binTable2Dygraph(props.binTable);
 			const labels = getLabels(props.tableFormat, props.dataObjInfo);
 
 			return (
@@ -29,12 +29,17 @@ class Chart extends React.Component {
 									//Firefox hack: add empty bold string
 									return '<b></b>' + toISOString(ms);
 								}
+							},
+							y: {
+								axisLabelWidth: 65
 							}
 
 						}}
 						drawXGrid={false} //TODO: This is not implemented in react-dygraphs
 						labelsSeparateLines={false}
 						labelsKMB={true}
+						//sigFigs={7}
+						digitsAfterDecimal={4}
 						legend={'always'}
 					/>
 					<div id="legendDiv" style={{width:100 + '%', fontSize:0.9 + 'em', marginTop:5}}></div>
