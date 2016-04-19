@@ -12,25 +12,14 @@ export function makeTableRequest(tableFormat, dataObjectInfo){
 }
 
 export function binTable2Dygraph(binTable){
-	let hasNaNDates = false;
+	let dataArr = [];
 
-	let dataArr = Array.from({length: binTable.length}, (_, i) => {
-		if (isNaN(binTable.value(i, 0))) {
-			hasNaNDates = true;
-		} else {
-			return [
+	for (let i=0; i<binTable.length; i++){
+		if (!isNaN(binTable.value(i, 0))) {
+			dataArr.push([
 				new Date(binTable.value(i, 0)),
 				binTable.value(i, 1),
-			];
-		}
-	});
-
-	if(hasNaNDates) {
-		for (var i = 0; i < dataArr.length; i++) {
-			if (dataArr[i] === undefined) {
-				dataArr.splice(i, 1);
-				i--;
-			}
+			]);
 		}
 	}
 
