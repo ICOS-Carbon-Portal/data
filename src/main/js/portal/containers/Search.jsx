@@ -199,7 +199,7 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		fromDateChange: function(date){console.log(date);
+		fromDateChange: function(date){
 			dispatch(fromDateSet(date));
 		},
 		

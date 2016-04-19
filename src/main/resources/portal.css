@@ -27,4 +27,22 @@ html, body {
 	text-decoration: underline;
 	cursor: pointer;
 }
+
+
+/** DatePicker **/
+.cp_datepicker {
+    cursor: pointer;
+}
+
+.cp_datepicker_date, .cp_datepicker_hours, .cp_datepicker_minutes, .cp_datepicker_reset {
+	display: inline;
+	padding: 0 1rem 0 0;
+	font-size: 2rem;
+}
+
+.cp_datepicker_message {
+	font-size: 1.5rem;
+	margin: 0 0 1rem 0;
+	border: 1px solid #ff0000;
+}
 		

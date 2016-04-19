@@ -1,4 +1,5 @@
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
 import ReactDatePicker from 'react-pikaday';
 
 class DatePicker extends Component {
@@ -6,8 +7,7 @@ class DatePicker extends Component {
 		
 		super(props)
 			
-		this.state = makeInitialState(this.props);
-		
+		this.state = makeInitialState(this.props);	
 	}
 	
 	componentWillReceiveProps(nextProps){
@@ -18,65 +18,92 @@ class DatePicker extends Component {
 		this.props.onChange(null);
 	}
 	
-	updateDate(newDate) {
-		let anotherDate = new Date(newDate);
-		anotherDate.setHours(this.state.hours);
-		anotherDate.setMinutes(this.state.minutes);
-		
-		
-		console.log('1 ' +this.state.hours);
-		console.log('2 ' +this.state.minutes);
-		
-		
-		this.props.onChange(anotherDate);
-	}
-	
-	handleDateChange(newDate) {
-		console.log(arguments);
-		this.setState({date: newDate});
-		this.updateDate(newDate);
-		
-	}
-	
-	handleHourChange(event) {
-		this.setState({hours: event.target.value});
-	}
-	
-	handleMinutesChange(event) {
-		this.setState({minutes: event.target.value});
-	}
+	handleChange() {
+		let dateStr = ReactDOM.findDOMNode(this.refs.datePicker).value;
+		let hours = ReactDOM.findDOMNode(this.refs.hoursPicker).value;
+		let minutes = ReactDOM.findDOMNode(this.refs.minutesPicker).value;
 
+		let date = new Date(dateStr);
+		date.setHours(hours);
+		date.setMinutes(minutes);
+		
+		if (date > this.state.min && date < this.state.max) {
+			this.props.onChange(date.toISOString());
+		} else {
+			this.setState({
+				date,
+			    hours,
+			    minutes,
+				error: `Min date is ${this.state.min} and max date is ${this.state.max}`
+			});
+		}
+		
+	}
+	
 	render() {
 		
-		return <div className="cp_datepicker">
+		return <div>
+				{
+					this.state.error
+						? <div className="cp_datepicker_message">Notice!<br />{this.state.error}</div>
+						: null
+				}
+				
+				<div className="cp_datepicker_date">
+					<ReactDatePicker ref="datePicker" value={ this.state.date } onChange={ this.handleChange.bind(this) } /> 
+				</div>
 					
-					<div className="cp_datepicker_date">
-						<ReactDatePicker value={ this.state.date } onChange={ this.handleDateChange.bind(this) } /> 
-					</div>
-					
-					<div className="cp_datepicker_hour">
-						<input type="text" value={ this.state.hours } onChange={ this.handleHourChange.bind(this) } /> 
-					</div>
-					
-					<div className="cp_datepicker_minute">
-						<input type="text" value={ this.state.minutes } onChange={ this.handleMinutesChange.bind(this) } /> 
-					</div>
-					
-					<div className="cp_datepicker_reset">
-						<button onClick={ this.resetHandler.bind(this) }>Reset</button>
-					</div>
+				<div className="cp_datepicker_hours">
+					<select ref="hoursPicker" value={ this.state.hours } onChange={ this.handleChange.bind(this) }>
+						{
+							hoursOptions.map(function(o, i) { 
+								return <option key={i} value={i}>{i}</option>; 
+							})
+						}
+					</select>
+				</div>
+				
+				<div className="cp_datepicker_minutes">
+					<select ref="minutesPicker" value={ this.state.minutes } onChange={ this.handleChange.bind(this) }>
+						{
+							minutesOptions.map(function(o, i) { 
+								return <option key={i} value={i}>{i}</option>; 
+							})
+						}
+					</select> 
+				</div>
+				
+				<div className="cp_datepicker_reset">
+					<button onClick={ this.resetHandler.bind(this) }>Reset</button>
+				</div>
 					
 			</div>;
 	}
 }
 
+const hoursOptions = getOptions(24);
+const minutesOptions = getOptions(60);
+
 function makeInitialState(props){
 	let date = new Date(props.date);
+	let min = new Date(props.minDate);
+	let max = new Date(props.maxDate);
 	return {
 		date,
 		hours: date.getHours(),
-		minutes: date.getMinutes()
+		minutes: date.getMinutes(),
+		min,
+		max,
+		error: null
 	};
+}
+
+function getOptions(total) {
+	let options = [];
+	for(let i = 0; i < total; i++) {
+		options[i] = i;
+	}
+	return options;
 }
 
 export default DatePicker;
