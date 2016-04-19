@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
-import DatePicker from 'react-bootstrap-date-picker';
 import { fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInterval } from '../actionsForIcos';
 import {routeUpdated} from '../actions'
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
+import DatePicker from '../components/DatePickerEncloser.jsx';
 
 class Search extends Component {
 	constructor(props){
@@ -23,19 +23,22 @@ class Search extends Component {
 	}
 
 	render() {
+	
 		const props = this.props;
 		const fromDate = props.fromDate || props.fromDateMin;
 		const toDate = props.toDate || props.toDateMax;
 		const returnedObjects = props.filteredDataObjects ? Object.keys(props.filteredDataObjects).length : null;
 
-		return (
-			<div id="cp_data_search" className="container-fluid">
-				<h1>ICOS Data Service search</h1>
-
-				<div className="row">
-					<div className="col-md-6"> <DatePicker label="Start" clearButtonElement="Reset" value={fromDate} onChange={props.fromDateChange} /> </div>
-					<div className="col-md-6"> <DatePicker label="Stop" clearButtonElement="Reset" value={toDate} onChange={props.toDateChange} /> </div>
-				</div>
+		return <div id="cp_data_search" className="container-fluid">
+			<h1>ICOS Data Service search</h1>
+			
+			<DatePicker 
+				date1={ fromDate } 
+				date2={ toDate } 
+				onChange1={ this.props.fromDateChange } 
+				onChange2={ this.props.toDateChange } 
+				minDate={ this.props.fromDateMin } 
+				maxDate={ this.props.toDateMax } />
 				{
 					config.wdcggProps.map(
 						({label, uri}, i) =>
@@ -68,6 +71,7 @@ class Search extends Component {
 				}
 			</div>
 		);
+
 	}
 }
 
@@ -77,6 +81,7 @@ function stateToProps(state){
 		state.wdcgg
 	);
 }
+
 
 function dispatchToProps(dispatch){
 	return {

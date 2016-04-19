@@ -14,6 +14,9 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 class TabularFetchRouting(fetcher: FromBinTableFetcher)(implicit mat: Materializer) {
 
 	val route = pathPrefix("portal"){
+		path("portal.css"){
+			getFromResource("portal.css")
+		} ~
 		path("portal.js"){
 			getFromResource("portal.js")
 		} ~
