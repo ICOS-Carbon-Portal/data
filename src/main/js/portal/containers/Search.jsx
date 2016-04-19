@@ -69,9 +69,8 @@ class Search extends Component {
 					)
 					: null
 				}
-			</div>
-		);
-
+			</div>;
+	
 	}
 }
 
