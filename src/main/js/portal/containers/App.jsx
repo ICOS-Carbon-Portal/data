@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import Wdcgg from './Wdcgg.jsx'
-import Icos from './Icos.jsx'
+import Search from './Search.jsx';
+import View from './View.jsx';
 
 class App extends Component {
 	constructor(props){
@@ -9,9 +9,17 @@ class App extends Component {
 	}
 
 	render() {
-		return this.props.route === 'wdcgg'
-			? <Wdcgg />
-			: <Icos /> ;
+		switch(this.props.route){
+
+			case 'search':
+				return <Search />;
+
+			case 'view':
+				return <View />;
+
+			default:
+				return <Search />;
+		}
 	}
 }
 

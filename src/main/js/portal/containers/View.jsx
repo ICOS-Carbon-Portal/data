@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
-import {chooseDataObject, fetchTableFormat, FETCHED_DATA} from '../actionsForWdcgg';
-import config from '../config';
+import {routeUpdated, chooseDataObject, FETCHED_DATA} from '../actions';
 import Chart from '../components/Chart.jsx'
 import Leaflet from '../components/Leaflet.jsx'
-import {routeUpdated} from '../actions'
 
 class View extends Component {
 	constructor(props){
@@ -13,11 +11,7 @@ class View extends Component {
 		this.state = {};
 	}
 
-	componentDidMount() {
-		this.props.fetchTableFormat(config.wdcggSpec);
-	}
-
-	componentWillReceiveProps(nextProps){
+	componentWillReceiveProps(){
 		if(this.refs.chartDiv) {
 			const chartDiv = ReactDOM.findDOMNode(this.refs.chartDiv);
 			const chartDivWidth = chartDiv.getBoundingClientRect().width - 44;
@@ -28,23 +22,6 @@ class View extends Component {
 			const mapDiv = ReactDOM.findDOMNode(this.refs.mapDiv);
 			const mapDivWidth = mapDiv.getBoundingClientRect().width;
 			this.setState({mapDivWidth});
-		}
-	}
-
-	filteredDO2Arr(filteredDataObjects){
-		if (filteredDataObjects){
-			function* obj2Arr(obj) {
-				for (let prop of Object.keys(obj))
-					yield {
-						id: prop,
-						fileName: obj[prop][0].value,
-						nRows: obj[prop][0].count
-					};
-			}
-
-			return Array.from(obj2Arr(filteredDataObjects));
-		} else {
-			return null;
 		}
 	}
 
@@ -74,22 +51,17 @@ class View extends Component {
 
 	render() {
 		const props = this.props;
-		const DOArr = this.filteredDO2Arr(props.filteredDataObjects);
 		const status = this.props.status;
-
-		if (!props.filteredDataObjects){
-			this.props.showSearch();
-		}
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
 				<h1>ICOS Data Service search</h1>
 
-				{DOArr && DOArr.length
+				{props.filteredDataObjects && props.filteredDataObjects.length
 					? (
 						<div className="row">
 							<div className="col-md-3">
-								<label>Number of returned data objects:</label> <span>{DOArr.length}</span>
+								<label>Number of returned data objects:</label> <span>{props.filteredDataObjects.length}</span>
 							</div>
 						</div>
 					)
@@ -98,14 +70,14 @@ class View extends Component {
 
 				<div className="row">
 					<div className="col-md-3" style={{maxHeight: 430, overflow: 'auto'}}>
-						{DOArr
+						{props.filteredDataObjects
 							? (
 								<table className="table table-striped table-condensed table-bordered">
 									<tbody>
 									<tr>
 										<th>Data object (sampling points)</th>
 									</tr>
-									{DOArr.map((rowData, i) => {
+									{props.filteredDataObjects.map((rowData, i) => {
 										return (
 											<tr key={"row" + i}>
 												<td>
@@ -156,18 +128,17 @@ class View extends Component {
 }
 
 function stateToProps(state){
-	const dataObjSelected = (state.wdcgg.dataObjectId != null);
+	const dataObjSelected = (state.dataObjectId != null);
 
-	return Object.assign({route: state.route},
-		state.icos,
-		state.wdcgg,
+	return Object.assign({},
+		state,
 		{
 			forChart: dataObjSelected
 				? {
-				tableFormat: state.wdcgg.tableFormat,
-				binTable: state.wdcgg.binTable,
-				dataObjectId: state.wdcgg.dataObjectId,
-				format: [{label: "LANDING PAGE", value: state.wdcgg.dataObjectId}].concat(state.wdcgg.format)
+				tableFormat: state.tableFormat,
+				binTable: state.binTable,
+				dataObjectId: state.dataObjectId,
+				format: [{label: "LANDING PAGE", value: state.dataObjectId}].concat(state.format)
 			}
 				: null
 		},
@@ -186,16 +157,8 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		fetchTableFormat(wdcggSpec){
-			dispatch(fetchTableFormat(wdcggSpec));
-		},
-
 		fetchData(dataObjectInfo){
 			dispatch(chooseDataObject(dataObjectInfo));
-		},
-
-		showSearch(){
-			dispatch(routeUpdated('search'));
 		}
 	};
 }

@@ -50,17 +50,6 @@ function getFormatSpecificProps(dobjId){
 	});
 }
 
-/*
-function getStandardDataObjMeta(dobjId) {
-	return sparql(sparqlQueries.standardDataObjProps(dobjId))
-		.then(response => {
-			const bindings = response.results.bindings;
-			const metaFound = bindings.length == 1;
-			return null;
-		});
-}
-*/
-
 function getBinaryTable(tblRequest){
 	return fetch('tabular', {
 			method: 'post',
@@ -76,16 +65,6 @@ function getBinaryTable(tblRequest){
 			return new BinTable(response, tblRequest.returnedTableSchema);
 		});
 }
-
-/*
-export function getCountriesForTimeInterval(spec, minDate, maxDate){
-	const query = sparqlQueries.getCountriesForTimeInterval(spec, minDate, maxDate);
-
-	return sparql(query).then(sparqlResult => {
-		return sparqlResult.results.bindings.map(binding => binding.country.value);
-	});
-}
-*/
 
 export function getGlobalTimeInterval(spec){
 	const query = sparqlQueries.getGlobalTimeInterval(spec);

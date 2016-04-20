@@ -1,10 +1,147 @@
+import {tableFormatForSpecies, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
+import {makeTableRequest} from './models/chartDataMaker';
 
+export const FETCHING_META = 'FETCHING_META';
+export const FETCHING_DATA = 'FETCHING_DATA';
+export const FETCHED_META = 'FETCHED_META';
+export const FETCHED_DATA = 'FETCHED_DATA';
+export const DATA_CHOSEN = 'DATA_CHOSEN';
+export const ERROR = 'ERROR';
+export const FROM_DATE_SET = 'FROM_DATE_SET';
+export const TO_DATE_SET = 'TO_DATE_SET';
+export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
+export const FILTER_UPDATED = 'FILTER_UPDATED';
+export const GOT_PROP_VAL_COUNTS = 'GOT_PROP_VAL_COUNTS';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
 
-export function routeUpdated(route){
-	return {
+
+export const routeUpdated = (route) => (dispatch, getState) => {
+	const state = getState();
+	const actualRoute = state.filteredDataObjects ? route : "search";
+	dispatch({
 		type: ROUTE_UPDATED,
-		route: route ? route : window.location.hash.substr(1)
+		route: actualRoute || window.location.hash.substr(1) || "search"
+	});
+}
+
+function failWithError(error){
+	return {
+		type: ERROR,
+		error
 	};
+}
+
+function gotMeta(tableFormat){
+	return {
+		type: FETCHED_META,
+		tableFormat
+	};
+}
+
+function gotData(data, dataObjId){
+	return Object.assign({
+		type: FETCHED_DATA,
+		dataObjId
+	}, data);
+}
+
+export const fetchTableFormat = (dataObjSpec) => dispatch => {
+	dispatch({type: FETCHING_META});
+
+	tableFormatForSpecies(dataObjSpec).then(
+		tableFormat => dispatch(gotMeta(tableFormat)),
+		err => dispatch(failWithError(err))
+	);
+}
+
+const fetchData = dataObjectInfo => (dispatch, getState) => {
+	const tableFormat = getState().tableFormat;
+	const request = makeTableRequest(tableFormat, dataObjectInfo);
+
+	dispatch({type: FETCHING_DATA});
+
+	getDataObjectData(dataObjectInfo.id, request).then(
+		data => dispatch(gotData(data, dataObjectInfo.id)),
+		err => dispatch(failWithError(err))
+	);
+}
+
+export const chooseDataObject = dataObjectInfo => dispatch => {
+	dispatch({
+		type: DATA_CHOSEN,
+		dataObjectId: dataObjectInfo.id
+	});
+
+	dispatch(fetchData(dataObjectInfo));
+}
+
+export const fromDateSet = (date) => dispatch => {
+	dispatch({
+		type: FROM_DATE_SET,
+		date
+	});
+	dispatch(fetchPropValueCounts);
+}
+
+export const toDateSet = (date) => dispatch => {
+	dispatch({
+		type: TO_DATE_SET,
+		date
+	});
+	dispatch(fetchPropValueCounts);
+}
+
+export function fetchGlobalTimeInterval(dispatch, getState){
+	const objSpec = getState().objectSpecification;
+
+	getGlobalTimeInterval(objSpec).then(
+		interval => {
+			dispatch(gotGlobalTimeInterval(objSpec, interval));
+			dispatch(fetchPropValueCounts);
+		},
+		err => dispatch(gotError(err))
+	);
+}
+
+function gotError(error){
+	console.log({error});
+	return {
+		type: ERROR,
+		error
+	};
+}
+
+function gotGlobalTimeInterval(objectSpecification, interval){
+	return Object.assign(
+		{
+			type: GOT_GLOBAL_TIME_INTERVAL,
+			objectSpecification
+		},
+		interval
+	);
+}
+
+export const updateFilter = (filterId, filter) => dispatch => {
+	dispatch({
+		type: FILTER_UPDATED,
+		update: {[filterId]: filter}
+	});
+
+	dispatch(fetchPropValueCounts);
+};
+
+function fetchPropValueCounts(dispatch, getState){
+	const {objectSpecification, filters, fromDate, toDate} = getState();
+
+	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
+		propsAndVals => dispatch({
+			type: GOT_PROP_VAL_COUNTS,
+			propsAndVals,
+			objectSpecification,
+			fromDate,
+			toDate
+		}),
+		err => dispatch(gotError(err))
+	);
 }
 

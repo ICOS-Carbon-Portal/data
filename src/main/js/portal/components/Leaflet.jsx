@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react'
 import ReactDOM from 'react-dom'
-import L from 'leaflet'
 
 class Leaflet extends Component {
 	constructor(props){
@@ -23,9 +22,6 @@ class Leaflet extends Component {
 		L.control.layers(baseMaps).addTo(map);
 
 		L.marker([props.lat, props.lon]).addTo(map);
-			// .bindPopup(`<b>Latitude: </b>${props.lat}<br /><b>Longitude: </b>${props.lon}`).openPopup();
-
-		// map.on('click', this.onMapClick);
 	}
 
 	getBaseMaps(maxZoom){
@@ -58,13 +54,6 @@ class Leaflet extends Component {
 		this.map.off('click', this.onMapClick);
 		this.map = null;
 	}
-
-	// onMapClick(e) {
-	// 	L.popup()
-	// 		.setLatLng(e.latlng)
-	// 		.setContent("You clicked the map at " + e.latlng.toString())
-	// 		.openOn(this.map);
-	// }
 
 	render() {
 		return (
