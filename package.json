@@ -38,6 +38,8 @@
     "browserify": "^13.0.0",
     "del": "^2.2.0",
     "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.2",
+    "gulp-jasmine": "^2.3.0",
     "gulp-uglify": "^1.5.3",
     "preprocessify": "0.0.6",
     "vinyl-buffer": "^1.0.0",

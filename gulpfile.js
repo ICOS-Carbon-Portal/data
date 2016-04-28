@@ -7,30 +7,34 @@ var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
 var babelify = require('babelify');
+var babel = require('gulp-babel');
 var preprocessify = require('preprocessify');
+var jasmine = require('gulp-jasmine');
 
 ['netcdf', 'portal'].forEach(function(project){
 
+	var projSrc = 'src/main/js/' + project + '/';
+	var jstarget = 'target/es5js/' + project + '/';
+
 	var paths = {
-		main: 'src/main/js/' + project + '/main.jsx',
-		jsx: ['src/main/js/' + project + '/**/*.jsx'],
-		js: ['src/main/js/' + project + '/**/*.js'],
-		testjs: ['src/test/js/' + project + '/**/*.js'],
-		common: ['src/main/js/common/**/*.js'],
+		main: projSrc + 'main/main.jsx',
+		jsx: projSrc + 'main/**/*.jsx',
+		js: projSrc + 'main/**/*.js',
+		alljs: projSrc + '**/*.js',
 		target: 'src/main/resources/',
+		jasmineSrc: jstarget + 'test/**/*.js',
 		bundleFile: project + '.js'
 	};
 
-	gulp.task('clean' + project, function(done) {
-		del([paths.target + paths.bundleFile], done);
+	gulp.task('clean' + project, function() {
+		return del([paths.target + paths.bundleFile]);
 	});
 
 	gulp.task('apply-prod-environment', function() {
 		process.env.NODE_ENV = 'production';
 	});
 
-	gulp.task('js' + project, function() {
-
+	function compileJs() {
 		var browser = browserify({
 				entries: [paths.main],
 				debug: false
@@ -54,16 +58,33 @@ var preprocessify = require('preprocessify');
 				.pipe(source(paths.bundleFile))
 				.pipe(gulp.dest(paths.target));
 		}
+	}
+
+	gulp.task('js' + project, ['clean' + project], compileJs);
+
+	gulp.task('clean_es5' + project, function() {
+		return del([jstarget]);
 	});
 
-	gulp.task('watch' + project, function() {
-
-		var sources = paths.js.concat(paths.jsx, paths.common);
-		gulp.watch(sources, ['clean' + project, 'js' + project]);
+	gulp.task('transpile' + project, ['clean_es5' + project], function(){
+		return gulp.src(paths.alljs)
+			.pipe(babel({presets: ['es2015']}))
+			.pipe(gulp.dest(jstarget));
 	});
 
-	gulp.task(project, ['clean' + project, 'js' + project, 'watch' + project]);
+	gulp.task('test' + project, ['transpile' + project], function(){
+		return gulp.src(paths.jasmineSrc).pipe(jasmine());
+	});
 
-	gulp.task('publish' + project, ['apply-prod-environment', 'clean' + project, 'js' + project]);
+	gulp.task('tdd' + project, ['test' + project], function(){
+		return gulp.watch([paths.alljs], ['test' + project]);
+	});
+
+	gulp.task(project, ['js' + project], function(){
+		var sources = [paths.js, paths.jsx];
+		return gulp.watch(sources, ['js' + project]);
+	});
+
+	gulp.task('publish' + project, ['apply-prod-environment', 'clean' + project], compileJs);
 });
 
