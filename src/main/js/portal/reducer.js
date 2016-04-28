@@ -1,5 +1,6 @@
-import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS, FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actions';
-
+import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
+	FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, ERROR} from './actions';
+import {addDataObject} from './models/chartDataMaker';
 
 export default function(state, action){
 
@@ -28,10 +29,10 @@ export default function(state, action){
 		case FETCHED_DATA:
 			return (state.dataObjectId === action.dataObjId)
 				? Object.assign({}, state, {
-				status: FETCHED_DATA,
-				binTable: action.binTable,
-				format: action.format
-			})
+					status: FETCHED_DATA,
+					format: action.format,
+					chart: addDataObject(state.chart, action.dataObjId, action.binTable, state.tableFormat)
+				})
 				: state; //ignore the fetched data obj if another one got chosen while fetching
 
 		case DATA_CHOSEN:
@@ -69,9 +70,9 @@ export default function(state, action){
 				state.toDate === action.toDate
 			)
 				? Object.assign({}, state, {
-				propValueCounts: action.propsAndVals.propValCount,
-				filteredDataObjects: filteredDO2Arr(action.propsAndVals.filteredDataObjects)
-			})
+					propValueCounts: action.propsAndVals.propValCount,
+					filteredDataObjects: filteredDO2Arr(action.propsAndVals.filteredDataObjects)
+				})
 				: state;
 
 		default:

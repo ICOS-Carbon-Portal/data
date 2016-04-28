@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
-import {routeUpdated, chooseDataObject, FETCHED_DATA} from '../actions';
+import {chooseDataObject, FETCHED_DATA} from '../actions';
 import Chart from '../components/Chart.jsx'
 import Leaflet from '../components/Leaflet.jsx'
 
@@ -49,6 +49,19 @@ class View extends Component {
 		this.props.fetchData(dataObjectInfo);
 	}
 
+	onChkBxChange(dataObjectInfo, event){
+		const isChecked = event.target.checked;
+
+		if (isChecked) {
+			this.props.fetchData(dataObjectInfo);
+		}
+
+		// const chartComp = this.refs.chartComp;
+		// if(chartComp) {
+		// 	console.log({chartComp});
+		// }
+	}
+
 	render() {
 		const props = this.props;
 		const status = this.props.status;
@@ -82,6 +95,8 @@ class View extends Component {
 											<tr key={"row" + i}>
 												<td>
 													<span className="lnk" onClick={() => this.onLnkClick(rowData)}>{rowData.fileName} ({rowData.nRows})</span>
+													{/*<input type="checkbox" onChange={(event) => this.onChkBxChange(rowData, event)} value={rowData} />
+													<span>{rowData.fileName} ({rowData.nRows})</span>*/}
 												</td>
 											</tr>
 										);
@@ -96,7 +111,7 @@ class View extends Component {
 						<table className="table table-striped table-condensed table-bordered">
 							<tbody>
 							{status === FETCHED_DATA
-								? props.forChart.format.map((rowData, i) =>{
+								? props.metaTable.map((rowData, i) =>{
 									return this.getTableRow(rowData, i);
 								})
 								: null
@@ -108,7 +123,7 @@ class View extends Component {
 				<div className="row">
 					<div ref="chartDiv" id="chartDiv" className="col-md-9">
 						{status === FETCHED_DATA
-							? <Chart {...props.forChart} width={this.state.chartDivWidth} />
+							? <Chart ref="chartComp" {...props.forChart} width={this.state.chartDivWidth} />
 							: null
 						}
 					</div>
@@ -133,23 +148,18 @@ function stateToProps(state){
 	return Object.assign({},
 		state,
 		{
-			forChart: dataObjSelected
-				? {
-				tableFormat: state.tableFormat,
-				binTable: state.binTable,
-				dataObjectId: state.dataObjectId,
-				format: [{label: "LANDING PAGE", value: state.dataObjectId}].concat(state.format)
-			}
+			metaTable: dataObjSelected
+				? [{label: "LANDING PAGE", value: state.dataObjectId}].concat(state.format)
 				: null
 		},
 		{
 			forMap: dataObjSelected
 				? {
-				geom: {
-					lat: Math.floor(Math.random() * 60),
-					lon: Math.floor(Math.random() * 60)
+					geom: {
+						lat: Math.floor(Math.random() * 60),
+						lon: Math.floor(Math.random() * 60)
+					}
 				}
-			}
 				: null
 		}
 	);

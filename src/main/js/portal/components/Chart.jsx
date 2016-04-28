@@ -1,28 +1,27 @@
 import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
 import {Dygraph} from 'react-dygraphs';
-import {binTable2Dygraph, getLabels} from '../models/chartDataMaker';
 
 class Chart extends React.Component {
 	constructor(props){
-		super(props)
+		super(props);
 	}
 
 	render() {
 		const props = this.props;
+		console.log({props});
 
-		if(props.binTable) {
-			const data = binTable2Dygraph(props.binTable);
-			const labels = getLabels(props.tableFormat, props.dataObjInfo);
-
+		if(props.chart.data && props.chart.labels) {
 			return (
 				<div>
 					<Dygraph
-						data={data}
+						data={props.chart.data}
 						width={props.width ? props.width : 800}
 						strokeWidth={1}
-						labels={labels}
-						ylabel={labels[1]}
+						labels={props.chart.labels}
+						ylabel={props.chart.labels[1]}
 						labelsDiv={'legendDiv'}
+						series={true}
 						axes={{
 							x: {
 								valueFormatter: function(ms){
@@ -35,6 +34,7 @@ class Chart extends React.Component {
 							}
 
 						}}
+						connectSeparatedPoints={true}
 						drawXGrid={false} //TODO: This is not implemented in react-dygraphs
 						labelsSeparateLines={false}
 						labelsKMB={true}
@@ -49,6 +49,14 @@ class Chart extends React.Component {
 			return <div></div>
 		}
 	}
+}
+
+function stateToProps(state){
+	return Object.assign({}, state);
+}
+
+function dispatchToProps(dispatch){
+	return {};
 }
 
 function toISOString(ms){
@@ -73,4 +81,4 @@ function toISOString(ms){
 // 	binTable: PropTypes.Object.isRequired
 // }
 
-export default Chart;
+export default connect(stateToProps, dispatchToProps)(Chart);

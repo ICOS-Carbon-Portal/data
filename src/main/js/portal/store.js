@@ -15,8 +15,13 @@ config.wdcggProps.forEach(prop => {
 const initState = {
 	meta: null,
 	format: null,
+	chart: {
+		dataObjectIds: [],
+		binTables: [],
+		data: [],
+		labels: []
+	},
 	tableFormat: null,
-	binTable: null,
 	status: 'INIT',
 	error: null,
 	objectSpecification: config.wdcggSpec,
