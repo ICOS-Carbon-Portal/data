@@ -26,31 +26,43 @@ export function binTable2Dygraph(binTable){
 	return dataArr;
 }
 
-export function binTables2Dygraph(binTables){
+export function binTables2Dygraph(binTables, debug = false){
 	let idxs = new Array(binTables.length).fill(0);
 	const maxLength = binTables.map(bt => bt.length).sort().pop();
 	let data = [];
-	console.log({binTables2Dygraph, maxLength, binTables});
 
+	// Loop through all rows in all binTables going to the largest index of them all
 	for (let dataIdx=0; dataIdx<maxLength; dataIdx++){
 		let smallest = Number.MAX_VALUE;
 		let includeBTIdxs = [];
 
+		// For each binTable
 		for (let bTIdx=0; bTIdx<binTables.length; bTIdx++){
 
-			if (dataIdx < binTables[bTIdx].length && !isNaN(binTables[bTIdx].value(dataIdx, 0))) {
+			debug ? console.log({rowIdx: idxs[bTIdx], date: new Date(binTables[bTIdx].value(idxs[bTIdx], 0)).toISOString(), isNotNumber: isNaN(binTables[bTIdx].value(idxs[bTIdx], 0))}) : null;
 
-				if (binTables[bTIdx].value(dataIdx, 0) <= smallest) {
+			// Do not exceed length of binTable and skip entries that cannot be parsed to a number
+			if (idxs[bTIdx] < binTables[bTIdx].length && isNaN(binTables[bTIdx].value(idxs[bTIdx], 0))){
+				idxs[bTIdx]++;
+			} else if (idxs[bTIdx] < binTables[bTIdx].length) {
+
+				debug ? console.log({dataIdx, i1: idxs[0], i2: idxs[1], smallest, value: binTables[bTIdx].value(idxs[bTIdx], 0)}) : null;
+
+				// Check if date in current binTable is the smallest
+				if (binTables[bTIdx].value(idxs[bTIdx], 0) <= smallest) {
+					// debug ? console.log({pushValue: binTables[bTIdx].value(dataIdx, 0)}) : null;
 					includeBTIdxs.push(bTIdx);
-					smallest = binTables[bTIdx].value(dataIdx, 0);
+					smallest = binTables[bTIdx].value(idxs[bTIdx], 0);
 				}
 			}
 		}
 
 		let dataPoint = [new Date(binTables[includeBTIdxs[0]].value(idxs[includeBTIdxs[0]], 0))];
 
+		debug ? console.log({dataIdx, includeBTIdxs}) : null;
+
 		for (let i = 0; i < binTables.length; i++) {
-			if (includeBTIdxs.includes(i)){
+			if (includeBTIdxs.indexOf(i) > -1){
 				dataPoint.push(binTables[i].value(idxs[i], 1));
 				idxs[i]++;
 			} else {

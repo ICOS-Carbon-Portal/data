@@ -10,30 +10,6 @@ import {binTables2Dygraph} from '../models/chartDataMaker';
 class Search extends Component {
 	constructor(props){
 		super(props);
-
-		const length = 4;
-		const bytes = new ArrayBuffer(length * 2 * 8);
-		const doubles = new Float64Array(bytes);
-
-		['2016-01-01', '2016-01-02', '2016-01-03', '2016-01-04'].forEach((date, i) => {
-			const millis = Date.parse(date);
-			return doubles[i] = millis;
-		});
-		[1,2,3,4].forEach((value, i) => doubles[length + i] = value);
-		const schema = {
-			columns: ['DOUBLE', 'DOUBLE'],
-			size: length
-		};
-
-		const binTable = new BinTable(bytes, schema);
-		const data = binTables2Dygraph([binTable]);
-
-		console.log({binTable, data, date: new Date(Date.parse('2016-01-01'))});
-
-		// const data = [
-		// 	[Date.parse('2016-01-01'), Date.parse('2016-01-02'), Date.parse('2016-01-03'), Date.parse('2016-01-04')],
-		// 	[1,2,3,4]
-		// ];
 	}
 
 	componentDidMount() {
