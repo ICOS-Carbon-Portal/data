@@ -20,7 +20,12 @@ export class PropertyValueFilter{
 	}
 
 	getSparql(varName){
-		return `?${varName} <${this._prop}> "${this._value}"^^xsd:string .\n`;
+		const stringValue = sparqlEscape(this._value);
+		return `?${varName} <${this._prop}> "${stringValue}"^^xsd:string .\n`;
 	}
+}
+
+function sparqlEscape(s){
+	return s.replace(/\"/g, '\\\"');
 }
 
