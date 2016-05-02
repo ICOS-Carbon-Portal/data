@@ -83,8 +83,9 @@ object TimeSeriesParser {
 						acc.changeHeader(parameter = value)
 					else acc
 
-				if(headerKeys.contains(key)) {
-					val updatedKvs = acc.header.kvPairs + makeKv(key, value)
+				val harmonizedKey = keyRenamings.getOrElse(key, key)
+				if(headerKeys.contains(harmonizedKey)) {
+					val updatedKvs = acc.header.kvPairs + makeKv(harmonizedKey, value)
 					withSpecialKvs.changeHeader(kvPairs = updatedKvs)
 				} else withSpecialKvs
 
@@ -102,19 +103,31 @@ object TimeSeriesParser {
 		origColNames.map(col => if(col == paramColName) paramKey else col)
 	}
 
+	private val CountryKey = "COUNTRY/TERRITORY"
 	private val headerKeys = Set(
-		"STATION NAME", "OBSERVATION CATEGORY", "COUNTRY/TERRITORY", "CONTRIBUTOR",
+		"STATION NAME", "OBSERVATION CATEGORY", CountryKey, "CONTRIBUTOR",
+		"LATITUDE", "LONGITUDE",
 		"CONTACT POINT", paramKey, "TIME INTERVAL", "MEASUREMENT UNIT",
 		"MEASUREMENT METHOD", "SAMPLING TYPE", "MEASUREMENT SCALE"
 	)
+	private val keyRenamings = Map("COUNTRY/TERITORY" -> CountryKey)
+	private val countryRenamings = Map(
+		"Hong Kong" -> "Hong Kong, China",
+		"Korea, Republic Of" -> "Republic of Korea",
+		"N/a" -> "N/A",
+		"Netherlands (the)" -> "Netherlands",
+		"United Kingdom" -> "United Kingdom of Great Britain and Northern Ireland",
+		"United States" -> "United States of America"
+	)
 
-	private def makeKv(key: String, value: String): (String, String) = {
-		//TODO Harmonize country names
-		(mapKey(key), value)
+	private def makeKv(harmonizedKey: String, value: String): (String, String) = harmonizedKey match {
+		case CountryKey =>
+			val country = value.split(' ').map(part => part.head + part.tail.toLowerCase).mkString(" ")
+			(harmonizedKey, countryRenamings.getOrElse(country, country))
+		case _ =>
+			(harmonizedKey, value)
 	}
 
-	private val keyRenamings = Map("COUNTRY/TERITORY" -> "COUNTRY/TERRITORY")
-	private def mapKey(key: String): String = keyRenamings.getOrElse(key, key)
 
 }
 
