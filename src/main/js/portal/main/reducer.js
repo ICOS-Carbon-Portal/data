@@ -32,7 +32,7 @@ export default function(state, action){
 					status: FETCHED_DATA,
 					format: action.format,
 					metaData: getMetaData(action.format, action.dataObjId),
-					chart: addDataObject(state.chart, action.dataObjId, action.binTable, state.tableFormat)
+					chart: addDataObject(state.chart, action.dataObjId, action.binTable, action.format)
 				})
 				: state; //ignore the fetched data obj if another one got chosen while fetching
 

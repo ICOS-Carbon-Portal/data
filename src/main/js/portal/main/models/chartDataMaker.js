@@ -119,11 +119,15 @@ export function getLabels(tableFormat){
 	return axisIndices.map(i => tableFormat.columns(i).label);
 }
 
-function getUniqueLabels(dataObjId){
-	return ["time instant", dataObjId];
+function getUniqueLabels(format){
+	const yLabel = format.find(obj => obj.label === 'STATION NAME').value
+		+ "; " + format.find(obj => obj.label === 'PARAMETER').value
+		+ "; " + format.find(obj => obj.label === 'MEASUREMENT UNIT').value;
+
+	return ["time instant", yLabel];
 }
 
-export function addDataObject(chart, dataObjId, binTable, tableFormat){
+export function addDataObject(chart, dataObjId, binTable, format){
 	const binTables = chart.binTables.concat(binTable);
 
 	return (chart.dataObjectIds.includes(dataObjId))
@@ -132,6 +136,6 @@ export function addDataObject(chart, dataObjId, binTable, tableFormat){
 			dataObjectIds: chart.dataObjectIds.concat(dataObjId),
 			binTables: binTables,
 			data: binTables2Dygraph(binTables),
-			labels: Array.from(new Set(chart.labels.concat(getUniqueLabels(dataObjId))))
+			labels: Array.from(new Set(chart.labels.concat(getUniqueLabels(format))))
 		};
 }
