@@ -124,7 +124,6 @@ function getUniqueLabels(dataObjId){
 }
 
 export function addDataObject(chart, dataObjId, binTable, tableFormat){
-	console.log({chart, dataObjId, binTable, tableFormat});
 	const binTables = chart.binTables.concat(binTable);
 
 	return (chart.dataObjectIds.includes(dataObjId))

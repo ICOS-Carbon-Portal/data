@@ -143,23 +143,18 @@ class View extends Component {
 }
 
 function stateToProps(state){
-	const dataObjSelected = (state.dataObjectId != null);
+	const dataObjSelected = (state.metaData != null);
 
 	return Object.assign({},
 		state,
 		{
 			metaTable: dataObjSelected
-				? [{label: "LANDING PAGE", value: state.dataObjectId}].concat(state.format)
+				? state.metaData.format
 				: null
 		},
 		{
 			forMap: dataObjSelected
-				? {
-					geom: {
-						lat: Math.floor(Math.random() * 60),
-						lon: Math.floor(Math.random() * 60)
-					}
-				}
+				? {	geom: state.metaData.geom }
 				: null
 		}
 	);

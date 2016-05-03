@@ -31,6 +31,7 @@ export default function(state, action){
 				? Object.assign({}, state, {
 					status: FETCHED_DATA,
 					format: action.format,
+					metaData: getMetaData(action.format, action.dataObjId),
 					chart: addDataObject(state.chart, action.dataObjId, action.binTable, state.tableFormat)
 				})
 				: state; //ignore the fetched data obj if another one got chosen while fetching
@@ -79,6 +80,27 @@ export default function(state, action){
 			return state;
 	}
 
+}
+
+function getMetaData(format, dataObjectId){
+	let geom = {
+		lat: null,
+		lon: null
+	};
+
+	let newFormat = [{label: "LANDING PAGE", value: dataObjectId}];
+
+	format.forEach(obj => {
+		if (obj.label === 'LATITUDE'){
+			geom.lat = obj.value;
+		} else if (obj.label === 'LONGITUDE'){
+			geom.lon = obj.value;
+		} else {
+			newFormat.push(obj);
+		}
+	});
+
+	return {geom, format: newFormat};
 }
 
 function filteredDO2Arr(filteredDataObjects){
