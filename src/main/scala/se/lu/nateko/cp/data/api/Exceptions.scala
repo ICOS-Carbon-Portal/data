@@ -15,3 +15,6 @@ final class MetadataObjectNotFound(hash: Sha256Sum) extends UploadUserError(
 
 final class UnauthorizedUpload(message: String) extends CpDataException(message)
 
+sealed class CpDataParsingException(message: String) extends CpDataException(message)
+
+final class WdcggParsingException(message: String) extends CpDataParsingException(message)

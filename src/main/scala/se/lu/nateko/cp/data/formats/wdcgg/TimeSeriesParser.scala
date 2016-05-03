@@ -1,5 +1,9 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
+import se.lu.nateko.cp.data.api.WdcggParsingException
+import scala.collection.immutable.ListMap
+import org.slf4j.LoggerFactory
+
 object TimeSeriesParser {
 
 	case class Header(
@@ -8,7 +12,7 @@ object TimeSeriesParser {
 		columnNames: Array[String],
 		parameter: String,
 		offsetFromUtc: Int,
-		kvPairs: Map[String, String]
+		kvPairs: ListMap[String, String]
 	){
 		def nRows = totLength - headerLength
 	}
@@ -27,23 +31,25 @@ object TimeSeriesParser {
 				columnNames: Array[String] = header.columnNames,
 				parameter: String = header.parameter,
 				offsetFromUtc: Int = header.offsetFromUtc,
-				kvPairs: Map[String, String] = header.kvPairs
+				kvPairs: ListMap[String, String] = header.kvPairs
 			): Accumulator =
 			copy(header = header.copy(headerLength, totLength, columnNames, parameter, offsetFromUtc, kvPairs))
 	}
 
-	private val headerPattern = """C\d\d.*""".r
+	val ParamKey = "PARAMETER"
+	val CountryKey = "COUNTRY/TERRITORY"
+	val SamplingTypeKey = "SAMPLING TYPE"
+	val MeasUnitKey = "MEASUREMENT UNIT"
+	private val headerPattern = """C\d\d(.*)""".r
 	private val headerKvPattern = """C\d\d ([^:]+): ?(.*)""".r
 	private val totLinesPattern = """C\d\d TOTAL LINES: (\d+)""".r
 	private val headLinesPattern = """C\d\d HEADER LINES: (\d+)""".r
 	private val wsPattern = "\\s+".r
-	private val paramKey = "PARAMETER"
-	private val timeZoneKey = "TIME ZONE"
+	private val TimeZoneKey = "TIME ZONE"
 
-	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, Map.empty), 0, Array.empty)
+	private val logger = LoggerFactory.getLogger(getClass)
 
-	def isHeaderLine(line: String): Boolean =
-		headerPattern.findFirstIn(line).isDefined
+	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, ListMap.empty), 0, Array.empty)
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 
@@ -54,15 +60,21 @@ object TimeSeriesParser {
 			val paramName = acc.header.parameter
 			val colNamesAttempt = wsPattern.split(line)
 
-			if(colNamesAttempt.length > 7 && colNamesAttempt.contains(paramName)) {
-				//the column names line is present
-				val colNames = mapColNames(colNamesAttempt.drop(1), paramName)
-				acc.changeHeader(columnNames = colNames).incrementLine
+			if(colNamesAttempt.length > 1 && colNamesAttempt(1) == "DATE"){
+				if(colNamesAttempt.contains(paramName)) {
+					//the correct column names line is present
+					val colNames = mapColNames(colNamesAttempt.drop(1), paramName)
+					acc.changeHeader(columnNames = colNames).incrementLine
+				} else throw new WdcggParsingException(
+					s"Unsupported WDCGG file format; column names row was: $line"
+				)
 			}else{
-				//bad file, missing the column names row; amending it with standard column names
+				val fileName = acc.header.kvPairs.getOrElse("FILE NAME", "(unknown file!)")
+				logger.warn(s"File $fileName is missing the column names row; amending it with standard column names")
+
 				acc.changeHeader(
 					headerLength = acc.header.headerLength - 1,
-					columnNames = Array("DATE", "TIME", "DATE", "TIME", paramKey, "ND", "SD", "F", "CS", "REM")
+					columnNames = Array("DATE", "TIME", "DATE", "TIME", ParamKey, "ND", "SD", "F", "CS", "REM")
 				).copy(cells = colNamesAttempt).incrementLine
 			}
 		}
@@ -75,21 +87,21 @@ object TimeSeriesParser {
 				acc.changeHeader(totLength = n.toInt)
 
 			case headerKvPattern(key, value) =>
-
 				val withSpecialKvs =
-					if(key == timeZoneKey)
+					if(key == TimeZoneKey)
 						acc.changeHeader(offsetFromUtc = parseUtcOffset(value))
-					else if(key == paramKey)
+					else if(key == ParamKey)
 						acc.changeHeader(parameter = value)
 					else acc
 
 				val harmonizedKey = keyRenamings.getOrElse(key, key)
-				if(headerKeys.contains(harmonizedKey)) {
-					val updatedKvs = acc.header.kvPairs + makeKv(harmonizedKey, value)
-					withSpecialKvs.changeHeader(kvPairs = updatedKvs)
-				} else withSpecialKvs
+				val updatedKvs = acc.header.kvPairs + makeKv(harmonizedKey, value)
+				withSpecialKvs.changeHeader(kvPairs = updatedKvs)
 
-			case _ if isHeaderLine(line) => acc
+			case headerPattern(value) =>
+				val (lastKey, currentValue) = acc.header.kvPairs.last
+				val newKvs = acc.header.kvPairs + ((lastKey, currentValue + value))
+				acc.changeHeader(kvPairs = newKvs)
 		}).incrementLine
 	}
 
@@ -100,16 +112,9 @@ object TimeSeriesParser {
 	}
 
 	private def mapColNames(origColNames: Array[String], paramColName: String) = {
-		origColNames.map(col => if(col == paramColName) paramKey else col)
+		origColNames.map(col => if(col == paramColName) ParamKey else col)
 	}
 
-	private val CountryKey = "COUNTRY/TERRITORY"
-	private val headerKeys = Set(
-		"STATION NAME", "OBSERVATION CATEGORY", CountryKey, "CONTRIBUTOR",
-		"LATITUDE", "LONGITUDE",
-		"CONTACT POINT", paramKey, "TIME INTERVAL", "MEASUREMENT UNIT",
-		"MEASUREMENT METHOD", "SAMPLING TYPE", "MEASUREMENT SCALE"
-	)
 	private val keyRenamings = Map("COUNTRY/TERITORY" -> CountryKey)
 	private val countryRenamings = Map(
 		"Hong Kong" -> "Hong Kong, China",
@@ -124,6 +129,12 @@ object TimeSeriesParser {
 		case CountryKey =>
 			val country = value.split(' ').map(part => part.head + part.tail.toLowerCase).mkString(" ")
 			(harmonizedKey, countryRenamings.getOrElse(country, country))
+		case SamplingTypeKey =>
+			(harmonizedKey, if(value == "Remote sensing") "remote sensing" else value)
+		case MeasUnitKey =>
+			val harmValue = if(value.endsWith("in dry air)")) "ppm"
+				else if (value == "Bq/m³") "Bq/m3" else value
+			(harmonizedKey, harmValue)
 		case _ =>
 			(harmonizedKey, value)
 	}

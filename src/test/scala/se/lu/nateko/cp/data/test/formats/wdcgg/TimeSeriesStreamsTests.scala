@@ -138,6 +138,8 @@ class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		assert(kv("PARAMETER") === "CO2")
 		assert(kv("TIME INTERVAL") === "monthly")
+		assert(kv("CREDIT FOR USE").endsWith("used within a publication.\""))
+		assert(kv("COMMENT") === "")
 	}
 
 }

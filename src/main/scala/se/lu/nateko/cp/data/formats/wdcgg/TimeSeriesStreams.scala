@@ -26,6 +26,7 @@ class WdcggRow(val header: Header, val cells: Array[String])
 
 object TimeSeriesStreams{
 	import ToBinTableConverter._
+	import TimeSeriesParser._
 
 	private val charSet = Charset.forName("Windows-1252").name()
 
@@ -36,11 +37,7 @@ object TimeSeriesStreams{
 	def wdcggParser: Flow[String, WdcggRow, NotUsed] = Flow[String]
 		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
 		.dropWhile(acc => !acc.isOnData)
-		.collect{
-			//TODO Check if the following is needed
-			case acc if (acc.cells.length == acc.header.columnNames.length) =>
-				new WdcggRow(acc.header, acc.cells)
-		}
+		.map(acc => new WdcggRow(acc.header, acc.cells))
 
 	def wdcggToBinTableConverter(formatsFut: Future[Formats])(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
 		val graph = GraphDSL.create(Sink.head[Formats], Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo){ implicit b =>
@@ -83,12 +80,18 @@ object TimeSeriesStreams{
 	}
 
 	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
-		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
+		.scan(seed)(parseLine)
 		.takeWhile(!_.isOnData)
 		.map(_.header.kvPairs)
 		.toMat(Sink.last)(Keep.right)
 
 	private def infiniteRepeater[T]: Flow[T, T, NotUsed] = Flow.apply[T].mapConcat(Stream.continually(_))
+
+	private val headerKeys = Set(
+		"STATION NAME", "OBSERVATION CATEGORY", CountryKey, "CONTRIBUTOR",
+		"LATITUDE", "LONGITUDE", "CONTACT POINT", ParamKey, "TIME INTERVAL",
+		MeasUnitKey, "MEASUREMENT METHOD", SamplingTypeKey, "MEASUREMENT SCALE"
+	)
 
 	private def getCompletionInfo(
 			formatsFut: Future[Formats],
@@ -105,6 +108,7 @@ object TimeSeriesStreams{
 			val start = recoverTimeStamp(firstBin.cells, formats)
 			val stop = recoverTimeStamp(lastBin.cells, formats)
 			val header = firstWdcgg.header
-			WdcggUploadCompletion(header.nRows, TimeInterval(start, stop), header.kvPairs)
+			val keyValues = header.kvPairs.filterKeys(headerKeys.contains)
+			WdcggUploadCompletion(header.nRows, TimeInterval(start, stop), keyValues)
 		}
 }
