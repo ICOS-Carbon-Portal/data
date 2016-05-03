@@ -27,50 +27,88 @@ export function binTable2Dygraph(binTable){
 }
 
 export function binTables2Dygraph(binTables, debug = false){
+
+	function findMin(arr){
+		let minVal = isNaN(arr[0])
+			? (arr.length>1) ? Number.MAX_VALUE : arr[0]
+			: arr[0];
+
+		if (minVal == null){
+			minVal = Number.MAX_VALUE;
+		}
+
+		for (let i=1; i<arr.length; i++){
+			if (!isNaN(arr[i]) && arr[i] != null && arr[i] < minVal){
+				minVal = arr[i];
+			}
+		}
+
+		return minVal;
+	}
+
 	let idxs = new Array(binTables.length).fill(0);
-	const maxLength = binTables.map(bt => bt.length).sort().pop();
+	let doneIdxs = new Array(binTables.length).fill(0);
 	let data = [];
+	let breakLoop = false;
 
 	// Loop through all rows in all binTables going to the largest index of them all
-	for (let dataIdx=0; dataIdx<maxLength; dataIdx++){
-		let smallest = Number.MAX_VALUE;
-		let includeBTIdxs = [];
+	while (!breakLoop ){
+		let msDates = [];
 
 		// For each binTable
 		for (let bTIdx=0; bTIdx<binTables.length; bTIdx++){
-
-			debug ? console.log({rowIdx: idxs[bTIdx], date: new Date(binTables[bTIdx].value(idxs[bTIdx], 0)).toISOString(), isNotNumber: isNaN(binTables[bTIdx].value(idxs[bTIdx], 0))}) : null;
+			// debug ? console.log({rowIdx: idxs[bTIdx], date: new Date(binTables[bTIdx].value(idxs[bTIdx], 0)).toISOString(), isNotNumber: isNaN(binTables[bTIdx].value(idxs[bTIdx], 0))}) : null;
 
 			// Do not exceed length of binTable and skip entries that cannot be parsed to a number
 			if (idxs[bTIdx] < binTables[bTIdx].length && isNaN(binTables[bTIdx].value(idxs[bTIdx], 0))){
-				idxs[bTIdx]++;
+				// Skip this value since we do not know the date
+				msDates.push(NaN);
+
 			} else if (idxs[bTIdx] < binTables[bTIdx].length) {
+				msDates.push(binTables[bTIdx].value(idxs[bTIdx], 0));
 
-				debug ? console.log({dataIdx, i1: idxs[0], i2: idxs[1], smallest, value: binTables[bTIdx].value(idxs[bTIdx], 0)}) : null;
+			} else {
+				// No data in this binTable
+				msDates.push(null);
+			}
+		}
 
-				// Check if date in current binTable is the smallest
-				if (binTables[bTIdx].value(idxs[bTIdx], 0) <= smallest) {
-					// debug ? console.log({pushValue: binTables[bTIdx].value(dataIdx, 0)}) : null;
-					includeBTIdxs.push(bTIdx);
-					smallest = binTables[bTIdx].value(idxs[bTIdx], 0);
+		const smallest = findMin(msDates);
+
+		if (!isNaN(smallest)) {
+			let dataPoint = [new Date(smallest)];
+
+			// debug ? console.log({msDates: msDates.map(d => new Date(d).toISOString()), smallest: new Date(smallest).toISOString()}) : null;
+
+			for (let bTIdx = 0; bTIdx < binTables.length; bTIdx++) {
+				if (isNaN(msDates[bTIdx])) {
+					dataPoint.push(null);
+					idxs[bTIdx]++;
+				} else if (msDates[bTIdx] == null) {
+					dataPoint.push(null);
+				} else {
+					if (msDates[bTIdx] <= smallest) {
+						dataPoint.push(binTables[bTIdx].value(idxs[bTIdx], 1));
+						idxs[bTIdx]++;
+					} else {
+						dataPoint.push(null);
+					}
+				}
+
+				if (idxs[bTIdx] >= binTables[bTIdx].length){
+					doneIdxs[bTIdx] = 1;
 				}
 			}
-		}
 
-		let dataPoint = [new Date(binTables[includeBTIdxs[0]].value(idxs[includeBTIdxs[0]], 0))];
-
-		debug ? console.log({dataIdx, includeBTIdxs}) : null;
-
-		for (let i = 0; i < binTables.length; i++) {
-			if (includeBTIdxs.indexOf(i) > -1){
-				dataPoint.push(binTables[i].value(idxs[i], 1));
-				idxs[i]++;
-			} else {
-				dataPoint.push(null);
+			data.push(dataPoint);
+		} else {
+			for (let bTIdx = 0; bTIdx < binTables.length; bTIdx++) {
+				idxs[bTIdx]++;
 			}
 		}
 
-		data.push(dataPoint);
+		breakLoop = doneIdxs.reduce((prev, next) => { return prev * next; });
+		debug ? console.log({breakLoop, dates: msDates.map(d => new Date(d).toISOString()), smallest}) : null;
 	}
 
 	return data;
