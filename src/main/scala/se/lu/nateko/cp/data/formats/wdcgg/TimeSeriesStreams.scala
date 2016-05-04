@@ -16,17 +16,16 @@ import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.ZipWith
 import akka.stream.FlowShape
 import java.nio.charset.Charset
-import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
 import java.time.Instant
 import se.lu.nateko.cp.meta.core.data.WdcggUploadCompletion
 import scala.concurrent.ExecutionContext
 import se.lu.nateko.cp.meta.core.data.TimeInterval
+import TimeSeriesParser._
 
 class WdcggRow(val header: Header, val cells: Array[String])
 
 object TimeSeriesStreams{
 	import ToBinTableConverter._
-	import TimeSeriesParser._
 
 	private val charSet = Charset.forName("Windows-1252").name()
 
@@ -35,7 +34,7 @@ object TimeSeriesStreams{
 		.map(_.decodeString(charSet).replace("\r", ""))
 
 	def wdcggParser: Flow[String, WdcggRow, NotUsed] = Flow[String]
-		.scan(TimeSeriesParser.seed)(TimeSeriesParser.parseLine)
+		.scan(seed)(parseLine)
 		.dropWhile(acc => !acc.isOnData)
 		.map(acc => new WdcggRow(acc.header, acc.cells))
 

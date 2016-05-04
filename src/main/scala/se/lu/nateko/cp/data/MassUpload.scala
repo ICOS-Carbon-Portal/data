@@ -138,11 +138,13 @@ object MassUpload extends CommonJsonSupport{
 			case (Success(resp), payload) if resp.status == StatusCodes.OK =>
 				Future.successful((payload, None))
 			case (Success(resp), payload) =>
-				resp.entity.toStrict(1 second).map{entity =>
-					val responseText = entity.data.utf8String
-					val msg = resp.status.defaultMessage + ": " + responseText
-					(payload, Some(msg))
-				}
+				resp.entity.toStrict(2 second)
+					.map(": " + _.data.utf8String)
+					.recover{case _ => ""}
+					.map{ responseText =>
+						val msg = resp.status.defaultMessage + responseText
+						(payload, Some(msg))
+					}
 			case (Failure(err), payload) =>
 				Future.successful((payload, Some(err.getMessage)))
 		}
