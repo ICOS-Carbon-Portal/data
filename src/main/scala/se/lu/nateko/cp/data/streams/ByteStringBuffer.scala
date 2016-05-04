@@ -88,7 +88,7 @@ private class ByteStringBuffer(nBytes: Int) extends GraphStage[FlowShape[ByteStr
 
 		setHandler(out, new OutHandler {
 			override def onPull(): Unit = {
-				if(bufSize == 0 && !isClosed(in) && !hasBeenPulled(in)) pull(in) //initial pull
+				if(!hasBeenPulled(in) && !isClosed(in) && !isAvailable(in)) pull(in) //initial pull
 				else flush()
 			}
 		})
