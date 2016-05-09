@@ -21,6 +21,7 @@ import se.lu.nateko.cp.meta.core.data.WdcggUploadCompletion
 import scala.concurrent.ExecutionContext
 import se.lu.nateko.cp.meta.core.data.TimeInterval
 import TimeSeriesParser._
+import akka.Done
 
 class WdcggRow(val header: Header, val cells: Array[String])
 
@@ -33,10 +34,31 @@ object TimeSeriesStreams{
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
 		.map(_.decodeString(charSet).replace("\r", ""))
 
-	def wdcggParser: Flow[String, WdcggRow, NotUsed] = Flow[String]
-		.scan(seed)(parseLine)
-		.dropWhile(acc => !acc.isOnData)
-		.map(acc => new WdcggRow(acc.header, acc.cells))
+	def wdcggParser(implicit ctxt: ExecutionContext): Flow[String, WdcggRow, Future[Done]] = {
+		val errorExtractor: Sink[Accumulator, Future[Done]] = Flow[Accumulator]
+			.filter(_.error.isDefined)
+			.toMat(Sink.headOption){(_, accFut) =>
+				accFut.flatMap{
+					case Some(Accumulator(_, _, _, Some(err))) => Future.failed(err)
+					case _ => Future.successful(Done)
+				}
+			}
+		val graph = GraphDSL.create(errorExtractor){implicit b => errorSink =>
+			import GraphDSL.Implicits._
+			val stringToAcc = b.add(Flow[String].scan(seed)(parseLine))
+			val accCloner = b.add(Broadcast[Accumulator](2))
+			stringToAcc.out ~> accCloner.in
+
+			val accToRows = b.add(Flow[Accumulator]
+				.dropWhile(acc => !acc.isOnData || acc.error.isDefined)
+				.map(acc => new WdcggRow(acc.header, acc.cells))
+			)
+			accCloner.out(0) ~> accToRows.in
+			accCloner.out(1) ~> errorSink.in
+			FlowShape(stringToAcc.in, accToRows.out)
+		}
+		Flow.fromGraph(graph)
+	}
 
 	def wdcggToBinTableConverter(formatsFut: Future[Formats])(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
 		val graph = GraphDSL.create(Sink.head[Formats], Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo){ implicit b =>

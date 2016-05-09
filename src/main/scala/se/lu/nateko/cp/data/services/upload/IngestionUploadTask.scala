@@ -20,6 +20,7 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.WdcggUploadCompletion
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
+import se.lu.nateko.cp.data.streams.KeepFuture
 
 class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: SparqlClient) extends UploadTask{
 
@@ -37,7 +38,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 			val columnFormats = getColumnFormats(dataObj.hash)
 
 			val toBinTableSink: Sink[String, Future[UploadTaskResult]] = wdcggParser
-				.viaMat(wdcggToBinTableConverter(columnFormats))(Keep.right)
+				.viaMat(wdcggToBinTableConverter(columnFormats))(KeepFuture.right)
 				.to(BinTableSink(file))
 				.mapMaterializedValue(
 					_.map(IngestionSuccess(_)).recover{

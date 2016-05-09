@@ -20,7 +20,8 @@ object TimeSeriesParser {
 	case class Accumulator(
 			header: Header,
 			lineNumber: Int,
-			cells: Array[String]
+			cells: Array[String],
+			error: Option[Throwable]
 		){
 
 		def incrementLine = copy(lineNumber = lineNumber + 1)
@@ -49,11 +50,12 @@ object TimeSeriesParser {
 
 	private val logger = LoggerFactory.getLogger(getClass)
 
-	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, ListMap.empty), 0, Array.empty)
+	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, ListMap.empty), 0, Array.empty, None)
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
+		if(acc.error.isDefined) acc
 
-		if(acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength)
+		else if(acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength)
 			acc.copy(cells = wsPattern.split(line), lineNumber = acc.lineNumber + 1)
 
 		else if(acc.lineNumber == acc.header.headerLength - 1) {
@@ -65,9 +67,9 @@ object TimeSeriesParser {
 					//the correct column names line is present
 					val colNames = mapColNames(colNamesAttempt.drop(1), paramName)
 					acc.changeHeader(columnNames = colNames).incrementLine
-				} else throw new WdcggParsingException(
+				} else acc.copy(error = Some(new WdcggParsingException(
 					s"Unsupported WDCGG file format; column names row was: $line"
-				)
+				)))
 			}else{
 				val fileName = acc.header.kvPairs.getOrElse("FILE NAME", "(unknown file!)")
 				logger.warn(s"File $fileName is missing the column names row; amending it with standard column names")
