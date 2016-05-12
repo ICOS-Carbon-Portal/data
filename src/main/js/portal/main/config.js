@@ -6,7 +6,7 @@ endpoint = 'https://meta.icos-cp.eu/sparql';
 
 export default {
 	sparqlEndpoint: endpoint,
-	wdcggSpec: 'http://meta.icos-cp.eu/ontologies/cpmeta/instances/wdcggDataObject',
+	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	wdcggProps: [
 		{uri: wdcggProp('PARAMETER'),           label: 'Parameter (gas)'},
 		{uri: wdcggProp('STATION+NAME'),        label: 'Station name'},

@@ -2,7 +2,7 @@
 export function simpleDataObjects(objSpec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select *
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 where {
 	?id cpmeta:hasObjectSpec <${objSpec}> .
 	?id cpmeta:hasName ?fileName .
@@ -13,7 +13,7 @@ where {
 export function simpleDataObject(objSpec, dobjId){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select *
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 where {
 	<${dobjId}> cpmeta:hasObjectSpec <${objSpec}> .
 	<${dobjId}> cpmeta:hasName ?fileName .
@@ -24,7 +24,7 @@ where {
 export function simpleObjectSchema(spec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/instances/>
+FROM <http://meta.icos-cp.eu/resources/cpmeta/>
 WHERE {
 	<${spec}> cpmeta:containsDataset ?dset .
 	?dset cpmeta:hasColumn [
@@ -45,7 +45,7 @@ export function standardDataObjProps(dobjId){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT *
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 WHERE {
 	<${dobjId}> cpmeta:wasSubmittedBy/prov:wasAssociatedWith/cpmeta:hasName ?submitterName .
 	<${dobjId}> cpmeta:wasProducedBy [
@@ -60,7 +60,7 @@ export function formatSpecificProps(dobjId){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT distinct ?label (str(?value) as ?val)
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 WHERE {
 	BIND (<${dobjId}> AS ?dobj)
 	?dobj cpmeta:wasProducedBy ?prod . {
@@ -84,7 +84,7 @@ export function getGlobalTimeInterval(spec){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 select  (min(?startTime) as ?startMin) (max(?endTime) as ?endMax)
-from <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+from <http://meta.icos-cp.eu/resources/uploads/>
 where{
 	?dobj cpmeta:hasObjectSpec <${spec}> .
 	?dobj cpmeta:wasProducedBy ?prod .
@@ -102,7 +102,7 @@ export function getPropValueCounts(spec, filters, fromDate, toDate){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT ?prop ?value (count(?dobj) as ?count)
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 WHERE {
 	{
 		select ?dobj where {
@@ -142,7 +142,7 @@ export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?fileName ?nRows
-FROM <http://meta.icos-cp.eu/ontologies/cpmeta/uploads/>
+FROM <http://meta.icos-cp.eu/resources/uploads/>
 where {
 	${dobjsQueryStatements}
 	?dobj cpmeta:hasName ?fileName .
