@@ -9,16 +9,17 @@ class Chart extends React.Component {
 
 	render() {
 		const props = this.props;
+		console.log({chartRender: props});
 
-		if(props.chart.data && props.chart.labels) {
+		if(props.forChart.data && props.forChart.labels) {
 			return (
 				<div>
 					<Dygraph
-						data={props.chart.data}
+						data={props.forChart.data}
 						width={props.width ? props.width : 800}
 						strokeWidth={1}
-						labels={props.chart.labels}
-						ylabel={props.chart.labels[1]}
+						labels={props.forChart.labels}
+						ylabel={props.forChart.labels[1]}
 						labelsDiv={'legendDiv'}
 						series={true}
 						axes={{

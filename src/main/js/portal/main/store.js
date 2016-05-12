@@ -16,9 +16,18 @@ const initState = {
 	meta: null,
 	format: null,
 	geom: null,
-	chart: {
-		dataObjectIds: [],
-		binTables: [],
+	dataObjects:[],
+	forChart: {
+		data: [],
+		labels: []
+	},
+	forMap: {
+		geoms: []
+	},
+	singleDO: {
+		dataObjId: null,
+		binTable: null,
+		geom: [],
 		data: [],
 		labels: []
 	},

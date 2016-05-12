@@ -17,12 +17,17 @@ html, body {
 .lnk{
 	color: #337ab7;
 	text-decoration: none;
+	margin-left: 7px;
 }
 
 .lnk:hover{
 	color: #255a87;
 	text-decoration: underline;
 	cursor: pointer;
+}
+
+button.cp{
+	margin-left: 3px;
 }
 
 

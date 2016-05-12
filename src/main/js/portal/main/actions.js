@@ -6,6 +6,8 @@ export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
 export const FETCHED_DATA = 'FETCHED_DATA';
 export const DATA_CHOSEN = 'DATA_CHOSEN';
+export const REMOVE_DATA = 'REMOVE_DATA';
+export const PIN_DATA = 'PIN_DATA';
 export const ERROR = 'ERROR';
 export const FROM_DATE_SET = 'FROM_DATE_SET';
 export const TO_DATE_SET = 'TO_DATE_SET';
@@ -66,13 +68,27 @@ const fetchData = dataObjectInfo => (dispatch, getState) => {
 	);
 }
 
-export const chooseDataObject = dataObjectInfo => dispatch => {
+export const pinDataObject = dataObjectInfo => dispatch => {
+	dispatch({
+		type: PIN_DATA,
+		dataObjectInfo: dataObjectInfo
+	});
+}
+
+export const addDataObject = dataObjectInfo => dispatch => {
 	dispatch({
 		type: DATA_CHOSEN,
-		dataObjectId: dataObjectInfo.id
+		dataObjId: dataObjectInfo.id
 	});
 
 	dispatch(fetchData(dataObjectInfo));
+}
+
+export const removeDataObject = dataObjectInfo => dispatch => {
+	dispatch({
+		type: REMOVE_DATA,
+		dataObjId: dataObjectInfo.id
+	});
 }
 
 export const fromDateSet = (date) => dispatch => {

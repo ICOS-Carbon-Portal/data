@@ -1,7 +1,7 @@
-const wdcggPriorityList = ["PARAMETER", "MEASUREMENT UNIT", "STATION NAME", "TIME INTERVAL", "SAMPLING TYPE", "SAMPLING START"];
+export const wdcggPriorityList = ["PARAMETER", "MEASUREMENT UNIT", "STATION NAME", "TIME INTERVAL", "SAMPLING TYPE", "SAMPLING START"];
 
 export function composeWdcggLabels(labelLists){
-	return composeUniqueLabels.bind(wdcggPriorityList, labelLists, ', ', 2);
+	return composeUniqueLabels(wdcggPriorityList, labelLists, ', ', 2);
 }
 
 export function composeUniqueLabels(priorityList, labelLists, separator = ' ', requiredLabels = 0){

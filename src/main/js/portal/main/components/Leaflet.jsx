@@ -8,20 +8,77 @@ class Leaflet extends Component {
 
 	componentDidMount() {
 		const props = this.props;
+		console.log({componentDidMount: props});
 		const maxZoom = 21;
 
 		const baseMaps = this.getBaseMaps(maxZoom);
 
 		const map = this.map = L.map(ReactDOM.findDOMNode(this.refs.map), {
-			center: [props.lat, props.lon],
+			center: [props.geoms[0].lat, props.geoms[0].lon],
 			zoom: 6,
 			layers: [baseMaps.Topographic],
 			attributionControl: false
 		});
 
+		const newMarkers = this.buildMarkers(props.geoms);
+		console.log({newMarkers});
+
+		map.addLayer(newMarkers.markers);
+
+		if (newMarkers.fitBounds) {
+			map.fitBounds(props.geoms.map(geom => [geom.lat, geom.lon]));
+		}
+
 		L.control.layers(baseMaps).addTo(map);
 
-		L.marker([props.lat, props.lon]).addTo(map);
+		this.setState({map, markers: newMarkers.markers});
+	}
+
+	componentWillReceiveProps(nextProps){
+		console.log({componentWillReceiveProps: this.props, nextProps, map: this.state.map, markers: this.state.markers});
+
+		if (this.props.geoms.length != nextProps.geoms.length){
+			const map = this.state.map;
+			const markers = this.state.markers;
+
+			map.removeLayer(markers);
+			const newMarkers = this.buildMarkers(nextProps.geoms);
+			map.addLayer(newMarkers.markers);
+
+			if (newMarkers.fitBounds) {
+				map.fitBounds(nextProps.geoms.map(geom => [geom.lat, geom.lon]));
+			} else {
+				map.setView(nextProps.geoms[0], 6);
+			}
+
+			this.setState({map, markers: newMarkers.markers});
+		}
+	}
+
+	buildMarkers(geoms){
+		let markers = L.markerClusterGroup();
+		let positions = [];
+
+		geoms.forEach(geom => {
+			markers.addLayer(L.marker([geom.lat, geom.lon]));
+
+			if (positions.findIndex(pos => pos[0] == geom.lat && pos[1] == geom.lon) < 0) {
+				positions.push([geom.lat, geom.lon]);
+			}
+		});
+
+		return {
+			markers,
+			fitBounds: positions.length > 1
+		};
+	}
+
+	// componentWillUpdate(nextProps, nextState){
+	// 	console.log({componentWillUpdate: this.props, nextProps, nextState});
+	// }
+
+	shouldComponentUpdate(){
+		return false;
 	}
 
 	getBaseMaps(maxZoom){
