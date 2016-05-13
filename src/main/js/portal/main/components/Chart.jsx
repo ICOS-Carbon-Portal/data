@@ -9,7 +9,7 @@ class Chart extends React.Component {
 
 	render() {
 		const props = this.props;
-		console.log({chartRender: props});
+		// console.log({chartRender: props});
 
 		if(props.forChart.data && props.forChart.labels) {
 			return (

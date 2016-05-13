@@ -1,18 +1,18 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
-import {pinDataObject, addDataObject, removeDataObject, FETCHED_DATA, REMOVE_DATA, PIN_DATA} from '../actions';
+import {pinDataObject, addDataObject, removeDataObject, FETCHED_META, FETCHING_DATA} from '../actions';
 import Chart from '../components/Chart.jsx'
 import Leaflet from '../components/Leaflet.jsx'
 
 class View extends Component {
 	constructor(props){
 		super(props);
-		this.state = {secondRender: false};
+		this.state = {loadComponents: false};
 	}
 
 	componentDidMount(){
-		if(this.state.secondRender) return;
+		if(this.state.loadComponents) return;
 
 		const chartDiv = ReactDOM.findDOMNode(this.refs.chartDiv);
 		const chartDivWidth = chartDiv.getBoundingClientRect().width - 44;
@@ -20,15 +20,10 @@ class View extends Component {
 		const mapDiv = ReactDOM.findDOMNode(this.refs.mapDiv);
 		const mapDivWidth = mapDiv.getBoundingClientRect().width;
 
-		this.setState({mapDivWidth, chartDivWidth, secondRender: true});
-	}
-
-	componentWillUnmount(){
-		// console.log({status: this.props.status});
+		this.setState({mapDivWidth, chartDivWidth, loadComponents: true});
 	}
 
 	getMetaDataTableData(formats, labels){
-		// console.log({formats, labels});
 		let tableLabels = labels.slice(0);
 		tableLabels.splice(0, 1);
 
@@ -54,13 +49,10 @@ class View extends Component {
 			});
 		});
 
-		// console.log({tableData});
 		return tableData;
 	}
 
 	getTableRow(rowData, i){
-		// console.log({rowData});
-
 		if (rowData.label == 'LANDING PAGE'){
 			return (
 				<tr key={"lp" + i}>
@@ -88,42 +80,22 @@ class View extends Component {
 		}
 	}
 
-	onLnkClick(dataObjectInfo){
-		this.props.fetchData(dataObjectInfo);
-	}
-
-	onPinBtnClick(dataObjectInfo, event, classes){
-		const btn = event.target;
-
-		if (btn.className == classes.btnClass){
-			btn.className = classes.btnClassActive;
-		} else {
-			btn.className = classes.btnClass;
-		}
-
+	onPinBtnClick(dataObjectInfo){
 		this.props.pinData(dataObjectInfo);
 	}
 
-	onViewBtnClick(dataObjectInfo, event, classes){
+	onViewBtnClick(dataObjectInfo, event, btnClass){
 		const btn = event.target;
 
-		if (btn.className == classes.btnClass){
-			btn.className = classes.btnClassActive;
-			event.target.children[0].className = classes.viewIconOpen;
-
-			this.props.addData(dataObjectInfo);
-		} else {
-			btn.className = classes.btnClass;
-			event.target.children[0].className = classes.viewIconClosed;
-
-			this.props.removeData(dataObjectInfo);
-		}
+		btn.className == btnClass
+			? this.props.addData(dataObjectInfo)
+			: this.props.removeData(dataObjectInfo)
 	}
 
 	render() {
 		const props = this.props;
 		const status = this.props.status;
-		console.log({viewRender: props});
+		// console.log({viewRender: props});
 
 		const btnClass = "cp btn btn-default btn-xs";
 		const btnClassActive = "cp btn btn-primary btn-xs active";
@@ -139,7 +111,7 @@ class View extends Component {
 					? (
 						<div className="row">
 							<div className="col-md-3">
-								<label>Number of returned data objects:</label> <span>{props.filteredDataObjects.length}</span>
+								<label>Number of returned data objects:</label> <span>{props.dataObjects.length}</span>
 							</div>
 						</div>
 					)
@@ -160,13 +132,13 @@ class View extends Component {
 											<tr key={"row" + i}>
 												<td>
 													<button className={rowData.pinned ? btnClassActive : btnClass}
-															onClick={(event) => this.onPinBtnClick(rowData, event, {btnClass, btnClassActive})}
+															onClick={(event) => this.onPinBtnClick(rowData)}
 															title="Pin to save selection">
 														<span className="glyphicon glyphicon-pushpin"></span>
 													</button>
 													<button className={rowData.view ? btnClassActive : btnClass}
-															onClick={(event) => this.onViewBtnClick(rowData, event, {btnClass, btnClassActive, viewIconOpen, viewIconClosed})}
-															title="Toggle visibility in multi graphs">
+															onClick={(event) => this.onViewBtnClick(rowData, event, btnClass)}
+															title="Toggle visibility in graph">
 														<span className={rowData.view ? viewIconOpen : viewIconClosed}></span>
 													</button>
 													<span style={{marginLeft: 7}}>{rowData.fileName} ({rowData.nRows})</span>
@@ -181,13 +153,13 @@ class View extends Component {
 						}
 					</div>
 					<div ref="chartDiv" id="chartDiv" className="col-md-6">
-						{props.forChart.data.length > 0 && this.state.secondRender//(status == FETCHED_DATA || status == REMOVE_DATA)
+						{props.forChart.data.length > 0 && this.state.loadComponents
 							? <Chart ref="chartComp" {...props.forChart} width={this.state.chartDivWidth} />
 							: null
 						}
 					</div>
 					<div ref="mapDiv" id="mapDiv" className="col-md-3">
-						{props.forMap.geoms.length > 0 && this.state.secondRender//(status == FETCHED_DATA || status == REMOVE_DATA)
+						{props.forMap.geoms.length > 0 && this.state.loadComponents
 							? <Leaflet {...props.forMap} width={this.state.mapDivWidth} />
 							: null
 						}
@@ -218,16 +190,7 @@ class View extends Component {
 }
 
 function stateToProps(state){
-	const dataObjSelected = (state.metaData != null);
-
-	return Object.assign({},
-		state,
-		{
-			metaTable: dataObjSelected
-				? state.metaData.format
-				: null
-		}
-	);
+	return Object.assign({}, state);
 }
 
 function dispatchToProps(dispatch){

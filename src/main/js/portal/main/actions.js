@@ -7,6 +7,7 @@ export const FETCHED_META = 'FETCHED_META';
 export const FETCHED_DATA = 'FETCHED_DATA';
 export const DATA_CHOSEN = 'DATA_CHOSEN';
 export const REMOVE_DATA = 'REMOVE_DATA';
+export const REMOVED_DATA = 'REMOVED_DATA';
 export const PIN_DATA = 'PIN_DATA';
 export const ERROR = 'ERROR';
 export const FROM_DATE_SET = 'FROM_DATE_SET';

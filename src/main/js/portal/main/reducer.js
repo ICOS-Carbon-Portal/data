@@ -1,5 +1,5 @@
 import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
-	FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, PIN_DATA, ERROR} from './actions';
+	FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {generateChartData} from './models/chartDataMaker';
 
 export default function(state, action){
@@ -43,9 +43,7 @@ export default function(state, action){
 					forMap: {
 						geoms: getMapData(dataObjects)
 					},
-					format: action.format,
-					// metaData: getMetaData(action.format, action.dataObjId),
-					// multipleDO: addDataObject(state.multipleDO, action.dataObjId, action.binTable, action.format, state.filteredDataObjects)
+					format: action.format
 				});
 			} else {
 				return state;
@@ -58,15 +56,13 @@ export default function(state, action){
 			const dataObjects = updateDataObjects(state.dataObjects, action.dataObjId, 'view');
 
 			return Object.assign({}, state, {
-				status: REMOVE_DATA,
+				status: REMOVED_DATA,
 				dataObjects,
 				forChart: generateChartData(dataObjects),
 				forMap: {
 					geoms: getMapData(dataObjects)
 				},
-				format: state.format,
-				// metaData: state.metaData,
-				// multipleDO: removeDataObject(state.multipleDO, action.dataObjId, state.format)
+				format: state.format
 			});
 
 		case ERROR:
@@ -101,11 +97,16 @@ export default function(state, action){
 				state.toDate === action.toDate
 			) {
 				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, state.dataObjects);
+				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
 					filteredDataObjects,
-					dataObjects: loadDataObjects(state.dataObjects, filteredDataObjects)
+					dataObjects,
+					forChart: generateChartData(dataObjects),
+					forMap: {
+						geoms: getMapData(dataObjects)
+					}
 				});
 			} else {
 				return state;
@@ -126,30 +127,8 @@ function getMapData(dataObjects){
 		}
 	});
 
-	console.log({dataObjects, newGeoms});
 	return newGeoms;
 }
-
-// function getMapData(oldGeoms, dataObjId, format){
-// 	let newGeoms = oldGeoms.slice(0);
-//
-// 	let geom = {
-// 		id: dataObjId,
-// 		lat: null,
-// 		lon: null
-// 	};
-//
-// 	format.forEach(obj => {
-// 		if (obj.label === 'LATITUDE'){
-// 			geom.lat = obj.value;
-// 		} else if (obj.label === 'LONGITUDE'){
-// 			geom.lon = obj.value;
-// 		}
-// 	});
-//
-// 	newGeoms.push(geom);
-// 	return newGeoms;
-// }
 
 function loadDataObjects(dataObjects, filteredDataObjects){
 	// console.log({dataObjects, filteredDataObjects});

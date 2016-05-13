@@ -8,9 +8,7 @@ class Leaflet extends Component {
 
 	componentDidMount() {
 		const props = this.props;
-		console.log({componentDidMount: props});
 		const maxZoom = 21;
-
 		const baseMaps = this.getBaseMaps(maxZoom);
 
 		const map = this.map = L.map(ReactDOM.findDOMNode(this.refs.map), {
@@ -21,7 +19,6 @@ class Leaflet extends Component {
 		});
 
 		const newMarkers = this.buildMarkers(props.geoms);
-		console.log({newMarkers});
 
 		map.addLayer(newMarkers.markers);
 
@@ -35,8 +32,6 @@ class Leaflet extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		console.log({componentWillReceiveProps: this.props, nextProps, map: this.state.map, markers: this.state.markers});
-
 		if (this.props.geoms.length != nextProps.geoms.length){
 			const map = this.state.map;
 			const markers = this.state.markers;
@@ -72,10 +67,6 @@ class Leaflet extends Component {
 			fitBounds: positions.length > 1
 		};
 	}
-
-	// componentWillUpdate(nextProps, nextState){
-	// 	console.log({componentWillUpdate: this.props, nextProps, nextState});
-	// }
 
 	shouldComponentUpdate(){
 		return false;

@@ -13,21 +13,6 @@ export function makeTableRequest(tableFormat, dataObjectInfo){
 	return tableFormat.getRequest(dataObjectInfo.id, dataObjectInfo.nRows, axisIndices);
 }
 
-// export function binTable2Dygraph(binTable){
-// 	let dataArr = [];
-//
-// 	for (let i=0; i<binTable.length; i++){
-// 		if (!isNaN(binTable.value(i, 0))) {
-// 			dataArr.push([
-// 				new Date(binTable.value(i, 0)),
-// 				binTable.value(i, 1)
-// 			]);
-// 		}
-// 	}
-//
-// 	return dataArr;
-// }
-
 export function binTables2Dygraph(binTables, debug = false){
 
 	function findMin(arr){
@@ -116,37 +101,6 @@ export function binTables2Dygraph(binTables, debug = false){
 	return data;
 }
 
-// export function getLabels(tableFormat){
-// 	const axisIndices = axisColumnIndices(tableFormat);
-// 	return axisIndices.map(i => tableFormat.columns(i).label);
-// }
-//
-// function getUniqueLabels(labels, format){
-// 	function getSpaces(nbr){
-// 		return new Array(nbr).fill(" ").join("");
-// 	}
-//
-// 	const yLabel = format.find(obj => obj.label === 'STATION NAME').value
-// 		+ "; " + format.find(obj => obj.label === 'PARAMETER').value
-// 		+ "; " + format.find(obj => obj.label === 'MEASUREMENT UNIT').value
-// 		+ getSpaces(labels.length);
-//
-// 	return ["time instant", yLabel];
-// }
-//
-// function getUniqueLabels2(nbr, format){
-// 	function getSpaces(nbr){
-// 		return new Array(nbr).fill(" ").join("");
-// 	}
-//
-// 	const yLabel = format.find(obj => obj.label === 'STATION NAME').value
-// 		+ "; " + format.find(obj => obj.label === 'PARAMETER').value
-// 		+ "; " + format.find(obj => obj.label === 'MEASUREMENT UNIT').value
-// 		+ getSpaces(nbr);
-//
-// 	return [yLabel];
-// }
-
 export function generateChartData(dataObjects){
 	const viewed = dataObjects.filter(dob => dob.view);
 	const binTables = viewed.map(dob => dob.binTable);
@@ -158,39 +112,3 @@ export function generateChartData(dataObjects){
 		labels
 	}
 }
-
-// export function addDataObject(multipleDO, dataObjId, binTable, format, filteredDataObjects){
-// 	const binTables = multipleDO.binTables.concat(binTable);
-//
-// 	return (multipleDO.dataObjectIds.includes(dataObjId))
-// 		? multipleDO
-// 		: {
-// 			dataObjectIds: multipleDO.dataObjectIds.concat(dataObjId),
-// 			binTables: binTables,
-// 			data: binTables2Dygraph(binTables),
-// 			labels: Array.from(new Set(multipleDO.labels.concat(getUniqueLabels(multipleDO.labels, format))))
-// 		};
-// }
-//
-// export function removeDataObject(viewDO, dataObjId, format){
-// 	const doIdx = viewDO.dataObjectIds.indexOf(dataObjId);
-//
-// 	let dataObjectIds = viewDO.dataObjectIds.slice(0);
-// 	dataObjectIds.splice(doIdx, 1);
-//
-// 	let binTables = viewDO.binTables.slice(0);
-// 	binTables.splice(doIdx, 1);
-//
-// 	let labels = viewDO.labels.slice(0);
-// 	labels.splice(doIdx + 1, 1);
-// 	labels = labels.length > 1 ? labels : [];
-//
-// 	// console.log({multipleDO, dataObjId, doIdx, dataObjectIds, labels, format});
-//
-// 	return {
-// 		dataObjectIds: dataObjectIds,
-// 		binTables: binTables,
-// 		data: binTables.length > 0 ? binTables2Dygraph(binTables) : [],
-// 		labels: labels
-// 	};
-// }
