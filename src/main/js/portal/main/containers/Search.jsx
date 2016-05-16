@@ -4,8 +4,6 @@ import { routeUpdated, fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInte
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
 import DatePicker from '../components/DatePickerEncloser.jsx';
-import BinTable from '../models/BinTable';
-import {binTables2Dygraph} from '../models/chartDataMaker';
 
 class Search extends Component {
 	constructor(props){

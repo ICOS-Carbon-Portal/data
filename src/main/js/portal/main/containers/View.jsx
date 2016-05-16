@@ -85,7 +85,7 @@ class View extends Component {
 	}
 
 	onViewBtnClick(dataObjectInfo, event, btnClass){
-		const btn = event.target;
+		const btn = event.currentTarget;
 
 		btn.className == btnClass
 			? this.props.addData(dataObjectInfo)
