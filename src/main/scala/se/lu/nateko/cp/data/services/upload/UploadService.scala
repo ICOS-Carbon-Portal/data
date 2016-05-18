@@ -65,7 +65,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 
 		def hashAndIrods = IndexedSeq.empty :+
 			new HashsumCheckingUploadTask(dataObj.hash) :+
-			new IrodsUploadTask(dataObj.hash.id, irods)
+			new IrodsUploadTask(dataObj, irods)
 
 		dataObj.specification.dataLevel match{
 			case 0 =>

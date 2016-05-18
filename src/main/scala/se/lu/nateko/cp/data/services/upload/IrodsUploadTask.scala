@@ -7,8 +7,14 @@ import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.irods.IrodsClient
+import se.lu.nateko.cp.meta.core.data.DataObject
 
-class IrodsUploadTask(filePath: String, client: IrodsClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+
+	private[this] val filePath: String = {
+		val formatId = dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
+		formatId + "/" + dataObject.hash.id
+	}
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = client.getNewFileSink(filePath)
 		.mapMaterializedValue(
