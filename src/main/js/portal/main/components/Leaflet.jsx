@@ -8,22 +8,23 @@ class Leaflet extends Component {
 
 	componentDidMount() {
 		const props = this.props;
+		const geoms = this.filterGeom(props.geoms);
 		const maxZoom = 21;
 		const baseMaps = this.getBaseMaps(maxZoom);
 
 		const map = this.map = L.map(ReactDOM.findDOMNode(this.refs.map), {
-			center: [props.geoms[0].lat, props.geoms[0].lon],
+			center: [geoms[0].lat, geoms[0].lon],
 			zoom: 6,
 			layers: [baseMaps.Topographic],
 			attributionControl: false
 		});
 
-		const newMarkers = this.buildMarkers(props.geoms);
+		const newMarkers = this.buildMarkers(geoms, props.labels);
 
 		map.addLayer(newMarkers.markers);
 
 		if (newMarkers.fitBounds) {
-			map.fitBounds(props.geoms.map(geom => [geom.lat, geom.lon]));
+			map.fitBounds(geoms.map(geom => [lat, lon]));
 		}
 
 		L.control.layers(baseMaps).addTo(map);
@@ -35,27 +36,42 @@ class Leaflet extends Component {
 		if (this.props.geoms.length != nextProps.geoms.length){
 			const map = this.state.map;
 			const markers = this.state.markers;
+			const geoms = this.filterGeom(nextProps.geoms);
 
 			map.removeLayer(markers);
-			const newMarkers = this.buildMarkers(nextProps.geoms);
+			const newMarkers = this.buildMarkers(geoms, nextProps.labels);
+
 			map.addLayer(newMarkers.markers);
 
 			if (newMarkers.fitBounds) {
-				map.fitBounds(nextProps.geoms.map(geom => [geom.lat, geom.lon]));
+				map.fitBounds(geoms.map(geom => [geom.lat, geom.lon]));
 			} else {
-				map.setView(nextProps.geoms[0], 6);
+				map.setView(geoms[0], 6);
 			}
 
 			this.setState({map, markers: newMarkers.markers});
 		}
 	}
 
-	buildMarkers(geoms){
+	filterGeom(geom){
+		return geom.map(g =>
+			g.lat && g.lon
+				? {lat: g.lat, lon: g.lon}
+				: {lat: 0, lon: 0}
+		);
+	}
+
+	buildMarkers(geoms, labels){
 		let markers = L.markerClusterGroup();
 		let positions = [];
 
-		geoms.forEach(geom => {
-			markers.addLayer(L.marker([geom.lat, geom.lon]));
+		geoms.forEach((geom, idx) => {
+			const marker = L.marker([geom.lat, geom.lon]);
+			const popUpTxt = geom.lat && geom.lon
+				? "<b>" + labels[idx] + "</b>"
+				: "<b>" + labels[idx] + "</b><br><p>Position is unknown!</p>";
+			marker.bindPopup(popUpTxt);
+			markers.addLayer(marker);
 
 			if (positions.findIndex(pos => pos[0] == geom.lat && pos[1] == geom.lon) < 0) {
 				positions.push([geom.lat, geom.lon]);
