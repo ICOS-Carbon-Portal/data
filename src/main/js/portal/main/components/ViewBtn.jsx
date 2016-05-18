@@ -28,7 +28,10 @@ class ViewBtn extends React.Component {
 		if (dataObjectInfo.view){
 			this.props.removeData(dataObjectInfo);
 		} else {
-			this.props.addData(dataObjectInfo);
+			const useCache = this.props.dataObjects.findIndex(
+					dob => dob.id == dataObjectInfo.id && dob.binTable != null && dob.metaData != null
+				) >= 0;
+			this.props.addData(dataObjectInfo, useCache);
 		}
 	}
 	
@@ -79,8 +82,8 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		addData(dataObjectInfo){
-			dispatch(addDataObject(dataObjectInfo));
+		addData(dataObjectInfo, useCache){
+			dispatch(addDataObject(dataObjectInfo, useCache));
 		},
 
 		removeData(dataObjectInfo){

@@ -34,7 +34,11 @@ export default function(state, action){
 
 		case FETCHED_DATA:
 			if (state.dataObjId === action.dataObjId){
-				const dataObjects = updateDataObjects(state.dataObjects, action.dataObjId, 'view', action.format, action.binTable);
+				const dataObjects = action.format && action.binTable
+					// Fetch data
+					? updateDataObjects(state.dataObjects, action.dataObjId, 'view', action.format, action.binTable)
+					// Use cached data
+					: updateDataObjects(state.dataObjects, action.dataObjId, 'view');
 
 				return Object.assign({}, state, {
 					status: FETCHED_DATA,

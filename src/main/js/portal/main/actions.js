@@ -76,13 +76,25 @@ export const pinDataObject = dataObjectInfo => dispatch => {
 	});
 }
 
-export const addDataObject = dataObjectInfo => dispatch => {
-	dispatch({
-		type: DATA_CHOSEN,
-		dataObjId: dataObjectInfo.id
-	});
+export const addDataObject = (dataObjectInfo, useCache) => dispatch => {
+	if (useCache){
+		dispatch({
+			type: DATA_CHOSEN,
+			dataObjId: dataObjectInfo.id
+		});
 
-	dispatch(fetchData(dataObjectInfo));
+		dispatch({
+			type: FETCHED_DATA,
+			dataObjId: dataObjectInfo.id
+		});
+	} else {
+		dispatch({
+			type: DATA_CHOSEN,
+			dataObjId: dataObjectInfo.id
+		});
+
+		dispatch(fetchData(dataObjectInfo));
+	}
 }
 
 export const removeDataObject = dataObjectInfo => dispatch => {
