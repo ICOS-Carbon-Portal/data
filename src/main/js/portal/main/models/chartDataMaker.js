@@ -30,7 +30,7 @@ export function binTables2Dygraph(binTables, debug = false){
 			}
 		}
 
-		return minVal;
+		return Number.MAX_VALUE == minVal ? NaN : minVal;
 	}
 
 	let idxs = new Array(binTables.length).fill(0);
