@@ -24,7 +24,7 @@ class Leaflet extends Component {
 		map.addLayer(newMarkers.markers);
 
 		if (newMarkers.fitBounds) {
-			map.fitBounds(geoms.map(geom => [lat, lon]));
+			map.fitBounds(geoms.map(geom => [geom.lat, geom.lon]));
 		}
 
 		L.control.layers(baseMaps).addTo(map);
@@ -64,17 +64,22 @@ class Leaflet extends Component {
 	buildMarkers(geoms, labels){
 		let markers = L.markerClusterGroup();
 		let positions = [];
+		let wdcggIcon = L.icon({
+			iconUrl: 'https://static.icos-cp.eu/images/tmp/wdcgg.svg',
+			iconSize:     [23, 28],
+			iconAnchor:   [12, 28],
+			popupAnchor:  [0, -23]
+		});
 
 		geoms.forEach((geom, idx) => {
-			const marker = L.marker([geom.lat, geom.lon]);
-			const popUpTxt = geom.lat && geom.lon
-				? "<b>" + labels[idx] + "</b>"
-				: "<b>" + labels[idx] + "</b><br><p>Position is unknown!</p>";
-			marker.bindPopup(popUpTxt);
-			markers.addLayer(marker);
+			if (geom.lat && geom.lon) {
+				const marker = L.marker([geom.lat, geom.lon], {icon: wdcggIcon});
+				marker.bindPopup("<b>" + labels[idx] + "</b>");
+				markers.addLayer(marker);
 
-			if (positions.findIndex(pos => pos[0] == geom.lat && pos[1] == geom.lon) < 0) {
-				positions.push([geom.lat, geom.lon]);
+				if (positions.findIndex(pos => pos[0] == geom.lat && pos[1] == geom.lon) < 0) {
+					positions.push([geom.lat, geom.lon]);
+				}
 			}
 		});
 
@@ -89,19 +94,19 @@ class Leaflet extends Component {
 	}
 
 	getBaseMaps(maxZoom){
-		var topo = L.tileLayer('http://server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+		var topo = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
 			maxZoom: maxZoom
 		});
 
-		var image = L.tileLayer('http://server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		var image = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 			maxZoom: maxZoom
 		});
 
-		var osm = L.tileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+		var osm = L.tileLayer(window.location.protocol + "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
 			maxZoom: maxZoom
 		});
 
-		var mapQuest = L.tileLayer("http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png", {
+		var mapQuest = L.tileLayer(window.location.protocol + "//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png", {
 			maxZoom: maxZoom,
 			subdomains: "1234"
 		});
