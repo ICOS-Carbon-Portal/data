@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import { connect } from 'react-redux';
-import {addDataObject, removeDataObject, FETCHED_DATA, REMOVED_DATA} from '../actions';
-import {btnClass, btnClassActive, viewIconOpen, viewIconClosed, viewIconWorking} from './DataObjectList.jsx';
+import {addDataObject, removeDataObject} from '../actions';
+import {btnClass, btnClassActive, viewIconOpen, viewIconClosed} from './DataObjectList.jsx';
 
 
 class ViewBtn extends React.Component {
@@ -10,26 +10,12 @@ class ViewBtn extends React.Component {
 		this.state = {};
 	}
 
-	componentWillReceiveProps(nextProps){
-		if (nextProps.status == FETCHED_DATA || nextProps.status == REMOVED_DATA){
-			this.setState({
-				id: this.state.id,
-				working: false
-			});
-		}
-	}
-
 	onViewBtnClick(dataObjectInfo){
-		this.setState({
-			id: dataObjectInfo.id,
-			working: true
-		});
-
 		if (dataObjectInfo.view){
 			this.props.removeData(dataObjectInfo);
 		} else {
-			const useCache = this.props.dataObjects.findIndex(
-					dob => dob.id == dataObjectInfo.id && dob.binTable != null && dob.metaData != null
+			const useCache = this.props.dataObjects.findIndex(dob =>
+					dob.id == dataObjectInfo.id && dob.binTable != null && dob.metaData != null
 				) >= 0;
 			this.props.addData(dataObjectInfo, useCache);
 		}
@@ -38,14 +24,8 @@ class ViewBtn extends React.Component {
 	render(){
 		const props = this.props;
 		const rowData = this.props.rowData;
-		const state = this.state;
+		const viewClasses = getBtnClasses(props.rowData);
 
-		const viewClasses = getBtnClasses(props.rowData, state);
-		// console.log({state, props, viewClasses});
-		// if (state && rowData.id == state.id) {
-		// 	console.log({ViewBtnRender: props, state, viewClasses});
-		// }
-		
 		return (
 			<button className={viewClasses.btn}
 					onClick={() => this.onViewBtnClick(rowData)}
@@ -56,24 +36,11 @@ class ViewBtn extends React.Component {
 	}
 }
 
-function getBtnClasses(rowData, state){
-	if (state && rowData.id == state.id){
-		return {
-			btn: rowData.view ? btnClassActive : btnClass,
-			icon: state.working
-				? viewIconWorking
-				: rowData.view
-					? viewIconOpen
-					: viewIconClosed
-		};
-	} else {
-		return {
-			btn: rowData.view ? btnClassActive : btnClass,
-			icon: rowData.view
-				? viewIconOpen
-				: viewIconClosed
-		};
-	}
+function getBtnClasses(rowData){
+	return {
+		btn: rowData.view ? btnClassActive : btnClass,
+		icon: rowData.view ? viewIconOpen : viewIconClosed
+	};
 }
 
 function stateToProps(state){

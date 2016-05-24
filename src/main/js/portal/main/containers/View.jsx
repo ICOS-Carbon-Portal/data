@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom'
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import Chart from '../components/Chart.jsx'
-import Leaflet from '../components/Leaflet.jsx'
-import DataObjectList from '../components/DataObjectList.jsx'
-import MetaDataTable from '../components/MetaDataTable.jsx'
+import Dygraphs from '../components/Dygraphs.jsx';
+import Leaflet from '../components/Leaflet.jsx';
+import DataObjectList from '../components/DataObjectList.jsx';
+import MetaDataTable from '../components/MetaDataTable.jsx';
 
 class View extends Component {
 	constructor(props){
@@ -50,13 +50,18 @@ class View extends Component {
 					</div>
 					<div ref="chartDiv" id="chartDiv" className="col-md-6">
 						{props.forChart.data.length > 0 && this.state.loadComponents
-							? <Chart ref="chartComp" {...props.forChart} width={this.state.chartDivWidth} />
+						? <Dygraphs {...props.forChart} width={this.state.chartDivWidth} /> //<Chart ref="chartComp" {...props.forChart} width={this.state.chartDivWidth} />
 							: null
 						}
 					</div>
 					<div ref="mapDiv" id="mapDiv" className="col-md-3">
 						{props.forMap.geoms.length > 0 && this.state.loadComponents
-							? <Leaflet geoms={props.forMap.geoms} labels={props.forChart.labels.slice(1)} width={this.state.mapDivWidth} />
+							? <Leaflet
+								geoms={props.forMap.geoms}
+								labels={props.forChart.labels.slice(1)}
+								metaData={props.dataObjects.filter(dob => dob.view)}
+								width={this.state.mapDivWidth}
+							/>
 							: null
 						}
 					</div>

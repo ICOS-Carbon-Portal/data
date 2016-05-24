@@ -7,7 +7,6 @@ export const btnClass = "btn btn-default btn-xs";
 export const btnClassActive = "btn btn-primary btn-xs active";
 export const viewIconOpen = "glyphicon glyphicon-eye-open";
 export const viewIconClosed = "glyphicon glyphicon-eye-close";
-export const viewIconWorking = "glyphicon glyphicon-refresh spinning";
 
 class DataObjectList extends React.Component {
 	constructor(props){

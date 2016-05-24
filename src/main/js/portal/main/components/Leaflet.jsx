@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 
 class Leaflet extends Component {
 	constructor(props){
-		super(props)
+		super(props);
 	}
 
 	componentDidMount() {
@@ -70,6 +70,8 @@ class Leaflet extends Component {
 			iconAnchor:   [12, 28],
 			popupAnchor:  [0, -23]
 		});
+
+		// console.log({geoms, labels, props: this.props, state: this.state});
 
 		geoms.forEach((geom, idx) => {
 			if (geom.lat && geom.lon) {
