@@ -48,8 +48,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 					Unmarshal(resp.entity).to[DataObject]
 				case StatusCodes.NotFound =>
 					Future.failed(new MetadataObjectNotFound(hash))
-				case _ =>
-					Future.failed(new Exception(s"Got '${resp.status}' from $url"))
+				case notOk =>
+					failWithReturnedMessage(notOk, resp)
 			}
 		)
 	}
@@ -92,6 +92,6 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 		resp.entity.toStrict(3 seconds)            //making sure the response is not chunked
 			.map(strict => strict.data.decodeString("UTF-8"))   //extracting the response body as string, to treat is as error message later
 			.recover{case _: Throwable => s"Got $status from the metadata server"}  //fallback error message
-			.flatMap(msg => Future.failed(new CpDataException(msg)))   //failing with the error message
+			.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))   //failing with the error message
 	}
 }
