@@ -8,18 +8,20 @@ class Leaflet extends Component {
 
 	componentDidMount() {
 		const props = this.props;
-		const geoms = this.filterGeom(props.geoms);
+		const mapObjects = props.forMap;
 		const maxZoom = 21;
 		const baseMaps = this.getBaseMaps(maxZoom);
 
+		// this.debug("load", props);
+
 		const map = this.map = L.map(ReactDOM.findDOMNode(this.refs.map), {
-			center: [geoms[0].lat, geoms[0].lon],
+			center: [mapObjects[0].geom.lat, mapObjects[0].geom.lon],
 			zoom: 6,
 			layers: [baseMaps.Topographic],
 			attributionControl: false
 		});
 
-		const newMarkers = this.buildMarkers(geoms, props.labels);
+		const newMarkers = this.buildMarkers(mapObjects);
 
 		map.addLayer(newMarkers.markers);
 
@@ -33,35 +35,33 @@ class Leaflet extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		if (this.props.geoms.length != nextProps.geoms.length){
+		if (this.props.forMap.length != nextProps.forMap.length){
 			const map = this.state.map;
 			const markers = this.state.markers;
-			const geoms = this.filterGeom(nextProps.geoms);
+			const mapObjects = nextProps.forMap;
+
+			// this.debug("update", nextProps);
 
 			map.removeLayer(markers);
-			const newMarkers = this.buildMarkers(geoms, nextProps.labels);
+			const newMarkers = this.buildMarkers(mapObjects);
 
 			map.addLayer(newMarkers.markers);
 
 			if (newMarkers.fitBounds) {
-				map.fitBounds(geoms.map(geom => [geom.lat, geom.lon]));
+				map.fitBounds(mapObjects.map(mapObj => [mapObj.geom.lat, mapObj.geom.lon]));
 			} else {
-				map.setView(geoms[0], 6);
+				map.setView([mapObjects[0].geom.lat, mapObjects[0].geom.lon], 6);
 			}
 
 			this.setState({map, markers: newMarkers.markers});
 		}
 	}
 
-	filterGeom(geom){
-		return geom.map(g =>
-			g.lat && g.lon
-				? {lat: g.lat, lon: g.lon}
-				: {lat: 0, lon: 0}
-		);
+	debug(sender, props){
+		console.log({sender, props});
 	}
 
-	buildMarkers(geoms, labels){
+	buildMarkers(mapObjects){
 		let markers = L.markerClusterGroup();
 		let positions = [];
 		let wdcggIcon = L.icon({
@@ -71,16 +71,22 @@ class Leaflet extends Component {
 			popupAnchor:  [0, -23]
 		});
 
-		// console.log({geoms, labels, props: this.props, state: this.state});
+		// console.log({mapObjects, props: this.props, state: this.state});
 
-		geoms.forEach((geom, idx) => {
-			if (geom.lat && geom.lon) {
-				const marker = L.marker([geom.lat, geom.lon], {icon: wdcggIcon});
-				marker.bindPopup("<b>" + labels[idx] + "</b>");
+		mapObjects.forEach(mapObj => {
+			if (mapObj.geom.lat && mapObj.geom.lon) {
+				const marker = L.marker([mapObj.geom.lat, mapObj.geom.lon], {icon: wdcggIcon});
+				const popupHeader = "<b>" + mapObj.popup.stationName + "</b>";
+
+				const popupTxt = Object.keys(mapObj.popup).filter(key => key != "stationName").map(key => {
+					return "<div>" + mapObj.popup[key] + "</div>"
+				}).join("");
+
+				marker.bindPopup(popupHeader + popupTxt);
 				markers.addLayer(marker);
 
-				if (positions.findIndex(pos => pos[0] == geom.lat && pos[1] == geom.lon) < 0) {
-					positions.push([geom.lat, geom.lon]);
+				if (positions.findIndex(pos => pos[0] == mapObj.geom.lat && pos[1] == mapObj.geom.lon) < 0) {
+					positions.push([mapObj.geom.lat, mapObj.geom.lon]);
 				}
 			}
 		});

@@ -101,14 +101,15 @@ export function binTables2Dygraph(binTables, debug = false){
 	return data;
 }
 
-export function generateChartData(dataObjects){
-	const viewed = dataObjects.filter(dob => dob.view);
-	const binTables = viewed.map(dob => dob.binTable);
-	const labels = ["time instant"].concat(composeWdcggLabels(viewed.map(dob => dob.metaData.format )));
-	// console.log({viewed, binTables, labels});
+export function getLabels(dataObjects){
+	return composeWdcggLabels(dataObjects.filter(dob => dob.view).map(dob => dob.metaData.format ));
+}
+
+export function generateChartData(dataObjects, labels){
+	const binTables = dataObjects.filter(dob => dob.view).map(dob => dob.binTable);
 
 	return {
 		data: binTables2Dygraph(binTables),
-		labels
+		labels: ["time instant"].concat(labels)
 	}
 }

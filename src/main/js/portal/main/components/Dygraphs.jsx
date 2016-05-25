@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import { connect } from 'react-redux';
 import Dygraph from 'dygraphs';
 // import ShowLazily from './ShowLazily.jsx';
-import {FETCHED_DATA, REMOVED_DATA} from '../actions';
+import {FETCHED_DATA, REMOVED_DATA, PIN_DATA} from '../actions';
 
 const delay = 10;
 
@@ -68,8 +68,11 @@ class Dygraphs extends React.Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		// console.log({componentWillReceiveProps: this.props, nextProps, state: this.state});
-		this.setState({working: true});
+		console.log({componentWillReceiveProps: this.props, nextProps, state: this.state});
+
+		if(nextProps.status != PIN_DATA) {
+			this.setState({working: true});
+		}
 
 		if(nextProps.status == FETCHED_DATA || nextProps.status == REMOVED_DATA){
 			this.delayedRender(this.state.graph, nextProps.forChart.data, nextProps.forChart.labels);

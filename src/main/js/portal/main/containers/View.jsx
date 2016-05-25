@@ -55,11 +55,9 @@ class View extends Component {
 						}
 					</div>
 					<div ref="mapDiv" id="mapDiv" className="col-md-3">
-						{props.forMap.geoms.length > 0 && this.state.loadComponents
+						{props.forMap.length > 0 && this.state.loadComponents
 							? <Leaflet
-								geoms={props.forMap.geoms}
-								labels={props.forChart.labels.slice(1)}
-								metaData={props.dataObjects.filter(dob => dob.view)}
+								forMap={props.forMap}
 								width={this.state.mapDivWidth}
 							/>
 							: null

@@ -1,6 +1,6 @@
 import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
 	FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
-import {generateChartData} from './models/chartDataMaker';
+import {getLabels, generateChartData} from './models/chartDataMaker';
 
 export default function(state, action){
 
@@ -40,13 +40,13 @@ export default function(state, action){
 					// Use cached data
 					: updateDataObjects(state.dataObjects, action.dataObjId, 'view');
 
+				const labels = getLabels(dataObjects);
+
 				return Object.assign({}, state, {
 					status: FETCHED_DATA,
 					dataObjects,
-					forChart: generateChartData(dataObjects),
-					forMap: {
-						geoms: getMapData(dataObjects)
-					},
+					forChart: generateChartData(dataObjects, labels),
+					forMap: getMapData(dataObjects, labels),
 					format: action.format
 				});
 			} else {
@@ -58,14 +58,13 @@ export default function(state, action){
 		
 		case REMOVE_DATA:
 			const dataObjects = updateDataObjects(state.dataObjects, action.dataObjId, 'view');
+			const labels = getLabels(dataObjects);
 
 			return Object.assign({}, state, {
 				status: REMOVED_DATA,
 				dataObjects,
-				forChart: generateChartData(dataObjects),
-				forMap: {
-					geoms: getMapData(dataObjects)
-				},
+				forChart: generateChartData(dataObjects, labels),
+				forMap: getMapData(dataObjects, labels),
 				format: state.format
 			});
 
@@ -102,15 +101,14 @@ export default function(state, action){
 			) {
 				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, state.dataObjects);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
+				const labels = getLabels(dataObjects);
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
 					filteredDataObjects,
 					dataObjects,
-					forChart: generateChartData(dataObjects),
-					forMap: {
-						geoms: getMapData(dataObjects)
-					}
+					forChart: generateChartData(dataObjects, labels),
+					forMap: getMapData(dataObjects, labels)
 				});
 			} else {
 				return state;
@@ -122,16 +120,22 @@ export default function(state, action){
 
 }
 
-function getMapData(dataObjects){
-	const newGeoms = dataObjects.filter(dob => dob.view).map(dob => {
+function getMapData(dataObjects, labels){
+	return dataObjects.filter(dob => dob.view).map((dob, idx) => {
 		return {
 			id: dob.id,
-			lat: dob.metaData.geom.lat,
-			lon: dob.metaData.geom.lon
+			geom: (dob.metaData.geom.lat && dob.metaData.geom.lon)
+				? {lat: dob.metaData.geom.lat, lon: dob.metaData.geom.lon}
+				: {lat: 0, lon: 0}
+			,
+			popup: dob.metaData.format.filter(frm => frm.label == "STATION NAME").map(frm =>{
+				return {
+					stationName: frm.value,
+					label: labels.slice(idx, idx + 1)[0]
+				}
+			})[0]
 		}
 	});
-
-	return newGeoms;
 }
 
 function loadDataObjects(dataObjects, filteredDataObjects){
