@@ -28,6 +28,19 @@ export function tableFormatForSpecies(objSpecies){
 	return sparql(query).then(parseTableFormat);
 }
 
+export function getStationPositions(){
+	const query = sparqlQueries.stationPositions();
+	return sparql(query).then(sparqlResult => {
+		return sparqlResult.results.bindings.map(binding => {
+			return {
+				name: binding.name.value,
+				lat: parseFloat(binding.lat.value),
+				lon: parseFloat(binding.lon.value)
+			}
+		})
+	});
+}
+
 export function getDataObjectData(dobjId, tblRequest){
 	return Promise.all([
 		getFormatSpecificProps(dobjId),
@@ -83,17 +96,25 @@ export function getGlobalTimeInterval(spec){
 	});
 }
 
-export function getFilteredPropValueCounts(spec, filters, fromDate, toDate){
+export function getFilteredPropValueCounts(spec, filters, fromDate, toDate, spatial){
+	// console.log({stations: spatial.stations, forMap: spatial.forMap, filtered: spatial.filtered});
+	const spatialStationList = spatial.stations.length == spatial.filtered.length
+		? []
+		: spatial.filtered;
+
 	return Promise.all([
-		getPropValueCounts(spec, filters, fromDate, toDate),
-		getFilteredDataObjects(spec, filters, fromDate, toDate)
+		getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList),
+		getFilteredDataObjects(spec, filters, fromDate, toDate, spatialStationList)
 	]).then(([propValCount, filteredDataObjects]) => {
 		return {propValCount, filteredDataObjects};
 	});
 }
 
-function getPropValueCounts(spec, filters, fromDate, toDate){
-	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
+function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
+	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList);
+
+	// console.log({spatialStationList});
+	// console.log(query);
 
 	function bindingToValueCount(binding){
 		return {
@@ -109,8 +130,8 @@ function getPropValueCounts(spec, filters, fromDate, toDate){
 	));
 }
 
-function getFilteredDataObjects(spec, filters, fromDate, toDate){
-	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate);
+function getFilteredDataObjects(spec, filters, fromDate, toDate, spatialStationList){
+	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate, spatialStationList);
 
 	function bindingToValueCount(binding){
 		return {

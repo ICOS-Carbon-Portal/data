@@ -25,6 +25,28 @@ export class PropertyValueFilter{
 	}
 }
 
+export class PropertyListFilter{
+	constructor(prop, list){
+		this._prop = prop;
+		this._value = list;
+	}
+
+	get list(){
+		return this._value;
+	}
+
+	getValueList(){
+		const stationList = this._value.map(station => station.name + "^^xsd:string").join(" ");
+		
+		return `VALUES ?stationName {\n${stationList}\n}\n`;
+	}
+
+	getSparql(varName){
+		const stringValue = sparqlEscape(this._value);
+		return `?${varName} <${this._prop}> "?stationName .\n`;
+	}
+}
+
 function sparqlEscape(s){
 	return s.replace(/\"/g, '\\\"');
 }

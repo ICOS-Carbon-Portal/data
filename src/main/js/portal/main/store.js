@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 import reducer from './reducer'
-import {routeUpdated, fetchTableFormat} from './actions'
+import {routeUpdated, fetchTableFormat, fetchStationPositions} from './actions'
 import config from './config';
 import { EmptyFilter } from './models/Filters';
 
@@ -30,7 +30,12 @@ const initState = {
 	fromDate: null,
 	toDate: null,
 	propValueCounts: initCounts,
-	filters: initFilters
+	filters: initFilters,
+	spatial: {
+		stations: [],
+		forMap: [],
+		filtered: []
+	}
 };
 
 // function logger({ getState }) {
@@ -53,6 +58,7 @@ const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 export default function(){
 	store.dispatch(routeUpdated());
 	store.dispatch(fetchTableFormat(config.wdcggSpec));
+	store.dispatch(fetchStationPositions());
 	return store;
 }
 

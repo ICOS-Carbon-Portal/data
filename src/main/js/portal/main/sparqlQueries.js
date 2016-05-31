@@ -94,11 +94,18 @@ where{
 }`;
 }
 
-export function getPropValueCounts(spec, filters, fromDate, toDate){
+export function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
 	const props = Object.keys(filters);
 	const propsList = '<' + props.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+	const spatialSupplement = spatialStationList.length > 0
+		? `?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME> ?stationName .\n
+			VALUES ?stationName {\n
+			${spatialStationList.map(station => 
+				'"' + station.name.replace(/"/g, '\\"') + '"^^xsd:string')
+			.join(" ")}\n}\n`
+		: "";
 
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -107,7 +114,8 @@ FROM <${wdcggUri}>
 WHERE {
 	{
 		select ?dobj where {
-			${dobjsQueryStatements} 
+			${spatialSupplement}
+			${dobjsQueryStatements}
 		}
 	}
 	VALUES ?prop {${propsList}}
@@ -138,16 +146,38 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 	${filterClauses} ${fromDateClause} ${toDateClause}`;
 }
 
-export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
+export function getFilteredDataObjQuery(spec, filters, fromDate, toDate, spatialStationList){
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+	const spatialSupplement = spatialStationList.length > 0
+		? `?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME> ?stationName .\n
+			VALUES ?stationName {\n
+			${spatialStationList.map(station =>
+	'"' + station.name.replace(/"/g, '\\"') + '"^^xsd:string')
+		.join(" ")}\n}\n`
+		: "";
+
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?fileName ?nRows
 FROM <${wdcggUri}>
 where {
 	${dobjsQueryStatements}
+	${spatialSupplement}
 	?dobj cpmeta:hasName ?fileName .
 	?dobj cpmeta:hasNumberOfRows ?nRows .
 } order by ?fileName`;
+}
 
+export function stationPositions(){
+	return `prefix wdcgg: <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/>
+select distinct ?name (SAMPLE(?latStr) AS ?lat) (SAMPLE(?lonStr) AS ?lon)
+from <http://meta.icos-cp.eu/resources/wdcgg/>
+where{
+	?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME> ?name .
+	?dobj wdcgg:LATITUDE ?latStr .
+	?dobj wdcgg:LONGITUDE ?lonStr .
+	filter(?latStr != "" && ?lonStr != "")
+}
+group by ?name
+order by ?name`;
 }

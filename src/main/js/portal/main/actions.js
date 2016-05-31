@@ -1,9 +1,11 @@
-import {tableFormatForSpecies, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
+import {tableFormatForSpecies, getStationPositions, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 
 export const FETCHING_META = 'FETCHING_META';
+export const FETCHING_SPATIAL = 'FETCHING_SPATIAL';
 export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
+export const FETCHED_SPATIAL = 'FETCHED_SPATIAL';
 export const FETCHED_DATA = 'FETCHED_DATA';
 export const DATA_CHOSEN = 'DATA_CHOSEN';
 export const REMOVE_DATA = 'REMOVE_DATA';
@@ -16,6 +18,7 @@ export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
 export const FILTER_UPDATED = 'FILTER_UPDATED';
 export const GOT_PROP_VAL_COUNTS = 'GOT_PROP_VAL_COUNTS';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
+export const SPATIAL_EXTENT_DEFINED = 'SPATIAL_EXTENT_DEFINED';
 
 
 export const routeUpdated = (route) => (dispatch, getState) => {
@@ -53,6 +56,18 @@ export const fetchTableFormat = (dataObjSpec) => dispatch => {
 
 	tableFormatForSpecies(dataObjSpec).then(
 		tableFormat => dispatch(gotMeta(tableFormat)),
+		err => dispatch(failWithError(err))
+	);
+}
+
+export const fetchStationPositions = () => dispatch => {
+	dispatch({type: FETCHING_SPATIAL});
+
+	getStationPositions().then(
+		stationPositions => dispatch({
+			type: FETCHED_SPATIAL,
+			stationPositions
+		}),
 		err => dispatch(failWithError(err))
 	);
 }
@@ -120,6 +135,14 @@ export const toDateSet = (date) => dispatch => {
 	dispatch(fetchPropValueCounts);
 }
 
+export const spatialExtentDefined = (filteredStations) => dispatch => {
+	dispatch({
+		type: SPATIAL_EXTENT_DEFINED,
+		filteredStations
+	});
+	dispatch(fetchPropValueCounts);
+}
+
 export function fetchGlobalTimeInterval(dispatch, getState){
 	const objSpec = getState().objectSpecification;
 
@@ -160,9 +183,9 @@ export const updateFilter = (filterId, filter) => dispatch => {
 };
 
 function fetchPropValueCounts(dispatch, getState){
-	const {objectSpecification, filters, fromDate, toDate} = getState();
+	const {objectSpecification, filters, fromDate, toDate, spatial} = getState();
 
-	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
+	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate, spatial).then(
 		propsAndVals => dispatch({
 			type: GOT_PROP_VAL_COUNTS,
 			propsAndVals,

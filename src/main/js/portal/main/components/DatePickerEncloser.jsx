@@ -34,9 +34,9 @@ class DatePickerEncloser extends Component {
 	
 	render() {
 		
-		return <div className="row cp_datepicker">
+		return <div className="cp_datepicker">
 					
-				<div className="col-md-6">
+				<div className="col-md-4">
 				 	<div className="panel panel-default">
 				    	<div className="panel-heading" onClick={ this.closePanel1.bind(this)}><h4>Date from { dateAsIso(this.props.date1) }</h4></div>
 				    	<div ref="panel1" className="panel-body">
@@ -48,10 +48,7 @@ class DatePickerEncloser extends Component {
 						</div>
 						<div className="panel-footer"></div>
 					</div>
-				
-				</div>
-				
-				<div className="col-md-6">
+
 					<div className="panel panel-default">
 						<div className="panel-heading" onClick={ this.closePanel2.bind(this) }><h4>Date to { dateAsIso(this.props.date2) }</h4></div>
 				    	<div ref="panel2" className="panel-body">
@@ -74,7 +71,7 @@ function dateAsIso(dateString) {
 	let month = dateObj.getMonth() + 1;
 	month = month.toString().length === 1 ? '0' + month.toString() : month.toString(); 
 	let date = dateObj.getDate().toString().length === 1 ? '0' + dateObj.getDate() : dateObj.getDate();
-	return dateObj.getFullYear() + ' - ' + month + ' - ' + date;
+	return dateObj.getFullYear() + '-' + month + '-' + date;
 }
 
 export default DatePickerEncloser;

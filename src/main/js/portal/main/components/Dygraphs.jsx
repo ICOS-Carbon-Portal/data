@@ -68,7 +68,7 @@ class Dygraphs extends React.Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		console.log({componentWillReceiveProps: this.props, nextProps, state: this.state});
+		// console.log({componentWillReceiveProps: this.props, nextProps, state: this.state});
 
 		if(nextProps.status != PIN_DATA) {
 			this.setState({working: true});

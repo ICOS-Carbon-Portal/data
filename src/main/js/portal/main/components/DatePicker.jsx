@@ -50,7 +50,7 @@ class DatePicker extends Component {
 				}
 				
 				<div className="cp_datepicker_date">
-					<ReactDatePicker ref="datePicker" value={ this.state.date } onChange={ this.handleChange.bind(this) } /> 
+					<ReactDatePicker ref="datePicker" value={ this.state.date } onChange={ this.handleChange.bind(this) } />
 				</div>
 					
 				<div className="cp_datepicker_hours">

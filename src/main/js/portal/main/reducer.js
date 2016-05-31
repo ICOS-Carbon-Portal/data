@@ -1,5 +1,5 @@
-import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
-	FETCHING_META, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
+import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS, SPATIAL_EXTENT_DEFINED,
+	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
 
 export default function(state, action){
@@ -17,6 +17,9 @@ export default function(state, action){
 		case FETCHING_META:
 			return Object.assign({}, state, {status: FETCHING_META});
 
+		case FETCHING_SPATIAL:
+			return Object.assign({}, state, {status: FETCHING_SPATIAL});
+
 		case FETCHING_DATA:
 			return Object.assign({}, state, {status: FETCHING_DATA});
 
@@ -24,6 +27,15 @@ export default function(state, action){
 			return Object.assign({}, state, {
 				status: FETCHED_META,
 				tableFormat: action.tableFormat
+			});
+
+		case FETCHED_SPATIAL:
+			return Object.assign({}, state, {
+				spatial: {
+					stations: action.stationPositions,
+					forMap: action.stationPositions,
+					filtered: []
+				}
 			});
 
 		case PIN_DATA:
@@ -75,9 +87,20 @@ export default function(state, action){
 			let newDate = makeAllowedDate(action.date, state.fromDateMin, state);
 			return Object.assign({}, state, {fromDate: newDate});
 		}
+
 		case TO_DATE_SET: {
 			let newDate = makeAllowedDate(action.date, state.toDateMax, state);
 			return Object.assign({}, state, {toDate: newDate});
+		}
+
+		case SPATIAL_EXTENT_DEFINED: {
+			return Object.assign({}, state, {
+				spatial: {
+					stations: state.spatial.stations,
+					forMap: action.filteredStations,
+					filtered: action.filteredStations
+				}
+			});
 		}
 
 		case FILTER_UPDATED:
@@ -99,16 +122,29 @@ export default function(state, action){
 				state.fromDate === action.fromDate &&
 				state.toDate === action.toDate
 			) {
-				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, state.dataObjects);
+				const spatiallyFilteredStations = getFilteredStations(
+					state.spatial.stations,
+					action.propsAndVals.propValCount['http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME']
+				);
+				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, spatiallyFilteredStations);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
+
+				// console.log({spatiallyFilteredStations,
+				// 	propValCount: action.propsAndVals.propValCount['http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME'],
+				// 	filteredDataObjects, dataObjects, fromDate: state.fromDate});
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
 					filteredDataObjects,
 					dataObjects,
 					forChart: generateChartData(dataObjects, labels),
-					forMap: getMapData(dataObjects, labels)
+					forMap: getMapData(dataObjects, labels),
+					spatial: {
+						stations: state.spatial.stations,
+						forMap: spatiallyFilteredStations,
+						filtered: []
+					}
 				});
 			} else {
 				return state;
@@ -118,6 +154,10 @@ export default function(state, action){
 			return state;
 	}
 
+}
+
+function getFilteredStations(stations, propValStations){
+	return stations.filter(station => propValStations.findIndex(pvs => pvs.value == station.name) >= 0);
 }
 
 function getMapData(dataObjects, labels){
@@ -193,8 +233,8 @@ function getMetaData(format, dataObjId){
 	return {geom, format: newFormat};
 }
 
-function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects, dataObjects){
-
+function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations){
+// console.log({filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations});
 	if (filteredDataObjects){
 		const oldFdos = oldFilteredDataObjects || [];
 
