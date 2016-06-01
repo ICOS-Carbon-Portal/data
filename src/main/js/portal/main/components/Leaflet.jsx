@@ -1,5 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
+import * as LCommon from '../models/LeafletCommon';
 
 class Leaflet extends Component {
 	constructor(props){
@@ -10,7 +11,7 @@ class Leaflet extends Component {
 		const props = this.props;
 		const mapObjects = props.forMap;
 		const maxZoom = 21;
-		const baseMaps = this.getBaseMaps(maxZoom);
+		const baseMaps = LCommon.getBaseMaps(maxZoom);
 
 		// this.debug("load", props);
 
@@ -64,18 +65,11 @@ class Leaflet extends Component {
 	buildMarkers(mapObjects){
 		let markers = L.markerClusterGroup();
 		let positions = [];
-		let wdcggIcon = L.icon({
-			iconUrl: 'https://static.icos-cp.eu/images/tmp/wdcgg.svg',
-			iconSize:     [23, 28],
-			iconAnchor:   [12, 28],
-			popupAnchor:  [0, -23]
-		});
-
 		// console.log({mapObjects, props: this.props, state: this.state});
 
 		mapObjects.forEach(mapObj => {
 			if (mapObj.geom.lat && mapObj.geom.lon) {
-				const marker = L.marker([mapObj.geom.lat, mapObj.geom.lon], {icon: wdcggIcon});
+				const marker = L.marker([mapObj.geom.lat, mapObj.geom.lon], {icon: LCommon.wdcggIcon});
 				const popupHeader = "<b>" + mapObj.popup.stationName + "</b>";
 
 				const popupTxt = Object.keys(mapObj.popup).filter(key => key != "stationName").map(key => {
@@ -99,32 +93,6 @@ class Leaflet extends Component {
 
 	shouldComponentUpdate(){
 		return false;
-	}
-
-	getBaseMaps(maxZoom){
-		var topo = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-			maxZoom: maxZoom
-		});
-
-		var image = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-			maxZoom: maxZoom
-		});
-
-		var osm = L.tileLayer(window.location.protocol + "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-			maxZoom: maxZoom
-		});
-
-		var mapQuest = L.tileLayer(window.location.protocol + "//otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png", {
-			maxZoom: maxZoom,
-			subdomains: "1234"
-		});
-
-		return {
-			"Topographic": topo,
-			"Satellite": image,
-			"OSM": osm,
-			"MapQuest": mapQuest
-		};
 	}
 
 	componentWillUnmount() {

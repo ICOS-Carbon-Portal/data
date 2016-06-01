@@ -105,7 +105,7 @@ class MapSearch extends Component {
 			if (station.lat && station.lon) {
 				const marker = cluster
 					? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
-					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(3));
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4));
 				const popupHeader = "<b>" + station.name + "</b>";
 				marker.bindPopup(popupHeader);
 
