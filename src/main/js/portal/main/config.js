@@ -19,5 +19,5 @@ export default {
 }
 
 function wdcggProp(suffix){
-	return 'http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/' + suffix;
+	return 'http://meta.icos-cp.eu/resources/wdcgg/' + suffix;
 }

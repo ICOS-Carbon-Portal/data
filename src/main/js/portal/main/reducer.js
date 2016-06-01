@@ -124,14 +124,14 @@ export default function(state, action){
 			) {
 				const spatiallyFilteredStations = getFilteredStations(
 					state.spatial.stations,
-					action.propsAndVals.propValCount['http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME']
+					action.propsAndVals.propValCount['http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME']
 				);
 				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, spatiallyFilteredStations);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
 
 				// console.log({spatiallyFilteredStations,
-				// 	propValCount: action.propsAndVals.propValCount['http://meta.icos-cp.eu/ontologies/cpmeta/wdcgg/STATION+NAME'],
+				// 	propValCount: action.propsAndVals.propValCount['http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME'],
 				// 	filteredDataObjects, dataObjects, fromDate: state.fromDate});
 
 				return Object.assign({}, state, {
