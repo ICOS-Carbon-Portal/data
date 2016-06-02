@@ -1,6 +1,8 @@
 import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS, SPATIAL_EXTENT_DEFINED,
 	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
+import config from './config';
+import { SpatialFilter } from './models/Filters';
 
 export default function(state, action){
 
@@ -35,7 +37,8 @@ export default function(state, action){
 					stations: action.stationPositions,
 					forMap: action.stationPositions,
 					filtered: []
-				}
+				},
+				// filters: Object.assign({}, state.filters, new SpatialFilter("SPATIAL", []))
 			});
 
 		case PIN_DATA:
@@ -104,6 +107,7 @@ export default function(state, action){
 		}
 
 		case FILTER_UPDATED:
+			// console.log({FILTER_UPDATED: action.update});
 			return Object.assign({}, state, {
 				filters: Object.assign({}, state.filters, action.update)
 			});
@@ -124,11 +128,13 @@ export default function(state, action){
 			) {
 				const spatiallyFilteredStations = getFilteredStations(
 					state.spatial.stations,
-					action.propsAndVals.propValCount['http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME']
+					action.propsAndVals.propValCount[config.wdcggStationProp]
 				);
 				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, spatiallyFilteredStations);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
+
+				console.log({filters: state.filters});
 
 				// console.log({spatiallyFilteredStations,
 				// 	propValCount: action.propsAndVals.propValCount['http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME'],
@@ -143,7 +149,7 @@ export default function(state, action){
 					spatial: {
 						stations: state.spatial.stations,
 						forMap: spatiallyFilteredStations,
-						filtered: []
+						filtered: state.spatial.filtered
 					}
 				});
 			} else {
@@ -157,6 +163,7 @@ export default function(state, action){
 }
 
 function getFilteredStations(stations, propValStations){
+	// console.log({stations, propValStations});
 	return stations.filter(station => propValStations.findIndex(pvs => pvs.value == station.name) >= 0);
 }
 
@@ -168,7 +175,7 @@ function getMapData(dataObjects, labels){
 				? {lat: dob.metaData.geom.lat, lon: dob.metaData.geom.lon}
 				: {lat: 0, lon: 0}
 			,
-			popup: dob.metaData.format.filter(frm => frm.label == "STATION NAME").map(frm =>{
+			popup: dob.metaData.format.filter(frm => frm.prop == config.wdcggStationProp).map(frm =>{
 				return {
 					stationName: frm.value,
 					label: labels.slice(idx, idx + 1)[0]
@@ -221,9 +228,9 @@ function getMetaData(format, dataObjId){
 	let newFormat = [{label: "LANDING PAGE", value: dataObjId}];
 
 	format.forEach(obj => {
-		if (obj.label === 'LATITUDE'){
+		if (obj.prop === config.wdcggLatProp){
 			geom.lat = obj.value;
-		} else if (obj.label === 'LONGITUDE'){
+		} else if (obj.prop === config.wdcggLonProp){
 			geom.lon = obj.value;
 		} else {
 			newFormat.push(obj);
@@ -234,7 +241,7 @@ function getMetaData(format, dataObjId){
 }
 
 function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations){
-// console.log({filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations});
+ // console.log({filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations});
 	if (filteredDataObjects){
 		const oldFdos = oldFilteredDataObjects || [];
 

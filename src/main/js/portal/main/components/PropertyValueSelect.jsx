@@ -18,11 +18,12 @@ class PropertyValueSelect extends Component {
 
 	filterReset(){
 		const prop = this.props.prop;
-		const filter = new EmptyFilter();
+		const filter = new EmptyFilter(true);
 		this.props.filterUpdate(prop, filter);
 	}
 
 	render() {
+		// console.log({props: this.props});
 		const props = this.props;
 		const [valueLabels, value] = makeValueLabels(props.valueCounts, props.filter);
 

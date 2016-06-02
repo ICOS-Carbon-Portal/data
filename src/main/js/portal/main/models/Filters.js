@@ -1,5 +1,13 @@
 
 export class EmptyFilter{
+	constructor(render){
+		this._render = render;
+	}
+
+	get render(){
+		return this._render;
+	}
+	
 	getSparql(){
 		return "";
 	}
@@ -10,13 +18,18 @@ export class EmptyFilter{
 }
 
 export class PropertyValueFilter{
-	constructor(prop, value){
+	constructor(prop, value, render = true){
 		this._prop = prop;
 		this._value = value;
+		this._render = render;
 	}
 
 	get value(){
 		return this._value;
+	}
+
+	get render(){
+		return this._render;
 	}
 
 	getSparql(varName){
@@ -25,24 +38,29 @@ export class PropertyValueFilter{
 	}
 }
 
-export class PropertyListFilter{
-	constructor(prop, list){
+export class SpatialFilter{
+	constructor(prop, list, render = false){
 		this._prop = prop;
-		this._value = list;
+		this._values = list;
+		this._render = render;
 	}
 
 	get list(){
-		return this._value;
+		return this._values;
+	}
+
+	get render(){
+		return this._render;
 	}
 
 	getValueList(){
-		const stationList = this._value.map(station => station.name + "^^xsd:string").join(" ");
+		const stationList = this._values.map(station => station.name + "^^xsd:string").join(" ");
 		
 		return `VALUES ?stationName {\n${stationList}\n}\n`;
 	}
 
 	getSparql(varName){
-		const stringValue = sparqlEscape(this._value);
+		const stringValue = sparqlEscape(this._values);
 		return `?${varName} <${this._prop}> "?stationName .\n`;
 	}
 }

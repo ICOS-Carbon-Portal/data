@@ -31,6 +31,7 @@ export const routeUpdated = (route) => (dispatch, getState) => {
 }
 
 function failWithError(error){
+	console.log({error});
 	return {
 		type: ERROR,
 		error

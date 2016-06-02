@@ -63,7 +63,7 @@ WHERE {
 export function formatSpecificProps(dobjId){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-SELECT distinct ?label (str(?value) as ?val)
+SELECT distinct ?prop ?label (str(?value) as ?val)
 FROM <${wdcggBaseUri}>
 WHERE {
 	BIND (<${dobjId}> AS ?dobj)
@@ -75,9 +75,9 @@ WHERE {
 			?prod prov:endedAtTime ?value .
 			BIND ("SAMPLING STOP" AS ?label)
 		} UNION {
-			?p rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
-			?dobj ?p ?value .
-			?p rdfs:label ?label .
+			?prop rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
+			?dobj ?prop ?value .
+			?prop rdfs:label ?label .
 		}
 	}
 }
@@ -98,7 +98,7 @@ where{
 }
 
 export function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
-	const props = Object.keys(filters);
+	const props = Object.keys(filters).filter(key => filters[key].render);
 	const propsList = '<' + props.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
@@ -135,9 +135,12 @@ function stationNamesQueryComponent(stationNames){
 }
 
 function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
-	const props = Object.keys(filters);
+	const props = Object.keys(filters).filter(key => filters[key].render);
+	// const props = config.wdcggProps.map(({uri, label}) => );
 	const propsList = '<' + props.join('> <') + '>';
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
+
+	console.log({spec, filters, keys: Object.keys(filters), props, fromDate, toDate});
 
 	const fromDateClause = fromDate
 		? `

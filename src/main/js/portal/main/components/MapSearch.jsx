@@ -10,6 +10,7 @@ class MapSearch extends Component {
 	}
 
 	componentDidMount() {
+		// console.log({componentDidMount: this.props});
 		const props = this.props;
 		const self = this;
 
@@ -48,22 +49,24 @@ class MapSearch extends Component {
 				const bBox = layer.getLatLngs();
 				const filteredStations = self.spatialFilter(bBox);
 
-				self.setState({bBox});
+				self.setState({bBox, extentDefined: true});
 				self.props.setSpatialExtent(filteredStations);
 			}
 		});
 
-		this.setState({map});
+		this.setState({map, drawMap: true});
 	}
 
 	componentWillReceiveProps(nextProps){
 		// console.log({nextProps});
 		// console.log({state: this.state});
+		const drawMap = nextProps.spatial.forMap.length > 0 && this.state.drawMap;
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
 		const resetExtent = this.props.resetExtent != nextProps.resetExtent;
 
-		if (newSpatialData || clusteringChanged){
+		if (drawMap || newSpatialData || clusteringChanged){
+			this.setState({drawMap: false});
 			this.updateMap(nextProps.spatial.forMap, nextProps.clustered);
 		} else if(resetExtent){
 			this.resetExtent();
@@ -88,11 +91,14 @@ class MapSearch extends Component {
 	}
 
 	resetExtent(){
-		const map = this.state.map;
-		const props = this.props;
+		if (this.state.extentDefined) {
+			const map = this.state.map;
+			const props = this.props;
 
-		props.setSpatialExtent(props.spatial.stations);
-		map.setView([0,0], 1);
+			props.setSpatialExtent(props.spatial.stations);
+			map.setView([0, 0], 1);
+			this.setState({extentDefined: false});
+		}
 	}
 
 	buildMarkers(stationPositions, cluster){
