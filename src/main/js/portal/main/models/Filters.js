@@ -47,7 +47,7 @@ export class PropertyListFilter{
 	}
 }
 
-function sparqlEscape(s){
+export function sparqlEscape(s){
 	return s.replace(/\"/g, '\\\"');
 }
 

@@ -97,7 +97,7 @@ export function getGlobalTimeInterval(spec){
 }
 
 export function getFilteredPropValueCounts(spec, filters, fromDate, toDate, spatial){
-	// console.log({stations: spatial.stations, forMap: spatial.forMap, filtered: spatial.filtered});
+
 	const spatialStationList = spatial.stations.length == spatial.filtered.length
 		? []
 		: spatial.filtered;
@@ -112,9 +112,6 @@ export function getFilteredPropValueCounts(spec, filters, fromDate, toDate, spat
 
 function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
 	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList);
-
-	// console.log({spatialStationList});
-	// console.log(query);
 
 	function bindingToValueCount(binding){
 		return {
@@ -158,5 +155,4 @@ function groupBy(arr, keyMaker, valueMaker){
 		return acc;
 	}, {});
 }
-
 

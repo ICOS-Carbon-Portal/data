@@ -1,9 +1,12 @@
-const wdcggUri = "http://meta.icos-cp.eu/resources/wdcgg/";
+import config from './config';
+import {sparqlEscape} from './models/Filters';
+
+var {wdcggBaseUri, wdcggStationProp, wdcggLatProp, wdcggLonProp, cpmetaOntoUri, cpmetaResUri} = config;
 
 export function simpleDataObjects(objSpec){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 select *
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 where {
 	?id cpmeta:hasObjectSpec <${objSpec}> .
 	?id cpmeta:hasName ?fileName .
@@ -12,9 +15,9 @@ where {
 }
 
 export function simpleDataObject(objSpec, dobjId){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 select *
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 where {
 	<${dobjId}> cpmeta:hasObjectSpec <${objSpec}> .
 	<${dobjId}> cpmeta:hasName ?fileName .
@@ -23,9 +26,9 @@ where {
 }
 
 export function simpleObjectSchema(spec){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
-FROM <http://meta.icos-cp.eu/resources/cpmeta/>
+FROM <${cpmetaResUri}>
 WHERE {
 	<${spec}> cpmeta:containsDataset ?dset .
 	?dset cpmeta:hasColumn [
@@ -43,10 +46,10 @@ WHERE {
 }
 
 export function standardDataObjProps(dobjId){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT *
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 WHERE {
 	<${dobjId}> cpmeta:wasSubmittedBy/prov:wasAssociatedWith/cpmeta:hasName ?submitterName .
 	<${dobjId}> cpmeta:wasProducedBy [
@@ -58,10 +61,10 @@ WHERE {
 }
 
 export function formatSpecificProps(dobjId){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT distinct ?label (str(?value) as ?val)
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 WHERE {
 	BIND (<${dobjId}> AS ?dobj)
 	?dobj cpmeta:wasProducedBy ?prod . {
@@ -82,10 +85,10 @@ ORDER BY ?label`;
 }
 
 export function getGlobalTimeInterval(spec){
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select  (min(?startTime) as ?startMin) (max(?endTime) as ?endMax)
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 where{
 	?dobj cpmeta:hasObjectSpec <${spec}> .
 	?dobj cpmeta:wasProducedBy ?prod .
@@ -99,18 +102,12 @@ export function getPropValueCounts(spec, filters, fromDate, toDate, spatialStati
 	const propsList = '<' + props.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = spatialStationList.length > 0
-		? `?dobj <http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME> ?stationName .\n
-			VALUES ?stationName {\n
-			${spatialStationList.map(station => 
-				'"' + station.name.replace(/"/g, '\\"') + '"^^xsd:string')
-			.join(" ")}\n}\n`
-		: "";
+	const spatialSupplement = stationNamesQueryComponent(spatialStationList);
 
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 SELECT ?prop ?value (count(?dobj) as ?count)
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 WHERE {
 	{
 		select ?dobj where {
@@ -123,6 +120,18 @@ WHERE {
 }
 group by ?prop ?value
 order by ?prop ?value`;
+}
+
+function stationNamesQueryComponent(stationNames){
+	const namesEnumeration = stationNames
+		.map(station => '"' + sparqlEscape(station.name) + '"^^xsd:string')
+		.join(" ");
+	return stationNames.length > 0
+		? `?dobj <${wdcggStationProp}> ?stationName .
+			VALUES ?stationName {
+				${namesEnumeration}
+			}`
+		: "";
 }
 
 function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
@@ -148,18 +157,12 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 
 export function getFilteredDataObjQuery(spec, filters, fromDate, toDate, spatialStationList){
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = spatialStationList.length > 0
-		? `?dobj <http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME> ?stationName .\n
-			VALUES ?stationName {\n
-			${spatialStationList.map(station =>
-	'"' + station.name.replace(/"/g, '\\"') + '"^^xsd:string')
-		.join(" ")}\n}\n`
-		: "";
+	const spatialSupplement = stationNamesQueryComponent(spatialStationList);
 
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?fileName ?nRows
-FROM <${wdcggUri}>
+FROM <${wdcggBaseUri}>
 where {
 	${dobjsQueryStatements}
 	${spatialSupplement}
@@ -169,15 +172,15 @@ where {
 }
 
 export function stationPositions(){
-	return `prefix wdcgg: <http://meta.icos-cp.eu/resources/wdcgg/>
-select distinct ?name (SAMPLE(?latStr) AS ?lat) (SAMPLE(?lonStr) AS ?lon)
-from <http://meta.icos-cp.eu/resources/wdcgg/>
+	return `select distinct ?name (SAMPLE(?latStr) AS ?lat) (SAMPLE(?lonStr) AS ?lon)
+from <${wdcggBaseUri}>
 where{
-	?dobj <http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME> ?name .
-	?dobj wdcgg:LATITUDE ?latStr .
-	?dobj wdcgg:LONGITUDE ?lonStr .
+	?dobj <${wdcggStationProp}> ?name .
+	?dobj <${wdcggLatProp}> ?latStr .
+	?dobj <${wdcggLonProp}> ?lonStr .
 	filter(?latStr != "" && ?lonStr != "")
 }
 group by ?name
 order by ?name`;
 }
+
