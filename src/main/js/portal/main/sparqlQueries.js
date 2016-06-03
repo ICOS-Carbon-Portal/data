@@ -97,12 +97,12 @@ where{
 }`;
 }
 
-export function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
-	const props = Object.keys(filters).filter(key => filters[key].render);
+export function getPropValueCounts(spec, filters, fromDate, toDate){
+	const props = config.wdcggProps.map(({uri, label}) => uri);
 	const propsList = '<' + props.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = stationNamesQueryComponent(spatialStationList);
+	const spatialSupplement = filters[config.spatialStationProp].getSparql();
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -122,25 +122,10 @@ group by ?prop ?value
 order by ?prop ?value`;
 }
 
-function stationNamesQueryComponent(stationNames){
-	const namesEnumeration = stationNames
-		.map(station => '"' + sparqlEscape(station.name) + '"^^xsd:string')
-		.join(" ");
-	return stationNames.length > 0
-		? `?dobj <${wdcggStationProp}> ?stationName .
-			VALUES ?stationName {
-				${namesEnumeration}
-			}`
-		: "";
-}
-
 function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
-	const props = Object.keys(filters).filter(key => filters[key].render);
-	// const props = config.wdcggProps.map(({uri, label}) => );
+	const props = config.wdcggProps.map(({uri, label}) => uri);
 	const propsList = '<' + props.join('> <') + '>';
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
-
-	console.log({spec, filters, keys: Object.keys(filters), props, fromDate, toDate});
 
 	const fromDateClause = fromDate
 		? `
@@ -158,9 +143,9 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 	${filterClauses} ${fromDateClause} ${toDateClause}`;
 }
 
-export function getFilteredDataObjQuery(spec, filters, fromDate, toDate, spatialStationList){
+export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = stationNamesQueryComponent(spatialStationList);
+	const spatialSupplement = filters[config.spatialStationProp].getSparql();
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>

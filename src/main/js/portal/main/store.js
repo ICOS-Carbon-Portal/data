@@ -6,12 +6,11 @@ import config from './config';
 import { EmptyFilter } from './models/Filters';
 
 const initCounts = {};
-const initFilters = {
-	"SPATIAL": new EmptyFilter(false)
-};
+const initFilters = {};
+initFilters[config.spatialStationProp] = new EmptyFilter();
 config.wdcggProps.forEach(prop => {
 	initCounts[prop.uri] = [];
-	initFilters[prop.uri] = new EmptyFilter(true);
+	initFilters[prop.uri] = new EmptyFilter();
 });
 
 const initState = {
@@ -35,8 +34,7 @@ const initState = {
 	filters: initFilters,
 	spatial: {
 		stations: [],
-		forMap: [],
-		filtered: []
+		forMap: []
 	}
 };
 

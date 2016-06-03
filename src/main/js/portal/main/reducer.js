@@ -1,4 +1,4 @@
-import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS, SPATIAL_EXTENT_DEFINED,
+import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
 	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
 import config from './config';
@@ -35,10 +35,8 @@ export default function(state, action){
 			return Object.assign({}, state, {
 				spatial: {
 					stations: action.stationPositions,
-					forMap: action.stationPositions,
-					filtered: []
-				},
-				// filters: Object.assign({}, state.filters, new SpatialFilter("SPATIAL", []))
+					forMap: action.stationPositions
+				}
 			});
 
 		case PIN_DATA:
@@ -96,18 +94,7 @@ export default function(state, action){
 			return Object.assign({}, state, {toDate: newDate});
 		}
 
-		case SPATIAL_EXTENT_DEFINED: {
-			return Object.assign({}, state, {
-				spatial: {
-					stations: state.spatial.stations,
-					forMap: action.filteredStations,
-					filtered: action.filteredStations
-				}
-			});
-		}
-
 		case FILTER_UPDATED:
-			// console.log({FILTER_UPDATED: action.update});
 			return Object.assign({}, state, {
 				filters: Object.assign({}, state.filters, action.update)
 			});
@@ -128,17 +115,12 @@ export default function(state, action){
 			) {
 				const spatiallyFilteredStations = getFilteredStations(
 					state.spatial.stations,
+					state.filters[config.spatialStationProp],
 					action.propsAndVals.propValCount[config.wdcggStationProp]
 				);
-				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects, spatiallyFilteredStations);
+				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
-
-				console.log({filters: state.filters});
-
-				// console.log({spatiallyFilteredStations,
-				// 	propValCount: action.propsAndVals.propValCount['http://meta.icos-cp.eu/resources/wdcgg/STATION+NAME'],
-				// 	filteredDataObjects, dataObjects, fromDate: state.fromDate});
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
@@ -148,8 +130,7 @@ export default function(state, action){
 					forMap: getMapData(dataObjects, labels),
 					spatial: {
 						stations: state.spatial.stations,
-						forMap: spatiallyFilteredStations,
-						filtered: state.spatial.filtered
+						forMap: spatiallyFilteredStations
 					}
 				});
 			} else {
@@ -162,9 +143,9 @@ export default function(state, action){
 
 }
 
-function getFilteredStations(stations, propValStations){
-	// console.log({stations, propValStations});
-	return stations.filter(station => propValStations.findIndex(pvs => pvs.value == station.name) >= 0);
+function getFilteredStations(stations, spatialFilter, propValStations){
+	const spatialStations = spatialFilter.isEmpty() ? stations : spatialFilter.list;
+	return spatialStations.filter(spatialStation => propValStations.findIndex(pvs => pvs.value == spatialStation.name) >= 0);
 }
 
 function getMapData(dataObjects, labels){
@@ -186,7 +167,6 @@ function getMapData(dataObjects, labels){
 }
 
 function loadDataObjects(dataObjects, filteredDataObjects){
-	// console.log({dataObjects, filteredDataObjects});
 	const dobs = dataObjects.filter(dob => dob.pinned || (dob.view && filteredDataObjects.findIndex(fdo => fdo.id == dob.id) >= 0));
 	const fdos = filteredDataObjects.map(fdo => {
 		return {
@@ -206,7 +186,6 @@ function loadDataObjects(dataObjects, filteredDataObjects){
 }
 
 function updateDataObjects(dataObjects, dataObjId, prop, format, binTable){
-	// console.log({dataObjects, dataObjId, prop});
 	const dobs = dataObjects.slice(0);
 	const dobIdx = dobs.findIndex(dob => dob.id == dataObjId);
 	dobs[dobIdx][prop] = !dobs[dobIdx][prop];
@@ -240,8 +219,7 @@ function getMetaData(format, dataObjId){
 	return {geom, format: newFormat};
 }
 
-function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations){
- // console.log({filteredDataObjects, oldFilteredDataObjects, spatiallyFilteredStations});
+function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects){
 	if (filteredDataObjects){
 		const oldFdos = oldFilteredDataObjects || [];
 

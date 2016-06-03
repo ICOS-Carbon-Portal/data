@@ -18,7 +18,6 @@ export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
 export const FILTER_UPDATED = 'FILTER_UPDATED';
 export const GOT_PROP_VAL_COUNTS = 'GOT_PROP_VAL_COUNTS';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
-export const SPATIAL_EXTENT_DEFINED = 'SPATIAL_EXTENT_DEFINED';
 
 
 export const routeUpdated = (route) => (dispatch, getState) => {
@@ -136,14 +135,6 @@ export const toDateSet = (date) => dispatch => {
 	dispatch(fetchPropValueCounts);
 }
 
-export const spatialExtentDefined = (filteredStations) => dispatch => {
-	dispatch({
-		type: SPATIAL_EXTENT_DEFINED,
-		filteredStations
-	});
-	dispatch(fetchPropValueCounts);
-}
-
 export function fetchGlobalTimeInterval(dispatch, getState){
 	const objSpec = getState().objectSpecification;
 
@@ -184,9 +175,9 @@ export const updateFilter = (filterId, filter) => dispatch => {
 };
 
 function fetchPropValueCounts(dispatch, getState){
-	const {objectSpecification, filters, fromDate, toDate, spatial} = getState();
+	const {objectSpecification, filters, fromDate, toDate} = getState();
 
-	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate, spatial).then(
+	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
 		propsAndVals => dispatch({
 			type: GOT_PROP_VAL_COUNTS,
 			propsAndVals,

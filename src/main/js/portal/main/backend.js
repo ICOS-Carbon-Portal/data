@@ -97,25 +97,17 @@ export function getGlobalTimeInterval(spec){
 	});
 }
 
-export function getFilteredPropValueCounts(spec, filters, fromDate, toDate, spatial){
-	// console.log({stations: spatial.stations, forMap: spatial.forMap, filtered: spatial.filtered});
-	const spatialStationList = spatial.stations.length == spatial.filtered.length
-		? []
-		: spatial.filtered;
-
+export function getFilteredPropValueCounts(spec, filters, fromDate, toDate){
 	return Promise.all([
-		getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList),
-		getFilteredDataObjects(spec, filters, fromDate, toDate, spatialStationList)
+		getPropValueCounts(spec, filters, fromDate, toDate),
+		getFilteredDataObjects(spec, filters, fromDate, toDate)
 	]).then(([propValCount, filteredDataObjects]) => {
 		return {propValCount, filteredDataObjects};
 	});
 }
 
-function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList){
-	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList);
-
-	// console.log({spatialStationList});
-	// console.log(query);
+function getPropValueCounts(spec, filters, fromDate, toDate){
+	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
 
 	function bindingToValueCount(binding){
 		return {
@@ -131,8 +123,8 @@ function getPropValueCounts(spec, filters, fromDate, toDate, spatialStationList)
 	));
 }
 
-function getFilteredDataObjects(spec, filters, fromDate, toDate, spatialStationList){
-	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate, spatialStationList);
+function getFilteredDataObjects(spec, filters, fromDate, toDate){
+	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate);
 
 	function bindingToValueCount(binding){
 		return {

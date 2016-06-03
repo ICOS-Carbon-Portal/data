@@ -1,13 +1,6 @@
+import config from '../config';
 
 export class EmptyFilter{
-	constructor(render){
-		this._render = render;
-	}
-
-	get render(){
-		return this._render;
-	}
-	
 	getSparql(){
 		return "";
 	}
@@ -18,18 +11,13 @@ export class EmptyFilter{
 }
 
 export class PropertyValueFilter{
-	constructor(prop, value, render = true){
+	constructor(prop, value){
 		this._prop = prop;
 		this._value = value;
-		this._render = render;
 	}
 
 	get value(){
 		return this._value;
-	}
-
-	get render(){
-		return this._render;
 	}
 
 	getSparql(varName){
@@ -39,18 +27,17 @@ export class PropertyValueFilter{
 }
 
 export class SpatialFilter{
-	constructor(prop, list, render = false){
+	constructor(prop, list){
 		this._prop = prop;
 		this._values = list;
-		this._render = render;
+	}
+
+	isEmpty(){
+		return false;
 	}
 
 	get list(){
 		return this._values;
-	}
-
-	get render(){
-		return this._render;
 	}
 
 	getValueList(){
@@ -59,9 +46,17 @@ export class SpatialFilter{
 		return `VALUES ?stationName {\n${stationList}\n}\n`;
 	}
 
-	getSparql(varName){
-		const stringValue = sparqlEscape(this._values);
-		return `?${varName} <${this._prop}> "?stationName .\n`;
+	getSparql(){
+		const namesEnumeration = this._values
+			.map(station => '"' + sparqlEscape(station.name) + '"^^xsd:string')
+			.join(" ");
+
+		return this._values.length > 0
+			? `?dobj <${config.wdcggStationProp}> ?stationName .
+			VALUES ?stationName {
+				${namesEnumeration}
+			}`
+			: "";
 	}
 }
 

@@ -24,7 +24,8 @@ export default {
 	],
 	wdcggStationProp,
 	wdcggLatProp: wdcggProp('LATITUDE'),
-	wdcggLonProp: wdcggProp('LONGITUDE')
+	wdcggLonProp: wdcggProp('LONGITUDE'),
+	spatialStationProp: "STATION_NAME"
 }
 
 function wdcggProp(suffix){

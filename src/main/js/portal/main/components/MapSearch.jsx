@@ -1,7 +1,9 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import {spatialExtentDefined} from '../actions';
+import config from '../config';
+import { SpatialFilter, EmptyFilter } from '../models/Filters'
+import {updateFilter} from '../actions';
 import * as LCommon from '../models/LeafletCommon';
 
 class MapSearch extends Component {
@@ -41,7 +43,7 @@ class MapSearch extends Component {
 		const drawControl = new L.Control.Draw(drawOptions);
 		map.addControl(drawControl);
 
-		map.on('draw:created', function (e) {
+		map.on('draw:created', e => {
 			const layerType = e.layerType;
 			const layer = e.layer;
 
@@ -50,7 +52,15 @@ class MapSearch extends Component {
 				const filteredStations = self.spatialFilter(bBox);
 
 				self.setState({bBox, extentDefined: true});
-				self.props.setSpatialExtent(filteredStations);
+
+				const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
+				self.props.filterUpdate(config.spatialStationProp, filter);
+			}
+		});
+
+		map.on('zoomend', e => {
+			if (map.getZoom() == 6){
+				self.updateMap(self.props.spatial.stations, self.props.spatial.forMap, self.props.clustered);
 			}
 		});
 
@@ -58,8 +68,6 @@ class MapSearch extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		// console.log({nextProps});
-		// console.log({state: this.state});
 		const drawMap = nextProps.spatial.forMap.length > 0 && this.state.drawMap;
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
@@ -67,25 +75,25 @@ class MapSearch extends Component {
 
 		if (drawMap || newSpatialData || clusteringChanged){
 			this.setState({drawMap: false});
-			this.updateMap(nextProps.spatial.forMap, nextProps.clustered);
+			this.updateMap(nextProps.spatial.stations, nextProps.spatial.forMap, nextProps.clustered);
 		} else if(resetExtent){
 			this.resetExtent();
 		}
 	}
 
-	updateMap(stationPositions, cluster){
+	updateMap(allStations, filteredStations, cluster){
 		const map = this.state.map;
 		const markers = this.state.markers;
 
 		if (markers){
 			map.removeLayer(markers);
 		}
-		const newMarkers = this.buildMarkers(stationPositions, cluster);
+		const newMarkers = this.buildMarkers(allStations, filteredStations, cluster, map.getZoom());
 		map.addLayer(newMarkers);
 
-		if (this.state.bBox) {
-			map.fitBounds(this.state.bBox);
-		}
+		// if (this.state.bBox) {
+		// 	map.fitBounds(this.state.bBox);
+		// }
 
 		this.setState({map, markers: newMarkers, clustered: cluster, bBox: null});
 	}
@@ -95,23 +103,28 @@ class MapSearch extends Component {
 			const map = this.state.map;
 			const props = this.props;
 
-			props.setSpatialExtent(props.spatial.stations);
+			props.filterUpdate(config.spatialStationProp, new EmptyFilter());
+			// props.setSpatialExtent(props.spatial.stations);
 			map.setView([0, 0], 1);
 			this.setState({extentDefined: false});
 		}
 	}
 
-	buildMarkers(stationPositions, cluster){
+	buildMarkers(allStations, filteredStations, cluster, zoomLevel){
 		let clusteredMarkers = L.markerClusterGroup({
 			maxClusterRadius: 50
 		});
 		let markers = L.featureGroup();
 
-		stationPositions.forEach(station => {
+		allStations.forEach(station => {
 			if (station.lat && station.lon) {
 				const marker = cluster
-					? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
-					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4));
+					? filteredStations.findIndex(fs => fs.name == station.name) >= 0
+						? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
+						: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4))
+					:  filteredStations.findIndex(fs => fs.name == station.name) >= 0
+						? L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4))
+						: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4));
 				const popupHeader = "<b>" + station.name + "</b>";
 				marker.bindPopup(popupHeader);
 
@@ -156,10 +169,10 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		setSpatialExtent(filteredStations){
-			dispatch(spatialExtentDefined(filteredStations));
+		filterUpdate: function (propUri, filter) {
+			dispatch(updateFilter(propUri, filter));
 		}
-	};
+	}
 }
 
 export default connect(stateToProps, dispatchToProps)(MapSearch);
