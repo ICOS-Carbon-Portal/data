@@ -116,15 +116,31 @@ class MapSearch extends Component {
 		});
 		let markers = L.featureGroup();
 
+		// First all excluded stations so they are placed underneath included
 		allStations.forEach(station => {
-			if (station.lat && station.lon) {
+			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) < 0) {
 				const marker = cluster
-					? filteredStations.findIndex(fs => fs.name == station.name) >= 0
-						? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
-						: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4))
-					:  filteredStations.findIndex(fs => fs.name == station.name) >= 0
-						? L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4))
-						: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4));
+					? L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4))
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4));
+
+				const popupHeader = "<b>" + station.name + "</b>";
+				marker.bindPopup(popupHeader);
+
+				if (cluster) {
+					clusteredMarkers.addLayer(marker);
+				} else {
+					markers.addLayer(marker);
+				}
+			}
+		});
+
+		// Included stations
+		allStations.forEach(station => {
+			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) >= 0) {
+				const marker = cluster
+					? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4));
+
 				const popupHeader = "<b>" + station.name + "</b>";
 				marker.bindPopup(popupHeader);
 

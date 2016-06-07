@@ -102,7 +102,6 @@ export function getPropValueCounts(spec, filters, fromDate, toDate){
 	const propsList = '<' + props.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = filters[config.spatialStationProp].getSparql();
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -111,7 +110,6 @@ FROM <${wdcggBaseUri}>
 WHERE {
 	{
 		select ?dobj where {
-			${spatialSupplement}
 			${dobjsQueryStatements}
 		}
 	}
@@ -123,8 +121,7 @@ order by ?prop ?value`;
 }
 
 function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
-	const props = config.wdcggProps.map(({uri, label}) => uri);
-	const propsList = '<' + props.join('> <') + '>';
+	const props = Object.getOwnPropertyNames(filters);
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
 
 	const fromDateClause = fromDate
@@ -145,7 +142,6 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 
 export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
-	const spatialSupplement = filters[config.spatialStationProp].getSparql();
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -153,7 +149,6 @@ select ?dobj ?fileName ?nRows
 FROM <${wdcggBaseUri}>
 where {
 	${dobjsQueryStatements}
-	${spatialSupplement}
 	?dobj cpmeta:hasName ?fileName .
 	?dobj cpmeta:hasNumberOfRows ?nRows .
 } order by ?fileName`;

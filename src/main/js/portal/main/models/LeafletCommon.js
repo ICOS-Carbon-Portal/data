@@ -46,7 +46,7 @@ export function pointIconExcluded(radius) {
 		radius,
 		weight: 3,
 		color: 'white',
-		fillColor: 'rgb(200,150,150)',
-		fillOpacity: 0.5
+		fillColor: 'rgb(180,150,150)',
+		fillOpacity: 1
 	}
 };
