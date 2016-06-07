@@ -26,7 +26,7 @@ class Search extends Component {
 		const fromDate = props.fromDate || props.fromDateMin;
 		const toDate = props.toDate || props.toDateMax;
 		const returnedObjects = props.filteredDataObjects ? Object.keys(props.filteredDataObjects).length : null;
-		console.log({props});
+		// console.log({props});
 
 		return (
 			<div id="cp_data_search" className="container-fluid">

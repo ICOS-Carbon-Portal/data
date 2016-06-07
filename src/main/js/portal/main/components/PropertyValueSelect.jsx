@@ -23,11 +23,10 @@ class PropertyValueSelect extends Component {
 	}
 
 	render() {
-		// console.log({props: this.props});
 		const props = this.props;
 		const [valueLabels, value] = makeValueLabels(props.valueCounts, props.filter);
 
-		const buttDisabled = props.filter.isEmpty;
+		const buttDisabled = props.filter.isEmpty();
 		const buttClass = buttDisabled ? 'default' : 'primary';
 
 		return <div className="row">
@@ -61,7 +60,7 @@ function makeValueLabels(valueCounts, filter){
 		};
 	});
 
-	if(!filter.isEmpty) return [valLabels, filter.value];
+	if(!filter.isEmpty()) return [valLabels, filter.value];
 	else {
 		const longSummary = valLabels.slice(0, 40).map(vl => vl.label).join(' | ');
 		const summary = longSummary.length < 200 ? longSummary : longSummary.substring(0, 196) + " ...";

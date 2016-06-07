@@ -64,7 +64,7 @@ class MapSearch extends Component {
 			}
 		});
 
-		this.setState({map, drawMap: true});
+		this.setState({map, drawMap: true, extentDefined: !props.filters[config.spatialStationProp].isEmpty()});
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -72,12 +72,20 @@ class MapSearch extends Component {
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
 		const resetExtent = this.props.resetExtent != nextProps.resetExtent;
+		const showAllStations = this.props.showAll != nextProps.showAll;
+		const zoomTo = this.props.zoomTo != nextProps.zoomTo;
+
+		// console.log({nextSpatial: nextProps.spatial, drawMap, newSpatialData, clusteringChanged, resetExtent, showAllStations, filters: nextProps.filters});
 
 		if (drawMap || newSpatialData || clusteringChanged){
 			this.setState({drawMap: false});
 			this.updateMap(nextProps.spatial.stations, nextProps.spatial.forMap, nextProps.clustered);
 		} else if(resetExtent){
 			this.resetExtent();
+		} else if(showAllStations){
+			this.showAllStations();
+		} else if(zoomTo){
+			this.zoomToSelectedStations();
 		}
 	}
 
@@ -104,10 +112,21 @@ class MapSearch extends Component {
 			const props = this.props;
 
 			props.filterUpdate(config.spatialStationProp, new EmptyFilter());
-			// props.setSpatialExtent(props.spatial.stations);
 			map.setView([0, 0], 1);
 			this.setState({extentDefined: false});
 		}
+	}
+
+	showAllStations(){
+		const map = this.state.map;
+		const stations = this.props.spatial.stations.map(st => [st.lat, st.lon]);
+		map.fitBounds(stations);
+	}
+
+	zoomToSelectedStations(){
+		const map = this.state.map;
+		const stations = this.props.spatial.forMap.map(st => [st.lat, st.lon]);
+		map.fitBounds(stations);
 	}
 
 	buildMarkers(allStations, filteredStations, cluster, zoomLevel){
@@ -120,8 +139,8 @@ class MapSearch extends Component {
 		allStations.forEach(station => {
 			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) < 0) {
 				const marker = cluster
-					? L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4))
-					: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(4));
+					? L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(3))
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(3));
 
 				const popupHeader = "<b>" + station.name + "</b>";
 				marker.bindPopup(popupHeader);
@@ -134,7 +153,7 @@ class MapSearch extends Component {
 			}
 		});
 
-		// Included stations
+		// Then included stations
 		allStations.forEach(station => {
 			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) >= 0) {
 				const marker = cluster
@@ -158,7 +177,7 @@ class MapSearch extends Component {
 	}
 
 	spatialFilter(bBox){
-		return this.props.spatial.forMap.filter(st =>
+		return this.props.spatial.stations.filter(st =>
 			st.lat >= bBox[0].lat
 			&& st.lat <= bBox[2].lat
 			&& st.lon >= bBox[0].lng
