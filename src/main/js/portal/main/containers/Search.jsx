@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { routeUpdated, fromDateSet, toDateSet, updateFilter, fetchGlobalTimeInterval } from '../actions';
+import { routeUpdated, updateFilter, fetchGlobalTimeInterval } from '../actions';
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
 import DatePicker from '../components/DatePickerEncloser.jsx';
@@ -26,7 +26,7 @@ class Search extends Component {
 		const fromDate = props.fromDate || props.fromDateMin;
 		const toDate = props.toDate || props.toDateMax;
 		const returnedObjects = props.filteredDataObjects ? Object.keys(props.filteredDataObjects).length : null;
-		// console.log({props});
+		console.log({props});
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
@@ -36,8 +36,8 @@ class Search extends Component {
 					<DatePicker
 						date1={ fromDate }
 						date2={ toDate }
-						onChange1={ this.props.fromDateChange }
-						onChange2={ this.props.toDateChange }
+						filterUpdate1={ props.filterUpdate }
+						filterUpdate2={ props.filterUpdate }
 						minDate={ this.props.fromDateMin }
 						maxDate={ this.props.toDateMax }
 					/>
@@ -81,14 +81,6 @@ class Search extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-		fromDateChange: function(date){
-			dispatch(fromDateSet(date));
-		},
-		
-		toDateChange: function(date){
-			dispatch(toDateSet(date));
-		},
-
 		filterUpdate: function(propUri, filter){
 			dispatch(updateFilter(propUri, filter));
 		},

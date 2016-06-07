@@ -16,6 +16,10 @@ export class PropertyValueFilter{
 		this._value = value;
 	}
 
+	isEmpty(){
+		return false;
+	}
+
 	get value(){
 		return this._value;
 	}
@@ -23,6 +27,29 @@ export class PropertyValueFilter{
 	getSparql(varName){
 		const stringValue = sparqlEscape(this._value);
 		return `?${varName} <${this._prop}> "${stringValue}"^^xsd:string .\n`;
+	}
+}
+
+export class TemporalFilter{
+	constructor(prop, value){
+		this._prop = prop;
+		this._value = value;
+	}
+
+	isEmpty(){
+		return false;
+	}
+
+	get value(){
+		return this._value;
+	}
+
+	getSparql(varName){
+		return this._prop == config.fromDateProp
+			? `?${varName} cpmeta:wasProducedBy/prov:endedAtTime ?endTime .
+				FILTER(?endTime >= "${this._value}"^^xsd:dateTime)\n`
+			: `?${varName} cpmeta:wasProducedBy/prov:startedAtTime ?startTime .
+				FILTER(?startTime >= "${this._value}"^^xsd:dateTime)\n`;
 	}
 }
 
@@ -40,19 +67,13 @@ export class SpatialFilter{
 		return this._values;
 	}
 
-	getValueList(){
-		const stationList = this._values.map(station => station.name + "^^xsd:string").join(" ");
-		
-		return `VALUES ?stationName {\n${stationList}\n}\n`;
-	}
-
-	getSparql(){
+	getSparql(varName){
 		const namesEnumeration = this._values
 			.map(station => '"' + sparqlEscape(station.name) + '"^^xsd:string')
 			.join(" ");
 
 		return this._values.length > 0
-			? `?dobj <${config.wdcggStationProp}> ?stationName .
+			? `?${varName} <${config.wdcggStationProp}> ?stationName .
 			VALUES ?stationName {
 				${namesEnumeration}
 			}`

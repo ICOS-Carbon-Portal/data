@@ -39,7 +39,6 @@ button.cp{
 .cp_datepicker_date, .cp_datepicker_hours, .cp_datepicker_minutes, .cp_datepicker_reset {
 	display: inline;
 	padding: 0 1rem 0 0;
-	font-size: 2rem;
 }
 
 .cp_datepicker_message {

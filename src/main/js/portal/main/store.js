@@ -7,7 +7,11 @@ import { EmptyFilter } from './models/Filters';
 
 const initCounts = {};
 const initFilters = {};
+
+initFilters[config.fromDateProp] = new EmptyFilter();
+initFilters[config.toDateProp] = new EmptyFilter();
 initFilters[config.spatialStationProp] = new EmptyFilter();
+
 config.wdcggProps.forEach(prop => {
 	initCounts[prop.uri] = [];
 	initFilters[prop.uri] = new EmptyFilter();

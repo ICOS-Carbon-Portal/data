@@ -1,4 +1,4 @@
-import { ROUTE_UPDATED, FROM_DATE_SET, TO_DATE_SET, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
+import { ROUTE_UPDATED, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
 	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
 import config from './config';
@@ -83,16 +83,6 @@ export default function(state, action){
 
 		case ERROR:
 			return Object.assign({}, state, {status: ERROR, error: action.error});
-
-		case FROM_DATE_SET: {
-			let newDate = makeAllowedDate(action.date, state.fromDateMin, state);
-			return Object.assign({}, state, {fromDate: newDate});
-		}
-
-		case TO_DATE_SET: {
-			let newDate = makeAllowedDate(action.date, state.toDateMax, state);
-			return Object.assign({}, state, {toDate: newDate});
-		}
 
 		case FILTER_UPDATED:
 			return Object.assign({}, state, {
@@ -239,14 +229,14 @@ function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects){
 	}
 }
 
-function makeAllowedDate(proposedValue, defaultValue, state){
-	if(!proposedValue) return defaultValue;
-
-	let maxAllowed = new Date(state.toDateMax);
-	let minAllowed = new Date(state.fromDateMin);
-	let date = new Date(proposedValue);
-
-	if(date < minAllowed) return minAllowed.toISOString()
-	else if(date > maxAllowed) return maxAllowed.toISOString()
-	else return proposedValue;
-}
+// function makeAllowedDate(proposedValue, defaultValue, state){
+// 	if(!proposedValue) return defaultValue;
+//
+// 	let maxAllowed = new Date(state.toDateMax);
+// 	let minAllowed = new Date(state.fromDateMin);
+// 	let date = new Date(proposedValue);
+//
+// 	if(date < minAllowed) return minAllowed.toISOString()
+// 	else if(date > maxAllowed) return maxAllowed.toISOString()
+// 	else return proposedValue;
+// }

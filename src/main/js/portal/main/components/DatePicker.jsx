@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import ReactDatePicker from 'react-pikaday';
+import { TemporalFilter, EmptyFilter } from '../models/Filters';
 
 class DatePicker extends Component {
 	constructor(props){
@@ -15,7 +16,7 @@ class DatePicker extends Component {
 	}
 		
 	resetHandler(){
-		this.props.onChange(null);
+		this.props.filterUpdate(this.props.prop, new EmptyFilter());
 	}
 	
 	handleChange() {
@@ -28,7 +29,8 @@ class DatePicker extends Component {
 		date.setMinutes(minutes);
 		
 		if (date > this.state.min && date < this.state.max) {
-			this.props.onChange(date.toISOString());
+			const filter = new TemporalFilter(this.props.prop, date.toISOString());
+			this.props.filterUpdate(this.props.prop, filter);
 		} else {
 			this.setState({
 				date,

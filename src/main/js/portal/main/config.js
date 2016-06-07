@@ -25,6 +25,8 @@ export default {
 	wdcggStationProp,
 	wdcggLatProp: wdcggProp('LATITUDE'),
 	wdcggLonProp: wdcggProp('LONGITUDE'),
+	fromDateProp: "FROM_DATE",
+	toDateProp: "TO_DATE",
 	spatialStationProp: "STATION_NAME"
 }
 

@@ -124,20 +124,8 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 	const props = Object.getOwnPropertyNames(filters);
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
 
-	const fromDateClause = fromDate
-		? `
-			?dobj cpmeta:wasProducedBy/prov:endedAtTime ?endTime .
-			FILTER(?endTime >= "${fromDate}"^^xsd:dateTime)`
-		: "";
-
-	const toDateClause = toDate
-		? `
-			?dobj cpmeta:wasProducedBy/prov:startedAtTime ?startTime .
-			FILTER(?startTime <= "${toDate}"^^xsd:dateTime)`
-		: "";
-
 	return `?dobj cpmeta:hasObjectSpec <${spec}> .
-	${filterClauses} ${fromDateClause} ${toDateClause}`;
+	${filterClauses}`;
 }
 
 export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){

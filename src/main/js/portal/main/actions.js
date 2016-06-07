@@ -12,8 +12,6 @@ export const REMOVE_DATA = 'REMOVE_DATA';
 export const REMOVED_DATA = 'REMOVED_DATA';
 export const PIN_DATA = 'PIN_DATA';
 export const ERROR = 'ERROR';
-export const FROM_DATE_SET = 'FROM_DATE_SET';
-export const TO_DATE_SET = 'TO_DATE_SET';
 export const GOT_GLOBAL_TIME_INTERVAL = 'GOT_GLOBAL_TIME_INTERVAL';
 export const FILTER_UPDATED = 'FILTER_UPDATED';
 export const GOT_PROP_VAL_COUNTS = 'GOT_PROP_VAL_COUNTS';
@@ -117,22 +115,6 @@ export const removeDataObject = dataObjectInfo => dispatch => {
 		type: REMOVE_DATA,
 		dataObjId: dataObjectInfo.id
 	});
-}
-
-export const fromDateSet = (date) => dispatch => {
-	dispatch({
-		type: FROM_DATE_SET,
-		date
-	});
-	dispatch(fetchPropValueCounts);
-}
-
-export const toDateSet = (date) => dispatch => {
-	dispatch({
-		type: TO_DATE_SET,
-		date
-	});
-	dispatch(fetchPropValueCounts);
 }
 
 export function fetchGlobalTimeInterval(dispatch, getState){
