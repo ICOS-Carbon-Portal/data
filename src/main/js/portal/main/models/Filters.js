@@ -46,10 +46,10 @@ export class TemporalFilter{
 
 	getSparql(varName){
 		return this._prop == config.fromDateProp
-			? `?${varName} cpmeta:wasProducedBy/prov:endedAtTime ?endTime .
-				FILTER(?endTime >= "${this._value}"^^xsd:dateTime)\n`
-			: `?${varName} cpmeta:wasProducedBy/prov:startedAtTime ?startTime .
-				FILTER(?startTime >= "${this._value}"^^xsd:dateTime)\n`;
+			? `?${varName} cpmeta:wasProducedBy/prov:startedAtTime ?startTime .
+				FILTER(?startTime <= "${this._value}"^^xsd:dateTime)\n`
+			: `?${varName} cpmeta:wasProducedBy/prov:endedAtTime ?endTime .
+				FILTER(?endTime >= "${this._value}"^^xsd:dateTime)\n`;
 	}
 }
 

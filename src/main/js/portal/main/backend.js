@@ -97,17 +97,18 @@ export function getGlobalTimeInterval(spec){
 	});
 }
 
-export function getFilteredPropValueCounts(spec, filters, fromDate, toDate){
+export function getFilteredPropValueCounts(spec, filters){
+	// console.log({spec, filters});
 	return Promise.all([
-		getPropValueCounts(spec, filters, fromDate, toDate),
-		getFilteredDataObjects(spec, filters, fromDate, toDate)
+		getPropValueCounts(spec, filters),
+		getFilteredDataObjects(spec, filters)
 	]).then(([propValCount, filteredDataObjects]) => {
 		return {propValCount, filteredDataObjects};
 	});
 }
 
-function getPropValueCounts(spec, filters, fromDate, toDate){
-	const query = sparqlQueries.getPropValueCounts(spec, filters, fromDate, toDate);
+function getPropValueCounts(spec, filters){
+	const query = sparqlQueries.getPropValueCounts(spec, filters);
 
 	function bindingToValueCount(binding){
 		return {
@@ -123,8 +124,8 @@ function getPropValueCounts(spec, filters, fromDate, toDate){
 	));
 }
 
-function getFilteredDataObjects(spec, filters, fromDate, toDate){
-	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters, fromDate, toDate);
+function getFilteredDataObjects(spec, filters){
+	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters);
 
 	function bindingToValueCount(binding){
 		return {

@@ -35,6 +35,7 @@ export default function(state, action){
 			return Object.assign({}, state, {
 				spatial: {
 					stations: action.stationPositions,
+					woSpatialExtent: action.stationPositions.filter(st => !(st.lat && st.lon)),
 					forMap: action.stationPositions
 				}
 			});
@@ -99,18 +100,18 @@ export default function(state, action){
 
 		case GOT_PROP_VAL_COUNTS:
 			if (
-				state.objectSpecification === action.objectSpecification &&
-				state.fromDate === action.fromDate &&
-				state.toDate === action.toDate
+				state.objectSpecification === action.objectSpecification
 			) {
 				const spatiallyFilteredStations = getFilteredStations(
 					state.spatial.stations,
 					state.filters[config.spatialStationProp],
 					action.propsAndVals.propValCount[config.wdcggStationProp]
 				);
-				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects, state.filteredDataObjects);
+				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
+
+				// console.log({spatiallyFilteredStations, filteredDataObjects});
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
@@ -120,6 +121,7 @@ export default function(state, action){
 					forMap: getMapData(dataObjects, labels),
 					spatial: {
 						stations: state.spatial.stations,
+						woSpatialExtent: state.spatial.woSpatialExtent,
 						forMap: spatiallyFilteredStations
 					}
 				});
@@ -134,7 +136,11 @@ export default function(state, action){
 }
 
 function getFilteredStations(stations, spatialFilter, propValStations){
-	const spatialStations = spatialFilter.isEmpty() ? stations : spatialFilter.list;
+	const spatialStations = spatialFilter.isEmpty()
+		? stations
+		: spatialFilter.list;
+	// console.log({stations, spatialFilter, isEmpty: spatialFilter.isEmpty(), spatialStations, propValStations});
+
 	return spatialStations.filter(spatialStation => propValStations.findIndex(pvs => pvs.value == spatialStation.name) >= 0);
 }
 
@@ -209,9 +215,8 @@ function getMetaData(format, dataObjId){
 	return {geom, format: newFormat};
 }
 
-function filteredDO2Arr(filteredDataObjects, oldFilteredDataObjects){
+function filteredDO2Arr(filteredDataObjects){
 	if (filteredDataObjects){
-		const oldFdos = oldFilteredDataObjects || [];
 
 		function* obj2Arr(obj) {
 			for (let prop of Object.keys(obj)) {

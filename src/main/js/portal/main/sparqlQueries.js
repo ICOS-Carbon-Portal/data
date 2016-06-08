@@ -97,11 +97,11 @@ where{
 }`;
 }
 
-export function getPropValueCounts(spec, filters, fromDate, toDate){
+export function getPropValueCounts(spec, filters){
 	const props = config.wdcggProps.map(({uri, label}) => uri);
 	const propsList = '<' + props.join('> <') + '>';
 
-	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters);
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -120,7 +120,7 @@ group by ?prop ?value
 order by ?prop ?value`;
 }
 
-function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
+function getFilteredDataObjQueryStatements(spec, filters){
 	const props = Object.getOwnPropertyNames(filters);
 	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
 
@@ -128,8 +128,8 @@ function getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate){
 	${filterClauses}`;
 }
 
-export function getFilteredDataObjQuery(spec, filters, fromDate, toDate){
-	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters, fromDate, toDate);
+export function getFilteredDataObjQuery(spec, filters){
+	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters);
 
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -149,7 +149,6 @@ where{
 	?dobj <${wdcggStationProp}> ?name .
 	?dobj <${wdcggLatProp}> ?latStr .
 	?dobj <${wdcggLonProp}> ?lonStr .
-	filter(?latStr != "" && ?lonStr != "")
 }
 group by ?name
 order by ?name`;

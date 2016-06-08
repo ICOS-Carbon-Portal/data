@@ -37,7 +37,7 @@ class DatePickerEncloser extends Component {
 		
 		return <div className="cp_datepicker">
 					
-				<div className="col-md-4">
+				<div className="col-md-3">
 				 	<div className="panel panel-default">
 				    	<div className="panel-heading" onClick={ this.closePanel1.bind(this)}><label>Date from { dateAsIso(this.props.date1) }</label></div>
 				    	<div ref="panel1" className="panel-body">

@@ -32,12 +32,11 @@ const initState = {
 	objectSpecification: config.wdcggSpec,
 	fromDateMin: '1950-01-01T12:00:00Z',
 	toDateMax: '2030-12-13T12:00:00Z',
-	fromDate: null,
-	toDate: null,
 	propValueCounts: initCounts,
 	filters: initFilters,
 	spatial: {
 		stations: [],
+		woSpatialExtent: [],
 		forMap: []
 	}
 };

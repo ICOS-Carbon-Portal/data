@@ -23,8 +23,8 @@ class Search extends Component {
 
 	render() {
 		const props = this.props;
-		const fromDate = props.fromDate || props.fromDateMin;
-		const toDate = props.toDate || props.toDateMax;
+		const fromDate = props.filters[config.fromDateProp].value || props.fromDateMin;
+		const toDate = props.filters[config.toDateProp].value || props.toDateMax;
 		const returnedObjects = props.filteredDataObjects ? Object.keys(props.filteredDataObjects).length : null;
 		// console.log({props});
 

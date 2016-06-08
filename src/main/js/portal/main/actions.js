@@ -157,15 +157,13 @@ export const updateFilter = (filterId, filter) => dispatch => {
 };
 
 function fetchPropValueCounts(dispatch, getState){
-	const {objectSpecification, filters, fromDate, toDate} = getState();
+	const {objectSpecification, filters} = getState();
 
-	getFilteredPropValueCounts(objectSpecification, filters, fromDate, toDate).then(
+	getFilteredPropValueCounts(objectSpecification, filters).then(
 		propsAndVals => dispatch({
 			type: GOT_PROP_VAL_COUNTS,
 			propsAndVals,
-			objectSpecification,
-			fromDate,
-			toDate
+			objectSpecification
 		}),
 		err => dispatch(gotError(err))
 	);
