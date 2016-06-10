@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.api
 
 import java.net.URI
-import java.net.URLEncoder
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 class MetaVocab(baseUri: URI) {
@@ -9,7 +8,7 @@ class MetaVocab(baseUri: URI) {
 	protected val baseUriStr = baseUri.toString
 
 	def getRelative(local: String): URI =
-		new URI(baseUriStr + URLEncoder.encode(local, "UTF-8"))
+		new URI(baseUri.getScheme, baseUri.getAuthority, baseUri.getPath + local, null, null)
 
 }
 

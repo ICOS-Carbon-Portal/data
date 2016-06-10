@@ -28,7 +28,7 @@ export const routeUpdated = (route) => (dispatch, getState) => {
 }
 
 function failWithError(error){
-	console.log({error});
+	console.log(error);
 	return {
 		type: ERROR,
 		error
@@ -125,16 +125,8 @@ export function fetchGlobalTimeInterval(dispatch, getState){
 			dispatch(gotGlobalTimeInterval(objSpec, interval));
 			dispatch(fetchPropValueCounts);
 		},
-		err => dispatch(gotError(err))
+		err => dispatch(failWithError(err))
 	);
-}
-
-function gotError(error){
-	console.log({error});
-	return {
-		type: ERROR,
-		error
-	};
 }
 
 function gotGlobalTimeInterval(objectSpecification, interval){
@@ -165,7 +157,7 @@ function fetchPropValueCounts(dispatch, getState){
 			propsAndVals,
 			objectSpecification
 		}),
-		err => dispatch(gotError(err))
+		err => dispatch(failWithError(err))
 	);
 }
 

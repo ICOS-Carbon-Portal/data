@@ -5,7 +5,7 @@ endpoint = 'https://meta.icos-cp.eu/sparql';
 // @endif
 
 const wdcggBaseUri = 'http://meta.icos-cp.eu/resources/wdcgg/';
-const wdcggStationProp = wdcggProp('STATION+NAME');
+const wdcggStationProp = wdcggProp('STATION%20NAME');
 
 export default {
 	sparqlEndpoint: endpoint,
@@ -17,10 +17,10 @@ export default {
 		{uri: wdcggProp('PARAMETER'),           label: 'Parameter (gas)'},
 		{uri: wdcggStationProp,                 label: 'Station name'},
 		{uri: wdcggProp('CONTRIBUTOR'),         label: 'Contributor'},
-		{uri: wdcggProp('COUNTRY%2FTERRITORY'), label: 'Country'},
-		{uri: wdcggProp('TIME+INTERVAL'),       label: 'Time interval'},
-		{uri: wdcggProp('SAMPLING+TYPE'),       label: 'Sampling type'},
-		{uri: wdcggProp('MEASUREMENT+UNIT'),    label: 'Measurement unit'}
+		{uri: wdcggProp('COUNTRY/TERRITORY'),   label: 'Country'},
+		{uri: wdcggProp('TIME%20INTERVAL'),     label: 'Time interval'},
+		{uri: wdcggProp('SAMPLING%20TYPE'),     label: 'Sampling type'},
+		{uri: wdcggProp('MEASUREMENT%20UNIT'),  label: 'Measurement unit'}
 	],
 	wdcggStationProp,
 	wdcggLatProp: wdcggProp('LATITUDE'),

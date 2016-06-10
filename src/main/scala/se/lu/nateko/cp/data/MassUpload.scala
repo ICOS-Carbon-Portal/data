@@ -43,7 +43,7 @@ object MassUpload extends CommonJsonSupport{
 
 	val parall = 8
 	val Username = "test@upload"
-	val Producer = "http://meta.icos-cp.eu/resources/cpmeta/WDCGG"
+	val Producer = "http://meta.icos-cp.eu/resources/organizations/WDCGG"
 	val ObjSpec = "http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject"
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
 	val RootFolder = "/disk/data/wdcgg"
