@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
-import ReactDOM from 'react-dom'
-import { connect } from 'react-redux';
+import ReactDOM from 'react-dom';
 import Dygraph from 'dygraphs';
 // import ShowLazily from './ShowLazily.jsx';
 import {FETCHED_DATA, REMOVED_DATA, PIN_DATA} from '../actions';
@@ -112,14 +111,6 @@ function getDataBndry(props){
 	return props.forChart.data.slice(0, 1).concat(props.forChart.data.slice(dataLength - 1, dataLength));
 }
 
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {};
-}
-
 function toISOString(ms){
 	const date = new Date(ms);
 
@@ -138,4 +129,4 @@ function toISOString(ms){
 		':' + pad(date.getUTCSeconds());
 }
 
-export default connect(stateToProps, dispatchToProps)(Dygraphs);
+export default Dygraphs;

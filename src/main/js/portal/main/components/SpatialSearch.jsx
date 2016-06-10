@@ -1,6 +1,5 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import { connect } from 'react-redux';
 import MapSearch from './MapSearch.jsx';
 import config from '../config';
 
@@ -8,10 +7,7 @@ class SpatialSearch extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			clustered: false,
-			resetExtent: 0,
-			showAll: 0,
-			zoomTo: 0
+			clustered: false
 		}
 	}
 
@@ -24,13 +20,6 @@ class SpatialSearch extends Component {
 
 	onClusterClick(cluster){
 		this.setState({clustered: cluster});
-	}
-
-	newState(prop){
-		const res = {};
-		res[prop] = this.state[prop] + 1;
-
-		this.setState(res);
 	}
 
 	render(){
@@ -47,10 +36,10 @@ class SpatialSearch extends Component {
 			<div>
 				<div ref="mapDiv" className="col-md-5">
 					<MapSearch
+						ref="mapSearch"
+						filterUpdate={props.filterUpdate}
+						spatial={props.spatial}
 						clustered={this.state.clustered}
-						resetExtent={this.state.resetExtent}
-						showAll={this.state.showAll}
-						zoomTo={this.state.zoomTo}
 					/>
 				</div>
 				<div className="col-md-2" style={{height:mapDivHeight}}>
@@ -68,20 +57,20 @@ class SpatialSearch extends Component {
 						<button className={resetBtnCss}
 								disabled={resetBtnDisabled}
 								style={{display: 'block', marginTop: 10}}
-								onClick={() => this.newState('resetExtent')}>
+								onClick={() => this.refs.mapSearch.resetExtent()}>
 							Reset
 						</button>
 					</div>
 
 					<div style={{display: 'block', marginBottom: 10}}>
-						<button type="button" className="btn btn-default" onClick={() => this.newState('showAll')}>
+						<button type="button" className="btn btn-default" onClick={() => this.refs.mapSearch.zoomTo(true)}>
 							<span className="glyphicon glyphicon-globe" style={{marginRight: 5}} aria-hidden="true"></span>
-							Show all stations
+							Zoom to full extent
 						</button>
 					</div>
 
 					<div style={{display: 'block', marginBottom: 10}}>
-						<button type="button" className="btn btn-default" onClick={() => this.newState('zoomTo')}>
+						<button type="button" className="btn btn-default" onClick={() => this.refs.mapSearch.zoomTo(false)}>
 							<span className="glyphicon glyphicon-resize-small" style={{marginRight: 5}} aria-hidden="true"></span>
 							Zoom to selected stations
 						</button>
@@ -105,12 +94,4 @@ function getBtnClass(active){
 		: "btn btn-default";
 }
 
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {};
-}
-
-export default connect(stateToProps, dispatchToProps)(SpatialSearch);
+export default SpatialSearch;

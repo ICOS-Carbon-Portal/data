@@ -31,9 +31,9 @@ export const wdcggIcon = L.icon({
 	popupAnchor:  [0, -23]
 });
 
-export function pointIcon(radius) {
+export function pointIcon() {
 	return {
-		radius,
+		radius: 4,
 		weight: 3,
 		color: 'white',
 		fillColor: 'rgb(255,50,50)',
@@ -41,12 +41,22 @@ export function pointIcon(radius) {
 	}
 };
 
-export function pointIconExcluded(radius) {
+export function pointIconExcluded() {
 	return {
-		radius,
+		radius: 3,
 		weight: 1,
 		color: 'white',
 		fillColor: 'rgb(255,200,200)',
+		fillOpacity: 1
+	}
+};
+
+export function pointIconExcluded2() {
+	return {
+		radius: 3,
+		weight: 1,
+		color: 'white',
+		fillColor: 'rgb(50,50,50)',
 		fillOpacity: 1
 	}
 };

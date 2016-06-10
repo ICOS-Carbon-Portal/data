@@ -38,11 +38,15 @@ class Search extends Component {
 						date2={ toDate }
 						filterUpdate1={ props.filterUpdate }
 						filterUpdate2={ props.filterUpdate }
-						minDate={ this.props.fromDateMin }
-						maxDate={ this.props.toDateMax }
+						minDate={ props.fromDateMin }
+						maxDate={ props.toDateMax }
 					/>
 
-					<SpatialSearch />
+					<SpatialSearch
+						filters={props.filters}
+						spatial={props.spatial}
+						filterUpdate={props.filterUpdate}
+					/>
 				</div>
 				{
 					config.wdcggProps.map(

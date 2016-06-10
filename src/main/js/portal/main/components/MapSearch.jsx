@@ -1,10 +1,10 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import { connect } from 'react-redux';
 import config from '../config';
 import { SpatialFilter, EmptyFilter } from '../models/Filters'
 import {updateFilter} from '../actions';
 import * as LCommon from '../models/LeafletCommon';
+import {MapLegend} from '../models/MapLegend';
 
 class MapSearch extends Component {
 	constructor(props) {
@@ -57,6 +57,8 @@ class MapSearch extends Component {
 			}
 		});
 
+		map.addControl(new MapLegend());
+
 		// map.on('zoomend', e => {
 		// 	console.log({zoom: map.getZoom()});
 		// 	// if (map.getZoom() == 6){
@@ -71,24 +73,12 @@ class MapSearch extends Component {
 		const drawMap = nextProps.spatial.forMap.length > 0 && this.state.drawMap;
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
-		const resetExtent = this.props.resetExtent != nextProps.resetExtent;
-		const zoomToAll = this.props.showAll != nextProps.showAll;
-		const zoomToSelected = this.props.zoomTo != nextProps.zoomTo;
-
 		// console.log({nextSpatial: nextProps.spatial, drawMap, newSpatialData, clusteringChanged, resetExtent, zoomToAll, zoomToSelected, filters: nextProps.filters});
 
 		if (drawMap || newSpatialData || clusteringChanged){
 			this.setState({drawMap: false});
 			this.updateMap(nextProps.spatial.stations, nextProps.spatial.forMap, nextProps.clustered);
 
-		} else if(resetExtent){
-			this.resetExtent();
-
-		} else if(zoomToAll){
-			this.zoomTo(true);
-
-		} else if(zoomToSelected){
-			this.zoomTo(false);
 		}
 	}
 
@@ -245,16 +235,4 @@ function popupHeader(stationName, remove, self, showRemoveBtn = true){
 	return div;
 }
 
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {
-		filterUpdate: function (propUri, filter) {
-			dispatch(updateFilter(propUri, filter));
-		}
-	}
-}
-
-export default connect(stateToProps, dispatchToProps)(MapSearch);
+export default MapSearch;

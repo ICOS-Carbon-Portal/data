@@ -13,6 +13,10 @@ html, body {
 	height: 320px;
 	display: block;
 }
+.legend-container{
+	background-color: rgba(255,255,255,1.0);
+	border-radius: 4px;
+}
 
 .lnk{
 	color: #337ab7;

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
+import ReactDOM from 'react-dom';
+import {pinDataObject, addDataObject, removeDataObject} from '../actions';
 import Dygraphs from '../components/Dygraphs.jsx';
 import Leaflet from '../components/Leaflet.jsx';
 import DataObjectList from '../components/DataObjectList.jsx';
@@ -46,11 +47,16 @@ class View extends Component {
 
 				<div className="row">
 					<div className="col-md-3" style={{maxHeight: 430, overflow: 'auto'}}>
-						<DataObjectList dataObjects={props.dataObjects}/>
+						<DataObjectList 
+							dataObjects={props.dataObjects}
+							pinData={this.props.pinData}
+							addData={this.props.addData}
+							removeData={this.props.removeData}
+						/>
 					</div>
 					<div ref="chartDiv" id="chartDiv" className="col-md-6">
 						{props.forChart.data.length > 0 && this.state.loadComponents
-						? <Dygraphs {...props.forChart} width={this.state.chartDivWidth} /> //<Chart ref="chartComp" {...props.forChart} width={this.state.chartDivWidth} />
+						? <Dygraphs forChart={props.forChart} width={this.state.chartDivWidth} status={props.status} />
 							: null
 						}
 					</div>
@@ -83,7 +89,19 @@ function stateToProps(state){
 }
 
 function dispatchToProps(dispatch){
-	return {};
+	return {
+		pinData(dataObjectInfo){
+			dispatch(pinDataObject(dataObjectInfo));
+		},
+
+		addData(dataObjectInfo, useCache){
+			dispatch(addDataObject(dataObjectInfo, useCache));
+		},
+
+		removeData(dataObjectInfo){
+			dispatch(removeDataObject(dataObjectInfo));
+		}
+	};
 }
 
 export default connect(stateToProps, dispatchToProps)(View);

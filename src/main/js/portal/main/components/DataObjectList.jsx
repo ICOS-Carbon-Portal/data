@@ -1,7 +1,5 @@
 import React, { Component, PropTypes } from 'react';
-import { connect } from 'react-redux';
 import ViewBtn from './ViewBtn.jsx';
-import {pinDataObject} from '../actions';
 
 export const btnClass = "btn btn-default btn-xs";
 export const btnClassActive = "btn btn-primary btn-xs active";
@@ -19,8 +17,6 @@ class DataObjectList extends React.Component {
 
 	render(){
 		const props = this.props;
-		const state = this.state;
-		// console.log({state: this.state});
 
 		if (props.dataObjects) {
 			return (
@@ -38,7 +34,12 @@ class DataObjectList extends React.Component {
 											title="Pin to save selection">
 										<span className="glyphicon glyphicon-pushpin"></span>
 									</button>
-									<ViewBtn rowData={rowData} />
+									<ViewBtn
+										dataObjects={props.dataObjects}
+										rowData={rowData}
+										addData={this.props.addData}
+										removeData={this.props.removeData}
+									/>
 									<span style={{marginLeft: 7}}>{rowData.fileName} ({rowData.nRows})</span>
 								</td>
 							</tr>
@@ -53,16 +54,4 @@ class DataObjectList extends React.Component {
 	}
 }
 
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {
-		pinData(dataObjectInfo){
-			dispatch(pinDataObject(dataObjectInfo));
-		}
-	};
-}
-
-export default connect(stateToProps, dispatchToProps)(DataObjectList);
+export default DataObjectList;

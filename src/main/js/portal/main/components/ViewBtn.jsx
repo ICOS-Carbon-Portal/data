@@ -1,6 +1,4 @@
 import React, { Component, PropTypes } from 'react';
-import { connect } from 'react-redux';
-import {addDataObject, removeDataObject} from '../actions';
 import {btnClass, btnClassActive, viewIconOpen, viewIconClosed} from './DataObjectList.jsx';
 
 
@@ -43,20 +41,4 @@ function getBtnClasses(rowData){
 	};
 }
 
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {
-		addData(dataObjectInfo, useCache){
-			dispatch(addDataObject(dataObjectInfo, useCache));
-		},
-
-		removeData(dataObjectInfo){
-			dispatch(removeDataObject(dataObjectInfo));
-		}
-	};
-}
-
-export default connect(stateToProps, dispatchToProps)(ViewBtn);
+export default ViewBtn;
