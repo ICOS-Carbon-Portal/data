@@ -3,9 +3,7 @@ package se.lu.nateko.cp.data.api
 import java.net.URI
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-class MetaVocab(baseUri: URI) {
-
-	protected val baseUriStr = baseUri.toString
+abstract class MetaVocab(baseUri: URI) {
 
 	def getRelative(local: String): URI =
 		new URI(baseUri.getScheme, baseUri.getAuthority, baseUri.getPath + local, null, null)

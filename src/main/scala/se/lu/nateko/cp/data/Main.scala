@@ -45,9 +45,12 @@ object Main extends App {
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
+			val traceWriter = new java.io.StringWriter()
+			ex.printStackTrace(new java.io.PrintWriter(traceWriter))
+			val trace = traceWriter.toString
 			val exMsg = ex.getMessage
 			val msg = if(exMsg == null || exMsg.isEmpty) ex.getClass.getName else exMsg
-			complete((StatusCodes.InternalServerError, msg))
+			complete((StatusCodes.InternalServerError, s"$msg\n$trace"))
 	}
 
 	val route = handleExceptions(exceptionHandler){
