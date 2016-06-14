@@ -17,7 +17,7 @@ export class PropertyValueFilter{
 	}
 
 	isEmpty(){
-		return false;
+		return this._value.length == 0;
 	}
 
 	get value(){
@@ -37,7 +37,7 @@ export class TemporalFilter{
 	}
 
 	isEmpty(){
-		return false;
+		return this._value.length == 0;
 	}
 
 	get value(){
@@ -60,7 +60,7 @@ export class SpatialFilter{
 	}
 
 	isEmpty(){
-		return false;
+		return this._values.length == 0;
 	}
 
 	get list(){

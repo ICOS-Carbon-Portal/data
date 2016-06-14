@@ -2,7 +2,6 @@ import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import config from '../config';
 import { SpatialFilter, EmptyFilter } from '../models/Filters'
-import {updateFilter} from '../actions';
 import * as LCommon from '../models/LeafletCommon';
 import {MapLegend} from '../models/MapLegend';
 
@@ -73,23 +72,23 @@ class MapSearch extends Component {
 		const drawMap = nextProps.spatial.forMap.length > 0 && this.state.drawMap;
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
-		// console.log({nextSpatial: nextProps.spatial, drawMap, newSpatialData, clusteringChanged, resetExtent, zoomToAll, zoomToSelected, filters: nextProps.filters});
+
+		// console.log({nextSpatial: nextProps.spatial, drawMap, newSpatialData, clusteringChanged, stationsAttributeFiltered: nextProps.stationsAttributeFiltered});
 
 		if (drawMap || newSpatialData || clusteringChanged){
 			this.setState({drawMap: false});
-			this.updateMap(nextProps.spatial.stations, nextProps.spatial.forMap, nextProps.clustered);
-
+			this.updateMap(nextProps.spatial, nextProps.spatialFilter, nextProps.stationsAttributeFiltered, nextProps.clustered);
 		}
 	}
 
-	updateMap(allStations, filteredStations, cluster){
+	updateMap(spatial, spatialFilter, stationsAttributeFiltered, cluster){
 		const map = this.state.map;
 		const markers = this.state.markers;
 
 		if (markers){
 			map.removeLayer(markers);
 		}
-		const newMarkers = this.buildMarkers(allStations, filteredStations, cluster, map.getZoom());
+		const newMarkers = this.buildMarkers(spatial, spatialFilter, stationsAttributeFiltered, cluster, map.getZoom());
 		map.addLayer(newMarkers);
 
 		this.setState({map, markers: newMarkers, clustered: cluster, bBox: null});
@@ -133,20 +132,22 @@ class MapSearch extends Component {
 		}
 	}
 
-	buildMarkers(allStations, filteredStations, cluster, zoomLevel){
+	buildMarkers(spatial, spatialFilter, stationsAttributeFiltered, cluster, zoomLevel){
 		let clusteredMarkers = L.markerClusterGroup({
 			maxClusterRadius: 50
 		});
 		let markers = L.featureGroup();
 
-		// First all excluded stations so they are placed underneath included
-		allStations.forEach(station => {
-			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) < 0) {
-				const marker = cluster
-					? L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(3))
-					: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded(3));
+		// console.log({spatial, spatialFilter, empty: spatialFilter.isEmpty(), stationsAttributeFiltered, cluster, zoomLevel});
 
-				marker.bindPopup(popupHeader(station.name, false, this));
+		// First all excluded stations so they are placed underneath included
+		spatial.stations.forEach(station => {
+			if (station.lat && station.lon && spatial.forMap.findIndex(ex => ex.name == station.name) < 0) {
+				const marker = cluster
+					? L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded())
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded());
+
+				marker.bindPopup(popupHeader(this, station.name));
 
 				if (cluster) {
 					clusteredMarkers.addLayer(marker);
@@ -157,13 +158,13 @@ class MapSearch extends Component {
 		});
 
 		// Then included stations
-		allStations.forEach(station => {
-			if (station.lat && station.lon && filteredStations.findIndex(fs => fs.name == station.name) >= 0) {
+		spatial.forMap.forEach(station => {
+			if (station.lat && station.lon) {
 				const marker = cluster
 					? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
-					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4));
+					: L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
 
-				marker.bindPopup(popupHeader(station.name, true, this, filteredStations.length > 1));
+				marker.bindPopup(popupHeader(this, station.name, 'remove'));
 
 				if (cluster) {
 					clusteredMarkers.addLayer(marker);
@@ -200,22 +201,24 @@ class MapSearch extends Component {
 	}
 }
 
-function popupHeader(stationName, remove, self, showRemoveBtn = true){
-	const className = remove ? 'glyphicon glyphicon-remove-circle' : 'glyphicon glyphicon-ok-circle';
-
+function popupHeader(self, stationName, btnType){
 	const div = document.createElement('div');
 
 	const b = document.createElement('b');
 	b.innerHTML = stationName;
 	div.appendChild(b);
 
-	if(!remove || showRemoveBtn) {
+	if(btnType) {
+		const className = btnType == 'remove'
+			? 'glyphicon glyphicon-remove-circle'
+			: 'glyphicon glyphicon-ok-circle';
+
 		div.appendChild(document.createElement('br'));
 
 		const btn = document.createElement('button');
 		btn.className = 'btn btn-primary';
 		btn.onclick = function () {
-			self.addRemoveStation(stationName, remove);
+			self.addRemoveStation(stationName, btnType == 'remove');
 			return false;
 		};
 
@@ -225,7 +228,7 @@ function popupHeader(stationName, remove, self, showRemoveBtn = true){
 
 
 		const btnTxt = document.createElement('span');
-		btnTxt.innerHTML = remove ? 'Remove' : 'Add';
+		btnTxt.innerHTML = btnType == 'remove' ? 'Remove' : 'Add';
 
 		btn.appendChild(span);
 		btn.appendChild(btnTxt);

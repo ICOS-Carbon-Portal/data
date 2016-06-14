@@ -37,6 +37,8 @@ class SpatialSearch extends Component {
 				<div ref="mapDiv" className="col-md-5">
 					<MapSearch
 						ref="mapSearch"
+						spatialFilter={props.filters[config.spatialStationProp]}
+						stationsAttributeFiltered={props.stationsAttributeFiltered}
 						filterUpdate={props.filterUpdate}
 						spatial={props.spatial}
 						clustered={this.state.clustered}

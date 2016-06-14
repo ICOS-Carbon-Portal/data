@@ -102,16 +102,19 @@ export default function(state, action){
 			if (
 				state.objectSpecification === action.objectSpecification
 			) {
+				const stations = state.spatial.stations;
+				const filteredStations = action.propsAndVals.propValCount[config.wdcggStationProp];
+
 				const spatiallyFilteredStations = getFilteredStations(
-					state.spatial.stations,
+					stations,
 					state.filters[config.spatialStationProp],
-					action.propsAndVals.propValCount[config.wdcggStationProp]
+					filteredStations
 				);
 				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects);
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
 
-				// console.log({spatiallyFilteredStations, filteredDataObjects});
+				// TODO: Handle zero data objects returned from filters
 
 				return Object.assign({}, state, {
 					propValueCounts: action.propsAndVals.propValCount,
@@ -120,7 +123,7 @@ export default function(state, action){
 					forChart: generateChartData(dataObjects, labels),
 					forMap: getMapData(dataObjects, labels),
 					spatial: {
-						stations: state.spatial.stations,
+						stations,
 						woSpatialExtent: state.spatial.woSpatialExtent,
 						forMap: spatiallyFilteredStations
 					}
@@ -133,6 +136,11 @@ export default function(state, action){
 			return state;
 	}
 
+}
+
+function getExcludedByAttribute(allStations, filteredStations){
+	// console.log({allStations, filteredStations});
+	return allStations.filter(as => filteredStations.findIndex(fs => fs.value == as.name) < 0);
 }
 
 function getFilteredStations(stations, spatialFilter, propValStations){

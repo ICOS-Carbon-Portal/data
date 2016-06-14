@@ -98,7 +98,6 @@ export function getGlobalTimeInterval(spec){
 }
 
 export function getFilteredPropValueCounts(spec, filters){
-	// console.log({spec, filters});
 	return Promise.all([
 		getPropValueCounts(spec, filters),
 		getFilteredDataObjects(spec, filters)
