@@ -27,7 +27,11 @@ module.exports = function(rasterStore){
 
 		resizeCanvas: function(){
 			var canvas = this.getCanvas();
-			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, canvas); //canvas has width and height
+			const bbox = this.state.raster
+				? this.state.raster.boundingBox
+				: {latMin: -89.5, latMax: 89.5, lonMin: -179.5, lonMax: 179.5};
+			const rasterSize = this.state.raster || {width: 360, height: 180};
+			var canvasSize = MapUtils.getMapSizeStyle(canvas.offsetParent, bbox, rasterSize);
 			canvas.style.width = canvasSize.width;
 			canvas.style.height = canvasSize.height;
 		},

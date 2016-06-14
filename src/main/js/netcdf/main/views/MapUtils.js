@@ -1,4 +1,4 @@
-function getColorMaker(minVal, maxVal, gamma) {
+export function getColorMaker(minVal, maxVal, gamma) {
 
 	var biLinear = (minVal < 0 && maxVal > 0);
 
@@ -34,7 +34,7 @@ function getColorMaker(minVal, maxVal, gamma) {
 	};
 }
 
-function makeImage(canvas, raster, gamma) {
+export function makeImage(canvas, raster, gamma) {
 	var colorMaker = getColorMaker(raster.stats.min, raster.stats.max, Math.abs(gamma));
 
 	var width = raster.width;
@@ -67,21 +67,11 @@ function makeImage(canvas, raster, gamma) {
 	context.putImageData(imgData, 0, 0);
 }
 
-function draw(elem, bbox, rasterSize) {
+export function draw(elem, rawBbox, rasterSize) {
 
 	elem.innerHTML = '';
 
-	var centerLon = (bbox.lonMin + bbox.lonMax) / 2;
-	var centerLat = (bbox.latMin + bbox.latMax) / 2;
-	var lonStep = (bbox.lonMax - bbox.lonMin) / (rasterSize.width - 1);
-	var latStep = (bbox.latMax - bbox.latMin) / (rasterSize.height - 1);
-	var lonRange = rasterSize.width * lonStep;
-	var latRange = rasterSize.height * latStep;
-
-	var lonMin = centerLon - lonRange / 2;
-	var lonMax = lonMin + lonRange;
-	var latMin = centerLat - latRange / 2;
-	var latMax = latMin + latRange;
+	const {centerLon, centerLat, latRange, lonMin, lonMax, latMin, latMax} = getTrueBbox(rawBbox, rasterSize);
 
 	var rotateLon = lonMax > 180 ? 180 - lonMax : lonMin < -180 ? -180 - lonMin : 0;
 	var rotateLat = latMax > 90 ? 90 - latMax : latMin < -90 ? -90 - latMin : 0;
@@ -108,7 +98,6 @@ function draw(elem, bbox, rasterSize) {
 				.center([centerLon + rotateLon, centerLat + rotateLat])
 				.scale(height * 180 / latRange / Math.PI)
 				.translate([width / 2, height / 2]);
-
 			return {
 				path: d3.geo.path().projection(projection),
 				projection: projection
@@ -117,15 +106,17 @@ function draw(elem, bbox, rasterSize) {
 	});
 }
 
-function getMapSizeStyle(illustrationElem, rasterSize){
+export function getMapSizeStyle(illustrationElem, rawBbox, rasterSize){
+
+	const {lonRange, latRange} = getTrueBbox(rawBbox, rasterSize);
 
 	var scale = Math.min(
-		illustrationElem.clientWidth / rasterSize.width,
-		(window.innerHeight - illustrationElem.offsetTop) / rasterSize.height
+		illustrationElem.clientWidth / lonRange,
+		(window.innerHeight - illustrationElem.offsetTop) / latRange
 	);
 
-	var width = rasterSize.width * scale;
-	var height = rasterSize.height * scale;
+	const width = lonRange * scale;
+	const height = latRange * scale;
 
 	return {
 		width: width + 'px',
@@ -133,10 +124,23 @@ function getMapSizeStyle(illustrationElem, rasterSize){
 	};
 }
 
-module.exports = {
-	getColorMaker: getColorMaker,
-	makeImage: makeImage,
-	draw: draw,
-	getMapSizeStyle: getMapSizeStyle
-};
+function getTrueBbox(bbox, rasterSize){
+	const centerLon = (bbox.lonMin + bbox.lonMax) / 2;
+	const centerLat = (bbox.latMin + bbox.latMax) / 2;
+	const lonStep = (bbox.lonMax - bbox.lonMin) / (rasterSize.width - 1);
+	const latStep = (bbox.latMax - bbox.latMin) / (rasterSize.height - 1);
+	const lonRange = rasterSize.width * lonStep;
+	const latRange = rasterSize.height * latStep;
+
+	return {
+		centerLon,
+		centerLat,
+		lonRange,
+		latRange,
+		lonMin: centerLon - lonRange / 2,
+		lonMax: centerLon + lonRange / 2,
+		latMin: centerLat - latRange / 2,
+		latMax: centerLat + latRange / 2
+	};
+}
 
