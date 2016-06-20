@@ -1,5 +1,7 @@
 import {tableFormatForSpecies, getStationPositions, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
+import config from './config';
+import { EmptyFilter } from './models/Filters';
 
 export const FETCHING_META = 'FETCHING_META';
 export const FETCHING_SPATIAL = 'FETCHING_SPATIAL';
@@ -149,15 +151,36 @@ export const updateFilter = (filterId, filter) => dispatch => {
 };
 
 function fetchPropValueCounts(dispatch, getState){
-	const {objectSpecification, filters} = getState();
+	const {objectSpecification, filters, cache} = getState();
+	const emptyFilters = allFiltersEmpty(filters);
 
-	getFilteredPropValueCounts(objectSpecification, filters).then(
-		propsAndVals => dispatch({
+	if (emptyFilters && cache.propsAndVals != null){
+		dispatch({
 			type: GOT_PROP_VAL_COUNTS,
-			propsAndVals,
+			propsAndVals: cache.propsAndVals,
 			objectSpecification
-		}),
-		err => dispatch(failWithError(err))
-	);
+		});
+	} else {
+		getFilteredPropValueCounts(objectSpecification, filters).then(
+			propsAndVals => dispatch({
+				type: GOT_PROP_VAL_COUNTS,
+				propsAndVals,
+				objectSpecification
+			}),
+			err => dispatch(failWithError(err))
+		);
+	}
+}
+
+function allFiltersEmpty(filters){
+	const temporalIsEmpty = filters[config.fromDateProp].isEmpty() && filters[config.toDateProp].isEmpty();
+	const spatialIsEmpty = filters[config.spatialStationProp].isEmpty();
+	let attributeIsEmpty = true;
+
+	config.wdcggProps.forEach(prop => {
+		attributeIsEmpty = attributeIsEmpty && filters[prop.uri].isEmpty();
+	});
+
+	return temporalIsEmpty && spatialIsEmpty && attributeIsEmpty;
 }
 

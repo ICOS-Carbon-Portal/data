@@ -98,9 +98,7 @@ export default function(state, action){
 				: state;
 
 		case GOT_PROP_VAL_COUNTS:
-			if (
-				state.objectSpecification === action.objectSpecification
-			) {
+			if (state.objectSpecification === action.objectSpecification) {
 				const stations = state.spatial.stations;
 				const filteredStations = action.propsAndVals.propValCount[config.wdcggStationProp];
 
@@ -125,6 +123,11 @@ export default function(state, action){
 						stations,
 						woSpatialExtent: state.spatial.woSpatialExtent,
 						forMap: spatiallyFilteredStations
+					},
+					cache: {
+						propsAndVals: state.cache.propsAndVals
+							? state.cache.propsAndVals
+							: action.propsAndVals
 					}
 				});
 			} else {
@@ -138,7 +141,6 @@ export default function(state, action){
 }
 
 function getExcludedByAttribute(allStations, filteredStations){
-	// console.log({allStations, filteredStations});
 	return allStations.filter(as => filteredStations.findIndex(fs => fs.value == as.name) < 0);
 }
 
@@ -146,7 +148,6 @@ function getFilteredStations(stations, spatialFilter, propValStations){
 	const spatialStations = spatialFilter.isEmpty()
 		? stations
 		: spatialFilter.list;
-	// console.log({stations, spatialFilter, isEmpty: spatialFilter.isEmpty(), spatialStations, propValStations});
 
 	return spatialStations.filter(spatialStation => propValStations.findIndex(pvs => pvs.value == spatialStation.name) >= 0);
 }

@@ -38,6 +38,9 @@ const initState = {
 		stations: [],
 		woSpatialExtent: [],
 		forMap: []
+	},
+	cache: {
+		propsAndVals: null
 	}
 };
 
