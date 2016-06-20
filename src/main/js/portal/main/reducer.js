@@ -2,7 +2,6 @@ import { ROUTE_UPDATED, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_C
 	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
 import config from './config';
-import { SpatialFilter } from './models/Filters';
 
 export default function(state, action){
 
@@ -158,7 +157,7 @@ function getMapData(dataObjects, labels){
 			id: dob.id,
 			geom: (dob.metaData.geom.lat && dob.metaData.geom.lon)
 				? {lat: dob.metaData.geom.lat, lon: dob.metaData.geom.lon}
-				: {lat: 0, lon: 0}
+				: {lat: null, lon: null}
 			,
 			popup: dob.metaData.format.filter(frm => frm.prop == config.wdcggStationProp).map(frm =>{
 				return {

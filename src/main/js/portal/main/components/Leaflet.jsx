@@ -16,23 +16,17 @@ class Leaflet extends Component {
 		// this.debug("load", props);
 
 		const map = this.map = L.map(ReactDOM.findDOMNode(this.refs.map), {
-			center: [mapObjects[0].geom.lat, mapObjects[0].geom.lon],
-			zoom: 6,
 			layers: [baseMaps.Topographic],
 			attributionControl: false
 		});
 
 		const newMarkers = this.buildMarkers(mapObjects);
-
-		map.addLayer(newMarkers.markers);
-
-		if (newMarkers.fitBounds) {
-			map.fitBounds(geoms.map(geom => [geom.lat, geom.lon]));
-		}
-
+		map.addLayer(newMarkers);
 		L.control.layers(baseMaps).addTo(map);
 
-		this.setState({map, markers: newMarkers.markers});
+		this.setView(map, mapObjects);
+
+		this.setState({map, markers: newMarkers});
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -45,16 +39,23 @@ class Leaflet extends Component {
 
 			map.removeLayer(markers);
 			const newMarkers = this.buildMarkers(mapObjects);
+			map.addLayer(newMarkers);
 
-			map.addLayer(newMarkers.markers);
+			this.setView(map, mapObjects);
 
-			if (newMarkers.fitBounds) {
-				map.fitBounds(mapObjects.map(mapObj => [mapObj.geom.lat, mapObj.geom.lon]));
-			} else {
-				map.setView([mapObjects[0].geom.lat, mapObjects[0].geom.lon], 6);
-			}
+			this.setState({map, markers: newMarkers});
+		}
+	}
 
-			this.setState({map, markers: newMarkers.markers});
+	setView(map, mapObjects){
+		const uniqueGeoms = getUniqueGeoms(mapObjects);
+
+		if (uniqueGeoms.length == 0){
+			map.setView([0, 0], 1);
+		} else if (uniqueGeoms.length == 1){
+			map.setView([uniqueGeoms[0].lat, uniqueGeoms[0].lon], 6);
+		} else {
+			map.fitBounds(uniqueGeoms.map(geom => [geom.lat, geom.lon]));
 		}
 	}
 
@@ -64,8 +65,6 @@ class Leaflet extends Component {
 
 	buildMarkers(mapObjects){
 		let markers = L.markerClusterGroup();
-		let positions = [];
-		// console.log({mapObjects, props: this.props, state: this.state});
 
 		mapObjects.forEach(mapObj => {
 			if (mapObj.geom.lat && mapObj.geom.lon) {
@@ -78,17 +77,10 @@ class Leaflet extends Component {
 
 				marker.bindPopup(popupHeader + popupTxt);
 				markers.addLayer(marker);
-
-				if (positions.findIndex(pos => pos[0] == mapObj.geom.lat && pos[1] == mapObj.geom.lon) < 0) {
-					positions.push([mapObj.geom.lat, mapObj.geom.lon]);
-				}
 			}
 		});
 
-		return {
-			markers,
-			fitBounds: positions.length > 1
-		};
+		return markers;
 	}
 
 	shouldComponentUpdate(){
@@ -105,6 +97,21 @@ class Leaflet extends Component {
 			<div ref='map' className='map'></div>
 		);
 	}
+}
+
+function getUniqueGeoms(mapObjects){
+	const geoms = mapObjects
+		.filter(mo => mo.geom.lat && mo.geom.lon)
+		.map(mo => mo.geom);
+	let uniqueGeoms = [];
+
+	geoms.forEach(geom => {
+		if (uniqueGeoms.findIndex(ug => ug.lat == geom.lat && ug.lon == geom.lon) < 0) {
+			uniqueGeoms.push(geom);
+		}
+	});
+
+	return uniqueGeoms;
 }
 
 export default Leaflet;
