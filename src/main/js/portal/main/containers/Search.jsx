@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { routeUpdated, updateFilter, fetchGlobalTimeInterval } from '../actions';
 import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
-import DatePicker from '../components/DatePickerEncloser.jsx';
+import DatePickerEncloser from '../components/DatePickerEncloser.jsx';
 import SpatialSearch from '../components/SpatialSearch.jsx';
 
 class Search extends Component {
@@ -33,7 +33,7 @@ class Search extends Component {
 				<h1>ICOS Data Service search</h1>
 
 				<div className="row">
-					<DatePicker
+					<DatePickerEncloser
 						date1={ fromDate }
 						date2={ toDate }
 						filterUpdate1={ props.filterUpdate }

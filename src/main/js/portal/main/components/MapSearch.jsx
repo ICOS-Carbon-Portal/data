@@ -23,7 +23,8 @@ class MapSearch extends Component {
 			zoom: 1,
 			maxZoom: 14,
 			layers: [baseMaps.Topographic],
-			attributionControl: false
+			attributionControl: false,
+			maxBounds: [[-90, -180],[90, 180]]
 		});
 
 		L.control.layers(baseMaps).addTo(map);
@@ -58,12 +59,26 @@ class MapSearch extends Component {
 
 		map.addControl(new MapLegend());
 
-		// map.on('zoomend', e => {
-		// 	console.log({zoom: map.getZoom()});
-		// 	// if (map.getZoom() == 6){
-		// 	// 	self.updateMap(self.props.spatial.stations, self.props.spatial.forMap, self.props.clustered);
-		// 	// }
-		// });
+		map.on('zoomend', e => {
+			const defaultRadius = LCommon.pointIcon().radius;
+			const largeRadius = LCommon.pointIconLarge().radius;
+			const zoomTrigger = 5;
+			const markers = self.state.markers.getLayers();
+			const currentRadius = markers[0].getRadius();
+			const currentZoom = map.getZoom();
+
+			if (currentRadius == defaultRadius && currentZoom >= zoomTrigger){
+				// console.log({Operation: "larger", defaultRadius, largeRadius, markers, currentRadius, currentZoom});
+				markers.forEach(marker => {
+					marker.setRadius(largeRadius);
+				});
+			} else if (currentRadius == largeRadius && currentZoom < zoomTrigger){
+				// console.log({Operation: "smaller", defaultRadius, largeRadius, markers, currentRadius, currentZoom});
+				markers.forEach(marker => {
+					marker.setRadius(defaultRadius);
+				});
+			}
+		});
 
 		this.setState({map, drawMap: true});
 	}

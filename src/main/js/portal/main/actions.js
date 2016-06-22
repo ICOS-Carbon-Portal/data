@@ -1,7 +1,6 @@
 import {tableFormatForSpecies, getStationPositions, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
-import { EmptyFilter } from './models/Filters';
 
 export const FETCHING_META = 'FETCHING_META';
 export const FETCHING_SPATIAL = 'FETCHING_SPATIAL';
