@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
 	"com.typesafe.akka"  %% "akka-slf4j"                         % "2.4.4",
 	"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 	"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.3-SNAPSHOT",
-	"se.lu.nateko.cp"    %% "meta-core"                          % "0.1.0-SNAPSHOT",
+	"se.lu.nateko.cp"    %% "meta-core"                          % "0.2.0-SNAPSHOT",
 
 // *** manually published on CP Nexus 3rd party repo ***
 
