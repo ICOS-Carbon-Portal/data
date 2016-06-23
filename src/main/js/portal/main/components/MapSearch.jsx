@@ -8,6 +8,9 @@ import {MapLegend} from '../models/MapLegend';
 class MapSearch extends Component {
 	constructor(props) {
 		super(props);
+		this.state = {
+			stationsEnlarged: false
+		}
 	}
 
 	componentDidMount() {
@@ -60,22 +63,20 @@ class MapSearch extends Component {
 		map.addControl(new MapLegend());
 
 		map.on('zoomend', e => {
-			const defaultRadius = LCommon.pointIcon().radius;
-			const largeRadius = LCommon.pointIconLarge().radius;
 			const zoomTrigger = 5;
 			const markers = self.state.markers.getLayers();
-			const currentRadius = markers[0].getRadius();
 			const currentZoom = map.getZoom();
+			const stationsEnlarged = self.state.stationsEnlarged;
 
-			if (currentRadius == defaultRadius && currentZoom >= zoomTrigger){
-				// console.log({Operation: "larger", defaultRadius, largeRadius, markers, currentRadius, currentZoom});
+			if (!stationsEnlarged && currentZoom >= zoomTrigger){
+				self.setState({stationsEnlarged: true});
 				markers.forEach(marker => {
-					marker.setRadius(largeRadius);
+					marker.setRadius(marker.getRadius() * 2);
 				});
-			} else if (currentRadius == largeRadius && currentZoom < zoomTrigger){
-				// console.log({Operation: "smaller", defaultRadius, largeRadius, markers, currentRadius, currentZoom});
+			} else if (stationsEnlarged && currentZoom < zoomTrigger){
+				self.setState({stationsEnlarged: false});
 				markers.forEach(marker => {
-					marker.setRadius(defaultRadius);
+					marker.setRadius(marker.getRadius() / 2);
 				});
 			}
 		});

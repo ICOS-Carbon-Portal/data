@@ -41,16 +41,6 @@ export function pointIcon() {
 	}
 };
 
-export function pointIconLarge() {
-	return {
-		radius: 8,
-		weight: 5,
-		color: 'white',
-		fillColor: 'rgb(255,50,50)',
-		fillOpacity: 1
-	}
-};
-
 export function pointIconExcluded() {
 	return {
 		radius: 3,
