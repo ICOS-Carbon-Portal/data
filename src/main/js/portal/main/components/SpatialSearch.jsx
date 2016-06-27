@@ -7,7 +7,8 @@ class SpatialSearch extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			clustered: false
+			clustered: false,
+			allStations: this.props.spatialMode.allStations
 		}
 	}
 
@@ -20,6 +21,10 @@ class SpatialSearch extends Component {
 
 	onClusterClick(cluster){
 		this.setState({clustered: cluster});
+	}
+
+	onStationaryClick(allStations){
+		this.setState({allStations});
 	}
 
 	render(){
@@ -41,21 +46,38 @@ class SpatialSearch extends Component {
 						stationsAttributeFiltered={props.stationsAttributeFiltered}
 						filterUpdate={props.filterUpdate}
 						spatial={props.spatial}
+						allStations={this.state.allStations}
 						clustered={this.state.clustered}
 					/>
 				</div>
 				<div className="col-md-2" style={{height:mapDivHeight}}>
-					<div className="btn-group" role="group">
-						<button ref="clusterBtn" type="button"
-								className={getBtnClass(this.state.clustered)}
-								onClick={() => this.onClusterClick(true)}>Clustered</button>
+					<div style={{display: 'block', marginBottom: 10}}>
+						<label style={{display: 'block', marginBottom: 0}}>Mobile stations in filter</label>
+						<div className="btn-group" role="group">
+							<button ref="spatialBtn" type="button"
+									className={getBtnClass(!this.state.allStations)}
+									onClick={() => this.onStationaryClick(false)}>Exclude</button>
 
-						<button ref="unclusterBtn" type="button"
-								className={getBtnClass(!this.state.clustered)}
-								onClick={() => this.onClusterClick(false)}>Not clustered</button>
+							<button ref="nonSpatialBtn" type="button"
+									className={getBtnClass(this.state.allStations)}
+									onClick={() => this.onStationaryClick(true)}>Include</button>
+						</div>
 					</div>
 
 					<div style={{display: 'block', marginBottom: 10}}>
+						<label style={{display: 'block', marginBottom: 0}}>Display stations</label>
+						<div className="btn-group" role="group">
+							<button ref="clusterBtn" type="button"
+									className={getBtnClass(this.state.clustered)}
+									onClick={() => this.onClusterClick(true)}>Clustered</button>
+
+							<button ref="unclusterBtn" type="button"
+									className={getBtnClass(!this.state.clustered)}
+									onClick={() => this.onClusterClick(false)}>Not clustered</button>
+						</div>
+					</div>
+
+					<div style={{display: 'block', marginBottom: 20}}>
 						<button className={resetBtnCss}
 								disabled={resetBtnDisabled}
 								style={{display: 'block', marginTop: 10}}
@@ -65,24 +87,19 @@ class SpatialSearch extends Component {
 					</div>
 
 					<div style={{display: 'block', marginBottom: 10}}>
-						<button type="button" className="btn btn-default" onClick={() => this.refs.mapSearch.zoomTo(true)}>
-							<span className="glyphicon glyphicon-globe" style={{marginRight: 5}} aria-hidden="true"></span>
-							Zoom to full extent
+						<button type="button" className="btn btn-default" title="Zoom to full extent" style={{marginRight: 10}} onClick={() => this.refs.mapSearch.zoomTo(true)}>
+							<span className="glyphicon glyphicon-globe" aria-hidden="true"></span>
 						</button>
-					</div>
-
-					<div style={{display: 'block', marginBottom: 10}}>
-						<button type="button" className="btn btn-default" onClick={() => this.refs.mapSearch.zoomTo(false)}>
-							<span className="glyphicon glyphicon-resize-small" style={{marginRight: 5}} aria-hidden="true"></span>
-							Zoom to selected stations
+						<button type="button" className="btn btn-default" title="Zoom to selected stations" style={{marginRight: 10}} onClick={() => this.refs.mapSearch.zoomTo(false)}>
+							<span className="glyphicon glyphicon-resize-small" aria-hidden="true"></span>
 						</button>
 					</div>
 
 					<div style={{position: 'absolute', bottom: 0, right: 0}}>
 						<label>Selected stations in map:&nbsp;</label>
 						<span>{selStationCount} out of {totStationCount}</span>
-						<label>Stations without geographic position:&nbsp;</label>
-						<span>{props.spatial.woSpatialExtent.length}</span>
+						<label>Mobile stations:&nbsp;</label>
+						<span>{props.spatial.woSpatialExtent.length} (not displayed in map)</span>
 					</div>
 				</div>
 			</div>

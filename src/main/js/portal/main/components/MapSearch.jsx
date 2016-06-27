@@ -42,7 +42,7 @@ class MapSearch extends Component {
 			}
 		};
 
-		L.drawLocal.draw.toolbar.buttons.rectangle = 'Limit stations by drawing a rectangle';
+		L.drawLocal.draw.toolbar.buttons.rectangle = 'Filter stations by drawing a rectangle';
 
 		const drawControl = new L.Control.Draw(drawOptions);
 		map.addControl(drawControl);
@@ -52,11 +52,7 @@ class MapSearch extends Component {
 			const layer = e.layer;
 
 			if (layerType === 'rectangle') {
-				const bBox = layer.getLatLngs();
-				const filteredStations = self.spatialFilter(bBox);
-
-				const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
-				self.props.filterUpdate(config.spatialStationProp, filter);
+				self.applySpatialFilter(self.props.allStations, layer.getLatLngs());
 			}
 		});
 
@@ -87,13 +83,14 @@ class MapSearch extends Component {
 	componentWillReceiveProps(nextProps){
 		const drawMap = nextProps.spatial.forMap.length > 0 && this.state.drawMap;
 		const newSpatialData = this.props.spatial.forMap.length != nextProps.spatial.forMap.length;
+		const filterModeChanged = this.props.allStations != nextProps.allStations;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
-
-		// console.log({nextSpatial: nextProps.spatial, drawMap, newSpatialData, clusteringChanged, stationsAttributeFiltered: nextProps.stationsAttributeFiltered});
 
 		if (drawMap || newSpatialData || clusteringChanged){
 			this.setState({drawMap: false});
 			this.updateMap(nextProps.spatial, nextProps.spatialFilter, nextProps.stationsAttributeFiltered, nextProps.clustered);
+		} else if (filterModeChanged && this.state.bBox){
+			this.applySpatialFilter(nextProps.allStations, this.state.bBox);
 		}
 	}
 
@@ -107,7 +104,7 @@ class MapSearch extends Component {
 		const newMarkers = this.buildMarkers(spatial, spatialFilter, stationsAttributeFiltered, cluster, map.getZoom());
 		map.addLayer(newMarkers);
 
-		this.setState({map, markers: newMarkers, clustered: cluster, bBox: null});
+		this.setState({map, markers: newMarkers, clustered: cluster});
 	}
 
 	resetExtent(){
@@ -130,21 +127,25 @@ class MapSearch extends Component {
 	}
 
 	addRemoveStation(stationName, remove){
-		// console.log({stationName, remove, spatial: this.props.spatial});
-		const woSpatialExtent = this.props.spatial.woSpatialExtent;
-		const forMap = this.props.spatial.forMap;
-		const stations = this.props.spatial.stations;
+		const props = this.props;
+		const allStations = props.allStations;
+		const woSpatialExtent = props.spatial.woSpatialExtent;
+		const forMap = props.spatial.forMap;
+		const stations = props.spatial.stations;
 
 		if(remove){
-			const filteredStations = forMap.filter(st => st.name != stationName).concat(woSpatialExtent);
+			const filteredStations = forMap.filter(st => st.name != stationName).concat(allStations
+				? woSpatialExtent
+				: []
+			);
 			const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
-			this.props.filterUpdate(config.spatialStationProp, filter);
+			props.filterUpdate(config.spatialStationProp, filter);
 		} else {
 			const filteredStations = forMap.concat(stations.filter(st => st.name == stationName)).concat(woSpatialExtent);
 			const filter = filteredStations.length == stations.length
 				? new EmptyFilter()
 				: new SpatialFilter(config.spatialStationProp, filteredStations);
-			this.props.filterUpdate(config.spatialStationProp, filter);
+			props.filterUpdate(config.spatialStationProp, filter);
 		}
 	}
 
@@ -195,13 +196,22 @@ class MapSearch extends Component {
 			: markers;
 	}
 
-	spatialFilter(bBox){
-		return this.props.spatial.stations.filter(st =>
+	applySpatialFilter(allStations, bBox){
+		this.setState({bBox});
+
+		const props = this.props;
+		const filteredStations = props.spatial.stations.filter(st =>
 			st.lat >= bBox[0].lat
 			&& st.lat <= bBox[2].lat
 			&& st.lon >= bBox[0].lng
 			&& st.lon <= bBox[2].lng
-		).concat(this.props.spatial.woSpatialExtent);
+		).concat(allStations
+			? props.spatial.woSpatialExtent
+			: []
+		);
+
+		const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
+		props.filterUpdate(config.spatialStationProp, filter);
 	}
 
 	shouldComponentUpdate(){

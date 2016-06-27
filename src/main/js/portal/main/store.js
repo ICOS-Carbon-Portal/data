@@ -39,6 +39,9 @@ const initState = {
 		woSpatialExtent: [],
 		forMap: []
 	},
+	spatialMode: {
+		allStations: config.initSpatialModeAllStations
+	},
 	cache: {
 		propsAndVals: null
 	}
