@@ -113,6 +113,7 @@ class MapSearch extends Component {
 
 		props.filterUpdate(config.spatialStationProp, new EmptyFilter());
 		map.setView([0, 0], 1);
+		this.setState({bBox: null});
 	}
 
 	zoomTo(allStations){
@@ -197,21 +198,23 @@ class MapSearch extends Component {
 	}
 
 	applySpatialFilter(allStations, bBox){
-		this.setState({bBox});
+		if (bBox) {
+			this.setState({bBox});
 
-		const props = this.props;
-		const filteredStations = props.spatial.stations.filter(st =>
-			st.lat >= bBox[0].lat
-			&& st.lat <= bBox[2].lat
-			&& st.lon >= bBox[0].lng
-			&& st.lon <= bBox[2].lng
-		).concat(allStations
-			? props.spatial.woSpatialExtent
-			: []
-		);
+			const props = this.props;
+			const filteredStations = props.spatial.stations.filter(st =>
+				st.lat >= bBox[0].lat
+				&& st.lat <= bBox[2].lat
+				&& st.lon >= bBox[0].lng
+				&& st.lon <= bBox[2].lng
+			).concat(allStations
+				? props.spatial.woSpatialExtent
+				: []
+			);
 
-		const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
-		props.filterUpdate(config.spatialStationProp, filter);
+			const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
+			props.filterUpdate(config.spatialStationProp, filter);
+		}
 	}
 
 	shouldComponentUpdate(){
