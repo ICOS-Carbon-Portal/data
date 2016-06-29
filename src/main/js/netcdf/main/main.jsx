@@ -1,3 +1,5 @@
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 function handleError(error){
 	console.log(error);
@@ -19,15 +21,21 @@ var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, hand
 var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
 var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, Raster.highlightedValueAction);
 
-var Map = require('./views/MapViewFactory.jsx')(MapStore);
+//var Map = require('./views/MapViewFactory.jsx')(MapStore);
+var LMapContainer = require('./views/LMapContainerFactory.jsx')(RasterStore, MapStore);
 
-React.render(
-	<div>
+console.log({MapStore});
+
+ReactDOM.render(
+	<div style={{width:'100%', height: '100%'}}>
 		<Controls.View/>
 		<Legend width={1000} height={45}/>
 		<div className="illustration">
+			<LMapContainer />
+			{/*
 			<Raster.View/>
 			<Map/>
+			*/}
 		</div>
 	</div>,
 	document.getElementById('main')

@@ -1,4 +1,6 @@
 var Utils = require('../Utils.js');
+import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 
 var Selector = React.createClass({
 
@@ -7,7 +9,7 @@ var Selector = React.createClass({
 	},
 
 	changeHandler: function(){
-		var value = React.findDOMNode(this.refs.selector).value;
+		var value = ReactDOM.findDOMNode(this.refs.selector).value;
 		if(Utils.isLengthy(value)) this.props.action(value);
 	},
 

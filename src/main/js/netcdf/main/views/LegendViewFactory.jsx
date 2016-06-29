@@ -1,5 +1,7 @@
 var MapUtils = require('./MapUtils.js');
 var Utils = require('../Utils.js');
+import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 
 var margin = 20;
 var stripeHeight = 20;
@@ -78,7 +80,7 @@ module.exports = function(rasterStore, highlightedValueAction){
 				? this.scale.domain([min, 0, max]).range([0, (width - 1) / 2 , width - 1])
 				: this.scale.domain([min, max]).range([0, width - 1]);
 
-			var canvas = React.findDOMNode(this.refs.canvas);
+			var canvas = ReactDOM.findDOMNode(this.refs.canvas);
 			var ctx = canvas.getContext('2d');
 
 			ctx.fillStyle = 'white';
@@ -95,7 +97,7 @@ module.exports = function(rasterStore, highlightedValueAction){
 				ctx.stroke();
 			}
 
-			var axisElem = React.findDOMNode(this.refs.axis);
+			var axisElem = ReactDOM.findDOMNode(this.refs.axis);
 			var axis = d3.svg.axis()
 				.scale(this.scale)
 				.tickFormat(d3.format('.2e'));

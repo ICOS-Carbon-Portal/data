@@ -1,4 +1,6 @@
 var MapUtils = require('./MapUtils.js');
+import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 
 module.exports = function(mapStore){
 
@@ -23,7 +25,7 @@ module.exports = function(mapStore){
 			var boundingBox = this.state.boundingBox;
 
 			if(rasterSize && boundingBox){
-				var map = React.findDOMNode(this.refs.map);
+				var map = ReactDOM.findDOMNode(this.refs.map);
 				var sizeStyle = MapUtils.getMapSizeStyle(map.offsetParent, boundingBox, rasterSize);
 				map.style.width = sizeStyle.width;
 				map.style.height = sizeStyle.height;

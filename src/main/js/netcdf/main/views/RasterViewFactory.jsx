@@ -1,4 +1,6 @@
 var MapUtils = require('./MapUtils.js');
+import React, { Component, PropTypes } from 'react';
+import ReactDOM from 'react-dom';
 
 module.exports = function(rasterStore){
 
@@ -41,7 +43,7 @@ module.exports = function(rasterStore){
 		},
 
 		getCanvas: function(){
-			return React.findDOMNode(this.refs.canvas);
+			return ReactDOM.findDOMNode(this.refs.canvas);
 		},
 
 		reportHighlightedValue: function(event) {
