@@ -81,6 +81,7 @@ module.exports = {
 
 	getCountriesTopoJson: function(resolve, reject){
 		var url = 'https://static.icos-cp.eu/js/topojson/readme-world.json';
+		// var url = 'https://static.icos-cp.eu/js/topojson/countries.topo.json';
 		getJson(url, resolve, reject);
 	}
 };

@@ -24,8 +24,6 @@ var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, Raster.highli
 //var Map = require('./views/MapViewFactory.jsx')(MapStore);
 var LMapContainer = require('./views/LMapContainerFactory.jsx')(RasterStore, MapStore);
 
-console.log({MapStore});
-
 ReactDOM.render(
 	<div style={{width:'100%', height: '100%'}}>
 		<Controls.View/>

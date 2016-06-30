@@ -5,12 +5,17 @@ import LMap from './LMap.jsx';
 module.exports = function(rasterStore, mapStore) {
 
 	return React.createClass({
-		mixins: [Reflux.connect(rasterStore)],
+		mixins: [Reflux.connect(rasterStore), Reflux.connect(mapStore)],
 
 		render: function() {
-			console.log({state: this.state});
+			const state = this.state;
+			// console.log({state});
 			return (
-				<LMap raster={this.state.raster} />
+				<LMap
+					raster={state.raster}
+					gamma={state.gamma}
+					countriesTopo={state.countriesTopo}
+				/>
 			);
 		}
 	});
