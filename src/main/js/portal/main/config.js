@@ -15,9 +15,9 @@ export default {
 	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	wdcggProps: [
 		{uri: wdcggProp('PARAMETER'),           label: 'Parameter (gas)'},
-		{uri: wdcggStationProp,                 label: 'Station name'},
+//		{uri: wdcggStationProp,                 label: 'Station name'},
 		{uri: wdcggProp('CONTRIBUTOR'),         label: 'Contributor'},
-		{uri: wdcggProp('COUNTRY/TERRITORY'),   label: 'Country'},
+//		{uri: wdcggProp('COUNTRY/TERRITORY'),   label: 'Country'},
 		{uri: wdcggProp('TIME%20INTERVAL'),     label: 'Time interval'},
 		{uri: wdcggProp('SAMPLING%20TYPE'),     label: 'Sampling type'},
 		{uri: wdcggProp('MEASUREMENT%20UNIT'),  label: 'Measurement unit'}

@@ -132,12 +132,14 @@ function getFilteredDataObjects(spec, filters){
 			count: Number.parseInt(binding.nRows.value)
 		};
 	}
-
-	return sparql(query).then(sparqlResult => groupBy(
-		sparqlResult.results.bindings,
-		binding => binding.dobj.value,
-		bindingToValueCount
-	));
+	return sparql(query).then(sparqlResult => {
+		var res = groupBy(
+			sparqlResult.results.bindings,
+			binding => binding.dobj.value,
+			bindingToValueCount
+		);
+		return res;
+	});
 }
 
 function groupBy(arr, keyMaker, valueMaker){

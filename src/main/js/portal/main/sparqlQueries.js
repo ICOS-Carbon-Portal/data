@@ -1,7 +1,7 @@
 import config from './config';
 import {sparqlEscape} from './models/Filters';
 
-var {wdcggBaseUri, wdcggStationProp, wdcggLatProp, wdcggLonProp, cpmetaOntoUri, cpmetaResUri} = config;
+var {wdcggBaseUri, cpmetaOntoUri, cpmetaResUri} = config;
 
 export function simpleDataObjects(objSpec){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
@@ -52,7 +52,7 @@ SELECT *
 FROM <${wdcggBaseUri}>
 WHERE {
 	<${dobjId}> cpmeta:wasSubmittedBy/prov:wasAssociatedWith/cpmeta:hasName ?submitterName .
-	<${dobjId}> cpmeta:wasProducedBy [
+	<${dobjId}> cpmeta:wasAcquiredBy [
 		prov:startedAtTime ?prodStart ;
 		prov:endedAtTime ?prodEnd ;
 		prov:wasAssociatedWith/cpmeta:hasName ?producerName
@@ -67,7 +67,7 @@ SELECT distinct ?prop ?label (str(?value) as ?val)
 FROM <${wdcggBaseUri}>
 WHERE {
 	BIND (<${dobjId}> AS ?dobj)
-	?dobj cpmeta:wasProducedBy ?prod . {
+	?dobj cpmeta:wasAcquiredBy ?prod . {
 		{
 			?prod prov:startedAtTime ?value .
 			BIND ("SAMPLING START" AS ?label)
@@ -91,7 +91,7 @@ select  (min(?startTime) as ?startMin) (max(?endTime) as ?endMax)
 FROM <${wdcggBaseUri}>
 where{
 	?dobj cpmeta:hasObjectSpec <${spec}> .
-	?dobj cpmeta:wasProducedBy ?prod .
+	?dobj cpmeta:wasAcquiredBy ?prod .
 	?prod  prov:startedAtTime ?startTime .
 	?prod  prov:endedAtTime ?endTime .
 }`;
@@ -143,14 +143,14 @@ where {
 }
 
 export function stationPositions(){
-	return `select distinct ?name (SAMPLE(?latStr) AS ?lat) (SAMPLE(?lonStr) AS ?lon)
+	return `prefix cpmeta: <${cpmetaOntoUri}>
+select distinct ?name ?lat ?lon
 from <${wdcggBaseUri}>
 where{
-	?dobj <${wdcggStationProp}> ?name .
-	?dobj <${wdcggLatProp}> ?latStr .
-	?dobj <${wdcggLonProp}> ?lonStr .
-}
-group by ?name
-order by ?name`;
+	?station a cpmeta:Station .
+	?station cpmeta:hasName ?name .
+	?station cpmeta:hasLatitude ?lat .
+	?station cpmeta:hasLongitude ?lon .
+}`;
 }
 

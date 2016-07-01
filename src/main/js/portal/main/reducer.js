@@ -236,7 +236,8 @@ function filteredDO2Arr(filteredDataObjects){
 			}
 		}
 
-		return Array.from(obj2Arr(filteredDataObjects));
+		var res = Array.from(obj2Arr(filteredDataObjects));
+		return res;
 	} else {
 		return null;
 	}
