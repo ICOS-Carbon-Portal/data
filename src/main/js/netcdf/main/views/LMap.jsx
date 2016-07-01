@@ -6,11 +6,13 @@ export default class LMap extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
-			countriesLoaded: false
+			countriesLoaded: false,
+			loadCanvas: true
 		}
 	}
 
 	componentDidMount() {
+		const self = this;
 		// console.log({props: this.props});
 		// const topo = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
 		// 	maxZoom: 14
@@ -38,6 +40,24 @@ export default class LMap extends Component{
 					L.GeoJSON.prototype.addData.call(self, jsonData);
 				}
 			}
+		});
+
+		map.on('zoomstart', e => {
+			showCanvasContainer(false);
+		});
+
+		map.on('mousedown', e => {
+			showCanvasContainer(false);
+		});
+
+		map.on('zoomend', e => {
+			showCanvasContainer(true);
+			self.setState({loadCanvas: true});
+		});
+
+		map.on('mouseup', e => {
+			showCanvasContainer(true);
+			self.setState({loadCanvas: true});
 		});
 
 		this.setState({map});
@@ -69,26 +89,33 @@ export default class LMap extends Component{
 	}
 
 	addCanvasLayer(map, raster, gamma){
+		const self = this;
+
 		const CanvasLayer = L.CanvasLayer.extend({
 			render: function(){
-				console.log({map, raster, gamma});
 				const canvas = this.getCanvas();
-				const context = canvas.getContext('2d');
 
-				const mapLL = map.latLngToContainerPoint(new L.LatLng(raster.boundingBox.latMin, raster.boundingBox.lonMin));
-				const mapUR = map.latLngToContainerPoint(new L.LatLng(raster.boundingBox.latMax, raster.boundingBox.lonMax));
+				if (self.state.loadCanvas) {
+					console.log({this, self, map, raster, gamma});
+					const context = canvas.getContext('2d');
 
-				const canvasStyleWidth = mapUR.x - mapLL.x;
-				const canvasStyleHeight = mapLL.y - mapUR.y;
+					const mapLL = map.latLngToContainerPoint(new L.LatLng(raster.boundingBox.latMin, raster.boundingBox.lonMin));
+					const mapUR = map.latLngToContainerPoint(new L.LatLng(raster.boundingBox.latMax, raster.boundingBox.lonMax));
 
-				context.clearRect(0, 0, canvasStyleWidth, canvasStyleHeight);
+					const canvasStyleWidth = mapUR.x - mapLL.x;
+					const canvasStyleHeight = mapLL.y - mapUR.y;
 
-				makeImage(canvas, raster, gamma);
+					context.clearRect(0, 0, canvasStyleWidth, canvasStyleHeight);
 
-				const style = "position: absolute; top: " + mapUR.y + "px; left: " + mapLL.x + "px; pointer-events: none; z-index: 0; width: "
-					+ canvasStyleWidth + "px; height: " + canvasStyleHeight + "px;";
-				canvas.setAttribute("style", style);
-				canvas.className = "raster";
+					makeImage(canvas, raster, gamma);
+
+					const style = "position: absolute; top: " + mapUR.y + "px; left: " + mapLL.x + "px; pointer-events: none; z-index: 0; width: "
+						+ canvasStyleWidth + "px; height: " + canvasStyleHeight + "px;";
+					canvas.setAttribute("style", style);
+					canvas.id = "rasterLayer";
+					canvas.className = "raster";
+					self.setState({loadCanvas: false});
+				}
 			}
 		});
 
@@ -110,4 +137,12 @@ export default class LMap extends Component{
 			<div ref='map' className='map'></div>
 		);
 	}
+}
+
+function showCanvasContainer(show){
+console.log({showCanvasContainer: show});
+	const canvasContainer = document.getElementsByClassName("leaflet-layer")[0];
+	show
+		? canvasContainer.setAttribute("style", "display:inline;")
+		: canvasContainer.setAttribute("style", "display:none;");
 }
