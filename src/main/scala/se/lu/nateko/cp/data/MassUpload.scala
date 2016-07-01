@@ -15,20 +15,10 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.HostConnectionPool
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.sprayJsonMarshaller
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.FormData
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.RequestEntity
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.model.headers.Cookie
-import akka.http.scaladsl.model.headers.HttpCookiePair
-import akka.http.scaladsl.model.headers.`Set-Cookie`
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
@@ -38,25 +28,29 @@ import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams
+import java.net.URLEncoder
 
 object MassUpload extends CommonJsonSupport{
 
 	val parall = 8
 	val Username = "test@upload"
-	val Producer = "http://meta.icos-cp.eu/resources/organizations/WDCGG"
-	val ObjSpec = "http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject"
+	val ObjSpec = new URI("http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject")
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
-	val RootFolder = "/disk/data/wdcgg"
+	val RootFolder = "/disk/data/wdcgg/"
+
+	def getWdcggStation(name: String) =
+		new URI("http", "meta.icos-cp.eu", "/resources/wdcgg/station/" + name, null)
 
 	case class UploadMetadataDto(
 		hashSum: Sha256Sum,
 		submitterId: String,
-		producingOrganization: URI,
 		objectSpecification: URI,
-		fileName: String
+		fileName: String,
+		specificInfo: Map[String, URI]
 	)
 
-	case class FileInfo(file: File, hash: Sha256Sum)
+	case class FileInfo(file: File, hash: Sha256Sum, stationName: String)
 
 	implicit val system = ActorSystem("massUpload")
 	import system.dispatcher
@@ -68,11 +62,11 @@ object MassUpload extends CommonJsonSupport{
 	type HttpFlow[T] = Flow[(HttpRequest, T), (Try[HttpResponse], T), HostConnectionPool]
 	type StepResult[T] = (T, Option[String])
 
-	def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPoolHttps("meta.icos-cp.eu")
-	def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPoolHttps("data.icos-cp.eu")
+//	def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPoolHttps("meta.icos-cp.eu")
+//	def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPoolHttps("data.icos-cp.eu")
 
-	//def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9094)
-	//def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9010)
+	def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9094)
+	def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9010)
 	
 	val fileSource: Source[File, NotUsed] = {
 		def getFiles(folder: File): Seq[File] = {
@@ -83,10 +77,16 @@ object MassUpload extends CommonJsonSupport{
 	}
 
 	val fileInfoSource: Source[FileInfo, NotUsed] = fileSource.mapAsyncUnordered(parall){file =>
-		FileIO.fromFile(file)
+		val hashFut = FileIO.fromFile(file)
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.to(Sink.ignore).run()
-			.map(hash => FileInfo(file, hash))
+		val headerFut = FileIO.fromFile(file)
+			.via(TimeSeriesStreams.linesFromBinary)
+			.toMat(TimeSeriesStreams.wdcggHeaderSink)(Keep.right).run()
+		for(hash <- hashFut; header <- headerFut) yield {
+			val stationName = header("STATION NAME")
+			FileInfo(file, hash, stationName)
+		}
 	}
 
 	val metaSubmittingFlow: Flow[FileInfo, StepResult[FileInfo], NotUsed] = Flow[FileInfo]
@@ -159,8 +159,8 @@ object MassUpload extends CommonJsonSupport{
 			hashSum = fileInfo.hash,
 			submitterId = "CP",
 			fileName = fileInfo.file.getName,
-			producingOrganization = new URI(Producer),
-			objectSpecification = new URI(ObjSpec)
+			objectSpecification = ObjSpec,
+			specificInfo = Map("station" -> getWdcggStation(fileInfo.stationName))
 		)
 
 		Marshal(meta).to[RequestEntity]
