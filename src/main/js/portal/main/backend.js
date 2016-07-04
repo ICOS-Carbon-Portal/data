@@ -28,14 +28,19 @@ export function tableFormatForSpecies(objSpecies){
 	return sparql(query).then(parseTableFormat);
 }
 
-export function getStationPositions(){
-	const query = sparqlQueries.stationPositions();
+export function getStationInfo(){
+	function floatValueOf(bindingVal){
+		return bindingVal ? parseFloat(bindingVal.value) : undefined;
+	}
+	const query = sparqlQueries.stationInfo();
 	return sparql(query).then(sparqlResult => {
 		return sparqlResult.results.bindings.map(binding => {
 			return {
+				uri: binding.station.value,
 				name: binding.name.value,
-				lat: parseFloat(binding.lat.value),
-				lon: parseFloat(binding.lon.value)
+				country: binding.country.value,
+				lat: floatValueOf(binding.lat),
+				lon: floatValueOf(binding.lon)
 			}
 		})
 	});
@@ -106,6 +111,20 @@ export function getFilteredPropValueCounts(spec, filters){
 	});
 }
 
+function getFilteredDataObjects(spec, filters){
+	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters);
+
+	return sparql(query).then(sparqlResult => {
+		return sparqlResult.results.bindings.map(binding => {
+			return {
+				uri: binding.dobj.value,
+				fileName: binding.fileName.value,
+				nRows: Number.parseInt(binding.nRows.value)
+			};
+		});
+	});
+}
+
 function getPropValueCounts(spec, filters){
 	const query = sparqlQueries.getPropValueCounts(spec, filters);
 
@@ -123,25 +142,6 @@ function getPropValueCounts(spec, filters){
 	));
 }
 
-function getFilteredDataObjects(spec, filters){
-	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters);
-
-	function bindingToValueCount(binding){
-		return {
-			value: binding.fileName.value,
-			count: Number.parseInt(binding.nRows.value)
-		};
-	}
-	return sparql(query).then(sparqlResult => {
-		var res = groupBy(
-			sparqlResult.results.bindings,
-			binding => binding.dobj.value,
-			bindingToValueCount
-		);
-		return res;
-	});
-}
-
 function groupBy(arr, keyMaker, valueMaker){
 	return arr.reduce(function(acc, elem){
 		const key = keyMaker(elem);
@@ -153,5 +153,3 @@ function groupBy(arr, keyMaker, valueMaker){
 		return acc;
 	}, {});
 }
-
-

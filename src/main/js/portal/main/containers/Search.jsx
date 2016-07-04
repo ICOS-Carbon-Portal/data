@@ -45,7 +45,7 @@ class Search extends Component {
 					<SpatialSearch
 						filters={props.filters}
 						stationsAttributeFiltered={props.propValueCounts[config.wdcggStationProp]}
-						spatial={props.spatial}
+						stations={props.stations}
 						filterUpdate={props.filterUpdate}
 						spatialMode={props.spatialMode}
 					/>

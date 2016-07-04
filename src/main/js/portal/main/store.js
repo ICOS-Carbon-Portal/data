@@ -1,9 +1,10 @@
 import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 import reducer from './reducer'
-import {routeUpdated, fetchTableFormat, fetchStationPositions} from './actions'
+import {routeUpdated, fetchTableFormat, fetchStationInfo} from './actions'
 import config from './config';
 import { EmptyFilter } from './models/Filters';
+import StationsInfo from './models/StationsInfo';
 
 const initCounts = {};
 const initFilters = {};
@@ -34,11 +35,7 @@ const initState = {
 	toDateMax: '2030-12-13T12:00:00Z',
 	propValueCounts: initCounts,
 	filters: initFilters,
-	spatial: {
-		stations: [],
-		woSpatialExtent: [],
-		forMap: []
-	},
+	stations: new StationsInfo([]),
 	spatialMode: {
 		allStations: config.initSpatialModeAllStations
 	},
@@ -67,7 +64,7 @@ const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 export default function(){
 	store.dispatch(routeUpdated());
 	store.dispatch(fetchTableFormat(config.wdcggSpec));
-	store.dispatch(fetchStationPositions());
+	store.dispatch(fetchStationInfo);
 	return store;
 }
 

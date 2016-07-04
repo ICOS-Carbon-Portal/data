@@ -1,6 +1,7 @@
 import { ROUTE_UPDATED, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_COUNTS,
-	FETCHING_META, FETCHING_SPATIAL, FETCHED_SPATIAL, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
+	FETCHING_META, FETCHED_STATIONS, FETCHING_DATA, FETCHED_META, FETCHED_DATA, DATA_CHOSEN, REMOVE_DATA, REMOVED_DATA, PIN_DATA, ERROR} from './actions';
 import {getLabels, generateChartData} from './models/chartDataMaker';
+import StationsInfo from './models/StationsInfo';
 import config from './config';
 
 export default function(state, action){
@@ -18,9 +19,6 @@ export default function(state, action){
 		case FETCHING_META:
 			return Object.assign({}, state, {status: FETCHING_META});
 
-		case FETCHING_SPATIAL:
-			return Object.assign({}, state, {status: FETCHING_SPATIAL});
-
 		case FETCHING_DATA:
 			return Object.assign({}, state, {status: FETCHING_DATA});
 
@@ -30,14 +28,8 @@ export default function(state, action){
 				tableFormat: action.tableFormat
 			});
 
-		case FETCHED_SPATIAL:
-			return Object.assign({}, state, {
-				spatial: {
-					stations: action.stationPositions,
-					woSpatialExtent: action.stationPositions.filter(st => !(st.lat && st.lon)),
-					forMap: action.stationPositions
-				}
-			});
+		case FETCHED_STATIONS:
+			return Object.assign({}, state, {stations: new StationsInfo(action.stationInfo)});
 
 		case PIN_DATA:
 			return Object.assign({}, state, {
@@ -92,22 +84,18 @@ export default function(state, action){
 		case GOT_GLOBAL_TIME_INTERVAL:
 			return state.objectSpecification === action.objectSpecification
 				? Object.assign({}, state, {
-				fromDateMin: action.min,
-				toDateMax: action.max
-			})
+					fromDateMin: action.min,
+					toDateMax: action.max
+				})
 				: state;
 
 		case GOT_PROP_VAL_COUNTS:
 			if (state.objectSpecification === action.objectSpecification) {
-				const stations = state.spatial.stations;
-				const filteredStations = action.propsAndVals.propValCount[config.wdcggStationProp];
+				const filteredStationUris = action.propsAndVals
+					.propValCount[config.stationProp]
+					.map(({value}) => value);
 
-				const spatiallyFilteredStations = getFilteredStations(
-					stations,
-					state.filters[config.spatialStationProp],
-					filteredStations
-				);
-				const filteredDataObjects = filteredDO2Arr(action.propsAndVals.filteredDataObjects);
+				const filteredDataObjects = action.propsAndVals.filteredDataObjects;
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
 
@@ -119,15 +107,9 @@ export default function(state, action){
 					dataObjects,
 					forChart: generateChartData(dataObjects, labels),
 					forMap: getMapData(dataObjects, labels),
-					spatial: {
-						stations,
-						woSpatialExtent: state.spatial.woSpatialExtent,
-						forMap: spatiallyFilteredStations
-					},
+					stations: state.stations.withSelected(filteredStationUris),
 					cache: {
-						propsAndVals: state.cache.propsAndVals
-							? state.cache.propsAndVals
-							: action.propsAndVals
+						propsAndVals: state.cache.propsAndVals || action.propsAndVals
 					}
 				});
 			} else {
@@ -138,18 +120,6 @@ export default function(state, action){
 			return state;
 	}
 
-}
-
-function getExcludedByAttribute(allStations, filteredStations){
-	return allStations.filter(as => filteredStations.findIndex(fs => fs.value == as.name) < 0);
-}
-
-function getFilteredStations(stations, spatialFilter, propValStations){
-	const spatialStations = spatialFilter.isEmpty()
-		? stations
-		: spatialFilter.list;
-
-	return spatialStations.filter(spatialStation => propValStations.findIndex(pvs => pvs.value == spatialStation.name) >= 0);
 }
 
 function getMapData(dataObjects, labels){
@@ -221,26 +191,6 @@ function getMetaData(format, dataObjId){
 	});
 
 	return {geom, format: newFormat};
-}
-
-function filteredDO2Arr(filteredDataObjects){
-	if (filteredDataObjects){
-
-		function* obj2Arr(obj) {
-			for (let prop of Object.keys(obj)) {
-				yield {
-					id: prop,
-					fileName: obj[prop][0].value,
-					nRows: obj[prop][0].count
-				};
-			}
-		}
-
-		var res = Array.from(obj2Arr(filteredDataObjects));
-		return res;
-	} else {
-		return null;
-	}
 }
 
 // function makeAllowedDate(proposedValue, defaultValue, state){

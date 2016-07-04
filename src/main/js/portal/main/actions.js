@@ -1,12 +1,11 @@
-import {tableFormatForSpecies, getStationPositions, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
+import {tableFormatForSpecies, getStationInfo, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 
 export const FETCHING_META = 'FETCHING_META';
-export const FETCHING_SPATIAL = 'FETCHING_SPATIAL';
 export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
-export const FETCHED_SPATIAL = 'FETCHED_SPATIAL';
+export const FETCHED_STATIONS = 'FETCHED_STATIONS';
 export const FETCHED_DATA = 'FETCHED_DATA';
 export const DATA_CHOSEN = 'DATA_CHOSEN';
 export const REMOVE_DATA = 'REMOVE_DATA';
@@ -59,13 +58,11 @@ export const fetchTableFormat = (dataObjSpec) => dispatch => {
 	);
 }
 
-export const fetchStationPositions = () => dispatch => {
-	dispatch({type: FETCHING_SPATIAL});
-
-	getStationPositions().then(
-		stationPositions => dispatch({
-			type: FETCHED_SPATIAL,
-			stationPositions
+export const fetchStationInfo = dispatch => {
+	getStationInfo().then(
+		stationInfo => dispatch({
+			type: FETCHED_STATIONS,
+			stationInfo
 		}),
 		err => dispatch(failWithError(err))
 	);

@@ -77,33 +77,20 @@ export class StationPropertyValueFilter extends StationFilter{
 }
 
 export class SpatialFilter extends StationFilter{
-	constructor(bbox, includeMobile){
+	constructor(stationUris){
 		super();
-		this._bbox = bbox;
-		this._includeMobile = includeMobile;
+		this._stationUris = stationUris;
 	}
 
 	isEmpty(){
-		return !this._bbox;
+		return !this._stationUris || this._stationUris.length === 0;
 	}
 
 	getSparql(varName){
 		if(isEmpty()) return "";
 
-		const latLonQuery = `?${varName} cpmeta:hasLatitude ?lat . ?${varName} cpmeta:hasLongitude ?lon .`;
-
-		const bbox = this._bbox;
-		const fixedStationsQuery = `${latLonQuery}
-			FILTER (?lat >= ${bbox.minLat} && ?lat <= ${bbox.maxLat} && ?lon >= ${bbox.minLon} && ?lon <= ${bbox.maxLon})`;
-
-		return this._includeMobile
-			? `{{
-					${fixedStationsQuery}
-				} UNION {
-				?${varName} a cpmeta:Station .
-				FILTER NOT EXISTS { ${latLonQuery} }
-			}}`
-			: fixedStationsQuery;
+		const conditions = this._stationUris.map(uri => `?${varName} == <${uri}>`);
+		return "FILTER (" + conditions.join(" || ") + " )";
 	}
 }
 

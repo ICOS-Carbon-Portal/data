@@ -5,26 +5,28 @@ endpoint = 'https://meta.icos-cp.eu/sparql';
 // @endif
 
 const wdcggBaseUri = 'http://meta.icos-cp.eu/resources/wdcgg/';
-const wdcggStationProp = wdcggProp('STATION%20NAME');
+const cpmetaOntoUri = 'http://meta.icos-cp.eu/ontologies/cpmeta/';
 
 export default {
 	sparqlEndpoint: endpoint,
-	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
+	cpmetaOntoUri,
 	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
 	wdcggBaseUri,
 	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	wdcggProps: [
 		{uri: wdcggProp('PARAMETER'),           label: 'Parameter (gas)'},
-//		{uri: wdcggStationProp,                 label: 'Station name'},
 		{uri: wdcggProp('CONTRIBUTOR'),         label: 'Contributor'},
-//		{uri: wdcggProp('COUNTRY/TERRITORY'),   label: 'Country'},
 		{uri: wdcggProp('TIME%20INTERVAL'),     label: 'Time interval'},
 		{uri: wdcggProp('SAMPLING%20TYPE'),     label: 'Sampling type'},
 		{uri: wdcggProp('MEASUREMENT%20UNIT'),  label: 'Measurement unit'}
 	],
-	wdcggStationProp,
-	wdcggLatProp: wdcggProp('LATITUDE'),
-	wdcggLonProp: wdcggProp('LONGITUDE'),
+//	cpmetaProps: [
+//		{uri: stationNameProp, label: 'Station name'},
+//		{uri: stationCountryProp, label: 'Country'},
+//	],
+	stationProp: wdcggProp("STATION"),
+	stationNameProp: cpmetaProp('hasName'),
+	stationCountryProp: cpmetaProp('country'),
 	fromDateProp: "DATE_FROM",
 	toDateProp: "DATE_TO",
 	spatialStationProp: "STATION_NAME",
@@ -33,5 +35,9 @@ export default {
 
 function wdcggProp(suffix){
 	return wdcggBaseUri + suffix;
+}
+
+function cpmetaProp(suffix){
+	return cpmetaOntoUri + suffix;
 }
 

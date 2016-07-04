@@ -98,8 +98,8 @@ where{
 }
 
 export function getPropValueCounts(spec, filters){
-	const props = config.wdcggProps.map(({uri, label}) => uri);
-	const propsList = '<' + props.join('> <') + '>';
+	const wdcggProps = config.wdcggProps.map(({uri}) => uri);
+	const wdcggPropsList = '<' + wdcggProps.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters);
 
@@ -113,8 +113,29 @@ WHERE {
 			${dobjsQueryStatements}
 		}
 	}
-	VALUES ?prop {${propsList}}
-	?dobj ?prop ?value .
+	{
+		{
+			VALUES ?prop {${wdcggPropsList}}
+			?dobj ?prop ?value .
+		} UNION
+		{
+			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
+			{
+				{
+					BIND (<${config.stationNameProp}> AS ?prop) .
+					?station ?prop ?value .
+				} UNION
+				{
+					BIND (<${config.stationCountryProp}> AS ?prop) .
+					?station ?prop ?value .
+				} UNION
+				{
+					BIND (<${config.stationProp}> AS ?prop) .
+					?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?value .
+				}
+			}
+		}
+	}
 }
 group by ?prop ?value
 order by ?prop ?value`;
@@ -142,15 +163,15 @@ where {
 } order by ?fileName`;
 }
 
-export function stationPositions(){
+export function stationInfo(){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
-select distinct ?name ?lat ?lon
+select *
 from <${wdcggBaseUri}>
 where{
 	?station a cpmeta:Station .
 	?station cpmeta:hasName ?name .
-	?station cpmeta:hasLatitude ?lat .
-	?station cpmeta:hasLongitude ?lon .
+	?station cpmeta:country ?country .
+	OPTIONAL { ?station cpmeta:hasLatitude ?lat }
+	OPTIONAL { ?station cpmeta:hasLongitude ?lon }
 }`;
 }
-

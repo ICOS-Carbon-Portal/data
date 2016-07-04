@@ -33,8 +33,6 @@ class SpatialSearch extends Component {
 			? 'btn btn-default'
 			: 'btn btn-primary';
 		const resetBtnDisabled = props.filters[config.spatialStationProp].isEmpty();
-		const selStationCount = props.spatial.forMap.filter(st => st.lat && st.lon).length;
-		const totStationCount = props.spatial.stations.length - props.spatial.woSpatialExtent.length;
 		const mapDivHeight = this.state.mapDivHeight || 320;
 
 		return (
@@ -45,7 +43,7 @@ class SpatialSearch extends Component {
 						spatialFilter={props.filters[config.spatialStationProp]}
 						stationsAttributeFiltered={props.stationsAttributeFiltered}
 						filterUpdate={props.filterUpdate}
-						spatial={props.spatial}
+						stations={props.stations}
 						allStations={this.state.allStations}
 						clustered={this.state.clustered}
 					/>
@@ -97,9 +95,9 @@ class SpatialSearch extends Component {
 
 					<div style={{position: 'absolute', bottom: 0, right: 0}}>
 						<label>Selected stations in map:&nbsp;</label>
-						<span>{selStationCount} out of {totStationCount}</span>
+						<span>{props.stations.selectedCount} out of {props.stations.stationaryCount}</span>
 						<label>Mobile stations:&nbsp;</label>
-						<span>{props.spatial.woSpatialExtent.length} (not displayed in map)</span>
+						<span>{props.stations.mobileCount} (not displayed in map)</span>
 					</div>
 				</div>
 			</div>
