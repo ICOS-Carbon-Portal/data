@@ -142,11 +142,23 @@ order by ?prop ?value`;
 }
 
 function getFilteredDataObjQueryStatements(spec, filters){
-	const props = Object.getOwnPropertyNames(filters);
-	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
+	const stationKeys = [config.stationProp, config.stationNameProp, config.stationCountryProp];
+
+	const stationFilters = stationKeys.map(key => filters[key])
+		.filter(filter => filter && !filter.isEmpty());
+
+	const stationClauses = stationFilters.map(filter => filter.getSparql("station")).join('\n');
+
+	const stationFilteringComponent = stationFilters.length > 0
+		? "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .\n" + stationClauses
+		: "";
+	const filterClauses = Object.getOwnPropertyNames(filters)
+		.filter(prop => !stationKeys.includes(prop))
+		.map(prop => filters[prop].getSparql("dobj")).join('');
 
 	return `?dobj cpmeta:hasObjectSpec <${spec}> .
-	${filterClauses}`;
+		${stationFilteringComponent}
+		${filterClauses}`;
 }
 
 export function getFilteredDataObjQuery(spec, filters){

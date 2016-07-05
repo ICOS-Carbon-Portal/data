@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import MapSearch from './MapSearch.jsx';
 import config from '../config';
 
-class SpatialSearch extends Component {
+export default class SpatialSearch extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -29,10 +29,10 @@ class SpatialSearch extends Component {
 
 	render(){
 		const props = this.props;
-		const resetBtnCss = props.filters[config.spatialStationProp].isEmpty()
+		const resetBtnCss = props.filters[config.stationProp].isEmpty()
 			? 'btn btn-default'
 			: 'btn btn-primary';
-		const resetBtnDisabled = props.filters[config.spatialStationProp].isEmpty();
+		const resetBtnDisabled = props.filters[config.stationProp].isEmpty();
 		const mapDivHeight = this.state.mapDivHeight || 320;
 
 		return (
@@ -40,7 +40,7 @@ class SpatialSearch extends Component {
 				<div ref="mapDiv" className="col-md-5">
 					<MapSearch
 						ref="mapSearch"
-						spatialFilter={props.filters[config.spatialStationProp]}
+						spatialFilter={props.filters[config.stationProp]}
 						stationsAttributeFiltered={props.stationsAttributeFiltered}
 						filterUpdate={props.filterUpdate}
 						stations={props.stations}
@@ -95,9 +95,9 @@ class SpatialSearch extends Component {
 
 					<div style={{position: 'absolute', bottom: 0, right: 0}}>
 						<label>Selected stations in map:&nbsp;</label>
-						<span>{props.stations.selectedCount} out of {props.stations.stationaryCount}</span>
+						<span>{props.stations.selectedStationary.length} out of {props.stations.stationaryStations.length}</span>
 						<label>Mobile stations:&nbsp;</label>
-						<span>{props.stations.mobileCount} (not displayed in map)</span>
+						<span>{props.stations.mobileStations.length} (not displayed in map)</span>
 					</div>
 				</div>
 			</div>
@@ -110,5 +110,3 @@ function getBtnClass(active){
 		? "btn btn-default active"
 		: "btn btn-default";
 }
-
-export default SpatialSearch;

@@ -4,7 +4,6 @@ import config from '../config';
 import { SpatialFilter, EmptyFilter } from '../models/Filters'
 import * as LCommon from '../models/LeafletCommon';
 import {MapLegend} from '../models/MapLegend';
-import {isMobile} from '../models/StationsInfo';
 
 export default class MapSearch extends Component {
 	constructor(props) {
@@ -82,8 +81,8 @@ export default class MapSearch extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		const drawMap = nextProps.stations.selectedCount > 0 && this.state.drawMap;
-		const newSpatialData = this.props.stations.selectedCount != nextProps.stations.selectedCount;
+		const drawMap = nextProps.stations.selectedStationary.length > 0 && this.state.drawMap;
+		const newSpatialData = this.props.stations.selectedStationary.length != nextProps.stations.selectedStationary.length;
 		const filterModeChanged = this.props.allStations != nextProps.allStations;
 		const clusteringChanged = this.props.clustered != nextProps.clustered;
 
@@ -112,7 +111,7 @@ export default class MapSearch extends Component {
 		const map = this.state.map;
 		const props = this.props;
 
-		props.filterUpdate(config.spatialStationProp, new EmptyFilter());
+		props.filterUpdate(config.stationProp, new EmptyFilter());
 		map.setView([0, 0], 1);
 		this.setState({bBox: null});
 	}
@@ -121,7 +120,7 @@ export default class MapSearch extends Component {
 		const map = this.state.map;
 		const stations = allStations
 			? this.props.stations.stationaryStations.map(st => [st.lat, st.lon])
-			: this.props.stations.selected.filter(st => !isMobile(st)).map(st => [st.lat, st.lon]);
+			: this.props.stations.selectedStationary.map(st => [st.lat, st.lon]);
 
 		if (stations.length > 0) {
 			map.fitBounds(stations);
@@ -132,7 +131,7 @@ export default class MapSearch extends Component {
 		const props = this.props;
 		const allStations = props.allStations;
 		const woSpatialExtent = props.stations.mobileStations;
-		const forMap = props.stations.selectedStations;
+		const forMap = props.stations.selectedStationary;
 		const stations = props.stations.allStations;
 
 		if(remove){
@@ -140,14 +139,14 @@ export default class MapSearch extends Component {
 				? woSpatialExtent
 				: []
 			);
-			const filter = new SpatialFilter(config.spatialStationProp, filteredStations);
-			props.filterUpdate(config.spatialStationProp, filter);
+			const filter = new SpatialFilter(config.stationProp, filteredStations);
+			props.filterUpdate(config.stationProp, filter);
 		} else {
 			const filteredStations = forMap.concat(stations.filter(st => st.name == stationName)).concat(woSpatialExtent);
 			const filter = filteredStations.length == stations.length
 				? new EmptyFilter()
-				: new SpatialFilter(config.spatialStationProp, filteredStations);
-			props.filterUpdate(config.spatialStationProp, filter);
+				: new SpatialFilter(config.stationProp, filteredStations);
+			props.filterUpdate(config.stationProp, filter);
 		}
 	}
 
@@ -157,16 +156,14 @@ export default class MapSearch extends Component {
 			: L.featureGroup();
 
 		// First all excluded stations so they are placed underneath included
-		stations.stationaryStations.forEach(station => {
-			if (stations.isSelected(station.uri)) {
-				const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded());
-				marker.bindPopup(popupHeader(this, station.name));
-				markers.addLayer(marker);
-			}
+		stations.nonSelectedStationary.forEach(station => {
+			const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded());
+			marker.bindPopup(popupHeader(this, station.name));
+			markers.addLayer(marker);
 		});
 
 		// Then included stations
-		stations.selectedStations.forEach(station => {
+		stations.selectedStationary.forEach(station => {
 			const marker = cluster
 				? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
 				: L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
@@ -184,7 +181,7 @@ export default class MapSearch extends Component {
 
 			const props = this.props;
 
-			const filteredStations = props.stations.allStations.filter(st =>
+			const filteredStations = props.stations.selectedStationary.filter(st =>
 				st.lat >= bBox[0].lat
 				&& st.lat <= bBox[2].lat
 				&& st.lon >= bBox[0].lng
@@ -195,7 +192,7 @@ export default class MapSearch extends Component {
 			).map(station => station.uri);
 
 			const filter = new SpatialFilter(filteredStations);
-			props.filterUpdate(config.spatialStationProp, filter);
+			props.filterUpdate(config.stationProp, filter);
 		}
 	}
 

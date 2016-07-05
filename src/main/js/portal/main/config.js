@@ -29,7 +29,6 @@ export default {
 	stationCountryProp: cpmetaProp('country'),
 	fromDateProp: "DATE_FROM",
 	toDateProp: "DATE_TO",
-	spatialStationProp: "STATION_NAME",
 	initSpatialModeAllStations: false
 }
 

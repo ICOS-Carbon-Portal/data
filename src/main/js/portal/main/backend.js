@@ -136,7 +136,7 @@ function getPropValueCounts(spec, filters){
 	}
 
 	return sparql(query).then(sparqlResult => groupBy(
-		sparqlResult.results.bindings,
+		sparqlResult.results.bindings.filter(binding => !!binding.value),
 		binding => binding.prop.value,
 		bindingToValueCount
 	));

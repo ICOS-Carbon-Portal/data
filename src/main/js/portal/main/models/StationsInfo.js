@@ -7,7 +7,7 @@ function groupByUri(stationInfos){
 }
 
 function unwrapToArray(groupedStations){
-	Object.getOwnPropertyNames(groupedStations).map(stationUri => groupedStations[stationUri]);
+	return Object.getOwnPropertyNames(groupedStations).map(stationUri => groupedStations[stationUri]);
 }
 
 export function isMobile(stationInfo){
@@ -17,11 +17,11 @@ export function isMobile(stationInfo){
 export default class StationsInfo{
 
 	constructor(stations, stationary, mobile, selected){
-		if(arguments.length < 3){
+		if(arguments.length < 4){
 			this._all = groupByUri(stations);
-			this._stationary = groupByUri(stations.filter(st => !isMobile(st)));
-			this._mobile = groupByUri(stations.filter(isMobile));
-			this._selected = this._all;
+			this._stationary = stations.filter(st => !isMobile(st));
+			this._mobile = stations.filter(isMobile);
+			this._selected = this._stationary;
 		}else{
 			this._all = stations;
 			this._stationary = stationary;
@@ -39,38 +39,28 @@ export default class StationsInfo{
 	}
 
 	get mobileStations(){
-		return unwrapToArray(this._mobile);
+		return this._mobile;
 	}
 
 	get stationaryStations(){
-		return unwrapToArray(this._mobile);
+		return this._stationary;
 	}
 
 	get selectedStations(){
-		return unwrapToArray(this._selected);
+		return this._selected;
 	}
 
-	get stationaryCount(){
-		return Object.getOwnPropertyNames(this._stationary).length;
+	get selectedStationary(){
+		return this._selected.filter(s => !isMobile(s));
 	}
 
-	get mobileCount(){
-		return Object.getOwnPropertyNames(this._mobile).length;
-	}
-
-	get selectedCount(){
-		return Object.getOwnPropertyNames(this._selected).length;
-	}
-
-	isSelected(stationUri){
-		return this._selected.hasOwnProperty(stationUri);
+	get nonSelectedStationary(){
+		const lookup = groupByUri(this._selected);
+		return this._stationary.filter(s => !lookup.hasOwnProperty(s.uri));
 	}
 
 	withSelected(selectedUris){
-		const selected = selectedUris.reduce(
-			(acc, next) => Object.assign(acc, {[next]: this._all[next]}),
-			{}
-		);
+		const selected = selectedUris.map(uri => this._all[uri]).filter(s => !!s);
 		return new StationsInfo(this._all, this._stationary, this._mobile, selected);
 	}
 }

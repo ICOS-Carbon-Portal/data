@@ -170,7 +170,7 @@ function fetchPropValueCounts(dispatch, getState){
 
 function allFiltersEmpty(filters){
 	const temporalIsEmpty = filters[config.fromDateProp].isEmpty() && filters[config.toDateProp].isEmpty();
-	const spatialIsEmpty = filters[config.spatialStationProp].isEmpty();
+	const spatialIsEmpty = filters[config.stationProp].isEmpty();
 	let attributeIsEmpty = true;
 
 	config.wdcggProps.forEach(prop => {

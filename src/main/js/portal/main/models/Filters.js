@@ -87,9 +87,9 @@ export class SpatialFilter extends StationFilter{
 	}
 
 	getSparql(varName){
-		if(isEmpty()) return "";
+		if(this.isEmpty()) return "";
 
-		const conditions = this._stationUris.map(uri => `?${varName} == <${uri}>`);
+		const conditions = this._stationUris.map(uri => `?${varName} = <${uri}>`);
 		return "FILTER (" + conditions.join(" || ") + " )";
 	}
 }

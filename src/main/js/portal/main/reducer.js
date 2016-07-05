@@ -29,7 +29,10 @@ export default function(state, action){
 			});
 
 		case FETCHED_STATIONS:
-			return Object.assign({}, state, {stations: new StationsInfo(action.stationInfo)});
+			return Object.assign({}, state, {
+				status: FETCHED_STATIONS,
+				stations: new StationsInfo(action.stationInfo)
+			});
 
 		case PIN_DATA:
 			return Object.assign({}, state, {
@@ -91,9 +94,8 @@ export default function(state, action){
 
 		case GOT_PROP_VAL_COUNTS:
 			if (state.objectSpecification === action.objectSpecification) {
-				const filteredStationUris = action.propsAndVals
-					.propValCount[config.stationProp]
-					.map(({value}) => value);
+				const stationCounts = action.propsAndVals.propValCount[config.stationProp] || [];
+				const filteredStationUris = stationCounts.map(({value}) => value);
 
 				const filteredDataObjects = action.propsAndVals.filteredDataObjects;
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
