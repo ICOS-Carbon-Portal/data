@@ -41,7 +41,6 @@ export default class SpatialSearch extends Component {
 					<MapSearch
 						ref="mapSearch"
 						spatialFilter={props.filters[config.stationProp]}
-						stationsAttributeFiltered={props.stationsAttributeFiltered}
 						filterUpdate={props.filterUpdate}
 						stations={props.stations}
 						allStations={this.state.allStations}
@@ -95,7 +94,7 @@ export default class SpatialSearch extends Component {
 
 					<div style={{position: 'absolute', bottom: 0, right: 0}}>
 						<label>Selected stations in map:&nbsp;</label>
-						<span>{props.stations.selectedStationary.length} out of {props.stations.stationaryStations.length}</span>
+						<span>{props.stations.selectedStations.length} out of {props.stations.stationaryStations.length}</span>
 						<label>Mobile stations:&nbsp;</label>
 						<span>{props.stations.mobileStations.length} (not displayed in map)</span>
 					</div>

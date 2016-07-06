@@ -148,7 +148,7 @@ export const updateFilter = (filterId, filter) => dispatch => {
 
 function fetchPropValueCounts(dispatch, getState){
 	const {objectSpecification, filters, cache} = getState();
-	const emptyFilters = allFiltersEmpty(filters);
+	const emptyFilters = allFiltersAreEmpty(filters);
 
 	if (emptyFilters && cache.propsAndVals != null){
 		dispatch({
@@ -168,15 +168,9 @@ function fetchPropValueCounts(dispatch, getState){
 	}
 }
 
-function allFiltersEmpty(filters){
+function allFiltersAreEmpty(filters){
 	const temporalIsEmpty = filters[config.fromDateProp].isEmpty() && filters[config.toDateProp].isEmpty();
+	const propertyFiltersAreEmpty = config.filteringWidgets.every(({prop}) => filters[prop].isEmpty());
 	const spatialIsEmpty = filters[config.stationProp].isEmpty();
-	let attributeIsEmpty = true;
-
-	config.wdcggProps.forEach(prop => {
-		attributeIsEmpty = attributeIsEmpty && filters[prop.uri].isEmpty();
-	});
-
-	return temporalIsEmpty && spatialIsEmpty && attributeIsEmpty;
+	return temporalIsEmpty && spatialIsEmpty && propertyFiltersAreEmpty;
 }
-

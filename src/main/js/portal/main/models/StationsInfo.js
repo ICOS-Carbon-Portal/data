@@ -10,7 +10,7 @@ function unwrapToArray(groupedStations){
 	return Object.getOwnPropertyNames(groupedStations).map(stationUri => groupedStations[stationUri]);
 }
 
-export function isMobile(stationInfo){
+function isMobile(stationInfo){
 	return isNaN(stationInfo.lat) || isNaN(stationInfo.lon);
 }
 
@@ -50,17 +50,13 @@ export default class StationsInfo{
 		return this._selected;
 	}
 
-	get selectedStationary(){
-		return this._selected.filter(s => !isMobile(s));
-	}
-
 	get nonSelectedStationary(){
 		const lookup = groupByUri(this._selected);
 		return this._stationary.filter(s => !lookup.hasOwnProperty(s.uri));
 	}
 
 	withSelected(selectedUris){
-		const selected = selectedUris.map(uri => this._all[uri]).filter(s => !!s);
+		const selected = selectedUris.map(uri => this._all[uri]).filter(s => !!s && !isMobile(s));
 		return new StationsInfo(this._all, this._stationary, this._mobile, selected);
 	}
 }

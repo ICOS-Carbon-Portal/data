@@ -13,9 +13,9 @@ initFilters[config.fromDateProp] = new EmptyFilter();
 initFilters[config.toDateProp] = new EmptyFilter();
 initFilters[config.stationProp] = new EmptyFilter();
 
-config.wdcggProps.forEach(prop => {
-	initCounts[prop.uri] = [];
-	initFilters[prop.uri] = new EmptyFilter();
+config.filteringWidgets.forEach(({prop}) => {
+	initCounts[prop] = [];
+	initFilters[prop] = new EmptyFilter();
 });
 
 const initState = {
@@ -44,15 +44,15 @@ const initState = {
 	}
 };
 
-const logger = store => next => action => {
-	console.log('dispatching', action);
-	// Call the next dispatch method in the middleware chain.
-	let returnValue = next(action);
-	console.log('state after dispatch', store.getState());
-	return returnValue;
-}
+//const logger = store => next => action => {
+//	console.log('dispatching', action);
+//	// Call the next dispatch method in the middleware chain.
+//	let returnValue = next(action);
+//	console.log('state after dispatch', store.getState());
+//	return returnValue;
+//}
 
-const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware, logger));
+const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));//, logger));
 
 export default function(){
 	store.dispatch(routeUpdated());

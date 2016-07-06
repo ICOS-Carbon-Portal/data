@@ -1,8 +1,6 @@
 import config from '../config';
 
-export class Filter{}
-
-export class EmptyFilter extends Filter{
+export class EmptyFilter {
 	getSparql(){
 		return "";
 	}
@@ -12,9 +10,8 @@ export class EmptyFilter extends Filter{
 	}
 }
 
-export class PropertyValueFilter extends Filter{
+export class PropertyValueFilter {
 	constructor(prop, value){
-		super();
 		this._prop = prop;
 		this._value = value;
 	}
@@ -33,9 +30,8 @@ export class PropertyValueFilter extends Filter{
 	}
 }
 
-export class TemporalFilter extends Filter{
+export class TemporalFilter {
 	constructor(prop, value){
-		super();
 		this._prop = prop;
 		this._value = value;
 	}
@@ -57,28 +53,8 @@ export class TemporalFilter extends Filter{
 	}
 }
 
-export class StationFilter extends Filter{}
-
-export class StationPropertyValueFilter extends StationFilter{
-	constructor(prop, value){
-		super();
-		this._prop = prop;
-		this._value = value;
-	}
-
-	isEmpty(){
-		return !this._value || this._value.length == 0;
-	}
-
-	getSparql(varName){
-		const stringValue = sparqlEscape(this._value);
-		return `?${varName} <${this._prop}> "${stringValue}"^^xsd:string .\n`;
-	}
-}
-
-export class SpatialFilter extends StationFilter{
+export class StationMultiFilter {
 	constructor(stationUris){
-		super();
 		this._stationUris = stationUris;
 	}
 
@@ -88,9 +64,8 @@ export class SpatialFilter extends StationFilter{
 
 	getSparql(varName){
 		if(this.isEmpty()) return "";
-
-		const conditions = this._stationUris.map(uri => `?${varName} = <${uri}>`);
-		return "FILTER (" + conditions.join(" || ") + " )";
+		const uriList = this._stationUris.join("> <");
+		return `VALUES ?${varName} {<${uriList}>}`;
 	}
 }
 

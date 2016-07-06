@@ -75,6 +75,12 @@ WHERE {
 			?prod prov:endedAtTime ?value .
 			BIND ("SAMPLING STOP" AS ?label)
 		} UNION {
+			VALUES (?prop ?actualProp ?label) {
+				(<${config.latProp}> cpmeta:hasLatitude "LATITUDE")
+				(<${config.lonProp}> cpmeta:hasLongitude "LONGITUDE")
+			}
+			?prod prov:wasAssociatedWith [?actualProp ?value]
+		} UNION {
 			?prop rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
 			?dobj ?prop ?value .
 			?prop rdfs:label ?label .
@@ -97,8 +103,13 @@ where{
 }`;
 }
 
+const stationKeys = [config.stationProp, config.stationNameProp, config.stationCountryProp];
+
 export function getPropValueCounts(spec, filters){
-	const wdcggProps = config.wdcggProps.map(({uri}) => uri);
+	const wdcggProps = config.filteringWidgets
+		.map(({prop}) => prop)
+		.filter(prop => !stationKeys.includes(prop));
+
 	const wdcggPropsList = '<' + wdcggProps.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters);
@@ -142,7 +153,6 @@ order by ?prop ?value`;
 }
 
 function getFilteredDataObjQueryStatements(spec, filters){
-	const stationKeys = [config.stationProp, config.stationNameProp, config.stationCountryProp];
 
 	const stationFilters = stationKeys.map(key => filters[key])
 		.filter(filter => filter && !filter.isEmpty());

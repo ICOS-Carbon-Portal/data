@@ -6,6 +6,10 @@ import config from './config';
 
 export default function(state, action){
 
+	function updatedState(stateUpdate){
+		return Object.assign({}, state, stateUpdate);
+	}
+
 	switch(action.type){
 		case ROUTE_UPDATED:
 			const currentRoute = window.location.hash.substr(1);
@@ -14,28 +18,28 @@ export default function(state, action){
 				window.location.hash = action.route;
 			}
 
-			return Object.assign({}, state, {route: action.route});
+			return updatedState({route: action.route});
 
 		case FETCHING_META:
-			return Object.assign({}, state, {status: FETCHING_META});
+			return updatedState({status: FETCHING_META});
 
 		case FETCHING_DATA:
-			return Object.assign({}, state, {status: FETCHING_DATA});
+			return updatedState({status: FETCHING_DATA});
 
 		case FETCHED_META:
-			return Object.assign({}, state, {
+			return updatedState({
 				status: FETCHED_META,
 				tableFormat: action.tableFormat
 			});
 
 		case FETCHED_STATIONS:
-			return Object.assign({}, state, {
+			return updatedState({
 				status: FETCHED_STATIONS,
 				stations: new StationsInfo(action.stationInfo)
 			});
 
 		case PIN_DATA:
-			return Object.assign({}, state, {
+			return updatedState({
 				status: PIN_DATA,
 				dataObjects: updateDataObjects(state.dataObjects, action.dataObjectInfo.id, 'pinned')
 			});
@@ -50,7 +54,7 @@ export default function(state, action){
 
 				const labels = getLabels(dataObjects);
 
-				return Object.assign({}, state, {
+				return updatedState({
 					status: FETCHED_DATA,
 					dataObjects,
 					forChart: generateChartData(dataObjects, labels),
@@ -62,13 +66,13 @@ export default function(state, action){
 			}
 
 		case DATA_CHOSEN:
-			return Object.assign({}, state, {dataObjId: action.dataObjId});
+			return updatedState({dataObjId: action.dataObjId});
 		
 		case REMOVE_DATA:
 			const dataObjects = updateDataObjects(state.dataObjects, action.dataObjId, 'view');
 			const labels = getLabels(dataObjects);
 
-			return Object.assign({}, state, {
+			return updatedState({
 				status: REMOVED_DATA,
 				dataObjects,
 				forChart: generateChartData(dataObjects, labels),
@@ -77,16 +81,16 @@ export default function(state, action){
 			});
 
 		case ERROR:
-			return Object.assign({}, state, {status: ERROR, error: action.error});
+			return updatedState({status: ERROR, error: action.error});
 
 		case FILTER_UPDATED:
-			return Object.assign({}, state, {
+			return updatedState({
 				filters: Object.assign({}, state.filters, action.update)
 			});
 
 		case GOT_GLOBAL_TIME_INTERVAL:
 			return state.objectSpecification === action.objectSpecification
-				? Object.assign({}, state, {
+				? updatedState({
 					fromDateMin: action.min,
 					toDateMax: action.max
 				})
@@ -101,9 +105,7 @@ export default function(state, action){
 				const dataObjects = loadDataObjects(state.dataObjects, filteredDataObjects);
 				const labels = getLabels(dataObjects);
 
-				// TODO: Handle zero data objects returned from filters
-
-				return Object.assign({}, state, {
+				return updatedState({
 					propValueCounts: action.propsAndVals.propValCount,
 					filteredDataObjects,
 					dataObjects,
@@ -146,7 +148,7 @@ function loadDataObjects(dataObjects, filteredDataObjects){
 	const dobs = dataObjects.filter(dob => dob.pinned || (dob.view && filteredDataObjects.findIndex(fdo => fdo.id == dob.id) >= 0));
 	const fdos = filteredDataObjects.map(fdo => {
 		return {
-			id: fdo.id,
+			id: fdo.uri,
 			fileName: fdo.fileName,
 			nRows: fdo.nRows,
 			pinned: false,
@@ -183,9 +185,9 @@ function getMetaData(format, dataObjId){
 	let newFormat = [{label: "LANDING PAGE", value: dataObjId}];
 
 	format.forEach(obj => {
-		if (obj.prop === config.wdcggLatProp){
+		if (obj.prop === config.latProp){
 			geom.lat = obj.value;
-		} else if (obj.prop === config.wdcggLonProp){
+		} else if (obj.prop === config.lonProp){
 			geom.lon = obj.value;
 		} else {
 			newFormat.push(obj);
