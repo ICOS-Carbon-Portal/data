@@ -120,7 +120,7 @@ SELECT ?prop ?value (count(?dobj) as ?count)
 FROM <${wdcggBaseUri}>
 WHERE {
 	{
-		select ?dobj where {
+		select ?dobj ?acquisition where {
 			${dobjsQueryStatements}
 		}
 	}
@@ -130,21 +130,12 @@ WHERE {
 			?dobj ?prop ?value .
 		} UNION
 		{
-			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
-			{
-				{
-					BIND (<${config.stationNameProp}> AS ?prop) .
-					?station ?prop ?value .
-				} UNION
-				{
-					BIND (<${config.stationCountryProp}> AS ?prop) .
-					?station ?prop ?value .
-				} UNION
-				{
-					BIND (<${config.stationProp}> AS ?prop) .
-					?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?value .
-				}
-			}
+			VALUES ?prop {<${config.stationNameProp}> <${config.stationCountryProp}>}
+			?acquisition prov:wasAssociatedWith [?prop ?value ]
+		} UNION
+		{
+			?acquisition prov:wasAssociatedWith ?value .
+			BIND (<${config.stationProp}> AS ?prop) .
 		}
 	}
 }
@@ -160,15 +151,22 @@ function getFilteredDataObjQueryStatements(spec, filters){
 	const stationClauses = stationFilters.map(filter => filter.getSparql("station")).join('\n');
 
 	const stationFilteringComponent = stationFilters.length > 0
-		? "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .\n" + stationClauses
+		? "?acquisition prov:wasAssociatedWith ?station .\n" + stationClauses
 		: "";
-	const filterClauses = Object.getOwnPropertyNames(filters)
+	const wdcggFilterClauses = config.filteringWidgets
+		.map(widget => widget.prop)
 		.filter(prop => !stationKeys.includes(prop))
 		.map(prop => filters[prop].getSparql("dobj")).join('');
 
+	const temporalFilterClauses = [config.fromDateProp, config.toDateProp]
+		.map(prop => filters[prop].getSparql("acquisition")).join('');
+
 	return `?dobj cpmeta:hasObjectSpec <${spec}> .
+		?dobj cpmeta:wasAcquiredBy ?acquisition .
+		FILTER EXISTS {?acquisition prov:endedAtTime ?ackEndTime }
 		${stationFilteringComponent}
-		${filterClauses}`;
+		${wdcggFilterClauses}
+		${temporalFilterClauses}`;
 }
 
 export function getFilteredDataObjQuery(spec, filters){
