@@ -11,10 +11,7 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 
 class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val filePath: String = {
-		val formatId = dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
-		formatId + "/" + dataObject.hash.id
-	}
+	private[this] val filePath: String = IrodsClient.filePath(dataObject)
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = client.getNewFileSink(filePath)
 		.mapMaterializedValue(

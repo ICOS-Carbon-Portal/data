@@ -4,6 +4,7 @@ import java.nio.file.Paths
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserInfo
 import se.lu.nateko.cp.data.UploadConfig
@@ -27,6 +28,13 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val irods = IrodsClient(config.irods)
+
+	def getRemoteStorageSource(hash: Sha256Sum): Future[Source[ByteString, Future[Long]]] = {
+		for(dataObj <- meta.lookupPackage(hash)) yield {
+			val filePath = IrodsClient.filePath(dataObj)
+			irods.getFileSource(filePath)
+		}
+	}
 
 	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[UploadResult]]] = {
 		for(

@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.irods
 
 import scala.concurrent.Await
 import scala.concurrent.Future
-import scala.concurrent.Promise
 import scala.concurrent.duration.DurationInt
 
 import org.irods.jargon.core.connection.IRODSAccount
@@ -29,14 +28,12 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 
 	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Long]) = {
 
-		val logic = new GraphStageLogic(shape){
+		val logic = new GraphStageLogic(shape) with IrodsStageLogicHelper {
 
 			private[this] var outStream: IRODSFileOutputStream = null
 			private[this] var session: LocalIrodsSession = null
 			private[this] var count: Long = 0
 			private[this] var init: Future[Done] = null
-
-			val countPromise = Promise[Long]()
 
 			override def preStart(): Unit = {
 				val mat = materializer
@@ -91,11 +88,6 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 				failResult(exc)
 			}
 
-			private def failResult(exc: Throwable): Unit =
-				if(!countPromise.isCompleted){
-					countPromise.failure(exc)
-				}
-
 			private def closeOutStreamAndSession(): Unit = {
 				doOrFailResult{
 					if(outStream != null){
@@ -112,12 +104,6 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 				}
 			}
 
-			private def doOrFailResult(todo: => Unit): Unit =
-				try{
-					todo
-				}catch{
-					case exc: Throwable => failResult(exc)
-				}
 		}
 		(logic, logic.countPromise.future)
 	}
