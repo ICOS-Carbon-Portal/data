@@ -33,6 +33,6 @@ project/plugins/project/
 nohup.out
 *.*~
 \#*\#
-
+/README.html
 .idea
 
