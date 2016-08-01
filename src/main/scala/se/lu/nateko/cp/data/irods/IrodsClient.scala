@@ -29,11 +29,6 @@ object IrodsClient{
 
 	def apply(config: IrodsConfig)(implicit system: ActorSystem) = new IrodsClient(config, new IRODSConnectionPool)
 
-	def filePath(dataObject: DataObject): String = {
-		val formatId = dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
-		formatId + "/" + dataObject.hash.id
-	}
-
 }
 
 class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){

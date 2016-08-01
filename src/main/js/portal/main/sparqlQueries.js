@@ -27,10 +27,11 @@ where {
 
 export function simpleObjectSchema(spec){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
-SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
+SELECT distinct ?objFormat ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
 FROM <${cpmetaResUri}>
 WHERE {
 	<${spec}> cpmeta:containsDataset ?dset .
+	<${spec}> cpmeta:hasFormat ?objFormat .
 	?dset cpmeta:hasColumn [
 		cpmeta:hasColumnTitle ?colName ;
 		cpmeta:hasValueFormat ?valFormat ;

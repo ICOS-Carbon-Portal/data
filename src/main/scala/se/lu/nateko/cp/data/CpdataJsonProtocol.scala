@@ -49,5 +49,5 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 			}
 	}
 
-	implicit val binTableRequestFormat = jsonFormat4(BinTableRequest)
+	implicit val binTableRequestFormat = jsonFormat5(BinTableRequest)
 }

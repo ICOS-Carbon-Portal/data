@@ -39,25 +39,20 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService)(impl
 				}
 			}
 		}
-	} ~ (path("dump") & extractRequest) { req =>
-		val doneFut = req.entity.dataBytes.runWith(Sink.ignore)
-		onSuccess(doneFut){ done =>
-			complete(StatusCodes.OK)
-		}
 	} ~ requireShaHash
 
 	private val download: Route = pathPrefix(Sha256Segment){ hashsum =>
-		val file = uploadService.getFile(hashsum)
-
-		if(file.exists){
-			optionalFileName{fileNameOpt =>
-				getFromFile(file, getContentType(fileNameOpt))
-			}
-		} else onSuccess(uploadService.getRemoteStorageSource(hashsum)){src =>
+		onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
 			optionalFileName{fileNameOpt =>
 				val contentType = getContentType(fileNameOpt)
-				val entity = HttpEntity.CloseDelimited(contentType, src)
-				complete(HttpResponse(entity = entity))
+				val file = uploadService.getFile(dobj)
+				if(file.exists)
+					getFromFile(file, contentType)
+				else {
+					val src = uploadService.getRemoteStorageSource(dobj)
+					val entity = HttpEntity.CloseDelimited(contentType, src)
+					complete(HttpResponse(entity = entity))
+				}
 			}
 		}
 	} ~ requireShaHash
