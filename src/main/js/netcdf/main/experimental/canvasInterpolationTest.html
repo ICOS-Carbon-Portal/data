@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript">
+		function render(){
+			var small = document.getElementById('small').getContext('2d');
+			var large = document.getElementById('large').getContext('2d');
+
+			function setPixel(x, y, color){
+				small.fillStyle = color;
+				small.fillRect(x, y, 1, 1);
+			}
+
+			setPixel(0,0, 'red');
+			setPixel(1,0, 'green');
+			setPixel(0,1, 'blue');
+			setPixel(1,1, 'black');
+
+			large.mozImageSmoothingEnabled = false;
+			large.webkitImageSmoothingEnabled = false;
+			large.msImageSmoothingEnabled = false;
+			large.imageSmoothingEnabled = false;
+
+			large.drawImage(small.canvas, 0.9, 0.9, 1.1, 1.1, 0, 0, 400, 400);
+		}
+	</script>
+</head>
+<body onload="render();">
+	<div><canvas id="small" width="2" height="2"></canvas></div>
+	<div><canvas id="large" width="400" height="400"></canvas></div>
+</body>
+</html>
