@@ -16,5 +16,10 @@ export default class TileMappingHelper{
 			return new BboxMapping(datasetPixels, tilePixels);
 		});
 	}
+
+	getRebasedDatasetBox(){
+		return this._mappings.map(m => m.from).reduce((acc, curr) => acc.join(curr));
+	}
+
 }
 

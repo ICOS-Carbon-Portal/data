@@ -68,6 +68,14 @@ export default class Bbox{
 		return new Bbox(xmin, ymin, xmax, ymax);
 	}
 
+	join(box){
+		let xmin = Math.min(this._xmin, box._xmin);
+		let ymin = Math.min(this._ymin, box._ymin);
+		let xmax = Math.max(this._xmax, box._xmax);
+		let ymax = Math.max(this._ymax, box._ymax);
+		return new Bbox(xmin, ymin, xmax, ymax);
+	}
+
 	subtract(box){
 		let hole = this.intersect(box);
 		if(hole.isEmpty) return [this];

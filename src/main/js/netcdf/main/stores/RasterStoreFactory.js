@@ -56,6 +56,7 @@ module.exports = function(Backend, actions, errorHandler){
 		},
 
 		triggerIfComplete: function(){
+			// console.log({state: this.state, actions});
 			if(this.state.gamma && this.state.raster){
 				this.trigger({
 					raster: this.state.raster,
