@@ -1,3 +1,5 @@
+import Bbox from '../models/Bbox';
+
 export function getColorMaker(minVal, maxVal, gamma) {
 
 	var biLinear = (minVal < 0 && maxVal > 0);
@@ -67,80 +69,16 @@ export function makeImage(canvas, raster, gamma) {
 	context.putImageData(imgData, 0, 0);
 }
 
-export function draw(elem, rawBbox, rasterSize) {
+export function getTileCoordBbox(tilePoint, zoom){
 
-	elem.innerHTML = '';
+	const tilePoint2Lon = tileNum => tileNum / Math.pow(2, zoom) * 360 - 180;
+	const tilePoint2Lat = tileNum => - tilePoint2Lon(tileNum);
 
-	const {centerLon, centerLat, latRange, lonMin, lonMax, latMin, latMax} = getTrueBbox(rawBbox, rasterSize);
+	const latMax = tilePoint2Lat(tilePoint.y);
+	const latMin = tilePoint2Lat(tilePoint.y + 1);
+	const lonMin = tilePoint2Lon(tilePoint.x);
+	const lonMax = tilePoint2Lon(tilePoint.x + 1);
 
-	var rotateLon = lonMax > 180 ? 180 - lonMax : lonMin < -180 ? -180 - lonMin : 0;
-	var rotateLat = latMax > 90 ? 90 - latMax : latMin < -90 ? -90 - latMin : 0;
-
-	return new Datamap({
-		element: elem,
-		geographyConfig: {
-			highlightOnHover: false,
-			popupOnHover: false,
-			borderColor: '#000000',
-			hideAntarctica: false
-		},
-		scope: 'countries',
-		fills: {
-			defaultFill: 'rgba(0,0,0,0)'
-		},
-		setProjection: function(element, options) {
-
-			var width = element.clientWidth;
-			var height = element.clientHeight;
-
-			var projection = d3.geo.equirectangular()
-				.rotate([rotateLon, rotateLat])
-				.center([centerLon + rotateLon, centerLat + rotateLat])
-				.scale(height * 180 / latRange / Math.PI)
-				.translate([width / 2, height / 2]);
-			return {
-				path: d3.geo.path().projection(projection),
-				projection: projection
-			};
-		}
-	});
-}
-
-export function getMapSizeStyle(illustrationElem, rawBbox, rasterSize){
-
-	const {lonRange, latRange} = getTrueBbox(rawBbox, rasterSize);
-
-	var scale = Math.min(
-		illustrationElem.clientWidth / lonRange,
-		(window.innerHeight - illustrationElem.offsetTop) / latRange
-	);
-
-	const width = lonRange * scale;
-	const height = latRange * scale;
-
-	return {
-		width: width + 'px',
-		height: height + 'px'
-	};
-}
-
-function getTrueBbox(bbox, rasterSize){
-	const centerLon = (bbox.lonMin + bbox.lonMax) / 2;
-	const centerLat = (bbox.latMin + bbox.latMax) / 2;
-	const lonStep = (bbox.lonMax - bbox.lonMin) / (rasterSize.width - 1);
-	const latStep = (bbox.latMax - bbox.latMin) / (rasterSize.height - 1);
-	const lonRange = rasterSize.width * lonStep;
-	const latRange = rasterSize.height * latStep;
-
-	return {
-		centerLon,
-		centerLat,
-		lonRange,
-		latRange,
-		lonMin: centerLon - lonRange / 2,
-		lonMax: centerLon + lonRange / 2,
-		latMin: centerLat - latRange / 2,
-		latMax: centerLat + latRange / 2
-	};
+	return new Bbox(lonMin, latMin, lonMax, latMax);
 }
 

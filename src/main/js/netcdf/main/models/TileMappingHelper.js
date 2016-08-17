@@ -3,7 +3,6 @@ import BboxMapping from './BboxMapping';
 export default class TileMappingHelper{
 	constructor(datasetMapping, worldBox){
 		this._mappings = datasetMapping.rebaseTo(worldBox);
-		this._worldBox = worldBox;
 	}
 
 	getCoordinateMappings(tileMapping){

@@ -17,8 +17,6 @@ module.exports = function(Backend, RasterStore, errorHandler){
 		},
 
 		gotTopoJson: function(topo){
-			//add topojson for 'countries' scope to the (globally loaded) Datamaps library
-			Datamaps.prototype.countriesTopo = topo;
 			this.state.countriesTopo = topo;
 			topoJsonReceived = true;
 			this.triggerIfReady();

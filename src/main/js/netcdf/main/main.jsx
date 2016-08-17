@@ -6,7 +6,7 @@ function handleError(error){
 }
 
 var actions = Reflux.createActions([
-	"dateSelected", "variableSelected", "elevationSelected", "gammaSelected", "serviceSelected"
+	"dateSelected", "variableSelected", "elevationSelected", "gammaSelected", "serviceSelected", "highlightedValueAction"
 ]);
 
 
@@ -18,10 +18,8 @@ var RasterStore = require('./stores/RasterStoreFactory.js')(Backend, actions, ha
 
 var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, handleError);
 
-var Raster = require('./views/RasterViewFactory.jsx')(RasterStore);
-var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, Raster.highlightedValueAction);
+var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, actions.highlightedValueAction);
 
-//var Map = require('./views/MapViewFactory.jsx')(MapStore);
 var LMapContainer = require('./views/LMapContainerFactory.jsx')(RasterStore, MapStore);
 
 ReactDOM.render(
@@ -30,10 +28,6 @@ ReactDOM.render(
 		<Legend width={1000} height={45}/>
 		<div className="illustration">
 			<LMapContainer />
-			{/*
-			<Raster.View/>
-			<Map/>
-			*/}
 		</div>
 	</div>,
 	document.getElementById('main')

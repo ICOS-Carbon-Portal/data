@@ -92,6 +92,21 @@ export default class Bbox{
 		return new Bbox(this._xmin + dx, this._ymin + dy, this._xmax + dx, this._ymax + dy);
 	}
 
+	expandToRaster(rasterSize){
+		const {width, height} = rasterSize;
+		const xCenter = (this._xmin + this._xmax) / 2;
+		const yCenter = (this._ymin + this._ymax) / 2;
+		const xStep = this.xRange / (width - 1);
+		const yStep = this.yRange / (height - 1);
+		const xRange = width * xStep;
+		const yRange = height * yStep;
+		const xmin = xCenter - xRange / 2;
+		const ymin = yCenter - yRange / 2;
+		const xmax = xCenter + xRange / 2;
+		const ymax = yCenter + yRange / 2;
+		return new Bbox(xmin, ymin, xmax, ymax);
+	}
+
 	alignTo(worldBox){
 		let dx = align1Ddiff(this._xmin, worldBox._xmin, worldBox._xmax);
 		let dy = align1Ddiff(this._ymin, worldBox._ymin, worldBox._ymax);
