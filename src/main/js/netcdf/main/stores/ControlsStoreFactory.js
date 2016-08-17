@@ -1,4 +1,6 @@
-module.exports = function(Backend, errorHandler, actions){
+import {getServices, getDates, getVariables, getElevations} from '../backend';
+
+export default function(errorHandler, actions){
 
 	var store = Reflux.createStore({
 
@@ -19,7 +21,7 @@ module.exports = function(Backend, errorHandler, actions){
 			this.listenTo(actions.serviceSelected, this.serviceSelectionListener);
 			this.listenTo(actions.variableSelected, this.varSelectionListener);
 			var successHandler = this.serviceListHandler.bind(this);
-			Backend.getServices(successHandler, errorHandler);
+			getServices().then(successHandler, errorHandler);
 		},
 
 		serviceSelectionListener: function(selectedService){
@@ -31,10 +33,10 @@ module.exports = function(Backend, errorHandler, actions){
 				this.state.elevations = [];
 
 				var datesSuccess = this.datesListHandler.bind(this);
-				Backend.getDates(selectedService, datesSuccess, errorHandler);
+				getDates(selectedService).then(datesSuccess, errorHandler);
 
 				var varsSuccess = this.variablesListHandler.bind(this);
-				Backend.getVariables(selectedService, varsSuccess, errorHandler);
+				getVariables(selectedService).then(varsSuccess, errorHandler);
 			}
 		},
 
@@ -45,7 +47,7 @@ module.exports = function(Backend, errorHandler, actions){
 			if (this.lastVariable != variable) {
 				this.lastVariable = variable;
 				var elevationsSuccess = this.elevationListHandler.bind(this);
-				Backend.getElevations(service, variable, elevationsSuccess, errorHandler);
+				getElevations(service, variable).then(elevationsSuccess, errorHandler);
 			}
 		},
 

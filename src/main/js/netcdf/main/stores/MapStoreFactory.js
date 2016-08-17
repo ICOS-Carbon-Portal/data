@@ -1,6 +1,7 @@
-var Utils = require('../Utils.js');
+import Utils from '../Utils';
+import {getCountriesTopoJson} from '../backend';
 
-module.exports = function(Backend, RasterStore, errorHandler){
+export default function(RasterStore, errorHandler){
 
 	var topoJsonReceived = false;
 
@@ -12,7 +13,7 @@ module.exports = function(Backend, RasterStore, errorHandler){
 
 		init: function(){
 			this.state = {};
-			Backend.getCountriesTopoJson(this.gotTopoJson, errorHandler);
+			getCountriesTopoJson().then(this.gotTopoJson.bind(this), errorHandler);
 			this.listenTo(RasterStore, this.handleRaster);
 		},
 

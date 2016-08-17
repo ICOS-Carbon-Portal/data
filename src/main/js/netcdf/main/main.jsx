@@ -1,5 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import mapStoreFactory from './stores/MapStoreFactory';
+import rasterStoreFactory from './stores/RasterStoreFactory';
+import controlsStoreFactory from './stores/ControlsStoreFactory';
 
 function handleError(error){
 	console.log(error);
@@ -10,13 +13,11 @@ var actions = Reflux.createActions([
 ]);
 
 
-var Backend = require('./Backend.js');
-var ControlsStore = require('./stores/ControlsStoreFactory.js')(Backend, handleError, actions);
+const ControlsStore = controlsStoreFactory(handleError, actions);
 var Controls = require('./views/ControlsViewFactory.jsx')(ControlsStore, actions);
 
-var RasterStore = require('./stores/RasterStoreFactory.js')(Backend, actions, handleError);
-
-var MapStore = require('./stores/MapStoreFactory.js')(Backend, RasterStore, handleError);
+const RasterStore = rasterStoreFactory(actions, handleError);
+const MapStore = mapStoreFactory(RasterStore, handleError);
 
 var Legend = require('./views/LegendViewFactory.jsx')(RasterStore, actions.highlightedValueAction);
 

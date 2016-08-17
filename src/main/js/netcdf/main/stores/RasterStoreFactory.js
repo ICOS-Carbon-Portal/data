@@ -1,6 +1,7 @@
-var Utils = require('../Utils.js');
+import Utils from '../Utils';
+import {getRaster} from '../backend';
 
-module.exports = function(Backend, actions, errorHandler){
+export default function(actions, errorHandler){
 
 	return Reflux.createStore({
 
@@ -46,7 +47,7 @@ module.exports = function(Backend, actions, errorHandler){
 						this.state.date === state.date;
 				});
 				var successHandler = doIfRelevant(this.rasterHandler);
-				Backend.getRaster(state.service, state.variable, state.date, state.elevation, successHandler, errorHandler);
+				getRaster(state.service, state.variable, state.date, state.elevation).then(successHandler, errorHandler);
 			}
 		},
 
