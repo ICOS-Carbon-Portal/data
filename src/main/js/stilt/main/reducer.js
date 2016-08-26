@@ -6,7 +6,6 @@ export default function(state, action){
 
 		case FETCHED_TABLEFORMAT:
 			return Object.assign({}, state, {
-				status: FETCHED_META,
 				wdcggFormat: action.wdcggFormat
 			});
 

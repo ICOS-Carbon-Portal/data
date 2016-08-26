@@ -1,4 +1,5 @@
 var endpoint = 'http://127.0.0.1:9094/sparql';
+// var endpoint = 'https://meta.icos-cp.eu/sparql';
 
 // @if NODE_ENV='production'
 endpoint = 'https://meta.icos-cp.eu/sparql';

@@ -31,7 +31,8 @@ export function tableFormatForSpecies(objSpecies){
 export function getStationPositions(){
 	const query = sparqlQueries.stationPositions();
 	return sparql(query).then(sparqlResult => {
-		return sparqlResult.results.bindings.map(binding => {
+		//TODO: Remove filter when sparql only returns stations with position
+		return sparqlResult.results.bindings.filter(binding => binding.lat && binding.lon).map(binding => {
 			return {
 				uri: binding.station.value,
 				name: binding.name.value,
