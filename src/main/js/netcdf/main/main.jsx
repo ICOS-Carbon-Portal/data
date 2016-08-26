@@ -1,3 +1,4 @@
+/*
 import React from 'react';
 import ReactDOM from 'react-dom';
 import mapStoreFactory from './stores/MapStoreFactory';
@@ -31,5 +32,16 @@ ReactDOM.render(
 			<LMapContainer />
 		</div>
 	</div>,
+	document.getElementById('main')
+);
+*/
+
+import 'babel-polyfill';
+import React from 'react';
+import {render} from 'react-dom';
+import Root from './containers/Root.jsx';
+
+render(
+	<Root />,
 	document.getElementById('main')
 );

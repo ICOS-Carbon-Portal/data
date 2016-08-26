@@ -5,6 +5,7 @@ import TileMappingHelper from '../models/TileMappingHelper';
 import Bbox from '../models/Bbox';
 import BboxMapping from '../models/BboxMapping';
 
+
 export default class LMap extends Component{
 	constructor(props){
 		super(props);
@@ -21,8 +22,7 @@ export default class LMap extends Component{
 			attributionControl: false,
 			continuousWorld: true,
 			worldCopyJump: false,
-			// maxBounds: [[-90, -180],[90, 180]],
-			// maxBounds: [[-90, 0],[90, 360]],
+			maxBounds: [[-90, -180],[90, 180]],
 			crs: L.CRS.EPSG4326,
 			center: [0, 0],
 			zoom: 2
@@ -54,10 +54,10 @@ export default class LMap extends Component{
 		const state = this.state;
 
 		const addCountries = nextProps.countriesTopo && !state.countriesAdded;
-		const updatedRaster = prevProps.raster !== nextProps.raster || prevProps.gamma !== nextProps.gamma;
+		const updatedRaster = nextProps.raster && nextProps.gamma && (prevProps.raster !== nextProps.raster || prevProps.gamma !== nextProps.gamma);
 		const updatedGamma = prevProps.raster === nextProps.raster && prevProps.gamma !== nextProps.gamma;
 
-		//console.log({prevProps, nextProps, state, addCountries, updatedRaster, updatedGamma});
+		// console.log({prevProps, nextProps, state, addCountries, updatedRaster, updatedGamma});
 
 		if (addCountries){
 			this.addCountryLayer(map, nextProps.countriesTopo);
@@ -120,10 +120,12 @@ export default class LMap extends Component{
 
 		map.removeLayer(canvasTiles);
 		canvasTiles.addTo(map);
-		// map.fitBounds([
-		// 	[rebasedDsCoords.ymin, rebasedDsCoords.xmin],
-		// 	[rebasedDsCoords.ymax, rebasedDsCoords.xmax]
-		// ]);
+
+		const bounds = L.latLngBounds(
+			L.latLng(rebasedDsCoords.ymin, rebasedDsCoords.xmin),
+			L.latLng(rebasedDsCoords.ymax, rebasedDsCoords.xmax)
+		);
+		map.panInsideBounds(bounds);
 	}
 
 	shouldComponentUpdate(){
