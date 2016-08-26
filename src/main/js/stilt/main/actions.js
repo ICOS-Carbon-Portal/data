@@ -16,10 +16,10 @@ function failWithError(error){
 	};
 }
 
-function gotTableFormat(tableFormat){
+function gotTableFormat(wdcggFormat){
 	return {
 		type: FETCHED_TABLEFORMAT,
-		tableFormat
+		wdcggFormat
 	};
 }
 
@@ -53,7 +53,13 @@ export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
 	const request = makeTableRequest(tableFormat, dataObjectInfo);
 
 	getBinaryTable(dataObjectInfo.id, request).then(
-		binTable => dispatch(gotObservationData(binTable, dataObjectInfo.id)),
+		binTable => dispatch({
+			type: FETCHED_OBSERVATIONS,
+			dataObjId,
+			obsBinTable: binTable
+		}
+		gotObservationData(binTable, dataObjectInfo.id)
+		),
 		err => dispatch(failWithError(err))
 	);
 }

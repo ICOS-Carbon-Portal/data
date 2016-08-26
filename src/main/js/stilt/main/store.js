@@ -29,9 +29,8 @@ const initState = {
 // 	}
 // }
 
-const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
-
 export default function(){
+	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 	store.dispatch(fetchTableFormat(config.wdcggSpec));
 	store.dispatch(fetchStationPositions());
 	return store;
