@@ -35,6 +35,13 @@ class TabularFetchRouting(fetcher: FromBinTableFetcher)(implicit mat: Materializ
 			} ~
 			complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
 		}
+	} ~ pathPrefix("stilt"){
+		path("stilt.js"){
+			getFromResource("stilt.js")
+		} ~
+		pathSingleSlash{
+			getFromResource("stilt.html")
+		}
 	}
 }
 

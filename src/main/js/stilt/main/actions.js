@@ -1,0 +1,60 @@
+import {tableFormatForSpecies, getStationPositions, getBinaryTable} from './backend';
+import {makeTableRequest} from './models/chartDataMaker';
+import config from './config';
+
+export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
+export const FETCHED_STATIONS = 'FETCHED_STATIONS';
+export const FETCHED_OBSERVATIONS = 'FETCHED_OBSERVATIONS';
+export const ERROR = 'ERROR';
+
+
+function failWithError(error){
+	console.log(error);
+	return {
+		type: ERROR,
+		error
+	};
+}
+
+function gotTableFormat(tableFormat){
+	return {
+		type: FETCHED_TABLEFORMAT,
+		tableFormat
+	};
+}
+
+function gotObservationData(binTable, dataObjId){
+	return {
+		type: FETCHED_OBSERVATIONS,
+		dataObjId,
+		obsBinTable: binTable
+	};
+}
+
+export const fetchTableFormat = (dataObjSpec) => dispatch => {
+	tableFormatForSpecies(dataObjSpec).then(
+		tableFormat => dispatch(gotTableFormat(tableFormat)),
+		err => dispatch(failWithError(err))
+	);
+}
+
+export const fetchStationPositions = () => dispatch => {
+	getStationPositions().then(
+		stationPositions => dispatch({
+			type: FETCHED_STATIONS,
+			stationPositions
+		}),
+		err => dispatch(failWithError(err))
+	);
+}
+
+export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
+	const tableFormat = getState().wdcggFormat;
+	const request = makeTableRequest(tableFormat, dataObjectInfo);
+
+	getBinaryTable(dataObjectInfo.id, request).then(
+		binTable => dispatch(gotObservationData(binTable, dataObjectInfo.id)),
+		err => dispatch(failWithError(err))
+	);
+}
+
