@@ -57,6 +57,7 @@ object Main extends App {
 		NetcdfRoute(factory) ~
 		uploadRouting.route ~
 		tabularRouting.route ~
+		StiltRouting(config.stilt) ~
 		StaticRouting.route
 	}
 
