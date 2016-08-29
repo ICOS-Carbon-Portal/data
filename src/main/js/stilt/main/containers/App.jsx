@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import StationsMap from '../components/StationsMap.jsx';
+import GraphsContainer from './GraphsContainer.jsx';
+import {setSelectedStation} from '../actions.js';
 
 class App extends Component {
 	constructor(props){
@@ -8,6 +10,9 @@ class App extends Component {
 	}
 
 	render() {
+		const props = this.props;
+		// console.log({props});
+
 		return (
 			<div className="container-fluid">
 				<div className="row">
@@ -16,7 +21,10 @@ class App extends Component {
 						<div className="row">
 							<div className="col-md-12">
 								<div style={{height: 400}}>
-									<StationsMap stations={this.props.stations} />
+									<StationsMap
+										stations={this.props.stations}
+										stationSelect={props.stationSelect}
+									/>
 								</div>
 							</div>
 						</div>
@@ -31,7 +39,7 @@ class App extends Component {
 					<div className="col-md-6">
 						<div className="row">
 							<div className="col-md-12">
-								Observations and Transport model
+								<GraphsContainer />
 							</div>
 						</div>
 					</div>
@@ -46,5 +54,14 @@ function stateToProps(state){
 	return state;
 }
 
-export default connect(stateToProps)(App);
+function dispatchToProps(dispatch){
+	return {
+		stationSelect(station){
+			dispatch(setSelectedStation(station));
+		}
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(App);
+
 

@@ -1,11 +1,12 @@
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
 import {getStationInfo, getWdcggBinaryTable} from './backend';
-import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 
 export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
 export const FETCHED_STATIONS = 'FETCHED_STATIONS';
 export const FETCHED_OBSERVATIONS = 'FETCHED_OBSERVATIONS';
+export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
+export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const ERROR = 'ERROR';
 
 
@@ -54,12 +55,26 @@ export const fetchStationInfo = dispatch => {
 }
 
 export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
-	//dataObjectInfo: {uri: String, nRows: Int}
+	//dataObjectInfo: {id: String, nRows: Int}
 	const tableFormat = getState().wdcggFormat;
 
 	getWdcggBinaryTable(tableFormat, dataObjectInfo).then(
 		binTable => dispatch(gotObservationData(binTable, dataObjectInfo.uri)),
 		err => dispatch(failWithError(err))
 	);
+}
+
+export const setSelectedStation = station => dispatch => {
+	dispatch({
+		type: SET_SELECTED_STATION,
+		selectedStation: station
+	});
+}
+
+export const setSelectedYear = selectedYear => dispatch => {
+	dispatch({
+		type: SET_SELECTED_YEAR,
+		selectedYear
+	});
 }
 

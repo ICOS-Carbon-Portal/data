@@ -27,19 +27,32 @@ class StationsMap extends Component {
 
 		if (nextProps.stations.length > 0 && prevProps.stations.length != nextProps.stations.length) {
 			const map = this.state.map;
-			const newMarkers = this.buildMarkers(nextProps.stations);
+			const newMarkers = this.buildMarkers(nextProps.stations, nextProps.stationSelect);
 			map.addLayer(newMarkers);
 
 			this.setView(map, nextProps.stations);
 		}
 	}
 
-	buildMarkers(stations){
+	buildMarkers(stations, stationSelect){
 		const markers = L.featureGroup();
 
 		stations.forEach(station => {
-			const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
+			// const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
+			const marker = L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon});
 			marker.bindPopup(popupHeader(station.name));
+
+			marker.on('mouseover', function (e) {
+				this.openPopup();
+			});
+			marker.on('mouseout', function (e) {
+				this.closePopup();
+			});
+
+			marker.on('click', function(){
+				stationSelect(station);
+			});
+
 			markers.addLayer(marker);
 		});
 
