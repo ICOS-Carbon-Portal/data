@@ -56,7 +56,8 @@ object Main extends App {
 	val route = handleExceptions(exceptionHandler){
 		NetcdfRoute(factory) ~
 		uploadRouting.route ~
-		tabularRouting.route
+		tabularRouting.route ~
+		StaticRouting.route
 	}
 
 	Http()

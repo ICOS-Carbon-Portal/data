@@ -15,12 +15,6 @@ object NetcdfRoute {
 		implicit val rasterMarshalling = RasterMarshalling.marshaller
 
 		(get & pathPrefix("netcdf")){
-			pathEndOrSingleSlash{
-				getFromResource("netcdf.html")
-			} ~
-			path("netcdf.js"){
-				getFromResource("netcdf.js")
-			} ~
 			path("listNetCdfFiles"){
 				complete(factory.getNetCdfFiles)
 			} ~
