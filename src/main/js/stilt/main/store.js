@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 import reducer from './reducer'
-import {fetchTableFormat, fetchStationPositions} from './actions'
+import {fetchTableFormat, fetchStationInfo} from './actions'
 import config from './config';
 
 const initState = {
@@ -32,7 +32,7 @@ const initState = {
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 	store.dispatch(fetchTableFormat(config.wdcggSpec));
-	store.dispatch(fetchStationPositions());
+	store.dispatch(fetchStationInfo);
 	return store;
 }
 

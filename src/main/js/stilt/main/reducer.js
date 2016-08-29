@@ -10,7 +10,7 @@ export default function(state, action){
 			});
 
 		case FETCHED_STATIONS:
-			return Object.assign({}, state, {stations: action.stationPositions});
+			return Object.assign({}, state, {stations: action.stationInfo});
 
 		case FETCHED_OBSERVATIONS:
 			return state;

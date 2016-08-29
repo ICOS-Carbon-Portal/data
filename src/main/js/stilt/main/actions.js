@@ -1,4 +1,4 @@
-import {tableFormatForSpecies, getStationPositions, getBinaryTable} from './backend';
+import {tableFormatForSpecies, getStationInfo, getBinaryTable} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 
@@ -38,11 +38,11 @@ export const fetchTableFormat = (dataObjSpec) => dispatch => {
 	);
 }
 
-export const fetchStationPositions = () => dispatch => {
-	getStationPositions().then(
-		stationPositions => dispatch({
+export const fetchStationInfo = dispatch => {
+	getStationInfo().then(
+		stationInfo => dispatch({
 			type: FETCHED_STATIONS,
-			stationPositions
+			stationInfo
 		}),
 		err => dispatch(failWithError(err))
 	);
