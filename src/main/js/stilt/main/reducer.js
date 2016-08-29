@@ -13,7 +13,8 @@ export default function(state, action){
 			return Object.assign({}, state, {stations: action.stationInfo});
 
 		case FETCHED_OBSERVATIONS:
-			return state;
+			//TODO Add a "result-is-still-relevant" control here
+			return Object.assign({}, state, {obsBinTable: action.obsBinTable});
 
 		case ERROR:
 			return Object.assign({}, state, {error: action.error});

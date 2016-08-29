@@ -25,27 +25,6 @@ where {
 } order by ?fileName`;
 }
 
-export function simpleObjectSchema(spec){
-	return `prefix cpmeta: <${cpmetaOntoUri}>
-SELECT distinct ?objFormat ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
-FROM <${cpmetaResUri}>
-WHERE {
-	<${spec}> cpmeta:containsDataset ?dset .
-	<${spec}> cpmeta:hasFormat ?objFormat .
-	?dset cpmeta:hasColumn [
-		cpmeta:hasColumnTitle ?colName ;
-		cpmeta:hasValueFormat ?valFormat ;
-		cpmeta:hasValueType ?valType
-	] .
-	?valType rdfs:label ?valueType .
-	optional{?valType rdfs:comment ?colTip }
-	optional{
-		?valType cpmeta:hasUnit ?unit .
-		?valType cpmeta:hasQuantityKind [rdfs:label ?qKind ] .
-	}
-} order by ?colName`;
-}
-
 export function standardDataObjProps(dobjId){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>

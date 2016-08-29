@@ -1,4 +1,5 @@
-import {tableFormatForSpecies, getStationInfo, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
+import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {getStationInfo, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 

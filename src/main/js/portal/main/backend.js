@@ -1,32 +1,7 @@
-import 'whatwg-fetch';
-import BinTable from './models/BinTable';
-import {parseTableFormat, parseFormat} from './models/TableFormat';
+import {sparql} from '../../common/main/backend/sparql';
+import {getBinaryTable} from '../../common/main/backend/binTable';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
-
-function checkStatus(response) {
-	if(response.status >= 200 && response.status < 300)
-		return response;
-		else throw new Error(response.statusText || "Ajax response status: " + response.status);
-}
-
-function sparql(query){
-	return fetch(config.sparqlEndpoint, {
-			method: 'post',
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'text/plain'
-			},
-			body: query
-		})
-		.then(checkStatus)
-		.then(response => response.json());
-}
-
-export function tableFormatForSpecies(objSpecies){
-	const query = sparqlQueries.simpleObjectSchema(objSpecies);
-	return sparql(query).then(parseTableFormat);
-}
 
 export function getStationInfo(){
 	function floatValueOf(bindingVal){
@@ -69,21 +44,6 @@ function getFormatSpecificProps(dobjId){
 	});
 }
 
-function getBinaryTable(tblRequest){
-	return fetch('tabular', {
-			method: 'post',
-			headers: {
-				'Accept': 'application/octet-stream',
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify(tblRequest)
-		})
-		.then(checkStatus)
-		.then(response => response.arrayBuffer())
-		.then(response => {
-			return new BinTable(response, tblRequest.returnedTableSchema);
-		});
-}
 
 export function getGlobalTimeInterval(spec){
 	const query = sparqlQueries.getGlobalTimeInterval(spec);
@@ -153,3 +113,4 @@ function groupBy(arr, keyMaker, valueMaker){
 		return acc;
 	}, {});
 }
+

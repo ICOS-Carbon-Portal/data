@@ -6,8 +6,8 @@
   "main": "gulpfile.js",
   "scripts": {
     "netcdf": "gulp netcdf",
-    "portalPublish": "gulp publishportal",
     "portal": "gulp portal",
+    "stilt": "gulp stilt",
     "gulp": "gulp"
   },
   "repository": {

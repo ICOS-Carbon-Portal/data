@@ -1,6 +1,7 @@
 
 export function parseTableFormat(sparqlResult){
-	const columnsInfo = sparqlResult.results.bindings.map(binding => {
+	const bindings = sparqlResult.results.bindings;
+	const columnsInfo = bindings.map(binding => {
 		return {
 			name: binding.colName.value,
 			label: binding.valueType.value,
@@ -8,7 +9,8 @@ export function parseTableFormat(sparqlResult){
 			type: mapDataTypes(binding.valFormat.value)
 		};
 	});
-	return new TableFormat(columnsInfo);
+	const formatUrl = bindings[0].objFormat.value;
+	return new TableFormat(columnsInfo, formatUrl);
 }
 
 export function lastUrlPart(url){
@@ -35,10 +37,11 @@ function mapDataTypes(rdfDataType){
 }
 
 class TableRequest{
-	constructor(tableId, schema, columnNumbers){
+	constructor(tableId, schema, columnNumbers, subFolder){
 		this.tableId = tableId;
 		this.schema = schema;
 		this.columnNumbers = columnNumbers;
+		this.subFolder = subFolder;
 	}
 
 	get returnedTableSchema(){
@@ -51,8 +54,9 @@ class TableRequest{
 
 export class TableFormat{
 
-	constructor(columnsInfo){
+	constructor(columnsInfo, formatUrl){
 		this._columnsInfo = columnsInfo;
+		this._subFolder = lastUrlPart(formatUrl);
 	}
 
 	getColumnIndex(colName){
@@ -72,7 +76,8 @@ export class TableFormat{
 				columns: cols,
 				size: nRows
 			},
-			columnIndices || Array.from(cols, (_, i) => i)
+			columnIndices || Array.from(cols, (_, i) => i),
+			this._subFolder
 		);
 	}
 }

@@ -1,4 +1,5 @@
-import {tableFormatForSpecies, getStationInfo, getBinaryTable} from './backend';
+import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {getStationInfo, getWdcggBinaryTable} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 
@@ -31,9 +32,13 @@ function gotObservationData(binTable, dataObjId){
 	};
 }
 
-export const fetchTableFormat = (dataObjSpec) => dispatch => {
-	tableFormatForSpecies(dataObjSpec).then(
-		tableFormat => dispatch(gotTableFormat(tableFormat)),
+export const fetchTableFormat = dispatch => {
+	tableFormatForSpecies(config.wdcggSpec).then(
+		tableFormat => {
+			dispatch(gotTableFormat(tableFormat));
+			//TODO Remove the next line, prototyping-only
+			//dispatch(fetchObservationData({id: 'https://meta.icos-cp.eu/objects/CKuB_hK4-1g3PB1lyPjrZMM3', nRows: 8760}));
+		},
 		err => dispatch(failWithError(err))
 	);
 }
@@ -49,18 +54,11 @@ export const fetchStationInfo = dispatch => {
 }
 
 export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
+	//dataObjectInfo: {uri: String, nRows: Int}
 	const tableFormat = getState().wdcggFormat;
-	const request = makeTableRequest(tableFormat, dataObjectInfo);
 
-	getBinaryTable(dataObjectInfo.id, request).then(
-		binTable => {
-			dispatch({
-				type: FETCHED_OBSERVATIONS,
-				dataObjId,
-				obsBinTable: binTable
-			});
-			gotObservationData(binTable, dataObjectInfo.id)
-		},
+	getWdcggBinaryTable(tableFormat, dataObjectInfo).then(
+		binTable => dispatch(gotObservationData(binTable, dataObjectInfo.uri)),
 		err => dispatch(failWithError(err))
 	);
 }

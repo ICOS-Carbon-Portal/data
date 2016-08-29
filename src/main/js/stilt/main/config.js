@@ -1,14 +1,6 @@
-//var endpoint = 'http://127.0.0.1:9094/sparql';
-var endpoint = 'https://meta.icos-cp.eu/sparql';
+import common from '../../common/main/config';
 
-// @if NODE_ENV='production'
-endpoint = 'https://meta.icos-cp.eu/sparql';
-// @endif
-
-export default {
-	sparqlEndpoint: endpoint,
-	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
-	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
+export default Object.assign({}, common, {
 	wdcggBaseUri: 'http://meta.icos-cp.eu/resources/wdcgg/',
 	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	stations: [
@@ -17,5 +9,5 @@ export default {
 		{id: 'PAL', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Pallas-Sammaltunturi%20'},
 		{id: 'SIL', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Schauinsland%20'}
 	]
-}
+})
 

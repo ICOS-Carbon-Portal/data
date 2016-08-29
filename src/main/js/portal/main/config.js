@@ -1,19 +1,11 @@
-var endpoint = 'http://127.0.0.1:9094/sparql';
-
-// @if NODE_ENV='production'
-endpoint = 'https://meta.icos-cp.eu/sparql';
-// @endif
+import common from '../../common/main/config';
 
 const wdcggBaseUri = 'http://meta.icos-cp.eu/resources/wdcgg/';
-const cpmetaOntoUri = 'http://meta.icos-cp.eu/ontologies/cpmeta/';
 
 const stationNameProp = cpmetaProp('hasName');
 const stationCountryProp = cpmetaProp('country');
 
-export default {
-	sparqlEndpoint: endpoint,
-	cpmetaOntoUri,
-	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
+export default Object.assign({}, common, {
 	wdcggBaseUri,
 	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	filteringWidgets: [
@@ -33,13 +25,13 @@ export default {
 	fromDateProp: "DATE_FROM",
 	toDateProp: "DATE_TO",
 	initSpatialModeAllStations: false
-}
+});
 
 function wdcggProp(suffix){
 	return wdcggBaseUri + suffix;
 }
 
 function cpmetaProp(suffix){
-	return cpmetaOntoUri + suffix;
+	return common.cpmetaOntoUri + suffix;
 }
 
