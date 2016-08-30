@@ -1,10 +1,10 @@
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
-import {getStationInfo, getWdcggBinaryTable} from './backend';
+import {getStationInfo, getTimeSeries} from './backend';
 import config from './config';
 
 export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
 export const FETCHED_STATIONS = 'FETCHED_STATIONS';
-export const FETCHED_OBSERVATIONS = 'FETCHED_OBSERVATIONS';
+export const FETCHED_TIMESERIES = 'FETCHED_TIMESERIES';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const ERROR = 'ERROR';
@@ -18,28 +18,19 @@ function failWithError(error){
 	};
 }
 
-function gotTableFormat(wdcggFormat){
-	return {
-		type: FETCHED_TABLEFORMAT,
-		wdcggFormat
-	};
-}
-
-function gotObservationData(binTable, dataObjId){
-	return {
-		type: FETCHED_OBSERVATIONS,
-		dataObjId,
-		obsBinTable: binTable
-	};
+function gotTimeSeriesData(timeSeries, year){
+	return Object.assign({}, timeSeries, {
+		type: FETCHED_TIMESERIES,
+		year
+	});
 }
 
 export const fetchTableFormat = dispatch => {
 	tableFormatForSpecies(config.wdcggSpec).then(
-		tableFormat => {
-			dispatch(gotTableFormat(tableFormat));
-			//TODO Remove the next line, prototyping-only
-			//dispatch(fetchObservationData({id: 'https://meta.icos-cp.eu/objects/CKuB_hK4-1g3PB1lyPjrZMM3', nRows: 8760}));
-		},
+		wdcggFormat => dispatch({
+			type: FETCHED_TABLEFORMAT,
+			wdcggFormat
+		}),
 		err => dispatch(failWithError(err))
 	);
 }
@@ -54,12 +45,18 @@ export const fetchStationInfo = dispatch => {
 	);
 }
 
-export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
-	//dataObjectInfo: {id: String, nRows: Int}
-	const tableFormat = getState().wdcggFormat;
+export const fetchTimeSeries = (dispatch, getState) => {
+	const state = getState();
+	const year = state.selectedYear;
+	if(!year) return;
 
-	getWdcggBinaryTable(tableFormat, dataObjectInfo).then(
-		binTable => dispatch(gotObservationData(binTable, dataObjectInfo.uri)),
+	const resultsRequest = {
+		stationId: state.selectedStation.id,
+		year: year.year
+	};
+
+	getTimeSeries(resultsRequest, year.dataObject, state.wdcggFormat).then(
+		timeSeries => dispatch(gotTimeSeriesData(timeSeries, year.year)),
 		err => dispatch(failWithError(err))
 	);
 }
@@ -67,14 +64,16 @@ export const fetchObservationData = dataObjectInfo => (dispatch, getState) => {
 export const setSelectedStation = station => dispatch => {
 	dispatch({
 		type: SET_SELECTED_STATION,
-		selectedStation: station
+		station
 	});
+	dispatch(fetchTimeSeries); //year might have been selected automatically
 }
 
-export const setSelectedYear = selectedYear => dispatch => {
+export const setSelectedYear = year => dispatch => {
 	dispatch({
 		type: SET_SELECTED_YEAR,
-		selectedYear
+		year
 	});
+	dispatch(fetchTimeSeries);
 }
 

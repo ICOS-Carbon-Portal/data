@@ -6,13 +6,21 @@ import java.io.File
 import java.nio.file.Files
 import scala.collection.JavaConversions._
 import java.nio.file.Path
+import akka.stream.scaladsl.Source
+import scala.io.{Source => IoSource}
+import akka.util.ByteString
+import akka.NotUsed
+import se.lu.nateko.cp.data.formats.csv.NumericScv
+
 
 class StiltResultsFetcher(config: StiltConfig) {
 
-	private[this] val resFilePattern = "^stiltresults(\\d{4}).csv$".r
 	private[this] val resFileGlob = "stiltresults????.csv"
+	private[this] val resFilePattern = resFileGlob.replace("????", "(\\d{4})").r
 	private[this] val resFolder = "Results"
 	private[this] val footPrintsFolder = "Footprints"
+
+	def resFileName(year: Int): String = resFileGlob.replace("????", year.toString)
 
 	def getStationsAndYears: Map[String, Seq[Int]] = {
 
@@ -34,5 +42,11 @@ class StiltResultsFetcher(config: StiltConfig) {
 			.iterator()
 			.map(_.getFileName.toString)
 			.toSeq
+	}
+
+	def getStiltResultJson(stationId: String, year: Int, columns: Seq[String]): Source[ByteString, NotUsed] = {
+		val resultsPath = Paths.get(config.mainFolder, resFolder, stationId, resFileName(year))
+		val src = IoSource.fromFile(resultsPath.toFile)
+		NumericScv.getJsonSource(src, columns)
 	}
 }

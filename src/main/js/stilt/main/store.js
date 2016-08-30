@@ -8,9 +8,7 @@ const initState = {
 	wdcggFormat: null,
 	stations: [],
 	selectedStation: null,
-	availableYears: [],
 	selectedYear: null,
-	timeInterval: null, //{start: date, stop: date}
 	error: null
 };
 
