@@ -1,4 +1,5 @@
-import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, SET_SELECTED_STATION, SET_SELECTED_YEAR, ERROR} from './actions';
+import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, ERROR} from './actions';
+import {prepareModelResultsGraphs} from './models/timeSeriesHelpers';
 
 export default function(state, action){
 
@@ -11,6 +12,9 @@ export default function(state, action){
 
 		case FETCHED_STATIONS:
 			return Object.assign({}, state, {stations: action.stationInfo});
+
+		case FETCHED_RASTER:
+			return Object.assign({}, state, {raster: action.raster});
 
 		case SET_SELECTED_STATION:
 			const station = action.station;
@@ -29,7 +33,10 @@ export default function(state, action){
 
 		case FETCHED_TIMESERIES:
 			return state.selectedYear && state.selectedYear.year == action.year
-				? Object.assign({}, state, {obsBinTable: action.obsBinTable, modelResults: action.modelResults})
+				? Object.assign({}, state, {
+					obsBinTable: action.obsBinTable,
+					modelResults: prepareModelResultsGraphs(action.modelResults)
+				})
 				: state;
 
 		case ERROR:

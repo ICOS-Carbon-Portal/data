@@ -1,10 +1,11 @@
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
-import {getStationInfo, getTimeSeries} from './backend';
+import {getStationInfo, getTimeSeries, getRaster} from './backend';
 import config from './config';
 
 export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
 export const FETCHED_STATIONS = 'FETCHED_STATIONS';
 export const FETCHED_TIMESERIES = 'FETCHED_TIMESERIES';
+export const FETCHED_RASTER = 'FETCHED_RASTER';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const ERROR = 'ERROR';
@@ -40,6 +41,14 @@ export const fetchStationInfo = dispatch => {
 		stationInfo => dispatch({
 			type: FETCHED_STATIONS,
 			stationInfo
+		}),
+		err => dispatch(failWithError(err))
+	);
+
+	getRaster().then(
+		raster => dispatch({
+			type: FETCHED_RASTER,
+			raster
 		}),
 		err => dispatch(failWithError(err))
 	);

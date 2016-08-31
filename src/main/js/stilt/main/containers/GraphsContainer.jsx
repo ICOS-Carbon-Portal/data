@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import Graphs from '../components/Graphs.jsx';
+import Dygraphs from '../components/Dygraphs.jsx';
 import Select from '../components/Select.jsx';
 import {setSelectedYear} from '../actions.js';
 
@@ -15,12 +15,13 @@ class GraphsContainer extends Component {
 
 		const availableYears = selectedStation ? selectedStation.years.map(year => year.year) : [];
 		const yearValue = selectedYear ? selectedYear.year : null;
+		const modelResults = this.props.modelResults;
 
 		return availableYears.length > 0
 			?	<div>
 					<label>{selectedStation.name}</label>
 					<Select selectValue={selectYear} availableValues={availableYears} value={yearValue} />
-					<Graphs />
+					{modelResults ? <Dygraphs {...modelResults}/> : null}
 				</div>
 			: null;
 	}

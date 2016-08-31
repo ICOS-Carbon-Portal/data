@@ -2,6 +2,7 @@ import 'whatwg-fetch';
 import {checkStatus} from '../../common/main/backend/fetchHelp';
 import {sparql} from '../../common/main/backend/sparql';
 import {getBinaryTable} from '../../common/main/backend/binTable';
+import {getBinRaster} from '../../common/main/backend/binRaster';
 import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
@@ -25,9 +26,6 @@ export function getStationInfo(){
 			name: 'Mace Head',
 			years: [{
 				year: 2011,
-				dataObject: {id: 'https://meta.icos-cp.eu/objects/epSW2GnzRlSmsSL76oylJnG1', nRows: 8760}
-			},{
-				year: 2012,
 				dataObject: {id: 'https://meta.icos-cp.eu/objects/epSW2GnzRlSmsSL76oylJnG1', nRows: 8760}
 			}],
 			lat: 53.33,
@@ -79,7 +77,7 @@ export function getTimeSeries(resultsRequest, dataObjectInfo, wdcggFormat){
 
 	const observationsPromise = getWdcggBinaryTable(dataObjectInfo, wdcggFormat);
 	const request = Object.assign({}, resultsRequest, {
-		columns: ['isodate','co2.bio', 'co2.fuel', 'co2.total']
+		columns: config.stiltResultColumns
 	});
 	const modelResultsPromise = getStiltResults(request);
 
@@ -102,5 +100,9 @@ function getStiltResults(resultsRequest){
 	})
 	.then(checkStatus)
 	.then(response => response.json());
+}
+
+export function getRaster(){
+	return getBinRaster('/netcdf/getSlice?service=foot2007x01x01x00x46.55Nx007.98Ex00720_aggreg.nc&varName=foot&date=2006-12-22T00%3A00%3A00Z&elevation=null');
 }
 
