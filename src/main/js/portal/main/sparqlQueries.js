@@ -58,6 +58,7 @@ WHERE {
 			VALUES (?prop ?actualProp ?label) {
 				(<${config.latProp}> cpmeta:hasLatitude "LATITUDE")
 				(<${config.lonProp}> cpmeta:hasLongitude "LONGITUDE")
+				(<${config.stationProp}> cpmeta:hasName "STATION")
 			}
 			?prod prov:wasAssociatedWith [?actualProp ?value]
 		} UNION {

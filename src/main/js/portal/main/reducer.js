@@ -134,7 +134,7 @@ function getMapData(dataObjects, labels){
 				? {lat: dob.metaData.geom.lat, lon: dob.metaData.geom.lon}
 				: {lat: null, lon: null}
 			,
-			popup: dob.metaData.format.filter(frm => frm.prop == config.wdcggStationProp).map(frm =>{
+			popup: dob.metaData.format.filter(frm => frm.prop == config.stationProp).map(frm =>{
 				return {
 					stationName: frm.value,
 					label: labels.slice(idx, idx + 1)[0]
