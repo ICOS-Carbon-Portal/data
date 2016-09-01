@@ -1,10 +1,10 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import * as MapUtils from '../../../common/main/geometry/MapUtils';
-import TileMappingHelper from '../../../common/main/geometry/TileMappingHelper';
+import TileMappingHelper, {getTileCoordBbox} from '../../../common/main/geometry/TileMappingHelper';
 import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
+import {makeImage} from '../models/MapUtils';
 
 
 export default class NetCDFMap extends Component{
@@ -68,7 +68,7 @@ export default class NetCDFMap extends Component{
 		rasterCanvas.height = raster.height;
 		self.setState({rasterCanvas});
 
-		MapUtils.makeImage(rasterCanvas, raster, gamma);
+		makeImage(rasterCanvas, raster, gamma);
 
 		const dsPixels = new Bbox(0, 0, raster.width, raster.height);
 		const rbb = raster.boundingBox;
@@ -82,7 +82,7 @@ export default class NetCDFMap extends Component{
 		canvasTiles.drawTile = function(canvas, tilePoint, zoom) {
 			const ctx = canvas.getContext('2d');
 
-			const tileCoords = MapUtils.getTileCoordBbox(tilePoint, zoom);
+			const tileCoords = getTileCoordBbox(tilePoint, zoom);
 			const tilePixels = new Bbox(0, 0, canvas.width, canvas.height);
 			const tileMapping = new BboxMapping(tileCoords, tilePixels);
 			const pixelMaps = tileHelper.getCoordinateMappings(tileMapping);

@@ -9,7 +9,7 @@ class FootprintContainer extends Component {
 		super(props);
 		this.state = {
 			zoomToRaster: true,
-			selectedGamma: 0.1
+			selectedGamma: 1
 		};
 	}
 
