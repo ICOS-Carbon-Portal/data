@@ -11,11 +11,11 @@ export default class Dygraphs extends React.Component {
 		const props = this.props;
 
 		this.graph = new Dygraph(ReactDOM.findDOMNode(this.refs.graphDiv),
-			props.data,
+			props.data.getData(),
 			{
 				strokeWidth: 1,
 				width: props.width,
-				labels: props.labels,
+				labels: props.data.labels,
 				legend: 'always',
 				labelsDiv: ReactDOM.findDOMNode(this.refs.labelsDiv),
 				labelsSeparateLines: false,
@@ -39,7 +39,7 @@ export default class Dygraphs extends React.Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		this.graph.updateOptions( { file: nextProps.data, labels: nextProps.labels } );
+		this.graph.updateOptions( { file: nextProps.data.getData(), labels: nextProps.data.labels } );
 	}
 
 	render(){

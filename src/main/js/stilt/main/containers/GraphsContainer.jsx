@@ -15,13 +15,13 @@ class GraphsContainer extends Component {
 
 		const availableYears = selectedStation ? selectedStation.years.map(year => year.year) : [];
 		const yearValue = selectedYear ? selectedYear.year : null;
-		const graphs = this.props.obsVsModel;
 
 		return availableYears.length > 0
 			?	<div>
 					<label>{selectedStation.name}</label>
 					<Select selectValue={selectYear} availableValues={availableYears} value={yearValue} />
-					{graphs ? <Dygraphs data={graphs.getData()} labels={graphs.labels}/> : null}
+					{this.props.obsVsModel ? <Dygraphs data={this.props.obsVsModel} /> : null}
+					{this.props.modelComponents ? <Dygraphs data={this.props.modelComponents} /> : null}
 				</div>
 			: null;
 	}

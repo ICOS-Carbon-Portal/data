@@ -8,19 +8,22 @@ export function wdcggBinTableToDygraphData(binTable, labels){
 	return new DygraphData(rowGetter, binTable.length, labels);
 }
 
-const NAN = {};
+const NAN = {};//local tailor-made not-a-number
 
 export default class DygraphData{
 
 	constructor(rowGetter, length, labels){
 		this.row = rowGetter;
 		this.length = length;
-		this.nCols = labels.length;
 		this.labels = labels;
 	}
 
 	getData(){
 		return Array.from({length: this.length}, (_, i) => this.row(i));
+	}
+
+	get nCols(){
+		return this.labels.length;
 	}
 
 	static merge(){
@@ -34,17 +37,10 @@ export default class DygraphData{
 
 		const finalData = [];
 
-		var x = minX(iters);
-
-		while(compareX(x, NAN) < 0){
+		for(let x = minX(iters); compareX(x, NAN) < 0; x = minX(iters)){
 			const row = [x];
-
-			iters.forEach(iter => {
-				const rowPart = iter.getRow(x);
-				for(let i = 1; i < rowPart.length; i++){ row.push(rowPart[i]);}
-			});
+			iters.forEach(iter => pushTail(row, iter.getRow(x)));
 			finalData.push(row);
-			x = minX(iters);
 		}
 
 		return new ArrayBasedDygraphData(finalData, labels);
@@ -69,7 +65,7 @@ class DygraphIter{
 			this.i++;
 			return row;
 		} else{
-			return Array.from({length: this.data.labels.length}, () => null);
+			return Array.from({length: this.data.nCols}, () => null);
 		}
 	}
 }
@@ -85,15 +81,22 @@ class ArrayBasedDygraphData extends DygraphData{
 	}
 }
 
+//NAN is greater than anything else except another NAN
+//otherwise, standard comparison using < and > operators
 function compareX(x1, x2){
 	return x1 === NAN ? x2 === NAN ? 0 : 1 : x2 === NAN ? -1 : x1 > x2 ? 1 : x1 < x2 ? -1 : 0;
 }
 
 function minX(dygraphIters){
-	return dygraphIters.reduce((acc, iter) => {
+	return dygraphIters.reduce((minSoFar, iter) => {
 		const x = iter.x;
-		return compareX(acc, x) < 0 ? acc : x;
+		return compareX(minSoFar, x) < 0 ? minSoFar : x;
 	}, NAN);
 }
 
+function pushTail(target, source){
+	for(let i = 1; i < source.length; i++){
+		target.push(source[i]);
+	}
+}
 

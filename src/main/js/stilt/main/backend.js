@@ -70,16 +70,17 @@ export function getStationInfo(){
 */
 }
 
-export function getTimeSeries(resultsRequest, dataObjectInfo, wdcggFormat){
-	//resultsRequest: {stationId: String, year: Int}
+export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
+	//stationId: String, year: Int
 	//dataObjectInfo: {id: String, nRows: Int}
 	//wdcggFormat: TableFormat
 
 	const observationsPromise = getWdcggBinaryTable(dataObjectInfo, wdcggFormat);
-	const request = Object.assign({}, resultsRequest, {
+	const modelResultsPromise = getStiltResults({
+		stationId,
+		year,
 		columns: config.stiltResultColumns
 	});
-	const modelResultsPromise = getStiltResults(request);
 
 	return Promise.all([observationsPromise, modelResultsPromise])
 		.then(([obsBinTable, modelResults]) => {return {obsBinTable, modelResults};});

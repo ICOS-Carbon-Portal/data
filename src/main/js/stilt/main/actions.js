@@ -59,12 +59,7 @@ export const fetchTimeSeries = (dispatch, getState) => {
 	const year = state.selectedYear;
 	if(!year) return;
 
-	const resultsRequest = {
-		stationId: state.selectedStation.id,
-		year: year.year
-	};
-
-	getTimeSeries(resultsRequest, year.dataObject, state.wdcggFormat).then(
+	getTimeSeries(state.selectedStation.id, year.year, year.dataObject, state.wdcggFormat).then(
 		timeSeries => dispatch(gotTimeSeriesData(timeSeries, year.year)),
 		err => dispatch(failWithError(err))
 	);
