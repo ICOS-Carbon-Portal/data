@@ -1,5 +1,6 @@
 import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, FETCHED_COUNTRIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
+import FootprintsRegistry from './models/FootprintsRegistry';
 
 export default function(state, action){
 
@@ -17,7 +18,7 @@ export default function(state, action){
 			return Object.assign({}, state, {countriesTopo: action.countriesTopo});
 
 		case FETCHED_RASTER:
-			return Object.assign({}, state, {raster: action.raster});
+			return Object.assign({}, state, {raster: action.raster, footprint: action.footprint});
 
 		case SET_SELECTED_STATION:
 			const station = action.station;
@@ -35,8 +36,12 @@ export default function(state, action){
 			});
 
 		case FETCHED_TIMESERIES:
-			return state.selectedYear && state.selectedYear.year == action.year
-				? Object.assign({}, state, makeTimeSeriesGraphData(action.obsBinTable, action.modelResults))
+			return state.selectedStation.id == action.stationId && state.selectedYear && state.selectedYear.year == action.year
+				? Object.assign({},
+						state,
+						makeTimeSeriesGraphData(action.obsBinTable, action.modelResults),
+						{footprints: new FootprintsRegistry(action.footprints)}
+					)
 				: state;
 
 		case ERROR:

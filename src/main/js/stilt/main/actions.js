@@ -20,9 +20,10 @@ function failWithError(error){
 	};
 }
 
-function gotTimeSeriesData(timeSeries, year){
+function gotTimeSeriesData(timeSeries, stationId, year){
 	return Object.assign({}, timeSeries, {
 		type: FETCHED_TIMESERIES,
+		stationId,
 		year
 	});
 }
@@ -55,23 +56,19 @@ export const fetchStationInfo = dispatch => {
 		},
 		err => dispatch(failWithError(err))
 	);
-
-	getRaster().then(
-		raster => dispatch({
-			type: FETCHED_RASTER,
-			raster
-		}),
-		err => dispatch(failWithError(err))
-	);
 }
 
 export const fetchTimeSeries = (dispatch, getState) => {
 	const state = getState();
 	const year = state.selectedYear;
 	if(!year) return;
+	const stationId = state.selectedStation.id;
 
-	getTimeSeries(state.selectedStation.id, year.year, year.dataObject, state.wdcggFormat).then(
-		timeSeries => dispatch(gotTimeSeriesData(timeSeries, year.year)),
+	getTimeSeries(stationId, year.year, year.dataObject, state.wdcggFormat).then(
+		timeSeries => {
+			dispatch(gotTimeSeriesData(timeSeries, stationId, year.year));
+			dispatch(setDateOfInterest(new Date(Date.UTC(1900, 1, 1))));
+		},
 		err => dispatch(failWithError(err))
 	);
 }
@@ -90,5 +87,22 @@ export const setSelectedYear = year => dispatch => {
 		year
 	});
 	dispatch(fetchTimeSeries);
+}
+
+const setDateOfInterest = date => (dispatch, getState) => {
+	const state = getState();
+	if(!state.footprints) return;
+	const footprint = state.footprints.getRelevantFilename(date);
+	const stationId = state.selectedStation.id;
+
+	if(footprint != state.footprint) getRaster(stationId, footprint).then(
+		raster => dispatch({
+			type: FETCHED_RASTER,
+			footprint,
+			raster
+		}),
+		err => dispatch(failWithError(err))
+	);
+
 }
 

@@ -11,9 +11,12 @@ import scala.io.{Source => IoSource}
 import akka.util.ByteString
 import akka.NotUsed
 import se.lu.nateko.cp.data.formats.csv.NumericScv
+import se.lu.nateko.cp.data.NetCdfConfig
+import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
+import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 
 
-class StiltResultsFetcher(config: StiltConfig) {
+class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 
 	private[this] val resFileGlob = "stiltresults????.csv"
 	private[this] val resFilePattern = resFileGlob.replace("????", "(\\d{4})").r
@@ -48,5 +51,17 @@ class StiltResultsFetcher(config: StiltConfig) {
 		val resultsPath = Paths.get(config.mainFolder, resFolder, stationId, resFileName(year))
 		val src = IoSource.fromFile(resultsPath.toFile)
 		NumericScv.getJsonSource(src, columns)
+	}
+
+	def getFootprintRaster(stationId: String, filename: String): Raster = {
+		val factory = {
+			import netcdf._
+			import scala.collection.JavaConversions._
+			val footprintsFolder = Paths.get(config.mainFolder, footPrintsFolder, stationId).toString + File.separator
+			new ViewServiceFactoryImpl(footprintsFolder, dateVars, latitudeVars, longitudeVars, elevationVars)
+		}
+		val service = factory.getNetCdfViewService(filename)
+		val date = service.getAvailableDates()(0)
+		service.getRaster(date, "foot", null)
 	}
 }

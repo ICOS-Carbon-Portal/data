@@ -18,6 +18,7 @@ import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
+import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 
 object Main extends App {
 
@@ -43,6 +44,8 @@ object Main extends App {
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRouting = new UploadRouting(authRouting, uploadService)
 
+	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)
+
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
 			val traceWriter = new java.io.StringWriter()
@@ -57,7 +60,7 @@ object Main extends App {
 		NetcdfRoute(factory) ~
 		uploadRouting.route ~
 		tabularRouting.route ~
-		StiltRouting(config.stilt) ~
+		StiltRouting(stiltFetcher) ~
 		StaticRouting.route
 	}
 

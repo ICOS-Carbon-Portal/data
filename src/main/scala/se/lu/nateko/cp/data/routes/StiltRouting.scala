@@ -2,23 +2,24 @@ package se.lu.nateko.cp.data.routes
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.DefaultJsonProtocol._
 
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 import akka.http.scaladsl.server.Route
-import se.lu.nateko.cp.data.StiltConfig
 import spray.json.DefaultJsonProtocol
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.ContentTypes
 
+import se.lu.nateko.cp.data.formats.netcdf.RasterMarshalling
+
 object StiltRouting extends DefaultJsonProtocol{
 
 	case class StiltResultsRequest(stationId: String, year: Int, columns: Seq[String])
-	implicit val stiltResultsRequestFormat = jsonFormat3(StiltResultsRequest)
 
-	def apply(config: StiltConfig): Route = {
-		val service = new StiltResultsFetcher(config)
+	def apply(service: StiltResultsFetcher): Route = {
+
+		implicit val rasterMarshalling = RasterMarshalling.marshaller
+		implicit val stiltResultsRequestFormat = jsonFormat3(StiltResultsRequest)
 
 		pathPrefix("stilt"){
 			get{
@@ -28,6 +29,11 @@ object StiltRouting extends DefaultJsonProtocol{
 				path("listfootprints"){
 					parameters("stationId", "year".as[Int]){(stationId, year) =>
 						complete(service.getFootprintFiles(stationId, year))
+					}
+				} ~
+				path("footprint"){
+					parameters("stationId", "footprint"){(stationId, filename) =>
+						complete(service.getFootprintRaster(stationId, filename))
 					}
 				}
 			} ~

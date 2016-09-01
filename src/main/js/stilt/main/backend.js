@@ -1,9 +1,10 @@
 import 'whatwg-fetch';
 import {checkStatus} from '../../common/main/backend/fetchHelp';
 import {sparql} from '../../common/main/backend/sparql';
+import {getJson} from '../../common/main/backend/json';
 import {getBinaryTable} from '../../common/main/backend/binTable';
 import {getBinRaster} from '../../common/main/backend/binRaster';
-import * as sparqlQueries from './sparqlQueries';
+//import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
 
@@ -70,11 +71,17 @@ export function getStationInfo(){
 */
 }
 
-export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
-	//stationId: String, year: Int
-	//dataObjectInfo: {id: String, nRows: Int}
-	//wdcggFormat: TableFormat
+export function getCountriesTopoJson(){
+	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json');
+}
 
+export function getRaster(stationId, footprint){
+	return getBinRaster('footprint?stationId=' + stationId + '&footprint=' + footprint);
+}
+
+export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
+	//stationId: String, year: Int, dataObjectInfo: {id: String, nRows: Int}, wdcggFormat: TableFormat
+	const footprintsListPromise = getFootprintsList(stationId, year);
 	const observationsPromise = getWdcggBinaryTable(dataObjectInfo, wdcggFormat);
 	const modelResultsPromise = getStiltResults({
 		stationId,
@@ -82,8 +89,8 @@ export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
 		columns: config.stiltResultColumns
 	});
 
-	return Promise.all([observationsPromise, modelResultsPromise])
-		.then(([obsBinTable, modelResults]) => {return {obsBinTable, modelResults};});
+	return Promise.all([observationsPromise, modelResultsPromise, footprintsListPromise])
+		.then(([obsBinTable, modelResults, footprints]) => {return {obsBinTable, modelResults, footprints};});
 }
 
 function getWdcggBinaryTable(dataObjectInfo, wdcggFormat){
@@ -103,33 +110,7 @@ function getStiltResults(resultsRequest){
 	.then(response => response.json());
 }
 
-function getUrlQuery(keyValues){
-	if(!keyValues || keyValues.length == 0) return '';
-
-	let qParams = new URLSearchParams();
-	keyValues.forEach(
-		([key, value]) => qParams.append(key, value)
-	);
-	return '?' + qParams.toString();
-}
-
-function getJson(url, ...keyValues){
-
-	return fetch(url + getUrlQuery(keyValues), {
-		headers: {
-			'Accept': 'application/json'
-		}
-	})
-		.then(checkStatus)
-		.then(response => response.json());
-}
-
-export function getCountriesTopoJson(){
-	var url = 'https://static.icos-cp.eu/js/topojson/readme-world.json';
-	return getJson(url);
-}
-
-export function getRaster(){
-	return getBinRaster('/netcdf/getSlice?service=foot2007x01x01x00x46.55Nx007.98Ex00720_aggreg.nc&varName=foot&date=2006-12-22T00%3A00%3A00Z&elevation=null');
+function getFootprintsList(stationId, year){
+	return getJson('listfootprints', ['stationId', stationId], ['year', year]);
 }
 
