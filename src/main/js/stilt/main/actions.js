@@ -1,10 +1,11 @@
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
-import {getStationInfo, getTimeSeries, getRaster} from './backend';
+import {getStationInfo, getTimeSeries, getCountriesTopoJson, getRaster} from './backend';
 import config from './config';
 
 export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
 export const FETCHED_STATIONS = 'FETCHED_STATIONS';
 export const FETCHED_TIMESERIES = 'FETCHED_TIMESERIES';
+export const FETCHED_COUNTRIES = 'FETCHED_COUNTRIES';
 export const FETCHED_RASTER = 'FETCHED_RASTER';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
@@ -42,6 +43,16 @@ export const fetchStationInfo = dispatch => {
 			type: FETCHED_STATIONS,
 			stationInfo
 		}),
+		err => dispatch(failWithError(err))
+	);
+
+	getCountriesTopoJson().then(
+		countriesTopo => {
+			dispatch({
+				type: FETCHED_COUNTRIES,
+				countriesTopo
+			});
+		},
 		err => dispatch(failWithError(err))
 	);
 

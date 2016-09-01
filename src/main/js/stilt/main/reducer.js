@@ -1,4 +1,4 @@
-import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, ERROR} from './actions';
+import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, FETCHED_COUNTRIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 
 export default function(state, action){
@@ -12,6 +12,9 @@ export default function(state, action){
 
 		case FETCHED_STATIONS:
 			return Object.assign({}, state, {stations: action.stationInfo});
+
+		case FETCHED_COUNTRIES:
+			return Object.assign({}, state, {countriesTopo: action.countriesTopo});
 
 		case FETCHED_RASTER:
 			return Object.assign({}, state, {raster: action.raster});

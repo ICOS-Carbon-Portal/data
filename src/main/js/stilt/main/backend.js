@@ -103,6 +103,32 @@ function getStiltResults(resultsRequest){
 	.then(response => response.json());
 }
 
+function getUrlQuery(keyValues){
+	if(!keyValues || keyValues.length == 0) return '';
+
+	let qParams = new URLSearchParams();
+	keyValues.forEach(
+		([key, value]) => qParams.append(key, value)
+	);
+	return '?' + qParams.toString();
+}
+
+function getJson(url, ...keyValues){
+
+	return fetch(url + getUrlQuery(keyValues), {
+		headers: {
+			'Accept': 'application/json'
+		}
+	})
+		.then(checkStatus)
+		.then(response => response.json());
+}
+
+export function getCountriesTopoJson(){
+	var url = 'https://static.icos-cp.eu/js/topojson/readme-world.json';
+	return getJson(url);
+}
+
 export function getRaster(){
 	return getBinRaster('/netcdf/getSlice?service=foot2007x01x01x00x46.55Nx007.98Ex00720_aggreg.nc&varName=foot&date=2006-12-22T00%3A00%3A00Z&elevation=null');
 }

@@ -12,78 +12,78 @@ class Observations extends React.Component {
 	}
 
 	componentDidMount(){
-		// const props = this.props;
-		// const dataBndry = getDataBndry(props);
-		//
-		// const graph = new Dygraph(ReactDOM.findDOMNode(this.refs.graphDiv),
-		// 	dataBndry,
-		// 	{
-		// 		strokeWidth: 0,
-		// 		width: props.width,
-		// 		labels: props.forChart.labels,
-		// 		legend: 'always',
-		// 		labelsDiv: 'legendDiv',
-		// 		labelsSeparateLines: false,
-		// 		connectSeparatedPoints: true,
-		// 		labelsKMB: true,
-		// 		digitsAfterDecimal: 4,
-		// 		axes: {
-		// 			x: {
-		// 				drawGrid: false,
-		// 				valueFormatter: function(ms){
-		// 					//Firefox hack: add empty bold string
-		// 					return '<b></b>' + toISOString(ms);
-		// 				}
-		// 			},
-		// 			y: {
-		// 				axisLabelWidth: 65
-		// 			}
-		// 		}
-		// 	}
-		// );
-		//
-		// const graphDiv = ReactDOM.findDOMNode(this.refs.graphDiv).getBoundingClientRect();
-		//
-		// this.setState({
-		// 	graph,
-		// 	top: graphDiv.top + 50,
-		// 	left: graphDiv.left,
-		// 	working: true
-		// });
-		//
-		// this.delayedRender(graph, props.forChart.data, props.forChart.labels);
-	}
+		const dummyObservations = [
+			[new Date("2010-01-01"), 10, 20],
+			[new Date("2011-01-01"), 30, 30],
+			[new Date("2012-01-01"), 50, 40],
+			[new Date("2013-01-01"), 70, 50],
+		];
 
-	delayedRender(graph, data, labels){
-		const self = this;
-		this.clearTimeout();
+		const dummyModel = [
+			[new Date("2010-01-01"), 100, 200],
+			[new Date("2011-01-01"), 300, 300],
+			[new Date("2012-01-01"), 500, 400],
+			[new Date("2013-01-01"), 700, 500],
+		];
 
-		this.timeout = setTimeout(function(){
-			graph.updateOptions( { file: data, labels, strokeWidth: 1 } );
-			self.setState({working: false});
-		}, delay);
+		const observationsGraph = new Dygraph(ReactDOM.findDOMNode(this.refs.observationsGraphDiv),
+			dummyObservations,
+			{
+				width: 700,
+				labels: ["Date", "A data", "B data"],
+				legend: 'always',
+				connectSeparatedPoints: true,
+				labelsKMB: true,
+				digitsAfterDecimal: 4,
+				axes: {
+					x: {
+						drawGrid: false,
+						valueFormatter: function(ms){
+							//Firefox hack: add empty bold string
+							return '<b></b>' + toISOString(ms);
+						}
+					},
+					y: {
+						axisLabelWidth: 65
+					}
+				}
+			}
+		);
+
+		const modelGraph = new Dygraph(ReactDOM.findDOMNode(this.refs.modelGraphDiv),
+			dummyModel,
+			{
+				width: 700,
+				labels: ["Date", "AA data", "BB data"],
+				legend: 'always',
+				connectSeparatedPoints: true,
+				labelsKMB: true,
+				digitsAfterDecimal: 4,
+				axes: {
+					x: {
+						drawGrid: false,
+						valueFormatter: function(ms){
+							//Firefox hack: add empty bold string
+							return '<b></b>' + toISOString(ms);
+						}
+					},
+					y: {
+						axisLabelWidth: 65
+					}
+				}
+			}
+		);
+		//
+		// const graphs = [observationsGraph, modelGraph];
+		// const sync = Dygraph.synchronize(graphs);
 	}
 
 	componentWillReceiveProps(nextProps){
-		// console.log({componentWillReceiveProps: this.props, nextProps, state: this.state});
 
-		// if(nextProps.status != PIN_DATA) {
-		// 	this.setState({working: true});
-		// }
-		//
-		// if(nextProps.status == FETCHED_DATA || nextProps.status == REMOVED_DATA){
-		// 	this.delayedRender(this.state.graph, nextProps.forChart.data, nextProps.forChart.labels);
-		// }
 	}
 
 	componentWillUnmount(){
-		this.clearTimeout();
-	}
 
-	clearTimeout(){
-		if (this.timeout) {
-			clearTimeout(this.timeout);
-		}
 	}
 
 	shouldComponentUpdate(){
@@ -97,20 +97,11 @@ class Observations extends React.Component {
 
 		return (
 			<div>
-				<div ref="graphDiv" />
-				<div id="legendDiv" style={{width:100 + '%', fontSize:0.9 + 'em', marginTop:5}}></div>
-				{state.working
-					?	<span style={{position: 'absolute', top: state.top, left: state.left, zIndex: 1000}} className={"glyphicon glyphicon-refresh spinning"}></span>
-					: null
-				}
+				<div ref="observationsGraphDiv" />
+				<div ref="modelGraphDiv" />
 			</div>
 		);
 	}
-}
-
-function getDataBndry(props){
-	const dataLength = props.forChart.data.length;
-	return props.forChart.data.slice(0, 1).concat(props.forChart.data.slice(dataLength - 1, dataLength));
 }
 
 function toISOString(ms){
