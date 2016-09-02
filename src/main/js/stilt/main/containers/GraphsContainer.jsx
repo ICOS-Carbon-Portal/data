@@ -18,8 +18,8 @@ class GraphsContainer extends Component {
 
 		return availableYears.length > 0
 			?	<div>
-					<label>{selectedStation.name}</label>
-					<Select selectValue={selectYear} availableValues={availableYears} value={yearValue} />
+			{/*		<label>{selectedStation.name}</label>
+					<Select selectValue={selectYear} availableValues={availableYears} value={yearValue} />*/}
 					{this.props.obsVsModel ? <Dygraphs data={this.props.obsVsModel} /> : null}
 					{this.props.modelComponents ? <Dygraphs data={this.props.modelComponents} /> : null}
 				</div>

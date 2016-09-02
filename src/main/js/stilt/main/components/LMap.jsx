@@ -5,6 +5,9 @@ import * as LCommon from '../../../common/main/maps/LeafletCommon';
 export default class LMap extends Component{
 	constructor(props){
 		super(props);
+		this.state = {
+			markers: L.featureGroup()
+		}
 	}
 
 	componentDidMount() {
@@ -27,21 +30,41 @@ export default class LMap extends Component{
 	componentWillReceiveProps(nextProps){
 		const prevProps = this.props;
 
+		// console.log({
+		// 	prevSelectedStation: prevProps.selectedStation ? prevProps.selectedStation.name : null,
+		// 	nextSelectedStation: nextProps.selectedStation ? nextProps.selectedStation.name : null
+		// });
+
 		if (nextProps.stations.length > 0 && prevProps.stations.length != nextProps.stations.length) {
 			const map = this.state.map;
 			const newMarkers = this.buildMarkers(nextProps.stations, nextProps.action);
 			map.addLayer(newMarkers);
 
 			LCommon.setView(map, nextProps.stations);
+
+		} else if(nextProps.selectedStation != null && prevProps.selectedStation != nextProps.selectedStation){
+			// this.highlightMarker(nextProps.selectedStation);
+			this.buildMarkers(nextProps.stations, nextProps.action, nextProps.selectedStation);
 		}
 	}
 
-	buildMarkers(geoms, action){
-		const markers = L.featureGroup();
+	highlightMarker(selectedStation){
+		const map = this.state.map;
+		map.eachLayer(layer => {
+			console.log({layer, stations: this.props.stations, selectedStation});
+		});
+	}
+
+	buildMarkers(geoms, action, selectedStation){
+		const markers = this.state.markers;
+		markers.clearLayers();
 
 		geoms.forEach(geom => {
+			const marker = selectedStation != null && selectedStation.uri === geoms.uri
+				? L.circleMarker([geom.lat, geom.lon], LCommon.pointIcon())
+				: L.marker([geom.lat, geom.lon], {icon: LCommon.wdcggIcon});
 			// const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
-			const marker = L.marker([geom.lat, geom.lon], {icon: LCommon.wdcggIcon});
+			// const marker = L.marker([geom.lat, geom.lon], {icon: LCommon.wdcggIcon});
 			marker.bindPopup(LCommon.popupHeader(geom.name));
 
 			marker.on('mouseover', function (e) {
@@ -58,6 +81,7 @@ export default class LMap extends Component{
 			markers.addLayer(marker);
 		});
 
+		this.setState({markers});
 		return markers;
 	}
 

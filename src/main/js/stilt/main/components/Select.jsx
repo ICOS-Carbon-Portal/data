@@ -14,16 +14,30 @@ export default class Select extends Component {
 		}
 	}
 
+	onSelect(){
+		const ddl = ReactDOM.findDOMNode(this.refs.selectelem);
+
+		if (ddl.selectedIndex > 0){
+			const idx = ddl.selectedIndex - 1;
+			this.props.selectValue(this.props.dataList[idx]);
+		}
+	}
+
 	render(){
 		const props = this.props;
-		return <select ref="selectelem" value={props.value} className="form-control" onChange={this.changeHandler.bind(this)}>
-			<option key="select">Select year</option>
-			{
-				props.availableValues.map(value => {
-					return <option key={value} value={value}>{value}</option>;
-				})
-			}
-		</select>;
+
+		return (
+			props.availableValues.length > 0
+				? <select ref="selectelem" value={props.value} className="form-control" onChange={this.onSelect.bind(this)}>
+					<option key="select">{props.infoTxt}</option>
+					{
+						props.availableValues.map(value => {
+							return <option key={value} value={value}>{value}</option>;
+						})
+					}
+				</select>
+				: null
+		);
 	}
 }
 
