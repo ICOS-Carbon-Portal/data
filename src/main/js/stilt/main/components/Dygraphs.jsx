@@ -13,6 +13,8 @@ export default class Dygraphs extends React.Component {
 		this.graph = new Dygraph(ReactDOM.findDOMNode(this.refs.graphDiv),
 			props.data.getData(),
 			{
+				drawCallback: this.rangeChangeHandler.bind(this),
+				dateWindow: props.dateRange,
 				strokeWidth: 1,
 				width: props.width,
 				labels: props.data.labels,
@@ -36,10 +38,33 @@ export default class Dygraphs extends React.Component {
 				}
 			}
 		);
+
+		this.dataId = props.data.id;
 	}
 
 	componentWillReceiveProps(nextProps){
-		this.graph.updateOptions( { file: nextProps.data.getData(), labels: nextProps.data.labels } );
+		const update = {};
+		const nextRange = nextProps.dateRange;
+
+		if(nextRange){
+			const currRange = this.graph.xAxisRange();
+
+			if(!currRange || nextRange[0] != currRange[0] || nextRange[1] != currRange[1]){
+				Object.assign(update, {dateWindow: nextRange});
+			}
+		}
+
+		const nextData = nextProps.data;
+		if(nextData && nextData.id != this.dataId){
+			this.dataId = nextData.id;
+			Object.assign(update, { file: nextProps.data.getData(), labels: nextProps.data.labels });
+		}
+
+		if(Object.keys(update).length > 0) this.graph.updateOptions(update);
+	}
+
+	rangeChangeHandler(graph){
+		if(this.props.updateXRange) this.props.updateXRange(graph.xAxisRange());
 	}
 
 	render(){

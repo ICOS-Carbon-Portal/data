@@ -9,6 +9,9 @@ const initState = {
 	stations: [],
 	selectedStation: null,
 	selectedYear: null,
+	footprints: null,
+	footprint: null,
+	desiredFootprint: null,
 	error: null
 };
 

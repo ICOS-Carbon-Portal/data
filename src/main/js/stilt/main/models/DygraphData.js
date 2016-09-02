@@ -18,6 +18,11 @@ export default class DygraphData{
 		this.labels = labels;
 	}
 
+	withId(id){
+		this.id = id;
+		return this;
+	}
+
 	getData(){
 		return Array.from({length: this.length}, (_, i) => this.row(i));
 	}

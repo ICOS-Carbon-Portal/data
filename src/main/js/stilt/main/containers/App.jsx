@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import StationsMapContainer from './StationsMapContainer.jsx';
 import FootprintContainer from './FootprintContainer.jsx';
 import GraphsContainer from './GraphsContainer.jsx';
+import {datetimeFromFile} from '../models/FootprintsRegistry';
 
 
 class App extends Component {
@@ -32,11 +33,20 @@ class App extends Component {
 						</div>
 					</div>
 
-					<div className="col-md-9">
+					<div className="col-md-4">
 						<div className="row">
 							<div className="col-md-12">
 								<GraphsContainer />
 							</div>
+						</div>
+					</div>
+
+					<div className="col-md-5">
+						<div className="row">
+							<h2><span><b>Selected date:</b> </span><span>{props.midDate}</span></h2>
+						</div>
+						<div className="row">
+							<h2><span><b>Showing footprint:</b> </span><span>{props.footprintDate}</span></h2>
 						</div>
 					</div>
 
@@ -47,15 +57,14 @@ class App extends Component {
 }
 
 function stateToProps(state){
-	return state;
+	const footprintDate = state.footprint ? new Date(datetimeFromFile(state.footprint)).toUTCString() : '?';
+	const midDate = state.midDate ? state.midDate.toUTCString() : '?';
+	return {footprintDate, midDate};
 }
 
 function dispatchToProps(dispatch){
-	return {
-
-	};
+	return {};
 }
 
 export default connect(stateToProps, dispatchToProps)(App);
-
 

@@ -3,9 +3,9 @@ import DygraphData, {wdcggBinTableToDygraphData} from './DygraphData';
 
 const co2Index = config.stiltResultColumns.indexOf(config.totalCo2Column);
 
-export function makeTimeSeriesGraphData(obsBinTable, rawArray){
-	const obsVsModel = makeObservationsVsModelComparison(obsBinTable, rawArray);
-	const modelComponents = makeModelComponentsData(rawArray);
+export function makeTimeSeriesGraphData(obsBinTable, rawArray, id){
+	const obsVsModel = makeObservationsVsModelComparison(obsBinTable, rawArray).withId(id);
+	const modelComponents = makeModelComponentsData(rawArray).withId(id);
 
 	return {obsVsModel, modelComponents};
 }

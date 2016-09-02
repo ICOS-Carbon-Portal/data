@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import Dygraphs from '../components/Dygraphs.jsx';
-import Select from '../components/Select.jsx';
-import {setSelectedYear} from '../actions.js';
+import {setDateRange} from '../actions.js';
+import throttle from '../../../common/main/general/throttle';
+import copyprops from '../../../common/main/general/copyprops';
 
 class GraphsContainer extends Component {
 	constructor(props){
@@ -11,31 +12,24 @@ class GraphsContainer extends Component {
 	}
 
 	render() {
-		const {selectYear, selectedStation, selectedYear} = this.props;
+		const {obsVsModel, modelComponents, dateRange} = this.props
 
-		const availableYears = selectedStation ? selectedStation.years.map(year => year.year) : [];
-		const yearValue = selectedYear ? selectedYear.year : null;
-
-		return availableYears.length > 0
-			?	<div>
-			{/*		<label>{selectedStation.name}</label>
-					<Select selectValue={selectYear} availableValues={availableYears} value={yearValue} />*/}
-					{this.props.obsVsModel ? <Dygraphs data={this.props.obsVsModel} /> : null}
-					{this.props.modelComponents ? <Dygraphs data={this.props.modelComponents} /> : null}
-				</div>
-			: null;
+		return <div>
+			{obsVsModel ? <Dygraphs data={obsVsModel} {...this.props}/> : null}
+			{modelComponents ? <Dygraphs data={modelComponents} {...this.props}/> : null}
+		</div>;
 	}
 }
 
 function stateToProps(state){
-	return state;
+	return copyprops(state, ['obsVsModel', 'modelComponents', 'dateRange']);
 }
 
 function dispatchToProps(dispatch){
 	return {
-		selectYear(year){
-			dispatch(setSelectedYear(year));
-		}
+		updateXRange: throttle(range => {
+			dispatch(setDateRange(range));
+		}, 200)
 	};
 }
 

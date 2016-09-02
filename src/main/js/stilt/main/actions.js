@@ -9,6 +9,7 @@ export const FETCHED_COUNTRIES = 'FETCHED_COUNTRIES';
 export const FETCHED_RASTER = 'FETCHED_RASTER';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
+export const SET_DATE_RANGE = 'SET_DATE_RANGE';
 export const ERROR = 'ERROR';
 
 
@@ -40,9 +41,9 @@ export const fetchTableFormat = dispatch => {
 
 export const fetchStationInfo = dispatch => {
 	getStationInfo().then(
-		stationInfo => dispatch({
+		stations => dispatch({
 			type: FETCHED_STATIONS,
-			stationInfo
+			stations
 		}),
 		err => dispatch(failWithError(err))
 	);
@@ -67,7 +68,6 @@ export const fetchTimeSeries = (dispatch, getState) => {
 	getTimeSeries(stationId, year.year, year.dataObject, state.wdcggFormat).then(
 		timeSeries => {
 			dispatch(gotTimeSeriesData(timeSeries, stationId, year.year));
-			dispatch(setDateOfInterest(new Date(Date.UTC(1900, 1, 1))));
 		},
 		err => dispatch(failWithError(err))
 	);
@@ -89,10 +89,24 @@ export const setSelectedYear = year => dispatch => {
 	dispatch(fetchTimeSeries);
 }
 
-const setDateOfInterest = date => (dispatch, getState) => {
+export const setDateRange = dateRange => (dispatch, getState) => {
+	const currRange = getState().dateRange;
+
+	if(currRange && currRange[0] == dateRange[0] && currRange[1] == dateRange[1]) return;
+
+	dispatch({
+		type: SET_DATE_RANGE,
+		dateRange
+	});
+
+	dispatch(fetchFootprint);
+}
+
+const fetchFootprint = (dispatch, getState) => {
 	const state = getState();
-	if(!state.footprints) return;
-	const footprint = state.footprints.getRelevantFilename(date);
+	const footprint = state.desiredFootprint;
+	if(!footprint) return;
+
 	const stationId = state.selectedStation.id;
 
 	if(footprint != state.footprint) getRaster(stationId, footprint).then(
