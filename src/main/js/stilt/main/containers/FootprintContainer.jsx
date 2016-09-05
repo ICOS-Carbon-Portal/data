@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import NetCDFMap from '../components/NetCDFMap.jsx';
+import colorMaker from '../models/colorMaker';
 import config from '../config';
 
 class FootprintContainer extends Component {
@@ -14,10 +15,13 @@ class FootprintContainer extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		const prevProps = this.props;
-		const state = this.state;
+		const oldStation = this.props.selectedStation;
+		const newStation = nextProps.selectedStation;
 
-		const zoomToRaster = (prevProps.selectedStation != nextProps.selectedStation);
+		const zoomToRaster = (!oldStation || !newStation || oldStation.id != newStation.id);
+
+		//console.log('updating zoomToRaster to:', zoomToRaster);
+
 		this.setState({zoomToRaster});
 	}
 
@@ -40,7 +44,7 @@ class FootprintContainer extends Component {
 					mapOptions={{}}
 					countriesTopo={props.countriesTopo}
 					raster={props.raster}
-					gamma={state.selectedGamma}
+					colorMaker={colorMaker}
 					zoomToRaster={true}
 				/>
 				<select ref="gammaDdl" value={state.selectedGamma} className="form-control" onChange={this.changeHandler.bind(this)}>

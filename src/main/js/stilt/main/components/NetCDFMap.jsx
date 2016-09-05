@@ -4,7 +4,7 @@ import TileMappingHelper, {getTileCoordBbox} from '../../../common/main/geometry
 import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
-import {makeImage} from '../models/MapUtils';
+import renderRaster from '../../../common/main/maps/renderRaster';
 
 
 export default class NetCDFMap extends Component{
@@ -43,7 +43,7 @@ export default class NetCDFMap extends Component{
 		const state = this.state;
 
 		const addCountries = nextProps.countriesTopo && !state.countriesAdded;
-		const updatedRaster = nextProps.raster && nextProps.gamma && (prevProps.raster !== nextProps.raster || prevProps.gamma !== nextProps.gamma);
+		const updatedRaster = nextProps.raster && (prevProps.raster !== nextProps.raster);
 
 		// console.log({prevProps, nextProps, state, addCountries, updatedRaster});
 
@@ -53,12 +53,12 @@ export default class NetCDFMap extends Component{
 		}
 
 		if (updatedRaster){
-			this.updateRasterCanvas(map, nextProps.raster, nextProps.gamma, nextProps.zoomToRaster);
+			this.updateRasterCanvas(map, nextProps.raster, nextProps.zoomToRaster);
 		}
 
 	}
 
-	updateRasterCanvas(map, raster, gamma, zoomToRaster){
+	updateRasterCanvas(map, raster, zoomToRaster){
 		const self = this;
 
 		const canvasTiles = self.state.canvasTiles;
@@ -68,7 +68,7 @@ export default class NetCDFMap extends Component{
 		rasterCanvas.height = raster.height;
 		self.setState({rasterCanvas});
 
-		makeImage(rasterCanvas, raster, gamma);
+		renderRaster(rasterCanvas, raster, this.props.colorMaker);
 
 		const dsPixels = new Bbox(0, 0, raster.width, raster.height);
 		const rbb = raster.boundingBox;
