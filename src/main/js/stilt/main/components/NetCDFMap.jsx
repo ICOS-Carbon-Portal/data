@@ -10,7 +10,7 @@ import renderRaster from '../../../common/main/maps/renderRaster';
 export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
-		this.state = {
+		this.app = {
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
@@ -19,7 +19,7 @@ export default class NetCDFMap extends Component{
 	}
 
 	componentDidMount() {
-		const map = this.map = L.map(
+		const map = this.app.map = L.map(
 			ReactDOM.findDOMNode(this.refs.map),
 			Object.assign({
 				attributionControl: false,
@@ -33,40 +33,32 @@ export default class NetCDFMap extends Component{
 		);
 
 		map.getContainer().style.background = 'white';
-
-		this.setState({map});
 	}
 
 	componentWillReceiveProps(nextProps){
 		const prevProps = this.props;
-		const map = this.state.map;
-		const state = this.state;
+		const countriesAdded = this.app.countriesAdded;
 
-		const addCountries = nextProps.countriesTopo && !state.countriesAdded;
+		const addCountries = nextProps.countriesTopo && !countriesAdded;
 		const updatedRaster = nextProps.raster && (prevProps.raster !== nextProps.raster);
 
-		// console.log({prevProps, nextProps, state, addCountries, updatedRaster});
-
 		if (addCountries){
-			addTopoGeoJson(map, nextProps.countriesTopo);
-			this.setState({map, countriesAdded: true});
+			addTopoGeoJson(this.app.map, nextProps.countriesTopo);
+			this.app.countriesAdded = true;
 		}
 
 		if (updatedRaster){
-			this.updateRasterCanvas(map, nextProps.raster, nextProps.zoomToRaster);
+			this.updateRasterCanvas(nextProps.raster, nextProps.zoomToRaster);
 		}
-
 	}
 
-	updateRasterCanvas(map, raster, zoomToRaster){
-		const self = this;
+	updateRasterCanvas(raster, zoomToRaster){
+		const map = this.app.map;
+		const canvasTiles = this.app.canvasTiles;
+		const rasterCanvas = this.app.rasterCanvas;
 
-		const canvasTiles = self.state.canvasTiles;
-
-		const rasterCanvas = self.state.rasterCanvas;
 		rasterCanvas.width = raster.width;
 		rasterCanvas.height = raster.height;
-		self.setState({rasterCanvas});
 
 		renderRaster(rasterCanvas, raster, this.props.colorMaker);
 
@@ -122,8 +114,8 @@ export default class NetCDFMap extends Component{
 	}
 
 	componentWillUnmount() {
-		this.map.off('click', this.onMapClick);
-		this.map = null;
+		this.app.map.off('click', this.onMapClick);
+		this.app.map = null;
 	}
 
 	render() {

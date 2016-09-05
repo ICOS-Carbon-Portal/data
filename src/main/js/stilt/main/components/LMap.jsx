@@ -5,7 +5,7 @@ import * as LCommon from '../../../common/main/maps/LeafletCommon';
 export default class LMap extends Component{
 	constructor(props){
 		super(props);
-		this.state = {
+		this.app = {
 			map: null,
 			markers: L.featureGroup()
 		}
@@ -14,7 +14,7 @@ export default class LMap extends Component{
 	componentDidMount() {
 		const baseMaps = LCommon.getBaseMaps(21);
 
-		const map = L.map(ReactDOM.findDOMNode(this.refs.map),
+		const map = this.app.map = L.map(ReactDOM.findDOMNode(this.refs.map),
 			{
 				layers: [baseMaps.Topographic],
 				worldCopyJump: false,
@@ -24,9 +24,7 @@ export default class LMap extends Component{
 		);
 
 		map.addControl(new LCommon.CoordViewer({decimals: 4}));
-		map.addLayer(this.state.markers);
-
-		this.setState({map});
+		map.addLayer(this.app.markers);
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -35,7 +33,7 @@ export default class LMap extends Component{
 			(nextProps.selectedStation != undefined && prevProps.selectedStation != nextProps.selectedStation);
 
 		if (buildMarkers) {
-			const map = this.state.map;
+			const map = this.app.map;
 			this.buildMarkers(nextProps.stations, nextProps.action, nextProps.selectedStation);
 
 			if (nextProps.selectedStation == undefined) {
@@ -56,7 +54,7 @@ export default class LMap extends Component{
 	}
 
 	buildMarkers(geoms, action, selectedStation){
-		const markers = this.state.markers;
+		const markers = this.app.markers;
 		markers.clearLayers();
 
 		geoms.forEach(geom => {
@@ -79,12 +77,6 @@ export default class LMap extends Component{
 
 			markers.addLayer(marker);
 		});
-
-		this.setState({markers});
-	}
-
-	debug(sender, props){
-		console.log({sender, props});
 	}
 
 	shouldComponentUpdate(){
@@ -92,8 +84,8 @@ export default class LMap extends Component{
 	}
 
 	componentWillUnmount() {
-		this.map.off('click', this.onMapClick);
-		this.map = null;
+		this.app.map.off('click', this.onMapClick);
+		this.app.map = null;
 	}
 
 	render() {
