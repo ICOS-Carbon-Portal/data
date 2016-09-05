@@ -25,6 +25,13 @@ export const wdcggIcon = L.icon({
 	popupAnchor:  [0, -23]
 });
 
+export const wdcggIconHighlight = L.icon({
+	iconUrl: 'https://static.icos-cp.eu/images/tmp/wdcgg_highlight.svg',
+	iconSize:     [23, 28],
+	iconAnchor:   [12, 28],
+	popupAnchor:  [0, -23]
+});
+
 export function pointIcon() {
 	return {
 		radius: 4,

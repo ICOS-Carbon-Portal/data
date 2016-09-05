@@ -39,19 +39,25 @@ class FootprintContainer extends Component {
 		// console.log({props, state});
 
 		return (
-			<div style={{height: 400}}>
-				<NetCDFMap
-					mapOptions={{}}
-					countriesTopo={props.countriesTopo}
-					raster={props.raster}
-					colorMaker={colorMaker}
-					zoomToRaster={true}
-				/>
-				<select ref="gammaDdl" value={state.selectedGamma} className="form-control" onChange={this.changeHandler.bind(this)}>
-					<option key="gamma">Select gamma</option>
-					{config.gammas.map(gamma => <option key={gamma} value={gamma}>{gamma}</option>)}
-				</select>
-			</div>
+			props.selectedStation
+				? <div style={{height: 400}}>
+					<NetCDFMap
+						mapOptions={{
+							maxBounds: [[33, -15],[73, 35]],
+							center: [53, 10],
+							zoom: 3
+						}}
+						countriesTopo={props.countriesTopo}
+						raster={props.raster}
+						colorMaker={colorMaker}
+						zoomToRaster={true}
+					/>
+					<select ref="gammaDdl" value={state.selectedGamma} className="form-control" onChange={this.changeHandler.bind(this)}>
+						<option key="gamma">Select gamma</option>
+						{config.gammas.map(gamma => <option key={gamma} value={gamma}>{gamma}</option>)}
+					</select>
+				</div>
+				: null
 		);
 	}
 }
