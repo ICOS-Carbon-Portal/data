@@ -23,6 +23,7 @@ export default class LMap extends Component{
 			}
 		);
 
+		L.control.layers(baseMaps).addTo(map);
 		map.addControl(new LCommon.CoordViewer({decimals: 4}));
 		map.addLayer(this.app.markers);
 	}
@@ -37,14 +38,22 @@ export default class LMap extends Component{
 			this.buildMarkers(nextProps.stations, nextProps.action, nextProps.selectedStation);
 
 			if (nextProps.selectedStation == undefined) {
+
 				LCommon.setView(map, nextProps.stations);
+
 			} else {
+
 				const mapBounds = map.getBounds();
-				const selectedStationBounds = L.latLngBounds(
-					L.latLng(nextProps.selectedStation.lat - 1, nextProps.selectedStation.lon - 1),
-					L.latLng(nextProps.selectedStation.lat + 1, nextProps.selectedStation.lon + 1)
-				);
 				const selectedStationPosition = L.latLng(nextProps.selectedStation.lat, nextProps.selectedStation.lon);
+				const markerIcon = this.app.markers.getLayers()[0].options.icon;
+				const markerPoint = map.latLngToLayerPoint(L.latLng(selectedStationPosition));
+				const markerBoundaryLL = map.layerPointToLatLng(
+					L.point(markerPoint.x - markerIcon.options.iconSize[0] / 2, markerPoint.y)
+				);
+				const markerBoundaryUR = map.layerPointToLatLng(
+					L.point(markerPoint.x + markerIcon.options.iconSize[0] / 2, markerPoint.y - markerIcon.options.iconSize[1])
+				);
+				const selectedStationBounds = L.latLngBounds(markerBoundaryLL, markerBoundaryUR);
 
 				if (!mapBounds.contains(selectedStationBounds)){
 					map.panTo(selectedStationPosition);

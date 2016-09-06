@@ -19,7 +19,7 @@ class FootprintContainer extends Component {
 				? <div style={{height: 400}}>
 					<NetCDFMap
 						mapOptions={{
-							maxBounds: [[33, -15],[73, 35]],
+							maxBounds: [[38, -20],[78, 40]],
 							center: [53, 10],
 							zoom: 3
 						}}
