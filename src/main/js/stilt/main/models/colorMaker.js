@@ -5,7 +5,7 @@ const low = [255, 255, 178, 255];
 const medium = [253, 141, 60, 255];
 const high = [189, 0, 38, 255];
 
-const color = rgbaInterpolation([-5, -4, -2, 0], [zero, low, medium, high]);
+const color = rgbaInterpolation([-6, -5, -2.5, 0], [zero, low, medium, high]);
 
 export default function colorMaker(value) {
 	return value == 0 ? zero : color(Math.log10(value));

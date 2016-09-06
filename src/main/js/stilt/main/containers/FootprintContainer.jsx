@@ -4,42 +4,18 @@ import { connect } from 'react-redux';
 import NetCDFMap from '../components/NetCDFMap.jsx';
 import colorMaker from '../models/colorMaker';
 import config from '../config';
+import copyprops from '../../../common/main/general/copyprops';
 
 class FootprintContainer extends Component {
 	constructor(props){
 		super(props);
-		this.state = {
-			zoomToRaster: true,
-			selectedGamma: 1
-		};
-	}
-
-	componentWillReceiveProps(nextProps){
-		const oldStation = this.props.selectedStation;
-		const newStation = nextProps.selectedStation;
-
-		const zoomToRaster = (!oldStation || !newStation || oldStation.id != newStation.id);
-
-		//console.log('updating zoomToRaster to:', zoomToRaster);
-
-		this.setState({zoomToRaster});
-	}
-
-	changeHandler(){
-		const ddl = ReactDOM.findDOMNode(this.refs.gammaDdl);
-
-		if (ddl.selectedIndex > 0){
-			this.setState({selectedGamma: ddl.value});
-		}
 	}
 
 	render() {
 		const props = this.props;
-		const state = this.state;
-		// console.log({props, state});
 
 		return (
-			props.selectedStation
+			props.visible
 				? <div style={{height: 400}}>
 					<NetCDFMap
 						mapOptions={{
@@ -50,12 +26,8 @@ class FootprintContainer extends Component {
 						countriesTopo={props.countriesTopo}
 						raster={props.raster}
 						colorMaker={colorMaker}
-						zoomToRaster={true}
+						zoomToRaster={false}
 					/>
-					<select ref="gammaDdl" value={state.selectedGamma} className="form-control" onChange={this.changeHandler.bind(this)}>
-						<option key="gamma">Select gamma</option>
-						{config.gammas.map(gamma => <option key={gamma} value={gamma}>{gamma}</option>)}
-					</select>
 				</div>
 				: null
 		);
@@ -63,9 +35,10 @@ class FootprintContainer extends Component {
 }
 
 function stateToProps(state){
-	return state;
+	let props = copyprops(state, ['countriesTopo', 'raster']);
+	props.visible = !!state.selectedStation;
+	return props;
 }
 
 export default connect(stateToProps)(FootprintContainer);
-
 

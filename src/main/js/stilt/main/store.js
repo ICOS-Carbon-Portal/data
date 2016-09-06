@@ -15,6 +15,7 @@ const initState = {
 	error: null
 };
 
+/*
 function logger({ getState }) {
 	return (next) => (action) => {
 		console.log('will dispatch', action)
@@ -29,9 +30,9 @@ function logger({ getState }) {
 		return returnValue
 	}
 }
-
+*/
 export default function(){
-	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware, logger));
+	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));//, logger));
 	store.dispatch(fetchTableFormat);
 	store.dispatch(fetchStationInfo);
 	return store;
