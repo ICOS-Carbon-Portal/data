@@ -1,3 +1,4 @@
+import {pad2} from './formatting';
 
 export default class FootprintsRegistry{
 	constructor(filenames){
@@ -22,7 +23,7 @@ export default class FootprintsRegistry{
 		return [this._minD, this._maxD];
 	}
 
-	getRelevantFilename(date){
+	getRelevantFootprint(date){
 		const dates = this._dates;
 		const step = this._step;
 		const d = date.valueOf();
@@ -43,7 +44,7 @@ export default class FootprintsRegistry{
 		}
 
 		const index = improve(0, dates.length - 1);
-		return this.constructFilename(dates[index]);
+		return {date: dates[index], filename: this.constructFilename(dates[index])};
 	}
 
 	constructFilename(date){
@@ -55,13 +56,9 @@ export default class FootprintsRegistry{
 
 const fileRegex = /^foot(\d{4})x(\d\d)x(\d\d)x(\d\d)/;
 
-export function datetimeFromFile(filename){
+function datetimeFromFile(filename){
 	const match = fileRegex.exec(filename);
 	const [year, month, day, hour] = [1, 2, 3, 4].map(i => parseInt(match[i]));
 	return Date.UTC(year, month - 1, day, hour, 0, 0); //months are zero-based!
-}
-
-function pad2(num){
-	return ('0' + num).slice(-2);
 }
 

@@ -1,17 +1,29 @@
-import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
-import {getStationInfo, getTimeSeries, getCountriesTopoJson, getRaster} from './backend';
+import {getInitialData, getTimeSeries, getRaster} from './backend';
 import config from './config';
 
-export const FETCHED_TABLEFORMAT = 'FETCHED_TABLEFORMAT';
-export const FETCHED_STATIONS = 'FETCHED_STATIONS';
+export const FETCHED_INITDATA = 'FETCHED_INITDATA';
 export const FETCHED_TIMESERIES = 'FETCHED_TIMESERIES';
-export const FETCHED_COUNTRIES = 'FETCHED_COUNTRIES';
 export const FETCHED_RASTER = 'FETCHED_RASTER';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const SET_DATE_RANGE = 'SET_DATE_RANGE';
+export const SET_VISIBILITY = 'SET_VISIBILITY';
 export const ERROR = 'ERROR';
 
+
+export const fetchInitData = dispatch => {
+	getInitialData().then(
+		initData => dispatch(Object.assign({type: FETCHED_INITDATA}, initData)),
+		err => dispatch(failWithError(err))
+	);
+}
+
+export function visibilityUpdate(name, visibility){
+	return {
+		type: SET_VISIBILITY,
+		update: {[name]: visibility}
+	};
+}
 
 function failWithError(error){
 	console.log(error);
@@ -27,36 +39,6 @@ function gotTimeSeriesData(timeSeries, stationId, year){
 		stationId,
 		year
 	});
-}
-
-export const fetchTableFormat = dispatch => {
-	tableFormatForSpecies(config.wdcggSpec).then(
-		wdcggFormat => dispatch({
-			type: FETCHED_TABLEFORMAT,
-			wdcggFormat
-		}),
-		err => dispatch(failWithError(err))
-	);
-}
-
-export const fetchStationInfo = dispatch => {
-	getStationInfo().then(
-		stations => dispatch({
-			type: FETCHED_STATIONS,
-			stations
-		}),
-		err => dispatch(failWithError(err))
-	);
-
-	getCountriesTopoJson().then(
-		countriesTopo => {
-			dispatch({
-				type: FETCHED_COUNTRIES,
-				countriesTopo
-			});
-		},
-		err => dispatch(failWithError(err))
-	);
 }
 
 export const fetchTimeSeries = (dispatch, getState) => {
@@ -109,7 +91,7 @@ const fetchFootprint = (dispatch, getState) => {
 
 	const stationId = state.selectedStation.id;
 
-	if(footprint != state.footprint) getRaster(stationId, footprint).then(
+	if(!state.footprint || footprint.date != state.footprint.date) getRaster(stationId, footprint.filename).then(
 		raster => dispatch({
 			type: FETCHED_RASTER,
 			footprint,

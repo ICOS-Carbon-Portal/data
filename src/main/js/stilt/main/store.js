@@ -1,7 +1,7 @@
 import { createStore, applyMiddleware } from 'redux'
 import thunkMiddleware from 'redux-thunk'
 import reducer from './reducer'
-import {fetchTableFormat, fetchStationInfo, fetchObservationData} from './actions'
+import {fetchInitData} from './actions'
 //import config from './config';
 
 const initState = {
@@ -12,6 +12,7 @@ const initState = {
 	footprints: null,
 	footprint: null,
 	desiredFootprint: null,
+	modelComponentsVisibility: {"co2.total": true, "co2.observed": true},
 	error: null
 };
 
@@ -31,10 +32,10 @@ function logger({ getState }) {
 	}
 }
 */
+
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));//, logger));
-	store.dispatch(fetchTableFormat);
-	store.dispatch(fetchStationInfo);
+	store.dispatch(fetchInitData);
 	return store;
 }
 

@@ -4,11 +4,20 @@ import {sparql} from '../../common/main/backend/sparql';
 import {getJson} from '../../common/main/backend/json';
 import {getBinaryTable} from '../../common/main/backend/binTable';
 import {getBinRaster} from '../../common/main/backend/binRaster';
+import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+
 //import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
+export function getInitialData(){
+	return Promise.all([
+		tableFormatForSpecies(config.wdcggSpec),
+		getStationInfo(),
+		getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
+	]).then(([wdcggFormat, stations, countriesTopo]) => {return {wdcggFormat, stations, countriesTopo};});
+}
 
-export function getStationInfo(){
+function getStationInfo(){
 	return Promise.resolve([
 		{
 			id: 'JFJ',
@@ -69,10 +78,6 @@ export function getStationInfo(){
 		})
 	});
 */
-}
-
-export function getCountriesTopoJson(){
-	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json');
 }
 
 export function getRaster(stationId, footprint){

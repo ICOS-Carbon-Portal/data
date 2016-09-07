@@ -1,4 +1,4 @@
-import {FETCHED_TABLEFORMAT, FETCHED_STATIONS, FETCHED_TIMESERIES, FETCHED_COUNTRIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, SET_DATE_RANGE, ERROR} from './actions';
+import {FETCHED_INITDATA, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, SET_DATE_RANGE, SET_VISIBILITY, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import copyprops from '../../common/main/general/copyprops';
@@ -7,24 +7,18 @@ export default function(state, action){
 
 	switch(action.type){
 
-		case FETCHED_TABLEFORMAT:
-			return updateWith(['wdcggFormat']);
-
-		case FETCHED_STATIONS:
-			return updateWith(['stations']);
-
-		case FETCHED_COUNTRIES:
-			return updateWith(['countriesTopo']);
+		case FETCHED_INITDATA:
+			return updateWith(['wdcggFormat', 'stations', 'countriesTopo']);
 
 		case FETCHED_RASTER:
-			return true//state.desiredFootprint == action.footprint
+			return state.desiredFootprint.date == action.footprint.date
 				? updateWith(['raster', 'footprint'])
 				: state;
 
 		case SET_SELECTED_STATION:
 			const station = action.station;
 
-			return keep(['wdcggFormat', 'stations', 'countriesTopo'], {
+			return keep(['wdcggFormat', 'stations', 'countriesTopo', 'modelComponentsVisibility'], {
 				selectedStation: station,
 				selectedYear: station.years.length == 1
 					? station.years[0]
@@ -43,14 +37,18 @@ export default function(state, action){
 				const seriesId = action.stationId + '_' + action.year;
 				const timeSeriesData = makeTimeSeriesGraphData(action.obsBinTable, action.modelResults, seriesId);
 
-				return update(timeSeriesData, {footprints});
+				return update({timeSeriesData}, {footprints});
 			} else return state;
 
 		case SET_DATE_RANGE:
 			const dateRange = action.dateRange;
 			const midDate = new Date(dateRange[0]/2 + dateRange[1]/2);
-			const desiredFootprint = state.footprints ? state.footprints.getRelevantFilename(midDate) : null;
-			return update({desiredFootprint, dateRange, midDate});
+			const desiredFootprint = state.footprints ? state.footprints.getRelevantFootprint(midDate) : null;
+			return update({desiredFootprint, dateRange});
+
+		case SET_VISIBILITY:
+			const modelComponentsVisibility = Object.assign({}, state.modelComponentsVisibility, action.update);
+			return update({modelComponentsVisibility});
 
 		case ERROR:
 			return updateWith(['error']);

@@ -1,21 +1,21 @@
 
-export function wdcggBinTableToDygraphData(binTable, labels){
+export function wdcggBinTableToDygraphData(binTable, series){
 	function rowGetter(i){
 		var row = binTable.row(i);
 		row[0] = new Date(row[0]);
 		return row;
 	}
-	return new DygraphData(rowGetter, binTable.length, labels);
+	return new DygraphData(rowGetter, binTable.length, series);
 }
 
 const NAN = {};//local tailor-made not-a-number
 
 export default class DygraphData{
 
-	constructor(rowGetter, length, labels){
+	constructor(rowGetter, length, series){
 		this.row = rowGetter;
 		this.length = length;
-		this.labels = labels;
+		this.series = series;
 	}
 
 	withId(id){
@@ -28,15 +28,15 @@ export default class DygraphData{
 	}
 
 	get nCols(){
-		return this.labels.length;
+		return this.series.length;
 	}
 
 	static merge(){
 		const datas = Array.from(arguments);
 
-		const labels = datas
-			.map(data => data.labels)
-			.reduce((acc, labels) => acc.concat(labels.slice(1)));
+		const series = datas
+			.map(data => data.series)
+			.reduce((acc, series) => acc.concat(series.slice(1)));
 
 		const iters = datas.map(data => new DygraphIter(data));
 
@@ -48,7 +48,7 @@ export default class DygraphData{
 			finalData.push(row);
 		}
 
-		return new ArrayBasedDygraphData(finalData, labels);
+		return new ArrayBasedDygraphData(finalData, series);
 	}
 }
 
@@ -76,8 +76,8 @@ class DygraphIter{
 }
 
 class ArrayBasedDygraphData extends DygraphData{
-	constructor(rowsArr, labels){
-		super(i => rowsArr[i], rowsArr.length, labels);
+	constructor(rowsArr, series){
+		super(i => rowsArr[i], rowsArr.length, series);
 		this._rowsArr = rowsArr;
 	}
 

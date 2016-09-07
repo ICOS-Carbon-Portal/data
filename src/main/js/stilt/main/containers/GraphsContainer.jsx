@@ -5,6 +5,7 @@ import Dygraphs from '../components/Dygraphs.jsx';
 import {setDateRange} from '../actions.js';
 import throttle from '../../../common/main/general/throttle';
 import copyprops from '../../../common/main/general/copyprops';
+import {formatDate} from '../models/formatting';
 
 class GraphsContainer extends Component {
 	constructor(props){
@@ -12,17 +13,22 @@ class GraphsContainer extends Component {
 	}
 
 	render() {
-		const {obsVsModel, modelComponents, dateRange} = this.props
+		const {timeSeriesData} = this.props
 
 		return <div>
-			{obsVsModel ? <Dygraphs data={obsVsModel} {...this.props}/> : null}
-			{modelComponents ? <Dygraphs data={modelComponents} {...this.props}/> : null}
+			{timeSeriesData ? <Dygraphs data={timeSeriesData} {...this.props}/> : null}
 		</div>;
 	}
 }
 
 function stateToProps(state){
-	return copyprops(state, ['obsVsModel', 'modelComponents', 'dateRange']);
+	return Object.assign(
+		{
+			dateFormatter: formatDate,
+			width: 1200
+		},
+		copyprops(state, ['timeSeriesData', 'dateRange', 'modelComponentsVisibility'])
+	);
 }
 
 function dispatchToProps(dispatch){

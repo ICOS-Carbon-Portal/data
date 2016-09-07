@@ -17,7 +17,7 @@ export default class Dygraphs extends React.Component {
 				dateWindow: props.dateRange,
 				strokeWidth: 1,
 				width: props.width,
-				labels: props.data.labels,
+				labels: this.makeLabels(props),
 				legend: 'always',
 				labelsDiv: ReactDOM.findDOMNode(this.refs.labelsDiv),
 				labelsSeparateLines: false,
@@ -27,25 +27,38 @@ export default class Dygraphs extends React.Component {
 				axes: {
 					x: {
 						drawGrid: false,
-						valueFormatter: function(ms){
-							//Firefox hack: add empty bold string
-							return '<b></b>' + new Date(ms).toUTCString();
-						}
+						valueFormatter: this.formatDate.bind(this)
 					},
 					y: {
 						axisLabelWidth: 65
 					}
-				}
+				},
+				series: makeSeriesOpt(props.data.series),
+				visibility: this.getVisibility(this.props)
 			}
 		);
 
 		this.dataId = props.data.id;
 	}
 
+	formatDate(ms){
+		const formatter = this.props.dateFormatter;
+		//Firefox hack: add empty bold string
+		return '<b></b>' + formatter ? formatter(ms) : new Date(ms).toUTCString();
+	}
+
+	makeLabels(props){
+		return props.data.series.map(s => s.label);
+	}
+
+	getVisibility(props){
+		return computeVisibility(this.makeLabels(props).slice(1), props.modelComponentsVisibility);
+	}
+
 	componentWillReceiveProps(nextProps){
 		const update = {};
-		const nextRange = nextProps.dateRange;
 
+		const nextRange = nextProps.dateRange;
 		if(nextRange){
 			const currRange = this.graph.xAxisRange();
 
@@ -58,6 +71,11 @@ export default class Dygraphs extends React.Component {
 		if(nextData && nextData.id != this.dataId){
 			this.dataId = nextData.id;
 			Object.assign(update, { file: nextProps.data.getData(), labels: nextProps.data.labels });
+		}
+
+		const nextVisibility = this.getVisibility(nextProps);
+		if(!areEqualArrays(nextVisibility, this.getVisibility(this.props))){
+			Object.assign(update, {visibility: nextVisibility});
 		}
 
 		if(Object.keys(update).length > 0) this.graph.updateOptions(update);
@@ -75,5 +93,23 @@ export default class Dygraphs extends React.Component {
 			</div>
 		);
 	}
+}
+
+function computeVisibility(labels, visibilityObj){
+	let visibility = visibilityObj || {};
+	return labels.map(label => !!visibility[label]);
+}
+
+function areEqualArrays(a1, a2){
+	if(!a1 || !a2 || a1.length !== a2.length) return false;
+	return a1.every((a, i) => a === a2[i]);
+}
+
+function makeSeriesOpt(dyDataSeries){
+	let opt = {};
+	dyDataSeries.forEach((s, i) => {
+		if(i > 0) opt[s.label] = s.options;
+	});
+	return opt;
 }
 
