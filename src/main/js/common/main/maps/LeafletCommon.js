@@ -32,12 +32,12 @@ export const wdcggIconHighlight = L.icon({
 	popupAnchor:  [0, -23]
 });
 
-export function pointIcon() {
+export function pointIcon(radius = 4, weight = 3, fillColor = 'rgb(255,50,50)') {
 	return {
-		radius: 4,
-		weight: 3,
+		radius,
+		weight,
 		color: 'white',
-		fillColor: 'rgb(255,50,50)',
+		fillColor,
 		fillOpacity: 1
 	}
 };

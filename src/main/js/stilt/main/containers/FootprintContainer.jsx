@@ -9,6 +9,14 @@ import copyprops from '../../../common/main/general/copyprops';
 class FootprintContainer extends Component {
 	constructor(props){
 		super(props);
+		this.state = {
+			showStationPos: true
+		}
+	}
+
+	showPosChanged(){
+		const checkBox = ReactDOM.findDOMNode(this.refs.showStationPos);
+		this.setState({showStationPos: checkBox.checked});
 	}
 
 	render() {
@@ -19,15 +27,21 @@ class FootprintContainer extends Component {
 				? <div style={{height: 400}}>
 					<NetCDFMap
 						mapOptions={{
-							maxBounds: [[38, -20],[78, 40]],
+							maxBounds: [[28, -20],[78, 40]],
 							center: [53, 10],
 							zoom: 3
 						}}
 						countriesTopo={props.countriesTopo}
 						raster={props.raster}
+						selectedStation={props.selectedStation}
 						colorMaker={colorMaker}
 						zoomToRaster={false}
+						showStationPos={this.state.showStationPos}
 					/>
+					<div>
+						<input ref="showStationPos" type="checkbox" onChange={this.showPosChanged.bind(this)} defaultChecked={true} />
+						<span style={{marginLeft:7, position:'relative', top:-3}}>Show station position</span>
+					</div>
 				</div>
 				: null
 		);
@@ -35,7 +49,7 @@ class FootprintContainer extends Component {
 }
 
 function stateToProps(state){
-	let props = copyprops(state, ['countriesTopo', 'raster']);
+	let props = copyprops(state, ['countriesTopo', 'raster', 'selectedStation']);
 	props.visible = !!state.selectedStation;
 	return props;
 }

@@ -5,7 +5,7 @@ import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
 import renderRaster from '../../../common/main/maps/renderRaster';
-
+import {positionMarker, pointIcon} from '../../../common/main/maps/LeafletCommon';
 
 export default class NetCDFMap extends Component{
 	constructor(props){
@@ -14,7 +14,8 @@ export default class NetCDFMap extends Component{
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
-			canvasTiles: L.tileLayer.canvas()
+			canvasTiles: L.tileLayer.canvas(),
+			markers: L.featureGroup()
 		}
 	}
 
@@ -32,6 +33,7 @@ export default class NetCDFMap extends Component{
 			}, this.props.mapOptions)
 		);
 
+		map.addLayer(this.app.markers);
 		map.getContainer().style.background = 'white';
 	}
 
@@ -41,6 +43,7 @@ export default class NetCDFMap extends Component{
 
 		const addCountries = nextProps.countriesTopo && !countriesAdded;
 		const updatedRaster = nextProps.raster && (prevProps.raster !== nextProps.raster);
+		const showStationPosStateChanged = prevProps.showStationPos !== nextProps.showStationPos;
 
 		if (addCountries){
 			addTopoGeoJson(this.app.map, nextProps.countriesTopo);
@@ -49,6 +52,30 @@ export default class NetCDFMap extends Component{
 
 		if (updatedRaster){
 			this.updateRasterCanvas(nextProps.raster, nextProps.zoomToRaster);
+		}
+
+		if (updatedRaster || showStationPosStateChanged){
+			this.updatePosition(nextProps.selectedStation, nextProps.showStationPos);
+		}
+	}
+
+	updatePosition(position, showStationPos){
+		const markers = this.app.markers;
+		markers.clearLayers();
+
+		if (position) {
+			if (showStationPos) {
+				markers.addLayer(L.circleMarker([position.lat, position.lon], pointIcon(6, 0, 'rgb(85,131,255)')));
+				markers.addLayer(L.circleMarker([position.lat, position.lon], pointIcon(3, 0, 'rgb(255,255,255)')));
+			}
+
+			const map = this.app.map;
+			const mapBounds = map.getBounds();
+			const positionLatLng = L.latLng(position.lat, position.lon);
+
+			if (!mapBounds.contains(positionLatLng)){
+				map.panTo(positionLatLng);
+			}
 		}
 	}
 
