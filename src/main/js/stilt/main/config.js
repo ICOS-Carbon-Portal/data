@@ -2,7 +2,7 @@ import common from '../../common/main/config';
 
 const [dateColumn, observedCo2Column] = ['isodate', 'co2.observed'];
 const primaryAxisStilt = ['co2.total', 'co2.ini'];
-const secondaryAxisStilt = ['co2.bio', 'gee.all', 'resp.all', 'co2.fuel', 'co2.cat.fuel.oil', 'co2.cat.fuel.coal', 'co2.cat.fuel.gas', 'co2.cat.fuel.bio', 'rn'];
+const secondaryAxisStilt = ['co2.bio', 'gee.all', 'resp.all', 'co2.fuel', 'co2.cat.fuel.oil', 'co2.cat.fuel.coal', 'co2.cat.fuel.gas', 'co2.cat.fuel.bio'];
 
 export default Object.assign({}, common, {
 	wdcggBaseUri: 'http://meta.icos-cp.eu/resources/wdcgg/',

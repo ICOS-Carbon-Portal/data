@@ -26,6 +26,9 @@ function makeModelComponentsData(rawArray){
 }
 
 function labelToSeries(label){
-	const axis = config.primaryAxisColumns.indexOf(label) >= 0 ? 'y1' : 'y2';
+	const axis = label == config.stiltResultColumns[0]
+		? 'x'
+		: config.primaryAxisColumns.indexOf(label) >= 0 ? 'y1' : 'y2';
 	return {label, options: {axis}};
 }
+

@@ -10,13 +10,16 @@ export default class Dygraphs extends React.Component {
 	componentDidMount(){
 		const props = this.props;
 
-		this.graph = new Dygraph(ReactDOM.findDOMNode(this.refs.graphDiv),
+		this.dataId = props.data.id;
+
+		this.graph = new Dygraph(
+			ReactDOM.findDOMNode(this.refs.graphDiv),
 			props.data.getData(),
-			{
+			Object.assign({
 				drawCallback: this.rangeChangeHandler.bind(this),
 				dateWindow: props.dateRange,
 				strokeWidth: 1,
-				width: props.width,
+				colorValue: 0.9,
 				labels: this.makeLabels(props),
 				legend: 'always',
 				labelsDiv: ReactDOM.findDOMNode(this.refs.labelsDiv),
@@ -34,11 +37,13 @@ export default class Dygraphs extends React.Component {
 					}
 				},
 				series: makeSeriesOpt(props.data.series),
-				visibility: this.getVisibility(this.props)
-			}
+				visibility: this.getVisibility(props)
+			}, props.graphOptions || {})
 		);
+	}
 
-		this.dataId = props.data.id;
+	componentWillUnmount(){
+		this.graph.destroy();
 	}
 
 	formatDate(ms){
@@ -78,7 +83,13 @@ export default class Dygraphs extends React.Component {
 			Object.assign(update, {visibility: nextVisibility});
 		}
 
-		if(Object.keys(update).length > 0) this.graph.updateOptions(update);
+		const optionsWillUpdate = (Object.keys(update).length > 0);
+
+		if(annotationsHaveBeenUpdated(this.props.annotations, nextProps.annotations)){
+			this.graph.setAnnotations(nextProps.annotations, optionsWillUpdate); //avoiding double redrawing
+		}
+
+		if(optionsWillUpdate) this.graph.updateOptions(update);
 	}
 
 	rangeChangeHandler(graph){
@@ -88,8 +99,8 @@ export default class Dygraphs extends React.Component {
 	render(){
 		return (
 			<div>
-				<div ref="graphDiv" />
-				<div ref="labelsDiv" style={{width:100 + '%', fontSize:0.9 + 'em', marginTop:5}}></div>
+				<div ref="graphDiv" style={{width: '99%'}} />
+				<div ref="labelsDiv" style={{width: '99%', fontSize: '0.9em', marginTop: 5}}></div>
 			</div>
 		);
 	}
@@ -108,8 +119,17 @@ function areEqualArrays(a1, a2){
 function makeSeriesOpt(dyDataSeries){
 	let opt = {};
 	dyDataSeries.forEach((s, i) => {
-		if(i > 0) opt[s.label] = s.options;
+		opt[s.label] = s.options;
 	});
 	return opt;
+}
+
+function annotationsHaveBeenUpdated(oldAnno, newAnno){
+	if(!!oldAnno != !!newAnno) return true;
+	if(!newAnno) return false;
+	if(oldAnno.length != newAnno.length) return true;
+	if(newAnno.length == 0) return false;
+
+	return !oldAnno.every((oa, i) => oa.series == newAnno[i].series && oa.x == newAnno[i].x);
 }
 

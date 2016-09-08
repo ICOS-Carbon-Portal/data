@@ -6,6 +6,7 @@ import {setDateRange} from '../actions.js';
 import throttle from '../../../common/main/general/throttle';
 import copyprops from '../../../common/main/general/copyprops';
 import {formatDate} from '../models/formatting';
+import config from '../config';
 
 class GraphsContainer extends Component {
 	constructor(props){
@@ -15,17 +16,28 @@ class GraphsContainer extends Component {
 	render() {
 		const {timeSeriesData} = this.props
 
-		return <div>
-			{timeSeriesData ? <Dygraphs data={timeSeriesData} {...this.props}/> : null}
-		</div>;
+		return timeSeriesData ? <Dygraphs data={timeSeriesData} {...this.props}/> : null;
 	}
 }
 
 function stateToProps(state){
+
+	let annotations = [];
+	if(state.timeSeriesData && state.footprint){
+		annotations.push({
+			series: config.stiltResultColumns[1],
+			x: state.footprint.date,
+			shortText: '',
+			text: state.footprint.filename,
+			cssClass: 'glyphicon glyphicon-triangle-bottom',
+			attachAtBottom: true
+		});
+	}
+
 	return Object.assign(
 		{
 			dateFormatter: formatDate,
-			width: 1200
+			annotations
 		},
 		copyprops(state, ['timeSeriesData', 'dateRange', 'modelComponentsVisibility'])
 	);
