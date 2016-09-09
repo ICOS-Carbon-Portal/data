@@ -1,7 +1,11 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import {formatDate} from '../models/formatting';
+
 import config from '../config';
+
+import {formatDate} from '../models/formatting';
+import Select from './Select.jsx';
+import StationsMap from './LMap.jsx';
 
 
 export default class ControlPanel extends Component {
@@ -16,17 +20,55 @@ export default class ControlPanel extends Component {
 	}
 
 	render(){
+		const {selectYear, selectStation, selectedYear, selectedStation, stations} = this.props;
+		const yearInfos = selectedStation ? selectedStation.years : [];
+
 		return <div className="panel panel-default">
 			<div className="panel-body">
-				<ul className="list-group">
-					<li className="list-group-item"><strong>Footprint: </strong>{presentFootprint(this.props.footprint)}</li>
-					<li className="list-group-item"><strong>Primary Y-axis:</strong>{
-						config.primaryComponents().map(this.stiltComponentSelector.bind(this))
-					}</li>
-					<li className="list-group-item"><strong>Secondary Y-axis:</strong>{
-						config.secondaryComponents().map(this.stiltComponentSelector.bind(this))
-					}</li>
-				</ul>
+				<div className="row">
+						<div className="col-md-3">
+							<div style={{height: 250}}>
+								<StationsMap
+									stations={stations}
+									selectedStation={selectedStation}
+									action={selectStation}
+								/>
+							</div>
+						</div>
+						<div className="col-md-9">
+							<ul className="list-group">
+								<li className="list-group-item">
+									<div className="row">
+										<div className="col-md-6">
+											<Select
+												selectValue={selectStation}
+												infoTxt="Select station here or on the map"
+												availableValues={stations}
+												value={selectedStation}
+												presenter={station => station.name}
+											/>
+										</div>
+										<div className="col-md-6">
+											<Select
+												selectValue={selectYear}
+												infoTxt="Select year"
+												availableValues={yearInfos}
+												value={selectedYear}
+												presenter={yearInfo => yearInfo.year}
+											/>
+										</div>
+									</div>
+								</li>
+								<li className="list-group-item"><strong>Footprint: </strong>{presentFootprint(this.props.footprint)}</li>
+								<li className="list-group-item"><strong>Primary Y-axis:</strong>{
+									config.primaryComponents().map(this.stiltComponentSelector.bind(this))
+								}</li>
+								<li className="list-group-item"><strong>Secondary Y-axis:</strong>{
+									config.secondaryComponents().map(this.stiltComponentSelector.bind(this))
+								}</li>
+							</ul>
+						</div>
+				</div>
 			</div>
 		</div>;
 	}

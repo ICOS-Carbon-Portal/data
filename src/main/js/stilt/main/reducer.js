@@ -16,7 +16,7 @@ export default function(state, action){
 				: state;
 
 		case SET_SELECTED_STATION:
-			const station = action.station;
+			const station = action.selectedStation;
 
 			return keep(['wdcggFormat', 'stations', 'countriesTopo', 'modelComponentsVisibility'], {
 				selectedStation: station,
@@ -26,9 +26,7 @@ export default function(state, action){
 			});
 
 		case SET_SELECTED_YEAR:
-			return update({
-				selectedYear: state.selectedStation.years.find(year => year.year == action.year)
-			});
+			return updateWith(['selectedYear']);
 
 		case FETCHED_TIMESERIES:
 			if(checkStationId(action.stationId) && checkYear(action.year)){

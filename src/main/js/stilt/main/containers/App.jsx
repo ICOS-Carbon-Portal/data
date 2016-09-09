@@ -6,6 +6,8 @@ import GraphsContainer from './GraphsContainer.jsx';
 import ControlPanel from '../components/ControlPanel.jsx';
 import copyprops from '../../../common/main/general/copyprops';
 import {visibilityUpdate} from '../actions';
+import {setSelectedYear} from '../actions.js';
+import {setSelectedStation} from '../actions.js';
 
 class App extends Component {
 	constructor(props){
@@ -16,50 +18,38 @@ class App extends Component {
 		const props = this.props;
 		// console.log({props});
 
-		return (
-			<div className="container-fluid">
-				<div className="row">
+		return <div className="container-fluid">
+			<div className="row">
 
-					<div className="col-md-3">
-						<div className="row">
-							<div className="col-md-12">
-								<StationsMapContainer />
-							</div>
-						</div>
+				<div className="col-md-3">
+					<FootprintContainer />
+				</div>
 
-						<div className="row">
-							<div className="col-md-12">
-								<FootprintContainer />
-							</div>
-						</div>
-					</div>
+				<div className="col-md-9">
+					<ControlPanel {...props} />
+				</div>
 
-					<div className="col-md-9">
-						<div className="row">
-							<div className="col-md-12">
-								<ControlPanel {...props} />
-							</div>
-						</div>
-						<div className="row">
-							<div className="col-md-12">
-								<GraphsContainer />
-							</div>
-						</div>
-					</div>
+			</div>
 
+			<div className="row">
+				<div className="col-md-12">
+					<GraphsContainer />
 				</div>
 			</div>
-		);
+
+		</div>;
 	}
 }
 
 function stateToProps(state){
-	return copyprops(state, ['footprint', 'modelComponentsVisibility']);;
+	return copyprops(state, ['stations', 'selectedStation', 'selectedYear', 'footprint', 'modelComponentsVisibility']);
 }
 
 function dispatchToProps(dispatch){
 	return {
-		updateVisibility: (name, visible) => dispatch(visibilityUpdate(name, visible))
+		updateVisibility: (name, visible) => dispatch(visibilityUpdate(name, visible)),
+		selectStation: station => dispatch(setSelectedStation(station)),
+		selectYear: year => dispatch(setSelectedYear(year))
 	};
 }
 

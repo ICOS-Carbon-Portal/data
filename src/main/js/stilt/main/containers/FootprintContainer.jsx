@@ -22,37 +22,33 @@ class FootprintContainer extends Component {
 	render() {
 		const props = this.props;
 
-		return (
-			props.visible
-				? <div style={{height: 400}}>
-					<NetCDFMap
-						mapOptions={{
-							maxBounds: [[28, -20],[78, 40]],
-							center: [53, 10],
-							zoom: 3
-						}}
-						countriesTopo={props.countriesTopo}
-						raster={props.raster}
-						selectedStation={props.selectedStation}
-						colorMaker={colorMaker}
-						zoomToRaster={false}
-						showStationPos={this.state.showStationPos}
-					/>
-					<NetCDFLegend width={400} height={20} />
-					<div>
-						<input ref="showStationPos" type="checkbox" onChange={this.showPosChanged.bind(this)} defaultChecked={true} />
-						<span style={{marginLeft:7, position:'relative', top:-3}}>Show station position</span>
-					</div>
-				</div>
-				: null
-		);
+		return <div>
+			<div style={{height: 400}}>
+				<NetCDFMap
+					mapOptions={{
+						maxBounds: [[28, -20],[78, 40]],
+						center: [53, 10],
+						zoom: 3
+					}}
+					countriesTopo={props.countriesTopo}
+					raster={props.raster}
+					selectedStation={props.selectedStation}
+					colorMaker={colorMaker}
+					zoomToRaster={false}
+					showStationPos={this.state.showStationPos}
+				/>
+			</div>
+			<NetCDFLegend width={400} height={20} />
+			<div>
+				<input ref="showStationPos" type="checkbox" onChange={this.showPosChanged.bind(this)} defaultChecked={true} />
+				<span style={{marginLeft:7, position:'relative', top:-3}}>Show station position</span>
+			</div>
+		</div>;
 	}
 }
 
 function stateToProps(state){
-	let props = copyprops(state, ['countriesTopo', 'raster', 'selectedStation']);
-	props.visible = !!state.selectedStation;
-	return props;
+	return copyprops(state, ['countriesTopo', 'raster', 'selectedStation']);
 }
 
 export default connect(stateToProps)(FootprintContainer);

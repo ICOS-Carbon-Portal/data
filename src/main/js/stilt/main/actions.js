@@ -55,18 +55,18 @@ export const fetchTimeSeries = (dispatch, getState) => {
 	);
 }
 
-export const setSelectedStation = station => dispatch => {
+export const setSelectedStation = selectedStation => dispatch => {
 	dispatch({
 		type: SET_SELECTED_STATION,
-		station
+		selectedStation
 	});
 	dispatch(fetchTimeSeries); //year might have been selected automatically
 }
 
-export const setSelectedYear = year => dispatch => {
+export const setSelectedYear = selectedYear => dispatch => {
 	dispatch({
 		type: SET_SELECTED_YEAR,
-		year
+		selectedYear
 	});
 	dispatch(fetchTimeSeries);
 }
