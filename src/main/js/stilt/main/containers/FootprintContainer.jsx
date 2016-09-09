@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import NetCDFMap from '../components/NetCDFMap.jsx';
 import colorMaker from '../models/colorMaker';
-import config from '../config';
 import copyprops from '../../../common/main/general/copyprops';
+import NetCDFLegend from '../components/NetCDFLegend.jsx';
 
 class FootprintContainer extends Component {
 	constructor(props){
@@ -38,6 +38,7 @@ class FootprintContainer extends Component {
 						zoomToRaster={false}
 						showStationPos={this.state.showStationPos}
 					/>
+					<NetCDFLegend width={400} height={20} />
 					<div>
 						<input ref="showStationPos" type="checkbox" onChange={this.showPosChanged.bind(this)} defaultChecked={true} />
 						<span style={{marginLeft:7, position:'relative', top:-3}}>Show station position</span>
