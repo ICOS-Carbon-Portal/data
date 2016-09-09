@@ -91,7 +91,7 @@ export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
 	const modelResultsPromise = getStiltResults({
 		stationId,
 		year,
-		columns: config.stiltResultColumns
+		columns: config.stiltResultColumns.map(series => series.label)
 	});
 
 	return Promise.all([observationsPromise, modelResultsPromise, footprintsListPromise])

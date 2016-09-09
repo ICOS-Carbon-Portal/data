@@ -22,17 +22,21 @@ class GraphsContainer extends Component {
 
 function stateToProps(state){
 
-	let annotations = [];
-	if(state.timeSeriesData && state.footprint){
-		annotations.push({
-			series: config.stiltResultColumns[1],
+	const firstVisibleStilt = config.stiltResultColumns.concat(config.wdcggColumns).find(
+		series => state.modelComponentsVisibility && state.modelComponentsVisibility[series.label]
+	);
+
+	const annotations = state.footprint && firstVisibleStilt
+		? [{
+			series: firstVisibleStilt.label,
 			x: state.footprint.date,
 			shortText: '',
 			text: state.footprint.filename,
 			cssClass: 'glyphicon glyphicon-triangle-bottom',
-			attachAtBottom: true
-		});
-	}
+			//attachAtBottom: true,
+			tickHeight: 10
+		}]
+		: [];
 
 	return Object.assign(
 		{

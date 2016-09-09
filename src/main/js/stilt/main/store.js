@@ -12,7 +12,7 @@ const initState = {
 	footprints: null,
 	footprint: null,
 	desiredFootprint: null,
-	modelComponentsVisibility: {"co2.total": true, "co2.observed": true},
+	modelComponentsVisibility: {"co2.stilt": true, "co2.observed": true},
 	error: null
 };
 
