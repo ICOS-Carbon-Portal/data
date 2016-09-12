@@ -57,7 +57,7 @@ export default class Dygraphs extends React.Component {
 	}
 
 	getVisibility(props){
-		return computeVisibility(this.makeLabels(props).slice(1), props.modelComponentsVisibility);
+		return computeVisibility(this.makeLabels(props).slice(1), props.visibility);
 	}
 
 	componentWillReceiveProps(nextProps){

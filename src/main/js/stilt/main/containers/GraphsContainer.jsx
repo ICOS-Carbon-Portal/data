@@ -1,29 +1,22 @@
-import React, { Component } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import Dygraphs from '../components/Dygraphs.jsx';
-import {setDateRange} from '../actions.js';
 import throttle from '../../../common/main/general/throttle';
 import copyprops from '../../../common/main/general/copyprops';
-import {formatDate} from '../models/formatting';
+
 import config from '../config';
+import {setDateRange} from '../actions.js';
+import {formatDate} from '../models/formatting';
+import Dygraphs from '../components/Dygraphs.jsx';
 
-class GraphsContainer extends Component {
-	constructor(props){
-		super(props);
-	}
-
-	render() {
-		const {timeSeriesData} = this.props
-
-		return timeSeriesData ? <Dygraphs data={timeSeriesData} {...this.props}/> : null;
-	}
-}
+const GraphsContainer = props => props.timeSeriesData
+	? <Dygraphs data={props.timeSeriesData} {...props}/>
+	: <div></div>;
 
 function stateToProps(state){
 
 	const firstVisibleStilt = config.stiltResultColumns.concat(config.wdcggColumns).find(
-		series => state.modelComponentsVisibility && state.modelComponentsVisibility[series.label]
+		series => state.options.modelComponentsVisibility[series.label]
 	);
 
 	const annotations = state.footprint && firstVisibleStilt
@@ -41,9 +34,10 @@ function stateToProps(state){
 	return Object.assign(
 		{
 			dateFormatter: formatDate,
-			annotations
+			annotations,
+			visibility: state.options.modelComponentsVisibility
 		},
-		copyprops(state, ['timeSeriesData', 'dateRange', 'modelComponentsVisibility'])
+		copyprops(state, ['timeSeriesData', 'dateRange'])
 	);
 }
 

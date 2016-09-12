@@ -13,9 +13,15 @@ export default class ControlPanel extends Component {
 		super(props);
 	}
 
-	changeHandler(name, event){
+	componentVisibilityChangeHandler(name, event){
 		if(this.props.updateVisibility){
 			this.props.updateVisibility(name, event.target.checked);
+		}
+	}
+
+	stationVisibilityChangeHandler(event){
+		if(this.props.updateStationVisibility){
+			this.props.updateStationVisibility(event.target.checked);
 		}
 	}
 
@@ -59,7 +65,17 @@ export default class ControlPanel extends Component {
 										</div>
 									</div>
 								</li>
-								<li className="list-group-item"><strong>Footprint: </strong>{presentFootprint(this.props.footprint)}</li>
+								<li className="list-group-item">
+									<div className="row">
+										<div className="col-md-6">
+											<strong>Footprint: </strong>{presentFootprint(this.props.footprint)}
+										</div>
+										<div className="col-md-6">
+											<input type="checkbox" onChange={this.stationVisibilityChangeHandler.bind(this)} checked={this.props.options.showStationPosition} />
+											<span style={{marginLeft:7, position:'relative', top:-2}}>Show station position</span>
+										</div>
+									</div>
+								</li>
 								<li className="list-group-item"><strong>Primary Y-axis:</strong>{
 									config.primaryComponents().map(this.stiltComponentSelector.bind(this))
 								}</li>
@@ -74,11 +90,11 @@ export default class ControlPanel extends Component {
 	}
 
 	stiltComponentSelector({label, comment}){
-		const visibility = this.props.modelComponentsVisibility || {};
+		const visibility = this.props.options.modelComponentsVisibility || {};
 		return <span key={label} title={comment} style={{marginLeft: 7}}>
 			<input type="checkbox"
 				checked={!!visibility[label]}
-				onChange={this.changeHandler.bind(this, label)}
+				onChange={this.componentVisibilityChangeHandler.bind(this, label)}
 				style={{marginRight: 3}}
 			/>
 			{label}
@@ -89,3 +105,4 @@ export default class ControlPanel extends Component {
 function presentFootprint(fp){
 	return fp ? formatDate(fp.date) : '?';
 }
+

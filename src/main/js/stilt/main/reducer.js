@@ -1,7 +1,8 @@
-import {FETCHED_INITDATA, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, SET_DATE_RANGE, SET_VISIBILITY, ERROR} from './actions';
+import {FETCHED_INITDATA, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import copyprops from '../../common/main/general/copyprops';
+import deepUpdate from '../../common/main/general/deepUpdate';
 
 export default function(state, action){
 
@@ -18,7 +19,7 @@ export default function(state, action){
 		case SET_SELECTED_STATION:
 			const station = action.selectedStation;
 
-			return keep(['wdcggFormat', 'stations', 'countriesTopo', 'modelComponentsVisibility'], {
+			return keep(['wdcggFormat', 'stations', 'countriesTopo', 'options'], {
 				selectedStation: station,
 				selectedYear: station.years.length == 1
 					? station.years[0]
@@ -35,7 +36,7 @@ export default function(state, action){
 				const seriesId = action.stationId + '_' + action.year;
 				const timeSeriesData = makeTimeSeriesGraphData(action.obsBinTable, action.modelResults, seriesId);
 
-				return update({timeSeriesData}, {footprints});
+				return update({timeSeriesData, footprints});
 			} else return state;
 
 		case SET_DATE_RANGE:
@@ -45,8 +46,10 @@ export default function(state, action){
 			return update({desiredFootprint, dateRange});
 
 		case SET_VISIBILITY:
-			const modelComponentsVisibility = Object.assign({}, state.modelComponentsVisibility, action.update);
-			return update({modelComponentsVisibility});
+			return deepUpdate(state, ['options', 'modelComponentsVisibility'], action.update);
+
+		case SET_STATION_VISIBILITY:
+			return updateWith(['showStationPosition'], ['options']);
 
 		case ERROR:
 			return updateWith(['error']);
@@ -72,8 +75,10 @@ export default function(state, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates)); 
 	}
 
-	function updateWith(actionProps){
-		return update(copyprops(action, actionProps));
+	function updateWith(actionProps, path){
+		return path
+			? deepUpdate(state, path, copyprops(action, actionProps))
+			: update(copyprops(action, actionProps));
 	}
 
 }
