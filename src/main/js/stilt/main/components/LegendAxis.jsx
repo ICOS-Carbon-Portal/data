@@ -21,7 +21,7 @@ export default class LegendAxis extends Component {
 						return (
 							<g key={'g' + idx}>
 								<line x1={tick + props.margin} y1={0} x2={tick + props.margin} y2={10} stroke="black" strokeWidth="2" />
-								<text x={tick + props.margin} y={props.margin + textMargin} textAnchor="middle">{tickVal}</text>
+								<text x={tick + props.margin} y={props.height + textMargin} textAnchor="middle">{tickVal}</text>
 							</g>
 						);
 					})

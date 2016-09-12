@@ -147,7 +147,9 @@ export default class NetCDFMap extends Component{
 
 	render() {
 		return (
-			<div ref='map' style={{width: '100%', height: '100%', display: 'block', border: '1px solid darkgrey'}}></div>
+			<div style={{height: this.props.mapHeight}}>
+				<div ref='map' style={{width: '100%', height: '100%', display: 'block', border: '1px solid darkgrey'}}></div>
+			</div>
 		);
 	}
 }

@@ -139,7 +139,7 @@ export const CoordViewer = L.Control.extend({
 
 	onAdd: function (map) {
 		const container = L.DomUtil.create('div', 'coords-container', L.DomUtil.get('map'));
-		container.style = this.options.style;
+		container.setAttribute("style", this.options.style);
 		container.innerHTML = "";
 		L.DomEvent.on(container, 'mousemove', L.DomEvent.stopPropagation);
 
