@@ -1,4 +1,5 @@
-import {FETCHED_INITDATA, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR, SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, ERROR} from './actions';
+import {FETCHED_INITDATA, FETCHED_TIMESERIES, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR,
+	SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, INCREMENT_FOOTPRINT, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import copyprops from '../../common/main/general/copyprops';
@@ -50,6 +51,11 @@ export default function(state, action){
 
 		case SET_STATION_VISIBILITY:
 			return updateWith(['showStationPosition'], ['options']);
+
+		case INCREMENT_FOOTPRINT:
+			return state.footprint
+				? update({desiredFootprint: state.footprints.step(state.footprint, action.increment, state.dateRange)})
+				: state;
 
 		case ERROR:
 			return updateWith(['error']);

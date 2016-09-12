@@ -44,7 +44,29 @@ export default class FootprintsRegistry{
 		}
 
 		const index = improve(0, dates.length - 1);
-		return {date: dates[index], filename: this.constructFilename(dates[index])};
+		return this.getFootprint(index);
+	}
+
+	getFootprint(index){
+		return {index, date: this._dates[index], filename: this.constructFilename(this._dates[index])};
+	}
+
+	step(startFootprint, indexIncrement, requiredRange){
+		const lastIndex = this._dates.length - 1;
+		const range = requiredRange || [this._dates[0], this._dates[lastIndex]];
+
+		let next = this.getFootprint(startFootprint.index + indexIncrement);
+
+		if(next.date < range[0]){
+			next = this.getRelevantFootprint(range[1]);
+			if(next.date > range[1] && next.index > 0) next = this.getFootprint(next.index - 1);
+		}
+		else if(next.date > range[1]){
+			next = this.getRelevantFootprint(range[0]);
+			if(next.date < range[0] && next.index < lastIndex) next = this.getFootprint(next.index + 1);
+		}
+
+		return next;
 	}
 
 	constructFilename(date){

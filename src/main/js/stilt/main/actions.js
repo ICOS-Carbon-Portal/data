@@ -9,6 +9,7 @@ export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const SET_DATE_RANGE = 'SET_DATE_RANGE';
 export const SET_VISIBILITY = 'SET_VISIBILITY';
 export const SET_STATION_VISIBILITY = 'SET_STATION_VISIBILITY';
+export const INCREMENT_FOOTPRINT = 'INCREMENT_FOOTPRINT';
 export const ERROR = 'ERROR';
 
 
@@ -108,5 +109,14 @@ export const setStationVisibility = visibility => {
 		type: SET_STATION_VISIBILITY,
 		showStationPosition: visibility
 	};
-};
+}
+
+export const incrementFootprint = increment => dispatch => {
+	dispatch({
+		type: INCREMENT_FOOTPRINT,
+		increment
+	});
+
+	dispatch(fetchFootprint);
+}
 
