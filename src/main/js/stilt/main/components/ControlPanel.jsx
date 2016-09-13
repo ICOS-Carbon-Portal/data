@@ -124,12 +124,20 @@ const MovieControl = props => {
 	const toNext = () => props.incrementFootprint(1);
 	const toPrevious = () => props.incrementFootprint(-1);
 
+	const navDisabled = props.playingMovie || !props.footprint;
+
+	const playClass = "glyphicon glyphicon-" + (props.playingMovie ? 'pause' : 'play');
+	const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
+
 	return <div className="input-group">
 		<div className="input-group-btn">
-			<button type="button" className="btn btn-default" onClick={toPrevious}>
+			<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
 				<span className="glyphicon glyphicon-triangle-left"></span>
 			</button>
-			<button type="button" className="btn btn-default" onClick={toNext}>
+			<button title={playTitle} type="button" className="btn btn-default" onClick={props.pushPlay} disabled={!props.footprint}>
+				<span className={playClass}></span>
+			</button>
+			<button  title="To next footprint" type="button" className="btn btn-default" onClick={toNext} disabled={navDisabled}>
 				<span className="glyphicon glyphicon-triangle-right"></span>
 			</button>
 		</div>

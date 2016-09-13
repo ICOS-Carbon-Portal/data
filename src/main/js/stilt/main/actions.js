@@ -10,6 +10,7 @@ export const SET_DATE_RANGE = 'SET_DATE_RANGE';
 export const SET_VISIBILITY = 'SET_VISIBILITY';
 export const SET_STATION_VISIBILITY = 'SET_STATION_VISIBILITY';
 export const INCREMENT_FOOTPRINT = 'INCREMENT_FOOTPRINT';
+export const PUSH_PLAY = 'PUSH_PLAY';
 export const ERROR = 'ERROR';
 
 
@@ -94,11 +95,14 @@ const fetchFootprint = (dispatch, getState) => {
 	const stationId = state.selectedStation.id;
 
 	if(!state.footprint || footprint.date != state.footprint.date) getRaster(stationId, footprint.filename).then(
-		raster => dispatch({
-			type: FETCHED_RASTER,
-			footprint,
-			raster
-		}),
+		raster => {
+			dispatch({
+				type: FETCHED_RASTER,
+				footprint,
+				raster
+			});
+			if(getState().playingMovie) dispatch(incrementFootprint(1));
+		},
 		err => dispatch(failWithError(err))
 	);
 
@@ -118,5 +122,10 @@ export const incrementFootprint = increment => dispatch => {
 	});
 
 	dispatch(fetchFootprint);
+}
+
+export const pushPlayButton = (dispatch, getState) => {
+	dispatch({type: PUSH_PLAY});
+	if(getState().playingMovie) dispatch(incrementFootprint(1));
 }
 

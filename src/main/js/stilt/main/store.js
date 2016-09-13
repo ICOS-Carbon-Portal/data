@@ -12,6 +12,7 @@ const initState = {
 	footprints: null,
 	footprint: null,
 	desiredFootprint: null,
+	playingMovie: false,
 	options: {
 		modelComponentsVisibility: {"co2.stilt": true, "co2.observed": true},
 		showStationPosition: true

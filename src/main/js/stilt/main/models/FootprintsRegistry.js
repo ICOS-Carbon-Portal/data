@@ -23,10 +23,10 @@ export default class FootprintsRegistry{
 		return [this._minD, this._maxD];
 	}
 
-	getRelevantFootprint(date){
+	getRelevantFootprint(date){ //Date object or millis
 		const dates = this._dates;
 		const step = this._step;
-		const d = date.valueOf();
+		const d = typeof date === 'object' ? date.valueOf() : date;
 
 		function improve(left, right){
 			if(right == left) return left;
@@ -67,6 +67,11 @@ export default class FootprintsRegistry{
 		}
 
 		return next;
+	}
+
+	ensureRange(startFootprint, range){
+		if(startFootprint && range[0] <= startFootprint.date && range[1] >= startFootprint.date) return startFootprint;
+		return this.getRelevantFootprint(range[0]/2 + range[1]/2);
 	}
 
 	constructFilename(date){

@@ -1,12 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import copyprops from '../../../common/main/general/copyprops';
-import {visibilityUpdate, setSelectedYear, setSelectedStation, setStationVisibility, incrementFootprint} from '../actions';
+import {visibilityUpdate, setSelectedYear, setSelectedStation, setStationVisibility, incrementFootprint, pushPlayButton} from '../actions';
 import ControlPanel from '../components/ControlPanel.jsx';
 
 
 function stateToProps(state){
-	return copyprops(state, ['stations', 'selectedStation', 'selectedYear', 'footprint', 'options']);
+	return copyprops(state, ['stations', 'selectedStation', 'selectedYear', 'footprint', 'options', 'playingMovie']);
 }
 
 function dispatchToProps(dispatch){
@@ -15,7 +15,8 @@ function dispatchToProps(dispatch){
 		selectStation: station => dispatch(setSelectedStation(station)),
 		selectYear: year => dispatch(setSelectedYear(year)),
 		updateStationVisibility: visibility => dispatch(setStationVisibility(visibility)),
-		incrementFootprint: increment => dispatch(incrementFootprint(increment))
+		incrementFootprint: increment => dispatch(incrementFootprint(increment)),
+		pushPlay: () => dispatch(pushPlayButton)
 	};
 }
 

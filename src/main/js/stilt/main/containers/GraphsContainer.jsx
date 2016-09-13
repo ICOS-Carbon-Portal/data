@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import throttle from '../../../common/main/general/throttle';
 import copyprops from '../../../common/main/general/copyprops';
 
 import config from '../config';
@@ -43,9 +42,7 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		updateXRange: throttle(range => {
-			dispatch(setDateRange(range));
-		}, 200)
+		updateXRange: range => dispatch(setDateRange(range))
 	};
 }
 
