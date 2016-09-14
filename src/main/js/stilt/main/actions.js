@@ -11,6 +11,7 @@ export const SET_VISIBILITY = 'SET_VISIBILITY';
 export const SET_STATION_VISIBILITY = 'SET_STATION_VISIBILITY';
 export const INCREMENT_FOOTPRINT = 'INCREMENT_FOOTPRINT';
 export const PUSH_PLAY = 'PUSH_PLAY';
+export const SET_DELAY = 'SET_DELAY';
 export const ERROR = 'ERROR';
 
 
@@ -127,5 +128,12 @@ export const incrementFootprint = increment => dispatch => {
 export const pushPlayButton = (dispatch, getState) => {
 	dispatch({type: PUSH_PLAY});
 	if(getState().playingMovie) dispatch(incrementFootprint(1));
+}
+
+export const setDelay = delay => {
+	return {
+		type: SET_DELAY,
+		delay
+	};
 }
 

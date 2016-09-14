@@ -129,17 +129,35 @@ const MovieControl = props => {
 	const playClass = "glyphicon glyphicon-" + (props.playingMovie ? 'pause' : 'play');
 	const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
 
-	return <div className="input-group">
-		<div className="input-group-btn">
-			<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
-				<span className="glyphicon glyphicon-triangle-left"></span>
-			</button>
-			<button title={playTitle} type="button" className="btn btn-default" onClick={props.pushPlay} disabled={!props.footprint}>
-				<span className={playClass}></span>
-			</button>
-			<button  title="To next footprint" type="button" className="btn btn-default" onClick={toNext} disabled={navDisabled}>
-				<span className="glyphicon glyphicon-triangle-right"></span>
-			</button>
+	return <div className="row">
+		<div className="col-md-1">
+			<strong>Playback</strong>
+		</div>
+		<div className="col-md-5">
+			<div className="input-group">
+				<div className="input-group-btn">
+					<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
+						<span className="glyphicon glyphicon-triangle-left"></span>
+					</button>
+					<button title={playTitle} type="button" className="btn btn-default" onClick={props.pushPlay} disabled={!props.footprint}>
+						<span className={playClass}></span>
+					</button>
+					<button  title="To next footprint" type="button" className="btn btn-default" onClick={toNext} disabled={navDisabled}>
+						<span className="glyphicon glyphicon-triangle-right"></span>
+					</button>
+				</div>
+			</div>
+		</div>
+		<div className="col-md-2">
+			<strong>Delay, ms</strong>
+		</div>
+		<div className="col-md-4">
+			<Select
+				selectValue={props.setDelay}
+				infoTxt="Select minimal delay between footprint renderings"
+				availableValues={[0, 50, 100, 300, 500, 1000, 3000]}
+				value={props.movieDelay}
+			/>
 		</div>
 	</div>;
 }

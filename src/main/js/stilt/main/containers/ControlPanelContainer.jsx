@@ -1,12 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import copyprops from '../../../common/main/general/copyprops';
-import {visibilityUpdate, setSelectedYear, setSelectedStation, setStationVisibility, incrementFootprint, pushPlayButton} from '../actions';
+import {visibilityUpdate, setSelectedYear, setSelectedStation, setStationVisibility, incrementFootprint, pushPlayButton, setDelay} from '../actions';
 import ControlPanel from '../components/ControlPanel.jsx';
+import config from '../config';
 
 
 function stateToProps(state){
-	return copyprops(state, ['stations', 'selectedStation', 'selectedYear', 'footprint', 'options', 'playingMovie']);
+	return Object.assign(
+		copyprops(state, ['stations', 'selectedStation', 'selectedYear', 'footprint', 'options', 'playingMovie']),
+		{movieDelay: state.footprintsFetcher ? state.footprintsFetcher.delay : config.defaultDelay}
+	);
 }
 
 function dispatchToProps(dispatch){
@@ -16,7 +20,8 @@ function dispatchToProps(dispatch){
 		selectYear: year => dispatch(setSelectedYear(year)),
 		updateStationVisibility: visibility => dispatch(setStationVisibility(visibility)),
 		incrementFootprint: increment => dispatch(incrementFootprint(increment)),
-		pushPlay: () => dispatch(pushPlayButton)
+		pushPlay: () => dispatch(pushPlayButton),
+		setDelay: delay => dispatch(setDelay(delay))
 	};
 }
 

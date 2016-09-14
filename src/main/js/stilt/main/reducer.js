@@ -1,5 +1,5 @@
 import {FETCHED_INITDATA, FETCHED_STATIONDATA, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR,
-	SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, INCREMENT_FOOTPRINT, PUSH_PLAY, ERROR} from './actions';
+	SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, INCREMENT_FOOTPRINT, PUSH_PLAY, SET_DELAY, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import FootprintsFetcher from './models/FootprintsFetcher';
@@ -45,7 +45,7 @@ export default function(state, action){
 		case SET_DATE_RANGE:
 			const dateRange = action.dateRange;
 			const desiredFootprint = state.footprints ? state.footprints.ensureRange(state.footprint, dateRange) : null;
-			const footprintsFetcher = state.footprintsFetcher ? state.footprintsFetcher.withDateRange(dateRange) : null;
+			let footprintsFetcher = state.footprintsFetcher ? state.footprintsFetcher.withDateRange(dateRange) : null;
 			return update({desiredFootprint, dateRange, footprintsFetcher});
 
 		case SET_VISIBILITY:
@@ -56,11 +56,15 @@ export default function(state, action){
 
 		case INCREMENT_FOOTPRINT:
 			return state.footprint
-				? update({desiredFootprint: state.footprints.step(state.footprint, action.increment, state.dateRange)})
+				? update({desiredFootprint: state.footprintsFetcher.step(state.footprint, action.increment)})
 				: state;
 
 		case PUSH_PLAY:
 			return update({playingMovie: !state.playingMovie});
+
+		case SET_DELAY:
+			footprintsFetcher = state.footprintsFetcher ? state.footprintsFetcher.withDelay(action.delay) : null;
+			return update({footprintsFetcher});
 
 		case ERROR:
 			return updateWith(['error']);

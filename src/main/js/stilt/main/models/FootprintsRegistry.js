@@ -21,9 +21,14 @@ export default class FootprintsRegistry{
 
 	indexRange(dateRange){
 		const self = this;
-		return dateRange
-			? dateRange.map(d => self.getRelevantFootprint(d).index)
-			: [0, this._dates.length - 1];
+		const dates = this._dates;
+		if(!dateRange) return [0, dates.length - 1];
+
+		let idxMin = self.getRelevantFootprint(dateRange[0]);
+		let idxMax = self.getRelevantFootprint(dateRange[1]);
+		if(dates[idxMin] < dateRange[0]) idxMin++;
+		if(dates[idxMax] > dateRange[1]) idxMax--;
+		return [idxMin, idxMax];
 	}
 
 	getRelevantFootprint(date){ //Date object or millis
@@ -46,35 +51,17 @@ export default class FootprintsRegistry{
 			return dates[guess] > d ? improve(left, guess) : improve(guess, right);
 		}
 
-		const index = improve(0, dates.length - 1);
-		return this.getFootprint(index);
+		return improve(0, dates.length - 1);
 	}
 
 	getFootprint(index){
 		return {index, date: this._dates[index], filename: this.constructFilename(this._dates[index])};
 	}
 
-	step(startFootprint, indexIncrement, requiredRange){
-		const lastIndex = this._dates.length - 1;
-		const range = requiredRange || [this._dates[0], this._dates[lastIndex]];
-
-		let next = this.getFootprint(startFootprint.index + indexIncrement);
-
-		if(next.date < range[0]){
-			next = this.getRelevantFootprint(range[1]);
-			if(next.date > range[1] && next.index > 0) next = this.getFootprint(next.index - 1);
-		}
-		else if(next.date > range[1]){
-			next = this.getRelevantFootprint(range[0]);
-			if(next.date < range[0] && next.index < lastIndex) next = this.getFootprint(next.index + 1);
-		}
-
-		return next;
-	}
-
 	ensureRange(startFootprint, range){
 		if(startFootprint && range[0] <= startFootprint.date && range[1] >= startFootprint.date) return startFootprint;
-		return this.getRelevantFootprint(range[0]/2 + range[1]/2);
+		const idx = this.getRelevantFootprint(range[0]/2 + range[1]/2);
+		return this.getFootprint(idx);
 	}
 
 	constructFilename(date){
