@@ -80,11 +80,11 @@ function getStationInfo(){
 */
 }
 
-export function getRaster(stationId, footprint){
-	return getBinRaster('footprint?stationId=' + stationId + '&footprint=' + footprint);
+export function getRaster(stationId, filename){
+	return getBinRaster('footprint', ['stationId', stationId], ['footprint', filename]);
 }
 
-export function getTimeSeries(stationId, year, dataObjectInfo, wdcggFormat){
+export function getStationData(stationId, year, dataObjectInfo, wdcggFormat){
 	//stationId: String, year: Int, dataObjectInfo: {id: String, nRows: Int}, wdcggFormat: TableFormat
 	const footprintsListPromise = getFootprintsList(stationId, year);
 	const observationsPromise = getWdcggBinaryTable(dataObjectInfo, wdcggFormat);

@@ -1,8 +1,8 @@
-import {getInitialData, getTimeSeries, getRaster} from './backend';
+import {getInitialData, getStationData} from './backend';
 import config from './config';
 
 export const FETCHED_INITDATA = 'FETCHED_INITDATA';
-export const FETCHED_TIMESERIES = 'FETCHED_TIMESERIES';
+export const FETCHED_STATIONDATA = 'FETCHED_STATIONDATA';
 export const FETCHED_RASTER = 'FETCHED_RASTER';
 export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
@@ -36,23 +36,23 @@ function failWithError(error){
 	};
 }
 
-function gotTimeSeriesData(timeSeries, stationId, year){
-	return Object.assign({}, timeSeries, {
-		type: FETCHED_TIMESERIES,
+function gotStationData(stationData, stationId, year){
+	return Object.assign({}, stationData, {
+		type: FETCHED_STATIONDATA,
 		stationId,
 		year
 	});
 }
 
-export const fetchTimeSeries = (dispatch, getState) => {
+export const fetchStationData = (dispatch, getState) => {
 	const state = getState();
 	const year = state.selectedYear;
 	if(!year) return;
 	const stationId = state.selectedStation.id;
 
-	getTimeSeries(stationId, year.year, year.dataObject, state.wdcggFormat).then(
-		timeSeries => {
-			dispatch(gotTimeSeriesData(timeSeries, stationId, year.year));
+	getStationData(stationId, year.year, year.dataObject, state.wdcggFormat).then(
+		stationData => {
+			dispatch(gotStationData(stationData, stationId, year.year));
 		},
 		err => dispatch(failWithError(err))
 	);
@@ -63,7 +63,7 @@ export const setSelectedStation = selectedStation => dispatch => {
 		type: SET_SELECTED_STATION,
 		selectedStation
 	});
-	dispatch(fetchTimeSeries); //year might have been selected automatically
+	dispatch(fetchStationData); //year might have been selected automatically
 }
 
 export const setSelectedYear = selectedYear => dispatch => {
@@ -71,7 +71,7 @@ export const setSelectedYear = selectedYear => dispatch => {
 		type: SET_SELECTED_YEAR,
 		selectedYear
 	});
-	dispatch(fetchTimeSeries);
+	dispatch(fetchStationData);
 }
 
 export const setDateRange = dateRange => (dispatch, getState) => {
@@ -89,16 +89,16 @@ export const setDateRange = dateRange => (dispatch, getState) => {
 
 const fetchFootprint = (dispatch, getState) => {
 	const state = getState();
-	const footprint = state.desiredFootprint;
-	if(!footprint) return;
+	const desired = state.desiredFootprint;
+	if(!desired) return;
 
 	const stationId = state.selectedStation.id;
 
-	if(!state.footprint || footprint.date != state.footprint.date) getRaster(stationId, footprint.filename).then(
+	if(!state.footprint || desired.date != state.footprint.date) state.footprintsFetcher.fetch(desired).then(
 		raster => {
 			dispatch({
 				type: FETCHED_RASTER,
-				footprint,
+				footprint: desired,
 				raster
 			});
 			if(getState().playingMovie) dispatch(incrementFootprint(1));

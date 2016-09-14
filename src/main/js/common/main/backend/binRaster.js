@@ -1,10 +1,10 @@
 import 'whatwg-fetch';
-import {checkStatus} from './fetchHelp';
+import {checkStatus, getUrlQuery} from './fetchHelp';
 import BinRaster from '../dataformats/BinRaster';
 
 
-export function getBinRaster(url){
-	return fetch(url, {
+export function getBinRaster(url, ...keyValues){
+	return fetch(url + getUrlQuery(keyValues), {
 			headers: {
 				'Accept': 'application/octet-stream'
 			}

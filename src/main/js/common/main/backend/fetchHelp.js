@@ -5,3 +5,11 @@ export function checkStatus(response) {
 		else throw new Error(response.statusText || "Ajax response status: " + response.status);
 }
 
+export function getUrlQuery(keyValues){
+	return !keyValues || keyValues.length == 0
+		? ''
+		: '?' + keyValues.map(
+			([key, value]) => key + '=' + encodeURIComponent(value)
+		).join('&');
+}
+

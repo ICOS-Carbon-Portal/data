@@ -19,8 +19,11 @@ export default class FootprintsRegistry{
 		this._filenameSuffix = filenames[0].substr(17);
 	}
 
-	get dateRange(){
-		return [this._minD, this._maxD];
+	indexRange(dateRange){
+		const self = this;
+		return dateRange
+			? dateRange.map(d => self.getRelevantFootprint(d).index)
+			: [0, this._dates.length - 1];
 	}
 
 	getRelevantFootprint(date){ //Date object or millis
