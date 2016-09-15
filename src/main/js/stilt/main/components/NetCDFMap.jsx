@@ -51,7 +51,7 @@ export default class NetCDFMap extends Component{
 		}
 
 		if (updatedRaster){
-			this.updateRasterCanvas(nextProps.raster, nextProps.zoomToRaster);
+			this.updateRasterCanvas(nextProps);
 		}
 
 		if (updatedRaster || showStationPosStateChanged){
@@ -79,7 +79,8 @@ export default class NetCDFMap extends Component{
 		}
 	}
 
-	updateRasterCanvas(raster, zoomToRaster){
+	updateRasterCanvas(props){
+		const raster = props.raster;
 		const map = this.app.map;
 		const canvasTiles = this.app.canvasTiles;
 		const rasterCanvas = this.app.rasterCanvas;
@@ -128,11 +129,15 @@ export default class NetCDFMap extends Component{
 		map.removeLayer(canvasTiles);
 		canvasTiles.addTo(map);
 
-		if(zoomToRaster) {
+		if(props.zoomToRaster) {
 			map.fitBounds([
 				[rebasedDsCoords.ymin, rebasedDsCoords.xmin],
 				[rebasedDsCoords.ymax, rebasedDsCoords.xmax],
 			]);
+		}
+
+		if(props.renderCompleted){ //callback has been provided
+			props.renderCompleted();
 		}
 	}
 

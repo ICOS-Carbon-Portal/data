@@ -5,6 +5,7 @@ import colorMaker from '../models/colorMaker';
 import NetCDFMap from '../components/NetCDFMap.jsx';
 import NetCDFLegend from '../components/NetCDFLegend.jsx';
 import {getLegend} from '../models/colorMaker';
+import {incrementIfNeeded} from '../actions';
 
 const FootprintContainer = props =>
 <div>
@@ -21,6 +22,7 @@ const FootprintContainer = props =>
 		colorMaker={colorMaker}
 		zoomToRaster={false}
 		showStationPos={props.showStationPosition}
+		renderCompleted={props.renderCompleted}
 	/>
 	<NetCDFLegend divWidth={props.divWidth} stripeHeight={20} getLegend={getLegend} />
 </div>;
@@ -32,5 +34,11 @@ function stateToProps(state){
 	);
 }
 
-export default connect(stateToProps)(FootprintContainer);
+function dispatchToProps(dispatch){
+	return {
+		renderCompleted: () => dispatch(incrementIfNeeded)
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(FootprintContainer);
 

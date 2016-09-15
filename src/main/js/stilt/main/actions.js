@@ -102,7 +102,6 @@ const fetchFootprint = (dispatch, getState) => {
 				footprint: desired,
 				raster
 			});
-			if(getState().playingMovie) dispatch(incrementFootprint(1));
 		},
 		err => dispatch(failWithError(err))
 	);
@@ -125,9 +124,15 @@ export const incrementFootprint = increment => dispatch => {
 	dispatch(fetchFootprint);
 }
 
+export const incrementIfNeeded = (dispatch, getState) => {
+	setTimeout(() => {
+		if(getState().playingMovie) dispatch(incrementFootprint(1));
+	}, 5); //a tiny delay in hope to improve interface's responsiveness
+}
+
 export const pushPlayButton = (dispatch, getState) => {
 	dispatch({type: PUSH_PLAY});
-	if(getState().playingMovie) dispatch(incrementFootprint(1));
+	dispatch(incrementIfNeeded);
 }
 
 export const setDelay = delay => {

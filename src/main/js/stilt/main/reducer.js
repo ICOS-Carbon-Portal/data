@@ -44,7 +44,7 @@ export default function(state, action){
 
 		case SET_DATE_RANGE:
 			const dateRange = action.dateRange;
-			const desiredFootprint = state.footprints ? state.footprints.ensureRange(state.footprint, dateRange) : null;
+			let desiredFootprint = state.footprints ? state.footprints.ensureRange(state.footprint, dateRange) : null;
 			let footprintsFetcher = state.footprintsFetcher ? state.footprintsFetcher.withDateRange(dateRange) : null;
 			return update({desiredFootprint, dateRange, footprintsFetcher});
 
@@ -60,7 +60,9 @@ export default function(state, action){
 				: state;
 
 		case PUSH_PLAY:
-			return update({playingMovie: !state.playingMovie});
+			const playingMovie = !state.playingMovie;
+			desiredFootprint = playingMovie ? state.desiredFootprint : state.footprint;
+			return update({playingMovie, desiredFootprint});
 
 		case SET_DELAY:
 			footprintsFetcher = state.footprintsFetcher ? state.footprintsFetcher.withDelay(action.delay) : null;
