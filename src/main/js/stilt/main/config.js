@@ -1,4 +1,5 @@
 import common from '../../common/main/config';
+import Dygraph from 'dygraphs';
 
 const dateSeries = {
 	label: 'isodate',
@@ -46,6 +47,22 @@ const stiltResultColumns = [dateSeries, {
 	label: 'co2.fuel.bio',
 	comment: 'CO2 from biofuel combustion',
 	options: {axis: 'y2', color: 'rgb(216,131,255)'}
+}, {
+	label: 'co2.energy',
+	comment: 'CO2 from energy production',
+	options: {axis: 'y2', color: 'rgb(197,90,17)', strokePattern: Dygraph.DASHED_LINE}
+}, {
+	label: 'co2.transport',
+	comment: 'CO2 from transport',
+	options: {axis: 'y2', color: 'rgb(255,147,0)', strokePattern: Dygraph.DASHED_LINE},
+}, {
+	label: 'co2.industry',
+	comment: 'CO2 from industry',
+	options: {axis: 'y2', color: 'rgb(255,64,255)', strokePattern: Dygraph.DASHED_LINE}
+}, {
+	label: 'co2.others',
+	comment: 'CO2 from other categories',
+	options: {axis: 'y2', color: 'rgb(216,131,255)', strokePattern: Dygraph.DASHED_LINE}
 }];
 
 const wdcggColumns = [dateSeries, {

@@ -16,7 +16,8 @@ export default class Select extends Component {
 	}
 
 	render(){
-		return <select ref="selectelem" value={this.stringValue(this.props.value)} className="form-control" onChange={this.changeHandler.bind(this)}>
+		const props = this.props;
+		return <select ref="selectelem" value={this.stringValue(props.value)} className="form-control" onChange={this.changeHandler.bind(this)} {...props.options}>
 			<option key="select">{this.props.infoTxt}</option>
 			{
 				(this.props.availableValues || [])
@@ -27,7 +28,7 @@ export default class Select extends Component {
 	}
 
 	stringValue(complexValue){
-		return this.props.presenter && complexValue ? this.props.presenter(complexValue) : complexValue;
+		return this.props.presenter ? this.props.presenter(complexValue) : complexValue;
 	}
 }
 

@@ -51,7 +51,7 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 				infoTxt="Select station here or on the map"
 				availableValues={stations}
 				value={selectedStation}
-				presenter={station => station.name}
+				presenter={station => station ? station.name : station}
 			/>
 		</div>
 		<div className="col-md-6">
@@ -60,7 +60,7 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 				infoTxt="Select year"
 				availableValues={yearInfos}
 				value={selectedYear}
-				presenter={yearInfo => yearInfo.year}
+				presenter={yearInfo => yearInfo ? yearInfo.year : yearInfo}
 			/>
 		</div>
 	</div>;
@@ -130,10 +130,10 @@ const MovieControl = props => {
 	const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
 
 	return <div className="row">
-		<div className="col-md-1">
+		<div className="col-md-2">
 			<strong>Playback</strong>
 		</div>
-		<div className="col-md-5">
+		<div className="col-md-4">
 			<div className="input-group">
 				<div className="input-group-btn">
 					<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
@@ -149,16 +149,32 @@ const MovieControl = props => {
 			</div>
 		</div>
 		<div className="col-md-2">
-			<strong>Delay, ms</strong>
+			<strong>Playback speed</strong>
 		</div>
 		<div className="col-md-4">
 			<Select
 				selectValue={props.setDelay}
-				infoTxt="Select minimal delay between footprint renderings"
-				availableValues={[0, 50, 100, 300, 500, 1000, 3000]}
+				infoTxt="Select playback speed"
+				availableValues={delayValues}
 				value={props.movieDelay}
+				presenter={delayPresenter}
+				options={{disabled: !props.footprint}}
 			/>
 		</div>
 	</div>;
+}
+
+const delayValues = [0, 50, 100, 200, 500, 1000, 3000];
+function delayPresenter(delay){
+	switch (delay){
+		case 0 : return 'Fastest (processor-limited)';
+		case 50 : return 'Very fast (up to 20 fps)';
+		case 100 : return 'Fast (up to 10 fps)';
+		case 200 : return 'Medium (up to 5 fps)';
+		case 500 : return 'Medium (up to 2 fps)';
+		case 1000 : return 'Slow (up to 1 fps)';
+		case 3000 : return 'Very slow (0.33 fps)';
+		default : return (1000 / delay) + ' fps';
+	}
 }
 

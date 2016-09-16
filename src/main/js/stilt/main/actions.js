@@ -1,4 +1,5 @@
 import {getInitialData, getStationData} from './backend';
+import throttle from '../../common/main/general/throttle';
 import config from './config';
 
 export const FETCHED_INITDATA = 'FETCHED_INITDATA';
@@ -85,17 +86,16 @@ export const setDateRange = dateRange => (dispatch, getState) => {
 		dateRange
 	});
 
-	dispatch(fetchFootprint);
+	fetchFootprintThrottled(dispatch);
 }
 
 const fetchFootprint = (dispatch, getState) => {
 	const state = getState();
 	const desired = state.desiredFootprint;
-	if(!desired) return;
 
-	const stationId = state.selectedStation.id;
-
-	if(!state.footprint || desired.date != state.footprint.date) state.footprintsFetcher.fetch(desired).then(
+	if(!desired || state.footprint && desired.date == state.footprint.date) {
+		dispatch(incrementIfNeeded);
+	} else state.footprintsFetcher.fetch(desired).then(
 		raster => {
 			dispatch({
 				type: FETCHED_RASTER,
@@ -105,8 +105,9 @@ const fetchFootprint = (dispatch, getState) => {
 		},
 		err => dispatch(failWithError(err))
 	);
-
 }
+
+const fetchFootprintThrottled = throttle(dispatch => dispatch(fetchFootprint), 300);
 
 export const setStationVisibility = visibility => {
 	return {
