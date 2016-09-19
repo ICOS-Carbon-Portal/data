@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Dygraph from 'dygraphs';
+import deepMerge from '../../../common/main/general/deepMerge';
+
 
 export default class Dygraphs extends React.Component {
 	constructor(props) {
@@ -15,7 +17,7 @@ export default class Dygraphs extends React.Component {
 		this.graph = new Dygraph(
 			ReactDOM.findDOMNode(this.refs.graphDiv),
 			props.data.getData(),
-			Object.assign({
+			deepMerge({
 				drawCallback: this.rangeChangeHandler.bind(this),
 				dateWindow: props.dateRange,
 				strokeWidth: 1,
@@ -38,7 +40,7 @@ export default class Dygraphs extends React.Component {
 				},
 				series: makeSeriesOpt(props.data.series),
 				visibility: this.getVisibility(props)
-			}, props.graphOptions || {})
+			}, props.graphOptions)
 		);
 	}
 
@@ -99,8 +101,8 @@ export default class Dygraphs extends React.Component {
 	render(){
 		return (
 			<div>
-				<div ref="graphDiv" style={{width: '99%'}} />
-				<div ref="labelsDiv" style={{width: '99%', fontSize: '0.9em', marginTop: 5}}></div>
+				<div ref="graphDiv" style={{width: '100%'}} />
+				<div ref="labelsDiv" style={{width: '100%', fontSize: '0.9em', marginTop: 5}}></div>
 			</div>
 		);
 	}

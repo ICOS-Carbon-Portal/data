@@ -34,7 +34,17 @@ function stateToProps(state){
 		{
 			dateFormatter: formatDate,
 			annotations,
-			visibility: state.options.modelComponentsVisibility
+			visibility: state.options.modelComponentsVisibility,
+			graphOptions: {
+				ylabel: 'total CO2 [ppm]',
+				y2label: 'CO2 components [ppm]',
+				xlabel: 'Timestamp (UTC)',
+				axes: {
+					y2: {
+						axisLabelFormatter: number => Number(number).toFixed(2)
+					}
+				}
+			}
 		},
 		copyprops(state, ['timeSeriesData', 'dateRange'])
 	);
