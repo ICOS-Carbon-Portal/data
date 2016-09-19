@@ -15,7 +15,8 @@ export default class NetCDFMap extends Component{
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
 			canvasTiles: L.tileLayer.canvas(),
-			markers: L.featureGroup()
+			markers: L.featureGroup(),
+			maskHole: null
 		};
 	}
 
@@ -50,7 +51,10 @@ export default class NetCDFMap extends Component{
 
 		const updatedRaster = nextProps.raster && (prevProps.raster !== nextProps.raster);
 
-		if (updatedRaster) this.updateRasterCanvas(nextProps);
+		if (updatedRaster) {
+			this.updateRasterCanvas(nextProps);
+			this.addMask(nextProps.raster);
+		}
 
 		if (updatedRaster || prevProps.showStationPos !== nextProps.showStationPos){
 			this.updatePosition(nextProps.selectedStation, nextProps.showStationPos);
@@ -75,6 +79,16 @@ export default class NetCDFMap extends Component{
 				map.panTo(positionLatLng);
 			}
 		}
+	}
+
+	addMask(raster){
+		const props = this.props;
+		const app = this.app;
+
+		if(!props.addMask || !raster || (app.maskHole && app.maskHole.isIdentical(raster.boundingBox))) return;
+
+		app.maskHole = props.addMask(raster.boundingBox);
+		app.maskHole.addTo(app.map);
 	}
 
 	updateRasterCanvas(props){

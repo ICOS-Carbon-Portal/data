@@ -161,3 +161,43 @@ export const CoordViewer = L.Control.extend({
 		map.off('mouseout');
 	},
 });
+
+L.PolygonMask = L.Polygon.extend({
+	options: {
+		weight: 1.5,
+		color: 'red',
+		fillColor: '#333',
+		fillOpacity: 0.5,
+		clickable: false,
+		outerBounds: new L.LatLngBounds([-90, -360], [90, 360])
+	},
+
+	initialize: function (boundingBox, options) {
+		this.boundingBox = boundingBox;
+		const outerBoundsLatLngs = [
+			this.options.outerBounds.getSouthWest(),
+			this.options.outerBounds.getNorthWest(),
+			this.options.outerBounds.getNorthEast(),
+			this.options.outerBounds.getSouthEast()
+		];
+		const hole = [
+			new L.LatLng(boundingBox.latMin, boundingBox.lonMin),
+			new L.LatLng(boundingBox.latMax, boundingBox.lonMin),
+			new L.LatLng(boundingBox.latMax, boundingBox.lonMax),
+			new L.LatLng(boundingBox.latMin, boundingBox.lonMax),
+			new L.LatLng(boundingBox.latMin, boundingBox.lonMin)
+		];
+		L.Polygon.prototype.initialize.call(this, [outerBoundsLatLngs, hole], options);
+	},
+
+	isIdentical(boundingBox){
+		return boundingBox.latMin == this.boundingBox.latMin
+			&& boundingBox.latMax == this.boundingBox.latMax
+			&& boundingBox.lonMin == this.boundingBox.lonMin
+			&& boundingBox.lonMax == this.boundingBox.lonMax;
+	}
+});
+
+export function polygonMask(boundingBox, options) {
+	return new L.PolygonMask(boundingBox, options);
+};

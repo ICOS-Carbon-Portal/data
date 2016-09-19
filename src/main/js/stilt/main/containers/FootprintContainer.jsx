@@ -6,6 +6,7 @@ import NetCDFMap from '../components/NetCDFMap.jsx';
 import NetCDFLegend from '../components/NetCDFLegend.jsx';
 import {getLegend} from '../models/colorMaker';
 import {incrementIfNeeded} from '../actions';
+import {polygonMask} from '../../../common/main/maps/LeafletCommon';
 
 const containerHeight = 400;
 
@@ -34,6 +35,7 @@ export class FootprintContainer extends Component {
 						zoomToRaster={false}
 						showStationPos={props.showStationPosition}
 						renderCompleted={props.renderCompleted}
+						addMask={polygonMask}
 					/>
 				</div>
 				<div  style={{flex: '65px', minWidth:65}}>
