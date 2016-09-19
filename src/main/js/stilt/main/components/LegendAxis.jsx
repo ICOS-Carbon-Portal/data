@@ -1,6 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 
 const textMargin = 3;
+const tickLength = 10;
 
 export default class LegendAxis extends Component {
 	constructor(props) {
@@ -9,9 +10,15 @@ export default class LegendAxis extends Component {
 
 	render() {
 		const props = this.props;
+		const width = props.horizontal
+			? props.length + props.margin * 2
+			: props.width + 21 + textMargin;
+		const height = props.horizontal
+			? props.width + textMargin
+			: props.length + props.margin * 2;
 
 		return (
-			<svg ref="axis" className="axis" width={props.width + props.margin * 2} height={props.height + textMargin} style={{display: 'block'}}>{
+			<svg ref="axis" className="axis" width={width} height={height}>{
 				props.suggestedTickLocations
 					? props.suggestedTickLocations.map((tick, idx) => {
 						const tickVal = props.valueMaker(tick) == 1
@@ -19,10 +26,15 @@ export default class LegendAxis extends Component {
 							: props.valueMaker(tick).toExponential(0)
 
 						return (
-							<g key={'g' + idx}>
-								<line x1={tick + props.margin} y1={0} x2={tick + props.margin} y2={10} stroke="black" strokeWidth="2" />
-								<text x={tick + props.margin} y={props.height + textMargin} textAnchor="middle">{tickVal}</text>
-							</g>
+							props.horizontal
+								? <g key={'g' + idx}>
+									<line x1={tick + props.margin} y1={0} x2={tick + props.margin} y2={tickLength} stroke="black" strokeWidth="2" />
+									<text x={tick + props.margin} y={props.width + textMargin} textAnchor="middle">{tickVal}</text>
+								</g>
+								: <g key={'g' + idx}>
+									<line y1={tick + props.margin} x1={0} y2={tick + props.margin} x2={tickLength} stroke="black" strokeWidth="2" />
+									<text y={height - tick - props.margin} x={tickLength + textMargin} textAnchor="start" dy="0.3em">{tickVal}</text>
+								</g>
 						);
 					})
 					: null

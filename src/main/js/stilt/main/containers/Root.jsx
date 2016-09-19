@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux'
 import getStore from '../store'
 import FootprintContainer from './FootprintContainer.jsx';
@@ -10,43 +9,17 @@ import GraphsContainer from './GraphsContainer.jsx';
 const store = getStore();
 
 export default class Root extends Component {
-	constructor(props){
-		super(props);
-		this.state = {
-			footPrintDivWidth: 0
-		};
-	}
-
-	componentDidMount() {
-		window.addEventListener('resize', this.calculateWidth.bind(this));
-		this.calculateWidth();
-	}
-
-	calculateWidth(){
-		const footPrintDiv = ReactDOM.findDOMNode(this.refs.footPrintDiv);
-		const style = window.getComputedStyle(footPrintDiv);
-		const paddingLeft = parseInt(style.paddingLeft.replace("px", ""));
-		const paddingRight = parseInt(style.paddingRight.replace("px", ""));
-		const footPrintDivWidth = footPrintDiv.getBoundingClientRect().width - paddingLeft - paddingRight;
-
-		this.setState({footPrintDivWidth});
-	}
-
-	componentWillUnmount(){
-		window.removeEventListener('resize', this.calculateWidth);
-	}
-
 	render() {
 		return <Provider store={store}>
 			<div className="container-fluid">
 
 				<div className="row">
 
-					<div ref="footPrintDiv" className="col-md-3">
-						<FootprintContainer divWidth={this.state.footPrintDivWidth}/>
+					<div className="col-md-4">
+						<FootprintContainer />
 					</div>
 
-					<div className="col-md-9">
+					<div className="col-md-8">
 						<ControlPanelContainer />
 					</div>
 

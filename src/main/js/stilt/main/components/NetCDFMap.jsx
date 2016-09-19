@@ -1,11 +1,11 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import TileMappingHelper, {getTileCoordBbox} from '../../../common/main/geometry/TileMappingHelper';
 import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
 import renderRaster from '../../../common/main/maps/renderRaster';
-import {positionMarker, pointIcon} from '../../../common/main/maps/LeafletCommon';
+import {pointIcon} from '../../../common/main/maps/LeafletCommon';
 
 export default class NetCDFMap extends Component{
 	constructor(props){
@@ -109,11 +109,7 @@ export default class NetCDFMap extends Component{
 	}
 
 	render() {
-		return (
-			<div style={{height: this.props.mapHeight}}>
-				<div ref='map' style={{width: '100%', height: '100%', display: 'block', border: '1px solid darkgrey'}}></div>
-			</div>
-		);
+		return <div ref='map' style={{width: '100%', height: '100%', display: 'block', border: '1px solid darkgrey'}}></div>;
 	}
 }
 
