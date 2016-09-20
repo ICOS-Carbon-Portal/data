@@ -76,17 +76,41 @@ export default Object.assign({}, common, {
 	wdcggSpec: 'http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject',
 	stiltResultColumns,
 	wdcggColumns,
-	primaryComponents(){
-		return wdcggColumns.slice(1).concat(stiltResultColumns.slice(1,3));
+	primaryComponents(selectedYear){
+		const obsColumns = !selectedYear || selectedYear.dataObject ? wdcggColumns.slice(1) : [];
+		return obsColumns.concat(stiltResultColumns.slice(1,3));
 	},
 	secondaryComponents(){
 		return stiltResultColumns.slice(3);
 	},
-	stations: [
-		{id: 'JFJ', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Jungfraujoch%20'},
-		{id: 'MHD', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Mace%20Head%20'},
-		{id: 'PAL', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Pallas-Sammaltunturi%20'},
-		{id: 'SIL', uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Schauinsland%20'}
+	stations: [ //STILT id, STILT lat, STILT lon, ICOS short name, WDCGG name
+		['BAL', 55.35, 17.22, '',       'Baltic Sea'],
+		['BGU',     0,     0, '',       'Begur'],
+		['BI5', 53.23, 23.03, '',       ''],
+		['BSC', 44.17, 28.68, '',       ''],
+		['CB1',     0,     0, 'NL-Cab', ''],
+		['CB4',     0,     0, 'NL-Cab', ''],
+		['EGH', 51.43, -0.56, '',       ''],
+		['GIF', 48.71,  2.15, '',       ''],
+		['HEI', 49.42,  8.67, '',       ''],
+		['HPB',     0,     0, 'HPB',    'Hohenpeissenberg'],
+		['HU1',     0,     0, '',       'Hegyhatsal'],
+		['IPR', 45.81,  8.63, '',       ''],
+		['JFJ',     0,     0, 'JFJ',    'Jungfraujoch'],
+		['KAS', 49.25, 19.98, '',       ''],
+		['LMP',     0,     0, 'Lmp',    'Lampedusa'],
+		['LPO', 48.80, -3.58, '',       ''],
+		['LU1',     0,     0, 'NL-Lut', ''],
+		['MHD',     0,     0, '',       'Mace Head'],
+		['OX3',     0,     0, 'OXK',    'Ochsenkopf'],
+		['PAL',     0,     0, 'ATM-PAL','Pallas-Sammaltunturi'],
+		['PDM',     0,     0, '',       'Pic du Midi'],
+		['PUY',     0,     0, 'PUY',    'Puy de Dome'],
+		['SIL',     0,     0, '',       'Schauinsland'],
+		['TR2',     0,     0, 'TRN',    ''],
+		['TR4',     0,     0, 'TRN',    ''],
+		['TT1',     0,     0, '',       'Tacolneston Tall Tower'],
+		['TT2',     0,     0, '',       'Tacolneston Tall Tower']
 	],
 	defaultDelay: 100 //ms
 })

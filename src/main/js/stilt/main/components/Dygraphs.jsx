@@ -77,7 +77,11 @@ export default class Dygraphs extends React.Component {
 		const nextData = nextProps.data;
 		if(nextData && nextData.id != this.dataId){
 			this.dataId = nextData.id;
-			Object.assign(update, { file: nextProps.data.getData(), labels: nextProps.data.labels });
+			Object.assign(update, {
+				file: nextProps.data.getData(),
+				labels: this.makeLabels(nextProps),
+				series: makeSeriesOpt(nextProps.data.series)
+			});
 		}
 
 		const nextVisibility = this.getVisibility(nextProps);

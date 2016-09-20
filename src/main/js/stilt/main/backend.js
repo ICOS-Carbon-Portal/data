@@ -5,6 +5,10 @@ import {getJson} from '../../common/main/backend/json';
 import {getBinaryTable} from '../../common/main/backend/binTable';
 import {getBinRaster} from '../../common/main/backend/binRaster';
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {stationInfoQuery} from './sparqlQueries';
+import groupBy from '../../common/main/general/groupBy';
+import copyprops from '../../common/main/general/copyprops';
+import distinct from '../../common/main/general/distinct';
 
 //import * as sparqlQueries from './sparqlQueries';
 import config from './config';
@@ -18,66 +22,50 @@ export function getInitialData(){
 }
 
 function getStationInfo(){
-	return Promise.resolve([
-		{
-			id: 'JFJ',
-			uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Jungfraujoch%20',
-			name: 'Jungfraujoch',
-			years: [{
-				year: 2011,
-				dataObject: {id: 'https://meta.icos-cp.eu/objects/CKuB_hK4-1g3PB1lyPjrZMM3', nRows: 8760}
-			}],
-			lat: 46.55,
-			lon: 7.98
-		},
-		{
-			id: 'MHD',
-			uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Mace%20Head%20',
-			name: 'Mace Head',
-			years: [{
-				year: 2011,
-				dataObject: {id: 'https://meta.icos-cp.eu/objects/epSW2GnzRlSmsSL76oylJnG1', nRows: 8760}
-			}],
-			lat: 53.33,
-			lon: -9.9
-		},
-		{
-			id: 'PAL',
-			uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Pallas-Sammaltunturi%20',
-			name: 'Pallas-Sammaltunturi',
-			years: [{
-				year: 2011,
-				dataObject: {id: 'https://meta.icos-cp.eu/objects/43UW3Nr00WbjDi1zVZa187AJ', nRows: 8760}
-			}],
-			lat: 67.97,
-			lon: 24.12
-		},
-		{
-			id: 'SIL',
-			uri: 'http://meta.icos-cp.eu/resources/wdcgg/station/Schauinsland%20',
-			name: 'Schauinsland',
-			years: [{
-				year: 2011,
-				dataObject: {id: 'https://meta.icos-cp.eu/objects/S9HFnhr7lF4D4Xl-sKTN4VTk', nRows: 8760}
-			}],
-			lat: 47.92,
-			lon: 7.92
-		}
-	]);
+	return Promise.all([
+		sparql(stationInfoQuery),
+		getJson('stationyears')
+	]).then(([sparqlResult, stationYears]) => {
 
-/*
-	const query = sparqlQueries.stationPositions();
-	return sparql(query).then(sparqlResult => {
-		return sparqlResult.results.bindings.map(binding => {
+		const flatInfo = sparqlResult.results.bindings.map(binding => {
+			const year = binding.ackStartTime && binding.ackEndTime
+				? new Date(new Date(binding.ackStartTime.value).valueOf() / 2 + new Date(binding.ackEndTime.value).valueOf() / 2).getUTCFullYear()
+				: undefined;
 			return {
-				uri: binding.station.value,
-				name: binding.name.value,
+				id: binding.stiltId.value,
+				name: binding.stationName.value.trim(),
 				lat: parseFloat(binding.lat.value),
-				lon: parseFloat(binding.lon.value)
-			}
-		})
+				lon: parseFloat(binding.lon.value),
+				year,
+				nRows: binding.nRows ? parseInt(binding.nRows.value) : undefined,
+				dobj: binding.dobj ? binding.dobj.value : undefined
+			};
+		}).filter(({id, year}) => stationYears[id] && stationYears[id].length > 0 &&
+				(!year || stationYears[id].indexOf(year) >= 0)
+		);
+
+		const byId = groupBy(flatInfo, info => info.id, info => info);
+
+		return Object.keys(byId).map(id => {
+			const dataObjs = byId[id];
+
+			const byYear = groupBy(
+				dataObjs.filter(dobj => dobj.year),
+				dobj => dobj.year,
+				i => i
+			);
+
+			const years = stationYears[id].sort().map(year => {
+				const dobjs = byYear[year];
+				const dataObject = dobjs
+					? {id: dobjs[0].dobj, nRows: dobjs[0].nRows}
+					: undefined;
+				return {year, dataObject};
+			});
+
+			return Object.assign(copyprops(dataObjs[0], ['id', 'name', 'lat', 'lon']), {years});
+		});
 	});
-*/
 }
 
 export function getRaster(stationId, filename){
@@ -99,6 +87,8 @@ export function getStationData(stationId, year, dataObjectInfo, wdcggFormat){
 }
 
 function getWdcggBinaryTable(dataObjectInfo, wdcggFormat){
+	if(!dataObjectInfo) return Promise.resolve(null);
+
 	const axisIndices = ['TIMESTAMP', 'PARAMETER'].map(idx => wdcggFormat.getColumnIndex(idx));
 	const tblRequest = wdcggFormat.getRequest(dataObjectInfo.id, dataObjectInfo.nRows, axisIndices);
 

@@ -17,7 +17,7 @@ export default props => <div className="panel panel-default">
 					<li className="list-group-item"><StationAndYearSelector {...props} /></li>
 					<li className="list-group-item"><FootprintState {...props} /></li>
 					<li className="list-group-item">
-						<AxisControl title="Primary Y-axis" components={config.primaryComponents()} {...props} />
+						<AxisControl title="Primary Y-axis" components={config.primaryComponents(props.selectedYear)} {...props} />
 					</li>
 					<li className="list-group-item">
 						<AxisControl title="Secondary Y-axis" components={config.secondaryComponents()} {...props} />
@@ -40,6 +40,10 @@ const StationSelectingMap = ({stations, selectedStation, selectStation}) => {
 	</div>;
 }
 
+function yearInfoToLabel(info){
+	if(!info) return info;
+	return info.year + (info.dataObject ? ' (+WDCGG)' : '');
+}
 
 const StationAndYearSelector = ({selectYear, selectStation, selectedYear, selectedStation, stations}) => {
 	const yearInfos = selectedStation ? selectedStation.years : [];
@@ -51,7 +55,7 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 				infoTxt="Select station here or on the map"
 				availableValues={stations}
 				value={selectedStation}
-				presenter={station => station ? station.name : station}
+				presenter={station => station ? `${station.name} (${station.id})` : station}
 			/>
 		</div>
 		<div className="col-md-6">
@@ -60,7 +64,7 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 				infoTxt="Select year"
 				availableValues={yearInfos}
 				value={selectedYear}
-				presenter={yearInfo => yearInfo ? yearInfo.year : yearInfo}
+				presenter={yearInfoToLabel}
 			/>
 		</div>
 	</div>;

@@ -1,34 +1,27 @@
-import React, { Component } from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 
-export default class Select extends Component {
-	constructor(props){
-		super(props);
-	}
+export default function(props){
 
-	changeHandler(){
-		const ddl = ReactDOM.findDOMNode(this.refs.selectelem);
+	function changeHandler(event){
+		const idx = event.target.selectedIndex;
 
-		if (ddl.selectedIndex > 0){
-			const idx = ddl.selectedIndex - 1;
-			this.props.selectValue(this.props.availableValues[idx]);
+		if (idx > 0){
+			props.selectValue(props.availableValues[idx - 1]);
 		}
 	}
 
-	render(){
-		const props = this.props;
-		return <select ref="selectelem" value={this.stringValue(props.value)} className="form-control" onChange={this.changeHandler.bind(this)} {...props.options}>
-			<option key="select">{this.props.infoTxt}</option>
-			{
-				(this.props.availableValues || [])
-					.map(this.stringValue.bind(this))
-					.map(value => <option key={value} value={value}>{value}</option>)
-			}
-		</select>;
-	}
+	const toStringValue = value => props.presenter ? props.presenter(value) : value;
+	const noValue = "49djs8fjsal38t";
+	const current = toStringValue(props.value) || noValue;
 
-	stringValue(complexValue){
-		return this.props.presenter ? this.props.presenter(complexValue) : complexValue;
-	}
+	return <select value={current} className="form-control" onChange={changeHandler} {...props.options}>
+		<option value={noValue}>{props.infoTxt}</option>
+		{
+			(props.availableValues || []).map(toStringValue).map(
+				value => <option key={value} value={value}>{value}</option>
+			)
+		}
+	</select>;
 }
 

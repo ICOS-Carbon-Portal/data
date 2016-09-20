@@ -3,9 +3,10 @@ import DygraphData, {wdcggBinTableToDygraphData} from './DygraphData';
 
 export function makeTimeSeriesGraphData(obsBinTable, rawArray, id){
 
-	const obsDyData = wdcggBinTableToDygraphData(obsBinTable, config.wdcggColumns);
-
 	const modelComponents = makeModelComponentsData(rawArray);
+	if(!obsBinTable) return modelComponents.withId(id);
+
+	const obsDyData = wdcggBinTableToDygraphData(obsBinTable, config.wdcggColumns);
 
 	return DygraphData.merge(obsDyData, modelComponents).withId(id);
 }

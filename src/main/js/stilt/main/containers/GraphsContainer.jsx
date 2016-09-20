@@ -38,7 +38,7 @@ function stateToProps(state){
 			graphOptions: {
 				ylabel: 'total CO2 [ppm]',
 				y2label: 'CO2 components [ppm]',
-				xlabel: 'Timestamp (UTC)',
+				xlabel: 'timestamp (UTC)',
 				axes: {
 					y2: {
 						axisLabelFormatter: number => Number(number).toFixed(2)
