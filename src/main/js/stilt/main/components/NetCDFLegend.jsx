@@ -101,6 +101,7 @@ export default class NetCDFLegend extends Component {
 					margin={props.margin}
 					suggestedTickLocations={state.suggestedTickLocations}
 					valueMaker={state.valueMaker}
+					legendText={props.legendText}
 				/>
 			</div>
 		);

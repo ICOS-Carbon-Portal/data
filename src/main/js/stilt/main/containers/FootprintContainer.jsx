@@ -38,13 +38,14 @@ export class FootprintContainer extends Component {
 						addMask={polygonMask}
 					/>
 				</div>
-				<div  style={{flex: '65px', minWidth:65}}>
+				<div  style={{flex: '90px', minWidth:90}}>
 					<NetCDFLegend
 						horizontal={false}
 						canvasWidth={20}
 						containerHeight={containerHeight}
-						margin={5}
+						margin={7}
 						getLegend={getLegend}
+						legendText="surface influence [ppm / (&mu;mol / m&sup2;s)]"
 					/>
 				</div>
 			</div>

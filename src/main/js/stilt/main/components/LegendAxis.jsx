@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react';
+import React, { Component } from 'react';
 
 const textMargin = 3;
 const tickLength = 10;
@@ -9,10 +9,11 @@ export default class LegendAxis extends Component {
 	}
 
 	render() {
+		//TODO: Handle horizontal alignment. It is only partially implemented
 		const props = this.props;
 		const width = props.horizontal
 			? props.length + props.margin * 2
-			: props.width + 21 + textMargin;
+			: props.width + 50 + textMargin;
 		const height = props.horizontal
 			? props.width + textMargin
 			: props.length + props.margin * 2;
@@ -38,7 +39,15 @@ export default class LegendAxis extends Component {
 						);
 					})
 					: null
-			}</svg>
+				}
+				{
+					props.horizontal
+						? null
+						: <text x={65} y={height / 2} textAnchor="middle" fontSize={'1.2em'} transform={"rotate(270,65," + height / 2 + ")"}>
+							{props.legendText}
+						</text>
+				}
+			</svg>
 		);
 	}
 }
