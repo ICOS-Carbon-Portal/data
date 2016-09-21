@@ -6,13 +6,20 @@ import NetCDFMap from '../components/NetCDFMap.jsx';
 import NetCDFLegend from '../components/NetCDFLegend.jsx';
 import {getLegend} from '../models/colorMaker';
 import {incrementIfNeeded} from '../actions';
-import {polygonMask} from '../../../common/main/maps/LeafletCommon';
+import {pointIcon, polygonMask} from '../../../common/main/maps/LeafletCommon';
 
 const containerHeight = 400;
 
 export class FootprintContainer extends Component {
 	constructor(props) {
 		super(props);
+		this.lastSelectedStation = {id: null};
+	}
+
+	componentDidUpdate(prevProps){
+		this.lastSelectedStation = prevProps.selectedStation
+			? prevProps.selectedStation
+			: this.lastSelectedStation;
 	}
 
 	render(){
@@ -30,15 +37,15 @@ export class FootprintContainer extends Component {
 						}}
 						countriesTopo={props.countriesTopo}
 						raster={props.raster}
-						selectedStation={props.selectedStation}
+						markers={getMarkers(props.selectedStation, props.showStationPosition)}
+						latLngBounds={getLatLngBounds(props.selectedStation, this.lastSelectedStation)}
 						colorMaker={colorMaker}
 						zoomToRaster={false}
-						showStationPos={props.showStationPosition}
 						renderCompleted={props.renderCompleted}
 						addMask={polygonMask}
 					/>
 				</div>
-				<div  style={{flex: '90px', minWidth:90}}>
+				<div  style={{flex: '94px', minWidth:94}}>
 					<NetCDFLegend
 						horizontal={false}
 						canvasWidth={20}
@@ -51,6 +58,23 @@ export class FootprintContainer extends Component {
 			</div>
 		);
 	}
+}
+
+function getMarkers(selectedStation, showStationPos){
+	var markers = [];
+
+	if (selectedStation && showStationPos){
+		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(6, 0, 'rgb(85,131,255)')));
+		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(3, 0, 'rgb(255,255,255)')));
+	}
+
+	return markers;
+}
+
+function getLatLngBounds(selectedStation, lastSelectedStation){
+	return selectedStation && selectedStation.id != lastSelectedStation.id
+		? L.latLngBounds([L.latLng(selectedStation.lat, selectedStation.lon)])
+		: null;
 }
 
 function stateToProps(state){

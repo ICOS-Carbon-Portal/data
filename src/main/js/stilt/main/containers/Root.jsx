@@ -7,13 +7,14 @@ import GraphsContainer from './GraphsContainer.jsx';
 
 
 const store = getStore();
+const marginTop = 10;
 
 export default class Root extends Component {
 	render() {
 		return <Provider store={store}>
 			<div>
 
-				<div className="row">
+				<div className="row" style={{marginTop}}>
 
 					<div className="col-md-4">
 						<FootprintContainer />
@@ -25,7 +26,7 @@ export default class Root extends Component {
 
 				</div>
 
-				<div className="row">
+				<div className="row" style={{marginTop}}>
 					<div className="col-md-12">
 						<GraphsContainer />
 					</div>

@@ -184,8 +184,7 @@ L.PolygonMask = L.Polygon.extend({
 			new L.LatLng(boundingBox.latMin, boundingBox.lonMin),
 			new L.LatLng(boundingBox.latMax, boundingBox.lonMin),
 			new L.LatLng(boundingBox.latMax, boundingBox.lonMax),
-			new L.LatLng(boundingBox.latMin, boundingBox.lonMax),
-			new L.LatLng(boundingBox.latMin, boundingBox.lonMin)
+			new L.LatLng(boundingBox.latMin, boundingBox.lonMax)
 		];
 		L.Polygon.prototype.initialize.call(this, [outerBoundsLatLngs, hole], options);
 	},

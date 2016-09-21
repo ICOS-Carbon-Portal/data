@@ -9,6 +9,7 @@ module.exports = function(arrayBuf){
 	var width = getHeaderValue(1);
 
 	return {
+		tstamp: Date.now(),
 		getValue: function(y, x){ //e.g. y for lat, x for lon
 			var i = (height - 1 - y) * width + x;
 			return data.getFloat64((i << 3) + 64, false);

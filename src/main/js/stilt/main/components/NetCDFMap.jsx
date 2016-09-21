@@ -5,12 +5,12 @@ import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
 import renderRaster from '../../../common/main/maps/renderRaster';
-import {pointIcon} from '../../../common/main/maps/LeafletCommon';
 
 export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
 		this.app = {
+			tstamp: null,
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
@@ -41,7 +41,6 @@ export default class NetCDFMap extends Component{
 	}
 
 	componentWillReceiveProps(nextProps){
-		const prevProps = this.props;
 		const app = this.app;
 
 		if (nextProps.countriesTopo && !app.countriesAdded){
@@ -49,35 +48,36 @@ export default class NetCDFMap extends Component{
 			app.countriesAdded = true;
 		}
 
-		const updatedRaster = nextProps.raster && (prevProps.raster !== nextProps.raster);
+		const updateRaster = nextProps.raster && nextProps.raster.tstamp !== this.app.tstamp;
 
-		if (updatedRaster) {
+		if (updateRaster) {
 			this.updateRasterCanvas(nextProps);
 			this.addMask(nextProps.raster);
 		}
 
-		if (updatedRaster || prevProps.showStationPos !== nextProps.showStationPos){
-			this.updatePosition(nextProps.selectedStation, nextProps.showStationPos);
-		}
+		this.updateMarkers(nextProps.markers);
+		this.panTo(nextProps.latLngBounds);
 	}
 
-	updatePosition(position, showStationPos){
+	updateMarkers(propMarkers){
 		const markers = this.app.markers;
 		markers.clearLayers();
 
-		if (position) {
-			if (showStationPos) {
-				markers.addLayer(L.circleMarker([position.lat, position.lon], pointIcon(6, 0, 'rgb(85,131,255)')));
-				markers.addLayer(L.circleMarker([position.lat, position.lon], pointIcon(3, 0, 'rgb(255,255,255)')));
-			}
+		if (propMarkers.length > 0){
+			propMarkers.forEach(marker => {
+				markers.addLayer(marker);
+			});
+		}
+	}
 
-			const map = this.app.map;
-			const mapBounds = map.getBounds();
-			const positionLatLng = L.latLng(position.lat, position.lon);
+	panTo(latLngBounds){
+		if (!latLngBounds) return;
 
-			if (!mapBounds.contains(positionLatLng)){
-				map.panTo(positionLatLng);
-			}
+		const map = this.app.map;
+		const mapBounds = map.getBounds();
+
+		if (!mapBounds.contains(latLngBounds.getCenter())){
+			map.panTo(latLngBounds.getCenter());
 		}
 	}
 
@@ -95,6 +95,7 @@ export default class NetCDFMap extends Component{
 		const raster = props.raster;
 		if(!raster) return;
 		const app = this.app;
+		app.tstamp = props.raster.tstamp;
 
 		app.rasterCanvas.width = raster.width;
 		app.rasterCanvas.height = raster.height;
