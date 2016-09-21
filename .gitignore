@@ -1,5 +1,4 @@
 /application.conf
-/sparql.query
 /fileStorage/
 *.class
 *.log
@@ -11,15 +10,9 @@ src/main/resources/portal.js
 src/main/resources/stilt.js
 
 # sbt specific
-.cache/
-.history/
-.lib/
-dist/*
 target/
-lib_managed/
-src_managed/
-project/boot/
-project/plugins/project/
+project/target/
+/views/target/
 
 # Scala-IDE specific
 .scala_dependencies
@@ -30,6 +23,8 @@ project/plugins/project/
 .cache-main
 .cache-tests
 /bin/
+/views/bin/
+/views/.gitignore
 
 nohup.out
 *.*~

@@ -11,7 +11,7 @@ const store = getStore();
 export default class Root extends Component {
 	render() {
 		return <Provider store={store}>
-			<div className="container-fluid">
+			<div>
 
 				<div className="row">
 

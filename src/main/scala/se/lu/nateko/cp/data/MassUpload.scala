@@ -2,6 +2,8 @@ package se.lu.nateko.cp.data
 
 import java.io.File
 import java.net.URI
+import java.net.URLEncoder
+import java.nio.file.Path
 
 import scala.collection.immutable.Seq
 import scala.concurrent.Future
@@ -29,7 +31,6 @@ import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams
-import java.net.URLEncoder
 
 object MassUpload extends CommonJsonSupport{
 
@@ -50,7 +51,9 @@ object MassUpload extends CommonJsonSupport{
 		specificInfo: Map[String, URI]
 	)
 
-	case class FileInfo(file: File, hash: Sha256Sum, stationName: String)
+	case class FileInfo(file: Path, hash: Sha256Sum, stationName: String){
+		def fileName: String = file.toFile.getName
+	}
 
 	implicit val system = ActorSystem("massUpload")
 	import system.dispatcher
@@ -68,24 +71,24 @@ object MassUpload extends CommonJsonSupport{
 	def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9094)
 	def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9010)
 	
-	val fileSource: Source[File, NotUsed] = {
+	val fileSource: Source[Path, NotUsed] = {
 		def getFiles(folder: File): Seq[File] = {
 			val children = Seq(folder.listFiles :_*)
 			children.filter(_.isFile) ++ children.filter(_.isDirectory).flatMap(getFiles)
 		}
-		Source(getFiles(new File(RootFolder)))
+		Source(getFiles(new File(RootFolder))).map(_.toPath)
 	}
 
-	val fileInfoSource: Source[FileInfo, NotUsed] = fileSource.mapAsyncUnordered(parall){file =>
-		val hashFut = FileIO.fromFile(file)
+	val fileInfoSource: Source[FileInfo, NotUsed] = fileSource.mapAsyncUnordered(parall){path =>
+		val hashFut = FileIO.fromPath(path)
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.to(Sink.ignore).run()
-		val headerFut = FileIO.fromFile(file)
+		val headerFut = FileIO.fromPath(path)
 			.via(TimeSeriesStreams.linesFromBinary)
 			.toMat(TimeSeriesStreams.wdcggHeaderSink)(Keep.right).run()
 		for(hash <- hashFut; header <- headerFut) yield {
 			val stationName = header("STATION NAME")
-			FileInfo(file, hash, stationName)
+			FileInfo(path, hash, stationName)
 		}
 	}
 
@@ -99,7 +102,7 @@ object MassUpload extends CommonJsonSupport{
 		.via(dataHttp)
 		.via(uploadResultControl)
 
-	val fileDumpingFlow: Flow[File, StepResult[File], NotUsed] = Flow[File]
+	val fileDumpingFlow: Flow[Path, StepResult[Path], NotUsed] = Flow[Path]
 		.map(fileDumping)
 		.via(dataHttp)
 		.via(uploadResultControl)
@@ -124,14 +127,14 @@ object MassUpload extends CommonJsonSupport{
 				case Success(pair) => cookie = pair
 			}
 
-	def dumpFiles = fileSource.via(fileDumpingFlow).runWith(resultLogger(f => s"Dumping ${f.getName}"))
+	def dumpFiles = fileSource.via(fileDumpingFlow).runWith(resultLogger(f => s"Dumping ${f.getFileName}"))
 
 	def submitFiles = fileInfoSource
 		.via(metaSubmittingFlow)
-		.alsoTo(resultLogger(f => s"Meta upload ${f.file.getName}"))
+		.alsoTo(resultLogger(f => s"Meta upload ${f.fileName}"))
 		.collect{case (fi, None) => fi}
 		.via(fileUploadingFlow)
-		.runWith(resultLogger(f => s"File upload ${f.file.getName}"))
+		.runWith(resultLogger(f => s"File upload ${f.fileName}"))
 
 	private def uploadResultControl[T]: Flow[(Try[HttpResponse], T), StepResult[T], NotUsed] = Flow[(Try[HttpResponse], T)]
 		.mapAsyncUnordered(parall){
@@ -158,7 +161,7 @@ object MassUpload extends CommonJsonSupport{
 		val meta = UploadMetadataDto(
 			hashSum = fileInfo.hash,
 			submitterId = "CP",
-			fileName = fileInfo.file.getName,
+			fileName = fileInfo.file.toFile.getName,
 			objectSpecification = ObjSpec,
 			specificInfo = Map("station" -> getWdcggStation(fileInfo.stationName))
 		)
@@ -175,8 +178,8 @@ object MassUpload extends CommonJsonSupport{
 			)}
 	}
 
-	private def fileUpload(file: File, pathSuffix: String): HttpRequest = {
-		val entity = HttpEntity(ContentTypes.`application/octet-stream`, FileIO.fromFile(file))
+	private def fileUpload(file: Path, pathSuffix: String): HttpRequest = {
+		val entity = HttpEntity(ContentTypes.`application/octet-stream`, FileIO.fromPath(file))
 		HttpRequest(
 			method = HttpMethods.PUT,
 			uri = Uri("/objects/" + pathSuffix),
@@ -188,6 +191,6 @@ object MassUpload extends CommonJsonSupport{
 	private def fileSubmission(fileInfo: FileInfo): (HttpRequest, FileInfo) =
 		(fileUpload(fileInfo.file, fileInfo.hash.id), fileInfo)
 
-	private def fileDumping(file: File): (HttpRequest, File) = (fileUpload(file, "dump"), file)
+	private def fileDumping(file: Path): (HttpRequest, Path) = (fileUpload(file, "dump"), file)
 
 }
