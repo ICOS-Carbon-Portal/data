@@ -7,7 +7,11 @@ export default class LMap extends Component{
 		super(props);
 		this.app = {
 			map: null,
-			markers: L.featureGroup()
+			markers: L.markerClusterGroup({
+				maxClusterRadius: function(zoom){
+					return 0.1;
+				}
+			})
 		}
 	}
 
@@ -45,13 +49,13 @@ export default class LMap extends Component{
 
 				const mapBounds = map.getBounds();
 				const selectedStationPosition = L.latLng(nextProps.selectedStation.lat, nextProps.selectedStation.lon);
-				const markerIcon = this.app.markers.getLayers()[0].options.icon;
+				const markerOptions = this.app.markers.getLayers()[0].options;
 				const markerPoint = map.latLngToLayerPoint(L.latLng(selectedStationPosition));
 				const markerBoundaryLL = map.layerPointToLatLng(
-					L.point(markerPoint.x - markerIcon.options.iconSize[0] / 2, markerPoint.y)
+					L.point(markerPoint.x - markerOptions.radius, markerPoint.y)
 				);
 				const markerBoundaryUR = map.layerPointToLatLng(
-					L.point(markerPoint.x + markerIcon.options.iconSize[0] / 2, markerPoint.y - markerIcon.options.iconSize[1])
+					L.point(markerPoint.x + markerOptions.radius, markerPoint.y)
 				);
 				const selectedStationBounds = L.latLngBounds(markerBoundaryLL, markerBoundaryUR);
 
@@ -65,27 +69,29 @@ export default class LMap extends Component{
 	buildMarkers(geoms, action, selectedStation){
 		const markers = this.app.markers;
 		markers.clearLayers();
+		// markers.addLayer(L.circleMarker([55, 8], LCommon.pointIcon(6, 1, 'rgb(255,100,100)', 'black')));
+		// markers.addLayer(L.circleMarker([55, 8], LCommon.pointIcon(6, 1, 'rgb(255,100,100)', 'black')));
 
-		geoms.forEach(geom => {
-			const marker = selectedStation != undefined && selectedStation.id === geom.id
-				? L.marker([geom.lat, geom.lon], {icon: LCommon.wdcggIconHighlight})
-				: L.marker([geom.lat, geom.lon], {icon: LCommon.wdcggIcon});
+		//First all non selected
+		geoms.filter(geom => !selectedStation || geom.id != selectedStation.id).forEach(geom => {
+			const marker = L.circleMarker([geom.lat, geom.lon], LCommon.pointIcon(6, 1, 'rgb(255,100,100)', 'black'));
 
-			marker.bindPopup(LCommon.popupHeader(geom.name));
-
-			marker.on('mouseover', function (e) {
-				this.openPopup();
-			});
-			marker.on('mouseout', function (e) {
-				this.closePopup();
-			});
-
-			marker.on('click', function(){
-				action(geom);
-			});
+			addPopup(marker, geom.name + " (" + geom.id + ")", {offset:[0,0], closeButton: false});
+			addEvents(marker, action, geom);
 
 			markers.addLayer(marker);
 		});
+
+		//Then the selected
+		const selected = geoms.find(geom => selectedStation && geom.id == selectedStation.id);
+		if (selected){
+			const marker = L.circleMarker([selected.lat, selected.lon], LCommon.pointIcon(8, 6));
+
+			addPopup(marker, selected.name + " (" + selected.id + ")", {offset:[0,0], closeButton: false});
+			addEvents(marker, action, selected);
+
+			markers.addLayer(marker);
+		}
 	}
 
 	shouldComponentUpdate(){
@@ -102,4 +108,21 @@ export default class LMap extends Component{
 			<div ref='map' style={{width: '100%', height: '100%', display: 'block', border: '1px solid darkgrey'}}></div>
 		);
 	}
+}
+
+function addPopup(marker, text, options){
+	marker.bindPopup(LCommon.popupHeader(text), options);
+}
+
+function addEvents(marker, action, geom){
+	marker.on('mouseover', function (e) {
+		this.openPopup();
+	});
+	marker.on('mouseout', function (e) {
+		this.closePopup();
+	});
+
+	marker.on('click', function(){
+		action(geom);
+	});
 }
