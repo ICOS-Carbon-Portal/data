@@ -69,7 +69,8 @@ function getStationInfo(){
 }
 
 export function getRaster(stationId, filename){
-	return getBinRaster('footprint', ['stationId', stationId], ['footprint', filename]);
+	const id = stationId + filename;
+	return getBinRaster(id, 'footprint', ['stationId', stationId], ['footprint', filename]);
 }
 
 export function getStationData(stationId, year, dataObjectInfo, wdcggFormat){

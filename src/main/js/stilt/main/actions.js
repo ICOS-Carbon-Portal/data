@@ -92,11 +92,14 @@ export const setDateRange = dateRange => (dispatch, getState) => {
 const fetchFootprint = (dispatch, getState) => {
 	const state = getState();
 	const desired = state.desiredFootprint;
+	if(!desired) return;
 
-	if(!desired || state.footprint && desired.date == state.footprint.date) {
+	if(state.footprint && desired.date == state.footprint.date) {
+//		console.log('footprint already there, will increment if needed');
 		dispatch(incrementIfNeeded);
 	} else state.footprintsFetcher.fetch(desired).then(
 		raster => {
+			//console.log('fetched ', desired);
 			dispatch({
 				type: FETCHED_RASTER,
 				footprint: desired,
@@ -126,8 +129,16 @@ export const incrementFootprint = increment => dispatch => {
 }
 
 export const incrementIfNeeded = (dispatch, getState) => {
+//	var ts = Date.now();
+//	console.log('will increment in 5 ms after', ts);
+
 	setTimeout(() => {
-		if(getState().playingMovie) dispatch(incrementFootprint(1));
+		if(getState().playingMovie) {
+//			console.log('incrementing after ', ts);
+			dispatch(incrementFootprint(1));
+		} else {
+//			console.log('not incrementing after ', ts);
+		}
 	}, 5); //a tiny delay in hope to improve interface's responsiveness
 }
 

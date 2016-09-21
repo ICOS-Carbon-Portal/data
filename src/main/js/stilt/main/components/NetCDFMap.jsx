@@ -10,7 +10,7 @@ export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
 		this.app = {
-			tstamp: null,
+			rasterId: null,
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
@@ -48,7 +48,9 @@ export default class NetCDFMap extends Component{
 			app.countriesAdded = true;
 		}
 
-		const updateRaster = nextProps.raster && nextProps.raster.tstamp !== this.app.tstamp;
+		const updateRaster = nextProps.raster && nextProps.raster.id !== app.rasterId;
+
+//		console.log('raster will be updated:', updateRaster, nextProps.raster);
 
 		if (updateRaster) {
 			this.updateRasterCanvas(nextProps);
@@ -95,7 +97,7 @@ export default class NetCDFMap extends Component{
 		const raster = props.raster;
 		if(!raster) return;
 		const app = this.app;
-		app.tstamp = props.raster.tstamp;
+		app.rasterId = props.raster.id;
 
 		app.rasterCanvas.width = raster.width;
 		app.rasterCanvas.height = raster.height;
@@ -110,6 +112,7 @@ export default class NetCDFMap extends Component{
 		}
 
 		if(props.renderCompleted){ //callback has been provided
+			//console.log('calling renderCompleted()');
 			props.renderCompleted();
 		}
 	}

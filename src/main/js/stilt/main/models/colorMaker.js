@@ -5,13 +5,15 @@ const zero = [255, 255, 255, 0];
 const low = [255, 255, 178, 255];
 const medium = [253, 141, 60, 255];
 const high = [189, 0, 38, 255];
+const veryHigh = [0, 0, 0, 255];
 
-const logDomain = [-6, -5, -2.5, 0];
+const logDomain = [-5, -4, -2.5, -1, 0];
+const minValue = Math.pow(10, logDomain[0]);
 
-const color = rgbaInterpolation(logDomain, [zero, low, medium, high]);
+const color = rgbaInterpolation(logDomain, [zero, low, medium, high, veryHigh]);
 
 export default function colorMaker(value) {
-	return value == 0 ? zero : color(Math.log10(value));
+	return value <= minValue ? zero : color(Math.log10(value));
 }
 
 export function getLegend(pixelMin, pixelMax){

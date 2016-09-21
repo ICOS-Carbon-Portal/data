@@ -3,7 +3,7 @@ import {checkStatus, getUrlQuery} from './fetchHelp';
 import BinRaster from '../dataformats/BinRaster';
 
 
-export function getBinRaster(url, ...keyValues){
+export function getBinRaster(id, url, ...keyValues){
 	return fetch(url + getUrlQuery(keyValues), {
 			headers: {
 				'Accept': 'application/octet-stream'
@@ -12,7 +12,7 @@ export function getBinRaster(url, ...keyValues){
 		.then(checkStatus)
 		.then(response => response.arrayBuffer())
 		.then(response => {
-			return new BinRaster(response);
+			return new BinRaster(response, id);
 		});
 }
 

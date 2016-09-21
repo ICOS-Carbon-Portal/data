@@ -12,16 +12,11 @@ export default function(props){
 	}
 
 	const toStringValue = value => props.presenter ? props.presenter(value) : value;
-	const noValue = "49djs8fjsal38t";
-	const current = toStringValue(props.value) || noValue;
+	const stringValues = [props.infoTxt].concat((props.availableValues || []).map(toStringValue));
+	const current = toStringValue(props.value) || props.infoTxt;
 
-	return <select value={current} className="form-control" onChange={changeHandler} {...props.options}>
-		<option value={noValue}>{props.infoTxt}</option>
-		{
-			(props.availableValues || []).map(toStringValue).map(
-				value => <option key={value} value={value}>{value}</option>
-			)
-		}
-	</select>;
+	return <select value={current} className="form-control" onChange={changeHandler} {...props.options}>{
+		stringValues.map(sv => <option key={sv} value={sv}>{sv}</option>)
+	}</select>;
 }
 
