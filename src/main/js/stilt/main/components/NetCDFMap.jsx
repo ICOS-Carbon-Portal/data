@@ -16,7 +16,8 @@ export default class NetCDFMap extends Component{
 			rasterCanvas: document.createElement('canvas'),
 			canvasTiles: L.tileLayer.canvas(),
 			markers: L.featureGroup(),
-			maskHole: null
+			maskHole: null,
+			maskHoleVisible: false
 		};
 	}
 
@@ -48,9 +49,9 @@ export default class NetCDFMap extends Component{
 			app.countriesAdded = true;
 		}
 
-		const updateRaster = nextProps.raster && nextProps.raster.id !== app.rasterId;
+		this.reset(nextProps.reset);
 
-//		console.log('raster will be updated:', updateRaster, nextProps.raster);
+		const updateRaster = nextProps.raster && nextProps.raster.id !== app.rasterId;
 
 		if (updateRaster) {
 			this.updateRasterCanvas(nextProps);
@@ -59,6 +60,21 @@ export default class NetCDFMap extends Component{
 
 		this.updateMarkers(nextProps.markers);
 		this.panTo(nextProps.latLngBounds);
+	}
+
+	reset(reset){
+		if (reset) {
+			const app = this.app;
+			const ctx = app.rasterCanvas.getContext('2d');
+
+			ctx.clearRect(0, 0, app.rasterCanvas.width, app.rasterCanvas.height);
+			app.canvasTiles.redraw();
+
+			if (app.maskHole) app.map.removeLayer(app.maskHole);
+			app.maskHoleVisible = false;
+
+			app.markers.clearLayers();
+		}
 	}
 
 	updateMarkers(propMarkers){
@@ -87,10 +103,11 @@ export default class NetCDFMap extends Component{
 		const props = this.props;
 		const app = this.app;
 
-		if(!props.addMask || !raster || (app.maskHole && app.maskHole.isIdentical(raster.boundingBox))) return;
+		if(!props.addMask || !raster || (app.maskHole && app.maskHoleVisible && app.maskHole.isIdentical(raster.boundingBox))) return;
 
 		app.maskHole = props.addMask(raster.boundingBox);
 		app.maskHole.addTo(app.map);
+		app.maskHoleVisible = true;
 	}
 
 	updateRasterCanvas(props){

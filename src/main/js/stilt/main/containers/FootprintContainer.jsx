@@ -39,6 +39,7 @@ export class FootprintContainer extends Component {
 						raster={props.raster}
 						markers={getMarkers(props.selectedStation, props.showStationPosition)}
 						latLngBounds={getLatLngBounds(props.selectedStation, this.lastSelectedStation)}
+						reset={doReset(props.selectedStation, this.lastSelectedStation, props.raster)}
 						colorMaker={colorMaker}
 						zoomToRaster={false}
 						renderCompleted={props.renderCompleted}
@@ -69,6 +70,10 @@ function getMarkers(selectedStation, showStationPos){
 	}
 
 	return markers;
+}
+
+function doReset(selectedStation, lastSelectedStation, raster){
+	return !!(selectedStation && selectedStation.id != lastSelectedStation.id && !raster);
 }
 
 function getLatLngBounds(selectedStation, lastSelectedStation){
