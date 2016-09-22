@@ -47,6 +47,7 @@ function yearInfoToLabel(info){
 
 const StationAndYearSelector = ({selectYear, selectStation, selectedYear, selectedStation, stations}) => {
 	const yearInfos = selectedStation ? selectedStation.years : [];
+	const yearsDisabled = !yearInfos.length;
 
 	return <div className="row">
 		<div className="col-md-6">
@@ -61,10 +62,11 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 		<div className="col-md-6">
 			<Select
 				selectValue={selectYear}
-				infoTxt="Select year"
+				infoTxt={yearsDisabled ? "Select station first" : "Select year"}
 				availableValues={yearInfos}
 				value={selectedYear}
 				presenter={yearInfoToLabel}
+				options={{disabled: yearsDisabled}}
 			/>
 		</div>
 	</div>;

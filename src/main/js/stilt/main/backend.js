@@ -44,23 +44,23 @@ function getStationInfo(){
 				(!year || stationYears[id].indexOf(year) >= 0)
 		);
 
-		const byId = groupBy(flatInfo, info => info.id, info => info);
+		const byId = groupBy(flatInfo, info => info.id);
 
 		return Object.keys(byId).map(id => {
 			const dataObjs = byId[id];
 
 			const byYear = groupBy(
 				dataObjs.filter(dobj => dobj.year),
-				dobj => dobj.year,
-				i => i
+				dobj => dobj.year
 			);
 
 			const years = stationYears[id].sort().map(year => {
-				const dobjs = byYear[year];
-				const dataObject = dobjs
-					? {id: dobjs[0].dobj, nRows: dobjs[0].nRows}
-					: undefined;
-				return {year, dataObject};
+
+				const dobjs = (byYear[year] || [])
+					.map(({dobj, nRows}) => {return {id: dobj, nRows};})
+					.sort((do1, do2) => do2.nRows - do1.nRows); //by number of points, descending
+
+				return {year, dataObject: dobjs[0]};//picking the observation with largest number of points
 			});
 
 			return Object.assign(copyprops(dataObjs[0], ['id', 'name', 'lat', 'lon']), {years});

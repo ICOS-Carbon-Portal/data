@@ -25,7 +25,7 @@ export default function(state, action){
 				selectedStation: station,
 				selectedYear: station.years.length == 1
 					? station.years[0]
-					: null
+					: station.years.find(({year}) => state.selectedYear && state.selectedYear.year == year)
 			});
 
 		case SET_SELECTED_YEAR:
