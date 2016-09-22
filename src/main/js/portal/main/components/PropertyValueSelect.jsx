@@ -50,7 +50,7 @@ class PropertyValueSelect extends Component {
 function makeValueLabels(valueCounts, filter){
 	if(!valueCounts) return [
 		[{value: null, label: "(None)"}],
-		null
+		undefined
 	];
 
 	const valLabels = valueCounts.map(({value, count}) => {
@@ -65,7 +65,7 @@ function makeValueLabels(valueCounts, filter){
 		const longSummary = valLabels.slice(0, 40).map(vl => vl.label).join(' | ');
 		const summary = longSummary.length < 200 ? longSummary : longSummary.substring(0, 196) + " ...";
 		const finalValLabels = [{value: null, label: summary}].concat(valLabels);
-		return [finalValLabels, null];
+		return [finalValLabels, undefined];
 	}
 }
 
