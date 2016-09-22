@@ -12,3 +12,9 @@ export function ensureDelay(innerPromise, delay){
 	return Promise.all([innerPromise, delayed]).then(([inner,]) => inner);
 }
 
+export function retryPromise(promiseFactory, count){
+	return count <= 0
+		? promiseFactory()
+		: promiseFactory().catch(() => retryPromise(promiseFactory, count - 1));
+}
+

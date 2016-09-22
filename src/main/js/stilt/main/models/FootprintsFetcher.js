@@ -1,5 +1,5 @@
 import {getRaster} from '../backend';
-import {ensureDelay} from '../../../common/main/general/promiseUtils';
+import {ensureDelay, retryPromise} from '../../../common/main/general/promiseUtils';
 import config from '../config';
 
 const defaultCacheSize = 5;
@@ -38,7 +38,7 @@ export default class FootprintsFetcher{
 	}
 
 	fetchPlainly(footprint){
-		return getRaster(this._stationId, footprint.filename);
+		return retryPromise(getRaster.bind(null, this._stationId, footprint.filename), 5);
 	}
 
 	fetch(footprint){
