@@ -10,7 +10,8 @@ export default class LMap extends Component{
 			markers: L.markerClusterGroup({
 				maxClusterRadius: function(zoom){
 					return 0.1;
-				}
+				},
+				spiderfyDistanceMultiplier: 1.8
 			})
 		}
 	}
@@ -69,8 +70,6 @@ export default class LMap extends Component{
 	buildMarkers(geoms, action, selectedStation){
 		const markers = this.app.markers;
 		markers.clearLayers();
-		// markers.addLayer(L.circleMarker([55, 8], LCommon.pointIcon(6, 1, 'rgb(255,100,100)', 'black')));
-		// markers.addLayer(L.circleMarker([55, 8], LCommon.pointIcon(6, 1, 'rgb(255,100,100)', 'black')));
 
 		//First all non selected
 		geoms.filter(geom => !selectedStation || geom.id != selectedStation.id).forEach(geom => {
@@ -85,7 +84,7 @@ export default class LMap extends Component{
 		//Then the selected
 		const selected = geoms.find(geom => selectedStation && geom.id == selectedStation.id);
 		if (selected){
-			const marker = L.circleMarker([selected.lat, selected.lon], LCommon.pointIcon(8, 6));
+			const marker = L.circleMarker([selected.lat, selected.lon], LCommon.pointIcon(8, 1, 'rgb(85,131,255)', 'black'));
 
 			addPopup(marker, selected.name + " (" + selected.id + ")", {offset:[0,0], closeButton: false});
 			addEvents(marker, action, selected);

@@ -81,11 +81,9 @@ export default class NetCDFMap extends Component{
 		const markers = this.app.markers;
 		markers.clearLayers();
 
-		if (propMarkers.length > 0){
-			propMarkers.forEach(marker => {
-				markers.addLayer(marker);
-			});
-		}
+		propMarkers.forEach(marker => {
+			markers.addLayer(marker);
+		});
 	}
 
 	panTo(latLngBounds){

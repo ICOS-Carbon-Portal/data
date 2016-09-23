@@ -65,8 +65,7 @@ function getMarkers(selectedStation, showStationPos){
 	var markers = [];
 
 	if (selectedStation && showStationPos){
-		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(6, 0, 'rgb(85,131,255)')));
-		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(3, 0, 'rgb(255,255,255)')));
+		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(5, 1, 'rgb(85,131,255)', 'black')));
 	}
 
 	return markers;
