@@ -10,21 +10,18 @@ import {pointIcon, polygonMask} from '../../../common/main/maps/LeafletCommon';
 
 const containerHeight = 400;
 
-export class FootprintContainer extends Component {
+class FootprintContainer extends Component {
 	constructor(props) {
 		super(props);
 		this.lastSelectedStation = {id: null};
 	}
 
 	componentDidUpdate(prevProps){
-		this.lastSelectedStation = prevProps.selectedStation
-			? prevProps.selectedStation
-			: this.lastSelectedStation;
+		this.lastSelectedStation = prevProps.selectedStation | this.lastSelectedStation;
 	}
 
 	render(){
 		const props = this.props;
-
 		return(
 			<div ref="container" style={{display:'flex'}}>
 				<div style={{height: containerHeight, flex: 100}}>

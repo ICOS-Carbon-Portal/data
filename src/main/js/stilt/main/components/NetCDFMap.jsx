@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom';
 import TileMappingHelper, {getTileCoordBbox} from '../../../common/main/geometry/TileMappingHelper';
 import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
-import {addTopoGeoJson} from '../../../common/main/maps/LeafletCommon';
 import renderRaster from '../../../common/main/maps/renderRaster';
 
 export default class NetCDFMap extends Component{
@@ -16,13 +15,15 @@ export default class NetCDFMap extends Component{
 			rasterCanvas: document.createElement('canvas'),
 			canvasTiles: L.tileLayer.canvas(),
 			markers: L.featureGroup(),
+			countries: new L.GeoJSON(),
 			maskHole: null,
 			maskHoleVisible: false
 		};
 	}
 
 	componentDidMount() {
-		const map = this.app.map = L.map(
+		const app = this.app;
+		const map = app.map = L.map(
 			ReactDOM.findDOMNode(this.refs.map),
 			Object.assign({
 				attributionControl: false,
@@ -35,9 +36,9 @@ export default class NetCDFMap extends Component{
 			}, this.props.mapOptions)
 		);
 
-		map.addLayer(this.app.markers);
-		this.app.canvasTiles.drawTile = drawTile.bind(this.app);
-		map.addLayer(this.app.canvasTiles);
+		app.canvasTiles.drawTile = drawTile.bind(app);
+		map.addLayer(app.canvasTiles);
+		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
 	}
 
@@ -45,11 +46,13 @@ export default class NetCDFMap extends Component{
 		const app = this.app;
 
 		if (nextProps.countriesTopo && !app.countriesAdded){
-			addTopoGeoJson(app.map, nextProps.countriesTopo);
+			app.countries.addData(nextProps.countriesTopo);
+			app.countries.setStyle({fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1});
+			app.map.addLayer(app.countries);
 			app.countriesAdded = true;
 		}
 
-		this.reset(nextProps.reset);
+		if(nextProps.reset) this.reset();
 
 		const updateRaster = nextProps.raster && nextProps.raster.id !== app.rasterId;
 
@@ -62,19 +65,17 @@ export default class NetCDFMap extends Component{
 		this.panTo(nextProps.latLngBounds);
 	}
 
-	reset(reset){
-		if (reset) {
-			const app = this.app;
-			const ctx = app.rasterCanvas.getContext('2d');
+	reset(){
+		const app = this.app;
+		const ctx = app.rasterCanvas.getContext('2d');
 
-			ctx.clearRect(0, 0, app.rasterCanvas.width, app.rasterCanvas.height);
-			app.canvasTiles.redraw();
+		ctx.clearRect(0, 0, app.rasterCanvas.width, app.rasterCanvas.height);
+		app.canvasTiles.redraw();
 
-			if (app.maskHole) app.map.removeLayer(app.maskHole);
-			app.maskHoleVisible = false;
+		if (app.maskHole) app.map.removeLayer(app.maskHole);
+		app.maskHoleVisible = false;
 
-			app.markers.clearLayers();
-		}
+		app.markers.clearLayers();
 	}
 
 	updateMarkers(propMarkers){

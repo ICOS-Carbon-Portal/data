@@ -9,6 +9,7 @@ import {stationInfoQuery} from './sparqlQueries';
 import groupBy from '../../common/main/general/groupBy';
 import copyprops from '../../common/main/general/copyprops';
 import distinct from '../../common/main/general/distinct';
+import {feature} from 'topojson';
 
 //import * as sparqlQueries from './sparqlQueries';
 import config from './config';
@@ -17,8 +18,13 @@ export function getInitialData(){
 	return Promise.all([
 		tableFormatForSpecies(config.wdcggSpec),
 		getStationInfo(),
-		getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
+		getCountriesGeoJson()
 	]).then(([wdcggFormat, stations, countriesTopo]) => {return {wdcggFormat, stations, countriesTopo};});
+}
+
+function getCountriesGeoJson(){
+	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
+		.then(topo => feature(topo, topo.objects.countries));
 }
 
 function getStationInfo(){

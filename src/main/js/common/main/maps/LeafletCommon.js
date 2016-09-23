@@ -62,35 +62,6 @@ export function pointIconExcluded2() {
 	}
 };
 
-export function addTopoGeoJson(map, topoGeoJson, style){
-	if (!L.TopoJSON) {
-		L.TopoJSON = L.GeoJSON.extend({
-			addData: function (jsonData) {
-				const self = this;
-
-				if (jsonData.type === "Topology") {
-					Object.keys(jsonData.objects).forEach(key => {
-						const geoJson = topojson.feature(jsonData, jsonData.objects[key]);
-						L.GeoJSON.prototype.addData.call(self, geoJson);
-					});
-				}
-				else {
-					L.GeoJSON.prototype.addData.call(self, jsonData);
-				}
-			}
-		});
-	}
-
-	const countryStyle = style
-		? style
-		: {fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1};
-
-	const countries = new L.TopoJSON();
-	countries.addData(topoGeoJson);
-	countries.setStyle(countryStyle);
-	countries.addTo(map);
-}
-
 export function popupHeader(txt){
 	const div = document.createElement('div');
 
