@@ -38,7 +38,6 @@ class FootprintContainer extends Component {
 						latLngBounds={getLatLngBounds(props.selectedStation, this.lastSelectedStation)}
 						reset={doReset(props.selectedStation, this.lastSelectedStation, props.raster)}
 						colorMaker={colorMaker}
-						zoomToRaster={false}
 						renderCompleted={props.renderCompleted}
 						addMask={polygonMask}
 					/>

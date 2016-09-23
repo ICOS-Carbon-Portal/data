@@ -8,12 +8,13 @@ import renderRaster from '../../../common/main/maps/renderRaster';
 export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
+		const NetCdfLayer = getNetCdfLayer(this);
 		this.app = {
 			rasterId: null,
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
-			canvasTiles: L.tileLayer.canvas(),
+			canvasTiles: new NetCdfLayer(),
 			markers: L.featureGroup(),
 			countries: new L.GeoJSON(),
 			maskHole: null,
@@ -36,10 +37,15 @@ export default class NetCDFMap extends Component{
 			}, this.props.mapOptions)
 		);
 
-		app.canvasTiles.drawTile = drawTile.bind(app);
 		map.addLayer(app.canvasTiles);
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
+		const self = this;
+		app.canvasTiles.on('load', () => {
+			if(self.props.renderCompleted){ //callback has been provided
+				self.props.renderCompleted();
+			}
+		});
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -52,17 +58,16 @@ export default class NetCDFMap extends Component{
 			app.countriesAdded = true;
 		}
 
-		if(nextProps.reset) this.reset();
-
-		const updateRaster = nextProps.raster && nextProps.raster.id !== app.rasterId;
-
-		if (updateRaster) {
+		if (nextProps.raster && nextProps.raster.id !== app.rasterId) {
 			this.updateRasterCanvas(nextProps);
-			this.addMask(nextProps.raster);
 		}
 
-		this.updateMarkers(nextProps.markers);
-		this.panTo(nextProps.latLngBounds);
+		if(nextProps.reset) {
+			this.reset();
+			this.panTo(nextProps.latLngBounds);
+			this.updateMarkers(nextProps.markers);
+			this.addMask(nextProps.raster);
+		}
 	}
 
 	reset(){
@@ -121,16 +126,6 @@ export default class NetCDFMap extends Component{
 		renderRaster(app.rasterCanvas, raster, props.colorMaker);
 		app.tileHelper = getTileHelper(raster);
 		app.canvasTiles.redraw();
-
-		if(props.zoomToRaster) {
-			const {xmin, xmax, ymin, ymax} = this.app.tileHelper.getRebasedDatasetBox();
-			this.app.map.fitBounds([[ymin, xmin], [ymax, xmax]]);
-		}
-
-		if(props.renderCompleted){ //callback has been provided
-			//console.log('calling renderCompleted()');
-			props.renderCompleted();
-		}
 	}
 
 	shouldComponentUpdate(){
@@ -157,18 +152,15 @@ function getTileHelper(raster){
 	return new TileMappingHelper(dsMapping, worldBox);
 }
 
-/* Must be bound to the NetCDFMap.app object*/
-function drawTile(canvas, tilePoint, zoom) {
-	const {tileHelper, rasterCanvas} = this;
+function drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper) {
 	if(!tileHelper) return;
 
-	const ctx = canvas.getContext('2d');
-
-	const tileCoords = getTileCoordBbox(tilePoint, zoom);
-	const tilePixels = new Bbox(0, 0, canvas.width, canvas.height);
+	const tileCoords = getTileCoordBbox(tilePoint);
+	const tilePixels = new Bbox(0, 0, tileCanvas.width, tileCanvas.height);
 	const tileMapping = new BboxMapping(tileCoords, tilePixels);
 	const pixelMaps = tileHelper.getCoordinateMappings(tileMapping);
 
+	const ctx = tileCanvas.getContext('2d');
 	ctx.mozImageSmoothingEnabled = false;
 	ctx.msImageSmoothingEnabled = false;
 	ctx.imageSmoothingEnabled = false;
@@ -181,10 +173,27 @@ function drawTile(canvas, tilePoint, zoom) {
 			m.from.xRange,
 			m.from.yRange,
 			m.to.xmin,
-			canvas.height - m.to.ymax,
+			tileCanvas.height - m.to.ymax,
 			m.to.xRange,
 			m.to.yRange
 		);
+	});
+}
+
+function getNetCdfLayer(netcdfmap){
+	return L.GridLayer.extend({
+		createTile: function(tilePoint){
+
+			const tileCanvas = L.DomUtil.create('canvas', 'leaflet-tile');
+			const size = this.getTileSize();
+			tileCanvas.width = size.x;
+			tileCanvas.height = size.y;
+
+			const {rasterCanvas, tileHelper} = netcdfmap.app;
+			drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper);
+
+			return tileCanvas;
+		}
 	});
 }
 

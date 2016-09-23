@@ -23,10 +23,11 @@ export default class TileMappingHelper{
 
 }
 
-export function getTileCoordBbox(tilePoint, zoom){
+export function getTileCoordBbox(tilePoint){
 
-	const tilePoint2Lon = tileNum => tileNum / Math.pow(2, zoom) * 360 - 180;
-	const tilePoint2Lat = tileNum => - tilePoint2Lon(tileNum);
+	const step = 180 / Math.pow(2, tilePoint.z);
+	const tilePoint2Lon = tileNum => tileNum*step - 180;
+	const tilePoint2Lat = tileNum => 90 - tileNum*step;
 
 	const latMax = tilePoint2Lat(tilePoint.y);
 	const latMin = tilePoint2Lat(tilePoint.y + 1);
