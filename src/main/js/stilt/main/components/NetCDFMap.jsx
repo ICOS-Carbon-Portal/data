@@ -8,18 +8,18 @@ import renderRaster from '../../../common/main/maps/renderRaster';
 export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
-		const NetCdfLayer = getNetCdfLayer(this);
 		this.app = {
 			rasterId: null,
 			countriesAdded: false,
 			map: null,
 			rasterCanvas: document.createElement('canvas'),
-			canvasTiles: new NetCdfLayer(),
 			markers: L.featureGroup(),
 			countries: new L.GeoJSON(),
 			maskHole: null,
 			maskHoleVisible: false
 		};
+		const NetCdfLayer = getNetCdfLayer(this.app);
+		this.app.canvasTiles = new NetCdfLayer();
 	}
 
 	componentDidMount() {
@@ -40,12 +40,6 @@ export default class NetCDFMap extends Component{
 		map.addLayer(app.canvasTiles);
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
-		const self = this;
-		app.canvasTiles.on('load', () => {
-			if(self.props.renderCompleted){ //callback has been provided
-				self.props.renderCompleted();
-			}
-		});
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -125,7 +119,8 @@ export default class NetCDFMap extends Component{
 
 		renderRaster(app.rasterCanvas, raster, props.colorMaker);
 		app.tileHelper = getTileHelper(raster);
-		app.canvasTiles.redraw();
+		app.canvasTiles.refreshTiles();
+		if(props.renderCompleted) props.renderCompleted();
 	}
 
 	shouldComponentUpdate(){
@@ -180,17 +175,33 @@ function drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper) {
 	});
 }
 
-function getNetCdfLayer(netcdfmap){
-	return L.GridLayer.extend({
-		createTile: function(tilePoint){
+function getNetCdfLayer(rasterCanvasAndTileHelper){
 
+	function drawTileCanvas(tileCanvas, tilePoint){
+		const {rasterCanvas, tileHelper} = rasterCanvasAndTileHelper;
+		drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper);
+	}
+
+	return L.GridLayer.extend({
+
+		refreshTiles: function(){
+			const tiles = this._tiles;
+
+			Object.keys(tiles).forEach(key => {
+				const tile = tiles[key];
+				tile.el.getContext('2d').clearRect(0, 0, tile.el.width, tile.el.height);
+				drawTileCanvas(tile.el, tile.coords);
+			});
+		},
+
+		createTile: function(tilePoint){
 			const tileCanvas = L.DomUtil.create('canvas', 'leaflet-tile');
+
 			const size = this.getTileSize();
 			tileCanvas.width = size.x;
 			tileCanvas.height = size.y;
 
-			const {rasterCanvas, tileHelper} = netcdfmap.app;
-			drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper);
+			drawTileCanvas(tileCanvas, tilePoint);
 
 			return tileCanvas;
 		}
