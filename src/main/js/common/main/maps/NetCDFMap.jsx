@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import TileMappingHelper, {getTileCoordBbox} from '../../../common/main/geometry/TileMappingHelper';
-import Bbox from '../../../common/main/geometry/Bbox';
-import BboxMapping from '../../../common/main/geometry/BboxMapping';
-import renderRaster from '../../../common/main/maps/renderRaster';
+import TileMappingHelper, {getTileCoordBbox} from '../geometry/TileMappingHelper';
+import Bbox from '../geometry/Bbox';
+import BboxMapping from '../geometry/BboxMapping';
+import renderRaster from './renderRaster';
 
 /*
  Incoming props
