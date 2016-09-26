@@ -17,7 +17,7 @@ class FootprintContainer extends Component {
 	}
 
 	componentDidUpdate(prevProps){
-		this.lastSelectedStation = prevProps.selectedStation | this.lastSelectedStation;
+		this.lastSelectedStation = prevProps.selectedStation || this.lastSelectedStation;
 	}
 
 	render(){
@@ -32,14 +32,14 @@ class FootprintContainer extends Component {
 							center: [53, 10],
 							zoom: 3
 						}}
-						countriesTopo={props.countriesTopo}
+						geoJson={props.countriesTopo}
 						raster={props.raster}
 						markers={getMarkers(props.selectedStation, props.showStationPosition)}
 						latLngBounds={getLatLngBounds(props.selectedStation, this.lastSelectedStation)}
 						reset={doReset(props.selectedStation, this.lastSelectedStation, props.raster)}
 						colorMaker={colorMaker}
 						renderCompleted={props.renderCompleted}
-						addMask={polygonMask}
+						mask={polygonMask}
 					/>
 				</div>
 				<div  style={{flex: '94px', minWidth:94}}>

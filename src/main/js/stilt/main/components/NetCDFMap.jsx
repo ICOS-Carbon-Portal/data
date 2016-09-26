@@ -5,6 +5,20 @@ import Bbox from '../../../common/main/geometry/Bbox';
 import BboxMapping from '../../../common/main/geometry/BboxMapping';
 import renderRaster from '../../../common/main/maps/renderRaster';
 
+/*
+ Incoming props
+ mapHeight: REQUIRED (Number) - Height in pixels of map
+ mapOptions: OPTIONAL (Object) - Override options for Leaflet in componentDidMount
+ geoJson: OPTIONAL (Leaflet GeoJSON object or an array of GeoJSON objects) - Display GeoJSON layer in map, usually a country layer
+ raster: REQUIRED (BinRaster) - Raster data to show in map
+ markers: OPTIONAL ([Leaflet Layer]) - Marker symbols to be displayed in map. Marker symbols must be able to be added to a Leaflet featureGroup
+ latLngBounds: OPTIONAL (L.latLngBounds) - If included, map will pan to center point of bounds
+ reset: OPTIONAL (Boolean) - If true, map will clear canvas, mask and markers
+ colorMaker: REQUIRED (colorMaker) - Defines what colors the raster gets
+ renderCompleted: OPTIONAL (function) - What to do when canvas rendering is completed
+ mask: OPTIONAL (polygonMask) - Display mask showing extent
+ */
+
 export default class NetCDFMap extends Component{
 	constructor(props){
 		super(props);
@@ -45,8 +59,8 @@ export default class NetCDFMap extends Component{
 	componentWillReceiveProps(nextProps){
 		const app = this.app;
 
-		if (nextProps.countriesTopo && !app.countriesAdded){
-			app.countries.addData(nextProps.countriesTopo);
+		if (nextProps.geoJson && !app.countriesAdded){
+			app.countries.addData(nextProps.geoJson);
 			app.countries.setStyle({fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1});
 			app.map.addLayer(app.countries);
 			app.countriesAdded = true;
@@ -58,10 +72,11 @@ export default class NetCDFMap extends Component{
 
 		if(nextProps.reset) {
 			this.reset();
-			this.panTo(nextProps.latLngBounds);
-			this.updateMarkers(nextProps.markers);
-			this.addMask(nextProps.raster);
 		}
+
+		this.panTo(nextProps.latLngBounds);
+		this.updateMarkers(nextProps.markers);
+		this.addMask(nextProps.raster);
 	}
 
 	reset(){
@@ -78,6 +93,8 @@ export default class NetCDFMap extends Component{
 	}
 
 	updateMarkers(propMarkers){
+		if (!propMarkers) return;
+
 		const markers = this.app.markers;
 		markers.clearLayers();
 
@@ -101,9 +118,9 @@ export default class NetCDFMap extends Component{
 		const props = this.props;
 		const app = this.app;
 
-		if(!props.addMask || !raster || (app.maskHole && app.maskHoleVisible && app.maskHole.isIdentical(raster.boundingBox))) return;
+		if(!props.mask || !raster || (app.maskHole && app.maskHoleVisible && app.maskHole.isIdentical(raster.boundingBox))) return;
 
-		app.maskHole = props.addMask(raster.boundingBox);
+		app.maskHole = props.mask(raster.boundingBox);
 		app.maskHole.addTo(app.map);
 		app.maskHoleVisible = true;
 	}

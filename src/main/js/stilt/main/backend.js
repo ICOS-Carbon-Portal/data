@@ -8,7 +8,6 @@ import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
 import {stationInfoQuery} from './sparqlQueries';
 import groupBy from '../../common/main/general/groupBy';
 import copyprops from '../../common/main/general/copyprops';
-import distinct from '../../common/main/general/distinct';
 import {feature} from 'topojson';
 
 //import * as sparqlQueries from './sparqlQueries';
