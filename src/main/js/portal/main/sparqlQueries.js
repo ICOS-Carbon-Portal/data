@@ -1,7 +1,7 @@
 import config from './config';
 import {sparqlEscape} from './models/Filters';
 
-var {wdcggBaseUri, wdcggStationProp, wdcggLatProp, wdcggLonProp, cpmetaOntoUri, cpmetaResUri} = config;
+var {wdcggBaseUri, cpmetaOntoUri, cpmetaResUri} = config;
 
 export function simpleDataObjects(objSpec){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
@@ -25,26 +25,6 @@ where {
 } order by ?fileName`;
 }
 
-export function simpleObjectSchema(spec){
-	return `prefix cpmeta: <${cpmetaOntoUri}>
-SELECT distinct ?colName ?valueType ?valFormat ?unit ?qKind ?colTip
-FROM <${cpmetaResUri}>
-WHERE {
-	<${spec}> cpmeta:containsDataset ?dset .
-	?dset cpmeta:hasColumn [
-		cpmeta:hasColumnTitle ?colName ;
-		cpmeta:hasValueFormat ?valFormat ;
-		cpmeta:hasValueType ?valType
-	] .
-	?valType rdfs:label ?valueType .
-	optional{?valType rdfs:comment ?colTip }
-	optional{
-		?valType cpmeta:hasUnit ?unit .
-		?valType cpmeta:hasQuantityKind [rdfs:label ?qKind ] .
-	}
-} order by ?colName`;
-}
-
 export function standardDataObjProps(dobjId){
 	return `prefix cpmeta: <${cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -52,7 +32,7 @@ SELECT *
 FROM <${wdcggBaseUri}>
 WHERE {
 	<${dobjId}> cpmeta:wasSubmittedBy/prov:wasAssociatedWith/cpmeta:hasName ?submitterName .
-	<${dobjId}> cpmeta:wasProducedBy [
+	<${dobjId}> cpmeta:wasAcquiredBy [
 		prov:startedAtTime ?prodStart ;
 		prov:endedAtTime ?prodEnd ;
 		prov:wasAssociatedWith/cpmeta:hasName ?producerName
@@ -67,13 +47,20 @@ SELECT distinct ?prop ?label (str(?value) as ?val)
 FROM <${wdcggBaseUri}>
 WHERE {
 	BIND (<${dobjId}> AS ?dobj)
-	?dobj cpmeta:wasProducedBy ?prod . {
+	?dobj cpmeta:wasAcquiredBy ?prod . {
 		{
 			?prod prov:startedAtTime ?value .
 			BIND ("SAMPLING START" AS ?label)
 		} UNION {
 			?prod prov:endedAtTime ?value .
 			BIND ("SAMPLING STOP" AS ?label)
+		} UNION {
+			VALUES (?prop ?actualProp ?label) {
+				(<${config.latProp}> cpmeta:hasLatitude "LATITUDE")
+				(<${config.lonProp}> cpmeta:hasLongitude "LONGITUDE")
+				(<${config.stationProp}> cpmeta:hasName "STATION")
+			}
+			?prod prov:wasAssociatedWith [?actualProp ?value]
 		} UNION {
 			?prop rdfs:subPropertyOf cpmeta:hasFormatSpecificMetadata .
 			?dobj ?prop ?value .
@@ -91,15 +78,20 @@ select  (min(?startTime) as ?startMin) (max(?endTime) as ?endMax)
 FROM <${wdcggBaseUri}>
 where{
 	?dobj cpmeta:hasObjectSpec <${spec}> .
-	?dobj cpmeta:wasProducedBy ?prod .
+	?dobj cpmeta:wasAcquiredBy ?prod .
 	?prod  prov:startedAtTime ?startTime .
 	?prod  prov:endedAtTime ?endTime .
 }`;
 }
 
+const stationKeys = [config.stationProp, config.stationNameProp, config.stationCountryProp];
+
 export function getPropValueCounts(spec, filters){
-	const props = config.wdcggProps.map(({uri, label}) => uri);
-	const propsList = '<' + props.join('> <') + '>';
+	const wdcggProps = config.filteringWidgets
+		.map(({prop}) => prop)
+		.filter(prop => !stationKeys.includes(prop));
+
+	const wdcggPropsList = '<' + wdcggProps.join('> <') + '>';
 
 	const dobjsQueryStatements = getFilteredDataObjQueryStatements(spec, filters);
 
@@ -109,23 +101,53 @@ SELECT ?prop ?value (count(?dobj) as ?count)
 FROM <${wdcggBaseUri}>
 WHERE {
 	{
-		select ?dobj where {
+		select ?dobj ?acquisition where {
 			${dobjsQueryStatements}
 		}
 	}
-	VALUES ?prop {${propsList}}
-	?dobj ?prop ?value .
+	{
+		{
+			VALUES ?prop {${wdcggPropsList}}
+			?dobj ?prop ?value .
+		} UNION
+		{
+			VALUES ?prop {<${config.stationNameProp}> <${config.stationCountryProp}>}
+			?acquisition prov:wasAssociatedWith [?prop ?value ]
+		} UNION
+		{
+			?acquisition prov:wasAssociatedWith ?value .
+			BIND (<${config.stationProp}> AS ?prop) .
+		}
+	}
 }
 group by ?prop ?value
 order by ?prop ?value`;
 }
 
 function getFilteredDataObjQueryStatements(spec, filters){
-	const props = Object.getOwnPropertyNames(filters);
-	const filterClauses = props.map(prop => filters[prop].getSparql("dobj")).join('');
+
+	const stationFilters = stationKeys.map(key => filters[key])
+		.filter(filter => filter && !filter.isEmpty());
+
+	const stationClauses = stationFilters.map(filter => filter.getSparql("station")).join('\n');
+
+	const stationFilteringComponent = stationFilters.length > 0
+		? "?acquisition prov:wasAssociatedWith ?station .\n" + stationClauses
+		: "";
+	const wdcggFilterClauses = config.filteringWidgets
+		.map(widget => widget.prop)
+		.filter(prop => !stationKeys.includes(prop))
+		.map(prop => filters[prop].getSparql("dobj")).join('');
+
+	const temporalFilterClauses = [config.fromDateProp, config.toDateProp]
+		.map(prop => filters[prop].getSparql("acquisition")).join('');
 
 	return `?dobj cpmeta:hasObjectSpec <${spec}> .
-	${filterClauses}`;
+		?dobj cpmeta:wasAcquiredBy ?acquisition .
+		FILTER EXISTS {?acquisition prov:endedAtTime ?ackEndTime }
+		${stationFilteringComponent}
+		${wdcggFilterClauses}
+		${temporalFilterClauses}`;
 }
 
 export function getFilteredDataObjQuery(spec, filters){
@@ -142,15 +164,15 @@ where {
 } order by ?fileName`;
 }
 
-export function stationPositions(){
-	return `select distinct ?name (SAMPLE(?latStr) AS ?lat) (SAMPLE(?lonStr) AS ?lon)
+export function stationInfo(){
+	return `prefix cpmeta: <${cpmetaOntoUri}>
+select *
 from <${wdcggBaseUri}>
 where{
-	?dobj <${wdcggStationProp}> ?name .
-	?dobj <${wdcggLatProp}> ?latStr .
-	?dobj <${wdcggLonProp}> ?lonStr .
+	?station a cpmeta:Station .
+	?station cpmeta:hasName ?name .
+	?station cpmeta:country ?country .
+	OPTIONAL { ?station cpmeta:hasLatitude ?lat }
+	OPTIONAL { ?station cpmeta:hasLongitude ?lon }
+}`;
 }
-group by ?name
-order by ?name`;
-}
-

@@ -4,6 +4,7 @@ import java.nio.file.Paths
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserInfo
 import se.lu.nateko.cp.data.UploadConfig
@@ -28,6 +29,11 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 
 	private val irods = IrodsClient(config.irods)
 
+	def lookupPackage(hash: Sha256Sum): Future[DataObject] = meta.lookupPackage(hash)
+
+	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
+		irods.getFileSource(filePathSuffix(dataObj))
+
 	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[UploadResult]]] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
@@ -35,7 +41,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 		) yield getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
 	}
 
-	def getFile(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, hash.id).toFile
+	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
 	private def getSpecificSink(dataObj: DataObject): Sink[ByteString, Future[UploadResult]] = {
 		val tasks = getUploadTasks(dataObj)
@@ -61,7 +67,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	}
 
 	private def getUploadTasks(dataObj: DataObject): IndexedSeq[UploadTask] = {
-		val file = getFile(dataObj.hash)
+		val file = getFile(dataObj)
 
 		def hashAndIrods = IndexedSeq.empty :+
 			new HashsumCheckingUploadTask(dataObj.hash) :+
@@ -96,6 +102,11 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 object UploadService{
 	type UploadTaskSink = Sink[ByteString, Future[UploadTaskResult]]
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
+
+	def filePathSuffix(dataObject: DataObject): String = {
+		val formatId = dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
+		formatId + "/" + dataObject.hash.id
+	}
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {
 		SinkCombiner.combineMat(sinks).mapMaterializedValue(Future.sequence(_))

@@ -11,16 +11,10 @@ export function	getBaseMaps(maxZoom){
 		maxZoom
 	});
 
-	var mapQuest = L.tileLayer("http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png", {
-		maxZoom,
-		subdomains: "1234"
-	});
-
 	return {
 		"Topographic": topo,
 		"Satellite": image,
-		"OSM": osm,
-		"MapQuest": mapQuest
+		"OSM": osm
 	};
 }
 

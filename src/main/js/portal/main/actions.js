@@ -1,12 +1,12 @@
-import {tableFormatForSpecies, getStationPositions, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
+import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {getStationInfo, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
 
 export const FETCHING_META = 'FETCHING_META';
-export const FETCHING_SPATIAL = 'FETCHING_SPATIAL';
 export const FETCHING_DATA = 'FETCHING_DATA';
 export const FETCHED_META = 'FETCHED_META';
-export const FETCHED_SPATIAL = 'FETCHED_SPATIAL';
+export const FETCHED_STATIONS = 'FETCHED_STATIONS';
 export const FETCHED_DATA = 'FETCHED_DATA';
 export const DATA_CHOSEN = 'DATA_CHOSEN';
 export const REMOVE_DATA = 'REMOVE_DATA';
@@ -59,13 +59,11 @@ export const fetchTableFormat = (dataObjSpec) => dispatch => {
 	);
 }
 
-export const fetchStationPositions = () => dispatch => {
-	dispatch({type: FETCHING_SPATIAL});
-
-	getStationPositions().then(
-		stationPositions => dispatch({
-			type: FETCHED_SPATIAL,
-			stationPositions
+export const fetchStationInfo = dispatch => {
+	getStationInfo().then(
+		stationInfo => dispatch({
+			type: FETCHED_STATIONS,
+			stationInfo
 		}),
 		err => dispatch(failWithError(err))
 	);
@@ -151,7 +149,7 @@ export const updateFilter = (filterId, filter) => dispatch => {
 
 function fetchPropValueCounts(dispatch, getState){
 	const {objectSpecification, filters, cache} = getState();
-	const emptyFilters = allFiltersEmpty(filters);
+	const emptyFilters = allFiltersAreEmpty(filters);
 
 	if (emptyFilters && cache.propsAndVals != null){
 		dispatch({
@@ -171,15 +169,9 @@ function fetchPropValueCounts(dispatch, getState){
 	}
 }
 
-function allFiltersEmpty(filters){
+function allFiltersAreEmpty(filters){
 	const temporalIsEmpty = filters[config.fromDateProp].isEmpty() && filters[config.toDateProp].isEmpty();
-	const spatialIsEmpty = filters[config.spatialStationProp].isEmpty();
-	let attributeIsEmpty = true;
-
-	config.wdcggProps.forEach(prop => {
-		attributeIsEmpty = attributeIsEmpty && filters[prop.uri].isEmpty();
-	});
-
-	return temporalIsEmpty && spatialIsEmpty && attributeIsEmpty;
+	const propertyFiltersAreEmpty = config.filteringWidgets.every(({prop}) => filters[prop].isEmpty());
+	const spatialIsEmpty = filters[config.stationProp].isEmpty();
+	return temporalIsEmpty && spatialIsEmpty && propertyFiltersAreEmpty;
 }
-

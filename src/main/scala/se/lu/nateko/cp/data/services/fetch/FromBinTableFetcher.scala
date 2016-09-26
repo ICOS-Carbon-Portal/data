@@ -11,6 +11,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 case class BinTableRequest(
 	tableId: Sha256Sum,
+	subFolder: String,
 	schema: Schema,
 	columnNumbers: Seq[Int],
 	slice: Option[BinTableSlice]
@@ -24,7 +25,7 @@ class FromBinTableFetcher(folder: File){
 
 		assert(!request.schema.hasStringColumn, "Only numeric BinTables can be fetched as binary data.")
 
-		val file = new File(folder, request.tableId.id + FileExtension)
+		val file = new File(folder, request.subFolder + "/" + request.tableId.id + FileExtension)
 
 		BinTableSource(file, request.schema, request.columnNumbers, request.slice)
 	}

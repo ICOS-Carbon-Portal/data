@@ -16,16 +16,19 @@ import akka.actor.ActorSystem
 import akka.stream.ActorAttributes
 import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.DataObject
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
 
 	def apply(config: IrodsConfig)(implicit system: ActorSystem) = new IrodsClient(config, new IRODSConnectionPool)
+
 }
 
 class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
@@ -68,6 +71,9 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 				) yield irodsDigest
 			}
 	}
+
+	def getFileSource(filePath: String): Source[ByteString, Future[Long]] =
+		Source.fromGraph(new IrodsSource(filePath, account, connPool, bufferSize))
 
 	def deleteFile(filePath: String): Unit = {
 		val api = getIrodsFileApi

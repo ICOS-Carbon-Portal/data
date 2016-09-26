@@ -11,7 +11,7 @@ var babel = require('gulp-babel');
 var preprocessify = require('preprocessify');
 var jasmine = require('gulp-jasmine');
 
-['netcdf', 'portal'].forEach(function(project){
+['netcdf', 'portal', 'stilt'].forEach(function(project){
 
 	var projSrc = 'src/main/js/' + project + '/';
 	var jstarget = 'target/es5js/' + project + '/';
@@ -21,6 +21,7 @@ var jasmine = require('gulp-jasmine');
 		jsx: projSrc + 'main/**/*.jsx',
 		js: projSrc + 'main/**/*.js',
 		alljs: projSrc + '**/*.js',
+		commonjs: 'src/main/js/common/main/**/*.js',
 		target: 'src/main/resources/',
 		jasmineSrc: jstarget + 'test/**/*.js',
 		bundleFile: project + '.js'
@@ -81,7 +82,7 @@ var jasmine = require('gulp-jasmine');
 	});
 
 	gulp.task(project, ['js' + project], function(){
-		var sources = [paths.js, paths.jsx];
+		var sources = [paths.commonjs, paths.js, paths.jsx];
 		return gulp.watch(sources, ['js' + project]);
 	});
 

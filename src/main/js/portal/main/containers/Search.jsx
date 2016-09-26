@@ -26,7 +26,6 @@ class Search extends Component {
 		const fromDate = props.filters[config.fromDateProp].value || props.fromDateMin;
 		const toDate = props.filters[config.toDateProp].value || props.toDateMax;
 		const returnedObjects = props.filteredDataObjects ? Object.keys(props.filteredDataObjects).length : null;
-		// console.log({props});
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
@@ -44,20 +43,19 @@ class Search extends Component {
 
 					<SpatialSearch
 						filters={props.filters}
-						stationsAttributeFiltered={props.propValueCounts[config.wdcggStationProp]}
-						spatial={props.spatial}
+						stations={props.stations}
 						filterUpdate={props.filterUpdate}
 						spatialMode={props.spatialMode}
 					/>
 				</div>
 				{
-					config.wdcggProps.map(
-						({label, uri}, i) =>
+					config.filteringWidgets.map(
+						({label, prop}, i) =>
 							<PropertyValueSelect
 								label={label}
-								prop={uri}
-								filter={props.filters[uri]}
-								valueCounts={props.propValueCounts[uri]}
+								prop={prop}
+								filter={props.filters[prop]}
+								valueCounts={props.propValueCounts[prop]}
 								filterUpdate={props.filterUpdate}
 								key={i}
 							/>
