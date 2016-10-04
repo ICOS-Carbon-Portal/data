@@ -5,102 +5,97 @@ import LegendAxis from './LegendAxis.jsx';
 export default class NetCDFLegend extends Component {
 	constructor(props) {
 		super(props);
-		this.state = {
-			colorMaker: null,
-			suggestedTickLocations: null,
-			valueMaker: null,
-			length: 0,
-			renderCanvas: true
-		}
+		this.state = {length: 0};
 	}
 
 	componentDidMount() {
-		if (!this.props.horizontal) window.addEventListener('resize', this.updateApp.bind(this));
-		this.updateApp();
-	}
-
-	updateApp(){
-		const legendDiv = ReactDOM.findDOMNode(this.refs.legendDiv).getBoundingClientRect();
-		const legendDivWidth = legendDiv.width;
-		const length = this.props.horizontal
-			? legendDivWidth - 2 * this.props.margin
-			: this.props.containerHeight - 2 * this.props.margin;
-
-		this.setState({length});
-		this.updateLegendFunctions(length);
-	}
-
-	updateLegendFunctions(length){
-		const {colorMaker, valueMaker, suggestedTickLocations} = this.props.getLegend(0, length - 1);
-		this.setState({colorMaker, suggestedTickLocations, valueMaker, renderCanvas: true});
-	}
-
-	componentWillUnmount(){
-		if (!this.props.horizontal) window.removeEventListener('resize', this.updateApp);
+		this.updateLegend();
 	}
 
 	componentDidUpdate(props){
-		const state = this.state;
+		this.updateLegend();
+	}
 
-		if (state.renderCanvas) {
-			const length = state.length;
-			const width = props.canvasWidth;
-			const canvas = ReactDOM.findDOMNode(this.refs.canvas);
-			const ctx = canvas.getContext('2d');
+	shouldComponentUpdate(nextProps, nextState){
+		return nextProps.legendId != this.props.legendId || this.state.length != nextState.length;
+	}
 
-			for (let i = 0; i < length; i++) {
-				let color = state.colorMaker(i);
-				ctx.strokeStyle = 'rgba(' + Math.round(color[0]) + ',' + Math.round(color[1]) + ',' + Math.round(color[2]) + ',' + Math.round(color[3]) + ')';
-				ctx.beginPath();
-				if (props.horizontal) {
-					ctx.moveTo(i + props.margin, 0);
-					ctx.lineTo(i + props.margin, width);
-				} else {
-					ctx.moveTo(0, state.length - i + props.margin);
-					ctx.lineTo(width, state.length - i + props.margin);
-				}
-				ctx.stroke();
-			}
+	updateLegend() {
+		const props = this.props;
 
-			ctx.strokeStyle = "black";
-			ctx.lineWidth = 1;
+		const legendDiv = ReactDOM.findDOMNode(this.refs.legendDiv).getBoundingClientRect();
+
+		const length = props.horizontal
+			? legendDiv.width - 2 * props.margin
+			: props.containerHeight - 2 * props.margin;
+
+		const thisIsInitialization = !this.state.length;
+		this.setState({length});
+		if (thisIsInitialization) return;
+
+		this.renderLegend(length);
+	}
+
+	renderLegend(length){
+		const props = this.props;
+		const {colorMaker} = props.getLegend(0, length - 1);
+
+		const width = props.canvasWidth;
+
+		const canvas = ReactDOM.findDOMNode(this.refs.canvas);
+
+		canvas.width = props.horizontal	? length + props.margin * 2	: width;
+		canvas.height = props.horizontal ? width : length + props.margin * 2;
+
+		const ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		for (let i = 0; i < length; i++) {
+			let color = colorMaker(i);
+			ctx.strokeStyle = 'rgba(' + Math.round(color[0]) + ',' + Math.round(color[1]) + ',' + Math.round(color[2]) + ',' + Math.round(color[3]) + ')';
+			ctx.beginPath();
 			if (props.horizontal) {
-				ctx.strokeRect(props.margin - 0.5, 0.5, length, width - 1);
+				ctx.moveTo(i + props.margin, 0);
+				ctx.lineTo(i + props.margin, width);
 			} else {
-				ctx.strokeRect(0, props.margin - 0.5, width, length);
+				ctx.moveTo(0, this.state.length - i + props.margin);
+				ctx.lineTo(width, this.state.length - i + props.margin);
 			}
+			ctx.stroke();
+		}
 
-			this.setState({renderCanvas: false});
+		ctx.strokeStyle = "black";
+		ctx.lineWidth = 1;
+		if (props.horizontal) {
+			ctx.strokeRect(props.margin - 0.5, 0.5, length, width - 1);
+		} else {
+			ctx.strokeRect(0, props.margin - 0.5, width, length);
 		}
 	}
 
 	render() {
-		const state = this.state;
+		const length = this.state.length;
+
 		const props = this.props;
-		const canvasWidth = props.horizontal
-			? state.length + props.margin * 2
-			: props.canvasWidth;
-		const canvasHeight = props.horizontal
-			? props.canvasWidth
-			: state.length + props.margin * 2;
 		const legendDivStyle = props.horizontal
 			? {marginTop: 2}
 			: {marginLeft: 2};
 
+		if(!length) return <div ref="legendDiv" style={legendDivStyle}></div>;
+
+		const {valueMaker, suggestedTickLocations} = props.getLegend(0, length - 1);
+
 		return (
 			<div ref="legendDiv" style={legendDivStyle}>
-				<canvas
-					ref="canvas"
-					width={canvasWidth}
-					height={canvasHeight}
-				/>
+				<canvas	ref="canvas"/>
 				<LegendAxis
 					horizontal={props.horizontal}
-					length={state.length}
+					length={length}
 					width={props.canvasWidth}
 					margin={props.margin}
-					suggestedTickLocations={state.suggestedTickLocations}
-					valueMaker={state.valueMaker}
+					suggestedTickLocations={suggestedTickLocations}
+					decimals={props.decimals}
+					valueMaker={valueMaker}
 					legendText={props.legendText}
 				/>
 			</div>

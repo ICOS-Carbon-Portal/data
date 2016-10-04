@@ -17,14 +17,23 @@ export default class LegendAxis extends Component {
 		const height = props.horizontal
 			? props.width + textMargin
 			: props.length + props.margin * 2;
+		const style = props.horizontal
+			? {position: 'relative', top: -5}
+			: {};
+		const decimals = props.decimals
+			? props.decimals
+			: 0;
+		// if (props.suggestedTickLocations) {
+		// 	console.log({props, start: props.valueMaker(0)});
+		// }
 
 		return (
-			<svg ref="axis" className="axis" width={width} height={height}>{
+			<svg ref="axis" className="axis" width={width} height={height} style={style}>{
 				props.suggestedTickLocations
 					? props.suggestedTickLocations.map((tick, idx) => {
 						const tickVal = props.valueMaker(tick) == 1
 							? 1
-							: props.valueMaker(tick).toExponential(0)
+							: props.valueMaker(tick).toExponential(decimals)
 
 						return (
 							props.horizontal

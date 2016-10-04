@@ -7,7 +7,6 @@ import renderRaster from './renderRaster';
 
 /*
  Incoming props
- mapHeight: REQUIRED (Number) - Height in pixels of map
  mapOptions: OPTIONAL (Object) - Override options for Leaflet in componentDidMount
  geoJson: OPTIONAL (Leaflet GeoJSON object or an array of GeoJSON objects) - Display GeoJSON layer in map, usually a country layer
  raster: REQUIRED (BinRaster) - Raster data to show in map
@@ -17,6 +16,7 @@ import renderRaster from './renderRaster';
  colorMaker: REQUIRED (colorMaker) - Defines what colors the raster gets
  renderCompleted: OPTIONAL (function) - What to do when canvas rendering is completed
  mask: OPTIONAL (polygonMask) - Display mask showing extent
+ maskOptions; OPTIONAL (JS Object) - Override default options of mask
  */
 
 export default class NetCDFMap extends Component{
@@ -33,7 +33,7 @@ export default class NetCDFMap extends Component{
 			maskHoleVisible: false
 		};
 		const NetCdfLayer = getNetCdfLayer(this.app);
-		this.app.canvasTiles = new NetCdfLayer();
+		this.app.canvasTiles = new NetCdfLayer({keepBuffer: 0, noWrap: true});
 	}
 
 	componentDidMount() {
@@ -120,7 +120,7 @@ export default class NetCDFMap extends Component{
 
 		if(!props.mask || !raster || (app.maskHole && app.maskHoleVisible && app.maskHole.isIdentical(raster.boundingBox))) return;
 
-		app.maskHole = props.mask(raster.boundingBox);
+		app.maskHole = props.mask(raster.boundingBox, props.maskOptions);
 		app.maskHole.addTo(app.map);
 		app.maskHoleVisible = true;
 	}

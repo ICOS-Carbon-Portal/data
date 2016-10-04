@@ -1,16 +1,20 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
-import Legend from '../views/LegendViewFactory.jsx';
-import LMap from '../views/LMap.jsx';
-import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_FETCHED, DATES_FETCHED, ELEVATIONS_FETCHED, CTRL_HELPER_UPDATED, RASTER_FETCHED,
-	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED} from '../actions';
+import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
+import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
+import {polygonMask} from '../../../common/main/maps/LeafletCommon';
+import {ERROR, RASTER_FETCHED}from '../actions';
+
+const marginTop = 10;
 
 class App extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			busy: true
+			busy: true,
+			width: null,
+			height: null
 		};
 	}
 
@@ -23,7 +27,8 @@ class App extends Component {
 	updateDimensions(){
 		this.setState({
 			width: window.innerWidth - 30,
-			height: window.innerHeight - 130
+			//155: empirical, 147: top header height
+			height: window.innerHeight - 155 - marginTop - 147
 		});
 	}
 
@@ -43,9 +48,9 @@ class App extends Component {
 	render() {
 		const state = this.state;
 		const props = this.props;
-		const gamma = props.controls
-			? props.controls.gammas.values[props.controls.gammas.selectedIdx]
-			: undefined;
+		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
+		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
+
 		const busyStyle = state.busy
 			? {
 				position: 'absolute',
@@ -55,26 +60,51 @@ class App extends Component {
 			}
 			: {display: 'none'};
 
-		// console.log({state, props, gamma, lastCtrl: props.controls.lastChangedControl});
+		// console.log({state, props, colorMaker, getLegend, lastCtrl: props.controls.lastChangedControl, status: props.status});
+
+		// if (getLegend) {
+		// 	const {colorMaker, valueMaker, suggestedTickLocations} = getLegend(0, 1850 - 1);
+		// 	console.log({colorMaker, valueMaker, suggestedTickLocations});
+		// }
+
+		const legendId = props.raster
+			? props.raster.id + '_' + props.controls.gammas.selected + '_' + state.width
+			: "";
 
 		return (
-			<div className="container-fluid">
+			<div>
 
-				<Controls />
+				<Controls marginTop={marginTop} />
 
 				<div className="row">
 					<div className="col-md-12">
-						<div style={{height: 45}} />
+						<div style={{height: 70}}>{
+							getLegend
+								? <NetCDFLegend
+									horizontal={true}
+									canvasWidth={20}
+									margin={30}
+									getLegend={getLegend}
+									decimals={2}
+									legendText="Legend"
+									legendId={legendId}
+								/>
+								: null
+						}</div>
 					</div>
 				</div>
 
 				<div className="row">
 					<div className="col-md-12">
 						<div style={{width: state.width, height: state.height, margin: '0 auto'}}>
-							<LMap
+							<NetCDFMap
+								mapOptions={{
+									zoom: 2,
+									center: [13, 0]
+								}}
 								raster={props.raster}
-								gamma={gamma}
-								countriesTopo={props.countriesTopo}
+								colorMaker={colorMaker}
+								geoJson={props.countriesTopo}
 							/>
 						</div>
 					</div>
@@ -84,10 +114,6 @@ class App extends Component {
 			</div>
 		);
 	}
-}
-
-function rasterUpdated(raster){
-	console.log({raster});
 }
 
 function stateToProps(state){

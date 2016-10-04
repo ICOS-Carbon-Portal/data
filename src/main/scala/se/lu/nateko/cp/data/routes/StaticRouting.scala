@@ -19,6 +19,7 @@ object StaticRouting {
 
 	private[this] val pages: PartialFunction[String, Html] = {
 		case "stilt" => views.html.StiltPage()
+		case "netcdf" => views.html.NetCDFPage()
 	}
 
 	private implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(

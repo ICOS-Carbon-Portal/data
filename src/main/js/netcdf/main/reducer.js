@@ -1,6 +1,7 @@
 import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_FETCHED, DATES_FETCHED, ELEVATIONS_FETCHED, CTRL_HELPER_UPDATED, RASTER_FETCHED,
 	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED} from './actions';
 import {Control} from './models/ControlsHelper';
+import ColorMaker from './models/ColorMaker';
 
 export default function(state, action){
 
@@ -46,7 +47,10 @@ export default function(state, action){
 				: state;
 
 		case SERVICE_SELECTED:
-			return Object.assign({}, state, {controls: state.controls.withSelectedService(action.idx)});
+			return Object.assign({}, state, {
+				status: SERVICE_SELECTED,
+				controls: state.controls.withSelectedService(action.idx)
+			});
 
 		case VARIABLE_SELECTED:
 			return Object.assign({}, state, {controls: state.controls.withSelectedVariable(action.idx)});
@@ -58,13 +62,26 @@ export default function(state, action){
 			return Object.assign({}, state, {controls: state.controls.withSelectedElevation(action.idx)});
 
 		case GAMMA_SELECTED:
-			return Object.assign({}, state, {controls: state.controls.withSelectedGamma(action.idx)});
+			const newGammaControls = state.controls.withSelectedGamma(action.idx);
+			const selectedGamma = newGammaControls.gammas.selected;
+
+			if(state.raster){
+				state.raster.id = state.raster.basicId + selectedGamma;
+			}
+
+			return Object.assign({}, state, {
+				controls: newGammaControls,
+				colorMaker: state.raster
+					? new ColorMaker(state.raster.stats.min, state.raster.stats.max, selectedGamma)
+					: null
+			});
 
 		case RASTER_FETCHED:
 			return isRasterFetched(state, action)
 				? Object.assign({}, state, {
 					status: RASTER_FETCHED,
-					raster: action.raster
+					raster: action.raster,
+					colorMaker: new ColorMaker(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected)
 				})
 				: state;
 

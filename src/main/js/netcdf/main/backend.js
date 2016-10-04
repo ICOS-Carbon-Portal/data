@@ -1,47 +1,15 @@
 import 'whatwg-fetch';
-import BinRaster from './models/BinRaster';
+import {getBinRaster} from '../../common/main/backend/binRaster';
+import {getJson} from '../../common/main/backend/json';
+import {feature} from 'topojson';
 
-function checkStatus(response) {
-	if(response.status >= 200 && response.status < 300)
-		return response;
-		else throw new Error(response.statusText || "Ajax response status: " + response.status);
-}
-
-export function getRaster(service, variable, date, elevation){
-
-	let urlQuery = getUrlQuery([['service', service], ['varName', variable], ['date', date], ['elevation', elevation]]);
-
-	return fetch('/netcdf/getSlice' + urlQuery, {
-			headers: {
-				'Accept': 'application/octet-stream'
-			}
-		})
-		.then(checkStatus)
-		.then(response => response.arrayBuffer())
-		.then(response => {
-			return new BinRaster(response);
-		});
-}
-
-function getUrlQuery(keyValues){
-	if(!keyValues || keyValues.length == 0) return '';
-
-	let qParams = new URLSearchParams();
-	keyValues.forEach(
-		([key, value]) => qParams.append(key, value)
-	);
-	return '?' + qParams.toString();
-}
-
-function getJson(url, ...keyValues){
-
-	return fetch(url + getUrlQuery(keyValues), {
-		headers: {
-			'Accept': 'application/json'
-		}
-	})
-	.then(checkStatus)
-	.then(response => response.json());
+export function getRaster(service, variable, date, elevation, gamma){
+	const basicIdRaster = getBinRaster(null, '/netcdf/getSlice', ['service', service], ['varName', variable], ['date', date], ['elevation', elevation]);
+	return basicIdRaster.then(raster => {
+		raster.basicId = raster.id;
+		raster.id = raster.basicId + gamma;
+		return raster;
+	});
 }
 
 export function getServices(){
@@ -60,10 +28,7 @@ export function getElevations(service, variable){
 	return getJson('/netcdf/listElevations', ['service', service], ['varName', variable]);
 }
 
-export function getCountriesTopoJson(){
-	// var url = 'https://static.icos-cp.eu/js/topojson/countries.json';
-	// var url = 'https://static.icos-cp.eu/js/topojson/countries.topo.json';
-	var url = 'https://static.icos-cp.eu/js/topojson/readme-world.json';
-	return getJson(url);
+export function getCountriesGeoJson(){
+	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
+		.then(topo => feature(topo, topo.objects.countries));
 }
-

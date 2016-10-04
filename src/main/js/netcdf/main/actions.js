@@ -1,4 +1,4 @@
-import {getCountriesTopoJson, getServices, getVariables, getDates, getElevations, getRaster} from './backend.js';
+import {getCountriesGeoJson, getServices, getVariables, getDates, getElevations, getRaster} from './backend.js';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
@@ -23,7 +23,7 @@ function failWithError(error){
 }
 
 export const fetchCountriesTopo = dispatch => {
-	getCountriesTopoJson().then(
+	getCountriesGeoJson().then(
 		countriesTopo => {
 			dispatch({
 				type: COUNTRIES_FETCHED,
@@ -107,13 +107,13 @@ export const fetchElevations = (dispatch, getState) => {
 
 export const fetchRaster = (dispatch, getState) => {
 	const controls = getState().controls;
-	const {services, variables, dates, elevations} = controls;
+	const {services, variables, dates, elevations, gammas} = controls;
 
 	if(!services.hasSelected || !variables.hasSelected || !dates.hasSelected || !elevations.isLoaded) return;
 
 	const elevation = elevations.hasSelected ? elevations.selected : null;
 
-	getRaster(services.selected, variables.selected, dates.selected, elevation).then(
+	getRaster(services.selected, variables.selected, dates.selected, elevation, gammas.selected).then(
 		raster => dispatch({
 			type: RASTER_FETCHED,
 			raster,
