@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.cpauth.core.UserInfo
+import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.irods.IrodsClient
@@ -34,7 +34,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods.getFileSource(filePathSuffix(dataObj))
 
-	def getSink(hash: Sha256Sum, user: UserInfo): Future[Sink[ByteString, Future[UploadResult]]] = {
+	def getSink(hash: Sha256Sum, user: UserId): Future[Sink[ByteString, Future[UploadResult]]] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dataObj, user)

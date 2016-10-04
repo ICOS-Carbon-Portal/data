@@ -8,7 +8,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import se.lu.nateko.cp.cpauth.core.UserInfo
+import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
 import se.lu.nateko.cp.data.MetaServiceConfig
@@ -54,11 +54,11 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 		)
 	}
 
-	def userIsAllowedUpload(dataObj: DataObject, user: UserInfo): Future[Unit] = {
+	def userIsAllowedUpload(dataObj: DataObject, user: UserId): Future[Unit] = {
 		val submitter = dataObj.submission.submitter
 		val submitterUri = submitter.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
-			Uri.Query("submitter" -> submitterUri, "userId" -> user.mail)
+			Uri.Query("submitter" -> submitterUri, "userId" -> user.email)
 		)
 		get(uri).flatMap(
 			resp => resp.status match {
@@ -67,7 +67,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 						case JsBoolean(b) =>
 							if(!b) throw new UnauthorizedUpload({
 								val submitterName = submitter.label.getOrElse(submitterUri)
-								s"User '${user.mail}' is not authorized to upload on behalf of $submitterName"
+								s"User '${user.email}' is not authorized to upload on behalf of $submitterName"
 							})
 						case js => throw new Exception(s"Expected a JSON boolean, got $js")
 					})

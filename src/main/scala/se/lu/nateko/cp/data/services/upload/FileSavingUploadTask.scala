@@ -20,7 +20,7 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		if(file.exists)
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(FileExists))
-		else FileIO.toFile(file).mapMaterializedValue(_.map(ioResultToTaskResult))
+		else FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioResultToTaskResult))
 	}
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] = {

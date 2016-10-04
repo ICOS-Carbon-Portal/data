@@ -51,14 +51,14 @@ object Playground {
 
 	def fromDisk(path: String): Future[Sha256Sum] = {
 		val file = new java.io.File(path)
-		val src = FileIO.fromFile(file)
+		val src = FileIO.fromPath(file.toPath)
 		val sink = client.getNewFileSink(file.getName)(blockingExeCtxt)
 		src.runWith(sink)
 	}
 
 	def digestFileFromDisk(path: String): Future[Sha256Sum] = {
 		val file = new java.io.File(path)
-		val src = FileIO.fromFile(file)
+		val src = FileIO.fromPath(file.toPath)
 		val sink = DigestFlow.sha256.to(Sink.ignore)
 		src.runWith(sink)
 	}
