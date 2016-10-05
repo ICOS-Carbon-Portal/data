@@ -3,7 +3,6 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import {polygonMask} from '../../../common/main/maps/LeafletCommon';
 import {ERROR, RASTER_FETCHED}from '../actions';
 
 const marginTop = 10;

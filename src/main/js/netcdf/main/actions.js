@@ -81,7 +81,6 @@ export const fetchDates = (dispatch, getState) => {
 				dates,
 				service: services.selected
 			});
-			dispatch(fetchRaster);
 		},
 		err => dispatch(failWithError(err))
 	);
