@@ -49,6 +49,7 @@ class FootprintContainer extends Component {
 						containerHeight={containerHeight}
 						margin={7}
 						getLegend={getLegend}
+						legendId={props.raster ? props.raster.id : ""}
 						legendText="surface influence [ppm / (&mu;mol / m&sup2;s)]"
 					/>
 				</div>

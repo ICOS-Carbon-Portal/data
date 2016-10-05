@@ -1,3 +1,4 @@
+/*
 Reflux = require('reflux');
 var factory = require('../../main/js/stores/ControlsStoreFactory.js');
 
@@ -66,3 +67,4 @@ var backend = {
 		resolve({});
 	}
 };
+*/

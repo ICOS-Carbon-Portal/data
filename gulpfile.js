@@ -21,7 +21,7 @@ var jasmine = require('gulp-jasmine');
 		jsx: projSrc + 'main/**/*.jsx',
 		js: projSrc + 'main/**/*.js',
 		alljs: projSrc + '**/*.js',
-		commonjs: 'src/main/js/common/main/**/*.js',
+		commonjs: 'src/main/js/common/main/**/*.js*',
 		target: 'src/main/resources/',
 		jasmineSrc: jstarget + 'test/**/*.js',
 		bundleFile: project + '.js'
