@@ -22,7 +22,7 @@ export class Control{
 	}
 }
 
-const defaultControl = new Control(null, -1);
+const defaultControl = new Control([], -1);
 const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 0);
 
 export class ControlsHelper{

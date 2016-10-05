@@ -54,18 +54,11 @@ class App extends Component {
 		const busyStyle = state.busy
 			? {
 				position: 'absolute',
-				top: Math.floor(state.height / 2),
-				left: Math.floor(state.width / 2),
+				top: Math.floor(window.innerHeight / 2),
+				left: Math.floor(window.innerWidth / 2),
 				zIndex: 99
 			}
 			: {display: 'none'};
-
-		// console.log({state, props, colorMaker, getLegend, lastCtrl: props.controls.lastChangedControl, status: props.status});
-
-		// if (getLegend) {
-		// 	const {colorMaker, valueMaker, suggestedTickLocations} = getLegend(0, 1850 - 1);
-		// 	console.log({colorMaker, valueMaker, suggestedTickLocations});
-		// }
 
 		const legendId = props.raster
 			? props.raster.id + '_' + props.controls.gammas.selected + '_' + state.width

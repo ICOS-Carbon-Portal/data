@@ -10,46 +10,40 @@ class Controls extends React.Component {
 	}
 
 	render(){
-		const state = this.state;
 		const props = this.props;
-		const controls = this.props.controls;
+		const controls = props.controls;
 
-		if (controls && controls.allControlsLoaded) {
-			// console.log({props, controls, allControlsLoaded: controls.allControlsLoaded});
+		return (
+			<div className="row" style={{marginTop: props.marginTop}}>
+				<div className="col-md-4">
+					<Selector className="services" caption="Data object" control={controls.services} action={props.serviceChanged}/>
+				</div>
 
-			return (
-				<div className="row" style={{marginTop: props.marginTop}}>
-					<div className="col-md-4">
-						<Selector className="services" caption="Data object" control={controls.services} action={props.serviceChanged}/>
-					</div>
+				<div className="col-md-2">
+					<Selector className="variables" caption="Variable" control={controls.variables} action={props.variableChanged}/>
+				</div>
 
-					<div className="col-md-2">
-						<Selector className="variables" caption="Variable" control={controls.variables} action={props.variableChanged}/>
-					</div>
-
-					<div className="col-md-2">
-						<div className="form-group">
-							<div className="input-group">
-								{/*
-									<div className="input-group-addon button-s">
-										<button id="dateRev" className="form-control btn btn-primary" title="Reverse one time step">&lt;</button>
-									</div>
-								*/}
-								<Selector className="dates" caption="Date" control={controls.dates} action={props.dateChanged}/>
-							</div>
+				<div className="col-md-2">
+					<div className="form-group">
+						<div className="input-group">
+							{/*
+							 <div className="input-group-addon button-s">
+							 <button id="dateRev" className="form-control btn btn-primary" title="Reverse one time step">&lt;</button>
+							 </div>
+							 */}
+							<Selector className="dates" caption="Date" control={controls.dates} action={props.dateChanged}/>
 						</div>
 					</div>
-
-					<div className="col-md-1">
-						<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.elevationChanged}/>
-
-						<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.gammaChanged}/>
-					</div>
 				</div>
-			);
-		} else {
-			return null;
-		}
+
+				<div className="col-md-1">
+					<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.elevationChanged}/>
+				</div>
+				<div className="col-md-1">
+					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.gammaChanged}/>
+				</div>
+			</div>
+		);
 	}
 }
 

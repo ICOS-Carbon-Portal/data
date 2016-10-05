@@ -6,11 +6,6 @@ class Selector extends React.Component {
 		super(props);
 	}
 
-	// componentWillReceiveProps(nextProps){
-	// 	const prevProps = this.props;
-	// 	// console.log({prevProps, nextProps});
-	// }
-
 	changeHandler(){
 		const props = this.props;
 		const idx = ReactDOM.findDOMNode(this.refs.selector).selectedIndex;
@@ -20,10 +15,8 @@ class Selector extends React.Component {
 	render(){
 		const props = this.props;
 		const control = props.control;
-		const selectedOption = control.values[control.selectedIdx];
-		const style = {display: control.hasSelected ? "inline" : "none"};
-
-		// console.log({state: this.state, props: this.props, selectedOption, hasSelected: control.hasSelected});
+		const selectedOption = control.hasSelected ? control.selected : props.caption;
+		const style = {visibility: control.hasSelected ? "visible" : "hidden"};
 
 		return <div className={props.className} style={style}>
 
