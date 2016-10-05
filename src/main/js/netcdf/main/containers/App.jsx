@@ -98,6 +98,7 @@ class App extends Component {
 								raster={props.raster}
 								colorMaker={colorMaker}
 								geoJson={props.countriesTopo}
+								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
 							/>
 						</div>
 					</div>
@@ -107,6 +108,15 @@ class App extends Component {
 			</div>
 		);
 	}
+}
+
+function getLatLngBounds(services, lastChangedControl, raster, status){
+	return status === RASTER_FETCHED && services && lastChangedControl == "services"
+		? L.latLngBounds(
+			L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
+			L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
+		)
+		: null;
 }
 
 function stateToProps(state){
