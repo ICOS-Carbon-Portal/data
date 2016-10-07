@@ -1,4 +1,4 @@
-import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_FETCHED, DATES_FETCHED, ELEVATIONS_FETCHED, CTRL_HELPER_UPDATED, RASTER_FETCHED,
+import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, CTRL_HELPER_UPDATED, RASTER_FETCHED,
 	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from './models/ColorMaker';
@@ -22,19 +22,12 @@ export default function(state, action){
 				controls: state.controls.withServices(new Control(action.services), state.controls.lastChangedControl)
 			});
 
-		case VARIABLES_FETCHED:
+		case VARIABLES_AND_DATES_FETCHED:
 			return isFetched(state, action)
 				? Object.assign({}, state, {
-					status: VARIABLES_FETCHED,
+					status: VARIABLES_AND_DATES_FETCHED,
 					controls: state.controls.withVariables(new Control(action.variables), state.controls.lastChangedControl)
-				})
-				: state;
-
-		case DATES_FETCHED:
-			return isFetched(state, action)
-				? Object.assign({}, state, {
-					status: DATES_FETCHED,
-					controls: state.controls.withDates(new Control(action.dates), state.controls.lastChangedControl)
+											.withDates(new Control(action.dates), state.controls.lastChangedControl)
 				})
 				: state;
 

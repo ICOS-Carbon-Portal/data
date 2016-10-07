@@ -16,12 +16,10 @@ export function getServices(){
 	return getJson('/netcdf/listNetCdfFiles');
 }
 
-export function getDates(service){
-	return getJson('/netcdf/listDates', ['service', service]);
-}
-
-export function getVariables(service){
-	return getJson('/netcdf/listVariables', ['service', service]);
+export function getVariablesAndDates(service){
+	const vars = getJson('/netcdf/listVariables', ['service', service]);
+	const dates = getJson('/netcdf/listDates', ['service', service]);
+	return Promise.all([vars, dates]).then(([variables, dates]) => {return {variables, dates};});
 }
 
 export function getElevations(service, variable){

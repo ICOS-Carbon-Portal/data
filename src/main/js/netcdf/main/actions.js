@@ -1,10 +1,9 @@
-import {getCountriesGeoJson, getServices, getVariables, getDates, getElevations, getRaster} from './backend.js';
+import {getCountriesGeoJson, getServices, getVariablesAndDates, getElevations, getRaster} from './backend.js';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 export const SERVICES_FETCHED = 'SERVICES_FETCHED';
-export const VARIABLES_FETCHED = 'VARIABLES_FETCHED';
-export const DATES_FETCHED = 'DATES_FETCHED';
+export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
 export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
 export const CTRL_HELPER_UPDATED = 'CTRL_HELPER_UPDATED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
@@ -42,51 +41,35 @@ export const fetchServices = dispatch => {
 				controlName: 'services',
 				services
 			});
-			dispatch(fetchVariables);
-			dispatch(fetchDates);
+			dispatch(fetchParamsAndRaster);
 		},
 		err => dispatch(failWithError(err))
 	);
 }
 
-export const fetchVariables = (dispatch, getState) => {
+const fetchParamsAndRaster = (dispatch, getState) => {
 	const services = getState().controls.services;
 
 	if(!services.hasSelected) return;
 
-	getVariables(services.selected).then(
-		variables => {
+	getVariablesAndDates(services.selected).then(
+		({variables, dates}) => {
+
 			dispatch({
-				type: VARIABLES_FETCHED,
-				controlName: 'variables',
+				type: VARIABLES_AND_DATES_FETCHED,
 				variables,
+				dates,
 				service: services.selected
 			});
+
 			dispatch(fetchElevations);
 		},
 		err => dispatch(failWithError(err))
 	);
 }
 
-export const fetchDates = (dispatch, getState) => {
-	const services = getState().controls.services;
 
-	if(!services.hasSelected) return;
-
-	getDates(services.selected).then(
-		dates => {
-			dispatch({
-				type: DATES_FETCHED,
-				controlName: 'dates',
-				dates,
-				service: services.selected
-			});
-		},
-		err => dispatch(failWithError(err))
-	);
-}
-
-export const fetchElevations = (dispatch, getState) => {
+const fetchElevations = (dispatch, getState) => {
 	const controls = getState().controls;
 	if(!controls.services.hasSelected || !controls.variables.hasSelected) return;
 
@@ -104,7 +87,7 @@ export const fetchElevations = (dispatch, getState) => {
 	);
 }
 
-export const fetchRaster = (dispatch, getState) => {
+const fetchRaster = (dispatch, getState) => {
 	const controls = getState().controls;
 	const {services, variables, dates, elevations, gammas} = controls;
 
@@ -127,8 +110,9 @@ export const selectService = idx => dispatch => {
 		type: SERVICE_SELECTED,
 		idx
 	});
-	dispatch(fetchVariables);
-	dispatch(fetchDates);
+	dispatch(fetchParamsAndRaster);
+	// dispatch(fetchVariables);
+	// dispatch(fetchDates);
 };
 
 export const selectVariable = idx => dispatch => {
