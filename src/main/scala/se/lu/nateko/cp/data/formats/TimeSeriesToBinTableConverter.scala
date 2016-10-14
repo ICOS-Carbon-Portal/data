@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.formats.wdcgg
+package se.lu.nateko.cp.data.formats
 
 import java.time.Instant
 import java.time.LocalDate
@@ -6,14 +6,17 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 import java.util.Locale
-import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.Schema
-import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesParser.Header
-import ToBinTableConverter._
+import TimeSeriesToBinTableConverter._
 
-class ToBinTableConverter(colFormats: Formats, header: Header) {
+abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[String], offsetFromUtc: Int, nRows: Int) {
 
-	private val colPositions: Map[String, Int] = computeIndices(header.columnNames)
+	protected def amend(value: String, format: ValueFormat): String
+	protected def isNull(value: String, format: ValueFormat): Boolean
+	protected def timeCol: String
+	protected def dateCol: String
+
+	private val colPositions: Map[String, Int] = computeIndices(columnNames)
 
 	private val missingColumns = {
 		val expectedCols = (colFormats.keys.toSeq :+ timeCol :+ dateCol).distinct
@@ -27,7 +30,7 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 
 	val schema = {
 		val dataTypes = sortedColumns.map(colFormats).map(valueFormatParser.getBinTableDataType)
-		new Schema(dataTypes, header.nRows)
+		new Schema(dataTypes, nRows)
 	}
 
 	private val Seq(stampPos, timePos, datePos) = {
@@ -63,10 +66,10 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 			val dt =
 				if(time >= 86400){
 					val locTime = LocalTime.ofSecondOfDay(time - 86400)
-					LocalDateTime.of(locDate, locTime).plusHours(24 - header.offsetFromUtc)
+					LocalDateTime.of(locDate, locTime).plusHours(24 - offsetFromUtc)
 				} else {
 					val locTime = LocalTime.ofSecondOfDay(time)
-					LocalDateTime.of(locDate, locTime).minusHours(header.offsetFromUtc)
+					LocalDateTime.of(locDate, locTime).minusHours(offsetFromUtc)
 				}
 			Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli)
 		}
@@ -74,40 +77,9 @@ class ToBinTableConverter(colFormats: Formats, header: Header) {
 	private def getNull(valFormat: ValueFormat) = valueFormatParser.getNullRepresentation(valFormat)
 }
 
-object ToBinTableConverter{
-
-	type Formats = Map[String, ValueFormat]
+object TimeSeriesToBinTableConverter{
 
 	val timeStampCol = "TIMESTAMP"
-	private val timeCol = "TIME"
-	private val dateCol = "DATE"
-	private val floatNullRegex = "\\-9+\\.9*".r
-	private val timeRegex = "(\\d\\d):(\\d\\d)".r
-	private val nullDates = Set("99-99", "02-30", "04-31", "06-31", "09-31", "11-31")
-
-	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case IntValue => value == "-9999"
-		case FloatValue => floatNullRegex.findFirstIn(value).isDefined
-		case StringValue => value == null
-		case Iso8601Date => nullDates.contains(value.substring(5))
-		case Iso8601DateTime => false //does not occur in WDCGG
-		case Iso8601TimeOfDay => value == "99:99" || value.startsWith("25:") || value.startsWith("26:")
-	}
-
-	def amend(value: String, format: ValueFormat): String = format match {
-		case Iso8601TimeOfDay => value match{
-			case timeRegex(hourStr, minStr) =>
-				minStr.toInt match{
-					case 60 =>
-						val hours = "%02d".format(hourStr.toInt + 1)
-						s"$hours:00"
-					case mins if mins > 60 => s"$hourStr:00"
-					case _ => value
-				}
-			case _ => value
-		}
-		case _ => value
-	}
 
 	def computeIndices(strings: Array[String]): Map[String, Int] = {
 		strings.zipWithIndex.groupBy(_._1).map{
@@ -115,7 +87,7 @@ object ToBinTableConverter{
 		}
 	}
 
-	def recoverTimeStamp(cells: Array[AnyRef], formats: Formats): Instant = {
+	def recoverTimeStamp(cells: Array[AnyRef], formats: ColumnFormats): Instant = {
 		val sortedCols = getSortedColumns(formats)
 		val stampColIndex = sortedCols.indexOf(timeStampCol)
 		assert(stampColIndex >= 0, timeStampCol + " not found in:  ." + sortedCols.mkString(", "))
@@ -123,6 +95,6 @@ object ToBinTableConverter{
 		Instant.ofEpochMilli(epochMilli.toLong)
 	}
 
-	private def getSortedColumns(formats: Formats): Array[String] =
+	private def getSortedColumns(formats: ColumnFormats): Array[String] =
 		formats.keys.toArray.sorted
 }

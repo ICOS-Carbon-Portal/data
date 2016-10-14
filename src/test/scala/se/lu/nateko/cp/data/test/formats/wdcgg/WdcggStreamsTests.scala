@@ -9,15 +9,15 @@ import java.io.File
 import org.scalatest.FunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
-import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
 import org.scalatest.BeforeAndAfterAll
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggRow
 import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.DurationInt
 
-class TimeSeriesStreamsTests extends FunSuite with BeforeAndAfterAll{
+class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 
-	private implicit val system = ActorSystem("bintabletest")
+	private implicit val system = ActorSystem("wdcggstreamstest")
 	private implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 

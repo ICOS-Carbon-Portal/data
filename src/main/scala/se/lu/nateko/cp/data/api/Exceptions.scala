@@ -18,3 +18,4 @@ final class UnauthorizedUpload(message: String) extends CpDataException(message)
 sealed class CpDataParsingException(message: String) extends CpDataException(message)
 
 final class WdcggParsingException(message: String) extends CpDataParsingException(message)
+final class EcoCsvParsingException(message: String) extends CpDataParsingException(message)

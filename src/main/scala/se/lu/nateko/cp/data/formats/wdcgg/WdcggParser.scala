@@ -1,10 +1,13 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
-import se.lu.nateko.cp.data.api.WdcggParsingException
 import scala.collection.immutable.ListMap
+
 import org.slf4j.LoggerFactory
 
-object TimeSeriesParser {
+import se.lu.nateko.cp.data.api.WdcggParsingException
+import se.lu.nateko.cp.data.formats.ParsingAccumulator
+
+object WdcggParser {
 
 	case class Header(
 		headerLength: Int,
@@ -22,7 +25,7 @@ object TimeSeriesParser {
 			lineNumber: Int,
 			cells: Array[String],
 			error: Option[Throwable]
-		){
+		) extends ParsingAccumulator{
 
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 		def isOnData = (header.headerLength > 0 && lineNumber > header.headerLength)
@@ -141,6 +144,4 @@ object TimeSeriesParser {
 			(harmonizedKey, value)
 	}
 
-
 }
-

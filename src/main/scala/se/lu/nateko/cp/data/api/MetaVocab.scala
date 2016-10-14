@@ -13,6 +13,7 @@ abstract class MetaVocab(baseUri: URI) {
 object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/cpmeta/")){
 
 	val asciiWdcggTimeSer = getRelative("asciiWdcggTimeSer")
+	val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
 
 	def getDataObject(hash: Sha256Sum) = new URI("https://meta.icos-cp.eu/objects/" + hash.id)
 
@@ -20,6 +21,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val int32 = getRelative("int32")
 	val string = getRelative("string")
 	val iso8601date = getRelative("iso8601date")
+	val etcDate = getRelative("etcDate")
 	val iso8601dateTime = getRelative("iso8601dateTime")
 	val iso8601timeOfDay = getRelative("iso8601timeOfDay")
 }

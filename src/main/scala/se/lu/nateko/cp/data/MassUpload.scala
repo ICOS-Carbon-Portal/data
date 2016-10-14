@@ -30,7 +30,7 @@ import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams
+import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
 
 object MassUpload extends CommonJsonSupport{
 
@@ -84,8 +84,8 @@ object MassUpload extends CommonJsonSupport{
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.to(Sink.ignore).run()
 		val headerFut = FileIO.fromPath(path)
-			.via(TimeSeriesStreams.linesFromBinary)
-			.toMat(TimeSeriesStreams.wdcggHeaderSink)(Keep.right).run()
+			.via(WdcggStreams.linesFromBinary)
+			.toMat(WdcggStreams.wdcggHeaderSink)(Keep.right).run()
 		for(hash <- hashFut; header <- headerFut) yield {
 			val stationName = header("STATION NAME")
 			FileInfo(path, hash, stationName)

@@ -9,6 +9,7 @@ case object IntValue extends ValueFormat
 case object FloatValue extends ValueFormat
 case object StringValue extends ValueFormat
 case object Iso8601Date extends ValueFormat
+case object EtcDate extends ValueFormat
 case object Iso8601DateTime extends ValueFormat
 case object Iso8601TimeOfDay extends ValueFormat
 
@@ -21,6 +22,7 @@ object ValueFormat{
 		case `float32` => FloatValue
 		case `string` => StringValue
 		case `iso8601date` => Iso8601Date
+		case `etcDate` => EtcDate
 		case `iso8601dateTime` => Iso8601DateTime
 		case `iso8601timeOfDay` => Iso8601TimeOfDay
 		case _ => throw new CpDataException(s"Unsupported value format $uri")

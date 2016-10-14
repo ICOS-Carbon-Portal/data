@@ -33,7 +33,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 
 		if(format.uri == CpMetaVocab.asciiWdcggTimeSer){
 
-			import se.lu.nateko.cp.data.formats.wdcgg.TimeSeriesStreams._
+			import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
 
 			val columnFormats = getColumnFormats(dataObj.hash)
 
