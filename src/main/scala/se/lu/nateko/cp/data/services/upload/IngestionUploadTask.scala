@@ -34,7 +34,6 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 		if(format.uri == CpMetaVocab.asciiWdcggTimeSer){
 
 			import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-
 			val columnFormats = getColumnFormats(dataObj.hash)
 
 			val toBinTableSink: Sink[String, Future[UploadTaskResult]] = wdcggParser
@@ -49,12 +48,34 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 			linesFromBinary
 				.toMat(toBinTableSink)(Keep.right)
 
-		} else Sink.cancelled.mapMaterializedValue(_ =>
-			Future.successful(
-				NotImplementedFailure(s"Ingestion of format ${format.label} is not supported")
-			)
-		)
+		} else if(format.uri == CpMetaVocab.asciiEtcTimeSer){
+
+			dataObj.specificInfo.right.toOption.flatMap(_.nRows) match{
+
+				case None => failedSink(IncompleteMetadataFailure(dataObj.hash, "Missing nRows (number of rows)"))
+
+				case Some(nRows) =>
+
+					import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
+					val columnFormats = getColumnFormats(dataObj.hash)
+
+					val toBinTableSink: Sink[String, Future[UploadTaskResult]] = ecoCsvParser
+						.viaMat(ecoCsvToBinTableConverter(nRows, columnFormats))(KeepFuture.right)
+						.to(BinTableSink(file))
+						.mapMaterializedValue(
+							_.map(IngestionSuccess(_)).recover{
+								case exc: Throwable => IngestionFailure(exc)
+							}
+						)
+
+					linesFromBinary
+						.toMat(toBinTableSink)(Keep.right)
+			}
+
+		} else failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
 	}
+
+	private def failedSink[T](result: UploadTaskResult) = Sink.cancelled[T].mapMaterializedValue(_ => Future.successful(result))
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = {
 		ownResult match {

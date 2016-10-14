@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.services.upload
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 import se.lu.nateko.cp.data.api.CpDataException
+import se.lu.nateko.cp.data.api.MetadataObjectIncomplete
 
 class UploadResult(val taskResults: Seq[UploadTaskResult]){
 
@@ -35,6 +36,9 @@ sealed trait UploadTaskFailure extends UploadTaskResult{
 }
 case class NotImplementedFailure(message: String) extends UploadTaskFailure{
 	val error = new CpDataException(message)
+}
+case class IncompleteMetadataFailure(hash: Sha256Sum, message: String) extends UploadTaskFailure{
+	val error = new MetadataObjectIncomplete(hash, message)
 }
 case class CancelledBecauseOfOthers(errors: Seq[UploadTaskFailure]) extends UploadTaskCancellation
 

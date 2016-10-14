@@ -76,18 +76,27 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 		dataObj.specification.dataLevel match{
 			case 0 =>
 				hashAndIrods
+
 			case 2 =>
 				if(dataObj.specification.format.uri == CpMetaVocab.asciiWdcggTimeSer){
 					IndexedSeq.empty :+
 					new HashsumCheckingUploadTask(dataObj.hash) :+
 					new IngestionUploadTask(dataObj, file, meta.sparql)
+
+				} else if(dataObj.specification.format.uri == CpMetaVocab.asciiEtcTimeSer){
+					hashAndIrods :+
+					new IngestionUploadTask(dataObj, file, meta.sparql) :+
+					new FileSavingUploadTask(file)
+
 				}else {
 					hashAndIrods :+
 					new FileSavingUploadTask(file)
 				}
+
 			case 3 =>
 				hashAndIrods :+
 				new FileSavingUploadTask(file)
+
 			case dataLevel =>
 				IndexedSeq.empty :+
 				new NotSupportedUploadTask(s"Upload of data objects of level $dataLevel is not supported")
