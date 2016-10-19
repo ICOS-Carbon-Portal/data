@@ -17,7 +17,8 @@ export default class NetCDFLegend extends Component {
 	}
 
 	shouldComponentUpdate(nextProps, nextState){
-		return nextProps.legendId != this.props.legendId || this.state.length != nextState.length;
+		// console.log({rasterVal: nextProps.rasterVal});
+		return nextProps.legendId != this.props.legendId || this.state.length != nextState.length || nextProps.rasterVal != this.props.rasterVal;
 	}
 
 	updateLegend() {
@@ -78,16 +79,23 @@ export default class NetCDFLegend extends Component {
 
 		const props = this.props;
 		const legendDivStyle = props.horizontal
-			? {marginTop: 2}
-			: {marginLeft: 2};
+			? {position: 'relative', marginTop: 2}
+			: {position: 'relative', marginLeft: 2};
 
 		if(!length) return <div ref="legendDiv" style={legendDivStyle}></div>;
 
-		const {valueMaker, suggestedTickLocations} = props.getLegend(0, length - 1);
+		const {valueMaker, pixelMaker, suggestedTickLocations} = props.getLegend(0, length - 1);
+		const cursorPos = pixelMaker
+			? Math.round(pixelMaker(props.rasterVal))
+			: null;
+		const cursorStyle = pixelMaker && props.horizontal
+			? {width: 2, height: props.canvasWidth, backgroundColor: 'black', position: 'absolute', top: 0, left: props.margin + cursorPos}
+			: {}
 
 		return (
 			<div ref="legendDiv" style={legendDivStyle}>
 				<canvas	ref="canvas"/>
+				<span style={cursorStyle} />
 				<LegendAxis
 					horizontal={props.horizontal}
 					length={length}

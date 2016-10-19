@@ -12,6 +12,7 @@ export const VARIABLE_SELECTED = 'VARIABLE_SELECTED';
 export const DATE_SELECTED = 'DATE_SELECTED';
 export const ELEVATION_SELECTED = 'ELEVATION_SELECTED';
 export const GAMMA_SELECTED = 'GAMMA_SELECTED';
+export const RASTER_VALUE_RECEIVED = 'RASTER_VALUE_RECEIVED';
 
 function failWithError(error){
 	console.log(error);
@@ -41,13 +42,13 @@ export const fetchServices = dispatch => {
 				controlName: 'services',
 				services
 			});
-			dispatch(fetchParamsAndRaster);
+			dispatch(fetchVariablesAndDates);
 		},
 		err => dispatch(failWithError(err))
 	);
 }
 
-const fetchParamsAndRaster = (dispatch, getState) => {
+const fetchVariablesAndDates = (dispatch, getState) => {
 	const services = getState().controls.services;
 
 	if(!services.hasSelected) return;
@@ -110,9 +111,7 @@ export const selectService = idx => dispatch => {
 		type: SERVICE_SELECTED,
 		idx
 	});
-	dispatch(fetchParamsAndRaster);
-	// dispatch(fetchVariables);
-	// dispatch(fetchDates);
+	dispatch(fetchVariablesAndDates);
 };
 
 export const selectVariable = idx => dispatch => {
@@ -145,3 +144,10 @@ export const selectGamma = idx => dispatch => {
 		idx
 	});
 };
+
+export const setRasterVal = val => dispatch => {
+	dispatch({
+		type: RASTER_VALUE_RECEIVED,
+		val
+	});
+}

@@ -1,5 +1,5 @@
 import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, CTRL_HELPER_UPDATED, RASTER_FETCHED,
-	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED} from './actions';
+	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, RASTER_VALUE_RECEIVED} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from './models/ColorMaker';
 
@@ -77,6 +77,12 @@ export default function(state, action){
 					colorMaker: new ColorMaker(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected)
 				})
 				: state;
+
+		case RASTER_VALUE_RECEIVED:
+			return Object.assign({}, state, {
+				status: RASTER_VALUE_RECEIVED,
+				rasterVal: action.val
+			});
 
 		default:
 			return state;

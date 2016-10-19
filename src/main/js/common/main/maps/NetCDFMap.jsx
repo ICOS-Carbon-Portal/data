@@ -26,6 +26,7 @@ export default class NetCDFMap extends Component{
 			rasterId: null,
 			countriesAdded: false,
 			map: null,
+			mapMouseOver: null,
 			rasterCanvas: document.createElement('canvas'),
 			markers: L.featureGroup(),
 			countries: new L.GeoJSON(),
@@ -54,6 +55,24 @@ export default class NetCDFMap extends Component{
 		map.addLayer(app.canvasTiles);
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
+
+		if (this.props.mouseOverCB) {
+			app.mapMouseOver = e => {
+				const raster = this.props.raster;
+				const latlng = e.latlng;
+
+				if (raster && app.latLonToXY && app.latLonToXY.from.containsXY(latlng.lng, latlng.lat)) {
+					const xy = app.latLonToXY.mapXY(latlng.lng, latlng.lat);
+					const val = raster.getValue(Math.round(raster.height - xy.y - 0.5), Math.round(xy.x - 0.5));
+
+					if (!isNaN(val)) {
+						this.props.mouseOverCB(val);
+					}
+				}
+			}
+
+			map.on('mousemove', app.mapMouseOver);
+		}
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -144,7 +163,9 @@ export default class NetCDFMap extends Component{
 		app.rasterCanvas.height = raster.height;
 
 		renderRaster(app.rasterCanvas, raster, props.colorMaker);
-		app.tileHelper = getTileHelper(raster);
+		app.latLonToXY = getLatLonToXYMapping(raster);
+		const worldBox = new Bbox(-180, -90, 180, 90);
+		app.tileHelper = new TileMappingHelper(app.latLonToXY, worldBox);
 		app.canvasTiles.refreshTiles();
 		if(props.renderCompleted) props.renderCompleted();
 	}
@@ -155,7 +176,10 @@ export default class NetCDFMap extends Component{
 
 	componentWillUnmount() {
 		//TODO Remove all layers from the map
-		this.app.map = null;
+		const app = this.app;
+
+		if (this.props.mouseOverCB) app.map.off('mousemove', app.mapMouseOver);
+		app.map = null;
 	}
 
 	render() {
@@ -163,14 +187,11 @@ export default class NetCDFMap extends Component{
 	}
 }
 
-function getTileHelper(raster){
+function getLatLonToXYMapping(raster){
 	const dsPixels = new Bbox(0, 0, raster.width, raster.height);
 	const rbb = raster.boundingBox;
 	const dsCoords = new Bbox(rbb.lonMin, rbb.latMin, rbb.lonMax, rbb.latMax).expandToRaster(raster);
-	const dsMapping = new BboxMapping(dsCoords, dsPixels);
-	const worldBox = new Bbox(-180, -90, 180, 90);
-
-	return new TileMappingHelper(dsMapping, worldBox);
+	return new BboxMapping(dsCoords, dsPixels);
 }
 
 function drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper) {

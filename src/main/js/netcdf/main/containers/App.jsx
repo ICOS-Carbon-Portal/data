@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import {ERROR, RASTER_FETCHED}from '../actions';
+import {ERROR, RASTER_FETCHED, RASTER_VALUE_RECEIVED, setRasterVal}from '../actions';
 
 const marginTop = 10;
 
@@ -18,7 +18,7 @@ class App extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		nextProps.status === RASTER_FETCHED
+		nextProps.status === RASTER_FETCHED || nextProps.status === RASTER_VALUE_RECEIVED
 			? this.setState({busy: false})
 			: this.setState({busy: true});
 	}
@@ -80,6 +80,7 @@ class App extends Component {
 									decimals={2}
 									legendText="Legend"
 									legendId={legendId}
+									rasterVal={props.rasterVal}
 								/>
 								: null
 						}</div>
@@ -98,6 +99,7 @@ class App extends Component {
 								colorMaker={colorMaker}
 								geoJson={props.countriesTopo}
 								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
+								mouseOverCB={props.mouseOverCB}
 							/>
 						</div>
 					</div>
@@ -122,4 +124,12 @@ function stateToProps(state){
 	return Object.assign({}, state);
 }
 
-export default connect(stateToProps)(App);
+function dispatchToProps(dispatch){
+	return {
+		mouseOverCB(val){
+			dispatch(setRasterVal(val));
+		}
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(App);

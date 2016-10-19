@@ -28,13 +28,13 @@ export default class ColorMaker{
 	getLegend(pixelMin, pixelMax){
 		const minVal = this._domain[0];
 		const maxVal = this._domain[1];
-		const valRange = maxVal - minVal;
 		const valueMaker = linearInterpolation([pixelMin, pixelMax], this._domain);
+		const pixelMaker = linearInterpolation(this._domain, [pixelMin, pixelMax]);
 		const nTickIntervals = Math.floor((pixelMax - pixelMin) / 200);
 		const toPixel = linearInterpolation([0, nTickIntervals], [pixelMin, pixelMax]);
 
+		// const valRange = maxVal - minVal;
 		// const nTicks = Math.floor((pixelMax - pixelMin) / 200);
-		// const val2pixel = linearInterpolation(this._domain, [pixelMin, pixelMax]);
 		// // const tickIntervalPixelLength =  Math.floor((pixelMax - pixelMin)) / nTicks;
 		// const tickIntervalValLength = valRange / nTicks;
 		// const valExp = Math.floor(Math.log(valRange) / Math.log(10));
@@ -65,6 +65,7 @@ export default class ColorMaker{
 
 		return {
 			valueMaker,
+			pixelMaker,
 			colorMaker: pixel => this.makeColor(valueMaker(pixel)),
 			suggestedTickLocations: Array.from({length: nTickIntervals + 1}, (_, i) => i).map(toPixel)
 		};
