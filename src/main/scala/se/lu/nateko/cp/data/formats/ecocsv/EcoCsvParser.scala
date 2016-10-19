@@ -41,9 +41,9 @@ object EcoCsvParser {
 			//lineNumber = 1 and line is the units line
 			val timeFormat = line.split(',')(1)
 
-			if(timeFormat != "HH:MM (CET)")
+			if(!timeFormat.endsWith("(CET)"))
 				acc.copy(error = Some(
-					new EcoCsvParsingException(s"Unsupported time format $timeFormat")
+					new EcoCsvParsingException(s"Unsupported time format $timeFormat, should end with '(CET)'")
 				))
 			else acc.copy(header = acc.header.copy(offsetFromUtc = 1)).incrementLine
 		}
