@@ -39,6 +39,7 @@ export default class NetCDFMap extends Component{
 
 	componentDidMount() {
 		const app = this.app;
+		const props = this.props;
 		const map = app.map = L.map(
 			ReactDOM.findDOMNode(this.refs.map),
 			Object.assign({
@@ -56,7 +57,7 @@ export default class NetCDFMap extends Component{
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
 
-		if (this.props.mouseOverCB) {
+		if (props.mouseOverCB) {
 			app.mapMouseOver = e => {
 				const raster = this.props.raster;
 				const latlng = e.latlng;
@@ -72,6 +73,12 @@ export default class NetCDFMap extends Component{
 			}
 
 			map.on('mousemove', app.mapMouseOver);
+		}
+
+		if (props.controls){
+			props.controls.forEach(ctrl => {
+				map.addControl(ctrl);
+			});
 		}
 	}
 

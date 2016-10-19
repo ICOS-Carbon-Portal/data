@@ -4,6 +4,7 @@ import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
 import {ERROR, RASTER_FETCHED, RASTER_VALUE_RECEIVED, setRasterVal}from '../actions';
+import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 const marginTop = 10;
 
@@ -100,6 +101,7 @@ class App extends Component {
 								geoJson={props.countriesTopo}
 								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
 								mouseOverCB={props.mouseOverCB}
+								controls={[new LCommon.CoordViewer({decimals: 2})]}
 							/>
 						</div>
 					</div>
