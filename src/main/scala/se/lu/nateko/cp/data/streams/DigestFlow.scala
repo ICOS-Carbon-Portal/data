@@ -15,10 +15,12 @@ import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.ByteString
+import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 object DigestFlow{
 
+	def md5 = forDigest("MD5")(bytes => new Md5Sum(bytes))
 	def sha1 = forDigest("SHA-1")(identity)
 	def sha256 = forDigest("SHA-256")(bytes => new Sha256Sum(bytes))
 

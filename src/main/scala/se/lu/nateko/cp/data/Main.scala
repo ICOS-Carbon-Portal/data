@@ -61,7 +61,8 @@ object Main extends App {
 		uploadRouting.route ~
 		tabularRouting.route ~
 		StiltRouting(stiltFetcher) ~
-		StaticRouting.route
+		StaticRouting.route ~
+		EtcUploadRouting()
 	}
 
 	Http()
