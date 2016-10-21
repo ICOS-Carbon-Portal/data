@@ -110,7 +110,8 @@ export default Object.assign({}, common, {
 		['TR2',     0,     0, 'TRN',    ''],
 		['TR4',     0,     0, 'TRN',    ''],
 		['TT1',     0,     0, '',       'Tacolneston Tall Tower'],
-		['TT2',     0,     0, '',       'Tacolneston Tall Tower']
+		['TT2',     0,     0, '',       'Tacolneston Tall Tower'],
+		['WEY', 52.95,  1.12, 'WAO',    '']
 	],
 	defaultDelay: 100 //ms
 })
