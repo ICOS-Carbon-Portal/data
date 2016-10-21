@@ -7,6 +7,7 @@ Data service for:
 - previewing the datasets and their metadata
 - the above 3 for the [WDCGG datasets](https://data.icos-cp.eu/portal/)
 - viewing lat/lon geo grid [NetCDF data](https://data.icos-cp.eu/netcdf/)
+- visualizing the results of [STILT modeling](https://data.icos-cp.eu/stilt/)
 
 ---
 
@@ -23,6 +24,28 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 
 ---
 
+## Simplified ETC-specific facade API for data uploads
+A test service is available for developers of the client code. At the time of writing, the test service uses Basic HTTP Authentication with a fixed username `station` and password `p4ssw0rd`. The uploaded data is analyzed (MD5 sum gets calculated for it), and then discarded. Here is an example of uploading bytes in the string `test` to the service (performed on Linux command line):
+
+`$ echo -n 'test' | md5sum`
+
+`098f6bcd4621d373cade4e832627b4f6  -`
+
+`$ curl -X PUT --data 'test' https://station:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/testFileName.txt`
+
+`OK`
+
+To upload a file from the command line:
+
+`$ md5sum myfile.ext`
+
+`098f6bcd4621d373cade4e832627b4f6  -`
+
+`$ curl --upload-file myfile.ext https://station:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/myfile.ext`
+
+`OK`
+
+---
 ## Information for developers
 
 ###Getting started with the front-end part
