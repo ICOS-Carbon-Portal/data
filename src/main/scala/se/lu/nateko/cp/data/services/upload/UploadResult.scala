@@ -4,6 +4,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.MetadataObjectIncomplete
+import java.util.concurrent.ExecutionException
 
 class UploadResult(val taskResults: Seq[UploadTaskResult]){
 
@@ -20,11 +21,19 @@ class UploadResult(val taskResults: Seq[UploadTaskResult]){
 			}.getOrElse("NOT SPECIFIED")
 
 		} else {
-			val messages = failures.map(_.error.getMessage).mkString("\n")
+			import UploadResult._
+			val messages = failures.map(f => extractMessage(f.error)).mkString("\n")
 			throw new CpDataException(messages)
 		}
 	}
 
+}
+
+object UploadResult{
+	def extractMessage(error: Throwable): String = error match {
+		case boxed: ExecutionException => extractMessage(boxed.getCause)
+		case otherError => otherError.getMessage
+	}
 }
 
 sealed trait UploadTaskResult

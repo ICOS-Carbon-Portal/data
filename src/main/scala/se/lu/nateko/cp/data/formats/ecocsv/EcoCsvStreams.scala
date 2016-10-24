@@ -28,7 +28,7 @@ class EcoCsvRow(val header: Header, val cells: Array[String])
 object EcoCsvStreams{
 
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
-		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
+		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
 
 	def ecoCsvParser(implicit ctxt: ExecutionContext): Flow[String, EcoCsvRow, Future[Done]] =
