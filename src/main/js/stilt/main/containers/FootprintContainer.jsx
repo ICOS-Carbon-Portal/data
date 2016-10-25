@@ -9,6 +9,7 @@ import {incrementIfNeeded} from '../actions';
 import {pointIcon, polygonMask} from '../../../common/main/maps/LeafletCommon';
 
 const containerHeight = 400;
+const legendWidth = 118;
 
 class FootprintContainer extends Component {
 	constructor(props) {
@@ -42,7 +43,7 @@ class FootprintContainer extends Component {
 						mask={polygonMask}
 					/>
 				</div>
-				<div  style={{flex: '94px', minWidth:94}}>
+				<div style={{flex: legendWidth + 'px', minWidth: legendWidth}}>
 					<NetCDFLegend
 						horizontal={false}
 						canvasWidth={20}

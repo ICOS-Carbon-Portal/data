@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
+import LegendText from './LegendText.jsx';
 import LegendAxis from './LegendAxis.jsx';
 
 export default class NetCDFLegend extends Component {
@@ -9,31 +10,26 @@ export default class NetCDFLegend extends Component {
 	}
 
 	componentDidMount() {
-		this.updateLegend();
+		const length = this.getLength(this.props);
+		this.updateLegend(length);
 	}
 
-	componentDidUpdate(props){
-		this.updateLegend();
-	}
-
-	shouldComponentUpdate(nextProps, nextState){
-		// console.log({rasterVal: nextProps.rasterVal});
-		return nextProps.legendId != this.props.legendId || this.state.length != nextState.length || nextProps.rasterVal != this.props.rasterVal;
-	}
-
-	updateLegend() {
-		const props = this.props;
-
-		const legendDiv = ReactDOM.findDOMNode(this.refs.legendDiv).getBoundingClientRect();
-
-		const length = props.horizontal
-			? legendDiv.width - 2 * props.margin
+	getLength(props){
+		return props.horizontal
+			? ReactDOM.findDOMNode(this.refs.legendDiv).getBoundingClientRect().width - 2 * props.margin
 			: props.containerHeight - 2 * props.margin;
+	}
 
-		const thisIsInitialization = !this.state.length;
+	componentDidUpdate(prevProps, prevState){
+		const length = this.getLength(this.props);
+
+		if (prevProps.legendId != this.props.legendId || length != prevState.length) {
+			this.updateLegend(length);
+		}
+	}
+
+	updateLegend(length) {
 		this.setState({length});
-		if (thisIsInitialization) return;
-
 		this.renderLegend(length);
 	}
 
@@ -82,20 +78,18 @@ export default class NetCDFLegend extends Component {
 			? {position: 'relative', marginTop: 2}
 			: {position: 'relative', marginLeft: 2};
 
-		if(!length) return <div ref="legendDiv" style={legendDivStyle}></div>;
-
-		const {valueMaker, pixelMaker, suggestedTickLocations} = props.getLegend(0, length - 1);
-		const cursorPos = pixelMaker
-			? Math.round(pixelMaker(props.rasterVal))
-			: null;
-		const cursorStyle = pixelMaker && props.horizontal
-			? {width: 2, height: props.canvasWidth, backgroundColor: 'black', position: 'absolute', top: 0, left: props.margin + cursorPos}
-			: {}
+		const {valueMaker, suggestedTickLocations} = props.getLegend(0, length - 1);
 
 		return (
 			<div ref="legendDiv" style={legendDivStyle}>
+				<LegendText
+					horizontal={props.horizontal}
+					length={length}
+					width={props.canvasWidth}
+					margin={props.margin}
+					legendText={props.legendText}
+				/>
 				<canvas	ref="canvas"/>
-				<span style={cursorStyle} />
 				<LegendAxis
 					horizontal={props.horizontal}
 					length={length}
@@ -104,7 +98,6 @@ export default class NetCDFLegend extends Component {
 					suggestedTickLocations={suggestedTickLocations}
 					decimals={props.decimals}
 					valueMaker={valueMaker}
-					legendText={props.legendText}
 				/>
 			</div>
 		);

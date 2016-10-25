@@ -133,6 +133,94 @@ export const CoordViewer = L.Control.extend({
 	},
 });
 
+export const CoordValueViewer = L.Control.extend({
+	options: {
+		position: 'bottomleft',
+		decimals: 3,
+		style: "background-color: white; padding-left: 3px; padding-right: 3px;"
+	},
+
+	initialize: function (raster, helper, options) {
+		L.Util.setOptions(this, options);
+		this._raster = raster;
+		this._mapper = helper;
+	},
+
+	onAdd: function (map) {
+		var freeze = false;
+		const container = L.DomUtil.create('div', '', L.DomUtil.get('map'));
+		container.setAttribute("style", this.options.style);
+		L.DomEvent.on(container, 'mousemove', L.DomEvent.stopPropagation);
+
+		const infoDiv = L.DomUtil.create('div', '', container);
+		const valDiv = L.DomUtil.create('div', '', container);
+		const latDiv = L.DomUtil.create('div', '', container);
+		const lonDiv = L.DomUtil.create('div', '', container);
+
+		function display(self, latlng, infoTxt){
+			const xy = self._mapper.lookupPixel(latlng.lng, latlng.lat);
+
+			if (infoTxt){
+				infoDiv.innerHTML = infoTxt;
+			} else {
+				infoDiv.innerHTML = '';
+			}
+
+			if (xy) {
+				const val = self._raster.getValue(Math.round(self._raster.height - xy.y - 0.5), Math.round(xy.x - 0.5));
+
+				if (isNaN(val)) {
+					valDiv.innerHTML = "";
+				} else {
+					valDiv.innerHTML = "<b>Value:</b> " + parseFloat(val.toPrecision(9));
+				}
+
+				latDiv.innerHTML = "<b>Lat:</b> " + latlng.lat.toFixed(self.options.decimals);
+				lonDiv.innerHTML = "<b>Lng:</b> " + latlng.lng.toFixed(self.options.decimals);
+			} else {
+				clear();
+			}
+		}
+
+		function clear(){
+			valDiv.innerHTML = "";
+			latDiv.innerHTML = "";
+			lonDiv.innerHTML = "";
+		}
+
+		map.on('mousemove', e => {
+			if(!freeze) {
+				display(this, e.latlng);
+			}
+		});
+
+		map.on('click', e => {
+			freeze = !freeze;
+			const infoTxt = freeze ? '<b>Click in map to unfreeze</b>' : null;
+			display(this, e.latlng, infoTxt);
+		});
+
+		map.on('dblclick', e => {
+			console.log("dblclick");
+		});
+
+		map.on('mouseout', () => {
+			if (!freeze) {
+				clear();
+			}
+		});
+
+		return container;
+	},
+
+	onRemove: function (map) {
+		map.off('mousemove');
+		map.off('mouseout');
+		map.off('click');
+		map.off('dblclick');
+	},
+});
+
 L.PolygonMask = L.Polygon.extend({
 	options: {
 		weight: 1.5,

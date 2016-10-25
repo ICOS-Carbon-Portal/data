@@ -7,6 +7,7 @@ import {ERROR, RASTER_FETCHED, RASTER_VALUE_RECEIVED, setRasterVal}from '../acti
 import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 const marginTop = 10;
+const legendWidth = 130;
 
 class App extends Component {
 	constructor(props){
@@ -19,7 +20,7 @@ class App extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		nextProps.status === RASTER_FETCHED || nextProps.status === RASTER_VALUE_RECEIVED
+		nextProps.status === RASTER_FETCHED
 			? this.setState({busy: false})
 			: this.setState({busy: true});
 	}
@@ -28,7 +29,7 @@ class App extends Component {
 		this.setState({
 			width: window.innerWidth - 30,
 			//155: empirical, 147: top header height
-			height: window.innerHeight - 155 - marginTop - 147
+			height: window.innerHeight - 100 - marginTop - 147
 		});
 	}
 
@@ -61,7 +62,7 @@ class App extends Component {
 			: {display: 'none'};
 
 		const legendId = props.raster
-			? props.raster.id + '_' + props.controls.gammas.selected + '_' + state.width
+			? props.raster.id + '_' + props.controls.gammas.selected
 			: "";
 
 		return (
@@ -69,41 +70,35 @@ class App extends Component {
 
 				<Controls marginTop={marginTop} />
 
-				<div className="row">
-					<div className="col-md-12">
-						<div style={{height: 70}}>{
-							getLegend
-								? <NetCDFLegend
-									horizontal={true}
-									canvasWidth={20}
-									margin={30}
-									getLegend={getLegend}
-									decimals={2}
-									legendText="Legend"
-									legendId={legendId}
-									rasterVal={props.rasterVal}
-								/>
-								: null
-						}</div>
-					</div>
-				</div>
-
-				<div className="row">
-					<div className="col-md-12">
-						<div style={{width: state.width, height: state.height, margin: '0 auto'}}>
-							<NetCDFMap
-								mapOptions={{
-									zoom: 2,
-									center: [13, 0]
-								}}
-								raster={props.raster}
-								colorMaker={colorMaker}
-								geoJson={props.countriesTopo}
-								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
-								mouseOverCB={props.mouseOverCB}
-								controls={[new LCommon.CoordViewer({decimals: 2})]}
+				<div className="col-md-12" style={{display:'flex'}}>
+					<div style={{flex: legendWidth + 'px', minWidth: legendWidth}}>{
+						getLegend
+							? <NetCDFLegend
+								horizontal={false}
+								canvasWidth={20}
+								containerHeight={state.height}
+								margin={7}
+								getLegend={getLegend}
+								legendId={legendId}
+								legendText="Legend"
+								decimals={3}
 							/>
-						</div>
+							: null
+					}</div>
+					<div style={{height: state.height, flex: 100}}>
+						<NetCDFMap
+							mapOptions={{
+								zoom: 2,
+								center: [13, 0]
+							}}
+							raster={props.raster}
+							colorMaker={colorMaker}
+							geoJson={props.countriesTopo}
+							latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
+							controls={[
+								new LCommon.CoordViewer({decimals: 2})
+							]}
+						/>
 					</div>
 				</div>
 
@@ -126,12 +121,4 @@ function stateToProps(state){
 	return Object.assign({}, state);
 }
 
-function dispatchToProps(dispatch){
-	return {
-		mouseOverCB(val){
-			dispatch(setRasterVal(val));
-		}
-	};
-}
-
-export default connect(stateToProps, dispatchToProps)(App);
+export default connect(stateToProps)(App);

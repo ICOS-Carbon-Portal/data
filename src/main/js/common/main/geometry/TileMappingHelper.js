@@ -17,6 +17,11 @@ export default class TileMappingHelper{
 		});
 	}
 
+	lookupPixel(lon, lat){
+		const mapping = this._mappings.find(mapping => mapping.from.containsXY(lon, lat));
+		return mapping ? mapping.mapXY(lon, lat) : null;
+	}
+
 	getRebasedDatasetBox(){
 		return this._mappings.map(m => m.from).reduce((acc, curr) => acc.join(curr));
 	}

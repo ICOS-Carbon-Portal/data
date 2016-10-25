@@ -4,6 +4,7 @@ import TileMappingHelper, {getTileCoordBbox} from '../geometry/TileMappingHelper
 import Bbox from '../geometry/Bbox';
 import BboxMapping from '../geometry/BboxMapping';
 import renderRaster from './renderRaster';
+import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 /*
  Incoming props
@@ -31,7 +32,8 @@ export default class NetCDFMap extends Component{
 			markers: L.featureGroup(),
 			countries: new L.GeoJSON(),
 			maskHole: null,
-			maskHoleVisible: false
+			maskHoleVisible: false,
+			coordValCtrl: null
 		};
 		const NetCdfLayer = getNetCdfLayer(this.app);
 		this.app.canvasTiles = new NetCdfLayer({keepBuffer: 0, noWrap: true});
@@ -62,12 +64,14 @@ export default class NetCDFMap extends Component{
 				const raster = this.props.raster;
 				const latlng = e.latlng;
 
-				if (raster && app.latLonToXY && app.latLonToXY.from.containsXY(latlng.lng, latlng.lat)) {
-					const xy = app.latLonToXY.mapXY(latlng.lng, latlng.lat);
-					const val = raster.getValue(Math.round(raster.height - xy.y - 0.5), Math.round(xy.x - 0.5));
+				if (raster && app.tileHelper) {
+					const xy = app.tileHelper.lookupPixel(latlng.lng, latlng.lat);
+					if(xy){
+						const val = raster.getValue(Math.round(raster.height - xy.y - 0.5), Math.round(xy.x - 0.5));
 
-					if (!isNaN(val)) {
-						this.props.mouseOverCB(val);
+						if (!isNaN(val)) {
+							this.props.mouseOverCB(val);
+						}
 					}
 				}
 			}
@@ -75,11 +79,11 @@ export default class NetCDFMap extends Component{
 			map.on('mousemove', app.mapMouseOver);
 		}
 
-		if (props.controls){
-			props.controls.forEach(ctrl => {
-				map.addControl(ctrl);
-			});
-		}
+		// if (props.controls){
+		// 	props.controls.forEach(ctrl => {
+		// 		map.addControl(ctrl);
+		// 	});
+		// }
 	}
 
 	componentWillReceiveProps(nextProps){
@@ -94,6 +98,7 @@ export default class NetCDFMap extends Component{
 
 		if (nextProps.raster && nextProps.raster.id !== app.rasterId) {
 			this.updateRasterCanvas(nextProps);
+			this.updateCoordValViewer(app, nextProps);
 		}
 
 		if(nextProps.reset) {
@@ -127,6 +132,13 @@ export default class NetCDFMap extends Component{
 		propMarkers.forEach(marker => {
 			markers.addLayer(marker);
 		});
+	}
+
+	updateCoordValViewer(app, props){
+		if (app.coordValCtrl) app.coordValCtrl.remove();
+
+		app.coordValCtrl = new LCommon.CoordValueViewer(props.raster, app.tileHelper, {decimals: 3});
+		app.map.addControl(app.coordValCtrl);
 	}
 
 	adjustMapView(latLngBounds){
@@ -170,9 +182,9 @@ export default class NetCDFMap extends Component{
 		app.rasterCanvas.height = raster.height;
 
 		renderRaster(app.rasterCanvas, raster, props.colorMaker);
-		app.latLonToXY = getLatLonToXYMapping(raster);
+		const latLonToXY = getLatLonToXYMapping(raster);
 		const worldBox = new Bbox(-180, -90, 180, 90);
-		app.tileHelper = new TileMappingHelper(app.latLonToXY, worldBox);
+		app.tileHelper = new TileMappingHelper(latLonToXY, worldBox);
 		app.canvasTiles.refreshTiles();
 		if(props.renderCompleted) props.renderCompleted();
 	}

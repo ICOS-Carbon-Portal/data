@@ -30,7 +30,7 @@ export default class ColorMaker{
 		const maxVal = this._domain[1];
 		const valueMaker = linearInterpolation([pixelMin, pixelMax], this._domain);
 		const pixelMaker = linearInterpolation(this._domain, [pixelMin, pixelMax]);
-		const nTickIntervals = Math.floor((pixelMax - pixelMin) / 200);
+		const nTickIntervals = Math.floor((pixelMax - pixelMin) / 80);
 		const toPixel = linearInterpolation([0, nTickIntervals], [pixelMin, pixelMax]);
 
 		// const valRange = maxVal - minVal;
