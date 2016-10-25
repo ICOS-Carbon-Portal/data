@@ -57,6 +57,7 @@ const StationAndYearSelector = ({selectYear, selectStation, selectedYear, select
 				availableValues={stations}
 				value={selectedStation}
 				presenter={station => station ? `${station.name} (${station.id})` : station}
+				sort={true}
 			/>
 		</div>
 		<div className="col-md-6">

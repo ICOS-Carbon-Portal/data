@@ -111,7 +111,16 @@ export default Object.assign({}, common, {
 		['TR4',     0,     0, 'TRN',    ''],
 		['TT1',     0,     0, '',       'Tacolneston Tall Tower'],
 		['TT2',     0,     0, '',       'Tacolneston Tall Tower'],
-		['WEY', 52.95,  1.12, 'WAO',    '']
+		['WEY', 52.95,  1.12, 'WAO',    ''],
+		['FIK', 35.34, 25.67, '',       'Finokalia'],
+		['FZJ', 50.91,  6.41, 'JUE',    ''],
+		['GAR', 53.07, 11.44, 'GAT',    ''],
+		['HYL', 56.10, 13.42, 'SE-Htm', ''],
+		['KIT050',49.09,8.43, 'KIT',    ''],
+		['KIT100',49.09,8.43, 'KIT',    ''],
+		['LIN', 52.21, 14.12, 'LIN',    ''],
+		['OP3', 48.55,  5.50, 'OPE',    ''],
+		['WES', 54.92,  8.30, '',       'Westerland']
 	],
 	defaultDelay: 100 //ms
 })
