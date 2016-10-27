@@ -41,22 +41,28 @@ private class DigestFlow[T](digest: String, map: Array[Byte] => T) extends Graph
 
 			val matValPromise = Promise[T]()
 			private val md = MessageDigest.getInstance(digest)
+			private def completeDigest(): Unit = matValPromise.complete(Success(map(md.digest)))
 
 			setHandler(in, new InHandler{
 				override def onPush(): Unit = {
 					val bs = grab(in)
-					bs.asByteBuffers.foreach(md.update)
 					push(out, bs)
+					bs.asByteBuffers.foreach(md.update)
 				}
 
 				override def onUpstreamFinish(): Unit = {
 					super.onUpstreamFinish()
-					matValPromise.complete(Success(map(md.digest)))
+					completeDigest()
 				}
 			})
 
 			setHandler(out, new OutHandler {
 				override def onPull(): Unit = pull(in)
+
+				override def onDownstreamFinish(): Unit = {
+					completeDigest()
+					super.onDownstreamFinish()
+				}
 			})
 		}
 
