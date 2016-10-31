@@ -9,7 +9,7 @@ import {incrementIfNeeded} from '../actions';
 import {pointIcon, polygonMask} from '../../../common/main/maps/LeafletCommon';
 
 const containerHeight = 400;
-const legendWidth = 118;
+const legendWidth = 120;
 
 class FootprintContainer extends Component {
 	constructor(props) {
