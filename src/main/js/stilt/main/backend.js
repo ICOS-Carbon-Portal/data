@@ -45,9 +45,7 @@ function getStationInfo(){
 				nRows: binding.nRows ? parseInt(binding.nRows.value) : undefined,
 				dobj: binding.dobj ? binding.dobj.value : undefined
 			};
-		}).filter(({id, year}) => stationYears[id] && stationYears[id].length > 0 &&
-				(!year || stationYears[id].indexOf(year) >= 0)
-		);
+		}).filter(({id, year}) => stationYears[id] && stationYears[id].length > 0);
 
 		const byId = groupBy(flatInfo, info => info.id);
 
