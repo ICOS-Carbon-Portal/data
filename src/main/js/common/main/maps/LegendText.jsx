@@ -20,7 +20,7 @@ export default class LegendText extends Component {
 			: {marginRight: 4};
 
 		return (
-			<svg width={width} height={height} style={style}>{
+			<svg className="legend-text" width={width} height={height} style={style}>{
 				props.horizontal
 					? null
 					: <text x={textHeight} y={height / 2} textAnchor="middle" fontSize={'1.2em'} transform={"rotate(270," + textHeight + "," + height / 2 + ")"}>

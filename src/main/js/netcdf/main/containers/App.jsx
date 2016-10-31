@@ -8,6 +8,7 @@ import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 const marginTop = 10;
 const legendWidth = 130;
+const minHeight = 300;
 
 class App extends Component {
 	constructor(props){
@@ -65,18 +66,20 @@ class App extends Component {
 			? props.raster.id + '_' + props.controls.gammas.selected
 			: "";
 
+		const containerHeight = state.height < minHeight ? minHeight : state.height;
+
 		return (
 			<div>
 
 				<Controls marginTop={marginTop} />
 
 				<div className="col-md-12" style={{display:'flex'}}>
-					<div style={{flex: legendWidth + 'px', minWidth: legendWidth}}>{
+					<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
 						getLegend
 							? <NetCDFLegend
 								horizontal={false}
 								canvasWidth={20}
-								containerHeight={state.height}
+								containerHeight={containerHeight}
 								margin={7}
 								getLegend={getLegend}
 								legendId={legendId}
@@ -85,7 +88,7 @@ class App extends Component {
 							/>
 							: null
 					}</div>
-					<div style={{height: state.height, flex: 100}}>
+					<div style={{height: state.height, flex: 100, minHeight}}>
 						<NetCDFMap
 							mapOptions={{
 								zoom: 2,

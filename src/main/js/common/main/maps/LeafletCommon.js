@@ -163,23 +163,16 @@ export const CoordValueViewer = L.Control.extend({
 		function display(self, latlng, infoTxt){
 			const xy = self._mapper.lookupPixel(latlng.lng, latlng.lat);
 
-			if (infoTxt){
-				infoDiv.innerHTML = infoTxt;
-			} else {
-				infoDiv.innerHTML = '';
-			}
+			infoDiv.innerHTML = infoTxt ? infoTxt : '';
 
 			if (xy) {
 				const val = self._raster.getValue(Math.round(self._raster.height - xy.y - 0.5), Math.round(xy.x - 0.5));
 
-				if (isNaN(val)) {
-					valDiv.innerHTML = "";
-				} else {
-					valDiv.innerHTML = "<b>Value:</b> " + parseFloat(val.toPrecision(9));
-				}
-
-				latDiv.innerHTML = "<b>Lat:</b> " + latlng.lat.toFixed(self.options.decimals);
-				lonDiv.innerHTML = "<b>Lng:</b> " + latlng.lng.toFixed(self.options.decimals);
+				valDiv.innerHTML = isNaN(val)
+					? ''
+					: '<b>Value:</b> ' + parseFloat(val.toPrecision(9));
+				latDiv.innerHTML = '<b>Lat:</b> ' + latlng.lat.toFixed(self.options.decimals);
+				lonDiv.innerHTML = '<b>Lng:</b> ' + latlng.lng.toFixed(self.options.decimals);
 			} else {
 				clear();
 			}
@@ -216,7 +209,6 @@ export const CoordValueViewer = L.Control.extend({
 		map.off('mousemove');
 		map.off('mouseout');
 		map.off('click');
-		map.off('dblclick');
 	},
 });
 

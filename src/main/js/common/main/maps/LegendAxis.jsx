@@ -24,7 +24,7 @@ export default class LegendAxis extends Component {
 			: 0;
 
 		return (
-			<svg ref="axis" className="axis" width={width} height={height} style={style}>{
+			<svg className="axis" width={width} height={height} style={style}>{
 				props.suggestedTickLocations
 					? props.suggestedTickLocations.map((tick, idx) => {
 						const tickVal = props.valueMaker(tick) == 1
@@ -45,13 +45,6 @@ export default class LegendAxis extends Component {
 					})
 					: null
 				}
-				{/*
-					props.horizontal
-						? null
-						: <text x={65} y={height / 2} textAnchor="middle" fontSize={'1.2em'} transform={"rotate(270,65," + height / 2 + ")"}>
-							{props.legendText}
-						</text>
-				*/}
 			</svg>
 		);
 	}
