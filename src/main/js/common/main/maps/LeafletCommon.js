@@ -147,6 +147,9 @@ export const CoordValueViewer = L.Control.extend({
 	},
 
 	onAdd: function (map) {
+		//disable double click zoom because it interferes with single click
+		map.doubleClickZoom.disable();
+
 		var freeze = false;
 		const container = L.DomUtil.create('div', '', L.DomUtil.get('map'));
 		container.setAttribute("style", this.options.style);
@@ -198,10 +201,6 @@ export const CoordValueViewer = L.Control.extend({
 			freeze = !freeze;
 			const infoTxt = freeze ? '<b>Click in map to unfreeze</b>' : null;
 			display(this, e.latlng, infoTxt);
-		});
-
-		map.on('dblclick', e => {
-			console.log("dblclick");
 		});
 
 		map.on('mouseout', () => {
