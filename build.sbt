@@ -19,7 +19,7 @@ lazy val views = (project in file("views"))
 	.settings(
 		name := "data-views",
 		version := "0.1.0",
-		libraryDependencies += "se.lu.nateko.cp" %% "views-core" % "0.1-SNAPSHOT"
+		libraryDependencies += "se.lu.nateko.cp" %% "views-core" % "0.2-SNAPSHOT"
 	)
 
 val akkaVersion = "2.4.10"
