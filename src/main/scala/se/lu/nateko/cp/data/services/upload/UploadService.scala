@@ -74,7 +74,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 			new IrodsUploadTask(dataObj, irods)
 
 		dataObj.specification.dataLevel match{
-			case 0 =>
+			case 0 | 1 =>
 				hashAndIrods
 
 			case 2 =>
