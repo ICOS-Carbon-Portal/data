@@ -46,7 +46,7 @@ class View extends Component {
 					}
 
 				<div className="row">
-					<div className="col-md-3" style={{maxHeight: 430, overflow: 'auto'}}>
+					<div className="col-md-3" style={{maxHeight: 360, overflow: 'auto'}}>
 						<DataObjectList 
 							dataObjects={props.dataObjects}
 							pinData={this.props.pinData}
