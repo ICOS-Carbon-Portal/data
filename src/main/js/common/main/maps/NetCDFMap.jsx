@@ -42,9 +42,12 @@ export default class NetCDFMap extends Component{
 	componentDidMount() {
 		const app = this.app;
 		const props = this.props;
+		const baseMaps = LCommon.getMapProxyBaseMapsTMS(21);
+
 		const map = app.map = L.map(
 			ReactDOM.findDOMNode(this.refs.map),
 			Object.assign({
+				layers: [baseMaps.Satellite],
 				attributionControl: false,
 				continuousWorld: true,
 				worldCopyJump: false,
@@ -55,7 +58,10 @@ export default class NetCDFMap extends Component{
 			}, this.props.mapOptions)
 		);
 
+		L.control.layers(baseMaps).addTo(map);
+
 		map.addLayer(app.canvasTiles);
+		app.canvasTiles.setZIndex(99);
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
 

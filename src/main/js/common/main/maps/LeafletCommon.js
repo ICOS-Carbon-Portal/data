@@ -1,4 +1,5 @@
 export function	getBaseMaps(maxZoom){
+	// All sources deliver in SRS 3857 (Web Mercator)
 	const topo = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
 		maxZoom
 	});
@@ -7,8 +8,62 @@ export function	getBaseMaps(maxZoom){
 		maxZoom
 	});
 
-	const osm = L.tileLayer(window.location.protocol + "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+	const osm = L.tileLayer(window.location.protocol + '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		maxZoom
+	});
+
+	return {
+		"Topographic": topo,
+		"Satellite": image,
+		"OSM": osm
+	};
+}
+
+export function	getMapProxyBaseMapsWMS(maxZoom){
+	// All sources deliver in SRS 4326 (Lat Long)
+	const topo = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+		layers: 'topo',
+		format: 'image/jpeg',
+		transparent: false,
+		maxZoom
+	});
+
+	const image = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+		layers: 'satellite',
+		format: 'image/png',
+		transparent: false,
+		maxZoom
+	});
+
+	const osm = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+		layers: 'osm',
+		format: 'image/jpeg',
+		transparent: false,
+		maxZoom
+	});
+
+	return {
+		"Topographic": topo,
+		"Satellite": image,
+		"OSM": osm
+	};
+}
+
+export function	getMapProxyBaseMapsTMS(maxZoom){
+	// All sources deliver in SRS 4326 (Lat Long)
+	const topo = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/topo/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+		maxZoom,
+		tms: true
+	});
+
+	const image = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/satellite/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+		maxZoom,
+		tms: true
+	});
+
+	const osm = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/osm/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+		maxZoom,
+		tms: true
 	});
 
 	return {
