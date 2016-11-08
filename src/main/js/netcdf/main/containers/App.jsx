@@ -71,6 +71,10 @@ class App extends Component {
 		return (
 			<div>
 
+				<div className="page-header">
+					<h1>Spatial data visualization</h1>
+				</div>
+
 				<Controls marginTop={marginTop} />
 
 				<div className="col-md-12" style={{display:'flex'}}>

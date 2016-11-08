@@ -32,7 +32,9 @@ class View extends Component {
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
-				<h1>ICOS Data Service search result</h1>
+				<div className="page-header">
+					<h1>ICOS Data Service search result</h1>
+				</div>
 
 				{props.filteredDataObjects && props.filteredDataObjects.length
 					? (

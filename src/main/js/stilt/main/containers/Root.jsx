@@ -13,7 +13,9 @@ export default class Root extends Component {
 	render() {
 		return <Provider store={store}>
 			<div>
-
+				<div className="page-header">
+					<h1>STILT footprint visualization</h1>
+				</div>
 				<div className="row" style={{marginTop}}>
 
 					<div className="col-md-4">

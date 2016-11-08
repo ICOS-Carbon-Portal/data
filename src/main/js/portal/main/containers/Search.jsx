@@ -29,7 +29,9 @@ class Search extends Component {
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
-				<h1>ICOS Data Service search</h1>
+				<div className="page-header">
+					<h1>ICOS Data Service search</h1>
+				</div>
 
 				<div className="row">
 					<DatePickerEncloser
