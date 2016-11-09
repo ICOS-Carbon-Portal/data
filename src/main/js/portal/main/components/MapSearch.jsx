@@ -5,6 +5,8 @@ import { StationMultiFilter, EmptyFilter } from '../models/Filters'
 import * as LCommon from '../../../common/main/maps/LeafletCommon';
 import {MapLegend} from '../models/MapLegend';
 
+const zoomTrigger = 5;
+
 export default class MapSearch extends Component {
 	constructor(props) {
 		super(props);
@@ -59,7 +61,6 @@ export default class MapSearch extends Component {
 		map.addControl(new LCommon.CoordViewer());
 
 		map.on('zoomend', e => {
-			const zoomTrigger = 5;
 			const markers = self.state.markers.getLayers();
 			const currentZoom = map.getZoom();
 			const stationsEnlarged = self.state.stationsEnlarged;
@@ -129,6 +130,9 @@ export default class MapSearch extends Component {
 		// First all excluded stations so they are placed underneath included
 		stations.nonSelectedStationary.forEach(station => {
 			const marker = L.circleMarker([station.lat, station.lon], LCommon.pointIconExcluded());
+			if (this.state.stationsEnlarged) {
+				marker.setRadius(marker.getRadius() * 2);
+			}
 			marker.bindPopup(popupHeader(this, station.name, false));
 			markers.addLayer(marker);
 		});
@@ -139,6 +143,9 @@ export default class MapSearch extends Component {
 				? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
 				: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4, 2));
 
+			if (this.state.stationsEnlarged && !clustered) {
+				marker.setRadius(marker.getRadius() * 2);
+			}
 			marker.bindPopup(popupHeader(this, station.name, true));
 			markers.addLayer(marker);
 		});
