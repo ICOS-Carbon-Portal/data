@@ -23,6 +23,7 @@ class Leaflet extends Component {
 		const newMarkers = this.buildMarkers(mapObjects);
 		map.addLayer(newMarkers);
 		L.control.layers(baseMaps).addTo(map);
+		map.addControl(new LCommon.CoordViewer());
 
 		this.setView(map, mapObjects);
 

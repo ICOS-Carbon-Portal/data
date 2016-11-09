@@ -1,4 +1,4 @@
-import * as LCommon from './LeafletCommon';
+import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 export const MapLegend = L.Control.extend({
 	options: {
@@ -8,7 +8,6 @@ export const MapLegend = L.Control.extend({
 
 	onAdd: function (map) {
 		const legendContainer = L.DomUtil.create('div', 'legend-container', L.DomUtil.get('map'));
-		// const legendToggle = L.DomUtil.create('a', 'legend-toggle', legendContainer);
 		const legend = L.DomUtil.create('div', 'legend', legendContainer);
 		legend.innerHTML = getSvgLegend();
 
@@ -19,7 +18,6 @@ export const MapLegend = L.Control.extend({
 function getSvgLegend(){
 	const pointIcon = LCommon.pointIcon();
 	const pointIconExcluded = LCommon.pointIconExcluded();
-	const pointIconExcluded2 = LCommon.pointIconExcluded2();
 	const startY = 12;
 	const deltaY = 17;
 

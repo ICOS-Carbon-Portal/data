@@ -56,6 +56,7 @@ export default class MapSearch extends Component {
 		});
 
 		map.addControl(new MapLegend());
+		map.addControl(new LCommon.CoordViewer());
 
 		map.on('zoomend', e => {
 			const zoomTrigger = 5;

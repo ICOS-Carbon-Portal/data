@@ -42,22 +42,12 @@ export function pointIcon(radius = 4, weight = 3, fillColor = 'rgb(255,50,50)', 
 	}
 };
 
-export function pointIconExcluded() {
+export function pointIconExcluded(radius = 4, weight = 2) {
 	return {
-		radius: 3,
-		weight: 1,
+		radius,
+		weight,
 		color: 'white',
 		fillColor: 'rgb(255,200,200)',
-		fillOpacity: 1
-	}
-};
-
-export function pointIconExcluded2() {
-	return {
-		radius: 3,
-		weight: 1,
-		color: 'white',
-		fillColor: 'rgb(50,50,50)',
 		fillOpacity: 1
 	}
 };
