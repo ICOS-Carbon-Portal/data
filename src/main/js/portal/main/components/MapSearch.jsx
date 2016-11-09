@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import config from '../config';
 import { StationMultiFilter, EmptyFilter } from '../models/Filters'
-import * as LCommon from '../models/LeafletCommon';
+import * as LCommon from '../../../common/main/maps/LeafletCommon';
 import {MapLegend} from '../models/MapLegend';
 
 export default class MapSearch extends Component {
@@ -136,7 +136,7 @@ export default class MapSearch extends Component {
 		stations.selectedStations.forEach(station => {
 			const marker = clustered
 				? L.marker([station.lat, station.lon], {icon: LCommon.wdcggIcon})
-				: L.circleMarker([station.lat, station.lon], LCommon.pointIcon());
+				: L.circleMarker([station.lat, station.lon], LCommon.pointIcon(4, 2));
 
 			marker.bindPopup(popupHeader(this, station.name, true));
 			markers.addLayer(marker);
@@ -173,10 +173,10 @@ export default class MapSearch extends Component {
 		if (bBox) {
 			const filteredStations = props.stations.selectedStations
 				.filter(st =>
-					st.lat >= bBox[0].lat &&
-					st.lat <= bBox[2].lat &&
-					st.lon >= bBox[0].lng &&
-					st.lon <= bBox[2].lng
+					st.lat >= bBox[0][0].lat &&
+					st.lat <= bBox[0][2].lat &&
+					st.lon >= bBox[0][0].lng &&
+					st.lon <= bBox[0][2].lng
 				);
 			this.updateFilter(filteredStations, props);
 		}

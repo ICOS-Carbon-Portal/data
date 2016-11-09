@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import * as LCommon from '../models/LeafletCommon';
+import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 class Leaflet extends Component {
 	constructor(props){
