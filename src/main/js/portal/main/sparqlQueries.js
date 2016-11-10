@@ -1,5 +1,4 @@
 import config from './config';
-import {sparqlEscape} from './models/Filters';
 
 var {wdcggBaseUri, cpmetaOntoUri, cpmetaResUri} = config;
 

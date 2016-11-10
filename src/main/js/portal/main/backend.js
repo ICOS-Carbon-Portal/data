@@ -1,7 +1,6 @@
 import {sparql} from '../../common/main/backend/sparql';
 import {getBinaryTable} from '../../common/main/backend/binTable';
 import * as sparqlQueries from './sparqlQueries';
-import config from './config';
 
 export function getStationInfo(){
 	function floatValueOf(bindingVal){
