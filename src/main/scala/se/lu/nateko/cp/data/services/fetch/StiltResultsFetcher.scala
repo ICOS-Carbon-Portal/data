@@ -17,6 +17,7 @@ import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 
 
 class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
+	import StiltResultFetcher._
 
 	private[this] val resFileGlob = "stiltresults????.csv"
 	private[this] val resFilePattern = resFileGlob.replace("????", "(\\d{4})").r
@@ -27,12 +28,8 @@ class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 
 	def getStationsAndYears: Map[String, Seq[Int]] = {
 
-		def stationYears(dir: File): Seq[Int] = {
-			val pathIter: Iterator[Path] = Files.newDirectoryStream(dir.toPath, resFileGlob).iterator()
-
-			pathIter.map(p => p.getFileName.toString).collect{
-				case resFilePattern(dddd) => dddd.toInt
-			}.toSeq
+		def stationYears(dir: File): Seq[Int] = listFileNames(dir.toPath, resFileGlob).collect{
+			case resFilePattern(dddd) => dddd.toInt
 		}
 
 		val stationFolders = new File(config.mainFolder, resFolder).listFiles().filter(_.isDirectory)
@@ -41,10 +38,7 @@ class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 
 	def getFootprintFiles(stationId: String, year: Int): Seq[String] = {
 		val stationPath = Paths.get(config.mainFolder, footPrintsFolder, stationId)
-		Files.newDirectoryStream(stationPath, "foot" + year + "*.nc")
-			.iterator()
-			.map(_.getFileName.toString)
-			.toSeq
+		listFileNames(stationPath, "foot" + year + "*.nc")
 	}
 
 	def getStiltResultJson(stationId: String, year: Int, columns: Seq[String]): Source[ByteString, NotUsed] = {
@@ -63,5 +57,20 @@ class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 		val service = factory.getNetCdfViewService(filename)
 		val date = service.getAvailableDates()(0)
 		service.getRaster(date, "foot", null)
+	}
+}
+
+object StiltResultFetcher{
+
+	def listFileNames(dir: Path, fileGlob: String): Seq[String] = {
+		val dirStream = Files.newDirectoryStream(dir, fileGlob)
+		try{
+			dirStream
+				.iterator()
+				.map(_.getFileName.toString)
+				.toIndexedSeq
+		} finally {
+			dirStream.close()
+		}
 	}
 }
