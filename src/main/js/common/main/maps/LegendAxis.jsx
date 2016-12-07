@@ -17,8 +17,8 @@ export default class LegendAxis extends Component {
 			? props.width + textMargin
 			: props.length + props.margin * 2;
 		const style = props.horizontal
-			? {position: 'relative', top: -5}
-			: {};
+			? {position: 'relative', top: -5, fontSize: 12}
+			: {fontSize: 12};
 		const decimals = props.decimals
 			? props.decimals
 			: 0;

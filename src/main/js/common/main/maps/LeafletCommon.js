@@ -21,21 +21,21 @@ export function	getBaseMaps(maxZoom){
 
 export function	getMapProxyBaseMapsWMS(maxZoom){
 	// All sources deliver in SRS 4326 (Lat Long)
-	const topo = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+	const topo = L.tileLayer.wms(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/service', {
 		layers: 'topo',
 		format: 'image/jpeg',
 		transparent: false,
 		maxZoom
 	});
 
-	const image = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+	const image = L.tileLayer.wms(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/service', {
 		layers: 'satellite',
 		format: 'image/png',
 		transparent: false,
 		maxZoom
 	});
 
-	const osm = L.tileLayer.wms(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/service', {
+	const osm = L.tileLayer.wms(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/service', {
 		layers: 'osm',
 		format: 'image/jpeg',
 		transparent: false,
@@ -51,17 +51,17 @@ export function	getMapProxyBaseMapsWMS(maxZoom){
 
 export function	getMapProxyBaseMapsTMS(maxZoom){
 	// All sources deliver in SRS 4326 (Lat Long)
-	const topo = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/topo/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+	const topo = L.tileLayer(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/tms/1.0.0/topo/GLOBAL_GEODETIC/{z}/{x}/{y}.jpeg', {
 		maxZoom,
 		tms: true
 	});
 
-	const image = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/satellite/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+	const image = L.tileLayer(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/tms/1.0.0/satellite/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
 		maxZoom,
 		tms: true
 	});
 
-	const osm = L.tileLayer(window.location.protocol + '//mapproxy.icos-cp.eu/mapproxy/tms/1.0.0/osm/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
+	const osm = L.tileLayer(window.location.protocol + '//mapproxy.gis.lu.se/mapproxy/tms/1.0.0/osm/GLOBAL_GEODETIC/{z}/{x}/{y}.png', {
 		maxZoom,
 		tms: true
 	});
