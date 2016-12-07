@@ -5,7 +5,8 @@ import {fetchCountriesTopo, fetchServices, selectGamma} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper.js';
 
 const initState = {
-	controls: new ControlsHelper()
+	controls: new ControlsHelper(),
+	playingMovie: false
 };
 
 // function logger({ getState }) {
