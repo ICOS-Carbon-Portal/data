@@ -25,7 +25,7 @@ export default class NetCDFMap extends Component{
 		super(props);
 		this.app = {
 			rasterId: null,
-			countriesAdded: false,
+			layerCtrlAdded: false,
 			map: null,
 			mapMouseOver: null,
 			rasterCanvas: document.createElement('canvas'),
@@ -42,6 +42,7 @@ export default class NetCDFMap extends Component{
 	componentDidMount() {
 		const app = this.app;
 		const props = this.props;
+
 		const map = app.map = L.map(
 			ReactDOM.findDOMNode(this.refs.map),
 			Object.assign({
@@ -56,6 +57,7 @@ export default class NetCDFMap extends Component{
 		);
 
 		map.addLayer(app.canvasTiles);
+		app.canvasTiles.setZIndex(99);
 		map.addLayer(app.markers);
 		map.getContainer().style.background = 'white';
 
@@ -89,11 +91,18 @@ export default class NetCDFMap extends Component{
 	componentWillReceiveProps(nextProps){
 		const app = this.app;
 
-		if (nextProps.geoJson && !app.countriesAdded){
-			app.countries.addData(nextProps.geoJson);
-			app.countries.setStyle({fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1});
-			app.map.addLayer(app.countries);
-			app.countriesAdded = true;
+		if (nextProps.geoJson && !app.layerCtrlAdded){
+			const countryBorders = new L.GeoJSON();
+			countryBorders.addData(nextProps.geoJson);
+			countryBorders.setStyle({fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1});
+			app.map.addLayer(countryBorders);
+
+			const countries = {
+				"Country borders": countryBorders
+			};
+
+			L.control.layers(null, countries).addTo(app.map);
+			app.layerCtrlAdded = true;
 		}
 
 		if (nextProps.raster && nextProps.raster.id !== app.rasterId) {

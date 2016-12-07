@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import {ERROR, RASTER_FETCHED, RASTER_VALUE_RECEIVED, setRasterVal}from '../actions';
+import {RASTER_FETCHED}from '../actions';
 import * as LCommon from '../../../common/main/maps/LeafletCommon';
 
 const marginTop = 10;
@@ -15,7 +15,6 @@ class App extends Component {
 		super(props);
 		this.state = {
 			busy: true,
-			width: null,
 			height: null
 		};
 	}
@@ -28,9 +27,8 @@ class App extends Component {
 
 	updateDimensions(){
 		this.setState({
-			width: window.innerWidth - 30,
 			//155: empirical, 147: top header height
-			height: window.innerHeight - 100 - marginTop - 147
+			height: window.innerHeight - 100 - marginTop - 135
 		});
 	}
 
@@ -45,7 +43,6 @@ class App extends Component {
 	componentWillUnmount(){
 		window.removeEventListener("resize", this.updateDimensions.bind(this));
 	}
-
 
 	render() {
 		const state = this.state;
@@ -77,10 +74,26 @@ class App extends Component {
 
 				<Controls marginTop={marginTop} />
 
-				<div className="col-md-12" style={{display:'flex'}}>
-					<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
-						getLegend
-							? <NetCDFLegend
+				<div className="row">
+					<div className="col-md-12" style={{display:'flex'}}>
+						<div style={{height: state.height, flex: 100, minHeight}}>
+							<NetCDFMap
+								mapOptions={{
+									zoom: 2,
+									center: [13, 0]
+								}}
+								raster={props.raster}
+								colorMaker={colorMaker}
+								geoJson={props.countriesTopo}
+								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
+								controls={[
+									new LCommon.CoordViewer({decimals: 2})
+								]}
+							/>
+						</div>
+						<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
+							getLegend
+								? <NetCDFLegend
 								horizontal={false}
 								canvasWidth={20}
 								containerHeight={containerHeight}
@@ -90,22 +103,8 @@ class App extends Component {
 								legendText="Legend"
 								decimals={3}
 							/>
-							: null
-					}</div>
-					<div style={{height: state.height, flex: 100, minHeight}}>
-						<NetCDFMap
-							mapOptions={{
-								zoom: 2,
-								center: [13, 0]
-							}}
-							raster={props.raster}
-							colorMaker={colorMaker}
-							geoJson={props.countriesTopo}
-							latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
-							controls={[
-								new LCommon.CoordViewer({decimals: 2})
-							]}
-						/>
+								: null
+						}</div>
 					</div>
 				</div>
 

@@ -1,7 +1,7 @@
 import rgbaInterpolation from '../../../common/main/maps/rgbaInterpolation';
 import linearInterpolation from '../../../common/main/general/linearInterpolation';
 
-const noValue = [255, 255, 255, 255];
+const noValue = [255, 255, 255, 0];
 
 export default class ColorMaker{
 	constructor(minVal, maxVal, gamma){
@@ -26,8 +26,8 @@ export default class ColorMaker{
 	}
 
 	getLegend(pixelMin, pixelMax){
-		const minVal = this._domain[0];
-		const maxVal = this._domain[1];
+		// const minVal = this._domain[0];
+		// const maxVal = this._domain[1];
 		const valueMaker = linearInterpolation([pixelMin, pixelMax], this._domain);
 		const pixelMaker = linearInterpolation(this._domain, [pixelMin, pixelMax]);
 		const nTickIntervals = Math.floor((pixelMax - pixelMin) / 80);

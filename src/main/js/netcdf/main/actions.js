@@ -5,14 +5,17 @@ export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 export const SERVICES_FETCHED = 'SERVICES_FETCHED';
 export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
 export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
-export const CTRL_HELPER_UPDATED = 'CTRL_HELPER_UPDATED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
 export const SERVICE_SELECTED = 'SERVICE_SELECTED';
 export const VARIABLE_SELECTED = 'VARIABLE_SELECTED';
 export const DATE_SELECTED = 'DATE_SELECTED';
 export const ELEVATION_SELECTED = 'ELEVATION_SELECTED';
 export const GAMMA_SELECTED = 'GAMMA_SELECTED';
+export const DELAY_SELECTED = 'DELAY_SELECTED';
 export const RASTER_VALUE_RECEIVED = 'RASTER_VALUE_RECEIVED';
+export const PUSH_PLAY = 'PUSH_PLAY';
+export const SET_DELAY = 'SET_DELAY';
+export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 
 function failWithError(error){
 	console.log(error);
@@ -106,6 +109,54 @@ const fetchRaster = (dispatch, getState) => {
 	);
 }
 
+export const pushPlayButton = (dispatch, getState) => {
+	if (!getState().rasterDataFetcher) return;
+
+	dispatch({type: PUSH_PLAY});
+	dispatch(incrementIfNeeded);
+}
+
+export const incrementRasterData = increment => dispatch => {
+	dispatch({
+		type: INCREMENT_RASTER,
+		increment
+	});
+
+	dispatch(fetchRasterData);
+}
+
+const fetchRasterData = (dispatch, getState) => {
+	const state = getState();
+	if(!state.desiredId) return;
+
+	if (state.raster && state.raster.id == state.desiredId) {
+		dispatch(incrementIfNeeded);
+	} else {
+		state.rasterDataFetcher.fetch(state.controls.selectedIdxs).then(
+			raster => {
+				dispatch({
+					type: RASTER_FETCHED,
+					desiredId: state.desiredId,
+					controls: state.controls,
+					raster
+				});
+				dispatch(incrementIfNeeded);
+			},
+			err => dispatch(failWithError(err)));
+	}
+}
+
+export const incrementIfNeeded = (dispatch, getState) => {
+	var ts = Date.now();
+
+	setTimeout(() => {
+		if(getState().playingMovie) {
+			dispatch(incrementRasterData(1));
+		}
+	}, 5); //a tiny delay in hope to improve interface's responsiveness
+}
+
+
 export const selectService = idx => dispatch => {
 	dispatch({
 		type: SERVICE_SELECTED,
@@ -141,6 +192,13 @@ export const selectElevation = idx => dispatch => {
 export const selectGamma = idx => dispatch => {
 	dispatch({
 		type: GAMMA_SELECTED,
+		idx
+	});
+};
+
+export const selectDelay = idx => dispatch => {
+	dispatch({
+		type: DELAY_SELECTED,
 		idx
 	});
 };

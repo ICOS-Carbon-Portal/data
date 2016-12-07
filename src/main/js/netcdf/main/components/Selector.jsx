@@ -17,15 +17,16 @@ class Selector extends React.Component {
 		const control = props.control;
 		const selectedOption = control.hasSelected ? control.selected : props.caption;
 		const style = {visibility: control.hasSelected ? "visible" : "hidden"};
+		const optionTexter = value => props.presenter ? props.presenter(value) : value;
 
 		return <div className={props.className} style={style}>
 
 			<span style={{fontWeight: 'bold'}}>{props.caption + ": "}</span>
 
-			<select ref="selector" value={selectedOption} className="form-control" onChange={this.changeHandler.bind(this)}>{
+			<select ref="selector" value={optionTexter(selectedOption)} className="form-control" onChange={this.changeHandler.bind(this)}>{
 
 				control.values.map(function(optionValue, i){
-					return <option key={optionValue}>{optionValue}</option>;
+					return <option key={optionValue}>{optionTexter(optionValue)}</option>;
 				})
 
 			}</select>
