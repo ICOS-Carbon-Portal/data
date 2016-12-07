@@ -35,7 +35,7 @@ class FootprintContainer extends Component {
 						}}
 						geoJson={props.countriesTopo}
 						raster={props.raster}
-						markers={getMarkers(props.selectedStation, props.showStationPosition)}
+						overlay={getMarkers(props.selectedStation, "Station")}
 						latLngBounds={getLatLngBounds(props.selectedStation, this.lastSelectedStation)}
 						reset={doReset(props.selectedStation, this.lastSelectedStation, props.raster)}
 						colorMaker={colorMaker}
@@ -59,11 +59,14 @@ class FootprintContainer extends Component {
 	}
 }
 
-function getMarkers(selectedStation, showStationPos){
-	var markers = [];
+function getMarkers(selectedStation, label){
+	const markers = {
+		label,
+		features: []
+	};
 
-	if (selectedStation && showStationPos){
-		markers.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(5, 1, 'rgb(85,131,255)', 'black')));
+	if (selectedStation){
+		markers.features.push(L.circleMarker([selectedStation.lat, selectedStation.lon], pointIcon(5, 1, 'rgb(85,131,255)', 'black')));
 	}
 
 	return markers;
@@ -81,7 +84,6 @@ function getLatLngBounds(selectedStation, lastSelectedStation){
 
 function stateToProps(state){
 	return Object.assign({},
-		copyprops(state.options, ['showStationPosition']),
 		copyprops(state, ['countriesTopo', 'raster', 'selectedStation'])
 	);
 }

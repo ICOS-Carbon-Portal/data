@@ -108,19 +108,9 @@ const FootprintState = ({footprint, options, updateStationVisibility}) => {
 
 	const status = footprint ? formatDate(footprint.date) : 'not loaded';
 
-	const changeHandler = event => {
-		if(updateStationVisibility){
-			updateStationVisibility(event.target.checked);
-		}
-	}
-
 	return <div className="row">
 		<div className="col-md-6">
 			<strong>Footprint: </strong>{status}
-		</div>
-		<div className="col-md-6">
-			<input type="checkbox" onChange={changeHandler} checked={options.showStationPosition} />
-			<span style={{marginLeft:7, position:'relative', top:-2}}>Show station position</span>
 		</div>
 	</div>;
 }
@@ -141,18 +131,16 @@ const MovieControl = props => {
 			<strong>Playback</strong>
 		</div>
 		<div className="col-md-4">
-			<div className="input-group">
-				<div className="input-group-btn">
-					<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
-						<span className="glyphicon glyphicon-triangle-left"></span>
-					</button>
-					<button title={playTitle} type="button" className="btn btn-default" onClick={props.pushPlay} disabled={!props.footprint}>
-						<span className={playClass}></span>
-					</button>
-					<button  title="To next footprint" type="button" className="btn btn-default" onClick={toNext} disabled={navDisabled}>
-						<span className="glyphicon glyphicon-triangle-right"></span>
-					</button>
-				</div>
+			<div className="btn-group" style={{minWidth: 120}}>
+				<button title="To previous footprint" type="button" className="btn btn-default" onClick={toPrevious} disabled={navDisabled}>
+					<span className="glyphicon glyphicon-triangle-left"></span>
+				</button>
+				<button title={playTitle} type="button" className="btn btn-default" onClick={props.pushPlay} disabled={!props.footprint}>
+					<span className={playClass}></span>
+				</button>
+				<button  title="To next footprint" type="button" className="btn btn-default" onClick={toNext} disabled={navDisabled}>
+					<span className="glyphicon glyphicon-triangle-right"></span>
+				</button>
 			</div>
 		</div>
 		<div className="col-md-2">

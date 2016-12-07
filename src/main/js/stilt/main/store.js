@@ -14,8 +14,7 @@ const initState = {
 	desiredFootprint: null,
 	playingMovie: false,
 	options: {
-		modelComponentsVisibility: {"co2.stilt": true, "co2.observed": true},
-		showStationPosition: true
+		modelComponentsVisibility: {"co2.stilt": true, "co2.observed": true}
 	},
 	error: null
 };

@@ -1,5 +1,5 @@
 import {FETCHED_INITDATA, FETCHED_STATIONDATA, FETCHED_RASTER, SET_SELECTED_STATION, SET_SELECTED_YEAR,
-	SET_DATE_RANGE, SET_VISIBILITY, SET_STATION_VISIBILITY, INCREMENT_FOOTPRINT, PUSH_PLAY, SET_DELAY, ERROR} from './actions';
+	SET_DATE_RANGE, SET_VISIBILITY, INCREMENT_FOOTPRINT, PUSH_PLAY, SET_DELAY, ERROR} from './actions';
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import FootprintsFetcher from './models/FootprintsFetcher';
@@ -50,9 +50,6 @@ export default function(state, action){
 
 		case SET_VISIBILITY:
 			return deepUpdate(state, ['options', 'modelComponentsVisibility'], action.update);
-
-		case SET_STATION_VISIBILITY:
-			return updateWith(['showStationPosition'], ['options']);
 
 		case INCREMENT_FOOTPRINT:
 			return state.footprint

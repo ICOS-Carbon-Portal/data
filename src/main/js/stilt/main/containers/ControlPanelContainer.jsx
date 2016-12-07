@@ -18,7 +18,6 @@ function dispatchToProps(dispatch){
 		updateVisibility: (name, visible) => dispatch(visibilityUpdate(name, visible)),
 		selectStation: station => dispatch(setSelectedStation(station)),
 		selectYear: year => dispatch(setSelectedYear(year)),
-		updateStationVisibility: visibility => dispatch(setStationVisibility(visibility)),
 		incrementFootprint: increment => dispatch(incrementFootprint(increment)),
 		pushPlay: () => dispatch(pushPlayButton),
 		setDelay: delay => dispatch(setDelay(delay))

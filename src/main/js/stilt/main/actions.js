@@ -9,7 +9,6 @@ export const SET_SELECTED_STATION = 'SET_SELECTED_STATION';
 export const SET_SELECTED_YEAR = 'SET_SELECTED_YEAR';
 export const SET_DATE_RANGE = 'SET_DATE_RANGE';
 export const SET_VISIBILITY = 'SET_VISIBILITY';
-export const SET_STATION_VISIBILITY = 'SET_STATION_VISIBILITY';
 export const INCREMENT_FOOTPRINT = 'INCREMENT_FOOTPRINT';
 export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
@@ -111,13 +110,6 @@ const fetchFootprint = (dispatch, getState) => {
 }
 
 const fetchFootprintThrottled = throttle(dispatch => dispatch(fetchFootprint), 300);
-
-export const setStationVisibility = visibility => {
-	return {
-		type: SET_STATION_VISIBILITY,
-		showStationPosition: visibility
-	};
-}
 
 export const incrementFootprint = increment => dispatch => {
 	dispatch({

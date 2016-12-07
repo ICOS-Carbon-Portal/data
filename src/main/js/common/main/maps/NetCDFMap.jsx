@@ -11,9 +11,10 @@ import * as LCommon from '../../../common/main/maps/LeafletCommon';
  mapOptions: OPTIONAL (Object) - Override options for Leaflet in componentDidMount
  geoJson: OPTIONAL (Leaflet GeoJSON object or an array of GeoJSON objects) - Display GeoJSON layer in map, usually a country layer
  raster: REQUIRED (BinRaster) - Raster data to show in map
- markers: OPTIONAL ([Leaflet Layer]) - Marker symbols to be displayed in map. Marker symbols must be able to be added to a Leaflet featureGroup
+ overlay: OPTIONAL (object with [Leaflet Layer]) - Feature overlay to be displayed in map. Feature symbols must be able to be added to a Leaflet featureGroup
+ 	Example: {label: "Station", features: [Leaflet Layer]}
  latLngBounds: OPTIONAL (L.latLngBounds) - If included, map will pan to center point of bounds
- reset: OPTIONAL (Boolean) - If true, map will clear canvas, mask and markers
+ reset: OPTIONAL (Boolean) - If true, map will clear canvas, mask and overlay
  colorMaker: REQUIRED (colorMaker) - Defines what colors the raster gets
  renderCompleted: OPTIONAL (function) - What to do when canvas rendering is completed
  mask: OPTIONAL (polygonMask) - Display mask showing extent
@@ -25,11 +26,12 @@ export default class NetCDFMap extends Component{
 		super(props);
 		this.app = {
 			rasterId: null,
+			layerControl: null,
 			layerCtrlAdded: false,
 			map: null,
 			mapMouseOver: null,
 			rasterCanvas: document.createElement('canvas'),
-			markers: L.featureGroup(),
+			overlay: L.featureGroup(),
 			countries: new L.GeoJSON(),
 			maskHole: null,
 			maskHoleVisible: false,
@@ -58,7 +60,7 @@ export default class NetCDFMap extends Component{
 
 		map.addLayer(app.canvasTiles);
 		app.canvasTiles.setZIndex(99);
-		map.addLayer(app.markers);
+		map.addLayer(app.overlay);
 		map.getContainer().style.background = 'white';
 
 		if (props.mouseOverCB) {
@@ -101,7 +103,7 @@ export default class NetCDFMap extends Component{
 				"Country borders": countryBorders
 			};
 
-			L.control.layers(null, countries).addTo(app.map);
+			app.layerControl = L.control.layers(null, countries).addTo(app.map);
 			app.layerCtrlAdded = true;
 		}
 
@@ -115,7 +117,7 @@ export default class NetCDFMap extends Component{
 		}
 
 		this.adjustMapView(nextProps.latLngBounds);
-		this.updateMarkers(nextProps.markers);
+		this.updateOverlay(nextProps.overlay);
 		this.addMask(nextProps.raster);
 	}
 
@@ -129,18 +131,24 @@ export default class NetCDFMap extends Component{
 		if (app.maskHole) app.map.removeLayer(app.maskHole);
 		app.maskHoleVisible = false;
 
-		app.markers.clearLayers();
+		app.overlay.clearLayers();
 	}
 
-	updateMarkers(propMarkers){
-		if (!propMarkers) return;
+	updateOverlay(propOverlay){
+		if (!propOverlay) return;
 
-		const markers = this.app.markers;
-		markers.clearLayers();
+		const app = this.app;
+		const overlay = app.overlay;
+		overlay.clearLayers();
+		app.layerControl.removeLayer(overlay);
 
-		propMarkers.forEach(marker => {
-			markers.addLayer(marker);
+		propOverlay.features.forEach(feature => {
+			overlay.addLayer(feature);
 		});
+
+		if (propOverlay.features.length > 0) {
+			app.layerControl.addOverlay(overlay, propOverlay.label);
+		}
 	}
 
 	updateCoordValViewer(app, props){
