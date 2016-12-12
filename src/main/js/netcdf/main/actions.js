@@ -17,12 +17,18 @@ export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 
+import {TOAST_RESET} from '../../common/main/toaster/ToasterData';
+
 function failWithError(error){
 	console.log(error);
 	return {
 		type: ERROR,
 		error
 	};
+}
+
+export const resetToast = dispatch => {
+	dispatch({type: TOAST_RESET});
 }
 
 export const fetchCountriesTopo = dispatch => {

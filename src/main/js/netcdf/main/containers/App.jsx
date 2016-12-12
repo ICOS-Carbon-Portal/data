@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import {RASTER_FETCHED}from '../actions';
-import * as LCommon from '../../../common/main/maps/LeafletCommon';
+import Toaster from '../../../common/main/toaster/Toaster.jsx';
+import {RASTER_FETCHED, TOAST_RESET, resetToast}from '../actions';
 
 const marginTop = 10;
 const legendWidth = 130;
@@ -20,7 +20,7 @@ class App extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		nextProps.status === RASTER_FETCHED
+		nextProps.status === RASTER_FETCHED || nextProps.status === TOAST_RESET
 			? this.setState({busy: false})
 			: this.setState({busy: true});
 	}
@@ -68,6 +68,12 @@ class App extends Component {
 		return (
 			<div>
 
+				<Toaster
+					toasterData={props.toasterData}
+					msTimeout={5000}
+					resetToast={props.resetToastHandler}
+				/>
+
 				<div className="page-header">
 					<h1>Spatial data visualization</h1>
 				</div>
@@ -86,9 +92,6 @@ class App extends Component {
 								colorMaker={colorMaker}
 								geoJson={props.countriesTopo}
 								latLngBounds={getLatLngBounds(props.controls.services, props.controls.lastChangedControl, props.raster, props.status)}
-								controls={[
-									new LCommon.CoordViewer({decimals: 2})
-								]}
 							/>
 						</div>
 						<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
@@ -127,4 +130,12 @@ function stateToProps(state){
 	return Object.assign({}, state);
 }
 
-export default connect(stateToProps)(App);
+function dispatchToProps(dispatch){
+	return {
+		resetToastHandler(){
+			dispatch(resetToast);
+		}
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(App);
