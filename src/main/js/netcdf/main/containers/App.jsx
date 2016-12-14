@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import Toaster from '../../../common/main/toaster/Toaster.jsx';
-import {RASTER_FETCHED, TOAST_RESET, resetToast}from '../actions';
+import ToasterContainer from './ToasterContainer.jsx';
+import {RASTER_FETCHED, TOAST_RESET}from '../actions';
 
 const marginTop = 10;
 const legendWidth = 130;
@@ -68,11 +68,7 @@ class App extends Component {
 		return (
 			<div>
 
-				<Toaster
-					toasterData={props.toasterData}
-					msTimeout={5000}
-					resetToast={props.resetToastHandler}
-				/>
+				<ToasterContainer toasterData={props.toasterData} />
 
 				<div className="page-header">
 					<h1>Spatial data visualization</h1>
@@ -130,12 +126,4 @@ function stateToProps(state){
 	return Object.assign({}, state);
 }
 
-function dispatchToProps(dispatch){
-	return {
-		resetToastHandler(){
-			dispatch(resetToast);
-		}
-	};
-}
-
-export default connect(stateToProps, dispatchToProps)(App);
+export default connect(stateToProps)(App);

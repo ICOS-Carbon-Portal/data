@@ -17,7 +17,7 @@ export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 
-import {TOAST_RESET} from '../../common/main/toaster/ToasterData';
+import {TOAST_RESET} from '../../common/main/frontend/toaster/ToasterData';
 
 function failWithError(error){
 	console.log(error);

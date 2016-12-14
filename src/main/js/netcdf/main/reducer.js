@@ -4,7 +4,7 @@ import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED,
 import {Control} from './models/ControlsHelper';
 import ColorMaker from './models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
-import {ToasterData, TOAST_SUCCESS, TOAST_INFO, TOAST_WARNING, TOAST_ERROR, TOAST_RESET} from '../../common/main/toaster/ToasterData';
+import {ToasterData, TOAST_SUCCESS, TOAST_INFO, TOAST_WARNING, TOAST_ERROR, TOAST_RESET} from '../../common/main/frontend/toaster/ToasterData';
 
 export default function(state, action){
 
