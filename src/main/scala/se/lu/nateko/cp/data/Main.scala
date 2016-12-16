@@ -66,7 +66,7 @@ object Main extends App {
 	}
 
 	Http()
-		.bindAndHandle(route, "localhost", 9010)
+		.bindAndHandle(route, config.interface, 9010)
 		.onSuccess{
 			case binding =>
 				sys.addShutdownHook{

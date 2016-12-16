@@ -34,6 +34,7 @@ case class MetaServiceConfig(
 case class StiltConfig(mainFolder: String)
 
 case class CpdataConfig(
+	interface: String,
 	auth: PublicAuthConfig,
 	netcdf: NetCdfConfig,
 	upload: UploadConfig,
@@ -49,7 +50,7 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
 	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
-	implicit val cpdataConfigFormat = jsonFormat5(CpdataConfig)
+	implicit val cpdataConfigFormat = jsonFormat6(CpdataConfig)
 
 	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
 
