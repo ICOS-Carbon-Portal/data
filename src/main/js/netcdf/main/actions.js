@@ -27,8 +27,11 @@ function failWithError(error){
 	};
 }
 
-export const resetToast = dispatch => {
-	dispatch({type: TOAST_RESET});
+export const resetToast = id => dispatch => {
+	dispatch({
+		type: TOAST_RESET,
+		id
+	});
 }
 
 export const fetchCountriesTopo = dispatch => {

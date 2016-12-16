@@ -6,7 +6,8 @@ import {ControlsHelper} from './models/ControlsHelper.js';
 
 const initState = {
 	controls: new ControlsHelper(),
-	playingMovie: false
+	playingMovie: false,
+	toasterData: []
 };
 
 // function logger({ getState }) {

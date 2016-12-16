@@ -1,25 +1,21 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {resetToast}from '../actions';
-import {AnimatedToaster} from '../../../common/main/frontend/toaster/Toaster.jsx';
+import {AnimatedToasters} from '../../../common/main/frontend/toaster/Toaster.jsx';
 
 export default class ToasterContainer extends Component {
 	constructor(props) {
 		super(props);
 	}
 
-	handleToasterReset(){
-		this.props.resetToaster();
-	}
-
 	render(){
-		return (this.props.toasterData
-			? <AnimatedToaster
+		return (this.props.toasterData.length > 0
+			? <AnimatedToasters
 				autoCloseDelay={5000}
 				fadeInTime={100}
 				fadeOutTime={400}
 				toasterData={this.props.toasterData}
-				closeToast={this.handleToasterReset.bind(this)}
+				closeToast={this.props.resetToaster}
 			/>
 			: null
 		);
@@ -34,8 +30,8 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		resetToaster(){
-			dispatch(resetToast);
+		resetToaster(id){
+			dispatch(resetToast(id));
 		}
 	};
 }

@@ -52,16 +52,15 @@ export class FadeOut extends Component{
 			let newOpacity = self.state.opacity - 0.1;
 			newOpacity = newOpacity < 0 ? 0 : newOpacity;
 
-			if(newOpacity == 0) {
+			if (newOpacity == 0) {
 				clearInterval(interval);
 
-				if(self.props.onDone){
+				if (self.props.onDone) {
 					self.props.onDone();
 				}
 			} else {
 				self.setState({opacity: newOpacity});
 			}
-
 		}, fadeTime);
 	}
 

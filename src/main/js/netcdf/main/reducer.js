@@ -11,11 +11,15 @@ export default function(state, action){
 	switch(action.type){
 
 		case ERROR:
-			const toasterData = new ToasterData(TOAST_ERROR, action.error.message);
+			const toasterData = state.toasterData.slice(0);
+			toasterData.push(new ToasterData(TOAST_ERROR, action.error.message + ' - ' + Date.now()));
+
 			return Object.assign({}, state, {toasterData});
 
 		case TOAST_RESET:
-			return Object.assign({}, state, {toasterData: null});
+			return Object.assign({}, state, {
+				toasterData: state.toasterData.filter(toasterData => toasterData.id != action.id)
+			});
 
 		case COUNTRIES_FETCHED:
 			return Object.assign({}, state, {

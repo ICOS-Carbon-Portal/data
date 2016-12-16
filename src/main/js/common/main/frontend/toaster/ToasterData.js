@@ -6,8 +6,13 @@ export const TOAST_RESET = 'TOAST_RESET';
 
 export class ToasterData{
 	constructor(type, message){
+		this._id = Date.now() + '-' + Math.round(Math.random() * 100000000);
 		this._type = type;
 		this._message = message;
+	}
+
+	get id(){
+		return this._id;
 	}
 
 	get message(){
