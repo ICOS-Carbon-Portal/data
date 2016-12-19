@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
-import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
+import NetCDFLegend from '../../../common/main/frontend/legend/NetCDFLegend.jsx';
 import {AnimatedToasters} from '../../../common/main/frontend/toaster/Toaster.jsx';
 import {RASTER_FETCHED, TOAST_RESET}from '../actions';
 
