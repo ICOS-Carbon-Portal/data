@@ -38,25 +38,55 @@ export class Toaster extends Component{
 export class AnimatedToasters extends Component{
 	constructor(props){
 		super(props);
+		this.state = {
+			toasterData: props.toasterData ? [props.toasterData] : []
+		};
+		this.idRecorder = [];
+	}
+
+	componentWillReceiveProps(nextProps){
+		if (nextProps.toasterData && !this.idRecorder.includes(nextProps.toasterData.id)){
+			const newToasterData = this.state.toasterData.slice(0);
+			this.setState({toasterData: newToasterData.concat(nextProps.toasterData)});
+			this.idRecorder.push(nextProps.toasterData.id);
+		}
+	}
+
+	handleCloseToast(id){
+		const props = this.props;
+
+		const newToasterData = this.state.toasterData.filter(td => td.id !== id);
+		const currentToasterDataId = props.toasterData ? props.toasterData.id : null;
+		const idsInState = newToasterData.map(td => td.id);
+
+		//Make sure to always have current toasterData id on the record so we do not display it again
+		if (currentToasterDataId && idsInState.indexOf(currentToasterDataId) === -1){
+			idsInState.push(currentToasterDataId);
+		}
+
+		this.setState({toasterData: newToasterData});
+		this.idRecorder = idsInState;
 	}
 
 	render(){
 		const props = this.props;
+		const state = this.state;
 		const maxWidth = props.maxWidth || toasterDefaultMaxWidth;
 
-		return (
-			<div style={{position:'fixed', top: 15, right: 15, maxWidth, zIndex:9999}}>{
-				props.toasterData.map(toasterData => {
+		return (state.toasterData.length > 0
+			? <div style={{position:'fixed', top: 15, right: 15, maxWidth, zIndex:9999}}>{
+				state.toasterData.map(toasterData => {
 					return <Animate
 						key={toasterData.id}
 						autoCloseDelay={props.autoCloseDelay}
 						fadeInTime={props.fadeInTime}
 						fadeOutTime={props.fadeOutTime}
 						toasterData={toasterData}
-						closeToast={props.closeToast}
+						closeToast={this.handleCloseToast.bind(this)}
 					/>;
 				})
 			}</div>
+			: null
 		);
 	}
 }
@@ -64,7 +94,7 @@ export class AnimatedToasters extends Component{
 class Animate extends Component{
 	constructor(props){
 		super(props);
-		this.state = {status : "SHOW"}
+		this.state = {toasterData: props.toasterData}
 	}
 
 	componentDidMount(){
@@ -72,14 +102,18 @@ class Animate extends Component{
 
 		if(this.props.autoCloseDelay > 0){
 			this.autoCloseTimer = setTimeout(() => {
-				self.setState({status: "HIDE"});
+				this.close();
 			}, this.props.autoCloseDelay);
 		}
 	}
 
 	handleInnerToasterClose(){
 		clearTimeout(this.autoCloseTimer);
-		this.setState({status: "HIDE"});
+		this.close();
+	}
+
+	close(){
+		this.setState({toasterData: Object.assign(this.state.toasterData, {closing: true})})
 	}
 
 	handleFadeOutDone(id){
@@ -93,19 +127,13 @@ class Animate extends Component{
 		const closeToast = this.handleInnerToasterClose.bind(this);
 		const fadeOutDone = this.handleFadeOutDone.bind(this, props.toasterData.id);
 
-		switch(this.state.status){
-			case "SHOW":
-				return (
-					<FadeIn fadeTime={props.fadeInTime}>
-						<Toaster toasterData={props.toasterData} closeToast={closeToast} animated={true}/>
-					</FadeIn>
-				);
-			case "HIDE":
-				return (
-					<FadeOut fadeTime={props.fadeOutTime} onDone={fadeOutDone}>
-						<Toaster toasterData={props.toasterData} animated={true}/>
-					</FadeOut>
-				);
-		}
+		return (props.toasterData.closing
+			? <FadeOut fadeTime={props.fadeOutTime} onDone={fadeOutDone}>
+				<Toaster toasterData={props.toasterData} animated={true}/>
+			</FadeOut>
+			: <FadeIn fadeTime={props.fadeInTime}>
+				<Toaster toasterData={props.toasterData} closeToast={closeToast} animated={true}/>
+			</FadeIn>
+		);
 	}
 }

@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/maps/NetCDFLegend.jsx';
-import ToasterContainer from './ToasterContainer.jsx';
+import {AnimatedToasters} from '../../../common/main/frontend/toaster/Toaster.jsx';
 import {RASTER_FETCHED, TOAST_RESET}from '../actions';
 
 const marginTop = 10;
@@ -27,7 +27,6 @@ class App extends Component {
 
 	updateDimensions(){
 		this.setState({
-			//155: empirical, 147: top header height
 			height: window.innerHeight - 100 - marginTop - 135
 		});
 	}
@@ -68,7 +67,13 @@ class App extends Component {
 		return (
 			<div>
 
-				<ToasterContainer toasterData={props.toasterData} />
+				<AnimatedToasters
+					autoCloseDelay={5000}
+					fadeInTime={100}
+					fadeOutTime={400}
+					toasterData={props.toasterData}
+					maxWidth={400}
+				/>
 
 				<div className="page-header">
 					<h1>Spatial data visualization</h1>

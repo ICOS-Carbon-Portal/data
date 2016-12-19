@@ -4,21 +4,15 @@ import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED,
 import {Control} from './models/ControlsHelper';
 import ColorMaker from './models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
-import {ToasterData, TOAST_SUCCESS, TOAST_INFO, TOAST_WARNING, TOAST_ERROR, TOAST_RESET} from '../../common/main/frontend/toaster/ToasterData';
+import * as Toaster from '../../common/main/frontend/toaster/ToasterData';
 
 export default function(state, action){
 
 	switch(action.type){
 
 		case ERROR:
-			const toasterData = state.toasterData.slice(0);
-			toasterData.push(new ToasterData(TOAST_ERROR, action.error.message + ' - ' + Date.now()));
-
-			return Object.assign({}, state, {toasterData});
-
-		case TOAST_RESET:
 			return Object.assign({}, state, {
-				toasterData: state.toasterData.filter(toasterData => toasterData.id != action.id)
+				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message)
 			});
 
 		case COUNTRIES_FETCHED:

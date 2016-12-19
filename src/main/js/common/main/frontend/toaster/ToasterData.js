@@ -2,10 +2,11 @@ export const TOAST_SUCCESS = 'TOAST_SUCCESS';
 export const TOAST_INFO = 'TOAST_INFO';
 export const TOAST_WARNING = 'TOAST_WARNING';
 export const TOAST_ERROR = 'TOAST_ERROR';
-export const TOAST_RESET = 'TOAST_RESET';
 
 export class ToasterData{
 	constructor(type, message){
+		//TODO: Use Symbol() for id if/when IE catches up
+		//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol
 		this._id = Date.now() + '-' + Math.round(Math.random() * 100000000);
 		this._type = type;
 		this._message = message;
