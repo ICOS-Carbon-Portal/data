@@ -4,7 +4,7 @@ import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED,
 import {Control} from './models/ControlsHelper';
 import ColorMaker from './models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
-import * as Toaster from '../../common/main/frontend/toaster/ToasterData';
+import * as Toaster from 'icos-cp-toaster';
 
 export default function(state, action){
 

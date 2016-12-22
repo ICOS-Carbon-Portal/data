@@ -3,8 +3,8 @@ import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/frontend/legend/NetCDFLegend.jsx';
-import {AnimatedToasters} from '../../../common/main/frontend/toaster/Toaster.jsx';
-import {RASTER_FETCHED, TOAST_RESET}from '../actions';
+import {AnimatedToasters} from 'icos-cp-toaster';
+import {RASTER_FETCHED}from '../actions';
 
 const marginTop = 10;
 const legendWidth = 130;
@@ -20,7 +20,7 @@ class App extends Component {
 	}
 
 	componentWillReceiveProps(nextProps){
-		nextProps.status === RASTER_FETCHED || nextProps.status === TOAST_RESET
+		nextProps.status === RASTER_FETCHED
 			? this.setState({busy: false})
 			: this.setState({busy: true});
 	}
