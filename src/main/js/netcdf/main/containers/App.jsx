@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
-import NetCDFLegend from '../../../common/main/frontend/legend/NetCDFLegend.jsx';
+import Legend from 'icos-cp-legend';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import {RASTER_FETCHED}from '../actions';
 
@@ -97,7 +97,7 @@ class App extends Component {
 						</div>
 						<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
 							getLegend
-								? <NetCDFLegend
+								? <Legend
 								horizontal={false}
 								canvasWidth={20}
 								containerHeight={containerHeight}

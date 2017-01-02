@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import copyprops from '../../../common/main/general/copyprops';
 import colorMaker from '../models/colorMaker';
 import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
-import NetCDFLegend from '../../../common/main/frontend/legend/NetCDFLegend.jsx';
+import Legend from 'icos-cp-legend';
 import {getLegend} from '../models/colorMaker';
 import {incrementIfNeeded} from '../actions';
 import {pointIcon, polygonMask} from 'icos-cp-leaflet-common';
@@ -44,7 +44,7 @@ class FootprintContainer extends Component {
 					/>
 				</div>
 				<div style={{flex: legendWidth + 'px', minWidth: legendWidth}}>
-					<NetCDFLegend
+					<Legend
 						horizontal={false}
 						canvasWidth={20}
 						containerHeight={containerHeight}
