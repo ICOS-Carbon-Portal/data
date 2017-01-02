@@ -4,7 +4,7 @@ import TileMappingHelper, {getTileCoordBbox} from '../geometry/TileMappingHelper
 import Bbox from '../geometry/Bbox';
 import BboxMapping from '../geometry/BboxMapping';
 import renderRaster from './renderRaster';
-import * as LCommon from '../../../common/main/maps/LeafletCommon';
+import * as LCommon from 'icos-cp-leaflet-common';
 
 /*
  Incoming props

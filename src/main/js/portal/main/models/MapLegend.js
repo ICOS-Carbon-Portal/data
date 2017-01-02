@@ -1,4 +1,4 @@
-import * as LCommon from '../../../common/main/maps/LeafletCommon';
+import * as LCommon from 'icos-cp-leaflet-common';
 
 export const MapLegend = L.Control.extend({
 	options: {

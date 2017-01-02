@@ -1,6 +1,6 @@
 import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
-import * as LCommon from '../../../common/main/maps/LeafletCommon';
+import * as LCommon from 'icos-cp-leaflet-common';
 
 export default class LMap extends Component{
 	constructor(props){

@@ -6,7 +6,7 @@ import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
 import NetCDFLegend from '../../../common/main/frontend/legend/NetCDFLegend.jsx';
 import {getLegend} from '../models/colorMaker';
 import {incrementIfNeeded} from '../actions';
-import {pointIcon, polygonMask} from '../../../common/main/maps/LeafletCommon';
+import {pointIcon, polygonMask} from 'icos-cp-leaflet-common';
 
 const containerHeight = 400;
 const legendWidth = 120;

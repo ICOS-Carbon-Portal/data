@@ -2,7 +2,7 @@ import React, { Component, PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import config from '../config';
 import { StationMultiFilter, EmptyFilter } from '../models/Filters'
-import * as LCommon from '../../../common/main/maps/LeafletCommon';
+import * as LCommon from 'icos-cp-leaflet-common';
 import {MapLegend} from '../models/MapLegend';
 
 const zoomTrigger = 5;
