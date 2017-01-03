@@ -1,5 +1,4 @@
-import rgbaInterpolation from '../../../common/main/maps/rgbaInterpolation';
-import linearInterpolation from '../../../common/main/general/linearInterpolation';
+import {rgbaInterpolation, linearInterpolation} from 'icos-cp-spatial';
 
 const zero = [255, 255, 255, 0];
 const low = [255, 255, 178, 255];

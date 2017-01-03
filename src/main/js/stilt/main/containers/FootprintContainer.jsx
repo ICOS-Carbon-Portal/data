@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import copyprops from '../../../common/main/general/copyprops';
 import colorMaker from '../models/colorMaker';
-import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
+import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import {getLegend} from '../models/colorMaker';
 import {incrementIfNeeded} from '../actions';

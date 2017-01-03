@@ -1,7 +1,8 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Controls from './Controls.jsx';
-import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
+// import NetCDFMap from '../../../common/main/maps/NetCDFMap.jsx';
+import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import {RASTER_FETCHED}from '../actions';
