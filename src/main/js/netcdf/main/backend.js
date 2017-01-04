@@ -1,6 +1,5 @@
 import 'whatwg-fetch';
-import {getBinRaster} from '../../common/main/backend/binRaster';
-import {getJson} from '../../common/main/backend/json';
+import {getBinRaster, getJson} from 'icos-cp-backend';
 import {feature} from 'topojson';
 
 export function getRaster(service, variable, date, elevation, gamma){

@@ -1,4 +1,4 @@
-import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {tableFormatForSpecies} from 'icos-cp-backend';
 import {getStationInfo, getDataObjectData, getGlobalTimeInterval, getFilteredPropValueCounts} from './backend';
 import {makeTableRequest} from './models/chartDataMaker';
 import config from './config';
@@ -53,7 +53,7 @@ function gotData(data, dataObjId){
 export const fetchTableFormat = (dataObjSpec) => dispatch => {
 	dispatch({type: FETCHING_META});
 
-	tableFormatForSpecies(dataObjSpec).then(
+	tableFormatForSpecies(dataObjSpec, config).then(
 		tableFormat => dispatch(gotMeta(tableFormat)),
 		err => dispatch(failWithError(err))
 	);

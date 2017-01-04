@@ -3,7 +3,7 @@
 var endpoint = 'https://meta.icos-cp.eu/sparql';
 
 // @if NODE_ENV='production'
-endpoint = 'https://meta.icos-cp.eu/sparql';
+// endpoint = 'https://meta.icos-cp.eu/sparql';
 // @endif
 
 

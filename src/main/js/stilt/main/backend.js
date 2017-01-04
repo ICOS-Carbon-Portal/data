@@ -1,20 +1,13 @@
 import 'whatwg-fetch';
-import {checkStatus} from '../../common/main/backend/fetchHelp';
-import {sparql} from '../../common/main/backend/sparql';
-import {getJson} from '../../common/main/backend/json';
-import {getBinaryTable} from '../../common/main/backend/binTable';
-import {getBinRaster} from '../../common/main/backend/binRaster';
-import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
+import {checkStatus, sparql, getJson, getBinaryTable, getBinRaster, tableFormatForSpecies} from 'icos-cp-backend';
 import {stationInfoQuery} from './sparqlQueries';
 import {groupBy, copyprops} from 'icos-cp-utils';
 import {feature} from 'topojson';
-
-//import * as sparqlQueries from './sparqlQueries';
 import config from './config';
 
 export function getInitialData(){
 	return Promise.all([
-		tableFormatForSpecies(config.wdcggSpec),
+		tableFormatForSpecies(config.wdcggSpec, config),
 		getStationInfo(),
 		getCountriesGeoJson()
 	]).then(([wdcggFormat, stations, countriesTopo]) => {return {wdcggFormat, stations, countriesTopo};});
@@ -27,7 +20,7 @@ function getCountriesGeoJson(){
 
 function getStationInfo(){
 	return Promise.all([
-		sparql(stationInfoQuery),
+		sparql(stationInfoQuery, config.sparqlEndpoint),
 		getJson('stationyears')
 	]).then(([sparqlResult, stationYears]) => {
 
