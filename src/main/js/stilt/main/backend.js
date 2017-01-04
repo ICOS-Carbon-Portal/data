@@ -6,8 +6,7 @@ import {getBinaryTable} from '../../common/main/backend/binTable';
 import {getBinRaster} from '../../common/main/backend/binRaster';
 import {tableFormatForSpecies} from '../../common/main/backend/tableFormat';
 import {stationInfoQuery} from './sparqlQueries';
-import groupBy from '../../common/main/general/groupBy';
-import copyprops from '../../common/main/general/copyprops';
+import {groupBy, copyprops} from 'icos-cp-utils';
 import {feature} from 'topojson';
 
 //import * as sparqlQueries from './sparqlQueries';

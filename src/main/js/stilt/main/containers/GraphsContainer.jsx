@@ -1,7 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
-import copyprops from '../../../common/main/general/copyprops';
+import {copyprops} from 'icos-cp-utils';
 
 import config from '../config';
 import {setDateRange} from '../actions.js';

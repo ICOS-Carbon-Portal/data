@@ -1,5 +1,5 @@
 import {getRaster} from '../backend';
-import {ensureDelay, retryPromise} from '../../../common/main/general/promiseUtils';
+import {ensureDelay, retryPromise} from 'icos-cp-utils';
 
 export default class RasterDataFetcher{
 	constructor(dataObjectVars, options){

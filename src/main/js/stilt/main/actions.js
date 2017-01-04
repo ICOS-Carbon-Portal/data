@@ -1,6 +1,5 @@
 import {getInitialData, getStationData} from './backend';
-import throttle from '../../common/main/general/throttle';
-import config from './config';
+import {throttle} from 'icos-cp-utils';
 
 export const FETCHED_INITDATA = 'FETCHED_INITDATA';
 export const FETCHED_STATIONDATA = 'FETCHED_STATIONDATA';

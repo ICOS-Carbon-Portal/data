@@ -3,8 +3,7 @@ import {FETCHED_INITDATA, FETCHED_STATIONDATA, FETCHED_RASTER, SET_SELECTED_STAT
 import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import FootprintsFetcher from './models/FootprintsFetcher';
-import copyprops from '../../common/main/general/copyprops';
-import deepUpdate from '../../common/main/general/deepUpdate';
+import {copyprops, deepUpdate} from 'icos-cp-utils';
 
 export default function(state, action){
 

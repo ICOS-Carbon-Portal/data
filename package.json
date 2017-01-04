@@ -52,6 +52,7 @@
     "icos-cp-legend": "^0.3.0",
     "icos-cp-netcdfmap": "^0.1.0",
     "icos-cp-spatial": "^0.2.0",
+    "icos-cp-utils": "^0.1.0",
     "dygraphs": "^1.1.1",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",

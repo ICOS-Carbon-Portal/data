@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import Dygraph from 'dygraphs';
-import deepMerge from '../../../common/main/general/deepMerge';
+import {deepMerge} from 'icos-cp-utils';
 
 
 export default class Dygraphs extends React.Component {

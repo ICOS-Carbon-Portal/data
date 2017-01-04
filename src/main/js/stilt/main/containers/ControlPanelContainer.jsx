@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import copyprops from '../../../common/main/general/copyprops';
+import {copyprops} from 'icos-cp-utils';
 import {visibilityUpdate, setSelectedYear, setSelectedStation, setStationVisibility, incrementFootprint, pushPlayButton, setDelay} from '../actions';
 import ControlPanel from '../components/ControlPanel.jsx';
 import config from '../config';

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import copyprops from '../../../common/main/general/copyprops';
+import {copyprops} from 'icos-cp-utils';
 import colorMaker from '../models/colorMaker';
 import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
