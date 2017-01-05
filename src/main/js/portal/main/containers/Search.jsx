@@ -5,6 +5,7 @@ import config from '../config';
 import PropertyValueSelect from '../components/PropertyValueSelect.jsx';
 import DatePickerEncloser from '../components/DatePickerEncloser.jsx';
 import SpatialSearch from '../components/SpatialSearch.jsx';
+import {AnimatedToasters} from 'icos-cp-toaster';
 
 class Search extends Component {
 	constructor(props){
@@ -29,6 +30,8 @@ class Search extends Component {
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
+				<AnimatedToasters toasterData={props.toasterData} autoCloseDelay={5000} />
+
 				<div className="page-header">
 					<h1>ICOS Data Service search</h1>
 				</div>

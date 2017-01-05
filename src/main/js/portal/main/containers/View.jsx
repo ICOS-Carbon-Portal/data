@@ -6,6 +6,7 @@ import Dygraphs from '../components/Dygraphs.jsx';
 import Leaflet from '../components/Leaflet.jsx';
 import DataObjectList from '../components/DataObjectList.jsx';
 import MetaDataTable from '../components/MetaDataTable.jsx';
+import {AnimatedToasters} from 'icos-cp-toaster';
 
 class View extends Component {
 	constructor(props){
@@ -32,6 +33,8 @@ class View extends Component {
 
 		return (
 			<div id="cp_data_search" className="container-fluid">
+				<AnimatedToasters toasterData={props.toasterData} autoCloseDelay={5000} />
+
 				<div className="page-header">
 					<h1>ICOS Data Service search result</h1>
 				</div>

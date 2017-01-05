@@ -3,6 +3,7 @@ import { ROUTE_UPDATED, FILTER_UPDATED, GOT_GLOBAL_TIME_INTERVAL, GOT_PROP_VAL_C
 import {getLabels, generateChartData} from './models/chartDataMaker';
 import StationsInfo from './models/StationsInfo';
 import config from './config';
+import * as Toaster from 'icos-cp-toaster';
 
 export default function(state, action){
 
@@ -81,7 +82,9 @@ export default function(state, action){
 			});
 
 		case ERROR:
-			return updatedState({status: ERROR, error: action.error});
+			return Object.assign({}, state, {
+				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
+			});
 
 		case FILTER_UPDATED:
 			return updatedState({

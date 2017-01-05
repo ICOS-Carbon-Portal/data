@@ -12,7 +12,7 @@ export default function(state, action){
 
 		case ERROR:
 			return Object.assign({}, state, {
-				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message)
+				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
 		case COUNTRIES_FETCHED:

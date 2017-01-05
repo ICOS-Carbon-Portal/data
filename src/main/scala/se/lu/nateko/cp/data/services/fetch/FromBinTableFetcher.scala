@@ -27,6 +27,8 @@ class FromBinTableFetcher(folder: File){
 
 		val file = new File(folder, request.subFolder + "/" + request.tableId.id + FileExtension)
 
+		assert(file.exists, s"File ${file.getName} not found on the server")
+
 		BinTableSource(file, request.schema, request.columnNumbers, request.slice)
 	}
 

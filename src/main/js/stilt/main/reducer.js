@@ -4,6 +4,7 @@ import {makeTimeSeriesGraphData} from './models/timeSeriesHelpers';
 import FootprintsRegistry from './models/FootprintsRegistry';
 import FootprintsFetcher from './models/FootprintsFetcher';
 import {copyprops, deepUpdate} from 'icos-cp-utils';
+import * as Toaster from 'icos-cp-toaster';
 
 export default function(state, action){
 
@@ -65,7 +66,9 @@ export default function(state, action){
 			return update({footprintsFetcher});
 
 		case ERROR:
-			return updateWith(['error']);
+			return Object.assign({}, state, {
+				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
+			});
 
 		default:
 			return state;
