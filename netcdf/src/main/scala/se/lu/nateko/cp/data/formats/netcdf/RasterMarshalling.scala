@@ -9,15 +9,16 @@ import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import akka.http.scaladsl.model._
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.data.CpdataJsonProtocol.rasterFormat
 import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
-import spray.json.pimpAny
+import spray.json._
 
 case class RasterMessage(stats: Stats, boundingBox: BoundingBox, array: Array[Array[Double]])
 case class BoundingBox(latMin: Double, latMax: Double, lonMin: Double, lonMax: Double)
 case class Stats(min: Double, max: Double)
 
 object RasterMarshalling {
+
+	import NetCdfJson._
 
 	def marshaller: ToResponseMarshaller[Raster] = Marshaller(
 		implicit exeCtxt => raster => Future.successful(

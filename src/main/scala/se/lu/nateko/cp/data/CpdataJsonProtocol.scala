@@ -12,10 +12,6 @@ import spray.json._
 
 object CpdataJsonProtocol extends CommonJsonSupport {
 
-	implicit val statsFormat = jsonFormat2(Stats)
-	implicit val boundingBoxFormat = jsonFormat4(BoundingBox)
-	implicit val rasterFormat = jsonFormat3(RasterMessage)
-
 	implicit val binTableSliceFormat = jsonFormat2(BinTableSlice)
 
 	implicit object binTableDataTypeFormat extends JsonFormat[DataType]{

@@ -13,34 +13,16 @@ lazy val commonSettings = Seq(
 	)
 )
 
-lazy val views = (project in file("views"))
-	.settings(commonSettings: _*)
-	.enablePlugins(SbtTwirl)
-	.settings(
-		name := "data-views",
-		version := "0.1.0",
-		libraryDependencies += "se.lu.nateko.cp" %% "views-core" % "0.2-SNAPSHOT"
-	)
+val akkaVersion = "2.4.16"
+val akkaHttpVersion = "10.0.2"
 
-val akkaVersion = "2.4.10"
-
-lazy val data = (project in file("."))
-	.dependsOn(views)
+lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
-		name := "data",
-		version := "0.2.1",
-
+		name := "data-netcdf",
+		version := "0.1.0-SNAPSHOT",
 		libraryDependencies ++= Seq(
-			"com.typesafe.akka"  %% "akka-http-spray-json-experimental"  % akkaVersion,
-			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
-			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.2.0-SNAPSHOT",
-
-		// *** manually published on CP Nexus 3rd party repo ***
-
-			"edu.ucar"            % "cdm"                                % "4.5.5" excludeAll(
+			"edu.ucar"            % "cdm"                                % "4.5.5" excludeAll( //manually published on nexus.icos-cp.eu
 				ExclusionRule(organization = "com.beust"),
 				//ExclusionRule(organization = "com.google.guava"),
 				ExclusionRule(organization = "com.google.protobuf"),
@@ -51,6 +33,35 @@ lazy val data = (project in file("."))
 				ExclusionRule(organization = "org.quartz-scheduler"),
 				ExclusionRule(organization = "org.slf4j")
 			),
+			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion
+		),
+		publishTo := {
+			val nexus = "https://repo.icos-cp.eu/content/repositories/"
+			if (isSnapshot.value)
+				Some("snapshots" at nexus + "snapshots")
+			else
+				Some("releases"  at nexus + "releases")
+		},
+		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+	)
+
+lazy val data = (project in file("."))
+	.dependsOn(netcdf)
+	.enablePlugins(SbtTwirl)
+	.settings(commonSettings: _*)
+	.settings(
+		name := "data",
+		version := "0.3.0",
+
+		libraryDependencies ++= Seq(
+			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
+			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
+			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "meta-core"                          % "0.2.0-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.2-SNAPSHOT",
+
+		// *** manually published on CP Nexus 3rd party repo ***
 			"org.irods.jargon"    % "jargon-core"      % "4.0.2.4", //IRODS client core features
 			"org.globus.jglobus"  % "cog-jglobus"      % "1.8.0",   //jargon-core dependency
 			"com.claymoresystems" % "puretls"          % "1.1",     //cog-jglobus dependency
