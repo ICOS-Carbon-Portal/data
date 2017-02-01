@@ -56,7 +56,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 
 	def userIsAllowedUpload(dataObj: DataObject, user: UserId): Future[Unit] = {
 		val submitter = dataObj.submission.submitter
-		val submitterUri = submitter.uri.toString
+		val submitterUri = submitter.self.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
 			Uri.Query("submitter" -> submitterUri, "userId" -> user.email)
 		)
@@ -66,7 +66,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 					Unmarshal(resp.entity).to[JsValue].map(_ match {
 						case JsBoolean(b) =>
 							if(!b) throw new UnauthorizedUpload({
-								val submitterName = submitter.label.getOrElse(submitterUri)
+								val submitterName = submitter.self.label.getOrElse(submitterUri)
 								s"User '${user.email}' is not authorized to upload on behalf of $submitterName"
 							})
 						case js => throw new Exception(s"Expected a JSON boolean, got $js")
