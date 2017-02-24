@@ -13,8 +13,8 @@ lazy val commonSettings = Seq(
 	)
 )
 
-val akkaVersion = "2.4.16"
-val akkaHttpVersion = "10.0.2"
+val akkaVersion = "2.4.17"
+val akkaHttpVersion = "10.0.4"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
