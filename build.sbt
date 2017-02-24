@@ -23,17 +23,21 @@ lazy val netcdf = (project in file("netcdf"))
 		version := "0.1.0-SNAPSHOT",
 		libraryDependencies ++= Seq(
 			"edu.ucar"            % "cdm"                                % "4.5.5" excludeAll( //manually published on nexus.icos-cp.eu
-				ExclusionRule(organization = "com.beust"),
-				//ExclusionRule(organization = "com.google.guava"),
-				ExclusionRule(organization = "com.google.protobuf"),
-				ExclusionRule(organization = "net.sf.ehcache"),
-				ExclusionRule(organization = "org.apache.httpcomponents"),
-				ExclusionRule(organization = "org.itadaki"),
-				ExclusionRule(organization = "org.jdom"),
-				ExclusionRule(organization = "org.quartz-scheduler"),
-				ExclusionRule(organization = "org.slf4j")
+				ExclusionRule(organization = "com.beust", name = "jcommander"),
+				//ExclusionRule(organization = "com.google.guava", name = "guava"),
+				ExclusionRule(organization = "com.google.protobuf", name = "protobuf-java"),
+				//ExclusionRule(organization = "edu.ucar", name = "httpservices"),
+				ExclusionRule(organization = "net.sf.ehcache", name = "ehcache-core"),
+				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpcore"),
+				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),
+				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpmime"),
+				ExclusionRule(organization = "org.itadaki", name = "bzip2"),
+				ExclusionRule(organization = "org.jdom", name = "jdom2"),
+				ExclusionRule(organization = "org.quartz-scheduler", name = "quartz"),
+				ExclusionRule(organization = "org.slf4j", name = "jcl-over-slf4j"),
+				ExclusionRule(organization = "org.slf4j", name = "slf4j-api")
 			),
-			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion
+			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided"
 		),
 		publishTo := {
 			val nexus = "https://repo.icos-cp.eu/content/repositories/"
