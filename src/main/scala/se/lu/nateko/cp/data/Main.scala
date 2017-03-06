@@ -19,6 +19,7 @@ import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
+import se.lu.nateko.cp.data.api.RestHeartClient
 
 object Main extends App {
 
@@ -34,7 +35,9 @@ object Main extends App {
 		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
 	}
 
+	val http = Http()
 	val metaClient = new MetaClient(config.meta)
+	val restHeart = new RestHeartClient(config.restheart, http)
 
 	val uploadService = new UploadService(config.upload, metaClient)
 
@@ -42,8 +45,9 @@ object Main extends App {
 	val tabularRouting = new TabularFetchRouting(binTableFetcher)
 
 	val authRouting = new AuthRouting(config.auth)
-	val uploadRouting = new UploadRouting(authRouting, uploadService)
+	val uploadRouting = new UploadRouting(authRouting, uploadService, restHeart)
 
+	val licenceRouting = new LicenceRouting(authRouting)
 	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)
 
 	val exceptionHandler = ExceptionHandler{
@@ -62,10 +66,11 @@ object Main extends App {
 		tabularRouting.route ~
 		StiltRouting(stiltFetcher) ~
 		StaticRouting.route ~
+		licenceRouting.route ~
 		EtcUploadRouting()
 	}
 
-	Http()
+	http
 		.bindAndHandle(route, config.interface, 9010)
 		.onSuccess{
 			case binding =>
