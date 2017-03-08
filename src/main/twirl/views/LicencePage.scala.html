@@ -1,0 +1,102 @@
+@import se.lu.nateko.cp.cpauth.core.UserId
+@import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+
+@(uid: Option[UserId], dobjId: Option[Sha256Sum])
+
+@CpCommonPage("ICOS Data Licence"){
+}{
+<div class="page-header">
+	<h1>ICOS Data Licence <small><a href="https://cpauth.icos-cp.eu/">Log in</a> to accept permanently</small></h1>
+</div>
+
+<p>This is a human-readable summary of (and not a substitute for) the <a href="https://creativecommons.org/licenses/by/4.0/legalcode">licence</a>.</p>
+
+<p>
+Before you can download the ICOS data you requested, we ask you to accept our data licence.
+Please read carefully and then go to the bottom of the page to enter your choice.
+If you <a href="https://cpauth.icos-cp.eu/home/">register and use our Single-Sign-On to login</a>, this acceptance will only be asked of you once.
+</p>
+
+<h4>ICOS DATA is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
+
+<h6>You are free to:</h6>
+
+<ul>
+	<li><span class="strong">Share</span> — copy and redistribute the material in any medium or format</li>
+	<li><span class="strong">Adapt</span> — remix, transform, and build upon the material for any purpose, even commercially.</li>
+</ul>
+
+<p>The licensor cannot revoke these freedoms as long as you follow the licence terms.</p>
+
+<p></p>
+
+<h6>Under the following terms:</h6>
+
+<ul>
+	<li>
+		<span class="strong">Attribution</span>
+		— You must give appropriate credit, provide a link to the licence, and indicate if changes were made.
+		You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+	</li>
+	<li>
+		<span class="strong">No additional restrictions</span>
+		— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits.
+	</li>
+</ul>
+
+<ul class="links odd">
+	<li>
+		<div>
+			<a href="https://www.icos-cp.eu/fair_use">@inlineJpg("fair_use", "Fair Use")</a>
+			<p>About Fair USE</p>
+		</div>
+	</li>
+	<li>
+		<div>
+			<a href="https://www.icos-cp.eu/icos_data_quality">@inlineJpg("icos_data_quality", "ICOS Data Quality")</a>
+			<p>About ICOS Data Quality</p>
+		</div>
+	</li>
+</ul>
+
+<ul class="links even">
+	<li>
+		<div>
+			<a href="https://www.icos-cp.eu/how_to_cite">@inlineJpg("cite_how", "How to cite")</a>
+			<p>About how to cite</p>
+		</div>
+	</li>
+</ul>
+
+<ul class="links odd last">
+	<li>
+		<div>
+			<a href="https://cpauth.icos-cp.eu/">@inlineJpg("register", "Register")</a>
+			<p>Register to get more support</p>
+		</div>
+	</li>
+	<li>
+		<div>
+			<a href="https://www.icos-cp.eu/pid_what">@inlineJpg("pid_what", "About PIDs")</a>
+			<p>What are Persistent Identifiers (PIDs) and how to use them</p>
+		</div>
+	</li>
+</ul>
+
+<p class="strong last">By continuing I confirm that I have taken notice of the information provided to inform me about the data
+ and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
+
+<ul class="links">
+	<li>
+		<div><a href="#">@inlineJpg("yes", "Yes")</a></div>
+	</li>
+	<li>
+		<div><a href="#">@inlineJpg("no", "No")</a></div>
+	</li>
+</ul>
+
+}
+
+@inlineJpg(name: String, alt: String) = {
+	<img alt=@alt src=@{"https://www.icos-cp.eu/sites/default/files/inline-images/" + name + ".jpg"} />
+}

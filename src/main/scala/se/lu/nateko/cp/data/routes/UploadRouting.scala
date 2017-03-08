@@ -53,7 +53,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 		onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
 			val ok = accessRoute(dobj)
 			cookie(LicenceCookieName){licCookie =>
-				if(licCookie.value == hashsum.base64) ok
+				if(licCookie.value == hashsum.base64Url) ok
 				else reject
 			} ~
 			user{uid =>

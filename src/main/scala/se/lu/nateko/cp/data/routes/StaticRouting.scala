@@ -23,7 +23,7 @@ object StaticRouting {
 		case "portal" => views.html.PortalPage()
 	}
 
-	private implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(
+	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(
 		implicit exeCtxt => html => Future.successful(
 			WithOpenCharset(MediaTypes.`text/html`, getHtml(html, _)) :: Nil
 		)

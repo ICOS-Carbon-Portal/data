@@ -7,21 +7,30 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.StatusCodes
 
-class LicenceRouting(auth: AuthRouting) {
+class LicenceRouting(authRouting: AuthRouting) {
 
 	import LicenceRouting._
 	import UploadRouting.Sha256Segment
+	import StaticRouting.pageMarshaller
+	import authRouting.user
 
 	def route: Route =
 		path("licence_accept" / Sha256Segment){hash =>
-			setCookie(HttpCookie(LicenceCookieName, hash.base64)){
+			setCookie(HttpCookie(LicenceCookieName, hash.base64Url)){
 				redirect("/objects/" + hash.base64Url, StatusCodes.Found)
 			}
 		} ~
 		pathPrefix("licence"){
-			complete((StatusCodes.OK, "Under construction!"))
+			pathEndOrSingleSlash{dataLicence(None)} ~
+			path(Sha256Segment){hash => dataLicence(Some(hash))}
 		}
 
+	private def dataLicence(dobjId: Option[Sha256Sum]): Route = {
+		user{uid =>
+			complete(views.html.LicencePage(Some(uid), dobjId))
+		} ~
+		complete(views.html.LicencePage(None, dobjId))
+	}
 }
 
 object LicenceRouting{
