@@ -7,6 +7,8 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.`Content-Disposition`
+import akka.http.scaladsl.model.headers.ContentDispositionTypes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directive
@@ -53,8 +55,10 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 		onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
 			val ok = accessRoute(dobj)
 			cookie(LicenceCookieName){licCookie =>
-				if(licCookie.value == hashsum.base64Url) ok
-				else reject
+				deleteCookie(LicenceCookieName){
+					if(licCookie.value == hashsum.base64Url) (ok)
+					else reject
+				}
 			} ~
 			user{uid =>
 				onComplete(restHeart.getUserLicenseAcceptance(uid)){
@@ -73,15 +77,20 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 		}
 	}
 
-	private def accessRoute(dobj: DataObject): Route = optionalFileName{fileNameOpt =>
+	private def accessRoute(dobj: DataObject): Route = optionalFileName{pathFileNameOpt =>
+		val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
 		val contentType = getContentType(fileNameOpt)
 		val file = uploadService.getFile(dobj)
-		if(file.exists)
-			getFromFile(file, contentType)
-		else {
-			val src = uploadService.getRemoteStorageSource(dobj)
-			val entity = HttpEntity.CloseDelimited(contentType, src)
-			complete(HttpResponse(entity = entity))
+		val fileName = fileNameOpt.getOrElse(file.getName)
+
+		respondWithHeader(`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))){
+			if(file.exists)
+				getFromFile(file, contentType)
+			else {
+				val src = uploadService.getRemoteStorageSource(dobj)
+				val entity = HttpEntity.CloseDelimited(contentType, src)
+				complete(HttpResponse(entity = entity))
+			}
 		}
 	}
 }

@@ -16,8 +16,9 @@ class LicenceRouting(authRouting: AuthRouting) {
 
 	def route: Route =
 		path("licence_accept" / Sha256Segment){hash =>
-			setCookie(HttpCookie(LicenceCookieName, hash.base64Url)){
-				redirect("/objects/" + hash.base64Url, StatusCodes.Found)
+			val dlPath = "/objects/" + hash.base64Url
+			setCookie(HttpCookie(LicenceCookieName, hash.base64Url, path = Some(dlPath))){
+				redirect(dlPath, StatusCodes.Found)
 			}
 		} ~
 		pathPrefix("licence"){

@@ -5,47 +5,75 @@
 
 @CpCommonPage("ICOS Data Licence"){
 	<style type="text/css">
-		h5{
-			font-family: inherit;
-			font-weight: bold;
+		.layout-container{
+			max-width: 1290px;
+			margin-left: auto;
+			margin-right: auto;
 		}
-		ul.freedoms_or_terms li{
+		li{
 			list-style-type: none;
+		}
+		ul.links li{
+			display: inline;
+			padding: 0 100px;
+		}
+		ul.links li div{
+			display: inline-block;
+			vertical-align: top;
+		}
+		ul.even li div { margin-left: 200px; }
+		ul.links img{
+			width: 150px;
+		}
+		ul.links li div p { text-align: center; width: 150px;}
+		p.confirmation{
+			font-weight: bold;
+			padding-top: 15px;
+			margin-top: 30px;
+			border-top: 1px solid #eee;
 		}
 	</style>
 }{
+<div class="layout-container">
+
 <div class="page-header">
-	<h1>ICOS Data Licence <small><a href="https://cpauth.icos-cp.eu/">Log in</a> to accept permanently</small></h1>
+	<h1>ICOS Data Licence
+		@if(uid.isEmpty){<small>
+			<a href="https://cpauth.icos-cp.eu/" target="_blank">Log in</a>
+			to accept permanently
+		</small>}
+	</h1>
 </div>
+
+<p>ICOS data are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a>.</p>
 
 <p>This is a human-readable summary of (and not a substitute for) the <a href="https://creativecommons.org/licenses/by/4.0/legalcode">licence</a>.</p>
 
-<p>
-Before you can download the ICOS data you requested, we ask you to accept our data licence.
-Please read carefully and then go to the bottom of the page to enter your choice.
-If you <a href="https://cpauth.icos-cp.eu/home/">register and use our Single-Sign-On to login</a>, this acceptance will only be asked of you once.
-</p>
+@if(dobjId.isDefined){
+	<p>Before you can download the ICOS data object you requested, we ask you to accept our data licence.
+	Please read carefully and then go to the bottom of the page to enter your choice.
+	If you register and accept the licence in your <a href="https://cpauth.icos-cp.eu/home/">user profile</a>,
+	this acceptance will not be asked of you any more.</p>
+}
 
-<h4>ICOS DATA is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
+<h5><b>You are free to:</b></h5>
 
-<h5>You are free to:</h5>
-
-<ul class="freedoms_or_terms">
+<ul>
 	<li><strong>Share</strong> — copy and redistribute the material in any medium or format</li>
-	<li><strong>Adapt</strong> — remix, transform, and build upon the material for any purpose, even commercially.</li>
+	<li><strong>Adapt</strong> — remix, transform, and build upon the material for any purpose, even commercially</li>
 </ul>
 
-<h5>Under the following terms:</h5>
+<h5><b>Under the following terms:</b></h5>
 
-<ul class="freedoms_or_terms">
+<ul>
 	<li>
 		<strong>Attribution</strong>
 		— You must give appropriate credit, provide a link to the licence, and indicate if changes were made.
-		You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+		You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use
 	</li>
 	<li>
 		<strong>No additional restrictions</strong>
-		— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits.
+		— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits
 	</li>
 </ul>
 
@@ -55,7 +83,7 @@ If you <a href="https://cpauth.icos-cp.eu/home/">register and use our Single-Sig
 	<li>
 		<div>
 			<a href="https://www.icos-cp.eu/fair_use">@inlineJpg("fair_use", "Fair Use")</a>
-			<p>About Fair USE</p>
+			<p>About Fair use</p>
 		</div>
 	</li>
 	<li>
@@ -90,18 +118,21 @@ If you <a href="https://cpauth.icos-cp.eu/home/">register and use our Single-Sig
 	</li>
 </ul>
 
-<p class="strong last">By continuing I confirm that I have taken notice of the information provided to inform me about the data
- and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
+@for(hash <- dobjId){
+	<p class="confirmation">I hereby confirm that I have taken notice of the information provided to inform me about the data
+	 and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
 
-<ul class="links">
-	<li>
-		<div><a href="#">@inlineJpg("yes", "Yes")</a></div>
-	</li>
-	<li>
-		<div><a href="#">@inlineJpg("no", "No")</a></div>
-	</li>
-</ul>
+	<ul class="links">
+		<li>
+			<div><a target="_blank" href=@{"/licence_accept/" + hash.base64Url}>@inlineJpg("yes", "Yes")</a></div>
+		</li>
+		<li>
+			<div><a href=@{"https://meta.icos-cp.eu/objects/" + hash.base64Url}>@inlineJpg("no", "No")</a></div>
+		</li>
+	</ul>
+}
 
+</div>
 }
 
 @inlineJpg(name: String, alt: String) = {
