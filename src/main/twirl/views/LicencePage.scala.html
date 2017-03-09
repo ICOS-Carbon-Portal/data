@@ -4,6 +4,15 @@
 @(uid: Option[UserId], dobjId: Option[Sha256Sum])
 
 @CpCommonPage("ICOS Data Licence"){
+	<style type="text/css">
+		h5{
+			font-family: inherit;
+			font-weight: bold;
+		}
+		ul.freedoms_or_terms li{
+			list-style-type: none;
+		}
+	</style>
 }{
 <div class="page-header">
 	<h1>ICOS Data Licence <small><a href="https://cpauth.icos-cp.eu/">Log in</a> to accept permanently</small></h1>
@@ -19,30 +28,28 @@ If you <a href="https://cpauth.icos-cp.eu/home/">register and use our Single-Sig
 
 <h4>ICOS DATA is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
 
-<h6>You are free to:</h6>
+<h5>You are free to:</h5>
 
-<ul>
-	<li><span class="strong">Share</span> — copy and redistribute the material in any medium or format</li>
-	<li><span class="strong">Adapt</span> — remix, transform, and build upon the material for any purpose, even commercially.</li>
+<ul class="freedoms_or_terms">
+	<li><strong>Share</strong> — copy and redistribute the material in any medium or format</li>
+	<li><strong>Adapt</strong> — remix, transform, and build upon the material for any purpose, even commercially.</li>
 </ul>
 
-<p>The licensor cannot revoke these freedoms as long as you follow the licence terms.</p>
+<h5>Under the following terms:</h5>
 
-<p></p>
-
-<h6>Under the following terms:</h6>
-
-<ul>
+<ul class="freedoms_or_terms">
 	<li>
-		<span class="strong">Attribution</span>
+		<strong>Attribution</strong>
 		— You must give appropriate credit, provide a link to the licence, and indicate if changes were made.
 		You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
 	</li>
 	<li>
-		<span class="strong">No additional restrictions</span>
+		<strong>No additional restrictions</strong>
 		— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits.
 	</li>
 </ul>
+
+<p>The licensor cannot revoke these freedoms as long as you follow the licence terms.</p>
 
 <ul class="links odd">
 	<li>
