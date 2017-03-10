@@ -70,18 +70,18 @@ object Main extends App {
 		EtcUploadRouting()
 	}
 
-	http
-		.bindAndHandle(route, config.interface, 9010)
-		.onSuccess{
-			case binding =>
-				sys.addShutdownHook{
-					val exeCtxt = ExecutionContext.Implicits.global
-					val doneFuture = binding
-						.unbind()
-						.flatMap(_ => system.terminate())(exeCtxt)
-					Await.result(doneFuture, 3 seconds)
-				}
-				println(binding)
-		}
+	restHeart.ensureDobjDownloadCollExists.flatMap{_ =>
+		http.bindAndHandle(route, config.interface, 9010)
+	}.onSuccess{
+		case binding =>
+			sys.addShutdownHook{
+				val exeCtxt = ExecutionContext.Implicits.global
+				val doneFuture = binding
+					.unbind()
+					.flatMap(_ => system.terminate())(exeCtxt)
+				Await.result(doneFuture, 3 seconds)
+			}
+			system.log.info(s"Started data: $binding")
+	}
 
 }

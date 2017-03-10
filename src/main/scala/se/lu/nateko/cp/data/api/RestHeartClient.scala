@@ -12,12 +12,22 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.RestHeartConfig
-import spray.json.{ JsObject, JsValue }
+import spray.json._
 import spray.json.JsBoolean
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.marshalling.Marshal
+import akka.http.scaladsl.model.RequestEntity
+import se.lu.nateko.cp.meta.core.data.DataObject
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
 	import http.system.dispatcher
+
+	private val dlCollUri = {
+		import config._
+		Uri(s"$baseUri/$dbName/$dobjDownloadsCollection")
+	}
 
 	def getUserUri(uid: UserId): Uri = {
 		val email = uid.email
@@ -39,4 +49,39 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 				uobj.fields("profile").asJsObject.fields("icosLicenceOk").asInstanceOf[JsBoolean].value
 			})
 		}
+
+	def ensureDobjDownloadCollExists: Future[Unit] = {
+		http.singleRequest(HttpRequest(uri = dlCollUri)).flatMap{resp =>
+			if(resp.status == StatusCodes.NotFound){
+				val dlCollectionDescr = JsObject("desc" -> JsString("Download log for CP-hosted data objects"))
+				for(
+					entity <- Marshal(dlCollectionDescr).to[RequestEntity];
+					r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
+				) yield {
+					if(r.status == StatusCodes.Created) Future.successful(())
+					else Future.failed(new Exception(s"Failed creating ${config.dobjDownloadsCollection} collection in RestHeart: ${r.status.defaultMessage}"))
+				}
+			} else if(resp.status == StatusCodes.OK) Future.successful(())
+			else Future.failed(new Exception(s"Unexpected response when checking for dobj download log collection in RestHeart : ${resp.status.defaultMessage}"))
+		}
+	}
+
+	def logDownload(dobj: DataObject, ip: String): Future[Unit] = {
+		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
+
+		val logItem = JsObject(
+			"time" -> JsString(java.time.Instant.now().toString),
+			"ip" -> JsString(ip),
+			"dobj" -> dobj.toJson
+		)
+
+		for(
+			entity <- Marshal(logItem).to[RequestEntity];
+			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.POST, entity = entity))
+		) yield {
+			if(r.status == StatusCodes.Created) Future.successful(())
+			else Future.failed(new Exception(s"Failed loggin data object download to RestHeart: ${r.status.defaultMessage}"))
+		}
+	}
+
 }

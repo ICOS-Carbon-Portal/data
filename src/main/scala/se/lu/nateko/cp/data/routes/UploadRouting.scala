@@ -8,6 +8,7 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.`Content-Disposition`
+import akka.http.scaladsl.model.headers.`X-Forwarded-For`
 import akka.http.scaladsl.model.headers.ContentDispositionTypes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Directive1
@@ -78,20 +79,32 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 	}
 
 	private def accessRoute(dobj: DataObject): Route = optionalFileName{pathFileNameOpt =>
-		val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
-		val contentType = getContentType(fileNameOpt)
-		val file = uploadService.getFile(dobj)
-		val fileName = fileNameOpt.getOrElse(file.getName)
+		headerValueByType[`X-Forwarded-For`](){ip =>
+			extractLog{ log =>
 
-		respondWithHeader(`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))){
-			if(file.exists)
-				getFromFile(file, contentType)
-			else {
-				val src = uploadService.getRemoteStorageSource(dobj)
-				val entity = HttpEntity.CloseDelimited(contentType, src)
-				complete(HttpResponse(entity = entity))
+				val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
+				val contentType = getContentType(fileNameOpt)
+				val file = uploadService.getFile(dobj)
+				val fileName = fileNameOpt.getOrElse(file.getName)
+
+				def logDownload(): Unit = restHeart.logDownload(dobj, ip.value).onFailure{
+					case err: Throwable => log.error(err, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
+				}
+
+				respondWithHeader(`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))){
+					if(file.exists){
+						logDownload()
+						getFromFile(file, contentType)
+					} else {
+						val src = uploadService.getRemoteStorageSource(dobj)
+						val entity = HttpEntity.CloseDelimited(contentType, src)
+						logDownload()
+						complete(HttpResponse(entity = entity))
+					}
+				}
 			}
-		}
+		} ~
+		complete((StatusCodes.BadRequest, "Missing 'X-Forwarded-For' header, bad reverse proxy configuration on the server"))
 	}
 }
 
