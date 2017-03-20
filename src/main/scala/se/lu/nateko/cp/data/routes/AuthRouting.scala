@@ -19,6 +19,10 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 
 	private[this] val authenticator = Authenticator(authConfig).get
 
+	def userOpt(inner: Option[UserId] => Route): Route =
+		user{uid => inner(Some(uid))} ~
+		inner(None)
+
 	def user(inner: UserId => Route): Route = cookie(authConfig.authCookieName){cookie =>
 		val tokenTry = for(
 			signedToken <- CookieToToken.recoverToken(cookie.value);

@@ -81,25 +81,34 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 	private def accessRoute(dobj: DataObject): Route = optionalFileName{pathFileNameOpt =>
 		headerValueByType[`X-Forwarded-For`](){ip =>
 			extractLog{ log =>
+				userOpt{uidOpt =>
 
-				val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
-				val contentType = getContentType(fileNameOpt)
-				val file = uploadService.getFile(dobj)
-				val fileName = fileNameOpt.getOrElse(file.getName)
+					val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
+					val contentType = getContentType(fileNameOpt)
+					val file = uploadService.getFile(dobj)
+					val fileName = fileNameOpt.getOrElse(file.getName)
 
-				def logDownload(): Unit = restHeart.logDownload(dobj, ip.value).onFailure{
-					case err: Throwable => log.error(err, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
-				}
+					def logDownload(): Unit = {
+						restHeart.logDownload(dobj, ip.value).onFailure{
+							case err: Throwable => log.error(err, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
+						}
+						for(uid <- uidOpt){
+							restHeart.saveDownload(dobj, uid).onFailure{
+								case err: Throwable => log.error(err, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")
+							}
+						}
+					}
 
-				respondWithHeader(`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))){
-					if(file.exists){
-						logDownload()
-						getFromFile(file, contentType)
-					} else {
-						val src = uploadService.getRemoteStorageSource(dobj)
-						val entity = HttpEntity.CloseDelimited(contentType, src)
-						logDownload()
-						complete(HttpResponse(entity = entity))
+					respondWithHeader(`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))){
+						if(file.exists){
+							logDownload()
+							getFromFile(file, contentType)
+						} else {
+							val src = uploadService.getRemoteStorageSource(dobj)
+							val entity = HttpEntity.CloseDelimited(contentType, src)
+							logDownload()
+							complete(HttpResponse(entity = entity))
+						}
 					}
 				}
 			}

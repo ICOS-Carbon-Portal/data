@@ -80,7 +80,27 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.POST, entity = entity))
 		) yield {
 			if(r.status == StatusCodes.Created) Future.successful(())
-			else Future.failed(new Exception(s"Failed loggin data object download to RestHeart: ${r.status.defaultMessage}"))
+			else Future.failed(new Exception(s"Failed logging data object download to RestHeart: ${r.status.defaultMessage}"))
+		}
+	}
+
+	def saveDownload(dobj: DataObject, uid: UserId): Future[Unit] = {
+		val updateItem = JsObject(
+			"$push" -> JsObject(
+				"dobjDownloads" -> JsObject(
+					"time" -> JsString(java.time.Instant.now().toString),
+					"fileName" -> dobj.fileName.map(JsString.apply).getOrElse(JsNull),
+					"hash" -> JsString(dobj.hash.base64Url)
+				)
+			)
+		)
+
+		for(
+			entity <- Marshal(updateItem).to[RequestEntity];
+			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity))
+		) yield {
+			if(r.status == StatusCodes.NoContent) Future.successful(())
+			else Future.failed(new Exception(s"Failed saving data object download to user profile: ${r.status.defaultMessage}"))
 		}
 	}
 
