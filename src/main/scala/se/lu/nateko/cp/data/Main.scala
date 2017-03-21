@@ -4,6 +4,8 @@ import scala.collection.JavaConversions
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
+import scala.util.Success
+import scala.util.Failure
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
@@ -72,8 +74,8 @@ object Main extends App {
 
 	restHeart.ensureDobjDownloadCollExists.flatMap{_ =>
 		http.bindAndHandle(route, config.interface, 9010)
-	}.onSuccess{
-		case binding =>
+	}.onComplete{
+		case Success(binding) =>
 			sys.addShutdownHook{
 				val exeCtxt = ExecutionContext.Implicits.global
 				val doneFuture = binding
@@ -82,6 +84,10 @@ object Main extends App {
 				Await.result(doneFuture, 3 seconds)
 			}
 			system.log.info(s"Started data: $binding")
+
+		case Failure(err) =>
+			system.log.error(err, "Could not start 'data' service")
+			system.terminate()
 	}
 
 }

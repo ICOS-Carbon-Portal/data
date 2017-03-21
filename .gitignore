@@ -6,7 +6,7 @@
 # Node.js specific
 node_modules/
 src/main/resources/netcdf.js
-src/main/resources/portal.js
+src/main/resources/wdcgg.js
 src/main/resources/stilt.js
 
 # sbt specific

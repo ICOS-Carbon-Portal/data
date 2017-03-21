@@ -15,12 +15,12 @@ import akka.http.scaladsl.model.ContentType
 
 object StaticRouting {
 
-	val projects = Set("netcdf", "portal", "stilt")
+	val projects = Set("netcdf", "wdcgg", "stilt")
 
 	private[this] val pages: PartialFunction[String, Html] = {
 		case "stilt" => views.html.StiltPage()
 		case "netcdf" => views.html.NetCDFPage()
-		case "portal" => views.html.PortalPage()
+		case "wdcgg" => views.html.WdcggPage()
 	}
 
 	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(

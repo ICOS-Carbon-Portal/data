@@ -11,7 +11,7 @@ var babel = require('gulp-babel');
 var preprocessify = require('preprocessify');
 var jasmine = require('gulp-jasmine');
 
-['netcdf', 'portal', 'stilt'].forEach(function(project){
+['netcdf', 'wdcgg', 'stilt'].forEach(function(project){
 
 	var projSrc = 'src/main/js/' + project + '/';
 	var jstarget = 'target/es5js/' + project + '/';
