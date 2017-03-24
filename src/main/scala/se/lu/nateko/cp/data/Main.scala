@@ -72,7 +72,7 @@ object Main extends App {
 		EtcUploadRouting()
 	}
 
-	restHeart.ensureDobjDownloadCollExists.flatMap{_ =>
+	restHeart.init.flatMap{_ =>
 		http.bindAndHandle(route, config.interface, 9010)
 	}.onComplete{
 		case Success(binding) =>

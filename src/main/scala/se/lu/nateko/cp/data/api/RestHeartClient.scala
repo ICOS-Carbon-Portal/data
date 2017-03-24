@@ -53,7 +53,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	def ensureDobjDownloadCollExists: Future[Unit] = {
 		http.singleRequest(HttpRequest(uri = dlCollUri)).flatMap{resp =>
 			if(resp.status == StatusCodes.NotFound){
-				val dlCollectionDescr = JsObject("desc" -> JsString("Download log for CP-hosted data objects"))
+				val dlCollectionDescr = JsObject("comment" -> JsString("Download log for CP-hosted data objects"))
 				for(
 					entity <- Marshal(dlCollectionDescr).to[RequestEntity];
 					r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
@@ -65,6 +65,18 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			else Future.failed(new Exception(s"Unexpected response when checking for dobj download log collection in RestHeart : ${resp.status.defaultMessage}"))
 		}
 	}
+
+	def defineDobjDownloadAggregations: Future[Unit] = {
+		for(
+			entity <- Marshal(config.dobjDownloadsAggregations).to[RequestEntity];
+			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
+		) yield {
+			if(r.status.isSuccess) Future.successful(())
+			else Future.failed(new Exception(s"Failed defining data object download aggregations in RestHeart: ${r.status.defaultMessage}"))
+		}
+	}
+
+	def init: Future[Unit] = ensureDobjDownloadCollExists.flatMap(_ => defineDobjDownloadAggregations)
 
 	def logDownload(dobj: DataObject, ip: String): Future[Unit] = {
 		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat

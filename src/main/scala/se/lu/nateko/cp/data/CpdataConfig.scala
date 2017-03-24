@@ -37,7 +37,8 @@ case class RestHeartConfig(
 	baseUri: String,
 	dbName: String,
 	usersCollection: String,
-	dobjDownloadsCollection: String
+	dobjDownloadsCollection: String,
+	dobjDownloadsAggregations: JsObject
 )
 
 case class CpdataConfig(
@@ -58,7 +59,7 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
 	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
-	implicit val restHeartConfigFormat = jsonFormat4(RestHeartConfig)
+	implicit val restHeartConfigFormat = jsonFormat5(RestHeartConfig)
 	implicit val cpdataConfigFormat = jsonFormat7(CpdataConfig)
 
 	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
