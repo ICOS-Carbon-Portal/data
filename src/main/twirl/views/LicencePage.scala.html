@@ -4,137 +4,202 @@
 @(uid: Option[UserId], dobjId: Option[Sha256Sum])
 
 @CpCommonPage("ICOS Data Licence"){
-	<style type="text/css">
-		.layout-container{
-			max-width: 1290px;
-			margin-left: auto;
-			margin-right: auto;
-		}
-		li{
-			list-style-type: none;
-		}
-		ul.links li{
-			display: inline;
-			padding: 0 100px;
-		}
-		ul.links li div{
-			display: inline-block;
-			vertical-align: top;
-		}
-		ul.even li div { margin-left: 200px; }
-		ul.links img{
-			width: 150px;
-		}
-		ul.links li div p { text-align: center; width: 150px;}
-		p.confirmation{
-			font-weight: bold;
-			padding-top: 15px;
-			margin-top: 30px;
-			border-top: 1px solid #eee;
-		}
-	</style>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://static.icos-cp.eu/data_licence/style.css">
 }{
-<div class="layout-container">
+<div class="cp_page_container">
 
-<div class="page-header">
-	<h1>ICOS Data Licence
-		@if(uid.isEmpty){<small>
-			<a href="https://cpauth.icos-cp.eu/" target="_blank">Log in</a>
-			to accept permanently
-		</small>}
-	</h1>
+<div class="cp_page_header">
+	<h1>ICOS Data Licence</h1>
 </div>
 
-<p>ICOS data are licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a>.</p>
+<div class="cp_body_content">
+    <div class="col_1">
+        <div class="inner">
+            <h4><img src="https://www.icos-cp.eu/sites/default/files/inline-images/creativecommons.png" style="margin-right:10px" />ICOS DATA is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
+        </div>
+    </div>
+</div>
 
-<p>This is a human-readable summary of (and not a substitute for) the <a href="https://creativecommons.org/licenses/by/4.0/legalcode">licence</a>.</p>
+<div class="cp_body_content">		
+	<div class="col_6_1">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse1"><img src="https://static.icos-cp.eu/data_licence/license-document.svg" /><h4 class="panel-title">ICOS Data Licence - Summary</h4></a>
+					</div>
+					<div id="collapse1" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>This is a human-readable summary of (and not a substitute for) the <a href="https://creativecommons.org/licenses/by/4.0/legalcode">licence</a>.</p>
 
-@if(dobjId.isDefined){
-	<p>Before you can download the ICOS data object you requested, we ask you to accept our data licence.
-	Please read carefully and then go to the bottom of the page to enter your choice.
-	If you register and accept the licence in your <a href="https://cpauth.icos-cp.eu/home/">user profile</a>,
-	this acceptance will not be asked of you any more.</p>
-}
+							<h5><b>You are free to:</b></h5>
 
-<h5><b>You are free to:</b></h5>
+							<ul>
+								<li><strong>Share</strong> — copy and redistribute the material in any medium or format</li>
+								<li><strong>Adapt</strong> — remix, transform, and build upon the material for any purpose, even commercially</li>
+							</ul>
 
-<ul>
-	<li><strong>Share</strong> — copy and redistribute the material in any medium or format</li>
-	<li><strong>Adapt</strong> — remix, transform, and build upon the material for any purpose, even commercially</li>
-</ul>
+							<h5><b>Under the following terms:</b></h5>
 
-<h5><b>Under the following terms:</b></h5>
+							<ul>
+								<li>
+									<strong>Attribution</strong>
+									— You must give appropriate credit, provide a link to the licence, and indicate if changes were made.
+									You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use
+								</li>
+								<li>
+									<strong>No additional restrictions</strong>
+									— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits
+								</li>
+							</ul>
 
-<ul>
-	<li>
-		<strong>Attribution</strong>
-		— You must give appropriate credit, provide a link to the licence, and indicate if changes were made.
-		You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use
-	</li>
-	<li>
-		<strong>No additional restrictions</strong>
-		— You may not apply legal terms or technological measures that legally restrict others from doing anything the licence permits
-	</li>
-</ul>
-
-<p>The licensor cannot revoke these freedoms as long as you follow the licence terms.</p>
-
-<ul class="links odd">
-	<li>
-		<div>
-			<a href="https://www.icos-cp.eu/fair_use">@inlineJpg("fair_use", "Fair Use")</a>
-			<p>About Fair use</p>
+							<p>The licensor cannot revoke these freedoms as long as you follow the licence terms.</p>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-	</li>
-	<li>
-		<div>
-			<a href="https://www.icos-cp.eu/icos_data_quality">@inlineJpg("icos_data_quality", "ICOS Data Quality")</a>
-			<p>About ICOS Data Quality</p>
-		</div>
-	</li>
-</ul>
+	</div>			
+			
+	<div class="col_6_2">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse2"><img src="https://static.icos-cp.eu/data_licence/hand-with-thum-up.svg" /><h4 class="panel-title">Fair Use - How and why</h4></a>
+					</div>
+					<div id="collapse2" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>By downloading this ICOS data product you agree to the licencing conditions that apply to this data (CC4BY). Under this license derived products and redistribution are allowed, but you are required to always inform your users of the original source of the data used, refer them to the license text and the original source at ICOS for possible updates or uploads.</p>
 
-<ul class="links even">
-	<li>
-		<div>
-			<a href="https://www.icos-cp.eu/how_to_cite">@inlineJpg("cite_how", "How to cite")</a>
-			<p>About how to cite</p>
-		</div>
-	</li>
-</ul>
+							<p>Use of the data requires proper reference and citation of the ICOS data, using the exact citation (including the provided doi or pid) as provided at the moment of upload from ICOS, if applicable.</p>
 
-<ul class="links odd last">
-	<li>
-		<div>
-			<a href="https://cpauth.icos-cp.eu/">@inlineJpg("register", "Register")</a>
-			<p>Register to get more support</p>
+							<p>We ask you to inform the data providers, traceable through the metadata connected to the provided DOI or PID, when the data is used for publication(s), and to offer them the possibility to comment and/or offer them co-authorship or acknowledgement in the publication when this is justified by the added value of the data for your results.</p>
+
+							<p><strong>The ICOS data products are provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, title and non-infringement. In no event shall the copyright holders or anyone distributing the ICOS data products be liable for any damages or other liability, whether in contract, tort or otherwise, arising from, out of or in connection with the ICOS data products.</strong></p>
+						</div>
+					</div>
+				</div>
+			</div>			
 		</div>
-	</li>
-	<li>
-		<div>
-			<a href="https://www.icos-cp.eu/pid_what">@inlineJpg("pid_what", "About PIDs")</a>
-			<p>What are Persistent Identifiers (PIDs) and how to use them</p>
+	</div>			
+			
+	<div class="col_6_3">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse3"><img src="https://static.icos-cp.eu/data_licence/medal.svg" /><h4 class="panel-title">About ICOS - Data Quality</h4></a>
+					</div>
+					<div id="collapse3" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>ICOS Research Infrastructure will provide high quality, long-term observations using standardized observations across the whole network. ICOS data meets, and sometimes exceeds or even sets the global standards for atmospheric, ecosystem flux and marine observations of greenhouse gases. &nbsp;All information on aobservations and the metadata is stored in persistent trusted long-term repositories for current and future use of the data. &nbsp;&nbsp;</p>  
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-	</li>
-</ul>
+	</div>
+		
+	<div class="col_6_4">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse4"><img src="https://static.icos-cp.eu/data_licence/icon.svg" /><h4 class="panel-title">How to cite</h4></a>
+					</div>
+					<div id="collapse4" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>For most of the ICOS data we will provide you with the citation to use through the landing page of the data object, from this page you will always be able to download the data object again. The PID or DOI of the data object will always resolve to its&nbsp;landing page when you submit this to the handle system (http://hdl.handle.net/yourpidhandle or https://dx.doi.org/yourdoihandle).</p>
+
+							<p>You may also use or link to pictures from the ICOS websites or use visualisations if you add&nbsp;the link to the original and the text "ICOS RI, licensed under CC4BY" followed by the&nbsp;link to the original.&nbsp;</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>			
+			
+	<div class="col_6_5">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse5"><img src="https://static.icos-cp.eu/data_licence/login.svg" /><h4 class="panel-title">REGISTER - How and why</h4></a>
+					</div>
+					<div id="collapse5" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>You can register at the Carbon Portal at <a href="https://cpauth.icos-cp.eu/">MyCP</a>. We will use the information only to improve our services to you. In the future, you will access and manage here the links to your stored searches and downloads and, in case of updates of the data that you downloaded, you'll be able to opt in here to receive notifications of updates.</p>
+
+							<p>As soon as you have accepted the ICOS data policy, your choice will be remembered, and, when signed in, you will not be bothered by ICOS license acceptance before every dataset download.</p>
+						</div>
+					</div>
+				</div>
+			</div>			
+		</div>
+	</div>			
+			
+	<div class="col_6_6">
+		<div class="inner">			
+			<div class="panel-group">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a data-toggle="collapse" href="#collapse6"><img src="https://static.icos-cp.eu/data_licence/stamp.svg" /><h4 class="panel-title">About PIDs</h4></a>
+					</div>
+					<div id="collapse6" class="panel-collapse collapse">
+						<div class="panel-body">
+							<p>Identification of data throughout its lifecycle is essential. This can be achieved by allocating unique and persistent digital identifiers (PIDs or DOIs) to data objects.</p>
+
+							<p>The PIDs allow to make unambiguous references to data during curation, cataloguing and support provenance tracking. They are also needed for correct citation (and hence attribution) of the data by end users.</p>
+
+							<p>In short, in today’s expanding “open data world”, PIDs are an essential tool for establishing clear links between all entities involved in or connected with any given research project</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
 
 @for(hash <- dobjId){
-	<p class="confirmation">I hereby confirm that I have taken notice of the information provided to inform me about the data
-	 and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
+	@if(uid.isEmpty){
+		<div class="cp_body_content">
+			<div class="col_1">
+				<div class="inner">
+				    <a href="https://cpauth.icos-cp.eu/" target="_blank"><h5>Log in to accept permanently</h5></a>
+				</div>
+			</div>
+		</div>
+	}
 
-	<ul class="links">
-		<li>
-			<div><a target="_blank" href=@{"/licence_accept/" + hash.base64Url}>@inlineJpg("yes", "Yes")</a></div>
-		</li>
-		<li>
-			<div><a href=@{"https://meta.icos-cp.eu/objects/" + hash.base64Url}>@inlineJpg("no", "No")</a></div>
-		</li>
-	</ul>
+	<div class="cp_body_content">
+		<div class="col_6_1">
+		    <div class="inner">
+		        <h5>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</h5>
+		    </div>
+		</div>
+
+		<div class="col_6_2">
+		    <div class="inner">
+				<div class="button_box" style="display:inline; margin-right:20px;"><a target="_blank" href=@{"/licence_accept/"}>YES</a></div>
+
+				<div class="button_box" style="display:inline;"><a href=@{"https://meta.icos-cp.eu/objects/"}>NO</a></div>
+		    </div>
+		</div>
+	</div>
 }
 
 </div>
-}
 
-@inlineJpg(name: String, alt: String) = {
-	<img alt=@alt src=@{"https://www.icos-cp.eu/sites/default/files/inline-images/" + name + ".jpg"} />
+<script>
+jQuery('.panel-heading a').hover(function() { 
+	jQuery(this).css({'color':'#000'});
+	jQuery(this).parent().css({'background-color':'#bd7931'});
+	}, function() {
+	jQuery(this).css({'color':'#337ab7'});
+	jQuery(this).parent().css({'background-color':'#f5f5f5'});
+});
+</script>
 }
