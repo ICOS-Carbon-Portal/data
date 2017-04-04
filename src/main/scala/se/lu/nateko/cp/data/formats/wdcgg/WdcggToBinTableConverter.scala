@@ -7,7 +7,7 @@ class WdcggToBinTableConverter(colFormats: ColumnFormats, header: WdcggParser.He
 	val timeCol = "TIME"
 	val dateCol = "DATE"
 
-} with TimeSeriesToBinTableConverter(colFormats, header.columnNames, header.offsetFromUtc, header.nRows){
+} with DateColTimeColTimeSeriesToBinTableConverter(colFormats, header.columnNames, header.offsetFromUtc, header.nRows){
 
 	private val floatNullRegex = "\\-9+\\.9*".r
 	private val timeRegex = "(\\d\\d):(\\d\\d)".r
@@ -15,7 +15,7 @@ class WdcggToBinTableConverter(colFormats: ColumnFormats, header: WdcggParser.He
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case IntValue => value == "-9999"
-		case FloatValue => floatNullRegex.findFirstIn(value).isDefined
+		case FloatValue | DoubleValue => floatNullRegex.findFirstIn(value).isDefined
 		case StringValue => value == null
 		case Iso8601Date => nullDates.contains(value.substring(5))
 		case Iso8601DateTime | EtcDate => false //do not occur in WDCGG

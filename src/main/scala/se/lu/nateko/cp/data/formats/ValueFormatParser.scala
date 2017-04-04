@@ -19,6 +19,8 @@ class ValueFormatParser(locale: Locale){
 			parser.parse(value, DataType.INT)
 		case FloatValue =>
 			parser.parse(value, DataType.FLOAT)
+		case DoubleValue =>
+			parser.parse(value, DataType.DOUBLE)
 		case StringValue =>
 			value
 		case Iso8601Date =>
@@ -39,6 +41,7 @@ class ValueFormatParser(locale: Locale){
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
 		case IntValue => DataType.INT
 		case FloatValue => DataType.FLOAT
+		case DoubleValue => DataType.DOUBLE
 		case StringValue => DataType.STRING
 		case Iso8601Date | EtcDate => DataType.INT
 		case Iso8601DateTime => DataType.DOUBLE
@@ -48,6 +51,7 @@ class ValueFormatParser(locale: Locale){
 	def getNullRepresentation(format: ValueFormat): AnyRef = format match {
 		case IntValue => Int.box(Int.MinValue)
 		case FloatValue => Float.box(Float.NaN)
+		case DoubleValue => Double.box(Double.NaN)
 		case StringValue => ""
 		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
 		case Iso8601DateTime => Double.box(Double.NaN)

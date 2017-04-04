@@ -14,10 +14,12 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 
 	val asciiWdcggTimeSer = getRelative("asciiWdcggTimeSer")
 	val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
+	val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
 
 	def getDataObject(hash: Sha256Sum) = new URI("https://meta.icos-cp.eu/objects/" + hash.id)
 
 	val float32 = getRelative("float32")
+	val float64 = getRelative("float64")
 	val int32 = getRelative("int32")
 	val string = getRelative("string")
 	val iso8601date = getRelative("iso8601date")

@@ -7,6 +7,7 @@ sealed trait ValueFormat
 
 case object IntValue extends ValueFormat
 case object FloatValue extends ValueFormat
+case object DoubleValue extends ValueFormat
 case object StringValue extends ValueFormat
 case object Iso8601Date extends ValueFormat
 case object EtcDate extends ValueFormat
@@ -20,6 +21,7 @@ object ValueFormat{
 	def fromUri(uri: java.net.URI): ValueFormat = uri match {
 		case `int32` => IntValue
 		case `float32` => FloatValue
+		case `float64` => DoubleValue
 		case `string` => StringValue
 		case `iso8601date` => Iso8601Date
 		case `etcDate` => EtcDate

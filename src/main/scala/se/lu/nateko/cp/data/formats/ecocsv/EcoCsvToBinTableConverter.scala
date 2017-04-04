@@ -8,7 +8,7 @@ class EcoCsvToBinTableConverter(colFormats: ColumnFormats, header: Header, nRows
 	val timeCol = "time"
 	val dateCol = "date"
 
-} with TimeSeriesToBinTableConverter(colFormats, header.columnNames, header.offsetFromUtc, nRows){
+} with DateColTimeColTimeSeriesToBinTableConverter(colFormats, header.columnNames, header.offsetFromUtc, nRows){
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN"

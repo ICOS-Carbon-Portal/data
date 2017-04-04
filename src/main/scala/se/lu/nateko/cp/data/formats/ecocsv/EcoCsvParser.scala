@@ -2,10 +2,11 @@ package se.lu.nateko.cp.data.formats.ecocsv
 
 import se.lu.nateko.cp.data.api.EcoCsvParsingException
 import se.lu.nateko.cp.data.formats.ParsingAccumulator
+import se.lu.nateko.cp.data.formats.TableRowHeader
 
 object EcoCsvParser {
 
-	case class Header(columnNames: Array[String], offsetFromUtc: Int)
+	case class Header(columnNames: Array[String], offsetFromUtc: Int) extends TableRowHeader
 
 	case class Accumulator(
 		header: Header,

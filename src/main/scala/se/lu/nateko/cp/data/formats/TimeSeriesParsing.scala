@@ -7,3 +7,19 @@ trait ParsingAccumulator {
 	def isOnData: Boolean
 
 }
+
+
+trait TableRowHeader{
+
+	def columnNames: Array[String]
+
+}
+
+
+trait TableRow[H <: TableRowHeader]{
+
+	def header: H
+
+	def cells: Array[String]
+
+}
