@@ -78,12 +78,13 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 				hashAndIrods
 
 			case 2 =>
-				if(dataObj.specification.format.uri == CpMetaVocab.asciiWdcggTimeSer){
+				val formatUri = dataObj.specification.format.uri
+				if(formatUri == CpMetaVocab.asciiWdcggTimeSer){
 					IndexedSeq.empty :+
 					new HashsumCheckingUploadTask(dataObj.hash) :+
 					new IngestionUploadTask(dataObj, file, meta.sparql)
 
-				} else if(dataObj.specification.format.uri == CpMetaVocab.asciiEtcTimeSer){
+				} else if(formatUri == CpMetaVocab.asciiEtcTimeSer || formatUri == CpMetaVocab.asciiOtcSocatTimeSer){
 					hashAndIrods :+
 					new IngestionUploadTask(dataObj, file, meta.sparql) :+
 					new FileSavingUploadTask(file)
