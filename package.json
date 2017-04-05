@@ -8,6 +8,7 @@
     "netcdf": "gulp netcdf",
     "wdcgg": "gulp wdcgg",
     "stilt": "gulp stilt",
+    "dygraph-light": "gulp dygraph-light",
     "gulp": "gulp"
   },
   "repository": {

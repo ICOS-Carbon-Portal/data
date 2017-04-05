@@ -10,6 +10,7 @@ var endpoint = 'https://meta.icos-cp.eu/sparql';
 export default {
 	sparqlEndpoint: endpoint,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
-	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/'
+	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
+	cpmetaObjectUri: 'http://meta.icos-cp.eu/resources/cpmeta/'
 }
 

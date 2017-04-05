@@ -15,7 +15,7 @@ import akka.http.scaladsl.model.ContentType
 
 object StaticRouting {
 
-	val projects = Set("netcdf", "wdcgg", "stilt")
+	val projects = Set("netcdf", "wdcgg", "stilt", "dygraph-light")
 
 	private[this] val pages: PartialFunction[String, Html] = {
 		case "stilt" => views.html.StiltPage()
