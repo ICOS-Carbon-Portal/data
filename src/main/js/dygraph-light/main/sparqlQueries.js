@@ -1,5 +1,3 @@
-
-
 export function objectSpecification(config, objId){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}> 
 select * where{

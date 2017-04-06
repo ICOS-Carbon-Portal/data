@@ -1,8 +1,8 @@
 import 'babel-polyfill';
 
 export default class Params {
-	constructor(){
-		this._params = this.getParams(window.location.search);
+	constructor(search){
+		this._params = this.getParams(search);
 	}
 
 	getParams(search){
@@ -12,7 +12,8 @@ export default class Params {
 			return {
 				objId: params.get('objId'),
 				x: params.get('x'),
-				y: params.get('y')
+				y: params.get('y'),
+				type: params.get('type') //optional
 			};
 		} else {
 			return undefined;
@@ -35,5 +36,7 @@ export default class Params {
 		return this.isValidParams ? this._params.y : undefined;
 	}
 
-
+	get type(){
+		return this.isValidParams ? this._params.type : undefined;
+	}
 }
