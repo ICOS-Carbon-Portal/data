@@ -90,12 +90,11 @@ export default class App {
 	drawGraph(binTable){
 		const valueFormatX = getColInfoParam(this.tableFormat, this.params.x, 'valueFormat');
 		const data = isTimestamp(valueFormatX)
-			? binTable.chartValues(0, 1).map(cv => [new Date(cv.x), cv.y])
+			? binTable.chartValues(0, 1).filter(cv => cv.x !== 0).map(cv => [new Date(cv.x), cv.y])
 			: binTable.chartValues(0, 1).map(cv => [cv.x, cv.y]);
 		const strokeWidth = this.params.type === 'scatter'
 			? 0
 			: 1;
-
 		this.graph.updateOptions( { file: data, strokeWidth } );
 	}
 }
