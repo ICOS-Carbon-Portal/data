@@ -48,6 +48,7 @@ export default class App {
 
 	initGraph(tableFormat){
 		const params = this.params;
+		console.log({tableFormat});
 
 		const xlabel = getColInfoParam(tableFormat, params.x, 'label');
 		const ylabel = getColInfoParam(tableFormat, params.y, 'label');
@@ -58,7 +59,7 @@ export default class App {
 			? (ms) => toISOString(ms)
 			: (val) => `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`;
 
-		const drawPoints = params.type === 'scatter';
+		const drawPoints = params.type !== 'line';
 
 		this.graph = new Dygraph(
 			'graph',
@@ -90,13 +91,28 @@ export default class App {
 	drawGraph(binTable){
 		const valueFormatX = getColInfoParam(this.tableFormat, this.params.x, 'valueFormat');
 		const data = isTimestamp(valueFormatX)
-			? binTable.chartValues(0, 1).map(cv => [new Date(cv.x), cv.y])
-			: binTable.chartValues(0, 1).map(cv => [cv.x, cv.y]);
-		const strokeWidth = this.params.type === 'scatter'
+			? binTable.chartValsTimeserie(0, 1).filter(cv => cv.x !== 0)
+			: binTable.chartValsArr(0, 1).filter(cv => cv.x !== 0);
+		const strokeWidth = this.params.type !== 'line'
 			? 0
 			: 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
+	}
+}
+
+function formatValues(xlabel, valueFormatX){
+	function regular(xlabel, val){
+
+
+		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`
+	}
+
+	switch(valueFormatX){
+		case '':
+			return toISOString;
+		default:
+
 	}
 }
 
