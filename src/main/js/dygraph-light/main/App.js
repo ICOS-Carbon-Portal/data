@@ -48,18 +48,16 @@ export default class App {
 
 	initGraph(tableFormat){
 		const params = this.params;
-		console.log({tableFormat});
 
 		const xlabel = getColInfoParam(tableFormat, params.x, 'label');
 		const ylabel = getColInfoParam(tableFormat, params.y, 'label');
 		const labels = [xlabel, ylabel];
 
 		const valueFormatX = getColInfoParam(tableFormat, params.x, 'valueFormat');
-		const valueFormatter = isTimestamp(valueFormatX)
-			? (ms) => toISOString(ms)
-			: (val) => `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`;
-
+		const formatters = getFormatters(xlabel, valueFormatX);
 		const drawPoints = params.type !== 'line';
+
+		console.log({tableFormat, formatters});
 
 		this.graph = new Dygraph(
 			'graph',
@@ -67,10 +65,10 @@ export default class App {
 			{
 				strokeWidth: 0,
 				drawPoints,
-				axisLabelWidth: 70,
 				legend: 'always',
 				labelsDiv: 'legend',
 				labelsSeparateLines: false,
+				ylabel,
 				labels,
 				connectSeparatedPoints: true,
 				labelsKMB: true,
@@ -78,10 +76,12 @@ export default class App {
 				axes: {
 					x: {
 						drawGrid: false,
-						valueFormatter: valueFormatter
+						axisLabelWidth: 80,
+						valueFormatter: formatters.valueFormatter,
+						axisLabelFormatter: formatters.axisLabelFormatter
 					},
 					y: {
-						axisLabelWidth: 65
+						axisLabelWidth: 100
 					}
 				}
 			}
@@ -98,6 +98,68 @@ export default class App {
 			: 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
+	}
+}
+
+const getFormatters = (xlabel, valueFormatX) => {
+	console.log(xlabel, valueFormatX);
+
+	const formatLbl = (val) => {
+		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`
+	};
+
+	const parseDatetime = (converter, format, func) => {
+		const pad = (number) => {
+			if (number < 10) {
+				return '0' + number;
+			}
+			return number;
+		};
+
+		return (timeUnit) => {
+			const fn = func ? func : (val) => val;
+			const date = new Date(converter * timeUnit);
+
+			switch(format){
+				case "datetime":
+					return date.getUTCFullYear() +
+						'-' + pad(date.getUTCMonth() + 1) +
+						'-' + pad(date.getUTCDate()) +
+						' ' + pad(date.getUTCHours()) +
+						':' + pad(date.getUTCMinutes()) +
+						':' + pad(date.getUTCSeconds());
+
+				case "date":
+					return fn(date.getUTCFullYear() +
+						'-' + pad(date.getUTCMonth() + 1) +
+						'-' + pad(date.getUTCDate()));
+
+				case "hms":
+					return fn(pad(date.getUTCHours()) +
+						':' + pad(date.getUTCMinutes()) +
+						':' + pad(date.getUTCSeconds()));
+
+				case "hm":
+					return fn(pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()));
+			}
+		}
+	};
+
+	switch (valueFormatX) {
+
+		case 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601dateTime':
+			return {valueFormatter: parseDatetime(1, "datetime"), axisLabelFormatter: parseDatetime(1, "date")};
+
+		case 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601date':
+			const days2ms = 24 * 3600 * 1000;
+			return {valueFormatter: parseDatetime(days2ms, "date", formatLbl), axisLabelFormatter: parseDatetime(days2ms, "date")};
+
+		case "http://meta.icos-cp.eu/ontologies/cpmeta/iso8601timeOfDay":
+			const sec2ms = 1000;
+			return {valueFormatter: parseDatetime(sec2ms, "hms", formatLbl), axisLabelFormatter: parseDatetime(sec2ms, "hm")};
+
+		default:
+			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val};
 	}
 }
 
