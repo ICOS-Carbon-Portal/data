@@ -110,10 +110,7 @@ const getFormatters = (xlabel, valueFormatX) => {
 
 	const parseDatetime = (converter, format, func) => {
 		const pad = (number) => {
-			if (number < 10) {
-				return '0' + number;
-			}
-			return number;
+			return number < 10 ? '0' + number : number;
 		};
 
 		return (timeUnit) => {
@@ -141,6 +138,9 @@ const getFormatters = (xlabel, valueFormatX) => {
 
 				case "hm":
 					return fn(pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()));
+
+				default:
+					return fn(timeUnit);
 			}
 		}
 	};
@@ -161,57 +161,24 @@ const getFormatters = (xlabel, valueFormatX) => {
 		default:
 			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val};
 	}
-}
+};
 
-function formatValues(xlabel, valueFormatX){
-	function regular(xlabel, val){
-
-
-		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`
-	}
-
-	switch(valueFormatX){
-		case '':
-			return toISOString;
-		default:
-
-	}
-}
-
-function isTimestamp(valueFormat){
+const isTimestamp = (valueFormat) => {
 	return valueFormat === 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601dateTime';
-}
+};
 
-function isColNameValid(tableFormat, colName){
+const isColNameValid = (tableFormat, colName) => {
 	return tableFormat.getColumnIndex(colName) >= 0;
-}
+};
 
-function getColInfoParam(tableFormat, colName, param){
+const getColInfoParam = (tableFormat, colName, param) => {
 	return tableFormat.columns(tableFormat.getColumnIndex(colName))[param];
-}
+};
 
-function toISOString(ms){
-	const date = new Date(ms);
-
-	function pad(number) {
-		if (number < 10) {
-			return '0' + number;
-		}
-		return number;
-	}
-
-	return date.getUTCFullYear() +
-		'-' + pad(date.getUTCMonth() + 1) +
-		'-' + pad(date.getUTCDate()) +
-		' ' + pad(date.getUTCHours()) +
-		':' + pad(date.getUTCMinutes()) +
-		':' + pad(date.getUTCSeconds());
-}
-
-function fail(message){
+const fail = (message) => {
 	return Promise.reject(new Error(message));
-}
+};
 
-function presentError(errMsg){
+const presentError = (errMsg) => {
 	document.getElementById('error').innerHTML = errMsg;
-}
+};
