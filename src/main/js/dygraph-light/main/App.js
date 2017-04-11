@@ -98,6 +98,7 @@ export default class App {
 			: 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
+		document.getElementById('loading').style.display = 'none';
 	}
 }
 
