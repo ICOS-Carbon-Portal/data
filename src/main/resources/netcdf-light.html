@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>NetCDF</title>
+	<script type="text/javascript" src="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" />
+	<style type="text/css">
+		html {margin:0; padding:0; width:100%; height:100%;}
+
+		/*Spinner from http://tobiasahlin.com/spinkit/*/
+		.spinner {
+			display: none;
+			position:absolute;
+			left:50%;
+			top:50%;
+			width: 70px;
+			text-align: center;
+		}
+
+		.spinner > div {
+			width: 18px;
+			height: 18px;
+			border-radius: 100%;
+			background-color: #e53274;
+			display: inline-block;
+			-webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+			animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+		}
+
+		.spinner .bounce1 {
+			background-color: #e53274;
+			-webkit-animation-delay: -0.32s;
+			animation-delay: -0.32s;
+		}
+
+		.spinner .bounce2 {
+			background-color: #0a97f3;
+			-webkit-animation-delay: -0.16s;
+			animation-delay: -0.16s;
+		}
+
+		.spinner > span {
+			padding-left: 6px;
+			font-family: "Trebuchet MS", Verdana, Geneva, Arial, Helvetica, sans-serif;
+			font-size: 18px;
+			float: left;
+			text-shadow: white 1px 1px 2px;
+		}
+
+		@-webkit-keyframes sk-bouncedelay {
+			0%, 80%, 100% { -webkit-transform: scale(0) }
+			40% { -webkit-transform: scale(1.0) }
+		}
+
+		@keyframes sk-bouncedelay {
+			0%, 80%, 100% {
+				-webkit-transform: scale(0);
+				transform: scale(0);
+			} 40% {
+				  -webkit-transform: scale(1.0);
+				  transform: scale(1.0);
+			  }
+		}
+	</style>
+</head>
+<body>
+	<div id="map"></div>
+	<div id="legend"></div>
+	<div id="error"></div>
+
+	<div id="loading" class="spinner">
+		<div class="bounce1"></div>
+		<div class="bounce2"></div>
+		<div class="bounce3"></div>
+		<span>Carbon</span>
+		<span>Portal</span>
+	</div>
+
+	<script type="text/javascript" src="./netcdf-light.js"></script>
+</body>
+</html>
