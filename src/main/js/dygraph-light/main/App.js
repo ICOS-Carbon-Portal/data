@@ -51,13 +51,10 @@ export default class App {
 
 		const xlabel = getColInfoParam(tableFormat, params.x, 'label');
 		const ylabel = getColInfoParam(tableFormat, params.y, 'label');
-		const labels = [xlabel, ylabel];
 
 		const valueFormatX = getColInfoParam(tableFormat, params.x, 'valueFormat');
 		const formatters = getFormatters(xlabel, valueFormatX);
 		const drawPoints = params.type !== 'line';
-
-		console.log({tableFormat, formatters});
 
 		this.graph = new Dygraph(
 			'graph',
@@ -68,8 +65,10 @@ export default class App {
 				legend: 'always',
 				labelsDiv: 'legend',
 				labelsSeparateLines: false,
+				xlabel,
 				ylabel,
-				labels,
+				labels: [xlabel, ylabel],
+				xRangePad: 5,
 				connectSeparatedPoints: true,
 				labelsKMB: true,
 				digitsAfterDecimal: 4,
@@ -78,7 +77,8 @@ export default class App {
 						drawGrid: false,
 						axisLabelWidth: 80,
 						valueFormatter: formatters.valueFormatter,
-						axisLabelFormatter: formatters.axisLabelFormatter
+						axisLabelFormatter: formatters.axisLabelFormatter,
+						pixelsPerLabel: 100
 					},
 					y: {
 						axisLabelWidth: 100
@@ -103,8 +103,6 @@ export default class App {
 }
 
 const getFormatters = (xlabel, valueFormatX) => {
-	console.log(xlabel, valueFormatX);
-
 	const formatLbl = (val) => {
 		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`
 	};
