@@ -6,7 +6,26 @@
 	<script type="text/javascript" src="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
 	<link rel="stylesheet" href="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" />
 	<style type="text/css">
-		html {margin:0; padding:0; width:100%; height:100%;}
+		body {
+			padding: 0;
+			margin: 0;
+		}
+		html, body {
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+		}
+		#map {
+			position: relative;
+			width: -webkit-calc(100% - 10px);
+			width: -moz-calc(100% - 10px);
+			width: calc(100% - 10px);
+			height: -webkit-calc(100% - 10px);
+			height: -moz-calc(100% - 10px);
+			height: calc(100% - 10px);
+			margin-left: 5px;
+			margin-top: 5px;
+		}
 
 		/*Spinner from http://tobiasahlin.com/spinkit/*/
 		.spinner {
