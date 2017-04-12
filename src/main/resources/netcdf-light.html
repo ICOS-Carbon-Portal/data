@@ -25,6 +25,7 @@
 			height: calc(100% - 10px);
 			margin-left: 5px;
 			margin-top: 5px;
+			border: 1px solid darkgrey;
 		}
 
 		/*Spinner from http://tobiasahlin.com/spinkit/*/
@@ -36,7 +37,6 @@
 			width: 70px;
 			text-align: center;
 		}
-
 		.spinner > div {
 			width: 18px;
 			height: 18px;
@@ -46,32 +46,30 @@
 			-webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
 			animation: sk-bouncedelay 1.4s infinite ease-in-out both;
 		}
-
 		.spinner .bounce1 {
-			background-color: #e53274;
 			-webkit-animation-delay: -0.32s;
 			animation-delay: -0.32s;
 		}
-
 		.spinner .bounce2 {
 			background-color: #0a97f3;
 			-webkit-animation-delay: -0.16s;
 			animation-delay: -0.16s;
 		}
-
 		.spinner > span {
 			padding-left: 6px;
 			font-family: "Trebuchet MS", Verdana, Geneva, Arial, Helvetica, sans-serif;
 			font-size: 18px;
 			float: left;
-			text-shadow: white 1px 1px 2px;
+			text-shadow:
+				-1px -1px 0 #fff,
+				1px -1px 0 #fff,
+				-1px 1px 0 #fff,
+				1px 1px 0 #fff;
 		}
-
 		@-webkit-keyframes sk-bouncedelay {
 			0%, 80%, 100% { -webkit-transform: scale(0) }
 			40% { -webkit-transform: scale(1.0) }
 		}
-
 		@keyframes sk-bouncedelay {
 			0%, 80%, 100% {
 				-webkit-transform: scale(0);
