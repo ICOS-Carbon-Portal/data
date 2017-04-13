@@ -1,48 +1,57 @@
 export default class Params {
-	constructor(search, required){
-		this._params = this.parseSearch(search);
-		this.isValidParams = this.validateSearch(required);
+	constructor(search, required) {
+		this._search = window.decodeURIComponent(search);
+		this._required = required;
+		this._params = this.parseSearch();
 	}
 
-	parseSearch(search) {
-		return window.URLSearchParams
-			? new URLSearchParams(search)
-			: search;
-	}
-
-	validateSearch(required){
+	parseSearch() {
 		if (window.URLSearchParams) {
-			return required.reduce((acc, curr) => acc * this._params.has(curr), true);
+			return new URLSearchParams(this._search);
 		} else {
-			return required.reduce((acc, curr) => {
-				const regex = new RegExp('[\\?&]' + curr + '=([^&#]*)');
-				const results = regex.exec(this._params);
-				return acc * (results !== null);
-			}, true);
+			const searchStr = this._search.replace(/^\?/, '');
+			const keyValpairs = searchStr.split('&');
+
+			return keyValpairs.reduce((acc, curr) => {
+				const p = curr.split('=');
+				acc[p[0]] = p[1];
+				return acc;
+			}, {});
 		}
+	}
+
+	get search(){
+		return this._search;
+	}
+
+	get required(){
+		return this._required;
+	}
+
+	get isValidParams(){
+		if (!this._required){
+			return true;
+		} else if (window.URLSearchParams) {
+			return this._required.reduce((acc, curr) => acc * this._params.has(curr), true);
+		} else {
+			return this._required.reduce((acc, curr) => acc * this._params.hasOwnProperty(curr), true);
+		}
+	}
+
+	has(param){
+		return window.URLSearchParams
+			? this._params.has(param)
+			: this._params.hasOwnProperty(param);
 	}
 
 	get(param){
-		// A non existing search param -> return null
-		// An existing search param that has value null or nothing -> return undefined
-		// An existing search param that has a value other than null -> return the value
 		if (window.URLSearchParams) {
-			return this._params.has(param)
-				? this._params.get(param) && this._params.get(param) !== 'null' ? this._params.get(param) : undefined
-				: null;
+			return this._params.get(param);
 		} else {
-			return this.getUrlParameter(param);
+			// Give null response for non existing params as URLSearchParams does
+			return this._params.hasOwnProperty(param)
+				? this._params[param]
+				: null;
 		}
-	}
-
-	getUrlParameter(param) {
-		param = param.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-		const regex = new RegExp('[\\?&]' + param + '=([^&#]*)');
-		const results = regex.exec(this._params);
-		return results === null
-			? null
-			: results[1] === '' || results[1] === 'null'
-				? undefined
-				: decodeURIComponent(results[1].replace(/\+/g, ' '));
 	}
 }
