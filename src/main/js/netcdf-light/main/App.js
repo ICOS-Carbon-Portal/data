@@ -1,4 +1,7 @@
+import 'babel-polyfill';
 import * as LCommon from 'icos-cp-leaflet-common';
+import {getRaster, getCountriesGeoJson} from './backend';
+import ColorMaker from './models/ColorMaker';
 import {TileMappingHelper, getTileCoordBbox, Bbox, BboxMapping, renderRaster} from 'icos-cp-spatial';
 
 export default class App {
@@ -7,22 +10,24 @@ export default class App {
 		this.params = params;
 
 		this.app = {
-			map: null,
 			layerControl: null,
+			map: null,
 			mapMouseOver: null,
 			rasterCanvas: document.createElement('canvas'),
 			countries: new L.GeoJSON(),
-			coordValCtrl: null
+			coordValCtrl: null,
+			requestsDone: {
+				countries: false,
+				binTable: false,
+				allDone: () => this.app.requestsDone.countries && this.app.requestsDone.binTable
+			}
 		};
 
 		if (params.isValidParams) {
-			// const NetCdfLayer = getNetCdfLayer(this.app);
-			// this.app.canvasTiles = new NetCdfLayer({keepBuffer: 0, noWrap: true});
-
 			this.main();
 		} else {
 			let errMsg = '<b>The request you made is not valid!</b>';
-			errMsg += '<p>It must contain <i>service</i>, <i>varName</i>, <i>date</i> and <i>elevation</i></p>';
+			errMsg += '<p>It must contain these parameters: ' + this.params.required.join(', ') + '</p>';
 
 			presentError(errMsg);
 		}
@@ -30,9 +35,44 @@ export default class App {
 
 	main(){
 		document.getElementById('loading').style.display = 'inline';
-		console.log({varName: this.params.get('varName'), elevation: this.params.get('elevation'), nonExisting: this.params.get('ddd')});
+		// console.log({isValidParams: this.params.isValidParams, varName: this.params.get('varName'), elevation: this.params.get('elevation'), nonExisting: this.params.get('ddd')});
 
-		const map = this.app.map = L.map(
+		this.initMap();
+
+		getCountriesGeoJson().then(
+			this.addCountries.bind(this),
+			err => {
+				console.log(err);
+				presentError(err.message);
+			}
+		);
+
+		getRaster(this.params.search).then(
+			this.addRaster.bind(this),
+			err => {
+				console.log(err);
+				presentError(err.message);
+			}
+		);
+
+		// getCountriesGeoJson()
+		// 	.then(countriesTopo => this.initMap(countriesTopo))
+		//
+		// 	.then(() => {return getRaster(this.params.search)})
+		//
+		// 	.then(
+		// 		this.addRaster.bind(this),
+		// 		err => {
+		// 			console.log(err);
+		// 			presentError(err.message);
+		// 		}
+		// 	);
+	}
+
+	initMap(){
+		const app = this.app;
+
+		const map = app.map = L.map(
 			'map',
 			{
 				attributionControl: false,
@@ -45,9 +85,65 @@ export default class App {
 			}
 		);
 
-		// map.addLayer(this.app.canvasTiles);
-		// this.app.canvasTiles.setZIndex(99);
+		const NetCdfLayer = getNetCdfLayer(app);
+		app.canvasTiles = new NetCdfLayer({keepBuffer: 0, noWrap: true});
+
 		map.getContainer().style.background = 'white';
+		map.addLayer(app.canvasTiles);
+		app.canvasTiles.setZIndex(99);
+	}
+
+	addCountries(countriesTopo){
+		const app = this.app;
+
+		const countryBorders = new L.GeoJSON();
+		countryBorders.addData(countriesTopo);
+		countryBorders.setStyle({fillOpacity: 0, color: "rgb(0,0,0)", weight: 1, opacity: 1});
+		app.map.addLayer(countryBorders);
+
+		const countries = {
+			"Country borders": countryBorders
+		};
+
+		app.layerControl = L.control.layers(null, countries).addTo(app.map);
+
+		app.requestsDone.countries = true;
+		if (app.requestsDone.allDone()) document.getElementById('loading').style.display = 'none';
+	}
+
+	addRaster(binTable){
+		console.log({binTable});
+		const app = this.app;
+
+		const cm = new ColorMaker(binTable.stats.min, binTable.stats.max, this.params.get('gamma'));
+		const colorMaker = cm.makeColor.bind(cm);
+
+		app.rasterCanvas.width = binTable.width;
+		app.rasterCanvas.height = binTable.height;
+		renderRaster(app.rasterCanvas, binTable, colorMaker);
+
+		const latLonToXY = getLatLonToXYMapping(binTable);
+		const worldBox = new Bbox(-180, -90, 180, 90);
+		app.tileHelper = new TileMappingHelper(latLonToXY, worldBox);
+
+		app.canvasTiles.refreshTiles();
+
+		app.coordValCtrl = new LCommon.CoordValueViewer(binTable, app.tileHelper, {decimals: 3});
+		app.map.addControl(app.coordValCtrl);
+
+		if (this.params.get('fit') === 'true') this.fitBinTable(binTable);
+
+		app.requestsDone.binTable = true;
+		if (app.requestsDone.allDone()) document.getElementById('loading').style.display = 'none';
+	}
+
+	fitBinTable(raster){
+		const latLngBounds = L.latLngBounds(
+			L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
+			L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
+		);
+
+		this.app.map.fitBounds(latLngBounds);
 	}
 }
 
@@ -79,16 +175,23 @@ const drawTile = (rasterCanvas, tileCanvas, tilePoint, tileHelper) => {
 	});
 };
 
+const getLatLonToXYMapping = (raster) => {
+	const dsPixels = new Bbox(0, 0, raster.width, raster.height);
+	const rbb = raster.boundingBox;
+	const dsCoords = new Bbox(rbb.lonMin, rbb.latMin, rbb.lonMax, rbb.latMax).expandToRaster(raster);
+	return new BboxMapping(dsCoords, dsPixels);
+}
+
 const getNetCdfLayer = (rasterCanvasAndTileHelper) => {
 
-	const drawTileCanvas = (tileCanvas, tilePoint) => {
+	function drawTileCanvas(tileCanvas, tilePoint){
 		const {rasterCanvas, tileHelper} = rasterCanvasAndTileHelper;
 		drawTile(rasterCanvas, tileCanvas, tilePoint, tileHelper);
 	}
 
 	return L.GridLayer.extend({
 
-		refreshTiles: () => {
+		refreshTiles: function(){
 			const tiles = this._tiles;
 
 			Object.keys(tiles).forEach(key => {
@@ -98,7 +201,7 @@ const getNetCdfLayer = (rasterCanvasAndTileHelper) => {
 			});
 		},
 
-		createTile: (tilePoint) => {
+		createTile: function(tilePoint){
 			const tileCanvas = L.DomUtil.create('canvas', 'leaflet-tile');
 
 			const size = this.getTileSize();
@@ -113,5 +216,6 @@ const getNetCdfLayer = (rasterCanvasAndTileHelper) => {
 };
 
 const presentError = (errMsg) => {
+	document.getElementById('map').style.display = 'none';
 	document.getElementById('error').innerHTML = errMsg;
 };

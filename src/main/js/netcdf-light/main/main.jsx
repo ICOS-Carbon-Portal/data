@@ -4,5 +4,5 @@ import Params from './models/Params';
 
 new App(
 	config,
-	new Params(window.location.search, ['service', 'varName', 'date', 'elevation'])
+	new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma'])
 );

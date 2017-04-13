@@ -17,9 +17,9 @@
 		}
 		#map {
 			position: relative;
-			width: -webkit-calc(100% - 10px);
-			width: -moz-calc(100% - 10px);
-			width: calc(100% - 10px);
+			width: -webkit-calc(100% - 150px);
+			width: -moz-calc(100% - 150px);
+			width: calc(100% - 150px);
 			height: -webkit-calc(100% - 10px);
 			height: -moz-calc(100% - 10px);
 			height: calc(100% - 10px);
@@ -27,6 +27,10 @@
 			margin-top: 5px;
 			border: 1px solid darkgrey;
 		}
+		.leaflet-container, .leaflet-clickable, .leaflet-interactive {
+			cursor: crosshair !important;
+		}
+		#error {margin: 10px;}
 
 		/*Spinner from http://tobiasahlin.com/spinkit/*/
 		.spinner {
@@ -36,6 +40,7 @@
 			top:50%;
 			width: 70px;
 			text-align: center;
+			z-index: 999;
 		}
 		.spinner > div {
 			width: 18px;
