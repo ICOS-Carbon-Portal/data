@@ -7,12 +7,12 @@ import akka.stream.SinkShape
 
 object SinkCombiner {
 
-	private val EagerCancel = true
+	private val EagerCancel = false
 
 	/**
 	 * Combines multiple sinks with compatible inputs and materialization values into a single sink by broadcasting.
 	 * The resulting sink's materialization value is a sequence of the underlying sinks' materialization values.
-	 * The resulting sink cancels eagerly (i.e. if any of the underlying sinks cancel).
+	 * The resulting sink does not cancel if only some (not all) of the underlying sinks cancel.
 	 */
 	def combineMat[In, Mat](sinks: Seq[Sink[In, Mat]]): Sink[In, Seq[Mat]] = sinks match {
 

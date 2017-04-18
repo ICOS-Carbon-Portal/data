@@ -114,8 +114,11 @@ object UploadService{
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
 
 	def filePathSuffix(dataObject: DataObject): String = {
-		val formatId = dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
-		formatId + "/" + dataObject.hash.id
+		fileFolder(dataObject) + "/" + dataObject.hash.id
+	}
+
+	def fileFolder(dataObject: DataObject): String = {
+		dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
 	}
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {

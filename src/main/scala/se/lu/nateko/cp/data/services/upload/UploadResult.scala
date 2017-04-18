@@ -58,6 +58,9 @@ case class HashsumCheckFailure(expected: Sha256Sum, actual: Sha256Sum) extends U
 
 case class IrodsSuccess(hash: Sha256Sum) extends UploadTaskSuccess
 case class IrodsFailure(error: Throwable) extends UploadTaskFailure
+case class IrodsHashsumFailure(failure: HashsumCheckFailure) extends UploadTaskFailure{
+	val error = new CpDataException(s"IRODS upload hashsum check error: expected ${failure.expected.id}, got ${failure.actual.id}")
+}
 
 case class FileWriteSuccess(bytesWritten: Long) extends UploadTaskSuccess
 case class FileWriteFailure(error: Throwable) extends UploadTaskFailure

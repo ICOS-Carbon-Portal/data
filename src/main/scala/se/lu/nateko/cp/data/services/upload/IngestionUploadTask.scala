@@ -78,7 +78,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.viaMat(toBinTableConverter)(KeepFuture.right)
-			.to(BinTableSink(file))
+			.to(BinTableSink(file, overwrite = true))
 			.mapMaterializedValue(
 				_.map(IngestionSuccess(_)).recover{
 					case exc: Throwable => IngestionFailure(exc)
@@ -87,15 +87,14 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 	}
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = {
-		ownResult match {
-			case IngestionFailure(fexc: FileAlreadyExistsException) =>
-				Future.successful(ownResult)
-			case _ =>
-				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-					if(file.exists) file.delete()
-					Done
-				})
+		val relevantOtherErrors = otherTaskResults.collect{
+			case failure: HashsumCheckFailure => failure
 		}
+
+		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
+			if(file.exists) file.delete()
+			Done
+		})
 	}
 
 	def getColumnFormats(dataObjHash: Sha256Sum): Future[Map[String, ValueFormat]] = {

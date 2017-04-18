@@ -25,6 +25,17 @@ trait PostUploadTask{
 
 object UploadTask{
 
+	def revertOnOwnFailure(
+		ownResult: UploadTaskResult, cleanup: () => Future[Done]
+	)
+	(implicit ctxt: ExecutionContext): Future[UploadTaskResult] = ownResult match {
+
+		case _: UploadTaskFailure => cleanup().map(_ => ownResult)
+
+		case _ =>
+			Future.successful(ownResult)
+	}
+
 	def revertOnAnyFailure(
 		ownResult: UploadTaskResult,
 		otherTaskResults: Seq[UploadTaskResult],

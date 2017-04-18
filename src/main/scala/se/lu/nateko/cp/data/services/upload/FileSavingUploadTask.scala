@@ -20,18 +20,22 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		if(file.exists)
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(FileExists))
-		else FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioResultToTaskResult))
+		else {
+			val folder = file.getParentFile
+			if(folder != null && !folder.exists && folder.isDirectory()) folder.mkdir()
+			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioResultToTaskResult))
+		}
 	}
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] = {
-		ownResult match {
-			case FileExists => Future.successful(FileExists)
-			case _ =>
-				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-					if(file.exists) file.delete()
-					Done
-				})
+		val relevantOtherErrors = otherTaskResults.collect{
+			case failure: HashsumCheckFailure => failure
 		}
+
+		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
+			if(file.exists) file.delete()
+			Done
+		})
 	}
 
 	private def ioResultToTaskResult(ioRes: IOResult): UploadTaskResult = ioRes.status match{

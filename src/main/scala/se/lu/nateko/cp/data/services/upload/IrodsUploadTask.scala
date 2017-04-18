@@ -13,33 +13,32 @@ class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt
 
 	private[this] val filePath: String = UploadService.filePathSuffix(dataObject)
 
-	def sink: Sink[ByteString, Future[UploadTaskResult]] = client.getNewFileSink(filePath)
-		.mapMaterializedValue(
-			_.map(IrodsSuccess(_)).recover{
+	client.ensureFolderExists(UploadService.fileFolder(dataObject))
+
+	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
+		val optimistic = if(client.fileExists(filePath)) {
+
+			client.getNewFileSink(filePath).mapMaterializedValue(_.map(IrodsSuccess(_)))
+
+		} else Sink.cancelled.mapMaterializedValue(
+			_ => Future{
+				IrodsSuccess(client.getChecksum(filePath))
+			}
+		)
+		optimistic.mapMaterializedValue(
+			_.map{success =>
+				if(success.hash == dataObject.hash) success
+				else IrodsHashsumFailure(HashsumCheckFailure(dataObject.hash, success.hash))
+			}.recover{
 				case err => IrodsFailure(err)
 			}
 		)
+	}
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] =
-		(ownResult match{
-			case IrodsSuccess(_) =>
-				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => Future{
-					client.deleteFile(filePath)
-					Done
-				})
-			case _ => Future.successful(ownResult)
-		})
-		.map(result => {
-			val hashOpt = otherTaskResults.collectFirst{
-				case HashsumCheckSuccess(hash) => hash
-			}
-
-			(result, hashOpt) match{
-				case (IrodsSuccess(actualHash), Some(hash)) if(hash != actualHash) =>
-					client.deleteFile(filePath)
-					HashsumCheckFailure(hash, actualHash)
-				case _ => result
-			}
+		UploadTask.revertOnOwnFailure(ownResult, () => Future{
+			client.deleteFile(filePath)
+			Done
 		})
 
 }
