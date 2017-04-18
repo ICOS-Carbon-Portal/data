@@ -4,10 +4,13 @@ import {getRaster, getCountriesGeoJson} from './backend';
 import ColorMaker from './models/ColorMaker';
 import {TileMappingHelper, getTileCoordBbox, Bbox, BboxMapping, renderRaster} from 'icos-cp-spatial';
 
+const spinnerDelay = 400;
+
 export default class App {
 	constructor(config, params){
 		this.config = config;
 		this.params = params;
+		this.timer = undefined;
 
 		this.app = {
 			layerControl: null,
@@ -34,7 +37,7 @@ export default class App {
 	}
 
 	main(){
-		document.getElementById('loading').style.display = 'inline';
+		this.showSpinner(true);
 		// console.log({isValidParams: this.params.isValidParams, varName: this.params.get('varName'), elevation: this.params.get('elevation'), nonExisting: this.params.get('ddd')});
 
 		this.initMap();
@@ -54,19 +57,6 @@ export default class App {
 				presentError(err.message);
 			}
 		);
-
-		// getCountriesGeoJson()
-		// 	.then(countriesTopo => this.initMap(countriesTopo))
-		//
-		// 	.then(() => {return getRaster(this.params.search)})
-		//
-		// 	.then(
-		// 		this.addRaster.bind(this),
-		// 		err => {
-		// 			console.log(err);
-		// 			presentError(err.message);
-		// 		}
-		// 	);
 	}
 
 	initMap(){
@@ -108,7 +98,7 @@ export default class App {
 		app.layerControl = L.control.layers(null, countries).addTo(app.map);
 
 		app.requestsDone.countries = true;
-		if (app.requestsDone.allDone()) document.getElementById('loading').style.display = 'none';
+		if (app.requestsDone.allDone()) this.showSpinner(false);
 	}
 
 	addRaster(binTable){
@@ -134,7 +124,7 @@ export default class App {
 		if (this.params.get('fit') === 'true') this.fitBinTable(binTable);
 
 		app.requestsDone.binTable = true;
-		if (app.requestsDone.allDone()) document.getElementById('loading').style.display = 'none';
+		if (app.requestsDone.allDone()) this.showSpinner(false);
 	}
 
 	fitBinTable(raster){
@@ -144,6 +134,15 @@ export default class App {
 		);
 
 		this.app.map.fitBounds(latLngBounds);
+	}
+
+	showSpinner(show){
+		if (show) {
+			this.timer = setTimeout(() => document.getElementById('loading').style.display = 'inline', spinnerDelay);
+		} else {
+			clearTimeout(this.timer);
+			document.getElementById('loading').style.display = 'none';
+		}
 	}
 }
 
