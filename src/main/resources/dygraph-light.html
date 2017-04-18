@@ -15,13 +15,18 @@
 
 		/*Spinner from http://tobiasahlin.com/spinkit/*/
 		.spinner {
+			display: none;
 			position:absolute;
-			left:50%;
-			top:50%;
+			left:-webkit-calc(50% - 35px);
+			left:-moz-calc(50% - 35px);
+			left:calc(50% - 35px);
+			top:-webkit-calc(50% - 31px);
+			top:-moz-calc(50% - 31px);
+			top:calc(50% - 31px);
 			width: 70px;
 			text-align: center;
+			z-index: 999;
 		}
-
 		.spinner > div {
 			width: 18px;
 			height: 18px;
@@ -31,32 +36,30 @@
 			-webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
 			animation: sk-bouncedelay 1.4s infinite ease-in-out both;
 		}
-
 		.spinner .bounce1 {
-			background-color: #e53274;
 			-webkit-animation-delay: -0.32s;
 			animation-delay: -0.32s;
 		}
-
 		.spinner .bounce2 {
 			background-color: #0a97f3;
 			-webkit-animation-delay: -0.16s;
 			animation-delay: -0.16s;
 		}
-
 		.spinner > span {
 			padding-left: 6px;
 			font-family: "Trebuchet MS", Verdana, Geneva, Arial, Helvetica, sans-serif;
 			font-size: 18px;
 			float: left;
-			text-shadow: white 1px 1px 2px;
+			text-shadow:
+					-1px -1px 0 #fff,
+					1px -1px 0 #fff,
+					-1px 1px 0 #fff,
+					1px 1px 0 #fff;
 		}
-
 		@-webkit-keyframes sk-bouncedelay {
 			0%, 80%, 100% { -webkit-transform: scale(0) }
 			40% { -webkit-transform: scale(1.0) }
 		}
-
 		@keyframes sk-bouncedelay {
 			0%, 80%, 100% {
 				-webkit-transform: scale(0);
@@ -77,8 +80,8 @@
 		<div class="bounce1"></div>
 		<div class="bounce2"></div>
 		<div class="bounce3"></div>
-		<span class="txt">Carbon</span>
-		<span class="txt">Portal</span>
+		<span>Carbon</span>
+		<span>Portal</span>
 	</div>
 
 	<script type="text/javascript" src="./dygraph-light.js"></script>

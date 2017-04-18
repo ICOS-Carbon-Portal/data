@@ -1,5 +1,7 @@
 import {getTableFormatNrows, getBinTable} from './backend';
 
+const spinnerDelay = 400;
+
 export default class App {
 	constructor(config, params){
 		this.config = config;
@@ -20,13 +22,13 @@ export default class App {
 	main(){
 		const params = this.params;
 
-		getTableFormatNrows(this.config, params.objId)
+		getTableFormatNrows(this.config, params.get('objId'))
 			.then(
 				({tableFormat, nRows}) => {
-					if(!isColNameValid(tableFormat, params.x))
-						return fail(`Parameter x (${params.x}) does not exist in data`)
-					else if(!isColNameValid(tableFormat, params.y))
-						return fail(`Parameter y (${params.y}) does not exist in data`)
+					if(!isColNameValid(tableFormat, params.get('x')))
+						return fail(`Parameter x (${params.get('x')}) does not exist in data`)
+					else if(!isColNameValid(tableFormat, params.get('y')))
+						return fail(`Parameter y (${params.get('y')}) does not exist in data`)
 					else {
 						this.initGraph(tableFormat);
 						this.tableFormat = tableFormat;
@@ -35,11 +37,12 @@ export default class App {
 				})
 			.then(
 				({tableFormat, nRows}) => {
-					return getBinTable(params.x, params.y, params.objId, tableFormat, nRows);
+					return getBinTable(params.get('x'), params.get('y'), params.get('objId'), tableFormat, nRows);
 				})
 			.then(
 				this.drawGraph.bind(this),
 				err => {
+					this.showSpinner(false);
 					console.log(err);
 					presentError(err.message);
 				}
@@ -47,14 +50,15 @@ export default class App {
 	}
 
 	initGraph(tableFormat){
+		this.showSpinner(true);
 		const params = this.params;
 
-		const xlabel = getColInfoParam(tableFormat, params.x, 'label');
-		const ylabel = getColInfoParam(tableFormat, params.y, 'label');
+		const xlabel = getColInfoParam(tableFormat, params.get('x'), 'label');
+		const ylabel = getColInfoParam(tableFormat, params.get('y'), 'label');
 
-		const valueFormatX = getColInfoParam(tableFormat, params.x, 'valueFormat');
+		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
 		const formatters = getFormatters(xlabel, valueFormatX);
-		const drawPoints = params.type !== 'line';
+		const drawPoints = params.get('type') !== 'line';
 
 		this.graph = new Dygraph(
 			'graph',
@@ -89,16 +93,25 @@ export default class App {
 	}
 
 	drawGraph(binTable){
-		const valueFormatX = getColInfoParam(this.tableFormat, this.params.x, 'valueFormat');
+		const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
 		const data = isTimestamp(valueFormatX)
 			? binTable.chartValsTimeserie(0, 1).filter(cv => cv.x !== 0)
 			: binTable.chartValsArr(0, 1).filter(cv => cv.x !== 0);
-		const strokeWidth = this.params.type !== 'line'
+		const strokeWidth = this.params.get('type') !== 'line'
 			? 0
 			: 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
-		document.getElementById('loading').style.display = 'none';
+		this.showSpinner(false);
+	}
+
+	showSpinner(show){
+		if (show) {
+			this.timer = setTimeout(() => document.getElementById('loading').style.display = 'inline', spinnerDelay);
+		} else {
+			clearTimeout(this.timer);
+			document.getElementById('loading').style.display = 'none';
+		}
 	}
 }
 
