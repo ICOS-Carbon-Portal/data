@@ -1,6 +1,6 @@
 import {getTableFormatNrows, getBinTable} from './backend';
 
-const spinnerDelay = 400;
+const spinnerDelay = 100;
 
 export default class App {
 	constructor(config, params){
@@ -98,9 +98,7 @@ export default class App {
 			? binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]).filter(d => d[0].getTime() !== 0)
 			: binTable.values([0, 1], (subrow) => [subrow[0], subrow[1]]).filter(d => d[0] !== 0);
 
-		const strokeWidth = this.params.get('type') !== 'line'
-			? 0
-			: 1;
+		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
 		this.showSpinner(false);
@@ -108,10 +106,10 @@ export default class App {
 
 	showSpinner(show){
 		if (show) {
-			this.timer = setTimeout(() => document.getElementById('loading').style.display = 'inline', spinnerDelay);
+			this.timer = setTimeout(() => document.getElementById('cp-spinner').style.display = 'inline', spinnerDelay);
 		} else {
 			clearTimeout(this.timer);
-			document.getElementById('loading').style.display = 'none';
+			document.getElementById('cp-spinner').style.display = 'none';
 		}
 	}
 }
