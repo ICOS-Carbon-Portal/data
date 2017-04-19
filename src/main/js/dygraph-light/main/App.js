@@ -95,8 +95,9 @@ export default class App {
 	drawGraph(binTable){
 		const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
 		const data = isTimestamp(valueFormatX)
-			? binTable.chartValsTimeserie(0, 1).filter(cv => cv.x !== 0)
-			: binTable.chartValsArr(0, 1).filter(cv => cv.x !== 0);
+			? binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]).filter(d => d[0].getTime() !== 0)
+			: binTable.values([0, 1], (subrow) => [subrow[0], subrow[1]]).filter(d => d[0] !== 0);
+
 		const strokeWidth = this.params.get('type') !== 'line'
 			? 0
 			: 1;
