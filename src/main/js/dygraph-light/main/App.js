@@ -13,7 +13,7 @@ export default class App {
 			this.main();
 		} else {
 			let errMsg = '<b>The request you made is not valid!</b>';
-			errMsg += '<p>It must contain <i>objId</i>, <i>x</i> (parameter name for X-axel) and <i>y</i> (parameter name for Y-axel)</p>';
+			errMsg += '<p>It must contain these parameters: ' + this.params.required.join(', ') + '</p>';
 
 			presentError(errMsg);
 		}
