@@ -1,8 +1,17 @@
-import config from '../../common/main/config';
-import App from './App';
-import Params from '../../common/main/models/Params';;
+// import config from '../../common/main/config';
+// import App from './App';
+// import Params from '../../common/main/models/Params';;
+//
+// new App(
+// 	config,
+// 	new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma'])
+// );
 
-new App(
-	config,
-	new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma'])
+import React from 'react';
+import {render} from 'react-dom';
+import Root from './containers/Root.jsx';
+
+render(
+	<Root />,
+	document.getElementById('main')
 );

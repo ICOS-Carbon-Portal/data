@@ -1,8 +1,11 @@
 import 'babel-polyfill';
 import * as LCommon from 'icos-cp-leaflet-common';
-import {getRaster, getCountriesGeoJson} from './backend';
-import ColorMaker from './models/ColorMaker';
+import {getRaster, getCountriesGeoJson} from '../backend';
+import ColorMaker from '../models/ColorMaker';
 import {TileMappingHelper, getTileCoordBbox, Bbox, BboxMapping, renderRaster} from 'icos-cp-spatial';
+import Legend from 'icos-cp-legend';
+import React from 'react';
+import ReactDOM from 'react-dom';
 
 const spinnerDelay = 400;
 
@@ -125,6 +128,26 @@ export default class App {
 
 		app.requestsDone.binTable = true;
 		if (app.requestsDone.allDone()) this.showSpinner(false);
+
+		this.addLegend(binTable);
+	}
+
+	addLegend(binTable){
+		const cm = new ColorMaker(binTable.stats.min, binTable.stats.max, this.params.get('gamma'));
+		const getLegend = cm.getLegend.bind(cm);
+
+		ReactContentRenderer.render(
+			<Legend
+				horizontal={false}
+				canvasWidth={20}
+				containerHeight={690}
+				margin={7}
+				getLegend={getLegend}
+				legendId={'xxxx'}
+				legendText="Legend"
+				decimals={3}
+			/>, document.getElementById('legend')
+		);
 	}
 
 	fitBinTable(raster){
@@ -138,10 +161,10 @@ export default class App {
 
 	showSpinner(show){
 		if (show) {
-			this.timer = setTimeout(() => document.getElementById('loading').style.display = 'inline', spinnerDelay);
+			this.timer = setTimeout(() => document.getElementById('cp-spinner').style.display = 'inline', spinnerDelay);
 		} else {
 			clearTimeout(this.timer);
-			document.getElementById('loading').style.display = 'none';
+			document.getElementById('cp-spinner').style.display = 'none';
 		}
 	}
 }
@@ -217,4 +240,21 @@ const getNetCdfLayer = (rasterCanvasAndTileHelper) => {
 const presentError = (errMsg) => {
 	document.getElementById('map').style.display = 'none';
 	document.getElementById('error').innerHTML = errMsg;
+};
+
+let nodes = [];
+
+const ReactContentRenderer = {
+	unmountAll() {
+		if (nodes.length === 0) {
+			return;
+		}
+		nodes.forEach(node => React.unmountComponentAtNode(node));
+		nodes = [];
+	},
+	render(element, container, callback) {
+		console.log({React, ReactDOM});
+		ReactDOM.render(element, container, callback);
+		nodes.push(container);
+	}
 };
