@@ -1,8 +1,8 @@
 import {getBinRaster, getJson} from 'icos-cp-backend';
 import {feature} from 'topojson';
 
-export function getRaster(search){
-	const res = getBinRaster(null, '/netcdf/getSlice' + search);
+export function getRaster(basicId, search){
+	const res = getBinRaster(basicId, '/netcdf/getSlice' + search);
 	return res.then(raster => raster);
 }
 

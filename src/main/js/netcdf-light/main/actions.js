@@ -3,9 +3,8 @@ import {getCountriesGeoJson, getRaster} from './backend.js';
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
-export const GAMMA_SELECTED = 'GAMMA_SELECTED';
 
-function failWithError(error){
+export function failWithError(error){
 	console.log(error);
 	return {
 		type: ERROR,
@@ -28,7 +27,7 @@ export const fetchCountriesTopo = dispatch => {
 export const fetchRaster = (dispatch, getState) => {
 	const params = getState().params;
 
-	getRaster(params.search).then(
+	getRaster(getRasterId(params, params.get('gamma')), params.search).then(
 		raster => dispatch({
 			type: RASTER_FETCHED,
 			raster
@@ -37,9 +36,9 @@ export const fetchRaster = (dispatch, getState) => {
 	);
 };
 
-export const selectGamma = idx => dispatch => {
-	dispatch({
-		type: GAMMA_SELECTED,
-		idx
-	});
+export const getRasterId = (params, gamma) =>{
+	return params.required
+		.filter(p => p !== 'gamma')
+		.map(p => p + '=' + params.get(p))
+		.join('&') + '&gamma=' + gamma;
 };

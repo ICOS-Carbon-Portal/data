@@ -3,10 +3,22 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {fetchCountriesTopo, fetchRaster} from './actions';
 import Params from '../../common/main/models/Params';
+import {failWithError} from './actions';
+
+const params = new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma']);
+
+const getErr = () => {
+	let errMsg = 'The request you made is not valid! ';
+	errMsg += 'It must contain these parameters: ' + params.required.join(', ');
+
+	return {
+		message: errMsg
+	};
+}
 
 const initState = {
-	params: new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma']),
-	toasterData: null
+	params,
+	error: undefined
 };
 
 // function logger({ getState }) {
@@ -26,7 +38,12 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
-	store.dispatch(fetchCountriesTopo);
-	store.dispatch(fetchRaster);
+
+	if (params.isValidParams) {
+		store.dispatch(fetchCountriesTopo);
+		store.dispatch(fetchRaster);
+	} else {
+		store.dispatch(failWithError(getErr()));
+	}
 	return store;
 }
