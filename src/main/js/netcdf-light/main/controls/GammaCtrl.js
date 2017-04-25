@@ -3,7 +3,7 @@ export const GammaCtrl = L.Control.extend({
 		gamma: undefined,
 		gammaChanged: undefined,
 		position: 'bottomright',
-		style: undefined
+		style: 'padding:2px 5px 5px 5px;background-color:white;box-shadow: 0 1px 5px rgba(0,0,0,0.4);border-radius: 5px;'
 	},
 
 	initialize: function (options) {
@@ -20,7 +20,7 @@ export const GammaCtrl = L.Control.extend({
 		const onChange = e => {
 			const idx = e.target.selectedIndex;
 
-			if (idx > 0 && this.options.gammaChanged) {
+			if (this.options.gammaChanged) {
 				const val = e.target[idx].value;
 				this.options.gammaChanged(val);
 			}
@@ -29,8 +29,11 @@ export const GammaCtrl = L.Control.extend({
 		const container = L.DomUtil.create('div', 'gamma-container', L.DomUtil.get('map'));
 		container.setAttribute("style", this.options.style);
 
+		const lbl = L.DomUtil.create('div', null, container);
+		lbl.innerHTML = 'Gamma';
+		lbl.setAttribute("style", "text-align:center;");
+
 		const select = L.DomUtil.create('select', null, container);
-		addOption(select, "Gamma");
 		[0.1, 0.2, 0.3, 0.5, 1, 2, 3, 5].forEach(v => addOption(select, v));
 
 		select.value = this.options.gamma ? this.options.gamma : 1;

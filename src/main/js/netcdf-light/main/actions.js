@@ -37,8 +37,12 @@ export const fetchRaster = (dispatch, getState) => {
 };
 
 export const getRasterId = (params, gamma) =>{
+	return getBaseSearch(params) + '&gamma=' + gamma;
+};
+
+export const getBaseSearch = (params) =>{
 	return params.required
-		.filter(p => p !== 'gamma')
-		.map(p => p + '=' + params.get(p))
-		.join('&') + '&gamma=' + gamma;
+			.filter(p => p !== 'gamma')
+			.map(p => p + '=' + params.get(p))
+			.join('&');
 };
