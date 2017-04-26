@@ -6,6 +6,7 @@ import Legend from 'icos-cp-legend';
 import ColorMaker from '../models/ColorMaker';
 import {getRasterId, getBaseSearch, COUNTRIES_FETCHED, RASTER_FETCHED}from '../actions';
 import {GammaCtrl} from '../controls/GammaCtrl';
+import {CopyUrlCtrl} from '../controls/CopyUrlCtrl';
 
 const minHeight = 300;
 
@@ -110,7 +111,7 @@ class Map extends Component {
 						colorMaker={colorMaker}
 						geoJson={props.countriesTopo}
 						centerZoom={this.centerZoom}
-						controls={[gammaCtrl]}
+						controls={[gammaCtrl, new CopyUrlCtrl()]}
 						events={[
 							{
 								event: 'moveend',
