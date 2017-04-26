@@ -2,23 +2,27 @@ import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {fetchCountriesTopo, fetchRaster} from './actions';
-import Params from '../../common/main/models/Params';
+import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import {failWithError} from './actions';
 
-const params = new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma']);
+const params = new UrlSearchParams(window.location.search, ['service', 'varName', 'date', 'gamma'], ['elevation']);
 
 const getErr = () => {
-	let errMsg = 'The request you made is not valid! ';
-	errMsg += 'It must contain these parameters: ' + params.required.join(', ');
+	let errMsg = 'The request you made is not valid!';
+	errMsg += ' It must contain these parameters: ' + params.required.join(', ') + '.';
+	errMsg += ' The request is missing these parameters: ' + params.missingParams.join(', ') + '.';
 
 	return {
 		message: errMsg
 	};
-}
+};
 
 const initState = {
+	event: undefined,
 	params,
-	error: undefined
+	toasterData: undefined,
+	countriesTopo: undefined,
+	raster: undefined
 };
 
 // function logger({ getState }) {

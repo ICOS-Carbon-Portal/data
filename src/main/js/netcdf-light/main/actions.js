@@ -41,8 +41,12 @@ export const getRasterId = (params, gamma) =>{
 };
 
 export const getBaseSearch = (params) =>{
-	return params.required
-			.filter(p => p !== 'gamma')
-			.map(p => p + '=' + params.get(p))
-			.join('&');
+	const required = params.required
+		.filter(p => p !== 'gamma')
+		.map(p => p + '=' + params.get(p));
+
+	const optional = params.optional
+		.map(p => p + '=' + params.get(p));
+
+	return required.concat(optional).join('&');
 };

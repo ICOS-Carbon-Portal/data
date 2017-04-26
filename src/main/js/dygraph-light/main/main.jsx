@@ -1,5 +1,5 @@
 import config from '../../common/main/config';
 import App from './App';
-import Params from '../../common/main/models/Params';
+import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 
-new App(config, new Params(window.location.search, ['objId', 'x', 'y']));
+new App(config, new UrlSearchParams(window.location.search, ['objId', 'x', 'y']));

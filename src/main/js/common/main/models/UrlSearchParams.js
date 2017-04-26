@@ -1,7 +1,8 @@
-export default class Params {
-	constructor(search, required) {
+export default class UrlSearchParams {
+	constructor(search, required = [], optional = []) {
 		this._search = window.decodeURIComponent(search);
 		this._required = required;
+		this._optional = optional;
 		this._params = this.parseSearch();
 	}
 
@@ -28,13 +29,23 @@ export default class Params {
 		return this._required;
 	}
 
+	get optional(){
+		return this._optional;
+	}
+
 	get isValidParams(){
 		if (!this._required){
 			return true;
-		} else if (window.URLSearchParams) {
-			return this._required.reduce((acc, curr) => acc * this._params.has(curr), true);
 		} else {
-			return this._required.reduce((acc, curr) => acc * this._params.hasOwnProperty(curr), true);
+			return this._required.reduce((acc, curr) => acc * !!this.get(curr), true);
+		}
+	}
+
+	get missingParams(){
+		if (!this._required){
+			return [];
+		} else {
+			return this._required.filter(p => !this.get(p))
 		}
 	}
 
@@ -46,11 +57,11 @@ export default class Params {
 
 	get(param){
 		if (window.URLSearchParams) {
-			return this._params.get(param);
+			return this._params.get(param) === 'null' ? null : this._params.get(param);
 		} else {
 			// Give null response for non existing params as URLSearchParams does
 			return this._params.hasOwnProperty(param)
-				? this._params[param]
+				? this._params[param] === 'null' ? null : this._params[param]
 				: null;
 		}
 	}

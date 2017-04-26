@@ -62,9 +62,8 @@ class Map extends Component {
 		window.removeEventListener("resize", this.updateDimensions.bind(this));
 	}
 
-	mapEventCallbacks(event, payload){
+	mapEventCallback(event, payload){
 		if (event === 'moveend') {
-			// console.log({payload});
 			this.centerZoom = payload;
 			this.updateHistory(this.state.gamma);
 		}
@@ -77,7 +76,6 @@ class Map extends Component {
 		const newUrl = baseUrl + '?' + baseSearch
 			+ '&gamma=' + (gamma ? gamma : params.get('gamma'))
 			+ (this.centerZoom ? centerZoom2str(this.centerZoom) : '');
-		// console.log({baseUrl, baseSearch, newUrl});
 
 		history.pushState({urlPath: newUrl}, "", newUrl);
 	}
@@ -85,10 +83,6 @@ class Map extends Component {
 	render() {
 		const state = this.state;
 		const props = this.props;
-
-		// const latLngBounds = props.params.has('bbox')
-		// 	? getLatLngBounds(props.params.get('bbox'))
-		// 	: null;
 
 		const colorMaker = state.colorMaker ? state.colorMaker.makeColor.bind(state.colorMaker) : null;
 		const getLegend = state.colorMaker ? state.colorMaker.getLegend.bind(state.colorMaker) : null;
@@ -101,7 +95,6 @@ class Map extends Component {
 			: "";
 
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
-		// console.log({mapProps: props});
 
 		return (
 			<div id="content">
@@ -122,7 +115,7 @@ class Map extends Component {
 							{
 								event: 'moveend',
 								fn: leafletMap => {return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};},
-								callback: this.mapEventCallbacks.bind(this)
+								callback: this.mapEventCallback.bind(this)
 							}
 						]}
 					/>

@@ -1,10 +1,10 @@
 // import config from '../../common/main/config';
 // import App from './App';
-// import Params from '../../common/main/models/Params';;
+// import URLSearchParams from '../../common/main/models/URLSearchParams';;
 //
 // new App(
 // 	config,
-// 	new Params(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma'])
+// 	new URLSearchParams(window.location.search, ['service', 'varName', 'date', 'elevation', 'gamma'])
 // );
 
 import React from 'react';
