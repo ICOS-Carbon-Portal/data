@@ -50,7 +50,7 @@
   "dependencies": {
     "babel-polyfill": "^6.13.0",
     "icos-cp-toaster": "^0.4.0",
-    "icos-cp-leaflet-common": "^0.2.2",
+    "icos-cp-leaflet-common": "^0.2.3",
     "icos-cp-legend": "^0.3.0",
     "icos-cp-netcdfmap": "^0.1.2",
     "icos-cp-spatial": "^0.2.0",
