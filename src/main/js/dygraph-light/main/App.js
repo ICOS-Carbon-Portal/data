@@ -14,6 +14,7 @@ export default class App {
 		} else {
 			let errMsg = '<b>The request you made is not valid!</b>';
 			errMsg += '<p>It must contain these parameters: ' + this.params.required.join(', ') + '</p>';
+			errMsg += '<p>The request is missing these parameters: ' + params.missingParams.join(', ') + '.</p>';
 
 			presentError(errMsg);
 		}
@@ -191,5 +192,6 @@ const fail = (message) => {
 };
 
 const presentError = (errMsg) => {
+	document.getElementById('cp-spinner').style.display = 'none';
 	document.getElementById('error').innerHTML = errMsg;
 };
