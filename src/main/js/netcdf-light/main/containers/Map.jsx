@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { connect } from 'react-redux'
 import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
-import ColorMaker from '../models/ColorMaker';
+import ColorMaker from '../../../common/main/models/ColorMaker';
 import {getRasterId, getBaseSearch, COUNTRIES_FETCHED, RASTER_FETCHED}from '../actions';
 import {GammaCtrl} from '../controls/GammaCtrl';
 import {CopyUrlCtrl} from '../controls/CopyUrlCtrl';
