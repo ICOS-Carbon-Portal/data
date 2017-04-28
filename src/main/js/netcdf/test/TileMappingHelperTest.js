@@ -1,4 +1,4 @@
-import TileMappingHelper from '../main/models/TileMappingHelper.js';
+import TileMappingHelper from 'icos-cp-spatial';
 import Bbox from '../main/models/Bbox.js';
 import BboxMapping from '../main/models/BboxMapping.js';
 
