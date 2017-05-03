@@ -44,9 +44,10 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 						.getSink(hashsum, uid)
 						.flatMap(req.entity.dataBytes.runWith)
 
-					onSuccess(resFuture){res =>
-						complete(res.makeReport)
-					}
+					onSuccess(resFuture)(res => res.makeReport match{
+						case Right(report) => complete(report)
+						case Left(errorMsg) => complete((StatusCodes.InternalServerError, errorMsg))
+					})
 				}
 			}
 		}

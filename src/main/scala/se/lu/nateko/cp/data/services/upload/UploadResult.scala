@@ -1,15 +1,17 @@
 package se.lu.nateko.cp.data.services.upload
 
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
+import java.util.concurrent.ExecutionException
+
+import scala.util.control.NoStackTrace
+
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.MetadataObjectIncomplete
-import java.util.concurrent.ExecutionException
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 
 class UploadResult(val taskResults: Seq[UploadTaskResult]){
 
-	//TODO Provide a proper reporting mechanism
-	def makeReport: String = {
+	def makeReport: Either[String, String] = {
 		val failures = taskResults.collect{
 			case result: UploadTaskFailure => result
 		}
@@ -17,14 +19,16 @@ class UploadResult(val taskResults: Seq[UploadTaskResult]){
 		if(failures.isEmpty) {
 
 			taskResults.collectFirst{
-				case UploadCompletionSuccess(info) => info
-			}.getOrElse("NOT SPECIFIED")
+				case UploadCompletionSuccess(info) => Right(info)
+			}.getOrElse(
+				Left("No errors encountered, but upload completion success info was not found")
+			)
 
-		} else {
-			import UploadResult._
-			val messages = failures.map(f => extractMessage(f.error)).mkString("\n")
-			throw new CpDataException(messages)
-		}
+		} else Left(
+			failures.map{f =>
+				f.getClass.getSimpleName + ": " + UploadResult.extractMessage(f.error)
+			}.mkString("\n")
+		)
 	}
 
 }
@@ -32,7 +36,9 @@ class UploadResult(val taskResults: Seq[UploadTaskResult]){
 object UploadResult{
 	def extractMessage(error: Throwable): String = error match {
 		case boxed: ExecutionException => extractMessage(boxed.getCause)
-		case otherError => otherError.getMessage
+		case nst: NoStackTrace => nst.getMessage
+		case otherError => otherError.getMessage +
+			otherError.getStackTrace.map(_.toString).mkString("\n")
 	}
 }
 

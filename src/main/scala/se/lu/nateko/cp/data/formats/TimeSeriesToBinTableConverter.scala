@@ -5,6 +5,7 @@ import java.util.Locale
 
 import TimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.formats.bintable.Schema
+import se.lu.nateko.cp.data.api.CpDataParsingException
 
 abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[String], nRows: Int) {
 
@@ -13,13 +14,6 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 	protected def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef
 
 	protected val colPositions: Map[String, Int] = computeIndices(columnNames)
-
-	private val missingColumns = {
-		val expectedCols = (colFormats.keys.toSeq).distinct
-		expectedCols.filterNot(colPositions.contains).filter(_ != timeStampCol)
-	}
-	assert(missingColumns.isEmpty, "Missing columns: " + missingColumns.mkString(", "))
-
 	protected val sortedColumns = colFormats.sortedColumns
 
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
@@ -35,7 +29,15 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 		val parsed = sortedColumns.map{ colName =>
 			if(colName == timeStampCol) null else {
 				val valFormat = colFormats(colName)
-				val colPos = colPositions(colName)
+
+				val colPos = try{
+					colPositions(colName)
+				} catch {
+					case _: NoSuchElementException =>
+						val missingColumns = colFormats.keys.filterNot(colPositions.contains).filter(_ != timeStampCol)
+						throw new CpDataParsingException("Missing columns: " + missingColumns.mkString(", "))
+				}
+
 				val cellValue = cells(colPos)
 
 				if(isNull(cellValue, valFormat)) getNull(valFormat)

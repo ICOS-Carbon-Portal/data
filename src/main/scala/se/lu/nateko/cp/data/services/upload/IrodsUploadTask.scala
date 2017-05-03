@@ -16,7 +16,7 @@ class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt
 	client.ensureFolderExists(UploadService.fileFolder(dataObject))
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
-		val optimistic = if(client.fileExists(filePath)) {
+		val optimistic = if(!client.fileExists(filePath)) {
 
 			client.getNewFileSink(filePath).mapMaterializedValue(_.map(IrodsSuccess(_)))
 
