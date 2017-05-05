@@ -1,6 +1,6 @@
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
-	scalaVersion := "2.11.8",
+	scalaVersion := "2.11.11",
 
 	scalacOptions ++= Seq(
 		"-unchecked",
@@ -13,8 +13,8 @@ lazy val commonSettings = Seq(
 	)
 )
 
-val akkaVersion = "2.4.17"
-val akkaHttpVersion = "10.0.4"
+val akkaVersion = "2.4.18"
+val akkaHttpVersion = "10.0.6"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
