@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.formats.bintable
 
+import java.io.EOFException
 import java.io.File
 import java.nio.file.FileAlreadyExistsException
 
@@ -70,7 +71,7 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 					if(schema == null || count == schema.size)
 						countPromise.success(count)
 					else failBinTable(
-						new Exception(s"Got $count rows while expected ${schema.size}")
+						new EOFException(s"Got $count rows while expected ${schema.size}")
 					)
 				}
 

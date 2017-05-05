@@ -78,7 +78,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.viaMat(toBinTableConverter)(KeepFuture.right)
-			.to(BinTableSink(file, overwrite = true))
+			.toMat(BinTableSink(file, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
 				_.map(IngestionSuccess(_)).recover{
 					case exc: Throwable => IngestionFailure(exc)
