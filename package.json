@@ -6,6 +6,7 @@
   "main": "gulpfile.js",
   "scripts": {
     "netcdf": "gulp netcdf",
+    "portal": "gulp portal",
     "wdcgg": "gulp wdcgg",
     "stilt": "gulp stilt",
     "dygraph-light": "gulp dygraph-light",
