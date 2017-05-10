@@ -1,4 +1,4 @@
-import {ERROR} from './actions';
+import {ERROR, META_QUERIED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 
 export default function(state, action){
@@ -9,6 +9,12 @@ export default function(state, action){
 			return update({
 				event: ERROR,
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
+			});
+
+		case META_QUERIED:
+			return update({
+				event: META_QUERIED,
+				metadata: action.metadata
 			});
 
 		default:
