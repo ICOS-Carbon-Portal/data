@@ -52,12 +52,14 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	def ensureDobjDownloadCollExists: Future[Unit] = {
 		http.singleRequest(HttpRequest(uri = dlCollUri)).flatMap{resp =>
+			resp.discardEntityBytes()
 			if(resp.status == StatusCodes.NotFound){
 				val dlCollectionDescr = JsObject("comment" -> JsString("Download log for CP-hosted data objects"))
 				for(
 					entity <- Marshal(dlCollectionDescr).to[RequestEntity];
 					r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
 				) yield {
+					r.discardEntityBytes()
 					if(r.status == StatusCodes.Created) Future.successful(())
 					else Future.failed(new Exception(s"Failed creating ${config.dobjDownloadsCollection} collection in RestHeart: ${r.status.defaultMessage}"))
 				}
@@ -71,6 +73,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			entity <- Marshal(config.dobjDownloadsAggregations).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
 		) yield {
+			r.discardEntityBytes()
 			if(r.status.isSuccess) Future.successful(())
 			else Future.failed(new Exception(s"Failed defining data object download aggregations in RestHeart: ${r.status.defaultMessage}"))
 		}
@@ -91,6 +94,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			entity <- Marshal(logItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.POST, entity = entity))
 		) yield {
+			r.discardEntityBytes()
 			if(r.status == StatusCodes.Created) Future.successful(())
 			else Future.failed(new Exception(s"Failed logging data object download to RestHeart: ${r.status.defaultMessage}"))
 		}
@@ -111,6 +115,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity))
 		) yield {
+			r.discardEntityBytes()
 			if(r.status == StatusCodes.NoContent) Future.successful(())
 			else Future.failed(new Exception(s"Failed saving data object download to user profile: ${r.status.defaultMessage}"))
 		}
