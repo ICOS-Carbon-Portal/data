@@ -1,7 +1,9 @@
 export const ERROR = 'ERROR';
+export const SPECS_FETCHED = 'SPECS_FETCHED';
+export const SPEC_COUNT_FETCHED = 'SPEC_COUNT_FETCHED';
 export const META_QUERIED = 'META_QUERIED';
 import config from '../../common/main/config';
-import {searchDobjs, searchStations} from './backend';
+import {fetchSpecs, fetchSpecCount, searchDobjs, searchStations} from './backend';
 
 export function failWithError(error){
 	console.log(error);
@@ -10,6 +12,28 @@ export function failWithError(error){
 		error
 	};
 }
+
+export const getSpecs = dispatch => {
+	fetchSpecs(config).then(
+		specs => {
+			dispatch({
+				type: SPECS_FETCHED,
+				specs
+			})
+		}
+	);
+};
+
+export const getSpecCount = dispatch => {
+	fetchSpecCount(config).then(
+		specCount => {
+			dispatch({
+				type: SPEC_COUNT_FETCHED,
+				specCount
+			})
+		}
+	);
+};
 
 export const queryMeta = (id, search, minLength) => dispatch => {
 	if (search.length >= minLength) {

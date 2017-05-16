@@ -5,6 +5,7 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 // import ComboBox from '../components/ComboBox.jsx';
 import Combobox from 'react-widgets/lib/Combobox';
 import {queryMeta, reset} from '../actions';
+import Multiselect from './InitSearch.jsx';
 
 
 class App extends Component {
@@ -133,6 +134,8 @@ class App extends Component {
 				{Object.keys(this.comboboxes).map((key, idx) =>
 					this.getComboBox(key, this.comboboxes[key].placeholder))
 				}
+
+				<Multiselect specs={props.specs} specCount={props.specCount} />
 			</div>
 		);
 	}

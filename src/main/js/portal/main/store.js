@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-// import {fetchDobjs} from './actions';
+import {getSpecs, getSpecCount} from './actions';
 
 const initState = {
 	event: undefined,
@@ -26,6 +26,7 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
-	// store.dispatch(fetchDobjs);
+	store.dispatch(getSpecs);
+	store.dispatch(getSpecCount);
 	return store;
 }
