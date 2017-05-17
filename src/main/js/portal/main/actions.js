@@ -15,10 +15,10 @@ export function failWithError(error){
 
 export const getSpecs = dispatch => {
 	fetchSpecs(config).then(
-		specs => {
+		specTable => {
 			dispatch({
 				type: SPECS_FETCHED,
-				specs
+				specTable
 			})
 		}
 	);

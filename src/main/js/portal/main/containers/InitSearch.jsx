@@ -8,89 +8,70 @@ export default class InitSearch extends Component {
 		this.ctrls = {
 			specLabel: {
 				placeholder: 'Specification',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			},
 			level: {
 				placeholder: 'Level',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
 			,
 			format: {
 				placeholder: 'Format',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
 			,
 			colTitle: {
 				placeholder: 'Column name',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
 			,
 			valType: {
 				placeholder: 'Value type',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
 			,
 			qKind: {
 				placeholder: 'Quantity kind',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
 			,
 			unit: {
 				placeholder: 'Unit',
-				data: [],
-				value: undefined,
-				minLength: 0
+				values: []
 			}
+		};
+
+		this.state = {
+			selSpecs: []
 		};
 	}
 
-	componentWillReceiveProps(nextProps){
-		if (nextProps.specs && nextProps.specCount){
-			nextProps.specs.vars.forEach(varName => {
-				this.ctrls[varName].data = nextProps.specs.specData.reduce((acc, curr) => {
-					if (curr[varName] && acc.indexOf(curr[varName]) < 0) acc.push(curr[varName]);
-					return acc;
-				}, []);
-			});
-		}
-
-		console.log({ctrls: this.ctrls});
-	}
-
-	getCtrl(varName, specData){
+	getCtrl(id, specData){
 		const data = specData.reduce((acc, curr) => {
-			if (curr[varName] && acc.indexOf(curr[varName]) < 0) acc.push(curr[varName]);
+			if (curr[id] && acc.indexOf(curr[id]) < 0 && (this.state.selSpecs.length === 0 || this.state.selSpecs.includes(curr.spec))) {
+				acc.push(curr[id]);
+			}
+
 			return acc;
 		}, []);
-		// console.log({data});
 
 		return (
-			<div className="row" key={varName} style={{marginTop: 10}}>
+			<div className="row" key={id} style={{marginTop: 10}}>
 				<div className="col-md-6">
 					<Multiselect
-						placeholder={varName}
+						placeholder={`${this.ctrls[id].placeholder} (${data.length})`}
 						data={data}
-						onChange={this.handleChange.bind(this, varName)}
+						onChange={this.handleChange.bind(this, id)}
 					/>
 				</div>
 			</div>
 		);
 	}
 
-	handleChange(varName, value){
-		console.log({varName, value});
+	handleChange(id, values){
+		this.ctrls[id].values = values;
+		const selSpecs = filterSpecs(this.props.specs.specData, this.ctrls);
+		this.setState({selSpecs});
 	}
 
 	render(){
@@ -100,10 +81,42 @@ export default class InitSearch extends Component {
 		return (
 			<div>
 			{props.specs && props.specCount
-				? props.specs.vars.map(varName => this.getCtrl(varName, props.specs.specData))
+				? props.specs.vars.map(id => this.getCtrl(id, props.specs.specData))
 				: null
 			}
 			</div>
 		);
 	}
 }
+
+const filterSpecs = (specData, ctrls) => {
+	const noFilter = Object.keys(ctrls).reduce((acc, curr) => acc + ctrls[curr].values.length, 0) === 0;
+
+	if (noFilter) {
+		return specData.reduce((acc, sd) => {
+			acc.push(sd.spec);
+
+			return acc;
+		}, []);
+	}
+
+
+	var selSpecs = [];
+
+	Object.keys(ctrls).forEach(ctrlName => {
+		const tmp = specData.reduce((a, sd) => {
+			// console.log({values: ctrls[ctrlName].values});
+
+			if (ctrls[ctrlName].values.includes(sd[ctrlName]) && a.indexOf(sd.spec) < 0 && selSpecs.indexOf(sd.spec) < 0) {
+				console.log("Add spec", sd.spec, sd[ctrlName]);
+				a.push(sd.spec);
+			}
+
+			return a;
+		}, []);
+
+		if (tmp.length) selSpecs = selSpecs.concat(tmp);
+	});
+console.log({selSpecs});
+	return selSpecs;
+};

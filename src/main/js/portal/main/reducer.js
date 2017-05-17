@@ -14,7 +14,7 @@ export default function(state, action){
 		case SPECS_FETCHED:
 			return update({
 				event: SPECS_FETCHED,
-				specs: action.specs
+				specTable: action.specTable
 			});
 
 		case SPEC_COUNT_FETCHED:

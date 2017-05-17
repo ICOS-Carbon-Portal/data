@@ -135,7 +135,7 @@ class App extends Component {
 					this.getComboBox(key, this.comboboxes[key].placeholder))
 				}
 
-				<Multiselect specs={props.specs} specCount={props.specCount} />
+				<Multiselect specCount={props.specCount} specTable={props.specTable} />
 			</div>
 		);
 	}

@@ -1,5 +1,6 @@
 import {sparql} from 'icos-cp-backend';
 import {specs, specCount, findDobjs, findStations} from './sparqlQueries';
+import SpecTable from './models/SpecTable';
 
 export const fetchSpecs = config => {
 	const query = specs(config);
@@ -7,14 +8,8 @@ export const fetchSpecs = config => {
 	return sparql(query, config.sparqlEndpoint)
 		.then(
 			specs => {
-				const vars = specs.head.vars;
-				const bindings = specs.results.bindings;
-
-				return bindings
-					? Promise.resolve({
-						vars: vars.filter(v => v !== "spec"),
-						specData: getValueObjects(bindings)
-					})
+				return specs.results.bindings
+					? Promise.resolve(new SpecTable(specs))
 					: Promise.reject(new Error("Could not get specs from meta"));
 			}
 		);
