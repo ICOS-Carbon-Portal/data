@@ -1,50 +1,28 @@
 import {sparql} from 'icos-cp-backend';
-import {specs, specCount, findDobjs, findStations} from './sparqlQueries';
-import SpecTable, {parseSpecs} from './models/SpecTable';
+import * as queries from './sparqlQueries';
+import SpecTable from './models/SpecTable';
 
-export const fetchSpecs = config => {
-	const query = specs(config);
+export function fetchAllSpecTables(config) {
+	return Promise.all(
+		[queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
+			.map(qf => fetchSpecTable(qf, config))
+	).then(
+		([basics, columnMeta, origins]) => {
+			return {basics, columnMeta, origins};
+		}
+	);
+};
+
+function fetchSpecTable(queryFactory, config) {
+	const query = queryFactory(config);
 
 	return sparql(query, config.sparqlEndpoint)
-		.then(
-			specs => {
-				const parsedSpecs = parseSpecs(specs);
-
-				return specs.results.bindings
-					? Promise.resolve(new SpecTable(parsedSpecs.colNames, parsedSpecs.bindings))
-					: Promise.reject(new Error("Could not get specs from meta"));
-			}
-		);
+		.then(sparqlResultToSpecTable);
 };
 
-export const fetchSpecCount = config => {
-	const query = specCount(config);
-
-	return sparql(query, config.sparqlEndpoint)
-		.then(
-			specCount => {
-				const bindings = specCount.results.bindings;
-
-				return bindings
-					? Promise.resolve(getValueObjects(bindings))
-					: Promise.reject(new Error("Could not get spec count from meta"));
-			}
-		);
-};
-
-const getValueObjects = bindings => {
-	return bindings.map(b => {
-		return Object.keys(b).reduce((acc, curr) => {
-			acc[curr] = b[curr].datatype === "http://www.w3.org/2001/XMLSchema#integer"
-				? parseInt(b[curr].value)
-				: b[curr].value;
-			return acc;
-		}, {});
-	});
-};
 
 export const searchDobjs = (config, search) => {
-	const query = findDobjs(config, search);
+	const query = queries.findDobjs(config, search);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(
@@ -58,8 +36,9 @@ export const searchDobjs = (config, search) => {
 		);
 };
 
+
 export const searchStations = (config, search) => {
-	const query = findStations(config, search);
+	const query = queries.findStations(config, search);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(
@@ -72,3 +51,29 @@ export const searchStations = (config, search) => {
 			}
 		);
 };
+
+
+function sparqlResultToSpecTable(sparqlResult) {
+	const columnNames = sparqlResult.head.vars;
+
+	const rows = sparqlResult.results.bindings.map(b => {
+		const row = {};
+		columnNames.forEach(colName => row[colName] = sparqlBindingToValue(b[colName]));
+		return row;
+	});
+
+	return new SpecTable(columnNames, rows);
+}
+
+
+function sparqlBindingToValue(b){
+	if(!b) return undefined;
+	switch(b.datatype){
+		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value);
+		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value);
+		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value);
+		default: return b.value;
+	}
+}
+
+

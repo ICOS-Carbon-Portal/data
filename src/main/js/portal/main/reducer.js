@@ -1,4 +1,4 @@
-import {ERROR, SPECS_FETCHED, SPEC_COUNT_FETCHED, META_QUERIED} from './actions';
+import {ERROR, SPECTABLES_FETCHED, META_QUERIED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 
 export default function(state, action){
@@ -11,16 +11,11 @@ export default function(state, action){
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case SPECS_FETCHED:
+		case SPECTABLES_FETCHED:
 			return update({
-				event: SPECS_FETCHED,
-				specTable: action.specTable
-			});
-
-		case SPEC_COUNT_FETCHED:
-			return update({
-				event: SPEC_COUNT_FETCHED,
-				specCount: action.specCount
+				event: SPECTABLES_FETCHED,
+				specTable: action.specTables.basics,
+				specCount: action.specTables.origins
 			});
 
 		case META_QUERIED:

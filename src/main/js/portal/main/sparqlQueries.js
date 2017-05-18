@@ -1,5 +1,6 @@
+export const SPECCOL = 'spec';
 
-export function specs(config){
+export function specBasics(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec ?specLabel ?level ?format
 where{
@@ -9,7 +10,7 @@ where{
 }`;
 }
 
-export function columnMeta(config){
+export function specColumnMeta(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?colTitle ?valType ?qKind ?unit
 where{
@@ -22,7 +23,7 @@ where{
 }`;
 }
 
-export function dobjCounts(config){
+export function dobjOriginsAndCounts(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select
