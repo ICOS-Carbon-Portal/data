@@ -27,6 +27,6 @@ const initState = {
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 	store.dispatch(getSpecs);
-	store.dispatch(getSpecCount);
+	// store.dispatch(getSpecCount);
 	return store;
 }

@@ -29,8 +29,6 @@ select
 ?spec
 (sample(?submitterName) as ?submitter)
 (sample(?stationName) as ?station)
-(sample(?lat) as ?latitude)
-(sample(?lon) as ?longitude)
 (count(?dobj) as ?count)
 (if(sample(?submitterClass) = cpmeta:ThematicCenter, "ICOS", "Non-ICOS") as ?isIcos)
 where{
@@ -38,10 +36,6 @@ where{
 	OPTIONAL{
 		?dobj cpmeta:wasAcquiredBy [prov:wasAssociatedWith ?stationRes ] .
 		?stationRes cpmeta:hasName ?stationName .
-		OPTIONAL{
-			?stationRes cpmeta:hasLatitude ?lat .
-			?stationRes cpmeta:hasLongitude ?lon .
-		}
 	}
 	?dobj cpmeta:hasObjectSpec ?spec .
 	?submitterRes cpmeta:hasName ?submitterName .

@@ -40,38 +40,31 @@ export default class InitSearch extends Component {
 				values: []
 			}
 		};
-
-		this.state = {
-			selSpecs: []
-		};
 	}
 
-	getCtrl(id, specData){
-		const data = specData.reduce((acc, curr) => {
-			if (curr[id] && acc.indexOf(curr[id]) < 0 && (this.state.selSpecs.length === 0 || this.state.selSpecs.includes(curr.spec))) {
-				acc.push(curr[id]);
-			}
-
-			return acc;
-		}, []);
+	getCtrl(name, specTable){
+		const data = specTable.getDistinctColObjects(name);
+		console.log({name, specTable, data});
 
 		return (
-			<div className="row" key={id} style={{marginTop: 10}}>
+			<div className="row" key={name} style={{marginTop: 10}}>
 				<div className="col-md-6">
 					<Multiselect
-						placeholder={`${this.ctrls[id].placeholder} (${data.length})`}
+						placeholder={`${this.ctrls[name].placeholder} (${data.length})`}
+						valueField="id"
+						textField="text"
 						data={data}
-						onChange={this.handleChange.bind(this, id)}
+						onChange={this.handleChange.bind(this, name)}
 					/>
 				</div>
 			</div>
 		);
 	}
 
-	handleChange(id, values){
-		this.ctrls[id].values = values;
-		const selSpecs = filterSpecs(this.props.specs.specData, this.ctrls);
-		this.setState({selSpecs});
+	handleChange(name, values){
+		this.ctrls[name].values = values;
+		const tmp = this.props.specTable.withFilter(name, values);
+		console.log({tmp});
 	}
 
 	render(){
@@ -80,8 +73,8 @@ export default class InitSearch extends Component {
 
 		return (
 			<div>
-			{props.specs && props.specCount
-				? props.specs.vars.map(id => this.getCtrl(id, props.specs.specData))
+			{props.specTable
+				? props.specTable.names.map(name => this.getCtrl(name, props.specTable))
 				: null
 			}
 			</div>
@@ -89,34 +82,33 @@ export default class InitSearch extends Component {
 	}
 }
 
-const filterSpecs = (specData, ctrls) => {
-	const noFilter = Object.keys(ctrls).reduce((acc, curr) => acc + ctrls[curr].values.length, 0) === 0;
-
-	if (noFilter) {
-		return specData.reduce((acc, sd) => {
-			acc.push(sd.spec);
-
-			return acc;
-		}, []);
-	}
-
-
-	var selSpecs = [];
-
-	Object.keys(ctrls).forEach(ctrlName => {
-		const tmp = specData.reduce((a, sd) => {
-			// console.log({values: ctrls[ctrlName].values});
-
-			if (ctrls[ctrlName].values.includes(sd[ctrlName]) && a.indexOf(sd.spec) < 0 && selSpecs.indexOf(sd.spec) < 0) {
-				console.log("Add spec", sd.spec, sd[ctrlName]);
-				a.push(sd.spec);
-			}
-
-			return a;
-		}, []);
-
-		if (tmp.length) selSpecs = selSpecs.concat(tmp);
-	});
-console.log({selSpecs});
-	return selSpecs;
-};
+// const filterSpecs = (specData, ctrls) => {
+// 	const noFilter = Object.keys(ctrls).reduce((acc, curr) => acc + ctrls[curr].values.length, 0) === 0;
+//
+// 	if (noFilter) {
+// 		return specData.reduce((acc, sd) => {
+// 			acc.push(sd.spec);
+//
+// 			return acc;
+// 		}, []);
+// 	}
+//
+//
+// 	var selSpecs = [];
+//
+// 	Object.keys(ctrls).forEach(ctrlName => {
+// 		const tmp = specData.reduce((a, sd) => {
+// 			// console.log({values: ctrls[ctrlName].values});
+//
+// 			if (ctrls[ctrlName].values.includes(sd[ctrlName]) && a.indexOf(sd.spec) < 0 && selSpecs.indexOf(sd.spec) < 0) {
+// 				a.push(sd.spec);
+// 			}
+//
+// 			return a;
+// 		}, []);
+//
+// 		if (tmp.length) selSpecs = selSpecs.concat(tmp);
+// 	});
+//
+// 	return selSpecs;
+// };
