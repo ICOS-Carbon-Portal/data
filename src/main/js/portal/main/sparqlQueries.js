@@ -1,33 +1,54 @@
 
 export function specs(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?specLabel ?level ?format ?colTitle ?valType ?qKind ?unit
-from <http://meta.icos-cp.eu/resources/cpmeta/>
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select ?spec ?specLabel ?level ?format
 where{
-   ?spec cpmeta:hasDataLevel ?level .
-  ?spec rdfs:label ?specLabel .
-  ?spec cpmeta:hasFormat [rdfs:label ?format ]
-  OPTIONAL{
-    ?spec cpmeta:containsDataset ?dataSet .
-    ?dataSet cpmeta:hasColumn ?column .
-    ?column cpmeta:hasColumnTitle ?colTitle .
-    ?column cpmeta:hasValueType ?valTypeRes .
-    ?valTypeRes rdfs:label ?valType .
-    OPTIONAL{?valTypeRes cpmeta:hasQuantityKind [rdfs:label ?qKind] }
-    OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
-  }
+	?spec cpmeta:hasDataLevel ?level .
+	?spec rdfs:label ?specLabel .
+	?spec cpmeta:hasFormat [rdfs:label ?format ]
 }`;
 }
 
-export function specCount(config){
+export function columnMeta(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec ?submitter (count(?dobj) as ?count) where{
-  ?dobj cpmeta:hasObjectSpec ?spec .
-  ?dobj cpmeta:wasSubmittedBy [<http://www.w3.org/ns/prov#wasAssociatedWith> ?submitter]
+select distinct ?spec ?colTitle ?valType ?qKind ?unit
+where{
+	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
+	?column cpmeta:hasColumnTitle ?colTitle .
+	?column cpmeta:hasValueType ?valTypeRes .
+	?valTypeRes rdfs:label ?valType .
+	OPTIONAL{?valTypeRes cpmeta:hasQuantityKind [rdfs:label ?qKind] }
+	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
+}`;
 }
-group by ?spec ?submitter
-order by ?spec`;
+
+export function dobjCounts(config){
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+select
+?spec
+(sample(?submitterName) as ?submitter)
+(sample(?stationName) as ?station)
+(sample(?lat) as ?latitude)
+(sample(?lon) as ?longitude)
+(count(?dobj) as ?count)
+(if(sample(?submitterClass) = cpmeta:ThematicCenter, "ICOS", "Non-ICOS") as ?isIcos)
+where{
+	?dobj cpmeta:wasSubmittedBy [prov:wasAssociatedWith ?submitterRes ] .
+	OPTIONAL{
+		?dobj cpmeta:wasAcquiredBy [prov:wasAssociatedWith ?stationRes ] .
+		?stationRes cpmeta:hasName ?stationName .
+		OPTIONAL{
+			?stationRes cpmeta:hasLatitude ?lat .
+			?stationRes cpmeta:hasLongitude ?lon .
+		}
+	}
+	?dobj cpmeta:hasObjectSpec ?spec .
+	?submitterRes cpmeta:hasName ?submitterName .
+	?submitterRes a ?submitterClass .
+	FILTER(?submitterClass != owl:NamedIndividual)
+}
+group by ?spec ?submitterRes ?stationRes`;
 }
 
 export function findDobjs(config, search){
@@ -48,3 +69,15 @@ WHERE {
 }
 ORDER BY ?Long_name`;
 }
+
+export function rdfGraphsAndSpecFormats(config){
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+select ?graph (sample(?fmt) as ?format) where{
+	?spec cpmeta:hasFormat [rdfs:label ?fmt] .
+	graph ?graph {
+	?dobj cpmeta:hasObjectSpec ?spec .
+	}
+}
+group by ?graph`;
+}
+
