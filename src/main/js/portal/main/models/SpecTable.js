@@ -10,6 +10,7 @@ export default class SpecTable{
 			this.names.forEach(col => this._filters[col] = []);
 		}
 
+		this._speciesCount = distinct(rows.map(row => row[SPECCOL])).length;
 		this._rows = rows;
 	}
 
@@ -18,29 +19,40 @@ export default class SpecTable{
 	}
 
 	withFilter(colName, values){
+		if(!this._colNames.includes(colName)) return this;
 		const newFilters = Object.assign({}, this._filters, {[colName]: values});
 		return new SpecTable(this._colNames, this._rows, newFilters);
 	}
 
 	getDistinctColValues(colName){
-		return distinct(this._rows.map(row => row[colName]));
+		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}
 
-	getDistinctColObjects(colName){
-		const values = this.getDistinctColValues(colName);
-
-		return values.map((v, idx) => {
-			return {
-				id: idx,
-				text: v,
-				isIntExcl: false,
-				isExtExcl: false
-			};
-		});
+	rowsFilteredByOthers(excludedColumn){
+		const filters = Object.assign({}, this._filters);
+		filters[excludedColumn] = [];
+		return filterRows(this._rows, filters);
 	}
+
+	get speciesFilter(){
+		if(this.names.every(name => this._filters[name].length === 0)) return [];
+		const filter = this.getDistinctColValues(SPECCOL);
+		return filter.length === this._speciesCount ? [] : filter;
+	}
+
 }
 
 function distinct(stringArray){
 	return Array.from(new Set(stringArray).values());
+}
+
+function filterRows(rows, filters){
+	const colNames = Object.keys(filters);
+	return rows.filter(row => {
+		return colNames.every(colName => {
+			const filter = filters[colName];
+			return !filter.length || filter.includes(row[colName]);
+		});
+	});
 }
 

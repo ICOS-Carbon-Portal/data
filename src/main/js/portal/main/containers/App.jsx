@@ -7,7 +7,6 @@ import Combobox from 'react-widgets/lib/Combobox';
 import {queryMeta, reset} from '../actions';
 import Multiselect from './InitSearch.jsx';
 
-
 class App extends Component {
 	constructor(props){
 		super(props);
@@ -120,9 +119,6 @@ class App extends Component {
 
 	render() {
 		const props = this.props;
-		const state = this.state;
-		// console.log({props, state});
-
 		return(
 			<div className="container" style={{marginTop: 10}}>
 				<AnimatedToasters
@@ -135,7 +131,7 @@ class App extends Component {
 					this.getComboBox(key, this.comboboxes[key].placeholder))
 				}
 
-				<Multiselect specCount={props.specCount} specTable={props.specTable} />
+				<Multiselect specTable={props.specTable} />
 			</div>
 		);
 	}

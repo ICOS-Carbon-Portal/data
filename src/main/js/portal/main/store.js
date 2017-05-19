@@ -3,10 +3,13 @@ import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {getAllSpecTables} from './actions';
+import CompositeSpecTable from './models/CompositeSpecTable';
+
 
 const initState = {
 	event: undefined,
-	metadata: undefined
+	metadata: undefined,
+	specTable: new CompositeSpecTable({})
 };
 
 // function logger({ getState }) {

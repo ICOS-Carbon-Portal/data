@@ -1,5 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
+import CompositeSpecTable from './models/CompositeSpecTable';
 
 export default function(state, action){
 
@@ -14,8 +15,7 @@ export default function(state, action){
 		case SPECTABLES_FETCHED:
 			return update({
 				event: SPECTABLES_FETCHED,
-				specTable: action.specTables.basics,
-				specCount: action.specTables.origins
+				specTable: new CompositeSpecTable(action.specTables)
 			});
 
 		case META_QUERIED:
