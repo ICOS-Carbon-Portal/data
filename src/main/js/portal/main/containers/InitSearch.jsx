@@ -3,12 +3,12 @@ import Multiselect from 'react-widgets/lib/Multiselect';
 
 const placeholders = {
 	specLabel: 'Specification',
-	level: 'Level',
+	level: 'Data level',
 	format: 'Format',
 	colTitle: 'Column name',
 	valType: 'Value type',
-	qKind: 'Quantity kind',
-	unit: 'Unit',
+	quantityKind: 'Quantity kind',
+	quantityUnit: 'Unit',
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	isIcos: 'ICOS / non-ICOS data'
@@ -34,7 +34,7 @@ export default class InitSearch extends Component {
 
 		const placeholder = data.length == 1
 		 ? `${placeholders[name]}: ${data[0].text}`
-		 : `${placeholders[name]} (${data.length})`;
+		 : `${placeholders[name]} (${data.length} items)`;
 
 		return (
 			<div className="row" key={name} style={{marginTop: 10}}>
@@ -59,10 +59,25 @@ export default class InitSearch extends Component {
 	render(){
 		const specTable = this.state.specTable;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
+		const originsTable = specTable.getTable('origins');
+		const count = originsTable
+			? originsTable.filteredRows.reduce((acc, next) => acc + (next.count || 0), 0)
+			: 0;
 
-		return specTable
-			? <div>{colNames.map(name => this.getCtrl(name, specTable))}</div>
-			: null;
+		return <div className="panel panel-default">
+			<div className="panel-heading">
+				<h3 className="panel-title">Data object specification search</h3>
+			</div>
+			<div className="panel-body">
+				<div>
+					<div className="row">
+						<div className="col-md-2"><label>Total object count</label></div>
+						<div className="col-md-2"><span className="label label-default">{count}</span></div>
+					</div>
+					<div>{colNames.map(name => this.getCtrl(name, specTable))}</div>
+				</div>
+			</div>
+		</div>;
 	}
 }
 

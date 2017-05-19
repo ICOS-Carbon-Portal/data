@@ -12,7 +12,9 @@ where{
 
 export function specColumnMeta(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?colTitle ?valType ?qKind ?unit
+select distinct ?spec ?colTitle ?valType
+(if(bound(?qKind), ?qKind, "(not applicable)") as ?quantityKind)
+(if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
 	?column cpmeta:hasColumnTitle ?colTitle .
@@ -29,21 +31,23 @@ prefix prov: <http://www.w3.org/ns/prov#>
 select
 ?spec
 (sample(?submitterName) as ?submitter)
-(sample(?stationName) as ?station)
+(if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
 (count(?dobj) as ?count)
 (if(sample(?submitterClass) = cpmeta:ThematicCenter, "ICOS", "Non-ICOS") as ?isIcos)
 where{
-	?dobj cpmeta:wasSubmittedBy [prov:wasAssociatedWith ?submitterRes ] .
-	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy [prov:wasAssociatedWith ?stationRes ] .
-		?stationRes cpmeta:hasName ?stationName .
-	}
 	?dobj cpmeta:hasObjectSpec ?spec .
+	?dobj cpmeta:wasSubmittedBy [
+		prov:wasAssociatedWith ?submitterRes ;
+		prov:endedAtTime []
+	] .
+	OPTIONAL{
+		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:hasName ?stationName
+	}
 	?submitterRes cpmeta:hasName ?submitterName .
 	?submitterRes a ?submitterClass .
 	FILTER(?submitterClass != owl:NamedIndividual)
 }
-group by ?spec ?submitterRes ?stationRes`;
+group by ?spec ?submitterRes ?stationName`;
 }
 
 export function findDobjs(config, search){

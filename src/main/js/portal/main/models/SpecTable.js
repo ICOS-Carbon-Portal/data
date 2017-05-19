@@ -34,6 +34,10 @@ export default class SpecTable{
 		return filterRows(this._rows, filters);
 	}
 
+	get filteredRows(){
+		return filterRows(this._rows, this._filters);
+	}
+
 	get speciesFilter(){
 		if(this.names.every(name => this._filters[name].length === 0)) return [];
 		const filter = this.getDistinctColValues(SPECCOL);
