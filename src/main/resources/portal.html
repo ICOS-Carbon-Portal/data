@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Portal</title>
+	<script type="text/javascript" src="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" />
+	<link rel="stylesheet" href="//static.icos-cp.eu/css/spinner.css" />
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//static.icos-cp.eu/css/react-widgets/css/react-widgets.css">
+
+	<style type="text/css">
+		body {
+			padding: 0;
+			margin: 0;
+		}
+		html, body, #main, #content {
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+		}
+		#map {
+			position: relative;
+			float: left;
+			width: -webkit-calc(100% - 150px);
+			width: -moz-calc(100% - 150px);
+			width: calc(100% - 150px);
+			height: -webkit-calc(100% - 10px);
+			height: -moz-calc(100% - 10px);
+			height: calc(100% - 10px);
+			margin-left: 5px;
+			margin-top: 5px;
+		}
+		#legend{
+			position: relative;
+			float: right;
+			width: 135px;
+			height: -webkit-calc(100% - 10px);
+			height: -moz-calc(100% - 10px);
+			height: calc(100% - 10px);
+			margin-right: 5px;
+			margin-top: 5px;
+		}
+		.leaflet-container, .leaflet-clickable, .leaflet-interactive {
+			cursor: crosshair !important;
+		}
+	</style>
+</head>
+<body>
+	<div id="main"></div>
+
+	<script type="text/javascript" src="./portal.js"></script>
+</body>
+</html>
