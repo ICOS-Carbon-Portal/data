@@ -14,6 +14,9 @@ const placeholders = {
 	isIcos: 'ICOS / non-ICOS data'
 };
 
+const search = Object.assign({}, placeholders);
+Object.keys(search).forEach(v => search[v] = undefined);
+
 export default class InitSearch extends Component {
 	constructor(props) {
 		super(props);
@@ -32,6 +35,12 @@ export default class InitSearch extends Component {
 				.map(text => {return {text};})
 			: [];
 
+		if (data[0]) {
+			typeof data[0].text === "string"
+				? data.sort((d1, d2) => d1.text.localeCompare(d2.text))
+				: data.sort((d1, d2) => d1.text > d2.text);
+		}
+
 		const placeholder = data.length == 1
 		 ? `${placeholders[name]}: ${data[0].text}`
 		 : `${placeholders[name]} (${data.length} items)`;
@@ -44,16 +53,48 @@ export default class InitSearch extends Component {
 						valueField="text"
 						textField="text"
 						data={data}
+						filter="contains"
 						onChange={this.handleChange.bind(this, name)}
+						onSearch={this.handleSearch.bind(this, name)}
+						itemComponent={this.listItem.bind(this, name)}
 					/>
 				</div>
 			</div>
 		);
 	}
 
+	listItem(name, props){
+		const text = props.text.toLowerCase();
+		const searchStr = search[name] ? search[name].toLowerCase() : undefined;
+		const start = text.indexOf(searchStr);
+
+		if (start < 0) {
+			return <span>{props.text}</span>;
+		} else if (start === 0) {
+			return (
+				<span>
+					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
+					<span>{props.text.slice(start + searchStr.length)}</span>
+				</span>
+			);
+		} else {
+			return (
+				<span>
+					<span>{props.text.slice(0, start - 1)}</span>
+					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
+					<span>{props.text.slice(start + searchStr.length)}</span>
+				</span>
+			);
+		}
+	}
+
 	handleChange(name, values){
 		const specTable = this.state.specTable.withFilter(name, values.map(v => v.text));
 		this.setState({specTable});
+	}
+
+	handleSearch(name, value){
+		search[name] = value;
 	}
 
 	render(){
@@ -80,4 +121,3 @@ export default class InitSearch extends Component {
 		</div>;
 	}
 }
-
