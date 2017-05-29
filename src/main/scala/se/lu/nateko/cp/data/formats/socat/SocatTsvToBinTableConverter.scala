@@ -17,7 +17,7 @@ class SocatTsvToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[
 }
 
 object SocatTsvToBinTableConverter{
-	val timestampFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH':'mm")
+	val timestampFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
 	def parseTimestamp(ts: String): AnyRef = {
 		Double.box(LocalDateTime.parse(ts, timestampFormatter).toInstant(ZoneOffset.UTC).toEpochMilli)
