@@ -14,24 +14,16 @@ const placeholders = {
 	isIcos: 'ICOS / non-ICOS data'
 };
 
-const search = Object.assign({}, placeholders);
-Object.keys(search).forEach(v => search[v] = undefined);
-
-export default class InitSearch extends Component {
+export default class ObjSpecFilter extends Component {
 	constructor(props) {
 		super(props);
-		this.state = {
-			specTable: props.specTable
-		};
-	}
-
-	componentWillReceiveProps(props){
-		this.setState(props);
+		this.search = Object.assign({}, placeholders);
+		Object.keys(this.search).forEach(v => this.search[v] = undefined);
 	}
 
 	getCtrl(name){
-		const data = this.state.specTable
-			? this.state.specTable.getDistinctColValues(name)
+		const data = this.props.specTable
+			? this.props.specTable.getDistinctColValues(name)
 				.map(text => {return {text};})
 			: [];
 
@@ -65,7 +57,7 @@ export default class InitSearch extends Component {
 
 	listItem(name, props){
 		const text = props.text.toLowerCase();
-		const searchStr = search[name] ? search[name].toLowerCase() : undefined;
+		const searchStr = this.search[name] ? this.search[name].toLowerCase() : undefined;
 		const start = text.indexOf(searchStr);
 
 		if (start < 0) {
@@ -89,16 +81,15 @@ export default class InitSearch extends Component {
 	}
 
 	handleChange(name, values){
-		const specTable = this.state.specTable.withFilter(name, values.map(v => v.text));
-		this.setState({specTable});
+		this.props.updateFilter(name, values.map(v => v.text));
 	}
 
 	handleSearch(name, value){
-		search[name] = value;
+		this.search[name] = value;
 	}
 
 	render(){
-		const specTable = this.state.specTable;
+		const specTable = this.props.specTable;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
 		const originsTable = specTable.getTable('origins');
 		const count = originsTable
@@ -107,7 +98,7 @@ export default class InitSearch extends Component {
 
 		return <div className="panel panel-default">
 			<div className="panel-heading">
-				<h3 className="panel-title">Data object specification search</h3>
+				<h3 className="panel-title">Data object specification filter</h3>
 			</div>
 			<div className="panel-body">
 				<div>
@@ -121,3 +112,4 @@ export default class InitSearch extends Component {
 		</div>;
 	}
 }
+

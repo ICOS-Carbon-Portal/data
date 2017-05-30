@@ -1,5 +1,6 @@
 export const ERROR = 'ERROR';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
+export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
 export const META_QUERIED = 'META_QUERIED';
 import config from '../../common/main/config';
 import {fetchAllSpecTables, searchDobjs, searchStations} from './backend';
@@ -53,4 +54,12 @@ const dispatchMeta = (id, data, dispatch) => {
 		}
 	});
 };
+
+export function specFilterUpdate(varName, values){
+	return {
+		type: SPEC_FILTER_UPDATED,
+		varName,
+		values
+	};
+}
 
