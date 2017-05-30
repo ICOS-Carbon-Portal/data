@@ -9,7 +9,8 @@ import CompositeSpecTable from './models/CompositeSpecTable';
 const initState = {
 	event: undefined,
 	metadata: undefined,
-	specTable: new CompositeSpecTable({})
+	specTable: new CompositeSpecTable({}),
+	objectsTable: []
 };
 
 // function logger({ getState }) {

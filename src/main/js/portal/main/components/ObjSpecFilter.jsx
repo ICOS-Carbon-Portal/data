@@ -39,7 +39,7 @@ export default class ObjSpecFilter extends Component {
 
 		return (
 			<div className="row" key={name} style={{marginTop: 10}}>
-				<div className="col-md-6">
+				<div className="col-md-12">
 					<Multiselect
 						placeholder={placeholder}
 						valueField="text"
@@ -103,8 +103,8 @@ export default class ObjSpecFilter extends Component {
 			<div className="panel-body">
 				<div>
 					<div className="row">
-						<div className="col-md-2"><label>Total object count</label></div>
-						<div className="col-md-2"><span className="label label-default">{count}</span></div>
+						<div className="col-md-6"><label>Total object count</label></div>
+						<div className="col-md-6"><span className="label label-default">{count}</span></div>
 					</div>
 					<div>{colNames.map(name => this.getCtrl(name, specTable))}</div>
 				</div>

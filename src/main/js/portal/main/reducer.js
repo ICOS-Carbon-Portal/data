@@ -1,4 +1,4 @@
-import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED} from './actions';
+import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -28,6 +28,11 @@ export default function(state, action){
 			return update({
 				event: SPEC_FILTER_UPDATED,
 				specTable: state.specTable.withFilter(action.varName, action.values)
+			});
+
+		case OBJECTS_FETCHED:
+			return update({
+				objectsTable: action.objectsTable
 			});
 
 		default:

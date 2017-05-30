@@ -80,3 +80,21 @@ select ?graph (sample(?fmt) as ?format) where{
 group by ?graph`;
 }
 
+export function listFilteredDataObjects(config, specs, stations, limit, offset){
+
+	const specsFilter = (specs && specs.length)
+		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
+		 : '';
+
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?dobj ?fileName where {
+	${specsFilter}
+	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	?dobj cpmeta:hasName ?fileName .
+	FILTER EXISTS{ ?dobj cpmeta:wasSubmittedBy/prov:endedAtTime []}
+}
+offset ${offset || 0} limit ${limit || 50}`;
+}
+
+
