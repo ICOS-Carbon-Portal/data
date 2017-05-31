@@ -85,6 +85,7 @@ function sparqlBindingToValue(b){
 		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value);
 		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value);
 		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value);
+		case "http://www.w3.org/2001/XMLSchema#dateTime": return new Date(b.value);
 		default: return b.value;
 	}
 }

@@ -69,8 +69,11 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 export const getFilteredDataObjects = (dispatch, getState) => {
 	const specTable = getState().specTable;
 	const specFilter = specTable.getSpeciesFilter(null);
+	const stationsFilter = specTable.getFilter('station').length
+		? specTable.getDistinctAvailableColValues('stationUri')
+		: [];
 
-	fetchFilteredDataObjects(specFilter, []).then(
+	fetchFilteredDataObjects(specFilter, stationsFilter).then(
 		({rows}) => dispatch({
 			type: OBJECTS_FETCHED,
 			objectsTable: rows

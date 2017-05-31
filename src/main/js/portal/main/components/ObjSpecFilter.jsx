@@ -23,7 +23,7 @@ export default class ObjSpecFilter extends Component {
 
 	getCtrl(name){
 		const data = this.props.specTable
-			? this.props.specTable.getDistinctColValues(name)
+			? this.props.specTable.getDistinctAvailableColValues(name)
 				.map(text => {return {text};})
 			: [];
 

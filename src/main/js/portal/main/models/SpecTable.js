@@ -24,7 +24,11 @@ export default class SpecTable{
 		return new SpecTable(this._colNames, this._rows, newFilters);
 	}
 
-	getDistinctColValues(colName){
+	getFilter(colName){
+		return this._filters[colName] || [];
+	}
+
+	getDistinctAvailableColValues(colName){
 		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}
 
@@ -40,7 +44,7 @@ export default class SpecTable{
 
 	get speciesFilter(){
 		if(this.names.every(name => this._filters[name].length === 0)) return [];
-		const filter = this.getDistinctColValues(SPECCOL);
+		const filter = this.getDistinctAvailableColValues(SPECCOL);
 		return filter.length === this._speciesCount ? [] : filter;
 	}
 
