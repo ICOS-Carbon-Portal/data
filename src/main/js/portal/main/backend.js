@@ -1,8 +1,9 @@
 import {sparql} from 'icos-cp-backend';
 import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
+import config from '../../common/main/config';
 
-export function fetchAllSpecTables(config) {
+export function fetchAllSpecTables() {
 	return Promise.all(
 		[queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
 			.map(qf => fetchSpecTable(qf, config))
@@ -13,15 +14,23 @@ export function fetchAllSpecTables(config) {
 	);
 };
 
-function fetchSpecTable(queryFactory, config) {
+function fetchSpecTable(queryFactory) {
 	const query = queryFactory(config);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(sparqlResultToSpecTable);
-};
+}
 
 
-export const searchDobjs = (config, search) => {
+export function fetchFilteredDataObjects(dobjRequest){
+	const query = queries.listFilteredDataObjects(config, dobjRequest);
+
+	return sparql(query, config.sparqlEndpoint)
+		.then(sparqlResultToColNamesAndRows);
+}
+
+
+export const searchDobjs = search => {
 	const query = queries.findDobjs(config, search);
 
 	return sparql(query, config.sparqlEndpoint)
@@ -37,7 +46,7 @@ export const searchDobjs = (config, search) => {
 };
 
 
-export const searchStations = (config, search) => {
+export const searchStations = search => {
 	const query = queries.findStations(config, search);
 
 	return sparql(query, config.sparqlEndpoint)
@@ -53,7 +62,7 @@ export const searchStations = (config, search) => {
 };
 
 
-function sparqlResultToSpecTable(sparqlResult) {
+function sparqlResultToColNamesAndRows(sparqlResult) {
 	const columnNames = sparqlResult.head.vars;
 
 	const rows = sparqlResult.results.bindings.map(b => {
@@ -62,9 +71,13 @@ function sparqlResultToSpecTable(sparqlResult) {
 		return row;
 	});
 
-	return new SpecTable(columnNames, rows);
+	return {columnNames, rows};
 }
 
+function sparqlResultToSpecTable(sparqlResult) {
+	const {columnNames, rows} = sparqlResultToColNamesAndRows(sparqlResult);
+	return new SpecTable(columnNames, rows);
+}
 
 function sparqlBindingToValue(b){
 	if(!b) return undefined;
@@ -72,6 +85,7 @@ function sparqlBindingToValue(b){
 		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value);
 		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value);
 		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value);
+		case "http://www.w3.org/2001/XMLSchema#dateTime": return new Date(b.value);
 		default: return b.value;
 	}
 }

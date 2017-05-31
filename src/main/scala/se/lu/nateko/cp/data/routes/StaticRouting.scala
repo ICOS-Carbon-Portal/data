@@ -21,6 +21,7 @@ object StaticRouting {
 		case "stilt" => views.html.StiltPage()
 		case "netcdf" => views.html.NetCDFPage()
 		case "wdcgg" => views.html.WdcggPage()
+		case "portal" => views.html.PortalPage()
 	}
 
 	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(

@@ -23,8 +23,12 @@ export default class CompositeSpecTable{
 		return Object.keys(this._tables);
 	}
 
-	getTableName(columnName){
+	findTableName(columnName){
 		return this.tableNames.find(tname => this.getTable(tname).names.includes(columnName));
+	}
+
+	findTable(columnName){
+		return this.getTable(this.findTableName(columnName));
 	}
 
 	getSpeciesFilter(targetTableName){
@@ -41,8 +45,8 @@ export default class CompositeSpecTable{
 	}
 
 	withFilter(colName, values){
-		const tableName = this.getTableName(colName);
-		const newTable = this._tables[tableName].withFilter(colName, values);
+		const tableName = this.findTableName(colName);
+		const newTable = this.getTable(tableName).withFilter(colName, values);
 		const pass1 = new CompositeSpecTable(Object.assign({}, this._tables, {[tableName]: newTable}));
 
 		const pass2 = {};
@@ -52,10 +56,12 @@ export default class CompositeSpecTable{
 		return new CompositeSpecTable(pass2);
 	}
 
-	getDistinctColValues(colName){
-		const tableName = this.getTableName(colName);
-		const table = this._tables[tableName];
-		return table.getDistinctColValues(colName);
+	getFilter(colName){
+		return this.findTable(colName).getFilter(colName);
+	}
+
+	getDistinctAvailableColValues(colName){
+		return this.findTable(colName).getDistinctAvailableColValues(colName);
 	}
 
 }

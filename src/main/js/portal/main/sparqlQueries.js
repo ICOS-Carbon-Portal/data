@@ -32,6 +32,7 @@ select
 ?spec
 (sample(?submitterName) as ?submitter)
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
+(sample(?stationRes) as ?stationUri)
 (count(?dobj) as ?count)
 (if(sample(?submitterClass) = cpmeta:ThematicCenter, "ICOS", "Non-ICOS") as ?isIcos)
 where{
@@ -41,7 +42,8 @@ where{
 		prov:endedAtTime []
 	] .
 	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:hasName ?stationName
+		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationRes .
+		?stationRes cpmeta:hasName ?stationName
 	}
 	?submitterRes cpmeta:hasName ?submitterName .
 	?submitterRes a ?submitterClass .
@@ -78,5 +80,58 @@ select ?graph (sample(?fmt) as ?format) where{
 	}
 }
 group by ?graph`;
+}
+
+export const listFilteredDataObjects = (config, {specs, stations, limit, offset, sorting}) => {
+
+	const specsValues = (specs && specs.length)
+		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
+		 : '';
+
+	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .';
+	const dobjSpec = `?dobj cpmeta:hasObjectSpec ?${SPECCOL} .`;
+	const noStationFilter = dobjSpec + '\n' + `FILTER NOT EXISTS{${dobjStation}}`;
+
+	function stationsFilter(stations){
+		return `VALUES ?station {<${stations.join('> <')}>}` +
+			'\n' + dobjSpec + '\n' + dobjStation;
+	}
+
+	const dobjSearch = (stations && stations.length)
+		? stations.some(s => !s)
+			? stations.length === 1
+				? noStationFilter
+				: `{{
+						${noStationFilter}
+					} UNION {
+						${stationsFilter(stations.filter(s => !!s))}
+					}}`
+			: stationsFilter(stations)
+		: dobjSpec;
+
+	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
+		? (
+			sorting.ascending
+				? `order by ?${sorting.varName}`
+				: `order by desc(?${sorting.varName})`
+			)
+		: '';
+
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
+	${specsValues}
+	${dobjSearch}
+	?dobj cpmeta:hasName ?fileName .
+	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+	OPTIONAL{
+		?dobj cpmeta:wasAcquiredBy [
+			prov:startedAtTime ?acqStart;
+			prov:endedAtTime ?acqEnd
+		]
+	}
+}
+${orderBy}
+offset ${offset || 0} limit ${limit || 25}`;
 }
 
