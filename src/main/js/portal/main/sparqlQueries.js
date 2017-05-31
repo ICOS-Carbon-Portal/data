@@ -82,7 +82,7 @@ select ?graph (sample(?fmt) as ?format) where{
 group by ?graph`;
 }
 
-export function listFilteredDataObjects(config, specs, stations, limit, offset){
+export const listFilteredDataObjects = (config, {specs, stations, limit, offset, sorting}) => {
 
 	const specsValues = (specs && specs.length)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
@@ -109,6 +109,14 @@ export function listFilteredDataObjects(config, specs, stations, limit, offset){
 			: stationsFilter(stations)
 		: dobjSpec;
 
+	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
+		? (
+			sorting.ascending
+				? `order by ?${sorting.varName}`
+				: `order by desc(?${sorting.varName})`
+			)
+		: '';
+
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
@@ -123,6 +131,7 @@ select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
 		]
 	}
 }
+${orderBy}
 offset ${offset || 0} limit ${limit || 25}`;
 }
 

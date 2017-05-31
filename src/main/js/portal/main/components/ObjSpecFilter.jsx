@@ -91,10 +91,6 @@ export default class ObjSpecFilter extends Component {
 	render(){
 		const specTable = this.props.specTable;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
-		const originsTable = specTable.getTable('origins');
-		const count = originsTable
-			? originsTable.filteredRows.reduce((acc, next) => acc + (next.count || 0), 0)
-			: 0;
 
 		return <div className="panel panel-default">
 			<div className="panel-heading">
@@ -103,8 +99,8 @@ export default class ObjSpecFilter extends Component {
 			<div className="panel-body">
 				<div>
 					<div className="row">
-						<div className="col-md-6"><label>Total object count</label></div>
-						<div className="col-md-6"><span className="label label-default">{count}</span></div>
+						<div className="col-md-6"><label>Data object count</label></div>
+						<div className="col-md-6"><span className="label label-default">{this.props.objCount}</span></div>
 					</div>
 					<div>{colNames.map(name => this.getCtrl(name, specTable))}</div>
 				</div>

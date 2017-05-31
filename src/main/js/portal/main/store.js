@@ -10,7 +10,8 @@ const initState = {
 	event: undefined,
 	metadata: undefined,
 	specTable: new CompositeSpecTable({}),
-	objectsTable: []
+	objectsTable: [],
+	sorting: {}
 };
 
 // function logger({ getState }) {

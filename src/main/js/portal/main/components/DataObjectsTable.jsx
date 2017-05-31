@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import ScreenHeightColumn from './ScreenHeightColumn.jsx';
-
-const placeholders = {
-	fileName: 'File name'
-};
+import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
 	return <div className="panel panel-default">
@@ -16,14 +13,14 @@ export default function(props){
 				<table className="table">
 					<thead>
 						<tr>
-							<th>Landing page</th>
-							<th>Submission time (UTC)</th>
-							<th>Acquisition start (UTC)</th>
-							<th>Acquisition stop (UTC)</th>
+							<th>File name<SortButton varName="fileName" {...props}/></th>
+							<th>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
+							<th>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
+							<th>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
 						</tr>
 					</thead>
 					<tbody>{
-						props.objectsTable.map((objInfo, i) => <ObjectRow {...objInfo} key={'dobj_' + i} />)
+						props.objectsTable.map((objInfo, i) => <ObjectTableRow {...objInfo} key={'dobj_' + i} />)
 					}</tbody>
 				</table>
 			</ScreenHeightColumn>
@@ -31,18 +28,27 @@ export default function(props){
 	</div>;
 }
 
-const ObjectRow = props => <tr>
-	<td><a href={props.dobj} target="_blank">{props.fileName}</a></td>
-	<td>{formatDate(props.submTime)}</td>
-	<td>{formatDate(props.acqStart)}</td>
-	<td>{formatDate(props.acqEnd)}</td>
-</tr>
+const SortButton = props => {
+	const sorting = props.sorting || {};
+	const disabled = !sorting.isEnabled;
 
-function formatDate(d){
-	if(!d) return '';
-	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
-}
+	const glyphClass = 'glyphicon glyphicon-sort' + (
+		(disabled || sorting.varName !== props.varName)
+			? ''
+			: sorting.ascending
+				? '-by-attributes'
+				: '-by-attributes-alt'
+	);
 
-function pad2(s){
-	return ("0" + s).substr(-2, 2);
-}
+	const title = disabled ? 'Filter down the amount of objects first, then sort' : 'Sort';
+
+	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
+
+	return <button type="button" className="btn btn-default" disabled={disabled}
+		title={title} onClick={sortHandler}
+		style={{pointerEvents: 'auto', borderWidth: 0}}
+		>
+		<span className={glyphClass}></span>
+	</button>;
+};
+

@@ -2,6 +2,7 @@ export const ERROR = 'ERROR';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
 export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
+export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const META_QUERIED = 'META_QUERIED';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects} from './backend';
 
@@ -64,21 +65,31 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 		values
 	});
 	dispatch(getFilteredDataObjects);
-}
+};
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const specTable = getState().specTable;
-	const specFilter = specTable.getSpeciesFilter(null);
-	const stationsFilter = specTable.getFilter('station').length
+	const {specTable, sorting} = getState();
+
+	const specs = specTable.getSpeciesFilter(null);
+
+	const stations = specTable.getFilter('station').length
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
 
-	fetchFilteredDataObjects(specFilter, stationsFilter).then(
+	fetchFilteredDataObjects({specs, stations, sorting}).then(
 		({rows}) => dispatch({
 			type: OBJECTS_FETCHED,
 			objectsTable: rows
 		}),
 		failWithError(dispatch)
 	);
-}
+};
+
+export const toggleSort = varName => dispatch => {
+	dispatch({
+		type: SORTING_TOGGLED,
+		varName
+	});
+	dispatch(getFilteredDataObjects);
+};
 

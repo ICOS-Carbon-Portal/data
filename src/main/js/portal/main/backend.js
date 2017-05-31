@@ -22,8 +22,8 @@ function fetchSpecTable(queryFactory) {
 }
 
 
-export function fetchFilteredDataObjects(specs, stations, limit, offset){
-	const query = queries.listFilteredDataObjects(config, specs, stations, limit, offset);
+export function fetchFilteredDataObjects(dobjRequest){
+	const query = queries.listFilteredDataObjects(config, dobjRequest);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(sparqlResultToColNamesAndRows);
