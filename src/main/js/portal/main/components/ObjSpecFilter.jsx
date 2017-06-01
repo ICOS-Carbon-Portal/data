@@ -97,13 +97,7 @@ export default class ObjSpecFilter extends Component {
 				<h3 className="panel-title">Data object specification filter</h3>
 			</div>
 			<div className="panel-body">
-				<div>
-					<div className="row">
-						<div className="col-md-6"><label>Data object count</label></div>
-						<div className="col-md-6"><span className="label label-default">{this.props.objCount}</span></div>
-					</div>
-					<div>{colNames.map(name => this.getCtrl(name, specTable))}</div>
-				</div>
+				{colNames.map(name => this.getCtrl(name, specTable))}
 			</div>
 		</div>;
 	}

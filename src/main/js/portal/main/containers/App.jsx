@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
+import {copyprops} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort} from '../actions';
+import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep} from '../actions';
 
 const App = props => <div className="container-fluid" style={{marginTop: 10}}>
 	<AnimatedToasters
@@ -13,10 +14,10 @@ const App = props => <div className="container-fluid" style={{marginTop: 10}}>
 	/>
 	<div className="row">
 		<div className="col-md-4">
-			<ObjSpecFilter specTable={props.specTable} updateFilter={props.updateFilter} objCount={props.objCount} />
+			<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
 		</div>
 		<div className="col-md-8">
-			<DataObjectsTable objectsTable={props.objectsTable} toggleSort={props.toggleSort} sorting={props.sorting}/>
+			<DataObjectsTable {...copyprops(props, ['objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging'])}/>
 		</div>
 	</div>
 </div>;
@@ -25,7 +26,8 @@ function dispatchToProps(dispatch){
 	return {
 		//queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
-		toggleSort: varName => dispatch(toggleSort(varName))
+		toggleSort: varName => dispatch(toggleSort(varName)),
+		requestStep: direction => dispatch(requestStep(direction))
 	};
 }
 

@@ -4,9 +4,17 @@ import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
+	const {paging, requestStep} = props;
+	const {offset, limit, objCount} = paging;
+	const to = Math.min(offset + limit, objCount);
+
 	return <div className="panel panel-default">
 		<div className="panel-heading">
-			<h3 className="panel-title">Data objects</h3>
+			<h3 style={{display: 'inline'}} className="panel-title">Data objects {offset + 1} to {to} of {objCount}</h3>
+			<div style={{display: 'inline', float: 'right'}}>
+				<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)} />
+				<StepButton direction="forward" enabled={to < objCount} onStep={() => requestStep(1)} />
+			</div>
 		</div>
 		<div className="panel-body">
 			<ScreenHeightColumn>
@@ -50,5 +58,14 @@ const SortButton = props => {
 		>
 		<span className={glyphClass}></span>
 	</button>;
+};
+
+const StepButton = props => {
+	const style = props.enabled ? {} : {opacity: 0.65};
+	return <div style={Object.assign({display: 'inline', paddingLeft: 4}, style)}
+		onClick={props.onStep}
+		>
+		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
+	</div>;
 };
 

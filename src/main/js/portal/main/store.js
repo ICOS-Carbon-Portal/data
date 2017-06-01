@@ -11,7 +11,8 @@ const initState = {
 	metadata: undefined,
 	specTable: new CompositeSpecTable({}),
 	objectsTable: [],
-	sorting: {}
+	sorting: {objCount: 0},
+	paging: {}
 };
 
 // function logger({ getState }) {

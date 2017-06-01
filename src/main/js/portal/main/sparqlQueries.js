@@ -82,7 +82,7 @@ select ?graph (sample(?fmt) as ?format) where{
 group by ?graph`;
 }
 
-export const listFilteredDataObjects = (config, {specs, stations, limit, offset, sorting}) => {
+export const listFilteredDataObjects = (config, {specs, stations, sorting, paging}) => {
 
 	const specsValues = (specs && specs.length)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
@@ -132,6 +132,6 @@ select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
 	}
 }
 ${orderBy}
-offset ${offset || 0} limit ${limit || 25}`;
+offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 }
 

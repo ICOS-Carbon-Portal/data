@@ -1,4 +1,4 @@
-import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED} from './actions';
+import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -16,7 +16,7 @@ export default function(state, action){
 			let objCount = getObjCount(specTable);
 			return update({
 				specTable,
-				objCount,
+				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
@@ -30,7 +30,8 @@ export default function(state, action){
 			objCount = getObjCount(specTable);
 			return update({
 				specTable,
-				objCount,
+				objectTable: [],
+				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
@@ -41,7 +42,14 @@ export default function(state, action){
 
 		case SORTING_TOGGLED:
 			return update({
+				objectTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
+			});
+
+		case STEP_REQUESTED:
+			return update({
+				objectTable: [],
+				paging: updatePaging(state.paging, action.direction)
 			});
 
 		default:
@@ -73,5 +81,30 @@ function getObjCount(specTable){
 	return originsTable
 		? originsTable.filteredRows.reduce((acc, next) => acc + (next.count || 0), 0)
 		: 0;
+}
+
+const STEPSIZE = 20;
+
+function freshPaging(objCount){
+	return {
+		objCount,
+		offset: 0,
+		limit: STEPSIZE
+	};
+}
+
+function updatePaging(old, direction){
+	if(direction < 0){
+		if(old.offset == 0) return old;
+		const offset = Math.max(0, old.offset - STEPSIZE);
+		return Object.assign({}, old, {offset});
+
+	} else if(direction > 0){
+		if(old.offset + old.limit >= old.objCount) return old;
+		if(old.offset + STEPSIZE >= old.objCount) return old;
+		const offset = old.offset + STEPSIZE;
+		return Object.assign({}, old, {offset});
+
+	} else return old;
 }
 
