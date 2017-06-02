@@ -34,7 +34,7 @@ export default class ObjSpecFilter extends Component {
 		}
 
 		const placeholder = data.length == 1
-		 ? data[0].text
+		 ? `${data[0].text}`
 		 : `(${data.length} items)`;
 
 		return (

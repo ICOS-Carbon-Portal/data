@@ -84,17 +84,23 @@ group by ?graph`;
 
 export const listFilteredDataObjects = (config, {specs, stations, sorting, paging}) => {
 
-	const specsValues = (specs && specs.length)
+	const specsValues = (specs && specs.length > 1)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
 		 : '';
 
-	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .';
-	const dobjSpec = `?dobj cpmeta:hasObjectSpec ?${SPECCOL} .`;
-	const noStationFilter = dobjSpec + '\n' + `FILTER NOT EXISTS{${dobjStation}}`;
+	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
+
+	const dobjSpec = (specs && specs.length == 1)
+		? `?dobj cpmeta:hasObjectSpec <${specs[0]}> .`
+		: `?dobj cpmeta:hasObjectSpec ?${SPECCOL} .`;
+
+	const noStationFilter = dobjSpec + '\n' + `FILTER NOT EXISTS{${dobjStation} []}`;
 
 	function stationsFilter(stations){
-		return `VALUES ?station {<${stations.join('> <')}>}` +
-			'\n' + dobjSpec + '\n' + dobjStation;
+		return stations.length == 1
+			? dobjSpec + '\n' + dobjStation + `<${stations[0]}> .`
+			: `VALUES ?station {<${stations.join('> <')}>}` +
+				'\n' + dobjSpec + '\n' + dobjStation + '?station .';
 	}
 
 	const dobjSearch = (stations && stations.length)
