@@ -12,6 +12,12 @@ const App = props => <div className="container-fluid" style={{marginTop: 10}}>
 		toasterData={props.toasterData}
 		maxWidth={400}
 	/>
+	<div className="page-header">
+		<h1>
+			ICOS data portal
+			<small> Under construction</small>
+		</h1>
+	</div>
 	<div className="row">
 		<div className="col-md-4">
 			<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />

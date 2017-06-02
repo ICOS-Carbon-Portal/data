@@ -34,12 +34,15 @@ export default class ObjSpecFilter extends Component {
 		}
 
 		const placeholder = data.length == 1
-		 ? `${placeholders[name]}: ${data[0].text}`
-		 : `${placeholders[name]} (${data.length} items)`;
+		 ? data[0].text
+		 : `(${data.length} items)`;
 
 		return (
 			<div className="row" key={name} style={{marginTop: 10}}>
-				<div className="col-md-12">
+				<div className="col-md-4">
+					<label>{placeholders[name]}</label>
+				</div>
+				<div className="col-md-8">
 					<Multiselect
 						placeholder={placeholder}
 						valueField="text"
