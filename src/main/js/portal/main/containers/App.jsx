@@ -1,12 +1,10 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
+import React from 'react';
 import {AnimatedToasters} from 'icos-cp-toaster';
-import {copyprops} from 'icos-cp-utils';
-import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
-import DataObjectsTable from '../components/DataObjectsTable.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep} from '../actions';
+import Search from './Search.jsx';
+import Collections from './Collections.jsx';
 
-const App = props => <div className="container-fluid" style={{marginTop: 10}}>
+
+export const App = props => <div className="container-fluid" style={{marginTop: 10}}>
 	<AnimatedToasters
 		autoCloseDelay={5000}
 		toasterData={props.toasterData}
@@ -18,24 +16,21 @@ const App = props => <div className="container-fluid" style={{marginTop: 10}}>
 			<small> Under construction</small>
 		</h1>
 	</div>
-	<div className="row">
-		<div className="col-md-4">
-			<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
-		</div>
-		<div className="col-md-8">
-			<DataObjectsTable {...copyprops(props, ['objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging'])}/>
-		</div>
-	</div>
+
+	<Route props={props} />
+
 </div>;
 
-function dispatchToProps(dispatch){
-	return {
-		//queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
-		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
-		toggleSort: varName => dispatch(toggleSort(varName)),
-		requestStep: direction => dispatch(requestStep(direction))
-	};
-}
+const Route = props => {
+	switch(props.route){
 
-export default connect(state => state, dispatchToProps)(App);
+		case 'search':
+			return <Search props={props} />;
 
+		case 'collections':
+			return <Collections props={props} />;
+
+		default:
+			return <Search props={props}  />;
+	}
+};

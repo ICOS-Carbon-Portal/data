@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import Multiselect from 'react-widgets/lib/Multiselect';
+import React from 'react';
 import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
@@ -21,7 +20,7 @@ export default function(props){
 				<table className="table">
 					<thead>
 						<tr>
-							<th>File name<SortButton varName="fileName" {...props}/></th>
+							<th>Data object<SortButton varName="fileName" {...props}/></th>
 							<th>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
 							<th>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
 							<th>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
@@ -62,7 +61,7 @@ const SortButton = props => {
 
 const StepButton = props => {
 	const style = props.enabled ? {} : {opacity: 0.65};
-	return <div style={Object.assign({display: 'inline', paddingLeft: 4}, style)}
+	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '200%', position: 'relative', top: -6}, style)}
 		onClick={props.onStep}
 		>
 		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
