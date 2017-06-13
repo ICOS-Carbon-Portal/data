@@ -17,7 +17,7 @@ export const App = props => <div className="container-fluid" style={{marginTop: 
 		</h1>
 	</div>
 
-	<Route props={props} />
+	<Route {...props} />
 
 </div>;
 
@@ -25,12 +25,12 @@ const Route = props => {
 	switch(props.route){
 
 		case 'search':
-			return <Search props={props} />;
+			return <Search {...props} />;
 
 		case 'collections':
-			return <Collections props={props} />;
+			return <Collections {...props} />;
 
 		default:
-			return <Search props={props}  />;
+			return <Search {...props}  />;
 	}
 };

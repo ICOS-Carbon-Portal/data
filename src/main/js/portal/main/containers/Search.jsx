@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {copyprops} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep} from '../actions';
+import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCollection, removeFromCollection} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -12,6 +12,7 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
+		// console.log({props});
 
 		return (
 			<div className="row">
@@ -19,7 +20,9 @@ class Search extends Component {
 					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
 				</div>
 				<div className="col-md-8">
-					<DataObjectsTable {...copyprops(props, ['objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging'])}/>
+					<DataObjectsTable {...copyprops(props, [
+						'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'collection', 'addToCollection', 'removeFromCollection'
+					])}/>
 				</div>
 			</div>
 		);
@@ -31,7 +34,9 @@ function dispatchToProps(dispatch){
 		//queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
-		requestStep: direction => dispatch(requestStep(direction))
+		requestStep: direction => dispatch(requestStep(direction)),
+		addToCollection: objInfo => dispatch(addToCollection(objInfo)),
+		removeFromCollection: id => dispatch(removeFromCollection(id)),
 	};
 }
 

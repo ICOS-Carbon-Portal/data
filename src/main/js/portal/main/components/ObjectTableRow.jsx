@@ -1,30 +1,34 @@
 import React, { Component } from 'react';
+import CollectionIcon from './CollectionIcon.jsx';
 
 export default class ObjectTableRow extends Component {
 	constructor(props){
 		super(props);
 	}
 
-	handleClick(){
+	handlePreviewClick(){
 		console.log({objInfo: this.props});
 	}
 
 	render(){
 		const props = this.props;
+		const objInfo = props.objInfo;
+		const icoStyle = {marginRight: 10, cursor: 'pointer', fontSize: '150%', position: 'relative', verticalAlign: 'middle'};
 
 		return <tr>
 			<td>
+				<CollectionIcon {...props} style={icoStyle} />
 				<span
-					style={{marginRight: 10, cursor: 'pointer', fontSize: '130%'}}
-					title="Add to collection"
-					className="glyphicon glyphicon-shopping-cart"
-					onClick={this.handleClick.bind(this)}
+					style={icoStyle}
+					title="Preview data"
+					className="glyphicon glyphicon-eye-open"
+					onClick={this.handlePreviewClick.bind(this)}
 				/>
-				<a href={props.dobj} target="_blank">{stripExt(props.fileName)}</a>
+				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
-			<td>{formatDate(props.submTime)}</td>
-			<td>{formatDate(props.acqStart)}</td>
-			<td>{formatDate(props.acqEnd)}</td>
+			<td>{formatDate(objInfo.submTime)}</td>
+			<td>{formatDate(objInfo.acqStart)}</td>
+			<td>{formatDate(objInfo.acqEnd)}</td>
 		</tr>;
 	}
 }

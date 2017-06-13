@@ -1,6 +1,8 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
+import {COLLECTION_ITEM_ADDED, COLLECTION_ITEM_REMOVED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
+import CollectionItem from './models/CollectionItem';
 
 export default function(state, action){
 
@@ -50,6 +52,16 @@ export default function(state, action){
 			return update({
 				objectTable: [],
 				paging: updatePaging(state.paging, action.direction)
+			});
+
+		case COLLECTION_ITEM_ADDED:
+			return update({
+				collection: state.collection.addItem(new CollectionItem(action.objInfo))
+			});
+
+		case COLLECTION_ITEM_REMOVED:
+			return update({
+				collection: state.collection.removeItem(action.id)
 			});
 
 		default:
