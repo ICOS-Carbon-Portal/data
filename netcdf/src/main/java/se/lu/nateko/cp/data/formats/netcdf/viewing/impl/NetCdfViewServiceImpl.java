@@ -212,7 +212,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			int dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension());
 			int lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension());
 			int latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
-			
+
 			int sizeLon = ncVar.getDimension(lonDimInd).getLength();
 			int sizeLat = ncVar.getDimension(latDimInd).getLength();
 			boolean latFirst = latDimInd < lonDimInd;
@@ -281,9 +281,12 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			double lonMin = latLonRect.getLonMin();
 			double lonMax = latLonRect.getLonMax();
 
+			Array latValues = ds.findVariable(variables.getLatVariable()).read();
+			boolean latSorted = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1);
+
 			griddataset.close();
 
-			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latMin, latMax, lonMin, lonMax);
+			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, latMin, latMax, lonMin, lonMax);
 
 		} catch (IOException ioe) {
 			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
