@@ -5,6 +5,9 @@ export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
+export const ROUTE_CHANGED = 'ROUTE_CHANGED';
+export const COLLECTION_ITEM_ADDED = 'COLLECTION_ITEM_ADDED';
+export const COLLECTION_ITEM_REMOVED = 'COLLECTION_ITEM_REMOVED';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects} from './backend';
 
 const failWithError = dispatch => error => {
@@ -100,5 +103,25 @@ export const requestStep = direction => dispatch => {
 		direction
 	});
 	dispatch(getFilteredDataObjects);
-}
+};
 
+export const changeRoute = route => dispatch => {
+	dispatch({
+		type: ROUTE_CHANGED,
+		route
+	});
+};
+
+export const addToCollection = objInfo => dispatch => {
+	dispatch({
+		type: COLLECTION_ITEM_ADDED,
+		objInfo
+	});
+};
+
+export const removeFromCollection = id => dispatch => {
+	dispatch({
+		type: COLLECTION_ITEM_REMOVED,
+		id
+	});
+};

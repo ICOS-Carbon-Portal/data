@@ -1,12 +1,12 @@
-import React, { Component } from 'react';
-import Multiselect from 'react-widgets/lib/Multiselect';
+import React from 'react';
 import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep} = props;
+	const {paging, requestStep, collection} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
+	// console.log({props});
 
 	return <div className="panel panel-default">
 		<div className="panel-heading">
@@ -21,14 +21,24 @@ export default function(props){
 				<table className="table">
 					<thead>
 						<tr>
-							<th>File name<SortButton varName="fileName" {...props}/></th>
+							<th>Data object<SortButton varName="fileName" {...props}/></th>
 							<th>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
 							<th>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
 							<th>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
 						</tr>
 					</thead>
 					<tbody>{
-						props.objectsTable.map((objInfo, i) => <ObjectTableRow {...objInfo} key={'dobj_' + i} />)
+						props.objectsTable.map((objInfo, i) => {
+							const addedToCollection = collection.ids.includes(objInfo.dobj);
+
+							return	<ObjectTableRow
+										objInfo={objInfo}
+										addedToCollection={addedToCollection}
+										addToCollection={props.addToCollection}
+										removeFromCollection={props.removeFromCollection}
+										key={'dobj_' + i}
+									/>;
+						})
 					}</tbody>
 				</table>
 			</ScreenHeightColumn>
@@ -62,7 +72,7 @@ const SortButton = props => {
 
 const StepButton = props => {
 	const style = props.enabled ? {} : {opacity: 0.65};
-	return <div style={Object.assign({display: 'inline', paddingLeft: 4}, style)}
+	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '200%', position: 'relative', top: -6}, style)}
 		onClick={props.onStep}
 		>
 		<span className={'glyphicon glyphicon-step-' + props.direction}></span>

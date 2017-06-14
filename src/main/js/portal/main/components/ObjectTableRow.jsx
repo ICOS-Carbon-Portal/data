@@ -1,12 +1,40 @@
-import React from 'react';
+import React, { Component } from 'react';
+import CollectionIcon from './CollectionIcon.jsx';
 
-export default function(props){
-	return <tr>
-		<td><a href={props.dobj} target="_blank">{props.fileName}</a></td>
-		<td>{formatDate(props.submTime)}</td>
-		<td>{formatDate(props.acqStart)}</td>
-		<td>{formatDate(props.acqEnd)}</td>
-	</tr>;
+export default class ObjectTableRow extends Component {
+	constructor(props){
+		super(props);
+	}
+
+	handlePreviewClick(){
+		console.log({objInfo: this.props});
+	}
+
+	render(){
+		const props = this.props;
+		const objInfo = props.objInfo;
+		const icoStyle = {marginRight: 10, cursor: 'pointer', fontSize: '150%', position: 'relative', verticalAlign: 'middle'};
+
+		return <tr>
+			<td>
+				<CollectionIcon {...props} style={icoStyle} />
+				<span
+					style={icoStyle}
+					title="Preview data"
+					className="glyphicon glyphicon-eye-open"
+					onClick={this.handlePreviewClick.bind(this)}
+				/>
+				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
+			</td>
+			<td>{formatDate(objInfo.submTime)}</td>
+			<td>{formatDate(objInfo.acqStart)}</td>
+			<td>{formatDate(objInfo.acqEnd)}</td>
+		</tr>;
+	}
+}
+
+function stripExt(fileName){
+	return fileName.slice(0, fileName.lastIndexOf('.'));
 }
 
 function formatDate(d){

@@ -4,6 +4,7 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {getAllSpecTables} from './actions';
 import CompositeSpecTable from './models/CompositeSpecTable';
+import Collection from './models/Collection';
 
 
 const initState = {
@@ -12,7 +13,8 @@ const initState = {
 	specTable: new CompositeSpecTable({}),
 	objectsTable: [],
 	sorting: {objCount: 0},
-	paging: {}
+	paging: {},
+	collection: new Collection()
 };
 
 // function logger({ getState }) {
