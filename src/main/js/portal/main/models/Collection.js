@@ -19,4 +19,20 @@ export default class Collection {
 	get count(){
 		return this._items.length;
 	}
+
+	get items(){
+		return this._items;
+	}
+
+	item(id){
+		return this._items.find(item => item.id === id);
+	}
+
+	get name(){
+		return this._name;
+	}
+
+	setName(name){
+		this._name = name;
+	}
 }
