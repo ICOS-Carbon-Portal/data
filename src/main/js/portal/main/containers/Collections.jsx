@@ -9,7 +9,7 @@ class Collections extends Component {
 
 	render(){
 		return (
-			<div>Hello</div>
+			<div>Hello collections</div>
 		);
 	}
 }

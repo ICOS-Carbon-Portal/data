@@ -15,4 +15,8 @@ export default class Collection {
 	get ids(){
 		return this._items.map(item => item.id);
 	}
+
+	get count(){
+		return this._items.length;
+	}
 }

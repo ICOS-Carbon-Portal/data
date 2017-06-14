@@ -23,13 +23,13 @@ export default class CollectionIcon extends Component {
 				? <span
 					style={style}
 					title="Remove from collection"
-					className="glyphicon glyphicon-minus-sign"
+					className="glyphicon glyphicon-minus-sign text-danger"
 					onClick={this.handleRemoveFromCollectionClick.bind(this)}
 				/>
 				: <span
 					style={style}
 					title="Add to collection"
-					className="glyphicon glyphicon-plus-sign"
+					className="glyphicon glyphicon-plus-sign text-primary"
 					onClick={this.handleAddToCollectionClick.bind(this)}
 				/>
 			}</span>
