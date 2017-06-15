@@ -3,7 +3,7 @@ import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep, collection} = props;
+	const {paging, requestStep, cart} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
 	// console.log({props});
@@ -29,13 +29,13 @@ export default function(props){
 					</thead>
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
-							const addedToCollection = collection.ids.includes(objInfo.dobj);
+							const addedToCart = cart.ids.includes(objInfo.dobj);
 
 							return	<ObjectTableRow
 										objInfo={objInfo}
-										addedToCollection={addedToCollection}
-										addToCollection={props.addToCollection}
-										removeFromCollection={props.removeFromCollection}
+										addedToCart={addedToCart}
+										addToCart={props.addToCart}
+										removeFromCart={props.removeFromCart}
 										key={'dobj_' + i}
 									/>;
 						})

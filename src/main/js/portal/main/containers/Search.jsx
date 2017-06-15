@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {copyprops} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCollection, removeFromCollection} from '../actions';
+import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -21,7 +21,7 @@ class Search extends Component {
 				</div>
 				<div className="col-md-8">
 					<DataObjectsTable {...copyprops(props, [
-						'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'collection', 'addToCollection', 'removeFromCollection'
+						'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'cart', 'addToCart', 'removeFromCart'
 					])}/>
 				</div>
 			</div>
@@ -35,8 +35,8 @@ function dispatchToProps(dispatch){
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
-		addToCollection: objInfo => dispatch(addToCollection(objInfo)),
-		removeFromCollection: id => dispatch(removeFromCollection(id)),
+		addToCart: objInfo => dispatch(addToCart(objInfo)),
+		removeFromCart: id => dispatch(removeFromCart(id)),
 	};
 }
 

@@ -6,8 +6,8 @@ export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
-export const COLLECTION_ITEM_ADDED = 'COLLECTION_ITEM_ADDED';
-export const COLLECTION_ITEM_REMOVED = 'COLLECTION_ITEM_REMOVED';
+export const CART_ITEM_ADDED = 'CART_ITEM_ADDED';
+export const CART_ITEM_REMOVED = 'CART_ITEM_REMOVED';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects} from './backend';
 
 const failWithError = dispatch => error => {
@@ -112,16 +112,16 @@ export const changeRoute = route => dispatch => {
 	});
 };
 
-export const addToCollection = objInfo => dispatch => {
+export const addToCart = objInfo => dispatch => {
 	dispatch({
-		type: COLLECTION_ITEM_ADDED,
+		type: CART_ITEM_ADDED,
 		objInfo
 	});
 };
 
-export const removeFromCollection = id => dispatch => {
+export const removeFromCart = id => dispatch => {
 	dispatch({
-		type: COLLECTION_ITEM_REMOVED,
+		type: CART_ITEM_REMOVED,
 		id
 	});
 };

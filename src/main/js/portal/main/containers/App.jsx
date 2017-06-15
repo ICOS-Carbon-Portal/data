@@ -2,11 +2,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
-import Collections from './Collections.jsx';
+import DataCart from './DataCart.jsx';
 import {changeRoute} from '../actions';
 
 const ROUTE_SEARCH = 'ROUTE_SEARCH';
-const ROUTE_COLLECTION = 'ROUTE_COLLECTION';
+const ROUTE_CART = 'ROUTE_CART';
 
 export class App extends Component {
 	constructor(props){
@@ -16,7 +16,7 @@ export class App extends Component {
 	handleRouteClick(){
 		const currentRoute = this.props.route;
 		const newRoute = !currentRoute || currentRoute === ROUTE_SEARCH
-			? ROUTE_COLLECTION
+			? ROUTE_CART
 			: ROUTE_SEARCH;
 
 		this.props.changeRoute(newRoute);
@@ -41,7 +41,7 @@ export class App extends Component {
 
 						<SwitchRouteBtn
 							currentRoute={props.route}
-							collection={props.collection}
+							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
 					</h1>
@@ -54,16 +54,13 @@ export class App extends Component {
 }
 
 const SwitchRouteBtn = props => {
-	const {currentRoute, collection, action} = props;
-	const colCount = collection.count;
-
-	switch(currentRoute){
+	switch(props.currentRoute){
 
 		case ROUTE_SEARCH:
 			return <RouteSearchBtn {...props} />;
 
-		case ROUTE_COLLECTION:
-			return <RouteCollectionBtn {...props} />;
+		case ROUTE_CART:
+			return <RouteCartBtn {...props} />;
 
 		default:
 			return <RouteSearchBtn {...props} />;
@@ -71,20 +68,20 @@ const SwitchRouteBtn = props => {
 };
 
 const RouteSearchBtn = props => {
-	const {collection, action} = props;
-	const colCount = collection.count;
+	const {cart, action} = props;
+	const colCount = cart.count;
 
 	return (
 		<button className="btn btn-primary" onClick={action} style={{float: 'right'}}>
-			Switch to collection
+			Switch to data cart
 			<span style={{marginLeft: 5}} className="badge">
-						{colCount} {colCount === 1 ? ' item' : ' items'}
-					</span>
+				{colCount} {colCount === 1 ? ' item' : ' items'}
+			</span>
 		</button>
 	);
 };
 
-const RouteCollectionBtn = props => {
+const RouteCartBtn = props => {
 	const {action} = props;
 
 	return (
@@ -100,8 +97,8 @@ const Route = props => {
 		case ROUTE_SEARCH:
 			return <Search {...props} />;
 
-		case ROUTE_COLLECTION:
-			return <Collections {...props} />;
+		case ROUTE_CART:
+			return <DataCart {...props} />;
 
 		default:
 			return <Search {...props}  />;
@@ -112,7 +109,7 @@ function stateToProps(state){
 	return {
 		route: state.route,
 		toasterData: state.toasterData,
-		collection: state.collection
+		cart: state.cart
 	};
 }
 

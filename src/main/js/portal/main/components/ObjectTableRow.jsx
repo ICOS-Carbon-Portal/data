@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import CollectionIcon from './CollectionIcon.jsx';
+import CartIcon from './CartIcon.jsx';
 
 export default class ObjectTableRow extends Component {
 	constructor(props){
@@ -17,7 +17,7 @@ export default class ObjectTableRow extends Component {
 
 		return <tr>
 			<td>
-				<CollectionIcon {...props} style={icoStyle} />
+				<CartIcon {...props} style={icoStyle} />
 				<span
 					style={icoStyle}
 					title="Preview data"

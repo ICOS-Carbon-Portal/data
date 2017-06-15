@@ -1,4 +1,4 @@
-export default class CollectionItem {
+export default class CartItem {
 	constructor(dataobject){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;

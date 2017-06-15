@@ -4,7 +4,7 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {getAllSpecTables} from './actions';
 import CompositeSpecTable from './models/CompositeSpecTable';
-import Collection from './models/Collection';
+import Cart from './models/Cart';
 
 
 const initState = {
@@ -14,7 +14,7 @@ const initState = {
 	objectsTable: [],
 	sorting: {objCount: 0},
 	paging: {},
-	collection: new Collection()
+	cart: new Cart()
 };
 
 // function logger({ getState }) {

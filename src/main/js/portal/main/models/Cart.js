@@ -1,15 +1,15 @@
-export default class Collection {
+export default class Cart {
 	constructor(name, items){
-		this._name = name || "My collection";
+		this._name = name || "My data cart";
 		this._items = items || [];
 	}
 
-	addItem(collectionItem){
-		return new Collection(this._name, this._items.concat(collectionItem));
+	addItem(cartItem){
+		return new Cart(this._name, this._items.concat(cartItem));
 	}
 
 	removeItem(id){
-		return new Collection(this._name, this._items.filter(item => item.id !== id));
+		return new Cart(this._name, this._items.filter(item => item.id !== id));
 	}
 
 	get ids(){

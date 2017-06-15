@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import CollectionPanel from '../components/CollectionPanel.jsx';
+import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
 
 
-class Collections extends Component {
+class DataCart extends Component {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -12,15 +12,16 @@ class Collections extends Component {
 		}
 	}
 
-	handleSelectItem(id){
-		this.setState({selectedItem: this.props.collection.item(id)});
+	handlePreviewItem(id){
+		// console.log({id});
+		this.setState({selectedItem: this.props.cart.item(id)});
 	}
 
 	render(){
 		return (
 			<div className="row">
 				<div className="col-md-4">
-					<CollectionPanel collection={this.props.collection} selectItemAction={this.handleSelectItem.bind(this)} />
+					<CartPanel cart={this.props.cart} previewItemAction={this.handlePreviewItem.bind(this)} />
 				</div>
 				<div className="col-md-8">
 					<Preview item={this.state.selectedItem}/>
@@ -36,4 +37,4 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state, dispatchToProps)(Collections);
+export default connect(state => state, dispatchToProps)(DataCart);
