@@ -1,29 +1,26 @@
 import React, { Component } from 'react';
+import {copyprops} from 'icos-cp-utils';
 import CartIcon from './CartIcon.jsx';
+import PreviewIcon from './PreviewIcon.jsx';
+
 
 export default class ObjectTableRow extends Component {
 	constructor(props){
 		super(props);
 	}
 
-	handlePreviewClick(){
-		console.log({objInfo: this.props});
+	handlePreviewClick(id){
+		console.log({id, preview: this.props.objInfo});
 	}
 
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		const icoStyle = {marginRight: 10, cursor: 'pointer', fontSize: '150%', position: 'relative', verticalAlign: 'middle'};
 
 		return <tr>
 			<td>
-				<CartIcon {...props} style={icoStyle} />
-				<span
-					style={icoStyle}
-					title="Preview data"
-					className="glyphicon glyphicon-eye-open"
-					onClick={this.handlePreviewClick.bind(this)}
-				/>
+				<CartIcon id={objInfo.dobj} {...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])} />
+				<PreviewIcon id={objInfo.dobj} clickAction={this.handlePreviewClick.bind(this)} />
 				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatDate(objInfo.submTime)}</td>

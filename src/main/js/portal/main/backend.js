@@ -1,7 +1,7 @@
 import {sparql} from 'icos-cp-backend';
 import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
-import config from '../../common/main/config';
+import config from './config';
 
 export function fetchAllSpecTables() {
 	return Promise.all(

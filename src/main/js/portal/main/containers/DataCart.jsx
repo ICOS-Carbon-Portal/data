@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
+import {removeFromCart} from '../actions';
 
 
 class DataCart extends Component {
@@ -18,10 +19,16 @@ class DataCart extends Component {
 	}
 
 	render(){
+		const props = this.props;
+
 		return (
 			<div className="row">
 				<div className="col-md-4">
-					<CartPanel cart={this.props.cart} previewItemAction={this.handlePreviewItem.bind(this)} />
+					<CartPanel
+						cart={props.cart}
+						previewItemAction={this.handlePreviewItem.bind(this)}
+						removeFromCart={props.removeFromCart}
+					/>
 				</div>
 				<div className="col-md-8">
 					<Preview item={this.state.selectedItem}/>
@@ -33,7 +40,7 @@ class DataCart extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-
+		removeFromCart: id => dispatch(removeFromCart(id))
 	};
 }
 

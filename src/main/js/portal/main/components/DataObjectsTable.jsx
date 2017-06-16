@@ -29,11 +29,11 @@ export default function(props){
 					</thead>
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
-							const addedToCart = cart.ids.includes(objInfo.dobj);
+							const isAddedToCart = cart.ids.includes(objInfo.dobj);
 
 							return	<ObjectTableRow
 										objInfo={objInfo}
-										addedToCart={addedToCart}
+										isAddedToCart={isAddedToCart}
 										addToCart={props.addToCart}
 										removeFromCart={props.removeFromCart}
 										key={'dobj_' + i}
@@ -72,7 +72,7 @@ const SortButton = props => {
 
 const StepButton = props => {
 	const style = props.enabled ? {} : {opacity: 0.65};
-	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '200%', position: 'relative', top: -6}, style)}
+	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6}, style)}
 		onClick={props.onStep}
 		>
 		<span className={'glyphicon glyphicon-step-' + props.direction}></span>

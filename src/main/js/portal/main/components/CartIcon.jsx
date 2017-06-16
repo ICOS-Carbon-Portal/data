@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import config from '../config';
 
 export default class CartIcon extends Component {
 	constructor(props){
@@ -11,23 +12,23 @@ export default class CartIcon extends Component {
 	}
 
 	handleRemoveFromCartClick(){
-		const {objInfo, removeFromCart} = this.props;
-		if (removeFromCart) removeFromCart(objInfo.dobj);
+		const {id, removeFromCart} = this.props;
+		if (removeFromCart) removeFromCart(id);
 	}
 
 	render(){
-		const {addedToCart, style} = this.props;
+		const {isAddedToCart, style} = this.props;
 
 		return(
-			<span>{addedToCart
+			<span>{isAddedToCart
 				? <span
-					style={style}
+					style={config.iconStyle}
 					title="Remove from data cart"
 					className="glyphicon glyphicon-minus-sign text-danger"
 					onClick={this.handleRemoveFromCartClick.bind(this)}
 				/>
 				: <span
-					style={style}
+					style={config.iconStyle}
 					title="Add to data cart"
 					className="glyphicon glyphicon-plus-sign text-primary"
 					onClick={this.handleAddToCartClick.bind(this)}
