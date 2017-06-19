@@ -6,9 +6,9 @@ export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
-export const CART_ITEM_ADDED = 'CART_ITEM_ADDED';
-export const CART_ITEM_REMOVED = 'CART_ITEM_REMOVED';
-import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects} from './backend';
+export const CART_UPDATED = 'CART_UPDATED';
+import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
+import CartItem from './models/CartItem';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -112,16 +112,35 @@ export const changeRoute = route => dispatch => {
 	});
 };
 
-export const addToCart = objInfo => dispatch => {
-	dispatch({
-		type: CART_ITEM_ADDED,
-		objInfo
-	});
+export const fetchCart = dispatch => {
+	getCart().then(
+		cart => dispatch({
+			type: CART_UPDATED,
+			cart
+		})
+	);
 };
 
-export const removeFromCart = id => dispatch => {
-	dispatch({
-		type: CART_ITEM_REMOVED,
-		id
-	});
+export const addToCart = objInfo => (dispatch, getState) => {
+	const state = getState();
+	const cart = state.cart.addItem(new CartItem(objInfo));
+
+	saveCart(cart).then(
+		dispatch({
+			type: CART_UPDATED,
+			cart
+		})
+	);
+};
+
+export const removeFromCart = id => (dispatch, getState) => {
+	const state = getState();
+	const cart = state.cart.removeItem(id);
+
+	saveCart(cart).then(
+		dispatch({
+			type: CART_UPDATED,
+			cart
+		})
+	);
 };

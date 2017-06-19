@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {getAllSpecTables} from './actions';
+import {getAllSpecTables, fetchCart} from './actions';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Cart from './models/Cart';
 
@@ -34,6 +34,7 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
+	store.dispatch(fetchCart);
 	store.dispatch(getAllSpecTables);
 	return store;
 }

@@ -2,6 +2,8 @@ import {sparql} from 'icos-cp-backend';
 import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
 import config from '../../common/main/config';
+import Cart from './models/Cart';
+import CartItem from './models/CartItem';
 
 export function fetchAllSpecTables() {
 	return Promise.all(
@@ -59,6 +61,15 @@ export const searchStations = search => {
 					: Promise.reject(new Error("Could not get stations from meta"));
 			}
 		);
+};
+
+export const saveCart = cart => {
+	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
+};
+
+export const getCart = () => {
+	const ls = localStorage.getItem('cp-cart');
+	return Promise.resolve(new Cart().fromStorage(ls));
 };
 
 

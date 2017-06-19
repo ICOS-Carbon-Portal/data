@@ -1,8 +1,8 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {ROUTE_CHANGED, CART_ITEM_ADDED, CART_ITEM_REMOVED} from './actions';
+import {ROUTE_CHANGED, CART_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
-import CartItem from './models/CartItem';
+
 
 export default function(state, action){
 
@@ -59,14 +59,9 @@ export default function(state, action){
 				route: action.route
 			});
 
-		case CART_ITEM_ADDED:
+		case CART_UPDATED:
 			return update({
-				cart: state.cart.addItem(new CartItem(action.objInfo))
-			});
-
-		case CART_ITEM_REMOVED:
-			return update({
-				cart: state.cart.removeItem(action.id)
+				cart: action.cart
 			});
 
 		default:
