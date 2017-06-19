@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import config from '../config';
+import {styles} from './styles';
 
 export default class CartIcon extends Component {
 	constructor(props){
@@ -22,13 +22,13 @@ export default class CartIcon extends Component {
 		return(
 			<span>{isAddedToCart
 				? <span
-					style={config.iconStyle}
+					style={styles.clickIcon}
 					title="Remove from data cart"
 					className="glyphicon glyphicon-minus-sign text-danger"
 					onClick={this.handleRemoveFromCartClick.bind(this)}
 				/>
 				: <span
-					style={config.iconStyle}
+					style={styles.clickIcon}
 					title="Add to data cart"
 					className="glyphicon glyphicon-plus-sign text-primary"
 					onClick={this.handleAddToCartClick.bind(this)}

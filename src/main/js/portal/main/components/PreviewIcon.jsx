@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import config from '../config';
+import {styles} from './styles';
 
 export default class PreviewIcon extends Component {
 	constructor(props){
@@ -13,7 +13,7 @@ export default class PreviewIcon extends Component {
 	render(){
 		return(
 			<span
-				style={config.iconStyle}
+				style={styles.clickIcon}
 				title="Preview data"
 				className="glyphicon glyphicon-eye-open"
 				onClick={this.handlePreviewClick.bind(this)}
