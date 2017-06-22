@@ -3,7 +3,7 @@ import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
 import config from '../../common/main/config';
 import Cart from './models/Cart';
-import CartItem from './models/CartItem';
+
 
 export function fetchAllSpecTables() {
 	return Promise.all(
@@ -23,14 +23,12 @@ function fetchSpecTable(queryFactory) {
 		.then(sparqlResultToSpecTable);
 }
 
-
 export function fetchFilteredDataObjects(dobjRequest){
 	const query = queries.listFilteredDataObjects(config, dobjRequest);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(sparqlResultToColNamesAndRows);
 }
-
 
 export const searchDobjs = search => {
 	const query = queries.findDobjs(config, search);
@@ -47,7 +45,6 @@ export const searchDobjs = search => {
 		);
 };
 
-
 export const searchStations = search => {
 	const query = queries.findStations(config, search);
 
@@ -63,6 +60,31 @@ export const searchStations = search => {
 		);
 };
 
+export const getObjColInfo = dobj => {
+	const query = queries.dobjColInfo(config, dobj);
+
+	return sparql(query, config.sparqlEndpoint)
+		.then(
+			sparqlResult => {
+				const vars = sparqlResult.head.vars;
+				const bindings = sparqlResult.results.bindings;
+
+				const colInfo = vars.map(v => {
+					return {
+						name: v,
+						data: bindings.map(b => {
+							return b[v].value === "?" ? undefined : b[v].value;
+						})
+					};
+				});
+
+				return bindings
+					? Promise.resolve(colInfo)
+					: Promise.reject(new Error("Could not find dobj " + dobj));
+			}
+		);
+};
+
 export const saveCart = cart => {
 	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
@@ -71,7 +93,6 @@ export const getCart = () => {
 	const ls = localStorage.getItem('cp-cart');
 	return Promise.resolve(new Cart().fromStorage(ls));
 };
-
 
 function sparqlResultToColNamesAndRows(sparqlResult) {
 	const columnNames = sparqlResult.head.vars;
@@ -100,5 +121,3 @@ function sparqlBindingToValue(b){
 		default: return b.value;
 	}
 }
-
-

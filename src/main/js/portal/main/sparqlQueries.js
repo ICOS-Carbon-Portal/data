@@ -139,5 +139,20 @@ select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
-}
+};
 
+//TODO: Perhaps merge this query with 'specColumnMeta' above
+export const dobjColInfo = (config, dobj) => {
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+select ?colTitle ?label ?valType
+(if(bound(?unit), ?unit, "?") as ?quantityUnit)
+where{
+    <${dobj}> cpmeta:hasObjectSpec ?spec .
+	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
+	?column cpmeta:hasColumnTitle ?colTitle .
+	?column cpmeta:hasValueType ?valTypeRes .
+	?column rdfs:label ?label .
+	?valTypeRes rdfs:label ?valType .
+	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
+}`;
+};

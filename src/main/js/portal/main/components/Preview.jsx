@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import PreviewTimeSerie from './PreviewTimeSerie.jsx';
 
 export default class Preview extends Component {
 	constructor(props){
@@ -6,22 +7,8 @@ export default class Preview extends Component {
 	}
 
 	render(){
-		const {item} = this.props;
-		// console.log({item});
-
 		return (
-			<div>
-			{item
-				? <div className="panel panel-default">
-					<div className="panel-heading">
-						<h3 className="panel-title">Preview of {item.itemName}</h3>
-					</div>
-					<div className="panel-body">
-						The preview
-					</div>
-				</div>
-				: null
-			}</div>
+			<PreviewTimeSerie {...this.props} />
 		);
 	}
 }

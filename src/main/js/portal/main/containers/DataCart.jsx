@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
-import {removeFromCart} from '../actions';
+import {removeFromCart, fetchObjColInfo} from '../actions';
 
 
 class DataCart extends Component {
@@ -14,24 +14,31 @@ class DataCart extends Component {
 	}
 
 	handlePreviewItem(id){
-		// console.log({id});
 		this.setState({selectedItem: this.props.cart.item(id)});
+		if (!this.props.cache.dobjColumns.some(dc => dc.name === id)) {
+			this.props.fetchObjColInfo(id);
+		}
 	}
 
 	render(){
 		const props = this.props;
+		// console.log({DataCartProps: props});
 
 		return (
 			<div className="row">
 				<div className="col-md-4">
 					<CartPanel
 						cart={props.cart}
+						dobjColumns={props.cache.dobjColumns}
 						previewItemAction={this.handlePreviewItem.bind(this)}
 						removeFromCart={props.removeFromCart}
 					/>
 				</div>
 				<div className="col-md-8">
-					<Preview item={this.state.selectedItem}/>
+					<Preview
+						item={this.state.selectedItem}
+						dobjColumns={props.cache.dobjColumns}
+					/>
 				</div>
 			</div>
 		);
@@ -40,7 +47,8 @@ class DataCart extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-		removeFromCart: id => dispatch(removeFromCart(id))
+		removeFromCart: id => dispatch(removeFromCart(id)),
+		fetchObjColInfo: id => dispatch(fetchObjColInfo(id))
 	};
 }
 

@@ -7,7 +7,8 @@ export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
-import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
+export const COL_INFO_FETCHED = 'COL_INFO_FETCHED';
+import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart, getObjColInfo} from './backend';
 import CartItem from './models/CartItem';
 
 const failWithError = dispatch => error => {
@@ -142,5 +143,17 @@ export const removeFromCart = id => (dispatch, getState) => {
 			type: CART_UPDATED,
 			cart
 		})
+	);
+};
+
+export const fetchObjColInfo = id => dispatch => {
+	getObjColInfo(id).then(
+		colInfo => {
+			dispatch({
+				type: COL_INFO_FETCHED,
+				id,
+				colInfo
+			})
+		}
 	);
 };

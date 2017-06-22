@@ -14,7 +14,10 @@ const initState = {
 	objectsTable: [],
 	sorting: {objCount: 0},
 	paging: {},
-	cart: new Cart()
+	cart: new Cart(),
+	cache: {
+		dobjColumns: []
+	}
 };
 
 // function logger({ getState }) {

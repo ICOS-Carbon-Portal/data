@@ -1,5 +1,5 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {ROUTE_CHANGED, CART_UPDATED} from './actions';
+import {ROUTE_CHANGED, CART_UPDATED, COL_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -64,6 +64,11 @@ export default function(state, action){
 				cart: action.cart
 			});
 
+		case COL_INFO_FETCHED:
+			return update({
+				cache: updateCacheArr(state.cache, 'dobjColumns', action.id, action.colInfo)
+			});
+
 		default:
 			return update({event: undefined});
 	}
@@ -72,6 +77,15 @@ export default function(state, action){
 		const updates = Array.from(arguments);
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
+}
+
+function updateCacheArr(cache, cachePart, key, val){
+	return Object.assign({}, cache, {
+		[cachePart]: cache[cachePart].concat([{
+			name: key,
+			data: val
+			}])
+	});
 }
 
 function updateSorting(old, varName){

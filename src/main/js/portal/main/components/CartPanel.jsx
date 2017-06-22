@@ -6,10 +6,13 @@ import PreviewIcon from './PreviewIcon.jsx';
 export default class CartPanel extends Component {
 	constructor(props){
 		super(props);
+		this.state = {
+			selectedItemId: undefined
+		};
 	}
 
-	handlePreviewClick(id){
-		console.log({id, preview: this.props});
+	handleClick(id){
+		this.setState({selectedItemId: id});
 	}
 
 	render(){
@@ -27,8 +30,10 @@ export default class CartPanel extends Component {
 							cart.items.map((item, i) =>
 								<Item
 									item={item}
+									selected={this.state.selectedItemId === item.id}
 									removeFromCart={removeFromCart}
 									previewItemAction={previewItemAction}
+									clickAction={this.handleClick.bind(this)}
 									key={'ci' + i}
 								/>
 							)}
@@ -41,8 +46,16 @@ export default class CartPanel extends Component {
 }
 
 const Item = props => {
+	const action = () => {
+		props.clickAction(props.item.id);
+	};
+
+	const className = props.selected
+		? "list-group-item list-group-item-info"
+		: "list-group-item";
+
 	return (
-		<li className="list-group-item">
+		<li className={className} onClick={action}>
 			<CartIcon id={props.item.id} removeFromCart={props.removeFromCart} isAddedToCart={true} />
 			<PreviewIcon id={props.item.id} clickAction={props.previewItemAction} />
 			<a href={props.item.id} target="_blank">{props.item.itemName}</a>
