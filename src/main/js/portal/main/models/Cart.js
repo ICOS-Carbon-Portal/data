@@ -1,4 +1,4 @@
-import CartItem from './CartItem';
+import CartItem, {Settings} from './CartItem';
 
 export default class Cart {
 	constructor(name, items){
@@ -12,7 +12,8 @@ export default class Cart {
 		var cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
 
 		jsonCartItems.forEach(item => {
-			cart = cart.addItem(new CartItem(item._dataobject));
+			const settings = new Settings(item._settings._xAxis, item._settings._yAxis, item._settings._type);
+			cart = cart.addItem(new CartItem(item._dataobject, settings));
 		});
 
 		return cart;
@@ -24,6 +25,16 @@ export default class Cart {
 
 	removeItem(id){
 		return new Cart(this._name, this._items.filter(item => item.id !== id));
+	}
+
+	withItemSetting(id, setting, value){
+		const items = this._items.map(item => {
+			return item.id === id
+				? item.withSetting(setting, value)
+				: item;
+		});
+
+		return new Cart(this._name, items);
 	}
 
 	get ids(){

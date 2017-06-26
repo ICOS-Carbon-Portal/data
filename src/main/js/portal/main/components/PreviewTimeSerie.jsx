@@ -3,11 +3,6 @@ import React, { Component } from 'react';
 export default class PreviewTimeSerie extends Component {
 	constructor(props){
 		super(props);
-		this.state = {
-			xAxis: undefined,
-			yAxis: undefined,
-			chartType: 'scatter'
-		};
 		this.axisOptions = undefined;
 	}
 
@@ -19,28 +14,35 @@ export default class PreviewTimeSerie extends Component {
 		if (nextItem && nextDobjColumns.length){
 			const axisOptions = getDataFromCache('colTitle', getDataFromCache(nextItem.id, nextDobjColumns));
 
-			if (axisOptions && !isArrEqual(this.axisOptions, axisOptions)) {
+			if (axisOptions) {
+				const xAxisSetting = axisOptions.find(ao => ao === 'TIMESTAMP');
 				this.axisOptions = axisOptions;
-				this.setState({
-					xAxis: axisOptions.find(ao => ao === 'TIMESTAMP'),
-					yAxis: undefined
-				});
+
+				if(this.props.setCartItemSetting && xAxisSetting && !nextItem.settings.xAxis) {
+					console.log("Save xAxis setting");
+					this.props.setCartItemSetting(this.props.item.id, 'xAxis', xAxisSetting);
+				}
 			}
 		}
 	}
 
 	handleSelectAction(ev){
-		const name = ev.target.name;
+		const setting = ev.target.name;
 		const selectedIdx = ev.target.selectedIndex;
 		const selectedVal = ev.target.selectedOptions[0].innerHTML;
+		// console.log({id: this.props.item.id, setting, selectedVal, props: this.props});
 
-		if(selectedIdx > 0) this.setState({[name]: selectedVal});
+		if(selectedIdx > 0 && this.props.setCartItemSetting) {
+			this.props.setCartItemSetting(this.props.item.id, setting, selectedVal);
+		}
 	}
 
 	render(){
-		const {item, dobjColumns} = this.props;
-		const {xAxis, yAxis, chartType} = this.state;
-		// console.log({item, dobjColumns, axisOptions: this.axisOptions, props: this.props, xAxis, yAxis, chartType});
+		const {item} = this.props;
+		const {xAxis, yAxis, type} = this.props.item
+			? this.props.item.settings
+			: {xAxis: undefined, yAxis: undefined, type: undefined};
+		// console.log({item, dobjColumns, axisOptions: this.axisOptions, props: this.props, xAxis, yAxis, type});
 
 		return (
 			<div>
@@ -67,9 +69,9 @@ export default class PreviewTimeSerie extends Component {
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 									<Selector
-										name="chartType"
+										name="type"
 										label="Chart type"
-										selected={chartType}
+										selected={type}
 										options={['scatter', 'line']}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
@@ -80,7 +82,7 @@ export default class PreviewTimeSerie extends Component {
 									id={item.id}
 									x={xAxis}
 									y={yAxis}
-									type={chartType}
+									type={type}
 								/>
 							</div>
 						</div>

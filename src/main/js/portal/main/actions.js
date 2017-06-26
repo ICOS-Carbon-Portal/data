@@ -126,18 +126,24 @@ export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
 	const cart = state.cart.addItem(new CartItem(objInfo));
 
-	saveCart(cart).then(
-		dispatch({
-			type: CART_UPDATED,
-			cart
-		})
-	);
+	updateCart(cart, dispatch);
 };
 
 export const removeFromCart = id => (dispatch, getState) => {
 	const state = getState();
 	const cart = state.cart.removeItem(id);
 
+	updateCart(cart, dispatch);
+};
+
+export const setCartItemSetting = (id, setting, value) => (dispatch, getState) => {
+	const state = getState();
+	const cart = state.cart.withItemSetting(id, setting, value);
+
+	updateCart(cart, dispatch);
+};
+
+const updateCart = (cart, dispatch) => {
 	saveCart(cart).then(
 		dispatch({
 			type: CART_UPDATED,
