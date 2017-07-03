@@ -3,54 +3,33 @@ import React, { Component } from 'react';
 export default class PreviewTimeSerie extends Component {
 	constructor(props){
 		super(props);
-		this.axisOptions = undefined;
-	}
-
-	componentWillReceiveProps(nextProps){
-		const prevItem = this.props.item;
-		const nextItem = nextProps.item;
-		const nextDobjColumns = nextProps.dobjColumns;
-
-		if (nextItem && nextDobjColumns.length){
-			const axisOptions = getDataFromCache('colTitle', getDataFromCache(nextItem.id, nextDobjColumns));
-
-			if (axisOptions) {
-				const xAxisSetting = axisOptions.find(ao => ao === 'TIMESTAMP');
-				this.axisOptions = axisOptions;
-
-				if(this.props.setCartItemSetting && xAxisSetting && !nextItem.settings.xAxis) {
-					console.log("Save xAxis setting");
-					this.props.setCartItemSetting(this.props.item.id, 'xAxis', xAxisSetting);
-				}
-			}
-		}
 	}
 
 	handleSelectAction(ev){
+		const id = this.props.preview.previewItem.id;
 		const setting = ev.target.name;
 		const selectedIdx = ev.target.selectedIndex;
 		const selectedVal = ev.target.selectedOptions[0].innerHTML;
-		// console.log({id: this.props.item.id, setting, selectedVal, props: this.props});
 
-		if(selectedIdx > 0 && this.props.setCartItemSetting) {
-			this.props.setCartItemSetting(this.props.item.id, setting, selectedVal);
+		if (selectedIdx > 0 && this.props.setPreviewItemSetting) {
+			this.props.setPreviewItemSetting(id, setting, selectedVal);
 		}
 	}
 
 	render(){
-		const {item} = this.props;
-		const {xAxis, yAxis, type} = this.props.item
-			? this.props.item.settings
+		const {preview, closePreviewAction, setPreviewItemSetting} = this.props;
+		const {xAxis, yAxis, type} = preview.previewItem
+			? preview.previewItem.settings
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
-		// console.log({item, dobjColumns, axisOptions: this.axisOptions, props: this.props, xAxis, yAxis, type});
 
 		return (
 			<div>
-				{item && this.axisOptions
+				{preview
 					? <div>
 						<div className="panel panel-default">
 							<div className="panel-heading">
-								<h3 className="panel-title">Preview of {item.itemName}</h3>
+								<span className="panel-title">Preview of {preview.previewItem.itemName}</span>
+								<CloseBtn closePreviewAction={closePreviewAction} />
 							</div>
 							<div className="panel-body">
 								<div className="row">
@@ -58,14 +37,14 @@ export default class PreviewTimeSerie extends Component {
 										name="xAxis"
 										label="X axis"
 										selected={xAxis}
-										options={this.axisOptions}
+										options={preview.previewOptions.options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 									<Selector
 										name="yAxis"
 										label="Y axis"
 										selected={yAxis}
-										options={this.axisOptions}
+										options={preview.previewOptions.options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 									<Selector
@@ -79,7 +58,7 @@ export default class PreviewTimeSerie extends Component {
 							</div>
 							<div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
 								<TimeSeries
-									id={item.id}
+									id={preview.previewItem.id}
 									x={xAxis}
 									y={yAxis}
 									type={type}
@@ -93,18 +72,18 @@ export default class PreviewTimeSerie extends Component {
 	}
 }
 
-function isArrEqual(arr1, arr2){
-	return arr1 && arr2 && arr1.length === arr2.length && arr1.every((v, i) => v === arr2[i]);
-}
-
-function getDataFromCache(name, cacheArr){
-	return name && cacheArr
-		? cacheArr.reduce((acc, curr) => {
-			if (curr.name === name) acc = curr.data;
-			return acc;
-		}, undefined)
-		: undefined;
-}
+const CloseBtn = props => {
+	if (props.closePreviewAction){
+		return <span
+			className="glyphicon glyphicon-remove-sign"
+			style={{float: 'right', fontSize: '170%', cursor: 'pointer'}}
+			title="Close preview"
+			onClick={props.closePreviewAction}
+		/>;
+	} else {
+		return <span />;
+	}
+};
 
 const Selector = props => {
 	return (

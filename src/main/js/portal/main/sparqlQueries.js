@@ -25,6 +25,24 @@ where{
 }`;
 }
 
+
+//TODO: Perhaps merge this query with 'specColumnMeta' above
+export const dobjColInfo = (config, dobj) => {
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+select ?colTitle ?label ?valType
+(if(bound(?unit), ?unit, "?") as ?quantityUnit)
+where{
+    <${dobj}> cpmeta:hasObjectSpec ?spec .
+	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
+	?column cpmeta:hasColumnTitle ?colTitle .
+	?column cpmeta:hasValueType ?valTypeRes .
+	?column rdfs:label ?label .
+	?valTypeRes rdfs:label ?valType .
+	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
+}`;
+};
+
+
 export function dobjOriginsAndCounts(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -91,7 +109,8 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 
 	const dobjSpec = (specs && specs.length == 1)
-		? `?dobj cpmeta:hasObjectSpec <${specs[0]}> .`
+		? `?dobj cpmeta:hasObjectSpec <${specs[0]}> .
+			BIND(<${specs[0]}> AS ?${SPECCOL})`
 		: `?dobj cpmeta:hasObjectSpec ?${SPECCOL} .`;
 
 	const noStationFilter = dobjSpec + '\n' + `FILTER NOT EXISTS{${dobjStation} []}`;
@@ -125,7 +144,7 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
+select ?dobj ?${SPECCOL} ?fileName ?submTime ?acqStart ?acqEnd where {
 	${specsValues}
 	${dobjSearch}
 	?dobj cpmeta:hasName ?fileName .
@@ -139,19 +158,4 @@ select ?dobj ?fileName ?submTime ?acqStart ?acqEnd where {
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
-};
-
-//TODO: Perhaps merge this query with 'specColumnMeta' above
-export const dobjColInfo = (config, dobj) => {
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?colTitle ?valType
-(if(bound(?unit), ?unit, "?") as ?quantityUnit)
-where{
-    <${dobj}> cpmeta:hasObjectSpec ?spec .
-	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
-	?column cpmeta:hasColumnTitle ?colTitle .
-	?column cpmeta:hasValueType ?valTypeRes .
-	?valTypeRes rdfs:label ?valType .
-	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
-}`;
 };

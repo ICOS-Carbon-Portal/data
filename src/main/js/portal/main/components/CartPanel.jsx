@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
+import EditablePanelHeading from './EditablePanelHeading.jsx';
 
 
 export default class CartPanel extends Component {
@@ -16,20 +17,23 @@ export default class CartPanel extends Component {
 	}
 
 	render(){
-		const {cart, removeFromCart, previewItemAction} = this.props;
-		// console.log({cart, count: cart.count, props: this.props});
+		const {cart, removeFromCart, previewItemAction, previewLookup} = this.props;
 
 		return (
 			<div className="panel panel-default">
-				<div className="panel-heading">
-					<h3 className="panel-title">{cart.name}</h3>
-				</div>
+				<EditablePanelHeading
+					cart={cart}
+					iconClass="glyphicon glyphicon-edit"
+					iconTooltip="Change name of cart"
+				/>
+
 				<div className="panel-body">{
 					cart.count
 						? <ul className="list-group">{
 							cart.items.map((item, i) =>
 								<Item
 									item={item}
+									previewLookup={previewLookup}
 									selected={this.state.selectedItemId === item.id}
 									removeFromCart={removeFromCart}
 									previewItemAction={previewItemAction}
@@ -46,19 +50,25 @@ export default class CartPanel extends Component {
 }
 
 const Item = props => {
+	const {item, previewLookup, selected, removeFromCart, previewItemAction, clickAction} = props;
+
 	const action = () => {
-		props.clickAction(props.item.id);
+		clickAction(props.item.id);
 	};
 
-	const className = props.selected
+	const previewType = previewLookup && previewLookup[item.spec]
+		? previewLookup[item.spec].type
+		: undefined;
+
+	const className = selected
 		? "list-group-item list-group-item-info"
 		: "list-group-item";
 
 	return (
 		<li className={className} onClick={action}>
-			<CartIcon id={props.item.id} removeFromCart={props.removeFromCart} isAddedToCart={true} />
-			<PreviewIcon id={props.item.id} clickAction={props.previewItemAction} />
-			<a href={props.item.id} target="_blank">{props.item.itemName}</a>
+			<CartIcon id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
+			<PreviewIcon id={item.id} previewType={previewType} clickAction={previewItemAction} />
+			<a href={item.id} target="_blank">{item.itemName}</a>
 		</li>
 	);
 };

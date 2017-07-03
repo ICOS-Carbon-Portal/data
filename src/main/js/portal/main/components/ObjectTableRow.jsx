@@ -10,17 +10,25 @@ export default class ObjectTableRow extends Component {
 	}
 
 	handlePreviewClick(id){
-		console.log({id, preview: this.props.objInfo});
+		if (this.props.previewAction) this.props.previewAction(id);
 	}
 
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		// console.log({props});
 
 		return <tr>
 			<td>
-				<CartIcon id={objInfo.dobj} {...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])} />
-				<PreviewIcon id={objInfo.dobj} clickAction={this.handlePreviewClick.bind(this)} />
+				<CartIcon
+					id={objInfo.dobj}
+					{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
+				/>
+				<PreviewIcon
+					id={objInfo.dobj}
+					previewType={props.previewType}
+					clickAction={this.handlePreviewClick.bind(this)}
+				/>
 				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatDate(objInfo.submTime)}</td>

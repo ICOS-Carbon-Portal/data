@@ -9,6 +9,10 @@ export default class CartItem {
 		return this._id;
 	}
 
+	get spec(){
+		return this._dataobject.spec;
+	}
+
 	get item(){
 		return this._dataobject;
 	}

@@ -3,10 +3,9 @@ import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart} = props;
+	const {paging, requestStep, cart, previewAction, previewLookup} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
-	// console.log({props});
 
 	return <div className="panel panel-default">
 		<div className="panel-heading">
@@ -30,8 +29,13 @@ export default function(props){
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
 							const isAddedToCart = cart.ids.includes(objInfo.dobj);
+							const previewType = previewLookup && previewLookup[objInfo.spec]
+								? previewLookup[objInfo.spec].type
+								: undefined;
 
 							return	<ObjectTableRow
+										previewType={previewType}
+										previewAction={previewAction}
 										objInfo={objInfo}
 										isAddedToCart={isAddedToCart}
 										addToCart={props.addToCart}

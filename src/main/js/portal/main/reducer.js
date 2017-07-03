@@ -1,7 +1,8 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {ROUTE_CHANGED, CART_UPDATED, COL_INFO_FETCHED} from './actions';
+import {ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
+import CartItem from './models/CartItem';
 
 
 export default function(state, action){
@@ -19,7 +20,8 @@ export default function(state, action){
 			return update({
 				specTable,
 				paging: freshPaging(objCount),
-				sorting: updateSortingEnableness(state.sorting, objCount)
+				sorting: updateSortingEnableness(state.sorting, objCount),
+				previewLookup: getPreviewLookup(specTable)
 			});
 
 		case META_QUERIED:
@@ -59,14 +61,20 @@ export default function(state, action){
 				route: action.route
 			});
 
+		case PREVIEW:
+			return update({
+				preview: getPreview(state.cart, state.previewLookup, action.id, state.objectsTable)
+			});
+
+		case PREVIEW_SETTING_UPDATED:
+			return update({
+				cart: action.cart,
+				preview: updatePreview(state.preview, action.setting, action.value)
+			});
+
 		case CART_UPDATED:
 			return update({
 				cart: action.cart
-			});
-
-		case COL_INFO_FETCHED:
-			return update({
-				cache: updateCacheArr(state.cache, 'dobjColumns', action.id, action.colInfo)
 			});
 
 		default:
@@ -79,14 +87,56 @@ export default function(state, action){
 	}
 }
 
-function updateCacheArr(cache, cachePart, key, val){
-	return Object.assign({}, cache, {
-		[cachePart]: cache[cachePart].concat([{
-			name: key,
-			data: val
-			}])
-	});
+function updatePreview(preview, setting, value){
+	const previewItem = preview.previewItem.withSetting(setting, value);
+	return Object.assign(preview, {previewItem});
 }
+
+function getPreview(cart, previewLookup, id, objectsTable){
+	if (cart.item(id)){
+		const previewItem = cart.item(id);
+
+		return {
+			previewItem,
+			previewOptions: previewLookup[previewItem.spec]
+		}
+	} else {
+		const objInfo = objectsTable.find(ot => ot.dobj === id);
+		const previewItem = objInfo ? new CartItem(objInfo) : undefined;
+		const previewOptions = previewItem ? previewLookup[previewItem.spec] : undefined;
+		const xAxisSetting = previewOptions
+			? previewOptions.options.find(ao => ao === 'TIMESTAMP')
+			: undefined;
+
+		return previewItem && xAxisSetting
+			? {
+				previewItem: previewItem.withSetting('xAxis', xAxisSetting),
+				previewOptions
+			}
+			: {
+				previewItem,
+				previewOptions
+			};
+	}
+}
+
+function getPreviewLookup(specTable){
+	return specTable.getTable("columnMeta") && specTable.getTableRows("columnMeta")
+		? specTable.getTableRows("columnMeta").reduce((acc, curr) => {
+
+			acc[curr.spec] === undefined
+				? acc[curr.spec] = {
+					type: 'TIMESERIES',
+					options: [curr.colTitle]
+				}
+				: acc[curr.spec].options.push(curr.colTitle);
+
+			return acc;
+
+		}, {})
+		: [];
+}
+
 
 function updateSorting(old, varName){
 	const ascending = (old.varName === varName)

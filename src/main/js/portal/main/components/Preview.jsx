@@ -7,8 +7,25 @@ export default class Preview extends Component {
 	}
 
 	render(){
+		const {preview} = this.props;
+
 		return (
-			<PreviewTimeSerie {...this.props} />
+			<div>{
+				preview
+					? <PreviewRoute preview={preview} {...this.props} />
+					: null
+			}</div>
 		);
 	}
 }
+
+const PreviewRoute = props => {
+	switch (props.preview.previewOptions.type){
+
+		case 'TIMESERIES':
+			return <PreviewTimeSerie {...props} />;
+
+		default:
+			return <div>This type of preview is not yet implemented</div>;
+	}
+};

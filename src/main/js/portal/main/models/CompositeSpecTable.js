@@ -14,6 +14,10 @@ export default class CompositeSpecTable{
 		return this._tables[name];
 	}
 
+	getTableRows(name){
+		return this._tables[name]._rows;
+	}
+
 	get names(){
 		const toFlatMap = this.tables.map(tbl => tbl.names);
 		return Array.prototype.concat.apply([], toFlatMap);

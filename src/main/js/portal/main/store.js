@@ -15,6 +15,11 @@ const initState = {
 	sorting: {objCount: 0},
 	paging: {},
 	cart: new Cart(),
+	previewLookup: undefined,
+	preview: {
+		previewItem: undefined,
+		previewOptions: undefined
+	},
 	cache: {
 		dobjColumns: []
 	}

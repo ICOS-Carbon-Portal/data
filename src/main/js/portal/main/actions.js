@@ -5,11 +5,14 @@ export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
+export const PREVIEW = 'PREVIEW';
+export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
 export const COL_INFO_FETCHED = 'COL_INFO_FETCHED';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart, getObjColInfo} from './backend';
 import CartItem from './models/CartItem';
+
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -113,6 +116,27 @@ export const changeRoute = route => dispatch => {
 	});
 };
 
+export const setPreviewItem = id => dispatch => {
+	dispatch({
+		type: PREVIEW,
+		id
+	})
+};
+
+export const setPreviewItemSetting = (id, setting, value) => (dispatch, getState) => {
+	const state = getState();
+	const cart = state.cart.withItemSetting(id, setting, value);
+
+	saveCart(cart).then(
+		dispatch({
+			type: PREVIEW_SETTING_UPDATED,
+			cart,
+			setting,
+			value
+		})
+	);
+};
+
 export const fetchCart = dispatch => {
 	getCart().then(
 		cart => dispatch({
@@ -124,7 +148,14 @@ export const fetchCart = dispatch => {
 
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
-	const cart = state.cart.addItem(new CartItem(objInfo));
+	const specLookup = state.previewLookup[objInfo.spec];
+	const xAxisSetting = specLookup.type === 'TIMESERIES'
+		? specLookup.options.find(ao => ao === 'TIMESTAMP')
+		: undefined;
+
+	const cart = xAxisSetting
+		? state.cart.addItem(new CartItem(objInfo).withSetting('xAxis', xAxisSetting))
+		: state.cart.addItem(new CartItem(objInfo));
 
 	updateCart(cart, dispatch);
 };
@@ -136,30 +167,11 @@ export const removeFromCart = id => (dispatch, getState) => {
 	updateCart(cart, dispatch);
 };
 
-export const setCartItemSetting = (id, setting, value) => (dispatch, getState) => {
-	const state = getState();
-	const cart = state.cart.withItemSetting(id, setting, value);
-
-	updateCart(cart, dispatch);
-};
-
 const updateCart = (cart, dispatch) => {
 	saveCart(cart).then(
 		dispatch({
 			type: CART_UPDATED,
 			cart
 		})
-	);
-};
-
-export const fetchObjColInfo = id => dispatch => {
-	getObjColInfo(id).then(
-		colInfo => {
-			dispatch({
-				type: COL_INFO_FETCHED,
-				id,
-				colInfo
-			})
-		}
 	);
 };

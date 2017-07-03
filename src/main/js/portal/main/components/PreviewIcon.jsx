@@ -11,13 +11,23 @@ export default class PreviewIcon extends Component {
 	}
 
 	render(){
-		return(
-			<span
-				style={styles.clickIcon}
-				title="Preview data"
-				className="glyphicon glyphicon-eye-open"
-				onClick={this.handlePreviewClick.bind(this)}
-			/>
+		const {previewType} = this.props;
+
+		return (
+			<span>{previewType
+				? <span
+					style={styles.clickIcon}
+					title="Preview data"
+					className="glyphicon glyphicon-eye-open"
+					onClick={this.handlePreviewClick.bind(this)}
+				/>
+				: <span
+					style={Object.assign({visibility: 'hidden'}, styles.clickIcon)}
+					className="glyphicon glyphicon-eye-open"
+				/>
+			}</span>
 		);
 	}
 }
+
+
