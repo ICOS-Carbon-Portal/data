@@ -6,6 +6,7 @@ export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
 export const META_QUERIED = 'META_QUERIED';
 export const PREVIEW = 'PREVIEW';
+export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
@@ -116,6 +117,13 @@ export const changeRoute = route => dispatch => {
 	});
 };
 
+export const setPreviewVisibility = visible => dispatch => {
+	dispatch({
+		type: PREVIEW_VISIBILITY,
+		visible
+	})
+};
+
 export const setPreviewItem = id => dispatch => {
 	dispatch({
 		type: PREVIEW,
@@ -125,16 +133,26 @@ export const setPreviewItem = id => dispatch => {
 
 export const setPreviewItemSetting = (id, setting, value) => (dispatch, getState) => {
 	const state = getState();
-	const cart = state.cart.withItemSetting(id, setting, value);
 
-	saveCart(cart).then(
+	if (state.cart.hasItem(id)) {
+		const cart = state.cart.withItemSetting(id, setting, value);
+
+		saveCart(cart).then(
+			dispatch({
+				type: PREVIEW_SETTING_UPDATED,
+				cart,
+				setting,
+				value
+			})
+		);
+	} else {
 		dispatch({
 			type: PREVIEW_SETTING_UPDATED,
-			cart,
+			cart: state.cart,
 			setting,
 			value
 		})
-	);
+	}
 };
 
 export const fetchCart = dispatch => {

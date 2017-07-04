@@ -16,6 +16,7 @@ class DataCart extends Component {
 
 	render(){
 		const props = this.props;
+		const showPreview = props.previewVisible && props.preview.previewItem && props.preview.previewOptions;
 
 		return (
 			<div className="row">
@@ -28,7 +29,7 @@ class DataCart extends Component {
 					/>
 				</div>
 				<div className="col-md-8">{
-					props.preview.previewItem && props.preview.previewOptions
+					showPreview
 						? <Preview
 							preview={props.preview}
 							setPreviewItemSetting={props.setPreviewItemSetting}

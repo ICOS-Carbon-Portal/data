@@ -6,12 +6,13 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	handleSelectAction(ev){
-		const id = this.props.preview.previewItem.id;
-		const setting = ev.target.name;
 		const selectedIdx = ev.target.selectedIndex;
-		const selectedVal = ev.target.selectedOptions[0].innerHTML;
 
 		if (selectedIdx > 0 && this.props.setPreviewItemSetting) {
+			const id = this.props.preview.previewItem.id;
+			const setting = ev.target.name;
+			const selectedVal = ev.target.selectedOptions[0].innerHTML;
+
 			this.props.setPreviewItemSetting(id, setting, selectedVal);
 		}
 	}

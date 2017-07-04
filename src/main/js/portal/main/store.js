@@ -8,21 +8,19 @@ import Cart from './models/Cart';
 
 
 const initState = {
-	event: undefined,
-	metadata: undefined,
+	// metadata: undefined,
 	specTable: new CompositeSpecTable({}),
 	objectsTable: [],
 	sorting: {objCount: 0},
 	paging: {},
 	cart: new Cart(),
 	previewLookup: undefined,
+	previewVisible: true,
 	preview: {
 		previewItem: undefined,
 		previewOptions: undefined
 	},
-	cache: {
-		dobjColumns: []
-	}
+	toasterData: undefined
 };
 
 // function logger({ getState }) {

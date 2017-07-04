@@ -1,5 +1,5 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED} from './actions';
+import {ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import CartItem from './models/CartItem';
@@ -62,9 +62,17 @@ export default function(state, action){
 			});
 
 		case PREVIEW:
+			const preview = state.preview.previewItem && state.preview.previewItem.id === action.id
+				? state.preview
+				: getPreview(state.cart, state.previewLookup, action.id, state.objectsTable);
+
 			return update({
-				preview: getPreview(state.cart, state.previewLookup, action.id, state.objectsTable)
+				preview,
+				previewVisible: true
 			});
+
+		case PREVIEW_VISIBILITY:
+			return update({previewVisible: action.visible});
 
 		case PREVIEW_SETTING_UPDATED:
 			return update({
@@ -89,7 +97,11 @@ export default function(state, action){
 
 function updatePreview(preview, setting, value){
 	const previewItem = preview.previewItem.withSetting(setting, value);
-	return Object.assign(preview, {previewItem});
+
+	return {
+		previewItem,
+		previewOptions: preview.previewOptions
+	};
 }
 
 function getPreview(cart, previewLookup, id, objectsTable){

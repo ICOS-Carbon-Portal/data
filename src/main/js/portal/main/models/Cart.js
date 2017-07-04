@@ -53,6 +53,10 @@ export default class Cart {
 		return this._items.find(item => item.id === id);
 	}
 
+	hasItem(id){
+		return !!this._items.find(item => item.id === id);
+	}
+
 	get name(){
 		return this._name;
 	}

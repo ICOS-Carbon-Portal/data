@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
-import {changeRoute} from '../actions';
+import {changeRoute, setPreviewVisibility} from '../actions';
 
 const ROUTE_SEARCH = 'ROUTE_SEARCH';
 const ROUTE_CART = 'ROUTE_CART';
@@ -19,6 +19,7 @@ export class App extends Component {
 			? ROUTE_CART
 			: ROUTE_SEARCH;
 
+		this.props.setPreviewVisibility(false);
 		this.props.changeRoute(newRoute);
 	}
 
@@ -115,7 +116,8 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		changeRoute: route => dispatch(changeRoute(route))
+		changeRoute: route => dispatch(changeRoute(route)),
+		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 	};
 }
 

@@ -5,7 +5,7 @@ import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
 import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewItemSetting, setPreviewItem} from '../actions';
+import {setPreviewItemSetting, setPreviewItem, setPreviewVisibility} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -17,11 +17,13 @@ class Search extends Component {
 	}
 
 	handleClosePreview(){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(undefined);
+		if (this.props.setPreviewVisibility) this.props.setPreviewVisibility(false);
 	}
 
 	render(){
 		const props = this.props;
+		const showPreview = props.previewVisible && props.preview.previewItem && props.preview.previewOptions;
+		// console.log({props});
 
 		return (
 			<div className="row">
@@ -29,7 +31,7 @@ class Search extends Component {
 					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
 				</div>
 				<div className="col-md-8">{
-					props.preview.previewItem && props.preview.previewOptions
+					showPreview
 						? <Preview
 							preview={props.preview}
 							setPreviewItemSetting={props.setPreviewItemSetting}
@@ -53,6 +55,7 @@ function dispatchToProps(dispatch){
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
+		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value))
