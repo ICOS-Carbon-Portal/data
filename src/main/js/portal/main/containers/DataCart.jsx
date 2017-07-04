@@ -16,20 +16,20 @@ class DataCart extends Component {
 
 	render(){
 		const props = this.props;
-		const showPreview = props.previewVisible && props.preview.previewItem && props.preview.previewOptions;
+		console.log({preview: props.preview});
 
 		return (
 			<div className="row">
 				<div className="col-md-4">
 					<CartPanel
 						cart={props.cart}
-						previewLookup={props.previewLookup}
+						getLookupType={props.preview.getLookupType.bind(props.preview)}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
 					/>
 				</div>
 				<div className="col-md-8">{
-					showPreview
+					props.preview.visible
 						? <Preview
 							preview={props.preview}
 							setPreviewItemSetting={props.setPreviewItemSetting}

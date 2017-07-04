@@ -22,8 +22,7 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
-		const showPreview = props.previewVisible && props.preview.previewItem && props.preview.previewOptions;
-		// console.log({props});
+		// console.log({props, preview: props.preview});
 
 		return (
 			<div className="row">
@@ -31,7 +30,7 @@ class Search extends Component {
 					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
 				</div>
 				<div className="col-md-8">{
-					showPreview
+					props.preview.visible
 						? <Preview
 							preview={props.preview}
 							setPreviewItemSetting={props.setPreviewItemSetting}
@@ -40,7 +39,7 @@ class Search extends Component {
 						: <DataObjectsTable
 							previewAction={this.handlePreview.bind(this)}
 							{...copyprops(props, [
-								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'previewLookup', 'cart', 'addToCart', 'removeFromCart'
+								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart'
 						])}/>
 				}</div>
 			</div>

@@ -17,7 +17,7 @@ export default class CartPanel extends Component {
 	}
 
 	render(){
-		const {cart, removeFromCart, previewItemAction, previewLookup} = this.props;
+		const {cart, removeFromCart, previewItemAction, lookup, getLookupType} = this.props;
 
 		return (
 			<div className="panel panel-default">
@@ -33,7 +33,7 @@ export default class CartPanel extends Component {
 							cart.items.map((item, i) =>
 								<Item
 									item={item}
-									previewLookup={previewLookup}
+									previewType={getLookupType(item.spec)}
 									selected={this.state.selectedItemId === item.id}
 									removeFromCart={removeFromCart}
 									previewItemAction={previewItemAction}
@@ -50,15 +50,11 @@ export default class CartPanel extends Component {
 }
 
 const Item = props => {
-	const {item, previewLookup, selected, removeFromCart, previewItemAction, clickAction} = props;
+	const {item, selected, removeFromCart, previewItemAction, clickAction, previewType} = props;
 
 	const action = () => {
 		clickAction(props.item.id);
 	};
-
-	const previewType = previewLookup && previewLookup[item.spec]
-		? previewLookup[item.spec].type
-		: undefined;
 
 	const className = selected
 		? "list-group-item list-group-item-info"

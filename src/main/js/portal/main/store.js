@@ -5,6 +5,7 @@ import reducer from './reducer';
 import {getAllSpecTables, fetchCart} from './actions';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Cart from './models/Cart';
+import Preview from './models/Preview';
 
 
 const initState = {
@@ -14,12 +15,7 @@ const initState = {
 	sorting: {objCount: 0},
 	paging: {},
 	cart: new Cart(),
-	previewLookup: undefined,
-	previewVisible: true,
-	preview: {
-		previewItem: undefined,
-		previewOptions: undefined
-	},
+	preview: new Preview(),
 	toasterData: undefined
 };
 

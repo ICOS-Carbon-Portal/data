@@ -3,7 +3,7 @@ import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart, previewAction, previewLookup} = props;
+	const {paging, requestStep, cart, previewAction, preview} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
 
@@ -28,20 +28,20 @@ export default function(props){
 					</thead>
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
-							const isAddedToCart = cart.ids.includes(objInfo.dobj);
-							const previewType = previewLookup && previewLookup[objInfo.spec]
-								? previewLookup[objInfo.spec].type
-								: undefined;
+							const isAddedToCart = cart.hasItem(objInfo.dobj);
+							const previewType = preview.getLookupType(objInfo.spec);
 
-							return	<ObjectTableRow
-										previewType={previewType}
-										previewAction={previewAction}
-										objInfo={objInfo}
-										isAddedToCart={isAddedToCart}
-										addToCart={props.addToCart}
-										removeFromCart={props.removeFromCart}
-										key={'dobj_' + i}
-									/>;
+							return (
+								<ObjectTableRow
+									previewType={previewType}
+									previewAction={previewAction}
+									objInfo={objInfo}
+									isAddedToCart={isAddedToCart}
+									addToCart={props.addToCart}
+									removeFromCart={props.removeFromCart}
+									key={'dobj_' + i}
+								/>
+							);
 						})
 					}</tbody>
 				</table>

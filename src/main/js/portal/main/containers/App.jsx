@@ -19,7 +19,10 @@ export class App extends Component {
 			? ROUTE_CART
 			: ROUTE_SEARCH;
 
-		this.props.setPreviewVisibility(false);
+		const {cart, preview} = this.props;
+		const visible = newRoute === ROUTE_CART && preview.item && cart.hasItem(preview.item.id);
+
+		this.props.setPreviewVisibility(visible);
 		this.props.changeRoute(newRoute);
 	}
 
@@ -110,7 +113,8 @@ function stateToProps(state){
 	return {
 		route: state.route,
 		toasterData: state.toasterData,
-		cart: state.cart
+		cart: state.cart,
+		preview: state.preview
 	};
 }
 

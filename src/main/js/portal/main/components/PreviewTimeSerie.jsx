@@ -9,7 +9,7 @@ export default class PreviewTimeSerie extends Component {
 		const selectedIdx = ev.target.selectedIndex;
 
 		if (selectedIdx > 0 && this.props.setPreviewItemSetting) {
-			const id = this.props.preview.previewItem.id;
+			const id = this.props.preview.item.id;
 			const setting = ev.target.name;
 			const selectedVal = ev.target.selectedOptions[0].innerHTML;
 
@@ -18,9 +18,9 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	render(){
-		const {preview, closePreviewAction, setPreviewItemSetting} = this.props;
-		const {xAxis, yAxis, type} = preview.previewItem
-			? preview.previewItem.settings
+		const {preview, closePreviewAction} = this.props;
+		const {xAxis, yAxis, type} = preview.item
+			? preview.item.settings
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
 
 		return (
@@ -29,7 +29,7 @@ export default class PreviewTimeSerie extends Component {
 					? <div>
 						<div className="panel panel-default">
 							<div className="panel-heading">
-								<span className="panel-title">Preview of {preview.previewItem.itemName}</span>
+								<span className="panel-title">Preview of {preview.item.itemName}</span>
 								<CloseBtn closePreviewAction={closePreviewAction} />
 							</div>
 							<div className="panel-body">
@@ -38,14 +38,14 @@ export default class PreviewTimeSerie extends Component {
 										name="xAxis"
 										label="X axis"
 										selected={xAxis}
-										options={preview.previewOptions.options}
+										options={preview.options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 									<Selector
 										name="yAxis"
 										label="Y axis"
 										selected={yAxis}
-										options={preview.previewOptions.options}
+										options={preview.options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 									<Selector
@@ -59,7 +59,7 @@ export default class PreviewTimeSerie extends Component {
 							</div>
 							<div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
 								<TimeSeries
-									id={preview.previewItem.id}
+									id={preview.item.id}
 									x={xAxis}
 									y={yAxis}
 									type={type}

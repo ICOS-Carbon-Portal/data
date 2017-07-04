@@ -20,7 +20,7 @@ export default class Preview extends Component {
 }
 
 const PreviewRoute = props => {
-	switch (props.preview.previewOptions.type){
+	switch (props.preview.type){
 
 		case 'TIMESERIES':
 			return <PreviewTimeSerie {...props} />;

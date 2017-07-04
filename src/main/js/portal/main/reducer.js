@@ -21,7 +21,7 @@ export default function(state, action){
 				specTable,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				previewLookup: getPreviewLookup(specTable)
+				preview: state.preview.withLookup(specTable)
 			});
 
 		case META_QUERIED:
@@ -62,22 +62,17 @@ export default function(state, action){
 			});
 
 		case PREVIEW:
-			const preview = state.preview.previewItem && state.preview.previewItem.id === action.id
-				? state.preview
-				: getPreview(state.cart, state.previewLookup, action.id, state.objectsTable);
-
 			return update({
-				preview,
-				previewVisible: true
+				preview: state.preview.initPreview(state.cart, action.id, state.objectsTable),
 			});
 
 		case PREVIEW_VISIBILITY:
-			return update({previewVisible: action.visible});
+			return update({preview: action.visible ? state.preview.show() : state.preview.hide()});
 
 		case PREVIEW_SETTING_UPDATED:
 			return update({
 				cart: action.cart,
-				preview: updatePreview(state.preview, action.setting, action.value)
+				preview: state.preview.withItemSetting(action.setting, action.value)
 			});
 
 		case CART_UPDATED:
@@ -94,61 +89,6 @@ export default function(state, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
-
-function updatePreview(preview, setting, value){
-	const previewItem = preview.previewItem.withSetting(setting, value);
-
-	return {
-		previewItem,
-		previewOptions: preview.previewOptions
-	};
-}
-
-function getPreview(cart, previewLookup, id, objectsTable){
-	if (cart.item(id)){
-		const previewItem = cart.item(id);
-
-		return {
-			previewItem,
-			previewOptions: previewLookup[previewItem.spec]
-		}
-	} else {
-		const objInfo = objectsTable.find(ot => ot.dobj === id);
-		const previewItem = objInfo ? new CartItem(objInfo) : undefined;
-		const previewOptions = previewItem ? previewLookup[previewItem.spec] : undefined;
-		const xAxisSetting = previewOptions
-			? previewOptions.options.find(ao => ao === 'TIMESTAMP')
-			: undefined;
-
-		return previewItem && xAxisSetting
-			? {
-				previewItem: previewItem.withSetting('xAxis', xAxisSetting),
-				previewOptions
-			}
-			: {
-				previewItem,
-				previewOptions
-			};
-	}
-}
-
-function getPreviewLookup(specTable){
-	return specTable.getTable("columnMeta") && specTable.getTableRows("columnMeta")
-		? specTable.getTableRows("columnMeta").reduce((acc, curr) => {
-
-			acc[curr.spec] === undefined
-				? acc[curr.spec] = {
-					type: 'TIMESERIES',
-					options: [curr.colTitle]
-				}
-				: acc[curr.spec].options.push(curr.colTitle);
-
-			return acc;
-
-		}, {})
-		: [];
-}
-
 
 function updateSorting(old, varName){
 	const ascending = (old.varName === varName)
