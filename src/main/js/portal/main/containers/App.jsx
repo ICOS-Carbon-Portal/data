@@ -14,15 +14,13 @@ export class App extends Component {
 	}
 
 	handleRouteClick(){
+		const {cart, preview} = this.props;
 		const currentRoute = this.props.route;
 		const newRoute = !currentRoute || currentRoute === ROUTE_SEARCH
 			? ROUTE_CART
 			: ROUTE_SEARCH;
 
-		const {cart, preview} = this.props;
-		const visible = newRoute === ROUTE_CART && preview.item && cart.hasItem(preview.item.id);
-
-		this.props.setPreviewVisibility(visible);
+		this.props.setPreviewVisibility(newRoute === ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
 		this.props.changeRoute(newRoute);
 	}
 

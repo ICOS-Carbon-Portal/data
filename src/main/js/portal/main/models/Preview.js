@@ -10,7 +10,7 @@ export default class Preview {
 	}
 
 	withLookup(specTable){
-		return new Preview(getPreviewLookup(specTable));
+		return new Preview(getLookup(specTable));
 	}
 
 	getLookupType(spec){
@@ -78,7 +78,7 @@ export default class Preview {
 	}
 }
 
-function getPreviewLookup(specTable){
+function getLookup(specTable){
 	return specTable.getTable("columnMeta") && specTable.getTableRows("columnMeta")
 		? specTable.getTableRows("columnMeta").reduce((acc, curr) => {
 

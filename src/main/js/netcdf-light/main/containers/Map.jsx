@@ -79,6 +79,8 @@ class Map extends Component {
 			+ (this.centerZoom ? centerZoom2str(this.centerZoom) : '');
 
 		history.pushState({urlPath: newUrl}, "", newUrl);
+		//Let calling page (through iframe) know what current url is
+		window.top.postMessage(newUrl, '*');
 	}
 
 	render() {

@@ -16,7 +16,6 @@ class DataCart extends Component {
 
 	render(){
 		const props = this.props;
-		console.log({preview: props.preview});
 
 		return (
 			<div className="row">
