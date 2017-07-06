@@ -29,7 +29,7 @@ export default function(props){
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
 							const isAddedToCart = cart.hasItem(objInfo.dobj);
-							const previewType = preview.getLookupType(objInfo.spec);
+							const previewType = preview.getSpecLookupType(objInfo.spec);
 
 							return (
 								<ObjectTableRow

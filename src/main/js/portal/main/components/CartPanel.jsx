@@ -8,7 +8,7 @@ export default class CartPanel extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			selectedItemId: undefined
+			selectedItemId: props.previewitemId
 		};
 	}
 
@@ -17,7 +17,7 @@ export default class CartPanel extends Component {
 	}
 
 	render(){
-		const {cart, removeFromCart, previewItemAction, lookup, getLookupType} = this.props;
+		const {cart, removeFromCart, previewItemAction, getSpecLookupType} = this.props;
 
 		return (
 			<div className="panel panel-default">
@@ -33,7 +33,7 @@ export default class CartPanel extends Component {
 							cart.items.map((item, i) =>
 								<Item
 									item={item}
-									previewType={getLookupType(item.spec)}
+									previewType={getSpecLookupType(item.spec)}
 									selected={this.state.selectedItemId === item.id}
 									removeFromCart={removeFromCart}
 									previewItemAction={previewItemAction}

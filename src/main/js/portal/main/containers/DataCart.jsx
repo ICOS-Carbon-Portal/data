@@ -16,13 +16,15 @@ class DataCart extends Component {
 
 	render(){
 		const props = this.props;
+		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
 
 		return (
 			<div className="row">
 				<div className="col-md-4">
 					<CartPanel
 						cart={props.cart}
-						getLookupType={props.preview.getLookupType.bind(props.preview)}
+						previewitemId={previewitemId}
+						getSpecLookupType={props.preview.getSpecLookupType.bind(props.preview)}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
 					/>

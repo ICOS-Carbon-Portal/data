@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import CopyUrl from './CopyUrl.jsx';
+import CopyValue from './CopyValue.jsx';
 
 export default class PreviewTimeSerie extends Component {
 	constructor(props){
@@ -7,7 +7,6 @@ export default class PreviewTimeSerie extends Component {
 		this.state = {
 			iframeSrc: undefined
 		};
-		this.iframeSrcChange = this.handleIframeSrcChange.bind(this);
 		window.onmessage = event => this.handleIframeSrcChange(event);
 	}
 
@@ -17,7 +16,7 @@ export default class PreviewTimeSerie extends Component {
 		if (selectedIdx > 0 && this.props.setPreviewItemSetting) {
 			const id = this.props.preview.item.id;
 			const setting = ev.target.name;
-			const selectedVal = ev.target.selectedOptions[0].innerHTML;
+			const selectedVal = ev.target.options[selectedIdx].innerHTML;
 
 			this.props.setPreviewItemSetting(id, setting, selectedVal);
 		}
@@ -26,10 +25,6 @@ export default class PreviewTimeSerie extends Component {
 	handleIframeSrcChange(event){
 		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
 		this.setState({iframeSrc});
-	}
-
-	componentWillUnmount(){
-		this.iframe.removeEventListener('load', this.iframeSrcChange);
 	}
 
 	render(){
@@ -47,32 +42,46 @@ export default class PreviewTimeSerie extends Component {
 							<div className="panel-heading">
 								<span className="panel-title">Preview of {preview.item.itemName}</span>
 								<CloseBtn closePreviewAction={closePreviewAction} />
-								<CopyUrl iframeSrc={this.state.iframeSrc}/>
 							</div>
 
 							<div className="panel-body">
 								<div className="row">
-									<Selector
-										name="xAxis"
-										label="X axis"
-										selected={xAxis}
-										options={preview.options}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-									<Selector
-										name="yAxis"
-										label="Y axis"
-										selected={yAxis}
-										options={preview.options}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-									<Selector
-										name="type"
-										label="Chart type"
-										selected={type}
-										options={['scatter', 'line']}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
+									<div className="col-md-4">
+										<Selector
+											name="xAxis"
+											label="X axis"
+											selected={xAxis}
+											options={preview.options}
+											selectAction={this.handleSelectAction.bind(this)}
+										/>
+									</div>
+									<div className="col-md-4">
+										<Selector
+											name="yAxis"
+											label="Y axis"
+											selected={yAxis}
+											options={preview.options}
+											selectAction={this.handleSelectAction.bind(this)}
+										/>
+									</div>
+									<div className="col-md-4">
+										<Selector
+											name="type"
+											label="Chart type"
+											selected={type}
+											options={['scatter', 'line']}
+											selectAction={this.handleSelectAction.bind(this)}
+										/>
+									</div>
+								</div>
+								<div className="row" style={{marginTop: 15}}>
+									<div className="col-md-12">
+										<CopyValue
+											btnText="Copy preview chart URL"
+											copyHelpText="Click to copy preview chart URL to clipboard"
+											valToCopy={this.state.iframeSrc}
+										/>
+									</div>
 								</div>
 							</div>
 							<div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
@@ -82,7 +91,7 @@ export default class PreviewTimeSerie extends Component {
 									x={xAxis}
 									y={yAxis}
 									type={type}
-									onLoad={this.iframeSrcChange}
+									onLoad={this.handleIframeSrcChange.bind(this)}
 								/>
 							</div>
 						</div>
@@ -108,13 +117,13 @@ const CloseBtn = props => {
 
 const Selector = props => {
 	return (
-		<div className="col-md-4">
+		<span>
 			<label>{props.label}</label>
 			<select name={props.name} className="form-control" onChange={props.selectAction} value={props.selected ? props.selected : '0'}>
 				<option value="0">Select option</option>{
 				props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)
 			}</select>
-		</div>
+		</span>
 	);
 };
 
@@ -127,8 +136,7 @@ const TimeSeries = props => {
 			x && y
 				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`http://127.0.0.1:9010/netcdf-light/?service=yearly_1x1_fluxes_limited.nc&varName=bio_flux_opt&date=2001-07-01T17:04:15.484Z&elevation=&gamma=1`}
-					// src={`https://data.icos-cp.eu/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
+					src={`https://data.icos-cp.eu/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
 				/>
 				: null
 		}</div>

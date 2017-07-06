@@ -10,13 +10,18 @@ export default class Preview {
 	}
 
 	withLookup(specTable){
-		return new Preview(getLookup(specTable));
+		return new Preview(parseSpecTable(specTable));
 	}
 
-	getLookupType(spec){
+	getSpecLookup(spec){
 		return this._lookup && this._lookup[spec]
-			? this._lookup[spec].type
+			? this._lookup[spec]
 			: undefined;
+	}
+
+	getSpecLookupType(spec){
+		const specLookup = this.getSpecLookup(spec);
+		return specLookup ? this.getSpecLookup(spec).type : undefined;
 	}
 
 	initPreview(cart, id, objectsTable) {
@@ -78,7 +83,7 @@ export default class Preview {
 	}
 }
 
-function getLookup(specTable){
+function parseSpecTable(specTable){
 	return specTable.getTable("columnMeta") && specTable.getTableRows("columnMeta")
 		? specTable.getTableRows("columnMeta").reduce((acc, curr) => {
 

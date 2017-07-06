@@ -166,8 +166,8 @@ export const fetchCart = dispatch => {
 
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
-	const specLookup = state.previewLookup[objInfo.spec];
-	const xAxisSetting = specLookup.type === 'TIMESERIES'
+	const specLookup = state.preview.getSpecLookup(objInfo.spec);
+	const xAxisSetting = specLookup && specLookup.type === 'TIMESERIES'
 		? specLookup.options.find(ao => ao === 'TIMESTAMP')
 		: undefined;
 
