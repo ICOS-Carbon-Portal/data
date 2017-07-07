@@ -164,6 +164,12 @@ export const fetchCart = dispatch => {
 	);
 };
 
+export const setCartName = newName => (dispatch, getState) => {
+	const state = getState();
+
+	updateCart(state.cart.withName(newName), dispatch);
+};
+
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
 	const specLookup = state.preview.getSpecLookup(objInfo.spec);

@@ -7,6 +7,8 @@ export default class Cart {
 	}
 
 	fromStorage(jsonStr){
+		if (!jsonStr || jsonStr === "undefined") return new Cart();
+
 		const jsonCart = jsonStr && JSON.parse(jsonStr);
 		const jsonCartItems = jsonCart ? jsonCart._items : [];
 		var cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
@@ -61,7 +63,7 @@ export default class Cart {
 		return this._name;
 	}
 
-	setName(name){
-		this._name = name;
+	withName(name){
+		return new Cart(name, this._items);
 	}
 }

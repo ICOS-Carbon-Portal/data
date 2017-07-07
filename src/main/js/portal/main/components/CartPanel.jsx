@@ -16,15 +16,22 @@ export default class CartPanel extends Component {
 		this.setState({selectedItemId: id});
 	}
 
+	handleSaveCartName(newName){
+		if (this.props.setCartName) this.props.setCartName(newName);
+	}
+
 	render(){
 		const {cart, removeFromCart, previewItemAction, getSpecLookupType} = this.props;
 
 		return (
 			<div className="panel panel-default">
 				<EditablePanelHeading
-					cart={cart}
-					iconClass="glyphicon glyphicon-edit"
-					iconTooltip="Change name of cart"
+					editValue={cart.name}
+					saveValueAction={this.handleSaveCartName.bind(this)}
+					iconEditClass="glyphicon glyphicon-edit"
+					iconEditTooltip="Change name of cart"
+					iconSaveClass="glyphicon glyphicon-floppy-save"
+					iconSaveTooltip="Save new cart name"
 				/>
 
 				<div className="panel-body">{
@@ -54,6 +61,7 @@ const Item = props => {
 
 	const action = () => {
 		clickAction(props.item.id);
+		previewItemAction(props.item.id);
 	};
 
 	const className = selected
@@ -61,9 +69,9 @@ const Item = props => {
 		: "list-group-item";
 
 	return (
-		<li className={className} onClick={action}>
+		<li className={className}>
 			<CartIcon id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
-			<PreviewIcon id={item.id} previewType={previewType} clickAction={previewItemAction} />
+			<PreviewIcon id={item.id} previewType={previewType} clickAction={action} />
 			<a href={item.id} target="_blank">{item.itemName}</a>
 		</li>
 	);

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
-import {removeFromCart, setPreviewItem, setPreviewItemSetting} from '../actions';
+import {removeFromCart, setPreviewItem, setPreviewItemSetting, setCartName} from '../actions';
 
 
 class DataCart extends Component {
@@ -23,6 +23,7 @@ class DataCart extends Component {
 				<div className="col-md-4">
 					<CartPanel
 						cart={props.cart}
+						setCartName={props.setCartName}
 						previewitemId={previewitemId}
 						getSpecLookupType={props.preview.getSpecLookupType.bind(props.preview)}
 						previewItemAction={this.handlePreview.bind(this)}
@@ -45,6 +46,7 @@ class DataCart extends Component {
 function dispatchToProps(dispatch){
 	return {
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
+		setCartName: newName => dispatch(setCartName(newName)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value))
 	};
