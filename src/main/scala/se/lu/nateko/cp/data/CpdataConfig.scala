@@ -41,6 +41,8 @@ case class RestHeartConfig(
 	dobjDownloadsAggregations: JsObject
 )
 
+case class EtcFacadeConfig(folder: String, secret: String, stationOverrides: Map[String, String])
+
 case class CpdataConfig(
 	interface: String,
 	auth: PublicAuthConfig,
@@ -48,7 +50,8 @@ case class CpdataConfig(
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
 	stilt: StiltConfig,
-	restheart: RestHeartConfig
+	restheart: RestHeartConfig,
+	etcFacade: EtcFacadeConfig
 )
 
 object ConfigReader extends DefaultJsonProtocol{
@@ -60,7 +63,8 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
 	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
 	implicit val restHeartConfigFormat = jsonFormat5(RestHeartConfig)
-	implicit val cpdataConfigFormat = jsonFormat7(CpdataConfig)
+	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)
+	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
 	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
 

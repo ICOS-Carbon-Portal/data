@@ -1,4 +1,4 @@
-#ICOS Carbon Portal's Data Service
+# ICOS Carbon Portal's Data Service
 
 Data service for:
 
@@ -11,7 +11,7 @@ Data service for:
 
 ---
 
-##Instruction for uploading ICOS data objects
+## Instruction for uploading ICOS data objects
 In HTTP protocol terms, the upload is performed by HTTP-PUTing the contents of the data object with chunked transfer encoding and cookie authentication to a URL of the form `https://data.icos-cp.eu/objects/<data object id>`, where `<data object id>` is either [base64url](https://en.wikipedia.org/wiki/Base64#URL_applications)- or hex-encoded representation of the first 18 bytes of a SHA-256 hashsum of the data object's contents. The complete 32-byte representations are also accepted. You will have obtained the data object id by the time you have completed the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the [2-step upload procedure](https://github.com/ICOS-Carbon-Portal/meta#data-object-registration-and-upload-instructions). The authentication cookie can be obtained from [CPauth](https://cpauth.icos-cp.eu) as described [here](https://github.com/ICOS-Carbon-Portal/meta#authentication).
 
 For example, using the command-line tool `curl`, one can perform the upload as follows:
@@ -58,7 +58,7 @@ Upload a file from the command line ("happy path" example):
 ---
 ## Information for developers
 
-###Getting started with the front-end part
+### Getting started with the front-end part
 
 - Install `Node.js 5.x` as instructed [here](https://github.com/nodesource/distributions)
 - Clone this repository: `git clone git@github.com:ICOS-Carbon-Portal/data.git`
@@ -66,7 +66,7 @@ Upload a file from the command line ("happy path" example):
 - Install Node.js dependencies: `npm install`
 - Now you can run Gulp tasks: `npm run gulp <task>` (the list of tasks can be found in `package.json`)
 
-###Getting started with the back-end part
+### Getting started with the back-end part
 
 - Check out the [cpauth](https://github.com/ICOS-Carbon-Portal/cpauth) project.
 - Make a copy of `src/main/resources/application.conf` file in the project root and edit it to suit your environment. You only need to override the properties whose defaults are not suitable. For example, `cpdata.netcdf.folder` likely needs to be overridden. For deployment, make sure there is a relevant `application.conf` in the JVM's working directory.

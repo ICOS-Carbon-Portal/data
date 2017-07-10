@@ -4,21 +4,15 @@ import se.lu.nateko.cp.data.irods.IrodsClient
 import akka.stream.scaladsl.Source
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import scala.concurrent.Await
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.Http
-import scala.concurrent.duration._
 import akka.util.ByteString
-import scala.collection.immutable.Iterable
 import scala.concurrent.Future
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Flow
-import akka.stream.ThrottleMode
 import akka.stream.scaladsl.FileIO
-import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
+import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
+import se.lu.nateko.cp.data.services.etcfacade.StationId
 
 object Playground {
 
@@ -26,7 +20,8 @@ object Playground {
 	implicit val materializer = ActorMaterializer(namePrefix = Some("playgr_mat"))
 	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
-	val irodsConfig = ConfigReader.getDefault.upload.irods
+	val config = ConfigReader.getDefault
+	val irodsConfig = config.upload.irods
 	val client = IrodsClient(irodsConfig)
 
 	def repeat(str: String, n: Int) = {
@@ -78,17 +73,11 @@ object Playground {
 		runnable.run()
 	}
 
+	def getPassword(stationId: String, secret: String = ""): Option[String] = {
+		val etcConfig = if(secret.isEmpty)
+			config.etcFacade
+		else
+			config.etcFacade.copy(secret = secret)
+		StationId.unapply(stationId).map(AuthenticatorProvider.getSecret(_, etcConfig))
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
