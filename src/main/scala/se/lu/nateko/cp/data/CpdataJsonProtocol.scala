@@ -3,9 +3,6 @@ package se.lu.nateko.cp.data
 import se.lu.nateko.cp.data.formats.bintable.BinTableSlice
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
-import se.lu.nateko.cp.data.formats.netcdf.BoundingBox
-import se.lu.nateko.cp.data.formats.netcdf.RasterMessage
-import se.lu.nateko.cp.data.formats.netcdf.Stats
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import spray.json._

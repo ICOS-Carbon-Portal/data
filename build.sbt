@@ -1,20 +1,25 @@
+val defaultScala = "2.12.2"
+
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
-	scalaVersion := "2.11.11",
+	scalaVersion := defaultScala,
 
 	scalacOptions ++= Seq(
-		"-unchecked",
-		"-deprecation",
-		"-Xlint",
-		"-Ywarn-dead-code",
-		"-language:_",
 		"-target:jvm-1.8",
-		"-encoding", "UTF-8"
+		"-encoding", "UTF-8",
+		"-unchecked",
+		"-feature",
+		"-deprecation",
+		"-Xfuture",
+		"-Yno-adapted-args",
+		"-Ywarn-dead-code",
+		"-Ywarn-numeric-widen",
+		"-Ywarn-unused"
 	)
 )
 
-val akkaVersion = "2.4.18"
-val akkaHttpVersion = "10.0.6"
+val akkaVersion = "2.4.19"
+val akkaHttpVersion = "10.0.9"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
@@ -46,6 +51,7 @@ lazy val netcdf = (project in file("netcdf"))
 			else
 				Some("releases"  at nexus + "releases")
 		},
+		crossScalaVersions := Seq(defaultScala, "2.11.11"),
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
@@ -55,14 +61,14 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.3.1",
+		version := "0.4.0",
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.2-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.3-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.2-SNAPSHOT",
 
 		// *** manually published on CP Nexus 3rd party repo ***
@@ -74,7 +80,7 @@ lazy val data = (project in file("."))
 
 		// *** end of manually published on CP Nexus 3rd party repo ***
 
-			"org.scalatest"      %% "scalatest"        % "2.2.1" % "test"
+			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
 		)
 
 //		initialCommands in console := """
@@ -85,4 +91,3 @@ lazy val data = (project in file("."))
 //			system.terminate()
 //		"""
 	)
-

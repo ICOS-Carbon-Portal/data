@@ -26,13 +26,13 @@ private class SourceFromCloseableIterator[T](iterFactory: () => (Iterator[T], ()
 
 	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Unit]) = {
 
+		val donePromise = Promise[Unit]()
+
 		val logic = new GraphStageLogic(shape){
 
 			private[this] var iterClosed = false
 			private[this] var innerIter: Iterator[T] = null
 			private[this] var closer: () => Unit = null
-
-			val donePromise = Promise[Unit]()
 
 			override def preStart(): Unit =
 				try{
@@ -75,7 +75,7 @@ private class SourceFromCloseableIterator[T](iterFactory: () => (Iterator[T], ()
 			}
 
 		}
-		(logic, logic.donePromise.future)
+		(logic, donePromise.future)
 	}
 
 }

@@ -5,10 +5,7 @@ import scala.concurrent.Future
 
 import EcoCsvParser._
 import akka.Done
-import akka.NotUsed
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Framing
-import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.ColumnFormats
 import se.lu.nateko.cp.data.formats.TableRow
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams

@@ -5,7 +5,6 @@ import java.time.LocalTime
 import java.util.Locale
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
-import java.time.format.DateTimeParseException
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
@@ -28,7 +27,7 @@ class ValueFormatParser(locale: Locale){
 		case EtcDate =>
 			Int.box(LocalDate.parse(value, etcDateFormatter).toEpochDay.toInt)
 		case Iso8601DateTime =>
-			Double.box(Instant.parse(value).toEpochMilli)
+			Double.box(Instant.parse(value).toEpochMilli.toDouble)
 		case Iso8601TimeOfDay =>
 			if(value.startsWith("24:")) {
 				val residualTime = "00:" + value.substring(3)

@@ -1,9 +1,9 @@
 package se.lu.nateko.cp.data.test.formats.netcdf.viewing
 
 import org.scalatest.FunSuite
-import scala.collection.JavaConverters._
-import se.lu.nateko.cp.data.formats.netcdf.viewing._
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl._
+//import scala.collection.JavaConverters._
+//import se.lu.nateko.cp.data.formats.netcdf.viewing._
+//import se.lu.nateko.cp.data.formats.netcdf.viewing.impl._
 
 class NetCdfViewServiceTest extends FunSuite {
   

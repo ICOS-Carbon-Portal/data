@@ -35,14 +35,14 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 
 	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Long]) = {
 
+		val countPromise = Promise[Long]()
+
 		val logic = new GraphStageLogic(shape){
 
 			private[this] var writer: BinTableWriter = null
 			private[this] var writerClosed = false
 			private[this] var count: Long = 0
 			private[this] var schema: Schema = null
-
-			val countPromise = Promise[Long]()
 
 			override def preStart(): Unit =
 				if(file.exists && !overwrite)
@@ -104,7 +104,7 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 			}
 
 		}
-		(logic, logic.countPromise.future)
+		(logic, countPromise.future)
 	}
 
 }

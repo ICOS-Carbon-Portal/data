@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
-import java.nio.file.FileAlreadyExistsException
 
 import scala.concurrent.Future
 

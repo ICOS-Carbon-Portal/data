@@ -9,7 +9,6 @@ import org.irods.jargon.core.connection.IRODSSession
 import scala.collection.concurrent.TrieMap
 import java.io.Closeable
 import akka.actor.ActorSystem
-import akka.actor.Cancellable
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
@@ -20,7 +19,6 @@ import scala.concurrent.duration.DurationInt
  */
 class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolManager with Closeable{
 
-	import system.dispatcher
 	system.registerOnTermination(close)
 
 	private[this] val inner = IRODSSimpleProtocolManager.instance()
@@ -41,7 +39,7 @@ class IRODSConnectionPool(implicit system: ActorSystem) extends IRODSProtocolMan
 			session: IRODSSession): AbstractIRODSMidLevelProtocol = {
 
 		val connFut = getPool(irodsAccount).getConnection(pipeConf, session)
-		Await.result(connFut, 10 minutes)
+		Await.result(connFut, 10.minutes)
 	}
 
 	override def returnIRODSProtocol(conn: AbstractIRODSMidLevelProtocol): Unit = {

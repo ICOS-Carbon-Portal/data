@@ -19,7 +19,7 @@ private class ConnectionHolder(
 
 	def release(): Unit = synchronized{
 		if(conn.isConnected) {
-			_closing = scheduler.scheduleOnce(5 minutes)(closeConnection)
+			_closing = scheduler.scheduleOnce(5.minutes)(closeConnection)
 		}
 	}
 

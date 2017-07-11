@@ -22,7 +22,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 
-	override def afterAll() {
+	override def afterAll(): Unit = {
 		system.terminate()
 	}
 
@@ -50,7 +50,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val rowsFut = rowsSource.runWith(Sink.seq)
 
-		val rows = Await.result(rowsFut, 1 second)
+		val rows = Await.result(rowsFut, 1.second)
 
 		assert(rows.size === nRows)
 		assert(rows(2).cells(2) === "-42.94501") //stick-test
@@ -63,7 +63,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(socatTsvToBinTableConverter(nRows, formatsFut))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)
 
 		assert(readResult.count === 72067)
 		assert(nRowsWritten === nRows)

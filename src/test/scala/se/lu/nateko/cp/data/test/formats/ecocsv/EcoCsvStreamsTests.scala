@@ -22,7 +22,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 
-	override def afterAll() {
+	override def afterAll(): Unit = {
 		system.terminate()
 	}
 
@@ -53,7 +53,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val rowsFut = rowsSource.runWith(Sink.seq)
 
-		val rows = Await.result(rowsFut, 1 second)
+		val rows = Await.result(rowsFut, 1.second)
 
 		assert(rows.size === nRows)
 		assert(rows(25).cells(2) === "3.0267") //stick-test
@@ -66,7 +66,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(ecoCsvToBinTableConverter(nRows, formatsFut))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)
 
 		assert(readResult.count === 4206)
 		assert(nRowsWritten === nRows)

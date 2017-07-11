@@ -8,7 +8,7 @@ public class RestheartEtagWarningFilter extends Filter<ILoggingEvent> {
 
 	@Override
 	public FilterReply decide(ILoggingEvent event) {
-		if (event.getFormattedMessage().startsWith("Illegal response header: Illegal 'etag' header: Invalid input"))
+		if (event.getFormattedMessage().startsWith("Illegal header: Illegal 'etag' header: Invalid input"))
 			return FilterReply.DENY;
 		return FilterReply.ACCEPT;
 	}

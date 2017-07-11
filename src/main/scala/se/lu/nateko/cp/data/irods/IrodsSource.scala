@@ -72,7 +72,7 @@ private class IrodsSource(filePath: String, account: IRODSAccount, connPool: IRO
 
 			private def readRow(): ByteString = {
 				if(inStream == null){
-					Await.result(init, 10 seconds)
+					Await.result(init, 10.seconds)
 				}
 				val bytes = Array.ofDim[Byte](bufferSize)
 				val hasRead = inStream.read(bytes)

@@ -6,14 +6,13 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.model.StatusCodes
-import akka.stream.Materializer
 
 import se.lu.nateko.cp.data.CpdataJsonProtocol._
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import akka.http.scaladsl.model.HttpMethods
 
-class TabularFetchRouting(fetcher: FromBinTableFetcher)(implicit mat: Materializer) {
+class TabularFetchRouting(fetcher: FromBinTableFetcher) {
 
 	val route = path("portal" / "tabular"){
 		post{

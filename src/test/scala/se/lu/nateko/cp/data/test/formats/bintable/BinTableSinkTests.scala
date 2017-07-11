@@ -22,7 +22,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val system = ActorSystem("binTableSinkTests")
 	private implicit val materializer = ActorMaterializer()
 
-	override def afterAll() {
+	override def afterAll(): Unit = {
 		system.terminate()
 	}
 
@@ -33,7 +33,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 
 		val schema = new Schema(Array(DataType.INT, DataType.DOUBLE), 1000)
 
-		def getRow(i: Int): Array[AnyRef] = Array(Int.box(i), Double.box(i.toLong << 16))
+		def getRow(i: Int): Array[AnyRef] = Array(Int.box(i), Double.box((i.toLong << 16).toDouble))
 		def getRowIterator = Iterator.from(1).take(schema.size.toInt).map(getRow)
 
 		val source = Source.fromIterator(() => getRowIterator)
@@ -41,7 +41,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 
 		val sink = BinTableSink(file)
 
-		val rowsWritten = Await.result(source.runWith(sink), 3 seconds)
+		val rowsWritten = Await.result(source.runWith(sink), 3.seconds)
 
 		assert(rowsWritten == schema.size)
 
@@ -94,7 +94,7 @@ class BinTableSinkTests extends FunSuite with BeforeAndAfterAll{
 
 		val sink = BinTableSink(file)
 
-		val rowsWritten = Await.result(rowsSource.runWith(sink), 3 seconds)
+		val rowsWritten = Await.result(rowsSource.runWith(sink), 3.seconds)
 
 		assert(rowsWritten == schema.size)
 	}

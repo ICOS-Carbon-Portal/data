@@ -12,7 +12,6 @@ import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
-import java.util.Arrays
 
 object ByteStringBuffer {
 

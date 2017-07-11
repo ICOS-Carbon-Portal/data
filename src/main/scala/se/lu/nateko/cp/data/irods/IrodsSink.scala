@@ -72,7 +72,7 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 			private def writeRow(row: ByteString): Unit =
 				try{
 					if(outStream == null){
-						Await.result(init, 10 seconds)
+						Await.result(init, 10.seconds)
 					}
 					val bytes = Array.ofDim[Byte](row.length)
 					row.copyToArray(bytes)

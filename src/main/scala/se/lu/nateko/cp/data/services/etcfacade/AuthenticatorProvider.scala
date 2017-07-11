@@ -5,6 +5,7 @@ import akka.http.scaladsl.server.directives.Credentials.Provided
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import java.security.MessageDigest
 import java.util.Base64
+import se.lu.nateko.cp.meta.core.etcupload.StationId
 
 
 object AuthenticatorProvider {

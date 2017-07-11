@@ -30,17 +30,17 @@ abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnFor
 
 		if(date == dateNull || time == timeNull) stampNull
 		else{
-			val locDate = LocalDate.ofEpochDay(date)
+			val locDate = LocalDate.ofEpochDay(date.toLong)
 
 			val dt =
 				if(time >= 86400){
-					val locTime = LocalTime.ofSecondOfDay(time - 86400)
-					LocalDateTime.of(locDate, locTime).plusHours(24 - offsetFromUtc)
+					val locTime = LocalTime.ofSecondOfDay((time - 86400).toLong)
+					LocalDateTime.of(locDate, locTime).plusHours((24 - offsetFromUtc).toLong)
 				} else {
-					val locTime = LocalTime.ofSecondOfDay(time)
-					LocalDateTime.of(locDate, locTime).minusHours(offsetFromUtc)
+					val locTime = LocalTime.ofSecondOfDay(time.toLong)
+					LocalDateTime.of(locDate, locTime).minusHours(offsetFromUtc.toLong)
 				}
-			Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli)
+			Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 		}
 	}
 

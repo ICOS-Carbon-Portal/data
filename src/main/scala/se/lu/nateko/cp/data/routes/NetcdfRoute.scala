@@ -29,12 +29,12 @@ object NetcdfRoute {
 				}
 			} ~
 			path("listElevations"){
-				parameter('service, 'varName){ (service, varName) =>
+				parameter(('service, 'varName)){ (service, varName) =>
 					complete(factory.getNetCdfViewService(service).getAvailableElevations(varName))
 				}
 			} ~
 			path("getSlice"){
-				parameters('service, 'date, 'varName, 'elevation?){(service, date, varName, elevation) =>
+				parameters(('service, 'date, 'varName, 'elevation.?)){(service, date, varName, elevation) =>
 					val raster = factory
 						.getNetCdfViewService(service)
 						.getRaster(date, varName, elevation.getOrElse(null))

@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.irods
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.concurrent.Promise
 
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
@@ -23,7 +22,6 @@ import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.DataObject
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
@@ -104,7 +102,7 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 		val checksum = try{
 			docuao.retrieveExistingChecksumForDataObject(filePath)
 		}catch{
-			case ex: Throwable =>
+			case _: Throwable =>
 				val file = api.fileFactory.instanceIRODSFile(filePath)
 				docuao.computeChecksumOnDataObject(file)
 		}

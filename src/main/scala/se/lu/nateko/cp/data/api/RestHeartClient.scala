@@ -105,7 +105,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			"$push" -> JsObject(
 				"dobjDownloads" -> JsObject(
 					"time" -> JsString(java.time.Instant.now().toString),
-					"fileName" -> dobj.fileName.map(JsString.apply).getOrElse(JsNull),
+					"fileName" -> JsString(dobj.fileName),
 					"hash" -> JsString(dobj.hash.base64Url)
 				)
 			)

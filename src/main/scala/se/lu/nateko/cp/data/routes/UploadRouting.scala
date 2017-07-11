@@ -3,7 +3,6 @@ package se.lu.nateko.cp.data.routes
 import scala.concurrent.Future
 
 import akka.http.scaladsl.model.ContentType
-import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
@@ -17,7 +16,6 @@ import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.stream.Materializer
-import akka.stream.scaladsl.Sink
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
 import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.services.upload.UploadResult
@@ -26,7 +24,6 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.data.api.RestHeartClient
 import scala.util.Success
-import scala.util.Failure
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, restHeart: RestHeartClient)(implicit mat: Materializer) {
@@ -80,23 +77,22 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 	}
 
 	private def accessRoute(dobj: DataObject): Route = optionalFileName{pathFileNameOpt =>
-		headerValueByType[`X-Forwarded-For`](){ip =>
+		headerValueByType[`X-Forwarded-For`](()){ip =>
 			extractLog{ log =>
 				userOpt{uidOpt =>
 
-					val fileNameOpt = dobj.fileName.orElse(pathFileNameOpt)
-					val contentType = getContentType(fileNameOpt)
+					val fileName = dobj.fileName
+					val contentType = getContentType(fileName)
 					val file = uploadService.getFile(dobj)
-					val fileName = fileNameOpt.getOrElse(file.getName)
 
 					def logDownload(): Unit = {
-						restHeart.logDownload(dobj, ip.value).onFailure{
-							case err: Throwable => log.error(err, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
-						}
+						restHeart.logDownload(dobj, ip.value).failed.foreach(
+							log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
+						)
 						for(uid <- uidOpt){
-							restHeart.saveDownload(dobj, uid).onFailure{
-								case err: Throwable => log.error(err, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")
-							}
+							restHeart.saveDownload(dobj, uid).failed.foreach(
+								log.error(_, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")
+							)
 						}
 					}
 
@@ -129,7 +125,7 @@ object UploadRouting{
 		pathEndOrSingleSlash{
 			nameToRoute(Tuple1(None))
 		} ~
-		path(Segment?){segmOpt =>
+		path(Segment.?){segmOpt =>
 			nameToRoute(Tuple1(segmOpt))
 		}
 	}
@@ -147,8 +143,5 @@ object UploadRouting{
 		val contentResolver = implicitly[ContentTypeResolver]
 		contentResolver(fileName)
 	}
-
-	private def getContentType(fileName: Option[String]): ContentType =
-		fileName.map(getContentType).getOrElse(ContentTypes.`application/octet-stream`)
 
 }

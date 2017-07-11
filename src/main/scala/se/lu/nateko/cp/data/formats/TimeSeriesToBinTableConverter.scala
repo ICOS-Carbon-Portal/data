@@ -20,7 +20,7 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 
 	val schema = {
 		val dataTypes = sortedColumns.map(colFormats).map(valueFormatParser.getBinTableDataType)
-		new Schema(dataTypes, nRows)
+		new Schema(dataTypes, nRows.toLong)
 	}
 
 	private val stampPos = sortedColumns.indexOf(timeStampCol)

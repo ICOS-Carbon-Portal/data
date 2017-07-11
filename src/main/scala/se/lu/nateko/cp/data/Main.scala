@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data
 
-import scala.collection.JavaConversions
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
@@ -13,11 +12,9 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.ActorMaterializer
-import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
-import se.lu.nateko.cp.data.irods.IRODSConnectionPool
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
@@ -33,8 +30,8 @@ object Main extends App {
 
 	val factory = {
 		import config.netcdf._
-		import scala.collection.JavaConversions._
-		new ViewServiceFactoryImpl(folder, dateVars, latitudeVars, longitudeVars, elevationVars)
+		import scala.collection.JavaConverters._
+		new ViewServiceFactoryImpl(folder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
 	}
 
 	val http = Http()

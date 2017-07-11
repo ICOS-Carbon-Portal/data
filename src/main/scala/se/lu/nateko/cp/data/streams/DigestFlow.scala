@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.streams
 
 import java.security.MessageDigest
-import java.util.Base64
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Success
@@ -37,9 +36,10 @@ private class DigestFlow[T](digest: String, map: Array[Byte] => T) extends Graph
 
 	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[T]) = {
 
+		val matValPromise = Promise[T]()
+
 		val logic = new GraphStageLogic(shape){
 
-			val matValPromise = Promise[T]()
 			private val md = MessageDigest.getInstance(digest)
 			private def completeDigest(): Unit = matValPromise.complete(Success(map(md.digest)))
 
@@ -66,6 +66,6 @@ private class DigestFlow[T](digest: String, map: Array[Byte] => T) extends Graph
 			})
 		}
 
-		(logic, logic.matValPromise.future)
+		(logic, matValPromise.future)
 	}
 }

@@ -12,7 +12,7 @@ import akka.stream.scaladsl.FileIO
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
-import se.lu.nateko.cp.data.services.etcfacade.StationId
+import se.lu.nateko.cp.meta.core.etcupload.StationId
 
 object Playground {
 

@@ -1,16 +1,13 @@
 package se.lu.nateko.cp.data.test.formats.bintable
 
 import scala.concurrent.Await
-import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.FunSuite
-import org.scalactic.TypeCheckedTripleEquals._
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.test.TestUtils._
@@ -20,7 +17,7 @@ class BinTableSourceTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val system = ActorSystem("binTableSinkTests")
 	private implicit val materializer = ActorMaterializer()
 
-	override def afterAll() {
+	override def afterAll(): Unit = {
 		system.terminate()
 	}
 
@@ -29,11 +26,11 @@ class BinTableSourceTests extends FunSuite with BeforeAndAfterAll{
 		val file = getFileInTarget("intFloatDouble344.cpb")
 
 		val n = 344
-		val schema = new Schema(Array(DataType.INT, DataType.FLOAT, DataType.DOUBLE), n)
+		val schema = new Schema(Array(DataType.INT, DataType.FLOAT, DataType.DOUBLE), n.toLong)
 
 		val source = BinTableSource(file, schema, Seq(0, 1, 2))
 
-		val bytes = Await.result(source.runFold(ByteString.empty)(_ ++ _), 1 second)
+		val bytes = Await.result(source.runFold(ByteString.empty)(_ ++ _), 1.second)
 
 		val firstCol = bytes.take(n * 4).asByteBuffer.asIntBuffer
 		assert(firstCol.get(0) === 6466)

@@ -4,7 +4,7 @@ import se.lu.nateko.cp.data.StiltConfig
 import java.nio.file.Paths
 import java.io.File
 import java.nio.file.Files
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import java.nio.file.Path
 import akka.stream.scaladsl.Source
 import scala.io.{Source => IoSource}
@@ -50,9 +50,8 @@ class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 	def getFootprintRaster(stationId: String, filename: String): Raster = {
 		val factory = {
 			import netcdf._
-			import scala.collection.JavaConversions._
 			val footprintsFolder = Paths.get(config.mainFolder, footPrintsFolder, stationId).toString + File.separator
-			new ViewServiceFactoryImpl(footprintsFolder, dateVars, latitudeVars, longitudeVars, elevationVars)
+			new ViewServiceFactoryImpl(footprintsFolder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
 		}
 		val service = factory.getNetCdfViewService(filename)
 		val date = service.getAvailableDates()(0)
@@ -66,7 +65,7 @@ object StiltResultFetcher{
 		val dirStream = Files.newDirectoryStream(dir, fileGlob)
 		try{
 			dirStream
-				.iterator()
+				.asScala
 				.map(_.getFileName.toString)
 				.toIndexedSeq
 		} finally {

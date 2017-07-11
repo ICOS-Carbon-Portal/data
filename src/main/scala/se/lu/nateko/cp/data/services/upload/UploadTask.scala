@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.services.upload
 
-import scala.annotation.implicitNotFound
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 

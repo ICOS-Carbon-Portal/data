@@ -21,7 +21,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 
-	override def afterAll() {
+	override def afterAll(): Unit = {
 		system.terminate()
 	}
 
@@ -48,7 +48,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val rowsFut = rowsSource.runWith(Sink.seq)
 
-		val rows = Await.result(rowsFut, 1 second)
+		val rows = Await.result(rowsFut, 1.second)
 
 		assert(rows.size === rows.head.header.nRows)
 		assert(rows.size === expectedNRows)
@@ -65,9 +65,9 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 			case ( (schemaNRows, count), _) => (schemaNRows, count + 1)
 		}
 
-		val (schemaNRows, nRowsInSource) = Await.result(rowCountsFut, 1 second)
+		val (schemaNRows, nRowsInSource) = Await.result(rowCountsFut, 1.second)
 
-		val (readResult, nRowsWritten) = Await.result(binTableExport.run(), 1 second)
+		val (readResult, nRowsWritten) = Await.result(binTableExport.run(), 1.second)
 
 		assert(schemaNRows === nRowsInSource)
 		assert(nRowsWritten === nRowsInSource)
@@ -82,7 +82,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(wdcggToBinTableConverter(formats))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1 second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)
 
 		assert(readResult.count === 29454)
 		assert(firstRow.header.nRows === expectedNRows)
@@ -107,7 +107,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 				ClosedShape
 		})
 
-		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 1 second)
+		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 1.second)
 
 		assert(schemaNRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
@@ -121,7 +121,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 					ByteString(" forth \n") ::
 					ByteString("fi\rfth\n") :: Nil
 		)
-		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1 second)
+		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1.second)
 		assert(lines === Seq("first line", " second", "third ", " forth ", "fifth"))
 	}
 
@@ -129,12 +129,12 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 		val strLines = List("first line\r\n", " second\r\n", "third \r\n", " forth \r\n", "fi\rfth\r\n")
 		val binSource = Source(strLines).map(ByteString(_))
 
-		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1 second)
+		val lines: Seq[String] = Await.result(binSource.via(linesFromBinary).runWith(Sink.seq), 1.second)
 		assert(lines === Seq("first line", " second", "third ", " forth ", "fifth"))
 	}
 
 	test("Header key-values are parsed successfully"){
-		val kv = Await.result(linesSource.runWith(wdcggHeaderSink), 1 second)
+		val kv = Await.result(linesSource.runWith(wdcggHeaderSink), 1.second)
 
 		assert(kv("PARAMETER") === "CO2")
 		assert(kv("TIME INTERVAL") === "monthly")

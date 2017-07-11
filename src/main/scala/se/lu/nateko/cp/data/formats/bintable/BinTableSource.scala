@@ -20,7 +20,7 @@ object BinTableSource {
 		SourceFromCloseableIterator(() => {
 			val binTblReader = new BinTableReader(file, schema)
 			val byteStringIter = getColumns(binTblReader, cols, slice)
-			(byteStringIter, binTblReader.close)
+			(byteStringIter, () => binTblReader.close())
 		})
 
 

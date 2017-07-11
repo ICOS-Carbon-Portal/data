@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data
 
 import java.io.File
 import java.net.URI
-import java.net.URLEncoder
 import java.nio.file.Path
 
 import scala.collection.immutable.Seq

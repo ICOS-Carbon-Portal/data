@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.test.formats.bintable
 
 import org.scalatest.FunSuite
-import java.io.File
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
 import se.lu.nateko.cp.data.test.TestUtils._
@@ -13,7 +12,7 @@ class BinTableTest extends FunSuite{
 
 		val n = 100000
 
-		val schema = new Schema(Array(DataType.INT, DataType.DOUBLE, DataType.FLOAT), n)
+		val schema = new Schema(Array(DataType.INT, DataType.DOUBLE, DataType.FLOAT), n.toLong)
 
 		val writer = new BinTableWriter(file, schema)
 

@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.irods
 
-import scala.annotation.migration
 import scala.concurrent.Future
 import scala.concurrent.Promise
 

@@ -20,6 +20,6 @@ object SocatTsvToBinTableConverter{
 	val timestampFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
 	def parseTimestamp(ts: String): AnyRef = {
-		Double.box(LocalDateTime.parse(ts, timestampFormatter).toInstant(ZoneOffset.UTC).toEpochMilli)
+		Double.box(LocalDateTime.parse(ts, timestampFormatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 	}
 }

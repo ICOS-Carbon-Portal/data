@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
-import java.nio.file.Paths
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -13,7 +12,6 @@ import akka.stream.IOResult
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends UploadTask{
 
