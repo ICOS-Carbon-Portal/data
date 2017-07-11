@@ -78,6 +78,6 @@ object Playground {
 			config.etcFacade
 		else
 			config.etcFacade.copy(secret = secret)
-		StationId.unapply(stationId).map(AuthenticatorProvider.getSecret(_, etcConfig))
+		StationId.unapply(stationId).map(AuthenticatorProvider.getPassword(_, etcConfig))
 	}
 }

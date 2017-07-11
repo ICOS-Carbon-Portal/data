@@ -69,7 +69,7 @@ object Main extends App {
 		StiltRouting(stiltFetcher) ~
 		StaticRouting.route ~
 		licenceRouting.route ~
-		EtcUploadRouting()
+		EtcUploadRouting(config.etcFacade)
 	}
 
 	restHeart.init.flatMap{_ =>

@@ -25,15 +25,7 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 ---
 
 ## Simplified ETC-specific facade API for data uploads
-A test service is available for developers of the client code. At the time of writing, the test service uses Basic HTTP Authentication with a fixed username `station` and password `p4ssw0rd`. The uploaded data is analyzed (MD5 sum gets calculated for it), and then discarded.
-
-To enable the authors of the client code to test their implementations for the cases of network and server failures and transfer errors, the test service is intentionally designed to be faulty. For every upload request, the server will react with equal probability in one of the following 5 ways:
-
-- working as it should (replying with 400 on checksum error and with 200 otherwise)
-- failing after receiving more than 1000 bytes
-- artificially truncating the data stream after first 1000 bytes, and failing with "Checksum error" because of that
-- scrambling the data stream, and failing with "Checksum error" because of that
-- consuming the stream but timing out instead of responding properly
+A test service is available for developers of the client code. At the time of writing, the test service uses Basic HTTP Authentication with a fixed username `FA-Lso` and password `p4ssw0rd`. The uploaded data is analyzed (MD5 sum gets calculated for it), and then discarded.
 
 Here is an example of uploading bytes in the string `test` to the service (performed on Linux command line):
 
@@ -41,7 +33,7 @@ Here is an example of uploading bytes in the string `test` to the service (perfo
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl -X PUT --data 'test' https://station:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/testFileName.txt`
+`$ curl -X PUT --data 'test' https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/testFileName.txt`
 
 `OK`
 
@@ -51,7 +43,7 @@ Upload a file from the command line ("happy path" example):
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl --upload-file myfile.ext https://station:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/myfile.ext`
+`$ curl --upload-file myfile.ext https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/myfile.ext`
 
 `OK`
 

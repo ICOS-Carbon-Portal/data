@@ -9,7 +9,7 @@ import java.util.Base64
 
 object AuthenticatorProvider {
 
-	def getSecret(id: StationId, config: EtcFacadeConfig): String =
+	def getPassword(id: StationId, config: EtcFacadeConfig): String =
 		config.stationOverrides.get(id.id).getOrElse{
 			val md = MessageDigest.getInstance("SHA-256")
 			md.update((config.secret + id.id).getBytes("UTF-8"))
@@ -17,7 +17,7 @@ object AuthenticatorProvider {
 		}
 
 	def apply(config: EtcFacadeConfig): Directives.Authenticator[StationId] = {
-		case creds @ Provided(StationId(id)) if(creds.verify(getSecret(id, config))) => Some(id)
+		case creds @ Provided(StationId(id)) if(creds.verify(getPassword(id, config))) => Some(id)
 		case _ => None
 	}
 
