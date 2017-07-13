@@ -81,7 +81,9 @@ lazy val data = (project in file("."))
 		// *** end of manually published on CP Nexus 3rd party repo ***
 
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
-		)
+		),
+
+		scalacOptions += "-Ywarn-unused-import:false"
 
 //		initialCommands in console := """
 //			import se.lu.nateko.cp.data.MassUpload._

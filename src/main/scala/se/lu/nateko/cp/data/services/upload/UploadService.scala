@@ -74,8 +74,9 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 			new IrodsUploadTask(dataObj, irods)
 
 		dataObj.specification.dataLevel match{
-			case 0 | 1 =>
-				hashAndIrods
+			case 0 | 1 | 3 =>
+				hashAndIrods :+
+				new FileSavingUploadTask(file)
 
 			case 2 =>
 				val formatUri = dataObj.specification.format.uri
@@ -93,10 +94,6 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 					hashAndIrods :+
 					new FileSavingUploadTask(file)
 				}
-
-			case 3 =>
-				hashAndIrods :+
-				new FileSavingUploadTask(file)
 
 			case dataLevel =>
 				IndexedSeq.empty :+
