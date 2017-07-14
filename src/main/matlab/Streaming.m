@@ -54,8 +54,8 @@ maxNumPoints = 30;
 %
 % Lite komplicerade linjer
 %
-load 'D:\My Documents\Egna_projekt\ICOS carbon portal\Geometrisk sökning 2016\Matlab test 2017\Data\OrgData3.txt'
-OrgData=OrgData3;
+%load 'D:\My Documents\Egna_projekt\ICOS carbon portal\Geometrisk sökning 2016\Matlab test 2017\Data\OrgData3.txt'
+%OrgData=OrgData3;
 %
 %load 'D:\My Documents\Egna_projekt\ICOS carbon portal\Geometrisk sökning 2016\Matlab test 2017\Data\OrgData4.txt'
 %OrgData=OrgData4;
@@ -69,14 +69,12 @@ OrgData=OrgData3;
 %load 'D:\My Documents\Egna_projekt\ICOS carbon portal\Geometrisk sökning 2016\Matlab test 2017\Data\OrgData6.txt'
 %OrgData=OrgData6;
 %
+OrgData = csvread('data1.csv')(2:end,:);
+
 [rader kolumner]=size(OrgData);
-for i=1:(rader-1)	
-	Graphx=[OrgData(i,1), OrgData(i+1,1)];
-	Graphy=[OrgData(i,2), OrgData(i+1,2)];
-	plot(Graphx,Graphy,'r'),hold on
-end;
-%
-%
+
+plot(OrgData(:,1), OrgData(:,2), 'r'), hold on;
+
 disp = [ 'Ursprungligt antal punkter: ', num2str(rader) ]
 %
 % **************************************************************************
@@ -99,6 +97,7 @@ end;
 %
 % Addera nästa punkt i listan samt ta bort punkt med lägst prioritet
 %
+
 for i = (maxNumPoints+1) : (rader-1)   
 %for i = (maxNumPoints+1) : (maxNumPoints+100)
 
@@ -110,7 +109,7 @@ for i = (maxNumPoints+1) : (rader-1)
     linje(j,3)=Inf; 
     linje(j,4)=0;
     % Beräkna nya prioriteter för föregående och nästa punkt
-    k=j-1 % Föregånde
+    k=j-1; % Föregånde
     while (linje(k,4)<0.1)
         k=k-1;
     end
@@ -128,12 +127,7 @@ for i = (maxNumPoints+1) : (rader-1)
 end
 %
 %
-toc % Sluta tidmätning
-%
 % *****************************************************************
-%
-linje
-size(linje)
 %
 % Plocka ut de punkter som ska bevaras och
 % lagra dem i vektorn ny_linje
@@ -148,15 +142,14 @@ for i=1:rader
 end
 %
 %
-toc
+toc % Sluta tidmätning
+
+ny_linje
+
 %
 %  Rita ut den av D&P förenklade linjen
 %
-for i=1:(maxNumPoints-1)	
-	Graphx=[ny_linje(i,1), ny_linje(i+1,1)];
-	Graphy=[ny_linje(i,2), ny_linje(i+1,2)];
-	plot(Graphx,Graphy,'k'),hold on
-end;
+plot(ny_linje(:, 1), ny_linje(:, 2), 'k');
 %
 %
 %  ************** END ****************************************
