@@ -1,10 +1,11 @@
+function comp = compare(filename)
 
-OrgData = csvread('data1.csv')(2:end,:);
+OrgData = csvread([filename '.csv'])(2:end,:);
 
-plot(OrgData(:,1), OrgData(:,2), 'r'), hold on;
+plot(OrgData(:,2), OrgData(:,1), 'r'), hold on;
 
-ScalaRes = csvread('data1ScalaOut.csv');
+ScalaRes = csvread([filename '.reduced.csv']);
 
-plot(ScalaRes(:,1), ScalaRes(:, 2), 'g');
+plot(ScalaRes(:,2), ScalaRes(:, 1), '.-g');
 
 

@@ -8,27 +8,41 @@ import java.io.PrintWriter
 
 class PointReducerTests extends FunSuite {
 
-	test("PointReducer playground"){
+	ignore("PointReducer playground"){
+		val nmax = 31
+		val reducer = PointReducer.fullDistanceSquaredCost(nmax)
+		//val reducer = PointReducer.signedTriangleAreaCost(nmax)
+
+		val res = singleRun(reducer, "data2")
+		println(res)
+	}
+
+	private case class RunResult(elapsedMs: Int, sigma: Float, nPoints: Int)
+
+	private def singleRun(reducer: PointReducer, fileName: String): RunResult = {
 		val folder = "/home/maintenance/workspace/data/src/main/matlab/"
-		val csvPath = folder + "data1.csv"
+		val csvPath = s"$folder$fileName.csv"
 
 		val latLongs = Source.fromFile(new File(csvPath)).getLines().drop(1)
-			.map(s => s.split(',')).map(arr => (arr(0).toFloat, arr(1).toFloat))
+			.map(s => s.split(','))
+			.map(arr => (arr(0).toFloat, arr(1).toFloat))
+			.toIndexedSeq
 
 		val t0 = System.currentTimeMillis()
 
-		val finState = latLongs.foldLeft(PointReducerState(5)){
-			case (state, (lat, lon)) => PointReducer.nextState(state, lat, lon)
+		val finState = latLongs.foldLeft(new PointReducerState){
+			case (state, (lat, lon)) => reducer.nextState(state, lat, lon)
 		}
 
-		println("Elapsed, ms: " + (System.currentTimeMillis() - t0).toString)
+		val elapsed = System.currentTimeMillis() - t0
 
-		val pw = new PrintWriter(new File(folder + "data1ScalaOut.csv"))
+		val pw = new PrintWriter(new File(s"$folder$fileName.reduced.csv"))
 
 		finState.latLongs.foreach{
 			case (lat, lon) =>
 				pw.println(s"$lat,$lon")
 		}
 		pw.close()
+		RunResult(elapsed.toInt, PointReducer.sigmaError(finState), latLongs.length)
 	}
 }

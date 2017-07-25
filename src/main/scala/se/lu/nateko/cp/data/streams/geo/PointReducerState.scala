@@ -3,51 +3,37 @@ package se.lu.nateko.cp.data.streams.geo
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
 
-class PointReducerState(val nmax: Int){
-
-	import PointReducerState._
-	assert(nmax >= 2, "Geo point reducer must keep at least 2 points")
+class PointReducerState{
 
 	val lats, lons = Buffer.empty[Float]
+	val bbox = new BBox
 	val shortList = Buffer.empty[Int]
-	var n: Int = 0
 
 	val costs = Map.empty[Int, Double]
-
-	def updateCost(idx: Int): Unit = {
-		val globIdx = shortList(idx)
-		costs += globIdx -> recomputeCost(idx)
-	}
-
-	def recomputeCost(idx: Int): Double = {
-		val idx1 = shortList(idx - 1)
-		val idx2 = shortList(idx + 1)
-
-		val lon1 = lons(idx1)
-		val lon2 = lons(idx2)
-		val lat1 = lats(idx1)
-		val lat2 = lats(idx2)
-
-		val dist12Sq = {
-			val latDiff = lat2 - lat1
-			val lonDiff = lon2 - lon1
-			latDiff * latDiff + lonDiff * lonDiff
-		}
-
-		(idx1 to idx2).map(i =>
-			distanceSqNom(lon1, lat1, lon2, lat2, lons(i), lats(i))
-		).sum / dist12Sq
-	}
+	val inheritedCosts = Map.empty[Int, Double]
 
 	def latLongs = shortList.map(i => (lats(i), lons(i)))
 }
 
-object PointReducerState{
+class BBox(var left: Point, var top: Point, var right: Point, var bottom: Point){
+	def this() = this(new Point(1000, 0), new Point(0, -1000), new Point(-1000, 0), new Point(0, 1000))
 
-	def apply(nmax: Int) = new PointReducerState(nmax)
-
-	def distanceSqNom(x1: Float, y1: Float, x2: Float, y2: Float, x0: Float, y0: Float): Double = {
-		val distNom = (y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1
-		distNom.toDouble * distNom
+	def updateWith(lon: Float, lat: Float): Unit = {
+		if(lon < left.lon) left = new Point(lon, lat)
+		if(lon > right.lon) right = new Point(lon, lat)
+		if(lat < bottom.lat) bottom = new Point(lon, lat)
+		if(lat > top.lat) top = new Point(lon, lat)
 	}
+
+	def hasDefiningPoint(lon: Float, lat: Float): Boolean =
+		left.sameAs(lon, lat) || top.sameAs(lon, lat) || right.sameAs(lon, lat) || bottom.sameAs(lon, lat)
+
+	override def toString = s"BBox($left, $top, $right, $bottom)"
+}
+
+class Point(val lon: Float, val lat: Float){
+
+	def sameAs(lon2: Float, lat2: Float): Boolean = lon2 == lon && lat2 == lat
+
+	override def toString = s"($lon, $lat)"
 }
