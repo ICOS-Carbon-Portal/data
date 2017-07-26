@@ -15,7 +15,11 @@ class HashsumCheckingUploadTask(hash: Sha256Sum)(implicit ctxt: ExecutionContext
 			if(actualHash == hash)
 				HashsumCheckSuccess(actualHash)
 			else HashsumCheckFailure(hash, actualHash)
-		}))
+		}).recover{
+			case _ =>
+				val zeroHash = Sha256Sum.fromHex("0" * 64).get
+				HashsumCheckFailure(hash, zeroHash)
+		})
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = Future.successful(ownResult)
 

@@ -88,6 +88,7 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = {
 		val relevantOtherErrors = otherTaskResults.collect{
 			case failure: HashsumCheckFailure => failure
+			case failure: UnexpectedTaskFailure => failure
 		}
 
 		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{

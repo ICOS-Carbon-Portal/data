@@ -31,6 +31,7 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 			case _ =>
 				val relevantOtherErrors = otherTaskResults.collect{
 					case failure: HashsumCheckFailure => failure
+					case failure: UnexpectedTaskFailure => failure
 				}
 
 				UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{

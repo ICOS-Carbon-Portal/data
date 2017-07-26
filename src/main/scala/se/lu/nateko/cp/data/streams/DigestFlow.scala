@@ -16,6 +16,7 @@ import akka.stream.stage.OutHandler
 import akka.util.ByteString
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import scala.util.Failure
 
 object DigestFlow{
 
@@ -51,8 +52,13 @@ private class DigestFlow[T](digest: String, map: Array[Byte] => T) extends Graph
 				}
 
 				override def onUpstreamFinish(): Unit = {
-					super.onUpstreamFinish()
 					completeDigest()
+					super.onUpstreamFinish()
+				}
+
+				override def onUpstreamFailure(ex: Throwable): Unit = {
+					matValPromise.complete(Failure(ex))
+					super.onUpstreamFailure(ex)
 				}
 			})
 

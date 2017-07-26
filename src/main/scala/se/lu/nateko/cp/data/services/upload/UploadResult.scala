@@ -49,6 +49,9 @@ sealed trait UploadTaskCancellation extends UploadTaskResult
 sealed trait UploadTaskFailure extends UploadTaskResult{
 	val error: Throwable
 }
+
+case class UnexpectedTaskFailure(val error: Throwable) extends UploadTaskFailure
+
 case class NotImplementedFailure(message: String) extends UploadTaskFailure{
 	val error = new CpDataException(message)
 }

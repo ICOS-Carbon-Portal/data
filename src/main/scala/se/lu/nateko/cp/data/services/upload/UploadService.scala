@@ -119,6 +119,11 @@ object UploadService{
 	}
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {
-		SinkCombiner.combineMat(sinks).mapMaterializedValue(Future.sequence(_))
+		SinkCombiner.combineMat(sinks).mapMaterializedValue{uploadResultFuts =>
+			val failProof = uploadResultFuts.map(_.recover{
+				case err => UnexpectedTaskFailure(err)
+			})
+			Future.sequence(failProof)
+		}
 	}
 }
