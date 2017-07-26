@@ -1,6 +1,9 @@
 package se.lu.nateko.cp.data.streams.geo
 
 import PointReducer._
+import se.lu.nateko.cp.meta.core.data.SpatialCoverage
+import se.lu.nateko.cp.meta.core.data.GeoTrack
+import se.lu.nateko.cp.meta.core.data.Position
 
 class PointReducer(nmax: Int, costFun: CostFunction) {
 
@@ -128,4 +131,24 @@ object PointReducer {
 			.map(segm => segmentDistSquaredSum(segm(0), segm(1), state))
 			.sum / (state.lons.length - 1)
 	).toFloat
+
+	def getCoverage(state: PointReducerState): Either[SpatialCoverage, GeoTrack] = {
+		val err = sigmaError(state)
+		import state.bbox
+		val bboxSizeEst = Math.sqrt(bbox.width.toDouble * bbox.height)
+
+		if(err < 0.05 * bboxSizeEst) Right(
+			GeoTrack(
+				state.latLongs.map{
+					case (lat, lon) => Position(lat.toDouble, lon.toDouble)
+				}
+			)
+		) else Left(
+			SpatialCoverage(
+				min = Position(bbox.bottom.lat.toDouble, bbox.left.lon.toDouble),
+				max = Position(bbox.top.lat.toDouble, bbox.right.lon.toDouble),
+				label = None
+			)
+		)
+	}
 }

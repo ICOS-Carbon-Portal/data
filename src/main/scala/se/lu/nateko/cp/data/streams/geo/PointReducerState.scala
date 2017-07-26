@@ -28,6 +28,9 @@ class BBox(var left: Point, var top: Point, var right: Point, var bottom: Point)
 	def hasDefiningPoint(lon: Float, lat: Float): Boolean =
 		left.sameAs(lon, lat) || top.sameAs(lon, lat) || right.sameAs(lon, lat) || bottom.sameAs(lon, lat)
 
+	def width: Float = right.lon - left.lon
+	def height: Float = top.lat - bottom.lat
+
 	override def toString = s"BBox($left, $top, $right, $bottom)"
 }
 
