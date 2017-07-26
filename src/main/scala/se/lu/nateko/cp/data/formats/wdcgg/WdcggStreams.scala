@@ -43,34 +43,28 @@ object WdcggStreams{
 			.map(acc => new WdcggRow(acc.header, acc.cells))
 
 
-	def wdcggToBinTableConverter(formatsFut: Future[ColumnFormats])(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
-		val graph = GraphDSL.create(Sink.head[ColumnFormats], Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo){ implicit b =>
-			(formatsSink, firstWdcggSink, firstRowSink, lastRowSink) =>
+	def wdcggToBinTableConverter(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
+		val graph = GraphDSL.create(Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
+			(firstWdcggSink, firstRowSink, lastRowSink) =>
 
 			import GraphDSL.Implicits._
-
-			val formats = b.add(Broadcast[ColumnFormats](2))
-			formats.out(0) ~> formatsSink.in
-			b.add(Source.fromFuture(formatsFut)).out ~> formats.in
 
 			val inputs = b.add(Broadcast[WdcggRow](3))
 			inputs.out(0) ~> firstWdcggSink.in
 
-			val zipToConverter = b.add(ZipWith[ColumnFormats, WdcggRow, WdcggToBinTableConverter](
-				(formats, row) => new WdcggToBinTableConverter(formats, row.header)
-			))
+			val rowConverterRepeated = b.add(
+				Flow[WdcggRow].take(1)
+					.map(row => new WdcggToBinTableConverter(formats, row.header))
+					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
+			)
 
-			formats.out(1) ~> zipToConverter.in0
-			inputs.out(1) ~> zipToConverter.in1
-
-			val converterRepeater = b.add(infiniteRepeater[WdcggToBinTableConverter])
-			zipToConverter.out ~> converterRepeater.in
+			inputs.out(1) ~> rowConverterRepeated.in
 
 			val zipToBinRow = b.add(ZipWith[WdcggToBinTableConverter, WdcggRow, BinTableRow](
 				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
 			))
 
-			converterRepeater.out ~> zipToBinRow.in0
+			rowConverterRepeated.out ~> zipToBinRow.in0
 			inputs.out(2) ~> zipToBinRow.in1
 
 			val outputs = b.add(Broadcast[BinTableRow](3))
@@ -89,22 +83,18 @@ object WdcggStreams{
 		.map(_.header.kvPairs)
 		.toMat(Sink.last)(Keep.right)
 
-	private def infiniteRepeater[T]: Flow[T, T, NotUsed] = Flow.apply[T].mapConcat(Stream.continually(_))
-
 	private val headerKeys = Set(
 		"STATION NAME", "OBSERVATION CATEGORY", CountryKey, "CONTRIBUTOR",
 		"LATITUDE", "LONGITUDE", "CONTACT POINT", ParamKey, "TIME INTERVAL",
 		MeasUnitKey, "MEASUREMENT METHOD", SamplingTypeKey, "MEASUREMENT SCALE"
 	)
 
-	private def getCompletionInfo(
-			formatsFut: Future[ColumnFormats],
+	private def getCompletionInfo(formats: ColumnFormats)(
 			firstWdcggFut: Future[WdcggRow],
 			firstBinFut: Future[BinTableRow],
 			lastBinFut: Future[BinTableRow]
 		)(implicit ctxt: ExecutionContext): Future[WdcggUploadCompletion] =
 		for(
-			formats <- formatsFut;
 			firstWdcgg <- firstWdcggFut;
 			firstBin <- firstBinFut;
 			lastBin <- lastBinFut

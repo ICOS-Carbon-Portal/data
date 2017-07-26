@@ -52,36 +52,30 @@ object TimeSeriesStreams {
 	}
 
 	def timeSeriesToBinTableConverter[H <: TableRowHeader](
-		formatsFut: Future[ColumnFormats],
-		factory: (H, ColumnFormats) => TimeSeriesToBinTableConverter
+		formats: ColumnFormats,
+		factory: H => TimeSeriesToBinTableConverter
 	)(implicit ctxt: ExecutionContext): Flow[TableRow[H], BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 
-		val graph = GraphDSL.create(Sink.head[ColumnFormats], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo){ implicit b =>
-			(formatsSink, firstRowSink, lastRowSink) =>
+		val graph = GraphDSL.create(Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
+			(firstRowSink, lastRowSink) =>
 
 			import GraphDSL.Implicits._
 
-			val formats = b.add(Broadcast[ColumnFormats](2))
-			formats.out(0) ~> formatsSink.in
-			b.add(Source.fromFuture(formatsFut)).out ~> formats.in
-
 			val inputs = b.add(Broadcast[TableRow[H]](2))
 
-			val zipToConverter = b.add(ZipWith[ColumnFormats, TableRow[H], TimeSeriesToBinTableConverter](
-				(formats, row) => factory(row.header, formats)
-			))
+			val rowConverterRepeated = b.add(
+				Flow[TableRow[H]].take(1)
+					.map(row => factory(row.header))
+					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
+			)
 
-			formats.out(1) ~> zipToConverter.in0
-			inputs.out(0) ~> zipToConverter.in1
-
-			val converterRepeater = b.add(infiniteRepeater[TimeSeriesToBinTableConverter])
-			zipToConverter.out ~> converterRepeater.in
+			inputs.out(0) ~> rowConverterRepeated.in
 
 			val zipToBinRow = b.add(ZipWith[TimeSeriesToBinTableConverter, TableRow[H], BinTableRow](
 				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
 			))
 
-			converterRepeater.out ~> zipToBinRow.in0
+			rowConverterRepeated.out ~> zipToBinRow.in0
 			inputs.out(1) ~> zipToBinRow.in1
 
 			val outputs = b.add(Broadcast[BinTableRow](3))
@@ -94,15 +88,11 @@ object TimeSeriesStreams {
 		Flow.fromGraph(graph)
 	}
 
-	private def infiniteRepeater[T]: Flow[T, T, NotUsed] = Flow.apply[T].mapConcat(Stream.continually(_))
-
-	private def getCompletionInfo(
-			formatsFut: Future[ColumnFormats],
+	private def getCompletionInfo(formats: ColumnFormats)(
 			firstBinFut: Future[BinTableRow],
 			lastBinFut: Future[BinTableRow]
 		)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for(
-			formats <- formatsFut;
 			firstBin <- firstBinFut;
 			lastBin <- lastBinFut
 		) yield{

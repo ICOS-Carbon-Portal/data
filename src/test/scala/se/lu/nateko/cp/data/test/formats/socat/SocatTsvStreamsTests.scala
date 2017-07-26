@@ -37,7 +37,6 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 		"Temp [°C]" -> FloatValue,
 		"fCO2water_SST_wet [µatm] (Recomputed after SOCAT (Pfeil...)" -> FloatValue
 	)
-	val formatsFut = Future.successful(formats)
 
 	val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/26NA20050107_CO2_underway_SOCATv3.tab"))
@@ -60,7 +59,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val g = rowsSource
 			.alsoToMat(Sink.head[SocatTsvRow])(_ zip _)
-			.via(socatTsvToBinTableConverter(nRows, formatsFut))
+			.via(socatTsvToBinTableConverter(nRows, formats))
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)

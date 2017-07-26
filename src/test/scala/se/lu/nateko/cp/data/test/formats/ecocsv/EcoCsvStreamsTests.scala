@@ -40,7 +40,6 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 		"NEE_1_1_1" -> FloatValue,
 		"Ustar_1_1_1" -> FloatValue
 	)
-	val formatsFut = Future.successful(formats)
 
 	val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/SE-Htm_fluxes_2015-01-01_CP_flag.txt"))
@@ -63,7 +62,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val g = rowsSource
 			.alsoToMat(Sink.head[EcoCsvRow])(_ zip _)
-			.via(ecoCsvToBinTableConverter(nRows, formatsFut))
+			.via(ecoCsvToBinTableConverter(nRows, formats))
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)

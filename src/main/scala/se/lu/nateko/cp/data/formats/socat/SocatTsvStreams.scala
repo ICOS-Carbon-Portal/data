@@ -12,6 +12,7 @@ import se.lu.nateko.cp.data.formats.TableRow
 import se.lu.nateko.cp.data.formats.TableRowHeader
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
+import se.lu.nateko.cp.meta.core.data.SpatialTimeSeriesUploadCompletion
 import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
 
 class SocatRowHeader(val columnNames: Array[String]) extends TableRowHeader
@@ -35,11 +36,11 @@ object SocatTsvStreams{
 
 	def socatTsvToBinTableConverter(
 		nRows: Int,
-		formatsFut: Future[ColumnFormats]
+		formats: ColumnFormats
 	)(implicit ctxt: ExecutionContext): Flow[SocatTsvRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 		TimeSeriesStreams.timeSeriesToBinTableConverter(
-			formatsFut,
-			(header, formats) => new SocatTsvToBinTableConverter(formats, header.columnNames, nRows)
+			formats,
+			header => new SocatTsvToBinTableConverter(formats, header.columnNames, nRows)
 		)
 	}
 

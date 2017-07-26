@@ -23,11 +23,11 @@ object EcoCsvStreams{
 
 	def ecoCsvToBinTableConverter(
 		nRows: Int,
-		formatsFut: Future[ColumnFormats]
+		formats: ColumnFormats
 	)(implicit ctxt: ExecutionContext): Flow[EcoCsvRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 		TimeSeriesStreams.timeSeriesToBinTableConverter(
-			formatsFut,
-			(header, formats) => new EcoCsvToBinTableConverter(formats, header, nRows)
+			formats,
+			header => new EcoCsvToBinTableConverter(formats, header, nRows)
 		)
 	}
 
