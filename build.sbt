@@ -61,14 +61,14 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.4.0",
+		version := "0.4.1",
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.3-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.4-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.2-SNAPSHOT",
 
 		// *** manually published on CP Nexus 3rd party repo ***

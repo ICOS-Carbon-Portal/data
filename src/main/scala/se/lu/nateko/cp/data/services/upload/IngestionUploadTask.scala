@@ -24,10 +24,15 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
+import scala.concurrent.ExecutionContext
 
-class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: SparqlClient) extends UploadTask{
+class IngestionUploadTask(
+	dataObj: DataObject,
+	originalFile: File,
+	formats: ColumnFormats
+)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	import sparql.materializer.executionContext
+	//import sparql.materializer.executionContext
 
 	private val file = new File(originalFile.getAbsolutePath + FileExtension)
 
@@ -40,7 +45,8 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 
 			case `asciiWdcggTimeSer` =>
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-				makeFormatSpecificSink(linesFromBinary, wdcggParser, wdcggToBinTableConverter)
+				val converter = wdcggToBinTableConverter(formats)
+				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` =>
 
@@ -52,10 +58,12 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 					case Some(nRows) =>
 						if(format.uri == asciiEtcTimeSer) {
 							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser, ecoCsvToBinTableConverter(nRows, _))
+							val converter = ecoCsvToBinTableConverter(nRows, formats)
+							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser, converter)
 						} else {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, socatTsvToBinTableConverter(nRows, _))
+							val converter = socatTsvToBinTableConverter(nRows, formats)
+							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
 						}
 				}
 
@@ -69,10 +77,8 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 	private def makeFormatSpecificSink[R](
 		lineParser: Flow[ByteString, String, NotUsed],
 		rowParser: Flow[String, R, Future[Done]],
-		toBinTableConverterFactory: Future[ColumnFormats] => Flow[R, BinTableRow, Future[UploadCompletionInfo]]
+		toBinTableConverter: Flow[R, BinTableRow, Future[UploadCompletionInfo]]
 	): Sink[ByteString, Future[UploadTaskResult]] = {
-
-		val toBinTableConverter = toBinTableConverterFactory(getColumnFormats(dataObj.hash))
 
 		lineParser
 			.viaMat(rowParser)(Keep.right)
@@ -96,8 +102,19 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 			Done
 		})
 	}
+}
 
-	def getColumnFormats(dataObjHash: Sha256Sum): Future[Map[String, ValueFormat]] = {
+object IngestionUploadTask{
+
+	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
+		import sparql.materializer.executionContext
+		getColumnFormats(dataObj.hash, sparql).map{formats =>
+			new IngestionUploadTask(dataObj, originalFile, formats)
+		}
+	}
+
+	def getColumnFormats(dataObjHash: Sha256Sum, sparql: SparqlClient): Future[ColumnFormats] = {
+		import sparql.materializer.executionContext
 		val dataObjUri = CpMetaVocab.getDataObject(dataObjHash)
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
@@ -120,3 +137,4 @@ class IngestionUploadTask(dataObj: DataObject, originalFile: File, sparql: Sparq
 		}
 	}
 }
+

@@ -28,14 +28,14 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val expectedNRows = 360
 
-	val formats = Future.successful(Map(
+	val formats = Map(
 		"DATE" -> Iso8601Date,
 		"TIMESTAMP" -> Iso8601DateTime,
 		"TIME" -> Iso8601TimeOfDay,
 		"PARAMETER" -> FloatValue,
 		"ND" -> IntValue,
 		"SD" -> FloatValue
-	))
+	)
 
 	val linesSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat"))

@@ -37,36 +37,39 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	def getSink(hash: Sha256Sum, user: UserId): Future[Sink[ByteString, Future[UploadResult]]] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
-			_ <- meta.userIsAllowedUpload(dataObj, user)
-		) yield getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
+			_ <- meta.userIsAllowedUpload(dataObj, user);
+			sink <- getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
+		) yield sink
 	}
 
 	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
-	private def getSpecificSink(dataObj: DataObject): Sink[ByteString, Future[UploadResult]] = {
-		val tasks = getUploadTasks(dataObj)
+	private def getSpecificSink(dataObj: DataObject): Future[Sink[ByteString, Future[UploadResult]]] = {
 		val postTasks = getPostUploadTasks(dataObj)
 
-		combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
-			val results = uploadResults.toIndexedSeq
+		getUploadTasks(dataObj).map{tasks =>
 
-			val taskResultFutures = tasks.indices.map(i => {
-				val theTask = tasks(i)
-				val ownResult = results(i)
-				val otherTaskResults = results.indices.collect{
-					case idx if(idx != i) => results(idx)
-				}
-				theTask.onComplete(ownResult, otherTaskResults)
-			})
+			combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
+				val results = uploadResults.toIndexedSeq
 
-			for(
-				taskResults <- Future.sequence(taskResultFutures);
-				postTaskResults <- Future.sequence(postTasks.map(_.perform(taskResults)))
-			) yield new UploadResult(taskResults ++ postTaskResults)
-		}))
+				val taskResultFutures = tasks.indices.map(i => {
+					val theTask = tasks(i)
+					val ownResult = results(i)
+					val otherTaskResults = results.indices.collect{
+						case idx if(idx != i) => results(idx)
+					}
+					theTask.onComplete(ownResult, otherTaskResults)
+				})
+
+				for(
+					taskResults <- Future.sequence(taskResultFutures);
+					postTaskResults <- Future.sequence(postTasks.map(_.perform(taskResults)))
+				) yield new UploadResult(taskResults ++ postTaskResults)
+			}))
+		}
 	}
 
-	private def getUploadTasks(dataObj: DataObject): IndexedSeq[UploadTask] = {
+	private def getUploadTasks(dataObj: DataObject): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
 		def hashAndIrods = IndexedSeq.empty :+
@@ -74,30 +77,36 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 			new IrodsUploadTask(dataObj, irods)
 
 		dataObj.specification.dataLevel match{
-			case 0 | 1 | 3 =>
+			case 0 | 1 | 3 => Future.successful(
 				hashAndIrods :+
 				new FileSavingUploadTask(file)
+			)
 
 			case 2 =>
 				val formatUri = dataObj.specification.format.uri
 				if(formatUri == CpMetaVocab.asciiWdcggTimeSer){
-					IndexedSeq.empty :+
-					new HashsumCheckingUploadTask(dataObj.hash) :+
-					new IngestionUploadTask(dataObj, file, meta.sparql)
+					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
+						IndexedSeq.empty :+
+						new HashsumCheckingUploadTask(dataObj.hash) :+
+						ingestionTask
+					}
 
 				} else if(formatUri == CpMetaVocab.asciiEtcTimeSer || formatUri == CpMetaVocab.asciiOtcSocatTimeSer){
-					hashAndIrods :+
-					new IngestionUploadTask(dataObj, file, meta.sparql) :+
-					new FileSavingUploadTask(file)
+					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
+						hashAndIrods :+
+						ingestionTask :+
+						new FileSavingUploadTask(file)
+					}
 
-				}else {
+				} else Future.successful(
 					hashAndIrods :+
 					new FileSavingUploadTask(file)
-				}
+				)
 
-			case dataLevel =>
+			case dataLevel => Future.successful(
 				IndexedSeq.empty :+
 				new NotSupportedUploadTask(s"Upload of data objects of level $dataLevel is not supported")
+			)
 		}
 	}
 
