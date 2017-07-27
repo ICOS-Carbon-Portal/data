@@ -22,6 +22,7 @@ import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.streams.DigestFlow
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
@@ -55,7 +56,10 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 	 * @param executor should be an `ExecutionContext` suitable for running thread-blocking tasks
 	 * @return the `ByteString` sink
 	 */
-	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Sha256Sum]] = {
+	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Sha256Sum]] =
+		if(config.dryRun){
+			DigestFlow.sha256.to(Sink.ignore)
+		} else {
 
 		val irodsSink = Sink.fromGraph(new IrodsSink(filePath, account, connPool))
 			//disabling buffer here as we'll be buffering ourselves
@@ -72,21 +76,24 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 	}
 
 	def getFileSource(filePath: String): Source[ByteString, Future[Long]] =
+		if(config.dryRun)
+			Source.empty.mapMaterializedValue(_ => Future.successful(0))
+		else
 		Source.fromGraph(new IrodsSource(filePath, account, connPool, bufferSize))
 
-	def deleteFile(filePath: String): Unit = withFileApi{api =>
+	def deleteFile(filePath: String): Unit = if(config.dryRun) () else withFileApi{api =>
 		val file = api.makeFile(filePath)
 		if(!file.deleteWithForceOption())
 			throw new JargonException("File deletion failure")
 	}
 
-	def fileExists(filePath: String): Boolean = withFileApi(_.makeFile(filePath).exists)
+	def fileExists(filePath: String): Boolean = !config.dryRun && withFileApi(_.makeFile(filePath).exists)
 
 	/**
 	 * This operation is cached to be executed only once per folderPath during lifetime of IrodsClient.
 	 * No check if done for whether the folder was deleted after creation.
 	 */
-	def ensureFolderExists(folderPath: String): Unit =
+	def ensureFolderExists(folderPath: String): Unit = if(config.dryRun) () else
 		if(!existingFolderPaths.contains(folderPath))
 		{
 			withFileApi{api =>
@@ -96,7 +103,9 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 			}
 		}
 
-	def getChecksum(filePath: String): Sha256Sum = withFileApi{api =>
+	def getChecksum(filePath: String): Sha256Sum =
+		if(config.dryRun) Sha256Sum.fromString("0" * 64).get
+	else withFileApi{api =>
 		val docuao = api.accessObjFactory.getDataObjectChecksumUtilitiesAO(account)
 
 		val checksum = try{
