@@ -1,4 +1,22 @@
-@CpCommonPage("Carbon Portal's NetCDF Viewer"){
+@(iframe: Boolean)
+@if(iframe){
+	@CpBarePage(pageTitle)(pageHeader){
+		<div class="container-fluid">
+			@pageBody
+		</div>
+	}
+} else {
+	@CpCommonPage(pageTitle)(pageHeader)(pageBody)
+}
+
+@pageTitle = @{"Carbon Portal's NetCDF Viewer"}
+
+@pageBody = {
+	<div id="main"></div>
+	<script src="netcdf.js"></script>
+}
+
+@pageHeader = {
 	<script src="https://static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
 	<link href="https://static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" rel="stylesheet" />
 
@@ -29,8 +47,7 @@
 	}
 
 	</style>
-}{
-	<div id="main"></div>
-	<script src="netcdf.js"></script>
 }
+
+
 

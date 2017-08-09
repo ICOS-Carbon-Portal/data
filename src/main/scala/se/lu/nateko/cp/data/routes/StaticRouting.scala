@@ -12,14 +12,20 @@ import akka.http.scaladsl.model.MediaTypes
 import scala.concurrent.Future
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentType
+import akka.http.scaladsl.server.PathMatcher1
 
 object StaticRouting {
 
-	val projects = Set("netcdf", "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
+	private type PageFactory = PartialFunction[String, Html]
+	private val NetCdfProj = "netcdf"
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
 
-	private[this] val pages: PartialFunction[String, Html] = {
+	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
+		case NetCdfProj => views.html.NetCDFPage(iframe)
+	}
+
+	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
-		case "netcdf" => views.html.NetCDFPage()
 		case "wdcgg" => views.html.WdcggPage()
 		case "portal" => views.html.PortalPage()
 	}
@@ -37,24 +43,33 @@ object StaticRouting {
 		)
 	)
 
+	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] =
+		if(proj != NetCdfProj) Neutral.tmap(_ => Tuple1(standardPageFactory))
+		else (Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
+			case Some(_) =>
+				Tuple1(netCdfPageFactory(iframe = true))
+			case None =>
+				Tuple1(netCdfPageFactory(iframe = false))
+		})
+
 	val route = pathPrefix(Segment){ proj =>
 
 		if(projects.contains(proj)){
-
 			pathEnd{
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
-			pathSingleSlash{
-				if(pages.isDefinedAt(proj)){
-					complete(pages(proj))
-				} else getFromResource(proj + ".html")
-			} ~
-			path(Segment){fileName =>
-				if(fileName.startsWith(proj + "."))
-					getFromResource(fileName)
-				else reject
+			rawPathPrefix(maybeSha256SumIfNetCdfProj(proj)){pageFactory =>
+				pathSingleSlash{
+					if(pageFactory.isDefinedAt(proj)){
+						complete(pageFactory(proj))
+					} else getFromResource(proj + ".html")
+				} ~
+				path(Segment){fileName =>
+					if(fileName.startsWith(proj + "."))
+						getFromResource(fileName)
+					else reject
+				}
 			}
-
 		} else reject
 
 	}
