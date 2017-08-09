@@ -28,10 +28,10 @@ object Main extends App {
 
 	val config = ConfigReader.getDefault
 
-	val factory = {
+	private def netCdfServiceFactory(netCdfFolder: String) = {
 		import config.netcdf._
 		import scala.collection.JavaConverters._
-		new ViewServiceFactoryImpl(folder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
+		new ViewServiceFactoryImpl(netCdfFolder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
 	}
 
 	val http = Http()
@@ -60,7 +60,8 @@ object Main extends App {
 	}
 
 	val route = handleExceptions(exceptionHandler){
-		NetcdfRoute(factory) ~
+		NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/")) ~
+		NetcdfRoute(netCdfServiceFactory(config.netcdf.folder)) ~
 		uploadRouting.route ~
 		tabularRouting.route ~
 		StiltRouting(stiltFetcher) ~
