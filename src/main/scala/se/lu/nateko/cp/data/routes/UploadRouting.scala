@@ -32,6 +32,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 	import authRouting._
 
 	private implicit val ex = mat.executionContext
+	private val log = uploadService.log
 
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		forbidAuthenticationFailures{
@@ -43,7 +44,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 
 					onSuccess(resFuture)(res => res.makeReport match{
 						case Right(report) => complete(report)
-						case Left(errorMsg) => complete((StatusCodes.InternalServerError, errorMsg))
+						case Left(errorMsg) =>
+							log.warning(errorMsg)
+							complete((StatusCodes.InternalServerError, errorMsg))
 					})
 				}
 			}

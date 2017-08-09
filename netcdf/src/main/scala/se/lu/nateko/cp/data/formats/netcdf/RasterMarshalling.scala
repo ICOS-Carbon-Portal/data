@@ -60,8 +60,8 @@ object RasterMarshalling {
 
 		val headerBytes = makeBuffer(8)
 		val headerNums = headerBytes.asDoubleBuffer
-		headerNums.put(nLat)
-		headerNums.put(nLon)
+		headerNums.put(nLat.toDouble)
+		headerNums.put(nLon.toDouble)
 		headerNums.put(raster.getMin)
 		headerNums.put(raster.getMax)
 		headerNums.put(raster.getLatMin)
@@ -78,7 +78,7 @@ object RasterMarshalling {
 		HttpResponse(
 			entity = HttpEntity(
 				MediaTypes.`application/octet-stream`.withComp(MediaType.Compressible),
-				size,
+				size.toLong,
 				Source.fromIterator(() => rasterAsBinary)
 			)
 		)

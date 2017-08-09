@@ -20,6 +20,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	import meta.{system, dispatcher}
 	import UploadService._
 
+	val log = system.log
 	val folder = new java.io.File(config.folder)
 
 	if(!folder.exists) {
