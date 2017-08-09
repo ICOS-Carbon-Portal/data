@@ -38,9 +38,9 @@ export default class ObjSpecFilter extends Component {
 		 : `(${data.length} items)`;
 
 		return (
-			<div className="row" key={name} style={{marginTop: 10}}>
+			<div className="row" key={name} style={{marginTop: 10, display: 'flex', alignItems: 'center'}}>
 				<div className="col-md-4">
-					<label>{placeholders[name]}</label>
+					<label style={{marginBottom: 0}}>{placeholders[name]}</label>
 				</div>
 				<div className="col-md-8">
 					<Multiselect
