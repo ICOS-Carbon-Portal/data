@@ -6,6 +6,7 @@ export default function(props){
 	const {paging, requestStep, cart, previewAction, preview} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
+	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
 
 	return <div className="panel panel-default">
 		<div className="panel-heading">
@@ -16,14 +17,14 @@ export default function(props){
 			</div>
 		</div>
 		<div className="panel-body">
-			<ScreenHeightColumn>
+			<div className="table-responsive">
 				<table className="table">
 					<thead>
 						<tr>
-							<th>Data object<SortButton varName="fileName" {...props}/></th>
-							<th>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
-							<th>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
-							<th>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
+							<th style={headerStyle}>Data object<SortButton varName="fileName" {...props}/></th>
+							<th style={headerStyle}>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
+							<th style={headerStyle}>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
+							<th style={headerStyle}>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
 						</tr>
 					</thead>
 					<tbody>{
@@ -45,7 +46,7 @@ export default function(props){
 						})
 					}</tbody>
 				</table>
-			</ScreenHeightColumn>
+			</div>
 		</div>
 	</div>;
 }
@@ -68,7 +69,7 @@ const SortButton = props => {
 
 	return <button type="button" className="btn btn-default" disabled={disabled}
 		title={title} onClick={sortHandler}
-		style={{pointerEvents: 'auto', borderWidth: 0}}
+		style={{pointerEvents: 'auto', borderWidth: 0, padding: 6}}
 		>
 		<span className={glyphClass}></span>
 	</button>;

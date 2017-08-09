@@ -16,10 +16,9 @@ export default class ObjectTableRow extends Component {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		// console.log({props});
 
 		return <tr>
-			<td>
+			<td style={{whiteSpace: 'nowrap'}}>
 				<CartIcon
 					id={objInfo.dobj}
 					{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
