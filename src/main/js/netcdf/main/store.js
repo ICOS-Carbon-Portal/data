@@ -1,8 +1,9 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchCountriesTopo, fetchServices, selectGamma} from './actions.js';
+import {fetchCountriesTopo, fetchServices, setService, selectGamma} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper.js';
+
 
 const initState = {
 	controls: new ControlsHelper(),
@@ -29,9 +30,15 @@ let store = null;
 
 export default function(){
 	if(store == null){
+		const pathName = window.location.pathname;
+
 		store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 		store.dispatch(fetchCountriesTopo);
-		store.dispatch(fetchServices);
+		if (pathName === "/netcdf/") {
+			store.dispatch(fetchServices);
+		} else {
+			store.dispatch(setService(pathName.split('/').pop()));
+		}
 		store.dispatch(selectGamma(4));
 	}
 	return store;

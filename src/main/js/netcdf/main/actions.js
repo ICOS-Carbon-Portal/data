@@ -35,7 +35,7 @@ export const fetchCountriesTopo = dispatch => {
 		},
 		err => dispatch(failWithError(err))
 	);
-}
+};
 
 export const fetchServices = dispatch => {
 	getServices().then(
@@ -49,7 +49,15 @@ export const fetchServices = dispatch => {
 		},
 		err => dispatch(failWithError(err))
 	);
-}
+};
+
+export const setService = service => dispatch => {
+	dispatch({
+		type: SERVICES_FETCHED,
+		controlName: 'services',
+		services: [service]
+	});
+};
 
 const fetchVariablesAndDates = (dispatch, getState) => {
 	const services = getState().controls.services;
@@ -70,7 +78,7 @@ const fetchVariablesAndDates = (dispatch, getState) => {
 		},
 		err => dispatch(failWithError(err))
 	);
-}
+};
 
 
 const fetchElevations = (dispatch, getState) => {
@@ -89,7 +97,7 @@ const fetchElevations = (dispatch, getState) => {
 		},
 		err => dispatch(failWithError(err))
 	);
-}
+};
 
 const fetchRaster = (dispatch, getState) => {
 	const controls = getState().controls;
@@ -107,14 +115,14 @@ const fetchRaster = (dispatch, getState) => {
 		}),
 		err => dispatch(failWithError(err))
 	);
-}
+};
 
 export const pushPlayButton = (dispatch, getState) => {
 	if (!getState().rasterDataFetcher) return;
 
 	dispatch({type: PUSH_PLAY});
 	dispatch(incrementIfNeeded);
-}
+};
 
 export const incrementRasterData = increment => dispatch => {
 	dispatch({
@@ -123,7 +131,7 @@ export const incrementRasterData = increment => dispatch => {
 	});
 
 	dispatch(fetchRasterData);
-}
+};
 
 const fetchRasterData = (dispatch, getState) => {
 	const state = getState();
@@ -144,7 +152,7 @@ const fetchRasterData = (dispatch, getState) => {
 			},
 			err => dispatch(failWithError(err)));
 	}
-}
+};
 
 export const incrementIfNeeded = (dispatch, getState) => {
 	var ts = Date.now();
@@ -154,7 +162,7 @@ export const incrementIfNeeded = (dispatch, getState) => {
 			dispatch(incrementRasterData(1));
 		}
 	}, 5); //a tiny delay in hope to improve interface's responsiveness
-}
+};
 
 
 export const selectService = idx => dispatch => {
@@ -208,4 +216,4 @@ export const setRasterVal = val => dispatch => {
 		type: RASTER_VALUE_RECEIVED,
 		val
 	});
-}
+};
