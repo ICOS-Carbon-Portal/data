@@ -27,7 +27,9 @@ class App extends Component {
 
 	updateDimensions(){
 		this.setState({
-			height: window.innerHeight - 100 - marginTop - 135
+			height: this.props.scopedView
+				? window.innerHeight - marginTop - 80
+				: window.innerHeight - marginTop - 235
 		});
 	}
 
@@ -75,11 +77,14 @@ class App extends Component {
 					maxWidth={400}
 				/>
 
-				<div className="page-header">
-					<h1>Spatial data visualization</h1>
-				</div>
+				{props.scopedView
+					? null
+					: <div className="page-header">
+						<h1>Spatial data visualization</h1>
+					</div>
+				}
 
-				<Controls marginTop={marginTop} />
+				<Controls scopedView={props.scopedView} marginTop={marginTop} />
 
 				<div className="row">
 					<div className="col-md-12" style={{display:'flex'}}>
@@ -98,15 +103,15 @@ class App extends Component {
 						<div style={{flex: legendWidth + 'px', minWidth: legendWidth, minHeight}}>{
 							getLegend
 								? <Legend
-								horizontal={false}
-								canvasWidth={20}
-								containerHeight={containerHeight}
-								margin={7}
-								getLegend={getLegend}
-								legendId={legendId}
-								legendText="Legend"
-								decimals={3}
-							/>
+									horizontal={false}
+									canvasWidth={20}
+									containerHeight={containerHeight}
+									margin={7}
+									getLegend={getLegend}
+									legendId={legendId}
+									legendText="Legend"
+									decimals={3}
+								/>
 								: null
 						}</div>
 					</div>

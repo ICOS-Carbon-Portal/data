@@ -5,7 +5,14 @@ import {fetchCountriesTopo, fetchServices, setService, selectGamma} from './acti
 import {ControlsHelper} from './models/ControlsHelper.js';
 
 
+const pathName = window.location.pathname;
+const sections = pathName.split('/');
+const pid = pathName === "/netcdf/"
+	? undefined
+	: sections.pop() || sections.pop();
+
 const initState = {
+	scopedView: !!pid,
 	controls: new ControlsHelper(),
 	playingMovie: false,
 	toasterData: null
@@ -30,14 +37,14 @@ let store = null;
 
 export default function(){
 	if(store == null){
-		const pathName = window.location.pathname;
+
 
 		store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 		store.dispatch(fetchCountriesTopo);
-		if (pathName === "/netcdf/") {
-			store.dispatch(fetchServices);
+		if (initState.scopedView) {
+			store.dispatch(setService(pid));
 		} else {
-			store.dispatch(setService(pathName.split('/').pop()));
+			store.dispatch(fetchServices);
 		}
 		store.dispatch(selectGamma(4));
 	}

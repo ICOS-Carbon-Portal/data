@@ -57,6 +57,7 @@ export const setService = service => dispatch => {
 		controlName: 'services',
 		services: [service]
 	});
+	dispatch(fetchVariablesAndDates);
 };
 
 const fetchVariablesAndDates = (dispatch, getState) => {

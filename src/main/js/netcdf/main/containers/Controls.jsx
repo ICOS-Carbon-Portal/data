@@ -21,9 +21,12 @@ class Controls extends React.Component {
 
 		return (
 			<div className="row" style={{marginTop: props.marginTop, marginBottom: 10}}>
-				<div className="col-md-3">
-					<Selector className="services" caption="Data object" control={controls.services} action={props.serviceChanged}/>
-				</div>
+				{props.scopedView
+					? null
+					: <div className="col-md-3">
+						<Selector className="services" caption="Data object" control={controls.services} action={props.serviceChanged}/>
+					</div>
+				}
 
 				<div className="col-md-2">
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.variableChanged}/>
