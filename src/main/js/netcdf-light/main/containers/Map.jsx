@@ -1,12 +1,10 @@
 import React, { Component } from 'react'
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux'
 import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import ColorMaker from '../../../common/main/models/ColorMaker';
 import {getRasterId, getBaseSearch, COUNTRIES_FETCHED, RASTER_FETCHED}from '../actions';
-import {GammaCtrl} from '../controls/GammaCtrl';
-import {CopyUrlCtrl} from '../controls/CopyUrlCtrl';
+
 
 const minHeight = 300;
 
@@ -22,14 +20,12 @@ class Map extends Component {
 			colorMaker: undefined
 		};
 
-		this.legendDiv = undefined;
 		this.hostPath = location.origin + location.pathname;
 		this.centerZoom = centerZoom2obj(props.params);
 	}
 
 	componentDidMount(){
 		window.addEventListener("resize", this.updateDimensions.bind(this));
-		this.legendDiv = ReactDOM.findDOMNode(this.refs.legend);
 		this.updateDimensions();
 	}
 
@@ -89,10 +85,6 @@ class Map extends Component {
 
 		const colorMaker = state.colorMaker ? state.colorMaker.makeColor.bind(state.colorMaker) : null;
 		const getLegend = state.colorMaker ? state.colorMaker.getLegend.bind(state.colorMaker) : null;
-		const gammaCtrl = state.gamma
-			? new GammaCtrl({gamma: state.gamma, gammaChanged: this.gammaChanged.bind(this)})
-			: null;
-
 		const legendId = props.raster
 			? props.raster.id + '_' + state.gamma
 			: "";
@@ -104,7 +96,6 @@ class Map extends Component {
 
 				<div id="map">
 					<NetCDFMap
-						ref="netcdfmap"
 						mapOptions={{
 							zoom: 2,
 							center: [13, 0]
@@ -113,7 +104,6 @@ class Map extends Component {
 						colorMaker={colorMaker}
 						geoJson={props.countriesTopo}
 						centerZoom={this.centerZoom}
-						controls={[gammaCtrl, new CopyUrlCtrl()]}
 						events={[
 							{
 								event: 'moveend',
@@ -123,7 +113,7 @@ class Map extends Component {
 						]}
 					/>
 				</div>
-				<div id="legend" ref="legend">{
+				<div id="legend" ref={div => this.legendDiv = div}>{
 					getLegend
 						? <Legend
 						horizontal={false}
@@ -160,9 +150,9 @@ const centerZoom2obj = params => {
 const Spinner = props => {
 	return props.show
 		? <div id="cp-spinner">
-			<div className="bounce1"></div>
-			<div className="bounce2"></div>
-			<div></div>
+			<div className="bounce1" />
+			<div className="bounce2" />
+			<div />
 			<span>Carbon</span>
 			<span>Portal</span>
 		</div>
