@@ -84,18 +84,34 @@ export default class Preview {
 }
 
 function parseSpecTable(specTable){
-	return specTable.getTable("columnMeta") && specTable.getTableRows("columnMeta")
-		? specTable.getTableRows("columnMeta").reduce((acc, curr) => {
+	const basicsRows = specTable.getTable("basics") ? specTable.getTableRows("basics") : undefined;
+	const columnMetaRows = specTable.getTable("columnMeta") ? specTable.getTableRows("columnMeta") : undefined;
 
+	const netcdf = basicsRows
+		? basicsRows.reduce((acc, curr) => {
+			if (curr.format === 'NetCDF'){
+				acc[curr.spec] = {
+					type: 'NETCDF'
+				}
+			}
+
+			return acc;
+		}, {})
+		: [];
+
+	const timeSeries = columnMetaRows
+		? columnMetaRows.reduce((acc, curr) => {
 			acc[curr.spec] === undefined
 				? acc[curr.spec] = {
-				type: 'TIMESERIES',
-				options: [curr.colTitle]
-			}
+					type: 'TIMESERIES',
+					options: [curr.colTitle]
+				}
 				: acc[curr.spec].options.push(curr.colTitle);
 
 			return acc;
 
 		}, {})
 		: [];
+
+	return Object.assign({}, netcdf, timeSeries);
 }
