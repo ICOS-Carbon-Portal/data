@@ -53,6 +53,7 @@ export default class ObjSpecFilter extends Component {
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
 						itemComponent={this.listItem.bind(this, name)}
+						tagComponent={this.tagItem.bind(this)}
 					/>
 				</div>
 			</div>
@@ -82,6 +83,10 @@ export default class ObjSpecFilter extends Component {
 				</span>
 			);
 		}
+	}
+
+	tagItem({item}){
+		return <span style={{marginRight: 2}}>{item.text}</span>;
 	}
 
 	handleChange(name, values){
