@@ -28,11 +28,11 @@ class Controls extends React.Component {
 					</div>
 				}
 
-				<div className="col-md-2">
+				<div className={clsName(props.scopedView, 2)}>
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.variableChanged}/>
 				</div>
 
-				<div className="col-md-2">
+				<div className={clsName(props.scopedView, 2)}>
 					<Selector className="dates" caption="Date" control={controls.dates} action={props.dateChanged} />
 				</div>
 
@@ -65,6 +65,12 @@ class Controls extends React.Component {
 			</div>
 		);
 	}
+}
+
+function clsName(scopedView, defaultWidth){
+	return scopedView
+		? 'col-md-' + (defaultWidth + 1)
+		: 'col-md-' + defaultWidth;
 }
 
 function delayPresenter(delay){
