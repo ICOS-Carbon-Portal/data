@@ -33,9 +33,9 @@ export default class ObjSpecFilter extends Component {
 				: data.sort((d1, d2) => d1.text > d2.text);
 		}
 
-		const placeholder = data.length == 1
-		 ? `${data[0].text}`
-		 : `(${data.length} items)`;
+		const placeholder = data.length === 1
+			? `${data[0].text}`
+			: `(${data.length} items)`;
 
 		return (
 			<div className="row" key={name} style={{marginTop: 10, display: 'flex', alignItems: 'center'}}>
@@ -48,6 +48,7 @@ export default class ObjSpecFilter extends Component {
 						valueField="text"
 						textField="text"
 						data={data}
+						defaultValue={this.props.specTable.getFilter(name)}
 						filter="contains"
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
