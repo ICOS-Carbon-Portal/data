@@ -5,7 +5,7 @@ import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
 import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewItemSetting, setPreviewItem, setPreviewVisibility} from '../actions';
+import {setPreviewItemSetting, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -27,7 +27,7 @@ class Search extends Component {
 		return (
 			<div className="row">
 				<div className="col-md-4">
-					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter'])} />
+					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset'])} />
 				</div>
 				<div className="col-md-8">{
 					props.preview.visible
@@ -57,7 +57,8 @@ function dispatchToProps(dispatch){
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
-		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value))
+		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value)),
+		specFiltersReset: () => dispatch(specFiltersReset),
 	};
 }
 

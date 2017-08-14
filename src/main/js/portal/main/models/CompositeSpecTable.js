@@ -60,6 +60,15 @@ export default class CompositeSpecTable{
 		return new CompositeSpecTable(pass2);
 	}
 
+	withResetFilters(){
+		const tables = {};
+		for (let key in this._tables){
+			tables[key] = this._tables[key].withResetFilters();
+		}
+
+		return new CompositeSpecTable(tables);
+	}
+
 	getFilter(colName){
 		return this.findTable(colName).getFilter(colName);
 	}

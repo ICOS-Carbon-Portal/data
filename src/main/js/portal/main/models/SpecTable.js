@@ -28,6 +28,10 @@ export default class SpecTable{
 		return this._filters[colName] || [];
 	}
 
+	withResetFilters(){
+		return new SpecTable(this._colNames, this._rows);
+	}
+
 	getDistinctAvailableColValues(colName){
 		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}

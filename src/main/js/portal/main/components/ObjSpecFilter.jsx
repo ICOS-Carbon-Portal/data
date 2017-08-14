@@ -48,7 +48,7 @@ export default class ObjSpecFilter extends Component {
 						valueField="text"
 						textField="text"
 						data={data}
-						defaultValue={this.props.specTable.getFilter(name)}
+						value={this.props.specTable.getFilter(name)}
 						filter="contains"
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
@@ -98,12 +98,13 @@ export default class ObjSpecFilter extends Component {
 	}
 
 	render(){
-		const specTable = this.props.specTable;
+		const {specTable, specFiltersReset} = this.props;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
 
 		return <div className="panel panel-default">
 			<div className="panel-heading">
-				<h3 className="panel-title">Data object specification filter</h3>
+				<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+				<ResetBtn resetFiltersAction={specFiltersReset} />
 			</div>
 			<div className="panel-body">
 				{colNames.map(name => this.getCtrl(name, specTable))}
@@ -112,3 +113,11 @@ export default class ObjSpecFilter extends Component {
 	}
 }
 
+const ResetBtn = props => {
+	return <div
+		className="glyphicon glyphicon-ban-circle"
+		style={{display: 'inline', float: 'right', fontSize: '160%', cursor: 'pointer'}}
+		title="Clear all filters"
+		onClick={props.resetFiltersAction}
+	/>;
+};

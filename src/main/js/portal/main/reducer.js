@@ -1,5 +1,5 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -34,6 +34,16 @@ export default function(state, action){
 			return update({
 				specTable,
 				objectTable: [],
+				paging: freshPaging(objCount),
+				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case SPEC_FILTER_RESET:
+			specTable = state.specTable.withResetFilters();
+			objCount = getObjCount(specTable);
+
+			return update({
+				specTable,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});

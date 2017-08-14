@@ -1,6 +1,7 @@
 export const ERROR = 'ERROR';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
+export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
 export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
@@ -92,6 +93,11 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		}),
 		failWithError(dispatch)
 	);
+};
+
+export const specFiltersReset = dispatch => {
+	dispatch({type: SPEC_FILTER_RESET});
+	dispatch(getFilteredDataObjects);
 };
 
 export const toggleSort = varName => dispatch => {
