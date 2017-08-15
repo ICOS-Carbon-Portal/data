@@ -1,5 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {TESTED_BATCH_DOWNLOAD} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -89,13 +90,19 @@ export default function(state, action){
 				cart: action.cart
 			});
 
+		case TESTED_BATCH_DOWNLOAD:
+			return update({
+				event: TESTED_BATCH_DOWNLOAD,
+				isBatchDownloadOk: action.isBatchDownloadOk
+			});
+
 		default:
-			return update({event: undefined});
+			return state;
 	}
 
 	function update(){
 		const updates = Array.from(arguments);
-		return Object.assign.apply(Object, [{}, state].concat(updates));
+		return Object.assign.apply(Object, [{}, Object.assign(state, {event: undefined})].concat(updates));
 	}
 }
 

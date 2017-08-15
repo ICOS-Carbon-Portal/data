@@ -16,7 +16,8 @@ const initState = {
 	paging: {},
 	cart: new Cart(),
 	preview: new Preview(),
-	toasterData: undefined
+	toasterData: undefined,
+	isBatchDownloadOk: false
 };
 
 // function logger({ getState }) {

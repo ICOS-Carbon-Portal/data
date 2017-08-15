@@ -43,6 +43,10 @@ export default class Cart {
 		return this._items.map(item => item.id);
 	}
 
+	get pids(){
+		return this._items.map(item => item.id.slice(item.id.lastIndexOf('/') + 1));
+	}
+
 	get count(){
 		return this._items.length;
 	}

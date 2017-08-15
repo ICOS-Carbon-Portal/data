@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
-import {removeFromCart, setPreviewItem, setPreviewItemSetting, setCartName} from '../actions';
+import {removeFromCart, setPreviewItem, setPreviewItemSetting, setCartName, fetchIsBatchDownloadOk} from '../actions';
 
 
 class DataCart extends Component {
@@ -17,17 +17,21 @@ class DataCart extends Component {
 	render(){
 		const props = this.props;
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
+		// console.log({props});
 
 		return (
 			<div className="row">
 				<div className="col-md-4">
 					<CartPanel
+						event={props.event}
 						cart={props.cart}
 						setCartName={props.setCartName}
 						previewitemId={previewitemId}
 						getSpecLookupType={props.preview.getSpecLookupType.bind(props.preview)}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
+						isBatchDownloadOk={props.isBatchDownloadOk}
+						fetchIsBatchDownloadOk={props.fetchIsBatchDownloadOk}
 					/>
 				</div>
 				<div className="col-md-8">{
@@ -48,7 +52,8 @@ function dispatchToProps(dispatch){
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		setCartName: newName => dispatch(setCartName(newName)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
-		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value))
+		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value)),
+		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk)
 	};
 }
 

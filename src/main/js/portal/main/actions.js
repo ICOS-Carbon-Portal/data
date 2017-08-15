@@ -12,7 +12,8 @@ export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
 export const COL_INFO_FETCHED = 'COL_INFO_FETCHED';
-import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart, getObjColInfo} from './backend';
+export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
+import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart, getIsBatchDownloadOk} from './backend';
 import CartItem from './models/CartItem';
 
 
@@ -202,6 +203,15 @@ const updateCart = (cart, dispatch) => {
 		dispatch({
 			type: CART_UPDATED,
 			cart
+		})
+	);
+};
+
+export const fetchIsBatchDownloadOk = dispatch => {
+	getIsBatchDownloadOk().then(
+		isBatchDownloadOk => dispatch({
+			type: TESTED_BATCH_DOWNLOAD,
+			isBatchDownloadOk
 		})
 	);
 };

@@ -3,6 +3,7 @@ import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
 import config from '../../common/main/config';
 import Cart from './models/Cart';
+import 'whatwg-fetch';
 
 
 export function fetchAllSpecTables() {
@@ -92,6 +93,11 @@ export const saveCart = cart => {
 export const getCart = () => {
 	const ls = localStorage.getItem('cp-cart');
 	return Promise.resolve(new Cart().fromStorage(ls));
+};
+
+export const getIsBatchDownloadOk = ids => {
+	return fetch('../objects?ids=[]&fileName=test', {credentials: 'include'})
+		.then(response => response.status === 200);
 };
 
 function sparqlResultToColNamesAndRows(sparqlResult) {
