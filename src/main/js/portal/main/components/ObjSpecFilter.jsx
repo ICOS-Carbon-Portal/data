@@ -100,11 +100,18 @@ export default class ObjSpecFilter extends Component {
 	render(){
 		const {specTable, specFiltersReset} = this.props;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
+		const filters = colNames.map(colName => specTable.getFilter(colName));
+		const showResetBtn = !!filters.reduce((acc, curr) => {
+			return acc + curr.length;
+		}, 0);
 
 		return <div className="panel panel-default">
 			<div className="panel-heading">
 				<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
-				<ResetBtn resetFiltersAction={specFiltersReset} />
+				{showResetBtn
+					? <ResetBtn resetFiltersAction={specFiltersReset} />
+					: null
+				}
 			</div>
 			<div className="panel-body">
 				{colNames.map(name => this.getCtrl(name, specTable))}
