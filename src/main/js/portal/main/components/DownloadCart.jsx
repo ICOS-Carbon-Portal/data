@@ -35,24 +35,28 @@ export default class DownloadCart extends Component {
 		const showDownloadIframe = downloadIframeVisible(downloadBtnClickedOn, yesNoViewClosedOn, batchDownloadStatus);
 
 		return(
-			<div>
-				<button className="btn btn-primary" onClick={this.handleDownloadBtnClick.bind(this)} style={{marginBottom: 15}}>
-					<span className="glyphicon glyphicon-download-alt"/> Download cart content
-				</button>
-				{showDownloadIframe
-					? <iframe src={downloadURL(cart.pids, cart.name)} style={{display:'none'}}></iframe>
-					: null
-				}
+			<div>{cart.count > 0
+				? <div>
+					<button className="btn btn-primary" onClick={this.handleDownloadBtnClick.bind(this)}
+							style={{marginBottom: 15}}>
+						<span className="glyphicon glyphicon-download-alt"/> Download cart content
+					</button>
+					{showDownloadIframe
+						? <iframe src={downloadURL(cart.pids, cart.name)} style={{display: 'none'}}></iframe>
+						: null
+					}
 
-				<YesNoView
-					visible={showYesNoView}
-					mouseClick={this.mouseClick}
-					title={'Login required'}
-					question={'You must be logged in to Carbon Portal and have accepted the license agreement before downloading. Do you want to log in and accept the license agreement?'}
-					actionYes={{fn: this.openLoginWindow.bind(this)}}
-					actionNo={{fn: this.closeYesNoView.bind(this)}}
-				/>
-			</div>
+					<YesNoView
+						visible={showYesNoView}
+						mouseClick={this.mouseClick}
+						title={'Login required'}
+						question={'You must be logged in to Carbon Portal and have accepted the license agreement before downloading. Do you want to log in and accept the license agreement?'}
+						actionYes={{fn: this.openLoginWindow.bind(this)}}
+						actionNo={{fn: this.closeYesNoView.bind(this)}}
+					/>
+				</div>
+				: null
+			}</div>
 		);
 	}
 }
