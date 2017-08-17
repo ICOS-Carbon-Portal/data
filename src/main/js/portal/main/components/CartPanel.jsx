@@ -2,25 +2,17 @@ import React, { Component } from 'react';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
 import EditablePanelHeading from './EditablePanelHeading.jsx';
-import YesNoView from './YesNoView.jsx';
-import {TESTED_BATCH_DOWNLOAD} from '../actions';
+import DownloadCart from './DownloadCart.jsx';
 
 
 export default class CartPanel extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			selectedItemId: props.previewitemId,
-			yesNoViewVisible: false
+			selectedItemId: props.previewitemId
 		};
 
 		this.mouseClick = undefined;
-	}
-
-	componentWillReceiveProps(nextProps){
-		if (nextProps.event === TESTED_BATCH_DOWNLOAD && !nextProps.isBatchDownloadOk) {
-			this.setState({yesNoViewVisible: true});
-		}
 	}
 
 	handleItemClick(id){
@@ -31,24 +23,8 @@ export default class CartPanel extends Component {
 		if (this.props.setCartName) this.props.setCartName(newName);
 	}
 
-	handleDownloadBtnClick(ev){
-		this.mouseClick = ev.nativeEvent;
-		this.props.fetchIsBatchDownloadOk();
-	}
-
-	openLoginWindow(){
-		window.open("https://cpauth.icos-cp.eu/");
-		this.closeYesNoView();
-	}
-
-	closeYesNoView(){
-		this.setState({yesNoViewVisible: false});
-	}
-
 	render(){
-		const {yesNoViewVisible} = this.state;
-		const {event, cart, removeFromCart, previewItemAction, getSpecLookupType, isBatchDownloadOk, fetchIsBatchDownloadOk} = this.props;
-		// console.log({event, cart, isBatchDownloadOk, fetchIsBatchDownloadOk});
+		const {batchDownloadStatus, cart, removeFromCart, previewItemAction, getSpecLookupType, fetchIsBatchDownloadOk} = this.props;
 
 		return (
 			<div className="panel panel-default">
@@ -62,21 +38,10 @@ export default class CartPanel extends Component {
 				/>
 
 				<div className="panel-body">
-					<button className="btn btn-primary" onClick={this.handleDownloadBtnClick.bind(this)} style={{marginBottom: 15}}>
-						<span className="glyphicon glyphicon-download-alt"/> Download cart content
-					</button>
-					{isBatchDownloadOk && event === TESTED_BATCH_DOWNLOAD
-						? <iframe src={downloadURL(cart.pids, cart.name)} style={{display:'none'}}></iframe>
-						: null
-						}
-
-					<YesNoView
-						visible={yesNoViewVisible}
-						mouseClick={this.mouseClick}
-						title={'Login required'}
-						question={'You must be logged in to Carbon Portal and have accepted the license agreement before downloading. Do you want to log in and accept the license agreement?'}
-						actionYes={{fn: this.openLoginWindow.bind(this)}}
-						actionNo={{fn: this.closeYesNoView.bind(this)}}
+					<DownloadCart
+						cart={cart}
+						batchDownloadStatus={batchDownloadStatus}
+						fetchIsBatchDownloadOk={fetchIsBatchDownloadOk}
 					/>
 
 					{cart.count
@@ -119,8 +84,4 @@ const Item = props => {
 			<a href={item.id} target="_blank">{item.itemName}</a>
 		</li>
 	);
-};
-
-const downloadURL = (ids, fileName) => {
-	return `https://data.icos-cp.eu/objects?ids=["${ids.join('","')}"]&fileName=${fileName}`;
 };

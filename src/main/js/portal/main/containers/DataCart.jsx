@@ -30,7 +30,7 @@ class DataCart extends Component {
 						getSpecLookupType={props.preview.getSpecLookupType.bind(props.preview)}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
-						isBatchDownloadOk={props.isBatchDownloadOk}
+						batchDownloadStatus={props.batchDownloadStatus}
 						fetchIsBatchDownloadOk={props.fetchIsBatchDownloadOk}
 					/>
 				</div>

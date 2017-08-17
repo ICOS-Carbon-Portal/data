@@ -17,7 +17,10 @@ const initState = {
 	cart: new Cart(),
 	preview: new Preview(),
 	toasterData: undefined,
-	isBatchDownloadOk: false
+	batchDownloadStatus: {
+		isAllowed: false,
+		ts: 0
+	}
 };
 
 // function logger({ getState }) {

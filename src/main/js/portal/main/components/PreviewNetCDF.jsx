@@ -9,7 +9,7 @@ export default class PreviewNetCDF extends Component{
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
-		console.log({props: this.props, preview});
+		// console.log({props: this.props, preview});
 
 		return (
 			<div>{preview

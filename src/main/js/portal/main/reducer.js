@@ -92,8 +92,10 @@ export default function(state, action){
 
 		case TESTED_BATCH_DOWNLOAD:
 			return update({
-				event: TESTED_BATCH_DOWNLOAD,
-				isBatchDownloadOk: action.isBatchDownloadOk
+				batchDownloadStatus: {
+					isAllowed: action.isBatchDownloadOk,
+					ts: Date.now()
+				}
 			});
 
 		default:
@@ -102,7 +104,7 @@ export default function(state, action){
 
 	function update(){
 		const updates = Array.from(arguments);
-		return Object.assign.apply(Object, [{}, Object.assign(state, {event: undefined})].concat(updates));
+		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
 
