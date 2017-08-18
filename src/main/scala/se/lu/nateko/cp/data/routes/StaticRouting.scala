@@ -18,7 +18,7 @@ object StaticRouting {
 
 	private type PageFactory = PartialFunction[String, Html]
 	private val NetCdfProj = "netcdf"
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light", "netcdf-new")
 
 	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
 		case NetCdfProj => views.html.NetCDFPage(iframe)

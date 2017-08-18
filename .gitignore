@@ -11,6 +11,7 @@ src/main/resources/stilt.js
 src/main/resources/portal.js
 /src/main/resources/dygraph-light.js
 /src/main/resources/netcdf-light.js
+/src/main/resources/netcdf-new.js
 
 # sbt specific
 target/
