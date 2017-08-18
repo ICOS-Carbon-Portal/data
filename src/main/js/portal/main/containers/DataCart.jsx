@@ -23,6 +23,7 @@ class DataCart extends Component {
 			<div className="row">
 				<div className="col-md-4">
 					<CartPanel
+						user={props.user}
 						event={props.event}
 						cart={props.cart}
 						setCartName={props.setCartName}

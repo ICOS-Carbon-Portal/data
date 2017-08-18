@@ -24,7 +24,9 @@ export default class CartPanel extends Component {
 	}
 
 	render(){
-		const {batchDownloadStatus, cart, removeFromCart, previewItemAction, getSpecLookupType, fetchIsBatchDownloadOk} = this.props;
+		const {batchDownloadStatus, cart, removeFromCart, previewItemAction,
+			getSpecLookupType, fetchIsBatchDownloadOk, user} = this.props;
+		// console.log({batchDownloadStatus, user});
 
 		return (
 			<div className="panel panel-default">
@@ -39,6 +41,7 @@ export default class CartPanel extends Component {
 
 				<div className="panel-body">
 					<DownloadCart
+						user={user}
 						cart={cart}
 						batchDownloadStatus={batchDownloadStatus}
 						fetchIsBatchDownloadOk={fetchIsBatchDownloadOk}

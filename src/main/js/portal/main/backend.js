@@ -127,3 +127,12 @@ function sparqlBindingToValue(b){
 		default: return b.value;
 	}
 }
+
+export function getWhoIam(){
+	return fetch('https://cpauth.icos-cp.eu/whoami', {credentials: 'include'})
+		.then(resp => {
+			return resp.status === 200
+				? resp.json()
+				: {email: undefined};
+		});
+}

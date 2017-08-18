@@ -11,9 +11,10 @@ export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
-export const COL_INFO_FETCHED = 'COL_INFO_FETCHED';
+export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
-import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart, getIsBatchDownloadOk} from './backend';
+import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
+import {getIsBatchDownloadOk, getWhoIam} from './backend';
 import CartItem from './models/CartItem';
 
 
@@ -207,11 +208,24 @@ const updateCart = (cart, dispatch) => {
 	);
 };
 
-export const fetchIsBatchDownloadOk = dispatch => {
-	getIsBatchDownloadOk().then(
-		isBatchDownloadOk => dispatch({
-			type: TESTED_BATCH_DOWNLOAD,
-			isBatchDownloadOk
+export const fetchWhoAmI = dispatch => {
+	getWhoIam().then(
+		user => dispatch({
+			type: WHOAMI_FETCHED,
+			user
 		})
 	);
+};
+
+export const fetchIsBatchDownloadOk = dispatch => {
+	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
+		// .then(([isBatchDownloadOk, user]) => {return {isBatchDownloadOk, user};})
+		.then(
+			([isBatchDownloadOk, user]) => dispatch({
+				type: TESTED_BATCH_DOWNLOAD,
+				isBatchDownloadOk,
+				user
+			}),
+			err => dispatch(failWithError(err))
+		);
 };

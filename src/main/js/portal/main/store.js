@@ -2,14 +2,14 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {getAllSpecTables, fetchCart} from './actions';
+import {fetchWhoAmI, getAllSpecTables, fetchCart} from './actions';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Cart from './models/Cart';
 import Preview from './models/Preview';
 
 
 const initState = {
-	// metadata: undefined,
+	user: undefined,
 	specTable: new CompositeSpecTable({}),
 	objectsTable: [],
 	sorting: {objCount: 0},
@@ -40,6 +40,7 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
+	store.dispatch(fetchWhoAmI);
 	store.dispatch(fetchCart);
 	store.dispatch(getAllSpecTables);
 	return store;

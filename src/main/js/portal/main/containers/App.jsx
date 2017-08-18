@@ -109,6 +109,7 @@ const Route = props => {
 
 function stateToProps(state){
 	return {
+		user: state.user,
 		route: state.route,
 		toasterData: state.toasterData,
 		cart: state.cart,
