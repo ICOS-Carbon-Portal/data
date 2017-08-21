@@ -14,6 +14,8 @@ import se.lu.nateko.cp.cpauth.core.Authenticator
 import se.lu.nateko.cp.cpauth.core.CookieToToken
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
 
 class AuthRouting(authConfig: PublicAuthConfig) {
 
@@ -49,6 +51,10 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 			}
 			.result()
 	)
+
+	val whoami: Route = (get & forbidAuthenticationFailures & path("whoami")){
+		user{ uid => complete(uid)}
+	}
 
 	private def toMessage(err: Throwable): String = {
 		val msg = err.getMessage

@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data
 
+import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.formats.bintable.BinTableSlice
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
@@ -10,6 +11,9 @@ import spray.json._
 object CpdataJsonProtocol extends CommonJsonSupport {
 
 	implicit val binTableSliceFormat = jsonFormat2(BinTableSlice)
+
+	implicit val userIdFormat = jsonFormat1(UserId)
+
 
 	implicit object binTableDataTypeFormat extends JsonFormat[DataType]{
 		override def write(dt: DataType) = JsString(dt.name())
