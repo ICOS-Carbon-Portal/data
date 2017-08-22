@@ -18,7 +18,8 @@ object StaticRouting {
 
 	private type PageFactory = PartialFunction[String, Html]
 	private val NetCdfProj = "netcdf"
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light", "netcdf-new")
+	private val NetCdfProjNew = "netcdf-new"
+	val projects = Set(NetCdfProj, NetCdfProjNew, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
 
 	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
 		case NetCdfProj => views.html.NetCDFPage(iframe)
@@ -43,14 +44,19 @@ object StaticRouting {
 		)
 	)
 
-	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] =
-		if(proj != NetCdfProj) Neutral.tmap(_ => Tuple1(standardPageFactory))
-		else (Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
-			case Some(_) =>
-				Tuple1(netCdfPageFactory(iframe = true))
-			case None =>
-				Tuple1(netCdfPageFactory(iframe = false))
-		})
+	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
+		case NetCdfProj =>
+			(Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
+				case Some(_) =>
+					Tuple1(netCdfPageFactory(iframe = true))
+				case None =>
+					Tuple1(netCdfPageFactory(iframe = false))
+			})
+		case NetCdfProjNew =>
+			(Slash ~ UploadRouting.Sha256Segment).tmap(_ => Tuple1(standardPageFactory))
+		case _ =>
+			Neutral.tmap(_ => Tuple1(standardPageFactory))
+	}
 
 	val route = pathPrefix(Segment){ proj =>
 
