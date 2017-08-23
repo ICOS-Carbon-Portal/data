@@ -1,23 +1,35 @@
 package se.lu.nateko.cp.data.services.upload
 
+import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
 import scala.util.Success
 
 import akka.NotUsed
 import akka.event.LoggingAdapter
+import akka.stream.SourceShape
+import akka.stream.scaladsl.Broadcast
+import akka.stream.scaladsl.Concat
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import se.lu.nateko.cp.data.ConfigReader
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
+import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 
 class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
 
+	import DownloadService._
+
+	private val conf = ConfigReader.metaCore
+
 	def getZipSource(hashes: Seq[Sha256Sum], downloadLogger: DataObject => Unit) = {
 
-		val sourcesSource = Source(hashes.toList)
+		val destiniesSource: Source[FileDestiny, NotUsed] = Source(hashes.toList)
 			.flatMapConcat{
 				hash => Source.fromFuture(
 					upload.lookupPackage(hash).andThen{
@@ -26,13 +38,38 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 					}
 				)
 			}
-			// Level-0 data should not be easily available, WDCGG (absent on disk) should be skipped
-			//TODO Filter out third-party NetCDFs that have their own access URL
-			.filter(dobj => dobj.specification.dataLevel > 0 && upload.getFile(dobj).exists)
-			.map(dobj => (dobj.fileName, singleObjectSource(dobj, downloadLogger)))
+			.scan[Destiny](ZeroDestiny){(dest, dobj) =>
+				new FileDestiny(dobj, dest.fileNamesUsed)
+			}.collect{
+				case fd: FileDestiny => fd
+			}
 
-		ZipEntryFlow.getMultiEntryZipStream(sourcesSource)
+		val destinyToDobjSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
+			.filter(fd => fd.omissionReason.isEmpty)
+			.map(fd => (fd.fileName, singleObjectSource(fd.dobj, downloadLogger)))
+
+		val sourcesSource = GraphDSL.create(){implicit b =>
+			import GraphDSL.Implicits._
+
+			val split = b.add(Broadcast[FileDestiny](2))
+			val concat = b.add(Concat[FileEntry]())
+
+			destiniesSource ~> split.in
+
+			split.out(0) ~> destinyToDobjSourcesFlow ~> concat.in(0)
+			split.out(1) ~> destinyToAuxSourcesFlow ~> concat.in(1)
+			SourceShape(concat.out)
+		}
+		ZipEntryFlow.getMultiEntryZipStream(Source.fromGraph(sourcesSource))
 	}
+
+	private val destinyToAuxSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
+		.fold(Vector.empty[FileDestiny])(_ :+ _)
+		.map{dests =>
+			("!TOC.csv", destiniesToTocFileSource(dests))
+		}.concat(Source.single(
+			("!LICENCE.txt", Source.single(ByteString("https://data.icos-cp.eu/licence\n")))
+		))
 
 	private def singleObjectSource(dobj: DataObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
 		val file = upload.getFile(dobj)
@@ -48,4 +85,72 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 			NotUsed
 		})
 	}
+
+	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny]): Source[ByteString, NotUsed] = {
+		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
+
+			val presense = if(dest.omissionReason.isEmpty) "\u2713" else "\u2717" // "check" or "cross"
+			val omissionReason = dest.omissionReason.getOrElse("")
+			val pid = dest.dobj.pid.getOrElse("")
+			val landingPage = dest.dobj.pid.fold(
+				conf.landingPagePrefix + dest.dobj.hash.id
+			)(
+				pid => s"${conf.handleService}$pid"
+			)
+			s"$presense,${dest.fileName},$pid,$landingPage,$omissionReason\n"
+		}
+		Source(lines.map(ByteString.apply))
+	}
+
+	private class FileDestiny(val dobj: DataObject, fileNamesUsedEarlier: Set[String]) extends Destiny{
+
+		val omissionReason: Option[String] = dobj.accessUrl match {
+			case None =>
+				Some("Data object is not distributed by Carbon Portal as open data")
+
+			case Some(url) =>
+				if(!url.toString.startsWith(conf.dataObjPrefix.toString))
+					Some("Data object is distributed by third parties")
+
+				else if(!upload.getFile(dobj).exists)
+					Some("File is missing on the server")
+				else
+					None
+		}
+
+		val fileName = if(omissionReason.isDefined) dobj.fileName else {
+
+			val uniquifyingIndex = Iterator.from(0).dropWhile{idx =>
+				val attemptName = makeFileName(dobj.fileName, idx)
+				fileNamesUsedEarlier.contains(attemptName)
+			}.next()
+
+			makeFileName(dobj.fileName, uniquifyingIndex)
+		}
+
+		val fileNamesUsed: Set[String] =
+			if(omissionReason.isDefined) fileNamesUsedEarlier
+			else fileNamesUsedEarlier + fileName
+	}
+}
+
+private sealed trait Destiny{
+	def omissionReason: Option[String]
+	def fileNamesUsed: Set[String]
+}
+
+private object ZeroDestiny extends Destiny{
+	def omissionReason = None
+	def fileNamesUsed = Set.empty
+}
+
+object DownloadService{
+
+	def makeFileName(base: String, idx: Int): String =
+		if(idx == 0) base
+		else if(!base.contains('.')) s"$base($idx)"
+		else {
+			val segms = base.split('.')
+			segms.dropRight(1).mkString("", ".", s"($idx).${segms.last}")
+		}
 }

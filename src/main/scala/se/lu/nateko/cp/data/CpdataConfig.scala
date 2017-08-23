@@ -5,6 +5,7 @@ import spray.json._
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigRenderOptions
 import com.typesafe.config.ConfigFactory
+import se.lu.nateko.cp.meta.core.MetaCoreConfig
 
 case class NetCdfConfig(
 	folder: String,
@@ -67,20 +68,27 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
-	def getDefault: CpdataConfig = fromAppConfig(getAppConfig)
-
-	def getAppConfig: Config = {
+	val appConfig: Config = {
 		val default = ConfigFactory.load
 		val confFile = new java.io.File("application.conf").getAbsoluteFile
 		if(!confFile.exists) default
 		else ConfigFactory.parseFile(confFile).withFallback(default)
 	}
 
-	def fromAppConfig(applicationConfig: Config): CpdataConfig = {
-		val renderOpts = ConfigRenderOptions.concise.setJson(true)
+	def getDefault: CpdataConfig = fromAppConfig(appConfig)
+
+	private val renderOpts = ConfigRenderOptions.concise.setJson(true)
+
+	private def fromAppConfig(applicationConfig: Config): CpdataConfig = {
 		val confJson: String = applicationConfig.getValue("cpdata").render(renderOpts)
 		
 		confJson.parseJson.convertTo[CpdataConfig]
+	}
+
+	val metaCore: MetaCoreConfig = {
+		val default = ConfigFactory.parseResources("metacore.conf")
+		appConfig.withFallback(default).getValue("metacore").render(renderOpts)
+			.parseJson.convertTo[MetaCoreConfig]
 	}
 }
 

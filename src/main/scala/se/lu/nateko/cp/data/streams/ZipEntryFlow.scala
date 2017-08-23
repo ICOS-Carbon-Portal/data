@@ -29,8 +29,9 @@ object ZipEntryFlow {
 	case class ZipEntrySegment(bytes: ByteString) extends ZipFlowElement
 
 	type FileLikeSource = Source[ByteString, Any]
+	type FileEntry = (String, FileLikeSource)
 
-	def getMultiEntryZipStream(entries: Source[(String, FileLikeSource), NotUsed]) : Source[ByteString, NotUsed] = {
+	def getMultiEntryZipStream(entries: Source[FileEntry, NotUsed]) : Source[ByteString, NotUsed] = {
 		val zipFlowSources = entries.flatMapConcat{
 			case (fileName, fileSource) =>
 				val headerSource: Source[ZipFlowElement, NotUsed] = Source.single(new ZipEntryStart(fileName))
