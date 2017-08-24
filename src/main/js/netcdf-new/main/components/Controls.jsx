@@ -1,9 +1,7 @@
-import React, { Component, PropTypes } from 'react';
-import { connect } from 'react-redux';
-import Selector from '../components/Selector.jsx';
-import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton, incrementRasterData} from '../actions.js';
+import React, { Component } from 'react';
+import Selector from './Selector.jsx';
 
-class Controls extends React.Component {
+export default class Controls extends Component {
 	constructor(props){
 		super(props);
 	}
@@ -21,19 +19,12 @@ class Controls extends React.Component {
 
 		return (
 			<div className="row" style={{marginTop: props.marginTop, marginBottom: 10}}>
-				{props.scopedView
-					? null
-					: <div className="col-md-3">
-						<Selector className="services" caption="Data object" control={controls.services} action={props.serviceChanged}/>
-					</div>
-				}
-
-				<div className={clsName(props.scopedView, 2)}>
-					<Selector className="variables" caption="Variable" control={controls.variables} action={props.variableChanged}/>
+				<div className="col-md-3">
+					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
-				<div className={clsName(props.scopedView, 2)}>
-					<Selector className="dates" caption="Date" control={controls.dates} action={props.dateChanged} />
+				<div className="col-md-2">
+					<Selector className="dates" caption="Date" control={controls.dates} action={props.handleDateChange} />
 				</div>
 
 				<div className="col-md-1" style={{minWidth: 120}}>
@@ -56,21 +47,15 @@ class Controls extends React.Component {
 				</div>
 
 				<div className="col-md-1" style={{display: elevationsStyle}}>
-					<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.elevationChanged}/>
+					<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.handleElevationChange}/>
 				</div>
 
 				<div className="col-md-1">
-					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.gammaChanged}/>
+					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.handleGammaChange}/>
 				</div>
 			</div>
 		);
 	}
-}
-
-function clsName(scopedView, defaultWidth){
-	return scopedView
-		? 'col-md-' + (defaultWidth + 1)
-		: 'col-md-' + defaultWidth;
 }
 
 function delayPresenter(delay){
@@ -85,46 +70,3 @@ function delayPresenter(delay){
 		default : return (1000 / delay) + ' fps';
 	}
 }
-
-function stateToProps(state){
-	return Object.assign({}, state);
-}
-
-function dispatchToProps(dispatch){
-	return {
-		serviceChanged(newIdx){
-			dispatch(selectService(newIdx));
-		},
-
-		variableChanged(newIdx){
-			dispatch(selectVariable(newIdx));
-		},
-
-		dateChanged(newIdx){
-			dispatch(selectDate(newIdx));
-		},
-
-		elevationChanged(newIdx){
-			dispatch(selectElevation(newIdx));
-		},
-
-		delayChanged(newIdx){
-			dispatch(selectDelay(newIdx));
-		},
-
-		gammaChanged(newIdx){
-			dispatch(selectGamma(newIdx));
-		},
-
-		increment(direction){
-			dispatch(incrementRasterData(direction));
-		},
-
-		playPauseMovie(){
-			dispatch(pushPlayButton);
-		}
-	};
-}
-
-export default connect(stateToProps, dispatchToProps)(Controls);
-

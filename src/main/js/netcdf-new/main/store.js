@@ -2,28 +2,28 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchCountriesTopo, fetchRaster} from './actions';
+import {fetchCountriesTopo, setService, selectGamma, failWithError} from './actions.js';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
-import {failWithError} from './actions';
+import {ControlsHelper} from './models/ControlsHelper';
 
-const params = new UrlSearchParams(window.location.search, ['service', 'varName', 'date', 'gamma'], ['elevation']);
-
-const getErr = () => {
-	let errMsg = 'The request you made is not valid!';
-	errMsg += ' It must contain these parameters: ' + params.required.join(', ') + '.';
-	errMsg += ' The request is missing these parameters: ' + params.missingParams.join(', ') + '.';
-
-	return {
-		message: errMsg
-	};
-};
+const pathName = window.location.pathname;
+const sections = pathName.split('/');
+const pid = sections.pop() || sections.pop();
+const params = new UrlSearchParams(window.location.search, [], ['varName', 'date', 'gamma', 'elevation']);
 
 const initState = {
 	event: undefined,
 	params,
 	toasterData: undefined,
-	countriesTopo: undefined,
-	raster: undefined
+	countriesTopo: {
+		ts: 0,
+		data: undefined
+	},
+	raster: {
+		ts: 0,
+		data: undefined
+	},
+	controls: new ControlsHelper()
 };
 
 // function logger({ getState }) {
@@ -46,9 +46,13 @@ export default function(){
 
 	if (params.isValidParams) {
 		store.dispatch(fetchCountriesTopo);
-		store.dispatch(fetchRaster);
+		if (pid) store.dispatch(setService(pid));
+		store.dispatch(selectGamma(4));
 	} else {
-		store.dispatch(failWithError(getErr()));
+		let message = 'The request you made is not valid!';
+		message += ' The request is missing these parameters: ' + params.missingParams.join(', ') + '.';
+
+		store.dispatch(failWithError({message}));
 	}
 	return store;
 }
