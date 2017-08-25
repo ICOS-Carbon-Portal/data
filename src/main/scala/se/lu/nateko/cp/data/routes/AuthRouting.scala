@@ -5,7 +5,9 @@ import scala.util.Success
 
 import akka.http.javadsl.server.CustomRejection
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
+import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.MissingCookieRejection
 import akka.http.scaladsl.server.RejectionHandler
@@ -16,6 +18,7 @@ import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
+import scala.util.Try
 
 class AuthRouting(authConfig: PublicAuthConfig) {
 
@@ -25,21 +28,28 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 		user{uid => inner(Some(uid))} ~
 		inner(None)
 
-	def user(inner: UserId => Route): Route = cookie(authConfig.authCookieName){cookie =>
-		val tokenTry = for(
+	val userTry: Directive1[Try[UserId]] = cookie(authConfig.authCookieName).map{cookie =>
+		for(
 			signedToken <- CookieToToken.recoverToken(cookie.value);
 			token <- authenticator.unwrapToken(signedToken)
-		) yield token
-
-		tokenTry match {
-			case Success(token) =>
-				inner(token.userId)
-			case Failure(err) =>
-				reject(new CpauthAuthenticationFailedRejection("Could not decode the authentication cookie: " + toMessage(err)))
-		}
+		) yield token.userId
 	}
 
-	val forbidAuthenticationFailures: Directive0 = handleRejections(
+	val user: Directive1[UserId] = userTry.flatMap{
+		case Success(uid) => provide(uid)
+		case Failure(err) =>
+			reject(new CpauthAuthenticationFailedRejection("Could not decode the authentication cookie: " + toMessage(err)))
+	}
+
+	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).recover{rejections =>
+		val hasCookieRejection = rejections.collectFirst{
+			case MissingCookieRejection(cookieName) if(cookieName == authConfig.authCookieName) => true
+		}
+		if(hasCookieRejection.isDefined) provide(None)
+		else reject
+	}
+
+	private val forbidAuthenticationFailures: Directive0 = handleRejections(
 		RejectionHandler.newBuilder()
 			.handle{
 				case cafr: CpauthAuthenticationFailedRejection =>
@@ -52,8 +62,10 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 			.result()
 	)
 
-	val whoami: Route = (get & forbidAuthenticationFailures & path("whoami")){
-		user{ uid => complete(uid)}
+	val userRequired: Directive1[UserId] = forbidAuthenticationFailures & user
+
+	val whoami: Route = (get & path("whoami")){
+		userRequired{ uid => complete(uid)}
 	}
 
 	private def toMessage(err: Throwable): String = {

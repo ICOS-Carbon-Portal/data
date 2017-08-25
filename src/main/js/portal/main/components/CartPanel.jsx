@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
 import EditablePanelHeading from './EditablePanelHeading.jsx';
-import DownloadCart from './DownloadCart.jsx';
 
 
 export default class CartPanel extends Component {
@@ -40,12 +39,11 @@ export default class CartPanel extends Component {
 				/>
 
 				<div className="panel-body">
-					<DownloadCart
-						user={user}
-						cart={cart}
-						batchDownloadStatus={batchDownloadStatus}
-						fetchIsBatchDownloadOk={fetchIsBatchDownloadOk}
-					/>
+					<a href={downloadURL(cart.pids, cart.name)} target="_blank">
+						<button className="btn btn-primary" style={{marginBottom: 15}}>
+							<span className="glyphicon glyphicon-download-alt"/> Download cart content
+						</button>
+					</a>
 
 					{cart.count
 						? <ul className="list-group">{
@@ -88,3 +86,10 @@ const Item = props => {
 		</li>
 	);
 };
+
+const downloadURL = (ids, fileName) => {
+	const idsValue = encodeURIComponent(`["${ids.join('","')}"]`);
+	const fnValue = encodeURIComponent(fileName);
+	return `/objects?ids=${idsValue}&fileName=${fnValue}`;
+};
+

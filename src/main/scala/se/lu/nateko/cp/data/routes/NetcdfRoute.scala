@@ -52,6 +52,7 @@ object NetcdfRoute {
 
 	def cp(factory: ViewServiceFactory): Route = {
 
+		//TODO Look into changing Sha256Sum's json format in meta core from RootJsonFormat to non-Root
 		implicit val hashDeser = Unmarshaller.apply[String, Sha256Sum](
 			_ => s => Future.fromTry(Sha256Sum.fromString(s))
 		)

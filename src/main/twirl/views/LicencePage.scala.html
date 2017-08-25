@@ -1,7 +1,8 @@
 @import se.lu.nateko.cp.cpauth.core.UserId
 @import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+@import se.lu.nateko.cp.data.routes.LicenceRouting._
 
-@(uid: Option[UserId], dobjId: Option[Sha256Sum])
+@(uid: Option[UserId], dobjIds: Seq[Sha256Sum], fileName: Option[String])
 
 @CpCommonPage("ICOS Data Licence"){
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -163,12 +164,12 @@
 	</div>
 </div>
 
-@for(hash <- dobjId){
+@if(!dobjIds.isEmpty){
 	@if(uid.isEmpty){
 		<div class="cp_body_content">
 			<div class="col_1">
 				<div class="inner">
-				    <a href="https://cpauth.icos-cp.eu/" target="_blank"><h5>Log in to accept permanently</h5></a>
+					<a href="https://cpauth.icos-cp.eu/" target="_blank"><h5>Log in to accept permanently</h5></a>
 				</div>
 			</div>
 		</div>
@@ -176,17 +177,17 @@
 
 	<div class="cp_body_content">
 		<div class="col_6_1">
-		    <div class="inner">
-		        <h5>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</h5>
-		    </div>
+			<div class="inner">
+				<h5>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</h5>
+			</div>
 		</div>
 
 		<div class="col_6_2">
-		    <div class="inner">
-				<div class="button_box" style="display:inline; margin-right:20px;"><a target="_blank" href=@{"/licence_accept/" + hash.base64Url}>YES</a></div>
+			<div class="inner">
+				<div class="button_box" style="display:inline; margin-right:20px;"><a target="_blank" href=@{licenceAcceptUri(dobjIds, fileName)}>YES</a></div>
 
-				<div class="button_box" style="display:inline;"><a href=@{"https://meta.icos-cp.eu/objects/" + hash.base64Url}>NO</a></div>
-		    </div>
+				<div class="button_box" style="display:inline;"><a href=@{licenceRejectUri(dobjIds)}>NO</a></div>
+			</div>
 		</div>
 	</div>
 }

@@ -34,10 +34,11 @@ import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import LicenceRouting._
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, restHeart: RestHeartClient)(implicit mat: Materializer) {
-	import LicenceRouting.LicenceCookieName
 	import UploadRouting._
 	import authRouting._
 
@@ -46,29 +47,27 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 	private val downloadService = new DownloadService(uploadService, log)
 
 	private val upload: Route = path(Sha256Segment){ hashsum =>
-		forbidAuthenticationFailures{
-			user{ uid =>
-				extractRequest{ req =>
-					val resFuture: Future[UploadResult] = uploadService
-						.getSink(hashsum, uid)
-						.flatMap(req.entity.dataBytes.runWith)
+		userRequired{ uid =>
+			extractRequest{ req =>
+				val resFuture: Future[UploadResult] = uploadService
+					.getSink(hashsum, uid)
+					.flatMap(req.entity.dataBytes.runWith)
 
-					onSuccess(resFuture)(res => res.makeReport match{
-						case Right(report) => complete(report)
-						case Left(errorMsg) =>
-							log.warning(errorMsg)
-							complete((StatusCodes.InternalServerError, errorMsg))
-					})
-				}
+				onSuccess(resFuture)(res => res.makeReport match{
+					case Right(report) => complete(report)
+					case Left(errorMsg) =>
+						log.warning(errorMsg)
+						complete((StatusCodes.InternalServerError, errorMsg))
+				})
 			}
 		}
 	} ~ requireShaHash
 
 	private val download: Route = pathPrefix(Sha256Segment){ hashsum =>
 		onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
-			cookie(LicenceCookieName){licCookie =>
+			licenceCookieDobjList{dobjs =>
 				deleteCookie(LicenceCookieName){
-					if(licCookie.value == hashsum.base64Url) (accessRoute(dobj))
+					if(dobjs.contains(hashsum)) (accessRoute(dobj))
 					else reject
 				}
 			} ~
@@ -78,33 +77,35 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, rest
 					case _ => reject
 				}
 			} ~
-			redirect("/licence/" + hashsum.base64Url, StatusCodes.Found)
+			redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
 		}
 	} ~ requireShaHash
 
 	private val batchDownload: Route = pathEnd{
 		parameter(('ids.as[Seq[Sha256Sum]], 'fileName)){ (hashes, fileName) =>
-			user{uid =>
-				onComplete(restHeart.getUserLicenseAcceptance(uid)){
-					case Failure(err) =>
-						throw err
+			userOpt{uidOpt =>
 
-					case Success(false) =>
-						complete((StatusCodes.Forbidden, "You need to accept CP data licence on your 'My CP' page"))
+				val ok = getClientIp{ip =>
+					respondWithAttachment(fileName + ".zip"){
+						val src = downloadService.getZipSource(
+							hashes,
+							logDownload(_, ip, uidOpt)
+						)
+						completeWithSource(src, ContentType(MediaTypes.`application/zip`))
+					}
+				}
 
-					case Success(true) =>
-						getClientIp{ip =>
-							respondWithAttachment(fileName + ".zip"){
-								val src = downloadService.getZipSource(
-									hashes,
-									logDownload(_, ip, Some(uid))
-								)
-								completeWithSource(src, ContentType(MediaTypes.`application/zip`))
-							}
-						}
+				licenceCookieDobjList{dobjs =>
+					if(hashes.diff(dobjs).isEmpty) ok else reject
+				} ~
+				onSome(uidOpt){uid =>
+					onComplete(restHeart.getUserLicenseAcceptance(uid)){
+						case Success(true) => ok
+						case _ => reject
+					}
 				}
 			} ~
-			complete((StatusCodes.Unauthorized, "You need to be logged in to CP to perform batch downloads"))
+			redirect(licenceUri(hashes, Some(fileName)), StatusCodes.Found)
 		} ~
 		complete((StatusCodes.BadRequest, "Expected js array of SHA256 hashsums in 'ids' URL param and a 'fileName' param"))
 	}
@@ -166,6 +167,22 @@ object UploadRouting{
 		path(Segment.?){segmOpt =>
 			nameToRoute(Tuple1(segmOpt))
 		}
+	}
+
+	val licenceCookieDobjList: Directive1[Seq[Sha256Sum]] = Directive{dobjsToRoute =>
+		cookie(LicenceCookieName){licCookie =>
+			extractMaterializer{implicit mat =>
+				onComplete(parseLicenceCookie(licCookie.value)){
+					case Success(dobjs) => dobjsToRoute(Tuple1(dobjs))
+					case _ => reject
+				}
+			}
+		}
+	}
+
+	def onSome[T](opt: Option[T]): Directive1[T] = provide(opt).flatMap{
+		case Some(v) => provide(v)
+		case None => reject
 	}
 
 	private val errHandler = ExceptionHandler{
