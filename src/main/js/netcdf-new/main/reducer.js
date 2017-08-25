@@ -1,5 +1,5 @@
-import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
-	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
+import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
+	SERVICE_SET, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
 	RASTER_VALUE_RECEIVED, PUSH_PLAY, INCREMENT_RASTER} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from '../../common/main/models/ColorMaker';
@@ -12,32 +12,32 @@ export default function(state, action){
 
 		case ERROR:
 			return update({
-				event: ERROR,
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
 		case COUNTRIES_FETCHED:
 			return update({
-				event: COUNTRIES_FETCHED,
 				countriesTopo: {
 					ts: Date.now(),
 					data: action.countriesTopo
 				}
 			});
 
-		case SERVICES_FETCHED:
+		case SERVICE_SET:
 			return update({
-				event: SERVICES_FETCHED,
 				controls: state.controls.withServices(new Control(action.services), state.controls.lastChangedControl)
 			});
 
 		case VARIABLES_AND_DATES_FETCHED:
 			if (isFetched(state, action)){
-				const controls = state.controls.withVariables(new Control(action.variables), state.controls.lastChangedControl)
-					.withDates(new Control(action.dates), state.controls.lastChangedControl);
+				const vIdx = action.variables.indexOf(state.initSearchParams.varName);
+				const dIdx = action.dates.indexOf(state.initSearchParams.date);
+
+				const controls = state.controls
+					.withVariables(new Control(action.variables, vIdx), state.controls.lastChangedControl)
+					.withDates(new Control(action.dates, dIdx), state.controls.lastChangedControl);
 
 				return update({
-					event: VARIABLES_AND_DATES_FETCHED,
 					controls
 				});
 			} else {
@@ -46,25 +46,21 @@ export default function(state, action){
 
 		case ELEVATIONS_FETCHED:
 			if (isElevationsFetched(state, action)) {
+				const elevations = filterElevations(action.elevations);
+				const eIdx = elevations.indexOf(state.initSearchParams.elevation);
+
 				const elevationCtrls = state.controls.withElevations(
-					new Control(filterElevations(action.elevations)),
+					new Control(elevations, eIdx),
 					state.controls.lastChangedControl
 				);
 
 				return update({
-					event: ELEVATIONS_FETCHED,
 					controls: elevationCtrls,
 					rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrls))
 				});
 			} else {
 				return state;
 			}
-
-		case SERVICE_SELECTED:
-			return update({
-				event: SERVICE_SELECTED,
-				controls: state.controls.withSelectedService(action.idx)
-			});
 
 		case VARIABLE_SELECTED:
 			return update({controls: state.controls.withSelectedVariable(action.idx)});
@@ -107,7 +103,6 @@ export default function(state, action){
 		case RASTER_FETCHED:
 			return isRasterFetched(state, action)
 				? update({
-					event: RASTER_FETCHED,
 					raster: {
 						ts: Date.now(),
 						data: action.raster
@@ -118,7 +113,6 @@ export default function(state, action){
 
 		case RASTER_VALUE_RECEIVED:
 			return update({
-				event: RASTER_VALUE_RECEIVED,
 				rasterVal: action.val
 			});
 
@@ -132,14 +126,13 @@ export default function(state, action){
 		case INCREMENT_RASTER:
 			const controls = state.controls.withIncrementedDate(action.increment);
 			const desiredId = state.rasterDataFetcher.getDesiredId(controls.selectedIdxs);
-			// console.log({state, action, controls, desiredId});
 
 			return state.raster.data
 				? update({controls, desiredId})
 				: state;
 
 		default:
-			return update({event: undefined});
+			return state;
 	}
 
 	function update(){

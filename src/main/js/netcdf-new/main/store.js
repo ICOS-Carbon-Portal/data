@@ -3,27 +3,50 @@ import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {fetchCountriesTopo, setService, selectGamma, failWithError} from './actions.js';
-import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import {ControlsHelper} from './models/ControlsHelper';
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
 const pid = sections.pop() || sections.pop();
-const params = new UrlSearchParams(window.location.search, [], ['varName', 'date', 'gamma', 'elevation']);
+
+const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
+const keyValpairs = searchStr.split('&');
+const searchParams = keyValpairs.reduce((acc, curr) => {
+	const p = curr.split('=');
+	acc[p[0]] = p[1];
+	return acc;
+}, {});
+
+const controls = new ControlsHelper();
+const gammaIdx = searchParams.gamma
+	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
+	: 4;
+
+console.log({searchStr, keyValpairs, searchParams, gammas: controls.gammas.values, gammaIdx});
 
 const initState = {
-	event: undefined,
-	params,
-	toasterData: undefined,
+	colorMaker: undefined,
+	controls,
 	countriesTopo: {
 		ts: 0,
 		data: undefined
 	},
+	desiredId: undefined,
+	initSearchParams: {
+		varName: searchParams.varName,
+		date: searchParams.date,
+		gamma: searchParams.gamma,
+		elevation: searchParams.elevation,
+		center: searchParams.center,
+		zoom: searchParams.zoom,
+	},
+	playingMovie: false,
 	raster: {
 		ts: 0,
 		data: undefined
 	},
-	controls: new ControlsHelper()
+	rasterDataFetcher: undefined,
+	toasterData: undefined
 };
 
 // function logger({ getState }) {
@@ -44,15 +67,12 @@ const initState = {
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 
-	if (params.isValidParams) {
+	if (pid) {
 		store.dispatch(fetchCountriesTopo);
-		if (pid) store.dispatch(setService(pid));
-		store.dispatch(selectGamma(4));
+		store.dispatch(setService(pid));
+		store.dispatch(selectGamma(gammaIdx));
 	} else {
-		let message = 'The request you made is not valid!';
-		message += ' The request is missing these parameters: ' + params.missingParams.join(', ') + '.';
-
-		store.dispatch(failWithError({message}));
+		store.dispatch(failWithError({message: 'The request is missing a pid'}));
 	}
 	return store;
 }

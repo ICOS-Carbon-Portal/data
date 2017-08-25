@@ -2,7 +2,7 @@ import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations} fro
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
-export const SERVICES_FETCHED = 'SERVICES_FETCHED';
+export const SERVICE_SET = 'SERVICE_SET';
 export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
 export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
@@ -39,7 +39,7 @@ export const fetchCountriesTopo = dispatch => {
 
 export const setService = service => dispatch => {
 	dispatch({
-		type: SERVICES_FETCHED,
+		type: SERVICE_SET,
 		controlName: 'services',
 		services: [service]
 	});

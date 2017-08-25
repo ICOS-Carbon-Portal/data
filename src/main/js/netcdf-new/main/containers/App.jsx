@@ -35,11 +35,12 @@ const AppDiv = props => {
 			elevationChanged={props.elevationChanged}
 			gammaChanged={props.gammaChanged}
 			increment={props.increment}
-			params={props.params}
+			playingMovie={props.playingMovie}
 			playPauseMovie={props.playPauseMovie}
 			raster={props.raster}
 			rasterDataFetcher={props.rasterDataFetcher}
 			variableChanged={props.variableChanged}
+			initSearchParams={props.initSearchParams}
 		/>;
 }
 

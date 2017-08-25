@@ -2,7 +2,6 @@ import React, { Component } from 'react';
 import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
-import {getRasterId, getBaseSearch}from '../actions';
 import {throttle} from 'icos-cp-utils';
 
 
@@ -21,50 +20,48 @@ export default class Map extends Component {
 		window.addEventListener("resize", this.hightUpdater);
 
 		this.ctrls = {
-			varName: props.params.get('varName'),
-			date: props.params.get('date'),
-			gamma: props.params.get('gamma'),
-			elevation: props.params.get('elevation')
+			varName: props.initSearchParams.varName,
+			date: props.initSearchParams.date,
+			gamma: props.initSearchParams.gamma,
+			elevation: props.initSearchParams.elevation
 		};
+
+		this.centerZoom = centerZoom2obj(props.initSearchParams.center, props.initSearchParams.zoom);
 	}
 
 	componentDidMount(){
 		this.updateHight();
 	}
 
-	componentWillReceiveProps(nextProps){
-
-	}
-
 	handleVarNameChange(newIdx){
 		const {controls, variableChanged} = this.props;
 		this.ctrls.varName = controls.variables.values[newIdx];
-		this.updateAddressbar();
+		this.updateURL();
 		variableChanged(newIdx);
 	}
 
 	handleDateChange(newIdx){
 		const {controls, dateChanged} = this.props;
 		this.ctrls.date = controls.dates.values[newIdx];
-		this.updateAddressbar();
+		this.updateURL();
 		dateChanged(newIdx);
 	}
 
 	handleGammaChange(newIdx){
 		const {controls, gammaChanged} = this.props;
 		this.ctrls.gamma = controls.gammas.values[newIdx];
-		this.updateAddressbar();
+		this.updateURL();
 		gammaChanged(newIdx);
 	}
 
 	handleElevationChange(newIdx){
 		const {controls, elevationChanged} = this.props;
 		this.ctrls.elevation = controls.elevations.values[newIdx];
-		this.updateAddressbar();
+		this.updateURL();
 		elevationChanged(newIdx);
 	}
 
-	updateAddressbar(centerZoom){
+	updateURL(centerZoom){
 		const {varName, date, gamma, elevation} = this.ctrls;
 
 		const varNameParam = varName ? `varName=${varName}` : undefined;
@@ -94,7 +91,7 @@ export default class Map extends Component {
 
 	mapEventCallback(event, payload){
 		if (event === 'moveend') {
-			this.updateAddressbar(payload);
+			this.updateURL(payload);
 		}
 	}
 
@@ -110,7 +107,7 @@ export default class Map extends Component {
 
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
 		const showSpinner = isSpinnerVisible(props.countriesTopo.ts, state.countriesTs, props.raster.ts, state.rasterTs);
-		console.log({props, state, showSpinner});
+		// console.log({props, state, showSpinner});
 
 		return (
 			<div id="content" className="container-fluid">
@@ -130,8 +127,8 @@ export default class Map extends Component {
 				<div id="map">
 					<NetCDFMap
 						mapOptions={{
-							zoom: 2,
-							center: [13, 0]
+							center: [13, 0],
+							zoom: 2
 						}}
 						raster={props.raster.data}
 						colorMaker={colorMaker}
@@ -172,9 +169,9 @@ const centerZoom2str = centerZoom => {
 	return '&center=' + centerZoom.center.lat + ',' + centerZoom.center.lng + '&zoom=' + centerZoom.zoom;
 };
 
-const centerZoom2obj = params => {
-	if (params.has('center') && params.has('zoom')){
-		return {center: params.get('center').split(','), zoom: params.get('zoom')};
+const centerZoom2obj = (center, zoom) => {
+	if (center && zoom){
+		return {center: center.split(','), zoom};
 	} else {
 		return null;
 	}
