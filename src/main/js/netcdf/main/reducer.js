@@ -1,6 +1,6 @@
-import {ERROR, COUNTRIES_FETCHED, SERVICES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
-	SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
-	RASTER_VALUE_RECEIVED, PUSH_PLAY, INCREMENT_RASTER} from './actions';
+import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
+	SERVICE_SET, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
+	PUSH_PLAY, INCREMENT_RASTER} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
@@ -11,29 +11,33 @@ export default function(state, action){
 	switch(action.type){
 
 		case ERROR:
-			return Object.assign({}, state, {
+			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
 		case COUNTRIES_FETCHED:
-			return Object.assign({}, state, {
-				status: COUNTRIES_FETCHED,
-				countriesTopo: action.countriesTopo
+			return update({
+				countriesTopo: {
+					ts: Date.now(),
+					data: action.countriesTopo
+				}
 			});
 
-		case SERVICES_FETCHED:
-			return Object.assign({}, state, {
-				status: SERVICES_FETCHED,
-				controls: state.controls.withServices(new Control(action.services), state.controls.lastChangedControl)
+		case SERVICE_SET:
+			return update({
+				controls: state.controls.withServices(new Control(action.services))
 			});
 
 		case VARIABLES_AND_DATES_FETCHED:
 			if (isFetched(state, action)){
-				const controls = state.controls.withVariables(new Control(action.variables), state.controls.lastChangedControl)
-					.withDates(new Control(action.dates), state.controls.lastChangedControl);
+				const vIdx = action.variables.indexOf(state.initSearchParams.varName);
+				const dIdx = action.dates.indexOf(state.initSearchParams.date);
 
-				return Object.assign({}, state, {
-					status: VARIABLES_AND_DATES_FETCHED,
+				const controls = state.controls
+					.withVariables(new Control(action.variables, vIdx))
+					.withDates(new Control(action.dates, dIdx));
+
+				return update({
 					controls
 				});
 			} else {
@@ -42,34 +46,36 @@ export default function(state, action){
 
 		case ELEVATIONS_FETCHED:
 			if (isElevationsFetched(state, action)) {
-				const elevationCtrls = state.controls.withElevations(
-					new Control(filterElevations(action.elevations)),
-					state.controls.lastChangedControl
-				);
+				const elevations = filterElevations(action.elevations);
+				const eIdx = elevations.length
+					? state.lastElevation
+						? elevations.indexOf(state.lastElevation)
+						: state.initSearchParams.elevation
+							? elevations.indexOf(state.initSearchParams.elevation)
+							: -1
+					: -1;
+				const elevationCtrl = state.controls.withElevations(new Control(elevations, eIdx));
 
-				return Object.assign({}, state, {
-					status: ELEVATIONS_FETCHED,
-					controls: elevationCtrls,
-					rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrls))
+				return update({
+					lastElevation: eIdx >= 0 ? elevations[eIdx] : state.lastElevation,
+					controls: elevationCtrl,
+					rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrl))
 				});
 			} else {
 				return state;
 			}
 
-		case SERVICE_SELECTED:
-			return Object.assign({}, state, {
-				status: SERVICE_SELECTED,
-				controls: state.controls.withSelectedService(action.idx)
-			});
-
 		case VARIABLE_SELECTED:
-			return Object.assign({}, state, {controls: state.controls.withSelectedVariable(action.idx)});
+			return update({controls: state.controls.withSelectedVariable(action.idx)});
 
 		case DATE_SELECTED:
-			return Object.assign({}, state, {controls: state.controls.withSelectedDate(action.idx)});
+			return update({controls: state.controls.withSelectedDate(action.idx)});
 
 		case ELEVATION_SELECTED:
-			return Object.assign({}, state, {controls: state.controls.withSelectedElevation(action.idx)});
+			return update({
+				lastElevation: state.controls.elevations.values[action.idx],
+				controls: state.controls.withSelectedElevation(action.idx)
+			});
 
 		case DELAY_SELECTED:
 			const delayCtrls = state.controls.withSelectedDelay(action.idx);
@@ -80,7 +86,7 @@ export default function(state, action){
 				}
 			);
 
-			return Object.assign({}, state, {
+			return update({
 				controls: delayCtrls,
 				rasterDataFetcher
 			});
@@ -93,7 +99,7 @@ export default function(state, action){
 				state.raster.id = state.raster.basicId + selectedGamma;
 			}
 
-			return Object.assign({}, state, {
+			return update({
 				controls: newGammaControls,
 				colorMaker: state.raster
 					? new ColorMaker(state.raster.stats.min, state.raster.stats.max, selectedGamma)
@@ -102,18 +108,12 @@ export default function(state, action){
 
 		case RASTER_FETCHED:
 			return isRasterFetched(state, action)
-				? Object.assign({}, state, {
-					status: RASTER_FETCHED,
+				? update({
+					rasterFetchCount: state.rasterFetchCount + 1,
 					raster: action.raster,
 					colorMaker: new ColorMaker(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected)
 				})
 				: state;
-
-		case RASTER_VALUE_RECEIVED:
-			return Object.assign({}, state, {
-				status: RASTER_VALUE_RECEIVED,
-				rasterVal: action.val
-			});
 
 		case PUSH_PLAY:
 			const playingMovie = !state.playingMovie;
@@ -125,7 +125,6 @@ export default function(state, action){
 		case INCREMENT_RASTER:
 			const controls = state.controls.withIncrementedDate(action.increment);
 			const desiredId = state.rasterDataFetcher.getDesiredId(controls.selectedIdxs);
-			// console.log({state, action, controls, desiredId});
 
 			return state.raster
 				? update({controls, desiredId})
@@ -143,25 +142,25 @@ export default function(state, action){
 
 function filterElevations(elevations){
 	//TODO: Remove this when backend filters elevations
-	return elevations.length == 1 && elevations[0] == "null"
+	return elevations.length === 1 && elevations[0] === "null"
 		? []
 		: Array.from(new Set(elevations));
 }
 
 function isFetched(state, action){
-	return action.service == state.controls.services.selected;
+	return action.service === state.controls.services.selected;
 }
 
 function isElevationsFetched(state, action){
-	return action.controls.services.selected == state.controls.services.selected
-		&& action.controls.variables.selected == state.controls.variables.selected;
+	return action.controls.services.selected === state.controls.services.selected
+		&& action.controls.variables.selected === state.controls.variables.selected;
 }
 
 function isRasterFetched(state, action){
-	return action.controls.services.selected == state.controls.services.selected &&
-		action.controls.variables.selected == state.controls.variables.selected &&
-		action.controls.dates.selected == state.controls.dates.selected &&
-		action.controls.elevations.selected == state.controls.elevations.selected;
+	return action.controls.services.selected === state.controls.services.selected &&
+		action.controls.variables.selected === state.controls.variables.selected &&
+		action.controls.dates.selected === state.controls.dates.selected &&
+		action.controls.elevations.selected === state.controls.elevations.selected;
 }
 
 function getDataObjectVariables(controls){
