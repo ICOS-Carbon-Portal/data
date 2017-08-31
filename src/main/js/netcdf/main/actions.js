@@ -1,8 +1,8 @@
-import {getCountriesGeoJson, getServices, getVariablesAndDates, getElevations, getRaster} from './backend.js';
+import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations} from './backend.js';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
-export const SERVICES_FETCHED = 'SERVICES_FETCHED';
+export const SERVICE_SET = 'SERVICE_SET';
 export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
 export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
@@ -12,12 +12,11 @@ export const DATE_SELECTED = 'DATE_SELECTED';
 export const ELEVATION_SELECTED = 'ELEVATION_SELECTED';
 export const GAMMA_SELECTED = 'GAMMA_SELECTED';
 export const DELAY_SELECTED = 'DELAY_SELECTED';
-export const RASTER_VALUE_RECEIVED = 'RASTER_VALUE_RECEIVED';
 export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 
-function failWithError(error){
+export function failWithError(error){
 	console.log(error);
 	return {
 		type: ERROR,
@@ -37,23 +36,9 @@ export const fetchCountriesTopo = dispatch => {
 	);
 };
 
-export const fetchServices = dispatch => {
-	getServices().then(
-		services => {
-			dispatch({
-				type: SERVICES_FETCHED,
-				controlName: 'services',
-				services
-			});
-			dispatch(fetchVariablesAndDates);
-		},
-		err => dispatch(failWithError(err))
-	);
-};
-
 export const setService = service => dispatch => {
 	dispatch({
-		type: SERVICES_FETCHED,
+		type: SERVICE_SET,
 		controlName: 'services',
 		services: [service]
 	});
@@ -80,7 +65,6 @@ const fetchVariablesAndDates = (dispatch, getState) => {
 		err => dispatch(failWithError(err))
 	);
 };
-
 
 const fetchElevations = (dispatch, getState) => {
 	const controls = getState().controls;
@@ -138,7 +122,7 @@ const fetchRasterData = (dispatch, getState) => {
 	const state = getState();
 	if(!state.desiredId) return;
 
-	if (state.raster && state.raster.id == state.desiredId) {
+	if (state.raster && state.raster.id === state.desiredId) {
 		dispatch(incrementIfNeeded);
 	} else {
 		state.rasterDataFetcher.fetch(state.controls.selectedIdxs).then(
@@ -156,22 +140,11 @@ const fetchRasterData = (dispatch, getState) => {
 };
 
 export const incrementIfNeeded = (dispatch, getState) => {
-	var ts = Date.now();
-
 	setTimeout(() => {
 		if(getState().playingMovie) {
 			dispatch(incrementRasterData(1));
 		}
 	}, 5); //a tiny delay in hope to improve interface's responsiveness
-};
-
-
-export const selectService = idx => dispatch => {
-	dispatch({
-		type: SERVICE_SELECTED,
-		idx
-	});
-	dispatch(fetchVariablesAndDates);
 };
 
 export const selectVariable = idx => dispatch => {
@@ -209,12 +182,5 @@ export const selectDelay = idx => dispatch => {
 	dispatch({
 		type: DELAY_SELECTED,
 		idx
-	});
-};
-
-export const setRasterVal = val => dispatch => {
-	dispatch({
-		type: RASTER_VALUE_RECEIVED,
-		val
 	});
 };

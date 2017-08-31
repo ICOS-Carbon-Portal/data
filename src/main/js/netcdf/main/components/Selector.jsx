@@ -1,14 +1,13 @@
-import React, { Component, PropTypes } from 'react';
-import ReactDOM from 'react-dom';
+import React, { Component } from 'react';
 
-class Selector extends React.Component {
+export default class Selector extends Component {
 	constructor(props) {
 		super(props);
 	}
 
 	changeHandler(){
 		const props = this.props;
-		const idx = ReactDOM.findDOMNode(this.refs.selector).selectedIndex;
+		const idx = this.selector.selectedIndex;
 		props.action(idx);
 	}
 
@@ -23,7 +22,7 @@ class Selector extends React.Component {
 
 			<span style={{fontWeight: 'bold'}}>{props.caption + ": "}</span>
 
-			<select ref="selector" value={optionTexter(selectedOption)} className="form-control" onChange={this.changeHandler.bind(this)}>{
+			<select ref={select => this.selector = select} value={optionTexter(selectedOption)} className="form-control" onChange={this.changeHandler.bind(this)}>{
 
 				control.values.map(function(optionValue, i){
 					return <option key={optionValue}>{optionTexter(optionValue)}</option>;
@@ -34,5 +33,3 @@ class Selector extends React.Component {
 		</div>;
 	}
 }
-
-export default Selector;

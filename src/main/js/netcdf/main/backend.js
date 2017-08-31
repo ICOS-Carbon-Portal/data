@@ -1,6 +1,11 @@
-import 'whatwg-fetch';
 import {getBinRaster, getJson} from 'icos-cp-backend';
 import {feature} from 'topojson';
+
+// export function getRaster(basicId, search){
+// 	console.log({basicId, search});
+// 	const res = getBinRaster(basicId, '/netcdf/getSlice' + search);
+// 	return res.then(raster => raster);
+// }
 
 export function getRaster(service, variable, date, elevation, gamma){
 	const basicIdRaster = getBinRaster(null, '/netcdf/getSlice', ['service', service], ['varName', variable], ['date', date], ['elevation', elevation]);
@@ -11,8 +16,9 @@ export function getRaster(service, variable, date, elevation, gamma){
 	});
 }
 
-export function getServices(){
-	return getJson('/netcdf/listNetCdfFiles');
+export function getCountriesGeoJson(){
+	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
+		.then(topo => feature(topo, topo.objects.countries));
 }
 
 export function getVariablesAndDates(service){
@@ -23,9 +29,4 @@ export function getVariablesAndDates(service){
 
 export function getElevations(service, variable){
 	return getJson('/netcdf/listElevations', ['service', service], ['varName', variable]);
-}
-
-export function getCountriesGeoJson(){
-	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
-		.then(topo => feature(topo, topo.objects.countries));
 }

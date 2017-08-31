@@ -43,14 +43,12 @@ object StaticRouting {
 		)
 	)
 
-	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] =
-		if(proj != NetCdfProj) Neutral.tmap(_ => Tuple1(standardPageFactory))
-		else (Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
-			case Some(_) =>
-				Tuple1(netCdfPageFactory(iframe = true))
-			case None =>
-				Tuple1(netCdfPageFactory(iframe = false))
-		})
+	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
+		case NetCdfProj =>
+			(Slash ~ UploadRouting.Sha256Segment).tmap(_ => Tuple1(standardPageFactory))
+		case _ =>
+			Neutral.tmap(_ => Tuple1(standardPageFactory))
+	}
 
 	val route = pathPrefix(Segment){ proj =>
 

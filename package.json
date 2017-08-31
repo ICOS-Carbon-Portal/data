@@ -10,7 +10,6 @@
     "wdcgg": "gulp wdcgg",
     "stilt": "gulp stilt",
     "dygraph-light": "gulp dygraph-light",
-    "netcdf-light": "gulp netcdf-light",
     "gulp": "gulp"
   },
   "repository": {
@@ -54,9 +53,9 @@
     "icos-cp-backend": "^0.3.3",
     "icos-cp-leaflet-common": "^0.2.3",
     "icos-cp-legend": "^0.3.0",
-    "icos-cp-netcdfmap": "^0.1.2",
+    "icos-cp-netcdfmap": "^0.2.0",
     "icos-cp-spatial": "^0.2.0",
-    "icos-cp-toaster": "^0.4.0",
+    "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.0",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",

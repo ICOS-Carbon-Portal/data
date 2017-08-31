@@ -2,7 +2,7 @@
 export class Control{
 	constructor(values, selectedIdx){
 		this.values = values;
-		this.selectedIdx = selectedIdx || 0;
+		this.selectedIdx = selectedIdx > 0 ? selectedIdx : 0;
 	}
 
 	get isLoaded(){
@@ -27,15 +27,13 @@ const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 0);
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 
 export class ControlsHelper{
-	constructor(services, variables, dates, elevations, gammas, delays, lastSelectedCtrl){
+	constructor(services, variables, dates, elevations, gammas, delays){
 		this.services = services || defaultControl;
 		this.variables = variables || defaultControl;
 		this.dates = dates || defaultControl;
 		this.elevations = elevations || defaultControl;
 		this.gammas = gammas || defaultGammas;
 		this.delays = delays || defaultDelays;
-
-		this.lastChangedControl = lastSelectedCtrl;
 	}
 
 	get allControlsLoaded(){
@@ -55,28 +53,28 @@ export class ControlsHelper{
 		};
 	}
 
-	withServices(services, lastSelectedCtrl){
-		return new ControlsHelper(services, defaultControl, defaultControl, defaultControl, this.gammas, this.delays, lastSelectedCtrl);
+	withServices(services){
+		return new ControlsHelper(services, defaultControl, defaultControl, defaultControl, this.gammas, this.delays);
 	}
 
-	withVariables(variables, lastSelectedCtrl){
-		return new ControlsHelper(this.services, variables, this.dates, defaultControl, this.gammas, this.delays, lastSelectedCtrl);
+	withVariables(variables){
+		return new ControlsHelper(this.services, variables, this.dates, defaultControl, this.gammas, this.delays);
 	}
 
-	withDates(dates, lastSelectedCtrl){
-		return new ControlsHelper(this.services, this.variables, dates, this.elevations, this.gammas, this.delays, lastSelectedCtrl);
+	withDates(dates){
+		return new ControlsHelper(this.services, this.variables, dates, this.elevations, this.gammas, this.delays);
 	}
 
-	withElevations(elevations, lastSelectedCtrl){
-		return new ControlsHelper(this.services, this.variables, this.dates, elevations, this.gammas, this.delays, lastSelectedCtrl);
+	withElevations(elevations){
+		return new ControlsHelper(this.services, this.variables, this.dates, elevations, this.gammas, this.delays);
 	}
 
-	withGammas(gammas, lastSelectedCtrl){
-		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, gammas, this.delays, lastSelectedCtrl);
+	withGammas(gammas){
+		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, gammas, this.delays);
 	}
 
-	withDelays(delays, lastSelectedCtrl){
-		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, this.gammas, delays, lastSelectedCtrl);
+	withDelays(delays){
+		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, this.gammas, delays);
 	}
 
 	withSelectedService(idx){

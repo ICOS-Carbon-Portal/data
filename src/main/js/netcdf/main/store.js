@@ -1,21 +1,51 @@
+import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchCountriesTopo, fetchServices, setService, selectGamma} from './actions.js';
-import {ControlsHelper} from './models/ControlsHelper.js';
-
+import {fetchCountriesTopo, setService, selectGamma, failWithError} from './actions.js';
+import {ControlsHelper} from './models/ControlsHelper';
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
-const pid = pathName === "/netcdf/"
-	? undefined
-	: sections.pop() || sections.pop();
+const pid = sections.pop() || sections.pop();
+
+const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
+const keyValpairs = searchStr.split('&');
+const searchParams = keyValpairs.reduce((acc, curr) => {
+	const p = curr.split('=');
+	acc[p[0]] = p[1];
+	return acc;
+}, {});
+
+const controls = new ControlsHelper();
+export const defaultGamma = 1;
+const gammaIdx = searchParams.gamma
+	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
+	: controls.gammas.values.indexOf(defaultGamma);
+
 
 const initState = {
-	scopedView: !!pid,
-	controls: new ControlsHelper(),
+	colorMaker: undefined,
+	controls,
+	countriesTopo: {
+		ts: 0,
+		data: undefined
+	},
+	desiredId: undefined,
+	lastElevation: undefined,
+	initSearchParams: {
+		varName: searchParams.varName,
+		date: searchParams.date,
+		gamma: searchParams.gamma,
+		elevation: searchParams.elevation,
+		center: searchParams.center,
+		zoom: searchParams.zoom,
+	},
 	playingMovie: false,
-	toasterData: null
+	rasterFetchCount: 0,
+	raster: undefined,
+	rasterDataFetcher: undefined,
+	toasterData: undefined
 };
 
 // function logger({ getState }) {
@@ -33,20 +63,15 @@ const initState = {
 // 	}
 // }
 
-let store = null;
-
 export default function(){
-	if(store == null){
+	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 
-
-		store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
+	if (pid) {
 		store.dispatch(fetchCountriesTopo);
-		if (initState.scopedView) {
-			store.dispatch(setService(pid));
-		} else {
-			store.dispatch(fetchServices);
-		}
-		store.dispatch(selectGamma(4));
+		store.dispatch(setService(pid));
+		store.dispatch(selectGamma(gammaIdx));
+	} else {
+		store.dispatch(failWithError({message: 'The request is missing a pid'}));
 	}
 	return store;
 }
