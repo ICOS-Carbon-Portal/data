@@ -9,11 +9,10 @@ export default class PreviewNetCDF extends Component{
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
-		// console.log({props: this.props, preview});
 
 		return (
 			<div>{preview
-				? <div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
+				? <div className="panel-body" style={{position: 'relative', width: '100%', height: 600, padding: '20%'}}>
 					<NetCDFMap
 						self={this}
 						id={preview.item.id}
