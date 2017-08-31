@@ -18,11 +18,11 @@ const searchParams = keyValpairs.reduce((acc, curr) => {
 }, {});
 
 const controls = new ControlsHelper();
+export const defaultGamma = 1;
 const gammaIdx = searchParams.gamma
 	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
-	: 4;
+	: controls.gammas.values.indexOf(defaultGamma);
 
-console.log({searchStr, keyValpairs, searchParams, gammas: controls.gammas.values, gammaIdx});
 
 const initState = {
 	colorMaker: undefined,
@@ -32,6 +32,7 @@ const initState = {
 		data: undefined
 	},
 	desiredId: undefined,
+	lastElevation: undefined,
 	initSearchParams: {
 		varName: searchParams.varName,
 		date: searchParams.date,
@@ -41,10 +42,8 @@ const initState = {
 		zoom: searchParams.zoom,
 	},
 	playingMovie: false,
-	raster: {
-		ts: 0,
-		data: undefined
-	},
+	rasterFetchCount: 0,
+	raster: undefined,
 	rasterDataFetcher: undefined,
 	toasterData: undefined
 };

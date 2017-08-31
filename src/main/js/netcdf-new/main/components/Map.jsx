@@ -3,6 +3,7 @@ import NetCDFMap from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
 import {throttle} from 'icos-cp-utils';
+import {defaultGamma} from '../store';
 
 
 const minHeight = 300;
@@ -11,78 +12,50 @@ export default class Map extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			countriesTs: Date.now(),
-			rasterTs: Date.now(),
 			height: null
 		};
 
+		this.countriesTs = Date.now();
+		this.center = props.initSearchParams.center && props.initSearchParams.center.split(',') || [52.5, 10];
+		this.zoom = props.initSearchParams.zoom || 2;
+
 		this.hightUpdater = throttle(this.updateHight.bind(this));
 		window.addEventListener("resize", this.hightUpdater);
-
-		this.ctrls = {
-			varName: props.initSearchParams.varName,
-			date: props.initSearchParams.date,
-			gamma: props.initSearchParams.gamma,
-			elevation: props.initSearchParams.elevation
-		};
-
-		this.centerZoom = centerZoom2obj(props.initSearchParams.center, props.initSearchParams.zoom);
 	}
 
 	componentDidMount(){
 		this.updateHight();
 	}
 
-	handleVarNameChange(newIdx){
-		const {controls, variableChanged} = this.props;
-		this.ctrls.varName = controls.variables.values[newIdx];
-		this.updateURL();
-		variableChanged(newIdx);
-	}
+	updateURL(){
+		if (this.props.rasterFetchCount > 0) {
+			const {dates, elevations, gammas, variables} = this.props.controls;
+			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
+			const elevationParam = elevations.selectedIdx > 0 && elevations.selected ? `elevation=${elevations.selected}` : undefined;
+			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
+			const varNameParam = variables.selectedIdx > 0 && variables.selected ? `varName=${variables.selected}` : undefined;
+			const center = this.center ? `center=${this.center}` : undefined;
+			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
 
-	handleDateChange(newIdx){
-		const {controls, dateChanged} = this.props;
-		this.ctrls.date = controls.dates.values[newIdx];
-		this.updateURL();
-		dateChanged(newIdx);
-	}
+			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom];
+			const newSearch = searchParams.filter(sp => sp).join('&');
 
-	handleGammaChange(newIdx){
-		const {controls, gammaChanged} = this.props;
-		this.ctrls.gamma = controls.gammas.values[newIdx];
-		this.updateURL();
-		gammaChanged(newIdx);
-	}
+			if (newSearch) {
+				const newURL = location.origin + location.pathname + '?' + newSearch;
 
-	handleElevationChange(newIdx){
-		const {controls, elevationChanged} = this.props;
-		this.ctrls.elevation = controls.elevations.values[newIdx];
-		this.updateURL();
-		elevationChanged(newIdx);
-	}
-
-	updateURL(centerZoom){
-		const {varName, date, gamma, elevation} = this.ctrls;
-
-		const varNameParam = varName ? `varName=${varName}` : undefined;
-		const dateParam = date ? `date=${date}` : undefined;
-		const gammaParam = gamma ? `gamma=${gamma}` : undefined;
-		const elevationParam = elevation ? `elevation=${elevation}` : undefined;
-		const center = centerZoom && centerZoom.center
-			? `center=${centerZoom.center.lat.toFixed(5)},${centerZoom.center.lng.toFixed(5)}`
-			: undefined;
-		const zoom = centerZoom && centerZoom.zoom ? `zoom=${centerZoom.zoom}` : undefined;
-
-		const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom];
-		const newURL = location.origin + location.pathname + '?' + searchParams.filter(sp => sp).join('&');
-
-		history.pushState({urlPath: newURL}, "", newURL);
-		//Let calling page (through iframe) know what current url is
-		window.top.postMessage(newURL, '*');
+				history.pushState({urlPath: newURL}, "", newURL);
+				//Let calling page (through iframe) know what current url is
+				window.top.postMessage(newURL, '*');
+			}
+		}
 	}
 
 	updateHight(){
 		this.setState({height: this.legendDiv.clientHeight});
+	}
+
+	componentDidUpdate(){
+		this.updateURL();
 	}
 
 	componentWillUnmount(){
@@ -90,8 +63,11 @@ export default class Map extends Component {
 	}
 
 	mapEventCallback(event, payload){
-		if (event === 'moveend') {
-			this.updateURL(payload);
+		if (event === 'moveend' && payload && payload.center && payload.zoom) {
+			const decimals = 5;
+			this.center = [payload.center.lat.toFixed(decimals), payload.center.lng.toFixed(decimals)];
+			this.zoom = payload.zoom;
+			this.updateURL();
 		}
 	}
 
@@ -99,15 +75,19 @@ export default class Map extends Component {
 		const state = this.state;
 		const props = this.props;
 
+		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
-		const legendId = props.raster.data
-			? props.raster.data.id + '_' + state.gamma
+		const legendId = props.raster
+			? props.raster.id + '_' + state.gamma
 			: "";
-
+		const latLngBounds = getLatLngBounds(
+			props.rasterFetchCount,
+			props.initSearchParams.center,
+			props.initSearchParams.zoom,
+			props.raster
+		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
-		const showSpinner = isSpinnerVisible(props.countriesTopo.ts, state.countriesTs, props.raster.ts, state.rasterTs);
-		// console.log({props, state, showSpinner});
 
 		return (
 			<div id="content" className="container-fluid">
@@ -118,26 +98,29 @@ export default class Map extends Component {
 					increment={props.increment}
 					playPauseMovie={props.playPauseMovie}
 					delayChanged={props.delayChanged}
-					handleVarNameChange={this.handleVarNameChange.bind(this)}
-					handleDateChange={this.handleDateChange.bind(this)}
-					handleGammaChange={this.handleGammaChange.bind(this)}
-					handleElevationChange={this.handleElevationChange.bind(this)}
+					handleVarNameChange={props.variableChanged}
+					handleDateChange={props.dateChanged}
+					handleGammaChange={props.gammaChanged}
+					handleElevationChange={props.elevationChanged}
 				/>
 
 				<div id="map">
 					<NetCDFMap
 						mapOptions={{
-							center: [13, 0],
-							zoom: 2
+							center: this.center,
+							zoom: this.zoom,
+							forceCenter: [52.5, 10]
 						}}
-						raster={props.raster.data}
+						raster={props.raster}
 						colorMaker={colorMaker}
 						geoJson={props.countriesTopo.data}
-						centerZoom={this.centerZoom}
+						latLngBounds={latLngBounds}
 						events={[
 							{
 								event: 'moveend',
-								fn: leafletMap => {return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};},
+								fn: leafletMap => {
+									return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};
+								},
 								callback: this.mapEventCallback.bind(this)
 							}
 						]}
@@ -165,20 +148,13 @@ export default class Map extends Component {
 	}
 }
 
-const centerZoom2str = centerZoom => {
-	return '&center=' + centerZoom.center.lat + ',' + centerZoom.center.lng + '&zoom=' + centerZoom.zoom;
-};
-
-const centerZoom2obj = (center, zoom) => {
-	if (center && zoom){
-		return {center: center.split(','), zoom};
-	} else {
-		return null;
-	}
-};
-
-const isSpinnerVisible = (fetchedCountriesTs, stateCountriesTs, fetchedRasterTs, stateRasterTs) => {
-	return stateCountriesTs > fetchedCountriesTs && stateRasterTs > fetchedRasterTs;
+const getLatLngBounds = (rasterFetchCount, initCenter, initZoom, raster) => {
+	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
+		? L.latLngBounds(
+			L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
+			L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
+		)
+		: undefined;
 };
 
 const Spinner = props => {
@@ -191,5 +167,4 @@ const Spinner = props => {
 			<span>Portal</span>
 		</div>
 		: null;
-}
-
+};

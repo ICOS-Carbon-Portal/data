@@ -23,7 +23,7 @@ export default class Controls extends Component {
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
-				<div className="col-md-2">
+				<div className="col-md-3">
 					<Selector className="dates" caption="Date" control={controls.dates} action={props.handleDateChange} />
 				</div>
 

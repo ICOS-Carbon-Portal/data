@@ -1,6 +1,6 @@
 import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
 	SERVICE_SET, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
-	RASTER_VALUE_RECEIVED, PUSH_PLAY, INCREMENT_RASTER} from './actions';
+	PUSH_PLAY, INCREMENT_RASTER} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
@@ -25,7 +25,7 @@ export default function(state, action){
 
 		case SERVICE_SET:
 			return update({
-				controls: state.controls.withServices(new Control(action.services), state.controls.lastChangedControl)
+				controls: state.controls.withServices(new Control(action.services))
 			});
 
 		case VARIABLES_AND_DATES_FETCHED:
@@ -34,8 +34,8 @@ export default function(state, action){
 				const dIdx = action.dates.indexOf(state.initSearchParams.date);
 
 				const controls = state.controls
-					.withVariables(new Control(action.variables, vIdx), state.controls.lastChangedControl)
-					.withDates(new Control(action.dates, dIdx), state.controls.lastChangedControl);
+					.withVariables(new Control(action.variables, vIdx))
+					.withDates(new Control(action.dates, dIdx));
 
 				return update({
 					controls
@@ -47,16 +47,19 @@ export default function(state, action){
 		case ELEVATIONS_FETCHED:
 			if (isElevationsFetched(state, action)) {
 				const elevations = filterElevations(action.elevations);
-				const eIdx = elevations.indexOf(state.initSearchParams.elevation);
-
-				const elevationCtrls = state.controls.withElevations(
-					new Control(elevations, eIdx),
-					state.controls.lastChangedControl
-				);
+				const eIdx = elevations.length
+					? state.lastElevation
+						? elevations.indexOf(state.lastElevation)
+						: state.initSearchParams.elevation
+							? elevations.indexOf(state.initSearchParams.elevation)
+							: -1
+					: -1;
+				const elevationCtrl = state.controls.withElevations(new Control(elevations, eIdx));
 
 				return update({
-					controls: elevationCtrls,
-					rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrls))
+					lastElevation: eIdx >= 0 ? elevations[eIdx] : state.lastElevation,
+					controls: elevationCtrl,
+					rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrl))
 				});
 			} else {
 				return state;
@@ -69,7 +72,10 @@ export default function(state, action){
 			return update({controls: state.controls.withSelectedDate(action.idx)});
 
 		case ELEVATION_SELECTED:
-			return update({controls: state.controls.withSelectedElevation(action.idx)});
+			return update({
+				lastElevation: state.controls.elevations.values[action.idx],
+				controls: state.controls.withSelectedElevation(action.idx)
+			});
 
 		case DELAY_SELECTED:
 			const delayCtrls = state.controls.withSelectedDelay(action.idx);
@@ -89,32 +95,25 @@ export default function(state, action){
 			const newGammaControls = state.controls.withSelectedGamma(action.idx);
 			const selectedGamma = newGammaControls.gammas.selected;
 
-			if(state.raster.data){
-				state.raster.data.id = state.raster.data.basicId + selectedGamma;
+			if(state.raster){
+				state.raster.id = state.raster.basicId + selectedGamma;
 			}
 
 			return update({
 				controls: newGammaControls,
-				colorMaker: state.raster.data
-					? new ColorMaker(state.raster.data.stats.min, state.raster.data.stats.max, selectedGamma)
+				colorMaker: state.raster
+					? new ColorMaker(state.raster.stats.min, state.raster.stats.max, selectedGamma)
 					: null
 			});
 
 		case RASTER_FETCHED:
 			return isRasterFetched(state, action)
 				? update({
-					raster: {
-						ts: Date.now(),
-						data: action.raster
-					},
+					rasterFetchCount: state.rasterFetchCount + 1,
+					raster: action.raster,
 					colorMaker: new ColorMaker(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected)
 				})
 				: state;
-
-		case RASTER_VALUE_RECEIVED:
-			return update({
-				rasterVal: action.val
-			});
 
 		case PUSH_PLAY:
 			const playingMovie = !state.playingMovie;
@@ -127,7 +126,7 @@ export default function(state, action){
 			const controls = state.controls.withIncrementedDate(action.increment);
 			const desiredId = state.rasterDataFetcher.getDesiredId(controls.selectedIdxs);
 
-			return state.raster.data
+			return state.raster
 				? update({controls, desiredId})
 				: state;
 

@@ -55,7 +55,7 @@
     "icos-cp-backend": "^0.3.3",
     "icos-cp-leaflet-common": "^0.2.3",
     "icos-cp-legend": "^0.3.0",
-    "icos-cp-netcdfmap": "^0.1.2",
+    "icos-cp-netcdfmap": "^0.2.0",
     "icos-cp-spatial": "^0.2.0",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.0",

@@ -37,6 +37,7 @@ const AppDiv = props => {
 			increment={props.increment}
 			playingMovie={props.playingMovie}
 			playPauseMovie={props.playPauseMovie}
+			rasterFetchCount={props.rasterFetchCount}
 			raster={props.raster}
 			rasterDataFetcher={props.rasterDataFetcher}
 			variableChanged={props.variableChanged}

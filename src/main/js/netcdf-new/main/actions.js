@@ -12,7 +12,6 @@ export const DATE_SELECTED = 'DATE_SELECTED';
 export const ELEVATION_SELECTED = 'ELEVATION_SELECTED';
 export const GAMMA_SELECTED = 'GAMMA_SELECTED';
 export const DELAY_SELECTED = 'DELAY_SELECTED';
-export const RASTER_VALUE_RECEIVED = 'RASTER_VALUE_RECEIVED';
 export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
@@ -141,8 +140,6 @@ const fetchRasterData = (dispatch, getState) => {
 };
 
 export const incrementIfNeeded = (dispatch, getState) => {
-	var ts = Date.now();
-
 	setTimeout(() => {
 		if(getState().playingMovie) {
 			dispatch(incrementRasterData(1));
@@ -186,19 +183,4 @@ export const selectDelay = idx => dispatch => {
 		type: DELAY_SELECTED,
 		idx
 	});
-};
-
-export const getRasterId = (params, gamma) =>{
-	return getBaseSearch(params) + '&gamma=' + gamma;
-};
-
-export const getBaseSearch = (params) =>{
-	const required = params.required
-		.filter(p => p !== 'gamma')
-		.map(p => p + '=' + params.get(p));
-
-	const optional = params.optional
-		.map(p => p + '=' + params.get(p));
-
-	return required.concat(optional).join('&');
 };
