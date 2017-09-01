@@ -19,12 +19,12 @@ export default class Map extends Component {
 		this.center = props.initSearchParams.center && props.initSearchParams.center.split(',') || [52.5, 10];
 		this.zoom = props.initSearchParams.zoom || 2;
 
-		this.hightUpdater = throttle(this.updateHight.bind(this));
+		this.hightUpdater = throttle(this.updateHeight.bind(this));
 		window.addEventListener("resize", this.hightUpdater);
 	}
 
 	componentDidMount(){
-		this.updateHight();
+		this.updateHeight();
 	}
 
 	updateURL(){
@@ -38,10 +38,10 @@ export default class Map extends Component {
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
 
 			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom];
-			const newSearch = searchParams.filter(sp => sp).join('&');
+			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
 
-			if (newSearch) {
-				const newURL = location.origin + location.pathname + '?' + newSearch;
+			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
+				const newURL = location.origin + location.pathname + newSearch;
 
 				history.pushState({urlPath: newURL}, "", newURL);
 				//Let calling page (through iframe) know what current url is
@@ -50,7 +50,7 @@ export default class Map extends Component {
 		}
 	}
 
-	updateHight(){
+	updateHeight(){
 		this.setState({height: this.legendDiv.clientHeight});
 	}
 
