@@ -30,11 +30,10 @@ export default function(props){
 					<tbody>{
 						props.objectsTable.map((objInfo, i) => {
 							const isAddedToCart = cart.hasItem(objInfo.dobj);
-							const previewType = preview.getSpecLookupType(objInfo.spec);
 
 							return (
 								<ObjectTableRow
-									previewType={previewType}
+									preview={preview}
 									previewAction={previewAction}
 									objInfo={objInfo}
 									isAddedToCart={isAddedToCart}

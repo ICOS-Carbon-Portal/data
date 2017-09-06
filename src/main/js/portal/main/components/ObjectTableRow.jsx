@@ -16,8 +16,14 @@ export default class ObjectTableRow extends Component {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		const preview = props.preview;
+		const previewItem = preview.item;
+		const previewType = preview.getSpecLookupType(objInfo.spec);
+		const className = previewItem && previewItem.id === objInfo.dobj
+			? "list-group-item-info"
+			: "";
 
-		return <tr>
+		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
 				<CartIcon
 					id={objInfo.dobj}
@@ -25,7 +31,7 @@ export default class ObjectTableRow extends Component {
 				/>
 				<PreviewIcon
 					id={objInfo.dobj}
-					previewType={props.previewType}
+					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
 				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
