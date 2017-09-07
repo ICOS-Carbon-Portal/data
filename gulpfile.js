@@ -40,7 +40,7 @@ var jasmine = require('gulp-jasmine');
 				entries: [paths.main],
 				debug: false
 			})
-			.transform(preprocessify({NODE_ENV: process.env.NODE_ENV}))
+			// .transform(preprocessify({NODE_ENV: process.env.NODE_ENV}))
 			.transform(babelify, {presets: ["es2015", "react"]})
 			.bundle()
 			.on('error', function(err){
@@ -83,7 +83,7 @@ var jasmine = require('gulp-jasmine');
 
 	gulp.task(project, ['js' + project], function(){
 		var sources = [paths.commonjs, paths.js, paths.jsx];
-		return gulp.watch(sources, ['js' + project]);
+		 return gulp.watch(sources, ['js' + project]);
 	});
 
 	gulp.task('publish' + project, ['apply-prod-environment', 'clean' + project], compileJs);
