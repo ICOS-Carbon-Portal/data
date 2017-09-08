@@ -55,6 +55,9 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
+val npmPublish = taskKey[Unit]("runs 'npm publish'")
+npmPublish := Process("npm run publish").!
+
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
 	.enablePlugins(SbtTwirl)
@@ -83,13 +86,15 @@ lazy val data = (project in file("."))
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
 		),
 
-		scalacOptions += "-Ywarn-unused-import:false"
+		scalacOptions += "-Ywarn-unused-import:false",
 
-//		initialCommands in console := """
-//			import se.lu.nateko.cp.data.MassUpload._
-//		""",
-
-//		cleanupCommands in console := """
-//			system.terminate()
-//		"""
+		// Override the "assembly" command so that we always run "npm publish"
+		// first - thus generating javascript files - before we package the
+		// "fat" jarfile used for deployment.
+		assembly := (Def.taskDyn{
+			// Referencing the task's 'value' field will trigger the npm command
+			npmPublish.value
+			// Then just return the original "assembly command"
+			Def.task(assembly.taskValue.value)
+		}).value
 	)
