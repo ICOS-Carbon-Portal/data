@@ -92,9 +92,10 @@ lazy val data = (project in file("."))
 		// first - thus generating javascript files - before we package the
 		// "fat" jarfile used for deployment.
 		assembly := (Def.taskDyn{
+			val original = assembly.taskValue
 			// Referencing the task's 'value' field will trigger the npm command
 			npmPublish.value
 			// Then just return the original "assembly command"
-			Def.task(assembly.taskValue.value)
+			Def.task(original.value)
 		}).value
 	)
