@@ -50,13 +50,17 @@ export default class Preview {
 				}
 			} else if (options && options.type === 'NETCDF'){
 				console.log({id, objInfo, item, options});
-				return new Preview(this._lookup, item.withSetting(undefined, undefined, options.type), options.options, options.type, true);
+				return new Preview(this._lookup, item, options.options, options.type, true);
 			}
 		}
 	}
 
 	withItemSetting(setting, value, itemType){
 		return new Preview(this._lookup, this._item.withSetting(setting, value, itemType), this._options, this._type, this._visible);
+	}
+
+	withItemUrl(url){
+		return new Preview(this._lookup, this._item.withUrl(url), this._options, this._type, this._visible);
 	}
 
 	show(){

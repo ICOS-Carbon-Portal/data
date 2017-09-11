@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {WHOAMI_FETCHED, TESTED_BATCH_DOWNLOAD} from './actions';
+import {WHOAMI_FETCHED, TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -88,6 +88,12 @@ export default function(state, action){
 			return update({
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
+			});
+
+		case ITEM_URL_UPDATED:
+			return update({
+				cart: action.cart,
+				preview: state.preview.withItemUrl(action.url)
 			});
 
 		case CART_UPDATED:

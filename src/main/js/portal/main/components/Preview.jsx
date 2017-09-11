@@ -14,11 +14,14 @@ export default class Preview extends Component {
 
 	handleIframeSrcChange(event){
 		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
+		console.log({event, iframeSrc, setPreviewUrl: this.props.setPreviewUrl});
 		this.setState({iframeSrc});
+		this.props.setPreviewUrl(iframeSrc);
 	}
 
 	render(){
 		const {preview, closePreviewAction} = this.props;
+		console.log({preview});
 
 		return (
 			<div>

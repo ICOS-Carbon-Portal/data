@@ -1,10 +1,31 @@
 export default class CartItem {
-	constructor(dataobject, type, settings){
+	constructor(dataobject, type, url, settings){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;
 		this._type = type;
+		this._url = url;
+		// this._keyValpairs = this.deconstructURL(url);
 		this._settings = settings;
 	}
+
+	// deconstructURL(url) {
+	// 	if (!url) return undefined;
+	//
+	// 	const search = url.split('?').pop();
+	//
+	// 	if (window.URLSearchParams) {
+	// 		return new URLSearchParams(search);
+	// 	} else {
+	// 		const searchStr = search.replace(/^\?/, '');
+	// 		const keyValpairs = searchStr.split('&');
+	//
+	// 		return keyValpairs.reduce((acc, curr) => {
+	// 			const p = curr.split('=');
+	// 			acc[p[0]] = p[1];
+	// 			return acc;
+	// 		}, {});
+	// 	}
+	// }
 
 	get id(){
 		return this._id;
@@ -28,6 +49,18 @@ export default class CartItem {
 		}
 
 		return stripExt(this._dataobject.fileName);
+	}
+
+	get url(){
+		return this._url;
+	}
+
+	// getUrlSearchValue(key) {
+	// 	return this._keyValpairs[key];
+	// }
+
+	withUrl(url){
+		return new CartItem(this._dataobject, this._type, url, this._settings);
 	}
 
 	withSetting(setting, value, itemType){

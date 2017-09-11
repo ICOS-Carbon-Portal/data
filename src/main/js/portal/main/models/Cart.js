@@ -39,6 +39,16 @@ export default class Cart {
 		return new Cart(this._name, items);
 	}
 
+	withItemUrl(id, url){
+		const items = this._items.map(item => {
+			return item.id === id
+				? item.withUrl(url)
+				: item;
+		});
+
+		return new Cart(this._name, items);
+	}
+
 	get ids(){
 		return this._items.map(item => item.id);
 	}

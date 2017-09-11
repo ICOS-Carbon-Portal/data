@@ -9,6 +9,7 @@ export const META_QUERIED = 'META_QUERIED';
 export const PREVIEW = 'PREVIEW';
 export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
+export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
@@ -159,6 +160,30 @@ export const setPreviewItemSetting = (id, setting, value) => (dispatch, getState
 			cart: state.cart,
 			setting,
 			value
+		})
+	}
+};
+
+export const setPreviewUrl = url => (dispatch, getState) => {
+	const state = getState();
+	const id = state.preview.item.id;
+	console.log({state});
+
+	if (state.cart.hasItem(id)) {
+		const cart = state.cart.withItemUrl(id, url);
+
+		saveCart(cart).then(
+			dispatch({
+				type: ITEM_URL_UPDATED,
+				cart,
+				url
+			})
+		);
+	} else {
+		dispatch({
+			type: ITEM_URL_UPDATED,
+			cart: state.cart,
+			url
 		})
 	}
 };
