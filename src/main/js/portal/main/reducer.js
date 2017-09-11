@@ -87,7 +87,7 @@ export default function(state, action){
 		case PREVIEW_SETTING_UPDATED:
 			return update({
 				cart: action.cart,
-				preview: state.preview.withItemSetting(action.setting, action.value)
+				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
 			});
 
 		case CART_UPDATED:

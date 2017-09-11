@@ -2,6 +2,7 @@ import CartItem from './CartItem';
 
 export default class Preview {
 	constructor(lookup, item, options, type, visible){
+		console.log({lookup, item, options, type, visible});
 		this._lookup = lookup;
 		this._item = item;
 		this._options = options;
@@ -9,7 +10,8 @@ export default class Preview {
 		this._visible = visible === undefined ? false : visible;
 	}
 
-	withLookup(specTable){
+	withLookup(specTable){1
+		console.log({specTable});
 		return new Preview(parseSpecTable(specTable));
 	}
 
@@ -37,21 +39,24 @@ export default class Preview {
 			const objInfo = objectsTable.find(ot => ot.dobj === id);
 			const item = objInfo ? new CartItem(objInfo) : undefined;
 			const options = item ? this._lookup[item.spec] : undefined;
-			const xAxisSetting = options && options.type === 'TIMESERIES'
-				? options.options.find(o => o === 'TIMESTAMP')
-				: undefined;
 
-			if (item && xAxisSetting){
-				return new Preview(this._lookup, item.withSetting('xAxis', xAxisSetting), options.options, options.type, true);
-			} else {
-				return new Preview(this._lookup, item, options.options, options.type, true);
+			if (options && options.type === 'TIMESERIES'){
+				const xAxisSetting = options.options.find(o => o === 'TIMESTAMP');
+				console.log({id, objInfo, item, options, xAxisSetting});
+				if (item && xAxisSetting){
+					return new Preview(this._lookup, item.withSetting('xAxis', xAxisSetting, options.type), options.options, options.type, true);
+				} else {
+					return new Preview(this._lookup, item, options.options, options.type, true);
+				}
+			} else if (options && options.type === 'NETCDF'){
+				console.log({id, objInfo, item, options});
+				return new Preview(this._lookup, item.withSetting(undefined, undefined, options.type), options.options, options.type, true);
 			}
-
 		}
 	}
 
-	withItemSetting(setting, value){
-		return new Preview(this._lookup, this._item.withSetting(setting, value), this._options, this._type, this._visible);
+	withItemSetting(setting, value, itemType){
+		return new Preview(this._lookup, this._item.withSetting(setting, value, itemType), this._options, this._type, this._visible);
 	}
 
 	show(){

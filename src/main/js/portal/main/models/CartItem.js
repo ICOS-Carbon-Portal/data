@@ -1,12 +1,17 @@
 export default class CartItem {
-	constructor(dataobject, settings){
+	constructor(dataobject, type, settings){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;
-		this._settings = settings || new Settings();
+		this._type = type;
+		this._settings = settings;
 	}
 
 	get id(){
 		return this._id;
+	}
+
+	get type(){
+		return this._type;
 	}
 
 	get spec(){
@@ -25,8 +30,16 @@ export default class CartItem {
 		return stripExt(this._dataobject.fileName);
 	}
 
-	withSetting(setting, value){
-		return new CartItem(this._dataobject, this._settings.withSetting(setting, value));
+	withSetting(setting, value, itemType){
+		console.log({itemType, setting, value, settings: this._settings});
+		const newSettings = this._settings
+			? this._settings.withSetting(setting, value)
+			: itemType === 'TIMESERIES'
+				? new SettingsDygraph()
+				: itemType === 'NETCDF'
+					? new SettingsNetCDF()
+					: undefined;
+		return new CartItem(this._dataobject, newSettings);
 	}
 
 	get settings(){
@@ -34,7 +47,7 @@ export default class CartItem {
 	}
 }
 
-export class Settings {
+export class SettingsDygraph {
 	constructor(xAxis, yAxis, type){
 		this._xAxis = xAxis || undefined;
 		this._yAxis = yAxis || undefined;
@@ -57,16 +70,38 @@ export class Settings {
 		switch(setting){
 
 			case "xAxis":
-				return new Settings(value, this._yAxis, this._type);
+				return new SettingsDygraph(value, this._yAxis, this._type);
 
 			case "yAxis":
-				return new Settings(this._xAxis, value, this._type);
+				return new SettingsDygraph(this._xAxis, value, this._type);
 
 			case "type":
-				return new Settings(this._xAxis, this._yAxis, value);
+				return new SettingsDygraph(this._xAxis, this._yAxis, value);
 
 			default:
 				throw `Unknown setting (${setting}: ${value})`;
 		}
+	}
+}
+
+export class SettingsNetCDF {
+	constructor(url){
+		this._url = url;
+	}
+
+	get url() {
+		return this._url;
+	}
+
+	withSetting(setting, value){
+		switch(setting){
+
+			case "url":
+				return new SettingsNetCDF(value);
+
+			default:
+				throw `Unknown setting (${setting}: ${value})`;
+		}
+
 	}
 }

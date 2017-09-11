@@ -1,4 +1,4 @@
-import CartItem, {Settings} from './CartItem';
+import CartItem, {SettingsDygraph, SettingsNetCDF} from './CartItem';
 
 export default class Cart {
 	constructor(name, items){
@@ -11,13 +11,13 @@ export default class Cart {
 
 		const jsonCart = jsonStr && JSON.parse(jsonStr);
 		const jsonCartItems = jsonCart ? jsonCart._items : [];
-		var cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
+		let cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
 
 		jsonCartItems.forEach(item => {
-			const settings = new Settings(item._settings._xAxis, item._settings._yAxis, item._settings._type);
+			const settings = new SettingsDygraph(item._settings._xAxis, item._settings._yAxis, item._settings._type);
 			cart = cart.addItem(new CartItem(item._dataobject, settings));
 		});
-
+		console.log({jsonCart, jsonCartItems, cart});
 		return cart;
 	}
 

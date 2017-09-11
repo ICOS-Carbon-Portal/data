@@ -22,7 +22,7 @@ export default class PreviewTimeSerie extends Component {
 		const {xAxis, yAxis, type} = preview.item
 			? preview.item.settings
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
-
+console.log({preview});
 		return (
 			<div>
 				{preview

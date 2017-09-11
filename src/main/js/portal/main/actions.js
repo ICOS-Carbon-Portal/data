@@ -186,8 +186,8 @@ export const addToCart = objInfo => (dispatch, getState) => {
 		: undefined;
 
 	const cart = xAxisSetting
-		? state.cart.addItem(new CartItem(objInfo).withSetting('xAxis', xAxisSetting))
-		: state.cart.addItem(new CartItem(objInfo));
+		? state.cart.addItem(new CartItem(objInfo, specLookup.type).withSetting('xAxis', xAxisSetting))
+		: state.cart.addItem(new CartItem(objInfo, specLookup.type));
 
 	updateCart(cart, dispatch);
 };
