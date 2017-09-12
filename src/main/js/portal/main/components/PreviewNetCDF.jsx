@@ -13,7 +13,6 @@ export default class PreviewNetCDF extends Component{
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
-		// console.log({preview});
 
 		return (
 			<div>{preview
@@ -31,9 +30,8 @@ export default class PreviewNetCDF extends Component{
 }
 
 const NetCDFMap = ({self, preview, onLoad}) => {
-	// const src = preview.item.url || `${config.iFrameBaseUrl[config.NETCDF]}${preview.item.id.split('/').pop()}/`;
 	const src = preview.item.url || `${config.iFrameBaseUrl[config.NETCDF]}${preview.item.id.split('/').pop()}/`;
-console.log(src);
+
 	return (
 		<iframe ref={iframe => self.iframe = iframe} onLoad={onLoad}
 			style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}

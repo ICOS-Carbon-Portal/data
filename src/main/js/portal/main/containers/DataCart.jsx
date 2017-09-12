@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import Preview from '../components/Preview.jsx';
-import {removeFromCart, setPreviewItem, setPreviewItemSetting, setCartName, fetchIsBatchDownloadOk} from '../actions';
+import {removeFromCart, setPreviewItem, setPreviewUrl, setPreviewItemSetting, setCartName, fetchIsBatchDownloadOk} from '../actions';
 
 
 class DataCart extends Component {
@@ -40,6 +40,7 @@ class DataCart extends Component {
 						? <Preview
 							preview={props.preview}
 							setPreviewItemSetting={props.setPreviewItemSetting}
+							setPreviewUrl={props.setPreviewUrl}
 						/>
 						: null
 				}</div>
@@ -54,6 +55,7 @@ function dispatchToProps(dispatch){
 		setCartName: newName => dispatch(setCartName(newName)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value)),
+		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk)
 	};
 }

@@ -2,7 +2,6 @@ import CartItem from './CartItem';
 
 export default class Preview {
 	constructor(lookup, item, options, type, visible){
-		console.log({lookup, item, options, type, visible});
 		this._lookup = lookup;
 		this._item = item;
 		this._options = options;
@@ -10,8 +9,7 @@ export default class Preview {
 		this._visible = visible === undefined ? false : visible;
 	}
 
-	withLookup(specTable){1
-		console.log({specTable});
+	withLookup(specTable){
 		return new Preview(parseSpecTable(specTable));
 	}
 
@@ -41,13 +39,21 @@ export default class Preview {
 			const options = item ? this._lookup[item.spec] : undefined;
 
 			if (options && options.type === 'TIMESERIES'){
-				const xAxisSetting = options.options.find(o => o === 'TIMESTAMP');
-				console.log({id, objInfo, item, options, xAxisSetting});
-				if (item && xAxisSetting){
-					return new Preview(this._lookup, item.withSetting('xAxis', xAxisSetting, options.type), options.options, options.type, true);
+				const xAxis = options.options.find(o => o === 'TIMESTAMP');
+
+				if (item && xAxis){
+					const url = item.getNewUrl({
+						objId: item.id.split('/').pop(),
+						x: xAxis,
+						type: 'scatter'
+					});
+					console.log({id, objInfo, item, options, xAxis, url});
+					return new Preview(this._lookup, item.withUrl(url), options.options, options.type, true);
+
 				} else {
 					return new Preview(this._lookup, item, options.options, options.type, true);
 				}
+
 			} else if (options && options.type === 'NETCDF'){
 				console.log({id, objInfo, item, options});
 				return new Preview(this._lookup, item, options.options, options.type, true);
@@ -55,9 +61,9 @@ export default class Preview {
 		}
 	}
 
-	withItemSetting(setting, value, itemType){
-		return new Preview(this._lookup, this._item.withSetting(setting, value, itemType), this._options, this._type, this._visible);
-	}
+	// withItemSetting(setting, value, itemType){
+	// 	return new Preview(this._lookup, this._item.withSetting(setting, value, itemType), this._options, this._type, this._visible);
+	// }
 
 	withItemUrl(url){
 		return new Preview(this._lookup, this._item.withUrl(url), this._options, this._type, this._visible);

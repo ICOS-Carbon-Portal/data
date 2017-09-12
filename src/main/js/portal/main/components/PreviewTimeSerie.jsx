@@ -6,23 +6,28 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	handleSelectAction(ev){
+		const {preview, iframeSrcChange} = this.props;
 		const selectedIdx = ev.target.selectedIndex;
 
-		if (selectedIdx > 0 && this.props.setPreviewItemSetting) {
-			const id = this.props.preview.item.id;
-			const setting = ev.target.name;
+		if (selectedIdx > 0 && iframeSrcChange) {
 			const selectedVal = ev.target.options[selectedIdx].innerHTML;
+			const setting = ev.target.name;
+			const newUrl = preview.item.getNewUrl({[setting]: selectedVal});
 
-			this.props.setPreviewItemSetting(id, setting, selectedVal);
+			iframeSrcChange({target: {src: newUrl}});
 		}
 	}
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
-		const {xAxis, yAxis, type} = preview.item
-			? preview.item.settings
+		const {xAxis, yAxis, type} = preview.item && preview.item.hasKeyValPairs
+			? {
+				xAxis: preview.item.getUrlSearchValue('x'),
+				yAxis: preview.item.getUrlSearchValue('y'),
+				type: preview.item.getUrlSearchValue('type')
+			}
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
-console.log({preview});
+
 		return (
 			<div>
 				{preview
@@ -32,7 +37,7 @@ console.log({preview});
 							<div className="row">
 								<div className="col-md-4">
 									<Selector
-										name="xAxis"
+										name="x"
 										label="X axis"
 										selected={xAxis}
 										options={preview.options}
@@ -41,7 +46,7 @@ console.log({preview});
 								</div>
 								<div className="col-md-4">
 									<Selector
-										name="yAxis"
+										name="y"
 										label="Y axis"
 										selected={yAxis}
 										options={preview.options}

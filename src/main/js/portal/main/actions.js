@@ -167,7 +167,6 @@ export const setPreviewItemSetting = (id, setting, value) => (dispatch, getState
 export const setPreviewUrl = url => (dispatch, getState) => {
 	const state = getState();
 	const id = state.preview.item.id;
-	console.log({state});
 
 	if (state.cart.hasItem(id)) {
 		const cart = state.cart.withItemUrl(id, url);
