@@ -17,6 +17,7 @@ export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
 import CartItem from './models/CartItem';
+import {getNewTimeseriesUrl} from './utils.js';
 
 
 const failWithError = dispatch => error => {
@@ -140,30 +141,6 @@ export const setPreviewItem = id => dispatch => {
 	})
 };
 
-export const setPreviewItemSetting = (id, setting, value) => (dispatch, getState) => {
-	const state = getState();
-
-	if (state.cart.hasItem(id)) {
-		const cart = state.cart.withItemSetting(id, setting, value);
-
-		saveCart(cart).then(
-			dispatch({
-				type: PREVIEW_SETTING_UPDATED,
-				cart,
-				setting,
-				value
-			})
-		);
-	} else {
-		dispatch({
-			type: PREVIEW_SETTING_UPDATED,
-			cart: state.cart,
-			setting,
-			value
-		})
-	}
-};
-
 export const setPreviewUrl = url => (dispatch, getState) => {
 	const state = getState();
 	const id = state.preview.item.id;
@@ -205,13 +182,14 @@ export const setCartName = newName => (dispatch, getState) => {
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
 	const specLookup = state.preview.getSpecLookup(objInfo.spec);
-	const xAxisSetting = specLookup && specLookup.type === 'TIMESERIES'
+	const xAxis = specLookup && specLookup.type === 'TIMESERIES'
 		? specLookup.options.find(ao => ao === 'TIMESTAMP')
 		: undefined;
+	const item = new CartItem(objInfo, specLookup.type);
 
-	const cart = xAxisSetting
-		? state.cart.addItem(new CartItem(objInfo, specLookup.type).withSetting('xAxis', xAxisSetting))
-		: state.cart.addItem(new CartItem(objInfo, specLookup.type));
+	const cart = xAxis
+		? state.cart.addItem(item.withUrl(getNewTimeseriesUrl(item, xAxis)))
+		: state.cart.addItem(item);
 
 	updateCart(cart, dispatch);
 };

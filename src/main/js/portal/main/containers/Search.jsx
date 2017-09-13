@@ -5,7 +5,7 @@ import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
 import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewItemSetting, setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
+import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -22,7 +22,6 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
-		// console.log({props, preview: props.preview});
 
 		return (
 			<div className="row">
@@ -33,7 +32,6 @@ class Search extends Component {
 					props.preview.visible
 						? <Preview
 							preview={props.preview}
-							setPreviewItemSetting={props.setPreviewItemSetting}
 							setPreviewUrl={props.setPreviewUrl}
 							closePreviewAction={this.handleClosePreview.bind(this)}
 						/>
@@ -58,7 +56,6 @@ function dispatchToProps(dispatch){
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
-		setPreviewItemSetting: (id, setting, value) => dispatch(setPreviewItemSetting(id, setting, value)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),
 	};

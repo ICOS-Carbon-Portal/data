@@ -14,10 +14,11 @@ export default class Cart {
 		let cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
 
 		jsonCartItems.forEach(item => {
-			// const settings = new SettingsDygraph(item._settings._xAxis, item._settings._yAxis, item._settings._type);
-			cart = cart.addItem(new CartItem(item._dataobject));
+			const type = item._type;
+			const url = item._url;
+			cart = cart.addItem(new CartItem(item._dataobject, type, url));
 		});
-		console.log({jsonCart, jsonCartItems, cart});
+
 		return cart;
 	}
 

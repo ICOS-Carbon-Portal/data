@@ -1,4 +1,5 @@
 import CartItem from './CartItem';
+import {getNewTimeseriesUrl} from '../utils.js';
 
 export default class Preview {
 	constructor(lookup, item, options, type, visible){
@@ -42,12 +43,7 @@ export default class Preview {
 				const xAxis = options.options.find(o => o === 'TIMESTAMP');
 
 				if (item && xAxis){
-					const url = item.getNewUrl({
-						objId: item.id.split('/').pop(),
-						x: xAxis,
-						type: 'scatter'
-					});
-					console.log({id, objInfo, item, options, xAxis, url});
+					const url = getNewTimeseriesUrl(item, xAxis);
 					return new Preview(this._lookup, item.withUrl(url), options.options, options.type, true);
 
 				} else {
@@ -60,10 +56,6 @@ export default class Preview {
 			}
 		}
 	}
-
-	// withItemSetting(setting, value, itemType){
-	// 	return new Preview(this._lookup, this._item.withSetting(setting, value, itemType), this._options, this._type, this._visible);
-	// }
 
 	withItemUrl(url){
 		return new Preview(this._lookup, this._item.withUrl(url), this._options, this._type, this._visible);
