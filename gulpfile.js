@@ -8,7 +8,6 @@ var del = require('del');
 var source = require('vinyl-source-stream');
 var babelify = require('babelify');
 var babel = require('gulp-babel');
-var preprocessify = require('preprocessify');
 var jasmine = require('gulp-jasmine');
 
 var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light'];
@@ -42,7 +41,6 @@ projects.forEach(function(project){
 				entries: [paths.main],
 				debug: false
 			})
-			// .transform(preprocessify({NODE_ENV: process.env.NODE_ENV}))
 			.transform(babelify, {presets: ["es2015", "react"]})
 			.bundle()
 			.on('error', function(err){
