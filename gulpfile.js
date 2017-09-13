@@ -11,7 +11,9 @@ var babel = require('gulp-babel');
 var preprocessify = require('preprocessify');
 var jasmine = require('gulp-jasmine');
 
-['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light'].forEach(function(project){
+var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light'];
+
+projects.forEach(function(project){
 
 	var projSrc = 'src/main/js/' + project + '/';
 	var jstarget = 'target/es5js/' + project + '/';
@@ -88,4 +90,7 @@ var jasmine = require('gulp-jasmine');
 
 	gulp.task('publish' + project, ['apply-prod-environment', 'clean' + project], compileJs);
 });
+
+
+gulp.task('publish', projects.map(function(e) { return "publish" + e; }));
 

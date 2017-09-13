@@ -5,7 +5,7 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.js",
   "scripts": {
-    "publish": "gulp publishnetcdf && gulp publishportal && gulp publishwdcgg && gulp publishstilt && gulp publishdygraph-light",
+    "publish": "gulp publish",
     "netcdf": "gulp netcdf",
     "portal": "gulp portal",
     "wdcgg": "gulp wdcgg",
