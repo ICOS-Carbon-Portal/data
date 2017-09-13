@@ -91,4 +91,4 @@ projects.forEach(function(project){
 
 
 gulp.task('publish', projects.map(function(e) { return "publish" + e; }));
-
+gulp.task('default', ['publish']);
