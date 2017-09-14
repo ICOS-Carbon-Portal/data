@@ -60,7 +60,7 @@ npmPublish := Process("npm run publish").!
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
-	.enablePlugins(SbtTwirl)
+	.enablePlugins(SbtTwirl,IcosCpSbtDeployPlugin)
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
@@ -87,6 +87,9 @@ lazy val data = (project in file("."))
 		),
 
 		scalacOptions += "-Ywarn-unused-import:false",
+
+		cpDeployTarget := "cpdata",
+		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
 
 		// Override the "assembly" command so that we always run "npm publish"
 		// first - thus generating javascript files - before we package the
