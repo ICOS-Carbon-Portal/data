@@ -25,7 +25,9 @@ export default class CartPanel extends Component {
 	render(){
 		const {batchDownloadStatus, cart, removeFromCart, previewItemAction,
 			getSpecLookupType, fetchIsBatchDownloadOk, user} = this.props;
-		// console.log({batchDownloadStatus, user});
+		const downloadBtnTxt = user.email && user.icosLicenceOk
+			? 'Download cart content'
+			: 'Accept license and download cart content';
 
 		return (
 			<div className="panel panel-default">
@@ -39,26 +41,26 @@ export default class CartPanel extends Component {
 				/>
 
 				<div className="panel-body">
-					<a href={downloadURL(cart.pids, cart.name)} target="_blank">
-						<button className="btn btn-primary" style={{marginBottom: 15}}>
-							<span className="glyphicon glyphicon-download-alt"/> Download cart content
-						</button>
-					</a>
-
 					{cart.count
-						? <ul className="list-group">{
-							cart.items.map((item, i) =>
-								<Item
-									item={item}
-									previewType={getSpecLookupType(item.spec)}
-									selected={this.state.selectedItemId === item.id}
-									removeFromCart={removeFromCart}
-									previewItemAction={previewItemAction}
-									clickAction={this.handleItemClick.bind(this)}
-									key={'ci' + i}
-								/>
-							)}
-						</ul>
+						? <div>
+							<a href={downloadURL(cart.pids, cart.name)} className="btn btn-primary" style={{marginBottom: 15}} target="_blank">
+								<span className="glyphicon glyphicon-download-alt"/> {downloadBtnTxt}
+							</a>
+
+							<ul className="list-group">{
+								cart.items.map((item, i) =>
+									<Item
+										item={item}
+										previewType={getSpecLookupType(item.spec)}
+										selected={this.state.selectedItemId === item.id}
+										removeFromCart={removeFromCart}
+										previewItemAction={previewItemAction}
+										clickAction={this.handleItemClick.bind(this)}
+										key={'ci' + i}
+									/>
+								)}
+							</ul>
+						</div>
 						: <div>Your cart is empty</div>
 				}</div>
 			</div>

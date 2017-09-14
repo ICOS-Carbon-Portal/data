@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {WHOAMI_FETCHED, TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 
@@ -14,9 +14,9 @@ export default function(state, action){
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case WHOAMI_FETCHED:
+		case USER_INFO_FETCHED:
 			return update({
-				user: action.user.email
+				user: Object.assign({}, {email: action.user._id}, action.user.profile)
 			});
 
 		case SPECTABLES_FETCHED:

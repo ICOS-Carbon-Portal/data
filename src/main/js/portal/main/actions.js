@@ -13,11 +13,14 @@ export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
 export const ROUTE_CHANGED = 'ROUTE_CHANGED';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
+export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
+import {getUserInfo, logOutUser} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl} from './utils.js';
+import config from './config';
 
 
 const failWithError = dispatch => error => {
@@ -182,7 +185,7 @@ export const setCartName = newName => (dispatch, getState) => {
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
 	const specLookup = state.preview.getSpecLookup(objInfo.spec);
-	const xAxis = specLookup && specLookup.type === 'TIMESERIES'
+	const xAxis = specLookup && specLookup.type === config.TIMESERIES
 		? specLookup.options.find(ao => ao === 'TIMESTAMP')
 		: undefined;
 	const item = new CartItem(objInfo, specLookup.type);
@@ -210,10 +213,10 @@ const updateCart = (cart, dispatch) => {
 	);
 };
 
-export const fetchWhoAmI = dispatch => {
-	getWhoIam().then(
+export const fetchUserInfo = dispatch => {
+	getUserInfo().then(
 		user => dispatch({
-			type: WHOAMI_FETCHED,
+			type: USER_INFO_FETCHED,
 			user
 		})
 	);
@@ -221,7 +224,6 @@ export const fetchWhoAmI = dispatch => {
 
 export const fetchIsBatchDownloadOk = dispatch => {
 	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
-		// .then(([isBatchDownloadOk, user]) => {return {isBatchDownloadOk, user};})
 		.then(
 			([isBatchDownloadOk, user]) => dispatch({
 				type: TESTED_BATCH_DOWNLOAD,
@@ -230,4 +232,13 @@ export const fetchIsBatchDownloadOk = dispatch => {
 			}),
 			err => dispatch(failWithError(err))
 		);
+};
+
+export const logOut = dispatch => {
+	logOutUser().then(
+		user => dispatch({
+			type: USER_INFO_FETCHED,
+			user
+		})
+	);
 };

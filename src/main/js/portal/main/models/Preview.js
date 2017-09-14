@@ -1,5 +1,6 @@
 import CartItem from './CartItem';
 import {getNewTimeseriesUrl} from '../utils.js';
+import config from '../config';
 
 export default class Preview {
 	constructor(lookup, item, options, type, visible){
@@ -39,7 +40,7 @@ export default class Preview {
 			const item = objInfo ? new CartItem(objInfo) : undefined;
 			const options = item ? this._lookup[item.spec] : undefined;
 
-			if (options && options.type === 'TIMESERIES'){
+			if (options && options.type === config.TIMESERIES){
 				const xAxis = options.options.find(o => o === 'TIMESTAMP');
 
 				if (item && xAxis){
@@ -50,7 +51,7 @@ export default class Preview {
 					return new Preview(this._lookup, item, options.options, options.type, true);
 				}
 
-			} else if (options && options.type === 'NETCDF'){
+			} else if (options && options.type === config.NETCDF){
 				console.log({id, objInfo, item, options});
 				return new Preview(this._lookup, item, options.options, options.type, true);
 			}
@@ -98,7 +99,7 @@ function parseSpecTable(specTable){
 		? basicsRows.reduce((acc, curr) => {
 			if (curr.format === 'NetCDF'){
 				acc[curr.spec] = {
-					type: 'NETCDF'
+					type: config.NETCDF
 				}
 			}
 
@@ -110,7 +111,7 @@ function parseSpecTable(specTable){
 		? columnMetaRows.reduce((acc, curr) => {
 			acc[curr.spec] === undefined
 				? acc[curr.spec] = {
-					type: 'TIMESERIES',
+					type: config.TIMESERIES,
 					options: [curr.colTitle]
 				}
 				: acc[curr.spec].options.push(curr.colTitle);

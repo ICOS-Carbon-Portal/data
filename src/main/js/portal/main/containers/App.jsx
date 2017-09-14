@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
-import {changeRoute, setPreviewVisibility} from '../actions';
+import {changeRoute, setPreviewVisibility, logOut} from '../actions';
+import AccountButtons from '../components/AccountButtons.jsx';
 
 const ROUTE_SEARCH = 'ROUTE_SEARCH';
 const ROUTE_CART = 'ROUTE_CART';
@@ -30,6 +31,11 @@ export class App extends Component {
 
 		return (
 			<div className="container-fluid" style={{marginTop: 10}}>
+				<AccountButtons
+					user={props.user}
+					logOutAction={props.logOut}
+				/>
+
 				<AnimatedToasters
 					autoCloseDelay={5000}
 					toasterData={props.toasterData}
@@ -121,6 +127,7 @@ function dispatchToProps(dispatch){
 	return {
 		changeRoute: route => dispatch(changeRoute(route)),
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
+		logOut: () => dispatch(logOut)
 	};
 }
 

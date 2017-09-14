@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import PreviewTimeSerie from './PreviewTimeSerie.jsx';
 import PreviewNetCDF from './PreviewNetCDF.jsx';
 import CopyValue from './CopyValue.jsx';
+import config from '../config';
 
 export default class Preview extends Component {
 	constructor(props){
@@ -64,10 +65,10 @@ export default class Preview extends Component {
 const PreviewRoute = props => {
 	switch (props.preview.type){
 
-		case 'TIMESERIES':
+		case config.TIMESERIES:
 			return <PreviewTimeSerie {...props} />;
 
-		case 'NETCDF':
+		case config.NETCDF:
 			return <PreviewNetCDF {...props} />;
 
 		default:
