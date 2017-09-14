@@ -128,19 +128,21 @@ function sparqlBindingToValue(b){
 	}
 }
 
-export const getUserInfo = () => {
+export function getWhoIam(){
 	return fetch('/whoami', {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
 				: {email: undefined};
-		})
+		});
+}
+
+export const getUserInfo = () => {
+	return getWhoIam()
 		.then(user => {
-			if (user.email) {
-				return fetch(`https://cpauth.icos-cp.eu/db/users/${user.email}?keys={profile:1}`, {credentials: 'include'})
-			} else {
-				return {};
-			}
+			return user.email
+				? fetch(`https://cpauth.icos-cp.eu/db/users/${user.email}?keys={profile:1}`, {credentials: 'include'})
+				: {};
 		})
 		.then(resp => {
 			return resp.status === 200
