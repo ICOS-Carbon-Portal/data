@@ -2,7 +2,7 @@ export default {
 	TIMESERIES: 'TIMESERIES',
 	NETCDF: 'NETCDF',
 	iFrameBaseUrl: {
-		TIMESERIES: '//local-data.icos-cp.eu/dygraph-light/',
-		NETCDF: '//local-data.icos-cp.eu/netcdf/'
+		TIMESERIES: '//data.icos-cp.eu/dygraph-light/',
+		NETCDF: '//data.icos-cp.eu/netcdf/'
 	}
 };
