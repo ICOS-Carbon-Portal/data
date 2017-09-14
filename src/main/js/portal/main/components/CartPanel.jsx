@@ -44,7 +44,7 @@ export default class CartPanel extends Component {
 					{cart.count
 						? <div>
 							<a href={downloadURL(cart.pids, cart.name)} className="btn btn-primary" style={{marginBottom: 15}} target="_blank">
-								<span className="glyphicon glyphicon-download-alt"/> {downloadBtnTxt}
+								<span className="glyphicon glyphicon-download-alt" style={{marginRight: 5}} /> {downloadBtnTxt}
 							</a>
 
 							<ul className="list-group">{

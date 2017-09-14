@@ -23,10 +23,12 @@ const AccountBtn = ({user}) => {
 			user.email
 				? <a href="https://cpauth.icos-cp.eu" className="btn btn-primary" style={{marginLeft: 20}}>
 					<span className="glyphicon glyphicon-user" style={{marginRight: 10}}/>
-					Carbon Portal Account for {user.givenName + ' ' + user.surname}
+					My Carbon Portal Account
 					{user.icosLicenceOk
 						? null
-						: <span className="badge" style={{marginLeft: 5}}>License not accepted</span>
+						: <span className="badge" style={{marginLeft: 5}}>
+							<span className="text-danger">License not accepted</span>
+						</span>
 					}
 				</a>
 				: null
