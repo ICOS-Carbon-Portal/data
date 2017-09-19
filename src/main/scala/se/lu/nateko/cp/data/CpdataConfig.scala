@@ -62,7 +62,7 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val irodsConfigFormat = jsonFormat8(IrodsConfig)
 	implicit val uploadConfigFormat = jsonFormat2(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
-	implicit val pubAuthConfigFormat = jsonFormat2(PublicAuthConfig)
+	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
 	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
 	implicit val restHeartConfigFormat = jsonFormat5(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)

@@ -70,9 +70,9 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5.1-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.4-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.1-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.2-SNAPSHOT",
 
 		// *** manually published on CP Nexus 3rd party repo ***
 			"org.irods.jargon"    % "jargon-core"      % "4.0.2.4", //IRODS client core features

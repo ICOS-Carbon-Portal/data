@@ -1,10 +1,13 @@
 import {sparql} from 'icos-cp-backend';
 import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
-import config from '../../common/main/config';
+import commonConfig from '../../common/main/config';
+import localConfig from './config';
 import Cart from './models/Cart';
 import 'whatwg-fetch';
 
+
+const config = Object.assign(commonConfig, localConfig);
 
 export function fetchAllSpecTables() {
 	return Promise.all(
@@ -86,13 +89,38 @@ export const getObjColInfo = dobj => {
 		);
 };
 
-export const saveCart = cart => {
-	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
+export const saveCart = (email, cart) => {
+	return email
+		? updateRestheart('users', email, {cart})
+		: Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
-export const getCart = () => {
-	const ls = localStorage.getItem('cp-cart');
-	return Promise.resolve(new Cart().fromStorage(ls));
+const updateRestheart = (db, email, data) => {
+	return fetch(`${config.restheartBaseUrl}${db}/${email}`, {
+		method: 'PATCH',
+		mode: 'cors',
+		headers: new Headers({
+			'Content-Type': 'application/json'
+		}),
+		body: JSON.stringify(data)
+	}).then(resp => resp);
+};
+
+export const getCart = email => {
+	console.log({email});
+	const cartInStorage = email
+		? Promise.resolve(getCartFromRestheart(email))
+		: {cart: localStorage.getItem('cp-cart')};
+	return Promise.resolve(new Cart().fromStorage(cartInStorage));
+};
+
+const getCartFromRestheart = email => {
+	return fetch(`${config.restheartBaseUrl}users/${email}?keys={cart:1}`)
+		.then(resp => {
+			return resp.status === 200
+				? resp.json()
+				: undefined;
+		});
 };
 
 export const getIsBatchDownloadOk = ids => {

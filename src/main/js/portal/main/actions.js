@@ -16,7 +16,7 @@ export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
-import {getUserInfo, logOutUser} from './backend';
+import {getUserInfo, logOutUser, updateRestheart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl} from './utils.js';
@@ -151,7 +151,7 @@ export const setPreviewUrl = url => (dispatch, getState) => {
 	if (state.cart.hasItem(id)) {
 		const cart = state.cart.withItemUrl(id, url);
 
-		saveCart(cart).then(
+		saveCart(state.user.email, cart).then(
 			dispatch({
 				type: ITEM_URL_UPDATED,
 				cart,
@@ -167,8 +167,11 @@ export const setPreviewUrl = url => (dispatch, getState) => {
 	}
 };
 
-export const fetchCart = dispatch => {
-	getCart().then(
+export const fetchCart = (dispatch, getState) => {
+	const state = getState();
+	console.log({state});
+
+	getCart(state.user.email).then(
 		cart => dispatch({
 			type: CART_UPDATED,
 			cart
@@ -179,7 +182,7 @@ export const fetchCart = dispatch => {
 export const setCartName = newName => (dispatch, getState) => {
 	const state = getState();
 
-	updateCart(state.cart.withName(newName), dispatch);
+	updateCart(state.user.email, state.cart.withName(newName), dispatch);
 };
 
 export const addToCart = objInfo => (dispatch, getState) => {
@@ -194,18 +197,18 @@ export const addToCart = objInfo => (dispatch, getState) => {
 		? state.cart.addItem(item.withUrl(getNewTimeseriesUrl(item, xAxis)))
 		: state.cart.addItem(item);
 
-	updateCart(cart, dispatch);
+	updateCart(state.user.email, cart, dispatch);
 };
 
 export const removeFromCart = id => (dispatch, getState) => {
 	const state = getState();
 	const cart = state.cart.removeItem(id);
 
-	updateCart(cart, dispatch);
+	updateCart(state.user.email, cart, dispatch);
 };
 
-const updateCart = (cart, dispatch) => {
-	saveCart(cart).then(
+const updateCart = (email, cart, dispatch) => {
+	saveCart(email, cart).then(
 		dispatch({
 			type: CART_UPDATED,
 			cart
@@ -213,12 +216,16 @@ const updateCart = (cart, dispatch) => {
 	);
 };
 
-export const fetchUserInfo = dispatch => {
+export const fetchUserInfo = restoreCart => (dispatch, getState) => {
 	getUserInfo().then(
-		user => dispatch({
-			type: USER_INFO_FETCHED,
-			user
-		})
+		user => {
+			dispatch({
+				type: USER_INFO_FETCHED,
+				user
+			});
+
+			if (restoreCart) fetchCart(dispatch, getState);
+		}
 	);
 };
 
@@ -242,3 +249,9 @@ export const logOut = dispatch => {
 		})
 	);
 };
+
+// export const saveInRestHeart = (email, data) => dispatch => {
+// 	updateRestheart('users', email, data).then(
+// 		resp => console.log({resp})
+// 	);
+// };

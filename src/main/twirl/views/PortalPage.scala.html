@@ -1,4 +1,7 @@
-@CpCommonPage("Carbon Portal's data search"){
+@import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
+
+@(config: PublicAuthConfig)
+@CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.cpauthHost)){
 	<link rel="stylesheet" href="//static.icos-cp.eu/css/react-widgets/css/react-widgets.css">
 	<style type="text/css">
 		.rw-multiselect-taglist > li{

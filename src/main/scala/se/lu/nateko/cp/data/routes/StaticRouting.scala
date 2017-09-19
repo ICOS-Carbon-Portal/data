@@ -9,21 +9,29 @@ import akka.http.scaladsl.model.HttpCharset
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.marshalling.Marshalling.WithOpenCharset
 import akka.http.scaladsl.model.MediaTypes
+
 import scala.concurrent.Future
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.server.PathMatcher1
+import se.lu.nateko.cp.data.ConfigReader
 
 object StaticRouting {
 
 	private type PageFactory = PartialFunction[String, Html]
 	private val NetCdfProj = "netcdf"
+
+	val authConfig = ConfigReader.getDefault.auth
 	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light")
+
+	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
+		case NetCdfProj => views.html.NetCDFPage(iframe)
+	}
 
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
 		case "wdcgg" => views.html.WdcggPage()
-		case "portal" => views.html.PortalPage()
+		case "portal" => views.html.PortalPage(authConfig)
 		case NetCdfProj => views.html.NetCDFPage(false)
 	}
 

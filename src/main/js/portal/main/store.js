@@ -40,8 +40,8 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
-	store.dispatch(fetchUserInfo);
-	store.dispatch(fetchCart);
+	store.dispatch(fetchUserInfo(true));
+	// store.dispatch(fetchCart);
 	store.dispatch(getAllSpecTables);
 	return store;
 }

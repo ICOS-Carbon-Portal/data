@@ -65,7 +65,15 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 	val userRequired: Directive1[UserId] = forbidAuthenticationFailures & user
 
 	val whoami: Route = (get & path("whoami")){
-		userRequired{ uid => complete(uid)}
+		import spray.json._
+		user{ uid => complete(uid)} ~
+		complete(JsObject("email" -> JsNull))
+	}
+
+	val logout: Route = (get & path("logout")){
+		deleteCookie(authConfig.authCookieName, domain = authConfig.authCookieDomain, path = "/"){
+			complete(StatusCodes.OK)
+		}
 	}
 
 	private def toMessage(err: Throwable): String = {

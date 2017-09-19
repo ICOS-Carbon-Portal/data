@@ -6,10 +6,13 @@ export default class Cart {
 		this._items = items || [];
 	}
 
-	fromStorage(jsonStr){
-		if (!jsonStr || jsonStr === "undefined") return new Cart();
+	fromStorage(cartInStorage){
+		console.log({cartInStorage});
+		if (!cartInStorage.cart || cartInStorage.cart === "undefined") return new Cart();
 
-		const jsonCart = jsonStr && JSON.parse(jsonStr);
+		const jsonCart = cartInStorage.cart._name
+			? cartInStorage.cart
+			: JSON.parse(cartInStorage.cart);
 		const jsonCartItems = jsonCart ? jsonCart._items : [];
 		let cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
 

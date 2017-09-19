@@ -68,7 +68,8 @@ object Main extends App {
 		StaticRouting.route ~
 		licenceRouting.route ~
 		EtcUploadRouting(config.etcFacade) ~
-		authRouting.whoami
+		authRouting.whoami ~
+		authRouting.logout
 	}
 
 	restHeart.init.flatMap{_ =>
