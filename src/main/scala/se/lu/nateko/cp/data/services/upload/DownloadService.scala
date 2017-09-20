@@ -20,6 +20,7 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import akka.stream.scaladsl.StreamConverters
 
 class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
 
@@ -63,12 +64,16 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 		ZipEntryFlow.getMultiEntryZipStream(Source.fromGraph(sourcesSource))
 	}
 
+	private val licenceSource = StreamConverters.fromInputStream(
+		() => getClass.getClassLoader.getResourceAsStream("licence.pdf")
+	)
+
 	private val destinyToAuxSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
 		.map{dests =>
 			("!TOC.csv", destiniesToTocFileSource(dests))
 		}.concat(Source.single(
-			("!LICENCE.txt", Source.single(ByteString("https://data.icos-cp.eu/licence\n")))
+			("!LICENCE.pdf", licenceSource)
 		))
 
 	private def singleObjectSource(dobj: DataObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
@@ -89,7 +94,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny]): Source[ByteString, NotUsed] = {
 		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
 
-			val presense = if(dest.omissionReason.isEmpty) "\u2713" else "\u2717" // "check" or "cross"
+			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
 			val pid = dest.dobj.pid.getOrElse("")
 			val landingPage = dest.dobj.pid.fold(

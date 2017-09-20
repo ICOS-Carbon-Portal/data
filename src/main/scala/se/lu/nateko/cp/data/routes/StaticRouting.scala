@@ -20,10 +20,6 @@ object StaticRouting {
 	private val NetCdfProj = "netcdf"
 	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
 
-	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
-		case NetCdfProj => views.html.NetCDFPage(iframe)
-	}
-
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
 		case "wdcgg" => views.html.WdcggPage()
