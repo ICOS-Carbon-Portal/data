@@ -3,6 +3,7 @@ import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
+import Cart from './models/Cart';
 
 
 export default function(state, action){

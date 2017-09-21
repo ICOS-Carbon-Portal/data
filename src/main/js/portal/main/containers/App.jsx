@@ -31,11 +31,6 @@ export class App extends Component {
 
 		return (
 			<div className="container-fluid" style={{marginTop: 10}}>
-				<AccountButtons
-					user={props.user}
-					logOutAction={props.logOut}
-				/>
-
 				<AnimatedToasters
 					autoCloseDelay={5000}
 					toasterData={props.toasterData}

@@ -2,27 +2,9 @@ import CartItem from './CartItem';
 
 export default class Cart {
 	constructor(name, items){
-		this._name = name || "My data cart";
+		this._name = name || 'My data cart';
 		this._items = items || [];
-	}
-
-	fromStorage(cartInStorage){
-		console.log({cartInStorage});
-		if (!cartInStorage.cart || cartInStorage.cart === "undefined") return new Cart();
-
-		const jsonCart = cartInStorage.cart._name
-			? cartInStorage.cart
-			: JSON.parse(cartInStorage.cart);
-		const jsonCartItems = jsonCart ? jsonCart._items : [];
-		let cart = jsonCart ? new Cart(jsonCart._name) : new Cart();
-
-		jsonCartItems.forEach(item => {
-			const type = item._type;
-			const url = item._url;
-			cart = cart.addItem(new CartItem(item._dataobject, type, url));
-		});
-
-		return cart;
+		this._ts = items ? Date.now() + '' : '0';
 	}
 
 	addItem(cartItem){
@@ -51,6 +33,10 @@ export default class Cart {
 		});
 
 		return new Cart(this._name, items);
+	}
+
+	get ts(){
+		return this._ts;
 	}
 
 	get ids(){
@@ -85,3 +71,22 @@ export default class Cart {
 		return new Cart(name, this._items);
 	}
 }
+
+export const restoreCarts = (cartInLocalStorage, cartInRestheart) => {
+	const restheartTs = cartInRestheart.cart._ts
+		? parseInt(cartInRestheart.cart._ts)
+		: '0';
+	const localStorageTs = cartInLocalStorage.cart._ts
+		? parseInt(cartInRestheart.cart._ts)
+		: '0';
+
+	const newName = restheartTs > localStorageTs
+		? cartInRestheart.cart._name
+		: cartInLocalStorage.cart._name;
+	const newItems = cartInRestheart.cart._items.concat(cartInLocalStorage.cart._items).filter((item, i, items) => {
+		return items.findIndex(itm => itm._id === item._id) === i;
+	});
+	const newCartItems = newItems.map(item => new CartItem(item._dataobject, item._type, item._url));
+
+	return new Cart(newName, newCartItems);
+};

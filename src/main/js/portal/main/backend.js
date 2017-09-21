@@ -5,6 +5,7 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart from './models/Cart';
 import 'whatwg-fetch';
+import {deepMerge} from 'icos-cp-utils';
 
 
 const config = Object.assign(commonConfig, localConfig);
@@ -90,9 +91,10 @@ export const getObjColInfo = dobj => {
 };
 
 export const saveCart = (email, cart) => {
-	return email
-		? updateRestheart('users', email, {cart})
-		: Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
+	if (email){
+		updateRestheart('users', email, {cart});
+	}
+	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
 const updateRestheart = (db, email, data) => {
@@ -107,11 +109,15 @@ const updateRestheart = (db, email, data) => {
 };
 
 export const getCart = email => {
-	console.log({email});
-	const cartInStorage = email
-		? Promise.resolve(getCartFromRestheart(email))
-		: {cart: localStorage.getItem('cp-cart')};
-	return Promise.resolve(new Cart().fromStorage(cartInStorage));
+	const localStorageJson = localStorage.getItem('cp-cart')
+		? JSON.parse(localStorage.getItem('cp-cart'))
+		: new Cart();
+	const cartInLocalStorage = {cart: localStorageJson};
+	const cartInRestheart = email
+		? getCartFromRestheart(email)
+		: Promise.resolve({cart: new Cart()});
+
+	return Promise.resolve({cartInLocalStorage, cartInRestheart});
 };
 
 const getCartFromRestheart = email => {

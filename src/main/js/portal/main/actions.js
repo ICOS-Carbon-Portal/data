@@ -18,6 +18,7 @@ export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
 import {getUserInfo, logOutUser, updateRestheart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
+import Cart, {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl} from './utils.js';
 import config from './config';
@@ -169,13 +170,15 @@ export const setPreviewUrl = url => (dispatch, getState) => {
 
 export const fetchCart = (dispatch, getState) => {
 	const state = getState();
-	console.log({state});
 
 	getCart(state.user.email).then(
-		cart => dispatch({
-			type: CART_UPDATED,
-			cart
-		})
+		({cartInLocalStorage, cartInRestheart}) => {
+
+			cartInRestheart.then(restheartCart => {
+				const cart = restoreCarts(cartInLocalStorage, restheartCart);
+				updateCart(state.user.email, cart, dispatch);
+			});
+		}
 	);
 };
 
@@ -188,10 +191,11 @@ export const setCartName = newName => (dispatch, getState) => {
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
 	const specLookup = state.preview.getSpecLookup(objInfo.spec);
+	const type = specLookup ? specLookup.type : undefined;
 	const xAxis = specLookup && specLookup.type === config.TIMESERIES
 		? specLookup.options.find(ao => ao === 'TIMESTAMP')
 		: undefined;
-	const item = new CartItem(objInfo, specLookup.type);
+	const item = new CartItem(objInfo, type);
 
 	const cart = xAxis
 		? state.cart.addItem(item.withUrl(getNewTimeseriesUrl(item, xAxis)))
