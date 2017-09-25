@@ -5,8 +5,6 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart from './models/Cart';
 import 'whatwg-fetch';
-import {deepMerge} from 'icos-cp-utils';
-
 
 const config = Object.assign(commonConfig, localConfig);
 
@@ -99,6 +97,7 @@ export const saveCart = (email, cart) => {
 
 const updateRestheart = (db, email, data) => {
 	return fetch(`${config.restheartBaseUrl}${db}/${email}`, {
+		credentials: 'include',
 		method: 'PATCH',
 		mode: 'cors',
 		headers: new Headers({
@@ -121,7 +120,7 @@ export const getCart = email => {
 };
 
 const getCartFromRestheart = email => {
-	return fetch(`${config.restheartBaseUrl}users/${email}?keys={cart:1}`)
+	return fetch(`${config.restheartBaseUrl}users/${email}?keys={cart:1}`, {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()

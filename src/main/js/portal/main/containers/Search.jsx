@@ -38,7 +38,8 @@ class Search extends Component {
 						: <DataObjectsTable
 							previewAction={this.handlePreview.bind(this)}
 							{...copyprops(props, [
-								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart'
+								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
+								'cart', 'addToCart', 'removeFromCart', 'lookup'
 						])}/>
 				}</div>
 			</div>

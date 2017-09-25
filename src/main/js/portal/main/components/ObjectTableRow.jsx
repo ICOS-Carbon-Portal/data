@@ -18,7 +18,7 @@ export default class ObjectTableRow extends Component {
 		const objInfo = props.objInfo;
 		const preview = props.preview;
 		const previewItem = preview.item;
-		const previewType = preview.getSpecLookupType(objInfo.spec);
+		const previewType = props.lookup.getSpecLookupType(objInfo.spec);
 		const className = previewItem && previewItem.id === objInfo.dobj
 			? "list-group-item-info"
 			: "";

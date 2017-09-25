@@ -27,7 +27,7 @@ class DataCart extends Component {
 						cart={props.cart}
 						setCartName={props.setCartName}
 						previewitemId={previewitemId}
-						getSpecLookupType={props.preview.getSpecLookupType.bind(props.preview)}
+						getSpecLookupType={props.lookup.getSpecLookupType.bind(props.lookup)}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
 						batchDownloadStatus={props.batchDownloadStatus}

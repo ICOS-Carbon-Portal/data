@@ -3,7 +3,7 @@ import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
-import Cart from './models/Cart';
+import Lookup from './models/Lookup';
 
 
 export default function(state, action){
@@ -27,7 +27,7 @@ export default function(state, action){
 				specTable,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				preview: state.preview.withLookup(specTable)
+				lookup: new Lookup(specTable)
 			});
 
 		case META_QUERIED:
@@ -79,7 +79,7 @@ export default function(state, action){
 
 		case PREVIEW:
 			return update({
-				preview: state.preview.initPreview(state.cart, action.id, state.objectsTable),
+				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable),
 			});
 
 		case PREVIEW_VISIBILITY:
@@ -166,4 +166,3 @@ function updatePaging(old, direction){
 
 	} else return old;
 }
-

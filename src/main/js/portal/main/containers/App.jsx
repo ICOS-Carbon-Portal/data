@@ -4,7 +4,6 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import {changeRoute, setPreviewVisibility, logOut} from '../actions';
-import AccountButtons from '../components/AccountButtons.jsx';
 
 const ROUTE_SEARCH = 'ROUTE_SEARCH';
 const ROUTE_CART = 'ROUTE_CART';
@@ -76,7 +75,7 @@ const RouteSearchBtn = props => {
 
 	return (
 		<button className="btn btn-primary" onClick={action} style={{float: 'right'}}>
-			Switch to data cart
+			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}
 			</span>
@@ -110,6 +109,7 @@ const Route = props => {
 
 function stateToProps(state){
 	return {
+		lookup: state.lookup,
 		user: state.user,
 		route: state.route,
 		toasterData: state.toasterData,

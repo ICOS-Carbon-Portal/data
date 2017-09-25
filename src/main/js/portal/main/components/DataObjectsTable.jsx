@@ -1,9 +1,8 @@
 import React from 'react';
-import ScreenHeightColumn from './ScreenHeightColumn.jsx';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart, previewAction, preview} = props;
+	const {paging, requestStep, cart, previewAction, lookup, preview} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
 	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
@@ -33,6 +32,7 @@ export default function(props){
 
 							return (
 								<ObjectTableRow
+									lookup={lookup}
 									preview={preview}
 									previewAction={previewAction}
 									objInfo={objInfo}

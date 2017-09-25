@@ -16,9 +16,9 @@ export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
-import {getUserInfo, logOutUser, updateRestheart} from './backend';
+import {getUserInfo, logOutUser} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
-import Cart, {restoreCarts} from './models/Cart';
+import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl} from './utils.js';
 import config from './config';
@@ -190,7 +190,7 @@ export const setCartName = newName => (dispatch, getState) => {
 
 export const addToCart = objInfo => (dispatch, getState) => {
 	const state = getState();
-	const specLookup = state.preview.getSpecLookup(objInfo.spec);
+	const specLookup = state.lookup.getSpecLookup(objInfo.spec);
 	const type = specLookup ? specLookup.type : undefined;
 	const xAxis = specLookup && specLookup.type === config.TIMESERIES
 		? specLookup.options.find(ao => ao === 'TIMESTAMP')
@@ -253,9 +253,3 @@ export const logOut = dispatch => {
 		})
 	);
 };
-
-// export const saveInRestHeart = (email, data) => dispatch => {
-// 	updateRestheart('users', email, data).then(
-// 		resp => console.log({resp})
-// 	);
-// };

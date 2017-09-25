@@ -73,17 +73,25 @@ export default class Cart {
 }
 
 export const restoreCarts = (cartInLocalStorage, cartInRestheart) => {
-	const restheartTs = cartInRestheart.cart._ts
-		? parseInt(cartInRestheart.cart._ts)
+	const localStorageTs = cartInLocalStorage.cart && cartInLocalStorage.cart._ts
+		? parseInt(cartInLocalStorage.cart._ts)
 		: '0';
-	const localStorageTs = cartInLocalStorage.cart._ts
+	const restheartTs = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._ts
 		? parseInt(cartInRestheart.cart._ts)
 		: '0';
 
 	const newName = restheartTs > localStorageTs
 		? cartInRestheart.cart._name
 		: cartInLocalStorage.cart._name;
-	const newItems = cartInRestheart.cart._items.concat(cartInLocalStorage.cart._items).filter((item, i, items) => {
+
+	const localStorageItems = cartInLocalStorage.cart && cartInLocalStorage.cart._items
+		? cartInLocalStorage.cart._items
+		: [];
+	const restheartItems = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._items
+		? cartInRestheart.cart._items
+		: [];
+
+	const newItems = restheartItems.concat(localStorageItems).filter((item, i, items) => {
 		return items.findIndex(itm => itm._id === item._id) === i;
 	});
 	const newCartItems = newItems.map(item => new CartItem(item._dataobject, item._type, item._url));

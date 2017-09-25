@@ -6,9 +6,9 @@ export default class PreviewNetCDF extends Component{
 		super(props);
 	}
 
-	shouldComponentUpdate(){
-		// Prevent NetCDFMap component from updating iframe src
-		return false;
+	shouldComponentUpdate(nextProps){
+		// Prevent NetCDFMap component from updating iframe src if we are viewing the same data object
+		return this.props.preview.item.id !== nextProps.preview.item.id;
 	}
 
 	render(){
