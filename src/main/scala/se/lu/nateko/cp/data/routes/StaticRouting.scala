@@ -18,12 +18,13 @@ object StaticRouting {
 
 	private type PageFactory = PartialFunction[String, Html]
 	private val NetCdfProj = "netcdf"
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "netcdf-light")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light")
 
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
 		case "wdcgg" => views.html.WdcggPage()
 		case "portal" => views.html.PortalPage()
+		case NetCdfProj => views.html.NetCDFPage(false)
 	}
 
 	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(
@@ -41,7 +42,12 @@ object StaticRouting {
 
 	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
 		case NetCdfProj =>
-			(Slash ~ UploadRouting.Sha256Segment).tmap(_ => Tuple1(standardPageFactory))
+			(Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
+				case Some(_) =>
+					Tuple1{case NetCdfProj => views.html.NetCDFPage(true)}
+				case None =>
+					Tuple1(standardPageFactory)
+			})
 		case _ =>
 			Neutral.tmap(_ => Tuple1(standardPageFactory))
 	}

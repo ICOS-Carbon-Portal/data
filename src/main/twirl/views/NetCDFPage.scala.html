@@ -1,10 +1,9 @@
 @(iframe: Boolean)
 @if(iframe){
-	@CpBarePage(pageTitle)(pageHeader){
-		<div class="container-fluid">
-			@pageBody
-		</div>
-	}
+	@CpBarePage(pageTitle){
+		<link rel="stylesheet" href="//static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" />
+		@pageHeader
+	}(pageBody)
 } else {
 	@CpCommonPage(pageTitle)(pageHeader)(pageBody)
 }
@@ -13,39 +12,43 @@
 
 @pageBody = {
 	<div id="main"></div>
-	<script src="netcdf.js"></script>
+	<script type="text/javascript" src="./netcdf.js"></script>
 }
 
 @pageHeader = {
-	<script src="https://static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
-	<link href="https://static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" rel="stylesheet" />
+	<meta charset="UTF-8">
+	<title>NetCDF</title>
+	<script type="text/javascript" src="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" />
+	<link rel="stylesheet" href="//static.icos-cp.eu/css/spinner.css" />
 
 	<style type="text/css">
-
-	html, body, #main {
-		height: 100%;
-		margin: 0px;
-		padding: 0px;
-	}
-
-	.leaflet-container, .leaflet-clickable, .leaflet-interactive {
-		cursor: crosshair !important;
-	}
-
-	canvas.raster {
-		image-rendering: optimizeSpeed;             /* Older versions of FF          */
-		image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
-		image-rendering: -webkit-optimize-contrast; /* Safari                        */
-		image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-		image-rendering: pixelated;                 /* Awesome future-browsers       */
-		-ms-interpolation-mode: nearest-neighbor;   /* IE                            */
-	}
-
-	.axis path, .axis line{
-		fill: none;
-		stroke: black;
-	}
-
+			body {
+				padding: 0;
+				margin: 0;
+			}
+			html, body, #main, #content {
+				height: 100%;
+				width: 100%;
+				overflow: hidden;
+			}
+			#map {
+				position: relative;
+				float: left;
+				width: calc(100% - 140px);
+				height: calc(100% - 80px);
+				margin: 0;
+			}
+			#legend{
+				position: relative;
+				float: right;
+				width: 135px;
+				height: calc(100% - 80px);
+				margin: 0;
+			}
+			.leaflet-container, .leaflet-clickable, .leaflet-interactive {
+				cursor: crosshair !important;
+			}
 	</style>
 }
 
