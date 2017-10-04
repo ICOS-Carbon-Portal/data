@@ -7,26 +7,30 @@ import {feature} from 'topojson';
 // 	return res.then(raster => raster);
 // }
 
-export function getRaster(service, variable, date, elevation, gamma){
+export const getRaster = (service, variable, date, elevation, gamma) => {
 	const basicIdRaster = getBinRaster(null, '/netcdf/getSlice', ['service', service], ['varName', variable], ['date', date], ['elevation', elevation]);
 	return basicIdRaster.then(raster => {
 		raster.basicId = raster.id;
 		raster.id = raster.basicId + gamma;
 		return raster;
 	});
-}
+};
 
-export function getCountriesGeoJson(){
+export const getCountriesGeoJson = () => {
 	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')
 		.then(topo => feature(topo, topo.objects.countries));
-}
+};
 
-export function getVariablesAndDates(service){
+export const getVariablesAndDates = service => {
 	const vars = getJson('/netcdf/listVariables', ['service', service]);
 	const dates = getJson('/netcdf/listDates', ['service', service]);
 	return Promise.all([vars, dates]).then(([variables, dates]) => {return {variables, dates};});
-}
+};
 
-export function getElevations(service, variable){
+export const getElevations = (service, variable) => {
 	return getJson('/netcdf/listElevations', ['service', service], ['varName', variable]);
-}
+};
+
+export const getServices = () => {
+	return getJson('/netcdf/listNetCdfFiles');
+};

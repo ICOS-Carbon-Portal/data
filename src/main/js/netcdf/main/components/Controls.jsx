@@ -19,11 +19,17 @@ export default class Controls extends Component {
 
 		return (
 			<div className="row" style={{marginTop: props.marginTop, marginBottom: 10}}>
-				<div className="col-md-3">
+				{!props.isIframe
+					? <div className="col-md-3">
+						<Selector className="variables" caption="Services" control={controls.services} action={props.handleServiceChange}/>
+					</div>
+					: null
+				}
+				<div className={getClassName(3, props.isIframe)}>
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
-				<div className="col-md-3">
+				<div className={getClassName(3, props.isIframe)}>
 					<Selector className="dates" caption="Date" control={controls.dates} action={props.handleDateChange} />
 				</div>
 
@@ -57,6 +63,11 @@ export default class Controls extends Component {
 		);
 	}
 }
+
+const getClassName = (defaultWidth, isIframe) => {
+	const width = isIframe ? defaultWidth : defaultWidth - 1;
+	return 'col-md-' + width;
+};
 
 function delayPresenter(delay){
 	switch (delay){

@@ -1,11 +1,12 @@
-import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations} from './backend.js';
+import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices} from './backend.js';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
-export const SERVICE_SET = 'SERVICE_SET';
+export const SERVICES_FETCHED = 'SERVICES_FETCHED';
 export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
 export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
 export const RASTER_FETCHED = 'RASTER_FETCHED';
+export const SERVICE_SET = 'SERVICE_SET';
 export const SERVICE_SELECTED = 'SERVICE_SELECTED';
 export const VARIABLE_SELECTED = 'VARIABLE_SELECTED';
 export const DATE_SELECTED = 'DATE_SELECTED';
@@ -24,6 +25,20 @@ export function failWithError(error){
 	};
 }
 
+export const fetchServices = dispatch => {
+	getServices().then(
+		services => {
+			dispatch({
+				type: SERVICES_FETCHED,
+				services
+			});
+
+			dispatch(selectService(0));
+		},
+		err => dispatch(failWithError(err))
+	);
+};
+
 export const fetchCountriesTopo = dispatch => {
 	getCountriesGeoJson().then(
 		countriesTopo => {
@@ -36,11 +51,18 @@ export const fetchCountriesTopo = dispatch => {
 	);
 };
 
-export const setService = service => dispatch => {
+export const setService = pid => dispatch => {
 	dispatch({
 		type: SERVICE_SET,
-		controlName: 'services',
-		services: [service]
+		services: [pid]
+	});
+	dispatch(fetchVariablesAndDates);
+};
+
+export const selectService = idx => dispatch => {
+	dispatch({
+		type: SERVICE_SELECTED,
+		idx
 	});
 	dispatch(fetchVariablesAndDates);
 };

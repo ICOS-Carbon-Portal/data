@@ -2,12 +2,14 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchCountriesTopo, setService, selectGamma, failWithError} from './actions.js';
+import {fetchServices, setService, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper';
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
-const pid = sections.pop() || sections.pop();
+const pidIdx = sections.indexOf('netcdf') + 1;
+const pid = sections[pidIdx];
+const isIframe = pid !== '';
 
 const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
 const keyValpairs = searchStr.split('&');
@@ -23,8 +25,8 @@ const gammaIdx = searchParams.gamma
 	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
 	: controls.gammas.values.indexOf(defaultGamma);
 
-
 const initState = {
+	isIframe,
 	colorMaker: undefined,
 	controls,
 	countriesTopo: {
@@ -65,13 +67,17 @@ const initState = {
 
 export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
+	store.dispatch(fetchCountriesTopo);
+	store.dispatch(selectGamma(gammaIdx));
 
-	if (pid) {
-		store.dispatch(fetchCountriesTopo);
-		store.dispatch(setService(pid));
-		store.dispatch(selectGamma(gammaIdx));
+	if (isIframe) {
+		if (pid) {
+			store.dispatch(setService(pid));
+		} else {
+			store.dispatch(failWithError({message: 'The request is missing a pid'}));
+		}
 	} else {
-		store.dispatch(failWithError({message: 'The request is missing a pid'}));
+		store.dispatch(fetchServices);
 	}
 	return store;
 }

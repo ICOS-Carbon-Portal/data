@@ -11,7 +11,11 @@
 @pageTitle = @{"Carbon Portal's NetCDF Viewer"}
 
 @pageBody = {
-	<div id="main"></div>
+	@if(iframe){
+		<div id="main"></div>
+	} else {
+		<div id="main" style="height:700px;"></div>
+	}
 	<script type="text/javascript" src="./netcdf.js"></script>
 }
 
@@ -30,7 +34,7 @@
 			html, body, #main, #content {
 				height: 100%;
 				width: 100%;
-				overflow: hidden;
+				/*overflow: hidden;*/
 			}
 			#map {
 				position: relative;

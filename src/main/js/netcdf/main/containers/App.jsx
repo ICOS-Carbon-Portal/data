@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Map from '../components/Map.jsx';
-import {selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton, incrementRasterData} from '../actions.js';
+import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton, incrementRasterData} from '../actions.js';
 import {AnimatedToasters} from 'icos-cp-toaster';
 
 class App extends Component {
@@ -11,7 +11,6 @@ class App extends Component {
 
 	render() {
 		const props = this.props;
-		// console.log({AppProps: props});
 
 		return <AppDiv {...props} />;
 	}
@@ -27,6 +26,8 @@ const AppDiv = props => {
 			maxWidth={400}
 		/>
 		: <Map
+			isIframe={props.isIframe}
+			services={props.services}
 			colorMaker={props.colorMaker}
 			controls={props.controls}
 			countriesTopo={props.countriesTopo}
@@ -40,6 +41,7 @@ const AppDiv = props => {
 			rasterFetchCount={props.rasterFetchCount}
 			raster={props.raster}
 			rasterDataFetcher={props.rasterDataFetcher}
+			serviceChanged={props.serviceChanged}
 			variableChanged={props.variableChanged}
 			initSearchParams={props.initSearchParams}
 		/>;
@@ -51,6 +53,7 @@ const stateToProps = state => {
 
 const dispatchToProps = dispatch => {
 	return {
+		serviceChanged: newIdx => dispatch(selectService(newIdx)),
 		variableChanged: newIdx => dispatch(selectVariable(newIdx)),
 		dateChanged: newIdx => dispatch(selectDate(newIdx)),
 		elevationChanged: newIdx => dispatch(selectElevation(newIdx)),

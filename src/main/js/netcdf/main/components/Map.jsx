@@ -28,7 +28,7 @@ export default class Map extends Component {
 	}
 
 	updateURL(){
-		if (this.props.rasterFetchCount > 0) {
+		if (this.props.isIframe && this.props.rasterFetchCount > 0) {
 			const {dates, elevations, gammas, variables} = this.props.controls;
 			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
 			const elevationParam = elevations.selectedIdx > 0 && elevations.selected ? `elevation=${elevations.selected}` : undefined;
@@ -92,12 +92,15 @@ export default class Map extends Component {
 		return (
 			<div id="content" className="container-fluid">
 				<Controls
+					isIframe={props.isIframe}
+					services={props.services}
 					marginTop={5}
 					controls={props.controls}
 					playingMovie={props.playingMovie}
 					increment={props.increment}
 					playPauseMovie={props.playPauseMovie}
 					delayChanged={props.delayChanged}
+					handleServiceChange={props.serviceChanged}
 					handleVarNameChange={props.variableChanged}
 					handleDateChange={props.dateChanged}
 					handleGammaChange={props.gammaChanged}
