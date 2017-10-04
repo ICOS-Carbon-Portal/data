@@ -24,10 +24,6 @@ object StaticRouting {
 	val authConfig = ConfigReader.getDefault.auth
 	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light")
 
-	private[this] def netCdfPageFactory(iframe: Boolean): PageFactory = {
-		case NetCdfProj => views.html.NetCDFPage(iframe)
-	}
-
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
 		case "wdcgg" => views.html.WdcggPage()
