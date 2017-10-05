@@ -83,10 +83,12 @@ export default class PreviewTimeSerie extends Component {
 }
 
 const Selector = props => {
+	const value = props.selected ? decodeURIComponent(props.selected) : '0';
+
 	return (
 		<span>
 			<label>{props.label}</label>
-			<select name={props.name} className="form-control" onChange={props.selectAction} value={props.selected ? props.selected : '0'}>
+			<select name={props.name} className="form-control" onChange={props.selectAction} value={value}>
 				<option value="0">Select option</option>{
 				props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)
 			}</select>
