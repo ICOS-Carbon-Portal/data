@@ -16,6 +16,7 @@ case class EtcFilename(
 	text: String
 ){
 	def dataType: DataType.Value = timeOrDatatype.fold(_ => DataType.EC, identity)
+	def time: Option[LocalTime] = timeOrDatatype.left.toOption
 	override def toString = text
 }
 

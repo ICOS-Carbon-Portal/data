@@ -24,6 +24,8 @@ class EtcFilenameTests extends FunSuite{
 	}
 
 	testGood(bm)
+	testGood(bm.replace("dat", "zip"))
+	testGood(bm.replace("dat", "bin"))
 	testBad(bm.replace("_", "-"), "must use underscores")
 	testBad(bm.replace("20170815", "201708151134"), "time only allowed in EC files")
 
