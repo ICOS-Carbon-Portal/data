@@ -13,9 +13,14 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
+import se.lu.nateko.cp.data.services.etcfacade.FacadeService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
+import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
+import scala.util.Failure
+import scala.util.Success
+import akka.http.scaladsl.model.headers.Connection
 
 object EtcUploadRouting {
 
@@ -23,34 +28,41 @@ object EtcUploadRouting {
 		import mat.executionContext
 
 		val authenticator = AuthenticatorProvider(config)
+		val facade = new FacadeService(config)
 
 		authenticateBasic("Carbon Portal", authenticator){station =>
 
 			pathPrefix(Md5Segment){ md5 =>
 
-				path(Segment){ fileName =>
+				path(Segment){ fileNameStr =>
 
-					extractRequest{ req =>
-						val md5Fut = req.entity.dataBytes.runWith(dataMd5Sink)
-						onSuccess(md5Fut){gotMd5 =>
-							if(md5 == gotMd5)
-								complete(StatusCodes.OK)
-							else
-								complete((StatusCodes.BadRequest, "Checksum failure!"))
-						}
+					EtcFilename.parse(fileNameStr) match{
+
+						case Failure(err) =>
+							complete((StatusCodes.BadRequest, err.getMessage))
+
+						case Success(file) =>
+							if(file.station.id != station.id)
+								forbid(s"This file must be uploaded by ${file.station.id}, not by ${station.id}!")
+
+							else extractDataBytes { dataBytes =>
+								val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
+
+								onSuccess(doneFut){_ => complete(StatusCodes.OK)}
+							}
 					}
-
 				} ~
-				complete((StatusCodes.BadRequest, "Expected single URL segment with file name after the MD5 segment"))
+				complete(StatusCodes.BadRequest -> "Expected single URL segment with file name after the MD5 segment")
 
 			} ~
-			complete((StatusCodes.BadRequest, "Expected hex-encoded MD5 sum as URL segment after 'upload/etc'"))
-		}
+			complete(StatusCodes.BadRequest -> "Expected hex-encoded MD5 sum as URL segment after 'upload/etc'")
+		} ~
+		forbid("Authentication error")
 	}
 
 	private val Md5Segment = Segment.flatMap(Md5Sum.fromHex(_).toOption)
 
-	private def dataMd5Sink(implicit ctxt: ExecutionContext): Sink[ByteString, Future[Md5Sum]] = {
-		Flow.apply[ByteString].viaMat(DigestFlow.md5)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
+	private def forbid(msg: String): Route = respondWithHeader(Connection("close")){
+		complete(StatusCodes.Forbidden -> msg)
 	}
 }

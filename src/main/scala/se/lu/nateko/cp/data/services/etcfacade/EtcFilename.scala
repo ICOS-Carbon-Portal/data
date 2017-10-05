@@ -13,9 +13,10 @@ case class EtcFilename(
 	timeOrDatatype: Either[LocalTime, DataType.Value],
 	loggerNumber: Int,
 	fileNumber: Int,
-	override val toString: String
+	text: String
 ){
 	def dataType: DataType.Value = timeOrDatatype.fold(_ => DataType.EC, identity)
+	override def toString = text
 }
 
 object EtcFilename{
