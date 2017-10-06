@@ -9,6 +9,8 @@ sealed class CpDataException(val message: String) extends RuntimeException(
 
 sealed class UploadUserError(message: String) extends CpDataException(message)
 
+final class ChecksumError(message: String) extends CpDataException(message)
+
 final class MetadataObjectNotFound(hash: Sha256Sum) extends UploadUserError(
 	s"No metadata found for data object with SHA-256 hash of $hash"
 )
