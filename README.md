@@ -25,7 +25,10 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 ---
 
 ## Simplified ETC-specific facade API for data uploads
-A test service is available for developers of the client code. At the time of writing, the test service uses Basic HTTP Authentication with a fixed username `FA-Lso` and password `p4ssw0rd`. The uploaded data is analyzed (MD5 sum gets calculated for it), and then discarded.
+The facade uses Basic HTTP Authentication. Username is the station's id.
+For testing purposes one can use fake station `FA-Lso` and password `p4ssw0rd`.
+The uploaded data is analyzed (MD5 sum gets calculated for it), and, if the checksum matches, the facade performs upload metadata registration (the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the complete Carbon Portal data upload procedure).
+The second step (the actual data upload that finalizes the metadata) is disabled at the moment (to prevent generation of PIDs for the test data), but is trivial (the data is already on the server) and can be enabled easily.
 
 Here is an example of uploading bytes in the string `test` to the service (performed on Linux command line):
 
@@ -33,19 +36,47 @@ Here is an example of uploading bytes in the string `test` to the service (perfo
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl -X PUT --data 'test' https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/testFileName.txt`
+`$ curl -X PUT --data 'test' https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011200_L3_F1.csv`
 
 `OK`
 
-Upload a file from the command line ("happy path" example):
+To upload a file from the command line:
 
-`$ md5sum myfile.ext`
+`$ md5sum FA-Lso_EC_201301011300_L3_F1.csv`
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl --upload-file myfile.ext https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/myfile.ext`
+`$ curl --upload-file FA-Lso_EC_201301011300_L3_F1.csv https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011300_L3_F1.csv`
 
 `OK`
+
+In HTTP terms, the binary contents of the file must be HTTP PUT to the URL whose format is shown in the examples. 
+
+File names are validated. Here is the output from our unit tests for this:
+
+	[info] EtcFilenameTests:
+	[info] - BE-Lon_BM_20170815_L99_F1.dat is a valid filename
+	[info] - BE-Lon_BM_20170815_L99_F1.zip is a valid filename
+	[info] - BE-Lon_BM_20170815_L99_F1.bin is a valid filename
+	[info] - BE-Lon-BM-20170815-L99-F1.dat is not a valid filename (must use underscores)
+	[info] - BE-Lon_BM_201708151134_L99_F1.dat is not a valid filename (time only allowed in EC files)
+	[info] - FA-Lso_EC_201202040437_L3_F12.csv is a valid EC filename with time
+	[info] - FA-Lso_EC_201202040437_L3_F12.blabla is not a valid filename (too long file extension)
+	[info] - FA-Lso_EC_201202040437_L3_F12.xxx is not a valid filename (unsupported file extension)
+	[info] - FA-lso_EC_201202040437_L3_F12.csv is not a valid filename (bad station id format)
+	[info] - FAA-Lso_EC_201202040437_L3_F12.csv is not a valid filename (bad station id format)
+	[info] - FA-Lso_EC_201202040437_F12.csv is not a valid filename (logger number missing)
+	[info] - FA-Lso_XX_201202040437_L3_F12.csv is not a valid filename (bad data type)
+	[info] - FA-Lso_EC_20120204_L3_F12.csv is not a valid filename (EC files must have time)
+
+Please note that only two metadata profiles are present for testing at the moment: for [Eddy fluxes ASCII](http://meta.icos-cp.eu/resources/cpmeta/etcEddyFluxRawSeriesCsv) and for [Eddy fluxes binary](http://meta.icos-cp.eu/resources/cpmeta/etcEddyFluxRawSeriesBin) files (plain, not zipped), so the file names must be chosen accordingly, and in consistence with the information about FA-Lso station on the ETC's [metadata service](http://www.europe-fluxdata.eu/metadata.aspx). That is, use only `EC` files and avoid `.zip` file extension. Otherwise, metadata registration will fail silently (logging the error on the server, of course).
+
+To observe the effect of the upload on the Carbon Portal metadata, please visit the Carbon Portal "landing page" of the fake station [FA-Lso](http://meta.icos-cp.eu/resources/stations/ES_FA-Lso) and observe changes in the "Usages of this Resource by others" section.
+Upload of every new file (provided that the file content is unique!) will result in creation of two new html links there, one for the acquisition provenance object, and one for the submission provenance object.
+You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.
+At the time of writing, there is already one test file uploaded (so two links are already there).
+
+The data object landing page (see example [here](https://meta.icos-cp.eu/objects/9-UPzv1eohIyxT1JYrBjp4kY)) will report incomplete upload status - that is by design (for testing).
 
 ---
 ## Information for developers
