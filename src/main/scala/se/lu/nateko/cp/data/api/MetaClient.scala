@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.api
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
@@ -15,6 +16,7 @@ import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
 import akka.http.scaladsl.marshalling.Marshal
+import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 	implicit val dispatcher = system.dispatcher
@@ -22,6 +24,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 	import config.{baseUrl, uploadApiPath, sparqlEndpointPath}
 
 	val sparql = new SparqlClient(new java.net.URL(baseUrl + sparqlEndpointPath))
+	def log = system.log
 
 	private def get(uri: Uri): Future[HttpResponse] = {
 		Http().singleRequest(
@@ -32,8 +35,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 		)
 	}
 
-	private def post(uri: Uri, completionInfo: UploadCompletionInfo): Future[HttpResponse] = {
-		Marshal(completionInfo).to[RequestEntity].flatMap( entity =>
+	private def post[T: ToEntityMarshaller](uri: Uri, payload: T): Future[HttpResponse] = {
+		Marshal(payload).to[RequestEntity].flatMap( entity =>
 			Http().singleRequest(
 				HttpRequest(uri = uri, method = HttpMethods.POST, entity = entity)
 			)
@@ -76,6 +79,18 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 					failWithReturnedMessage(notOk, resp)
 			}
 		)
+	}
+
+	def registerEtcUpload(meta: EtcUploadMetadata): Future[Unit] = {
+		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.etcUploatMetaFormat
+		val url = Uri(s"$baseUrl$uploadApiPath/etc")
+		post(url, meta).flatMap(resp => resp.status match {
+			case StatusCodes.OK =>
+				resp.discardEntityBytes()
+				Future.successful(())
+			case notOk =>
+				failWithReturnedMessage(notOk, resp)
+		})
 	}
 
 	def completeUpload(hash: Sha256Sum, completionInfo: UploadCompletionInfo): Future[String] = {

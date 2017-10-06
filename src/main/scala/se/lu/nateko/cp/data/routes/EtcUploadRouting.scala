@@ -24,11 +24,10 @@ import akka.http.scaladsl.model.headers.Connection
 
 object EtcUploadRouting {
 
-	def apply(config: EtcFacadeConfig)(implicit mat: Materializer): Route = (put & pathPrefix("upload" / "etc")){
+	def apply(config: EtcFacadeConfig, facade: FacadeService)(implicit mat: Materializer): Route = (put & pathPrefix("upload" / "etc")){
 		import mat.executionContext
 
 		val authenticator = AuthenticatorProvider(config)
-		val facade = new FacadeService(config)
 
 		authenticateBasic("Carbon Portal", authenticator){station =>
 

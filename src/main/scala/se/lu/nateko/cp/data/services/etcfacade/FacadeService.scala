@@ -20,8 +20,9 @@ import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
+import se.lu.nateko.cp.data.api.MetaClient
 
-class FacadeService(config: EtcFacadeConfig)(implicit mat: Materializer) {
+class FacadeService(config: EtcFacadeConfig, metaClient: MetaClient)(implicit mat: Materializer) {
 	import mat.executionContext
 
 	def getFileSink(file: EtcFilename, md5: Md5Sum): Sink[ByteString, Future[Done]] = {
@@ -45,7 +46,15 @@ class FacadeService(config: EtcFacadeConfig)(implicit mat: Materializer) {
 
 			res.failed.foreach(_ => Files.deleteIfExists(path))
 
+			res.foreach(_ => performUpload(file))
 			res
+		}
+	}
+
+	private def performUpload(file: EtcFilename): Unit = {
+		val log = metaClient.log
+		getUploadMeta(file).flatMap(metaClient.registerEtcUpload).failed.foreach{err =>
+			log.error(err, "ETC upload registration with meta service failed")
 		}
 	}
 
