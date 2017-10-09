@@ -3,10 +3,8 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
-import {changeRoute, setPreviewVisibility, logOut} from '../actions';
-
-const ROUTE_SEARCH = 'ROUTE_SEARCH';
-const ROUTE_CART = 'ROUTE_CART';
+import {updateRoute, setPreviewVisibility, logOut} from '../actions';
+import config from '../config';
 
 export class App extends Component {
 	constructor(props){
@@ -16,12 +14,12 @@ export class App extends Component {
 	handleRouteClick(){
 		const {cart, preview} = this.props;
 		const currentRoute = this.props.route;
-		const newRoute = !currentRoute || currentRoute === ROUTE_SEARCH
-			? ROUTE_CART
-			: ROUTE_SEARCH;
+		const newRoute = !currentRoute || currentRoute === config.ROUTE_SEARCH
+			? config.ROUTE_CART
+			: config.ROUTE_SEARCH;
 
-		this.props.setPreviewVisibility(newRoute === ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
-		this.props.changeRoute(newRoute);
+		this.props.setPreviewVisibility(newRoute === config.ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
+		this.props.updateRoute(newRoute);
 	}
 
 	render(){
@@ -58,10 +56,10 @@ export class App extends Component {
 const SwitchRouteBtn = props => {
 	switch(props.currentRoute){
 
-		case ROUTE_SEARCH:
+		case config.ROUTE_SEARCH:
 			return <RouteSearchBtn {...props} />;
 
-		case ROUTE_CART:
+		case config.ROUTE_CART:
 			return <RouteCartBtn {...props} />;
 
 		default:
@@ -96,10 +94,10 @@ const RouteCartBtn = props => {
 const Route = props => {
 	switch(props.route){
 
-		case ROUTE_SEARCH:
+		case config.ROUTE_SEARCH:
 			return <Search {...props} />;
 
-		case ROUTE_CART:
+		case config.ROUTE_CART:
 			return <DataCart {...props} />;
 
 		default:
@@ -120,7 +118,7 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		changeRoute: route => dispatch(changeRoute(route)),
+		updateRoute: route => dispatch(updateRoute(route)),
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		logOut: () => dispatch(logOut)
 	};

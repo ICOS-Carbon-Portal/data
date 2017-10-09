@@ -10,7 +10,7 @@ export const PREVIEW = 'PREVIEW';
 export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
-export const ROUTE_CHANGED = 'ROUTE_CHANGED';
+export const ROUTE_UPDATED = 'ROUTE_UPDATED';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
@@ -124,10 +124,12 @@ export const requestStep = direction => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const changeRoute = route => dispatch => {
+export const updateRoute = route => dispatch => {
+	const newRoute = route || window.location.hash.substr(1) || config.ROUTE_SEARCH;
+
 	dispatch({
-		type: ROUTE_CHANGED,
-		route
+		type: ROUTE_UPDATED,
+		route: newRoute
 	});
 };
 

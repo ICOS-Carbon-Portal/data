@@ -1,12 +1,29 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {SPEC_FILTER_RESET, ROUTE_UPDATED, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
+import Cart from './models/Cart';
+import Preview from './models/Preview';
 
+const initState = {
+	user: {},
+	lookup: undefined,
+	specTable: new CompositeSpecTable({}),
+	objectsTable: [],
+	sorting: {objCount: 0},
+	paging: {},
+	cart: new Cart(),
+	preview: new Preview(),
+	toasterData: undefined,
+	batchDownloadStatus: {
+		isAllowed: false,
+		ts: 0
+	}
+};
 
-export default function(state, action){
+export default function(state = initState, action){
 
 	switch(action.type){
 
@@ -72,10 +89,14 @@ export default function(state, action){
 				paging: updatePaging(state.paging, action.direction)
 			});
 
-		case ROUTE_CHANGED:
-			return update({
-				route: action.route
-			});
+		case ROUTE_UPDATED:
+			const currentRoute = window.location.hash.substr(1);
+
+			if (currentRoute !== action.route) {
+				window.location.hash = action.route;
+			}
+
+			return update({route: action.route});
 
 		case PREVIEW:
 			return update({

@@ -17,6 +17,9 @@ class DataCart extends Component {
 	render(){
 		const props = this.props;
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
+		const getSpecLookupType = props.lookup
+			? props.lookup.getSpecLookupType.bind(props.lookup)
+			: _ => _;
 
 		return (
 			<div className="row">
@@ -27,7 +30,7 @@ class DataCart extends Component {
 						cart={props.cart}
 						setCartName={props.setCartName}
 						previewitemId={previewitemId}
-						getSpecLookupType={props.lookup.getSpecLookupType.bind(props.lookup)}
+						getSpecLookupType={getSpecLookupType}
 						previewItemAction={this.handlePreview.bind(this)}
 						removeFromCart={props.removeFromCart}
 						batchDownloadStatus={props.batchDownloadStatus}
