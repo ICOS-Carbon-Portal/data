@@ -4,6 +4,7 @@ import scala.collection.mutable.Buffer
 import scala.annotation.tailrec
 
 class EnvelopePolygon {
+	import EnvelopePolygon._
 
 	private[this] val verts = Buffer.empty[Point]
 
@@ -31,6 +32,9 @@ class EnvelopePolygon {
 		Math.atan2((to.lat - from.lat).toDouble, (to.lon - from.lon).toDouble)
 	}
 
+	def verticeIsConcave(idx: Int): Boolean =
+		angleDiff(edgeAngle(idx - 1), edgeAngle(idx)) <= 0
+
 	def attachDegenerateVertice(baseVerticeIdx: Int, newVertice: Point): Unit = {
 		if(size < 2) verts += newVertice
 		else {
@@ -48,7 +52,7 @@ object EnvelopePolygon{
 	def angleDiff(from: Double, to: Double): Double = {
 		val diff0 = to - from
 		if(diff0 > Math.PI) diff0 - 2 * Math.PI
-		else if(diff0 < - Math.PI) diff0 + 2 * Math.PI
+		else if(diff0 <= - Math.PI) diff0 + 2 * Math.PI
 		else diff0
 	}
 }
