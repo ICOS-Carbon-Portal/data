@@ -34,7 +34,7 @@ class BBox(var left: Point, var top: Point, var right: Point, var bottom: Point)
 	override def toString = s"BBox($left, $top, $right, $bottom)"
 }
 
-class Point(val lon: Float, val lat: Float){
+case class Point(lon: Float, lat: Float){
 
 	def sameAs(lon2: Float, lat2: Float): Boolean = lon2 == lon && lat2 == lat
 
