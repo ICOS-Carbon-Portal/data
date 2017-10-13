@@ -53,7 +53,7 @@ export default class ObjSpecFilter extends Component {
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
 						itemComponent={this.listItem.bind(this, name)}
-						tagComponent={this.tagItem.bind(this)}
+						tagComponent={this.tagItem}
 					/>
 				</div>
 			</div>
@@ -86,11 +86,15 @@ export default class ObjSpecFilter extends Component {
 	}
 
 	tagItem({item}){
-		return <span style={{marginRight: 2}}>{item.text}</span>;
+		const textItem = typeof item === 'object' ? item : {text: item};
+
+		return typeof item === 'object'
+			? <span style={{marginRight: 2}}>{textItem.text}</span>
+			: <span style={{marginRight: 2, color: 'gray'}} title="Not present with current filters">{textItem.text}</span>;
 	}
 
 	handleChange(name, values){
-		this.props.updateFilter(name, values.map(v => v.text));
+		this.props.updateFilter(name, values.map(v => v.text || v));
 	}
 
 	handleSearch(name, value){
@@ -114,7 +118,7 @@ export default class ObjSpecFilter extends Component {
 				}
 			</div>
 			<div className="panel-body">
-				{colNames.map(name => this.getCtrl(name, specTable))}
+				{colNames.map(name => this.getCtrl(name))}
 			</div>
 		</div>;
 	}

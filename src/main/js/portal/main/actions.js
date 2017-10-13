@@ -11,6 +11,7 @@ export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
+export const RESTORE_FILTERS = 'RESTORE_FILTERS';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
@@ -20,7 +21,7 @@ import {getUserInfo, logOutUser} from './backend';
 import {getIsBatchDownloadOk, getWhoIam} from './backend';
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
-import {getNewTimeseriesUrl} from './utils.js';
+import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
 
 
@@ -32,13 +33,16 @@ const failWithError = dispatch => error => {
 	});
 }
 
-export const getAllSpecTables = dispatch => {
+export const getAllSpecTables = hash => dispatch => {
 	fetchAllSpecTables().then(
 		specTables => {
 			dispatch({
 				type: SPECTABLES_FETCHED,
 				specTables
 			});
+			if (hash){
+				dispatch(restoreFilters(hash));
+			}
 			dispatch(getFilteredDataObjects);
 		},
 		failWithError(dispatch)
@@ -125,11 +129,18 @@ export const requestStep = direction => dispatch => {
 };
 
 export const updateRoute = route => dispatch => {
-	const newRoute = route || window.location.hash.substr(1) || config.ROUTE_SEARCH;
+	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 	dispatch({
 		type: ROUTE_UPDATED,
 		route: newRoute
+	});
+};
+
+const restoreFilters = hash => dispatch => {
+	dispatch({
+		type: RESTORE_FILTERS,
+		hash
 	});
 };
 

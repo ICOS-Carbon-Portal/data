@@ -1,13 +1,16 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_UPDATED, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
 import Cart from './models/Cart';
 import Preview from './models/Preview';
+import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
+import {getRouteFromLocationHash} from './utils';
 
 const initState = {
+	routeAndParams: new RouteAndParams(),
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
@@ -54,10 +57,14 @@ export default function(state = initState, action){
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
+			let routeAndParams = state.routeAndParams.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
+			window.location.hash = routeAndParams.urlPart;
+
 			return update({
+				routeAndParams,
 				specTable,
-				objectTable: [],
+				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
@@ -65,9 +72,27 @@ export default function(state = initState, action){
 		case SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
+			routeAndParams = state.routeAndParams.withResetFilters();
+			window.location.hash = routeAndParams.urlPart;
 
 			return update({
+				routeAndParams,
 				specTable,
+				paging: freshPaging(objCount),
+				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case RESTORE_FILTERS:
+			routeAndParams = restoreRouteAndParams(action.hash);
+			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
+				return specTable.withFilter(filterKey, routeAndParams.filters[filterKey]);
+			}, state.specTable);
+			objCount = getObjCount(specTable);
+
+			return update({
+				routeAndParams,
+				specTable,
+				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
@@ -79,24 +104,27 @@ export default function(state = initState, action){
 
 		case SORTING_TOGGLED:
 			return update({
-				objectTable: [],
+				objectsTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
 			});
 
 		case STEP_REQUESTED:
 			return update({
-				objectTable: [],
+				objectsTable: [],
 				paging: updatePaging(state.paging, action.direction)
 			});
 
 		case ROUTE_UPDATED:
-			const currentRoute = window.location.hash.substr(1);
+			routeAndParams = state.routeAndParams.withRoute(action.route);
+			const currentRoute = getRouteFromLocationHash();
 
 			if (currentRoute !== action.route) {
-				window.location.hash = action.route;
+				window.location.hash = routeAndParams.urlPart;
 			}
 
-			return update({route: action.route});
+			return update({
+				routeAndParams
+			});
 
 		case PREVIEW:
 			return update({

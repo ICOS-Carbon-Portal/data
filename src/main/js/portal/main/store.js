@@ -19,10 +19,13 @@ import {fetchUserInfo, getAllSpecTables, updateRoute} from './actions';
 // 	}
 // }
 
+const hash = window.location.hash.substr(1);
+const route = hash.split('?')[0];
+
 export default function(){
 	const store = createStore(reducer, undefined, applyMiddleware(thunkMiddleware));
-	store.dispatch(updateRoute());
+	store.dispatch(updateRoute(route));
 	store.dispatch(fetchUserInfo(true));
-	store.dispatch(getAllSpecTables);
+	store.dispatch(getAllSpecTables(hash));
 	return store;
 }

@@ -6,3 +6,7 @@ export const getNewTimeseriesUrl = (item, xAxis) => {
 		type: 'scatter'
 	});
 };
+
+export const getRouteFromLocationHash = () => {
+	return window.location.hash.substr(1).split('?')[0];
+};

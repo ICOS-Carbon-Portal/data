@@ -12,9 +12,8 @@ export class App extends Component {
 	}
 
 	handleRouteClick(){
-		const {cart, preview} = this.props;
-		const currentRoute = this.props.route;
-		const newRoute = !currentRoute || currentRoute === config.ROUTE_SEARCH
+		const {cart, preview, routeAndParams} = this.props;
+		const newRoute = routeAndParams.route === config.ROUTE_SEARCH
 			? config.ROUTE_CART
 			: config.ROUTE_SEARCH;
 
@@ -40,7 +39,7 @@ export class App extends Component {
 						<small> Under construction</small>
 
 						<SwitchRouteBtn
-							currentRoute={props.route}
+							currentRoute={props.routeAndParams.route}
 							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
@@ -57,17 +56,17 @@ const SwitchRouteBtn = props => {
 	switch(props.currentRoute){
 
 		case config.ROUTE_SEARCH:
-			return <RouteSearchBtn {...props} />;
+			return <SearchBtn {...props} />;
 
 		case config.ROUTE_CART:
-			return <RouteCartBtn {...props} />;
+			return <CartBtn {...props} />;
 
 		default:
-			return <RouteSearchBtn {...props} />;
+			return <SearchBtn {...props} />;
 	}
 };
 
-const RouteSearchBtn = props => {
+const SearchBtn = props => {
 	const {cart, action} = props;
 	const colCount = cart.count;
 
@@ -81,7 +80,7 @@ const RouteSearchBtn = props => {
 	);
 };
 
-const RouteCartBtn = props => {
+const CartBtn = props => {
 	const {action} = props;
 
 	return (
@@ -92,7 +91,7 @@ const RouteCartBtn = props => {
 };
 
 const Route = props => {
-	switch(props.route){
+	switch(props.routeAndParams.route){
 
 		case config.ROUTE_SEARCH:
 			return <Search {...props} />;
@@ -109,7 +108,7 @@ function stateToProps(state){
 	return {
 		lookup: state.lookup,
 		user: state.user,
-		route: state.route,
+		routeAndParams: state.routeAndParams,
 		toasterData: state.toasterData,
 		cart: state.cart,
 		preview: state.preview
@@ -118,7 +117,7 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		updateRoute: route => dispatch(updateRoute(route)),
+		updateRoute: hash => dispatch(updateRoute(hash)),
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		logOut: () => dispatch(logOut)
 	};

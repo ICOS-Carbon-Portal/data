@@ -16,21 +16,25 @@ export default class Preview {
 		}
 
 		const objInfo = objectsTable.find(ot => ot.dobj === id);
+		const options = objInfo ? lookup[objInfo.spec] : {};
 		const item = cart.hasItem(id)
 			? cart.item(id)
-			: objInfo ? new CartItem(objInfo) : undefined;
-		const options = item ? lookup[item.spec] : undefined;
+			: objInfo ? new CartItem(objInfo, options.type) : undefined;
 
-		if (options && options.type === config.TIMESERIES){
+		if (options.type === config.TIMESERIES){
 			const xAxis = options.options.find(o => o === 'TIMESTAMP');
 
 			if (item && xAxis){
 				const url = getNewTimeseriesUrl(item, xAxis);
 				return new Preview(item.withUrl(url), options.options, options.type, true);
 			}
+		} else if (options.type === config.NETCDF){
+			return new Preview(item, options.options, options.type, true);
+		} else if (cart.hasItem(id)){
+			return new Preview(item, undefined, item.type, true);
 		}
 
-		return new Preview(item, options.options, options.type, true);
+		throw new Error('Could not initialize Preview');
 	}
 
 	withItemUrl(url){
