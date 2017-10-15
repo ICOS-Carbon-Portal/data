@@ -10,6 +10,7 @@ class EnvelopePolygon {
 
 	def vertices: Seq[Point] = verts
 	def vertice(idx: Int): Point = verts(shortcircuit(idx))
+	def size: Int = verts.size
 
 	private def shortcircuit(idx: Int): Int = {
 		val curSize = verts.size
@@ -68,19 +69,36 @@ class EnvelopePolygon {
 		}
 	}
 
-	//TODO Implement
-	def isInside(p: Point): Boolean = false
+	private def isInside(p: Point): Boolean = {
+		import EdgeRayRelationship._
+		var isOnBorder = false
+		var crossingCount = 0
+		val iter = verts.indices.iterator
+		val n = verts.size
+		while(!isOnBorder && iter.hasNext){
+			val idx = iter.next()
+			computeRelationship(verts(idx), verts((idx + 1) % n), p) match{
+				case Start => isOnBorder = true
+				case Cross => crossingCount += 1
+				case _ =>
+			}
+		}
+		isOnBorder || crossingCount % 2 != 0
+	}
 
 	/***
-	 * returns false if the new vertice was strictly inside the polygon and therefore has been discarded,
+	 * returns false if the new vertice was inside the polygon (including border) and therefore has been discarded,
 	 * true otherwise
 	 */
 	def addVertice(vert: Point): Boolean = {
 		if(verts.size < 2) {
-			verts += vert
-			true
+			if(verts.contains(vert)) false else {
+				verts += vert
+				true
+			}
 		}
 		else !isInside(vert) && {
+			//TODO Improve base vertice search (ensure against possible edge crossing!)
 			val baseIdx = verts.indices.minBy{i =>
 				val vi = verts(i)
 				val dx = vi.lon - vert.lon

@@ -6,7 +6,7 @@ import se.lu.nateko.cp.data.streams.geo.Point
 
 class EnvelopePolygonTests extends FunSpec{
 
-	def add(lon: Float, lat: Float)(implicit poly: EnvelopePolygon): Unit =
+	def add(lon: Float, lat: Float)(implicit poly: EnvelopePolygon): Boolean =
 		poly.addVertice(new Point(lon, lat))
 
 	private def triangle = {
@@ -33,12 +33,53 @@ class EnvelopePolygonTests extends FunSpec{
 		p
 	}
 
+	describe("Vertice addition"){
+		it("Discards second vertice if it is a duplicate"){
+			implicit val p = new EnvelopePolygon
+			add(42, 42)
+			assert(add(42, 42) == false)
+			assert(p.size == 1)
+		}
+
+		it("Discards third vertice if it is on the edge"){
+			implicit val p = new EnvelopePolygon
+			add(0, 0)
+			add(1, 0)
+			assert(add(0.5f, 0) == false)
+			assert(p.size == 2)
+		}
+
+		def reducedTriangle = {
+			val t = triangle
+			t.reduceVerticesByOne
+			t
+		}
+
+		it("Discards points inside triangle and on its edges and vertices"){
+			implicit val t = reducedTriangle
+			assert(!add(0.9f,0.5f))
+			assert(!add(0,0))
+			assert(!add(1,0))
+			assert(!add(1,1))
+			assert(!add(0.5f,0.5f))
+			assert(!add(0.5f,0))
+			assert(!add(1, 0.5f))
+			assert(t.size == 3)
+		}
+
+		it("Adds a point outside a triangle"){
+			implicit val t = reducedTriangle
+			assert(add(-1,-1))
+			assert(t.size == 5)
+		}
+	}
+
 	describe("Constructing EnvelopePolygon by right-angle-triangle vertice additions"){
 
 		val p = triangle
 
 		it("gives size == 4"){
-			assert(p.vertices.size == 4)
+			assert(p.size == 4)
 		}
 
 		it("Short-circuits 4th vertice to 0th"){
@@ -151,8 +192,12 @@ class EnvelopePolygonTests extends FunSpec{
 		}
 
 		it("Cleans up redundant vertices as first priority"){
-			implicit val p = trapezoid
-			add(1.5f, 1)
+			implicit val p = new EnvelopePolygon
+			add(0,0)
+			add(1,1)
+			add(1.5f, 1) //trapezoid with an extra redundant vertice inside the top edge
+			add(2,1)
+			add(3,0)
 			p.reduceVerticesByOne
 			p.reduceVerticesByOne
 			assert(trapezoid.vertices === p.vertices)
