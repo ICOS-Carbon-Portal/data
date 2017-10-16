@@ -1,10 +1,9 @@
 package se.lu.nateko.cp.data.services.upload
 
 import scala.concurrent.Future
-
-import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.data.api.{CpDataException, MetaClient}
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.EmptyCompletionInfo
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, UploadCompletionInfo}
 
 class MetaCompletionPostUploadTask(hash: Sha256Sum, client: MetaClient) extends PostUploadTask{
 
@@ -18,11 +17,24 @@ class MetaCompletionPostUploadTask(hash: Sha256Sum, client: MetaClient) extends 
 
 		if(failures.isEmpty) {
 
-			val completionInfo = taskResults.collectFirst{
-				case IngestionSuccess(info) => info
-			}.getOrElse(EmptyCompletionInfo)
+			val bytesFut: Future[Long] = taskResults.collectFirst{
+				case ByteCountingSuccess(bytes) =>
+					Future.successful(bytes)
+			}.getOrElse(
+					Future.failed(
+						new CpDataException("Result of the byte-counting upload task was not found")
+					)
+			)
 
-			client.completeUpload(hash, completionInfo).map(UploadCompletionSuccess(_))
+			val extractOpt: Option[IngestionMetadataExtract] = taskResults.collectFirst{
+				case IngestionSuccess(extract) => extract
+			}
+
+			for(
+				bytes <- bytesFut;
+				completionInfo = UploadCompletionInfo(bytes, extractOpt);
+				metaServiceResponse <- client.completeUpload(hash, completionInfo)
+			) yield UploadCompletionSuccess(metaServiceResponse)
 
 		} else
 			Future.successful(CancelledBecauseOfOthers(failures))
