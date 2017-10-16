@@ -87,26 +87,41 @@ class EnvelopePolygon {
 	}
 
 	/***
+	 * Adds a vertice, attaching it to the nearest edge with a degenerate zero-area protrusion.
+	 * Effectively inserts 2 or 3 new vertices, depending on whether the nearest point on the nearest edge
+	 * is a vertice or an inner point, respectively.
+	 *
 	 * returns false if the new vertice was inside the polygon (including border) and therefore has been discarded,
-	 * true otherwise
+	 * true otherwise (i.e. the vertice has been added)
 	 */
 	def addVertice(vert: Point): Boolean = {
-		if(verts.size < 2) {
+		val curSize = size
+		if(curSize < 2) {
 			if(verts.contains(vert)) false else {
 				verts += vert
 				true
 			}
 		}
 		else !isInside(vert) && {
-			//TODO Improve base vertice search (ensure against possible edge crossing!)
-			val baseIdx = verts.indices.minBy{i =>
-				val vi = verts(i)
-				val dx = vi.lon - vert.lon
-				val dy = vi.lat - vert.lat
-				dx * dx + dy * dy
+
+			val nearest = verts.indices.map{i =>
+				val noe = nearestOnEdge(verts(i), verts((i + 1) % curSize), vert)
+				noe.baseIdx = i + 1
+				noe
+			}.minBy(nearest => distSq(vert, nearest.point))
+
+			import NearestKind._
+			nearest.kind match{
+
+				case FirstVertice =>
+					verts.insert(nearest.baseIdx, vert, nearest.point)
+
+				case SecondVertice =>
+					verts.insert(nearest.baseIdx, nearest.point, vert)
+
+				case InnerPoint =>
+					verts.insert(nearest.baseIdx, nearest.point, vert, nearest.point)
 			}
-			val base = verts(baseIdx)
-			verts.insert(baseIdx + 1, vert, base)
 			true
 		}
 	}
@@ -140,5 +155,37 @@ object EnvelopePolygon{
 
 			new Point(xnom / denom, ynom / denom)
 		}
+	}
+
+	def distSq(p1: Point, p2: Point): Float = {
+		val dx = p1.lon - p2.lon
+		val dy = p1.lat - p2.lat
+		dx * dx + dy * dy
+	}
+
+	object NearestKind extends Enumeration{
+		val FirstVertice, SecondVertice, InnerPoint = Value
+	}
+
+	class NearestOnEdge(val kind: NearestKind.Value, val point: Point){
+		var baseIdx: Int = _
+	}
+
+	def nearestOnEdge(v1: Point, v2: Point, p: Point): NearestOnEdge = {
+
+		val factor: Float = {
+			val nom = (v2.lon - v1.lon) * (p.lon - v1.lon) + (v2.lat - v1.lat) * (p.lat - v1.lat)
+			nom / distSq(v1, v2)
+		}
+
+		import NearestKind._
+
+		if(factor <= 0) new NearestOnEdge(FirstVertice, v1)
+
+		else if(factor >= 1) new NearestOnEdge(SecondVertice, v2)
+
+		else new NearestOnEdge(InnerPoint,
+			Point(v1.lon + (v2.lon - v1.lon) * factor, v1.lat + (v2.lat - v1.lat) * factor)
+		)
 	}
 }

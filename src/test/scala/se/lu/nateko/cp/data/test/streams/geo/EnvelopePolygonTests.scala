@@ -72,6 +72,16 @@ class EnvelopePolygonTests extends FunSpec{
 			assert(add(-1,-1))
 			assert(t.size == 5)
 		}
+
+		it("Correctly attaches a point to an edge of a slim triangle"){
+			implicit val t = new EnvelopePolygon
+			add(0,0); add(1, 5); add(0, 10);
+			t.reduceVerticesByOne
+			//have a simple triangle now, 3 points
+			assert(t.size == 3)
+			add(-1, 4)
+			assert(t.vertices.toSet == Set(Point(0,0), Point(-1, 4), Point(0, 4), Point(0, 10), Point(1, 5)))
+		}
 	}
 
 	describe("Constructing EnvelopePolygon by right-angle-triangle vertice additions"){
@@ -162,11 +172,12 @@ class EnvelopePolygonTests extends FunSpec{
 	describe("Edge cost"){
 
 		it("Is 'infinite' on non-convex edges"){
-			assert(trapezoid.edgeCost(0) == Double.MaxValue)
-			assert(trapezoid.edgeCost(1) == Double.MaxValue)
-			assert(trapezoid.edgeCost(2) == Double.MaxValue)
-			assert(trapezoid.edgeCost(3) == Double.MaxValue)
-			assert(trapezoid.edgeCost(5) == Double.MaxValue)
+			val t = trapezoid
+			assert(t.edgeCost(0) == Double.MaxValue)
+			assert(t.edgeCost(1) == Double.MaxValue)
+			assert(t.edgeCost(2) == Double.MaxValue)
+			assert(t.edgeCost(3) == Double.MaxValue)
+			assert(t.edgeCost(5) == Double.MaxValue)
 		}
 
 		it("Is double triangle area on convex edges"){
