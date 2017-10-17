@@ -16,7 +16,9 @@ export default class Preview {
 		}
 
 		const objInfo = objectsTable.find(ot => ot.dobj === id);
-		const options = objInfo ? lookup[objInfo.spec] : {};
+		const options = objInfo
+			? lookup[objInfo.spec]
+			: cart.hasItem(id) ? lookup[cart.item(id).spec] : {};
 		const item = cart.hasItem(id)
 			? cart.item(id)
 			: objInfo ? new CartItem(objInfo, options.type) : undefined;

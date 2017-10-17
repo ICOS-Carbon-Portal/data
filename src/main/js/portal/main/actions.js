@@ -40,9 +40,8 @@ export const getAllSpecTables = hash => dispatch => {
 				type: SPECTABLES_FETCHED,
 				specTables
 			});
-			if (hash){
-				dispatch(restoreFilters(hash));
-			}
+
+			dispatch(restoreFilters(hash));
 			dispatch(getFilteredDataObjects);
 		},
 		failWithError(dispatch)

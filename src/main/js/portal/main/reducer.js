@@ -128,7 +128,7 @@ export default function(state = initState, action){
 
 		case PREVIEW:
 			return update({
-				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable),
+				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
 		case PREVIEW_VISIBILITY:
