@@ -24,9 +24,11 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	import http.system.dispatcher
 
-	private val dlCollUri = {
+	private val dlCollUri = collUri(config.dobjDownloadsCollection)
+
+	def collUri(alias: String) = {
 		import config._
-		Uri(s"$baseUri/$dbName/$dobjDownloadsCollection")
+		Uri(s"$baseUri/$dbName/$alias")
 	}
 
 	def getUserUri(uid: UserId): Uri = {
@@ -50,21 +52,33 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			})
 		}
 
-	def ensureDobjDownloadCollExists: Future[Unit] = {
-		http.singleRequest(HttpRequest(uri = dlCollUri)).flatMap{resp =>
+	def ensureDobjDownloadCollExists: Future[Unit] = ensureCollectionExists(
+		dlCollUri,
+		"Download log for CP-hosted data objects",
+		config.dobjDownloadsCollection
+	)
+
+	def ensurePortalUseCollExists: Future[Unit] = ensureCollectionExists(
+		collUri(config.portalUsageCollection),
+		"Usage statistics of CP 'portal' app",
+		config.portalUsageCollection
+	)
+
+	def ensureCollectionExists(collUri: Uri, description: String, alias: String): Future[Unit] = {
+		http.singleRequest(HttpRequest(uri = collUri)).flatMap{resp =>
 			resp.discardEntityBytes()
 			if(resp.status == StatusCodes.NotFound){
-				val dlCollectionDescr = JsObject("comment" -> JsString("Download log for CP-hosted data objects"))
+				val collectionDescr = JsObject("comment" -> JsString(description))
 				for(
-					entity <- Marshal(dlCollectionDescr).to[RequestEntity];
-					r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.PUT, entity = entity))
+					entity <- Marshal(collectionDescr).to[RequestEntity];
+					r <- http.singleRequest(HttpRequest(uri = collUri, method = HttpMethods.PUT, entity = entity))
 				) yield {
 					r.discardEntityBytes()
 					if(r.status == StatusCodes.Created) Future.successful(())
-					else Future.failed(new Exception(s"Failed creating ${config.dobjDownloadsCollection} collection in RestHeart: ${r.status.defaultMessage}"))
+					else Future.failed(new Exception(s"Failed creating ${alias} collection in RestHeart: ${r.status.defaultMessage}"))
 				}
 			} else if(resp.status == StatusCodes.OK) Future.successful(())
-			else Future.failed(new Exception(s"Unexpected response when checking for dobj download log collection in RestHeart : ${resp.status.defaultMessage}"))
+			else Future.failed(new Exception(s"Unexpected response when checking for ${alias} collection in RestHeart : ${resp.status.defaultMessage}"))
 		}
 	}
 
@@ -79,7 +93,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}
 
-	def init: Future[Unit] = ensureDobjDownloadCollExists.flatMap(_ => defineDobjDownloadAggregations)
+	def init: Future[Unit] = ensurePortalUseCollExists.zip(ensureDobjDownloadCollExists).flatMap(_ => defineDobjDownloadAggregations)
 
 	def logDownload(dobj: DataObject, ip: String): Future[Unit] = {
 		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat

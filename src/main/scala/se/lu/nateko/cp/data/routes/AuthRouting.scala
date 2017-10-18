@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.routes
 
 import scala.util.Failure
 import scala.util.Success
-
 import akka.http.javadsl.server.CustomRejection
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directive
@@ -18,6 +17,8 @@ import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
+import spray.json.{JsNull, JsObject, JsString}
+
 import scala.util.Try
 
 class AuthRouting(authConfig: PublicAuthConfig) {
@@ -43,7 +44,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 
 	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).recover{rejections =>
 		val hasCookieRejection = rejections.collectFirst{
-			case MissingCookieRejection(cookieName) if(cookieName == authConfig.authCookieName) => true
+			case MissingCookieRejection(cookieName) if cookieName == authConfig.authCookieName => true
 		}
 		if(hasCookieRejection.isDefined) provide(None)
 		else reject
@@ -56,7 +57,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 					complete((StatusCodes.Forbidden, cafr.msg))
 			}
 			.handle{
-				case MissingCookieRejection(cookieName) if(cookieName == authConfig.authCookieName) =>
+				case MissingCookieRejection(cookieName) if cookieName == authConfig.authCookieName =>
 					complete((StatusCodes.Forbidden, "Carbon Portal authentication cookie was missing"))
 			}
 			.result()
@@ -65,9 +66,16 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 	val userRequired: Directive1[UserId] = forbidAuthenticationFailures & user
 
 	val whoami: Route = (get & path("whoami")){
+		UploadRouting.getClientIp{ip =>
+			user{uid => complete(getWhoAmIObj(ip, Some(uid)))} ~
+			complete(getWhoAmIObj(ip, None))
+		}
+	}
+
+	private def getWhoAmIObj(ip: String, uidOpt: Option[UserId]): JsObject = {
 		import spray.json._
-		user{ uid => complete(uid)} ~
-		complete(JsObject("email" -> JsNull))
+		val email = uidOpt.map(uid => JsString(uid.email)).getOrElse(JsNull)
+		JsObject("email" -> email, "ip" -> JsString(ip))
 	}
 
 	val logout: Route = (get & path("logout")){
