@@ -81,10 +81,10 @@ const Item = props => {
 		: "list-group-item";
 
 	return (
-		<li className={className}>
+		<li className={className} style={{display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
 			<CartIcon id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
 			<PreviewIcon id={item.id} previewType={previewType} clickAction={action} />
-			<a href={item.id} target="_blank">{item.itemName}</a>
+			<a href={item.id} target="_blank" title={item.itemName}>{item.itemName}</a>
 		</li>
 	);
 };

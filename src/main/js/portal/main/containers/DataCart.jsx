@@ -23,7 +23,7 @@ class DataCart extends Component {
 
 		return (
 			<div className="row">
-				<div className="col-md-4">
+				<div className="col-sm-6 col-md-5 col-lg-3">
 					<CartPanel
 						user={props.user}
 						event={props.event}
@@ -37,7 +37,7 @@ class DataCart extends Component {
 						fetchIsBatchDownloadOk={props.fetchIsBatchDownloadOk}
 					/>
 				</div>
-				<div className="col-md-8">{
+				<div className="col-sm-6 col-md-7 col-lg-9">{
 					props.preview.visible
 						? <Preview
 							preview={props.preview}
