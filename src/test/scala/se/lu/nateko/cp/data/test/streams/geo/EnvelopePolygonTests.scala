@@ -214,4 +214,14 @@ class EnvelopePolygonTests extends FunSpec{
 			assert(trapezoid.vertices === p.vertices)
 		}
 	}
+
+	describe("Line-line intersection"){
+		it("Works correctly for almost-collilear segments"){
+			val p = EnvelopePolygon.lineLineIntersection(
+				Point(-67.0643f, -51.6842f), Point(-67.0617f, -51.6816f),
+				Point(-67.0592f, -51.6790f), Point(-67.0567f, -51.6764f)
+			)
+			println(s"INTERDECTION: $p")
+		}
+	}
 }

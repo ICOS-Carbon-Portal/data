@@ -44,6 +44,15 @@ class EnvelopePolygon {
 		val curr = edgeAngle(idx)
 		val next = edgeAngle(idx + 1)
 		val diff = angleDiff(prev, next)
+		//val diff2 = angleDiff(curr, next)
+		//val maxAngle = 0.26 * Math.PI
+
+//		val res = (diff1 >= 0 && diff1 < maxAngle && diff2 >= 0 && diff2 < maxAngle)
+//		if(res) {
+//			println(s"prev: $prev, curr: $curr, next: $next")
+//			println(s"diff1: $diff1 , diff2: $diff2")
+//		}
+//		res
 		angleDiff(prev, curr) > 0 && angleDiff(curr, next) > 0 && diff >= 0 && diff < Math.PI
 	}
 
@@ -52,18 +61,27 @@ class EnvelopePolygon {
 		val start = vertice(idx)
 		val stop = vertice(idx + 1)
 		val top = lineLineIntersection(vertice(idx - 1), start, stop, vertice(idx + 2))
+		//println(s"$idx: $start -> $top -> $stop")
 		triangleArea2(start, top, stop)
 	}
 
 	def reduceVerticesByOne: Unit = {
-		if(verts.size < 4) throw new NoSuchElementException("The polygon has no removeable vertices")
+//println(toString)
+		val curSize = verts.size
+		if(curSize < 4) throw new NoSuchElementException("The polygon has no removeable vertices")
 		val cheapestVertice = verts.indices.minBy(verticeCost _)
 		val cheapestEdge = verts.indices.minBy(edgeCost _)
 		if(edgeCost(cheapestEdge) < verticeCost(cheapestVertice)){
 			val idx = cheapestEdge
 			val vert = lineLineIntersection(vertice(idx - 1), vertice(idx), vertice(idx + 1), vertice(idx + 2))
-			verts.remove(idx, 2)
-			verts.insert(idx, vert)
+			if(idx < curSize - 1){
+				verts.remove(idx, 2)
+				verts.insert(idx, vert)
+			} else {//TODO Write a test for this branch
+				verts.remove(idx, 1)
+				verts.insert(idx, vert)
+				verts.remove(0, 1)
+			}
 		} else {
 			verts.remove(cheapestVertice)
 		}
@@ -145,7 +163,7 @@ object EnvelopePolygon{
 	def lineLineIntersection(p1: Point, p2: Point, p3: Point, p4: Point): Point = {
 		val denom = (p1.lon - p2.lon) * (p3.lat - p4.lat) - (p1.lat - p2.lat) * (p3.lon - p4.lon)
 
-		if(denom == 0) new Point((p2.lon + p3.lon) / 2, (p2.lat + p3.lat) / 2) else {
+		if(Math.abs(denom) < 1e-5) new Point((p2.lon + p3.lon) / 2, (p2.lat + p3.lat) / 2) else {
 
 			val xnom = (p1.lon * p2.lat - p1.lat * p2.lon) * (p3.lon - p4.lon) -
 				(p1.lon - p2.lon) * (p3.lon * p4.lat - p3.lat * p4.lon)
