@@ -37,7 +37,7 @@ export default function(state = initState, action){
 
 		case USER_INFO_FETCHED:
 			return update({
-				user: Object.assign({}, {email: action.user._id}, action.user.profile)
+				user: Object.assign({}, {email: action.user._id, ip: action.ip}, action.user.profile)
 			});
 
 		case SPECTABLES_FETCHED:

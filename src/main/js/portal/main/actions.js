@@ -18,7 +18,7 @@ export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
 import {getUserInfo, logOutUser} from './backend';
-import {getIsBatchDownloadOk, getWhoIam} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, updatePortalUsage} from './backend';
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
@@ -31,7 +31,16 @@ const failWithError = dispatch => error => {
 		type: ERROR,
 		error
 	});
-}
+};
+
+export const pushToPortalUsage = data => dispatch => {
+	updatePortalUsage(data).then(
+		result => {
+			console.log({data, result});
+		},
+		failWithError(dispatch)
+	);
+};
 
 export const getAllSpecTables = hash => dispatch => {
 	fetchAllSpecTables().then(
@@ -234,13 +243,15 @@ const updateCart = (email, cart, dispatch) => {
 
 export const fetchUserInfo = restoreCart => (dispatch, getState) => {
 	getUserInfo().then(
-		user => {
-			dispatch({
-				type: USER_INFO_FETCHED,
-				user
-			});
+		({profilePromise, ip}) => {
+			profilePromise.then(profile => {
+				dispatch({
+					type: USER_INFO_FETCHED,
+					user: Object.assign(profile, {ip})
+				});
 
-			if (restoreCart) fetchCart(dispatch, getState);
+				if (restoreCart) fetchCart(dispatch, getState);
+			});
 		}
 	);
 };

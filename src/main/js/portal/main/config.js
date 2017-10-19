@@ -7,5 +7,6 @@ export default {
 		TIMESERIES: '//data.icos-cp.eu/dygraph-light/',
 		NETCDF: '//data.icos-cp.eu/netcdf/'
 	},
-	restheartBaseUrl: '//cpauth.icos-cp.eu/db/'
+	restheartBaseUrl: '//cpauth.icos-cp.eu/db/',
+	restheartPortalUseBaseUrl: '//restheart.icos-cp.eu/db/',
 };

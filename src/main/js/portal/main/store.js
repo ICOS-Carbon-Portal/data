@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchUserInfo, getAllSpecTables, updateRoute} from './actions';
+import {fetchUserInfo, getAllSpecTables, updateRoute, pushToPortalUsage} from './actions';
 
 // function logger({ getState }) {
 // 	return (next) => (action) => {
@@ -27,5 +27,6 @@ export default function(){
 	store.dispatch(updateRoute(route));
 	store.dispatch(fetchUserInfo(true));
 	store.dispatch(getAllSpecTables(hash));
+	// store.dispatch(pushToPortalUsage({'filter.$last': {IP}}));
 	return store;
 }
