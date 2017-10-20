@@ -22,7 +22,7 @@ object StaticRouting {
 	private val NetCdfProj = "netcdf"
 
 	val authConfig = ConfigReader.getDefault.auth
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats")
 
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()

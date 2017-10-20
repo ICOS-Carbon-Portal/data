@@ -10,7 +10,7 @@ var babelify = require('babelify');
 var babel = require('gulp-babel');
 var jasmine = require('gulp-jasmine');
 
-var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light'];
+var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light', 'stats'];
 
 projects.forEach(function(project){
 
@@ -83,7 +83,7 @@ projects.forEach(function(project){
 
 	gulp.task(project, ['js' + project], function(){
 		var sources = [paths.commonjs, paths.js, paths.jsx];
-		 return gulp.watch(sources, ['js' + project]);
+		return gulp.watch(sources, ['js' + project]);
 	});
 
 	gulp.task('publish' + project, ['apply-prod-environment', 'clean' + project], compileJs);
