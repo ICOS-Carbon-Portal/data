@@ -39,9 +39,6 @@ export default class ObjSpecFilter extends Component {
 
 		return (
 			<div className="row" key={name} style={{marginTop: 10}}>
-				{/*<div className="col-md-4">*/}
-					{/*<label style={{marginBottom: 0}}>{placeholders[name]}</label>*/}
-				{/*</div>*/}
 				<div className="col-md-12">
 					<label style={{marginBottom: 0}}>{placeholders[name]}</label>
 					<Multiselect
@@ -95,7 +92,7 @@ export default class ObjSpecFilter extends Component {
 	}
 
 	handleChange(name, values){
-		this.props.updateFilter(name, values.map(v => v.text || v));
+		this.props.updateFilter(name, values.map(v => typeof v === 'object' ? v.text : v));
 	}
 
 	handleSearch(name, value){
