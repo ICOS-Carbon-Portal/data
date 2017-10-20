@@ -1,8 +1,9 @@
 package se.lu.nateko.cp.data.api
 
+import akka.Done
+
 import scala.concurrent.Future
 import scala.util.Try
-
 import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes
@@ -52,33 +53,35 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			})
 		}
 
-	def ensureDobjDownloadCollExists: Future[Unit] = ensureCollectionExists(
+	def ensureDobjDownloadCollExists: Future[Done] = ensureCollectionExists(
 		dlCollUri,
 		"Download log for CP-hosted data objects",
 		config.dobjDownloadsCollection
 	)
 
-	def ensurePortalUseCollExists: Future[Unit] = ensureCollectionExists(
+	def ensurePortalUseCollExists: Future[Done] = ensureCollectionExists(
 		collUri(config.portalUsageCollection),
 		"Usage statistics of CP 'portal' app",
 		config.portalUsageCollection
 	)
 
-	def ensureCollectionExists(collUri: Uri, description: String, alias: String): Future[Unit] = {
+	def ensureCollectionExists(collUri: Uri, description: String, alias: String): Future[Done] = {
 		http.singleRequest(HttpRequest(uri = collUri)).flatMap{resp =>
 			resp.discardEntityBytes()
 			if(resp.status == StatusCodes.NotFound){
 				val collectionDescr = JsObject("comment" -> JsString(description))
 				for(
 					entity <- Marshal(collectionDescr).to[RequestEntity];
-					r <- http.singleRequest(HttpRequest(uri = collUri, method = HttpMethods.PUT, entity = entity))
-				) yield {
-					r.discardEntityBytes()
-					if(r.status == StatusCodes.Created) Future.successful(())
-					else Future.failed(new Exception(s"Failed creating ${alias} collection in RestHeart: ${r.status.defaultMessage}"))
-				}
-			} else if(resp.status == StatusCodes.OK) Future.successful(())
-			else Future.failed(new Exception(s"Unexpected response when checking for ${alias} collection in RestHeart : ${resp.status.defaultMessage}"))
+					r <- http.singleRequest(HttpRequest(uri = collUri, method = HttpMethods.PUT, entity = entity));
+					done <- {
+						r.discardEntityBytes()
+						if(r.status == StatusCodes.Created) Future.successful(Done)
+						else Future.failed[Done](new Exception(s"Failed creating ${alias} collection in RestHeart: ${r.status.defaultMessage}"))
+					}
+				) yield done
+			}
+			else if(resp.status == StatusCodes.OK) Future.successful(Done)
+			else Future.failed[Done](new Exception(s"Unexpected response when checking for ${alias} collection in RestHeart : ${resp.status.defaultMessage}"))
 		}
 	}
 
