@@ -4,6 +4,8 @@ import org.scalatest.FunSpec
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 
+import EnvelopePolygon._
+
 class EnvelopePolygonTests extends FunSpec{
 
 	def add(lon: Float, lat: Float)(implicit poly: EnvelopePolygon): Boolean =
@@ -183,13 +185,25 @@ class EnvelopePolygonTests extends FunSpec{
 		it("Is double triangle area on convex edges"){
 			assert(trapezoid.edgeCost(4) == 0.5)
 		}
+
+		it("is correctly computed on an edge between vertices approaching 180 degrees"){
+			implicit val t = new EnvelopePolygon
+			add(3, -1e-4f); add(2,0); add(1,0); add(0, -1e-4f)
+			assert(t.edgeCost(1) == 5e-5f)
+		}
+
+		it("is zero for an edge collinear with its neighbours"){
+			implicit val l = new EnvelopePolygon
+			add(3, 0); add(2,0); add(1,0); add(0, 0)
+			assert(l.edgeCost(1) == 0)
+		}
 	}
 
 	describe("Vertice reduction"){
 
 		it("Reduces triangle as expected"){
 			val p = triangle
-			p.reduceVerticesByOne
+			p.reduceVerticesByOne()
 			assert(p.vertices.toSet === Set(new Point(1,0), new Point(0,0), new Point(1, 1)))
 		}
 
@@ -197,7 +211,7 @@ class EnvelopePolygonTests extends FunSpec{
 			val p = trapezoid
 
 			for(_ <- 1 to 3){
-				p.reduceVerticesByOne
+				p.reduceVerticesByOne()
 			}
 			assert(p.vertices.toSet === Set(new Point(3,0), new Point(0,0), new Point(1.5f, 1.5f)))
 		}
@@ -209,19 +223,19 @@ class EnvelopePolygonTests extends FunSpec{
 			add(1.5f, 1) //trapezoid with an extra redundant vertice inside the top edge
 			add(2,1)
 			add(3,0)
-			p.reduceVerticesByOne
-			p.reduceVerticesByOne
+			p.reduceVerticesByOne()
+			p.reduceVerticesByOne()
 			assert(trapezoid.vertices === p.vertices)
 		}
 	}
 
-	describe("Line-line intersection"){
-		it("Works correctly for almost-collilear segments"){
-			val p = EnvelopePolygon.lineLineIntersection(
-				Point(-67.0643f, -51.6842f), Point(-67.0617f, -51.6816f),
-				Point(-67.0592f, -51.6790f), Point(-67.0567f, -51.6764f)
-			)
-			println(s"INTERDECTION: $p")
+	describe("segmentsDontIntersect check"){
+		it("non-intersecting are reported as such"){
+			assert(segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(0.1f, 0.05f), Point(1,0)))
+		}
+
+		it("intersecting are reported as such"){
+			assert(!segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(-1, 0), Point(1,0)))
 		}
 	}
 }

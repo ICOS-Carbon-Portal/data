@@ -9,23 +9,26 @@ import java.io.PrintWriter
 
 class EnvelopePolygonBenchmark extends FunSuite{
 
-	val Budget = 20
+	val Budget = 10
+	val ChunkSize = 10
 	val filePath = "/home/oleg/Downloads/58GS20040825_CO2_underway_SOCATv3"
 	//val filePath = "/home/oleg/Downloads/06AQ20120411_CO2_underway_SOCATv3"
 
-	test("EnvelopePolygon benchmark"){
+	ignore("EnvelopePolygon benchmark"){
 		val latLongs = Source.fromFile(new File(filePath + ".csv")).getLines().drop(1)
-			//.take(20)
+			.drop(55590)
+			.take(10)
 			.map(s => s.split(','))
-			.map(arr => (arr(0).toFloat, arr(1).toFloat))
+			.map(arr => Point(arr(1).toFloat, arr(0).toFloat))
 			.toIndexedSeq
 
 		val t0 = System.currentTimeMillis()
 
-		val hull = latLongs.foldLeft(new EnvelopePolygon){
-			case (poly, (lat, lon)) =>
-				poly.addVertice(Point(lon, lat))
-				while(poly.size > Budget) poly.reduceVerticesByOne
+		val hull = latLongs.sliding(ChunkSize, ChunkSize).foldLeft(new EnvelopePolygon){
+			case (poly, chunk) =>
+				chunk foreach println
+				chunk.foreach(poly.addVertice)
+				while(poly.size > Budget && poly.reduceVerticesByOne()){}
 				poly
 		}
 
@@ -41,5 +44,39 @@ class EnvelopePolygonBenchmark extends FunSuite{
 				pw.println(s"$lat,$lon")
 		}
 		pw.close()
+	}
+
+	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
+		poly.addVertice(new Point(lon.toFloat, lat.toFloat))
+
+	ignore("EnvelopePolygon debug"){
+		implicit val p = new EnvelopePolygon
+		add(-12.991, 57.665)
+		add(-13.005, 57.665)
+		add(-13.01001, 57.666)
+		add(-13.01199, 57.667)
+		add(-13.01199, 57.668)
+		add(-13.01199, 57.668)
+		add(-13.01199, 57.668)
+		add(-13.01199, 57.667)
+		add(-13.01099, 57.667)
+		add(-13.01001, 57.668)
+
+		val (_, nonRepeatedPointCount) = p.vertices.foldLeft[(Point, Int)]((null, 0)){
+			case (acc @ (prev, count), next) =>
+				if(next == prev) acc
+				else (next, count + 1)
+		}
+		assert(nonRepeatedPointCount === p.size)
+
+		def printarr(axis: String, extr: Point => Float) =
+			println(p.vertices.map(extr).mkString(s"$axis${p.size} = [", ", ", "]"))
+
+		do{
+			printarr("x", _.lon)
+			printarr("y", _.lat)
+		}while(p.size > 11 && p.reduceVerticesByOne())
+
+		p.reduceVerticesByOne()
 	}
 }
