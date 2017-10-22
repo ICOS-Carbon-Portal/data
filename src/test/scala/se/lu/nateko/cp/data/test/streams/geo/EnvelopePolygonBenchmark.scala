@@ -9,24 +9,23 @@ import java.io.PrintWriter
 
 class EnvelopePolygonBenchmark extends FunSuite{
 
-	val Budget = 10
+	val Budget = 20
 	val ChunkSize = 10
 	val filePath = "/home/oleg/Downloads/58GS20040825_CO2_underway_SOCATv3"
 	//val filePath = "/home/oleg/Downloads/06AQ20120411_CO2_underway_SOCATv3"
 
-	ignore("EnvelopePolygon benchmark"){
+	test("EnvelopePolygon benchmark"){
 		val latLongs = Source.fromFile(new File(filePath + ".csv")).getLines().drop(1)
-			.drop(55590)
-			.take(10)
+//			.drop(55590)
+//			.take(10)
 			.map(s => s.split(','))
-			.map(arr => Point(arr(1).toFloat, arr(0).toFloat))
+			.map(arr => Point(arr(1).toDouble, arr(0).toDouble))
 			.toIndexedSeq
 
 		val t0 = System.currentTimeMillis()
 
 		val hull = latLongs.sliding(ChunkSize, ChunkSize).foldLeft(new EnvelopePolygon){
 			case (poly, chunk) =>
-				chunk foreach println
 				chunk.foreach(poly.addVertice)
 				while(poly.size > Budget && poly.reduceVerticesByOne()){}
 				poly
@@ -47,7 +46,7 @@ class EnvelopePolygonBenchmark extends FunSuite{
 	}
 
 	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
-		poly.addVertice(new Point(lon.toFloat, lat.toFloat))
+		poly.addVertice(new Point(lon, lat))
 
 	ignore("EnvelopePolygon debug"){
 		implicit val p = new EnvelopePolygon
@@ -69,14 +68,13 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		}
 		assert(nonRepeatedPointCount === p.size)
 
-		def printarr(axis: String, extr: Point => Float) =
+		def printarr(axis: String, extr: Point => Double) =
 			println(p.vertices.map(extr).mkString(s"$axis${p.size} = [", ", ", "]"))
 
 		do{
 			printarr("x", _.lon)
 			printarr("y", _.lat)
-		}while(p.size > 11 && p.reduceVerticesByOne())
+		}while(p.size > 10 && p.reduceVerticesByOne())
 
-		p.reduceVerticesByOne()
 	}
 }

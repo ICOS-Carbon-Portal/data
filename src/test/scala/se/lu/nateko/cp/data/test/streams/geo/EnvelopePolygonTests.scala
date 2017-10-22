@@ -8,7 +8,7 @@ import EnvelopePolygon._
 
 class EnvelopePolygonTests extends FunSpec{
 
-	def add(lon: Float, lat: Float)(implicit poly: EnvelopePolygon): Boolean =
+	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
 		poly.addVertice(new Point(lon, lat))
 
 	private def triangle = {
@@ -59,13 +59,13 @@ class EnvelopePolygonTests extends FunSpec{
 
 		it("Discards points inside triangle and on its edges and vertices"){
 			implicit val t = reducedTriangle
-			assert(!add(0.9f,0.5f))
+			assert(!add(0.9,0.5))
 			assert(!add(0,0))
 			assert(!add(1,0))
 			assert(!add(1,1))
-			assert(!add(0.5f,0.5f))
-			assert(!add(0.5f,0))
-			assert(!add(1, 0.5f))
+			assert(!add(0.5,0.5))
+			assert(!add(0.5,0))
+			assert(!add(1, 0.5))
 			assert(t.size == 3)
 		}
 
@@ -188,8 +188,8 @@ class EnvelopePolygonTests extends FunSpec{
 
 		it("is correctly computed on an edge between vertices approaching 180 degrees"){
 			implicit val t = new EnvelopePolygon
-			add(3, -1e-4f); add(2,0); add(1,0); add(0, -1e-4f)
-			assert(t.edgeCost(1) == 5e-5f)
+			add(3, -1e-4); add(2,0); add(1,0); add(0, -1e-4)
+			assert(t.edgeCost(1) == 5e-5)
 		}
 
 		it("is zero for an edge collinear with its neighbours"){
@@ -213,14 +213,14 @@ class EnvelopePolygonTests extends FunSpec{
 			for(_ <- 1 to 3){
 				p.reduceVerticesByOne()
 			}
-			assert(p.vertices.toSet === Set(new Point(3,0), new Point(0,0), new Point(1.5f, 1.5f)))
+			assert(p.vertices.toSet === Set(new Point(3,0), new Point(0,0), new Point(1.5, 1.5)))
 		}
 
 		it("Cleans up redundant vertices as first priority"){
 			implicit val p = new EnvelopePolygon
 			add(0,0)
 			add(1,1)
-			add(1.5f, 1) //trapezoid with an extra redundant vertice inside the top edge
+			add(1.5, 1) //trapezoid with an extra redundant vertice inside the top edge
 			add(2,1)
 			add(3,0)
 			p.reduceVerticesByOne()
@@ -231,7 +231,7 @@ class EnvelopePolygonTests extends FunSpec{
 
 	describe("segmentsDontIntersect check"){
 		it("non-intersecting are reported as such"){
-			assert(segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(0.1f, 0.05f), Point(1,0)))
+			assert(segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(0.1, 0.05), Point(1,0)))
 		}
 
 		it("intersecting are reported as such"){

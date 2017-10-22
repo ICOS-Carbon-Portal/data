@@ -74,8 +74,8 @@ object SocatTsvStreams{
 		val reducer = PointReducer.signedTriangleAreaCost(20)
 
 		val reducingSink: Sink[BinTableRow, Future[PointReducerState]] = Flow.apply[BinTableRow].fold(seed){(s, row) =>
-			val lon = row.cells(lonPos).asInstanceOf[Number].floatValue
-			val lat = row.cells(latPos).asInstanceOf[Number].floatValue
+			val lon = row.cells(lonPos).asInstanceOf[Number].doubleValue
+			val lat = row.cells(latPos).asInstanceOf[Number].doubleValue
 			reducer.nextState(s, lat, lon)
 		}.toMat(Sink.head[PointReducerState])(Keep.right)
 

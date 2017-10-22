@@ -226,13 +226,13 @@ object EnvelopePolygon{
 			val base = Math.sqrt(distSq(p2, p3))
 			val lInter = base / l12 * (Math.sin(smallerAngle) / Math.sin(totalAngle))
 			Point(
-				(p2.lon + lInter * (p2.lon - p1.lon)).toFloat,
-				(p2.lat + lInter * (p2.lat - p1.lat)).toFloat
+				p2.lon + lInter * (p2.lon - p1.lon),
+				p2.lat + lInter * (p2.lat - p1.lat)
 			)
 		}
 	}
 
-	def distSq(p1: Point, p2: Point): Float = {
+	def distSq(p1: Point, p2: Point): Double = {
 		val dx = p1.lon - p2.lon
 		val dy = p1.lat - p2.lat
 		dx * dx + dy * dy
@@ -250,7 +250,7 @@ object EnvelopePolygon{
 
 	def nearestOnEdge(v1: Point, v2: Point, p: Point): NearestOnEdge = {
 
-		val factor: Float = {
+		val factor: Double = {
 			val nom = (v2.lon - v1.lon) * (p.lon - v1.lon) + (v2.lat - v1.lat) * (p.lat - v1.lat)
 			nom / distSq(v1, v2)
 		}
