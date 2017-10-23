@@ -109,7 +109,7 @@ const updatePersonalRestheart = (db, email, data) => {
 
 export const updatePortalUsage = (data) => {
 	return fetch(`${config.restheartPortalUseBaseUrl}portaluse`, {
-		method: 'PATCH',
+		method: 'POST',
 		mode: 'cors',
 		headers: new Headers({
 			'Content-Type': 'application/json'
@@ -197,7 +197,7 @@ export const getUserInfo = () => {
 		.then(user => {
 			return {
 				profilePromise: getProfile(user.email),
-				ip: user.ip
+				user
 			};
 		})
 };

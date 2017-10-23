@@ -33,15 +33,6 @@ const failWithError = dispatch => error => {
 	});
 };
 
-export const pushToPortalUsage = data => dispatch => {
-	updatePortalUsage(data).then(
-		result => {
-			console.log({data, result});
-		},
-		failWithError(dispatch)
-	);
-};
-
 export const getAllSpecTables = hash => dispatch => {
 	fetchAllSpecTables().then(
 		specTables => {
@@ -98,10 +89,18 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, sorting, paging} = getState();
+	const {specTable, routeAndParams, sorting, paging, user} = getState();
+
+	if (Object.keys(routeAndParams.filters).length) {
+		updatePortalUsage({
+			filterChange: {
+				ip: user.ip,
+				filters: routeAndParams.filters
+			}
+		});
+	}
 
 	const specs = specTable.getSpeciesFilter(null);
-
 	const stations = specTable.getFilter('station').length
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
@@ -243,11 +242,12 @@ const updateCart = (email, cart, dispatch) => {
 
 export const fetchUserInfo = restoreCart => (dispatch, getState) => {
 	getUserInfo().then(
-		({profilePromise, ip}) => {
+		({profilePromise, user}) => {
 			profilePromise.then(profile => {
 				dispatch({
 					type: USER_INFO_FETCHED,
-					user: Object.assign(profile, {ip})
+					user,
+					profile
 				});
 
 				if (restoreCart) fetchCart(dispatch, getState);
