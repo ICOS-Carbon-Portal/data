@@ -42,15 +42,17 @@ class EnvelopePolygon {
 		val stop = vertice(idx + 1)
 		val self = vertice(idx)
 
-		val oldIntersections = verts.indices.filter{i =>
-			val v1 = verts(i); val v2 = vertice(i + 1)
-			!segmentsDontIntersect(v1, v2, start, self) ||
-			!segmentsDontIntersect(v1, v2, self, stop)
-		}.toSet
+		val allowedIntersections = ((idx - 2) to (idx + 1)).map(shortcircuit).toSet
 
 		val noNewIntersections = verts.indices.forall{i =>
-			oldIntersections.contains(i) ||
-			segmentsDontIntersect(verts(i), vertice(i + 1), start, stop)
+			import SegmentsIntersection._
+			val v1 = verts(i); val v2 = vertice(i + 1)
+			val inter = forSegments(v1, v2, start, stop)
+
+			inter == NoIntersection ||
+			inter == SingleVertice && allowedIntersections.contains(i) ||
+			inter <= forSegments(v1, v2, start, self) ||
+			inter <= forSegments(v1, v2, stop, self)
 		}
 		if(noNewIntersections) triangleArea2(start, self, stop) else Double.MaxValue
 	}
@@ -61,7 +63,7 @@ class EnvelopePolygon {
 		val next = edgeAngle(idx + 1)
 		val diff = angleDiff(prev, next)
 
-		if(diff >= 0 && diff < 0.9 * Math.PI){
+		if(diff >= 0 && diff < Math.PI / 3){
 			val diff1 = angleDiff(prev, curr)
 			val diff2 = angleDiff(curr, next)
 
@@ -69,7 +71,7 @@ class EnvelopePolygon {
 				val start = vertice(idx)
 				val stop = vertice(idx + 1)
 
-				val top = if(diff > 0.01)
+				val top = if(diff > 0.001)
 					lineLineIntersection(vertice(idx - 1), start, stop, vertice(idx + 2))
 				else if(diff1 <= diff2)
 					lineLineIntersection(vertice(idx + 2), stop, start, diff1, diff)
@@ -78,14 +80,20 @@ class EnvelopePolygon {
 
 				edgeReplacements += idx -> top
 
-				val oldIntersections = verts.indices.filterNot{i =>
-					segmentsDontIntersect(verts(i), vertice(i + 1), start, stop)
-				}.toSet
+				val allowedIntersections = Set(idx -1, idx, idx + 1).map(shortcircuit)
 
-				val noNewIntersections = verts.indices.forall(i => oldIntersections.contains(i) || {
+				val noNewIntersections = verts.indices.forall{i =>
+					import SegmentsIntersection._
 					val v1 = verts(i); val v2 = vertice(i + 1)
-					segmentsDontIntersect(v1, v2, start, top) && segmentsDontIntersect(v1, v2, stop, top)
-				})
+					Array(
+						forSegments(v1, v2, start, top),
+						forSegments(v1, v2, stop, top)
+					).forall{inter =>
+						inter == NoIntersection ||
+						inter == SingleVertice && allowedIntersections.contains(i) ||
+						inter <= forSegments(v1, v2, start, stop)
+					}
+				}
 				if(noNewIntersections) triangleArea2(start, top, stop) else Double.MaxValue
 			} else Double.MaxValue
 		} else Double.MaxValue
@@ -158,7 +166,7 @@ class EnvelopePolygon {
 				val noe = nearestOnEdge(verts(i), verts((i + 1) % curSize), vert)
 				noe.baseIdx = i + 1
 				noe
-			}.minBy(nearest => distSq(vert, nearest.point))
+			}.minBy(_.cost)
 
 			import NearestKind._
 			nearest.kind match{
@@ -195,15 +203,6 @@ object EnvelopePolygon{
 	def side(a: Point, b: Point, c: Point) = Math.signum(
 		(a.lon - c.lon) * (b.lat - a.lat) - (a.lon - b.lon) * (c.lat - a.lat)
 	)
-
-	def segmentsDontIntersect(a: Point, b: Point, c: Point, d: Point): Boolean = {
-		side(a, c, d) * side(b, c, d) == 1 ||
-		side(c, a, b) * side(d, a, b) == 1 ||
-		Math.min(a.lon, b.lon) > Math.max(c.lon, d.lon) ||
-		Math.max(a.lon, b.lon) < Math.min(c.lon, d.lon) ||
-		Math.min(a.lat, b.lat) > Math.max(c.lat, d.lat) ||
-		Math.max(a.lat, b.lat) < Math.min(c.lat, d.lat)
-	}
 
 	/**
 	 * Only to be called with lines that are not close to being parallel
@@ -242,7 +241,7 @@ object EnvelopePolygon{
 		val FirstVertice, SecondVertice, InnerPoint = Value
 	}
 
-	class NearestOnEdge(val kind: NearestKind.Value, val point: Point){
+	class NearestOnEdge(val kind: NearestKind.Value, val point: Point, val cost: Double){
 		var baseIdx: Int = _
 	}
 
@@ -257,12 +256,14 @@ object EnvelopePolygon{
 
 		import NearestKind._
 
-		if(factor <= 0) new NearestOnEdge(FirstVertice, v1)
+		if(factor <= 0) new NearestOnEdge(FirstVertice, v1, distSq(p, v1))
 
-		else if(factor >= 1) new NearestOnEdge(SecondVertice, v2)
+		else if(factor >= 1) new NearestOnEdge(SecondVertice, v2, distSq(p, v2))
 
-		else new NearestOnEdge(InnerPoint,
-			Point(v1.lon + (v2.lon - v1.lon) * factor, v1.lat + (v2.lat - v1.lat) * factor)
-		)
+		else {
+			val nearestPoint = Point(v1.lon + (v2.lon - v1.lon) * factor, v1.lat + (v2.lat - v1.lat) * factor)
+			val cost = if(side(v1, v2, p) > 0) Double.MaxValue else distSq(p, nearestPoint)
+			new NearestOnEdge(InnerPoint, nearestPoint, cost)
+		}
 	}
 }

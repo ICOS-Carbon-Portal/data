@@ -166,8 +166,8 @@ class EnvelopePolygonTests extends FunSpec{
 
 		it("Is zero on redundant vertices"){
 			val p = linear
-			assert(p.verticeCost(1) == 0)
-			assert(p.verticeCost(3) == 0)
+			assert(p.verticeCost(1) === 0)
+			assert(p.verticeCost(3) === 0)
 		}
 	}
 
@@ -183,7 +183,8 @@ class EnvelopePolygonTests extends FunSpec{
 		}
 
 		it("Is double triangle area on convex edges"){
-			assert(trapezoid.edgeCost(4) == 0.5)
+			val t = trapezoid
+			assert(t.edgeCost(4) == 0.5)
 		}
 
 		it("is correctly computed on an edge between vertices approaching 180 degrees"){
@@ -226,16 +227,6 @@ class EnvelopePolygonTests extends FunSpec{
 			p.reduceVerticesByOne()
 			p.reduceVerticesByOne()
 			assert(trapezoid.vertices === p.vertices)
-		}
-	}
-
-	describe("segmentsDontIntersect check"){
-		it("non-intersecting are reported as such"){
-			assert(segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(0.1, 0.05), Point(1,0)))
-		}
-
-		it("intersecting are reported as such"){
-			assert(!segmentsDontIntersect(Point(-1, -1), Point(1, 1), Point(-1, 0), Point(1,0)))
 		}
 	}
 }

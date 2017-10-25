@@ -9,14 +9,14 @@ import java.io.PrintWriter
 
 class EnvelopePolygonBenchmark extends FunSuite{
 
-	val Budget = 20
-	val ChunkSize = 10
+	val Budget = 30
+	val ChunkSize = 1
 	val filePath = "/home/oleg/Downloads/58GS20040825_CO2_underway_SOCATv3"
 	//val filePath = "/home/oleg/Downloads/06AQ20120411_CO2_underway_SOCATv3"
 
 	test("EnvelopePolygon benchmark"){
 		val latLongs = Source.fromFile(new File(filePath + ".csv")).getLines().drop(1)
-//			.drop(55590)
+//			.take(60000)
 //			.take(10)
 			.map(s => s.split(','))
 			.map(arr => Point(arr(1).toDouble, arr(0).toDouble))
@@ -74,7 +74,11 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		do{
 			printarr("x", _.lon)
 			printarr("y", _.lat)
-		}while(p.size > 10 && p.reduceVerticesByOne())
+		}while(p.size > 6 && p.reduceVerticesByOne())
+
+		println(p.vertices.indices.map(p.verticeCost))
+		println(p.vertices.indices.map(p.edgeCost))
+		assert(!p.verticeIsConcave(0))
 
 	}
 }
