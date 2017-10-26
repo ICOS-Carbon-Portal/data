@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from subprocess import getoutput
+from subprocess import check_output
 
 BASE_FOLDER = "/disk/data/dataAppStorage"
 OUTPUT_FOLDER = "/disk/volumes/rdflogdb"
@@ -63,19 +63,19 @@ def copy_to_table(folder, sizes):
 				]
 				sql_file.write(",".join(table_row) + "\n")
 
-		table_exists_query = getoutput("docker exec -t rdflogdb psql -U postgres -t -c \"SELECT 1 FROM information_schema.tables WHERE table_name = '" + table_name + "';\"")
+		table_exists_query = check_output("docker exec -t rdflogdb psql -U postgres -t -c \"SELECT 1 FROM information_schema.tables WHERE table_name = '" + table_name + "';\"", shell=True)
 
 		if table_exists_query != "":
-			result = getoutput("docker exec -t rdflogdb psql -U postgres -c \"COPY " + table_name
-				+ "(tstamp, \\\"ASSERTION\\\", \\\"TYPE\\\", \\\"SUBJECT\\\", \\\"PREDICATE\\\", \\\"OBJECT\\\", \\\"LITATTR\\\") "
-				+ "FROM '/var/lib/postgresql/data/" + table_name + ".csv' DELIMITER ',' CSV;\"")
+			result = check_output("docker exec -t rdflogdb psql -U postgres -c \"COPY " + table_name
+								  + "(tstamp, \\\"ASSERTION\\\", \\\"TYPE\\\", \\\"SUBJECT\\\", \\\"PREDICATE\\\", \\\"OBJECT\\\", \\\"LITATTR\\\") "
+								  + "FROM '/var/lib/postgresql/data/" + table_name + ".csv' DELIMITER ',' CSV;\"", shell=True)
 			expected_num = len(sizes)
 			actual_num = int(result.replace("COPY ", ""))
-			print("Expected number of inserts for table " + table_name + ":", str(expected_num), "Actual result:", str(actual_num))
+			print "Expected number of inserts for table " + table_name + ":", str(expected_num), "Actual result:", str(actual_num)
 			if expected_num != actual_num:
-				print("ERROR - Expected number of inserted rows does not match actual inserted rows!")
+				print "ERROR - Expected number of inserted rows does not match actual inserted rows!"
 		else:
-			print("Table " + table_name + " does not exist. Skipping import of " + table_name + ".csv")
+			print "Table " + table_name + " does not exist. Skipping import of " + table_name + ".csv"
 
 		os.remove(output_file)
 
