@@ -21,6 +21,7 @@ export default function(props){
 					<thead>
 						<tr>
 							<th style={headerStyle}>Data object<SortButton varName="fileName" {...props}/></th>
+							<th style={headerStyle}>Size<SortButton varName="size" {...props}/></th>
 							<th style={headerStyle}>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
 							<th style={headerStyle}>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
 							<th style={headerStyle}>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>

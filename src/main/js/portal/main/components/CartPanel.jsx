@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
 import EditablePanelHeading from './EditablePanelHeading.jsx';
+import {formatBytes} from '../utils';
 
 
 export default class CartPanel extends Component {
@@ -46,6 +47,10 @@ export default class CartPanel extends Component {
 							<a href={downloadURL(cart.pids, cart.name)} className="btn btn-primary" style={{marginBottom: 15}} target="_blank">
 								<span className="glyphicon glyphicon-download-alt" style={{marginRight: 5}} /> {downloadBtnTxt}
 							</a>
+
+							<div style={{fontSize:'90%'}}>
+								Size of cart: {formatBytes(cart.size)} (uncompressed)
+							</div>
 
 							<ul className="list-group">{
 								cart.items.map((item, i) =>
