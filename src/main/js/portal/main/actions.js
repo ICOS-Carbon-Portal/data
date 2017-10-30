@@ -91,7 +91,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 export const getFilteredDataObjects = (dispatch, getState) => {
 	const {specTable, routeAndParams, sorting, paging, user} = getState();
 
-	if (Object.keys(routeAndParams.filters).length) {
+	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
 			filterChange: {
 				ip: user.ip,
