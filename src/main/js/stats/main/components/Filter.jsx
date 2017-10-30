@@ -16,7 +16,7 @@ export default class Filter extends Component {
     const {filters} = this.props;
 
 		const Row = ({filter}) => {
-			const downloadCounts = this.props.downloadCounts;
+			const downloadStats = this.props.downloadStats;
 		  return (
 		    <div className="row" key={filter.name} style={{marginTop: 10, display: 'flex', alignItems: 'center'}}>
 					<div className="col-md-4">
@@ -28,7 +28,7 @@ export default class Filter extends Component {
 								valueField="text"
 								textField="text"
 								data={filter.values.map(value => value.label || value._id)}
-								value={downloadCounts.getFilter(filter.name)}
+								value={this.props.downloadStats.getFilter(filter.name)}
 								filter="contains"
 								onChange={this.handleSelectionChange.bind(this, filter.name)}
 							/>
@@ -52,9 +52,7 @@ export default class Filter extends Component {
   }
 
 	handleSelectionChange(name, values) {
-		console.log(name, values);
 		this.props.updateTableWithFilter(name, values);
-		// this.props.updateTableWithFilter(name, values.map(v => v.text));
 	}
 
 	tagItem({item}) {

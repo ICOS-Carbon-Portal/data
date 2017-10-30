@@ -31,10 +31,10 @@ export class App extends Component {
 							<Filter
 								filters={props.filters}
 								updateTableWithFilter={props.updateTableWithFilter}
-								downloadCounts={props.displayedStats}/>
+								downloadStats={props.downloadStats}/>
 						</div>
 						<div className="col-md-8">
-							<DobjTable downloadCounts={props.displayedStats}/>
+							<DobjTable downloadStats={props.downloadStats}/>
 						</div>
 					</div>
 				</div>
@@ -45,8 +45,7 @@ export class App extends Component {
 
 function stateToProps(state) {
 	return {
-		downloadCounts: state.downloadCounts,
-		displayedStats: state.displayedStats,
+		downloadStats: state.downloadStats,
 		filters: state.filters
 	};
 }

@@ -1,4 +1,4 @@
-import {ERROR, DOWNLOADCOUNTS_FETCHED, FILTERS, STATS_UPDATE} from './actions';
+import {ERROR, DOWNLOADCOUNTS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
 
@@ -12,19 +12,8 @@ export default function(state, action){
 			});
 
 		case DOWNLOADCOUNTS_FETCHED:
-			const statsTable = new StatsTable(action.downloadCounts._embedded)
 			return update({
-				downloadCounts: statsTable,
-				displayedStats: statsTable
-				// downloadCounts: {
-				// 	stat: stat
-				// }
-				// downloadCounts: {
-				// 	dobjs: action.downloadCounts._embedded,
-				// 	returned: action.downloadCounts._returned,
-				// 	size: action.downloadCounts._size,
-				// 	total_pages: action.downloadCounts._total_pages
-				// }
+				downloadStats: new StatsTable(action.downloadStats._embedded)
 			})
 
 		case FILTERS:
@@ -43,15 +32,12 @@ export default function(state, action){
 
 		case STATS_UPDATE:
 			return update({
-				displayedStats: state.downloadCounts.withFilter(action.varName, action.values),
-				downloadCounts: state.downloadCounts
-				// downloadCounts: state.downloadCounts.withoutFilter()
-				// downloadCounts: {
-				// 	dobjs: state.downloadCounts.dobjs.filter(dobj => dobj.specification[action.varName] == action.values),
-				// 	returned: state.downloadCounts._returned,
-				// 	size: state.downloadCounts._size,
-				// 	total_pages: state.downloadCounts._total_pages
-				// }
+				downloadStats: state.downloadStats.withFilter(action.varName, action.values)
+			})
+
+		case STATS_UPDATED:
+			return update({
+				downloadStats: new StatsTable(action.downloadStats._embedded, state.downloadStats.filters)
 			})
 
 		default:

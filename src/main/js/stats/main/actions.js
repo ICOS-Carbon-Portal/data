@@ -4,6 +4,7 @@ export const ERROR = 'ERROR';
 export const DOWNLOADCOUNTS_FETCHED = 'DOWNLOADCOUNTS_FETCHED';
 export const FILTERS = 'FILTERS';
 export const STATS_UPDATE = 'STATS_UPDATE';
+export const STATS_UPDATED = 'STATS_UPDATED';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -14,11 +15,11 @@ const failWithError = dispatch => error => {
 }
 
 export const fetchDownloadCounts = dispatch => {
-	getDownloadCounts().then(
-		downloadCounts => {
+	getDownloadCounts({}).then(
+		downloadStats => {
 			dispatch({
 				type: DOWNLOADCOUNTS_FETCHED,
-				downloadCounts
+				downloadStats
 			})
 		}
 	)
@@ -37,12 +38,25 @@ export const fetchFilters = dispatch => {
 	)
 }
 
-export const statsUpdate = (varName, values) => dispatch => {
+export const statsUpdate = (varName, values) => (dispatch, getState) => {
+
 	dispatch({
 		type: STATS_UPDATE,
 		varName,
 		values
 	});
+
+	const state = getState();
+	const filters = state.downloadStats.filters;
+
+	getDownloadCounts(filters).then(
+		downloadStats => {
+			dispatch({
+				type: STATS_UPDATED,
+				downloadStats
+			})
+		}
+	)
 }
 
 export const fetchFilteredDownloadStats = dispatch => {

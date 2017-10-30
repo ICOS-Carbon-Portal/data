@@ -6,7 +6,7 @@ export default class DobjTable extends Component {
   }
 
   render() {
-    const {downloadCounts} = this.props;
+    const {downloadStats} = this.props;
 
     return (
       <table className="table">
@@ -16,8 +16,8 @@ export default class DobjTable extends Component {
             <th>Landing Page</th>
             <th>Count</th>
           </tr>
-          { downloadCounts
-          ? downloadCounts.stats.map((stat, idx) => <Row key={'row-'+idx} dobj={stat}/>)
+          { downloadStats.stats.length
+          ? downloadStats.stats.map((stat, idx) => <Row key={'row-'+idx} dobj={stat}/>)
           : null
         }
         </tbody>
