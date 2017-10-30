@@ -40,7 +40,7 @@ export default class CartItem {
 	}
 
 	get size(){
-		return parseInt(this._dataobject.size);
+		return parseInt(this._dataobject.size || 0);
 	}
 
 	get item(){
