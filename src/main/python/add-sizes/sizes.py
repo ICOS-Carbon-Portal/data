@@ -7,16 +7,12 @@ IS_SIMULATION = True
 
 RDF_CONTAINER = "rdflogdb-v9.6" if IS_PRODUCTION else "rdflogdb"
 OUTPUT_FOLDER = "/disk/data/volumes/rdflogdb-9.6/add-sizes" if IS_PRODUCTION else "/disk/volumes/rdflogdb/pgdata/add-sizes"
+PG_FOLDER = "/var/lib/postgresql/data/add-sizes" if IS_PRODUCTION else "/var/lib/postgresql/data/pgdata/add-sizes"
 DATA_FOLDER = "/disk/data/dataAppStorage"
-PG_FOLDER = "/var/lib/postgresql/data/pgdata/add-sizes"
 
 # Only folders mentioned here will be processed
 FOLDER_2_TABLE = {
-	'asciiWdcggTimeSer': 'wdcgg',
 	'asciiAtcTimeSer': 'atmcsv',
-	'atcZipMulti': 'atcmulti',
-	'asciiEtcRawTimeSer': 'etccsv',
-	'binEtcRawTimeSer': 'etcbin',
 	'asciiEtcTimeSer': 'ecocsv',
 	'asciiOtcSocatTimeSer': 'socat',
 	'netcdf': 'netcdf',
