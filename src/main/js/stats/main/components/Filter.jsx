@@ -10,6 +10,7 @@ const placeholders = {
 export default class Filter extends Component {
   constructor(props) {
     super(props);
+		this.state = { value: [] }
   }
 
   render() {
@@ -25,12 +26,12 @@ export default class Filter extends Component {
 					<div className="col-md-8">
 						<Multiselect
 								placeholder={placeholders[filter.name]}
-								valueField="text"
-								textField="text"
-								data={filter.values.map(value => value.label || value._id)}
+								valueField="_id"
+								textField="label"
+								data={filter.values}
 								value={this.props.downloadStats.getFilter(filter.name)}
 								filter="contains"
-								onChange={this.handleSelectionChange.bind(this, filter.name)}
+								onChange={this.handleSelectionChange.bind(this, filter)}
 							/>
 					</div>
 				</div>
@@ -51,8 +52,8 @@ export default class Filter extends Component {
     )
   }
 
-	handleSelectionChange(name, values) {
-		this.props.updateTableWithFilter(name, values);
+	handleSelectionChange(filter, values) {
+		this.props.updateTableWithFilter(filter.name, values.map(value => value._id));
 	}
 
 	tagItem({item}) {

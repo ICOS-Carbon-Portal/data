@@ -14,7 +14,6 @@ export default class StatsTable {
   }
 
   withFilter(filterName, filterValue) {
-    if (filterValue && filterValue.length == 0) return this;
     const newFilters = Object.assign({}, this._filters, {[filterName]: filterValue});
     return new StatsTable(this._stats, newFilters);
   }
