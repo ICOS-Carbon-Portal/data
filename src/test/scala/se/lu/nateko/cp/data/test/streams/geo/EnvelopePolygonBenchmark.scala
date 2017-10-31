@@ -9,7 +9,7 @@ import java.io.PrintWriter
 
 class EnvelopePolygonBenchmark extends FunSuite{
 
-	val Budget = 30
+	val Budget = 20
 	val ChunkSize = 1
 	val filePath = "/home/oleg/Downloads/58GS20040825_CO2_underway_SOCATv3"
 	//val filePath = "/home/oleg/Downloads/06AQ20120411_CO2_underway_SOCATv3"
@@ -48,6 +48,9 @@ class EnvelopePolygonBenchmark extends FunSuite{
 	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
 		poly.addVertice(new Point(lon, lat))
 
+	def printarr(axis: String, extr: Point => Double)(implicit p: EnvelopePolygon) =
+		println(p.vertices.map(extr).mkString(s"$axis${p.size} = [", ", ", "]"))
+
 	ignore("EnvelopePolygon debug"){
 		implicit val p = new EnvelopePolygon
 		add(-12.991, 57.665)
@@ -68,9 +71,6 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		}
 		assert(nonRepeatedPointCount === p.size)
 
-		def printarr(axis: String, extr: Point => Double) =
-			println(p.vertices.map(extr).mkString(s"$axis${p.size} = [", ", ", "]"))
-
 		do{
 			printarr("x", _.lon)
 			printarr("y", _.lat)
@@ -80,5 +80,35 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		println(p.vertices.indices.map(p.edgeCost))
 		assert(!p.verticeIsConcave(0))
 
+	}
+
+	ignore("EnvelopePolygon debug 2"){
+		implicit val p = new EnvelopePolygon
+		add(51.24807098745052, -20.536151500738157)
+		add(109.0683283505391, 34.36887557724276)
+		add(-69.56969550016895, -28.094834450311147)
+		add(62.07176696517618, -15.082551343775236)
+		
+
+		do{
+			printarr("x", _.lon)
+			printarr("y", _.lat)
+		}while(p.size > 4 && p.reduceVerticesByOne())
+		assert(!EnvelopePolygonBugSearch.selfIntersects(p))
+	}
+
+	ignore("EnvelopePolygon debug 3"){
+		implicit val p = new EnvelopePolygon
+		add(126.78083483632014, -89.7927492841762)
+		add(175.8871963966767, -60.46169828056818)
+		add(-100.94871632118426, -73.54171609855533)
+		add(-165.18184457976855, -39.87243453740618)
+		
+
+		do{
+			printarr("x", _.lon)
+			printarr("y", _.lat)
+		}while(p.size > 4 && p.reduceVerticesByOne())
+		assert(!EnvelopePolygonBugSearch.selfIntersects(p))
 	}
 }

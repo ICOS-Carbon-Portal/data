@@ -168,17 +168,33 @@ class EnvelopePolygon {
 				noe
 			}.minBy(_.cost)
 
+			val Epsilon = 1e-13
+
 			import NearestKind._
 			nearest.kind match{
 
 				case FirstVertice =>
-					verts.insert(nearest.baseIdx, vert, nearest.point)
+					val v1 = nearest.point
+					val ortho1 = orthoNormVector(vert, v1)
+					val ortho2 = orthoNormVector(v1, verts(nearest.baseIdx % curSize))
+					val nanoShifted = v1 + (ortho1 + ortho2) * Epsilon
+					verts.insert(nearest.baseIdx, vert, nanoShifted)
 
 				case SecondVertice =>
-					verts.insert(nearest.baseIdx, nearest.point, vert)
+					val v2 = nearest.point
+					val ortho1 = orthoNormVector(verts(nearest.baseIdx - 1), v2)
+					val ortho2 = orthoNormVector(v2, vert)
+					val nanoShifted = v2 + (ortho1 + ortho2) * Epsilon
+					verts.insert(nearest.baseIdx, nanoShifted, vert)
 
 				case InnerPoint =>
-					verts.insert(nearest.baseIdx, nearest.point, vert, nearest.point)
+					val dist = Math.sqrt(nearest.cost)
+					val np = nearest.point
+					val shifted = Point(
+						np.lon + (vert.lon - np.lon) / dist * Epsilon,
+						np.lat + (vert.lat - np.lat) / dist * Epsilon
+					)
+					verts.insert(nearest.baseIdx, shifted, vert, shifted)
 			}
 			true
 		}
@@ -235,6 +251,11 @@ object EnvelopePolygon{
 		val dx = p1.lon - p2.lon
 		val dy = p1.lat - p2.lat
 		dx * dx + dy * dy
+	}
+
+	def orthoNormVector(p1: Point, p2: Point): GeoVector = {
+		val norm = Math.sqrt(distSq(p1, p2))
+		new GeoVector((p2.lat - p1.lat) / norm, (p1.lon - p2.lon) / norm)
 	}
 
 	object NearestKind extends Enumeration{
