@@ -3,10 +3,9 @@ package se.lu.nateko.cp.data.test.streams.geo
 import org.scalatest.FunSuite
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
-import se.lu.nateko.cp.data.streams.geo.SegmentsIntersection.{forSegments, InnerPoints}
 import scala.util.Random
 
-class EnvelopePolygonBugSearch extends FunSuite{
+class EnvelopePolygonBugSearch extends FunSuite with EnvelopePolygonHelpers{
 
 	private val rnd = new Random
 
@@ -16,37 +15,43 @@ class EnvelopePolygonBugSearch extends FunSuite{
 		Point(lon, lat)
 	}
 
-	test("Try producing self-intersecting polygon state"){
-		var found = false
-		for(_ <- (1 to 1000) if !found){
-			val nstart = 30
-			//val nstop = 5
-			val startPoints = IndexedSeq.fill(nstart)(getRandomPoint())
-			val poly = new EnvelopePolygon
-			startPoints.foreach(poly.addVertice)
+	def prefill(startPoints: Seq[Point]) = {
+		val poly = new EnvelopePolygon
+		startPoints.foreach(poly.addVertice)
+		poly
+	}
+
+	def getBadStart(nIter: Int, nstart: Int): Option[EnvelopePolygon] = {
+
+		def generateRandom = IndexedSeq.fill(nstart)(getRandomPoint())
+
+		Iterator.fill(nIter)(generateRandom).find{startPoints =>
+			val poly = prefill(startPoints)
 			while(poly.size > nstart && poly.reduceVerticesByOne()){}
-			if(EnvelopePolygonBugSearch.selfIntersects(poly)){
-				found = true
-				println(startPoints.mkString(", "))
-				println(poly.vertices.mkString(", "))
-			}//else println("OK")
+			selfIntersects(poly)
+		}.map(prefill)
+	}
+
+	test("Trying to produce self-intersecting polygon state fails"){
+		getBadStart(30, 30) match{
+			case Some(poly) =>
+				var prevVerts = poly.vertices.toVector
+
+				while(!selfIntersects(poly)){
+					prevVerts = poly.vertices.toVector
+					poly.reduceVerticesByOne()
+				}
+				println("Counterexample found:")
+				printXarr(prevVerts)
+				printYarr(prevVerts)
+				printXarr(poly.vertices)
+				printYarr(poly.vertices)
+				fail("Got a polygon in a self-intersecting state!")
+			case None =>
+				succeed
 		}
 	}
 }
 
 object EnvelopePolygonBugSearch{
-
-	def selfIntersects(poly: EnvelopePolygon): Boolean = {
-		val edges: IndexedSeq[(Point, Point)] = poly.vertices.indices.map{i =>
-			(poly.vertice(i), poly.vertice((i + 1) % poly.size))
-		}
-
-		edges.indices.exists{i =>
-			edges.indices.drop(i + 2).exists{j =>
-				val e1 = edges(i)
-				val e2 = edges(j)
-				forSegments(e1._1, e1._2, e2._1, e2._2) == InnerPoints
-			}
-		}
-	}
 }

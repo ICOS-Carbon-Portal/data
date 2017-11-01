@@ -7,14 +7,13 @@ import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 import java.io.PrintWriter
 
-class EnvelopePolygonBenchmark extends FunSuite{
-
+class EnvelopePolygonBenchmark extends FunSuite with EnvelopePolygonHelpers{
 	val Budget = 20
 	val ChunkSize = 1
 	val filePath = "/home/oleg/Downloads/58GS20040825_CO2_underway_SOCATv3"
 	//val filePath = "/home/oleg/Downloads/06AQ20120411_CO2_underway_SOCATv3"
 
-	test("EnvelopePolygon benchmark"){
+	ignore("EnvelopePolygon benchmark"){
 		val latLongs = Source.fromFile(new File(filePath + ".csv")).getLines().drop(1)
 //			.take(60000)
 //			.take(10)
@@ -45,12 +44,6 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		pw.close()
 	}
 
-	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
-		poly.addVertice(new Point(lon, lat))
-
-	def printarr(axis: String, extr: Point => Double)(implicit p: EnvelopePolygon) =
-		println(p.vertices.map(extr).mkString(s"$axis${p.size} = [", ", ", "]"))
-
 	ignore("EnvelopePolygon debug"){
 		implicit val p = new EnvelopePolygon
 		add(-12.991, 57.665)
@@ -72,8 +65,8 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		assert(nonRepeatedPointCount === p.size)
 
 		do{
-			printarr("x", _.lon)
-			printarr("y", _.lat)
+			printXarr(p.vertices)
+			printYarr(p.vertices)
 		}while(p.size > 6 && p.reduceVerticesByOne())
 
 		println(p.vertices.indices.map(p.verticeCost))
@@ -91,10 +84,10 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		
 
 		do{
-			printarr("x", _.lon)
-			printarr("y", _.lat)
+			printXarr(p.vertices)
+			printYarr(p.vertices)
 		}while(p.size > 4 && p.reduceVerticesByOne())
-		assert(!EnvelopePolygonBugSearch.selfIntersects(p))
+		assert(!selfIntersects(p))
 	}
 
 	ignore("EnvelopePolygon debug 3"){
@@ -106,9 +99,9 @@ class EnvelopePolygonBenchmark extends FunSuite{
 		
 
 		do{
-			printarr("x", _.lon)
-			printarr("y", _.lat)
+			printXarr(p.vertices)
+			printYarr(p.vertices)
 		}while(p.size > 4 && p.reduceVerticesByOne())
-		assert(!EnvelopePolygonBugSearch.selfIntersects(p))
+		assert(!selfIntersects(p))
 	}
 }

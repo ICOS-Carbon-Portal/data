@@ -141,7 +141,7 @@ class EnvelopePolygon {
 				case _ =>
 			}
 		}
-		isOnBorder || crossingCount % 2 != 0
+		isOnBorder || (crossingCount % 2 != 0)
 	}
 
 	/***
@@ -168,35 +168,37 @@ class EnvelopePolygon {
 				noe
 			}.minBy(_.cost)
 
-			val Epsilon = 1e-13
+			if(nearest.cost < 1e-8) false else {
+				val Epsilon = 1e-6
+				import NearestKind._
 
-			import NearestKind._
-			nearest.kind match{
+				nearest.kind match{
 
-				case FirstVertice =>
-					val v1 = nearest.point
-					val ortho1 = orthoNormVector(vert, v1)
-					val ortho2 = orthoNormVector(v1, verts(nearest.baseIdx % curSize))
-					val nanoShifted = v1 + (ortho1 + ortho2) * Epsilon
-					verts.insert(nearest.baseIdx, vert, nanoShifted)
+					case FirstVertice =>
+						val v1 = nearest.point
+						val ortho1 = orthoNormVector(vert, v1)
+						val ortho2 = orthoNormVector(v1, verts(nearest.baseIdx % curSize))
+						val nanoShifted = v1 + (ortho1 + ortho2) * Epsilon
+						verts.insert(nearest.baseIdx, vert, nanoShifted)
 
-				case SecondVertice =>
-					val v2 = nearest.point
-					val ortho1 = orthoNormVector(verts(nearest.baseIdx - 1), v2)
-					val ortho2 = orthoNormVector(v2, vert)
-					val nanoShifted = v2 + (ortho1 + ortho2) * Epsilon
-					verts.insert(nearest.baseIdx, nanoShifted, vert)
+					case SecondVertice =>
+						val v2 = nearest.point
+						val ortho1 = orthoNormVector(verts(nearest.baseIdx - 1), v2)
+						val ortho2 = orthoNormVector(v2, vert)
+						val nanoShifted = v2 + (ortho1 + ortho2) * Epsilon
+						verts.insert(nearest.baseIdx, nanoShifted, vert)
 
-				case InnerPoint =>
-					val dist = Math.sqrt(nearest.cost)
-					val np = nearest.point
-					val shifted = Point(
-						np.lon + (vert.lon - np.lon) / dist * Epsilon,
-						np.lat + (vert.lat - np.lat) / dist * Epsilon
-					)
-					verts.insert(nearest.baseIdx, shifted, vert, shifted)
+					case InnerPoint =>
+						val dist = Math.sqrt(nearest.cost)
+						val np = nearest.point
+						val shifted = Point(
+							np.lon + (vert.lon - np.lon) / dist * Epsilon,
+							np.lat + (vert.lat - np.lat) / dist * Epsilon
+						)
+						verts.insert(nearest.baseIdx, shifted, vert, shifted)
+				}
+				true
 			}
-			true
 		}
 	}
 
