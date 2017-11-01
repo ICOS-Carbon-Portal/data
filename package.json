@@ -11,6 +11,7 @@
     "wdcgg": "gulp wdcgg",
     "stilt": "gulp stilt",
     "dygraph-light": "gulp dygraph-light",
+    "stats": "gulp stats",
     "gulp": "gulp"
   },
   "repository": {
