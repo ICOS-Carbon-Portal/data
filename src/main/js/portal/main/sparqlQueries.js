@@ -5,6 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat [rdfs:label ?format ]
 }`;

@@ -36,7 +36,7 @@ export class App extends Component {
 				<div className="page-header">
 					<h1>
 						ICOS data portal
-						<small> Under construction</small>
+						<small> Search, preview, download data objects</small>
 
 						<SwitchRouteBtn
 							currentRoute={props.routeAndParams.route}
