@@ -1,7 +1,7 @@
 import { getDownloadCounts, getSpecifications, getFormats, getDataLevels } from './backend';
 
 export const ERROR = 'ERROR';
-export const DOWNLOADCOUNTS_FETCHED = 'DOWNLOADCOUNTS_FETCHED';
+export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
 export const FILTERS = 'FILTERS';
 export const STATS_UPDATE = 'STATS_UPDATE';
 export const STATS_UPDATED = 'STATS_UPDATED';
@@ -14,11 +14,11 @@ const failWithError = dispatch => error => {
 	});
 }
 
-export const fetchDownloadCounts = dispatch => {
+export const fetchDownloadStats = dispatch => {
 	getDownloadCounts({}).then(
 		downloadStats => {
 			dispatch({
-				type: DOWNLOADCOUNTS_FETCHED,
+				type: DOWNLOAD_STATS_FETCHED,
 				downloadStats
 			})
 		}
@@ -57,8 +57,4 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 			})
 		}
 	)
-}
-
-export const fetchFilteredDownloadStats = dispatch => {
-
 }

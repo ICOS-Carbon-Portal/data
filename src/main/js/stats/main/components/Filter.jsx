@@ -38,9 +38,16 @@ export default class Filter extends Component {
 		  )
 		}
 
+		const showResetBtn = !!filters;
+
     return (
       <div className="panel panel-default">
   			<div className="panel-heading">
+					<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+					{showResetBtn
+						? <ResetBtn resetFiltersAction={this.props.fetchDownloadStats} />
+						: null
+					}
   			</div>
   			<div className="panel-body">
   				{ filters
@@ -59,4 +66,14 @@ export default class Filter extends Component {
 	tagItem({item}) {
 		return <span>{item.text}</span>;
 	}
+
 }
+
+const ResetBtn = props => {
+	return <div
+		className="glyphicon glyphicon-ban-circle"
+		style={{display: 'inline', float: 'right', fontSize: '160%', cursor: 'pointer'}}
+		title="Clear all filters"
+		onClick={props.resetFiltersAction}
+		/>;
+};

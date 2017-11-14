@@ -6,11 +6,12 @@ export default class DobjTable extends Component {
   }
 
   render() {
-    const {downloadStats} = this.props;
+    const {downloadStats, paging} = this.props;
 
     return (
       <div className="panel panel-default">
   			<div className="panel-heading">
+          <h3 className="panel-title">Data objects {paging.offset} to {paging.to} of {paging.objCount}</h3>
   			</div>
   			<div className="panel-body">
           <table className="table">
