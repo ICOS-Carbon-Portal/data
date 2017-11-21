@@ -12,6 +12,7 @@
     "stilt": "gulp stilt",
     "dygraph-light": "gulp dygraph-light",
     "stats": "gulp stats",
+	"map-proj": "gulp map-proj",
     "gulp": "gulp"
   },
   "repository": {
@@ -59,6 +60,11 @@
     "icos-cp-spatial": "^0.2.0",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.0",
+    "leaflet": "^1.2.0",
+    "leaflet.markercluster": "^1.1.0",
+    "ol": "^4.5.0",
+    "proj4": "^2.4.4",
+    "proj4leaflet": "^1.0.2",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-pikaday": "~0.5.1",
