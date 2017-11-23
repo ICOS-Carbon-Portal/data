@@ -63,7 +63,7 @@ const SortButton = props => {
 				: '-by-attributes-alt'
 	);
 
-	const title = disabled ? 'Filter down the amount of objects first, then sort' : 'Sort';
+	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
 
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
