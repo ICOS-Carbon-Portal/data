@@ -19,7 +19,8 @@ export const fetchDownloadStats = dispatch => {
 		downloadStats => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
-				downloadStats
+				downloadStats,
+				page: 1
 			})
 		}
 	)
@@ -58,3 +59,16 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 		}
 	)
 }
+
+export const requestPage = page => dispatch => {
+	console.log(page);
+	getDownloadCounts({}, page).then(
+		downloadStats => {
+			dispatch({
+				type: DOWNLOAD_STATS_FETCHED,
+				downloadStats,
+				page
+			})
+		}
+	)
+};

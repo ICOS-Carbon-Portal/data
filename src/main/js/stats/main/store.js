@@ -10,7 +10,8 @@ const initState = {
 	paging: {
 		offset: 0,
 		to: 0,
-		objCount: 0
+		objCount: 0,
+		pagesize: 100
 	}
 };
 

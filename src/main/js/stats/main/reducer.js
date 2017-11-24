@@ -15,9 +15,10 @@ export default function(state, action){
 			return update({
 				downloadStats: new StatsTable(action.downloadStats._embedded),
 				paging: {
-					offset: 1,
+					offset: action.page,
 					to: action.downloadStats._returned,
-					objCount: action.downloadStats._size
+					objCount: action.downloadStats._size,
+					pagesize: 100
 				}
 			})
 
@@ -46,7 +47,8 @@ export default function(state, action){
 				paging: {
 					offset: 1,
 					to: action.downloadStats._returned,
-					objCount: action.downloadStats._size
+					objCount: action.downloadStats._size,
+					pagesize: 100
 				}
 			})
 

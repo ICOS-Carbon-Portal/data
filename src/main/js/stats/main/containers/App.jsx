@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { AnimatedToasters } from 'icos-cp-toaster';
 import Filter from '../components/Filter.jsx';
 import DobjTable from '../components/DobjTable.jsx';
-import { statsUpdate, fetchDownloadStats } from '../actions';
+import { statsUpdate, fetchDownloadStats, requestPage } from '../actions';
 
 export class App extends Component {
 	constructor(props){
@@ -38,7 +38,8 @@ export class App extends Component {
 					<div className="col-md-8">
 						<DobjTable
 							downloadStats={props.downloadStats}
-							paging={props.paging}/>
+							paging={props.paging}
+							requestPage={props.requestPage}/>
 					</div>
 				</div>
 			</div>
@@ -57,7 +58,8 @@ function stateToProps(state) {
 function dispatchToProps(dispatch) {
 	return {
 		updateTableWithFilter: (varName, values) => dispatch(statsUpdate(varName, values)),
-		fetchDownloadStats: () => dispatch(fetchDownloadStats)
+		fetchDownloadStats: () => dispatch(fetchDownloadStats),
+		requestPage: page => dispatch(requestPage(page))
 	};
 }
 
