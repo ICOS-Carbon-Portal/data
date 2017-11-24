@@ -16,7 +16,7 @@ class EnvelopePolygonBugSearch extends FunSuite with EnvelopePolygonHelpers{
 	}
 
 	def prefill(startPoints: Seq[Point]) = {
-		val poly = new EnvelopePolygon
+		val poly = EnvelopePolygon.defaultEmpty
 		startPoints.foreach(poly.addVertice)
 		poly
 	}

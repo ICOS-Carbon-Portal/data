@@ -23,7 +23,7 @@ class EnvelopePolygonBenchmark extends FunSuite with EnvelopePolygonHelpers{
 
 		val t0 = System.currentTimeMillis()
 
-		val hull = latLongs.sliding(ChunkSize, ChunkSize).foldLeft(new EnvelopePolygon){
+		val hull = latLongs.sliding(ChunkSize, ChunkSize).foldLeft(EnvelopePolygon.defaultEmpty){
 			case (poly, chunk) =>
 				chunk.foreach(poly.addVertice)
 				while(poly.size > Budget && poly.reduceVerticesByOne()){}
@@ -45,7 +45,7 @@ class EnvelopePolygonBenchmark extends FunSuite with EnvelopePolygonHelpers{
 	}
 
 	ignore("EnvelopePolygon debug"){
-		implicit val p = new EnvelopePolygon
+		implicit val p = EnvelopePolygon.defaultEmpty
 		add(-12.991, 57.665)
 		add(-13.005, 57.665)
 		add(-13.01001, 57.666)
@@ -76,7 +76,7 @@ class EnvelopePolygonBenchmark extends FunSuite with EnvelopePolygonHelpers{
 	}
 
 	ignore("EnvelopePolygon debug 2"){
-		implicit val p = new EnvelopePolygon
+		implicit val p = EnvelopePolygon.defaultEmpty
 		add(51.24807098745052, -20.536151500738157)
 		add(109.0683283505391, 34.36887557724276)
 		add(-69.56969550016895, -28.094834450311147)
@@ -91,7 +91,7 @@ class EnvelopePolygonBenchmark extends FunSuite with EnvelopePolygonHelpers{
 	}
 
 	ignore("EnvelopePolygon debug 3"){
-		implicit val p = new EnvelopePolygon
+		implicit val p = EnvelopePolygon.defaultEmpty
 		add(126.78083483632014, -89.7927492841762)
 		add(175.8871963966767, -60.46169828056818)
 		add(-100.94871632118426, -73.54171609855533)

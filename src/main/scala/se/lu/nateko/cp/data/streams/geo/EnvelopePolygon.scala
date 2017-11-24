@@ -4,10 +4,12 @@ import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
 import scala.annotation.tailrec
 
-class EnvelopePolygon {
+import GeoAlgorithms._
+
+class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	import EnvelopePolygon._
 
-	private[this] val verts = Buffer.empty[Point]
+	private val verts = Buffer.empty[Point]
 	private[this] val edgeReplacements = Map.empty[Int, Point]
 
 	def vertices: Seq[Point] = verts
@@ -63,7 +65,7 @@ class EnvelopePolygon {
 		val next = edgeAngle(idx + 1)
 		val diff = angleDiff(prev, next)
 
-		if(diff >= 0 && diff < Math.PI / 3){
+		if(diff >= 0 && diff < conf.maxAngleForEdgeRemoval){
 			val diff1 = angleDiff(prev, curr)
 			val diff2 = angleDiff(curr, next)
 
@@ -71,7 +73,7 @@ class EnvelopePolygon {
 				val start = vertice(idx)
 				val stop = vertice(idx + 1)
 
-				val top = if(diff > 0.001)
+				val top = if(diff > conf.minAngleForSimpleLineLineIntersection)
 					lineLineIntersection(vertice(idx - 1), start, stop, vertice(idx + 2))
 				else if(diff1 <= diff2)
 					lineLineIntersection(vertice(idx + 2), stop, start, diff1, diff)
@@ -127,7 +129,7 @@ class EnvelopePolygon {
 		}
 	}
 
-	private def isInside(p: Point): Boolean = {
+	def containsPoint(p: Point): Boolean = {
 		import EdgeRayRelationship._
 		var isOnBorder = false
 		var crossingCount = 0
@@ -145,7 +147,7 @@ class EnvelopePolygon {
 	}
 
 	/***
-	 * Adds a vertice, attaching it to the nearest edge with a degenerate zero-area protrusion.
+	 * Adds a vertice, attaching it to the nearest edge with a degenerate near-zero-area protrusion.
 	 * Effectively inserts 2 or 3 new vertices, depending on whether the nearest point on the nearest edge
 	 * is a vertice or an inner point, respectively.
 	 *
@@ -160,16 +162,15 @@ class EnvelopePolygon {
 				true
 			}
 		}
-		else !isInside(vert) && {
+		else !containsPoint(vert) && {
 
 			val nearest = verts.indices.map{i =>
 				val noe = nearestOnEdge(verts(i), verts((i + 1) % curSize), vert)
 				noe.baseIdx = i + 1
 				noe
-			}.minBy(_.cost)
+			}.minBy(_.distSq)
 
-			if(nearest.cost < 1e-8) false else {
-				val Epsilon = 1e-6
+			if(nearest.distSq < conf.minSquaredDistanceForNewVertice) false else {
 				import NearestKind._
 
 				nearest.kind match{
@@ -178,23 +179,24 @@ class EnvelopePolygon {
 						val v1 = nearest.point
 						val ortho1 = orthoNormVector(vert, v1)
 						val ortho2 = orthoNormVector(v1, verts(nearest.baseIdx % curSize))
-						val nanoShifted = v1 + (ortho1 + ortho2) * Epsilon
+						val nanoShifted = v1 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, vert, nanoShifted)
 
 					case SecondVertice =>
 						val v2 = nearest.point
 						val ortho1 = orthoNormVector(verts(nearest.baseIdx - 1), v2)
 						val ortho2 = orthoNormVector(v2, vert)
-						val nanoShifted = v2 + (ortho1 + ortho2) * Epsilon
+						val nanoShifted = v2 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, nanoShifted, vert)
 
 					case InnerPoint =>
-						val dist = Math.sqrt(nearest.cost)
+						val dist = Math.sqrt(nearest.distSq)
 						val np = nearest.point
 						val shifted = Point(
-							np.lon + (vert.lon - np.lon) / dist * Epsilon,
-							np.lat + (vert.lat - np.lat) / dist * Epsilon
+							np.lon + (vert.lon - np.lon) / dist * conf.epsilon,
+							np.lat + (vert.lat - np.lat) / dist * conf.epsilon
 						)
+						//TODO Consider making two versions of 'shifted', shifted in slightly different directions
 						verts.insert(nearest.baseIdx, shifted, vert, shifted)
 				}
 				true
@@ -207,6 +209,23 @@ class EnvelopePolygon {
 
 object EnvelopePolygon{
 
+	object defaultConfig extends EnvelopePolygonConfig{
+		val maxAngleForEdgeRemoval: Double = 0.9 * Math.PI
+		val minAngleForSimpleLineLineIntersection: Double = 0.001
+		val minSquaredDistanceForNewVertice: Double = 1e-8
+		val epsilon: Double = 1e-6
+	}
+
+	def defaultEmpty = new EnvelopePolygon(defaultConfig)
+
+	def apply(vertices: TraversableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
+		val p = new EnvelopePolygon(conf)
+		p.verts ++= vertices
+		p
+	}
+
+	def default(vertices: Point*) = apply(vertices)(defaultConfig)
+
 	def angleDiff(from: Double, to: Double): Double = {
 		val diff0 = to - from
 		if(diff0 > Math.PI) diff0 - 2 * Math.PI
@@ -214,57 +233,11 @@ object EnvelopePolygon{
 		else diff0
 	}
 
-	def triangleArea2(a: Point, b: Point, c: Point): Double = Math.abs(
-		(a.lon - c.lon) * (b.lat - a.lat) - (a.lon - b.lon) * (c.lat - a.lat)
-	).toDouble
-
-	def side(a: Point, b: Point, c: Point) = Math.signum(
-		(a.lon - c.lon) * (b.lat - a.lat) - (a.lon - b.lon) * (c.lat - a.lat)
-	)
-
-	/**
-	 * Only to be called with lines that are not close to being parallel
-	 */
-	def lineLineIntersection(p1: Point, p2: Point, p3: Point, p4: Point): Point = {
-		val denom = (p1.lon - p2.lon) * (p3.lat - p4.lat) - (p1.lat - p2.lat) * (p3.lon - p4.lon)
-
-		val xnom = (p1.lon * p2.lat - p1.lat * p2.lon) * (p3.lon - p4.lon) -
-			(p1.lon - p2.lon) * (p3.lon * p4.lat - p3.lat * p4.lon)
-
-		val ynom = (p1.lon * p2.lat - p1.lat * p2.lon) * (p3.lat - p4.lat) -
-			(p1.lat - p2.lat) * (p3.lon * p4.lat - p3.lat * p4.lon)
-
-		new Point(xnom / denom, ynom / denom)
-	}
-
-	def lineLineIntersection(p1: Point, p2: Point, p3: Point, smallerAngle: Double, totalAngle: Double): Point = {
-		if(smallerAngle == 0) Point((p2.lon + p3.lon) / 2, (p2.lat + p3.lat) / 2) else {
-			val l12 = Math.sqrt(distSq(p1, p2))
-			val base = Math.sqrt(distSq(p2, p3))
-			val lInter = base / l12 * (Math.sin(smallerAngle) / Math.sin(totalAngle))
-			Point(
-				p2.lon + lInter * (p2.lon - p1.lon),
-				p2.lat + lInter * (p2.lat - p1.lat)
-			)
-		}
-	}
-
-	def distSq(p1: Point, p2: Point): Double = {
-		val dx = p1.lon - p2.lon
-		val dy = p1.lat - p2.lat
-		dx * dx + dy * dy
-	}
-
-	def orthoNormVector(p1: Point, p2: Point): GeoVector = {
-		val norm = Math.sqrt(distSq(p1, p2))
-		new GeoVector((p2.lat - p1.lat) / norm, (p1.lon - p2.lon) / norm)
-	}
-
 	object NearestKind extends Enumeration{
 		val FirstVertice, SecondVertice, InnerPoint = Value
 	}
 
-	class NearestOnEdge(val kind: NearestKind.Value, val point: Point, val cost: Double){
+	class NearestOnEdge(val kind: NearestKind.Value, val point: Point, val distSq: Double){
 		var baseIdx: Int = _
 	}
 
@@ -285,6 +258,7 @@ object EnvelopePolygon{
 
 		else {
 			val nearestPoint = Point(v1.lon + (v2.lon - v1.lon) * factor, v1.lat + (v2.lat - v1.lat) * factor)
+			//new vertices cannot be attached to a polygon edge from the "internal side" of it:
 			val cost = if(side(v1, v2, p) > 0) Double.MaxValue else distSq(p, nearestPoint)
 			new NearestOnEdge(InnerPoint, nearestPoint, cost)
 		}

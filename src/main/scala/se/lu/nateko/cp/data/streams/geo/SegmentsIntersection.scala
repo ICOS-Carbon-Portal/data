@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.streams.geo
 
-import EnvelopePolygon.side
+import GeoAlgorithms.side
 
 object SegmentsIntersection extends Enumeration{
 	val NoIntersection, SingleVertice, CollinearOverlap, VerticeInside, InnerPoints = Value
