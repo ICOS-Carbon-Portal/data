@@ -60,9 +60,11 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 	)
 }
 
-export const requestPage = page => dispatch => {
-	console.log(page);
-	getDownloadCounts({}, page).then(
+export const requestPage = page => (dispatch, getState) => {
+	const state = getState();
+	const filters = state.downloadStats.filters;
+
+	getDownloadCounts(filters, page).then(
 		downloadStats => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
