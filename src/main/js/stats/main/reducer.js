@@ -33,6 +33,9 @@ export default function(state, action){
 				}, {
 					name: "dataLevel",
 					values: action.dataLevels._embedded
+				}, {
+					name: "stations",
+					values: action.stations._embedded
 				}]
 			})
 

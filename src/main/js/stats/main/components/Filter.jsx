@@ -4,7 +4,8 @@ import Multiselect from 'react-widgets/lib/Multiselect';
 const placeholders = {
 	specification: 'Specification',
 	dataLevel: 'Data level',
-	format: 'Format'
+	format: 'Format',
+	stations: 'Stations'
 };
 
 export default class Filter extends Component {
