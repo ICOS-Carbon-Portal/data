@@ -39,6 +39,9 @@ export default function(state, action){
 				}, {
 					name: "contributors",
 					values: action.contributors._embedded
+				}, {
+					name: "themes",
+					values: action.themes._embedded
 				}]
 			})
 

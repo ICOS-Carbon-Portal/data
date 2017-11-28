@@ -6,7 +6,8 @@ const placeholders = {
 	dataLevel: 'Data level',
 	format: 'Format',
 	stations: 'Stations',
-	contributors: 'Contributors'
+	contributors: 'Contributors',
+	themes: 'Theme'
 };
 
 export default class Filter extends Component {

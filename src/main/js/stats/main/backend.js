@@ -10,7 +10,8 @@ export const getDownloadCounts = (filters, page = 1) => {
   const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : "/.*/, null";
   const stations = filters.stations && filters.stations.length ? filters.stations.map(station => `"${station}"`) : "/.*/, null";
   const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : "/.*/, null";
-  const parameters = `page=${page}&avars={"specification":[${specification}],"format":[${format}],"dataLevel":[${dataLevel}],"stations":[${stations}],"contributors":[${contributors}]}`;
+  const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : "/.*/, null";
+  const parameters = `page=${page}&avars={"specification":[${specification}],"format":[${format}],"dataLevel":[${dataLevel}],"stations":[${stations}],"contributors":[${contributors}],"themes":[${themes}]}`;
 
   return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getDownloadStats?${parameters}`);
 }
@@ -33,4 +34,8 @@ export function getStations() {
 
 export function getContributors() {
   return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getContributors?pagesize=100&page=1`);
+}
+
+export function getThemes() {
+  return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getThemes?pagesize=100&page=1`);
 }
