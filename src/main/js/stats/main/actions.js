@@ -1,4 +1,4 @@
-import { getDownloadCounts, getSpecifications, getFormats, getDataLevels, getStations } from './backend';
+import { getDownloadCounts, getSpecifications, getFormats, getDataLevels, getStations, getContributors } from './backend';
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -27,14 +27,15 @@ export const fetchDownloadStats = dispatch => {
 }
 
 export const fetchFilters = dispatch => {
-	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations()]).then(
-		([specifications, formats, dataLevels, stations]) => {
+	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors()]).then(
+		([specifications, formats, dataLevels, stations, contributors]) => {
 			dispatch({
 				type: FILTERS,
 				specifications,
 				formats,
 				dataLevels,
-				stations
+				stations,
+				contributors
 			})
 		}
 	)

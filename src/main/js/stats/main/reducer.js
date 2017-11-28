@@ -13,7 +13,7 @@ export default function(state, action){
 
 		case DOWNLOAD_STATS_FETCHED:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats._embedded, state.downloadStats.filters),
+				downloadStats: new StatsTable(action.downloadStats._embedded),
 				paging: {
 					offset: action.page,
 					to: action.downloadStats._returned,
@@ -36,6 +36,9 @@ export default function(state, action){
 				}, {
 					name: "stations",
 					values: action.stations._embedded
+				}, {
+					name: "contributors",
+					values: action.contributors._embedded
 				}]
 			})
 
