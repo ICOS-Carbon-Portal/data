@@ -58,7 +58,7 @@ function stateToProps(state) {
 function dispatchToProps(dispatch) {
 	return {
 		updateTableWithFilter: (varName, values) => dispatch(statsUpdate(varName, values)),
-		fetchDownloadStats: () => dispatch(fetchDownloadStats),
+		fetchDownloadStats: filters => dispatch(fetchDownloadStats(filters)),
 		requestPage: page => dispatch(requestPage(page))
 	};
 }

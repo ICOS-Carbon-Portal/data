@@ -17,7 +17,7 @@ const initState = {
 
 export default function() {
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
-	store.dispatch(fetchDownloadStats);
+	store.dispatch(fetchDownloadStats({}));
 	store.dispatch(fetchFilters);
 	return store;
 }

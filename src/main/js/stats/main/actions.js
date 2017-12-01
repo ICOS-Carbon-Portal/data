@@ -1,4 +1,4 @@
-import { getDownloadCounts, getSpecifications, getFormats, getDataLevels, getStations, getContributors, getThemes } from './backend';
+import { getDownloadCounts, getSpecifications, getFormats, getDataLevels, getStations, getContributors, getThemes, getStationsCountryCode } from './backend';
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -14,21 +14,26 @@ const failWithError = dispatch => error => {
 	});
 }
 
-export const fetchDownloadStats = dispatch => {
-	getDownloadCounts({}).then(
+export const fetchDownloadStats = filters => (dispatch, getState) => {
+	const state = getState();
+	getDownloadCounts(filters, state.stationCountryCodeLookup).then(
 		downloadStats => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
 				downloadStats,
+				filters,
 				page: 1
 			})
 		}
 	)
 }
 
-export const fetchFilters = dispatch => {
-	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes()]).then(
-		([specifications, formats, dataLevels, stations, contributors, themes]) => {
+export const fetchFilters = (dispatch, getState) => {
+	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
+		([specifications, formats, dataLevels, stations, contributors, themes, countryCodes]) => {
+			const state = getState();
+			let countryCodesLabels = countryCodes.countryCodeFilter;
+			state.stationCountryCodeLookup = countryCodes.stationCountryCodeLookup;
 			dispatch({
 				type: FILTERS,
 				specifications,
@@ -36,7 +41,8 @@ export const fetchFilters = dispatch => {
 				dataLevels,
 				stations,
 				contributors,
-				themes
+				themes,
+				countryCodes: countryCodesLabels
 			})
 		}
 	)
@@ -53,7 +59,7 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 	const state = getState();
 	const filters = state.downloadStats.filters;
 
-	getDownloadCounts(filters).then(
+	getDownloadCounts(filters, state.stationCountryCodeLookup).then(
 		downloadStats => {
 			dispatch({
 				type: STATS_UPDATED,
@@ -67,11 +73,12 @@ export const requestPage = page => (dispatch, getState) => {
 	const state = getState();
 	const filters = state.downloadStats.filters;
 
-	getDownloadCounts(filters, page).then(
+	getDownloadCounts(filters, state.stationCountryCodeLookup, page).then(
 		downloadStats => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
 				downloadStats,
+				filters,
 				page
 			})
 		}

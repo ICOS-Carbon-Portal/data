@@ -13,7 +13,7 @@ export default function(state, action){
 
 		case DOWNLOAD_STATS_FETCHED:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats._embedded),
+				downloadStats: new StatsTable(action.downloadStats._embedded, action.filters),
 				paging: {
 					offset: action.page,
 					to: action.downloadStats._returned,
@@ -42,6 +42,9 @@ export default function(state, action){
 				}, {
 					name: "themes",
 					values: action.themes._embedded
+				}, {
+					name: "countryCodes",
+					values: action.countryCodes
 				}]
 			})
 
