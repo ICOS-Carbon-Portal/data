@@ -21,12 +21,15 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import akka.stream.scaladsl.StreamConverters
+import se.lu.nateko.cp.meta.core.data.Envri
 
 class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
 
 	import DownloadService._
 
-	private val conf = ConfigReader.metaCore
+	private val coreConf = ConfigReader.metaCore
+	//TODO Generalize for multiple ENVRIes
+	private val envriConf = coreConf.envriConfigs(Envri.ICOS)
 
 	def getZipSource(hashes: Seq[Sha256Sum], downloadLogger: DataObject => Unit) = {
 
@@ -98,9 +101,9 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 			val omissionReason = dest.omissionReason.getOrElse("")
 			val pid = dest.dobj.pid.getOrElse("")
 			val landingPage = dest.dobj.pid.fold(
-				conf.landingPagePrefix + dest.dobj.hash.id
+				envriConf.landingPagePrefix + dest.dobj.hash.id
 			)(
-				pid => s"${conf.handleService}$pid"
+				pid => s"${coreConf.handleService}$pid"
 			)
 			s"$presense,${dest.fileName},$pid,$landingPage,$omissionReason\n"
 		}
@@ -114,7 +117,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 				Some("Data object is not distributed by Carbon Portal as open data")
 
 			case Some(url) =>
-				if(!url.toString.startsWith(conf.dataObjPrefix.toString))
+				if(!url.toString.startsWith(envriConf.dataObjPrefix.toString))
 					Some("Data object is distributed by third parties")
 
 				else if(!upload.getFile(dobj).exists)
