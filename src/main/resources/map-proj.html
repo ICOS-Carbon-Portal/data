@@ -7,23 +7,20 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta charset="UTF-8">
 
-		<script type="application/javascript" src="//cdn-webgl.wrld3d.com/wrldjs/dist/latest/wrld.js"></script>
-
 		<title>Map</title>
 
-		<link rel="stylesheet" href="//static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.css" />
-		<link href="https://static.icos-cp.eu/constant/leaflet/markercluster/1.0.0/MarkerCluster.Default.css" rel="stylesheet" />
-		<link href="https://static.icos-cp.eu/constant/leaflet/markercluster/1.0.0/MarkerCluster.css" rel="stylesheet" />
+		<script type="text/javascript" src="https://static.icos-cp.eu/constant/misc/countries.js"></script>
+		<link rel="stylesheet" href="https://static.icos-cp.eu/constant/ol/4.5.0/css/ol.css" type="text/css">
+
 
 		<style type="text/css">
 			body {
 				padding: 0;
 				margin: 0;
 			}
-			html, body, #main, #content {
+			html, body {
 				height: 100%;
 				width: 100%;
-				/*overflow: hidden;*/
 			}
 			#map {
 				position: relative;
@@ -32,17 +29,64 @@
 				height: 100%;
 				margin: 0;
 			}
-			.leaflet-container, .leaflet-clickable, .leaflet-interactive {
-				cursor: crosshair !important;
+			.ol-viewport{
+				background-color: #aee1e6;
 			}
-			.leaflet-container {
-				background: #aee1e6;
-				/*background: rgba(93, 188, 210, 0.3);*/
+			.ol-popup {
+				position: absolute;
+				background-color: white;
+				min-width: 210px;
+				max-width: 400px;
+				-webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+				filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+				padding: 0;
+				border-radius: 10px;
+				border: 1px solid #cccccc;
+				bottom: 12px;
+				left: -50px;
+				font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+				font-size: 14px;
+			}
+			.ol-popup:after, .ol-popup:before {
+				top: 100%;
+				border: solid transparent;
+				content: " ";
+				height: 0;
+				width: 0;
+				position: absolute;
+				pointer-events: none;
+			}
+			.ol-popup:after {
+				border-top-color: white;
+				border-width: 10px;
+				left: 48px;
+				margin-left: -10px;
+			}
+			.ol-popup:before {
+				border-top-color: #cccccc;
+				border-width: 11px;
+				left: 48px;
+				margin-left: -11px;
+			}
+			.ol-popup-header {
+				white-space: nowrap;
+				background-color: #f5f5f5;
+				border-top-left-radius: 10px;
+				border-top-right-radius: 10px;
+				padding: 5px 10px;
+				border-bottom: lightgray solid 1px;
+				margin-bottom: 5px;
+			}
+			.ol-popup-content {
+				margin-bottom: 10px;
+			}
+			.ol-popup-content-record {
+				padding: 2px 5px;
 			}
 		</style>
 	</head>
 <body>
-	<div id="map"></div>
+	<div id="map"><div id="popover" class="ol-popup"></div></div>
 	<script type="text/javascript" src="./map-proj.js"></script>
 </body>
 
