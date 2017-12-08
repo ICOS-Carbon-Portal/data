@@ -2,34 +2,39 @@ import proj from 'ol/proj';
 import CanvasMap from 'ol/canvasmap';
 import View from 'ol/view';
 import Overlay from 'ol/overlay';
-import OSM from 'ol/source/osm';
-import XYZ from 'ol/source/xyz';
-import TileJSON from 'ol/source/tilejson';
 import VectorSource from 'ol/source/vector';
-import Tile from 'ol/layer/tile';
 import VectorLayer from 'ol/layer/vector';
 import GeoJSON from 'ol/format/geojson';
 import Feature from 'ol/feature';
 import Point from 'ol/geom/point';
+import Polygon, {fromExtent} from 'ol/geom/polygon';
 import Select from 'ol/interaction/select';
 import condition from 'ol/events/condition';
 import Popup from './models/Popup';
+import Stroke from "ol/style/stroke";
+import Fill from "ol/style/fill";
+import Style from "ol/style/style";
+import PointsOnGreatCircle from './models/PointsOnGreatCircle';
 
 
 const defaultMapOptions = {
 	// Initial zoom level
 	zoom: 4,
-	// Radius in pixels around given position where features should be selected
+	// Radius in pixels around mouse position where features should be selected for popup
 	hitTolerance: 5,
-	popupEnabled: true
+	fitView: true,
+	popupEnabled: true,
+	// Should a popup slide map so it fits the popup
+	autoPan: false
 };
 
 export default class OL{
-	constructor(projection, layers = [], mapOptions, popupElement){
+	constructor(projection, layers = [], controls = [], mapOptions){
 		this._projection = projection;
 		this._layers = layers;
+		this._controls = controls;
+		this._layerControl = undefined;
 		this._mapOptions = Object.assign(defaultMapOptions, mapOptions);
-		this._popupElement = popupElement;
 		this._viewParams = getViewParams(projection.getCode());
 		this._map = undefined;
 		this._points = [];
@@ -40,14 +45,15 @@ export default class OL{
 	initMap(){
 		const view = new View({
 			projection: this._projection,
-			center: this._viewParams.initCenter,
-			zoom: this._mapOptions.zoom
+			center: this._mapOptions.center || this._viewParams.initCenter,
+			zoom: this._mapOptions.zoom,
+			extent: this._viewParams.extent
 		});
 
 		const pp = new Popup('popover', countries);
 		const popup = new Overlay({
 			element: pp.popupElement,
-			autoPan: true,
+			autoPan: this._mapOptions.autoPan,
 			autoPanAnimation: {
 				duration: 250
 			}
@@ -57,14 +63,25 @@ export default class OL{
 			target: 'map',
 			view,
 			layers: this._layers,
-			overlays: [popup]
+			overlays: [popup],
+			controls: this._controls
 		});
+
+		this._layerControl = this._controls.find(ctrl => ctrl.name === 'layerControl');
+		if (this._layerControl){
+			// console.log({layerControl: this._layerControl});
+			this._layerControl.setMap(map);
+		}
+
+		// map.getLayerGroup().set('name', 'Root');
 
 		if (this._mapOptions.popupEnabled) {
 			this.addPopup(popup, pp);
 		}
 
-		// view.fit(this._viewParams.extent);
+		if (this._mapOptions.fitView) {
+			view.fit(this._viewParams.extent);
+		}
 	}
 
 	addPopup(popup, pp){
@@ -73,7 +90,8 @@ export default class OL{
 			condition: condition.pointerMove,
 			layers: layer => layer.get('interactive'),
 			multi: true,
-			hitTolerance: this._mapOptions.hitTolerance
+			hitTolerance: this._mapOptions.hitTolerance,
+			wrapX: false
 		});
 		map.addInteraction(select);
 
@@ -125,14 +143,17 @@ export default class OL{
 		});
 	}
 
-	addGeoJson(geoJson, style, interactive = true){
+	addGeoJson(name, ctrlType, geoJson, style, interactive = true){
 		const jsonFeatures = (new GeoJSON()).readFeatures(geoJson, {
 			dataProjection: 'EPSG:4326',
 			featureProjection: this._projection
 		});
 
 		const vectorLayer = new VectorLayer({
+			name,
+			ctrlType,
 			interactive,
+			extent: this._viewParams.extent,
 			source: new VectorSource({
 				features: jsonFeatures
 			}),
@@ -142,7 +163,7 @@ export default class OL{
 		this._map.addLayer(vectorLayer);
 	}
 
-	addPoints(points, style, renderOrder){
+	addPoints(name, ctrlType, points, style, renderOrder){
 		this._points = this._points.concat(points);
 
 		const vectorSource = new VectorSource({
@@ -154,7 +175,10 @@ export default class OL{
 		});
 
 		const vectorLayer = new VectorLayer({
+			name,
+			ctrlType,
 			interactive: true,
+			extent: this._viewParams.extent,
 			renderOrder,
 			source: vectorSource,
 			style
@@ -162,12 +186,51 @@ export default class OL{
 
 		this._map.addLayer(vectorLayer);
 	}
+
+	addBBox(){
+		const bBox4326 = [[-16.1, 32.88], [-16.1, 84.17], [39.65, 84.17], [39.65, 32.88], [-16.1, 32.88]];
+		const pointsOnGreatCircle = PointsOnGreatCircle.fromCoords(bBox4326, 1);
+		const pointsOnGreatCircle3035 = pointsOnGreatCircle.map(c => proj.transform(c, 'EPSG:4326', this._projection));
+		const minMax = pointsOnGreatCircle3035.reduce((acc, curr) => {
+			if (curr[0] < acc.minX) acc.minX = curr[0];
+			if (curr[1] < acc.minY) acc.minY = curr[1];
+			if (curr[0] > acc.maxX) acc.maxX = curr[0];
+			if (curr[1] > acc.maxY) acc.maxY = curr[1];
+
+			return acc;
+		}, {minX: Number.MAX_VALUE, minY: Number.MAX_VALUE, maxX: 0, maxY: 0});
+
+		const bBox = [
+			[minMax.minX, minMax.minY],
+			[minMax.minX, minMax.maxY],
+			[minMax.maxX, minMax.maxY],
+			[minMax.maxX, minMax.minY],
+			[minMax.minX, minMax.minY]
+		];
+
+		const vectorSource = new VectorSource({
+			features: [new Feature({geometry: new Polygon([bBox])})]
+		});
+
+		const vectorLayer = new VectorLayer({
+			source: vectorSource,
+			style: new Style({
+				stroke: new Stroke({
+					color: 'rgb(100,100,100)',
+					width: 1
+				})
+			}),
+			zIndex: 99
+		});
+
+		this._map.addLayer(vectorLayer);
+	}
 }
 
-const getViewParams = epsgCode => {
+export const getViewParams = epsgCode => {
 	const bBox4326 = [[-180, -90], [180, 90]];
 	const bBox3857 = [[-20026376.39, -20048966.10], [20026376.39, 20048966.10]];
-	const bBox3035 = [[1896628.62, 1507846.05], [4656644.57, 6827128.02]];
+	const bBox3035 = [[1896628.618, 1450770.904], [7058042.778, 6827128.02]];
 
 	switch (epsgCode){
 		case 'EPSG:4326':
@@ -185,7 +248,14 @@ const getViewParams = epsgCode => {
 		case 'EPSG:3035':
 			return {
 				initCenter: [4321000, 3210000],
-				extent: [bBox3035[0][0], bBox3035[0][1], bBox3035[1][0], bBox3035[1][1]]
+				extent: [bBox3035[0][0], bBox3035[0][1], bBox3035[1][0], bBox3035[1][1]],
+				rect:[
+					bBox3035[0][0], bBox3035[0][1],
+					bBox3035[0][0], bBox3035[1][1],
+					bBox3035[1][0], bBox3035[1][1],
+					bBox3035[1][0], bBox3035[0][1],
+					bBox3035[0][0], bBox3035[0][1]
+				],
 			};
 
 		default:

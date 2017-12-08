@@ -70,7 +70,7 @@
 			}
 			.ol-popup-header {
 				white-space: nowrap;
-				background-color: #f5f5f5;
+				background-color: #dcdcdc;
 				border-top-left-radius: 10px;
 				border-top-right-radius: 10px;
 				padding: 5px 10px;
@@ -83,10 +83,33 @@
 			.ol-popup-content-record {
 				padding: 2px 5px;
 			}
+			.ol-mouse-position{
+				top: calc(100% - 30px);
+				right: 8px;
+				position: absolute;
+				background-color: white;
+				padding: 3px;
+				font-size: 9pt;
+				border: gray solid 1px;
+				border-radius: 5px;
+			}
+			.ol-layer-control{
+				top: 8px;
+				right: 8px;
+				position: absolute;
+				background-color: white;
+				padding: 3px;
+				font-size: 9pt;
+				border: gray solid 1px;
+				border-radius: 5px;
+			}
 		</style>
 	</head>
 <body>
-	<div id="map"><div id="popover" class="ol-popup"></div></div>
+	<div id="map">
+		<div id="popover" class="ol-popup"></div>
+		<div id="layerCtrl" class="ol-layer-control"></div>
+	</div>
 	<script type="text/javascript" src="./map-proj.js"></script>
 </body>
 
