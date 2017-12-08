@@ -23,6 +23,12 @@ class EtcFilenameTests extends FunSuite{
 		}
 	}
 
+	def testRoundTrip(fn: String) = {
+		test(s"Parsing '$fn' gives EtcFilename with correct toString"){
+			assert(EtcFilename.parse(fn).get.toString === fn)
+		}
+	}
+
 	testGood(bm)
 	testGood(bm.replace("dat", "zip"))
 	testGood(bm.replace("dat", "bin"))
@@ -54,4 +60,7 @@ class EtcFilenameTests extends FunSuite{
 	testBad(ec.replace("_L3", ""), "logger number missing")
 	testBad(ec.replace("EC", "XX"), "bad data type")
 	testBad(ec.replace("201202040437", "20120204"), "EC files must have time")
+
+	testRoundTrip(ec)
+	testRoundTrip(bm)
 }

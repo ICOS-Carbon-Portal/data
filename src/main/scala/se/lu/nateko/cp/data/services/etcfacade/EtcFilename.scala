@@ -13,11 +13,15 @@ case class EtcFilename(
 	timeOrDatatype: Either[LocalTime, DataType.Value],
 	loggerNumber: Int,
 	fileNumber: Int,
-	text: String
+	extension: String
 ){
 	def dataType: DataType.Value = timeOrDatatype.fold(_ => DataType.EC, identity)
 	def time: Option[LocalTime] = timeOrDatatype.left.toOption
-	override def toString = text
+	override def toString = {
+		val dateStr = date.format(EtcFilename.dateFormat)
+		val timeStr = time.map(_.format(EtcFilename.timeFormat)).getOrElse("")
+		s"${station.id}_${dataType}_$dateStr${timeStr}_L${loggerNumber}_F$fileNumber.$extension"
+	}
 }
 
 object EtcFilename{
@@ -53,7 +57,7 @@ object EtcFilename{
 				Left(LocalTime.parse(timeStr, timeFormat))
 			}
 
-			EtcFilename(station, date, timeOrDatatype, loggerStr.toInt, fileStr.toInt, text)
+			EtcFilename(station, date, timeOrDatatype, loggerStr.toInt, fileStr.toInt, extension)
 
 		case _ =>
 			argExc("Wrong file name format, expecting CC-###_##_YYYYMMDD_LLN_FFN.zzz")

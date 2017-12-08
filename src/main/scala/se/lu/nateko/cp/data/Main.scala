@@ -24,6 +24,7 @@ import se.lu.nateko.cp.data.services.etcfacade.FacadeService
 object Main extends App {
 
 	implicit val system = ActorSystem("cpdata")
+	system.log
 	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
 
