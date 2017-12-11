@@ -14,6 +14,24 @@ export default class LayerControl extends Control {
 			element: rootElement,
 			target: options.target
 		});
+
+		const btn = document.createElement('button');
+		this._content = document.createElement('div');
+		this._content.setAttribute('style', 'display: none;');
+
+		btn.addEventListener('mouseenter', e => {
+			btn.setAttribute('style', 'display: none;');
+			this._content.setAttribute('style', 'display: inline;');
+		});
+		this._content.addEventListener('mouseout', e => {
+			if (!this._content.contains(e.toElement || e.relatedTarget)) {
+				btn.setAttribute('style', 'display: inline;');
+				this._content.setAttribute('style', 'display: none;');
+			}
+		});
+
+		this.element.appendChild(btn);
+		this.element.appendChild(this._content);
 	}
 
 	setMap(map){
@@ -22,7 +40,6 @@ export default class LayerControl extends Control {
 			const mapLayers = map.getLayers().getArray().filter(ml => ml.get('name'));
 
 			if (mapLayers.length > this._layerCount()) {
-				// console.log({e, mapLayers, mapLayerCount: mapLayers.length, layerCount: this._layerCount()});
 				const layerSet = new Set();
 				const layerGroups = [];
 
@@ -33,47 +50,108 @@ export default class LayerControl extends Control {
 						} else {
 							layerGroups.push({
 								name: l.get('name'),
-								ctrlType: l.get('ctrlType'),
+								layerType: l.get('layerType'),
 								layers: [l]
 							});
 						}
 					}
 				});
 				this._layerGroups = layerGroups;
-				// console.log({layerGroups, count: this._layerCount()});
 				this.updateCtrl();
 			}
 		});
 	}
 
 	updateCtrl(){
-		console.log({updateCtrl: this, map: this.getMap(), layerGroups: this._layerGroups});
-		this.element.innerHTML ='';
+		this._content.innerHTML = '';
+		const baseMaps = this._layerGroups.filter(lg => lg.layerType === 'baseMap');
+		const toggles = this._layerGroups.filter(lg => lg.layerType === 'toggle');
 
-		this._layerGroups.forEach(lg => {
-			if (lg.ctrlType === 'checkBx'){
+		if (baseMaps.length){
+			const root = document.createElement('div');
+			root.setAttribute('class', 'ol-layer-control-basemaps');
+			const lbl = document.createElement('label');
+			lbl.innerHTML = 'Base maps';
+			root.appendChild(lbl);
+
+			baseMaps.forEach(bm => {
 				const row = document.createElement('div');
-				const id = 'checkBx' + lg.name.replace(/ /g, "_");
+				const id = 'radio' + bm.name.replace(/ /g, "_");
+				row.setAttribute('class', 'row');
 
-				const checkBx = document.createElement('input');
-				checkBx.setAttribute('id', id);
-				checkBx.setAttribute('type', 'checkbox');
-				if (lg.layers[0].getVisible()) {
-					checkBx.setAttribute('checked', 'true');
+				const radio = document.createElement('input');
+				radio.setAttribute('id', id);
+				radio.setAttribute('name', 'basemap');
+				radio.setAttribute('type', 'radio');
+				if (bm.layers[0].getVisible()) {
+					radio.setAttribute('checked', 'true');
 				}
-				checkBx.addEventListener('change', () => this.toggleLayerGroup(checkBx.checked, lg.name));
-				row.appendChild(checkBx);
+				radio.addEventListener('change', () => this.toggleBaseMaps(bm.name));
+				row.appendChild(radio);
 
 				const lbl = document.createElement('label');
 				lbl.setAttribute('for', id);
-				lbl.innerHTML = lg.name;
+				lbl.innerHTML = bm.name;
 				row.appendChild(lbl);
 
-				this.element.appendChild(row);
+				root.appendChild(row);
+			});
+
+			this._content.appendChild(root);
+		}
+
+		if (toggles.length) {
+			const root = document.createElement('div');
+			root.setAttribute('class', 'ol-layer-control-toggles');
+			const lbl = document.createElement('label');
+			lbl.innerHTML = 'Layers';
+			root.appendChild(lbl);
+
+			toggles.forEach(togg => {
+				const legendItem = this.getLegendItem(togg.layers[0], togg.layers[0].getStyle());
+				const row = document.createElement('div');
+				const id = 'toggle' + togg.name.replace(/ /g, "_");
+				row.setAttribute('class', 'row');
+
+				const toggle = document.createElement('input');
+				toggle.setAttribute('id', id);
+				toggle.setAttribute('type', 'checkbox');
+				if (togg.layers[0].getVisible()) {
+					toggle.setAttribute('checked', 'true');
+				}
+				toggle.addEventListener('change', () => this.toggleLayerGroup(toggle.checked, togg.name));
+				row.appendChild(toggle);
+
+				if (legendItem){
+					row.appendChild(legendItem);
+				}
+
+				const lbl = document.createElement('label');
+				lbl.setAttribute('for', id);
+				lbl.innerHTML = togg.name;
+				row.appendChild(lbl);
+
+				root.appendChild(row);
+			});
+
+			this._content.appendChild(root);
+		}
+	}
+
+	getLegendItem(layer){
+		const style = layer.getStyle();
+		const image = style ? style.getImage() : undefined;
+		const canvas = image ? image.canvas_ : undefined;
+		return canvas;
+	}
+
+	toggleBaseMaps(baseMapNameToActivate){
+		this._layerGroups.filter(lg => lg.layerType === 'baseMap').forEach(bm => {
+			if (bm.name === baseMapNameToActivate){
+				bm.layers[0].setVisible(true);
+			} else {
+				bm.layers[0].setVisible(false);
 			}
-			// const layerEl = document.createElement('div');
-			// layerEl.innerHTML = lg.name;
-			// this.element.appendChild(layerEl);
 		});
 	}
 

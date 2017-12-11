@@ -7,13 +7,17 @@ import Style from 'ol/style/style';
 import Fill from 'ol/style/fill';
 import Stroke from 'ol/style/stroke';
 import Circle from 'ol/style/circle';
+import Tile from 'ol/layer/tile';
+import OSM from 'ol/source/osm';
+import XYZ from 'ol/source/xyz';
+import TileJSON from 'ol/source/tilejson';
 import proj from 'ol/proj';
 import Projection from 'ol/proj/projection';
 import proj4 from 'proj4';
 import Zoom from 'ol/control/zoom';
 import ZoomSlider from 'ol/control/zoomslider';
 import ScaleLine from 'ol/control/scaleline';
-import MousePosition from 'ol/control/mouseposition';
+// import MousePosition from 'ol/control/mouseposition';
 import ZoomToExtent from 'ol/control/zoomtoextent';
 import LayerControl from './ol-controls/LayerControl';
 
@@ -33,31 +37,48 @@ if (epsgCode === 'EPSG:3035') {
 const projection = proj.get(epsgCode);
 
 const layers = [
-	// new Tile({name: 'OpenStreetMap', source: new OSM()}),
-	// new Tile({name: 'Imagery', source: new XYZ({
-	// 	url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-	// })}),
-	// new Tile({name: 'Topology', source: new XYZ({
-	// 	url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
-	// })}),
-	// new Tile({
-	//	name: 'Natural Earth',
-	// 	source: new TileJSON({
-	// 		url: 'https://api.tiles.mapbox.com/v3/mapbox.natural-earth-hypso-bathy.json?secure',
-	// 		crossOrigin: 'anonymous'
-	// 	})
-	// })
+	new Tile({
+		visible: false,
+		name: 'OpenStreetMap',
+		layerType: 'baseMap',
+		source: new OSM()
+	}),
+	new Tile({
+		visible: false,
+		name: 'Imagery',
+		layerType: 'baseMap',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+		})
+	}),
+	new Tile({
+		visible: false,
+		name: 'Topology',
+		layerType: 'baseMap',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+		})
+	}),
+	new Tile({
+		visible: false,
+		name: 'Natural Earth',
+		layerType: 'baseMap',
+		source: new TileJSON({
+			url: 'https://api.tiles.mapbox.com/v3/mapbox.natural-earth-hypso-bathy.json?secure',
+			crossOrigin: 'anonymous'
+		})
+	})
 ];
 
 const controls = [
 	new Zoom(),
 	new ZoomSlider(),
 	new ScaleLine(),
-	new MousePosition({
-		undefinedHTML: 'Mouse position',
-		projection: epsgCode,
-		coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`
-	}),
+	// new MousePosition({
+	// 	undefinedHTML: 'Mouse position',
+	// 	projection: epsgCode,
+	// 	coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`
+	// }),
 	new ZoomToExtent({extent: getViewParams(epsgCode).extent}),
 	new LayerControl(document.getElementById('layerCtrl'))
 ];
@@ -76,7 +97,7 @@ getCountriesGeoJson()
 			})
 		});
 
-		map.addGeoJson('Countries', 'checkBx', countriesTopo, countryBorderStyle, false);
+		map.addGeoJson('Countries', 'baseMap', countriesTopo, countryBorderStyle, false);
 
 		queryMeta(getStations(config))
 			.then(sparqlResult => {
@@ -113,18 +134,16 @@ getCountriesGeoJson()
 					.filter(s => !duplicates.some(d => d.id === s.id));
 				const shippingLines = stations.filterByAttr({type: 'line'});
 
-				console.log({duplicates, stationPointsOS, stationPointsES, stationPointsAS, shippingLines});
+				map.addPoints('Ocean stations', 'toggle', stationPointsOS, ptStyle('blue'));
+				map.addPoints('Ecosystem stations', 'toggle', stationPointsES, ptStyle('green'));
+				map.addPoints('Atmosphere stations', 'toggle', stationPointsAS, ptStyle('white'));
+				map.addPoints('Ecosystem-Atmosphere', 'toggle', duplicates, ptStyle('green', 'white', 2, 5));
 
-				map.addPoints('OS', 'checkBx', stationPointsOS, ptStyle('blue'));
-				map.addPoints('ES', 'checkBx', stationPointsES, ptStyle('green'));
-				map.addPoints('AS', 'checkBx', stationPointsAS, ptStyle('white'));
-				map.addPoints('ES-AS', 'checkBx', duplicates, ptStyle('green', 'white', 2, 5));
-
-				shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'checkBx', addProps(sl), lnStyle));
+				shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', addProps(sl), lnStyle));
 			});
 
 		if (epsgCode === 'EPSG:3035') {
-			map.addBBox();
+			map.add3035BBox();
 		}
 	});
 

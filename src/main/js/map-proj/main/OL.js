@@ -143,7 +143,7 @@ export default class OL{
 		});
 	}
 
-	addGeoJson(name, ctrlType, geoJson, style, interactive = true){
+	addGeoJson(name, layerType, geoJson, style, interactive = true){
 		const jsonFeatures = (new GeoJSON()).readFeatures(geoJson, {
 			dataProjection: 'EPSG:4326',
 			featureProjection: this._projection
@@ -151,7 +151,7 @@ export default class OL{
 
 		const vectorLayer = new VectorLayer({
 			name,
-			ctrlType,
+			layerType,
 			interactive,
 			extent: this._viewParams.extent,
 			source: new VectorSource({
@@ -163,7 +163,7 @@ export default class OL{
 		this._map.addLayer(vectorLayer);
 	}
 
-	addPoints(name, ctrlType, points, style, renderOrder){
+	addPoints(name, layerType, points, style, renderOrder){
 		this._points = this._points.concat(points);
 
 		const vectorSource = new VectorSource({
@@ -176,7 +176,7 @@ export default class OL{
 
 		const vectorLayer = new VectorLayer({
 			name,
-			ctrlType,
+			layerType,
 			interactive: true,
 			extent: this._viewParams.extent,
 			renderOrder,
@@ -187,7 +187,7 @@ export default class OL{
 		this._map.addLayer(vectorLayer);
 	}
 
-	addBBox(){
+	add3035BBox(){
 		const bBox4326 = [[-16.1, 32.88], [-16.1, 84.17], [39.65, 84.17], [39.65, 32.88], [-16.1, 32.88]];
 		const pointsOnGreatCircle = PointsOnGreatCircle.fromCoords(bBox4326, 1);
 		const pointsOnGreatCircle3035 = pointsOnGreatCircle.map(c => proj.transform(c, 'EPSG:4326', this._projection));
