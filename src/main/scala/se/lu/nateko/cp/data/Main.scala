@@ -51,7 +51,7 @@ object Main extends App {
 	val licenceRouting = new LicenceRouting(authRouting)
 	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)
 
-	val etcFacade = new FacadeService(config.etcFacade, metaClient)
+	val etcFacade = new FacadeService(config.etcFacade, uploadService)
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>

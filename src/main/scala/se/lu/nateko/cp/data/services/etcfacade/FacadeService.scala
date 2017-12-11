@@ -22,7 +22,8 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.api.ChecksumError
-import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.data.api.CpDataException
+import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -30,8 +31,17 @@ import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
-class FacadeService(config: EtcFacadeConfig, metaClient: MetaClient)(implicit mat: Materializer) {
+class FacadeService(config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer) {
+	import FacadeService._
 	import mat.executionContext
+
+	private val metaClient = upload.meta
+	private val log = upload.log
+
+	def getFilePath(file: EtcFilename) = Paths.get(config.folder, file.station.id, file.toString)
+	def getStationFolder(station: StationId) = Paths.get(config.folder, station.id)
+	def getObjectSource(station: StationId, hash: Sha256Sum): Path =
+		getStationFolder(station).resolve(hash.id)
 
 	def getFileSink(file: EtcFilename, md5: Md5Sum): Sink[ByteString, Future[Done]] = {
 		val tmpPath = Files.createTempFile(file.toString + ".", "")
@@ -62,21 +72,55 @@ class FacadeService(config: EtcFacadeConfig, metaClient: MetaClient)(implicit ma
 	}
 
 	private def performUpload(file: EtcFilename): Unit = {
-		val log = metaClient.log
-		getUploadMeta(file).flatMap(metaClient.registerEtcUpload).failed.foreach{err =>
-			log.error(err, "ETC upload registration with meta service failed")
+		if(file.time.isDefined){
+			getZippableDailyECs(getStationFolder(file.station))
+				.foreach{case (target, sources) =>
+					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName)
+					zipToArchive(srcFiles, getFilePath(target))
+						.foreach(hash => performEtcUpload(target, Some(hash)))
+				}
 		}
+		else performEtcUpload(file, None)
 	}
 
-	def getFilePath(file: EtcFilename) = Paths.get(config.folder, file.station.id, file.toString)
-	def getStationFolder(station: StationId) = Paths.get(config.folder, station.id)
+	private def performEtcUpload(file: EtcFilename, hashOpt: Option[Sha256Sum]): Unit = hashOpt
+		.map(Future.successful)
+		.getOrElse(FileIO
+			.fromPath(getFilePath(file))
+			.viaMat(DigestFlow.sha256)(Keep.right)
+			.to(Sink.ignore)
+			.run()
+		)
+		.map(getUploadMeta(file, _))
+		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
+		.onComplete{
+			case Failure(err) =>
+				log.error(err, "ETC upload registration with meta service failed")
+			case Success(etcMeta) =>
+				Files.move(getFilePath(file), getObjectSource(file.station, etcMeta.hashSum))
+				//TODO Activate data object upload (uncomment the next line)
+				//uploadDataObject(file.station, etcMeta.hashSum)
+		}
 
-	def getUploadMeta(file: EtcFilename): Future[EtcUploadMetadata] = FileIO
-		.fromPath(getFilePath(file))
-		.viaMat(DigestFlow.sha256)(Keep.right)
-		.to(Sink.ignore)
-		.run()
-		.map(FacadeService.getUploadMeta(file, _))
+	private def uploadDataObject(station: StationId, hash: Sha256Sum): Unit = upload
+		.getEtcSink(hash)
+		.flatMap{sink =>
+			val srcPath = getObjectSource(station, hash)
+			FileIO.fromPath(srcPath).runWith(sink)
+		}
+		.flatMap{res =>
+			res.makeReport.fold(
+				errMsg => Future.failed(new CpDataException(errMsg)),
+				_ => Future.successful(Done)
+			)
+		}
+		.onComplete{
+			case Failure(err) =>
+				log.error(err, s"ETC facade failure during internal object upload. Station $station, object $hash")
+			case Success(_) =>
+				Files.delete(getObjectSource(station, hash))
+		}
+
 }
 
 object FacadeService{
@@ -120,7 +164,7 @@ object FacadeService{
 
 		Files.newDirectoryStream(stationFolder).iterator.asScala
 			.flatMap(p => EtcFilename.parse(p.getFileName.toString).toOption)
-			.filter(_.dataType == DataType.EC) //not needed but good for code clarity
+			.filter(f => f.time.isDefined && f.dataType == DataType.EC)
 			.flatMap(f => slot(f).map(new FileSlot(f, _)))
 			.toIterable
 			.groupBy(fs => SlotGroup(fs.slot.date, fs.file.loggerNumber, fs.file.fileNumber))
@@ -128,7 +172,8 @@ object FacadeService{
 				case (slotGroup, fileSlots) if(fileSlots.map(_.slot.number).toSet.size == 48) => //2 per hour for a day
 					val archiveFile = fileSlots.head.file.copy( //head is sure to exist
 						date = slotGroup.date,
-						timeOrDatatype = Right(DataType.EC) // "illegal" EtcFilename with EC datatype but no time
+						timeOrDatatype = Right(DataType.EC), // "illegal" EtcFilename with EC datatype but no time
+						extension = "zip"
 					)
 					archiveFile -> fileSlots.map(_.file).toVector
 			}
