@@ -1,12 +1,12 @@
 #!/bin/bash
 
-dummy='test4'
+dummy='test1'
 
 md5=`echo -n "$dummy" | md5sum | awk '{print $1}'`
 
 
 uploadDummy(){
-	url="http://FA-Lso:p4ssw0rd@127.0.0.1:9010/upload/etc/"$md5"/FA-Lso_EC_"$1$2"_L3_F1.csv"
+	url="https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/"$md5"/FA-Lso_EC_"$1$2"_L3_F1.csv"
 	echo $url
 	curl -X PUT --data "$dummy" "$url"
 }

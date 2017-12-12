@@ -42,6 +42,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 			reject(new CpauthAuthenticationFailedRejection("Could not decode the authentication cookie: " + toMessage(err)))
 	}
 
+	//TODO Try getting rid of "def userOpt" above
 	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).recover{rejections =>
 		val hasCookieRejection = rejections.collectFirst{
 			case MissingCookieRejection(cookieName) if cookieName == authConfig.authCookieName => true
