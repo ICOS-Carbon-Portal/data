@@ -182,7 +182,7 @@ function updateSorting(old, varName){
 }
 
 function updateSortingEnableness(old, objCount){
-	const isEnabled = objCount <= 1000;
+	const isEnabled = objCount <= 2000;
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});

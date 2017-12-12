@@ -22,21 +22,21 @@ export function fetchAllSpecTables() {
 function fetchSpecTable(queryFactory) {
 	const query = queryFactory(config);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(sparqlResultToSpecTable);
 }
 
 export function fetchFilteredDataObjects(dobjRequest){
 	const query = queries.listFilteredDataObjects(config, dobjRequest);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(sparqlResultToColNamesAndRows);
 }
 
 export const searchDobjs = search => {
 	const query = queries.findDobjs(config, search);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;
@@ -51,7 +51,7 @@ export const searchDobjs = search => {
 export const searchStations = search => {
 	const query = queries.findStations(config, search);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;
@@ -66,7 +66,7 @@ export const searchStations = search => {
 export const getObjColInfo = dobj => {
 	const query = queries.dobjColInfo(config, dobj);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const vars = sparqlResult.head.vars;
