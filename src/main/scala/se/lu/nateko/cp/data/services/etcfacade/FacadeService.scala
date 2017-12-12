@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.services.etcfacade
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -49,7 +50,7 @@ class FacadeService(config: EtcFacadeConfig, upload: UploadService)(implicit mat
 		def transactUpload(): Done = {
 			val path = getFilePath(file)
 			Files.createDirectories(path.getParent)
-			Files.move(tmpPath, path)
+			Files.move(tmpPath, path, REPLACE_EXISTING)
 			Done
 		}
 
@@ -75,7 +76,7 @@ class FacadeService(config: EtcFacadeConfig, upload: UploadService)(implicit mat
 		if(file.time.isDefined){
 			getZippableDailyECs(getStationFolder(file.station))
 				.foreach{case (target, sources) =>
-					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName)
+					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName.toString)
 					zipToArchive(srcFiles, getFilePath(target))
 						.foreach(hash => performEtcUpload(target, Some(hash)))
 				}
@@ -97,7 +98,7 @@ class FacadeService(config: EtcFacadeConfig, upload: UploadService)(implicit mat
 			case Failure(err) =>
 				log.error(err, "ETC upload registration with meta service failed")
 			case Success(etcMeta) =>
-				Files.move(getFilePath(file), getObjectSource(file.station, etcMeta.hashSum))
+				Files.move(getFilePath(file), getObjectSource(file.station, etcMeta.hashSum), REPLACE_EXISTING)
 				//TODO Activate data object upload (uncomment the next line)
 				//uploadDataObject(file.station, etcMeta.hashSum)
 		}
@@ -190,7 +191,7 @@ object FacadeService{
 		}
 
 		def transactArchival(): Future[Done] = Future{
-			Files.move(tmpFile, target)
+			Files.move(tmpFile, target, REPLACE_EXISTING)
 			files.foreach(Files.delete)
 			Done
 		}
