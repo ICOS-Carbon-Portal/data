@@ -1,8 +1,8 @@
 export default class Popup{
-	constructor(rootElementId, countriesLookupTbl){
+	constructor(rootElementId, keys, countriesLookupTbl){
 		this._rootElement = document.getElementById(rootElementId);
 		this._countriesLookupTbl = countriesLookupTbl;
-		this._keys = ['Country', 'Site_type', 'Long_name', 'PI_names'];
+		this._keys = keys || [];
 	}
 
 	reset(){

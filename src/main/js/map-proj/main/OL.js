@@ -22,8 +22,13 @@ const defaultMapOptions = {
 	zoom: 4,
 	// Radius in pixels around mouse position where features should be selected for popup
 	hitTolerance: 5,
+	// Fit view (defined in getViewParams) on initial load (overrides zoom and center)
 	fitView: true,
 	popupEnabled: true,
+	// What key in props to use for popup header
+	popupHeader: 'Short_name',
+	// What keys in props to use for popup
+	popupProps: ['Country', 'Site_type', 'Long_name', 'PI_names'],
 	// Should a popup slide map so it fits the popup
 	autoPan: false
 };
@@ -50,7 +55,7 @@ export default class OL{
 			extent: this._viewParams.extent
 		});
 
-		const pp = new Popup('popover', countries);
+		const pp = new Popup('popover', this._mapOptions.popupProps, countries);
 		const popup = new Overlay({
 			element: pp.popupElement,
 			autoPan: this._mapOptions.autoPan,
@@ -69,11 +74,8 @@ export default class OL{
 
 		this._layerControl = this._controls.find(ctrl => ctrl.name === 'layerControl');
 		if (this._layerControl){
-			// console.log({layerControl: this._layerControl});
 			this._layerControl.setMap(map);
 		}
-
-		// map.getLayerGroup().set('name', 'Root');
 
 		if (this._mapOptions.popupEnabled) {
 			this.addPopup(popup, pp);
@@ -109,7 +111,7 @@ export default class OL{
 							? this._points.find(props => props.id === id)
 							: f.getProperties();
 
-						pp.addObject("Station information for " + props.Short_name, props);
+						pp.addObject("Station information for " + props[this._mapOptions.popupHeader], props);
 					} else {
 						pp.addTxt(`Zoom in to see ${features.getLength() - 2} more`);
 						return;
@@ -137,7 +139,7 @@ export default class OL{
 					: f.getProperties();
 
 				pp.reset();
-				pp.addObject("Station information for " + props.Short_name, props);
+				pp.addObject("Station information for " + props[this._mapOptions.popupHeader], props);
 				popup.setPosition(e.coordinate);
 			}
 		});
