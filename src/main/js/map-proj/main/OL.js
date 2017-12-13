@@ -186,28 +186,17 @@ export default class OL{
 	}
 
 	add3035BBox(){
-		const bBox4326 = [[-16.1, 32.88], [-16.1, 84.17], [39.65, 84.17], [39.65, 32.88], [-16.1, 32.88]];
-		const pointsOnGreatCircle = PointsOnGreatCircle.fromCoords(bBox4326, 1);
-		const pointsOnGreatCircle3035 = pointsOnGreatCircle.map(c => proj.transform(c, 'EPSG:4326', this._projection));
-		const minMax = pointsOnGreatCircle3035.reduce((acc, curr) => {
-			if (curr[0] < acc.minX) acc.minX = curr[0];
-			if (curr[1] < acc.minY) acc.minY = curr[1];
-			if (curr[0] > acc.maxX) acc.maxX = curr[0];
-			if (curr[1] > acc.maxY) acc.maxY = curr[1];
-
-			return acc;
-		}, {minX: Number.MAX_VALUE, minY: Number.MAX_VALUE, maxX: 0, maxY: 0});
-
-		const bBox = [
-			[minMax.minX, minMax.minY],
-			[minMax.minX, minMax.maxY],
-			[minMax.maxX, minMax.maxY],
-			[minMax.maxX, minMax.minY],
-			[minMax.minX, minMax.minY]
+		const rectCoords = getViewParams('EPSG:3035').rect;
+		const rect = [
+			[rectCoords[0], rectCoords[1]],
+			[rectCoords[2], rectCoords[3]],
+			[rectCoords[4], rectCoords[5]],
+			[rectCoords[6], rectCoords[7]],
+			[rectCoords[8], rectCoords[9]],
 		];
 
 		const vectorSource = new VectorSource({
-			features: [new Feature({geometry: new Polygon([bBox])})]
+			features: [new Feature({geometry: new Polygon([rect])})]
 		});
 
 		const vectorLayer = new VectorLayer({
@@ -225,10 +214,26 @@ export default class OL{
 	}
 }
 
+const calculate3035MinMax = () => {
+	const bBox4326 = [[-16.1, 32.88], [-16.1, 84.17], [39.65, 84.17], [39.65, 32.88], [-16.1, 32.88]];
+	const pointsOnGreatCircle4326 = PointsOnGreatCircle.fromCoords(bBox4326, 1);
+	const pointsOnGreatCircle3035 = pointsOnGreatCircle4326.map(c => proj.transform(c, 'EPSG:4326', proj.get('EPSG:3035')));
+	return pointsOnGreatCircle3035.reduce((acc, curr) => {
+		if (curr[0] < acc.minX) acc.minX = curr[0];
+		if (curr[1] < acc.minY) acc.minY = curr[1];
+		if (curr[0] > acc.maxX) acc.maxX = curr[0];
+		if (curr[1] > acc.maxY) acc.maxY = curr[1];
+
+		return acc;
+	}, {minX: Number.MAX_VALUE, minY: Number.MAX_VALUE, maxX: 0, maxY: 0});
+};
+
 export const getViewParams = epsgCode => {
 	const bBox4326 = [[-180, -90], [180, 90]];
 	const bBox3857 = [[-20026376.39, -20048966.10], [20026376.39, 20048966.10]];
-	const bBox3035 = [[1896628.618, 1450770.904], [7058042.778, 6827128.02]];
+	// True bounding box for SRID 3035
+	// const bBox3035 = [[1896628.618, 1450770.904], [7058042.778, 6827128.02]];
+	const bBox3035 = [[1896628.618, 1330000], [7058042.778, 6827128.02]];
 
 	switch (epsgCode){
 		case 'EPSG:4326':
