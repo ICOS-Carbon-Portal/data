@@ -4,7 +4,6 @@ export default class LayerControl extends Control {
 	constructor(rootElement, options = {}){
 		super(rootElement);
 
-		this.name = 'layerControl';
 		this._layerGroups = [];
 		this._layerCount = () => this._layerGroups.reduce((length, lg) => {
 			return length + lg.layers.length;
@@ -15,23 +14,24 @@ export default class LayerControl extends Control {
 			target: options.target
 		});
 
-		const btn = document.createElement('button');
-		this._content = document.createElement('div');
-		this._content.setAttribute('style', 'display: none;');
+		const switchBtn = document.createElement('button');
+		switchBtn.setAttribute('class', 'ol');
+		this._layers = document.createElement('div');
+		this._layers.setAttribute('style', 'display: none;');
 
-		btn.addEventListener('mouseenter', e => {
-			btn.setAttribute('style', 'display: none;');
-			this._content.setAttribute('style', 'display: inline;');
+		switchBtn.addEventListener('mouseenter', e => {
+			switchBtn.setAttribute('style', 'display: none;');
+			this._layers.setAttribute('style', 'display: inline;');
 		});
-		this._content.addEventListener('mouseout', e => {
-			if (!this._content.contains(e.toElement || e.relatedTarget)) {
-				btn.setAttribute('style', 'display: inline;');
-				this._content.setAttribute('style', 'display: none;');
+		this._layers.addEventListener('mouseout', e => {
+			if (!this._layers.contains(e.toElement || e.relatedTarget)) {
+				switchBtn.setAttribute('style', 'display: inline;');
+				this._layers.setAttribute('style', 'display: none;');
 			}
 		});
 
-		this.element.appendChild(btn);
-		this.element.appendChild(this._content);
+		this.element.appendChild(switchBtn);
+		this.element.appendChild(this._layers);
 	}
 
 	setMap(map){
@@ -63,7 +63,7 @@ export default class LayerControl extends Control {
 	}
 
 	updateCtrl(){
-		this._content.innerHTML = '';
+		this._layers.innerHTML = '';
 		const baseMaps = this._layerGroups.filter(lg => lg.layerType === 'baseMap');
 		const toggles = this._layerGroups.filter(lg => lg.layerType === 'toggle');
 
@@ -97,7 +97,7 @@ export default class LayerControl extends Control {
 				root.appendChild(row);
 			});
 
-			this._content.appendChild(root);
+			this._layers.appendChild(root);
 		}
 
 		if (toggles.length) {
@@ -134,7 +134,7 @@ export default class LayerControl extends Control {
 				root.appendChild(row);
 			});
 
-			this._content.appendChild(root);
+			this._layers.appendChild(root);
 		}
 	}
 

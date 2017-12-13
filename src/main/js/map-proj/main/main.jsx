@@ -21,6 +21,7 @@ import ScaleLine from 'ol/control/scaleline';
 // import MousePosition from 'ol/control/mouseposition';
 import ZoomToExtent from 'ol/control/zoomtoextent';
 import LayerControl from './ol-controls/LayerControl';
+import ExportControl from './ol-controls/ExportControl';
 
 
 const start = srid => {
@@ -43,14 +44,15 @@ const start = srid => {
 			visible: false,
 			name: 'OpenStreetMap',
 			layerType: 'baseMap',
-			source: new OSM()
+			source: new OSM({crossOrigin: 'anonymous'})
 		}),
 		new Tile({
 			visible: false,
 			name: 'Watercolor',
 			layerType: 'baseMap',
 			source: new Stamen({
-				layer: 'watercolor'
+				layer: 'watercolor',
+				crossOrigin: 'anonymous'
 			})
 		}),
 		new Tile({
@@ -58,7 +60,8 @@ const start = srid => {
 			name: 'Imagery',
 			layerType: 'baseMap',
 			source: new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+				url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+				crossOrigin: 'anonymous'
 			})
 		}),
 		new Tile({
@@ -66,7 +69,8 @@ const start = srid => {
 			name: 'Topology',
 			layerType: 'baseMap',
 			source: new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}'
+				url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+				crossOrigin: 'anonymous'
 			})
 		}),
 		new Tile({
@@ -74,7 +78,8 @@ const start = srid => {
 			name: 'Ocean',
 			layerType: 'baseMap',
 			source: new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}'
+				url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
+				crossOrigin: 'anonymous'
 			})
 		}),
 		new Tile({
@@ -82,7 +87,8 @@ const start = srid => {
 			name: 'Shaded relief',
 			layerType: 'baseMap',
 			source: new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}'
+				url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+				crossOrigin: 'anonymous'
 			})
 		}),
 		new Tile({
@@ -106,7 +112,8 @@ const start = srid => {
 		// 	coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`
 		// }),
 		new ZoomToExtent({extent: getViewParams(epsgCode).extent}),
-		new LayerControl(document.getElementById('layerCtrl'))
+		new LayerControl(document.getElementById('layerCtrl')),
+		new ExportControl(document.getElementById('exportCtrl')),
 	];
 
 	const map = new OL(projection, layers, controls);

@@ -53,6 +53,7 @@
   "dependencies": {
     "babel-polyfill": "^6.13.0",
     "dygraphs": "^2.0.0",
+    "file-saver": "^1.3.3",
     "icos-cp-backend": "^0.3.4",
     "icos-cp-leaflet-common": "^0.2.3",
     "icos-cp-legend": "^0.3.0",

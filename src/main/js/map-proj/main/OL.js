@@ -39,6 +39,7 @@ export default class OL{
 		this._layers = layers;
 		this._controls = controls;
 		this._layerControl = undefined;
+		this._exportControl = undefined;
 		this._mapOptions = Object.assign(defaultMapOptions, mapOptions);
 		this._viewParams = getViewParams(projection.getCode());
 		this._map = undefined;
@@ -71,11 +72,6 @@ export default class OL{
 			overlays: [popup],
 			controls: this._controls
 		});
-
-		this._layerControl = this._controls.find(ctrl => ctrl.name === 'layerControl');
-		if (this._layerControl){
-			this._layerControl.setMap(map);
-		}
 
 		if (this._mapOptions.popupEnabled) {
 			this.addPopup(popup, pp);
