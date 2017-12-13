@@ -13,7 +13,7 @@ export default class ExportControl extends Control {
 		});
 
 		const switchBtn = document.createElement('button');
-		switchBtn.setAttribute('class', 'ol');
+		switchBtn.setAttribute('class', 'dl');
 
 		const content = document.createElement('div');
 		content.setAttribute('style', 'display: none;');
@@ -31,6 +31,7 @@ export default class ExportControl extends Control {
 		this.element.appendChild(switchBtn);
 
 		const printBtn = document.createElement('button');
+		printBtn.setAttribute('class', 'dl-action');
 		printBtn.innerHTML = "Export map to image";
 
 		printBtn.addEventListener('click', () => {
