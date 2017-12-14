@@ -141,7 +141,7 @@ export default class OL{
 		});
 	}
 
-	addGeoJson(name, layerType, geoJson, style, interactive = true){
+	addGeoJson(name, layerType, visible = true, geoJson, style, interactive = true){
 		const jsonFeatures = (new GeoJSON()).readFeatures(geoJson, {
 			dataProjection: 'EPSG:4326',
 			featureProjection: this._projection
@@ -150,6 +150,7 @@ export default class OL{
 		const vectorLayer = new VectorLayer({
 			name,
 			layerType,
+			visible,
 			interactive,
 			extent: this._viewParams.extent,
 			source: new VectorSource({

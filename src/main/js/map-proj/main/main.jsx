@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import OL, {getViewParams} from './OL';
 import {getCountriesGeoJson, queryMeta} from './backend';
 import config from './config';
@@ -92,7 +93,7 @@ const start = srid => {
 			})
 		}),
 		new Tile({
-			visible: false,
+			visible: true,
 			name: 'Natural Earth',
 			layerType: 'baseMap',
 			source: new TileJSON({
@@ -130,7 +131,7 @@ const start = srid => {
 				})
 			});
 
-			map.addGeoJson('Countries', 'baseMap', countriesTopo, countryBorderStyle, false);
+			map.addGeoJson('Countries', 'baseMap', false, countriesTopo, countryBorderStyle, false);
 
 			queryMeta(getStations(config))
 				.then(sparqlResult => {
@@ -172,7 +173,7 @@ const start = srid => {
 					map.addPoints('Atmosphere stations', 'toggle', stationPointsAS, ptStyle('white'));
 					map.addPoints('Ecosystem-Atmosphere', 'toggle', duplicates, ptStyle('green', 'white', 2, 5));
 
-					shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', addProps(sl), lnStyle));
+					shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', true, addProps(sl), lnStyle));
 				});
 
 			if (epsgCode === 'EPSG:3035') {
