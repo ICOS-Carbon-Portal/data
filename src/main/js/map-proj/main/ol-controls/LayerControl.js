@@ -108,7 +108,7 @@ export default class LayerControl extends Control {
 			root.appendChild(lbl);
 
 			toggles.forEach(togg => {
-				const legendItem = this.getLegendItem(togg.layers[0], togg.layers[0].getStyle());
+				const legendItem = this.getLegendItem(togg.layers[0]);
 				const row = document.createElement('div');
 				const id = 'toggle' + togg.name.replace(/ /g, "_");
 				row.setAttribute('class', 'row');

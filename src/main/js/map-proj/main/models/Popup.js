@@ -28,7 +28,7 @@ export default class Popup{
 				contentRecord.appendChild(lbl);
 
 				const txt = document.createElement("span");
-				txt.innerHTML = countries && key === 'Country'
+				txt.innerHTML = this._countriesLookupTbl && key === 'Country'
 					? this._countriesLookupTbl[props[key]] + ' (' + props[key] + ')'
 					: props[key].replace(/;/g, ", ");
 				contentRecord.appendChild(txt);

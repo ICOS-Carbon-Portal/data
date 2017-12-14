@@ -12,16 +12,12 @@ import Select from 'ol/interaction/select';
 import condition from 'ol/events/condition';
 import Popup from './models/Popup';
 import Stroke from "ol/style/stroke";
-import Fill from "ol/style/fill";
 import Style from "ol/style/style";
-import PointsOnGreatCircle from './models/PointsOnGreatCircle';
 
 
 const defaultMapOptions = {
 	// Initial zoom level
 	zoom: 4,
-	// Radius in pixels around mouse position where features should be selected for popup
-	hitTolerance: 5,
 	// Fit view (defined in getViewParams) on initial load (overrides zoom and center)
 	fitView: true,
 	popupEnabled: true,
@@ -30,11 +26,13 @@ const defaultMapOptions = {
 	// What keys in props to use for popup
 	popupProps: ['Country', 'Site_type', 'Long_name', 'PI_names'],
 	// Should a popup slide map so it fits the popup
-	autoPan: false
+	autoPan: false,
+	// Radius in pixels around mouse position where features should be selected for popup
+	hitTolerance: 5
 };
 
 export default class OL{
-	constructor(projection, layers = [], controls = [], mapOptions){
+	constructor(projection, layers = [], controls = [], countryLookup, mapOptions){
 		this._projection = projection;
 		this._layers = layers;
 		this._controls = controls;
@@ -45,10 +43,10 @@ export default class OL{
 		this._map = undefined;
 		this._points = [];
 
-		this.initMap();
+		this.initMap(countryLookup);
 	}
 
-	initMap(){
+	initMap(countryLookup){
 		const view = new View({
 			projection: this._projection,
 			center: this._mapOptions.center || this._viewParams.initCenter,
@@ -56,20 +54,25 @@ export default class OL{
 			extent: this._viewParams.extent
 		});
 
-		const pp = new Popup('popover', this._mapOptions.popupProps, countries);
-		const popup = new Overlay({
-			element: pp.popupElement,
-			autoPan: this._mapOptions.autoPan,
-			autoPanAnimation: {
-				duration: 250
-			}
-		});
+		const pp = this._mapOptions.popupEnabled
+			? new Popup('popover', this._mapOptions.popupProps, countryLookup)
+			: undefined;
+		const popup = this._mapOptions.popupEnabled
+			? new Overlay({
+				element: pp.popupElement,
+				autoPan: this._mapOptions.autoPan,
+				autoPanAnimation: {
+					duration: 250
+				}
+			})
+			: undefined;
+		const overlays = this._mapOptions.popupEnabled ? [popup] : [];
 
-		const map = this._map = new CanvasMap({
+		this._map = new CanvasMap({
 			target: 'map',
 			view,
 			layers: this._layers,
-			overlays: [popup],
+			overlays,
 			controls: this._controls
 		});
 
@@ -186,8 +189,8 @@ export default class OL{
 		this._map.addLayer(vectorLayer);
 	}
 
-	add3035BBox(){
-		const rectCoords = getViewParams('EPSG:3035').rect;
+	outlineExtent(projection){
+		const rectCoords = getViewParams(projection.getCode()).rect;
 		const rect = [
 			[rectCoords[0], rectCoords[1]],
 			[rectCoords[2], rectCoords[3]],
@@ -215,25 +218,9 @@ export default class OL{
 	}
 }
 
-const calculate3035MinMax = () => {
-	const bBox4326 = [[-16.1, 32.88], [-16.1, 84.17], [39.65, 84.17], [39.65, 32.88], [-16.1, 32.88]];
-	const pointsOnGreatCircle4326 = PointsOnGreatCircle.fromCoords(bBox4326, 1);
-	const pointsOnGreatCircle3035 = pointsOnGreatCircle4326.map(c => proj.transform(c, 'EPSG:4326', proj.get('EPSG:3035')));
-	return pointsOnGreatCircle3035.reduce((acc, curr) => {
-		if (curr[0] < acc.minX) acc.minX = curr[0];
-		if (curr[1] < acc.minY) acc.minY = curr[1];
-		if (curr[0] > acc.maxX) acc.maxX = curr[0];
-		if (curr[1] > acc.maxY) acc.maxY = curr[1];
-
-		return acc;
-	}, {minX: Number.MAX_VALUE, minY: Number.MAX_VALUE, maxX: 0, maxY: 0});
-};
-
 export const getViewParams = epsgCode => {
 	const bBox4326 = [[-180, -90], [180, 90]];
 	const bBox3857 = [[-20026376.39, -20048966.10], [20026376.39, 20048966.10]];
-	// True bounding box for SRID 3035
-	// const bBox3035 = [[1896628.618, 1450770.904], [7058042.778, 6827128.02]];
 	const bBox3035 = [[1896628.618, 1330000], [7058042.778, 6827128.02]];
 
 	switch (epsgCode){
