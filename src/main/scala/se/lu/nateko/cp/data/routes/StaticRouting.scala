@@ -22,13 +22,14 @@ object StaticRouting {
 	private val NetCdfProj = "netcdf"
 
 	val authConfig = ConfigReader.getDefault.auth
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats", "etcfacade")
 
 	private[this] val standardPageFactory: PageFactory = {
 		case "stilt" => views.html.StiltPage()
 		case "wdcgg" => views.html.WdcggPage()
 		case "portal" => views.html.PortalPage(authConfig)
 		case "stats" => views.html.StatsPage()
+		case "etcfacade" => views.html.EtcFacadePage(authConfig)
 	}
 
 	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(
