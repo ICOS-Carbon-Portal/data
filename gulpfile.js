@@ -10,7 +10,7 @@ var babelify = require('babelify');
 var babel = require('gulp-babel');
 var jasmine = require('gulp-jasmine');
 
-var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light', 'stats'];
+var projects = ['netcdf', 'portal', 'wdcgg', 'stilt', 'dygraph-light', 'stats', 'map-proj'];
 
 projects.forEach(function(project){
 
