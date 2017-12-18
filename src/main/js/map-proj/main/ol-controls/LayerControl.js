@@ -123,6 +123,7 @@ export default class LayerControl extends Control {
 				row.appendChild(toggle);
 
 				if (legendItem){
+					legendItem.id = id.replace('toggle', 'canvas');
 					row.appendChild(legendItem);
 				}
 
