@@ -33,7 +33,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		if(verts.size < 2) throw new NoSuchElementException("The polygon has no edges")
 		val from = vertice(idx)
 		val to = vertice(idx + 1)
-		Math.atan2((to.lat - from.lat).toDouble, (to.lon - from.lon).toDouble)
+		Math.atan2(to.lat - from.lat, to.lon - from.lon)
 	}
 
 	def verticeIsConcave(idx: Int): Boolean =
@@ -177,27 +177,28 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 
 					case FirstVertice =>
 						val v1 = nearest.point
+						val v2 = verts(nearest.baseIdx % curSize)
 						val ortho1 = orthoNormVector(vert, v1)
-						val ortho2 = orthoNormVector(v1, verts(nearest.baseIdx % curSize))
+						val ortho2 = orthoNormVector(v1, v2)
 						val nanoShifted = v1 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, vert, nanoShifted)
 
 					case SecondVertice =>
 						val v2 = nearest.point
-						val ortho1 = orthoNormVector(verts(nearest.baseIdx - 1), v2)
+						val v1 = verts(nearest.baseIdx - 1)
+						val ortho1 = orthoNormVector(v1, v2)
 						val ortho2 = orthoNormVector(v2, vert)
 						val nanoShifted = v2 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, nanoShifted, vert)
 
 					case InnerPoint =>
-						val dist = Math.sqrt(nearest.distSq)
 						val np = nearest.point
-						val shifted = Point(
-							np.lon + (vert.lon - np.lon) / dist * conf.epsilon,
-							np.lat + (vert.lat - np.lat) / dist * conf.epsilon
-						)
-						//TODO Consider making two versions of 'shifted', shifted in slightly different directions
-						verts.insert(nearest.baseIdx, shifted, vert, shifted)
+						val v1 = verts(nearest.baseIdx - 1)
+						val dir1 = normVector(np, vert)
+						val dir2 = normVector(np, v1)
+						val shifted1 = np + (dir1 + dir2) * conf.epsilon
+						val shifted2 = np + (dir1 - dir2) * conf.epsilon
+						verts.insert(nearest.baseIdx, shifted1, vert, shifted2)
 				}
 				true
 			}

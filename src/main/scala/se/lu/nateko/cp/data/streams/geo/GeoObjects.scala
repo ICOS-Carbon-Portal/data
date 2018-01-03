@@ -23,6 +23,7 @@ class BBox(var left: Point, var top: Point, var right: Point, var bottom: Point)
 case class Point(lon: Double, lat: Double){
 
 	def + (v: GeoVector) = Point(lon + v.dlon, lat + v.dlat)
+	def - (v: GeoVector) = Point(lon - v.dlon, lat - v.dlat)
 
 	def sameAs(lon2: Double, lat2: Double): Boolean = lon2 == lon && lat2 == lat
 
@@ -31,5 +32,6 @@ case class Point(lon: Double, lat: Double){
 
 class GeoVector(val dlon: Double, val dlat: Double){
 	def + (other: GeoVector) = new GeoVector(dlon + other.dlon, dlat + other.dlat)
+	def - (other: GeoVector) = new GeoVector(dlon - other.dlon, dlat - other.dlat)
 	def * (factor: Double) = new GeoVector(dlon * factor, dlat * factor)
 }

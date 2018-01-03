@@ -4,7 +4,7 @@ object GeoAlgorithms {
 
 	def triangleArea2(a: Point, b: Point, c: Point): Double = Math.abs(
 		(a.lon - c.lon) * (b.lat - a.lat) - (a.lon - b.lon) * (c.lat - a.lat)
-	).toDouble
+	)
 
 	def side(a: Point, b: Point, c: Point) = Math.signum(
 		(a.lon - c.lon) * (b.lat - a.lat) - (a.lon - b.lon) * (c.lat - a.lat)
@@ -46,5 +46,10 @@ object GeoAlgorithms {
 	def orthoNormVector(p1: Point, p2: Point): GeoVector = {
 		val norm = Math.sqrt(distSq(p1, p2))
 		new GeoVector((p2.lat - p1.lat) / norm, (p1.lon - p2.lon) / norm)
+	}
+
+	def normVector(p1: Point, p2: Point): GeoVector = {
+		val norm = Math.sqrt(distSq(p1, p2))
+		new GeoVector((p2.lon - p1.lon) / norm, (p2.lat - p1.lat) / norm)
 	}
 }

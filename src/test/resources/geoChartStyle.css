@@ -1,0 +1,10 @@
+.default-color0.chart-series-line {
+	-fx-stroke: transparent;
+}
+
+.default-color0.chart-line-symbol {
+	-fx-background-color: red;
+	-fx-background-radius: 0;
+	-fx-background-insets: 0;
+	-fx-padding: 0.5px;
+}

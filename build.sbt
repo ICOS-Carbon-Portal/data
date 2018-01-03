@@ -86,6 +86,8 @@ lazy val data = (project in file("."))
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
 		),
 
+		fork in (Test, run) := true,
+
 		logBuffered in Test := false,
 
 		scalacOptions += "-Ywarn-unused-import:false",
