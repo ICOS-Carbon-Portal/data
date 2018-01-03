@@ -10,6 +10,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	import EnvelopePolygon._
 
 	private val verts = Buffer.empty[Point]
+	private val accumulatedCosts = Buffer.empty[Double]
 	private[this] val edgeReplacements = Map.empty[Int, Point]
 
 	def vertices: Seq[Point] = verts
@@ -56,7 +57,9 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			inter <= forSegments(v1, v2, start, self) ||
 			inter <= forSegments(v1, v2, stop, self)
 		}
-		if(noNewIntersections) triangleArea2(start, self, stop) else Double.MaxValue
+		if(noNewIntersections)
+			triangleArea2(start, self, stop) + accumulatedCosts(idx)
+		else Double.MaxValue
 	}
 
 	def edgeCost(idx: Int): Double = {
@@ -96,7 +99,9 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						inter <= forSegments(v1, v2, start, stop)
 					}
 				}
-				if(noNewIntersections) triangleArea2(start, top, stop) else Double.MaxValue
+				if(noNewIntersections)
+					triangleArea2(start, top, stop) + accumulatedCosts(idx) + accumulatedCosts(shortcircuit(idx + 1))
+				else Double.MaxValue
 			} else Double.MaxValue
 		} else Double.MaxValue
 	}
@@ -120,15 +125,25 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			if(removal.isEdge){
 				val vert = edgeReplacements(idx)
 				if(idx < curSize - 1){
+					val costToSave = removal.cost + accumulatedCosts(idx) + accumulatedCosts(idx + 1)
 					verts.remove(idx, 2)
+					accumulatedCosts.remove(idx, 2)
 					verts.insert(idx, vert)
+					accumulatedCosts.insert(idx, costToSave)
 				} else {//TODO Write a test for this branch
+					val costToSave = removal.cost + accumulatedCosts(idx) + accumulatedCosts(0)
 					verts.remove(idx, 1)
-					verts.insert(idx, vert)
-					verts.remove(0, 1)
+					accumulatedCosts.remove(idx, 1)
+					verts(0) = vert
+					accumulatedCosts(0) = costToSave
 				}
-			} else
+			} else {
+				val costToSave = removal.cost + accumulatedCosts(idx)
+				accumulatedCosts(shortcircuit(idx - 1)) += costToSave / 2
+				accumulatedCosts(shortcircuit(idx + 1)) += costToSave / 2
 				verts.remove(idx)
+				accumulatedCosts.remove(idx)
+			}
 			Right(removal.cost)
 		}
 	}
@@ -163,6 +178,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		if(curSize < 2) {
 			if(verts.contains(vert)) false else {
 				verts += vert
+				accumulatedCosts += 0
 				true
 			}
 		}
@@ -186,6 +202,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho2 = orthoNormVector(v1, v2)
 						val nanoShifted = v1 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, vert, nanoShifted)
+						accumulatedCosts.insert(nearest.baseIdx, 0, 0)
 
 					case SecondVertice =>
 						val v2 = nearest.point
@@ -194,6 +211,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho2 = orthoNormVector(v2, vert)
 						val nanoShifted = v2 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, nanoShifted, vert)
+						accumulatedCosts.insert(nearest.baseIdx, 0, 0)
 
 					case InnerPoint =>
 						val np = nearest.point
@@ -203,6 +221,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val shifted1 = np + (dir1 + dir2) * conf.epsilon
 						val shifted2 = np + (dir1 - dir2) * conf.epsilon
 						verts.insert(nearest.baseIdx, shifted1, vert, shifted2)
+						accumulatedCosts.insert(nearest.baseIdx, 0, 0, 0)
 				}
 				true
 			}
@@ -232,6 +251,7 @@ object EnvelopePolygon{
 	def apply(vertices: TraversableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
 		val p = new EnvelopePolygon(conf)
 		p.verts ++= vertices
+		p.verts.indices.foreach{_ => p.accumulatedCosts += 0}
 		p
 	}
 
