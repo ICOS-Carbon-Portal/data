@@ -101,7 +101,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		} else Double.MaxValue
 	}
 
-	def reduceVerticesByOne(): Boolean = {
+	def reduceVerticesByOne(costLimit: Double = Double.MaxValue): Boolean = {
 		val curSize = verts.size
 		if(curSize < 4) throw new NoSuchElementException("The polygon has no removeable vertices")
 
@@ -110,7 +110,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			verts.indices.map(i => new VerticeRemoval(i, edgeCost(i), true))
 		).minBy(_.cost)
 
-		if(removal.cost == Double.MaxValue) false
+		if(removal.cost >= costLimit) false
 		else {
 			val idx = removal.idx
 			if(removal.isEdge){
@@ -151,8 +151,8 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	 * Effectively inserts 2 or 3 new vertices, depending on whether the nearest point on the nearest edge
 	 * is a vertice or an inner point, respectively.
 	 *
-	 * returns false if the new vertice was inside the polygon (including border) and therefore has been discarded,
-	 * true otherwise (i.e. the vertice has been added)
+	 * returns false if the new vertice was inside the polygon (including border) or very close to it and
+	 * therefore has been discarded, true otherwise (i.e. the vertice has been added)
 	 */
 	def addVertice(vert: Point): Boolean = {
 		val curSize = size
@@ -204,6 +204,11 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			}
 		}
 	}
+
+	def area2: Double = verts.indices.drop(1).foldLeft(0d)((area, i) => {
+		val p0 = verts(i - 1); val p1 = verts(i)
+		area + (p1.lon - p0.lon) * (p1.lat + p0.lat)
+	})
 
 	override def toString = verts.mkString("Polygon[", ", ", "]")
 }

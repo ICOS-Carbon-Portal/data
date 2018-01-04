@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.test.streams.geo
 
 import java.io.File
 
-import scala.collection.JavaConverters._
 import scala.io.Source
 
 import javafx.application.Application
@@ -22,7 +21,7 @@ object EnvelopePolygonRun{
 
 class EnvelopePolygonRun extends Application{
 	val Budget = 20
-	val InputLimit = 6000
+	val InputLimit = 10000
 	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
 
 	override def start(stage: Stage): Unit = {
@@ -36,28 +35,24 @@ class EnvelopePolygonRun extends Application{
 		val lineChart = new LineChart[Number,Number](xAxis,yAxis)
 		lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE)
 
-		val gpsSeries = new XYChart.Series[Number, Number]();
-		gpsSeries.setName("GPS track");
-
 		val gpsData = latLongs
 		val hullData = hull(gpsData).vertices
 
-		gpsSeries.getData().addAll(gpsData.map{p =>
-			new XYChart.Data[Number, Number](p.lon, p.lat)
-		}.asJava)
+		val gpsSeries = new XYChart.Series[Number, Number]();
+		gpsSeries.setName("GPS track");
 
 		val hullSeries = new XYChart.Series[Number, Number]();
 		hullSeries.setName("Concave hull");
 
-		hullSeries.getData().addAll((hullData :+ hullData.head).map{p =>
-			new XYChart.Data[Number, Number](p.lon, p.lat)
-		}.asJava)
-
 		lineChart.getData().addAll(gpsSeries, hullSeries);
 
-		val scene  = new Scene(lineChart,1000,1000);
+		val scene  = new Scene(lineChart, 1800, 900);
 		scene.getStylesheets.add(getClass.getResource("/geoChartStyle.css").toExternalForm)
 		stage.setScene(scene);
+
+		EnvelopePolygonInteractive.refreshSeries(hullSeries, hullData :+ hullData.head)
+		EnvelopePolygonInteractive.refreshSeries(gpsSeries, gpsData)
+
 		stage.show()
 	}
 
@@ -74,9 +69,11 @@ class EnvelopePolygonRun extends Application{
 		val hull = latLongs.foldLeft(EnvelopePolygon.defaultEmpty){
 			case (poly, vertice) =>
 				poly.addVertice(vertice)
-				while(poly.size > Budget && poly.reduceVerticesByOne()){}
+				while(poly.size > Budget && poly.reduceVerticesByOne(2)){}
+				while(poly.size > Budget * 2 && poly.reduceVerticesByOne()){}
 				poly
 		}
+		while(hull.size > Budget && hull.reduceVerticesByOne()){}
 
 		val elapsed = System.currentTimeMillis() - t0
 

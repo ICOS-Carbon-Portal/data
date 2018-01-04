@@ -51,7 +51,7 @@ class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHe
 
 		def reducedTriangle = {
 			val t = triangle
-			t.reduceVerticesByOne
+			t.reduceVerticesByOne()
 			t
 		}
 
@@ -76,7 +76,7 @@ class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHe
 		it("Correctly attaches a point to an edge of a slim triangle"){
 			implicit val t = EnvelopePolygon.defaultEmpty
 			add(0,0); add(1, 5); add(0, 10);
-			t.reduceVerticesByOne
+			t.reduceVerticesByOne()
 			//have a simple triangle now, 3 points
 			assert(t.size == 3)
 			add(-1, 4)

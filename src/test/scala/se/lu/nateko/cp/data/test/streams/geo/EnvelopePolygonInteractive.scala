@@ -1,43 +1,53 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import java.io.File
-
 import scala.collection.JavaConverters._
-import scala.io.Source
+import scala.collection.mutable.Buffer
 
 import javafx.application.Application
+import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.chart.LineChart
 import javafx.scene.chart.NumberAxis
 import javafx.scene.chart.XYChart
+import javafx.scene.control.Button
+import javafx.scene.layout.BorderPane
+import javafx.scene.layout.HBox
+import javafx.scene.text.Text
 import javafx.stage.Stage
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
+import se.lu.nateko.cp.data.streams.geo.EnvelopePolygonConfig
 import se.lu.nateko.cp.data.streams.geo.Point
 
 object EnvelopePolygonInteractive{
 	def main(args: Array[String]): Unit = {
 		Application.launch(classOf[EnvelopePolygonInteractive], args: _*)
 	}
+
+	def refreshSeries(series: XYChart.Series[Number, Number], points: Seq[Point]): Unit = {
+		val data = series.getData
+		data.clear()
+		data.addAll(
+			points.map{p =>
+				new XYChart.Data[Number, Number](p.lon, p.lat)
+			}.asJava
+		)
+	}
 }
 
 class EnvelopePolygonInteractive extends Application{
+	import EnvelopePolygonInteractive._
 	val Budget = 20
 
 	override def start(stage: Stage): Unit = {
-		val poly = EnvelopePolygon.defaultEmpty
+		var poly = getFreshPoly
+		val gps = Buffer.empty[Point]
 		stage.setTitle("Interactive concave hull computation")
 
 		val xAxis = new NumberAxis()
 		xAxis.setLabel("Longitude")
-		xAxis.setUpperBound(180)
-		xAxis.setLowerBound(-180)
-		xAxis.setAutoRanging(false)
 
 		val yAxis = new NumberAxis()
 		yAxis.setLabel("Latitude")
-		yAxis.setUpperBound(90)
-		yAxis.setLowerBound(-90)
-		yAxis.setAutoRanging(false)
 
 		val gpsSeries = new XYChart.Series[Number, Number]()
 		gpsSeries.setName("GPS track");
@@ -49,36 +59,85 @@ class EnvelopePolygonInteractive extends Application{
 		lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE)
 		lineChart.setAnimated(false)
 		lineChart.getData.addAll(gpsSeries, hullSeries)
+		lineChart.setPrefSize(1800, 900)
 
-		lineChart.lookup(".chart-plot-background").setOnMouseClicked{click =>
-			val lon = xAxis.getValueForDisplay(click.getX)
-			val lat = yAxis.getValueForDisplay(click.getY)
+		val chartBackground = lineChart.lookup(".chart-plot-background")
 
-			def appendTo(series: XYChart.Series[Number, Number]) =
-				series.getData.add(new XYChart.Data(lon, lat))
-
-			appendTo(gpsSeries)
-
-			var shouldRefresh = false
-			val vert = Point(lon.doubleValue, lat.doubleValue)
-			shouldRefresh |= poly.addVertice(vert)
-
-			while(poly.size > Budget && poly.reduceVerticesByOne()){
-				shouldRefresh = true
-			}
-
-			if(shouldRefresh){
-				val hullData = hullSeries.getData
-				hullData.clear()
-				(poly.vertices :+ poly.vertices.head).foreach{p =>
-					hullData.add(new XYChart.Data(p.lon, p.lat))
-				}
+		chartBackground.getParent.getChildrenUnmodifiable.forEach{n =>
+			if (n != chartBackground && n != xAxis && n != yAxis) {
+				n.setMouseTransparent(true);
 			}
 		}
 
-		val scene  = new Scene(lineChart,1800,900);
+		val info = new Text()
+
+		val reduceButton = new Button("Reduce")
+		reduceButton.setOnAction{_ =>
+			if(poly.reduceVerticesByOne()) refreshPlot()
+		}
+
+		def refreshPlot(): Unit = {
+			refreshSeries(hullSeries, poly.vertices ++ poly.vertices.headOption)
+			refreshSeries(gpsSeries, gps)
+			reduceButton.setDisable(poly.size < 4)
+			info.setText(s"Points in the hull: ${poly.size}, in the track: ${gpsSeries.getData.size}")
+		}
+
+		chartBackground.setOnMouseClicked{click =>
+			val lon = xAxis.getValueForDisplay(click.getX)
+			val lat = yAxis.getValueForDisplay(click.getY)
+
+			val vert = Point(lon.doubleValue, lat.doubleValue)
+			poly.addVertice(vert)
+			gps += vert
+			refreshPlot()
+		}
+
+		val autorangeButton = new Button("Autorange")
+		autorangeButton.setOnAction{_ =>
+			xAxis.setAutoRanging(true)
+			xAxis.requestAxisLayout()
+			yAxis.setAutoRanging(true)
+			yAxis.requestAxisLayout()
+			autorangeButton.setDisable(true)
+		}
+
+		def initialize(): Unit = {
+			poly = getFreshPoly
+			gps.clear()
+			xAxis.setAutoRanging(false)
+			xAxis.setUpperBound(180)
+			xAxis.setLowerBound(-180)
+			yAxis.setAutoRanging(false)
+			yAxis.setUpperBound(90)
+			yAxis.setLowerBound(-90)
+			autorangeButton.setDisable(false)
+			refreshPlot()
+		}
+
+		val clearButton = new Button("Clear")
+		clearButton.setOnAction{_ => initialize()}
+
+		val buttons = new HBox(5, info, reduceButton, autorangeButton, clearButton)
+		buttons.setAlignment(Pos.CENTER)
+		buttons.setStyle("-fx-padding: 5 0 0 0")
+
+		val root = new BorderPane()
+		root.setCenter(lineChart)
+		root.setTop(buttons)
+		val scene = new Scene(root)
 		scene.getStylesheets.add(getClass.getResource("/geoChartStyle.css").toExternalForm)
-		stage.setScene(scene);
+
+		initialize()
+
+		stage.setScene(scene)
 		stage.show()
 	}
+
+	private def getFreshPoly = EnvelopePolygon(Nil)(new EnvelopePolygonConfig{
+		val maxAngleForEdgeRemoval: Double = 0.9 * Math.PI
+		val minAngleForSimpleLineLineIntersection: Double = 0.001
+		val minSquaredDistanceForNewVertice: Double = 4.01
+		val epsilon: Double = 1
+	})
 }
