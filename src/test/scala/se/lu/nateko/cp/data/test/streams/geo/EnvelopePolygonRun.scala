@@ -11,6 +11,7 @@ import javafx.scene.chart.NumberAxis
 import javafx.scene.chart.XYChart
 import javafx.stage.Stage
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
+import se.lu.nateko.cp.data.streams.geo.EnvelopeCostStats
 import se.lu.nateko.cp.data.streams.geo.Point
 
 object EnvelopePolygonRun{
@@ -21,7 +22,8 @@ object EnvelopePolygonRun{
 
 class EnvelopePolygonRun extends Application{
 	val Budget = 20
-	val InputLimit = 10000
+	val InputLimit = 4250
+	//val InputLimit = 60000 //interesting value, gives buggy behaviour
 	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
 
 	override def start(stage: Stage): Unit = {
@@ -66,14 +68,24 @@ class EnvelopePolygonRun extends Application{
 	def hull(latLongs: IndexedSeq[Point]): EnvelopePolygon = {
 		val t0 = System.currentTimeMillis()
 
+		val stats = new EnvelopeCostStats
+
 		val hull = latLongs.foldLeft(EnvelopePolygon.defaultEmpty){
 			case (poly, vertice) =>
 				poly.addVertice(vertice)
-				while(poly.size > Budget && poly.reduceVerticesByOne(2)){}
-				while(poly.size > Budget * 2 && poly.reduceVerticesByOne()){}
+
+				var reducible = true
+
+				while(poly.size > Budget && reducible){
+					val reduction = poly.reduceVerticesByOne(stats.recommendedCostLimit)
+					reducible = reduction.isRight
+					stats.addCost(reduction.fold(identity, identity))
+				}
 				poly
 		}
-		while(hull.size > Budget && hull.reduceVerticesByOne()){}
+		//while(hull.size > Budget && hull.reduceVerticesByOne().isRight){}
+
+		println("Final area: " + hull.area)
 
 		val elapsed = System.currentTimeMillis() - t0
 

@@ -17,6 +17,7 @@ import javafx.stage.Stage
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygonConfig
 import se.lu.nateko.cp.data.streams.geo.Point
+import javafx.scene.control.TextField
 
 object EnvelopePolygonInteractive{
 	def main(args: Array[String]): Unit = {
@@ -73,7 +74,7 @@ class EnvelopePolygonInteractive extends Application{
 
 		val reduceButton = new Button("Reduce")
 		reduceButton.setOnAction{_ =>
-			if(poly.reduceVerticesByOne()) refreshPlot()
+			if(poly.reduceVerticesByOne(getMaxCost).isRight) refreshPlot()
 		}
 
 		def refreshPlot(): Unit = {
@@ -118,7 +119,7 @@ class EnvelopePolygonInteractive extends Application{
 		val clearButton = new Button("Clear")
 		clearButton.setOnAction{_ => initialize()}
 
-		val buttons = new HBox(5, info, reduceButton, autorangeButton, clearButton)
+		val buttons = new HBox(10, info, maxCostField, reduceButton, autorangeButton, clearButton)
 		buttons.setAlignment(Pos.CENTER)
 		buttons.setStyle("-fx-padding: 5 0 0 0")
 
@@ -134,10 +135,23 @@ class EnvelopePolygonInteractive extends Application{
 		stage.show()
 	}
 
+	private val maxCostField = new TextField
+	maxCostField.setPrefColumnCount(5)
+
+	private def getMaxCost: Double = {
+		try{
+			val num = maxCostField.getText.toDouble
+			if(num <= 0) Double.MaxValue else num
+		} catch{
+			case _: Throwable => Double.MaxValue
+		}
+	}
+
 	private def getFreshPoly = EnvelopePolygon(Nil)(new EnvelopePolygonConfig{
 		val maxAngleForEdgeRemoval: Double = 0.9 * Math.PI
 		val minAngleForSimpleLineLineIntersection: Double = 0.001
 		val minSquaredDistanceForNewVertice: Double = 4.01
 		val epsilon: Double = 1
+		val convexnessToleranceAngle: Double = 0.05
 	})
 }

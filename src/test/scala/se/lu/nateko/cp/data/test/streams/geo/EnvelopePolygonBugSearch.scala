@@ -27,7 +27,7 @@ class EnvelopePolygonBugSearch extends FunSuite with EnvelopePolygonHelpers{
 
 		Iterator.fill(nIter)(generateRandom).find{startPoints =>
 			val poly = prefill(startPoints)
-			while(poly.size > nstart && poly.reduceVerticesByOne()){}
+			while(poly.size > nstart && poly.reduceVerticesByOne().isRight){}
 			selfIntersects(poly)
 		}.map(prefill)
 	}

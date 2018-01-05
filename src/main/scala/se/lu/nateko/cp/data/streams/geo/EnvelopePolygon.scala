@@ -37,7 +37,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	}
 
 	def verticeIsConcave(idx: Int): Boolean =
-		angleDiff(edgeAngle(idx - 1), edgeAngle(idx)) <= 0
+		angleDiff(edgeAngle(idx - 1), edgeAngle(idx)) <= conf.convexnessToleranceAngle
 
 	def verticeCost(idx: Int): Double = if(!verticeIsConcave(idx)) Double.MaxValue else {
 		val start = vertice(idx - 1)
@@ -101,7 +101,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		} else Double.MaxValue
 	}
 
-	def reduceVerticesByOne(costLimit: Double = Double.MaxValue): Boolean = {
+	def reduceVerticesByOne(costLimit: Double = Double.MaxValue): Either[Double, Double] = {
 		val curSize = verts.size
 		if(curSize < 4) throw new NoSuchElementException("The polygon has no removeable vertices")
 
@@ -110,7 +110,11 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			verts.indices.map(i => new VerticeRemoval(i, edgeCost(i), true))
 		).minBy(_.cost)
 
-		if(removal.cost >= costLimit) false
+//		if(removal.cost >= costLimit && costLimit < Double.MaxValue){
+//			println(s"Rejecting cost ${removal.cost} due to limit $costLimit")
+//		}
+
+		if(removal.cost >= costLimit) Left(removal.cost)
 		else {
 			val idx = removal.idx
 			if(removal.isEdge){
@@ -125,7 +129,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 				}
 			} else
 				verts.remove(idx)
-			true
+			Right(removal.cost)
 		}
 	}
 
@@ -205,10 +209,10 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		}
 	}
 
-	def area2: Double = verts.indices.drop(1).foldLeft(0d)((area, i) => {
-		val p0 = verts(i - 1); val p1 = verts(i)
-		area + (p1.lon - p0.lon) * (p1.lat + p0.lat)
-	})
+	def area: Double = (verts ++ verts.headOption).sliding(2, 1).foldLeft(0d)((area, edge) => {
+		val p0 = edge(0); val p1 = edge(1)
+		area + (p0.lon - p1.lon) * (p0.lat + p1.lat)
+	}) / 2
 
 	override def toString = verts.mkString("Polygon[", ", ", "]")
 }
@@ -220,6 +224,7 @@ object EnvelopePolygon{
 		val minAngleForSimpleLineLineIntersection: Double = 0.001
 		val minSquaredDistanceForNewVertice: Double = 1e-8
 		val epsilon: Double = 1e-6
+		val convexnessToleranceAngle: Double = 0.01
 	}
 
 	def defaultEmpty = new EnvelopePolygon(defaultConfig)

@@ -30,7 +30,7 @@ class EnvelopePolygonDebug extends FunSuite with EnvelopePolygonHelpers{
 		do{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 6 && p.reduceVerticesByOne())
+		}while(p.size > 6 && p.reduceVerticesByOne().isRight)
 
 		println(p.vertices.indices.map(p.verticeCost))
 		println(p.vertices.indices.map(p.edgeCost))
@@ -49,7 +49,7 @@ class EnvelopePolygonDebug extends FunSuite with EnvelopePolygonHelpers{
 		do{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 4 && p.reduceVerticesByOne())
+		}while(p.size > 4 && p.reduceVerticesByOne().isRight)
 		assert(!selfIntersects(p))
 	}
 
@@ -64,7 +64,7 @@ class EnvelopePolygonDebug extends FunSuite with EnvelopePolygonHelpers{
 		do{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 4 && p.reduceVerticesByOne())
+		}while(p.size > 4 && p.reduceVerticesByOne().isRight)
 		assert(!selfIntersects(p))
 	}
 }

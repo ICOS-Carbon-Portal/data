@@ -28,4 +28,11 @@ trait EnvelopePolygonConfig {
 	 * very close to zero.
 	 */
 	def epsilon: Double
+
+	/**
+	 * A maximum (small) angle (in radians) between the edge directions of a convex vertice
+	 * that is allowed to be neglected, so that the vertice can be effectively considered
+	 * concave and eligible for removal. Must be greater than or equal to zero.
+	 */
+	def convexnessToleranceAngle: Double
 }
