@@ -22,7 +22,7 @@ object EnvelopePolygonRun{
 
 class EnvelopePolygonRun extends Application{
 	val Budget = 20
-	val InputLimit = 4250
+	val InputLimit = 60000
 	//val InputLimit = 60000 //interesting value, gives buggy behaviour
 	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
 
@@ -68,7 +68,7 @@ class EnvelopePolygonRun extends Application{
 	def hull(latLongs: IndexedSeq[Point]): EnvelopePolygon = {
 		val t0 = System.currentTimeMillis()
 
-		val stats = new EnvelopeCostStats
+		//val stats = new EnvelopeCostStats(100)
 
 		val hull = latLongs.foldLeft(EnvelopePolygon.defaultEmpty){
 			case (poly, vertice) =>
@@ -76,14 +76,17 @@ class EnvelopePolygonRun extends Application{
 
 				var reducible = true
 
-				while(poly.size > Budget && reducible){
-					val reduction = poly.reduceVerticesByOne(stats.recommendedCostLimit)
+				while(poly.size > Budget * 4 && reducible){
+					val reduction = poly.reduceVerticesByOne()//stats.recommendedCostLimit)
 					reducible = reduction.isRight
-					stats.addCost(reduction.fold(identity, identity))
+					//stats.addCost(reduction.fold(identity, identity))
+					//reduction.foreach(stats.addCost)
 				}
+
+//if(poly.size > Budget) print(poly.size + " ")
 				poly
 		}
-		//while(hull.size > Budget && hull.reduceVerticesByOne().isRight){}
+		while(hull.size > Budget && hull.reduceVerticesByOne().isRight){}
 
 		println("Final area: " + hull.area)
 
