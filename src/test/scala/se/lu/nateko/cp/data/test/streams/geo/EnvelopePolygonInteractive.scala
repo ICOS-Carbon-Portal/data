@@ -74,7 +74,11 @@ class EnvelopePolygonInteractive extends Application{
 
 		val reduceButton = new Button("Reduce")
 		reduceButton.setOnAction{_ =>
-			if(poly.reduceVerticesByOne(getMaxCost).isRight) refreshPlot()
+			val reduction = poly.reduceVerticesByOne(getMaxCost)
+			reduction.foreach{cost =>
+				println("Reduced with cost " + cost)
+			}
+			if(reduction.isRight) refreshPlot()
 		}
 
 		def refreshPlot(): Unit = {
@@ -130,6 +134,10 @@ class EnvelopePolygonInteractive extends Application{
 		scene.getStylesheets.add(getClass.getResource("/geoChartStyle.css").toExternalForm)
 
 		initialize()
+
+		poly = EnvelopePolygonRun.hull(EnvelopePolygonRun.latLongs)
+		refreshPlot()
+		//println(poly)
 
 		stage.setScene(scene)
 		stage.show()

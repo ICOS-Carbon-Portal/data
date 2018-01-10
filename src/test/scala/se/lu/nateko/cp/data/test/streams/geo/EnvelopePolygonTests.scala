@@ -18,7 +18,9 @@ class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHe
 	}
 
 	private def linear = {
-		implicit val p = EnvelopePolygon.defaultEmpty
+		implicit val p = EnvelopePolygon(Nil)(new EnvelopePolygon.DefaultConfig{
+			override val convexnessToleranceAngle = 0
+		})
 		add(0,0)
 		add(1,0)
 		add(2,0)

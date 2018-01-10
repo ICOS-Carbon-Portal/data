@@ -47,20 +47,22 @@ class LastNpointsSdDev(size: Int) extends EnvelopeCostStats{
 	}
 }
 
-class PriorCostFraction(fraction: Double,  extends EnvelopeCostStats{
+class PriorCostFraction(fraction: Double, initPointNumber: Int) extends EnvelopeCostStats{
 
 	private[this] var sum: Double = 0
-	private[this] var sqDiffSum: Double = 0
 	private[this] var n: Int = 0
 
 	def addCost(cost: Double): Unit = {
 		sum += cost
 		n += 1
-		val diff = sum / n - cost
-		sqDiffSum += diff * diff
 	}
 
-	def recommendedCostLimit: Double = if(n == 0) Double.MaxValue else {
-		sum / n + 3 * Math.sqrt(sqDiffSum / n)
+	def recommendedCostLimit: Double = if(n <= initPointNumber) Double.MaxValue else {
+		fraction * sum
 	}
+}
+
+object DummyCostStats extends  EnvelopeCostStats {
+	def addCost(cost: Double): Unit = {}
+	def recommendedCostLimit: Double = Double.MaxValue
 }

@@ -83,6 +83,7 @@ lazy val data = (project in file("."))
 
 		// *** end of manually published on CP Nexus 3rd party repo ***
 
+			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
 		),
 
