@@ -133,19 +133,15 @@ object PointReducer {
 			.sum / (state.lons.length - 1)
 	).toFloat
 
-	def getCoverage(state: PointReducerState): GeoFeature = {
+	def getCoverage(maxErrorFactor: Double)(state: PointReducerState): Option[GeoTrack] = {
 		val err = sigmaError(state)
 		import state.bbox
-		val bboxSizeEst = Math.sqrt(bbox.width.toDouble * bbox.height)
+		val bboxSizeEst = Math.sqrt(bbox.width * bbox.height)
 
-		if(err < 0.05 * bboxSizeEst) GeoTrack(
+		if(err <= maxErrorFactor * bboxSizeEst) Some(GeoTrack(
 			state.latLongs.map{
-				case (lat, lon) => Position(lat.toDouble, lon.toDouble)
+				case (lat, lon) => Position(lat, lon)
 			}
-		) else LatLonBox(
-			min = Position(bbox.bottom.lat.toDouble, bbox.left.lon.toDouble),
-			max = Position(bbox.top.lat.toDouble, bbox.right.lon.toDouble),
-			label = None
-		)
+		)) else None
 	}
 }

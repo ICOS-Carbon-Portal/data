@@ -1,10 +1,12 @@
 package se.lu.nateko.cp.data.streams.geo
 
+import scala.annotation.tailrec
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
-import scala.annotation.tailrec
 
 import GeoAlgorithms._
+import se.lu.nateko.cp.meta.core.data.Polygon
+import se.lu.nateko.cp.meta.core.data.Position
 
 class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	import EnvelopePolygon._
@@ -307,4 +309,8 @@ object EnvelopePolygon{
 			new NearestOnEdge(InnerPoint, nearestPoint, cost)
 		}
 	}
+
+	def getGeoFeature(poly: EnvelopePolygon) = Polygon(
+		poly.vertices.map(p => Position(lat = p.lat, lon = p.lon))
+	)
 }
