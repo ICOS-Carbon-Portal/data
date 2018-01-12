@@ -52,4 +52,11 @@ object GeoAlgorithms {
 		val norm = Math.sqrt(distSq(p1, p2))
 		new GeoVector((p2.lon - p1.lon) / norm, (p2.lat - p1.lat) / norm)
 	}
+
+	def nearestPoint(to: Point, among: Point*): Point = among.minBy(distSq(to, _))
+	def minDistSq(to: Point, fromAmong: Point*): Double = fromAmong.foldLeft(Double.MaxValue){
+		(min, fromP) => Math.min(min, distSq(fromP, to))
+	}
+
+	def midPoint(ps: Point*) = Point(ps.map(_.lon).sum / ps.size, ps.map(_.lat).sum / ps.size)
 }

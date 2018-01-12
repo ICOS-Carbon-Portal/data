@@ -19,9 +19,9 @@ import org.gillius.jfxutils.chart.ChartPanManager
 
 object EnvelopePolygonRun{
 	val Budget = 20
-	val InputSkip = 0
-	val InputLimit = 60000
-	val BatchSize = 10
+	val InputSkip = 10000
+	val InputLimit = 6000
+	val BatchSize = 40
 	//val InputLimit = 60000 //interesting value, gives buggy behaviour
 	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
 
@@ -40,9 +40,14 @@ object EnvelopePolygonRun{
 		val t0 = System.currentTimeMillis()
 
 		//val stats = DummyCostStats
-		val stats = new PriorCostFraction(0.01, 100)
+		val stats = new PriorCostFraction(0.05)
 
-		val hull = latLongs.sliding(BatchSize, BatchSize).foldLeft(EnvelopePolygon.defaultEmpty){
+		val seed = EnvelopePolygon(Nil)(new EnvelopePolygon.DefaultConfig{
+			override val distanceCostFactor = 5
+			override val maxAngleForEdgeRemoval = 0.9 * Math.PI
+		})
+
+		val hull = latLongs.sliding(BatchSize, BatchSize).foldLeft(seed){
 			case (poly, vertices) =>
 				vertices.foreach(poly.addVertice)
 

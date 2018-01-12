@@ -10,10 +10,12 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	import EnvelopePolygon._
 
 	private val verts = Buffer.empty[Point]
+	private val nearests = Buffer.empty[Point]
 	private[this] val edgeReplacements = Map.empty[Int, Point]
 
 	def vertices: Seq[Point] = verts
 	def vertice(idx: Int): Point = verts(shortcircuit(idx))
+	def nearestTo(idx: Int): Point = nearests(shortcircuit(idx))
 	def size: Int = verts.size
 
 	private def shortcircuit(idx: Int): Int = {
@@ -57,7 +59,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 			inter <= forSegments(v1, v2, stop, self)
 		}
 		if(noNewIntersections)
-			triangleArea2(start, self, stop)// + accumulatedCosts(idx)
+			triangleArea2(start, self, stop)
 		else Double.MaxValue
 	}
 
@@ -98,9 +100,12 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						inter <= forSegments(v1, v2, start, stop)
 					}
 				}
-				if(noNewIntersections)
-					triangleArea2(start, top, stop)// + accumulatedCosts(idx) + accumulatedCosts(shortcircuit(idx + 1))
-				else Double.MaxValue
+				if(noNewIntersections){
+					val near1 = nearestTo(idx)
+					val near2 = nearestTo(idx + 1)
+					val distanceCost = minDistSq(top, near1, near2, midPoint(near1, near2))
+					triangleArea2(start, top, stop) + conf.distanceCostFactor * distanceCost
+				} else Double.MaxValue
 			} else Double.MaxValue
 		} else Double.MaxValue
 	}
@@ -126,12 +131,23 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 				if(idx < curSize - 1){
 					verts.remove(idx, 2)
 					verts.insert(idx, vert)
+					val near1 = nearests(idx)
+					val near2 = nearests(idx + 1)
+					val newNearest = nearestPoint(vert, near1, near2, midPoint(near1, near2))
+					nearests.remove(idx, 2)
+					nearests.insert(idx, newNearest)
 				} else {//TODO Write a test for this branch
 					verts.remove(idx, 1)
 					verts(0) = vert
+					val near1 = nearests(0)
+					val near2 = nearests(idx)
+					val newNearest = nearestPoint(vert, near1, near2, midPoint(near1, near2))
+					nearests.remove(idx, 1)
+					nearests(0) = newNearest
 				}
 			} else {
 				verts.remove(idx)
+				nearests.remove(idx)
 			}
 			Right(removal.cost)
 		}
@@ -143,9 +159,13 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		var crossingCount = 0
 		val iter = verts.indices.iterator
 		val n = verts.size
-		while(!isOnBorder && iter.hasNext){
+		while(iter.hasNext){
 			val idx = iter.next()
-			computeRelationship(verts(idx), verts((idx + 1) % n), p) match{
+
+			//Updating nearest points for vertices to which p is closer than their current nearest
+			if(distSq(verts(idx), nearests(idx)) > distSq(verts(idx), p)) nearests(idx) = p
+
+			if(!isOnBorder) computeRelationship(verts(idx), verts((idx + 1) % n), p) match{
 				case Start => isOnBorder = true
 				case Cross => crossingCount += 1
 				case _ =>
@@ -167,10 +187,12 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		if(curSize < 2) {
 			if(verts.contains(vert)) false else {
 				verts += vert
+				nearests += vert
 				true
 			}
 		}
-		else !containsPoint(vert) && {
+		else if(containsPoint(vert)) false
+		else {
 
 			val nearest = verts.indices.map{i =>
 				val noe = nearestOnEdge(verts(i), verts((i + 1) % curSize), vert)
@@ -190,6 +212,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho2 = orthoNormVector(v1, v2)
 						val nanoShifted = v1 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, vert, nanoShifted)
+						nearests.insert(nearest.baseIdx, vert, nanoShifted)
 
 					case SecondVertice =>
 						val v2 = nearest.point
@@ -198,6 +221,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho2 = orthoNormVector(v2, vert)
 						val nanoShifted = v2 + (ortho1 + ortho2) * conf.epsilon
 						verts.insert(nearest.baseIdx, nanoShifted, vert)
+						nearests.insert(nearest.baseIdx, nanoShifted, vert)
 
 					case InnerPoint =>
 						val np = nearest.point
@@ -207,6 +231,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val shifted1 = np + (dir1 + dir2) * conf.epsilon
 						val shifted2 = np + (dir1 - dir2) * conf.epsilon
 						verts.insert(nearest.baseIdx, shifted1, vert, shifted2)
+						nearests.insert(nearest.baseIdx, shifted1, vert, shifted2)
 				}
 				true
 			}
@@ -224,11 +249,12 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 object EnvelopePolygon{
 
 	class DefaultConfig extends EnvelopePolygonConfig{
-		val maxAngleForEdgeRemoval: Double = 0.8 * Math.PI
+		val maxAngleForEdgeRemoval: Double = 0.9 * Math.PI
 		val minAngleForSimpleLineLineIntersection: Double = 0.001
 		val minSquaredDistanceForNewVertice: Double = 1e-10
 		val epsilon: Double = 1e-6
 		val convexnessToleranceAngle: Double = 0.01
+		val distanceCostFactor: Double = 5
 	}
 
 	object defaultConfig extends DefaultConfig
@@ -238,6 +264,7 @@ object EnvelopePolygon{
 	def apply(vertices: TraversableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
 		val p = new EnvelopePolygon(conf)
 		p.verts ++= vertices
+		p.nearests ++= p.verts
 		p
 	}
 

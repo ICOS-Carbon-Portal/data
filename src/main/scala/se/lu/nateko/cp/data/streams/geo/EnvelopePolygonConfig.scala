@@ -35,4 +35,10 @@ trait EnvelopePolygonConfig {
 	 * concave and eligible for removal. Must be greater than or equal to zero.
 	 */
 	def convexnessToleranceAngle: Double
+
+	/**
+	 * During edge removal cost evaluation, a contribution factor of squared distance from the newly
+	 * created vertice to the nearest original point (or some fictional representation of the latter).
+	 */
+	def distanceCostFactor: Double
 }

@@ -135,8 +135,8 @@ class EnvelopePolygonInteractive extends Application{
 
 		initialize()
 
-		poly = EnvelopePolygonRun.hull(EnvelopePolygonRun.latLongs)
-		refreshPlot()
+		//poly = EnvelopePolygonRun.hull(EnvelopePolygonRun.latLongs)
+		//refreshPlot()
 		//println(poly)
 
 		stage.setScene(scene)
@@ -155,11 +155,9 @@ class EnvelopePolygonInteractive extends Application{
 		}
 	}
 
-	private def getFreshPoly = EnvelopePolygon(Nil)(new EnvelopePolygonConfig{
-		val maxAngleForEdgeRemoval: Double = 0.9 * Math.PI
-		val minAngleForSimpleLineLineIntersection: Double = 0.001
-		val minSquaredDistanceForNewVertice: Double = 4.01
-		val epsilon: Double = 1
-		val convexnessToleranceAngle: Double = 0.05
+	private def getFreshPoly = EnvelopePolygon(Nil)(new EnvelopePolygon.DefaultConfig{
+		override val minSquaredDistanceForNewVertice: Double = 4.01
+		override val epsilon: Double = 1
+		override val convexnessToleranceAngle: Double = 0.05
 	})
 }

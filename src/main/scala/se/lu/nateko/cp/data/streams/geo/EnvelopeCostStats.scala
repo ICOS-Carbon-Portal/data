@@ -47,8 +47,9 @@ class LastNpointsSdDev(size: Int) extends EnvelopeCostStats{
 	}
 }
 
-class PriorCostFraction(fraction: Double, initPointNumber: Int) extends EnvelopeCostStats{
+class PriorCostFraction(fraction: Double) extends EnvelopeCostStats{
 
+	val initPointNumber: Int = 5 + (1 / fraction).toInt
 	private[this] var sum: Double = 0
 	private[this] var n: Int = 0
 
