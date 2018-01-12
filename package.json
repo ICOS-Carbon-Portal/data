@@ -11,6 +11,7 @@
     "wdcgg": "gulp wdcgg",
     "stilt": "gulp stilt",
     "dygraph-light": "gulp dygraph-light",
+    "stats": "gulp stats",
     "gulp": "gulp"
   },
   "repository": {
@@ -51,7 +52,7 @@
   "dependencies": {
     "babel-polyfill": "^6.13.0",
     "dygraphs": "^2.0.0",
-    "icos-cp-backend": "^0.3.3",
+    "icos-cp-backend": "^0.3.4",
     "icos-cp-leaflet-common": "^0.2.3",
     "icos-cp-legend": "^0.3.0",
     "icos-cp-netcdfmap": "^0.2.1",

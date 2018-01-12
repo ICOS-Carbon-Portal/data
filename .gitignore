@@ -12,6 +12,7 @@ src/main/resources/portal.js
 /src/main/resources/dygraph-light.js
 /src/main/resources/netcdf-light.js
 /src/main/resources/netcdf-new.js
+/src/main/resources/stats.js
 
 # sbt specific
 target/

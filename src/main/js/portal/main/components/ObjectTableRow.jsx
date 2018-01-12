@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
+import {formatBytes} from '../utils';
 
 
 export default class ObjectTableRow extends Component {
@@ -22,6 +23,7 @@ export default class ObjectTableRow extends Component {
 		const className = previewItem && previewItem.id === objInfo.dobj
 			? "list-group-item-info"
 			: "";
+		const size = parseInt(objInfo.size);
 
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
@@ -36,6 +38,7 @@ export default class ObjectTableRow extends Component {
 				/>
 				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
+			<td>{formatBytes(size, 2)}</td>
 			<td>{formatDate(objInfo.submTime)}</td>
 			<td>{formatDate(objInfo.acqStart)}</td>
 			<td>{formatDate(objInfo.acqEnd)}</td>
@@ -55,4 +58,3 @@ function formatDate(d){
 function pad2(s){
 	return ("0" + s).substr(-2, 2);
 }
-

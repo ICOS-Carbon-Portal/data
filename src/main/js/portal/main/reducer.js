@@ -1,12 +1,32 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_CHANGED, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
+import Cart from './models/Cart';
+import Preview from './models/Preview';
+import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
+import {getRouteFromLocationHash} from './utils';
 
+const initState = {
+	routeAndParams: new RouteAndParams(),
+	user: {},
+	lookup: undefined,
+	specTable: new CompositeSpecTable({}),
+	objectsTable: [],
+	sorting: {objCount: 0},
+	paging: {},
+	cart: new Cart(),
+	preview: new Preview(),
+	toasterData: undefined,
+	batchDownloadStatus: {
+		isAllowed: false,
+		ts: 0
+	}
+};
 
-export default function(state, action){
+export default function(state = initState, action){
 
 	switch(action.type){
 
@@ -17,7 +37,11 @@ export default function(state, action){
 
 		case USER_INFO_FETCHED:
 			return update({
-				user: Object.assign({}, {email: action.user._id}, action.user.profile)
+				user: {
+					profile: action.profile,
+					email: action.user.email,
+					ip: action.user.ip
+				}
 			});
 
 		case SPECTABLES_FETCHED:
@@ -37,10 +61,14 @@ export default function(state, action){
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
+			let routeAndParams = state.routeAndParams.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
+			window.location.hash = routeAndParams.urlPart;
+
 			return update({
+				routeAndParams,
 				specTable,
-				objectTable: [],
+				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
@@ -48,9 +76,27 @@ export default function(state, action){
 		case SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
+			routeAndParams = state.routeAndParams.withResetFilters();
+			window.location.hash = routeAndParams.urlPart;
 
 			return update({
+				routeAndParams,
 				specTable,
+				paging: freshPaging(objCount),
+				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case RESTORE_FILTERS:
+			routeAndParams = restoreRouteAndParams(action.hash);
+			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
+				return specTable.withFilter(filterKey, routeAndParams.filters[filterKey]);
+			}, state.specTable);
+			objCount = getObjCount(specTable);
+
+			return update({
+				routeAndParams,
+				specTable,
+				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
@@ -62,24 +108,31 @@ export default function(state, action){
 
 		case SORTING_TOGGLED:
 			return update({
-				objectTable: [],
+				objectsTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
 			});
 
 		case STEP_REQUESTED:
 			return update({
-				objectTable: [],
+				objectsTable: [],
 				paging: updatePaging(state.paging, action.direction)
 			});
 
-		case ROUTE_CHANGED:
+		case ROUTE_UPDATED:
+			routeAndParams = state.routeAndParams.withRoute(action.route);
+			const currentRoute = getRouteFromLocationHash();
+
+			if (currentRoute !== action.route) {
+				window.location.hash = routeAndParams.urlPart;
+			}
+
 			return update({
-				route: action.route
+				routeAndParams
 			});
 
 		case PREVIEW:
 			return update({
-				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable),
+				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
 		case PREVIEW_VISIBILITY:
@@ -129,7 +182,7 @@ function updateSorting(old, varName){
 }
 
 function updateSortingEnableness(old, objCount){
-	const isEnabled = objCount <= 1000;
+	const isEnabled = objCount <= 2000;
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});

@@ -15,7 +15,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.data.api.CpMetaVocab
 
-class UploadService(config: UploadConfig, meta: MetaClient) {
+class UploadService(config: UploadConfig, val meta: MetaClient) {
 
 	import meta.{system, dispatcher}
 	import UploadService._
@@ -35,7 +35,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods.getFileSource(filePathSuffix(dataObj))
 
-	def getSink(hash: Sha256Sum, user: UserId): Future[Sink[ByteString, Future[UploadResult]]] = {
+	def getSink(hash: Sha256Sum, user: UserId): Future[DataObjectSink] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dataObj, user);
@@ -43,9 +43,12 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 		) yield sink
 	}
 
+	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] =
+		meta.lookupPackage(hash).flatMap(getSpecificSink)
+
 	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
-	private def getSpecificSink(dataObj: DataObject): Future[Sink[ByteString, Future[UploadResult]]] = {
+	private def getSpecificSink(dataObj: DataObject): Future[DataObjectSink] = {
 		val postTasks = getPostUploadTasks(dataObj)
 
 		getUploadTasks(dataObj).map{tasks =>
@@ -73,36 +76,33 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 	private def getUploadTasks(dataObj: DataObject): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
-		def hashAndIrods = IndexedSeq.empty :+
+		def defaults = IndexedSeq.empty :+
 			new HashsumCheckingUploadTask(dataObj.hash) :+
+			new ByteCountingTask
+
+		def defaultsWithIrods = defaults :+
 			new IrodsUploadTask(dataObj, irods)
 
+		def saveToFile = new FileSavingUploadTask(file)
+
 		dataObj.specification.dataLevel match{
-			case 0 | 1 | 3 => Future.successful(
-				hashAndIrods :+
-				new FileSavingUploadTask(file)
-			)
+			case 0 | 1 | 3 => Future.successful(defaultsWithIrods :+ saveToFile)
 
 			case 2 =>
 				val formatUri = dataObj.specification.format.uri
 				if(formatUri == CpMetaVocab.asciiWdcggTimeSer){
 					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-						IndexedSeq.empty :+
-						new HashsumCheckingUploadTask(dataObj.hash) :+
-						ingestionTask
+						defaults :+ ingestionTask
 					}
 
 				} else if(formatUri == CpMetaVocab.asciiEtcTimeSer || formatUri == CpMetaVocab.asciiOtcSocatTimeSer){
 					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-						hashAndIrods :+
+						defaultsWithIrods :+
 						ingestionTask :+
-						new FileSavingUploadTask(file)
+						saveToFile
 					}
 
-				} else Future.successful(
-					hashAndIrods :+
-					new FileSavingUploadTask(file)
-				)
+				} else Future.successful(defaultsWithIrods :+ saveToFile)
 
 			case dataLevel => Future.successful(
 				IndexedSeq.empty :+
@@ -117,6 +117,7 @@ class UploadService(config: UploadConfig, meta: MetaClient) {
 }
 
 object UploadService{
+	type DataObjectSink = Sink[ByteString, Future[UploadResult]]
 	type UploadTaskSink = Sink[ByteString, Future[UploadTaskResult]]
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
 

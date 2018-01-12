@@ -5,6 +5,7 @@ import scala.concurrent.Future
 
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -13,7 +14,6 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
-import se.lu.nateko.cp.data.services.etcfacade.FacadeService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
@@ -21,10 +21,35 @@ import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
 import scala.util.Failure
 import scala.util.Success
 import akka.http.scaladsl.model.headers.Connection
+import spray.json._
+import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.data.services.etcfacade.FacadeService
+import se.lu.nateko.cp.meta.core.etcupload.StationId
 
-object EtcUploadRouting {
+class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer){
+	import EtcUploadRouting._
+	import mat.executionContext
 
-	def apply(config: EtcFacadeConfig, facade: FacadeService)(implicit mat: Materializer): Route = (put & pathPrefix("upload" / "etc")){
+	private val facade = new FacadeService(config, upload)
+	private val meta = upload.meta
+
+	def route: Route = pathPrefix("upload" / "etc"){
+		uploadRoute ~
+		pathPrefix("staging"){
+			getFromBrowseableDirectory(config.folder)
+		} ~
+		(get & path("passwords")){
+			auth.userOpt{userOpt =>
+				val passesFut: Future[JsObject] = userOpt
+					.map(uid => meta.getStationsWhereUserIsPi(uid).map(Some.apply))
+					.getOrElse(Future.successful(None))
+					.map(getPassList(config, _))
+				onSuccess(passesFut){json => complete(json)}
+			}
+		}
+	}
+
+	private def uploadRoute: Route = put{
 		import mat.executionContext
 
 		val authenticator = AuthenticatorProvider(config)
@@ -58,10 +83,23 @@ object EtcUploadRouting {
 		} ~
 		forbid("Authentication error")
 	}
+}
 
-	private val Md5Segment = Segment.flatMap(Md5Sum.fromHex(_).toOption)
+object EtcUploadRouting{
 
-	private def forbid(msg: String): Route = respondWithHeader(Connection("close")){
+	val Md5Segment = Segment.flatMap(Md5Sum.fromHex(_).toOption)
+
+	def forbid(msg: String): Route = respondWithHeader(Connection("close")){
 		complete(StatusCodes.Forbidden -> msg)
+	}
+
+	def getPassList(config: EtcFacadeConfig, stationsOpt: Option[Seq[StationId]]): JsObject = {
+		val statArray: JsValue = stationsOpt.map{stations =>
+			JsArray(stations.map{s =>
+				val pass = AuthenticatorProvider.getPassword(s, config)
+				JsObject(Map("station" -> JsString(s.id), "password" -> JsString(pass)))
+			}.toVector)
+		}.getOrElse(JsNull)
+		JsObject(Map("passwords" -> statArray))
 	}
 }

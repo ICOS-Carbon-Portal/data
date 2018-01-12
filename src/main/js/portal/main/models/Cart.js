@@ -70,6 +70,10 @@ export default class Cart {
 	withName(name){
 		return new Cart(name, this._items);
 	}
+
+	get size(){
+		return this.items.reduce((totSize, item) => totSize + item.size, 0);
+	}
 }
 
 export const restoreCarts = (cartInLocalStorage, cartInRestheart) => {

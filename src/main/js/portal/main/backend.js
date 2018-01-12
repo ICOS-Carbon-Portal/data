@@ -22,21 +22,21 @@ export function fetchAllSpecTables() {
 function fetchSpecTable(queryFactory) {
 	const query = queryFactory(config);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(sparqlResultToSpecTable);
 }
 
 export function fetchFilteredDataObjects(dobjRequest){
 	const query = queries.listFilteredDataObjects(config, dobjRequest);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(sparqlResultToColNamesAndRows);
 }
 
 export const searchDobjs = search => {
 	const query = queries.findDobjs(config, search);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;
@@ -51,7 +51,7 @@ export const searchDobjs = search => {
 export const searchStations = search => {
 	const query = queries.findStations(config, search);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;
@@ -66,7 +66,7 @@ export const searchStations = search => {
 export const getObjColInfo = dobj => {
 	const query = queries.dobjColInfo(config, dobj);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const vars = sparqlResult.head.vars;
@@ -90,15 +90,26 @@ export const getObjColInfo = dobj => {
 
 export const saveCart = (email, cart) => {
 	if (email){
-		updateRestheart('users', email, {cart});
+		updatePersonalRestheart('users', email, {cart});
 	}
 	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
-const updateRestheart = (db, email, data) => {
+const updatePersonalRestheart = (db, email, data) => {
 	return fetch(`${config.restheartBaseUrl}${db}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
+		mode: 'cors',
+		headers: new Headers({
+			'Content-Type': 'application/json'
+		}),
+		body: JSON.stringify(data)
+	}).then(resp => resp);
+};
+
+export const updatePortalUsage = (data) => {
+	return fetch(`${config.restheartPortalUseBaseUrl}portaluse`, {
+		method: 'POST',
 		mode: 'cors',
 		headers: new Headers({
 			'Content-Type': 'application/json'
@@ -166,22 +177,29 @@ export function getWhoIam(){
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
-				: {email: undefined};
+				: {email: undefined, ip: undefined};
 		});
 }
+
+const getProfile = email => {
+	return email
+		? fetch(`https://cpauth.icos-cp.eu/db/users/${email}?keys={profile:1}`, {credentials: 'include'})
+			.then(profile => {
+				return profile.status === 200
+					? profile.json()
+					: {}
+			})
+		: Promise.resolve({});
+};
 
 export const getUserInfo = () => {
 	return getWhoIam()
 		.then(user => {
-			return user.email
-				? fetch(`https://cpauth.icos-cp.eu/db/users/${user.email}?keys={profile:1}`, {credentials: 'include'})
-				: {};
+			return {
+				profilePromise: getProfile(user.email),
+				user
+			};
 		})
-		.then(resp => {
-			return resp.status === 200
-				? resp.json()
-				: {};
-		});
 };
 
 export const logOutUser = () => {

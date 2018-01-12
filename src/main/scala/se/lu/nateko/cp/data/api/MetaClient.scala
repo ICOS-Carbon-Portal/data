@@ -17,6 +17,8 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
 import akka.http.scaladsl.marshalling.Marshal
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
+import se.lu.nateko.cp.meta.core.etcupload.StationId
+import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 	implicit val dispatcher = system.dispatcher
@@ -102,6 +104,26 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem) {
 			case notOk =>
 				failWithReturnedMessage(notOk, resp)
 		})
+	}
+
+	def getStationsWhereUserIsPi(user: UserId): Future[Seq[StationId]] = {
+		val stationVar = "stationId"
+
+		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|select ?$stationVar where{
+				|?pi cpmeta:hasEmail "${user.email}"^^xsd:string .
+				|?pi cpmeta:hasMembership ?memb .
+				|?memb cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
+				|?memb cpmeta:atOrganization ?station .
+				|?station a cpmeta:ES .
+				|?station cpmeta:hasStationId ?$stationVar .
+			|}""".stripMargin
+
+		sparql.select(query).map{res =>
+			res.results.bindings.map(_.get(stationVar)).collect{
+				case Some(BoundLiteral(StationId(id), _)) => id
+			}
+		}
 	}
 
 	private def failWithReturnedMessage[T](status: StatusCode, resp: HttpResponse): Future[T] = {

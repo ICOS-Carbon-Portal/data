@@ -7,7 +7,7 @@ export function getStationInfo(){
 		return bindingVal ? parseFloat(bindingVal.value) : undefined;
 	}
 	const query = sparqlQueries.stationInfo();
-	return sparql(query, config.sparqlEndpoint).then(sparqlResult => {
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => {
 		return sparqlResult.results.bindings.map(binding => {
 			return {
 				uri: binding.station.value,
@@ -32,7 +32,7 @@ export function getDataObjectData(dobjId, tblRequest){
 function getFormatSpecificProps(dobjId){
 	const query = sparqlQueries.formatSpecificProps(dobjId);
 
-	return sparql(query, config.sparqlEndpoint).then(sparqlResult => {
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => {
 		return sparqlResult.results.bindings.map(binding => {
 			return {
 				prop: binding.prop ? binding.prop.value : binding.label,
@@ -47,7 +47,7 @@ function getFormatSpecificProps(dobjId){
 export function getGlobalTimeInterval(spec){
 	const query = sparqlQueries.getGlobalTimeInterval(spec);
 
-	return sparql(query, config.sparqlEndpoint).then(sparqlResult => {
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => {
 		const binding = sparqlResult.results.bindings[0];
 
 		return !binding
@@ -73,7 +73,7 @@ export function getFilteredPropValueCounts(spec, filters){
 function getFilteredDataObjects(spec, filters){
 	const query = sparqlQueries.getFilteredDataObjQuery(spec, filters);
 
-	return sparql(query, config.sparqlEndpoint).then(sparqlResult => {
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => {
 		return sparqlResult.results.bindings.map(binding => {
 			return {
 				uri: binding.dobj.value,
@@ -94,7 +94,7 @@ function getPropValueCounts(spec, filters){
 		};
 	}
 
-	return sparql(query, config.sparqlEndpoint).then(sparqlResult => groupBy(
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => groupBy(
 		sparqlResult.results.bindings.filter(binding => !!binding.value),
 		binding => binding.prop.value,
 		bindingToValueCount

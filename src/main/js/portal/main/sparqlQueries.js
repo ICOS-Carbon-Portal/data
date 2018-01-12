@@ -5,6 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat [rdfs:label ?format ]
 }`;
@@ -144,10 +145,11 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?submTime ?acqStart ?acqEnd where {
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?acqStart ?acqEnd where {
 	${specsValues}
 	${dobjSearch}
 	?dobj cpmeta:hasName ?fileName .
+	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	OPTIONAL{
 		?dobj cpmeta:wasAcquiredBy [

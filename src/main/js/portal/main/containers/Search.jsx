@@ -25,10 +25,10 @@ class Search extends Component {
 
 		return (
 			<div className="row">
-				<div className="col-md-4">
+				<div className="col-md-3">
 					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset'])} />
 				</div>
-				<div className="col-md-8">{
+				<div className="col-md-9">{
 					props.preview.visible
 						? <Preview
 							preview={props.preview}

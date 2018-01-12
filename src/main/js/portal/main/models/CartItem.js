@@ -39,6 +39,10 @@ export default class CartItem {
 		return this._dataobject.spec;
 	}
 
+	get size(){
+		return parseInt(this._dataobject.size || 0);
+	}
+
 	get item(){
 		return this._dataobject;
 	}

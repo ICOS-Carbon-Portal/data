@@ -3,7 +3,6 @@ package se.lu.nateko.cp.data.services.upload
 import java.io.File
 
 import scala.concurrent.Future
-
 import akka.Done
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
@@ -20,10 +19,10 @@ import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
+import se.lu.nateko.cp.meta.core.data.{DataObject, IngestionMetadataExtract}
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
+
 import scala.concurrent.ExecutionContext
 
 class IngestionUploadTask(
@@ -77,7 +76,7 @@ class IngestionUploadTask(
 	private def makeFormatSpecificSink[R](
 		lineParser: Flow[ByteString, String, NotUsed],
 		rowParser: Flow[String, R, Future[Done]],
-		toBinTableConverter: Flow[R, BinTableRow, Future[UploadCompletionInfo]]
+		toBinTableConverter: Flow[R, BinTableRow, Future[IngestionMetadataExtract]]
 	): Sink[ByteString, Future[UploadTaskResult]] = {
 
 		lineParser

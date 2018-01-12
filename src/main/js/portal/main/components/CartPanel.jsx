@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import CartIcon from './CartIcon.jsx';
 import PreviewIcon from './PreviewIcon.jsx';
 import EditablePanelHeading from './EditablePanelHeading.jsx';
+import {formatBytes} from '../utils';
 
 
 export default class CartPanel extends Component {
@@ -47,6 +48,10 @@ export default class CartPanel extends Component {
 								<span className="glyphicon glyphicon-download-alt" style={{marginRight: 5}} /> {downloadBtnTxt}
 							</a>
 
+							<div style={{fontSize:'90%'}}>
+								Size of cart: {formatBytes(cart.size)} (uncompressed)
+							</div>
+
 							<ul className="list-group">{
 								cart.items.map((item, i) =>
 									<Item
@@ -81,10 +86,10 @@ const Item = props => {
 		: "list-group-item";
 
 	return (
-		<li className={className}>
+		<li className={className} style={{display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
 			<CartIcon id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
 			<PreviewIcon id={item.id} previewType={previewType} clickAction={action} />
-			<a href={item.id} target="_blank">{item.itemName}</a>
+			<a href={item.id} target="_blank" title={item.itemName}>{item.itemName}</a>
 		</li>
 	);
 };

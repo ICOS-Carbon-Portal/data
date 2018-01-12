@@ -19,11 +19,11 @@ import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 import se.lu.nateko.cp.data.api.RestHeartClient
-import se.lu.nateko.cp.data.services.etcfacade.FacadeService
 
 object Main extends App {
 
 	implicit val system = ActorSystem("cpdata")
+	system.log
 	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
 
@@ -50,8 +50,6 @@ object Main extends App {
 	val licenceRouting = new LicenceRouting(authRouting)
 	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)
 
-	val etcFacade = new FacadeService(config.etcFacade, metaClient)
-
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
 			val traceWriter = new java.io.StringWriter()
@@ -70,7 +68,7 @@ object Main extends App {
 		StiltRouting(stiltFetcher) ~
 		StaticRouting.route ~
 		licenceRouting.route ~
-		EtcUploadRouting(config.etcFacade, etcFacade) ~
+		new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route ~
 		authRouting.whoami ~
 		authRouting.logout
 	}

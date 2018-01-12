@@ -21,6 +21,7 @@ export default function(props){
 					<thead>
 						<tr>
 							<th style={headerStyle}>Data object<SortButton varName="fileName" {...props}/></th>
+							<th style={headerStyle}>Size<SortButton varName="size" {...props}/></th>
 							<th style={headerStyle}>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
 							<th style={headerStyle}>Acquisition start (UTC)<SortButton varName="acqStart" {...props}/></th>
 							<th style={headerStyle}>Acquisition stop (UTC)<SortButton varName="acqEnd" {...props}/></th>
@@ -62,7 +63,7 @@ const SortButton = props => {
 				: '-by-attributes-alt'
 	);
 
-	const title = disabled ? 'Filter down the amount of objects first, then sort' : 'Sort';
+	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
 
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
