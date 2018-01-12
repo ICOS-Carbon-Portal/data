@@ -27,7 +27,9 @@ class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHe
 		p
 	}
 	private def trapezoid = {
-		implicit val p = EnvelopePolygon.defaultEmpty
+		implicit val p = EnvelopePolygon(Nil)(new EnvelopePolygon.DefaultConfig{
+			override val distanceCostFactor = 0
+		})
 		add(0,0)
 		add(1,1)
 		add(2,1)
@@ -191,7 +193,11 @@ class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHe
 		}
 
 		it("is correctly computed on an edge between vertices approaching 180 degrees"){
-			val t = EnvelopePolygon.default(Point(3, -1e-4), Point(2,0), Point(1,0), Point(0, -1e-4))
+			val t = EnvelopePolygon(
+				Seq(Point(3, -1e-4), Point(2,0), Point(1,0), Point(0, -1e-4))
+			)(new EnvelopePolygon.DefaultConfig{
+				override val distanceCostFactor = 0
+			})
 			assert(t.edgeCost(1) === 5e-5)
 		}
 

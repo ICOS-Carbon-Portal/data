@@ -42,13 +42,10 @@ object EnvelopePolygonRun{
 		//val stats = DummyCostStats
 		val stats = new PriorCostFraction(0.05)
 
-		val seed = EnvelopePolygon(Nil)(new EnvelopePolygon.DefaultConfig{
-			override val distanceCostFactor = 5
-			override val maxAngleForEdgeRemoval = 0.9 * Math.PI
-		})
+		val seed = EnvelopePolygon.defaultEmpty
 
 		val hull = latLongs.sliding(BatchSize, BatchSize).foldLeft(seed){
-			case (poly, vertices) =>
+			(poly, vertices) =>
 				vertices.foreach(poly.addVertice)
 
 				var reducible = true
