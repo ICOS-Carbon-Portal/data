@@ -6,11 +6,18 @@ export default class DobjTable extends Component {
   }
 
   render() {
-    const {downloadStats} = this.props;
+    const {downloadStats, paging, requestPage} = this.props;
+    const start = (paging.offset - 1) * paging.pagesize;
+    const end = start + paging.to;
 
     return (
       <div className="panel panel-default">
   			<div className="panel-heading">
+          <h3 style={{display: 'inline'}} className="panel-title">Data objects {start + 1} to {end} of {paging.objCount}</h3>
+    			<div style={{display: 'inline', float: 'right'}}>
+    				<StepButton direction="backward" enabled={start > 0} onStep={() => requestPage(paging.offset-1)} />
+    				<StepButton direction="forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.offset+1)} />
+    			</div>
   			</div>
   			<div className="panel-body">
           <table className="table">
@@ -42,3 +49,14 @@ const Row = ({dobj}) => {
     </tr>
   )
 }
+
+const StepButton = props => {
+  const disabled = props.enabled ? false : true;
+  return <button className="btn btn-default"
+    style={Object.assign({display: 'inline', cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6, borderWidth: 0, padding: 0, paddingLeft: 4, backgroundColor: 'transparent'})}
+		onClick={props.onStep}
+    disabled={disabled}
+		>
+		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
+	</button>;
+};

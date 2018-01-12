@@ -1,8 +1,9 @@
 export default class StatsTable {
 
-  constructor(stats, filters = {}) {
+  constructor(stats, filters = {}, page = 1) {
     this._stats = stats;
     this._filters = filters;
+    this._page = page;
   }
 
   get stats() {
