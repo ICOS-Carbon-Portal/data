@@ -19,18 +19,21 @@ import org.gillius.jfxutils.chart.ChartPanManager
 
 object EnvelopePolygonRun{
 	val Budget = 20
-	val InputSkip = 10000
-	val InputLimit = 6000
+	val HardBudget = 100
+	val InputSkip = 0
+	val InputLimit = Int.MaxValue
 	val BatchSize = 40
-	//val InputLimit = 60000 //interesting value, gives buggy behaviour
-	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
+//	val headerSize = 34
+//	val filePath = System.getProperty("user.home") + "/Downloads/58GS20040825_CO2_underway_SOCATv3.tab"
+	val headerSize = 38
+	val filePath = "/home/maintenance/workspace/cpupload/socat/YLFSxmY-7ltF59wu_WloU78u"
 
 	def main(args: Array[String]): Unit = {
 		Application.launch(classOf[EnvelopePolygonRun], args: _*)
 	}
 
 	def latLongs: IndexedSeq[Point] = Source.fromFile(new File(filePath)).getLines()
-		.drop(34 + InputSkip)
+		.drop(headerSize + InputSkip)
 		.take(InputLimit)
 		.map(s => s.split('\t'))
 		.map(arr => Point(arr(2).toDouble, arr(1).toDouble))
@@ -51,7 +54,8 @@ object EnvelopePolygonRun{
 				var reducible = true
 
 				while(poly.size > Budget && reducible){
-					val reduction = poly.reduceVerticesByOne(stats.recommendedCostLimit)
+					val costLimit = if(poly.size > HardBudget) Double.MaxValue else stats.recommendedCostLimit
+					val reduction = poly.reduceVerticesByOne(costLimit)
 					reducible = reduction.isRight
 					//stats.addCost(reduction.fold(identity, identity))
 					reduction.foreach(stats.addCost)

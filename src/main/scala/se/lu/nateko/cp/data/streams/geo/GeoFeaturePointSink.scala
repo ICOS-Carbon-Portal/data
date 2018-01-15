@@ -41,6 +41,7 @@ object GeoFeaturePointSink {
 
 	def polygonSink(
 			budget: Int = DefaultBudget,
+			hardBudget: Int = 100,
 			batchSize: Int = 40,
 			priorCostFraction: Double = 0.05,
 			conf: EnvelopePolygonConfig = EnvelopePolygon.defaultConfig
@@ -56,7 +57,8 @@ object GeoFeaturePointSink {
 				var reducible = true
 
 				while(poly.size > budget && reducible){
-					val reduction = poly.reduceVerticesByOne(stats.recommendedCostLimit)
+					val costLimit = if(poly.size > hardBudget) Double.MaxValue else stats.recommendedCostLimit
+					val reduction = poly.reduceVerticesByOne(costLimit)
 					reducible = reduction.isRight
 					reduction.foreach(stats.addCost)
 				}
