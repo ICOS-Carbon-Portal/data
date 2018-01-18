@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {copyprops} from 'icos-cp-utils';
-import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
+import SearchFilterRouter from '../components/SearchFilterRouter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
 import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
@@ -26,7 +26,9 @@ class Search extends Component {
 		return (
 			<div className="row">
 				<div className="col-md-3">
-					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset'])} />
+					<SearchFilterRouter
+						{...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab', 'selectedTab', 'filterTemporal', 'setFilterTemporal'])}
+					/>
 				</div>
 				<div className="col-md-9">{
 					props.preview.visible

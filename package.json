@@ -59,6 +59,7 @@
     "icos-cp-spatial": "^0.2.0",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.0",
+    "rc-datepicker": "^5.0.10",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-pikaday": "~0.5.1",

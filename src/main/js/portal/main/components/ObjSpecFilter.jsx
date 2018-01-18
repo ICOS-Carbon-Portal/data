@@ -107,18 +107,28 @@ export default class ObjSpecFilter extends Component {
 			return acc + curr.length;
 		}, 0);
 
-		return <div className="panel panel-default">
-			<div className="panel-heading">
-				<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+		return (
+			<div>
 				{showResetBtn
 					? <ResetBtn resetFiltersAction={specFiltersReset} />
 					: null
 				}
-			</div>
-			<div className="panel-body">
 				{colNames.map(name => this.getCtrl(name))}
 			</div>
-		</div>;
+		);
+
+		// return <div className="panel panel-default">
+		// 	<div className="panel-heading">
+		// 		<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+		// 		{showResetBtn
+		// 			? <ResetBtn resetFiltersAction={specFiltersReset} />
+		// 			: null
+		// 		}
+		// 	</div>
+		// 	<div className="panel-body">
+		// 		{colNames.map(name => this.getCtrl(name))}
+		// 	</div>
+		// </div>;
 	}
 }
 

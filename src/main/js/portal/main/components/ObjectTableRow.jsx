@@ -40,8 +40,8 @@ export default class ObjectTableRow extends Component {
 			</td>
 			<td>{formatBytes(size, 2)}</td>
 			<td>{formatDate(objInfo.submTime)}</td>
-			<td>{formatDate(objInfo.acqStart)}</td>
-			<td>{formatDate(objInfo.acqEnd)}</td>
+			<td>{formatDate(objInfo.timeStart)}</td>
+			<td>{formatDate(objInfo.timeEnd)}</td>
 		</tr>;
 	}
 }

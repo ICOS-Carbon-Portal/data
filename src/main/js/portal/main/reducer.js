@@ -1,16 +1,20 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB} from './actions';
+import {TEMPORAL_FILTER} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
 import Cart from './models/Cart';
 import Preview from './models/Preview';
+import FilterTemporal from './models/FilterTemporal';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
 
 const initState = {
 	routeAndParams: new RouteAndParams(),
+	selectedTab: 'filter',
+	filterTemporal: new FilterTemporal(),
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
@@ -130,6 +134,9 @@ export default function(state = initState, action){
 				routeAndParams
 			});
 
+		case SWITCH_TAB:
+			return update({selectedTab: action.selectedTab});
+
 		case PREVIEW:
 			return update({
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
@@ -163,6 +170,9 @@ export default function(state = initState, action){
 					ts: Date.now()
 				}
 			});
+
+		case TEMPORAL_FILTER:
+			return update({filterTemporal: action.filterTemporal});
 
 		default:
 			return state;

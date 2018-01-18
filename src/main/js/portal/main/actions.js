@@ -11,11 +11,13 @@ export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
 export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
+export const SWITCH_TAB = 'SWITCH_TAB';
 export const RESTORE_FILTERS = 'RESTORE_FILTERS';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
+export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
 import {getUserInfo, logOutUser} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, updatePortalUsage} from './backend';
@@ -89,7 +91,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging, user} = getState();
+	const {specTable, routeAndParams, sorting, paging, user, filterTemporal} = getState();
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
@@ -105,7 +107,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
 
-	fetchFilteredDataObjects({specs, stations, sorting, paging}).then(
+	fetchFilteredDataObjects({specs, stations, sorting, paging, filterTemporal}).then(
 		({rows}) => dispatch({
 			type: OBJECTS_FETCHED,
 			objectsTable: rows
@@ -141,6 +143,13 @@ export const updateRoute = route => dispatch => {
 	dispatch({
 		type: ROUTE_UPDATED,
 		route: newRoute
+	});
+};
+
+export const switchTab = selectedTab => dispatch => {
+	dispatch({
+		type: SWITCH_TAB,
+		selectedTab
 	});
 };
 
@@ -275,4 +284,20 @@ export const logOut = dispatch => {
 			user
 		})
 	);
+};
+
+export const setFilterTemporal = filterTemporal => dispatch => {
+	if (filterTemporal.dataTime.error) {
+		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
+	}
+	if (filterTemporal.submission.error) {
+		failWithError(dispatch)(new Error(filterTemporal.submission.error));
+	}
+
+	dispatch({
+		type: TEMPORAL_FILTER,
+		filterTemporal
+	});
+
+	// dispatch(getFilteredDataObjects);
 };
