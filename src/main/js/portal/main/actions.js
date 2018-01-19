@@ -299,5 +299,7 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 		filterTemporal
 	});
 
+	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
+
 	// dispatch(getFilteredDataObjects);
 };

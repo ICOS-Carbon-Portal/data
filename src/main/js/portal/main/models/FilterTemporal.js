@@ -40,6 +40,25 @@ export default class FilterTemporal {
 		return this._submission;
 	}
 
+	get filters(){
+		return [
+			{
+				category: 'dataTime',
+				from: this._dataTime.error ? undefined : this._dataTime.from,
+				fromDateStr: this._dataTime.error ? undefined : this._dataTime.fromDateStr,
+				to: this._dataTime.error ? undefined : this._dataTime.to,
+				toDateStr: this._dataTime.error ? undefined : this._dataTime.toDateStr
+			},
+			{
+				category: 'submission',
+				from: this._submission.error ? undefined : this._submission.from,
+				fromDateStr: this._submission.error ? undefined : this._submission.fromDateStr,
+				to: this._submission.error ? undefined : this._submission.to,
+				toDateStr: this._submission.error ? undefined : this._submission.toDateStr
+			}
+		]
+	}
+
 	validateDataTime(){
 		this._dataTime.error = this.isValid(this._dataTime)
 			? undefined
@@ -84,7 +103,7 @@ class FromToDates {
 	}
 
 	get fromDateStr(){
-		return this._from.toISOString().substr(0, 10);
+		return this._from ? this._from.toISOString().substr(0, 10) : undefined;
 	}
 
 	get to(){
@@ -92,6 +111,6 @@ class FromToDates {
 	}
 
 	get toDateStr(){
-		return this._to.toISOString().substr(0, 10);
+		return this._to ? this._to.toISOString().substr(0, 10) : undefined;
 	}
 }
