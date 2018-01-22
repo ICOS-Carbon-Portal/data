@@ -4,7 +4,7 @@ import {copyprops} from 'icos-cp-utils';
 import SearchFilterRouter from '../components/SearchFilterRouter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
+import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
 
 class Search extends Component {
@@ -22,13 +22,14 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
+		const selectedTab = props.routeAndParams.filters.tab;
+		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
+			'filterTemporal', 'setFilterTemporal', 'queryMeta']);
 
 		return (
 			<div className="row">
 				<div className="col-md-3">
-					<SearchFilterRouter
-						{...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab', 'selectedTab', 'filterTemporal', 'setFilterTemporal'])}
-					/>
+					<SearchFilterRouter {...searchProps} selectedTab={selectedTab} />
 				</div>
 				<div className="col-md-9">{
 					props.preview.visible
@@ -51,7 +52,7 @@ class Search extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-		//queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
+		queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),

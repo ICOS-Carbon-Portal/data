@@ -301,5 +301,5 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
-	// dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjects);
 };

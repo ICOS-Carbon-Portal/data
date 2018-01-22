@@ -2,24 +2,23 @@ import React, { Component } from 'react';
 import ObjSpecFilter from './ObjSpecFilter.jsx';
 import Filters from './filters/Filters.jsx';
 
+
+const defaultTab = 'search';
+
 export default class SearchFilterRouter extends Component {
 	constructor(props){
 		super(props);
 
+		const selectedTab = props.selectedTab || defaultTab;
 		this.tabState = {
-			selectedTab: props.selectedTab,
-			searchTabCls: 'active',
-			filterTabCls: '',
-			setActiveTab: selectedTab => {
-				this.tabState.selectedTab = selectedTab;
+			selectedTab,
+			searchTabCls: selectedTab === 'search' ? 'active' : '',
+			filterTabCls: selectedTab === 'filter' ? 'active' : '',
 
-				if (selectedTab === 'search' || selectedTab === 'filter'){
-					this.tabState.searchTabCls = selectedTab === 'search' ? 'active' : '';
-					this.tabState.filterTabCls = selectedTab === 'filter' ? 'active' : '';
-				} else {
-					this.tabState.searchTabCls = 'active';
-					this.tabState.filterTabCls = '';
-				}
+			setActiveTab: selectedTab => {
+				this.tabState.selectedTab = selectedTab || defaultTab;
+				this.tabState.searchTabCls = this.tabState.selectedTab === 'search' ? 'active' : '';
+				this.tabState.filterTabCls = this.tabState.selectedTab === 'filter' ? 'active' : '';
 			}
 		};
 	}
@@ -62,7 +61,11 @@ export default class SearchFilterRouter extends Component {
 					<div className="tab-pane active">{
 						tabState.selectedTab === 'search'
 							? <ObjSpecFilter {...props} />
-							: <Filters filterTemporal={props.filterTemporal} setFilterTemporal={props.setFilterTemporal} />
+							: <Filters
+								filterTemporal={props.filterTemporal}
+								setFilterTemporal={props.setFilterTemporal}
+								queryMeta={props.queryMeta}
+							/>
 					}</div>
 				</div>
 			</div>

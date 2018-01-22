@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import PickDates from './PickDates.jsx';
 import Slider from '../Slider.jsx';
+import PickDates from './PickDates.jsx';
+import FilterByPid from './FilterByPid.jsx';
 
 
 export default class Filters extends Component {
@@ -18,7 +19,7 @@ export default class Filters extends Component {
 						<h3 className="panel-title">Temporal filters</h3>
 					</div>
 
-					<Slider>
+					<Slider startCollapsed={true}>
 						<div className="panel-body" style={{paddingTop:0}}>
 							<PickDates
 								filterTemporal={props.filterTemporal}
@@ -33,6 +34,18 @@ export default class Filters extends Component {
 								category="submission"
 								header="Submission of data"
 							/>
+						</div>
+					</Slider>
+				</div>
+
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h3 className="panel-title">Free text filters</h3>
+					</div>
+
+					<Slider>
+						<div className="panel-body" style={{paddingTop:0}}>
+							<FilterByPid queryMeta={props.queryMeta} />
 						</div>
 					</Slider>
 				</div>

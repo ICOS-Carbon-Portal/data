@@ -10,10 +10,10 @@ import Preview from './models/Preview';
 import FilterTemporal from './models/FilterTemporal';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
+import {placeholders} from './config';
 
 const initState = {
 	routeAndParams: new RouteAndParams(),
-	selectedTab: 'filter',
 	filterTemporal: new FilterTemporal(),
 	user: {},
 	lookup: undefined,
@@ -29,6 +29,8 @@ const initState = {
 		ts: 0
 	}
 };
+
+const specTableKeys = Object.keys(placeholders);
 
 export default function(state = initState, action){
 
@@ -65,12 +67,10 @@ export default function(state = initState, action){
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
-			let routeAndParams = state.routeAndParams.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
-			window.location.hash = routeAndParams.urlPart;
 
 			return update({
-				routeAndParams,
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, action.varName, action.values),
 				specTable,
 				objectsTable: [],
 				paging: freshPaging(objCount),
@@ -80,20 +80,20 @@ export default function(state = initState, action){
 		case SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
-			routeAndParams = state.routeAndParams.withResetFilters();
-			window.location.hash = routeAndParams.urlPart;
 
 			return update({
-				routeAndParams,
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams),
 				specTable,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
 		case RESTORE_FILTERS:
-			routeAndParams = restoreRouteAndParams(action.hash);
+			let routeAndParams = restoreRouteAndParams(action.hash);
 			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
-				return specTable.withFilter(filterKey, routeAndParams.filters[filterKey]);
+				return specTableKeys.includes(filterKey)
+					? specTable.withFilter(filterKey, routeAndParams.filters[filterKey])
+					: specTable;
 			}, state.specTable);
 			objCount = getObjCount(specTable);
 
@@ -135,7 +135,9 @@ export default function(state = initState, action){
 			});
 
 		case SWITCH_TAB:
-			return update({selectedTab: action.selectedTab});
+			return update({
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'tab', action.selectedTab)
+			});
 
 		case PREVIEW:
 			return update({
@@ -182,6 +184,14 @@ export default function(state = initState, action){
 		const updates = Array.from(arguments);
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
+}
+
+function updateAndApplyRouteAndParams(currentRouteParams, varName, values){
+	const routeAndParams = varName && values
+		? currentRouteParams.withFilter(varName, values)
+		: currentRouteParams.withResetFilters();
+	window.location.hash = routeAndParams.urlPart;
+	return routeAndParams;
 }
 
 function updateSorting(old, varName){

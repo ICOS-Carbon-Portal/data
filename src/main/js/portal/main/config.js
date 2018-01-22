@@ -10,3 +10,16 @@ export default {
 	restheartBaseUrl: '//cpauth.icos-cp.eu/db/',
 	restheartPortalUseBaseUrl: '//restheart.icos-cp.eu/db/',
 };
+
+export const placeholders = {
+	specLabel: 'Specification',
+	level: 'Data level',
+	format: 'Format',
+	colTitle: 'Column name',
+	valType: 'Value type',
+	quantityKind: 'Quantity kind',
+	quantityUnit: 'Unit',
+	submitter: 'Data submitter',
+	station: 'Station of origin',
+	isIcos: 'ICOS / non-ICOS data'
+};
