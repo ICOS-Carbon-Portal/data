@@ -99,8 +99,7 @@ class FacadeService(config: EtcFacadeConfig, upload: UploadService)(implicit mat
 				log.error(err, "ETC upload registration with meta service failed")
 			case Success(etcMeta) =>
 				Files.move(getFilePath(file), getObjectSource(file.station, etcMeta.hashSum), REPLACE_EXISTING)
-				//TODO Activate data object upload (uncomment the next line)
-				//uploadDataObject(file.station, etcMeta.hashSum)
+				uploadDataObject(file.station, etcMeta.hashSum)
 		}
 
 	private def uploadDataObject(station: StationId, hash: Sha256Sum): Unit = upload

@@ -101,7 +101,8 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 			val omissionReason = dest.omissionReason.getOrElse("")
 			val pid = dest.dobj.pid.getOrElse("")
 			val landingPage = dest.dobj.pid.fold(
-				envriConf.landingPagePrefix + dest.dobj.hash.id
+				//TODO Find a single place (across data and meta) for the 'formula' in the next line
+				envriConf.metaPrefix + "objects/" + dest.dobj.hash.id
 			)(
 				pid => s"${coreConf.handleService}$pid"
 			)
@@ -117,7 +118,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 				Some("Data object is not distributed by Carbon Portal as open data")
 
 			case Some(url) =>
-				if(!url.toString.startsWith(envriConf.dataObjPrefix.toString))
+				if(!url.toString.startsWith(envriConf.dataPrefix.toString))
 					Some("Data object is distributed by third parties")
 
 				else if(!upload.getFile(dobj).exists)
