@@ -13,33 +13,34 @@ export default class PickDates extends Component {
 
 		this.fromInput = undefined;
 		this.toInput = undefined;
-		this.onKeyUpHandler = this.onKeyUp.bind(this);
+		this.onFromKeyUpHandler = this.onFromKeyUp.bind(this);
+		this.onToKeyUpHandler = this.onToKeyUp.bind(this);
 	}
 
 	componentDidMount(){
 		// Add handler for emptying date picker input
-		const datePickerInputFrom = this.datePickerInputFrom;
-		const datePickerInputTo = this.datePickerInputTo;
+		this.fromInput = this.datePickerInputFrom.getDatePickerInput().firstChild.firstChild;
+		this.toInput = this.datePickerInputTo.getDatePickerInput().firstChild.firstChild;
 
-		this.fromInput = datePickerInputFrom.getDatePickerInput().firstChild.firstChild;
-		this.toInput = datePickerInputTo.getDatePickerInput().firstChild.firstChild;
-
-		this.fromInput.setAttribute('sender', 'from');
-		this.toInput.setAttribute('sender', 'to');
-
-		this.fromInput.addEventListener('keyup', this.onKeyUpHandler);
-		this.toInput.addEventListener('keyup', this.onKeyUpHandler);
+		this.fromInput.addEventListener('keyup', this.onFromKeyUpHandler);
+		this.toInput.addEventListener('keyup', this.onToKeyUpHandler);
 	}
 
-	onKeyUp(evt){
+	onFromKeyUp(evt){
 		if (evt.target.value === '') {
-			this.onDateSet(evt.target.getAttribute('sender'));
+			this.onDateSet('from');
+		}
+	}
+
+	onToKeyUp(evt){
+		if (evt.target.value === '') {
+			this.onDateSet('to');
 		}
 	}
 
 	componentWillUnmount(){
-		this.fromInput.removeEventListener("keyup", this.onKeyUpHandler);
-		this.toInput.removeEventListener("keyup", this.onKeyUpHandler);
+		this.fromInput.removeEventListener("keyup", this.onFromKeyUpHandler);
+		this.toInput.removeEventListener("keyup", this.onToKeyUpHandler);
 	}
 
 	onDateSet(sender, dateObj, dateString){

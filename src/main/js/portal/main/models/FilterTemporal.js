@@ -45,16 +45,16 @@ export default class FilterTemporal {
 			{
 				category: 'dataTime',
 				from: this._dataTime.error ? undefined : this._dataTime.from,
-				fromDateStr: this._dataTime.error ? undefined : this._dataTime.fromDateStr,
+				fromDateTimeStr: this._dataTime.error ? undefined : this._dataTime.fromDateTimeStr,
 				to: this._dataTime.error ? undefined : this._dataTime.to,
-				toDateStr: this._dataTime.error ? undefined : this._dataTime.toDateStr
+				toDateTimeStr: this._dataTime.error ? undefined : this._dataTime.toDateTimeStr
 			},
 			{
 				category: 'submission',
 				from: this._submission.error ? undefined : this._submission.from,
-				fromDateStr: this._submission.error ? undefined : this._submission.fromDateStr,
+				fromDateTimeStr: this._submission.error ? undefined : this._submission.fromDateTimeStr,
 				to: this._submission.error ? undefined : this._submission.to,
-				toDateStr: this._submission.error ? undefined : this._submission.toDateStr
+				toDateTimeStr: this._submission.error ? undefined : this._submission.toDateTimeStr
 			}
 		]
 	}
@@ -106,11 +106,19 @@ class FromToDates {
 		return this._from ? this._from.toISOString().substr(0, 10) : undefined;
 	}
 
+	get fromDateTimeStr(){
+		return this._from ? this._from.toISOString() : undefined;
+	}
+
 	get to(){
 		return this._to;
 	}
 
 	get toDateStr(){
 		return this._to ? this._to.toISOString().substr(0, 10) : undefined;
+	}
+
+	get toDateTimeStr(){
+		return this._to ? this._to.toISOString() : undefined;
 	}
 }

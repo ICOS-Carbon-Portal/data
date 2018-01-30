@@ -136,13 +136,13 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 		: dobjSpec;
 
 	const tempFilters = filterTemporal.filters.reduce((acc, f) => {
-		if (f.fromDateStr) {
+		if (f.fromDateTimeStr) {
 			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
-			acc.push(`${cond} >= '${f.fromDateStr}'^^xsd:dateTime`);
+			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
 		}
-		if (f.toDateStr) {
+		if (f.toDateTimeStr) {
 			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
-			acc.push(`${cond} <= '${f.toDateStr}'^^xsd:dateTime`);
+			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
 		}
 
 		return acc;
