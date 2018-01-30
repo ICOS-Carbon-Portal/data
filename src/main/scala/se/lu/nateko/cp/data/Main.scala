@@ -36,7 +36,7 @@ object Main extends App {
 	}
 
 	val http = Http()
-	val metaClient = new MetaClient(config.meta)
+	val metaClient = new MetaClient(config.meta, ConfigReader.metaCore.envriConfigs)
 	val restHeart = new RestHeartClient(config.restheart, http)
 
 	val uploadService = new UploadService(config.upload, metaClient)
@@ -45,7 +45,7 @@ object Main extends App {
 	val tabularRouting = new TabularFetchRouting(binTableFetcher)
 
 	val authRouting = new AuthRouting(config.auth)
-	val uploadRouting = new UploadRouting(authRouting, uploadService, restHeart)
+	val uploadRouting = new UploadRouting(authRouting, uploadService, restHeart, ConfigReader.metaCore)
 
 	val licenceRouting = new LicenceRouting(authRouting)
 	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)

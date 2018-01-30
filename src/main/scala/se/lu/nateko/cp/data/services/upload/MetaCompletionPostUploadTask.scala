@@ -4,8 +4,9 @@ import scala.concurrent.Future
 import se.lu.nateko.cp.data.api.{CpDataException, MetaClient}
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, UploadCompletionInfo}
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
-class MetaCompletionPostUploadTask(hash: Sha256Sum, client: MetaClient) extends PostUploadTask{
+class MetaCompletionPostUploadTask(hash: Sha256Sum, client: MetaClient)(implicit envri: Envri) extends PostUploadTask{
 
 	import client.dispatcher
 

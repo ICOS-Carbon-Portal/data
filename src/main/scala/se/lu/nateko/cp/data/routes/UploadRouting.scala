@@ -36,15 +36,18 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import LicenceRouting._
+import se.lu.nateko.cp.meta.core.MetaCoreConfig
 
 
-class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, restHeart: RestHeartClient)(implicit mat: Materializer) {
+class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
+	restHeart: RestHeartClient, coreConf: MetaCoreConfig
+)(implicit mat: Materializer) {
 	import UploadRouting._
 	import authRouting._
 
 	private implicit val ex = mat.executionContext
 	private val log = uploadService.log
-	private val downloadService = new DownloadService(uploadService, log)
+	private val downloadService = new DownloadService(coreConf, uploadService, log)
 
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		userRequired{ uid =>

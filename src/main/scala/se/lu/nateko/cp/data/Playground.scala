@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.FileIO
@@ -13,6 +14,8 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpRequest
 
 object Playground {
 
@@ -79,5 +82,16 @@ object Playground {
 		else
 			config.etcFacade.copy(secret = secret)
 		StationId.unapply(stationId).map(AuthenticatorProvider.getPassword(_, etcConfig))
+	}
+
+	def manualHostTest(host: String): Unit = {
+		import akka.http.scaladsl.model.headers
+		Http().singleRequest(HttpRequest(
+			uri = "http://127.0.0.1:9094/objects/r9PLBPgCVDkIGQ-pVHpd1PH-",
+			headers = headers.Host(host) :: Nil
+//			headers = headers.Host("meta.fieldsites.se") :: Nil
+		)).flatMap(_.entity.toStrict(2.seconds)).foreach{entity =>
+			println(entity.data.utf8String)
+		}
 	}
 }

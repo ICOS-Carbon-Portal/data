@@ -22,16 +22,16 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import akka.stream.scaladsl.StreamConverters
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.MetaCoreConfig
 
-class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
+class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
 
 	import DownloadService._
 
-	private val coreConf = ConfigReader.metaCore
-	//TODO Generalize for multiple ENVRIes
-	private val envriConf = coreConf.envriConfigs(Envri.ICOS)
+	private def envriConf(implicit envri: Envri) = coreConf.envriConfigs(envri)
 
-	def getZipSource(hashes: Seq[Sha256Sum], downloadLogger: DataObject => Unit) = {
+	def getZipSource(hashes: Seq[Sha256Sum], downloadLogger: DataObject => Unit)(implicit envri: Envri) = {
 
 		val destiniesSource: Source[FileDestiny, NotUsed] = Source(hashes.toList)
 			.flatMapConcat{
@@ -71,7 +71,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 		() => getClass.getClassLoader.getResourceAsStream("licence.pdf")
 	)
 
-	private val destinyToAuxSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
+	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
 		.map{dests =>
 			("!TOC.csv", destiniesToTocFileSource(dests))
@@ -94,7 +94,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 		})
 	}
 
-	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny]): Source[ByteString, NotUsed] = {
+	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny])(implicit envri: Envri): Source[ByteString, NotUsed] = {
 		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
@@ -111,7 +111,7 @@ class DownloadService(upload: UploadService, log: LoggingAdapter)(implicit ctxt:
 		Source(lines.map(ByteString.apply))
 	}
 
-	private class FileDestiny(val dobj: DataObject, fileNamesUsedEarlier: Set[String]) extends Destiny{
+	private class FileDestiny(val dobj: DataObject, fileNamesUsedEarlier: Set[String])(implicit envri: Envri) extends Destiny{
 
 		val omissionReason: Option[String] = dobj.accessUrl match {
 			case None =>

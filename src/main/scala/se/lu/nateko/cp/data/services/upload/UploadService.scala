@@ -13,6 +13,8 @@ import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.data.api.CpMetaVocab
 
 class UploadService(config: UploadConfig, val meta: MetaClient) {
@@ -30,12 +32,12 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 
 	private val irods = IrodsClient(config.irods)
 
-	def lookupPackage(hash: Sha256Sum): Future[DataObject] = meta.lookupPackage(hash)
+	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods.getFileSource(filePathSuffix(dataObj))
 
-	def getSink(hash: Sha256Sum, user: UserId): Future[DataObjectSink] = {
+	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dataObj, user);
@@ -43,12 +45,14 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 		) yield sink
 	}
 
-	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] =
+	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] = {
+		implicit val envri = Envri.ICOS
 		meta.lookupPackage(hash).flatMap(getSpecificSink)
+	}
 
 	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
-	private def getSpecificSink(dataObj: DataObject): Future[DataObjectSink] = {
+	private def getSpecificSink(dataObj: DataObject)(implicit envri: Envri): Future[DataObjectSink] = {
 		val postTasks = getPostUploadTasks(dataObj)
 
 		getUploadTasks(dataObj).map{tasks =>
@@ -111,7 +115,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 		}
 	}
 
-	private def getPostUploadTasks(dataObj: DataObject): Seq[PostUploadTask] =
+	private def getPostUploadTasks(dataObj: DataObject)(implicit envri: Envri): Seq[PostUploadTask] =
 		Seq(new MetaCompletionPostUploadTask(dataObj.hash, meta))
 
 }
