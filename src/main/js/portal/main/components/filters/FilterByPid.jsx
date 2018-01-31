@@ -1,18 +1,24 @@
 import React, { Component } from 'react';
-import Multiselect from 'react-widgets/lib/Multiselect';
+import {Combobox} from 'react-widgets';
 
+
+const minLength = 3;
 
 export default class FilterByPid extends Component{
 	constructor(props){
 		super(props);
 	}
 
-	handleChange(){
-
+	handleChange(selected){
+		// if (this.props.updateFilter) this.props.updateFilter('dobj', selected);
+		console.log({selected});
 	}
 
-	handleSearch(){
-
+	handleSearch(searchStr){
+		if (searchStr.length >= minLength && this.props.queryMeta) {
+			console.log({searchStr});
+			this.props.queryMeta('dobj', searchStr, minLength);
+		}
 	}
 
 	listItem(name, props){
@@ -50,25 +56,23 @@ export default class FilterByPid extends Component{
 
 	render(){
 		const props = this.props;
-		const data = [];
-		const name = '';
-		// console.log({props});
+		console.log({props});
 
 		return (
 			<div className="row" style={{marginTop: 10}}>
 				<div className="col-md-12">
 					<label style={{marginBottom: 0}}>PID</label>
-					<Multiselect
+					<Combobox
 						placeholder="Search by PID"
-						valueField="text"
-						textField="text"
-						data={data}
+						// valueField="text"
+						// textField="text"
+						data={props.filterPids}
 						// value={this.props.specTable.getFilter(name)}
 						filter="contains"
-						onChange={this.handleChange.bind(this, name)}
-						onSearch={this.handleSearch.bind(this, name)}
-						itemComponent={this.listItem.bind(this, name)}
-						tagComponent={this.tagItem}
+						onChange={this.handleChange.bind(this)}
+						onChange={this.handleSearch.bind(this)}
+						// itemComponent={this.listItem.bind(this)}
+						// tagComponent={this.tagItem}
 					/>
 				</div>
 			</div>

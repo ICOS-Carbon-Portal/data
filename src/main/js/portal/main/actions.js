@@ -51,33 +51,26 @@ export const getAllSpecTables = hash => dispatch => {
 };
 
 
-export const queryMeta = (id, search, minLength) => dispatch => {
-	if (search.length >= minLength) {
+export const queryMeta = (id, search) => dispatch => {
+	switch (id) {
+		case "dobj":
+			searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
+			break;
 
-		switch (id) {
-			case "dobj":
-				searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
-				break;
+		case "station":
+			searchStations(search).then(data => dispatchMeta(id, data, dispatch));
+			break;
 
-			case "station":
-				searchStations(search).then(data => dispatchMeta(id, data, dispatch));
-				break;
-
-			default:
-				dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
-		}
-	} else {
-		dispatchMeta(id, undefined, dispatch);
+		default:
+			dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
 	}
 };
 
 const dispatchMeta = (id, data, dispatch) => {
 	dispatch({
 		type: META_QUERIED,
-		metadata: {
-			id,
-			data
-		}
+		id,
+		data
 	});
 };
 

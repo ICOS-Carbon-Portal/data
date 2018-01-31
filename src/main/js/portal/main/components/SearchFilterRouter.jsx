@@ -65,6 +65,8 @@ export default class SearchFilterRouter extends Component {
 								filterTemporal={props.filterTemporal}
 								setFilterTemporal={props.setFilterTemporal}
 								queryMeta={props.queryMeta}
+								filterPids={props.filterPids}
+								updateFilter={props.updateFilter}
 							/>
 					}</div>
 				</div>

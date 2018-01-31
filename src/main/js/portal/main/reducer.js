@@ -15,6 +15,7 @@ import {placeholders} from './config';
 const initState = {
 	routeAndParams: new RouteAndParams(),
 	filterTemporal: new FilterTemporal(),
+	filterPids: [],
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
@@ -61,9 +62,11 @@ export default function(state = initState, action){
 			});
 
 		case META_QUERIED:
-			return update({
-				metadata: action.metadata
-			});
+			const metaResult = action.id === 'dobj'
+				? {filterPids: action.data}
+				: {};
+
+			return update(metaResult);
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);

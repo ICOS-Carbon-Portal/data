@@ -24,7 +24,7 @@ class Search extends Component {
 		const props = this.props;
 		const selectedTab = props.routeAndParams.filters.tab;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
-			'filterTemporal', 'setFilterTemporal', 'queryMeta']);
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterPids']);
 
 		return (
 			<div className="row">
@@ -52,7 +52,7 @@ class Search extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-		queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
+		queryMeta: (id, search) => dispatch(queryMeta(id, search)),
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
