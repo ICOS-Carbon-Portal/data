@@ -1,4 +1,4 @@
-val defaultScala = "2.12.3"
+val defaultScala = "2.12.4"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -18,8 +18,8 @@ lazy val commonSettings = Seq(
 	)
 )
 
-val akkaVersion = "2.4.19"
-val akkaHttpVersion = "10.0.9"
+val akkaVersion = "2.4.20"
+val akkaHttpVersion = "10.0.11"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
@@ -71,7 +71,7 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5.1-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.6-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.7-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.2-SNAPSHOT",
 
 		// *** manually published on CP Nexus 3rd party repo ***
@@ -83,8 +83,13 @@ lazy val data = (project in file("."))
 
 		// *** end of manually published on CP Nexus 3rd party repo ***
 
+			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
 		),
+
+		fork in (Test, run) := true,
+
+		logBuffered in Test := false,
 
 		scalacOptions += "-Ywarn-unused-import:false",
 

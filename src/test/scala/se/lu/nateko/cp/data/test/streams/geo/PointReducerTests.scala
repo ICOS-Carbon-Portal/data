@@ -25,7 +25,7 @@ class PointReducerTests extends FunSuite {
 
 		val latLongs = Source.fromFile(new File(csvPath)).getLines().drop(1)
 			.map(s => s.split(','))
-			.map(arr => (arr(0).toFloat, arr(1).toFloat))
+			.map(arr => (arr(0).toDouble, arr(1).toDouble))
 			.toIndexedSeq
 
 		val t0 = System.currentTimeMillis()

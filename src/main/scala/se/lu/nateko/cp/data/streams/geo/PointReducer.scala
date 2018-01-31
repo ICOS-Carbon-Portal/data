@@ -10,7 +10,7 @@ class PointReducer(nmax: Int, costFun: CostFunction) {
 
 	assert(nmax >= 4, "Geo point reducer must keep at least 4 points")
 
-	def nextState(state: PointReducerState, lat: Float, lon: Float): PointReducerState = {
+	def nextState(state: PointReducerState, lat: Double, lon: Double): PointReducerState = {
 		import state._
 
 		def getCost(shortListPos: Int): Double = {
@@ -104,13 +104,13 @@ object PointReducer {
 		}
 	}
 
-	private def p2pDistanceSq(x1: Float, y1: Float, x2: Float, y2: Float): Double = {
+	private def p2pDistanceSq(x1: Double, y1: Double, x2: Double, y2: Double): Double = {
 		val diffx = x1 - x2
 		val diffy = y1 - y2
 		diffx.toDouble * diffx + diffy * diffy
 	}
 
-	private def p2lDistanceSqNom(x1: Float, y1: Float, x2: Float, y2: Float, x0: Float, y0: Float): Double = {
+	private def p2lDistanceSqNom(x1: Double, y1: Double, x2: Double, y2: Double, x0: Double, y0: Double): Double = {
 		val distNom = (y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1
 		distNom.toDouble * distNom
 	}
@@ -123,7 +123,7 @@ object PointReducer {
 		heritageCost + signedTriangleArea(xs(0), ys(0), xs(1), ys(1), xs(2), ys(2))
 	})
 
-	private def signedTriangleArea(x1: Float, y1: Float, x2: Float, y2: Float, x3: Float, y3: Float): Double = {
+	private def signedTriangleArea(x1: Double, y1: Double, x2: Double, y2: Double, x3: Double, y3: Double): Double = {
 		y1.toDouble * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2)
 	}
 
@@ -133,19 +133,15 @@ object PointReducer {
 			.sum / (state.lons.length - 1)
 	).toFloat
 
-	def getCoverage(state: PointReducerState): GeoFeature = {
+	def getCoverage(maxErrorFactor: Double)(state: PointReducerState): Option[GeoTrack] = {
 		val err = sigmaError(state)
 		import state.bbox
-		val bboxSizeEst = Math.sqrt(bbox.width.toDouble * bbox.height)
+		val bboxSizeEst = Math.sqrt(bbox.width * bbox.height)
 
-		if(err < 0.05 * bboxSizeEst) GeoTrack(
+		if(err <= maxErrorFactor * bboxSizeEst) Some(GeoTrack(
 			state.latLongs.map{
-				case (lat, lon) => Position(lat.toDouble, lon.toDouble)
+				case (lat, lon) => Position(lat, lon)
 			}
-		) else LatLonBox(
-			min = Position(bbox.bottom.lat.toDouble, bbox.left.lon.toDouble),
-			max = Position(bbox.top.lat.toDouble, bbox.right.lon.toDouble),
-			label = None
-		)
+		)) else None
 	}
 }
