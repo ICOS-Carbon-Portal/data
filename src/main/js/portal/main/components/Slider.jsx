@@ -8,7 +8,7 @@ const defaultIconStyle = {
 	right:3,
 	cursor:'pointer'
 };
-const defaultDeltaStep = 6;
+const defaultDeltaStep = 8;
 
 export default class Slider extends Component{
 	constructor(props){
