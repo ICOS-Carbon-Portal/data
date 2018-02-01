@@ -8,8 +8,8 @@ import java.time.LocalTime
 
 class EtcFilenameTests extends FunSuite{
 
-	private val ec = "FA-Lso_EC_201202040437_L3_F12.csv"
-	private val bm = "BE-Lon_BM_20170815_L99_F1.dat"
+	private val ec = "FA-Lso_EC_201202040437_L03_F12.csv"
+	private val bm = "BE-Lon_BM_20170815_L99_F01.dat"
 
 	def testBad(fn: String, reason: String) = {
 		test(s"$fn is not a valid filename ($reason)"){
@@ -57,7 +57,7 @@ class EtcFilenameTests extends FunSuite{
 	testBad(ec.replace(".csv", ".xxx"), "unsupported file extension")
 	testBad(ec.replace("-Lso", "-lso"), "bad station id format")
 	testBad(ec.replace("FA-Lso", "FAA-Lso"), "bad station id format")
-	testBad(ec.replace("_L3", ""), "logger number missing")
+	testBad(ec.replace("_L03", ""), "logger number missing")
 	testBad(ec.replace("EC", "XX"), "bad data type")
 	testBad(ec.replace("201202040437", "20120204"), "EC files must have time")
 

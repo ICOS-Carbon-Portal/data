@@ -36,17 +36,17 @@ Here is an example of uploading bytes in the string `test` to the service (perfo
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl -X PUT --data 'test' https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011200_L3_F1.csv`
+`$ curl -X PUT --data 'test' https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011200_L03_F01.csv`
 
 `OK`
 
 To upload a file from the command line:
 
-`$ md5sum FA-Lso_EC_201301011300_L3_F1.csv`
+`$ md5sum FA-Lso_EC_201301011300_L03_F01.csv`
 
 `098f6bcd4621d373cade4e832627b4f6  -`
 
-`$ curl --upload-file FA-Lso_EC_201301011300_L3_F1.csv https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011300_L3_F1.csv`
+`$ curl --upload-file FA-Lso_EC_201301011300_L03_F01.csv https://FA-Lso:p4ssw0rd@data.icos-cp.eu/upload/etc/098f6bcd4621d373cade4e832627b4f6/FA-Lso_EC_201301011300_L03_F01.csv`
 
 `OK`
 
@@ -55,28 +55,29 @@ In HTTP terms, the binary contents of the file must be HTTP PUT to the URL whose
 File names are validated. Here is the output from our unit tests for this:
 
 	[info] EtcFilenameTests:
-	[info] - BE-Lon_BM_20170815_L99_F1.dat is a valid filename
-	[info] - BE-Lon_BM_20170815_L99_F1.zip is a valid filename
-	[info] - BE-Lon_BM_20170815_L99_F1.bin is a valid filename
-	[info] - BE-Lon-BM-20170815-L99-F1.dat is not a valid filename (must use underscores)
-	[info] - BE-Lon_BM_201708151134_L99_F1.dat is not a valid filename (time only allowed in EC files)
-	[info] - FA-Lso_EC_201202040437_L3_F12.csv is a valid EC filename with time
-	[info] - FA-Lso_EC_201202040437_L3_F12.blabla is not a valid filename (too long file extension)
-	[info] - FA-Lso_EC_201202040437_L3_F12.xxx is not a valid filename (unsupported file extension)
-	[info] - FA-lso_EC_201202040437_L3_F12.csv is not a valid filename (bad station id format)
-	[info] - FAA-Lso_EC_201202040437_L3_F12.csv is not a valid filename (bad station id format)
+	[info] - BE-Lon_BM_20170815_L99_F01.dat is a valid filename
+	[info] - BE-Lon_BM_20170815_L99_F01.zip is a valid filename
+	[info] - BE-Lon_BM_20170815_L99_F01.bin is a valid filename
+	[info] - BE-Lon-BM-20170815-L99-F01.dat is not a valid filename (must use underscores)
+	[info] - BE-Lon_BM_201708151134_L99_F01.dat is not a valid filename (time only allowed in EC files)
+	[info] - FA-Lso_EC_201202040437_L03_F12.csv is a valid EC filename with time
+	[info] - FA-Lso_EC_201202040437_L03_F12.blabla is not a valid filename (too long file extension)
+	[info] - FA-Lso_EC_201202040437_L03_F12.xxx is not a valid filename (unsupported file extension)
+	[info] - FA-lso_EC_201202040437_L03_F12.csv is not a valid filename (bad station id format)
+	[info] - FAA-Lso_EC_201202040437_L03_F12.csv is not a valid filename (bad station id format)
 	[info] - FA-Lso_EC_201202040437_F12.csv is not a valid filename (logger number missing)
-	[info] - FA-Lso_XX_201202040437_L3_F12.csv is not a valid filename (bad data type)
-	[info] - FA-Lso_EC_20120204_L3_F12.csv is not a valid filename (EC files must have time)
+	[info] - FA-Lso_XX_201202040437_L03_F12.csv is not a valid filename (bad data type)
+	[info] - FA-Lso_EC_20120204_L03_F12.csv is not a valid filename (EC files must have time)
+	[info] - Parsing 'FA-Lso_EC_201202040437_L03_F12.csv' gives EtcFilename with correct toString
+	[info] - Parsing 'BE-Lon_BM_20170815_L99_F01.dat' gives EtcFilename with correct toString
 
 Please note that Eddy flux files (EC data type), being half-hourly rather than daily, are treated specially. They are not uploaded by the facade to CP immediately. Instead, they are kept in the staging area until a complete daily set (for certain station, logger id, and file id) has been uploaded. After that, the daily file set gets zip-archived and uploaded to CP as a single data object with a time-stripped filename.
 
-To observe the effect of the upload on the Carbon Portal metadata, please visit the Carbon Portal "landing page" of the fake station [FA-Lso](http://meta.icos-cp.eu/resources/stations/ES_FA-Lso) and observe changes in the "Usages of this Resource by others" section.
-Upload of every new file (provided that the file content is unique!) will result in creation of two new html links there, one for the acquisition provenance object, and one for the submission provenance object.
-You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.
-At the time of writing, there is already one test file uploaded (so two links are already there).
+To observe the effect of the FA-Lso upload on the Carbon Portal metadata, you can inspect search results in the [portal](https://data.icos-cp.eu/portal/#search?station=%5B%22Test%20station%20(fake)%22%5D) webapp.
 
-The data object landing page (see example [here](https://meta.icos-cp.eu/objects/9-UPzv1eohIyxT1JYrBjp4kY)) will report incomplete upload status - that is by design (for testing).
+(Alternatively, you can visit the Carbon Portal "landing page" of the fake station [FA-Lso](http://meta.icos-cp.eu/resources/stations/ES_FA-Lso) and observe changes in the "Usages of this Resource by others" section.
+Upload of every new file (provided that the file content is unique!) will result in creation of two new html links there, one for the acquisition provenance object, and one for the submission provenance object.
+You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.)
 
 ---
 ## Information for developers
