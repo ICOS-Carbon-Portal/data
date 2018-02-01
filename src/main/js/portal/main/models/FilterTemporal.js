@@ -59,6 +59,10 @@ export default class FilterTemporal {
 		]
 	}
 
+	get hasFilter(){
+		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
+	}
+
 	validateDataTime(){
 		this._dataTime.error = this.isValid(this._dataTime)
 			? undefined

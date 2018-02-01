@@ -2,14 +2,17 @@ import React from 'react';
 import ObjectTableRow from './ObjectTableRow.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart, previewAction, lookup, preview} = props;
+	const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
 	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
+	const objCountStyle = hasFilters
+		? {display: 'inline', opacity: 0}
+		: {display: 'inline'};
 
 	return <div className="panel panel-default">
 		<div className="panel-heading">
-			<h3 style={{display: 'inline'}} className="panel-title">Data objects {offset + 1} to {to} of {objCount}</h3>
+			<h3 style={objCountStyle} className="panel-title">Data objects {offset + 1} to {to} of {objCount}</h3>
 			<div style={{display: 'inline', float: 'right'}}>
 				<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)} />
 				<StepButton direction="forward" enabled={to < objCount} onStep={() => requestStep(1)} />

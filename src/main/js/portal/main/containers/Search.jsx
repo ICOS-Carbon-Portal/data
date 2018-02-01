@@ -40,6 +40,7 @@ class Search extends Component {
 						/>
 						: <DataObjectsTable
 							previewAction={this.handlePreview.bind(this)}
+							hasFilters={hasFilters({filterTemporal: props.filterTemporal})}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 								'cart', 'addToCart', 'removeFromCart', 'lookup'
@@ -49,6 +50,10 @@ class Search extends Component {
 		);
 	}
 }
+
+const hasFilters = ({filterTemporal}) => {
+	return filterTemporal.hasFilter;
+};
 
 function dispatchToProps(dispatch){
 	return {
