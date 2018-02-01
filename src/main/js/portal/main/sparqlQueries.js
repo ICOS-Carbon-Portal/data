@@ -168,18 +168,11 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
 	?dobj cpmeta:hasName ?fileName .
 	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
-	OPTIONAL{
-		?dobj cpmeta:hasStartTime ?timeStart .
-		?dobj cpmeta:hasEndTime ?timeEnd .
-	}
-	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy [
-			prov:startedAtTime ?timeStart;
-			prov:endedAtTime ?timeEnd
-		]
-	}
+	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
+	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
 	${temporalFilterClauses}
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
+
