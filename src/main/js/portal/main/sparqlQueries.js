@@ -101,7 +101,7 @@ select ?graph (sample(?fmt) as ?format) where{
 group by ?graph`;
 }
 
-export const listFilteredDataObjects = (config, {specs, stations, sorting, paging, filterTemporal}) => {
+export const listFilteredDataObjects = (config, {specs, stations, sorting, paging, filters}) => {
 
 	const specsValues = (specs && specs.length > 1)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
@@ -135,7 +135,7 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 			: stationsFilter(stations)
 		: dobjSpec;
 
-	const tempFilters = filterTemporal.filters.reduce((acc, f) => {
+	const appliedFilters = filters.reduce((acc, f) => {
 		if (f.fromDateTimeStr) {
 			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
 			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
@@ -144,13 +144,16 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
 			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
 		}
+		if (f.category === 'pids'){
+			f.filterPids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
+		}
 
 		return acc;
 	}, []);
-	const temporalFilterClauses = tempFilters.length
-		? `FILTER (${tempFilters.join(' && ')})`
+
+	const filterClauses = appliedFilters.length
+		? `FILTER (${appliedFilters.join(' && ')})`
 		: '';
-	// console.log({filterTemporal, tempFilterDataTime, tempFilterSubmission, tempFilters, temporalFilterClauses});
 
 	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
 		? (
@@ -161,6 +164,7 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 		: '';
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix cpmetaObjectUri: <${config.cpmetaObjectUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
 	${specsValues}
@@ -170,7 +174,7 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
-	${temporalFilterClauses}
+	${filterClauses}
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;

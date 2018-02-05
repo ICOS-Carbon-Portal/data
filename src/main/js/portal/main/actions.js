@@ -67,11 +67,17 @@ export const queryMeta = (id, search) => dispatch => {
 };
 
 const dispatchMeta = (id, data, dispatch) => {
+	console.log({id, data, dispatch});
+
 	dispatch({
 		type: META_QUERIED,
 		id,
 		data
 	});
+
+	if (id === 'dobj' && data.length === 1){
+		dispatch(getFilteredDataObjects);
+	}
 };
 
 export const specFilterUpdate = (varName, values) => dispatch => {
@@ -84,7 +90,9 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging, user, filterTemporal} = getState();
+	const {specTable, routeAndParams, sorting, paging, user, filterTemporal, filterPids} = getState();
+	const filters = filterTemporal.filters.concat([{category: 'pids', filterPids}]);
+	console.log({filters});
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
@@ -100,7 +108,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
 
-	fetchFilteredDataObjects({specs, stations, sorting, paging, filterTemporal}).then(
+	fetchFilteredDataObjects({specs, stations, sorting, paging, filters}).then(
 		({rows}) => dispatch({
 			type: OBJECTS_FETCHED,
 			objectsTable: rows

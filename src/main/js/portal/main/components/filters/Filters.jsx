@@ -19,7 +19,7 @@ export default class Filters extends Component {
 						<h3 className="panel-title">Temporal filters</h3>
 					</div>
 
-					<Slider startCollapsed={false}>
+					<Slider startCollapsed={true}>
 						<div className="panel-body" style={{paddingTop:0}}>
 							<PickDates
 								filterTemporal={props.filterTemporal}
@@ -38,21 +38,21 @@ export default class Filters extends Component {
 					</Slider>
 				</div>
 
-				{/*<div className="panel panel-default">*/}
-					{/*<div className="panel-heading">*/}
-						{/*<h3 className="panel-title">Free text filters</h3>*/}
-					{/*</div>*/}
+				<div className="panel panel-default">
+					<div className="panel-heading">
+						<h3 className="panel-title">Free text filters</h3>
+					</div>
 
-					{/*<Slider startCollapsed={false}>*/}
-						{/*<div className="panel-body" style={{paddingTop:0}}>*/}
-							{/*<FilterByPid*/}
-								{/*queryMeta={props.queryMeta}*/}
-								{/*filterPids={props.filterPids}*/}
-								{/*updateFilter={props.updateFilter}*/}
-							{/*/>*/}
-						{/*</div>*/}
-					{/*</Slider>*/}
-				{/*</div>*/}
+					<Slider startCollapsed={false}>
+						<div className="panel-body" style={{paddingTop:0}}>
+							<FilterByPid
+								queryMeta={props.queryMeta}
+								filterPids={props.filterPids}
+								updateFilter={props.updateFilter}
+							/>
+						</div>
+					</Slider>
+				</div>
 			</div>
 		);
 	}

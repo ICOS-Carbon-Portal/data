@@ -11,13 +11,13 @@ export default class FilterByPid extends Component{
 
 	handleChange(selected){
 		// if (this.props.updateFilter) this.props.updateFilter('dobj', selected);
-		console.log({selected});
+		// console.log({selected});
 	}
 
-	handleSearch(searchStr){
-		if (searchStr.length >= minLength && this.props.queryMeta) {
-			console.log({searchStr});
-			this.props.queryMeta('dobj', searchStr, minLength);
+	handleSearch(pidStr){
+		if (pidStr.length >= minLength && this.props.queryMeta) {
+			// console.log({pidStr});
+			this.props.queryMeta('dobj', pidStr, minLength);
 		}
 	}
 
@@ -56,7 +56,7 @@ export default class FilterByPid extends Component{
 
 	render(){
 		const props = this.props;
-		console.log({props});
+		// console.log({filterPids: props.filterPids});
 
 		return (
 			<div className="row" style={{marginTop: 10}}>
@@ -69,7 +69,7 @@ export default class FilterByPid extends Component{
 						data={props.filterPids}
 						// value={this.props.specTable.getFilter(name)}
 						filter="contains"
-						onChange={this.handleChange.bind(this)}
+						onSelect={this.handleChange.bind(this)}
 						onChange={this.handleSearch.bind(this)}
 						// itemComponent={this.listItem.bind(this)}
 						// tagComponent={this.tagItem}
