@@ -1,4 +1,5 @@
 import config from '../config';
+import {varType} from '../utils';
 
 
 export default class RouteAndParams{
@@ -16,9 +17,10 @@ export default class RouteAndParams{
 	}
 
 	withResetFilters(){
-		const keepFilters = Object.assign({}, this._filters.filterTemporal);
-		console.log({filters: this._filters, keepFilters});
-		return new RouteAndParams(this._route);
+		const filtersToKeep = {};
+		if (this._filters.filterTemporal) filtersToKeep.filterTemporal = this._filters.filterTemporal;
+
+		return new RouteAndParams(this._route, filtersToKeep);
 	}
 
 	get route(){
@@ -30,9 +32,26 @@ export default class RouteAndParams{
 	}
 
 	get urlPart(){
-		const filterKeys = Object.keys(this._filters);
+		// Don not add filters that are empty
+		const newFilters = Object.keys(this._filters).reduce((acc, key) => {
+			const variableType = varType(this._filters[key]);
+
+			if (variableType === 'object' && Object.keys(this._filters[key]).length){
+				acc[key] = this._filters[key];
+			} else if (variableType === 'array' && this._filters[key].length){
+				acc[key] = this._filters[key];
+			} else if (variableType === 'string'){
+				acc[key] = this._filters[key];
+			}
+
+			return acc;
+		}, {});
+
+		const filterKeys = Object.keys(newFilters);
+
 		return filterKeys.length
-			? this._route + '?' + filterKeys.map(key => key + '=' + encodeURIComponent(JSON.stringify(this._filters[key]))).join('&')
+			? this._route + '?' + filterKeys.map(key =>
+				key + '=' + encodeURIComponent(JSON.stringify(newFilters[key]))).join('&')
 			: this._route;
 	}
 }

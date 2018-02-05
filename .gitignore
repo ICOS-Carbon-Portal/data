@@ -2,10 +2,12 @@
 /fileStorage/
 *.class
 *.log
-src/main/resources/*.js
 
 # Node.js specific
 node_modules/
+src/main/resources/*.js
+# ETC facade js is hand-written, not built, therefore is an exception
+!src/main/resources/etcfacade.js
 
 # sbt specific
 target/

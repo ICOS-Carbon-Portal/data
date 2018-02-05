@@ -20,4 +20,17 @@ export const formatBytes = (bytes, decimals) => {
 		sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
 		i = Math.floor(Math.log(bytes) / Math.log(k));
 	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
+};
+
+export const varType = variable => {
+	const isString = typeof variable === 'string';
+	if (isString) return 'string';
+
+	const isArray = Array.isArray(variable);
+	if (isArray) return 'array';
+
+	const isPlainObject = variable !== null && typeof variable === 'object' && !Array.isArray(variable);
+	if (isPlainObject) return 'object';
+
+	return 'unknown';
+};

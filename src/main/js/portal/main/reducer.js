@@ -180,7 +180,6 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
-			// console.log({filterTemporal: action.filterTemporal, routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary)});
 			return update({
 				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary),
 				filterTemporal: action.filterTemporal

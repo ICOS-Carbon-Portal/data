@@ -92,40 +92,25 @@ export default class ObjSpecFilter extends Component {
 		const {specTable, specFiltersReset} = this.props;
 		const colNames = specTable.names.filter(name => !!placeholders[name]);
 		const filters = colNames.map(colName => specTable.getFilter(colName));
-		const showResetBtn = !!filters.reduce((acc, curr) => {
+		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
 
 		return (
 			<div>
-				{showResetBtn
-					? <ResetBtn resetFiltersAction={specFiltersReset} />
-					: null
-				}
+				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 				{colNames.map(name => this.getCtrl(name))}
 			</div>
 		);
-
-		// return <div className="panel panel-default">
-		// 	<div className="panel-heading">
-		// 		<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
-		// 		{showResetBtn
-		// 			? <ResetBtn resetFiltersAction={specFiltersReset} />
-		// 			: null
-		// 		}
-		// 	</div>
-		// 	<div className="panel-body">
-		// 		{colNames.map(name => this.getCtrl(name))}
-		// 	</div>
-		// </div>;
 	}
 }
 
-const ResetBtn = props => {
-	return <div
-		className="glyphicon glyphicon-ban-circle"
-		style={{display: 'inline', float: 'right', fontSize: '160%', cursor: 'pointer'}}
-		title="Clear all filters"
-		onClick={props.resetFiltersAction}
-	/>;
+const ResetBtn = ({resetFiltersAction, enabled}) => {
+	const className = enabled ? 'btn btn-primary' : 'btn btn-primary disabled';
+	const style = enabled
+		? {display: 'inline', float: 'right', cursor: 'pointer'}
+		: {display: 'inline', float: 'right'};
+	const onClick = enabled ? resetFiltersAction : () => _;
+
+	return <button className={className} style={style} onClick={onClick}>Clear categories</button>;
 };

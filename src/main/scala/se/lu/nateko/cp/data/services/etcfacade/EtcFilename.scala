@@ -20,7 +20,7 @@ case class EtcFilename(
 	override def toString = {
 		val dateStr = date.format(EtcFilename.dateFormat)
 		val timeStr = time.map(_.format(EtcFilename.timeFormat)).getOrElse("")
-		s"${station.id}_${dataType}_$dateStr${timeStr}_L${loggerNumber}_F$fileNumber.$extension"
+		f"${station.id}_${dataType}_$dateStr${timeStr}_L$loggerNumber%02d_F$fileNumber%02d.$extension"
 	}
 }
 
