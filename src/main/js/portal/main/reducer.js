@@ -100,12 +100,15 @@ export default function(state = initState, action){
 			}, state.specTable);
 			objCount = getObjCount(specTable);
 
+			const restoredFilterTemporal = state.filterTemporal.restore(routeAndParams.filters.filterTemporal);
+
 			return update({
 				routeAndParams,
 				specTable,
 				objectsTable: [],
 				paging: freshPaging(objCount),
-				sorting: updateSortingEnableness(state.sorting, objCount)
+				sorting: updateSortingEnableness(state.sorting, objCount),
+				filterTemporal: restoredFilterTemporal
 			});
 
 		case OBJECTS_FETCHED:
@@ -177,7 +180,11 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
-			return update({filterTemporal: action.filterTemporal});
+			// console.log({filterTemporal: action.filterTemporal, routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary)});
+			return update({
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary),
+				filterTemporal: action.filterTemporal
+			});
 
 		default:
 			return state;

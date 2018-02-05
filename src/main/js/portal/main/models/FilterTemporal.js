@@ -32,6 +32,30 @@ export default class FilterTemporal {
 		return newFilter;
 	}
 
+	restore(dates){
+		if (dates === undefined) {
+			return this;
+		} else {
+			const self = this;
+
+			return Object.keys(dates).reduce((acc, key) => {
+				switch (key){
+					case 'df':
+						return acc.withDataTimeFrom(new Date(dates[key]));
+
+					case 'dt':
+						return acc.withDataTimeTo(new Date(dates[key]));
+
+					case 'sf':
+						return acc.withSubmissionFrom(new Date(dates[key]));
+
+					case 'st':
+						return acc.withSubmissionTo(new Date(dates[key]));
+				}
+			}, self);
+		}
+	}
+
 	get dataTime(){
 		return this._dataTime;
 	}
@@ -61,6 +85,17 @@ export default class FilterTemporal {
 
 	get hasFilter(){
 		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
+	}
+
+	get summary(){
+		const res = {};
+
+		if (this._dataTime.from) res.df = this._dataTime.fromDateStr;
+		if (this._dataTime.to) res.dt = this._dataTime.toDateStr;
+		if (this._submission.from) res.sf = this._submission.fromDateStr;
+		if (this._submission.to) res.st = this._submission.toDateStr;
+
+		return res;
 	}
 
 	validateDataTime(){

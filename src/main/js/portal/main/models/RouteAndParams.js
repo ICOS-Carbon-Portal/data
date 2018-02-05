@@ -1,3 +1,6 @@
+import config from '../config';
+
+
 export default class RouteAndParams{
 	constructor(route, filters){
 		this._route = route;
@@ -9,17 +12,12 @@ export default class RouteAndParams{
 	}
 
 	withFilter(varName, values){
-		const newFilters = values.length
-			? Object.assign(this._filters, {[varName]: values})
-			: Object.keys(this._filters).reduce((acc, filterName) => {
-				if (filterName !== varName) acc[filterName] = this._filters[filterName];
-				return acc;
-			}, {});
-
-		return new RouteAndParams(this._route, newFilters);
+		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}));
 	}
 
 	withResetFilters(){
+		const keepFilters = Object.assign({}, this._filters.filterTemporal);
+		console.log({filters: this._filters, keepFilters});
 		return new RouteAndParams(this._route);
 	}
 
@@ -36,11 +34,6 @@ export default class RouteAndParams{
 		return filterKeys.length
 			? this._route + '?' + filterKeys.map(key => key + '=' + encodeURIComponent(JSON.stringify(this._filters[key]))).join('&')
 			: this._route;
-		// return filterKeys.length
-		// 	? this._route + '?' + filterKeys.map(key => {
-		// 	return key + '=' + encodeURIComponent(JSON.stringify(this._filters[key]).replace(/"/g, ''))
-		// }).join('&')
-		// 	: this._route;
 	}
 }
 
@@ -55,5 +48,5 @@ export const restoreRouteAndParams = routeAndParams => {
 		}, {})
 		: {};
 
-	return new RouteAndParams(route, filters);
+	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters);
 };

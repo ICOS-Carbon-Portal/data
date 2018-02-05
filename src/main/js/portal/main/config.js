@@ -1,6 +1,7 @@
 export default {
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
+	DEFAULT_ROUTE: 'search',
 	TIMESERIES: 'TIMESERIES',
 	NETCDF: 'NETCDF',
 	iFrameBaseUrl: {

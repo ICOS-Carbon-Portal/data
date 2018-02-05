@@ -1,22 +1,21 @@
 import React, { Component } from 'react';
 import ObjSpecFilter from './ObjSpecFilter.jsx';
 import Filters from './filters/Filters.jsx';
+import config from '../config';
 
-
-const defaultTab = 'search';
 
 export default class SearchFilterRouter extends Component {
 	constructor(props){
 		super(props);
 
-		const selectedTab = props.selectedTab || defaultTab;
+		const selectedTab = props.selectedTab || config.DEFAULT_ROUTE;
 		this.tabState = {
 			selectedTab,
 			searchTabCls: selectedTab === 'search' ? 'active' : '',
 			filterTabCls: selectedTab === 'filter' ? 'active' : '',
 
 			setActiveTab: selectedTab => {
-				this.tabState.selectedTab = selectedTab || defaultTab;
+				this.tabState.selectedTab = selectedTab || config.DEFAULT_ROUTE;
 				this.tabState.searchTabCls = this.tabState.selectedTab === 'search' ? 'active' : '';
 				this.tabState.filterTabCls = this.tabState.selectedTab === 'filter' ? 'active' : '';
 			}
