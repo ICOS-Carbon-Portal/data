@@ -56,7 +56,7 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 val npmPublish = taskKey[Unit]("runs 'npm publish'")
-npmPublish := Process("npm run publish").!
+npmPublish := scala.sys.process.Process("npm run publish").!
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)

@@ -5,14 +5,9 @@
 
 # Node.js specific
 node_modules/
-src/main/resources/netcdf.js
-src/main/resources/wdcgg.js
-src/main/resources/stilt.js
-src/main/resources/portal.js
-/src/main/resources/dygraph-light.js
-/src/main/resources/netcdf-light.js
-/src/main/resources/netcdf-new.js
-/src/main/resources/stats.js
+src/main/resources/*.js
+# ETC facade js is hand-written, not built, therefore is an exception
+!src/main/resources/etcfacade.js
 
 # sbt specific
 target/

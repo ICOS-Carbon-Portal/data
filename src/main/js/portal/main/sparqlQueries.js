@@ -101,7 +101,7 @@ select ?graph (sample(?fmt) as ?format) where{
 group by ?graph`;
 }
 
-export const listFilteredDataObjects = (config, {specs, stations, sorting, paging}) => {
+export const listFilteredDataObjects = (config, {specs, stations, sorting, paging, filterTemporal}) => {
 
 	const specsValues = (specs && specs.length > 1)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
@@ -135,6 +135,23 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 			: stationsFilter(stations)
 		: dobjSpec;
 
+	const tempFilters = filterTemporal.filters.reduce((acc, f) => {
+		if (f.fromDateTimeStr) {
+			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
+			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
+		}
+		if (f.toDateTimeStr) {
+			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
+			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
+		}
+
+		return acc;
+	}, []);
+	const temporalFilterClauses = tempFilters.length
+		? `FILTER (${tempFilters.join(' && ')})`
+		: '';
+	// console.log({filterTemporal, tempFilterDataTime, tempFilterSubmission, tempFilters, temporalFilterClauses});
+
 	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
 		? (
 			sorting.ascending
@@ -145,19 +162,17 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?acqStart ?acqEnd where {
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
 	${specsValues}
 	${dobjSearch}
 	?dobj cpmeta:hasName ?fileName .
 	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
-	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy [
-			prov:startedAtTime ?acqStart;
-			prov:endedAtTime ?acqEnd
-		]
-	}
+	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
+	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
+	${temporalFilterClauses}
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
+

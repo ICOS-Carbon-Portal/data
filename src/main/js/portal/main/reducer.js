@@ -1,16 +1,21 @@
 import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB} from './actions';
+import {TEMPORAL_FILTER} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
 import Cart from './models/Cart';
 import Preview from './models/Preview';
+import FilterTemporal from './models/FilterTemporal';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
+import {placeholders} from './config';
 
 const initState = {
 	routeAndParams: new RouteAndParams(),
+	filterTemporal: new FilterTemporal(),
+	filterPids: [],
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
@@ -25,6 +30,8 @@ const initState = {
 		ts: 0
 	}
 };
+
+const specTableKeys = Object.keys(placeholders);
 
 export default function(state = initState, action){
 
@@ -55,18 +62,18 @@ export default function(state = initState, action){
 			});
 
 		case META_QUERIED:
-			return update({
-				metadata: action.metadata
-			});
+			const metaResult = action.id === 'dobj'
+				? {filterPids: action.data}
+				: {};
+
+			return update(metaResult);
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
-			let routeAndParams = state.routeAndParams.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
-			window.location.hash = routeAndParams.urlPart;
 
 			return update({
-				routeAndParams,
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, action.varName, action.values),
 				specTable,
 				objectsTable: [],
 				paging: freshPaging(objCount),
@@ -76,20 +83,20 @@ export default function(state = initState, action){
 		case SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
-			routeAndParams = state.routeAndParams.withResetFilters();
-			window.location.hash = routeAndParams.urlPart;
 
 			return update({
-				routeAndParams,
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams),
 				specTable,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
 		case RESTORE_FILTERS:
-			routeAndParams = restoreRouteAndParams(action.hash);
+			let routeAndParams = restoreRouteAndParams(action.hash);
 			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
-				return specTable.withFilter(filterKey, routeAndParams.filters[filterKey]);
+				return specTableKeys.includes(filterKey)
+					? specTable.withFilter(filterKey, routeAndParams.filters[filterKey])
+					: specTable;
 			}, state.specTable);
 			objCount = getObjCount(specTable);
 
@@ -130,6 +137,11 @@ export default function(state = initState, action){
 				routeAndParams
 			});
 
+		case SWITCH_TAB:
+			return update({
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'tab', action.selectedTab)
+			});
+
 		case PREVIEW:
 			return update({
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
@@ -164,6 +176,9 @@ export default function(state = initState, action){
 				}
 			});
 
+		case TEMPORAL_FILTER:
+			return update({filterTemporal: action.filterTemporal});
+
 		default:
 			return state;
 	}
@@ -172,6 +187,14 @@ export default function(state = initState, action){
 		const updates = Array.from(arguments);
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
+}
+
+function updateAndApplyRouteAndParams(currentRouteParams, varName, values){
+	const routeAndParams = varName && values
+		? currentRouteParams.withFilter(varName, values)
+		: currentRouteParams.withResetFilters();
+	window.location.hash = routeAndParams.urlPart;
+	return routeAndParams;
 }
 
 function updateSorting(old, varName){

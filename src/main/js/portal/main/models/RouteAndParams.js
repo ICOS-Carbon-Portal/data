@@ -36,6 +36,11 @@ export default class RouteAndParams{
 		return filterKeys.length
 			? this._route + '?' + filterKeys.map(key => key + '=' + encodeURIComponent(JSON.stringify(this._filters[key]))).join('&')
 			: this._route;
+		// return filterKeys.length
+		// 	? this._route + '?' + filterKeys.map(key => {
+		// 	return key + '=' + encodeURIComponent(JSON.stringify(this._filters[key]).replace(/"/g, ''))
+		// }).join('&')
+		// 	: this._route;
 	}
 }
 

@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {copyprops} from 'icos-cp-utils';
-import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
+import SearchFilterRouter from '../components/SearchFilterRouter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
-import {/*queryMeta, reset, */specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
+import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
 
 class Search extends Component {
@@ -22,11 +22,14 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
+		const selectedTab = props.routeAndParams.filters.tab;
+		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterPids']);
 
 		return (
 			<div className="row">
 				<div className="col-md-3">
-					<ObjSpecFilter {...copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset'])} />
+					<SearchFilterRouter {...searchProps} selectedTab={selectedTab} />
 				</div>
 				<div className="col-md-9">{
 					props.preview.visible
@@ -49,7 +52,7 @@ class Search extends Component {
 
 function dispatchToProps(dispatch){
 	return {
-		//queryMeta: (id, search, minLength) => dispatch(queryMeta(id, search, minLength)),
+		queryMeta: (id, search) => dispatch(queryMeta(id, search)),
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),

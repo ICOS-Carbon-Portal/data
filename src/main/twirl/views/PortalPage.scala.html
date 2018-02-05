@@ -3,10 +3,17 @@
 @(config: PublicAuthConfig)
 @CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.cpauthHost)){
 	<link rel="stylesheet" href="//static.icos-cp.eu/css/react-widgets/css/react-widgets.css">
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/rc-datepicker/5.0.10/style.min.css">
 	<style type="text/css">
 		.rw-multiselect-taglist > li{
 			text-align: left !important;
 			white-space: normal !important;
+		}
+		.cp-dpi-error div.react-datepicker-input {
+			background: #ebccd1 !important;
+		}
+		.cp-dpi-error i.icon-rc-datepicker_calendar {
+			color: black !important;
 		}
 	</style>
 }{

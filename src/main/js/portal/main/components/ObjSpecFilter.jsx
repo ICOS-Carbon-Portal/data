@@ -1,18 +1,7 @@
 import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
+import {placeholders} from '../config';
 
-const placeholders = {
-	specLabel: 'Specification',
-	level: 'Data level',
-	format: 'Format',
-	colTitle: 'Column name',
-	valType: 'Value type',
-	quantityKind: 'Quantity kind',
-	quantityUnit: 'Unit',
-	submitter: 'Data submitter',
-	station: 'Station of origin',
-	isIcos: 'ICOS / non-ICOS data'
-};
 
 export default class ObjSpecFilter extends Component {
 	constructor(props) {
@@ -107,18 +96,28 @@ export default class ObjSpecFilter extends Component {
 			return acc + curr.length;
 		}, 0);
 
-		return <div className="panel panel-default">
-			<div className="panel-heading">
-				<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+		return (
+			<div>
 				{showResetBtn
 					? <ResetBtn resetFiltersAction={specFiltersReset} />
 					: null
 				}
-			</div>
-			<div className="panel-body">
 				{colNames.map(name => this.getCtrl(name))}
 			</div>
-		</div>;
+		);
+
+		// return <div className="panel panel-default">
+		// 	<div className="panel-heading">
+		// 		<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+		// 		{showResetBtn
+		// 			? <ResetBtn resetFiltersAction={specFiltersReset} />
+		// 			: null
+		// 		}
+		// 	</div>
+		// 	<div className="panel-body">
+		// 		{colNames.map(name => this.getCtrl(name))}
+		// 	</div>
+		// </div>;
 	}
 }
 
