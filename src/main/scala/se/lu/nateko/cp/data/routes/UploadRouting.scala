@@ -37,6 +37,7 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import LicenceRouting._
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
+import se.lu.nateko.cp.meta.core.data.Envri
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
@@ -46,65 +47,73 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	import authRouting._
 
 	private implicit val ex = mat.executionContext
+	private implicit val envriConfs = coreConf.envriConfigs
 	private val log = uploadService.log
 	private val downloadService = new DownloadService(coreConf, uploadService, log)
+	val extractEnvri = extractHost.map(host => Envri.infer(host).get)
 
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		userRequired{ uid =>
 			extractRequest{ req =>
-				val resFuture: Future[UploadResult] = uploadService
-					.getSink(hashsum, uid)
-					.flatMap(req.entity.dataBytes.runWith)
+				extractEnvri{implicit envri =>
+					val resFuture: Future[UploadResult] = uploadService
+						.getSink(hashsum, uid)
+						.flatMap(req.entity.dataBytes.runWith)
 
-				onSuccess(resFuture)(res => res.makeReport match{
-					case Right(report) => complete(report)
-					case Left(errorMsg) =>
-						log.warning(errorMsg)
-						complete((StatusCodes.InternalServerError, errorMsg))
-				})
+					onSuccess(resFuture)(res => res.makeReport match{
+						case Right(report) => complete(report)
+						case Left(errorMsg) =>
+							log.warning(errorMsg)
+							complete((StatusCodes.InternalServerError, errorMsg))
+					})
+				}
 			}
 		}
 	} ~ requireShaHash
 
 	private val download: Route = pathPrefix(Sha256Segment){ hashsum =>
-		onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
-			licenceCookieDobjList{dobjs =>
-				deleteCookie(LicenceCookieName){
-					if(dobjs.contains(hashsum)) (accessRoute(dobj))
-					else reject
-				}
-			} ~
-			user{uid =>
-				onComplete(restHeart.getUserLicenseAcceptance(uid)){
-					case Success(true) => accessRoute(dobj)
-					case _ => reject
-				}
-			} ~
-			redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
+		extractEnvri{implicit envri =>
+			onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
+				licenceCookieDobjList{dobjs =>
+					deleteCookie(LicenceCookieName){
+						if(dobjs.contains(hashsum)) (accessRoute(dobj))
+						else reject
+					}
+				} ~
+				user{uid =>
+					onComplete(restHeart.getUserLicenseAcceptance(uid)){
+						case Success(true) => accessRoute(dobj)
+						case _ => reject
+					}
+				} ~
+				redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
+			}
 		}
 	} ~ requireShaHash
 
 	private val batchDownload: Route = pathEnd{
 		parameter(('ids.as[Seq[Sha256Sum]], 'fileName)){ (hashes, fileName) =>
 			userOpt{uidOpt =>
+				extractEnvri{implicit envri =>
 
-				val ok = getClientIp{ip =>
-					respondWithAttachment(fileName + ".zip"){
-						val src = downloadService.getZipSource(
-							hashes,
-							logDownload(_, ip, uidOpt)
-						)
-						completeWithSource(src, ContentType(MediaTypes.`application/zip`))
+					val ok = getClientIp{ip =>
+						respondWithAttachment(fileName + ".zip"){
+							val src = downloadService.getZipSource(
+								hashes,
+								logDownload(_, ip, uidOpt)
+							)
+							completeWithSource(src, ContentType(MediaTypes.`application/zip`))
+						}
 					}
-				}
 
-				licenceCookieDobjList{dobjs =>
-					if(hashes.diff(dobjs).isEmpty) ok else reject
-				} ~
-				onSome(uidOpt){uid =>
-					onComplete(restHeart.getUserLicenseAcceptance(uid)){
-						case Success(true) => ok
-						case _ => reject
+					licenceCookieDobjList{dobjs =>
+						if(hashes.diff(dobjs).isEmpty) ok else reject
+					} ~
+					onSome(uidOpt){uid =>
+						onComplete(restHeart.getUserLicenseAcceptance(uid)){
+							case Success(true) => ok
+							case _ => reject
+						}
 					}
 				}
 			} ~
