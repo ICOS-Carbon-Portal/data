@@ -43,8 +43,6 @@ export default class SearchFilterRouter extends Component {
 			padding: 10
 		};
 
-		// console.log({props, tabState});
-
 		return (
 			<div>
 				<ul className="nav nav-tabs">
@@ -64,7 +62,7 @@ export default class SearchFilterRouter extends Component {
 								filterTemporal={props.filterTemporal}
 								setFilterTemporal={props.setFilterTemporal}
 								queryMeta={props.queryMeta}
-								filterPids={props.filterPids}
+								filterFreeText={props.filterFreeText}
 								updateFilter={props.updateFilter}
 							/>
 					}</div>

@@ -145,7 +145,7 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
 		}
 		if (f.category === 'pids'){
-			f.filterPids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
+			f.pids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
 		}
 
 		return acc;

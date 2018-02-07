@@ -19,6 +19,7 @@ export default class RouteAndParams{
 	withResetFilters(){
 		const filtersToKeep = {};
 		if (this._filters.filterTemporal) filtersToKeep.filterTemporal = this._filters.filterTemporal;
+		if (this._filters.filterFreeText) filtersToKeep.filterFreeText = this._filters.filterFreeText;
 
 		return new RouteAndParams(this._route, filtersToKeep);
 	}

@@ -24,7 +24,7 @@ class Search extends Component {
 		const props = this.props;
 		const selectedTab = props.routeAndParams.filters.tab;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
-			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterPids']);
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText']);
 
 		return (
 			<div className="row">

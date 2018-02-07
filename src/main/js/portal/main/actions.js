@@ -5,7 +5,7 @@ export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
 export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
-export const META_QUERIED = 'META_QUERIED';
+export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const PREVIEW = 'PREVIEW';
 export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
@@ -67,15 +67,13 @@ export const queryMeta = (id, search) => dispatch => {
 };
 
 const dispatchMeta = (id, data, dispatch) => {
-	console.log({id, data, dispatch});
-
 	dispatch({
-		type: META_QUERIED,
+		type: FREE_TEXT_FILTER,
 		id,
 		data
 	});
 
-	if (id === 'dobj' && data.length === 1){
+	if (id === 'dobj' && (data.length === 0 || data.length === 1)){
 		dispatch(getFilteredDataObjects);
 	}
 };
@@ -90,9 +88,8 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging, user, filterTemporal, filterPids} = getState();
-	const filters = filterTemporal.filters.concat([{category: 'pids', filterPids}]);
-	console.log({filters});
+	const {specTable, routeAndParams, sorting, paging, user, filterTemporal, filterFreeText} = getState();
+	const filters = filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.pids}]);
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({

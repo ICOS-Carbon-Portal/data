@@ -1,4 +1,4 @@
-import {ERROR, SPECTABLES_FETCHED, META_QUERIED, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
+import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
 import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB} from './actions';
 import {TEMPORAL_FILTER} from './actions';
@@ -8,6 +8,7 @@ import Lookup from './models/Lookup';
 import Cart from './models/Cart';
 import Preview from './models/Preview';
 import FilterTemporal from './models/FilterTemporal';
+import FilterFreeText from './models/FilterFreeText';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
 import {placeholders} from './config';
@@ -15,6 +16,7 @@ import {placeholders} from './config';
 const initState = {
 	routeAndParams: new RouteAndParams(),
 	filterTemporal: new FilterTemporal(),
+	filterFreeText: new FilterFreeText(),
 	filterPids: [],
 	user: {},
 	lookup: undefined,
@@ -61,13 +63,6 @@ export default function(state = initState, action){
 				lookup: new Lookup(specTable)
 			});
 
-		case META_QUERIED:
-			const metaResult = action.id === 'dobj'
-				? {filterPids: action.data}
-				: {};
-
-			return update(metaResult);
-
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
@@ -101,6 +96,7 @@ export default function(state = initState, action){
 			objCount = getObjCount(specTable);
 
 			const restoredFilterTemporal = state.filterTemporal.restore(routeAndParams.filters.filterTemporal);
+			const restoredFilterFreeText = state.filterFreeText.restore(routeAndParams.filters.filterFreeText);
 
 			return update({
 				routeAndParams,
@@ -108,7 +104,8 @@ export default function(state = initState, action){
 				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				filterTemporal: restoredFilterTemporal
+				filterTemporal: restoredFilterTemporal,
+				filterFreeText: restoredFilterFreeText
 			});
 
 		case OBJECTS_FETCHED:
@@ -183,6 +180,16 @@ export default function(state = initState, action){
 			return update({
 				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary),
 				filterTemporal: action.filterTemporal
+			});
+
+		case FREE_TEXT_FILTER:
+			const filterFreeText = action.id === 'dobj'
+				? new FilterFreeText(action.data)
+				: state.filterFreeText;
+
+			return update({
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary),
+				filterFreeText
 			});
 
 		default:

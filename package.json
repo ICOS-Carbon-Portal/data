@@ -58,7 +58,7 @@
     "icos-cp-netcdfmap": "^0.2.1",
     "icos-cp-spatial": "^0.2.0",
     "icos-cp-toaster": "^0.5.1",
-    "icos-cp-utils": "^0.1.0",
+    "icos-cp-utils": "^0.1.4",
     "rc-datepicker": "^5.0.10",
     "react": "^15.3.2",
     "react-dom": "^15.3.2",

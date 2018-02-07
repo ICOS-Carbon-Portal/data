@@ -47,7 +47,7 @@ export default class Filters extends Component {
 						<div className="panel-body" style={{paddingTop:0}}>
 							<FilterByPid
 								queryMeta={props.queryMeta}
-								filterPids={props.filterPids}
+								pids={props.filterFreeText.pids}
 								updateFilter={props.updateFilter}
 							/>
 						</div>
