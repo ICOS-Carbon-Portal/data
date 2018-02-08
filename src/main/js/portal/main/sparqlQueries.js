@@ -92,16 +92,22 @@ ORDER BY ?Long_name`;
 
 export function rdfGraphsAndSpecFormats(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?graph (sample(?fmt) as ?format) where{
-	?spec cpmeta:hasFormat [rdfs:label ?fmt] .
+select (sample(?fmt) as ?format) ?graph where{
 	graph ?graph {
-	?dobj cpmeta:hasObjectSpec ?spec .
+		?dobj cpmeta:hasObjectSpec ?spec .
 	}
+	?spec cpmeta:hasFormat/rdfs:label ?fmt.
 }
 group by ?graph`;
 }
 
-export const listFilteredDataObjects = (config, {specs, stations, sorting, paging, filterTemporal}) => {
+export const listFilteredDataObjects = (config, options) => {
+
+	const {specs, stations, sorting, paging, filterTemporal, rdfGraphs} = options;
+
+	const fromClause = rdfGraphs.length
+		? 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n'
+		: '';
 
 	const specsValues = (specs && specs.length > 1)
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
@@ -162,7 +168,8 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
+${fromClause}where {
 	${specsValues}
 	${dobjSearch}
 	?dobj cpmeta:hasName ?fileName .
@@ -175,4 +182,3 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd where {
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
-

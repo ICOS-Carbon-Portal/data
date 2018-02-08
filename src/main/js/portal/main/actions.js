@@ -19,8 +19,7 @@ export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
-import {getUserInfo, logOutUser} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, updatePortalUsage} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage} from './backend';
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
@@ -37,12 +36,8 @@ const failWithError = dispatch => error => {
 
 export const getAllSpecTables = hash => dispatch => {
 	fetchAllSpecTables().then(
-		specTables => {
-			dispatch({
-				type: SPECTABLES_FETCHED,
-				specTables
-			});
-
+		allTables => {
+			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
 			dispatch(restoreFilters(hash));
 			dispatch(getFilteredDataObjects);
 		},
@@ -84,7 +79,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging, user, filterTemporal} = getState();
+	const {specTable, routeAndParams, sorting, paging, user, filterTemporal, formatToRdfGraph} = getState();
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
@@ -100,7 +95,12 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
 
-	fetchFilteredDataObjects({specs, stations, sorting, paging, filterTemporal}).then(
+	const rdfGraphs = specTable.getColumnValuesFilter('format')
+		.map(f => formatToRdfGraph[f]);
+
+	const options = {specs, stations, sorting, paging, filterTemporal, rdfGraphs};
+
+	fetchFilteredDataObjects(options).then(
 		({rows}) => dispatch({
 			type: OBJECTS_FETCHED,
 			objectsTable: rows
@@ -268,15 +268,6 @@ export const fetchIsBatchDownloadOk = dispatch => {
 			}),
 			err => dispatch(failWithError(err))
 		);
-};
-
-export const logOut = dispatch => {
-	logOutUser().then(
-		user => dispatch({
-			type: USER_INFO_FETCHED,
-			user
-		})
-	);
 };
 
 export const setFilterTemporal = filterTemporal => dispatch => {

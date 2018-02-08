@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
-import {updateRoute, switchTab, setPreviewVisibility, logOut, setFilterTemporal} from '../actions';
+import {updateRoute, switchTab, setPreviewVisibility, setFilterTemporal} from '../actions';
 import config from '../config';
 
 export class App extends Component {
@@ -121,7 +121,6 @@ function dispatchToProps(dispatch){
 		switchTab: selectedTab => dispatch(switchTab(selectedTab)),
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
-		logOut: () => dispatch(logOut)
 	};
 }
 
