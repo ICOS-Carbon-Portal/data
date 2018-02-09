@@ -9,12 +9,17 @@ import 'whatwg-fetch';
 const config = Object.assign(commonConfig, localConfig);
 
 export function fetchAllSpecTables() {
-	return Promise.all(
-		[queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
-			.map(qf => fetchSpecTable(qf, config))
-	).then(
-		([basics, columnMeta, origins]) => {
-			return {basics, columnMeta, origins};
+	const promises = [queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
+		.map(qf => fetchSpecTable(qf, config));
+
+	promises.push(fetchFormatToRdfGraphTbl());
+
+	return Promise.all(promises).then(
+		([basics, columnMeta, origins, formatToRdfGraph]) => {
+			return {
+				specTables: {basics, columnMeta, origins},
+				formatToRdfGraph
+			};
 		}
 	);
 };
@@ -161,6 +166,16 @@ function sparqlResultToSpecTable(sparqlResult) {
 	return new SpecTable(columnNames, rows);
 }
 
+function fetchFormatToRdfGraphTbl(){
+	const query = queries.rdfGraphsAndSpecFormats(config);
+	return sparql(query, config.sparqlEndpoint, true).then(
+		res => res.results.bindings.reduce((acc, row) => {
+			acc[row['format'].value] = row['graph'].value
+			return acc;
+		}, {})
+	);
+}
+
 function sparqlBindingToValue(b){
 	if(!b) return undefined;
 	switch(b.datatype){
@@ -200,11 +215,4 @@ export const getUserInfo = () => {
 				user
 			};
 		})
-};
-
-export const logOutUser = () => {
-	return fetch('https://cpauth.icos-cp.eu/logout', {credentials: 'include'})
-		.then(resp => {
-			return {};
-		});
 };

@@ -7,7 +7,7 @@ export default class SpecTable{
 		if(filters) this._filters = filters;
 		else {
 			this._filters = {};
-			this.names.forEach(col => this._filters[col] = []);
+			this._colNames.forEach(col => this._filters[col] = []);
 		}
 
 		this._speciesCount = distinct(rows.map(row => row[SPECCOL])).length;
@@ -36,6 +36,10 @@ export default class SpecTable{
 		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}
 
+	getDistinctColValues(colName){
+		return distinct(this.filteredRows.map(row => row[colName]));
+	}
+
 	rowsFilteredByOthers(excludedColumn){
 		const filters = Object.assign({}, this._filters);
 		filters[excludedColumn] = [];
@@ -50,6 +54,12 @@ export default class SpecTable{
 		if(this.names.every(name => this._filters[name].length === 0)) return [];
 		const filter = this.getDistinctAvailableColValues(SPECCOL);
 		return filter.length === this._speciesCount ? [] : filter;
+	}
+
+	getColumnValuesFilter(colName){
+		return this._colNames.some(name => this._filters[name].length !== 0)
+			? this.getDistinctColValues(colName)
+			: [];
 	}
 
 }

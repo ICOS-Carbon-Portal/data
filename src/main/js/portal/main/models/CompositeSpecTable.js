@@ -55,7 +55,8 @@ export default class CompositeSpecTable{
 
 		const pass2 = {};
 		this.tableNames.forEach(tname => {
-			pass2[tname] = pass1.getTable(tname).withFilter(SPECCOL, pass1.getSpeciesFilter(tname));
+			const specFilter = pass1.getSpeciesFilter(tname);
+			pass2[tname] = pass1.getTable(tname).withFilter(SPECCOL, specFilter);
 		});
 		return new CompositeSpecTable(pass2);
 	}
@@ -75,6 +76,10 @@ export default class CompositeSpecTable{
 
 	getDistinctAvailableColValues(colName){
 		return this.findTable(colName).getDistinctAvailableColValues(colName);
+	}
+
+	getColumnValuesFilter(colName){
+		return this.findTable(colName).getColumnValuesFilter(colName);
 	}
 
 }

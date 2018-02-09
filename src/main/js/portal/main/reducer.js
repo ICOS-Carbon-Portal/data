@@ -20,6 +20,7 @@ const initState = {
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
+	formatToRdfGraph: {},
 	objectsTable: [],
 	sorting: {objCount: 0},
 	paging: {},
@@ -55,8 +56,10 @@ export default function(state = initState, action){
 		case SPECTABLES_FETCHED:
 			let specTable = new CompositeSpecTable(action.specTables);
 			let objCount = getObjCount(specTable);
+
 			return update({
 				specTable,
+				formatToRdfGraph: action.formatToRdfGraph,
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount),
 				lookup: new Lookup(specTable)

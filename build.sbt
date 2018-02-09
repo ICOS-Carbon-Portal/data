@@ -15,7 +15,8 @@ lazy val commonSettings = Seq(
 		"-Ywarn-dead-code",
 		"-Ywarn-numeric-widen",
 		"-Ywarn-unused"
-	)
+	),
+	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
 val akkaVersion = "2.4.20"
