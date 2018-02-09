@@ -20,7 +20,7 @@ export default class Slider extends Component{
 		this.state = {
 			forceCollapse: props.startCollapsed || false,
 			direction: undefined,
-			defaultHeight: undefined,
+			fullHeight: undefined,
 			height: undefined
 		};
 
@@ -29,7 +29,7 @@ export default class Slider extends Component{
 
 	componentDidMount(){
 		this.setState({
-			defaultHeight: this.content.clientHeight,
+			fullHeight: this.content.clientHeight,
 			height: this.state.forceCollapse ? 0 : this.content.clientHeight
 		});
 	}
@@ -41,19 +41,23 @@ export default class Slider extends Component{
 		const content = this.content;
 		const direction = this.state.direction;
 		const height = content.clientHeight;
+		const fullHeight = height === 0 ? this.state.fullHeight : height;
 		const newDirection = (direction === undefined && height > 0) || direction === 'expand'
 			? 'collapse'
 			: 'expand';
 
 		this.setState({
 			direction: newDirection,
-			height: height + getDelta(newDirection, this.deltaStep)
+			height: height + getDelta(newDirection, this.deltaStep),
+			fullHeight
 		});
 	}
 
 	render(){
 		const {height, direction} = this.state;
-		const style = getStyle(this.state);
+		const style = direction === undefined && height !== 0
+			? {}
+			: getStyle(this.state);
 		const iconCls = height === 0 || direction === 'collapse'
 			? 'glyphicon glyphicon-collapse-down'
 			: 'glyphicon glyphicon-collapse-up';
@@ -70,15 +74,15 @@ export default class Slider extends Component{
 	}
 
 	componentDidUpdate(){
-		const {height, direction, defaultHeight} = this.state;
+		const {height, direction, fullHeight} = this.state;
 
 		if (direction === undefined || height === undefined) return;
 		if (height <= 0) {
 			this.setState({direction: undefined, height: 0});
 			return;
 		}
-		if (height >= defaultHeight) {
-			this.setState({direction: undefined, height: defaultHeight});
+		if (height >= fullHeight) {
+			this.setState({direction: undefined, height: fullHeight});
 			return;
 		}
 
@@ -93,12 +97,12 @@ const getDelta = (direction, deltaStep) => {
 };
 
 const getStyle = state => {
-	const {height, defaultHeight} = state;
+	const {height, fullHeight} = state;
 
 	if (height === undefined) return {};
 
 	const opacity = height > 100 ? 1 : (height / 100);
-	return height === defaultHeight
+	return height === fullHeight
 		? {height, overflow: 'visible', opacity, padding: 0}
 		: {height, overflow: 'hidden', opacity, padding: 0};
 };
