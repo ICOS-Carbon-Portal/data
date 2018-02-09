@@ -50,10 +50,11 @@ prefix prov: <http://www.w3.org/ns/prov#>
 select
 ?spec
 (sample(?submitterName) as ?submitter)
+(?submitterRes as ?submitterUri)
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
 (sample(?stationRes) as ?stationUri)
 (count(?dobj) as ?count)
-(if(sample(?submitterClass) = cpmeta:ThematicCenter, "ICOS", "Non-ICOS") as ?isIcos)
+(if(sample(?submitterClass) = cpmeta:ThematicCenter || sample(?submitterClass) = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
 	?dobj cpmeta:hasObjectSpec ?spec .
 	?dobj cpmeta:wasSubmittedBy [
@@ -103,7 +104,7 @@ group by ?graph`;
 
 export const listFilteredDataObjects = (config, options) => {
 
-	const {specs, stations, sorting, paging, rdfGraphs, filters} = options;
+	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
 
 	const fromClause = rdfGraphs.length
 		? 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n'
@@ -113,7 +114,11 @@ export const listFilteredDataObjects = (config, options) => {
 		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
 		 : '';
 
-	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
+	const submitterValues = submitters.length
+		?  `VALUES ?submitter {<` + submitters.join('> <') + '>}\n'
+		: '';
+
+		 const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 
 	const dobjSpec = (specs && specs.length == 1)
 		? `?dobj cpmeta:hasObjectSpec <${specs[0]}> .
@@ -160,7 +165,10 @@ ${fromClause}where {
 	${dobjSearch}
 	?dobj cpmeta:hasName ?fileName .
 	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
-	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+	${submitterValues}?dobj cpmeta:wasSubmittedBy [
+		prov:endedAtTime ?submTime ;
+		prov:wasAssociatedWith ?submitter
+	] .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
 	${filterClauses}
