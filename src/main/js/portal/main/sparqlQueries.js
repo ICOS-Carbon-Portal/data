@@ -5,7 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format
 where{
 	?spec cpmeta:hasDataLevel ?level .
-	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec}
+	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat [rdfs:label ?format ]
 }`;
@@ -18,6 +18,7 @@ select distinct ?spec ?colTitle ?valType
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
+	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valTypeRes .
 	?valTypeRes rdfs:label ?valType .
@@ -25,23 +26,6 @@ where{
 	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
 }`;
 }
-
-
-//TODO: Perhaps merge this query with 'specColumnMeta' above
-export const dobjColInfo = (config, dobj) => {
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?colTitle ?label ?valType
-(if(bound(?unit), ?unit, "?") as ?quantityUnit)
-where{
-    <${dobj}> cpmeta:hasObjectSpec ?spec .
-	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
-	?column cpmeta:hasColumnTitle ?colTitle .
-	?column cpmeta:hasValueType ?valTypeRes .
-	?column rdfs:label ?label .
-	?valTypeRes rdfs:label ?valType .
-	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
-}`;
-};
 
 
 export function dobjOriginsAndCounts(config){

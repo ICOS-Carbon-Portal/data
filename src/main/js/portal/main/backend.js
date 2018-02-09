@@ -68,31 +68,6 @@ export const searchStations = search => {
 		);
 };
 
-export const getObjColInfo = dobj => {
-	const query = queries.dobjColInfo(config, dobj);
-
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(
-			sparqlResult => {
-				const vars = sparqlResult.head.vars;
-				const bindings = sparqlResult.results.bindings;
-
-				const colInfo = vars.map(v => {
-					return {
-						name: v,
-						data: bindings.map(b => {
-							return b[v].value === "?" ? undefined : b[v].value;
-						})
-					};
-				});
-
-				return bindings
-					? Promise.resolve(colInfo)
-					: Promise.reject(new Error("Could not find dobj " + dobj));
-			}
-		);
-};
-
 export const saveCart = (email, cart) => {
 	if (email){
 		updatePersonalRestheart('users', email, {cart});
