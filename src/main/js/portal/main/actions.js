@@ -95,10 +95,14 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
 
+	const submitters = specTable.getFilter('submitter').length
+	? specTable.getDistinctAvailableColValues('submitterUri')
+	: [];
+
 	const rdfGraphs = specTable.getColumnValuesFilter('format')
 		.map(f => formatToRdfGraph[f]);
 
-	const options = {specs, stations, sorting, paging, filterTemporal, rdfGraphs};
+	const options = {specs, stations, submitters, sorting, paging, filterTemporal, rdfGraphs};
 
 	fetchFilteredDataObjects(options).then(
 		({rows}) => dispatch({
