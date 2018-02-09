@@ -19,7 +19,7 @@ export default class Filters extends Component {
 						<h3 className="panel-title">Temporal filters</h3>
 					</div>
 
-					<Slider startCollapsed={true}>
+					<Slider startCollapsed={false}>
 						<div className="panel-body" style={{paddingTop:0}}>
 							<PickDates
 								filterTemporal={props.filterTemporal}
@@ -47,8 +47,9 @@ export default class Filters extends Component {
 						<div className="panel-body" style={{paddingTop:0}}>
 							<FilterByPid
 								queryMeta={props.queryMeta}
-								pids={props.filterFreeText.pids}
-								updateFilter={props.updateFilter}
+								pidList={props.filterFreeText.pidList}
+								selectedPids={props.filterFreeText.selectedPids}
+								updateSelectedPids={props.updateSelectedPids}
 							/>
 						</div>
 					</Slider>

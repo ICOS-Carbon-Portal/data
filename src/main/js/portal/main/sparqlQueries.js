@@ -135,25 +135,7 @@ export const listFilteredDataObjects = (config, {specs, stations, sorting, pagin
 			: stationsFilter(stations)
 		: dobjSpec;
 
-	const appliedFilters = filters.reduce((acc, f) => {
-		if (f.fromDateTimeStr) {
-			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
-			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
-		}
-		if (f.toDateTimeStr) {
-			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
-			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
-		}
-		if (f.category === 'pids'){
-			f.pids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
-		}
-
-		return acc;
-	}, []);
-
-	const filterClauses = appliedFilters.length
-		? `FILTER (${appliedFilters.join(' && ')})`
-		: '';
+	const filterClauses = getFilterClauses(filters);
 
 	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
 		? (
@@ -180,3 +162,41 @@ ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
 
+const getFilterClauses = filters => {
+	const andFilters = filters.reduce((acc, f) => {
+		if (f.fromDateTimeStr) {
+			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
+			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
+		}
+		if (f.toDateTimeStr) {
+			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
+			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
+		}
+
+		return acc;
+	}, []).join(' && ');
+
+	const orFilters = filters.reduce((acc, f) => {
+		if (f.category === 'pids'){
+			f.pids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
+		}
+
+		return acc;
+	}, []).join(' || ');
+
+	let filterClauses = andFilters.length || orFilters.length
+		? 'FILTER ('
+		: '';
+	if (filterClauses.length){
+		if (andFilters.length && orFilters.length){
+			filterClauses += `${andFilters} && (${orFilters}))`;
+		} else if (andFilters.length){
+			filterClauses += `${andFilters})`;
+		}
+		else if (orFilters.length){
+			filterClauses += `${orFilters})`;
+		}
+	}
+
+	return filterClauses;
+};

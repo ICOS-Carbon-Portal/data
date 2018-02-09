@@ -5,7 +5,7 @@ import SearchFilterRouter from '../components/SearchFilterRouter.jsx';
 import DataObjectsTable from '../components/DataObjectsTable.jsx';
 import Preview from '../components/Preview.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset} from '../actions';
+import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset, updateSelectedPids} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -24,7 +24,8 @@ class Search extends Component {
 		const props = this.props;
 		const selectedTab = props.routeAndParams.filters.tab;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
-			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText']);
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
+		const hasFilters = props.filterTemporal.hasFilter || props.filterFreeText.hasFilter;
 
 		return (
 			<div className="row">
@@ -40,7 +41,7 @@ class Search extends Component {
 						/>
 						: <DataObjectsTable
 							previewAction={this.handlePreview.bind(this)}
-							hasFilters={hasFilters({filterTemporal: props.filterTemporal})}
+							hasFilters={hasFilters}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 								'cart', 'addToCart', 'removeFromCart', 'lookup'
@@ -50,10 +51,6 @@ class Search extends Component {
 		);
 	}
 }
-
-const hasFilters = ({filterTemporal}) => {
-	return filterTemporal.hasFilter;
-};
 
 function dispatchToProps(dispatch){
 	return {
@@ -67,6 +64,7 @@ function dispatchToProps(dispatch){
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),
+		updateSelectedPids: pids => dispatch(updateSelectedPids(pids)),
 	};
 }
 

@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS} from './actions';
 import {TEMPORAL_FILTER} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -17,7 +17,6 @@ const initState = {
 	routeAndParams: new RouteAndParams(),
 	filterTemporal: new FilterTemporal(),
 	filterFreeText: new FilterFreeText(),
-	filterPids: [],
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
@@ -183,9 +182,15 @@ export default function(state = initState, action){
 			});
 
 		case FREE_TEXT_FILTER:
-			const filterFreeText = action.id === 'dobj'
-				? new FilterFreeText(action.data)
-				: state.filterFreeText;
+			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
+
+			return update({
+				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary),
+				filterFreeText
+			});
+
+		case UPDATE_SELECTED_PIDS:
+			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
 
 			return update({
 				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary),
@@ -199,6 +204,16 @@ export default function(state = initState, action){
 	function update(){
 		const updates = Array.from(arguments);
 		return Object.assign.apply(Object, [{}, state].concat(updates));
+	}
+}
+
+function updateFreeTextFilter(id, data, filterFreeText){
+	switch(id){
+		case 'dobj':
+			return filterFreeText.withPidList(data);
+
+		default:
+			return filterFreeText;
 	}
 }
 

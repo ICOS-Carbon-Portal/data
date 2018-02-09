@@ -5,7 +5,6 @@ export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
 export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
-export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const PREVIEW = 'PREVIEW';
 export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
@@ -18,6 +17,8 @@ export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
+export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
+export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
 import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
 import {getUserInfo, logOutUser} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, updatePortalUsage} from './backend';
@@ -57,10 +58,6 @@ export const queryMeta = (id, search) => dispatch => {
 			searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
 			break;
 
-		case "station":
-			searchStations(search).then(data => dispatchMeta(id, data, dispatch));
-			break;
-
 		default:
 			dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
 	}
@@ -78,6 +75,15 @@ const dispatchMeta = (id, data, dispatch) => {
 	}
 };
 
+export const updateSelectedPids = selectedPids => dispatch => {
+	dispatch({
+		type: UPDATE_SELECTED_PIDS,
+		selectedPids
+	});
+
+	dispatch(getFilteredDataObjects);
+};
+
 export const specFilterUpdate = (varName, values) => dispatch => {
 	dispatch({
 		type: SPEC_FILTER_UPDATED,
@@ -89,7 +95,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 
 export const getFilteredDataObjects = (dispatch, getState) => {
 	const {specTable, routeAndParams, sorting, paging, user, filterTemporal, filterFreeText} = getState();
-	const filters = filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.pids}]);
+	const filters = filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}]);
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({

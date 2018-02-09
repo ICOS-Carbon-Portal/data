@@ -1,14 +1,23 @@
 export default class FilterFreeText{
-	constructor(pids){
-		this._pids = pids || [];
+	constructor(pidList, selectedPids){
+		this._pidList = pidList || [];
+		this._selectedPids = selectedPids || [];
 	}
 
-	withPids(pids){
-		return new FilterFreeText(pids);
+	withPidList(pidList){
+		return new FilterFreeText(pidList, this._selectedPids);
 	}
 
-	get pids(){
-		return this._pids;
+	withSelectedPids(selectedPids){
+		return new FilterFreeText(this._pidList, selectedPids);
+	}
+
+	get pidList(){
+		return Array.from(new Set(this._pidList.concat(this._selectedPids)).values());
+	}
+
+	get selectedPids(){
+		return this._selectedPids;
 	}
 
 	clearPids(){
@@ -19,14 +28,18 @@ export default class FilterFreeText{
 		if (items === undefined){
 			return this;
 		} else {
-			return new FilterFreeText([items.pid]);
+			return new FilterFreeText(items.pids, items.pids);
 		}
+	}
+
+	get hasFilter(){
+		return this._selectedPids.length > 0;
 	}
 
 	get summary(){
 		const res = {};
 
-		if (this._pids.length === 1) res.pid = this._pids[0];
+		if (this._selectedPids.length > 0) res.pids = this._selectedPids;
 
 		return res;
 	}
