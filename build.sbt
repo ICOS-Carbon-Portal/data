@@ -53,7 +53,8 @@ lazy val netcdf = (project in file("netcdf"))
 				Some("releases"  at nexus + "releases")
 		},
 		crossScalaVersions := Seq(defaultScala, "2.11.11"),
-		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
+		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+		watchService := (() => new sbt.io.PollingWatchService(pollInterval.value))
 	)
 
 val npmPublish = taskKey[Unit]("runs 'npm publish'")
