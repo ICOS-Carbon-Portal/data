@@ -28,6 +28,7 @@ object Main extends App {
 	implicit val dispatcher = system.dispatcher
 
 	val config = ConfigReader.getDefault
+	implicit val envriConfigs = ConfigReader.metaCore.envriConfigs
 
 	private def netCdfServiceFactory(netCdfFolder: String) = {
 		import config.netcdf._
@@ -36,7 +37,7 @@ object Main extends App {
 	}
 
 	val http = Http()
-	val metaClient = new MetaClient(config.meta, ConfigReader.metaCore.envriConfigs)
+	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
 
 	val uploadService = new UploadService(config.upload, metaClient)

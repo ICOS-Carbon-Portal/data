@@ -37,6 +37,7 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import LicenceRouting._
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
+import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri
 
 
@@ -50,7 +51,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private implicit val envriConfs = coreConf.envriConfigs
 	private val log = uploadService.log
 	private val downloadService = new DownloadService(coreConf, uploadService, log)
-	val extractEnvri = extractHost.map(host => Envri.infer(host).get)
+	val extractEnvri = extractEnvriDirective
 
 	private val upload: Route = path(Sha256Segment){ hashsum =>
 		userRequired{ uid =>
@@ -225,5 +226,7 @@ object UploadRouting{
 
 		handleRejections(rejHandler) & headerValueByType[`X-Forwarded-For`](()).map(_.value)
 	}
+
+	def extractEnvriDirective(implicit configs: EnvriConfigs) = extractHost.map(host => Envri.infer(host).get)
 
 }
