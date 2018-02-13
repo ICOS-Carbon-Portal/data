@@ -9,7 +9,7 @@
 @template{
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-	<link rel="stylesheet" href="https://static.icos-cp.eu/data_licence/style.css">
+	<style>@LicenceStyle(envri)</style>
 }{
 <div class="cp_page_container">
 
@@ -214,19 +214,6 @@
 
 </div>
 
-<style>
-	.panel-heading {
-		color: #337ab7;
-		background-color: #f5f5f5;
-	}
-	.panel-heading:hover {
-		color: #000;
-		background-color: @panelBackgroundColor;
-	}
-	.panel a {
-		text-decoration: none;
-	}
-</style>
 }
 
 @template = @{
@@ -239,8 +226,4 @@
 
 @name = @{
 	envri
-}
-
-@panelBackgroundColor = @{
-	if(envri == Envri.SITES) "#8FB17A" else "#bd7931"
 }
