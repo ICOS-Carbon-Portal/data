@@ -5,6 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat [rdfs:label ?format ]
@@ -41,6 +42,7 @@ select
 (if(sample(?submitterClass) = cpmeta:ThematicCenter || sample(?submitterClass) = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
 	?dobj cpmeta:hasObjectSpec ?spec .
+	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	?dobj cpmeta:wasSubmittedBy [
 		prov:wasAssociatedWith ?submitterRes ;
 		prov:endedAtTime []
@@ -147,6 +149,7 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
 	${specsValues}
 	${dobjSearch}
+	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	?dobj cpmeta:hasName ?fileName .
 	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	${submitterValues}?dobj cpmeta:wasSubmittedBy [
