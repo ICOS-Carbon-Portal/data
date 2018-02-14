@@ -10,15 +10,18 @@ import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.unmarshalling.Unmarshaller
+import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+
 import scala.concurrent.Future
 import scala.util.Try
 
-class LicenceRouting(authRouting: AuthRouting) {
+class LicenceRouting(authRouting: AuthRouting)(implicit envriConfs: EnvriConfigs) {
 
 	import LicenceRouting._
-	import UploadRouting.Sha256Segment
 	import StaticRouting.pageMarshaller
 	import authRouting.user
+	private val extractEnvri = UploadRouting.extractEnvriDirective
 
 	def route: Route = parameter(('ids.as[Seq[Sha256Sum]], 'fileName.?)){(dobjs, fileOpt) =>
 		path("licence_accept"){
@@ -38,10 +41,12 @@ class LicenceRouting(authRouting: AuthRouting) {
 	} ~ path("licence"){dataLicence(Nil, None)}
 
 	private def dataLicence(dobjIds: Seq[Sha256Sum], fileName: Option[String]): Route = {
-		user{uid =>
-			complete(views.html.LicencePage(Some(uid), dobjIds, fileName))
-		} ~
-		complete(views.html.LicencePage(None, dobjIds, fileName))
+		extractEnvri{implicit envri =>
+			user{uid =>
+				complete(views.html.LicencePage(Some(uid), dobjIds, fileName))
+			} ~
+				complete(views.html.LicencePage(None, dobjIds, fileName))
+		}
 	}
 }
 

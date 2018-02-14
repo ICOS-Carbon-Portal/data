@@ -24,7 +24,7 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import spray.json._
 
-class MetaClient(config: MetaServiceConfig, envriConfs: EnvriConfigs)(implicit val system: ActorSystem) {
+class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher = system.dispatcher
 	implicit val materializer = ActorMaterializer(None, Some("metaClientMat"))
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
