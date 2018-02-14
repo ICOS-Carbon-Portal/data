@@ -227,6 +227,10 @@ object UploadRouting{
 		handleRejections(rejHandler) & headerValueByType[`X-Forwarded-For`](()).map(_.value)
 	}
 
-	def extractEnvriDirective(implicit configs: EnvriConfigs) = extractHost.map(host => Envri.infer(host).get)
+	def extractEnvriDirective(implicit configs: EnvriConfigs) = extractHost.map(
+		host => Envri.infer(host).getOrElse{
+			throw new Exception("Could not find ENVRI for host " + host)
+		}
+	)
 
 }
