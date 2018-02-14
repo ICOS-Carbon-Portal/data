@@ -74,7 +74,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.5.1-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.7-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.2-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.3-SNAPSHOT",
 
 		// *** manually published on CP Nexus 3rd party repo ***
 			"org.irods.jargon"    % "jargon-core"      % "4.0.2.4", //IRODS client core features
