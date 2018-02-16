@@ -20,7 +20,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.ZipWith
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.ColumnFormats
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.meta.core.data.TimeInterval
@@ -38,9 +38,11 @@ object WdcggStreams{
 		.map(_.decodeString(charSet).replace("\r", ""))
 
 
-	def wdcggParser(implicit ctxt: ExecutionContext): Flow[String, WdcggRow, Future[Done]] =
-		TimeSeriesStreams.errorCapturingParser(Flow[String].scan(seed)(parseLine))
-			.map(acc => new WdcggRow(acc.header, acc.cells))
+	def wdcggParser(implicit ctxt: ExecutionContext): Flow[String, WdcggRow, Future[Done]] = Flow[String]
+		.scan(seed)(parseLine)
+		.exposeParsingError
+		.keepGoodRows
+		.map(acc => new WdcggRow(acc.header, acc.cells))
 
 
 	def wdcggToBinTableConverter(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {

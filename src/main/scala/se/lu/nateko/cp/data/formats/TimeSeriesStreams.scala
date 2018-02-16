@@ -6,6 +6,7 @@ import scala.concurrent.Future
 import akka.Done
 import akka.NotUsed
 import akka.stream.FlowShape
+import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Broadcast
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Framing
@@ -20,36 +21,28 @@ import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
 
 object TimeSeriesStreams {
 
+	implicit class TimeSeriesParserEnhancer[A <: ParsingAccumulator, M](val parser: Flow[String, A, M]) extends AnyVal {
+
+		def exposeParsingError(implicit ctxt: ExecutionContext): Flow[String, A, Future[Done]] = {
+
+			val errorSink: Sink[A, Future[Done]] = Flow.apply[A]
+				.filter(_.error.isDefined)
+				.toMat(Sink.headOption){(_, err) =>
+					err.flatMap{
+						_.flatMap(_.error).fold(Future.successful(Done))(Future.failed)
+					}
+				}
+			parser.alsoToMat(errorSink)(Keep.right)
+		}
+
+		def keepGoodRows: Flow[String, A, M] = parser.filter(acc => acc.isOnData && acc.error.isEmpty)
+	}
+
+
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
 
-	def errorCapturingParser[A <: ParsingAccumulator](parser: Flow[String, A, NotUsed])(implicit ctxt: ExecutionContext): Flow[String, A, Future[Done]] = {
-
-		val errorExtractor: Sink[A, Future[Done]] = Flow[A]
-			.filter(_.error.isDefined)
-			.mapConcat[Throwable](_.error.toList)
-			.toMat(Sink.headOption){(_, errOptFut) =>
-				errOptFut.flatMap{
-					case Some(err) => Future.failed(err)
-					case _ => Future.successful(Done)
-				}
-			}
-
-		val graph = GraphDSL.create(errorExtractor){implicit b => errorSink =>
-			import GraphDSL.Implicits._
-			val stringToAcc = b.add(parser)
-			val accCloner = b.add(Broadcast[A](2))
-			stringToAcc.out ~> accCloner.in
-
-			val accFilter = b.add(Flow[A].filter(acc => acc.isOnData && acc.error.isEmpty))
-			accCloner.out(0) ~> accFilter.in
-			accCloner.out(1) ~> errorSink.in
-			FlowShape(stringToAcc.in, accFilter.out)
-		}
-
-		Flow.fromGraph(graph)
-	}
 
 	def timeSeriesToBinTableConverter[H <: TableRowHeader](
 		formats: ColumnFormats,
