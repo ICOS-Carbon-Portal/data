@@ -1,5 +1,7 @@
 val defaultScala = "2.12.4"
 
+watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
+
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
 	scalaVersion := defaultScala,
@@ -53,8 +55,7 @@ lazy val netcdf = (project in file("netcdf"))
 				Some("releases"  at nexus + "releases")
 		},
 		crossScalaVersions := Seq(defaultScala, "2.11.11"),
-		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
-		watchService := (() => new sbt.io.PollingWatchService(pollInterval.value))
+		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
 val npmPublish = taskKey[Unit]("runs 'npm publish'")
