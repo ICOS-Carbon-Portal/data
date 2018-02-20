@@ -42,14 +42,19 @@ object Main extends App {
 
 	val uploadService = new UploadService(config.upload, metaClient)
 
+	val netcdfRoute = NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
+	val legacyNetcdfRoute = NetcdfRoute(netCdfServiceFactory(config.netcdf.folder))
+
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
-	val tabularRouting = new TabularFetchRouting(binTableFetcher)
+	val tabularRoute = new TabularFetchRouting(binTableFetcher).route
 
 	val authRouting = new AuthRouting(config.auth)
-	val uploadRouting = new UploadRouting(authRouting, uploadService, restHeart, ConfigReader.metaCore)
+	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, ConfigReader.metaCore).route
 
-	val licenceRouting = new LicenceRouting(authRouting)
-	val stiltFetcher = new StiltResultsFetcher(config.stilt, config.netcdf)
+	val licenceRoute = new LicenceRouting(authRouting).route
+	val stiltRoute = StiltRouting(new StiltResultsFetcher(config.stilt, config.netcdf))
+	val staticRoute = StaticRouting.route
+	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
@@ -62,14 +67,14 @@ object Main extends App {
 	}
 
 	val route = handleExceptions(exceptionHandler){
-		NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/")) ~
-		NetcdfRoute(netCdfServiceFactory(config.netcdf.folder)) ~
-		uploadRouting.route ~
-		tabularRouting.route ~
-		StiltRouting(stiltFetcher) ~
-		StaticRouting.route ~
-		licenceRouting.route ~
-		new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route ~
+		netcdfRoute ~
+		legacyNetcdfRoute ~
+		uploadRoute ~
+		tabularRoute ~
+		stiltRoute ~
+		staticRoute ~
+		licenceRoute ~
+		etcUploadRoute ~
 		authRouting.whoami ~
 		authRouting.logout
 	}
