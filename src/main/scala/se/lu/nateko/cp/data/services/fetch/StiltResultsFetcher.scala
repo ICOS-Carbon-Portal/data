@@ -1,19 +1,20 @@
 package se.lu.nateko.cp.data.services.fetch
 
-import se.lu.nateko.cp.data.StiltConfig
-import java.nio.file.Paths
 import java.io.File
-import java.nio.file.Files
-import scala.collection.JavaConverters._
 import java.nio.file.Path
-import akka.stream.scaladsl.Source
-import scala.io.{Source => IoSource}
-import akka.util.ByteString
+import java.nio.file.Paths
+
+import scala.collection.JavaConverters._
+import scala.io.{ Source => IoSource }
+
 import akka.NotUsed
-import se.lu.nateko.cp.data.formats.csv.NumericScv
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import se.lu.nateko.cp.data.NetCdfConfig
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
+import se.lu.nateko.cp.data.StiltConfig
+import se.lu.nateko.cp.data.formats.csv.NumericScv
 import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
+import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 
 
 class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
@@ -61,15 +62,8 @@ class StiltResultsFetcher(config: StiltConfig, netcdf: NetCdfConfig) {
 
 object StiltResultFetcher{
 
-	def listFileNames(dir: Path, fileGlob: String): Seq[String] = {
-		val dirStream = Files.newDirectoryStream(dir, fileGlob)
-		try{
-			dirStream
-				.asScala
-				.map(_.getFileName.toString)
-				.toIndexedSeq
-		} finally {
-			dirStream.close()
+	def listFileNames(dir: Path, fileGlob: String): Seq[String] =
+		se.lu.nateko.cp.data.api.Utils.iterateChildren(dir, Some(fileGlob)){
+			_.map(_.getFileName.toString).toIndexedSeq
 		}
-	}
 }
