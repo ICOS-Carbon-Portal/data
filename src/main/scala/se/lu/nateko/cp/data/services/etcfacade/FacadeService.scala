@@ -48,13 +48,13 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	def getObjectSource(station: StationId, hash: Sha256Sum): Path =
 		getStationFolder(station).resolve(hash.id)
 
-	def getFileSink(file: EtcFilename, md5: Md5Sum): Sink[ByteString, Future[Done]] = {
-		val tmpPath = Files.createTempFile(file.toString + ".", "")
+	def getFileSink(fn: EtcFilename, md5: Md5Sum): Sink[ByteString, Future[Done]] = {
+		val tmpPath = Files.createTempFile(fn.toString + ".", "")
+		val targetFile = getFilePath(fn)
 
 		def transactUpload(): Done = {
-			val path = getFilePath(file)
-			Files.createDirectories(path.getParent)
-			Files.move(tmpPath, path, REPLACE_EXISTING)
+			Files.createDirectories(targetFile.getParent)
+			Files.move(tmpPath, targetFile, REPLACE_EXISTING)
 			Done
 		}
 
@@ -70,42 +70,47 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 					new ChecksumError(s"Expected MD5 checksum $md5, got $md5Actual")
 				)
 			) yield done).andThen{
-				case Success(_) => performUpload(file)
+				case Success(_) => performUpload(targetFile, fn)
 				case Failure(_) => Files.deleteIfExists(tmpPath)
 			}
 		}
 	}
 
-	private[etcfacade] def performUpload(file: EtcFilename): Future[Done] = {
-		if(file.time.isDefined){
-			val futSeq = getZippableDailyECs(getStationFolder(file.station))
-				.map{case (target, sources) =>
+	private[etcfacade] def performUpload(file: Path, fn: EtcFilename): Future[Done] = {
+		if(fn.time.isDefined){
+			val futSeq = getZippableDailyECs(getStationFolder(fn.station))
+				.map{case (archiveFn, sources) =>
+
 					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName.toString)
-					zipToArchive(srcFiles, getFilePath(target))
-						.flatMap(hash => performEtcUpload(target, Some(hash)))
+
+					zipToArchive(srcFiles, archiveFn).flatMap{
+						case (file, hash) => performEtcUpload(file, archiveFn, Some(hash))
+					}
 				}
 			Future.sequence(futSeq).map(_ => Done)
 		}
-		else performEtcUpload(file, None)
+		else performEtcUpload(file, fn, None)
 	}
 
-	private def performEtcUpload(file: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
+	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
 		.map(Future.successful)
 		.getOrElse(FileIO
-			.fromPath(getFilePath(file))
+			.fromPath(file)
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.to(Sink.ignore)
 			.run()
 		)
-		.map(getUploadMeta(file, _))
+		.map(getUploadMeta(fn, _))
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
 		.andThen{
 			case Failure(err) =>
+				//file can be a temp file outside the staging folder. If not, the next line is a noop.
+				Files.move(file, getFilePath(fn), REPLACE_EXISTING)
 				log.error(err, "ETC upload registration with meta service failed")
 		}
 		.flatMap{etcMeta =>
-			Files.move(getFilePath(file), getObjectSource(file.station, etcMeta.hashSum), REPLACE_EXISTING)
-			uploadDataObject(file.station, etcMeta.hashSum)
+			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
+			uploadDataObject(fn.station, etcMeta.hashSum)
 		}
 
 	private[etcfacade] def uploadDataObject(station: StationId, hash: Sha256Sum): Future[Done] = upload
@@ -183,19 +188,13 @@ object FacadeService{
 	}
 
 
-	def zipToArchive(files: Vector[Path], target: Path)(implicit mat: Materializer, ctxt: ExecutionContext): Future[Sha256Sum] = {
+	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
 		import se.lu.nateko.cp.data.streams.ZipEntryFlow._
 
-		val tmpFile = Files.createTempFile(target.getFileName.toString, "")
+		val tmpFile = Files.createTempFile(fn.toString, "")
 
 		val fileEntries: Vector[FileEntry] = files.map{file =>
 			file.getFileName.toString -> FileIO.fromPath(file)
-		}
-
-		def transactArchival(): Future[Done] = Future{
-			Files.move(tmpFile, target, REPLACE_EXISTING)
-			files.foreach(Files.delete)
-			Done
 		}
 
 		getMultiEntryZipStream(Source(fileEntries))
@@ -206,9 +205,8 @@ object FacadeService{
 					val finalHashFut = for(
 						hash <- hashFut;
 						io <- ioFut;
-						_ <- Future.fromTry(io.status);
-						_ <- transactArchival()
-					) yield hash
+						_ <- Future.fromTry(io.status)
+					) yield tmpFile -> hash
 					finalHashFut.failed.foreach( _ => Files.deleteIfExists(tmpFile))
 					finalHashFut
 			}

@@ -13,6 +13,7 @@ import akka.stream.Materializer
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import java.nio.file.Path
 
 private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit mat: Materializer) {
 
@@ -25,25 +26,31 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 		}
 	})
 
-	private def retryStuckFiles(): Future[Done] = retryEntities(
+	private def retryStuckFiles(): Future[Done] = retryEntities[EtcFilename](
 		(station, filename) => EtcFilename.parse(filename),
-		facade.performUpload
+		fn => facade.performUpload(facade.getFilePath(fn), fn),
+		facade.getFilePath
 	)
 
 	private def retryStuckObjects(): Future[Done] = retryEntities(
 		(station, filename) => Sha256Sum.fromBase64Url(filename).map(station -> _),
-		(facade.uploadDataObject _).tupled
+		(facade.uploadDataObject _).tupled,
+		(facade.getObjectSource _).tupled
 	)
 
 	private def retryEntities[T](
 		parser: (StationId, String) => Try[T],
-		singleJob: T => Future[Done]
+		singleJob: T => Future[Done],
+		fileToCheck: T => Path
 	): Future[Done] = {
 		def retrySequentially(queue: List[T]): Future[Done] = queue match{
 			case Nil =>
 				Future.successful(Done)
 			case first :: rest =>
-				singleJob(first).transformWith(_ => retrySequentially(rest))
+				val firstJob = if(Files.exists(fileToCheck(first)))
+					singleJob(first)
+				else Future.successful(Done)
+				firstJob.transformWith(_ => retrySequentially(rest))
 		}
 
 		val queue = getStations.flatMap(station => getStuckEntities(station, parser(station, _)))
