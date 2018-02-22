@@ -201,14 +201,18 @@ object FacadeService{
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.toMat(FileIO.toPath(tmpFile))(Keep.both)
 			.mapMaterializedValue{
-				case (hashFut, ioFut) =>
-					val finalHashFut = for(
+				case (hashFut, ioFut) => {
+					for(
 						hash <- hashFut;
 						io <- ioFut;
 						_ <- Future.fromTry(io.status)
 					) yield tmpFile -> hash
-					finalHashFut.failed.foreach( _ => Files.deleteIfExists(tmpFile))
-					finalHashFut
+				}.andThen{
+					case Success(_) =>
+						files.foreach(Files.delete)
+					case Failure(_) =>
+						Files.deleteIfExists(tmpFile)
+				}
 			}
 			.run()
 	}
