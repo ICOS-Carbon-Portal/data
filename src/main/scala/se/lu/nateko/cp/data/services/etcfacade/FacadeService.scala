@@ -60,26 +60,27 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 		Flow.apply[ByteString]
 			.viaMat(DigestFlow.md5)(Keep.right)
-			.toMat(FileIO.toPath(tmpPath)){(md5Fut, ioFut) =>
-
-			(for(
-				md5Actual <- md5Fut;
-				ioRes <- ioFut;
-				_ <- Future.fromTry(ioRes.status);
-				done <- if(md5Actual == md5) Future(transactUpload()) else Future.failed(
-					new ChecksumError(s"Expected MD5 checksum $md5, got $md5Actual")
-				)
-			) yield done).andThen{
-				case Success(_) => performUpload(targetFile, fn)
-				case Failure(_) => Files.deleteIfExists(tmpPath)
+			.toMat(FileIO.toPath(tmpPath)){
+				(md5Fut, ioFut) => {
+					for(
+						md5Actual <- md5Fut;
+						ioRes <- ioFut;
+						_ <- Future.fromTry(ioRes.status);
+						done <- if(md5Actual == md5) Future(transactUpload()) else Future.failed(
+							new ChecksumError(s"Expected MD5 checksum $md5, got $md5Actual")
+						)
+					) yield done
+				}.andThen{
+					case Success(_) => performUpload(targetFile, fn)
+					case Failure(_) => Files.deleteIfExists(tmpPath)
+				}
 			}
-		}
 	}
 
 	private[etcfacade] def performUpload(file: Path, fn: EtcFilename): Future[Done] = {
 		if(fn.time.isDefined){
 			val futSeq = getZippableDailyECs(getStationFolder(fn.station))
-				.map{case (archiveFn, sources) =>
+				.collect{case (archiveFn, sources) if(sources contains fn) =>
 
 					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName.toString)
 
@@ -187,7 +188,6 @@ object FacadeService{
 		}
 	}
 
-
 	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
 		import se.lu.nateko.cp.data.streams.ZipEntryFlow._
 
@@ -209,7 +209,7 @@ object FacadeService{
 					) yield tmpFile -> hash
 				}.andThen{
 					case Success(_) =>
-						files.foreach(Files.delete)
+						files.foreach(Files.deleteIfExists)
 					case Failure(_) =>
 						Files.deleteIfExists(tmpFile)
 				}
