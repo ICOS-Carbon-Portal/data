@@ -8,8 +8,6 @@ import java.time.ZoneOffset
 abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[String], offsetFromUtc: Int, nRows: Int)
 	extends TimeSeriesToBinTableConverter(colFormats, columnNames, nRows){
 
-	import TimeSeriesToBinTableConverter.timeStampCol
-
 	protected def timeCol: String
 	protected def dateCol: String
 
@@ -21,8 +19,8 @@ abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnFor
 	assert(timePos >= 0, s"Column $timeCol is missing from metadata descriptions")
 	assert(datePos >= 0, s"Column $dateCol is missing from metadata descriptions")
 
-	private val Seq(dateNull, timeNull, stampNull) = Seq(dateCol, timeCol, timeStampCol)
-		.map(col => getNull(colFormats(col)))
+	private val Seq(dateNull, timeNull, stampNull) = Seq(dateCol, timeCol, colFormats.timeStampColumn)
+		.map(col => getNull(colFormats.valueFormats(col)))
 
 	override protected def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef = {
 		val date = parsed(datePos).asInstanceOf[Int]

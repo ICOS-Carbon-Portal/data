@@ -11,13 +11,12 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.SparqlClient
-import se.lu.nateko.cp.data.formats.ColumnFormats
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams
-import se.lu.nateko.cp.data.formats.ValueFormat
+import se.lu.nateko.cp.data.formats.{ColumnFormats, ColumnValueFormats, TimeSeriesStreams, ValueFormat}
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.streams.KeepFuture
+import se.lu.nateko.cp.meta.core.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.{DataObject, IngestionMetadataExtract}
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
@@ -28,7 +27,7 @@ import scala.concurrent.ExecutionContext
 class IngestionUploadTask(
 	dataObj: DataObject,
 	originalFile: File,
-	formats: ColumnFormats
+	formats: ColumnValueFormats
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
 	//import sparql.materializer.executionContext
@@ -39,15 +38,17 @@ class IngestionUploadTask(
 		val format = dataObj.specification.format
 
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
+		import se.lu.nateko.cp.data.api.SitesMetaVocab.simpleSitesCsvTimeSer
 
+		val icosColumnFormats = ColumnFormats(formats, "TIMESTAMP")
 		format.uri match {
 
 			case `asciiWdcggTimeSer` =>
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-				val converter = wdcggToBinTableConverter(formats)
+				val converter = wdcggToBinTableConverter(icosColumnFormats)
 				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
 
-			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` =>
+			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` =>
 
 				dataObj.specificInfo.right.toOption.flatMap(_.nRows) match{
 
@@ -57,13 +58,17 @@ class IngestionUploadTask(
 					case Some(nRows) =>
 						if(format.uri == asciiEtcTimeSer) {
 							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-							val converter = ecoCsvToBinTableConverter(nRows, formats)
+							val converter = ecoCsvToBinTableConverter(nRows, icosColumnFormats)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser, converter)
-						} else {
+						} else if (format.uri == asciiOtcSocatTimeSer) {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							val converter = socatTsvToBinTableConverter(nRows, formats)
+							val converter = socatTsvToBinTableConverter(nRows, icosColumnFormats)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
-						}
+						} else {
+              import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
+              val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
+              makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
+            }
 				}
 
 			case _ =>
@@ -105,14 +110,14 @@ class IngestionUploadTask(
 
 object IngestionUploadTask{
 
-	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
+	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[IngestionUploadTask] = {
 		import sparql.materializer.executionContext
 		getColumnFormats(dataObj.hash, sparql).map{formats =>
 			new IngestionUploadTask(dataObj, originalFile, formats)
 		}
 	}
 
-	def getColumnFormats(dataObjHash: Sha256Sum, sparql: SparqlClient): Future[ColumnFormats] = {
+	def getColumnFormats(dataObjHash: Sha256Sum, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[ColumnValueFormats] = {
 		import sparql.materializer.executionContext
 		val dataObjUri = CpMetaVocab.getDataObject(dataObjHash)
 

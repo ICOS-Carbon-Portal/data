@@ -19,22 +19,22 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
 	val schema = {
-		val dataTypes = sortedColumns.map(colFormats).map(valueFormatParser.getBinTableDataType)
+		val dataTypes = sortedColumns.map(colFormats.valueFormats).map(valueFormatParser.getBinTableDataType)
 		new Schema(dataTypes, nRows.toLong)
 	}
 
-	private val stampPos = sortedColumns.indexOf(timeStampCol)
+	private val stampPos = sortedColumns.indexOf(colFormats.timeStampColumn)
 
 	def parseCells(cells: Array[String]): Array[AnyRef] = {
 		val parsed = sortedColumns.map{ colName =>
-			if(colName == timeStampCol) null else {
-				val valFormat = colFormats(colName)
+			if(colName == colFormats.timeStampColumn) null else {
+				val valFormat = colFormats.valueFormats(colName)
 
 				val colPos = try{
 					colPositions(colName)
 				} catch {
 					case _: NoSuchElementException =>
-						val missingColumns = colFormats.keys.filterNot(colPositions.contains).filter(_ != timeStampCol)
+						val missingColumns = colFormats.valueFormats.keys.filterNot(colPositions.contains).filter(_ != colFormats.timeStampColumn)
 						throw new CpDataParsingException("Missing columns: " + missingColumns.mkString(", "))
 				}
 
@@ -54,8 +54,6 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 
 object TimeSeriesToBinTableConverter{
 
-	val timeStampCol = "TIMESTAMP"
-
 	def computeIndices(strings: Array[String]): Map[String, Int] = {
 		strings.zipWithIndex.groupBy(_._1).map{
 			case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
@@ -64,8 +62,8 @@ object TimeSeriesToBinTableConverter{
 
 	def recoverTimeStamp(cells: Array[AnyRef], formats: ColumnFormats): Instant = {
 		val sortedCols = formats.sortedColumns
-		val stampColIndex = sortedCols.indexOf(timeStampCol)
-		assert(stampColIndex >= 0, timeStampCol + " not found in:  ." + sortedCols.mkString(", "))
+		val stampColIndex = sortedCols.indexOf(formats.timeStampColumn)
+		assert(stampColIndex >= 0, formats.timeStampColumn + " not found in:  ." + sortedCols.mkString(", "))
 		val epochMilli = cells(stampColIndex).asInstanceOf[Double]
 		Instant.ofEpochMilli(epochMilli.toLong)
 	}

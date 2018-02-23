@@ -8,16 +8,17 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
-import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.data.api.{CpMetaVocab, MetaClient, SitesMetaVocab}
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
+import se.lu.nateko.cp.meta.core.EnvriConfig
+import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri
-import se.lu.nateko.cp.data.api.CpMetaVocab
 
-class UploadService(config: UploadConfig, val meta: MetaClient) {
+class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: EnvriConfigs) {
 
 	import meta.{system, dispatcher}
 	import UploadService._
@@ -31,6 +32,10 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val irods = IrodsClient(config.irods)
+
+	private implicit def getEnvriConfig(implicit envri: Envri): EnvriConfig = {
+		envriConfs.getOrElse(envri, throw new Exception(s"Did not find config for ENVRI $envri"))
+	}
 
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
@@ -77,7 +82,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 		}
 	}
 
-	private def getUploadTasks(dataObj: DataObject): Future[IndexedSeq[UploadTask]] = {
+	private def getUploadTasks(dataObj: DataObject)(implicit  envri: Envri): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
 		def defaults = IndexedSeq.empty :+
@@ -99,7 +104,11 @@ class UploadService(config: UploadConfig, val meta: MetaClient) {
 						defaults :+ ingestionTask
 					}
 
-				} else if(formatUri == CpMetaVocab.asciiEtcTimeSer || formatUri == CpMetaVocab.asciiOtcSocatTimeSer){
+				} else if (
+						formatUri == CpMetaVocab.asciiEtcTimeSer ||
+						formatUri == CpMetaVocab.asciiOtcSocatTimeSer ||
+						formatUri == SitesMetaVocab.simpleSitesCsvTimeSer
+				){
 					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
 						defaultsWithIrods :+
 						ingestionTask :+

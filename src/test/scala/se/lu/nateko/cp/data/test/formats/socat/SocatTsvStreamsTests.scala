@@ -29,13 +29,16 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val nRows = 526
 
-	val formats = Map(
-		"TIMESTAMP" -> Iso8601DateTime,
-		"Latitude" -> DoubleValue,
-		"Longitude" -> DoubleValue,
-		"Depth water [m]" -> FloatValue,
-		"Temp [°C]" -> FloatValue,
-		"fCO2water_SST_wet [µatm] (Recomputed after SOCAT (Pfeil...)" -> FloatValue
+	val formats = ColumnFormats(
+		Map(
+			"TIMESTAMP" -> Iso8601DateTime,
+			"Latitude" -> DoubleValue,
+			"Longitude" -> DoubleValue,
+			"Depth water [m]" -> FloatValue,
+			"Temp [°C]" -> FloatValue,
+			"fCO2water_SST_wet [µatm] (Recomputed after SOCAT (Pfeil...)" -> FloatValue
+		),
+		"TIMESTAMP"
 	)
 
 	val rowsSource = StreamConverters
@@ -66,7 +69,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		assert(readResult.count === 72067)
 		assert(nRowsWritten === nRows)
-		assert(formats.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
+		assert(formats.valueFormats.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
 
 	}
 

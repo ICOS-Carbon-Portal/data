@@ -13,6 +13,7 @@ case object Iso8601Date extends ValueFormat
 case object EtcDate extends ValueFormat
 case object Iso8601DateTime extends ValueFormat
 case object Iso8601TimeOfDay extends ValueFormat
+case object IsoLikeLocalDateTime extends ValueFormat
 
 object ValueFormat{
 
@@ -27,6 +28,7 @@ object ValueFormat{
 		case `etcDate` => EtcDate
 		case `iso8601dateTime` => Iso8601DateTime
 		case `iso8601timeOfDay` => Iso8601TimeOfDay
+		case `isoLikeLocalDateTime` => IsoLikeLocalDateTime
 		case _ => throw new CpDataException(s"Unsupported value format $uri")
 	}
 }

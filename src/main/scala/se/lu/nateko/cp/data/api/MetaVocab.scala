@@ -1,6 +1,8 @@
 package se.lu.nateko.cp.data.api
 
 import java.net.URI
+
+import se.lu.nateko.cp.meta.core.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 abstract class MetaVocab(baseUri: URI) {
@@ -16,7 +18,8 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
 	val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
 
-	def getDataObject(hash: Sha256Sum) = new URI("https://meta.icos-cp.eu/objects/" + hash.id)
+	def getDataObject(hash: Sha256Sum)(implicit envri: EnvriConfig) =
+		new URI(s"${envri.metaPrefix}objects/${hash.id}")
 
 	val float32 = getRelative("float32")
 	val float64 = getRelative("float64")
@@ -26,4 +29,10 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val etcDate = getRelative("etcDate")
 	val iso8601dateTime = getRelative("iso8601dateTime")
 	val iso8601timeOfDay = getRelative("iso8601timeOfDay")
+	val isoLikeLocalDateTime = getRelative("isoLikeLocalDateTime")
+}
+
+object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
+
+	val simpleSitesCsvTimeSer = getRelative("simpleSitesCsv")
 }

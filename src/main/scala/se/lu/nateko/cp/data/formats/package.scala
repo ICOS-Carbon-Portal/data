@@ -2,10 +2,12 @@ package se.lu.nateko.cp.data
 
 package object formats {
 
-	type ColumnFormats = Map[String, ValueFormat]
+	type ColumnValueFormats = Map[String, ValueFormat]
+
+	case class ColumnFormats(valueFormats: ColumnValueFormats, timeStampColumn: String)
 
 	implicit class EnrichedColumnFormats(val formats: ColumnFormats) extends AnyVal{
-		def sortedColumns = formats.keys.toArray.sorted
+		def sortedColumns: Array[String] = formats.valueFormats.keys.toArray.sorted
 	}
 
 }

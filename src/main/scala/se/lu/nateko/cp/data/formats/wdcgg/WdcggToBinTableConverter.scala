@@ -18,8 +18,9 @@ class WdcggToBinTableConverter(colFormats: ColumnFormats, header: WdcggParser.He
 		case FloatValue | DoubleValue => floatNullRegex.findFirstIn(value).isDefined
 		case StringValue => value == null
 		case Iso8601Date => nullDates.contains(value.substring(5))
-		case Iso8601DateTime | EtcDate => false //do not occur in WDCGG
+		case Iso8601DateTime | EtcDate => throw new Exception("Did not expect these value types (Iso8601DateTime | EtcDate) in WDCGG data")
 		case Iso8601TimeOfDay => value == "99:99" || value.startsWith("25:") || value.startsWith("26:")
+		case IsoLikeLocalDateTime => throw new Exception("Did not expect this value type (IsoLikeLocalDateTime) in WDCGG data")
 	}
 
 	def amend(value: String, format: ValueFormat): String = format match {

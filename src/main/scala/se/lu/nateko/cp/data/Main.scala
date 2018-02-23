@@ -40,7 +40,7 @@ object Main extends App {
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
 
-	val uploadService = new UploadService(config.upload, metaClient)
+	val uploadService = new UploadService(config.upload, metaClient, envriConfigs)
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRouting = new TabularFetchRouting(binTableFetcher)

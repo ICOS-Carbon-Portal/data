@@ -29,16 +29,19 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val nRows = 48
 
-	val formats = Map(
-		"date" -> EtcDate,
-		"TIMESTAMP" -> Iso8601DateTime,
-		"time" -> Iso8601TimeOfDay,
-		"H_1_1_1" -> FloatValue,
-		"H_f_1_1_1" -> FloatValue,
-		"Fc_1_1_1" -> FloatValue,
-		"LE_1_1_1" -> FloatValue,
-		"NEE_1_1_1" -> FloatValue,
-		"Ustar_1_1_1" -> FloatValue
+	val formats = ColumnFormats(
+		Map(
+			"date" -> EtcDate,
+			"TIMESTAMP" -> Iso8601DateTime,
+			"time" -> Iso8601TimeOfDay,
+			"H_1_1_1" -> FloatValue,
+			"H_f_1_1_1" -> FloatValue,
+			"Fc_1_1_1" -> FloatValue,
+			"LE_1_1_1" -> FloatValue,
+			"NEE_1_1_1" -> FloatValue,
+			"Ustar_1_1_1" -> FloatValue
+		),
+	"TIMESTAMP"
 	)
 
 	val rowsSource = StreamConverters
@@ -69,7 +72,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		assert(readResult.count === 4206)
 		assert(nRowsWritten === nRows)
-		assert(formats.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
+		assert(formats.valueFormats.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
 
 	}
 
