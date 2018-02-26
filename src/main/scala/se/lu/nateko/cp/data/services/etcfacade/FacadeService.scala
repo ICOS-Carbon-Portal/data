@@ -1,9 +1,12 @@
 package se.lu.nateko.cp.data.services.etcfacade
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import java.nio.file.StandardOpenOption
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -107,6 +110,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			case Failure(err) =>
 				//file can be a temp file outside the staging folder. If not, the next line is a noop.
 				Files.move(file, getFilePath(fn), REPLACE_EXISTING)
+				appendError(s"Meta service error: ${err.getMessage}")
 				log.error(err, "ETC upload registration with meta service failed")
 		}
 		.flatMap{etcMeta =>
@@ -128,11 +132,17 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		}
 		.andThen{
 			case Failure(err) =>
+				appendError(s"Internal object upload, station $station, object $hash : ${err.getMessage}")
 				log.error(err, s"ETC facade failure during internal object upload. Station $station, object $hash")
 			case Success(_) =>
 				Files.delete(getObjectSource(station, hash))
 		}
 
+	private def appendError(msg: String): Unit = {
+		val errFile = Paths.get(config.folder, "errorLog.txt")
+		val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
+		Files.write(errFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+	}
 }
 
 object FacadeService{
