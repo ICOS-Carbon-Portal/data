@@ -105,7 +105,7 @@ const TimeSeries = props => {
 			x && y
 				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`//data.icos-cp.eu/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
+					src={`/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
 				/>
 				: null
 		}</div>
