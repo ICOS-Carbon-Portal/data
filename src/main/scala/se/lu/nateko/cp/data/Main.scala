@@ -53,7 +53,7 @@ object Main extends App {
 
 	val licenceRoute = new LicenceRouting(authRouting).route
 	val stiltRoute = StiltRouting(new StiltResultsFetcher(config.stilt, config.netcdf))
-	val staticRoute = StaticRouting.route
+	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val exceptionHandler = ExceptionHandler{

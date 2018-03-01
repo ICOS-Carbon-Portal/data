@@ -1,7 +1,9 @@
 @import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
+@import se.lu.nateko.cp.meta.core.data.Envri
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
-@(config: PublicAuthConfig)
-@CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.cpauthHost)){
+@(config: PublicAuthConfig)(implicit envri: Envri)
+@template{
 	<link rel="stylesheet" href="//static.icos-cp.eu/css/react-widgets/css/react-widgets.css">
 	<link rel="stylesheet" href="//static.icos-cp.eu/constant/rc-datepicker/5.0.10/style.min.css">
 	<style type="text/css">
@@ -15,9 +17,17 @@
 		.cp-dpi-error i.icon-rc-datepicker_calendar {
 			color: black !important;
 		}
+		@if(envri == Envri.SITES){
+			.sites-page {
+				max-width: 1400px;
+			}
+		}
 	</style>
 }{
 	<div id="main"></div>
 	<script src="/portal/portal.js"></script>
 }
 
+@template = @{
+if(envri == Envri.SITES) SitesPage("SITES data search") _ else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.cpauthHost)) _
+}
