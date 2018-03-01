@@ -65,10 +65,10 @@ class IngestionUploadTask(
 							val converter = socatTsvToBinTableConverter(nRows, icosColumnFormats)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
 						} else {
-              import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
-              val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
-              makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
-            }
+							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
+							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
+							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
+						}
 				}
 
 			case _ =>

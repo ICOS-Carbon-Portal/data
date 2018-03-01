@@ -14,16 +14,16 @@ class SimpleSitesCsvRow(val header: Header, val cells: Array[String]) extends Ta
 
 object SimpleSitesCsvStreams {
 
-  def simpleSitesCsvParser(implicit ctxt: ExecutionContext): Flow[String, SimpleSitesCsvRow, Future[Done]] = Flow.apply[String]
-    .scan(seed)(parseLine)
-    .exposeParsingError
-    .keepGoodRows
-    .map(acc => new SimpleSitesCsvRow(acc.header, acc.cells))
+	def simpleSitesCsvParser(implicit ctxt: ExecutionContext): Flow[String, SimpleSitesCsvRow, Future[Done]] = Flow.apply[String]
+		.scan(seed)(parseLine)
+		.exposeParsingError
+		.keepGoodRows
+		.map(acc => new SimpleSitesCsvRow(acc.header, acc.cells))
 
-  def simpleSitesCsvToBinTableConverter(
-     nRows: Int,
-     formats: ColumnFormats,
-  )(implicit ctxt: ExecutionContext): Flow[SimpleSitesCsvRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-    timeSeriesToBinTableConverter(formats, header => new SimpleSitesCsvToBinTableConverter(formats, header, nRows))
-  }
+	def simpleSitesCsvToBinTableConverter(
+		 nRows: Int,
+		 formats: ColumnFormats,
+	)(implicit ctxt: ExecutionContext): Flow[SimpleSitesCsvRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
+		timeSeriesToBinTableConverter(formats, header => new SimpleSitesCsvToBinTableConverter(formats, header, nRows))
+	}
 }
