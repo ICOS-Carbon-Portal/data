@@ -31,7 +31,7 @@ object EtcFilename{
 	val timeFormat = DateTimeFormatter.ofPattern("HHmm")
 	val allowedExtensions = Set("csv", "zip", "bin", "dat")
 
-	def parse(text: String): Try[EtcFilename] = Try(text match{
+	def parse(text: String, allowDailyEcFiles: Boolean = false): Try[EtcFilename] = Try(text match{
 
 		case pattern(stationStr, typeStr, dateTimeStr, loggerStr, fileStr, extension) =>
 
@@ -50,7 +50,7 @@ object EtcFilename{
 			val timeStr = dateTimeStr.drop(8)
 
 			val timeOrDatatype = if(timeStr.isEmpty) {
-				if(dataType == DataType.EC) argExc("EC filenames must contain time")
+				if(dataType == DataType.EC && !allowDailyEcFiles) argExc("EC filenames must contain time")
 				Right(dataType)
 			}else {
 				if(dataType != DataType.EC) argExc("Only EC filenames can contain time")

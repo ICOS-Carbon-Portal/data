@@ -27,7 +27,7 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 	})
 
 	private def retryStuckFiles(): Future[Done] = retryEntities[EtcFilename](
-		(station, filename) => EtcFilename.parse(filename),
+		(station, filename) => EtcFilename.parse(filename, true),
 		fn => facade.performUpload(facade.getFilePath(fn), fn),
 		facade.getFilePath
 	)

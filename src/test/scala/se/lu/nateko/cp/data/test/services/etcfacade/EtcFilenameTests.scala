@@ -61,6 +61,10 @@ class EtcFilenameTests extends FunSuite{
 	testBad(ec.replace("EC", "XX"), "bad data type")
 	testBad(ec.replace("201202040437", "20120204"), "EC files must have time")
 
+	test("Daily EC files without time are valid if explicitly allowed"){
+		assert(EtcFilename.parse("FA-Lso_EC_20120204_L03_F12.csv", true).isSuccess)
+	}
+
 	testRoundTrip(ec)
 	testRoundTrip(bm)
 }
