@@ -58,8 +58,11 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val npmPublish = taskKey[Unit]("runs 'npm publish'")
-npmPublish := scala.sys.process.Process("npm run publish").!
+val frontendBuild = taskKey[Unit]("Builds the front end apps")
+frontendBuild := {
+	import scala.sys.process.Process
+	(Process("npm install") #&& Process("npm run publish")).!
+}
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
@@ -105,7 +108,7 @@ lazy val data = (project in file("."))
 		assembly := (Def.taskDyn{
 			val original = assembly.taskValue
 			// Referencing the task's 'value' field will trigger the npm command
-			npmPublish.value
+			frontendBuild.value
 			// Then just return the original "assembly command"
 			Def.task(original.value)
 		}).value
