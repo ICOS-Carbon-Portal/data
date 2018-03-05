@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
 
 const spinnerDelay = 100;

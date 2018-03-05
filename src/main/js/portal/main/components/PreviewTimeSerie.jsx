@@ -99,13 +99,14 @@ const Selector = props => {
 const TimeSeries = props => {
 	const objId = props.id.split('/').pop();
 	const {self, x, y, type} = props;
+	const host = props.id.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i)[1].replace('meta', 'data');
 
 	return (
 		<div>{
 			x && y
 				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
+					src={`//${host}/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
 				/>
 				: null
 		}</div>
