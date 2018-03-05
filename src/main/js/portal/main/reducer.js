@@ -111,8 +111,13 @@ export default function(state = initState, action){
 			});
 
 		case OBJECTS_FETCHED:
+			const extendedObjectsTable = action.objectsTable.map(ot => {
+				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
+				return Object.assign(ot, spec);
+			});
+
 			return update({
-				objectsTable: action.objectsTable
+				objectsTable: extendedObjectsTable
 			});
 
 		case SORTING_TOGGLED:

@@ -17,22 +17,28 @@ export default class CartIcon extends Component {
 	}
 
 	render(){
-		const {isAddedToCart, style} = this.props;
+		const {isAddedToCart, objInfo} = this.props;
 
 		return(
-			<span>{isAddedToCart
+			<span>{objInfo.level === 0
 				? <span
-					style={styles.clickIcon}
-					title="Remove from data cart"
-					className="glyphicon glyphicon-minus-sign text-danger"
-					onClick={this.handleRemoveFromCartClick.bind(this)}
+					style={styles.disabledClickIcon}
+					title="Data level 0 is available upon request"
+					className="glyphicon glyphicon-ban-circle text-default"
 				/>
-				: <span
-					style={styles.clickIcon}
-					title="Add to data cart"
-					className="glyphicon glyphicon-plus-sign text-primary"
-					onClick={this.handleAddToCartClick.bind(this)}
-				/>
+				: isAddedToCart
+					? <span
+						style={styles.clickIcon}
+						title="Remove from data cart"
+						className="glyphicon glyphicon-minus-sign text-danger"
+						onClick={this.handleRemoveFromCartClick.bind(this)}
+					/>
+					: <span
+						style={styles.clickIcon}
+						title="Add to data cart"
+						className="glyphicon glyphicon-plus-sign text-primary"
+						onClick={this.handleAddToCartClick.bind(this)}
+					/>
 			}</span>
 		);
 	}

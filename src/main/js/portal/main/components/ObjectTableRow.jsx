@@ -36,7 +36,7 @@ export default class ObjectTableRow extends Component {
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a href={objInfo.dobj} target="_blank">{stripExt(objInfo.fileName)}</a>
+				<a href={objInfo.dobj} title={objInfo.specLabel} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatBytes(size, 2)}</td>
 			<td>{formatDate(objInfo.submTime)}</td>
