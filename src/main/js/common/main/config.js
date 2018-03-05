@@ -3,7 +3,7 @@
 var endpoint = 'https://meta.icos-cp.eu/sparql';
 
 const host = location.host.replace('data', 'meta');
-const envri = location.host.includes('fieldsites.se') ? 'SITES' : 'ICOS';
+const envri = location.host.indexOf('fieldsites.se') >= 0 ? 'SITES' : 'ICOS';
 
 export default {
 	sparqlEndpoint: endpoint,
