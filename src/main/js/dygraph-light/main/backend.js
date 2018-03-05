@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import {sparql, getBinaryTable, tableFormatForSpecies} from 'icos-cp-backend';
 import {objectSpecification} from './sparqlQueries';
 
