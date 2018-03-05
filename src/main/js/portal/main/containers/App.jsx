@@ -4,7 +4,8 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import {updateRoute, switchTab, setPreviewVisibility, setFilterTemporal} from '../actions';
-import config from '../config';
+import commonConfig from '../../../common/main/config';
+import localConfig from '../config';
 
 export class App extends Component {
 	constructor(props){
@@ -13,11 +14,11 @@ export class App extends Component {
 
 	handleRouteClick(){
 		const {cart, preview, routeAndParams} = this.props;
-		const newRoute = routeAndParams.route === config.ROUTE_SEARCH
-			? config.ROUTE_CART
-			: config.ROUTE_SEARCH;
+		const newRoute = routeAndParams.route === localConfig.ROUTE_SEARCH
+			? localConfig.ROUTE_CART
+			: localConfig.ROUTE_SEARCH;
 
-		this.props.setPreviewVisibility(newRoute === config.ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
+		this.props.setPreviewVisibility(newRoute === localConfig.ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
 		this.props.updateRoute(newRoute);
 	}
 
@@ -35,7 +36,7 @@ export class App extends Component {
 
 				<div className="page-header">
 					<h1>
-						ICOS data portal
+						{commonConfig.envri} data portal
 						<small> Search, preview, download data objects</small>
 
 						<SwitchRouteBtn
@@ -55,10 +56,10 @@ export class App extends Component {
 const SwitchRouteBtn = props => {
 	switch(props.currentRoute){
 
-		case config.ROUTE_SEARCH:
+		case localConfig.ROUTE_SEARCH:
 			return <SearchBtn {...props} />;
 
-		case config.ROUTE_CART:
+		case localConfig.ROUTE_CART:
 			return <CartBtn {...props} />;
 
 		default:
@@ -93,10 +94,10 @@ const CartBtn = props => {
 const Route = props => {
 	switch(props.routeAndParams.route){
 
-		case config.ROUTE_SEARCH:
+		case localConfig.ROUTE_SEARCH:
 			return <Search {...props} />;
 
-		case config.ROUTE_CART:
+		case localConfig.ROUTE_CART:
 			return <DataCart {...props} />;
 
 		default:
