@@ -20,7 +20,7 @@ export default class CartIcon extends Component {
 		const {isAddedToCart, objInfo} = this.props;
 
 		return(
-			<span>{objInfo.level === 0
+			<span>{objInfo && objInfo.level === 0
 				? <span
 					style={styles.disabledClickIcon}
 					title="Data level 0 is available upon request"
