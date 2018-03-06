@@ -119,7 +119,7 @@ function stateToProps(state){
 function dispatchToProps(dispatch){
 	return {
 		updateRoute: hash => dispatch(updateRoute(hash)),
-		switchTab: selectedTab => dispatch(switchTab(selectedTab)),
+		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
 		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
 	};

@@ -145,9 +145,10 @@ export default function(state = initState, action){
 			});
 
 		case SWITCH_TAB:
-			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'tab', action.selectedTab)
-			});
+			routeAndParams = state.routeAndParams.withTab({[action.tabName]: action.selectedTabId});
+			updateUrl(routeAndParams.urlPart);
+
+			return update({routeAndParams});
 
 		case PREVIEW:
 			return update({
@@ -229,8 +230,12 @@ function updateAndApplyRouteAndParams(currentRouteParams, varName, values){
 	const routeAndParams = varName && values
 		? currentRouteParams.withFilter(varName, values)
 		: currentRouteParams.withResetFilters();
-	window.location.hash = routeAndParams.urlPart;
+	updateUrl(routeAndParams.urlPart);
 	return routeAndParams;
+}
+
+function updateUrl(urlPart){
+	window.location.hash = urlPart;
 }
 
 function updateSorting(old, varName){

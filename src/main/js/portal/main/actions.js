@@ -154,10 +154,11 @@ export const updateRoute = route => dispatch => {
 	});
 };
 
-export const switchTab = selectedTab => dispatch => {
+export const switchTab = (tabName, selectedTabId) => dispatch => {
 	dispatch({
 		type: SWITCH_TAB,
-		selectedTab
+		tabName,
+		selectedTabId
 	});
 };
 

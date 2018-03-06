@@ -3,17 +3,22 @@ import {varType} from '../utils';
 
 
 export default class RouteAndParams{
-	constructor(route, filters){
+	constructor(route, filters, tabs){
 		this._route = route;
 		this._filters = filters || {};
+		this._tabs = tabs || {};
 	}
 
 	withRoute(route){
-		return new RouteAndParams(route, this._filters);
+		return new RouteAndParams(route, this._filters, this._tabs);
 	}
 
 	withFilter(varName, values){
-		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}));
+		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}), this._tabs);
+	}
+
+	withTab(tab){
+		return new RouteAndParams(this._route, this._filters, Object.assign(this._tabs, tab));
 	}
 
 	withResetFilters(){
@@ -21,7 +26,7 @@ export default class RouteAndParams{
 		if (this._filters.filterTemporal) filtersToKeep.filterTemporal = this._filters.filterTemporal;
 		if (this._filters.filterFreeText) filtersToKeep.filterFreeText = this._filters.filterFreeText;
 
-		return new RouteAndParams(this._route, filtersToKeep);
+		return new RouteAndParams(this._route, filtersToKeep, this._tabs);
 	}
 
 	get route(){
@@ -30,6 +35,10 @@ export default class RouteAndParams{
 
 	get filters(){
 		return this._filters;
+	}
+
+	get tabs(){
+		return this._tabs;
 	}
 
 	get urlPart(){
@@ -48,11 +57,15 @@ export default class RouteAndParams{
 			return acc;
 		}, {});
 
-		const filterKeys = Object.keys(newFilters);
+		const filtersAndTabs = Object.keys(this._tabs).length
+			? Object.assign(newFilters, {tabs: this._tabs})
+			: newFilters;
 
-		return filterKeys.length
-			? this._route + '?' + filterKeys.map(key =>
-				key + '=' + encodeURIComponent(JSON.stringify(newFilters[key]))).join('&')
+		const keys = Object.keys(filtersAndTabs);
+
+		return keys.length
+			? this._route + '?' + keys.map(key =>
+				key + '=' + encodeURIComponent(JSON.stringify(filtersAndTabs[key]))).join('&')
 			: this._route;
 	}
 }
@@ -60,7 +73,7 @@ export default class RouteAndParams{
 export const restoreRouteAndParams = routeAndParams => {
 	const urlParts = routeAndParams.split('?');
 	const route = urlParts[0];
-	const filters = urlParts[1]
+	const filtersAndTabs = urlParts[1]
 		? urlParts[1].split('&').reduce((acc, keyVal) => {
 			const param = keyVal.split('=');
 			acc[param[0]] = JSON.parse(decodeURIComponent(param[1]));
@@ -68,5 +81,9 @@ export const restoreRouteAndParams = routeAndParams => {
 		}, {})
 		: {};
 
-	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters);
+	const tabs = filtersAndTabs.tabs;
+	const filters = filtersAndTabs;
+	delete filters.tabs;
+
+	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters, tabs);
 };
