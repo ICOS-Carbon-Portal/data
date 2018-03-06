@@ -38,7 +38,7 @@ export default class ObjectTableRow extends Component {
 				/>
 				<a href={objInfo.dobj} title={objInfo.specLabel} target="_blank">{stripExt(objInfo.fileName)}</a>
 			</td>
-			<td>{formatBytes(size, 2)}</td>
+			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDate(objInfo.submTime)}</td>
 			<td>{formatDate(objInfo.timeStart)}</td>
 			<td>{formatDate(objInfo.timeEnd)}</td>
@@ -52,7 +52,11 @@ function stripExt(fileName){
 
 function formatDate(d){
 	if(!d) return '';
-	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+
+	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`
+
+	return time === "00:00" ? `${date}` : `${date} ${time}`;
 }
 
 function pad2(s){

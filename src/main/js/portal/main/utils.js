@@ -11,15 +11,14 @@ export const getRouteFromLocationHash = () => {
 	return window.location.hash.substr(1).split('?')[0];
 };
 
-export const formatBytes = (bytes, decimals) => {
+export const formatBytes = (bytes, decimals = 2) => {
 	if (isNaN(bytes)) return "";
 	if(bytes === 0) return '0 Bytes';
 
 	const k = 1024,
-		dm = decimals || 2,
 		sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
 		i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 };
 
 export const varType = variable => {
