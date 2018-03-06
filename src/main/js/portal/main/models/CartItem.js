@@ -22,7 +22,7 @@ export default class CartItem {
 			return acc;
 		}, {});
 	}
-	
+
 	get hasKeyValPairs(){
 		return Object.getOwnPropertyNames(this._keyValPairs).length > 0;
 	}
@@ -69,7 +69,9 @@ export default class CartItem {
 
 	getNewUrl(keyVal){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
-		return config.iFrameBaseUrl[config.TIMESERIES] + '?' + Object.keys(newKeyVal)
+		const host = this._id.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i)[1].replace('meta', 'data');
+
+		return `//${host}/dygraph-light/?` + Object.keys(newKeyVal)
 			.map(key => `${key}=${newKeyVal[key]}`)
 			.join('&');
 	}
