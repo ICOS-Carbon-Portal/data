@@ -43,6 +43,8 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	private val metaClient = upload.meta
 	private val log = upload.log
 
+	Files.createDirectories(Paths.get(config.folder))
+
 	private[this] val retries = new RetryLogic(this, log).schedule()
 	sys.addShutdownHook(retries.cancel())
 
