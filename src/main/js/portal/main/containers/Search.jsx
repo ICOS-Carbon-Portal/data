@@ -50,6 +50,23 @@ class Search extends Component {
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
 						{props.preview.visible
 							? <Preview
+								tabHeader="Simple"
+								preview={props.preview}
+								setPreviewUrl={props.setPreviewUrl}
+								closePreviewAction={this.handleClosePreview.bind(this)}
+							/>
+							: <SimpleDataObjectsTable
+								tabHeader="Simple"
+								previewAction={this.handlePreview.bind(this)}
+								hasFilters={hasFilters}
+								{...copyprops(props, [
+									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
+									'cart', 'addToCart', 'removeFromCart', 'lookup'
+								])}
+							/>
+						}
+						{props.preview.visible
+							? <Preview
 								tabHeader="Advanced"
 								preview={props.preview}
 								setPreviewUrl={props.setPreviewUrl}
@@ -62,17 +79,7 @@ class Search extends Component {
 								{...copyprops(props, [
 									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 									'cart', 'addToCart', 'removeFromCart', 'lookup'
-								])}/>
-						}
-						{props.preview.visible
-							? <Preview
-								tabHeader="Simple"
-								preview={props.preview}
-								setPreviewUrl={props.setPreviewUrl}
-								closePreviewAction={this.handleClosePreview.bind(this)}
-							/>
-							: <SimpleDataObjectsTable
-								tabHeader="Simple"
+								])}
 							/>
 						}
 					</Tabs>

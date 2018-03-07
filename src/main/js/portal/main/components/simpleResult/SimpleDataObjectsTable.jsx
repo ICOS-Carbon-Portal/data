@@ -1,16 +1,113 @@
 import React, { Component } from 'react';
+import SimpleObjectTableRow from './SimpleObjectTableRow.jsx';
 
 
 export default class SimpleDataObjectsTable extends Component{
 	constructor(props){
 		super(props);
+
+		this.state = {
+			dropdownOpen: false
+		}
+	}
+
+	onDropdownClick(){
+		this.setState({dropdownOpen: !this.state.dropdownOpen});
 	}
 
 	render(){
 		const props = this.props;
+		const {dropdownOpen} = this.state;
+		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;
+		const {offset, limit, objCount} = paging;
+		const to = Math.min(offset + limit, objCount);
+		const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
+		const objCountStyle = hasFilters
+			? {display: 'inline', opacity: 0}
+			: {display: 'inline'};
 
 		return (
-			<div>Simple</div>
+			<div className="panel panel-default">
+				<div className="panel-heading">
+					<h3 style={objCountStyle} className="panel-title">Data objects {offset + 1} to {to} of {objCount}</h3>
+					<div style={{display: 'inline', float: 'right'}}>
+						<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)} />
+						<StepButton direction="forward" enabled={to < objCount} onStep={() => requestStep(1)} />
+					</div>
+				</div>
+				<div className="panel-body">
+
+					<div className={dropdownOpen ? 'dropdown open' : 'dropdown'} style={{marginBottom: 10}}>
+						<button className="btn btn-default dropdown-toggle" type="button" onClick={this.onDropdownClick.bind(this)}>
+							Sort by <span className="caret" />
+						</button>
+						<ul className="dropdown-menu">
+							<li><a href="#">Level</a></li>
+							<li><a href="#">Filename</a></li>
+							<li><a href="#">File size</a></li>
+							<li><a href="#">Submission date</a></li>
+							<li><a href="#">Sample start date</a></li>
+							<li><a href="#">Sample end date</a></li>
+						</ul>
+					</div>
+
+					<div className="table-responsive">
+						<table className="table">
+							<tbody>{
+								props.objectsTable.map((objInfo, i) => {
+									const isAddedToCart = cart.hasItem(objInfo.dobj);
+
+									return (
+										<SimpleObjectTableRow
+											lookup={lookup}
+											preview={preview}
+											previewAction={previewAction}
+											objInfo={objInfo}
+											isAddedToCart={isAddedToCart}
+											addToCart={props.addToCart}
+											removeFromCart={props.removeFromCart}
+											key={'dobj_' + i}
+										/>
+									);
+								})
+							}</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
 		);
 	}
 }
+
+const SortButton = props => {
+	const sorting = props.sorting || {};
+	const disabled = !sorting.isEnabled;
+
+	const glyphClass = 'glyphicon glyphicon-sort' + (
+		(disabled || sorting.varName !== props.varName)
+			? ''
+			: sorting.ascending
+			? '-by-attributes'
+			: '-by-attributes-alt'
+	);
+
+	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
+
+	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
+
+	return <button type="button" className="btn btn-default" disabled={disabled}
+				   title={title} onClick={sortHandler}
+				   style={{pointerEvents: 'auto', borderWidth: 0, padding: 6}}
+	>
+		<span className={glyphClass}></span>
+	</button>;
+};
+
+const StepButton = props => {
+	const style = props.enabled ? {} : {opacity: 0.65};
+	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6}, style)}
+				onClick={props.onStep}
+	>
+		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
+	</div>;
+};
