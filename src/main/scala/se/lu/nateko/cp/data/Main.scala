@@ -22,7 +22,7 @@ import se.lu.nateko.cp.data.api.RestHeartClient
 
 object Main extends App {
 
-	implicit val system = ActorSystem("cpdata")
+	implicit val system = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
 	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
@@ -67,6 +67,9 @@ object Main extends App {
 	}
 
 	val route = handleExceptions(exceptionHandler){
+		pathEndOrSingleSlash{
+			redirect("/portal/", StatusCodes.Found)
+		} ~
 		netcdfRoute ~
 		legacyNetcdfRoute ~
 		uploadRoute ~
@@ -76,7 +79,8 @@ object Main extends App {
 		licenceRoute ~
 		etcUploadRoute ~
 		authRouting.whoami ~
-		authRouting.logout
+		authRouting.logout ~
+		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
 	restHeart.init.flatMap{_ =>
