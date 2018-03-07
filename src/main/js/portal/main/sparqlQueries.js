@@ -43,6 +43,7 @@ select
 where{
 	?dobj cpmeta:hasObjectSpec ?spec .
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
+	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:wasSubmittedBy [
 		prov:wasAssociatedWith ?submitterRes ;
 		prov:endedAtTime []
@@ -150,6 +151,7 @@ ${fromClause}where {
 	${specsValues}
 	${dobjSearch}
 	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
+	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:hasName ?fileName .
 	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	${submitterValues}?dobj cpmeta:wasSubmittedBy [
