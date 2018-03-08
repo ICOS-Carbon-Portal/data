@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED} from './actions';
 import {TEMPORAL_FILTER} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -20,6 +20,7 @@ const initState = {
 	user: {},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
+	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],
 	sorting: {objCount: 0},
@@ -75,6 +76,11 @@ export default function(state = initState, action){
 				objectsTable: [],
 				paging: freshPaging(objCount),
 				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case EXTENDED_DOBJ_INFO_FETCHED:
+			return update({
+				extendedDobjInfo: action.extendedDobjInfo
 			});
 
 		case SPEC_FILTER_RESET:

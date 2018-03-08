@@ -17,6 +17,7 @@ export default class SimpleObjectTableRow extends Component{
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		const extendedInfo = props.extendedInfo;
 		const preview = props.preview;
 		const previewItem = preview.item;
 		const previewType = props.lookup.getSpecLookupType(objInfo.spec);
@@ -24,6 +25,7 @@ export default class SimpleObjectTableRow extends Component{
 			? "list-group-item-info"
 			: "";
 		const size = parseInt(objInfo.size);
+		console.log({extendedInfo});
 
 		return(
 			<tr className={className}>
@@ -43,13 +45,26 @@ export default class SimpleObjectTableRow extends Component{
 						<a href={objInfo.dobj} target="_blank">Landing page</a>
 					</div>
 					<div>
-						<label>Description:</label> {objInfo.specLabel}
+						<label>Data level:</label> {objInfo.level}
+					</div>
+					<div>
+						<label>Data type:</label> {objInfo.specLabel}
 					</div>
 					<div>
 						<label>Filename:</label> {objInfo.fileName}
 					</div>
-				</td>
-				<td>
+					{extendedInfo && extendedInfo.title
+						? <div>
+							<label>Title:</label> {extendedInfo.title}
+						</div>
+						: null
+					}
+					{extendedInfo && extendedInfo.description
+						? <div>
+							<label>Description:</label> {extendedInfo.description}
+						</div>
+						: null
+					}
 					<div>
 						<label>File size:</label> {formatBytes(size, 0)}
 					</div>

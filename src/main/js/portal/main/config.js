@@ -13,7 +13,7 @@ export default {
 };
 
 export const placeholders = {
-	specLabel: 'Specification',
+	specLabel: 'Data type',
 	level: 'Data level',
 	format: 'Format',
 	colTitle: 'Column name',

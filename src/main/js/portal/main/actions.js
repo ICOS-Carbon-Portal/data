@@ -14,13 +14,14 @@ export const SWITCH_TAB = 'SWITCH_TAB';
 export const RESTORE_FILTERS = 'RESTORE_FILTERS';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
+export const EXTENDED_DOBJ_INFO_FETCHED = 'EXTENDED_DOBJ_INFO_FETCHED';
 export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
 export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
-import {fetchAllSpecTables, searchDobjs, searchStations, fetchFilteredDataObjects, getCart, saveCart} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage} from './backend';
+import {fetchAllSpecTables, searchDobjs, fetchFilteredDataObjects, getCart, saveCart} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage, getExtendedDataObjInfo} from './backend';
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
@@ -116,11 +117,25 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
 	fetchFilteredDataObjects(options).then(
-		({rows}) => dispatch({
-			type: OBJECTS_FETCHED,
-			objectsTable: rows
-		}),
+		({rows}) => {
+			dispatch(fetchExtendedDataObjInfo(rows.map(r => `<${r.dobj}>`)));
+			dispatch({
+				type: OBJECTS_FETCHED,
+				objectsTable: rows
+			})
+		},
 		failWithError(dispatch)
+	);
+};
+
+const fetchExtendedDataObjInfo = dobjs => dispatch => {
+	getExtendedDataObjInfo(dobjs).then(
+		extendedDobjInfo => {
+			dispatch({
+				type: EXTENDED_DOBJ_INFO_FETCHED,
+				extendedDobjInfo
+			})
+		}
 	);
 };
 

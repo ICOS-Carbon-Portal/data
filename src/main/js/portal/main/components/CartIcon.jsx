@@ -24,7 +24,7 @@ export default class CartIcon extends Component {
 				? <span
 					style={styles.disabledClickIcon}
 					title="Data level 0 is available upon request"
-					className="glyphicon glyphicon-ban-circle text-default"
+					className="glyphicon glyphicon-plus-sign text-muted"
 				/>
 				: isAddedToCart
 					? <span

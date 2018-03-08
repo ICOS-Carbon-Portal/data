@@ -18,7 +18,7 @@ export default class SimpleDataObjectsTable extends Component{
 	render(){
 		const props = this.props;
 		const {dropdownOpen} = this.state;
-		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;
+		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters, extendedDobjInfo} = props;
 		const {offset, limit, objCount} = paging;
 		const to = Math.min(offset + limit, objCount);
 		const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
@@ -56,10 +56,12 @@ export default class SimpleDataObjectsTable extends Component{
 							<tbody>{
 								props.objectsTable.map((objInfo, i) => {
 									const isAddedToCart = cart.hasItem(objInfo.dobj);
+									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj)
 
 									return (
 										<SimpleObjectTableRow
 											lookup={lookup}
+											extendedInfo={extendedInfo}
 											preview={preview}
 											previewAction={previewAction}
 											objInfo={objInfo}

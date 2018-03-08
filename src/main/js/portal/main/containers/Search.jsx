@@ -29,7 +29,7 @@ class Search extends Component {
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
 		const hasFilters = props.filterTemporal.hasFilter || props.filterFreeText.hasFilter;
-		// console.log({routeAndParams: props.routeAndParams, tabs: props.routeAndParams.tabs});
+		// console.log({extendedDobjInfo: props.extendedDobjInfo});
 
 		return (
 			<div className="row">
@@ -50,30 +50,30 @@ class Search extends Component {
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
 						{props.preview.visible
 							? <Preview
-								tabHeader="Simple"
+								tabHeader="Search results"
 								preview={props.preview}
 								setPreviewUrl={props.setPreviewUrl}
 								closePreviewAction={this.handleClosePreview.bind(this)}
 							/>
 							: <SimpleDataObjectsTable
-								tabHeader="Simple"
+								tabHeader="Search results"
 								previewAction={this.handlePreview.bind(this)}
 								hasFilters={hasFilters}
 								{...copyprops(props, [
 									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
-									'cart', 'addToCart', 'removeFromCart', 'lookup'
+									'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo'
 								])}
 							/>
 						}
 						{props.preview.visible
 							? <Preview
-								tabHeader="Advanced"
+								tabHeader="Compact view"
 								preview={props.preview}
 								setPreviewUrl={props.setPreviewUrl}
 								closePreviewAction={this.handleClosePreview.bind(this)}
 							/>
 							: <DataObjectsTable
-								tabHeader="Advanced"
+								tabHeader="Compact view"
 								previewAction={this.handlePreview.bind(this)}
 								hasFilters={hasFilters}
 								{...copyprops(props, [

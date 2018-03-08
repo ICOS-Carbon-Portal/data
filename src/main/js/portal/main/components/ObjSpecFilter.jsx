@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import {placeholders} from '../config';
+import Slider from './Slider.jsx';
 
 
 export default class ObjSpecFilter extends Component {
@@ -95,21 +96,65 @@ export default class ObjSpecFilter extends Component {
 		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
+		// console.log({colNames: colNames.map(name => `${name}: ${placeholders[name]}`)});
 
 		return (
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
-				{colNames.map(name => this.getCtrl(name))}
+
+				<FilterPanel
+					header="Data origin"
+					nameList={['isIcos', 'station', 'submitter']}
+					colNames={colNames}
+					getCtrl={this.getCtrl.bind(this)}
+					startCollapsed={false}
+				/>
+
+				<FilterPanel
+					header="Data types"
+					nameList={['specLabel', 'level', 'format']}
+					colNames={colNames}
+					getCtrl={this.getCtrl.bind(this)}
+					startCollapsed={false}
+				/>
+
+				<FilterPanel
+					header="Value types"
+					nameList={['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+					colNames={colNames}
+					getCtrl={this.getCtrl.bind(this)}
+					startCollapsed={false}
+				/>
+
+
 			</div>
 		);
 	}
 }
 
+const FilterPanel = ({header, nameList, colNames, getCtrl, startCollapsed = false}) => {
+	if (colNames.length === 0) return null;
+
+	return (
+		<div className="panel panel-default">
+			<div className="panel-heading">
+				<h3 className="panel-title">{header}</h3>
+			</div>
+
+			<Slider startCollapsed={startCollapsed}>
+				<div className="panel-body" style={{paddingTop:0}}>
+					{nameList.map(name => getCtrl(name))}
+				</div>
+			</Slider>
+		</div>
+	);
+};
+
 const ResetBtn = ({resetFiltersAction, enabled}) => {
 	const className = enabled ? 'btn btn-primary' : 'btn btn-primary disabled';
 	const style = enabled
-		? {display: 'inline', float: 'right', cursor: 'pointer'}
-		: {display: 'inline', float: 'right'};
+		? {marginBottom: 15, cursor: 'pointer'}
+		: {marginBottom: 15};
 	const onClick = enabled ? resetFiltersAction : () => _;
 
 	return <button className={className} style={style} onClick={onClick}>Clear categories</button>;

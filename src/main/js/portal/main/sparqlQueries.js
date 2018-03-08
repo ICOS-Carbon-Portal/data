@@ -204,3 +204,14 @@ const getFilterClauses = filters => {
 
 	return filterClauses;
 };
+
+export const extendedDataObjectInfo = (config, dobjs) => {
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select ?dobj ?title ?description where{
+	VALUES ?dobj { ${dobjs.join(' ')} }
+	OPTIONAL{ ?dobj cpmeta:hasObjectSpec/rdfs:comment ?spec }
+	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
+	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
+	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
+}`;
+};

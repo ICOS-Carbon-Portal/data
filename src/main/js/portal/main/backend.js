@@ -191,3 +191,24 @@ export const getUserInfo = () => {
 			};
 		})
 };
+
+export const getExtendedDataObjInfo = dobjs => {
+	const query = queries.extendedDataObjectInfo(config, dobjs);
+
+	return sparql(query, config.sparqlEndpoint, true)
+		.then(
+			sparqlResult => {
+				const bindings = sparqlResult.results.bindings;
+
+				return bindings
+					? Promise.resolve(bindings.map(b => {
+						return {
+							dobj: b.dobj.value,
+							title: b.title.value,
+							description: b.description.value,
+						};
+					}))
+					: Promise.reject(new Error("Could not get extended info for data objects"));
+			}
+		);
+};

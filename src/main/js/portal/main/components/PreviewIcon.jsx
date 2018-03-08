@@ -22,8 +22,9 @@ export default class PreviewIcon extends Component {
 					onClick={this.handlePreviewClick.bind(this)}
 				/>
 				: <span
-					style={Object.assign({visibility: 'hidden'}, styles.clickIcon)}
-					className="glyphicon glyphicon-eye-open"
+					style={styles.clickIcon}
+					title="No preview available for this data object"
+					className="glyphicon glyphicon-eye-open text-muted"
 				/>
 			}</span>
 		);
