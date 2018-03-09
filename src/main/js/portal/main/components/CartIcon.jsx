@@ -17,10 +17,10 @@ export default class CartIcon extends Component {
 	}
 
 	render(){
-		const {isAddedToCart, objInfo} = this.props;
+		const {isAddedToCart, objInfo, style} = this.props;
 
 		return(
-			<span>{objInfo && objInfo.level === 0
+			<span style={style}>{objInfo && objInfo.level === 0
 				? <span
 					style={styles.disabledClickIcon}
 					title="Data level 0 is available upon request"

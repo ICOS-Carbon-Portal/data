@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {styles} from './styles';
 
+
 export default class PreviewIcon extends Component {
 	constructor(props){
 		super(props);
@@ -11,10 +12,10 @@ export default class PreviewIcon extends Component {
 	}
 
 	render(){
-		const {previewType} = this.props;
+		const {previewType, style} = this.props;
 
 		return (
-			<span>{previewType
+			<span style={style}>{previewType
 				? <span
 					style={styles.clickIcon}
 					title="Preview data"
@@ -22,7 +23,7 @@ export default class PreviewIcon extends Component {
 					onClick={this.handlePreviewClick.bind(this)}
 				/>
 				: <span
-					style={styles.clickIcon}
+					style={styles.disabledClickIcon}
 					title="No preview available for this data object"
 					className="glyphicon glyphicon-eye-open text-muted"
 				/>

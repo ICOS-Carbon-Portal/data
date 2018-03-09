@@ -87,8 +87,8 @@ const Item = props => {
 
 	return (
 		<li className={className} style={{display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
-			<CartIcon id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
-			<PreviewIcon id={item.id} previewType={previewType} clickAction={action} />
+			<CartIcon style={{marginRight: 10}} id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
+			<PreviewIcon style={{marginRight: 10}} id={item.id} previewType={previewType} clickAction={action} />
 			<a href={item.id} target="_blank" title={item.itemName}>{item.itemName}</a>
 		</li>
 	);

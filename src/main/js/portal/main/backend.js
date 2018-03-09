@@ -204,8 +204,8 @@ export const getExtendedDataObjInfo = dobjs => {
 					? Promise.resolve(bindings.map(b => {
 						return {
 							dobj: b.dobj.value,
-							title: b.title.value,
-							description: b.description.value,
+							title: b.title ? b.title.value : undefined,
+							description: b.description ? b.description.value : undefined,
 						};
 					}))
 					: Promise.reject(new Error("Could not get extended info for data objects"));

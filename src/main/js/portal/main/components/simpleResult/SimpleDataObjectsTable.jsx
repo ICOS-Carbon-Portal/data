@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import SimpleObjectTableRow from './SimpleObjectTableRow.jsx';
 
 
+
 export default class SimpleDataObjectsTable extends Component{
 	constructor(props){
 		super(props);
@@ -21,7 +22,6 @@ export default class SimpleDataObjectsTable extends Component{
 		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters, extendedDobjInfo} = props;
 		const {offset, limit, objCount} = paging;
 		const to = Math.min(offset + limit, objCount);
-		const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
 		const objCountStyle = hasFilters
 			? {display: 'inline', opacity: 0}
 			: {display: 'inline'};
@@ -56,10 +56,16 @@ export default class SimpleDataObjectsTable extends Component{
 							<tbody>{
 								props.objectsTable.map((objInfo, i) => {
 									const isAddedToCart = cart.hasItem(objInfo.dobj);
-									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj)
+									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+									const theme = [(Math.round(Math.random() * 100) % 3)].map(t => {
+										if (t === 0) return 'a';
+										if (t === 1) return 'e';
+										if (t === 2) return 'o';
+									})[0];
 
 									return (
 										<SimpleObjectTableRow
+											theme={theme}
 											lookup={lookup}
 											extendedInfo={extendedInfo}
 											preview={preview}
