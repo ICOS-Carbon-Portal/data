@@ -53,15 +53,18 @@ export default class SimpleDataObjectsTable extends Component{
 								props.objectsTable.map((objInfo, i) => {
 									const isAddedToCart = cart.hasItem(objInfo.dobj);
 									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-									const theme = [(Math.round(Math.random() * 100) % 3)].map(t => {
+									const theme = [(Math.round(Math.random() * 100) % 4)].map(t => {
 										if (t === 0) return 'a';
 										if (t === 1) return 'e';
 										if (t === 2) return 'o';
+										if (t === 3) return '?';
 									})[0];
+									const level = Math.round(Math.random() * 100) % 4;
 
 									return (
 										<SimpleObjectTableRow
 											theme={theme}
+											level={level}
 											lookup={lookup}
 											extendedInfo={extendedInfo}
 											preview={preview}

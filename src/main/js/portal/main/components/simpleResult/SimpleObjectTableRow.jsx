@@ -43,11 +43,24 @@ export default class SimpleObjectTableRow extends Component{
 			overflow: 'hidden',
 			textOverflow: 'ellipsis'
 		};
+		const levelStyle = {
+			display: 'inline-block',
+			fontSize: 16,
+			marginTop: 5,
+			textAlign: 'center',
+			width: 30,
+			height: 30,
+			backgroundColor: 'white',
+			border: '2px solid black',
+			borderRadius: '50%',
+			padding: 3
+		};
 
 		return(
 			<tr className={className}>
-				<td style={{width: 40}}>
+				<td style={{textAlign: 'center', width: 40}}>
 					<span style={themeStyle} className={themeCls} title={themes[props.theme]} />
+					<div style={levelStyle} title="Data lavel">{props.level}</div>
 				</td>
 				<td style={{maxWidth: 0}}>
 					{extendedInfo && extendedInfo.title
@@ -57,42 +70,16 @@ export default class SimpleObjectTableRow extends Component{
 					<div>
 						<a href={objInfo.dobj} target="_blank">Landing page</a>
 					</div>
+					<div>
+						{objInfo.fileName} ({formatBytes(size, 0)})
+					</div>
 					{extendedInfo && extendedInfo.description
 						? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-						: <div>{objInfo.fileName} ({formatBytes(size, 0)})</div>
+						: null
 					}
 					<div>
 						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}.`}
 					</div>
-
-
-					{/*<div>*/}
-						{/*<label>Data level:</label> {objInfo.level}*/}
-					{/*</div>*/}
-					{/*<div>*/}
-						{/*<label>Data type:</label> {objInfo.specLabel}*/}
-					{/*</div>*/}
-					{/*<div>*/}
-						{/*<label>Filename:</label> {objInfo.fileName}*/}
-					{/*</div>*/}
-					{/*{extendedInfo && extendedInfo.title*/}
-						{/*? <div>*/}
-							{/*<label>Title:</label> {extendedInfo.title}*/}
-						{/*</div>*/}
-						{/*: null*/}
-					{/*}*/}
-					{/*{extendedInfo && extendedInfo.description*/}
-						{/*? <div>*/}
-							{/*<label>Description:</label> {extendedInfo.description}*/}
-						{/*</div>*/}
-						{/*: null*/}
-					{/*}*/}
-					{/*<div>*/}
-						{/*<label>File size:</label> {formatBytes(size, 0)}*/}
-					{/*</div>*/}
-					{/*<div>*/}
-						{/*{`Data was sampled between ${formatDate(objInfo.timeStart)} and ${formatDate(objInfo.timeEnd)} and submitted to Carbon Portal ${formatDate(objInfo.submTime)}`}*/}
-					{/*</div>*/}
 				</td>
 				<td style={{width: 224}}>
 					<CartAddRemove
@@ -124,7 +111,7 @@ const getThemeCls = theme => {
 			return 'glyphicon glyphicon-tint';
 
 		default:
-			return '';
+			return 'glyphicon glyphicon-record';
 	}
 };
 
@@ -155,7 +142,11 @@ const getThemeStyle = theme => {
 			return themeStyle;
 
 		default:
-			return {};
+			return {
+				fontSize: '38px',
+				padding: 0,
+				margin: '3px 0 0 0'
+			};
 	}
 };
 
