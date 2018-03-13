@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
-import CartIcon from '../CartIcon.jsx';
-import PreviewIcon from '../PreviewIcon.jsx';
+import CartAddRemove from '../buttons/CartAddRemove.jsx';
+import Preview from '../buttons/Preview.jsx';
+// import CartIcon from '../CartIcon.jsx';
+// import PreviewIcon from '../PreviewIcon.jsx';
 import {formatBytes} from '../../utils';
-import {styles} from '../styles';
+// import {styles} from '../styles';
 
 
 const themes = {
@@ -31,13 +33,9 @@ export default class SimpleObjectTableRow extends Component{
 		const className = previewItem && previewItem.id === objInfo.dobj
 			? "list-group-item-info"
 			: "";
-		// const size = parseInt(objInfo.size);
+		const size = parseInt(objInfo.size);
 
-		const themeCls = props.theme === 'a'
-			? 'glyphicon glyphicon-cloud'
-			: props.theme === 'e'
-				? 'glyphicon glyphicon-leaf'
-				: 'glyphicon glyphicon-tint';
+		const themeCls = getThemeCls(props.theme);
 		const themeStyle = getThemeStyle(props.theme);
 		const truncateStyle = {
 			maxWidth: '100%',
@@ -48,25 +46,8 @@ export default class SimpleObjectTableRow extends Component{
 
 		return(
 			<tr className={className}>
-				<td style={{whiteSpace: 'nowrap', width: 78}}>
-					<div style={{textAlign: 'center'}}>
-						<span style={themeStyle} className={themeCls} title={themes[props.theme]} />
-					</div>
-					<div style={{marginTop: 10, width: '100%', display: 'block'}}>
-						<span style={{width: '50%', display: 'inline-block', textAlign: 'left'}}>
-							<CartIcon
-								id={objInfo.dobj}
-								{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
-							/>
-						</span>
-						<span style={{width: '50%', display: 'inline-block', textAlign: 'right'}}>
-							<PreviewIcon
-								id={objInfo.dobj}
-								previewType={previewType}
-								clickAction={this.handlePreviewClick.bind(this)}
-							/>
-						</span>
-					</div>
+				<td style={{width: 40}}>
+					<span style={themeStyle} className={themeCls} title={themes[props.theme]} />
 				</td>
 				<td style={{maxWidth: 0}}>
 					{extendedInfo && extendedInfo.title
@@ -78,7 +59,7 @@ export default class SimpleObjectTableRow extends Component{
 					</div>
 					{extendedInfo && extendedInfo.description
 						? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-						: <div>{objInfo.fileName}</div>
+						: <div>{objInfo.fileName} ({formatBytes(size, 0)})</div>
 					}
 					<div>
 						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}.`}
@@ -113,35 +94,68 @@ export default class SimpleObjectTableRow extends Component{
 						{/*{`Data was sampled between ${formatDate(objInfo.timeStart)} and ${formatDate(objInfo.timeEnd)} and submitted to Carbon Portal ${formatDate(objInfo.submTime)}`}*/}
 					{/*</div>*/}
 				</td>
+				<td style={{width: 224}}>
+					<CartAddRemove
+						id={objInfo.dobj}
+						{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
+					/>
+
+					<Preview
+						style={{marginTop: 10}}
+						id={objInfo.dobj}
+						previewType={previewType}
+						clickAction={this.handlePreviewClick.bind(this)}
+					/>
+				</td>
 			</tr>
 		);
 	}
 }
 
+const getThemeCls = theme => {
+	switch(theme){
+		case 'a':
+			return 'glyphicon glyphicon-cloud';
+
+		case 'e':
+			return 'glyphicon glyphicon-leaf';
+
+		case 'o':
+			return 'glyphicon glyphicon-tint';
+
+		default:
+			return '';
+	}
+};
+
 const getThemeStyle = theme => {
 	const themeStyle = {
 		backgroundColor: 'black',
+		color: 'white',
 		borderRadius: 50
 	};
 
 	switch(theme){
 		case 'a':
 			themeStyle.fontSize = '26px';
-			themeStyle.color = 'white';
+			// themeStyle.color = 'white';
 			themeStyle.padding = 6;
 			return themeStyle;
 
 		case 'e':
 			themeStyle.fontSize = '20px';
-			themeStyle.color = 'rgb(50,200,50)';
-			themeStyle.padding = 10;
+			// themeStyle.color = 'rgb(50,200,50)';
+			themeStyle.padding = 9;
 			return themeStyle;
 
 		case 'o':
 			themeStyle.fontSize = '26px';
-			themeStyle.color = 'rgb(50,100,240)';
+			// themeStyle.color = 'rgba(50,100,240,0.9)';
 			themeStyle.padding = 6;
 			return themeStyle;
+
+		default:
+			return {};
 	}
 };
 

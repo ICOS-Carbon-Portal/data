@@ -247,7 +247,7 @@ function updateUrl(urlPart){
 function updateSorting(old, varName){
 	const ascending = (old.varName === varName)
 		? !old.ascending
-		: false;
+		: true;
 	return Object.assign({}, old, {varName, ascending});
 }
 

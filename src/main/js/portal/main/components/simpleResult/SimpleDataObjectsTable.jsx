@@ -1,24 +1,25 @@
 import React, { Component } from 'react';
 import SimpleObjectTableRow from './SimpleObjectTableRow.jsx';
+import Dropdown from '../Dropdown.jsx';
 
 
+const dropdownLookup = {
+	// theme: 'Theme',
+	// level: 'Data level',
+	fileName: 'File name',
+	size: 'File size',
+	submTime: 'Submission date',
+	timeStart: 'Data start date',
+	timeEnd: 'Data end date',
+};
 
 export default class SimpleDataObjectsTable extends Component{
 	constructor(props){
 		super(props);
-
-		this.state = {
-			dropdownOpen: false
-		}
-	}
-
-	onDropdownClick(){
-		this.setState({dropdownOpen: !this.state.dropdownOpen});
 	}
 
 	render(){
 		const props = this.props;
-		const {dropdownOpen} = this.state;
 		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters, extendedDobjInfo} = props;
 		const {offset, limit, objCount} = paging;
 		const to = Math.min(offset + limit, objCount);
@@ -37,19 +38,14 @@ export default class SimpleDataObjectsTable extends Component{
 				</div>
 				<div className="panel-body">
 
-					<div className={dropdownOpen ? 'dropdown open' : 'dropdown'} style={{marginBottom: 10}}>
-						<button className="btn btn-default dropdown-toggle" type="button" onClick={this.onDropdownClick.bind(this)}>
-							Sort by <span className="caret" />
-						</button>
-						<ul className="dropdown-menu">
-							<li><a href="#">Level</a></li>
-							<li><a href="#">Filename</a></li>
-							<li><a href="#">File size</a></li>
-							<li><a href="#">Submission date</a></li>
-							<li><a href="#">Sample start date</a></li>
-							<li><a href="#">Sample end date</a></li>
-						</ul>
-					</div>
+					<Dropdown
+						isSorter={true}
+						isEnabled={props.sorting.isEnabled}
+						selectedItemKey={props.sorting.varName}
+						isAscending={props.sorting.ascending}
+						itemClickAction={props.toggleSort}
+						lookup={dropdownLookup}
+					/>
 
 					<div className="table-responsive">
 						<table className="table">
@@ -86,30 +82,6 @@ export default class SimpleDataObjectsTable extends Component{
 		);
 	}
 }
-
-const SortButton = props => {
-	const sorting = props.sorting || {};
-	const disabled = !sorting.isEnabled;
-
-	const glyphClass = 'glyphicon glyphicon-sort' + (
-		(disabled || sorting.varName !== props.varName)
-			? ''
-			: sorting.ascending
-			? '-by-attributes'
-			: '-by-attributes-alt'
-	);
-
-	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
-
-	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
-
-	return <button type="button" className="btn btn-default" disabled={disabled}
-				   title={title} onClick={sortHandler}
-				   style={{pointerEvents: 'auto', borderWidth: 0, padding: 6}}
-	>
-		<span className={glyphClass}></span>
-	</button>;
-};
 
 const StepButton = props => {
 	const style = props.enabled ? {} : {opacity: 0.65};

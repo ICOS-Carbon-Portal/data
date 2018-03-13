@@ -28,10 +28,12 @@ export default class ObjectTableRow extends Component {
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
 				<CartIcon
+					style={{marginRight: 10}}
 					id={objInfo.dobj}
 					{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
 				/>
 				<PreviewIcon
+					style={{marginRight: 10}}
 					id={objInfo.dobj}
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
