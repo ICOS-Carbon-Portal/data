@@ -2,16 +2,20 @@ import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
 import CartAddRemove from '../buttons/CartAddRemove.jsx';
 import Preview from '../buttons/Preview.jsx';
-// import CartIcon from '../CartIcon.jsx';
-// import PreviewIcon from '../PreviewIcon.jsx';
 import {formatBytes} from '../../utils';
-// import {styles} from '../styles';
 
 
 const themes = {
 	a: 'Atmospheric Thematic Center',
 	e: 'Ecosystem Thematic Center',
 	o: 'Ocean Thematic Center'
+};
+
+const truncateStyle = {
+	maxWidth: '100%',
+	whiteSpace: 'nowrap',
+	overflow: 'hidden',
+	textOverflow: 'ellipsis'
 };
 
 export default class SimpleObjectTableRow extends Component{
@@ -36,40 +40,22 @@ export default class SimpleObjectTableRow extends Component{
 		const size = parseInt(objInfo.size);
 
 		const themeCls = getThemeCls(props.theme);
-		const themeStyle = getThemeStyle(props.theme);
-		const truncateStyle = {
-			maxWidth: '100%',
-			whiteSpace: 'nowrap',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis'
-		};
-		const levelStyle = {
-			display: 'inline-block',
-			fontSize: 16,
-			marginTop: 5,
-			textAlign: 'center',
-			width: 30,
-			height: 30,
-			backgroundColor: 'white',
-			border: '2px solid black',
-			borderRadius: '50%',
-			padding: 3
-		};
+		const themeStyle = {fontSize: 22};
 
 		return(
 			<tr className={className}>
 				<td style={{textAlign: 'center', width: 40}}>
 					<span style={themeStyle} className={themeCls} title={themes[props.theme]} />
-					<div style={levelStyle} title="Data lavel">{props.level}</div>
 				</td>
 				<td style={{maxWidth: 0}}>
 					{extendedInfo && extendedInfo.title
-						? <b>{extendedInfo.title}</b>
-						: <b>{objInfo.specLabel}</b>
+						? <h4 style={{marginTop: 0}}>
+							<a href={objInfo.dobj} title="Go to landing page" target="_blank">{extendedInfo.title}</a>
+						</h4>
+						: <h4 style={{marginTop: 0}}>
+							<a href={objInfo.dobj} title="Go to landing page" target="_blank">{objInfo.specLabel}</a>
+						</h4>
 					}
-					<div>
-						<a href={objInfo.dobj} target="_blank">Landing page</a>
-					</div>
 					<div>
 						{objInfo.fileName} ({formatBytes(size, 0)})
 					</div>
@@ -81,7 +67,7 @@ export default class SimpleObjectTableRow extends Component{
 						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}.`}
 					</div>
 				</td>
-				<td style={{width: 224}}>
+				<td style={{width: 200}}>
 					<CartAddRemove
 						id={objInfo.dobj}
 						{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
@@ -111,42 +97,7 @@ const getThemeCls = theme => {
 			return 'glyphicon glyphicon-tint';
 
 		default:
-			return 'glyphicon glyphicon-record';
-	}
-};
-
-const getThemeStyle = theme => {
-	const themeStyle = {
-		backgroundColor: 'black',
-		color: 'white',
-		borderRadius: 50
-	};
-
-	switch(theme){
-		case 'a':
-			themeStyle.fontSize = '26px';
-			// themeStyle.color = 'white';
-			themeStyle.padding = 6;
-			return themeStyle;
-
-		case 'e':
-			themeStyle.fontSize = '20px';
-			// themeStyle.color = 'rgb(50,200,50)';
-			themeStyle.padding = 9;
-			return themeStyle;
-
-		case 'o':
-			themeStyle.fontSize = '26px';
-			// themeStyle.color = 'rgba(50,100,240,0.9)';
-			themeStyle.padding = 6;
-			return themeStyle;
-
-		default:
-			return {
-				fontSize: '38px',
-				padding: 0,
-				margin: '3px 0 0 0'
-			};
+			return 'glyphicon glyphicon-asterisk';
 	}
 };
 

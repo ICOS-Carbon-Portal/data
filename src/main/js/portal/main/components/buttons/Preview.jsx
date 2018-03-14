@@ -15,10 +15,10 @@ export default class Preview extends Component{
 
 		return (
 			<div style={style}>{previewType
-				? <button onClick={this.handlePreviewClick.bind(this)} className="btn btn-primary">
+				? <button onClick={this.handlePreviewClick.bind(this)} className="btn btn-default btn-sm">
 					<span className="glyphicon glyphicon-eye-open" /> Preview data
 				</button>
-				: <button className="btn btn-primary disabled">
+				: <button className="btn btn-default btn-sm disabled">
 					<span className="glyphicon glyphicon-eye-close" /> Preview unavailable
 				</button>
 			}</div>

@@ -8,7 +8,7 @@ const dropdownLookup = {
 	// level: 'Data level',
 	fileName: 'File name',
 	size: 'File size',
-	submTime: 'Submission date',
+	// submTime: 'Submission date',
 	timeStart: 'Data start date',
 	timeEnd: 'Data end date',
 };
@@ -59,12 +59,10 @@ export default class SimpleDataObjectsTable extends Component{
 										if (t === 2) return 'o';
 										if (t === 3) return '?';
 									})[0];
-									const level = Math.round(Math.random() * 100) % 4;
 
 									return (
 										<SimpleObjectTableRow
 											theme={theme}
-											level={level}
 											lookup={lookup}
 											extendedInfo={extendedInfo}
 											preview={preview}

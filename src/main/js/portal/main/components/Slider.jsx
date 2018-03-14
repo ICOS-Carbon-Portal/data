@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
 
 const defaultIconStyle = {
-	fontSize:28,
+	fontSize:22,
 	position:'absolute',
 	float:'right',
-	top:-33,
-	right:3,
+	top:-30,
+	right:8,
 	cursor:'pointer'
 };
 const defaultDeltaStep = 8;
@@ -59,8 +59,8 @@ export default class Slider extends Component{
 			? {}
 			: getStyle(this.state);
 		const iconCls = height === 0 || direction === 'collapse'
-			? 'glyphicon glyphicon-collapse-down'
-			: 'glyphicon glyphicon-collapse-up';
+			? 'glyphicon glyphicon-triangle-bottom'
+			: 'glyphicon glyphicon-triangle-top';
 		const {children} = this.props;
 
 		return (

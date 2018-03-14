@@ -118,11 +118,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 
 	fetchFilteredDataObjects(options).then(
 		({rows}) => {
-			if(Math.round(Math.random() * 10) % 2) {
-				setTimeout(() => dispatch(fetchExtendedDataObjInfo(rows.map(r => `<${r.dobj}>`))), 500);
-			} else {
-				dispatch(fetchExtendedDataObjInfo(rows.map(r => `<${r.dobj}>`)));
-			}
+			dispatch(fetchExtendedDataObjInfo(rows.map(r => `<${r.dobj}>`)));
 			dispatch({
 				type: OBJECTS_FETCHED,
 				objectsTable: rows

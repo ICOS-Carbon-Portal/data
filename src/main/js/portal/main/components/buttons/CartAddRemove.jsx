@@ -21,14 +21,14 @@ export default class CartAddRemove extends Component{
 
 		return(
 			<div style={style}>{objInfo && objInfo.level === 0
-				? <a className="btn btn-primary" href="http://www.google.com" target="_blank">
-					<span className="glyphicon glyphicon-link" /> Available upon request
+				? <a className="btn btn-primary btn-sm" href="https://www.icos-cp.eu" target="_blank">
+					Available upon request
 				</a>
 				: isAddedToCart
-					? <button onClick={this.handleRemoveFromCartClick.bind(this)} className="btn btn-primary">
+					? <button onClick={this.handleRemoveFromCartClick.bind(this)} className="btn btn-primary btn-sm">
 						<span className="glyphicon glyphicon-minus-sign" /> Remove from data cart
 					</button>
-					: <button onClick={this.handleAddToCartClick.bind(this)} className="btn btn-primary">
+					: <button onClick={this.handleAddToCartClick.bind(this)} className="btn btn-primary btn-sm">
 						<span className="glyphicon glyphicon-plus-sign" /> Add to data cart
 					</button>
 			}</div>
