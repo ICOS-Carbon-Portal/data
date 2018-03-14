@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import config from '../config.js';
+import config from '../../config.js';
 
 export default class PreviewNetCDF extends Component{
 	constructor(props){

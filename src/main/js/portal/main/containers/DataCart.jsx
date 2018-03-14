@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import Preview from '../components/Preview.jsx';
+import Preview from '../components/preview/Preview.jsx';
 import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk} from '../actions';
 
 

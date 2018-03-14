@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Slider from '../Slider.jsx';
+import Slider from '../ui/Slider.jsx';
 import PickDates from './PickDates.jsx';
 import FilterByPid from './FilterByPid.jsx';
 

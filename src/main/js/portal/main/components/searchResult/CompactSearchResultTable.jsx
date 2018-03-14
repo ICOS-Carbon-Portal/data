@@ -1,5 +1,5 @@
 import React from 'react';
-import ObjectTableRow from './ObjectTableRow.jsx';
+import ObjectTableRow from './CompactSearchResultTableRow.jsx';
 
 export default function(props){
 	const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;

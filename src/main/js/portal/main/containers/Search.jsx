@@ -3,10 +3,10 @@ import { connect } from 'react-redux';
 import {copyprops} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import Filters from '../components/filters/Filters.jsx';
-import Tabs from '../components/Tabs.jsx';
-import DataObjectsTable from '../components/DataObjectsTable.jsx';
-import SimpleDataObjectsTable from '../components/simpleResult/SimpleDataObjectsTable.jsx';
-import Preview from '../components/Preview.jsx';
+import Tabs from '../components/ui/Tabs.jsx';
+import DataObjectsTable from '../components/searchResult/CompactSearchResultTable.jsx';
+import SimpleDataObjectsTable from '../components/searchResult/SearchResultTable.jsx';
+import Preview from '../components/preview/Preview.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset, updateSelectedPids} from '../actions';
 

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import {placeholders} from '../config';
-import Slider from './Slider.jsx';
+import Slider from './ui/Slider.jsx';
 
 
 export default class ObjSpecFilter extends Component {

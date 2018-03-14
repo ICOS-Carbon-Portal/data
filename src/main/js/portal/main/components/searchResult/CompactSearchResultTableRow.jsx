@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
-import CartIcon from './CartIcon.jsx';
-import PreviewIcon from './PreviewIcon.jsx';
-import {formatBytes} from '../utils';
+import CartIcon from '../buttons/CartIcon.jsx';
+import PreviewIcon from '../buttons/PreviewIcon.jsx';
+import {formatBytes} from '../../utils';
 
 
 export default class ObjectTableRow extends Component {

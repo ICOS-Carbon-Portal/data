@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import SimpleObjectTableRow from './SimpleObjectTableRow.jsx';
-import Dropdown from '../Dropdown.jsx';
+import SimpleObjectTableRow from './SearchResultTableRow.jsx';
+import Dropdown from '../controls/Dropdown.jsx';
 
 
 const dropdownLookup = {

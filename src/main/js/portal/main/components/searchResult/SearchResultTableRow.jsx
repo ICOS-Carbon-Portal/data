@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
-import CartAddRemove from '../buttons/CartAddRemove.jsx';
-import Preview from '../buttons/Preview.jsx';
+import CartAddRemove from '../buttons/CartBtn.jsx';
+import Preview from '../buttons/PreviewBtn.jsx';
 import {formatBytes} from '../../utils';
 
 

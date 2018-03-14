@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import CartIcon from './CartIcon.jsx';
-import PreviewIcon from './PreviewIcon.jsx';
-import EditablePanelHeading from './EditablePanelHeading.jsx';
+import CartIcon from './buttons/CartIcon.jsx';
+import PreviewIcon from './buttons/PreviewIcon.jsx';
+import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
 import {formatBytes} from '../utils';
 
 
