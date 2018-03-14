@@ -10,6 +10,7 @@ export default {
 	},
 	restheartBaseUrl: '//cpauth.icos-cp.eu/db/',
 	restheartPortalUseBaseUrl: '//restheart.icos-cp.eu/db/',
+	STEPSIZE: 20
 };
 
 export const placeholders = {

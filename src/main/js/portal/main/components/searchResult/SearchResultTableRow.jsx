@@ -45,7 +45,7 @@ export default class SimpleObjectTableRow extends Component{
 		return(
 			<tr className={className}>
 				<td style={{textAlign: 'center', width: 40}}>
-					<span style={themeStyle} className={themeCls} title={themes[props.theme]} />
+					<span style={themeStyle} className={themeCls} title={themes[props.theme] || 'Other data source'} />
 				</td>
 				<td style={{maxWidth: 0}}>
 					{extendedInfo && extendedInfo.title

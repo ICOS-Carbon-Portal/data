@@ -87,8 +87,8 @@ export default class SimpleDataObjectsTable extends Component{
 const StepButton = props => {
 	const style = props.enabled ? {} : {opacity: 0.65};
 	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6}, style)}
-				onClick={props.onStep}
+				onClick={props.enabled ? props.onStep : _ => _}
 	>
-		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
+		<span className={'glyphicon glyphicon-step-' + props.direction} />
 	</div>;
 };

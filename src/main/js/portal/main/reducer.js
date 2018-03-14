@@ -11,7 +11,7 @@ import FilterTemporal from './models/FilterTemporal';
 import FilterFreeText from './models/FilterFreeText';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
-import {placeholders} from './config';
+import config, {placeholders} from './config';
 
 const initState = {
 	routeAndParams: new RouteAndParams(),
@@ -110,7 +110,7 @@ export default function(state = initState, action){
 				routeAndParams,
 				specTable,
 				objectsTable: [],
-				paging: freshPaging(objCount),
+				paging: freshPaging(objCount, routeAndParams.pageOffset),
 				sorting: updateSortingEnableness(state.sorting, objCount),
 				filterTemporal: restoredFilterTemporal,
 				filterFreeText: restoredFilterFreeText
@@ -133,9 +133,13 @@ export default function(state = initState, action){
 			});
 
 		case STEP_REQUESTED:
+			routeAndParams = state.routeAndParams.changePage(action.direction);
+			updateUrl(routeAndParams.urlPart);
+
 			return update({
 				objectsTable: [],
-				paging: updatePaging(state.paging, action.direction)
+				paging: updatePaging(state.paging, action.direction),
+				routeAndParams
 			});
 
 		case ROUTE_UPDATED:
@@ -265,26 +269,24 @@ function getObjCount(specTable){
 		: 0;
 }
 
-const STEPSIZE = 20;
-
-function freshPaging(objCount){
+function freshPaging(objCount, offset){
 	return {
 		objCount,
-		offset: 0,
-		limit: STEPSIZE
+		offset: offset || 0,
+		limit: config.STEPSIZE
 	};
 }
 
 function updatePaging(old, direction){
 	if(direction < 0){
 		if(old.offset == 0) return old;
-		const offset = Math.max(0, old.offset - STEPSIZE);
+		const offset = Math.max(0, old.offset - config.STEPSIZE);
 		return Object.assign({}, old, {offset});
 
 	} else if(direction > 0){
 		if(old.offset + old.limit >= old.objCount) return old;
-		if(old.offset + STEPSIZE >= old.objCount) return old;
-		const offset = old.offset + STEPSIZE;
+		if(old.offset + config.STEPSIZE >= old.objCount) return old;
+		const offset = old.offset + config.STEPSIZE;
 		return Object.assign({}, old, {offset});
 
 	} else return old;

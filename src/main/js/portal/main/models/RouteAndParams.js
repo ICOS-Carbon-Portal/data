@@ -3,22 +3,23 @@ import {varType} from '../utils';
 
 
 export default class RouteAndParams{
-	constructor(route, filters, tabs){
+	constructor(route, filters, tabs, page){
 		this._route = route;
 		this._filters = filters || {};
 		this._tabs = tabs || {};
+		this._page = page || 0;
 	}
 
 	withRoute(route){
-		return new RouteAndParams(route, this._filters, this._tabs);
+		return new RouteAndParams(route, this._filters, this._tabs, this._page);
 	}
 
 	withFilter(varName, values){
-		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}), this._tabs);
+		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}), this._tabs, this._page);
 	}
 
 	withTab(tab){
-		return new RouteAndParams(this._route, this._filters, Object.assign(this._tabs, tab));
+		return new RouteAndParams(this._route, this._filters, Object.assign(this._tabs, tab), this._page);
 	}
 
 	withResetFilters(){
@@ -26,7 +27,11 @@ export default class RouteAndParams{
 		if (this._filters.filterTemporal) filtersToKeep.filterTemporal = this._filters.filterTemporal;
 		if (this._filters.filterFreeText) filtersToKeep.filterFreeText = this._filters.filterFreeText;
 
-		return new RouteAndParams(this._route, filtersToKeep, this._tabs);
+		return new RouteAndParams(this._route, filtersToKeep, this._tabs, this._page);
+	}
+
+	changePage(direction){
+		return new RouteAndParams(this._route, this._filters, this._tabs, this._page + direction);
 	}
 
 	get route(){
@@ -39,6 +44,14 @@ export default class RouteAndParams{
 
 	get tabs(){
 		return this._tabs;
+	}
+
+	get page(){
+		return this._page;
+	}
+
+	get pageOffset(){
+		return this._page * config.STEPSIZE;
 	}
 
 	get urlPart(){
@@ -57,15 +70,15 @@ export default class RouteAndParams{
 			return acc;
 		}, {});
 
-		const filtersAndTabs = Object.keys(this._tabs).length
-			? Object.assign(newFilters, {tabs: this._tabs})
+		const combined = Object.keys(this._tabs).length
+			? Object.assign(newFilters, {tabs: this._tabs, page: this._page})
 			: newFilters;
 
-		const keys = Object.keys(filtersAndTabs);
+		const keys = Object.keys(combined);
 
 		return keys.length
 			? this._route + '?' + keys.map(key =>
-				key + '=' + encodeURIComponent(JSON.stringify(filtersAndTabs[key]))).join('&')
+				key + '=' + encodeURIComponent(JSON.stringify(combined[key]))).join('&')
 			: this._route;
 	}
 }
@@ -82,8 +95,10 @@ export const restoreRouteAndParams = routeAndParams => {
 		: {};
 
 	const tabs = filtersAndTabs.tabs;
+	const page = filtersAndTabs.page;
 	const filters = filtersAndTabs;
 	delete filters.tabs;
+	delete filters.page;
 
-	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters, tabs);
+	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters, tabs, page);
 };
