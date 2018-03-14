@@ -64,7 +64,7 @@ export default class SimpleObjectTableRow extends Component{
 						: null
 					}
 					<div>
-						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}.`}
+						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`}
 					</div>
 				</td>
 				<td style={{width: 200}}>

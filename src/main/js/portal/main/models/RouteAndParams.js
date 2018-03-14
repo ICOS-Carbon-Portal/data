@@ -15,7 +15,7 @@ export default class RouteAndParams{
 	}
 
 	withFilter(varName, values){
-		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}), this._tabs, this._page);
+		return new RouteAndParams(this._route, Object.assign(this._filters, {[varName]: values}), this._tabs);
 	}
 
 	withTab(tab){
@@ -27,7 +27,7 @@ export default class RouteAndParams{
 		if (this._filters.filterTemporal) filtersToKeep.filterTemporal = this._filters.filterTemporal;
 		if (this._filters.filterFreeText) filtersToKeep.filterFreeText = this._filters.filterFreeText;
 
-		return new RouteAndParams(this._route, filtersToKeep, this._tabs, this._page);
+		return new RouteAndParams(this._route, filtersToKeep, this._tabs);
 	}
 
 	changePage(direction){
@@ -55,7 +55,7 @@ export default class RouteAndParams{
 	}
 
 	get urlPart(){
-		// Don not add filters that are empty
+		// Do not add filters that are empty
 		const newFilters = Object.keys(this._filters).reduce((acc, key) => {
 			const variableType = varType(this._filters[key]);
 
