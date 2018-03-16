@@ -5,12 +5,6 @@ import Preview from '../buttons/PreviewBtn.jsx';
 import {formatBytes} from '../../utils';
 
 
-const themes = {
-	a: 'Atmospheric Thematic Center',
-	e: 'Ecosystem Thematic Center',
-	o: 'Ocean Thematic Center'
-};
-
 const truncateStyle = {
 	maxWidth: '100%',
 	whiteSpace: 'nowrap',
@@ -30,7 +24,11 @@ export default class SimpleObjectTableRow extends Component{
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		const extendedInfo = props.extendedInfo;
+		const extendedInfo = props.extendedInfo
+			? props.extendedInfo.theme && props.extendedInfo.themeIcon
+				? props.extendedInfo
+				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
+			: props.extendedInfo;
 		const preview = props.preview;
 		const previewItem = preview.item;
 		const previewType = props.lookup.getSpecLookupType(objInfo.spec);
@@ -39,13 +37,13 @@ export default class SimpleObjectTableRow extends Component{
 			: "";
 		const size = parseInt(objInfo.size);
 
-		const themeCls = getThemeCls(props.theme);
-		const themeStyle = {fontSize: 22};
-
 		return(
 			<tr className={className}>
 				<td style={{textAlign: 'center', width: 40}}>
-					<span style={themeStyle} className={themeCls} title={themes[props.theme] || 'Other data source'} />
+					{extendedInfo && extendedInfo.themeIcon && extendedInfo.theme
+						? <img style={{width: 20}} src={extendedInfo.themeIcon} title={extendedInfo.theme} />
+						: null
+					}
 				</td>
 				<td style={{maxWidth: 0}}>
 					{extendedInfo && extendedInfo.title
@@ -84,22 +82,6 @@ export default class SimpleObjectTableRow extends Component{
 		);
 	}
 }
-
-const getThemeCls = theme => {
-	switch(theme){
-		case 'a':
-			return 'glyphicon glyphicon-cloud';
-
-		case 'e':
-			return 'glyphicon glyphicon-leaf';
-
-		case 'o':
-			return 'glyphicon glyphicon-tint';
-
-		default:
-			return 'glyphicon glyphicon-asterisk';
-	}
-};
 
 function formatDate(d){
 	if(!d) return '';

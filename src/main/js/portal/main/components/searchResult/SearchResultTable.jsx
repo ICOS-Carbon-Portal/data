@@ -1,14 +1,12 @@
 import React, { Component } from 'react';
 import SimpleObjectTableRow from './SearchResultTableRow.jsx';
 import Dropdown from '../controls/Dropdown.jsx';
+import {StepButton} from '../buttons/StepButton.jsx';
 
 
 const dropdownLookup = {
-	// theme: 'Theme',
-	// level: 'Data level',
 	fileName: 'File name',
 	size: 'File size',
-	// submTime: 'Submission date',
 	timeStart: 'Data start date',
 	timeEnd: 'Data end date',
 };
@@ -53,16 +51,9 @@ export default class SimpleDataObjectsTable extends Component{
 								props.objectsTable.map((objInfo, i) => {
 									const isAddedToCart = cart.hasItem(objInfo.dobj);
 									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-									const theme = [(Math.round(Math.random() * 100) % 4)].map(t => {
-										if (t === 0) return 'a';
-										if (t === 1) return 'e';
-										if (t === 2) return 'o';
-										if (t === 3) return '?';
-									})[0];
 
 									return (
 										<SimpleObjectTableRow
-											theme={theme}
 											lookup={lookup}
 											extendedInfo={extendedInfo}
 											preview={preview}
@@ -83,12 +74,3 @@ export default class SimpleDataObjectsTable extends Component{
 		);
 	}
 }
-
-const StepButton = props => {
-	const style = props.enabled ? {} : {opacity: 0.65};
-	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6}, style)}
-				onClick={props.enabled ? props.onStep : _ => _}
-	>
-		<span className={'glyphicon glyphicon-step-' + props.direction} />
-	</div>;
-};

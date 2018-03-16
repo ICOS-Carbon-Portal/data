@@ -5,7 +5,7 @@ import PreviewIcon from '../buttons/PreviewIcon.jsx';
 import {formatBytes} from '../../utils';
 
 
-export default class ObjectTableRow extends Component {
+export default class CompactSearchResultTableRow extends Component {
 	constructor(props){
 		super(props);
 	}

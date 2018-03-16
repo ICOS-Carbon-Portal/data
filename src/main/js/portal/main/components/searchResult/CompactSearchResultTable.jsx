@@ -1,5 +1,6 @@
 import React from 'react';
-import ObjectTableRow from './CompactSearchResultTableRow.jsx';
+import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
+import {StepButton} from '../buttons/StepButton.jsx';
 
 export default function(props){
 	const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;
@@ -35,7 +36,7 @@ export default function(props){
 							const isAddedToCart = cart.hasItem(objInfo.dobj);
 
 							return (
-								<ObjectTableRow
+								<CompactSearchResultTableRow
 									lookup={lookup}
 									preview={preview}
 									previewAction={previewAction}
@@ -74,16 +75,6 @@ const SortButton = props => {
 		title={title} onClick={sortHandler}
 		style={{pointerEvents: 'auto', borderWidth: 0, padding: 6}}
 		>
-		<span className={glyphClass}></span>
+		<span className={glyphClass} />
 	</button>;
 };
-
-const StepButton = props => {
-	const style = props.enabled ? {} : {opacity: 0.65};
-	return <div style={Object.assign({display: 'inline', paddingLeft: 4, cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6}, style)}
-		onClick={props.onStep}
-		>
-		<span className={'glyphicon glyphicon-step-' + props.direction}></span>
-	</div>;
-};
-

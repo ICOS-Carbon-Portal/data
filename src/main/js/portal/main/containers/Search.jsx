@@ -4,8 +4,8 @@ import {copyprops} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter.jsx';
 import Filters from '../components/filters/Filters.jsx';
 import Tabs from '../components/ui/Tabs.jsx';
-import DataObjectsTable from '../components/searchResult/CompactSearchResultTable.jsx';
-import SimpleDataObjectsTable from '../components/searchResult/SearchResultTable.jsx';
+import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
+import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset, updateSelectedPids} from '../actions';
@@ -55,7 +55,7 @@ class Search extends Component {
 								setPreviewUrl={props.setPreviewUrl}
 								closePreviewAction={this.handleClosePreview.bind(this)}
 							/>
-							: <SimpleDataObjectsTable
+							: <SearchResultTable
 								tabHeader="Search results"
 								previewAction={this.handlePreview.bind(this)}
 								hasFilters={hasFilters}
@@ -72,7 +72,7 @@ class Search extends Component {
 								setPreviewUrl={props.setPreviewUrl}
 								closePreviewAction={this.handleClosePreview.bind(this)}
 							/>
-							: <DataObjectsTable
+							: <CompactSearchResultTable
 								tabHeader="Compact view"
 								previewAction={this.handlePreview.bind(this)}
 								hasFilters={hasFilters}

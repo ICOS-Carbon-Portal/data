@@ -207,9 +207,14 @@ const getFilterClauses = filters => {
 
 export const extendedDataObjectInfo = (config, dobjs) => {
 	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select ?dobj ?title ?description where{
+select ?dobj ?theme ?themeIcon ?title ?description where{
 	VALUES ?dobj { ${dobjs.join(' ')} }
-	OPTIONAL{ ?dobj cpmeta:hasObjectSpec/rdfs:comment ?spec }
+	?dobj cpmeta:hasObjectSpec ?specUri .
+	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
+		rdfs:label ?theme ;
+		cpmeta:hasIcon ?themeIcon 
+	]}
+	OPTIONAL{?specUri rdfs:comment ?spec }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)

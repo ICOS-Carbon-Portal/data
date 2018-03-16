@@ -204,6 +204,8 @@ export const getExtendedDataObjInfo = dobjs => {
 					? Promise.resolve(bindings.map(b => {
 						return {
 							dobj: b.dobj.value,
+							theme: b.theme ? b.theme.value : undefined,
+							themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
 							title: b.title ? b.title.value : undefined,
 							description: b.description ? b.description.value : undefined,
 						};

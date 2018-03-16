@@ -17,6 +17,7 @@ export const placeholders = {
 	specLabel: 'Data type',
 	level: 'Data level',
 	format: 'Format',
+	theme: 'Theme',
 	colTitle: 'Column name',
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
