@@ -91,7 +91,9 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 
 export const getFilteredDataObjects = (dispatch, getState) => {
 	const {specTable, routeAndParams, sorting, paging, user, formatToRdfGraph, filterTemporal, filterFreeText} = getState();
-	const filters = filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}]);
+	const filters = routeAndParams.filtersEnabled
+		? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
+		: [];
 
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
@@ -169,12 +171,18 @@ export const updateRoute = route => dispatch => {
 	});
 };
 
-export const switchTab = (tabName, selectedTabId) => dispatch => {
+export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
+	const {filterTemporal, filterFreeText, routeAndParams} = getState();
+
 	dispatch({
 		type: SWITCH_TAB,
 		tabName,
 		selectedTabId
 	});
+
+	if (tabName === 'searchTab' && (filterTemporal.hasFilter || filterFreeText.hasFilter)){
+		dispatch(getFilteredDataObjects);
+	}
 };
 
 const restoreFilters = hash => dispatch => {

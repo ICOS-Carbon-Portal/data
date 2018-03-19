@@ -54,6 +54,10 @@ export default class RouteAndParams{
 		return this._page * config.STEPSIZE;
 	}
 
+	get filtersEnabled(){
+		return this._tabs.searchTab === 1;
+	}
+
 	get urlPart(){
 		// Do not add filters that are empty
 		const newFilters = Object.keys(this._filters).reduce((acc, key) => {

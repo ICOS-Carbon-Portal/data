@@ -3,13 +3,13 @@ import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
 import {StepButton} from '../buttons/StepButton.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters} = props;
+	const {paging, requestStep, cart, previewAction, lookup, preview, showCount} = props;
 	const {offset, limit, objCount} = paging;
 	const to = Math.min(offset + limit, objCount);
 	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
-	const objCountStyle = hasFilters
-		? {display: 'inline', opacity: 0}
-		: {display: 'inline'};
+	const objCountStyle = showCount
+		? {display: 'inline'}
+		: {display: 'inline', opacity: 0};
 
 	return <div className="panel panel-default">
 		<div className="panel-heading">

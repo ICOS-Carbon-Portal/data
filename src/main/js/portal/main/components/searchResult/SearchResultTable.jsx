@@ -18,12 +18,12 @@ export default class SimpleDataObjectsTable extends Component{
 
 	render(){
 		const props = this.props;
-		const {paging, requestStep, cart, previewAction, lookup, preview, hasFilters, extendedDobjInfo} = props;
+		const {paging, requestStep, cart, previewAction, lookup, preview, showCount, extendedDobjInfo} = props;
 		const {offset, limit, objCount} = paging;
 		const to = Math.min(offset + limit, objCount);
-		const objCountStyle = hasFilters
-			? {display: 'inline', opacity: 0}
-			: {display: 'inline'};
+		const objCountStyle = showCount
+			? {display: 'inline'}
+			: {display: 'inline', opacity: 0};
 
 		return (
 			<div className="panel panel-default">

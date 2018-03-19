@@ -26,9 +26,10 @@ class Search extends Component {
 	render(){
 		const props = this.props;
 		const tabs = props.routeAndParams.tabs;
+		const filtersEnabled = props.routeAndParams.filtersEnabled;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
-		const hasFilters = props.filterTemporal.hasFilter || props.filterFreeText.hasFilter;
+		const showCount = !filtersEnabled;
 		// console.log({extendedDobjInfo: props.extendedDobjInfo});
 
 		return (
@@ -58,7 +59,7 @@ class Search extends Component {
 							: <SearchResultTable
 								tabHeader="Search results"
 								previewAction={this.handlePreview.bind(this)}
-								hasFilters={hasFilters}
+								showCount={showCount}
 								{...copyprops(props, [
 									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 									'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo'
@@ -75,7 +76,7 @@ class Search extends Component {
 							: <CompactSearchResultTable
 								tabHeader="Compact view"
 								previewAction={this.handlePreview.bind(this)}
-								hasFilters={hasFilters}
+								showCount={showCount}
 								{...copyprops(props, [
 									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 									'cart', 'addToCart', 'removeFromCart', 'lookup'
