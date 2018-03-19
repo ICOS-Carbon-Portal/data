@@ -55,7 +55,7 @@ export default class SimpleObjectTableRow extends Component{
 						</h4>
 					}
 					<div>
-						{objInfo.fileName} ({formatBytes(size, 0)})
+						<SourceAndFile extendedInfo={extendedInfo} fileName={objInfo.fileName} size={size} />
 					</div>
 					{extendedInfo && extendedInfo.description
 						? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
@@ -82,6 +82,18 @@ export default class SimpleObjectTableRow extends Component{
 		);
 	}
 }
+
+const SourceAndFile = ({extendedInfo, fileName, size}) => {
+	if (extendedInfo && extendedInfo.station){
+		return size
+			? <span><b>Source:</b> {extendedInfo.station.trim()} - <b>Filename:</b> {fileName} ({formatBytes(size, 0)})</span>
+			: <span><b>Source:</b> {extendedInfo.station.trim()} - <b>Filename:</b> {fileName}</span>;
+	} else {
+		return size
+			? <span><b>Filename:</b> {fileName} ({formatBytes(size, 0)})</span>
+			: <span><b>Filename:</b> {fileName}</span>;
+	}
+};
 
 function formatDate(d){
 	if(!d) return '';
