@@ -1,24 +1,18 @@
 import React from 'react';
 import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
-import {StepButton} from '../buttons/StepButton.jsx';
+import {Paging} from '../buttons/Paging.jsx';
 
 export default function(props){
 	const {paging, requestStep, cart, previewAction, lookup, preview, showCount} = props;
-	const {offset, limit, objCount} = paging;
-	const to = Math.min(offset + limit, objCount);
 	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
-	const objCountStyle = showCount
-		? {display: 'inline'}
-		: {display: 'inline', opacity: 0};
 
 	return <div className="panel panel-default">
-		<div className="panel-heading">
-			<h3 style={objCountStyle} className="panel-title">Data objects {offset + 1} to {to} of {objCount}</h3>
-			<div style={{display: 'inline', float: 'right'}}>
-				<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)} />
-				<StepButton direction="forward" enabled={to < objCount} onStep={() => requestStep(1)} />
-			</div>
-		</div>
+		<Paging
+			paging={paging}
+			showCount={showCount}
+			requestStep={requestStep}
+		/>
+
 		<div className="panel-body">
 			<div className="table-responsive">
 				<table className="table">
@@ -68,13 +62,12 @@ const SortButton = props => {
 	);
 
 	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
-
+	const style = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
-	return <button type="button" className="btn btn-default" disabled={disabled}
-		title={title} onClick={sortHandler}
-		style={{pointerEvents: 'auto', borderWidth: 0, padding: 6}}
-		>
-		<span className={glyphClass} />
-	</button>;
+	return (
+		<button className="btn btn-default" disabled={disabled} title={title} onClick={sortHandler} style={style}>
+			<span className={glyphClass} />
+		</button>
+	);
 };
