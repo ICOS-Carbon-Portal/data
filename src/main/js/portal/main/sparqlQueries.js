@@ -2,9 +2,10 @@ export const SPECCOL = 'spec';
 
 export function specBasics(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec ?specLabel ?level ?format
+select ?spec ?specLabel ?level ?format (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
 	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .

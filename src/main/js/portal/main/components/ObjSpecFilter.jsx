@@ -96,7 +96,6 @@ export default class ObjSpecFilter extends Component {
 		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
-		// console.log({colNames: colNames.map(name => `${name}: ${placeholders[name]}`)});
 
 		return (
 			<div>
@@ -104,7 +103,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data origin"
-					nameList={['isIcos', 'station', 'submitter']}
+					nameList={['isIcos', 'theme', 'station', 'submitter']}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
