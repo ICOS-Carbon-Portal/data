@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import {placeholders} from '../config';
 import Slider from './ui/Slider.jsx';
@@ -54,21 +54,21 @@ export default class ObjSpecFilter extends Component {
 		const start = text.indexOf(searchStr);
 
 		if (start < 0) {
-			return <span>{props.text}</span>;
+			return props.text;
 		} else if (start === 0) {
 			return (
-				<span>
+				<Fragment>
 					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
 					<span>{props.text.slice(start + searchStr.length)}</span>
-				</span>
+				</Fragment>
 			);
 		} else {
 			return (
-				<span>
+				<Fragment>
 					<span>{props.text.slice(0, start - 1)}</span>
 					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
 					<span>{props.text.slice(start + searchStr.length)}</span>
-				</span>
+				</Fragment>
 			);
 		}
 	}

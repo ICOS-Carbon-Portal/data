@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {updateRoute, switchTab, setPreviewVisibility, setFilterTemporal} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
@@ -24,7 +25,6 @@ export class App extends Component {
 
 	render(){
 		const props = this.props;
-		// console.log({AppProps: props});
 
 		return (
 			<div className="container-fluid" style={{marginTop: 10}}>
@@ -47,7 +47,9 @@ export class App extends Component {
 					</h1>
 				</div>
 
-				<Route {...props} />
+				<ErrorBoundary>
+					<Route {...props} />
+				</ErrorBoundary>
 			</div>
 		);
 	}
