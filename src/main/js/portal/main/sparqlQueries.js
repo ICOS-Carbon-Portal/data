@@ -207,7 +207,7 @@ const getFilterClauses = filters => {
 };
 
 export const extendedDataObjectInfo = (config, dobjs) => {
-	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?station ?theme ?themeIcon ?title ?description where{
 	VALUES ?dobj { ${dobjs.join(' ')} }

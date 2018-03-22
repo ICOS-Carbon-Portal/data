@@ -9,6 +9,6 @@ export default {
 	sparqlEndpoint: endpoint,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
 	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
-	cpmetaObjectUri: `https://${host}/objects/`,
+	cpmetaObjectUri: `https://${host.replace('local-', '')}/objects/`,
 	envri: envri,
 }
