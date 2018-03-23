@@ -61,7 +61,15 @@ lazy val netcdf = (project in file("netcdf"))
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
 frontendBuild := {
 	import scala.sys.process.Process
-	(Process("npm install") #&& Process("npm run publish")).!
+	import java.io.File
+
+	//building common js first, blocking
+	Process("npm install", new File("src/main/js/common/")).!
+
+	new File("src/main/js/").listFiles.filter(_.getName != "common").foreach{pwd =>
+		//building each front end project, non-blocking
+		(Process("npm install", pwd) #&& Process("npm run publish", pwd)).run
+	}
 }
 
 lazy val data = (project in file("."))
