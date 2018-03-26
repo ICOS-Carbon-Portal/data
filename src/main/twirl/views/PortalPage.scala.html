@@ -29,5 +29,5 @@
 }
 
 @template = @{
-if(envri == Envri.SITES) SitesPage("SITES data search") _ else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.cpauthHost)) _
+if(envri == Envri.SITES) SitesPage("SITES data search") _ else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.authHost)) _
 }

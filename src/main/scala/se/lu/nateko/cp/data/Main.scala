@@ -19,6 +19,7 @@ import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 import se.lu.nateko.cp.data.api.RestHeartClient
+import se.lu.nateko.cp.cpdata.BuildInfo
 
 object Main extends App {
 
@@ -80,6 +81,7 @@ object Main extends App {
 		etcUploadRoute ~
 		authRouting.whoami ~
 		authRouting.logout ~
+		path("buildInfo"){complete(BuildInfo.toString)} ~
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 

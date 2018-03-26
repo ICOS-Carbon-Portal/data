@@ -18,7 +18,7 @@ import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
-class StaticRouting(authConfig: PublicAuthConfig)(implicit val envriConfigs: EnvriConfigs) {
+class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller
 	private type PageFactory = PartialFunction[(String, Envri), Html]
 	private val NetCdfProj = "netcdf"
@@ -28,9 +28,9 @@ class StaticRouting(authConfig: PublicAuthConfig)(implicit val envriConfigs: Env
 	private[this] val standardPageFactory: PageFactory = {
 		case ("stilt", _) => views.html.StiltPage()
 		case ("wdcgg", _) => views.html.WdcggPage()
-		case ("portal", envri) => views.html.PortalPage(authConfig)(envri)
+		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
 		case ("stats", _) => views.html.StatsPage()
-		case ("etcfacade", _) => views.html.EtcFacadePage(authConfig)
+		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
 	}
 
 	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {

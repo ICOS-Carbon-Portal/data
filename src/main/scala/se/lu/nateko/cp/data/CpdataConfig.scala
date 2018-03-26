@@ -6,6 +6,9 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigRenderOptions
 import com.typesafe.config.ConfigFactory
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
+import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.CommonJsonSupport
 
 case class NetCdfConfig(
 	folder: String,
@@ -37,18 +40,20 @@ case class StiltConfig(mainFolder: String)
 
 case class RestHeartConfig(
 	baseUri: String,
-	dbName: String,
+	dbNames: Map[Envri, String],
 	usersCollection: String,
 	portalUsageCollection: String,
 	dobjDownloadsCollection: String,
 	dobjDownloadsAggregations: JsObject
-)
+){
+	def dbName(implicit envri: Envri) = dbNames(envri)
+}
 
 case class EtcFacadeConfig(folder: String, secret: String, stationOverrides: Map[String, String])
 
 case class CpdataConfig(
 	interface: String,
-	auth: PublicAuthConfig,
+	auth: Map[Envri, PublicAuthConfig],
 	netcdf: NetCdfConfig,
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
@@ -57,7 +62,7 @@ case class CpdataConfig(
 	etcFacade: EtcFacadeConfig
 )
 
-object ConfigReader extends DefaultJsonProtocol{
+object ConfigReader extends CommonJsonSupport{
 
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
 	implicit val irodsConfigFormat = jsonFormat8(IrodsConfig)
@@ -65,6 +70,9 @@ object ConfigReader extends DefaultJsonProtocol{
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
 	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
+
+	implicit val envriFormat = enumFormat(Envri)
+
 	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
