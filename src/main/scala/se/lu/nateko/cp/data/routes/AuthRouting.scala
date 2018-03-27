@@ -18,22 +18,32 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
 import spray.json.{JsNull, JsObject, JsString}
+import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 
 import scala.util.Try
+import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
-class AuthRouting(authConfig: PublicAuthConfig) {
+class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: EnvriConfigs) {
 
-	private[this] val authenticator = Authenticator(authConfig).get
+	private val extractEnvri = UploadRouting.extractEnvriDirective
+
+	private def authConfig(implicit envri: Envri) = authConfigs(envri)
+	private def authenticator(implicit envri: Envri) = Authenticator(authConfig).get
+
+	private val authCookieNames = authConfigs.values.map(_.authCookieName).toSet
 
 	def userOpt(inner: Option[UserId] => Route): Route =
 		user{uid => inner(Some(uid))} ~
 		inner(None)
 
-	val userTry: Directive1[Try[UserId]] = cookie(authConfig.authCookieName).map{cookie =>
-		for(
-			signedToken <- CookieToToken.recoverToken(cookie.value);
-			token <- authenticator.unwrapToken(signedToken)
-		) yield token.userId
+	val userTry: Directive1[Try[UserId]] = extractEnvri.flatMap{implicit envri =>
+		cookie(authConfig.authCookieName).map{cookie =>
+			for(
+				signedToken <- CookieToToken.recoverToken(cookie.value);
+				token <- authenticator.unwrapToken(signedToken)
+			) yield token.userId
+		}
 	}
 
 	val user: Directive1[UserId] = userTry.flatMap{
@@ -45,7 +55,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 	//TODO Try getting rid of "def userOpt" above
 	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).recover{rejections =>
 		val hasCookieRejection = rejections.collectFirst{
-			case MissingCookieRejection(cookieName) if cookieName == authConfig.authCookieName => true
+			case MissingCookieRejection(cookieName) if authCookieNames.contains(cookieName) => true
 		}
 		if(hasCookieRejection.isDefined) provide(None)
 		else reject
@@ -58,7 +68,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 					complete((StatusCodes.Forbidden, cafr.msg))
 			}
 			.handle{
-				case MissingCookieRejection(cookieName) if cookieName == authConfig.authCookieName =>
+				case MissingCookieRejection(cookieName) if authCookieNames.contains(cookieName) =>
 					complete((StatusCodes.Forbidden, "Carbon Portal authentication cookie was missing"))
 			}
 			.result()
@@ -79,7 +89,7 @@ class AuthRouting(authConfig: PublicAuthConfig) {
 		JsObject("email" -> email, "ip" -> JsString(ip))
 	}
 
-	val logout: Route = (get & path("logout")){
+	val logout: Route = (get & path("logout") & extractEnvri){implicit envri =>
 		deleteCookie(authConfig.authCookieName, domain = authConfig.authCookieDomain, path = "/"){
 			complete(StatusCodes.OK)
 		}
