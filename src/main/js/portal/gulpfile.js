@@ -7,6 +7,8 @@ var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
 var babelify = require('babelify');
+let sass = require('gulp-sass');
+let cleanCSS = require('gulp-clean-css');
 
 
 var currentPath = __dirname;
@@ -18,6 +20,12 @@ var paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	target: '../../resources/',
+	sassSources: ['node_modules/react-widgets/lib/scss/react-widgets.scss'],
+	sassExtSources: [
+		'node_modules/react-widgets/lib/**/fonts/*',
+		'node_modules/react-widgets/lib/**/img/*'
+	],
+	sassTarget: '../../resources/style/' + project + '/',
 	bundleFile: project + '.js'
 };
 
@@ -54,12 +62,24 @@ function compileJs() {
 	}
 }
 
-gulp.task('js', ['clean'], compileJs);
+gulp.task('js', ['clean', 'sass', 'sass-ext'], compileJs);
+
+gulp.task('sass', function () {
+	return gulp.src(paths.sassSources)
+		.pipe(sass())
+		.pipe(cleanCSS({compatibility: '*'}))	//Internet Explorer 10+ compatibility mode
+		.pipe(gulp.dest(paths.sassTarget + 'css/'));
+});
+
+gulp.task('sass-ext', function () {
+	return gulp.src(paths.sassExtSources)
+		.pipe(gulp.dest(paths.sassTarget));
+});
 
 gulp.task('build', ['js'], function(){
 	var sources = [paths.commonjs, paths.js, paths.jsx];
 	return gulp.watch(sources, ['js']);
 });
 
-gulp.task('publish', ['apply-prod-environment', 'clean'], compileJs);
+gulp.task('publish', ['apply-prod-environment', 'js'], compileJs);
 gulp.task('default', ['publish']);

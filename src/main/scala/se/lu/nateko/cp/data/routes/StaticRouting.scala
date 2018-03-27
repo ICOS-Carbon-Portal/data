@@ -65,6 +65,9 @@ class StaticRouting(authConfig: PublicAuthConfig)(implicit val envriConfigs: Env
 				})
 			}
 		} else reject
+	} ~
+	pathPrefix("style"){
+		getFromResourceDirectory("style")
 	}
 }
 
