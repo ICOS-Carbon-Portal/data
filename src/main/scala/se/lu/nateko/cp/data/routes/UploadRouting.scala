@@ -39,6 +39,7 @@ import LicenceRouting._
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
@@ -130,7 +131,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def accessRoute(dobj: DataObject): Route = optionalFileName{pathFileNameOpt =>
+	private def accessRoute(dobj: DataObject)(implicit envri: Envri): Route = optionalFileName{pathFileNameOpt =>
 		getClientIp{ip =>
 			extractLog{ log =>
 				userOpt{uidOpt =>
@@ -154,7 +155,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId]): Unit = {
+	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
 		restHeart.logDownload(dobj, ip).failed.foreach(
 			log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
 		)
@@ -227,10 +228,11 @@ object UploadRouting{
 		handleRejections(rejHandler) & headerValueByType[`X-Forwarded-For`](()).map(_.value)
 	}
 
-	def extractEnvriDirective(implicit configs: EnvriConfigs) = extractHost.map(
-		host => Envri.infer(host).getOrElse{
-			throw new Exception("Could not find ENVRI for host " + host)
+	def extractEnvriDirective(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
+		Envri.infer(h) match{
+			case None => complete(StatusCodes.BadRequest -> s"Unexpected host $h, cannot find corresponding ENVRI")
+			case Some(envri) => provide(envri)
 		}
-	)
+	}
 
 }

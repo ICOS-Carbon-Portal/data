@@ -26,10 +26,10 @@ case class EtcFilename(
 
 object EtcFilename{
 
-	val pattern = raw"(.{6})_([A-Z]{2})_(\d+)_L(\d+)_F(\d+)\.(\w{3})".r
+	val pattern = raw"(.{6})_([A-Z]{2,6})_(\d+)_L(\d+)_F(\d+)\.(\w{3})".r
 	val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
 	val timeFormat = DateTimeFormatter.ofPattern("HHmm")
-	val allowedExtensions = Set("csv", "zip", "bin", "dat")
+	val allowedExtensions = Set("csv", "zip", "bin", "dat", "txt")
 
 	def parse(text: String, allowDailyEcFiles: Boolean = false): Try[EtcFilename] = Try(text match{
 

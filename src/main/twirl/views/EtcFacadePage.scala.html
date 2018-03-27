@@ -1,7 +1,7 @@
 @import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 
 @(config: PublicAuthConfig)
-@CpCommonPage("ICOS ETC logger facade status", cpauthHostOpt = Some(config.cpauthHost)){
+@CpCommonPage("ICOS ETC logger facade status", cpauthHostOpt = Some(config.authHost)){
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="etcfacade.js"></script>
 }{

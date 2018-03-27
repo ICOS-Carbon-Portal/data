@@ -10,6 +10,7 @@ class EtcFilenameTests extends FunSuite{
 
 	private val ec = "FA-Lso_EC_201202040437_L03_F12.csv"
 	private val bm = "BE-Lon_BM_20170815_L99_F01.dat"
+	private val heat = "FA-Lso_SAHEAT_20100603_L01_F02.txt"
 
 	def testBad(fn: String, reason: String) = {
 		test(s"$fn is not a valid filename ($reason)"){
@@ -29,6 +30,7 @@ class EtcFilenameTests extends FunSuite{
 		}
 	}
 
+	testGood(heat)
 	testGood(bm)
 	testGood(bm.replace("dat", "zip"))
 	testGood(bm.replace("dat", "bin"))

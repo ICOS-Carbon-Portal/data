@@ -1,3 +1,8 @@
+import commonConfig from '../../common/main/config';
+
+const authHost = commonConfig.envri == 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
+const restheartDb = commonConfig.envri == 'SITES' ? 'sitesdb' : 'db';
+
 export default {
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
@@ -8,8 +13,8 @@ export default {
 		TIMESERIES: '//data.icos-cp.eu/dygraph-light/',
 		NETCDF: '//data.icos-cp.eu/netcdf/'
 	},
-	restheartBaseUrl: '//cpauth.icos-cp.eu/db/',
-	restheartPortalUseBaseUrl: '//restheart.icos-cp.eu/db/',
+	restheartBaseUrl: `//${authHost}/db`,
+	restheartPortalUseBaseUrl: `//restheart.icos-cp.eu/${restheartDb}`,
 	STEPSIZE: 20
 };
 

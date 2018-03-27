@@ -76,7 +76,7 @@ export const saveCart = (email, cart) => {
 };
 
 const updatePersonalRestheart = (db, email, data) => {
-	return fetch(`${config.restheartBaseUrl}${db}/${email}`, {
+	return fetch(`${config.restheartBaseUrl}/${db}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
 		mode: 'cors',
@@ -88,7 +88,7 @@ const updatePersonalRestheart = (db, email, data) => {
 };
 
 export const updatePortalUsage = (data) => {
-	return fetch(`${config.restheartPortalUseBaseUrl}portaluse`, {
+	return fetch(`${config.restheartPortalUseBaseUrl}/portaluse`, {
 		method: 'POST',
 		mode: 'cors',
 		headers: new Headers({
@@ -111,7 +111,7 @@ export const getCart = email => {
 };
 
 const getCartFromRestheart = email => {
-	return fetch(`${config.restheartBaseUrl}users/${email}?keys={cart:1}`, {credentials: 'include'})
+	return fetch(`${config.restheartBaseUrl}/users/${email}?keys={cart:1}`, {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
@@ -173,7 +173,7 @@ export function getWhoIam(){
 
 const getProfile = email => {
 	return email
-		? fetch(`https://cpauth.icos-cp.eu/db/users/${email}?keys={profile:1}`, {credentials: 'include'})
+		? fetch(`https://${config.restheartBaseUrl}/users/${email}?keys={profile:1}`, {credentials: 'include'})
 			.then(profile => {
 				return profile.status === 200
 					? profile.json()
