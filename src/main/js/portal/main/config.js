@@ -1,7 +1,7 @@
 import commonConfig from '../../common/main/config';
 
-const authHost = commonConfig.envri == 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
-const restheartDb = commonConfig.envri == 'SITES' ? 'sitesdb' : 'db';
+const authHost = commonConfig.envri === 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
+const restheartDb = commonConfig.envri === 'SITES' ? 'sitesdb' : 'db';
 
 export default {
 	ROUTE_SEARCH: 'search',

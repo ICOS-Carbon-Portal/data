@@ -5,6 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
 	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
@@ -20,6 +21,7 @@ select distinct ?spec ?colTitle ?valType
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valTypeRes .
@@ -43,6 +45,7 @@ select
 (if(sample(?submitterClass) = cpmeta:ThematicCenter || sample(?submitterClass) = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
 	?dobj cpmeta:hasObjectSpec ?spec .
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:wasSubmittedBy [
@@ -151,6 +154,7 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
 	${specsValues}
 	${dobjSearch}
+	FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:hasName ?fileName .
