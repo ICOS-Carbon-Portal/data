@@ -1,34 +1,34 @@
 {
-  "name": "cpdata-frontend",
-  "version": "0.1.0",
-  "private": true,
-  "description": "Carbon Portal Data Service",
-  "repository": {
-	"type": "git",
-	"url": "git+ssh://git@github.com/ICOS-Carbon-Portal/data.git"
-  },
-  "keywords": [
-	"ICOS",
-	"Carbon",
-	"Portal",
-	"NetCDF",
-	"data"
-  ],
-  "contributors": [
-	"Oleg Mirzov",
-	"Roger Groth",
-	"Jonathan Thiry"
-  ],
-  "license": "ISC",
-  "bugs": {
-	"url": "https://github.com/ICOS-Carbon-Portal/data/issues"
-  },
-  "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
-  "devDependencies": {
-	"babel-preset-es2015": "^6.24.1",
-	"babel-preset-react": "^6.24.1"
-  },
-  "dependencies": {
-	"icos-cp-spatial": "^0.2.0"
-  }
+ "name": "cpdata-frontend",
+ "version": "0.1.0",
+ "private": true,
+ "description": "Carbon Portal Data Service",
+ "repository": {
+  "type": "git",
+  "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/data.git"
+ },
+ "keywords": [
+  "ICOS",
+  "Carbon",
+  "Portal",
+  "NetCDF",
+  "data"
+ ],
+ "contributors": [
+  "Oleg Mirzov",
+  "Roger Groth",
+  "Jonathan Thiry"
+ ],
+ "license": "ISC",
+ "bugs": {
+  "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
+ },
+ "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
+ "devDependencies": {
+  "babel-preset-es2015": "^6.24.1",
+  "babel-preset-react": "^6.24.1"
+ },
+ "dependencies": {
+  "icos-cp-spatial": "^0.2.0"
+ }
 }

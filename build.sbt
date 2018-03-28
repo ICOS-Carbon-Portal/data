@@ -62,14 +62,17 @@ val frontendBuild = taskKey[Unit]("Builds the front end apps")
 frontendBuild := {
 	import scala.sys.process.Process
 	import java.io.File
+	val log = streams.value.log
 
-	//building common js first, blocking
+	log.info("Starting front-end build for common")
 	Process("npm install", new File("src/main/js/common/")).!
 
-	new File("src/main/js/").listFiles.filter(_.getName != "common").foreach{pwd =>
-		//building each front end project, non-blocking
-		(Process("npm install", pwd) #&& Process("npm run publish", pwd)).run
+	new File("src/main/js/").listFiles.filter(_.getName != "common").par.foreach{pwd =>
+		log.info("Starting front-end build for " + pwd.getName)
+		(Process("npm install", pwd) #&& Process("npm run publish", pwd)).!
+		log.info("Finished front-end build for " + pwd.getName)
 	}
+	log.info("Front end builds are complete!")
 }
 
 lazy val data = (project in file("."))
