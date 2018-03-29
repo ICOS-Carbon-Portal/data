@@ -34,7 +34,7 @@ import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
 object MassUpload extends CommonJsonSupport{
 
 	val parall = 8
-	val Username = "test@upload"
+	val Username = "uploader@CP"
 	val ObjSpec = new URI("http://meta.icos-cp.eu/resources/cpmeta/wdcggDataObject")
 	val LoginUrl = "https://cpauth.icos-cp.eu/password/login"
 	val RootFolder = "/disk/data/wdcgg/"
