@@ -91,7 +91,7 @@ object TimeSeriesStreams {
 		) yield{
 			val start = TimeSeriesToBinTableConverter.recoverTimeStamp(firstBin.cells, formats)
 			val stop = TimeSeriesToBinTableConverter.recoverTimeStamp(lastBin.cells, formats)
-			TimeSeriesUploadCompletion(TimeInterval(start, stop))
+			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
 		}
 
 }

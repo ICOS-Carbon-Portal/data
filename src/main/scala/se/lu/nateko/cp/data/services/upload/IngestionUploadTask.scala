@@ -37,7 +37,7 @@ class IngestionUploadTask(
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = dataObj.specification.format
 
-		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
+		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer, asciiAtcProdTimeSer }
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.simpleSitesCsvTimeSer
 
 		val icosColumnFormats = ColumnFormats(formats, "TIMESTAMP")
@@ -47,6 +47,11 @@ class IngestionUploadTask(
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
 				val converter = wdcggToBinTableConverter(icosColumnFormats)
 				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
+
+			case `asciiAtcProdTimeSer` =>
+				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
+				val converter = atcProdToBinTableConverter(icosColumnFormats)
+				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` =>
 

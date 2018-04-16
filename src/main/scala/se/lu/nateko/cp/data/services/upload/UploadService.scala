@@ -104,18 +104,11 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 						defaults :+ ingestionTask
 					}
 
-				} else if (
-						formatUri == CpMetaVocab.asciiEtcTimeSer ||
-						formatUri == CpMetaVocab.asciiOtcSocatTimeSer ||
-						formatUri == SitesMetaVocab.simpleSitesCsvTimeSer
-				){
-					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-						defaultsWithIrods :+
-						ingestionTask :+
-						saveToFile
-					}
-
-				} else Future.successful(defaultsWithIrods :+ saveToFile)
+				} else IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
+					defaultsWithIrods :+
+					ingestionTask :+
+					saveToFile
+				}
 
 			case dataLevel => Future.successful(
 				IndexedSeq.empty :+

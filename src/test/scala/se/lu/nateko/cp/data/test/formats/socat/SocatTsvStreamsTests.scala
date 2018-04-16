@@ -52,7 +52,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val rowsFut = rowsSource.runWith(Sink.seq)
 
-		val rows = Await.result(rowsFut, 1.second)
+		val rows = Await.result(rowsFut, 3.second)
 
 		assert(rows.size === nRows)
 		assert(rows(2).cells(2) === "-42.94501") //stick-test
@@ -65,7 +65,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 			.via(socatTsvToBinTableConverter(nRows, formats))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 3.second)
 
 		assert(readResult.count === 72067)
 		assert(nRowsWritten === nRows)
