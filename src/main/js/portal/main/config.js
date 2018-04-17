@@ -10,8 +10,8 @@ export default {
 	TIMESERIES: 'TIMESERIES',
 	NETCDF: 'NETCDF',
 	iFrameBaseUrl: {
-		TIMESERIES: '//data.icos-cp.eu/dygraph-light/',
-		NETCDF: '//data.icos-cp.eu/netcdf/'
+		TIMESERIES: '/dygraph-light/',
+		NETCDF: '/netcdf/'
 	},
 	restheartBaseUrl: `//${authHost}/db`,
 	restheartPortalUseBaseUrl: `//restheart.icos-cp.eu/${restheartDb}`,

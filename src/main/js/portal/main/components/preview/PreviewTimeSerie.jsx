@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import config from '../../config.js';
 
 export default class PreviewTimeSerie extends Component {
 	constructor(props){
@@ -106,7 +107,7 @@ const TimeSeries = props => {
 			x && y
 				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`//${host}/dygraph-light/?objId=${objId}&x=${x}&y=${y}&type=${type}`}
+					src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objId}&x=${x}&y=${y}&type=${type}`}
 				/>
 				: null
 		}</div>
