@@ -12,6 +12,7 @@ import FilterFreeText from './models/FilterFreeText';
 import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getRouteFromLocationHash} from './utils';
 import config, {placeholders} from './config';
+import Paging from './models/Paging';
 
 const initState = {
 	routeAndParams: new RouteAndParams(),
@@ -61,7 +62,7 @@ export default function(state = initState, action){
 			return update({
 				specTable,
 				formatToRdfGraph: action.formatToRdfGraph,
-				paging: freshPaging(objCount),
+				paging: new Paging({objCount}),
 				sorting: updateSortingEnableness(state.sorting, objCount),
 				lookup: new Lookup(specTable)
 			});
@@ -74,7 +75,7 @@ export default function(state = initState, action){
 				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, action.varName, action.values),
 				specTable,
 				objectsTable: [],
-				paging: freshPaging(objCount),
+				paging: new Paging({objCount}),
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
@@ -90,8 +91,8 @@ export default function(state = initState, action){
 			return update({
 				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams),
 				specTable,
-				paging: freshPaging(objCount),
-				sorting: updateSortingEnableness(state.sorting, objCount)
+				paging: new Paging({objCount}),
+				sorting: updateSortingEnableness(state.sorting, {objCount})
 			});
 
 		case RESTORE_FILTERS:
@@ -105,12 +106,13 @@ export default function(state = initState, action){
 
 			const restoredFilterTemporal = state.filterTemporal.restore(routeAndParams.filters.filterTemporal);
 			const restoredFilterFreeText = state.filterFreeText.restore(routeAndParams.filters.filterFreeText);
+			const paging = new Paging({objCount, offset: routeAndParams.pageOffset});
 
 			return update({
 				routeAndParams,
 				specTable,
 				objectsTable: [],
-				paging: freshPaging(objCount, routeAndParams.pageOffset),
+				paging,
 				sorting: updateSortingEnableness(state.sorting, objCount),
 				filterTemporal: restoredFilterTemporal,
 				filterFreeText: restoredFilterFreeText
@@ -123,7 +125,14 @@ export default function(state = initState, action){
 			});
 
 			return update({
-				objectsTable: extendedObjectsTable
+				objectsTable: extendedObjectsTable,
+				paging: state.paging.withObjCount(
+					getObjCount(state.specTable),
+					action.objectsTable.length,
+					state.routeAndParams.filtersEnabled,
+					action.cacheSize,
+					action.isDataEndReached
+				)
 			});
 
 		case SORTING_TOGGLED:
@@ -138,7 +147,7 @@ export default function(state = initState, action){
 
 			return update({
 				objectsTable: [],
-				paging: updatePaging(state.paging, action.direction),
+				paging: state.paging.withDirection(action.direction),
 				routeAndParams
 			});
 
@@ -195,25 +204,29 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
+			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary);
+
 			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary),
-				filterTemporal: action.filterTemporal
+				routeAndParams,
+				filterTemporal: action.filterTemporal,
+				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
 			});
 
 		case FREE_TEXT_FILTER:
 			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
 
 			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary),
 				filterFreeText
 			});
 
 		case UPDATE_SELECTED_PIDS:
 			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
+			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary);
 
 			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary),
-				filterFreeText
+				routeAndParams,
+				filterFreeText,
+				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
 			});
 
 		default:
@@ -267,27 +280,4 @@ function getObjCount(specTable){
 	return originsTable
 		? originsTable.filteredRows.reduce((acc, next) => acc + (next.count || 0), 0)
 		: 0;
-}
-
-function freshPaging(objCount, offset){
-	return {
-		objCount,
-		offset: offset || 0,
-		limit: config.STEPSIZE
-	};
-}
-
-function updatePaging(old, direction){
-	if(direction < 0){
-		if(old.offset == 0) return old;
-		const offset = Math.max(0, old.offset - config.STEPSIZE);
-		return Object.assign({}, old, {offset});
-
-	} else if(direction > 0){
-		if(old.offset + old.limit >= old.objCount) return old;
-		if(old.offset + config.STEPSIZE >= old.objCount) return old;
-		const offset = old.offset + config.STEPSIZE;
-		return Object.assign({}, old, {offset});
-
-	} else return old;
 }

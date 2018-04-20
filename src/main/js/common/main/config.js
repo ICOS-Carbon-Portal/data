@@ -1,7 +1,7 @@
 
 var endpoint = 'https://meta.icos-cp.eu/sparql';
 
-const envri = location.host.indexOf('fieldsites.se') >= 0 ? 'SITES' : 'ICOS';
+const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? 'SITES' : 'ICOS';
 const host = envri === 'SITES' ? 'meta.fieldsites.se' : 'meta.icos-cp.eu';
 const sparqlGraphFilter = envri === 'SITES' ? 'https://meta.fieldsites.se/' : 'http://meta.icos-cp.eu/';
 

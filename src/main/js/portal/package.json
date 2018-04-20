@@ -8,6 +8,7 @@
     "default": "gulp publish",
     "publish": "gulp publish",
     "build": "gulp build",
+    "test": "gulp test",
     "gulp": "gulp"
   },
   "repository": {
@@ -39,14 +40,18 @@
     "browserify": "^16.1.1",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.1",
     "gulp-clean-css": "^3.9.3",
+    "gulp-jasmine": "^3.0.0",
     "gulp-sass": "^3.1.0",
     "gulp-uglify": "^3.0.0",
+    "run-sequence": "^2.2.1",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "deep-equal": "^1.0.1",
     "icos-cp-backend": "^0.3.5",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.4",

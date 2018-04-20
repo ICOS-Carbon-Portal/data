@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import SimpleObjectTableRow from './SearchResultTableRow.jsx';
+import SearchResultTableRow from './SearchResultTableRow.jsx';
 import Dropdown from '../controls/Dropdown.jsx';
 import {Paging} from '../buttons/Paging.jsx';
 
@@ -18,13 +18,12 @@ export default class SimpleDataObjectsTable extends Component{
 
 	render(){
 		const props = this.props;
-		const {paging, requestStep, cart, previewAction, lookup, preview, showCount, extendedDobjInfo} = props;
+		const {paging, requestStep, cart, previewAction, lookup, preview, extendedDobjInfo} = props;
 
 		return (
 			<div className="panel panel-default">
 				<Paging
 					paging={paging}
-					showCount={showCount}
 					requestStep={requestStep}
 				/>
 
@@ -47,7 +46,7 @@ export default class SimpleDataObjectsTable extends Component{
 									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
 
 									return (
-										<SimpleObjectTableRow
+										<SearchResultTableRow
 											lookup={lookup}
 											extendedInfo={extendedInfo}
 											preview={preview}

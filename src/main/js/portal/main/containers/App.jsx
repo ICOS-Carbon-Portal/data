@@ -28,6 +28,7 @@ export class App extends Component {
 
 		return (
 			<div className="container-fluid" style={{marginTop: 10}}>
+
 				<AnimatedToasters
 					autoCloseDelay={5000}
 					toasterData={props.toasterData}

@@ -51,11 +51,15 @@ export default class RouteAndParams{
 	}
 
 	get pageOffset(){
-		return this._page * config.STEPSIZE;
+		return this._page * config.stepsize;
 	}
 
 	get filtersEnabled(){
-		return this._tabs.searchTab === 1;
+		const {filterTemporal, filterFreeText} = this._filters;
+
+		return this._tabs.searchTab === 1
+			&& ((filterTemporal !== undefined && Object.keys(filterTemporal).length > 0)
+			|| (filterFreeText !== undefined && Object.keys(filterFreeText).length > 0));
 	}
 
 	get urlPart(){
@@ -74,15 +78,19 @@ export default class RouteAndParams{
 			return acc;
 		}, {});
 
-		const combined = Object.keys(this._tabs).length
-			? Object.assign(newFilters, {tabs: this._tabs, page: this._page})
+		Object.keys(this._tabs).length
+			? Object.assign(newFilters, {tabs: this._tabs})
 			: newFilters;
 
-		const keys = Object.keys(combined);
+		this._page !== 0
+			? Object.assign(newFilters, {page: this._page})
+			: newFilters;
+
+		const keys = Object.keys(newFilters);
 
 		return keys.length
 			? this._route + '?' + keys.map(key =>
-				key + '=' + encodeURIComponent(JSON.stringify(combined[key]))).join('&')
+				key + '=' + encodeURIComponent(JSON.stringify(newFilters[key]))).join('&')
 			: this._route;
 	}
 }

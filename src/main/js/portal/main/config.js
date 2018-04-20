@@ -15,7 +15,10 @@ export default {
 	},
 	restheartBaseUrl: `//${authHost}/db`,
 	restheartPortalUseBaseUrl: `//restheart.icos-cp.eu/${restheartDb}`,
-	STEPSIZE: 20
+	stepsize: 20,
+	useDataObjectsCache: true,
+	dobjCacheFetchLimit: 500,
+	dobjExtendedCacheFetchLimit: 100,
 };
 
 export const placeholders = {

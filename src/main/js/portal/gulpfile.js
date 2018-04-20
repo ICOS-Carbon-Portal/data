@@ -6,13 +6,20 @@ var browserify = require('browserify');
 var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
+var babel = require('gulp-babel');
 var babelify = require('babelify');
-let sass = require('gulp-sass');
-let cleanCSS = require('gulp-clean-css');
+var jasmine = require('gulp-jasmine');
+var sass = require('gulp-sass');
+var cleanCSS = require('gulp-clean-css');
+var runSequence = require('run-sequence');
 
 
 var currentPath = __dirname;
 var project = currentPath.split('/').pop();
+var testRoot = 'target/';
+var testMain = testRoot + 'src/main/';
+var testCommon = testRoot + 'common/main/';
+var testJasmine = testRoot + 'test/';
 
 var paths = {
 	main: 'main/main.jsx',
@@ -26,6 +33,7 @@ var paths = {
 		'node_modules/react-widgets/lib/**/img/*'
 	],
 	sassTarget: '../../resources/style/' + project + '/',
+	jasmineSrc: 'test/**/*.js',
 	bundleFile: project + '.js'
 };
 
@@ -76,10 +84,51 @@ gulp.task('sass-ext', function () {
 		.pipe(gulp.dest(paths.sassTarget));
 });
 
+gulp.task('clean_test', function() {
+	return del([testRoot]);
+});
+
+gulp.task('transpile_jasmine', function(){
+	return gulp.src(paths.jasmineSrc)
+		.pipe(babel({presets: ['es2015']}))
+		.pipe(gulp.dest(testJasmine));
+});
+
+gulp.task('transpile_src', function(){
+	return gulp.src(paths.js)
+		.pipe(babel({presets: ['es2015']}))
+		.pipe(gulp.dest(testMain));
+});
+
+gulp.task('transpile_common', function(){
+	return gulp.src(paths.commonjs)
+		.pipe(babel({presets: ['es2015']}))
+		.pipe(gulp.dest(testCommon));
+});
+
+gulp.task('run_jasmine', function(){
+	return gulp.src(testJasmine + '*.js').pipe(jasmine());
+});
+
+gulp.task('test', function(){
+	runSequence(
+		'clean_test',
+		['transpile_jasmine', 'transpile_src', 'transpile_common'],
+		'run_jasmine'
+	);
+});
+
 gulp.task('build', ['js'], function(){
 	var sources = [paths.commonjs, paths.js, paths.jsx];
 	return gulp.watch(sources, ['js']);
 });
 
-gulp.task('publish', ['apply-prod-environment', 'js'], compileJs);
+gulp.task('publish', function(){
+	runSequence(
+		'test',
+		['apply-prod-environment','js']
+	);
+});
+
+// gulp.task('publish', ['test', 'apply-prod-environment', 'js']);
 gulp.task('default', ['publish']);

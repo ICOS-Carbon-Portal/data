@@ -20,13 +20,23 @@ export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
-import {fetchAllSpecTables, searchDobjs, fetchFilteredDataObjects, getCart, saveCart} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage, getExtendedDataObjInfo} from './backend';
+import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage} from './backend';
+import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
+import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
 
+
+const dataObjectsFetcher = config.useDataObjectsCache
+	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
+	: new DataObjectsFetcher();
+
+const dataObjectsExtendedFetcher = config.useDataObjectsCache
+	? new CachedDataObjectsExtendedFetcher(config.dobjExtendedCacheFetchLimit, dataObjectsFetcher)
+	: new DataObjectsExtendedFetcher();
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -89,12 +99,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging, user, formatToRdfGraph, filterTemporal, filterFreeText} = getState();
-	const filters = routeAndParams.filtersEnabled
-		? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
-		: [];
-
+const logPortalUsage = (user, routeAndParams) => {
 	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
 		updatePortalUsage({
 			filterChange: {
@@ -103,6 +108,16 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 			}
 		});
 	}
+};
+
+export const getFilteredDataObjects = (dispatch, getState) => {
+	const {specTable, routeAndParams, sorting, paging,
+		user, formatToRdfGraph, filterTemporal, filterFreeText} = getState();
+	const filters = routeAndParams.filtersEnabled
+		? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
+		: [];
+
+	logPortalUsage(user, routeAndParams);
 
 	const specs = specTable.getSpeciesFilter(null);
 	const stations = specTable.getFilter('station').length
@@ -110,35 +125,43 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		: [];
 
 	const submitters = specTable.getFilter('submitter').length
-	? specTable.getDistinctAvailableColValues('submitterUri')
-	: [];
+		? specTable.getDistinctAvailableColValues('submitterUri')
+		: [];
 
 	const rdfGraphs = specTable.getColumnValuesFilter('format')
 		.map(f => formatToRdfGraph[f]);
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
-	fetchFilteredDataObjects(options).then(
-		({rows}) => {
-			dispatch(fetchExtendedDataObjInfo(rows.map(r => `<${r.dobj}>`)));
+	dataObjectsFetcher.fetch(options).then(
+		({rows, cacheSize, isDataEndReached}) => {
+
+			const opts = config.useDataObjectsCache ? options : rows.map(d => `<${d.dobj}>`);
+
+			dispatch(fetchExtendedDataObjInfo(opts));
+
 			dispatch({
 				type: OBJECTS_FETCHED,
-				objectsTable: rows
-			})
+				objectsTable: rows,
+				cacheSize,
+				isDataEndReached
+			});
 		},
 		failWithError(dispatch)
 	);
 };
 
-const fetchExtendedDataObjInfo = dobjs => dispatch => {
-	getExtendedDataObjInfo(dobjs).then(
-		extendedDobjInfo => {
-			dispatch({
-				type: EXTENDED_DOBJ_INFO_FETCHED,
-				extendedDobjInfo
-			})
-		}
-	);
+const fetchExtendedDataObjInfo = options => dispatch => {
+	dataObjectsExtendedFetcher.fetch(options)
+		.then(
+			extendedDobjInfo => {
+				dispatch({
+					type: EXTENDED_DOBJ_INFO_FETCHED,
+					extendedDobjInfo
+				})
+			},
+			failWithError(dispatch)
+		);
 };
 
 export const specFiltersReset = dispatch => {
@@ -325,4 +348,19 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
 	dispatch(getFilteredDataObjects);
+};
+
+const updatePaging = (old, direction) => {
+	if(direction < 0){
+		if(old.offset === 0) return old;
+		const offset = Math.max(0, old.offset - config.stepsize);
+		return Object.assign({}, old, {offset});
+
+	} else if(direction > 0){
+		if(old.offset + old.limit >= old.objCount) return old;
+		if(old.offset + config.stepsize >= old.objCount) return old;
+		const offset = old.offset + config.stepsize;
+		return Object.assign({}, old, {offset});
+
+	} else return old;
 };
