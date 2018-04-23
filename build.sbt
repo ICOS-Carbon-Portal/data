@@ -21,14 +21,14 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.4.20"
-val akkaHttpVersion = "10.0.11"
+val akkaVersion = "2.5.12"
+val akkaHttpVersion = "10.1.1"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.1.0-SNAPSHOT",
+		version := "0.1.1-SNAPSHOT",
 		libraryDependencies ++= Seq(
 			"edu.ucar"            % "cdm"                                % "4.5.5" excludeAll( //manually published on nexus.icos-cp.eu
 				ExclusionRule(organization = "com.beust", name = "jcommander"),
@@ -45,7 +45,8 @@ lazy val netcdf = (project in file("netcdf"))
 				ExclusionRule(organization = "org.slf4j", name = "jcl-over-slf4j"),
 				ExclusionRule(organization = "org.slf4j", name = "slf4j-api")
 			),
-			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided"
+			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided",
+			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided"
 		),
 		publishTo := {
 			val nexus = "https://repo.icos-cp.eu/content/repositories/"
@@ -81,10 +82,11 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.4.3",
+		version := "0.4.4",
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
+			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
