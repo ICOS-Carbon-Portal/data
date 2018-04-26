@@ -73,6 +73,9 @@ case class IrodsHashsumFailure(failure: HashsumCheckFailure) extends UploadTaskF
 	val error = new CpDataException(s"IRODS upload hashsum check error: expected ${failure.expected.id}, got ${failure.actual.id}")
 }
 
+case object B2StageSuccess extends UploadTaskSuccess
+case class B2StageFailure(error: Throwable) extends UploadTaskFailure
+
 case class FileWriteSuccess(bytesWritten: Long) extends UploadTaskSuccess
 case class FileWriteFailure(error: Throwable) extends UploadTaskFailure
 case object FileExists extends UploadTaskCancellation

@@ -64,7 +64,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	test("Parsing of an example Eco time series data set and streaming to BinTable"){
 
 		val g = rowsSource
-			.alsoToMat(Sink.head[EcoCsvRow])(_ zip _)
+			.wireTapMat(Sink.head[EcoCsvRow])(_ zip _)
 			.via(ecoCsvToBinTableConverter(nRows, formats))
 			.toMat(binTableSink)(_ zip _)
 
