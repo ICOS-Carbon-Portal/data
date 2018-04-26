@@ -75,7 +75,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 					case JsArray(elems) => elems
 					case _ => throw new CpDataException("Expected B2SAFE data list to be a json array")
 				}
-	
+
 				entries.map{djs =>
 					val jo = djs.asJsObject.fields.values.head.asJsObject.fields
 

@@ -61,7 +61,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	test("Parsing of an example Socat time series data set and streaming to BinTable"){
 
 		val g = rowsSource
-			.alsoToMat(Sink.head[SocatTsvRow])(_ zip _)
+			.wireTapMat(Sink.head[SocatTsvRow])(_ zip _)
 			.via(socatTsvToBinTableConverter(nRows, formats))
 			.toMat(binTableSink)(_ zip _)
 
