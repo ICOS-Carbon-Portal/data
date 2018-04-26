@@ -1,8 +1,8 @@
 package se.lu.nateko.cp.data.api
 
-import java.nio.file.Paths
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 
-import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
@@ -11,6 +11,7 @@ import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.model.EntityStreamException
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.HttpRequest
@@ -22,17 +23,12 @@ import akka.http.scaladsl.model.headers.Authorization
 import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.B2StageConfig
 import spray.json._
-import akka.stream.scaladsl.Sink
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-import akka.stream.scaladsl.StreamConverters
-import akka.http.scaladsl.model.EntityStreamException
-import akka.stream.OverflowStrategy
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: ExecutionContext, mat: Materializer) {
 
@@ -55,6 +51,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 			entity <- Marshal(creds).to[RequestEntity];
 			req = HttpRequest(uri = authUri, method = HttpMethods.POST, entity = entity);
 			resp <- http.singleRequest(req);
+			_ <- failIfNotOk(resp);
 			js <- Unmarshal(resp).to[JsValue]
 		) yield{
 			token = js.asJsObject.fields("Response").asJsObject.fields("data").asJsObject.fields("token") match{
