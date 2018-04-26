@@ -14,6 +14,7 @@ import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 
 object StatefulInitSink {
+	//TODO Rewrite using Sink.lazyInitAsync
 	def apply[T, M](sinkFactory: () => Sink[T, M]): Sink[T, Future[M]] = Sink.fromGraph(new StatefulInitSink(sinkFactory))
 }
 

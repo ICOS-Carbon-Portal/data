@@ -1,30 +1,38 @@
 package se.lu.nateko.cp.data.api
 
-import se.lu.nateko.cp.data.B2StageConfig
-import akka.http.scaladsl.HttpExt
-import akka.http.scaladsl.model.Uri
-import scala.concurrent.Future
-import spray.json._
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.RequestEntity
+import java.nio.file.Paths
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
-import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.HttpEntity
+import scala.concurrent.Future
+
+import akka.Done
+import akka.http.scaladsl.HttpExt
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpMethods
+import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.RequestEntity
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model.headers.Authorization
+import akka.http.scaladsl.model.headers.OAuth2BearerToken
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import scala.util.Success
-import akka.Done
-import akka.http.scaladsl.model.headers.OAuth2BearerToken
-import akka.http.scaladsl.model.headers.Authorization
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.StatusCodes
-import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import java.nio.file.Paths
+import se.lu.nateko.cp.data.B2StageConfig
+import spray.json._
+import akka.stream.scaladsl.Sink
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
+import akka.stream.scaladsl.StreamConverters
+import akka.http.scaladsl.model.EntityStreamException
+import akka.stream.OverflowStrategy
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: ExecutionContext, mat: Materializer) {
 
@@ -98,19 +106,34 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 		withAuth(req).flatMap(failIfNotOk)
 	}
 
-	def downloadObject(path: String): Source[ByteString, Future[Done]] = Source.lazily(
-		() => Source.fromFutureSource{
+	def objectSink(path: String): Sink[ByteString, Future[Done]] = {
+		val is = new PipedInputStream()
+		val os = new PipedOutputStream(is)
 
-			val uri = fromRelativePath(path).withQuery(Uri.Query("download" -> "true"))
-	
-			withAuth(HttpRequest(uri = uri)).flatMap(resp => resp.status match{
-				case StatusCodes.OK =>
-					Future.successful(resp.entity.withoutSizeLimit.dataBytes)
-				case _ =>
-					failIfNotOk(resp).map(_ => Source.empty)
-			})
+		val doneFut = uploadObject(path, StreamConverters.fromInputStream(() => is))
+
+		StreamConverters.fromOutputStream(() => os, true).mapMaterializedValue{
+			sinkFut => doneFut.flatMap(_ => sinkFut).flatMap(iores =>
+				Future.fromTry(iores.status)
+			)
 		}
-	).mapMaterializedValue(_.flatten.map(_ => Done))
+	}
+
+	def downloadObjectOnce(path: String): Future[Source[ByteString, Any]] = {
+
+		val uri = fromRelativePath(path).withQuery(Uri.Query("download" -> "true"))
+
+		withAuth(HttpRequest(uri = uri)).flatMap(resp => resp.status match{
+			case StatusCodes.OK =>
+				Future.successful(resp.entity.withoutSizeLimit.dataBytes)
+			case _ =>
+				failIfNotOk(resp).map(_ => Source.empty)
+		})
+	}
+
+	def downloadObjectReusable(path: String): Source[ByteString, Future[Done]] = Source
+		.lazily(() => Source.fromFutureSource(downloadObjectOnce(path)))
+		.mapMaterializedValue(_.flatten.map(_ => Done))
 
 	def delete(path: String): Future[Done] = withAuth(
 		HttpRequest(uri = fromRelativePath(path), method = HttpMethods.DELETE)
@@ -161,45 +184,69 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 					case JsNull => notOk.value
 					case JsArray(errs) => errs.map{
 						case JsString(err) => err
-						case _ => "unrecognized error"
+						case err => err.compactPrint
 					}.mkString("; ")
 					case _ => throw new CpDataException("Response.errors returned from B2STAGE API must be JSON null or array")
 				}
-				Future.failed(new CpDataException(msg))
-			}
+				Future.failed[Done](new CpDataException(msg))
+			}.transform(identity, {
+				case _: EntityStreamException =>
+					new CpDataException("Could not parse response from B2STAGE. Returned status: " + resp.status.value)
+				case err => err
+			})
 	}
 }
 
 object B2StageClient{
 	val RegisteredPrefix = "/api/registered"
 
-	import se.lu.nateko.cp.data.ConfigReader
-	import akka.actor.ActorSystem
-	import akka.stream.ActorMaterializer
-
-	implicit private val system = ActorSystem("B2StageClient")
-	system.log
-	implicit private val materializer = ActorMaterializer(namePrefix = Some("B2StageClient_mat"))
-	implicit val dispatcher = system.dispatcher
-	private val http = akka.http.scaladsl.Http()
-
-	def stop() = system.terminate()
-	
-	val default = new B2StageClient(ConfigReader.getDefault.upload.b2stage, http)
-
-	def list(path: String) = default.listCollection(path).foreach(c => c.foreach(println))
-
-	def testUpload() = {
-		val filePath = "/home/oleg/Downloads/InGOS_Radon_fluxmap_v2.0_noah_2006-2012.nc"
-		val src = FileIO.fromPath(Paths.get(filePath))
-		default.uploadObject("/newdir/radon.nc", src)
-	}
-
-	def testDownload(): Future[Long] = {
-		default.downloadObject("/newdir/radon.nc").runFold(0L)((sum, bs) => sum + bs.length)
-	}
-
 	sealed trait B2SafeData
 	case class DataObject(path: String) extends B2SafeData
 	case class Collection(path: String) extends B2SafeData
+
 }
+
+//object B2Playground{
+//	import akka.actor.ActorSystem
+//	import akka.stream.ActorMaterializer
+//	import scala.concurrent.duration.DurationInt
+//	import se.lu.nateko.cp.data.ConfigReader
+//
+//	implicit private val system = ActorSystem("B2StageClient")
+//	system.log
+//	implicit private val materializer = ActorMaterializer(namePrefix = Some("B2StageClient_mat"))
+//	implicit val dispatcher = system.dispatcher
+//	private val http = akka.http.scaladsl.Http()
+//
+//	def stop() = system.terminate()
+//
+//	val default = new B2StageClient(ConfigReader.getDefault.upload.b2stage, http)
+//
+//	def list(path: String) = default.listCollection(path).foreach(c => c.foreach(println))
+//
+//	def testUpload(targetPath: String, nMb: Long, viaSink: Boolean) = {
+//		val mb = ByteString(Array.ofDim[Byte](1 << 20))
+//
+//		val src = Source.repeat(mb).take(nMb).delay(200.milli, OverflowStrategy.backpressure)
+//
+//		val start = System.currentTimeMillis
+//
+//		if(viaSink)
+//			Await.result(src.runWith(default.objectSink(targetPath)), 3.minute)
+//		else
+//			Await.result(default.uploadObject(targetPath, src), 3.minute)
+//
+//		val elapsed = System.currentTimeMillis - start
+//		println(s"Elapsed $elapsed ms")
+//	}
+//
+//	def testDownload(path: String): Unit = {
+//		val lfut = default.downloadObjectOnce(path).flatMap(
+//			_.runFold(0L)((sum, bs) => {println(sum); sum + bs.length})
+//		)
+//		val start = System.currentTimeMillis
+//		val size = Await.result(lfut, 3.minute)
+//		val elapsed = System.currentTimeMillis - start
+//		println(s"Size $size, elapsed $elapsed ms")
+//	}
+//}

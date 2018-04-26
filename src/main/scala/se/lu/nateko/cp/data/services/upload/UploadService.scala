@@ -17,10 +17,12 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.data.api.B2StageClient
+import akka.http.scaladsl.Http
 
 class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: EnvriConfigs) {
 
-	import meta.{system, dispatcher}
+	import meta.{system, dispatcher, materializer}
 	import UploadService._
 
 	val log = system.log
@@ -32,6 +34,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val irods = IrodsClient(config.irods)
+	private val b2 = new B2StageClient(config.b2stage, Http())
 
 	private implicit def getEnvriConfig(implicit envri: Envri): EnvriConfig = {
 		envriConfs.getOrElse(envri, throw new Exception(s"Did not find config for ENVRI $envri"))
@@ -61,7 +64,6 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 		val postTasks = getPostUploadTasks(dataObj)
 
 		getUploadTasks(dataObj).map{tasks =>
-
 			combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
 				val results = uploadResults.toIndexedSeq
 
@@ -85,17 +87,20 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	private def getUploadTasks(dataObj: DataObject)(implicit  envri: Envri): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
-		def defaults = IndexedSeq.empty :+
+		val b2Fut = B2StageUploadTask(dataObj, b2)
+
+		val defaults = IndexedSeq.empty :+
 			new HashsumCheckingUploadTask(dataObj.hash) :+
 			new ByteCountingTask
 
-		def defaultsWithIrods = defaults :+
-			new IrodsUploadTask(dataObj, irods)
+		val defaultsWithBackupFut = b2Fut.map{
+			defaults :+ new IrodsUploadTask(dataObj, irods) :+ _
+		}
 
 		def saveToFile = new FileSavingUploadTask(file)
 
 		dataObj.specification.dataLevel match{
-			case 0 | 1 | 3 => Future.successful(defaultsWithIrods :+ saveToFile)
+			case 0 | 1 | 3 => defaultsWithBackupFut.map(_ :+ saveToFile)
 
 			case 2 =>
 				val formatUri = dataObj.specification.format.uri
@@ -104,10 +109,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 						defaults :+ ingestionTask
 					}
 
-				} else IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-					defaultsWithIrods :+
-					ingestionTask :+
-					saveToFile
+				} else IngestionUploadTask(dataObj, file, meta.sparql).flatMap{ingestionTask =>
+					defaultsWithBackupFut.map(_ :+ ingestionTask :+ saveToFile)
 				}
 
 			case dataLevel => Future.successful(

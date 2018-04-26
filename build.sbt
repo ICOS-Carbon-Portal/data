@@ -124,5 +124,14 @@ lazy val data = (project in file("."))
 			frontendBuild.value
 			// Then just return the original "assembly command"
 			Def.task(original.value)
-		}).value
+		}).value,
+
+//		initialCommands in console := """
+//			import se.lu.nateko.cp.data.api.B2Playground._
+//		""",
+
+//		cleanupCommands in console := """
+//			stop()
+//		"""
 	)
+
