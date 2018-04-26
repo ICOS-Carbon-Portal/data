@@ -29,6 +29,7 @@
   "babel-preset-react": "^6.24.1"
  },
  "dependencies": {
-  "icos-cp-spatial": "^0.2.0"
+  "icos-cp-spatial": "^0.2.0",
+  "whatwg-fetch": "^2.0.4"
  }
 }

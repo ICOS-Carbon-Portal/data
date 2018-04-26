@@ -87,17 +87,6 @@ const updatePersonalRestheart = (db, email, data) => {
 	}).then(resp => resp);
 };
 
-export const updatePortalUsage = (data) => {
-	return fetch(`${config.restheartPortalUseBaseUrl}/portaluse`, {
-		method: 'POST',
-		mode: 'cors',
-		headers: new Headers({
-			'Content-Type': 'application/json'
-		}),
-		body: JSON.stringify(data)
-	}).then(resp => resp);
-};
-
 export const getCart = email => {
 	const localStorageJson = localStorage.getItem('cp-cart')
 		? JSON.parse(localStorage.getItem('cp-cart'))
@@ -171,7 +160,7 @@ export function getWhoIam(){
 		});
 }
 
-const getProfile = email => {
+export const getProfile = email => {
 	return email
 		? fetch(`https://${config.restheartBaseUrl}/users/${email}?keys={profile:1}`, {credentials: 'include'})
 			.then(profile => {
@@ -180,16 +169,6 @@ const getProfile = email => {
 					: {}
 			})
 		: Promise.resolve({});
-};
-
-export const getUserInfo = () => {
-	return getWhoIam()
-		.then(user => {
-			return {
-				profilePromise: getProfile(user.email),
-				user
-			};
-		})
 };
 
 export const getExtendedDataObjInfo = dobjs => {

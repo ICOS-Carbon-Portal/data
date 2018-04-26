@@ -21,7 +21,8 @@ export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, getUserInfo, updatePortalUsage} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
+import {saveToRestheart} from '../../common/main/backend';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
@@ -100,8 +101,8 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 const logPortalUsage = (user, routeAndParams) => {
-	if (user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
-		updatePortalUsage({
+	if (user.ip && user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
+		saveToRestheart({
 			filterChange: {
 				ip: user.ip,
 				filters: routeAndParams.filters
@@ -304,20 +305,26 @@ const updateCart = (email, cart, dispatch) => {
 	);
 };
 
-export const fetchUserInfo = restoreCart => (dispatch, getState) => {
-	getUserInfo().then(
-		({profilePromise, user}) => {
-			profilePromise.then(profile => {
+export const fetchUserInfo = restoreCart => dispatch => {
+	getWhoIam()
+		.then(user => {
+			dispatch({
+				type: WHOAMI_FETCHED,
+				user
+			});
+			return user;
+		})
+		.then(user => {
+			getProfile(user.email).then(profile => {
 				dispatch({
 					type: USER_INFO_FETCHED,
 					user,
 					profile
 				});
 
-				if (restoreCart) fetchCart(dispatch, getState);
+				if (restoreCart) dispatch(fetchCart);
 			});
-		}
-	);
+		});
 };
 
 export const fetchIsBatchDownloadOk = dispatch => {

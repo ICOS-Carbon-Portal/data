@@ -4,6 +4,7 @@ import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
 import {throttle} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
+import {logUsage} from '../../../common/main/backend';
 
 
 const minHeight = 300;
@@ -19,6 +20,9 @@ export default class Map extends Component {
 		this.center = props.initSearchParams.center && props.initSearchParams.center.split(',') || [52.5, 10];
 		this.zoom = props.initSearchParams.zoom || 2;
 
+		this.objId = location.pathname.split('/').filter(part => part.length > 20).pop();
+		this.prevVariables = undefined;
+
 		this.hightUpdater = throttle(this.updateHeight.bind(this));
 		window.addEventListener("resize", this.hightUpdater);
 	}
@@ -30,6 +34,12 @@ export default class Map extends Component {
 	updateURL(){
 		if (this.props.isIframe && this.props.rasterFetchCount > 0) {
 			const {dates, elevations, gammas, variables} = this.props.controls;
+
+			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
+				this.prevVariables = variables;
+				logUsage({objId: this.objId, variable: variables.selected}, formatData);
+			}
+
 			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
 			const elevationParam = elevations.selectedIdx > 0 && elevations.selected ? `elevation=${elevations.selected}` : undefined;
 			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
@@ -170,4 +180,16 @@ const Spinner = props => {
 			<span>Portal</span>
 		</div>
 		: null;
+};
+
+const formatData = (user, dataToSave) => {
+	return {
+		previewNetCDF: {
+			ip: user.ip,
+			params: {
+				objId: dataToSave.objId,
+				variable: dataToSave.variable
+			}
+		}
+	}
 };

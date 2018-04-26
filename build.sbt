@@ -1,6 +1,6 @@
 val defaultScala = "2.12.4"
 
-watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
+//watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",

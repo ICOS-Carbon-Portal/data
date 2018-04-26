@@ -1,5 +1,7 @@
 import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
+import {logUsage} from '../../common/main/backend';
+
 
 const spinnerDelay = 100;
 
@@ -23,6 +25,7 @@ export default class App {
 
 	main(){
 		const params = this.params;
+		logUsage(params, formatData);
 
 		getTableFormatNrows(this.config, params.get('objId'))
 			.then(
@@ -197,4 +200,18 @@ const fail = (message) => {
 const presentError = (errMsg) => {
 	document.getElementById('cp-spinner').style.display = 'none';
 	document.getElementById('error').innerHTML = errMsg;
+};
+
+const formatData = (user, dataToSave) => {
+	return {
+		previewTimeserie: {
+			ip: user.ip,
+			params: {
+				objId: dataToSave.get('objId'),
+				x: dataToSave.get('x'),
+				y: dataToSave.get('y'),
+				type: dataToSave.get('type')
+			}
+		}
+	}
 };

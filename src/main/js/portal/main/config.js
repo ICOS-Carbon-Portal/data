@@ -1,7 +1,5 @@
 import commonConfig from '../../common/main/config';
 
-const authHost = commonConfig.envri === 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
-const restheartDb = commonConfig.envri === 'SITES' ? 'sitesdb' : 'db';
 
 export default {
 	ROUTE_SEARCH: 'search',
@@ -13,8 +11,8 @@ export default {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/'
 	},
-	restheartBaseUrl: `//${authHost}/db`,
-	restheartPortalUseBaseUrl: `//restheart.icos-cp.eu/${restheartDb}`,
+	restheartBaseUrl: commonConfig.restheartBaseUrl,
+	restheartPortalUseBaseUrl: commonConfig.restheartPortalUseBaseUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 500,
