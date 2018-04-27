@@ -16,6 +16,7 @@ class WdcggToBinTableConverter(colFormats: ColumnFormats, header: WdcggParser.He
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case IntValue => value == "-9999"
 		case FloatValue | DoubleValue => floatNullRegex.findFirstIn(value).isDefined
+		case Utf16CharValue => value.isEmpty
 		case StringValue => value == null
 		case Iso8601Date => nullDates.contains(value.substring(5))
 		case Iso8601DateTime | EtcDate => throw new Exception("Did not expect these value types (Iso8601DateTime | EtcDate) in WDCGG data")

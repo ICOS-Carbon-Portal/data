@@ -11,7 +11,8 @@ class AtcProdToBinTableConverter(colFormats: ColumnFormats, header: AtcProdParse
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "-999.990"
 		case IntValue => value == null || value.trim.isEmpty
-		case _ => throw new Exception("Did not expect value types except float and int in ATC product time series data")
+		case Utf16CharValue => value == null || value.isEmpty
+		case vf => throw new Exception(s"Did not expect value format $vf in ATC product time series data")
 	}
 
 	def amend(value: String, format: ValueFormat): String = value

@@ -208,6 +208,7 @@ object B2StageClient{
 //	import akka.stream.ActorMaterializer
 //	import scala.concurrent.duration.DurationInt
 //	import se.lu.nateko.cp.data.ConfigReader
+//	import scala.concurrent.Await
 //
 //	implicit private val system = ActorSystem("B2StageClient")
 //	system.log
@@ -224,7 +225,7 @@ object B2StageClient{
 //	def testUpload(targetPath: String, nMb: Long, viaSink: Boolean) = {
 //		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 //
-//		val src = Source.repeat(mb).take(nMb).delay(200.milli, OverflowStrategy.backpressure)
+//		val src = Source.repeat(mb).take(nMb)//.delay(200.milli, OverflowStrategy.backpressure)
 //
 //		val start = System.currentTimeMillis
 //

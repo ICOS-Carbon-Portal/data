@@ -18,6 +18,8 @@ class ValueFormatParser(locale: Locale){
 			parser.parse(value, DataType.FLOAT)
 		case DoubleValue =>
 			parser.parse(value, DataType.DOUBLE)
+		case Utf16CharValue =>
+			Character.valueOf(value.charAt(0))
 		case StringValue =>
 			value
 		case Iso8601Date =>
@@ -41,6 +43,7 @@ class ValueFormatParser(locale: Locale){
 		case IntValue => DataType.INT
 		case FloatValue => DataType.FLOAT
 		case DoubleValue => DataType.DOUBLE
+		case Utf16CharValue => DataType.CHAR
 		case StringValue => DataType.STRING
 		case Iso8601Date | EtcDate => DataType.INT
 		case Iso8601DateTime | IsoLikeLocalDateTime => DataType.DOUBLE
@@ -51,6 +54,7 @@ class ValueFormatParser(locale: Locale){
 		case IntValue => Int.box(Int.MinValue)
 		case FloatValue => Float.box(Float.NaN)
 		case DoubleValue => Double.box(Double.NaN)
+		case Utf16CharValue => Character.valueOf(Character.MIN_VALUE)
 		case StringValue => ""
 		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
 		case Iso8601DateTime | IsoLikeLocalDateTime => Double.box(Double.NaN)
