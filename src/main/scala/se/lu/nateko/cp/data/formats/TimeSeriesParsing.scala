@@ -9,13 +9,11 @@ trait TableRowHeader{
 	def columnNames: Array[String]
 }
 
-trait ProperTableRowHeader extends TableRowHeader{
-	def nRows: Int
-}
+case class ProperTableRowHeader(columnNames: Array[String], nRows: Int) extends TableRowHeader
 
 trait TableRow[H <: TableRowHeader]{
 	def header: H
 	def cells: Array[String]
 }
 
-trait ProperTableRow[H <: ProperTableRowHeader] extends TableRow[H]
+case class ProperTableRow(header: ProperTableRowHeader, cells: Array[String]) extends TableRow[ProperTableRowHeader]

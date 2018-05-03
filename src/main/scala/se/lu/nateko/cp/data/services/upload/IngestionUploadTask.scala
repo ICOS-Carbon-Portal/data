@@ -75,12 +75,8 @@ class IngestionUploadTask(
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
 						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-							val converter = dailySitesCsvToBinTableConverter(nRows, ColumnFormats(formats, null))
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser, converter)
-//						} else {
-//							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-//							val converter = dailySitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
-//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser, converter)
+							val converter = dailySitesCsvToBinTableConverter(ColumnFormats(formats, null))
+							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser(nRows), converter)
 						}
 				}
 
