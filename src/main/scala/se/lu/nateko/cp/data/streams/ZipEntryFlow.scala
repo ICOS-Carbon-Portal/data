@@ -1,7 +1,10 @@
 package se.lu.nateko.cp.data.streams
 
 import java.io.BufferedOutputStream
+import java.io.PipedInputStream
+import java.io.PipedOutputStream
 import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
 import scala.collection.mutable.Queue
@@ -42,6 +45,7 @@ object ZipEntryFlow {
 		zipFlowSources.via(Flow.fromGraph(new ZipEntryFlow))
 	}
 
+	val singleEntryUnzip: Flow[ByteString, ByteString, NotUsed] = Flow.fromGraph(new SingleEntryUnzipFlow)
 }
 
 
@@ -100,6 +104,82 @@ private class ZipEntryFlow extends GraphStage[FlowShape[ZipFlowElement, ByteStri
 			if(bsq.isEmpty && !hasBeenPulled(in) && !isAvailable(in)) {
 				if(isClosed(in)) completeStage()
 				else pull(in)
+			}
+		}
+	}
+}
+
+
+private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, ByteString]]{
+
+	private val in: Inlet[ByteString] = Inlet("SingleEntryUnzipFlowInput")
+	private val out: Outlet[ByteString] = Outlet("SingleEntryUnzipFlowOutput")
+
+	override val shape = FlowShape(in, out)
+
+	override def createLogic(inheritedAttributes: Attributes) = new GraphStageLogic(shape){
+
+		private val os = new PipedOutputStream()
+		private val is = new PipedInputStream(os)
+		private val zis = new ZipInputStream(is)
+		private var gotNextEntry = false
+		private val buff = Array.ofDim[Byte](8096)
+
+		override def preStart(): Unit = pull(in) //initial pull
+
+		setHandler(in, new InHandler{
+			override def onPush(): Unit = {
+				grabAndPipe()
+				if(isAvailable(out)) {
+					pull(in)
+					pushResultOut()
+				}
+			}
+
+			override def onUpstreamFinish(): Unit = {
+				if(isAvailable(in)) grabAndPipe()
+				//println("Upstream finish, closing piped os")
+				os.close()
+				if(isAvailable(out)) pushResultOut()
+				zis.close()
+				completeStage()
+			}
+		})
+
+		setHandler(out, new OutHandler {
+			override def onPull(): Unit = pushResultOut()
+		})
+
+		private def grabAndPipe(): Unit = {
+			//println("grabbing input")
+			val bs = grab(in)
+			val arr = Array.ofDim[Byte](bs.size)
+			bs.copyToArray(arr)
+			//println(s"grabbed ${arr.length} bytes, writing to os")
+			os.write(arr)
+		}
+
+		private def pushResultOut(): Unit = if(is.available > 0){
+			if(!gotNextEntry) {
+				//println("Getting the first entry")
+				zis.getNextEntry()
+				gotNextEntry = true
+				//println("Got the first entry")
+			}
+
+			//println("See if we can read output...")
+			while(isAvailable(out) && zis.available == 1){
+				val nread = zis.read(buff)
+				//println(s"Have read $nread bytes")
+				if(nread > 0){
+					push(out, ByteString.fromArray(buff, 0, nread))
+				}
+			}
+			if(zis.available == 0) {
+				//println(s"Have read all output, closing streams and completing stage")
+				os.close()
+				zis.close()
+				completeStage()
 			}
 		}
 	}
