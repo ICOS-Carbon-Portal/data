@@ -25,3 +25,4 @@ sealed class CpDataParsingException(message: String) extends CpDataException(mes
 
 final class WdcggParsingException(message: String) extends CpDataParsingException(message)
 final class EcoCsvParsingException(message: String) extends CpDataParsingException(message)
+final class DailyCsvParsingException(message: String) extends CpDataParsingException(message)

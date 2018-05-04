@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.formats.dailysitescsv
 
+import se.lu.nateko.cp.data.api.DailyCsvParsingException
 import se.lu.nateko.cp.data.formats.{ParsingAccumulator, ProperTableRowHeader}
 
 object DailySitesCsvParser {
@@ -25,7 +26,16 @@ class DailySitesCsvParser(nRows: Int) {
 		} else if (acc.header.columnNames.isEmpty) { // Header
 			acc.copy(header = ProperTableRowHeader(line.split(separator), nRows))
 		} else { // Rows
-			acc.copy(cells = line.split(separator))
+			val cells = line.split(separator)
+			if (cells.length != acc.header.columnNames.length) {
+				acc.copy(error = Some(
+					new DailyCsvParsingException(
+						s"Encountered $cells.length cells on line $line, expected $acc.header.columnNames.length"
+					)
+				))
+			} else {
+				acc.copy(cells = cells)
+			}
 		}
 	}
 }
