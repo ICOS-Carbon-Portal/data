@@ -10,7 +10,7 @@ object DailySitesCsvParser {
 		cells: Array[String],
 		error: Option[Throwable])
 		extends ParsingAccumulator {
-		def isOnData = !header.columnNames.isEmpty
+		def isOnData = !cells.isEmpty
 	}
 }
 
@@ -22,10 +22,10 @@ class DailySitesCsvParser(nRows: Int) {
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) {
 			acc
-		} else if (acc.isOnData) { // Header
-			acc.copy(cells = line.split(separator))
-		} else { // Rows
+		} else if (acc.header.columnNames.isEmpty) { // Header
 			acc.copy(header = ProperTableRowHeader(line.split(separator), nRows))
+		} else { // Rows
+			acc.copy(cells = line.split(separator))
 		}
 	}
 }

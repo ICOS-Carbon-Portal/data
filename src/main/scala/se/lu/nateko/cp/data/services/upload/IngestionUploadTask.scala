@@ -75,7 +75,7 @@ class IngestionUploadTask(
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
 						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-							val converter = dailySitesCsvToBinTableConverter(ColumnFormats(formats, null))
+							val converter = dailySitesCsvToBinTableConverter(formats)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser(nRows), converter)
 						}
 				}

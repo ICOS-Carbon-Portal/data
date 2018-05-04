@@ -6,7 +6,7 @@ import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
 import akka.{Done, NotUsed}
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.data.formats.{ColumnFormats, ProperTableRow, ProperTableRowHeader}
+import se.lu.nateko.cp.data.formats.{ColumnValueFormats, ProperTableRow, ProperTableRowHeader}
 import se.lu.nateko.cp.meta.core.data.{TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,7 +29,7 @@ object DailySitesCsvStreams {
 	}
 
 	def dailySitesCsvToBinTableConverter[H <: ProperTableRowHeader](
-		formats: ColumnFormats
+		formats: ColumnValueFormats
 	)(implicit ctxt: ExecutionContext): Flow[ProperTableRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 		val conv = new DailySitesCsvToBinTableConverter(formats)
 

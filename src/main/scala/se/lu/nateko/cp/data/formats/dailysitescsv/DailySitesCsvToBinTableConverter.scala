@@ -1,10 +1,10 @@
 package se.lu.nateko.cp.data.formats.dailysitescsv
 
-import se.lu.nateko.cp.data.formats.{ColumnFormats, FloatValue, ProperTimeSeriesToBinTableConverter, ValueFormat}
+import se.lu.nateko.cp.data.formats.{ColumnValueFormats, FloatValue, ProperTimeSeriesToBinTableConverter, ValueFormat}
 
 class DailySitesCsvToBinTableConverter(
-	colFormats: ColumnFormats
-) extends ProperTimeSeriesToBinTableConverter(colFormats: ColumnFormats) {
+	formats: ColumnValueFormats
+) extends ProperTimeSeriesToBinTableConverter(formats: ColumnValueFormats) {
 	protected def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN"
 		case _ => false

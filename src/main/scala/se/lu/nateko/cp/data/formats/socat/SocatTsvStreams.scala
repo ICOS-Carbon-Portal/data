@@ -60,7 +60,7 @@ object SocatTsvStreams{
 	}
 
 	def coverageSink(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Sink[BinTableRow, Future[GeoFeature]] = {
-		val sortedCols = formats.sortedColumns
+		val sortedCols = formats.valueFormats.sortedColumns
 
 		val lonPos = sortedCols.indexOf(LonColName)
 		val latPos = sortedCols.indexOf(LatColName)
