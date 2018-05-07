@@ -38,7 +38,7 @@ class IngestionUploadTask(
 		val format = dataObj.specification.format
 
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer, asciiAtcProdTimeSer }
-		import se.lu.nateko.cp.data.api.SitesMetaVocab.simpleSitesCsvTimeSer
+		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ simpleSitesCsvTimeSer, dailySitesCsvTimeSer }
 
 		val icosColumnFormats = ColumnFormats(formats, "TIMESTAMP")
 		format.uri match {
@@ -53,7 +53,7 @@ class IngestionUploadTask(
 				val converter = atcProdToBinTableConverter(icosColumnFormats)
 				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
 
-			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` =>
+			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
 				dataObj.specificInfo.right.toOption.flatMap(_.nRows) match{
 
@@ -69,10 +69,14 @@ class IngestionUploadTask(
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
 							val converter = socatTsvToBinTableConverter(nRows, icosColumnFormats)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
-						} else {
+						} else if (format.uri == simpleSitesCsvTimeSer) {
 							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
 							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
+						} else {
+							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
+							val converter = dailySitesCsvToBinTableConverter(formats)
+							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser(nRows), converter)
 						}
 				}
 

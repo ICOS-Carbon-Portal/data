@@ -24,7 +24,7 @@ export default class Preview {
 			: objInfo ? new CartItem(objInfo, options.type) : undefined;
 
 		if (options.type === config.TIMESERIES){
-			const xAxis = ['UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.includes(x));
+			const xAxis = ['Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.includes(x));
 
 			if (item && xAxis){
 				const url = getNewTimeseriesUrl(item, xAxis);

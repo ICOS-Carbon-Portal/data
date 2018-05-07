@@ -37,4 +37,5 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
 
 	val simpleSitesCsvTimeSer = getRelative("simpleSitesCsv")
+	val dailySitesCsvTimeSer = getRelative("dailySitesCsv")
 }

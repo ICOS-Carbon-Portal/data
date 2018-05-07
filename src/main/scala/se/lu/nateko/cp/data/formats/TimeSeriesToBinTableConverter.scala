@@ -14,7 +14,7 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 	protected def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef
 
 	protected val colPositions: Map[String, Int] = computeIndices(columnNames)
-	protected val sortedColumns = colFormats.sortedColumns
+	protected val sortedColumns = colFormats.valueFormats.sortedColumns
 
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
@@ -61,7 +61,7 @@ object TimeSeriesToBinTableConverter{
 	}
 
 	def recoverTimeStamp(cells: Array[AnyRef], formats: ColumnFormats): Instant = {
-		val sortedCols = formats.sortedColumns
+		val sortedCols = formats.valueFormats.sortedColumns
 		val stampColIndex = sortedCols.indexOf(formats.timeStampColumn)
 		assert(stampColIndex >= 0, formats.timeStampColumn + " not found in:  ." + sortedCols.mkString(", "))
 		val epochMilli = cells(stampColIndex).asInstanceOf[Double]
