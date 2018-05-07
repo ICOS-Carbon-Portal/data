@@ -87,14 +87,14 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	private def getUploadTasks(dataObj: DataObject)(implicit  envri: Envri): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
-		val b2Fut = B2StageUploadTask(dataObj, b2)
+		//val b2Fut = B2StageUploadTask(dataObj, b2)
 
 		val defaults = IndexedSeq.empty :+
 			new HashsumCheckingUploadTask(dataObj.hash) :+
 			new ByteCountingTask
 
-		val defaultsWithBackupFut = b2Fut.map{
-			defaults :+ new IrodsUploadTask(dataObj, irods) :+ _
+		val defaultsWithBackupFut = Future.successful(()).map{_ =>
+			defaults :+ new IrodsUploadTask(dataObj, irods)
 		}
 
 		def saveToFile = new FileSavingUploadTask(file)
