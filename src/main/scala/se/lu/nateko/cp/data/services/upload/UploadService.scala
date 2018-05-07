@@ -34,7 +34,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val irods = IrodsClient(config.irods)
-	private val b2 = new B2StageClient(config.b2stage, Http())
+//	private val b2 = new B2StageClient(config.b2stage, Http())
 
 	private implicit def getEnvriConfig(implicit envri: Envri): EnvriConfig = {
 		envriConfs.getOrElse(envri, throw new Exception(s"Did not find config for ENVRI $envri"))

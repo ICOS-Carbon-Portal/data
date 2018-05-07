@@ -176,19 +176,23 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 			resp.discardEntityBytes()
 			Future.successful(Done)
 		case notOk =>
-			Unmarshal(resp).to[JsValue].flatMap{jsv =>
-				val msg = jsv.asJsObject.fields("Response").asJsObject.fields("errors") match{
-					case JsNull => notOk.value
-					case JsArray(errs) => errs.map{
-						case JsString(err) => err
-						case err => err.compactPrint
-					}.mkString("; ")
-					case _ => throw new CpDataException("Response.errors returned from B2STAGE API must be JSON null or array")
+			Unmarshal(resp).to[String].flatMap{body =>
+				val msg: String = try{
+					body.parseJson.asJsObject.fields("Response").asJsObject.fields("errors") match{
+						case JsNull => notOk.value
+						case JsArray(errs) => errs.map{
+							case JsString(err) => err
+							case err => err.compactPrint
+						}.mkString("; ")
+						case _ => body //Response.errors returned from B2STAGE API must be JSON null or array
+					}
+				} catch{
+					case _: Throwable => body
 				}
-				Future.failed[Done](new CpDataException(msg))
+				Future.failed[Done](new CpDataException("B2STAGE error: " + msg))
 			}.transform(identity, {
 				case _: EntityStreamException =>
-					new CpDataException("Could not parse response from B2STAGE. Returned status: " + resp.status.value)
+					new CpDataException("Could not obtain response from B2STAGE. Returned status: " + resp.status.value)
 				case err => err
 			})
 	}
