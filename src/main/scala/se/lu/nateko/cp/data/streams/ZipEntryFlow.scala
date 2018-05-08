@@ -119,68 +119,73 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 
 	override def createLogic(inheritedAttributes: Attributes) = new GraphStageLogic(shape){
 
-		private val os = new PipedOutputStream()
-		private val is = new PipedInputStream(os)
-		private val zis = new ZipInputStream(is)
-		private var gotNextEntry = false
-		private val buff = Array.ofDim[Byte](8096)
+		private val oq = new ByteStringQueueInputStream
+		private val zis = new ZipInputStream(oq)
+		private var entrySize: Long = -1
+		private var readSize: Long = 0
+		private def gotFirstEntry = entrySize >= 0
+		private val bufSize = 8192
+		private val buff = Array.ofDim[Byte](bufSize)
+		private val headerBytesMax = 128
 
 		override def preStart(): Unit = pull(in) //initial pull
 
 		setHandler(in, new InHandler{
+
 			override def onPush(): Unit = {
-				grabAndPipe()
-				if(isAvailable(out)) {
+				oq.append(grab(in))
+				if(!gotFirstEntry && oq.available < headerBytesMax || isAvailable(out) && oq.available < bufSize * 2) {
 					pull(in)
-					pushResultOut()
 				}
+				if(!gotFirstEntry && oq.available >= headerBytesMax) getFirstEntry()
+				if(gotFirstEntry && isAvailable(out)) pushResultOut()
 			}
 
 			override def onUpstreamFinish(): Unit = {
-				if(isAvailable(in)) grabAndPipe()
-				//println("Upstream finish, closing piped os")
-				os.close()
-				if(isAvailable(out)) pushResultOut()
-				zis.close()
-				completeStage()
+				if(isAvailable(in)) oq.append(grab(in))
+				oq.finishAppending()
+				if(!gotFirstEntry && oq.available > 0) getFirstEntry()
+				pushResultOut()
 			}
 		})
 
 		setHandler(out, new OutHandler {
-			override def onPull(): Unit = pushResultOut()
+			override def onPull(): Unit = {
+				if(!hasBeenPulled(in) && !isClosed(in) && oq.available < bufSize * 2) {
+					pull(in)
+				}
+				pushResultOut()
+			}
+			override def onDownstreamFinish(): Unit = {
+				oq.finishAppending()
+				zis.close()
+				oq.close()
+				completeStage()
+			}
 		})
 
-		private def grabAndPipe(): Unit = {
-			//println("grabbing input")
-			val bs = grab(in)
-			val arr = Array.ofDim[Byte](bs.size)
-			bs.copyToArray(arr)
-			//println(s"grabbed ${arr.length} bytes, writing to os")
-			os.write(arr)
+		private def getFirstEntry(): Unit = {
+			entrySize = zis.getNextEntry().getSize
 		}
 
-		private def pushResultOut(): Unit = if(is.available > 0){
-			if(!gotNextEntry) {
-				//println("Getting the first entry")
-				zis.getNextEntry()
-				gotNextEntry = true
-				//println("Got the first entry")
-			}
+		private def pushResultOut(): Unit = {
 
-			//println("See if we can read output...")
-			while(isAvailable(out) && zis.available == 1){
-				val nread = zis.read(buff)
-				//println(s"Have read $nread bytes")
+			if(gotFirstEntry && isAvailable(out) && readSize < entrySize && (upstreamFinished || oq.available > bufSize)){
+				val toRead = Math.min(buff.length.toLong, entrySize - readSize).toInt
+				val nread = zis.read(buff, 0, toRead)
+				readSize += nread
 				if(nread > 0){
 					push(out, ByteString.fromArray(buff, 0, nread))
 				}
 			}
-			if(zis.available == 0) {
-				//println(s"Have read all output, closing streams and completing stage")
-				os.close()
+
+			if(upstreamFinished && readSize == entrySize) {
+				//oq must have been closed from the InputHandler by now
 				zis.close()
 				completeStage()
 			}
 		}
+
+		private def upstreamFinished: Boolean = isClosed(in) && !isAvailable(in) && !hasBeenPulled(in)
 	}
 }
