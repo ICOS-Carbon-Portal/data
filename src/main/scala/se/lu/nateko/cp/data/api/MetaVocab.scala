@@ -32,6 +32,9 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val iso8601dateTime = getRelative("iso8601dateTime")
 	val iso8601timeOfDay = getRelative("iso8601timeOfDay")
 	val isoLikeLocalDateTime = getRelative("isoLikeLocalDateTime")
+
+	val zipEncoding = getRelative("zipEncoding")
+	val plainFile = getRelative("plainFileEncoding")
 }
 
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {

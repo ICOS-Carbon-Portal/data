@@ -2,27 +2,30 @@ package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
 
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+
 import akka.Done
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
+import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.SparqlClient
-import se.lu.nateko.cp.data.formats.{ColumnFormats, ColumnValueFormats, TimeSeriesStreams, ValueFormat}
+import se.lu.nateko.cp.data.formats.{ ColumnFormats, ColumnValueFormats, TimeSeriesStreams, ValueFormat }
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.streams.KeepFuture
+import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.meta.core.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.{DataObject, IngestionMetadataExtract}
+import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
+import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
-
-import scala.concurrent.ExecutionContext
 
 class IngestionUploadTask(
 	dataObj: DataObject,
@@ -30,18 +33,17 @@ class IngestionUploadTask(
 	formats: ColumnValueFormats
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	//import sparql.materializer.executionContext
-
 	private val file = new File(originalFile.getAbsolutePath + FileExtension)
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = dataObj.specification.format
 
-		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer, asciiAtcProdTimeSer }
-		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ simpleSitesCsvTimeSer, dailySitesCsvTimeSer }
+		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
+		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ dailySitesCsvTimeSer, simpleSitesCsvTimeSer }
 
 		val icosColumnFormats = ColumnFormats(formats, "TIMESTAMP")
-		format.uri match {
+
+		val ingestionSink = format.uri match {
 
 			case `asciiWdcggTimeSer` =>
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
@@ -83,6 +85,9 @@ class IngestionUploadTask(
 			case _ =>
 				failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
 		}
+
+		val decoderFlow = makeEncodingSpecificFlow(dataObj.specification.encoding)
+		decoderFlow.toMat(ingestionSink)(Keep.right)
 	}
 
 	private def failedSink[T](result: UploadTaskResult) = Sink.cancelled[T].mapMaterializedValue(_ => Future.successful(result))
@@ -102,6 +107,15 @@ class IngestionUploadTask(
 					case exc: Throwable => IngestionFailure(exc)
 				}
 			)
+	}
+
+	private def makeEncodingSpecificFlow(encoding: UriResource): Flow[ByteString, ByteString, NotUsed] = {
+		import se.lu.nateko.cp.data.api.CpMetaVocab.{ plainFile, zipEncoding }
+		encoding.uri match{
+			case `plainFile` => Flow.apply[ByteString]
+			case `zipEncoding` => ZipEntryFlow.singleEntryUnzip
+			case encUri => throw new CpDataException("Unsupported encoding " + encoding.label.getOrElse(encUri.toString))
+		}
 	}
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = {
