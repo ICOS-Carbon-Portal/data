@@ -22,7 +22,12 @@ class B2StageUploadTask private (dataObject: DataObject, client: B2StageClient)(
 				)
 			case false =>
 				client.objectSink(filePath).mapMaterializedValue(
-					_.map(_ => B2StageSuccess)
+					_.map{hash =>
+						if(hash == dataObject.hash) B2StageSuccess
+						else B2StageFailure(
+							new CpDataException(s"B2STAGE returned SHA256 $hash instead of " + dataObject.hash)
+						)
+					}
 				)
 		}
 

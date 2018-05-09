@@ -28,6 +28,7 @@ import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.B2StageConfig
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: ExecutionContext, mat: Materializer) {
@@ -54,7 +55,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 			_ <- failIfNotOk(resp);
 			js <- Unmarshal(resp).to[JsValue]
 		) yield{
-			token = js.asJsObject.fields("Response").asJsObject.fields("data").asJsObject.fields("token") match{
+			token = drillIn(js, "Response", "data", "token") match{
 				case JsString(s) => s
 				case _ => throw new Exception("Expected the authentication token to be a json string")
 			}
@@ -68,7 +69,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 			.flatMap(parseJsIfOk)
 			.map{js =>
 
-				val entries = js.asJsObject.fields("Response").asJsObject.fields("data") match{
+				val entries = drillIn(js, "Response", "data") match{
 					case JsArray(elems) => elems
 					case _ => throw new CpDataException("Expected B2SAFE data list to be a json array")
 				}
@@ -94,25 +95,34 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 		}.flatMap(failIfNotOk)
 	}
 
-	def uploadObject(path: String, source: Source[ByteString, Any]): Future[Done] = {
+	def uploadObject(path: String, source: Source[ByteString, Any]): Future[Sha256Sum] = {
 
 		val uri = fromRelativePath(path)
 		val entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`, source.map(b => b))
 		val req = HttpRequest(uri = uri, method = HttpMethods.PUT, entity = entity)
 
-		withAuth(req).flatMap(failIfNotOk)
+		withAuth(req).flatMap(parseJsIfOk).map{js =>
+			drillIn(js, "Response", "data", "checksum") match{
+				case JsString(str) =>
+					Sha256Sum.fromBase64(str.stripPrefix("sha2:")).get
+				case _ =>
+					throw new CpDataException("Could not extract sha2 checksum from the B2STAGE response")
+			}
+		}
 	}
 
-	def objectSink(path: String): Sink[ByteString, Future[Done]] = {
+	def objectSink(path: String): Sink[ByteString, Future[Sha256Sum]] = {
 		val is = new PipedInputStream()
 		val os = new PipedOutputStream(is)
 
-		val doneFut = uploadObject(path, StreamConverters.fromInputStream(() => is))
+		val hashFut = uploadObject(path, StreamConverters.fromInputStream(() => is))
 
 		StreamConverters.fromOutputStream(() => os, true).mapMaterializedValue{
-			sinkFut => doneFut.flatMap(_ => sinkFut).flatMap(iores =>
-				Future.fromTry(iores.status)
-			)
+			sinkFut => for(
+				hash <- hashFut;
+				iores <- sinkFut;
+				_ <- Future.fromTry(iores.status)
+			) yield hash
 		}
 	}
 
@@ -164,21 +174,21 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 
 	private def fromRelativePath(path: String): Uri = storageUri.withPath(storageUri.path + path)
 
-	private def parseJsIfOk(resp: HttpResponse): Future[JsValue] = resp.status match {
-		case StatusCodes.OK => Unmarshal(resp).to[JsValue]
-		case s =>
-			resp.discardEntityBytes()
-			Future.failed(new CpDataException(s.value))
+	private def parseJsIfOk(resp: HttpResponse): Future[JsValue] = analyzeResponse(resp){
+		Unmarshal(_).to[JsValue]
 	}
 
-	private def failIfNotOk(resp: HttpResponse): Future[Done] = resp.status match {
+	private def failIfNotOk(resp: HttpResponse): Future[Done] = analyzeResponse(resp){
+		_.entity.dataBytes.runWith(Sink.ignore)
+	}
+
+	private def analyzeResponse[T](resp: HttpResponse)(extractor: HttpResponse => Future[T]): Future[T] = resp.status match {
 		case StatusCodes.OK =>
-			resp.discardEntityBytes()
-			Future.successful(Done)
+			extractor(resp)
 		case notOk =>
 			Unmarshal(resp).to[String].flatMap{body =>
 				val msg: String = try{
-					body.parseJson.asJsObject.fields("Response").asJsObject.fields("errors") match{
+					drillIn(body.parseJson, "Response", "errors") match{
 						case JsNull => notOk.value
 						case JsArray(errs) => errs.map{
 							case JsString(err) => err
@@ -189,10 +199,10 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 				} catch{
 					case _: Throwable => body
 				}
-				Future.failed[Done](new CpDataException("B2STAGE error: " + msg))
+				Future.failed[T](new CpDataException("B2STAGE error: " + msg))
 			}.transform(identity, {
 				case _: EntityStreamException =>
-					new CpDataException("Could not obtain response from B2STAGE. Returned status: " + resp.status.value)
+					new CpDataException("Could not obtain response from B2STAGE. Returned status: " + notOk.value)
 				case err => err
 			})
 	}
@@ -205,14 +215,20 @@ object B2StageClient{
 	case class DataObject(path: String) extends B2SafeData
 	case class Collection(path: String) extends B2SafeData
 
+	def drillIn(js: JsValue, fields: String*): JsValue = fields match {
+		case Nil => js
+		case _ =>
+			drillIn(js.asJsObject.fields(fields.head), fields.tail :_*)
+	}
+
 }
 
 //object B2Playground{
 //	import akka.actor.ActorSystem
 //	import akka.stream.ActorMaterializer
+//	import scala.concurrent.Await
 //	import scala.concurrent.duration.DurationInt
 //	import se.lu.nateko.cp.data.ConfigReader
-//	import scala.concurrent.Await
 //
 //	implicit private val system = ActorSystem("B2StageClient")
 //	system.log
@@ -233,13 +249,13 @@ object B2StageClient{
 //
 //		val start = System.currentTimeMillis
 //
-//		if(viaSink)
+//		val hash = if(viaSink)
 //			Await.result(src.runWith(default.objectSink(targetPath)), 3.minute)
 //		else
 //			Await.result(default.uploadObject(targetPath, src), 3.minute)
 //
 //		val elapsed = System.currentTimeMillis - start
-//		println(s"Elapsed $elapsed ms")
+//		println(s"SHA256 = $hash, elapsed $elapsed ms")
 //	}
 //
 //	def testDownload(path: String): Unit = {
