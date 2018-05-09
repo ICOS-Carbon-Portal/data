@@ -1,8 +1,6 @@
 package se.lu.nateko.cp.data.streams
 
 import java.io.BufferedOutputStream
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -24,6 +22,7 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.ByteString
+import se.lu.nateko.cp.data.api.CpDataException
 
 object ZipEntryFlow {
 
@@ -121,12 +120,11 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 
 		private val oq = new ByteStringQueueInputStream
 		private val zis = new ZipInputStream(oq)
-		private var entrySize: Long = -1
+		private var entrySize: Long = -2
 		private var readSize: Long = 0
-		private def gotFirstEntry = entrySize >= 0
+		private def gotFirstEntry = entrySize > -2
 		private val bufSize = 8192
 		private val buff = Array.ofDim[Byte](bufSize)
-		private val headerBytesMax = 128
 
 		override def preStart(): Unit = pull(in) //initial pull
 
@@ -134,10 +132,10 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 
 			override def onPush(): Unit = {
 				oq.append(grab(in))
-				if(!gotFirstEntry && oq.available < headerBytesMax || isAvailable(out) && oq.available < bufSize * 2) {
+				if(!gotFirstEntry && oq.available < bufSize || isAvailable(out) && oq.available < bufSize * 2) {
 					pull(in)
 				}
-				if(!gotFirstEntry && oq.available >= headerBytesMax) getFirstEntry()
+				if(!gotFirstEntry && oq.available >= bufSize) getFirstEntry()
 				if(gotFirstEntry && isAvailable(out)) pushResultOut()
 			}
 
@@ -165,21 +163,31 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 		})
 
 		private def getFirstEntry(): Unit = {
-			entrySize = zis.getNextEntry().getSize
+			val entry = zis.getNextEntry()
+			if(entry == null) throw new CpDataException("No entry found in the ZIP archive")
+			entrySize = entry.getSize
 		}
 
 		private def pushResultOut(): Unit = {
 
-			if(gotFirstEntry && isAvailable(out) && readSize < entrySize && (upstreamFinished || oq.available > bufSize)){
-				val toRead = Math.min(buff.length.toLong, entrySize - readSize).toInt
-				val nread = zis.read(buff, 0, toRead)
-				readSize += nread
+			var nread = 0
+
+			if(
+				gotFirstEntry && isAvailable(out) &&
+				(readSize < entrySize || entrySize == -1) &&
+				(upstreamFinished || oq.available > bufSize)
+			){
+				val toRead = if(entrySize == -1) buff.length
+					else Math.min(buff.length.toLong, entrySize - readSize).toInt
+
+				nread = zis.read(buff, 0, toRead)
 				if(nread > 0){
+					readSize += nread
 					push(out, ByteString.fromArray(buff, 0, nread))
 				}
 			}
 
-			if(upstreamFinished && readSize == entrySize) {
+			if(upstreamFinished && (readSize == entrySize || entrySize == -1 && nread < 0)) {
 				//oq must have been closed from the InputHandler by now
 				zis.close()
 				completeStage()

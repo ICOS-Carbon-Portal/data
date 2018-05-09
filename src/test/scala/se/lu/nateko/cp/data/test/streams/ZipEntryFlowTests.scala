@@ -18,6 +18,7 @@ import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.streams.ZipEntryFlow._
 import se.lu.nateko.cp.data.test.TestUtils
+import akka.NotUsed
 
 class ZipEntryFlowTests extends FunSuite with BeforeAndAfterAll{
 	private implicit val system = ActorSystem("ZipEntryFlowTests")
@@ -27,7 +28,7 @@ class ZipEntryFlowTests extends FunSuite with BeforeAndAfterAll{
 		system.terminate()
 	}
 
-	def testZip(fileName: String, content: String, bySingleBytes: Boolean = false) = {
+	def testUnZip(fileName: String, content: String, bySingleBytes: Boolean = false) = {
 		val nameSuff = if(bySingleBytes) " (byte by byte)" else ""
 		test("Unzipping " + fileName + nameSuff){
 			val basicSrc = FileIO.fromPath(TestUtils.getFileInTarget(fileName).toPath)
@@ -44,15 +45,36 @@ class ZipEntryFlowTests extends FunSuite with BeforeAndAfterAll{
 		}
 	}
 
-	val largeContent = {
-		val innerFile = TestUtils.getFileInTarget("26NA20050107_CO2_underway_SOCATv3.tab")
+	def testUnzipLarge(largeFileBaseName: String, byByte: Boolean = false) =
+		testUnZip(largeFileBaseName + ".zip", getFileContent(largeFileBaseName), byByte)
+
+	def getFileContent(fileName: String): String = {
+		val innerFile = TestUtils.getFileInTarget(fileName)
 		new String(Files.readAllBytes(innerFile.toPath), StandardCharsets.UTF_8)
 	}
 
-	testZip("26NA20050107_CO2_underway_SOCATv3.tab.zip", largeContent)
-	testZip("emptyFile.txt.zip", "")
-	testZip("blablaText.txt.zip", "blablaText\n")
-	testZip("blablaText.txt.zip", "blablaText\n", true)
+	testUnzipLarge("26NA20050107_CO2_underway_SOCATv3.tab")
+	testUnzipLarge("realatc.CO2")
+	testUnzipLarge("realatc.CO2", true)
+	testUnZip("emptyFile.txt.zip", "")
+	testUnZip("blablaText.txt.zip", "blablaText\n")
+	testUnZip("blablaText.txt.zip", "blablaText\n", true)
+
+	def testRoundTrip(title: String, content: String) =
+		test(s"Round-trip test ($title)"){
+			val zipEntrySrc: Source[FileEntry, NotUsed] = Source(List(
+				"theOnlyFile.txt" -> Source.single(ByteString(content))
+			))
+			val res = getMultiEntryZipStream(zipEntrySrc).via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+			val gotBack = Await.result(res, 2.seconds).utf8String
+			assert(gotBack.length === content.length)
+			assert(gotBack === content)
+		}
+
+	testRoundTrip("short string", "bla bla bla bebebe mememe")
+	testRoundTrip("empty string", "")
+	testRoundTrip("5 kb file realatc.CO2", getFileContent("realatc.CO2"))
+	testRoundTrip("72 kb file 26NA20050107_CO2_underway_SOCATv3.tab", getFileContent("26NA20050107_CO2_underway_SOCATv3.tab"))
 
 	test("Unzipping with Java streams"){
 		val fut = StreamConverters.fromInputStream(
