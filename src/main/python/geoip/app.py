@@ -57,7 +57,8 @@ def get_location(ip, days_limit):
 			req_resp = req.json()
 
 			if req.status_code == 200:
-				if 'latitude' and 'longitude' in req_resp:
+				if 'latitude' and 'longitude' in req_resp and \
+						req_resp['latitude'] is not None and req_resp['longitude'] is not None:
 					DB().set_location(req_resp['ip'], req_resp['latitude'], req_resp['longitude'])
 					return req_resp
 
