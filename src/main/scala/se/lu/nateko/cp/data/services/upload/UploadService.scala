@@ -1,29 +1,30 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.nio.file.Paths
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
-import se.lu.nateko.cp.data.api.{CpMetaVocab, MetaClient, SitesMetaVocab}
+import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
+import se.lu.nateko.cp.data.api.CpInstVocab
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.EnvriConfig
 import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri
-import se.lu.nateko.cp.data.api.B2StageClient
-import akka.http.scaladsl.Http
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
 class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: EnvriConfigs) {
 
-	import meta.{system, dispatcher, materializer}
 	import UploadService._
+	import meta.{ dispatcher, system }
 
 	val log = system.log
 	val folder = new java.io.File(config.folder)
@@ -98,20 +99,23 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 		}
 
 		def saveToFile = new FileSavingUploadTask(file)
+		val spec = dataObj.specification
+		val specUri = spec.self.uri
 
-		dataObj.specification.dataLevel match{
-			case 0 | 1 | 3 => defaultsWithBackupFut.map(_ :+ saveToFile)
-
-			case 2 =>
-				val formatUri = dataObj.specification.format.uri
-				if(formatUri == CpMetaVocab.asciiWdcggTimeSer){
-					IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-						defaults :+ ingestionTask
-					}
-
-				} else IngestionUploadTask(dataObj, file, meta.sparql).flatMap{ingestionTask =>
+		def ingest =
+			if(spec.format.uri == CpMetaVocab.asciiWdcggTimeSer)
+				IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
+					defaults :+ ingestionTask
+				}
+			else
+				IngestionUploadTask(dataObj, file, meta.sparql).flatMap{ingestionTask =>
 					defaultsWithBackupFut.map(_ :+ ingestionTask :+ saveToFile)
 				}
+
+		spec.dataLevel match{
+			case 1 if (specUri == CpInstVocab.atcCo2Nrt || specUri == CpInstVocab.atcCh4Nrt) => ingest
+			case 2 => ingest
+			case 0 | 1 | 3 => defaultsWithBackupFut.map(_ :+ saveToFile)
 
 			case dataLevel => Future.successful(
 				IndexedSeq.empty :+

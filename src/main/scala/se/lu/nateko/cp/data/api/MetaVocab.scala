@@ -37,6 +37,11 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val plainFile = getRelative("plainFileEncoding")
 }
 
+object CpInstVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/resources/cpmeta/")){
+	val atcCo2Nrt = getRelative("atcCo2NrtDataObject")
+	val atcCh4Nrt = getRelative("atcCh4NrtDataObject")
+}
+
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
 
 	val simpleSitesCsvTimeSer = getRelative("simpleSitesCsv")
