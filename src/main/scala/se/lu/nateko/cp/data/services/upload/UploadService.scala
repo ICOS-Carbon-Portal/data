@@ -35,6 +35,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val irods = IrodsClient(config.irods)
+	private val irods2 = IrodsClient(config.irods2)
 //	private val b2 = new B2StageClient(config.b2stage, Http())
 
 	private implicit def getEnvriConfig(implicit envri: Envri): EnvriConfig = {
@@ -95,7 +96,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 			new ByteCountingTask
 
 		val defaultsWithBackupFut = Future.successful(()).map{_ =>
-			defaults :+ new IrodsUploadTask(dataObj, irods)
+			defaults :+ new IrodsUploadTask(dataObj, irods) :+ new IrodsUploadTask(dataObj, irods2)
 		}
 
 		def saveToFile = new FileSavingUploadTask(file)

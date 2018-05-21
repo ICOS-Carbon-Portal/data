@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.irods
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
+import org.irods.jargon.core.connection.AuthScheme
 import org.irods.jargon.core.connection.IRODSAccount
 import org.irods.jargon.core.exception.JargonException
 import org.irods.jargon.core.protovalues.ChecksumEncodingEnum
@@ -21,8 +22,8 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
@@ -43,6 +44,9 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 		config.zone,
 		config.defaultResource
 	)
+	config.authenticationScheme.foreach{authSchemeStr =>
+		account.setAuthenticationScheme(AuthScheme.findTypeByString(authSchemeStr))
+	}
 
 	private val existingFolderPaths = scala.collection.mutable.Set.empty[String]
 
