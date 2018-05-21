@@ -5,9 +5,9 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
 where{
 	?spec cpmeta:hasDataLevel ?level .
+	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
-	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat [rdfs:label ?format ]
@@ -38,7 +38,7 @@ prefix prov: <http://www.w3.org/ns/prov#>
 select
 ?spec
 (sample(?submitterName) as ?submitter)
-(?submitterRes as ?submitterUri)
+?submitterUri
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
 (sample(?stationRes) as ?stationUri)
 (count(?dobj) as ?count)
@@ -48,19 +48,17 @@ where{
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
-	?dobj cpmeta:wasSubmittedBy [
-		prov:wasAssociatedWith ?submitterRes ;
-		prov:endedAtTime []
-	] .
+	FILTER EXISTS {?dobj cpmeta:hasSizeInBytes []}
+	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitterUri .
+	?submitterUri cpmeta:hasName ?submitterName ;
+		a ?submitterClass .
+	FILTER(?submitterClass != owl:NamedIndividual)
 	OPTIONAL{
 		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationRes .
 		?stationRes cpmeta:hasName ?stationName
 	}
-	?submitterRes cpmeta:hasName ?submitterName .
-	?submitterRes a ?submitterClass .
-	FILTER(?submitterClass != owl:NamedIndividual)
 }
-group by ?spec ?submitterRes ?stationName`;
+group by ?spec ?submitterUri ?stationName`;
 }
 
 export function findDobjs(config, search){
@@ -153,12 +151,12 @@ prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
 	${specsValues}
-	${dobjSearch}
 	FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
+	${dobjSearch}
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .
-	OPTIONAL{?dobj cpmeta:hasSizeInBytes ?size}.
 	${submitterValues}?dobj cpmeta:wasSubmittedBy [
 		prov:endedAtTime ?submTime ;
 		prov:wasAssociatedWith ?submitter
