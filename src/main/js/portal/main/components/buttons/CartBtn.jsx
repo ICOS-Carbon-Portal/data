@@ -21,7 +21,7 @@ export default class CartAddRemove extends Component{
 
 		return(
 			<div style={style}>{objInfo && objInfo.level === 0
-				? <a className="btn btn-primary btn-sm" href="https://www.icos-cp.eu" target="_blank">
+				? <a className="btn btn-primary btn-sm disabled" href="https://www.icos-cp.eu" target="_blank">
 					Available upon request
 				</a>
 				: isAddedToCart
