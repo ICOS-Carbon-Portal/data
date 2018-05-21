@@ -4,7 +4,7 @@ import se.lu.nateko.cp.data.api.DailyCsvParsingException
 import se.lu.nateko.cp.data.formats.{ParsingAccumulator, ProperTableRowHeader}
 
 object DailySitesCsvParser {
-	val separator = ','
+	val separator = ","
 
 	case class Accumulator(
 		header: ProperTableRowHeader,
@@ -26,7 +26,7 @@ class DailySitesCsvParser(nRows: Int) {
 		} else if (acc.header.columnNames.isEmpty) { // Header
 			acc.copy(header = ProperTableRowHeader(line.split(separator), nRows))
 		} else { // Rows
-			val cells = line.split(separator)
+			val cells = line.split(separator, -1)
 			if (cells.length != acc.header.columnNames.length) {
 				acc.copy(error = Some(
 					new DailyCsvParsingException(

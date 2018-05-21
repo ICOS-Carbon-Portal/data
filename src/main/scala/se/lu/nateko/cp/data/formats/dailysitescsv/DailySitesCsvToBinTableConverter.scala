@@ -6,7 +6,7 @@ class DailySitesCsvToBinTableConverter(
 	formats: ColumnValueFormats
 ) extends ProperTimeSeriesToBinTableConverter(formats: ColumnValueFormats) {
 	protected def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "NaN"
+		case FloatValue => value == ""
 		case _ => false
 	}
 }
