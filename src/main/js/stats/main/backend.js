@@ -2,7 +2,7 @@ import 'whatwg-fetch';
 import { getJson, sparql } from 'icos-cp-backend';
 import config from '../../common/main/config';
 
-const restheartBaseUrl = '//restheart.icos-cp.eu/';
+const restheartBaseUrl = config.restheartBaseUrl;
 
 export const getDownloadCounts = (filters, stationCountryCodeLookup = [], page = 1) => {
   const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : "0,1,2,3";

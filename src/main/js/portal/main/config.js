@@ -12,7 +12,6 @@ export default {
 		NETCDF: '/netcdf/'
 	},
 	restheartBaseUrl: commonConfig.restheartBaseUrl,
-	restheartPortalUseBaseUrl: commonConfig.restheartPortalUseBaseUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 500,
