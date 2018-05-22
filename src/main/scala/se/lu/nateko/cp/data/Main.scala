@@ -20,6 +20,7 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.cpdata.BuildInfo
+import se.lu.nateko.cp.data.api.PortalLogClient
 
 object Main extends App {
 
@@ -40,6 +41,7 @@ object Main extends App {
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
+	val portalLog = new PortalLogClient(config.restheart, http)
 
 	val uploadService = new UploadService(config.upload, metaClient, envriConfigs)
 
@@ -50,7 +52,7 @@ object Main extends App {
 	val tabularRoute = new TabularFetchRouting(binTableFetcher).route
 
 	val authRouting = new AuthRouting(config.auth)
-	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, ConfigReader.metaCore).route
+	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
 
 	val licenceRoute = new LicenceRouting(authRouting).route
 	val stiltRoute = StiltRouting(new StiltResultsFetcher(config.stilt, config.netcdf))

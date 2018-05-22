@@ -118,25 +118,6 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.map(_ => Done)
 
-	def logDownload(dobj: DataObject, ip: String)(implicit envri: Envri): Future[Done] = {
-		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
-
-		val logItem = JsObject(
-			"time" -> JsString(java.time.Instant.now().toString),
-			"ip" -> JsString(ip),
-			"dobj" -> dobj.toJson
-		)
-
-		for(
-			entity <- Marshal(logItem).to[RequestEntity];
-			r <- http.singleRequest(HttpRequest(uri = dlCollUri, method = HttpMethods.POST, entity = entity))
-		) yield {
-			r.discardEntityBytes()
-			if(r.status == StatusCodes.Created) ok
-			else Future.failed(new Exception(s"Failed logging data object download to RestHeart: ${r.status.defaultMessage}"))
-		}
-	}.flatten
-
 	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] = {
 		val updateItem = JsObject(
 			"$push" -> JsObject(

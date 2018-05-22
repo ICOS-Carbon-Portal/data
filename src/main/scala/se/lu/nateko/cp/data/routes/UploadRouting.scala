@@ -40,10 +40,11 @@ import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.data.api.PortalLogClient
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
-	restHeart: RestHeartClient, coreConf: MetaCoreConfig
+	restHeart: RestHeartClient, logClient: PortalLogClient, coreConf: MetaCoreConfig
 )(implicit mat: Materializer) {
 	import UploadRouting._
 	import authRouting._
@@ -156,7 +157,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
-		restHeart.logDownload(dobj, ip).failed.foreach(
+		logClient.logDownload(dobj, ip).failed.foreach(
 			log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
 		)
 		for(uid <- uidOpt){

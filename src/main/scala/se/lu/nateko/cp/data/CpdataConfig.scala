@@ -50,12 +50,14 @@ case class StiltConfig(mainFolder: String)
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
+	dobjDownloadLogUris: Map[Envri, java.net.URI],
 	usersCollection: String,
 	portalUsageCollection: String,
 	dobjDownloadsCollection: String,
 	dobjDownloadsAggregations: JsObject
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
+	def dobjDownloadLogUri(implicit envri: Envri) = dobjDownloadLogUris(envri)
 }
 
 case class EtcFacadeConfig(folder: String, secret: String, stationOverrides: Map[String, String])
@@ -83,7 +85,7 @@ object ConfigReader extends CommonJsonSupport{
 
 	implicit val envriFormat = enumFormat(Envri)
 
-	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
+	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
