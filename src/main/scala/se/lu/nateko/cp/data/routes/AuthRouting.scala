@@ -77,16 +77,14 @@ class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: E
 	val userRequired: Directive1[UserId] = forbidAuthenticationFailures & user
 
 	val whoami: Route = (get & path("whoami")){
-		UploadRouting.getClientIp{ip =>
-			user{uid => complete(getWhoAmIObj(ip, Some(uid)))} ~
-			complete(getWhoAmIObj(ip, None))
-		}
+		user{uid => complete(getWhoAmIObj(Some(uid)))} ~
+		complete(getWhoAmIObj(None))
 	}
 
-	private def getWhoAmIObj(ip: String, uidOpt: Option[UserId]): JsObject = {
+	private def getWhoAmIObj(uidOpt: Option[UserId]): JsObject = {
 		import spray.json._
 		val email = uidOpt.map(uid => JsString(uid.email)).getOrElse(JsNull)
-		JsObject("email" -> email, "ip" -> JsString(ip))
+		JsObject("email" -> email)
 	}
 
 	val logout: Route = (get & path("logout") & extractEnvri){implicit envri =>
