@@ -34,3 +34,4 @@ nohup.out
 \#*\#
 /README.html
 .idea
+/src/main/python/geoip/py/access_key

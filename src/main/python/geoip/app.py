@@ -2,6 +2,19 @@ from flask import Flask, jsonify
 import time
 from py.DB import DB
 from py.QueryIpstack import query_ip
+from py.config import fields, access_key
+import os
+
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+
+try:
+	with open(os.path.join(APP_ROOT, 'py', 'access_key'), 'r') as key_file:
+		ipstack_access_key = key_file.readline()
+
+except:
+	ipstack_access_key = access_key
+
 
 LOOKUP = {}
 app = Flask(__name__)
@@ -53,7 +66,7 @@ def get_location(ip, days_limit):
 			return db_location
 
 		else:
-			req = query_ip(ip)
+			req = query_ip(ip, fields, ipstack_access_key)
 			req_resp = req.json()
 
 			if req.status_code == 200:
