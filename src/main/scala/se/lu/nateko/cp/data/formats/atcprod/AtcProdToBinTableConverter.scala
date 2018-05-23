@@ -18,8 +18,10 @@ class AtcProdToBinTableConverter(colFormats: ColumnFormats, header: AtcProdParse
 	def amend(value: String, format: ValueFormat): String = value
 
 	def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef = {
+		def pad0(s: String) = if(s.length == 1) "0" + s else s
+
 		val Seq(year, month, day, hour, min, sec) = timeIndices.map{idx =>
-			if(idx >= 0) cells(idx) else "00"
+			if(idx >= 0) pad0(cells(idx)) else "00"
 		}
 		Double.box(Instant.parse(s"$year-$month-${day}T$hour:$min:${sec}Z").toEpochMilli.toDouble)
 	}

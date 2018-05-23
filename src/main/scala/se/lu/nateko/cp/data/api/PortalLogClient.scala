@@ -38,7 +38,7 @@ class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			r <- http.singleRequest(HttpRequest(uri = downloadLogUri, method = HttpMethods.POST, entity = entity))
 		) yield {
 			r.discardEntityBytes()
-			if(r.status == StatusCodes.Created) Future.successful(Done)
+			if(r.status == StatusCodes.OK) Future.successful(Done)
 			else Future.failed(new Exception(s"Failed logging data object download to the portal log: ${r.status.defaultMessage}"))
 		}
 	}.flatten

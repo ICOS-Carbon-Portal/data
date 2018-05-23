@@ -24,6 +24,9 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 	}
 
 	private val stampPos = sortedColumns.indexOf(colFormats.timeStampColumn)
+	if(stampPos < 0) throw new CpDataParsingException(
+		s"Missing timestamp column ${colFormats.timeStampColumn} in the data object specification"
+	)
 
 	def parseCells(cells: Array[String]): Array[AnyRef] = {
 		val parsed = sortedColumns.map{ colName =>
@@ -34,8 +37,10 @@ abstract class TimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNa
 					colPositions(colName)
 				} catch {
 					case _: NoSuchElementException =>
-						val missingColumns = colFormats.valueFormats.keys.filterNot(colPositions.contains).filter(_ != colFormats.timeStampColumn)
-						throw new CpDataParsingException("Missing columns: " + missingColumns.mkString(", "))
+						val missingColumns = colFormats.valueFormats.keys.filterNot(colPositions.contains)
+							.filter(_ != colFormats.timeStampColumn).mkString(", ")
+						val presentColumns = colPositions.keys.mkString(", ")
+						throw new CpDataParsingException(s"Missing columns: $missingColumns (present columns: $presentColumns)\n")
 				}
 
 				val cellValue = cells(colPos)
