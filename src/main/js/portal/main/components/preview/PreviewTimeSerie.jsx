@@ -41,7 +41,7 @@ export default class PreviewTimeSerie extends Component {
 										name="x"
 										label="X axis"
 										selected={xAxis}
-										options={preview.options}
+										options={filterOptions(preview.options)}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -50,7 +50,7 @@ export default class PreviewTimeSerie extends Component {
 										name="y"
 										label="Y axis"
 										selected={yAxis}
-										options={preview.options}
+										options={filterOptions(preview.options)}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -82,6 +82,10 @@ export default class PreviewTimeSerie extends Component {
 		);
 	}
 }
+
+const filterOptions = options => {
+	return options.filter(opt => !opt.startsWith('Flag'));
+};
 
 const Selector = props => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
