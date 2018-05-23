@@ -42,7 +42,8 @@ object AtcProdParser {
 			acc.copy(cells = line.split(sep), lineNumber = acc.lineNumber + 1)
 
 		else if(acc.lineNumber == acc.header.headerLength - 1) {
-			val colNames = line.drop(1).split(sep)
+			val ambiguousColNames = line.drop(1).split(sep)
+			val colNames = disambiguateColumnNames(ambiguousColNames)
 			acc.changeHeader(columnNames = colNames).incrementLine
 		}
 
@@ -58,4 +59,18 @@ object AtcProdParser {
 		}).incrementLine
 	}
 
+	def disambiguateColumnNames(names: Array[String]): Array[String] = {
+
+		val ambigs = Set("Stdev", "NbPoints", "Flag", "QualityId").filter{amb =>
+			names.count(_ == amb) > 1
+		}
+
+		if(ambigs.isEmpty) names else names.scanLeft(("", "")){
+			case ((varName, _), nextColName) =>
+				if(ambigs.contains(nextColName))
+					(varName, nextColName + "_" + varName)
+				else
+					(nextColName, nextColName)
+		}.drop(1).map(_._2)
+	}
 }

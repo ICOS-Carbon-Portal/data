@@ -9,7 +9,7 @@ class AtcProdToBinTableConverter(colFormats: ColumnFormats, header: AtcProdParse
 	private val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(header.columnNames.indexOf)
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "-999.990"
+		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99"
 		case IntValue => value == null || value.trim.isEmpty
 		case Utf16CharValue => value == null || value.isEmpty
 		case vf => throw new Exception(s"Did not expect value format $vf in ATC product time series data")
