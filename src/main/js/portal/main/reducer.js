@@ -53,8 +53,7 @@ export default function(state = initState, action){
 			return update({
 				user: {
 					profile: action.profile,
-					email: action.user.email,
-					ip: action.user.ip
+					email: action.user.email
 				}
 			});
 

@@ -1,6 +1,6 @@
 import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
-import {logUsage} from '../../common/main/backend';
+import {saveToRestheart} from '../../common/main/backend';
 
 
 const spinnerDelay = 100;
@@ -25,15 +25,15 @@ export default class App {
 
 	main(){
 		const params = this.params;
-		logUsage(params, formatData);
+		saveToRestheart(formatData(params));
 
 		getTableFormatNrows(this.config, params.get('objId'))
 			.then(
 				({tableFormat, nRows}) => {
 					if(!isColNameValid(tableFormat, params.get('x')))
-						return fail(`Parameter x (${params.get('x')}) does not exist in data`)
+						return fail(`Parameter x (${params.get('x')}) does not exist in data`);
 					else if(!isColNameValid(tableFormat, params.get('y')))
-						return fail(`Parameter y (${params.get('y')}) does not exist in data`)
+						return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 					else {
 						this.initGraph(tableFormat);
 						this.tableFormat = tableFormat;
@@ -202,10 +202,9 @@ const presentError = (errMsg) => {
 	document.getElementById('error').innerHTML = errMsg;
 };
 
-const formatData = (user, dataToSave) => {
+const formatData = dataToSave => {
 	return {
 		previewTimeserie: {
-			ip: user.ip,
 			params: {
 				objId: dataToSave.get('objId'),
 				x: dataToSave.get('x'),

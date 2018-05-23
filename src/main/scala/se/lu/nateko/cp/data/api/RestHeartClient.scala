@@ -65,12 +65,6 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		config.dobjDownloadsCollection + " collection"
 	)
 
-	def ensurePortalUseCollExists(implicit envri: Envri): Future[Done] = ensureResourceExists(
-		collUri(config.portalUsageCollection),
-		s"Usage statistics of CP 'portal' app ($envri)",
-		config.portalUsageCollection + " collection"
-	)
-
 	def ensureDbExists(implicit envri: Envri): Future[Done] = ensureResourceExists(
 		dbUri,
 		s"DB for various Carbon Portal based apps for $envri",
@@ -110,8 +104,8 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	def init: Future[Done] = Future.sequence{
 		config.dbNames.keys.map{implicit envri =>
-			ensureDbExists.flatMap{_ =>
-				ensurePortalUseCollExists.zip(ensureDobjDownloadCollExists)
+			ensureDbExists.flatMap{
+				_ => ensureDobjDownloadCollExists
 			}.flatMap{
 				_ => defineDobjDownloadAggregations
 			}

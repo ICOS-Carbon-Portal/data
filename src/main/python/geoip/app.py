@@ -66,7 +66,7 @@ def get_location(ip, days_limit):
 					return req_resp
 
 				else:
-					return {'error': 'Could not find location in DB or through external service'}
+					return {'error': 'Could not find location for ' + ip + ' in DB or through external service'}
 			else:
 				return req_resp
 

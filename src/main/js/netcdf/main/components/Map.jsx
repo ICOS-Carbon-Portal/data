@@ -4,7 +4,7 @@ import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
 import {throttle} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
-import {logUsage} from '../../../common/main/backend';
+import {saveToRestheart} from '../../../common/main/backend';
 
 
 const minHeight = 300;
@@ -37,7 +37,7 @@ export default class Map extends Component {
 
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
 				this.prevVariables = variables;
-				logUsage({objId: this.objId, variable: variables.selected}, formatData);
+				saveToRestheart(formatData({objId: this.objId, variable: variables.selected}));
 			}
 
 			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
@@ -182,10 +182,9 @@ const Spinner = props => {
 		: null;
 };
 
-const formatData = (user, dataToSave) => {
+const formatData = dataToSave => {
 	return {
 		previewNetCDF: {
-			ip: user.ip,
 			params: {
 				objId: dataToSave.objId,
 				variable: dataToSave.variable

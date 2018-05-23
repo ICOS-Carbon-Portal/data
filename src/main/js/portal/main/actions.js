@@ -101,10 +101,9 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 const logPortalUsage = (user, routeAndParams) => {
-	if (user.ip && user.ip !== '127.0.0.1' && Object.keys(routeAndParams.filters).length) {
+	if (Object.keys(routeAndParams.filters).length) {
 		saveToRestheart({
 			filterChange: {
-				ip: user.ip,
 				filters: routeAndParams.filters
 			}
 		});

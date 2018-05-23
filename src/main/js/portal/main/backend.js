@@ -70,13 +70,13 @@ export const searchStations = search => {
 
 export const saveCart = (email, cart) => {
 	if (email){
-		updatePersonalRestheart('users', email, {cart});
+		updatePersonalRestheart(email, {cart});
 	}
 	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
-const updatePersonalRestheart = (db, email, data) => {
-	return fetch(`${config.restheartBaseUrl}/${db}/${email}`, {
+const updatePersonalRestheart = (email, data) => {
+	return fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
 		mode: 'cors',
@@ -100,7 +100,7 @@ export const getCart = email => {
 };
 
 const getCartFromRestheart = email => {
-	return fetch(`${config.restheartBaseUrl}/users/${email}?keys={cart:1}`, {credentials: 'include'})
+	return fetch(`${config.restheartProfileBaseUrl}/${email}?keys={cart:1}`, {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
@@ -156,13 +156,13 @@ export function getWhoIam(){
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
-				: {email: undefined, ip: undefined};
+				: {email: undefined};
 		});
 }
 
 export const getProfile = email => {
 	return email
-		? fetch(`https://${config.restheartBaseUrl}/users/${email}?keys={profile:1}`, {credentials: 'include'})
+		? fetch(`${config.restheartProfileBaseUrl}/${email}?keys={profile:1}`, {credentials: 'include'})
 			.then(profile => {
 				return profile.status === 200
 					? profile.json()
