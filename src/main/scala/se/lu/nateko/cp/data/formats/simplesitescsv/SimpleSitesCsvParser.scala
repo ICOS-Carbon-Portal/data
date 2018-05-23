@@ -4,7 +4,7 @@ import se.lu.nateko.cp.data.formats.{ParsingAccumulator, TableRowHeader}
 
 object SimpleSitesCsvParser {
 
-	val separator = ','
+	val separator = ","
 
 	case class Header(columnNames: Array[String]) extends TableRowHeader
 
@@ -26,7 +26,7 @@ object SimpleSitesCsvParser {
 		} else if (acc.lineNumber == 0) { // Header
 			acc.copy(header = acc.header.copy(columnNames = line.split(separator))).incrementLine
 		} else { // Rows
-			acc.copy(cells = line.split(separator)).incrementLine
+			acc.copy(cells = line.split(separator, -1)).incrementLine
 		}
 	}
 }

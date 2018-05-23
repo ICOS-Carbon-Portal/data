@@ -13,7 +13,7 @@ class SimpleSitesCsvToBinTableConverter(
 	override protected def amend(value: String, format: ValueFormat): String = value
 
 	override protected def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "NaN"
+		case FloatValue => value == "NaN" || value == ""
 		case _ => false
 	}
 
