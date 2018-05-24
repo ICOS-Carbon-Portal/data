@@ -34,7 +34,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
-	private val irods = IrodsClient(config.irods)
+//	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
 //	private val b2 = new B2StageClient(config.b2stage, Http())
 
@@ -45,7 +45,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
-		irods.getFileSource(filePathSuffix(dataObj))
+		irods2.getFileSource(filePathSuffix(dataObj))
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
@@ -96,7 +96,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 			new ByteCountingTask
 
 		val defaultsWithBackupFut = Future.successful(()).map{_ =>
-			defaults :+ new IrodsUploadTask(dataObj, irods) :+ new IrodsUploadTask(dataObj, irods2)
+			defaults :+ new IrodsUploadTask(dataObj, irods2)// :+ new IrodsUploadTask(dataObj, irods)
 		}
 
 		def saveToFile = new FileSavingUploadTask(file)
