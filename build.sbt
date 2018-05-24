@@ -92,15 +92,7 @@ lazy val data = (project in file("."))
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.8-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.7-SNAPSHOT",
-
-		// *** manually published on CP Nexus 3rd party repo ***
-			"org.irods.jargon"    % "jargon-core"      % "4.0.2.4", //IRODS client core features
-			"org.globus.jglobus"  % "cog-jglobus"      % "1.8.0",   //jargon-core dependency
-			"com.claymoresystems" % "puretls"          % "1.1",     //cog-jglobus dependency
-			// other dependencies of jargon-core are commons-io and commons-codec,
-			// but they are already present in this project transitively
-
-		// *** end of manually published on CP Nexus 3rd party repo ***
+			"org.irods.jargon"    % "jargon-core"                        % "4.2.2.0-RELEASE", //IRODS client core features
 
 			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
