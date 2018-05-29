@@ -12,7 +12,7 @@ const failWithError = dispatch => error => {
 		type: ERROR,
 		error
 	});
-}
+};
 
 export const fetchDownloadStats = filters => (dispatch, getState) => {
 	const state = getState();
@@ -26,7 +26,7 @@ export const fetchDownloadStats = filters => (dispatch, getState) => {
 			})
 		}
 	)
-}
+};
 
 export const fetchFilters = (dispatch, getState) => {
 	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
@@ -46,7 +46,7 @@ export const fetchFilters = (dispatch, getState) => {
 			})
 		}
 	)
-}
+};
 
 export const statsUpdate = (varName, values) => (dispatch, getState) => {
 
@@ -67,7 +67,7 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 			})
 		}
 	)
-}
+};
 
 export const requestPage = page => (dispatch, getState) => {
 	const state = getState();

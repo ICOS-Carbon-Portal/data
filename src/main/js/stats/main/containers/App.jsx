@@ -4,6 +4,8 @@ import { AnimatedToasters } from 'icos-cp-toaster';
 import Filter from '../components/Filter.jsx';
 import DobjTable from '../components/DobjTable.jsx';
 import { statsUpdate, fetchDownloadStats, requestPage } from '../actions';
+import Map from '../components/Map.jsx';
+
 
 export class App extends Component {
 	constructor(props){
@@ -34,6 +36,10 @@ export class App extends Component {
 							updateTableWithFilter={props.updateTableWithFilter}
 							downloadStats={props.downloadStats}
 							fetchDownloadStats={props.fetchDownloadStats}/>
+
+						<Map>
+							<div id="map" />
+						</Map>
 					</div>
 					<div className="col-md-8">
 						<DobjTable
