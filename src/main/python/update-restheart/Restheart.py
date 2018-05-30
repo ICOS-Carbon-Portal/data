@@ -35,10 +35,10 @@ class Restheart(object):
 
 	def get_url(self, pagesize, collection):
 		if collection == 'portaluse':
-			return self._baseUrl + collection + '?filter={"ip":{"$exists":0}}&np&pagesize=' + str(pagesize)
+			return self._baseUrl + collection + '?filter={"city":{"$exists":0}}&np&pagesize=' + str(pagesize)
 
 		elif collection == 'dobjdls':
-			return self._baseUrl + collection + '?filter={"$and":[{"ip":{"$exists":1}},{"latitude":{"$exists":0}}]}&np&pagesize=' + str(pagesize)
+			return self._baseUrl + collection + '?filter={"$and":[{"ip":{"$exists":1}},{"city":{"$exists":0}}]}&np&pagesize=' + str(pagesize)
 
 		else:
 			raise ValueError("Unknown collection: " + collection)
