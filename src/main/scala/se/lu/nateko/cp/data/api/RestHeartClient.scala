@@ -128,7 +128,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity))
 		) yield {
 			r.discardEntityBytes()
-			if(r.status == StatusCodes.NoContent) ok
+			if(r.status.isSuccess) ok
 			else Future.failed(new Exception(s"Failed saving data object download to user profile: ${r.status.defaultMessage}"))
 		}
 	}.flatten
