@@ -1,3 +1,7 @@
+@import se.lu.nateko.cp.meta.core.data.Envri
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
+
+@()(implicit envri: Envri)
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,6 +17,9 @@
 		#legend {position:absolute; left:10px; bottom:10px; font-family: Georgia,Verdana,serif; font-size: 0.9em;}
 		.dygraph-axis-label-x, .dygraph-axis-label-y { font-size: 0.9em;}
 		.dygraph-label{font-weight: bold; color: rgb(0,128,128);}
+		@if(envri == Envri.SITES){
+		#cp-spinner > div, #cp-spinner .bounce2 {background-color: #61AB43;}
+		}
 	</style>
 </head>
 <body>
@@ -21,11 +28,15 @@
 	<div id="error"></div>
 
 	<div id="cp-spinner">
-		<div class="bounce1"></div>
+		<div class="bounce bounce1"></div>
 		<div class="bounce2"></div>
 		<div></div>
+		@if(envri == Envri.SITES){
+		<span>SITES</span>
+		} else {
 		<span>Carbon</span>
 		<span>Portal</span>
+		}
 	</div>
 
 	<script type="text/javascript" src="./dygraph-light.js"></script>

@@ -31,6 +31,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
 		case ("stats", _) => views.html.StatsPage()
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
+		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)
 	}
 
 	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
