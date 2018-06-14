@@ -17,11 +17,13 @@ object Utils {
 	def iterateChildren[T](folder: Path, glob: Option[String] = None)(eagerExtractor: Iterator[Path] => T): T = {
 		import scala.collection.JavaConverters._
 
-		val dirStream = glob.fold(Files.newDirectoryStream(folder))(Files.newDirectoryStream(folder, _))
-		try{
-			eagerExtractor(dirStream.iterator.asScala)
-		} finally{
-			dirStream.close()
-		}
+		if(Files.exists(folder) && Files.isDirectory(folder)){
+			val dirStream = glob.fold(Files.newDirectoryStream(folder))(Files.newDirectoryStream(folder, _))
+			try{
+				eagerExtractor(dirStream.iterator.asScala)
+			} finally{
+				dirStream.close()
+			}
+		} else eagerExtractor(Iterator.empty)
 	}
 }

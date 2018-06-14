@@ -1,10 +1,16 @@
 package se.lu.nateko.cp.data.services.etcfacade
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.Duration
+import java.time.LocalTime
+import java.time.ZoneOffset
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.NANOSECONDS
 import scala.util.Try
 
 import akka.Done
@@ -13,22 +19,33 @@ import akka.stream.Materializer
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
-import java.nio.file.Path
 
 private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit mat: Materializer) {
 
+	import RetryLogic._
 	import mat.executionContext
 
-	def schedule() = mat.schedulePeriodically(1.minute, 12.hours, () => {
-		log.info("Retrying ETC logger facade uploads")
-		retryStuckFiles().andThen{
-			case _ => retryStuckObjects()
-		}
-	})
+	private val retry: Runnable = () => {
+		val forcingEc = withinHalfHour(nowUtc, FacadeService.ForceEcUploadTime)
 
-	private def retryStuckFiles(): Future[Done] = retryEntities[EtcFilename](
+		log.info("Retrying ETC logger facade uploads" + (if(forcingEc) ", forcing EC file uploads" else ""))
+
+		retryStuckFiles(forcingEc).transformWith{
+			case _ => retryStuckObjects()
+		}.foreach{_ =>
+			if(forcingEc) getStations.foreach(facade.cleanupVeryOldFiles)
+		}
+	}
+
+	def schedule() = {
+		val timeToFirst = timeToNextTick(nowUtc, FacadeService.ForceEcUploadTime, RetryPeriod)
+		if(timeToFirst > 1.hour) mat.scheduleOnce(1.minute, retry)
+		mat.schedulePeriodically(timeToFirst, RetryPeriod, retry)
+	}
+
+	private def retryStuckFiles(forceEc: Boolean): Future[Done] = retryEntities[EtcFilename](
 		(station, filename) => EtcFilename.parse(filename, true),
-		fn => facade.performUpload(facade.getFilePath(fn), fn),
+		fn => facade.performUpload(facade.getFilePath(fn), fn, forceEc),
 		facade.getFilePath
 	)
 
@@ -71,3 +88,21 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 			.toIndexedSeq
 		}
 }
+
+object RetryLogic{
+
+	val RetryPeriod = 12.hours
+
+	def nowUtc = LocalTime.now(ZoneOffset.UTC)
+
+	def withinHalfHour(dt1: LocalTime, dt2: LocalTime): Boolean =
+		Math.abs(Duration.between(dt1, dt2).getSeconds) < 1800
+
+	def timeToNextTick(from: LocalTime, mustTickTime: LocalTime, interval: FiniteDuration): FiniteDuration = {
+		val nanoDiff: Long = Duration.between(from, mustTickTime).toNanos
+		val max: Long = if(nanoDiff >= 0) nanoDiff else nanoDiff + 3600L * 24 * 1000000000L
+		val actualNanos = max % interval.toNanos
+		FiniteDuration(actualNanos, NANOSECONDS)
+	}
+}
+

@@ -6,10 +6,11 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.StandardOpenOption
+import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneOffset
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -32,7 +33,6 @@ import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
@@ -48,8 +48,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	private[this] val retries = new RetryLogic(this, log).schedule()
 	sys.addShutdownHook(retries.cancel())
 
-	def getFilePath(file: EtcFilename) = Paths.get(config.folder, file.station.id, file.toString)
+	def getFilePath(file: EtcFilename) = getStationFolder(file.station).resolve(file.toString)
+	def getFileUploadedPath(file: EtcFilename) = getStationUploadedFolder(file.station).resolve(file.toString)
+
 	def getStationFolder(station: StationId) = Paths.get(config.folder, station.id)
+	def getStationUploadedFolder(station: StationId) = getStationFolder(station).resolve("uploaded")
+
 	def getObjectSource(station: StationId, hash: Sha256Sum): Path =
 		getStationFolder(station).resolve(hash.id)
 
@@ -58,7 +62,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		val targetFile = getFilePath(fn)
 
 		def transactUpload(): Done = {
-			Files.createDirectories(targetFile.getParent)
+			val uploadedPath = getFileUploadedPath(fn)
+			Files.createDirectories(uploadedPath.getParent)
+			Files.deleteIfExists(uploadedPath)
 			Files.move(tmpPath, targetFile, REPLACE_EXISTING)
 			Done
 		}
@@ -76,26 +82,50 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 						)
 					) yield done
 				}.andThen{
-					case Success(_) => performUpload(targetFile, fn)
+					case Success(_) => performUpload(targetFile, fn, false)
 					case Failure(_) => Files.deleteIfExists(tmpPath)
 				}
 			}
 	}
 
-	private[etcfacade] def performUpload(file: Path, fn: EtcFilename): Future[Done] = {
-		if(fn.time.isDefined){
-			val futSeq = getZippableDailyECs(getStationFolder(fn.station))
-				.collect{case (archiveFn, sources) if(sources contains fn) =>
+	def cleanupVeryOldFiles(station: StationId): Unit = {
+		deleteOldEtcFiles(getStationFolder(station))
+		deleteOldEtcFiles(getStationUploadedFolder(station))
+	}
 
-					val srcFiles = sources.map(getFilePath).sortBy(_.getFileName.toString)
+	private[etcfacade] def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] = (fn.toEcDaily match{
+		case Some(daily) =>
+			val fresh = getZippableDailyECs(getStationFolder(fn.station), daily)
 
-					zipToArchive(srcFiles, archiveFn).flatMap{
-						case (file, hash) => performEtcUpload(file, archiveFn, Some(hash))
-					}
+			val uploadedFolder = getStationUploadedFolder(fn.station)
+			Files.createDirectories(uploadedFolder)
+
+			val uploaded = getZippableDailyECs(uploadedFolder, daily)
+
+			val filePackage = fresh ++ uploaded
+			val isFullPackage: Boolean = filePackage.size == 48
+
+			if(isFullPackage || forceEc){
+
+				val srcFiles = filePackage.sortBy(_.getFileName.toString)
+
+				zipToArchive(srcFiles, daily).flatMap{
+					case (file, hash) =>
+						if(isFullPackage)
+							filePackage.foreach(Files.deleteIfExists)
+						else fresh.foreach{file =>
+							val target = uploadedFolder.resolve(file.getFileName)
+							Files.move(file, target, REPLACE_EXISTING)
+						}
+						performEtcUpload(file, daily, Some(hash))
 				}
-			Future.sequence(futSeq).map(_ => Done)
-		}
-		else performEtcUpload(file, fn, None)
+			} else Future.successful(Done)
+		case None =>
+			performEtcUpload(file, fn, None)
+	}).andThen{
+		case Failure(err) =>
+			appendError(err.getMessage)
+			log.error("ETC facade error", err)
 	}
 
 	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
@@ -108,13 +138,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		)
 		.map(getUploadMeta(fn, _))
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
-		.andThen{
-			case Failure(err) =>
-				//file can be a temp file outside the staging folder. If not, the next line is a noop.
-				Files.move(file, getFilePath(fn), REPLACE_EXISTING)
-				appendError(s"Meta service error: ${err.getMessage}")
-				log.error(err, "ETC upload registration with meta service failed")
-		}
+		.transform(identity, err => {
+			//file can be a temp file outside the staging folder. If not, the next line is a noop.
+			Files.move(file, getFilePath(fn), REPLACE_EXISTING)
+			new Exception(s"ETC upload registration with meta service failed: ${err.getMessage}", err)
+			err
+		})
 		.flatMap{etcMeta =>
 			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
 			uploadDataObject(fn.station, etcMeta.hashSum)
@@ -132,13 +161,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 				_ => Future.successful(Done)
 			)
 		}
-		.andThen{
-			case Failure(err) =>
-				appendError(s"Internal object upload, station $station, object $hash : ${err.getMessage}")
-				log.error(err, s"ETC facade failure during internal object upload. Station $station, object $hash")
-			case Success(_) =>
-				Files.delete(getObjectSource(station, hash))
-		}
+		.transform(
+			ok => {Files.delete(getObjectSource(station, hash)); ok},
+			err => new Exception(s"ETC facade failure during internal object upload. Station $station, object $hash", err)
+		)
 
 	private def appendError(msg: String): Unit = {
 		val errFile = Paths.get(config.folder, "errorLog.txt")
@@ -148,6 +174,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 }
 
 object FacadeService{
+
+	val ForceEcUploadTime = LocalTime.of(4, 0)
+	val OldFileMaxAge = Duration.ofDays(30)
 
 	def getUploadMeta(file: EtcFilename, hashSum: Sha256Sum) = EtcUploadMetadata(
 		hashSum = hashSum,
@@ -166,38 +195,23 @@ object FacadeService{
 			.getOrElse(LocalDateTime.of(file.date.plusDays(1), LocalTime.MIN))
 	)
 
-	case class HalfHourSlot(date: LocalDate, number: Int)
-
-	def slot(file: EtcFilename): Option[HalfHourSlot] = file.time.map{time =>
-
-		val middle = LocalDateTime.of(file.date, time).minusMinutes(15)
-
-		val middleSecond = middle
-			.toLocalTime
-			.toSecondOfDay
-			.toFloat
-
-		HalfHourSlot(middle.toLocalDate, Math.round((middleSecond - 900) / 1800).toInt)
+	private def getEtcFiles(folder: Path): Vector[(Path,EtcFilename)] = iterateChildren(folder){_
+		.flatMap(p => EtcFilename.parse(p.getFileName.toString).toOption.map((p, _)))
+		.toVector
 	}
 
-	private class FileSlot(val file: EtcFilename, val slot: HalfHourSlot)
-	private case class SlotGroup(date: LocalDate, loggerNumber: Int, fileNumber: Int)
+	def deleteOldEtcFiles(folder: Path): Unit = {
+		val now = LocalDateTime.now(ZoneOffset.UTC)
 
-	def getZippableDailyECs(stationFolder: Path): Map[EtcFilename, Vector[EtcFilename]] = iterateChildren(stationFolder){_
-		.flatMap(p => EtcFilename.parse(p.getFileName.toString).toOption)
-		.filter(f => f.time.isDefined && f.dataType == DataType.EC)
-		.flatMap(f => slot(f).map(new FileSlot(f, _)))
-		.toIterable
-		.groupBy(fs => SlotGroup(fs.slot.date, fs.file.loggerNumber, fs.file.fileNumber))
-		.collect{
-			case (slotGroup, fileSlots) if(fileSlots.map(_.slot.number).toSet.size == 48) => //2 per hour for a day
-				val archiveFile = fileSlots.head.file.copy( //head is sure to exist
-					date = slotGroup.date,
-					timeOrDatatype = Right(DataType.EC), // "illegal" EtcFilename with EC datatype but no time
-					extension = "zip"
-				)
-				archiveFile -> fileSlots.map(_.file).toVector
+		getEtcFiles(folder).foreach{
+			case (path, filename) =>
+				val age = Duration.between(LocalDateTime.of(filename.date, LocalTime.MAX), now)
+				if(age.compareTo(OldFileMaxAge) > 0) Files.deleteIfExists(path)
 		}
+	}
+
+	def getZippableDailyECs(folder: Path, dailyFile: EtcFilename): Vector[Path] = getEtcFiles(folder).collect{
+		case (path, fn) if fn.toEcDaily.contains(dailyFile) => path
 	}
 
 	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
@@ -220,12 +234,11 @@ object FacadeService{
 						_ <- Future.fromTry(io.status)
 					) yield tmpFile -> hash
 				}.andThen{
-					case Success(_) =>
-						files.foreach(Files.deleteIfExists)
 					case Failure(_) =>
 						Files.deleteIfExists(tmpFile)
 				}
 			}
 			.run()
 	}
+
 }

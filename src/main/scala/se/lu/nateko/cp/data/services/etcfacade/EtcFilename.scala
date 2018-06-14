@@ -17,6 +17,15 @@ case class EtcFilename(
 ){
 	def dataType: DataType.Value = timeOrDatatype.fold(_ => DataType.EC, identity)
 	def time: Option[LocalTime] = timeOrDatatype.left.toOption
+
+	def toEcDaily: Option[EtcFilename] = time.map{time =>
+		copy(
+			date = LocalDateTime.of(date, time).minusMinutes(15).toLocalDate,
+			timeOrDatatype = Right(DataType.EC),
+			extension = "zip"
+		)
+	}
+
 	override def toString = {
 		val dateStr = date.format(EtcFilename.dateFormat)
 		val timeStr = time.map(_.format(EtcFilename.timeFormat)).getOrElse("")
