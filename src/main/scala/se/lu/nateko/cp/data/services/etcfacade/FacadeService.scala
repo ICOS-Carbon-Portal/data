@@ -125,7 +125,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	}).andThen{
 		case Failure(err) =>
 			appendError(err.getMessage)
-			log.error("ETC facade error", err)
+			log.error(err, "ETC facade error")
 	}
 
 	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
