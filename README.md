@@ -27,8 +27,9 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 ## Simplified ETC-specific facade API for data uploads
 The facade uses Basic HTTP Authentication. Username is the station's id.
 For testing purposes one can use fake station `FA-Lso` and password `p4ssw0rd`.
-The uploaded data is analyzed (MD5 sum gets calculated for it), and, if the checksum matches, the facade performs upload metadata registration (the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the complete Carbon Portal data upload procedure).
-The second step (the actual data upload that finalizes the metadata) is disabled at the moment (to prevent generation of PIDs for the test data), but is trivial (the data is already on the server) and can be enabled easily.
+The uploaded data is analyzed (MD5 sum gets calculated for it), and, if the checksum matches, the facade performs [upload metadata registration](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) and internal data object upload.
+
+The features and functional principles of the facade are described in more detail in [source code comments](https://github.com/ICOS-Carbon-Portal/data/blob/master/src/main/scala/se/lu/nateko/cp/data/services/etcfacade/FacadeService.scala#L40)
 
 Here is an example of uploading bytes in the string `test` to the service (performed on Linux command line):
 
@@ -71,7 +72,7 @@ File names are validated. Here is the output from our unit tests for this:
 	[info] - Parsing 'FA-Lso_EC_201202040437_L03_F12.csv' gives EtcFilename with correct toString
 	[info] - Parsing 'BE-Lon_BM_20170815_L99_F01.dat' gives EtcFilename with correct toString
 
-Please note that Eddy flux files (EC data type), being half-hourly rather than daily, are treated specially. They are not uploaded by the facade to CP immediately. Instead, they are kept in the staging area until a complete daily set (for certain station, logger id, and file id) has been uploaded. After that, the daily file set gets zip-archived and uploaded to CP as a single data object with a time-stripped filename.
+Please note that Eddy flux files (EC data type), being half-hourly rather than daily, are treated specially. They are not uploaded by the facade to CP immediately. Instead, they are kept in the staging area until a complete daily set (for certain station, logger id, and file id) has been uploaded. After that, the daily file set gets zip-archived and uploaded to CP as a single data object with a time-stripped filename. Additionally, there exists a deadline time of day (04:00 UTC at the time of writing) when even incomplete daily sets are packaged and uploaded.
 
 To observe the effect of the FA-Lso upload on the Carbon Portal metadata, you can inspect search results in the [portal](https://data.icos-cp.eu/portal/#search?station=%5B%22Test%20station%20(fake)%22%5D) webapp.
 

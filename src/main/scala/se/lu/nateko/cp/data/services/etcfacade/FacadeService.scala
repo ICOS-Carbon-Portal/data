@@ -8,6 +8,7 @@ import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -36,6 +37,25 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
+/**
+ * Encodes the behaviour and logic of the ETC logger data upload facade.
+ * Main features:
+ * 	- integrity control with MD5 checksums
+ * 	- staging area for files uploaded from the loggers but not uploaded to CP yet
+ * 	- upload to CP, if the ETC metadata for the filename is available on the meta service
+ * 	- packaging EC half-hourly files into daily packages (zip archives)
+ * 	- version handling in the case of re-uploads of files with the same filename
+ * 	- automatic upload retries for all the files in staging
+ *
+ * EC file packaging and submission is done in the following way.
+ * 	1) If upon upload of a half-hourly file a certain daily package becomes complete, the package
+ * is uploaded and the half-hourly files are removed from staging.
+ * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all half-hourly EC files in staging are packaged and uploaded,
+ * but not completely removed from staging. Instead, they are put into a subfolder called {@code uploaded}.
+ * 	3) Subsequent forced uploads of EC files are only performed if there are "fresh" files, but the files in {@code uploaded}
+ * are included, and versioning is used, so that the latest uploaded file is the most complete and up to date.
+ * 	4) After the daily forced EC upload, very old files (older than {@code FacadeService OldFileMaxAge}) are purged from staging.
+ */
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer) {
 	import FacadeService._
 	import mat.executionContext
@@ -94,13 +114,13 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	}
 
 	private[etcfacade] def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] = (fn.toEcDaily match{
-		case Some(daily) =>
-			val fresh = getZippableDailyECs(getStationFolder(fn.station), daily)
+		case Some(daily) if(isFromBeforeToday(daily)) =>
 
 			val uploadedFolder = getStationUploadedFolder(fn.station)
 			Files.createDirectories(uploadedFolder)
 
 			val uploaded = getZippableDailyECs(uploadedFolder, daily)
+			val fresh = getZippableDailyECs(getStationFolder(fn.station), daily)
 
 			val filePackage = fresh ++ uploaded
 			val isFullPackage: Boolean = filePackage.size == 48
@@ -119,9 +139,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 						}
 						performEtcUpload(file, daily, Some(hash))
 				}
-			} else Future.successful(Done)
+			} else done //no uploads for incomplete packages, unless forced
 		case None =>
 			performEtcUpload(file, fn, None)
+		case _ =>
+			done //no uploads for same-day EC files (more are likely coming!)
 	}).andThen{
 		case Failure(err) =>
 			appendError(err.getMessage)
@@ -158,7 +180,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		.flatMap{res =>
 			res.makeReport.fold(
 				errMsg => Future.failed(new CpDataException(errMsg)),
-				_ => Future.successful(Done)
+				_ => done
 			)
 		}
 		.transform(
@@ -177,6 +199,8 @@ object FacadeService{
 
 	val ForceEcUploadTime = LocalTime.of(4, 0)
 	val OldFileMaxAge = Duration.ofDays(30)
+
+	val done = Future.successful(Done)
 
 	def getUploadMeta(file: EtcFilename, hashSum: Sha256Sum) = EtcUploadMetadata(
 		hashSum = hashSum,
@@ -240,5 +264,7 @@ object FacadeService{
 			}
 			.run()
 	}
+
+	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
 }
