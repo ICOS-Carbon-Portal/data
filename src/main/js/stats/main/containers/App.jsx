@@ -37,9 +37,11 @@ export class App extends Component {
 							downloadStats={props.downloadStats}
 							fetchDownloadStats={props.fetchDownloadStats}/>
 
-						<Map>
-							<div id="map" />
-						</Map>
+						<Map
+							countryStats={props.countryStats}
+							countriesTopo={props.countriesTopo}
+							statsMap={props.statsMap}
+						/>
 					</div>
 					<div className="col-md-8">
 						<DobjTable
@@ -56,6 +58,8 @@ export class App extends Component {
 function stateToProps(state) {
 	return {
 		downloadStats: state.downloadStats,
+		statsMap: state.statsMap,
+		countriesTopo: state.countriesTopo,
 		paging : state.paging,
 		filters: state.filters
 	};

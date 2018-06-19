@@ -1,10 +1,12 @@
-import { getDownloadCounts, getSpecifications, getFormats, getDataLevels, getStations, getContributors, getThemes, getStationsCountryCode } from './backend';
+import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
+	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode } from './backend';
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
 export const FILTERS = 'FILTERS';
 export const STATS_UPDATE = 'STATS_UPDATE';
 export const STATS_UPDATED = 'STATS_UPDATED';
+export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -14,18 +16,32 @@ const failWithError = dispatch => error => {
 	});
 };
 
+export const fetchCountries = dispatch => {
+	getCountriesGeoJson().then(
+		countriesTopo => {
+			dispatch({
+				type: COUNTRIES_FETCHED,
+				countriesTopo
+			});
+		},
+		err => dispatch(failWithError(err))
+	);
+};
+
 export const fetchDownloadStats = filters => (dispatch, getState) => {
 	const state = getState();
-	getDownloadCounts(filters, state.stationCountryCodeLookup).then(
-		downloadStats => {
+	const avars = getAvars(filters, state.stationCountryCodeLookup);
+
+	Promise.all([getDownloadCounts(avars), getDownloadsByCountry(avars)])
+		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
 				downloadStats,
+				countryStats,
 				filters,
 				page: 1
 			})
-		}
-	)
+		});
 };
 
 export const fetchFilters = (dispatch, getState) => {
@@ -58,29 +74,31 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 
 	const state = getState();
 	const filters = state.downloadStats.filters;
+	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	getDownloadCounts(filters, state.stationCountryCodeLookup).then(
-		downloadStats => {
+	Promise.all([getDownloadCounts(avars), getDownloadsByCountry(avars)])
+		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: STATS_UPDATED,
-				downloadStats
+				downloadStats,
+				countryStats
 			})
-		}
-	)
+		});
 };
 
 export const requestPage = page => (dispatch, getState) => {
 	const state = getState();
 	const filters = state.downloadStats.filters;
+	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	getDownloadCounts(filters, state.stationCountryCodeLookup, page).then(
-		downloadStats => {
+	Promise.all([getDownloadCounts(avars), getDownloadsByCountry(avars)])
+		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
 				downloadStats,
+				countryStats,
 				filters,
 				page
 			})
-		}
-	)
+		});
 };

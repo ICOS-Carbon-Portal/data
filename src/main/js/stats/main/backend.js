@@ -1,15 +1,21 @@
 import 'whatwg-fetch';
 import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
+import {feature} from 'topojson';
 
 const restheartBaseUrl = config.restheartBaseUrl;
 
-export const getDownloadCounts = (filters, stationCountryCodeLookup = [], page = 1) => {
-	const parameters = `page=${page}&avars=${getAvars(filters, stationCountryCodeLookup)}`;
+export const getDownloadCounts = (avars, page = 1) => {
+	const parameters = `page=${page}&avars=${avars}`;
 	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getDownloadStats?${parameters}`);
 };
 
-const getAvars = (filters, stationCountryCodeLookup) => {
+export const getDownloadsByCountry = (avars, page = 1) => {
+	const parameters = `page=${page}&pagesize=300&avars=${avars}`;
+	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/downloadsByCountry?np&${parameters}`);
+};
+
+export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : "0,1,2,3";
 	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : "/.*/, null";
 	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : "/.*/, null";
@@ -33,6 +39,11 @@ const stationFilters = (filters, stationCountryCodeLookup) => {
 	let stationsName = stations.concat(ccStations.map(cc => `"${cc.name}"`));
 
 	return stationsName.length ? stationsName : "/.*/, null";
+};
+
+export const getCountriesGeoJson = () => {
+	return getJson('https://static.icos-cp.eu/js/topojson/countries-topo-iso2.json')
+		.then(topo => feature(topo, topo.objects.countries));
 };
 
 export function getDataLevels() {
@@ -76,7 +87,7 @@ export function getStationsCountryCode() {
 				const stationCountryCodeLookup = sparqlResult.results.bindings.map(b => ({
 					name: b.name.value,
 					code: b.countryCode.value
-				}))
+				}));
 
 				return uniqueCountryCodes
 					? Promise.resolve({stationCountryCodeLookup, countryCodeFilter})

@@ -1,6 +1,7 @@
-import {ERROR, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED} from './actions';
+import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
+
 
 export default function(state, action){
 
@@ -11,16 +12,20 @@ export default function(state, action){
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
+		case COUNTRIES_FETCHED:
+			return update({statsMap: state.statsMap.withCountriesTopo(action.countriesTopo)});
+
 		case DOWNLOAD_STATS_FETCHED:
 			return update({
 				downloadStats: new StatsTable(action.downloadStats._embedded, action.filters),
+				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
 					offset: action.page,
 					to: action.downloadStats._returned,
 					objCount: action.downloadStats._size,
 					pagesize: 100
 				}
-			})
+			});
 
 		case FILTERS:
 			return update({
@@ -46,23 +51,24 @@ export default function(state, action){
 					name: "countryCodes",
 					values: action.countryCodes
 				}]
-			})
+			});
 
 		case STATS_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withFilter(action.varName, action.values)
-			})
+			});
 
 		case STATS_UPDATED:
 			return update({
 				downloadStats: new StatsTable(action.downloadStats._embedded, state.downloadStats.filters),
+				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
 					offset: 1,
 					to: action.downloadStats._returned,
 					objCount: action.downloadStats._size,
 					pagesize: 100
 				}
-			})
+			});
 
 		default:
 			return state;
