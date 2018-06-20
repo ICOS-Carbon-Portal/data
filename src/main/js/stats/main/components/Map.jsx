@@ -16,6 +16,17 @@ export default class Map extends Component {
 		this._mapElement = undefined;
 		this._legendCtrl = undefined;
 		this._countriesTopoLayer = undefined;
+
+		this._eventHandlers = [];
+	}
+
+	addEvent(type, fn){
+		this._leafletMap.on(type, fn);
+		this._eventHandlers.push({type, fn});
+	}
+
+	clearEvents(){
+		this._eventHandlers.forEach(eh => this._leafletMap.off(eh.type, eh.fn));
 	}
 
 	componentDidMount(){
@@ -52,7 +63,6 @@ export default class Map extends Component {
 			},
 			style: feature => {
 				const count = statsMap.getCount(feature.properties.iso2);
-				// console.log({count, color: getColor(count)});
 				return {
 					weight: 1,
 					color: 'black',
@@ -69,19 +79,19 @@ export default class Map extends Component {
 		if (this._legendCtrl === undefined) {
 			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), getLegend);
 			this._legendCtrl = legendCtrl(canvasLegend.renderLegend());
-
 			map.addControl(this._legendCtrl);
-
-			map.on(
-				'resize',
-				debounce(({oldSize, newSize}) => {
-					const {getLegend} = colorMaker(min, max, decimals, getLegendHeight(newSize.y));
-					this.updateLegend(newSize, getLegend);
-				}, 300)
-			);
 		} else {
 			this.updateLegend(mapSize, getLegend);
 		}
+
+		const updateLegend = this.updateLegend.bind(this);
+		this.clearEvents();
+		this.addEvent('resize', resizeCB(min, max, updateLegend));
+	}
+
+	componentWillUnmount() {
+		this.clearEvents();
+		this._leafletMap = null;
 	}
 
 	render(){
@@ -101,6 +111,13 @@ export default class Map extends Component {
 		);
 	}
 }
+
+const resizeCB = (min, max, updateLegend) => {
+	return debounce(({newSize}) => {
+		const {getLegend} = colorMaker(min, max, decimals, getLegendHeight(newSize.y));
+		updateLegend(newSize, getLegend);
+	}, 300);
+};
 
 const getLegendHeight = mapHeight => {
 	return mapHeight - 30;

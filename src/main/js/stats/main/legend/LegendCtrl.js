@@ -1,4 +1,4 @@
-import { Control, DomUtil, Util } from 'leaflet';
+import { Control, DomUtil, Util, DomEvent } from 'leaflet';
 
 const containerId = 'containerId';
 const iconId = 'iconId';
@@ -18,8 +18,8 @@ Control.LegendCtr = Control.extend({
 	},
 
 	toggle: function() {
-		const iconElement = L.DomUtil.get(iconId);
-		const legendElement = L.DomUtil.get(legendId);
+		const iconElement = DomUtil.get(iconId);
+		const legendElement = DomUtil.get(legendId);
 
 		if (iconElement.style.display === 'none') {
 			iconElement.setAttribute("style", iconStyle);
@@ -31,7 +31,7 @@ Control.LegendCtr = Control.extend({
 	},
 
 	addEvent: function(obj, types, fn, context){
-		L.DomEvent.on(obj, types, fn, context);
+		DomEvent.on(obj, types, fn, context);
 		this.eventHandlers.push({obj, types, fn, context});
 	},
 
@@ -39,13 +39,14 @@ Control.LegendCtr = Control.extend({
 		const container = DomUtil.create('div', 'legend-container', map.getContainer());
 		container.setAttribute("id", containerId);
 		container.setAttribute("style", this.options.style);
+		DomEvent.disableClickPropagation(container);
 
-		const iconElement = L.DomUtil.create('span', 'glyphicon glyphicon-list-alt', container);
+		const iconElement = DomUtil.create('span', 'glyphicon glyphicon-list-alt', container);
 		iconElement.setAttribute("id", iconId);
 		iconElement.setAttribute("title", "View legend");
 		iconElement.setAttribute("style", iconStyle);
 
-		const legendElement = L.DomUtil.create('div', null, container);
+		const legendElement = DomUtil.create('div', null, container);
 		legendElement.setAttribute("id", legendId);
 		legendElement.setAttribute("style", "display:none;");
 
@@ -63,7 +64,7 @@ Control.LegendCtr = Control.extend({
 	},
 
 	onRemove: function () {
-		this.eventHandlers.forEach(e => L.DomEvent.off(e.obj, e.types, e.fn, e.context));
+		this.eventHandlers.forEach(e => DomEvent.off(e.obj, e.types, e.fn, e.context));
 	}
 });
 
