@@ -91,7 +91,7 @@ export const requestPage = page => (dispatch, getState) => {
 	const filters = state.downloadStats.filters;
 	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	Promise.all([getDownloadCounts(avars), getDownloadsByCountry(avars)])
+	Promise.all([getDownloadCounts(avars, page), getDownloadsByCountry(avars)])
 		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
