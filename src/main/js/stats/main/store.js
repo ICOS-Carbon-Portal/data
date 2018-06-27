@@ -5,10 +5,12 @@ import reducer from './reducer';
 import { fetchDownloadStats, fetchCountries, fetchFilters } from './actions';
 import StatsTable from './models/StatsTable';
 import StatsMap from './models/StatsMap';
+import StatsGraph from './models/StatsGraph';
 
 const initState = {
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
+	statsGraph: new StatsGraph(),
 	paging: {
 		offset: 0,
 		to: 0,

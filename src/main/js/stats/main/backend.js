@@ -46,6 +46,11 @@ export const getCountriesGeoJson = () => {
 		.then(topo => feature(topo, topo.objects.countries));
 };
 
+export const getDownloadsPerDateUnit = (dateUnit, avars) => {
+	const aggregation = 'downloadsPer' + dateUnit.charAt(0).toUpperCase() + dateUnit.slice(1);
+	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregation}?pagesize=1000&np&avars=${avars}`);
+};
+
 export function getDataLevels() {
 	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getDataLevels?pagesize=100&page=1`);
 }

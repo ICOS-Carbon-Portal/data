@@ -1,5 +1,5 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
-	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode } from './backend';
+	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit} from './backend';
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -7,6 +7,7 @@ export const FILTERS = 'FILTERS';
 export const STATS_UPDATE = 'STATS_UPDATE';
 export const STATS_UPDATED = 'STATS_UPDATED';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
+export const DOWNLOAD_STATS_PER_DATE_FETCHED = 'DOWNLOAD_STATS_PER_DATE_FETCHED';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -40,7 +41,9 @@ export const fetchDownloadStats = filters => (dispatch, getState) => {
 				countryStats,
 				filters,
 				page: 1
-			})
+			});
+
+			dispatch(fetchDownloadStatsPerDateUnit('week', avars));
 		});
 };
 
@@ -59,9 +62,30 @@ export const fetchFilters = (dispatch, getState) => {
 				contributors,
 				themes,
 				countryCodes: countryCodesLabels
-			})
+			});
 		}
 	)
+};
+
+export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, getState) => {
+	const avarsGetter = avars => {
+		if (avars === undefined){
+			const state = getState();
+			const filters = state.downloadStats.filters;
+			return getAvars(filters, state.stationCountryCodeLookup);
+		} else {
+			return avars;
+		}
+	};
+
+	getDownloadsPerDateUnit(dateUnit, avarsGetter(avars))
+		.then(downloadsPerDateUnit => {
+			dispatch({
+				type: DOWNLOAD_STATS_PER_DATE_FETCHED,
+				dateUnit,
+				downloadsPerDateUnit
+			});
+		});
 };
 
 export const statsUpdate = (varName, values) => (dispatch, getState) => {
@@ -82,7 +106,9 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 				type: STATS_UPDATED,
 				downloadStats,
 				countryStats
-			})
+			});
+
+			dispatch(fetchDownloadStatsPerDateUnit(state.statsGraph.dateUnit, avars))
 		});
 };
 
@@ -99,6 +125,8 @@ export const requestPage = page => (dispatch, getState) => {
 				countryStats,
 				filters,
 				page
-			})
+			});
+
+			dispatch(fetchDownloadStatsPerDateUnit(state.statsGraph.dateUnit, avars));
 		});
 };

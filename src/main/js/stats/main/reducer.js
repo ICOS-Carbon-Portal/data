@@ -1,6 +1,8 @@
-import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED} from './actions';
+import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED,
+	DOWNLOAD_STATS_PER_DATE_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
+import StatsGraph from './models/StatsGraph';
 
 
 export default function(state, action){
@@ -26,6 +28,9 @@ export default function(state, action){
 					pagesize: 100
 				}
 			});
+
+		case DOWNLOAD_STATS_PER_DATE_FETCHED:
+			return update({statsGraph: new StatsGraph(action.dateUnit, action.downloadsPerDateUnit)});
 
 		case FILTERS:
 			return update({

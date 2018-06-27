@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.13.0",
+    "deep-equal": "^1.0.1",
     "icos-cp-backend": "^0.3.5",
     "icos-cp-spatial": "^0.2.1",
     "icos-cp-toaster": "^0.5.1",
