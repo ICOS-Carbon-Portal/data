@@ -58,15 +58,15 @@ export default class Radio extends Component {
 
 const RadioCtrl = ({horizontal, txt, isActive, action}) => {
 	const rootStyle = horizontal
-		? {marginRight:10}
-		: {display:'block', marginTop:3, marginBottom:3};
+		? {cursor:'pointer', marginRight:10}
+		: {cursor:'pointer', display:'block', marginTop:3, marginBottom:3};
 	const tickStyle = isActive ? {opacity:1} : {opacity:0};
 
 	return (
-		<span style={rootStyle}>
+		<span style={rootStyle} onClick={action}>
 			<div className="btn-group" data-toggle="buttons">
 				<label className="btn btn-default">
-					<input autoComplete="off" type="checkbox" onClick={action} />
+					<input autoComplete="off" type="checkbox" />
 					<span className="glyphicon glyphicon-ok" style={tickStyle} />
 				</label>
 				<span className="input-group-addon" style={{height:34}}>{txt}</span>

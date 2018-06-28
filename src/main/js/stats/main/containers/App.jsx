@@ -44,7 +44,7 @@ export class App extends Component {
 							statsMap={props.statsMap}
 						/>
 
-						<h4 style={{marginTop:15}}>Downloads by date</h4>
+						<h4 style={{marginTop:15}}>Downloads per time period</h4>
 						<Graph
 							style={{width: '100%', height: 300}}
 							statsGraph={props.statsGraph}

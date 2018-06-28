@@ -41,30 +41,77 @@ export default class Graph extends Component{
 }
 
 const renderGraph = (chartDiv, labelsDiv, statsGraph) => {
-	if (!chartDiv || !statsGraph.hasData) return;
+	if (!statsGraph.hasData) {
+		new Dygraph(
+			chartDiv,
+			",\n0,0",
+			{
+				drawYAxis:false,
+				title:'No data available',
+				pointSize: 0,
+				highlightCircleSize: 0,
+				showLabelsOnHighlight:false
+			}
+		);
+		return;
+	}
 
-	new Dygraph(chartDiv,
+	const getDateWindow = data => {
+		const oneDay = 1000 * 3600 * 24;
+		if (data.length < 2) return [data[0][0].getTime() - oneDay, data[0][0].getTime() + oneDay];
+
+		const span = Math.floor((data[1][0].getTime() - data[0][0].getTime()) / 2);
+		const first = data[0][0].getTime() - span;
+		const last = data[data.length - 1][0].getTime() + span;
+		return [first, last];
+	};
+
+	const valueFrmtr = dateFormatter(statsGraph.dateUnit, statsGraph.weeks);
+	const axisLabelFrmtr = dateFormatter(statsGraph.dateUnit);
+
+	new Dygraph(
+		chartDiv,
 		statsGraph.data,
 		{
-			labels: ["date", "Count"],
+			labels: ["date", "Downloads"],
 			plotter: barChartPlotter,
+			legend: 'always',
 			labelsDiv: labelsDiv,
 			labelsSeparateLines: false,
-			dateWindow: statsGraph.dateWindow,
+			dateWindow: getDateWindow(statsGraph.data),
 			axes: {
 				x: {
 					axisLabelWidth: 80,
-					valueFormatter: dateFormatter,
-					axisLabelFormatter: dateFormatter,
+					valueFormatter: valueFrmtr,
+					axisLabelFormatter: axisLabelFrmtr,
 					pixelsPerLabel: 100,
 				}
 			}
-		});
+		}
+	);
 };
 
-const dateFormatter = ms => {
-	const date = new Date(ms);
-	return date.toISOString().substring(0, 10);
+const dateFormatter = (dateUnit, weeks) => {
+	switch (dateUnit) {
+		case 'week':
+			return weeks && weeks.length
+			? (ms, opts, seriesName, dygraph, row) => {
+				return `${new Date(ms).toISOString().substring(0, 10)} (week ${weeks[row]})`;
+			}
+			: ms => {
+					return new Date(ms).toISOString().substring(0, 10);
+				};
+
+		case 'month':
+			return ms => {
+				const date = new Date(ms);
+				const locale = "en-us";
+				return `${date.toLocaleString(locale, {month: "long"})} ${date.getFullYear()}`;
+			};
+
+		case 'year':
+			return ms => new Date(ms).getFullYear();
+	}
 };
 
 const barChartPlotter = (e => {
@@ -88,7 +135,9 @@ const barChartPlotter = (e => {
 		if (sep < min_sep) min_sep = sep;
 	}
 
-	const bar_width = Math.floor(2.0 / 3 * min_sep);
+	const bar_width = points.length >= 2
+		? Math.floor((points.length / Math.pow(points.length, 1.1)) * min_sep)
+		: 300;
 
 	for (let i = 0; i < points.length; i++) {
 		const p = points[i];
