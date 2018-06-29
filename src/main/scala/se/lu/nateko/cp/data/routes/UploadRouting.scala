@@ -10,9 +10,7 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.`Content-Disposition`
-import akka.http.scaladsl.model.headers.ContentDispositionTypes
-import akka.http.scaladsl.model.headers.`X-Forwarded-For`
+import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
@@ -40,7 +38,9 @@ import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.data.api.PortalLogClient
+import akka.http.scaladsl.model.HttpMethods
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
@@ -55,26 +55,40 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private val downloadService = new DownloadService(coreConf, uploadService, log)
 	val extractEnvri = extractEnvriDirective
 
-	private val upload: Route = path(Sha256Segment){ hashsum =>
+	private val upload: Route = requireShaHash{ hashsum =>
 		userRequired{ uid =>
 			extractRequest{ req =>
 				extractEnvri{implicit envri =>
 					val resFuture: Future[UploadResult] = uploadService
 						.getSink(hashsum, uid)
 						.flatMap(req.entity.dataBytes.runWith)
-
-					onSuccess(resFuture)(res => res.makeReport match{
-						case Right(report) => complete(report)
-						case Left(errorMsg) =>
-							log.warning(errorMsg)
-							complete((StatusCodes.InternalServerError, errorMsg))
-					})
+					addAccessControlHeaders(envri){
+						onSuccess(resFuture)(res => res.makeReport match{
+							case Right(report) => complete(report)
+							case Left(errorMsg) =>
+								log.warning(errorMsg)
+								complete((StatusCodes.InternalServerError, errorMsg))
+						})
+					}
 				}
 			}
 		}
-	} ~ requireShaHash
+	}
 
-	private val download: Route = pathPrefix(Sha256Segment){ hashsum =>
+	private val uploadHttpOptions: Route = requireShaHash{ _ =>
+		extractEnvri{implicit envri =>
+			addAccessControlHeaders(envri){
+				respondWithHeaders(
+					`Access-Control-Allow-Methods`(HttpMethods.PUT),
+					`Access-Control-Allow-Headers`(`Content-Type`.name)
+				){
+					complete(StatusCodes.OK)
+				}
+			}
+		}
+	}
+
+	private val download: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
 			onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
 				licenceCookieDobjList{dobjs =>
@@ -92,7 +106,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 				redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
 			}
 		}
-	} ~ requireShaHash
+	}
 
 	private val batchDownload: Route = pathEnd{
 		parameter(('ids.as[Seq[Sha256Sum]], 'fileName)){ (hashes, fileName) =>
@@ -128,6 +142,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	val route = pathPrefix("objects"){
 		handleExceptions(errHandler){
 			put{ upload } ~
+			options{ uploadHttpOptions } ~
 			get{ batchDownload ~ download}
 		}
 	}
@@ -166,14 +181,24 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			)
 		}
 	}
+
+	private def addAccessControlHeaders(implicit envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
+		case Some(origin) if envriConfs(envri).metaPrefix.toString.startsWith(origin.value) =>
+			respondWithHeaders( //allowing uploads from meta-hosted browser web apps
+				`Access-Control-Allow-Origin`(origin.value), `Access-Control-Allow-Credentials`(true)
+			)
+		case _ => pass
+	}
 }
 
 object UploadRouting{
 
 	val Sha256Segment = Segment.flatMap(Sha256Sum.fromString(_).toOption)
 
-	private val requireShaHash =
-		complete((StatusCodes.BadRequest, s"Expected base64Url- or hex-encoded SHA-256 hash"))
+	val requireShaHash: Directive1[Sha256Sum] = path(Sha256Segment.?).flatMap{
+		case Some(hash) => provide(hash)
+		case None => complete(StatusCodes.BadRequest -> s"Expected base64Url- or hex-encoded SHA-256 hash")
+	}
 
 	private val optionalFileName: Directive1[Option[String]] = Directive{nameToRoute =>
 		pathEndOrSingleSlash{
@@ -218,15 +243,11 @@ object UploadRouting{
 	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType): Route =
 		complete(HttpResponse(entity = HttpEntity.CloseDelimited(contentType, src)))
 
-	val getClientIp: Directive1[String] = {
-
-		val errMsg = "Missing 'X-Forwarded-For' header, bad reverse proxy configuration on the server"
-
-		val rejHandler = RejectionHandler.newBuilder().handle{
-			case MissingHeaderRejection(_) => complete((StatusCodes.BadRequest, errMsg))
-		}.result()
-
-		handleRejections(rejHandler) & headerValueByType[`X-Forwarded-For`](()).map(_.value)
+	val getClientIp: Directive1[String] = optionalHeaderValueByType[`X-Forwarded-For`](()).flatMap{
+		case Some(xff) => provide(xff.value)
+		case None => complete(
+			StatusCodes.BadRequest -> "Missing 'X-Forwarded-For' header, bad reverse proxy configuration on the server"
+		)
 	}
 
 	def extractEnvriDirective(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>

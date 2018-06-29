@@ -6,6 +6,7 @@ import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import spray.json._
 
 object CpdataJsonProtocol extends CommonJsonSupport {

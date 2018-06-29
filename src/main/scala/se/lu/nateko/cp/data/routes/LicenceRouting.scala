@@ -4,6 +4,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.StatusCodes
 import spray.json._
