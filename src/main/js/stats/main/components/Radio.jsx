@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import FileDownload from './FileDownload.jsx';
 
 
 export default class Radio extends Component {

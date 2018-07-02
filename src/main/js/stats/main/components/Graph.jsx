@@ -1,11 +1,18 @@
 import React, { Component } from 'react';
 import Radio from './Radio.jsx';
 import deepEqual from 'deep-equal';
+import FileDownload from './FileDownload.jsx';
 
 
 export default class Graph extends Component{
 	constructor(props){
 		super(props);
+
+		this.state = {
+			blob: undefined,
+			fileName: undefined,
+			ts: undefined
+		};
 
 		this.chartDiv = undefined;
 		this.labelsDiv = undefined;
@@ -17,7 +24,16 @@ export default class Graph extends Component{
 		}
 	}
 
+	onDownloadClick(){
+		const {statsGraph} = this.props;
+		const debug = {hello: "world"};
+		const blob = new Blob([json2csv(statsGraph)], {type : 'text/csv'});
+		console.log({blob, statsGraph});
+		this.setState({blob, fileName: `Downloads per ${statsGraph.dateUnit}.csv`, ts: Date.now()});
+	}
+
 	render(){
+		const {blob, fileName, ts} = this.state;
 		const {radioAction, style} = this.props;
 		const radios = [
 			{txt: 'Per week', isActive: true, actionTxt: 'week'},
@@ -33,12 +49,38 @@ export default class Graph extends Component{
 					radios={radios}
 					action={radioAction}
 				/>
+
 				<div ref={div => this.chartDiv = div} style={style} />
 				<div ref={div => this.labelsDiv = div} style={{marginTop:5}} />
+
+				<button
+					className="btn btn-primary"
+					style={{marginTop:20}}
+					onClick={this.onDownloadClick.bind(this)}
+				>Download statistics in CSV format</button>
+				<FileDownload ts={ts} blob={blob} fileName={fileName} />
 			</div>
 		);
 	}
 }
+
+const json2csv = statsGraph => {
+	const headers = statsGraph.dateUnit === 'week'
+		? 'Date,Week,Downloads\n'
+		: 'Date,Downloads\n';
+
+	const vals = statsGraph.dateUnit === 'week'
+		? statsGraph.data.reduce((acc, curr, idx) => {
+			acc += `${curr[0].toISOString()},${statsGraph.weeks[idx]},${curr[1]}\n`;
+			return acc;
+		}, '')
+		: statsGraph.data.reduce((acc, curr) => {
+			acc += `${curr[0].toISOString()},${curr[1]}\n`;
+			return acc;
+		}, '');
+
+	return headers + vals;
+};
 
 const renderGraph = (chartDiv, labelsDiv, statsGraph) => {
 	if (!statsGraph.hasData) {
@@ -84,7 +126,7 @@ const renderGraph = (chartDiv, labelsDiv, statsGraph) => {
 					axisLabelWidth: 80,
 					valueFormatter: valueFrmtr,
 					axisLabelFormatter: axisLabelFrmtr,
-					pixelsPerLabel: 100,
+					pixelsPerLabel: 110,
 				}
 			}
 		}
