@@ -66,7 +66,7 @@ export default class Map extends Component {
 				return {
 					weight: 1,
 					color: 'black',
-					fillColor: `rgb(${getColor(count).join(',')})`,
+					fillColor: `rgba(${getColor(count).join(',')})`,
 					fillOpacity: 0.5
 				};
 			}

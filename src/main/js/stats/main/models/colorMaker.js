@@ -23,7 +23,7 @@ export const colorMaker = (min, max, decimals, containerHeight) => {
 		.map(val => valueCompressor(val));
 
 	const color = rgbaInterpolation(domain, colorDefs);
-	const getColor = value => color(valueCompressor(value));
+	const getColor = value => color(valueCompressor(value)).map(c => Math.round(c));
 	const domainEdges = [domain[0], domain[domain.length - 1]];
 	const valueMaker = tick =>
 		valueStretcher(linearInterpolation([0, containerHeight], domainEdges)(tick)).toFixed(decimals);

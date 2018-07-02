@@ -67,10 +67,9 @@ const RadioCtrl = ({horizontal, txt, isActive, action}) => {
 		<span style={rootStyle} onClick={action}>
 			<div className="btn-group" data-toggle="buttons">
 				<label className="btn btn-default">
-					<input autoComplete="off" type="checkbox" />
 					<span className="glyphicon glyphicon-ok" style={tickStyle} />
 				</label>
-				<span className="input-group-addon" style={{height:34}}>{txt}</span>
+				<span className="input-group-addon" style={{height:34, width:'auto'}}>{txt}</span>
 			</div>
 		</span>
 	);
