@@ -23,7 +23,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private type PageFactory = PartialFunction[(String, Envri), Html]
 	private val NetCdfProj = "netcdf"
 
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats", "etcfacade")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats", "etcfacade", "map-graph")
 
 	private[this] val standardPageFactory: PageFactory = {
 		case ("stilt", _) => views.html.StiltPage()
@@ -32,6 +32,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 		case ("stats", _) => views.html.StatsPage()
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)
+		case ("map-graph", _) => views.html.MapGraph()
 	}
 
 	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
