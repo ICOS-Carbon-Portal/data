@@ -8,7 +8,7 @@ export default class Cart {
 	}
 
 	addItem(cartItem){
-		return new Cart(this._name, this._items.concat(cartItem));
+		return new Cart(this._name, [...this._items, ...cartItem]);
 	}
 
 	removeItem(id){

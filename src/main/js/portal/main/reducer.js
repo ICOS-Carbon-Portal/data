@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED} from './actions';
+import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, RESTORE_PREVIEW, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS} from './actions';
 import {TEMPORAL_FILTER, WHOAMI_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -32,7 +32,8 @@ const initState = {
 	batchDownloadStatus: {
 		isAllowed: false,
 		ts: 0
-	}
+	},
+	checkedObjects: [],
 };
 
 const specTableKeys = Object.keys(placeholders);
@@ -120,6 +121,11 @@ export default function(state = initState, action){
 				filterFreeText: restoredFilterFreeText
 			});
 
+		case RESTORE_PREVIEW:
+			return update({
+				preview: state.preview.initPreview(state.lookup.table, state.cart, state.routeAndParams.previewIds, state.objectsTable)
+			});
+
 		case OBJECTS_FETCHED:
 			const extendedObjectsTable = action.objectsTable.map(ot => {
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
@@ -172,7 +178,11 @@ export default function(state = initState, action){
 			return update({routeAndParams});
 
 		case PREVIEW:
+			routeAndParams = state.routeAndParams.withRoute(config.ROUTE_PREVIEW).withPreviewIds(action.id);
+			updateUrl(routeAndParams.urlPart);
+
 			return update({
+				routeAndParams,
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
@@ -229,6 +239,11 @@ export default function(state = initState, action){
 				routeAndParams,
 				filterFreeText,
 				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
+			});
+
+		case UPDATE_CHECKED_OBJECTS:
+			return update({
+				checkedObjects: action.checkedObjects
 			});
 
 		default:

@@ -4,6 +4,7 @@ import commonConfig from '../../common/main/config';
 export default {
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
+	ROUTE_PREVIEW: 'preview',
 	DEFAULT_ROUTE: 'search',
 	TIMESERIES: 'TIMESERIES',
 	NETCDF: 'NETCDF',

@@ -2,7 +2,8 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchUserInfo, getAllSpecTables, updateRoute} from './actions';
+import {fetchUserInfo, getAllSpecTables, updateRoute, getPreview} from './actions';
+import config from './config';
 
 // function logger({ getState }) {
 // 	return (next) => (action) => {
@@ -27,7 +28,15 @@ export default function(){
 
 	store.dispatch(updateRoute(route));
 	store.dispatch(fetchUserInfo(true));
-	store.dispatch(getAllSpecTables(hash));
+
+	switch (route) {
+		case config.ROUTE_PREVIEW:
+			store.dispatch(getPreview(hash));
+			store.dispatch(getAllSpecTables(hash));
+			break;
+		default:
+			store.dispatch(getAllSpecTables(hash));
+	}
 
 	return store;
 }

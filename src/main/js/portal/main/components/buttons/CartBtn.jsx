@@ -1,37 +1,25 @@
 import React, { Component } from 'react';
 
-
-export default class CartAddRemove extends Component{
+export default class CartAddBtn extends Component {
 	constructor(props){
 		super(props);
 	}
 
 	handleAddToCartClick(){
-		const {objInfo, addToCart} = this.props;
-		if (addToCart) addToCart(objInfo);
-	}
-
-	handleRemoveFromCartClick(){
-		const {id, removeFromCart} = this.props;
-		if (removeFromCart) removeFromCart(id);
+		const {checkedObjects, addToCart} = this.props;
+		if (addToCart) addToCart(checkedObjects);
 	}
 
 	render(){
-		const {isAddedToCart, objInfo, style} = this.props;
+		const {isAddedToCart, style, enabled} = this.props;
+		const className = "btn btn-primary " + (enabled ? "" : "disabled");
 
-		return(
-			<div style={style}>{objInfo && objInfo.level === 0
-				? <a className="btn btn-primary btn-sm disabled" href="https://www.icos-cp.eu" target="_blank">
-					Available upon request
-				</a>
-				: isAddedToCart
-					? <button onClick={this.handleRemoveFromCartClick.bind(this)} className="btn btn-primary btn-sm">
-						<span className="glyphicon glyphicon-minus-sign" /> Remove from data cart
-					</button>
-					: <button onClick={this.handleAddToCartClick.bind(this)} className="btn btn-primary btn-sm">
-						<span className="glyphicon glyphicon-plus-sign" /> Add to data cart
-					</button>
-			}</div>
+		return (
+			<div style={style}>
+				<button id="add-to-cart-button" onClick={this.handleAddToCartClick.bind(this)} className={className}>
+					Add to cart
+				</button>
+			</div>
 		);
 	}
 }

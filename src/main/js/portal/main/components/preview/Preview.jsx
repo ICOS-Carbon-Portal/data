@@ -10,17 +10,17 @@ export default class Preview extends Component {
 		this.state = {
 			iframeSrc: undefined
 		};
-		window.onmessage = event => this.handleIframeSrcChange(event);
 	}
 
 	handleIframeSrcChange(event){
-		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
+		const iframeSrc = event.target.src;
 		this.setState({iframeSrc});
 		this.props.setPreviewUrl(iframeSrc);
 	}
 
 	render(){
 		const {preview, closePreviewAction} = this.props;
+		const valToCopy = (preview.items[0] && preview.items[0].getUrlSearchValue('x') && preview.items[0].getUrlSearchValue('y')) ? this.state.iframeSrc : '';
 
 		return (
 			<div>
@@ -30,12 +30,18 @@ export default class Preview extends Component {
 
 							<div className="panel-heading">
 								<span className="panel-title">
-									<span style={{marginRight: 10}}>
-										{preview.item.itemName}
-									</span>
-									<a href={preview.item.id} title="View landing page" target="_blank">
-										<span className="glyphicon glyphicon-info-sign" />
-									</a>
+									{preview.items.map(item => {
+										return (
+											<span key={item.id} style={{marginRight: 10}}>
+												<span style={{marginRight: 10}}>
+													{item.itemName}
+												</span>
+												<a href={item.id} title="View metadata" target="_blank">
+													<span className="glyphicon glyphicon-info-sign" />
+												</a>
+											</span>
+										)
+									})}
 								</span>
 								<CloseBtn closePreviewAction={closePreviewAction} />
 							</div>
@@ -46,7 +52,7 @@ export default class Preview extends Component {
 										<CopyValue
 											btnText="Copy preview chart URL"
 											copyHelpText="Click to copy preview chart URL to clipboard"
-											valToCopy={this.state.iframeSrc}
+											valToCopy={valToCopy}
 										/>
 									</div>
 								</div>

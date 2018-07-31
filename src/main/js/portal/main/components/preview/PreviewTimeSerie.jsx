@@ -13,7 +13,7 @@ export default class PreviewTimeSerie extends Component {
 		if (selectedIdx > 0 && iframeSrcChange) {
 			const selectedVal = ev.target.options[selectedIdx].innerHTML;
 			const setting = ev.target.name;
-			const newUrl = preview.item.getNewUrl({[setting]: selectedVal});
+			const newUrl = preview.items[0].getNewUrl({[setting]: selectedVal});
 
 			iframeSrcChange({target: {src: newUrl}});
 		}
@@ -21,13 +21,30 @@ export default class PreviewTimeSerie extends Component {
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
-		const {xAxis, yAxis, type} = preview.item && preview.item.hasKeyValPairs
+		const {xAxis, yAxis, type} = preview.items[0] && preview.items[0].hasKeyValPairs
 			? {
-				xAxis: preview.item.getUrlSearchValue('x'),
-				yAxis: preview.item.getUrlSearchValue('y'),
-				type: preview.item.getUrlSearchValue('type')
+				xAxis: preview.items[0].getUrlSearchValue('x'),
+				yAxis: preview.items[0].getUrlSearchValue('y'),
+				type: preview.items[0].getUrlSearchValue('type')
 			}
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
+
+		const linking = preview.items.reduce((acc,cur) => {
+			const result = preview.items.reduce((acc2,cur2) => {
+				if (cur.id !== cur2.id) {
+					if (cur._dataobject.timeStart < cur2._dataobject.timeStart
+						&& cur._dataobject.timeEnd < cur2._dataobject.timeEnd) {
+							return 'concatenate';
+					}
+					else if (cur._dataobject.timeStart > cur2._dataobject.timeStart
+						&& cur._dataobject.timeEnd > cur2._dataobject.timeEnd) {
+							return 'concatenate';
+					}
+				}
+				return acc2;
+			}, 'overlap');
+			return result;
+		}, '');
 
 		return (
 			<div>
@@ -69,10 +86,11 @@ export default class PreviewTimeSerie extends Component {
 						<div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
 							<TimeSeries
 								self={this}
-								id={preview.item.id}
+								ids={preview.items.map(i => i.id)}
 								x={xAxis}
 								y={yAxis}
 								type={type}
+								linking={linking}
 								onLoad={iframeSrcChange}
 							/>
 						</div>
@@ -102,16 +120,15 @@ const Selector = props => {
 };
 
 const TimeSeries = props => {
-	const objId = props.id.split('/').pop();
-	const {self, x, y, type} = props;
-	const host = props.id.match(/^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i)[1].replace('meta', 'data');
+	const objIds = props.ids.map(id => id.split('/').pop()).join();
+	const {self, x, y, type, linking} = props;
 
 	return (
 		<div>{
 			x && y
 				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objId}&x=${x}&y=${y}&type=${type}`}
+					src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}&y=${y}&type=${type}&linking=${linking}`}
 				/>
 				: null
 		}</div>

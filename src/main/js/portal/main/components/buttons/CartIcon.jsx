@@ -7,8 +7,8 @@ export default class CartIcon extends Component {
 	}
 
 	handleAddToCartClick(){
-		const {objInfo, addToCart} = this.props;
-		if (addToCart) addToCart(objInfo);
+		const {id, addToCart} = this.props;
+		if (addToCart) addToCart([id]);
 	}
 
 	handleRemoveFromCartClick(){

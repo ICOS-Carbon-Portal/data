@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
-import CartAddRemove from '../buttons/CartBtn.jsx';
-import Preview from '../buttons/PreviewBtn.jsx';
 import {formatBytes} from '../../utils';
 
 
@@ -15,10 +13,11 @@ const truncateStyle = {
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
 		super(props);
+		this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
 	}
 
-	handlePreviewClick(id){
-		if (this.props.previewAction) this.props.previewAction(id);
+	handleCheckboxChange() {
+		this.props.onCheckboxChange();
 	}
 
 	render(){
@@ -31,67 +30,43 @@ export default class SimpleObjectTableRow extends Component{
 			: props.extendedInfo;
 		const preview = props.preview;
 		const previewItem = preview.item;
-		const previewType = props.lookup.getSpecLookupType(objInfo.spec);
-		const className = previewItem && previewItem.id === objInfo.dobj
-			? "list-group-item-info"
-			: "";
 		const size = parseInt(objInfo.size);
+		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
+		const checkboxDisabled = objInfo.level === 0 ? "disabled" : "";
 
 		return(
-			<tr className={className}>
-				<td style={{textAlign: 'center', width: 40}}>
-					{extendedInfo && extendedInfo.themeIcon && extendedInfo.theme
-						? <img style={{width: 20}} src={extendedInfo.themeIcon} title={extendedInfo.theme} />
-						: null
-					}
+			<tr style={{margin: '20px 0'}}>
+				<td style={{textAlign: 'center', width: 40, padding: '16px 8px'}}>
+					<input className="data-checkbox" type="checkbox" name="data-checkbox" value={objInfo.dobj} onChange={this.handleCheckboxChange} disabled={checkboxDisabled} checked={props.isChecked}/>
 				</td>
-				<td style={{maxWidth: 0}}>
-					{extendedInfo && extendedInfo.title
-						? <h4 style={{marginTop: 0}}>
-							<a href={objInfo.dobj} title="Go to landing page" target="_blank">{extendedInfo.title}</a>
-						</h4>
-						: <h4 style={{marginTop: 0}}>
-							<a href={objInfo.dobj} title="Go to landing page" target="_blank">{objInfo.specLabel}</a>
-						</h4>
+				<td style={{maxWidth: 0, padding: '16px 8px'}}>
+					<h4 style={{marginTop: 0}}>
+						<a href={objInfo.dobj} title="View metadata" target="_blank">{title}</a>
+					</h4>
+					{extendedInfo && extendedInfo.description &&
+						<div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
 					}
-					<div>
-						<SourceAndFile extendedInfo={extendedInfo} fileName={objInfo.fileName} size={size} />
+					{extendedInfo &&
+					<div className="extended-info" style={{marginTop: 4}}>
+						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} width={'80px'} iconHeight={14} iconRightMargin={4} />
+						{extendedInfo.station &&
+						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={'//static.icos-cp.eu/images/icons/pin.svg'} width={'120px'} />
+						}
+						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={'//static.icos-cp.eu/images/icons/calendar.svg'} width={'240px'} />
+						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} width={'220px'} />
 					</div>
-					{extendedInfo && extendedInfo.description
-						? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-						: null
 					}
-					<div>
-						{`Data from ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`}
-					</div>
-				</td>
-				<td style={{width: 200}}>
-					<CartAddRemove
-						id={objInfo.dobj}
-						{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
-					/>
-
-					<Preview
-						style={{marginTop: 10}}
-						id={objInfo.dobj}
-						previewType={previewType}
-						clickAction={this.handlePreviewClick.bind(this)}
-					/>
 				</td>
 			</tr>
 		);
 	}
 }
 
-const SourceAndFile = ({extendedInfo, fileName, size}) => {
-	if (extendedInfo && extendedInfo.station){
-		return size
-			? <span><b>Source:</b> {extendedInfo.station.trim()} - <b>Filename:</b> {fileName} ({formatBytes(size, 0)})</span>
-			: <span><b>Source:</b> {extendedInfo.station.trim()} - <b>Filename:</b> {fileName}</span>;
-	} else {
-		return size
-			? <span><b>Filename:</b> {fileName} ({formatBytes(size, 0)})</span>
-			: <span><b>Filename:</b> {fileName}</span>;
+const ExtendedInfoItem = ({item, icon, width, iconHeight = 18, iconRightMargin = 0}) => {
+	if (item && icon) {
+		return <span className="extended-info-item" style={{display: 'inline-block', marginRight: 16, minWidth: width}}>
+			<img src={icon} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
+			</span>
 	}
 };
 

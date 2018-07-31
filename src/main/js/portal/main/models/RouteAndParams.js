@@ -3,11 +3,12 @@ import {varType} from '../utils';
 
 
 export default class RouteAndParams{
-	constructor(route, filters, tabs, page){
+	constructor(route, filters, tabs, page, previewIds){
 		this._route = route;
 		this._filters = filters || {};
 		this._tabs = tabs || {};
 		this._page = page || 0;
+		this._previewIds = previewIds || [];
 	}
 
 	withRoute(route){
@@ -34,6 +35,10 @@ export default class RouteAndParams{
 		return new RouteAndParams(this._route, this._filters, this._tabs, this._page + direction);
 	}
 
+	withPreviewIds(ids){
+		return new RouteAndParams(this._route, this._filters, this._tabs, this._page, ids);
+	}
+
 	get route(){
 		return this._route;
 	}
@@ -54,6 +59,10 @@ export default class RouteAndParams{
 		return this._page * config.stepsize;
 	}
 
+	get previewIds(){
+		return this._previewIds;
+	}
+
 	get filtersEnabled(){
 		const {filterTemporal, filterFreeText} = this._filters;
 
@@ -63,54 +72,72 @@ export default class RouteAndParams{
 	}
 
 	get urlPart(){
-		// Do not add filters that are empty
-		const newFilters = Object.keys(this._filters).reduce((acc, key) => {
-			const variableType = varType(this._filters[key]);
+		switch (this._route) {
+			case config.ROUTE_PREVIEW:
+				const objId = this._previewIds.map(id => id.split('/').pop()).join();
+				return objId.length ? `${this._route}?objId=${objId}` : this._route;
 
-			if (variableType === 'object' && Object.keys(this._filters[key]).length){
-				acc[key] = this._filters[key];
-			} else if (variableType === 'array' && this._filters[key].length){
-				acc[key] = this._filters[key];
-			} else if (variableType === 'string'){
-				acc[key] = this._filters[key];
-			}
+				break;
 
-			return acc;
-		}, {});
+			default:
+				// Do not add filters that are empty
+				const newFilters = Object.keys(this._filters).reduce((acc, key) => {
+					const variableType = varType(this._filters[key]);
 
-		Object.keys(this._tabs).length
-			? Object.assign(newFilters, {tabs: this._tabs})
-			: newFilters;
+					if (variableType === 'object' && Object.keys(this._filters[key]).length){
+						acc[key] = this._filters[key];
+					} else if (variableType === 'array' && this._filters[key].length){
+						acc[key] = this._filters[key];
+					} else if (variableType === 'string'){
+						acc[key] = this._filters[key];
+					}
 
-		this._page !== 0
-			? Object.assign(newFilters, {page: this._page})
-			: newFilters;
+					return acc;
+				}, {});
 
-		const keys = Object.keys(newFilters);
+				Object.keys(this._tabs).length
+				? Object.assign(newFilters, {tabs: this._tabs})
+				: newFilters;
 
-		return keys.length
-			? this._route + '?' + keys.map(key =>
-				key + '=' + encodeURIComponent(JSON.stringify(newFilters[key]))).join('&')
-			: this._route;
-	}
+				this._page !== 0
+				? Object.assign(newFilters, {page: this._page})
+				: newFilters;
+
+				const keys = Object.keys(newFilters);
+
+				return keys.length
+				? this._route + '?' + keys.map(key =>
+					key + '=' + encodeURIComponent(JSON.stringify(newFilters[key]))).join('&')
+					: this._route;
+				}
+		}
+
 }
 
 export const restoreRouteAndParams = routeAndParams => {
 	const urlParts = routeAndParams.split('?');
 	const route = urlParts[0];
-	const filtersAndTabs = urlParts[1]
-		? urlParts[1].split('&').reduce((acc, keyVal) => {
-			const param = keyVal.split('=');
-			acc[param[0]] = JSON.parse(decodeURIComponent(param[1]));
-			return acc;
-		}, {})
-		: {};
 
-	const tabs = filtersAndTabs.tabs;
-	const page = filtersAndTabs.page;
-	const filters = filtersAndTabs;
-	delete filters.tabs;
-	delete filters.page;
+	switch (route) {
+		case config.ROUTE_PREVIEW:
+			let ids = urlParts[1].split('=')[1].split(',');
+			return new RouteAndParams(route || config.DEFAULT_ROUTE).withPreviewIds(ids);
 
-	return new RouteAndParams(route || config.DEFAULT_ROUTE, filters, tabs, page);
+		default:
+			const filtersAndTabs = urlParts[1]
+				? urlParts[1].split('&').reduce((acc, keyVal) => {
+					const param = keyVal.split('=');
+					acc[param[0]] = JSON.parse(decodeURIComponent(param[1]));
+					return acc;
+				}, {})
+				: {};
+
+			const tabs = filtersAndTabs.tabs;
+			const page = filtersAndTabs.page;
+			const filters = filtersAndTabs;
+			delete filters.tabs;
+			delete filters.page;
+
+			return new RouteAndParams(route || config.DEFAULT_ROUTE, filters, tabs, page);
+	}
 };
