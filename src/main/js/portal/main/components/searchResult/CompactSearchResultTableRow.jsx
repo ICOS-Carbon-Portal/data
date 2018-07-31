@@ -11,7 +11,7 @@ export default class CompactSearchResultTableRow extends Component {
 	}
 
 	handlePreviewClick(id){
-		if (this.props.previewAction) this.props.previewAction(id);
+		if (this.props.previewAction) this.props.previewAction([id]);
 	}
 
 	render(){

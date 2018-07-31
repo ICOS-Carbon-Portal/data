@@ -5,7 +5,7 @@ import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, setPreviewItem, updateCheckedObjects} from '../actions';
+import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjects} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 

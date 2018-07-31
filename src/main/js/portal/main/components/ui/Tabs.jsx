@@ -6,11 +6,12 @@ export default class Tabs extends Component{
 	constructor(props){
 		super(props);
 
+		const selectedTabId = props.selectedTabId || 0;
 		this.tabState = props.children.map((child, idx) => {
 			return {
 				id: idx,
 				tabHeader: child.props.tabHeader,
-				isActive: idx === 0
+				isActive: idx === selectedTabId
 			};
 		});
 	}
