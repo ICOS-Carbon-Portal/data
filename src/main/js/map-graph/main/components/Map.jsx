@@ -1,0 +1,204 @@
+import React, { Component } from 'react';
+import L from 'leaflet';
+import * as LCommon from 'icos-cp-leaflet-common';
+import {colorMaker} from "../models/colorMaker";
+import CanvasLegend from '../legend/CanvasLegend';
+import {legendCtrl} from '../legend/LegendCtrl';
+import config from '../config';
+import {TextControl} from '../controls/TextControl';
+
+
+export default class Map extends Component{
+	constructor(props){
+		super(props);
+
+		this.leafletMap = undefined;
+		this.textCtrl = undefined;
+		this._legendCtrl = undefined;
+		this.mapElement = undefined;
+		this.layerGroup = undefined;
+		this.markerGroup = undefined;
+		this.moveEndFn = undefined;
+		this.handleMoveEnd = this.moveEndHandler.bind(this);
+
+		this.mapPointMouseOver = props.mapPointMouseOver;
+
+		this.colorMaker = undefined;
+	}
+
+	componentDidMount(){
+		this.createNewMap();
+	}
+
+	componentDidUpdate(prevProps){
+		const {binTableData, valueIdx, afterPointsFiltered, fromGraph} = this.props;
+
+		if (prevProps.valueIdx !== valueIdx) {
+			const zoomToPoints = this.colorMaker === undefined;
+			if (this._legendCtrl) this.leafletMap.removeControl(this._legendCtrl);
+			this.colorMaker = undefined;
+			const variable = binTableData.column(valueIdx);
+			this.textCtrl.updateLbl(`${variable.label} [${variable.unit}]`);
+			this.addPoints(zoomToPoints, binTableData, valueIdx, afterPointsFiltered);
+		}
+
+		if (prevProps.fromGraph !== fromGraph) {
+			this.addMarker(fromGraph);
+		}
+	}
+
+	addMarker(position){
+		this.markerGroup.clearLayers();
+		if (position) {
+			// this.markerGroup.addLayer(L.marker([position.latitude, position.longitude]));
+			this.markerGroup.addLayer(L.marker([position.latitude, position.longitude], {
+				icon: L.icon({
+					iconUrl: '//static.icos-cp.eu/images/tmp/boat.png',
+					iconAnchor: [15, 22]
+				})
+			}));
+		}
+	}
+
+	createNewMap(){
+		const baseMaps = LCommon.getBaseMaps(21);
+
+		const map = this.leafletMap = L.map(this.mapElement.id,
+			{
+				preferCanvas: true,
+				layers: [baseMaps.Topographic],
+				worldCopyJump: false,
+				maxBounds: [[-90, -180],[90, 180]],
+				center: [0, 0],
+				zoom: 1,
+				attributionControl: false
+			}
+		);
+
+		this.textCtrl = new TextControl();
+		map.addControl(this.textCtrl);
+
+		L.control.layers(baseMaps, null, {position: 'bottomright'}).addTo(map);
+		map.addControl(new LCommon.CoordViewer({decimals: 2}));
+
+		this.layerGroup = L.layerGroup();
+		map.addLayer(this.layerGroup);
+
+		this.markerGroup = L.layerGroup();
+		map.addLayer(this.markerGroup);
+	}
+
+	moveEndHandler(moveEndFn){
+		if (this.moveEndFn) this.leafletMap.off('moveend', this.moveEndFn);
+		if (moveEndFn) this.leafletMap.on('moveend', moveEndFn);
+		this.moveEndFn = moveEndFn;
+	}
+
+	addPoints(zoomToPoints, binTableData, valueIdx, afterPointsFiltered){
+		const map = this.leafletMap;
+		const layerGroup = this.layerGroup;
+		const totalTimeStart = performance.now();
+		if (zoomToPoints) this.handleMoveEnd();
+		layerGroup.clearLayers();
+
+		const mapBounds = map.getBounds();
+		const latMin = mapBounds.getSouth() < -85.06 ? -85.06 : mapBounds.getSouth();
+		const latMax = mapBounds.getNorth() > 85.06 ? 85.06 : mapBounds.getNorth();
+		const lngMin = mapBounds.getWest();
+		const lngMax = mapBounds.getEast();
+
+		const stats = {min: Infinity, max: -Infinity, data: [], sum: 0, mean: undefined, sd: undefined};
+
+		const latIdx = binTableData.indices.latitude;
+		const lngIdx = binTableData.indices.longitude;
+		const dateIdx = binTableData.indices.date;
+
+		const filterBboxStart = performance.now();
+		const pointsInBbox = binTableData.allData.reduce((acc, curr, originalIdx) => {
+			if (curr[latIdx] >= latMin && curr[latIdx] <= latMax && curr[lngIdx] >= lngMin && curr[lngIdx] <= lngMax && !isNaN(curr[valueIdx])){
+				stats.min = Math.min(stats.min, curr[valueIdx]);
+				stats.max = Math.max(stats.max, curr[valueIdx]);
+				stats.sum += curr[valueIdx];
+				stats.data.push(curr[valueIdx]);
+				acc.push(curr.concat([originalIdx]));
+			}
+
+			return acc;
+		}, []);
+		const filterBboxDuration = performance.now() - filterBboxStart;
+
+		const statsStart = performance.now();
+		stats.mean = stats.sum / pointsInBbox.length;
+		const sqrdSum = stats.data.reduce((acc, curr) => {
+			acc += Math.pow(curr - stats.mean, 2);
+			return acc;
+		}, 0);
+		stats.sd = Math.sqrt(sqrdSum / stats.data.length);
+		delete stats.sum;
+		delete stats.data;
+		const statsDuration = performance.now() - statsStart;
+
+		if (this.colorMaker === undefined) {
+			const mapSize = map.getSize();
+			this.colorMaker = colorMaker(stats.min, stats.max, 2, getLegendHeight(mapSize.y));
+			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), this.colorMaker.getLegend);
+			this._legendCtrl = legendCtrl(canvasLegend.renderLegend(), {showOnLoad: true});
+			map.addControl(this._legendCtrl);
+		}
+		const factor = Math.ceil(pointsInBbox.length / config.maxPointsInMap);
+
+		const reducePointsStart = performance.now();
+		const reducedPoints = pointsInBbox.filter((p, idx) => {
+			return idx === 0
+				|| pointsInBbox.length <= config.maxPointsInMap
+				|| idx % factor === 0
+				|| Math.abs(pointsInBbox[idx - 1][valueIdx] - p[valueIdx]) > stats.sd * config.percentSD;
+		});
+		const reducePointsDuration = performance.now() - reducePointsStart;
+
+		const createPointsStart = performance.now();
+		reducedPoints.forEach(p => {
+			const cm = L.circleMarker([p[latIdx], p[lngIdx]], {
+				radius: 5,
+				weight: 0,
+				fillColor: `rgba(${this.colorMaker.getColor(p[valueIdx]).join(',')})`,
+				fillOpacity: 1,
+				dataCoord: {dataX: p[dateIdx], dataY: p[valueIdx], row: p[p.length - 1]}
+			});
+
+			cm.on('mouseover', e => this.mapPointMouseOver(e.target.options.dataCoord));
+			cm.on('mouseout', () => this.mapPointMouseOver({dataX: undefined, dataY: undefined, row: undefined}));
+
+			layerGroup.addLayer(cm);
+		});
+		const createPointsDuration = performance.now() - createPointsStart;
+
+		if (zoomToPoints) {
+			map.fitBounds(reducedPoints.map(row => [row[latIdx], row[lngIdx]]));
+			this.handleMoveEnd(_ => this.addPoints(false, binTableData, valueIdx, afterPointsFiltered));
+		} else {
+			if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
+		}
+
+		const totalTimeDuration = performance.now() - totalTimeStart;
+		// console.log({totalPoints: binTableData.nRows, pointsInBbox, filterBboxDuration, statsDuration, reducePointsDuration, createPointsDuration, pointsInMap: reducedPoints.length, totalTimeDuration, stats});
+	}
+
+	render(){
+		return (
+			<div
+				ref={div => this.mapElement = div} id="map"
+				style={{
+					width: '100%',
+					paddingTop: '30%',
+					border: '1px solid #ddd',
+					borderRadius: '4px'
+				}}
+			/>
+		);
+	}
+}
+
+const getLegendHeight = mapHeight => {
+	return mapHeight - 130;
+};

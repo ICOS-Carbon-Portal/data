@@ -1,0 +1,154 @@
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { AnimatedToasters } from 'icos-cp-toaster';
+import Map from '../components/Map.jsx';
+import Graph from '../components/Graph.jsx';
+import Table from '../components/Table.jsx';
+import Dropdown from '../components/Dropdown.jsx';
+import {selectVar} from '../actions';
+
+
+export class App extends Component {
+	constructor(props){
+		super(props);
+
+		this.afterPointsFiltered = this.onAfterPointsFiltered.bind(this);
+		this.graphMouseMove = this.onGraphMouseMove.bind(this);
+		this.graphMouseOut = this.onGraphMouseOut.bind(this);
+		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
+
+		this.state = {
+			reducedPoints: undefined,
+			fromGraph: undefined,
+			fromMap: undefined,
+			row: 0
+		};
+	}
+
+	onAfterPointsFiltered(reducedPoints){
+		this.setState({reducedPoints});
+	}
+
+	onGraphMouseMove(latitude, longitude, row){
+		this.setState({fromGraph: {latitude, longitude}, row});
+	}
+
+	onGraphMouseOut(){
+		this.setState({fromGraph: undefined});
+	}
+
+	onMapPointMouseOver(mapData){
+		const fromMap = {dataX: mapData.dataX, dataY: mapData.dataY};
+		const row = mapData.row || this.state.row;
+		this.setState({fromMap, row});
+	}
+
+	onBtnClick(axel, valueIdx){
+		this.props.selectVar(axel, this.props.binTableData.valueIdx2DataIdx(valueIdx));
+	}
+
+	render(){
+		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar} = this.props;
+		const {reducedPoints, fromGraph, fromMap, row} = this.state;
+		const selectedItem1Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value1Idx) : undefined;
+		const selectedItem2Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value2Idx) : undefined;
+
+		return (
+			<div className="container-fluid" style={{margin: 10}}>
+				<AnimatedToasters
+					autoCloseDelay={5000}
+					toasterData={toasterData}
+					maxWidth={400}
+				/>
+
+				<div className="row">
+					<div className="col-md-9">
+						<Map
+							binTableData={binTableData}
+							valueIdx={mapValueIdx}
+							afterPointsFiltered={this.afterPointsFiltered}
+							fromGraph={fromGraph}
+							mapPointMouseOver={this.mapPointMouseOver}
+						/>
+					</div>
+
+					<div className="col-md-3">
+						<Table
+							binTableData={binTableData}
+							row={row}
+							reducedPoints={reducedPoints}
+						/>
+
+
+					</div>
+				</div>
+
+				<div className="row" style={{marginTop: 15}}>
+					<div className="col-md-6">
+						<Dropdown
+							buttonLbl="Select variable"
+							selectedItemKey={selectedItem1Key}
+							itemClickAction={value => selectVar('y1', value)}
+							selectOptions={selectOptions}
+						/>
+
+						<button
+							className="btn btn-primary"
+							style={{marginLeft:10}}
+							onClick={this.onBtnClick.bind(this, 'y1', value1Idx)}
+						>Show in map
+						</button>
+					</div>
+
+					<div className="col-md-6">
+						<button
+							className="btn btn-primary"
+							style={{float:'right', marginLeft:10}}
+							onClick={this.onBtnClick.bind(this, 'y2', value2Idx)}
+							>Show in map
+						</button>
+
+						<Dropdown
+							style={{float:'right'}}
+							buttonLbl="Select variable"
+							selectedItemKey={selectedItem2Key}
+							itemClickAction={value => selectVar('y2', value)}
+							selectOptions={selectOptions}
+						/>
+					</div>
+				</div>
+
+				<div className="row">
+					<div className="col-md-12" onMouseOut={this.graphMouseOut}>
+						<Graph
+							binTableData={binTableData}
+							value1Idx={value1Idx}
+							value2Idx={value2Idx}
+							graphMouseMove={this.graphMouseMove}
+							fromMap={fromMap}
+						/>
+					</div>
+				</div>
+			</div>
+		);
+	}
+}
+
+function stateToProps(state) {
+	return {
+		toasterData: state.toasterData,
+		binTableData: state.binTableData,
+		selectOptions: state.selectOptions,
+		mapValueIdx: state.mapValueIdx,
+		value1Idx: state.value1Idx,
+		value2Idx: state.value2Idx,
+	};
+}
+
+function dispatchToProps(dispatch) {
+	return {
+		selectVar: (axis, value) => dispatch(selectVar(axis, value))
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(App);
