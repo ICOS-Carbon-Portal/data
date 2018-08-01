@@ -12,9 +12,12 @@ export class App extends Component {
 	constructor(props){
 		super(props);
 
+		this.hasTouch = 'ontouchstart' in document.documentElement;
+
 		this.afterPointsFiltered = this.onAfterPointsFiltered.bind(this);
 		this.graphMouseMove = this.onGraphMouseMove.bind(this);
 		this.graphMouseOut = this.onGraphMouseOut.bind(this);
+		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
 		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
 
 		this.state = {
@@ -45,6 +48,10 @@ export class App extends Component {
 
 	onBtnClick(axel, valueIdx){
 		this.props.selectVar(axel, this.props.binTableData.valueIdx2DataIdx(valueIdx));
+	}
+
+	componentWillUnmount(){
+		window.removeEventListener("resize", this.windowResizeHandler);
 	}
 
 	render(){
@@ -90,6 +97,7 @@ export class App extends Component {
 
 					<div className="col-md-3">
 						<Table
+							hasTouch={this.hasTouch}
 							binTableData={binTableData}
 							row={row}
 							reducedPoints={reducedPoints}

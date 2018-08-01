@@ -6,15 +6,18 @@ export default class Table extends Component{
 	}
 
 	render(){
-		const {binTableData, reducedPoints, row} = this.props;
+		const {binTableData, reducedPoints, row, hasTouch} = this.props;
 
 		return (
 			<div style={{fontSize:'85%'}}>
-				<table className="table">
-					<tbody>
-					<TableRows binTableData={binTableData} row={row} />
-					</tbody>
-				</table>
+				{!hasTouch
+					? <table className="table">
+						<tbody>
+						<TableRows binTableData={binTableData} row={row} />
+						</tbody>
+					</table>
+					: null
+				}
 
 				{binTableData.isValidData
 					? <table className="table">
