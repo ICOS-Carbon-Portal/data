@@ -12,7 +12,7 @@ export class App extends Component {
 	constructor(props){
 		super(props);
 
-		this.hasTouch = 'ontouchstart' in document.documentElement;
+		this.isTouchDevice = 'ontouchstart' in document.documentElement;
 
 		this.afterPointsFiltered = this.onAfterPointsFiltered.bind(this);
 		this.graphMouseMove = this.onGraphMouseMove.bind(this);
@@ -50,10 +50,6 @@ export class App extends Component {
 		this.props.selectVar(axel, this.props.binTableData.valueIdx2DataIdx(valueIdx));
 	}
 
-	componentWillUnmount(){
-		window.removeEventListener("resize", this.windowResizeHandler);
-	}
-
 	render(){
 		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar} = this.props;
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
@@ -70,7 +66,6 @@ export class App extends Component {
 		const label = variable && mapValueIdx !== undefined
 			? `${variable.label} [${variable.unit}]`
 			: 'Waiting for data...';
-		// console.log({isValidData: binTableData.isValidData, variable, label});
 
 		return (
 			<div className="container-fluid" style={{margin: 10}}>
@@ -82,7 +77,7 @@ export class App extends Component {
 
 				<div className="row">
 					<div className="col-md-9">
-						<div style={{position:'absolute',width:'100%',textAlign:'center',zIndex:999, top:5}}>
+						<div style={{position:'absolute', top:5, left:70, zIndex:999}}>
 							<span style={labelStyle}>{label}</span>
 						</div>
 
@@ -97,7 +92,7 @@ export class App extends Component {
 
 					<div className="col-md-3">
 						<Table
-							hasTouch={this.hasTouch}
+							isTouchDevice={this.isTouchDevice}
 							binTableData={binTableData}
 							row={row}
 							reducedPoints={reducedPoints}

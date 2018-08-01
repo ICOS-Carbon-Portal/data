@@ -108,7 +108,7 @@ export default class Map extends Component{
 	addPoints(zoomToPoints, redefineColor, binTableData, valueIdx, afterPointsFiltered){
 		const map = this.leafletMap;
 		const layerGroup = this.layerGroup;
-		const totalTimeStart = performance.now();
+
 		if (zoomToPoints) this.handleMoveEnd();
 		layerGroup.clearLayers();
 
@@ -124,7 +124,6 @@ export default class Map extends Component{
 		const lngIdx = binTableData.indices.longitude;
 		const dateIdx = binTableData.indices.date;
 
-		const filterBboxStart = performance.now();
 		const pointsInBbox = binTableData.allData.reduce((acc, curr, originalIdx) => {
 			if (curr[latIdx] >= latMin && curr[latIdx] <= latMax && curr[lngIdx] >= lngMin && curr[lngIdx] <= lngMax && !isNaN(curr[valueIdx])){
 				stats.min = Math.min(stats.min, curr[valueIdx]);
@@ -136,9 +135,7 @@ export default class Map extends Component{
 
 			return acc;
 		}, []);
-		const filterBboxDuration = performance.now() - filterBboxStart;
 
-		const statsStart = performance.now();
 		stats.mean = stats.sum / pointsInBbox.length;
 		const sqrdSum = stats.data.reduce((acc, curr) => {
 			acc += Math.pow(curr - stats.mean, 2);
@@ -147,7 +144,6 @@ export default class Map extends Component{
 		stats.sd = Math.sqrt(sqrdSum / stats.data.length);
 		delete stats.sum;
 		delete stats.data;
-		const statsDuration = performance.now() - statsStart;
 
 		if (this.colorMaker === undefined) {
 			const mapSize = map.getSize();
@@ -160,16 +156,13 @@ export default class Map extends Component{
 		}
 		const factor = Math.ceil(pointsInBbox.length / config.maxPointsInMap);
 
-		const reducePointsStart = performance.now();
 		const reducedPoints = pointsInBbox.filter((p, idx) => {
 			return idx === 0
 				|| pointsInBbox.length <= config.maxPointsInMap
 				|| idx % factor === 0
 				|| Math.abs(pointsInBbox[idx - 1][valueIdx] - p[valueIdx]) > stats.sd * config.percentSD;
 		});
-		const reducePointsDuration = performance.now() - reducePointsStart;
 
-		const createPointsStart = performance.now();
 		reducedPoints.forEach(p => {
 			const cm = L.circleMarker([p[latIdx], p[lngIdx]], {
 				radius: 5,
@@ -184,7 +177,6 @@ export default class Map extends Component{
 
 			layerGroup.addLayer(cm);
 		});
-		const createPointsDuration = performance.now() - createPointsStart;
 
 		if (zoomToPoints) {
 			const updateLegend = this.updateLegend.bind(this);
@@ -199,11 +191,6 @@ export default class Map extends Component{
 		} else {
 			if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
 		}
-
-		// console.log({zoomToPoints, redefineColor, binTableData, valueIdx, afterPointsFiltered});
-
-		const totalTimeDuration = performance.now() - totalTimeStart;
-		// console.log({totalPoints: binTableData.nRows, pointsInBbox, filterBboxDuration, statsDuration, reducePointsDuration, createPointsDuration, pointsInMap: reducedPoints.length, totalTimeDuration, stats});
 	}
 
 	render(){

@@ -6,11 +6,11 @@ export default class Table extends Component{
 	}
 
 	render(){
-		const {binTableData, reducedPoints, row, hasTouch} = this.props;
+		const {binTableData, reducedPoints, row, isTouchDevice} = this.props;
 
 		return (
 			<div style={{fontSize:'85%'}}>
-				{!hasTouch
+				{!isTouchDevice
 					? <table className="table">
 						<tbody>
 						<TableRows binTableData={binTableData} row={row} />

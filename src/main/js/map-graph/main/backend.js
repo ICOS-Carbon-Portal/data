@@ -25,7 +25,6 @@ export function getTableFormatNrows(config, objId){
 
 export function getBinTable(objId, tableFormat, nRows){
 	const axisIndices = Array.from({length: tableFormat._columnsInfo.length}, (_, i) => i);
-	// const axisIndices = ['Latitude', 'Longitude'].map(colName => tableFormat.getColumnIndex(colName));
 	const request = tableFormat.getRequest(objId, nRows, axisIndices);
 	return getBinaryTable(request, '/portal/tabular');
 }

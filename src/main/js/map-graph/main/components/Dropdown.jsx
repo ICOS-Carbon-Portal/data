@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 
 
 export default class Dropdown extends Component{
@@ -29,7 +29,6 @@ export default class Dropdown extends Component{
 	}
 
 	handleHover(idx){
-		console.log({idx});
 		this.setState({hoverIdx: idx});
 	}
 
@@ -132,7 +131,6 @@ const Button = ({isEnabled, selectedItemKey, clickAction, selectOptions, buttonL
 		const btnCls = isEnabled
 			? 'btn btn-default dropdown-toggle'
 			: 'btn btn-default dropdown-toggle disabled';
-		// console.log({isEnabled, selectedItemKey, clickAction, selectOptions, buttonLbl, lbl, btnCls});
 
 		return (
 			<button className={btnCls} type="button" onClick={clickAction}>

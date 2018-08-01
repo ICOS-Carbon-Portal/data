@@ -36,7 +36,6 @@ export const fetchTableFormatNrows = objId => dispatch => {
 export const selectVar = (axel, dataIdx) => (dispatch, getState) => {
 	const {binTableData, selectOptions} = getState();
 	const valueIdx = binTableData.dataIdx2ValueIdx(dataIdx);
-	console.log({axel, dataIdx, valueIdx, binTableData, selectOptions});
 
 	dispatch({
 		type: VARIABLE_SELECTED,

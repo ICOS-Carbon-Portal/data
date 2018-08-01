@@ -59,7 +59,7 @@ export default class {
 						drawGrid: false,
 						axisLabelWidth: 80,
 						valueFormatter: dateFormatter,
-						// axisLabelFormatter: formatters.axisLabelFormatter,
+						axisLabelFormatter: ms => new Date(ms).toISOString().substring(0, 10),
 						pixelsPerLabel: 100
 					},
 					y: {
