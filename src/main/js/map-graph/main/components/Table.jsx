@@ -9,7 +9,7 @@ export default class Table extends Component{
 		const {binTableData, reducedPoints, row} = this.props;
 
 		return (
-			<Fragment>
+			<div style={{fontSize:'85%'}}>
 				<table className="table">
 					<tbody>
 					<TableRows binTableData={binTableData} row={row} />
@@ -29,7 +29,7 @@ export default class Table extends Component{
 					</table>
 					: null
 				}
-			</Fragment>
+			</div>
 		);
 	}
 }
@@ -54,7 +54,9 @@ const TableRows = ({binTableData, row}) => {
 				const colInfo = binTableData.column(colIndices[idx]);
 				const header = idx <= 2 ? colInfo.label : `${colInfo.label} [${colInfo.unit}]`;
 				const title = colInfo.name;
-				const valTxt = idx === 0 ? dateFormatter(val) : val.toFixed(3);
+				const valTxt = idx === 0
+					? dateFormatter(val)
+					: isNaN(val) ? '' : val.toFixed(3);
 
 				return <TableRow key={'tr' + idx} header={header} title={title} val={valTxt} active={active} />;
 			})

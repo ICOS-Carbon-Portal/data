@@ -5,19 +5,13 @@ export const TextControl = L.Control.extend({
 	},
 
 	lbl: undefined,
-	eventHandlers: [],
-
-	addEvent: function(obj, types, fn, context){
-		L.DomEvent.on(obj, types, fn, context);
-		this.eventHandlers.push({obj, types, fn, context});
-	},
 
 	initialize: function (options) {
 		L.Util.setOptions(this, options);
 	},
 
 	onAdd: function (map) {
-		const container = L.DomUtil.create('div', 'text-container', L.DomUtil.get('map'));
+		const container = L.DomUtil.create('div');
 		container.setAttribute("style", this.options.style);
 
 		this.lbl = L.DomUtil.create('div', null, container);
@@ -27,11 +21,7 @@ export const TextControl = L.Control.extend({
 		return container;
 	},
 
-	updateLbl: function(txt) {
+	updateTxt: function(txt) {
 		this.lbl.innerHTML = txt;
-	},
-
-	onRemove: function () {
-		this.eventHandlers.forEach(e => L.DomEvent.off(e.obj, e.types, e.fn, e.context));
-	},
+	}
 });

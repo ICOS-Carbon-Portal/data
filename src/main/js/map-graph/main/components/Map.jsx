@@ -5,7 +5,8 @@ import {colorMaker} from "../models/colorMaker";
 import CanvasLegend from '../legend/CanvasLegend';
 import {legendCtrl} from '../legend/LegendCtrl';
 import config from '../config';
-import {TextControl} from '../controls/TextControl';
+import {Stats} from '../controls/Stats';
+import {FullExtent} from '../controls/FullExtent';
 
 
 export default class Map extends Component{
@@ -14,7 +15,8 @@ export default class Map extends Component{
 
 		this.leafletMap = undefined;
 		this.textCtrl = undefined;
-		this._legendCtrl = undefined;
+		this.fullExtentCtrl = undefined;
+		this.legendCtrl = undefined;
 		this.mapElement = undefined;
 		this.layerGroup = undefined;
 		this.markerGroup = undefined;
@@ -35,10 +37,9 @@ export default class Map extends Component{
 
 		if (prevProps.valueIdx !== valueIdx) {
 			const zoomToPoints = this.colorMaker === undefined;
-			if (this._legendCtrl) this.leafletMap.removeControl(this._legendCtrl);
+			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
 			this.colorMaker = undefined;
-			const variable = binTableData.column(valueIdx);
-			this.textCtrl.updateLbl(`${variable.label} [${variable.unit}]`);
+
 			this.addPoints(zoomToPoints, binTableData, valueIdx, afterPointsFiltered);
 		}
 
@@ -50,10 +51,9 @@ export default class Map extends Component{
 	addMarker(position){
 		this.markerGroup.clearLayers();
 		if (position) {
-			// this.markerGroup.addLayer(L.marker([position.latitude, position.longitude]));
 			this.markerGroup.addLayer(L.marker([position.latitude, position.longitude], {
 				icon: L.icon({
-					iconUrl: '//static.icos-cp.eu/images/tmp/boat.png',
+					iconUrl: '//static.icos-cp.eu/images/icons/boat.png',
 					iconAnchor: [15, 22]
 				})
 			}));
@@ -75,10 +75,13 @@ export default class Map extends Component{
 			}
 		);
 
-		this.textCtrl = new TextControl();
-		map.addControl(this.textCtrl);
+		this.fullExtentCtrl = new FullExtent();
+		map.addControl(this.fullExtentCtrl);
 
-		L.control.layers(baseMaps, null, {position: 'bottomright'}).addTo(map);
+		this.statsCtrl = new Stats();
+		map.addControl(this.statsCtrl);
+
+		L.control.layers(baseMaps, null, {position: 'topleft'}).addTo(map);
 		map.addControl(new LCommon.CoordViewer({decimals: 2}));
 
 		this.layerGroup = L.layerGroup();
@@ -142,8 +145,10 @@ export default class Map extends Component{
 			const mapSize = map.getSize();
 			this.colorMaker = colorMaker(stats.min, stats.max, 2, getLegendHeight(mapSize.y));
 			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), this.colorMaker.getLegend);
-			this._legendCtrl = legendCtrl(canvasLegend.renderLegend(), {showOnLoad: true});
-			map.addControl(this._legendCtrl);
+			this.legendCtrl = legendCtrl(canvasLegend.renderLegend(), {position: 'topright', showOnLoad: true});
+			map.addControl(this.legendCtrl);
+
+			this.statsCtrl.updateStats(stats);
 		}
 		const factor = Math.ceil(pointsInBbox.length / config.maxPointsInMap);
 
@@ -174,7 +179,9 @@ export default class Map extends Component{
 		const createPointsDuration = performance.now() - createPointsStart;
 
 		if (zoomToPoints) {
-			map.fitBounds(reducedPoints.map(row => [row[latIdx], row[lngIdx]]));
+			const points = reducedPoints.map(row => [row[latIdx], row[lngIdx]]);
+			map.fitBounds(points);
+			this.fullExtentCtrl.updatePoints(points);
 			this.handleMoveEnd(_ => this.addPoints(false, binTableData, valueIdx, afterPointsFiltered));
 		} else {
 			if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
@@ -190,6 +197,7 @@ export default class Map extends Component{
 				ref={div => this.mapElement = div} id="map"
 				style={{
 					width: '100%',
+					minHeight: 420,
 					paddingTop: '30%',
 					border: '1px solid #ddd',
 					borderRadius: '4px'
@@ -200,5 +208,5 @@ export default class Map extends Component{
 }
 
 const getLegendHeight = mapHeight => {
-	return mapHeight - 130;
+	return mapHeight - 30;
 };

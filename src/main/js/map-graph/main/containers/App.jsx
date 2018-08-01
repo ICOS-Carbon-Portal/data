@@ -52,6 +52,18 @@ export class App extends Component {
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
 		const selectedItem1Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value1Idx) : undefined;
 		const selectedItem2Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value2Idx) : undefined;
+		const labelStyle = {
+			backgroundColor: 'white',
+			padding: '3px 5px',
+			fontSize: 14,
+			borderRadius: 5,
+			boxShadow: '0 1px 5px rgba(0,0,0,0.4)'
+		};
+		const variable = binTableData.isValidData ? binTableData.column(mapValueIdx) : undefined;
+		const label = variable && mapValueIdx !== undefined
+			? `${variable.label} [${variable.unit}]`
+			: 'Waiting for data...';
+		// console.log({isValidData: binTableData.isValidData, variable, label});
 
 		return (
 			<div className="container-fluid" style={{margin: 10}}>
@@ -63,6 +75,10 @@ export class App extends Component {
 
 				<div className="row">
 					<div className="col-md-9">
+						<div style={{position:'absolute',width:'100%',textAlign:'center',zIndex:999, top:5}}>
+							<span style={labelStyle}>{label}</span>
+						</div>
+
 						<Map
 							binTableData={binTableData}
 							valueIdx={mapValueIdx}
