@@ -7,7 +7,10 @@ import {legendCtrl} from '../legend/LegendCtrl';
 import config from '../config';
 import {Stats} from '../controls/Stats';
 import {FullExtent} from '../controls/FullExtent';
+import {debounce} from 'icos-cp-utils';
 
+
+const decimals = 0;
 
 export default class Map extends Component{
 	constructor(props){
@@ -40,7 +43,7 @@ export default class Map extends Component{
 			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
 			this.colorMaker = undefined;
 
-			this.addPoints(zoomToPoints, binTableData, valueIdx, afterPointsFiltered);
+			this.addPoints(zoomToPoints, true, binTableData, valueIdx, afterPointsFiltered);
 		}
 
 		if (prevProps.fromGraph !== fromGraph) {
@@ -97,7 +100,12 @@ export default class Map extends Component{
 		this.moveEndFn = moveEndFn;
 	}
 
-	addPoints(zoomToPoints, binTableData, valueIdx, afterPointsFiltered){
+	updateLegend(newSize, getLegend){
+		const canvasLegend = new CanvasLegend(getLegendHeight(newSize.y), getLegend);
+		this.legendCtrl.update(canvasLegend.renderLegend());
+	}
+
+	addPoints(zoomToPoints, redefineColor, binTableData, valueIdx, afterPointsFiltered){
 		const map = this.leafletMap;
 		const layerGroup = this.layerGroup;
 		const totalTimeStart = performance.now();
@@ -143,7 +151,7 @@ export default class Map extends Component{
 
 		if (this.colorMaker === undefined) {
 			const mapSize = map.getSize();
-			this.colorMaker = colorMaker(stats.min, stats.max, 2, getLegendHeight(mapSize.y));
+			this.colorMaker = colorMaker(stats.min, stats.max, decimals, getLegendHeight(mapSize.y));
 			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), this.colorMaker.getLegend);
 			this.legendCtrl = legendCtrl(canvasLegend.renderLegend(), {position: 'topright', showOnLoad: true});
 			map.addControl(this.legendCtrl);
@@ -179,13 +187,20 @@ export default class Map extends Component{
 		const createPointsDuration = performance.now() - createPointsStart;
 
 		if (zoomToPoints) {
+			const updateLegend = this.updateLegend.bind(this);
+			map.on('resize', resizeCB(stats.min, stats.max, updateLegend));
+
 			const points = reducedPoints.map(row => [row[latIdx], row[lngIdx]]);
 			map.fitBounds(points);
 			this.fullExtentCtrl.updatePoints(points);
-			this.handleMoveEnd(_ => this.addPoints(false, binTableData, valueIdx, afterPointsFiltered));
+			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
+		} else if (redefineColor) {
+			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		} else {
 			if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
 		}
+
+		// console.log({zoomToPoints, redefineColor, binTableData, valueIdx, afterPointsFiltered});
 
 		const totalTimeDuration = performance.now() - totalTimeStart;
 		// console.log({totalPoints: binTableData.nRows, pointsInBbox, filterBboxDuration, statsDuration, reducePointsDuration, createPointsDuration, pointsInMap: reducedPoints.length, totalTimeDuration, stats});
@@ -206,6 +221,13 @@ export default class Map extends Component{
 		);
 	}
 }
+
+const resizeCB = (min, max, updateLegend) => {
+	return debounce(({newSize}) => {
+		const {getLegend} = colorMaker(min, max, decimals, getLegendHeight(newSize.y));
+		updateLegend(newSize, getLegend);
+	}, 300);
+};
 
 const getLegendHeight = mapHeight => {
 	return mapHeight - 30;
