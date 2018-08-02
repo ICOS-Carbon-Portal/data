@@ -1,6 +1,7 @@
 export const ERROR = 'ERROR';
 export const BINTABLE_FETCHED = 'BINTABLE_FETCHED';
-export const VARIABLE_SELECTED = 'VARIABLE_SELECTED';
+export const VARIABLE_Y1_SELECTED = 'VARIABLE_Y1_SELECTED';
+export const VARIABLE_Y2_SELECTED = 'VARIABLE_Y2_SELECTED';
 import config from '../../common/main/config';
 import {getTableFormatNrows, getBinTable} from './backend';
 import BinTableData from './models/BinTableData';
@@ -33,13 +34,34 @@ export const fetchTableFormatNrows = objId => dispatch => {
 	});
 };
 
-export const selectVar = (axel, dataIdx) => (dispatch, getState) => {
-	const {binTableData, selectOptions} = getState();
-	const valueIdx = binTableData.dataIdx2ValueIdx(dataIdx);
+export const selectVarY1 = dataIdx => (dispatch, getState) => {
+	const {binTableData} = getState();
+	const value1Idx = binTableData.dataIdx2ValueIdx(dataIdx);
 
 	dispatch({
-		type: VARIABLE_SELECTED,
-		axel,
-		valueIdx
+		type: VARIABLE_Y1_SELECTED,
+		value1Idx
 	})
+};
+
+export const selectVarY2 = dataIdx => (dispatch, getState) => {
+	const {binTableData} = getState();
+	const value2Idx = binTableData.dataIdx2ValueIdx(dataIdx);
+
+	dispatch({
+		type: VARIABLE_Y2_SELECTED,
+		value2Idx
+	})
+};
+
+export const selectVar = valueIdx => (dispatch, getState) => {
+	const {binTableData, value1Idx, value2Idx} = getState();
+
+	if (valueIdx === value1Idx) {
+		dispatch(selectVarY1(binTableData.valueIdx2DataIdx(valueIdx)));
+	} else if (valueIdx === value2Idx){
+		dispatch(selectVarY2(binTableData.valueIdx2DataIdx(valueIdx)));
+	} else {
+		dispatch(failWithError({message: "Could not determine what axel was selected"}));
+	}
 };

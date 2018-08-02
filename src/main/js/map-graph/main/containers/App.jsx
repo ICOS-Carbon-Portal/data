@@ -2,10 +2,10 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { AnimatedToasters } from 'icos-cp-toaster';
 import Map from '../components/Map.jsx';
-import Graph from '../components/Graph.jsx';
+import GraphContainer from '../components/GraphContainer.jsx';
 import Table from '../components/Table.jsx';
-import Dropdown from '../components/Dropdown.jsx';
-import {selectVar} from '../actions';
+import Radio from '../components/Radio.jsx';
+import {selectVar, selectVarY1, selectVarY2} from '../actions';
 
 
 export class App extends Component {
@@ -51,30 +51,8 @@ export class App extends Component {
 	}
 
 	render(){
-		const {toasterData, binTableData, mapValueIdx, axel, value1Idx, value2Idx, selectOptions, selectVar} = this.props;
+		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios} = this.props;
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
-		const selectedItem1Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value1Idx) : undefined;
-		const selectedItem2Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value2Idx) : undefined;
-		const labelStyle = {
-			backgroundColor: 'white',
-			padding: '3px 5px',
-			fontSize: 14,
-			borderRadius: 5,
-			boxShadow: '0 1px 5px rgba(0,0,0,0.4)'
-		};
-		const variable = binTableData.isValidData ? binTableData.column(mapValueIdx) : undefined;
-		const label = variable && mapValueIdx !== undefined
-			? `${variable.label} [${variable.unit}]`
-			: 'Waiting for data...';
-
-		const mapBtnY1Class = axel === 'y1' ? "btn btn-primary active" : "btn btn-primary";
-		const mapBtnY2Class = axel === 'y2' ? "btn btn-primary active" : "btn btn-primary";
-		const mapBtnY1Style = axel === 'y1'
-			? {marginLeft:10}
-			: {boxShadow: '0 3px 5px rgba(0,0,0,0.7)', marginLeft:10};
-		const mapBtnY2Style = axel === 'y2'
-			? {float:'right', marginLeft:10}
-			: {boxShadow: '0 3px 5px rgba(0,0,0,0.7)', float:'right', marginLeft:10};
 
 		return (
 			<div className="container-fluid" style={{margin: 10}}>
@@ -87,7 +65,12 @@ export class App extends Component {
 				<div className="row">
 					<div className="col-md-9">
 						<div style={{position:'absolute', top:5, left:70, zIndex:999}}>
-							<span style={labelStyle}>{label}</span>
+							<Radio
+								horizontal={true}
+								containerStyle={{margin:'0 0 10px 0'}}
+								radios={radios}
+								action={selectVar}
+							/>
 						</div>
 
 						<Map
@@ -111,52 +94,17 @@ export class App extends Component {
 					</div>
 				</div>
 
-				<div className="row" style={{marginTop: 15}}>
-					<div className="col-md-6">
-						<Dropdown
-							buttonLbl="Select variable"
-							selectedItemKey={selectedItem1Key}
-							itemClickAction={value => selectVar('y1', value)}
-							selectOptions={selectOptions}
-						/>
-
-						<button
-							className={mapBtnY1Class}
-							style={mapBtnY1Style}
-							onClick={this.onBtnClick.bind(this, 'y1', value1Idx)}
-						>Show in map
-						</button>
-					</div>
-
-					<div className="col-md-6">
-						<button
-							className={mapBtnY2Class}
-							style={mapBtnY2Style}
-							onClick={this.onBtnClick.bind(this, 'y2', value2Idx)}
-							>Show in map
-						</button>
-
-						<Dropdown
-							style={{float:'right'}}
-							buttonLbl="Select variable"
-							selectedItemKey={selectedItem2Key}
-							itemClickAction={value => selectVar('y2', value)}
-							selectOptions={selectOptions}
-						/>
-					</div>
-				</div>
-
-				<div className="row">
-					<div className="col-md-12" onMouseOut={this.graphMouseOut}>
-						<Graph
-							binTableData={binTableData}
-							value1Idx={value1Idx}
-							value2Idx={value2Idx}
-							graphMouseMove={this.graphMouseMove}
-							fromMap={fromMap}
-						/>
-					</div>
-				</div>
+				<GraphContainer
+					binTableData={binTableData}
+					value1Idx={value1Idx}
+					value2Idx={value2Idx}
+					selectVarY1={selectVarY1}
+					selectVarY2={selectVarY2}
+					selectOptions={selectOptions}
+					fromMap={fromMap}
+					graphMouseMove={this.graphMouseMove}
+					graphMouseOut={this.graphMouseOut}
+				/>
 			</div>
 		);
 	}
@@ -171,12 +119,15 @@ function stateToProps(state) {
 		axel: state.axel,
 		value1Idx: state.value1Idx,
 		value2Idx: state.value2Idx,
+		radios: state.radios
 	};
 }
 
 function dispatchToProps(dispatch) {
 	return {
-		selectVar: (axis, value) => dispatch(selectVar(axis, value))
+		selectVar: value => dispatch(selectVar(value)),
+		selectVarY1: value => dispatch(selectVarY1(value)),
+		selectVarY2: value => dispatch(selectVarY2(value)),
 	};
 }
 
