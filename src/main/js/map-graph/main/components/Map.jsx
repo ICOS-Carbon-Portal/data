@@ -10,8 +10,6 @@ import {FullExtent} from '../controls/FullExtent';
 import {debounce} from 'icos-cp-utils';
 
 
-const decimals = 0;
-
 export default class Map extends Component{
 	constructor(props){
 		super(props);
@@ -147,7 +145,7 @@ export default class Map extends Component{
 
 		if (this.colorMaker === undefined) {
 			const mapSize = map.getSize();
-			this.colorMaker = colorMaker(stats.min, stats.max, decimals, getLegendHeight(mapSize.y));
+			this.colorMaker = colorMaker(stats.min, stats.max, calculateDecimals(stats.min, stats.max), getLegendHeight(mapSize.y));
 			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), this.colorMaker.getLegend);
 			this.legendCtrl = legendCtrl(canvasLegend.renderLegend(), {position: 'topright', showOnLoad: true});
 			map.addControl(this.legendCtrl);
@@ -209,9 +207,13 @@ export default class Map extends Component{
 	}
 }
 
+const calculateDecimals = (min, max) => {
+	return Math.abs(max - min) < 50 ? 1 : 0;
+};
+
 const resizeCB = (min, max, updateLegend) => {
 	return debounce(({newSize}) => {
-		const {getLegend} = colorMaker(min, max, decimals, getLegendHeight(newSize.y));
+		const {getLegend} = colorMaker(min, max, calculateDecimals(min, max), getLegendHeight(newSize.y));
 		updateLegend(newSize, getLegend);
 	}, 300);
 };
