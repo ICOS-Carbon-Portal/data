@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
 import * as LCommon from 'icos-cp-leaflet-common';
+import PointReducer from '../models/PointReducer';
 import {colorMaker} from "../models/colorMaker";
 import CanvasLegend from '../legend/CanvasLegend';
 import {legendCtrl} from '../legend/LegendCtrl';
@@ -110,38 +111,8 @@ export default class Map extends Component{
 		if (zoomToPoints) this.handleMoveEnd();
 		layerGroup.clearLayers();
 
-		const mapBounds = map.getBounds();
-		const latMin = mapBounds.getSouth() < -85.06 ? -85.06 : mapBounds.getSouth();
-		const latMax = mapBounds.getNorth() > 85.06 ? 85.06 : mapBounds.getNorth();
-		const lngMin = mapBounds.getWest();
-		const lngMax = mapBounds.getEast();
-
-		const stats = {min: Infinity, max: -Infinity, data: [], sum: 0, mean: undefined, sd: undefined};
-
-		const latIdx = binTableData.indices.latitude;
-		const lngIdx = binTableData.indices.longitude;
-		const dateIdx = binTableData.indices.date;
-
-		const pointsInBbox = binTableData.allData.reduce((acc, curr, originalIdx) => {
-			if (curr[latIdx] >= latMin && curr[latIdx] <= latMax && curr[lngIdx] >= lngMin && curr[lngIdx] <= lngMax && !isNaN(curr[valueIdx])){
-				stats.min = Math.min(stats.min, curr[valueIdx]);
-				stats.max = Math.max(stats.max, curr[valueIdx]);
-				stats.sum += curr[valueIdx];
-				stats.data.push(curr[valueIdx]);
-				acc.push(curr.concat([originalIdx]));
-			}
-
-			return acc;
-		}, []);
-
-		stats.mean = stats.sum / pointsInBbox.length;
-		const sqrdSum = stats.data.reduce((acc, curr) => {
-			acc += Math.pow(curr - stats.mean, 2);
-			return acc;
-		}, 0);
-		stats.sd = Math.sqrt(sqrdSum / stats.data.length);
-		delete stats.sum;
-		delete stats.data;
+		const pointReducer = new PointReducer(map, binTableData, valueIdx, config.maxPointsInMap, config.percentSD);
+		const stats = pointReducer.stats;
 
 		if (this.colorMaker === undefined) {
 			const mapSize = map.getSize();
@@ -152,22 +123,14 @@ export default class Map extends Component{
 
 			this.statsCtrl.updateStats(stats);
 		}
-		const factor = Math.ceil(pointsInBbox.length / config.maxPointsInMap);
 
-		const reducedPoints = pointsInBbox.filter((p, idx) => {
-			return idx === 0
-				|| pointsInBbox.length <= config.maxPointsInMap
-				|| idx % factor === 0
-				|| Math.abs(pointsInBbox[idx - 1][valueIdx] - p[valueIdx]) > stats.sd * config.percentSD;
-		});
-
-		reducedPoints.forEach(p => {
-			const cm = L.circleMarker([p[latIdx], p[lngIdx]], {
+		pointReducer.reducedPoints.forEach(p => {
+			const cm = L.circleMarker([p[pointReducer.latIdx], p[pointReducer.lngIdx]], {
 				radius: 5,
 				weight: 0,
 				fillColor: `rgba(${this.colorMaker.getColor(p[valueIdx]).join(',')})`,
 				fillOpacity: 1,
-				dataCoord: {dataX: p[dateIdx], dataY: p[valueIdx], row: p[p.length - 1]}
+				dataCoord: {dataX: p[pointReducer.dateIdx], dataY: p[valueIdx], row: p[p.length - 1]}
 			});
 
 			cm.on('mouseover', e => this.mapPointMouseOver(e.target.options.dataCoord));
@@ -180,7 +143,7 @@ export default class Map extends Component{
 			const updateLegend = this.updateLegend.bind(this);
 			map.on('resize', resizeCB(stats.min, stats.max, updateLegend));
 
-			const points = reducedPoints.map(row => [row[latIdx], row[lngIdx]]);
+			const points = pointReducer.reducedPoints.map(row => [row[pointReducer.latIdx], row[pointReducer.lngIdx]]);
 			map.fitBounds(points);
 			this.fullExtentCtrl.updatePoints(points);
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
@@ -188,7 +151,7 @@ export default class Map extends Component{
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		}
 
-		if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
+		if (afterPointsFiltered) afterPointsFiltered(pointReducer.reducedPoints);
 	}
 
 	render(){
