@@ -188,9 +188,9 @@ export default class Map extends Component{
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		} else if (redefineColor) {
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
-		} else {
-			if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
 		}
+
+		if (afterPointsFiltered) afterPointsFiltered(reducedPoints);
 	}
 
 	render(){

@@ -51,7 +51,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar} = this.props;
+		const {toasterData, binTableData, mapValueIdx, axel, value1Idx, value2Idx, selectOptions, selectVar} = this.props;
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
 		const selectedItem1Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value1Idx) : undefined;
 		const selectedItem2Key = binTableData.valueIdx2DataIdx ? binTableData.valueIdx2DataIdx(value2Idx) : undefined;
@@ -66,6 +66,15 @@ export class App extends Component {
 		const label = variable && mapValueIdx !== undefined
 			? `${variable.label} [${variable.unit}]`
 			: 'Waiting for data...';
+
+		const mapBtnY1Class = axel === 'y1' ? "btn btn-primary active" : "btn btn-primary";
+		const mapBtnY2Class = axel === 'y2' ? "btn btn-primary active" : "btn btn-primary";
+		const mapBtnY1Style = axel === 'y1'
+			? {marginLeft:10}
+			: {boxShadow: '0 3px 5px rgba(0,0,0,0.7)', marginLeft:10};
+		const mapBtnY2Style = axel === 'y2'
+			? {float:'right', marginLeft:10}
+			: {boxShadow: '0 3px 5px rgba(0,0,0,0.7)', float:'right', marginLeft:10};
 
 		return (
 			<div className="container-fluid" style={{margin: 10}}>
@@ -112,8 +121,8 @@ export class App extends Component {
 						/>
 
 						<button
-							className="btn btn-primary"
-							style={{marginLeft:10}}
+							className={mapBtnY1Class}
+							style={mapBtnY1Style}
 							onClick={this.onBtnClick.bind(this, 'y1', value1Idx)}
 						>Show in map
 						</button>
@@ -121,8 +130,8 @@ export class App extends Component {
 
 					<div className="col-md-6">
 						<button
-							className="btn btn-primary"
-							style={{float:'right', marginLeft:10}}
+							className={mapBtnY2Class}
+							style={mapBtnY2Style}
 							onClick={this.onBtnClick.bind(this, 'y2', value2Idx)}
 							>Show in map
 						</button>
@@ -159,6 +168,7 @@ function stateToProps(state) {
 		binTableData: state.binTableData,
 		selectOptions: state.selectOptions,
 		mapValueIdx: state.mapValueIdx,
+		axel: state.axel,
 		value1Idx: state.value1Idx,
 		value2Idx: state.value2Idx,
 	};

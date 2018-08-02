@@ -5,6 +5,7 @@ import * as Toaster from 'icos-cp-toaster';
 const initState = {
 	binTableData: {},
 	mapValueIdx: undefined,
+	axel: undefined,
 	value1Idx: undefined,
 	value2Idx: undefined,
 	selectOptions: []
@@ -26,6 +27,7 @@ export default function(state = initState, action){
 			return update({
 				binTableData: action.binTableData,
 				mapValueIdx: value1Idx,
+				axel: 'y1',
 				value1Idx,
 				value2Idx,
 				selectOptions: action.binTableData.dataColumnsInfo.map(cols => cols.label)
@@ -33,8 +35,8 @@ export default function(state = initState, action){
 
 		case VARIABLE_SELECTED:
 			const newPartialState = action.axel === 'y1'
-				? {value1Idx: action.valueIdx}
-				: {value2Idx: action.valueIdx};
+				? {value1Idx: action.valueIdx, axel: 'y1'}
+				: {value2Idx: action.valueIdx, axel: 'y2'};
 
 			return update(Object.assign(newPartialState, {mapValueIdx: action.valueIdx}));
 
