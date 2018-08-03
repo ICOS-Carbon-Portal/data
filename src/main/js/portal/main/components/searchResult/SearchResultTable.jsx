@@ -3,7 +3,7 @@ import SearchResultTableRow from './SearchResultTableRow.jsx';
 import Dropdown from '../controls/Dropdown.jsx';
 import {Paging} from '../buttons/Paging.jsx';
 import PreviewBtn from '../buttons/PreviewBtn.jsx';
-import CartAddBtn from '../buttons/CartBtn.jsx';
+import CartBtn from '../buttons/CartBtn.jsx';
 
 
 const dropdownLookup = {
@@ -40,25 +40,25 @@ export default class SimpleDataObjectsTable extends Component{
 						lookup={dropdownLookup}
 					/>
 
-					<CartAddBtn
+					<CartBtn
 						style={{float: 'right', marginBottom: 10}}
 						checkedObjects={props.checkedObjects}
+						clickAction={props.addToCart}
 						enabled={props.checkedObjects.length}
-						addToCart={props.addToCart}
+						type='add'
 					/>
 
 					<PreviewBtn
 						style={{float: 'right', marginBottom: 10, marginRight: 10}}
-						checkedObjects={props.checkedObjects}
+						checkedObjects={props.checkedObjects.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
 						clickAction={previewAction}
-						enabled={isPreviewEnabled(props.checkedObjects.flatMap(c => props.objectsTable.filter(o => o.dobj === c)), lookup)}
+						lookup={props.lookup}
 					/>
 
 					<div className="table-responsive">
 						<table className="table">
 							<tbody>{
 								props.objectsTable.map((objInfo, i) => {
-									const isAddedToCart = cart.hasItem(objInfo.dobj);
 									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
 									const isChecked = props.checkedObjects.includes(objInfo.dobj);
 
@@ -68,8 +68,6 @@ export default class SimpleDataObjectsTable extends Component{
 											extendedInfo={extendedInfo}
 											preview={preview}
 											objInfo={objInfo}
-											isAddedToCart={isAddedToCart}
-											removeFromCart={props.removeFromCart}
 											key={'dobj_' + i}
 											onCheckboxChange={this.props.handleCheckboxChange}
 											isChecked={isChecked}
@@ -83,10 +81,4 @@ export default class SimpleDataObjectsTable extends Component{
 			</div>
 		);
 	}
-}
-
-const isPreviewEnabled = (checkedObjects, lookup) => {
-	return checkedObjects.length
-		&& checkedObjects.reduce((acc,cur) => (lookup.getSpecLookupType(cur.spec)) ? true : false, true)
-		&& checkedObjects.reduce((prev,cur) => (prev.spec === cur.spec) ? prev : false);
 }

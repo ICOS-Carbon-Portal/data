@@ -31,15 +31,10 @@ export default class PreviewTimeSerie extends Component {
 
 		const linking = preview.items.reduce((acc,cur) => {
 			const result = preview.items.reduce((acc2,cur2) => {
-				if (cur.id !== cur2.id) {
-					if (cur._dataobject.timeStart < cur2._dataobject.timeStart
-						&& cur._dataobject.timeEnd < cur2._dataobject.timeEnd) {
-							return 'concatenate';
-					}
-					else if (cur._dataobject.timeStart > cur2._dataobject.timeStart
-						&& cur._dataobject.timeEnd > cur2._dataobject.timeEnd) {
-							return 'concatenate';
-					}
+				if ((cur.id !== cur2.id) &&
+					((cur.timeStart < cur2.timeStart && cur.timeEnd < cur2.timeEnd) ||
+					(cur.timeStart > cur2.timeStart && cur.timeEnd > cur2.timeEnd))) {
+					return 'concatenate';
 				}
 				return acc2;
 			}, 'overlap');
@@ -112,9 +107,9 @@ const Selector = props => {
 		<span>
 			<label>{props.label}</label>
 			<select name={props.name} className="form-control" onChange={props.selectAction} value={value}>
-				<option value="0">Select option</option>{
-				props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)
-			}</select>
+				<option value="0">Select option</option>
+				{props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)}
+			</select>
 		</span>
 	);
 };

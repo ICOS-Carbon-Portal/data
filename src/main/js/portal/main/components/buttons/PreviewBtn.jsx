@@ -7,11 +7,12 @@ export default class PreviewBtn extends Component{
 	}
 
 	handlePreviewClick(){
-		if (this.props.clickAction) this.props.clickAction(this.props.checkedObjects);
+		if (this.props.clickAction) this.props.clickAction(this.props.checkedObjects.flatMap(co => co.dobj));
 	}
 
 	render(){
-		const {checkedObjects, style, enabled} = this.props;
+		const {checkedObjects, style} = this.props;
+		const enabled = this.isPreviewEnabled(checkedObjects, this.props.lookup);
 		const className = "btn btn-default " + (enabled ? "" : "disabled");
 
 		return (
@@ -22,4 +23,11 @@ export default class PreviewBtn extends Component{
 			</div>
 		);
 	}
+
+	isPreviewEnabled(checkedObjects, lookup) {
+		return checkedObjects.length
+			&& checkedObjects.reduce((acc,cur) => (lookup.getSpecLookupType(cur.spec)) ? true : false, true)
+			&& checkedObjects.reduce((prev,cur) => (prev.spec === cur.spec) ? prev : false);
+	}
+
 }

@@ -11,8 +11,8 @@ export default class Cart {
 		return new Cart(this._name, [...this._items, ...cartItem]);
 	}
 
-	removeItem(id){
-		return new Cart(this._name, this._items.filter(item => item.id !== id));
+	removeItems(ids){
+		return new Cart(this._name, this._items.filter(item => !ids.includes(item.id)));
 	}
 
 	withItemSetting(id, setting, value){

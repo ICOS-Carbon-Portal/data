@@ -1,23 +1,25 @@
 import React, { Component } from 'react';
 
-export default class CartAddBtn extends Component {
+export default class CartBtn extends Component {
 	constructor(props){
 		super(props);
 	}
 
 	handleAddToCartClick(){
-		const {checkedObjects, addToCart} = this.props;
-		if (addToCart) addToCart(checkedObjects);
+		const {checkedObjects, clickAction} = this.props;
+		if (clickAction) clickAction(checkedObjects);
 	}
 
 	render(){
-		const {isAddedToCart, style, enabled} = this.props;
-		const className = "btn btn-primary " + (enabled ? "" : "disabled");
+		const {style, enabled, type} = this.props;
+		const btnText = (type === 'remove') ? 'Remove from cart' : 'Add to cart';
+		const btnStyle = (type === 'remove') ? 'btn-default' : 'btn-primary';
+		const className = `btn ${btnStyle} ${enabled ? "" : "disabled"}`;
 
 		return (
 			<div style={style}>
 				<button id="add-to-cart-button" onClick={this.handleAddToCartClick.bind(this)} className={className}>
-					Add to cart
+					{btnText}
 				</button>
 			</div>
 		);

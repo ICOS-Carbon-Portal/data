@@ -268,16 +268,17 @@ export const setPreviewItem = id => dispatch => {
 	dispatch({
 		type: PREVIEW,
 		id
-	})
+	});
 };
 
 export const setPreviewUrl = url => (dispatch, getState) => {
 	const state = getState();
-		dispatch({
-			type: ITEM_URL_UPDATED,
-			cart: state.cart,
-			url
-		})
+
+	dispatch({
+		type: ITEM_URL_UPDATED,
+		cart: state.cart,
+		url
+	});
 };
 
 export const fetchCart = (dispatch, getState) => {
@@ -323,9 +324,9 @@ export const addToCart = ids => (dispatch, getState) => {
 	}
 };
 
-export const removeFromCart = id => (dispatch, getState) => {
+export const removeFromCart = ids => (dispatch, getState) => {
 	const state = getState();
-	const cart = state.cart.removeItem(id);
+	const cart = state.cart.removeItems(ids);
 
 	updateCart(state.user.email, cart, dispatch);
 };

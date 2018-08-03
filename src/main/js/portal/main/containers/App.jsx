@@ -19,10 +19,6 @@ export class App extends Component {
 		this.props.updateRoute(newRoute);
 	}
 
-	hidePreview() {
-		this.props.updateRoute(localConfig.ROUTE_SEARCH);
-	}
-
 	handleCheckboxChange(event) {
 		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
 			.map((checkbox) => checkbox.value);
@@ -58,6 +54,7 @@ export class App extends Component {
 				<ErrorBoundary>
 					<Route
 						handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+						routeAction={this.handleRouteClick.bind(this)}
 						checkedObjects={props.checkedObjects}
 						{...props} />
 				</ErrorBoundary>
@@ -73,7 +70,7 @@ const SwitchRouteBtn = props => {
 			return <SearchBtn {...props} />;
 
 		case localConfig.ROUTE_CART:
-			return <CartBtn {...props} />;
+			return null;
 
 		default:
 			return <SearchBtn {...props} />;

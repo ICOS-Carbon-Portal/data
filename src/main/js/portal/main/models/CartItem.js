@@ -1,5 +1,3 @@
-import config from '../config.js';
-
 export default class CartItem {
 	constructor(dataobject, type, url){
 		this._id = dataobject.dobj;
@@ -57,6 +55,18 @@ export default class CartItem {
 
 	get url(){
 		return this._url;
+	}
+
+	get specLabel() {
+		return this._dataobject.specLabel;
+	}
+
+	get timeStart() {
+		return new Date(this._dataobject.timeStart);
+	}
+
+	get timeEnd() {
+		return new Date(this._dataobject.timeEnd);
 	}
 
 	getUrlSearchValue(key) {
