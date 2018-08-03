@@ -22,7 +22,8 @@ export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
 export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
-export const UPDATE_CHECKED_OBJECTS = 'UPDATE_CHECKED_OBJECTS';
+export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
+export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
 import {saveToRestheart} from '../../common/main/backend';
@@ -95,10 +96,17 @@ export const updateSelectedPids = selectedPids => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateCheckedObjects = checkedObjects => dispatch => {
+export const updateCheckedObjectsInSearch = checkedObjectsInSearch => dispatch => {
 	dispatch({
-		type: UPDATE_CHECKED_OBJECTS,
-		checkedObjects
+		type: UPDATE_CHECKED_OBJECTS_IN_SEARCH,
+		checkedObjectsInSearch
+	});
+};
+
+export const updateCheckedObjectsInCart = checkedObjectsInCart => dispatch => {
+	dispatch({
+		type: UPDATE_CHECKED_OBJECTS_IN_CART,
+		checkedObjectsInCart
 	});
 };
 

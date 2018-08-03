@@ -5,25 +5,17 @@ import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjects} from '../actions';
+import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
 export class App extends Component {
 	constructor(props){
 		super(props);
-		this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
 	}
 
 	handleRouteClick(newRoute){
 		this.props.updateRoute(newRoute);
-	}
-
-	handleCheckboxChange(event) {
-		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
-			.map((checkbox) => checkbox.value);
-
-		this.props.updateCheckedObjects(checkedObjects)
 	}
 
 	render(){
@@ -53,9 +45,7 @@ export class App extends Component {
 
 				<ErrorBoundary>
 					<Route
-						handleCheckboxChange={this.handleCheckboxChange.bind(this)}
 						routeAction={this.handleRouteClick.bind(this)}
-						checkedObjects={props.checkedObjects}
 						{...props} />
 				</ErrorBoundary>
 			</div>
@@ -91,16 +81,6 @@ const SearchBtn = props => {
 	);
 };
 
-const CartBtn = props => {
-	const {action} = props;
-
-	return (
-		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_SEARCH)} style={{float: 'right'}}>
-			Switch to search
-		</button>
-	);
-};
-
 const Route = props => {
 	switch(props.routeAndParams.route){
 		case localConfig.ROUTE_SEARCH:
@@ -125,7 +105,8 @@ function stateToProps(state){
 		toasterData: state.toasterData,
 		cart: state.cart,
 		preview: state.preview,
-		checkedObjects: state.checkedObjects
+		checkedObjectsInSearch: state.checkedObjectsInSearch,
+		checkedObjectsInCart: state.checkedObjectsInCart,
 	};
 }
 
@@ -135,7 +116,6 @@ function dispatchToProps(dispatch){
 		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
-		updateCheckedObjects: obj => dispatch(updateCheckedObjects(obj)),
 	};
 }
 

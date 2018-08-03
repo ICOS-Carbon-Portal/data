@@ -46,14 +46,14 @@ export default class CartPanel extends Component {
 						<div className="text-right">
 							<CartBtn
 								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
-								checkedObjects={props.checkedObjects}
+								checkedObjects={props.checkedObjectsInCart}
 								clickAction={props.removeFromCart}
-								enabled={props.checkedObjects.length}
+								enabled={props.checkedObjectsInCart.length}
 								type='remove'
 							/>
 							<PreviewBtn
 								style={{marginBottom: 10, marginRight: 10}}
-								checkedObjects={props.checkedObjects.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+								checkedObjects={props.checkedObjectsInCart.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
 								clickAction={this.handlePreview.bind(this)}
 								lookup={props.lookup}
 							/>
@@ -64,7 +64,7 @@ export default class CartPanel extends Component {
 								<tbody>{
 									props.cart.items.map((objInfo, i) => {
 										const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
-										const isChecked = props.checkedObjects.includes(objInfo.id);
+										const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
 										objInfo.fileName = objInfo.itemName;
 										objInfo.dobj = objInfo.id;
 

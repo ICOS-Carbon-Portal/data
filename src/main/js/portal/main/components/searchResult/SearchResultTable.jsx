@@ -20,7 +20,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 	render(){
 		const props = this.props;
-		const {paging, requestStep, cart, previewAction, lookup, preview, extendedDobjInfo, updateCheckboxes} = props;
+		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo} = props;
 
 		return (
 			<div className="panel panel-default">
@@ -42,15 +42,15 @@ export default class SimpleDataObjectsTable extends Component{
 
 					<CartBtn
 						style={{float: 'right', marginBottom: 10}}
-						checkedObjects={props.checkedObjects}
-						clickAction={props.addToCart}
-						enabled={props.checkedObjects.length}
+						checkedObjects={props.checkedObjectsInSearch}
+						clickAction={props.handleAddToCart}
+						enabled={props.checkedObjectsInSearch.length}
 						type='add'
 					/>
 
 					<PreviewBtn
 						style={{float: 'right', marginBottom: 10, marginRight: 10}}
-						checkedObjects={props.checkedObjects.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+						checkedObjects={props.checkedObjectsInSearch.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
 						clickAction={previewAction}
 						lookup={props.lookup}
 					/>
@@ -60,7 +60,7 @@ export default class SimpleDataObjectsTable extends Component{
 							<tbody>{
 								props.objectsTable.map((objInfo, i) => {
 									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-									const isChecked = props.checkedObjects.includes(objInfo.dobj);
+									const isChecked = props.checkedObjectsInSearch.includes(objInfo.dobj);
 
 									return (
 										<SearchResultTableRow

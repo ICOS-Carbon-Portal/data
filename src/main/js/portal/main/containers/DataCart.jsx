@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk} from '../actions';
+import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
 
@@ -13,6 +13,13 @@ class DataCart extends Component {
 
 	handlePreview(id){
 		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
+	}
+
+	handleCheckboxChange() {
+		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
+			.map((checkbox) => checkbox.value);
+
+		this.props.updateCheckedObjects(checkedObjects);
 	}
 
 	render(){
@@ -34,6 +41,7 @@ class DataCart extends Component {
 								previewitemId={previewitemId}
 								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
+								handleCheckboxChange={this.handleCheckboxChange.bind(this)}
 								{...props}
 							/>
 						</div>
@@ -79,7 +87,8 @@ function dispatchToProps(dispatch){
 		setCartName: newName => dispatch(setCartName(newName)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
-		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk)
+		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
+		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInCart(ids)),
 	};
 }
 

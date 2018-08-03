@@ -1,6 +1,6 @@
 import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
 import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, RESTORE_PREVIEW, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS} from './actions';
+import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS_IN_SEARCH, UPDATE_CHECKED_OBJECTS_IN_CART} from './actions';
 import {TEMPORAL_FILTER, WHOAMI_FETCHED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -33,12 +33,14 @@ const initState = {
 		isAllowed: false,
 		ts: 0
 	},
-	checkedObjects: [],
+	checkedObjectsInSearch: [],
+	checkedObjectsInCart: [],
 };
 
 const specTableKeys = Object.keys(placeholders);
 
 export default function(state = initState, action){
+	let routeAndParams;
 
 	switch(action.type){
 
@@ -99,7 +101,7 @@ export default function(state = initState, action){
 			});
 
 		case RESTORE_FILTERS:
-			let routeAndParams = restoreRouteAndParams(action.hash);
+			routeAndParams = restoreRouteAndParams(action.hash);
 			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
 				return specTableKeys.includes(filterKey)
 					? specTable.withFilter(filterKey, routeAndParams.filters[filterKey])
@@ -241,9 +243,14 @@ export default function(state = initState, action){
 				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
 			});
 
-		case UPDATE_CHECKED_OBJECTS:
+		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
 			return update({
-				checkedObjects: action.checkedObjects
+				checkedObjectsInSearch: action.checkedObjectsInSearch
+			});
+
+		case UPDATE_CHECKED_OBJECTS_IN_CART:
+			return update({
+				checkedObjectsInCart: action.checkedObjectsInCart
 			});
 
 		default:

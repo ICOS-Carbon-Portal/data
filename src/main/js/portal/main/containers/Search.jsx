@@ -6,9 +6,8 @@ import Filters from '../components/filters/Filters.jsx';
 import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
-import Preview from '../components/preview/Preview.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjects} from '../actions';
+import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
@@ -17,6 +16,18 @@ class Search extends Component {
 
 	handlePreview(ids){
 		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+	}
+
+	handleCheckboxChange() {
+		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
+			.map((checkbox) => checkbox.value);
+
+		this.props.updateCheckedObjects(checkedObjects);
+	}
+
+	handleAddToCart(objInfo) {
+		this.props.addToCart(objInfo);
+		this.props.updateCheckedObjects([]);
 	}
 
 	render(){
@@ -45,9 +56,11 @@ class Search extends Component {
 						<SearchResultTable
 							tabHeader="Search results"
 							previewAction={this.handlePreview.bind(this)}
+							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+							handleAddToCart={this.handleAddToCart.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
-								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'updateCheckboxes', 'checkedObjects', 'handleCheckboxChange'
+								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch'
 							])}
 						/>
 						<CompactSearchResultTable
@@ -77,7 +90,7 @@ function dispatchToProps(dispatch){
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),
 		updateSelectedPids: pids => dispatch(updateSelectedPids(pids)),
-		updateCheckboxes: ids => dispatch(updateCheckedObjects(ids)),
+		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInSearch(ids)),
 	};
 }
 
