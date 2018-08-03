@@ -63,10 +63,10 @@ export default class {
 						pixelsPerLabel: 100
 					},
 					y: {
-						axisLabelWidth: 100
+						axisLabelWidth: 80
 					},
 					y2: {
-						axisLabelWidth: 100
+						axisLabelWidth: 80
 					}
 				}
 			}
