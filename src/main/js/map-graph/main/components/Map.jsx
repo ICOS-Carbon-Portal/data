@@ -14,6 +14,10 @@ export default class Map extends Component{
 	constructor(props){
 		super(props);
 
+		this.initCenter = props.center;
+		this.initZoom = props.zoom;
+		this.setInitCenterZoom = this.initCenter !== undefined && this.initZoom !== undefined;
+
 		this.leafletMap = undefined;
 		this.textCtrl = undefined;
 		this.fullExtentCtrl = undefined;
@@ -39,7 +43,6 @@ export default class Map extends Component{
 		if (prevProps.valueIdx !== valueIdx) {
 			const zoomToPoints = this.colorMaker === undefined;
 			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
-			// this.colorMaker = undefined;
 
 			this.addPoints(zoomToPoints, true, binTableData, valueIdx, afterPointsFiltered);
 		}
@@ -70,8 +73,8 @@ export default class Map extends Component{
 				layers: [baseMaps.Topographic],
 				worldCopyJump: false,
 				maxBounds: [[-90, -180],[90, 180]],
-				center: [0, 0],
-				zoom: 1,
+				center: this.setInitCenterZoom ? this.initCenter : [0, 0],
+				zoom: this.setInitCenterZoom ? this.initZoom : 1,
 				attributionControl: false
 			}
 		);
@@ -150,14 +153,14 @@ export default class Map extends Component{
 			map.on('resize', resizeCB(stats.min, stats.max, updateLegend));
 
 			const points = pointReducer.reducedPoints.map(row => [row[pointReducer.latIdx], row[pointReducer.lngIdx]]);
-			map.fitBounds(points);
+			if (!this.setInitCenterZoom) map.fitBounds(points);
 			this.fullExtentCtrl.updatePoints(points);
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		} else if (redefineColor) {
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		}
 
-		if (afterPointsFiltered) afterPointsFiltered(pointReducer.reducedPoints);
+		if (afterPointsFiltered) afterPointsFiltered(pointReducer.reducedPoints, map.getCenter(), map.getZoom());
 	}
 
 	render(){

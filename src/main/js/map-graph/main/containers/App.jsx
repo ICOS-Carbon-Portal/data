@@ -5,7 +5,7 @@ import Map from '../components/Map.jsx';
 import GraphContainer from '../components/GraphContainer.jsx';
 import Table from '../components/Table.jsx';
 import Radio from '../components/Radio.jsx';
-import {selectVar, selectVarY1, selectVarY2} from '../actions';
+import {selectVar, selectVarY1, selectVarY2, mapStateChanged} from '../actions';
 
 
 export class App extends Component {
@@ -28,7 +28,8 @@ export class App extends Component {
 		};
 	}
 
-	onAfterPointsFiltered(reducedPoints){
+	onAfterPointsFiltered(reducedPoints, center, zoom){
+		this.props.mapStateChanged(center, zoom);
 		this.setState({reducedPoints});
 	}
 
@@ -51,7 +52,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios} = this.props;
+		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios, hashState} = this.props;
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
 
 		return (
@@ -74,6 +75,8 @@ export class App extends Component {
 						</div>
 
 						<Map
+							center={hashState.center}
+							zoom={hashState.zoom}
 							binTableData={binTableData}
 							valueIdx={mapValueIdx}
 							afterPointsFiltered={this.afterPointsFiltered}
@@ -119,7 +122,8 @@ function stateToProps(state) {
 		axel: state.axel,
 		value1Idx: state.value1Idx,
 		value2Idx: state.value2Idx,
-		radios: state.radios
+		radios: state.radios,
+		hashState: state.hashState
 	};
 }
 
@@ -128,6 +132,7 @@ function dispatchToProps(dispatch) {
 		selectVar: value => dispatch(selectVar(value)),
 		selectVarY1: value => dispatch(selectVarY1(value)),
 		selectVarY2: value => dispatch(selectVarY2(value)),
+		mapStateChanged: (mapValueIdx, center, zoom) => dispatch(mapStateChanged(mapValueIdx, center, zoom)),
 	};
 }
 
