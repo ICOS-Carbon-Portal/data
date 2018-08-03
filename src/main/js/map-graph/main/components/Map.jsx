@@ -5,7 +5,6 @@ import PointReducer from '../models/PointReducer';
 import {colorMaker} from "../models/colorMaker";
 import CanvasLegend from '../legend/CanvasLegend';
 import {legendCtrl} from '../legend/LegendCtrl';
-import config from '../config';
 import {Stats} from '../controls/Stats';
 import {FullExtent} from '../controls/FullExtent';
 import {debounce} from 'icos-cp-utils';
@@ -40,7 +39,7 @@ export default class Map extends Component{
 		if (prevProps.valueIdx !== valueIdx) {
 			const zoomToPoints = this.colorMaker === undefined;
 			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
-			this.colorMaker = undefined;
+			// this.colorMaker = undefined;
 
 			this.addPoints(zoomToPoints, true, binTableData, valueIdx, afterPointsFiltered);
 		}
@@ -111,12 +110,19 @@ export default class Map extends Component{
 		if (zoomToPoints) this.handleMoveEnd();
 		layerGroup.clearLayers();
 
-		const pointReducer = new PointReducer(map, binTableData, valueIdx, config.maxPointsInMap, config.percentSD);
+		const pointReducer = new PointReducer(map, binTableData, valueIdx, redefineColor);
 		const stats = pointReducer.stats;
 
-		if (this.colorMaker === undefined) {
+		if (redefineColor) {
 			const mapSize = map.getSize();
-			this.colorMaker = colorMaker(stats.min, stats.max, calculateDecimals(stats.min, stats.max), getLegendHeight(mapSize.y));
+			const min = pointReducer.adjustedMinMax
+				? pointReducer.adjustedMinMax.min
+				: stats.min;
+			const max = pointReducer.adjustedMinMax
+				? pointReducer.adjustedMinMax.max
+				: stats.max;
+
+			this.colorMaker = colorMaker(min, max, calculateDecimals(min, max), getLegendHeight(mapSize.y));
 			const canvasLegend = new CanvasLegend(getLegendHeight(mapSize.y), this.colorMaker.getLegend);
 			this.legendCtrl = legendCtrl(canvasLegend.renderLegend(), {position: 'topright', showOnLoad: true});
 			map.addControl(this.legendCtrl);

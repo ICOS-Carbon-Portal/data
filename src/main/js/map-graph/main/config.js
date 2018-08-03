@@ -3,5 +3,6 @@ export default {
 	latitudeColName: 'Latitude',
 	longitudeColName: 'Longitude',
 	maxPointsInMap: 2000,
-	percentSD: 0.1
+	percentSD: 0.1,
+	outlierSDFactor: 10
 };
