@@ -6,6 +6,8 @@ import GraphContainer from '../components/GraphContainer.jsx';
 import Table from '../components/Table.jsx';
 import Radio from '../components/Radio.jsx';
 import {selectVar, selectVarY1, selectVarY2, mapStateChanged} from '../actions';
+import {getHash} from '../store';
+import deepEqual from 'deep-equal'
 
 
 export class App extends Component {
@@ -52,7 +54,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios, hashState} = this.props;
+		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios, center, zoom} = this.props;
 		const {reducedPoints, fromGraph, fromMap, row} = this.state;
 
 		return (
@@ -75,8 +77,8 @@ export class App extends Component {
 						</div>
 
 						<Map
-							center={hashState.center}
-							zoom={hashState.zoom}
+							center={center}
+							zoom={zoom}
 							binTableData={binTableData}
 							valueIdx={mapValueIdx}
 							afterPointsFiltered={this.afterPointsFiltered}
@@ -113,7 +115,27 @@ export class App extends Component {
 	}
 }
 
+const updateURL = state => {
+	const currentHash = getHash();
+	const newHash = {
+		y1: state.value1Idx,
+		y2: state.value2Idx,
+		map: state.mapValueIdx,
+		center: state.center,
+		zoom: state.zoom
+	};
+	const hasVals =  Object.keys(newHash).reduce((acc, key) => {
+		return newHash[key] === undefined ? acc : acc + 1;
+	}, 0) > 0;
+
+	if (hasVals && !deepEqual(currentHash, newHash)) {
+		window.location.hash = JSON.stringify(newHash);
+	}
+};
+
 function stateToProps(state) {
+	updateURL(state);
+
 	return {
 		toasterData: state.toasterData,
 		binTableData: state.binTableData,
@@ -123,7 +145,8 @@ function stateToProps(state) {
 		value1Idx: state.value1Idx,
 		value2Idx: state.value2Idx,
 		radios: state.radios,
-		hashState: state.hashState
+		center: state.center,
+		zoom: state.zoom
 	};
 }
 

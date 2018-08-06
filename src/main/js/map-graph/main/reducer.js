@@ -3,13 +3,14 @@ import * as Toaster from 'icos-cp-toaster';
 
 
 const initState = {
-	hashState: {},
 	binTableData: {},
 	mapValueIdx: undefined,
 	value1Idx: undefined,
 	value2Idx: undefined,
 	selectOptions: [],
-	radios: []
+	radios: [],
+	center: undefined,
+	zoom: undefined
 };
 
 export default function(state = initState, action){
@@ -26,16 +27,18 @@ export default function(state = initState, action){
 			const center = getCenter(action.hashState.center);
 			const zoom = Number.isInteger(action.hashState.zoom) ? action.hashState.zoom : undefined;
 
-			let hashState = getHashState(y1, y2, map, center, zoom);
-
 			return update({
-				hashState
+				mapValueIdx: map,
+				value1Idx: y1,
+				value2Idx: y2,
+				center,
+				zoom
 			});
 
 		case BINTABLE_FETCHED:
-			y1 = state.hashState.y1;
-			y2 = state.hashState.y2;
-			map = state.hashState.map;
+			y1 = state.value1Idx;
+			y2 = state.value2Idx;
+			map = state.mapValueIdx;
 
 
 			const value1Idx = y1 !== undefined && action.binTableData.indices.data.includes(y1)
@@ -49,9 +52,8 @@ export default function(state = initState, action){
 				: value1Idx;
 			let radios = [
 				getRadioData(action.binTableData, value1Idx, mapValueIdx === value1Idx),
-				getRadioData(action.binTableData, value2Idx, mapValueIdx === value2Idx)
+				getRadioData(action.binTableData, value2Idx, mapValueIdx === value2Idx && mapValueIdx !== value1Idx)
 			];
-			hashState = updateHashState(value1Idx, value2Idx, mapValueIdx, state.center, state.zoom);
 
 			return update({
 				binTableData: action.binTableData,
@@ -59,8 +61,7 @@ export default function(state = initState, action){
 				value1Idx,
 				value2Idx,
 				selectOptions: action.binTableData.dataColumnsInfo.map(cols => cols.label),
-				radios,
-				hashState
+				radios
 			});
 
 		case VARIABLE_Y1_SELECTED:
@@ -69,13 +70,10 @@ export default function(state = initState, action){
 				getRadioData(state.binTableData, state.value2Idx, false)
 			];
 
-			hashState = updateHashState(action.value1Idx, state.value2Idx, action.value1Idx, state.center, state.zoom);
-
 			return update({
 				value1Idx: action.value1Idx,
 				radios,
-				mapValueIdx: action.value1Idx,
-				hashState
+				mapValueIdx: action.value1Idx
 			});
 
 		case VARIABLE_Y2_SELECTED:
@@ -84,8 +82,6 @@ export default function(state = initState, action){
 				getRadioData(state.binTableData, action.value2Idx, true)
 			];
 
-			updateHashState(state.value1Idx, action.value2Idx, action.value2Idx, state.center, state.zoom);
-
 			return update({
 				value2Idx: action.value2Idx,
 				radios,
@@ -93,10 +89,9 @@ export default function(state = initState, action){
 			});
 
 		case MAP_STATE_CHANGED:
-			hashState = updateHashState(state.value1Idx, state.value2Idx, state.mapValueIdx, action.center, action.zoom);
-
 			return update({
-				hashState
+				center: action.center,
+				zoom: action.zoom
 			});
 
 		default:
@@ -119,25 +114,6 @@ const getCenter = potentialCenter => {
 	return center.lat < 85.06 && center.lat > -85.06 && center.lng < 180 && center.lng > -180
 		? center
 		: undefined;
-};
-
-const updateHashState = (value1Idx, value2Idx, map, center, zoom) => {
-	return updateUrl(getHashState(value1Idx, value2Idx, map, center, zoom));
-};
-
-const getHashState = (value1Idx, value2Idx, map, center, zoom) => {
-	return {
-		y1: value1Idx,
-		y2: value2Idx,
-		map,
-		center,
-		zoom
-	};
-};
-
-const updateUrl = hashState => {
-	window.location.hash = JSON.stringify(hashState);
-	return hashState;
 };
 
 const getRadioData = (binTableData, idx, isActive) => {

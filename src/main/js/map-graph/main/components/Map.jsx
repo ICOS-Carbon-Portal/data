@@ -39,8 +39,10 @@ export default class Map extends Component{
 
 	componentDidUpdate(prevProps){
 		const {binTableData, valueIdx, afterPointsFiltered, fromGraph} = this.props;
+		const renderPoints = (binTableData.isValidData && valueIdx !== undefined && this.colorMaker === undefined)
+			|| prevProps.valueIdx !== valueIdx;
 
-		if (prevProps.valueIdx !== valueIdx) {
+		if (renderPoints) {
 			const zoomToPoints = this.colorMaker === undefined;
 			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
 
