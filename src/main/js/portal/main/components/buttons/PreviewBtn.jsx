@@ -14,10 +14,12 @@ export default class PreviewBtn extends Component{
 		const {checkedObjects, style} = this.props;
 		const enabled = this.isPreviewEnabled(checkedObjects, this.props.lookup);
 		const className = "btn btn-default " + (enabled ? "" : "disabled");
+		const title = checkedObjects.length && !enabled ? "Preview is only available for data of same type." : "";
+		const btnStyle = title.length ? {pointerEvents:'auto'} : {};
 
 		return (
 			<div style={style}>
-				<button id="preview-button" onClick={this.handlePreviewClick.bind(this)} className={className}>
+				<button id="preview-button" onClick={this.handlePreviewClick.bind(this)} className={className} title={title} style={btnStyle}>
 					Preview
 				</button>
 			</div>

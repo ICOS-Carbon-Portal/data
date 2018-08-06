@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import {copyprops} from 'icos-cp-utils';
-import {formatBytes} from '../../utils';
 
 
 const truncateStyle = {
@@ -28,9 +26,6 @@ export default class SimpleObjectTableRow extends Component{
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
-		const preview = props.preview;
-		const previewItem = preview.item;
-		const size = parseInt(objInfo.size);
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
 		const checkboxDisabled = objInfo.level === 0 ? "disabled" : "";
 
@@ -66,7 +61,7 @@ const ExtendedInfoItem = ({item, icon, width, iconHeight = 18, iconRightMargin =
 	if (item && icon) {
 		return <span className="extended-info-item" style={{display: 'inline-block', marginRight: 16, minWidth: width}}>
 			<img src={icon} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
-			</span>
+		</span>;
 	}
 };
 
