@@ -31,7 +31,10 @@ export default class {
 		};
 
 		const yLabel1 = this.getLabel(this._value1Idx);
-		const yLabel2 = this.getLabel(this._value2Idx);
+		// Labels must be unique in dygraph
+		const yLabel2 = this._value1Idx === this._value2Idx
+			? ' ' + this.getLabel(this._value2Idx)
+			: this.getLabel(this._value2Idx);
 
 		this.graph = new Dygraph(
 			this._graphElement,
@@ -81,7 +84,10 @@ export default class {
 		this._value1Idx = value1Idx;
 		this._value2Idx = value2Idx;
 		const yLabel1 = this.getLabel(this._value1Idx);
-		const yLabel2 = this.getLabel(this._value2Idx);
+		// Labels must be unique in dygraph
+		const yLabel2 = value1Idx === value2Idx
+			? ' ' + this.getLabel(this._value2Idx)
+			: this.getLabel(this._value2Idx);
 
 		this.graph.updateOptions({
 			file: this.getData(),
