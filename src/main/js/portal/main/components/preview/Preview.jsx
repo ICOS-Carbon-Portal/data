@@ -10,17 +10,17 @@ export default class Preview extends Component {
 		this.state = {
 			iframeSrc: undefined
 		};
+		window.onmessage = event => this.handleIframeSrcChange(event); 
 	}
 
 	handleIframeSrcChange(event){
-		const iframeSrc = event.target.src;
+		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
 		this.setState({iframeSrc});
 		this.props.setPreviewUrl(iframeSrc);
 	}
 
 	render(){
 		const {preview, closePreviewAction} = this.props;
-		const valToCopy = (preview.items[0] && preview.items[0].getUrlSearchValue('x') && preview.items[0].getUrlSearchValue('y')) ? this.state.iframeSrc : '';
 
 		return (
 			<div>
@@ -40,7 +40,7 @@ export default class Preview extends Component {
 													<span className="glyphicon glyphicon-info-sign" />
 												</a>
 											</span>
-										)
+										);
 									})}
 								</span>
 								<CloseBtn closePreviewAction={closePreviewAction} />
@@ -52,7 +52,7 @@ export default class Preview extends Component {
 										<CopyValue
 											btnText="Copy preview chart URL"
 											copyHelpText="Click to copy preview chart URL to clipboard"
-											valToCopy={valToCopy}
+											valToCopy={previewUrl(preview.items[0], preview.type, this.state.iframeSrc)}
 										/>
 									</div>
 								</div>
@@ -96,5 +96,16 @@ const CloseBtn = props => {
 		/>;
 	} else {
 		return <span />;
+	}
+};
+
+const previewUrl = (item, type, iframeSrc) => {
+	switch (type) {
+
+		case config.TIMESERIES:
+			return (item && item.getUrlSearchValue('x') && item.getUrlSearchValue('y')) ? iframeSrc : '';
+
+		default:
+			return (item) ? iframeSrc : '';
 	}
 };
