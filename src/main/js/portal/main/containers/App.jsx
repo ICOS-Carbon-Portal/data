@@ -112,6 +112,7 @@ function stateToProps(state){
 		preview: state.preview,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		checkedObjectsInCart: state.checkedObjectsInCart,
+		extendedDobjInfo: state.extendedDobjInfo,
 	};
 }
 

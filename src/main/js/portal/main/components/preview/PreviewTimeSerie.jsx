@@ -29,11 +29,20 @@ export default class PreviewTimeSerie extends Component {
 			}
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
 
-		const linking = preview.items.reduce((acc,cur) => {
-			const result = preview.items.reduce((acc2,cur2) => {
+		// Add station information
+		const items = preview.items.map((item) => {
+			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.id);
+			item.station = extendedInfo ? extendedInfo.station : null;
+			return item;
+		});
+
+		// Determine if curves should concatenate or overlap
+		const linking = items.reduce((acc,cur) => {
+			const result = items.reduce((acc2,cur2) => {
 				if ((cur.id !== cur2.id) &&
-					((cur.timeStart < cur2.timeStart && cur.timeEnd < cur2.timeEnd) ||
-					(cur.timeStart > cur2.timeStart && cur.timeEnd > cur2.timeEnd))) {
+					(cur.station === cur2.station) &&
+					((cur.timeEnd < cur2.timeStart) ||
+					(cur.timeStart > cur2.timeEnd))) {
 					return 'concatenate';
 				}
 				return acc2;
