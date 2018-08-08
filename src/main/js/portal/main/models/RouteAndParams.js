@@ -3,16 +3,18 @@ import {varType} from '../utils';
 
 
 export default class RouteAndParams{
-	constructor(route, filters, tabs, page, previewIds){
+	constructor(route, filters, tabs, page, previewIds, previousRoute){
 		this._route = route;
 		this._filters = filters || {};
 		this._tabs = tabs || {};
 		this._page = page || 0;
 		this._previewIds = previewIds || [];
+		this._previousRoute = previousRoute || config.ROUTE_SEARCH;
 	}
 
 	withRoute(route){
-		return new RouteAndParams(route, this._filters, this._tabs, this._page);
+		const previousRoute = route === this._route ? this._previousRoute : this._route;
+		return new RouteAndParams(route, this._filters, this._tabs, this._page, this._previewIds, previousRoute);
 	}
 
 	withFilter(varName, values){
@@ -36,11 +38,15 @@ export default class RouteAndParams{
 	}
 
 	withPreviewIds(ids){
-		return new RouteAndParams(this._route, this._filters, this._tabs, this._page, ids);
+		return new RouteAndParams(this._route, this._filters, this._tabs, this._page, ids, this._previousRoute);
 	}
 
 	get route(){
 		return this._route;
+	}
+
+	get previousRoute(){
+		return this._previousRoute;
 	}
 
 	get filters(){

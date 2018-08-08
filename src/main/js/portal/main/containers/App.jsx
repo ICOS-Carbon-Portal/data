@@ -18,6 +18,10 @@ export class App extends Component {
 		this.props.updateRoute(newRoute);
 	}
 
+	handleBackButton(previousRoute){
+		this.props.updateRoute(previousRoute);
+	}
+
 	render(){
 		const props = this.props;
 
@@ -45,6 +49,7 @@ export class App extends Component {
 
 				<ErrorBoundary>
 					<Route
+						backButtonAction={this.handleBackButton.bind(this)}
 						routeAction={this.handleRouteClick.bind(this)}
 						{...props} />
 				</ErrorBoundary>

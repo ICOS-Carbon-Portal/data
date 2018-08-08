@@ -4,6 +4,7 @@ import CartPanel from '../components/CartPanel.jsx';
 import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
+import BackButton from '../components/buttons/BackButton.jsx';
 
 
 class DataCart extends Component {
@@ -34,6 +35,7 @@ class DataCart extends Component {
 
 		return (
 			<div>
+				<BackButton action={props.backButtonAction} previousRoute={config.ROUTE_SEARCH}/>
 				{props.cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-6 col-lg-9">
