@@ -1,7 +1,8 @@
 
-export const getNewTimeseriesUrl = (item, xAxis) => {
-	return item.getNewUrl({
-		objId: item.id.split('/').pop(),
+export const getNewTimeseriesUrl = (items, xAxis) => {
+	const objIds = items.map(item => item.id.split('/').pop()).join();
+	return items[0].getNewUrl({
+		objId: objIds,
 		x: xAxis,
 		type: 'scatter'
 	});

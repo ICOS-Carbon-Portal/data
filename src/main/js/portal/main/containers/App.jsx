@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
+import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {updateRoute, switchTab, setPreviewVisibility, setFilterTemporal} from '../actions';
+import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
@@ -13,14 +14,12 @@ export class App extends Component {
 		super(props);
 	}
 
-	handleRouteClick(){
-		const {cart, preview, routeAndParams} = this.props;
-		const newRoute = routeAndParams.route === localConfig.ROUTE_SEARCH
-			? localConfig.ROUTE_CART
-			: localConfig.ROUTE_SEARCH;
-
-		this.props.setPreviewVisibility(newRoute === localConfig.ROUTE_CART && preview.item && cart.hasItem(preview.item.id));
+	handleRouteClick(newRoute){
 		this.props.updateRoute(newRoute);
+	}
+
+	handleBackButton(previousRoute){
+		this.props.updateRoute(previousRoute);
 	}
 
 	render(){
@@ -49,7 +48,10 @@ export class App extends Component {
 				</div>
 
 				<ErrorBoundary>
-					<Route {...props} />
+					<Route
+						backButtonAction={this.handleBackButton.bind(this)}
+						routeAction={this.handleRouteClick.bind(this)}
+						{...props} />
 				</ErrorBoundary>
 			</div>
 		);
@@ -63,7 +65,7 @@ const SwitchRouteBtn = props => {
 			return <SearchBtn {...props} />;
 
 		case localConfig.ROUTE_CART:
-			return <CartBtn {...props} />;
+			return null;
 
 		default:
 			return <SearchBtn {...props} />;
@@ -75,7 +77,7 @@ const SearchBtn = props => {
 	const colCount = cart.count;
 
 	return (
-		<button className="btn btn-primary" onClick={action} style={{float: 'right'}}>
+		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)} style={{float: 'right'}}>
 			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}
@@ -84,27 +86,19 @@ const SearchBtn = props => {
 	);
 };
 
-const CartBtn = props => {
-	const {action} = props;
-
-	return (
-		<button className="btn btn-primary" onClick={action} style={{float: 'right'}}>
-			Switch to search
-		</button>
-	);
-};
-
 const Route = props => {
 	switch(props.routeAndParams.route){
-
 		case localConfig.ROUTE_SEARCH:
 			return <Search {...props} />;
 
 		case localConfig.ROUTE_CART:
 			return <DataCart {...props} />;
 
+		case localConfig.ROUTE_PREVIEW:
+			return <Preview {...props} />;
+
 		default:
-			return <Search {...props}  />;
+			return <Search {...props} />;
 	}
 };
 
@@ -115,7 +109,10 @@ function stateToProps(state){
 		routeAndParams: state.routeAndParams,
 		toasterData: state.toasterData,
 		cart: state.cart,
-		preview: state.preview
+		preview: state.preview,
+		checkedObjectsInSearch: state.checkedObjectsInSearch,
+		checkedObjectsInCart: state.checkedObjectsInCart,
+		extendedDobjInfo: state.extendedDobjInfo,
 	};
 }
 
@@ -123,8 +120,8 @@ function dispatchToProps(dispatch){
 	return {
 		updateRoute: hash => dispatch(updateRoute(hash)),
 		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
-		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
+		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 	};
 }
 

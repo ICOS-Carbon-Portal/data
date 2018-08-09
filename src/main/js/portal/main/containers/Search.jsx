@@ -6,21 +6,28 @@ import Filters from '../components/filters/Filters.jsx';
 import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
-import Preview from '../components/preview/Preview.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
-import {setPreviewUrl, setPreviewItem, setPreviewVisibility, specFiltersReset, updateSelectedPids} from '../actions';
+import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 
 class Search extends Component {
 	constructor(props) {
 		super(props);
 	}
 
-	handlePreview(id){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
+	handlePreview(ids){
+		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
 	}
 
-	handleClosePreview(){
-		if (this.props.setPreviewVisibility) this.props.setPreviewVisibility(false);
+	handleCheckboxChange() {
+		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
+			.map((checkbox) => checkbox.value);
+
+		this.props.updateCheckedObjects(checkedObjects);
+	}
+
+	handleAddToCart(objInfo) {
+		this.props.addToCart(objInfo);
+		this.props.updateCheckedObjects([]);
 	}
 
 	render(){
@@ -46,38 +53,24 @@ class Search extends Component {
 				</div>
 				<div className="col-md-9">
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
-						{props.preview.visible
-							? <Preview
-								tabHeader="Search results"
-								preview={props.preview}
-								setPreviewUrl={props.setPreviewUrl}
-								closePreviewAction={this.handleClosePreview.bind(this)}
-							/>
-							: <SearchResultTable
-								tabHeader="Search results"
-								previewAction={this.handlePreview.bind(this)}
-								{...copyprops(props, [
-									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
-									'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo'
-								])}
-							/>
-						}
-						{props.preview.visible
-							? <Preview
-								tabHeader="Compact view"
-								preview={props.preview}
-								setPreviewUrl={props.setPreviewUrl}
-								closePreviewAction={this.handleClosePreview.bind(this)}
-							/>
-							: <CompactSearchResultTable
-								tabHeader="Compact view"
-								previewAction={this.handlePreview.bind(this)}
-								{...copyprops(props, [
-									'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
-									'cart', 'addToCart', 'removeFromCart', 'lookup'
-								])}
-							/>
-						}
+						<SearchResultTable
+							tabHeader="Search results"
+							previewAction={this.handlePreview.bind(this)}
+							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+							handleAddToCart={this.handleAddToCart.bind(this)}
+							{...copyprops(props, [
+								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
+								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch'
+							])}
+						/>
+						<CompactSearchResultTable
+							tabHeader="Compact view"
+							previewAction={this.handlePreview.bind(this)}
+							{...copyprops(props, [
+								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
+								'cart', 'addToCart', 'removeFromCart', 'lookup'
+							])}
+						/>
 					</Tabs>
 				</div>
 			</div>
@@ -92,12 +85,12 @@ function dispatchToProps(dispatch){
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
-		setPreviewVisibility: visibility => dispatch(setPreviewVisibility(visibility)),
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),
 		updateSelectedPids: pids => dispatch(updateSelectedPids(pids)),
+		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInSearch(ids)),
 	};
 }
 

@@ -12,6 +12,7 @@ export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
 export const ROUTE_UPDATED = 'ROUTE_UPDATED';
 export const SWITCH_TAB = 'SWITCH_TAB';
 export const RESTORE_FILTERS = 'RESTORE_FILTERS';
+export const RESTORE_PREVIEW = 'RESTORE_PREVIEW';
 export const CART_UPDATED = 'CART_UPDATED';
 export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
 export const EXTENDED_DOBJ_INFO_FETCHED = 'EXTENDED_DOBJ_INFO_FETCHED';
@@ -20,6 +21,9 @@ export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
 export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
 export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
 export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
+export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
+export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
+export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
 import {saveToRestheart} from '../../common/main/backend';
@@ -27,6 +31,7 @@ import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./Cach
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
+import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
 
@@ -89,6 +94,20 @@ export const updateSelectedPids = selectedPids => dispatch => {
 	});
 
 	dispatch(getFilteredDataObjects);
+};
+
+export const updateCheckedObjectsInSearch = checkedObjectsInSearch => dispatch => {
+	dispatch({
+		type: UPDATE_CHECKED_OBJECTS_IN_SEARCH,
+		checkedObjectsInSearch
+	});
+};
+
+export const updateCheckedObjectsInCart = checkedObjectsInCart => dispatch => {
+	dispatch({
+		type: UPDATE_CHECKED_OBJECTS_IN_CART,
+		checkedObjectsInCart
+	});
 };
 
 export const specFilterUpdate = (varName, values) => dispatch => {
@@ -215,41 +234,59 @@ const restoreFilters = hash => dispatch => {
 	});
 };
 
-export const setPreviewVisibility = visible => dispatch => {
-	dispatch({
-		type: PREVIEW_VISIBILITY,
-		visible
-	})
+export const getPreview = hash => (dispatch, getState) => {
+
+	fetchAllSpecTables().then(
+		allTables => {
+			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
+
+			const paging = {}, rdfGraphs = {}, submitters = {};
+			const routeAndParams = restoreRouteAndParams(hash);
+			const filters = [{category: 'pids', pids: routeAndParams.previewIds}];
+			const options = {filters, paging, rdfGraphs, submitters};
+			const dataObjectsFetcher = new DataObjectsFetcher();
+
+			dataObjectsFetcher.fetch(options).then(
+				({rows, cacheSize, isDataEndReached}) => {
+
+					const opts = config.useDataObjectsCache ? options : rows.map(d => `<${d.dobj}>`);
+
+					dispatch(fetchExtendedDataObjInfo(opts));
+
+					dispatch({
+						type: OBJECTS_FETCHED,
+						objectsTable: rows,
+						cacheSize,
+						isDataEndReached
+					});
+
+					dispatch({
+						type: RESTORE_PREVIEW,
+					});
+				},
+				failWithError(dispatch)
+			);
+		},
+		failWithError(dispatch)
+	);
+
 };
 
 export const setPreviewItem = id => dispatch => {
 	dispatch({
 		type: PREVIEW,
 		id
-	})
+	});
 };
 
 export const setPreviewUrl = url => (dispatch, getState) => {
 	const state = getState();
-	const id = state.preview.item.id;
 
-	if (state.cart.hasItem(id)) {
-		const cart = state.cart.withItemUrl(id, url);
-
-		saveCart(state.user.email, cart).then(
-			dispatch({
-				type: ITEM_URL_UPDATED,
-				cart,
-				url
-			})
-		);
-	} else {
-		dispatch({
-			type: ITEM_URL_UPDATED,
-			cart: state.cart,
-			url
-		})
-	}
+	dispatch({
+		type: ITEM_URL_UPDATED,
+		cart: state.cart,
+		url
+	});
 };
 
 export const fetchCart = (dispatch, getState) => {
@@ -272,25 +309,32 @@ export const setCartName = newName => (dispatch, getState) => {
 	updateCart(state.user.email, state.cart.withName(newName), dispatch);
 };
 
-export const addToCart = objInfo => (dispatch, getState) => {
+export const addToCart = ids => (dispatch, getState) => {
 	const state = getState();
-	const specLookup = state.lookup.getSpecLookup(objInfo.spec);
-	const type = specLookup ? specLookup.type : undefined;
-	const xAxis = specLookup && specLookup.type === config.TIMESERIES
-		? specLookup.options.find(ao => ao === 'TIMESTAMP')
-		: undefined;
-	const item = new CartItem(objInfo, type);
+	const cart = state.cart;
 
-	const cart = xAxis
-		? state.cart.addItem(item.withUrl(getNewTimeseriesUrl(item, xAxis)))
-		: state.cart.addItem(item);
+	const newItems = ids.filter(id => state.cart.hasItem(id) === false).map(id => {
+		const objInfo = state.objectsTable.find(o => o.dobj === id);
+		const specLookup = state.lookup.getSpecLookup(objInfo.spec);
+		const type = specLookup ? specLookup.type : undefined;
+		const xAxis = specLookup && specLookup.type === config.TIMESERIES
+			? specLookup.options.find(ao => ao === 'TIMESTAMP')
+			: undefined;
+		const item = new CartItem(objInfo, type);
 
-	updateCart(state.user.email, cart, dispatch);
+		return xAxis
+			? item.withUrl(getNewTimeseriesUrl([item], xAxis))
+			: item;
+	});
+
+	if (newItems.length > 0) {
+		updateCart(state.user.email, cart.addItem(newItems), dispatch);
+	}
 };
 
-export const removeFromCart = id => (dispatch, getState) => {
+export const removeFromCart = ids => (dispatch, getState) => {
 	const state = getState();
-	const cart = state.cart.removeItem(id);
+	const cart = state.cart.removeItems(ids);
 
 	updateCart(state.user.email, cart, dispatch);
 };

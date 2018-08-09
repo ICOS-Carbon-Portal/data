@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
-import CartIcon from './buttons/CartIcon.jsx';
-import PreviewIcon from './buttons/PreviewIcon.jsx';
+import PreviewBtn from './buttons/PreviewBtn.jsx';
 import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
-import {formatBytes} from '../utils';
+import SearchResultTableRow from './searchResult/SearchResultTableRow.jsx';
+import CartBtn from './buttons/CartBtn.jsx';
 
 
 export default class CartPanel extends Component {
@@ -23,80 +23,69 @@ export default class CartPanel extends Component {
 		if (this.props.setCartName) this.props.setCartName(newName);
 	}
 
+	handlePreview(ids){
+		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+	}
+
 	render(){
-		const {batchDownloadStatus, cart, removeFromCart, previewItemAction,
-			getSpecLookupType, fetchIsBatchDownloadOk, user} = this.props;
-		const downloadBtnTxt = user.email && user.icosLicenceOk
-			? 'Download cart content'
-			: 'Accept license and download cart content';
+		const props = this.props;
 
 		return (
 			<div className="panel panel-default">
 				<EditablePanelHeading
-					editValue={cart.name}
+					editValue={props.cart.name}
 					saveValueAction={this.handleSaveCartName.bind(this)}
 					iconEditClass="glyphicon glyphicon-edit"
-					iconEditTooltip="Change name of cart"
+					iconEditTooltip="Edit download name"
 					iconSaveClass="glyphicon glyphicon-floppy-save"
 					iconSaveTooltip="Save new cart name"
 				/>
 
 				<div className="panel-body">
-					{cart.count
-						? <div>
-							<a href={downloadURL(cart.pids, cart.name)} className="btn btn-primary" style={{marginBottom: 15}} target="_blank">
-								<span className="glyphicon glyphicon-download-alt" style={{marginRight: 5}} /> {downloadBtnTxt}
-							</a>
-
-							<div style={{fontSize:'90%'}}>
-								Size of cart: {formatBytes(cart.size)} (uncompressed)
-							</div>
-
-							<ul className="list-group">{
-								cart.items.map((item, i) =>
-									<Item
-										item={item}
-										previewType={getSpecLookupType(item.spec)}
-										selected={this.state.selectedItemId === item.id}
-										removeFromCart={removeFromCart}
-										previewItemAction={previewItemAction}
-										clickAction={this.handleItemClick.bind(this)}
-										key={'ci' + i}
-									/>
-								)}
-							</ul>
+					<div>
+						<div className="text-right">
+							<CartBtn
+								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
+								checkedObjects={props.checkedObjectsInCart}
+								clickAction={props.removeFromCart}
+								enabled={props.checkedObjectsInCart.length}
+								type='remove'
+							/>
+							<PreviewBtn
+								style={{marginBottom: 10, marginRight: 10}}
+								checkedObjects={props.checkedObjectsInCart.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+								clickAction={this.handlePreview.bind(this)}
+								lookup={props.lookup}
+							/>
 						</div>
-						: <div>Your cart is empty</div>
-				}</div>
+
+						<div className="table-responsive">
+							<table className="table">
+								<tbody>{
+									props.cart.items.map((objInfo, i) => {
+										const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
+										const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
+										objInfo.fileName = objInfo.itemName;
+										objInfo.dobj = objInfo.id;
+
+										return (
+											<SearchResultTableRow
+												lookup={props.lookup}
+												extendedInfo={extendedInfo}
+												preview={props.preview}
+												objInfo={objInfo}
+												key={'dobj_' + i}
+												onCheckboxChange={props.handleCheckboxChange}
+												isChecked={isChecked}
+											/>
+										);
+									})
+								}</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
 			</div>
 		);
 	}
 }
-
-const Item = props => {
-	const {item, selected, removeFromCart, previewItemAction, clickAction, previewType} = props;
-
-	const action = () => {
-		clickAction(props.item.id);
-		previewItemAction(props.item.id);
-	};
-
-	const className = selected
-		? "list-group-item list-group-item-info"
-		: "list-group-item";
-
-	return (
-		<li className={className} style={{display: 'block', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
-			<CartIcon style={{marginRight: 10}} id={item.id} removeFromCart={removeFromCart} isAddedToCart={true} />
-			<PreviewIcon style={{marginRight: 10}} id={item.id} previewType={previewType} clickAction={action} />
-			<a href={item.id} target="_blank" title={item.itemName}>{item.itemName}</a>
-		</li>
-	);
-};
-
-const downloadURL = (ids, fileName) => {
-	const idsValue = encodeURIComponent(`["${ids.join('","')}"]`);
-	const fnValue = encodeURIComponent(fileName);
-	return `/objects?ids=${idsValue}&fileName=${fnValue}`;
-};
-

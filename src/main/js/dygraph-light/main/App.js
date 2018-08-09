@@ -27,47 +27,54 @@ export default class App {
 		const params = this.params;
 		saveToRestheart(formatData(params));
 
-		getTableFormatNrows(this.config, params.get('objId'))
-			.then(
-				({tableFormat, nRows}) => {
-					if(!isColNameValid(tableFormat, params.get('x')))
-						return fail(`Parameter x (${params.get('x')}) does not exist in data`);
-					else if(!isColNameValid(tableFormat, params.get('y')))
-						return fail(`Parameter y (${params.get('y')}) does not exist in data`);
-					else {
-						this.initGraph(tableFormat);
-						this.tableFormat = tableFormat;
-						return {tableFormat, nRows};
-					}
-				})
-			.then(
-				({tableFormat, nRows}) => {
-					return getBinTable(params.get('x'), params.get('y'), params.get('objId'), tableFormat, nRows);
-				})
-			.then(
-				this.drawGraph.bind(this),
-				err => {
-					this.showSpinner(false);
-					console.log(err);
-					presentError(err.message);
-				}
-			);
+		const ids = params.get('objId').split(',');
+
+		Promise.all(
+			ids.map(id => {
+				return getTableFormatNrows(this.config, id)
+				.then(
+					({tableFormat, nRows}) => {
+						if(!isColNameValid(tableFormat, params.get('x')))
+							return fail(`Parameter x (${params.get('x')}) does not exist in data`);
+						else if(!isColNameValid(tableFormat, params.get('y')))
+							return fail(`Parameter y (${params.get('y')}) does not exist in data`);
+						else {
+							if (typeof this.graph === "undefined") {
+								this.initGraph(tableFormat);
+								this.tableFormat = tableFormat;
+							}
+							return {tableFormat, nRows};
+						}
+					})
+					.then(
+						({tableFormat, nRows}) => {
+							return getBinTable(params.get('x'), params.get('y'), id, tableFormat, nRows);
+						})
+			})
+		)
+		.then(binTables => {
+			this.drawGraph(binTables),
+			err => {
+				this.showSpinner(false);
+				presentError(err.message);
+			}
+		});
 	}
 
 	initGraph(tableFormat){
 		this.showSpinner(true);
-		const params = this.params;
 
+		const params = this.params;
 		const xlabel = getColInfoParam(tableFormat, params.get('x'), 'label');
 		const ylabel = getColInfoParam(tableFormat, params.get('y'), 'label');
-
+		const labels = getLabels(xlabel, ylabel, params);
 		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
 		const formatters = getFormatters(xlabel, valueFormatX);
 		const drawPoints = params.get('type') !== 'line';
 
 		this.graph = new Dygraph(
 			'graph',
-			[[0,0]],
+			[Array(labels.length).fill(0)],
 			{
 				strokeWidth: 0,
 				drawPoints,
@@ -76,7 +83,7 @@ export default class App {
 				labelsSeparateLines: false,
 				xlabel,
 				ylabel,
-				labels: [xlabel, ylabel],
+				labels: labels,
 				xRangePad: 5,
 				connectSeparatedPoints: true,
 				labelsKMB: true,
@@ -97,13 +104,32 @@ export default class App {
 		);
 	}
 
-	drawGraph(binTable){
-		const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
-		const data = (
-			isTimestamp(valueFormatX)
-				? binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]])
-				: binTable.values([0, 1], subrow => subrow)
-			).sort((d1, d2) => d1[0] - d2[0]);
+	drawGraph(binTables){
+		const data = () => {
+			if (this.params.get('linking') === 'concatenate') {
+				// Concatenation
+				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
+				return isTimestamp(valueFormatX)
+					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]))
+					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => subrow)
+				).sort((d1, d2) => d1[0] - d2[0]);
+			} else {
+				// Overlap
+				const dates = binTables.flatMap(binTable => binTable.values([0], v => v[0]));
+				const uniqueDates = [...new Set([].concat(...dates))];
+				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)]));
+
+				binTables.map((binTable, index) => {
+					binTable.values([0, 1], subrow => {
+						let v = dateList.get(subrow[0]);
+						v[index] = subrow[1];
+						dateList.set(subrow[0], v);
+					});
+				});
+
+				return Array.from(dateList).map(k => k.flatten()).sort((d1, d2) => d1[0] - d2[0]);
+			}
+		}
 
 		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
 
@@ -192,6 +218,16 @@ const isColNameValid = (tableFormat, colName) => {
 const getColInfoParam = (tableFormat, colName, param) => {
 	return tableFormat.columns(tableFormat.getColumnIndex(colName))[param];
 };
+
+const getLabels = (xlabel, ylabel, params) => {
+	const ids = params.get('objId').split(',');
+
+	if (params.get('linking') !== 'concatenate' && ids.length > 1) {
+		return [xlabel, ...ids];
+	} else {
+		return [xlabel, ylabel];
+	}
+}
 
 const fail = (message) => {
 	return Promise.reject(new Error(message));
