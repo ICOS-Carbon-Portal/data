@@ -57,7 +57,7 @@ export default class App {
 			})
 		)
 		.then(binTables => {
-			if (binTables.length > 1) {
+			if (binTables.length > 1 && params.get('linking') !== 'concatenate') {
 				this.graph.updateOptions( { labels: this.labels } );
 			}
 			this.drawGraph(binTables),
