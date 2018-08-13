@@ -11,6 +11,7 @@ export default class App {
 		this.params = params;
 		this.graph = undefined;
 		this.tableFormat = undefined;
+		this.labels = [];
 
 		if (params.isValidParams) {
 			this.main();
@@ -33,16 +34,19 @@ export default class App {
 			ids.map(id => {
 				return getTableFormatNrows(this.config, id)
 				.then(
-					({tableFormat, nRows}) => {
+					({tableFormat, nRows, filename}) => {
 						if(!isColNameValid(tableFormat, params.get('x')))
 							return fail(`Parameter x (${params.get('x')}) does not exist in data`);
 						else if(!isColNameValid(tableFormat, params.get('y')))
 							return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 						else {
 							if (typeof this.graph === "undefined") {
-								this.initGraph(tableFormat);
+								this.initGraph(tableFormat, filename);
 								this.tableFormat = tableFormat;
+								this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
 							}
+							const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
+							this.labels.push(yLabel);
 							return {tableFormat, nRows};
 						}
 					})
@@ -53,6 +57,9 @@ export default class App {
 			})
 		)
 		.then(binTables => {
+			if (binTables.length > 1) {
+				this.graph.updateOptions( { labels: this.labels } );
+			}
 			this.drawGraph(binTables),
 			err => {
 				this.showSpinner(false);
