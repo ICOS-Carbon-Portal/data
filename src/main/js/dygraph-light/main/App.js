@@ -54,17 +54,20 @@ export default class App {
 						({tableFormat, nRows}) => {
 							return getBinTable(params.get('x'), params.get('y'), id, tableFormat, nRows);
 						})
+					.catch(err => {
+						throw err;
+					});
 			})
 		)
 		.then(binTables => {
 			if (binTables.length > 1 && params.get('linking') !== 'concatenate') {
 				this.graph.updateOptions( { labels: this.labels } );
 			}
-			this.drawGraph(binTables),
-			err => {
-				this.showSpinner(false);
-				presentError(err.message);
-			}
+			this.drawGraph(binTables)
+		})
+		.catch(err => {
+			this.showSpinner(false);
+			presentError(err.message);
 		});
 	}
 
