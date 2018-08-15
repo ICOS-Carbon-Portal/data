@@ -245,6 +245,7 @@ const fail = (message) => {
 
 const presentError = (errMsg) => {
 	document.getElementById('cp-spinner').style.display = 'none';
+	document.getElementById('error').style.display = 'flex';
 	document.getElementById('error').innerHTML = errMsg;
 };
 
