@@ -3,24 +3,26 @@ import {sparql, getBinaryTable, tableFormatForSpecies} from 'icos-cp-backend';
 import {objectSpecification} from './sparqlQueries';
 
 
-export function getTableFormatNrows(config, objId){
-	const query = objectSpecification(config, objId);
+export function getTableFormatNrows(config, objIds){
+	const query = objectSpecification(config, objIds);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(
 			sparqlResult => {
-				const solution = sparqlResult.results.bindings[0];
-				return solution
-					? Promise.resolve({
-						objSpec: solution.objSpec.value,
-						nRows: parseInt(solution.nRows.value),
-						filename: solution.fileName.value
-					})
-					: Promise.reject(new Error(`Data object ${objId} does not exist or is not an ingested time series`));
+				const bindings = sparqlResult.results.bindings;
+				return bindings
+					? Promise.resolve(bindings.map(binding => {
+						return {
+							id: binding.obj.value,
+							objSpec: binding.objSpec.value,
+							nRows: parseInt(binding.nRows.value),
+							filename: binding.fileName.value
+						}
+					}))
+					: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));
 			}
-		).then(
-			({objSpec, nRows, filename}) => tableFormatForSpecies(objSpec, config)
-				.then(tableFormat => {return {tableFormat, nRows, filename};})
+		).then(objects => tableFormatForSpecies(objects[0].objSpec, config)
+			.then(tableFormat => [tableFormat, objects])
 		);
 }
 

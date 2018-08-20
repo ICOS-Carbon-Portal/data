@@ -30,34 +30,35 @@ export default class App {
 
 		const ids = params.get('objId').split(',');
 
-		Promise.all(
-			ids.map(id => {
-				return getTableFormatNrows(this.config, id)
-				.then(
-					({tableFormat, nRows, filename}) => {
-						if(!isColNameValid(tableFormat, params.get('x')))
-							return fail(`Parameter x (${params.get('x')}) does not exist in data`);
-						else if(!isColNameValid(tableFormat, params.get('y')))
-							return fail(`Parameter y (${params.get('y')}) does not exist in data`);
-						else {
-							if (typeof this.graph === "undefined") {
-								this.initGraph(tableFormat, filename);
-								this.tableFormat = tableFormat;
-								this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
-							}
-							const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
-							this.labels.push(yLabel);
-							return {tableFormat, nRows};
-						}
+		return getTableFormatNrows(this.config, ids)
+		.then(
+			([tableFormat, objects]) => {
+				if(!isColNameValid(tableFormat, params.get('x')))
+					return fail(`Parameter x (${params.get('x')}) does not exist in data`);
+				else if(!isColNameValid(tableFormat, params.get('y')))
+					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
+				else {
+					if (typeof this.graph === "undefined") {
+						this.initGraph(tableFormat);
+						this.tableFormat = tableFormat;
+						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
+					}
+					objects.map(object => {
+						const filename = object.filename;
+						const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
+						this.labels.push(yLabel);
 					})
-					.then(
-						({tableFormat, nRows}) => {
-							return getBinTable(params.get('x'), params.get('y'), id, tableFormat, nRows);
-						})
-					.catch(err => {
-						throw err;
-					});
-			})
+					return [tableFormat, objects];
+				}
+			}
+		)
+		.then(
+			([tableFormat, objects]) => {
+				return Promise.all(
+					objects.map(object =>
+						getBinTable(params.get('x'), params.get('y'), object.id, tableFormat, object.nRows))
+				)
+			}
 		)
 		.then(binTables => {
 			if (binTables.length > 1 && params.get('linking') !== 'concatenate') {

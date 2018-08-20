@@ -20,7 +20,7 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	render(){
-		const {preview, iframeSrcChange} = this.props;
+		const {preview} = this.props;
 		const {xAxis, yAxis, type} = preview.items[0] && preview.items[0].hasKeyValPairs
 			? {
 				xAxis: preview.items[0].getUrlSearchValue('x'),
@@ -95,7 +95,6 @@ export default class PreviewTimeSerie extends Component {
 								y={yAxis}
 								type={type}
 								linking={linking}
-								onLoad={iframeSrcChange}
 							/>
 						</div>
 					</div>
@@ -130,7 +129,7 @@ const TimeSeries = props => {
 	return (
 		<div>{
 			x && y
-				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
+				? <iframe ref={iframe => self.iframe = iframe}
 					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
 					src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}&y=${y}&type=${type}&linking=${linking}`}
 				/>
