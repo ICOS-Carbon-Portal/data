@@ -136,7 +136,7 @@ export const listFilteredDataObjects = (config, options) => {
 			: stationsFilter(stations)
 		: dobjSpec;
 
-	const filterClauses = getFilterClauses(filters);
+	const filterClauses = getFilterClauses(config, filters);
 
 	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
 		? (
@@ -147,7 +147,6 @@ export const listFilteredDataObjects = (config, options) => {
 		: '';
 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix cpmetaObjectUri: <${config.cpmetaObjectUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
@@ -170,7 +169,7 @@ ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
 
-const getFilterClauses = filters => {
+const getFilterClauses = (config, filters) => {
 	const andFilters = filters.reduce((acc, f) => {
 		if (f.fromDateTimeStr) {
 			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
@@ -186,7 +185,8 @@ const getFilterClauses = filters => {
 
 	const orFilters = filters.reduce((acc, f) => {
 		if (f.category === 'pids'){
-			f.pids.forEach(fp => acc.push(`?dobj = cpmetaObjectUri:${fp}`));
+			// Do not use prefix since it cannot be used with pids starting with '-'
+			f.pids.forEach(fp => acc.push(`?dobj = <${config.cpmetaObjectUri}${fp}>`));
 		}
 
 		return acc;
