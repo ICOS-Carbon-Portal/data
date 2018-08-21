@@ -153,6 +153,7 @@ select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
 	${specsValues}
 	FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
+	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	${dobjSearch}
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:hasSizeInBytes ?size .
