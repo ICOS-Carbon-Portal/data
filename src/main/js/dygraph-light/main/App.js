@@ -77,7 +77,7 @@ export default class App {
 
 		const params = this.params;
 		const xlabel = getColInfoParam(tableFormat, params.get('x'), 'label');
-		const ylabel = getColInfoParam(tableFormat, params.get('y'), 'label');
+		const ylabel = getYLabel(tableFormat, params.get('y'));
 		const labels = getLabels(xlabel, ylabel, params);
 		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
 		const formatters = getFormatters(xlabel, valueFormatX);
@@ -229,6 +229,12 @@ const isColNameValid = (tableFormat, colName) => {
 const getColInfoParam = (tableFormat, colName, param) => {
 	return tableFormat.columns(tableFormat.getColumnIndex(colName))[param];
 };
+
+const getYLabel = (tableFormat, colName) => {
+	const unit = getColInfoParam(tableFormat, colName, 'unit');
+	const label = getColInfoParam(tableFormat, colName, 'label');
+	return unit != '?' ? `${label}, ${unit}` : label;
+}
 
 const getLabels = (xlabel, ylabel, params) => {
 	const ids = params.get('objId').split(',');
