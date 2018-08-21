@@ -74,7 +74,7 @@ export default class Paging{
 	withFiltersEnabled(filtersEnabled){
 		return new Paging({
 			objCount: this._objCount,
-			offset: 0,
+			offset: this._offset,
 			pageCount: this._pageCount,
 			filtersEnabled,
 			cacheSize: this._cacheSize,

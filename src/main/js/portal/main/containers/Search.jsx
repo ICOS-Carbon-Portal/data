@@ -19,7 +19,7 @@ class Search extends Component {
 	}
 
 	handleCheckboxChange() {
-		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
+		const checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
 			.map((checkbox) => checkbox.value);
 
 		this.props.updateCheckedObjects(checkedObjects);
@@ -32,7 +32,7 @@ class Search extends Component {
 
 	render(){
 		const props = this.props;
-		const tabs = props.routeAndParams.tabs;
+		const tabs = props.tabs;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
 

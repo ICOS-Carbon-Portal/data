@@ -4,30 +4,43 @@ import PreviewNetCDF from './PreviewNetCDF.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
 import BackButton from '../buttons/BackButton.jsx';
+import {getStateFomHash} from '../../models/HashStateHandler';
 
 export default class Preview extends Component {
 	constructor(props){
 		super(props);
+
 		this.state = {
 			iframeSrc: undefined
 		};
-		window.onmessage = event => this.handleIframeSrcChange(event);
+
+		this.historyLength = history.length;
+		this.srcChangeHandler = this.handleIframeSrcChange.bind(this);
+		window.addEventListener('message',this.srcChangeHandler);
 	}
 
 	handleIframeSrcChange(event){
 		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
 		this.setState({iframeSrc});
 		this.props.setPreviewUrl(iframeSrc);
+
+		if (history.length > this.historyLength) {
+			history.go(-1);
+		}
+	}
+
+	componentWillUnmount(){
+		window.removeEventListener('message', this.srcChangeHandler);
 	}
 
 	render(){
-		const {preview, backButtonAction, routeAndParams} = this.props;
+		const {preview, backButtonAction} = this.props;
 
 		return (
 			<div>
 				{preview
 					? <div>
-						<BackButton action={backButtonAction} previousRoute={routeAndParams.previousRoute}/>
+						<BackButton action={backButtonAction} previousRoute={'search'}/>
 
 						<div className="panel panel-default">
 							<div className="panel-heading">

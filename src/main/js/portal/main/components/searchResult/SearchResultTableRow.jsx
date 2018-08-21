@@ -66,7 +66,7 @@ const ExtendedInfoItem = ({item, icon, width, iconHeight = 18, iconRightMargin =
 };
 
 function formatDate(d){
-	if(!d) return '';
+	if(!d || isNaN(d)) return '';
 
 	return d.toISOString().substr(0, 10);
 }

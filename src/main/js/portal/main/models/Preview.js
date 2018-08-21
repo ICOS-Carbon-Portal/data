@@ -6,6 +6,7 @@ import deepEqual from 'deep-equal';
 export default class Preview {
 	constructor(items, options, type, visible){
 		this._items = items || [];
+		this._pids = this._items.map(item => item._id.split('/').pop());
 		this._options = options;
 		this._type = type;
 		this._visible = visible === undefined ? false : visible;
@@ -48,8 +49,26 @@ export default class Preview {
 		throw new Error('Could not initialize Preview');
 	}
 
+	restore(lookup, cart, objectsTable) {
+		if (this.visible){
+			return this;
+		} else if (this._pids.length > 0) {
+			return this.initPreview(lookup, cart, this._pids.map(pid => config.previewIdPrefix + pid), objectsTable);
+		} else {
+			return this;
+		}
+	}
+
+
+	withPids(pids){
+		this._pids = pids;
+		return this;
+	}
+
 	withItemUrl(url){
-		return new Preview(this._items.map(i => i.withUrl(url)), this._options, this._type, this._visible);
+		return typeof url === 'string'
+			? new Preview(this._items.map(i => i.withUrl(url)), this._options, this._type, this._visible)
+			: this;
 	}
 
 	show(){
@@ -58,6 +77,14 @@ export default class Preview {
 
 	hide(){
 		return new Preview(this._items, this._options, this._type, false);
+	}
+
+	get summary(){
+		return this._pids;
+	}
+
+	get hasPids(){
+		return this.summary.length > 0;
 	}
 
 	get item() {

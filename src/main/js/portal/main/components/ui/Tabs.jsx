@@ -20,9 +20,7 @@ export default class Tabs extends Component{
 		this.setActiveTab(nextProps.selectedTabId);
 	}
 
-	setActiveTab(tabId){
-		if (tabId === undefined) return;
-
+	setActiveTab(tabId = 0){
 		this.tabState.forEach(tab => tab.isActive = tab.id === tabId);
 	}
 

@@ -1,7 +1,8 @@
-import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, RESTORE_PREVIEW, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS_IN_SEARCH, UPDATE_CHECKED_OBJECTS_IN_CART} from './actions';
-import {TEMPORAL_FILTER, WHOAMI_FETCHED} from './actions';
+import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED,
+	SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, RESTORE_PREVIEW, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED,
+	PREVIEW_VISIBILITY, TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS,
+	EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS_IN_SEARCH, UPDATE_CHECKED_OBJECTS_IN_CART, INIT} from './actions';
+import {TEMPORAL_FILTER, WHOAMI_FETCHED, RESTORE_FROM_HASH} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
@@ -9,13 +10,12 @@ import Cart from './models/Cart';
 import Preview from './models/Preview';
 import FilterTemporal from './models/FilterTemporal';
 import FilterFreeText from './models/FilterFreeText';
-import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
-import {getRouteFromLocationHash} from './utils';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
+import {hash2State} from "./models/HashStateHandler";
 
 const initState = {
-	routeAndParams: new RouteAndParams(),
+	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterFreeText: new FilterFreeText(),
 	user: {},
@@ -34,13 +34,12 @@ const initState = {
 		ts: 0
 	},
 	checkedObjectsInSearch: [],
-	checkedObjectsInCart: [],
+	checkedObjectsInCart: []
 };
 
 const specTableKeys = Object.keys(placeholders);
 
 export default function(state = initState, action){
-	let routeAndParams;
 
 	switch(action.type){
 
@@ -48,6 +47,10 @@ export default function(state = initState, action){
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
+
+		case INIT:
+			const initState = hash2State();
+			return update(initState);
 
 		case WHOAMI_FETCHED:
 			return update({user: action.user});
@@ -61,7 +64,7 @@ export default function(state = initState, action){
 			});
 
 		case SPECTABLES_FETCHED:
-			let specTable = new CompositeSpecTable(action.specTables);
+			specTable = new CompositeSpecTable(action.specTables);
 			let objCount = getObjCount(specTable);
 
 			return update({
@@ -72,21 +75,56 @@ export default function(state = initState, action){
 				lookup: new Lookup(specTable)
 			});
 
+		case RESTORE_FILTERS:
+			let {filterCategories, page} = state;
+			let specTable = getSpecTable(state.specTable, filterCategories);
+			objCount = getObjCount(specTable);
+			let paging = new Paging({objCount, offset: page * config.stepsize});
+
+			return update({
+				specTable,
+				objectsTable: [],
+				paging,
+				sorting: updateSortingEnableness(state.sorting, objCount),
+				// filterTemporal: restoredFilterTemporal,
+				// filterFreeText: restoredFilterFreeText
+			});
+
+		case RESTORE_FROM_HASH:
+			const newHashState = hash2State();
+			filterCategories = newHashState.filterCategories;
+
+			specTable = getSpecTable(state.specTable.withResetFilters(), filterCategories);
+			objCount = getObjCount(specTable);
+			const filtersEnabled = areFiltersEnabled(newHashState.tabs, newHashState.filterTemporal, newHashState.filterFreeText);
+			paging = new Paging({objCount, offset: newHashState.page * config.stepsize}).withFiltersEnabled(filtersEnabled);
+
+			// console.log({newHashState, state, preview: state.preview, specTable, objCount, paging, offset: newHashState.page * config.stepsize, filtersEnabled});
+
+			return update({
+				route: newHashState.route,
+				specTable,
+				objectsTable: [],
+				paging,
+				// sorting: updateSortingEnableness(state.sorting, objCount),
+				filterCategories: newHashState.filterCategories,
+				filterTemporal: newHashState.filterTemporal,
+				filterFreeText: newHashState.filterFreeText,
+				tabs: newHashState.tabs,
+				page: newHashState.page,
+				preview: newHashState.preview
+			});
+
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
 
 			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, action.varName, action.values),
 				specTable,
 				objectsTable: [],
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, objCount)
-			});
-
-		case EXTENDED_DOBJ_INFO_FETCHED:
-			return update({
-				extendedDobjInfo: action.extendedDobjInfo
+				sorting: updateSortingEnableness(state.sorting, objCount),
+				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values})
 			});
 
 		case SPEC_FILTER_RESET:
@@ -94,38 +132,17 @@ export default function(state = initState, action){
 			objCount = getObjCount(specTable);
 
 			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams),
 				specTable,
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, {objCount})
-			});
-
-		case RESTORE_FILTERS:
-			routeAndParams = restoreRouteAndParams(action.hash);
-			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
-				return specTableKeys.includes(filterKey)
-					? specTable.withFilter(filterKey, routeAndParams.filters[filterKey])
-					: specTable;
-			}, state.specTable);
-			objCount = getObjCount(specTable);
-
-			const restoredFilterTemporal = state.filterTemporal.restore(routeAndParams.filters.filterTemporal);
-			const restoredFilterFreeText = state.filterFreeText.restore(routeAndParams.filters.filterFreeText);
-			const paging = new Paging({objCount, offset: routeAndParams.pageOffset});
-
-			return update({
-				routeAndParams,
-				specTable,
-				objectsTable: [],
-				paging,
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				filterTemporal: restoredFilterTemporal,
-				filterFreeText: restoredFilterFreeText
+				filterCategories: {}
 			});
 
 		case RESTORE_PREVIEW:
+			// console.log({route: state.route, table: state.lookup ? state.lookup.table : undefined, cart: state.cart, hasPids: state.preview.hasPids, preview: state.preview, objectsTable: state.objectsTable});
+
 			return update({
-				preview: state.preview.initPreview(state.lookup.table, state.cart, state.routeAndParams.previewIds, state.objectsTable)
+				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
 		case OBJECTS_FETCHED:
@@ -133,16 +150,22 @@ export default function(state = initState, action){
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
 			});
+			// console.log({extendedObjectsTable, objectsTable: action.objectsTable});
 
 			return update({
 				objectsTable: extendedObjectsTable,
 				paging: state.paging.withObjCount(
 					getObjCount(state.specTable),
 					action.objectsTable.length,
-					state.routeAndParams.filtersEnabled,
+					areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
 					action.cacheSize,
 					action.isDataEndReached
 				)
+			});
+
+		case EXTENDED_DOBJ_INFO_FETCHED:
+			return update({
+				extendedDobjInfo: action.extendedDobjInfo
 			});
 
 		case SORTING_TOGGLED:
@@ -152,39 +175,29 @@ export default function(state = initState, action){
 			});
 
 		case STEP_REQUESTED:
-			routeAndParams = state.routeAndParams.changePage(action.direction);
-			updateUrl(routeAndParams.urlPart);
-
 			return update({
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
-				routeAndParams
+				page: state.page + action.direction
 			});
 
 		case ROUTE_UPDATED:
-			routeAndParams = state.routeAndParams.withRoute(action.route);
-			const currentRoute = getRouteFromLocationHash();
-
-			if (currentRoute !== action.route) {
-				window.location.hash = routeAndParams.urlPart;
-			}
-
 			return update({
-				routeAndParams
+				route: action.route
 			});
 
 		case SWITCH_TAB:
-			routeAndParams = state.routeAndParams.withTab({[action.tabName]: action.selectedTabId});
-			updateUrl(routeAndParams.urlPart);
-
-			return update({routeAndParams});
-
-		case PREVIEW:
-			routeAndParams = state.routeAndParams.withRoute(config.ROUTE_PREVIEW).withPreviewIds(action.id);
-			updateUrl(routeAndParams.urlPart);
+			paging = new Paging({objCount, offset: state.page * config.stepsize})
+				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText));
 
 			return update({
-				routeAndParams,
+				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
+				paging
+			});
+
+		case PREVIEW:
+			return update({
+				route: config.ROUTE_PREVIEW,
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
@@ -199,7 +212,6 @@ export default function(state = initState, action){
 
 		case ITEM_URL_UPDATED:
 			return update({
-				cart: action.cart,
 				preview: state.preview.withItemUrl(action.url)
 			});
 
@@ -218,12 +230,10 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
-			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary);
-
+// console.log({oldFilterTemporal: state.filterTemporal, newfilterTemporal: action.filterTemporal});
 			return update({
-				routeAndParams,
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
+				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
 			});
 
 		case FREE_TEXT_FILTER:
@@ -235,12 +245,10 @@ export default function(state = initState, action){
 
 		case UPDATE_SELECTED_PIDS:
 			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
-			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary);
 
 			return update({
-				routeAndParams,
 				filterFreeText,
-				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
+				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, filterFreeText))
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
@@ -263,6 +271,12 @@ export default function(state = initState, action){
 	}
 }
 
+export const areFiltersEnabled = (tabs, filterTemporal, filterFreeText) => {
+	return tabs.searchTab === 1
+		&& ((filterTemporal !== undefined && filterTemporal.hasFilter)
+			|| (filterFreeText !== undefined && filterFreeText.hasFilter));
+};
+
 function updateFreeTextFilter(id, data, filterFreeText){
 	switch(id){
 		case 'dobj':
@@ -271,18 +285,6 @@ function updateFreeTextFilter(id, data, filterFreeText){
 		default:
 			return filterFreeText;
 	}
-}
-
-function updateAndApplyRouteAndParams(currentRouteParams, varName, values){
-	const routeAndParams = varName && values
-		? currentRouteParams.withFilter(varName, values)
-		: currentRouteParams.withResetFilters();
-	updateUrl(routeAndParams.urlPart);
-	return routeAndParams;
-}
-
-function updateUrl(urlPart){
-	window.location.hash = urlPart;
 }
 
 function updateSorting(old, varName){
@@ -297,6 +299,14 @@ function updateSortingEnableness(old, objCount){
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});
+}
+
+function getSpecTable(startTable, filterCategories){
+	return Object.keys(filterCategories).reduce((specTable, varName) => {
+		return specTableKeys.includes(varName)
+			? specTable.withFilter(varName, filterCategories[varName])
+			: specTable;
+	}, startTable);
 }
 
 function getObjCount(specTable){

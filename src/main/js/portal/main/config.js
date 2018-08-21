@@ -17,6 +17,7 @@ export default {
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 500,
 	dobjExtendedCacheFetchLimit: 100,
+	previewIdPrefix: 'https://meta.icos-cp.eu/objects/'
 };
 
 export const placeholders = {

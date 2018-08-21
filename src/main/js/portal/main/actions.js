@@ -1,4 +1,6 @@
 export const ERROR = 'ERROR';
+export const INIT = 'INIT';
+export const RESTORE_FROM_HASH = 'RESTORE_FROM_HASH';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
 export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
@@ -26,12 +28,12 @@ export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARC
 export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
+import {areFiltersEnabled} from './reducer';
 import {saveToRestheart} from '../../common/main/backend';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
-import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
 
@@ -52,11 +54,22 @@ const failWithError = dispatch => error => {
 	});
 };
 
-export const getAllSpecTables = hash => dispatch => {
+export const init = () => dispatch => {
+	dispatch({type: INIT});
+	dispatch(fetchUserInfo(true));
+	dispatch(getAllSpecTables());
+};
+
+export const restoreFromHash = () => dispatch => {
+	dispatch({type: RESTORE_FROM_HASH});
+	dispatch(getFilteredDataObjects);
+};
+
+export const getAllSpecTables = () => dispatch => {
 	fetchAllSpecTables().then(
 		allTables => {
 			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
-			dispatch(restoreFilters(hash));
+			dispatch({type: RESTORE_FILTERS});
 			dispatch(getFilteredDataObjects);
 		},
 		failWithError(dispatch)
@@ -119,24 +132,29 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-const logPortalUsage = (user, routeAndParams) => {
-	if (Object.keys(routeAndParams.filters).length) {
+const logPortalUsage = (filterCategories, filterTemporal, filterFreeText) => {
+	const filters = Object.assign({}, filterCategories, filterTemporal.summary, filterFreeText.summary);
+
+	if (Object.keys(filters).length) {
 		saveToRestheart({
 			filterChange: {
-				filters: routeAndParams.filters
+				filters
 			}
 		});
 	}
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging,
-		user, formatToRdfGraph, filterTemporal, filterFreeText} = getState();
-	const filters = routeAndParams.filtersEnabled
-		? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
-		: [];
+	const {specTable, route, preview, sorting, paging, formatToRdfGraph,
+		tabs, filterCategories, filterTemporal, filterFreeText} = getState();
 
-	logPortalUsage(user, routeAndParams);
+	const filters = route === config.ROUTE_PREVIEW && preview.hasPids
+		? [{category: 'pids', pids: preview.summary}]
+		: areFiltersEnabled(tabs, filterTemporal, filterFreeText)
+			? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
+			: [];
+
+	logPortalUsage(filterCategories, filterTemporal, filterFreeText);
 
 	const specs = specTable.getSpeciesFilter(null);
 	const stations = specTable.getFilter('station').length
@@ -165,6 +183,8 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
+
+			dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
 	);
@@ -214,7 +234,7 @@ export const updateRoute = route => dispatch => {
 };
 
 export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
-	const {filterTemporal, filterFreeText, routeAndParams} = getState();
+	const {filterTemporal, filterFreeText} = getState();
 
 	dispatch({
 		type: SWITCH_TAB,
@@ -227,51 +247,6 @@ export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
 	}
 };
 
-const restoreFilters = hash => dispatch => {
-	dispatch({
-		type: RESTORE_FILTERS,
-		hash
-	});
-};
-
-export const getPreview = hash => (dispatch, getState) => {
-
-	fetchAllSpecTables().then(
-		allTables => {
-			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
-
-			const paging = {}, rdfGraphs = {}, submitters = {};
-			const routeAndParams = restoreRouteAndParams(hash);
-			const filters = [{category: 'pids', pids: routeAndParams.previewIds}];
-			const options = {filters, paging, rdfGraphs, submitters};
-			const dataObjectsFetcher = new DataObjectsFetcher();
-
-			dataObjectsFetcher.fetch(options).then(
-				({rows, cacheSize, isDataEndReached}) => {
-
-					const opts = config.useDataObjectsCache ? options : rows.map(d => `<${d.dobj}>`);
-
-					dispatch(fetchExtendedDataObjInfo(opts));
-
-					dispatch({
-						type: OBJECTS_FETCHED,
-						objectsTable: rows,
-						cacheSize,
-						isDataEndReached
-					});
-
-					dispatch({
-						type: RESTORE_PREVIEW,
-					});
-				},
-				failWithError(dispatch)
-			);
-		},
-		failWithError(dispatch)
-	);
-
-};
-
 export const setPreviewItem = id => dispatch => {
 	dispatch({
 		type: PREVIEW,
@@ -279,12 +254,9 @@ export const setPreviewItem = id => dispatch => {
 	});
 };
 
-export const setPreviewUrl = url => (dispatch, getState) => {
-	const state = getState();
-
+export const setPreviewUrl = url => dispatch => {
 	dispatch({
 		type: ITEM_URL_UPDATED,
-		cart: state.cart,
 		url
 	});
 };

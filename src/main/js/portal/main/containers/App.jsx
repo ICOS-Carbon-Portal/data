@@ -9,6 +9,7 @@ import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal} from '../actio
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
+
 export class App extends Component {
 	constructor(props){
 		super(props);
@@ -40,7 +41,7 @@ export class App extends Component {
 						<small> Search, preview, download data objects</small>
 
 						<SwitchRouteBtn
-							currentRoute={props.routeAndParams.route}
+							currentRoute={props.route}
 							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
@@ -87,7 +88,7 @@ const SearchBtn = props => {
 };
 
 const Route = props => {
-	switch(props.routeAndParams.route){
+	switch(props.route){
 		case localConfig.ROUTE_SEARCH:
 			return <Search {...props} />;
 
@@ -106,13 +107,16 @@ function stateToProps(state){
 	return {
 		lookup: state.lookup,
 		user: state.user,
-		routeAndParams: state.routeAndParams,
 		toasterData: state.toasterData,
 		cart: state.cart,
 		preview: state.preview,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		checkedObjectsInCart: state.checkedObjectsInCart,
 		extendedDobjInfo: state.extendedDobjInfo,
+		route: state.route,
+		filterCategories: state.filterCategories,
+		tabs: state.tabs,
+		page: state.page,
 	};
 }
 
