@@ -85,9 +85,7 @@ export default function(state = initState, action){
 				specTable,
 				objectsTable: [],
 				paging,
-				sorting: updateSortingEnableness(state.sorting, objCount),
-				// filterTemporal: restoredFilterTemporal,
-				// filterFreeText: restoredFilterFreeText
+				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
 		case RESTORE_FROM_HASH:
@@ -98,8 +96,6 @@ export default function(state = initState, action){
 			objCount = getObjCount(specTable);
 			const filtersEnabled = areFiltersEnabled(newHashState.tabs, newHashState.filterTemporal, newHashState.filterFreeText);
 			paging = new Paging({objCount, offset: newHashState.page * config.stepsize}).withFiltersEnabled(filtersEnabled);
-
-			// console.log({newHashState, state, preview: state.preview, specTable, objCount, paging, offset: newHashState.page * config.stepsize, filtersEnabled});
 
 			return update({
 				route: newHashState.route,
@@ -139,8 +135,6 @@ export default function(state = initState, action){
 			});
 
 		case RESTORE_PREVIEW:
-			// console.log({route: state.route, table: state.lookup ? state.lookup.table : undefined, cart: state.cart, hasPids: state.preview.hasPids, preview: state.preview, objectsTable: state.objectsTable});
-
 			return update({
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
@@ -150,7 +144,6 @@ export default function(state = initState, action){
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
 			});
-			// console.log({extendedObjectsTable, objectsTable: action.objectsTable});
 
 			return update({
 				objectsTable: extendedObjectsTable,
@@ -187,8 +180,7 @@ export default function(state = initState, action){
 			});
 
 		case SWITCH_TAB:
-			paging = new Paging({objCount, offset: state.page * config.stepsize})
-				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText));
+			paging = state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText));
 
 			return update({
 				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
@@ -230,7 +222,6 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
-// console.log({oldFilterTemporal: state.filterTemporal, newfilterTemporal: action.filterTemporal});
 			return update({
 				filterTemporal: action.filterTemporal,
 				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
@@ -295,7 +286,7 @@ function updateSorting(old, varName){
 }
 
 function updateSortingEnableness(old, objCount){
-	const isEnabled = objCount <= 2000;
+	const isEnabled = objCount > 0 && objCount <= 2000;
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});
