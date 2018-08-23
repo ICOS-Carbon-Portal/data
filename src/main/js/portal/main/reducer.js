@@ -24,7 +24,11 @@ const initState = {
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],
-	sorting: {objCount: 0},
+	sorting: {
+		isEnabled: false,
+		varName: undefined,
+		ascending: true
+	},
 	paging: {},
 	cart: new Cart(),
 	preview: new Preview(),
@@ -102,7 +106,7 @@ export default function(state = initState, action){
 				specTable,
 				objectsTable: [],
 				paging,
-				// sorting: updateSortingEnableness(state.sorting, objCount),
+				sorting: updateSortingEnableness(state.sorting, objCount),
 				filterCategories: newHashState.filterCategories,
 				filterTemporal: newHashState.filterTemporal,
 				filterFreeText: newHashState.filterFreeText,

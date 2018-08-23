@@ -62,7 +62,7 @@ export default class Dropdown extends Component{
 				<ul className="dropdown-menu">{
 					Object.keys(lookup).map((key, idx) =>
 						<li key={'ddl' + idx}>
-							<a href="#" onClick={this.onDropDownItemClick.bind(this, key)}>{lookup[key]}</a>
+							<a onClick={this.onDropDownItemClick.bind(this, key)} style={{cursor:'pointer'}}>{lookup[key]}</a>
 						</li>
 					)
 				}</ul>

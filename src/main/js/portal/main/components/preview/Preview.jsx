@@ -4,7 +4,7 @@ import PreviewNetCDF from './PreviewNetCDF.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
 import BackButton from '../buttons/BackButton.jsx';
-import {getStateFomHash} from '../../models/HashStateHandler';
+
 
 export default class Preview extends Component {
 	constructor(props){

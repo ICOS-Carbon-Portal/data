@@ -184,7 +184,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				isDataEndReached
 			});
 
-			dispatch({type: RESTORE_PREVIEW});
+			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
 	);
