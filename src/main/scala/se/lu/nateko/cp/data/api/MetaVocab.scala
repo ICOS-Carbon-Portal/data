@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.api
 
 import java.net.URI
 
-import se.lu.nateko.cp.meta.core.EnvriConfig
+import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 abstract class MetaVocab(baseUri: URI) {

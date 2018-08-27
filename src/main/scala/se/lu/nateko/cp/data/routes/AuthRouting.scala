@@ -18,10 +18,9 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
 import spray.json.{JsNull, JsObject, JsString}
-import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
 import scala.util.Try
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
 class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: EnvriConfigs) {

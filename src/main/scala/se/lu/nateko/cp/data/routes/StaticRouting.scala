@@ -15,7 +15,7 @@ import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
 class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envriConfigs: EnvriConfigs) {
