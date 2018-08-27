@@ -23,6 +23,10 @@ export default class Paging{
 		return this._offset;
 	}
 
+	set offset(offset){
+		this._offset = offset;
+	}
+
 	get pageCount(){
 		return this._pageCount;
 	}
@@ -33,6 +37,17 @@ export default class Paging{
 
 	get isCountKnown(){
 		return this._filtersEnabled ? this._isDataEndReached : true;
+	}
+
+	withOffset(offset){
+		return new Paging({
+			objCount: this._objCount,
+			offset: offset,
+			pageCount: this._pageCount,
+			filtersEnabled: this._filtersEnabled,
+			cacheSize: this._cacheSize,
+			isDataEndReached: this._isDataEndReached
+		});
 	}
 
 	withDirection(direction){

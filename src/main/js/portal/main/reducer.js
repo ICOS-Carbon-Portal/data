@@ -148,16 +148,19 @@ export default function(state = initState, action){
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
 			});
+			paging = state.paging.withObjCount(
+				getObjCount(state.specTable),
+				action.objectsTable.length,
+				areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
+				action.cacheSize,
+				action.isDataEndReached
+			);
+			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
 
 			return update({
 				objectsTable: extendedObjectsTable,
-				paging: state.paging.withObjCount(
-					getObjCount(state.specTable),
-					action.objectsTable.length,
-					areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
-					action.cacheSize,
-					action.isDataEndReached
-				)
+				paging,
+				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
 		case EXTENDED_DOBJ_INFO_FETCHED:
@@ -184,11 +187,14 @@ export default function(state = initState, action){
 			});
 
 		case SWITCH_TAB:
-			paging = state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText));
+			paging = state.paging
+				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
+				.withOffset(0);
 
 			return update({
 				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
-				paging
+				paging,
+				page: 0
 			});
 
 		case PREVIEW:

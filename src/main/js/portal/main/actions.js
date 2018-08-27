@@ -242,7 +242,7 @@ export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
 		selectedTabId
 	});
 
-	if (tabName === 'searchTab' && (filterTemporal.hasFilter || filterFreeText.hasFilter)){
+	if (tabName === 'searchTab'){
 		dispatch(getFilteredDataObjects);
 	}
 };
