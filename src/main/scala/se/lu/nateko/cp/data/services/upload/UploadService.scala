@@ -14,8 +14,8 @@ import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
 import se.lu.nateko.cp.data.api.CpInstVocab
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
-import se.lu.nateko.cp.meta.core.EnvriConfig
-import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri

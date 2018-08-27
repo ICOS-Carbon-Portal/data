@@ -20,7 +20,7 @@ import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
-import se.lu.nateko.cp.meta.core.EnvriConfig
+import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
 import se.lu.nateko.cp.meta.core.data.UriResource

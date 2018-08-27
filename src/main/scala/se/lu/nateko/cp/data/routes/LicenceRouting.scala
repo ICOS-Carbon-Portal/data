@@ -10,9 +10,7 @@ import akka.http.scaladsl.model.StatusCodes
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Uri
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import se.lu.nateko.cp.meta.core.MetaCoreConfig.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
 import scala.concurrent.Future
 import scala.util.Try

@@ -42,6 +42,7 @@ object TimeSeriesStreams {
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
+		.filter(_.size > 0)
 
 
 	def timeSeriesToBinTableConverter[H <: TableRowHeader](
