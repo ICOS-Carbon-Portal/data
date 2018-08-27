@@ -67,13 +67,13 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		)
 	}
 
-	def userIsAllowedUpload(dataObj: DataObject, user: UserId): Future[Unit] = {
+	def userIsAllowedUpload(dataObj: DataObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
 		val submitter = dataObj.submission.submitter
 		val submitterUri = submitter.self.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
 			Uri.Query("submitter" -> submitterUri, "userId" -> user.email)
 		)
-		get(uri, None).flatMap(
+		get(uri, hostOpt).flatMap(
 			resp => resp.status match {
 				case StatusCodes.OK =>
 					Unmarshal(resp.entity).to[JsValue].map(_ match {
