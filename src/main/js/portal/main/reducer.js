@@ -253,8 +253,13 @@ export default function(state = initState, action){
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
+			const checkedObjectsInSearch = state.checkedObjectsInSearch;
+			const newCheckedObjectsInSearch = checkedObjectsInSearch.includes(action.checkedObjectInSearch)
+				? checkedObjectsInSearch.filter(objId => objId !== action.checkedObjectInSearch)
+				: checkedObjectsInSearch.concat([action.checkedObjectInSearch]);
+
 			return update({
-				checkedObjectsInSearch: action.checkedObjectsInSearch
+				checkedObjectsInSearch: newCheckedObjectsInSearch
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_CART:

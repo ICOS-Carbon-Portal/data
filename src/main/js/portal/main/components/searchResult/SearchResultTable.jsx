@@ -69,7 +69,7 @@ export default class SimpleDataObjectsTable extends Component{
 											preview={preview}
 											objInfo={objInfo}
 											key={'dobj_' + i}
-											onCheckboxChange={this.props.handleCheckboxChange}
+											updateCheckedObjects={this.props.updateCheckedObjects}
 											isChecked={isChecked}
 										/>
 									);

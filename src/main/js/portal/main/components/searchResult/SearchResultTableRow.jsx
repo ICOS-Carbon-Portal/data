@@ -11,11 +11,10 @@ const truncateStyle = {
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
 		super(props);
-		this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
 	}
 
-	handleCheckboxChange() {
-		this.props.onCheckboxChange();
+	handleCheckboxChange(dobj) {
+		this.props.updateCheckedObjects(dobj);
 	}
 
 	render(){
@@ -31,8 +30,10 @@ export default class SimpleObjectTableRow extends Component{
 
 		return(
 			<tr style={{margin: '20px 0'}}>
-				<td style={{textAlign: 'center', width: 40, padding: '16px 8px'}}>
-					<input className="data-checkbox" type="checkbox" name="data-checkbox" value={objInfo.dobj} onChange={this.handleCheckboxChange} disabled={checkboxDisabled} checked={props.isChecked}/>
+				<td style={{textAlign: 'center', width: 40, padding: '16px 0px'}}>
+					<button className="btn btn-default" style={{pointerEvents:'auto'}} onClick={this.handleCheckboxChange.bind(this, objInfo.dobj)} disabled={checkboxDisabled} >
+						<span className="glyphicon glyphicon-ok" style={{opacity: props.isChecked ? 1 : 0}} />
+					</button>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>
