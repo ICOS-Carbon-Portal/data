@@ -38,28 +38,29 @@ export function dobjOriginsAndCounts(config){
 prefix prov: <http://www.w3.org/ns/prov#>
 select
 ?spec
-(sample(?submitterName) as ?submitter)
+?submitter
 ?submitterUri
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
-(sample(?stationRes) as ?stationUri)
-(count(?dobj) as ?count)
-(if(sample(?submitterClass) = cpmeta:ThematicCenter || sample(?submitterClass) = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
+(if(bound(?stationName), ?stationUri0, ?stationName) as ?stationUri)
+?count
+(if(?submitterClass = cpmeta:ThematicCenter || ?submitterClass = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
-	?dobj cpmeta:hasObjectSpec ?spec .
+	{
+		select * where{
+			[] cpmeta:hasStatProps [
+				cpmeta:hasStatCount ?count;
+				cpmeta:hasStatStation ?stationUri0;
+				cpmeta:hasStatSpec ?spec;
+				cpmeta:hasStatSubmitter ?submitterUri
+			] .
+			OPTIONAL{?stationUri0 cpmeta:hasName ?stationName}
+		}
+	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
-	FILTER EXISTS {?dobj cpmeta:hasSizeInBytes []}
-	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitterUri .
-	?submitterUri cpmeta:hasName ?submitterName ;
-		a ?submitterClass .
+	?submitterUri cpmeta:hasName ?submitter ; a ?submitterClass .
 	FILTER(?submitterClass != owl:NamedIndividual)
-	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationRes .
-		?stationRes cpmeta:hasName ?stationName
-	}
-}
-group by ?spec ?submitterUri ?stationName`;
+}`;
 }
 
 export function findDobjs(config, search){
