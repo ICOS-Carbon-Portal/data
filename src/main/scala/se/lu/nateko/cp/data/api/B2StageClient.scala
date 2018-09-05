@@ -1,9 +1,5 @@
 package se.lu.nateko.cp.data.api
 
-import java.io.PipedInputStream
-import java.io.PipedOutputStream
-
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 
@@ -11,7 +7,6 @@ import akka.Done
 import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.EntityStreamException
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.HttpRequest
@@ -24,13 +19,15 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.B2StageConfig
+import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json._
 
-class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: ExecutionContext, mat: Materializer) {
+class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Materializer) {
+
+	import mat.executionContext
 
 	def getUri(item: B2StageItem) = {
 		val pathPrefix = item match{
@@ -70,20 +67,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 		}
 	}
 
-	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = {
-		val is = new PipedInputStream()
-		val os = new PipedOutputStream(is)
-
-		val hashFut = uploadObject(obj, StreamConverters.fromInputStream(() => is))
-
-		StreamConverters.fromOutputStream(() => os, true).mapMaterializedValue{
-			sinkFut => for(
-				hash <- hashFut;
-				iores <- sinkFut;
-				_ <- Future.fromTry(iores.status)
-			) yield hash
-		}
-	}
+	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))
 
 	def downloadObjectOnce(obj: IrodsData): Future[Source[ByteString, Any]] = {
 
@@ -104,13 +88,16 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit ctxt: Executi
 	).flatMap(failIfNotSuccess)
 
 	def exists(item: B2StageItem): Future[Boolean] = withAuth(
-		HttpRequest(uri = getUri(item), method = HttpMethods.HEAD)
-	).flatMap(resp => resp.status match{
-		case StatusCodes.NotFound =>
-			resp.discardEntityBytes()
-			Future.successful(false)
-		case _ => failIfNotSuccess(resp).map(_ => true)
-	})
+			HttpRequest(uri = getUri(item), method = HttpMethods.HEAD)
+		).flatMap(resp =>
+			resp.status match{
+				case StatusCodes.NotFound =>
+					resp.discardEntityBytes()
+					Future.successful(false)
+				case _ =>
+					failIfNotSuccess(resp).map(_ => true)
+			}
+		)
 
 	private def withAuth(req: HttpRequest): Future[HttpResponse] = http.singleRequest{
 		req.withHeaders(req.headers :+ authHeader)
