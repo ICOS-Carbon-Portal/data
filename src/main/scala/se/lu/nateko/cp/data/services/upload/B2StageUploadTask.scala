@@ -9,11 +9,23 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.api.B2StageClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.data.api.IrodsColl
+import se.lu.nateko.cp.data.api.IrodsData
+import akka.stream.scaladsl.Keep
 
-class B2StageUploadTask private (dataObject: DataObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+class B2StageUploadTask(dataObject: DataObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val filePath: String = "/" + UploadService.filePathSuffix(dataObject)
-	private[this] val existsFut = client.exists(filePath)
+	private[this] val (irodsData, existsFut) = {
+		val coll = IrodsColl(UploadService.fileFolder(dataObject)) //parent is root
+		val obj = IrodsData(UploadService.fileName(dataObject), coll)
+
+		val objExistsFut: Future[Boolean] = client.exists(coll).flatMap{
+			case true => client.exists(obj)
+			case false => client.create(coll).map(_ => false)
+		}
+
+		(obj, objExistsFut)
+	}
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val sinkFut = existsFut.map{
@@ -21,7 +33,7 @@ class B2StageUploadTask private (dataObject: DataObject, client: B2StageClient)(
 					_ => Future.successful(B2StageSuccess)
 				)
 			case false =>
-				client.objectSink(filePath).mapMaterializedValue(
+				client.objectSink(irodsData).mapMaterializedValue(
 					_.map{hash =>
 						if(hash == dataObject.hash) B2StageSuccess
 						else B2StageFailure(
@@ -45,21 +57,8 @@ class B2StageUploadTask private (dataObject: DataObject, client: B2StageClient)(
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] =
 		existsFut.flatMap{
 			case true =>
-				UploadTask.revertOnOwnFailure(ownResult, () => client.delete(filePath))
+				UploadTask.revertOnOwnFailure(ownResult, () => client.delete(irodsData))
 			case false =>
-				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => client.delete(filePath))
+				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => client.delete(irodsData))
 		}
-}
-
-object B2StageUploadTask{
-
-	def apply(dataObject: DataObject, client: B2StageClient)(implicit ctxt: ExecutionContext): Future[B2StageUploadTask] = {
-
-		val folderPath: String = "/" + UploadService.fileFolder(dataObject)
-
-		client.exists(folderPath).flatMap{
-			case true => Future.successful(Done)
-			case false => client.createCollection(folderPath)
-		}.map(_ => new B2StageUploadTask(dataObject, client))
-	}
 }
