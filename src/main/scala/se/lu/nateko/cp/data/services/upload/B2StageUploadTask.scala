@@ -3,15 +3,13 @@ package se.lu.nateko.cp.data.services.upload
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.B2StageClient
 import se.lu.nateko.cp.data.api.CpDataException
-import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
-import akka.stream.scaladsl.Keep
+import se.lu.nateko.cp.meta.core.data.DataObject
 
 class B2StageUploadTask(dataObject: DataObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
@@ -60,5 +58,7 @@ class B2StageUploadTask(dataObject: DataObject, client: B2StageClient)(implicit 
 				UploadTask.revertOnOwnFailure(ownResult, () => client.delete(irodsData))
 			case false =>
 				UploadTask.revertOnAnyFailure(ownResult, otherTaskResults, () => client.delete(irodsData))
+		}.recover{
+			case _ => ownResult
 		}
 }
