@@ -11,7 +11,7 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
 object AuthenticatorProvider {
 
 	def getPassword(id: StationId, config: EtcFacadeConfig): String =
-		config.stationOverrides.get(id.id).getOrElse{
+		config.stationOverrides.get(id).getOrElse{
 			val md = MessageDigest.getInstance("SHA-256")
 			md.update((config.secret + id.id).getBytes("UTF-8"))
 			Base64.getUrlEncoder.encodeToString(md.digest).take(12)

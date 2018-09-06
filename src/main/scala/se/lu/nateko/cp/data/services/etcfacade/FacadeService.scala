@@ -117,7 +117,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 				}.andThen{
 					case Success(_) =>
 						logExternalUpload(fn)
-						performUpload(targetFile, fn, false)
+						performUploadIfNotTest(targetFile, fn, false)
 					case Failure(_) => Files.deleteIfExists(tmpPath)
 				}
 			}
@@ -128,7 +128,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		deleteOldEtcFiles(getStationUploadedFolder(station))
 	}
 
-	private[etcfacade] def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] = (fn.toEcDaily match{
+	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] =
+		if(fn.station == config.testStation) done else performUpload(file, fn, forceEc)
+
+	private def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean) = (fn.toEcDaily match{
 		case Some(daily) if(isFromBeforeToday(daily)) =>
 
 			val uploadedFolder = getStationUploadedFolder(fn.station)
@@ -161,8 +164,8 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			done //no uploads for same-day EC files (more are likely coming!)
 	}).andThen{
 		case Failure(err) =>
-			appendError(err.getMessage)
-			log.error(err, "ETC facade error")
+			appendError(s"Error while uploading $fn : " + err.getMessage)
+			log.error(err, s"ETC facade error while uploading $fn")
 	}
 
 	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
