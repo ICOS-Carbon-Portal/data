@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import config from '../../config';
 
 
 export default class Dropdown extends Component{
@@ -89,8 +90,9 @@ const SortButton = ({isEnabled, selectedItemKey, isAscending, clickAction, looku
 			</button>
 		);
 	} else {
+		const title = `Sort up to ${config.dobjSortLimit} results. Please refine your search!`;
 		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button">
+			<button className="btn btn-default dropdown-toggle disabled" type="button" title={title} style={{pointerEvents:'auto'}}>
 				<span>{defaultLbl}</span> <span className="caret"/>
 			</button>
 		);
