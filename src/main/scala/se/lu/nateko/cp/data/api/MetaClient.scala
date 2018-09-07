@@ -118,7 +118,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|select ?$stationVar where{
-				|?pi cpmeta:hasEmail "${user.email}"^^xsd:string .
+				|?pi cpmeta:hasEmail ?email .
+				|FILTER(regex(?email, "${user.email}", "i")) .
 				|?pi cpmeta:hasMembership ?memb .
 				|?memb cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
 				|?memb cpmeta:atOrganization ?station .
