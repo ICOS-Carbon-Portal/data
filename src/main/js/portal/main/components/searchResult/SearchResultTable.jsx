@@ -74,7 +74,6 @@ export default class SimpleDataObjectsTable extends Component{
 						</div>
 					</div>
 
-					<div className="table-responsive">
 						<table className="table">
 							<tbody>{
 								props.objectsTable.map((objInfo, i) => {
@@ -95,7 +94,6 @@ export default class SimpleDataObjectsTable extends Component{
 								})
 							}</tbody>
 						</table>
-					</div>
 				</div>
 			</div>
 		);

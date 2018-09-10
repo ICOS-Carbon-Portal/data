@@ -37,10 +37,7 @@ export default class Tabs extends Component{
 		const tabContentStyle = {
 			borderLeft: border,
 			borderRight: border,
-			borderBottom: border,
-			borderBottomLeftRadius: 4,
-			borderBottomRightRadius: 4,
-			padding: 10
+			borderBottom: border
 		};
 
 		return (

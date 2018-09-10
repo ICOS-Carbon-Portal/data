@@ -26,7 +26,7 @@ export class App extends Component {
 		const props = this.props;
 
 		return (
-			<div className="container-fluid" style={{marginTop: 10}}>
+			<div style={{marginTop: 10}}>
 
 				<AnimatedToasters
 					autoCloseDelay={5000}
@@ -34,17 +34,18 @@ export class App extends Component {
 					maxWidth={400}
 				/>
 
-				<div className="page-header">
-					<h1>
+				<div className="row page-header">
+					<h1 className="col-md-9">
 						{commonConfig.envri} data portal
 						<small> Search, preview, download data objects</small>
-
+					</h1>
+					<div className="col-md-3 text-right" style={{marginTop: 30}}>
 						<SwitchRouteBtn
 							currentRoute={props.routeAndParams.route}
 							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
-					</h1>
+					</div>
 				</div>
 
 				<ErrorBoundary>
@@ -77,7 +78,7 @@ const SearchBtn = props => {
 	const colCount = cart.count;
 
 	return (
-		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)} style={{float: 'right'}}>
+		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)}>
 			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}

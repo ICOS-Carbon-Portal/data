@@ -49,7 +49,7 @@ class DataCart extends Component {
 				<BackButton action={props.backButtonAction} previousRoute={config.ROUTE_SEARCH}/>
 				{props.cart.count > 0 ?
 					<div className="row">
-						<div className="col-sm-6 col-lg-9">
+						<div className="col-sm-8 col-lg-9">
 							<CartPanel
 								previewitemId={previewitemId}
 								getSpecLookupType={getSpecLookupType}
@@ -59,7 +59,7 @@ class DataCart extends Component {
 								{...props}
 							/>
 						</div>
-						<div className="col-sm-6 col-lg-3">
+						<div className="col-sm-4 col-lg-3">
 							<div className="panel panel-default">
 								<div className="panel-heading">
 									{downloadTitle}

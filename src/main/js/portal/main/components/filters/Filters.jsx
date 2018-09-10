@@ -13,7 +13,7 @@ export default class Filters extends Component {
 		const props = this.props;
 
 		return (
-			<div style={{marginTop: 15}}>
+			<div>
 				<div className="panel panel-default">
 					<div className="panel-heading">
 						<h3 className="panel-title">Temporal filters</h3>

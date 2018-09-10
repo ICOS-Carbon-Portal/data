@@ -49,7 +49,7 @@ class Search extends Component {
 
 		return (
 			<div className="row">
-				<div className="col-md-3">
+				<div className="col-md-3" style={{marginBottom: 20}}>
 					<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
 						<ObjSpecFilter tabHeader="Categories" {...searchProps} />
 						<Filters

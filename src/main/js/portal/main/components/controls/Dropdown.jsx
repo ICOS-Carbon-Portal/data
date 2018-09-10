@@ -41,23 +41,24 @@ export default class Dropdown extends Component{
 		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 
 		return (
-			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', marginBottom: 10}}>{
-				isSorter
-					? <SortButton
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						isAscending={isAscending}
-						clickAction={this.onDropdownClick.bind(this)}
-						lookup={lookup}
-						defaultLbl={defaultLbl}
-					/>
-					: <Button
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						clickAction={this.onDropdownClick.bind(this)}
-						lookup={lookup}
-						defaultLbl={defaultLbl}
-					/>
+			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
+				{
+					isSorter
+						? <SortButton
+							isEnabled={isEnabled}
+							selectedItemKey={selectedItemKey}
+							isAscending={isAscending}
+							clickAction={this.onDropdownClick.bind(this)}
+							lookup={lookup}
+							defaultLbl={defaultLbl}
+						/>
+						: <Button
+							isEnabled={isEnabled}
+							selectedItemKey={selectedItemKey}
+							clickAction={this.onDropdownClick.bind(this)}
+							lookup={lookup}
+							defaultLbl={defaultLbl}
+						/>
 				}
 
 				<ul className="dropdown-menu">{
