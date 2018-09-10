@@ -42,8 +42,8 @@ export default class CartPanel extends Component {
 				/>
 
 				<div className="panel-body">
-					<div>
 						<div className="text-right">
+					<div className="panel-srollable-controls clearfix">
 							<CartBtn
 								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
 								checkedObjects={props.checkedObjectsInCart}

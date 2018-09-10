@@ -31,22 +31,16 @@ export default class SimpleDataObjectsTable extends Component{
 
 				<div className="panel-body">
 
-					<Dropdown
-						isSorter={true}
-						isEnabled={props.sorting.isEnabled}
-						selectedItemKey={props.sorting.varName}
-						isAscending={props.sorting.ascending}
-						itemClickAction={props.toggleSort}
-						lookup={dropdownLookup}
-					/>
+					<div className="panel-srollable-controls clearfix">
+						<Dropdown
+							isSorter={true}
+							isEnabled={props.sorting.isEnabled}
+							selectedItemKey={props.sorting.varName}
+							isAscending={props.sorting.ascending}
+							itemClickAction={props.toggleSort}
+							lookup={dropdownLookup}
+						/>
 
-					<CartBtn
-						style={{float: 'right', marginBottom: 10}}
-						checkedObjects={props.checkedObjectsInSearch}
-						clickAction={props.handleAddToCart}
-						enabled={props.checkedObjectsInSearch.length}
-						type='add'
-					/>
 
 					<PreviewBtn
 						style={{float: 'right', marginBottom: 10, marginRight: 10}}
@@ -54,6 +48,23 @@ export default class SimpleDataObjectsTable extends Component{
 						clickAction={previewAction}
 						lookup={props.lookup}
 					/>
+						<div style={{float: 'right'}}>
+							<CartBtn
+								style={{float: 'right', marginBottom: 10}}
+								checkedObjects={props.checkedObjectsInSearch}
+								clickAction={props.handleAddToCart}
+								enabled={props.checkedObjectsInSearch.length}
+								type='add'
+							/>
+
+							<PreviewBtn
+								style={{float: 'right', marginBottom: 10, marginRight: 10}}
+								checkedObjects={props.checkedObjectsInSearch.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+								clickAction={previewAction}
+								lookup={props.lookup}
+							/>
+						</div>
+					</div>
 
 					<div className="table-responsive">
 						<table className="table">

@@ -27,7 +27,7 @@ var paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	target: '../../resources/',
-	sassSources: ['node_modules/react-widgets/lib/scss/react-widgets.scss'],
+	sassSources: ['portal.scss','node_modules/react-widgets/lib/scss/react-widgets.scss'],
 	sassExtSources: [
 		'node_modules/react-widgets/lib/**/fonts/*',
 		'node_modules/react-widgets/lib/**/img/*'
@@ -119,7 +119,7 @@ gulp.task('test', function(){
 });
 
 gulp.task('build', ['js'], function(){
-	var sources = [paths.commonjs, paths.js, paths.jsx];
+	var sources = [paths.commonjs, paths.js, paths.jsx, paths.sassSources];
 	return gulp.watch(sources, ['js']);
 });
 
