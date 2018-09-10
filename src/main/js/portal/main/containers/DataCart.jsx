@@ -23,6 +23,17 @@ class DataCart extends Component {
 		this.props.updateCheckedObjects(checkedObjects);
 	}
 
+	handleAllCheckboxesChange() {
+		if (this.props.checkedObjectsInCart.length > 0) {
+			this.props.updateCheckedObjects([]);
+		} else {
+			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
+				.map((checkbox) => checkbox.value);
+
+			this.props.updateCheckedObjects(checkedObjects);
+		}
+	}
+
 	render(){
 		const props = this.props;
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
@@ -44,6 +55,7 @@ class DataCart extends Component {
 								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
 								handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 								{...props}
 							/>
 						</div>

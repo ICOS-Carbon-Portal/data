@@ -4,6 +4,7 @@ import Dropdown from '../controls/Dropdown.jsx';
 import {Paging} from '../buttons/Paging.jsx';
 import PreviewBtn from '../buttons/PreviewBtn.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
+import CheckAllBoxes from '../controls/CheckAllBoxes.jsx';
 
 
 const dropdownLookup = {
@@ -18,9 +19,14 @@ export default class SimpleDataObjectsTable extends Component{
 		super(props);
 	}
 
+	handleAllCheckboxesChange() {
+		this.props.handleAllCheckboxesChange();
+	}
+
 	render(){
 		const props = this.props;
 		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo} = props;
+		const objectText = props.checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 
 		return (
 			<div className="panel panel-default">
@@ -32,6 +38,11 @@ export default class SimpleDataObjectsTable extends Component{
 				<div className="panel-body">
 
 					<div className="panel-srollable-controls clearfix">
+						<CheckAllBoxes
+							checkCount={props.checkedObjectsInSearch.length}
+							totalCount={paging.pageCount}
+							onChange={this.props.handleAllCheckboxesChange} />
+
 						<Dropdown
 							isSorter={true}
 							isEnabled={props.sorting.isEnabled}
@@ -41,13 +52,10 @@ export default class SimpleDataObjectsTable extends Component{
 							lookup={dropdownLookup}
 						/>
 
+						{ props.checkedObjectsInSearch.length > 0 &&
+							<span style={{marginLeft: 16, verticalAlign: 7}}>{props.checkedObjectsInSearch.length} {objectText} selected</span>
+						}
 
-					<PreviewBtn
-						style={{float: 'right', marginBottom: 10, marginRight: 10}}
-						checkedObjects={props.checkedObjectsInSearch.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
-						clickAction={previewAction}
-						lookup={props.lookup}
-					/>
 						<div style={{float: 'right'}}>
 							<CartBtn
 								style={{float: 'right', marginBottom: 10}}

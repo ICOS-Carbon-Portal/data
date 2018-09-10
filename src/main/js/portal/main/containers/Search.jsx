@@ -30,6 +30,17 @@ class Search extends Component {
 		this.props.updateCheckedObjects([]);
 	}
 
+	handleAllCheckboxesChange() {
+		if (this.props.checkedObjectsInSearch.length > 0) {
+			this.props.updateCheckedObjects([]);
+		} else {
+			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
+				.map((checkbox) => checkbox.value);
+
+			this.props.updateCheckedObjects(checkedObjects);
+		}
+	}
+
 	render(){
 		const props = this.props;
 		const tabs = props.routeAndParams.tabs;
@@ -58,6 +69,7 @@ class Search extends Component {
 							previewAction={this.handlePreview.bind(this)}
 							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
+							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch'
