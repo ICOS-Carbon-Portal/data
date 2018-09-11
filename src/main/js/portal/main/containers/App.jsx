@@ -5,7 +5,7 @@ import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal} from '../actions';
+import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
@@ -15,6 +15,8 @@ export class App extends Component {
 	}
 
 	handleRouteClick(newRoute){
+		this.props.updateCheckedObjectsInCart([]);
+		this.props.updateCheckedObjectsInSearch([]);
 		this.props.updateRoute(newRoute);
 	}
 
@@ -123,6 +125,8 @@ function dispatchToProps(dispatch){
 		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
+		updateCheckedObjectsInCart: ids => dispatch(updateCheckedObjectsInCart(ids)),
+		updateCheckedObjectsInSearch: ids => dispatch(updateCheckedObjectsInSearch(ids)),
 	};
 }
 
