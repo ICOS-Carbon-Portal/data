@@ -53,9 +53,12 @@ export default class Map extends Component {
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
 				const newURL = location.origin + location.pathname + newSearch;
 
-				history.pushState({urlPath: newURL}, "", newURL);
-				//Let calling page (through iframe) know what current url is
-				window.top.postMessage(newURL, '*');
+				if (window.frameElement) {
+					//Let calling page (through iframe) know what current url is
+					window.top.postMessage(newURL, '*');
+				} else {
+					history.pushState({urlPath: newURL}, "", newURL);
+				}
 			}
 		}
 	}
