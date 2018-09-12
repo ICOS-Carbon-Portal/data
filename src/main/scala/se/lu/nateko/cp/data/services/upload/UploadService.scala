@@ -1,11 +1,13 @@
 package se.lu.nateko.cp.data.services.upload
 
+import java.nio.file.Files
 import java.nio.file.Paths
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -14,7 +16,6 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
 import se.lu.nateko.cp.data.api.B2StageClient
-import se.lu.nateko.cp.data.api.CpInstVocab
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -53,6 +54,19 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 			sink <- getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
 		) yield sink
 	}
+
+	def getTryIngestSink(objSpec: Uri, nRows: Option[Int])(implicit envri: Envri): Future[DataObjectSink] =
+		meta.lookupObjSpec(objSpec).flatMap{spec =>
+			val ingSpec = IngestionSpec(spec, nRows, spec.self.label)
+			val origFile = Files.createTempFile("ingestionTest", null)
+			Files.delete(origFile)
+			IngestionUploadTask(ingSpec, origFile.toFile, meta.sparql)
+		}.map{task =>
+			task.sink.mapMaterializedValue(_.map{taskRes =>
+				Files.deleteIfExists(task.file.toPath)
+				new UploadResult(Seq(taskRes))
+			})
+		}
 
 	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] = {
 		implicit val envri = Envri.ICOS
@@ -104,7 +118,6 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 		def saveToFile = new FileSavingUploadTask(file)
 		val spec = dataObj.specification
-		val specUri = spec.self.uri
 
 		def ingest =
 			if(spec.format.uri == CpMetaVocab.asciiWdcggTimeSer)
@@ -117,7 +130,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 				}
 
 		spec.dataLevel match{
-			case 1 if (specUri == CpInstVocab.atcCo2Nrt || specUri == CpInstVocab.atcCh4Nrt) => ingest
+			case 1 if (spec.datasetSpec.isDefined) => ingest
 			case 2 => ingest
 			case 0 | 1 | 3 => Future.successful(defaultsWithBackup :+ saveToFile)
 

@@ -29,15 +29,15 @@ import se.lu.nateko.cp.meta.core.sparql.BoundUri
 import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 
 class IngestionUploadTask(
-	dataObj: DataObject,
+	ingSpec: IngestionSpec,
 	originalFile: File,
 	formats: ColumnValueFormats
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private val file = new File(originalFile.getAbsolutePath + FileExtension)
+	val file = new File(originalFile.getAbsolutePath + FileExtension)
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
-		val format = dataObj.specification.format
+		val format = ingSpec.objSpec.format
 
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ dailySitesCsvTimeSer, simpleSitesCsvTimeSer }
@@ -58,10 +58,10 @@ class IngestionUploadTask(
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
-				dataObj.specificInfo.right.toOption.flatMap(_.nRows) match{
+				ingSpec.nRows match{
 
 					case None =>
-						failedSink(IncompleteMetadataFailure(dataObj.hash, "Missing nRows (number of rows)"))
+						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
 
 					case Some(nRows) =>
 						if(format.uri == asciiEtcTimeSer) {
@@ -87,7 +87,7 @@ class IngestionUploadTask(
 				failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
 		}
 
-		val decoderFlow = makeEncodingSpecificFlow(dataObj.specification.encoding)
+		val decoderFlow = makeEncodingSpecificFlow(ingSpec.objSpec.encoding)
 		decoderFlow.toMat(ingestionSink)(Keep.right)
 	}
 
@@ -132,12 +132,23 @@ class IngestionUploadTask(
 	}
 }
 
+case class IngestionSpec(objSpec: DataObjectSpec, nRows: Option[Int], label: Option[String])
+
+object IngestionSpec{
+	import scala.language.implicitConversions
+	implicit def fromDataObject(dobj: DataObject) = IngestionSpec(
+		dobj.specification,
+		dobj.specificInfo.right.toOption.flatMap(_.nRows),
+		Some(dobj.hash.id)
+	)
+}
+
 object IngestionUploadTask{
 
-	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
+	def apply(ingSpec: IngestionSpec, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
 		import sparql.materializer.executionContext
-		getColumnFormats(dataObj.specification, sparql).map{formats =>
-			new IngestionUploadTask(dataObj, originalFile, formats)
+		getColumnFormats(ingSpec.objSpec, sparql).map{formats =>
+			new IngestionUploadTask(ingSpec, originalFile, formats)
 		}
 	}
 

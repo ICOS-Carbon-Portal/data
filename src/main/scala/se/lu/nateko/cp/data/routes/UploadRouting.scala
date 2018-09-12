@@ -1,46 +1,47 @@
 package se.lu.nateko.cp.data.routes
 
 import scala.concurrent.Future
-import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 
+import LicenceRouting.LicenceCookieName
+import LicenceRouting.licenceUri
+import LicenceRouting.parseLicenceCookie
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
-import akka.http.scaladsl.server.MissingHeaderRejection
-import akka.http.scaladsl.server.RejectionHandler
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
+import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
 import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.meta.core.MetaCoreConfig
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import LicenceRouting._
-import se.lu.nateko.cp.meta.core.MetaCoreConfig
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
-import se.lu.nateko.cp.data.api.PortalLogClient
-import akka.http.scaladsl.model.HttpMethods
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
@@ -51,27 +52,36 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private implicit val ex = mat.executionContext
 	private implicit val envriConfs = coreConf.envriConfigs
+	private implicit val uriFSU = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
+
 	private val log = uploadService.log
 	private val downloadService = new DownloadService(coreConf, uploadService, log)
 	val extractEnvri = extractEnvriDirective
 
 	private val upload: Route = requireShaHash{ hashsum =>
 		userRequired{ uid =>
-			extractRequest{ req =>
-				extractEnvri{implicit envri =>
-					val resFuture: Future[UploadResult] = uploadService
-						.getSink(hashsum, uid)
-						.flatMap(req.entity.dataBytes.runWith)
-					addAccessControlHeaders(envri){
-						onSuccess(resFuture)(res => res.makeReport match{
-							case Right(report) => complete(report)
-							case Left(errorMsg) =>
-								log.warning(errorMsg)
-								complete((StatusCodes.InternalServerError, errorMsg))
-						})
-					}
-				}
+			extractEnvri{implicit envri =>
+				makeUpload(uploadService.getSink(hashsum, uid))
 			}
+		}
+	}
+
+	private val tryIngest: Route = parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
+			extractEnvri{implicit envri =>
+				makeUpload(uploadService.getTryIngestSink(specUri, nRowsOpt))
+			}
+		} ~
+		complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
+
+	private def makeUpload(sink: Future[UploadService.DataObjectSink])(implicit envri: Envri): Route = extractRequest{ req =>
+		val resFuture: Future[UploadResult] = sink.flatMap(req.entity.dataBytes.runWith)
+		addAccessControlHeaders(envri){
+			onSuccess(resFuture)(res => res.makeReport match{
+				case Right(report) => complete(report)
+				case Left(errorMsg) =>
+					log.warning(errorMsg)
+					complete((StatusCodes.InternalServerError, errorMsg))
+			})
 		}
 	}
 
@@ -139,11 +149,14 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		complete((StatusCodes.BadRequest, "Expected js array of SHA256 hashsums in 'ids' URL param and a 'fileName' param"))
 	}
 
-	val route = pathPrefix("objects"){
-		handleExceptions(errHandler){
+	val route = handleExceptions(errHandler){
+		pathPrefix("objects"){
 			put{ upload } ~
 			options{ uploadHttpOptions } ~
 			get{ batchDownload ~ download}
+		} ~
+		path("tryingest"){
+			put{ tryIngest }
 		}
 	}
 
