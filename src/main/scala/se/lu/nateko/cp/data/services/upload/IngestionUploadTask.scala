@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
+import java.nio.file.Files
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -23,10 +24,10 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
+import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
-import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
@@ -34,7 +35,9 @@ class IngestionUploadTask(
 	formats: ColumnValueFormats
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
+	//TODO Switch to java.nio classes
 	val file = new File(originalFile.getAbsolutePath + FileExtension)
+	private val tmpFile = new File(file.getAbsoluteFile + ".working")
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = ingSpec.objSpec.format
@@ -102,10 +105,16 @@ class IngestionUploadTask(
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.viaMat(toBinTableConverter)(KeepFuture.right)
-			.toMat(BinTableSink(file, overwrite = true))(KeepFuture.left)
+			.toMat(BinTableSink(tmpFile, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
-				_.map(IngestionSuccess(_)).recover{
-					case exc: Throwable => IngestionFailure(exc)
+				_.map{ingMeta =>
+					import java.nio.file.StandardCopyOption._
+					Files.move(tmpFile.toPath, file.toPath, ATOMIC_MOVE, REPLACE_EXISTING)
+					IngestionSuccess(ingMeta)
+				}.recover{
+					case exc: Throwable =>
+						Files.deleteIfExists(tmpFile.toPath)
+						IngestionFailure(exc)
 				}
 			)
 	}

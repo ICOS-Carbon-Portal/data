@@ -66,6 +66,19 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
+	private val reIngest: Route = requireShaHash{ hashsum =>
+		userRequired{ uid =>
+			extractEnvri{implicit envri =>
+				extractRequest{req =>
+					req.discardEntityBytes()
+					onSuccess(uploadService.reingest(hashsum, uid)){_ =>
+						complete(StatusCodes.OK)
+					}
+				}
+			}
+		}
+	}
+
 	private val tryIngest: Route = parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
 			extractEnvri{implicit envri =>
 				makeUpload(uploadService.getTryIngestSink(specUri, nRowsOpt))
@@ -152,6 +165,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	val route = handleExceptions(errHandler){
 		pathPrefix("objects"){
 			put{ upload } ~
+			post{ reIngest } ~
 			options{ uploadHttpOptions } ~
 			get{ batchDownload ~ download}
 		} ~

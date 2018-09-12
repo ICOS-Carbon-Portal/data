@@ -1,14 +1,19 @@
 package se.lu.nateko.cp.data.services.upload
 
+import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 
+import akka.Done
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -67,6 +72,25 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 				new UploadResult(Seq(taskRes))
 			})
 		}
+
+	def reingest(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[Done] =
+		for(
+			dataObj <- meta.lookupPackage(hash);
+			_ <- meta.userIsAllowedUpload(dataObj, user);
+			origFile = getFile(dataObj);
+			ingTask <- {
+				if(origFile.exists) IngestionUploadTask(dataObj, origFile, meta.sparql)
+				else throw new FileNotFoundException(
+					s"File for ${dataObj.hash} not found on the server, can not reingest"
+				)
+			};
+			done <- {
+				FileIO.fromPath(origFile.toPath).runWith(ingTask.sink).transform{
+					case Success(res: UploadTaskFailure) => Failure(res.error)
+					case other => other.map(_ => Done)
+				}
+			}
+		) yield done
 
 	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] = {
 		implicit val envri = Envri.ICOS
