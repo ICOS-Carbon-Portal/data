@@ -43,7 +43,7 @@ object Main extends App {
 	val restHeart = new RestHeartClient(config.restheart, http)
 	val portalLog = new PortalLogClient(config.restheart, http)
 
-	val uploadService = new UploadService(config.upload, metaClient, envriConfigs)
+	val uploadService = new UploadService(config.upload, metaClient)
 
 	val netcdfRoute = NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
 	val legacyNetcdfRoute = NetcdfRoute(netCdfServiceFactory(config.netcdf.folder))

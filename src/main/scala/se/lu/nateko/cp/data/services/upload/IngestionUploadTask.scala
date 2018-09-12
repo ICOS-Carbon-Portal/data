@@ -26,6 +26,7 @@ import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
 import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
+import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 
 class IngestionUploadTask(
 	dataObj: DataObject,
@@ -133,21 +134,19 @@ class IngestionUploadTask(
 
 object IngestionUploadTask{
 
-	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[IngestionUploadTask] = {
+	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
 		import sparql.materializer.executionContext
-		getColumnFormats(dataObj.hash, sparql).map{formats =>
+		getColumnFormats(dataObj.specification, sparql).map{formats =>
 			new IngestionUploadTask(dataObj, originalFile, formats)
 		}
 	}
 
-	def getColumnFormats(dataObjHash: Sha256Sum, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[ColumnValueFormats] = {
+	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnValueFormats] = {
 		import sparql.materializer.executionContext
-		val dataObjUri = CpMetaVocab.getDataObject(dataObjHash)
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select ?colName ?valFormat where{
-		|	<$dataObjUri> cpmeta:hasObjectSpec ?spec .
-		|	?spec cpmeta:containsDataset ?dataSet .
+		|	?<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .

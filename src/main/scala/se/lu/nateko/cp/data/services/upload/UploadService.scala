@@ -24,7 +24,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: EnvriConfigs)(implicit mat: Materializer) {
+class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
 	import UploadService._
 	import meta.{ dispatcher, system }
@@ -40,10 +40,6 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 //	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
 	private val b2 = new B2StageClient(config.b2stage, Http())
-
-	private implicit def getEnvriConfig(implicit envri: Envri): EnvriConfig = {
-		envriConfs.getOrElse(envri, throw new Exception(s"Did not find config for ENVRI $envri"))
-	}
 
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
@@ -96,7 +92,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient, envriConfs: Envr
 		}
 	}
 
-	private def getUploadTasks(dataObj: DataObject)(implicit  envri: Envri): Future[IndexedSeq[UploadTask]] = {
+	private def getUploadTasks(dataObj: DataObject): Future[IndexedSeq[UploadTask]] = {
 		val file = getFile(dataObj)
 
 		val defaults = IndexedSeq.empty :+
