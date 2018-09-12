@@ -16,7 +16,12 @@ export default class PreviewTimeSerie extends Component {
 			const newUrl = preview.items[0].getNewUrl({[setting]: selectedVal});
 
 			iframeSrcChange({target: {src: newUrl}});
+			this.iframe.contentWindow.postMessage(newUrl, "*");
 		}
+	}
+
+	shouldComponentUpdate() {
+		return false;
 	}
 
 	render(){
@@ -115,7 +120,7 @@ const Selector = props => {
 	return (
 		<span>
 			<label>{props.label}</label>
-			<select name={props.name} className="form-control" onChange={props.selectAction} value={value}>
+			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
 				{props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)}
 			</select>
@@ -126,15 +131,10 @@ const Selector = props => {
 const TimeSeries = props => {
 	const objIds = props.ids.map(id => id.split('/').pop()).join();
 	const {self, x, y, type, linking} = props;
+	const yParam = y ? `&y=${y}` : '';
 
-	return (
-		<div>{
-			x && y
-				? <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
-					style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-					src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}&y=${y}&type=${type}&linking=${linking}`}
-				/>
-				: null
-		}</div>
-	);
+	return <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
+		style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
+		src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}`}
+	/>;
 };
