@@ -8,13 +8,7 @@ import LicenceRouting.LicenceCookieName
 import LicenceRouting.licenceUri
 import LicenceRouting.parseLicenceCookie
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.ContentType
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.HttpMethods
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.MediaTypes
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
@@ -42,7 +36,8 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-
+import se.lu.nateko.cp.meta.core.data.JsonSupport.ingestionMetadataExtractFormat
+import spray.json._
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	restHeart: RestHeartClient, logClient: PortalLogClient, coreConf: MetaCoreConfig
@@ -58,45 +53,43 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private val downloadService = new DownloadService(coreConf, uploadService, log)
 	val extractEnvri = extractEnvriDirective
 
-	private val upload: Route = requireShaHash{ hashsum =>
-		userRequired{ uid =>
-			extractEnvri{implicit envri =>
-				makeUpload(uploadService.getSink(hashsum, uid))
+	private val upload: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
+		extractEnvri{implicit envri =>
+			val resFuture: Future[UploadResult] = uploadService
+				.getSink(hashsum, uid)
+				.flatMap(req.entity.dataBytes.runWith)
+
+			addAccessControlHeaders(envri){
+				onSuccess(resFuture)(res => res.makeReport match{
+					case Right(report) => complete(report)
+					case Left(errorMsg) =>
+						log.warning(errorMsg)
+						complete((StatusCodes.InternalServerError, errorMsg))
+				})
 			}
 		}
 	}
 
-	private val reIngest: Route = requireShaHash{ hashsum =>
-		userRequired{ uid =>
-			extractEnvri{implicit envri =>
-				extractRequest{req =>
-					req.discardEntityBytes()
-					onSuccess(uploadService.reingest(hashsum, uid)){_ =>
-						complete(StatusCodes.OK)
-					}
-				}
+	private val reIngest: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
+		extractEnvri{implicit envri =>
+			req.discardEntityBytes()
+			onSuccess(uploadService.reingest(hashsum, uid)){_ =>
+				complete(StatusCodes.OK)
 			}
 		}
 	}
 
 	private val tryIngest: Route = parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
-			extractEnvri{implicit envri =>
-				makeUpload(uploadService.getTryIngestSink(specUri, nRowsOpt))
+		extractEnvri{implicit envri =>
+			extractRequest{req =>
+				val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
+				onSuccess(resFut){metaExtract =>
+					complete(metaExtract.toJson)
+				}
 			}
-		} ~
-		complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
-
-	private def makeUpload(sink: Future[UploadService.DataObjectSink])(implicit envri: Envri): Route = extractRequest{ req =>
-		val resFuture: Future[UploadResult] = sink.flatMap(req.entity.dataBytes.runWith)
-		addAccessControlHeaders(envri){
-			onSuccess(resFuture)(res => res.makeReport match{
-				case Right(report) => complete(report)
-				case Left(errorMsg) =>
-					log.warning(errorMsg)
-					complete((StatusCodes.InternalServerError, errorMsg))
-			})
 		}
-	}
+	} ~
+	complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
 
 	private val uploadHttpOptions: Route = requireShaHash{ _ =>
 		extractEnvri{implicit envri =>

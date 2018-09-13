@@ -23,7 +23,9 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 `curl -v --cookie cookies.txt -H "Transfer-Encoding: chunked" --upload-file <file> https://data.icos-cp.eu/objects/<data object id>`
 
 ### Trying ingestion
-When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>`, where `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec)), and `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files).
+When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>`, where `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec)), and `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files). With curl, the test can be performed for example as follows:
+
+`curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" --upload-file ICOS_ATC_NRT_MTO.zip https://meta.icos-cp.eu/tryingest`
 
 ---
 

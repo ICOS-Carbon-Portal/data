@@ -166,7 +166,7 @@ object IngestionUploadTask{
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select ?colName ?valFormat where{
-		|	?<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
+		|	<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .

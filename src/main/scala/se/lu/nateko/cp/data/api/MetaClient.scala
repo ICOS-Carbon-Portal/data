@@ -65,8 +65,13 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		)
 	}
 
-	def lookupObjSpec(spec: Uri)(implicit envri: Envri): Future[DataObjectSpec] = get(spec, hostOpt).flatMap{
-		extractIfSuccess(Unmarshal(_).to[DataObjectSpec])
+	def lookupObjSpec(spec: Uri)(implicit envri: Envri): Future[DataObjectSpec] = {
+		val baseUri = Uri(baseUrl)
+		val specUri = spec.withAuthority(baseUri.authority).withScheme(baseUri.scheme)
+
+		get(specUri, hostOpt).flatMap{
+			extractIfSuccess(Unmarshal(_).to[DataObjectSpec])
+		}
 	}
 
 	def userIsAllowedUpload(dataObj: DataObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
@@ -136,10 +141,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				Future.failed(failureHandler(status))
 			}
 		else
-			resp.entity.toStrict(3.seconds)            //making sure the response is not chunked
-				.map(strict => strict.data.decodeString("UTF-8"))   //extracting the response body as string, to treat is as error message later
-				.recover{case _: Throwable => s"Got $status from the metadata server"}  //fallback error message
-				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))   //failing with the error message
+			Utils.responseAsString(resp)
+				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
 
 }

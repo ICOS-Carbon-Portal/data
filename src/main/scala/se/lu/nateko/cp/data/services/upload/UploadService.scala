@@ -29,6 +29,8 @@ import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
+import se.lu.nateko.cp.data.api.CpDataException
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -60,7 +62,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		) yield sink
 	}
 
-	def getTryIngestSink(objSpec: Uri, nRows: Option[Int])(implicit envri: Envri): Future[DataObjectSink] =
+	def getTryIngestSink(objSpec: Uri, nRows: Option[Int])(implicit envri: Envri): Future[TryIngestSink] =
 		meta.lookupObjSpec(objSpec).flatMap{spec =>
 			val ingSpec = IngestionSpec(spec, nRows, spec.self.label)
 			val origFile = Files.createTempFile("ingestionTest", null)
@@ -69,7 +71,11 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		}.map{task =>
 			task.sink.mapMaterializedValue(_.map{taskRes =>
 				Files.deleteIfExists(task.file.toPath)
-				new UploadResult(Seq(taskRes))
+				taskRes match{
+					case IngestionSuccess(metaExtract) => metaExtract
+					case fail: UploadTaskFailure => throw fail.error
+					case _ => throw new CpDataException(s"Unexpected UploadTaskResult $taskRes")
+				}
 			})
 		}
 
@@ -174,6 +180,7 @@ object UploadService{
 	type DataObjectSink = Sink[ByteString, Future[UploadResult]]
 	type UploadTaskSink = Sink[ByteString, Future[UploadTaskResult]]
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
+	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract]]
 
 	def fileName(dataObject: DataObject): String = dataObject.hash.id
 
