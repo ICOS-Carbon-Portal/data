@@ -52,7 +52,8 @@ export default class App {
 					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 				else {
 					if (typeof this.graph === "undefined") {
-						this.initGraph(tableFormat);
+						const title = window.frameElement ? null : objects[0].specLabel;
+						this.initGraph(tableFormat, title);
 						this.tableFormat = tableFormat;
 						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
 					}
@@ -85,7 +86,7 @@ export default class App {
 		});
 	}
 
-	initGraph(tableFormat){
+	initGraph(tableFormat, title){
 		this.showSpinner(true);
 
 		const params = this.params;
@@ -100,6 +101,7 @@ export default class App {
 			'graph',
 			[Array(labels.length).fill(0)],
 			{
+				title: title,
 				strokeWidth: 0,
 				drawPoints,
 				legend: 'always',

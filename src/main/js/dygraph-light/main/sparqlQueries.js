@@ -6,5 +6,6 @@ select * where {
 	?obj cpmeta:hasObjectSpec ?objSpec ;
 	cpmeta:hasNumberOfRows ?nRows ;
 	cpmeta:hasName ?fileName .
+	?objSpec rdfs:label ?specLabel .
 }`;
 }
