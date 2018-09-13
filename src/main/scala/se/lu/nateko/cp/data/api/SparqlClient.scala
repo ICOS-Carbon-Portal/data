@@ -39,12 +39,13 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 							resp.entity
 						case _ =>
 							resp.discardEntityBytes()
-							throw new Exception(s"Server responded with Content Type ${resp.entity.contentType}")
+							throw new CpDataException(s"SPARQL server responded with Content Type ${resp.entity.contentType}")
 					}
 					Unmarshal(entity).to[SparqlSelectResult]
 				case _ =>
-					resp.discardEntityBytes()
-					Future.failed(new Exception(s"Got ${resp.status} from the server"))
+					Utils.responseAsString(resp).flatMap{msg =>
+						Future.failed(new CpDataException(s"SPARQL server error: $msg"))
+					}
 			}
 		)
 	}

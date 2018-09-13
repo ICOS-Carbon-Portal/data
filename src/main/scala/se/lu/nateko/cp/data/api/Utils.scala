@@ -1,9 +1,13 @@
 package se.lu.nateko.cp.data.api
 
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 import java.nio.file.Path
 import java.nio.file.Files
+
+import akka.http.scaladsl.model.HttpResponse
+import akka.stream.Materializer
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 object Utils {
 
@@ -25,5 +29,12 @@ object Utils {
 				dirStream.close()
 			}
 		} else eagerExtractor(Iterator.empty)
+	}
+
+	def responseAsString(resp: HttpResponse)(implicit mat: Materializer): Future[String] = {
+		import mat.executionContext
+		resp.entity.toStrict(3.seconds)
+				.map(strict => strict.data.decodeString("UTF-8"))
+				.recover{case _: Throwable => resp.status.toString}
 	}
 }

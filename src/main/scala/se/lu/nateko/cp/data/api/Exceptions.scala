@@ -15,8 +15,8 @@ final class MetadataObjectNotFound(hash: Sha256Sum) extends UploadUserError(
 	s"No metadata found for data object with SHA-256 hash of $hash"
 )
 
-final class MetadataObjectIncomplete(hash: Sha256Sum, message: String) extends UploadUserError(
-	s"Metadata incomplete for $hash : $message"
+final class MetadataObjectIncomplete(objLabel: Option[String], message: String) extends UploadUserError(
+	s"Metadata incomplete${objLabel.fold("")(" for " + _)}: $message"
 )
 
 final class UnauthorizedUpload(message: String) extends CpDataException(message)

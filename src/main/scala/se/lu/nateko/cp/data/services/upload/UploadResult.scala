@@ -54,8 +54,8 @@ case class UnexpectedTaskFailure(val error: Throwable) extends UploadTaskFailure
 case class NotImplementedFailure(message: String) extends UploadTaskFailure{
 	val error = new CpDataException(message)
 }
-case class IncompleteMetadataFailure(hash: Sha256Sum, message: String) extends UploadTaskFailure{
-	val error = new MetadataObjectIncomplete(hash, message)
+case class IncompleteMetadataFailure(objLabel: Option[String], message: String) extends UploadTaskFailure{
+	val error = new MetadataObjectIncomplete(objLabel, message)
 }
 case class CancelledBecauseOfOthers(errors: Seq[UploadTaskFailure]) extends UploadTaskCancellation
 
