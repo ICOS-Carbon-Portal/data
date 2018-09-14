@@ -2,14 +2,14 @@ import 'babel-polyfill';
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchServices, setService, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
+import {fetchServices, setService, fetchTitle, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper';
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
 const pidIdx = sections.indexOf('netcdf') + 1;
 const pid = sections[pidIdx];
-const isIframe = pid !== '';
+const isPIDProvided = pid !== '';
 
 const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
 const keyValpairs = searchStr.split('&');
@@ -26,7 +26,7 @@ const gammaIdx = searchParams.gamma
 	: controls.gammas.values.indexOf(defaultGamma);
 
 const initState = {
-	isIframe,
+	isPIDProvided,
 	colorMaker: undefined,
 	controls,
 	countriesTopo: {
@@ -47,6 +47,7 @@ const initState = {
 	rasterFetchCount: 0,
 	raster: undefined,
 	rasterDataFetcher: undefined,
+	title: undefined,
 	toasterData: undefined
 };
 
@@ -70,7 +71,10 @@ export default function(){
 	store.dispatch(fetchCountriesTopo);
 	store.dispatch(selectGamma(gammaIdx));
 
-	if (isIframe) {
+	if (isPIDProvided) {
+		if (!window.frameElement) {
+			store.dispatch(fetchTitle(pid));
+		}
 		if (pid) {
 			store.dispatch(setService(pid));
 		} else {
