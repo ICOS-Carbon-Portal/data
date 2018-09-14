@@ -6,7 +6,7 @@ import Filters from '../components/filters/Filters.jsx';
 import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
-import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
+import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 
 class Search extends Component {
@@ -97,7 +97,6 @@ function dispatchToProps(dispatch){
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
-		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),

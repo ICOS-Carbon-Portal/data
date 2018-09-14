@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
+import {setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
 import BackButton from '../components/buttons/BackButton.jsx';
@@ -99,7 +99,6 @@ function dispatchToProps(dispatch){
 	return {
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		setCartName: newName => dispatch(setCartName(newName)),
-		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInCart(ids)),

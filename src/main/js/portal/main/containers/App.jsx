@@ -6,6 +6,7 @@ import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
+import {addToCart, removeFromCart} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
@@ -127,6 +128,8 @@ function dispatchToProps(dispatch){
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		updateCheckedObjectsInCart: ids => dispatch(updateCheckedObjectsInCart(ids)),
 		updateCheckedObjectsInSearch: ids => dispatch(updateCheckedObjectsInSearch(ids)),
+		addToCart: objInfo => dispatch(addToCart(objInfo)),
+		removeFromCart: id => dispatch(removeFromCart(id)),
 	};
 }
 
