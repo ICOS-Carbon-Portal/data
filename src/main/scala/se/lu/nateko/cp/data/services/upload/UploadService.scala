@@ -21,6 +21,7 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
 import se.lu.nateko.cp.data.api.B2StageClient
+import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -30,7 +31,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
-import se.lu.nateko.cp.data.api.CpDataException
+import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -90,13 +91,17 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 					s"File for ${dataObj.hash} not found on the server, can not reingest"
 				)
 			};
-			done <- {
+			completionInfo <- {
 				FileIO.fromPath(origFile.toPath).runWith(ingTask.sink).transform{
 					case Success(res: UploadTaskFailure) => Failure(res.error)
-					case other => other.map(_ => Done)
+					case Success(IngestionSuccess(metaExtr)) =>
+						Success(UploadCompletionInfo(origFile.length, Some(metaExtr)))
+					case Success(taskRes) => Failure(new CpDataException(s"Unexpected UploadTaskResult $taskRes"))
+					case Failure(err) => Failure(err)
 				}
-			}
-		) yield done
+			};
+			_ <- meta.completeUpload(hash, completionInfo)
+		) yield Done
 
 	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] = {
 		implicit val envri = Envri.ICOS
