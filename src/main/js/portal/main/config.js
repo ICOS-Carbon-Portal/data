@@ -18,7 +18,7 @@ export default {
 	dobjCacheFetchLimit: 500,
 	dobjExtendedCacheFetchLimit: 100,
 	previewIdPrefix: 'https://meta.icos-cp.eu/objects/',
-	historyStateMaxAge: (1000 * 3600 * 24)
+	historyStateMaxAge: (1000 * 3600 * 24),
 	dobjSortLimit: 2000,
 };
 

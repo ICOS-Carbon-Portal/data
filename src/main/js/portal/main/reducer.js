@@ -38,9 +38,10 @@ import {getStateFromHash} from "./models/HashStateHandler";
 
 
 const specTableKeys = Object.keys(placeholders);
+let currentCart;
 
 export default function(state = new State(), action){
-	console.log({actionType: action.type, state, history: history.state});
+	console.log({actionType: action.type, action, state, history: history.state});
 	switch(action.type){
 
 		case ERROR:
@@ -88,7 +89,7 @@ export default function(state = new State(), action){
 			});
 
 		case RESTORE_FROM_HISTORY:
-			return State.deserialize(action.historyState, state.cart);
+			return State.deserialize(action.historyState, currentCart);
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
@@ -115,7 +116,7 @@ export default function(state = new State(), action){
 
 		case RESTORE_PREVIEW:
 			return state.update({
-				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
+				preview: state.preview.restore(state.lookup.table, currentCart, state.objectsTable)
 			});
 
 		case OBJECTS_FETCHED:
@@ -176,13 +177,15 @@ export default function(state = new State(), action){
 		case PREVIEW:
 			return state.update({
 				route: config.ROUTE_PREVIEW,
-				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
+				preview: state.preview.initPreview(state.lookup.table, currentCart, action.id, state.objectsTable)
 			});
 
 		case PREVIEW_VISIBILITY:
 			return state.update({preview: action.visible ? state.preview.show() : state.preview.hide()});
 
 		case PREVIEW_SETTING_UPDATED:
+			currentCart = action.cart;
+
 			return state.update({
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
@@ -194,6 +197,9 @@ export default function(state = new State(), action){
 			});
 
 		case CART_UPDATED:
+			currentCart = action.cart;
+			console.log({currentCart});
+
 			return state.update({
 				cart: action.cart
 			});

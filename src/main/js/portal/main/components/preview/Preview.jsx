@@ -32,7 +32,7 @@ export default class Preview extends Component {
 	}
 
 	render(){
-		const {preview, backButtonAction, routeAndParams, cart} = this.props;
+		const {preview, cart} = this.props;
 		const areItemsInCart = preview.items.reduce((prevVal, item) => cart.hasItem(item.id), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
@@ -41,7 +41,6 @@ export default class Preview extends Component {
 			<div>
 				{preview
 					? <div>
-						<BackButton action={backButtonAction} previousRoute={routeAndParams.previousRoute}/>
 
 						<div className="panel panel-default">
 							<div className="panel-heading">

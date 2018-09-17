@@ -57,8 +57,35 @@ const failWithError = dispatch => error => {
 
 export const init = () => dispatch => {
 	dispatch({type: INIT});
-	dispatch(fetchUserInfo(true));
-	dispatch(getAllSpecTables());
+
+	getWhoIam().then(user => {
+		dispatch({
+			type: WHOAMI_FETCHED,
+			user
+		});
+		return user;
+
+	}).then(user => {
+		getProfile(user.email).then(profile => {
+			dispatch({
+				type: USER_INFO_FETCHED,
+				user,
+				profile
+			});
+		});
+
+		getCart(user.email).then(
+			({cartInSessionStorage, cartInRestheart}) => {
+
+				cartInRestheart.then(restheartCart => {
+					const cart = restoreCarts(cartInSessionStorage, restheartCart);
+
+					dispatch(updateCart(user.email, cart))
+						.then(_ => dispatch(getAllSpecTables()));
+				});
+			}
+		);
+	});
 };
 
 export const restoreFromHistory = historyState => dispatch => {
@@ -175,18 +202,25 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 
 	const filters = getFilters();
 
-	logPortalUsage(filterCategories, filterTemporal, filterFreeText);
+	if (route === config.ROUTE_SEARCH) {
+		logPortalUsage(filterCategories, filterTemporal, filterFreeText);
+	}
 
 	const specs = route === config.ROUTE_CART
 		? []
 		: specTable.getSpeciesFilter(null);
-	const stations = specTable.getFilter('station').length
-		? specTable.getDistinctAvailableColValues('stationUri')
-		: [];
 
-	const submitters = specTable.getFilter('submitter').length
-		? specTable.getDistinctAvailableColValues('submitterUri')
-		: [];
+	const stations = route === config.ROUTE_CART
+		? []
+		: specTable.getFilter('station').length
+			? specTable.getDistinctAvailableColValues('stationUri')
+			: [];
+
+	const submitters = route === config.ROUTE_CART
+		? []
+		: specTable.getFilter('submitter').length
+			? specTable.getDistinctAvailableColValues('submitterUri')
+			: [];
 
 	const rdfGraphs = route === config.ROUTE_CART
 		? []
@@ -210,7 +244,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
-console.log({options, route, rows});
+console.log({route, rows, filters, cart, options});
 			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
@@ -294,24 +328,10 @@ export const setPreviewUrl = url => dispatch => {
 	});
 };
 
-export const fetchCart = (dispatch, getState) => {
-	const state = getState();
-
-	getCart(state.user.email).then(
-		({cartInLocalStorage, cartInRestheart}) => {
-
-			cartInRestheart.then(restheartCart => {
-				const cart = restoreCarts(cartInLocalStorage, restheartCart);
-				updateCart(state.user.email, cart, dispatch);
-			});
-		}
-	);
-};
-
 export const setCartName = newName => (dispatch, getState) => {
 	const state = getState();
 
-	updateCart(state.user.email, state.cart.withName(newName), dispatch);
+	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
 };
 
 export const addToCart = ids => (dispatch, getState) => {
@@ -333,7 +353,7 @@ export const addToCart = ids => (dispatch, getState) => {
 	});
 
 	if (newItems.length > 0) {
-		updateCart(state.user.email, cart.addItem(newItems), dispatch);
+		dispatch(updateCart(state.user.email, cart.addItem(newItems)));
 	}
 };
 
@@ -341,38 +361,16 @@ export const removeFromCart = ids => (dispatch, getState) => {
 	const state = getState();
 	const cart = state.cart.removeItems(ids);
 
-	updateCart(state.user.email, cart, dispatch);
+	dispatch(updateCart(state.user.email, cart));
 };
 
-const updateCart = (email, cart, dispatch) => {
-	saveCart(email, cart).then(
+const updateCart = (email, cart) => dispatch => {
+	return saveCart(email, cart).then(
 		dispatch({
 			type: CART_UPDATED,
 			cart
 		})
 	);
-};
-
-export const fetchUserInfo = restoreCart => dispatch => {
-	getWhoIam()
-		.then(user => {
-			dispatch({
-				type: WHOAMI_FETCHED,
-				user
-			});
-			return user;
-		})
-		.then(user => {
-			getProfile(user.email).then(profile => {
-				dispatch({
-					type: USER_INFO_FETCHED,
-					user,
-					profile
-				});
-
-				if (restoreCart) dispatch(fetchCart);
-			});
-		});
 };
 
 export const fetchIsBatchDownloadOk = dispatch => {
