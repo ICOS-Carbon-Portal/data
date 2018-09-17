@@ -1,9 +1,30 @@
 import {SPECCOL} from '../sparqlQueries';
+import SpecTable from "./SpecTable";
+
 
 export default class CompositeSpecTable{
 
 	constructor(nameToTableKv){
 		this._tables = nameToTableKv;
+	}
+
+	get serialize(){
+		return Object.keys(this._tables).reduce((acc, key) => {
+			acc[key] = this._tables[key].serialize;
+			return acc;
+		}, {});
+	}
+
+	static deserialize(jsonCompositeSpecTable) {
+		const basics = jsonCompositeSpecTable.basics;
+		const columnMeta = jsonCompositeSpecTable.columnMeta;
+		const origins = jsonCompositeSpecTable.origins;
+
+		return new CompositeSpecTable({
+			basics: new SpecTable(...Object.keys(basics).map(t => basics[t])),
+			columnMeta: new SpecTable(...Object.keys(columnMeta).map(t => columnMeta[t])),
+			origins: new SpecTable(...Object.keys(origins).map(t => origins[t]))
+		});
 	}
 
 	get tables(){

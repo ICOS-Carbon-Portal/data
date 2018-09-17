@@ -14,6 +14,14 @@ export default class SpecTable{
 		this._rows = rows;
 	}
 
+	get serialize(){
+		return {
+			colNames: this._colNames,
+			rows: this._rows,
+			filters: this._filters
+		};
+	}
+
 	get names(){
 		return this._colNames.filter(col => col !== SPECCOL);
 	}

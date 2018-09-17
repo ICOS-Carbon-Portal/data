@@ -1,6 +1,7 @@
 export const ERROR = 'ERROR';
 export const INIT = 'INIT';
-export const RESTORE_FROM_HASH = 'RESTORE_FROM_HASH';
+export const SAVE_STATE = 'SAVE_STATE';
+export const RESTORE_FROM_HISTORY = 'RESTORE_FROM_HISTORY';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
 export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
@@ -60,9 +61,15 @@ export const init = () => dispatch => {
 	dispatch(getAllSpecTables());
 };
 
-export const restoreFromHash = () => dispatch => {
-	dispatch({type: RESTORE_FROM_HASH});
-	dispatch(getFilteredDataObjects);
+export const restoreFromHistory = historyState => dispatch => {
+	if (Date.now() - historyState.ts < config.historyStateMaxAge) {
+		dispatch({
+			type: RESTORE_FROM_HISTORY,
+			historyState
+		});
+	} else {
+		dispatch(init());
+	}
 };
 
 export const getAllSpecTables = () => dispatch => {
@@ -133,7 +140,7 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 };
 
 const logPortalUsage = (filterCategories, filterTemporal, filterFreeText) => {
-	const filters = Object.assign({}, filterCategories, filterTemporal.summary, filterFreeText.summary);
+	const filters = Object.assign({}, filterCategories, filterTemporal.serialize, filterFreeText.serialize);
 
 	if (Object.keys(filters).length) {
 		saveToRestheart({
@@ -145,18 +152,34 @@ const logPortalUsage = (filterCategories, filterTemporal, filterFreeText) => {
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, route, preview, sorting, paging, formatToRdfGraph,
-		tabs, filterCategories, filterTemporal, filterFreeText} = getState();
+	const {specTable, route, preview, sorting, formatToRdfGraph,
+		tabs, filterCategories, filterTemporal, filterFreeText, cart} = getState();
 
-	const filters = route === config.ROUTE_PREVIEW && preview.hasPids
-		? [{category: 'pids', pids: preview.summary}]
-		: areFiltersEnabled(tabs, filterTemporal, filterFreeText)
-			? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
-			: [];
+	const getFilters = () => {
+		if (route === config.ROUTE_PREVIEW && preview.hasPids){
+			return [{category: 'pids', pids: preview.pids}];
+
+		} else if (route === config.ROUTE_CART) {
+			return [{
+				category: 'pids',
+				pids: cart.ids.map(id => id.split('/').pop())
+			}];
+
+		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
+			return filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}]);
+
+		} else {
+			return [];
+		}
+	};
+
+	const filters = getFilters();
 
 	logPortalUsage(filterCategories, filterTemporal, filterFreeText);
 
-	const specs = specTable.getSpeciesFilter(null);
+	const specs = route === config.ROUTE_CART
+		? []
+		: specTable.getSpeciesFilter(null);
 	const stations = specTable.getFilter('station').length
 		? specTable.getDistinctAvailableColValues('stationUri')
 		: [];
@@ -165,11 +188,15 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		? specTable.getDistinctAvailableColValues('submitterUri')
 		: [];
 
-	const rdfGraphs = specTable.getColumnValuesFilter('format')
-		.map(f => formatToRdfGraph[f]);
+	const rdfGraphs = route === config.ROUTE_CART
+		? []
+		: specTable.getColumnValuesFilter('format').map(f => formatToRdfGraph[f]);
+
+	const paging = route === config.ROUTE_CART
+		? {offset: 0, limit: cart.ids.length}
+		: getState().paging;
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
-
 	dataObjectsFetcher.fetch(options).then(
 		({rows, cacheSize, isDataEndReached}) => {
 
@@ -183,7 +210,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
-
+console.log({options, route, rows});
 			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
@@ -191,16 +218,15 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 };
 
 const fetchExtendedDataObjInfo = options => dispatch => {
-	dataObjectsExtendedFetcher.fetch(options)
-		.then(
-			extendedDobjInfo => {
-				dispatch({
-					type: EXTENDED_DOBJ_INFO_FETCHED,
-					extendedDobjInfo
-				})
-			},
-			failWithError(dispatch)
-		);
+	dataObjectsExtendedFetcher.fetch(options).then(
+		extendedDobjInfo => {
+			dispatch({
+				type: EXTENDED_DOBJ_INFO_FETCHED,
+				extendedDobjInfo
+			});
+		},
+		failWithError(dispatch)
+	);
 };
 
 export const specFiltersReset = dispatch => {
@@ -224,17 +250,24 @@ export const requestStep = direction => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateRoute = route => dispatch => {
+export const updateRoute = route => (dispatch, getState) => {
+	const state = getState();
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 	dispatch({
 		type: ROUTE_UPDATED,
 		route: newRoute
 	});
+
+	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
+		dispatch(getFilteredDataObjects);
+
+	} else if (newRoute === config.ROUTE_SEARCH && state.route === config.ROUTE_CART){
+		dispatch(getFilteredDataObjects);
+	}
 };
 
-export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
-	const {filterTemporal, filterFreeText} = getState();
+export const switchTab = (tabName, selectedTabId) => dispatch => {
 
 	dispatch({
 		type: SWITCH_TAB,
@@ -370,19 +403,4 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
 	dispatch(getFilteredDataObjects);
-};
-
-const updatePaging = (old, direction) => {
-	if(direction < 0){
-		if(old.offset === 0) return old;
-		const offset = Math.max(0, old.offset - config.stepsize);
-		return Object.assign({}, old, {offset});
-
-	} else if(direction > 0){
-		if(old.offset + old.limit >= old.objCount) return old;
-		if(old.offset + config.stepsize >= old.objCount) return old;
-		const offset = old.offset + config.stepsize;
-		return Object.assign({}, old, {offset});
-
-	} else return old;
 };

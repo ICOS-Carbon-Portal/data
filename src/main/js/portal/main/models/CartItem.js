@@ -7,6 +7,16 @@ export default class CartItem {
 		this._keyValPairs = this.deconstructURL(url);
 	}
 
+	get serialize(){
+		return {
+			id: this._id,
+			dataobject: this._dataobject,
+			type: this._type,
+			url: this._url,
+			keyValPairs: this._keyValPairs
+		};
+	}
+
 	deconstructURL(url) {
 		if (!url) return {};
 

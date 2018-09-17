@@ -94,4 +94,4 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state, dispatchToProps)(DataCart);
+export default connect(state => state.toPlainObject, dispatchToProps)(DataCart);

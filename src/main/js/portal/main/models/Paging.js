@@ -1,4 +1,5 @@
 import config from '../config';
+import FilterFreeText from "./FilterFreeText";
 
 
 export default class Paging{
@@ -11,6 +12,22 @@ export default class Paging{
 		this._cacheSize = cacheSize;
 		this._cacheOffset = isNaN(cacheOffset) ? this._offset : cacheOffset;
 		this._isDataEndReached = isDataEndReached;
+	}
+
+	get serialize(){
+		return {
+			objCount: this._objCount,
+			offset: this._offset,
+			pageCount: this._pageCount,
+			filtersEnabled: this._filtersEnabled,
+			cacheSize: this._cacheSize,
+			cacheOffset: this._cacheOffset,
+			isDataEndReached: this._isDataEndReached
+		};
+	}
+
+	static deserialize(jsonPaging) {
+		return new Paging(jsonPaging);
 	}
 
 	get objCount(){

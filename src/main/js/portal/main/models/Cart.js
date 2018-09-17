@@ -4,7 +4,15 @@ export default class Cart {
 	constructor(name, items){
 		this._name = name || 'My data cart';
 		this._items = items || [];
-		this._ts = items ? Date.now() + '' : '0';
+		this._ts = (items ? Date.now() + '' : '0');
+	}
+
+	get serialize(){
+		return {
+			name: this._name,
+			items: this._items.map(item => item.serialize),
+			ts: this._ts
+		}
 	}
 
 	addItem(cartItem){

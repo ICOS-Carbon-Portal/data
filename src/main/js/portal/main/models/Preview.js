@@ -3,6 +3,7 @@ import {getNewTimeseriesUrl} from '../utils.js';
 import config from '../config';
 import deepEqual from 'deep-equal';
 
+
 export default class Preview {
 	constructor(items, options, type, visible){
 		this._items = items || [];
@@ -10,6 +11,24 @@ export default class Preview {
 		this._options = options;
 		this._type = type;
 		this._visible = visible === undefined ? false : visible;
+	}
+
+	get serialize(){
+		return {
+			items: this._items.map(item => item.serialize),
+			options: this._options,
+			type: this._type,
+			visible: this._visible
+		};
+	}
+
+	static deserialize(jsonPreview) {
+		const items = jsonPreview.items.map(item => new CartItem(item.dataobject, item.type, item.url));
+		const options = jsonPreview.options;
+		const type = jsonPreview.type;
+		const visible = jsonPreview.visible;
+
+		return new Preview(items, options, type, visible);
 	}
 
 	initPreview(lookup, cart, ids, objectsTable) {
@@ -34,6 +53,7 @@ export default class Preview {
 		});
 
 		const items = objects.map(o => o.item);
+		console.log({lookup, cart, hasItem: cart.hasItem, ids, objectsTable, objects, items, options});
 
 		if (options.type === config.TIMESERIES){
 			const xAxis = ['Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.includes(x));
@@ -79,12 +99,12 @@ export default class Preview {
 		return new Preview(this._items, this._options, this._type, false);
 	}
 
-	get summary(){
+	get pids(){
 		return this._pids;
 	}
 
 	get hasPids(){
-		return this.summary.length > 0;
+		return this._pids.length > 0;
 	}
 
 	get item() {

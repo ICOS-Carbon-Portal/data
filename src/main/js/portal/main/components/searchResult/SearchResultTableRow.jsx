@@ -28,6 +28,7 @@ export default class SimpleObjectTableRow extends Component{
 			: props.extendedInfo;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
 		const checkboxDisabled = objInfo.level === 0 ? "disabled" : "";
+		// console.log({props});
 
 		return(
 			<tr style={{margin: '20px 0'}}>

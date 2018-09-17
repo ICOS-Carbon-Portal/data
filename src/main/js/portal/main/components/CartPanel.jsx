@@ -29,6 +29,7 @@ export default class CartPanel extends Component {
 
 	render(){
 		const props = this.props;
+		console.log({cart: props.cart, extendedDobjInfo: props.extendedDobjInfo});
 
 		return (
 			<div className="panel panel-default">

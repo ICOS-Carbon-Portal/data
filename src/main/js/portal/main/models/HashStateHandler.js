@@ -1,4 +1,3 @@
-import deepEqual from 'deep-equal';
 import config from "../config";
 import FilterTemporal from "./FilterTemporal";
 import FilterFreeText from "./FilterFreeText";
@@ -15,19 +14,6 @@ const stateStructure = {
 	preview: undefined
 };
 
-const getStateFomHash = () => {
-	const hash = window.location.hash.substr(1);
-	let hashState;
-
-	try {
-		hashState = JSON.parse(decodeURIComponent(hash));
-	} catch(err) {
-		hashState = {};
-	}
-
-	return hashState;
-};
-
 const getStateFromStore = storeState => {
 	return Object.keys(stateStructure).reduce((acc, key) => {
 		acc[key] = storeState[key];
@@ -37,83 +23,118 @@ const getStateFromStore = storeState => {
 
 const simplifyState = state => {
 	return Object.assign(state, {
-		filterTemporal: state.filterTemporal ? state.filterTemporal.summary : {},
-		filterFreeText: state.filterFreeText.summary,
-		preview: state.preview.summary
+		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
+		filterFreeText: state.filterFreeText.serialize,
+		preview: state.preview.pids
 	});
 };
 
-const extendState = state => {
-	state.route = state.route || config.DEFAULT_ROUTE;
-	state.filterCategories = state.filterCategories || {};
-	state.filterTemporal = state.filterTemporal
-		? new FilterTemporal().restore(state.filterTemporal)
-		: new FilterTemporal();
-	state.filterFreeText = new FilterFreeText().restore(state.filterFreeText);
-	state.tabs = state.tabs || {};
-	state.page = state.page || 0;
-	state.preview = new Preview().withPids(state.preview || []);
+const jsonToState = state => {
+	const stateFromHash = Object.assign({}, state);
+
+	try {
+		state.route = state.route || config.DEFAULT_ROUTE;
+		state.filterCategories = state.filterCategories || {};
+		state.filterTemporal = state.filterTemporal
+			? new FilterTemporal().restore(state.filterTemporal)
+			: new FilterTemporal();
+		state.filterFreeText = state.filterFreeText === undefined
+			? new FilterFreeText()
+			: FilterFreeText.deserialize(state.filterFreeText);
+		state.tabs = state.tabs || {};
+		state.page = state.page || 0;
+		state.preview = new Preview().withPids(state.preview || []);
+
+		// const stateFromDeserialize = State.deserialize(state, {});
+		console.log({stateFromHash, newState: state});
+	} catch(err) {
+		console.log({stateFromHash, err});
+		throw new Error("Could not convert json to state");
+	}
 
 	return state;
+};
+
+const handleRoute = storeState => {
+	if (storeState.route === config.ROUTE_SEARCH){
+		delete storeState.route;
+	}
 };
 
 const specialCases = state => {
-	if (state.route !== config.ROUTE_PREVIEW) delete state.preview;
+	if (state.route === config.ROUTE_PREVIEW) {
+		return {
+			route: state.route,
+			preview: state.preview
+		};
+	} else {
+		delete state.preview;
+	}
+
+	if (state.route === config.ROUTE_SEARCH){
+		delete state.route;
+	}
 
 	return state;
 };
 
+function getCurrentHash(){
+	return decodeURIComponent(window.location.hash.substr(1));
+}
+
 const hashUpdater = store => () => {
-	const {hashState, storeState} = getStates(store);
-	const newHash = deepEqual(hashState, storeState) ? undefined : storeState;
+	const newHash = stateToHash(store.getState());
+	const oldHash = getCurrentHash();
 
-	if (newHash) {
-		window.location.hash = JSON.stringify(specialCases(newHash));
+	// console.log('hashUpdater', {updateHash: (newHash !== oldHash), history: history.state, newHash, oldHash});
+
+	if (newHash !== oldHash){
+		window.location.hash = newHash;
 	}
-
 };
 export default hashUpdater;
 
-export const shouldAppLoadFromHash = store => {
-	const {hashState, storeState} = getStates(store);
-	return !deepEqual(hashState, storeState);
-};
-
-const getStates = store => {
-	const state = store.getState();
-	const currentHash = getStateFomHash();
+const stateToHash = state => {
 	const currentStoreState = getStateFromStore(state);
 	const simplifiedStoreState = simplifyState(currentStoreState);
-	const reducedStoreState = reduceHashState(simplifiedStoreState);
-
-	return {
-		hashState: currentHash,
-		storeState: reducedStoreState
-	};
+	const reducedStoreState = reduceState(simplifiedStoreState);
+	handleRoute(reducedStoreState);
+	const final = specialCases(reducedStoreState);
+	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-export const hash2State = () => {
-	return extendState(getStateFomHash());
+//No # in the beginning!
+const hashToState = hash => {
+	try {
+		const state = JSON.parse(decodeURIComponent(hash));
+		return jsonToState(state);
+	} catch(err) {
+		return {};
+	}
 };
 
-const reduceHashState = hashState => {
-	return Object.keys(hashState).reduce((acc, key) => {
+export const getStateFromHash = () => {
+	return hashToState(getCurrentHash());
+};
 
-		if (Array.isArray(hashState[key]) && hashState[key].length){
-			acc[key] = hashState[key];
+const reduceState = state => {
+	return Object.keys(state).reduce((acc, key) => {
 
-		} else if (typeof hashState[key] === 'object') {
-			const part = reduceHashState(hashState[key]);
+		if (Array.isArray(state[key]) && state[key].length){
+			acc[key] = state[key];
+
+		} else if (typeof state[key] === 'object') {
+			const part = reduceState(state[key]);
 
 			if (Object.keys(part).length) {
 				acc[key] = part;
 			}
 
-		} else if (typeof hashState[key] === 'string'){
-			acc[key] = hashState[key];
+		} else if (typeof state[key] === 'string'){
+			acc[key] = state[key];
 
-		} else if (typeof hashState[key] === 'number' && hashState[key] !== 0){
-			acc[key] = hashState[key];
+		} else if (typeof state[key] === 'number' && state[key] !== 0){
+			acc[key] = state[key];
 		}
 
 		return acc;

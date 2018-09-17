@@ -2,8 +2,8 @@ import React, { Component } from 'react'
 import { Provider } from 'react-redux'
 import getStore from '../store.js';
 import App from './App.jsx';
-import {restoreFromHash} from '../actions';
-import hashUpdater, {shouldAppLoadFromHash} from '../models/HashStateHandler';
+import {restoreFromHistory} from '../actions';
+import hashUpdater from '../models/HashStateHandler';
 
 
 const store = getStore();
@@ -13,8 +13,12 @@ export default class Root extends Component {
 
 	componentDidMount() {
 		window.addEventListener('popstate', e => {
-			e.preventDefault();
-			if (shouldAppLoadFromHash(store)) store.dispatch(restoreFromHash());
+			console.log('popstate', history.state);
+			if (history.state) {
+				store.dispatch(restoreFromHistory(history.state));
+			} else {
+				history.replaceState(store.getState().serialize, null, window.location);
+			}
 		});
 	}
 

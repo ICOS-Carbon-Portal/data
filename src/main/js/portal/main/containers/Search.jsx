@@ -94,4 +94,4 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state, dispatchToProps)(Search);
+export default connect(state => state.toPlainObject, dispatchToProps)(Search);

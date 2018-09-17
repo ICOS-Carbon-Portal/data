@@ -24,9 +24,10 @@ export default class Preview extends Component {
 		this.setState({iframeSrc});
 		this.props.setPreviewUrl(iframeSrc);
 
-		if (history.length > this.historyLength) {
-			history.go(-1);
-		}
+		// if (history.length > this.historyLength) {
+		// 	console.log("backing one step");
+		// 	history.go(-1);
+		// }
 	}
 
 	componentWillUnmount(){
@@ -34,13 +35,12 @@ export default class Preview extends Component {
 	}
 
 	render(){
-		const {preview, backButtonAction} = this.props;
+		const {preview} = this.props;
 
 		return (
 			<div>
 				{preview
 					? <div>
-						<BackButton action={backButtonAction} previousRoute={'search'}/>
 
 						<div className="panel panel-default">
 							<div className="panel-heading">

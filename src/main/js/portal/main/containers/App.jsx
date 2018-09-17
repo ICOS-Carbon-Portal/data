@@ -20,11 +20,13 @@ export class App extends Component {
 	}
 
 	handleBackButton(previousRoute){
+		// console.log({previousRoute});
 		this.props.updateRoute(previousRoute);
 	}
 
 	render(){
 		const props = this.props;
+		// console.log({route: props.route});
 
 		return (
 			<div className="container-fluid" style={{marginTop: 10}}>

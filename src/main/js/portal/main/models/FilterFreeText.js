@@ -1,7 +1,20 @@
+
 export default class FilterFreeText{
 	constructor(pidList, selectedPids){
 		this._pidList = pidList || [];
 		this._selectedPids = selectedPids || [];
+	}
+
+	get serialize(){
+		const res = {};
+
+		if (this.hasFilter) res.pids = this._selectedPids;
+
+		return res;
+	}
+
+	static deserialize(jsonFilterFreeText) {
+		return new FilterFreeText(jsonFilterFreeText.pids, jsonFilterFreeText.pids);
 	}
 
 	withPidList(pidList){
@@ -24,23 +37,15 @@ export default class FilterFreeText{
 		return new FilterFreeText();
 	}
 
-	restore(items){
-		if (items === undefined){
-			return this;
-		} else {
-			return new FilterFreeText(items.pids, items.pids);
-		}
-	}
+	// restore(items){
+	// 	if (items === undefined){
+	// 		return this;
+	// 	} else {
+	// 		return new FilterFreeText(items.pids, items.pids);
+	// 	}
+	// }
 
 	get hasFilter(){
 		return this._selectedPids.length > 0;
-	}
-
-	get summary(){
-		const res = {};
-
-		if (this._selectedPids.length > 0) res.pids = this._selectedPids;
-
-		return res;
 	}
 }
