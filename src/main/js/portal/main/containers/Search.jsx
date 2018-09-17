@@ -18,13 +18,6 @@ class Search extends Component {
 		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
 	}
 
-	handleCheckboxChange() {
-		const checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
-			.map((checkbox) => checkbox.value);
-
-		this.props.updateCheckedObjects(checkedObjects);
-	}
-
 	handleAddToCart(objInfo) {
 		this.props.addToCart(objInfo);
 		this.props.updateCheckedObjects([]);
@@ -67,7 +60,7 @@ class Search extends Component {
 						<SearchResultTable
 							tabHeader="Search results"
 							previewAction={this.handlePreview.bind(this)}
-							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+								updateCheckedObjects={props.updateCheckedObjects.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							{...copyprops(props, [

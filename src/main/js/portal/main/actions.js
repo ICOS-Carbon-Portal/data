@@ -143,10 +143,10 @@ export const updateSelectedPids = selectedPids => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateCheckedObjectsInSearch = checkedObjectsInSearch => dispatch => {
+export const updateCheckedObjectsInSearch = checkedObjectInSearch => dispatch => {
 	dispatch({
 		type: UPDATE_CHECKED_OBJECTS_IN_SEARCH,
-		checkedObjectsInSearch
+		checkedObjectInSearch
 	});
 };
 
