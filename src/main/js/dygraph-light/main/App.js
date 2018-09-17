@@ -1,7 +1,7 @@
 import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
 import {saveToRestheart} from '../../common/main/backend';
-
+import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 
 const spinnerDelay = 100;
 
@@ -13,14 +13,27 @@ export default class App {
 		this.tableFormat = undefined;
 		this.labels = [];
 
-		if (params.isValidParams) {
-			this.main();
+		if (window.frameElement) {
+			this.showSpinner(false);
+			window.onmessage = event => {
+				const urlParams = new URL(event.data).search;
+				this.params = new UrlSearchParams(urlParams, ['objId', 'x', 'y']);
+				if (this.params.isValidParams) {
+					hideError();
+					this.main();
+				} else {
+					presentError(`Please choose a value for ${this.params.missingParams.join(', ')}.`);
+				}
+			}
 		} else {
-			let errMsg = '<b>The request you made is not valid!</b>';
-			errMsg += '<p>It must contain these parameters: ' + this.params.required.join(', ') + '</p>';
-			errMsg += '<p>The request is missing these parameters: ' + params.missingParams.join(', ') + '.</p>';
+			if (params.isValidParams) {
+				this.main();
+			} else {
+				const errMsg = `<h2>The request you made is not valid!</h2>
+				<p>It is missing a value for ${params.missingParams.join(', ')}.</p>`;
 
-			presentError(errMsg);
+				presentError(errMsg);
+			}
 		}
 	}
 
@@ -39,7 +52,8 @@ export default class App {
 					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 				else {
 					if (typeof this.graph === "undefined") {
-						this.initGraph(tableFormat);
+						const title = window.frameElement ? null : objects[0].specLabel;
+						this.initGraph(tableFormat, title);
 						this.tableFormat = tableFormat;
 						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
 					}
@@ -72,7 +86,7 @@ export default class App {
 		});
 	}
 
-	initGraph(tableFormat){
+	initGraph(tableFormat, title){
 		this.showSpinner(true);
 
 		const params = this.params;
@@ -87,6 +101,7 @@ export default class App {
 			'graph',
 			[Array(labels.length).fill(0)],
 			{
+				title: title,
 				strokeWidth: 0,
 				drawPoints,
 				legend: 'always',
@@ -254,6 +269,10 @@ const presentError = (errMsg) => {
 	document.getElementById('cp-spinner').style.display = 'none';
 	document.getElementById('error').style.display = 'flex';
 	document.getElementById('error').innerHTML = errMsg;
+};
+
+const hideError = () => {
+	document.getElementById('error').style.display = 'none';
 };
 
 const formatData = dataToSave => {

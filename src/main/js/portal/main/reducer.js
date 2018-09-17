@@ -267,7 +267,7 @@ function updateSorting(old, varName){
 }
 
 function updateSortingEnableness(old, objCount){
-	const isEnabled = objCount > 0 && objCount <= 2000;
+	const isEnabled = objCount <= config.dobjSortLimit;
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});

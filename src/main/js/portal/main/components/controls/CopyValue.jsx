@@ -42,7 +42,7 @@ export default class CopyValue extends Component {
 
 const Btn = ({show, btnText, clickAction}) => {
 	return (
-		<button	onClick={clickAction} className="btn btn-primary" style={show ? {} : {visibility: 'hidden'}}>
+		<button	onClick={clickAction} className="btn btn-default" style={show ? {} : {visibility: 'hidden'}}>
 			{btnText}
 		</button>
 	);
@@ -56,7 +56,7 @@ const CopyCtr = ({self, valToCopy, copyHelpText, copyClick}) => {
 	return (
 		<span className="input-group">
 			<span className="input-group-btn">
-				<button className="btn btn-primary" onClick={copyClick} title={copyHelpText}>
+				<button className="btn btn-default" onClick={copyClick} title={copyHelpText}>
 					<span className="glyphicon glyphicon-copy" />
 				</button>
 			</span>

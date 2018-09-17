@@ -5,7 +5,8 @@ import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal} from '../actions';
+import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
+import {addToCart, removeFromCart} from '../actions';
 import commonConfig from '../../../common/main/config';
 import localConfig from '../config';
 
@@ -16,6 +17,8 @@ export class App extends Component {
 	}
 
 	handleRouteClick(newRoute){
+		this.props.updateCheckedObjectsInCart([]);
+		this.props.updateCheckedObjectsInSearch([]);
 		this.props.updateRoute(newRoute);
 	}
 
@@ -29,7 +32,7 @@ export class App extends Component {
 		// console.log({route: props.route});
 
 		return (
-			<div className="container-fluid" style={{marginTop: 10}}>
+			<div style={{marginTop: 10}}>
 
 				<AnimatedToasters
 					autoCloseDelay={5000}
@@ -37,17 +40,18 @@ export class App extends Component {
 					maxWidth={400}
 				/>
 
-				<div className="page-header">
-					<h1>
+				<div className="row page-header">
+					<h1 className="col-md-9">
 						{commonConfig.envri} data portal
 						<small> Search, preview, download data objects</small>
-
+					</h1>
+					<div className="col-md-3 text-right" style={{marginTop: 30}}>
 						<SwitchRouteBtn
 							currentRoute={props.route}
 							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
-					</h1>
+					</div>
 				</div>
 
 				<ErrorBoundary>
@@ -80,7 +84,7 @@ const SearchBtn = props => {
 	const colCount = cart.count;
 
 	return (
-		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)} style={{float: 'right'}}>
+		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)}>
 			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}
@@ -128,6 +132,10 @@ function dispatchToProps(dispatch){
 		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
+		updateCheckedObjectsInCart: ids => dispatch(updateCheckedObjectsInCart(ids)),
+		updateCheckedObjectsInSearch: ids => dispatch(updateCheckedObjectsInSearch(ids)),
+		addToCart: objInfo => dispatch(addToCart(objInfo)),
+		removeFromCart: id => dispatch(removeFromCart(id)),
 	};
 }
 

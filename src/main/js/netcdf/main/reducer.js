@@ -1,6 +1,6 @@
 import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
 	SERVICE_SET, SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
-	PUSH_PLAY, INCREMENT_RASTER, SERVICES_FETCHED} from './actions';
+	PUSH_PLAY, INCREMENT_RASTER, SERVICES_FETCHED, TITLE_FETCHED} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
@@ -37,6 +37,11 @@ export default function(state, action){
 			return update({
 				controls: state.controls.withSelectedService(action.idx)
 			});
+
+		case TITLE_FETCHED:
+			return update({
+				title: action.title
+			})
 
 		case VARIABLES_AND_DATES_FETCHED:
 			if (isFetched(state, action)){

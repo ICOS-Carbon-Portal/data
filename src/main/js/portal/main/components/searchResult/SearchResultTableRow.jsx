@@ -44,12 +44,12 @@ export default class SimpleObjectTableRow extends Component{
 					}
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
-						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} width={'80px'} iconHeight={14} iconRightMargin={4} />
+						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
 						{extendedInfo.station &&
-						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={'//static.icos-cp.eu/images/icons/pin.svg'} width={'120px'} />
+						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={'//static.icos-cp.eu/images/icons/pin.svg'} />
 						}
-						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={'//static.icos-cp.eu/images/icons/calendar.svg'} width={'240px'} />
-						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} width={'220px'} />
+						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={'//static.icos-cp.eu/images/icons/calendar.svg'} />
+						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
 					</div>
 					}
 				</td>
@@ -58,9 +58,9 @@ export default class SimpleObjectTableRow extends Component{
 	}
 }
 
-const ExtendedInfoItem = ({item, icon, width, iconHeight = 18, iconRightMargin = 0}) => {
+const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0}) => {
 	if (item && icon) {
-		return <span className="extended-info-item" style={{display: 'inline-block', marginRight: 16, minWidth: width}}>
+		return <span className="extended-info-item" >
 			<img src={icon} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
 		</span>;
 	}

@@ -30,10 +30,12 @@ import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.api.ChecksumError
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
@@ -89,8 +91,19 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			Done
 		}
 
+		val uniqueizer = fn.dataType match{
+			case DataType.SAHEAT =>
+				TimeSeriesStreams.linesFromBinary.map{line =>
+					val stationId = fn.station.hashCode
+					ByteString(s"$line,$stationId\n" , ByteString.UTF_8)
+				}
+			case _ =>
+				Flow.apply[ByteString]
+		}
+
 		Flow.apply[ByteString]
 			.viaMat(DigestFlow.md5)(Keep.right)
+			.via(uniqueizer)
 			.toMat(FileIO.toPath(tmpPath)){
 				(md5Fut, ioFut) => {
 					for(
@@ -102,7 +115,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 						)
 					) yield done
 				}.andThen{
-					case Success(_) => performUpload(targetFile, fn, false)
+					case Success(_) =>
+						logExternalUpload(fn)
+						performUploadIfNotTest(targetFile, fn, false)
 					case Failure(_) => Files.deleteIfExists(tmpPath)
 				}
 			}
@@ -113,7 +128,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		deleteOldEtcFiles(getStationUploadedFolder(station))
 	}
 
-	private[etcfacade] def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] = (fn.toEcDaily match{
+	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] =
+		if(fn.station == config.testStation) done else performUpload(file, fn, forceEc)
+
+	private def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean) = (fn.toEcDaily match{
 		case Some(daily) if(isFromBeforeToday(daily)) =>
 
 			val uploadedFolder = getStationUploadedFolder(fn.station)
@@ -146,8 +164,8 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			done //no uploads for same-day EC files (more are likely coming!)
 	}).andThen{
 		case Failure(err) =>
-			appendError(err.getMessage)
-			log.error(err, "ETC facade error")
+			appendError(s"Error while uploading $fn : " + err.getMessage)
+			log.error(err, s"ETC facade error while uploading $fn")
 	}
 
 	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
@@ -188,10 +206,13 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			err => new Exception(s"ETC facade failure during internal object upload. Station $station, object $hash", err)
 		)
 
-	private def appendError(msg: String): Unit = {
-		val errFile = Paths.get(config.folder, "errorLog.txt")
+	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")
+	private def logExternalUpload(fn: EtcFilename): Unit = appendLogMsgToFile(fn.toString, "externalUploadsLog.txt")
+
+	private def appendLogMsgToFile(msg: String, fileName: String): Unit = {
+		val msgFile = Paths.get(config.folder, fileName)
 		val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
-		Files.write(errFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+		Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
 	}
 }
 

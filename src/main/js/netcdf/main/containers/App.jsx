@@ -26,7 +26,7 @@ const AppDiv = props => {
 			maxWidth={400}
 		/>
 		: <Map
-			isIframe={props.isIframe}
+			isPIDProvided={props.isPIDProvided}
 			services={props.services}
 			colorMaker={props.colorMaker}
 			controls={props.controls}
@@ -42,6 +42,7 @@ const AppDiv = props => {
 			raster={props.raster}
 			rasterDataFetcher={props.rasterDataFetcher}
 			serviceChanged={props.serviceChanged}
+			title={props.title}
 			variableChanged={props.variableChanged}
 			initSearchParams={props.initSearchParams}
 		/>;

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {removeFromCart, setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
+import {setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
 import BackButton from '../components/buttons/BackButton.jsx';
@@ -23,6 +23,17 @@ class DataCart extends Component {
 		this.props.updateCheckedObjects(checkedObjects);
 	}
 
+	handleAllCheckboxesChange() {
+		if (this.props.checkedObjectsInCart.length > 0) {
+			this.props.updateCheckedObjects([]);
+		} else {
+			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
+				.map((checkbox) => checkbox.value);
+
+			this.props.updateCheckedObjects(checkedObjects);
+		}
+	}
+
 	render(){
 		const props = this.props;
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
@@ -38,16 +49,17 @@ class DataCart extends Component {
 				<BackButton action={props.backButtonAction} previousRoute={config.ROUTE_SEARCH}/>
 				{props.cart.count > 0 ?
 					<div className="row">
-						<div className="col-sm-6 col-lg-9">
+						<div className="col-sm-8 col-lg-9">
 							<CartPanel
 								previewitemId={previewitemId}
 								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
 								handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 								{...props}
 							/>
 						</div>
-						<div className="col-sm-6 col-lg-3">
+						<div className="col-sm-4 col-lg-3">
 							<div className="panel panel-default">
 								<div className="panel-heading">
 									{downloadTitle}
@@ -87,7 +99,6 @@ function dispatchToProps(dispatch){
 	return {
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		setCartName: newName => dispatch(setCartName(newName)),
-		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInCart(ids)),

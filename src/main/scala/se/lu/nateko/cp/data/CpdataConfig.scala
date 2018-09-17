@@ -1,14 +1,16 @@
 package se.lu.nateko.cp.data
 
-import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import spray.json._
 import com.typesafe.config.Config
-import com.typesafe.config.ConfigRenderOptions
 import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigRenderOptions
+
+import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
+import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.CommonJsonSupport
+import se.lu.nateko.cp.meta.core.etcupload.StationId
+import spray.json._
 
 case class NetCdfConfig(
 	folder: String,
@@ -21,9 +23,7 @@ case class NetCdfConfig(
 case class B2StageConfig(
 	host: String,
 	username: String,
-	password: String,
-	authEndpoint: String,
-	storageEndpoint: String
+	password: String
 )
 
 case class IrodsConfig(
@@ -60,7 +60,12 @@ case class RestHeartConfig(
 	def dobjDownloadLogUri(implicit envri: Envri) = dobjDownloadLogUris(envri)
 }
 
-case class EtcFacadeConfig(folder: String, secret: String, stationOverrides: Map[String, String])
+case class EtcFacadeConfig(
+	folder: String,
+	secret: String,
+	stationOverrides: Map[StationId, String],
+	testStation: StationId
+)
 
 case class CpdataConfig(
 	interface: String,
@@ -75,9 +80,11 @@ case class CpdataConfig(
 
 object ConfigReader extends CommonJsonSupport{
 
+	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
+
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
 	implicit val irodsConfigFormat = jsonFormat9(IrodsConfig)
-	implicit val b2stageConfigFormat = jsonFormat5(B2StageConfig)
+	implicit val b2stageConfigFormat = jsonFormat3(B2StageConfig)
 	implicit val uploadConfigFormat = jsonFormat4(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
@@ -86,7 +93,7 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val envriFormat = enumFormat(Envri)
 
 	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
-	implicit val etcFacadeConfigFormat = jsonFormat3(EtcFacadeConfig)
+	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
 	val appConfig: Config = {
