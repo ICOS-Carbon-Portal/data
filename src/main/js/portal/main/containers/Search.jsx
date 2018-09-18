@@ -6,7 +6,7 @@ import Filters from '../components/filters/Filters.jsx';
 import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
-import {queryMeta, specFilterUpdate, toggleSort, requestStep, addToCart, removeFromCart} from '../actions';
+import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 
 class Search extends Component {
@@ -30,6 +30,17 @@ class Search extends Component {
 		this.props.updateCheckedObjects([]);
 	}
 
+	handleAllCheckboxesChange() {
+		if (this.props.checkedObjectsInSearch.length > 0) {
+			this.props.updateCheckedObjects([]);
+		} else {
+			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
+				.map((checkbox) => checkbox.value);
+
+			this.props.updateCheckedObjects(checkedObjects);
+		}
+	}
+
 	render(){
 		const props = this.props;
 		const tabs = props.routeAndParams.tabs;
@@ -38,7 +49,7 @@ class Search extends Component {
 
 		return (
 			<div className="row">
-				<div className="col-md-3">
+				<div className="col-md-3" style={{marginBottom: 20}}>
 					<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
 						<ObjSpecFilter tabHeader="Categories" {...searchProps} />
 						<Filters
@@ -58,6 +69,7 @@ class Search extends Component {
 							previewAction={this.handlePreview.bind(this)}
 							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
+							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
 								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch'
@@ -85,7 +97,6 @@ function dispatchToProps(dispatch){
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
-		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
 		specFiltersReset: () => dispatch(specFiltersReset),

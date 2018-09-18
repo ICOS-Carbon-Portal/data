@@ -4,6 +4,7 @@ import PreviewNetCDF from './PreviewNetCDF.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
 import BackButton from '../buttons/BackButton.jsx';
+import CartBtn from '../buttons/CartBtn.jsx';
 
 export default class Preview extends Component {
 	constructor(props){
@@ -20,8 +21,19 @@ export default class Preview extends Component {
 		this.props.setPreviewUrl(iframeSrc);
 	}
 
+	handleAddToCart(objInfo) {
+		this.props.addToCart(objInfo);
+	}
+
+	handleRemoveFromCart(objInfo) {
+		this.props.removeFromCart(objInfo);
+	}
+
 	render(){
-		const {preview, backButtonAction, routeAndParams} = this.props;
+		const {preview, backButtonAction, routeAndParams, cart} = this.props;
+		const areItemsInCart = preview.items.reduce((prevVal, item) => cart.hasItem(item.id), false);
+		const actionButtonType = areItemsInCart ? 'remove' : 'add';
+		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 
 		return (
 			<div>
@@ -49,13 +61,24 @@ export default class Preview extends Component {
 
 							<div className="panel-body">
 								<div className="row">
-									<div className="col-md-12">
+									<div className="col-sm-10">
 										<CopyValue
 											btnText="Copy preview chart URL"
 											copyHelpText="Click to copy preview chart URL to clipboard"
 											valToCopy={previewUrl(preview.items[0], preview.type, this.state.iframeSrc)}
 										/>
 									</div>
+									{preview.items &&
+										<div className="col-sm-2">
+											<CartBtn
+												style={{float: 'right', marginBottom: 10}}
+												checkedObjects={preview.items.map(item => item.id)}
+												clickAction={buttonAction}
+												enabled={true}
+												type={actionButtonType}
+											/>
+										</div>
+									}
 								</div>
 							</div>
 

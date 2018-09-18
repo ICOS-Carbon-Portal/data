@@ -17,6 +17,7 @@ export default {
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 500,
 	dobjExtendedCacheFetchLimit: 100,
+	dobjSortLimit: 2000,
 };
 
 export const placeholders = {

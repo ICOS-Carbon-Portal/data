@@ -16,7 +16,8 @@ export function getTableFormatNrows(config, objIds){
 							id: binding.obj.value,
 							objSpec: binding.objSpec.value,
 							nRows: parseInt(binding.nRows.value),
-							filename: binding.fileName.value
+							filename: binding.fileName.value,
+							specLabel: binding.specLabel.value
 						}
 					}))
 					: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));

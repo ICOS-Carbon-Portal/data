@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import config from '../../config';
 
 
 export default class Dropdown extends Component{
@@ -40,23 +41,24 @@ export default class Dropdown extends Component{
 		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 
 		return (
-			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', marginBottom: 10}}>{
-				isSorter
-					? <SortButton
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						isAscending={isAscending}
-						clickAction={this.onDropdownClick.bind(this)}
-						lookup={lookup}
-						defaultLbl={defaultLbl}
-					/>
-					: <Button
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						clickAction={this.onDropdownClick.bind(this)}
-						lookup={lookup}
-						defaultLbl={defaultLbl}
-					/>
+			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
+				{
+					isSorter
+						? <SortButton
+							isEnabled={isEnabled}
+							selectedItemKey={selectedItemKey}
+							isAscending={isAscending}
+							clickAction={this.onDropdownClick.bind(this)}
+							lookup={lookup}
+							defaultLbl={defaultLbl}
+						/>
+						: <Button
+							isEnabled={isEnabled}
+							selectedItemKey={selectedItemKey}
+							clickAction={this.onDropdownClick.bind(this)}
+							lookup={lookup}
+							defaultLbl={defaultLbl}
+						/>
 				}
 
 				<ul className="dropdown-menu">{
@@ -89,8 +91,9 @@ const SortButton = ({isEnabled, selectedItemKey, isAscending, clickAction, looku
 			</button>
 		);
 	} else {
+		const title = `Sort up to ${config.dobjSortLimit} results. Please refine your search!`;
 		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button">
+			<button className="btn btn-default dropdown-toggle disabled" type="button" title={title} style={{pointerEvents:'auto'}}>
 				<span>{defaultLbl}</span> <span className="caret"/>
 			</button>
 		);

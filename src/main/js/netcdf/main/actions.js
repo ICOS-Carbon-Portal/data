@@ -1,4 +1,4 @@
-import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices} from './backend.js';
+import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle} from './backend.js';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
@@ -16,6 +16,7 @@ export const DELAY_SELECTED = 'DELAY_SELECTED';
 export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
+export const TITLE_FETCHED = 'TITLE_FETCHED';
 
 export function failWithError(error){
 	console.log(error);
@@ -38,6 +39,18 @@ export const fetchServices = dispatch => {
 		err => dispatch(failWithError(err))
 	);
 };
+
+export const fetchTitle = pid => dispatch => {
+	getTitle(pid).then(
+		title => {
+			dispatch({
+				type: TITLE_FETCHED,
+				title
+			});
+		},
+		err => dispatch(failWithError(error))
+	);
+}
 
 export const fetchCountriesTopo = dispatch => {
 	getCountriesGeoJson().then(

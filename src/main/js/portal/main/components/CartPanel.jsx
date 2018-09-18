@@ -3,6 +3,7 @@ import PreviewBtn from './buttons/PreviewBtn.jsx';
 import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
 import SearchResultTableRow from './searchResult/SearchResultTableRow.jsx';
 import CartBtn from './buttons/CartBtn.jsx';
+import CheckAllBoxes from './controls/CheckAllBoxes.jsx';
 
 
 export default class CartPanel extends Component {
@@ -27,8 +28,13 @@ export default class CartPanel extends Component {
 		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
 	}
 
+	handleAllCheckboxesChange() {
+		this.props.handleAllCheckboxesChange();
+	}
+
 	render(){
 		const props = this.props;
+		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
 
 		return (
 			<div className="panel panel-default">
@@ -42,8 +48,17 @@ export default class CartPanel extends Component {
 				/>
 
 				<div className="panel-body">
-					<div>
-						<div className="text-right">
+					<div className="panel-srollable-controls clearfix row">
+						<div className="col-xs-4">
+							<CheckAllBoxes
+								checkCount={props.checkedObjectsInCart.length}
+								totalCount={props.cart.count}
+								onChange={this.props.handleAllCheckboxesChange} />
+							{ props.checkedObjectsInCart.length > 0 &&
+								<span style={{marginLeft: 6, verticalAlign: -6}}>{props.checkedObjectsInCart.length} {objectText} selected</span>
+							}
+						</div>
+						<div className="col-xs-8 text-right">
 							<CartBtn
 								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
 								checkedObjects={props.checkedObjectsInCart}
@@ -58,31 +73,31 @@ export default class CartPanel extends Component {
 								lookup={props.lookup}
 							/>
 						</div>
+					</div>
 
-						<div className="table-responsive">
-							<table className="table">
-								<tbody>{
-									props.cart.items.map((objInfo, i) => {
-										const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
-										const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
-										objInfo.fileName = objInfo.itemName;
-										objInfo.dobj = objInfo.id;
+					<div className="table-responsive">
+						<table className="table">
+							<tbody>{
+								props.cart.items.map((objInfo, i) => {
+									const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
+									const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
+									objInfo.fileName = objInfo.itemName;
+									objInfo.dobj = objInfo.id;
 
-										return (
-											<SearchResultTableRow
-												lookup={props.lookup}
-												extendedInfo={extendedInfo}
-												preview={props.preview}
-												objInfo={objInfo}
-												key={'dobj_' + i}
-												onCheckboxChange={props.handleCheckboxChange}
-												isChecked={isChecked}
-											/>
-										);
-									})
-								}</tbody>
-							</table>
-						</div>
+									return (
+										<SearchResultTableRow
+											lookup={props.lookup}
+											extendedInfo={extendedInfo}
+											preview={props.preview}
+											objInfo={objInfo}
+											key={'dobj_' + i}
+											onCheckboxChange={props.handleCheckboxChange}
+											isChecked={isChecked}
+										/>
+									);
+								})
+							}</tbody>
+						</table>
 					</div>
 				</div>
 			</div>

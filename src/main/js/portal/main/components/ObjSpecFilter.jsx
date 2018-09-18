@@ -154,11 +154,11 @@ const FilterPanel = ({header, nameList, colNames, getCtrl, startCollapsed = fals
 };
 
 const ResetBtn = ({resetFiltersAction, enabled}) => {
-	const className = enabled ? 'btn btn-primary' : 'btn btn-primary disabled';
+	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
 	const style = enabled
-		? {marginBottom: 15, cursor: 'pointer'}
-		: {marginBottom: 15};
+		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
+		: {margin: '5px 2px', textDecoration: 'underline'};
 	const onClick = enabled ? resetFiltersAction : () => _;
 
-	return <button className={className} style={style} onClick={onClick}>Clear categories</button>;
+	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };

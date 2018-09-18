@@ -32,7 +32,7 @@ export default class Map extends Component {
 	}
 
 	updateURL(){
-		if (this.props.isIframe && this.props.rasterFetchCount > 0) {
+		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
 			const {dates, elevations, gammas, variables} = this.props.controls;
 
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
@@ -53,9 +53,12 @@ export default class Map extends Component {
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
 				const newURL = location.origin + location.pathname + newSearch;
 
-				history.pushState({urlPath: newURL}, "", newURL);
-				//Let calling page (through iframe) know what current url is
-				window.top.postMessage(newURL, '*');
+				if (window.frameElement) {
+					//Let calling page (through iframe) know what current url is
+					window.top.postMessage(newURL, '*');
+				} else {
+					history.pushState({urlPath: newURL}, "", newURL);
+				}
 			}
 		}
 	}
@@ -101,58 +104,63 @@ export default class Map extends Component {
 
 		return (
 			<div id="content" className="container-fluid">
-				<Controls
-					isIframe={props.isIframe}
-					services={props.services}
-					marginTop={5}
-					controls={props.controls}
-					playingMovie={props.playingMovie}
-					increment={props.increment}
-					playPauseMovie={props.playPauseMovie}
-					delayChanged={props.delayChanged}
-					handleServiceChange={props.serviceChanged}
-					handleVarNameChange={props.variableChanged}
-					handleDateChange={props.dateChanged}
-					handleGammaChange={props.gammaChanged}
-					handleElevationChange={props.elevationChanged}
-				/>
+				{!window.frameElement && props.title &&
+					<h1>{props.title}</h1>
+				}
 
-				<div id="map">
-					<NetCDFMap
-						mapOptions={{
-							center: this.center,
-							zoom: this.zoom,
-							forceCenter: [52.5, 10]
-						}}
-						raster={props.raster}
-						colorMaker={colorMaker}
-						geoJson={props.countriesTopo.data}
-						latLngBounds={latLngBounds}
-						events={[
-							{
-								event: 'moveend',
-								fn: leafletMap => {
-									return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};
-								},
-								callback: this.mapEventCallback.bind(this)
-							}
-						]}
+				<div id="map-container">
+					<Controls
+						isPIDProvided={props.isPIDProvided}
+						services={props.services}
+						marginTop={5}
+						controls={props.controls}
+						playingMovie={props.playingMovie}
+						increment={props.increment}
+						playPauseMovie={props.playPauseMovie}
+						delayChanged={props.delayChanged}
+						handleServiceChange={props.serviceChanged}
+						handleVarNameChange={props.variableChanged}
+						handleDateChange={props.dateChanged}
+						handleGammaChange={props.gammaChanged}
+						handleElevationChange={props.elevationChanged}
 					/>
-				</div>
-				<div id="legend" ref={div => this.legendDiv = div}>{
-					getLegend
-						? <Legend
-							horizontal={false}
-							canvasWidth={20}
-							containerHeight={containerHeight}
-							margin={7}
-							getLegend={getLegend}
-							legendId={legendId}
-							legendText="Legend"
-							decimals={3}
+					<div id="map">
+						<NetCDFMap
+							mapOptions={{
+								center: this.center,
+								zoom: this.zoom,
+								forceCenter: [52.5, 10]
+							}}
+							raster={props.raster}
+							colorMaker={colorMaker}
+							geoJson={props.countriesTopo.data}
+							latLngBounds={latLngBounds}
+							events={[
+								{
+									event: 'moveend',
+									fn: leafletMap => {
+										return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};
+									},
+									callback: this.mapEventCallback.bind(this)
+								}
+							]}
 						/>
-						: null
-				}</div>
+					</div>
+					<div id="legend" ref={div => this.legendDiv = div}>{
+						getLegend
+							? <Legend
+								horizontal={false}
+								canvasWidth={20}
+								containerHeight={containerHeight}
+								margin={7}
+								getLegend={getLegend}
+								legendId={legendId}
+								legendText="Legend"
+								decimals={3}
+							/>
+							: null
+					}</div>
+				</div>
 
 				<Spinner show={showSpinner} />
 

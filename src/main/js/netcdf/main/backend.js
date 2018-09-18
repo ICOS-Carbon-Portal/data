@@ -1,5 +1,7 @@
-import {getBinRaster, getJson} from 'icos-cp-backend';
+import {sparql, getBinRaster, getJson} from 'icos-cp-backend';
 import {feature} from 'topojson';
+import {objectSpecification} from './sparqlQueries';
+import config from '../../common/main/config';
 
 // export function getRaster(basicId, search){
 // 	console.log({basicId, search});
@@ -34,3 +36,17 @@ export const getElevations = (service, variable) => {
 export const getServices = () => {
 	return getJson('/netcdf/listNetCdfFiles');
 };
+
+export const getTitle = (objId) => {
+	const query = objectSpecification(config, objId);
+
+	return sparql(query, config.sparqlEndpoint)
+		.then(
+			sparqlResult => {
+				const bindings = sparqlResult.results.bindings;
+				return bindings
+					? Promise.resolve(bindings.map(b => b.specLabel.value))
+					: Promise.reject(new Error("Could not get dobjs from meta"));
+			}
+		);
+}
