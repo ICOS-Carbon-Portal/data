@@ -36,14 +36,9 @@ where{
 export function dobjOriginsAndCounts(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select
-?spec
-?submitter
-?submitterUri
+select ?spec ?submitter ?submitterUri ?projectUri ?project ?count
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
 (if(bound(?stationName), ?stationUri0, ?stationName) as ?stationUri)
-?count
-(if(?submitterClass = cpmeta:ThematicCenter || ?submitterClass = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
 	{
 		select * where{
@@ -58,8 +53,9 @@ where{
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	?submitterUri cpmeta:hasName ?submitter ; a ?submitterClass .
-	FILTER(?submitterClass != owl:NamedIndividual)
+	?submitterUri cpmeta:hasName ?submitter .
+	?spec cpmeta:hasAssociatedProject ?projectUri .
+	?projectUri rdfs:label ?project .
 }`;
 }
 

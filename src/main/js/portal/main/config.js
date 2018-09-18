@@ -31,5 +31,5 @@ export const placeholders = {
 	quantityUnit: 'Unit',
 	submitter: 'Data submitter',
 	station: 'Station of origin',
-	isIcos: 'ICOS / non-ICOS data'
+	project: 'Project'
 };
