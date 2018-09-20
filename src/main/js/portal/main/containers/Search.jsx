@@ -27,8 +27,10 @@ class Search extends Component {
 		if (this.props.checkedObjectsInSearch.length > 0) {
 			this.props.updateCheckedObjects([]);
 		} else {
-			const checkedObjects = this.props.objectsTable.map(o => o.dobj);
-
+			const checkedObjects = this.props.objectsTable.reduce((acc, o) => {
+				if (o.level > 0) acc.push(o.dobj);
+				return acc;
+			}, []);
 			this.props.updateCheckedObjects(checkedObjects);
 		}
 	}
