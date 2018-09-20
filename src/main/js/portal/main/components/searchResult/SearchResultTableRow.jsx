@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import CheckBtn from '../buttons/ChechBtn.jsx';
 
 
 const truncateStyle = {
@@ -13,10 +14,6 @@ export default class SimpleObjectTableRow extends Component{
 		super(props);
 	}
 
-	handleCheckboxChange(dobj) {
-		this.props.updateCheckedObjects(dobj);
-	}
-
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
@@ -26,15 +23,16 @@ export default class SimpleObjectTableRow extends Component{
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
-		const checkboxDisabled = objInfo.level === 0 ? "disabled" : "";
-		// console.log({props});
 
 		return(
 			<tr style={{margin: '20px 0'}}>
-				<td style={{textAlign: 'center', width: 40, padding: '16px 0px'}}>
-					<button className="btn btn-default" style={{pointerEvents:'auto'}} onClick={this.handleCheckboxChange.bind(this, objInfo.dobj)} disabled={checkboxDisabled} >
-						<span className="glyphicon glyphicon-ok" style={{opacity: props.isChecked ? 1 : 0}} />
-					</button>
+				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
+					<CheckBtn
+						updateCheckedObjects={props.updateCheckedObjects}
+						id={objInfo.dobj}
+						isChecked={props.isChecked}
+						checkboxDisabled={objInfo.level === 0 ? "disabled" : ""}
+					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>

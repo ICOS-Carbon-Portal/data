@@ -41,7 +41,7 @@ const specTableKeys = Object.keys(placeholders);
 let currentCart;
 
 export default function(state = new State(), action){
-	console.log({actionType: action.type, action, state, history: history.state});
+	// console.log({actionType: action.type, action, state, history: history.state});
 	switch(action.type){
 
 		case ERROR:
@@ -236,7 +236,7 @@ export default function(state = new State(), action){
 
 		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
 			return state.update({
-				checkedObjectsInSearch: action.checkedObjectsInSearch
+				checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, action.checkedObjectInSearch)
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_CART:
@@ -248,6 +248,16 @@ export default function(state = new State(), action){
 			return state;
 	}
 }
+
+const updateCheckedObjects = (existingObjs, newObj) => {
+	if (Array.isArray(newObj)){
+		return newObj.length === 0 ? [] : newObj;
+	}
+
+	return existingObjs.includes(newObj)
+		? existingObjs.filter(o => o !== newObj)
+		: existingObjs.concat([newObj]);
+};
 
 export const areFiltersEnabled = (tabs, filterTemporal, filterFreeText) => {
 	return tabs.searchTab === 1
