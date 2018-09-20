@@ -111,7 +111,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data types"
-					nameList={['specLabel', 'level', 'format']}
+					nameList={['specLabel', 'level', 'formatLabel']}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}

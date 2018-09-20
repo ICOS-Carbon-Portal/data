@@ -6,34 +6,17 @@ export default class Lookup{
 	}
 
 	parseSpecTable(specTable) {
-		const basicsRows = specTable.getTable("basics") ? specTable.getTableRows("basics") : undefined;
-		const columnMetaRows = specTable.getTable("columnMeta") ? specTable.getTableRows("columnMeta") : undefined;
 
-		const netcdf = basicsRows
-			? basicsRows.reduce((acc, curr) => {
-				if (curr.format === 'NetCDF'){
-					acc[curr.spec] = {
-						type: config.NETCDF
-					}
-				}
+		const netcdf = {};
+		specTable.getTableRows("basics").forEach(br => {
+			if (br.format === config.netCdfFormat) netcdf[br.spec] = {type: config.NETCDF};
+		});
 
-				return acc;
-			}, {})
-			: [];
-
-		const timeSeries = columnMetaRows
-			? columnMetaRows.reduce((acc, curr) => {
-				acc[curr.spec] === undefined
-					? acc[curr.spec] = {
-						type: config.TIMESERIES,
-						options: [curr.colTitle]
-					}
-					: acc[curr.spec].options.push(curr.colTitle);
-
-				return acc;
-
-			}, {})
-			: [];
+		const timeSeries = {};
+		specTable.getTableRows("columnMeta").forEach(cmr => {
+			if(timeSeries[cmr.spec] === undefined) timeSeries[cmr.spec] = {type: config.TIMESERIES, options: []};
+			timeSeries[cmr.spec].options.push(cmr.colTitle);
+		});
 
 		return Object.assign({}, netcdf, timeSeries);
 	}

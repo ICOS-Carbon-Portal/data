@@ -15,7 +15,8 @@ export default class CompositeSpecTable{
 	}
 
 	getTableRows(name){
-		return this._tables[name]._rows;
+		const table = this._tables[name];
+		return table ? table._rows : [];
 	}
 
 	get names(){

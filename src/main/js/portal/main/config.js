@@ -8,6 +8,7 @@ export default {
 	DEFAULT_ROUTE: 'search',
 	TIMESERIES: 'TIMESERIES',
 	NETCDF: 'NETCDF',
+	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	iFrameBaseUrl: {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/'
@@ -15,15 +16,15 @@ export default {
 	restheartBaseUrl: commonConfig.restheartBaseUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
-	dobjCacheFetchLimit: 500,
-	dobjExtendedCacheFetchLimit: 100,
+	dobjCacheFetchLimit: 60,
+	dobjExtendedCacheFetchLimit: 20,
 	dobjSortLimit: 2000,
 };
 
 export const placeholders = {
 	specLabel: 'Data type',
 	level: 'Data level',
-	format: 'Format',
+	formatLabel: 'Format',
 	theme: 'Theme',
 	colTitle: 'Column name',
 	valType: 'Value type',

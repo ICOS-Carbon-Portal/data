@@ -131,13 +131,14 @@ function sparqlResultToSpecTable(sparqlResult) {
 }
 
 function fetchFormatToRdfGraphTbl(){
-	const query = queries.rdfGraphsAndSpecFormats(config);
-	return sparql(query, config.sparqlEndpoint, true).then(
-		res => res.results.bindings.reduce((acc, row) => {
-			acc[row['format'].value] = row['graph'].value
-			return acc;
-		}, {})
-	);
+	return fetch(config.metaServer + '/config/dataObjectGraphInfos')
+		.then(res => res.json())
+		.then(
+			res => res.reduce((acc, row) => {
+				acc[row.format] = row.graph;
+				return acc;
+			}, {})
+		);
 }
 
 function sparqlBindingToValue(b){

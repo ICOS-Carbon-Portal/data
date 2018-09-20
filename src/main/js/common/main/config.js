@@ -5,8 +5,11 @@ const sparqlGraphFilter = envri === 'SITES' ? 'https://meta.fieldsites.se/' : 'h
 
 const authHost = envri === 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
 
+const metaServer = 'https://meta.icos-cp.eu';
+
 export default {
-	sparqlEndpoint: 'https://meta.icos-cp.eu/sparql',
+	metaServer,
+	sparqlEndpoint: metaServer + '/sparql',
 	restheartBaseUrl: `//restheart.icos-cp.eu/`,
 	restheartProfileBaseUrl: `//${authHost}/db/users`,
 	portalUseLogUrl: `//${authHost}/logs/portaluse`,

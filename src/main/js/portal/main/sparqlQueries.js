@@ -2,7 +2,7 @@ export const SPECCOL = 'spec';
 
 export function specBasics(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec ?specLabel ?level ?format (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
+select ?spec ?specLabel ?level ?format ?formatLabel (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
 where{
 	?spec cpmeta:hasDataLevel ?level .
 	FILTER (?level != "1"^^xsd:integer) #temporary
@@ -10,7 +10,8 @@ where{
 	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
-	?spec cpmeta:hasFormat [rdfs:label ?format ]
+	?spec cpmeta:hasFormat ?format .
+	?format rdfs:label ?formatLabel .
 }`;
 }
 
@@ -76,17 +77,6 @@ WHERE {
   FILTER CONTAINS(LCASE(STR(?lName)), LCASE("${search}"))
 }
 ORDER BY ?Long_name`;
-}
-
-export function rdfGraphsAndSpecFormats(config){
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select (sample(?fmt) as ?format) ?graph where{
-	graph ?graph {
-		?dobj cpmeta:hasObjectSpec ?spec .
-	}
-	?spec cpmeta:hasFormat/rdfs:label ?fmt.
-}
-group by ?graph`;
 }
 
 export const listFilteredDataObjects = (config, options) => {
