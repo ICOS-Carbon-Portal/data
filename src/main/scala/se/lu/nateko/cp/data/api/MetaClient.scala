@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.api
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
+import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -13,16 +14,19 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data._
+import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
+import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
-import spray.json._
+import spray.json.JsBoolean
+import spray.json.JsValue
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher = system.dispatcher
@@ -55,16 +59,19 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = {
 		val url = baseUrl + "objects/" + hash.id
 		get(url, hostOpt).flatMap(
-			resp => resp.status match {
-				case StatusCodes.OK =>
-					Unmarshal(resp.entity).to[DataObject]
-				case StatusCodes.NotFound =>
-					resp.discardEntityBytes()
-					Future.failed(new MetadataObjectNotFound(hash))
-				case notOk =>
-					failWithReturnedMessage(notOk, resp)
+			extractResult(Unmarshal(_).to[DataObject]){
+				case StatusCodes.NotFound => new MetadataObjectNotFound(hash)
 			}
 		)
+	}
+
+	def lookupObjSpec(spec: Uri)(implicit envri: Envri): Future[DataObjectSpec] = {
+		val baseUri = Uri(baseUrl)
+		val specUri = spec.withAuthority(baseUri.authority).withScheme(baseUri.scheme)
+
+		get(specUri, hostOpt).flatMap{
+			extractIfSuccess(Unmarshal(_).to[DataObjectSpec])
+		}
 	}
 
 	def userIsAllowedUpload(dataObj: DataObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
@@ -73,44 +80,31 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
 			Uri.Query("submitter" -> submitterUri, "userId" -> user.email)
 		)
-		get(uri, hostOpt).flatMap(
-			resp => resp.status match {
-				case StatusCodes.OK =>
-					Unmarshal(resp.entity).to[JsValue].map(_ match {
-						case JsBoolean(b) =>
-							if(!b) throw new UnauthorizedUpload({
-								val submitterName = submitter.self.label.getOrElse(submitterUri)
-								s"User '${user.email}' is not authorized to upload on behalf of $submitterName"
-							})
-						case js => throw new Exception(s"Expected a JSON boolean, got $js")
+		get(uri, hostOpt).flatMap(extractIfSuccess(
+			Unmarshal(_).to[JsValue].map(_ match {
+				case JsBoolean(b) =>
+					if(!b) throw new UnauthorizedUpload({
+						val submitterName = submitter.self.label.getOrElse(submitterUri)
+						s"User '${user.email}' is not authorized to upload on behalf of $submitterName"
 					})
-				case notOk =>
-					failWithReturnedMessage(notOk, resp)
-			}
-		)
+				case js => throw new Exception(s"Expected a JSON boolean, got $js")
+			})
+		))
 	}
 
-	def registerEtcUpload(meta: EtcUploadMetadata): Future[Unit] = {
+	def registerEtcUpload(meta: EtcUploadMetadata): Future[Done] = {
 		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.etcUploatMetaFormat
 		val url = Uri(s"$baseUrl$uploadApiPath/etc")
-		post(url, meta, hostOpt(Envri.ICOS)).flatMap(resp => resp.status match {
-			case StatusCodes.OK =>
-				resp.discardEntityBytes()
-				Future.successful(())
-			case notOk =>
-				failWithReturnedMessage(notOk, resp)
+		post(url, meta, hostOpt(Envri.ICOS)).flatMap(extractIfSuccess{entity =>
+			entity.discardBytes()
+			Future.successful(Done)
 		})
 	}
 
 	def completeUpload(hash: Sha256Sum, completionInfo: UploadCompletionInfo)(implicit envri: Envri): Future[String] = {
 		val url = config.baseUrl + config.uploadApiPath + "/" + hash.id
 
-		post(url, completionInfo, hostOpt).flatMap(resp => resp.status match {
-			case StatusCodes.OK =>
-				Unmarshal(resp.entity).to[String]
-			case notOk =>
-				failWithReturnedMessage(notOk, resp)
-		})
+		post(url, completionInfo, hostOpt).flatMap(extractIfSuccess(Unmarshal(_).to[String]))
 	}
 
 	def getStationsWhereUserIsPi(user: UserId): Future[Seq[StationId]] = {
@@ -118,7 +112,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|select ?$stationVar where{
-				|?pi cpmeta:hasEmail "${user.email}"^^xsd:string .
+				|?pi cpmeta:hasEmail ?email .
+				|FILTER(regex(?email, "${user.email}", "i")) .
 				|?pi cpmeta:hasMembership ?memb .
 				|?memb cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
 				|?memb cpmeta:atOrganization ?station .
@@ -133,10 +128,21 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		}
 	}
 
-	private def failWithReturnedMessage[T](status: StatusCode, resp: HttpResponse): Future[T] = {
-		resp.entity.toStrict(3.seconds)            //making sure the response is not chunked
-			.map(strict => strict.data.decodeString("UTF-8"))   //extracting the response body as string, to treat is as error message later
-			.recover{case _: Throwable => s"Got $status from the metadata server"}  //fallback error message
-			.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))   //failing with the error message
+	private def extractIfSuccess[T](extractor: ResponseEntity => Future[T]) = extractResult(extractor)(PartialFunction.empty)
+
+	private def extractResult[T](extractor: ResponseEntity => Future[T])(
+		failureHandler: PartialFunction[StatusCode, CpDataException]
+	): HttpResponse => Future[T] = resp => {
+		import resp.status
+		if(status.isSuccess) extractor(resp.entity)
+		else
+			if(failureHandler.isDefinedAt(status)){
+				resp.discardEntityBytes()
+				Future.failed(failureHandler(status))
+			}
+		else
+			Utils.responseAsString(resp)
+				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
+
 }

@@ -2,7 +2,6 @@ import React, { Component, Fragment } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import {placeholders} from '../config';
 import Slider from './ui/Slider.jsx';
-import commonConfig from '../../../common/main/config';
 
 
 export default class ObjSpecFilter extends Component {
@@ -104,10 +103,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data origin"
-					nameList={commonConfig.envri === 'SITES'
-						? ['theme', 'station', 'submitter']
-						: ['isIcos', 'theme', 'station', 'submitter']
-					}
+					nameList={['project', 'theme', 'station', 'submitter']}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}

@@ -218,7 +218,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 object FacadeService{
 
-	val ForceEcUploadTime = LocalTime.of(4, 0)
+	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
 
 	val done = Future.successful(Done)

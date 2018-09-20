@@ -36,14 +36,9 @@ where{
 export function dobjOriginsAndCounts(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select
-?spec
-?submitter
-?submitterUri
+select ?spec ?submitter ?submitterUri ?projectUri ?project ?count
 (if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
 (if(bound(?stationName), ?stationUri0, ?stationName) as ?stationUri)
-?count
-(if(?submitterClass = cpmeta:ThematicCenter || ?submitterClass = cpmeta:ES, "ICOS", "Non-ICOS") as ?isIcos)
 where{
 	{
 		select * where{
@@ -58,8 +53,9 @@ where{
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	?submitterUri cpmeta:hasName ?submitter ; a ?submitterClass .
-	FILTER(?submitterClass != owl:NamedIndividual)
+	?submitterUri cpmeta:hasName ?submitter .
+	?spec cpmeta:hasAssociatedProject ?projectUri .
+	?projectUri rdfs:label ?project .
 }`;
 }
 
@@ -95,47 +91,41 @@ group by ?graph`;
 
 export const listFilteredDataObjects = (config, options) => {
 
+	function isEmpty(arr){return !arr || !arr.length;}
+
 	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
 
-	const fromClause = rdfGraphs.length
-		? 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n'
-		: '';
+	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
 
-	const specsValues = (specs && specs.length > 1)
-		 ? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
-		 : '';
+	const specsValues = isEmpty(specs)
+		? `?${SPECCOL} a/rdfs:subClassOf? cpmeta:DataObjectSpec .`
+		: (specs.length > 1)
+			? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
+			: `BIND(<${specs[0]}> AS ?${SPECCOL})`;
 
-	const submitterValues = submitters.length
-		?  `VALUES ?submitter {<` + submitters.join('> <') + '>}\n'
-		: '';
+	const submitterValues = isEmpty(submitters) ? ''
+		: `VALUES ?submitter {<` + submitters.join('> <') + '>}\n';
 
-		 const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
+	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 
-	const dobjSpec = (specs && specs.length == 1)
-		? `?dobj cpmeta:hasObjectSpec <${specs[0]}> .
-			BIND(<${specs[0]}> AS ?${SPECCOL})`
-		: `?dobj cpmeta:hasObjectSpec ?${SPECCOL} .`;
-
-	const noStationFilter = dobjSpec + '\n' + `FILTER NOT EXISTS{${dobjStation} []}`;
+	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
 
 	function stationsFilter(stations){
 		return stations.length == 1
-			? dobjSpec + '\n' + dobjStation + `<${stations[0]}> .`
+			? dobjStation + `<${stations[0]}> .`
 			: `VALUES ?station {<${stations.join('> <')}>}` +
-				'\n' + dobjSpec + '\n' + dobjStation + '?station .';
+				'\n' + dobjStation + '?station .';
 	}
 
-	const dobjSearch = (stations && stations.length)
-		? stations.some(s => !s)
-			? stations.length === 1
-				? noStationFilter
-				: `{{
-						${noStationFilter}
-					} UNION {
-						${stationsFilter(stations.filter(s => !!s))}
-					}}`
-			: stationsFilter(stations)
-		: dobjSpec;
+	const stationSearch = isEmpty(stations) ? '' : stations.some(s => !s)
+		? stations.length === 1
+			? noStationFilter
+			: `{{
+					${noStationFilter}
+				} UNION {
+					${stationsFilter(stations.filter(s => !!s))}
+				}}`
+		: stationsFilter(stations);
 
 	const filterClauses = getFilterClauses(config, filters);
 
@@ -154,7 +144,8 @@ ${fromClause}where {
 	${specsValues}
 	FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	${dobjSearch}
+	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	${stationSearch}
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .

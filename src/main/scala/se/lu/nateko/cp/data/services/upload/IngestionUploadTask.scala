@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.services.upload
 
 import java.io.File
+import java.nio.file.Files
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -23,20 +24,23 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
+import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
 
 class IngestionUploadTask(
-	dataObj: DataObject,
+	ingSpec: IngestionSpec,
 	originalFile: File,
 	formats: ColumnValueFormats
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private val file = new File(originalFile.getAbsolutePath + FileExtension)
+	//TODO Switch to java.nio classes
+	val file = new File(originalFile.getAbsolutePath + FileExtension)
+	private val tmpFile = new File(file.getAbsoluteFile + ".working")
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
-		val format = dataObj.specification.format
+		val format = ingSpec.objSpec.format
 
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ dailySitesCsvTimeSer, simpleSitesCsvTimeSer }
@@ -57,10 +61,10 @@ class IngestionUploadTask(
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
-				dataObj.specificInfo.right.toOption.flatMap(_.nRows) match{
+				ingSpec.nRows match{
 
 					case None =>
-						failedSink(IncompleteMetadataFailure(dataObj.hash, "Missing nRows (number of rows)"))
+						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
 
 					case Some(nRows) =>
 						if(format.uri == asciiEtcTimeSer) {
@@ -86,7 +90,7 @@ class IngestionUploadTask(
 				failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
 		}
 
-		val decoderFlow = makeEncodingSpecificFlow(dataObj.specification.encoding)
+		val decoderFlow = makeEncodingSpecificFlow(ingSpec.objSpec.encoding)
 		decoderFlow.toMat(ingestionSink)(Keep.right)
 	}
 
@@ -101,10 +105,16 @@ class IngestionUploadTask(
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.viaMat(toBinTableConverter)(KeepFuture.right)
-			.toMat(BinTableSink(file, overwrite = true))(KeepFuture.left)
+			.toMat(BinTableSink(tmpFile, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
-				_.map(IngestionSuccess(_)).recover{
-					case exc: Throwable => IngestionFailure(exc)
+				_.map{ingMeta =>
+					import java.nio.file.StandardCopyOption._
+					Files.move(tmpFile.toPath, file.toPath, ATOMIC_MOVE, REPLACE_EXISTING)
+					IngestionSuccess(ingMeta)
+				}.recover{
+					case exc: Throwable =>
+						Files.deleteIfExists(tmpFile.toPath)
+						IngestionFailure(exc)
 				}
 			)
 	}
@@ -131,23 +141,32 @@ class IngestionUploadTask(
 	}
 }
 
+case class IngestionSpec(objSpec: DataObjectSpec, nRows: Option[Int], label: Option[String])
+
+object IngestionSpec{
+	import scala.language.implicitConversions
+	implicit def fromDataObject(dobj: DataObject) = IngestionSpec(
+		dobj.specification,
+		dobj.specificInfo.right.toOption.flatMap(_.nRows),
+		Some(dobj.hash.id)
+	)
+}
+
 object IngestionUploadTask{
 
-	def apply(dataObj: DataObject, originalFile: File, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[IngestionUploadTask] = {
+	def apply(ingSpec: IngestionSpec, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
 		import sparql.materializer.executionContext
-		getColumnFormats(dataObj.hash, sparql).map{formats =>
-			new IngestionUploadTask(dataObj, originalFile, formats)
+		getColumnFormats(ingSpec.objSpec, sparql).map{formats =>
+			new IngestionUploadTask(ingSpec, originalFile, formats)
 		}
 	}
 
-	def getColumnFormats(dataObjHash: Sha256Sum, sparql: SparqlClient)(implicit envri: EnvriConfig): Future[ColumnValueFormats] = {
+	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnValueFormats] = {
 		import sparql.materializer.executionContext
-		val dataObjUri = CpMetaVocab.getDataObject(dataObjHash)
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select ?colName ?valFormat where{
-		|	<$dataObjUri> cpmeta:hasObjectSpec ?spec .
-		|	?spec cpmeta:containsDataset ?dataSet .
+		|	<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .

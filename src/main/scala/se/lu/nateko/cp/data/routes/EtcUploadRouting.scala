@@ -89,7 +89,8 @@ object EtcUploadRouting{
 
 	val Md5Segment = Segment.flatMap(Md5Sum.fromHex(_).toOption)
 
-	def forbid(msg: String): Route = respondWithHeader(Connection("close")){
+	def forbid(msg: String)(implicit mat: Materializer): Route = extractRequest{req =>
+		req.discardEntityBytes()
 		complete(StatusCodes.Forbidden -> msg)
 	}
 
