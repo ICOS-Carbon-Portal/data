@@ -5,7 +5,7 @@ export function specBasics(config){
 select ?spec ?specLabel ?level ?format ?formatLabel (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
 where{
 	?spec cpmeta:hasDataLevel ?level .
-	FILTER (?level != "1"^^xsd:integer) #temporary
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
@@ -22,7 +22,7 @@ select distinct ?spec ?colTitle ?valType
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
-	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
@@ -53,9 +53,9 @@ where{
 		}
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	?submitterUri cpmeta:hasName ?submitter .
 	?spec cpmeta:hasAssociatedProject ?projectUri .
+	FILTER NOT EXISTS {?projectUri cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	?submitterUri cpmeta:hasName ?submitter .
 	?projectUri rdfs:label ?project .
 }`;
 }
@@ -88,7 +88,9 @@ export const listFilteredDataObjects = (config, options) => {
 	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
 
 	const specsValues = isEmpty(specs)
-		? `?${SPECCOL} a/rdfs:subClassOf? cpmeta:DataObjectSpec .`
+		? `?${SPECCOL} a/rdfs:subClassOf? cpmeta:DataObjectSpec .
+			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
+			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: (specs.length > 1)
 			? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
 			: `BIND(<${specs[0]}> AS ?${SPECCOL})`;
@@ -133,8 +135,6 @@ prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
 	${specsValues}
-	FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
-	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	${stationSearch}
 	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
