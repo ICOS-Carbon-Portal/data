@@ -20,6 +20,8 @@ export default class App {
 				this.params = new UrlSearchParams(urlParams, ['objId', 'x', 'y']);
 				if (this.params.isValidParams) {
 					hideError();
+					this.graph = undefined;
+					this.labels = [];
 					this.main();
 				} else {
 					presentError(`Please choose a value for ${this.params.missingParams.join(', ')}.`);
@@ -56,12 +58,13 @@ export default class App {
 						this.initGraph(tableFormat, title);
 						this.tableFormat = tableFormat;
 						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
+						objects.map(object => {
+							const filename = object.filename;
+							const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
+							this.labels.push(yLabel);
+						})
 					}
-					objects.map(object => {
-						const filename = object.filename;
-						const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
-						this.labels.push(yLabel);
-					})
+
 					return [tableFormat, objects];
 				}
 			}
