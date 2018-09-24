@@ -69,6 +69,7 @@ case class EtcFacadeConfig(
 
 case class CpdataConfig(
 	interface: String,
+	port: Int,
 	auth: Map[Envri, PublicAuthConfig],
 	netcdf: NetCdfConfig,
 	upload: UploadConfig,
@@ -94,7 +95,7 @@ object ConfigReader extends CommonJsonSupport{
 
 	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
-	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
+	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load

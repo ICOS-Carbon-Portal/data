@@ -88,7 +88,7 @@ object Main extends App {
 	}
 
 	restHeart.init.flatMap{_ =>
-		http.bindAndHandle(route, config.interface, 9010)
+		http.bindAndHandle(route, config.interface, config.port)
 	}.onComplete{
 		case Success(binding) =>
 			sys.addShutdownHook{
