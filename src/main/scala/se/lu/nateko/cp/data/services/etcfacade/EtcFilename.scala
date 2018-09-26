@@ -26,6 +26,16 @@ case class EtcFilename(
 		)
 	}
 
+	def slot: Option[Int] = time.map{time =>
+		val middleSecond = LocalDateTime
+			.of(date, time)
+			.minusMinutes(15)
+			.toLocalTime
+			.toSecondOfDay
+			.toFloat
+		Math.round((middleSecond - 900) / 1800).toInt
+	}
+
 	override def toString = {
 		val dateStr = date.format(EtcFilename.dateFormat)
 		val timeStr = time.map(_.format(EtcFilename.timeFormat)).getOrElse("")

@@ -141,17 +141,17 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			val fresh = getZippableDailyECs(getStationFolder(fn.station), daily)
 
 			val filePackage = fresh ++ uploaded
-			val isFullPackage: Boolean = filePackage.size == 48
+			val isFullPackage: Boolean = packageIsComplete(filePackage)
 
 			if(isFullPackage || forceEc){
 
-				val srcFiles = filePackage.sortBy(_.getFileName.toString)
+				val srcFiles = filePackage.map(_._1).sortBy(_.getFileName.toString)
 
 				zipToArchive(srcFiles, daily).flatMap{
 					case (file, hash) =>
 						if(isFullPackage)
-							filePackage.foreach(Files.deleteIfExists)
-						else fresh.foreach{file =>
+							srcFiles.foreach(Files.deleteIfExists)
+						else fresh.foreach{case (file, _) =>
 							val target = uploadedFolder.resolve(file.getFileName)
 							Files.move(file, target, REPLACE_EXISTING)
 						}
@@ -217,6 +217,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 }
 
 object FacadeService{
+	type EtcFileInfo = (Path, EtcFilename)
 
 	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
@@ -240,7 +241,7 @@ object FacadeService{
 			.getOrElse(LocalDateTime.of(file.date.plusDays(1), LocalTime.MIN))
 	)
 
-	private def getEtcFiles(folder: Path): Vector[(Path,EtcFilename)] = iterateChildren(folder){_
+	private def getEtcFiles(folder: Path): Vector[EtcFileInfo] = iterateChildren(folder){_
 		.flatMap(p => EtcFilename.parse(p.getFileName.toString).toOption.map((p, _)))
 		.toVector
 	}
@@ -255,9 +256,8 @@ object FacadeService{
 		}
 	}
 
-	def getZippableDailyECs(folder: Path, dailyFile: EtcFilename): Vector[Path] = getEtcFiles(folder).collect{
-		case (path, fn) if fn.toEcDaily.contains(dailyFile) => path
-	}
+	def getZippableDailyECs(folder: Path, dailyFile: EtcFilename): Vector[EtcFileInfo] =
+		getEtcFiles(folder).filter(_._2.toEcDaily.contains(dailyFile))
 
 	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
 		import se.lu.nateko.cp.data.streams.ZipEntryFlow._
@@ -288,4 +288,6 @@ object FacadeService{
 
 	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
+	private def packageIsComplete(fileInfos: Vector[EtcFileInfo]): Boolean =
+		fileInfos.map(_._2.slot).flatten.distinct.size == 48
 }

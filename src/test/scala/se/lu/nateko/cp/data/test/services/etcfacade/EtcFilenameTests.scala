@@ -1,72 +1,99 @@
 package se.lu.nateko.cp.data.test.services.etcfacade
 
-import org.scalatest.FunSuite
+import org.scalatest.FunSpec
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
 import se.lu.nateko.cp.meta.core.etcupload.DataType
 import java.time.LocalDate
 import java.time.LocalTime
 
-class EtcFilenameTests extends FunSuite{
+class EtcFilenameTests extends FunSpec{
 
-	private val ec = "FA-Lso_EC_201202040437_L03_F12.csv"
-	private val bm = "BE-Lon_BM_20170815_L99_F01.dat"
-	private val heat = "FA-Lso_SAHEAT_20100603_L01_F02.txt"
+	describe("Parsing"){
+		val ec = "FA-Lso_EC_201202040437_L03_F12.csv"
+		val bm = "BE-Lon_BM_20170815_L99_F01.dat"
+		val heat = "FA-Lso_SAHEAT_20100603_L01_F02.txt"
 
-	def testBad(fn: String, reason: String) = {
-		test(s"$fn is not a valid filename ($reason)"){
-			assert(EtcFilename.parse(fn).isFailure)
+		def testBad(fn: String, reason: String) = {
+			it(s"Parses $fn as not a valid filename ($reason)"){
+				assert(EtcFilename.parse(fn).isFailure)
+			}
 		}
-	}
 
-	def testGood(fn: String) = {
-		test(fn + " is a valid filename"){
-			assert(EtcFilename.parse(fn).isSuccess)
+		def testGood(fn: String) = {
+			it(s"Parses $fn as a valid filename"){
+				assert(EtcFilename.parse(fn).isSuccess)
+			}
 		}
-	}
 
-	def testRoundTrip(fn: String) = {
-		test(s"Parsing '$fn' gives EtcFilename with correct toString"){
-			assert(EtcFilename.parse(fn).get.toString === fn)
+		def testRoundTrip(fn: String) = {
+			it(s"Parses '$fn', giving EtcFilename with correct toString"){
+				assert(EtcFilename.parse(fn).get.toString === fn)
+			}
 		}
+
+		testGood(heat)
+		testGood(bm)
+		testGood(bm.replace("dat", "zip"))
+		testGood(bm.replace("dat", "bin"))
+		testBad(bm.replace("_", "-"), "must use underscores")
+		testBad(bm.replace("20170815", "201708151134"), "time only allowed in EC files")
+
+		it(s"Parses $ec is a valid EC filename with time"){
+			val fTry = EtcFilename.parse(ec)
+
+			val f = fTry.get
+
+			assert(f.station.id === "FA-Lso")
+
+			assert(f.loggerNumber === 3)
+
+			assert(f.fileNumber === 12)
+
+			assert(f.dataType === DataType.EC)
+
+			assert(f.date === LocalDate.parse("2012-02-04"))
+
+			assert(f.timeOrDatatype === Left(LocalTime.parse("04:37")))
+		}
+
+		testBad(ec.replace(".csv", ".blabla"), "too long file extension")
+		testBad(ec.replace(".csv", ".xxx"), "unsupported file extension")
+		testBad(ec.replace("-Lso", "-lso"), "bad station id format")
+		testBad(ec.replace("FA-Lso", "FAA-Lso"), "bad station id format")
+		testBad(ec.replace("_L03", ""), "logger number missing")
+		testBad(ec.replace("EC", "XX"), "bad data type")
+		testBad(ec.replace("201202040437", "20120204"), "EC files must have time")
+
+		it("Parses daily EC files without time are if explicitly allowed"){
+			assert(EtcFilename.parse("FA-Lso_EC_20120204_L03_F12.csv", true).isSuccess)
+		}
+
+		testRoundTrip(ec)
+		testRoundTrip(bm)
 	}
 
-	testGood(heat)
-	testGood(bm)
-	testGood(bm.replace("dat", "zip"))
-	testGood(bm.replace("dat", "bin"))
-	testBad(bm.replace("_", "-"), "must use underscores")
-	testBad(bm.replace("20170815", "201708151134"), "time only allowed in EC files")
+	describe("slot"){
 
-	test(ec + " is a valid EC filename with time"){
-		val fTry = EtcFilename.parse(ec)
+		def testSlot(slotNum: Int, file: String) = {
+			it(s"Gives slot $slotNum for $file"){
 
-		val f = fTry.get
+				val fn = EtcFilename.parse(file).get
 
-		assert(f.station.id === "FA-Lso")
+				assert(fn.slot === Some(slotNum))
+			}
+		}
 
-		assert(f.loggerNumber === 3)
+		def testNoSlot(file: String) = {
+			it("Gives no slot for " + file){
+				assert(EtcFilename.parse(file).get.slot === None)
+			}
+		}
+		testSlot(0, "FA-Lso_EC_201507080027_L1_F1.csv")
+		testSlot(1, "FA-Lso_EC_201507080107_L1_F1.csv")
+		testSlot(46, "FA-Lso_EC_201507082323_L1_F1.csv")
+		testSlot(47, "FA-Lso_EC_201507082346_L1_F1.csv")
+		testSlot(47, "FA-Lso_EC_201507080014_L1_F1.csv")
 
-		assert(f.fileNumber === 12)
-
-		assert(f.dataType === DataType.EC)
-
-		assert(f.date === LocalDate.parse("2012-02-04"))
-
-		assert(f.timeOrDatatype === Left(LocalTime.parse("04:37")))
+		testNoSlot("FA-Lso_BM_20150708_L1_F1.csv")
 	}
-
-	testBad(ec.replace(".csv", ".blabla"), "too long file extension")
-	testBad(ec.replace(".csv", ".xxx"), "unsupported file extension")
-	testBad(ec.replace("-Lso", "-lso"), "bad station id format")
-	testBad(ec.replace("FA-Lso", "FAA-Lso"), "bad station id format")
-	testBad(ec.replace("_L03", ""), "logger number missing")
-	testBad(ec.replace("EC", "XX"), "bad data type")
-	testBad(ec.replace("201202040437", "20120204"), "EC files must have time")
-
-	test("Daily EC files without time are valid if explicitly allowed"){
-		assert(EtcFilename.parse("FA-Lso_EC_20120204_L03_F12.csv", true).isSuccess)
-	}
-
-	testRoundTrip(ec)
-	testRoundTrip(bm)
 }
