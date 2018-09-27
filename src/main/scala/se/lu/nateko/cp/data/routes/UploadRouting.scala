@@ -91,7 +91,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	} ~
 	complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
 
-	private val uploadHttpOptions: Route = requireShaHash{ _ =>
+	private val uploadHttpOptions: Route = {
 		extractEnvri{implicit envri =>
 			addAccessControlHeaders(envri){
 				respondWithHeaders(
@@ -163,7 +163,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			get{ batchDownload ~ download}
 		} ~
 		path("tryingest"){
-			put{ tryIngest }
+			put{ tryIngest } ~
+			options { uploadHttpOptions }
 		}
 	}
 
