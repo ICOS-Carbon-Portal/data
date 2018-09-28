@@ -2,6 +2,7 @@ import commonConfig from '../../common/main/config';
 
 
 export default {
+	envri: commonConfig.envri,
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
 	ROUTE_PREVIEW: 'preview',
@@ -23,7 +24,7 @@ export default {
 };
 
 export const placeholders = {
-	specLabel: 'Data type',
+	type: 'Data type',
 	level: 'Data level',
 	format: 'Format',
 	theme: 'Theme',
@@ -34,4 +35,27 @@ export const placeholders = {
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	project: 'Project'
+};
+
+export const prefixes = {
+	ICOS: {
+		project: 'http://meta.icos-cp.eu/resources/projects/',
+		theme: 'http://meta.icos-cp.eu/resources/themes/',
+		station: 'http://meta.icos-cp.eu/resources/stations/',
+		submitter: 'http://meta.icos-cp.eu/resources/organizations/',
+		type: 'http://meta.icos-cp.eu/resources/cpmeta/',
+		format: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
+		valType: 'http://meta.icos-cp.eu/resources/cpmeta/',
+		quantityKind: 'http://meta.icos-cp.eu/resources/cpmeta/'
+	},
+	SITES: {
+		project: 'https://meta.fieldsites.eu/resources/projects/',
+		theme: 'https://meta.fieldsites.eu/resources/themes/',
+		station: 'https://meta.fieldsites.eu/resources/stations/',
+		submitter: 'https://meta.fieldsites.eu/resources/organizations/',
+		type: 'https://meta.fieldsites.eu/resources/cpmeta/',
+		format: 'https://meta.fieldsites.eu/ontologies/cpmeta/',
+		valType: 'https://meta.fieldsites.eu/resources/cpmeta/',
+		quantityKind: 'https://meta.fieldsites.eu/resources/cpmeta/'
+	}
 };

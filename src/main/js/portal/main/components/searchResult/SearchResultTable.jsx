@@ -27,6 +27,9 @@ export default class SimpleDataObjectsTable extends Component{
 		const props = this.props;
 		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo} = props;
 		const objectText = props.checkedObjectsInSearch.length <= 1 ? "object" : "objects";
+		const checkedObjects = props.checkedObjectsInSearch.reduce((acc, uri) => {
+				return acc.concat(props.objectsTable.filter(o => o.dobj === uri));
+			}, []);
 
 		return (
 			<div className="panel panel-default">
@@ -67,7 +70,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 							<PreviewBtn
 								style={{float: 'right', marginBottom: 10, marginRight: 10}}
-								checkedObjects={props.checkedObjectsInSearch.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+								checkedObjects={checkedObjects}
 								clickAction={previewAction}
 								lookup={props.lookup}
 							/>

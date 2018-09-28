@@ -91,7 +91,7 @@ export default class CartPanel extends Component {
 											preview={props.preview}
 											objInfo={objInfo}
 											key={'dobj_' + i}
-											onCheckboxChange={props.handleCheckboxChange}
+											updateCheckedObjects={props.updateCheckedObjects}
 											isChecked={isChecked}
 										/>
 									);

@@ -36,7 +36,7 @@ export default class SimpleObjectTableRow extends Component{
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>
-						<a href={objInfo.dobj} title="View metadata" target="_blank">{title}</a>
+						<a href={objInfo.dobj} title="View metadata">{title}</a>
 					</h4>
 					{extendedInfo && extendedInfo.description &&
 						<div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>

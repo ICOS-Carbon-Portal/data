@@ -53,7 +53,6 @@ export default class Preview {
 		});
 
 		const items = objects.map(o => o.item);
-		console.log({lookup, cart, hasItem: cart.hasItem, ids, objectsTable, objects, items, options});
 
 		if (options.type === config.TIMESERIES){
 			const xAxis = ['Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.includes(x));

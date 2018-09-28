@@ -3,7 +3,7 @@ import { Provider } from 'react-redux'
 import getStore from '../store.js';
 import App from './App.jsx';
 import {restoreFromHistory} from '../actions';
-import hashUpdater from '../models/HashStateHandler';
+import {hashUpdater} from '../models/State';
 
 
 const store = getStore();
@@ -12,8 +12,7 @@ store.subscribe(hashUpdater(store));
 export default class Root extends Component {
 
 	componentDidMount() {
-		window.addEventListener('popstate', e => {
-			console.log('popstate', history.state);
+		window.addEventListener('popstate', _ => {
 			if (history.state) {
 				store.dispatch(restoreFromHistory(history.state));
 			} else {

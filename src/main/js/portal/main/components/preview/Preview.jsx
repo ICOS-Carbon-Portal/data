@@ -51,7 +51,7 @@ export default class Preview extends Component {
 												<span style={{marginRight: 10}}>
 													{item.itemName}
 												</span>
-												<a href={item.id} title="View metadata" target="_blank">
+												<a href={item.id} title="View metadata">
 													<span className="glyphicon glyphicon-info-sign" />
 												</a>
 											</span>

@@ -34,14 +34,13 @@ import Lookup from './models/Lookup';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
-import {getStateFromHash} from "./models/HashStateHandler";
+import {getStateFromHash} from "./models/State";
 
 
 const specTableKeys = Object.keys(placeholders);
-let currentCart;
 
 export default function(state = new State(), action){
-	// console.log({actionType: action.type, action, state, history: history.state});
+
 	switch(action.type){
 
 		case ERROR:
@@ -89,7 +88,7 @@ export default function(state = new State(), action){
 			});
 
 		case RESTORE_FROM_HISTORY:
-			return State.deserialize(action.historyState, currentCart);
+			return State.deserialize(action.historyState, state.cart);
 
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
@@ -100,7 +99,8 @@ export default function(state = new State(), action){
 				objectsTable: [],
 				paging: new Paging({objCount}),
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values})
+				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values}),
+				checkedObjectsInSearch: []
 			});
 
 		case SPEC_FILTER_RESET:
@@ -111,12 +111,13 @@ export default function(state = new State(), action){
 				specTable,
 				paging: new Paging({objCount}),
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				filterCategories: {}
+				filterCategories: {},
+				checkedObjectsInSearch: []
 			});
 
 		case RESTORE_PREVIEW:
 			return state.update({
-				preview: state.preview.restore(state.lookup.table, currentCart, state.objectsTable)
+				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
 		case OBJECTS_FETCHED:
@@ -177,15 +178,13 @@ export default function(state = new State(), action){
 		case PREVIEW:
 			return state.update({
 				route: config.ROUTE_PREVIEW,
-				preview: state.preview.initPreview(state.lookup.table, currentCart, action.id, state.objectsTable)
+				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
 		case PREVIEW_VISIBILITY:
 			return state.update({preview: action.visible ? state.preview.show() : state.preview.hide()});
 
 		case PREVIEW_SETTING_UPDATED:
-			currentCart = action.cart;
-
 			return state.update({
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
@@ -197,11 +196,9 @@ export default function(state = new State(), action){
 			});
 
 		case CART_UPDATED:
-			currentCart = action.cart;
-			console.log({currentCart});
-
 			return state.update({
-				cart: action.cart
+				cart: action.cart,
+				checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => action.cart.ids.includes(uri))
 			});
 
 		case TESTED_BATCH_DOWNLOAD:
@@ -216,14 +213,16 @@ export default function(state = new State(), action){
 		case TEMPORAL_FILTER:
 			return state.update({
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
+				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText)),
+				checkedObjectsInSearch: []
 			});
 
 		case FREE_TEXT_FILTER:
 			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
 
 			return state.update({
-				filterFreeText
+				filterFreeText,
+				checkedObjectsInSearch: []
 			});
 
 		case UPDATE_SELECTED_PIDS:
@@ -235,13 +234,13 @@ export default function(state = new State(), action){
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
-			return state.update({
+			return state.updateAndSave({
 				checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, action.checkedObjectInSearch)
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_CART:
 			return state.update({
-				checkedObjectsInCart: action.checkedObjectsInCart
+				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
 			});
 
 		default:

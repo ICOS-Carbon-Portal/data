@@ -2,22 +2,26 @@ export const SPECCOL = 'spec';
 
 export function specBasics(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec ?specLabel ?level ?format (if(bound(?themeLbl), ?themeLbl, "(not applicable)") as ?theme)
+select ?spec (?spec as ?type) ?specLabel ?level ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel)
 where{
 	?spec cpmeta:hasDataLevel ?level .
 	FILTER (?level != "1"^^xsd:integer) #temporary
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	OPTIONAL{ ?spec cpmeta:hasDataTheme/rdfs:label ?themeLbl }
+	OPTIONAL{
+		?spec cpmeta:hasDataTheme ?theme .
+		?theme rdfs:label ?themeLbl
+	}
 	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
 	?spec rdfs:label ?specLabel .
-	?spec cpmeta:hasFormat [rdfs:label ?format ]
+	?spec cpmeta:hasFormat ?format .
+	?format rdfs:label ?formatLabel .
 }`;
 }
 
 export function specColumnMeta(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?colTitle ?valType
-(if(bound(?qKind), ?qKind, "(not applicable)") as ?quantityKind)
+select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
+(if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
@@ -25,10 +29,13 @@ where{
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
-	?column cpmeta:hasValueType ?valTypeRes .
-	?valTypeRes rdfs:label ?valType .
-	OPTIONAL{?valTypeRes cpmeta:hasQuantityKind [rdfs:label ?qKind] }
-	OPTIONAL{?valTypeRes cpmeta:hasUnit ?unit }
+	?column cpmeta:hasValueType ?valType .
+	?valType rdfs:label ?valTypeLabel .
+	OPTIONAL{
+		?valType cpmeta:hasQuantityKind ?quantityKind .
+		?quantityKind rdfs:label ?qKindLabel .
+	}
+	OPTIONAL{?valType cpmeta:hasUnit ?unit }
 }`;
 }
 
@@ -36,26 +43,26 @@ where{
 export function dobjOriginsAndCounts(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?submitterUri ?projectUri ?project ?count
-(if(bound(?stationName), ?stationName, "(not applicable)") as ?station)
-(if(bound(?stationName), ?stationUri0, ?stationName) as ?stationUri)
+select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
+(if(bound(?stationName), ?station0, ?stationName) as ?station)
+(if(bound(?stationName), ?stationName, "(not applicable)") as ?stationLabel)
 where{
 	{
 		select * where{
 			[] cpmeta:hasStatProps [
 				cpmeta:hasStatCount ?count;
-				cpmeta:hasStatStation ?stationUri0;
+				cpmeta:hasStatStation ?station0;
 				cpmeta:hasStatSpec ?spec;
-				cpmeta:hasStatSubmitter ?submitterUri
+				cpmeta:hasStatSubmitter ?submitter
 			] .
-			OPTIONAL{?stationUri0 cpmeta:hasName ?stationName}
+			OPTIONAL{?station0 cpmeta:hasName ?stationName}
 		}
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasDataLevel "1"^^xsd:integer} #temporary
-	?submitterUri cpmeta:hasName ?submitter .
-	?spec cpmeta:hasAssociatedProject ?projectUri .
-	?projectUri rdfs:label ?project .
+	?submitter cpmeta:hasName ?submitterLabel .
+	?spec cpmeta:hasAssociatedProject ?project .
+	?project rdfs:label ?projectLabel .
 }`;
 }
 
@@ -84,7 +91,7 @@ select (sample(?fmt) as ?format) ?graph where{
 	graph ?graph {
 		?dobj cpmeta:hasObjectSpec ?spec .
 	}
-	?spec cpmeta:hasFormat/rdfs:label ?fmt.
+	?spec cpmeta:hasFormat ?fmt.
 }
 group by ?graph`;
 }
@@ -111,7 +118,7 @@ export const listFilteredDataObjects = (config, options) => {
 	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
 
 	function stationsFilter(stations){
-		return stations.length == 1
+		return stations.length === 1
 			? dobjStation + `<${stations[0]}> .`
 			: `VALUES ?station {<${stations.join('> <')}>}` +
 				'\n' + dobjStation + '?station .';

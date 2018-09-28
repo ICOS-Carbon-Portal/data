@@ -11,11 +11,24 @@ export default class ObjSpecFilter extends Component {
 		Object.keys(this.search).forEach(v => this.search[v] = undefined);
 	}
 
-	getCtrl(name){
+	getCtrl(name, labelName){
+		const specTbl = this.props.specTable;
+
+		const lookupTable = {};
+
+		if (specTbl) {
+			const colTbl = specTbl.findTable(name);
+			if (colTbl) colTbl.rows.forEach(row => {
+				lookupTable[row[name]] = row[labelName];
+			});
+		}
+
+		const filterUris = specTbl.getFilter(name);
 		const data = this.props.specTable
-			? this.props.specTable.getDistinctAvailableColValues(name)
-				.map(text => {return {text};})
+			? specTbl.getDistinctAvailableColValues(name)
+				.map(value => {return {value, text: lookupTable[value]};})
 			: [];
+		const value = filterUris.map(uri => data.some(d => d.value === uri) ? uri : lookupTable[uri]);
 
 		if (data[0]) {
 			typeof data[0].text === "string"
@@ -33,10 +46,10 @@ export default class ObjSpecFilter extends Component {
 					<label style={{marginBottom: 0}}>{placeholders[name]}</label>
 					<Multiselect
 						placeholder={placeholder}
-						valueField="text"
+						valueField="value"
 						textField="text"
 						data={data}
-						value={this.props.specTable.getFilter(name)}
+						value={value}
 						filter="contains"
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
@@ -82,7 +95,7 @@ export default class ObjSpecFilter extends Component {
 	}
 
 	handleChange(name, values){
-		this.props.updateFilter(name, values.map(v => typeof v === 'object' ? v.text : v));
+		this.props.updateFilter(name, values.map(v => typeof v === 'object' ? v.value : v));
 	}
 
 	handleSearch(name, value){
@@ -103,7 +116,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data origin"
-					nameList={['project', 'theme', 'station', 'submitter']}
+					nameList={[['project', 'projectLabel'], ['theme', 'themeLabel'], ['station', 'stationLabel'], ['submitter', 'submitterLabel']]}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
@@ -111,7 +124,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data types"
-					nameList={['specLabel', 'level', 'format']}
+					nameList={[['type', 'specLabel'], ['level', 'level'], ['format', 'formatLabel']]}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
@@ -119,12 +132,11 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Value types"
-					nameList={['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+					nameList={[['colTitle', 'colTitle'], ['valType', 'valTypeLabel'], ['quantityUnit','quantityUnit'], ['quantityKind', 'quantityKindLabel']]}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
 				/>
-
 
 			</div>
 		);
@@ -142,7 +154,7 @@ const FilterPanel = ({header, nameList, colNames, getCtrl, startCollapsed = fals
 
 			<Slider startCollapsed={startCollapsed}>
 				<div className="panel-body" style={{paddingTop:0}}>
-					{nameList.map(name => getCtrl(name))}
+					{nameList.map(name => getCtrl(...name))}
 				</div>
 			</Slider>
 		</div>

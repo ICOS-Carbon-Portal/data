@@ -11,7 +11,7 @@ export default class Lookup{
 
 		const netcdf = basicsRows
 			? basicsRows.reduce((acc, curr) => {
-				if (curr.format === 'NetCDF'){
+				if (curr.format === 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf'){
 					acc[curr.spec] = {
 						type: config.NETCDF
 					}

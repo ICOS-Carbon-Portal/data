@@ -64,6 +64,10 @@ export default class SpecTable{
 		return filter.length === this._speciesCount ? [] : filter;
 	}
 
+	get rows(){
+		return this._rows;
+	}
+
 	getColumnValuesFilter(colName){
 		return this._colNames.some(name => this._filters[name].length !== 0)
 			? this.getDistinctColValues(colName)

@@ -150,10 +150,10 @@ export const updateCheckedObjectsInSearch = checkedObjectInSearch => dispatch =>
 	});
 };
 
-export const updateCheckedObjectsInCart = checkedObjectsInCart => dispatch => {
+export const updateCheckedObjectsInCart = checkedObjectInCart => dispatch => {
 	dispatch({
 		type: UPDATE_CHECKED_OBJECTS_IN_CART,
-		checkedObjectsInCart
+		checkedObjectInCart
 	});
 };
 
@@ -212,15 +212,11 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 
 	const stations = route === config.ROUTE_CART
 		? []
-		: specTable.getFilter('station').length
-			? specTable.getDistinctAvailableColValues('stationUri')
-			: [];
+		: specTable.getFilter('station');
 
 	const submitters = route === config.ROUTE_CART
 		? []
-		: specTable.getFilter('submitter').length
-			? specTable.getDistinctAvailableColValues('submitterUri')
-			: [];
+		: specTable.getFilter('submitter');
 
 	const rdfGraphs = route === config.ROUTE_CART
 		? []
@@ -231,6 +227,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		: getState().paging;
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
+
 	dataObjectsFetcher.fetch(options).then(
 		({rows, cacheSize, isDataEndReached}) => {
 
@@ -244,7 +241,6 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
-console.log({route, rows, filters, cart, options});
 			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
