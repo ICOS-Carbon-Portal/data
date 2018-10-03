@@ -68,7 +68,7 @@ export function getStations() {
 }
 
 export function getContributors() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getContributors?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getContributors?pagesize=1000&page=1`);
 }
 
 export function getThemes() {
