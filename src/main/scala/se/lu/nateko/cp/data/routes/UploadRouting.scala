@@ -1,9 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
 import scala.concurrent.Future
-import scala.util.Success
-import scala.util.Try
-
+import scala.util.{Failure, Success, Try}
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.licenceUri
 import LicenceRouting.parseLicenceCookie
@@ -79,19 +77,22 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private val tryIngest: Route = parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
-		extractEnvri{implicit envri =>
-			extractRequest{req =>
-				val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
-				onSuccess(resFut){metaExtract =>
-					complete(metaExtract.toJson)
+	private val tryIngest: Route = extractEnvri{implicit envri =>
+		addAccessControlHeaders(envri){
+			parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
+				extractRequest { req =>
+					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
+					onComplete(resFut) {
+						case Success(metaExtract) => complete(metaExtract.toJson)
+						case Failure(err) => complete(StatusCodes.BadRequest -> err.getMessage)
+					}
 				}
-			}
+			} ~
+			complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
 		}
-	} ~
-	complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
+	}
 
-	private val uploadHttpOptions: Route = requireShaHash{ _ =>
+	private val uploadHttpOptions: Route =
 		extractEnvri{implicit envri =>
 			addAccessControlHeaders(envri){
 				respondWithHeaders(
@@ -102,7 +103,6 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 				}
 			}
 		}
-	}
 
 	private val download: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
@@ -163,7 +163,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			get{ batchDownload ~ download}
 		} ~
 		path("tryingest"){
-			put{ tryIngest }
+			put{ tryIngest } ~
+			options { uploadHttpOptions }
 		}
 	}
 
