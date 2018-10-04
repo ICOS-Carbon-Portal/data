@@ -4,6 +4,7 @@ from Restheart import Restheart
 from GeoIP import GeoIP
 import os
 
+op = 'geo'
 restheart = Restheart()
 geoIp = GeoIP()
 
@@ -103,7 +104,7 @@ def update_download_records(records):
 
 while UPDATE_PORTALUSE:
 	print("Fetching " + str(pagesize) + " records")
-	records = restheart.get_records_to_update(pagesize, 'portaluse')
+	records = restheart.get_records_to_update(op, pagesize, 'portaluse')
 
 	if records is None:
 		print("No records found -> Exiting")
@@ -124,7 +125,7 @@ if UPDATE_PORTALUSE:
 
 while UPDATE_DOWNLOADS:
 	print("Fetching " + str(pagesize) + " records")
-	records = restheart.get_records_to_update(pagesize, 'dobjdls')
+	records = restheart.get_records_to_update(op, pagesize, 'dobjdls')
 
 	if records is None:
 		print("No records found -> Exiting")
