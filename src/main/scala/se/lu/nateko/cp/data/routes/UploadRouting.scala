@@ -1,9 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
 import scala.concurrent.Future
-import scala.util.Success
-import scala.util.Try
-
+import scala.util.{Failure, Success, Try}
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.licenceUri
 import LicenceRouting.parseLicenceCookie
@@ -84,8 +82,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
 				extractRequest { req =>
 					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
-					onSuccess(resFut) { metaExtract =>
-						complete(metaExtract.toJson)
+					onComplete(resFut) {
+						case Success(metaExtract) => complete(metaExtract.toJson)
+						case Failure(err) => complete(StatusCodes.BadRequest -> err.getMessage)
 					}
 				}
 			} ~
