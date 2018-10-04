@@ -79,21 +79,21 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private val tryIngest: Route = parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
-		extractEnvri{implicit envri =>
-			addAccessControlHeaders(envri) {
+	private val tryIngest: Route = extractEnvri{implicit envri =>
+		addAccessControlHeaders(envri){
+			parameters(('specUri.as[Uri], 'nRows.as[Int].?)){(specUri, nRowsOpt) =>
 				extractRequest { req =>
 					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
 					onSuccess(resFut) { metaExtract =>
 						complete(metaExtract.toJson)
 					}
 				}
-				complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
-			}
+			} ~
+			complete(StatusCodes.BadRequest -> "Expected object species URI as 'specUri' query parameter, and optionally number of rows as 'nRows'")
 		}
 	}
 
-	private val uploadHttpOptions: Route = {
+	private val uploadHttpOptions: Route =
 		extractEnvri{implicit envri =>
 			addAccessControlHeaders(envri){
 				respondWithHeaders(
@@ -104,7 +104,6 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 				}
 			}
 		}
-	}
 
 	private val download: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
