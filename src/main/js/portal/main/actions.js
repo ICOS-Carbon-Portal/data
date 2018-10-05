@@ -166,10 +166,17 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-const logPortalUsage = (filterCategories, filterTemporal, filterFreeText) => {
-	const filters = Object.assign({}, filterCategories, filterTemporal.serialize, filterFreeText.serialize);
+const logPortalUsage = (specTable, filterCategories, filterTemporal, filterFreeText) => {
+	if (Object.keys(filterCategories).length || filterTemporal.hasFilter || filterFreeText.hasFilter) {
 
-	if (Object.keys(filters).length) {
+		const filters = Object.keys(filterCategories).reduce((acc, columnName) => {
+			acc[columnName] = specTable.getLabelFilter(columnName);
+			return acc;
+		}, {});
+
+		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
+		if (filterFreeText.hasFilter) filters.filterFreeText = filterFreeText.serialize;
+
 		saveToRestheart({
 			filterChange: {
 				filters
@@ -202,8 +209,8 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 
 	const filters = getFilters();
 
-	if (route === config.ROUTE_SEARCH) {
-		logPortalUsage(filterCategories, filterTemporal, filterFreeText);
+	if (route === undefined || route === config.ROUTE_SEARCH) {
+		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
 	}
 
 	const specs = route === config.ROUTE_CART

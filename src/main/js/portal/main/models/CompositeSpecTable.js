@@ -2,6 +2,17 @@ import {SPECCOL} from '../sparqlQueries';
 import SpecTable from "./SpecTable";
 
 
+const labelColNameMapper = {
+	project: 'projectLabel',
+	theme: 'themeLabel',
+	station: 'stationLabel',
+	submitter: 'submitterLabel',
+	type: 'specLabel',
+	format: 'formatLabel',
+	valType: 'valTypeLabel',
+	quantityKind: 'quantityKindLabel'
+};
+
 export default class CompositeSpecTable{
 
 	constructor(nameToTableKv){
@@ -103,6 +114,25 @@ export default class CompositeSpecTable{
 		return this.findTable(colName).getColumnValuesFilter(colName);
 	}
 
+	getColLabelNamePair(colName){
+		return labelColNameMapper[colName] ? [colName, labelColNameMapper[colName]] : [colName, colName];
+	}
+
+	getLabelName(colName){
+		return labelColNameMapper[colName] ? labelColNameMapper[colName] : colName;
+	}
+
+	getLabelFilter(colName){
+		const columnValues = this.getFilter(colName);
+		const labelName = this.getLabelName(colName);
+
+		if (colName === labelName) {
+			return columnValues;
+		} else {
+			const rows = this.findTable(colName).rows;
+			return columnValues.map(val => rows.find(row => val === row[colName])[labelName]);
+		}
+	}
 }
 
 

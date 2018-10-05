@@ -15,7 +15,7 @@ export default class Dropdown extends Component{
 	}
 
 	handleOutsideClick(e){
-		if (!this.node.contains(e.target) && this.state.dropdownOpen) {
+		if (this.node && !this.node.contains(e.target) && this.state.dropdownOpen) {
 			this.setState({dropdownOpen: false});
 		}
 	}

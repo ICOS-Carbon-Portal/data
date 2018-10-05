@@ -50,7 +50,8 @@ export default class State{
 			},
 			checkedObjectsInSearch: [],
 			checkedObjectsInCart: [],
-			tabs: {}
+			tabs: {},
+			page: 0
 		}, state);
 	}
 
@@ -188,12 +189,13 @@ function getCurrentHash(){
 }
 
 export const hashUpdater = store => () => {
-	const newHash = stateToHash(store.getState());
+	const state = store.getState();
+	const newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
 
-	if (newHash !== oldHash && oldHash !== '{}'){
+	if (newHash !== oldHash){
 		newHash === ''
-			? window.location.hash = encodeURIComponent('{}')
+			? history.pushState(state.serialize, null, window.location.href.split('#')[0])
 			: window.location.hash = encodeURIComponent(newHash);
 	}
 };

@@ -116,7 +116,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data origin"
-					nameList={[['project', 'projectLabel'], ['theme', 'themeLabel'], ['station', 'stationLabel'], ['submitter', 'submitterLabel']]}
+					nameList={getNameList(specTable, ['project', 'theme', 'station', 'submitter'])}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
@@ -124,7 +124,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Data types"
-					nameList={[['type', 'specLabel'], ['level', 'level'], ['format', 'formatLabel']]}
+					nameList={getNameList(specTable, ['type', 'level', 'format'])}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
@@ -132,7 +132,7 @@ export default class ObjSpecFilter extends Component {
 
 				<FilterPanel
 					header="Value types"
-					nameList={[['colTitle', 'colTitle'], ['valType', 'valTypeLabel'], ['quantityUnit','quantityUnit'], ['quantityKind', 'quantityKindLabel']]}
+					nameList={getNameList(specTable, ['colTitle', 'valType', 'quantityUnit', 'quantityKind'])}
 					colNames={colNames}
 					getCtrl={this.getCtrl.bind(this)}
 					startCollapsed={false}
@@ -169,4 +169,8 @@ const ResetBtn = ({resetFiltersAction, enabled}) => {
 	const onClick = enabled ? resetFiltersAction : () => _;
 
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
+};
+
+const getNameList = (specTable, list) => {
+	return list.map(colName => specTable.getColLabelNamePair(colName));
 };
