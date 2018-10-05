@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.licenceUri
@@ -12,6 +13,7 @@ import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
@@ -24,6 +26,7 @@ import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
 import se.lu.nateko.cp.data.api.UploadUserError
+import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
@@ -155,6 +158,28 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		complete((StatusCodes.BadRequest, "Expected js array of SHA256 hashsums in 'ids' URL param and a 'fileName' param"))
 	}
 
+	private val authent: Authenticator[String] = {
+		case creds @ Provided(user) =>
+			uploadService.getDownloadReporterPassword(user).filter(creds.verify).map(_ => user)
+		case _ => None
+	}
+
+	private val downloadLogging: Route = parameter('ip.?){ipOpt =>
+		ipOpt.fold(getClientIp)(provide){ip =>
+			ensureValidIpAddress(ip){
+				extractHashsums{hashes =>
+					extractEnvri{implicit envri =>
+						authenticateBasic("Carbon Portal download reporting", authent){_ =>
+							logDownloads(hashes, ip)
+							complete(s"Logging download (by $ip) of the following data objects:\n${hashes.mkString("\n")}")
+						} ~
+						complete(StatusCodes.Unauthorized)
+					}
+				}
+			}
+		}
+	}
+
 	val route = handleExceptions(errHandler){
 		pathPrefix("objects"){
 			put{ upload } ~
@@ -165,6 +190,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		path("tryingest"){
 			put{ tryIngest } ~
 			options { uploadHttpOptions }
+		} ~
+		path("logExternalDownload"){
+			post{ downloadLogging }
 		}
 	}
 
@@ -202,6 +230,14 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			)
 		}
 	}
+
+	private def logDownloads(hashes: Seq[Sha256Sum], ip: String)(implicit envri: Envri): Unit =
+		Utils.runSequentially(hashes){hash =>
+			uploadService.meta.lookupPackage(hash).andThen{
+				case Success(dobj) => logDownload(dobj, ip, None)
+				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service")
+			}
+		}
 
 	private def addAccessControlHeaders(implicit envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
 		case Some(origin) if envriConfs(envri).metaPrefix.toString.startsWith(origin.value) =>
@@ -278,4 +314,26 @@ object UploadRouting{
 		}
 	}
 
+	def ensureValidIpAddress(ip: String): Directive0 =
+		try{
+			java.net.InetAddress.getByName(ip)
+			pass
+		} catch{
+			case _: Throwable =>
+				complete(StatusCodes.BadRequest -> s"Bad IP address $ip")
+		}
+
+	private val extractHashsums: Directive1[Seq[Sha256Sum]] = extractStrictEntity(1.second).flatMap{entity =>
+		try{
+			provide{
+				entity.data.utf8String.split("\n").map{pid =>
+					Sha256Sum.fromBase64Url(pid.split('/').last.trim).get
+				}
+			}
+		} catch{
+			case err: Throwable => complete(
+				StatusCodes.BadRequest -> ("Expected newline-separated list of data object PIDs. Parsing error: " + err.getMessage)
+			)
+		}
+	}
 }

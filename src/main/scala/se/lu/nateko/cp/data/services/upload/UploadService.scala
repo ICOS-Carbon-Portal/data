@@ -110,6 +110,9 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
+	def getDownloadReporterPassword(username: String): Option[String] =
+		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
+
 	private def getSpecificSink(dataObj: DataObject)(implicit envri: Envri): Future[DataObjectSink] = {
 		val postTasks = getPostUploadTasks(dataObj)
 

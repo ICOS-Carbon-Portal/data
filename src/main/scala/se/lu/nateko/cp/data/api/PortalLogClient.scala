@@ -39,7 +39,7 @@ class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield {
 			r.discardEntityBytes()
 			if(r.status == StatusCodes.OK) Future.successful(Done)
-			else Future.failed(new Exception(s"Failed logging data object download to the portal log: ${r.status.defaultMessage}"))
+			else Future.failed(new Exception(s"Failed logging data object download to the portal log at $downloadLogUri: ${r.status}"))
 		}
 	}.flatten
 
