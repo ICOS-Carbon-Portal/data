@@ -101,8 +101,10 @@ export default class State{
 }
 
 // Hash to state and state to hash below
-export const getStateFromHash = () => {
-	const state = hashToState(getCurrentHash());
+export const getStateFromHash = hash => {
+	const state = hash === undefined
+		? hashToState(getCurrentHash())
+		: hashToState(decodeURIComponent(hash));
 	return managePrefixes(state);
 };
 
@@ -200,7 +202,7 @@ export const hashUpdater = store => () => {
 	}
 };
 
-const stateToHash = state => {
+export const stateToHash = state => {
 	const currentStoreState = getStateFromStore(state);
 	const simplifiedStoreState = simplifyState(currentStoreState);
 	const reducedStoreState = reduceState(simplifiedStoreState);
