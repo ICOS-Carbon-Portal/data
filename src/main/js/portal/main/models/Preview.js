@@ -72,7 +72,7 @@ export default class Preview {
 		if (this.visible){
 			return this;
 		} else if (this._pids.length > 0) {
-			return this.initPreview(lookup, cart, this._pids.map(pid => config.previewIdPrefix + pid), objectsTable);
+			return this.initPreview(lookup, cart, this._pids.map(pid => config.previewIdPrefix[config.envri] + pid), objectsTable);
 		} else {
 			return this;
 		}

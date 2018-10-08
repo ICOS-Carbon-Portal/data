@@ -19,7 +19,10 @@ export default {
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 60,
 	dobjExtendedCacheFetchLimit: 20,
-	previewIdPrefix: 'https://meta.icos-cp.eu/objects/',
+	previewIdPrefix: {
+		ICOS: 'https://meta.icos-cp.eu/objects/',
+		SITES: 'https://meta.fieldsites.se/objects/'
+	},
 	historyStateMaxAge: (1000 * 3600 * 24),
 	dobjSortLimit: 2000,
 };
