@@ -6,9 +6,11 @@ import config from '../../config';
 import BackButton from '../buttons/BackButton.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
 
+
 export default class Preview extends Component {
 	constructor(props){
 		super(props);
+
 		this.state = {
 			iframeSrc: undefined
 		};
@@ -30,7 +32,7 @@ export default class Preview extends Component {
 	}
 
 	render(){
-		const {preview, backButtonAction, routeAndParams, cart} = this.props;
+		const {preview, cart} = this.props;
 		const areItemsInCart = preview.items.reduce((prevVal, item) => cart.hasItem(item.id), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
@@ -39,7 +41,6 @@ export default class Preview extends Component {
 			<div>
 				{preview
 					? <div>
-						<BackButton action={backButtonAction} previousRoute={routeAndParams.previousRoute}/>
 
 						<div className="panel panel-default">
 							<div className="panel-heading">
@@ -50,7 +51,7 @@ export default class Preview extends Component {
 												<span style={{marginRight: 10}}>
 													{item.itemName}
 												</span>
-												<a href={item.id} title="View metadata" target="_blank">
+												<a href={item.id} title="View metadata">
 													<span className="glyphicon glyphicon-info-sign" />
 												</a>
 											</span>

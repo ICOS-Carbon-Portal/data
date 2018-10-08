@@ -1,59 +1,61 @@
-import {ERROR, SPECTABLES_FETCHED, FREE_TEXT_FILTER, SPEC_FILTER_UPDATED, OBJECTS_FETCHED, SORTING_TOGGLED, STEP_REQUESTED} from './actions';
-import {SPEC_FILTER_RESET, ROUTE_UPDATED, RESTORE_FILTERS, RESTORE_PREVIEW, CART_UPDATED, PREVIEW, PREVIEW_SETTING_UPDATED, PREVIEW_VISIBILITY} from './actions';
-import {TESTED_BATCH_DOWNLOAD, ITEM_URL_UPDATED, USER_INFO_FETCHED, SWITCH_TAB, UPDATE_SELECTED_PIDS, EXTENDED_DOBJ_INFO_FETCHED, UPDATE_CHECKED_OBJECTS_IN_SEARCH, UPDATE_CHECKED_OBJECTS_IN_CART} from './actions';
-import {TEMPORAL_FILTER, WHOAMI_FETCHED} from './actions';
+import {
+	ERROR,
+	SPECTABLES_FETCHED,
+	FREE_TEXT_FILTER,
+	SPEC_FILTER_UPDATED,
+	OBJECTS_FETCHED,
+	SORTING_TOGGLED,
+	STEP_REQUESTED,
+	SPEC_FILTER_RESET,
+	ROUTE_UPDATED,
+	RESTORE_FILTERS,
+	RESTORE_PREVIEW,
+	CART_UPDATED,
+	PREVIEW,
+	PREVIEW_SETTING_UPDATED,
+	PREVIEW_VISIBILITY,
+	TESTED_BATCH_DOWNLOAD,
+	ITEM_URL_UPDATED,
+	USER_INFO_FETCHED,
+	SWITCH_TAB,
+	UPDATE_SELECTED_PIDS,
+	EXTENDED_DOBJ_INFO_FETCHED,
+	UPDATE_CHECKED_OBJECTS_IN_SEARCH,
+	UPDATE_CHECKED_OBJECTS_IN_CART,
+	INIT,
+	RESTORE_FROM_HISTORY,
+	TEMPORAL_FILTER,
+	WHOAMI_FETCHED,
+	SAVE_STATE} from './actions';
 import * as Toaster from 'icos-cp-toaster';
+import State from './models/State';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
-import Cart from './models/Cart';
 import Preview from './models/Preview';
-import FilterTemporal from './models/FilterTemporal';
-import FilterFreeText from './models/FilterFreeText';
-import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
-import {getRouteFromLocationHash} from './utils';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
+import {getStateFromHash} from "./models/State";
 
-const initState = {
-	routeAndParams: new RouteAndParams(),
-	filterTemporal: new FilterTemporal(),
-	filterFreeText: new FilterFreeText(),
-	user: {},
-	lookup: undefined,
-	specTable: new CompositeSpecTable({}),
-	extendedDobjInfo: [],
-	formatToRdfGraph: {},
-	objectsTable: [],
-	sorting: {objCount: 0},
-	paging: {},
-	cart: new Cart(),
-	preview: new Preview(),
-	toasterData: undefined,
-	batchDownloadStatus: {
-		isAllowed: false,
-		ts: 0
-	},
-	checkedObjectsInSearch: [],
-	checkedObjectsInCart: [],
-};
 
 const specTableKeys = Object.keys(placeholders);
 
-export default function(state = initState, action){
-	let routeAndParams;
+export default function(state = new State(), action){
 
 	switch(action.type){
 
 		case ERROR:
-			return update({
+			return state.update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
+		case INIT:
+			return state.update(getStateFromHash());
+
 		case WHOAMI_FETCHED:
-			return update({user: action.user});
+			return state.update({user: action.user});
 
 		case USER_INFO_FETCHED:
-			return update({
+			return state.update({
 				user: {
 					profile: action.profile,
 					email: action.user.email
@@ -61,10 +63,10 @@ export default function(state = initState, action){
 			});
 
 		case SPECTABLES_FETCHED:
-			let specTable = new CompositeSpecTable(action.specTables);
+			specTable = new CompositeSpecTable(action.specTables);
 			let objCount = getObjCount(specTable);
 
-			return update({
+			return state.update({
 				specTable,
 				formatToRdfGraph: action.formatToRdfGraph,
 				paging: new Paging({objCount}),
@@ -72,60 +74,50 @@ export default function(state = initState, action){
 				lookup: new Lookup(specTable)
 			});
 
+		case RESTORE_FILTERS:
+			let {filterCategories, page} = state;
+			let specTable = getSpecTable(state.specTable, filterCategories);
+			objCount = getObjCount(specTable);
+			let paging = new Paging({objCount, offset: page * config.stepsize});
+
+			return state.update({
+				specTable,
+				objectsTable: [],
+				paging,
+				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case RESTORE_FROM_HISTORY:
+			return State.deserialize(action.historyState, state.cart);
+
 		case SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
 
-			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams, action.varName, action.values),
+			return state.update({
 				specTable,
 				objectsTable: [],
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, objCount)
-			});
-
-		case EXTENDED_DOBJ_INFO_FETCHED:
-			return update({
-				extendedDobjInfo: action.extendedDobjInfo
+				sorting: updateSortingEnableness(state.sorting, objCount),
+				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values}),
+				checkedObjectsInSearch: []
 			});
 
 		case SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
 
-			return update({
-				routeAndParams: updateAndApplyRouteAndParams(state.routeAndParams),
+			return state.update({
 				specTable,
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, {objCount})
-			});
-
-		case RESTORE_FILTERS:
-			routeAndParams = restoreRouteAndParams(action.hash);
-			specTable = Object.keys(routeAndParams.filters).reduce((specTable, filterKey) => {
-				return specTableKeys.includes(filterKey)
-					? specTable.withFilter(filterKey, routeAndParams.filters[filterKey])
-					: specTable;
-			}, state.specTable);
-			objCount = getObjCount(specTable);
-
-			const restoredFilterTemporal = state.filterTemporal.restore(routeAndParams.filters.filterTemporal);
-			const restoredFilterFreeText = state.filterFreeText.restore(routeAndParams.filters.filterFreeText);
-			const paging = new Paging({objCount, offset: routeAndParams.pageOffset});
-
-			return update({
-				routeAndParams,
-				specTable,
-				objectsTable: [],
-				paging,
 				sorting: updateSortingEnableness(state.sorting, objCount),
-				filterTemporal: restoredFilterTemporal,
-				filterFreeText: restoredFilterFreeText
+				filterCategories: {},
+				checkedObjectsInSearch: []
 			});
 
 		case RESTORE_PREVIEW:
-			return update({
-				preview: state.preview.initPreview(state.lookup.table, state.cart, state.routeAndParams.previewIds, state.objectsTable)
+			return state.update({
+				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
 		case OBJECTS_FETCHED:
@@ -133,83 +125,84 @@ export default function(state = initState, action){
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
 			});
+			paging = state.paging.withObjCount(
+				getObjCount(state.specTable),
+				action.objectsTable.length,
+				areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
+				action.cacheSize,
+				action.isDataEndReached
+			);
+			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
 
-			return update({
+			return state.update({
 				objectsTable: extendedObjectsTable,
-				paging: state.paging.withObjCount(
-					getObjCount(state.specTable),
-					action.objectsTable.length,
-					state.routeAndParams.filtersEnabled,
-					action.cacheSize,
-					action.isDataEndReached
-				)
+				paging,
+				sorting: updateSortingEnableness(state.sorting, objCount)
+			});
+
+		case EXTENDED_DOBJ_INFO_FETCHED:
+			return state.updateAndSave({
+				extendedDobjInfo: action.extendedDobjInfo
 			});
 
 		case SORTING_TOGGLED:
-			return update({
+			return state.update({
 				objectsTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
 			});
 
 		case STEP_REQUESTED:
-			routeAndParams = state.routeAndParams.changePage(action.direction);
-			updateUrl(routeAndParams.urlPart);
-
-			return update({
+			return state.update({
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
-				routeAndParams
+				page: state.page + action.direction
 			});
 
 		case ROUTE_UPDATED:
-			routeAndParams = state.routeAndParams.withRoute(action.route);
-			const currentRoute = getRouteFromLocationHash();
-
-			if (currentRoute !== action.route) {
-				window.location.hash = routeAndParams.urlPart;
-			}
-
-			return update({
-				routeAndParams
+			return state.update({
+				route: action.route,
+				preview: action.route === config.ROUTE_PREVIEW ? state.preview : new Preview()
 			});
 
 		case SWITCH_TAB:
-			routeAndParams = state.routeAndParams.withTab({[action.tabName]: action.selectedTabId});
-			updateUrl(routeAndParams.urlPart);
+			paging = state.paging
+				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
+				.withOffset(0);
 
-			return update({routeAndParams});
+			return state.update({
+				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
+				paging,
+				page: 0
+			});
 
 		case PREVIEW:
-			routeAndParams = state.routeAndParams.withRoute(config.ROUTE_PREVIEW).withPreviewIds(action.id);
-			updateUrl(routeAndParams.urlPart);
-
-			return update({
-				routeAndParams,
+			return state.update({
+				route: config.ROUTE_PREVIEW,
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
 		case PREVIEW_VISIBILITY:
-			return update({preview: action.visible ? state.preview.show() : state.preview.hide()});
+			return state.update({preview: action.visible ? state.preview.show() : state.preview.hide()});
 
 		case PREVIEW_SETTING_UPDATED:
-			return update({
+			return state.update({
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
 			});
 
 		case ITEM_URL_UPDATED:
-			return update({
-				cart: action.cart,
+			return state.update({
 				preview: state.preview.withItemUrl(action.url)
 			});
 
 		case CART_UPDATED:
-			return update({
-				cart: action.cart
+			return state.update({
+				cart: action.cart,
+				checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => action.cart.ids.includes(uri))
 			});
 
 		case TESTED_BATCH_DOWNLOAD:
-			return update({
+			return state.update({
 				user: action.user.email,
 				batchDownloadStatus: {
 					isAllowed: action.isBatchDownloadOk,
@@ -218,50 +211,58 @@ export default function(state = initState, action){
 			});
 
 		case TEMPORAL_FILTER:
-			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterTemporal', action.filterTemporal.summary);
-
-			return update({
-				routeAndParams,
+			return state.update({
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
+				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText)),
+				checkedObjectsInSearch: []
 			});
 
 		case FREE_TEXT_FILTER:
 			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
 
-			return update({
-				filterFreeText
+			return state.update({
+				filterFreeText,
+				checkedObjectsInSearch: []
 			});
 
 		case UPDATE_SELECTED_PIDS:
 			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
-			routeAndParams = updateAndApplyRouteAndParams(state.routeAndParams, 'filterFreeText', filterFreeText.summary);
 
-			return update({
-				routeAndParams,
+			return state.update({
 				filterFreeText,
-				paging: state.paging.withFiltersEnabled(routeAndParams.filtersEnabled)
+				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, filterFreeText))
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
-			return update({
-				checkedObjectsInSearch: action.checkedObjectsInSearch
+			return state.updateAndSave({
+				checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, action.checkedObjectInSearch)
 			});
 
 		case UPDATE_CHECKED_OBJECTS_IN_CART:
-			return update({
-				checkedObjectsInCart: action.checkedObjectsInCart
+			return state.update({
+				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
 			});
 
 		default:
 			return state;
 	}
-
-	function update(){
-		const updates = Array.from(arguments);
-		return Object.assign.apply(Object, [{}, state].concat(updates));
-	}
 }
+
+const updateCheckedObjects = (existingObjs, newObj) => {
+	if (Array.isArray(newObj)){
+		return newObj.length === 0 ? [] : newObj;
+	}
+
+	return existingObjs.includes(newObj)
+		? existingObjs.filter(o => o !== newObj)
+		: existingObjs.concat([newObj]);
+};
+
+export const areFiltersEnabled = (tabs, filterTemporal, filterFreeText) => {
+	return tabs.searchTab === 1
+		&& ((filterTemporal !== undefined && filterTemporal.hasFilter)
+			|| (filterFreeText !== undefined && filterFreeText.hasFilter));
+};
 
 function updateFreeTextFilter(id, data, filterFreeText){
 	switch(id){
@@ -271,18 +272,6 @@ function updateFreeTextFilter(id, data, filterFreeText){
 		default:
 			return filterFreeText;
 	}
-}
-
-function updateAndApplyRouteAndParams(currentRouteParams, varName, values){
-	const routeAndParams = varName && values
-		? currentRouteParams.withFilter(varName, values)
-		: currentRouteParams.withResetFilters();
-	updateUrl(routeAndParams.urlPart);
-	return routeAndParams;
-}
-
-function updateUrl(urlPart){
-	window.location.hash = urlPart;
 }
 
 function updateSorting(old, varName){
@@ -297,6 +286,14 @@ function updateSortingEnableness(old, objCount){
 	return isEnabled === old.isEnabled
 		? old
 		: Object.assign({}, old, {isEnabled});
+}
+
+function getSpecTable(startTable, filterCategories){
+	return Object.keys(filterCategories).reduce((specTable, varName) => {
+		return specTableKeys.includes(varName)
+			? specTable.withFilter(varName, filterCategories[varName])
+			: specTable;
+	}, startTable);
 }
 
 function getObjCount(specTable){

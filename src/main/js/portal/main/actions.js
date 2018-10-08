@@ -1,4 +1,7 @@
 export const ERROR = 'ERROR';
+export const INIT = 'INIT';
+export const SAVE_STATE = 'SAVE_STATE';
+export const RESTORE_FROM_HISTORY = 'RESTORE_FROM_HISTORY';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
 export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
@@ -26,12 +29,12 @@ export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARC
 export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
+import {areFiltersEnabled} from './reducer';
 import {saveToRestheart} from '../../common/main/backend';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
-import RouteAndParams, {restoreRouteAndParams} from './models/RouteAndParams';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
 
@@ -52,11 +55,55 @@ const failWithError = dispatch => error => {
 	});
 };
 
-export const getAllSpecTables = hash => dispatch => {
+export const init = () => dispatch => {
+	dispatch({type: INIT});
+
+	getWhoIam().then(user => {
+		dispatch({
+			type: WHOAMI_FETCHED,
+			user
+		});
+		return user;
+
+	}).then(user => {
+		getProfile(user.email).then(profile => {
+			dispatch({
+				type: USER_INFO_FETCHED,
+				user,
+				profile
+			});
+		});
+
+		getCart(user.email).then(
+			({cartInSessionStorage, cartInRestheart}) => {
+
+				cartInRestheart.then(restheartCart => {
+					const cart = restoreCarts(cartInSessionStorage, restheartCart);
+
+					dispatch(updateCart(user.email, cart))
+						.then(_ => dispatch(getAllSpecTables()));
+				});
+			}
+		);
+	});
+};
+
+export const restoreFromHistory = historyState => dispatch => {
+	if (Date.now() - historyState.ts < config.historyStateMaxAge) {
+		dispatch({
+			type: RESTORE_FROM_HISTORY,
+			historyState
+		});
+	} else {
+		dispatch(init());
+	}
+};
+
+export const getAllSpecTables = () => dispatch => {
 	fetchAllSpecTables().then(
 		allTables => {
 			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
-			dispatch(restoreFilters(hash));
+			dispatch({type: RESTORE_FILTERS});
 			dispatch(getFilteredDataObjects);
 		},
 		failWithError(dispatch)
@@ -96,17 +143,17 @@ export const updateSelectedPids = selectedPids => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateCheckedObjectsInSearch = checkedObjectsInSearch => dispatch => {
+export const updateCheckedObjectsInSearch = checkedObjectInSearch => dispatch => {
 	dispatch({
 		type: UPDATE_CHECKED_OBJECTS_IN_SEARCH,
-		checkedObjectsInSearch
+		checkedObjectInSearch
 	});
 };
 
-export const updateCheckedObjectsInCart = checkedObjectsInCart => dispatch => {
+export const updateCheckedObjectsInCart = checkedObjectInCart => dispatch => {
 	dispatch({
 		type: UPDATE_CHECKED_OBJECTS_IN_CART,
-		checkedObjectsInCart
+		checkedObjectInCart
 	});
 };
 
@@ -119,36 +166,72 @@ export const specFilterUpdate = (varName, values) => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-const logPortalUsage = (user, routeAndParams) => {
-	if (Object.keys(routeAndParams.filters).length) {
+const logPortalUsage = (specTable, filterCategories, filterTemporal, filterFreeText) => {
+	if (Object.keys(filterCategories).length || filterTemporal.hasFilter || filterFreeText.hasFilter) {
+
+		const filters = Object.keys(filterCategories).reduce((acc, columnName) => {
+			acc[columnName] = specTable.getLabelFilter(columnName);
+			return acc;
+		}, {});
+
+		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
+		if (filterFreeText.hasFilter) filters.filterFreeText = filterFreeText.serialize;
+
 		saveToRestheart({
 			filterChange: {
-				filters: routeAndParams.filters
+				filters
 			}
 		});
 	}
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
-	const {specTable, routeAndParams, sorting, paging,
-		user, formatToRdfGraph, filterTemporal, filterFreeText} = getState();
-	const filters = routeAndParams.filtersEnabled
-		? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}])
-		: [];
+	const {specTable, route, preview, sorting, formatToRdfGraph,
+		tabs, filterCategories, filterTemporal, filterFreeText, cart} = getState();
 
-	logPortalUsage(user, routeAndParams);
+	const getFilters = () => {
+		if (route === config.ROUTE_PREVIEW && preview.hasPids){
+			return [{category: 'pids', pids: preview.pids}];
 
-	const specs = specTable.getSpeciesFilter(null);
-	const stations = specTable.getFilter('station').length
-		? specTable.getDistinctAvailableColValues('stationUri')
-		: [];
+		} else if (route === config.ROUTE_CART) {
+			return [{
+				category: 'pids',
+				pids: cart.ids.map(id => id.split('/').pop())
+			}];
 
-	const submitters = specTable.getFilter('submitter').length
-		? specTable.getDistinctAvailableColValues('submitterUri')
-		: [];
+		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
+			return filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}]);
 
-	const rdfGraphs = specTable.getColumnValuesFilter('format')
-		.map(f => formatToRdfGraph[f]);
+		} else {
+			return [];
+		}
+	};
+
+	const filters = getFilters();
+
+	if (route === undefined || route === config.ROUTE_SEARCH) {
+		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
+	}
+
+	const specs = route === config.ROUTE_CART
+		? []
+		: specTable.getSpeciesFilter(null);
+
+	const stations = route === config.ROUTE_CART
+		? []
+		: specTable.getFilter('station');
+
+	const submitters = route === config.ROUTE_CART
+		? []
+		: specTable.getFilter('submitter');
+
+	const rdfGraphs = route === config.ROUTE_CART
+		? []
+		: specTable.getColumnValuesFilter('format').map(f => formatToRdfGraph[f]);
+
+	const paging = route === config.ROUTE_CART
+		? {offset: 0, limit: cart.ids.length}
+		: getState().paging;
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
@@ -165,22 +248,22 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
+			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
 	);
 };
 
 const fetchExtendedDataObjInfo = options => dispatch => {
-	dataObjectsExtendedFetcher.fetch(options)
-		.then(
-			extendedDobjInfo => {
-				dispatch({
-					type: EXTENDED_DOBJ_INFO_FETCHED,
-					extendedDobjInfo
-				})
-			},
-			failWithError(dispatch)
-		);
+	dataObjectsExtendedFetcher.fetch(options).then(
+		extendedDobjInfo => {
+			dispatch({
+				type: EXTENDED_DOBJ_INFO_FETCHED,
+				extendedDobjInfo
+			});
+		},
+		failWithError(dispatch)
+	);
 };
 
 export const specFiltersReset = dispatch => {
@@ -204,17 +287,24 @@ export const requestStep = direction => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateRoute = route => dispatch => {
+export const updateRoute = route => (dispatch, getState) => {
+	const state = getState();
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 	dispatch({
 		type: ROUTE_UPDATED,
 		route: newRoute
 	});
+
+	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
+		dispatch(getFilteredDataObjects);
+
+	} else if (newRoute === config.ROUTE_SEARCH && state.route === config.ROUTE_CART){
+		dispatch(getFilteredDataObjects);
+	}
 };
 
-export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
-	const {filterTemporal, filterFreeText, routeAndParams} = getState();
+export const switchTab = (tabName, selectedTabId) => dispatch => {
 
 	dispatch({
 		type: SWITCH_TAB,
@@ -222,54 +312,9 @@ export const switchTab = (tabName, selectedTabId) => (dispatch, getState) => {
 		selectedTabId
 	});
 
-	if (tabName === 'searchTab' && (filterTemporal.hasFilter || filterFreeText.hasFilter)){
+	if (tabName === 'searchTab'){
 		dispatch(getFilteredDataObjects);
 	}
-};
-
-const restoreFilters = hash => dispatch => {
-	dispatch({
-		type: RESTORE_FILTERS,
-		hash
-	});
-};
-
-export const getPreview = hash => (dispatch, getState) => {
-
-	fetchAllSpecTables().then(
-		allTables => {
-			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
-
-			const paging = {}, rdfGraphs = {}, submitters = {};
-			const routeAndParams = restoreRouteAndParams(hash);
-			const filters = [{category: 'pids', pids: routeAndParams.previewIds}];
-			const options = {filters, paging, rdfGraphs, submitters};
-			const dataObjectsFetcher = new DataObjectsFetcher();
-
-			dataObjectsFetcher.fetch(options).then(
-				({rows, cacheSize, isDataEndReached}) => {
-
-					const opts = config.useDataObjectsCache ? options : rows.map(d => `<${d.dobj}>`);
-
-					dispatch(fetchExtendedDataObjInfo(opts));
-
-					dispatch({
-						type: OBJECTS_FETCHED,
-						objectsTable: rows,
-						cacheSize,
-						isDataEndReached
-					});
-
-					dispatch({
-						type: RESTORE_PREVIEW,
-					});
-				},
-				failWithError(dispatch)
-			);
-		},
-		failWithError(dispatch)
-	);
-
 };
 
 export const setPreviewItem = id => dispatch => {
@@ -279,34 +324,17 @@ export const setPreviewItem = id => dispatch => {
 	});
 };
 
-export const setPreviewUrl = url => (dispatch, getState) => {
-	const state = getState();
-
+export const setPreviewUrl = url => dispatch => {
 	dispatch({
 		type: ITEM_URL_UPDATED,
-		cart: state.cart,
 		url
 	});
-};
-
-export const fetchCart = (dispatch, getState) => {
-	const state = getState();
-
-	getCart(state.user.email).then(
-		({cartInLocalStorage, cartInRestheart}) => {
-
-			cartInRestheart.then(restheartCart => {
-				const cart = restoreCarts(cartInLocalStorage, restheartCart);
-				updateCart(state.user.email, cart, dispatch);
-			});
-		}
-	);
 };
 
 export const setCartName = newName => (dispatch, getState) => {
 	const state = getState();
 
-	updateCart(state.user.email, state.cart.withName(newName), dispatch);
+	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
 };
 
 export const addToCart = ids => (dispatch, getState) => {
@@ -328,7 +356,7 @@ export const addToCart = ids => (dispatch, getState) => {
 	});
 
 	if (newItems.length > 0) {
-		updateCart(state.user.email, cart.addItem(newItems), dispatch);
+		dispatch(updateCart(state.user.email, cart.addItem(newItems)));
 	}
 };
 
@@ -336,38 +364,16 @@ export const removeFromCart = ids => (dispatch, getState) => {
 	const state = getState();
 	const cart = state.cart.removeItems(ids);
 
-	updateCart(state.user.email, cart, dispatch);
+	dispatch(updateCart(state.user.email, cart));
 };
 
-const updateCart = (email, cart, dispatch) => {
-	saveCart(email, cart).then(
+const updateCart = (email, cart) => dispatch => {
+	return saveCart(email, cart).then(
 		dispatch({
 			type: CART_UPDATED,
 			cart
 		})
 	);
-};
-
-export const fetchUserInfo = restoreCart => dispatch => {
-	getWhoIam()
-		.then(user => {
-			dispatch({
-				type: WHOAMI_FETCHED,
-				user
-			});
-			return user;
-		})
-		.then(user => {
-			getProfile(user.email).then(profile => {
-				dispatch({
-					type: USER_INFO_FETCHED,
-					user,
-					profile
-				});
-
-				if (restoreCart) dispatch(fetchCart);
-			});
-		});
 };
 
 export const fetchIsBatchDownloadOk = dispatch => {
@@ -398,19 +404,4 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
 	dispatch(getFilteredDataObjects);
-};
-
-const updatePaging = (old, direction) => {
-	if(direction < 0){
-		if(old.offset === 0) return old;
-		const offset = Math.max(0, old.offset - config.stepsize);
-		return Object.assign({}, old, {offset});
-
-	} else if(direction > 0){
-		if(old.offset + old.limit >= old.objCount) return old;
-		if(old.offset + config.stepsize >= old.objCount) return old;
-		const offset = old.offset + config.stepsize;
-		return Object.assign({}, old, {offset});
-
-	} else return old;
 };

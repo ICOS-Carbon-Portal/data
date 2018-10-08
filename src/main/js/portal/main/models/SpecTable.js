@@ -14,6 +14,14 @@ export default class SpecTable{
 		this._rows = rows;
 	}
 
+	get serialize(){
+		return {
+			colNames: this._colNames,
+			rows: this._rows,
+			filters: this._filters
+		};
+	}
+
 	get names(){
 		return this._colNames.filter(col => col !== SPECCOL);
 	}
@@ -54,6 +62,10 @@ export default class SpecTable{
 		if(this.names.every(name => this._filters[name].length === 0)) return [];
 		const filter = this.getDistinctAvailableColValues(SPECCOL);
 		return filter.length === this._speciesCount ? [] : filter;
+	}
+
+	get rows(){
+		return this._rows;
 	}
 
 	getColumnValuesFilter(colName){

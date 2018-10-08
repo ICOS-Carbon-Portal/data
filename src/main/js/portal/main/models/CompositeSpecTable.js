@@ -1,9 +1,41 @@
 import {SPECCOL} from '../sparqlQueries';
+import SpecTable from "./SpecTable";
+
+
+const labelColNameMapper = {
+	project: 'projectLabel',
+	theme: 'themeLabel',
+	station: 'stationLabel',
+	submitter: 'submitterLabel',
+	type: 'specLabel',
+	format: 'formatLabel',
+	valType: 'valTypeLabel',
+	quantityKind: 'quantityKindLabel'
+};
 
 export default class CompositeSpecTable{
 
 	constructor(nameToTableKv){
 		this._tables = nameToTableKv;
+	}
+
+	get serialize(){
+		return Object.keys(this._tables).reduce((acc, key) => {
+			acc[key] = this._tables[key].serialize;
+			return acc;
+		}, {});
+	}
+
+	static deserialize(jsonCompositeSpecTable) {
+		const basics = jsonCompositeSpecTable.basics;
+		const columnMeta = jsonCompositeSpecTable.columnMeta;
+		const origins = jsonCompositeSpecTable.origins;
+
+		return new CompositeSpecTable({
+			basics: new SpecTable(...Object.keys(basics).map(t => basics[t])),
+			columnMeta: new SpecTable(...Object.keys(columnMeta).map(t => columnMeta[t])),
+			origins: new SpecTable(...Object.keys(origins).map(t => origins[t]))
+		});
 	}
 
 	get tables(){
@@ -83,6 +115,25 @@ export default class CompositeSpecTable{
 		return this.findTable(colName).getColumnValuesFilter(colName);
 	}
 
+	getColLabelNamePair(colName){
+		return labelColNameMapper[colName] ? [colName, labelColNameMapper[colName]] : [colName, colName];
+	}
+
+	getLabelName(colName){
+		return labelColNameMapper[colName] ? labelColNameMapper[colName] : colName;
+	}
+
+	getLabelFilter(colName){
+		const columnValues = this.getFilter(colName);
+		const labelName = this.getLabelName(colName);
+
+		if (colName === labelName) {
+			return columnValues;
+		} else {
+			const rows = this.findTable(colName).rows;
+			return columnValues.map(val => rows.find(row => val === row[colName])[labelName]);
+		}
+	}
 }
 
 

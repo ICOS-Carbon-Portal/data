@@ -20,9 +20,9 @@ export const Paging = ({paging, requestStep}) => {
 };
 
 const CountHeader = ({objCount, isCountKnown, to, offset}) => {
-	const countTxt = !isNaN(to) && objCount
+	const countTxt = !isNaN(to) && !isNaN(objCount)
 		? isCountKnown
-			? `Data objects ${offset + 1} to ${to} of ${objCount}`
+			? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount}`
 			: `Data objects ${offset + 1} to ${to} of more than ${objCount}`
 		: <span>&nbsp;</span>;
 

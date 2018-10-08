@@ -16,20 +16,14 @@ class DataCart extends Component {
 		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
 	}
 
-	handleCheckboxChange() {
-		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
-			.map((checkbox) => checkbox.value);
-
-		this.props.updateCheckedObjects(checkedObjects);
-	}
-
 	handleAllCheckboxesChange() {
 		if (this.props.checkedObjectsInCart.length > 0) {
 			this.props.updateCheckedObjects([]);
 		} else {
-			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
-				.map((checkbox) => checkbox.value);
-
+			const checkedObjects = this.props.objectsTable.reduce((acc, o) => {
+				if (o.level > 0) acc.push(o.dobj);
+				return acc;
+			}, []);
 			this.props.updateCheckedObjects(checkedObjects);
 		}
 	}
@@ -54,7 +48,7 @@ class DataCart extends Component {
 								previewitemId={previewitemId}
 								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
-								handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+								updateCheckedObjects={props.updateCheckedObjects}
 								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 								{...props}
 							/>
@@ -105,4 +99,4 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state, dispatchToProps)(DataCart);
+export default connect(state => state.toPlainObject, dispatchToProps)(DataCart);

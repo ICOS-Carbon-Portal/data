@@ -4,7 +4,15 @@ export default class Cart {
 	constructor(name, items){
 		this._name = name || 'My data cart';
 		this._items = items || [];
-		this._ts = items ? Date.now() + '' : '0';
+		this._ts = (items ? Date.now() + '' : '0');
+	}
+
+	get serialize(){
+		return {
+			name: this._name,
+			items: this._items.map(item => item.serialize),
+			ts: this._ts
+		}
 	}
 
 	addItem(cartItem){
@@ -76,26 +84,26 @@ export default class Cart {
 	}
 }
 
-export const restoreCarts = (cartInLocalStorage, cartInRestheart) => {
-	const localStorageTs = cartInLocalStorage.cart && cartInLocalStorage.cart._ts
-		? parseInt(cartInLocalStorage.cart._ts)
+export const restoreCarts = (cartInSessionStorage, cartInRestheart) => {
+	const sessionStorageTs = cartInSessionStorage.cart && cartInSessionStorage.cart._ts
+		? parseInt(cartInSessionStorage.cart._ts)
 		: '0';
 	const restheartTs = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._ts
 		? parseInt(cartInRestheart.cart._ts)
 		: '0';
 
-	const newName = restheartTs > localStorageTs
+	const newName = restheartTs > sessionStorageTs
 		? cartInRestheart.cart._name
-		: cartInLocalStorage.cart._name;
+		: cartInSessionStorage.cart._name;
 
-	const localStorageItems = cartInLocalStorage.cart && cartInLocalStorage.cart._items
-		? cartInLocalStorage.cart._items
+	const sessionStorageItems = cartInSessionStorage.cart && cartInSessionStorage.cart._items
+		? cartInSessionStorage.cart._items
 		: [];
 	const restheartItems = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._items
 		? cartInRestheart.cart._items
 		: [];
 
-	const newItems = restheartItems.concat(localStorageItems).filter((item, i, items) => {
+	const newItems = restheartItems.concat(sessionStorageItems).filter((item, i, items) => {
 		return items.findIndex(itm => itm._id === item._id) === i;
 	});
 	const newCartItems = newItems.map(item => new CartItem(item._dataobject, item._type, item._url));

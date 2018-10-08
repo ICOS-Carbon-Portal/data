@@ -18,13 +18,6 @@ class Search extends Component {
 		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
 	}
 
-	handleCheckboxChange() {
-		var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox:checked'))
-			.map((checkbox) => checkbox.value);
-
-		this.props.updateCheckedObjects(checkedObjects);
-	}
-
 	handleAddToCart(objInfo) {
 		this.props.addToCart(objInfo);
 		this.props.updateCheckedObjects([]);
@@ -34,16 +27,17 @@ class Search extends Component {
 		if (this.props.checkedObjectsInSearch.length > 0) {
 			this.props.updateCheckedObjects([]);
 		} else {
-			var checkedObjects = Array.from(document.querySelectorAll('.data-checkbox'))
-				.map((checkbox) => checkbox.value);
-
+			const checkedObjects = this.props.objectsTable.reduce((acc, o) => {
+				if (o.level > 0) acc.push(o.dobj);
+				return acc;
+			}, []);
 			this.props.updateCheckedObjects(checkedObjects);
 		}
 	}
 
 	render(){
 		const props = this.props;
-		const tabs = props.routeAndParams.tabs;
+		const tabs = props.tabs;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
 
@@ -67,7 +61,7 @@ class Search extends Component {
 						<SearchResultTable
 							tabHeader="Search results"
 							previewAction={this.handlePreview.bind(this)}
-							handleCheckboxChange={this.handleCheckboxChange.bind(this)}
+							updateCheckedObjects={props.updateCheckedObjects.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							{...copyprops(props, [
@@ -105,4 +99,4 @@ function dispatchToProps(dispatch){
 	};
 }
 
-export default connect(state => state, dispatchToProps)(Search);
+export default connect(state => state.toPlainObject, dispatchToProps)(Search);

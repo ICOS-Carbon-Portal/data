@@ -2,11 +2,30 @@
 const minDate = new Date(-8640000000000000);
 const maxDate = new Date(8640000000000000);
 
+
 export default class FilterTemporal {
 	constructor(dataTime, submission){
 		this._dataTime = dataTime || new FromToDates();
 		this._submission = submission || new FromToDates();
 	}
+
+	get serialize(){
+		const res = {};
+
+		if (this._dataTime.from) res.df = this._dataTime.fromDateStr;
+		if (this._dataTime.to) res.dt = this._dataTime.toDateStr;
+		if (this._submission.from) res.sf = this._submission.fromDateStr;
+		if (this._submission.to) res.st = this._submission.toDateStr;
+
+		return res;
+	}
+
+	static deserialize(jsonFilterTemporal){
+		return new FilterTemporal(
+			new FromToDates(jsonFilterTemporal.df, jsonFilterTemporal.dt),
+			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st)
+		);
+	};
 
 	withDataTimeFrom(from){
 		const newFilter = new FilterTemporal(this._dataTime.withFrom(from), this._submission);
@@ -87,17 +106,6 @@ export default class FilterTemporal {
 		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
 	}
 
-	get summary(){
-		const res = {};
-
-		if (this._dataTime.from) res.df = this._dataTime.fromDateStr;
-		if (this._dataTime.to) res.dt = this._dataTime.toDateStr;
-		if (this._submission.from) res.sf = this._submission.fromDateStr;
-		if (this._submission.to) res.st = this._submission.toDateStr;
-
-		return res;
-	}
-
 	validateDataTime(){
 		this._dataTime.error = this.isValid(this._dataTime)
 			? undefined
@@ -118,10 +126,10 @@ export default class FilterTemporal {
 	}
 }
 
-class FromToDates {
+export class FromToDates {
 	constructor(from, to){
-		this._from = from;
-		this._to = to;
+		this._from = createDate(from);
+		this._to = createDate(to);
 		this.error = undefined;
 	}
 
@@ -161,3 +169,11 @@ class FromToDates {
 		return this._to ? this._to.toISOString() : undefined;
 	}
 }
+
+const createDate = potentialDate => {
+	if (potentialDate === undefined) return undefined;
+
+	return potentialDate instanceof Date
+		? potentialDate
+		: new Date(potentialDate);
+};

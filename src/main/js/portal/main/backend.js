@@ -22,7 +22,7 @@ export function fetchAllSpecTables() {
 			};
 		}
 	);
-};
+}
 
 function fetchSpecTable(queryFactory) {
 	const query = queryFactory(config);
@@ -72,7 +72,7 @@ export const saveCart = (email, cart) => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
-	return Promise.resolve(localStorage.setItem('cp-cart', JSON.stringify(cart)));
+	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
 const updatePersonalRestheart = (email, data) => {
@@ -84,19 +84,19 @@ const updatePersonalRestheart = (email, data) => {
 			'Content-Type': 'application/json'
 		}),
 		body: JSON.stringify(data)
-	}).then(resp => resp);
+	});
 };
 
 export const getCart = email => {
-	const localStorageJson = localStorage.getItem('cp-cart')
-		? JSON.parse(localStorage.getItem('cp-cart'))
+	const sessionStorageJson = sessionStorage.getItem('cp-cart')
+		? JSON.parse(sessionStorage.getItem('cp-cart'))
 		: new Cart();
-	const cartInLocalStorage = {cart: localStorageJson};
+	const cartInSessionStorage = {cart: sessionStorageJson};
 	const cartInRestheart = email
 		? getCartFromRestheart(email)
 		: Promise.resolve({cart: new Cart()});
 
-	return Promise.resolve({cartInLocalStorage, cartInRestheart});
+	return Promise.resolve({cartInSessionStorage, cartInRestheart});
 };
 
 const getCartFromRestheart = email => {
@@ -108,7 +108,7 @@ const getCartFromRestheart = email => {
 		});
 };
 
-export const getIsBatchDownloadOk = ids => {
+export const getIsBatchDownloadOk = () => {
 	return fetch('../objects?ids=[]&fileName=test', {credentials: 'include'})
 		.then(response => response.status === 200);
 };

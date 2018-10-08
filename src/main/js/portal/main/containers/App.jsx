@@ -7,8 +7,8 @@ import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
-import commonConfig from '../../../common/main/config';
-import localConfig from '../config';
+import config from '../config';
+
 
 export class App extends Component {
 	constructor(props){
@@ -17,7 +17,6 @@ export class App extends Component {
 
 	handleRouteClick(newRoute){
 		this.props.updateCheckedObjectsInCart([]);
-		this.props.updateCheckedObjectsInSearch([]);
 		this.props.updateRoute(newRoute);
 	}
 
@@ -39,12 +38,12 @@ export class App extends Component {
 
 				<div className="row page-header">
 					<h1 className="col-md-9">
-						{commonConfig.envri} data portal
+						{config.envri} data portal
 						<small> Search, preview, download data objects</small>
 					</h1>
 					<div className="col-md-3 text-right" style={{marginTop: 30}}>
 						<SwitchRouteBtn
-							currentRoute={props.routeAndParams.route}
+							currentRoute={props.route}
 							cart={props.cart}
 							action={this.handleRouteClick.bind(this)}
 						/>
@@ -65,10 +64,10 @@ export class App extends Component {
 const SwitchRouteBtn = props => {
 	switch(props.currentRoute){
 
-		case localConfig.ROUTE_SEARCH:
+		case config.ROUTE_SEARCH:
 			return <SearchBtn {...props} />;
 
-		case localConfig.ROUTE_CART:
+		case config.ROUTE_CART:
 			return null;
 
 		default:
@@ -81,7 +80,7 @@ const SearchBtn = props => {
 	const colCount = cart.count;
 
 	return (
-		<button className="btn btn-primary" onClick={action.bind(this, localConfig.ROUTE_CART)}>
+		<button className="btn btn-primary" onClick={action.bind(this, config.ROUTE_CART)}>
 			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}
@@ -91,14 +90,14 @@ const SearchBtn = props => {
 };
 
 const Route = props => {
-	switch(props.routeAndParams.route){
-		case localConfig.ROUTE_SEARCH:
+	switch(props.route){
+		case config.ROUTE_SEARCH:
 			return <Search {...props} />;
 
-		case localConfig.ROUTE_CART:
+		case config.ROUTE_CART:
 			return <DataCart {...props} />;
 
-		case localConfig.ROUTE_PREVIEW:
+		case config.ROUTE_PREVIEW:
 			return <Preview {...props} />;
 
 		default:
@@ -110,13 +109,16 @@ function stateToProps(state){
 	return {
 		lookup: state.lookup,
 		user: state.user,
-		routeAndParams: state.routeAndParams,
 		toasterData: state.toasterData,
 		cart: state.cart,
 		preview: state.preview,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		checkedObjectsInCart: state.checkedObjectsInCart,
 		extendedDobjInfo: state.extendedDobjInfo,
+		route: state.route,
+		filterCategories: state.filterCategories,
+		tabs: state.tabs,
+		page: state.page,
 	};
 }
 

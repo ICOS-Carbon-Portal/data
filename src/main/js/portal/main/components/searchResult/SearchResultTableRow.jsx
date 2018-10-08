@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import CheckBtn from '../buttons/ChechBtn.jsx';
 
 
 const truncateStyle = {
@@ -11,11 +12,6 @@ const truncateStyle = {
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
 		super(props);
-		this.handleCheckboxChange = this.handleCheckboxChange.bind(this);
-	}
-
-	handleCheckboxChange() {
-		this.props.onCheckboxChange();
 	}
 
 	render(){
@@ -27,16 +23,20 @@ export default class SimpleObjectTableRow extends Component{
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
-		const checkboxDisabled = objInfo.level === 0 ? "disabled" : "";
 
 		return(
 			<tr style={{margin: '20px 0'}}>
-				<td style={{textAlign: 'center', width: 40, padding: '16px 8px'}}>
-					<input className="data-checkbox" type="checkbox" name="data-checkbox" value={objInfo.dobj} onChange={this.handleCheckboxChange} disabled={checkboxDisabled} checked={props.isChecked}/>
+				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
+					<CheckBtn
+						updateCheckedObjects={props.updateCheckedObjects}
+						id={objInfo.dobj}
+						isChecked={props.isChecked}
+						checkboxDisabled={objInfo.level === 0 ? "disabled" : ""}
+					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>
-						<a href={objInfo.dobj} title="View metadata" target="_blank">{title}</a>
+						<a href={objInfo.dobj} title="View metadata">{title}</a>
 					</h4>
 					{extendedInfo && extendedInfo.description &&
 						<div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
@@ -66,7 +66,7 @@ const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0}) =>
 };
 
 function formatDate(d){
-	if(!d) return '';
+	if(!d || isNaN(d)) return '';
 
 	return d.toISOString().substr(0, 10);
 }

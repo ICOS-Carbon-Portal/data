@@ -65,7 +65,7 @@ export default class FilterByPid extends Component{
 					<Multiselect
 						placeholder="Search by PID"
 						data={pidList}
-						defaultValue={selectedPids}
+						value={selectedPids}
 						filter="contains"
 						onChange={this.handleChange.bind(this)}
 						onSearch={this.handleSearch.bind(this)}
