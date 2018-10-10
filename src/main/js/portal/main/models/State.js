@@ -213,28 +213,46 @@ export const stateToHash = state => {
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-const managePrefixes = (state = {}) => {
+export const managePrefixes = (state = {}) => {
 	if (Object.keys(state).length === 0) return state;
 	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
 
+	const shortener = (prefix, value) => {
+		if (Array.isArray(prefix)){
+			const prefixObj = prefix.find(p => value.startsWith(p.value));
+			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+			return prefixObj.prefix + value.slice(prefixObj.value.length);
+		} else {
+			return value.slice(prefix.length);
+		}
+	};
+
+	const extender = (prefix, value) => {
+		if (Array.isArray(prefix)){
+			const pLetter = value.slice(0, 1);
+			const prefixObj = prefix.find(p => p.prefix === pLetter);
+			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+			return prefixObj.value + value.slice(1);
+		} else {
+			return prefix + value;
+		}
+	};
+
 	const categories = Object.keys(state.filterCategories);
 	const appPrefixes = prefixes[config.envri];
-	const prefixValues = Object.keys(appPrefixes).map(key => appPrefixes[key]);
 	const fc = state.filterCategories;
 
 	return Object.assign({}, state, {
 		filterCategories: categories.reduce((acc, category) => {
-			const prefix = appPrefixes[category] || '';
-
 			acc[category] = fc[category].map(value => {
-
 				if (Number.isInteger(value)) return value;
 
+				const prefix = appPrefixes[category];
+				if (prefix === undefined) throw new Error(`Could not find prefix for ${value}`);
+
 				return value.startsWith('http://') || value.startsWith('https://')
-					? prefixValues.some(pv => value.startsWith(pv))
-						? value.slice(prefix.length)
-						: value
-					: prefix + value;
+					? shortener(prefix, value)
+					: extender(prefix, value)
 			});
 
 			return acc;
