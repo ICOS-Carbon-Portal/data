@@ -61,7 +61,7 @@ export default class Preview {
 				const url = getNewTimeseriesUrl(items, xAxis);
 				return new Preview(items.map(i => i.withUrl(url)), options.options, options.type, true);
 			}
-		} else if (options.type === config.NETCDF){
+		} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
 			return new Preview(items, options.options, options.type, true);
 		}
 

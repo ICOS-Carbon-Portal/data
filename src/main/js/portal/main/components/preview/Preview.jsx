@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import PreviewTimeSerie from './PreviewTimeSerie.jsx';
 import PreviewNetCDF from './PreviewNetCDF.jsx';
+import PreviewSelfContained from './PreviewSelfContained.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
 import BackButton from '../buttons/BackButton.jsx';
@@ -100,7 +101,10 @@ const PreviewRoute = props => {
 			return <PreviewTimeSerie {...props} />;
 
 		case config.NETCDF:
-			return <PreviewNetCDF {...props} />;
+			return <PreviewSelfContained {...props} />;
+
+		case config.MAPGRAPH:
+			return <PreviewSelfContained {...props} />;
 
 		default:
 			return (
