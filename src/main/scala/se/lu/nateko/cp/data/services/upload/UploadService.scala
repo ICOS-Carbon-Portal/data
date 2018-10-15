@@ -78,6 +78,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 					case _ => throw new CpDataException(s"Unexpected UploadTaskResult $taskRes")
 				}
 			})
+		}.map{
+			SinkCombiner.ignoreOnCancel
 		}
 
 	def reingest(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[Done] =

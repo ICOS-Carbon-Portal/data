@@ -25,7 +25,7 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 ### Trying ingestion
 When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>`, where `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec)), and `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files). With curl, the test can be performed for example as follows:
 
-`curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" --upload-file ICOS_ATC_NRT_MTO.zip https://meta.icos-cp.eu/tryingest`
+`curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" --upload-file ICOS_ATC_NRT_MTO.zip https://data.icos-cp.eu/tryingest`
 
 ---
 
@@ -108,7 +108,7 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 ### Getting started with the back-end part
 
-- Check out the [cpauth](https://github.com/ICOS-Carbon-Portal/cpauth) project.
+- Check out the [data](https://github.com/ICOS-Carbon-Portal/data) project.
 - Make a copy of `src/main/resources/application.conf` file in the project root and edit it to suit your environment. You only need to override the properties whose defaults are not suitable. For example, `cpdata.netcdf.folder` likely needs to be overridden. For deployment, make sure there is a relevant `application.conf` in the JVM's working directory.
 - Run sbt (from this project's root)
 - In the sbt console, run `~re-start` for continuous local rebuilds and server restarts

@@ -1,9 +1,14 @@
 package se.lu.nateko.cp.data.streams
 
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Broadcast
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
 import akka.stream.SinkShape
+import akka.stream.scaladsl.Broadcast
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 
 object SinkCombiner {
 
@@ -77,4 +82,8 @@ object SinkCombiner {
 				}
 			)
 	}
+
+	def ignoreOnCancel[T,M](sink: Sink[T, Future[M]])(implicit ctxt: ExecutionContext): Sink[T, Future[M]] =
+		Flow.apply[T].wireTapMat(sink)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
+
 }
