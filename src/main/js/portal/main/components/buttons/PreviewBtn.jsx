@@ -41,6 +41,9 @@ export default class PreviewBtn extends Component{
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
 			return [false, "You can only preview one shipping line at a time"];
 
+		else if (previewTypes.every(type => type === config.TIMESERIES))
+			return [true, ""];
+
 		else if (checkedObjects.length > 1 && checkedObjects.reduce((prev,cur) => (prev.spec === cur.spec) ? prev : false))
 			return [false, "Preview is not available for data of this type."];
 
