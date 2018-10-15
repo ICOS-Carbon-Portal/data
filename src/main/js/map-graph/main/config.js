@@ -2,7 +2,7 @@ export default {
 	dateColName: 'TIMESTAMP',
 	latitudeColName: 'Latitude',
 	longitudeColName: 'Longitude',
-	maxPointsInMap: 2000,
+	pointsInMapThreshHold: 2000,
 	percentSD: 0.1,
 	outlierSDFactor: 10
 };

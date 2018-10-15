@@ -6,8 +6,6 @@ import GraphContainer from '../components/GraphContainer.jsx';
 import Table from '../components/Table.jsx';
 import Radio from '../components/Radio.jsx';
 import {selectVar, selectVarY1, selectVarY2, mapStateChanged} from '../actions';
-import {getHash} from '../store';
-import deepEqual from 'deep-equal'
 
 
 export class App extends Component {
@@ -23,16 +21,16 @@ export class App extends Component {
 		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
 
 		this.state = {
-			reducedPoints: undefined,
+			pointReducer: undefined,
 			fromGraph: undefined,
 			fromMap: undefined,
 			row: 0
 		};
 	}
 
-	onAfterPointsFiltered(reducedPoints, center, zoom){
+	onAfterPointsFiltered(pointReducer, center, zoom){
 		this.props.mapStateChanged(center, zoom);
-		this.setState({reducedPoints});
+		this.setState({pointReducer});
 	}
 
 	onGraphMouseMove(latitude, longitude, row){
@@ -55,7 +53,7 @@ export class App extends Component {
 
 	render(){
 		const {toasterData, binTableData, mapValueIdx, value1Idx, value2Idx, selectOptions, selectVar, selectVarY1, selectVarY2, radios, center, zoom} = this.props;
-		const {reducedPoints, fromGraph, fromMap, row} = this.state;
+		const {pointReducer, fromGraph, fromMap, row} = this.state;
 
 		return (
 			<div className="container-fluid" style={{margin: 10}}>
@@ -92,7 +90,7 @@ export class App extends Component {
 							isTouchDevice={this.isTouchDevice}
 							binTableData={binTableData}
 							row={row}
-							reducedPoints={reducedPoints}
+							pointReducer={pointReducer}
 						/>
 
 
@@ -115,27 +113,7 @@ export class App extends Component {
 	}
 }
 
-const updateURL = state => {
-	const currentHash = getHash();
-	const newHash = {
-		y1: state.value1Idx,
-		y2: state.value2Idx,
-		map: state.mapValueIdx,
-		center: state.center,
-		zoom: state.zoom
-	};
-	const hasVals =  Object.keys(newHash).reduce((acc, key) => {
-		return newHash[key] === undefined ? acc : acc + 1;
-	}, 0) > 0;
-
-	if (hasVals && !deepEqual(currentHash, newHash)) {
-		window.location.hash = JSON.stringify(newHash);
-	}
-};
-
 function stateToProps(state) {
-	updateURL(state);
-
 	return {
 		toasterData: state.toasterData,
 		binTableData: state.binTableData,
@@ -155,7 +133,7 @@ function dispatchToProps(dispatch) {
 		selectVar: value => dispatch(selectVar(value)),
 		selectVarY1: value => dispatch(selectVarY1(value)),
 		selectVarY2: value => dispatch(selectVarY2(value)),
-		mapStateChanged: (mapValueIdx, center, zoom) => dispatch(mapStateChanged(mapValueIdx, center, zoom)),
+		mapStateChanged: (center, zoom) => dispatch(mapStateChanged(center, zoom)),
 	};
 }
 

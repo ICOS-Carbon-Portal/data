@@ -38,11 +38,14 @@ export default class Map extends Component{
 	}
 
 	componentDidUpdate(prevProps){
-		const {binTableData, valueIdx, afterPointsFiltered, fromGraph} = this.props;
+		const {binTableData, valueIdx, afterPointsFiltered, fromGraph, center, zoom} = this.props;
 		const renderPoints = (binTableData.isValidData && valueIdx !== undefined && this.colorMaker === undefined)
 			|| prevProps.valueIdx !== valueIdx;
+		const newCenterZoom = getNewCenterZoom(prevProps, center, zoom, this.leafletMap);
 
-		if (renderPoints) {
+		if (newCenterZoom){
+			this.leafletMap.setView(newCenterZoom.center, newCenterZoom.zoom);
+		} else if (renderPoints) {
 			const zoomToPoints = this.colorMaker === undefined;
 			if (this.legendCtrl) this.leafletMap.removeControl(this.legendCtrl);
 
@@ -162,7 +165,7 @@ export default class Map extends Component{
 			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
 		}
 
-		if (afterPointsFiltered) afterPointsFiltered(pointReducer.reducedPoints, map.getCenter(), map.getZoom());
+		if (afterPointsFiltered) afterPointsFiltered(pointReducer, map.getCenter(), map.getZoom());
 	}
 
 	render(){
@@ -180,6 +183,18 @@ export default class Map extends Component{
 		);
 	}
 }
+
+const getNewCenterZoom = (prevProps, center, zoom, map) => {
+	const mapCenter = map.getCenter();
+
+	if (prevProps.center === undefined || center === undefined || mapCenter === undefined) return undefined;
+
+	const propsDiffers = prevProps.center.lat !== center.lat || prevProps.center.lng !== center.lng || prevProps.zoom !== zoom;
+	const mapZoom = map.getZoom();
+	const propsMapDiffers = mapCenter.lat !== center.lat || mapCenter.lng !== center.lng || mapZoom.zoom !== zoom;
+
+	return propsDiffers && propsMapDiffers ? {center, zoom} : undefined;
+};
 
 const calculateDecimals = (min, max) => {
 	return Math.abs(max - min) < 50 ? 1 : 0;

@@ -30,6 +30,7 @@ export const Stats = L.Control.extend({
 
 	initialize: function (options) {
 		this.eventHandlers = [];
+		this.pointCountTxt = L.DomUtil.create('span');
 		this.minTxt = L.DomUtil.create('span');
 		this.maxTxt = L.DomUtil.create('span');
 		this.meanTxt = L.DomUtil.create('span');
@@ -52,6 +53,7 @@ export const Stats = L.Control.extend({
 		bodyElement.setAttribute("id", statBodyId);
 		bodyElement.setAttribute("style", "display:none; font-size:12px; cursor:pointer; background-color:white;");
 
+		addRow(bodyElement, 'Data points', this.pointCountTxt);
 		addRow(bodyElement, 'Min', this.minTxt);
 		addRow(bodyElement, 'Max', this.maxTxt);
 		addRow(bodyElement, 'Mean', this.meanTxt);
@@ -64,6 +66,7 @@ export const Stats = L.Control.extend({
 	},
 
 	updateStats: function(stats) {
+		this.pointCountTxt.innerHTML = stats.pointCount.toLocaleString();
 		this.minTxt.innerHTML = stats.min.toFixed(2);
 		this.maxTxt.innerHTML = stats.max.toFixed(2);
 		this.meanTxt.innerHTML = stats.mean.toFixed(2);

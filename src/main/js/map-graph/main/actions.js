@@ -18,12 +18,15 @@ export const failWithError = error => dispatch => {
 };
 
 export const init = (objId, hashState) => dispatch => {
+	dispatch(hashUpdated(hashState));
+	dispatch(fetchTableFormatNrows(objId));
+};
+
+export const hashUpdated = hashState => dispatch => {
 	dispatch({
 		type: HASH_STATE_UPDATED,
 		hashState
 	});
-
-	dispatch(fetchTableFormatNrows(objId));
 };
 
 const fetchTableFormatNrows = objId => dispatch => {

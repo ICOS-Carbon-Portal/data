@@ -24,10 +24,15 @@ export default function(state = initState, action){
 
 		case HASH_STATE_UPDATED:
 			let {y1, y2, map} = action.hashState;
-			const center = getCenter(action.hashState.center);
+			const center = getCenter(action.hashState.center) || state.center;
 			const zoom = Number.isInteger(action.hashState.zoom) ? action.hashState.zoom : undefined;
+			let radios = [
+				getRadioData(state.binTableData, y1, map === y1),
+				getRadioData(state.binTableData, y2, map === y2)
+			];
 
 			return update({
+				radios,
 				mapValueIdx: map,
 				value1Idx: y1,
 				value2Idx: y2,
@@ -50,7 +55,7 @@ export default function(state = initState, action){
 			const mapValueIdx = map !== undefined && action.binTableData.indices.data.includes(map)
 				? map
 				: value1Idx;
-			let radios = [
+			radios = [
 				getRadioData(action.binTableData, value1Idx, mapValueIdx === value1Idx),
 				getRadioData(action.binTableData, value2Idx, mapValueIdx === value2Idx && mapValueIdx !== value1Idx)
 			];
@@ -89,6 +94,7 @@ export default function(state = initState, action){
 			});
 
 		case MAP_STATE_CHANGED:
+			// console.log({center: action.center, zoom: action.zoom, url: window.location});
 			return update({
 				center: action.center,
 				zoom: action.zoom
