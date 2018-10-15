@@ -17,12 +17,19 @@ export default class SimpleObjectTableRow extends Component{
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		const lookup = props.lookup;
+		const checkedObjects = props.checkedObjects;
 		const extendedInfo = props.extendedInfo
 			? props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
+		const checkboxDisabled = objInfo.level === 0;
+		const checkBtnTitle = checkboxDisabled
+			? 'You cannot download or preview level 0 data through this portal'
+			: `Click to select this data object for preview or add to cart`;
+		// console.log({checkedObjects, lookup, lookupType: lookup.getSpecLookupType(objInfo.spec), objInfo, isChecked: props.isChecked, checkboxDisabled: objInfo.level === 0 ? "disabled" : "", title});
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -30,8 +37,9 @@ export default class SimpleObjectTableRow extends Component{
 					<CheckBtn
 						updateCheckedObjects={props.updateCheckedObjects}
 						id={objInfo.dobj}
+						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={objInfo.level === 0 ? "disabled" : ""}
+						checkboxDisabled={checkboxDisabled ? "disabled" : ""}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>

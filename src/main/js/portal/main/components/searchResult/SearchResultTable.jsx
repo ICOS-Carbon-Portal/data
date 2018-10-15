@@ -92,6 +92,7 @@ export default class SimpleDataObjectsTable extends Component{
 											key={'dobj_' + i}
 											updateCheckedObjects={this.props.updateCheckedObjects}
 											isChecked={isChecked}
+											checkedObjects={checkedObjects}
 										/>
 									);
 								})

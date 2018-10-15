@@ -40,8 +40,7 @@ export default class PointReducer{
 		delete this._map;
 		delete this._binTableData;
 		delete this._bounds;
-		delete this._valueIdx;
-		delete this._pointsInBbox;
+		// delete this._pointsInBbox;
 		delete this._pointsInWorld;
 	}
 
@@ -105,6 +104,7 @@ export default class PointReducer{
 	}
 
 	calculateStatistics(){
+		this._stats.pointCount = this._pointCount;
 		this._stats.mean = this._stats.sum / this._pointCount;
 		const sqrdSum = this._stats.data.reduce((acc, curr) => {
 			acc += Math.pow(curr - this._stats.mean, 2);
@@ -137,21 +137,35 @@ export default class PointReducer{
 	}
 
 	reducePoints(){
-		const factor = Math.ceil(this._pointsInBbox.length / config.maxPointsInMap);
+		if (this._pointsInBbox.length <= config.pointsInMapThreshHold){
+			this._reducedPoints = this._pointsInBbox;
+			return;
+		}
+
+		const factor = Math.ceil(this._pointsInBbox.length / config.pointsInMapThreshHold);
 
 		this._reducedPoints = this._pointsInBbox.filter((p, idx) => {
-			const span = idx > 0
-				? Math.abs(this._pointsInBbox[idx - 1][this._valueIdx] - p[this._valueIdx])
-				: Math.abs(this._pointsInBbox[idx + 1][this._valueIdx] - p[this._valueIdx]);
+			const direction = idx > 0 ? -1 : 1;
+			const span = Math.abs(this._pointsInBbox[idx + direction][this._valueIdx] - p[this._valueIdx]);
 
-			return this._pointsInBbox.length <= config.maxPointsInMap
-				|| idx % factor === 0
-				|| span > this._stats.sd * config.percentSD;
+			return idx % factor === 0 || span > this._stats.sd * config.percentSD;
 		});
+	}
+
+	get pointCount(){
+		return this._pointCount;
+	}
+
+	get pointCountInBbox(){
+		return this._pointsInBbox.length;
 	}
 
 	get reducedPoints(){
 		return this._reducedPoints;
+	}
+
+	get valueIdx(){
+		return this._valueIdx;
 	}
 
 	get latIdx(){

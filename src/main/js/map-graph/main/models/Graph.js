@@ -77,7 +77,9 @@ export default class {
 	}
 
 	getLabel(idx){
-		return `${this._binTableData.column(idx).label} [${this._binTableData.column(idx).unit}]`;
+		return idx
+			? `${this._binTableData.column(idx).label} [${this._binTableData.column(idx).unit}]`
+			: '';
 	}
 
 	updateGraph(value1Idx, value2Idx){

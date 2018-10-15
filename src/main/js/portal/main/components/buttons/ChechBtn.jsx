@@ -12,6 +12,7 @@ export default class CheckBtn extends Component{
 	render(){
 		const {id, isChecked, checkboxDisabled, title} = this.props;
 		const style = Object.assign({pointerEvents:'auto', padding:'0px 3px'}, this.props.style);
+		if (checkboxDisabled) Object.assign(style, {backgroundColor:'rgb(216, 216, 216)', borderColor:'rgb(114, 114, 114)'});
 		const onClick = this.handleCheckboxChange.bind(this, id);
 
 		return(

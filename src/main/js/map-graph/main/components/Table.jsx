@@ -3,31 +3,53 @@ import React, { Component, Fragment } from 'react';
 export default class Table extends Component{
 	constructor(props){
 		super(props);
+
+		this.state = {
+			valueIdx: undefined,
+			pointCount: undefined
+		};
+	}
+
+	componentDidUpdate(){
+		const pointReducer = this.props.pointReducer;
+		const {valueIdx, pointCount} = this.state;
+
+		if (pointReducer && valueIdx !== pointReducer.valueIdx && pointCount !== pointReducer.pointCount){
+			this.setState({
+				valueIdx: pointReducer.valueIdx,
+				pointCount: pointReducer.pointCount
+			});
+		}
 	}
 
 	render(){
-		const {binTableData, reducedPoints, row, isTouchDevice} = this.props;
+		const {binTableData, pointReducer, row, isTouchDevice} = this.props;
+		const {pointCount} = this.state;
+
+		const dataPointsBboxTxt = binTableData.isValidData && pointCount
+			? pointReducer.pointCountInBbox.toLocaleString()
+			: '';
+
+		const dataPointsInMapTxt = binTableData.isValidData && pointCount
+			? pointReducer.reducedPoints.length.toLocaleString()
+			: '';
 
 		return (
 			<div style={{fontSize:'85%'}}>
-				{!isTouchDevice
-					? <table className="table">
+				{isTouchDevice
+					? null
+					: <table className="table">
 						<tbody>
 						<TableRows binTableData={binTableData} row={row} />
 						</tbody>
 					</table>
-					: null
 				}
 
 				{binTableData.isValidData
 					? <table className="table">
 						<tbody>
-						<TableRow header="Data points" val={binTableData.nRows.toLocaleString()} active={false} />
-						{reducedPoints !== undefined
-							? <TableRow header="Points shown in map" val={reducedPoints.length.toLocaleString()} active={false} />
-							: null
-						}
-
+							<TableRow header="Data points in bounding box" val={dataPointsBboxTxt} active={false} />
+							<TableRow header="Data points shown in map" val={dataPointsInMapTxt} active={false} />
 						</tbody>
 					</table>
 					: null

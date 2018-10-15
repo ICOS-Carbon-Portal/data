@@ -8,8 +8,10 @@ export default class Lookup{
 	parseSpecTable(specTable) {
 
 		const netcdf = {};
+		const mapGraph = {};
 		specTable.getTableRows("basics").forEach(br => {
 			if (br.format === config.netCdfFormat) netcdf[br.spec] = {type: config.NETCDF};
+			else if (config.mapGraphFormats.includes(br.format)) mapGraph[br.spec] = {type: config.MAPGRAPH};
 		});
 
 		const timeSeries = {};
@@ -18,7 +20,7 @@ export default class Lookup{
 			timeSeries[cmr.spec].options.push(cmr.colTitle);
 		});
 
-		return Object.assign({}, netcdf, timeSeries);
+		return Object.assign({}, netcdf, timeSeries, mapGraph);
 	}
 
 	getSpecLookup(spec) {
