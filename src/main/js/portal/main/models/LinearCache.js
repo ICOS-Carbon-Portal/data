@@ -67,6 +67,12 @@ export default class LinearCache{
 				// ----  ==== or ---≡≡≡≡-- or ====  ----
 				this._cache = arr;
 				this._offset = offset;
+
+			} else if (offset < this._offset && offset + limit === this._offset){
+				// ----====
+				this._cache = arr.concat(this._cache);
+				this._offset = offset;
+
 			} else {
 				throw new Error("No match in fetcher");
 			}

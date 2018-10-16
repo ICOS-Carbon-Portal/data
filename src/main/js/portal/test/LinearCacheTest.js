@@ -374,4 +374,27 @@ describe("Testing LinearCache", () => {
 
 	});
 
+	it("fills cache and then a new data block of same size before cache", () => {
+
+		const lc = new LinearCache(fetcher, 20, 20);
+
+		lc.fetch(20, 20)
+			.then(d => {
+				expect(d).toEqual([21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]);
+				expect(lc.cache).toEqual([21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]);
+				expect(lc.length).toBe(20, "length 1");
+				expect(lc.offset).toBe(20, "offset 1");
+				expect(lc.isDataEndReached).toBe(false, "isDataEndReached 1");
+				return lc.fetch(0, 20);
+			})
+			.then(d => {
+				expect(d).toEqual([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]);
+				expect(lc.cache).toEqual([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40]);
+				expect(lc.length).toBe(40, "length 2");
+				expect(lc.offset).toBe(0, "offset 2");
+				expect(lc.isDataEndReached).toBe(false, "isDataEndReached 2");
+			});
+
+	});
+
 });
