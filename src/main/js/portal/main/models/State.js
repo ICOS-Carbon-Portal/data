@@ -248,7 +248,7 @@ export const managePrefixes = (state = {}) => {
 				if (Number.isInteger(value)) return value;
 
 				const prefix = appPrefixes[category];
-				if (prefix === undefined) throw new Error(`Could not find prefix for ${value}`);
+				if (prefix === undefined) return value;
 
 				return value.startsWith('http://') || value.startsWith('https://')
 					? shortener(prefix, value)
