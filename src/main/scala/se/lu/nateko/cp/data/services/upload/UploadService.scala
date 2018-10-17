@@ -52,6 +52,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
+	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
+
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(dataObj))
 
