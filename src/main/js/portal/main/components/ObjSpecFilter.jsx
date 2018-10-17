@@ -78,7 +78,7 @@ export default class ObjSpecFilter extends Component {
 		} else {
 			return (
 				<Fragment>
-					<span>{props.text.slice(0, start - 1)}</span>
+					<span>{props.text.slice(0, start)}</span>
 					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
 					<span>{props.text.slice(start + searchStr.length)}</span>
 				</Fragment>
