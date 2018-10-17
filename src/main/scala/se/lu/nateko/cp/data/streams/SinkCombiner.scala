@@ -84,6 +84,16 @@ object SinkCombiner {
 	}
 
 	def ignoreOnCancel[T,M](sink: Sink[T, Future[M]])(implicit ctxt: ExecutionContext): Sink[T, Future[M]] =
-		Flow.apply[T].wireTapMat(sink)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
+		//For some reason, the following did not produce the same result:
+		//Flow.apply[T].wireTapMat(sink)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
+		Sink.fromGraph(GraphDSL.create(sink, Sink.ignore)(KeepFuture.left){implicit b =>
+			import GraphDSL.Implicits._
+			val bcast = b.add(Broadcast[T](2, false))
+			(sink1, sink2) => {
+				bcast.out(0) ~> sink1.in
+				bcast.out(1) ~> sink2.in
+				SinkShape(bcast.in)
+			}
+		})
 
 }
