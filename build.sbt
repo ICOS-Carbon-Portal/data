@@ -68,12 +68,24 @@ frontendBuild := {
 	log.info("Starting front-end build for common")
 	Process("npm install", new File("src/main/js/common/")).!
 
-	new File("src/main/js/").listFiles.filter(_.getName != "common").par.foreach{pwd =>
-		log.info("Starting front-end build for " + pwd.getName)
-		(Process("npm install", pwd) #&& Process("npm run publish", pwd)).!
-		log.info("Finished front-end build for " + pwd.getName)
-	}
-	log.info("Front end builds are complete!")
+	val errors: List[String] = new File("src/main/js/").listFiles.filter(_.getName != "common").par.map{pwd =>
+	  	val projName = pwd.getName
+		log.info("Starting front-end build for " + projName)
+		val exitCode = (Process("npm install", pwd) #&& Process("npm run publish", pwd)).!
+
+		if(exitCode == 0) {
+			log.info("Finished front-end build for " + projName)
+			None
+		}else {
+			log.error(s"Front-end build for $projName failed")
+			Some(s"Front end building for $projName returned non-zero exit code $exitCode")
+		}
+	}.toList.flatten
+
+	if(errors.isEmpty)
+		log.info("Front end builds are complete!")
+	else
+		throw new Exception(errors.mkString("\n"))
 }
 
 lazy val data = (project in file("."))
