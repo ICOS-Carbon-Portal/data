@@ -50,7 +50,7 @@ const dataObjectsExtendedFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsExtendedFetcher(config.dobjExtendedCacheFetchLimit, dataObjectsFetcher)
 	: new DataObjectsExtendedFetcher();
 
-const failWithError = dispatch => error => {
+export const failWithError = dispatch => error => {
 	console.log(error);
 	dispatch({
 		type: ERROR,

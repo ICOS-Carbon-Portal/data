@@ -12,6 +12,7 @@ export default class ErrorBoundary extends Component{
 
 	componentDidCatch(error, info) {
 		this.setState({hasError: true});
+		if (this.props.failWithError) this.props.failWithError(error);
 	}
 
 	render() {

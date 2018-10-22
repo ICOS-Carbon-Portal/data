@@ -5,7 +5,7 @@ import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
-import {setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
+import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart, updateCheckedObjectsInSearch} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
 
@@ -50,7 +50,7 @@ export class App extends Component {
 					</div>
 				</div>
 
-				<ErrorBoundary>
+				<ErrorBoundary failWithError={props.failWithError}>
 					<Route
 						backButtonAction={this.handleBackButton.bind(this)}
 						routeAction={this.handleRouteClick.bind(this)}
@@ -124,6 +124,7 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
+		failWithError: error => failWithError(dispatch)(error),
 		updateRoute: hash => dispatch(updateRoute(hash)),
 		switchTab: (tabName, selectedTabId) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: filterTemporal => dispatch(setFilterTemporal(filterTemporal)),
