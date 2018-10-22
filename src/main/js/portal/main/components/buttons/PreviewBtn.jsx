@@ -27,25 +27,26 @@ export default class PreviewBtn extends Component{
 	}
 
 	isPreviewEnabled(checkedObjects, lookup) {
-		const previewTypes = checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec));
-
 		if (!checkedObjects.length)
 			return [false, ""];
 
-		else if (previewTypes.includes(undefined))
-			return [false, "Preview is only available for time series, NetCDF and shipping lines."];
+		const specs = checkedObjects.map(obj => obj.spec);
+		const previewTypes = checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec));
+
+		if (previewTypes.length !== specs.length)
+			throw new Error("Unexpected error in PreviewBtn:isPreviewEnabled");
+
+		if (previewTypes.includes(undefined))
+			return [false, "You have selected a data object that cannot be previewed"];
+
+		else if (!specs.every(spec => spec === specs[0]))
+			return [false, "Multiple previews are only available for data of same type."];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))
 			return [false, "You can only preview one NetCDF at a time"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
 			return [false, "You can only preview one shipping line at a time"];
-
-		else if (checkedObjects.length > 1 && checkedObjects.reduce((prev,cur) => (prev.spec === cur.spec) ? prev : false))
-			return [false, "Preview is not available for data of this type."];
-
-		else if (!checkedObjects.reduce((prev,cur) => (prev.spec === cur.spec) ? prev : false))
-			return [false, "Preview is only available for data of same type."];
 
 		else
 			return [true, ""];
