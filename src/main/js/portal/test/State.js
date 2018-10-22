@@ -24,6 +24,7 @@ describe("Testing State", () => {
 
 		const state = new State();
 		const stateFromHash = state.update(getStateFromHash(''));
+		delete stateFromHash.route;
 
 		expect(deepEqual(state, stateFromHash, {strict: true})).toBe(true);
 	});
