@@ -4,6 +4,7 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {failWithError, init} from './actions';
 import deepEqual from "deep-equal";
+import {saveToRestheart} from "../../common/main/backend";
 
 
 const objId = window.location.pathname.split('/').pop();
@@ -36,6 +37,18 @@ export const updateURL = store => () => {
 	}, 0) > 0;
 
 	if (hasVals && !deepEqual(currentHash, newHash)) {
+
+		if (currentHash.y1 !== newHash.y1 || currentHash.y2 !== newHash.y2 || currentHash.map !== newHash.map) {
+			const labels = state.binTableData.columnsInfo.map(ci => ci.label);
+			saveToRestheart({
+				previewMapGraph: Object.assign({}, newHash, {
+					y1Label: labels[newHash.y1],
+					y2Label: labels[newHash.y2],
+					mapLabel: labels[newHash.map],
+				})
+			});
+		}
+
 		const newURL = location.origin + location.pathname + '#' + JSON.stringify(newHash);
 
 		if (window.frameElement) {
