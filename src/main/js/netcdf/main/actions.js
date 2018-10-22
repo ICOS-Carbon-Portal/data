@@ -1,4 +1,6 @@
 import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle} from './backend.js';
+import {logError} from "../../common/main/backend";
+import config from '../../portal/main/config';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
@@ -20,6 +22,9 @@ export const TITLE_FETCHED = 'TITLE_FETCHED';
 
 export function failWithError(error){
 	console.log(error);
+
+	logError(config.NETCDF, error.message);
+
 	return {
 		type: ERROR,
 		error

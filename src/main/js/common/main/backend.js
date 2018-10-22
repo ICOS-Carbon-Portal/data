@@ -12,3 +12,13 @@ export const saveToRestheart = dataToSave => {
 		body: JSON.stringify(dataToSave)
 	});
 };
+
+export const logError = (app, message) => {
+	saveToRestheart({
+		error: {
+			app,
+			message,
+			url: decodeURI(window.location)
+		}
+	});
+};

@@ -1,20 +1,31 @@
+import {logError} from "../../common/main/backend";
+
 export const ERROR = 'ERROR';
 export const HASH_STATE_UPDATED = 'HASH_STATE_UPDATED';
 export const BINTABLE_FETCHED = 'BINTABLE_FETCHED';
 export const VARIABLE_Y1_SELECTED = 'VARIABLE_Y1_SELECTED';
 export const VARIABLE_Y2_SELECTED = 'VARIABLE_Y2_SELECTED';
 export const MAP_STATE_CHANGED = 'MAP_STATE_CHANGED';
-import config from '../../common/main/config';
 import {getTableFormatNrows, getBinTable} from './backend';
 import BinTableData from './models/BinTableData';
+import commonConfig from '../../common/main/config';
+import portalConfig from '../../portal/main/config';
 
+const config = Object.assign(commonConfig, portalConfig);
 
 export const failWithError = error => dispatch => {
 	console.log({error, dispatch});
+
+	logError(config.MAPGRAPH, error.message);
+
 	dispatch({
 		type: ERROR,
 		error
 	});
+};
+
+const fail = dispatch => error => {
+	dispatch(failWithError(error));
 };
 
 export const init = (objId, hashState) => dispatch => {
@@ -30,8 +41,8 @@ export const hashUpdated = hashState => dispatch => {
 };
 
 const fetchTableFormatNrows = objId => dispatch => {
-	getTableFormatNrows(config, objId)
-		.then(({tableFormat, nRows}) => {
+	getTableFormatNrows(config, objId).then(
+		({tableFormat, nRows}) => {
 			const binTableData = new BinTableData(tableFormat);
 
 			if (binTableData.isValidData) {
@@ -45,7 +56,9 @@ const fetchTableFormatNrows = objId => dispatch => {
 			} else {
 				dispatch(failWithError({message: `Data object ${objId} cannot be displayed due to missing data`}));
 			}
-	});
+		},
+		fail(dispatch)
+	);
 };
 
 export const selectVarY1 = dataIdx => (dispatch, getState) => {

@@ -87,6 +87,22 @@ const updatePersonalRestheart = (email, data) => {
 	});
 };
 
+export const getError = errorId => {
+	return fetch(`${config.portalUseLogUrl}/${errorId}`).then(resp => {
+		return resp.status === 200
+			? Promise.resolve(resp.json())
+			: Promise.resolve(undefined);
+	});
+};
+
+export const logOut = () => {
+	return fetch('/logout', {credentials: 'include'}).then(resp => {
+		return resp.status === 200
+			? Promise.resolve(true)
+			: Promise.reject(false);
+	});
+};
+
 export const getCart = email => {
 	const sessionStorageJson = sessionStorage.getItem('cp-cart')
 		? JSON.parse(sessionStorage.getItem('cp-cart'))

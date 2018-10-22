@@ -103,16 +103,23 @@ export default class State{
 // Hash to state and state to hash below
 export const getStateFromHash = hash => {
 	const state = hash === undefined
-		? hashToState(getCurrentHash())
-		: hashToState(decodeURIComponent(hash));
+		? jsonToState(parseHash(getCurrentHash()))
+		: jsonToState(parseHash(decodeURIComponent(hash)));
 	return managePrefixes(state);
 };
 
 //No # in the beginning!
-const hashToState = hash => {
+const parseHash = hash => {
 	try {
-		const state = JSON.parse(hash);
-		return jsonToState(state);
+		return JSON.parse(hash);
+	} catch(err) {
+		return {};
+	}
+};
+
+export const hashToState = () => {
+	try {
+		return JSON.parse(getCurrentHash());
 	} catch(err) {
 		return {};
 	}

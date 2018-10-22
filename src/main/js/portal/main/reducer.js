@@ -26,7 +26,8 @@ import {
 	RESTORE_FROM_HISTORY,
 	TEMPORAL_FILTER,
 	WHOAMI_FETCHED,
-	SAVE_STATE} from './actions';
+	LOAD_ERROR
+} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import State from './models/State';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -50,6 +51,9 @@ export default function(state = new State(), action){
 
 		case INIT:
 			return state.update(getStateFromHash());
+
+		case LOAD_ERROR:
+			return State.deserialize(action.state, action.cart);
 
 		case WHOAMI_FETCHED:
 			return state.update({user: action.user});

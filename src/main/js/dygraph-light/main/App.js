@@ -1,7 +1,8 @@
 import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
-import {saveToRestheart} from '../../common/main/backend';
+import {logError, saveToRestheart} from '../../common/main/backend';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
+import config from '../../portal/main/config';
 
 const spinnerDelay = 100;
 
@@ -251,8 +252,8 @@ const getColInfoParam = (tableFormat, colName, param) => {
 const getYLabel = (tableFormat, colName) => {
 	const unit = getColInfoParam(tableFormat, colName, 'unit');
 	const label = getColInfoParam(tableFormat, colName, 'label');
-	return unit != '?' ? `${label}, ${unit}` : label;
-}
+	return unit !== '?' ? `${label}, ${unit}` : label;
+};
 
 const getLabels = (xlabel, ylabel, params) => {
 	const ids = params.get('objId').split(',');
@@ -262,9 +263,10 @@ const getLabels = (xlabel, ylabel, params) => {
 	} else {
 		return [xlabel, ylabel];
 	}
-}
+};
 
 const fail = (message) => {
+	logError(config.TIMESERIES, message);
 	return Promise.reject(new Error(message));
 };
 
@@ -272,6 +274,8 @@ const presentError = (errMsg) => {
 	document.getElementById('cp-spinner').style.display = 'none';
 	document.getElementById('error').style.display = 'flex';
 	document.getElementById('error').innerHTML = errMsg;
+
+	logError(config.TIMESERIES, errMsg);
 };
 
 const hideError = () => {

@@ -1,6 +1,8 @@
+import Cart from "./models/Cart";
+
 export const ERROR = 'ERROR';
 export const INIT = 'INIT';
-export const SAVE_STATE = 'SAVE_STATE';
+export const LOAD_ERROR = 'LOAD_ERROR';
 export const RESTORE_FROM_HISTORY = 'RESTORE_FROM_HISTORY';
 export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
 export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
@@ -27,16 +29,17 @@ export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
 export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
 export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
 export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
-import {fetchAllSpecTables, searchDobjs, getCart, saveCart} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, getProfile} from './backend';
+import {hashToState} from "./models/State";
+import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getProfile, getError} from './backend';
 import {areFiltersEnabled} from './reducer';
-import {saveToRestheart} from '../../common/main/backend';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
 import config from './config';
+import {saveToRestheart} from "../../common/main/backend";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -53,38 +56,89 @@ const failWithError = dispatch => error => {
 		type: ERROR,
 		error
 	});
+
+	dispatch(logError(error));
+};
+
+const logError = error => (dispatch, getState) => {
+	const state = getState();
+	const user = state.user.email
+		? `${state.user.profile.profile.givenName} ${state.user.profile.profile.surname}`
+		: undefined;
+
+	saveToRestheart({
+		error: {
+			app: 'portal',
+			message: error.message,
+			state: JSON.stringify(Object.assign({}, state.serialize, {user, cart: state.cart})),
+			url: decodeURI(window.location)
+		}
+	});
 };
 
 export const init = () => dispatch => {
-	dispatch({type: INIT});
+	const stateFromHash = hashToState();
 
 	getWhoIam().then(user => {
+		if (stateFromHash.error){
+			if (user.email) logOut();
+			dispatch(loadFromError(user, stateFromHash.error));
+
+		} else {
+			dispatch(loadApp(user));
+		}
+	});
+};
+
+const loadApp = user => dispatch => {
+	dispatch({type: INIT});
+
+	getProfile(user.email).then(profile => {
 		dispatch({
-			type: WHOAMI_FETCHED,
-			user
+			type: USER_INFO_FETCHED,
+			user,
+			profile
 		});
-		return user;
+	});
 
-	}).then(user => {
-		getProfile(user.email).then(profile => {
-			dispatch({
-				type: USER_INFO_FETCHED,
-				user,
-				profile
+	getCart(user.email).then(
+		({cartInSessionStorage, cartInRestheart}) => {
+
+			cartInRestheart.then(restheartCart => {
+				const cart = restoreCarts(cartInSessionStorage, restheartCart);
+
+				dispatch(updateCart(user.email, cart))
+					.then(_ => dispatch(getAllSpecTables()));
 			});
-		});
+		}
+	);
+};
 
-		getCart(user.email).then(
-			({cartInSessionStorage, cartInRestheart}) => {
-
-				cartInRestheart.then(restheartCart => {
-					const cart = restoreCarts(cartInSessionStorage, restheartCart);
-
-					dispatch(updateCart(user.email, cart))
-						.then(_ => dispatch(getAllSpecTables()));
+const loadFromError = (user, errorId) => dispatch => {
+	getError(errorId).then(response => {
+		if (response && response.error && response.error.state) {
+			const stateJSON = JSON.parse(response.error.state);
+			const objectsTable = stateJSON.objectsTable.map(ot => {
+				return Object.assign(ot, {
+					submTime: new Date(ot.submTime),
+					timeStart: new Date(ot.timeStart),
+					timeEnd: new Date(ot.timeEnd)
 				});
-			}
-		);
+			});
+			const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
+			const state = Object.assign({},
+				stateJSON,
+				{objectsTable, ts: undefined, user: {}}
+			);
+
+			dispatch({
+				type: LOAD_ERROR,
+				state,
+				cart
+			});
+		} else {
+			dispatch(loadApp(user));
+		}
 	});
 };
 
