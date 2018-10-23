@@ -84,7 +84,8 @@ object SinkCombiner {
 	}
 
 	def ignoreOnCancel[T,M](sink: Sink[T, Future[M]])(implicit ctxt: ExecutionContext): Sink[T, Future[M]] =
-		//For some reason, the following did not produce the same result:
+		//The following shorter implementation does not work because wireTap drops elements
+		//(and 'alsoTo'-based solution does not work because 'alsoTo' cancels eagerly)
 		//Flow.apply[T].wireTapMat(sink)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
 		Sink.fromGraph(GraphDSL.create(sink, Sink.ignore)(KeepFuture.left){implicit b =>
 			import GraphDSL.Implicits._

@@ -165,7 +165,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private val downloadLogging: Route = parameter('ip.?){ipOpt =>
-		ipOpt.fold(getClientIp)(provide){ip =>
+
+		val nonEmptyIpOpt = ipOpt.flatMap(ip => if(ip.trim.isEmpty) None else Some(ip.trim))
+
+		val withBestAvailableIp: Directive1[String] = nonEmptyIpOpt.fold(getClientIp)(provide)
+
+		withBestAvailableIp{ip =>
 			ensureValidIpAddress(ip){
 				extractHashsums{hashes =>
 					extractEnvri{implicit envri =>
