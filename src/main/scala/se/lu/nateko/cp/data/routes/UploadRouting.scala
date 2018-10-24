@@ -174,8 +174,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			ensureValidIpAddress(ip){
 				extractHashsums{hashes =>
 					extractEnvri{implicit envri =>
-						authenticateBasic("Carbon Portal download reporting", authent){_ =>
-							logDownloads(hashes, ip)
+						authenticateBasic("Carbon Portal download reporting", authent){thirdParty =>
+							logExternalDownloads(hashes, ip, thirdParty)
 							complete(s"Logging download (by $ip) of the following data objects:\n${hashes.mkString("\n")}")
 						} ~
 						complete(StatusCodes.Unauthorized)
@@ -227,9 +227,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
-		logClient.logDownload(dobj, ip).failed.foreach(
-			log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
-		)
+		logPublicDownloadInfo(dobj, ip)
 		for(uid <- uidOpt){
 			restHeart.saveDownload(dobj, uid).failed.foreach(
 				log.error(_, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")
@@ -237,13 +235,21 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def logDownloads(hashes: Seq[Sha256Sum], ip: String)(implicit envri: Envri): Unit =
+	private def logExternalDownloads(hashes: Seq[Sha256Sum], ip: String, thirdParty: String)(implicit envri: Envri): Unit =
 		Utils.runSequentially(hashes){hash =>
 			uploadService.meta.lookupPackage(hash).andThen{
-				case Success(dobj) => logDownload(dobj, ip, None)
-				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service")
+				case Success(dobj) => logPublicDownloadInfo(dobj, ip, Some(thirdParty))
+				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 			}
 		}
+
+	private def logPublicDownloadInfo(dobj: DataObject, ip: String, thirdParty: Option[String] = None)(implicit envri: Envri): Unit = {
+		val extraInfo = thirdParty.map("distributor" -> _).toSeq
+
+		logClient.logDownload(dobj, ip, extraInfo:_*).failed.foreach(
+			log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
+		)
+	}
 
 	private def addAccessControlHeaders(implicit envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
 		case Some(origin) if envriConfs(envri).metaPrefix.toString.startsWith(origin.value) =>

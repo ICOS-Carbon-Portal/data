@@ -24,17 +24,18 @@ class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	def downloadLogUri(implicit envri: Envri) =
 		Uri(config.dobjDownloadLogUri.toASCIIString)
 
-	def logDownload(dobj: DataObject, ip: String)(implicit envri: Envri): Future[Done] = {
+	def logDownload(dobj: DataObject, ip: String, extraProps: (String, String)*)(implicit envri: Envri): Future[Done] = {
 		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
 
-		val logItem = JsObject(
-			"time" -> JsString(java.time.Instant.now().toString),
-			"ip" -> JsString(ip),
+		val logItemProps = extraProps.map{
+				case(prop, value) => prop -> JsString(value)
+			} :+
+			"time" -> JsString(java.time.Instant.now().toString) :+
+			"ip" -> JsString(ip) :+
 			"dobj" -> dobj.toJson
-		)
 
 		for(
-			entity <- Marshal(logItem).to[RequestEntity];
+			entity <- Marshal(JsObject(logItemProps:_*)).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = downloadLogUri, method = HttpMethods.POST, entity = entity))
 		) yield {
 			r.discardEntityBytes()
