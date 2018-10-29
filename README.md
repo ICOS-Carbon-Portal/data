@@ -88,10 +88,11 @@ You can reach the landing page of your newly uploaded data object in two clicks:
 ## Reporting data object downloads (for partners distributing ICOS data)
 
 If you distribute ICOS data, you are requested to report all downloads of ICOS data objects to the Carbon Portal. Technically, the reporting can be done by HTTP-POSTing a string with a list of data object PIDs (newline-separated) to URL `https://data.icos-cp.eu/logExternalDownload`. Basic HTTP Authentication must be used, with user name and password provided to you by Carbon Portal. The IP address of the user's machine should be provided as a URL query parameter `ip`. If not provided, IP address of the machine reporting the download will be used as downloader's IP instead.
+Additionally, an arbitrary string characterizing the end user without identifying her/him (e.g. organization, but not email address) may be provided as a URL query parameter `endUser`.
 
 Here is an example of the API usage with `curl` from Linux command line:
 
-`$ curl -X POST --data $'11676/-bkHsZC3pt9nHiVegEBpvO3I\n11676/28VighT02O1PiY4pUp71F69O' https://noaa:password@data.icos-cp.eu/logExternalDownload?ip=123.234.1.1`
+`$ curl -X POST --data $'11676/-bkHsZC3pt9nHiVegEBpvO3I\n11676/28VighT02O1PiY4pUp71F69O' 'https://noaa:password@data.icos-cp.eu/logExternalDownload?ip=123.234.1.1&endUser=Wageningen%20University'`
 
 The example reports download of two data objects (PIDs are separated with `\n`) by a machine with IP address `123.234.1.1` (random example). Correct password must be used.
 
