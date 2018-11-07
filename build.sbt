@@ -104,7 +104,7 @@ lazy val data = (project in file("."))
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.11-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.8-SNAPSHOT",
-			"org.irods.jargon"    % "jargon-core"                        % "4.2.2.1-RELEASE", //IRODS client core features
+			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 
 			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"

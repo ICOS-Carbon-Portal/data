@@ -19,7 +19,6 @@ import akka.stream.Attributes
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.data.HardConfig
 import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.data.streams.DigestFlow
@@ -56,25 +55,25 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 	 * Materializes a `Future[Sha256Sum]`. The `Future` is successful if upload is successful.
 	 * Upload will fail if the file already exists.
 	 * 
-	 * @param filePath path to the new file on iRODS
+	 * @param relFilePath path to the new file on iRODS, relative to the home directory (no './' in the beginning)
 	 * @param executor should be an `ExecutionContext` suitable for running thread-blocking tasks
 	 * @return the `ByteString` sink
 	 */
-	def getNewFileSink(filePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Sha256Sum]] =
+	def getNewFileSink(relFilePath: String)(implicit executor: ExecutionContext): Sink[ByteString, Future[Sha256Sum]] =
 		if(config.dryRun){
 			DigestFlow.sha256.to(Sink.ignore)
 		} else {
 
-		val irodsSink = Sink.fromGraph(new IrodsSink(filePath, account, connPool))
+		val irodsSink = Sink.fromGraph(new IrodsSink(relFilePath, account, connPool))
 			//disabling buffer here as we'll be buffering ourselves
 			.withAttributes(Attributes.inputBuffer(1, 1))
-			.withAttributes(ActorAttributes.dispatcher(HardConfig.ioDispatcher))
+			.withAttributes(Attributes(ActorAttributes.IODispatcher))
 
 		ByteStringBuffer(bufferSize)
 			.toMat(irodsSink){(_, uploadFut) =>
 				for(
 					_ <- uploadFut; //need to wait for the upload to succeed before asking for checksum
-					irodsDigest <- Future(getChecksum(filePath))
+					irodsDigest <- Future(getChecksum(relFilePath))
 				) yield irodsDigest
 			}
 	}
@@ -107,10 +106,12 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 			}
 		}
 
-	def getChecksum(filePath: String): Sha256Sum =
+	def getChecksum(relFilePath: String): Sha256Sum =
 		if(config.dryRun) Sha256Sum.fromString("0" * 64).get
 	else withFileApi{api =>
 		val docuao = api.accessObjFactory.getDataObjectChecksumUtilitiesAO(account)
+
+		val filePath = account.getHomeDirectory + "/" + relFilePath
 
 		val checksum = try{
 			docuao.retrieveExistingChecksumForDataObject(filePath)

@@ -130,7 +130,3 @@ object ConfigReader extends CommonJsonSupport{
 			.parseJson.convertTo[MetaCoreConfig]
 	}
 }
-
-object HardConfig{
-	val ioDispatcher = "akka.io.pinned-dispatcher"
-}

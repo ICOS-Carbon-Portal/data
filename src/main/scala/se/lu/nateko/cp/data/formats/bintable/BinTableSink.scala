@@ -15,7 +15,6 @@ import akka.stream.scaladsl.Sink
 import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.InHandler
-import se.lu.nateko.cp.data.HardConfig
 
 class BinTableRow(val cells: Array[AnyRef], val schema: Schema)
 
@@ -23,7 +22,7 @@ object BinTableSink {
 
 	def apply(file: File, overwrite: Boolean = false): Sink[BinTableRow, Future[Long]] =
 		Sink.fromGraph(new BinTableSink(file, overwrite))
-			.withAttributes(ActorAttributes.dispatcher(HardConfig.ioDispatcher))
+			.withAttributes(Attributes(ActorAttributes.IODispatcher))
 
 }
 

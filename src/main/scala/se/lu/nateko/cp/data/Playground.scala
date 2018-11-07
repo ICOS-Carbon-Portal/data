@@ -16,6 +16,7 @@ import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpRequest
+import java.nio.file.Paths
 
 object Playground {
 
@@ -42,15 +43,14 @@ object Playground {
 	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
 	def failingLater = smallSrc.concat(failing)
 
-	def uploadFile(path: String, src: Source[ByteString, Any]): Future[Sha256Sum] = {
+	def uploadToPath(path: String, src: Source[ByteString, Any]): Future[Sha256Sum] = {
 		val sink = client.getNewFileSink(path)(blockingExeCtxt)
 		src.runWith(sink)
 	}
 
-	def fromDisk(path: String): Future[Sha256Sum] = {
-		val file = new java.io.File(path)
-		val src = FileIO.fromPath(file.toPath)
-		val sink = client.getNewFileSink(file.getName)(blockingExeCtxt)
+	def upload(fromPath: String, toRelIrodsPath: String): Future[Sha256Sum] = {
+		val src = FileIO.fromPath(Paths.get(fromPath))
+		val sink = client.getNewFileSink(toRelIrodsPath)(blockingExeCtxt)
 		src.runWith(sink)
 	}
 
@@ -64,7 +64,7 @@ object Playground {
 
 	def writeParallel(prefix: String, n: Int): Future[Seq[Sha256Sum]] = {
 		val extraLargeSrc = repeat(rowBlock, 10000)
-		val futsFut = Future.traverse(0 to n)(i => Future{uploadFile(s"$prefix$i.txt", extraLargeSrc)})
+		val futsFut = Future.traverse(0 to n)(i => Future{uploadToPath(s"$prefix$i.txt", extraLargeSrc)})
 		futsFut.flatMap(futs => Future.sequence(futs))
 	}
 
