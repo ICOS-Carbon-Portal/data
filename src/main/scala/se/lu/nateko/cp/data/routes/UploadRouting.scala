@@ -201,9 +201,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def accessRoute(dobj: DataObject)(implicit envri: Envri): Route = optionalFileName{pathFileNameOpt =>
+	private def accessRoute(dobj: DataObject)(implicit envri: Envri): Route = optionalFileName{_ => //legacy, can be removed later
 		getClientIp{ip =>
-			extractLog{ log =>
 				userOpt{uidOpt =>
 
 					val fileName = dobj.fileName
@@ -222,7 +221,6 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 					}
 					else complete(StatusCodes.NotFound -> "Contents of this data object are not found on the server.")
 				}
-			}
 		}
 	}
 
@@ -280,11 +278,9 @@ object UploadRouting{
 
 	val licenceCookieDobjList: Directive1[Seq[Sha256Sum]] = Directive{dobjsToRoute =>
 		cookie(LicenceCookieName){licCookie =>
-			extractMaterializer{implicit mat =>
-				onComplete(parseLicenceCookie(licCookie.value)){
-					case Success(dobjs) => dobjsToRoute(Tuple1(dobjs))
-					case _ => reject
-				}
+			onComplete(parseLicenceCookie(licCookie.value)){
+				case Success(dobjs) => dobjsToRoute(Tuple1(dobjs))
+				case _ => reject
 			}
 		}
 	}

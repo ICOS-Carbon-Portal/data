@@ -69,7 +69,7 @@ object EnvelopePolygonParamScans {
 		DataSample("06AQ_all", latLongs06AQ, 0, None),
 	)
 
-	val maxAngles = (0.5 to 0.9 by 0.1).map(_ * Math.PI)
+	val maxAngles = (5 to 9).map(_ * 0.1 * Math.PI)
 	val batchSizes = Seq(1, 2, 5, 10, 20, 30 , 40)
 	val maxCostFractions = Seq(0, 0.01, 0.02, 0.05, 0.1)
 	val distanceCostFactors = Seq(0, 0.1, 0.5, 1, 2, 5)

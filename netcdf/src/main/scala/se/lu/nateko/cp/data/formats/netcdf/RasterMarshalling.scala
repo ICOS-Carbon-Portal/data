@@ -21,7 +21,7 @@ object RasterMarshalling {
 	import NetCdfJson._
 
 	def marshaller: ToResponseMarshaller[Raster] = Marshaller(
-		implicit exeCtxt => raster => Future.successful(
+		_ => raster => Future.successful(
 			WithFixedContentType(ContentTypes.`application/json`, () => getJson(raster)) ::
 			WithFixedContentType(ContentTypes.`application/octet-stream`, () => getBinary(raster)) :: Nil
 		)

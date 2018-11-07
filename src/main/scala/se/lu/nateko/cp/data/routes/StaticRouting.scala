@@ -75,7 +75,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 
 object StaticRouting {
 	implicit val pageMarshaller: ToResponseMarshaller[Html] = Marshaller(
-		implicit exeCtxt => html => Future.successful(
+		_ => html => Future.successful(
 			WithOpenCharset(MediaTypes.`text/html`, getHtml(html, _)) :: Nil
 		)
 	)

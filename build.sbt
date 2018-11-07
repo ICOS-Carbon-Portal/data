@@ -1,4 +1,4 @@
-val defaultScala = "2.12.4"
+val defaultScala = "2.12.7"
 
 //watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
 
@@ -21,8 +21,8 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.5.12"
-val akkaHttpVersion = "10.1.1"
+val akkaVersion = "2.5.17"
+val akkaHttpVersion = "10.1.5"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
@@ -94,7 +94,7 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.4.4",
+		version := "0.4.5",
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,
@@ -104,7 +104,7 @@ lazy val data = (project in file("."))
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "meta-core"                          % "0.3.11-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.3.8-SNAPSHOT",
-			"org.irods.jargon"    % "jargon-core"                        % "4.2.2.0-RELEASE", //IRODS client core features
+			"org.irods.jargon"    % "jargon-core"                        % "4.2.2.1-RELEASE", //IRODS client core features
 
 			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
 			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
