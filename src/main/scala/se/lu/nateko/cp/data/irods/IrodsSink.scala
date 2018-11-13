@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.irods
 
-import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
@@ -9,7 +8,6 @@ import org.irods.jargon.core.packinstr.DataObjInp.OpenFlags
 import org.irods.jargon.core.pub.io.IRODSFileFactoryImpl
 import org.irods.jargon.core.pub.io.IRODSFileOutputStream
 
-import akka.Done
 import akka.stream.Attributes
 import akka.stream.Inlet
 import akka.stream.SinkShape
@@ -17,6 +15,8 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.InHandler
 import akka.util.ByteString
+import se.lu.nateko.cp.data.api.CpDataException
+import se.lu.nateko.cp.data.utils.TimeLimitedExecution
 
 
 private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODSConnectionPool)
@@ -33,20 +33,8 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 			private[this] var outStream: IRODSFileOutputStream = null
 			private[this] var session: LocalIrodsSession = null
 			private[this] var count: Long = 0
-			private[this] var init: Future[Done] = null
 
-			override def preStart(): Unit = {
-				val mat = materializer
-				import mat.executionContext
-
-				init = Future{
-					session = new LocalIrodsSession(connPool)
-					val fileFactory = new IRODSFileFactoryImpl(session, account)
-					outStream = fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.WRITE_FAIL_IF_EXISTS)
-					Done
-				}
-				pull(in)
-			}
+			override def preStart(): Unit = pull(in)
 	
 			setHandler(in, new InHandler{
 
@@ -71,9 +59,7 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 
 			private def writeRow(row: ByteString): Unit =
 				try{
-					if(outStream == null){
-						Await.result(init, 10.seconds)
-					}
+					if(outStream == null) initIrodsStream()
 					val bytes = Array.ofDim[Byte](row.length)
 					row.copyToArray(bytes)
 					outStream.write(bytes)
@@ -81,6 +67,16 @@ private class IrodsSink(filePath: String, account: IRODSAccount, connPool: IRODS
 				}catch{
 					case exc: Throwable => failIrodsSink(exc)
 				}
+
+			private def initIrodsStream(): Unit = {
+				val mat = materializer
+				import mat.executionContext
+				TimeLimitedExecution(10.seconds, new CpDataException(s"Timout while waiting for IRODS to start upload to $filePath")){
+					session = new LocalIrodsSession(connPool)
+					val fileFactory = new IRODSFileFactoryImpl(session, account)
+					outStream = fileFactory.instanceIRODSFileOutputStream(filePath, OpenFlags.WRITE_FAIL_IF_EXISTS)
+				}
+			}
 
 			private def failIrodsSink(exc: Throwable): Unit = {
 				failStage(exc)
