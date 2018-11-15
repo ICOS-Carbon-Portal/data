@@ -54,8 +54,6 @@ case class MetaServiceConfig(
 	uploadApiPath: String
 )
 
-case class StiltConfig(mainFolder: String)
-
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
@@ -83,7 +81,6 @@ case class CpdataConfig(
 	netcdf: NetCdfConfig,
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
-	stilt: StiltConfig,
 	restheart: RestHeartConfig,
 	etcFacade: EtcFacadeConfig
 )
@@ -99,13 +96,12 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val uploadConfigFormat = jsonFormat5(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
-	implicit val stiltConfigFormat = jsonFormat1(StiltConfig)
 
 	implicit val envriFormat = enumFormat(Envri)
 
 	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
-	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
+	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load

@@ -17,7 +17,6 @@ import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
-import se.lu.nateko.cp.data.services.fetch.StiltResultsFetcher
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.PortalLogClient
@@ -55,7 +54,6 @@ object Main extends App {
 	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
 
 	val licenceRoute = new LicenceRouting(authRouting).route
-	val stiltRoute = StiltRouting(new StiltResultsFetcher(config.stilt, config.netcdf))
 	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
@@ -77,7 +75,6 @@ object Main extends App {
 		legacyNetcdfRoute ~
 		uploadRoute ~
 		tabularRoute ~
-		stiltRoute ~
 		staticRoute ~
 		licenceRoute ~
 		etcUploadRoute ~

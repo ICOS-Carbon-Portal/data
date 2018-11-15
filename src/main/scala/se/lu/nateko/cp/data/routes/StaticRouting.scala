@@ -23,10 +23,9 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private type PageFactory = PartialFunction[(String, Envri), Html]
 	private val NetCdfProj = "netcdf"
 
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "stilt", "dygraph-light", "stats", "etcfacade", "map-graph")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "dygraph-light", "stats", "etcfacade", "map-graph")
 
 	private[this] val standardPageFactory: PageFactory = {
-		case ("stilt", _) => views.html.StiltPage()
 		case ("wdcgg", _) => views.html.WdcggPage()
 		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
 		case ("stats", _) => views.html.StatsPage()
