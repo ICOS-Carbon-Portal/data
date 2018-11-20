@@ -28,17 +28,19 @@ lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.1.1-SNAPSHOT",
+		version := "0.1.2-SNAPSHOT",
 		libraryDependencies ++= Seq(
-			"edu.ucar"            % "cdm"                                % "4.5.5" excludeAll( //manually published on nexus.icos-cp.eu
+			//repo.icos-cp.eu acts as proxy to https://artifacts.unidata.ucar.edu
+			"edu.ucar"            % "cdm"                                % "4.6.11" excludeAll(
 				ExclusionRule(organization = "com.beust", name = "jcommander"),
+				ExclusionRule(organization = "com.amazonaws", name = "aws-java-sdk-s3"),
 				//ExclusionRule(organization = "com.google.guava", name = "guava"),
+				ExclusionRule(organization = "org.quartz-scheduler", name = "quartz"),
 				ExclusionRule(organization = "com.google.protobuf", name = "protobuf-java"),
+				ExclusionRule(organization = "com.fasterxml.jackson.core"),
 				//ExclusionRule(organization = "edu.ucar", name = "httpservices"),
 				ExclusionRule(organization = "net.sf.ehcache", name = "ehcache-core"),
-				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpcore"),
-				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpclient"),
-				ExclusionRule(organization = "org.apache.httpcomponents", name = "httpmime"),
+				ExclusionRule(organization = "org.apache.httpcomponents"),
 				ExclusionRule(organization = "org.itadaki", name = "bzip2"),
 				ExclusionRule(organization = "org.jdom", name = "jdom2"),
 				ExclusionRule(organization = "org.quartz-scheduler", name = "quartz"),
