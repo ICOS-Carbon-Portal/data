@@ -62,16 +62,16 @@ export const prefixes = {
 		quantityKind: 'http://meta.icos-cp.eu/resources/cpmeta/'
 	},
 	SITES: {
-		project: 'https://meta.fieldsites.eu/resources/projects/',
-		theme: 'https://meta.fieldsites.eu/resources/themes/',
-		station: 'https://meta.fieldsites.eu/resources/stations/',
+		project: 'https://meta.fieldsites.se/resources/projects/',
+		theme: 'https://meta.fieldsites.se/resources/themes/',
+		station: 'https://meta.fieldsites.se/resources/stations/',
 		submitter: [
-			{prefix: 'o', value: 'https://meta.fieldsites.eu/resources/organizations/'},
-			{prefix: 's', value: 'https://meta.fieldsites.eu/resources/stations/'}
+			{prefix: 'o', value: 'https://meta.fieldsites.se/resources/organizations/'},
+			{prefix: 's', value: 'https://meta.fieldsites.se/resources/stations/'}
 		],
-		type: 'https://meta.fieldsites.eu/resources/cpmeta/',
-		format: 'https://meta.fieldsites.eu/ontologies/cpmeta/',
-		valType: 'https://meta.fieldsites.eu/resources/cpmeta/',
-		quantityKind: 'https://meta.fieldsites.eu/resources/cpmeta/'
+		type: 'https://meta.fieldsites.se/resources/cpmeta/',
+		format: 'https://meta.fieldsites.se/ontologies/cpmeta/',
+		valType: 'https://meta.fieldsites.se/resources/cpmeta/',
+		quantityKind: 'https://meta.fieldsites.se/resources/cpmeta/'
 	}
 };
