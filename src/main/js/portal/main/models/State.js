@@ -105,7 +105,7 @@ export const getStateFromHash = hash => {
 	const state = hash === undefined
 		? jsonToState(parseHash(getCurrentHash()))
 		: jsonToState(parseHash(decodeURIComponent(hash)));
-	return managePrefixes(state);
+	return extendUrls(state);
 };
 
 //No # in the beginning!
@@ -215,35 +215,42 @@ export const stateToHash = state => {
 	const reducedStoreState = reduceState(simplifiedStoreState);
 	handleRoute(reducedStoreState);
 	const withSpecialCases = specialCases(reducedStoreState);
-	const final = managePrefixes(withSpecialCases);
+	const final = shortenUrls(withSpecialCases);
 
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-export const managePrefixes = (state = {}) => {
+const shortenUrls = (state = {}) => {
+	return managePrefixes(state,
+		(prefix, value) => {
+			if (Array.isArray(prefix)){
+				const prefixObj = prefix.find(p => value.startsWith(p.value));
+				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+				return prefixObj.prefix + value.slice(prefixObj.value.length);
+			} else {
+				return value.slice(prefix.length);
+			}
+		});
+};
+
+const extendUrls = (state = {}) => {
+	return managePrefixes(state,
+		(prefix, value) => {
+			if (value.startsWith('http://') || value.startsWith('https://')) return value;
+			if (Array.isArray(prefix)){
+				const pLetter = value.slice(0, 1);
+				const prefixObj = prefix.find(p => p.prefix === pLetter);
+				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
+				return prefixObj.value + value.slice(1);
+			} else {
+				return prefix + value;
+			}
+		});
+};
+
+const managePrefixes = (state = {}, transform) => {
 	if (Object.keys(state).length === 0) return state;
 	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
-
-	const shortener = (prefix, value) => {
-		if (Array.isArray(prefix)){
-			const prefixObj = prefix.find(p => value.startsWith(p.value));
-			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-			return prefixObj.prefix + value.slice(prefixObj.value.length);
-		} else {
-			return value.slice(prefix.length);
-		}
-	};
-
-	const extender = (prefix, value) => {
-		if (Array.isArray(prefix)){
-			const pLetter = value.slice(0, 1);
-			const prefixObj = prefix.find(p => p.prefix === pLetter);
-			if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-			return prefixObj.value + value.slice(1);
-		} else {
-			return prefix + value;
-		}
-	};
 
 	const categories = Object.keys(state.filterCategories);
 	const appPrefixes = prefixes[config.envri];
@@ -257,9 +264,7 @@ export const managePrefixes = (state = {}) => {
 				const prefix = appPrefixes[category];
 				if (prefix === undefined) return value;
 
-				return value.startsWith('http://') || value.startsWith('https://')
-					? shortener(prefix, value)
-					: extender(prefix, value)
+				return transform(prefix, value);
 			});
 
 			return acc;
