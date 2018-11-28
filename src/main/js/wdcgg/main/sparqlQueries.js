@@ -99,11 +99,8 @@ prefix prov: <http://www.w3.org/ns/prov#>
 SELECT ?prop ?value (count(?dobj) as ?count)
 FROM <${wdcggBaseUri}>
 WHERE {
-	{
-		select ?dobj ?acquisition where {
-			${dobjsQueryStatements}
-		}
-	}
+	${dobjsQueryStatements}
+	?acquisition prov:wasAssociatedWith ?station .
 	{
 		{
 			VALUES ?prop {${wdcggPropsList}}
@@ -111,11 +108,11 @@ WHERE {
 		} UNION
 		{
 			VALUES ?prop {<${config.stationNameProp}> <${config.stationCountryProp}>}
-			?acquisition prov:wasAssociatedWith [?prop ?value ]
+			?station ?prop ?value
 		} UNION
 		{
-			?acquisition prov:wasAssociatedWith ?value .
 			BIND (<${config.stationProp}> AS ?prop) .
+			?acquisition prov:wasAssociatedWith ?value .
 		}
 	}
 }

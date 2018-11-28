@@ -16,15 +16,13 @@
   },
   "keywords": [
     "ICOS",
-    "Carbon",
-    "Portal",
-    "NetCDF",
+    "Carbon Portal",
+    "WDCGG",
     "data"
   ],
   "contributors": [
     "Oleg Mirzov",
-    "Roger Groth",
-    "Jonathan Thiry"
+    "Roger Groth"
   ],
   "license": "ISC",
   "bugs": {
