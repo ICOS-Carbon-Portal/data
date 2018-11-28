@@ -220,7 +220,7 @@ export const stateToHash = state => {
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-const shortenUrls = (state = {}) => {
+export const shortenUrls = (state = {}) => {
 	return managePrefixes(state,
 		(prefix, value) => {
 			if (Array.isArray(prefix)){
@@ -233,7 +233,7 @@ const shortenUrls = (state = {}) => {
 		});
 };
 
-const extendUrls = (state = {}) => {
+export const extendUrls = (state = {}) => {
 	return managePrefixes(state,
 		(prefix, value) => {
 			if (value.startsWith('http://') || value.startsWith('https://')) return value;

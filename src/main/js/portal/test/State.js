@@ -1,4 +1,4 @@
-import State, {getStateFromHash, stateToHash, managePrefixes} from '../src/main/models/State';
+import State, {getStateFromHash, stateToHash, shortenUrls, extendUrls} from '../src/main/models/State';
 import {fetchAllSpecTables} from '../src/main/backend';
 import 'isomorphic-fetch';
 import deepEqual from 'deep-equal';
@@ -87,7 +87,7 @@ describe("Testing State", () => {
 					let extended;
 
 					try {
-						extended = managePrefixes(managePrefixes(original));
+						extended = extendUrls(shortenUrls(original));
 					} catch (e) {
 						done.fail(e.message);
 						return;
