@@ -165,21 +165,14 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private val downloadLogging: Route = parameters(('ip.?, 'endUser.?)){(ipOpt, endUserOpt) =>
-
-		val nonEmptyIpOpt = ipOpt.flatMap(ip => if(ip.trim.isEmpty) None else Some(ip.trim))
-
-		val withBestAvailableIp: Directive1[String] = nonEmptyIpOpt.fold(getClientIp)(provide)
-
-		withBestAvailableIp{ip =>
-			ensureValidIpAddress(ip){
-				extractHashsums{hashes =>
-					extractEnvri{implicit envri =>
-						authenticateBasic("Carbon Portal download reporting", authent){thirdParty =>
-							logExternalDownloads(hashes, ip, thirdParty, endUserOpt)
-							complete(s"Logging download (by $ip) of the following data objects:\n${hashes.mkString("\n")}")
-						} ~
-						complete(StatusCodes.Unauthorized)
-					}
+		withBestAvailableIp(ipOpt){ip =>
+			extractHashsums{hashes =>
+				extractEnvri{implicit envri =>
+					authenticateBasic("Carbon Portal download reporting", authent){thirdParty =>
+						logExternalDownloads(hashes, ip, thirdParty, endUserOpt)
+						complete(s"Logging download (by $ip) of the following data objects:\n${hashes.mkString("\n")}")
+					} ~
+					complete(StatusCodes.Unauthorized)
 				}
 			}
 		}
@@ -322,14 +315,19 @@ object UploadRouting{
 		}
 	}
 
-	def ensureValidIpAddress(ip: String): Directive0 =
-		try{
-			java.net.InetAddress.getByName(ip)
-			pass
+	def toGoodIpAddress(ip: String): Option[String] = {
+		val trimmed = ip.trim
+		if(trimmed.isEmpty) None else try{
+			val addr = java.net.InetAddress.getByName(trimmed)
+			if(addr.isMulticastAddress || addr.isSiteLocalAddress) None
+			else Some(trimmed)
 		} catch{
-			case _: Throwable =>
-				complete(StatusCodes.BadRequest -> s"Bad IP address $ip")
+			case _: Throwable => None
 		}
+	}
+
+	def withBestAvailableIp(userProvidedIp: Option[String]): Directive1[String] =
+		userProvidedIp.flatMap(toGoodIpAddress).fold(getClientIp)(provide)
 
 	private val extractHashsums: Directive1[Seq[Sha256Sum]] = extractStrictEntity(1.second).flatMap{entity =>
 		try{
