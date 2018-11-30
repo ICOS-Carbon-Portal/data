@@ -180,8 +180,10 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	val route = handleExceptions(errHandler){
 		pathPrefix("objects"){
-			put{ upload } ~
-			post{ reIngest } ~
+			withRequestTimeout(3.minutes){
+				put{ upload } ~
+				post{ reIngest }
+			} ~
 			options{ uploadHttpOptions } ~
 			get{ batchDownload ~ download}
 		} ~
