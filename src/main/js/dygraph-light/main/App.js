@@ -3,6 +3,8 @@ import {getTableFormatNrows, getBinTable} from './backend';
 import {logError, saveToRestheart} from '../../common/main/backend';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import config from '../../portal/main/config';
+import Dygraph from 'dygraphs';
+import './Dygraphs.css';
 
 const spinnerDelay = 100;
 
@@ -146,7 +148,7 @@ export default class App {
 			} else {
 				// Overlap
 				const dates = binTables.flatMap(binTable => binTable.values([0], v => v[0]));
-				const uniqueDates = [...new Set([].concat(...dates))];
+				const uniqueDates = Array.from(new Set(dates));
 				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)]));
 
 				binTables.map((binTable, index) => {
@@ -159,7 +161,7 @@ export default class App {
 
 				return Array.from(dateList).map(k => k.flatten()).sort((d1, d2) => d1[0] - d2[0]);
 			}
-		}
+		};
 
 		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
 
