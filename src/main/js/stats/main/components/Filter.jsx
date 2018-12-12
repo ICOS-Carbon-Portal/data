@@ -12,20 +12,19 @@ const placeholders = {
 };
 
 export default class Filter extends Component {
-  constructor(props) {
-    super(props);
+	constructor(props) {
+		super(props);
 		this.state = { value: [] }
-  }
+	}
 
-  render() {
-    const {filters} = this.props;
+	render() {
+		const {filters} = this.props;
 
 		const Row = ({filter}) => {
-			const downloadStats = this.props.downloadStats;
-		  return (
-		    <div className="row" key={filter.name} style={{marginTop: 10, display: 'flex', alignItems: 'center'}}>
+			return (
+				<div className="row" key={filter.name} style={{marginTop: 10, alignItems: 'center'}}>
 					<div className="col-md-4">
-						<label style={{marginBottom: 0}}>{placeholders[filter.name]}</label>
+						<label style={{marginBottom: 0, lineHeight: '34px'}}>{placeholders[filter.name]}</label>
 					</div>
 					<div className="col-md-8">
 						<Multiselect
@@ -39,29 +38,29 @@ export default class Filter extends Component {
 							/>
 					</div>
 				</div>
-		  )
+			)
 		}
 
 		const showResetBtn = !!filters;
 
-    return (
-      <div className="panel panel-default">
-  			<div className="panel-heading">
-					<h3 style={{display: 'inline'}} className="panel-title">Data object specification filter</h3>
+		return (
+			<div className="panel panel-default">
+				<div className="panel-heading">
 					{showResetBtn
 						? <ResetBtn resetFiltersAction={() => this.props.fetchDownloadStats({})} />
 						: null
 					}
-  			</div>
-  			<div className="panel-body">
-  				{ filters
-          ? filters.map((filter, idx) => <Row key={'row-'+idx} filter={filter} />)
-          : null
-          }
-  			</div>
-  		</div>
-    )
-  }
+					<h3 className="panel-title">Data object specification filter</h3>
+				</div>
+				<div className="panel-body">
+					{ filters
+					? filters.map((filter, idx) => <Row key={'row-'+idx} filter={filter} />)
+					: null
+					}
+				</div>
+			</div>
+		)
+	}
 
 	handleSelectionChange(filter, values) {
 		this.props.updateTableWithFilter(filter.name, values.map(value => value._id));
@@ -76,7 +75,7 @@ export default class Filter extends Component {
 const ResetBtn = props => {
 	return <div
 		className="glyphicon glyphicon-ban-circle"
-		style={{display: 'inline', float: 'right', fontSize: '160%', cursor: 'pointer'}}
+		style={{display: 'inline', float: 'right', fontSize: '150%', cursor: 'pointer'}}
 		title="Clear all filters"
 		onClick={props.resetFiltersAction}
 		/>;

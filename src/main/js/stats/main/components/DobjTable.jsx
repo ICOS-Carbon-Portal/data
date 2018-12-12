@@ -13,13 +13,13 @@ export default class DobjTable extends Component {
     return (
       <div className="panel panel-default">
   			<div className="panel-heading">
-          <h3 style={{display: 'inline'}} className="panel-title">Data objects {start + 1} to {end} of {paging.objCount}</h3>
-    			<div style={{display: 'inline', float: 'right'}}>
+    			<div style={{float: 'right'}}>
     				<StepButton direction="backward" enabled={start > 0} onStep={() => requestPage(paging.offset-1)} />
     				<StepButton direction="forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.offset+1)} />
     			</div>
+          <h3 className="panel-title">Data objects {start + 1} to {end} of {paging.objCount}</h3>
   			</div>
-  			<div className="panel-body">
+  			<div className="panel-body table-responsive" style={{clear: 'both'}}>
           <table className="table">
             <tbody>
               <tr>
@@ -53,7 +53,7 @@ const Row = ({dobj}) => {
 const StepButton = props => {
   const disabled = props.enabled ? false : true;
   return <button className="btn btn-default"
-    style={Object.assign({display: 'inline', cursor: 'pointer', fontSize: '170%', position: 'relative', top: -6, borderWidth: 0, padding: 0, paddingLeft: 4, backgroundColor: 'transparent'})}
+    style={Object.assign({display: 'inline', cursor: 'pointer', fontSize: '150%', position: 'relative', top: -4, borderWidth: 0, padding: 0, paddingLeft: 4, backgroundColor: 'transparent'})}
 		onClick={props.onStep}
     disabled={disabled}
 		>

@@ -55,7 +55,7 @@ export default class Graph extends Component{
 
 				<button
 					className="btn btn-primary"
-					style={{marginTop:20}}
+					style={{margin: '2em 0'}}
 					onClick={this.onDownloadClick.bind(this)}
 				>Download statistics in CSV format</button>
 				<FileDownload ts={ts} blob={blob} fileName={fileName} />

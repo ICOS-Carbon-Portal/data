@@ -17,7 +17,7 @@ export class App extends Component {
 		const props = this.props;
 
 		return (
-			<div className="container-fluid" style={{marginTop: 10}}>
+			<div style={{marginTop: 10}}>
 				<AnimatedToasters
 					autoCloseDelay={5000}
 					toasterData={props.toasterData}
