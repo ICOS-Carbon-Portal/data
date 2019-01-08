@@ -56,7 +56,7 @@ To upload a file from the command line:
 
 `OK`
 
-In HTTP terms, the binary contents of the file must be HTTP PUT to the URL whose format is shown in the examples. 
+In HTTP terms, the binary contents of the file must be HTTP PUT to the URL whose format is shown in the examples.
 
 File names are validated. Here is the output from our unit tests for this:
 
@@ -101,11 +101,12 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 
 ### Getting started with the front-end part
 
-- Install `Node.js 5.x` as instructed [here](https://github.com/nodesource/distributions)
+- Install `Node.js 8.x` as instructed [here](https://github.com/nodesource/distributions)
 - Clone this repository: `git clone git@github.com:ICOS-Carbon-Portal/data.git`
 - `cd data`
-- Install Node.js dependencies: `npm install`
-- Now you can run Gulp tasks: `npm run gulp <task>` (the list of tasks can be found in `package.json`)
+- Run sbt
+- In the sbt console, run `frontend` to list the apps available
+- Run `~frontend build <jsApp>` for continuous build of the app
 
 ### Getting started with the back-end part
 
@@ -114,4 +115,3 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 - Run sbt (from this project's root)
 - In the sbt console, run `~re-start` for continuous local rebuilds and server restarts
 - For most of the operations (except, temporarily, the NetCDF service) you will also need [meta](https://github.com/ICOS-Carbon-Portal/meta) project running on your machine
-

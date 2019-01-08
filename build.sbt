@@ -70,7 +70,7 @@ frontend := Def.inputTaskDyn {
 
 	val args: Seq[String] = sbt.Def.spaceDelimited().parsed
 
-	 Def.taskDyn {
+	Def.task {
 		args.toList match {
 			case "build" :: app :: Nil =>
 				log.info(s"Build $app")
@@ -78,18 +78,15 @@ frontend := Def.inputTaskDyn {
 				val exitCode = (Process("npm install", projectDirectory) #&& Process("npm run build", projectDirectory)).!
 				if (exitCode == 0) {
 					log.info("Finished front-end build for " + app)
-					None
 				} else {
 					log.error(s"Front-end build for $app failed")
-					Some(s"Front end building for $app returned non-zero exit code $exitCode")
 				}
+				log.info("Copy resources")
+				copyResources in Compile
 			case _ =>
 				log.info("Usage: frontend build <app>, where app is one of: " + jsApps.mkString(", "))
 		}
-
-		log.info("Copy resources")
-		copyResources in Compile
-	 }
+	}
 }.evaluated
 
 
@@ -117,7 +114,7 @@ frontendBuild := {
 	Process("npm install", new File("src/main/js/common/")).!
 
 	val errors: List[String] = new File("src/main/js/").listFiles.filter(_.getName != "common").par.map{pwd =>
-	  	val projName = pwd.getName
+			val projName = pwd.getName
 		log.info("Starting front-end build for " + projName)
 		val exitCode = (Process("npm install", pwd) #&& Process("npm run publish", pwd)).!
 
