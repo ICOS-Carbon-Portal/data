@@ -70,7 +70,7 @@ function compileJs() {
 	}
 }
 
-gulp.task('js', ['clean', 'sass', 'sass-ext'], compileJs);
+gulp.task('build', ['clean', 'sass', 'sass-ext'], compileJs);
 
 gulp.task('sass', function () {
 	return gulp.src(paths.sassSources)
@@ -118,15 +118,10 @@ gulp.task('test', function(){
 	);
 });
 
-gulp.task('build', ['js'], function(){
-	var sources = [paths.commonjs, paths.js, paths.jsx, paths.sassSources];
-	return gulp.watch(sources, ['js']);
-});
-
 gulp.task('publish', function(){
 	runSequence(
 		'test',
-		['apply-prod-environment','js']
+		['apply-prod-environment','build']
 	);
 });
 

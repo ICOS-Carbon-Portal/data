@@ -54,12 +54,7 @@ function compileJs() {
 	}
 }
 
-gulp.task('js', ['clean'], compileJs);
-
-gulp.task('build', ['js'], function(){
-	var sources = [paths.commonjs, paths.js, paths.jsx];
-	return gulp.watch(sources, ['js']);
-});
+gulp.task('build', ['clean'], compileJs);
 
 gulp.task('publish', ['apply-prod-environment', 'clean'], compileJs);
 gulp.task('default', ['publish']);

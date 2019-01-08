@@ -58,7 +58,7 @@ function compileJs() {
 	}
 }
 
-gulp.task('js', ['clean'], compileJs);
+gulp.task('build', ['clean'], compileJs);
 
 gulp.task('clean_es5', function() {
 	return del([jstarget]);
@@ -76,11 +76,6 @@ gulp.task('test', ['transpile'], function(){
 
 gulp.task('tdd', ['test'], function(){
 	return gulp.watch([paths.js], ['test']);
-});
-
-gulp.task('build', ['js'], function(){
-	var sources = [paths.commonjs, paths.js, paths.jsx];
-	return gulp.watch(sources, ['js']);
 });
 
 gulp.task('publish', ['apply-prod-environment', 'clean'], compileJs);

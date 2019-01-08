@@ -61,6 +61,49 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
+
+val frontend = inputKey[Unit]("Builds the frontend")
+frontend := Def.inputTaskDyn {
+	import scala.sys.process.Process
+	import java.io.File
+	val log = streams.value.log
+
+	val args: Seq[String] = sbt.Def.spaceDelimited().parsed
+
+	 Def.taskDyn {
+		args.toList match {
+			case "build" :: app :: Nil =>
+				log.info(s"Build $app")
+				val projectDirectory = new File(s"src/main/js/$app/")
+				val exitCode = (Process("npm install", projectDirectory) #&& Process("npm run build", projectDirectory)).!
+				if (exitCode == 0) {
+					log.info("Finished front-end build for " + app)
+					None
+				} else {
+					log.error(s"Front-end build for $app failed")
+					Some(s"Front end building for $app returned non-zero exit code $exitCode")
+				}
+			case _ =>
+				log.info("Nothing")
+		}
+
+		log.info("Copy resources")
+		copyResources in Compile
+	 }
+}.evaluated
+
+
+val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg")
+val compiledJsFilter = new SimpleFileFilter(file => {
+		jsApps.exists(nameBase => file.getName.startsWith(nameBase + ".js"))
+})
+val watchSourcesChanges = Seq(
+		watchSources := watchSources.value.filterNot { _.base.getPath.contains("resources") },
+		watchSources += WatchSource((Compile / resourceDirectory).value, AllPassFilter, compiledJsFilter),
+	) ++ jsApps.map { app =>
+		watchSources += WatchSource((Compile / sourceDirectory).value / "js" / app / "main", AllPassFilter, HiddenFileFilter)
+	}
+
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
 frontendBuild := {
 	import scala.sys.process.Process
@@ -140,4 +183,4 @@ lazy val data = (project in file("."))
 //			stop()
 //		"""
 	)
-
+	.settings(watchSourcesChanges)
