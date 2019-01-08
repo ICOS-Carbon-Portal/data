@@ -84,7 +84,7 @@ frontend := Def.inputTaskDyn {
 					Some(s"Front end building for $app returned non-zero exit code $exitCode")
 				}
 			case _ =>
-				log.info("Nothing")
+				log.info("Usage: frontend build <app>, where app is one of: " + jsApps.mkString(", "))
 		}
 
 		log.info("Copy resources")
@@ -98,7 +98,10 @@ val compiledJsFilter = new SimpleFileFilter(file => {
 		jsApps.exists(nameBase => file.getName.startsWith(nameBase + ".js"))
 })
 val watchSourcesChanges = Seq(
-		watchSources := watchSources.value.filterNot { _.base.getPath.contains("resources") },
+		watchSources := {
+			val resFolder = (Compile / resourceDirectory).value
+			watchSources.value.filterNot { _.base == resFolder }
+		},
 		watchSources += WatchSource((Compile / resourceDirectory).value, AllPassFilter, compiledJsFilter),
 	) ++ jsApps.map { app =>
 		watchSources += WatchSource((Compile / sourceDirectory).value / "js" / app / "main", AllPassFilter, HiddenFileFilter)
