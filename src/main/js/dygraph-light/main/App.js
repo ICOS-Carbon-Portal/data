@@ -5,8 +5,32 @@ import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import config from '../../portal/main/config';
 import Dygraph from 'dygraphs';
 import './Dygraphs.css';
+import CollapsibleSection from './CollapsibleSection';
+
 
 const spinnerDelay = 100;
+const errMsg = `
+<div>
+	<h2>Invalid request</h2>
+	
+	<div style="font-weight:bold;">Required parameters:</div>
+	<ul style="margin:0;">
+		<li>objId: List (comma separated) of data object ids.</li>
+		<li>x: Parameter name for X axis.</li>
+		<li>y: Parameter name for Y axis.</li>
+	</ul>
+	
+	<div style="font-weight:bold;margin-top:30px;">Optional parameters:</div>
+	<ul style="margin:0;">
+		<li>linking: Defaults to <i>overlap</i>. Use <i>concatenate</i> to display data objects as one series.</li>
+		<li>legendLabels: List (comma separated matching order of objId) of labels for legend. Defaults to file name.</li>
+		<li>legendClosed: Start with legend collapsed. Defaults to legend open.</li>
+	</ul>
+	
+	<div style="margin-top:30px;">
+		<a href="?objId=-xQ2wgAt-ZjdGaCEJnKQIEIu,0EwfR9LutvnBbvgW-KJdq2U0&x=TIMESTAMP&linking=overlap&y=co2&legendLabels=HPB 93.0,SMR 67.2&legendClosed">Example</a>
+	</div>
+</div>`;
 
 export default class App {
 	constructor(config, params){
@@ -34,12 +58,17 @@ export default class App {
 			if (params.isValidParams) {
 				this.main();
 			} else {
-				const errMsg = `<h2>The request you made is not valid!</h2>
-				<p>It is missing a value for ${params.missingParams.join(', ')}.</p>`;
-
 				presentError(errMsg);
 			}
 		}
+
+		const styles = {
+			details: 'position:absolute; z-index:999; background-color:white; border:1px solid black; padding:5px;' +
+				' border-radius:5px; box-shadow: 9px 8px 20px -18px rgba(0,0,0,0.75);',
+			summary: "font-weight:bold; cursor:pointer;",
+			anchor: "margin-top: 7px;"
+		};
+		this.legend = new CollapsibleSection('legend', 'Legend', styles, this.params.get('legendClosed'), true);
 	}
 
 	main(){
@@ -47,6 +76,7 @@ export default class App {
 		saveToRestheart(formatData(params));
 
 		const ids = params.get('objId').split(',');
+		const legendLabels = params.has('legendLabels') ? params.get('legendLabels').split(',') : [];
 
 		return getTableFormatNrows(this.config, ids)
 		.then(
@@ -57,15 +87,25 @@ export default class App {
 					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 				else {
 					if (typeof this.graph === "undefined") {
-						const title = window.frameElement ? null : objects[0].specLabel;
+						const title = window.frameElement ? null : `${objects[0].specLabel} - ${params.get('y')}`;
 						this.initGraph(tableFormat, title);
 						this.tableFormat = tableFormat;
 						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
-						objects.map(object => {
-							const filename = object.filename;
-							const yLabel = `${filename.slice(0, filename.lastIndexOf('.'))}, ${params.get('y')}`;
-							this.labels.push(yLabel);
-						})
+
+						if (params.get('linking') === 'concatenate'){
+							this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
+								? params.get('legendLabels').split(',')[0]
+								: getYLabel(tableFormat, params.get('y')));
+
+						} else {
+							objects.forEach((object, idx) => {
+								const filename = object.filename;
+								const yLabel = legendLabels.length > idx && legendLabels[idx].length > 0
+									? legendLabels[idx]
+									: filename.slice(0, filename.lastIndexOf('.'));
+								this.labels.push(yLabel);
+							})
+						}
 					}
 
 					return [tableFormat, objects];
@@ -81,8 +121,8 @@ export default class App {
 			}
 		)
 		.then(binTables => {
-			if (binTables.length > 1 && params.get('linking') !== 'concatenate') {
-				this.graph.updateOptions( { labels: this.labels } );
+			if (binTables.length > 1) {
+				this.graph.updateOptions({ labels: this.labels });
 			}
 			this.drawGraph(binTables)
 		})
@@ -98,7 +138,8 @@ export default class App {
 		const params = this.params;
 		const xlabel = getColInfoParam(tableFormat, params.get('x'), 'label');
 		const ylabel = getYLabel(tableFormat, params.get('y'));
-		const labels = getLabels(xlabel, ylabel, params);
+		const labelCount = params.get('linking') === 'concatenate' ? 2 : params.get('objId').split(',').length + 1;
+		const labels = Array(labelCount).fill('');
 		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
 		const formatters = getFormatters(xlabel, valueFormatX);
 		const drawPoints = params.get('type') !== 'line';
@@ -112,13 +153,13 @@ export default class App {
 				drawPoints,
 				legend: 'always',
 				labelsDiv: 'legend',
-				labelsSeparateLines: false,
+				labelsSeparateLines: true,
+				legendFormatter: this.legendFormatter,
 				xlabel,
 				ylabel,
 				labels: labels,
 				xRangePad: 5,
 				connectSeparatedPoints: true,
-				labelsKMB: true,
 				digitsAfterDecimal: 4,
 				axes: {
 					x: {
@@ -134,6 +175,13 @@ export default class App {
 				}
 			}
 		);
+	}
+
+	legendFormatter(data){
+		return `${data.x === undefined ? '' : data.xHTML}<br><table>` + data.series.map(series =>
+			`<tr style="color:${series.color}"><td>${series.labelHTML}:</td>` +
+			`<td>${isNaN(series.yHTML) ? '' : series.yHTML}</td></tr>`
+		).join('') + '</table>';
 	}
 
 	drawGraph(binTables){
@@ -166,7 +214,20 @@ export default class App {
 		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
+		this.showLegend();
 		this.showSpinner(false);
+	}
+
+	showLegend(){
+		const xAxisRange = this.graph.xAxisExtremes();
+		const xCoord = this.graph.toDomXCoord(xAxisRange[0]);
+		const titleHeight = this.graph.getOption('titleHeight');
+		const graphStyle = window.getComputedStyle(document.getElementById("graph"));
+		const top = parseInt(graphStyle.top);
+		const left = parseInt(graphStyle.left);
+
+		this.legend.setPosition(top + titleHeight + 2, left + xCoord + 2);
+		this.legend.show();
 	}
 
 	showSpinner(show){
@@ -255,16 +316,6 @@ const getYLabel = (tableFormat, colName) => {
 	const unit = getColInfoParam(tableFormat, colName, 'unit');
 	const label = getColInfoParam(tableFormat, colName, 'label');
 	return unit !== '?' ? `${label}, ${unit}` : label;
-};
-
-const getLabels = (xlabel, ylabel, params) => {
-	const ids = params.get('objId').split(',');
-
-	if (params.get('linking') !== 'concatenate' && ids.length > 1) {
-		return [xlabel, ...ids];
-	} else {
-		return [xlabel, ylabel];
-	}
 };
 
 const fail = (message) => {
