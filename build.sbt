@@ -63,6 +63,7 @@ lazy val netcdf = (project in file("netcdf"))
 
 
 val frontend = inputKey[Unit]("Builds the frontend")
+
 frontend := Def.inputTaskDyn {
 	import scala.sys.process.Process
 	import java.io.File
@@ -70,30 +71,30 @@ frontend := Def.inputTaskDyn {
 
 	val args: Seq[String] = sbt.Def.spaceDelimited().parsed
 
-	Def.task {
-		args.toList match {
-			case "build" :: app :: Nil =>
-				log.info(s"Build $app")
-				val projectDirectory = new File(s"src/main/js/$app/")
-				val exitCode = (Process("npm install", projectDirectory) #&& Process("npm run build", projectDirectory)).!
-				if (exitCode == 0) {
-					log.info("Finished front-end build for " + app)
-				} else {
-					log.error(s"Front-end build for $app failed")
-				}
-				log.info("Copy resources")
-				copyResources in Compile
-			case _ =>
-				log.info("Usage: frontend build <app>, where app is one of: " + jsApps.mkString(", "))
-		}
+	args.toList match {
+		case "build" :: app :: Nil =>
+			log.info(s"Build $app")
+			val projectDirectory = new File(s"src/main/js/$app/")
+			val exitCode = (Process("npm install", projectDirectory) #&& Process("npm run build", projectDirectory)).!
+			if (exitCode == 0) {
+				log.info("Finished front-end build for " + app)
+			} else {
+				log.error(s"Front-end build for $app failed")
+			}
+		case _ =>
+			log.info("Usage: frontend build <app>, where app is one of: " + jsApps.mkString(", "))
 	}
+	log.info("Copying resources folder contents to target")
+	copyResources in Compile
 }.evaluated
 
 
 val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg")
+
 val compiledJsFilter = new SimpleFileFilter(file => {
 		jsApps.exists(nameBase => file.getName.startsWith(nameBase + ".js"))
 })
+
 val watchSourcesChanges = Seq(
 		watchSources := {
 			val resFolder = (Compile / resourceDirectory).value
@@ -105,6 +106,7 @@ val watchSourcesChanges = Seq(
 	}
 
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
+
 frontendBuild := {
 	import scala.sys.process.Process
 	import java.io.File
@@ -184,3 +186,4 @@ lazy val data = (project in file("."))
 //		"""
 	)
 	.settings(watchSourcesChanges)
+
