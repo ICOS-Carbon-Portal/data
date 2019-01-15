@@ -87,7 +87,7 @@ export default class App {
 					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
 				else {
 					if (typeof this.graph === "undefined") {
-						const title = window.frameElement ? null : `${objects[0].specLabel} - ${params.get('y')}`;
+						const title = `${objects[0].specLabel} - ${params.get('y')}`;
 						this.initGraph(tableFormat, title);
 						this.tableFormat = tableFormat;
 						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));

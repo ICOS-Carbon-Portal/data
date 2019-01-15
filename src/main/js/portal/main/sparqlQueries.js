@@ -201,7 +201,7 @@ const getFilterClauses = (config, filters) => {
 export const extendedDataObjectInfo = (config, dobjs) => {
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?station ?theme ?themeIcon ?title ?description where{
+select ?dobj ?station ?stationId ?elevation ?theme ?themeIcon ?title ?description where{
 	VALUES ?dobj { ${dobjs.join(' ')} }
 	?dobj cpmeta:hasObjectSpec ?specUri .
 	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
@@ -211,7 +211,12 @@ select ?dobj ?station ?theme ?themeIcon ?title ?description where{
 	OPTIONAL{?specUri rdfs:comment ?spec }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
-	OPTIONAL{ ?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:hasName ?station }
+	OPTIONAL{
+		?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationUri .
+		OPTIONAL{ ?stationUri cpmeta:hasName ?station }
+		OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId }
+		OPTIONAL{ ?stationUri cpmeta:hasElevation ?elevation }
+	}
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
 };

@@ -20,12 +20,12 @@ export default class PreviewTimeSerie extends Component {
 		}
 	}
 
-	shouldComponentUpdate() {
-		return false;
+	shouldComponentUpdate(nextProps) {
+		return this.props.extendedDobjInfo.length === 0 && nextProps.extendedDobjInfo.length > 0;
 	}
 
 	render(){
-		const {preview, iframeSrcChange} = this.props;
+		const {preview, extendedDobjInfo, iframeSrcChange} = this.props;
 		const {xAxis, yAxis, type} = preview.items[0] && preview.items[0].hasKeyValPairs
 			? {
 				xAxis: preview.items[0].getUrlSearchValue('x'),
@@ -38,6 +38,8 @@ export default class PreviewTimeSerie extends Component {
 		const items = preview.items.map((item) => {
 			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.id);
 			item.station = extendedInfo ? extendedInfo.station : null;
+			item.stationId = extendedInfo ? extendedInfo.stationId : null;
+			item.elevation = extendedInfo ? extendedInfo.elevation : null;
 			return item;
 		});
 
@@ -55,9 +57,11 @@ export default class PreviewTimeSerie extends Component {
 			return result;
 		}, '');
 
+		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
+
 		return (
 			<div>
-				{preview
+				{preview && legendLabels
 					? <div>
 
 						<div className="panel-body" style={{paddingTop: 0}}>
@@ -96,6 +100,7 @@ export default class PreviewTimeSerie extends Component {
 							<TimeSeries
 								self={this}
 								ids={preview.items.map(i => i.id)}
+								legendLabels={legendLabels}
 								x={xAxis}
 								y={yAxis}
 								type={type}
@@ -130,11 +135,15 @@ const Selector = props => {
 
 const TimeSeries = props => {
 	const objIds = props.ids.map(id => id.split('/').pop()).join();
-	const {self, x, y, type, linking} = props;
+	const {self, x, y, type, linking, legendLabels} = props;
 	const yParam = y ? `&y=${y}` : '';
 
 	return <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 		style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-		src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}`}
+		src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}&legendLabels=${legendLabels}`}
 	/>;
+};
+
+const getLegendLabels = items => {
+	return items.map(item => item.stationId && item.elevation ? `${item.stationId} ${item.elevation}` : '').join(',');
 };
