@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class SocatTsvToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[String], nRows: Int)
+class SocatTsvToBinTableConverter(colFormats: ColumnsMetaWithTsCol, columnNames: Array[String], nRows: Int)
 	extends TimeSeriesToBinTableConverter(colFormats, columnNames, nRows) {
 
 	def amend(value: String, format: ValueFormat): String = value

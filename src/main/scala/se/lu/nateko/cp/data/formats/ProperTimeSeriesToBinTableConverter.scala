@@ -6,27 +6,32 @@ import ProperTimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
 
-abstract class ProperTimeSeriesToBinTableConverter(valueFormats: ColumnValueFormats) {
+abstract class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 	protected def amend(value: String): String = value
 	protected def isNull(value: String, format: ValueFormat): Boolean
 
-	private val sortedColumns = valueFormats.sortedColumns
-
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
-	private val dataTypes = sortedColumns.map(valueFormats.valueFormats).map(valueFormatParser.getBinTableDataType)
 
 	def parseRow(row: ProperTableRow): BinTableRow = {
 		val colPositions: Map[String, Int] = computeIndices(row.header.columnNames)
 
+		val valueFormats: Map[String, ValueFormat] = row.header.columnNames.flatMap{cname =>
+			colsMeta.matchColumn(cname)
+				.map(valueFormat => cname -> valueFormat) //Option[String -> ValueFormat]
+		}.toMap
+
+		val sortedColumns = valueFormats.keys.toArray.sorted
+		val dataTypes = sortedColumns.map(valueFormats).map(valueFormatParser.getBinTableDataType)
+
 		val parsed = sortedColumns.map{ colName =>
-			val valFormat = valueFormats.valueFormats(colName)
+			val valFormat = valueFormats(colName)
 
 			val colPos = try {
 				colPositions(colName)
 			} catch {
 				case _: NoSuchElementException =>
-					val missingColumns = valueFormats.valueFormats.keys.filterNot(colPositions.contains)
+					val missingColumns = valueFormats.keys.filterNot(colPositions.contains)
 					throw new CpDataParsingException("Missing columns: " + missingColumns.mkString(", "))
 			}
 

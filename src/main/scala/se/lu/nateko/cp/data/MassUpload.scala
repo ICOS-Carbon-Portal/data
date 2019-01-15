@@ -30,7 +30,7 @@ import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
-import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
+//import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
 
 object MassUpload extends CommonJsonSupport{
 
@@ -79,18 +79,18 @@ object MassUpload extends CommonJsonSupport{
 		Source(getFiles(new File(RootFolder))).map(_.toPath)
 	}
 
-	val fileInfoSource: Source[FileInfo, NotUsed] = fileSource.mapAsyncUnordered(parall){path =>
-		val hashFut = FileIO.fromPath(path)
-			.viaMat(DigestFlow.sha256)(Keep.right)
-			.to(Sink.ignore).run()
-		val headerFut = FileIO.fromPath(path)
-			.via(WdcggStreams.linesFromBinary)
-			.toMat(WdcggStreams.wdcggHeaderSink)(Keep.right).run()
-		for(hash <- hashFut; header <- headerFut) yield {
-			val stationName = header("STATION NAME")
-			FileInfo(path, hash, stationName)
-		}
-	}
+//	val fileInfoSource: Source[FileInfo, NotUsed] = fileSource.mapAsyncUnordered(parall){path =>
+//		val hashFut = FileIO.fromPath(path)
+//			.viaMat(DigestFlow.sha256)(Keep.right)
+//			.to(Sink.ignore).run()
+//		val headerFut = FileIO.fromPath(path)
+//			.via(WdcggStreams.linesFromBinary)
+//			.toMat(WdcggStreams.wdcggHeaderSink)(Keep.right).run()
+//		for(hash <- hashFut; header <- headerFut) yield {
+//			val stationName = header("STATION NAME")
+//			FileInfo(path, hash, stationName)
+//		}
+//	}
 
 	val metaSubmittingFlow: Flow[FileInfo, StepResult[FileInfo], NotUsed] = Flow[FileInfo]
 		.mapAsyncUnordered(parall){metaSubmission}
@@ -129,12 +129,12 @@ object MassUpload extends CommonJsonSupport{
 
 	def dumpFiles = fileSource.via(fileDumpingFlow).runWith(resultLogger(f => s"Dumping ${f.getFileName}"))
 
-	def submitFiles = fileInfoSource
-		.via(metaSubmittingFlow)
-		.alsoTo(resultLogger(f => s"Meta upload ${f.fileName}"))
-		.collect{case (fi, None) => fi}
-		.via(fileUploadingFlow)
-		.runWith(resultLogger(f => s"File upload ${f.fileName}"))
+//	def submitFiles = fileInfoSource
+//		.via(metaSubmittingFlow)
+//		.alsoTo(resultLogger(f => s"Meta upload ${f.fileName}"))
+//		.collect{case (fi, None) => fi}
+//		.via(fileUploadingFlow)
+//		.runWith(resultLogger(f => s"File upload ${f.fileName}"))
 
 	private def uploadResultControl[T]: Flow[(Try[HttpResponse], T), StepResult[T], NotUsed] = Flow[(Try[HttpResponse], T)]
 		.mapAsyncUnordered(parall){

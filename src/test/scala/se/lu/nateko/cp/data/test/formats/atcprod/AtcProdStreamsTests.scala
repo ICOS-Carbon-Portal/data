@@ -28,12 +28,12 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 
-	val formats = ColumnFormats(
-		Map(
-			"TIMESTAMP" -> Iso8601DateTime,
-			"co2" -> FloatValue,
-			"Stdev" -> FloatValue
-		),
+	val formats = ColumnsMetaWithTsCol(
+		new ColumnsMeta(Seq(
+			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
+			PlainColumn(FloatValue, "co2", isOptional = false),
+			PlainColumn(FloatValue, "Stdev", isOptional = false)
+		)),
 		"TIMESTAMP"
 	)
 
@@ -65,7 +65,7 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		assert(readResult.count === 5006)
 		assert(nRowsWritten === 24)
-		assert(formats.valueFormats.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
+		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
 
 	}
 

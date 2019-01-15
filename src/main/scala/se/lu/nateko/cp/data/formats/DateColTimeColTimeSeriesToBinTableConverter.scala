@@ -5,7 +5,7 @@ import java.time.LocalTime
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnFormats, columnNames: Array[String], offsetFromUtc: Int, nRows: Int)
+abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnsMetaWithTsCol, columnNames: Array[String], offsetFromUtc: Int, nRows: Int)
 	extends TimeSeriesToBinTableConverter(colFormats, columnNames, nRows){
 
 	protected def timeCol: String
@@ -19,8 +19,9 @@ abstract class DateColTimeColTimeSeriesToBinTableConverter(colFormats: ColumnFor
 	assert(timePos >= 0, s"Column $timeCol is missing from metadata descriptions")
 	assert(datePos >= 0, s"Column $dateCol is missing from metadata descriptions")
 
+	// TODO: Is it always a plain column?
 	private val Seq(dateNull, timeNull, stampNull) = Seq(dateCol, timeCol, colFormats.timeStampColumn)
-		.map(col => getNull(colFormats.valueFormats(col)))
+		.map(col => getNull(colFormats.colsMeta.plainCols(col)))
 
 	override protected def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef = {
 		val date = parsed(datePos).asInstanceOf[Int]

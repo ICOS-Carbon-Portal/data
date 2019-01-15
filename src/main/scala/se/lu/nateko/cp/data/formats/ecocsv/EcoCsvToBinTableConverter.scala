@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.formats.ecocsv
 import se.lu.nateko.cp.data.formats._
 import EcoCsvParser.Header
 
-class EcoCsvToBinTableConverter(colFormats: ColumnFormats, header: Header, nRows: Int) extends{
+class EcoCsvToBinTableConverter(colFormats: ColumnsMetaWithTsCol, header: Header, nRows: Int) extends{
 
 	val timeCol = "time"
 	val dateCol = "date"

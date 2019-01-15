@@ -6,7 +6,7 @@ import java.time.{LocalDateTime, ZoneOffset}
 import se.lu.nateko.cp.data.formats._
 
 class SimpleSitesCsvToBinTableConverter(
-		colFormats: ColumnFormats,
+		colFormats: ColumnsMetaWithTsCol,
 		header: SimpleSitesCsvParser.Header,
 		nRows: Int
 	) extends TimeSeriesToBinTableConverter(colFormats, header.columnNames, nRows) {

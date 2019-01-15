@@ -1,30 +1,15 @@
 package se.lu.nateko.cp.data.formats.atcprod
 
-import java.nio.charset.Charset
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import AtcProdParser._
 import akka.Done
-
-import akka.NotUsed
 import akka.stream.FlowShape
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.ZipWith
-import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.ColumnFormats
+import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink, ZipWith}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
+import se.lu.nateko.cp.data.formats.atcprod.AtcProdParser._
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.meta.core.data.TimeInterval
-import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
+import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, TimeSeriesToBinTableConverter}
+import se.lu.nateko.cp.meta.core.data.{TimeInterval, TimeSeriesUploadCompletion}
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class AtcProdRow(val header: Header, val cells: Array[String])
 
@@ -38,7 +23,7 @@ object AtcProdStreams{
 		.map(acc => new AtcProdRow(acc.header, acc.cells))
 
 
-	def atcProdToBinTableConverter(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
+	def atcProdToBinTableConverter(formats: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 		val graph = GraphDSL.create(Sink.head[AtcProdRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
 			(firstWdcggSink, firstRowSink, lastRowSink) =>
 
@@ -72,7 +57,7 @@ object AtcProdStreams{
 		Flow.fromGraph(graph)
 	}
 
-	private def getCompletionInfo(formats: ColumnFormats)(
+	private def getCompletionInfo(formats: ColumnsMetaWithTsCol)(
 			firstAtcProdFut: Future[AtcProdRow],
 			firstBinFut: Future[BinTableRow],
 			lastBinFut: Future[BinTableRow]
@@ -82,8 +67,9 @@ object AtcProdStreams{
 			firstBin <- firstBinFut;
 			lastBin <- lastBinFut
 		) yield{
-			val start = recoverTimeStamp(firstBin.cells, formats)
-			val stop = recoverTimeStamp(lastBin.cells, formats)
+			val sortedColumns = firstProd.header.columnNames
+			val start = recoverTimeStamp(firstBin.cells, sortedColumns, formats.timeStampColumn)
+			val stop = recoverTimeStamp(lastBin.cells, sortedColumns, formats.timeStampColumn)
 			TimeSeriesUploadCompletion(TimeInterval(start, stop), Some(firstProd.header.nRows))
 		}
 }

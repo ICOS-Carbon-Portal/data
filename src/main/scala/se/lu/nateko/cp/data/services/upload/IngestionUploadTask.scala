@@ -5,7 +5,6 @@ import java.nio.file.Files
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-
 import akka.Done
 import akka.NotUsed
 import akka.stream.scaladsl.Flow
@@ -15,7 +14,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.SparqlClient
-import se.lu.nateko.cp.data.formats.{ ColumnFormats, ColumnValueFormats, TimeSeriesStreams, ValueFormat }
+import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
@@ -23,7 +22,7 @@ import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.{ DataObject, IngestionMetadataExtract }
+import se.lu.nateko.cp.meta.core.data.{DataObject, IngestionMetadataExtract}
 import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
@@ -32,7 +31,7 @@ import se.lu.nateko.cp.meta.core.sparql.BoundUri
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
 	originalFile: File,
-	formats: ColumnValueFormats
+	colsMeta: ColumnsMeta
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 
 	//TODO Switch to java.nio classes
@@ -45,14 +44,14 @@ class IngestionUploadTask(
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{ asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer }
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{ dailySitesCsvTimeSer, simpleSitesCsvTimeSer }
 
-		val icosColumnFormats = ColumnFormats(formats, "TIMESTAMP")
+		val icosColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
 		val ingestionSink = format.uri match {
 
-			case `asciiWdcggTimeSer` =>
-				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-				val converter = wdcggToBinTableConverter(icosColumnFormats)
-				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
+//			case `asciiWdcggTimeSer` =>
+//				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
+//				val converter = wdcggToBinTableConverter(icosColumnFormats)
+//				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
 
 			case `asciiAtcProdTimeSer` =>
 				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
@@ -67,23 +66,23 @@ class IngestionUploadTask(
 						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
 
 					case Some(nRows) =>
-						if(format.uri == asciiEtcTimeSer) {
-							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-							val converter = ecoCsvToBinTableConverter(nRows, icosColumnFormats)
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser, converter)
-						} else if (format.uri == asciiOtcSocatTimeSer) {
-							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							val converter = socatTsvToBinTableConverter(nRows, icosColumnFormats)
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
-						} else if (format.uri == simpleSitesCsvTimeSer) {
-							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
-							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnFormats(formats, "UTC_TIMESTAMP"))
-							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
-						} else {
+//						if(format.uri == asciiEtcTimeSer) {
+//							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
+//							val converter = ecoCsvToBinTableConverter(nRows, icosColumnFormats)
+//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser, converter)
+//						} else if (format.uri == asciiOtcSocatTimeSer) {
+//							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
+//							val converter = socatTsvToBinTableConverter(nRows, icosColumnFormats)
+//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser, converter)
+//						} else if (format.uri == simpleSitesCsvTimeSer) {
+//							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
+//							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP"))
+//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
+//						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-							val converter = dailySitesCsvToBinTableConverter(formats)
+							val converter = dailySitesCsvToBinTableConverter(colsMeta)
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser(nRows), converter)
-						}
+//						}
 				}
 
 			case _ =>
@@ -161,25 +160,38 @@ object IngestionUploadTask{
 		}
 	}
 
-	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnValueFormats] = {
+	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnsMeta] = {
 		import sparql.materializer.executionContext
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		|select ?colName ?valFormat where{
+		|select ?colName ?valFormat ?isRegex where{
 		|	<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .
+		| OPTIONAL{?column cpmeta:isRegexColumn ?isRegex}
+		|	OPTIONAL{?column cpmeta:isOptionalColumn ?isOptional}
 		|}""".stripMargin
 
 		sparql.select(query).map{ssr =>
-			ssr.results.bindings.map{binding =>
-				val colName = binding.get("colName").collect{case BoundLiteral(col, _) => col}
-				val valFormat = binding.get("valFormat").collect{
+			val colMetas = ssr.results.bindings.flatMap{binding =>
+				val colNameOpt = binding.get("colName").collect{case BoundLiteral(col, _) => col}
+				val valFormatOpt = binding.get("valFormat").collect{
 					case BoundUri(format) => ValueFormat.fromUri(format)
 				}
-				colName.zip(valFormat)
-			}.flatten.toMap
+				def getBoolean(varName: String): Boolean = binding.get(varName).collect{
+					case BoundLiteral(bool, _) if bool.toLowerCase == "true" => true
+					case _ => false
+				}.getOrElse(false)
+				val isRegex = getBoolean("isRegex")
+				val isOptional = getBoolean("isOptional")
+
+				for(colName <- colNameOpt; valFormat <- valFormatOpt) yield{
+					if(isRegex) RegexColumn(valFormat, colName.r, isOptional)
+					else PlainColumn(valFormat, colName, isOptional)
+				}
+			}
+			new ColumnsMeta(colMetas)
 		}
 	}
 }

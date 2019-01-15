@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.formats.wdcgg
 
 import se.lu.nateko.cp.data.formats._
 
-class WdcggToBinTableConverter(colFormats: ColumnFormats, header: WdcggParser.Header) extends{
+class WdcggToBinTableConverter(colFormats: ColumnsMetaWithTsCol, header: WdcggParser.Header) extends{
 
 	val timeCol = "TIME"
 	val dateCol = "DATE"
