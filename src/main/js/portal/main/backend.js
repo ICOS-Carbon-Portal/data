@@ -202,7 +202,7 @@ export const getExtendedDataObjInfo = dobjs => {
 							dobj: b.dobj.value,
 							station: b.station ? b.station.value : undefined,
 							stationId: b.stationId ? b.stationId.value : undefined,
-							elevation: b.elevation ? parseFloat(b.elevation.value) : undefined,
+							samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
 							theme: b.theme ? b.theme.value : undefined,
 							themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
 							title: b.title ? b.title.value : undefined,

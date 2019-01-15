@@ -39,7 +39,7 @@ export default class PreviewTimeSerie extends Component {
 			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.id);
 			item.station = extendedInfo ? extendedInfo.station : null;
 			item.stationId = extendedInfo ? extendedInfo.stationId : null;
-			item.elevation = extendedInfo ? extendedInfo.elevation : null;
+			item.samplingHeight = extendedInfo ? extendedInfo.samplingHeight : null;
 			return item;
 		});
 
@@ -145,5 +145,5 @@ const TimeSeries = props => {
 };
 
 const getLegendLabels = items => {
-	return items.map(item => item.stationId && item.elevation ? `${item.stationId} ${item.elevation}` : '').join(',');
+	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight}` : '').join(',');
 };
