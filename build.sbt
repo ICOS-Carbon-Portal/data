@@ -91,18 +91,29 @@ frontend := Def.inputTaskDyn {
 
 val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg")
 
-val compiledJsFilter = new SimpleFileFilter(file => {
-		jsApps.exists(nameBase => file.getName.startsWith(nameBase + ".js"))
+def compiledJsFilter(resourceFolder: java.nio.file.Path) = new SimpleFileFilter(file => {
+    val path = file.toPath
+	val isCompiledJs = jsApps.exists(nameBase => path.startsWith(resourceFolder) && file.getName.startsWith(nameBase + ".js"))
+    val isCompiledStyleFile = path.startsWith(resourceFolder.resolve("style"))
+	isCompiledJs || isCompiledStyleFile
 })
+
+val intellijSaveTmpFilter = new SimpleFileFilter(file => {
+    val fn = file.getName
+    fn.endsWith("___jb_tmp___") || fn.endsWith("___jb_old___")
+}) || HiddenFileFilter
 
 val watchSourcesChanges = Seq(
 		watchSources := {
 			val resFolder = (Compile / resourceDirectory).value
 			watchSources.value.filterNot { _.base == resFolder }
 		},
-		watchSources += WatchSource((Compile / resourceDirectory).value, AllPassFilter, compiledJsFilter),
+		watchSources += {
+			val resFolder = (Compile / resourceDirectory).value
+			WatchSource(resFolder, AllPassFilter, compiledJsFilter(resFolder.toPath))
+		},
 	) ++ jsApps.map { app =>
-		watchSources += WatchSource((Compile / sourceDirectory).value / "js" / app / "main", AllPassFilter, HiddenFileFilter)
+		watchSources += WatchSource((Compile / sourceDirectory).value / "js" / app / "main", AllPassFilter, intellijSaveTmpFilter)
 	}
 
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
