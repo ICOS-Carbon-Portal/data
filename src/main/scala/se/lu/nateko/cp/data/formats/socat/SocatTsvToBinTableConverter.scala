@@ -5,8 +5,8 @@ import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-class SocatTsvToBinTableConverter(colFormats: ColumnsMetaWithTsCol, columnNames: Array[String], nRows: Int)
-	extends TimeSeriesToBinTableConverter(colFormats, columnNames, nRows) {
+class SocatTsvToBinTableConverter(colFormats: ColumnsMeta)
+	extends ProperTimeSeriesToBinTableConverter(colFormats) {
 
 	def amend(value: String, format: ValueFormat): String = value
 	def isNull(value: String, format: ValueFormat): Boolean = value.isEmpty

@@ -3,8 +3,10 @@ package se.lu.nateko.cp.data.formats.atcprod
 import se.lu.nateko.cp.data.formats._
 import java.time.Instant
 
-class AtcProdToBinTableConverter(colFormats: ColumnsMetaWithTsCol, header: AtcProdParser.Header)
-	extends TimeSeriesToBinTableConverter(colFormats, header.columnNames, header.nRows){
+class AtcProdToBinTableConverter(
+	colFormats: ColumnsMetaWithTsCol,
+	header: AtcProdParser.Header
+) extends ProperTimeSeriesToBinTableConverter(colFormats.colsMeta){
 
 	private val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(header.columnNames.indexOf)
 

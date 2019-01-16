@@ -6,7 +6,7 @@ import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink, ZipWith}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdParser._
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, TimeSeriesToBinTableConverter}
+import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRowHeader, TimeSeriesToBinTableConverter}
 import se.lu.nateko.cp.meta.core.data.{TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -23,7 +23,9 @@ object AtcProdStreams{
 		.map(acc => new AtcProdRow(acc.header, acc.cells))
 
 
-	def atcProdToBinTableConverter(formats: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
+	def atcProdToBinTableConverter[H <: ProperTableRowHeader](
+		formats: ColumnsMetaWithTsCol
+	)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
 		val graph = GraphDSL.create(Sink.head[AtcProdRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
 			(firstWdcggSink, firstRowSink, lastRowSink) =>
 
