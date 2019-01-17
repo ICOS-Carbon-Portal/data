@@ -2,8 +2,7 @@ package se.lu.nateko.cp.data.formats.socat
 
 import se.lu.nateko.cp.data.formats._
 import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.{Instant, LocalDateTime, ZoneOffset}
 
 class SocatTsvToBinTableConverter(colFormats: ColumnsMeta)
 	extends ProperTimeSeriesToBinTableConverter(colFormats) {
@@ -11,15 +10,12 @@ class SocatTsvToBinTableConverter(colFormats: ColumnsMeta)
 	def amend(value: String, format: ValueFormat): String = value
 	def isNull(value: String, format: ValueFormat): Boolean = value.isEmpty
 
-	def getTimeStamp(cells: Array[String], parsed: Array[AnyRef]): AnyRef = {
-		SocatTsvToBinTableConverter.parseTimestamp(cells(0))
-	}
 }
 
 object SocatTsvToBinTableConverter{
-	val timestampFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+	val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 
-	def parseTimestamp(ts: String): AnyRef = {
-		Double.box(LocalDateTime.parse(ts, timestampFormatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
+	def parseTimestamp(ts: String): Instant = {
+		LocalDateTime.parse(ts, timestampFormatter).toInstant(ZoneOffset.UTC)
 	}
 }

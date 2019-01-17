@@ -52,11 +52,11 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 	}
 
 	test("Parsing a daily SITES time series example and streaming to bintable") {
-		val binTableFut = rowsSource.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+		val graph = rowsSource.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
 			.via(dailySitesCsvToBinTableConverter(formats.colsMeta))
 			.toMat(binTableSink)(_ zip _)
 
-		val ((readResult, firstRow), nRowsWritten) = Await.result(binTableFut.run(), 1.second)
+		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
 		assert(readResult.count === 12386)
 		assert(firstRow.header.nRows === nRows)

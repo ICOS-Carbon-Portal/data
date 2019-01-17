@@ -20,11 +20,8 @@ import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
-import se.lu.nateko.cp.meta.core.data.EnvriConfig
+import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.{DataObject, IngestionMetadataExtract}
-import se.lu.nateko.cp.meta.core.data.DataObjectSpec
-import se.lu.nateko.cp.meta.core.data.UriResource
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import se.lu.nateko.cp.meta.core.sparql.BoundUri
 
@@ -53,10 +50,10 @@ class IngestionUploadTask(
 //				val converter = wdcggToBinTableConverter(icosColumnFormats)
 //				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
 
-			case `asciiAtcProdTimeSer` =>
-				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-				val converter = atcProdToBinTableConverter(icosColumnFormats)
-				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
+//			case `asciiAtcProdTimeSer` =>
+//				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
+//				val converter = atcProdToBinTableConverter(icosColumnFormats)
+//				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
@@ -73,7 +70,9 @@ class IngestionUploadTask(
 //						} else
 						if (format.uri == asciiOtcSocatTimeSer) {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							val converter = socatTsvToBinTableConverter(icosColumnFormats)
+							val converter = Flow.apply[ProperTableRow]
+								.alsoToMat(socatUploadCompletionSink(icosColumnFormats))(Keep.right)
+  							.via(socatTsvToBinTableConverter(icosColumnFormats))
 							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser(nRows), converter)
 //						} else if (format.uri == simpleSitesCsvTimeSer) {
 //							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._

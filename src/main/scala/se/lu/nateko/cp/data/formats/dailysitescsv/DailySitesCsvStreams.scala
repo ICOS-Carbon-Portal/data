@@ -55,7 +55,7 @@ object DailySitesCsvStreams {
 			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
 		}
 
-	def makeTimeStampFromRow(row: ProperTableRow, time: LocalTime): Instant = {
+	private def makeTimeStampFromRow(row: ProperTableRow, time: LocalTime): Instant = {
 		val parsedTime = LocalDate.parse(row.cells(0)).atTime(time)
 		parsedTime.toInstant(ZoneOffset.ofHours(1))
 	}
