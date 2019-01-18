@@ -44,7 +44,7 @@ const Row = ({dobj}) => {
   return (
     <tr>
       <td>{dobj.fileName}</td>
-      <td><a href={dobj._id} target="_blank">{dobj._id.split('/').pop()}</a></td>
+      <td><a href={`https://meta.icos-cp.eu/objects/${dobj._id}`} target="_blank">{dobj._id}</a></td>
       <td>{dobj.count}</td>
     </tr>
   )

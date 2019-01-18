@@ -18,8 +18,12 @@ export default function(state, action){
 			return update({statsMap: state.statsMap.withCountriesTopo(action.countriesTopo)});
 
 		case DOWNLOAD_STATS_FETCHED:
+			const stats = action.downloadStats._embedded.map(obj =>
+				Object.assign(obj, {"_id": obj._id.slice(0, 24)})
+			);
+
 			return update({
-				downloadStats: new StatsTable(action.downloadStats._embedded, action.filters),
+				downloadStats: new StatsTable(stats, action.filters),
 				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
 					offset: action.page,

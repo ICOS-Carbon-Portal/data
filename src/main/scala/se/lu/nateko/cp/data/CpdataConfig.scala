@@ -54,12 +54,15 @@ case class MetaServiceConfig(
 	uploadApiPath: String
 )
 
+case class RestHeartIndex(name: String, keys: JsObject, ops: Option[JsObject])
+case class UsageRestheartColl(name: String, indices: Seq[RestHeartIndex])
+
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
 	dobjDownloadLogUris: Map[Envri, java.net.URI],
 	usersCollection: String,
-	portalUsageCollection: String,
+	portalUsageCollection: UsageRestheartColl,
 	dobjDownloadsCollection: String,
 	dobjDownloadsAggregations: JsObject
 ){
@@ -99,6 +102,9 @@ object ConfigReader extends CommonJsonSupport{
 
 	implicit val envriFormat = enumFormat(Envri)
 
+
+	implicit val restHeartIndexFormat = jsonFormat3(RestHeartIndex)
+	implicit val userRestHeartCollFormat = jsonFormat2(UsageRestheartColl)
 	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
