@@ -10,8 +10,8 @@ import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
 
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
@@ -41,8 +41,8 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004_2009.csv"))
-		.via(linesFromBinary)
-		.via(dailySitesCsvParser(nRows))
+		.via(TimeSeriesStreams.linesFromBinary)
+		.via(dailySitesCsvParser(nRows, formats.timeStampColumn))
 
 	test("Parsing a daily SITES time series example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)
@@ -51,9 +51,20 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 		assert(rows.size === nRows)
 	}
 
+	test("Timestamp column is injected into the table") {
+		val rowFut = rowsSource
+  		.runWith(Sink.head[ProperTableRow])
+		val row = Await.result(rowFut, 1.second)
+
+		assert(row.header.columnNames.contains(formats.timeStampColumn))
+		assert(row.cells.contains("2004-01-13T23:00:00Z"))
+	}
+
 	test("Parsing a daily SITES time series example and streaming to bintable") {
-		val graph = rowsSource.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
-			.via(dailySitesCsvToBinTableConverter(formats.colsMeta))
+		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val graph = rowsSource
+			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+  		.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
@@ -62,9 +73,8 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 		assert(firstRow.header.nRows === nRows)
 		assert(nRowsWritten === nRows)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) ===
-			Set("TIMESTAMP", "Optional column"))
-		assert(formats.colsMeta.findMissingColumns(firstRow.header.columnNames.toSeq).toSet ===
-			Set(PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false)))
+			Set("Optional column"))
+		assert(formats.colsMeta.findMissingColumns(firstRow.header.columnNames.toSeq).toSet === Set())
 	}
 
 }

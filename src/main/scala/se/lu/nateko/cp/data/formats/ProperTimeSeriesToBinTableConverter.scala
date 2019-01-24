@@ -6,10 +6,7 @@ import ProperTimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
 
-abstract class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
-
-	protected def amend(value: String): String = value
-	protected def isNull(value: String, format: ValueFormat): Boolean
+class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
@@ -36,14 +33,10 @@ abstract class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 			}
 
 			val cellValue = row.cells(colPos)
-
-			if(isNull(cellValue, valFormat)) getNull(valFormat)
-			else valueFormatParser.parse(amend(cellValue), valFormat)
+			valueFormatParser.parse(cellValue, valFormat)
 		}
 		new BinTableRow(parsed, new Schema(dataTypes, row.header.nRows.toLong))
 	}
-
-	private def getNull(valFormat: ValueFormat) = valueFormatParser.getNullRepresentation(valFormat)
 
 }
 

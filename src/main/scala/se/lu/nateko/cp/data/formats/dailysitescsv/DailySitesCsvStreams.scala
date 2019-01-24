@@ -1,62 +1,56 @@
 package se.lu.nateko.cp.data.formats.dailysitescsv
 
+import java.time.temporal.ChronoUnit
 import java.time.{Instant, LocalDate, LocalTime, ZoneOffset}
 
-import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
-import akka.util.ByteString
-import akka.{Done, NotUsed}
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.data.formats.{ColumnsMeta, ProperTableRow, ProperTableRowHeader}
-import se.lu.nateko.cp.meta.core.data.{TimeInterval, TimeSeriesUploadCompletion}
+import akka.stream.scaladsl.{Flow, Keep, Sink}
+import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object DailySitesCsvStreams {
 	import se.lu.nateko.cp.data.formats.TimeSeriesStreams.TimeSeriesParserEnhancer
 
-	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
-		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
-		.map(_.utf8String.trim)
-
-	def dailySitesCsvParser(nRows: Int)(implicit ctxt: ExecutionContext): Flow[String, ProperTableRow, Future[Done]] = {
+	def dailySitesCsvParser(nRows: Int, timeStampColumn: String)(implicit ctxt: ExecutionContext)
+	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] = {
 		val parser = new DailySitesCsvParser(nRows)
 
 		Flow.apply[String]
 			.scan(parser.seed)(parser.parseLine)
 			.exposeParsingError
 			.keepGoodRows
-			.map(acc => ProperTableRow(acc.header, acc.cells))
+			.map(acc =>
+				ProperTableRow(
+					acc.header.copy(columnNames = timeStampColumn +: acc.header.columnNames),
+					makeTimeStamp(acc.cells(0)).toString +: acc.cells
+				)
+			)
+			.alsoToMat(dailySitesCsvUploadCompletetionSink)(Keep.right)
 	}
 
-	def dailySitesCsvToBinTableConverter[H <: ProperTableRowHeader](
-		formats: ColumnsMeta
-	)(implicit ctxt: ExecutionContext): Flow[ProperTableRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-		val conv = new DailySitesCsvToBinTableConverter(formats)
-
-		val completionInfoSink: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] = Flow.apply[ProperTableRow]
-  		.wireTapMat(Sink.head)(Keep.right)
-  		.toMat(Sink.last)(getCompletionInfo())
-
+	def dailySitesCsvUploadCompletetionSink(implicit ctxt: ExecutionContext)
+	: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] = {
 		Flow.apply[ProperTableRow]
-			.alsoToMat(completionInfoSink)(Keep.right)
-			.map(conv.parseRow)
+			.wireTapMat(Sink.head)(Keep.right)
+			.toMat(Sink.last)(getCompletionInfo())
 	}
 
 	private def getCompletionInfo()(
-		firstBinFut: Future[ProperTableRow],
-		lastBinFut: Future[ProperTableRow]
+		firstRowFut: Future[ProperTableRow],
+		lastRowFut: Future[ProperTableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
-			firstBin <- firstBinFut;
-			lastBin <- lastBinFut
+			firstRow <- firstRowFut;
+			lastRow <- lastRowFut
 		) yield {
-			val start = makeTimeStampFromRow(firstBin, LocalTime.MIN)
-			val stop = makeTimeStampFromRow(lastBin, LocalTime.MAX)
+			val start = Instant.parse(firstRow.cells(0))
+			val stop = Instant.parse(lastRow.cells(0)).plus(1, ChronoUnit.DAYS)
 			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
 		}
 
-	private def makeTimeStampFromRow(row: ProperTableRow, time: LocalTime): Instant = {
-		val parsedTime = LocalDate.parse(row.cells(0)).atTime(time)
+	private def makeTimeStamp(localDate: String): Instant = {
+		val parsedTime = LocalDate.parse(localDate).atTime(LocalTime.MIN)
 		parsedTime.toInstant(ZoneOffset.ofHours(1))
 	}
 
