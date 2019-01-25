@@ -42,38 +42,37 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/26NA20050107_CO2_underway_SOCATv3.tab"))
 		.via(TimeSeriesStreams.linesFromBinary)
-		.via(socatTsvParser(nRows))
+		.viaMat(socatTsvParser(nRows, formats.timeStampColumn))(KeepFuture.left)
 
 	val binTableSink = BinTableSink(outFile("/socatTsvBinTest.cpb"), overwrite = true)
 
 	test("Parsing of an example Socat time series data set"){
 
-		val rowsFut = rowsSource.runWith(Sink.seq)
+		val rowsFut = rowsSource.toMat(Sink.seq)(KeepFuture.right).run()
 		val rows = Await.result(rowsFut, 3.second)
 
 		assert(rows.size === nRows)
-		assert(rows(2).cells(2) === "-42.94501") //stick-test
+		assert(rows(2).cells(3) === "-42.94501") //stick-test
 	}
 
 	test("Parsing of an example Socat time series data set and streaming to BinTable"){
-
+		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
 		val g = rowsSource
 			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
-			.via(socatTsvToBinTableConverter(formats))
+			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 3.second)
 
 		assert(readResult.count === 72067)
 		assert(nRowsWritten === nRows)
-		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
-
+		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set())
 	}
 
 	test("Parser preserves the amount of rows"){
+		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
 		val countFut = rowsSource
-			.alsoToMat(socatUploadCompletionSink(formats))(Keep.right)
-			.via(socatTsvToBinTableConverter(formats))
+  		.map(converter.parseRow)
 			.toMat(Sink.fold(0)((count, _) => count + 1))(KeepFuture.right)
 		val count = Await.result(countFut.run(), 3.second)
 		assert(count === nRows)

@@ -70,22 +70,17 @@ class IngestionUploadTask(
 //                .alsoToMat(ecoCsvUploadCompletionSink(icosColumnFormats))(Keep.right)
 //                .via(ecoCsvToBinTableConverter(icosColumnFormats))
 //							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser(nRows), converter)
-//						} else if (format.uri == asciiOtcSocatTimeSer) {
-//							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-//							val converter = Flow.apply[ProperTableRow]
-//								.alsoToMat(socatUploadCompletionSink(icosColumnFormats))(Keep.right)
-//  							.via(socatTsvToBinTableConverter(icosColumnFormats))
-//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, socatTsvParser(nRows), converter)
+						if (format.uri == asciiOtcSocatTimeSer) {
+							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
+							makeIngestionSink(socatTsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
 //						} else if (format.uri == simpleSitesCsvTimeSer) {
 //							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
 //							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP"))
 //							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
-//						} else {
+						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-//							val converter = dailySitesCsvToBinTableConverter(colsMeta)
-//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, dailySitesCsvParser(nRows), converter)
 							makeIngestionSink(dailySitesCsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
-//						}
+						}
 				}
 
 			case _ =>
