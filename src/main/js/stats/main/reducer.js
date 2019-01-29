@@ -30,7 +30,10 @@ export default function(state, action){
 			});
 
 		case DOWNLOAD_STATS_PER_DATE_FETCHED:
-			return update({statsGraph: new StatsGraph(action.dateUnit, action.downloadsPerDateUnit)});
+			return update({
+				statsGraph: new StatsGraph(action.dateUnit, action.downloadsPerDateUnit),
+				dateUnit: action.dateUnit
+			});
 
 		case FILTERS:
 			return update({

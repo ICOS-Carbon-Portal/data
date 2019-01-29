@@ -44,7 +44,7 @@ export const fetchDownloadStats = filters => (dispatch, getState) => {
 				page: 1
 			});
 
-			dispatch(fetchDownloadStatsPerDateUnit('week', avars));
+			dispatch(fetchDownloadStatsPerDateUnit(state.dateUnit, avars));
 		});
 };
 

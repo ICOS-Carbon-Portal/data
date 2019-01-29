@@ -16,7 +16,8 @@ const initState = {
 		to: 0,
 		objCount: 0,
 		pagesize: 100
-	}
+	},
+	dateUnit: 'week'
 };
 
 export default function() {
