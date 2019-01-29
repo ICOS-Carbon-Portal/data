@@ -51,10 +51,11 @@ class IngestionUploadTask(
 //				val converter = wdcggToBinTableConverter(icosColumnFormats)
 //				makeFormatSpecificSink(linesFromBinary, wdcggParser, converter)
 
-//			case `asciiAtcProdTimeSer` =>
-//				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
+			case `asciiAtcProdTimeSer` =>
+				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
 //				val converter = atcProdToBinTableConverter(icosColumnFormats)
 //				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
+				makeIngestionSink(atcProdParser(icosColumnFormats), converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 

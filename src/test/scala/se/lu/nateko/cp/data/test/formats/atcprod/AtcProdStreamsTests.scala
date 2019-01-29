@@ -12,14 +12,13 @@ import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl._
 import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.data.formats.atcprod.AtcProdRow
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
 import se.lu.nateko.cp.data.formats.bintable._
 
 class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 
-	private implicit val system = ActorSystem("atccsvstreamstest")
-	private implicit val materializer = ActorMaterializer()
+	private implicit val system: ActorSystem = ActorSystem("atccsvstreamstest")
+	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
 	override def afterAll(): Unit = {
@@ -37,35 +36,36 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 		"TIMESTAMP"
 	)
 
-	val rowsSource = StreamConverters
+	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ICOS_ATC_NRT_GAT_2018-04-12CO2.csv"))
 		.via(TimeSeriesStreams.linesFromBinary)
-		.via(atcProdParser)
+		.via(atcProdParser(formats))
 
-	val binTableSink = BinTableSink(outFile("/atcCsvBinTest.cpb"), true)
+	val binTableSink = BinTableSink(outFile("/atcCsvBinTest.cpb"), overwrite = true)
 
 	test("Parsing of an example ATC product time series data set"){
 
 		val rowsFut = rowsSource.runWith(Sink.seq)
-
 		val rows = Await.result(rowsFut, 3.second)
 
 		assert(rows.size === 24)
-		assert(rows(2).cells(7) === "2018.27694064") //stick-test
+		assert(rows(2).cells(0) === "2018-04-12T02:00:00Z") //stick-test
+		assert(rows(2).cells(8) === "2018.27694064") //stick-test
+		// TODO: test that a null value gets replaced by an empty string
 	}
 
 	test("Parsing of an example ATC product time series data set and streaming to BinTable"){
-
+		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
 		val g = rowsSource
-			.wireTapMat(Sink.head[AtcProdRow])(_ zip _)
-			.via(atcProdToBinTableConverter(formats))
+			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 3.second)
 
 		assert(readResult.count === 5006)
 		assert(nRowsWritten === 24)
-		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set("TIMESTAMP"))
+		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set())
 
 	}
 

@@ -1,77 +1,64 @@
 package se.lu.nateko.cp.data.formats.atcprod
 
-import akka.Done
-import akka.stream.FlowShape
-import akka.stream.scaladsl.{Broadcast, Flow, GraphDSL, Sink, ZipWith}
+import java.time.Instant
+
+import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdParser._
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRowHeader, TimeSeriesToBinTableConverter}
-import se.lu.nateko.cp.meta.core.data.{TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRow, ProperTableRowHeader}
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AtcProdRow(val header: Header, val cells: Array[String])
+object AtcProdStreams {
 
-object AtcProdStreams{
-	import TimeSeriesToBinTableConverter.recoverTimeStamp
+	def atcProdParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] =
+		Flow[String]
+			.scan(seed)(parseLine)
+			.exposeParsingError
+			.keepGoodRows
+			.map(acc => {
+				val cells: Array[String] = acc.cells.zipWithIndex.map{ case (cell, index) =>
+					format.colsMeta.matchColumn(acc.header.columnNames(index)) match {
+						case Some(valueFormat) => if (isNull(cell, valueFormat)) "" else cell
+						case None => cell
+					}
+				}
+				ProperTableRow(
+					ProperTableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
+					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: cells
+				)
+			})
+			.alsoToMat(atcProdUploadCompletionSink)(Keep.right)
 
-	def atcProdParser(implicit ctxt: ExecutionContext): Flow[String, AtcProdRow, Future[Done]] = Flow[String]
-		.scan(seed)(parseLine)
-		.exposeParsingError
-		.keepGoodRows
-		.map(acc => new AtcProdRow(acc.header, acc.cells))
+	private def atcProdUploadCompletionSink(implicit ctxt: ExecutionContext)
+	: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] =
+		Flow.apply[ProperTableRow]
+			.wireTapMat(Sink.head)(Keep.right)
+			.toMat(Sink.last)(getCompletionInfo())
 
-
-	def atcProdToBinTableConverter[H <: ProperTableRowHeader](
-		formats: ColumnsMetaWithTsCol
-	)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-		val graph = GraphDSL.create(Sink.head[AtcProdRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
-			(firstWdcggSink, firstRowSink, lastRowSink) =>
-
-			import GraphDSL.Implicits._
-
-			val inputs = b.add(Broadcast[AtcProdRow](3))
-			inputs.out(0) ~> firstWdcggSink.in
-
-			val rowConverterRepeated = b.add(
-				Flow[AtcProdRow].take(1)
-					.map(row => new AtcProdToBinTableConverter(formats, row.header))
-					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
-			)
-
-			inputs.out(1) ~> rowConverterRepeated.in
-
-			val zipToBinRow = b.add(ZipWith[AtcProdToBinTableConverter, AtcProdRow, BinTableRow](
-				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
-			))
-
-			rowConverterRepeated.out ~> zipToBinRow.in0
-			inputs.out(2) ~> zipToBinRow.in1
-
-			val outputs = b.add(Broadcast[BinTableRow](3))
-			outputs.out(0) ~> firstRowSink.in
-			outputs.out(1) ~> lastRowSink.in
-			zipToBinRow.out ~> outputs.in
-
-			FlowShape(inputs.in, outputs.out(2))
+	private def getCompletionInfo()(
+		firstRowFut: Future[ProperTableRow],
+		lastRowFut: Future[ProperTableRow]
+	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
+		for (
+			firstRow <- firstRowFut;
+			lastRow <- lastRowFut
+		) yield {
+			val start = Instant.parse(firstRow.cells(0))
+			val stop = Instant.parse(lastRow.cells(0))
+			TimeSeriesUploadCompletion(TimeInterval(start, stop), Some(firstRow.header.nRows))
 		}
-		Flow.fromGraph(graph)
+
+	private def makeTimeStamp(cells: Array[String], columnNames: Array[String]): Instant = {
+		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(columnNames.indexOf)
+
+		def pad0(s: String) = if (s.length == 1) "0" + s else s
+
+		val Seq(year, month, day, hour, min, sec) = timeIndices.map { idx =>
+			if (idx >= 0) pad0(cells(idx)) else "00"
+		}
+		Instant.parse(s"$year-$month-${day}T$hour:$min:${sec}Z")
 	}
-
-	private def getCompletionInfo(formats: ColumnsMetaWithTsCol)(
-			firstAtcProdFut: Future[AtcProdRow],
-			firstBinFut: Future[BinTableRow],
-			lastBinFut: Future[BinTableRow]
-		)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for(
-			firstProd <- firstAtcProdFut;
-			firstBin <- firstBinFut;
-			lastBin <- lastBinFut
-		) yield{
-			val sortedColumns = firstProd.header.columnNames
-			val start = recoverTimeStamp(firstBin.cells, sortedColumns, formats.timeStampColumn)
-			val stop = recoverTimeStamp(lastBin.cells, sortedColumns, formats.timeStampColumn)
-			TimeSeriesUploadCompletion(TimeInterval(start, stop), Some(firstProd.header.nRows))
-		}
 }
