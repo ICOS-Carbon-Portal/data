@@ -44,14 +44,14 @@ const Row = ({dobj}) => {
   return (
     <tr>
       <td>{dobj.fileName}</td>
-      <td><a href={`https://meta.icos-cp.eu/objects/${dobj._id}`} target="_blank">{dobj._id}</a></td>
+      <td><a href={`https://meta.icos-cp.eu/objects/${dobj._id}`} target="_blank">{dobj._id.slice(0, 24)}</a></td>
       <td>{dobj.count}</td>
     </tr>
   )
 }
 
 const StepButton = props => {
-  const disabled = props.enabled ? false : true;
+  const disabled = !props.enabled;
   return <button className="btn btn-default"
     style={Object.assign({display: 'inline', cursor: 'pointer', fontSize: '150%', position: 'relative', top: -4, borderWidth: 0, padding: 0, paddingLeft: 4, backgroundColor: 'transparent'})}
 		onClick={props.onStep}

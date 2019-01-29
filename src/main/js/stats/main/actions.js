@@ -31,9 +31,10 @@ export const fetchCountries = dispatch => {
 
 export const fetchDownloadStats = filters => (dispatch, getState) => {
 	const state = getState();
+	const useFullColl = useFullCollection(filters);
 	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	Promise.all([getDownloadCounts(simplifyAvars(filters, avars)), getDownloadsByCountry(avars)])
+	Promise.all([getDownloadCounts(useFullColl, avars), getDownloadsByCountry(useFullColl, avars)])
 		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
@@ -68,17 +69,19 @@ export const fetchFilters = (dispatch, getState) => {
 };
 
 export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, getState) => {
+	const state = getState();
+	const filters = state.downloadStats.filters;
+	const useFullColl = useFullCollection(filters);
+
 	const avarsGetter = avars => {
 		if (avars === undefined){
-			const state = getState();
-			const filters = state.downloadStats.filters;
 			return getAvars(filters, state.stationCountryCodeLookup);
 		} else {
 			return avars;
 		}
 	};
 
-	getDownloadsPerDateUnit(dateUnit, avarsGetter(avars))
+	getDownloadsPerDateUnit(useFullColl, dateUnit, avarsGetter(avars))
 		.then(downloadsPerDateUnit => {
 			dispatch({
 				type: DOWNLOAD_STATS_PER_DATE_FETCHED,
@@ -98,9 +101,10 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 
 	const state = getState();
 	const filters = state.downloadStats.filters;
+	const useFullColl = useFullCollection(filters);
 	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	Promise.all([getDownloadCounts(simplifyAvars(filters, avars)), getDownloadsByCountry(avars)])
+	Promise.all([getDownloadCounts(useFullColl, avars), getDownloadsByCountry(useFullColl, avars)])
 		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: STATS_UPDATED,
@@ -115,9 +119,10 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 export const requestPage = page => (dispatch, getState) => {
 	const state = getState();
 	const filters = state.downloadStats.filters;
+	const useFullColl = useFullCollection(filters);
 	const avars = getAvars(filters, state.stationCountryCodeLookup);
 
-	Promise.all([getDownloadCounts(simplifyAvars(filters, avars), page), getDownloadsByCountry(avars)])
+	Promise.all([getDownloadCounts(useFullColl, avars, page), getDownloadsByCountry(useFullColl, avars)])
 		.then(([downloadStats, countryStats]) => {
 			dispatch({
 				type: DOWNLOAD_STATS_FETCHED,
@@ -131,6 +136,6 @@ export const requestPage = page => (dispatch, getState) => {
 		});
 };
 
-const simplifyAvars = (filters, avars) => {
-	return Object.keys(filters).length ? avars : undefined;
+const useFullCollection = filters => {
+	return Object.keys(filters).length === 0 || Object.keys(filters).every(key => filters[key].length === 0);
 };
