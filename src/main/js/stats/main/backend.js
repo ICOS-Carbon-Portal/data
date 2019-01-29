@@ -3,25 +3,34 @@ import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
 
-const restheartBaseUrl = config.restheartBaseUrl;
 
-export const getDownloadCounts = (avars, page = 1) => {
-	const parameters = `page=${page}&avars=${avars}`;
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getDownloadStats?${parameters}`);
+const restheartBaseUrl = location.host.startsWith("local-")
+	? config.restheartBaseUrl.replace("//", "//local-")
+	: config.restheartBaseUrl;
+const wildcardText = "/^\\w/, null";
+const wildcardLevel = "0,1,2,3";
+
+export const getDownloadCounts = (useFullCollection, avars, page = 1) => {
+	const parameters = `page=${page}&pagesize=300&avars=${avars}`;
+	const aggregate = useFullCollection ? 'getDownloadStatsFull' : 'getDownloadStats';
+
+	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
-export const getDownloadsByCountry = (avars, page = 1) => {
+export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
 	const parameters = `page=${page}&pagesize=300&avars=${avars}`;
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/downloadsByCountry?np&${parameters}`);
+	const aggregate = useFullCollection ? 'downloadsByCountryFull' : 'downloadsByCountry';
+
+	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
 export const getAvars = (filters, stationCountryCodeLookup = []) => {
-	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : "0,1,2,3";
-	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : "/.*/, null";
-	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : "/.*/, null";
+	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : wildcardLevel;
+	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : wildcardText;
+	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : wildcardText;
 	const stationsName = stationFilters(filters, stationCountryCodeLookup);
-	const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : "/.*/, null";
-	const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : "/.*/, null";
+	const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : wildcardText;
+	const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : wildcardText;
 
 	return `{
 		"specification":[${specification}],
@@ -38,7 +47,7 @@ const stationFilters = (filters, stationCountryCodeLookup) => {
 	let ccStations = filters.countryCodes && filters.countryCodes.length ? stationCountryCodeLookup.filter(cc => filters.countryCodes.includes(cc.code)) : [];
 	let stationsName = stations.concat(ccStations.map(cc => `"${cc.name}"`));
 
-	return stationsName.length ? stationsName : "/.*/, null";
+	return stationsName.length ? stationsName : wildcardText;
 };
 
 export const getCountriesGeoJson = () => {
@@ -46,33 +55,36 @@ export const getCountriesGeoJson = () => {
 		.then(topo => feature(topo, topo.objects.countries));
 };
 
-export const getDownloadsPerDateUnit = (dateUnit, avars) => {
-	const aggregation = 'downloadsPer' + dateUnit.charAt(0).toUpperCase() + dateUnit.slice(1);
+export const getDownloadsPerDateUnit = (useFullCollection, dateUnit, avars) => {
+	let aggregation = `downloadsPer${dateUnit.charAt(0).toUpperCase()}${dateUnit.slice(1)}`;
+	if (useFullCollection) aggregation += 'Full';
+
 	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregation}?pagesize=1000&np&avars=${avars}`);
 };
 
+// Sorting is lost in the bulk insert to new collection. Specify sort order here with key "sort_by".
 export function getDataLevels() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getDataLevels?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetDataLevels?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getFormats() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getFormats?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetFormats?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getSpecifications() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getSpecifications?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetSpecifications?sort_by=count&pagesize=1000&page=1`);
 }
 
 export function getStations() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getStations?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetStations?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getContributors() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getContributors?pagesize=1000&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetContributors?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getThemes() {
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/getThemes?pagesize=100&page=1`);
+	return getJson(`${restheartBaseUrl}db/cacheForGetThemes?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getStationsCountryCode() {
@@ -80,7 +92,7 @@ export function getStationsCountryCode() {
 		.then(
 			sparqlResult => {
 				// Create an array of country codes [SV,EN,...]
-				const bindings = sparqlResult.results.bindings.map(b => b.countryCode.value)
+				const bindings = sparqlResult.results.bindings.map(b => b.countryCode.value);
 
 				// Remove duplicates
 				let uniqueCountryCodes = [...new Set(bindings)];

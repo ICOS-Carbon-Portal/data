@@ -89,7 +89,7 @@ frontend := Def.inputTaskDyn {
 }.evaluated
 
 
-val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg")
+val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "common")
 
 def compiledJsFilter(resourceFolder: java.nio.file.Path) = new SimpleFileFilter(file => {
     val path = file.toPath

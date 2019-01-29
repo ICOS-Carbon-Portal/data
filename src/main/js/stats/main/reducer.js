@@ -20,7 +20,7 @@ export default function(state, action){
 		case DOWNLOAD_STATS_FETCHED:
 			return update({
 				downloadStats: new StatsTable(action.downloadStats._embedded, action.filters),
-				statsMap: state.statsMap.withCountryStats(action.countryStats),
+				statsMap: state.statsMap.withCountryStats(action.countryStats._embedded),
 				paging: {
 					offset: action.page,
 					to: action.downloadStats._returned,
@@ -66,7 +66,7 @@ export default function(state, action){
 		case STATS_UPDATED:
 			return update({
 				downloadStats: new StatsTable(action.downloadStats._embedded, state.downloadStats.filters),
-				statsMap: state.statsMap.withCountryStats(action.countryStats),
+				statsMap: state.statsMap.withCountryStats(action.countryStats._embedded),
 				paging: {
 					offset: 1,
 					to: action.downloadStats._returned,

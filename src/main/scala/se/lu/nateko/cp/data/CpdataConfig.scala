@@ -54,14 +54,22 @@ case class MetaServiceConfig(
 	uploadApiPath: String
 )
 
+case class MongoDbIndex(name: String, keys: JsObject, ops: Option[JsObject])
+case class MongoDbAggregations(definitions: JsObject, cached: Seq[String], cacheValidityInMinutes: Int)
+case class RestheartCollDef(
+  name: String,
+  description: String,
+  indices: Option[Seq[MongoDbIndex]],
+  aggregations: Option[MongoDbAggregations]
+)
+
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
 	dobjDownloadLogUris: Map[Envri, java.net.URI],
 	usersCollection: String,
-	portalUsageCollection: String,
-	dobjDownloadsCollection: String,
-	dobjDownloadsAggregations: JsObject
+	portalUsage: RestheartCollDef,
+	dobjDownloads: RestheartCollDef
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
 	def dobjDownloadLogUri(implicit envri: Envri) = dobjDownloadLogUris(envri)
@@ -99,7 +107,10 @@ object ConfigReader extends CommonJsonSupport{
 
 	implicit val envriFormat = enumFormat(Envri)
 
-	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
+	implicit val mongoDbIndexFormat = jsonFormat3(MongoDbIndex)
+	implicit val mongoDbAggregationsFormat = jsonFormat3(MongoDbAggregations)
+	implicit val restheartCollDefFormat = jsonFormat4(RestheartCollDef)
+	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
 
