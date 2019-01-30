@@ -4,26 +4,24 @@ import java.time.Instant
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.atcprod.AtcProdParser._
 import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRow, ProperTableRowHeader}
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object AtcProdStreams {
+	import AtcProdParser._
 
 	def atcProdParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
 	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] =
 		Flow[String]
-			.scan(seed)(parseLine)
+			.scan(seed)(parseLine(format.colsMeta))
 			.exposeParsingError
 			.keepGoodRows
 			.map(acc => {
-				val cells: Array[String] = acc.cells.zipWithIndex.map{ case (cell, index) =>
-					format.colsMeta.matchColumn(acc.header.columnNames(index)) match {
-						case Some(valueFormat) => if (isNull(cell, valueFormat)) "" else cell
-						case None => cell
-					}
+				val cells = acc.cells.zip(acc.formats).map{
+					case (cell, None) => cell
+					case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
 				}
 				ProperTableRow(
 					ProperTableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
