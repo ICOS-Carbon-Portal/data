@@ -53,8 +53,6 @@ class IngestionUploadTask(
 
 			case `asciiAtcProdTimeSer` =>
 				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-//				val converter = atcProdToBinTableConverter(icosColumnFormats)
-//				makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, atcProdParser, converter)
 				makeIngestionSink(atcProdParser(icosColumnFormats), converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
@@ -65,13 +63,10 @@ class IngestionUploadTask(
 						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
 
 					case Some(nRows) =>
-//						if (format.uri == asciiEtcTimeSer) {
-//							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-//							val converter = Flow.apply[ProperTableRow]
-//                .alsoToMat(ecoCsvUploadCompletionSink(icosColumnFormats))(Keep.right)
-//                .via(ecoCsvToBinTableConverter(icosColumnFormats))
-//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, ecoCsvParser(nRows), converter)
-						if (format.uri == asciiOtcSocatTimeSer) {
+						if (format.uri == asciiEtcTimeSer) {
+							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
+							makeIngestionSink(ecoCsvParser(nRows, icosColumnFormats), converter)
+						} else if (format.uri == asciiOtcSocatTimeSer) {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
 							makeIngestionSink(socatTsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
 //						} else if (format.uri == simpleSitesCsvTimeSer) {
