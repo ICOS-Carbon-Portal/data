@@ -51,7 +51,13 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 		assert(rows.size === 24)
 		assert(rows(2).cells(0) === "2018-04-12T02:00:00Z") //stick-test
 		assert(rows(2).cells(8) === "2018.27694064") //stick-test
-		// TODO: test that a null value gets replaced by an empty string
+	}
+
+	test("Null value gets replaced by an empty string") {
+		val rowsFut = rowsSource.runWith(Sink.seq)
+		val rows = Await.result(rowsFut, 3.second)
+
+		assert(rows(23).cells(9) === "")
 	}
 
 	test("Parsing of an example ATC product time series data set and streaming to BinTable"){
@@ -63,7 +69,7 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 3.second)
 
-		assert(readResult.count === 5006)
+		assert(readResult.count === 5007)
 		assert(nRowsWritten === 24)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) === Set())
 
