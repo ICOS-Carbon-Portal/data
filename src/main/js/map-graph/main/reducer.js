@@ -61,6 +61,7 @@ export default function(state = initState, action){
 			];
 
 			return update({
+				objId: action.objId,
 				binTableData: action.binTableData,
 				mapValueIdx,
 				value1Idx,

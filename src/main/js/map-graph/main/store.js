@@ -26,6 +26,7 @@ export const updateURL = store => () => {
 	const state = store.getState();
 	const currentHash = getHash();
 	const newHash = {
+		objId: state.objId,
 		y1: state.value1Idx,
 		y2: state.value2Idx,
 		map: state.mapValueIdx,
@@ -42,9 +43,9 @@ export const updateURL = store => () => {
 			const labels = state.binTableData.columnsInfo.map(ci => ci.label);
 			saveToRestheart({
 				previewMapGraph: Object.assign({}, newHash, {
-					y1Label: labels[newHash.y1],
-					y2Label: labels[newHash.y2],
-					mapLabel: labels[newHash.map],
+					y1: labels[newHash.y1],
+					y2: labels[newHash.y2],
+					map: labels[newHash.map],
 				})
 			});
 		}
