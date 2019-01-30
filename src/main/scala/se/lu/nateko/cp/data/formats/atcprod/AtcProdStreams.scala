@@ -4,7 +4,7 @@ import java.time.Instant
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRow, ProperTableRowHeader}
+import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRow, ProperTableRowHeader, ValueFormat}
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -19,13 +19,9 @@ object AtcProdStreams {
 			.exposeParsingError
 			.keepGoodRows
 			.map(acc => {
-				val cells = acc.cells.zip(acc.formats).map{
-					case (cell, None) => cell
-					case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
-				}
 				ProperTableRow(
 					ProperTableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
-					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: cells
+					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			})
 			.alsoToMat(atcProdUploadCompletionSink)(Keep.right)
@@ -58,5 +54,12 @@ object AtcProdStreams {
 			if (idx >= 0) pad0(cells(idx)) else "00"
 		}
 		Instant.parse(s"$year-$month-${day}T$hour:$min:${sec}Z")
+	}
+
+	private def replaceNullValues(cells: Array[String], formats: Array[Option[ValueFormat]]): Array[String] = {
+		cells.zip(formats).map {
+			case (cell, None) => cell
+			case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
+		}
 	}
 }
