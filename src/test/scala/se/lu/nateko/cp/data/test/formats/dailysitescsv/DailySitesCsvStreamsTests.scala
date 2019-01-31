@@ -23,7 +23,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 		system.terminate()
 	}
 
-	private val nRows = 157
+	private val nRows = 29
 	private val binTableSink = BinTableSink(
 		new File(getClass.getResource("/").getFile + "/atcCsvBinTest.cpb"),
 		overwrite = true
@@ -40,7 +40,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 	)
 
 	private val rowsSource = StreamConverters
-		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004_2009.csv"))
+		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004.csv"))
 		.via(TimeSeriesStreams.linesFromBinary)
 		.via(dailySitesCsvParser(nRows, formats.timeStampColumn))
 
@@ -69,7 +69,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
-		assert(readResult.count === 12386)
+		assert(readResult.count === 2873)
 		assert(firstRow.header.nRows === nRows)
 		assert(nRowsWritten === nRows)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) ===
