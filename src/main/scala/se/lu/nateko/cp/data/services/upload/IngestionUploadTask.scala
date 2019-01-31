@@ -58,10 +58,9 @@ class IngestionUploadTask(
 						} else if (format.uri == asciiOtcSocatTimeSer) {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
 							makeIngestionSink(socatTsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
-//						} else if (format.uri == simpleSitesCsvTimeSer) {
-//							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
-//							val converter = simpleSitesCsvToBinTableConverter(nRows, ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP"))
-//							makeFormatSpecificSink(TimeSeriesStreams.linesFromBinary, simpleSitesCsvParser, converter)
+						} else if (format.uri == simpleSitesCsvTimeSer) {
+							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
+							makeIngestionSink(simpleSitesCsvParser(nRows, icosColumnFormats), converter)
 						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
 							makeIngestionSink(dailySitesCsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
