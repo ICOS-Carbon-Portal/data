@@ -31,5 +31,4 @@ case class RegexColumn(format: ValueFormat, regex: Regex, isOptional: Boolean) e
 	def matches(colTitle: String): Boolean = regex.findFirstIn(colTitle).isDefined
 }
 
-// TODO: Should I provide valueFormats: Map[String, ValueFormat] here?
 case class ColumnsMetaWithTsCol(colsMeta: ColumnsMeta, timeStampColumn: String)

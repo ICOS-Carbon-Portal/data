@@ -30,7 +30,7 @@ import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
-//import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
+import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
 
 object MassUpload extends CommonJsonSupport{
 
