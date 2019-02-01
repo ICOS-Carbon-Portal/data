@@ -31,18 +31,18 @@ class IngestionUploadTask(
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer}
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{dailySitesCsvTimeSer, simpleSitesCsvTimeSer}
 
-		val icosColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
+		val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 		val converter = new ProperTimeSeriesToBinTableConverter(colsMeta)
 
 		val ingestionSink = format.uri match {
 
 			case `asciiWdcggTimeSer` =>
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-				makeIngestionSink(wdcggParser(icosColumnFormats), converter)
+				makeIngestionSink(wdcggParser(defaultColumnFormats), converter)
 
 			case `asciiAtcProdTimeSer` =>
 				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-				makeIngestionSink(atcProdParser(icosColumnFormats), converter)
+				makeIngestionSink(atcProdParser(defaultColumnFormats), converter)
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
@@ -54,16 +54,16 @@ class IngestionUploadTask(
 					case Some(nRows) =>
 						if (format.uri == asciiEtcTimeSer) {
 							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-							makeIngestionSink(ecoCsvParser(nRows, icosColumnFormats), converter)
+							makeIngestionSink(ecoCsvParser(nRows, defaultColumnFormats), converter)
 						} else if (format.uri == asciiOtcSocatTimeSer) {
 							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							makeIngestionSink(socatTsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
+							makeIngestionSink(socatTsvParser(nRows, defaultColumnFormats), converter)
 						} else if (format.uri == simpleSitesCsvTimeSer) {
 							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
-							makeIngestionSink(simpleSitesCsvParser(nRows, icosColumnFormats), converter)
+							makeIngestionSink(simpleSitesCsvParser(nRows, ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")), converter)
 						} else {
 							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-							makeIngestionSink(dailySitesCsvParser(nRows, icosColumnFormats.timeStampColumn), converter)
+							makeIngestionSink(dailySitesCsvParser(nRows, defaultColumnFormats), converter)
 						}
 				}
 

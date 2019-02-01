@@ -5,14 +5,14 @@ import java.time.{Instant, LocalDate, LocalTime, ZoneOffset}
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object DailySitesCsvStreams {
 	import se.lu.nateko.cp.data.formats.TimeSeriesStreams.TimeSeriesParserEnhancer
 
-	def dailySitesCsvParser(nRows: Int, timeStampColumn: String)(implicit ctxt: ExecutionContext)
+	def dailySitesCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
 	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] = {
 		val parser = new DailySitesCsvParser(nRows)
 
@@ -22,21 +22,21 @@ object DailySitesCsvStreams {
 			.keepGoodRows
 			.map(acc =>
 				ProperTableRow(
-					acc.header.copy(columnNames = timeStampColumn +: acc.header.columnNames),
+					acc.header.copy(columnNames = format.timeStampColumn +: acc.header.columnNames),
 					makeTimeStamp(acc.cells(0)).toString +: acc.cells
 				)
 			)
-			.alsoToMat(dailySitesCsvUploadCompletetionSink)(Keep.right)
+			.alsoToMat(dailySitesCsvUploadCompletetionSink(format.colsMeta))(Keep.right)
 	}
 
-	def dailySitesCsvUploadCompletetionSink(implicit ctxt: ExecutionContext)
+def dailySitesCsvUploadCompletetionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext)
 	: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] = {
 		Flow.apply[ProperTableRow]
 			.wireTapMat(Sink.head)(Keep.right)
-			.toMat(Sink.last)(getCompletionInfo())
+			.toMat(Sink.last)(getCompletionInfo(columnsMeta))
 	}
 
-	private def getCompletionInfo()(
+	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
 		firstRowFut: Future[ProperTableRow],
 		lastRowFut: Future[ProperTableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
@@ -46,7 +46,9 @@ object DailySitesCsvStreams {
 		) yield {
 			val start = Instant.parse(firstRow.cells(0))
 			val stop = Instant.parse(lastRow.cells(0)).plus(1, ChronoUnit.DAYS)
-			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
+			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(firstRow.header.columnNames.toSeq) else None
+			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
+			TimeSeriesUploadCompletion(ingestionExtract, None)
 		}
 
 	private def makeTimeStamp(localDate: String): Instant = {

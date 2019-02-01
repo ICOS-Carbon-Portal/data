@@ -4,10 +4,10 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
-import se.lu.nateko.cp.data.formats.{ColumnsMetaWithTsCol, ProperTableRow, ValueFormat}
+import se.lu.nateko.cp.data.formats.{ColumnsMeta, ColumnsMetaWithTsCol, ProperTableRow, ValueFormat}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvParser._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -26,16 +26,16 @@ object SimpleSitesCsvStreams {
 					makeTimeStamp(acc.cells(0)).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			)
-  		.alsoToMat(uploadCompletionSink)(Keep.right)
+  		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 	}
 
-	private def uploadCompletionSink(implicit ctxt: ExecutionContext)
+	private def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext)
 	: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] =
 		Flow.apply[ProperTableRow]
   	.wireTapMat(Sink.head)(Keep.right)
-  	.toMat(Sink.last)(getCompletionInfo())
+  	.toMat(Sink.last)(getCompletionInfo(columnsMeta))
 
-	private def getCompletionInfo()(
+	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
 		firstRowFut: Future[ProperTableRow],
 		lastRowFut: Future[ProperTableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
@@ -45,7 +45,9 @@ object SimpleSitesCsvStreams {
 		) yield {
 			val start = Instant.parse(firstRow.cells(0))
 			val stop = Instant.parse(lastRow.cells(0))
-			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
+			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(firstRow.header.columnNames.toSeq) else None
+			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
+			TimeSeriesUploadCompletion(ingestionExtract, None)
 		}
 
 	private def makeTimeStamp(timeStamp: String): Instant = {

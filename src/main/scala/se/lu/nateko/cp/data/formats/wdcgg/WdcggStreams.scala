@@ -10,7 +10,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggParser._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeInterval, WdcggUploadCompletion}
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, WdcggUploadCompletion}
 
 import scala.collection.immutable.ListMap
 import scala.concurrent.{ExecutionContext, Future}
@@ -66,7 +66,7 @@ object WdcggStreams{
 			val start = Instant.parse(firstRow.cells(0))
 			val stop = Instant.parse(lastRow.cells(0))
 
-			WdcggUploadCompletion(firstRow.header.nRows, TimeInterval(start, stop), customMetadata)
+			WdcggUploadCompletion(TabularIngestionExtract(None, TimeInterval(start, stop)), firstRow.header.nRows, customMetadata)
 		}
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
