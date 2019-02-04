@@ -121,10 +121,10 @@ export default class App {
 			}
 		)
 		.then(binTables => {
-			if (binTables.length > 1) {
+			if (binTables.length > 0) {
 				this.graph.updateOptions({ labels: this.labels });
+				this.drawGraph(binTables);
 			}
-			this.drawGraph(binTables)
 		})
 		.catch(err => {
 			this.showSpinner(false);
