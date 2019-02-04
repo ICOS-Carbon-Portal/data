@@ -1,17 +1,40 @@
 import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED,
-	DOWNLOAD_STATS_PER_DATE_FETCHED} from './actions';
+	DOWNLOAD_STATS_PER_DATE_FETCHED, SET_VIEW_MODE,
+	PREVIEW_TS, PREVIEW_POPULAR_TS_VARS} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
 import StatsGraph from './models/StatsGraph';
+import ViewMode from "./models/ViewMode";
+import StatsMap from "./models/StatsMap";
 
 
-export default function(state, action){
+const initState = {
+	view: new ViewMode(),
+	downloadStats: new StatsTable({}),
+	statsMap: new StatsMap(),
+	statsGraph: new StatsGraph(),
+	paging: {
+		offset: 0,
+		to: 0,
+		objCount: 0,
+		pagesize: 100
+	},
+	dateUnit: 'week',
+
+};
+
+export default function(state = initState, action){
 
 	switch(action.type){
 
 		case ERROR:
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
+			});
+
+		case SET_VIEW_MODE:
+			return update({
+				view: state.view.setMode(action.mode)
 			});
 
 		case COUNTRIES_FETCHED:
@@ -78,6 +101,16 @@ export default function(state, action){
 				}
 			});
 
+		case PREVIEW_TS:
+			return update({
+				previewTimeserie: formatTimeserieData(action.previewTimeserie)
+			});
+
+		case PREVIEW_POPULAR_TS_VARS:
+			return update({
+				previewPopularTimeserieVars: action.popularTimeserieVars
+			});
+
 		default:
 			return state;
 	}
@@ -87,3 +120,12 @@ export default function(state, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
+
+const formatTimeserieData = previewTimeserie => {
+	return previewTimeserie.map(dobj => {
+		return Object.assign(dobj, {
+			x: dobj.x.sort((a, b) => a.count < b.count).map(x => x.name).join(', '),
+			y: dobj.y.sort((a, b) => a.count < b.count).map(y => y.name).join(', ')
+		})
+	});
+};

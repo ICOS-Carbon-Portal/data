@@ -1,5 +1,6 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
-	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit} from './backend';
+	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
+	getPreviewTimeserie, getPopularTimeserieVars} from './backend';
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -8,6 +9,9 @@ export const STATS_UPDATE = 'STATS_UPDATE';
 export const STATS_UPDATED = 'STATS_UPDATED';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 export const DOWNLOAD_STATS_PER_DATE_FETCHED = 'DOWNLOAD_STATS_PER_DATE_FETCHED';
+export const SET_VIEW_MODE = 'SET_VIEW_MODE';
+export const PREVIEW_TS = 'PREVIEW_TS';
+export const PREVIEW_POPULAR_TS_VARS = 'PREVIEW_POPULAR_TS_VARS';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -17,7 +21,38 @@ const failWithError = dispatch => error => {
 	});
 };
 
-export const fetchCountries = dispatch => {
+export const init = dispatch => {
+	dispatch(fetchDownloadStats({}));
+	dispatch(fetchFilters);
+	dispatch(fetchCountries);
+};
+
+const initPreviewView = dispatch => {
+	console.log("initPreviewView");
+
+	getPreviewTimeserie().then((previewTimeserie) => {
+		dispatch({
+			type: PREVIEW_TS,
+			previewTimeserie
+		});
+	});
+
+	getPopularTimeserieVars().then(popularTimeserieVars => {
+		dispatch({
+			type: PREVIEW_POPULAR_TS_VARS,
+			popularTimeserieVars
+		});
+	});
+};
+
+export const setViewMode = mode => dispatch => {
+	dispatch({
+		type: SET_VIEW_MODE,
+		mode
+	})
+};
+
+const fetchCountries = dispatch => {
 	getCountriesGeoJson().then(
 		countriesTopo => {
 			dispatch({
@@ -48,7 +83,7 @@ export const fetchDownloadStats = filters => (dispatch, getState) => {
 		});
 };
 
-export const fetchFilters = (dispatch, getState) => {
+const fetchFilters = (dispatch, getState) => {
 	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
 		([specifications, formats, dataLevels, stations, contributors, themes, countryCodes]) => {
 			const state = getState();
@@ -88,6 +123,8 @@ export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, get
 				dateUnit,
 				downloadsPerDateUnit
 			});
+
+			dispatch(initPreviewView);
 		});
 };
 

@@ -127,3 +127,43 @@ select ?name ?countryCode where{
 }
 order by ?label`;
 }
+
+
+// Previews
+const getFileNames = dobjs => {
+	return `
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select ?dobj ?fileName where{
+	VALUES ?dobj { ${dobjs} }
+    ?dobj cpmeta:hasName ?fileName
+}`
+};
+
+export const getPreviewTimeserie = _ => {
+	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPreviewTimeserie?pagesize=300&page=1&np`)
+		.then(previewTimeserie => {
+			const dobjs = previewTimeserie
+				.map(pt => `<https://meta.icos-cp.eu/objects/${pt._id}>`)
+				.join(' ');
+			const sparqlResult = sparql(getFileNames(dobjs), config.sparqlEndpoint, true);
+
+			return sparqlResult.then(res => {
+				return {
+					previewTimeserie,
+					fileNameMappings: res.results.bindings.reduce((acc, curr) => {
+						const objId = curr.dobj.value.slice(32);
+						acc[objId] = curr.fileName.value;
+						return acc;
+					}, {})
+				};
+			});
+		}).then(({previewTimeserie, fileNameMappings}) => {
+			return previewTimeserie.map(pt => Object.assign(pt, {
+				fileName: fileNameMappings[pt._id]
+			}));
+		});
+};
+
+export const getPopularTimeserieVars = _ => {
+	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1&np`);
+};

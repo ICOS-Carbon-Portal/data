@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import './styles.css';
 
 export default class DobjTable extends Component {
   constructor(props) {
@@ -6,9 +7,11 @@ export default class DobjTable extends Component {
   }
 
   render() {
-    const {downloadStats, paging, requestPage} = this.props;
+    const {dataList, paging, requestPage} = this.props;
     const start = (paging.offset - 1) * paging.pagesize;
     const end = start + paging.to;
+
+    if (dataList && dataList.length) console.log({dataList});
 
     return (
       <div className="panel panel-default">
@@ -26,11 +29,11 @@ export default class DobjTable extends Component {
                 <th>File Name</th>
                 <th>Landing Page</th>
                 <th>Count</th>
-              </tr>
-              { downloadStats.stats.length
-              ? downloadStats.stats.map((stat, idx) => <Row key={'row-'+idx} dobj={stat}/>)
-              : null
-            }
+              </tr>{
+            	dataList && dataList.length
+				  ? dataList.map((stat, idx) => <RowSwitch key={'row-' + idx} dobj={stat} />)
+				  : null
+				}
             </tbody>
           </table>
         </div>
@@ -40,7 +43,15 @@ export default class DobjTable extends Component {
   }
 }
 
-const Row = ({dobj}) => {
+const RowSwitch = ({dobj}) => {
+	if (dobj.x && dobj.y){
+		return <RowPreviewTS dobj={dobj} />;
+	} else {
+		return <RowDownloads dobj={dobj} />;
+	}
+};
+
+const RowDownloads = ({dobj}) => {
   return (
     <tr>
       <td>{dobj.fileName}</td>
@@ -48,7 +59,34 @@ const Row = ({dobj}) => {
       <td>{dobj.count}</td>
     </tr>
   )
-}
+};
+
+const RowPreviewTS = ({dobj}) => {
+	return (
+		<tr>
+			<td>
+				{dobj.fileName}
+				<details>
+					<summary>Additional info</summary>
+					<div><u>Variables on X:</u> {dobj.x}</div>
+					<div><u>Variables on Y:</u> {dobj.y}</div>
+				</details>
+			</td>
+			<td><a href={`https://meta.icos-cp.eu/objects/${dobj._id}`} target="_blank">{dobj._id.slice(0, 24)}</a></td>
+			<td>{dobj.count}</td>
+		</tr>
+	);
+};
+
+const Details = ({label, name, count}) => {
+	return (
+		<div>
+			<label>{label}</label>
+			<div>Name: {name}</div>
+			<div>Count: {count}</div>
+		</div>
+	);
+};
 
 const StepButton = props => {
   const disabled = !props.enabled;
