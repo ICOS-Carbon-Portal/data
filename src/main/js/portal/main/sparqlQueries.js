@@ -69,10 +69,9 @@ where{
 		}
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	?spec cpmeta:hasAssociatedProject ?projectUri .
-	FILTER NOT EXISTS {?projectUri cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	?submitter cpmeta:hasName ?submitterLabel .
 	?spec cpmeta:hasAssociatedProject ?project .
+	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	?submitter cpmeta:hasName ?submitterLabel .
 	?project rdfs:label ?projectLabel .
 	}`;
 }
@@ -210,7 +209,7 @@ const getFilterClauses = (config, filters) => {
 export const extendedDataObjectInfo = (config, dobjs) => {
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description where{
 	VALUES ?dobj { ${dobjs.join(' ')} }
 	?dobj cpmeta:hasObjectSpec ?specUri .
 	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
