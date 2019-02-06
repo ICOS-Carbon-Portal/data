@@ -42,7 +42,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/26NA20050107_CO2_underway_SOCATv3.tab"))
 		.via(TimeSeriesStreams.linesFromBinary)
-		.viaMat(socatTsvParser(nRows, formats.timeStampColumn))(KeepFuture.left)
+		.viaMat(socatTsvParser(nRows, formats))(KeepFuture.left)
 
 	val binTableSink = BinTableSink(outFile("/socatTsvBinTest.cpb"), overwrite = true)
 

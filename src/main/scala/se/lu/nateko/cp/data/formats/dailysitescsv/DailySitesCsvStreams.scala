@@ -46,7 +46,7 @@ def dailySitesCsvUploadCompletetionSink(columnsMeta: ColumnsMeta)(implicit ctxt:
 		) yield {
 			val start = Instant.parse(firstRow.cells(0))
 			val stop = Instant.parse(lastRow.cells(0)).plus(1, ChronoUnit.DAYS)
-			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(firstRow.header.columnNames.toSeq) else None
+			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(columnsMeta.actualColumnNames(firstRow.header.columnNames)) else None
 			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
 			TimeSeriesUploadCompletion(ingestionExtract, None)
 		}

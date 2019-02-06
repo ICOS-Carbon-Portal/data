@@ -146,7 +146,7 @@ object IngestionUploadTask{
 		import sparql.materializer.executionContext
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		|select ?colName ?valFormat ?isRegex where{
+		|select ?colName ?valFormat ?isRegex ?isOptional where{
 		|	<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
