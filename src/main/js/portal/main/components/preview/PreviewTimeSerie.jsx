@@ -40,6 +40,7 @@ export default class PreviewTimeSerie extends Component {
 			item.station = extendedInfo ? extendedInfo.station : null;
 			item.stationId = extendedInfo ? extendedInfo.stationId : null;
 			item.samplingHeight = extendedInfo ? extendedInfo.samplingHeight : null;
+			item.columnNames = extendedInfo ? extendedInfo.columnNames : null;
 			return item;
 		});
 
@@ -57,7 +58,12 @@ export default class PreviewTimeSerie extends Component {
 			return result;
 		}, '');
 
+		const alltemsHaveColumnNames = items.reduce((acc, cur) =>{
+			return acc && cur.columnNames ? true : false;
+		}, true);
+
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
+		const options = alltemsHaveColumnNames ? [...new Set(...items.map(item => item.columnNames))] : preview.options;
 
 		return (
 			<div>
@@ -71,7 +77,7 @@ export default class PreviewTimeSerie extends Component {
 										name="x"
 										label="X axis"
 										selected={xAxis}
-										options={filterOptions(preview.options)}
+										options={filterOptions(options)}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -80,7 +86,7 @@ export default class PreviewTimeSerie extends Component {
 										name="y"
 										label="Y axis"
 										selected={yAxis}
-										options={filterOptions(preview.options)}
+										options={filterOptions(options)}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>

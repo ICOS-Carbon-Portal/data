@@ -201,7 +201,7 @@ const getFilterClauses = (config, filters) => {
 export const extendedDataObjectInfo = (config, dobjs) => {
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description where{
+select ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
 	VALUES ?dobj { ${dobjs.join(' ')} }
 	?dobj cpmeta:hasObjectSpec ?specUri .
 	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
@@ -218,6 +218,7 @@ select ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?descr
 		OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId }
 		OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight }
 	}
+	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
 };
