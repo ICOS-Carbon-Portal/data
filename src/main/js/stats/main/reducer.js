@@ -1,14 +1,16 @@
 import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED,
 	DOWNLOAD_STATS_PER_DATE_FETCHED, SET_VIEW_MODE,
-	PREVIEW_TS, PREVIEW_POPULAR_TS_VARS} from './actions';
+	RADIO_CREATE, PREVIEW_DATA_FETCHED, RADIO_UPDATED} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
 import StatsGraph from './models/StatsGraph';
 import ViewMode from "./models/ViewMode";
 import StatsMap from "./models/StatsMap";
+import {RadioConfig} from "./models/RadioConfig";
+import localConfig from './config';
 
 
-const initState = {
+export const initState = {
 	view: new ViewMode(),
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
@@ -17,10 +19,9 @@ const initState = {
 		offset: 0,
 		to: 0,
 		objCount: 0,
-		pagesize: 100
+		pagesize: localConfig.pagesize
 	},
-	dateUnit: 'week',
-
+	dateUnit: 'week'
 };
 
 export default function(state = initState, action){
@@ -34,7 +35,9 @@ export default function(state = initState, action){
 
 		case SET_VIEW_MODE:
 			return update({
-				view: state.view.setMode(action.mode)
+				view: state.view.setMode(action.mode),
+				statsGraph: {},
+				dateUnit: initState.dateUnit
 			});
 
 		case COUNTRIES_FETCHED:
@@ -48,7 +51,7 @@ export default function(state = initState, action){
 					offset: action.page,
 					to: action.downloadStats._returned,
 					objCount: action.downloadStats._size,
-					pagesize: 100
+					pagesize: localConfig.pagesize
 				}
 			});
 
@@ -97,19 +100,43 @@ export default function(state = initState, action){
 					offset: 1,
 					to: action.downloadStats._returned,
 					objCount: action.downloadStats._size,
-					pagesize: 100
+					pagesize: localConfig.pagesize
 				}
 			});
 
-		case PREVIEW_TS:
+		case PREVIEW_DATA_FETCHED:
+			const formattedData = action.formatter(action.previewDataResult);
+			const previewData = filterPreviewData(state.subRadio, formattedData.data);
+			const paging = getPreviewPaging(
+				formattedData.data,
+				previewData,
+				formattedData._size,
+				action.page,
+				state.mainRadio,
+				state.subRadio
+			);
+
 			return update({
-				previewTimeserie: formatTimeserieData(action.previewTimeserie)
+				lastPreviewCall: {
+					fetchFn: action.fetchFn,
+					formatter: action.formatter
+				},
+				previewDataFull: formattedData.data,
+				previewSize: formattedData._size,
+				previewData,
+				paging
 			});
 
-		case PREVIEW_POPULAR_TS_VARS:
+		case RADIO_CREATE:
+			const radio = new RadioConfig(action.radioConfig, action.radioAction);
+			const name = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";
+
 			return update({
-				previewPopularTimeserieVars: action.popularTimeserieVars
+				[name]: radio
 			});
+
+		case RADIO_UPDATED:
+			return update(updateRadiosAndPreviewData(state, action));
 
 		default:
 			return state;
@@ -121,11 +148,103 @@ export default function(state = initState, action){
 	}
 }
 
-const formatTimeserieData = previewTimeserie => {
-	return previewTimeserie.map(dobj => {
+const updateRadiosAndPreviewData = (state, action) => {
+	const radioName = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";
+	const newRadio = state[radioName].withSelected(action.actionTxt);
+	const previewData = action.radioConfig.name === "main"
+		? state.previewData
+		: filterPreviewData(newRadio, state.previewDataFull);
+	const mainRadio = radioName === "mainRadio" ? newRadio : state.mainRadio;
+	const subRadio = radioName === "subRadio"
+		? newRadio
+		: mainRadio.selected.parentTo === state.subRadio.name
+			? state.subRadio.setActive()
+			: state.subRadio.setInactive();
+
+	const paging = getPreviewPaging(
+		state.previewDataFull,
+		previewData,
+		state.previewSize,
+		state.paging.offset,
+		state.mainRadio,
+		state.subRadio
+	);
+
+	return {
+		mainRadio,
+		subRadio,
+		previewData,
+		paging
+	};
+};
+
+const getPreviewPaging = (previewDataFull, previewData, previewSize, offset, mainRadio, subRadio) => {
+	const adjustPaging = mainRadio.selected.parentTo === subRadio.name;
+	const [to, objCount] = adjustPaging
+		? [previewData.length, previewData.length]
+		: [previewDataFull.length, previewSize];
+
+	return {
+		offset,
+		to,
+		objCount,
+		pagesize: localConfig.pagesize
+	};
+};
+
+const filterPreviewData = (radio, previewData) => {
+	if (!radio.isActive) return previewData;
+
+	const selectedRadio = radio && radio.radios && radio.radios.length
+		? radio.selected
+		: undefined;
+
+	return selectedRadio
+		? previewData.filter(d => d.name === selectedRadio.actionTxt)
+		: previewData;
+};
+
+export const formatTimeserieData = previewTimeserie => {
+	const data = previewTimeserie._embedded.map(dobj => {
 		return Object.assign(dobj, {
 			x: dobj.x.sort((a, b) => a.count < b.count).map(x => x.name).join(', '),
 			y: dobj.y.sort((a, b) => a.count < b.count).map(y => y.name).join(', ')
 		})
 	});
+
+	return {
+		data,
+		_size: previewTimeserie._size,
+		_returned: previewTimeserie._returned
+	}
+};
+
+export const formatNetCDFData = previewNetCDF => {
+	const data = previewNetCDF._embedded.map(dobj => {
+		return Object.assign(dobj, {
+			variables: dobj.variables.sort((a, b) => a.count < b.count).map(variable => variable.name).join(', ')
+		})
+	});
+
+	return {
+		data,
+		_size: previewNetCDF._size,
+		_returned: previewNetCDF._returned
+	}
+};
+
+export const formatPopularTimeserieVars = popularTimeserieVars => {
+	const data = popularTimeserieVars._embedded.map(p => {
+		return {
+			name: p.name,
+			val: p.val,
+			count: p.occurrences
+		};
+	});
+
+	return {
+		data,
+		_size: popularTimeserieVars._size,
+		_returned: popularTimeserieVars._returned
+	}
 };

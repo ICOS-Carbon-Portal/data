@@ -6,6 +6,8 @@ import Graph from './Graph.jsx';
 import PreviewCtrlPanel from './PreviewCtrlPanel.jsx';
 
 
+const defaultTableHeaders = ["File Name", "Landing Page", "Count"];
+
 export const ViewSwitcher = props => {
 	switch(props.view.mode){
 		case 'downloads':
@@ -45,6 +47,8 @@ const DownloadsView = props => {
 			</div>
 			<div className="col-md-8">
 				<DobjTable
+					panelTitle="Data objects"
+					tableHeaders={defaultTableHeaders}
 					dataList={props.downloadStats.stats}
 					paging={props.paging}
 					requestPage={props.requestPage}
@@ -55,15 +59,26 @@ const DownloadsView = props => {
 };
 
 const PreviewsView = props => {
+	const dataList = props.previewData;
+	const [panelTitle, tableHeaders, disablePaging] = props.radiosPreviewSub && props.radiosPreviewSub.isActive
+		? ["Variables", [props.radiosPreviewSub.selected.txt, "Count"], true]
+		: ["Data objects", defaultTableHeaders, false];
+
 	return (
 		<div className="row">
 			<div className="col-md-4">
-				<PreviewCtrlPanel />
+				<PreviewCtrlPanel
+					radiosPreviewMain={props.radiosPreviewMain}
+					radiosPreviewSub={props.radiosPreviewSub}
+				/>
 			</div>
 
 			<div className="col-md-8">
 				<DobjTable
-					dataList={props.previewTimeserie}
+					panelTitle={panelTitle}
+					disablePaging={disablePaging}
+					tableHeaders={tableHeaders}
+					dataList={dataList}
 					paging={props.paging}
 					requestPage={props.requestPage}
 				/>

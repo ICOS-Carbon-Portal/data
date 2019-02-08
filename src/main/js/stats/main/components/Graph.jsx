@@ -26,9 +26,7 @@ export default class Graph extends Component{
 
 	onDownloadClick(){
 		const {statsGraph} = this.props;
-		const debug = {hello: "world"};
 		const blob = new Blob([json2csv(statsGraph)], {type : 'text/csv'});
-		console.log({blob, statsGraph});
 		this.setState({blob, fileName: `Downloads per ${statsGraph.dateUnit}.csv`, ts: Date.now()});
 	}
 

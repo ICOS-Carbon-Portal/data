@@ -2,7 +2,9 @@ import 'whatwg-fetch';
 import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
+import localConfig from './config';
 
+const pagesize = localConfig.pagesize;
 
 const restheartBaseUrl = location.host.startsWith("local-")
 	? config.restheartBaseUrl.replace("//", "//local-")
@@ -11,14 +13,14 @@ const wildcardText = "/^\\w/, null";
 const wildcardLevel = "0,1,2,3";
 
 export const getDownloadCounts = (useFullCollection, avars, page = 1) => {
-	const parameters = `page=${page}&pagesize=300&avars=${avars}`;
+	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
 	const aggregate = useFullCollection ? 'getDownloadStatsFull' : 'getDownloadStats';
 
 	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
 export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
-	const parameters = `page=${page}&pagesize=300&avars=${avars}`;
+	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
 	const aggregate = useFullCollection ? 'downloadsByCountryFull' : 'downloadsByCountry';
 
 	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
@@ -130,7 +132,9 @@ order by ?label`;
 
 
 // Previews
-const getFileNames = dobjs => {
+const getFileNames = resultList => {
+	const dobjs = resultList.map(obj => `<https://meta.icos-cp.eu/objects/${obj._id}>`).join(' ');
+
 	return `
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select ?dobj ?fileName where{
@@ -139,31 +143,59 @@ select ?dobj ?fileName where{
 }`
 };
 
-export const getPreviewTimeserie = _ => {
-	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPreviewTimeserie?pagesize=300&page=1&np`)
-		.then(previewTimeserie => {
-			const dobjs = previewTimeserie
-				.map(pt => `<https://meta.icos-cp.eu/objects/${pt._id}>`)
-				.join(' ');
-			const sparqlResult = sparql(getFileNames(dobjs), config.sparqlEndpoint, true);
+const combineWithFileNames = (aggregationResult) => {
+	const sparqlResult = sparql(getFileNames(aggregationResult._embedded), config.sparqlEndpoint, true);
 
-			return sparqlResult.then(res => {
-				return {
-					previewTimeserie,
-					fileNameMappings: res.results.bindings.reduce((acc, curr) => {
-						const objId = curr.dobj.value.slice(32);
-						acc[objId] = curr.fileName.value;
-						return acc;
-					}, {})
-				};
-			});
-		}).then(({previewTimeserie, fileNameMappings}) => {
-			return previewTimeserie.map(pt => Object.assign(pt, {
-				fileName: fileNameMappings[pt._id]
-			}));
+	return sparqlResult.then(res => {
+		return {
+			aggregationResult,
+			fileNameMappings: res.results.bindings.reduce((acc, curr) => {
+				const objId = curr.dobj.value.slice(32);
+				acc[objId] = curr.fileName.value;
+				return acc;
+			}, {})
+		};
+	});
+};
+
+const joinResult = (aggregationResult, fileNameMappings) => {
+	const _embedded = aggregationResult._embedded.map(pt => Object.assign(pt, {
+		fileName: fileNameMappings[pt._id]
+	}));
+
+	return {
+		_embedded,
+		_size: aggregationResult._size,
+		_returned: aggregationResult._returned
+	}
+};
+
+export const getPreviewTimeserie = (page = 1) => {
+	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPreviewTimeserie?pagesize=${pagesize}&page=${page}`)
+		.then(previewTimeserie => {
+
+			return combineWithFileNames(previewTimeserie);
+
+		}).then(({aggregationResult, fileNameMappings}) => {
+
+			return joinResult(aggregationResult, fileNameMappings);
+
 		});
 };
 
-export const getPopularTimeserieVars = _ => {
-	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1&np`);
+export const getPreviewNetCDF = (page = 1) => {
+	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPreviewNetCDF?pagesize=${pagesize}&page=${page}`)
+		.then(previewNetCDF => {
+
+			return combineWithFileNames(previewNetCDF);
+
+		}).then(({aggregationResult, fileNameMappings}) => {
+
+			return joinResult(aggregationResult, fileNameMappings);
+
+		});
+};
+
+export const getPopularTimeserieVars = (page = 1) => {
+	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=${page}`);
 };

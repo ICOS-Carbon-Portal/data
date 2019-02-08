@@ -21,7 +21,7 @@ export class App extends Component {
 
 	render(){
 		const props = this.props;
-// console.log({props});
+
 		return (
 			<div style={{marginTop: 10}}>
 				<AnimatedToasters
@@ -57,8 +57,9 @@ function stateToProps(state) {
 		paging : state.paging,
 		filters: state.filters,
 		view: state.view,
-		previewTimeserie: state.previewTimeserie,
-		previewPopularTimeserieVars: state.previewPopularTimeserieVars,
+		previewData: state.previewData,
+		radiosPreviewMain: state.mainRadio,
+		radiosPreviewSub: state.subRadio,
 	};
 }
 

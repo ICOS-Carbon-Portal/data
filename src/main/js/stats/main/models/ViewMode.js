@@ -3,7 +3,7 @@ export default class ViewMode{
 		this._modes = ['downloads', 'previews'];
 		this._selectedMode = selectedMode
 			? this._modes[this._modes.indexOf(selectedMode)]
-			: this._modes[1];
+			: this._modes[0];
 	}
 
 	get mode(){
