@@ -1,5 +1,8 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
-	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit} from './backend';
+	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
+	getPreviewTimeserie, getPopularTimeserieVars, getPreviewNetCDF} from './backend';
+import {getConfig} from "./models/RadioConfig";
+import {formatPopularTimeserieVars, formatTimeserieData, formatNetCDFData} from "./reducer";
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -8,6 +11,10 @@ export const STATS_UPDATE = 'STATS_UPDATE';
 export const STATS_UPDATED = 'STATS_UPDATED';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
 export const DOWNLOAD_STATS_PER_DATE_FETCHED = 'DOWNLOAD_STATS_PER_DATE_FETCHED';
+export const SET_VIEW_MODE = 'SET_VIEW_MODE';
+export const RADIO_CREATE = 'RADIO_CREATE';
+export const PREVIEW_DATA_FETCHED = 'PREVIEW_DATA_FETCHED';
+export const RADIO_UPDATED = 'RADIO_UPDATED';
 
 const failWithError = dispatch => error => {
 	console.log(error);
@@ -17,7 +24,105 @@ const failWithError = dispatch => error => {
 	});
 };
 
-export const fetchCountries = dispatch => {
+export const init = (dispatch, getState) => {
+	const viewMode = getState().view.mode;
+	dispatch(fetchDataForView(viewMode));
+};
+
+export const setViewMode = mode => dispatch => {
+	dispatch({
+		type: SET_VIEW_MODE,
+		mode
+	});
+
+	dispatch(fetchDataForView(mode));
+};
+
+const fetchDataForView = viewMode => dispatch => {
+	if (viewMode === "downloads"){
+		dispatch(initDownloads);
+	} else if (viewMode === "previews"){
+		dispatch(initPreviewView);
+	}
+};
+
+const initDownloads = dispatch => {
+	dispatch(fetchDownloadStats({}));
+	dispatch(fetchFilters);
+	dispatch(fetchCountries);
+};
+
+const initPreviewView = dispatch => {
+	dispatch(fetchPreviewData('previewPopularTimeserieVars'));
+
+	const radioConfigMain = getConfig('main');
+
+	dispatch({
+		type: RADIO_CREATE,
+		radioConfig: radioConfigMain,
+		radioAction: actionTxt => {
+			dispatch(radioSelected(radioConfigMain, actionTxt));
+			dispatch(fetchPreviewData(actionTxt));
+		}
+	});
+
+	const radioConfigSub = getConfig('popularTSVars');
+
+	dispatch({
+		type: RADIO_CREATE,
+		radioConfig: radioConfigSub,
+		radioAction: actionTxt => dispatch(radioSelected(radioConfigSub, actionTxt))
+	});
+};
+
+const fetchPreviewData = actionTxt => dispatch => {
+	const {fetchFn, formatter} = getPreviewDataQuery(actionTxt);
+	dispatch(fetchPreviewDataFromBackend(fetchFn, formatter));
+};
+
+const fetchPreviewDataFromBackend = (fetchFn, formatter, page = 1) => dispatch => {
+	fetchFn(page).then(previewDataResult => {
+		dispatch({
+			type: PREVIEW_DATA_FETCHED,
+			page,
+			previewDataResult,
+			fetchFn,
+			formatter
+		});
+	});
+};
+
+const getPreviewDataQuery = actionTxt => {
+	switch (actionTxt){
+		case 'previewPopularTimeserieVars':
+			return {
+				fetchFn: getPopularTimeserieVars,
+				formatter: formatPopularTimeserieVars
+			};
+
+		case 'previewTimeserie':
+			return {
+				fetchFn: getPreviewTimeserie,
+				formatter: formatTimeserieData
+			};
+
+		case 'previewNetCDF':
+			return {
+				fetchFn: getPreviewNetCDF,
+				formatter: formatNetCDFData
+			};
+	}
+};
+
+export const radioSelected = (radioConfig, actionTxt) => dispatch => {
+	dispatch({
+		type: RADIO_UPDATED,
+		radioConfig,
+		actionTxt
+	});
+};
+
+const fetchCountries = dispatch => {
 	getCountriesGeoJson().then(
 		countriesTopo => {
 			dispatch({
@@ -48,7 +153,7 @@ export const fetchDownloadStats = filters => (dispatch, getState) => {
 		});
 };
 
-export const fetchFilters = (dispatch, getState) => {
+const fetchFilters = (dispatch, getState) => {
 	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
 		([specifications, formats, dataLevels, stations, contributors, themes, countryCodes]) => {
 			const state = getState();
@@ -117,6 +222,16 @@ export const statsUpdate = (varName, values) => (dispatch, getState) => {
 };
 
 export const requestPage = page => (dispatch, getState) => {
+	const viewMode = getState().view.mode;
+
+	if (viewMode === "downloads"){
+		dispatch(requestPageDownloads(page));
+	} else if (viewMode === "previews"){
+		dispatch(requestPagePreviews(page));
+	}
+};
+
+const requestPageDownloads = page => (dispatch, getState) => {
 	const state = getState();
 	const filters = state.downloadStats.filters;
 	const useFullColl = useFullCollection(filters);
@@ -135,6 +250,12 @@ export const requestPage = page => (dispatch, getState) => {
 			dispatch(fetchDownloadStatsPerDateUnit(state.statsGraph.dateUnit, avars));
 		});
 };
+
+const requestPagePreviews = page => (dispatch, getState) => {
+	const {fetchFn, formatter} = getState().lastPreviewCall;
+	dispatch(fetchPreviewDataFromBackend(fetchFn, formatter, page));
+};
+
 
 const useFullCollection = filters => {
 	return Object.keys(filters).length === 0 || Object.keys(filters).every(key => filters[key].length === 0);

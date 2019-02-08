@@ -1,16 +1,22 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { AnimatedToasters } from 'icos-cp-toaster';
-import Filter from '../components/Filter.jsx';
-import DobjTable from '../components/DobjTable.jsx';
-import { statsUpdate, fetchDownloadStats, requestPage, fetchDownloadStatsPerDateUnit } from '../actions';
-import Map from '../components/Map.jsx';
-import Graph from '../components/Graph.jsx';
+import { statsUpdate, fetchDownloadStats, requestPage, fetchDownloadStatsPerDateUnit, setViewMode } from '../actions';
+import Radio from "../components/Radio.jsx";
+import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
 
 
 export class App extends Component {
 	constructor(props){
 		super(props);
+
+		this.radios = props.view.modes.map(mode => {
+			return {
+				txt: mode.charAt(0).toUpperCase() + mode.slice(1),
+				isActive: props.view.mode === mode,
+				actionTxt: mode
+			}
+		});
 	}
 
 	render(){
@@ -27,37 +33,16 @@ export class App extends Component {
 				<div className="page-header">
 					<h1>
 						ICOS Data Statistics
+						<Radio
+							horizontal={true}
+							containerStyle={{display:'inline', float:'right'}}
+							radios={this.radios}
+							action={props.setViewMode}
+						/>
 					</h1>
 				</div>
-				<div className="row">
-					<div className="col-md-4">
-						<Filter
-							filters={props.filters}
-							updateTableWithFilter={props.updateTableWithFilter}
-							downloadStats={props.downloadStats}
-							fetchDownloadStats={props.fetchDownloadStats}/>
 
-						<h4>Downloads per country</h4>
-						<Map
-							countryStats={props.countryStats}
-							countriesTopo={props.countriesTopo}
-							statsMap={props.statsMap}
-						/>
-
-						<h4 style={{marginTop:15}}>Downloads per time period</h4>
-						<Graph
-							style={{width: '100%', height: 300}}
-							statsGraph={props.statsGraph}
-							radioAction={props.fetchDownloadStatsPerDateUnit}
-						/>
-					</div>
-					<div className="col-md-8">
-						<DobjTable
-							downloadStats={props.downloadStats}
-							paging={props.paging}
-							requestPage={props.requestPage}/>
-					</div>
-				</div>
+				<ViewSwitcher {...props} />
 			</div>
 		);
 	}
@@ -70,7 +55,11 @@ function stateToProps(state) {
 		statsGraph: state.statsGraph,
 		countriesTopo: state.countriesTopo,
 		paging : state.paging,
-		filters: state.filters
+		filters: state.filters,
+		view: state.view,
+		previewData: state.previewData,
+		radiosPreviewMain: state.mainRadio,
+		radiosPreviewSub: state.subRadio,
 	};
 }
 
@@ -79,7 +68,8 @@ function dispatchToProps(dispatch) {
 		updateTableWithFilter: (varName, values) => dispatch(statsUpdate(varName, values)),
 		fetchDownloadStats: filters => dispatch(fetchDownloadStats(filters)),
 		requestPage: page => dispatch(requestPage(page)),
-		fetchDownloadStatsPerDateUnit: dateUnit => dispatch(fetchDownloadStatsPerDateUnit(dateUnit))
+		fetchDownloadStatsPerDateUnit: dateUnit => dispatch(fetchDownloadStatsPerDateUnit(dateUnit)),
+		setViewMode: mode => dispatch(setViewMode(mode))
 	};
 }
 
