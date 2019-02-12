@@ -54,7 +54,7 @@ from <http://meta.icos-cp.eu/resources/wdcgg/>`
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
 (if(bound(?stationName), ?station0, ?stationName) as ?station)
-(if(bound(?stationName), ?stationName, "(not applicable)") as ?stationLabel)
+(if(bound(?stationName), CONCAT(?stPrefix, ?stationName), "(not applicable)") as ?stationLabel)
 ${fromClauses}
 where{
 	{
@@ -66,8 +66,10 @@ where{
 				cpmeta:hasStatSubmitter ?submitter
 			] .
 			OPTIONAL{?station0 cpmeta:hasName ?stationName}
+			OPTIONAL{?station0 cpmeta:hasStationId ?stId}
 		}
 	}
+	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
