@@ -53,13 +53,16 @@ const RowSwitch = ({dobj}) => {
 	if (dobj.x && dobj.y) {
 		return <RowPreviewTS dobj={dobj}/>;
 
-	} else  if (dobj.name && dobj.val && dobj.count) {
+	} else if (dobj.name && dobj.val && dobj.count) {
 		return <RowPreviewPopularTSVals dobj={dobj}/>;
 
-	} else  if (dobj.variables) {
+	} else if (dobj.variables) {
 		return <RowPreviewNetCDF dobj={dobj}/>;
 
-	}else {
+	} else if (dobj.mapView && dobj.y1 && dobj.y2) {
+		return <RowPreviewMapGraph dobj={dobj}/>;
+
+	} else {
 		return <RowDownloads dobj={dobj} />;
 	}
 };
@@ -99,6 +102,24 @@ const RowPreviewNetCDF = ({dobj}) => {
 				<details>
 					<summary>Additional info</summary>
 					<div><u>Variables:</u> {dobj.variables}</div>
+				</details>
+			</td>
+			<td><LandingPageLink id={dobj._id} /></td>
+			<td>{dobj.count}</td>
+		</tr>
+	);
+};
+
+const RowPreviewMapGraph = ({dobj}) => {
+	return (
+		<tr>
+			<td>
+				{dobj.fileName}
+				<details>
+					<summary>Additional info</summary>
+					<div><u>Shown in map:</u> {dobj.mapView}</div>
+					<div><u>Shown in graph (Y1):</u> {dobj.y1}</div>
+					<div><u>Shown in graph (Y2):</u> {dobj.y2}</div>
 				</details>
 			</td>
 			<td><LandingPageLink id={dobj._id} /></td>

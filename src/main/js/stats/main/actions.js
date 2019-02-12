@@ -1,8 +1,7 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
 	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
-	getPreviewTimeserie, getPopularTimeserieVars, getPreviewNetCDF} from './backend';
+	getPreviewAggregation, getPopularTimeserieVars} from './backend';
 import {getConfig} from "./models/RadioConfig";
-import {formatPopularTimeserieVars, formatTimeserieData, formatNetCDFData} from "./reducer";
 
 export const ERROR = 'ERROR';
 export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
@@ -53,7 +52,7 @@ const initDownloads = dispatch => {
 };
 
 const initPreviewView = dispatch => {
-	dispatch(fetchPreviewData('previewPopularTimeserieVars'));
+	dispatch(fetchPreviewData('getPopularTimeserieVars'));
 
 	const radioConfigMain = getConfig('main');
 
@@ -76,42 +75,21 @@ const initPreviewView = dispatch => {
 };
 
 const fetchPreviewData = actionTxt => dispatch => {
-	const {fetchFn, formatter} = getPreviewDataQuery(actionTxt);
-	dispatch(fetchPreviewDataFromBackend(fetchFn, formatter));
+	const fetchFn = actionTxt === "getPopularTimeserieVars"
+		? getPopularTimeserieVars
+		: getPreviewAggregation(actionTxt);
+	dispatch(fetchPreviewDataFromBackend(fetchFn));
 };
 
-const fetchPreviewDataFromBackend = (fetchFn, formatter, page = 1) => dispatch => {
+const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
 	fetchFn(page).then(previewDataResult => {
 		dispatch({
 			type: PREVIEW_DATA_FETCHED,
 			page,
 			previewDataResult,
-			fetchFn,
-			formatter
+			fetchFn
 		});
 	});
-};
-
-const getPreviewDataQuery = actionTxt => {
-	switch (actionTxt){
-		case 'previewPopularTimeserieVars':
-			return {
-				fetchFn: getPopularTimeserieVars,
-				formatter: formatPopularTimeserieVars
-			};
-
-		case 'previewTimeserie':
-			return {
-				fetchFn: getPreviewTimeserie,
-				formatter: formatTimeserieData
-			};
-
-		case 'previewNetCDF':
-			return {
-				fetchFn: getPreviewNetCDF,
-				formatter: formatNetCDFData
-			};
-	}
 };
 
 export const radioSelected = (radioConfig, actionTxt) => dispatch => {
@@ -252,8 +230,8 @@ const requestPageDownloads = page => (dispatch, getState) => {
 };
 
 const requestPagePreviews = page => (dispatch, getState) => {
-	const {fetchFn, formatter} = getState().lastPreviewCall;
-	dispatch(fetchPreviewDataFromBackend(fetchFn, formatter, page));
+	const fetchFn = getState().lastPreviewCall;
+	dispatch(fetchPreviewDataFromBackend(fetchFn, page));
 };
 
 

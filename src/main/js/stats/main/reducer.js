@@ -105,7 +105,7 @@ export default function(state = initState, action){
 			});
 
 		case PREVIEW_DATA_FETCHED:
-			const formattedData = action.formatter(action.previewDataResult);
+			const formattedData = action.previewDataResult;
 			const previewData = filterPreviewData(state.subRadio, formattedData.data);
 			const paging = getPreviewPaging(
 				formattedData.data,
@@ -117,10 +117,7 @@ export default function(state = initState, action){
 			);
 
 			return update({
-				lastPreviewCall: {
-					fetchFn: action.fetchFn,
-					formatter: action.formatter
-				},
+				lastPreviewCall: action.fetchFn,
 				previewDataFull: formattedData.data,
 				previewSize: formattedData._size,
 				previewData,
@@ -202,49 +199,4 @@ const filterPreviewData = (radio, previewData) => {
 	return selectedRadio
 		? previewData.filter(d => d.name === selectedRadio.actionTxt)
 		: previewData;
-};
-
-export const formatTimeserieData = previewTimeserie => {
-	const data = previewTimeserie._embedded.map(dobj => {
-		return Object.assign(dobj, {
-			x: dobj.x.sort((a, b) => a.count < b.count).map(x => x.name).join(', '),
-			y: dobj.y.sort((a, b) => a.count < b.count).map(y => y.name).join(', ')
-		})
-	});
-
-	return {
-		data,
-		_size: previewTimeserie._size,
-		_returned: previewTimeserie._returned
-	}
-};
-
-export const formatNetCDFData = previewNetCDF => {
-	const data = previewNetCDF._embedded.map(dobj => {
-		return Object.assign(dobj, {
-			variables: dobj.variables.sort((a, b) => a.count < b.count).map(variable => variable.name).join(', ')
-		})
-	});
-
-	return {
-		data,
-		_size: previewNetCDF._size,
-		_returned: previewNetCDF._returned
-	}
-};
-
-export const formatPopularTimeserieVars = popularTimeserieVars => {
-	const data = popularTimeserieVars._embedded.map(p => {
-		return {
-			name: p.name,
-			val: p.val,
-			count: p.occurrences
-		};
-	});
-
-	return {
-		data,
-		_size: popularTimeserieVars._size,
-		_returned: popularTimeserieVars._returned
-	}
 };

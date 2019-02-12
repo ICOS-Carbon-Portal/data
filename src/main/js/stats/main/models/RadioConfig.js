@@ -5,20 +5,20 @@ const configs = [
 			{
 				txt: 'Popular Timeserie variables',
 				parentTo: "popularTSVars",
-				actionTxt: 'previewPopularTimeserieVars'
+				actionTxt: 'getPopularTimeserieVars'
 			},
 			{
 				txt: 'Timeserie',
-				actionTxt: 'previewTimeserie'
+				actionTxt: 'getPreviewTimeserie'
 			},
 			{
 				txt: 'NetCDF',
-				actionTxt: 'previewNetCDF'
+				actionTxt: 'getPreviewNetCDF'
 			},
-			// {
-			// 	txt: 'Map and Graph',
-			// 	actionTxt: 'previewMapGraph'
-			// }
+			{
+				txt: 'Map and Graph (Shipping lines)',
+				actionTxt: 'getPreviewMapGraph'
+			}
 		]
 	},
 	{
