@@ -297,7 +297,7 @@ const getFormatters = (xlabel, valueFormatX) => {
 			return {valueFormatter: parseDatetime(sec2ms, "hms", formatLbl), axisLabelFormatter: parseDatetime(sec2ms, "hm")};
 
 		default:
-			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 > 0 ? val.toFixed(2) : val};
+			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
 };
 
