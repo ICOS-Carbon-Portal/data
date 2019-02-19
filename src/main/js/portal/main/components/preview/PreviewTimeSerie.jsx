@@ -63,7 +63,7 @@ export default class PreviewTimeSerie extends Component {
 		}, true);
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
-		const options = alltemsHaveColumnNames ? [...new Set(...items.map(item => item.columnNames))] : preview.options;
+		const options = alltemsHaveColumnNames ? [...new Set([...items.flatMap(item => item.columnNames)])] : preview.options;
 
 		return (
 			<div>
