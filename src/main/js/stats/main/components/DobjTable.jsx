@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import './styles.css';
+import config from '../../../common/main/config';
 
 export default class DobjTable extends Component {
   constructor(props) {
@@ -138,7 +139,7 @@ const RowPreviewPopularTSVals = ({dobj}) => {
 };
 
 const LandingPageLink = ({id}) => {
-	return <a href={`https://meta.icos-cp.eu/objects/${id}`} target="_blank">{id.slice(0, 24)}</a>
+	return <a href={`${config.cpmetaObjectUri}${id}`} target="_blank">{id.slice(0, 24)}</a>
 };
 
 const StepButton = props => {

@@ -4,11 +4,17 @@ import config from '../../common/main/config';
 import {feature} from 'topojson';
 import localConfig from './config';
 
+
 const pagesize = localConfig.pagesize;
 
 const restheartBaseUrl = location.host.startsWith("local-")
 	? config.restheartBaseUrl.replace("//", "//local-")
 	: config.restheartBaseUrl;
+
+const restheartDbUrl = config.envri === "ICOS"
+	? `${restheartBaseUrl}db/`
+	: `${restheartBaseUrl}sitesdb/`;
+
 const wildcardText = "/^\\w/, null";
 const wildcardLevel = "0,1,2,3";
 
@@ -16,14 +22,14 @@ export const getDownloadCounts = (useFullCollection, avars, page = 1) => {
 	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
 	const aggregate = useFullCollection ? 'getDownloadStatsFull' : 'getDownloadStats';
 
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
+	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
 export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
 	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
 	const aggregate = useFullCollection ? 'downloadsByCountryFull' : 'downloadsByCountry';
 
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregate}?${parameters}`);
+	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
 export const getAvars = (filters, stationCountryCodeLookup = []) => {
@@ -61,32 +67,32 @@ export const getDownloadsPerDateUnit = (useFullCollection, dateUnit, avars) => {
 	let aggregation = `downloadsPer${dateUnit.charAt(0).toUpperCase()}${dateUnit.slice(1)}`;
 	if (useFullCollection) aggregation += 'Full';
 
-	return getJson(`${restheartBaseUrl}db/dobjdls/_aggrs/${aggregation}?pagesize=1000&np&avars=${avars}`);
+	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregation}?pagesize=1000&np&avars=${avars}`);
 };
 
 // Sorting is lost in the bulk insert to new collection. Specify sort order here with key "sort_by".
 export function getDataLevels() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetDataLevels?sort_by=label&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetDataLevels?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getFormats() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetFormats?sort_by=label&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetFormats?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getSpecifications() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetSpecifications?sort_by=count&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetSpecifications?sort_by=count&pagesize=1000&page=1`);
 }
 
 export function getStations() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetStations?sort_by=label&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetStations?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getContributors() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetContributors?sort_by=label&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetContributors?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getThemes() {
-	return getJson(`${restheartBaseUrl}db/cacheForGetThemes?sort_by=label&pagesize=1000&page=1`);
+	return getJson(`${restheartDbUrl}cacheForGetThemes?sort_by=label&pagesize=1000&page=1`);
 }
 
 export function getStationsCountryCode() {
@@ -133,7 +139,7 @@ order by ?label`;
 
 // Previews
 const getFileNames = resultList => {
-	const dobjs = resultList.map(obj => `<https://meta.icos-cp.eu/objects/${obj._id}>`).join(' ');
+	const dobjs = resultList.map(obj => `<${config.cpmetaObjectUri}${obj._id}>`).join(' ');
 
 	return `
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
@@ -147,49 +153,40 @@ const combineWithFileNames = (aggregationResult) => {
 	const sparqlResult = sparql(getFileNames(aggregationResult._embedded), config.sparqlEndpoint, true);
 
 	return sparqlResult.then(res => {
+		const fileNameMappings = res.results.bindings.reduce((acc, curr) => {
+			const objId = curr.dobj.value.split('/objects/').pop();
+			acc[objId] = curr.fileName.value;
+			return acc;
+		}, {});
+
 		return {
-			aggregationResult,
-			fileNameMappings: res.results.bindings.reduce((acc, curr) => {
-				const objId = curr.dobj.value.slice(32);
-				acc[objId] = curr.fileName.value;
-				return acc;
-			}, {})
-		};
+			_embedded: aggregationResult._embedded.map(pt => Object.assign(pt, {
+				fileName: fileNameMappings[pt._id]
+			})),
+			_size: aggregationResult._size,
+			_returned: aggregationResult._returned
+		}
 	});
-};
-
-const joinResult = (aggregationResult, fileNameMappings) => {
-	const _embedded = aggregationResult._embedded.map(pt => Object.assign(pt, {
-		fileName: fileNameMappings[pt._id]
-	}));
-
-	return {
-		_embedded,
-		_size: aggregationResult._size,
-		_returned: aggregationResult._returned
-	}
 };
 
 export const getPreviewAggregation = aggregationName => {
 	return (page = 1) => {
-		return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
+		return getJson(`${restheartDbUrl}portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
 			.then(aggregationResult => {
 
 				return combineWithFileNames(aggregationResult);
 
-			}).then(({aggregationResult, fileNameMappings}) => {
+			}).then(resultWithFileNames => {
 
-				const joinedResult = joinResult(aggregationResult, fileNameMappings);
 				const formatter = getFormatter(aggregationName);
-
-				return formatter(joinedResult);
+				return formatter(resultWithFileNames);
 
 			});
 	};
 };
 
 export const getPopularTimeserieVars = _ => {
-	return getJson(`${restheartBaseUrl}db/portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1`)
+	return getJson(`${restheartDbUrl}portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1`)
 		.then(aggregationResult => formatPopularTimeserieVars(aggregationResult));
 };
 
