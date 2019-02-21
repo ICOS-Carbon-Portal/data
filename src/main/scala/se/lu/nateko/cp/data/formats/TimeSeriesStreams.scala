@@ -8,6 +8,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
+import java.time.temporal.TemporalUnit
 
 object TimeSeriesStreams {
 
@@ -28,24 +29,35 @@ object TimeSeriesStreams {
 		def keepGoodRows: Flow[String, A, M] = parser.filter(acc => acc.isOnData && acc.error.isEmpty)
 	}
 
-	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
+	def linesFromUtf8Binary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
 		.filter(_.nonEmpty)
 
-	def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[TableRow],
-		lastRowFut: Future[TableRow]
-	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
+	def getCompletionInfo(
+		columnsMeta: ColumnsMeta, provideNRows: Boolean = false, timeStepUnit: Option[TemporalUnit] = None
+	)(firstLast: FirstLastRows)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
-			firstRow <- firstRowFut;
-			lastRow <- lastRowFut
+			firstRow <- firstLast.first;
+			lastRow <- firstLast.last
 		) yield {
 			val start = Instant.parse(firstRow.cells(0))
-			val stop = Instant.parse(lastRow.cells(0))
-			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(columnsMeta.actualColumnNames(firstRow.header.columnNames)) else None
+			val defaultStop = Instant.parse(lastRow.cells(0))
+			val stop = timeStepUnit.fold(defaultStop)(unit => defaultStop.plus(1, unit))
+			val columnNames =
+				if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns)
+					Some(columnsMeta.actualColumnNames(firstRow.header.columnNames))
+				else
+					None
 			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
-			TimeSeriesUploadCompletion(ingestionExtract, None)
+			val nRowsInfo = if(provideNRows) Some(firstRow.header.nRows) else None
+			TimeSeriesUploadCompletion(ingestionExtract, nRowsInfo)
 		}
 
+	def digestSink[R](extractor: FirstLastRows => R): Sink[TableRow, R] = Flow
+		.apply[TableRow]
+		.wireTapMat(Sink.head)(Keep.right)
+		.toMat(Sink.last)((f, l) => extractor(new FirstLastRows(f, l)))
+
+	class FirstLastRows(val first: Future[TableRow], val last: Future[TableRow])
 }

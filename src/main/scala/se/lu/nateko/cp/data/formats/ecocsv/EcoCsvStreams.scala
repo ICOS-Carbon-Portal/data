@@ -3,12 +3,12 @@ package se.lu.nateko.cp.data.formats.ecocsv
 import java.time._
 import java.util.Locale
 
-import akka.stream.scaladsl.{Flow, Keep, Sink}
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeSeriesUploadCompletion}
+import scala.concurrent.{ ExecutionContext, Future }
 
-import scala.concurrent.{ExecutionContext, Future}
+import akka.stream.scaladsl.{ Flow, Keep }
+import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object EcoCsvStreams {
 
@@ -28,13 +28,9 @@ object EcoCsvStreams {
 					makeTimeStamp(acc.cells(0), acc.cells(1), acc.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			)
-  		.alsoToMat(ecoCsvUploadCompletionSink(format.colsMeta))(Keep.right)
-	}
-
-	def ecoCsvUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[TimeSeriesUploadCompletion]] = {
-		Flow.apply[TableRow]
-			.wireTapMat(Sink.head)(Keep.right)
-			.toMat(Sink.last)(TimeSeriesStreams.getCompletionInfo(columnsMeta))
+			.alsoToMat(
+				digestSink(getCompletionInfo(format.colsMeta))
+			)(Keep.right)
 	}
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {

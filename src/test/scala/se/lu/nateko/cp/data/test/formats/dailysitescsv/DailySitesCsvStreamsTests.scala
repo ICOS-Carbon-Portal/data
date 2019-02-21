@@ -41,7 +41,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004.csv"))
-		.via(TimeSeriesStreams.linesFromBinary)
+		.via(TimeSeriesStreams.linesFromUtf8Binary)
 		.via(dailySitesCsvParser(nRows, formats))
 
 	test("Parsing a daily SITES time series example") {

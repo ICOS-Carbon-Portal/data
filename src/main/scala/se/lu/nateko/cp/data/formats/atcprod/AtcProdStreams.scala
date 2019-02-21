@@ -2,12 +2,12 @@ package se.lu.nateko.cp.data.formats.atcprod
 
 import java.time.Instant
 
-import akka.stream.scaladsl.{Flow, Keep, Sink}
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
+import scala.concurrent.{ ExecutionContext, Future }
 
-import scala.concurrent.{ExecutionContext, Future}
+import akka.stream.scaladsl.{ Flow, Keep }
+import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object AtcProdStreams {
 	import AtcProdParser._
@@ -24,28 +24,9 @@ object AtcProdStreams {
 					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			})
-			.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
-
-	private def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext)
-	: Sink[TableRow, Future[TimeSeriesUploadCompletion]] =
-		Flow.apply[TableRow]
-			.wireTapMat(Sink.head)(Keep.right)
-			.toMat(Sink.last)(getCompletionInfo(columnsMeta))
-
-	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[TableRow],
-		lastRowFut: Future[TableRow]
-	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for (
-			firstRow <- firstRowFut;
-			lastRow <- lastRowFut
-		) yield {
-			val start = Instant.parse(firstRow.cells(0))
-			val stop = Instant.parse(lastRow.cells(0))
-			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(columnsMeta.actualColumnNames(firstRow.header.columnNames)) else None
-			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
-			TimeSeriesUploadCompletion(ingestionExtract, Some(firstRow.header.nRows))
-		}
+			.alsoToMat(
+				digestSink(getCompletionInfo(format.colsMeta, provideNRows = true))
+			)(Keep.right)
 
 	private def makeTimeStamp(cells: Array[String], columnNames: Array[String]): Instant = {
 		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(columnNames.indexOf)

@@ -37,12 +37,11 @@ class IngestionUploadTask(
 		val ingestionSink = format.uri match {
 
 			case `asciiWdcggTimeSer` =>
-				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
+				import wdcgg.WdcggStreams.{wdcggParser, linesFromBinary}
 				makeIngestionSink(wdcggParser(defaultColumnFormats), linesFromBinary)
 
 			case `asciiAtcProdTimeSer` =>
-				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-				makeIngestionSink(atcProdParser(defaultColumnFormats))
+				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats))
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
@@ -78,12 +77,12 @@ class IngestionUploadTask(
 
 	private def makeIngestionSink(
 		rowParser: Flow[String, TableRow, Future[IngestionMetadataExtract]],
-		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromBinary,
+		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary,
 	): Sink[ByteString, Future[UploadTaskResult]] = {
 
 		lineParser
 			.viaMat(rowParser)(Keep.right)
-  		.map(binTableConverter.parseRow)
+			.map(binTableConverter.parseRow)
 			.toMat(BinTableSink(tmpFile, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
 				_.map{ingMeta =>

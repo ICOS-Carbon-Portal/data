@@ -7,7 +7,7 @@ import java.util.Locale
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.TimeSeriesParserEnhancer
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggParser._
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, WdcggUploadCompletion}
@@ -30,7 +30,7 @@ object WdcggStreams{
 		.scan(seed)(parseLine(format.colsMeta))
 		.exposeParsingError
 		.keepGoodRows
-  	.wireTapMat(Sink.head)((_, accFut) => accFut.map(_.header.kvPairs))
+		.wireTapMat(Sink.head)((_, accFut) => accFut.map(_.header.kvPairs))
 		.map(acc => TableRow(
 			TableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
 			makeTimeStamp(acc.cells(0), acc.cells(1), acc.header.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)

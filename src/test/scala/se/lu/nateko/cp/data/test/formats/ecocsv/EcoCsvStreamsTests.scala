@@ -43,7 +43,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/SE-Htm_fluxes_2015-01-01_CP_flag.txt"))
-		.via(TimeSeriesStreams.linesFromBinary)
+		.via(TimeSeriesStreams.linesFromUtf8Binary)
 		.via(ecoCsvParser(nRows, formats))
 
 	val binTableSink = BinTableSink(outFile("/ecoCsvBinTest.cpb"), overwrite = true)

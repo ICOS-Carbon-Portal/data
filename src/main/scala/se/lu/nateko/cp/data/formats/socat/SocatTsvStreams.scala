@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.streams.geo.{GeoFeaturePointSink, Point}
 import se.lu.nateko.cp.meta.core.data._
 
@@ -38,12 +39,10 @@ object SocatTsvStreams {
 
 	def socatUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
 
-		val completionInfoSink: Sink[TableRow, Future[TimeSeriesUploadCompletion]] = Flow.apply[TableRow]
-			.wireTapMat(Sink.head)(Keep.right)
-			.toMat(Sink.last)(TimeSeriesStreams.getCompletionInfo(columnsMeta))
-
 		Flow.apply[TableRow]
-			.alsoToMat(completionInfoSink)(Keep.right)
+			.alsoToMat(
+				digestSink(getCompletionInfo(columnsMeta))
+			)(Keep.right)
 			.toMat(coverageSink) { (tsUplComplFut, coverageFut) =>
 				for (
 					tsUplCompl <- tsUplComplFut;
