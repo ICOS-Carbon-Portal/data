@@ -56,9 +56,9 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parsing of an example Socat time series data set and streaming to BinTable"){
-		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val g = rowsSource
-			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
 			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
@@ -70,7 +70,7 @@ class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parser preserves the amount of rows"){
-		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val countFut = rowsSource
   		.map(converter.parseRow)
 			.toMat(Sink.fold(0)((count, _) => count + 1))(KeepFuture.right)

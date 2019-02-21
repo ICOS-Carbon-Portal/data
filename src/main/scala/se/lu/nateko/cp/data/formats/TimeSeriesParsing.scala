@@ -5,5 +5,5 @@ trait ParsingAccumulator {
 	def isOnData: Boolean
 }
 
-case class ProperTableRowHeader(columnNames: Array[String], nRows: Int)
-case class ProperTableRow(header: ProperTableRowHeader, cells: Array[String])
+case class TableRowHeader(columnNames: Array[String], nRows: Int)
+case class TableRow(header: TableRowHeader, cells: Array[String])

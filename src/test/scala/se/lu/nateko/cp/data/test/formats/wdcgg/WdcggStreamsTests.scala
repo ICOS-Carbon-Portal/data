@@ -42,9 +42,9 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	val linesSource: Source[String, Future[IOResult]] = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat"))
 		.via(linesFromBinary)
-	val rowsSource: Source[ProperTableRow, Future[IOResult]] = linesSource.via(wdcggParser(formats))
+	val rowsSource: Source[TableRow, Future[IOResult]] = linesSource.via(wdcggParser(formats))
 
-	val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+	val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 	val binTableSink = BinTableSink(outFile("/wdcggBinTest.cpb"), true)
 
 	test("Parsing of an example WDCGG time series data set"){
@@ -77,7 +77,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 
 	test("Parsing (single pass) and writing using 'alsoToMat' of an example WDCGG time series data set"){
 		val g = rowsSource
-			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
   		.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 

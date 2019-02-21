@@ -61,9 +61,9 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parsing of an example ATC product time series data set and streaming to BinTable"){
-		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val g = rowsSource
-			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
 			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 

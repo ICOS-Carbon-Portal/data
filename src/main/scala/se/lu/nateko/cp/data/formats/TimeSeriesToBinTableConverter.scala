@@ -10,7 +10,7 @@ class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
-	def parseRow(row: ProperTableRow): BinTableRow = {
+	def parseRow(row: TableRow): BinTableRow = {
 		val colPositions: Map[String, Int] = computeIndices(row.header.columnNames)
 
 		val valueFormats: Map[String, ValueFormat] = row.header.columnNames.flatMap{cname =>

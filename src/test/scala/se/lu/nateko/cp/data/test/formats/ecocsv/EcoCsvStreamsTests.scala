@@ -47,7 +47,7 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 		.via(ecoCsvParser(nRows, formats))
 
 	val binTableSink = BinTableSink(outFile("/ecoCsvBinTest.cpb"), overwrite = true)
-	val rows: Seq[ProperTableRow] = Await.result(rowsSource.runWith(Sink.seq), 1.second)
+	val rows: Seq[TableRow] = Await.result(rowsSource.runWith(Sink.seq), 1.second)
 
 	test("Parsing of an example Eco time series data set"){
 		assert(rows.size === nRows)
@@ -63,9 +63,9 @@ class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parsing of an example Eco time series data set and streaming to BinTable"){
-		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val g = rowsSource
-			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
 			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 

@@ -8,7 +8,7 @@ object SimpleSitesCsvParser {
 	val separator = ","
 
 	case class Accumulator(
-		header: ProperTableRowHeader,
+		header: TableRowHeader,
 		lineNumber: Int,
 		cells: Array[String],
 		formats: Array[Option[ValueFormat]],
@@ -37,5 +37,5 @@ object SimpleSitesCsvParser {
 }
 
 class SimpleSitesCsvParser(nRows: Int) {
-	def seed: Accumulator = Accumulator(ProperTableRowHeader(Array.empty, nRows), 0, Array.empty, Array.empty, None)
+	def seed: Accumulator = Accumulator(TableRowHeader(Array.empty, nRows), 0, Array.empty, Array.empty, None)
 }

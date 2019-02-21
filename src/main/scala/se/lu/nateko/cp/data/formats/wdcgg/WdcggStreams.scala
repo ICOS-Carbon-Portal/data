@@ -25,14 +25,14 @@ object WdcggStreams{
 		.map(_.decodeString(charSet).replace("\r", ""))
 
 	def wdcggParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] =
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] =
 		Flow[String]
 		.scan(seed)(parseLine(format.colsMeta))
 		.exposeParsingError
 		.keepGoodRows
   	.wireTapMat(Sink.head)((_, accFut) => accFut.map(_.header.kvPairs))
-		.map(acc => ProperTableRow(
-			ProperTableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
+		.map(acc => TableRow(
+			TableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
 			makeTimeStamp(acc.cells(0), acc.cells(1), acc.header.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
 		))
 		.wireTapMat(Sink.head)(Keep.both)
@@ -54,8 +54,8 @@ object WdcggStreams{
 
 	private def getCompletionInfo(
 		keyValuesFut: Future[ListMap[String, String]],
-		firstRowFut: Future[ProperTableRow],
-		lastRowFut: Future[ProperTableRow]
+		firstRowFut: Future[TableRow],
+		lastRowFut: Future[TableRow]
 		)(implicit ctxt: ExecutionContext): Future[WdcggUploadCompletion] =
 		for(
 			keyValues <- keyValuesFut;

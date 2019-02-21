@@ -53,7 +53,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
 	test("Timestamp column is injected into the table") {
 		val rowFut = rowsSource
-  		.runWith(Sink.head[ProperTableRow])
+  		.runWith(Sink.head[TableRow])
 		val row = Await.result(rowFut, 1.second)
 
 		assert(row.header.columnNames.contains(formats.timeStampColumn))
@@ -61,9 +61,9 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 	}
 
 	test("Parsing a daily SITES time series example and streaming to bintable") {
-		val converter = new ProperTimeSeriesToBinTableConverter(formats.colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val graph = rowsSource
-			.wireTapMat(Sink.head[ProperTableRow])(_ zip _)
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
   		.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 

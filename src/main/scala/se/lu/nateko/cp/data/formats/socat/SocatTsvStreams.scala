@@ -17,32 +17,32 @@ object SocatTsvStreams {
 	val LatColName = "Latitude"
 
 	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] = Flow[String]
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = Flow[String]
 		.dropWhile(line => !line.contains("*/"))
 		.drop(1)
 		.map(_.trim.split('\t'))
-		.scan(ProperTableRow(ProperTableRowHeader(Array.empty[String], nRows), Array.empty[String])) {
+		.scan(TableRow(TableRowHeader(Array.empty[String], nRows), Array.empty[String])) {
 			(row, cells) =>
 				if (row.header.columnNames.length == 0) {
-					ProperTableRow(
-						ProperTableRowHeader(format.timeStampColumn +: cells, nRows),
+					TableRow(
+						TableRowHeader(format.timeStampColumn +: cells, nRows),
 						format.timeStampColumn +: cells
 					)
 				} else {
-					ProperTableRow(row.header, makeTimeStamp(cells(0)).toString +: cells)
+					TableRow(row.header, makeTimeStamp(cells(0)).toString +: cells)
 				}
 		}
 		.drop(2)
 		.alsoToMat(socatUploadCompletionSink(format.colsMeta))(Keep.right)
 
 
-	def socatUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[ProperTableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
+	def socatUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
 
-		val completionInfoSink: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] = Flow.apply[ProperTableRow]
+		val completionInfoSink: Sink[TableRow, Future[TimeSeriesUploadCompletion]] = Flow.apply[TableRow]
 			.wireTapMat(Sink.head)(Keep.right)
 			.toMat(Sink.last)(getCompletionInfo(columnsMeta))
 
-		Flow.apply[ProperTableRow]
+		Flow.apply[TableRow]
 			.alsoToMat(completionInfoSink)(Keep.right)
 			.toMat(coverageSink) { (tsUplComplFut, coverageFut) =>
 				for (
@@ -53,8 +53,8 @@ object SocatTsvStreams {
 			}
 	}
 
-	def coverageSink(implicit ctxt: ExecutionContext): Sink[ProperTableRow, Future[GeoFeature]] = {
-		Flow.apply[ProperTableRow].map { row =>
+	def coverageSink(implicit ctxt: ExecutionContext): Sink[TableRow, Future[GeoFeature]] = {
+		Flow.apply[TableRow].map { row =>
 
 			val lonPos = row.header.columnNames.indexOf(LonColName)
 			val latPos = row.header.columnNames.indexOf(LatColName)
@@ -69,8 +69,8 @@ object SocatTsvStreams {
 	}
 
 	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[ProperTableRow],
-		lastRowFut: Future[ProperTableRow]
+		firstRowFut: Future[TableRow],
+		lastRowFut: Future[TableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
 			firstRow <- firstRowFut;

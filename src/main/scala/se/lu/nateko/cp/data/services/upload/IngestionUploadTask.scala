@@ -32,7 +32,7 @@ class IngestionUploadTask(
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{dailySitesCsvTimeSer, simpleSitesCsvTimeSer}
 
 		val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
-		val converter = new ProperTimeSeriesToBinTableConverter(colsMeta)
+		val converter = new TimeSeriesToBinTableConverter(colsMeta)
 
 		val ingestionSink = format.uri match {
 
@@ -78,8 +78,8 @@ class IngestionUploadTask(
 	private def failedSink[T](result: UploadTaskResult) = Sink.cancelled[T].mapMaterializedValue(_ => Future.successful(result))
 
 	private def makeIngestionSink(
-		rowParser: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]],
-		binTableConverter: ProperTimeSeriesToBinTableConverter,
+		rowParser: Flow[String, TableRow, Future[IngestionMetadataExtract]],
+		binTableConverter: TimeSeriesToBinTableConverter,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromBinary,
 	): Sink[ByteString, Future[UploadTaskResult]] = {
 

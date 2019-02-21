@@ -1,13 +1,13 @@
 package se.lu.nateko.cp.data.formats.dailysitescsv
 
 import se.lu.nateko.cp.data.api.DailyCsvParsingException
-import se.lu.nateko.cp.data.formats.{ParsingAccumulator, ProperTableRowHeader}
+import se.lu.nateko.cp.data.formats.{ParsingAccumulator, TableRowHeader}
 
 object DailySitesCsvParser {
 	val separator = ","
 
 	case class Accumulator(
-		header: ProperTableRowHeader,
+		header: TableRowHeader,
 		cells: Array[String],
 		error: Option[Throwable])
 		extends ParsingAccumulator {
@@ -18,13 +18,13 @@ object DailySitesCsvParser {
 class DailySitesCsvParser(nRows: Int) {
 	import DailySitesCsvParser._
 
-	def seed = Accumulator(ProperTableRowHeader(Array.empty, nRows), Array.empty, None)
+	def seed = Accumulator(TableRowHeader(Array.empty, nRows), Array.empty, None)
 
 	def parseLine(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) {
 			acc
 		} else if (acc.header.columnNames.isEmpty) { // Header
-			acc.copy(header = ProperTableRowHeader(line.split(separator), nRows))
+			acc.copy(header = TableRowHeader(line.split(separator), nRows))
 		} else { // Rows
 			val cells = line.split(separator, -1)
 			if (cells.length != acc.header.columnNames.length) {

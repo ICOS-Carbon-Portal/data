@@ -4,7 +4,7 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
-import se.lu.nateko.cp.data.formats.{ColumnsMeta, ColumnsMetaWithTsCol, ProperTableRow, ValueFormat}
+import se.lu.nateko.cp.data.formats.{ColumnsMeta, ColumnsMetaWithTsCol, TableRow, ValueFormat}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvParser._
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
@@ -14,14 +14,14 @@ import scala.concurrent.{ExecutionContext, Future}
 object SimpleSitesCsvStreams {
 
 	def simpleSitesCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] = {
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
 		val parser = new SimpleSitesCsvParser(nRows)
 		Flow.apply[String]
 			.scan(parser.seed)(parseLine(format.colsMeta))
 			.exposeParsingError
 			.keepGoodRows
 			.map(acc =>
-				ProperTableRow(
+				TableRow(
 					acc.header.copy(columnNames = format.timeStampColumn +: acc.header.columnNames),
 					makeTimeStamp(acc.cells(0)).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
@@ -30,14 +30,14 @@ object SimpleSitesCsvStreams {
 	}
 
 	private def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext)
-	: Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] =
-		Flow.apply[ProperTableRow]
+	: Sink[TableRow, Future[TimeSeriesUploadCompletion]] =
+		Flow.apply[TableRow]
   	.wireTapMat(Sink.head)(Keep.right)
   	.toMat(Sink.last)(getCompletionInfo(columnsMeta))
 
 	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[ProperTableRow],
-		lastRowFut: Future[ProperTableRow]
+		firstRowFut: Future[TableRow],
+		lastRowFut: Future[TableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
 			firstRow <- firstRowFut;

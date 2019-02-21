@@ -15,7 +15,7 @@ object EcoCsvStreams {
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
 	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, ProperTableRow, Future[IngestionMetadataExtract]] = {
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
 		val parser = new EcoCsvParser(nRows)
 
 		Flow.apply[String]
@@ -23,23 +23,23 @@ object EcoCsvStreams {
 			.exposeParsingError
 			.keepGoodRows
 			.map(acc =>
-				ProperTableRow(
-					ProperTableRowHeader(format.timeStampColumn +: acc.columnNames, acc.nRows),
+				TableRow(
+					TableRowHeader(format.timeStampColumn +: acc.columnNames, acc.nRows),
 					makeTimeStamp(acc.cells(0), acc.cells(1), acc.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			)
   		.alsoToMat(ecoCsvUploadCompletionSink(format.colsMeta))(Keep.right)
 	}
 
-	def ecoCsvUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[ProperTableRow, Future[TimeSeriesUploadCompletion]] = {
-		Flow.apply[ProperTableRow]
+	def ecoCsvUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[TimeSeriesUploadCompletion]] = {
+		Flow.apply[TableRow]
 			.wireTapMat(Sink.head)(Keep.right)
 			.toMat(Sink.last)(getCompletionInfo(columnsMeta))
 	}
 
 	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[ProperTableRow],
-		lastRowFut: Future[ProperTableRow]
+		firstRowFut: Future[TableRow],
+		lastRowFut: Future[TableRow]
 	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
 			firstRow <- firstRowFut;
