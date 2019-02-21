@@ -2,11 +2,11 @@ package se.lu.nateko.cp.data.formats
 
 import java.util.Locale
 
-import ProperTimeSeriesToBinTableConverter._
+import TimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
 
-class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
+class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
@@ -40,7 +40,7 @@ class ProperTimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 }
 
-object ProperTimeSeriesToBinTableConverter {
+object TimeSeriesToBinTableConverter {
 
 	def computeIndices(strings: Array[String]): Map[String, Int] = {
 		strings.zipWithIndex.groupBy(_._1).map{

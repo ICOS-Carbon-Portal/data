@@ -67,7 +67,7 @@ export default class PreviewTimeSerie extends Component {
 
 		return (
 			<div>
-				{preview && legendLabels
+				{preview
 					? <div>
 
 						<div className="panel-body" style={{paddingTop: 0}}>
@@ -143,10 +143,11 @@ const TimeSeries = props => {
 	const objIds = props.ids.map(id => id.split('/').pop()).join();
 	const {self, x, y, type, linking, legendLabels} = props;
 	const yParam = y ? `&y=${y}` : '';
+	const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
 
 	return <iframe ref={iframe => self.iframe = iframe} onLoad={props.onLoad}
 		style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-		src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}&legendLabels=${legendLabels}`}
+		src={`${config.iFrameBaseUrl[config.TIMESERIES]}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}${legendLabelsParams}`}
 	/>;
 };
 
