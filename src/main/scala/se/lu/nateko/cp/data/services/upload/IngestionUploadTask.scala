@@ -24,6 +24,7 @@ class IngestionUploadTask(
 	//TODO Switch to java.nio classes
 	val file = new File(originalFile.getAbsolutePath + FileExtension)
 	private val tmpFile = new File(file.getAbsoluteFile + ".working")
+	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = ingSpec.objSpec.format
@@ -32,17 +33,16 @@ class IngestionUploadTask(
 		import se.lu.nateko.cp.data.api.SitesMetaVocab.{dailySitesCsvTimeSer, simpleSitesCsvTimeSer}
 
 		val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
-		val converter = new TimeSeriesToBinTableConverter(colsMeta)
 
 		val ingestionSink = format.uri match {
 
 			case `asciiWdcggTimeSer` =>
 				import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-				makeIngestionSink(wdcggParser(defaultColumnFormats), converter)
+				makeIngestionSink(wdcggParser(defaultColumnFormats), linesFromBinary)
 
 			case `asciiAtcProdTimeSer` =>
 				import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-				makeIngestionSink(atcProdParser(defaultColumnFormats), converter)
+				makeIngestionSink(atcProdParser(defaultColumnFormats))
 
 			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
 
@@ -52,19 +52,18 @@ class IngestionUploadTask(
 						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
 
 					case Some(nRows) =>
-						if (format.uri == asciiEtcTimeSer) {
-							import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
-							makeIngestionSink(ecoCsvParser(nRows, defaultColumnFormats), converter)
-						} else if (format.uri == asciiOtcSocatTimeSer) {
-							import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
-							makeIngestionSink(socatTsvParser(nRows, defaultColumnFormats), converter)
-						} else if (format.uri == simpleSitesCsvTimeSer) {
-							import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvStreams._
-							makeIngestionSink(simpleSitesCsvParser(nRows, ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")), converter)
-						} else {
-							import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
-							makeIngestionSink(dailySitesCsvParser(nRows, defaultColumnFormats), converter)
-						}
+						val rowParser =
+							if (format.uri == asciiEtcTimeSer)
+								ecocsv.EcoCsvStreams.ecoCsvParser(nRows, defaultColumnFormats)
+							else if (format.uri == asciiOtcSocatTimeSer)
+								socat.SocatTsvStreams.socatTsvParser(nRows, defaultColumnFormats)
+							else if (format.uri == simpleSitesCsvTimeSer){
+								val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
+								simplesitescsv.SimpleSitesCsvStreams.simpleSitesCsvParser(nRows, colFormats)
+							} else
+								dailysitescsv.DailySitesCsvStreams.dailySitesCsvParser(nRows, defaultColumnFormats)
+
+						makeIngestionSink(rowParser)
 				}
 
 			case _ =>
@@ -79,7 +78,6 @@ class IngestionUploadTask(
 
 	private def makeIngestionSink(
 		rowParser: Flow[String, TableRow, Future[IngestionMetadataExtract]],
-		binTableConverter: TimeSeriesToBinTableConverter,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromBinary,
 	): Sink[ByteString, Future[UploadTaskResult]] = {
 
