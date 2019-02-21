@@ -4,10 +4,10 @@ import java.time.format.DateTimeFormatter
 import java.time.{Instant, LocalDateTime, ZoneOffset}
 
 import akka.stream.scaladsl.{Flow, Keep, Sink}
-import se.lu.nateko.cp.data.formats.{ColumnsMeta, ColumnsMetaWithTsCol, TableRow, ValueFormat}
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvParser._
-import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TimeSeriesUploadCompletion}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -33,22 +33,7 @@ object SimpleSitesCsvStreams {
 	: Sink[TableRow, Future[TimeSeriesUploadCompletion]] =
 		Flow.apply[TableRow]
   	.wireTapMat(Sink.head)(Keep.right)
-  	.toMat(Sink.last)(getCompletionInfo(columnsMeta))
-
-	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[TableRow],
-		lastRowFut: Future[TableRow]
-	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for (
-			firstRow <- firstRowFut;
-			lastRow <- lastRowFut
-		) yield {
-			val start = Instant.parse(firstRow.cells(0))
-			val stop = Instant.parse(lastRow.cells(0))
-			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(columnsMeta.actualColumnNames(firstRow.header.columnNames)) else None
-			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
-			TimeSeriesUploadCompletion(ingestionExtract, None)
-		}
+  	.toMat(Sink.last)(TimeSeriesStreams.getCompletionInfo(columnsMeta))
 
 	private def makeTimeStamp(timeStamp: String): Instant = {
 		val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")

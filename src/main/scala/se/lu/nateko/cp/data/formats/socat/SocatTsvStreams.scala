@@ -40,7 +40,7 @@ object SocatTsvStreams {
 
 		val completionInfoSink: Sink[TableRow, Future[TimeSeriesUploadCompletion]] = Flow.apply[TableRow]
 			.wireTapMat(Sink.head)(Keep.right)
-			.toMat(Sink.last)(getCompletionInfo(columnsMeta))
+			.toMat(Sink.last)(TimeSeriesStreams.getCompletionInfo(columnsMeta))
 
 		Flow.apply[TableRow]
 			.alsoToMat(completionInfoSink)(Keep.right)
@@ -67,21 +67,6 @@ object SocatTsvStreams {
 			Point(lon, lat)
 		}.toMat(GeoFeaturePointSink.sink)(Keep.right)
 	}
-
-	private def getCompletionInfo(columnsMeta: ColumnsMeta)(
-		firstRowFut: Future[TableRow],
-		lastRowFut: Future[TableRow]
-	)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for (
-			firstRow <- firstRowFut;
-			lastRow <- lastRowFut
-		) yield {
-			val start = Instant.parse(firstRow.cells(0))
-			val stop = Instant.parse(lastRow.cells(0))
-			val columnNames = if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns) Some(columnsMeta.actualColumnNames(firstRow.header.columnNames)) else None
-			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
-			TimeSeriesUploadCompletion(ingestionExtract, None)
-		}
 
 	private def makeTimeStamp(timestamp: String): Instant = {
 		val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
