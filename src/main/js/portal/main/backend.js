@@ -207,6 +207,7 @@ export const getExtendedDataObjInfo = dobjs => {
 							themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
 							title: b.title ? b.title.value : undefined,
 							description: b.description ? b.description.value : undefined,
+							columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined,
 						};
 					}))
 					: Promise.reject(new Error("Could not get extended info for data objects"));

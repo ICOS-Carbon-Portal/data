@@ -1,79 +1,75 @@
 package se.lu.nateko.cp.data.formats.socat
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import java.time._
+import java.time.format.DateTimeFormatter
 
-import akka.Done
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.formats.ColumnFormats
-import se.lu.nateko.cp.data.formats.TableRow
-import se.lu.nateko.cp.data.formats.TableRowHeader
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.data.streams.geo.GeoFeaturePointSink
-import se.lu.nateko.cp.data.streams.geo.Point
-import se.lu.nateko.cp.meta.core.data.GeoFeature
-import se.lu.nateko.cp.meta.core.data.SpatialTimeSeriesUploadCompletion
+import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.streams.geo.{GeoFeaturePointSink, Point}
+import se.lu.nateko.cp.meta.core.data._
 
-class SocatRowHeader(val columnNames: Array[String]) extends TableRowHeader
-class SocatTsvRow(val header: SocatRowHeader, val cells: Array[String]) extends TableRow[SocatRowHeader]
+import scala.concurrent.{ExecutionContext, Future}
 
-object SocatTsvStreams{
+object SocatTsvStreams {
 
 	val LonColName = "Longitude"
 	val LatColName = "Latitude"
 
-	def socatTsvParser: Flow[String, SocatTsvRow, Future[Done]] = Flow[String]
+	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = Flow[String]
 		.dropWhile(line => !line.contains("*/"))
 		.drop(1)
 		.map(_.trim.split('\t'))
-		.scan(new SocatTsvRow(new SocatRowHeader(Array.empty[String]), Array.empty[String])){(row, cells) =>
-			val header = if(row.header.columnNames.length == 0)
-				new SocatRowHeader(cells)
-			else row.header
-			new SocatTsvRow(header, cells)
+		.scan(TableRow(TableRowHeader(Array.empty[String], nRows), Array.empty[String])) {
+			(row, cells) =>
+				if (row.header.columnNames.length == 0) {
+					TableRow(
+						TableRowHeader(format.timeStampColumn +: cells, nRows),
+						format.timeStampColumn +: cells
+					)
+				} else {
+					TableRow(row.header, makeTimeStamp(cells(0)).toString +: cells)
+				}
 		}
 		.drop(2)
-		.alsoToMat(Sink.ignore)(Keep.right)
+		.alsoToMat(socatUploadCompletionSink(format.colsMeta))(Keep.right)
 
 
-	def socatTsvToBinTableConverter(
-		nRows: Int,
-		formats: ColumnFormats
-	)(implicit ctxt: ExecutionContext): Flow[SocatTsvRow, BinTableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
+	def socatUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
 
-		val binFlow = TimeSeriesStreams.timeSeriesToBinTableConverter(
-			formats,
-			(header: SocatRowHeader) => new SocatTsvToBinTableConverter(formats, header.columnNames, nRows)
-		)
-
-		binFlow.alsoToMat(coverageSink(formats)){(tsUplComplFut, coverageFut) =>
-			for(
-				tsUplCompl <- tsUplComplFut;
-				coverage <- coverageFut
-			) yield
-				SpatialTimeSeriesUploadCompletion(tsUplCompl.interval, coverage)
-		}
+		Flow.apply[TableRow]
+			.alsoToMat(
+				digestSink(getCompletionInfo(columnsMeta))
+			)(Keep.right)
+			.toMat(coverageSink) { (tsUplComplFut, coverageFut) =>
+				for (
+					tsUplCompl <- tsUplComplFut;
+					coverage <- coverageFut
+				) yield
+					SpatialTimeSeriesUploadCompletion(tsUplCompl.tabular, coverage)
+			}
 	}
 
-	def coverageSink(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Sink[BinTableRow, Future[GeoFeature]] = {
-		val sortedCols = formats.valueFormats.sortedColumns
+	def coverageSink(implicit ctxt: ExecutionContext): Sink[TableRow, Future[GeoFeature]] = {
+		Flow.apply[TableRow].map { row =>
 
-		val lonPos = sortedCols.indexOf(LonColName)
-		val latPos = sortedCols.indexOf(LatColName)
+			val lonPos = row.header.columnNames.indexOf(LonColName)
+			val latPos = row.header.columnNames.indexOf(LatColName)
 
-		if(lonPos < 0 || latPos < 0)
-			Sink.cancelled.mapMaterializedValue(_ => Future.failed(
-				new CpDataParsingException("Expected both $LonColName and $LatColName columns to be present")
-			))
-		else Flow.apply[BinTableRow].map{row =>
-			val lon = row.cells(lonPos).asInstanceOf[Number].doubleValue
-			val lat = row.cells(latPos).asInstanceOf[Number].doubleValue
+			if (lonPos < 0 || latPos < 0)
+				throw new CpDataParsingException(s"Expected both $LonColName and $LatColName columns to be present")
+
+			val lon = row.cells(lonPos).toDouble
+			val lat = row.cells(latPos).toDouble
 			Point(lon, lat)
 		}.toMat(GeoFeaturePointSink.sink)(Keep.right)
+	}
+
+	private def makeTimeStamp(timestamp: String): Instant = {
+		val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+		LocalDateTime.parse(timestamp, timestampFormatter).toInstant(ZoneOffset.UTC)
 	}
 
 }

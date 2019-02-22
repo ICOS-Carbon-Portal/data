@@ -1,86 +1,47 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
 import java.nio.charset.Charset
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import WdcggParser._
-import akka.Done
+import java.time._
+import java.util.Locale
 
 import akka.NotUsed
-import akka.stream.FlowShape
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.ZipWith
+import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.ColumnFormats
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.meta.core.data.TimeInterval
-import se.lu.nateko.cp.meta.core.data.WdcggUploadCompletion
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.TimeSeriesParserEnhancer
+import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.wdcgg.WdcggParser._
+import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, WdcggUploadCompletion}
 
-class WdcggRow(val header: Header, val cells: Array[String])
+import scala.collection.immutable.ListMap
+import scala.concurrent.{ExecutionContext, Future}
 
 object WdcggStreams{
-	import TimeSeriesToBinTableConverter.recoverTimeStamp
 
 	private val charSet = Charset.forName("Windows-1252").name()
+	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
 		.map(_.decodeString(charSet).replace("\r", ""))
 
-
-	def wdcggParser(implicit ctxt: ExecutionContext): Flow[String, WdcggRow, Future[Done]] = Flow[String]
-		.scan(seed)(parseLine)
+	def wdcggParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] =
+		Flow[String]
+		.scan(seed)(parseLine(format.colsMeta))
 		.exposeParsingError
 		.keepGoodRows
-		.map(acc => new WdcggRow(acc.header, acc.cells))
-
-
-	def wdcggToBinTableConverter(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Flow[WdcggRow, BinTableRow, Future[WdcggUploadCompletion]] = {
-		val graph = GraphDSL.create(Sink.head[WdcggRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
-			(firstWdcggSink, firstRowSink, lastRowSink) =>
-
-			import GraphDSL.Implicits._
-
-			val inputs = b.add(Broadcast[WdcggRow](3))
-			inputs.out(0) ~> firstWdcggSink.in
-
-			val rowConverterRepeated = b.add(
-				Flow[WdcggRow].take(1)
-					.map(row => new WdcggToBinTableConverter(formats, row.header))
-					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
-			)
-
-			inputs.out(1) ~> rowConverterRepeated.in
-
-			val zipToBinRow = b.add(ZipWith[WdcggToBinTableConverter, WdcggRow, BinTableRow](
-				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
-			))
-
-			rowConverterRepeated.out ~> zipToBinRow.in0
-			inputs.out(2) ~> zipToBinRow.in1
-
-			val outputs = b.add(Broadcast[BinTableRow](3))
-			outputs.out(0) ~> firstRowSink.in
-			outputs.out(1) ~> lastRowSink.in
-			zipToBinRow.out ~> outputs.in
-
-			FlowShape(inputs.in, outputs.out(2))
+		.wireTapMat(Sink.head)((_, accFut) => accFut.map(_.header.kvPairs))
+		.map(acc => TableRow(
+			TableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
+			makeTimeStamp(acc.cells(0), acc.cells(1), acc.header.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
+		))
+		.wireTapMat(Sink.head)(Keep.both)
+		.alsoToMat(Sink.last){ case ((kvPairs, firstRow), lastRow) =>
+			getCompletionInfo(kvPairs, firstRow, lastRow)
 		}
-		Flow.fromGraph(graph)
-	}
 
-	def wdcggHeaderSink: Sink[String, Future[Map[String, String]]] = Flow[String]
-		.scan(seed)(parseLine)
+	def wdcggHeaderSink(columnsMeta: ColumnsMeta): Sink[String, Future[Map[String, String]]] = Flow[String]
+		.scan(seed)(parseLine(columnsMeta))
 		.takeWhile(!_.isOnData)
 		.map(_.header.kvPairs)
 		.toMat(Sink.last)(Keep.right)
@@ -91,20 +52,44 @@ object WdcggStreams{
 		MeasUnitKey, "MEASUREMENT METHOD", SamplingTypeKey, "MEASUREMENT SCALE"
 	)
 
-	private def getCompletionInfo(formats: ColumnFormats)(
-			firstWdcggFut: Future[WdcggRow],
-			firstBinFut: Future[BinTableRow],
-			lastBinFut: Future[BinTableRow]
+	private def getCompletionInfo(
+		keyValuesFut: Future[ListMap[String, String]],
+		firstRowFut: Future[TableRow],
+		lastRowFut: Future[TableRow]
 		)(implicit ctxt: ExecutionContext): Future[WdcggUploadCompletion] =
 		for(
-			firstWdcgg <- firstWdcggFut;
-			firstBin <- firstBinFut;
-			lastBin <- lastBinFut
+			keyValues <- keyValuesFut;
+			firstRow <- firstRowFut;
+			lastRow <- lastRowFut
 		) yield{
-			val start = recoverTimeStamp(firstBin.cells, formats)
-			val stop = recoverTimeStamp(lastBin.cells, formats)
-			val header = firstWdcgg.header
-			val keyValues = header.kvPairs.filterKeys(headerKeys.contains)
-			WdcggUploadCompletion(header.nRows, TimeInterval(start, stop), keyValues)
+			val customMetadata = keyValues.filterKeys(headerKeys.contains)
+			val start = Instant.parse(firstRow.cells(0))
+			val stop = Instant.parse(lastRow.cells(0))
+
+			WdcggUploadCompletion(TabularIngestionExtract(None, TimeInterval(start, stop)), firstRow.header.nRows, customMetadata)
 		}
+
+	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
+		val date = valueFormatParser.parse(localDate, Iso8601Date).asInstanceOf[Int]
+		val time = valueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
+		val locDate = LocalDate.ofEpochDay(date.toLong)
+
+		val dt =
+			if(time >= 86400){
+				val locTime = LocalTime.ofSecondOfDay((time - 86400).toLong)
+				LocalDateTime.of(locDate, locTime).plusHours((24 - offsetFromUtc).toLong)
+			} else {
+				val locTime = LocalTime.ofSecondOfDay(time.toLong)
+				LocalDateTime.of(locDate, locTime).minusHours(offsetFromUtc.toLong)
+			}
+		dt.toInstant(ZoneOffset.UTC)
+	}
+
+	private def replaceNullValues(cells: Array[String], formats: Array[Option[ValueFormat]]): Array[String] = {
+		cells.zip(formats).map {
+			case (cell, None) => cell
+			case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
+		}
+	}
+
 }

@@ -1,89 +1,48 @@
 package se.lu.nateko.cp.data.formats.atcprod
 
-import java.nio.charset.Charset
+import java.time.Instant
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContext, Future }
 
-import AtcProdParser._
-import akka.Done
-
-import akka.NotUsed
-import akka.stream.FlowShape
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.ZipWith
-import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.ColumnFormats
+import akka.stream.scaladsl.{ Flow, Keep }
+import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.meta.core.data.TimeInterval
-import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
-class AtcProdRow(val header: Header, val cells: Array[String])
+object AtcProdStreams {
+	import AtcProdParser._
 
-object AtcProdStreams{
-	import TimeSeriesToBinTableConverter.recoverTimeStamp
+	def atcProdParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] =
+		Flow[String]
+			.scan(seed)(parseLine(format.colsMeta))
+			.exposeParsingError
+			.keepGoodRows
+			.map(acc => {
+				TableRow(
+					TableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
+					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: replaceNullValues(acc.cells, acc.formats)
+				)
+			})
+			.alsoToMat(
+				digestSink(getCompletionInfo(format.colsMeta, provideNRows = true))
+			)(Keep.right)
 
-	def atcProdParser(implicit ctxt: ExecutionContext): Flow[String, AtcProdRow, Future[Done]] = Flow[String]
-		.scan(seed)(parseLine)
-		.exposeParsingError
-		.keepGoodRows
-		.map(acc => new AtcProdRow(acc.header, acc.cells))
+	private def makeTimeStamp(cells: Array[String], columnNames: Array[String]): Instant = {
+		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(columnNames.indexOf)
 
+		def pad0(s: String) = if (s.length == 1) "0" + s else s
 
-	def atcProdToBinTableConverter(formats: ColumnFormats)(implicit ctxt: ExecutionContext): Flow[AtcProdRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-		val graph = GraphDSL.create(Sink.head[AtcProdRow], Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
-			(firstWdcggSink, firstRowSink, lastRowSink) =>
-
-			import GraphDSL.Implicits._
-
-			val inputs = b.add(Broadcast[AtcProdRow](3))
-			inputs.out(0) ~> firstWdcggSink.in
-
-			val rowConverterRepeated = b.add(
-				Flow[AtcProdRow].take(1)
-					.map(row => new AtcProdToBinTableConverter(formats, row.header))
-					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
-			)
-
-			inputs.out(1) ~> rowConverterRepeated.in
-
-			val zipToBinRow = b.add(ZipWith[AtcProdToBinTableConverter, AtcProdRow, BinTableRow](
-				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
-			))
-
-			rowConverterRepeated.out ~> zipToBinRow.in0
-			inputs.out(2) ~> zipToBinRow.in1
-
-			val outputs = b.add(Broadcast[BinTableRow](3))
-			outputs.out(0) ~> firstRowSink.in
-			outputs.out(1) ~> lastRowSink.in
-			zipToBinRow.out ~> outputs.in
-
-			FlowShape(inputs.in, outputs.out(2))
+		val Seq(year, month, day, hour, min, sec) = timeIndices.map { idx =>
+			if (idx >= 0) pad0(cells(idx)) else "00"
 		}
-		Flow.fromGraph(graph)
+		Instant.parse(s"$year-$month-${day}T$hour:$min:${sec}Z")
 	}
 
-	private def getCompletionInfo(formats: ColumnFormats)(
-			firstAtcProdFut: Future[AtcProdRow],
-			firstBinFut: Future[BinTableRow],
-			lastBinFut: Future[BinTableRow]
-		)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for(
-			firstProd <- firstAtcProdFut;
-			firstBin <- firstBinFut;
-			lastBin <- lastBinFut
-		) yield{
-			val start = recoverTimeStamp(firstBin.cells, formats)
-			val stop = recoverTimeStamp(lastBin.cells, formats)
-			TimeSeriesUploadCompletion(TimeInterval(start, stop), Some(firstProd.header.nRows))
+	private def replaceNullValues(cells: Array[String], formats: Array[Option[ValueFormat]]): Array[String] = {
+		cells.zip(formats).map {
+			case (cell, None) => cell
+			case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
 		}
+	}
 }

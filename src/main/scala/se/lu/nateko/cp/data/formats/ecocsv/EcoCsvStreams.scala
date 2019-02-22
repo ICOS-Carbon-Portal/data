@@ -1,37 +1,61 @@
 package se.lu.nateko.cp.data.formats.ecocsv
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import java.time._
+import java.util.Locale
 
-import EcoCsvParser._
-import akka.Done
-import akka.stream.scaladsl.Flow
-import se.lu.nateko.cp.data.formats.ColumnFormats
-import se.lu.nateko.cp.data.formats.TableRow
+import scala.concurrent.{ ExecutionContext, Future }
+
+import akka.stream.scaladsl.{ Flow, Keep }
+import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
-import akka.NotUsed
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
-class EcoCsvRow(val header: Header, val cells: Array[String]) extends TableRow[Header]
+object EcoCsvStreams {
 
-object EcoCsvStreams{
+	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
 
-	def ecoCsvParser(implicit ctxt: ExecutionContext): Flow[String, EcoCsvRow, Future[Done]] = Flow.apply[String]
-		.scan(seed)(parseLine)
-		.exposeParsingError
-		.keepGoodRows
-		.map(acc => new EcoCsvRow(acc.header, acc.cells))
+	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
+		val parser = new EcoCsvParser(nRows)
 
+		Flow.apply[String]
+			.scan(parser.seed)(parser.parseLine(format.colsMeta))
+			.exposeParsingError
+			.keepGoodRows
+			.map(acc =>
+				TableRow(
+					TableRowHeader(format.timeStampColumn +: acc.columnNames, acc.nRows),
+					makeTimeStamp(acc.cells(0), acc.cells(1), acc.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
+				)
+			)
+			.alsoToMat(
+				digestSink(getCompletionInfo(format.colsMeta))
+			)(Keep.right)
+	}
 
-	def ecoCsvToBinTableConverter(
-		nRows: Int,
-		formats: ColumnFormats
-	)(implicit ctxt: ExecutionContext): Flow[EcoCsvRow, BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-		timeSeriesToBinTableConverter(
-			formats,
-			header => new EcoCsvToBinTableConverter(formats, header, nRows)
-		)
+	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
+		val date = valueFormatParser.parse(localDate, EtcDate).asInstanceOf[Int]
+		val time = valueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
+		val locDate = LocalDate.ofEpochDay(date.toLong)
+
+		val dt =
+			if(time >= 86400){
+				val locTime = LocalTime.ofSecondOfDay((time - 86400).toLong)
+				LocalDateTime.of(locDate, locTime).plusHours((24 - offsetFromUtc).toLong)
+			} else {
+				val locTime = LocalTime.ofSecondOfDay(time.toLong)
+				LocalDateTime.of(locDate, locTime).minusHours(offsetFromUtc.toLong)
+			}
+		dt.toInstant(ZoneOffset.UTC)
+	}
+
+	private def replaceNullValues(cells: Array[String], formats: Array[Option[ValueFormat]]): Array[String] = {
+		import EcoCsvParser._
+
+		cells.zip(formats).map {
+			case (cell, None) => cell
+			case (cell, Some(valueFormat)) => if (isNull(cell, valueFormat)) "" else cell
+		}
 	}
 
 }

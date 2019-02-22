@@ -1,11 +1,10 @@
 package se.lu.nateko.cp.data.formats.wdcgg
 
-import scala.collection.immutable.ListMap
-
 import org.slf4j.LoggerFactory
-
 import se.lu.nateko.cp.data.api.WdcggParsingException
-import se.lu.nateko.cp.data.formats.ParsingAccumulator
+import se.lu.nateko.cp.data.formats._
+
+import scala.collection.immutable.ListMap
 
 object WdcggParser {
 
@@ -21,11 +20,12 @@ object WdcggParser {
 	}
 
 	case class Accumulator(
-			header: Header,
-			lineNumber: Int,
-			cells: Array[String],
-			error: Option[Throwable]
-		) extends ParsingAccumulator{
+		header: Header,
+		lineNumber: Int,
+		cells: Array[String],
+		formats: Array[Option[ValueFormat]],
+		error: Option[Throwable]
+	) extends ParsingAccumulator{
 
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 		def isOnData = (header.headerLength > 0 && lineNumber > header.headerLength)
@@ -53,9 +53,9 @@ object WdcggParser {
 
 	private val logger = LoggerFactory.getLogger(getClass)
 
-	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, ListMap.empty), 0, Array.empty, None)
+	def seed = Accumulator(Header(0, 0, Array.empty, "", 0, ListMap.empty), 0, Array.empty, Array.empty, None)
 
-	def parseLine(acc: Accumulator, line: String): Accumulator = {
+	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if(acc.error.isDefined) acc
 
 		else if(acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength)
@@ -69,7 +69,8 @@ object WdcggParser {
 				if(colNamesAttempt.contains(paramName)) {
 					//the correct column names line is present
 					val colNames = mapColNames(colNamesAttempt.drop(1), paramName)
-					acc.changeHeader(columnNames = colNames).incrementLine
+					val formats = colNames.map(columnsMeta.matchColumn)
+					acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine
 				} else acc.copy(error = Some(new WdcggParsingException(
 					s"Unsupported WDCGG file format; column names row was: $line"
 				)))
@@ -143,5 +144,36 @@ object WdcggParser {
 		case _ =>
 			(harmonizedKey, value)
 	}
+
+	private val floatNullRegex = "\\-9+\\.9*".r
+	private val timeRegex = "(\\d\\d):(\\d\\d)".r
+	private val nullDates = Set("99-99", "02-30", "04-31", "06-31", "09-31", "11-31")
+
+	def isNull(value: String, format: ValueFormat): Boolean = format match {
+		case IntValue => value == "-9999"
+		case FloatValue | DoubleValue => floatNullRegex.findFirstIn(value).isDefined
+		case Utf16CharValue => value.isEmpty
+		case StringValue => value == null
+		case Iso8601Date => nullDates.contains(value.substring(5))
+		case Iso8601DateTime | EtcDate => throw new Exception("Did not expect these value types (Iso8601DateTime | EtcDate) in WDCGG data")
+		case Iso8601TimeOfDay => value == "99:99" || value.startsWith("25:") || value.startsWith("26:")
+		case IsoLikeLocalDateTime => throw new Exception("Did not expect this value type (IsoLikeLocalDateTime) in WDCGG data")
+	}
+
+	def amend(value: String, format: ValueFormat): String = format match {
+		case Iso8601TimeOfDay => value match{
+			case timeRegex(hourStr, minStr) =>
+				minStr.toInt match{
+					case 60 =>
+						val hours = "%02d".format(hourStr.toInt + 1)
+						s"$hours:00"
+					case mins if mins > 60 => s"$hourStr:00"
+					case _ => value
+				}
+			case _ => value
+		}
+		case _ => value
+	}
+
 
 }

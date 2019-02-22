@@ -12,21 +12,21 @@ const spinnerDelay = 100;
 const errMsg = `
 <div>
 	<h2>Invalid request</h2>
-	
+
 	<div style="font-weight:bold;">Required parameters:</div>
 	<ul style="margin:0;">
 		<li>objId: List (comma separated) of data object ids.</li>
 		<li>x: Parameter name for X axis.</li>
 		<li>y: Parameter name for Y axis.</li>
 	</ul>
-	
+
 	<div style="font-weight:bold;margin-top:30px;">Optional parameters:</div>
 	<ul style="margin:0;">
 		<li>linking: Defaults to <i>overlap</i>. Use <i>concatenate</i> to display data objects as one series.</li>
 		<li>legendLabels: List (comma separated matching order of objId) of labels for legend. Defaults to file name.</li>
 		<li>legendClosed: Start with legend collapsed. Defaults to legend open.</li>
 	</ul>
-	
+
 	<div style="margin-top:30px;">
 		<a href="?objId=-xQ2wgAt-ZjdGaCEJnKQIEIu,0EwfR9LutvnBbvgW-KJdq2U0&x=TIMESTAMP&linking=overlap&y=co2&legendLabels=HPB 93.0,SMR 67.2&legendClosed">Example</a>
 	</div>
@@ -80,22 +80,27 @@ export default class App {
 
 		return getTableFormatNrows(this.config, ids)
 		.then(
-			([tableFormat, objects]) => {
-				if(!isColNameValid(tableFormat, params.get('x')))
-					return fail(`Parameter x (${params.get('x')}) does not exist in data`);
-				else if(!isColNameValid(tableFormat, params.get('y')))
-					return fail(`Parameter y (${params.get('y')}) does not exist in data`);
-				else {
+			(objects) => {
+				const object = objects.find(object =>
+					isColNameValid(object.tableFormat, params.get('x')) &&
+					isColNameValid(object.tableFormat, params.get('y')));
+				if (!object) {
+					return fail(`Parameter x (${params.get('x')}) or parameter y (${params.get('y')}) does not exist in data`);
+				} else {
 					if (typeof this.graph === "undefined") {
-						const title = `${objects[0].specLabel} - ${params.get('y')}`;
-						this.initGraph(tableFormat, title);
-						this.tableFormat = tableFormat;
-						this.labels.push(getColInfoParam(tableFormat, params.get('x'), 'label'));
+						const title = `${object.specLabel} - ${params.get('y')}`;
+						this.initGraph(object.tableFormat, title);
+						this.tableFormat = object.tableFormat;
+						this.labels.push(getColInfoParam(object.tableFormat, params.get('x'), 'label'));
 
 						if (params.get('linking') === 'concatenate'){
 							this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
 								? params.get('legendLabels').split(',')[0]
+<<<<<<< HEAD
 								: getLabel(tableFormat, params.get('y')));
+=======
+								: getLabel(object.tableFormat, params.get('y')));
+>>>>>>> regex-specs
 
 						} else {
 							objects.forEach((object, idx) => {
@@ -108,15 +113,20 @@ export default class App {
 						}
 					}
 
-					return [tableFormat, objects];
+					return objects;
 				}
 			}
 		)
 		.then(
-			([tableFormat, objects]) => {
+			objects => {
 				return Promise.all(
-					objects.map(object =>
-						getBinTable(params.get('x'), params.get('y'), object.id, tableFormat, object.nRows))
+					objects.map(object => {
+						if(isColNameValid(object.tableFormat, params.get('y'))) {
+							return getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows)
+						} else {
+							return []
+						}
+					})
 				)
 			}
 		)
@@ -196,7 +206,7 @@ export default class App {
 				).sort((d1, d2) => d1[0] - d2[0]);
 			} else {
 				// Overlap
-				const dates = binTables.flatMap(binTable => binTable.values([0], v => v[0]));
+				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0]));
 				const uniqueDates = Array.from(new Set(dates));
 				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)]));
 

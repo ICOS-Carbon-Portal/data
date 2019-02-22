@@ -1,23 +1,14 @@
 package se.lu.nateko.cp.data.formats
 
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import java.time.Instant
 
-import akka.Done
-import akka.NotUsed
-import akka.stream.FlowShape
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.ZipWith
+import akka.{Done, NotUsed}
+import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.bintable.BinTableRow
-import se.lu.nateko.cp.meta.core.data.TimeInterval
-import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
+import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
+
+import scala.concurrent.{ExecutionContext, Future}
+import java.time.temporal.TemporalUnit
 
 object TimeSeriesStreams {
 
@@ -38,61 +29,35 @@ object TimeSeriesStreams {
 		def keepGoodRows: Flow[String, A, M] = parser.filter(acc => acc.isOnData && acc.error.isEmpty)
 	}
 
-
-	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
+	def linesFromUtf8Binary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
-		.filter(_.size > 0)
+		.filter(_.nonEmpty)
 
-
-	def timeSeriesToBinTableConverter[H <: TableRowHeader](
-		formats: ColumnFormats,
-		factory: H => TimeSeriesToBinTableConverter
-	)(implicit ctxt: ExecutionContext): Flow[TableRow[H], BinTableRow, Future[TimeSeriesUploadCompletion]] = {
-
-		val graph = GraphDSL.create(Sink.head[BinTableRow], Sink.last[BinTableRow])(getCompletionInfo(formats)){ implicit b =>
-			(firstRowSink, lastRowSink) =>
-
-			import GraphDSL.Implicits._
-
-			val inputs = b.add(Broadcast[TableRow[H]](2))
-
-			val rowConverterRepeated = b.add(
-				Flow[TableRow[H]].take(1)
-					.map(row => factory(row.header))
-					.mapConcat(Stream.continually(_)) //repeating the same instance indefinitely
-			)
-
-			inputs.out(0) ~> rowConverterRepeated.in
-
-			val zipToBinRow = b.add(ZipWith[TimeSeriesToBinTableConverter, TableRow[H], BinTableRow](
-				(conv, row) => new BinTableRow(conv.parseCells(row.cells), conv.schema)
-			))
-
-			rowConverterRepeated.out ~> zipToBinRow.in0
-			inputs.out(1) ~> zipToBinRow.in1
-
-			val outputs = b.add(Broadcast[BinTableRow](3))
-			outputs.out(0) ~> firstRowSink.in
-			outputs.out(1) ~> lastRowSink.in
-			zipToBinRow.out ~> outputs.in
-
-			FlowShape(inputs.in, outputs.out(2))
-		}
-		Flow.fromGraph(graph)
-	}
-
-	private def getCompletionInfo(formats: ColumnFormats)(
-			firstBinFut: Future[BinTableRow],
-			lastBinFut: Future[BinTableRow]
-		)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
-		for(
-			firstBin <- firstBinFut;
-			lastBin <- lastBinFut
-		) yield{
-			val start = TimeSeriesToBinTableConverter.recoverTimeStamp(firstBin.cells, formats)
-			val stop = TimeSeriesToBinTableConverter.recoverTimeStamp(lastBin.cells, formats)
-			TimeSeriesUploadCompletion(TimeInterval(start, stop), None)
+	def getCompletionInfo(
+		columnsMeta: ColumnsMeta, provideNRows: Boolean = false, timeStepUnit: Option[TemporalUnit] = None
+	)(firstLast: FirstLastRows)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
+		for (
+			firstRow <- firstLast.first;
+			lastRow <- firstLast.last
+		) yield {
+			val start = Instant.parse(firstRow.cells(0))
+			val defaultStop = Instant.parse(lastRow.cells(0))
+			val stop = timeStepUnit.fold(defaultStop)(unit => defaultStop.plus(1, unit))
+			val columnNames =
+				if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns)
+					Some(columnsMeta.actualColumnNames(firstRow.header.columnNames))
+				else
+					None
+			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
+			val nRowsInfo = if(provideNRows) Some(firstRow.header.nRows) else None
+			TimeSeriesUploadCompletion(ingestionExtract, nRowsInfo)
 		}
 
+	def digestSink[R](extractor: FirstLastRows => R): Sink[TableRow, R] = Flow
+		.apply[TableRow]
+		.wireTapMat(Sink.head)(Keep.right)
+		.toMat(Sink.last)((f, l) => extractor(new FirstLastRows(f, l)))
+
+	class FirstLastRows(val first: Future[TableRow], val last: Future[TableRow])
 }

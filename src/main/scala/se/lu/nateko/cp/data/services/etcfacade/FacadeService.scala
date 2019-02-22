@@ -93,7 +93,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 		val uniqueizer = fn.dataType match{
 			case DataType.SAHEAT =>
-				TimeSeriesStreams.linesFromBinary.map{line =>
+				TimeSeriesStreams.linesFromUtf8Binary.map{line =>
 					val stationId = fn.station.hashCode
 					ByteString(s"$line,$stationId\n" , ByteString.UTF_8)
 				}

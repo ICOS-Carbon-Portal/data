@@ -55,6 +55,7 @@ private class StatefulInitSink[T, M](sinkFactory: () => Sink[T, M]) extends Grap
 
 			override def onUpstreamFailure(ex: Throwable): Unit = {
 				sourceOut.fail(ex)
+				promise.tryFailure(ex)
 				failStage(ex)
 			}
 

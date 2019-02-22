@@ -1,32 +1,41 @@
 package se.lu.nateko.cp.data.formats.simplesitescsv
 
-import se.lu.nateko.cp.data.formats.{ParsingAccumulator, TableRowHeader}
+import se.lu.nateko.cp.data.formats.simplesitescsv.SimpleSitesCsvParser.Accumulator
+import se.lu.nateko.cp.data.formats._
 
 object SimpleSitesCsvParser {
 
 	val separator = ","
 
-	case class Header(columnNames: Array[String]) extends TableRowHeader
-
 	case class Accumulator(
-			 header: Header,
-			 lineNumber: Int,
-			 cells: Array[String],
-			 error: Option[Throwable])
+		header: TableRowHeader,
+		lineNumber: Int,
+		cells: Array[String],
+		formats: Array[Option[ValueFormat]],
+		error: Option[Throwable])
 	extends ParsingAccumulator {
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 		def isOnData = lineNumber > 1
 	}
 
-	def seed = Accumulator(Header(Array.empty), 0, Array.empty, None)
-
-	def parseLine(acc: Accumulator, line: String): Accumulator = {
+	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) {
 			acc
 		} else if (acc.lineNumber == 0) { // Header
-			acc.copy(header = acc.header.copy(columnNames = line.split(separator))).incrementLine
+			val columnNames = line.split(separator)
+			val formats = columnNames.map(columnsMeta.matchColumn)
+			acc.copy(header = acc.header.copy(columnNames = columnNames), formats = formats).incrementLine
 		} else { // Rows
 			acc.copy(cells = line.split(separator, -1)).incrementLine
 		}
 	}
+
+	def isNull(value: String, format: ValueFormat): Boolean = format match {
+		case FloatValue => value == "NaN" || value == ""
+		case _ => false
+	}
+}
+
+class SimpleSitesCsvParser(nRows: Int) {
+	def seed: Accumulator = Accumulator(TableRowHeader(Array.empty, nRows), 0, Array.empty, Array.empty, None)
 }

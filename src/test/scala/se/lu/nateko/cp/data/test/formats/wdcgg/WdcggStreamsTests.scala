@@ -1,24 +1,23 @@
 package se.lu.nateko.cp.data.test.formats.wdcgg
 
+import java.io.File
+
 import akka.actor.ActorSystem
-import akka.stream.{ClosedShape, ActorMaterializer}
-import akka.stream.IOResult
+import akka.stream.{ActorMaterializer, IOResult}
 import akka.stream.scaladsl._
 import akka.util.ByteString
-import java.io.File
-import org.scalatest.FunSuite
+import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
-import org.scalatest.BeforeAndAfterAll
-import se.lu.nateko.cp.data.formats.wdcgg.WdcggRow
-import scala.concurrent.{Future, Await}
+
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 
 class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 
-	private implicit val system = ActorSystem("wdcggstreamstest")
-	private implicit val materializer = ActorMaterializer()
+	private implicit val system: ActorSystem = ActorSystem("wdcggstreamstest")
+	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
 	override def afterAll(): Unit = {
@@ -28,29 +27,28 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val expectedNRows = 360
 
-	val formats = ColumnFormats(
-		Map(
-			"DATE" -> Iso8601Date,
-			"TIMESTAMP" -> Iso8601DateTime,
-			"TIME" -> Iso8601TimeOfDay,
-			"PARAMETER" -> FloatValue,
-			"ND" -> IntValue,
-			"SD" -> FloatValue
-		),
+	val formats = ColumnsMetaWithTsCol(
+		new ColumnsMeta(Seq(
+			PlainColumn(Iso8601Date, "DATE", isOptional = false),
+			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
+			PlainColumn(Iso8601TimeOfDay, "TIME", isOptional = false),
+			PlainColumn(FloatValue, "PARAMETER", isOptional = false),
+			PlainColumn(FloatValue, "ND", isOptional = false),
+			PlainColumn(FloatValue, "SD", isOptional = false)
+		)),
 		"TIMESTAMP"
 	)
 
-	val linesSource = StreamConverters
+	val linesSource: Source[String, Future[IOResult]] = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ams137s00.lsce.as.cn.co2.nl.mo.dat"))
 		.via(linesFromBinary)
-	val rowsSource = linesSource.via(wdcggParser)
+	val rowsSource: Source[TableRow, Future[IOResult]] = linesSource.via(wdcggParser(formats))
 
+	val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 	val binTableSink = BinTableSink(outFile("/wdcggBinTest.cpb"), true)
 
 	test("Parsing of an example WDCGG time series data set"){
-
 		val rowsFut = rowsSource.runWith(Sink.seq)
-
 		val rows = Await.result(rowsFut, 1.second)
 
 		assert(rows.size === rows.head.header.nRows)
@@ -58,9 +56,8 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parsing and writing of an example WDCGG time series data set"){
-
 		val binTableExport: RunnableGraph[Future[(IOResult, Long)]] = rowsSource
-			.via(wdcggToBinTableConverter(formats))
+			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val rowCountsFut = rowsSource.runFold[(Int, Int)]((0, 0)){
@@ -79,10 +76,9 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Parsing (single pass) and writing using 'alsoToMat' of an example WDCGG time series data set"){
-
 		val g = rowsSource
-			.wireTapMat(Sink.head[WdcggRow])(_ zip _)
-			.via(wdcggToBinTableConverter(formats))
+			.wireTapMat(Sink.head[TableRow])(_ zip _)
+  		.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)
@@ -91,29 +87,6 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 		assert(firstRow.header.nRows === expectedNRows)
 		assert(nRowsWritten === expectedNRows)
 
-	}
-
-	test("Parsing (single pass) and writing using broadcast of an example WDCGG time series data set"){
-
-		val g = RunnableGraph.fromGraph(GraphDSL.create(Sink.head[Int], binTableSink)(
-			(_ zip _)
-		) { implicit builder =>
-			(schemaNRowsSinkShape, binTableSinkShape) =>
-				import GraphDSL.Implicits._
-
-				val bCast = builder.add(Broadcast[WdcggRow](2))
-				rowsSource ~> bCast
-
-				bCast ~> Flow[WdcggRow].map(_.header.nRows) ~> schemaNRowsSinkShape.in
-				bCast ~> wdcggToBinTableConverter(formats) ~> binTableSinkShape
-
-				ClosedShape
-		})
-
-		val (schemaNRows, nRowsWritten) = Await.result(g.run(), 1.second)
-
-		assert(schemaNRows === expectedNRows)
-		assert(nRowsWritten === expectedNRows)
 	}
 
 	test("linesFromBinary Flow handles Unix style new lines correctly"){
@@ -137,7 +110,7 @@ class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
 	}
 
 	test("Header key-values are parsed successfully"){
-		val kv = Await.result(linesSource.runWith(wdcggHeaderSink), 1.second)
+		val kv = Await.result(linesSource.runWith(wdcggHeaderSink(formats.colsMeta)), 1.second)
 
 		assert(kv("PARAMETER") === "CO2")
 		assert(kv("TIME INTERVAL") === "monthly")
