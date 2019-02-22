@@ -96,12 +96,7 @@ export default class App {
 						if (params.get('linking') === 'concatenate'){
 							this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
 								? params.get('legendLabels').split(',')[0]
-<<<<<<< HEAD
-								: getLabel(tableFormat, params.get('y')));
-=======
 								: getLabel(object.tableFormat, params.get('y')));
->>>>>>> regex-specs
-
 						} else {
 							objects.forEach((object, idx) => {
 								const filename = object.filename;
