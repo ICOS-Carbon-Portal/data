@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import FileDownload from './FileDownload.jsx';
 
 
 export default class Radio extends Component {
@@ -7,7 +6,7 @@ export default class Radio extends Component {
 		super(props);
 
 		this.state = {
-			radios: []
+			radios: props.radios || []
 		};
 	}
 
@@ -24,10 +23,7 @@ export default class Radio extends Component {
 		const {radios} = this.state;
 		if (radios[idx].isActive) return;
 
-		const newRadios = radios.map((r, i) => {
-			r.isActive = i === idx;
-			return r;
-		});
+		const newRadios = radios.map((r, i) => Object.assign(r, {isActive: i === idx}));
 
 		this.setState({radios: newRadios});
 		if (this.props.action) this.props.action(radios[idx].actionTxt);

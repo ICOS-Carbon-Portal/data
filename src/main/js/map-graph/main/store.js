@@ -24,8 +24,9 @@ export const getHash = () => {
 
 export const updateURL = store => () => {
 	const state = store.getState();
-	const currentHash = getHash();
+	const prevState = state.prevState;
 	const newHash = {
+		objId: state.objId,
 		y1: state.value1Idx,
 		y2: state.value2Idx,
 		map: state.mapValueIdx,
@@ -36,15 +37,15 @@ export const updateURL = store => () => {
 		return newHash[key] === undefined ? acc : acc + 1;
 	}, 0) > 0;
 
-	if (hasVals && !deepEqual(currentHash, newHash)) {
+	if (hasVals && !deepEqual(prevState, newHash)) {
 
-		if (currentHash.y1 !== newHash.y1 || currentHash.y2 !== newHash.y2 || currentHash.map !== newHash.map) {
+		if (prevState.y1 !== newHash.y1 || prevState.y2 !== newHash.y2 || prevState.map !== newHash.map) {
 			const labels = state.binTableData.columnsInfo.map(ci => ci.label);
 			saveToRestheart({
 				previewMapGraph: Object.assign({}, newHash, {
-					y1Label: labels[newHash.y1],
-					y2Label: labels[newHash.y2],
-					mapLabel: labels[newHash.map],
+					y1: labels[newHash.y1],
+					y2: labels[newHash.y2],
+					map: labels[newHash.map],
 				})
 			});
 		}

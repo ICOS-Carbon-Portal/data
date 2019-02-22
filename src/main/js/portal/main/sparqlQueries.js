@@ -41,11 +41,21 @@ where{
 
 
 export function dobjOriginsAndCounts(config){
+	//This is needed to get rid of duplicates due to multiple labels for stations.
+	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
+	const fromClauses = config.envri == 'ICOS'
+		? `from <http://meta.icos-cp.eu/resources/cpmeta/>
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <http://meta.icos-cp.eu/resources/stations/>
+from <http://meta.icos-cp.eu/resources/wdcgg/>`
+		: '';
+
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
 (if(bound(?stationName), ?station0, ?stationName) as ?station)
-(if(bound(?stationName), ?stationName, "(not applicable)") as ?stationLabel)
+(if(bound(?stationName), CONCAT(?stPrefix, ?stationName), "(not applicable)") as ?stationLabel)
+${fromClauses}
 where{
 	{
 		select * where{
@@ -56,15 +66,16 @@ where{
 				cpmeta:hasStatSubmitter ?submitter
 			] .
 			OPTIONAL{?station0 cpmeta:hasName ?stationName}
+			OPTIONAL{?station0 cpmeta:hasStationId ?stId}
 		}
 	}
+	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	?spec cpmeta:hasAssociatedProject ?projectUri .
-	FILTER NOT EXISTS {?projectUri cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	?submitter cpmeta:hasName ?submitterLabel .
 	?spec cpmeta:hasAssociatedProject ?project .
+	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	?submitter cpmeta:hasName ?submitterLabel .
 	?project rdfs:label ?projectLabel .
-}`;
+	}`;
 }
 
 export function findDobjs(config, search){
@@ -147,8 +158,7 @@ ${fromClause}where {
 	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .
 	${submitterValues}?dobj cpmeta:wasSubmittedBy [
-		prov:endedAtTime ?submTime ;
-		prov:wasAssociatedWith ?submitter
+		prov:endedAtTime ?submTime ${isEmpty(submitters) ? '' : '; prov:wasAssociatedWith ?submitter'}
 	] .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
@@ -201,7 +211,7 @@ const getFilterClauses = (config, filters) => {
 export const extendedDataObjectInfo = (config, dobjs) => {
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
 	VALUES ?dobj { ${dobjs.join(' ')} }
 	?dobj cpmeta:hasObjectSpec ?specUri .
 	OPTIONAL{ ?specUri cpmeta:hasDataTheme [

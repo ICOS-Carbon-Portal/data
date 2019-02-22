@@ -10,7 +10,8 @@ const initState = {
 	selectOptions: [],
 	radios: [],
 	center: undefined,
-	zoom: undefined
+	zoom: undefined,
+	prevState: {}
 };
 
 export default function(state = initState, action){
@@ -45,7 +46,6 @@ export default function(state = initState, action){
 			y2 = state.value2Idx;
 			map = state.mapValueIdx;
 
-
 			const value1Idx = y1 !== undefined && action.binTableData.indices.data.includes(y1)
 				? y1
 				: action.binTableData.indices.data[action.binTableData.indices.data.length - 1];
@@ -61,6 +61,7 @@ export default function(state = initState, action){
 			];
 
 			return update({
+				objId: action.objId,
 				binTableData: action.binTableData,
 				mapValueIdx,
 				value1Idx,
@@ -78,7 +79,8 @@ export default function(state = initState, action){
 			return update({
 				value1Idx: action.value1Idx,
 				radios,
-				mapValueIdx: action.value1Idx
+				mapValueIdx: action.value1Idx,
+				prevState: getPrevState(state)
 			});
 
 		case VARIABLE_Y2_SELECTED:
@@ -90,14 +92,15 @@ export default function(state = initState, action){
 			return update({
 				value2Idx: action.value2Idx,
 				radios,
-				mapValueIdx: action.value2Idx
+				mapValueIdx: action.value2Idx,
+				prevState: getPrevState(state)
 			});
 
 		case MAP_STATE_CHANGED:
-			// console.log({center: action.center, zoom: action.zoom, url: window.location});
 			return update({
 				center: action.center,
-				zoom: action.zoom
+				zoom: action.zoom,
+				prevState: getPrevState(state)
 			});
 
 		default:
@@ -127,4 +130,15 @@ const getRadioData = (binTableData, idx, isActive) => {
 	const txt = variable ? variable.label : 'Waiting for data...';
 
 	return {txt, isActive, actionTxt: idx};
+};
+
+const getPrevState = state => {
+	return {
+		objId: state.objId,
+		y1: state.value1Idx,
+		y2: state.value2Idx,
+		map: state.mapValueIdx,
+		center: state.center,
+		zoom: state.zoom
+	};
 };

@@ -50,6 +50,7 @@ const fetchTableFormatNrows = objId => dispatch => {
 					.then(binTable => {
 						dispatch({
 							type: BINTABLE_FETCHED,
+							objId,
 							binTableData: binTableData.withBinTable(binTable)
 						});
 					});

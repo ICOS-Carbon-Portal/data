@@ -96,7 +96,7 @@ export default class App {
 						if (params.get('linking') === 'concatenate'){
 							this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
 								? params.get('legendLabels').split(',')[0]
-								: getYLabel(object.tableFormat, params.get('y')));
+								: getLabel(object.tableFormat, params.get('y')));
 
 						} else {
 							objects.forEach((object, idx) => {
@@ -127,10 +127,10 @@ export default class App {
 			}
 		)
 		.then(binTables => {
-			if (binTables.length > 1) {
+			if (binTables.length > 0) {
 				this.graph.updateOptions({ labels: this.labels });
+				this.drawGraph(binTables);
 			}
-			this.drawGraph(binTables)
 		})
 		.catch(err => {
 			this.showSpinner(false);
@@ -142,12 +142,13 @@ export default class App {
 		this.showSpinner(true);
 
 		const params = this.params;
-		const xlabel = getColInfoParam(tableFormat, params.get('x'), 'label');
-		const ylabel = getYLabel(tableFormat, params.get('y'));
+		const xlabel = getLabel(tableFormat, params.get('x'));
+		const ylabel = getLabel(tableFormat, params.get('y'));
 		const labelCount = params.get('linking') === 'concatenate' ? 2 : params.get('objId').split(',').length + 1;
 		const labels = Array(labelCount).fill('');
+		const xLegendLabel = getColInfoParam(tableFormat, params.get('x'), 'label');
 		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
-		const formatters = getFormatters(xlabel, valueFormatX);
+		const formatters = getFormatters(xLegendLabel, valueFormatX);
 		const drawPoints = params.get('type') !== 'line';
 
 		this.graph = new Dygraph(
@@ -302,7 +303,7 @@ const getFormatters = (xlabel, valueFormatX) => {
 			return {valueFormatter: parseDatetime(sec2ms, "hms", formatLbl), axisLabelFormatter: parseDatetime(sec2ms, "hm")};
 
 		default:
-			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val};
+			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
 };
 
@@ -318,10 +319,11 @@ const getColInfoParam = (tableFormat, colName, param) => {
 	return tableFormat.columns(tableFormat.getColumnIndex(colName))[param];
 };
 
-const getYLabel = (tableFormat, colName) => {
+const getLabel = (tableFormat, colName) => {
 	const unit = getColInfoParam(tableFormat, colName, 'unit');
 	const label = getColInfoParam(tableFormat, colName, 'label');
-	return unit !== '?' ? `${label}, ${unit}` : label;
+
+	return unit === '?' ? label : `${label} [${unit}]`;
 };
 
 const fail = (message) => {

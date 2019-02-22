@@ -17,19 +17,17 @@ export default class SimpleObjectTableRow extends Component{
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		const lookup = props.lookup;
-		const checkedObjects = props.checkedObjects;
 		const extendedInfo = props.extendedInfo
 			? props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
+		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled
 			? 'You cannot download or preview level 0 data through this portal'
 			: `Click to select this data object for preview or add to cart`;
-		// console.log({checkedObjects, lookup, lookupType: lookup.getSpecLookupType(objInfo.spec), objInfo, isChecked: props.isChecked, checkboxDisabled: objInfo.level === 0 ? "disabled" : "", title});
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -57,6 +55,7 @@ export default class SimpleObjectTableRow extends Component{
 						}
 						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={'//static.icos-cp.eu/images/icons/calendar.svg'} />
 						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
+						<ExtendedInfoItem item={samplingHeight} icon={'//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg'} iconHeight={15} title="Sampling height" />
 					</div>
 					}
 				</td>
@@ -65,12 +64,13 @@ export default class SimpleObjectTableRow extends Component{
 	}
 }
 
-const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0}) => {
-	if (item && icon) {
-		return <span className="extended-info-item" >
-			<img src={icon} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
-		</span>;
-	}
+const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title}) => {
+	return (item && icon
+		? <span className="extended-info-item" >
+			<img src={icon} title={title} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
+		</span>
+		: null
+	);
 };
 
 function formatDate(d){
