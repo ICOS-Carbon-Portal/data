@@ -55,7 +55,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		val entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`, source.map(b => b))
 		val req = HttpRequest(uri = uri, method = HttpMethods.PUT, entity = entity)
 
-		withAuth(req).flatMap(ensureSuccess).flatMap{resp =>
+		withAuth(req).flatMap(discardPayload).flatMap{resp =>
 			val hashTry = resp.headers.collectFirst{
 				case header if header.is("x-checksum") =>
 					Sha256Sum.fromBase64(header.value.stripPrefix("sha2:"))
@@ -86,17 +86,10 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		HttpRequest(uri = getUri(item).withRawQueryString("notrash"), method = HttpMethods.DELETE)
 	).flatMap(failIfNotSuccess)
 
-	def exists(item: B2StageItem): Future[Boolean] = withAuth(
-			HttpRequest(uri = getUri(item), method = HttpMethods.HEAD)
-		).flatMap(resp =>
-			resp.status match{
-				case StatusCodes.NotFound =>
-					resp.discardEntityBytes()
-					Future.successful(false)
-				case _ =>
-					failIfNotSuccess(resp).map(_ => true)
-			}
-		)
+	def exists(item: B2StageItem): Future[Boolean] =
+		withAuth(HttpRequest(uri = getUri(item), method = HttpMethods.HEAD))
+			.flatMap(discardPayload)
+			.map(_.status != StatusCodes.NotFound)
 
 	private def withAuth(req: HttpRequest): Future[HttpResponse] = http.singleRequest{
 		req.withHeaders(req.headers :+ authHeader)
@@ -111,8 +104,9 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		_.entity.dataBytes.runWith(Sink.ignore)
 	}
 
-	private def ensureSuccess(resp: HttpResponse): Future[HttpResponse] = analyzeResponse(resp){
-		Future.successful
+	private def discardPayload(resp: HttpResponse): Future[HttpResponse] = analyzeResponse(resp){r =>
+		r.discardEntityBytes()
+		Future.successful(r)
 	}
 
 	private def analyzeResponse[T](resp: HttpResponse)(extractor: HttpResponse => Future[T]): Future[T] = {
