@@ -4,6 +4,7 @@ import { AnimatedToasters } from 'icos-cp-toaster';
 import { statsUpdate, fetchDownloadStats, requestPage, fetchDownloadStatsPerDateUnit, setViewMode } from '../actions';
 import Radio from "../components/Radio.jsx";
 import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
+import config from '../config';
 
 
 export class App extends Component {
@@ -32,7 +33,7 @@ export class App extends Component {
 
 				<div className="page-header">
 					<h1>
-						ICOS Data Statistics
+						{config.envri} Data Statistics
 						<Radio
 							horizontal={true}
 							containerStyle={{display:'inline', float:'right'}}
