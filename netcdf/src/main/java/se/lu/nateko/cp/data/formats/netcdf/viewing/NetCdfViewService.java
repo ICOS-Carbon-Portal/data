@@ -19,7 +19,7 @@ public interface NetCdfViewService {
 		throws IOException,
 		InvalidRangeException;
 
-	public double[] getTemporalCrossSection(String varName, int lonInd, int latInd, String elevation)
+	public double[] getTemporalCrossSection(String varName, int latInd, int lonInd, String elevation)
 		throws IOException,
 		InvalidRangeException;
 

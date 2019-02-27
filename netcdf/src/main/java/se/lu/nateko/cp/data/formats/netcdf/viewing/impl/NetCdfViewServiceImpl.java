@@ -330,7 +330,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		}
 	}
 
-	public double[] getTemporalCrossSection(String varName, int lonInd, int latInd, String elevation)
+	public double[] getTemporalCrossSection(String varName, int latInd, int lonInd, String elevation)
 		throws IOException,
 		InvalidRangeException
 	{
@@ -353,13 +353,17 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			int latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
 
 			int sizeDate = ncVar.getDimension(dateDimInd).getLength();
+			int sizeLat = ncVar.getDimension(latDimInd).getLength();
+
+			Array latValues = ds.findVariable(variables.getLatVariable()).read();
+			boolean latSorted = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1);
 
 			int[] origin = new int[dimCount];
 			int[] size = new int[dimCount];
 
 			origin[dateDimInd] = 0;
 			origin[lonDimInd] = lonInd;
-			origin[latDimInd] = latInd;
+			origin[latDimInd] = latSorted ? latInd : (sizeLat - 1 - latInd);
 
 			size[dateDimInd] = sizeDate;
 			size[lonDimInd] = 1;
@@ -388,7 +392,6 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			}
 
 			Section sec = new Section(origin, size);
-
 			Array arrFullDim = ncVar.read(sec);
 
 			return (double[])arrFullDim.get1DJavaArray(double.class);

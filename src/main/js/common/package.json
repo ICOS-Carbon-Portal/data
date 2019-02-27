@@ -26,7 +26,8 @@
  "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
  "devDependencies": {
   "babel-preset-es2015": "^6.24.1",
-  "babel-preset-react": "^6.24.1"
+  "babel-preset-react": "^6.24.1",
+  "browserify-css": "^0.14.0"
  },
  "dependencies": {
   "icos-cp-spatial": "^0.2.0",

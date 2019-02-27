@@ -1,6 +1,7 @@
 import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
 	SERVICE_SET, SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
-	PUSH_PLAY, INCREMENT_RASTER, SERVICES_FETCHED, TITLE_FETCHED} from './actions';
+	PUSH_PLAY, INCREMENT_RASTER, SERVICES_FETCHED, TITLE_FETCHED, TIMESERIE_FETCHED, TOGGLE_TS_SPINNER,
+	TIMESERIE_RESET} from './actions';
 import {Control} from './models/ControlsHelper';
 import ColorMaker from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
@@ -41,7 +42,7 @@ export default function(state, action){
 		case TITLE_FETCHED:
 			return update({
 				title: action.title
-			})
+			});
 
 		case VARIABLES_AND_DATES_FETCHED:
 			if (isFetched(state, action)){
@@ -130,6 +131,23 @@ export default function(state, action){
 				})
 				: state;
 
+		case TIMESERIE_FETCHED:
+			return update({
+				timeserieData: getTimeserieData(state.controls.dates.values, action.yValues),
+				latlng: {
+					lat: action.latlng.lat.toFixed(3),
+					lng: action.latlng.lng.toFixed(3)
+				}
+			});
+
+		case TIMESERIE_RESET:
+			return update({timeserieData: []});
+
+		case TOGGLE_TS_SPINNER:
+			return update({
+				showTSSpinner: action.showTSSpinner
+			});
+
 		case PUSH_PLAY:
 			const playingMovie = !state.playingMovie;
 			const did = playingMovie
@@ -154,6 +172,12 @@ export default function(state, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
+
+const getTimeserieData = (dates, yValues) => {
+	return dates.length === yValues.length
+		? dates.map((date, idx) => [new Date(date), yValues[idx]])
+		: [[0, 1]];
+};
 
 function filterElevations(elevations){
 	//TODO: Remove this when backend filters elevations

@@ -1,10 +1,13 @@
 import React, { Component } from 'react';
-import NetCDFMap from 'icos-cp-netcdfmap';
+import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
 import {throttle} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
+import {ShowTimeserie} from '../controls/ShowTimeserie';
+import Timeserie from './Timeserie.jsx';
+import Events from '../models/Events';
 
 
 const minHeight = 300;
@@ -13,7 +16,8 @@ export default class Map extends Component {
 	constructor(props){
 		super(props);
 		this.state = {
-			height: null
+			height: null,
+			isShowTimeserieActive: false
 		};
 
 		this.countriesTs = Date.now();
@@ -23,8 +27,11 @@ export default class Map extends Component {
 		this.objId = location.pathname.split('/').filter(part => part.length > 20).pop();
 		this.prevVariables = undefined;
 
-		this.hightUpdater = throttle(this.updateHeight.bind(this));
-		window.addEventListener("resize", this.hightUpdater);
+		this.events = new Events();
+		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this)));
+
+		this.showTimeserie = new ShowTimeserie(this.timeserieToggle.bind(this), this.timeserieMapClick.bind(this));
+		this.getRasterXYFromLatLng = undefined;
 	}
 
 	componentDidMount(){
@@ -67,12 +74,23 @@ export default class Map extends Component {
 		this.setState({height: this.legendDiv.clientHeight});
 	}
 
-	componentDidUpdate(){
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.raster){
+			this.getRasterXYFromLatLng = getRasterXYFromLatLng(nextProps.raster);
+
+			// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
+			if (this.props.controls.services.selected !== nextProps.controls.services.selected) {
+				this.closeTimeserie();
+			}
+		}
+	}
+
+	componentDidUpdate(nextProps){
 		this.updateURL();
 	}
 
 	componentWillUnmount(){
-		window.removeEventListener("resize", this.hightUpdater);
+		this.events.clear();
 	}
 
 	mapEventCallback(event, payload){
@@ -81,6 +99,30 @@ export default class Map extends Component {
 			this.center = [payload.center.lat.toFixed(decimals), payload.center.lng.toFixed(decimals)];
 			this.zoom = payload.zoom;
 			this.updateURL();
+		}
+	}
+
+	timeserieToggle(isShowTimeserieActive){
+		this.setState({isShowTimeserieActive});
+
+		if (!isShowTimeserieActive) this.props.resetTimeserieData();
+	}
+
+	closeTimeserie(){
+		// Click button in control
+		this.showTimeserie.deactivate();
+	}
+
+	timeserieMapClick(e){
+		if (this.getRasterXYFromLatLng && this.props.fetchTimeSerie) {
+			const objId = this.props.controls.services.selected;
+			const variable = this.props.controls.variables.selected;
+			const elevation = this.props.controls.elevations.selected;
+			const xy = this.getRasterXYFromLatLng(e.latlng);
+
+			if (xy && this.props.fetchTimeSerie) {
+				this.props.fetchTimeSerie({objId, variable, elevation, x: xy.x, y: xy.y, latlng: e.latlng});
+			}
 		}
 	}
 
@@ -124,6 +166,16 @@ export default class Map extends Component {
 						handleGammaChange={props.gammaChanged}
 						handleElevationChange={props.elevationChanged}
 					/>
+
+					<Timeserie
+						isActive={state.isShowTimeserieActive}
+						varName={props.controls.variables.selected}
+						timeserieData={props.timeserieData}
+						latlng={props.latlng}
+						showTSSpinner={props.showTSSpinner}
+						closeTimeserie={this.closeTimeserie.bind(this)}
+					/>
+
 					<div id="map">
 						<NetCDFMap
 							mapOptions={{
@@ -135,6 +187,7 @@ export default class Map extends Component {
 							colorMaker={colorMaker}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
+							controls={[this.showTimeserie]}
 							events={[
 								{
 									event: 'moveend',
@@ -169,6 +222,21 @@ export default class Map extends Component {
 	}
 }
 
+const getRasterXYFromLatLng = raster => {
+	const tileHelper = getTileHelper(raster);
+
+	return latlng => {
+		const xy = tileHelper.lookupPixel(latlng.lng, latlng.lat);
+
+		return xy
+			? {
+				x: Math.round(xy.x - 0.5),
+				y: Math.round(xy.y - 0.5)
+			}
+			: undefined;
+	}
+};
+
 const getLatLngBounds = (rasterFetchCount, initCenter, initZoom, raster) => {
 	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
 		? L.latLngBounds(
@@ -178,7 +246,7 @@ const getLatLngBounds = (rasterFetchCount, initCenter, initZoom, raster) => {
 		: undefined;
 };
 
-const Spinner = props => {
+export const Spinner = props => {
 	return props.show
 		? <div id="cp-spinner">
 			<div className="bounce1" />

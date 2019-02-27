@@ -1,4 +1,4 @@
-import {sparql, getBinRaster, getJson} from 'icos-cp-backend';
+import {sparql, getBinRaster, getJson, BinTable} from 'icos-cp-backend';
 import {feature} from 'topojson';
 import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
@@ -49,4 +49,8 @@ export const getTitle = (objId) => {
 					: Promise.reject(new Error("Could not get dobjs from meta"));
 			}
 		);
-}
+};
+
+export const getTimeserie = ({objId, variable, elevation, x, y}) => {
+	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}&elevation=${elevation}&lonInd=${x}&latInd=${y}`);
+};
