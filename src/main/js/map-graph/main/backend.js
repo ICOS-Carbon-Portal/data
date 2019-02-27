@@ -13,13 +13,19 @@ export function getTableFormatNrows(config, objId){
 				return solution
 					? Promise.resolve({
 						objSpec: solution.objSpec.value,
-						nRows: parseInt(solution.nRows.value)
+						nRows: parseInt(solution.nRows.value),
+						colNames: solution.colNames ? JSON.parse(solution.colNames.value) : undefined
 					})
 					: Promise.reject(new Error(`Data object ${objId} does not exist or is not an ingested time series`));
 			}
 		).then(
-			({objSpec, nRows}) => tableFormatForSpecies(objSpec, config)
-				.then(tableFormat => {return {tableFormat, nRows};})
+			({objSpec, nRows, colNames}) => tableFormatForSpecies(objSpec, config)
+				.then(tableFormat => {
+					return {
+						tableFormat: colNames ? tableFormat.withColumnNames(colNames) : tableFormat,
+						nRows
+					};
+				})
 		);
 }
 
