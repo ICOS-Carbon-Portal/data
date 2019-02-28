@@ -11,27 +11,34 @@ import se.lu.nateko.cp.data.formats.netcdf.viewing.DimensionsSpecification;
 import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService;
 import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster;
 import se.lu.nateko.cp.data.formats.netcdf.viewing.VariableSpecification;
-import ucar.ma2.*;
+import ucar.ma2.Array;
+import ucar.ma2.ArrayFloat;
+import ucar.ma2.InvalidRangeException;
+import ucar.ma2.MAMath;
+import ucar.ma2.Section;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.VariableDS;
 import ucar.nc2.time.CalendarDate;
 
-public class NetCdfViewServiceImpl implements NetCdfViewService{
+public class NetCdfViewServiceImpl implements NetCdfViewService {
 
 	private DimensionsSpecification dimensions = new DimensionsSpecification();
+
 	private VariableSpecification variables = new VariableSpecification();
-		
+
 	private File file = null;
 
-	public NetCdfViewServiceImpl(String fileName, List<String> dates, List<String> lats, List<String> longs, List<String> elevations){
+	public NetCdfViewServiceImpl(String fileName, List<String> dates, List<String> lats, List<String> longs,
+			List<String> elevations)
+	{
 		file = new File(fileName);
 		NetcdfDataset ds = null;
 
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
-			
+
 			if (dates != null) {
 				for (String value : dates) {
 					if (ds.findVariable(value) != null) {
@@ -39,8 +46,8 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 						break;
 					}
 				}
-			} 
-			
+			}
+
 			if (lats != null) {
 				for (String value : lats) {
 					if (ds.findVariable(value) != null) {
@@ -49,7 +56,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 					}
 				}
 			}
-			
+
 			if (longs != null) {
 				for (String value : longs) {
 					if (ds.findVariable(value) != null) {
@@ -67,27 +74,36 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 					}
 				}
 			}
-			
-			dimensions.setDateDimension(ds.findVariable(variables.getDateVariable()).getDimension(0).getShortName());
-			dimensions.setLatDimension(ds.findVariable(variables.getLatVariable()).getDimension(0).getShortName());
-			dimensions.setLonDimension(ds.findVariable(variables.getLonVariable()).getDimension(0).getShortName());
-			dimensions.setElevationDimension(ds.findVariable(variables.getElevationVariable()).getDimension(0).getShortName());
-			
-		} catch (Exception e) {
-			
-		} finally {
-			if(ds != null)
+
+			dimensions.setDateDimension(
+					ds.findVariable(variables.getDateVariable()).getDimension(0).getShortName());
+			dimensions.setLatDimension(
+					ds.findVariable(variables.getLatVariable()).getDimension(0).getShortName());
+			dimensions.setLonDimension(
+					ds.findVariable(variables.getLonVariable()).getDimension(0).getShortName());
+			dimensions.setElevationDimension(
+					ds.findVariable(variables.getElevationVariable()).getDimension(0).getShortName());
+
+		}
+		catch (Exception e) {
+
+		}
+		finally {
+			if (ds != null)
 				try {
 					ds.close();
-				} catch (IOException e) {
-					
+				}
+				catch (IOException e) {
+
 				}
 		}
-		
+
 	}
 
 	@Override
-	public String[] getAvailableDates() throws IOException {
+	public String[] getAvailableDates()
+		throws IOException
+	{
 		NetcdfDataset ds = null;
 
 		try {
@@ -100,19 +116,22 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
 
-			return sliceAxis.getCalendarDates()
-					.stream()
-					.map(calendarDate -> calendarDate.toString())
-					.toArray(n -> new String[n]); 
-		} catch (IOException ioe) {
+			return sliceAxis.getCalendarDates().stream().map(calendarDate -> calendarDate.toString()).toArray(
+					n -> new String[n]);
+		}
+		catch (IOException ioe) {
 			throw new IOException("Could not open file " + file.getAbsolutePath());
-		}finally{
-			if(ds != null) ds.close();
+		}
+		finally {
+			if (ds != null)
+				ds.close();
 		}
 	}
 
 	@Override
-	public String[] getAvailableElevations(String varName) throws IOException {
+	public String[] getAvailableElevations(String varName)
+		throws IOException
+	{
 		if (variables.elevationVariable != null) {
 			NetcdfDataset ds = null;
 
@@ -127,8 +146,8 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 				if (dimIndex > 0) {
 					// It does. Continue to extract values from variable
 					Variable ncVar = ds.findVariable(variables.elevationVariable);
-					ArrayFloat data = (ArrayFloat) ncVar.read();
-					float[] jArr = (float[]) data.copyTo1DJavaArray();
+					ArrayFloat data = (ArrayFloat)ncVar.read();
+					float[] jArr = (float[])data.copyTo1DJavaArray();
 					String[] result = new String[jArr.length];
 
 					for (int i = 0; i < jArr.length; i++) {
@@ -136,27 +155,34 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 					}
 
 					return result;
-				} else {
-					return new String[] {"null"};
+				}
+				else {
+					return new String[] { "null" };
 				}
 
-			} catch (IOException ioe) {
-				throw new IOException("Could not open file " + file.getAbsolutePath());
-			} finally {
-				if (ds != null) ds.close();
 			}
-		} else {
-			return new String[] {"null"};
+			catch (IOException ioe) {
+				throw new IOException("Could not open file " + file.getAbsolutePath());
+			}
+			finally {
+				if (ds != null)
+					ds.close();
+			}
+		}
+		else {
+			return new String[] { "null" };
 		}
 	}
-	
+
 	@Override
-	public String[] getVariables() throws IOException {
+	public String[] getVariables()
+		throws IOException
+	{
 		NetcdfDataset ds = null;
 
 		try {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
-			
+
 			List<String> varList = new ArrayList<String>();
 
 			for (Variable var : ds.getVariables()) {
@@ -164,22 +190,27 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 				if (var.getRank() == 3
 						&& var.getDimension(0).getShortName().equals(dimensions.getDateDimension())
 						&& var.getDimension(1).getShortName().equals(dimensions.getLatDimension())
-						&& var.getDimension(2).getShortName().equals(dimensions.getLonDimension())){
+						&& var.getDimension(2).getShortName().equals(dimensions.getLonDimension()))
+				{
 
 					varList.add(var.getShortName());
 
-				} else if (var.getRank() == 3
+				}
+				else if (var.getRank() == 3
 						&& var.getDimension(0).getShortName().equals(dimensions.getDateDimension())
 						&& var.getDimension(1).getShortName().equals(dimensions.getLonDimension())
-						&& var.getDimension(2).getShortName().equals(dimensions.getLatDimension())) {
+						&& var.getDimension(2).getShortName().equals(dimensions.getLatDimension()))
+				{
 
 					varList.add(var.getShortName());
 
-				} else if (var.getRank() == 4
+				}
+				else if (var.getRank() == 4
 						&& var.getDimension(0).getShortName().equals(dimensions.getDateDimension())
 						&& var.getDimension(1).getShortName().equals(dimensions.getElevationDimension())
 						&& var.getDimension(2).getShortName().equals(dimensions.getLatDimension())
-						&& var.getDimension(3).getShortName().equals(dimensions.getLonDimension())) {
+						&& var.getDimension(3).getShortName().equals(dimensions.getLonDimension()))
+				{
 
 					varList.add(var.getShortName());
 				}
@@ -187,15 +218,21 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 			return varList.toArray(new String[varList.size()]);
 
-		} catch (IOException ioe) {
-			throw new IOException("Could not open file " + file.getAbsolutePath());
-		}finally{
-			if(ds != null) ds.close();
 		}
-	}	
-	
+		catch (IOException ioe) {
+			throw new IOException("Could not open file " + file.getAbsolutePath());
+		}
+		finally {
+			if (ds != null)
+				ds.close();
+		}
+	}
+
 	@Override
-	public Raster getRaster(String time, String varName, String elevation) throws IOException, InvalidRangeException {
+	public Raster getRaster(String time, String varName, String elevation)
+		throws IOException,
+		InvalidRangeException
+	{
 		NetcdfDataset ds = null;
 
 		try {
@@ -203,10 +240,11 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 			Variable ncVar = ds.findVariable(varName);
 
-			int dimCount = ncVar.getDimensions().size();
+			int dimCount = ncVar.getRank();
 
-			if(dimCount < 3 || dimCount > 4){
-				throw new IllegalArgumentException("The variable " + varName + " contains an illegal number of dimensions (" + dimCount + ")");
+			if (dimCount < 3 || dimCount > 4) {
+				throw new IllegalArgumentException("The variable " + varName
+						+ " contains an illegal number of dimensions (" + dimCount + ")");
 			}
 
 			int dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension());
@@ -227,55 +265,48 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 			CalendarDate date = CalendarDate.parseISOformat("gregorian", time);
 			int dateVarInd = sliceAxis.findTimeIndexFromCalendarDate(date);
 
-			int[] origin, size;
+			int[] origin = new int[dimCount];
+			int[] size = new int[dimCount];
 
-			if (dimCount == 3) {
-				origin = new int[ncVar.getRank()];
-				origin[dateDimInd] = dateVarInd;
-				origin[lonDimInd] = 0;
-				origin[latDimInd] = 0;
+			origin[dateDimInd] = dateVarInd;
+			origin[lonDimInd] = 0;
+			origin[latDimInd] = 0;
 
-				size = new int[ncVar.getRank()];
-				size[dateDimInd] = 1;
-				size[lonDimInd] = sizeLon;
-				size[latDimInd] = sizeLat;
-			} else {
+			size[dateDimInd] = 1;
+			size[lonDimInd] = sizeLon;
+			size[latDimInd] = sizeLat;
+
+			if (dimCount == 4) {
 				int elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension());
 				Variable elevationVar = ds.findVariable(variables.elevationVariable);
 				float elFloat = Float.parseFloat(elevation);
 				int elevationVarInd = 0;
 
 				//Find the elevation value
-				while(elevationVarInd < elevationVar.getSize() && elevationVar.slice(0, elevationVarInd).readScalarFloat() != elFloat){
+				while (elevationVarInd < elevationVar.getSize()
+						&& elevationVar.slice(0, elevationVarInd).readScalarFloat() != elFloat)
+				{
 					elevationVarInd++;
 				}
 
-				if (elevationVarInd >= elevationVar.getSize()){
-					throw new IndexOutOfBoundsException("Could not find the elevation value " + elevation + " in variable " + varName);
+				if (elevationVarInd >= elevationVar.getSize()) {
+					throw new IndexOutOfBoundsException(
+							"Could not find the elevation value " + elevation + " in variable " + varName);
 				}
 
-				origin = new int[ncVar.getRank()];
-				origin[dateDimInd] = dateVarInd;
 				origin[elevationDimInd] = elevationVarInd;
-				origin[lonDimInd] = 0;
-				origin[latDimInd] = 0;
-
-				size = new int[ncVar.getRank()];
-				size[dateDimInd] = 1;
 				size[elevationDimInd] = 1;
-				size[lonDimInd] = sizeLon;
-				size[latDimInd] = sizeLat;
 			}
-			
+
 			Section sec = new Section(origin, size);
 
 			Array arrFullDim = ncVar.read(sec);
 			double fullMin = MAMath.getMinimum(arrFullDim);
 			double fullMax = MAMath.getMaximum(arrFullDim);
-			
+
 			ucar.nc2.dt.grid.GridDataset griddataset = new ucar.nc2.dt.grid.GridDataset(ds);
 			ucar.unidata.geoloc.LatLonRect latLonRect = griddataset.getBoundingBox();
-			
+
 			double latMin = latLonRect.getLatMin();
 			double latMax = latLonRect.getLatMax();
 			double lonMin = latLonRect.getLonMin();
@@ -286,15 +317,90 @@ public class NetCdfViewServiceImpl implements NetCdfViewService{
 
 			griddataset.close();
 
-			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, latMin, latMax, lonMin, lonMax);
+			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, latMin,
+					latMax, lonMin, lonMax);
 
-		} catch (IOException ioe) {
+		}
+		catch (IOException ioe) {
 			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
-		}finally{
-			if(ds != null) ds.close();
+		}
+		finally {
+			if (ds != null)
+				ds.close();
 		}
 	}
 
+	public double[] getTemporalCrossSection(String varName, int lonInd, int latInd, String elevation)
+		throws IOException,
+		InvalidRangeException
+	{
+		NetcdfDataset ds = null;
 
+		try {
+			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+
+			Variable ncVar = ds.findVariable(varName);
+
+			int dimCount = ncVar.getRank();
+
+			if (dimCount < 3 || dimCount > 4) {
+				throw new IllegalArgumentException("The variable " + varName
+						+ " contains an illegal number of dimensions (" + dimCount + ")");
+			}
+
+			int dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension());
+			int lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension());
+			int latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension());
+
+			int sizeDate = ncVar.getDimension(dateDimInd).getLength();
+
+			int[] origin = new int[dimCount];
+			int[] size = new int[dimCount];
+
+			origin[dateDimInd] = 0;
+			origin[lonDimInd] = lonInd;
+			origin[latDimInd] = latInd;
+
+			size[dateDimInd] = sizeDate;
+			size[lonDimInd] = 1;
+			size[latDimInd] = 1;
+
+			if (dimCount == 4) {
+				int elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension());
+				Variable elevationVar = ds.findVariable(variables.elevationVariable);
+				float elFloat = Float.parseFloat(elevation);
+				int elevationVarInd = 0;
+
+				//Find the elevation value
+				while (elevationVarInd < elevationVar.getSize()
+						&& elevationVar.slice(0, elevationVarInd).readScalarFloat() != elFloat)
+				{
+					elevationVarInd++;
+				}
+
+				if (elevationVarInd >= elevationVar.getSize()) {
+					throw new IndexOutOfBoundsException(
+							"Could not find the elevation value " + elevation + " in variable " + varName);
+				}
+
+				origin[elevationDimInd] = elevationVarInd;
+				size[elevationDimInd] = 1;
+			}
+
+			Section sec = new Section(origin, size);
+
+			Array arrFullDim = ncVar.read(sec);
+
+			return (double[])arrFullDim.get1DJavaArray(double.class);
+
+		}
+		catch (IOException ioe) {
+			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
+		}
+		finally {
+			if (ds != null)
+				ds.close();
+		}
+	}
 
 }

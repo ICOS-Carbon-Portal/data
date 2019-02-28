@@ -6,8 +6,21 @@ import ucar.ma2.InvalidRangeException;
 
 public interface NetCdfViewService {
 
-	String[] getAvailableDates() throws IOException;
-	String[] getAvailableElevations(String varName) throws IOException;
-	String[] getVariables() throws IOException;
-	Raster getRaster(String time, String varName, String elevation) throws IOException, InvalidRangeException;
+	String[] getAvailableDates()
+		throws IOException;
+
+	String[] getAvailableElevations(String varName)
+		throws IOException;
+
+	String[] getVariables()
+		throws IOException;
+
+	Raster getRaster(String time, String varName, String elevation)
+		throws IOException,
+		InvalidRangeException;
+
+	public double[] getTemporalCrossSection(String varName, int lonInd, int latInd, String elevation)
+		throws IOException,
+		InvalidRangeException;
+
 }

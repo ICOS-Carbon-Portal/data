@@ -45,6 +45,14 @@ object NetcdfRoute {
 						.getRaster(date, varName, elevation.getOrElse(null))
 					complete(raster)
 				}
+			} ~
+			path("getCrossSection"){
+				parameters(('service, 'varName, 'latInd.as[Int], 'lonInd.as[Int], 'elevation.?)){(service, varName, latInd, lonInd, elevation) =>
+					val raster = factory
+						.getNetCdfViewService(service)
+						.getTemporalCrossSection(varName, latInd, lonInd, elevation.getOrElse(null))
+					complete(raster)
+				}
 			}
 		}
 
