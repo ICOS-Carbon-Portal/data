@@ -72,17 +72,27 @@ frontend := Def.inputTaskDyn {
 	val args: Seq[String] = sbt.Def.spaceDelimited().parsed
 
 	args.toList match {
-		case "build" :: app :: Nil =>
+		case "install" :: app :: Nil if jsApps.contains(app) =>
+			log.info(s"Install $app")
+			val projectDirectory = new File(s"src/main/js/$app/")
+			val exitCode = Process("npm install", projectDirectory).!
+			if (exitCode == 0) {
+				log.info("Finished npm install for " + app)
+			} else {
+				log.error(s"npm install for $app failed")
+			}
+		case "build" :: app :: Nil if jsApps.contains(app) =>
 			log.info(s"Build $app")
 			val projectDirectory = new File(s"src/main/js/$app/")
-			val exitCode = (Process("npm install", projectDirectory) #&& Process("npm run build", projectDirectory)).!
+			val exitCode = Process("npm run build", projectDirectory).!
 			if (exitCode == 0) {
 				log.info("Finished front-end build for " + app)
 			} else {
 				log.error(s"Front-end build for $app failed")
+				log.error(s"Did you run 'frontend install $app'?")
 			}
 		case _ =>
-			log.info("Usage: frontend build <app>, where app is one of: " + jsApps.mkString(", "))
+			log.error("Usage: frontend install/build <app>, where app is one of: " + jsApps.mkString(", "))
 	}
 	log.info("Copying resources folder contents to target")
 	copyResources in Compile
