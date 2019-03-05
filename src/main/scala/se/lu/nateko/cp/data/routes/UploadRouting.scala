@@ -34,6 +34,7 @@ import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
@@ -109,20 +110,23 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val download: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
-			onSuccess(uploadService.lookupPackage(hashsum)){dobj =>
-				licenceCookieDobjList{dobjs =>
-					deleteCookie(LicenceCookieName){
-						if(dobjs.contains(hashsum)) (accessRoute(dobj))
-						else reject
-					}
-				} ~
-				user{uid =>
-					onComplete(restHeart.getUserLicenseAcceptance(uid)){
-						case Success(true) => accessRoute(dobj)
-						case _ => reject
-					}
-				} ~
-				redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
+			onSuccess(uploadService.meta.lookupPackage(hashsum)){
+				case dobj: DataObject =>
+					licenceCookieDobjList{dobjs =>
+						deleteCookie(LicenceCookieName){
+							if(dobjs.contains(hashsum)) (accessRoute(dobj))
+							else reject
+						}
+					} ~
+					user{uid =>
+						onComplete(restHeart.getUserLicenseAcceptance(uid)){
+							case Success(true) => accessRoute(dobj)
+							case _ => reject
+						}
+					} ~
+					redirect(licenceUri(Seq(hashsum), None), StatusCodes.Found)
+				case doc: DocObject =>
+					docAccessRoute(doc)
 			}
 		}
 	}
@@ -219,6 +223,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
+	private def docAccessRoute(doc: DocObject): Route = {
+		val file = uploadService.getFile(doc)
+		if (file.exists) getFromFile(file, getContentType(doc.fileName))
+		else complete(StatusCodes.NotFound -> "Contents of this document are not found on the server.")
+	}
+
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
 		logPublicDownloadInfo(dobj, ip)
 		for(uid <- uidOpt){
@@ -233,7 +243,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 		Utils.runSequentially(hashes){hash =>
 			uploadService.meta.lookupPackage(hash).andThen{
-				case Success(dobj) => logPublicDownloadInfo(dobj, ip, extraInfo)
+				case Success(obj) => obj.asDataObject.foreach(logPublicDownloadInfo(_, ip, extraInfo))
 				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 			}
 		}

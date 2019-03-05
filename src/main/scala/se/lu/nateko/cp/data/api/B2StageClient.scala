@@ -22,7 +22,10 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.B2StageConfig
 import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.data.streams.DigestFlow
+import akka.stream.scaladsl.Keep
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Materializer) {
 
@@ -40,16 +43,17 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		BasicHttpCredentials(config.username, config.password)
 	)
 
-	def list(coll: IrodsColl): Future[Seq[B2StageItem]] = {
+	def list(coll: IrodsColl): Future[Seq[B2StageItem]] =
 		withAuth(HttpRequest(uri = getUri(coll)))
 			.flatMap(parseItemsIfOk)
-	}
 
-	def create(coll: IrodsColl): Future[Done] =
-		withAuth(HttpRequest(uri = getUri(coll), method = HttpMethods.PUT))
-			.flatMap(failIfNotSuccess)
+	def create(coll: IrodsColl): Future[Done] = if(config.dryRun) done else withAuth(
+			HttpRequest(uri = getUri(coll), method = HttpMethods.PUT)
+		).flatMap(failIfNotSuccess)
 
-	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Sha256Sum] = {
+	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Sha256Sum] = if(config.dryRun){
+		source.viaMat(DigestFlow.sha256)(Keep.right).to(Sink.ignore).run()
+	} else {
 
 		val uri = getUri(obj).withRawQueryString("force&checksum")
 		val entity = HttpEntity.Chunked(ContentTypes.`application/octet-stream`, source.map(b => b))
@@ -82,7 +86,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		.lazily(() => Source.fromFutureSource(downloadObjectOnce(obj)))
 		.mapMaterializedValue(_.flatten.map(_ => Done))
 
-	def delete(item: B2StageItem): Future[Done] = withAuth(
+	def delete(item: B2StageItem): Future[Done] = if(config.dryRun) done else withAuth(
 		HttpRequest(uri = getUri(item).withRawQueryString("notrash"), method = HttpMethods.DELETE)
 	).flatMap(failIfNotSuccess)
 

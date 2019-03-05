@@ -14,8 +14,9 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.data.DataObjectSpec
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
@@ -56,10 +57,10 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	private def hostOpt(implicit envri: Envri): Option[String] =
 		envriConfs.get(envri).map(_.metaPrefix.getHost)
 
-	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = {
+	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[StaticObject] = {
 		val url = baseUrl + "objects/" + hash.id
 		get(url, hostOpt).flatMap(
-			extractResult(Unmarshal(_).to[DataObject]){
+			extractResult(Unmarshal(_).to[StaticObject]){
 				case StatusCodes.NotFound => new MetadataObjectNotFound(hash)
 			}
 		)
@@ -74,8 +75,8 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		}
 	}
 
-	def userIsAllowedUpload(dataObj: DataObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
-		val submitter = dataObj.submission.submitter
+	def userIsAllowedUpload(obj: StaticObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
+		val submitter = obj.submission.submitter
 		val submitterUri = submitter.self.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
 			Uri.Query("submitter" -> submitterUri, "userId" -> user.email)
@@ -97,7 +98,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		val url = Uri(s"$baseUrl$uploadApiPath/etc")
 		post(url, meta, hostOpt(Envri.ICOS)).flatMap(extractIfSuccess{entity =>
 			entity.discardBytes()
-			Future.successful(Done)
+			done
 		})
 	}
 

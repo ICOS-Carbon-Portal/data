@@ -25,13 +25,8 @@ import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.meta.core.data.Envri
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.EnvriConfig
-import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
-import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
+import se.lu.nateko.cp.meta.core.data._
+import Envri.{Envri, EnvriConfigs}
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -49,8 +44,6 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 //	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
 	private val b2 = new B2StageClient(config.b2stage, Http())
-
-	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[DataObject] = meta.lookupPackage(hash)
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
@@ -86,7 +79,10 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	def reingest(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[Done] =
 		for(
-			dataObj <- meta.lookupPackage(hash);
+			obj <- meta.lookupPackage(hash);
+			dataObj = obj.asDataObject.getOrElse{
+				throw new CpDataException("Reingestion is only supported for DataObjects, not any StaticObjects")
+			};
 			_ <- meta.userIsAllowedUpload(dataObj, user);
 			origFile = getFile(dataObj);
 			ingTask <- {
@@ -112,12 +108,12 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		meta.lookupPackage(hash).flatMap(getSpecificSink)
 	}
 
-	def getFile(dataObj: DataObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
+	def getFile(dataObj: StaticObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
 
-	private def getSpecificSink(dataObj: DataObject)(implicit envri: Envri): Future[DataObjectSink] = {
+	private def getSpecificSink(dataObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] = {
 		val postTasks = getPostUploadTasks(dataObj)
 
 		getUploadTasks(dataObj).map{tasks =>
@@ -148,33 +144,30 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		}
 	}
 
-	private def getUploadTasks(dataObj: DataObject): Future[IndexedSeq[UploadTask]] = {
-		val file = getFile(dataObj)
+	private def getUploadTasks(obj: StaticObject): Future[IndexedSeq[UploadTask]] = obj match {
+		case dobj: DataObject => getDobjUploadTasks(dobj)
+		case doc: DocObject =>
+			Future.successful(defaultTasks(doc))
+	}
 
-		val defaults = IndexedSeq.empty :+
-			new HashsumCheckingUploadTask(dataObj.hash) :+
-			new ByteCountingTask
+	private def getDobjUploadTasks(dobj: DataObject): Future[IndexedSeq[UploadTask]] = {
 
-		val defaultsWithBackup = defaults :+ new IrodsUploadTask(dataObj, irods2) :+
-			new B2StageUploadTask(dataObj, b2)// :+ new IrodsUploadTask(dataObj, irods)
-
-		def saveToFile = new FileSavingUploadTask(file)
-		val spec = dataObj.specification
+		val spec = dobj.specification
 
 		def ingest =
 			if(spec.format.uri == CpMetaVocab.asciiWdcggTimeSer)
-				IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-					defaults :+ ingestionTask
+				IngestionUploadTask(dobj, getFile(dobj), meta.sparql).map{ingestionTask =>
+					mandatoryTasks(dobj) :+ ingestionTask
 				}
 			else
-				IngestionUploadTask(dataObj, file, meta.sparql).map{ingestionTask =>
-					defaultsWithBackup :+ ingestionTask :+ saveToFile
+				IngestionUploadTask(dobj, getFile(dobj), meta.sparql).map{ingestionTask =>
+					defaultTasks(dobj) :+ ingestionTask
 				}
 
 		spec.dataLevel match{
 			case 1 if (spec.datasetSpec.isDefined) => ingest
 			case 2 => ingest
-			case 0 | 1 | 3 => Future.successful(defaultsWithBackup :+ saveToFile)
+			case 0 | 1 | 3 => Future.successful(defaultTasks(dobj))
 
 			case dataLevel => Future.successful(
 				IndexedSeq.empty :+
@@ -183,8 +176,18 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		}
 	}
 
-	private def getPostUploadTasks(dataObj: DataObject)(implicit envri: Envri): Seq[PostUploadTask] =
-		Seq(new MetaCompletionPostUploadTask(dataObj.hash, meta))
+	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(
+		new HashsumCheckingUploadTask(obj.hash),
+		new ByteCountingTask
+	)
+
+	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
+		new IrodsUploadTask(obj, irods2) :+
+		new B2StageUploadTask(obj, b2) :+
+		new FileSavingUploadTask(getFile(obj))
+
+	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =
+		Seq(new MetaCompletionPostUploadTask(obj.hash, meta))
 
 }
 
@@ -194,13 +197,16 @@ object UploadService{
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
 	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract]]
 
-	def fileName(dataObject: DataObject): String = dataObject.hash.id
+	def fileName(obj: StaticObject): String = obj.hash.id
 
-	def fileFolder(dataObject: DataObject): String =
-		dataObject.specification.format.uri.toString.stripSuffix("/").split('/').last
+	def fileFolder(obj: StaticObject): String = obj match{
+		case dobj: DataObject =>
+			dobj.specification.format.uri.toString.stripSuffix("/").split('/').last
+		case _: DocObject =>
+			"documents"
+	}
 
-	def filePathSuffix(dataObject: DataObject): String =
-		fileFolder(dataObject) + "/" + fileName(dataObject)
+	def filePathSuffix(obj: StaticObject): String = fileFolder(obj) + "/" + fileName(obj)
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {
 		SinkCombiner.combineMat(sinks).mapMaterializedValue{uploadResultFuts =>

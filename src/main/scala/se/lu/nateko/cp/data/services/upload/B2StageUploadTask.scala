@@ -9,13 +9,13 @@ import se.lu.nateko.cp.data.api.B2StageClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
-import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.StaticObject
 
-class B2StageUploadTask(dataObject: DataObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+class B2StageUploadTask(statObj: StaticObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
 	private[this] val (irodsData, existsFut) = {
-		val coll = IrodsColl(UploadService.fileFolder(dataObject)) //parent is root
-		val obj = IrodsData(UploadService.fileName(dataObject), coll)
+		val coll = IrodsColl(UploadService.fileFolder(statObj)) //parent is root
+		val obj = IrodsData(UploadService.fileName(statObj), coll)
 
 		val objExistsFut: Future[Boolean] = client.exists(coll).flatMap{
 			case true => client.exists(obj)
@@ -33,9 +33,9 @@ class B2StageUploadTask(dataObject: DataObject, client: B2StageClient)(implicit 
 			case false =>
 				client.objectSink(irodsData).mapMaterializedValue(
 					_.map{hash =>
-						if(hash == dataObject.hash) B2StageSuccess
+						if(hash == statObj.hash) B2StageSuccess
 						else B2StageFailure(
-							new CpDataException(s"B2STAGE returned SHA256 $hash instead of " + dataObject.hash)
+							new CpDataException(s"B2STAGE returned SHA256 $hash instead of " + statObj.hash)
 						)
 					}
 				)

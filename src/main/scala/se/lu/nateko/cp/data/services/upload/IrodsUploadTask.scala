@@ -7,13 +7,13 @@ import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.irods.IrodsClient
-import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.StaticObject
 
-class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+class IrodsUploadTask(obj: StaticObject, client: IrodsClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val filePath: String = UploadService.filePathSuffix(dataObject)
+	private[this] val filePath: String = UploadService.filePathSuffix(obj)
 
-	client.ensureFolderExists(UploadService.fileFolder(dataObject))
+	client.ensureFolderExists(UploadService.fileFolder(obj))
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val optimistic = if(!client.fileExists(filePath)) {
@@ -27,8 +27,8 @@ class IrodsUploadTask(dataObject: DataObject, client: IrodsClient)(implicit ctxt
 		)
 		optimistic.mapMaterializedValue(
 			_.map{success =>
-				if(success.hash == dataObject.hash) success
-				else IrodsHashsumFailure(HashsumCheckFailure(dataObject.hash, success.hash))
+				if(success.hash == obj.hash) success
+				else IrodsHashsumFailure(HashsumCheckFailure(obj.hash, success.hash))
 			}.recover{
 				case err => IrodsFailure(err)
 			}

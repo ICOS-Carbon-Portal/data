@@ -17,6 +17,7 @@ import akka.Done
 import akka.event.LoggingAdapter
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
@@ -62,11 +63,11 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 	): Future[Done] = {
 		def retrySequentially(queue: List[T]): Future[Done] = queue match{
 			case Nil =>
-				Future.successful(Done)
+				done
 			case first :: rest =>
 				val firstJob = if(Files.exists(fileToCheck(first)))
 					singleJob(first)
-				else Future.successful(Done)
+				else done
 				firstJob.transformWith(_ => retrySequentially(rest))
 		}
 

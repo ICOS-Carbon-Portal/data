@@ -20,6 +20,7 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.StaticObject
 import akka.stream.scaladsl.StreamConverters
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
@@ -36,21 +37,21 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 		val destiniesSource: Source[FileDestiny, NotUsed] = Source(hashes.toList)
 			.flatMapConcat{
 				hash => Source.fromFuture(
-					upload.lookupPackage(hash).andThen{
+					upload.meta.lookupPackage(hash).andThen{
 						case Failure(err) =>
 							log.error(err, s"Could not retrieve metadata for ${hash.id}")
 					}
 				)
 			}
-			.scan[Destiny](ZeroDestiny){(dest, dobj) =>
-				new FileDestiny(dobj, dest.fileNamesUsed)
+			.scan[Destiny](ZeroDestiny){(dest, obj) =>
+				new FileDestiny(obj, dest.fileNamesUsed)
 			}.collect{
 				case fd: FileDestiny => fd
 			}
 
 		val destinyToDobjSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 			.filter(fd => fd.omissionReason.isEmpty)
-			.map(fd => (fd.fileName, singleObjectSource(fd.dobj, downloadLogger)))
+			.map(fd => (fd.fileName, singleObjectSource(fd.obj, downloadLogger)))
 
 		val sourcesSource = GraphDSL.create(){implicit b =>
 			import GraphDSL.Implicits._
@@ -79,16 +80,16 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 			("!LICENCE.pdf", licenceSource)
 		))
 
-	private def singleObjectSource(dobj: DataObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
-		val file = upload.getFile(dobj)
+	private def singleObjectSource(obj: StaticObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
+		val file = upload.getFile(obj)
 
 		val src = FileIO.fromPath(file.toPath).mapMaterializedValue(_.map(_.count))
 
 
 		src.mapMaterializedValue(f => {
 			f.onComplete{
-				case Success(_) => downloadLogger(dobj)
-				case Failure(err) => log.error(err, s"Access error for object ${dobj.hash.id} (${dobj.fileName})")
+				case Success(_) => obj.asDataObject.foreach(downloadLogger)
+				case Failure(err) => log.error(err, s"Access error for object ${obj.hash.id} (${obj.fileName})")
 			}
 			NotUsed
 		})
@@ -99,10 +100,10 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
-			val pid = dest.dobj.pid.getOrElse("")
-			val landingPage = dest.dobj.pid.fold(
+			val pid = dest.obj.pid.getOrElse("")
+			val landingPage = dest.obj.pid.fold(
 				//TODO Find a single place (across data and meta) for the 'formula' in the next line
-				envriConf.metaPrefix + "objects/" + dest.dobj.hash.id
+				envriConf.metaPrefix + "objects/" + dest.obj.hash.id
 			)(
 				pid => s"${coreConf.handleService}$pid"
 			)
@@ -111,9 +112,9 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 		Source(lines.map(ByteString.apply))
 	}
 
-	private class FileDestiny(val dobj: DataObject, fileNamesUsedEarlier: Set[String])(implicit envri: Envri) extends Destiny{
+	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(implicit envri: Envri) extends Destiny{
 
-		val omissionReason: Option[String] = dobj.accessUrl match {
+		val omissionReason: Option[String] = obj.accessUrl match {
 			case None =>
 				Some("Data object is not distributed by Carbon Portal as open data")
 
@@ -121,20 +122,20 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 				if(!url.toString.startsWith(envriConf.dataPrefix.toString))
 					Some("Data object is distributed by third parties")
 
-				else if(!upload.getFile(dobj).exists)
+				else if(!upload.getFile(obj).exists)
 					Some("File is missing on the server")
 				else
 					None
 		}
 
-		val fileName = if(omissionReason.isDefined) dobj.fileName else {
+		val fileName = if(omissionReason.isDefined) obj.fileName else {
 
 			val uniquifyingIndex = Iterator.from(0).dropWhile{idx =>
-				val attemptName = makeFileName(dobj.fileName, idx)
+				val attemptName = makeFileName(obj.fileName, idx)
 				fileNamesUsedEarlier.contains(attemptName)
 			}.next()
 
-			makeFileName(dobj.fileName, uniquifyingIndex)
+			makeFileName(obj.fileName, uniquifyingIndex)
 		}
 
 		val fileNamesUsed: Set[String] =

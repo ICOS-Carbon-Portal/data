@@ -12,6 +12,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
+import se.lu.nateko.cp.data.utils.Akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import spray.json._
@@ -20,8 +21,6 @@ import spray.json.JsBoolean
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
 	import http.system.dispatcher
-
-	private val ok = Future.successful(Done)
 
 	def dbUri(implicit envri: Envri) = {
 		import config._

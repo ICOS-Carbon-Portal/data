@@ -12,10 +12,9 @@ import scala.util.Success
 import akka.stream.QueueOfferResult.{ Failure => QueueFailure, _ }
 import scala.concurrent.ExecutionContext
 import akka.stream.scaladsl.Keep
+import se.lu.nateko.cp.data.utils.Akka.done
 
 object SourceReceptacleAsSink {
-
-	val ok = Future.successful(Done)
 
 	def apply[T, M](receiver: Source[T, Any] => Future[M])(implicit exe: ExecutionContext): Sink[T, Future[M]] = {
 
@@ -38,7 +37,7 @@ object SourceReceptacleAsSink {
 								Future.failed(err)
 							case Success(None) =>
 								srcQ.complete()
-								ok
+								done
 							case Success(Some(bs)) =>
 								srcQ.offer(bs).transformWith{
 									case Failure(err) =>
@@ -49,7 +48,7 @@ object SourceReceptacleAsSink {
 										Future.failed(err)
 									case Success(QueueClosed) =>
 										sinkQ.cancel()
-										ok
+										done
 									case Success(Dropped) | Success(Enqueued) =>
 										pullFromSink()
 								}

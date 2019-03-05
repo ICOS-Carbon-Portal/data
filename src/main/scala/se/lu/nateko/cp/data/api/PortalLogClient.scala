@@ -13,6 +13,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.RestHeartConfig
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import spray.json._
@@ -39,7 +40,7 @@ class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			r <- http.singleRequest(HttpRequest(uri = downloadLogUri, method = HttpMethods.POST, entity = entity))
 		) yield {
 			r.discardEntityBytes()
-			if(r.status == StatusCodes.OK) Future.successful(Done)
+			if(r.status == StatusCodes.OK) done
 			else Future.failed(new Exception(s"Failed logging data object download to the portal log at $downloadLogUri: ${r.status}"))
 		}
 	}.flatten

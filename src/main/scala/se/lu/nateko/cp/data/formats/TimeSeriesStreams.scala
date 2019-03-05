@@ -6,6 +6,7 @@ import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
 import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.data.utils.Akka.done
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.temporal.TemporalUnit
@@ -20,7 +21,7 @@ object TimeSeriesStreams {
 				.filter(_.error.isDefined)
 				.toMat(Sink.headOption){(_, err) =>
 					err.flatMap{
-						_.flatMap(_.error).fold(Future.successful(Done))(Future.failed)
+						_.flatMap(_.error).fold(done)(Future.failed)
 					}
 				}
 			parser.alsoToMat(errorSink)(Keep.right)
