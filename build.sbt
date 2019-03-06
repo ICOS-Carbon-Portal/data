@@ -28,7 +28,7 @@ lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.1.2-SNAPSHOT",
+		version := "0.1.3-SNAPSHOT",
 		libraryDependencies ++= Seq(
 			//repo.icos-cp.eu acts as proxy to https://artifacts.unidata.ucar.edu
 			"edu.ucar"            % "cdm"                                % "4.6.11" excludeAll(

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Map from '../components/Map.jsx';
-import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton, incrementRasterData} from '../actions.js';
+import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton,
+	incrementRasterData, fetchTimeSerie, resetTimeserieData} from '../actions.js';
 import {AnimatedToasters} from 'icos-cp-toaster';
 
 class App extends Component {
@@ -45,8 +46,13 @@ const AppDiv = props => {
 			title={props.title}
 			variableChanged={props.variableChanged}
 			initSearchParams={props.initSearchParams}
+			fetchTimeSerie={props.fetchTimeSerie}
+			timeserieData={props.timeserieData}
+			latlng={props.latlng}
+			showTSSpinner={props.showTSSpinner}
+			resetTimeserieData={props.resetTimeserieData}
 		/>;
-}
+};
 
 const stateToProps = state => {
 	return Object.assign({}, state);
@@ -61,7 +67,9 @@ const dispatchToProps = dispatch => {
 		delayChanged: newIdx => dispatch(selectDelay(newIdx)),
 		gammaChanged: newIdx => dispatch(selectGamma(newIdx)),
 		increment: direction => dispatch(incrementRasterData(direction)),
-		playPauseMovie: () => dispatch(pushPlayButton)
+		playPauseMovie: () => dispatch(pushPlayButton),
+		fetchTimeSerie: params => dispatch(fetchTimeSerie(params)),
+		resetTimeserieData: () => dispatch(resetTimeserieData),
 	};
 };
 

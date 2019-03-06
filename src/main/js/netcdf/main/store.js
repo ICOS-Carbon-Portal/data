@@ -48,7 +48,10 @@ const initState = {
 	raster: undefined,
 	rasterDataFetcher: undefined,
 	title: undefined,
-	toasterData: undefined
+	toasterData: undefined,
+	timeserieData: [],
+	latlng: undefined,
+	showTSSpinner: false
 };
 
 // function logger({ getState }) {

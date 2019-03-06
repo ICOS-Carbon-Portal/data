@@ -1,4 +1,5 @@
-import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle} from './backend.js';
+import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle,
+	getTimeserie} from './backend.js';
 import {logError} from "../../common/main/backend";
 import config from '../../portal/main/config';
 
@@ -19,6 +20,9 @@ export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 export const TITLE_FETCHED = 'TITLE_FETCHED';
+export const TIMESERIE_FETCHED = 'TIMESERIE_FETCHED';
+export const TOGGLE_TS_SPINNER = 'TOGGLE_TS_SPINNER';
+export const TIMESERIE_RESET = 'TIMESERIE_RESET';
 
 export function failWithError(error){
 	console.log(error);
@@ -55,7 +59,7 @@ export const fetchTitle = pid => dispatch => {
 		},
 		err => dispatch(failWithError(error))
 	);
-}
+};
 
 export const fetchCountriesTopo = dispatch => {
 	getCountriesGeoJson().then(
@@ -140,6 +144,34 @@ const fetchRaster = (dispatch, getState) => {
 		}),
 		err => dispatch(failWithError(err))
 	);
+};
+
+export const fetchTimeSerie = params => dispatch => {
+	const showSpinnerTimer = setTimeout(() => dispatch({
+		type: TOGGLE_TS_SPINNER,
+		showTSSpinner: true
+	}), 300);
+
+	getTimeserie(params).then(yValues => {
+		clearTimeout(showSpinnerTimer);
+
+		if (yValues.length > 0) {
+			dispatch({
+				type: TOGGLE_TS_SPINNER,
+				showTSSpinner: false
+			});
+
+			dispatch({
+				type: TIMESERIE_FETCHED,
+				yValues,
+				latlng: params.latlng
+			});
+		}
+	});
+};
+
+export const resetTimeserieData = dispatch => {
+	dispatch({type: TIMESERIE_RESET});
 };
 
 export const pushPlayButton = (dispatch, getState) => {
