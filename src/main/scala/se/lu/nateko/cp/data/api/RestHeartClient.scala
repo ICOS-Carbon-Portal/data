@@ -16,7 +16,8 @@ import se.lu.nateko.cp.data.utils.Akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import spray.json._
-import spray.json.JsBoolean
+import akka.http.scaladsl.unmarshalling.Unmarshaller
+import se.lu.nateko.cp.data.MongoDbIndex
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
@@ -87,8 +88,8 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	def defineAggregations(collDef: RestheartCollDef)(implicit envri: Envri): Future[Done] = collDef.aggregations.map{aggrs =>
 
 		def makeCacheForAggrs(aggrNames: List[String]): Future[Done] = aggrNames match {
-		  case Nil => ok
-		  case single :: rest => makeCacheForAggregation(collDef, single).flatMap(_ => makeCacheForAggrs(rest))
+			case Nil => ok
+			case single :: rest => makeCacheForAggregation(collDef, single).flatMap(_ => makeCacheForAggrs(rest))
 		}
 		val log = http.system.log
 		for(
@@ -146,12 +147,21 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 
 	private def setupCollIndices(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = coll.indices.map { idxDefs =>
-		val theCollUri = collUri(coll.name)
+		val indexUri = {
+			val colUri = collUri(coll.name)
+			colUri.withPath(colUri.path / "_indexes")
+		}
 
-		val dones: Seq[Future[Done]] = idxDefs.map{idxDef =>
+		import RestHeartClient._
 
-			val uri = theCollUri.withPath(theCollUri.path / "_indexes" / idxDef.name)
+		val currentIndexKeys: Future[Map[String, JsObject]] = for(
+			resp <- http.singleRequest(HttpRequest(uri = indexUri.withRawQueryString("np")));
+			keyInfos <- Unmarshal(resp.entity).to[Seq[KeyInfo]](keyInfoUnmarsh, dispatcher, m)
+		) yield keyInfos.map{ki => ki._id -> ki.key}.toMap
 
+		def uri(idxDef: MongoDbIndex) = indexUri.withPath(indexUri.path / idxDef.name)
+
+		def createIndex(idxDef: MongoDbIndex): Future[Done] = {
 			val payload = idxDef.ops match{
 				case Some(ops) => JsObject("keys" -> idxDef.keys, "ops" -> ops)
 				case None => JsObject("keys" -> idxDef.keys)
@@ -159,9 +169,30 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 			for(
 				entity <- Marshal(payload).to[RequestEntity];
-				r <- http.singleRequest(HttpRequest(uri = uri, method = HttpMethods.PUT, entity = entity));
+				r <- http.singleRequest(
+					HttpRequest(uri = uri(idxDef), method = HttpMethods.PUT, entity = entity)
+				);
 				res <- handleWritingOutcome(r, s"creating index ${idxDef.name} in collection ${coll.name}")
 			) yield res
+		}
+
+		def deleteIndex(idxDef: MongoDbIndex): Future[Done] = for(
+			r <- http.singleRequest(
+				HttpRequest(uri = uri(idxDef), method = HttpMethods.DELETE)
+			);
+			res <- handleWritingOutcome(r, s"deleting index ${idxDef.name} in collection ${coll.name}")
+		)yield res
+
+		val dones: Seq[Future[Done]] = idxDefs.map{idxDef =>
+
+			currentIndexKeys.flatMap(_.get(idxDef.name) match {
+				case None =>
+					createIndex(idxDef)
+				case Some(keyInfo) =>
+					if(keyInfo == idxDef.keys) ok
+					else deleteIndex(idxDef).flatMap(_ => createIndex(idxDef))
+			})
+
 		}
 
 		Future.sequence(dones).map(_ => Done)
@@ -238,4 +269,11 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			Future.failed(new Exception(s"Failed $opInfo: $errMsg"))
 		}
 	}
+}
+
+object RestHeartClient extends DefaultJsonProtocol{
+	case class KeyInfo(_id: String, key: JsObject)
+
+	implicit val keyInfoFormat = jsonFormat2(KeyInfo)
+	implicit val keyInfoUnmarsh = implicitly[Unmarshaller[ResponseEntity, Seq[KeyInfo]]]
 }
