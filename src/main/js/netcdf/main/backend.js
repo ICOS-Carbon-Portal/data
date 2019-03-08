@@ -1,13 +1,8 @@
-import {sparql, getBinRaster, getJson, BinTable} from 'icos-cp-backend';
+import {sparql, getBinRaster, getJson} from 'icos-cp-backend';
 import {feature} from 'topojson';
 import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
 
-// export function getRaster(basicId, search){
-// 	console.log({basicId, search});
-// 	const res = getBinRaster(basicId, '/netcdf/getSlice' + search);
-// 	return res.then(raster => raster);
-// }
 
 export const getRaster = (service, variable, date, elevation, gamma) => {
 	const basicIdRaster = getBinRaster(null, '/netcdf/getSlice', ['service', service], ['varName', variable], ['date', date], ['elevation', elevation]);

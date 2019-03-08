@@ -50,6 +50,7 @@ const initState = {
 	title: undefined,
 	toasterData: undefined,
 	timeserieData: [],
+	timeserieParams: undefined,
 	latlng: undefined,
 	showTSSpinner: false
 };

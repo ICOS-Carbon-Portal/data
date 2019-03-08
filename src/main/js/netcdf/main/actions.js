@@ -164,7 +164,7 @@ export const fetchTimeSerie = params => dispatch => {
 			dispatch({
 				type: TIMESERIE_FETCHED,
 				yValues,
-				latlng: params.latlng
+				timeserieParams: params
 			});
 		}
 	});
@@ -219,12 +219,19 @@ export const incrementIfNeeded = (dispatch, getState) => {
 	}, 5); //a tiny delay in hope to improve interface's responsiveness
 };
 
-export const selectVariable = idx => dispatch => {
+export const selectVariable = idx => (dispatch, getState) => {
 	dispatch({
 		type: VARIABLE_SELECTED,
 		idx
 	});
 	dispatch(fetchElevations);
+
+	const {timeserieParams, controls} = getState();
+
+	if (timeserieParams) {
+		const params = Object.assign({}, timeserieParams, {variable: controls.variables.selected});
+		dispatch(fetchTimeSerie(params));
+	}
 };
 
 export const selectDate = idx => dispatch => {

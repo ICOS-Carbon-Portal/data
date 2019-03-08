@@ -19,7 +19,6 @@ export const drawGraph = (timeserieData, varName, latlng) => {
 			digitsAfterDecimal: 3,
 			axes: {
 				x: {
-					drawGrid: false,
 					axisLabelWidth: 80,
 					valueFormatter: ms => toISOString(ms),
 				},

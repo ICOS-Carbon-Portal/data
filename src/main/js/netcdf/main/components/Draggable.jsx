@@ -10,7 +10,7 @@ export default class Draggable extends Component{
 
 		const defaultStyle = {
 			position:'absolute',
-			width: 500,
+			width: 580,
 			zIndex: 9999,
 			top: 150,
 			left: 100,

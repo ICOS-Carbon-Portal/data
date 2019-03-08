@@ -36,7 +36,8 @@ export default function(state, action){
 
 		case SERVICE_SELECTED:
 			return update({
-				controls: state.controls.withSelectedService(action.idx)
+				controls: state.controls.withSelectedService(action.idx),
+				timeserieParams: undefined
 			});
 
 		case TITLE_FETCHED:
@@ -134,14 +135,18 @@ export default function(state, action){
 		case TIMESERIE_FETCHED:
 			return update({
 				timeserieData: getTimeserieData(state.controls.dates.values, action.yValues),
+				timeserieParams: action.timeserieParams,
 				latlng: {
-					lat: action.latlng.lat.toFixed(3),
-					lng: action.latlng.lng.toFixed(3)
+					lat: action.timeserieParams.latlng.lat.toFixed(3),
+					lng: action.timeserieParams.latlng.lng.toFixed(3)
 				}
 			});
 
 		case TIMESERIE_RESET:
-			return update({timeserieData: []});
+			return update({
+				timeserieData: [],
+				timeserieParams: undefined
+			});
 
 		case TOGGLE_TS_SPINNER:
 			return update({
