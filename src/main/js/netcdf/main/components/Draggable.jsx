@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Events from '../models/Events';
+import {Events} from 'icos-cp-utils';
 
 
 export default class Draggable extends Component{

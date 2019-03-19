@@ -4,11 +4,10 @@ import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
-import {throttle} from 'icos-cp-utils';
+import {throttle, Events} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie.jsx';
-import Events from '../models/Events';
 
 
 const minHeight = 300;

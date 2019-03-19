@@ -55,7 +55,7 @@
     "icos-cp-netcdfmap": "^1.0.0",
     "icos-cp-spatial": "^0.2.1",
     "icos-cp-toaster": "^0.5.1",
-    "icos-cp-utils": "^0.1.4",
+    "icos-cp-utils": "^0.1.5",
     "icos-cp-spinner": "^0.0.2",
     "leaflet": "^1.4.0",
     "react": "^16.8.4",
