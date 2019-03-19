@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
+import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
+import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
 import {throttle} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
-import {ShowTimeserie} from '../controls/ShowTimeserie';
 import Timeserie from './Timeserie.jsx';
 import Events from '../models/Events';
 
@@ -30,7 +31,6 @@ export default class Map extends Component {
 		this.events = new Events();
 		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this)));
 
-		this.showTimeserie = new ShowTimeserie(this.timeserieToggle.bind(this), this.timeserieMapClick.bind(this));
 		this.getRasterXYFromLatLng = undefined;
 	}
 
@@ -109,11 +109,10 @@ export default class Map extends Component {
 	}
 
 	closeTimeserie(){
-		// Click button in control
-		this.showTimeserie.deactivate();
+		this.timeserieToggle(false);
 	}
 
-	timeserieMapClick(e){
+	timeserieMapClick(eventName, e){
 		if (this.getRasterXYFromLatLng && this.props.fetchTimeSerie) {
 			const objId = this.props.controls.services.selected;
 			const variable = this.props.controls.variables.selected;
@@ -122,6 +121,7 @@ export default class Map extends Component {
 
 			if (xy && this.props.fetchTimeSerie) {
 				this.props.fetchTimeSerie({objId, variable, elevation, x: xy.x, y: xy.y, latlng: e.latlng});
+				this.timeserieToggle(true);
 			}
 		}
 	}
@@ -168,11 +168,13 @@ export default class Map extends Component {
 					/>
 
 					<Timeserie
+						isSites={props.isSites}
 						isActive={state.isShowTimeserieActive}
 						varName={props.controls.variables.selected}
 						timeserieData={props.timeserieData}
 						latlng={props.latlng}
 						showTSSpinner={props.showTSSpinner}
+						isFetchingTimeserieData={props.isFetchingTimeserieData}
 						closeTimeserie={this.closeTimeserie.bind(this)}
 					/>
 
@@ -187,7 +189,6 @@ export default class Map extends Component {
 							colorMaker={colorMaker}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
-							controls={[this.showTimeserie]}
 							events={[
 								{
 									event: 'moveend',
@@ -195,6 +196,11 @@ export default class Map extends Component {
 										return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};
 									},
 									callback: this.mapEventCallback.bind(this)
+								},
+								{
+									event: 'click',
+									fn: (leafletMap, e) => e,
+									callback: this.timeserieMapClick.bind(this)
 								}
 							]}
 						/>
@@ -215,12 +221,24 @@ export default class Map extends Component {
 					}</div>
 				</div>
 
-				<Spinner show={showSpinner} />
+				<ReactSpinner isSites={props.isSites} show={showSpinner} />
 
 			</div>
 		);
 	}
 }
+
+export const Spinner = props => {
+	return props.show
+		? <div id="cp-spinner">
+			<div className="bounce1" />
+			<div className="bounce2" />
+			<div />
+			<span>Carbon</span>
+			<span>Portal</span>
+		</div>
+		: null;
+};
 
 const getRasterXYFromLatLng = raster => {
 	const tileHelper = getTileHelper(raster);
@@ -244,18 +262,6 @@ const getLatLngBounds = (rasterFetchCount, initCenter, initZoom, raster) => {
 			L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
 		)
 		: undefined;
-};
-
-export const Spinner = props => {
-	return props.show
-		? <div id="cp-spinner">
-			<div className="bounce1" />
-			<div className="bounce2" />
-			<div />
-			<span>Carbon</span>
-			<span>Portal</span>
-		</div>
-		: null;
 };
 
 const formatData = dataToSave => {

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Draggable from './Draggable.jsx';
 import {drawGraph} from '../models/Dygraphs';
 import deepequal from 'deep-equal';
-import {Spinner} from './Map.jsx';
+import {ReactSpinner} from 'icos-cp-spinner';
 
 
 const panelBodyHeight = 200;
@@ -15,7 +15,10 @@ export default class Timeserie extends Component {
 	}
 
 	componentWillReceiveProps(nextProps, nextContext) {
-		if (nextProps.varName && nextProps.timeserieData.length && !deepequal(this.timeserieData, nextProps.timeserieData)){
+		const hasData = nextProps.varName && nextProps.timeserieData.length;
+		const isDifferent = !deepequal(this.timeserieData, nextProps.timeserieData);
+
+		if (hasData && isDifferent){
 			drawGraph(nextProps.timeserieData, nextProps.varName, nextProps.latlng);
 		}
 	}
@@ -26,16 +29,16 @@ export default class Timeserie extends Component {
 	}
 
 	render(){
-		const {isActive, timeserieData, showTSSpinner, closeTimeserie} = this.props;
-		const showDivInstruction = !showTSSpinner && timeserieData.length === 0;
-		const showDivNoData = !showTSSpinner && !showDivInstruction && timeserieData.every(d => d[1] === 0 || d[1] === null);
+		const {isSites, isActive, isFetchingTimeserieData, timeserieData, showTSSpinner, closeTimeserie} = this.props;
+		const showDivNoData = !showTSSpinner && !isFetchingTimeserieData && isEmpty(timeserieData);
 
 		return isActive
 			?	<Draggable dragElementId="cp-drag-element" initialPos={initialPos(this.draggableStyle, 'map')} onStopDrag={this.onStopDrag.bind(this)} >
 					<Panel
 						positionToId="map"
-						showDivInstruction={showDivInstruction}
+						isFetchingTimeserieData={isFetchingTimeserieData}
 						showDivNoData={showDivNoData}
+						isSites={isSites}
 						showSpinner={showTSSpinner}
 						closeTimeserie={closeTimeserie}
 					/>
@@ -43,6 +46,10 @@ export default class Timeserie extends Component {
 			: null;
 	}
 }
+
+const isEmpty = timeserieData => {
+	return timeserieData.length === 0 || timeserieData.every(d => d[1] === 0 || d[1] === null);
+};
 
 const initialPos = (draggableStyle, masterElId) => {
 	return slaveEl => {
@@ -63,9 +70,9 @@ const initialPos = (draggableStyle, masterElId) => {
 	}
 };
 
-const Panel = ({showDivInstruction, showDivNoData, showSpinner, closeTimeserie}) => {
+const Panel = ({isSites, isFetchingTimeserieData, showDivNoData, showSpinner, closeTimeserie}) => {
 	const defaultGraphStyle = {border:'none', width:'100%', height:'100%'};
-	const graphStyle = showSpinner || showDivInstruction || showDivNoData
+	const graphStyle = isFetchingTimeserieData || showDivNoData || showSpinner
 		? Object.assign({}, defaultGraphStyle, {visibility:'hidden'})
 		: defaultGraphStyle;
 	const style = {textAlign:'center', position:'relative', top:'40%'};
@@ -78,10 +85,9 @@ const Panel = ({showDivInstruction, showDivNoData, showSpinner, closeTimeserie})
 			</div>
 
 			<div className="panel-body" style={{padding:'5px 2px', height: panelBodyHeight}}>
-				{showDivInstruction && <div style={style}>Click in map to show time serie</div>}
 				{showDivNoData && <div style={style}>No data found at that location</div>}
 				<div id="graph" style={graphStyle} />
-				<Spinner show={showSpinner} />
+				<ReactSpinner isSites={isSites} show={showSpinner} />
 			</div>
 		</div>
 	);

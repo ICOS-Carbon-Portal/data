@@ -4,6 +4,9 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {fetchServices, setService, fetchTitle, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper';
+import config from '../../common/main/config';
+
+const isSites = config.envri === "SITES";
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
@@ -26,6 +29,7 @@ const gammaIdx = searchParams.gamma
 	: controls.gammas.values.indexOf(defaultGamma);
 
 const initState = {
+	isSites,
 	isPIDProvided,
 	colorMaker: undefined,
 	controls,
@@ -49,6 +53,7 @@ const initState = {
 	rasterDataFetcher: undefined,
 	title: undefined,
 	toasterData: undefined,
+	isFetchingTimeserieData: false,
 	timeserieData: [],
 	timeserieParams: undefined,
 	latlng: undefined,

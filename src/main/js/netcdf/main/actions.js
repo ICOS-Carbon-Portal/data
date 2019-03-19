@@ -20,6 +20,7 @@ export const PUSH_PLAY = 'PUSH_PLAY';
 export const SET_DELAY = 'SET_DELAY';
 export const INCREMENT_RASTER = 'INCREMENT_RASTER';
 export const TITLE_FETCHED = 'TITLE_FETCHED';
+export const FETCHING_TIMESERIE = 'FETCHING_TIMESERIE';
 export const TIMESERIE_FETCHED = 'TIMESERIE_FETCHED';
 export const TOGGLE_TS_SPINNER = 'TOGGLE_TS_SPINNER';
 export const TIMESERIE_RESET = 'TIMESERIE_RESET';
@@ -147,6 +148,8 @@ const fetchRaster = (dispatch, getState) => {
 };
 
 export const fetchTimeSerie = params => dispatch => {
+	dispatch({type: FETCHING_TIMESERIE});
+
 	const showSpinnerTimer = setTimeout(() => dispatch({
 		type: TOGGLE_TS_SPINNER,
 		showTSSpinner: true

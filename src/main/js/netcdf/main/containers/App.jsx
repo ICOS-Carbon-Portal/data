@@ -27,6 +27,7 @@ const AppDiv = props => {
 			maxWidth={400}
 		/>
 		: <Map
+			isSites={props.isSites}
 			isPIDProvided={props.isPIDProvided}
 			services={props.services}
 			colorMaker={props.colorMaker}
@@ -51,6 +52,7 @@ const AppDiv = props => {
 			latlng={props.latlng}
 			showTSSpinner={props.showTSSpinner}
 			resetTimeserieData={props.resetTimeserieData}
+			isFetchingTimeserieData={props.isFetchingTimeserieData}
 		/>;
 };
 
