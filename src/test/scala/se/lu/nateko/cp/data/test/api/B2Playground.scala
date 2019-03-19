@@ -22,7 +22,8 @@ object B2Playground{
 
 	def stop() = system.terminate()
 
-	val default = new B2StageClient(ConfigReader.getDefault.upload.b2stage, http)
+	val b2config = ConfigReader.getDefault.upload.b2stage.copy(dryRun = false)
+	val default = new B2StageClient(b2config, http)
 
 	def list(path: String, parent: Option[IrodsColl] = Some(B2StageItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
