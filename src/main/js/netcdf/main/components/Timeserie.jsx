@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import Draggable from './Draggable.jsx';
+import Draggable from 'icos-cp-draggable';
 import {drawGraph} from '../models/Dygraphs';
 import deepequal from 'deep-equal';
 import {ReactSpinner} from 'icos-cp-spinner';

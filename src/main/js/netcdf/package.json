@@ -57,6 +57,7 @@
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",
     "icos-cp-spinner": "^0.0.2",
+    "icos-cp-draggable": "^0.0.1",
     "leaflet": "^1.4.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4",
