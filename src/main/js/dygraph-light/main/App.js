@@ -6,6 +6,7 @@ import config from '../../portal/main/config';
 import Dygraph from 'dygraphs';
 import './Dygraphs.css';
 import CollapsibleSection from './CollapsibleSection';
+import {Spinner} from 'icos-cp-spinner';
 
 
 const spinnerDelay = 100;
@@ -40,6 +41,9 @@ export default class App {
 		this.tableFormat = undefined;
 		this.labels = [];
 
+		const isSites = config.envri === "SITES";
+		this.spinner = new Spinner(isSites);
+
 		if (window.frameElement) {
 			this.showSpinner(false);
 			window.onmessage = event => {
@@ -58,6 +62,7 @@ export default class App {
 			if (params.isValidParams) {
 				this.main();
 			} else {
+				this.showSpinner(false);
 				presentError(errMsg);
 			}
 		}
@@ -238,10 +243,10 @@ export default class App {
 
 	showSpinner(show){
 		if (show) {
-			this.timer = setTimeout(() => document.getElementById('cp-spinner').style.display = 'inline', spinnerDelay);
+			this.timer = setTimeout(() => this.spinner.show(), spinnerDelay);
 		} else {
 			clearTimeout(this.timer);
-			document.getElementById('cp-spinner').style.display = 'none';
+			this.spinner.hide();
 		}
 	}
 }
@@ -331,7 +336,6 @@ const fail = (message) => {
 };
 
 const presentError = (errMsg) => {
-	document.getElementById('cp-spinner').style.display = 'none';
 	document.getElementById('error').style.display = 'flex';
 	document.getElementById('error').innerHTML = errMsg;
 
