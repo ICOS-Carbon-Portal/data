@@ -3,6 +3,7 @@ import * as Toaster from 'icos-cp-toaster';
 
 
 const initState = {
+	toasterData: undefined,
 	binTableData: {},
 	mapValueIdx: undefined,
 	value1Idx: undefined,

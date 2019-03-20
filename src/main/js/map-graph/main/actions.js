@@ -46,14 +46,14 @@ const fetchTableFormatNrows = objId => dispatch => {
 			const binTableData = new BinTableData(tableFormat);
 
 			if (binTableData.isValidData) {
-				getBinTable(objId, tableFormat, nRows)
-					.then(binTable => {
-						dispatch({
-							type: BINTABLE_FETCHED,
-							objId,
-							binTableData: binTableData.withBinTable(binTable)
-						});
+				getBinTable(objId, tableFormat, nRows).then(binTable => {
+					dispatch({
+						type: BINTABLE_FETCHED,
+						objId,
+						binTableData: binTableData.withBinTable(binTable)
 					});
+				},
+				fail(dispatch));
 			} else {
 				dispatch(failWithError({message: `Data object ${objId} cannot be displayed due to missing data`}));
 			}

@@ -1,4 +1,6 @@
 import config from '../config';
+import Dygraph from 'dygraphs';
+import '../../../common/main/Dygraphs.css';
 
 
 export default class {

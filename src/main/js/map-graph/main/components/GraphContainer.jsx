@@ -1,7 +1,7 @@
 import React, { Component, Fragment } from 'react';
 import Dropdown from '../components/Dropdown.jsx';
 import G from '../models/Graph';
-import {debounce} from 'icos-cp-utils';
+import {debounce, Events} from 'icos-cp-utils';
 
 
 export default class GraphContainer extends Component{
@@ -13,12 +13,13 @@ export default class GraphContainer extends Component{
 		this.graphElement = undefined;
 		this.labelElement = undefined;
 		this.graphMouseMove = props.graphMouseMove;
+		this.events = new Events();
 
 		this.handleResize = debounce(_ => {
 			this.canvasOverlay.width = this.g.graph.graphDiv.clientWidth;
 			this.canvasOverlay.height = this.g.graph.graphDiv.clientHeight;
 		});
-		window.addEventListener("resize", this.handleResize);
+		this.events.addToTarget(window, "resize", this.handleResize);
 	}
 
 	componentDidUpdate(prevProps){
@@ -50,7 +51,7 @@ export default class GraphContainer extends Component{
 	}
 
 	componentWillUnmount(){
-		window.removeEventListener("resize", this.handleResize);
+		this.events.clear();
 	}
 
 	render(){

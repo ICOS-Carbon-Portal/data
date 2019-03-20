@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
+import '../../node_modules/leaflet/dist/leaflet.css';
 import * as LCommon from 'icos-cp-leaflet-common';
 import PointReducer from '../models/PointReducer';
 import {colorMaker} from "../models/colorMaker";
@@ -24,7 +25,7 @@ export default class Map extends Component{
 		this.legendCtrl = undefined;
 		this.mapElement = undefined;
 		this.layerGroup = undefined;
-		this.markerGroup = undefined;
+		this.boatMarker = undefined;
 		this.moveEndFn = undefined;
 		this.handleMoveEnd = this.moveEndHandler.bind(this);
 
@@ -58,14 +59,16 @@ export default class Map extends Component{
 	}
 
 	addMarker(position){
-		this.markerGroup.clearLayers();
-		if (position) {
-			this.markerGroup.addLayer(L.marker([position.latitude, position.longitude], {
-				icon: L.icon({
-					iconUrl: '//static.icos-cp.eu/images/icons/boat.png',
-					iconAnchor: [15, 22]
-				})
-			}));
+		if (position){
+			if (this.boatMarker){
+				this.boatMarker.setLatLng([position.latitude, position.longitude]);
+			} else {
+				this.boatMarker = getMarker(position);
+				this.leafletMap.addLayer(this.boatMarker);
+			}
+		} else {
+			this.leafletMap.removeLayer(this.boatMarker);
+			this.boatMarker = undefined;
 		}
 	}
 
@@ -95,9 +98,6 @@ export default class Map extends Component{
 
 		this.layerGroup = L.layerGroup();
 		map.addLayer(this.layerGroup);
-
-		this.markerGroup = L.layerGroup();
-		map.addLayer(this.markerGroup);
 	}
 
 	moveEndHandler(moveEndFn){
@@ -183,6 +183,15 @@ export default class Map extends Component{
 		);
 	}
 }
+
+const getMarker = position => {
+	return L.marker([position.latitude, position.longitude], {
+		icon: L.icon({
+			iconUrl: '//static.icos-cp.eu/images/icons/boat.png',
+			iconAnchor: [15, 22]
+		})
+	});
+};
 
 const getNewCenterZoom = (prevProps, center, zoom, map) => {
 	const mapCenter = map.getCenter();
