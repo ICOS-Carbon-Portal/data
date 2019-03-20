@@ -30,7 +30,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
 		case ("stats", envri) => views.html.StatsPage()(envri)
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
-		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)
+		case ("dygraph-light", _) => views.html.DygraphLight()
 		case ("map-graph", _) => views.html.MapGraph()
 	}
 
