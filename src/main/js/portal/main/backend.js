@@ -4,9 +4,14 @@ import SpecTable from './models/SpecTable';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart from './models/Cart';
+import Storage from './models/Storage';
 import 'whatwg-fetch';
 
 const config = Object.assign(commonConfig, localConfig);
+const cartStorage = new Storage();
+const tsSettingsStorageName = 'tsSettings';
+const tsSettingsStorage = new Storage();
+
 
 export function fetchAllSpecTables() {
 	const promises = [queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
@@ -72,7 +77,7 @@ export const saveCart = (email, cart) => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
-	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
+	return Promise.resolve(cartStorage.setItem('cp-cart', cart));
 };
 
 const updatePersonalRestheart = (email, data) => {
@@ -104,19 +109,19 @@ export const logOut = () => {
 };
 
 export const getCart = email => {
-	const sessionStorageJson = sessionStorage.getItem('cp-cart')
-		? JSON.parse(sessionStorage.getItem('cp-cart'))
+	const sessionStorageJson = cartStorage.getItem('cp-cart')
+		? cartStorage.getItem('cp-cart')
 		: new Cart();
 	const cartInSessionStorage = {cart: sessionStorageJson};
 	const cartInRestheart = email
-		? getCartFromRestheart(email)
+		? getFromRestheart(email, 'cart')
 		: Promise.resolve({cart: new Cart()});
 
 	return Promise.resolve({cartInSessionStorage, cartInRestheart});
 };
 
-const getCartFromRestheart = email => {
-	return fetch(`${config.restheartProfileBaseUrl}/${email}?keys={cart:1}`, {credentials: 'include'})
+const getFromRestheart = (email, key) => {
+	return fetch(`${config.restheartProfileBaseUrl}/${email}?keys={${key}:1}`, {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json()
@@ -179,12 +184,7 @@ export function getWhoIam(){
 
 export const getProfile = email => {
 	return email
-		? fetch(`${config.restheartProfileBaseUrl}/${email}?keys={profile:1}`, {credentials: 'include'})
-			.then(profile => {
-				return profile.status === 200
-					? profile.json()
-					: {}
-			})
+		? getFromRestheart(email, 'profile')
 		: Promise.resolve({});
 };
 
@@ -213,4 +213,37 @@ export const getExtendedDataObjInfo = dobjs => {
 					: Promise.reject(new Error("Could not get extended info for data objects"));
 			}
 		);
+};
+
+export const saveTsSetting = (email, spec, type, val) => {
+	const settings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
+	const setting = settings[spec] || {};
+	const newSetting = Object.assign({}, setting, {[type]: val});
+	const newSettings = Object.assign({}, settings, {[spec]: newSetting});
+	tsSettingsStorage.setItem(tsSettingsStorageName, newSettings);
+
+	if (email){
+		updatePersonalRestheart(email, {[tsSettingsStorageName]: newSettings});
+	}
+
+	return Promise.resolve(newSettings);
+};
+
+export const getTsSettings = email => {
+	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
+
+	return email
+		? getFromRestheart(email, tsSettingsStorageName).then(settings => {
+			const newSettings = settings
+				? Object.assign({}, settings[tsSettingsStorageName], tsSettings)
+				: tsSettings;
+			tsSettingsStorage.setItem(tsSettingsStorageName, newSettings);
+
+			return newSettings;
+		})
+		: Promise.resolve(tsSettings);
+};
+
+export const clearTsSettings = _ => {
+	tsSettingsStorage.removeItem(tsSettingsStorageName);
 };

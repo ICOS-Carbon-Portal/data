@@ -29,9 +29,10 @@ export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
 export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
 export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
 export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
+export const TS_SETTINGS = 'TS_SETTINGS';
 import {hashToState} from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut} from './backend';
-import {getIsBatchDownloadOk, getWhoIam, getProfile, getError} from './backend';
+import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {areFiltersEnabled} from './reducer';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
@@ -99,6 +100,8 @@ const loadApp = user => dispatch => {
 			user,
 			profile
 		});
+
+		dispatch(getTsPreviewSettings());
 	});
 
 	getCart(user.email).then(
@@ -372,9 +375,33 @@ export const switchTab = (tabName, selectedTabId) => dispatch => {
 };
 
 export const setPreviewItem = id => dispatch => {
-	dispatch({
-		type: PREVIEW,
-		id
+	dispatch(getTsPreviewSettings()).then(_ => {
+		dispatch({
+			type: PREVIEW,
+			id
+		});
+	});
+};
+
+const getTsPreviewSettings = _ => (dispatch, getState) => {
+	const user = getState().user;
+
+	return getTsSettings(user.email).then(tsSettings => {
+		dispatch({
+			type: TS_SETTINGS,
+			tsSettings
+		});
+	});
+};
+
+export const storeTsPreviewSetting = (spec, type, val) => (dispatch, getState) => {
+	const user = getState().user;
+
+	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
+		dispatch({
+			type: TS_SETTINGS,
+			tsSettings
+		});
 	});
 };
 

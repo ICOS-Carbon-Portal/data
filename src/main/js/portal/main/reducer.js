@@ -26,7 +26,8 @@ import {
 	RESTORE_FROM_HISTORY,
 	TEMPORAL_FILTER,
 	WHOAMI_FETCHED,
-	LOAD_ERROR
+	LOAD_ERROR,
+	TS_SETTINGS
 } from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import State from './models/State';
@@ -245,6 +246,11 @@ export default function(state = new State(), action){
 		case UPDATE_CHECKED_OBJECTS_IN_CART:
 			return state.update({
 				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
+			});
+
+		case TS_SETTINGS:
+			return state.update({
+				tsSettings: action.tsSettings
 			});
 
 		default:

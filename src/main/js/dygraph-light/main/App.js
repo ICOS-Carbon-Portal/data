@@ -46,6 +46,8 @@ export default class App {
 
 		if (window.frameElement) {
 			this.showSpinner(false);
+			if (params.isValidParams) this.main();
+
 			window.onmessage = event => {
 				const urlParams = new URL(event.data).search;
 				this.params = new UrlSearchParams(urlParams, ['objId', 'x', 'y']);

@@ -51,7 +51,8 @@ export default class State{
 			checkedObjectsInSearch: [],
 			checkedObjectsInCart: [],
 			tabs: {},
-			page: 0
+			page: 0,
+			tsSettings: {}
 		}, state);
 	}
 

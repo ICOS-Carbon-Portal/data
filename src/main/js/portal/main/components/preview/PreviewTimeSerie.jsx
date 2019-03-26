@@ -7,7 +7,7 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	handleSelectAction(ev){
-		const {preview, iframeSrcChange} = this.props;
+		const {preview, iframeSrcChange, storeTsPreviewSetting} = this.props;
 		const selectedIdx = ev.target.selectedIndex;
 
 		if (selectedIdx > 0 && iframeSrcChange) {
@@ -17,6 +17,8 @@ export default class PreviewTimeSerie extends Component {
 
 			iframeSrcChange({target: {src: newUrl}});
 			this.iframe.contentWindow.postMessage(newUrl, "*");
+
+			storeTsPreviewSetting(preview.item.spec, setting, selectedVal);
 		}
 	}
 
@@ -25,12 +27,13 @@ export default class PreviewTimeSerie extends Component {
 	}
 
 	render(){
-		const {preview, extendedDobjInfo, iframeSrcChange} = this.props;
+		const {preview, extendedDobjInfo, iframeSrcChange, tsSettings} = this.props;
+		const specSettings = tsSettings[preview.item.spec] || {};
 		const {xAxis, yAxis, type} = preview.items[0] && preview.items[0].hasKeyValPairs
 			? {
-				xAxis: preview.items[0].getUrlSearchValue('x'),
-				yAxis: preview.items[0].getUrlSearchValue('y'),
-				type: preview.items[0].getUrlSearchValue('type')
+				xAxis: specSettings.x || preview.items[0].getUrlSearchValue('x'),
+				yAxis: specSettings.y || preview.items[0].getUrlSearchValue('y'),
+				type: specSettings.type || preview.items[0].getUrlSearchValue('type')
 			}
 			: {xAxis: undefined, yAxis: undefined, type: undefined};
 
