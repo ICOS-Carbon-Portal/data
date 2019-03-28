@@ -165,9 +165,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 				}
 
 		spec.dataLevel match{
-			case 1 if (spec.datasetSpec.isDefined) => ingest
-			case 2 => ingest
-			case 0 | 1 | 3 => Future.successful(defaultTasks(dobj))
+			case 1 | 2 if (spec.datasetSpec.isDefined) => ingest
+			case 0 | 1 | 2 | 3 => Future.successful(defaultTasks(dobj))
 
 			case dataLevel => Future.successful(
 				IndexedSeq.empty :+
