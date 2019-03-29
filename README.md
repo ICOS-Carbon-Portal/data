@@ -85,6 +85,17 @@ To observe the effect of the FA-Lso upload on the Carbon Portal metadata, you ca
 Upload of every new file (provided that the file content is unique!) will result in creation of two new html links there, one for the acquisition provenance object, and one for the submission provenance object.
 You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.)
 
+### Obtaining a receipt from the logger facade
+For increased traceability of file uploads to the logger facade, the latter returns unique receipts for every accepted data file. The receipt is returned as the value of a custom HTTP header `X-ICOSCP-Receipt`. A receipt can look as follow:
+
+`hGWKklUBlC3WslvazCuikpOTwlKTl4c9NpiFi_KoJUQ_ymH2FJyADaXCwpmgbYtxSt813pr-0smsxgzwF2spVuolYcRVCUy8HKSWgb9im40`
+
+It can be obtained by examining the HTTP headers of the response from any programming language. When using `curl`, one has the possibility of saving the HTTP headers to a file which can be specified with `-D` or `--dump-header` option.
+
+After obtaining a receipt, one can read it at URL
+`https://data.icos-cp.eu/upload/etc/receipt/<receipt>`,
+where `<receipt>` is the receipt text. The example receipt can be read [here](https://data.icos-cp.eu/upload/etc/receipt/hGWKklUBlC3WslvazCuikpOTwlKTl4c9NpiFi_KoJUQ_ymH2FJyADaXCwpmgbYtxSt813pr-0smsxgzwF2spVuolYcRVCUy8HKSWgb9im40).
+
 ## Reporting data object downloads (for partners distributing ICOS data)
 
 If you distribute ICOS data, you are requested to report all downloads of ICOS data objects to the Carbon Portal. Technically, the reporting can be done by HTTP-POSTing a string with a list of data object PIDs (newline-separated) to URL `https://data.icos-cp.eu/logExternalDownload`. Basic HTTP Authentication must be used, with user name and password provided to you by Carbon Portal. The IP address of the user's machine should be provided as a URL query parameter `ip`. If not provided, IP address of the machine reporting the download will be used as downloader's IP instead.
