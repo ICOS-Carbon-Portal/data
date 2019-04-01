@@ -27,7 +27,7 @@ export default {
 		SITES: 'https://meta.fieldsites.se/objects/'
 	},
 	historyStateMaxAge: (1000 * 3600 * 24),
-	dobjSortLimit: 2000,
+	dobjSortLimit: 10000,
 };
 
 export const placeholders = {

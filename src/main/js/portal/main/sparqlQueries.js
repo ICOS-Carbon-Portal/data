@@ -41,41 +41,36 @@ where{
 
 
 export function dobjOriginsAndCounts(config){
-	//This is needed to get rid of duplicates due to multiple labels for stations.
 	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
-	const fromClauses = config.envri == 'ICOS'
-		? `from <http://meta.icos-cp.eu/resources/cpmeta/>
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
-from <http://meta.icos-cp.eu/resources/stations/>
-from <http://meta.icos-cp.eu/resources/wdcgg/>`
-		: '';
-
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
-(if(bound(?stationName), ?station0, ?stationName) as ?station)
-(if(bound(?stationName), CONCAT(?stPrefix, ?stationName), "(not applicable)") as ?stationLabel)
-${fromClauses}
+select ?spec ?submitter ?project ?station ?count
+(sample(?submitterName) as ?submitterLabel)
+(sample(?projectName) as ?projectLabel)
+(if(bound(?station), CONCAT(sample(?stPrefix), sample(?stationName)), "(not applicable)") as ?stationLabel)
 where{
 	{
-		select * where{
-			[] cpmeta:hasStatProps [
-				cpmeta:hasStatCount ?count;
-				cpmeta:hasStatStation ?station0;
-				cpmeta:hasStatSpec ?spec;
-				cpmeta:hasStatSubmitter ?submitter
-			] .
-			OPTIONAL{?station0 cpmeta:hasName ?stationName}
-			OPTIONAL{?station0 cpmeta:hasStationId ?stId}
+		select ?project ?spec ?submitter ?station (count(?dobj) as ?count) where{
+			?spec cpmeta:hasAssociatedProject ?project .
+			FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
+			FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+			?dobj cpmeta:hasObjectSpec ?spec .
+			FILTER (EXISTS {?dobj cpmeta:hasSizeInBytes []} && NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj})
+			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
+			OPTIONAL{?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station}
 		}
+		group by ?spec ?project ?submitter ?station
 	}
+	?submitter cpmeta:hasName ?submitterName .
+	?project rdfs:label ?projectName .
+	OPTIONAL{
+		?station1 cpmeta:hasName ?stationName; cpmeta:hasStationId ?stId
+		FILTER(?station1 = ?station )
+	}
+	FILTER(bound(?station) = bound(?stationName))
 	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
-	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	?spec cpmeta:hasAssociatedProject ?project .
-	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	?submitter cpmeta:hasName ?submitterLabel .
-	?project rdfs:label ?projectLabel .
-	}`;
+}
+group by ?spec ?project ?submitter ?station ?count`;
 }
 
 export function findDobjs(config, search){
@@ -106,7 +101,7 @@ export const listFilteredDataObjects = (config, options) => {
 	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
 
 	const specsValues = isEmpty(specs)
-		? `?${SPECCOL} a/rdfs:subClassOf? cpmeta:DataObjectSpec .
+		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: (specs.length > 1)
