@@ -44,7 +44,7 @@ export function dobjOriginsAndCounts(config){
 	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?project ?station ?count
+select ?spec ?project ?submitter ?station ?count
 (sample(?submitterName) as ?submitterLabel)
 (sample(?projectName) as ?projectLabel)
 (if(bound(?station), CONCAT(sample(?stPrefix), sample(?stationName)), "(not applicable)") as ?stationLabel)
@@ -59,15 +59,13 @@ where{
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
 			OPTIONAL{?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station}
 		}
-		group by ?spec ?project ?submitter ?station
+		group by ?project ?spec ?submitter ?station
 	}
 	?submitter cpmeta:hasName ?submitterName .
 	?project rdfs:label ?projectName .
-	OPTIONAL{
-		?station1 cpmeta:hasName ?stationName; cpmeta:hasStationId ?stId
-		FILTER(?station1 = ?station )
-	}
-	FILTER(bound(?station) = bound(?stationName))
+	BIND(if(bound(?station), ?station, <http://dummythatdoesnotexist.com>) as ?stationFb)
+	OPTIONAL{?stationFb cpmeta:hasName ?stationName }
+	OPTIONAL{?stationFb cpmeta:hasStationId ?stId }
 	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
 }
 group by ?spec ?project ?submitter ?station ?count`;
@@ -79,17 +77,6 @@ SELECT ?dobj WHERE{
   ?dobj  cpmeta:hasObjectSpec ?spec.
   FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
-}
-
-export function findStations(config, search){
-	return `PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
-SELECT DISTINCT (str(?lName) AS ?Long_name)
-FROM <http://meta.icos-cp.eu/resources/stationentry/>
-WHERE {
-  ?s cpst:hasLongName ?lName .
-  FILTER CONTAINS(LCASE(STR(?lName)), LCASE("${search}"))
-}
-ORDER BY ?Long_name`;
 }
 
 export const listFilteredDataObjects = (config, options) => {

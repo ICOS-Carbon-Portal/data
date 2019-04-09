@@ -58,21 +58,6 @@ export const searchDobjs = search => {
 		);
 };
 
-export const searchStations = search => {
-	const query = queries.findStations(config, search);
-
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(
-			sparqlResult => {
-				const bindings = sparqlResult.results.bindings;
-
-				return bindings
-					? Promise.resolve(bindings.map(b => b.Long_name.value))
-					: Promise.reject(new Error("Could not get stations from meta"));
-			}
-		);
-};
-
 export const saveCart = (email, cart) => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
