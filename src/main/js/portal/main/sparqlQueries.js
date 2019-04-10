@@ -209,10 +209,23 @@ const getFilterClauses = (config, filters) => {
 };
 
 export const extendedDataObjectInfo = (config, dobjs) => {
+	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
-	VALUES ?dobj { ${dobjs.join(' ')} }
+	{
+		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) where{
+			VALUES ?dobj { ${dobjsList} }
+			OPTIONAL{
+				?dobj cpmeta:wasAcquiredBy ?acq.
+				?acq prov:wasAssociatedWith ?stationUri .
+				OPTIONAL{ ?stationUri cpmeta:hasName ?station0 }
+				OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId0 }
+				OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight0 }
+			}
+		}
+		group by ?dobj
+	}
 	?dobj cpmeta:hasObjectSpec ?specUri .
 	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
 		rdfs:label ?theme ;
@@ -221,13 +234,6 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	OPTIONAL{?specUri rdfs:comment ?spec }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
-	OPTIONAL{
-		?dobj cpmeta:wasAcquiredBy ?acq.
-		?acq prov:wasAssociatedWith ?stationUri .
-		OPTIONAL{ ?stationUri cpmeta:hasName ?station }
-		OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId }
-		OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight }
-	}
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
