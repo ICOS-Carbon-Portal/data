@@ -34,9 +34,9 @@ export const HELP_INFO_UPDATED = 'HELP_INFO_UPDATED';
 import {hashToState} from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
+import {getExtendedDataObjInfo} from './backend';
 import {areFiltersEnabled} from './reducer';
-import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
-import {DataObjectsExtendedFetcher, DataObjectsFetcher} from "./CachedDataObjectsFetcher";
+import {DataObjectsFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
@@ -47,10 +47,6 @@ import {saveToRestheart} from "../../common/main/backend";
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
-
-const dataObjectsExtendedFetcher = config.useDataObjectsCache
-	? new CachedDataObjectsExtendedFetcher(config.dobjExtendedCacheFetchLimit, dataObjectsFetcher)
-	: new DataObjectsExtendedFetcher();
 
 export const failWithError = dispatch => error => {
 	console.log(error);
@@ -244,8 +240,19 @@ const logPortalUsage = (specTable, filterCategories, filterTemporal, filterFreeT
 };
 
 export const getFilteredDataObjects = (dispatch, getState) => {
+	dispatch(getFilteredDataObjectsWithoutUsageLogging);
+
+	const {route, specTable, filterCategories, filterTemporal, filterFreeText} = getState();
+
+	if (route === undefined || route === config.ROUTE_SEARCH) {
+		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
+	}
+
+}
+
+const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 	const {specTable, route, preview, sorting, formatToRdfGraph,
-		tabs, filterCategories, filterTemporal, filterFreeText, cart} = getState();
+		tabs, filterTemporal, filterFreeText, cart} = getState();
 
 	const getFilters = () => {
 		if (route === config.ROUTE_PREVIEW && preview.hasPids){
@@ -266,10 +273,6 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 	};
 
 	const filters = getFilters();
-
-	if (route === undefined || route === config.ROUTE_SEARCH) {
-		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
-	}
 
 	const specs = route === config.ROUTE_CART
 		? []
@@ -296,9 +299,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 	dataObjectsFetcher.fetch(options).then(
 		({rows, cacheSize, isDataEndReached}) => {
 
-			const opts = config.useDataObjectsCache ? options : rows.map(d => `<${d.dobj}>`);
-
-			dispatch(fetchExtendedDataObjInfo(opts));
+			dispatch(fetchExtendedDataObjInfo(rows.map(d => d.dobj)));
 
 			dispatch({
 				type: OBJECTS_FETCHED,
@@ -312,8 +313,8 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 	);
 };
 
-const fetchExtendedDataObjInfo = options => dispatch => {
-	dataObjectsExtendedFetcher.fetch(options).then(
+const fetchExtendedDataObjInfo = dobjs => dispatch => {
+	getExtendedDataObjInfo(dobjs).then(
 		extendedDobjInfo => {
 			dispatch({
 				type: EXTENDED_DOBJ_INFO_FETCHED,
@@ -334,7 +335,7 @@ export const toggleSort = varName => dispatch => {
 		type: SORTING_TOGGLED,
 		varName
 	});
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjectsWithoutUsageLogging);
 };
 
 export const requestStep = direction => dispatch => {
@@ -342,7 +343,7 @@ export const requestStep = direction => dispatch => {
 		type: STEP_REQUESTED,
 		direction
 	});
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjectsWithoutUsageLogging);
 };
 
 export const updateRoute = route => (dispatch, getState) => {

@@ -25,12 +25,15 @@ import spray.json._
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.services.etcfacade.FacadeService
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import se.lu.nateko.cp.data.services.etcfacade.UploadReceiptCrypto
+import akka.http.scaladsl.model.headers.RawHeader
 
 class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer){
 	import EtcUploadRouting._
 	import mat.executionContext
 
 	private val facade = new FacadeService(config, upload)
+	private val receiptCrypto = new UploadReceiptCrypto(config.secret)
 	private val meta = upload.meta
 
 	def route: Route = pathPrefix("upload" / "etc"){
@@ -38,13 +41,23 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 		pathPrefix("staging"){
 			getFromBrowseableDirectory(config.folder)
 		} ~
-		(get & path("passwords")){
-			auth.userOpt{userOpt =>
-				val passesFut: Future[JsObject] = userOpt
-					.map(uid => meta.getStationsWhereUserIsPi(uid).map(Some.apply))
-					.getOrElse(Future.successful(None))
-					.map(getPassList(config, _))
-				onSuccess(passesFut){json => complete(json)}
+		get {
+			path("passwords"){
+				auth.userOpt{userOpt =>
+					val passesFut: Future[JsObject] = userOpt
+						.map(uid => meta.getStationsWhereUserIsPi(uid).map(Some.apply))
+						.getOrElse(Future.successful(None))
+						.map(getPassList(config, _))
+					onSuccess(passesFut){json => complete(json)}
+				}
+			} ~
+			path("receipt" / Segment){receiptStr =>
+				receiptCrypto.decrypt(receiptStr) match {
+					case Success(receipt) =>
+						complete(StatusCodes.OK -> receipt.report)
+					case Failure(err) =>
+						complete(StatusCodes.BadRequest -> ("Invalid receipt:\n" + err.getMessage))
+				}
 			}
 		}
 	}
@@ -72,7 +85,12 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 							else extractDataBytes { dataBytes =>
 								val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
 
-								onSuccess(doneFut){_ => complete(StatusCodes.OK)}
+								onSuccess(doneFut){_ =>
+									val receipt = receiptCrypto.encryptNow(file, md5)
+									respondWithHeader(RawHeader("X-ICOSCP-Receipt", receipt)){
+										complete(StatusCodes.OK)
+									}
+								}
 							}
 					}
 				} ~

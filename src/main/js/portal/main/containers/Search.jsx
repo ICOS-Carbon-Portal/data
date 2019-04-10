@@ -13,6 +13,7 @@ import HelpSection from "../components/help/HelpSection.jsx";
 class Search extends Component {
 	constructor(props) {
 		super(props);
+		this.state = {expandedFilters: window.innerWidth > 768};
 	}
 
 	handlePreview(ids){
@@ -36,12 +37,19 @@ class Search extends Component {
 		}
 	}
 
+	toggleFilters() {
+		this.setState({expandedFilters: !this.state.expandedFilters});
+	}
+
 	render(){
 		const props = this.props;
 		const tabs = props.tabs;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
 			'helpStorage', 'getResourceHelpInfo']);
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
+		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
+		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 
 		return (
 			<div className="row" style={{position:'relative'}}>
@@ -52,17 +60,22 @@ class Search extends Component {
 				</div>
 
 				<div className="col-md-3" style={{marginBottom: 20}}>
-					<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
-						<ObjSpecFilter tabHeader="Categories" {...searchProps} />
-						<Filters
-							tabHeader="Filters"
-							filterTemporal={props.filterTemporal}
-							setFilterTemporal={props.setFilterTemporal}
-							queryMeta={props.queryMeta}
-							filterFreeText={props.filterFreeText}
-							updateSelectedPids={props.updateSelectedPids}
-						/>
-					</Tabs>
+					<button className="btn btn-default btn-block visible-xs-block" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
+						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}}></span>
+					</button>
+					<div style={expandedFilters}>
+						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
+							<ObjSpecFilter tabHeader="Categories" {...searchProps} />
+							<Filters
+								tabHeader="Filters"
+								filterTemporal={props.filterTemporal}
+								setFilterTemporal={props.setFilterTemporal}
+								queryMeta={props.queryMeta}
+								filterFreeText={props.filterFreeText}
+								updateSelectedPids={props.updateSelectedPids}
+							/>
+						</Tabs>
+					</div>
 				</div>
 				<div className="col-md-9">
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
