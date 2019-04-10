@@ -8,6 +8,7 @@ import CompactSearchResultTable from '../components/searchResult/CompactSearchRe
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
+import HelpSection from "../components/help/HelpSection.jsx";
 
 class Search extends Component {
 	constructor(props) {
@@ -39,10 +40,17 @@ class Search extends Component {
 		const props = this.props;
 		const tabs = props.tabs;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
-			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
+			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
+			'helpStorage', 'getResourceHelpInfo']);
 
 		return (
-			<div className="row">
+			<div className="row" style={{position:'relative'}}>
+				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
+					<div ref={div => this.helpSection = div} style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
+						<HelpSection helpStorage={searchProps.helpStorage} getResourceHelpInfo={searchProps.getResourceHelpInfo} />
+					</div>
+				</div>
+
 				<div className="col-md-3" style={{marginBottom: 20}}>
 					<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
 						<ObjSpecFilter tabHeader="Categories" {...searchProps} />
@@ -66,7 +74,8 @@ class Search extends Component {
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
-								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch'
+								'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo', 'checkedObjectsInSearch',
+								'helpStorage', 'getResourceHelpInfo'
 							])}
 						/>
 						<CompactSearchResultTable

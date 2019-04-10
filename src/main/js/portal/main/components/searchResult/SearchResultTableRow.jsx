@@ -2,12 +2,10 @@ import React, { Component } from 'react';
 import CheckBtn from '../buttons/ChechBtn.jsx';
 
 
-const truncateStyle = {
-	maxWidth: '100%',
-	whiteSpace: 'nowrap',
-	overflow: 'hidden',
-	textOverflow: 'ellipsis'
-};
+const iconPin = '//static.icos-cp.eu/images/icons/pin.svg';
+const iconCalendar = '//static.icos-cp.eu/images/icons/calendar.svg';
+const iconInfo = '//static.icos-cp.eu/images/icons/info-circle-solid.svg';
+const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
@@ -41,21 +39,20 @@ export default class SimpleObjectTableRow extends Component{
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
-					<h4 style={{marginTop: 0}}>
-						<a href={objInfo.dobj} title="View metadata">{title}</a>
-					</h4>
+					<h4 style={{marginTop: 0}}>{title}</h4>
 					{extendedInfo && extendedInfo.description &&
-						<div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
+						<div>{extendedInfo.description}</div>
 					}
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
 						{extendedInfo.station &&
-						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={'//static.icos-cp.eu/images/icons/pin.svg'} />
+						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconPin} />
 						}
-						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={'//static.icos-cp.eu/images/icons/calendar.svg'} />
+						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={iconCalendar} />
 						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
-						<ExtendedInfoItem item={samplingHeight} icon={'//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg'} iconHeight={15} title="Sampling height" />
+						<ExtendedInfoItemLink item={'Landing page'} url={objInfo.dobj} iconHeight={14} icon={iconInfo} />
+						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
 					</div>
 					}
 				</td>
@@ -64,11 +61,22 @@ export default class SimpleObjectTableRow extends Component{
 	}
 }
 
-const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title}) => {
+const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, children}) => {
+	const imgStyle = {height: iconHeight, marginTop: -2, marginRight: iconRightMargin};
+
 	return (item && icon
 		? <span className="extended-info-item" >
-			<img src={icon} title={title} style={{height: iconHeight, marginTop: -2, marginRight: iconRightMargin}}/> {item}
+			<img src={icon} title={title} style={imgStyle}/> {children ? children : item}
 		</span>
+		: null
+	);
+};
+
+const ExtendedInfoItemLink = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, url}) => {
+	return (item && icon && url
+		? <ExtendedInfoItem item={item} icon={icon} iconHeight={iconHeight} iconRightMargin={iconRightMargin} title={title}>
+			<a href={url}>{item}</a>
+		</ExtendedInfoItem>
 		: null
 	);
 };

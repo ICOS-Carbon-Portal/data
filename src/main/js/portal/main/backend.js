@@ -215,6 +215,25 @@ export const getExtendedDataObjInfo = dobjs => {
 		);
 };
 
+export const fetchResourceHelpInfo = uriList => {
+	const query = queries.resourceHelpInfo(uriList);
+
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResult => {
+		const bindings = sparqlResult.results.bindings;
+
+		return bindings
+			? Promise.resolve(bindings.map(b => {
+				return {
+					uri: b.uri.value,
+					label: b.label ? b.label.value : undefined,
+					comment: b.comment ? b.comment.value : undefined,
+					webpage: b.webpage ? b.webpage.value : undefined
+				}
+			}))
+			: Promise.reject(new Error("Could not get resource info for list of uri=" + uriList.join(', ')));
+	})
+};
+
 export const saveTsSetting = (email, spec, type, val) => {
 	const settings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 	const setting = settings[spec] || {};

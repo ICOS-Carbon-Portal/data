@@ -3,6 +3,7 @@
 var gulp = require('gulp');
 var gp_uglify = require('gulp-uglify');
 var browserify = require('browserify');
+var bcss = require('browserify-css');
 var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
@@ -49,6 +50,11 @@ function compileJs() {
 	var browser = browserify({
 			entries: [paths.main],
 			debug: false
+		})
+		.transform(bcss, {
+			global: true,
+			minify: true,
+			minifyOptions: {compatibility: '*'}
 		})
 		.transform(babelify, {presets: ["es2015", "react"]})
 		.bundle()

@@ -30,8 +30,9 @@ export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
 export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
 export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 export const TS_SETTINGS = 'TS_SETTINGS';
+export const HELP_INFO_UPDATED = 'HELP_INFO_UPDATED';
 import {hashToState} from "./models/State";
-import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut} from './backend';
+import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {areFiltersEnabled} from './reducer';
 import {CachedDataObjectsExtendedFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
@@ -485,4 +486,20 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
 	dispatch(getFilteredDataObjects);
+};
+
+export const getResourceHelpInfo = (helpItem, uriList) => dispatch => {
+	if (helpItem.shouldFetchList) {
+		fetchResourceHelpInfo(uriList).then(resourceInfo => {
+			dispatch({
+				type: HELP_INFO_UPDATED,
+				helpItem: helpItem.withList(resourceInfo)
+			});
+		});
+	} else {
+		dispatch({
+			type: HELP_INFO_UPDATED,
+			helpItem
+		});
+	}
 };

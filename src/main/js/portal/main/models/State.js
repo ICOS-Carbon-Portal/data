@@ -5,6 +5,7 @@ import CompositeSpecTable from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
+import HelpStorage from './HelpStorage';
 import config, {prefixes} from "../config";
 
 
@@ -52,7 +53,8 @@ export default class State{
 			checkedObjectsInCart: [],
 			tabs: {},
 			page: 0,
-			tsSettings: {}
+			tsSettings: {},
+			helpStorage: new HelpStorage()
 		}, state);
 	}
 
@@ -79,7 +81,8 @@ export default class State{
 				specTable,
 				paging: Paging.deserialize(jsonObj.paging),
 				cart,
-				preview: Preview.deserialize(jsonObj.preview)
+				preview: Preview.deserialize(jsonObj.preview),
+				helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
 			})
 		);
 	}
@@ -92,7 +95,8 @@ export default class State{
 			specTable: this.specTable.serialize,
 			paging: this.paging.serialize,
 			cart: undefined,
-			preview: this.preview.serialize
+			preview: this.preview.serialize,
+			helpStorage: this.helpStorage.serialize
 		});
 	}
 

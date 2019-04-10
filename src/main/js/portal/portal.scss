@@ -25,3 +25,17 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+ul.dashed {
+	list-style-type: none;
+	margin: 0;
+	padding-left: 10px;
+}
+ul.dashed > li {
+	text-indent: -10px;
+}
+ul.dashed > li:before {
+	content: "-";
+	text-indent: -5px;
+	margin-right: 5px;
+}

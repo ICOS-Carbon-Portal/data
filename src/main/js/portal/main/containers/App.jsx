@@ -6,7 +6,7 @@ import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart,
-	updateCheckedObjectsInSearch, storeTsPreviewSetting} from '../actions';
+	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
 
@@ -120,7 +120,8 @@ function stateToProps(state){
 		filterCategories: state.filterCategories,
 		tabs: state.tabs,
 		page: state.page,
-		tsSettings: state.tsSettings
+		tsSettings: state.tsSettings,
+		helpStorage: state.helpStorage
 	};
 }
 
@@ -136,6 +137,7 @@ function dispatchToProps(dispatch){
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		storeTsPreviewSetting: (spec, type, val) => dispatch(storeTsPreviewSetting(spec, type, val)),
+		getResourceHelpInfo: (helpItem, uriList) => dispatch(getResourceHelpInfo(helpItem, uriList)),
 	};
 }
 

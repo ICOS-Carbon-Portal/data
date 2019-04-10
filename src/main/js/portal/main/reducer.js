@@ -27,7 +27,8 @@ import {
 	TEMPORAL_FILTER,
 	WHOAMI_FETCHED,
 	LOAD_ERROR,
-	TS_SETTINGS
+	TS_SETTINGS,
+	HELP_INFO_UPDATED
 } from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import State from './models/State';
@@ -251,6 +252,11 @@ export default function(state = new State(), action){
 		case TS_SETTINGS:
 			return state.update({
 				tsSettings: action.tsSettings
+			});
+
+		case HELP_INFO_UPDATED:
+			return state.update({
+				helpStorage: state.helpStorage.withUpdatedItem(action.helpItem)
 			});
 
 		default:

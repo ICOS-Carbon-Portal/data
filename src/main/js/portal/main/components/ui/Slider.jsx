@@ -16,7 +16,8 @@ export default class Slider extends Component{
 	constructor(props){
 		super(props);
 
-		this.iconsStyle = Object.assign(defaultIconStyle, props.iconsStyle);
+		this.rootStyle = Object.assign({position:'relative'}, props.rootStyle);
+		this.iconsStyle = Object.assign({}, defaultIconStyle, props.iconsStyle);
 		this.deltaStep = props.deltaStep || defaultDeltaStep;
 
 		this.state = {
@@ -48,6 +49,10 @@ export default class Slider extends Component{
 			? 'collapse'
 			: 'expand';
 
+		if (newDirection === 'expand' && this.props.onExpanding){
+			this.props.onExpanding();
+		}
+
 		this.setState({
 			direction: newDirection,
 			height: height + getDelta(newDirection, this.deltaStep),
@@ -57,17 +62,19 @@ export default class Slider extends Component{
 
 	render(){
 		const {height, direction} = this.state;
+		const {children, glyphiconUp, glyphiconDown, title} = this.props;
+		const iconUp = glyphiconUp || 'glyphicon glyphicon-menu-up';
+		const iconDown = glyphiconDown || 'glyphicon glyphicon-menu-down';
 		const style = direction === undefined && height !== 0
 			? {}
 			: getStyle(this.state);
 		const iconCls = height === 0 || direction === 'collapse'
-			? 'glyphicon glyphicon-menu-down'
-			: 'glyphicon glyphicon-menu-up';
-		const {children} = this.props;
+			? iconDown
+			: iconUp;
 
 		return (
-			<div style={{position:'relative'}}>
-				<span className={iconCls} style={this.iconsStyle} onClick={this.onClick.bind(this)} />
+			<div style={this.rootStyle}>
+				<span className={iconCls} style={this.iconsStyle} onClick={this.onClick.bind(this)} title={title} />
 				<div ref={content => this.content = content} style={style}>
 					{children}
 				</div>
@@ -77,20 +84,26 @@ export default class Slider extends Component{
 
 	componentDidUpdate(){
 		const {height, direction, fullHeight} = this.state;
+		const firstChildHeight = this.content.firstChild ? this.content.firstChild.clientHeight : 0;
+		const newFullHeight = firstChildHeight > fullHeight ? firstChildHeight : fullHeight;
 
 		if (direction === undefined || height === undefined) return;
 		if (height <= 0) {
 			this.setState({direction: undefined, height: 0});
+			if (this.props.onCollapsed) {
+				this.props.onCollapsed();
+			}
 			return;
 		}
-		if (height >= fullHeight) {
+		if (height >= newFullHeight) {
 			this.setState({direction: undefined, height: fullHeight});
 			return;
 		}
 
 		const newHeight = this.content.clientHeight + getDelta(direction, this.deltaStep);
 		const self = this;
-		this.timers.push(setTimeout(() => self.setState({height: newHeight}), 1));
+
+		this.timers.push(setTimeout(() => self.setState({height: newHeight, fullHeight: newFullHeight}), 1));
 	}
 }
 

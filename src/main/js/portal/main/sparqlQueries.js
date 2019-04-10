@@ -232,3 +232,12 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
 };
+
+export const resourceHelpInfo = uriList => {
+	return `select * where{
+	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
+	?uri rdfs:label ?label .
+	OPTIONAL{?uri rdfs:comment ?comment}
+	OPTIONAL{?uri rdfs:seeAlso ?webpage}
+}`;
+};

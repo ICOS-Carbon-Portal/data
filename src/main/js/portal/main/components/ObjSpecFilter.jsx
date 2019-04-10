@@ -2,6 +2,7 @@ import React, { Component, Fragment } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 import {placeholders} from '../config';
 import Slider from './ui/Slider.jsx';
+import HelpButton from './help/HelpButton.jsx';
 
 
 export default class ObjSpecFilter extends Component {
@@ -12,20 +13,20 @@ export default class ObjSpecFilter extends Component {
 	}
 
 	getCtrl(name, labelName){
-		const specTbl = this.props.specTable;
+		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
 
 		const lookupTable = {};
 
-		if (specTbl) {
-			const colTbl = specTbl.findTable(name);
+		if (specTable) {
+			const colTbl = specTable.findTable(name);
 			if (colTbl) colTbl.rows.forEach(row => {
 				lookupTable[row[name]] = row[labelName];
 			});
 		}
 
-		const filterUris = specTbl.getFilter(name);
-		const data = this.props.specTable
-			? specTbl.getDistinctAvailableColValues(name)
+		const filterUris = specTable.getFilter(name);
+		const data = specTable
+			? specTable.getDistinctAvailableColValues(name)
 				.map(value => {return {value, text: lookupTable[value]};})
 			: [];
 		const value = filterUris.map(uri => data.some(d => d.value === uri) ? uri : lookupTable[uri]);
@@ -44,6 +45,15 @@ export default class ObjSpecFilter extends Component {
 			<div className="row" key={name} style={{marginTop: 10}}>
 				<div className="col-md-12">
 					<label style={{marginBottom: 0}}>{placeholders[name]}</label>
+
+					<HelpButton
+						isActive={helpStorage.isActive(name)}
+						helpItem={helpStorage.getHelpItem(name)}
+						options={data}
+						title="Click to toggle help"
+						getResourceHelpInfo={getResourceHelpInfo}
+					/>
+
 					<Multiselect
 						placeholder={placeholder}
 						valueField="value"
@@ -54,7 +64,7 @@ export default class ObjSpecFilter extends Component {
 						onChange={this.handleChange.bind(this, name)}
 						onSearch={this.handleSearch.bind(this, name)}
 						itemComponent={this.listItem.bind(this, name)}
-						tagComponent={this.tagItem}
+						tagComponent={this.tagItem.bind(this)}
 					/>
 				</div>
 			</div>
@@ -90,7 +100,9 @@ export default class ObjSpecFilter extends Component {
 		const textItem = typeof item === 'object' ? item : {text: item};
 
 		return typeof item === 'object'
-			? <span style={{marginRight: 2}}>{textItem.text}</span>
+			? <Fragment>
+				<span style={{marginRight: 2}}>{textItem.text}</span>
+			</Fragment>
 			: <span style={{marginRight: 2, color: 'gray'}} title="Not present with current filters">{textItem.text}</span>;
 	}
 
@@ -109,6 +121,7 @@ export default class ObjSpecFilter extends Component {
 		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
+		// console.log({specTable, nameList: getNameList(specTable, ['project', 'theme', 'station', 'submitter', 'type', 'level', 'format', 'colTitle', 'valType', 'quantityUnit', 'quantityKind'])});
 
 		return (
 			<div>

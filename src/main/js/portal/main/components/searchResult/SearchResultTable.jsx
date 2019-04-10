@@ -5,6 +5,7 @@ import {Paging} from '../buttons/Paging.jsx';
 import PreviewBtn from '../buttons/PreviewBtn.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
 import CheckAllBoxes from '../controls/CheckAllBoxes.jsx';
+import HelpButton from '../help/HelpButton.jsx';
 
 
 const dropdownLookup = {
@@ -25,7 +26,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 	render(){
 		const props = this.props;
-		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo} = props;
+		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo, helpStorage, getResourceHelpInfo} = props;
 		const objectText = props.checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = props.checkedObjectsInSearch.reduce((acc, uri) => {
 				return acc.concat(props.objectsTable.filter(o => o.dobj === uri));
@@ -40,7 +41,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 				<div className="panel-body">
 
-					<div className="panel-srollable-controls clearfix">
+					<div ref={div => this.stickyHeader = div} className="panel-srollable-controls clearfix">
 						<CheckAllBoxes
 							checkCount={props.checkedObjectsInSearch.length}
 							totalCount={paging.pageCount}
@@ -74,30 +75,42 @@ export default class SimpleDataObjectsTable extends Component{
 								clickAction={previewAction}
 								lookup={props.lookup}
 							/>
+
+							<div style={{float: 'right', position:'relative', top:7, marginRight: 10}}>
+								<HelpButton
+									isActive={helpStorage.isActive('preview')}
+									helpItem={helpStorage.getHelpItem('preview')}
+									title="View help about Preview"
+									getResourceHelpInfo={getResourceHelpInfo}
+								/>
+							</div>
 						</div>
+
 					</div>
 
-						<table className="table">
-							<tbody>{
-								props.objectsTable.map((objInfo, i) => {
-									const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-									const isChecked = props.checkedObjectsInSearch.includes(objInfo.dobj);
 
-									return (
-										<SearchResultTableRow
-											lookup={lookup}
-											extendedInfo={extendedInfo}
-											preview={preview}
-											objInfo={objInfo}
-											key={'dobj_' + i}
-											updateCheckedObjects={this.props.updateCheckedObjects}
-											isChecked={isChecked}
-											checkedObjects={checkedObjects}
-										/>
-									);
-								})
-							}</tbody>
-						</table>
+
+					<table className="table">
+						<tbody>{
+							props.objectsTable.map((objInfo, i) => {
+								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+								const isChecked = props.checkedObjectsInSearch.includes(objInfo.dobj);
+
+								return (
+									<SearchResultTableRow
+										lookup={lookup}
+										extendedInfo={extendedInfo}
+										preview={preview}
+										objInfo={objInfo}
+										key={'dobj_' + i}
+										updateCheckedObjects={this.props.updateCheckedObjects}
+										isChecked={isChecked}
+										checkedObjects={checkedObjects}
+									/>
+								);
+							})
+						}</tbody>
+					</table>
 				</div>
 			</div>
 		);
