@@ -491,7 +491,7 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 
 export const getResourceHelpInfo = (helpItem, uriList) => dispatch => {
 	if (helpItem.shouldFetchList) {
-		fetchResourceHelpInfo(uriList).then(resourceInfo => {
+		fetchResourceHelpInfo(uriList.filter(uri => uri)).then(resourceInfo => {
 			dispatch({
 				type: HELP_INFO_UPDATED,
 				helpItem: helpItem.withList(resourceInfo)

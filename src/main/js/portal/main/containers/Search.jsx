@@ -47,7 +47,6 @@ class Search extends Component {
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
 			'helpStorage', 'getResourceHelpInfo']);
-			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 

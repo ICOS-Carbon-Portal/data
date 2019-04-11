@@ -25,6 +25,7 @@ project/target/
 .classpath
 .cache-main
 .cache-tests
+.metals/
 /bin/
 /views/bin/
 /views/.gitignore

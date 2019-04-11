@@ -1,3 +1,4 @@
+import config, {placeholders as titles} from '../config';
 export default class HelpStorage{
 	constructor(storage, visibility){
 		this.storage = storage || initItems;
@@ -75,23 +76,37 @@ const parseResourceInfo = resourceInfo => {
 	return resourceInfo.map(ri => {
 		return {
 			lbl: ri.label,
-			txt: ri.comment || 'Not available',
+			txt: ri.comment || '',
 			webpage: ri.webpage
 		};
 	});
 };
 
+const {envri} = config.envri;
+
+const projectDescr = envri === 'SITES'
+	? 'SITES Data Portal stores data from the following projects:'
+	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
+
 const initItems = [
-	new Item(
-		'project',
-		'Project',
-		'Description of Project',
-		[]
-	),
+
+	new Item('project', titles.project, projectDescr, []),
+
+	new Item('station', titles.station, 'If applicable, the research station that produced the original data for this data object. ' +
+		'Typically, all data except elaborated products have a station of origin.'),
+
+	new Item('submitter', titles.submitter, 'Organization credited for submission of the data object. ' +
+		'Acquisition and production are credited independently of submission.'),
+
+	new Item('type', titles.type, 'Kind of data object. Encompasses most of characteristics related to data content, ' +
+		'that can be shared by multiple data objects, namely: ' +
+		`${titles.project}, ${titles.theme}, ${titles.level}, ${titles.format}, and ` +
+		'(in the case of tabular data with well-defined content) the list of columns.'),
+
 	new Item(
 		'level',
-		'Data Level',
-		'Description of Data level',
+		titles.level,
+		envri + ' distinguishes 4 levels of data in terms of how processed they are (ranging from raw data to modelling results):',
 		parseResourceInfo([
 			{
 				label: 0,
@@ -117,14 +132,42 @@ const initItems = [
 			}
 		])
 	),
+
+	new Item('format', titles.format, 'Technical file format, indicating which software module is needed to read the data'),
+
 	new Item(
 		'quantityKind',
-		'Quantity Kind',
-		'Description of Quantity kind'
+		titles.quantityKind,
+		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. ' +
+			'Implies an associated physical quantity dimension but does not have a fixed unit of measurement.',
+		[]
 	),
+
+	new Item('valType', titles.valType, 'A specific kind of physical quantity used in a certain scientific field. ' +
+		'When applicable, is associated with a fixed unit of measurement and/or a single quantity kind.'),
+
 	new Item(
 		'preview',
-		'Preview',
-		'Description of how to use preview'
+		'Preview / Add to cart',
+		'How \"Preview\" and \"Add to cart\" buttons work:',
+		parseResourceInfo([
+			{
+				label: 'preview availability',
+				comment: 'normally available for single-table data objects of levels 1 and 2 and for NetCDF data objects (level 3)'
+			},
+			{
+				label: 'how to preview',
+				comment: 'select the data object(s) by ticking checkboxes, click the preview button (if active)'
+			},
+			{
+				label: 'multi-object preview',
+				comment: 'tabular objects of the same data type can be previewed simultaneously; if coming from the same station and from disjoint time intervals, ' +
+					'the datasets are concatenated, otherwise, presented as different plot lines'
+			},
+			{
+				label: 'adding to cart',
+				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
+			}
+		])
 	)
 ];

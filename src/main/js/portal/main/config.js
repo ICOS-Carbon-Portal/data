@@ -38,7 +38,7 @@ export const placeholders = {
 	colTitle: 'Column name',
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
-	quantityUnit: 'Unit',
+	quantityUnit: 'Unit of measurement',
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	project: 'Project'
