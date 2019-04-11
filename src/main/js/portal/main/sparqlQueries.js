@@ -106,15 +106,16 @@ export const listFilteredDataObjects = (config, options) => {
 	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
 
 	const specsValues = isEmpty(specs)
-		? `?${SPECCOL} a/rdfs:subClassOf? cpmeta:DataObjectSpec .
+		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: (specs.length > 1)
 			? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
 			: `BIND(<${specs[0]}> AS ?${SPECCOL})`;
 
-	const submitterValues = isEmpty(submitters) ? ''
-		: `VALUES ?submitter {<` + submitters.join('> <') + '>}\n';
+	const submitterSearch = isEmpty(submitters) ? ''
+		: `VALUES ?submitter {<${submitters.join('> <')}>}
+			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter`;
 
 	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 
@@ -151,15 +152,22 @@ export const listFilteredDataObjects = (config, options) => {
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
-	${specsValues}
-	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
-	${stationSearch}
-	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+	{
+		select ?spec ?dobj where{
+			{
+				select ?spec where{
+					${specsValues}
+				}
+			}
+			?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+			${stationSearch}
+			${submitterSearch}
+			FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+		}
+	}
 	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .
-	${submitterValues}?dobj cpmeta:wasSubmittedBy [
-		prov:endedAtTime ?submTime ${isEmpty(submitters) ? '' : '; prov:wasAssociatedWith ?submitter'}
-	] .
+	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
 	${filterClauses}
