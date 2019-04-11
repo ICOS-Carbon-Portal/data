@@ -1,6 +1,14 @@
 import React, { Component } from 'react';
 import CheckBtn from '../buttons/ChechBtn.jsx';
+import {isSmallDevice} from '../../utils';
 
+
+const truncateStyle = {
+	maxWidth: '100%',
+	whiteSpace: 'nowrap',
+	overflow: 'hidden',
+	textOverflow: 'ellipsis'
+};
 
 const iconPin = '//static.icos-cp.eu/images/icons/pin.svg';
 const iconCalendar = '//static.icos-cp.eu/images/icons/calendar.svg';
@@ -40,9 +48,7 @@ export default class SimpleObjectTableRow extends Component{
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>{title}</h4>
-					{extendedInfo && extendedInfo.description &&
-						<div>{extendedInfo.description}</div>
-					}
+					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
@@ -60,6 +66,14 @@ export default class SimpleObjectTableRow extends Component{
 		);
 	}
 }
+
+const Description = ({extendedInfo, truncateStyle}) => {
+	if (!(extendedInfo && extendedInfo.description)) return null;
+
+	return isSmallDevice()
+		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
+		: <div>{extendedInfo.description}</div>;
+};
 
 const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, children}) => {
 	const imgStyle = {height: iconHeight, marginTop: -2, marginRight: iconRightMargin};

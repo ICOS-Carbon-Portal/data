@@ -9,11 +9,23 @@ import SearchResultTable from '../components/searchResult/SearchResultTable.jsx'
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
 import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 import HelpSection from "../components/help/HelpSection.jsx";
+import {debounce, Events} from 'icos-cp-utils';
+import {isSmallDevice} from '../utils';
 
 class Search extends Component {
 	constructor(props) {
 		super(props);
-		this.state = {expandedFilters: window.innerWidth > 768};
+		this.state = {expandedFilters: !isSmallDevice()};
+
+		this.events = new Events();
+		this.handleResize = debounce(_ => {
+			const expandedFilters = this.state.expandedFilters;
+			const expanded = isSmallDevice()
+				? expandedFilters
+				: true;
+			this.setState({expandedFilters: expanded});
+		});
+		this.events.addToTarget(window, "resize", this.handleResize);
 	}
 
 	handlePreview(ids){
@@ -41,13 +53,16 @@ class Search extends Component {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
 
+	componentWillUnmount(){
+		this.events.clear();
+	}
+
 	render(){
 		const props = this.props;
 		const tabs = props.tabs;
 		const searchProps = copyprops(props, ['specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
 			'helpStorage', 'getResourceHelpInfo']);
-			'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids']);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 

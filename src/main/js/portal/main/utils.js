@@ -34,3 +34,7 @@ export const varType = variable => {
 
 	return 'unknown';
 };
+
+export const isSmallDevice = _ => {
+	return window.innerWidth <= 768;
+};

@@ -56,7 +56,7 @@
     "icos-cp-backend": "^0.3.5",
     "icos-cp-draggable": "0.0.1",
     "icos-cp-toaster": "^0.5.1",
-    "icos-cp-utils": "^0.1.4",
+    "icos-cp-utils": "^0.1.5",
     "rc-datepicker": "^5.0.11",
     "react": "^16.8.6",
     "react-bootstrap": "^0.32.4",
