@@ -69,9 +69,9 @@ export const prefixes = {
 			{prefix: 'o', value: 'https://meta.fieldsites.se/resources/organizations/'},
 			{prefix: 's', value: 'https://meta.fieldsites.se/resources/stations/'}
 		],
-		type: 'https://meta.fieldsites.se/resources/cpmeta/',
-		format: 'https://meta.fieldsites.se/ontologies/cpmeta/',
-		valType: 'https://meta.fieldsites.se/resources/cpmeta/',
-		quantityKind: 'https://meta.fieldsites.se/resources/cpmeta/'
+		type: 'https://meta.fieldsites.se/resources/objspecs/',
+		format: 'https://meta.fieldsites.se/ontologies/sites/',
+		valType: 'https://meta.fieldsites.se/resources/',
+		quantityKind: 'https://meta.fieldsites.se/resources/'
 	}
 };

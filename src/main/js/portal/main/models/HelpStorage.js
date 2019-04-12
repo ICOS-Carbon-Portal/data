@@ -82,7 +82,7 @@ const parseResourceInfo = resourceInfo => {
 	});
 };
 
-const {envri} = config.envri;
+const {envri} = config;
 
 const projectDescr = envri === 'SITES'
 	? 'SITES Data Portal stores data from the following projects:'
