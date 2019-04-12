@@ -10,6 +10,7 @@ export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
 export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
 export const SORTING_TOGGLED = 'SORTING_TOGGLED';
 export const STEP_REQUESTED = 'STEP_REQUESTED';
+export const METADATA = 'METADATA';
 export const PREVIEW = 'PREVIEW';
 export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
 export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
@@ -32,7 +33,7 @@ export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
 export const TS_SETTINGS = 'TS_SETTINGS';
 export const HELP_INFO_UPDATED = 'HELP_INFO_UPDATED';
 import {hashToState} from "./models/State";
-import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo} from './backend';
+import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
 import {areFiltersEnabled} from './reducer';
@@ -307,6 +308,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
+			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(getState().metadata.id));
 			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
@@ -374,6 +376,16 @@ export const switchTab = (tabName, selectedTabId) => dispatch => {
 	if (tabName === 'searchTab'){
 		dispatch(getFilteredDataObjects);
 	}
+};
+
+export const setMetadataItem = id => dispatch => {
+	getMetadata(id).then(metadata => {
+		const metadataWithId = Object.assign({}, metadata, {id: id});
+		dispatch({
+			type: METADATA,
+			metadataWithId
+		});
+	});
 };
 
 export const setPreviewItem = id => dispatch => {

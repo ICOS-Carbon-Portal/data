@@ -12,6 +12,10 @@ export default class SimpleObjectTableRow extends Component{
 		super(props);
 	}
 
+	handleViewMetadata(){
+		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
+	}
+
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
@@ -39,7 +43,9 @@ export default class SimpleObjectTableRow extends Component{
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
-					<h4 style={{marginTop: 0}}>{title}</h4>
+					<h4 style={{marginTop: 0}}>
+						<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
+					</h4>
 					{extendedInfo && extendedInfo.description &&
 						<div>{extendedInfo.description}</div>
 					}

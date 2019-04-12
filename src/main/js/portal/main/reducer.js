@@ -11,6 +11,7 @@ import {
 	RESTORE_FILTERS,
 	RESTORE_PREVIEW,
 	CART_UPDATED,
+	METADATA,
 	PREVIEW,
 	PREVIEW_SETTING_UPDATED,
 	PREVIEW_VISIBILITY,
@@ -179,6 +180,12 @@ export default function(state = new State(), action){
 				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
 				paging,
 				page: 0
+			});
+
+		case METADATA:
+			return state.update({
+				route: config.ROUTE_METADATA,
+				metadata: action.metadataWithId
 			});
 
 		case PREVIEW:

@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import PreviewTimeSerie from './PreviewTimeSerie.jsx';
-import PreviewNetCDF from './PreviewNetCDF.jsx';
 import PreviewSelfContained from './PreviewSelfContained.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
-import BackButton from '../buttons/BackButton.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
 
 

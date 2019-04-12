@@ -18,4 +18,4 @@ export default {
 	cpmetaObjectUri: `https://${host.replace('local-', '')}/objects/`,
 	envri,
 	sparqlGraphFilter
-}
+};

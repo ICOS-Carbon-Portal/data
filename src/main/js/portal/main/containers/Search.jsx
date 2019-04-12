@@ -7,7 +7,7 @@ import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
-import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
+import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch, setMetadataItem} from '../actions';
 import HelpSection from "../components/help/HelpSection.jsx";
 
 class Search extends Component {
@@ -37,6 +37,10 @@ class Search extends Component {
 		}
 	}
 
+	handleViewMetadata(id) {
+		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
+	}
+
 	toggleFilters() {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
@@ -51,14 +55,14 @@ class Search extends Component {
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 
 		return (
+
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
 					<div ref={div => this.helpSection = div} style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
 						<HelpSection helpStorage={searchProps.helpStorage} getResourceHelpInfo={searchProps.getResourceHelpInfo} />
 					</div>
 				</div>
-
-				<div className="col-md-3" style={{marginBottom: 20}}>
+				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
 					<button className="btn btn-default btn-block visible-xs-block" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
 						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}}></span>
 					</button>
@@ -76,10 +80,11 @@ class Search extends Component {
 						</Tabs>
 					</div>
 				</div>
-				<div className="col-md-9">
+				<div className="col-sm-8 col-md-9">
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
 						<SearchResultTable
 							tabHeader="Search results"
+							viewMetadata={this.handleViewMetadata.bind(this)}
 							previewAction={this.handlePreview.bind(this)}
 							updateCheckedObjects={props.updateCheckedObjects.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
@@ -92,6 +97,7 @@ class Search extends Component {
 						/>
 						<CompactSearchResultTable
 							tabHeader="Compact view"
+							viewMetadata={this.handleViewMetadata.bind(this)}
 							previewAction={this.handlePreview.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',
@@ -111,6 +117,7 @@ function dispatchToProps(dispatch){
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
+		setMetadataItem: id => dispatch(setMetadataItem(id)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),

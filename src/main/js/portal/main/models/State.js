@@ -19,6 +19,7 @@ const hashKeys = [
 	'filterFreeText',
 	'tabs',
 	'page',
+	'metadata',
 	'preview'
 ];
 
@@ -43,6 +44,7 @@ export default class State{
 			},
 			paging: {},
 			cart: new Cart(),
+			metadata: {},
 			preview: new Preview(),
 			toasterData: undefined,
 			batchDownloadStatus: {
@@ -160,7 +162,7 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-
+		state.metadata = Object.assign({}, {id: config.previewIdPrefix[config.envri] + state.metadata});
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
@@ -176,6 +178,15 @@ const handleRoute = storeState => {
 };
 
 const specialCases = state => {
+	if (state.route === config.ROUTE_METADATA) {
+		return {
+			route: state.route,
+			metadata: state.metadata.id.split('/').pop()
+		};
+	} else {
+		delete state.metadata;
+	}
+
 	if (state.route === config.ROUTE_PREVIEW) {
 		return {
 			route: state.route,
