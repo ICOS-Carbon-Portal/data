@@ -18,34 +18,20 @@ export default class HelpButton extends Component {
 		this.iconsStyle = Object.assign({}, defaultIconStyle, props.iconsStyle);
 		this.btnDefault = props.btnDefault || btnDefault;
 		this.btnActive = props.btnActive || btnActive;
-
-		this.state = {
-			isActive: false
-		};
-	}
-
-	componentWillReceiveProps(nextProps) {
-		if (nextProps.isActive !== this.state.isActive){
-			this.setState({isActive: nextProps.isActive});
-		}
 	}
 
 	handleBtnClick(){
-		const {getResourceHelpInfo, options, helpItem} = this.props;
+		const {getResourceHelpInfo, helpItem} = this.props;
 
 		if (getResourceHelpInfo){
-			const uriList = options && options.length
-				? options.map(d => d.value)
-				: undefined;
-			getResourceHelpInfo(helpItem, uriList);
+			getResourceHelpInfo(helpItem);
 		}
 	}
 
 	render(){
-		const {helpItem, title} = this.props;
+		const {helpItem, title, isActive} = this.props;
 		if (helpItem === undefined) return null;
 
-		const {isActive} = this.state;
 		const className = isActive ? this.btnActive : this.btnDefault;
 
 		return <span

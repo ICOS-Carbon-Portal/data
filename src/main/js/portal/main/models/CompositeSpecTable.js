@@ -111,6 +111,13 @@ export default class CompositeSpecTable{
 		return this.findTable(colName).getDistinctAvailableColValues(colName);
 	}
 
+	getAllDistinctAvailableColValues(colName){
+		const table = this.findTable(colName);
+		return table
+			? table.getAllColValues(colName)
+			: [];
+	}
+
 	getColumnValuesFilter(colName){
 		return this.findTable(colName).getColumnValuesFilter(colName);
 	}

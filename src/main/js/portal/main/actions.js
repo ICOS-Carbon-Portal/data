@@ -248,7 +248,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
 	}
 
-}
+};
 
 const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 	const {specTable, route, preview, sorting, formatToRdfGraph,
@@ -489,18 +489,28 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const getResourceHelpInfo = (helpItem, uriList) => dispatch => {
+export const getResourceHelpInfo = helpItem => (dispatch, getState) => {
 	if (helpItem.shouldFetchList) {
-		fetchResourceHelpInfo(uriList.filter(uri => uri)).then(resourceInfo => {
-			dispatch({
-				type: HELP_INFO_UPDATED,
-				helpItem: helpItem.withList(resourceInfo)
+		const {specTable} = getState();
+		const uriList = specTable
+			.getAllDistinctAvailableColValues(helpItem.name)
+			.filter(uri => uri);
+
+		if (uriList.length) {
+			fetchResourceHelpInfo(uriList).then(resourceInfo => {
+				dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
 			});
-		});
+		} else {
+			dispatch(updateHelpInfo(helpItem));
+		}
 	} else {
-		dispatch({
-			type: HELP_INFO_UPDATED,
-			helpItem
-		});
+		dispatch(updateHelpInfo(helpItem));
 	}
+};
+
+const updateHelpInfo = helpItem => dispatch => {
+	dispatch({
+		type: HELP_INFO_UPDATED,
+		helpItem
+	});
 };

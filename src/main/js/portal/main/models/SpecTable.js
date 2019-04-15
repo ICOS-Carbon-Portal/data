@@ -74,6 +74,9 @@ export default class SpecTable{
 			: [];
 	}
 
+	getAllColValues(colName){
+		return distinct(this._rows.map(row => row[colName]));
+	}
 }
 
 function distinct(stringArray){
