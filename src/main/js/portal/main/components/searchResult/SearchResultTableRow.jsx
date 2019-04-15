@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import CheckBtn from '../buttons/ChechBtn.jsx';
 import {isSmallDevice} from '../../utils';
+import {LinkifyText} from '../LinkifyText.jsx';
 
 
 const truncateStyle = {
@@ -34,6 +35,7 @@ export default class SimpleObjectTableRow extends Component{
 		const checkBtnTitle = checkboxDisabled
 			? 'You cannot download or preview level 0 data through this portal'
 			: `Click to select this data object for preview or add to cart`;
+
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -72,7 +74,7 @@ const Description = ({extendedInfo, truncateStyle}) => {
 
 	return isSmallDevice()
 		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-		: <div>{extendedInfo.description}</div>;
+		: <LinkifyText>{extendedInfo.description}</LinkifyText>;
 };
 
 const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, children}) => {

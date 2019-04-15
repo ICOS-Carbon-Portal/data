@@ -61,6 +61,7 @@
     "react": "^16.8.6",
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.8.6",
+    "linkify-it": "^2.1.0",
     "react-redux": "^5.0.7",
     "react-widgets": "^3.4.6",
     "redux": "^3.7.2",
