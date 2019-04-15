@@ -49,7 +49,6 @@ export default class ObjSpecFilter extends Component {
 					<HelpButton
 						isActive={helpStorage.isActive(name)}
 						helpItem={helpStorage.getHelpItem(name)}
-						options={data}
 						title="Click to toggle help"
 						getResourceHelpInfo={getResourceHelpInfo}
 					/>

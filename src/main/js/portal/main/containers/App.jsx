@@ -137,7 +137,7 @@ function dispatchToProps(dispatch){
 		addToCart: objInfo => dispatch(addToCart(objInfo)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		storeTsPreviewSetting: (spec, type, val) => dispatch(storeTsPreviewSetting(spec, type, val)),
-		getResourceHelpInfo: (helpItem, uriList) => dispatch(getResourceHelpInfo(helpItem, uriList)),
+		getResourceHelpInfo: (helpItem) => dispatch(getResourceHelpInfo(helpItem)),
 	};
 }
 

@@ -21,13 +21,10 @@ export default class HelpButton extends Component {
 	}
 
 	handleBtnClick(){
-		const {getResourceHelpInfo, options, helpItem} = this.props;
+		const {getResourceHelpInfo, helpItem} = this.props;
 
 		if (getResourceHelpInfo){
-			const uriList = options && options.length
-				? options.map(d => d.value)
-				: undefined;
-			getResourceHelpInfo(helpItem, uriList);
+			getResourceHelpInfo(helpItem);
 		}
 	}
 

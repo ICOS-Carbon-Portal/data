@@ -245,5 +245,6 @@ export const resourceHelpInfo = uriList => {
 	?uri rdfs:label ?label .
 	OPTIONAL{?uri rdfs:comment ?comment}
 	OPTIONAL{?uri rdfs:seeAlso ?webpage}
-}`;
+}
+order by ?label`;
 };
