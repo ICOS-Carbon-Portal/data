@@ -37,3 +37,6 @@ nohup.out
 .idea
 /src/main/python/geoip/py/access_key
 /src/main/python/update-restheart/badRecords.txt
+/src/main/python/geoip/DB/ip.sqlite
+/src/main/python/geoip/venv/
+__pycache__/
