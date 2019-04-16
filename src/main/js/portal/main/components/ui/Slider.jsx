@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 
+
 const defaultIconStyle = {
 	fontSize: 14,
 	position: 'absolute',
@@ -10,114 +11,50 @@ const defaultIconStyle = {
 	color: '#666',
 	padding: 10
 };
-const defaultDeltaStep = 8;
 
 export default class Slider extends Component{
 	constructor(props){
 		super(props);
 
 		this.rootStyle = Object.assign({position:'relative'}, props.rootStyle);
-		this.iconsStyle = Object.assign({}, defaultIconStyle, props.iconsStyle);
-		this.deltaStep = props.deltaStep || defaultDeltaStep;
+		this.iconStyle = Object.assign({}, defaultIconStyle, props.iconStyle);
 
 		this.state = {
-			forceCollapse: props.startCollapsed || false,
-			direction: undefined,
-			fullHeight: undefined,
+			isOpen: props.startCollapsed === undefined ? true : !props.startCollapsed,
 			height: undefined
 		};
-
-		this.timers = [];
-	}
-
-	componentDidMount(){
-		this.setState({
-			fullHeight: this.content.clientHeight,
-			height: this.state.forceCollapse ? 0 : this.content.clientHeight
-		});
 	}
 
 	onClick(){
-		this.timers.forEach(t => clearTimeout(t));
-		this.timers = [];
-
-		const content = this.content;
-		const direction = this.state.direction;
-		const height = content.clientHeight;
-		const fullHeight = height === 0 ? this.state.fullHeight : height;
-		const newDirection = (direction === undefined && height > 0) || direction === 'expand'
-			? 'collapse'
-			: 'expand';
-
-		if (newDirection === 'expand' && this.props.onExpanding){
-			this.props.onExpanding();
-		}
-
-		this.setState({
-			direction: newDirection,
-			height: height + getDelta(newDirection, this.deltaStep),
-			fullHeight
-		});
+		this.setState({isOpen: !this.state.isOpen});
 	}
 
 	render(){
-		const {height, direction} = this.state;
-		const {children, glyphiconUp, glyphiconDown, title} = this.props;
-		const iconUp = glyphiconUp || 'glyphicon glyphicon-menu-up';
-		const iconDown = glyphiconDown || 'glyphicon glyphicon-menu-down';
-		const style = direction === undefined && height !== 0
-			? {}
-			: getStyle(this.state);
-		const iconCls = height === 0 || direction === 'collapse'
-			? iconDown
-			: iconUp;
+		const state = this.state;
+		const isOpen = state.isOpen;
+		const height = isOpen ? state.height : 0;
+		const {children, openClsName, closedClsName, title} = this.props;
+		const iconCls = isOpen
+			? openClsName || 'glyphicon glyphicon-menu-up'
+			: closedClsName || 'glyphicon glyphicon-menu-down';
+		const contentStyle = {
+			transition: 'height 0.3s ease-in-out',
+			overflow: 'hidden',
+			height
+		};
 
 		return (
 			<div style={this.rootStyle}>
-				<span className={iconCls} style={this.iconsStyle} onClick={this.onClick.bind(this)} title={title} />
-				<div ref={content => this.content = content} style={style}>
+				<span className={iconCls} style={this.iconStyle} onClick={this.onClick.bind(this)} title={title} />
+				<div ref={content => this.content = content} className={'cp-slider'} style={contentStyle}>
 					{children}
 				</div>
 			</div>
 		);
 	}
 
-	componentDidUpdate(){
-		const {height, direction, fullHeight} = this.state;
-		const firstChildHeight = this.content.firstChild ? this.content.firstChild.clientHeight : 0;
-		const newFullHeight = firstChildHeight > fullHeight ? firstChildHeight : fullHeight;
-
-		if (direction === undefined || height === undefined) return;
-		if (height <= 0) {
-			this.setState({direction: undefined, height: 0});
-			if (this.props.onCollapsed) {
-				this.props.onCollapsed();
-			}
-			return;
-		}
-		if (height >= newFullHeight) {
-			this.setState({direction: undefined, height: fullHeight});
-			return;
-		}
-
-		const newHeight = this.content.clientHeight + getDelta(direction, this.deltaStep);
-		const self = this;
-
-		this.timers.push(setTimeout(() => self.setState({height: newHeight, fullHeight: newFullHeight}), 1));
+	componentDidMount(){
+		const height = Array.from(this.content.childNodes).reduce((acc, curr) => acc + curr.clientHeight, 0);
+		this.setState({height});
 	}
 }
-
-const getDelta = (direction, deltaStep) => {
-	return direction === 'collapse' ? -deltaStep : deltaStep;
-};
-
-const getStyle = state => {
-	const {height, fullHeight} = state;
-
-	if (height === undefined) return {};
-
-	const opacity = height > 100 ? 1 : (height / 100);
-	return height === fullHeight
-		? {height, overflow: 'visible', opacity, padding: 0}
-		: {height, overflow: 'hidden', opacity, padding: 0};
-};
