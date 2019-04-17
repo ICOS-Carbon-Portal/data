@@ -1,34 +1,23 @@
 import React, { Component } from 'react';
-import './SlideIn.css';
+
+
+const baseStyle = {
+	transition: 'margin-right 0.5s ease-in-out',
+	float: 'right'
+};
 
 export default class SlideIn extends Component {
 	constructor(props){
 		super(props);
-
-		this.state = {
-			className: props.isOpen === undefined
-				? 'cp-slide-in'
-				: props.isOpen
-					? 'cp-slide-in cp-slide-in-open'
-					: 'cp-slide-in cp-slide-in-close'
-		};
-	}
-
-	componentWillReceiveProps(nextProps) {
-		if (nextProps.isOpen !== this.state.isOpen) {
-			const className = nextProps.isOpen
-				? 'cp-slide-in cp-slide-in-open'
-				: 'cp-slide-in cp-slide-in-close';
-			this.setState({className});
-		}
 	}
 
 	render(){
-		const {className} = this.state;
-		const {children} = this.props;
+		const {width, children, isOpen} = this.props;
+		const marginRight = isOpen ? {marginRight: 0} : {marginRight: -width};
+		const style = Object.assign({}, baseStyle, marginRight);
 
 		return (
-			<div className={className}>
+			<div style={style}>
 				{children}
 			</div>
 		);

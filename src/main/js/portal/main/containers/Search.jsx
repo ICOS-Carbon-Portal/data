@@ -69,8 +69,12 @@ class Search extends Component {
 		return (
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
-					<div ref={div => this.helpSection = div} style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
-						<HelpSection helpStorage={searchProps.helpStorage} getResourceHelpInfo={searchProps.getResourceHelpInfo} />
+					<div style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
+						<HelpSection
+							width={300}
+							helpStorage={searchProps.helpStorage}
+							getResourceHelpInfo={searchProps.getResourceHelpInfo}
+						/>
 					</div>
 				</div>
 

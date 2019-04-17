@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import SlideIn from '../ui/SlideIn.jsx';
 import HelpText from './HelpText.jsx';
-import '../ui/SlideIn.css';
 
 
 const closeBtnStyle = {
@@ -52,32 +51,29 @@ export default class HelpSection extends Component{
 
 	render() {
 		const {helpItem, isOpen} = this.state;
+		const {width} = this.props;
 		const header = helpItem ? helpItem.header : undefined;
 
 		return (
 			<div style={{overflow:'hidden'}}>
-				<SlideIn isOpen={isOpen}>
-					<div className="cp-slide-in-content">
-						<div className="panel panel-default" style={{marginBottom: 0}}>
+				<SlideIn isOpen={isOpen} width={width}>
+					<div className="panel panel-default" style={{marginBottom: 0, width}}>
 
-							<div className="panel-heading">
-								<h3 className="panel-title">
-									{header}
-									<span
-										title="Close"
-										className="glyphicon glyphicon-remove-sign text-info"
-										style={closeBtnStyle}
-										onClick={this.onCloseBtnClick.bind(this)}
-									/>
-								</h3>
-							</div>
-
-							<div className="panel-body" style={panelBodyStyle}>
-								<HelpText helpTxtItem={helpItem} />
-							</div>
+						<div className="panel-heading">
+							<h3 className="panel-title">
+								{header}
+								<span
+									title="Close"
+									className="glyphicon glyphicon-remove-sign text-info"
+									style={closeBtnStyle}
+									onClick={this.onCloseBtnClick.bind(this)}
+								/>
+							</h3>
 						</div>
 
-
+						<div className="panel-body" style={panelBodyStyle}>
+							<HelpText helpTxtItem={helpItem} />
+						</div>
 					</div>
 				</SlideIn>
 			</div>
