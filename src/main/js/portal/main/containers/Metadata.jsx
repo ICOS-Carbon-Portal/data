@@ -28,11 +28,11 @@ export default class Preview extends Component {
 				{metadata && metadata.submission &&
 					<div>
 						<div className="row page-header">
-							<div className="col-md-9">
+							<div className="col-sm-9">
 								<h1>{metadata.specification.self.label}{station && <span> from {station.name}</span>}</h1>
 								<h2 className="text-muted">{formatDate(new Date(metadata.specificInfo.acquisition.interval.start))} - {formatDate(new Date(metadata.specificInfo.acquisition.interval.stop))}</h2>
 							</div>
-							<div className="col-md-3 text-right" style={{ marginTop: 30 }}>
+							<div className="col-sm-3 text-right" style={{ marginTop: 30 }}>
 								<CartBtn
 									style={{ float: 'right', marginBottom: 10 }}
 									checkedObjects={[metadata.id]}
@@ -43,7 +43,7 @@ export default class Preview extends Component {
 							</div>
 						</div>
 						<div className="row">
-							<div className="col-md-8">
+							<div className="col-sm-8">
 								{metadata.submission.stop ? null :
 									<div className="alert alert-warning">Upload not complete, data is missing.</div>
 								}
@@ -63,13 +63,17 @@ export default class Preview extends Component {
 								{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
 								<br />
 							</div>
-							<div className="col-md-4">
-								<div className="row">
-									<div className="col-md-12">
-										{map(metadata.specification.theme.markerIcon, metadata.coverageGeoJson)}
+							<div className="col-sm-4">
+								{metadata.coverageGeoJson &&
+									<div>
+										<div className="row">
+											<div className="col-md-12">
+												{map(metadata.specification.theme.markerIcon, metadata.coverageGeoJson)}
+											</div>
+										</div>
+										<br />
 									</div>
-								</div>
-								<br />
+								}
 								<div className="row">
 									<div className="col-md-12">
 										<label>Metadata download</label>
@@ -124,7 +128,7 @@ const metadataDownload = (id, fileName) => {
 const map = (icon, coverage) => {
 	const style = { border: '1px solid #ddd', width: '100%', height: '400px' };
 	return (
-		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon}&coverage=${coverage}`} style={style}></iframe>
+		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
 	);
 };
 
