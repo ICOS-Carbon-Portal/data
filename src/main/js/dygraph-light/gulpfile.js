@@ -35,7 +35,11 @@ function compileJs() {
 			entries: [paths.main],
 			debug: false
 		})
-		.transform(bcss, {global: true})
+		.transform(bcss, {
+			global: true,
+			minify: true,
+			minifyOptions: {compatibility: '*'}
+		})
 		.transform(babelify, {presets: ["es2015", "react"]})
 		.bundle()
 		.on('error', function(err){
