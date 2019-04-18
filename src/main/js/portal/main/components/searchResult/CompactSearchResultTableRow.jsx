@@ -56,7 +56,7 @@ function formatDate(d){
 	if(!d) return '';
 
 	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`
+	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
 
 	return time === "00:00" ? `${date}` : `${date} ${time}`;
 }

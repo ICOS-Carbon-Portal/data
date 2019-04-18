@@ -23,14 +23,18 @@ export default class Preview extends Component {
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition.station;
 
+		if (metadata && metadata.submission) {
+			console.log(metadata.specificInfo.acquisition.interval.start)
+			console.log(new Date(metadata.specificInfo.acquisition.interval.start))
+		}
+
 		return (
 			<div>
 				{metadata && metadata.submission &&
 					<div>
 						<div className="row page-header">
 							<div className="col-sm-9">
-								<h1>{metadata.specification.self.label}{station && <span> from {station.name}</span>}</h1>
-								<h2 className="text-muted">{formatDate(new Date(metadata.specificInfo.acquisition.interval.start))} - {formatDate(new Date(metadata.specificInfo.acquisition.interval.stop))}</h2>
+								{title(metadata, station)}
 							</div>
 							<div className="col-sm-3 text-right" style={{ marginTop: 30 }}>
 								<CartBtn
@@ -50,6 +54,9 @@ export default class Preview extends Component {
 								{metadata.nextVersion &&
 									<div className="alert alert-warning">A newer version of this data is availble: <a href={metadata.nextVersion} className="alert-link">{metadata.nextVersion}</a></div>
 								}
+								{metadata.specificInfo.description &&
+									metadataRow("Description", metadata.specificInfo.description)
+								}
 								{metadata.doi &&
 									metadataRow("DOI", doiLink(metadata.doi))
 								}
@@ -62,6 +69,9 @@ export default class Preview extends Component {
 								<br />
 								{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
 								<br />
+								{metadataRow("Time coverage", `${new Date(metadata.specificInfo.acquisition.interval.start).toISOString()}
+								\u2013
+								${new Date(metadata.specificInfo.acquisition.interval.stop).toISOString()}`)}
 							</div>
 							<div className="col-sm-4">
 								{metadata.coverageGeoJson &&
@@ -95,6 +105,28 @@ export default class Preview extends Component {
 		);
 	}
 }
+
+const title = (metadata, station) => {
+	return (
+		<h1>
+			{metadata.specificInfo.title || metadata.specification.self.label}
+			{station && <span> from {station.name}</span>}
+			{caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))}
+		</h1>
+	);
+};
+
+const caption = (startDate, stopDate) => {
+	return (
+		<div className="text-muted">
+			<small>{formatDate(startDate)}{areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate)}`}</small>99
+		</div>
+	);
+};
+
+const areDatesDifferent = (date1, date2) => {
+	return date1.setUTCHours(0,0,0,0) != date2.setUTCHours(0,0,0,0) ? true : false;
+};
 
 const metadataRow = (label, value) => {
 	return (
