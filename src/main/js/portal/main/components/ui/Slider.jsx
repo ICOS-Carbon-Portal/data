@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import {Events} from 'icos-cp-utils';
 
 
 const defaultIconStyle = {
@@ -21,32 +22,51 @@ export default class Slider extends Component{
 
 		this.state = {
 			isOpen: props.startCollapsed === undefined ? true : !props.startCollapsed,
-			height: undefined
+			height: undefined,
+			isOpening: false
 		};
+
+		this.events = new Events();
 	}
 
 	onClick(){
-		this.setState({isOpen: !this.state.isOpen});
+		const isOpen = !this.state.isOpen;
+
+		this.setState({
+			isOpen,
+			isOpening: isOpen
+		});
+	}
+
+	componentWillUnmount(){
+		this.events.clear();
+	}
+
+	transitionEnded(){
+		this.setState({isOpening: false});
 	}
 
 	render(){
 		const state = this.state;
 		const isOpen = state.isOpen;
+		const isOpening = state.isOpening;
 		const height = isOpen ? state.height : 0;
 		const {children, openClsName, closedClsName, title} = this.props;
 		const iconCls = isOpen
 			? openClsName || 'glyphicon glyphicon-menu-up'
 			: closedClsName || 'glyphicon glyphicon-menu-down';
-		const contentStyle = {
+		const baseStyle = {
 			transition: 'height 0.3s ease-in-out',
-			overflow: 'hidden',
 			height
 		};
+		const contentStyle = !isOpen || isOpening
+			? Object.assign({}, baseStyle, {overflow:'hidden'})
+			: baseStyle;
 
 		return (
 			<div style={this.rootStyle}>
 				<span className={iconCls} style={this.iconStyle} onClick={this.onClick.bind(this)} title={title} />
-				<div ref={content => this.content = content} className={'cp-slider'} style={contentStyle}>
+				<div ref={content => this.content = content} style={contentStyle}>
 					{children}
 				</div>
 			</div>
@@ -56,5 +76,7 @@ export default class Slider extends Component{
 	componentDidMount(){
 		const height = Array.from(this.content.childNodes).reduce((acc, curr) => acc + curr.clientHeight, 0);
 		this.setState({height});
+
+		this.events.addToTarget(this.content, "transitionend", this.transitionEnded.bind(this));
 	}
 }
