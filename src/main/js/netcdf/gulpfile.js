@@ -1,11 +1,11 @@
 'use strict';
 
 var gulp = require('gulp');
+var babel = require('gulp-babel');
 var gp_uglify = require('gulp-uglify');
 var browserify = require('browserify');
 var bcss = require('browserify-css');
 var gp_replace = require('gulp-replace');
-var runSequence = require('run-sequence');
 var buffer = require('vinyl-buffer');
 var del = require('del');
 var source = require('vinyl-source-stream');
@@ -26,18 +26,36 @@ var paths = {
 	bundleFile: project + '.js'
 };
 
-gulp.task('clean', function() {
+var presets = [
+	[
+		"@babel/preset-env",
+		{
+			"targets": {
+				"chrome": "60",
+				"opera": "58",
+				"edge": "11",
+				"firefox": "68",
+				"safari": "12"
+			}
+		}
+	],
+	[
+		"@babel/preset-react"
+	]
+];
+
+function clean(){
 	return del([paths.target + paths.bundleFile, paths.styleTargetDir], {force: true});
-});
+}
 
-gulp.task('apply-prod-environment', function() {
+function applyProdEnvironment(cb){
 	process.env.NODE_ENV = 'production';
-});
+	return cb();
+}
 
-gulp.task('images', function() {
-	return gulp.src(paths.imagesSource)
-		.pipe(gulp.dest(paths.styleTargetDir));
-});
+function copyImages(){
+	return gulp.src(paths.imagesSource).pipe(gulp.dest(paths.styleTargetDir));
+}
 
 function compileJs() {
 	var browser = browserify({
@@ -49,7 +67,7 @@ function compileJs() {
 			minify: true,
 			minifyOptions: {compatibility: '*'}
 		})
-		.transform(babelify, {presets: ["es2015", "react"]})
+		.transform(babelify, {presets: presets})
 		.bundle()
 		.on('error', function(err){
 			console.log(err);
@@ -71,13 +89,8 @@ function compileJs() {
 	}
 }
 
-gulp.task('build', function(){
-	runSequence(
-		'clean',
-		'images',
-		compileJs
-	);
-});
+gulp.task('build', gulp.series(clean, copyImages, compileJs));
 
-gulp.task('publish', ['apply-prod-environment', 'build'], compileJs);
-gulp.task('default', ['publish']);
+gulp.task('publish', gulp.series(applyProdEnvironment, 'build'));
+
+gulp.task('default', gulp.series('publish'));
