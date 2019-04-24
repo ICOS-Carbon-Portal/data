@@ -9,10 +9,7 @@ import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie.jsx';
 
-// console.log({lazy});
-// const LazyLoadedComponent = lazy(() => import('./Selector.jsx'));
-// const LazySpinner = lazy(() => import('icos-cp-spinner'));
-// console.log({LazySpinner});
+
 const minHeight = 300;
 
 export default class Map extends Component {
