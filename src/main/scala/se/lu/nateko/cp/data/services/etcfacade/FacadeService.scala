@@ -96,7 +96,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			case DataType.SAHEAT =>
 				TimeSeriesStreams.linesFromUtf8Binary.map{line =>
 					val stationId = fn.station.hashCode
-					ByteString(s"$line,$stationId\n" , ByteString.UTF_8)
+					ByteString(s"$line,$stationId\r\n" , ByteString.UTF_8)
 				}
 			case _ =>
 				Flow.apply[ByteString]

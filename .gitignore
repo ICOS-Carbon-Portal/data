@@ -26,6 +26,7 @@ project/target/
 .cache-main
 .cache-tests
 .metals/
+.vscode/
 /bin/
 /views/bin/
 /views/.gitignore
