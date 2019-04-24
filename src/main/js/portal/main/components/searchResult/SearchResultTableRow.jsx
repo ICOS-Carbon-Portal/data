@@ -59,8 +59,8 @@ export default class SimpleObjectTableRow extends Component{
 						}
 						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={iconCalendar} />
 						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
-						<ExtendedInfoItemLink item={'Landing page'} url={objInfo.dobj} iconHeight={14} icon={iconInfo} />
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
+						<ExtendedInfoItemLink item={'Landing page'} url={objInfo.dobj} iconHeight={14} icon={iconInfo} />
 					</div>
 					}
 				</td>
