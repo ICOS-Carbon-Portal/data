@@ -1,21 +1,19 @@
 'use strict';
 
-var gulp = require('gulp');
-var babel = require('gulp-babel');
-var gp_uglify = require('gulp-uglify');
-var browserify = require('browserify');
-var bcss = require('browserify-css');
-var gp_replace = require('gulp-replace');
-var buffer = require('vinyl-buffer');
-var del = require('del');
-var source = require('vinyl-source-stream');
-var babelify = require('babelify');
+import gulp from 'gulp';
+import gp_uglify from 'gulp-uglify';
+import browserify from 'browserify';
+import bcss from 'browserify-css';
+import gp_replace from 'gulp-replace';
+import buffer from 'vinyl-buffer';
+import del from 'del';
+import source from 'vinyl-source-stream';
+import babelify from 'babelify';
 
+const currentPath = __dirname;
+const project = currentPath.split('/').pop();
 
-var currentPath = __dirname;
-var project = currentPath.split('/').pop();
-
-var paths = {
+const paths = {
 	main: 'main/main.jsx',
 	jsx: 'main/**/*.jsx',
 	js: 'main/**/*.js',
@@ -26,7 +24,7 @@ var paths = {
 	bundleFile: project + '.js'
 };
 
-var presets = [
+const presets = [
 	[
 		"@babel/preset-env",
 		{
@@ -44,23 +42,25 @@ var presets = [
 	]
 ];
 
-function clean(){
+const clean = _ => {
 	return del([paths.target + paths.bundleFile, paths.styleTargetDir], {force: true});
-}
+};
 
-function applyProdEnvironment(cb){
+const applyProdEnvironment = cb => {
 	process.env.NODE_ENV = 'production';
 	return cb();
-}
+};
 
-function copyImages(){
+const copyImages = _ => {
 	return gulp.src(paths.imagesSource).pipe(gulp.dest(paths.styleTargetDir));
-}
+};
 
-function compileJs() {
-	var browser = browserify({
-			entries: [paths.main],
-			debug: false
+const compileJs = _ =>  {
+	const isProduction = process.env.NODE_ENV === 'production';
+
+	let stream = browserify({
+		entries: [paths.main],
+		debug: !isProduction
 		})
 		.transform(bcss, {
 			global: true,
@@ -72,22 +72,19 @@ function compileJs() {
 		.on('error', function(err){
 			console.log(err);
 			this.emit('end');
-		});
+		})
+		.pipe(source(paths.bundleFile));
 
-	if (process.env.NODE_ENV === 'production'){
-		return browser
-			.pipe(source(paths.bundleFile))
+	stream = isProduction
+		? stream
 			.pipe(buffer())
 			.pipe(gp_uglify())
-			.pipe(gp_replace('url(node_modules/icos-cp-netcdfmap/dist/images/', 'url(/style/netcdf/images/'))
-			.pipe(gulp.dest(paths.target));
-	} else {
-		return browser
-			.pipe(source(paths.bundleFile))
-			.pipe(gp_replace('url(node_modules/icos-cp-netcdfmap/dist/images/', 'url(/style/netcdf/images/'))
-			.pipe(gulp.dest(paths.target));
-	}
-}
+		: stream;
+
+	return stream
+		.pipe(gp_replace('url(node_modules/icos-cp-netcdfmap/dist/images/', 'url(/style/netcdf/images/'))
+		.pipe(gulp.dest(paths.target));
+};
 
 gulp.task('build', gulp.series(clean, copyImages, compileJs));
 
