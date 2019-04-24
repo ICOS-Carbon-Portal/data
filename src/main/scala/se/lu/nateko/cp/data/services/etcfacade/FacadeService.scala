@@ -133,7 +133,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		if(fn.station == config.testStation) done else performUpload(file, fn, forceEc)
 
 	private def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean) = (fn.toEcDaily match{
-		case Some(daily) if(isFromBeforeToday(daily)) =>
+		case Some(daily) =>
 
 			val uploadedFolder = getStationUploadedFolder(fn.station)
 			Files.createDirectories(uploadedFolder)
@@ -144,7 +144,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			val filePackage = fresh ++ uploaded
 			val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-			if(isFullPackage || forceEc){
+			if(isFullPackage && uploaded.isEmpty || forceEc){
 
 				val srcFiles = filePackage.map(_._1).sortBy(_.getFileName.toString)
 
@@ -158,11 +158,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 						}
 						performEtcUpload(file, daily, Some(hash))
 				}
-			} else done //no uploads for incomplete packages, unless forced
+			} else done //no uploads for incomplete or previously incomplete packages, unless forced
+
 		case None =>
 			performEtcUpload(file, fn, None)
-		case _ =>
-			done //no uploads for same-day EC files (more are likely coming!)
+
 	}).andThen{
 		case Failure(err) =>
 			appendError(s"Error while uploading $fn : " + err.getMessage)
@@ -284,8 +284,6 @@ object FacadeService{
 			}
 			.run()
 	}
-
-	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
 	private def packageIsComplete(fileInfos: Vector[EtcFileInfo]): Boolean =
 		fileInfos.map(_._2.slot).flatten.distinct.size == 48
