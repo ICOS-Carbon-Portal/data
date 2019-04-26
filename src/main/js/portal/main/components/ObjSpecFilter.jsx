@@ -1,8 +1,8 @@
-import React, { Component, Fragment } from 'react';
-import Multiselect from 'react-widgets/lib/Multiselect';
+import React, { Component } from 'react';
 import {placeholders} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
+import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 
 
 export default class ObjSpecFilter extends Component {
@@ -53,64 +53,17 @@ export default class ObjSpecFilter extends Component {
 						getResourceHelpInfo={getResourceHelpInfo}
 					/>
 
-					<Multiselect
+					<MultiSelectFilter
+						name={name}
+						search={this.search}
+						updateFilter={this.props.updateFilter}
 						placeholder={placeholder}
-						valueField="value"
-						textField="text"
 						data={data}
 						value={value}
-						filter="contains"
-						onChange={this.handleChange.bind(this, name)}
-						onSearch={this.handleSearch.bind(this, name)}
-						itemComponent={this.listItem.bind(this, name)}
-						tagComponent={this.tagItem.bind(this)}
 					/>
 				</div>
 			</div>
 		);
-	}
-
-	listItem(name, props){
-		const text = props.text.toLowerCase();
-		const searchStr = this.search[name] ? this.search[name].toLowerCase() : undefined;
-		const start = text.indexOf(searchStr);
-
-		if (start < 0) {
-			return props.text;
-		} else if (start === 0) {
-			return (
-				<Fragment>
-					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
-					<span>{props.text.slice(start + searchStr.length)}</span>
-				</Fragment>
-			);
-		} else {
-			return (
-				<Fragment>
-					<span>{props.text.slice(0, start)}</span>
-					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
-					<span>{props.text.slice(start + searchStr.length)}</span>
-				</Fragment>
-			);
-		}
-	}
-
-	tagItem({item}){
-		const textItem = typeof item === 'object' ? item : {text: item};
-
-		return typeof item === 'object'
-			? <Fragment>
-				<span style={{marginRight: 2}}>{textItem.text}</span>
-			</Fragment>
-			: <span style={{marginRight: 2, color: 'gray'}} title="Not present with current filters">{textItem.text}</span>;
-	}
-
-	handleChange(name, values){
-		this.props.updateFilter(name, values.map(v => typeof v === 'object' ? v.value : v));
-	}
-
-	handleSearch(name, value){
-		this.search[name] = value;
 	}
 
 	render(){
@@ -120,7 +73,6 @@ export default class ObjSpecFilter extends Component {
 		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
-		// console.log({specTable, nameList: getNameList(specTable, ['project', 'theme', 'station', 'submitter', 'type', 'level', 'format', 'colTitle', 'valType', 'quantityUnit', 'quantityKind'])});
 
 		return (
 			<div>
