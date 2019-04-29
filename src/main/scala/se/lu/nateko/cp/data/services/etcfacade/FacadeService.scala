@@ -144,7 +144,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			val filePackage = fresh ++ uploaded
 			val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-			if(isFullPackage && uploaded.isEmpty || forceEc){
+			if(isFullPackage && uploaded.isEmpty || forceEc && isFromBeforeToday(daily)){
 
 				val srcFiles = filePackage.map(_._1).sortBy(_.getFileName.toString)
 
@@ -284,6 +284,8 @@ object FacadeService{
 			}
 			.run()
 	}
+
+	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
 	private def packageIsComplete(fileInfos: Vector[EtcFileInfo]): Boolean =
 		fileInfos.map(_._2.slot).flatten.distinct.size == 48
