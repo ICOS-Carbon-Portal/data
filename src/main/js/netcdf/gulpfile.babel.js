@@ -9,6 +9,7 @@ import buffer from 'vinyl-buffer';
 import del from 'del';
 import source from 'vinyl-source-stream';
 import babelify from 'babelify';
+import buildConf from '../common/main/buildConf.js';
 
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
@@ -24,31 +25,8 @@ const paths = {
 	bundleFile: project + '.js'
 };
 
-const presets = [
-	[
-		"@babel/preset-env",
-		{
-			"targets": {
-				"chrome": "60",
-				"opera": "58",
-				"edge": "11",
-				"firefox": "68",
-				"safari": "12"
-			}
-		}
-	],
-	[
-		"@babel/preset-react"
-	]
-];
-
 const clean = _ => {
 	return del([paths.target + paths.bundleFile, paths.styleTargetDir], {force: true});
-};
-
-const applyProdEnvironment = cb => {
-	process.env.NODE_ENV = 'production';
-	return cb();
 };
 
 const copyImages = _ => {
@@ -59,15 +37,15 @@ const compileJs = _ =>  {
 	const isProduction = process.env.NODE_ENV === 'production';
 
 	let stream = browserify({
-		entries: [paths.main],
-		debug: !isProduction
+			entries: [paths.main],
+			debug: !isProduction
 		})
 		.transform(bcss, {
 			global: true,
 			minify: true,
 			minifyOptions: {compatibility: '*'}
 		})
-		.transform(babelify, {presets: presets})
+		.transform(babelify, {presets: buildConf.presets})
 		.bundle()
 		.on('error', function(err){
 			console.log(err);
@@ -88,6 +66,6 @@ const compileJs = _ =>  {
 
 gulp.task('build', gulp.series(clean, copyImages, compileJs));
 
-gulp.task('publish', gulp.series(applyProdEnvironment, 'build'));
+gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 
 gulp.task('default', gulp.series('publish'));
