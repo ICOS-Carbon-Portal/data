@@ -4,7 +4,6 @@ import gulp from 'gulp';
 import gp_uglify from 'gulp-uglify';
 import browserify from 'browserify';
 import bcss from 'browserify-css';
-import gp_replace from 'gulp-replace';
 import buffer from 'vinyl-buffer';
 import del from 'del';
 import source from 'vinyl-source-stream';
@@ -71,7 +70,6 @@ const compileJs = _ =>  {
 		: stream;
 
 	return stream
-		.pipe(gp_replace('url(node_modules/icos-cp-netcdfmap/dist/images/', 'url(/style/netcdf/images/'))
 		.pipe(gulp.dest(paths.target));
 };
 
