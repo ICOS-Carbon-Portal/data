@@ -1,3 +1,10 @@
+'use strict';
+
+var browserify = require('browserify');
+var bcss = require('browserify-css');
+var babelify = require('babelify');
+var source = require('vinyl-source-stream');
+
 const presets = [
 	[
 		"@babel/preset-env",
@@ -21,7 +28,28 @@ const applyProdEnvironment = cb => {
 	return cb();
 };
 
+const transformToBundle = (isProduction, paths) => {
+
+	return browserify({
+			entries: [paths.main],
+			debug: !isProduction
+		})
+		.transform(bcss, {
+			global: true,
+			minify: true,
+			minifyOptions: {compatibility: '*'}
+		})
+		.transform(babelify, {presets: presets})
+		.bundle()
+		.on('error', function(err){
+			console.log(err);
+			this.emit('end');
+		})
+		.pipe(source(paths.bundleFile));
+};
+
 module.exports = {
 	presets,
-	applyProdEnvironment
+	applyProdEnvironment,
+	transformToBundle
 };

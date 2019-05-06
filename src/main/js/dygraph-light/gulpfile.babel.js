@@ -2,14 +2,10 @@
 
 import gulp from 'gulp';
 import gp_uglify from 'gulp-uglify';
-import browserify from 'browserify';
-import bcss from 'browserify-css';
 import buffer from 'vinyl-buffer';
 import del from 'del';
-import source from 'vinyl-source-stream';
-import babelify from 'babelify';
 
-import buildConf from '../common/main/buildConf.js';
+import buildConf from '../common/main/buildConf';
 
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
@@ -30,22 +26,7 @@ const clean = _ => {
 const compileJs = _ =>  {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	let stream = browserify({
-		entries: [paths.main],
-		debug: !isProduction
-	})
-		.transform(bcss, {
-			global: true,
-			minify: true,
-			minifyOptions: {compatibility: '*'}
-		})
-		.transform(babelify, {presets: buildConf.presets})
-		.bundle()
-		.on('error', function(err){
-			console.log(err);
-			this.emit('end');
-		})
-		.pipe(source(paths.bundleFile));
+	let stream = buildConf.transformToBundle(isProduction, paths);
 
 	stream = isProduction
 		? stream
