@@ -50,7 +50,9 @@ export default class Slider extends Component{
 		const state = this.state;
 		const isOpen = state.isOpen;
 		const isOpening = state.isOpening;
-		const height = isOpen ? state.height : 0;
+		const height = isOpen
+			? this.content ? getHeight(this.content) : state.height
+			: 0;
 		const {children, openClsName, closedClsName, title} = this.props;
 		const iconCls = isOpen
 			? openClsName || 'glyphicon glyphicon-menu-up'
@@ -74,9 +76,13 @@ export default class Slider extends Component{
 	}
 
 	componentDidMount(){
-		const height = Array.from(this.content.childNodes).reduce((acc, curr) => acc + curr.clientHeight, 0);
+		const height = getHeight(this.content);
 		this.setState({height});
 
 		this.events.addToTarget(this.content, "transitionend", this.transitionEnded.bind(this));
 	}
 }
+
+const getHeight = content => {
+	return Array.from(content.childNodes).reduce((acc, curr) => acc + curr.clientHeight, 0);
+};
