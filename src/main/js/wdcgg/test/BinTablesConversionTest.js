@@ -1,5 +1,5 @@
-import BinTable from '../main/models/BinTable';
-import {binTables2Dygraph} from '../main/models/chartDataMaker';
+import {BinTable} from 'icos-cp-backend';
+import {binTables2Dygraph} from '../../main/models/chartDataMaker';
 
 var createBinTable = function(dates){
 	const bytes = new ArrayBuffer(dates.length * 2 * 8);

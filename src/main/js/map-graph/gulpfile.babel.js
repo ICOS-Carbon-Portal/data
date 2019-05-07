@@ -11,23 +11,22 @@ import buildConf from '../common/main/buildConf.js';
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
 
+const replaceSearch = "url(node_modules/leaflet/dist/images/";
+const replacement = "url(/style/map-graph/images/";
+
 const paths = {
 	main: 'main/main.jsx',
 	jsx: 'main/**/*.jsx',
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
-	imagesSource: 'node_modules/icos-cp-netcdfmap/dist/**/*.png',
-	styleTargetDir: '../../resources/style/netcdf/',
+	imagesSource: 'node_modules/leaflet/dist/**/*.png',
+	styleTargetDir: '../../resources/style/map-graph/',
 	target: '../../resources/',
 	bundleFile: project + '.js'
 };
 
 const clean = _ => {
-	return del([paths.target + paths.bundleFile, paths.styleTargetDir], {force: true});
-};
-
-const copyImages = _ => {
-	return gulp.src(paths.imagesSource).pipe(gulp.dest(paths.styleTargetDir));
+	return del([paths.target + paths.bundleFile], {force: true});
 };
 
 const compileJs = _ =>  {
@@ -42,9 +41,14 @@ const compileJs = _ =>  {
 		: stream;
 
 	return stream
-		.pipe(gp_replace('url(node_modules/icos-cp-netcdfmap/dist/images/', 'url(/style/netcdf/images/'))
+		.pipe(gp_replace(replaceSearch, replacement))
 		.pipe(gulp.dest(paths.target));
 };
+
+const copyImages = _ => {
+	return gulp.src(paths.imagesSource).pipe(gulp.dest(paths.styleTargetDir));
+};
+
 
 gulp.task('build', gulp.series(clean, copyImages, compileJs));
 
