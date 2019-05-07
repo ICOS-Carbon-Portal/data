@@ -36,9 +36,6 @@
       "@babel/preset-env"
     ]
   },
-  "browser": {
-    "browserify-css": "../common/node_modules/browserify-css"
-  },
   "devDependencies": {
     "@babel/cli": "^7.4.3",
     "@babel/core": "^7.4.3",
@@ -49,9 +46,9 @@
     "@babel/register": "^7.4.4",
     "del": "^3.0.0",
     "gulp": "^4.0.1",
-    "gulp-replace": "^1.0.0",
     "gulp-uglify": "^3.0.0",
-    "vinyl-buffer": "^1.0.1"
+    "vinyl-buffer": "^1.0.1",
+    "browserify-css": "^0.14.0"
   },
   "dependencies": {
     "babel-polyfill": "^6.13.0",

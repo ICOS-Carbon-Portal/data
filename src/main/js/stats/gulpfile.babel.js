@@ -2,7 +2,6 @@
 
 import gulp from 'gulp';
 import gp_uglify from 'gulp-uglify';
-import gp_replace from 'gulp-replace';
 import buffer from 'vinyl-buffer';
 import del from 'del';
 
