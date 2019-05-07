@@ -1,4 +1,4 @@
-import {composeUniqueLabels} from '../main/models/labelMaker';
+import {composeUniqueLabels} from '../../main/models/labelMaker';
 
 
 describe("composeLabels function", () => {
