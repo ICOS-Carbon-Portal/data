@@ -1,11 +1,11 @@
 
 .panel-srollable-controls {
 	position: sticky;
-	top: 0px;
+	top: 0;
 	margin-top: -10px;
 	padding-top: 10px;
 	background-color: white;
-	box-shadow: rgb(221, 221, 221) 0px 1px 0px;
+	box-shadow: rgb(221, 221, 221) 0 1px 0;
 	z-index: 1;
 }
 
@@ -18,7 +18,7 @@
 }
 
 .extended-info-item {
-	display: 'inline-block';
+	display: inline-block;
 	margin-right: 16px;
 	max-width: 100%;
 	white-space: nowrap;

@@ -8,6 +8,7 @@ import del from 'del';
 import babel from 'gulp-babel';
 import jasmine from 'gulp-jasmine';
 import sass from 'gulp-sass';
+import sassVars from 'gulp-sass-variables';
 import cleanCSS from 'gulp-clean-css';
 
 import buildConf from '../common/main/buildConf.js';
@@ -25,7 +26,11 @@ const paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	target: '../../resources/',
-	sassSources: ['portal.scss','node_modules/react-widgets/lib/scss/react-widgets.scss'],
+	sassSources: [
+		'portal.scss',
+		'node_modules/react-widgets/lib/scss/react-widgets.scss',
+		'react-widgets-override.scss'
+	],
 	sassExtSources: [
 		'node_modules/react-widgets/lib/**/fonts/*',
 		'node_modules/react-widgets/lib/**/img/*'
@@ -54,8 +59,16 @@ const compileJs = _ =>  {
 		.pipe(gulp.dest(paths.target));
 };
 
+const cleanSassTarget = _ => {
+	return del([paths.sassTarget], {force: true});
+};
+
 const transformSass = _ => {
 	return gulp.src(paths.sassSources)
+		.pipe(sassVars({
+			'$font-path': '/style/portal/fonts',
+			'$img-path': '/style/portal/img'
+		}))
 		.pipe(sass())
 		.pipe(cleanCSS({compatibility: '*'}))	//Internet Explorer 10+ compatibility mode
 		.pipe(gulp.dest(paths.sassTarget + 'css/'));
@@ -99,7 +112,9 @@ gulp.task('test', gulp.series(
 	runJasmine
 ));
 
-gulp.task('build', gulp.series(clean, transformSass, transformSassExt, compileJs));
+gulp.task('build', gulp.series(
+	gulp.parallel(clean, cleanSassTarget),
+	transformSass, transformSassExt, compileJs));
 
 gulp.task('publish', gulp.series('test', buildConf.applyProdEnvironment, 'build'));
 

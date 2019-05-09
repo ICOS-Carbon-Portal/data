@@ -45,15 +45,16 @@
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.4.4",
+    "browserify-css": "^0.14.0",
     "del": "^3.0.0",
     "gulp": "^4.0.1",
     "gulp-babel": "^8.0.0",
     "gulp-clean-css": "^3.9.3",
     "gulp-jasmine": "^3.0.0",
     "gulp-sass": "^3.1.0",
+    "gulp-sass-variables": "^1.2.0",
     "gulp-uglify": "^3.0.2",
-    "vinyl-buffer": "^1.0.1",
-    "browserify-css": "^0.14.0"
+    "vinyl-buffer": "^1.0.1"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
@@ -68,7 +69,7 @@
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.8.6",
     "react-redux": "^5.0.7",
-    "react-widgets": "^3.4.6",
+    "react-widgets": "^4.4.11",
     "redux": "^3.7.2",
     "redux-thunk": "^2.2.0",
     "whatwg-fetch": "^2.0.3"
