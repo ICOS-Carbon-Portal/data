@@ -152,19 +152,11 @@ export const listFilteredDataObjects = (config, options) => {
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
-	{
-		select ?spec ?dobj where{
-			{
-				select ?spec where{
-					${specsValues}
-				}
-			}
-			?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
-			${stationSearch}
-			${submitterSearch}
-			FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
-		}
-	}
+	${specsValues}
+	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	${stationSearch}
+	${submitterSearch}
+	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
 	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
