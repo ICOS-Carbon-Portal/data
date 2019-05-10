@@ -1,0 +1,66 @@
+{
+  "name": "cpdata-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Carbon Portal Data Service",
+  "main": "gulpfile.babel.js",
+  "scripts": {
+    "default": "gulp publish",
+    "publish": "gulp publish",
+    "build": "gulp build",
+    "gulp": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/data.git"
+  },
+  "keywords": [
+    "ICOS",
+    "Carbon",
+    "Portal",
+    "data"
+  ],
+  "contributors": [
+    "Oleg Mirzov",
+    "Roger Groth",
+    "Jonathan Thiry"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
+  },
+  "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ]
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.3",
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/preset-env": "^7.4.3",
+    "@babel/preset-es2015": "^7.0.0-beta.53",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/register": "^7.4.4",
+    "browserify-css": "^0.14.0",
+    "del": "^3.0.0",
+    "gulp": "^4.0.1",
+    "gulp-babel": "^8.0.0",
+    "gulp-uglify": "^3.0.2",
+    "vinyl-buffer": "^1.0.1"
+  },
+  "dependencies": {
+    "deep-equal": "^1.0.1",
+    "icos-cp-backend": "^0.3.5",
+    "icos-cp-toaster": "^0.5.1",
+    "icos-cp-utils": "^0.1.5",
+    "react": "^16.8.6",
+    "react-bootstrap": "^0.32.4",
+    "react-dom": "^16.8.6",
+    "react-redux": "^5.0.7",
+    "redux": "^3.7.2",
+    "redux-thunk": "^2.2.0",
+    "whatwg-fetch": "^2.0.3"
+  }
+}
