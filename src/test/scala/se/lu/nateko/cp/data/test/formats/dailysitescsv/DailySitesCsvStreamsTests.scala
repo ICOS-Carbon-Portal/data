@@ -8,7 +8,7 @@ import akka.stream.scaladsl.{Sink, StreamConverters}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams._
+import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -42,7 +42,7 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(dailySitesCsvParser(nRows, formats))
+		.via(DailySitesCsvStreams.simpleCsvParser(nRows, formats))
 
 	test("Parsing a daily SITES time series example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)

@@ -21,10 +21,4 @@ object SimpleSitesCsvStreams extends SimpleCsvStreams(","){
 	def makeTimeStamp(cells: Array[String]): Instant =
 		LocalDateTime.parse(cells(0), isoLikeDateFormater).toInstant(ZoneOffset.ofHours(1))
 
-	def simpleSitesCsvParser(
-		nRows: Int,
-		format: ColumnsMetaWithTsCol
-	)(implicit ctxt: ExecutionContext): Flow[String, TableRow, Future[IngestionMetadataExtract]] =
-		simpleCsvParser(nRows, format)
-
 }

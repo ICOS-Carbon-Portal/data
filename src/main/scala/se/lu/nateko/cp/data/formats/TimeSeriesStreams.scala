@@ -36,22 +36,34 @@ object TimeSeriesStreams {
 		.filter(_.nonEmpty)
 
 	def getCompletionInfo(
-		columnsMeta: ColumnsMeta, provideNRows: Boolean = false, timeStepUnit: Option[TemporalUnit] = None
+		columnsMeta: ColumnsMeta,
+		provideNRows: Boolean = false,
+		timeStep: Option[(Long, TemporalUnit)] = None
 	)(firstLast: FirstLastRows)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
 		for (
 			firstRow <- firstLast.first;
 			lastRow <- firstLast.last
 		) yield {
-			val start = Instant.parse(firstRow.cells(0))
+
+			val defaultStart = Instant.parse(firstRow.cells(0))
+			val start = timeStep.collect{
+				case (step, unit) if step < 0 => defaultStart.plus(step, unit)
+			}.getOrElse(defaultStart)
+
 			val defaultStop = Instant.parse(lastRow.cells(0))
-			val stop = timeStepUnit.fold(defaultStop)(unit => defaultStop.plus(1, unit))
+			val stop = timeStep.collect{
+				case (step, unit) if step > 0 => defaultStop.plus(step, unit)
+			}.getOrElse(defaultStop)
+
 			val columnNames =
 				if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns)
 					Some(columnsMeta.actualColumnNames(firstRow.header.columnNames))
 				else
 					None
+
 			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
 			val nRowsInfo = if(provideNRows) Some(firstRow.header.nRows) else None
+
 			TimeSeriesUploadCompletion(ingestionExtract, nRowsInfo)
 		}
 

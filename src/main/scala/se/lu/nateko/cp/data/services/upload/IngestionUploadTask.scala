@@ -58,9 +58,9 @@ class IngestionUploadTask(
 								socat.SocatTsvStreams.socatTsvParser(nRows, defaultColumnFormats)
 							else if (format.uri == simpleSitesCsvTimeSer){
 								val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
-								simplesitescsv.SimpleSitesCsvStreams.simpleSitesCsvParser(nRows, colFormats)
+								simplesitescsv.SimpleSitesCsvStreams.simpleCsvParser(nRows, colFormats)
 							} else
-								dailysitescsv.DailySitesCsvStreams.dailySitesCsvParser(nRows, defaultColumnFormats)
+								dailysitescsv.DailySitesCsvStreams.simpleCsvParser(nRows, defaultColumnFormats)
 
 						makeIngestionSink(rowParser)
 				}

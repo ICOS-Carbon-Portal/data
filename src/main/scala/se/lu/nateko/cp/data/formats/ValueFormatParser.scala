@@ -39,7 +39,9 @@ class ValueFormatParser(locale: Locale) {
 				else if (value.charAt(1) == ':') parseIsoTimeOfDay("0" + value)
 				else parseIsoTimeOfDay(value)
 			case IsoLikeLocalDateTime =>
-				Double.box(LocalDateTime.parse(value, isoLikeDateFormater).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
+				parseLocalDateTime(value, isoLikeDateFormater)
+			case EtcLocalDateTime =>
+				parseLocalDateTime(value, etcDateTimeFormatter)
 		}
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
@@ -49,7 +51,7 @@ class ValueFormatParser(locale: Locale) {
 		case Utf16CharValue => DataType.CHAR
 		case StringValue => DataType.STRING
 		case Iso8601Date | EtcDate => DataType.INT
-		case Iso8601DateTime | IsoLikeLocalDateTime => DataType.DOUBLE
+		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => DataType.DOUBLE
 		case Iso8601TimeOfDay => DataType.INT
 	}
 
@@ -60,7 +62,7 @@ class ValueFormatParser(locale: Locale) {
 		case Utf16CharValue => Character.valueOf(Character.MIN_VALUE)
 		case StringValue => ""
 		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
-		case Iso8601DateTime | IsoLikeLocalDateTime => Double.box(Double.NaN)
+		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => Double.box(Double.NaN)
 		case Iso8601TimeOfDay => Int.box(Int.MinValue)
 	}
 }
@@ -68,7 +70,11 @@ class ValueFormatParser(locale: Locale) {
 object ValueFormatParser {
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
 
 	def parseIsoTimeOfDay(time: String): Integer =
 		Int.box(LocalTime.parse(time).toSecondOfDay)
+
+	def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
+		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 }

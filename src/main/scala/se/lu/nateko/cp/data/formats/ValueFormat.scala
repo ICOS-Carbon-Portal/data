@@ -15,6 +15,7 @@ case object EtcDate extends ValueFormat
 case object Iso8601DateTime extends ValueFormat
 case object Iso8601TimeOfDay extends ValueFormat
 case object IsoLikeLocalDateTime extends ValueFormat
+case object EtcLocalDateTime extends ValueFormat
 
 object ValueFormat{
 

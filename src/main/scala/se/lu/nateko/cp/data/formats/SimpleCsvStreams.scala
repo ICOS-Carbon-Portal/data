@@ -9,6 +9,7 @@ import java.time.Instant
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 import akka.stream.scaladsl.Keep
 import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
+import java.time.temporal.ChronoUnit
 
 abstract class SimpleCsvStreams(separator: String){
 	import SimpleCsvParser._
@@ -16,8 +17,10 @@ abstract class SimpleCsvStreams(separator: String){
 	def isNull(value: String, format: ValueFormat): Boolean
 	def makeTimeStamp(cells: Array[String]): Instant
 
-	def completionInfoMaker(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): FirstLastRows => Future[TimeSeriesUploadCompletion] =
-		getCompletionInfo(columnsMeta)
+	/**
+	 * Temporal step from the measurement's UTC time stamp (which is expected to be either at the beginning or at the end of the interval) to the other end of the data acquisition interval
+	 */
+	def acqIntervalTimeStep: Option[(Long, ChronoUnit)] = None
 
 	def simpleCsvParser(
 		nRows: Int,
@@ -37,7 +40,7 @@ abstract class SimpleCsvStreams(separator: String){
 				)
 			)
 			.alsoToMat(
-				digestSink(completionInfoMaker(format.colsMeta))
+				digestSink(getCompletionInfo(format.colsMeta, timeStep = acqIntervalTimeStep))
 			)(Keep.right)
 	}
 
