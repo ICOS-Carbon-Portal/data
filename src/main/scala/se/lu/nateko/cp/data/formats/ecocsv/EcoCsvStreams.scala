@@ -16,7 +16,7 @@ object EcoCsvStreams {
 
 	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
 	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
-		val parser = new EcoCsvParser(nRows)
+		val parser = new EcoCsvParser
 
 		Flow.apply[String]
 			.scan(parser.seed)(parser.parseLine(format.colsMeta))
@@ -24,7 +24,7 @@ object EcoCsvStreams {
 			.keepGoodRows
 			.map(acc =>
 				TableRow(
-					TableRowHeader(format.timeStampColumn +: acc.columnNames, acc.nRows),
+					TableRowHeader(format.timeStampColumn +: acc.columnNames, nRows),
 					makeTimeStamp(acc.cells(0), acc.cells(1), acc.offsetFromUtc).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			)

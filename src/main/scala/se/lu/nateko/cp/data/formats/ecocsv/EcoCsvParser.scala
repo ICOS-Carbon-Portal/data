@@ -3,12 +3,11 @@ package se.lu.nateko.cp.data.formats.ecocsv
 import se.lu.nateko.cp.data.api.EcoCsvParsingException
 import se.lu.nateko.cp.data.formats._
 
-class EcoCsvParser(nRows: Int) {
+class EcoCsvParser {
 
 	case class Accumulator(
 		columnNames: Array[String],
 		offsetFromUtc: Int,
-		nRows: Int,
 		lineNumber: Int,
 		cells: Array[String],
 		formats: Array[Option[ValueFormat]],
@@ -18,7 +17,7 @@ class EcoCsvParser(nRows: Int) {
 		def isOnData = lineNumber > 2
 	}
 
-	def seed = Accumulator(Array.empty, 1, nRows, 0, Array.empty, Array.empty, None)
+	def seed = Accumulator(Array.empty, 1, 0, Array.empty, Array.empty, None)
 
 	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) acc
