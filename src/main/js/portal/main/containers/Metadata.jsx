@@ -28,7 +28,7 @@ class Metadata extends Component {
 		const isInCart = cart.hasItem(metadata.id);
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
-		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition.station;
+		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
 
 		return (
 			<div>
@@ -44,7 +44,7 @@ class Metadata extends Component {
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
-											enabled={true}
+											enabled={metadata.specification.dataLevel!=0}
 											type={actionButtonType}
 										/>
 										<PreviewBtn
@@ -67,39 +67,51 @@ class Metadata extends Component {
 								{metadata.doi &&
 									metadataRow("DOI", doiLink(metadata.doi))
 								}
-								{metadataRow("PID", doiLink(metadata.pid))}
+								{metadata.pid &&
+									metadataRow("PID", doiLink(metadata.pid))
+								}
 								{metadataRow("Affiliation", metadata.specification.project.label)}
 								{metadataRow("Type", metadata.specification.self.label)}
 								{metadataRow("Level", metadata.specification.dataLevel)}
 								{metadataRow("File name", metadata.fileName)}
 								{metadataRow("Size", formatBytes(metadata.size, 0))}
 								<br />
-								{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
-								<br />
-								{metadataRow("Time coverage", `${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.start))}
-								\u2013
-								${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
-								<br />
+								{station &&
+									<React.Fragment>
+										metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
+										<br />
+									</React.Fragment>
+								}
+								{metadata.specificInfo.acquisition &&
+									<React.Fragment>
+										{metadataRow("Time coverage", `${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.start))}
+										\u2013
+										${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
+										<br />
+									</React.Fragment>
+								}
 								{metadata.citationString &&
 									<React.Fragment>
-										metadataRow("Citation", metadata.citationString)
+										{metadataRow("Citation", metadata.citationString)}
 										<br />
 									</React.Fragment>
 								}
 								
 								{metadata.previousVersion &&
 									<React.Fragment>
-										metadataRow("Previous version", metadata.previousVersion)
+										{metadataRow("Previous version", metadata.previousVersion)}
 										<br />
 									</React.Fragment>
 								}
-								{metadata.specificInfo.production &&
+								{metadata.specificInfo.productionInfo &&
 									<React.Fragment>
-										{metadataRow("Made by", metadata.specificInfo.production.creator)}
-										{metadataRow("Contributors", metadata.specificInfo.production.contributors)}
-										{metadataRow("Host organization", metadata.specificInfo.production.hostOrganization)}
-										{metadata.specificInfo.production.comment && metadataRow("Comment", metadata.specificInfo.production.comment)}
-										{metadataRow("Creation date", metadata.specificInfo.production.creationDate)}
+										{metadataRow("Made by", personLink(metadata.specificInfo.productionInfo.creator))}
+										{metadataRow("Contributors", metadata.specificInfo.productionInfo.contributors.map(contributor => {
+											return(personLink(contributor))
+										}))}
+										{metadataRow("Host organization", <a href={metadata.specificInfo.productionInfo.host.self.uri}>{metadata.specificInfo.productionInfo.host.name}</a>)}
+										{metadata.specificInfo.productionInfo.comment && metadataRow("Comment", metadata.specificInfo.productionInfo.comment)}
+										{metadataRow("Creation date", formatDateTime(new Date(metadata.specificInfo.productionInfo.dateTime)))}
 									</React.Fragment>
 								}
 							</div>
@@ -138,14 +150,16 @@ class Metadata extends Component {
 
 export const MetadataTitle = props => {
 	const { metadata } = props;
-	const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition.station;
+	const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
 	return (
 		<React.Fragment>
 			{metadata && metadata.specificInfo &&
 				<h1>
 					{metadata.specificInfo.title || metadata.specification.self.label}
 					{station && <span> from {station.name}</span>}
-					{caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))}
+					{metadata.specificInfo.acquisition &&
+						caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))
+					}
 				</h1>
 			}
 		</React.Fragment>
@@ -199,6 +213,12 @@ const map = (icon, coverage) => {
 		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
 	);
 };
+
+const personLink = (person) => {
+	return <a href={person.self.uri} key={person.self.uri}>
+			{person.firstName} {person.lastName}
+		</a>;
+}
 
 function formatDate(d) {
 	if (!d) return '';
