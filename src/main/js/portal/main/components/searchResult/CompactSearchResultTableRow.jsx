@@ -14,6 +14,10 @@ export default class CompactSearchResultTableRow extends Component {
 		if (this.props.previewAction) this.props.previewAction([id]);
 	}
 
+	handleViewMetadata(){
+		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
+	}
+
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
@@ -38,7 +42,7 @@ export default class CompactSearchResultTableRow extends Component {
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a href={objInfo.dobj} title={objInfo.specLabel}>{stripExt(objInfo.fileName)}</a>
+				<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDate(objInfo.submTime)}</td>

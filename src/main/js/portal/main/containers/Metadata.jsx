@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
+import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
 import { formatBytes } from '../utils';
 import commonConfig from '../../../common/main/config';
+import { setPreviewItem } from '../actions';
 
-export default class Preview extends Component {
+class Metadata extends Component {
 	constructor(props) {
 		super(props);
 	}
@@ -16,38 +19,42 @@ export default class Preview extends Component {
 		this.props.removeFromCart(objInfo);
 	}
 
+	handlePreview(id){
+		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
+	}
+
 	render() {
-		const { metadata, cart } = this.props;
+		const { metadata, cart, lookup } = this.props;
 		const isInCart = cart.hasItem(metadata.id);
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition.station;
 
-		if (metadata && metadata.submission) {
-			console.log(metadata.specificInfo.acquisition.interval.start)
-			console.log(new Date(metadata.specificInfo.acquisition.interval.start))
-		}
-
 		return (
 			<div>
 				{metadata && metadata.submission &&
 					<div>
-						<div className="row page-header">
-							<div className="col-sm-9">
-								{title(metadata, station)}
-							</div>
-							<div className="col-sm-3 text-right" style={{ marginTop: 30 }}>
-								<CartBtn
-									style={{ float: 'right', marginBottom: 10 }}
-									checkedObjects={[metadata.id]}
-									clickAction={buttonAction}
-									enabled={true}
-									type={actionButtonType}
-								/>
-							</div>
-						</div>
 						<div className="row">
 							<div className="col-sm-8">
+								<div className="row">
+									<div className="col-md-2">
+									</div>
+									<div className="col-md-10">
+										<CartBtn
+											style={{ float: 'left', margin: '20px 10px 30px 0' }}
+											checkedObjects={[metadata.id]}
+											clickAction={buttonAction}
+											enabled={true}
+											type={actionButtonType}
+										/>
+										<PreviewBtn
+											style={{ float: 'left', margin: '20px 10px 30px 0' }}
+											checkedObjects={[{'dobj': metadata.id, 'spec': metadata.specification.self.uri}]}
+											clickAction={this.handlePreview.bind(this)}
+											lookup={lookup}
+										/>
+									</div>
+								</div>
 								{metadata.submission.stop ? null :
 									<div className="alert alert-warning">Upload not complete, data is missing.</div>
 								}
@@ -69,20 +76,43 @@ export default class Preview extends Component {
 								<br />
 								{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
 								<br />
-								{metadataRow("Time coverage", `${new Date(metadata.specificInfo.acquisition.interval.start).toISOString()}
+								{metadataRow("Time coverage", `${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.start))}
 								\u2013
-								${new Date(metadata.specificInfo.acquisition.interval.stop).toISOString()}`)}
+								${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
+								<br />
+								{metadata.citationString &&
+									<React.Fragment>
+										metadataRow("Citation", metadata.citationString)
+										<br />
+									</React.Fragment>
+								}
+								
+								{metadata.previousVersion &&
+									<React.Fragment>
+										metadataRow("Previous version", metadata.previousVersion)
+										<br />
+									</React.Fragment>
+								}
+								{metadata.specificInfo.production &&
+									<React.Fragment>
+										{metadataRow("Made by", metadata.specificInfo.production.creator)}
+										{metadataRow("Contributors", metadata.specificInfo.production.contributors)}
+										{metadataRow("Host organization", metadata.specificInfo.production.hostOrganization)}
+										{metadata.specificInfo.production.comment && metadataRow("Comment", metadata.specificInfo.production.comment)}
+										{metadataRow("Creation date", metadata.specificInfo.production.creationDate)}
+									</React.Fragment>
+								}
 							</div>
 							<div className="col-sm-4">
 								{metadata.coverageGeoJson &&
-									<div>
+									<React.Fragment>
 										<div className="row">
 											<div className="col-md-12">
 												{map(metadata.specification.theme.markerIcon, metadata.coverageGeoJson)}
 											</div>
 										</div>
 										<br />
-									</div>
+									</React.Fragment>
 								}
 								<div className="row">
 									<div className="col-md-12">
@@ -106,20 +136,26 @@ export default class Preview extends Component {
 	}
 }
 
-const title = (metadata, station) => {
+export const MetadataTitle = props => {
+	const { metadata } = props;
+	const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition.station;
 	return (
-		<h1>
-			{metadata.specificInfo.title || metadata.specification.self.label}
-			{station && <span> from {station.name}</span>}
-			{caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))}
-		</h1>
+		<React.Fragment>
+			{metadata && metadata.specificInfo &&
+				<h1>
+					{metadata.specificInfo.title || metadata.specification.self.label}
+					{station && <span> from {station.name}</span>}
+					{caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))}
+				</h1>
+			}
+		</React.Fragment>
 	);
 };
 
 const caption = (startDate, stopDate) => {
 	return (
 		<div className="text-muted">
-			<small>{formatDate(startDate)}{areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate)}`}</small>99
+			<small>{formatDate(startDate)}{areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate)}`}</small>
 		</div>
 	);
 };
@@ -170,6 +206,20 @@ function formatDate(d) {
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 }
 
+function formatDateTime(d) {
+	if (!d) return '';
+
+	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+}
+
 function pad2(s) {
 	return ("0" + s).substr(-2, 2);
 }
+
+function dispatchToProps(dispatch){
+	return {
+		setPreviewItem: id => dispatch(setPreviewItem(id)),
+	};
+}
+
+export default connect(state => state.toPlainObject, dispatchToProps)(Metadata);

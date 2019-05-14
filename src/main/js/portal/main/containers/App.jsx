@@ -4,10 +4,10 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
-import Metadata from './Metadata.jsx';
+import Metadata, { MetadataTitle } from './Metadata.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart,
-	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo} from '../actions';
+	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo, setMetadataItem} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
 
@@ -41,6 +41,7 @@ export class App extends Component {
 				<div className="row page-header">
 					<Title
 						currentRoute={props.route}
+						metadata={props.metadata}
 					/>
 					<div className="col-md-3 text-right" style={{marginTop: 30}}>
 						<SwitchRouteBtn
@@ -70,6 +71,11 @@ const Title = props => {
 					{config.envri} data portal
 					<small> Search, preview, download data objects</small>
 				</h1>
+			);
+
+		case config.ROUTE_METADATA:
+			return (
+				<div className="col-md-9">{MetadataTitle(props)}</div>
 			);
 
 		default:
@@ -157,6 +163,7 @@ function dispatchToProps(dispatch){
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		storeTsPreviewSetting: (spec, type, val) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		getResourceHelpInfo: (helpItem, uriList) => dispatch(getResourceHelpInfo(helpItem, uriList)),
+		setMetadataItem: id => dispatch(setMetadataItem(id)),
 	};
 }
 
