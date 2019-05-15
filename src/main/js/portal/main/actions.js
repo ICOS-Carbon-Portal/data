@@ -249,14 +249,17 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
 	}
 
-}
+};
 
 const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 	const {specTable, route, preview, sorting, formatToRdfGraph,
-		tabs, filterTemporal, filterFreeText, cart} = getState();
+		tabs, filterTemporal, filterFreeText, cart, metadata} = getState();
 
 	const getFilters = () => {
-		if (route === config.ROUTE_PREVIEW && preview.hasPids){
+		if (route === config.ROUTE_METADATA && metadata.id) {
+			return [{category: 'pids', pids: [metadata.id.split('/').pop()]}];
+
+		} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
 			return [{category: 'pids', pids: preview.pids}];
 
 		} else if (route === config.ROUTE_CART) {
@@ -308,7 +311,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 				cacheSize,
 				isDataEndReached
 			});
-			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(getState().metadata.id));
+			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(metadata.id));
 			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
