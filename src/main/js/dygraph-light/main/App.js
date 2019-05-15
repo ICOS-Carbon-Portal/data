@@ -297,9 +297,6 @@ const getFormatters = (xlabel, valueFormatX) => {
 
 	switch (valueFormatX) {
 
-		case 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601dateTime':
-			return {valueFormatter: parseDatetime(1, "datetime"), axisLabelFormatter: parseDatetime(1, "date")};
-
 		case 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601date':
 			const days2ms = 24 * 3600 * 1000;
 			return {valueFormatter: parseDatetime(days2ms, "date", formatLbl), axisLabelFormatter: parseDatetime(days2ms, "date")};
@@ -309,13 +306,16 @@ const getFormatters = (xlabel, valueFormatX) => {
 			return {valueFormatter: parseDatetime(sec2ms, "hms", formatLbl), axisLabelFormatter: parseDatetime(sec2ms, "hm")};
 
 		default:
-			return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
+			return isTimestamp(valueFormatX)
+				? {valueFormatter: parseDatetime(1, "datetime"), axisLabelFormatter: parseDatetime(1, "date")}
+				: {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
 };
 
-const isTimestamp = (valueFormat) => {
-	return valueFormat === 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601dateTime';
-};
+const timeStampFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
+const isTimestamp = (valueFormat) => timeStampFormats.includes(valueFormat);
 
 const isColNameValid = (tableFormat, colName) => {
 	return tableFormat.getColumnIndex(colName) >= 0;

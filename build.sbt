@@ -1,4 +1,4 @@
-val defaultScala = "2.12.7"
+val defaultScala = "2.12.8"
 
 //watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
 
@@ -162,7 +162,7 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.4.6",
+		version := "0.4.7",
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion,

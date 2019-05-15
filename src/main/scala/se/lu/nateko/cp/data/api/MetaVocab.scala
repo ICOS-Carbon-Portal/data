@@ -14,11 +14,13 @@ abstract class MetaVocab(baseUri: URI) {
 
 object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/cpmeta/")){
 
-	val asciiWdcggTimeSer = getRelative("asciiWdcggTimeSer")
-	val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
-	val asciiAtcProdTimeSer = getRelative("asciiAtcProductTimeSer")
-	val asciiEtcHalfHourlyProdTimeSer = getRelative("asciiEtcHalfHourlyProductTimeSer")
-	val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
+	object ObjectFormats{
+		val asciiWdcggTimeSer = getRelative("asciiWdcggTimeSer")
+		val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
+		val asciiAtcProdTimeSer = getRelative("asciiAtcProductTimeSer")
+		val asciiEtcHalfHourlyProdTimeSer = getRelative("asciiEtcHalfHourlyProductTimeSer")
+		val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
+	}
 
 	def getDataObject(hash: Sha256Sum)(implicit envri: EnvriConfig) =
 		new URI(s"${envri.metaPrefix}objects/${hash.id}")

@@ -7,6 +7,8 @@ import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.{CpDataException, SparqlClient}
+import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats._
+import se.lu.nateko.cp.data.api.SitesMetaVocab._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.{BinTableSink, FileExtension}
 import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow}
@@ -14,25 +16,25 @@ import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
 
 import scala.concurrent.{ExecutionContext, Future}
+import se.lu.nateko.cp.data.api.MetaClient
+import se.lu.nateko.cp.meta.core.etcupload.StationId
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
 	originalFile: File,
-	colsMeta: ColumnsMeta
+	colsMeta: ColumnsMeta,
+	utcOffset: Int
 )(implicit ctxt: ExecutionContext) extends UploadTask{
+	import IngestionUploadTask.{RowParser, IngestionSink}
 
 	//TODO Switch to java.nio classes
 	val file = new File(originalFile.getAbsolutePath + FileExtension)
 	private val tmpFile = new File(file.getAbsoluteFile + ".working")
 	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
+	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = ingSpec.objSpec.format
-
-		import se.lu.nateko.cp.data.api.CpMetaVocab.{asciiAtcProdTimeSer, asciiEtcTimeSer, asciiOtcSocatTimeSer, asciiWdcggTimeSer}
-		import se.lu.nateko.cp.data.api.SitesMetaVocab.{dailySitesCsvTimeSer, simpleSitesCsvTimeSer}
-
-		val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
 		val ingestionSink = format.uri match {
 
@@ -43,27 +45,23 @@ class IngestionUploadTask(
 			case `asciiAtcProdTimeSer` =>
 				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats))
 
-			case `asciiEtcTimeSer` | `asciiOtcSocatTimeSer` | `simpleSitesCsvTimeSer` | `dailySitesCsvTimeSer` =>
+			case `asciiEtcTimeSer` =>
+				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)
 
-				ingSpec.nRows match{
+			case `asciiOtcSocatTimeSer` =>
+				defaultStandardSink(socat.SocatTsvStreams.socatTsvParser)
 
-					case None =>
-						failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
-
-					case Some(nRows) =>
-						val rowParser =
-							if (format.uri == asciiEtcTimeSer)
-								ecocsv.EcoCsvStreams.ecoCsvParser(nRows, defaultColumnFormats)
-							else if (format.uri == asciiOtcSocatTimeSer)
-								socat.SocatTsvStreams.socatTsvParser(nRows, defaultColumnFormats)
-							else if (format.uri == simpleSitesCsvTimeSer){
-								val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
-								simplesitescsv.SimpleSitesCsvStreams.simpleCsvParser(nRows, colFormats)
-							} else
-								dailysitescsv.DailySitesCsvStreams.simpleCsvParser(nRows, defaultColumnFormats)
-
-						makeIngestionSink(rowParser)
+			case `simpleSitesCsvTimeSer` =>
+				standardSink{nRows =>
+					val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
+					simplesitescsv.SimpleSitesCsvStreams.simpleCsvParser(nRows, colFormats)
 				}
+
+			case `dailySitesCsvTimeSer` =>
+				defaultStandardSink(dailysitescsv.DailySitesCsvStreams.simpleCsvParser)
+
+			case `asciiEtcHalfHourlyProdTimeSer` =>
+				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).simpleCsvParser)
 
 			case _ =>
 				failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
@@ -75,10 +73,20 @@ class IngestionUploadTask(
 
 	private def failedSink[T](result: UploadTaskResult) = Sink.cancelled[T].mapMaterializedValue(_ => Future.successful(result))
 
+	private def defaultStandardSink(parserFactory: (Int, ColumnsMetaWithTsCol) => RowParser) =
+		standardSink(parserFactory(_, defaultColumnFormats))
+
+	private def standardSink(parserFactory: Int => RowParser): IngestionSink =
+		ingSpec.nRows.fold[IngestionSink](
+			failedSink(IncompleteMetadataFailure(ingSpec.label, "Missing nRows (number of rows)"))
+		){
+			nRows => makeIngestionSink(parserFactory(nRows))
+		}
+
 	private def makeIngestionSink(
-		rowParser: Flow[String, TableRow, Future[IngestionMetadataExtract]],
+		rowParser: RowParser,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary,
-	): Sink[ByteString, Future[UploadTaskResult]] = {
+	): IngestionSink = {
 
 		lineParser
 			.viaMat(rowParser)(Keep.right)
@@ -119,24 +127,39 @@ class IngestionUploadTask(
 	}
 }
 
-case class IngestionSpec(objSpec: DataObjectSpec, nRows: Option[Int], label: Option[String])
+class IngestionSpec(
+	val objSpec: DataObjectSpec,
+	val nRows: Option[Int],
+	val label: Option[String],
+	val stationId: Option[String]
+)
 
 object IngestionSpec{
-	import scala.language.implicitConversions
-	implicit def fromDataObject(dobj: DataObject) = IngestionSpec(
+	def apply(dobj: DataObject): IngestionSpec = new IngestionSpec(
 		dobj.specification,
 		dobj.specificInfo.right.toOption.flatMap(_.nRows),
-		Some(dobj.hash.id)
+		Some(dobj.hash.id),
+		dobj.specificInfo.right.toOption.map(_.acquisition.station.id)
 	)
 }
 
 object IngestionUploadTask{
 
-	def apply(ingSpec: IngestionSpec, originalFile: File, sparql: SparqlClient): Future[IngestionUploadTask] = {
-		import sparql.materializer.executionContext
-		getColumnFormats(ingSpec.objSpec, sparql).map{formats =>
-			new IngestionUploadTask(ingSpec, originalFile, formats)
-		}
+	type RowParser = Flow[String, TableRow, Future[IngestionMetadataExtract]]
+	type IngestionSink = Sink[ByteString, Future[UploadTaskResult]]
+
+	def apply(ingSpec: IngestionSpec, originalFile: File, meta: MetaClient): Future[IngestionUploadTask] = {
+		import meta.materializer.executionContext
+
+		val formatsFut = getColumnFormats(ingSpec.objSpec, meta.sparql)
+
+		val utcOffsetFut: Future[Int] = ingSpec.stationId.collect{
+			case StationId(stationId) if(ingSpec.objSpec.format.uri == asciiEtcHalfHourlyProdTimeSer) =>
+				meta.getUtcOffset(stationId)
+		}.getOrElse(Future.successful(0))
+
+		for(utcOffset <- utcOffsetFut; formats <- formatsFut) yield
+			new IngestionUploadTask(ingSpec, originalFile, formats, utcOffset)
 	}
 
 	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnsMeta] = {

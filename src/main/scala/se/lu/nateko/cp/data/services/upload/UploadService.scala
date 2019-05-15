@@ -60,10 +60,10 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	def getTryIngestSink(objSpec: Uri, nRows: Option[Int])(implicit envri: Envri): Future[TryIngestSink] =
 		meta.lookupObjSpec(objSpec).flatMap{spec =>
-			val ingSpec = IngestionSpec(spec, nRows, spec.self.label)
+			val ingSpec = new IngestionSpec(spec, nRows, spec.self.label, None)
 			val origFile = Files.createTempFile("ingestionTest", null)
 			Files.delete(origFile)
-			IngestionUploadTask(ingSpec, origFile.toFile, meta.sparql)
+			IngestionUploadTask(ingSpec, origFile.toFile, meta)
 		}.map{task =>
 			task.sink.mapMaterializedValue(_.map{taskRes =>
 				Files.deleteIfExists(task.file.toPath)
@@ -86,7 +86,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 			_ <- meta.userIsAllowedUpload(dataObj, user);
 			origFile = getFile(dataObj);
 			ingTask <- {
-				if(origFile.exists) IngestionUploadTask(dataObj, origFile, meta.sparql)
+				if(origFile.exists) IngestionUploadTask(IngestionSpec(dataObj), origFile, meta)
 				else throw new FileNotFoundException(
 					s"File for ${dataObj.hash} not found on the server, can not reingest"
 				)
@@ -155,12 +155,12 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		val spec = dobj.specification
 
 		def ingest =
-			if(spec.format.uri == CpMetaVocab.asciiWdcggTimeSer)
-				IngestionUploadTask(dobj, getFile(dobj), meta.sparql).map{ingestionTask =>
+			if(spec.format.uri == CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
+				IngestionUploadTask(IngestionSpec(dobj), getFile(dobj), meta).map{ingestionTask =>
 					mandatoryTasks(dobj) :+ ingestionTask
 				}
 			else
-				IngestionUploadTask(dobj, getFile(dobj), meta.sparql).map{ingestionTask =>
+				IngestionUploadTask(IngestionSpec(dobj), getFile(dobj), meta).map{ingestionTask =>
 					defaultTasks(dobj) :+ ingestionTask
 				}
 
