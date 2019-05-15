@@ -20,7 +20,11 @@ class Metadata extends Component {
 	}
 
 	handlePreview(id){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
+		this.props.setPreviewItem(id);
+	}
+
+	handleViewMetadata(id) {
+		this.props.setMetadataItem(id);
 	}
 
 	render() {
@@ -34,6 +38,12 @@ class Metadata extends Component {
 			<div>
 				{metadata && metadata.submission &&
 					<div>
+						{metadata.submission.stop ? null :
+							<div className="alert alert-warning">Upload not complete, data is missing.</div>
+						}
+						{metadata.nextVersion &&
+							<div className="alert alert-warning">A newer version of this data is available: <a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">View next version</a></div>
+						}
 						<div className="row">
 							<div className="col-sm-8">
 								<div className="row">
@@ -44,7 +54,7 @@ class Metadata extends Component {
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
-											enabled={metadata.specification.dataLevel!=0}
+											enabled={metadata.specification.dataLevel != 0}
 											type={actionButtonType}
 										/>
 										<PreviewBtn
@@ -55,12 +65,6 @@ class Metadata extends Component {
 										/>
 									</div>
 								</div>
-								{metadata.submission.stop ? null :
-									<div className="alert alert-warning">Upload not complete, data is missing.</div>
-								}
-								{metadata.nextVersion &&
-									<div className="alert alert-warning">A newer version of this data is availble: <a href={metadata.nextVersion} className="alert-link">{metadata.nextVersion}</a></div>
-								}
 								{metadata.specificInfo.description &&
 									metadataRow("Description", metadata.specificInfo.description)
 								}
@@ -78,7 +82,7 @@ class Metadata extends Component {
 								<br />
 								{station &&
 									<React.Fragment>
-										metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
+										{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
 										<br />
 									</React.Fragment>
 								}
@@ -96,20 +100,30 @@ class Metadata extends Component {
 										<br />
 									</React.Fragment>
 								}
-								
+
 								{metadata.previousVersion &&
 									<React.Fragment>
-										{metadataRow("Previous version", metadata.previousVersion)}
+										{metadataRow("Previous version", <a onClick={this.handleViewMetadata.bind(this, metadata.previousVersion)} style={{cursor: 'pointer'}}>View previous version</a>)}
 										<br />
 									</React.Fragment>
 								}
 								{metadata.specificInfo.productionInfo &&
 									<React.Fragment>
-										{metadataRow("Made by", personLink(metadata.specificInfo.productionInfo.creator))}
-										{metadataRow("Contributors", metadata.specificInfo.productionInfo.contributors.map(contributor => {
-											return(personLink(contributor))
-										}))}
-										{metadataRow("Host organization", <a href={metadata.specificInfo.productionInfo.host.self.uri}>{metadata.specificInfo.productionInfo.host.name}</a>)}
+										{metadataRow("Made by", creatorLink(metadata.specificInfo.productionInfo.creator))}
+										{metadata.specificInfo.productionInfo.contributors.length > 0 &&
+											metadataRow("Contributors", metadata.specificInfo.productionInfo.contributors.map((contributor, index) => {
+												return(
+													<span key={contributor.self.uri}>
+														<a href={contributor.self.uri}>
+															{contributor.firstName} {contributor.lastName}
+														</a>
+														{index != metadata.specificInfo.productionInfo.contributors.length - 1 && ', '}
+													</span>);
+											}))
+										}
+										{metadata.specificInfo.productionInfo.host &&
+											metadataRow("Host organization", <a href={metadata.specificInfo.productionInfo.host.self.uri}>{metadata.specificInfo.productionInfo.host.name}</a>)
+										}
 										{metadata.specificInfo.productionInfo.comment && metadataRow("Comment", metadata.specificInfo.productionInfo.comment)}
 										{metadataRow("Creation date", formatDateTime(new Date(metadata.specificInfo.productionInfo.dateTime)))}
 									</React.Fragment>
@@ -182,7 +196,7 @@ const metadataRow = (label, value) => {
 	return (
 		<div className="row">
 			<div className="col-md-2"><label>{label}</label></div>
-			<div className="col-md-10">{value}</div>
+			<div className="col-md-10 mb-2">{value}</div>
 		</div>
 	);
 };
@@ -214,11 +228,9 @@ const map = (icon, coverage) => {
 	);
 };
 
-const personLink = (person) => {
-	return <a href={person.self.uri} key={person.self.uri}>
-			{person.firstName} {person.lastName}
-		</a>;
-}
+const creatorLink = (creator) => {
+	return creator.name ? <a href={creator.self.uri}>{creator.name}</a> : <a href={creator.self.uri}>{creator.firstName} {creator.lastName}</a>;
+};
 
 function formatDate(d) {
 	if (!d) return '';
