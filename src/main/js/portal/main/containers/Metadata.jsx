@@ -141,15 +141,8 @@ export default class Metadata extends Component {
 								}
 								<div className="row">
 									<div className="col-md-12">
-										<label>Metadata download</label>
-										{metadataDownload(metadata.id, metadata.fileName)}
-									</div>
-								</div>
-								<br />
-								<div className="row">
-									<div className="col-md-12">
-										<label>Technical metadata</label>
-										<div><a href={metadata.id}>View metadata page <span className="glyphicon glyphicon-share"></span></a></div>
+										<label>Metadata</label>
+										{metadataLinks(metadata.id, metadata.fileName)}
 									</div>
 								</div>
 							</div>
@@ -209,13 +202,13 @@ const doiLink = (doi) => {
 	);
 };
 
-const metadataDownload = (id, fileName) => {
+const metadataLinks = (id, fileName) => {
 	const json = `${id}/${fileName}.json`;
 	const xml = `${id}/${fileName}.xml`;
 	const turtle = `${id}/${fileName}.ttl`;
 	return (
 		<div>
-			<a href={json}>JSON</a> &#8226; <a href={xml}>RDF/XML</a> &#8226; <a href={turtle}>RDF/TURTLE</a>
+			<a href={id}>HTML landing page</a> &#8226; <a href={json}>JSON</a> &#8226; <a href={xml}>RDF/XML</a> &#8226; <a href={turtle}>RDF/TURTLE</a>
 		</div>
 	);
 };
