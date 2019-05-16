@@ -45,7 +45,7 @@ export default class State{
 			paging: {},
 			cart: new Cart(),
 			id: undefined,
-			metadata: {},
+			metadata: undefined,
 			preview: new Preview(),
 			toasterData: undefined,
 			batchDownloadStatus: {
@@ -163,8 +163,8 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		state.id = config.previewIdPrefix[config.envri] + state.id;
-		state.metadata = Object.assign({}, {id: state.id});
+		state.id = state.id !== undefined ? config.previewIdPrefix[config.envri] + state.id : state.id;
+		state.metadata = state.id !== undefined ? Object.assign({}, {id: state.id}) : state.metadata;
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
