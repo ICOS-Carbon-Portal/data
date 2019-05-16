@@ -4,9 +4,10 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './Search.jsx';
 import DataCart from './DataCart.jsx';
 import Preview from '../components/preview/Preview.jsx';
+import Metadata, { MetadataTitle } from './Metadata.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart,
-	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo} from '../actions';
+	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo, setPreviewItem, setMetadataItem} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
 
@@ -38,10 +39,10 @@ export class App extends Component {
 				/>
 
 				<div className="row page-header">
-					<h1 className="col-md-9">
-						{config.envri} data portal
-						<small> Search, preview, download data objects</small>
-					</h1>
+					<Title
+						currentRoute={props.route}
+						metadata={props.metadata}
+					/>
 					<div className="col-md-3 text-right" style={{marginTop: 30}}>
 						<SwitchRouteBtn
 							currentRoute={props.route}
@@ -61,6 +62,26 @@ export class App extends Component {
 		);
 	}
 }
+
+const Title = props => {
+	switch(props.currentRoute) {
+		case config.ROUTE_SEARCH:
+			return (
+				<h1 className="col-md-9">
+					{config.envri} data portal
+					<small> Search, preview, download data objects</small>
+				</h1>
+			);
+
+		case config.ROUTE_METADATA:
+			return (
+				<div className="col-md-9">{MetadataTitle(props)}</div>
+			);
+
+		default:
+			return <div className="col-md-9"></div>;
+	}
+};
 
 const SwitchRouteBtn = props => {
 	switch(props.currentRoute){
@@ -101,6 +122,9 @@ const Route = props => {
 		case config.ROUTE_PREVIEW:
 			return <Preview {...props} />;
 
+		case config.ROUTE_METADATA:
+			return <Metadata {...props} />;
+
 		default:
 			return <Search {...props} />;
 	}
@@ -112,6 +136,7 @@ function stateToProps(state){
 		user: state.user,
 		toasterData: state.toasterData,
 		cart: state.cart,
+		metadata: state.metadata,
 		preview: state.preview,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		checkedObjectsInCart: state.checkedObjectsInCart,
@@ -138,6 +163,8 @@ function dispatchToProps(dispatch){
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		storeTsPreviewSetting: (spec, type, val) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		getResourceHelpInfo: (helpItem) => dispatch(getResourceHelpInfo(helpItem)),
+		setPreviewItem: id => dispatch(setPreviewItem(id)),
+		setMetadataItem: id => dispatch(setMetadataItem(id)),
 	};
 }
 

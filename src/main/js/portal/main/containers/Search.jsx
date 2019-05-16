@@ -49,6 +49,10 @@ class Search extends Component {
 		}
 	}
 
+	handleViewMetadata(id) {
+		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
+	}
+
 	toggleFilters() {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
@@ -77,8 +81,7 @@ class Search extends Component {
 						/>
 					</div>
 				</div>
-
-				<div className="col-md-3" style={{marginBottom: 20}}>
+				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
 					<button className="btn btn-default btn-block visible-xs-block" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
 						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}}></span>
 					</button>
@@ -96,10 +99,11 @@ class Search extends Component {
 						</Tabs>
 					</div>
 				</div>
-				<div className="col-md-9">
+				<div className="col-sm-8 col-md-9">
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={props.switchTab}>
 						<SearchResultTable
 							tabHeader="Search results"
+							viewMetadata={this.handleViewMetadata.bind(this)}
 							previewAction={this.handlePreview.bind(this)}
 							updateCheckedObjects={props.updateCheckedObjects.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
@@ -112,6 +116,7 @@ class Search extends Component {
 						/>
 						<CompactSearchResultTable
 							tabHeader="Compact view"
+							viewMetadata={this.handleViewMetadata.bind(this)}
 							previewAction={this.handlePreview.bind(this)}
 							{...copyprops(props, [
 								'objectsTable', 'toggleSort', 'sorting', 'requestStep', 'paging', 'preview',

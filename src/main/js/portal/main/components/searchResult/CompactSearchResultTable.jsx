@@ -3,7 +3,7 @@ import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
 import {Paging} from '../buttons/Paging.jsx';
 
 export default function(props){
-	const {paging, requestStep, cart, previewAction, lookup, preview, showCount} = props;
+	const {paging, requestStep, cart, previewAction, lookup, preview, showCount, viewMetadata} = props;
 	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
 
 	return <div className="panel panel-default">
@@ -39,6 +39,7 @@ export default function(props){
 									addToCart={props.addToCart}
 									removeFromCart={props.removeFromCart}
 									key={'dobj_' + i}
+									viewMetadata={viewMetadata}
 								/>
 							);
 						})

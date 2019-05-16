@@ -13,12 +13,15 @@ const truncateStyle = {
 
 const iconPin = '//static.icos-cp.eu/images/icons/pin.svg';
 const iconCalendar = '//static.icos-cp.eu/images/icons/calendar.svg';
-const iconInfo = '//static.icos-cp.eu/images/icons/info-circle-solid.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
 		super(props);
+	}
+
+	handleViewMetadata(){
+		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
 	}
 
 	render(){
@@ -49,7 +52,9 @@ export default class SimpleObjectTableRow extends Component{
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
-					<h4 style={{marginTop: 0}}>{title}</h4>
+					<h4 style={{marginTop: 0}}>
+						<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
+					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
@@ -60,7 +65,6 @@ export default class SimpleObjectTableRow extends Component{
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
 						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={iconCalendar} />
 						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
-						<ExtendedInfoItemLink item={'Landing page'} url={objInfo.dobj} iconHeight={14} icon={iconInfo} />
 					</div>
 					}
 				</td>
@@ -84,15 +88,6 @@ const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, tit
 		? <span className="extended-info-item" >
 			<img src={icon} title={title} style={imgStyle}/> {children ? children : item}
 		</span>
-		: null
-	);
-};
-
-const ExtendedInfoItemLink = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, url}) => {
-	return (item && icon && url
-		? <ExtendedInfoItem item={item} icon={icon} iconHeight={iconHeight} iconRightMargin={iconRightMargin} title={title}>
-			<a href={url}>{item}</a>
-		</ExtendedInfoItem>
 		: null
 	);
 };
