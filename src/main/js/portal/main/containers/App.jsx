@@ -7,7 +7,7 @@ import Preview from '../components/preview/Preview.jsx';
 import Metadata, { MetadataTitle } from './Metadata.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal, updateCheckedObjectsInCart,
-	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo, setMetadataItem} from '../actions';
+	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo, setPreviewItem, setMetadataItem} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
 
@@ -163,6 +163,7 @@ function dispatchToProps(dispatch){
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		storeTsPreviewSetting: (spec, type, val) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		getResourceHelpInfo: (helpItem, uriList) => dispatch(getResourceHelpInfo(helpItem, uriList)),
+		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		setMetadataItem: id => dispatch(setMetadataItem(id)),
 	};
 }

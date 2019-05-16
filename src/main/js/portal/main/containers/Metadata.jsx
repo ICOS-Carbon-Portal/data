@@ -1,12 +1,10 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
-import { formatBytes } from '../utils';
+import { formatBytes, formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
-import { setPreviewItem } from '../actions';
 
-class Metadata extends Component {
+export default class Metadata extends Component {
 	constructor(props) {
 		super(props);
 	}
@@ -232,27 +230,3 @@ const map = (icon, coverage) => {
 const creatorLink = (creator) => {
 	return creator.name ? <a href={creator.self.uri}>{creator.name}</a> : <a href={creator.self.uri}>{creator.firstName} {creator.lastName}</a>;
 };
-
-function formatDate(d) {
-	if (!d) return '';
-
-	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-}
-
-function formatDateTime(d) {
-	if (!d) return '';
-
-	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
-}
-
-function pad2(s) {
-	return ("0" + s).substr(-2, 2);
-}
-
-function dispatchToProps(dispatch){
-	return {
-		setPreviewItem: id => dispatch(setPreviewItem(id)),
-	};
-}
-
-export default connect(state => state.toPlainObject, dispatchToProps)(Metadata);

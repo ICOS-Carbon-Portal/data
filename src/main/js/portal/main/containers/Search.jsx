@@ -7,7 +7,7 @@ import Tabs from '../components/ui/Tabs.jsx';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable.jsx';
 import SearchResultTable from '../components/searchResult/SearchResultTable.jsx';
 import {queryMeta, specFilterUpdate, toggleSort, requestStep, removeFromCart} from '../actions';
-import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch, setMetadataItem} from '../actions';
+import {setPreviewUrl, setPreviewItem, specFiltersReset, updateSelectedPids, updateCheckedObjectsInSearch} from '../actions';
 import HelpSection from "../components/help/HelpSection.jsx";
 
 class Search extends Component {
@@ -117,7 +117,6 @@ function dispatchToProps(dispatch){
 		updateFilter: (varName, values) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: varName => dispatch(toggleSort(varName)),
 		requestStep: direction => dispatch(requestStep(direction)),
-		setMetadataItem: id => dispatch(setMetadataItem(id)),
 		setPreviewItem: id => dispatch(setPreviewItem(id)),
 		removeFromCart: id => dispatch(removeFromCart(id)),
 		setPreviewUrl: url => dispatch(setPreviewUrl(url)),

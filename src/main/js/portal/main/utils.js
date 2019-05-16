@@ -34,3 +34,28 @@ export const varType = variable => {
 
 	return 'unknown';
 };
+
+export const formatDateWithOptionalTime = d => {
+	if(!d) return '';
+
+	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
+
+	return time === "00:00" ? `${date}` : `${date} ${time}`;
+};
+
+export const formatDate = d => {
+	if (!d) return '';
+
+	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+};
+
+export const formatDateTime = d => {
+	if (!d) return '';
+
+	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
+};
+
+const pad2 = s => {
+	return ("0" + s).substr(-2, 2);
+};
