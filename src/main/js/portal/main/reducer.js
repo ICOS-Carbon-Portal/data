@@ -185,7 +185,8 @@ export default function(state = new State(), action){
 		case METADATA:
 			return state.update({
 				route: config.ROUTE_METADATA,
-				metadata: action.metadataWithId
+				metadata: action.metadataWithId,
+				id: action.metadataWithId.id
 			});
 
 		case PREVIEW:
