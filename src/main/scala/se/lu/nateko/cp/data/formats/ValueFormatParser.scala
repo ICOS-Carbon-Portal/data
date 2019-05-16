@@ -6,11 +6,11 @@ import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 import java.time.format.DateTimeFormatter
 
-class ValueFormatParser(locale: Locale) {
+class ValueFormatParser {
 
 	import ValueFormatParser._
 
-	private[this] val parser = new ValueParser(locale)
+	private[this] val parser = new ValueParser
 
 	def parse(value: String, format: ValueFormat): AnyRef =
 		if (value == "") getNullRepresentation(format)

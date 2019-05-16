@@ -12,7 +12,7 @@ import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object EcoCsvStreams {
 
-	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
+	protected val valueFormatParser = new ValueFormatParser
 
 	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
 	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {

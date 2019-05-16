@@ -12,6 +12,7 @@ import se.lu.nateko.cp.data.formats.etcprod.EtcHalfHourlyProductStreams
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
+import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 
 class EtcHalfHourlyProductStreamsTests extends FunSuite with BeforeAndAfterAll {
 
@@ -61,16 +62,17 @@ class EtcHalfHourlyProductStreamsTests extends FunSuite with BeforeAndAfterAll {
 	test("Parsing a half-hourly ETC product example and streaming to bintable") {
 		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val graph = rowsSource
-			.wireTapMat(Sink.head[TableRow])(_ zip _)
 			.map(converter.parseRow)
+			.wireTapMat(Sink.head[BinTableRow])(_ zip _)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
-		assert(readResult.count === 33297)
-		assert(firstRow.header.nRows === nRows)
+		assert(readResult.count === 33300)
+		assert(firstRow.schema.size === nRows)
 		assert(nRowsWritten === nRows)
-		assert(formats.colsMeta.findMissingColumns(firstRow.header.columnNames.toSeq).toSet === Set())
+		assert(firstRow.cells(0) === -9.154e-1f)
+		assert(firstRow.cells(1) === -3.154f)
 	}
 
 }

@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 object WdcggStreams{
 
 	private val charSet = Charset.forName("Windows-1252").name()
-	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
+	protected val valueFormatParser = new ValueFormatParser
 
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)

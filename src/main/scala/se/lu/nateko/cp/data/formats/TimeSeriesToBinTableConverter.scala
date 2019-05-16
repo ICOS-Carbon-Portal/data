@@ -8,7 +8,7 @@ import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
 
 class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
-	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
+	protected val valueFormatParser = new ValueFormatParser
 
 	def parseRow(row: TableRow): BinTableRow = {
 		val colPositions: Map[String, Int] = computeIndices(row.header.columnNames)
