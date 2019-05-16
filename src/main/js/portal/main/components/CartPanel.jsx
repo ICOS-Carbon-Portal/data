@@ -32,6 +32,10 @@ export default class CartPanel extends Component {
 		this.props.handleAllCheckboxesChange();
 	}
 
+	handleViewMetadata(id) {
+		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
+	}
+
 	render(){
 		const props = this.props;
 		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
@@ -88,6 +92,7 @@ export default class CartPanel extends Component {
 										<SearchResultTableRow
 											lookup={props.lookup}
 											extendedInfo={extendedInfo}
+											viewMetadata={this.handleViewMetadata.bind(this)}
 											preview={props.preview}
 											objInfo={objInfo}
 											key={'dobj_' + i}
