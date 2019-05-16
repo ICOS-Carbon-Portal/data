@@ -80,17 +80,18 @@ class Metadata extends Component {
 								{metadataRow("File name", metadata.fileName)}
 								{metadataRow("Size", formatBytes(metadata.size, 0))}
 								<br />
-								{station &&
-									<React.Fragment>
-										{metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
-										<br />
-									</React.Fragment>
-								}
 								{metadata.specificInfo.acquisition &&
 									<React.Fragment>
+										{station && metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
 										{metadataRow("Time coverage", `${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.start))}
 										\u2013
 										${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
+										{metadata.specificInfo.acquisition.instrument &&
+											metadataRow("Instrument", <a href={metadata.specificInfo.acquisition.instrument}>{metadata.specificInfo.acquisition.instrument.split('/').pop()}</a>)
+										}
+										{metadata.specificInfo.acquisition.samplingHeight &&
+											metadataRow("Sampling height", `${metadata.specificInfo.acquisition.samplingHeight} m`)
+										}
 										<br />
 									</React.Fragment>
 								}
