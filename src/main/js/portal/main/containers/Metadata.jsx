@@ -52,12 +52,13 @@ export default class Metadata extends Component {
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
-											enabled={metadata.specification.dataLevel != 0}
+											enabled={metadata.specification.dataLevel != 0 && !metadata.nextVersion}
 											type={actionButtonType}
+											title="You can only download the newest version"
 										/>
 										<PreviewBtn
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
-											checkedObjects={[{'dobj': metadata.id, 'spec': metadata.specification.self.uri}]}
+											checkedObjects={[{'dobj': metadata.id, 'spec': metadata.specification.self.uri, 'nextVersion': metadata.nextVersion}]}
 											clickAction={this.handlePreview.bind(this)}
 											lookup={lookup}
 										/>

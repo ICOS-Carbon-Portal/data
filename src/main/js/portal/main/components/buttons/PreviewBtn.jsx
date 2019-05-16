@@ -48,6 +48,9 @@ export default class PreviewBtn extends Component{
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
 			return [false, "You can only preview one shipping line at a time"];
 
+		else if (checkedObjects.reduce((accumulator, currentValue) => accumulator || typeof currentValue.nextVersion !== 'undefined', false))
+			return [false, "You can only preview the newest version"];
+
 		else
 			return [true, ""];
 	}
