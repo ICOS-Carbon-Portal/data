@@ -19,7 +19,7 @@ const hashKeys = [
 	'filterFreeText',
 	'tabs',
 	'page',
-	'id',
+	'metadata',
 	'preview'
 ];
 
@@ -44,7 +44,6 @@ export default class State{
 			},
 			paging: {},
 			cart: new Cart(),
-			id: undefined,
 			metadata: undefined,
 			preview: new Preview(),
 			toasterData: undefined,
@@ -144,7 +143,8 @@ const simplifyState = state => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
 		filterFreeText: state.filterFreeText.serialize,
-		preview: state.preview.pids
+		preview: state.preview.pids,
+		id: state.metadata && state.metadata.id && state.metadata.id.split('/').pop()
 	});
 };
 
@@ -163,8 +163,9 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		state.id = state.id !== undefined ? config.previewIdPrefix[config.envri] + state.id : state.id;
-		state.metadata = state.id !== undefined ? Object.assign({}, {id: state.id}) : state.metadata;
+		state.metadata = state.id !== undefined
+			? Object.assign({}, {id: config.previewIdPrefix[config.envri] + state.id})
+			: state.metadata;
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
@@ -183,7 +184,7 @@ const specialCases = state => {
 	if (state.route === config.ROUTE_METADATA) {
 		return {
 			route: state.route,
-			id: state.id.split('/').pop()
+			id: state.id,
 		};
 	} else {
 		delete state.id;
