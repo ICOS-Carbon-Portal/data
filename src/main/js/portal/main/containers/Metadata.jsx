@@ -71,7 +71,7 @@ export default class Metadata extends Component {
 									metadataRow("DOI", doiLink(metadata.doi))
 								}
 								{metadata.pid &&
-									metadataRow("PID", doiLink(metadata.pid))
+									metadataRow("PID", <a href={`https://doi.org/${metadata.pid}`}>{metadata.pid}</a>)
 								}
 								{metadataRow("Affiliation", metadata.specification.project.label)}
 								{metadataRow("Type", metadata.specification.self.label)}
