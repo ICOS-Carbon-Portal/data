@@ -32,10 +32,12 @@ sealed trait ColumnMeta {
 
 case class PlainColumn(format: ValueFormat, title: String, isOptional: Boolean) extends ColumnMeta {
 	def matches(colTitle: String): Boolean = title == colTitle
+	override def toString = title
 }
 
 case class RegexColumn(format: ValueFormat, regex: Regex, isOptional: Boolean) extends ColumnMeta {
 	def matches(colTitle: String): Boolean = regex.findFirstIn(colTitle).isDefined
+	override def toString = regex.toString
 }
 
 case class ColumnsMetaWithTsCol(colsMeta: ColumnsMeta, timeStampColumn: String)
