@@ -79,31 +79,29 @@ export default class CartPanel extends Component {
 						</div>
 					</div>
 
-					<div className="table-responsive">
-						<table className="table">
-							<tbody>{
-								props.cart.items.map((objInfo, i) => {
-									const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
-									const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
-									objInfo.fileName = objInfo.itemName;
-									objInfo.dobj = objInfo.id;
+					<table className="table">
+						<tbody>{
+							props.cart.items.map((objInfo, i) => {
+								const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
+								const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
+								objInfo.fileName = objInfo.itemName;
+								objInfo.dobj = objInfo.id;
 
-									return (
-										<SearchResultTableRow
-											lookup={props.lookup}
-											extendedInfo={extendedInfo}
-											viewMetadata={this.handleViewMetadata.bind(this)}
-											preview={props.preview}
-											objInfo={objInfo}
-											key={'dobj_' + i}
-											updateCheckedObjects={props.updateCheckedObjects}
-											isChecked={isChecked}
-										/>
-									);
-								})
-							}</tbody>
-						</table>
-					</div>
+								return (
+									<SearchResultTableRow
+										lookup={props.lookup}
+										extendedInfo={extendedInfo}
+										viewMetadata={this.handleViewMetadata.bind(this)}
+										preview={props.preview}
+										objInfo={objInfo}
+										key={'dobj_' + i}
+										updateCheckedObjects={props.updateCheckedObjects}
+										isChecked={isChecked}
+									/>
+								);
+							})
+						}</tbody>
+					</table>
 				</div>
 			</div>
 		);
