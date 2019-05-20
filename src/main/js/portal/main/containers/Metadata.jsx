@@ -31,6 +31,7 @@ export default class Metadata extends Component {
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
+		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
 
 		return (
 			<div>
@@ -52,9 +53,9 @@ export default class Metadata extends Component {
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
-											enabled={metadata.specification.dataLevel != 0 && !metadata.nextVersion}
+											enabled={isCartEnabled}
 											type={actionButtonType}
-											title="You can only download the newest version"
+											title={cartTitle}
 										/>
 										<PreviewBtn
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
@@ -224,3 +225,13 @@ const map = (icon, coverage) => {
 const creatorLink = (creator) => {
 	return creator.name ? <a href={creator.self.uri}>{creator.name}</a> : <a href={creator.self.uri}>{creator.firstName} {creator.lastName}</a>;
 };
+
+const cartState = (dataLevel, nextVersion) => {
+	if (dataLevel == 0) {
+		return [false, "Data level 0 is available on demand only"];
+	} else if (nextVersion) {
+		return [false, "You can only download the newest version"];
+	} else {
+		return [true, ""];
+	}
+}
