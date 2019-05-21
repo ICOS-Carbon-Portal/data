@@ -12,9 +12,11 @@ import {init} from './actions';
 // 	return returnValue;
 // };
 
+const searchParams = new URLSearchParams(window.location.search);
+
 export default function(){
 	const store = createStore(reducer, undefined, applyMiddleware(thunkMiddleware));	//, logger));
-	store.dispatch(init());
+	store.dispatch(init(searchParams));
 
 	return store;
 }

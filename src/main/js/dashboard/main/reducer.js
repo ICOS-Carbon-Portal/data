@@ -1,8 +1,9 @@
-import {ERROR, INIT, STATION_MEASUREMENTS} from './actions';
+import {ERROR, INIT, STATION_MEASUREMENTS, BINTABLE} from './actions';
 import * as Toaster from 'icos-cp-toaster';
+import Stats from './models/Stats';
 
 const initState = {
-	measurements: []
+	stats: new Stats()
 };
 
 export default function(state = initState, action){
@@ -15,11 +16,18 @@ export default function(state = initState, action){
 			});
 
 		case INIT:
-			return update({});
+			return update({
+				stats: state.stats.withParams(action.stationId, action.valueType, action.height)
+			});
 
 		case STATION_MEASUREMENTS:
 			return update({
-				measurements: action.measurements
+				stats: state.stats.withMeasurements(action.measurements)
+			});
+
+		case BINTABLE:
+			return update({
+				stats: state.stats.withData(action)
 			});
 
 		default:

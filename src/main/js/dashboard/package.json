@@ -56,7 +56,6 @@
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",
     "react": "^16.8.6",
-    "react-bootstrap": "^0.32.4",
     "react-dom": "^16.8.6",
     "react-redux": "^5.0.7",
     "redux": "^3.7.2",
