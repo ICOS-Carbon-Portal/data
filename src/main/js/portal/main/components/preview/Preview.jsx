@@ -1,10 +1,8 @@
 import React, { Component } from 'react';
 import PreviewTimeSerie from './PreviewTimeSerie.jsx';
-import PreviewNetCDF from './PreviewNetCDF.jsx';
 import PreviewSelfContained from './PreviewSelfContained.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
-import BackButton from '../buttons/BackButton.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
 
 
@@ -32,6 +30,10 @@ export default class Preview extends Component {
 		this.props.removeFromCart(objInfo);
 	}
 
+	handleViewMetadata(id) {
+		this.props.setMetadataItem(id);
+	}
+
 	render(){
 		const {preview, cart} = this.props;
 		const areItemsInCart = preview.items.reduce((prevVal, item) => cart.hasItem(item.id), false);
@@ -52,9 +54,7 @@ export default class Preview extends Component {
 												<span style={{marginRight: 10}}>
 													{item.itemName}
 												</span>
-												<a href={item.id} title="View metadata">
-													<span className="glyphicon glyphicon-info-sign" />
-												</a>
+												<span onClick={this.handleViewMetadata.bind(this, item.id)} style={{cursor: 'pointer'}} className="glyphicon glyphicon-info-sign" />
 											</span>
 										);
 									})}

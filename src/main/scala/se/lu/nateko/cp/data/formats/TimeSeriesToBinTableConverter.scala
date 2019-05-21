@@ -5,37 +5,73 @@ import java.util.Locale
 import TimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
+import java.{util => ju}
 
+//Instances of this class must not be reused for parsing different tables
 class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
-	protected val valueFormatParser = new ValueFormatParser(Locale.UK)
+	private var parser: Parser = null
 
 	def parseRow(row: TableRow): BinTableRow = {
-		val colPositions: Map[String, Int] = computeIndices(row.header.columnNames)
+		if(parser == null) parser = new Parser(row.header)
+		parser.parse(row)
+	}
 
-		val valueFormats: Map[String, ValueFormat] = row.header.columnNames.flatMap{cname =>
-			colsMeta.matchColumn(cname)
-				.map(valueFormat => cname -> valueFormat) //Option[String -> ValueFormat]
-		}.toMap
+	private class Parser(header: TableRowHeader){
 
-		val sortedColumns = valueFormats.keys.toArray.sorted
-		val dataTypes = sortedColumns.map(valueFormats).map(valueFormatParser.getBinTableDataType)
+		assertNoMissingColumns()
+		private val valueFormatParser = new ValueFormatParser
 
-		val parsed = sortedColumns.map{ colName =>
-			val valFormat = valueFormats(colName)
+		private val (sortedCols, sortedFormats) = {
+			val sortedColsAndFormats: Array[(String, ValueFormat)] = header.columnNames.sorted.flatMap{cname =>
+				colsMeta.matchColumn(cname)
+					.map(valueFormat => cname -> valueFormat) //Option[String -> ValueFormat]
+			}
+			sortedColsAndFormats.map(_._1) -> sortedColsAndFormats.map(_._2)
+		}
 
-			val colPos = try {
-				colPositions(colName)
-			} catch {
-				case _: NoSuchElementException =>
-					val missingColumns = valueFormats.keys.filterNot(colPositions.contains)
-					throw new CpDataParsingException("Missing columns: " + missingColumns.mkString(", "))
+		private val schema = new Schema(
+			sortedFormats.map(valueFormatParser.getBinTableDataType),
+			header.nRows.toLong
+		)
+
+		private val indices: Array[Int] = {
+			val lookup = computeIndices(header.columnNames)
+			sortedCols.map(lookup.apply)
+		}
+
+		def parse(row: TableRow): BinTableRow = {
+			assertConsistency(row.header)
+
+			val parsed = Array.ofDim[AnyRef](indices.length)
+
+			for(i <- parsed.indices){
+				val cellValue = row.cells(indices(i))
+				val valueFormat = sortedFormats(i)
+				parsed(i) = valueFormatParser.parse(cellValue, valueFormat)
 			}
 
-			val cellValue = row.cells(colPos)
-			valueFormatParser.parse(cellValue, valFormat)
+			new BinTableRow(parsed, schema)
 		}
-		new BinTableRow(parsed, new Schema(dataTypes, row.header.nRows.toLong))
+
+		private def assertConsistency(latestHeader: TableRowHeader): Unit = if(
+			(header ne latestHeader) && (
+				header.nRows != latestHeader.nRows ||
+				!ju.Arrays.equals(
+					header.columnNames.asInstanceOf[Array[AnyRef]],
+					latestHeader.columnNames.asInstanceOf[Array[AnyRef]]
+				)
+			)
+		) throw new CpDataParsingException(
+			"Sequential rows had different headers. Could be due to reuse of TimeSeriesToBinTableConverter instance. Contact developers."
+		)
+
+		private def assertNoMissingColumns(): Unit = {
+			val missingColumns = colsMeta.findMissingColumns(header.columnNames).map(_.toString)
+			if(!missingColumns.isEmpty) throw new CpDataParsingException(
+				s"Required columns were missing in the data: ${missingColumns.mkString(", ")}"
+			)
+		}
 	}
 
 }
@@ -47,5 +83,4 @@ object TimeSeriesToBinTableConverter {
 			case (colName, nameIndexPairs) => (colName, nameIndexPairs.map(_._2).min)
 		}
 	}
-
 }

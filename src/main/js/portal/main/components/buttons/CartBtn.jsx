@@ -11,14 +11,15 @@ export default class CartBtn extends Component {
 	}
 
 	render(){
-		const {style, enabled, type} = this.props;
+		const {style, enabled, type, title} = this.props;
 		const btnText = (type === 'remove') ? 'Remove from cart' : 'Add to cart';
-		const btnStyle = (type === 'remove') ? 'btn-default' : 'btn-primary';
-		const className = `btn ${btnStyle} ${enabled ? "" : "disabled"}`;
+		const btnType = (type === 'remove') ? 'btn-default' : 'btn-primary';
+		const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
+		const btnStyle = enabled ? {} : {pointerEvents: 'auto'};
 
 		return (
 			<div style={style}>
-				<button id="add-to-cart-button" onClick={this.handleAddToCartClick.bind(this)} className={className}>
+				<button id="add-to-cart-button" onClick={this.handleAddToCartClick.bind(this)} className={className} style={btnStyle} disabled={!enabled} title={title}>
 					{btnText}
 				</button>
 			</div>

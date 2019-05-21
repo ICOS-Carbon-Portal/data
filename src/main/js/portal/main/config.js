@@ -5,6 +5,7 @@ export default {
 	envri: commonConfig.envri,
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
+	ROUTE_METADATA: 'metadata',
 	ROUTE_PREVIEW: 'preview',
 	DEFAULT_ROUTE: 'search',
 	TIMESERIES: 'TIMESERIES',

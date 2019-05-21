@@ -28,6 +28,8 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
 import spray.json.JsBoolean
 import spray.json.JsValue
+import spray.json.JsNumber
+import spray.json.JsNull
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher = system.dispatcher
@@ -93,6 +95,12 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		))
 	}
 
+	def completeUpload(hash: Sha256Sum, completionInfo: UploadCompletionInfo)(implicit envri: Envri): Future[String] = {
+		val url = Uri(s"$baseUrl$uploadApiPath/${hash.id}")
+
+		post(url, completionInfo, hostOpt).flatMap(extractIfSuccess(Unmarshal(_).to[String]))
+	}
+
 	def registerEtcUpload(meta: EtcUploadMetadata): Future[Done] = {
 		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.etcUploatMetaFormat
 		val url = Uri(s"$baseUrl$uploadApiPath/etc")
@@ -102,10 +110,18 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		})
 	}
 
-	def completeUpload(hash: Sha256Sum, completionInfo: UploadCompletionInfo)(implicit envri: Envri): Future[String] = {
-		val url = config.baseUrl + config.uploadApiPath + "/" + hash.id
-
-		post(url, completionInfo, hostOpt).flatMap(extractIfSuccess(Unmarshal(_).to[String]))
+	def getUtcOffset(station: StationId): Future[Int] = {
+		val url = Uri(s"$baseUrl$uploadApiPath/etc/utcOffset").withQuery(Uri.Query("stationId" -> station.id))
+		get(url, None).flatMap(extractIfSuccess(
+			Unmarshal(_).to[JsValue].map{
+				case JsNull =>
+					throw new CpDataException(s"Could not find UTC offset for station ${station.id}")
+				case JsNumber(value) =>
+					value.intValue
+				case js =>
+					throw new CpDataException(s"Expected UTC offset to be a number, got $js")
+			}
+		))
 	}
 
 	def getStationsWhereUserIsPi(user: UserId): Future[Seq[StationId]] = {

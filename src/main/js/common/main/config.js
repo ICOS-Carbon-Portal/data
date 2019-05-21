@@ -15,7 +15,8 @@ export default {
 	portalUseLogUrl: `//${authHost}/logs/portaluse`,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
 	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
+	metaBaseUri: `https://${host}/`,
 	cpmetaObjectUri: `https://${host.replace('local-', '')}/objects/`,
 	envri,
 	sparqlGraphFilter
-}
+};

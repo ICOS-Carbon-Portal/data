@@ -266,3 +266,15 @@ export const getTsSettings = email => {
 export const clearTsSettings = _ => {
 	tsSettingsStorage.removeItem(tsSettingsStorageName);
 };
+
+export const getMetadata = (id) => {
+	return fetch(id, {
+		headers: new Headers({
+			'Accept': 'application/json'
+		})
+	}).then(resp => {
+		return resp.status === 200
+			? resp.json()
+			: undefined;
+	});
+};

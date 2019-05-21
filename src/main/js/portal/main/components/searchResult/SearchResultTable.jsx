@@ -26,7 +26,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 	render(){
 		const props = this.props;
-		const {paging, requestStep, previewAction, lookup, preview, extendedDobjInfo, helpStorage, getResourceHelpInfo} = props;
+		const {paging, requestStep, previewAction, lookup, viewMetadata, preview, extendedDobjInfo, helpStorage, getResourceHelpInfo} = props;
 		const objectText = props.checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = props.checkedObjectsInSearch.reduce((acc, uri) => {
 				return acc.concat(props.objectsTable.filter(o => o.dobj === uri));
@@ -88,8 +88,6 @@ export default class SimpleDataObjectsTable extends Component{
 
 					</div>
 
-
-
 					<table className="table">
 						<tbody>{
 							props.objectsTable.map((objInfo, i) => {
@@ -100,6 +98,7 @@ export default class SimpleDataObjectsTable extends Component{
 									<SearchResultTableRow
 										lookup={lookup}
 										extendedInfo={extendedInfo}
+										viewMetadata={viewMetadata}
 										preview={preview}
 										objInfo={objInfo}
 										key={'dobj_' + i}

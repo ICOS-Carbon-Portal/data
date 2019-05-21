@@ -158,6 +158,7 @@ object WdcggParser {
 		case Iso8601DateTime | EtcDate => throw new Exception("Did not expect these value types (Iso8601DateTime | EtcDate) in WDCGG data")
 		case Iso8601TimeOfDay => value == "99:99" || value.startsWith("25:") || value.startsWith("26:")
 		case IsoLikeLocalDateTime => throw new Exception("Did not expect this value type (IsoLikeLocalDateTime) in WDCGG data")
+		case EtcLocalDateTime => throw new Exception("Did not expect this value type (EtcLocalDateTime) in WDCGG data")
 	}
 
 	def amend(value: String, format: ValueFormat): String = format match {

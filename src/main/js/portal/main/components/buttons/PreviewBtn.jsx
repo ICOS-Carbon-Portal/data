@@ -40,13 +40,16 @@ export default class PreviewBtn extends Component{
 			return [false, "You have selected a data object that cannot be previewed"];
 
 		else if (!specs.every(spec => spec === specs[0]))
-			return [false, "Multiple previews are only available for data of same type."];
+			return [false, "Multiple previews are only available for data of same type"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))
 			return [false, "You can only preview one NetCDF at a time"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
 			return [false, "You can only preview one shipping line at a time"];
+
+		else if (checkedObjects.reduce((accumulator, currentValue) => accumulator || typeof currentValue.nextVersion !== 'undefined', false))
+			return [false, "You can only preview the newest version"];
 
 		else
 			return [true, ""];

@@ -46,7 +46,8 @@ object AtcProdParser {
 
 		else if (acc.lineNumber == acc.header.headerLength - 1) {
 			val ambiguousColNames = line.drop(1).split(sep)
-			val colNames = disambiguateColumnNames(ambiguousColNames)
+			val isMultiVar = hasMultipleMainVariables(columnsMeta)
+			val colNames = disambiguateColumnNames(ambiguousColNames, isMultiVar)
 			val formats = colNames.map(columnsMeta.matchColumn)
 			acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine
 		}
@@ -63,11 +64,22 @@ object AtcProdParser {
 		}).incrementLine
 	}
 
-	def disambiguateColumnNames(names: Array[String]): Array[String] = {
+	private val reoccuringColNames = Set("Stdev", "NbPoints", "Flag", "QualityId")
 
-		val ambigs = Set("Stdev", "NbPoints", "Flag", "QualityId").filter { amb =>
-			names.count(_ == amb) > 1
-		}
+	private def hasMultipleMainVariables(columnsMeta: ColumnsMeta): Boolean = reoccuringColNames.exists{reoccName =>
+		columnsMeta.columns.count{
+			case p: PlainColumn => p.title.startsWith(reoccName)
+			case anyCol => anyCol.matches(reoccName)
+		} > 1
+	}
+
+	def disambiguateColumnNames(names: Array[String], evenIfOnlyOneMainVar: Boolean): Array[String] = {
+
+		val ambigs =
+			if(evenIfOnlyOneMainVar) reoccuringColNames
+			else reoccuringColNames.filter { amb =>
+				names.count(_ == amb) > 1
+			}
 
 		if (ambigs.isEmpty) names else names.scanLeft(("", "")) {
 			case ((varName, _), nextColName) =>

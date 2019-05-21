@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {copyprops} from 'icos-cp-utils';
 import CartIcon from '../buttons/CartIcon.jsx';
 import PreviewIcon from '../buttons/PreviewIcon.jsx';
-import {formatBytes} from '../../utils';
+import {formatBytes, formatDateWithOptionalTime} from '../../utils';
 
 
 export default class CompactSearchResultTableRow extends Component {
@@ -12,6 +12,10 @@ export default class CompactSearchResultTableRow extends Component {
 
 	handlePreviewClick(id){
 		if (this.props.previewAction) this.props.previewAction([id]);
+	}
+
+	handleViewMetadata(){
+		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
 	}
 
 	render(){
@@ -38,29 +42,16 @@ export default class CompactSearchResultTableRow extends Component {
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a href={objInfo.dobj} title={objInfo.specLabel}>{stripExt(objInfo.fileName)}</a>
+				<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
-			<td>{formatDate(objInfo.submTime)}</td>
-			<td>{formatDate(objInfo.timeStart)}</td>
-			<td>{formatDate(objInfo.timeEnd)}</td>
+			<td>{formatDateWithOptionalTime(objInfo.submTime)}</td>
+			<td>{formatDateWithOptionalTime(objInfo.timeStart)}</td>
+			<td>{formatDateWithOptionalTime(objInfo.timeEnd)}</td>
 		</tr>;
 	}
 }
 
 function stripExt(fileName){
 	return fileName.slice(0, fileName.lastIndexOf('.'));
-}
-
-function formatDate(d){
-	if(!d) return '';
-
-	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`
-
-	return time === "00:00" ? `${date}` : `${date} ${time}`;
-}
-
-function pad2(s){
-	return ("0" + s).substr(-2, 2);
 }
