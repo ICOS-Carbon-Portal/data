@@ -11,7 +11,7 @@ export default class PreviewTimeSerie extends Component {
 		const selectedIdx = ev.target.selectedIndex;
 
 		if (selectedIdx > 0 && iframeSrcChange) {
-			const selectedVal = ev.target.options[selectedIdx].innerHTML;
+			const selectedVal = ev.target.options[selectedIdx].value;
 			const setting = ev.target.name;
 			const newUrl = preview.items[0].getNewUrl({[setting]: selectedVal});
 
@@ -49,7 +49,7 @@ export default class PreviewTimeSerie extends Component {
 
 		// Determine if curves should concatenate or overlap
 		const linking = items.reduce((acc,cur) => {
-			const result = items.reduce((acc2,cur2) => {
+			return items.reduce((acc2,cur2) => {
 				if ((cur.id !== cur2.id) &&
 					(cur.station === cur2.station) &&
 					((cur.timeEnd < cur2.timeStart) ||
@@ -58,15 +58,18 @@ export default class PreviewTimeSerie extends Component {
 				}
 				return acc2;
 			}, 'overlap');
-			return result;
 		}, '');
 
 		const alltemsHaveColumnNames = items.reduce((acc, cur) =>{
-			return acc && cur.columnNames ? true : false;
+			return !!(acc && cur.columnNames);
 		}, true);
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
 		const options = alltemsHaveColumnNames ? [...new Set([...items.flatMap(item => item.columnNames)])] : preview.options;
+		const chartTypeOptions = [
+			{colTitle: 'scatter', valTypeLabel: 'scatter'},
+			{colTitle: 'line', valTypeLabel: 'line'},
+		];
 
 		return (
 			<div>
@@ -98,7 +101,7 @@ export default class PreviewTimeSerie extends Component {
 										name="type"
 										label="Chart type"
 										selected={type}
-										options={['scatter', 'line']}
+										options={chartTypeOptions}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -125,7 +128,7 @@ export default class PreviewTimeSerie extends Component {
 }
 
 const filterOptions = options => {
-	return options.filter(opt => !opt.startsWith('Flag'));
+	return options.filter(opt => !opt.colTitle.startsWith('Flag'));
 };
 
 const Selector = props => {
@@ -136,7 +139,8 @@ const Selector = props => {
 			<label>{props.label}</label>
 			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
-				{props.options.map((o, i) => <option value={o} key={props.label.slice(0, 1) + i}>{o}</option>)}
+				{props.options.map((o, i) =>
+					<option value={o.colTitle} key={props.label.slice(0, 1) + i}>{`${o.colTitle} – ${o.valTypeLabel}`}</option>)}
 			</select>
 		</span>
 	);

@@ -6,7 +6,6 @@ export default class Lookup{
 	}
 
 	parseSpecTable(specTable) {
-
 		const netcdf = {};
 		const mapGraph = {};
 		specTable.getTableRows("basics").forEach(br => {
@@ -17,7 +16,7 @@ export default class Lookup{
 		const timeSeries = {};
 		specTable.getTableRows("columnMeta").forEach(cmr => {
 			if(timeSeries[cmr.spec] === undefined) timeSeries[cmr.spec] = {type: config.TIMESERIES, options: []};
-			timeSeries[cmr.spec].options.push(cmr.colTitle);
+			timeSeries[cmr.spec].options.push({colTitle: cmr.colTitle, valTypeLabel: cmr.valTypeLabel});
 		});
 
 		return Object.assign({}, netcdf, timeSeries, mapGraph);
