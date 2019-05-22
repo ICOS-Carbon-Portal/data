@@ -8,7 +8,6 @@ import Storage from './models/Storage';
 import 'whatwg-fetch';
 
 const config = Object.assign(commonConfig, localConfig);
-const cartStorage = new Storage();
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
@@ -77,7 +76,7 @@ export const saveCart = (email, cart) => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
-	return Promise.resolve(cartStorage.setItem('cp-cart', cart));
+	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
 const updatePersonalRestheart = (email, data) => {
@@ -109,8 +108,8 @@ export const logOut = () => {
 };
 
 export const getCart = email => {
-	const sessionStorageJson = cartStorage.getItem('cp-cart')
-		? cartStorage.getItem('cp-cart')
+	const sessionStorageJson = sessionStorage.getItem('cp-cart')
+		? JSON.parse(sessionStorage.getItem('cp-cart'))
 		: new Cart();
 	const cartInSessionStorage = {cart: sessionStorageJson};
 	const cartInRestheart = email
