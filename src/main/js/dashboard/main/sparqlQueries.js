@@ -2,17 +2,18 @@ export const listStationMeasurement = (config, stationId, valueType, height) => 
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 
-select ?station ?dobj ?unit ?dataEnd where{
+select ?station ?dobj ?dataEnd where{
 	?station cpmeta:hasStationId "${stationId}"^^xsd:string .
 	?column cpmeta:hasColumnTitle "${valueType}"^^xsd:string ;
 		cpmeta:hasValueType/cpmeta:hasUnit ?unit .
 	?spec cpmeta:containsDataset/cpmeta:hasColumn ?column ;
 		cpmeta:hasDataLevel "1"^^xsd:integer ;
-		cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/copernicus> .
+		cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/icos> .
 	?dobj cpmeta:hasObjectSpec ?spec .
 	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
 	?dobj cpmeta:wasAcquiredBy/prov:endedAtTime ?dataEnd .
 	?dobj cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?samplingHeight .
+	filter not exists {[] cpmeta:isNextVersionOf ?dobj}
 	filter (?samplingHeight = ${height}) .
 }
 order by desc(?dataEnd)

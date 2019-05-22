@@ -22,10 +22,10 @@ export default class Panel extends Component {
 					<h3 className="panel-title">{getHeader(stationId, valueType, height, metadata.station, metadata.dataEnd)}</h3>
 				</div>
 
-				<div className="panel-body" style={{paddingBottom: 3}}>
+				<div className="panel-body" style={{padding: '5px 10px'}}>
 
 					<Row>
-						<span style={{fontSize:'16pt'}}>{`${round(dataset.mean)} ${metadata.unit} mean`}</span>
+						<span style={{fontSize:'16pt'}}>{`${round(dataset.mean)} ppm mean`}</span>
 					</Row>
 
 					<Row>
@@ -43,7 +43,7 @@ export default class Panel extends Component {
 					</Row>
 
 					<a href="https://www.icos-cp.eu/about-icos-data">
-						<img src="//static.icos-cp.eu/images/cp-logo.jpg" style={{height:40}} />
+						<img src="//static.icos-cp.eu/images/ICOS_ERIC_logo_rgb.svg" style={{height:40}} />
 					</a>
 
 				</div>

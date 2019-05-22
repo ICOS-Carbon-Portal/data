@@ -14,8 +14,7 @@ export const fetchStationMeasurement = (stationId, valueType, height) => {
 					return {
 						station: binding.station.value,
 						dataEnd: new Date(binding.dataEnd.value),
-						dobj: binding.dobj.value,
-						unit: binding.unit.value
+						dobj: binding.dobj.value
 					}
 				}))
 				: Promise.reject(new Error(`Could not get station measurements for stationId = ${stationId}, valueType = ${valueType}`));

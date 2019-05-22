@@ -35,7 +35,8 @@ export default class Stats {
 
 class Dataset {
 	constructor(binTable, yCol, nRows){
-		const values = binTable.values([0], v => v);
+		// Use only data from the last 24 hours
+		const values = binTable.values([0], v => v).slice(-24);
 
 		this.nRows = nRows;
 
