@@ -133,6 +133,11 @@ const filterOptions = options => {
 
 const Selector = props => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
+	const getTxt = option => {
+		return option.colTitle === option.valTypeLabel
+			? option.colTitle
+			: `${option.colTitle}—${option.valTypeLabel}`
+	};
 
 	return (
 		<span>
@@ -140,7 +145,7 @@ const Selector = props => {
 			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
 				{props.options.map((o, i) =>
-					<option value={o.colTitle} key={props.label.slice(0, 1) + i}>{`${o.colTitle} – ${o.valTypeLabel}`}</option>)}
+					<option value={o.colTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
 			</select>
 		</span>
 	);
