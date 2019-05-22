@@ -5,7 +5,7 @@ const sparqlGraphFilter = envri === 'SITES' ? 'https://meta.fieldsites.se/' : 'h
 
 const authHost = envri === 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
 
-const metaServer = 'https://meta.icos-cp.eu';
+const metaServer = envri === 'SITES' ? 'https://meta.fieldsites.se' : 'https://meta.icos-cp.eu';
 
 export default {
 	metaServer,
