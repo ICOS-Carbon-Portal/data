@@ -107,11 +107,11 @@ const PreviewRoute = props => {
 			return <PreviewSelfContained {...props} />;
 
 		default:
-			return (
-				<div className="panel-body">
-					This type of preview is not yet implemented
-				</div>
-			);
+			const msg = props.preview.items.length
+				? "This type of preview is not yet implemented"
+				: "Fetching data for preview...";
+
+			return <div className="panel-body">{msg}</div>;
 	}
 };
 

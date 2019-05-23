@@ -60,12 +60,15 @@ export default class PreviewTimeSerie extends Component {
 			}, 'overlap');
 		}, '');
 
-		const alltemsHaveColumnNames = items.reduce((acc, cur) =>{
+		const allItemsHaveColumnNames = items.reduce((acc, cur) =>{
 			return !!(acc && cur.columnNames);
 		}, true);
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
-		const options = alltemsHaveColumnNames ? [...new Set([...items.flatMap(item => item.columnNames)])] : preview.options;
+		const options = allItemsHaveColumnNames
+			? [...new Set([...items.flatMap(item => item.columnNames)])]
+				.map(colName => preview.options.find(opt => opt.colTitle === colName))
+			: preview.options;
 		const chartTypeOptions = [
 			{colTitle: 'scatter', valTypeLabel: 'scatter'},
 			{colTitle: 'line', valTypeLabel: 'line'},
