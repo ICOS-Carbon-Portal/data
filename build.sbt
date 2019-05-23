@@ -116,7 +116,10 @@ val intellijSaveTmpFilter = new SimpleFileFilter(file => {
 val watchSourcesChanges = Seq(
 		watchSources := {
 			val resFolder = (Compile / resourceDirectory).value
-			watchSources.value.filterNot { _.base == resFolder }
+			val projBase = baseDirectory.value
+			watchSources.value.filterNot {src =>
+				src.base == resFolder || src.base == projBase
+			}
 		},
 		watchSources += {
 			val resFolder = (Compile / resourceDirectory).value

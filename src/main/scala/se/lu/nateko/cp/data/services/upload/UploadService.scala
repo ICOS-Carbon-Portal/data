@@ -43,7 +43,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 //	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
-	private val b2 = new B2StageClient(config.b2stage, Http())
+//	private val b2 = new B2StageClient(config.b2stage, Http())
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
@@ -182,7 +182,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-		new B2StageUploadTask(obj, b2) :+
+		//new B2StageUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =
