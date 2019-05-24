@@ -28,14 +28,6 @@ export default class PreviewTimeSerie extends Component {
 
 	render(){
 		const {preview, extendedDobjInfo, iframeSrcChange, tsSettings} = this.props;
-		const specSettings = tsSettings[preview.item.spec] || {};
-		const {xAxis, yAxis, type} = preview.items[0] && preview.items[0].hasKeyValPairs
-			? {
-				xAxis: specSettings.x || preview.items[0].getUrlSearchValue('x'),
-				yAxis: specSettings.y || preview.items[0].getUrlSearchValue('y'),
-				type: specSettings.type || preview.items[0].getUrlSearchValue('type')
-			}
-			: {xAxis: undefined, yAxis: undefined, type: undefined};
 
 		// Add station information
 		const items = preview.items.map((item) => {
@@ -66,13 +58,16 @@ export default class PreviewTimeSerie extends Component {
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
 		const options = allItemsHaveColumnNames
-			? [...new Set([...items.flatMap(item => item.columnNames)])]
-				.map(colName => preview.options.find(opt => opt.colTitle === colName))
-			: preview.options;
+			? filterOptions([...new Set([...items.flatMap(item => item.columnNames)])]
+				.map(colName => preview.options.find(opt => opt.colTitle === colName)))
+			: filterOptions(preview.options);
 		const chartTypeOptions = [
 			{colTitle: 'scatter', valTypeLabel: 'scatter'},
 			{colTitle: 'line', valTypeLabel: 'line'},
 		];
+
+		const specSettings = tsSettings[preview.item.spec] || {};
+		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
 
 		return (
 			<div>
@@ -86,7 +81,7 @@ export default class PreviewTimeSerie extends Component {
 										name="x"
 										label="X axis"
 										selected={xAxis}
-										options={filterOptions(options)}
+										options={options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -95,7 +90,7 @@ export default class PreviewTimeSerie extends Component {
 										name="y"
 										label="Y axis"
 										selected={yAxis}
-										options={filterOptions(options)}
+										options={options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
@@ -129,6 +124,21 @@ export default class PreviewTimeSerie extends Component {
 		);
 	}
 }
+
+const getAxes = (options, preview, specSettings) => {
+	const getColName = colName => {
+		const option = options.find(opt => opt.colTitle === colName);
+		return option ? option.colTitle : undefined;
+	};
+
+	return preview.items[0] && preview.items[0].hasKeyValPairs
+		? {
+			xAxis: getColName(specSettings.x) || preview.items[0].getUrlSearchValue('x'),
+			yAxis: getColName(specSettings.y) || preview.items[0].getUrlSearchValue('y'),
+			type: specSettings.type || preview.items[0].getUrlSearchValue('type')
+		}
+		: {xAxis: undefined, yAxis: undefined, type: undefined};
+};
 
 const filterOptions = options => {
 	return options.filter(opt => !opt.colTitle.startsWith('Flag'));
