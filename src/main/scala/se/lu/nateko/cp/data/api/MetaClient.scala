@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.api
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import scala.collection.immutable.Iterable
 
 import akka.Done
 import akka.actor.ActorSystem
@@ -30,11 +31,15 @@ import spray.json.JsBoolean
 import spray.json.JsValue
 import spray.json.JsNumber
 import spray.json.JsNull
+import java.net.URI
+import akka.stream.scaladsl.Source
+import scala.util.Try
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher = system.dispatcher
 	implicit val materializer = ActorMaterializer(None, Some("metaClientMat"))
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
+	import MetaClient._
 
 	val sparql = new SparqlClient(new java.net.URL(baseUrl + sparqlEndpointPath))
 	def log = system.log
@@ -162,4 +167,26 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
 
+	def getDobjStorageInfos: Future[Source[DobjStorageInfo, Any]] = sparql.streamedSelect(
+		"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		|select * where{
+		|	?dobj a cpmeta:DataObject .
+		|	?dobj cpmeta:hasSizeInBytes ?size .
+		|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
+		|	filter (?format != cpmeta:asciiWdcggTimeSer)
+		|}""".stripMargin
+	).map(_.mapConcat{
+		binding => Try{
+			val size = binding("size").toLong
+			val landingPage = new URI(binding("dobj"))
+			val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
+			val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
+			val format = new URI(binding("format"))
+			new DobjStorageInfo(landingPage, hash, size, format)
+		}.fold(_ => Iterable.empty, Iterable(_))
+	})
+}
+
+object MetaClient{
+	class DobjStorageInfo(val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: URI)
 }

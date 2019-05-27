@@ -27,6 +27,7 @@ import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.{Envri, EnvriConfigs}
+import java.net.URI
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -109,6 +110,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 	}
 
 	def getFile(dataObj: StaticObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
+	def getFile(format: URI, hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
 
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
@@ -196,16 +198,20 @@ object UploadService{
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
 	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract]]
 
-	def fileName(obj: StaticObject): String = obj.hash.id
+	def fileName(hash: Sha256Sum): String = hash.id
+	def fileName(obj: StaticObject): String = fileName(obj.hash)
+
+	def fileFolder(format: URI): String = format.toString.stripSuffix("/").split('/').last
 
 	def fileFolder(obj: StaticObject): String = obj match{
 		case dobj: DataObject =>
-			dobj.specification.format.uri.toString.stripSuffix("/").split('/').last
+			fileFolder(dobj.specification.format.uri)
 		case _: DocObject =>
 			"documents"
 	}
 
 	def filePathSuffix(obj: StaticObject): String = fileFolder(obj) + "/" + fileName(obj)
+	def filePathSuffix(format: URI, hash: Sha256Sum): String = fileFolder(format) + "/" + fileName(hash)
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {
 		SinkCombiner.combineMat(sinks).mapMaterializedValue{uploadResultFuts =>

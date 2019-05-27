@@ -21,8 +21,8 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.5.17"
-val akkaHttpVersion = "10.1.5"
+val akkaVersion = "2.5.23"
+val akkaHttpVersion = "10.1.8"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)

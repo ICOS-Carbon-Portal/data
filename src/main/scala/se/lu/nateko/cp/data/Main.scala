@@ -20,6 +20,7 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.PortalLogClient
+import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 
 object Main extends App {
 
@@ -43,6 +44,7 @@ object Main extends App {
 	val portalLog = new PortalLogClient(config.restheart, http)
 
 	val uploadService = new UploadService(config.upload, metaClient)
+	val integrityService = new IntegrityControlService(uploadService)
 
 	val netcdfRoute = NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
 	val legacyNetcdfRoute = NetcdfRoute(netCdfServiceFactory(config.netcdf.folder))
@@ -52,6 +54,7 @@ object Main extends App {
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
+	val integrityRoute = new IntegrityRouting(integrityService).route
 
 	val licenceRoute = new LicenceRouting(authRouting).route
 	val staticRoute = new StaticRouting(config.auth).route
@@ -81,6 +84,7 @@ object Main extends App {
 		authRouting.whoami ~
 		authRouting.logout ~
 		path("buildInfo"){complete(BuildInfo.toString)} ~
+		integrityRoute ~
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
