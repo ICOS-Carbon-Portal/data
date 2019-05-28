@@ -94,7 +94,7 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 
 	/**
 	 * This operation is cached to be executed only once per folderPath during lifetime of IrodsClient.
-	 * No check if done for whether the folder was deleted after creation.
+	 * No check is done for whether the folder was deleted after creation.
 	 */
 	def ensureFolderExists(folderPath: String): Unit = if(config.dryRun) () else
 		if(!existingFolderPaths.contains(folderPath))

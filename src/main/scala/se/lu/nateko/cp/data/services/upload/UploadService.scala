@@ -50,6 +50,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(dataObj))
+	def getRemoteStorageSource(format: URI, hash: Sha256Sum): Source[ByteString, Future[Long]] =
+		irods2.getFileSource(filePathSuffix(format, hash))
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(

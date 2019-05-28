@@ -170,23 +170,24 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	def getDobjStorageInfos: Future[Source[DobjStorageInfo, Any]] = sparql.streamedSelect(
 		"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select * where{
-		|	?dobj a cpmeta:DataObject .
-		|	?dobj cpmeta:hasSizeInBytes ?size .
 		|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
+		|	?dobj cpmeta:hasSizeInBytes ?size .
+		|	?dobj cpmeta:hasName ?fileName .
 		|	filter (?format != cpmeta:asciiWdcggTimeSer)
 		|}""".stripMargin
 	).map(_.mapConcat{
 		binding => Try{
 			val size = binding("size").toLong
+			val fileName = binding("fileName")
 			val landingPage = new URI(binding("dobj"))
 			val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
 			val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
 			val format = new URI(binding("format"))
-			new DobjStorageInfo(landingPage, hash, size, format)
+			new DobjStorageInfo(fileName, landingPage, hash, size, format)
 		}.fold(_ => Iterable.empty, Iterable(_))
 	})
 }
 
 object MetaClient{
-	class DobjStorageInfo(val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: URI)
+	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: URI)
 }

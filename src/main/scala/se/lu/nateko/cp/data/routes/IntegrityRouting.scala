@@ -10,10 +10,12 @@ import akka.http.scaladsl.model.HttpEntity
 class IntegrityRouting(service: IntegrityControlService){
 
 	val route = path("integrityControlReport"){
-		onSuccess(service.getReport){src =>
-			val data = src.map(report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8))
-			val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, data)
-			complete(entity)
+		parameter("fix".?){fix =>
+			onSuccess(service.getReport(fix.contains("true"))){src =>
+				val data = src.map(report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8))
+				val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, data)
+				complete(entity)
+			}
 		}
 	}
 }
