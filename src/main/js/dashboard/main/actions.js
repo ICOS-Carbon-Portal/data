@@ -1,14 +1,17 @@
 import {fetchStationMeasurement, fetchObjectSpecifications, fetchBinTable} from './backend';
-export const ERROR = 'ERROR';
-export const INIT = 'INIT';
-export const STATION_MEASUREMENTS = 'STATION_MEASUREMENTS';
-export const BINTABLE = 'BINTABLE';
+export const signals = {
+	ERROR: 'ERROR',
+	INIT: 'INIT',
+	STATION_MEASUREMENTS: 'STATION_MEASUREMENTS',
+	BINTABLE: 'BINTABLE',
+	SWITCH_TIMEPERIOD: 'SWITCH_TIMEPERIOD'
+};
 
 
 export const failWithError = dispatch => error => {
 	console.log(error);
 	dispatch({
-		type: ERROR,
+		type: signals.ERROR,
 		error
 	});
 };
@@ -21,7 +24,7 @@ export const init = searchParams => dispatch => {
 	const height = searchParams.get('height');
 
 	dispatch({
-		type: INIT,
+		type: signals.INIT,
 		stationId,
 		valueType,
 		height
@@ -36,7 +39,7 @@ const getStationMeasurement = (stationId, valueType, height) => dispatch => {
 
 	fetchStationMeasurement(stationId, valueType, height).then(measurements => {
 		dispatch({
-			type: STATION_MEASUREMENTS,
+			type: signals.STATION_MEASUREMENTS,
 			measurements
 		});
 
@@ -59,11 +62,16 @@ const getBinTable = (yCol, objSpec) => dispatch => {
 
 	fetchBinTable(yCol, id, tableFormat, nRows).then(binTable => {
 		dispatch({
-			type: BINTABLE,
+			type: signals.BINTABLE,
 			objSpec,
-			binTable,
-			yCol,
-			nRows
+			binTable
 		});
 	});
+};
+
+export const switchTimePeriod = timePeriod => dispatch => {
+	dispatch({
+		type: signals.SWITCH_TIMEPERIOD,
+		timePeriod
+	})
 };

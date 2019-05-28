@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import Panel from '../components/Panel.jsx';
+import {switchTimePeriod} from '../actions';
 
 
 export class App extends Component {
@@ -11,7 +12,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {stats, toasterData, failWithError} = this.props;
+		const {stats, toasterData, failWithError, switchTimePeriod} = this.props;
 
 		return (
 			<div style={{marginTop: 10}}>
@@ -25,7 +26,7 @@ export class App extends Component {
 				<ErrorBoundary failWithError={failWithError}>
 					{stats.isValidRequest
 						? <div className="container-fluid">
-							<Panels stats={stats} />
+							<Panels stats={stats} switchTimePeriod={switchTimePeriod} />
 						</div>
 						: <InvalidRequest />
 					}
@@ -36,9 +37,17 @@ export class App extends Component {
 	}
 }
 
-const Panels = ({stats}) => {
+const Panels = ({stats, switchTimePeriod}) => {
 	return stats.datasets.map((dataset, idx) =>
-		<Panel key={'p' + idx} dataset={dataset} metadata={stats.metadata[idx]} params={stats.params} />);
+		<Panel
+			key={'p' + idx}
+			dataset={dataset}
+			metadata={stats.metadata[idx]}
+			params={stats.params}
+			timePeriod={stats.timePeriod}
+			switchTimePeriod={switchTimePeriod}
+		/>
+	);
 };
 
 const InvalidRequest = _ => {
@@ -67,7 +76,9 @@ function stateToProps(state){
 }
 
 function dispatchToProps(dispatch){
-	return {};
+	return {
+		switchTimePeriod: timePeriod => dispatch(switchTimePeriod(timePeriod))
+	};
 }
 
 export default connect(stateToProps, dispatchToProps)(App);

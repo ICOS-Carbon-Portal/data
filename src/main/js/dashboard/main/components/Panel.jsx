@@ -3,7 +3,8 @@ import React, { Component, Fragment } from 'react';
 
 const style = {
 	display: 'inline-block',
-	marginRight: 15
+	marginRight: 15,
+	minWidth: 234
 };
 
 export default class Panel extends Component {
@@ -11,35 +12,52 @@ export default class Panel extends Component {
 		super(props);
 	}
 
+	handleBtnClick(newTimePeriod){
+		this.props.switchTimePeriod(newTimePeriod);
+	}
+
 	render(){
-		const {dataset, metadata, params} = this.props;
+		const {dataset, metadata, params, timePeriod} = this.props;
 		const {stationId, valueType, height} = params;
+		const start = performance.now();
+		const {min, max, mean} = dataset.stats;
+		const duration = performance.now() - start;
+		console.log({props: this.props, duration, min, max, mean});
+		const header = getHeader(timePeriod, stationId, valueType, height, metadata.station, metadata.dataEnd);
 
 		return (
 			<div className="panel panel-default" style={style}>
 
 				<div className="panel-heading">
-					<h3 className="panel-title">{getHeader(stationId, valueType, height, metadata.station, metadata.dataEnd)}</h3>
+					<h3 className="panel-title">{header}</h3>
 				</div>
 
 				<div className="panel-body" style={{padding: '5px 10px'}}>
 
 					<Row>
-						<span style={{fontSize:'16pt'}}>{`${round(dataset.mean)} ppm mean`}</span>
+						<span style={{fontSize:'16pt'}}>{`${round(mean)} ppm mean`}</span>
 					</Row>
 
 					<Row>
-						<span>{`${round(dataset.min)} min`}</span>
+						<span>{`${round(min)} min`}</span>
 						<span style={{float:'right'}}>
 							<a href={getPreviewLnk(metadata.dobj, valueType)} target="_blank">Preview</a>
 						</span>
 					</Row>
 
 					<Row>
-						<span>{`${round(dataset.max)} max`}</span>
+						<span>{`${round(max)} max`}</span>
 						<span style={{float:'right'}}>
 							<a href={getDownloadLnk(metadata.dobj, valueType)} target="_blank">Download</a>
 						</span>
+					</Row>
+
+					<Row>
+						<div className="btn-group" role="group" style={{width:'100%'}}>
+							<Button currTimePeriod={timePeriod} txt="Day" onClick={this.handleBtnClick.bind(this)} />
+							<Button currTimePeriod={timePeriod} txt="Month" onClick={this.handleBtnClick.bind(this)} />
+							<Button currTimePeriod={timePeriod} txt="Year" onClick={this.handleBtnClick.bind(this)} />
+						</div>
 					</Row>
 
 					<a href="https://www.icos-cp.eu/about-icos-data">
@@ -52,13 +70,37 @@ export default class Panel extends Component {
 	}
 }
 
-const getHeader = (stationId, valueType, height, station, dataEnd) => {
+const Button = ({currTimePeriod, txt, onClick}) => {
+	const isActive = currTimePeriod === txt.toLowerCase();
+	const cls = isActive
+		? "btn btn-default active"
+		: "btn btn-default";
+	const event = isActive ? _ => _ : _ => onClick(txt.toLowerCase());
+
+	return <button type="button" className={cls} style={{width:'33%'}} onClick={event}>{txt}</button>;
+};
+
+const getHeader = (timePeriod, stationId, valueType, height, station, dataEnd) => {
+	const dateStr = _ => {
+		switch(timePeriod){
+			case 'day':
+				return dataEnd.toISOString().split('T')[0];
+
+			case 'month':
+				const options = { year: 'numeric', month: 'short' };
+				return dataEnd.toLocaleDateString('en-EN', options);
+
+			case 'year':
+				return dataEnd.getFullYear();
+		}
+	};
+
 	return (
 		<Fragment>
 			<a href={station} target="_blank" style={{color:'#337ab7'}}>{stationId}</a>
 			<span style={{marginLeft: 10}}>{height}m</span>
 			<span style={{marginLeft: 10}}>{valueType}</span>
-			<span style={{marginLeft: 10}}>{dataEnd.toISOString().split('T')[0]}</span>
+			<span style={{marginLeft: 10, float:'right'}}>{dateStr()}</span>
 		</Fragment>);
 };
 
