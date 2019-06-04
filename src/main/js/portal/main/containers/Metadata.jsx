@@ -9,6 +9,10 @@ export default class Metadata extends Component {
 		super(props);
 	}
 
+	componentDidMount() {
+		window.scrollTo(0, 0);
+	}
+
 	handleAddToCart(objInfo) {
 		this.props.addToCart(objInfo);
 	}
