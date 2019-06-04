@@ -44,14 +44,21 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 //	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
-//	private val b2 = new B2StageClient(config.b2stage, Http())
+	private val b2 = new B2StageClient(config.b2stage, Http())
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
+	def b2StageSourceExists(format: URI, hash: Sha256Sum): Future[Boolean] =
+		b2.exists(B2StageUploadTask.irodsData(format, hash))
+
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(dataObj))
+
 	def getRemoteStorageSource(format: URI, hash: Sha256Sum): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(format, hash))
+
+	def getB2StageSink(format: URI, hash: Sha256Sum): Sink[ByteString, Future[Sha256Sum]] =
+		b2.objectSink(B2StageUploadTask.irodsData(format, hash))
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
@@ -126,8 +133,6 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 				results.foreach{
 					case fail: UploadTaskFailure => log.error(fail.error, "Upload task failure")
-					//TODO Remove following case when B2StageFailure is a failure again
-					case B2StageFailure(err) => log.error(err, "B2STAGE backup")
 					case _ =>
 				}
 
@@ -186,7 +191,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-		//new B2StageUploadTask(obj, b2) :+
+		new B2StageUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =

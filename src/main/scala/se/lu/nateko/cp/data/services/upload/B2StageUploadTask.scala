@@ -10,19 +10,16 @@ import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
 import se.lu.nateko.cp.meta.core.data.StaticObject
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import java.net.URI
 
 class B2StageUploadTask(statObj: StaticObject, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val (irodsData, existsFut) = {
-		val coll = IrodsColl(UploadService.fileFolder(statObj)) //parent is root
-		val obj = IrodsData(UploadService.fileName(statObj), coll)
-
-		val objExistsFut: Future[Boolean] = client.exists(coll).flatMap{
-			case true => client.exists(obj)
-			case false => client.create(coll).map(_ => false)
-		}
-
-		(obj, objExistsFut)
+	private[this] val irodsData: IrodsData = B2StageUploadTask.irodsData(statObj)
+	private[this] val existsFut: Future[Boolean] = client.exists(irodsData.parent).flatMap{
+		//TODO Add hash control to the existence check
+		case true => client.exists(irodsData)
+		case false => client.create(irodsData.parent).map(_ => false)
 	}
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
@@ -61,4 +58,16 @@ class B2StageUploadTask(statObj: StaticObject, client: B2StageClient)(implicit c
 		}.recover{
 			case _ => ownResult
 		}
+}
+
+object B2StageUploadTask{
+	def irodsData(statObj: StaticObject): IrodsData = {
+		val coll = IrodsColl(UploadService.fileFolder(statObj)) //parent is root
+		IrodsData(UploadService.fileName(statObj), coll)
+	}
+
+	def irodsData(format: URI, hash: Sha256Sum): IrodsData = {
+		val coll = IrodsColl(UploadService.fileFolder(format)) //parent is root
+		IrodsData(UploadService.fileName(hash), coll)
+	}
 }

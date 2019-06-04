@@ -8,14 +8,24 @@ import java.nio.charset.StandardCharsets
 import akka.http.scaladsl.model.HttpEntity
 
 class IntegrityRouting(service: IntegrityControlService){
+	import IntegrityControlService.ReportSource
 
-	val route = path("integrityControlReport"){
+	val route = pathPrefix("integrityControl"){
 		parameter("fix".?){fix =>
-			onSuccess(service.getReport(fix.contains("true"))){src =>
+
+			def respondWithReport(maker: Boolean => ReportSource) = onSuccess(maker(fix.contains("true"))){src =>
 				val data = src.map(report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8))
 				val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, data)
 				complete(entity)
 			}
+
+			path("local"){
+				respondWithReport(service.getReportOnLocal)
+			} ~
+			path("remote"){
+				respondWithReport(service.getReportOnRemote)
+			}
 		}
 	}
+
 }

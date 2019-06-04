@@ -15,25 +15,21 @@ import scala.util.Failure
 import scala.util.Success
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Keep
+import java.nio.file.Path
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
 	import IntegrityControlService._
+	import MetaClient.DobjStorageInfo
 
-	def getReport(fetchBaddiesFromRemote: Boolean): Future[Source[ReportScan, Future[ReportAcc]]] = uploader.meta.getDobjStorageInfos.map(_
+	def getReportOnLocal(fetchBaddiesFromRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
 		.mapAsync(2){dobjStInfo =>
-			val file = uploader.getFile(dobjStInfo.format, dobjStInfo.hash)
-
-			val problem: Option[String] = {
-				if(!file.exists) Some("file missing")
-				else if(file.length != dobjStInfo.size) Some(s"expected size ${dobjStInfo.size} got ${file.length}")
-				else None
-			}
+			val (file, problem) = localFileProblem(dobjStInfo)
 
 			problem.fold[Future[Report]](Future.successful(OkReport)){prob =>
 
 				if(fetchBaddiesFromRemote){
 					uploader.getRemoteStorageSource(dobjStInfo.format, dobjStInfo.hash)
-						.toMat(FileIO.toPath(file.toPath))(KeepFuture.right)
+						.toMat(FileIO.toPath(file))(KeepFuture.right)
 						.run()
 						.map{iores =>
 							val extraProblem: Option[String] = iores.status match{
@@ -51,13 +47,65 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 			}
 		}
 		.scan(new ReportAcc(0, None))(_ next _)
-		.alsoToMat(Sink.last)(Keep.right)
 		.mapConcat(_.reports)
 	)
+
+	def getReportOnRemote(uploadMissingToRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
+		.mapAsync(2){dobjStInfo =>
+			import dobjStInfo.{format, hash}
+			uploader.b2StageSourceExists(format, hash).flatMap{
+				case true =>
+					Future.successful(OkReport)
+				case false =>
+					val (file, localProb) = localFileProblem(dobjStInfo)
+					val prob = "file absent in B2STAGE" + localProb.fold("")("; " + _)
+
+					if(uploadMissingToRemote && localProb.isEmpty){
+						FileIO.fromPath(file)
+							.toMat(uploader.getB2StageSink(format, hash))(KeepFuture.right)
+							.run()
+							.map{remoteHash =>
+								if(remoteHash == hash) new ProblemReport(dobjStInfo, prob, true)
+								else {
+									val extraProb = s"; hashsum mismatch after upload attempt: expected $hash got $remoteHash"
+									new ProblemReport(dobjStInfo, prob + extraProb, false)
+								}
+							}
+							.recover{
+								case err: Throwable =>
+									new ProblemReport(dobjStInfo, prob + "; problem during upload attempt: " + err.getMessage, false)
+							}
+					}
+					else
+						Future.successful(new ProblemReport(dobjStInfo, prob, false))
+			}
+			.recover{
+				case err: Throwable =>
+					new ProblemReport(dobjStInfo, "problem checking presence on remote: " + err.getMessage, false)
+			}
+		}
+		.scan(new ReportAcc(0, None))(_ next _)
+		.mapConcat(_.reports)
+	)
+
+	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Option[String]) = {
+		import dobjStInfo.{format, hash, size}
+		val file = uploader.getFile(format, hash)
+
+		val problem: Option[String] = {
+			if(!file.exists) Some("file missing")
+			else if(file.length != size) Some(s"expected size $size got ${file.length}")
+			else None
+		}
+		(file.toPath, problem)
+	}
 
 }
 
 object IntegrityControlService{
+
+	type ReportSource = Future[Source[ReportScan, Any]]
+
 	sealed trait Report
 	object OkReport extends Report
 	sealed trait ReportScan{
