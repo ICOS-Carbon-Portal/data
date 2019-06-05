@@ -1,9 +1,7 @@
 'use strict';
 
 import gulp from 'gulp';
-import gp_uglify from 'gulp-uglify';
-import gp_replace from 'gulp-replace';
-import buffer from 'vinyl-buffer';
+// import gp_replace from 'gulp-replace';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf.js';
@@ -20,8 +18,9 @@ const paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	imagesSource: 'node_modules/leaflet/dist/**/*.png',
-	styleTargetDir: '../../resources/style/map-graph/',
-	target: '../../resources/',
+	styleTargetDir: './target/style/map-graph/',
+	target: './target/',
+	resources: '../../resources/',
 	bundleFile: project + '.js'
 };
 
@@ -29,20 +28,10 @@ const clean = _ => {
 	return del([paths.target + paths.bundleFile], {force: true});
 };
 
-const compileJs = _ =>  {
+const compileSrc = _ => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	let stream = buildConf.transformToBundle(isProduction, paths);
-
-	stream = isProduction
-		? stream
-			.pipe(buffer())
-			.pipe(gp_uglify())
-		: stream;
-
-	return stream
-		.pipe(gp_replace(replaceSearch, replacement))
-		.pipe(gulp.dest(paths.target));
+	return buildConf.transformToBundle(isProduction, paths, {replaceSearch, replacement});
 };
 
 const copyImages = _ => {
@@ -50,7 +39,7 @@ const copyImages = _ => {
 };
 
 
-gulp.task('build', gulp.series(clean, copyImages, compileJs));
+gulp.task('build', gulp.series(clean, copyImages, compileSrc));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 

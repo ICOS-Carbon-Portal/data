@@ -1,3 +1,5 @@
+import scala.sys.process.Process
+
 val defaultScala = "2.12.8"
 
 //watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
@@ -118,21 +120,26 @@ val watchSourcesChanges = Seq(
 			val resFolder = (Compile / resourceDirectory).value
 			val projBase = baseDirectory.value
 			watchSources.value.filterNot {src =>
-				src.base == resFolder || src.base == projBase
+				src.base == projBase
 			}
 		},
-		watchSources += {
-			val resFolder = (Compile / resourceDirectory).value
-			WatchSource(resFolder, AllPassFilter, compiledJsFilter(resFolder.toPath))
-		},
-	) ++ jsApps.map { app =>
-		watchSources += WatchSource((Compile / sourceDirectory).value / "js" / app / "main", AllPassFilter, intellijSaveTmpFilter)
-	}
+	)
 
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
+val portalBuild = taskKey[Unit]("Builds portal app (experimental)")
+
+val portalProc = settingKey[Option[Process]]("Watchify-enabled front-end build process")
+
+portalBuild := {
+	val procOpt = portalProc.value
+	println(procOpt)
+	portalProc := procOpt.filter(_.isAlive()).orElse {
+		println("Starting portal build!")
+		Some(Process("pwd && npm run build").run())
+	}
+}
 
 frontendBuild := {
-	import scala.sys.process.Process
 	import java.io.File
 	val log = streams.value.log
 
@@ -189,6 +196,7 @@ lazy val data = (project in file("."))
 
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
+		portalProc := None,
 
 		// Override the "assembly" command so that we always run "npm publish"
 		// first - thus generating javascript files - before we package the

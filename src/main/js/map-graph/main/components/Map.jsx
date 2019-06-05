@@ -32,6 +32,7 @@ export default class Map extends Component{
 		this.mapPointMouseOver = props.mapPointMouseOver;
 
 		this.colorMaker = undefined;
+		console.log("Hello there dfgsdfg");
 	}
 
 	componentDidMount(){
