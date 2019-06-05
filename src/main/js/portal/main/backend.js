@@ -188,6 +188,8 @@ export const getProfile = email => {
 };
 
 export const getExtendedDataObjInfo = dobjs => {
+	if (dobjs.length == 0) return Promise.resolve([]);
+
 	const query = queries.extendedDataObjectInfo(config, dobjs);
 
 	return sparql(query, config.sparqlEndpoint, true)
