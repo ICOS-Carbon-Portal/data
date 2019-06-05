@@ -11,7 +11,7 @@ where{
 		?spec cpmeta:hasDataTheme ?theme .
 		?theme rdfs:label ?themeLbl
 	}
-	FILTER EXISTS{[] cpmeta:hasObjectSpec ?spec}
+	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . filter not exists {[] cpmeta:isNextVersionOf ?dobj}}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .
 	?format rdfs:label ?formatLabel .
