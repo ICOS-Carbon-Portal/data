@@ -57,10 +57,6 @@ class Search extends Component {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
 
-	componentDidMount() {
-		window.scrollTo(0, 0);
-	}
-
 	componentWillUnmount(){
 		this.events.clear();
 	}

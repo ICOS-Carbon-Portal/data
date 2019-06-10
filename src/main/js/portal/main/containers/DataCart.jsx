@@ -12,10 +12,6 @@ class DataCart extends Component {
 		super(props);
 	}
 
-	componentDidMount() {
-		window.scrollTo(0, 0);
-	}
-
 	handlePreview(id){
 		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
 	}

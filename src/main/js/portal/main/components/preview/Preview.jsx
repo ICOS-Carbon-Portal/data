@@ -16,10 +16,6 @@ export default class Preview extends Component {
 		window.onmessage = event => this.handleIframeSrcChange(event);
 	}
 
-	componentDidMount() {
-		window.scrollTo(0, 0);
-	}
-
 	handleIframeSrcChange(event){
 		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
 		this.setState({iframeSrc});
