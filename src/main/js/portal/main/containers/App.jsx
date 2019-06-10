@@ -26,6 +26,12 @@ export class App extends Component {
 		this.props.updateRoute(previousRoute);
 	}
 
+	componentWillReceiveProps(nextProps) {
+		if (nextProps.route !== this.props.route) {
+			window.scrollTo(0, 0);
+		}
+	}
+
 	render(){
 		const props = this.props;
 
