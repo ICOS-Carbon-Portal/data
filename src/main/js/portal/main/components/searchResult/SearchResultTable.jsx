@@ -45,7 +45,8 @@ export default class SimpleDataObjectsTable extends Component{
 						<CheckAllBoxes
 							checkCount={props.checkedObjectsInSearch.length}
 							totalCount={paging.pageCount}
-							onChange={this.props.handleAllCheckboxesChange} />
+							onChange={this.props.handleAllCheckboxesChange}
+							disabled={props.objectsTable.filter(o => o.level > 0).length === 0} />
 
 						<Dropdown
 							isSorter={true}

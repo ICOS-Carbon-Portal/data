@@ -17,7 +17,7 @@ export default class CheckAllBoxes extends Component {
 				<CheckBtn
 					updateCheckedObjects={props.onChange}
 					isChecked={areAllChecked}
-					checkboxDisabled={""}
+					checkboxDisabled={props.disabled}
 					title={checkAllBoxesTitle}
 				/>
 			</div>
