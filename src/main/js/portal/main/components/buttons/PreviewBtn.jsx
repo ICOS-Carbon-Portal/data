@@ -30,16 +30,16 @@ export default class PreviewBtn extends Component{
 		if (!checkedObjects.length)
 			return [false, ""];
 
-		const specs = checkedObjects.map(obj => obj.spec);
+		const datasets = checkedObjects.map(obj => obj.dataset);
 		const previewTypes = checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec));
 
-		if (previewTypes.length !== specs.length)
+		if (previewTypes.length !== datasets.length)
 			throw new Error("Unexpected error in PreviewBtn:isPreviewEnabled");
 
 		if (previewTypes.includes(undefined))
 			return [false, "You have selected a data object that cannot be previewed"];
 
-		else if (!specs.every(spec => spec === specs[0]))
+		else if (!datasets.every(dataset => dataset === datasets[0]))
 			return [false, "Multiple previews are only available for data of same type"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))

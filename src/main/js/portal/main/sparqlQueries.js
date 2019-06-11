@@ -2,15 +2,14 @@ export const SPECCOL = 'spec';
 
 export function specBasics(config){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec (?spec as ?type) ?specLabel ?level ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel)
+select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel)
 where{
 	?spec cpmeta:hasDataLevel ?level .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	OPTIONAL{
-		?spec cpmeta:hasDataTheme ?theme .
-		?theme rdfs:label ?themeLbl
-	}
+	?spec cpmeta:hasDataTheme ?theme .
+	?theme rdfs:label ?themeLbl .
+	OPTIONAL{?spec cpmeta:containsDataset ?dataset}
 	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . filter not exists {[] cpmeta:isNextVersionOf ?dobj}}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .

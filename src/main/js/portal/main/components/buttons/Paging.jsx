@@ -28,7 +28,7 @@ export const PagingFooter = ({paging, requestStep}) => {
 
 	return (
 		<div className="panel-footer">
-			<div style={{textAlign: 'right'}}>
+			<div style={{textAlign: 'right', lineHeight: '1rem'}}>
 				<StepButton direction="backward" enabled={offset > 0} onStep={() => {window.scrollTo(0, 0);requestStep(-1)}} />
 				<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => {window.scrollTo(0, 0);requestStep(1)}} />
 			</div>

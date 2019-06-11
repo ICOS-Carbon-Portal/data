@@ -45,7 +45,8 @@ export default class PreviewTimeSerie extends Component {
 				if ((cur.id !== cur2.id) &&
 					(cur.station === cur2.station) &&
 					((cur.timeEnd < cur2.timeStart) ||
-					(cur.timeStart > cur2.timeEnd))) {
+					(cur.timeStart > cur2.timeEnd)) &&
+					(!cur.samplingHeight || cur.samplingHeight === cur2.samplingHeight)) {
 					return 'concatenate';
 				}
 				return acc2;
