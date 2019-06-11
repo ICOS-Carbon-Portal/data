@@ -11,9 +11,26 @@ export const Paging = ({paging, requestStep}) => {
 	return (
 		<div className="panel-heading">
 			<CountHeader objCount={objCount} isCountKnown={isCountKnown} to={to} offset={offset} />
-			<div style={{display: 'inline', float: 'right'}}>
+			<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 				<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)} />
 				<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => requestStep(1)} />
+			</div>
+		</div>
+	);
+};
+
+export const PagingFooter = ({paging, requestStep}) => {
+	const {offset, objCount, pageCount, isCountKnown} = paging;
+	const to = offset + pageCount;
+	const isForwardEnabled = isCountKnown
+		? to < objCount
+		: to <= objCount;
+
+	return (
+		<div className="panel-footer">
+			<div style={{textAlign: 'right'}}>
+				<StepButton direction="backward" enabled={offset > 0} onStep={() => {window.scrollTo(0, 0);requestStep(-1)}} />
+				<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => {window.scrollTo(0, 0);requestStep(1)}} />
 			</div>
 		</div>
 	);

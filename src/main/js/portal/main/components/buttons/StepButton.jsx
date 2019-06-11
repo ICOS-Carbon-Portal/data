@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const StepButton = props => {
-	const baseStyle = {display: 'inline', paddingLeft: 4, fontSize: '170%', position: 'relative', top: -6};
+	const baseStyle = {display: 'inline', paddingLeft: 4, fontSize: '150%'};
 	const style = props.enabled
 		? Object.assign(baseStyle, {cursor: 'pointer'})
 		: Object.assign(baseStyle, {opacity: 0.65});

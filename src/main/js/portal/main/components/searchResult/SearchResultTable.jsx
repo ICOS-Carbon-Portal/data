@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import SearchResultTableRow from './SearchResultTableRow.jsx';
 import Dropdown from '../controls/Dropdown.jsx';
-import {Paging} from '../buttons/Paging.jsx';
+import {Paging, PagingFooter} from '../buttons/Paging.jsx';
 import PreviewBtn from '../buttons/PreviewBtn.jsx';
 import CartBtn from '../buttons/CartBtn.jsx';
 import CheckAllBoxes from '../controls/CheckAllBoxes.jsx';
@@ -111,6 +111,10 @@ export default class SimpleDataObjectsTable extends Component{
 						}</tbody>
 					</table>
 				</div>
+				<PagingFooter
+					paging={paging}
+					requestStep={requestStep}
+				/>
 			</div>
 		);
 	}
