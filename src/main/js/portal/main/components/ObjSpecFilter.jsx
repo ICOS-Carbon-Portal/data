@@ -34,7 +34,7 @@ export default class ObjSpecFilter extends Component {
 		if (data[0]) {
 			typeof data[0].text === "string"
 				? data.sort((d1, d2) => d1.text.localeCompare(d2.text))
-				: data.sort((d1, d2) => d1.text > d2.text);
+				: data.sort((d1, d2) => d1.text - d2.text);
 		}
 
 		const placeholder = data.length === 1
