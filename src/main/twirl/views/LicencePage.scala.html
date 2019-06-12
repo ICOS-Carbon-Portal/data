@@ -9,7 +9,7 @@
 @template{
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
-	<style>@LicenceStyle(envri)</style>
+	<style>@LicenceStyle()</style>
 }{
 <div class="cp_page_container">
 
@@ -197,8 +197,8 @@
 
 	<div class="col-sm-6 col-md-4">
 		<div class="buttons inner">
-			<div class="button_box"><a target="_blank" href=@{licenceAcceptUri(dobjIds, fileName)}>YES</a></div>
-			<div class="button_box"><a href=@{licenceRejectUri(dobjIds)}>NO</a></div>
+			<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri(dobjIds, fileName)}>Yes, I accept</a>
+			<a class="btn btn-default btn-lg btn-licence" href=@{licenceRejectUri(dobjIds)}>No</a>
 		</div>
 	</div>
 }
