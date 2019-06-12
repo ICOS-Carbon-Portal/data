@@ -51,8 +51,9 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 	)
 
 	def getReportOnRemote(uploadMissingToRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
-		.mapAsync(2){dobjStInfo =>
+		.mapAsync(10){dobjStInfo =>
 			import dobjStInfo.{format, hash}
+
 			uploader.b2StageSourceExists(format, hash).flatMap{
 				case true =>
 					Future.successful(OkReport)
@@ -103,6 +104,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 }
 
 object IntegrityControlService{
+	val SuccessBunchSize = 500
 
 	type ReportSource = Future[Source[ReportScan, Any]]
 
@@ -123,7 +125,7 @@ object IntegrityControlService{
 
 	class ReportAcc(val successCount: Int, val problem: Option[ProblemReport]){
 
-		private val shouldResetSuccessCount: Boolean = problem.isDefined || successCount % 10000 == 0
+		private val shouldResetSuccessCount: Boolean = problem.isDefined || successCount % SuccessBunchSize == 0
 
 		def reports: Iterable[ReportScan] = {
 
