@@ -24,10 +24,12 @@ import se.lu.nateko.cp.data.api.B2StageClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.{Envri, EnvriConfigs}
 import java.net.URI
+import se.lu.nateko.cp.data.api.B2StageItem
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -57,8 +59,17 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 	def getRemoteStorageSource(format: URI, hash: Sha256Sum): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(format, hash))
 
-	def getB2StageSink(format: URI, hash: Sha256Sum): Sink[ByteString, Future[Sha256Sum]] =
-		b2.objectSink(B2StageUploadTask.irodsData(format, hash))
+	def getB2StageSink(format: URI, hash: Sha256Sum): Future[Sink[ByteString, Future[Sha256Sum]]] = {
+		val dataItem = B2StageUploadTask.irodsData(format, hash)
+		import dataItem.parent
+		val collExists: Future[Done] =
+			if(parent == B2StageItem.Root) done
+			else b2.exists(parent).flatMap{
+				case true => done
+				case false => b2.create(parent)
+			}
+		collExists.map(_ => b2.objectSink(dataItem))
+	}
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(

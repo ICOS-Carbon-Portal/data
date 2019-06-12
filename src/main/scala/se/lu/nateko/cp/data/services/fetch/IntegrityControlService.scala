@@ -51,7 +51,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 	)
 
 	def getReportOnRemote(uploadMissingToRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
-		.mapAsync(10){dobjStInfo =>
+		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 
 			uploader.b2StageSourceExists(format, hash).flatMap{
@@ -62,20 +62,22 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 					val prob = "file absent in B2STAGE" + localProb.fold("")("; " + _)
 
 					if(uploadMissingToRemote && localProb.isEmpty){
-						FileIO.fromPath(file)
-							.toMat(uploader.getB2StageSink(format, hash))(KeepFuture.right)
-							.run()
-							.map{remoteHash =>
-								if(remoteHash == hash) new ProblemReport(dobjStInfo, prob, true)
-								else {
-									val extraProb = s"; hashsum mismatch after upload attempt: expected $hash got $remoteHash"
-									new ProblemReport(dobjStInfo, prob + extraProb, false)
+						uploader.getB2StageSink(format, hash).flatMap{sink =>
+							FileIO.fromPath(file)
+								.toMat(sink)(KeepFuture.right)
+								.run()
+								.map{remoteHash =>
+									if(remoteHash == hash) new ProblemReport(dobjStInfo, prob, true)
+									else {
+										val extraProb = s"; hashsum mismatch after upload attempt: expected $hash got $remoteHash"
+										new ProblemReport(dobjStInfo, prob + extraProb, false)
+									}
 								}
-							}
-							.recover{
-								case err: Throwable =>
-									new ProblemReport(dobjStInfo, prob + "; problem during upload attempt: " + err.getMessage, false)
-							}
+						}
+						.recover{
+							case err: Throwable =>
+								new ProblemReport(dobjStInfo, prob + "; problem during upload attempt: " + err.getMessage, false)
+						}
 					}
 					else
 						Future.successful(new ProblemReport(dobjStInfo, prob, false))
