@@ -69,8 +69,8 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService)(implicit 
 		ZipEntryFlow.getMultiEntryZipStream(Source.fromGraph(sourcesSource))
 	}
 
-	private val licenceSource = StreamConverters.fromInputStream(
-		() => getClass.getClassLoader.getResourceAsStream("licence.pdf")
+	private def licenceSource(implicit envri: Envri) = StreamConverters.fromInputStream(
+		() => getClass.getClassLoader.getResourceAsStream(s"${envri}-licence.pdf")
 	)
 
 	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
