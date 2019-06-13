@@ -62,17 +62,8 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 					val prob = "file absent in B2STAGE" + localProb.fold("")("; " + _)
 
 					if(uploadMissingToRemote && localProb.isEmpty){
-						uploader.getB2StageSink(format, hash).flatMap{sink =>
-							FileIO.fromPath(file)
-								.toMat(sink)(KeepFuture.right)
-								.run()
-								.map{remoteHash =>
-									if(remoteHash == hash) new ProblemReport(dobjStInfo, prob, true)
-									else {
-										val extraProb = s"; hashsum mismatch after upload attempt: expected $hash got $remoteHash"
-										new ProblemReport(dobjStInfo, prob + extraProb, false)
-									}
-								}
+						uploader.uploadToB2Stage(format, hash, FileIO.fromPath(file)).map{_ =>
+							new ProblemReport(dobjStInfo, prob, true)
 						}
 						.recover{
 							case err: Throwable =>

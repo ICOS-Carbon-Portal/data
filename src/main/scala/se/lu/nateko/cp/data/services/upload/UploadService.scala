@@ -59,17 +59,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 	def getRemoteStorageSource(format: URI, hash: Sha256Sum): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(format, hash))
 
-	def getB2StageSink(format: URI, hash: Sha256Sum): Future[Sink[ByteString, Future[Sha256Sum]]] = {
-		val dataItem = B2StageUploadTask.irodsData(format, hash)
-		import dataItem.parent
-		val collExists: Future[Done] =
-			if(parent == B2StageItem.Root) done
-			else b2.exists(parent).flatMap{
-				case true => done
-				case false => b2.create(parent)
-			}
-		collExists.map(_ => b2.objectSink(dataItem))
-	}
+	def uploadToB2Stage(format: URI, hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
+		B2StageUploadTask(format, hash, b2).uploadObject(src)
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
@@ -202,7 +193,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-		new B2StageUploadTask(obj, b2) :+
+		B2StageUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =

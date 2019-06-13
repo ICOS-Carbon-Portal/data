@@ -1,11 +1,15 @@
 package se.lu.nateko.cp.data.api
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.headers.Accept
+import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
+import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 import scala.collection.immutable.Iterable
 import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
@@ -16,8 +20,6 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.csv.CsvParser
-import akka.NotUsed
-import akka.http.scaladsl.model.headers.Accept
 
 class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	import SparqlClient._
@@ -28,14 +30,24 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	private val acceptJson = Accept(MediaTypes.`application/json`, sparqlJson)
 	private val acceptCsv = Accept(MediaTypes.`text/csv`)
 
-	private def httpPost(entity: String, accept: Accept): Future[HttpResponse] = {
+	private def httpPost(entity: String, accept: Accept, longRunning: Boolean = false): Future[HttpResponse] = {
+		import ConnectionPoolSettings.default
+
+		val connPoolSettings: ConnectionPoolSettings = if(longRunning)
+			default
+				.withIdleTimeout(Duration.Inf)
+				.withResponseEntitySubscriptionTimeout(Duration.Inf)
+				.withUpdatedConnectionSettings(_.withIdleTimeout(Duration.Inf))
+		else default
+
 		Http().singleRequest(
 			HttpRequest(
 				method = HttpMethods.POST,
 				uri = url.toString,
 				headers = accept :: Nil,
 				entity = entity
-			)
+			),
+			settings = connPoolSettings
 		)
 	}
 
@@ -61,8 +73,9 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 		)
 	}
 
-	def streamedSelect(selectQuery: String): Future[Source[Binding, Any]] = httpPost(selectQuery, acceptCsv)
-		.map(_.entity.withoutSizeLimit.dataBytes.via(csvResParser))
+	def streamedSelect(selectQuery: String): Future[Source[Binding, Any]] =
+		httpPost(selectQuery, acceptCsv, longRunning = true)
+			.map(_.entity.withoutSizeLimit.dataBytes.via(csvResParser))
 
 	val csvResParser: Flow[ByteString, Binding, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary
 		.scan(CsvParser.seed)(CsvParser.default.parseLine)
