@@ -1,7 +1,6 @@
 'use strict';
 
 import gulp from 'gulp';
-// import gp_replace from 'gulp-replace';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf.js';
@@ -18,7 +17,7 @@ const paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	imagesSource: 'node_modules/leaflet/dist/**/*.png',
-	styleTargetDir: './target/style/map-graph/',
+	styleTargetDir: './target/style/' + project + '/',
 	target: './target/',
 	resources: '../../resources/',
 	bundleFile: project + '.js'

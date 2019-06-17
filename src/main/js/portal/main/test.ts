@@ -1,8 +1,17 @@
 interface IPerson {
 	firstName: string;
 	lastName: string;
+	email: string;
 }
 
-export const greeter = (person: IPerson) => {
-	return "Hello fgfgfg, " + person.firstName + " " + person.lastName;
+const person: IPerson = {
+	firstName: "John",
+	lastName: "Wick",
+	email: "j.w@badass.com"
 };
+
+export const greeter = (person: IPerson) => {
+	return "Hello there, " + person.firstName + " " + person.lastName;
+};
+
+greeter(person);

@@ -10,6 +10,7 @@ import {failWithError, setPreviewUrl, updateRoute, switchTab, setFilterTemporal,
 	updateCheckedObjectsInSearch, storeTsPreviewSetting, getResourceHelpInfo, setPreviewItem, setMetadataItem} from '../actions';
 import {addToCart, removeFromCart} from '../actions';
 import config from '../config';
+import Test from './Test';
 
 
 export class App extends Component {
@@ -37,6 +38,8 @@ export class App extends Component {
 					toasterData={props.toasterData}
 					maxWidth={400}
 				/>
+
+				<Test start="2" />
 
 				<div className="row page-header">
 					<Title

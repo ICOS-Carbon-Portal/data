@@ -1,4 +1,5 @@
 import scala.sys.process.Process
+import java.lang.{Process => JavaProcess, Runtime, ProcessBuilder}
 
 val defaultScala = "2.12.8"
 
@@ -64,80 +65,72 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 
-val frontend = inputKey[Unit]("Builds the frontend")
+val frontend = Command.args("frontend", "install | build <app>"){(state, args) =>
 
-frontend := Def.inputTaskDyn {
-	import scala.sys.process.Process
 	import java.io.File
-	val log = streams.value.log
+	val log = state.log
 
-	val args: Seq[String] = sbt.Def.spaceDelimited().parsed
+	def projectDirectory(app: String) = new File(s"src/main/js/$app/")
+
+	def stopAndStart(forApp: Option[String]) = {
+		val key = AttributeKey[JavaProcess]("frontendBuildProcess")
+		state.get(key).foreach{proc =>
+			if(proc.isAlive()) {
+				val pidField = proc.getClass.getDeclaredField("pid")
+				pidField.setAccessible(true)
+				val pid = pidField.getInt(proc)
+				log.info(s"Sending SIGTERM to the front end build process with PID $pid and waiting for it to finish")
+				proc.destroy()
+				proc.waitFor()
+			}
+			else log.info("The front end build process has already stopped")
+		}
+		forApp.fold(state.remove(key)){app =>
+			val pb = new ProcessBuilder("gulp", "build")
+			pb.directory(projectDirectory(app))
+			pb.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+			state.put(key, pb.start())
+		}
+	}
 
 	args.toList match {
 		case "install" :: app :: Nil if jsApps.contains(app) =>
 			log.info(s"Install $app")
-			val projectDirectory = new File(s"src/main/js/$app/")
-			val exitCode = Process("npm install", projectDirectory).!
+			val exitCode = Process("npm install", projectDirectory(app)).!
 			if (exitCode == 0) {
 				log.info("Finished npm install for " + app)
+				state
 			} else {
 				log.error(s"npm install for $app failed")
+				state.fail
 			}
-		case "build" :: app :: Nil if jsApps.contains(app) =>
-			log.info(s"Build $app")
-			val projectDirectory = new File(s"src/main/js/$app/")
-			val exitCode = Process("npm run build", projectDirectory).!
-			if (exitCode == 0) {
-				log.info("Finished front-end build for " + app)
-			} else {
-				log.error(s"Front-end build for $app failed")
-				log.error(s"Did you run 'frontend install $app'?")
-			}
-		case _ =>
-			log.error("Usage: frontend install/build <app>, where app is one of: " + jsApps.mkString(", "))
-	}
-	log.info("Copying resources folder contents to target")
-	copyResources in Compile
-}.evaluated
 
+		case "build" :: app :: Nil if jsApps.contains(app) =>
+			log.info(s"Start resident process building front-end app $app")
+			stopAndStart(Some(app))
+
+		case "stop" :: Nil =>
+			log.info(s"Stopping resident front-end building process (if any)")
+			stopAndStart(None)
+		case _ =>
+			log.error("Usage: frontend install <app> | build <app> | stop, where <app> is one of: " + jsApps.mkString(", "))
+			state.fail
+	}
+
+}
 
 val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard", "common")
 
-def compiledJsFilter(resourceFolder: java.nio.file.Path) = new SimpleFileFilter(file => {
-    val path = file.toPath
-	val isCompiledJs = jsApps.exists(nameBase => path.startsWith(resourceFolder) && file.getName.startsWith(nameBase + ".js"))
-    val isCompiledStyleFile = path.startsWith(resourceFolder.resolve("style"))
-	isCompiledJs || isCompiledStyleFile
-})
-
-val intellijSaveTmpFilter = new SimpleFileFilter(file => {
-    val fn = file.getName
-    fn.endsWith("___jb_tmp___") || fn.endsWith("___jb_old___")
-}) || HiddenFileFilter
-
 val watchSourcesChanges = Seq(
 		watchSources := {
-			val resFolder = (Compile / resourceDirectory).value
 			val projBase = baseDirectory.value
 			watchSources.value.filterNot {src =>
 				src.base == projBase
 			}
-		},
+		}
 	)
 
 val frontendBuild = taskKey[Unit]("Builds the front end apps")
-val portalBuild = taskKey[Unit]("Builds portal app (experimental)")
-
-val portalProc = settingKey[Option[Process]]("Watchify-enabled front-end build process")
-
-portalBuild := {
-	val procOpt = portalProc.value
-	println(procOpt)
-	portalProc := procOpt.filter(_.isAlive()).orElse {
-		println("Starting portal build!")
-		Some(Process("pwd && npm run build").run())
-	}
-}
 
 frontendBuild := {
 	import java.io.File
@@ -196,7 +189,8 @@ lazy val data = (project in file("."))
 
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
-		portalProc := None,
+
+		commands += frontend,
 
 		// Override the "assembly" command so that we always run "npm publish"
 		// first - thus generating javascript files - before we package the

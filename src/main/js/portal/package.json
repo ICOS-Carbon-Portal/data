@@ -5,12 +5,11 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp build",
+    "default": "./publish.sh",
+    "publish": "./publish.sh",
+    "build": "./build.sh",
     "test": "gulp test",
-    "gulp": "gulp",
-    "check-types": "tsc"
+    "gulp": "gulp"
   },
   "repository": {
     "type": "git",
@@ -35,24 +34,17 @@
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "babel": {
     "presets": [
-      "@babel/preset-env",
-      "@babel/typescript"
-    ],
-    "plugins": [
-      "@babel/proposal-class-properties",
-      "@babel/proposal-object-rest-spread"
+      "@babel/preset-env"
     ]
   },
   "devDependencies": {
+    "typescript": "^3.4.5",
     "@babel/cli": "^7.4.3",
     "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/preset-env": "^7.4.3",
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.0.0",
-    "@babel/preset-typescript": "^7.3.3",
     "@babel/register": "^7.4.4",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
@@ -62,11 +54,15 @@
     "gulp-babel": "^8.0.0",
     "gulp-clean-css": "^3.9.3",
     "gulp-jasmine": "^3.0.0",
+    "gulp-replace": "^1.0.0",
     "gulp-sass": "^3.1.0",
     "gulp-sass-variables": "^1.2.0",
+    "gulp-uglify": "^3.0.2",
+    "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.3.3",
     "babel-polyfill": "^6.26.0",
     "deep-equal": "^1.0.1",
     "icos-cp-backend": "^0.3.5",
@@ -82,6 +78,7 @@
     "react-widgets": "^4.4.11",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
+    "typescript": "^3.5.1",
     "whatwg-fetch": "^2.0.3"
   }
 }
