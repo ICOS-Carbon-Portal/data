@@ -13,18 +13,15 @@ const replacement = "url(/style/map-graph/images/";
 
 const paths = {
 	main: 'main/main.jsx',
-	jsx: 'main/**/*.jsx',
-	js: 'main/**/*.js',
+	src: 'main/**/*.js*',
 	commonjs: '../common/main/**/*.js*',
 	imagesSource: 'node_modules/leaflet/dist/**/*.png',
-	styleTargetDir: './target/style/' + project + '/',
-	target: './target/',
-	resources: '../../resources/',
+	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
 	bundleFile: project + '.js'
 };
 
 const clean = _ => {
-	return del([paths.target + paths.bundleFile], {force: true});
+	return del([buildConf.buildTarget + paths.bundleFile, paths.styleTargetDir], {force: true});
 };
 
 const compileSrc = _ => {
@@ -39,6 +36,8 @@ const copyImages = _ => {
 
 
 gulp.task('build', gulp.series(clean, copyImages, compileSrc));
+
+gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 
