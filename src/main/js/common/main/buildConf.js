@@ -43,10 +43,14 @@ const watch = (filesToWatch, buildTask) => {
 		});
 
 		watcher.on('add', path => {
+			if (path.endsWith("___jb_tmp___")) return;
+
 			console.log(`File ${path} was added`);
 		});
 
 		watcher.on('unlink', path => {
+			if (path.endsWith("___jb_tmp___")) return;
+
 			console.log(`File ${path} was removed`);
 		});
 	}
