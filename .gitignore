@@ -9,6 +9,7 @@ node_modules/
 package-lock.json
 src/main/resources/*.js
 /src/main/resources/style/*
+tsTarget/
 # ETC facade js is hand-written, not built, therefore is an exception
 !src/main/resources/etcfacade.js
 
