@@ -1,5 +1,5 @@
 import scala.sys.process.Process
-import java.lang.{Process => JavaProcess, Runtime, ProcessBuilder}
+import UnixProcessWithChildren.ExitHooksProcReplacementOpt
 
 val defaultScala = "2.12.8"
 
@@ -73,23 +73,22 @@ val frontend = Command.args("frontend", "install | build <app>"){(state, args) =
 	def projectDirectory(app: String) = new File(s"src/main/js/$app/")
 
 	def stopAndStart(forApp: Option[String]) = {
-		val key = AttributeKey[JavaProcess]("frontendBuildProcess")
+		val key = AttributeKey[UnixProcessWithChildren]("frontendBuildProcess")
 		state.get(key).foreach{proc =>
-			if(proc.isAlive()) {
-				val pidField = proc.getClass.getDeclaredField("pid")
-				pidField.setAccessible(true)
-				val pid = pidField.getInt(proc)
-				log.info(s"Sending SIGTERM to the front end build process with PID $pid and waiting for it to finish")
-				proc.destroy()
-				proc.waitFor()
+			if(proc.isAlive) {
+				log.info(s"Terminating the front end build process with PID ${proc.pid} (with children) and waiting for it to finish")
+				proc.killAndWaitFor()
 			}
 			else log.info("The front end build process has already stopped")
 		}
-		forApp.fold(state.remove(key)){app =>
-			val pb = new ProcessBuilder("gulp", "build")
-			pb.directory(projectDirectory(app))
-			pb.redirectOutput(ProcessBuilder.Redirect.INHERIT)
-			state.put(key, pb.start())
+		forApp.fold(state.remove(key).copy(exitHooks = state.exitHooks.dropProcessKilling)){app =>
+			val proc = UnixProcessWithChildren.run(projectDirectory(app), "bash", "-c", "./build.sh")
+
+			state
+				.put(key, proc)
+				.copy(
+					exitHooks = state.exitHooks.replaceProcToKill(proc.exitHook)
+				)
 		}
 	}
 
@@ -130,18 +129,18 @@ val watchSourcesChanges = Seq(
 		}
 	)
 
-val frontendBuild = taskKey[Unit]("Builds the front end apps")
+val frontendPublish = taskKey[Unit]("Builds the front end apps from scratch")
 
-frontendBuild := {
+frontendPublish := {
 	import java.io.File
 	val log = streams.value.log
 
-	log.info("Starting front-end build for common")
+	log.info("Starting front-end publish for common")
 	Process("npm install", new File("src/main/js/common/")).!
 
 	val errors: List[String] = new File("src/main/js/").listFiles.filter(_.getName != "common").par.map{pwd =>
 			val projName = pwd.getName
-		log.info("Starting front-end build for " + projName)
+		log.info("Starting front-end publish for " + projName)
 		val exitCode = (Process("npm install", pwd) #&& Process("npm run publish", pwd)).!
 
 		if(exitCode == 0) {
@@ -198,7 +197,7 @@ lazy val data = (project in file("."))
 		assembly := (Def.taskDyn{
 			val original = assembly.taskValue
 			// Referencing the task's 'value' field will trigger the npm command
-			frontendBuild.value
+			frontendPublish.value
 			// Then just return the original "assembly command"
 			Def.task(original.value)
 		}).value,
