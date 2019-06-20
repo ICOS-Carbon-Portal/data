@@ -1,6 +1,7 @@
 import {fetchStationMeasurement, fetchObjectSpecifications, fetchBinTable} from './backend';
 export const signals = {
 	ERROR: 'ERROR',
+	DISPLAY_ERROR: 'DISPLAY_ERROR',
 	INIT: 'INIT',
 	STATION_MEASUREMENTS: 'STATION_MEASUREMENTS',
 	BINTABLE: 'BINTABLE',
@@ -16,6 +17,12 @@ export const failWithError = dispatch => error => {
 	});
 };
 
+export const displayError = dispatch => error => {
+	dispatch({
+		type: signals.DISPLAY_ERROR,
+		error
+	});
+};
 
 export const init = searchParams => dispatch => {
 	const isValidRequest = searchParams.has('stationId') && searchParams.has('valueType') && searchParams.has('height');
@@ -53,8 +60,10 @@ const getObjectSpecifications = (measurements, valueType) => dispatch => {
 	fetchObjectSpecifications(objIds).then(objectSpecifications => {
 		objectSpecifications.forEach(objSpec => {
 			dispatch(getBinTable(valueType, objSpec));
-		});
-	});
+		})
+	},
+		displayError(dispatch)
+	);
 };
 
 const getBinTable = (yCol, objSpec) => dispatch => {

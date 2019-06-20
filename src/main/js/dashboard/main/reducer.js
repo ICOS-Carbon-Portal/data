@@ -3,7 +3,8 @@ import * as Toaster from 'icos-cp-toaster';
 import Stats from './models/Stats';
 
 const initState = {
-	stats: new Stats()
+	stats: new Stats(),
+	displayError: undefined
 };
 
 export default function(state = initState, action){
@@ -13,6 +14,11 @@ export default function(state = initState, action){
 		case signals.ERROR:
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
+			});
+
+		case signals.DISPLAY_ERROR:
+			return update({
+				displayError: action.error.message
 			});
 
 		case signals.INIT:

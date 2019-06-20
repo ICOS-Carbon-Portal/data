@@ -24,6 +24,7 @@ export default class Panel extends Component {
 		const duration = performance.now() - start;
 		console.log({props: this.props, duration, min, max, mean});
 		const header = getHeader(timePeriod, stationId, valueType, height, metadata.station, metadata.dataEnd);
+		const unit = valueType === "co2" ? "ppm" : "ppb";
 
 		return (
 			<div className="panel panel-default" style={style}>
@@ -35,7 +36,7 @@ export default class Panel extends Component {
 				<div className="panel-body" style={{padding: '5px 10px'}}>
 
 					<Row>
-						<span style={{fontSize:'16pt'}}>{`${round(mean)} ppm mean`}</span>
+						<span style={{fontSize:'16pt'}}>{`${round(mean)} ${unit} mean`}</span>
 					</Row>
 
 					<Row>
@@ -61,7 +62,7 @@ export default class Panel extends Component {
 					</Row>
 
 					<a href="https://www.icos-cp.eu/about-icos-data">
-						<img src="//static.icos-cp.eu/images/ICOS_ERIC_logo_rgb.svg" style={{height:40}} />
+						<img src="//static.icos-cp.eu/images/Icos_Logo_CMYK_Regular.svg" style={{height:40}} />
 					</a>
 
 				</div>

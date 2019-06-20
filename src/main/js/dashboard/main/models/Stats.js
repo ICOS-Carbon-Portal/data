@@ -15,6 +15,10 @@ export default class Stats {
 		return this._timePeriod;
 	}
 
+	get startStop(){
+		return getStartStop(this._timePeriod);
+	}
+
 	withParams(stationId, valueType, height){
 		return new Stats(this._timePeriod, {stationId, valueType, height}, this.metadata, this.datasets);
 	}
@@ -43,7 +47,42 @@ export default class Stats {
 	}
 }
 
-const getHours = (timePeriod) => {
+const getStartStop = timePeriod => {
+	const now = new Date();
+	const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+	switch (timePeriod) {
+		case 'day':
+			return {
+				start: yesterday,
+				stop: new Date(yesterday.getTime() + 24*60*60*1000)
+			};
+
+		case 'month':
+			return getMonth(today);
+
+		case 'year':
+			const lastMont = getMonth(today);
+			const start = new Date(lastMont.stop.getFullYear(), lastMont.stop.getMonth() - 12, 1)
+
+			return {
+				start,
+				stop: lastMont.stop
+			};
+	}
+};
+
+const getMonth = today => {
+	const monthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+	return {
+		start: monthStart,
+		stop: new Date(today.getFullYear(), today.getMonth(), 1)
+	};
+};
+
+const getHours = timePeriod => {
 	const dataEnd = new Date( Date.now() - 24*60*60*1000 );
 
 	switch (timePeriod) {
@@ -51,8 +90,8 @@ const getHours = (timePeriod) => {
 			return 24;
 
 		case 'month':
-			const monthStart = new Date(dataEnd.getFullYear(), dataEnd.getMonth());
-			// console.log({monthStart});
+			const monthStart = new Date(dataEnd.getFullYear(), dataEnd.getMonth() - 1);
+			console.log({dataEnd, monthStart});
 			return (dataEnd - monthStart) / 36e5;
 
 		case 'year':

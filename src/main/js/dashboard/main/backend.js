@@ -27,7 +27,7 @@ export const fetchObjectSpecifications = objIds => {
 	return sparql(query, config.sparqlEndpoint)
 		.then(sparqlResult => {
 			const bindings = sparqlResult.results.bindings;
-			return bindings
+			return bindings.length
 				? Promise.resolve(bindings.map(binding => {
 					return {
 						id: binding.dobj.value,

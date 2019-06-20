@@ -12,7 +12,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {stats, toasterData, failWithError, switchTimePeriod} = this.props;
+		const {toasterData, failWithError} = this.props;
 
 		return (
 			<div style={{marginTop: 10}}>
@@ -24,20 +24,27 @@ export class App extends Component {
 				/>
 
 				<ErrorBoundary failWithError={failWithError}>
-					{stats.isValidRequest
-						? <div className="container-fluid">
-							<Panels stats={stats} switchTimePeriod={switchTimePeriod} />
-						</div>
-						: <InvalidRequest />
-					}
-
+					<AppRoute {...this.props} />
 				</ErrorBoundary>
 			</div>
 		);
 	}
 }
 
+const AppRoute = props => {
+	const {displayError, stats, switchTimePeriod} = props;
+
+	if (displayError) return <DisplayError message={displayError} />;
+
+	return stats.isValidRequest
+		? <div className="container-fluid">
+			<Panels stats={stats} switchTimePeriod={switchTimePeriod} />
+		</div>
+		: <InvalidRequest />;
+};
+
 const Panels = ({stats, switchTimePeriod}) => {
+	console.log(stats.startStop);
 	return stats.datasets.map((dataset, idx) =>
 		<Panel
 			key={'p' + idx}
@@ -67,6 +74,14 @@ const InvalidRequest = _ => {
 					<a href="https://data.icos-cp.eu/dashboard/?stationId=GAT&valueType=co2&height=60">Example</a>
 				</div>
 			</div>
+		</div>
+	);
+};
+
+const DisplayError = ({message}) => {
+	return (
+		<div style={{display:'flex', height:'100%', alignItems:'center', justifyContent:'center', position:'absolute', width:'100%', flexDirection:'column'}}>
+			<p>{message}</p>
 		</div>
 	);
 };
