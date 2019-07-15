@@ -49,7 +49,10 @@ class IngestionUploadTask(
 				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)
 
 			case `asciiOtcSocatTimeSer` =>
-				defaultStandardSink(socat.SocatTsvStreams.socatTsvParser)
+				defaultStandardSink(otc.OtcCsvStreams.socatTsvParser)
+
+			case `asciiOtcProductCsv` =>
+				defaultStandardSink(otc.OtcCsvStreams.otcProductParser)
 
 			case `simpleSitesCsvTimeSer` =>
 				standardSink{nRows =>

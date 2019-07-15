@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.formats.socat
+package se.lu.nateko.cp.data.formats.otc
 
 import java.time._
 import java.time.format.DateTimeFormatter
@@ -7,22 +7,22 @@ import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.services.upload.IngestionUploadTask.RowParser
 import se.lu.nateko.cp.data.streams.geo.{GeoFeaturePointSink, Point}
 import se.lu.nateko.cp.meta.core.data._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object SocatTsvStreams {
+object OtcCsvStreams {
 
 	val LonColName = "Longitude"
 	val LatColName = "Latitude"
 
-	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = Flow[String]
+	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): RowParser = Flow[String]
 		.dropWhile(line => !line.contains("*/"))
 		.drop(1)
 		.map(_.trim.split('\t'))
-		.scan(TableRow(TableRowHeader(Array.empty[String], nRows), Array.empty[String])) {
+		.scan(TableRow.empty(nRows)) {
 			(row, cells) =>
 				if (row.header.columnNames.length == 0) {
 					TableRow(
@@ -30,14 +30,27 @@ object SocatTsvStreams {
 						format.timeStampColumn +: cells
 					)
 				} else {
-					TableRow(row.header, makeTimeStamp(cells(0)).toString +: cells)
+					TableRow(row.header, makeSocatTimeStamp(cells(0)).toString +: cells)
 				}
 		}
 		.drop(2)
-		.alsoToMat(socatUploadCompletionSink(format.colsMeta))(Keep.right)
+		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
+	def otcProductParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): RowParser = Flow[String]
+		.map(_.trim.split(','))
+		.scan(TableRow.empty(nRows)) {
+			(row, cells) =>
+				if (row.header.columnNames.length == 0) {
+					TableRow(
+						TableRowHeader(format.timeStampColumn +: cells.tail, nRows), //first column is the ISO UTC timestamp
+						cells
+					)
+				} else TableRow(row.header, cells)
+		}
+		.drop(2)
+		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
-	def socatUploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
+	def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
 
 		Flow.apply[TableRow]
 			.alsoToMat(
@@ -67,7 +80,7 @@ object SocatTsvStreams {
 		}.toMat(GeoFeaturePointSink.sink)(Keep.right)
 	}
 
-	private def makeTimeStamp(timestamp: String): Instant = {
+	private def makeSocatTimeStamp(timestamp: String): Instant = {
 		val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 		LocalDateTime.parse(timestamp, timestampFormatter).toInstant(ZoneOffset.UTC)
 	}

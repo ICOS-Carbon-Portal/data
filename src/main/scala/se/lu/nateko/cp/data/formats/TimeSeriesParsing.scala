@@ -7,3 +7,7 @@ trait ParsingAccumulator {
 
 case class TableRowHeader(columnNames: Array[String], nRows: Int)
 case class TableRow(header: TableRowHeader, cells: Array[String])
+
+object TableRow{
+	def empty(nRows: Int) = TableRow(TableRowHeader(Array.empty, nRows), Array.empty)
+}

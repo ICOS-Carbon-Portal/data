@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.test.formats.socat
+package se.lu.nateko.cp.data.test.formats.otc
 
 import java.io.File
 
@@ -8,15 +8,15 @@ import akka.stream.scaladsl._
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
-import se.lu.nateko.cp.data.formats.socat.SocatTsvStreams._
+import se.lu.nateko.cp.data.formats.otc.OtcCsvStreams._
 import se.lu.nateko.cp.data.streams.KeepFuture
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class SocatTsvStreamsTests extends FunSuite with BeforeAndAfterAll{
+class OtcCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
 
-	private implicit val system: ActorSystem = ActorSystem("socattsvstreamstest")
+	private implicit val system: ActorSystem = ActorSystem("otccsvstreamstest")
 	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
