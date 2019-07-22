@@ -12,7 +12,10 @@ export default {
 	NETCDF: 'NETCDF',
 	MAPGRAPH: 'MAPGRAPH',
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
-	mapGraphFormats: ['http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcSocatTimeSer'],
+	mapGraphFormats: [
+		'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcSocatTimeSer',
+		'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcProductCsv'
+	],
 	iFrameBaseUrl: {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
