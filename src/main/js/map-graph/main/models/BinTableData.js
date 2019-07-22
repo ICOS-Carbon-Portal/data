@@ -16,13 +16,13 @@ export default class BinTableData{
 				data: [],
 			};
 		}
-		const dateIdx = tableFormat.getColumnIndex(config.dateColName);
-		const latitudeIdx = tableFormat.getColumnIndex(config.latitudeColName);
-		const longitudeIdx = tableFormat.getColumnIndex(config.longitudeColName);
+		const specialColNames = [config.dateColName, config.latitudeColName, config.longitudeColName];
+		const [dateIdx, latitudeIdx, longitudeIdx] = specialColNames.map(i => tableFormat.getColumnIndex(i));
 		const dataIndices = tableFormat._columnsInfo.reduce((acc, curr, idx) => {
-			if (curr.name !== config.dateColName && curr.name !== config.latitudeColName && curr.name !== config.longitudeColName){
-				acc.push(idx);
-			}
+			if (
+				!specialColNames.includes(curr.name) &&
+				curr.valueFormat != config.flagColumnsFormat
+			) acc.push(idx);
 			return acc;
 		}, []);
 
