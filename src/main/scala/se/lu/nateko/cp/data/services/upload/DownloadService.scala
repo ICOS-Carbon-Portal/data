@@ -14,6 +14,7 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.ConfigReader
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
@@ -21,7 +22,7 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.StaticObject
-import akka.stream.scaladsl.StreamConverters
+import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
@@ -100,14 +101,16 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: Logg
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
-			val pid = dest.obj.pid.getOrElse("")
-			val landingPage = dest.obj.pid.fold(
-				//TODO Find a single place (across data and meta) for the 'formula' in the next line
-				envriConf.metaPrefix + "objects/" + dest.obj.hash.id
-			)(
-				pid => s"${coreConf.handleService}$pid"
-			)
-			s"$presense,${dest.fileName},$pid,$landingPage,$omissionReason\n"
+			val pidOpt = dest.obj.doi.orElse(dest.obj.pid)
+			val landingPage = pidOpt.fold(
+				staticObjLandingPage(dest.obj.hash)(envriConf).toString
+			){
+				pid =>
+				import coreConf.{handleProxies => prox}
+				val hdlProxy = if(dest.obj.doi.isDefined) prox.doi else prox.basic
+				hdlProxy + pid
+			}
+			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$omissionReason\n"
 		}
 		Source(lines.map(ByteString.apply))
 	}

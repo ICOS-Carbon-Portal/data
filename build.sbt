@@ -173,7 +173,7 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.4.2-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "meta-core"                          % "0.4.3-SNAPSHOT",
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.1-SNAPSHOT",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 
