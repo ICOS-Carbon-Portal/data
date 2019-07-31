@@ -2,9 +2,10 @@
 @import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 @import se.lu.nateko.cp.meta.core.data.Envri
 @import se.lu.nateko.cp.meta.core.data.Envri.Envri
+@import se.lu.nateko.cp.meta.core.HandleProxiesConfig
 @import se.lu.nateko.cp.data.routes.LicenceRouting._
 
-@(uid: Option[UserId], dobjIds: Seq[Sha256Sum], fileName: Option[String])(implicit envri: Envri)
+@(uid: Option[UserId], dobjIds: Seq[Sha256Sum], fileName: Option[String], handleProxies: HandleProxiesConfig)(implicit envri: Envri)
 
 @template{
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -124,7 +125,7 @@
 					</a>
 					<div id="collapse4" class="panel-collapse collapse">
 						<div class="panel-body">
-							<p>For most of the @name data we will provide you with the citation to use through the landing page of the data object, from this page you will always be able to download the data object again. The PID or DOI of the data object will always resolve to its&nbsp;landing page when you submit this to the handle system (http://hdl.handle.net/yourpidhandle or https://dx.doi.org/yourdoihandle).</p>
+							<p>For most of the @name data we will provide you with the citation to use through the landing page of the data object, from this page you will always be able to download the data object again. The PID or DOI of the data object will always resolve to its&nbsp;landing page when you submit this to the handle system (@{handleProxies.basic}yourpidhandle or @{handleProxies.doi}yourdoihandle).</p>
 
 							<p>You may also use or link to pictures from the @name websites or use visualisations if you add&nbsp;the link to the original and the text "@name RI, licensed under CC4BY" followed by the&nbsp;link to the original.&nbsp;</p>
 						</div>

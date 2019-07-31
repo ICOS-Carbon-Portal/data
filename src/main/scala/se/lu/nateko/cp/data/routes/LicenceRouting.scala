@@ -3,19 +3,20 @@ package se.lu.nateko.cp.data.routes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.StatusCodes
 import spray.json._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.Uri
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import se.lu.nateko.cp.meta.core.HandleProxiesConfig
 
 import scala.concurrent.Future
 import scala.util.Try
 
-class LicenceRouting(authRouting: AuthRouting)(implicit envriConfs: EnvriConfigs) {
+class LicenceRouting(authRouting: AuthRouting, handleProxies: HandleProxiesConfig)(implicit envriConfs: EnvriConfigs) {
 
 	import LicenceRouting._
 	import StaticRouting.pageMarshaller
@@ -42,9 +43,9 @@ class LicenceRouting(authRouting: AuthRouting)(implicit envriConfs: EnvriConfigs
 	private def dataLicence(dobjIds: Seq[Sha256Sum], fileName: Option[String]): Route = {
 		extractEnvri{implicit envri =>
 			user{uid =>
-				complete(views.html.LicencePage(Some(uid), dobjIds, fileName))
+				complete(views.html.LicencePage(Some(uid), dobjIds, fileName, handleProxies))
 			} ~
-				complete(views.html.LicencePage(None, dobjIds, fileName))
+				complete(views.html.LicencePage(None, dobjIds, fileName, handleProxies))
 		}
 	}
 }
