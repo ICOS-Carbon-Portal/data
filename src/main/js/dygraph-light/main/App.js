@@ -59,7 +59,7 @@ export default class App {
 				} else {
 					presentError(`Please choose a value for ${this.params.missingParams.join(', ')}.`);
 				}
-			}
+			};
 		} else {
 			if (params.isValidParams) {
 				this.main();
@@ -86,63 +86,63 @@ export default class App {
 		const legendLabels = params.has('legendLabels') ? params.get('legendLabels').split(',') : [];
 
 		return getTableFormatNrows(this.config, ids)
-		.then(
-			(objects) => {
-				const object = objects.find(object =>
-					isColNameValid(object.tableFormat, params.get('x')) &&
-					isColNameValid(object.tableFormat, params.get('y')));
-				if (!object) {
-					return fail(`Parameter x (${params.get('x')}) or parameter y (${params.get('y')}) does not exist in data`);
-				} else {
-					if (typeof this.graph === "undefined") {
-						const specList = Array.from(new Set(objects.map(o => o.specLabel))).join(' / ');
-						const title = `${specList} - ${params.get('y')}`;
-						this.initGraph(object.tableFormat, title);
-						this.tableFormat = object.tableFormat;
-						this.labels.push(getColInfoParam(object.tableFormat, params.get('x'), 'label'));
+			.then(
+				(objects) => {
+					const object = objects.find(object =>
+						isColNameValid(object.tableFormat, params.get('x')) &&
+						isColNameValid(object.tableFormat, params.get('y')));
+					if (!object) {
+						return fail(`Parameter x (${params.get('x')}) or parameter y (${params.get('y')}) does not exist in data`);
+					} else {
+						if (typeof this.graph === "undefined") {
+							const specList = Array.from(new Set(objects.map(o => o.specLabel))).join(' / ');
+							const title = `${specList} - ${params.get('y')}`;
+							this.initGraph(object.tableFormat, title);
+							this.tableFormat = object.tableFormat;
+							this.labels.push(getColInfoParam(object.tableFormat, params.get('x'), 'label'));
 
-						if (params.get('linking') === 'concatenate'){
-							this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
-								? params.get('legendLabels').split(',')[0]
-								: getLabel(object.tableFormat, params.get('y')));
-						} else {
-							objects.forEach((object, idx) => {
-								const filename = object.filename;
-								const yLabel = legendLabels.length > idx && legendLabels[idx].length > 0
-									? legendLabels[idx]
-									: filename.slice(0, filename.lastIndexOf('.'));
-								this.labels.push(yLabel);
-							})
+							if (params.get('linking') === 'concatenate'){
+								this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
+									? params.get('legendLabels').split(',')[0]
+									: getLabel(object.tableFormat, params.get('y')));
+							} else {
+								objects.forEach((object, idx) => {
+									const filename = object.filename;
+									const yLabel = legendLabels.length > idx && legendLabels[idx].length > 0
+										? legendLabels[idx]
+										: filename.slice(0, filename.lastIndexOf('.'));
+									this.labels.push(yLabel);
+								});
+							}
 						}
+
+						return objects;
 					}
-
-					return objects;
 				}
-			}
-		)
-		.then(
-			objects => {
-				return Promise.all(
-					objects.map(object => {
-						if(isColNameValid(object.tableFormat, params.get('y'))) {
-							return getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows)
-						} else {
-							return []
-						}
-					})
-				)
-			}
-		)
-		.then(binTables => {
-			if (binTables.length > 0) {
-				this.graph.updateOptions({ labels: this.labels });
-				this.drawGraph(binTables);
-			}
-		})
-		.catch(err => {
-			this.showSpinner(false);
-			presentError(err.message);
-		});
+			)
+			.then(
+				objects => {
+					return Promise.all(
+						objects.map(object => {
+							if(isColNameValid(object.tableFormat, params.get('y'))) {
+								return getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows);
+							} else {
+								return [];
+							}
+						})
+					);
+				}
+			)
+			.then(binTables => {
+				if (binTables.length > 0) {
+					this.graph.updateOptions({ labels: this.labels });
+					this.drawGraph(binTables);
+				}
+			})
+			.catch(err => {
+				this.showSpinner(false);
+				presentError(err.message);
+			});
 	}
 
 	initGraph(tableFormat, title){
@@ -205,8 +205,7 @@ export default class App {
 				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
 				return isTimestamp(valueFormatX)
 					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]))
-					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => subrow)
-				).sort((d1, d2) => d1[0] - d2[0]);
+					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => subrow)).sort((d1, d2) => d1[0] - d2[0]);
 			} else {
 				// Overlap
 				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0]));
@@ -256,7 +255,7 @@ export default class App {
 
 const getFormatters = (xlabel, valueFormatX) => {
 	const formatLbl = (val) => {
-		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`
+		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`;
 	};
 
 	const parseDatetime = (converter, format, func) => {
@@ -293,7 +292,7 @@ const getFormatters = (xlabel, valueFormatX) => {
 				default:
 					return fn(timeUnit);
 			}
-		}
+		};
 	};
 
 	switch (valueFormatX) {
@@ -359,5 +358,5 @@ const formatData = dataToSave => {
 				type: dataToSave.get('type')
 			}
 		}
-	}
+	};
 };

@@ -150,7 +150,7 @@ const Selector = props => {
 	const getTxt = option => {
 		return option.colTitle === option.valTypeLabel
 			? option.colTitle
-			: `${option.colTitle}—${option.valTypeLabel}`
+			: `${option.colTitle}—${option.valTypeLabel}`;
 	};
 
 	return (
@@ -178,5 +178,5 @@ const TimeSeries = props => {
 };
 
 const getLegendLabels = items => {
-	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight}` : '').join(',');
+	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight} m Level ${item.item.level}` : '').join(',');
 };
