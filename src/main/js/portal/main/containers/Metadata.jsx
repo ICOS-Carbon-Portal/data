@@ -87,7 +87,7 @@ export default class Metadata extends Component {
 										\u2013
 										${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
 										{metadata.specificInfo.acquisition.instrument &&
-											metadataRow("Instrument", <a href={metadata.specificInfo.acquisition.instrument}>{metadata.specificInfo.acquisition.instrument.split('/').pop()}</a>)
+											instrumentRow(metadata.specificInfo.acquisition.instrument)
 										}
 										{metadata.specificInfo.acquisition.samplingHeight &&
 											metadataRow("Sampling height", `${metadata.specificInfo.acquisition.samplingHeight} m`)
@@ -204,6 +204,21 @@ const doiLink = (doi) => {
 	);
 };
 
+const instrumentRow = (instruments) => {
+	return(
+		Array.isArray(instruments)
+			? metadataRow("Instruments", instruments.map((instrument, index) => {
+				return(
+					<span key={instrument}>
+						<a href={instrument}>{instrument.split('/').pop()}</a>
+						{index != instruments.length - 1 && ', '}
+					</span>
+				);
+			}))
+			: metadataRow("Instrument", <a href={instruments}>{instruments.split('/').pop()}</a>)
+	);
+};
+
 const metadataLinks = (id, fileName) => {
 	const json = `${id}/${fileName}.json`;
 	const xml = `${id}/${fileName}.xml`;
@@ -234,4 +249,4 @@ const cartState = (dataLevel, nextVersion) => {
 	} else {
 		return [true, ""];
 	}
-}
+};
