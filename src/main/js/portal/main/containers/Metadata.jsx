@@ -32,6 +32,10 @@ export default class Metadata extends Component {
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 		const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
+		const prevVersions = Array.isArray(metadata.previousVersion)
+			? metadata.previousVersion
+			: metadata.previousVersion ? [metadata.previousVersion] : [];
+		const self = this;
 
 		return (
 			<div>
@@ -102,12 +106,15 @@ export default class Metadata extends Component {
 									</React.Fragment>
 								}
 
-								{metadata.previousVersion &&
-									<React.Fragment>
-										{metadataRow("Previous version", <a onClick={this.handleViewMetadata.bind(this, metadata.previousVersion)} style={{cursor: 'pointer'}}>View previous version</a>)}
-										<br />
+								{prevVersions.map((previousVersion, i) =>
+									<React.Fragment key={"key_" + i}>
+										{metadataRow(
+											"Previous version",
+											<a onClick={self.handleViewMetadata.bind(self, previousVersion)} style={{cursor: 'pointer'}}>View previous version</a>
+										)}
 									</React.Fragment>
-								}
+								)}
+								{prevVersions.length > 0 && <br />}
 								{metadata.specificInfo.productionInfo &&
 									<React.Fragment>
 										{metadataRow("Made by", creatorLink(metadata.specificInfo.productionInfo.creator))}
