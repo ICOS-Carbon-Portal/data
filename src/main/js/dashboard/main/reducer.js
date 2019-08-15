@@ -1,4 +1,4 @@
-import {signals} from './actions';
+import {actionTypes} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import Stats from './models/Stats';
 
@@ -11,32 +11,32 @@ export default function(state = initState, action){
 
 	switch(action.type){
 
-		case signals.ERROR:
+		case actionTypes.ERROR:
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case signals.DISPLAY_ERROR:
+		case actionTypes.DISPLAY_ERROR:
 			return update({
 				displayError: action.error.message
 			});
 
-		case signals.INIT:
+		case actionTypes.INIT:
 			return update({
 				stats: state.stats.withParams(action.stationId, action.valueType, action.height)
 			});
 
-		case signals.STATION_MEASUREMENTS:
+		case actionTypes.STATION_MEASUREMENTS:
 			return update({
 				stats: state.stats.withMeasurements(action.measurements)
 			});
 
-		case signals.BINTABLE:
+		case actionTypes.BINTABLE:
 			return update({
 				stats: state.stats.withData(action)
 			});
 
-		case signals.SWITCH_TIMEPERIOD:
+		case actionTypes.SWITCH_TIMEPERIOD:
 			return update({
 				stats: state.stats.withTimePeriod(action.timePeriod)
 			});

@@ -35,26 +35,13 @@ const AppRoute = props => {
 	const {displayError, stats, switchTimePeriod} = props;
 
 	if (displayError) return <DisplayError message={displayError} />;
+	if (stats.error) return <DisplayError message={stats.error} />;
 
 	return stats.isValidRequest
 		? <div className="container-fluid">
-			<Panels stats={stats} switchTimePeriod={switchTimePeriod} />
+			<Panel stats={stats} switchTimePeriod={switchTimePeriod} />
 		</div>
 		: <InvalidRequest />;
-};
-
-const Panels = ({stats, switchTimePeriod}) => {
-	console.log(stats.startStop);
-	return stats.datasets.map((dataset, idx) =>
-		<Panel
-			key={'p' + idx}
-			dataset={dataset}
-			metadata={stats.metadata[idx]}
-			params={stats.params}
-			timePeriod={stats.timePeriod}
-			switchTimePeriod={switchTimePeriod}
-		/>
-	);
 };
 
 const InvalidRequest = _ => {

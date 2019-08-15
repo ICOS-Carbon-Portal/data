@@ -3,8 +3,8 @@ import * as queries from './sparqlQueries';
 import config from '../../common/main/config';
 
 
-export const fetchStationMeasurement = (stationId, valueType, height) => {
-	const query = queries.listStationMeasurement(config, stationId, valueType, height);
+export const fetchStationMeasurement = (stationId, valueType, dataLevel, height) => {
+	const query = queries.listStationMeasurement(config, stationId, valueType, dataLevel, height);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(sparqlResult => {
@@ -38,15 +38,18 @@ export const fetchObjectSpecifications = objIds => {
 						columnNames: binding.columnNames ? JSON.parse(binding.columnNames.value) : undefined,
 					}
 				}))
-				: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));
+				// Do not trigger exception. Treat this as a missing dataset
+				: Promise.resolve();
 			}
 		).then(objects => {
 			return {
 				objects,
-				tf: tableFormatForSpecies(objects[0].objSpec, config)
+				tf: objects === undefined ? undefined : tableFormatForSpecies(objects[0].objSpec, config)
 			};
 		})
 		.then(({objects, tf}) => {
+			if (tf === undefined) return;
+
 			return tf.then(tableFormat => {
 
 				objects.map(object => {
@@ -59,6 +62,10 @@ export const fetchObjectSpecifications = objIds => {
 };
 
 export const fetchBinTable = (yCol, objId, tableFormat, nRows) => {
-	const request = tableFormat.getRequest(objId, nRows, [tableFormat.getColumnIndex(yCol)]);
+	const idxTs = tableFormat.getColumnIndex('TIMESTAMP');
+	const idxQFlag = tableFormat.getColumnIndex('Flag');
+	const idxVal = tableFormat.getColumnIndex(yCol);
+	const request = tableFormat.getRequest(objId, nRows, [idxTs, idxVal, idxQFlag]);
+
 	return getBinaryTable(request, '/portal/tabular');
 };

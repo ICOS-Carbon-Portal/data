@@ -17,13 +17,13 @@ export default class Panel extends Component {
 	}
 
 	render(){
-		const {dataset, metadata, params, timePeriod} = this.props;
+		const {stats} = this.props;
+		if (!stats.isComplete) return null;
+
+		const {metadata, params, timePeriod, startStop} = stats;
 		const {stationId, valueType, height} = params;
-		const start = performance.now();
-		const {min, max, mean} = dataset.stats;
-		const duration = performance.now() - start;
-		console.log({props: this.props, duration, min, max, mean});
-		const header = getHeader(timePeriod, stationId, valueType, height, metadata.station, metadata.dataEnd);
+		const {min, max, mean} = stats.calculatedStats;
+		const header = getHeader(timePeriod, startStop, stationId, valueType, height, metadata[0].station);
 		const unit = valueType === "co2" ? "ppm" : "ppb";
 
 		return (
@@ -36,20 +36,24 @@ export default class Panel extends Component {
 				<div className="panel-body" style={{padding: '5px 10px'}}>
 
 					<Row>
-						<span style={{fontSize:'16pt'}}>{`${round(mean)} ${unit} mean`}</span>
+						<span>Sampled {getDateStr(timePeriod, startStop)}</span>
 					</Row>
 
 					<Row>
-						<span>{`${round(min)} min`}</span>
+						<span style={{fontSize:'16pt'}}>{`${mean.toFixed(1)} ${unit} mean`}</span>
+					</Row>
+
+					<Row>
+						<span>{`${Math.round(min)} min`}</span>
 						<span style={{float:'right'}}>
-							<a href={getPreviewLnk(metadata.dobj, valueType)} target="_blank">Preview</a>
+							<a href={getPreviewLnk(metadata, valueType)} target="_blank">Preview</a>
 						</span>
 					</Row>
 
 					<Row>
-						<span>{`${round(max)} max`}</span>
+						<span>{`${Math.round(max)} max`}</span>
 						<span style={{float:'right'}}>
-							<a href={getDownloadLnk(metadata.dobj, valueType)} target="_blank">Download</a>
+							<a href={getDownloadLnk(metadata, valueType)} target="_blank">Download</a>
 						</span>
 					</Row>
 
@@ -81,27 +85,30 @@ const Button = ({currTimePeriod, txt, onClick}) => {
 	return <button type="button" className={cls} style={{width:'33%'}} onClick={event}>{txt}</button>;
 };
 
-const getHeader = (timePeriod, stationId, valueType, height, station, dataEnd) => {
-	const dateStr = _ => {
-		switch(timePeriod){
-			case 'day':
-				return dataEnd.toISOString().split('T')[0];
+const getDateStr = (timePeriod, startStop) => {
+	const startTs = new Date(startStop.start);
+	const getMonthYearUTC = date => date.toUTCString().substring(8, 16);
 
-			case 'month':
-				const options = { year: 'numeric', month: 'short' };
-				return dataEnd.toLocaleDateString('en-EN', options);
+	switch(timePeriod){
+		case 'day':
+			return startTs.toISOString().split('T')[0];
 
-			case 'year':
-				return dataEnd.getFullYear();
-		}
-	};
+		case 'month':
+			const options = { year: 'numeric', month: 'long' };
+			return startTs.toLocaleDateString('en-EN', options);
 
+		case 'year':
+			const stopTs = new Date(startStop.stop);
+			return `${getMonthYearUTC(startTs)} to ${getMonthYearUTC(stopTs)}`
+	}
+};
+
+const getHeader = (timePeriod, startStop, stationId, valueType, height, station) => {
 	return (
 		<Fragment>
 			<a href={station} target="_blank" style={{color:'#337ab7'}}>{stationId}</a>
-			<span style={{marginLeft: 10}}>{height}m</span>
-			<span style={{marginLeft: 10}}>{valueType}</span>
-			<span style={{marginLeft: 10, float:'right'}}>{dateStr()}</span>
+			<span style={{marginLeft: 20}} title="Measurement height">{height}m</span>
+			<span style={{marginLeft: 20}} title="Measured type">{valueType}</span>
 		</Fragment>);
 };
 
@@ -109,14 +116,16 @@ const Row = ({children}) => {
 	return <div style={{marginBottom: 5}}>{children}</div>;
 };
 
-const round = val => Math.round(val);
+const getPreviewLnk = (metadata, valueType) => {
+	const ids = metadata.map(md => md.dobj.split('/').pop()).join(',');
 
-const getPreviewLnk = (dobj, valueType) => {
-	const id = dobj.split('/').pop();
-
-	return `https://data.icos-cp.eu/dygraph-light/?objId=${id}&x=TIMESTAMP&type=line&linking=overlap&y=${valueType}`;
+	return `https://data.icos-cp.eu/dygraph-light/?objId=${ids}&x=TIMESTAMP&type=point&linking=overlap&y=${valueType}`;
 };
 
-const getDownloadLnk = dobj => {
-	return dobj.replace('/meta.', '/data.');
+const getDownloadLnk = metadata => {
+	const dobjIds = metadata.map(md => md.dobj.split('/').pop() + '');
+	const ids = encodeURIComponent(JSON.stringify(dobjIds));
+	const fileName = encodeURIComponent('Near realtime data');
+
+	return `https://data.icos-cp.eu/objects?ids=${ids}&fileName=${fileName}`;
 };
