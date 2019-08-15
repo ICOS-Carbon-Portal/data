@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import Panel from '../components/Panel.jsx';
+import {switchTimePeriod} from '../actions';
 
 
 export class App extends Component {
@@ -11,7 +12,7 @@ export class App extends Component {
 	}
 
 	render(){
-		const {stats, toasterData, failWithError} = this.props;
+		const {toasterData, failWithError} = this.props;
 
 		return (
 			<div style={{marginTop: 10}}>
@@ -23,22 +24,24 @@ export class App extends Component {
 				/>
 
 				<ErrorBoundary failWithError={failWithError}>
-					{stats.isValidRequest
-						? <div className="container-fluid">
-							<Panels stats={stats} />
-						</div>
-						: <InvalidRequest />
-					}
-
+					<AppRoute {...this.props} />
 				</ErrorBoundary>
 			</div>
 		);
 	}
 }
 
-const Panels = ({stats}) => {
-	return stats.datasets.map((dataset, idx) =>
-		<Panel key={'p' + idx} dataset={dataset} metadata={stats.metadata[idx]} params={stats.params} />);
+const AppRoute = props => {
+	const {displayError, stats, switchTimePeriod} = props;
+
+	if (displayError) return <DisplayError message={displayError} />;
+	if (stats.error) return <DisplayError message={stats.error} />;
+
+	return stats.isValidRequest
+		? <div className="container-fluid">
+			<Panel stats={stats} switchTimePeriod={switchTimePeriod} />
+		</div>
+		: <InvalidRequest />;
 };
 
 const InvalidRequest = _ => {
@@ -62,12 +65,22 @@ const InvalidRequest = _ => {
 	);
 };
 
+const DisplayError = ({message}) => {
+	return (
+		<div style={{display:'flex', height:'100%', alignItems:'center', justifyContent:'center', position:'absolute', width:'100%', flexDirection:'column'}}>
+			<p>{message}</p>
+		</div>
+	);
+};
+
 function stateToProps(state){
 	return state
 }
 
 function dispatchToProps(dispatch){
-	return {};
+	return {
+		switchTimePeriod: timePeriod => dispatch(switchTimePeriod(timePeriod))
+	};
 }
 
 export default connect(stateToProps, dispatchToProps)(App);
