@@ -4,7 +4,7 @@ import Stats from './models/Stats';
 
 const initState = {
 	stats: new Stats(),
-	displayError: undefined
+	displayMsg: undefined
 };
 
 export default function(state = initState, action){
@@ -16,9 +16,9 @@ export default function(state = initState, action){
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case actionTypes.DISPLAY_ERROR:
+		case actionTypes.DISPLAY_MSG:
 			return update({
-				displayError: action.error.message
+				displayMsg: action.error.message.split('\n')[0]
 			});
 
 		case actionTypes.INIT:

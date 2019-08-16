@@ -32,10 +32,10 @@ export class App extends Component {
 }
 
 const AppRoute = props => {
-	const {displayError, stats, switchTimePeriod} = props;
+	const {displayMsg, stats, switchTimePeriod} = props;
 
-	if (displayError) return <DisplayError message={displayError} />;
-	if (stats.error) return <DisplayError message={stats.error} />;
+	if (displayMsg) return <DisplayMsg message={displayMsg} />;
+	if (stats.error) return <DisplayMsg message={stats.error} />;
 
 	return stats.isValidRequest
 		? <div className="container-fluid">
@@ -65,7 +65,7 @@ const InvalidRequest = _ => {
 	);
 };
 
-const DisplayError = ({message}) => {
+const DisplayMsg = ({message}) => {
 	return (
 		<div style={{display:'flex', height:'100%', alignItems:'center', justifyContent:'center', position:'absolute', width:'100%', flexDirection:'column'}}>
 			<p>{message}</p>

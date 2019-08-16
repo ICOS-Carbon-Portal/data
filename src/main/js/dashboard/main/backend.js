@@ -51,7 +51,6 @@ export const fetchObjectSpecifications = objIds => {
 			if (tf === undefined) return;
 
 			return tf.then(tableFormat => {
-
 				objects.map(object => {
 					object.tableFormat = object.columnNames ? tableFormat.withColumnNames(object.columnNames) : tableFormat
 				});
@@ -61,11 +60,6 @@ export const fetchObjectSpecifications = objIds => {
 		});
 };
 
-export const fetchBinTable = (yCol, objId, tableFormat, nRows) => {
-	const idxTs = tableFormat.getColumnIndex('TIMESTAMP');
-	const idxQFlag = tableFormat.getColumnIndex('Flag');
-	const idxVal = tableFormat.getColumnIndex(yCol);
-	const request = tableFormat.getRequest(objId, nRows, [idxTs, idxVal, idxQFlag]);
-
+export const fetchBinTable = request => {
 	return getBinaryTable(request, '/portal/tabular');
 };

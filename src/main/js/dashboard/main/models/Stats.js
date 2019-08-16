@@ -1,5 +1,14 @@
+import config from '../config';
+
+const colIdxs = config.columnIndexes;
+const emptyMetadata = {
+	station: undefined,
+	unit: undefined,
+	dobjs: []
+};
+
 export default class Stats {
-	constructor(timePeriod, params = {}, metadata = [], datasets = [], firstTimestamp, lastTimestamp){
+	constructor(timePeriod, params = {}, metadata = emptyMetadata, datasets = [], firstTimestamp, lastTimestamp){
 		this._timePeriod = timePeriod || 'day'; // day | month | year
 		this.params = params;
 		this.metadata = metadata;
@@ -73,63 +82,64 @@ export default class Stats {
 		const getRows = dataset => {
 			if (dataset.binTable === undefined) return [];
 
+			const columnIndices = Array.from({length: dataset.binTable.nCols}, (_, i) => i);
 			return dataset.binTable
-				.values([0, 1, 2], v => v)
+				.values(columnIndices, v => v)
 				.filter(row =>
-					!isNaN(row[1])
-					&& row[0] >= startStop.start && row[0] <= startStop.stop
-					&& (dataset.dataLevel === 1 && row[2] === 'U' || dataset.dataLevel === 2 && row[2] === 'O')
+					!isNaN(row[colIdxs.val])
+					&& row[colIdxs.ts] >= startStop.start && row[colIdxs.ts] <= startStop.stop
+					&& (dataset.dataLevel === 1 && row[colIdxs.flag] === 'U' || dataset.dataLevel === 2 && row[colIdxs.flag] === 'O')
 				);
 		};
 		const lvl1Rows = getRows(this.datasets.find(ds => ds.dataLevel === 1));
 		const lvl2Rows = getRows(this.datasets.find(ds => ds.dataLevel === 2));
 
-		let values = [];
 		let idx = 0;
 		let idx1 = 0;
 		let idx2 = 0;
-
-		// Merge values from two binTables and give priority to dataLevel 2
-		while (idx < (lvl1Rows.length + lvl2Rows.length)){
-			const ts1 = lvl1Rows[idx1] ? lvl1Rows[idx1][0] : Infinity;
-			const ts2 = lvl2Rows[idx2] ? lvl2Rows[idx2][0] : Infinity;
-
-			if (ts1 === ts2 && ts2 !== Infinity){
-				values[idx] = lvl2Rows[idx2][1];
-				idx1++;
-				idx2++;
-			} else if (ts1 < ts2 && ts1 !== Infinity){
-				values[idx] = lvl1Rows[idx1][1];
-				idx1++;
-			} else if (ts1 > ts2 && ts2 !== Infinity) {
-				values[idx] = lvl2Rows[idx2][1];
-				idx2++;
-			}
-
-			idx++;
-		}
 
 		let valCount = 0;
 		let min = Infinity;
 		let max = - Infinity;
 		let sum = 0;
 
-		values.forEach(v => {
-			min = Math.min(min, v);
-			max = Math.max(max, v);
-			sum += v;
-			valCount++;
-		});
+		// Merge values from two binTables and give priority to dataLevel 2
+		while (idx < (lvl1Rows.length + lvl2Rows.length)){
+			const ts1 = lvl1Rows[idx1] ? lvl1Rows[idx1][colIdxs.ts] : Infinity;
+			const ts2 = lvl2Rows[idx2] ? lvl2Rows[idx2][colIdxs.ts] : Infinity;
+			let currVal = undefined;
+
+			if (ts1 === ts2 && ts2 !== Infinity){
+				currVal = lvl2Rows[idx2][colIdxs.val];
+				idx1++;
+				idx2++;
+			} else if (ts1 < ts2 && ts1 !== Infinity){
+				currVal = lvl1Rows[idx1][colIdxs.val];
+				idx1++;
+			} else if (ts1 > ts2 && ts2 !== Infinity) {
+				currVal = lvl2Rows[idx2][colIdxs.val];
+				idx2++;
+			}
+
+			idx++;
+
+			if (currVal !== undefined){
+				min = Math.min(min, currVal);
+				max = Math.max(max, currVal);
+				sum += currVal;
+				valCount++;
+			}
+		}
 
 		return {min, max, mean: (sum / valCount)};
 	}
 
 	get isComplete(){
-		return this.metadata.length > 0 && this.startStop !== undefined && this.datasets.length === 2;
+		return this.metadata.dobjs.length > 0 && this.startStop !== undefined && this.datasets.length === 2;
 	}
 
 	get error(){
-		if (this.datasets.length === 2 && this.metadata.length === 0) {
+		if (this.datasets.length === 2 && this.metadata.dobjs.length === 0) {
 			return 'No data could be found. Check URL.';
 		}
 	}
@@ -139,25 +149,20 @@ export default class Stats {
 	}
 
 	withMeasurements(measurements){
-		return new Stats(this._timePeriod, this.params, this.metadata.concat(measurements), this.datasets, this.firstTimestamp, this.lastTimestamp);
+		const metadata = measurements.length
+			? Object.assign({}, this.metadata, {station: measurements[0].station})
+			: this.metadata;
+
+		return new Stats(this._timePeriod, this.params, metadata, this.datasets, this.firstTimestamp, this.lastTimestamp);
 	}
 
 	withTimePeriod(timePeriod){
 		return new Stats(timePeriod, this.params, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp);
 	}
 
-	withData({dataLevel, binTable, objSpec}){
+	withData({yCol, dataLevel, binTable, objSpec}){
 		const dataset = new Dataset(dataLevel, binTable, objSpec);
-		const metadata = this.metadata.map(meta => {
-			if (objSpec === undefined) return meta;
-
-			return meta.dobj === objSpec.id
-				? Object.assign(meta, {
-					filename: objSpec.filename,
-					specLabel: objSpec.specLabel,
-				})
-				: meta;
-		});
+		const metadata = getMetadata(objSpec, this.metadata, yCol);
 		const datasets = this.datasets.concat([dataset]);
 		const firstTimestamp = datasets.reduce((ts, ds) => Math.min(ts, ds.firstTimestamp), Date.now());
 		const lastTimestamp = datasets.reduce((ts, ds) => Math.max(ts, ds.lastTimestamp), 0);
@@ -165,6 +170,16 @@ export default class Stats {
 		return new Stats(this._timePeriod, this.params, metadata, datasets, firstTimestamp, lastTimestamp);
 	}
 }
+
+const getMetadata = (objSpec, metadata, yCol) => {
+	if (objSpec === undefined) return metadata;
+
+	const dobjs = metadata.dobjs.concat([objSpec.id]);
+	const unitIdx = objSpec.tableFormat.getColumnIndex(yCol);
+	const unit = objSpec.tableFormat.columns(unitIdx).unit;
+
+	return Object.assign({}, metadata, {dobjs, unit});
+};
 
 class Dataset {
 	constructor(dataLevel, binTable, objSpec){
@@ -174,10 +189,10 @@ class Dataset {
 	}
 
 	get firstTimestamp(){
-		return this.binTable === undefined ? Infinity : this.binTable.row(0)[0];
+		return this.binTable === undefined ? Infinity : this.binTable.row(0)[colIdxs.ts];
 	}
 
 	get lastTimestamp(){
-		return this.binTable === undefined ? -Infinity : this.binTable.row(this.nRows - 1)[0];
+		return this.binTable === undefined ? -Infinity : this.binTable.row(this.nRows - 1)[colIdxs.ts];
 	}
 }

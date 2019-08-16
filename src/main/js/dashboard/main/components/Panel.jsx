@@ -23,8 +23,8 @@ export default class Panel extends Component {
 		const {metadata, params, timePeriod, startStop} = stats;
 		const {stationId, valueType, height} = params;
 		const {min, max, mean} = stats.calculatedStats;
-		const header = getHeader(timePeriod, startStop, stationId, valueType, height, metadata[0].station);
-		const unit = valueType === "co2" ? "ppm" : "ppb";
+		const header = getHeader(timePeriod, startStop, stationId, valueType, height, metadata.station);
+		const unit = formatUnit(metadata.unit);
 
 		return (
 			<div className="panel panel-default" style={style}>
@@ -117,15 +117,28 @@ const Row = ({children}) => {
 };
 
 const getPreviewLnk = (metadata, valueType) => {
-	const ids = metadata.map(md => md.dobj.split('/').pop()).join(',');
+	const ids = metadata.dobjs.map(dobj => dobj.split('/').pop()).join(',');
 
 	return `https://data.icos-cp.eu/dygraph-light/?objId=${ids}&x=TIMESTAMP&type=point&linking=overlap&y=${valueType}`;
 };
 
 const getDownloadLnk = metadata => {
-	const dobjIds = metadata.map(md => md.dobj.split('/').pop() + '');
+	const dobjIds = metadata.dobjs.map(dobj => dobj.split('/').pop() + '');
 	const ids = encodeURIComponent(JSON.stringify(dobjIds));
 	const fileName = encodeURIComponent('Near realtime data');
 
 	return `https://data.icos-cp.eu/objects?ids=${ids}&fileName=${fileName}`;
+};
+
+const formatUnit = unit => {
+	switch (unit){
+		case 'µmol mol-1':
+			return 'ppm';
+
+		case 'nmol mol-1':
+			return 'ppb';
+
+		default:
+			return unit;
+	}
 };

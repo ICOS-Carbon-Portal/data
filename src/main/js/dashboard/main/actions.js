@@ -1,7 +1,8 @@
 import {fetchStationMeasurement, fetchObjectSpecifications, fetchBinTable} from './backend';
+import config from './config';
 export const actionTypes = {
 	ERROR: 'ERROR',
-	DISPLAY_ERROR: 'DISPLAY_ERROR',
+	DISPLAY_MSG: 'DISPLAY_MSG',
 	INIT: 'INIT',
 	STATION_MEASUREMENTS: 'STATION_MEASUREMENTS',
 	BINTABLE: 'BINTABLE',
@@ -17,9 +18,9 @@ export const failWithError = dispatch => error => {
 	});
 };
 
-export const displayError = dispatch => error => {
+export const displayMsg = dispatch => error => {
 	dispatch({
-		type: actionTypes.DISPLAY_ERROR,
+		type: actionTypes.DISPLAY_MSG,
 		error
 	});
 };
@@ -72,21 +73,28 @@ const getObjectSpecifications = (measurements, dataLevel, valueType) => dispatch
 			})
 		}
 	},
-		displayError(dispatch)
+		displayMsg(dispatch)
 	);
 };
 
 const getBinTable = (dataLevel, yCol, objSpec) => dispatch => {
 	const {id, tableFormat, nRows} = objSpec;
+	const columnIndexes = config.columnsToFetch.concat([yCol]).map(colName =>
+		tableFormat.getColumnIndex(colName)
+	);
+	const request = tableFormat.getRequest(id, nRows, columnIndexes);
 
-	fetchBinTable(yCol, id, tableFormat, nRows).then(binTable => {
+	fetchBinTable(request).then(binTable => {
 		dispatch({
 			type: actionTypes.BINTABLE,
+			yCol,
 			dataLevel,
 			objSpec,
 			binTable
 		});
-	});
+	},
+		displayMsg(dispatch)
+	);
 };
 
 export const switchTimePeriod = timePeriod => dispatch => {
