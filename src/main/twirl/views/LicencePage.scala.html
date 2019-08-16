@@ -1,11 +1,9 @@
-@import se.lu.nateko.cp.cpauth.core.UserId
+@import akka.http.scaladsl.model.Uri
 @import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 @import se.lu.nateko.cp.meta.core.data.Envri
-@import se.lu.nateko.cp.meta.core.data.Envri.Envri
 @import se.lu.nateko.cp.meta.core.HandleProxiesConfig
-@import se.lu.nateko.cp.data.routes.LicenceRouting._
 
-@(uid: Option[UserId], dobjIds: Seq[Sha256Sum], fileName: Option[String], handleProxies: HandleProxiesConfig)(implicit envri: Envri)
+@(acceptUri: Option[Uri], loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri.Envri)
 
 @template{
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -181,11 +179,12 @@
 		</div>
 	</div>
 
-@if(!dobjIds.isEmpty){
-	@if(uid.isEmpty && envri == Envri.ICOS){
+@for(licenceAcceptUri <- acceptUri){
+
+	@for(userLoginUri <- loginUri){
 		<div class="col-sm-12 col-md-6 col-md-offset-3">
 			<div class="link_box inner">
-				<a href="https://cpauth.icos-cp.eu/" target="_blank"><h5>Log in to accept permanently</h5></a>
+				<a href=@{userLoginUri} target="_blank"><h5>Log in to accept permanently</h5></a>
 			</div>
 		</div>
 	}
@@ -198,8 +197,8 @@
 
 	<div class="col-sm-6 col-md-4">
 		<div class="buttons inner">
-			<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri(dobjIds, fileName)}>Yes, I accept</a>
-			<a class="btn btn-default btn-lg btn-licence" href=@{licenceRejectUri(dobjIds)}>No</a>
+			<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+			<a class="btn btn-default btn-lg btn-licence" href="javascript:window.close();">No</a>
 		</div>
 	</div>
 }

@@ -12,18 +12,16 @@ import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.stream.ActorMaterializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.StaticObject
-import se.lu.nateko.cp.meta.core.data.DataObjectSpec
-import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
-import se.lu.nateko.cp.meta.core.data.UploadCompletionInfo
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
@@ -64,10 +62,16 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	private def hostOpt(implicit envri: Envri): Option[String] =
 		envriConfs.get(envri).map(_.metaPrefix.getHost)
 
-	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[StaticObject] = {
-		val url = baseUrl + "objects/" + hash.id
+	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[StaticObject] =
+		lookupItem[StaticObject](hash, objectPathPrefix)
+
+	def lookupCollection(hash: Sha256Sum)(implicit envri: Envri): Future[StaticCollection] =
+		lookupItem[StaticCollection](hash, collectionPathPrefix)
+
+	private def lookupItem[T](hash: Sha256Sum, pathPrefix: String)(implicit envri: Envri, unm: FromEntityUnmarshaller[T]): Future[T] = {
+		val url = baseUrl + pathPrefix + hash.id
 		get(url, hostOpt).flatMap(
-			extractResult(Unmarshal(_).to[StaticObject]){
+			extractResult(Unmarshal(_).to[T]){
 				case StatusCodes.NotFound => new MetadataObjectNotFound(hash)
 			}
 		)
