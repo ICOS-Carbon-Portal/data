@@ -37,6 +37,8 @@ class DataCart extends Component {
 		const downloadTitle = props.user.email && props.user.icosLicenceOk
 			? 'Download cart content'
 			: 'Accept license and download cart content';
+		const fileName = props.cart.name;
+		const hashes = props.cart.pids.join('|');
 
 		return (
 			<div>
@@ -59,9 +61,16 @@ class DataCart extends Component {
 									{downloadTitle}
 								</div>
 								<div className="panel-body text-center">
-									<a href={downloadURL(props.cart.pids, props.cart.name)} className="btn btn-primary" style={{marginBottom: 15, whiteSpace: 'normal'}} target="_blank">
-										<span className="glyphicon glyphicon-download-alt" style={{marginRight: 5}} /> Download
-									</a>
+
+									<form action="/objects" method="post" target="_blank">
+										<input type="hidden" name="fileName" value={fileName} />
+										<input type="hidden" name="hashes" value={hashes} />
+
+										<button className="btn btn-primary" style={{marginBottom: 15, whiteSpace: 'normal'}}>
+											<span className="glyphicon glyphicon-download-alt" style={{marginRight:9}} />Download
+										</button>
+									</form>
+
 									<div style={{textAlign: 'center', fontSize:'90%'}}>
 										Total size: {formatBytes(props.cart.size)} (uncompressed)
 									</div>
@@ -82,12 +91,6 @@ class DataCart extends Component {
 		);
 	}
 }
-
-const downloadURL = (ids, fileName) => {
-	const idsValue = encodeURIComponent(`["${ids.join('","')}"]`);
-	const fnValue = encodeURIComponent(fileName);
-	return `/objects?ids=${idsValue}&fileName=${fnValue}`;
-};
 
 function dispatchToProps(dispatch){
 	return {
