@@ -5,9 +5,9 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp build",
+    "default": "./publish.sh",
+    "publish": "./publish.sh",
+    "build": "./build.sh",
     "test": "gulp test",
     "gulp": "gulp"
   },
@@ -38,6 +38,7 @@
     ]
   },
   "devDependencies": {
+    "typescript": "^3.4.5",
     "@babel/cli": "^7.4.3",
     "@babel/core": "^7.4.3",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
@@ -45,18 +46,23 @@
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.4.4",
+    "babelify": "^10.0.0",
+    "browserify": "^16.2.3",
     "browserify-css": "^0.14.0",
     "del": "^3.0.0",
     "gulp": "^4.0.1",
     "gulp-babel": "^8.0.0",
     "gulp-clean-css": "^3.9.3",
     "gulp-jasmine": "^3.0.0",
+    "gulp-replace": "^1.0.0",
     "gulp-sass": "^3.1.0",
     "gulp-sass-variables": "^1.2.0",
     "gulp-uglify": "^3.0.2",
-    "vinyl-buffer": "^1.0.1"
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
+    "@babel/preset-typescript": "^7.3.3",
     "babel-polyfill": "^6.26.0",
     "deep-equal": "^1.0.1",
     "icos-cp-backend": "^0.3.5",
@@ -68,10 +74,11 @@
     "react": "^16.8.6",
     "react-bootstrap": "^0.32.4",
     "react-dom": "^16.8.6",
-    "react-redux": "^5.0.7",
+    "react-redux": "^7.0.3",
     "react-widgets": "^4.4.11",
-    "redux": "^3.7.2",
-    "redux-thunk": "^2.2.0",
+    "redux": "^4.0.1",
+    "redux-thunk": "^2.3.0",
+    "typescript": "^3.5.1",
     "whatwg-fetch": "^2.0.3"
   }
 }

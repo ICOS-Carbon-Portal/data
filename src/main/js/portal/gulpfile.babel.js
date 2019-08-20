@@ -1,10 +1,7 @@
 'use strict';
 
 import gulp from 'gulp';
-import gp_uglify from 'gulp-uglify';
-import buffer from 'vinyl-buffer';
 import del from 'del';
-
 import babel from 'gulp-babel';
 import jasmine from 'gulp-jasmine';
 import sass from 'gulp-sass';
@@ -19,44 +16,43 @@ const testRoot = 'target/';
 const testMain = testRoot + 'src/main/';
 const testCommon = testRoot + 'common/main/';
 const testJasmine = testRoot + 'test/';
+const tsTarget = './tsTarget/';
+
 
 const paths = {
-	main: 'main/main.jsx',
-	jsx: 'main/**/*.jsx',
+	project,
+	main: `${tsTarget}${project}/main/main.jsx`,
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
-	target: '../../resources/',
+	tsTarget,
 	sassSources: [
-		'portal.scss',
-		'node_modules/react-widgets/lib/scss/react-widgets.scss',
-		'react-widgets-override.scss'
+		'main/portal.scss',
+		'main/react-widgets-override.scss',
+		'node_modules/react-widgets/lib/scss/react-widgets.scss'
 	],
 	sassExtSources: [
 		'node_modules/react-widgets/lib/**/fonts/*',
 		'node_modules/react-widgets/lib/**/img/*'
 	],
-	sassTarget: '../../resources/style/' + project + '/',
+	sassTarget: buildConf.buildTarget + 'style/' + project + '/',
+	sassResources: buildConf.buildTarget + 'style/' + project + '/',
 	jasmineSrc: 'test/**/*.js',
 	bundleFile: project + '.js'
 };
 
 const clean = _ => {
-	return del([paths.target + paths.bundleFile], {force: true});
+	const patterns = [
+		buildConf.buildTarget + paths.bundleFile,
+		paths.sassTarget,
+		paths.sassResources,
+	];
+	return del(patterns, {force: true});
 };
 
-const compileJs = _ =>  {
+const compileSrc = _ => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	let stream = buildConf.transformToBundle(isProduction, paths);
-
-	stream = isProduction
-		? stream
-			.pipe(buffer())
-			.pipe(gp_uglify())
-		: stream;
-
-	return stream
-		.pipe(gulp.dest(paths.target));
+	return buildConf.transformToBundle(isProduction, paths);
 };
 
 const cleanSassTarget = _ => {
@@ -75,7 +71,7 @@ const transformSass = _ => {
 };
 
 const transformSassExt = _ => {
-	return gulp.src(paths.sassExtSources)
+	return gulp.src(paths.sassExtSources, {since: gulp.lastRun(transformSassExt)})
 		.pipe(gulp.dest(paths.sassTarget));
 };
 
@@ -94,7 +90,7 @@ const transformJasmine = _ => {
 };
 
 const transformSrc = _ => {
-	return transform(paths.js, testMain);
+	return transform(`${paths.tsTarget}${paths.project}/${paths.js}`, testMain);
 };
 
 const transformCommon = _ => {
@@ -114,7 +110,14 @@ gulp.task('test', gulp.series(
 
 gulp.task('build', gulp.series(
 	gulp.parallel(clean, cleanSassTarget),
-	transformSass, transformSassExt, compileJs));
+	transformSass, transformSassExt, compileSrc)
+);
+
+const jsToWatch = ['js', 'jsx'].map(ext => `${paths.tsTarget}**/*.${ext}`);
+const cssToWatch = ['css', 'scss'].map(ext => `main/**/*.${ext}`);
+const filesToWatch = [...jsToWatch, ...cssToWatch];
+
+gulp.task('buildWatch', gulp.series('build', buildConf.watch(filesToWatch, gulp.series('build'))));
 
 gulp.task('publish', gulp.series('test', buildConf.applyProdEnvironment, 'build'));
 

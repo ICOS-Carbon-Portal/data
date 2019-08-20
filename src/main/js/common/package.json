@@ -26,9 +26,19 @@
  "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
  "devDependencies": {
   "@babel/core": "^7.4.3",
+  "@babel/plugin-proposal-class-properties": "^7.4.4",
+  "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
+  "@babel/preset-typescript": "^7.3.3",
   "babelify": "^10.0.0",
   "browserify": "^16.2.3",
   "browserify-css": "^0.14.0",
+  "typescript": "^3.4.5",
+  "tsify": "^4.0.1",
+  "watchify": "^3.11.1",
+  "gulp": "^4.0.1",
+  "gulp-uglify": "^3.0.2",
+  "gulp-replace": "^1.0.0",
+  "vinyl-buffer": "^1.0.1",
   "vinyl-source-stream": "^2.0.0"
  },
  "dependencies": {

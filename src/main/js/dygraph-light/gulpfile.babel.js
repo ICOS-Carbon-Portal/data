@@ -1,8 +1,6 @@
 'use strict';
 
 import gulp from 'gulp';
-import gp_uglify from 'gulp-uglify';
-import buffer from 'vinyl-buffer';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf';
@@ -12,33 +10,24 @@ const project = currentPath.split('/').pop();
 
 const paths = {
 	main: 'main/main.jsx',
-	jsx: 'main/**/*.jsx',
-	js: 'main/**/*.js',
+	src: 'main/**/*.js*',
 	commonjs: '../common/main/**/*.js*',
-	target: '../../resources/',
 	bundleFile: project + '.js'
 };
 
 const clean = _ => {
-	return del([paths.target + paths.bundleFile], {force: true});
+	return del([buildConf.buildTarget + paths.bundleFile], {force: true});
 };
 
-const compileJs = _ =>  {
+const compileSrc = _ => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	let stream = buildConf.transformToBundle(isProduction, paths);
-
-	stream = isProduction
-		? stream
-			.pipe(buffer())
-			.pipe(gp_uglify())
-		: stream;
-
-	return stream
-		.pipe(gulp.dest(paths.target));
+	return buildConf.transformToBundle(isProduction, paths);
 };
 
-gulp.task('build', gulp.series(clean, compileJs));
+gulp.task('build', gulp.series(clean, compileSrc));
+
+gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 

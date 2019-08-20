@@ -7,7 +7,7 @@
   "scripts": {
     "default": "gulp publish",
     "publish": "gulp publish",
-    "build": "gulp build",
+    "build": "gulp buildWatch",
     "gulp": "gulp"
   },
   "repository": {
