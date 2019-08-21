@@ -24,12 +24,10 @@ import se.lu.nateko.cp.data.api.B2StageClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
-import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
-import Envri.{Envri, EnvriConfigs}
+import Envri.Envri
 import java.net.URI
-import se.lu.nateko.cp.data.api.B2StageItem
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 

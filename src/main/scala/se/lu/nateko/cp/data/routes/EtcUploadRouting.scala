@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.http.scaladsl.model.StatusCodes
@@ -8,19 +7,12 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Sink
-import akka.util.ByteString
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
-import se.lu.nateko.cp.data.streams.DigestFlow
-import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
 import scala.util.Failure
 import scala.util.Success
-import akka.http.scaladsl.model.headers.Connection
 import spray.json._
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.services.etcfacade.FacadeService
@@ -63,7 +55,6 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 	}
 
 	private def uploadRoute: Route = put{
-		import mat.executionContext
 
 		val authenticator = AuthenticatorProvider(config)
 

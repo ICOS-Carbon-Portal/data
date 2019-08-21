@@ -16,7 +16,6 @@ import akka.stream.scaladsl.GraphDSL
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import se.lu.nateko.cp.data.ConfigReader
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -27,10 +26,11 @@ import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 
-class DownloadService(coreConf: MetaCoreConfig, upload: UploadService, log: LoggingAdapter)(implicit ctxt: ExecutionContext) {
+class DownloadService(coreConf: MetaCoreConfig, upload: UploadService)(implicit ctxt: ExecutionContext) {
 
 	import DownloadService._
 
+	def log = upload.log
 	private def envriConf(implicit envri: Envri) = coreConf.envriConfigs(envri)
 
 	def getZipSource(hashes: Seq[Sha256Sum], downloadLogger: DataObject => Unit)(implicit envri: Envri) = {

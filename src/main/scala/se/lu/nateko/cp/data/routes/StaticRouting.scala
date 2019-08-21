@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.MediaTypes
 import scala.concurrent.Future
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.ContentType
-import akka.http.scaladsl.server.{PathMatcher, PathMatcher1}
+import akka.http.scaladsl.server.PathMatcher1
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.Envri.Envri

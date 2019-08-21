@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.formats.ecocsv
 
 import java.time._
-import java.util.Locale
 
 import scala.concurrent.{ ExecutionContext, Future }
 

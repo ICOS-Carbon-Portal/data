@@ -4,7 +4,6 @@ import org.scalatest.FunSpec
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 
-import EnvelopePolygon._
 import org.scalactic.Tolerance
 
 class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHelpers{

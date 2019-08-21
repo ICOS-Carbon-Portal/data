@@ -15,7 +15,6 @@ import javafx.scene.layout.HBox
 import javafx.scene.text.Text
 import javafx.stage.Stage
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
-import se.lu.nateko.cp.data.streams.geo.EnvelopePolygonConfig
 import se.lu.nateko.cp.data.streams.geo.Point
 import javafx.scene.control.TextField
 

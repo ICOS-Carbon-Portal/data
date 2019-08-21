@@ -12,7 +12,6 @@ import javafx.scene.chart.XYChart
 import javafx.stage.Stage
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.PriorCostFraction
-import se.lu.nateko.cp.data.streams.geo.DummyCostStats
 import se.lu.nateko.cp.data.streams.geo.Point
 import org.gillius.jfxutils.chart.JFXChartUtil
 import org.gillius.jfxutils.chart.ChartPanManager

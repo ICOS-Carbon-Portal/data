@@ -2,8 +2,9 @@
 @import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 @import se.lu.nateko.cp.meta.core.data.Envri
 @import se.lu.nateko.cp.meta.core.HandleProxiesConfig
+@import se.lu.nateko.cp.data.routes.LicenceRouting._
 
-@(acceptUri: Option[Uri], loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri.Envri)
+@(profile: LicenceProfile, loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri.Envri)
 
 @template{
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
@@ -179,8 +180,6 @@
 		</div>
 	</div>
 
-@for(licenceAcceptUri <- acceptUri){
-
 	@for(userLoginUri <- loginUri){
 		<div class="col-sm-12 col-md-6 col-md-offset-3">
 			<div class="link_box inner">
@@ -189,6 +188,33 @@
 		</div>
 	}
 
+	@profile match{
+		case uris: UriLicenceProfile => {
+			@for(licenceAcceptUri <- uris.licenceAcceptUri){
+				@acceptButtons{
+					<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+				}
+			}
+		}
+		case forms: FormLicenceProfile =>{
+			@for(formInfo <- forms.formInfo){
+				@acceptButtons{
+					<form action="/objects" method="post" target="_blank">
+						@for((name, value) <- formInfo){
+							<input type="hidden" name=@name value=@value />
+						}
+						<button class="btn btn-primary btn-lg btn-licence">Yes, I accept</button>
+					</form>
+				}
+			}
+		}
+	}
+
+</div>
+
+}
+
+@acceptButtons(yesButton: Html) = {
 	<div class="col-sm-6 col-md-4 col-md-offset-2">
 		<div class="notice inner">
 			<p>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
@@ -197,14 +223,10 @@
 
 	<div class="col-sm-6 col-md-4">
 		<div class="buttons inner">
-			<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+			@yesButton
 			<a class="btn btn-default btn-lg btn-licence" href="javascript:window.close();">No</a>
 		</div>
 	</div>
-}
-
-</div>
-
 }
 
 @template = @{

@@ -2,10 +2,7 @@ package se.lu.nateko.cp.data.test.api
 
 import se.lu.nateko.cp.data.api._
 import akka.util.ByteString
-import se.lu.nateko.cp.data.ConfigReader
 import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Sink
-import scala.concurrent.Future
 
 object B2Playground{
 	import akka.actor.ActorSystem

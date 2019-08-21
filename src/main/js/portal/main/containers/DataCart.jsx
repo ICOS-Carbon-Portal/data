@@ -38,7 +38,7 @@ class DataCart extends Component {
 			? 'Download cart content'
 			: 'Accept license and download cart content';
 		const fileName = props.cart.name;
-		const hashes = props.cart.pids.join('|');
+		const hashes = JSON.stringify(props.cart.pids);
 
 		return (
 			<div>
@@ -64,7 +64,7 @@ class DataCart extends Component {
 
 									<form action="/objects" method="post" target="_blank">
 										<input type="hidden" name="fileName" value={fileName} />
-										<input type="hidden" name="hashes" value={hashes} />
+										<input type="hidden" name="ids" value={hashes} />
 
 										<button className="btn btn-primary" style={{marginBottom: 15, whiteSpace: 'normal'}}>
 											<span className="glyphicon glyphicon-download-alt" style={{marginRight:9}} />Download

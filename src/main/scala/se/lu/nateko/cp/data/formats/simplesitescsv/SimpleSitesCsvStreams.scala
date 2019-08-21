@@ -3,11 +3,7 @@ package se.lu.nateko.cp.data.formats.simplesitescsv
 import java.time.{ Instant, LocalDateTime, ZoneOffset }
 import java.time.format.DateTimeFormatter
 
-import akka.stream.scaladsl.Flow
-import scala.concurrent.{ ExecutionContext, Future }
-
 import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object SimpleSitesCsvStreams extends SimpleCsvStreams(","){
 
