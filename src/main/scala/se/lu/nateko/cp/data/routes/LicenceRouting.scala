@@ -7,9 +7,12 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
+import akka.http.scaladsl.server.Directive1
 
 import spray.json._
+import scala.util.Try
 
+import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
@@ -18,13 +21,11 @@ import se.lu.nateko.cp.meta.core.data.objectPathPrefix
 import se.lu.nateko.cp.meta.core.data.collectionPathPrefix
 import se.lu.nateko.cp.meta.core.HandleProxiesConfig
 
-import scala.util.Try
-
-class LicenceRouting(authRouting: AuthRouting, handleProxies: HandleProxiesConfig)(implicit envriConfs: EnvriConfigs) {
+class LicenceRouting(userOpt: Directive1[Option[UserId]], handleProxies: HandleProxiesConfig)(implicit envriConfs: EnvriConfigs) {
 
 	import LicenceRouting._
-	import StaticRouting.pageMarshaller
-	import authRouting.userOpt
+
+	private def dataLicence(prof: LicenceProfile): Route = dataLicenceRoute(prof, userOpt, handleProxies)
 
 	def route: Route = parameter(('ids.as[Seq[Sha256Sum]], 'fileName.?, 'isColl.as[Boolean] ? false)){(hashes, fileOpt, isColl) =>
 
@@ -42,10 +43,10 @@ class LicenceRouting(authRouting: AuthRouting, handleProxies: HandleProxiesConfi
 			}
 		} ~
 		path(LicencePath){
-				dataLicence(profile, handleProxies)
+				dataLicence(profile)
 		}
 	} ~ path(LicencePath){
-		dataLicence(defaultLicenceProfile, handleProxies)
+		dataLicence(defaultLicenceProfile)
 	}
 }
 
@@ -99,10 +100,13 @@ object LicenceRouting{
 		value.split('|').map(Sha256Sum.fromBase64Url(_).get)
 	}
 
-	def dataLicenceRoute(profile: LicenceProfile)(
-		authRouting: AuthRouting, handleProxies: HandleProxiesConfig
+	def dataLicenceRoute(
+		profile: LicenceProfile, userOpt: Directive1[Option[UserId]], handleProxies: HandleProxiesConfig
 	)(implicit envriConfs: EnvriConfigs): Route = {
+
+		import StaticRouting.pageMarshaller
 		val extractEnvri = UploadRouting.extractEnvriDirective
+
 		extractEnvri{implicit envri =>
 			userOpt{uidOpt =>
 				val loginUri: Option[Uri] = if(uidOpt.isEmpty){

@@ -191,19 +191,23 @@
 	@profile match{
 		case uris: UriLicenceProfile => {
 			@for(licenceAcceptUri <- uris.licenceAcceptUri){
-				@acceptButtons{
-					<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+				@acceptLicence{
+					@yesNoButtonsDiv{
+						<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+					}
 				}
 			}
 		}
 		case forms: FormLicenceProfile =>{
 			@for(formInfo <- forms.formInfo){
-				@acceptButtons{
-					<form action="/objects" method="post" target="_blank">
+				@acceptLicence{
+					<form action="/objects" method="post">
 						@for((name, value) <- formInfo){
-							<input type="hidden" name=@name value=@value />
+							<input type="hidden" name="@name" value="@value" />
 						}
-						<button class="btn btn-primary btn-lg btn-licence">Yes, I accept</button>
+						@yesNoButtonsDiv{
+							<button class="btn btn-primary btn-lg btn-licence">Yes, I accept</button>
+						}
 					</form>
 				}
 			}
@@ -214,7 +218,7 @@
 
 }
 
-@acceptButtons(yesButton: Html) = {
+@acceptLicence(yesNoButtons: Html) = {
 	<div class="col-sm-6 col-md-4 col-md-offset-2">
 		<div class="notice inner">
 			<p>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
@@ -222,10 +226,14 @@
 	</div>
 
 	<div class="col-sm-6 col-md-4">
-		<div class="buttons inner">
-			@yesButton
-			<a class="btn btn-default btn-lg btn-licence" href="javascript:window.close();">No</a>
-		</div>
+		@yesNoButtons
+	</div>
+}
+
+@yesNoButtonsDiv(yesButton: Html) = {
+	<div class="buttons inner">
+		@yesButton
+		<a class="btn btn-default btn-lg btn-licence" href="javascript:window.close();">No</a>
 	</div>
 }
 

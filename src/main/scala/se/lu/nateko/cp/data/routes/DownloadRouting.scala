@@ -23,6 +23,7 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.Utils
+import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
@@ -30,7 +31,6 @@ import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import akka.http.scaladsl.server.StandardRoute
 
 class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	restHeart: RestHeartClient, logClient: PortalLogClient, coreConf: MetaCoreConfig
@@ -86,7 +86,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private def licenceCheck(hash: Sha256Sum): Directive1[Boolean] = licenceCookieHashsums.map(_.contains(hash))
 
 	private def batchDownload(hashes: Seq[Sha256Sum], fileName: String, licenceCheck: Directive1[Boolean])(
-		alternative: StandardRoute
+		alternative: Route
 	): Route = userOpt{uidOpt =>
 		extractEnvri{implicit envri =>
 
@@ -129,7 +129,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			formFields(('fileName, 'ids.as[Seq[Sha256Sum]], 'licenceOk.as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
 
 				batchDownload(hashes, fileName, provide(licenceOk)){
-					complete(StatusCodes.UnavailableForLegalReasons -> "Data licence must be accepted")
+					val licProfile = new FormLicenceProfile(hashes, fileName)
+					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
 				}
 			} ~
 			complete(StatusCodes.BadRequest -> "Expected js array of SHA256 hashsums in request payload")
@@ -239,10 +240,6 @@ object DownloadRouting{
 			case Success(hashes) => provide(hashes)
 			case _ => reject
 		}
-	}
-
-	val cc4byAccepted: Directive1[Boolean] = cookie(LicenceCookieName).map{licCookie =>
-		licCookie.value == "CC4BY"
 	}
 
 	def getContentType(fileName: String): ContentType = implicitly[ContentTypeResolver].apply(fileName)
