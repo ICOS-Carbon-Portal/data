@@ -75,9 +75,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 				val hashes = coll.members.collect{
 					case PlainStaticObject(_, hash, _) => hash
 				}
-				val fileName = coll.title + ".zip"
-				batchDownload(hashes, fileName, licenceCheck(hashsum)){
-					redirect(new UriLicenceProfile(Seq(hashsum), Some(fileName), true).licenceUri, StatusCodes.Found)
+				batchDownload(hashes, coll.title, licenceCheck(hashsum)){
+					redirect(new UriLicenceProfile(Seq(hashsum), None, true).licenceUri, StatusCodes.Found)
 				}
 			}
 		}
