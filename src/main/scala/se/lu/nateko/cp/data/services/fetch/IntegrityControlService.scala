@@ -2,19 +2,15 @@ package se.lu.nateko.cp.data.services.fetch
 
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.upload.UploadService
-import java.net.URI
 import scala.concurrent.Future
 import akka.stream.scaladsl.Source
 import scala.concurrent.ExecutionContext
-import scala.util.Try
 import scala.collection.immutable.Iterable
 import akka.stream.scaladsl.FileIO
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.streams.KeepFuture
 import scala.util.Failure
 import scala.util.Success
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Keep
 import java.nio.file.Path
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){

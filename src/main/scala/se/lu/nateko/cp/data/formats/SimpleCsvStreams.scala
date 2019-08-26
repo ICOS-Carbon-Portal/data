@@ -8,7 +8,6 @@ import scala.concurrent.Future
 import java.time.Instant
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 import akka.stream.scaladsl.Keep
-import se.lu.nateko.cp.meta.core.data.TimeSeriesUploadCompletion
 import java.time.temporal.ChronoUnit
 
 abstract class SimpleCsvStreams(separator: String){

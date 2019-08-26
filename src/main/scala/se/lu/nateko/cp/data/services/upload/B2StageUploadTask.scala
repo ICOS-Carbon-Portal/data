@@ -16,7 +16,6 @@ import se.lu.nateko.cp.data.api.IrodsData
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import scala.util.Failure
 
 class B2StageUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 

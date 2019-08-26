@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.formats.wdcgg
 
 import java.nio.charset.Charset
 import java.time._
-import java.util.Locale
 
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}

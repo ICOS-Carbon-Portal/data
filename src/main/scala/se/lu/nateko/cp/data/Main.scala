@@ -53,10 +53,11 @@ object Main extends App {
 	val tabularRoute = new TabularFetchRouting(binTableFetcher).route
 
 	val authRouting = new AuthRouting(config.auth)
-	val uploadRoute = new UploadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
+	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
+	val downloadRoute = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
 	val integrityRoute = new IntegrityRouting(integrityService).route
 
-	val licenceRoute = new LicenceRouting(authRouting, ConfigReader.metaCore.handleProxies).route
+	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
 	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
@@ -76,6 +77,7 @@ object Main extends App {
 		} ~
 		netcdfRoute ~
 		legacyNetcdfRoute ~
+		downloadRoute ~
 		uploadRoute ~
 		tabularRoute ~
 		staticRoute ~

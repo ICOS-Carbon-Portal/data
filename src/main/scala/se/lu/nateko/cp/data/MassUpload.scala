@@ -23,14 +23,11 @@ import akka.http.scaladsl.model.headers._
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
-import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams
 
 object MassUpload extends CommonJsonSupport{
 

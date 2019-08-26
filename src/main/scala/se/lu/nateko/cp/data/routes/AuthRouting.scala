@@ -4,7 +4,6 @@ import scala.util.Failure
 import scala.util.Success
 import akka.http.javadsl.server.CustomRejection
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
@@ -16,7 +15,6 @@ import se.lu.nateko.cp.cpauth.core.CookieToToken
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import se.lu.nateko.cp.data.CpdataJsonProtocol.userIdFormat
 import spray.json.{JsNull, JsObject, JsString}
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 

@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.api
 
 import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
 import scala.collection.immutable.Iterable
 
 import akka.Done

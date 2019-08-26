@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.utils
 
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import scala.concurrent.Await
 import java.util.concurrent.TimeoutException
 

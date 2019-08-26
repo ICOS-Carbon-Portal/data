@@ -5,9 +5,7 @@ import scala.concurrent.Future
 
 import akka.stream.SinkShape
 import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 
 object SinkCombiner {

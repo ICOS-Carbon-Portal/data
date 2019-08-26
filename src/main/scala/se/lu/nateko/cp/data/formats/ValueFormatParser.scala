@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.formats
 
 import java.time._
-import java.util.Locale
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 import java.time.format.DateTimeFormatter

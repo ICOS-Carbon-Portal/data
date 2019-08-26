@@ -1,7 +1,5 @@
 package se.lu.nateko.cp.data.formats
 
-import java.util.Locale
-
 import TimeSeriesToBinTableConverter._
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}

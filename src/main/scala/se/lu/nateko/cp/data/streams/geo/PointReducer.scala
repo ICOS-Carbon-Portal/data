@@ -3,8 +3,6 @@ package se.lu.nateko.cp.data.streams.geo
 import PointReducer._
 import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Position
-import se.lu.nateko.cp.meta.core.data.GeoFeature
-import se.lu.nateko.cp.meta.core.data.LatLonBox
 
 class PointReducer(nmax: Int, costFun: CostFunction) {
 
