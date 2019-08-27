@@ -1,38 +1,41 @@
 import Cart from "./models/Cart";
 
-export const ERROR = 'ERROR';
-export const INIT = 'INIT';
-export const LOAD_ERROR = 'LOAD_ERROR';
-export const RESTORE_FROM_HISTORY = 'RESTORE_FROM_HISTORY';
-export const SPECTABLES_FETCHED = 'SPECTABLES_FETCHED';
-export const SPEC_FILTER_UPDATED = 'SPEC_FILTER_UPDATED';
-export const SPEC_FILTER_RESET = 'SPEC_FILTER_RESET';
-export const OBJECTS_FETCHED = 'OBJECTS_FETCHED';
-export const SORTING_TOGGLED = 'SORTING_TOGGLED';
-export const STEP_REQUESTED = 'STEP_REQUESTED';
-export const METADATA = 'METADATA';
-export const PREVIEW = 'PREVIEW';
-export const PREVIEW_VISIBILITY = 'PREVIEW_VISIBILITY';
-export const PREVIEW_SETTING_UPDATED = 'PREVIEW_SETTING_UPDATED';
-export const ITEM_URL_UPDATED = 'ITEM_URL_UPDATED';
-export const ROUTE_UPDATED = 'ROUTE_UPDATED';
-export const SWITCH_TAB = 'SWITCH_TAB';
-export const RESTORE_FILTERS = 'RESTORE_FILTERS';
-export const RESTORE_PREVIEW = 'RESTORE_PREVIEW';
-export const CART_UPDATED = 'CART_UPDATED';
-export const WHOAMI_FETCHED = 'WHOAMI_FETCHED';
-export const EXTENDED_DOBJ_INFO_FETCHED = 'EXTENDED_DOBJ_INFO_FETCHED';
-export const USER_INFO_FETCHED = 'USER_INFO_FETCHED';
-export const TESTED_BATCH_DOWNLOAD = 'TESTED_BATCH_DOWNLOAD';
-export const TEMPORAL_FILTER = 'TEMPORAL_FILTER';
-export const FREE_TEXT_FILTER = 'FREE_TEXT_FILTER';
-export const UPDATE_SELECTED_PIDS = 'UPDATE_SELECTED_PIDS';
-export const UPDATE_SELECTED_IDS = 'UPDATE_SELECTED_IDS';
-export const UPDATE_CHECKED_OBJECTS_IN_SEARCH = 'UPDATE_CHECKED_OBJECTS_IN_SEARCH';
-export const UPDATE_CHECKED_OBJECTS_IN_CART = 'UPDATE_CHECKED_OBJECTS_IN_CART';
-export const TS_SETTINGS = 'TS_SETTINGS';
-export const HELP_INFO_UPDATED = 'HELP_INFO_UPDATED';
-import {hashToState} from "./models/State";
+export const actionTypes = {
+	ERROR: 'ERROR',
+	INIT: 'INIT',
+	LOAD_ERROR: 'LOAD_ERROR',
+	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
+	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
+	SPEC_FILTER_UPDATED: 'SPEC_FILTER_UPDATED',
+	SPEC_FILTER_RESET: 'SPEC_FILTER_RESET',
+	OBJECTS_FETCHED: 'OBJECTS_FETCHED',
+	SORTING_TOGGLED: 'SORTING_TOGGLED',
+	STEP_REQUESTED: 'STEP_REQUESTED',
+	METADATA: 'METADATA',
+	PREVIEW: 'PREVIEW',
+	PREVIEW_VISIBILITY: 'PREVIEW_VISIBILITY',
+	PREVIEW_SETTING_UPDATED: 'PREVIEW_SETTING_UPDATED',
+	ITEM_URL_UPDATED: 'ITEM_URL_UPDATED',
+	ROUTE_UPDATED: 'ROUTE_UPDATED',
+	SWITCH_TAB: 'SWITCH_TAB',
+	RESTORE_FILTERS: 'RESTORE_FILTERS',
+	RESTORE_PREVIEW: 'RESTORE_PREVIEW',
+	CART_UPDATED: 'CART_UPDATED',
+	WHOAMI_FETCHED: 'WHOAMI_FETCHED',
+	EXTENDED_DOBJ_INFO_FETCHED: 'EXTENDED_DOBJ_INFO_FETCHED',
+	USER_INFO_FETCHED: 'USER_INFO_FETCHED',
+	TESTED_BATCH_DOWNLOAD: 'TESTED_BATCH_DOWNLOAD',
+	TEMPORAL_FILTER: 'TEMPORAL_FILTER',
+	FREE_TEXT_FILTER: 'FREE_TEXT_FILTER',
+	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS',
+	UPDATE_SELECTED_IDS: 'UPDATE_SELECTED_IDS',
+	UPDATE_CHECKED_OBJECTS_IN_SEARCH: 'UPDATE_CHECKED_OBJECTS_IN_SEARCH',
+	UPDATE_CHECKED_OBJECTS_IN_CART: 'UPDATE_CHECKED_OBJECTS_IN_CART',
+	TS_SETTINGS: 'TS_SETTINGS',
+	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
+};
+
+import State, {hashToState} from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -40,27 +43,51 @@ import {areFiltersEnabled} from './reducer';
 import {DataObjectsFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
-import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils.js';
+import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
+import {IKeyValStrPairs} from "./typescript/interfaces";
+import {Action, Dispatch} from "redux";
+import {ThunkAction, ThunkDispatch} from "redux-thunk";
 
+interface IPortalThunkAction<R> extends ThunkAction<R, State, undefined, PortalAction>{}
+type PortalDispatch = ThunkDispatch<State, undefined, PortalAction>
+
+abstract class PortalAction implements Action<undefined>{
+	type: undefined;
+}
+
+abstract class BackendFetchAction extends PortalAction{}
+abstract class MiscellaneousAction extends PortalAction{}
+
+class WhoAmiFetchedAction extends BackendFetchAction{
+	constructor(readonly whoAmi: object){super();}
+}
+
+class TablesFetchedAction extends BackendFetchAction{
+	constructor(readonly allTables: object){super();}
+}
+
+class ErrorAction extends MiscellaneousAction{
+	constructor(readonly error: Error){super();}
+}
+
+class InitAction extends MiscellaneousAction{
+	constructor(){super();}
+}
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
-export const failWithError = dispatch => error => {
-	console.log(error);
-	dispatch({
-		type: ERROR,
-		error
-	});
 
+export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error =>{
+	dispatch(new ErrorAction(error));
 	dispatch(logError(error));
 };
 
-const logError = error => (dispatch, getState) => {
-	const state = getState();
+const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getState) => {
+	const state: any = getState();
 	const user = state.user.email
 		? `${state.user.profile.profile.givenName} ${state.user.profile.profile.surname}`
 		: undefined;
@@ -70,15 +97,15 @@ const logError = error => (dispatch, getState) => {
 			app: 'portal',
 			message: error.message,
 			state: JSON.stringify(Object.assign({}, state.serialize, {user, cart: state.cart})),
-			url: decodeURI(window.location)
+			url: decodeURI(window.location.href)
 		}
 	});
 };
 
-export const init = () => dispatch => {
+export const init = () => (dispatch: Function) => {
 	const stateFromHash = hashToState();
 
-	getWhoIam().then(user => {
+	getWhoIam().then((user: any) => {
 		if (stateFromHash.error){
 			if (user.email) logOut();
 			dispatch(loadFromError(user, stateFromHash.error));
@@ -89,12 +116,12 @@ export const init = () => dispatch => {
 	});
 };
 
-const loadApp = user => dispatch => {
-	dispatch({type: INIT});
+const loadApp:  (user: any) => IPortalThunkAction<void> = user => dispatch => {
+	dispatch(new InitAction());
 
 	getProfile(user.email).then(profile => {
 		dispatch({
-			type: USER_INFO_FETCHED,
+			type: actionTypes.USER_INFO_FETCHED,
 			user,
 			profile
 		});
@@ -109,17 +136,17 @@ const loadApp = user => dispatch => {
 				const cart = restoreCarts(cartInSessionStorage, restheartCart);
 
 				dispatch(updateCart(user.email, cart))
-					.then(_ => dispatch(getAllSpecTables()));
+					.then(() => dispatch(getAllSpecTables()));
 			});
 		}
 	);
 };
 
-const loadFromError = (user, errorId) => dispatch => {
+const loadFromError = (user: any, errorId: string) => (dispatch: Function) => {
 	getError(errorId).then(response => {
 		if (response && response.error && response.error.state) {
 			const stateJSON = JSON.parse(response.error.state);
-			const objectsTable = stateJSON.objectsTable.map(ot => {
+			const objectsTable = stateJSON.objectsTable.map((ot: any) => {
 				return Object.assign(ot, {
 					submTime: new Date(ot.submTime),
 					timeStart: new Date(ot.timeStart),
@@ -133,7 +160,7 @@ const loadFromError = (user, errorId) => dispatch => {
 			);
 
 			dispatch({
-				type: LOAD_ERROR,
+				type: actionTypes.LOAD_ERROR,
 				state,
 				cart
 			});
@@ -143,10 +170,10 @@ const loadFromError = (user, errorId) => dispatch => {
 	});
 };
 
-export const restoreFromHistory = historyState => dispatch => {
+export const restoreFromHistory = (historyState: any) => (dispatch: Function) => {
 	if (Date.now() - historyState.ts < config.historyStateMaxAge) {
 		dispatch({
-			type: RESTORE_FROM_HISTORY,
+			type: actionTypes.RESTORE_FROM_HISTORY,
 			historyState
 		});
 	} else {
@@ -154,11 +181,11 @@ export const restoreFromHistory = historyState => dispatch => {
 	}
 };
 
-export const getAllSpecTables = () => dispatch => {
+export const getAllSpecTables: IPortalThunkAction<void> = (dispatch, _) => {
 	fetchAllSpecTables().then(
 		allTables => {
-			dispatch(Object.assign({type: SPECTABLES_FETCHED}, allTables));
-			dispatch({type: RESTORE_FILTERS});
+			dispatch(Object.assign({type: actionTypes.SPECTABLES_FETCHED}, allTables));
+			dispatch({type: actionTypes.RESTORE_FILTERS});
 			dispatch(getFilteredDataObjects);
 		},
 		failWithError(dispatch)
@@ -166,20 +193,21 @@ export const getAllSpecTables = () => dispatch => {
 };
 
 
-export const queryMeta = (id, search) => dispatch => {
+export const queryMeta = (id: string, search: string) => (dispatch: Function) => {
 	switch (id) {
 		case "dobj":
-			searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
+			searchDobjs(search).then((data: any) => dispatchMeta(id, data, dispatch));
 			break;
 
 		default:
-			dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
+			failWithError(dispatch)(new Error(`Could not find a method matching ${id} to query metadata`));
+			// dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
 	}
 };
 
-const dispatchMeta = (id, data, dispatch) => {
+const dispatchMeta = (id: string, data: any, dispatch: Function) => {
 	dispatch({
-		type: FREE_TEXT_FILTER,
+		type: actionTypes.FREE_TEXT_FILTER,
 		id,
 		data
 	});
@@ -189,42 +217,42 @@ const dispatchMeta = (id, data, dispatch) => {
 	}
 };
 
-export const updateSelectedPids = selectedPids => dispatch => {
+export const updateSelectedPids = (selectedPids: string[]) => (dispatch: Function) => {
 	dispatch({
-		type: UPDATE_SELECTED_PIDS,
+		type: actionTypes.UPDATE_SELECTED_PIDS,
 		selectedPids
 	});
 
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateCheckedObjectsInSearch = checkedObjectInSearch => dispatch => {
+export const updateCheckedObjectsInSearch = (checkedObjectInSearch: CartItem) => (dispatch: Function) => {
 	dispatch({
-		type: UPDATE_CHECKED_OBJECTS_IN_SEARCH,
+		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH,
 		checkedObjectInSearch
 	});
 };
 
-export const updateCheckedObjectsInCart = checkedObjectInCart => dispatch => {
+export const updateCheckedObjectsInCart = (checkedObjectInCart: CartItem) => (dispatch: Function) => {
 	dispatch({
-		type: UPDATE_CHECKED_OBJECTS_IN_CART,
+		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART,
 		checkedObjectInCart
 	});
 };
 
-export const specFilterUpdate = (varName, values) => dispatch => {
+export const specFilterUpdate = (varName: string, values: string[]) => (dispatch: Function) => {
 	dispatch({
-		type: SPEC_FILTER_UPDATED,
+		type: actionTypes.SPEC_FILTER_UPDATED,
 		varName,
 		values
 	});
 	dispatch(getFilteredDataObjects);
 };
 
-const logPortalUsage = (specTable, filterCategories, filterTemporal, filterFreeText) => {
+const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
 	if (Object.keys(filterCategories).length || filterTemporal.hasFilter || filterFreeText.hasFilter) {
 
-		const filters = Object.keys(filterCategories).reduce((acc, columnName) => {
+		const filters = Object.keys(filterCategories).reduce<IKeyValStrPairs>((acc: IKeyValStrPairs, columnName: string) => {
 			acc[columnName] = specTable.getLabelFilter(columnName);
 			return acc;
 		}, {});
@@ -240,7 +268,7 @@ const logPortalUsage = (specTable, filterCategories, filterTemporal, filterFreeT
 	}
 };
 
-export const getFilteredDataObjects = (dispatch, getState) => {
+export const getFilteredDataObjects = (dispatch: Function, getState: Function) => {
 	dispatch(getFilteredDataObjectsWithoutUsageLogging);
 
 	const {route, specTable, filterCategories, filterTemporal, filterFreeText} = getState();
@@ -251,7 +279,7 @@ export const getFilteredDataObjects = (dispatch, getState) => {
 
 };
 
-const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
+const getFilteredDataObjectsWithoutUsageLogging = (dispatch: Function, getState: Function) => {
 	const {specTable, route, preview, sorting, formatToRdfGraph,
 		tabs, filterTemporal, filterFreeText, cart, metadata} = getState();
 
@@ -265,7 +293,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 		} else if (route === config.ROUTE_CART) {
 			return [{
 				category: 'pids',
-				pids: cart.ids.map(id => id.split('/').pop())
+				pids: cart.ids.map((id: string) => id.split('/').pop())
 			}];
 
 		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
@@ -292,7 +320,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 
 	const rdfGraphs = route === config.ROUTE_CART
 		? []
-		: specTable.getColumnValuesFilter('format').map(f => formatToRdfGraph[f]);
+		: specTable.getColumnValuesFilter('format').map((f: string) => formatToRdfGraph[f]);
 
 	const paging = route === config.ROUTE_CART
 		? {offset: 0, limit: cart.ids.length}
@@ -300,29 +328,35 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch, getState) => {
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
-	dataObjectsFetcher.fetch(options).then(
-		({rows, cacheSize, isDataEndReached}) => {
+	interface IFetchedDataObj {
+		rows: any,
+		cacheSize: number,
+		isDataEndReached: boolean
+	}
 
-			dispatch(fetchExtendedDataObjInfo(rows.map(d => d.dobj)));
+	dataObjectsFetcher.fetch(options).then(
+		({rows, cacheSize, isDataEndReached}: IFetchedDataObj) => {
+
+			dispatch(fetchExtendedDataObjInfo(rows.map((d: any) => d.dobj)));
 
 			dispatch({
-				type: OBJECTS_FETCHED,
+				type: actionTypes.OBJECTS_FETCHED,
 				objectsTable: rows,
 				cacheSize,
 				isDataEndReached
 			});
 			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(metadata.id));
-			if (route === config.ROUTE_PREVIEW) dispatch({type: RESTORE_PREVIEW});
+			if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
 	);
 };
 
-const fetchExtendedDataObjInfo = dobjs => dispatch => {
+const fetchExtendedDataObjInfo = (dobjs: string[]) => (dispatch: Function) => {
 	getExtendedDataObjInfo(dobjs).then(
-		extendedDobjInfo => {
+		(extendedDobjInfo: any) => {
 			dispatch({
-				type: EXTENDED_DOBJ_INFO_FETCHED,
+				type: actionTypes.EXTENDED_DOBJ_INFO_FETCHED,
 				extendedDobjInfo
 			});
 		},
@@ -330,33 +364,33 @@ const fetchExtendedDataObjInfo = dobjs => dispatch => {
 	);
 };
 
-export const specFiltersReset = dispatch => {
-	dispatch({type: SPEC_FILTER_RESET});
+export const specFiltersReset = (dispatch: Function) => {
+	dispatch({type: actionTypes.SPEC_FILTER_RESET});
 	dispatch(getFilteredDataObjects);
 };
 
-export const toggleSort = varName => dispatch => {
+export const toggleSort = (varName: string) => (dispatch: Function) => {
 	dispatch({
-		type: SORTING_TOGGLED,
+		type: actionTypes.SORTING_TOGGLED,
 		varName
 	});
 	dispatch(getFilteredDataObjectsWithoutUsageLogging);
 };
 
-export const requestStep = direction => dispatch => {
+export const requestStep = (direction: number) => (dispatch: Function) => {
 	dispatch({
-		type: STEP_REQUESTED,
+		type: actionTypes.STEP_REQUESTED,
 		direction
 	});
 	dispatch(getFilteredDataObjectsWithoutUsageLogging);
 };
 
-export const updateRoute = route => (dispatch, getState) => {
+export const updateRoute = (route: string) => (dispatch: Function, getState: Function) => {
 	const state = getState();
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 	dispatch({
-		type: ROUTE_UPDATED,
+		type: actionTypes.ROUTE_UPDATED,
 		route: newRoute
 	});
 
@@ -368,10 +402,10 @@ export const updateRoute = route => (dispatch, getState) => {
 	}
 };
 
-export const switchTab = (tabName, selectedTabId) => dispatch => {
+export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function) => {
 
 	dispatch({
-		type: SWITCH_TAB,
+		type: actionTypes.SWITCH_TAB,
 		tabName,
 		selectedTabId
 	});
@@ -381,70 +415,70 @@ export const switchTab = (tabName, selectedTabId) => dispatch => {
 	}
 };
 
-export const setMetadataItem = id => dispatch => {
+export const setMetadataItem = (id: string) => (dispatch: Function) => {
 	getMetadata(id).then(metadata => {
 		const metadataWithId = Object.assign({}, metadata, {id: id});
 		dispatch({
-			type: METADATA,
+			type: actionTypes.METADATA,
 			metadataWithId
 		});
 	});
 };
 
-export const setPreviewItem = id => dispatch => {
-	dispatch(getTsPreviewSettings()).then(_ => {
+export const setPreviewItem = (id: string) => (dispatch: Function) => {
+	dispatch(getTsPreviewSettings()).then(() => {
 		dispatch({
-			type: PREVIEW,
+			type: actionTypes.PREVIEW,
 			id
 		});
 	});
 };
 
-const getTsPreviewSettings = _ => (dispatch, getState) => {
+const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 	const user = getState().user;
 
 	return getTsSettings(user.email).then(tsSettings => {
 		dispatch({
-			type: TS_SETTINGS,
+			type: actionTypes.TS_SETTINGS,
 			tsSettings
 		});
 	});
 };
 
-export const storeTsPreviewSetting = (spec, type, val) => (dispatch, getState) => {
+export const storeTsPreviewSetting = (spec: any, type: string, val: any) => (dispatch: Function, getState: Function) => {
 	const user = getState().user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
 		dispatch({
-			type: TS_SETTINGS,
+			type: actionTypes.TS_SETTINGS,
 			tsSettings
 		});
 	});
 };
 
-export const setPreviewUrl = url => dispatch => {
+export const setPreviewUrl = (url: string) => (dispatch: Function) => {
 	dispatch({
-		type: ITEM_URL_UPDATED,
+		type: actionTypes.ITEM_URL_UPDATED,
 		url
 	});
 };
 
-export const setCartName = newName => (dispatch, getState) => {
+export const setCartName = (newName: string) => (dispatch: Function, getState: Function) => {
 	const state = getState();
 
 	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
 };
 
-export const addToCart = ids => (dispatch, getState) => {
+export const addToCart = (ids: string[]) => (dispatch: Function, getState: Function) => {
 	const state = getState();
 	const cart = state.cart;
 
-	const newItems = ids.filter(id => state.cart.hasItem(id) === false).map(id => {
-		const objInfo = state.objectsTable.find(o => o.dobj === id);
+	const newItems = ids.filter(id => !state.cart.hasItem(id)).map(id => {
+		const objInfo = state.objectsTable.find((o: any) => o.dobj === id);
 		const specLookup = state.lookup.getSpecLookup(objInfo.spec);
 		const type = specLookup ? specLookup.type : undefined;
 		const xAxis = specLookup && specLookup.type === config.TIMESERIES
-			? specLookup.options.find(ao => ao === 'TIMESTAMP')
+			? specLookup.options.find((ao: string) => ao === 'TIMESTAMP')
 			: undefined;
 		const item = new CartItem(objInfo, type);
 
@@ -458,27 +492,27 @@ export const addToCart = ids => (dispatch, getState) => {
 	}
 };
 
-export const removeFromCart = ids => (dispatch, getState) => {
+export const removeFromCart = (ids: string[]) => (dispatch: Function, getState: Function) => {
 	const state = getState();
 	const cart = state.cart.removeItems(ids);
 
 	dispatch(updateCart(state.user.email, cart));
 };
 
-const updateCart = (email, cart) => dispatch => {
+const updateCart = (email: string, cart: Cart) => (dispatch: Function) => {
 	return saveCart(email, cart).then(
 		dispatch({
-			type: CART_UPDATED,
+			type: actionTypes.CART_UPDATED,
 			cart
 		})
 	);
 };
 
-export const fetchIsBatchDownloadOk = dispatch => {
+export const fetchIsBatchDownloadOk = (dispatch: Function) => {
 	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
 		.then(
 			([isBatchDownloadOk, user]) => dispatch({
-				type: TESTED_BATCH_DOWNLOAD,
+				type: actionTypes.TESTED_BATCH_DOWNLOAD,
 				isBatchDownloadOk,
 				user
 			}),
@@ -486,7 +520,7 @@ export const fetchIsBatchDownloadOk = dispatch => {
 		);
 };
 
-export const setFilterTemporal = filterTemporal => dispatch => {
+export const setFilterTemporal = (filterTemporal: any) => (dispatch: Function) => {
 	if (filterTemporal.dataTime.error) {
 		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 	}
@@ -495,7 +529,7 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	}
 
 	dispatch({
-		type: TEMPORAL_FILTER,
+		type: actionTypes.TEMPORAL_FILTER,
 		filterTemporal
 	});
 
@@ -504,15 +538,15 @@ export const setFilterTemporal = filterTemporal => dispatch => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const getResourceHelpInfo = helpItem => (dispatch, getState) => {
+export const getResourceHelpInfo = (helpItem: any) => (dispatch: Function, getState: Function) => {
 	if (helpItem.shouldFetchList) {
 		const {specTable} = getState();
 		const uriList = specTable
 			.getAllDistinctAvailableColValues(helpItem.name)
-			.filter(uri => uri);
+			.filter((uri: string) => uri);
 
 		if (uriList.length) {
-			fetchResourceHelpInfo(uriList).then(resourceInfo => {
+			fetchResourceHelpInfo(uriList).then((resourceInfo: any) => {
 				dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
 			});
 		} else {
@@ -523,9 +557,9 @@ export const getResourceHelpInfo = helpItem => (dispatch, getState) => {
 	}
 };
 
-const updateHelpInfo = helpItem => dispatch => {
+const updateHelpInfo = (helpItem: any) => (dispatch: Function) => {
 	dispatch({
-		type: HELP_INFO_UPDATED,
+		type: actionTypes.HELP_INFO_UPDATED,
 		helpItem
 	});
 };

@@ -1,36 +1,4 @@
-import {
-	ERROR,
-	SPECTABLES_FETCHED,
-	FREE_TEXT_FILTER,
-	SPEC_FILTER_UPDATED,
-	OBJECTS_FETCHED,
-	SORTING_TOGGLED,
-	STEP_REQUESTED,
-	SPEC_FILTER_RESET,
-	ROUTE_UPDATED,
-	RESTORE_FILTERS,
-	RESTORE_PREVIEW,
-	CART_UPDATED,
-	METADATA,
-	PREVIEW,
-	PREVIEW_SETTING_UPDATED,
-	PREVIEW_VISIBILITY,
-	TESTED_BATCH_DOWNLOAD,
-	ITEM_URL_UPDATED,
-	USER_INFO_FETCHED,
-	SWITCH_TAB,
-	UPDATE_SELECTED_PIDS,
-	EXTENDED_DOBJ_INFO_FETCHED,
-	UPDATE_CHECKED_OBJECTS_IN_SEARCH,
-	UPDATE_CHECKED_OBJECTS_IN_CART,
-	INIT,
-	RESTORE_FROM_HISTORY,
-	TEMPORAL_FILTER,
-	WHOAMI_FETCHED,
-	LOAD_ERROR,
-	TS_SETTINGS,
-	HELP_INFO_UPDATED
-} from './actions';
+import {actionTypes} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import State from './models/State';
 import CompositeSpecTable from './models/CompositeSpecTable';
@@ -47,21 +15,21 @@ export default function(state = new State(), action){
 
 	switch(action.type){
 
-		case ERROR:
+		case actionTypes.ERROR:
 			return state.update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case INIT:
+		case actionTypes.INIT:
 			return state.update(getStateFromHash());
 
-		case LOAD_ERROR:
+		case actionTypes.LOAD_ERROR:
 			return State.deserialize(action.state, action.cart);
 
-		case WHOAMI_FETCHED:
+		case actionTypes.WHOAMI_FETCHED:
 			return state.update({user: action.user});
 
-		case USER_INFO_FETCHED:
+		case actionTypes.USER_INFO_FETCHED:
 			return state.update({
 				user: {
 					profile: action.profile,
@@ -69,7 +37,7 @@ export default function(state = new State(), action){
 				}
 			});
 
-		case SPECTABLES_FETCHED:
+		case actionTypes.SPECTABLES_FETCHED:
 			specTable = new CompositeSpecTable(action.specTables);
 			let objCount = getObjCount(specTable);
 
@@ -81,7 +49,7 @@ export default function(state = new State(), action){
 				lookup: new Lookup(specTable)
 			});
 
-		case RESTORE_FILTERS:
+		case actionTypes.RESTORE_FILTERS:
 			let {filterCategories, page} = state;
 			let specTable = getSpecTable(state.specTable, filterCategories);
 			objCount = getObjCount(specTable);
@@ -94,10 +62,10 @@ export default function(state = new State(), action){
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
-		case RESTORE_FROM_HISTORY:
+		case actionTypes.RESTORE_FROM_HISTORY:
 			return State.deserialize(action.historyState, state.cart);
 
-		case SPEC_FILTER_UPDATED:
+		case actionTypes.SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
 
@@ -110,7 +78,7 @@ export default function(state = new State(), action){
 				checkedObjectsInSearch: []
 			});
 
-		case SPEC_FILTER_RESET:
+		case actionTypes.SPEC_FILTER_RESET:
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
 
@@ -122,12 +90,12 @@ export default function(state = new State(), action){
 				checkedObjectsInSearch: []
 			});
 
-		case RESTORE_PREVIEW:
+		case actionTypes.RESTORE_PREVIEW:
 			return state.update({
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
-		case OBJECTS_FETCHED:
+		case actionTypes.OBJECTS_FETCHED:
 			const extendedObjectsTable = action.objectsTable.map(ot => {
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
@@ -147,31 +115,31 @@ export default function(state = new State(), action){
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
-		case EXTENDED_DOBJ_INFO_FETCHED:
+		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:
 			return state.updateAndSave({
 				extendedDobjInfo: action.extendedDobjInfo
 			});
 
-		case SORTING_TOGGLED:
+		case actionTypes.SORTING_TOGGLED:
 			return state.update({
 				objectsTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
 			});
 
-		case STEP_REQUESTED:
+		case actionTypes.STEP_REQUESTED:
 			return state.update({
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
 				page: state.page + action.direction
 			});
 
-		case ROUTE_UPDATED:
+		case actionTypes.ROUTE_UPDATED:
 			return state.update({
 				route: action.route,
 				preview: action.route === config.ROUTE_PREVIEW ? state.preview : new Preview()
 			});
 
-		case SWITCH_TAB:
+		case actionTypes.SWITCH_TAB:
 			paging = state.paging
 				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
 				.withOffset(0);
@@ -182,40 +150,40 @@ export default function(state = new State(), action){
 				page: 0
 			});
 
-		case METADATA:
+		case actionTypes.METADATA:
 			return state.update({
 				route: config.ROUTE_METADATA,
 				metadata: action.metadataWithId,
 				id: action.metadataWithId.id
 			});
 
-		case PREVIEW:
+		case actionTypes.PREVIEW:
 			return state.update({
 				route: config.ROUTE_PREVIEW,
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
-		case PREVIEW_VISIBILITY:
+		case actionTypes.PREVIEW_VISIBILITY:
 			return state.update({preview: action.visible ? state.preview.show() : state.preview.hide()});
 
-		case PREVIEW_SETTING_UPDATED:
+		case actionTypes.PREVIEW_SETTING_UPDATED:
 			return state.update({
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
 			});
 
-		case ITEM_URL_UPDATED:
+		case actionTypes.ITEM_URL_UPDATED:
 			return state.update({
 				preview: state.preview.withItemUrl(action.url)
 			});
 
-		case CART_UPDATED:
+		case actionTypes.CART_UPDATED:
 			return state.update({
 				cart: action.cart,
 				checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => action.cart.ids.includes(uri))
 			});
 
-		case TESTED_BATCH_DOWNLOAD:
+		case actionTypes.TESTED_BATCH_DOWNLOAD:
 			return state.update({
 				user: action.user.email,
 				batchDownloadStatus: {
@@ -224,14 +192,14 @@ export default function(state = new State(), action){
 				}
 			});
 
-		case TEMPORAL_FILTER:
+		case actionTypes.TEMPORAL_FILTER:
 			return state.update({
 				filterTemporal: action.filterTemporal,
 				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText)),
 				checkedObjectsInSearch: []
 			});
 
-		case FREE_TEXT_FILTER:
+		case actionTypes.FREE_TEXT_FILTER:
 			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
 
 			return state.update({
@@ -239,7 +207,7 @@ export default function(state = new State(), action){
 				checkedObjectsInSearch: []
 			});
 
-		case UPDATE_SELECTED_PIDS:
+		case actionTypes.UPDATE_SELECTED_PIDS:
 			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
 
 			return state.update({
@@ -247,22 +215,22 @@ export default function(state = new State(), action){
 				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, filterFreeText))
 			});
 
-		case UPDATE_CHECKED_OBJECTS_IN_SEARCH:
+		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH:
 			return state.updateAndSave({
 				checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, action.checkedObjectInSearch)
 			});
 
-		case UPDATE_CHECKED_OBJECTS_IN_CART:
+		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART:
 			return state.update({
 				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
 			});
 
-		case TS_SETTINGS:
+		case actionTypes.TS_SETTINGS:
 			return state.update({
 				tsSettings: action.tsSettings
 			});
 
-		case HELP_INFO_UPDATED:
+		case actionTypes.HELP_INFO_UPDATED:
 			return state.update({
 				helpStorage: state.helpStorage.withUpdatedItem(action.helpItem)
 			});

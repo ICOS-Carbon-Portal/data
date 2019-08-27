@@ -25,6 +25,7 @@
 		"main/**/*.jsx",
 		"main/**/*.ts",
 		"main/**/*.tsx",
-		"../common/main/**/*.js"
+		"../common/main/**/*.js",
+		"../common/main/**/*.ts"
 	]
 }
