@@ -2,7 +2,7 @@ import Cart from "./models/Cart";
 
 export const actionTypes = {
 	ERROR: 'ERROR',
-	INIT: 'INIT',
+//	INIT: 'INIT',
 	LOAD_ERROR: 'LOAD_ERROR',
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
@@ -48,31 +48,30 @@ import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {IKeyValStrPairs} from "./typescript/interfaces";
 import {Action, Dispatch} from "redux";
-import {ThunkAction, ThunkDispatch} from "redux-thunk";
+import {IPortalThunkAction, PortalDispatch} from "./store";
 
-interface IPortalThunkAction<R> extends ThunkAction<R, State, undefined, PortalAction>{}
-type PortalDispatch = ThunkDispatch<State, undefined, PortalAction>
+export abstract class ActionPayload implements Action<string>{type = ""}
+export abstract class BackendPayload extends ActionPayload{}
+export abstract class MiscPayload extends ActionPayload{}
 
-abstract class PortalAction implements Action<undefined>{
-	type: undefined;
+
+export interface IPortalPlainAction extends Action<string>{
+	payload: ActionPayload
 }
 
-abstract class BackendFetchAction extends PortalAction{}
-abstract class MiscellaneousAction extends PortalAction{}
-
-class WhoAmiFetchedAction extends BackendFetchAction{
-	constructor(readonly whoAmi: object){super();}
+export class BackendUserInfo extends BackendPayload{
+	constructor(readonly user: IUser, readonly profile: object){super();}
 }
 
-class TablesFetchedAction extends BackendFetchAction{
+export class BackendTables extends BackendPayload{
 	constructor(readonly allTables: object){super();}
 }
 
-class ErrorAction extends MiscellaneousAction{
+export class MiscError extends MiscPayload{
 	constructor(readonly error: Error){super();}
 }
 
-class InitAction extends MiscellaneousAction{
+export class MiscInit extends MiscPayload{
 	constructor(){super();}
 }
 
@@ -80,13 +79,16 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
+interface IUser{
+	email: string | undefined;
+}
 
-export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error =>{
-	dispatch(new ErrorAction(error));
+export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
+	dispatch(new MiscError(error));
 	dispatch(logError(error));
 };
 
-const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getState) => {
+const logError: (error: Error) => IPortalThunkAction = error => (_, getState) => {
 	const state: any = getState();
 	const user = state.user.email
 		? `${state.user.profile.profile.givenName} ${state.user.profile.profile.surname}`
@@ -102,10 +104,10 @@ const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getSta
 	});
 };
 
-export const init = () => (dispatch: Function) => {
+export const init: IPortalThunkAction = dispatch => {
 	const stateFromHash = hashToState();
 
-	getWhoIam().then((user: any) => {
+	getWhoIam().then((user: IUser) => {
 		if (stateFromHash.error){
 			if (user.email) logOut();
 			dispatch(loadFromError(user, stateFromHash.error));
@@ -116,16 +118,11 @@ export const init = () => (dispatch: Function) => {
 	});
 };
 
-const loadApp:  (user: any) => IPortalThunkAction<void> = user => dispatch => {
-	dispatch(new InitAction());
+const loadApp: (user: IUser) => IPortalThunkAction = user => dispatch => {
+	dispatch(new MiscInit());
 
 	getProfile(user.email).then(profile => {
-		dispatch({
-			type: actionTypes.USER_INFO_FETCHED,
-			user,
-			profile
-		});
-
+		dispatch(new BackendUserInfo(user, profile));
 		dispatch(getTsPreviewSettings());
 	});
 
@@ -136,7 +133,7 @@ const loadApp:  (user: any) => IPortalThunkAction<void> = user => dispatch => {
 				const cart = restoreCarts(cartInSessionStorage, restheartCart);
 
 				dispatch(updateCart(user.email, cart))
-					.then(() => dispatch(getAllSpecTables()));
+					.then(() => dispatch(getAllSpecTables));
 			});
 		}
 	);
@@ -177,11 +174,11 @@ export const restoreFromHistory = (historyState: any) => (dispatch: Function) =>
 			historyState
 		});
 	} else {
-		dispatch(init());
+		dispatch(init);
 	}
 };
 
-export const getAllSpecTables: IPortalThunkAction<void> = (dispatch, _) => {
+export const getAllSpecTables: IPortalThunkAction = dispatch => {
 	fetchAllSpecTables().then(
 		allTables => {
 			dispatch(Object.assign({type: actionTypes.SPECTABLES_FETCHED}, allTables));
@@ -193,7 +190,7 @@ export const getAllSpecTables: IPortalThunkAction<void> = (dispatch, _) => {
 };
 
 
-export const queryMeta = (id: string, search: string) => (dispatch: Function) => {
+export const queryMeta: (id: string, search: string) => IPortalThunkAction = (id, search) => dispatch => {
 	switch (id) {
 		case "dobj":
 			searchDobjs(search).then((data: any) => dispatchMeta(id, data, dispatch));
@@ -279,9 +276,10 @@ export const getFilteredDataObjects = (dispatch: Function, getState: Function) =
 
 };
 
-const getFilteredDataObjectsWithoutUsageLogging = (dispatch: Function, getState: Function) => {
+const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction = (dispatch, getState) => {
+	const state: any = getState();
 	const {specTable, route, preview, sorting, formatToRdfGraph,
-		tabs, filterTemporal, filterFreeText, cart, metadata} = getState();
+		tabs, filterTemporal, filterFreeText, cart, metadata} = state;
 
 	const getFilters = () => {
 		if (route === config.ROUTE_METADATA && metadata.id) {
@@ -324,7 +322,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch: Function, getState:
 
 	const paging = route === config.ROUTE_CART
 		? {offset: 0, limit: cart.ids.length}
-		: getState().paging;
+		: state.paging;
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
@@ -352,7 +350,7 @@ const getFilteredDataObjectsWithoutUsageLogging = (dispatch: Function, getState:
 	);
 };
 
-const fetchExtendedDataObjInfo = (dobjs: string[]) => (dispatch: Function) => {
+const fetchExtendedDataObjInfo: (dobjs: string[]) => IPortalThunkAction = dobjs => dispatch => {
 	getExtendedDataObjInfo(dobjs).then(
 		(extendedDobjInfo: any) => {
 			dispatch({
@@ -499,7 +497,7 @@ export const removeFromCart = (ids: string[]) => (dispatch: Function, getState: 
 	dispatch(updateCart(state.user.email, cart));
 };
 
-const updateCart = (email: string, cart: Cart) => (dispatch: Function) => {
+const updateCart = (email: string | undefined, cart: Cart) => (dispatch: Function) => {
 	return saveCart(email, cart).then(
 		dispatch({
 			type: actionTypes.CART_UPDATED,
@@ -520,7 +518,7 @@ export const fetchIsBatchDownloadOk = (dispatch: Function) => {
 		);
 };
 
-export const setFilterTemporal = (filterTemporal: any) => (dispatch: Function) => {
+export const setFilterTemporal: (filterTemporal: any) => IPortalThunkAction = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error) {
 		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 	}
