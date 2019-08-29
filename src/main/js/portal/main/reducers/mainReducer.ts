@@ -8,7 +8,6 @@ import State from "../models/State";
 
 const reducer: Reducer<State, IPortalPlainAction> = (state: State = new State(), action: IPortalPlainAction) => {
 	const payload = action.payload;
-	console.log({state, action, payload});
 
 	const result = (payload instanceof BackendPayload)
 		? backendReducer(state, payload)

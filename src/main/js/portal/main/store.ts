@@ -1,6 +1,6 @@
 import 'babel-polyfill';
-import {createStore, applyMiddleware, Middleware, AnyAction, Action, compose} from 'redux';
-import thunkMiddleware, {ThunkAction, ThunkDispatch} from 'redux-thunk';
+import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, compose} from 'redux';
+import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
 import {ActionPayload, init, IPortalPlainAction} from './actions';
 import State from "./models/State";
@@ -13,9 +13,15 @@ import State from "./models/State";
 // 	console.log('state after dispatch', store.getState());
 // 	return returnValue;
 // };
-export type PortalAction = IPortalPlainAction | IPortalThunkAction | ActionPayload;
-export interface IPortalThunkAction extends ThunkAction<void, State, undefined, PortalAction & Action<string>>{}
-export type PortalDispatch = ThunkDispatch<State, undefined, PortalAction & Action<string>>
+export interface IPortalThunkAction<R>{
+	(dispatch: PortalDispatch, getState: () => State): R
+}
+
+//TODO When the old reducer is not used any more, change Dispatch's type param to IPortalPlainAction
+export interface PortalDispatch extends Dispatch<Action<string>>{
+	<R>(asyncAction: IPortalThunkAction<R>): R
+	(payload: ActionPayload): IPortalPlainAction
+}
 
 const payloadMiddleware: Middleware<PortalDispatch, State, PortalDispatch> = store => next => action => {
 	const finalAction: AnyAction = (action instanceof ActionPayload)

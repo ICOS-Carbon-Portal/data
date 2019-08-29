@@ -1,7 +1,7 @@
 import {BackendPayload,	BackendTables, BackendUserInfo} from "../actions";
 import State from "../models/State";
 
-const subReducer: (s: State, payload: BackendPayload) => State = (state, payload) => {
+export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
 		return state.update({
@@ -19,5 +19,3 @@ const subReducer: (s: State, payload: BackendPayload) => State = (state, payload
 	return state;
 
 };
-
-export default subReducer;

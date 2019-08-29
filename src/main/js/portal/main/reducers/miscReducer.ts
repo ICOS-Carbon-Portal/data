@@ -1,7 +1,7 @@
 import {MiscError, MiscInit, MiscPayload} from "../actions";
 import State from "../models/State";
 
-const subReducer: (s: State, payload: MiscPayload) => State = (state, payload) => {
+export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscInit){
 		return state;
@@ -14,5 +14,3 @@ const subReducer: (s: State, payload: MiscPayload) => State = (state, payload) =
 	return state;
 
 };
-
-export default subReducer;

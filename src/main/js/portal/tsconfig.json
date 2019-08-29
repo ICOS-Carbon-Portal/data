@@ -7,7 +7,7 @@
 		"incremental": true,
 		// Specify what file to store incremental build information in.
 		"tsBuildInfoFile": "./tsTarget/tsBuildInfoFile",
-		"skipLibCheck": false,
+		"skipLibCheck": true,
 		"jsx": "preserve",
 		// Target latest version of ECMAScript.
 		"target": "esnext",
