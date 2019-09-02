@@ -16,32 +16,46 @@ import se.lu.nateko.cp.data.RestHeartConfig
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.StaticCollection
 import spray.json._
 
 class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
 	import http.system.dispatcher
 
-	def downloadLogUri(implicit envri: Envri) =
-		Uri(config.dobjDownloadLogUri.toASCIIString)
-
 	def logDownload(dobj: DataObject, ip: String, extraProps: (String, String)*)(implicit envri: Envri): Future[Done] = {
 		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
 
-		val logItemProps = extraProps.map{
+		val basePayload = extraProps.map{
 				case(prop, value) => prop -> JsString(value)
-			} :+
+			} :+ "dobj" -> dobj.toJson
+
+		val logUri = Uri(config.dobjDownloadLogUri.toASCIIString)
+		logDownloadInternal(logUri, basePayload, ip, "data object")
+	}
+
+	def logDownload(coll: StaticCollection, ip: String)(implicit envri: Envri): Future[Done] = {
+		import se.lu.nateko.cp.meta.core.data.JsonSupport.staticCollFormat
+
+		val basePayload = Seq("coll" -> coll.toJson)
+
+		val logUri = Uri(config.collDownloadLogUri.toASCIIString)
+		logDownloadInternal(logUri, basePayload, ip, "collection")
+	}
+
+	private def logDownloadInternal(logUri: Uri, basePayload: Seq[(String, JsValue)], ip: String, descr: String): Future[Done] = {
+
+		val logItemProps = basePayload :+
 			"time" -> JsString(java.time.Instant.now().toString) :+
-			"ip" -> JsString(ip) :+
-			"dobj" -> dobj.toJson
+			"ip" -> JsString(ip)
 
 		for(
 			entity <- Marshal(JsObject(logItemProps:_*)).to[RequestEntity];
-			r <- http.singleRequest(HttpRequest(uri = downloadLogUri, method = HttpMethods.POST, entity = entity))
+			r <- http.singleRequest(HttpRequest(uri = logUri, method = HttpMethods.POST, entity = entity))
 		) yield {
 			r.discardEntityBytes()
 			if(r.status == StatusCodes.OK) done
-			else Future.failed(new Exception(s"Failed logging data object download to the portal log at $downloadLogUri: ${r.status}"))
+			else Future.failed(new Exception(s"Failed logging $descr download to the portal log at $logUri: ${r.status}"))
 		}
 	}.flatten
 

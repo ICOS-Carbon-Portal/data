@@ -18,6 +18,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import spray.json._
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import se.lu.nateko.cp.data.MongoDbIndex
+import se.lu.nateko.cp.meta.core.data.StaticCollection
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
@@ -115,25 +116,36 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 				_ => setupCollection(config.dobjDownloads)
 			}.flatMap{
 				_ => setupCollection(config.portalUsage)
+			}.flatMap{
+				_ => setupCollection(config.collDownloads)
 			}
 		}
 	}.map(_ => Done)
 
 	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] = {
-		val updateItem = JsObject(
-			"$push" -> JsObject(
-				"dobjDownloads" -> JsObject(
-					"time" -> JsString(java.time.Instant.now().toString),
-					"fileName" -> JsString(dobj.fileName),
-					"hash" -> JsString(dobj.hash.base64Url)
-				)
-			)
+		val item = JsObject(
+			"time" -> JsString(java.time.Instant.now().toString),
+			"fileName" -> JsString(dobj.fileName),
+			"hash" -> JsString(dobj.hash.base64Url)
 		)
+		patchUserDoc(uid, "dobjDownloads", item, "data object download")
+	}
 
+	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] = {
+		val item = JsObject(
+			"time" -> JsString(java.time.Instant.now().toString),
+			"title" -> JsString(coll.title),
+			"uri" -> JsString(coll.res.toString)
+		)
+		patchUserDoc(uid, "collDownloads", item, "collection download")
+	}
+
+	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(implicit envri: Envri): Future[Done] = {
+		val updateItem = JsObject("$push" -> JsObject(arrayProp -> item))
 		for(
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
-			res <- handleWritingOutcome(r, "saving data object download to user profile")
+			res <- handleWritingOutcome(r, s"saving $itemName to user profile")
 		) yield res
 	}
 
@@ -144,7 +156,6 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			res <- setupCollIndices(coll)
 		) yield res
 	}
-
 
 	private def setupCollIndices(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = coll.indices.map { idxDefs =>
 		val indexUri = {
