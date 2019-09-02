@@ -1,7 +1,12 @@
 import CartItem from './CartItem';
 
 export default class Cart {
-	constructor(name, items){
+	readonly _name: string;
+	readonly _items: CartItem[];
+	readonly _ts: string;
+
+
+	constructor(name: string | undefined = undefined, items: CartItem[] | undefined = undefined){
 		this._name = name || 'My data cart';
 		this._items = items || [];
 		this._ts = (items ? Date.now() + '' : '0');
@@ -15,25 +20,15 @@ export default class Cart {
 		}
 	}
 
-	addItem(cartItem){
-		return new Cart(this._name, [...this._items, ...cartItem]);
+	addItem(cartItem: CartItem[]){
+		return new Cart(this._name, this._items.concat(cartItem));
 	}
 
-	removeItems(ids){
+	removeItems(ids: string[]){
 		return new Cart(this._name, this._items.filter(item => !ids.includes(item.id)));
 	}
 
-	withItemSetting(id, setting, value){
-		const items = this._items.map(item => {
-			return item.id === id
-				? item.withSetting(setting, value)
-				: item;
-		});
-
-		return new Cart(this._name, items);
-	}
-
-	withItemUrl(id, url){
+	withItemUrl(id: string, url: string){
 		const items = this._items.map(item => {
 			return item.id === id
 				? item.withUrl(url)
@@ -63,11 +58,11 @@ export default class Cart {
 		return this._items;
 	}
 
-	item(id){
+	item(id: string){
 		return this._items.find(item => item.id === id);
 	}
 
-	hasItem(id){
+	hasItem(id: string){
 		return !!this._items.find(item => item.id === id);
 	}
 
@@ -75,7 +70,7 @@ export default class Cart {
 		return this._name;
 	}
 
-	withName(name){
+	withName(name: string){
 		return new Cart(name, this._items);
 	}
 
@@ -84,7 +79,7 @@ export default class Cart {
 	}
 }
 
-export const restoreCarts = (cartInSessionStorage, cartInRestheart) => {
+export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart: {cart: any}) => {
 	const sessionStorageTs = cartInSessionStorage.cart && cartInSessionStorage.cart._ts
 		? parseInt(cartInSessionStorage.cart._ts)
 		: '0';
@@ -103,10 +98,10 @@ export const restoreCarts = (cartInSessionStorage, cartInRestheart) => {
 		? cartInRestheart.cart._items
 		: [];
 
-	const newItems = restheartItems.concat(sessionStorageItems).filter((item, i, items) => {
+	const newItems = restheartItems.concat(sessionStorageItems).filter((item: any, i: number, items: any[]) => {
 		return items.findIndex(itm => itm._id === item._id) === i;
 	});
-	const newCartItems = newItems.map(item => new CartItem(item._dataobject, item._type, item._url));
+	const newCartItems = newItems.map((item: any) => new CartItem(item._dataobject, item._type, item._url));
 
 	return new Cart(newName, newCartItems);
 };

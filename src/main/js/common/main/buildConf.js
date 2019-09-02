@@ -73,7 +73,7 @@ const transformToBundle = (isProduction, paths, gulpReplace) => {
 			extensions: ['.js', '.jsx', '.ts', '.tsx']
 		})
 		.bundle()
-		.on('error', err => {
+		.on('error', function(err) {
 			console.log(err);
 			this.emit('end');
 		})

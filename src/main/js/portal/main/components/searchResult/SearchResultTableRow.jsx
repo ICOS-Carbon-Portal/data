@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import CheckBtn from '../buttons/ChechBtn.jsx';
 import {isSmallDevice} from '../../utils';
-import {LinkifyText} from '../LinkifyText.jsx';
+import {LinkifyText} from '../LinkifyText';
 
 
 const truncateStyle = {
@@ -78,7 +78,7 @@ const Description = ({extendedInfo, truncateStyle}) => {
 
 	return isSmallDevice()
 		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-		: <LinkifyText>{extendedInfo.description}</LinkifyText>;
+		: <LinkifyText text={extendedInfo.description} />;
 };
 
 const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, children}) => {
