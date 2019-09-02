@@ -6,17 +6,11 @@ import Lookup from './models/Lookup';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
-import {getStateFromHash} from "./models/State";
-import {MiscInit} from './actions';
 
 
 const specTableKeys = Object.keys(placeholders);
 
 export default function(state = new State(), action){
-
-	if (action.payload instanceof MiscInit){
-		return state.update(getStateFromHash());
-	}
 
 	switch(action.type){
 
@@ -27,9 +21,6 @@ export default function(state = new State(), action){
 
 		case actionTypes.LOAD_ERROR:
 			return State.deserialize(action.state, action.cart);
-
-		// case actionTypes.WHOAMI_FETCHED:
-		// 	return state.update({user: action.user});
 
 		case actionTypes.USER_INFO_FETCHED:
 			return state.update({
