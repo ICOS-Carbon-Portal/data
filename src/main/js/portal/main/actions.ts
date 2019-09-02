@@ -35,7 +35,7 @@ export const actionTypes = {
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
-import State, {hashToState} from "./models/State";
+import {hashToState} from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -47,7 +47,7 @@ import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {IKeyValStrPairs} from "./typescript/interfaces";
-import {Action, Dispatch} from "redux";
+import {Action} from "redux";
 import {IPortalThunkAction, PortalDispatch} from "./store";
 
 export abstract class ActionPayload{}

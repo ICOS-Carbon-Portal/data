@@ -9,13 +9,16 @@ import State from "../models/State";
 const reducer: Reducer<State, IPortalPlainAction> = (state: State = new State(), action: IPortalPlainAction) => {
 	const payload = action.payload;
 
-	const result = (payload instanceof BackendPayload)
-		? backendReducer(state, payload)
-		: (payload instanceof MiscPayload)
-			? miscReducer(state, payload)
-			: state;
+	switch (payload) {
+		case payload instanceof BackendPayload:
+			return backendReducer(state, payload);
 
-	return (result === state) ? oldReducer(state, action) : result;
+		case payload instanceof MiscPayload:
+			return miscReducer(state, payload);
+
+		default:
+			return oldReducer(state, action);
+	}
 };
 
 export default reducer;
