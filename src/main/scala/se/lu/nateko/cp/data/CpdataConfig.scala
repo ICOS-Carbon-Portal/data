@@ -4,6 +4,8 @@ import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigRenderOptions
 
+import java.net.URI
+
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
@@ -67,14 +69,20 @@ case class RestheartCollDef(
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
-	dobjDownloadLogUris: Map[Envri, java.net.URI],
+	downloadLogUris: Map[Envri, URI],
 	usersCollection: String,
 	portalUsage: RestheartCollDef,
 	dobjDownloads: RestheartCollDef,
 	collDownloads: RestheartCollDef
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
-	def dobjDownloadLogUri(implicit envri: Envri) = dobjDownloadLogUris(envri)
+	def dobjDownloadLogUri(implicit envri: Envri) = downloadLogUri(dobjDownloads)
+	def collDownloadLogUri(implicit envri: Envri) = downloadLogUri(collDownloads)
+
+	private def downloadLogUri(dlColl: RestheartCollDef)(implicit envri: Envri): URI = {
+		val baseUri = downloadLogUris(envri)
+		baseUri.resolve(dlColl.name)
+	}
 }
 
 case class EtcFacadeConfig(

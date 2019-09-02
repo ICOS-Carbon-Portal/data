@@ -75,7 +75,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 				val hashes = coll.members.collect{
 					case PlainStaticObject(_, hash, _) => hash
 				}
-				batchDownload(hashes, coll.title, licenceCheck(hashsum)){
+				batchDownload(hashes, coll.title, licenceCheck(hashsum), logCollDownload(coll)){
 					redirect(new UriLicenceProfile(Seq(hashsum), None, true).licenceUri, StatusCodes.Found)
 				}
 			}
@@ -84,7 +84,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private def licenceCheck(hash: Sha256Sum): Directive1[Boolean] = licenceCookieHashsums.map(_.contains(hash))
 
-	private def batchDownload(hashes: Seq[Sha256Sum], fileName: String, licenceCheck: Directive1[Boolean])(
+	private def batchDownload(hashes: Seq[Sha256Sum], fileName: String, licenceCheck: Directive1[Boolean], extraLog: ExtraBatchLog = noopBatchLog)(
 		alternative: Route
 	): Route = userOpt{uidOpt =>
 		extractEnvri{implicit envri =>
@@ -95,6 +95,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 						hashes,
 						logDownload(_, ip, uidOpt)
 					)
+					extraLog(ip, uidOpt)
 					completeWithSource(src, ContentType(MediaTypes.`application/zip`))
 				}
 			}
@@ -219,11 +220,25 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private def logPublicDownloadInfo(dobj: DataObject, ip: String, extraInfo: Seq[(String, String)] = Nil)(implicit envri: Envri): Unit =
 		logClient.logDownload(dobj, ip, extraInfo:_*).failed.foreach(
-			log.error(_, s"Failed logging download of ${dobj.hash} from $ip to RestHeart")
+			log.error(_, s"Failed logging download of object ${dobj.hash} from $ip to RestHeart")
 		)
+
+	private def logCollDownload(coll: StaticCollection)(implicit envri: Envri): ExtraBatchLog = (ip, uidOpt) => {
+		logClient.logDownload(coll, ip).failed.foreach(
+			log.error(_, s"Failed logging download of collection ${coll.res} from $ip to RestHeart")
+		)
+		for(uid <- uidOpt){
+			restHeart.saveDownload(coll, uid).failed.foreach(
+				log.error(_, s"Failed saving download of collection ${coll.res} to ${uid.email}'s user profile")
+			)
+		}
+	}
 }
 
 object DownloadRouting{
+
+	type ExtraBatchLog = (String, Option[UserId]) => Unit
+	val noopBatchLog: ExtraBatchLog = (_, _) => ()
 
 	private val optionalFileName: Directive1[Option[String]] = Directive{nameToRoute =>
 		pathEndOrSingleSlash{
