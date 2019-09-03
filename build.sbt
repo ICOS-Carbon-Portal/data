@@ -64,28 +64,32 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
+val frontentBuildProcKey = AttributeKey[UnixProcessWithChildren]("frontendBuildProcess")
+
+def stopFrontendBuildProc(state: State): Unit = {
+	val log = state.log
+	state.get(frontentBuildProcKey).foreach{proc =>
+		if(proc.isAlive) {
+			log.info(s"Terminating the front end build process with PID ${proc.pid} (with children) and waiting for it to finish")
+			proc.killAndWaitFor()
+		}
+		else log.info("The resident front end build process has already stopped")
+	}
+}
 
 val frontend = Command.args("frontend", "install | build <app>"){(state, args) =>
 
 	import java.io.File
 	val log = state.log
-
 	def projectDirectory(app: String) = new File(s"src/main/js/$app/")
 
 	def stopAndStart(forApp: Option[String]) = {
-		val key = AttributeKey[UnixProcessWithChildren]("frontendBuildProcess")
-		state.get(key).foreach{proc =>
-			if(proc.isAlive) {
-				log.info(s"Terminating the front end build process with PID ${proc.pid} (with children) and waiting for it to finish")
-				proc.killAndWaitFor()
-			}
-			else log.info("The front end build process has already stopped")
-		}
-		forApp.fold(state.remove(key).copy(exitHooks = state.exitHooks.dropProcessKilling)){app =>
+		stopFrontendBuildProc(state)
+		forApp.fold(state.remove(frontentBuildProcKey).copy(exitHooks = state.exitHooks.dropProcessKilling)){app =>
 			val proc = UnixProcessWithChildren.run(projectDirectory(app), "bash", "-c", "./build.sh")
 
 			state
-				.put(key, proc)
+				.put(frontentBuildProcKey, proc)
 				.copy(
 					exitHooks = state.exitHooks.replaceProcToKill(proc.exitHook)
 				)
@@ -134,6 +138,8 @@ val frontendPublish = taskKey[Unit]("Builds the front end apps from scratch")
 frontendPublish := {
 	import java.io.File
 	val log = streams.value.log
+
+	stopFrontendBuildProc(state.value)
 
 	log.info("Starting front-end publish for common")
 	Process("npm install", new File("src/main/js/common/")).!
