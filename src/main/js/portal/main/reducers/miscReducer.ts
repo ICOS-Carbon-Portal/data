@@ -1,11 +1,11 @@
 import {MiscError, MiscInit, MiscPayload} from "../actions";
-import State from "../models/State";
+import State, {getStateFromHash} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 
 export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscInit){
-		return state;
+		return state.update(getStateFromHash());
 	}
 
 	if (payload instanceof MiscError){
