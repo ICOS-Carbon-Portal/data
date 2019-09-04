@@ -4,6 +4,7 @@ import PreviewSelfContained from './PreviewSelfContained.jsx';
 import CopyValue from '../controls/CopyValue.jsx';
 import config from '../../config';
 import CartBtn from '../buttons/CartBtn.jsx';
+import {Events} from 'icos-cp-utils';
 
 
 export default class Preview extends Component {
@@ -13,13 +14,18 @@ export default class Preview extends Component {
 		this.state = {
 			iframeSrc: undefined
 		};
-		window.onmessage = event => this.handleIframeSrcChange(event);
+
+		this.events = new Events();
+		this.events.addToTarget(window, "message", this.handleIframeSrcChange.bind(this));
 	}
 
 	handleIframeSrcChange(event){
 		const iframeSrc = event instanceof MessageEvent ? event.data : event.target.src;
-		this.setState({iframeSrc});
-		this.props.setPreviewUrl(iframeSrc);
+
+		if (typeof iframeSrc === "string") {
+			this.setState({iframeSrc});
+			this.props.setPreviewUrl(iframeSrc);
+		}
 	}
 
 	handleAddToCart(objInfo) {
@@ -32,6 +38,10 @@ export default class Preview extends Component {
 
 	handleViewMetadata(id) {
 		this.props.setMetadataItem(id);
+	}
+
+	componentWillUnmount(){
+		this.events.clear();
 	}
 
 	render(){
