@@ -156,6 +156,7 @@ function stateToProps(state){
 		toasterData: state.toasterData,
 		cart: state.cart,
 		metadata: state.metadata,
+		station: state.station,
 		preview: state.preview,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		checkedObjectsInCart: state.checkedObjectsInCart,

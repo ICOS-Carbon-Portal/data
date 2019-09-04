@@ -13,6 +13,9 @@ export default class PreviewBtn extends Component{
 
 	render(){
 		const {checkedObjects, style, lookup} = this.props;
+
+		if (lookup === undefined) return null;
+
 		const [enabled, title] = this.isPreviewEnabled(checkedObjects, lookup);
 		const className = "btn btn-default " + (enabled ? "" : "disabled");
 		const btnStyle = title.length ? {pointerEvents:'auto'} : {};

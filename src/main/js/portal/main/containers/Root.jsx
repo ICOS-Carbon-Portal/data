@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Provider } from 'react-redux'
-import getStore from '../store.js';
+import getStore from '../store';
 import App from './App.jsx';
 import {restoreFromHistory} from '../actions';
 import {hashUpdater} from '../models/State';

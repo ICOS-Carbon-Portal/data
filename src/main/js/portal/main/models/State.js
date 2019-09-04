@@ -6,6 +6,7 @@ import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
+import Metadata from './Metadata';
 import config, {prefixes} from "../config";
 
 
@@ -44,7 +45,8 @@ export default class State{
 			},
 			paging: {},
 			cart: new Cart(),
-			metadata: undefined,
+			metadata: new Metadata(),
+			station: undefined,
 			preview: new Preview(),
 			toasterData: undefined,
 			batchDownloadStatus: {
@@ -98,7 +100,8 @@ export default class State{
 			paging: this.paging.serialize,
 			cart: undefined,
 			preview: this.preview.serialize,
-			helpStorage: this.helpStorage.serialize
+			helpStorage: this.helpStorage.serialize,
+			metadata: this.metadata ? this.metadata.serialize : {},
 		});
 	}
 
@@ -163,9 +166,11 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		state.metadata = state.id !== undefined
-			? Object.assign({}, {id: config.previewIdPrefix[config.envri] + state.id})
-			: state.metadata;
+		state.metadata = history.state && history.state.metadata
+			? new Metadata(history.state.metadata)
+			: state.id === undefined
+				? new Metadata()
+				: Object.assign({}, {id: config.previewIdPrefix[config.envri] + state.id});
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
