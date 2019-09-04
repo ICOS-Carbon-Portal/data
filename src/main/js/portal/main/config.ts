@@ -34,18 +34,32 @@ export default {
 	dobjSortLimit: 2000,
 };
 
-export const placeholders = {
-	type: 'Data type',
-	level: 'Data level',
-	format: 'Format',
-	theme: 'Theme',
-	colTitle: 'Column name',
-	valType: 'Value type',
-	quantityKind: 'Quantity kind',
-	quantityUnit: 'Unit of measurement',
-	submitter: 'Data submitter',
-	station: 'Station of origin',
-	project: 'Project'
+export const placeholders: { [key: string]: { [key: string]: string }} = {
+	ICOS: {
+		type: 'Data type',
+		level: 'Data level',
+		format: 'Format',
+		theme: 'Theme',
+		colTitle: 'Column name',
+		valType: 'Value type',
+		quantityKind: 'Quantity kind',
+		quantityUnit: 'Unit of measurement',
+		submitter: 'Data submitter',
+		station: 'Station of origin',
+		project: 'Project'
+	},
+	SITES: {
+		type: 'Data type',
+		level: 'Data level',
+		format: 'Format',
+		theme: 'Theme',
+		colTitle: 'Column name',
+		valType: 'Value type',
+		quantityUnit: 'Unit of measurement',
+		submitter: 'Data submitter',
+		station: 'Station',
+		project: 'Project'
+	}
 };
 
 export const prefixes = {
@@ -78,4 +92,17 @@ export const prefixes = {
 		valType: 'https://meta.fieldsites.se/resources/',
 		quantityKind: 'https://meta.fieldsites.se/resources/'
 	}
+};
+
+export const filters: { [key: string]: { [key: string]: string | string[] }[]} = {
+	ICOS: [
+		{title: "Data origin", list: ['project', 'theme', 'station', 'submitter']},
+		{title: "Data types", list: ['type', 'level', 'format']},
+		{title: "Value types", list: ['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+	],
+	SITES: [
+		{title: "Data origin", list: ['project', 'theme', 'station']},
+		{title: "Data types", list: ['type', 'level', 'format']},
+		{title: "Value types", list: ['colTitle', 'valType', 'quantityUnit']}
+	]
 };

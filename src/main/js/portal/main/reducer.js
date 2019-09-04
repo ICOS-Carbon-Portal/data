@@ -8,7 +8,7 @@ import config, {placeholders} from './config';
 import Paging from './models/Paging';
 
 
-const specTableKeys = Object.keys(placeholders);
+const specTableKeys = Object.keys(placeholders[config.envri]);
 
 export default function(state = new State(), action){
 
