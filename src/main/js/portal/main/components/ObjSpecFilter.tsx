@@ -3,32 +3,30 @@ import config, {placeholders, filters} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
+import {IKeyValStrPairs, IKeyOptVal} from "../typescript/interfaces";
 
-interface SpecTable {
+interface ISpecTable {
 	names: string[];
-	findTable(name: string): { [key: string]: { [key: string]: string}[]};
+	findTable(name: string): { [key: string]: IKeyValStrPairs[] };
 	getFilter(name: string): string[];
 	getDistinctAvailableColValues(name: string): string[];
+	getColLabelNamePair(name: string): [string, string];
 }
 
-interface KeyOptVal {
-	[key: string]: string | undefined;
+interface IObjSpecFilterProps {
+	search: IKeyOptVal;
+	specTable: ISpecTable;
+	helpStorage: any;
+	getResourceHelpInfo: Function;
+	specFiltersReset: Function;
+	updateFilter: Function;
 }
 
-interface ObjSpecFilterProps {
-	search: KeyOptVal,
-	specTable: SpecTable,
-	helpStorage: any,
-	getResourceHelpInfo: any,
-	specFiltersReset: Function,
-	updateFilter: Function
-}
+export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps, {}> {
 
-export default class ObjSpecFilter extends React.Component<ObjSpecFilterProps, {}> {
+	search: IKeyOptVal
 
-	search: { [key: string]: string | undefined }
-
-	constructor(props: ObjSpecFilterProps) {
+	constructor(props: IObjSpecFilterProps) {
 		super(props);
 		this.search = Object.assign({}, placeholders[config.envri]);
 		Object.keys(this.search).forEach(v => this.search[v] = undefined);
@@ -101,7 +99,7 @@ export default class ObjSpecFilter extends React.Component<ObjSpecFilterProps, {
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 
-				{availableFilters.map((filterSection: any, i: any) =>
+				{availableFilters.map((filterSection: any, i: number) =>
 					<FilterPanel
 						key={"filter_" + i}
 						header={filterSection.title}
@@ -118,9 +116,9 @@ export default class ObjSpecFilter extends React.Component<ObjSpecFilterProps, {
 }
 
 interface IFilterPanel {
-	header: any,
-	nameList: string[],
-	colNames: any,
+	header: string,
+	nameList: [string, string][],
+	colNames: string[],
 	getCtrl: Function,
 	startCollapsed: boolean
 }
@@ -144,7 +142,7 @@ const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = fal
 };
 
 interface IResetBtn {
-	resetFiltersAction: any,
+	resetFiltersAction: Function,
 	enabled: boolean
 }
 
@@ -153,11 +151,11 @@ const ResetBtn = ({ resetFiltersAction, enabled }: IResetBtn) => {
 	const style = enabled
 		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
 		: {margin: '5px 2px', textDecoration: 'underline'};
-	const onClick = enabled ? resetFiltersAction : () => {};
+	const onClick = () => enabled ? resetFiltersAction() : {};
 
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };
 
-const getNameList = (specTable: any, list: string[]) => {
+const getNameList = (specTable: ISpecTable, list: string[]) => {
 	return list.map(colName => specTable.getColLabelNamePair(colName));
 };

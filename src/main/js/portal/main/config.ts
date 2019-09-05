@@ -1,4 +1,5 @@
 import commonConfig from '../../common/main/config';
+import {IKeyValStrPairs} from "./typescript/interfaces";
 
 
 export default {
@@ -34,7 +35,7 @@ export default {
 	dobjSortLimit: 2000,
 };
 
-export const placeholders: { [key: string]: { [key: string]: string }} = {
+export const placeholders: { [key: string]: IKeyValStrPairs } = {
 	ICOS: {
 		type: 'Data type',
 		level: 'Data level',
@@ -94,7 +95,14 @@ export const prefixes = {
 	}
 };
 
-export const filters: { [key: string]: { [key: string]: string | string[] }[]} = {
+interface IFilter {
+	 [key: string]: {
+		 title: string;
+		 list: string[];
+	 }[]
+}
+
+export const filters: IFilter = {
 	ICOS: [
 		{title: "Data origin", list: ['project', 'theme', 'station', 'submitter']},
 		{title: "Data types", list: ['type', 'level', 'format']},
