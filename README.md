@@ -27,6 +27,12 @@ When developing client code for data upload, one may wish to test data objects f
 
 `curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" --upload-file ICOS_ATC_NRT_MTO.zip https://data.icos-cp.eu/tryingest`
 
+
+### Internal re-ingestion
+In some circumstances one may need to update the binary results of data ingestion without changing the data itself. In this case the server can use data objects that are already available, and redo only the ingestion part of the upload. This process can be initiated by an empty-payload HTTP POST call to data object's upload URL, like so:
+
+`curl -X POST -H "Cookie: cpauthToken=<base64-encoded signed token>" https://data.icos-cp.eu/objects/<data object id>`
+
 ---
 
 ## Simplified ETC-specific facade API for data uploads
