@@ -56,7 +56,7 @@
     "gulp": "^4.0.1",
     "gulp-replace": "^1.0.0",
     "react": "^16.8.6",
-    "browserify-css": "^0.14.0"
+    "browserify-css": "^0.15.0"
   },
   "dependencies": {
     "babel-polyfill": "^6.13.0",

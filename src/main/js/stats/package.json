@@ -48,7 +48,7 @@
     "gulp": "^4.0.1",
     "gulp-uglify": "^3.0.0",
     "vinyl-buffer": "^1.0.1",
-    "browserify-css": "^0.14.0"
+    "browserify-css": "^0.15.0"
   },
   "dependencies": {
     "babel-polyfill": "^6.13.0",
