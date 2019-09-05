@@ -1,9 +1,10 @@
-import commonConfig from '../../common/main/config';
+import commonConfig, {ICOS, SITES} from '../../common/main/config';
 import {IKeyValStrPairs} from "./typescript/interfaces";
 
+export type Envri = typeof ICOS | typeof SITES;
 
 export default {
-	envri: commonConfig.envri,
+	envri: commonConfig.envri as Envri,
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
 	ROUTE_METADATA: 'metadata',
@@ -35,32 +36,26 @@ export default {
 	dobjSortLimit: 2000,
 };
 
-export const placeholders: { [key: string]: IKeyValStrPairs } = {
-	ICOS: {
-		type: 'Data type',
-		level: 'Data level',
-		format: 'Format',
-		theme: 'Theme',
-		colTitle: 'Column name',
-		valType: 'Value type',
-		quantityKind: 'Quantity kind',
-		quantityUnit: 'Unit of measurement',
-		submitter: 'Data submitter',
-		station: 'Station of origin',
-		project: 'Project'
-	},
-	SITES: {
-		type: 'Data type',
-		level: 'Data level',
-		format: 'Format',
-		theme: 'Theme',
-		colTitle: 'Column name',
-		valType: 'Value type',
-		quantityUnit: 'Unit of measurement',
-		submitter: 'Data submitter',
-		station: 'Station',
-		project: 'Project'
-	}
+const defaultCategNames = {
+	type: 'Data type',
+	level: 'Data level',
+	format: 'Format',
+	theme: 'Theme',
+	colTitle: 'Column name',
+	valType: 'Value type',
+	quantityKind: 'Quantity kind',
+	quantityUnit: 'Unit of measurement',
+	submitter: 'Data submitter',
+	station: 'Station of origin',
+	project: 'Project'
+};
+
+export type CategoryNamesDict = typeof defaultCategNames;
+export type CategoryType = keyof CategoryNamesDict;
+
+export const placeholders: {[E in Envri]: CategoryNamesDict} = {
+	ICOS: defaultCategNames,
+	SITES: {...defaultCategNames, station: 'Station'},
 };
 
 export const prefixes = {
@@ -95,22 +90,22 @@ export const prefixes = {
 	}
 };
 
-interface IFilter {
-	 [key: string]: {
-		 title: string;
-		 list: string[];
-	 }[]
+type IFilterCategories = {
+	[E in Envri]: Array<{
+		panelTitle: string;
+		filterList: CategoryType[];
+	}>
 }
 
-export const filters: IFilter = {
+export const filters: IFilterCategories = {
 	ICOS: [
-		{title: "Data origin", list: ['project', 'theme', 'station', 'submitter']},
-		{title: "Data types", list: ['type', 'level', 'format']},
-		{title: "Value types", list: ['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter']},
+		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
 	],
 	SITES: [
-		{title: "Data origin", list: ['project', 'theme', 'station']},
-		{title: "Data types", list: ['type', 'level', 'format']},
-		{title: "Value types", list: ['colTitle', 'valType', 'quantityUnit']}
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station']},
+		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit']}
 	]
 };

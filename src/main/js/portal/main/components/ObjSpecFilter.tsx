@@ -1,12 +1,12 @@
 import React from 'react';
-import config, {placeholders, filters} from '../config';
+import config, {placeholders, filters, CategoryType, CategoryNamesDict} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 import {IKeyValStrPairs, IKeyOptVal} from "../typescript/interfaces";
 
 interface ISpecTable {
-	names: string[];
+	names: CategoryType[];
 	findTable(name: string): { [key: string]: IKeyValStrPairs[] };
 	getFilter(name: string): string[];
 	getDistinctAvailableColValues(name: string): string[];
@@ -14,7 +14,7 @@ interface ISpecTable {
 }
 
 interface IObjSpecFilterProps {
-	search: IKeyOptVal;
+	search: CategoryNamesDict;
 	specTable: ISpecTable;
 	helpStorage: any;
 	getResourceHelpInfo: Function;
@@ -22,17 +22,19 @@ interface IObjSpecFilterProps {
 	updateFilter: Function;
 }
 
-export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps, {}> {
+function typedKeys<T extends object>(o: T): Array<keyof T> {
+	return Object.keys(o) as any;
+}
+export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> {
 
-	search: IKeyOptVal
+	search: {[C in CategoryType]?: any} //values are set by MultiSelectFilter
 
 	constructor(props: IObjSpecFilterProps) {
 		super(props);
-		this.search = Object.assign({}, placeholders[config.envri]);
-		Object.keys(this.search).forEach(v => this.search[v] = undefined);
+		this.search = {};
 	}
 
-	getCtrl(name: string, labelName: string){
+	getCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
 
 		const lookupTable: {[key: string]: any} = {};
@@ -99,14 +101,13 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps, 
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 
-				{availableFilters.map((filterSection: any, i: number) =>
+				{availableFilters.map((filterPanel, i) =>
 					<FilterPanel
 						key={"filter_" + i}
-						header={filterSection.title}
-						nameList={getNameList(specTable, filterSection.list)}
+						header={filterPanel.panelTitle}
+						nameList={getNameList(specTable, filterPanel.filterList)}
 						colNames={colNames}
 						getCtrl={this.getCtrl.bind(this)}
-						startCollapsed={false}
 					/>
 				)}
 
@@ -120,7 +121,7 @@ interface IFilterPanel {
 	nameList: [string, string][],
 	colNames: string[],
 	getCtrl: Function,
-	startCollapsed: boolean
+	startCollapsed?: boolean
 }
 
 const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = false }: IFilterPanel) => {

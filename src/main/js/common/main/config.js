@@ -1,11 +1,14 @@
 
-const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? 'SITES' : 'ICOS';
-const host = envri === 'SITES' ? 'meta.fieldsites.se' : 'meta.icos-cp.eu';
-const sparqlGraphFilter = envri === 'SITES' ? 'https://meta.fieldsites.se/' : 'http://meta.icos-cp.eu/';
+export const ICOS = "ICOS";
+export const SITES = "SITES";
 
-const authHost = envri === 'SITES' ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
+const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? SITES : ICOS;
+const host = envri === SITES ? 'meta.fieldsites.se' : 'meta.icos-cp.eu';
+const sparqlGraphFilter = envri === SITES ? 'https://meta.fieldsites.se/' : 'http://meta.icos-cp.eu/';
 
-const metaServer = envri === 'SITES' ? 'https://meta.fieldsites.se' : 'https://meta.icos-cp.eu';
+const authHost = envri === SITES ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
+
+const metaServer = envri === SITES ? 'https://meta.fieldsites.se' : 'https://meta.icos-cp.eu';
 
 export default {
 	metaServer,
