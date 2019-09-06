@@ -8,15 +8,12 @@ export const VARIABLE_Y2_SELECTED = 'VARIABLE_Y2_SELECTED';
 export const MAP_STATE_CHANGED = 'MAP_STATE_CHANGED';
 import {getTableFormatNrows, getBinTable} from './backend';
 import BinTableData from './models/BinTableData';
-import commonConfig from '../../common/main/config';
-import portalConfig from '../../portal/main/config';
-
-const config = Object.assign(commonConfig, portalConfig);
+import config from '../../common/main/config';
 
 export const failWithError = error => dispatch => {
 	console.log({error, dispatch});
 
-	logError(config.MAPGRAPH, error.message);
+	logError(config.previewTypes.MAPGRAPH, error.message);
 
 	dispatch({
 		type: ERROR,

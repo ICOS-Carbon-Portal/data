@@ -1,7 +1,7 @@
 import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle,
 	getTimeserie} from './backend.js';
 import {logError} from "../../common/main/backend";
-import config from '../../portal/main/config';
+import config from '../../common/main/config';
 
 export const ERROR = 'ERROR';
 export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
@@ -28,7 +28,7 @@ export const TIMESERIE_RESET = 'TIMESERIE_RESET';
 export function failWithError(error){
 	console.log(error);
 
-	logError(config.NETCDF, error.message);
+	logError(config.previewTypes.NETCDF, error.message);
 
 	return {
 		type: ERROR,

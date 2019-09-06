@@ -21,5 +21,10 @@ export default {
 	metaBaseUri: `https://${host}/`,
 	cpmetaObjectUri: `https://${host.replace('local-', '')}/objects/`,
 	envri,
-	sparqlGraphFilter
+	sparqlGraphFilter,
+	previewTypes: {
+		TIMESERIES: 'TIMESERIES',
+		NETCDF: 'NETCDF',
+		MAPGRAPH: 'MAPGRAPH'
+	}
 };

@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
 import {logError, saveToRestheart} from '../../common/main/backend';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
-import config from '../../portal/main/config';
+import config from '../../common/main/config';
 import Dygraph from 'dygraphs';
 import './Dygraphs.css';
 import CollapsibleSection from './CollapsibleSection';
@@ -333,7 +333,7 @@ const getLabel = (tableFormat, colName) => {
 };
 
 const fail = (message) => {
-	logError(config.TIMESERIES, message);
+	logError(config.previewTypes.TIMESERIES, message);
 	return Promise.reject(new Error(message));
 };
 
@@ -341,7 +341,7 @@ const presentError = (errMsg) => {
 	document.getElementById('error').style.display = 'flex';
 	document.getElementById('error').innerHTML = errMsg;
 
-	logError(config.TIMESERIES, errMsg);
+	logError(config.previewTypes.TIMESERIES, errMsg);
 };
 
 const hideError = () => {

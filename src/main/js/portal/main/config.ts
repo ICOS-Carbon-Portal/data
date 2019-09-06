@@ -9,9 +9,7 @@ export default {
 	ROUTE_METADATA: 'metadata',
 	ROUTE_PREVIEW: 'preview',
 	DEFAULT_ROUTE: 'search',
-	TIMESERIES: 'TIMESERIES',
-	NETCDF: 'NETCDF',
-	MAPGRAPH: 'MAPGRAPH',
+	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	mapGraphFormats: [
 		'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcSocatTimeSer',
