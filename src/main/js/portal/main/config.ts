@@ -1,5 +1,4 @@
 import commonConfig, {ICOS, SITES} from '../../common/main/config';
-import {IKeyValStrPairs} from "./typescript/interfaces";
 
 export type Envri = typeof ICOS | typeof SITES;
 

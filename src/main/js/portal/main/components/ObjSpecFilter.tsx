@@ -3,7 +3,7 @@ import config, {placeholders, filters, CategoryType, CategoryNamesDict} from '..
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
-import {IKeyValStrPairs, IKeyOptVal} from "../typescript/interfaces";
+import {IKeyValStrPairs} from "../typescript/interfaces";
 
 interface ISpecTable {
 	names: CategoryType[];
@@ -22,17 +22,9 @@ interface IObjSpecFilterProps {
 	updateFilter: Function;
 }
 
-function typedKeys<T extends object>(o: T): Array<keyof T> {
-	return Object.keys(o) as any;
-}
 export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> {
 
-	search: {[C in CategoryType]?: any} //values are set by MultiSelectFilter
-
-	constructor(props: IObjSpecFilterProps) {
-		super(props);
-		this.search = {};
-	}
+	search: {[C in CategoryType]?: any} = {} //values are set by MultiSelectFilter
 
 	getCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
