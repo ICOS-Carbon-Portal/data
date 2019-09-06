@@ -1,21 +1,35 @@
-import React, { Component } from 'react';
-import {placeholders} from '../config';
+import React from 'react';
+import config, {placeholders, filters, CategoryType, CategoryNamesDict} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
+import {IKeyValStrPairs} from "../typescript/interfaces";
 
+interface ISpecTable {
+	names: CategoryType[];
+	findTable(name: string): { [key: string]: IKeyValStrPairs[] };
+	getFilter(name: string): string[];
+	getDistinctAvailableColValues(name: string): string[];
+	getColLabelNamePair(name: string): [string, string];
+}
 
-export default class ObjSpecFilter extends Component {
-	constructor(props) {
-		super(props);
-		this.search = Object.assign({}, placeholders);
-		Object.keys(this.search).forEach(v => this.search[v] = undefined);
-	}
+interface IObjSpecFilterProps {
+	search: CategoryNamesDict;
+	specTable: ISpecTable;
+	helpStorage: any;
+	getResourceHelpInfo: Function;
+	specFiltersReset: Function;
+	updateFilter: Function;
+}
 
-	getCtrl(name, labelName){
+export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> {
+
+	search: {[C in CategoryType]?: any} = {} //values are set by MultiSelectFilter
+
+	getCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
 
-		const lookupTable = {};
+		const lookupTable: {[key: string]: any} = {};
 
 		if (specTable) {
 			const colTbl = specTable.findTable(name);
@@ -44,7 +58,7 @@ export default class ObjSpecFilter extends Component {
 		return (
 			<div className="row" key={name} style={{marginTop: 10}}>
 				<div className="col-md-12">
-					<label style={{marginBottom: 0}}>{placeholders[name]}</label>
+					<label style={{marginBottom: 0}}>{placeholders[config.envri][name]}</label>
 
 					<HelpButton
 						isActive={helpStorage.isActive(name)}
@@ -68,46 +82,41 @@ export default class ObjSpecFilter extends Component {
 
 	render(){
 		const {specTable, specFiltersReset} = this.props;
-		const colNames = specTable.names.filter(name => !!placeholders[name]);
-		const filters = colNames.map(colName => specTable.getFilter(colName));
-		const resetBtnEnabled = !!filters.reduce((acc, curr) => {
+		const colNames = specTable.names.filter(name => !!placeholders[config.envri][name]);
+		const activeFilters = colNames.map(colName => specTable.getFilter(colName));
+		const resetBtnEnabled = !!activeFilters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
+		const availableFilters = filters[config.envri];
 
 		return (
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 
-				<FilterPanel
-					header="Data origin"
-					nameList={getNameList(specTable, ['project', 'theme', 'station', 'submitter'])}
-					colNames={colNames}
-					getCtrl={this.getCtrl.bind(this)}
-					startCollapsed={false}
-				/>
-
-				<FilterPanel
-					header="Data types"
-					nameList={getNameList(specTable, ['type', 'level', 'format'])}
-					colNames={colNames}
-					getCtrl={this.getCtrl.bind(this)}
-					startCollapsed={false}
-				/>
-
-				<FilterPanel
-					header="Value types"
-					nameList={getNameList(specTable, ['colTitle', 'valType', 'quantityUnit', 'quantityKind'])}
-					colNames={colNames}
-					getCtrl={this.getCtrl.bind(this)}
-					startCollapsed={false}
-				/>
+				{availableFilters.map((filterPanel, i) =>
+					<FilterPanel
+						key={"filter_" + i}
+						header={filterPanel.panelTitle}
+						nameList={getNameList(specTable, filterPanel.filterList)}
+						colNames={colNames}
+						getCtrl={this.getCtrl.bind(this)}
+					/>
+				)}
 
 			</div>
 		);
 	}
 }
 
-const FilterPanel = ({header, nameList, colNames, getCtrl, startCollapsed = false}) => {
+interface IFilterPanel {
+	header: string,
+	nameList: [string, string][],
+	colNames: string[],
+	getCtrl: Function,
+	startCollapsed?: boolean
+}
+
+const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = false }: IFilterPanel) => {
 	if (colNames.length === 0) return null;
 
 	return (
@@ -125,16 +134,21 @@ const FilterPanel = ({header, nameList, colNames, getCtrl, startCollapsed = fals
 	);
 };
 
-const ResetBtn = ({resetFiltersAction, enabled}) => {
+interface IResetBtn {
+	resetFiltersAction: Function,
+	enabled: boolean
+}
+
+const ResetBtn = ({ resetFiltersAction, enabled }: IResetBtn) => {
 	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
 	const style = enabled
 		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
 		: {margin: '5px 2px', textDecoration: 'underline'};
-	const onClick = enabled ? resetFiltersAction : () => _;
+	const onClick = () => enabled ? resetFiltersAction() : {};
 
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };
 
-const getNameList = (specTable, list) => {
+const getNameList = (specTable: ISpecTable, list: string[]) => {
 	return list.map(colName => specTable.getColLabelNamePair(colName));
 };

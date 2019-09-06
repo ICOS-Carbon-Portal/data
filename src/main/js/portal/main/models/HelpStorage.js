@@ -1,4 +1,7 @@
-import config, {placeholders as titles} from '../config';
+import config, {placeholders} from '../config';
+
+const titles = placeholders[config.envri];
+
 export default class HelpStorage{
 	constructor(storage, visibility){
 		this.storage = storage || initItems;

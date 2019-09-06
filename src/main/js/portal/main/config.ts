@@ -1,8 +1,9 @@
-import commonConfig from '../../common/main/config';
+import commonConfig, {ICOS, SITES} from '../../common/main/config';
 
+export type Envri = typeof ICOS | typeof SITES;
 
 export default {
-	envri: commonConfig.envri,
+	envri: commonConfig.envri as Envri,
 	ROUTE_SEARCH: 'search',
 	ROUTE_CART: 'cart',
 	ROUTE_METADATA: 'metadata',
@@ -34,7 +35,7 @@ export default {
 	dobjSortLimit: 2000,
 };
 
-export const placeholders = {
+const defaultCategNames = {
 	type: 'Data type',
 	level: 'Data level',
 	format: 'Format',
@@ -46,6 +47,14 @@ export const placeholders = {
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	project: 'Project'
+};
+
+export type CategoryNamesDict = typeof defaultCategNames;
+export type CategoryType = keyof CategoryNamesDict;
+
+export const placeholders: {[E in Envri]: CategoryNamesDict} = {
+	ICOS: defaultCategNames,
+	SITES: {...defaultCategNames, station: 'Station'},
 };
 
 export const prefixes = {
@@ -78,4 +87,24 @@ export const prefixes = {
 		valType: 'https://meta.fieldsites.se/resources/',
 		quantityKind: 'https://meta.fieldsites.se/resources/'
 	}
+};
+
+type IFilterCategories = {
+	[E in Envri]: Array<{
+		panelTitle: string;
+		filterList: CategoryType[];
+	}>
+}
+
+export const filters: IFilterCategories = {
+	ICOS: [
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter']},
+		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+	],
+	SITES: [
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station']},
+		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit']}
+	]
 };
