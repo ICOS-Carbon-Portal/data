@@ -63,6 +63,9 @@ class IngestionUploadTask(
 			case `dailySitesCsvTimeSer` =>
 				defaultStandardSink(dailysitescsv.DailySitesCsvStreams.simpleCsvParser)
 
+			case `sitesDelimitedHeaderCsvTimeSer` =>
+				defaultStandardSink(delimitedheadercsv.SitesDelimitedHeaderCsvStreams.delimitedHeaderCsvParser)
+
 			case `asciiEtcHalfHourlyProdTimeSer` =>
 				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).simpleCsvParser)
 
