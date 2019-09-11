@@ -143,13 +143,6 @@ export default function(state = new State(), action){
 				page: 0
 			});
 
-		case actionTypes.METADATA:
-			return state.update({
-				route: config.ROUTE_METADATA,
-				metadata: action.metadataWithId,
-				id: action.metadataWithId.id
-			});
-
 		case actionTypes.PREVIEW:
 			return state.update({
 				route: config.ROUTE_PREVIEW,

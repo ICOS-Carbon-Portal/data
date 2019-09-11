@@ -1,4 +1,5 @@
 import Cart from "./models/Cart";
+import {DataObject} from "../../common/metacore";
 
 export const actionTypes = {
 	ERROR: 'ERROR',
@@ -11,7 +12,6 @@ export const actionTypes = {
 	OBJECTS_FETCHED: 'OBJECTS_FETCHED',
 	SORTING_TOGGLED: 'SORTING_TOGGLED',
 	STEP_REQUESTED: 'STEP_REQUESTED',
-	METADATA: 'METADATA',
 	PREVIEW: 'PREVIEW',
 	PREVIEW_VISIBILITY: 'PREVIEW_VISIBILITY',
 	PREVIEW_SETTING_UPDATED: 'PREVIEW_SETTING_UPDATED',
@@ -65,6 +65,10 @@ export class BackendUserInfo extends BackendPayload{
 
 export class BackendTables extends BackendPayload{
 	constructor(readonly allTables: object){super();}
+}
+
+export class BackendObjectMetadata extends BackendPayload{
+	constructor(readonly metadata: DataObject & {id: string}){super();}
 }
 
 export class MiscError extends MiscPayload{
@@ -413,13 +417,10 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 	}
 };
 
-export const setMetadataItem = (id: string) => (dispatch: Function) => {
-	getMetadata(id).then(metadata => {
+export const setMetadataItem: (id: string) => IPortalThunkAction<void> = id => dispatch => {
+	(getMetadata(id) as Promise<DataObject>).then(metadata => {
 		const metadataWithId = Object.assign({}, metadata, {id: id});
-		dispatch({
-			type: actionTypes.METADATA,
-			metadataWithId
-		});
+		dispatch(new BackendObjectMetadata(metadataWithId));
 	});
 };
 

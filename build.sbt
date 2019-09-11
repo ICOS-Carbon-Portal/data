@@ -1,13 +1,12 @@
 import scala.sys.process.Process
 import UnixProcessWithChildren.ExitHooksProcReplacementOpt
 
-val defaultScala = "2.12.8"
+scalaVersion in ThisBuild := "2.12.9"
 
 //watchService in ThisBuild := (() => new sbt.io.PollingWatchService(pollInterval.value)) //SBT bug
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
-	scalaVersion := defaultScala,
 
 	scalacOptions ++= Seq(
 		"-target:jvm-1.8",
@@ -60,7 +59,6 @@ lazy val netcdf = (project in file("netcdf"))
 			else
 				Some("releases"  at nexus + "releases")
 		},
-		crossScalaVersions := Seq(defaultScala, "2.11.11"),
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
@@ -81,7 +79,6 @@ val frontend = Command.args("frontend", "install | build <app>"){(state, args) =
 
 	import java.io.File
 	val log = state.log
-	def projectDirectory(app: String) = new File(s"src/main/js/$app/")
 
 	def stopAndStart(forApp: Option[String]) = {
 		stopFrontendBuildProc(state)
@@ -122,18 +119,18 @@ val frontend = Command.args("frontend", "install | build <app>"){(state, args) =
 
 }
 
-val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard", "common")
+val commonJsApp = "common"
+val jsApps = Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard", commonJsApp)
+def projectDirectory(jsApp: String) = new File(s"src/main/js/$jsApp/")
 
-val watchSourcesChanges = Seq(
-		watchSources := {
-			val projBase = baseDirectory.value
-			watchSources.value.filterNot {src =>
-				src.base == projBase
-			}
-		}
-	)
-
+val frontendCopyTsDeclarations = taskKey[Unit]("Copies Typescript declarations from meta-core jar")
 val frontendPublish = taskKey[Unit]("Builds the front end apps from scratch")
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.4"
+frontendCopyTsDeclarations := {
+	val toFile = projectDirectory(commonJsApp) / "metacore.ts"
+	val deps = (Compile / dependencyClasspath).value
+	JarResourceHelper.copyResource(deps, metaCoreModule, "metacore.d.ts", toFile).get
+}
 
 frontendPublish := {
 	import java.io.File
@@ -142,7 +139,7 @@ frontendPublish := {
 	stopFrontendBuildProc(state.value)
 
 	log.info("Starting front-end publish for common")
-	Process("npm install", new File("src/main/js/common/")).!
+	Process("npm install", projectDirectory(commonJsApp)).!
 
 	val errors: List[String] = new File("src/main/js/").listFiles.filter(_.getName != "common").par.map{pwd =>
 			val projName = pwd.getName
@@ -178,7 +175,7 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
-			"se.lu.nateko.cp"    %% "meta-core"                          % "0.4.3-SNAPSHOT",
+			metaCoreModule,
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.1-SNAPSHOT",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 
@@ -216,4 +213,3 @@ lazy val data = (project in file("."))
 //			stop()
 //		"""
 	)
-	.settings(watchSourcesChanges)
