@@ -3,7 +3,11 @@ package se.lu.nateko.cp.data.formats.delimitedheadercsv
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats._
 
-class DelimitedHeaderCsvParser(columnsMeta: ColumnsMeta, columnSeparator: String, headerDelimitor: String) {
+class DelimitedHeaderCsvParser(
+	columnsMeta: ColumnsMeta,
+	columnSeparator: String,
+	headerDelimitor: String
+) extends TextFormatParser[DelimitedHeaderCsvParser.Accumulator] {
 
 	import DelimitedHeaderCsvParser._
 
@@ -37,9 +41,12 @@ class DelimitedHeaderCsvParser(columnsMeta: ColumnsMeta, columnSeparator: String
 
 object DelimitedHeaderCsvParser {
 
-	class Header(val colNames: Array[String], val formats: Array[Option[ValueFormat]], val error: Option[Throwable])
+	case class Accumulator(
+		header: Header,
+		cells: Array[String],
+		hasReachedHeaderDelimitor: Boolean
+	) extends StandardParsingAcculumator {
 
-	case class Accumulator(header: Header, cells: Array[String], hasReachedHeaderDelimitor: Boolean) extends ParsingAccumulator {
 		override def isOnData = !cells.isEmpty
 		override def error = header.error
 	}

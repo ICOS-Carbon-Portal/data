@@ -42,7 +42,7 @@ class EtcHalfHourlyProductStreamsTests extends FunSuite with BeforeAndAfterAll {
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/fluxnet_hh.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(new EtcHalfHourlyProductStreams(2).simpleCsvParser(nRows, formats))
+		.via(new EtcHalfHourlyProductStreams(2).standardCsvParser(nRows, formats))
 
 	test("Parsing a daily ETC fluxnet product time series example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)

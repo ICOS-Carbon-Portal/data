@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.formats
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
 
-class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String){
+class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String) extends TextFormatParser[SimpleCsvParser.Accumulator] {
 
 	import SimpleCsvParser._
 
@@ -32,9 +32,7 @@ class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String){
 
 object SimpleCsvParser{
 
-	class Header(val colNames: Array[String], val formats: Array[Option[ValueFormat]], val error: Option[Throwable])
-
-	case class Accumulator(header: Header, cells: Array[String]) extends ParsingAccumulator{
+	case class Accumulator(header: Header, cells: Array[String]) extends StandardParsingAcculumator {
 		override def isOnData = !cells.isEmpty
 		override def error = header.error
 	}
