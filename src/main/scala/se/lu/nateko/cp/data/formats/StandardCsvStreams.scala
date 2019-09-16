@@ -14,9 +14,8 @@ abstract class StandardCsvStreams {
 	def isNull(value: String, format: ValueFormat): Boolean
 	def makeTimeStamp(cells: Array[String]): Instant
 
-	type ParserAcc <: StandardParsingAcculumator
-	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser[ParserAcc]
-	def seed: ParserAcc
+	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser
+	
 	/**
 	 * Temporal step from the measurement's UTC time stamp (which is expected to be either at the beginning or at the end of the interval) to the other end of the data acquisition interval
 	 */
@@ -30,7 +29,7 @@ abstract class StandardCsvStreams {
 		val parser = makeParser(format)
 
 		Flow.apply[String]
-			.scan(seed)(parser.parseLine)
+			.scan(parser.seed)(parser.parseLine)
 			.exposeParsingError
 			.keepGoodRows
 			.map(acc =>

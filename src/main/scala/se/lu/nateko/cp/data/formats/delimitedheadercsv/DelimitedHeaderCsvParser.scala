@@ -7,9 +7,11 @@ class DelimitedHeaderCsvParser(
 	columnsMeta: ColumnsMeta,
 	columnSeparator: String,
 	headerDelimitor: String
-) extends TextFormatParser[DelimitedHeaderCsvParser.Accumulator] {
+) extends TextFormatParser {
 
 	import DelimitedHeaderCsvParser._
+
+	type A = Accumulator
 
 	def parseLine(acc: Accumulator, line: String): Accumulator =
 		if (acc.error.isDefined) {
@@ -21,7 +23,7 @@ class DelimitedHeaderCsvParser(
 		} else if (acc.hasReachedHeaderDelimitor && acc.header.colNames.isEmpty) {
 			val columnNames = line.split(columnSeparator)
 			val formats = columnNames.map(columnsMeta.matchColumn)
-			acc.copy(header = new Header(columnNames, formats, None))
+			acc.copy(header = new StandardHeader(columnNames, formats, None))
 		} else {
 			val newCells = line.split(columnSeparator, -1)
 			val expectedNcells = acc.header.colNames.length
@@ -32,17 +34,18 @@ class DelimitedHeaderCsvParser(
 				val err = new CpDataParsingException(
 					s"Expected ${expectedNcells} values but the following row had ${newCells.length} values:\n$line"
 				)
-				val newHeader = new Header(acc.header.colNames, acc.header.formats, Some(err))
+				val newHeader = new StandardHeader(acc.header.colNames, acc.header.formats, Some(err))
 				acc.copy(header = newHeader)
 			}
 		}
 
+		def seed: Accumulator = Accumulator(new StandardHeader(Array.empty, Array.empty, None), Array.empty, false)
 }
 
 object DelimitedHeaderCsvParser {
 
 	case class Accumulator(
-		header: Header,
+		header: StandardHeader,
 		cells: Array[String],
 		hasReachedHeaderDelimitor: Boolean
 	) extends StandardParsingAcculumator {
@@ -51,5 +54,4 @@ object DelimitedHeaderCsvParser {
 		override def error = header.error
 	}
 
-	def seed = Accumulator(new Header(Array.empty, Array.empty, None), Array.empty, false)
 }

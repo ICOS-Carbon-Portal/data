@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.test.formats.dailysitescsv
+package se.lu.nateko.cp.data.test.formats.delimitedheadercsv
 
 import java.io.File
 

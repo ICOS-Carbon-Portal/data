@@ -19,7 +19,6 @@ object SitesDelimitedHeaderCsvStreams extends StandardCsvStreams {
 	private val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	private val columnSeparator = ","
 	private val headerDelimitor = "####"
-	type ParserAcc = DelimitedHeaderCsvParser.Accumulator
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN" || value == ""
@@ -29,9 +28,7 @@ object SitesDelimitedHeaderCsvStreams extends StandardCsvStreams {
 	def makeTimeStamp(cells: Array[String]): Instant =
 		LocalDateTime.parse(cells(0), isoLikeDateFormater).toInstant(ZoneOffset.ofHours(1))
 
-	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser[ParserAcc] = 
+	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser =
 		new DelimitedHeaderCsvParser(format.colsMeta, columnSeparator, headerDelimitor)
-	
-	def seed: ParserAcc = DelimitedHeaderCsvParser.seed
-	
+
 }
