@@ -47,24 +47,29 @@ class IngestionUploadTask(
 
 			case `asciiEtcTimeSer` =>
 				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)
-
+			
 			case `asciiOtcSocatTimeSer` =>
 				defaultStandardSink(otc.OtcCsvStreams.socatTsvParser)
-
+			
 			case `asciiOtcProductCsv` =>
 				defaultStandardSink(otc.OtcCsvStreams.otcProductParser)
-
+			
 			case `simpleSitesCsvTimeSer` =>
 				standardSink{nRows =>
 					val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
-					simplesitescsv.SimpleSitesCsvStreams.simpleCsvParser(nRows, colFormats)
+					simplesitescsv.SimpleSitesCsvStreams.standardCsvParser(nRows, colFormats)
 				}
 
 			case `dailySitesCsvTimeSer` =>
-				defaultStandardSink(dailysitescsv.DailySitesCsvStreams.simpleCsvParser)
+				defaultStandardSink(dailysitescsv.DailySitesCsvStreams.standardCsvParser)
+
+			case `sitesDelimitedHeaderCsvTimeSer` =>
+				standardSink{nRows =>
+					delimitedheadercsv.SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, defaultColumnFormats)
+				}
 
 			case `asciiEtcHalfHourlyProdTimeSer` =>
-				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).simpleCsvParser)
+				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).standardCsvParser)
 
 			case _ =>
 				failedSink(NotImplementedFailure(s"Ingestion of format ${format.label} is not supported"))
@@ -200,4 +205,3 @@ object IngestionUploadTask{
 		}
 	}
 }
-

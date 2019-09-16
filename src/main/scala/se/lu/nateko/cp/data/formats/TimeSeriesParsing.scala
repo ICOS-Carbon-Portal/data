@@ -1,5 +1,18 @@
 package se.lu.nateko.cp.data.formats
 
+trait TextFormatParser {
+	type A <: StandardParsingAcculumator
+	def parseLine(acc: A, line: String): A
+	def seed: A
+}
+
+trait StandardParsingAcculumator extends ParsingAccumulator {
+	def header: StandardHeader
+	def cells: Array[String]
+}
+
+class StandardHeader(val colNames: Array[String], val formats: Array[Option[ValueFormat]], val error: Option[Throwable])
+
 trait ParsingAccumulator {
 	def error: Option[Throwable]
 	def isOnData: Boolean

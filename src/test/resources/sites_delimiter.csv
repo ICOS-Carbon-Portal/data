@@ -1,0 +1,24 @@
+TIME	Explanation and unit
+SR_IN Explanation and unit
+PPFD 	Explanation and unit
+TA 	Explanation and unit
+RH 	Explanation and unit
+PH20 	Explanation and unit
+TW_1m	Explanation and unit
+TW_3m	Explanation and unit
+TW_15m	Explanation and unit
+WS	Explanation and unit
+WV	Explanation and unit
+WD	Explanation and unit
+WD_STD	Explanation and unit
+WS_MAX	Explanation and unit
+PREC	Explanation and unit
+PA	Explanation and unit
+####
+TIME,SR_IN,PPFD,TA,RH,PH2O,TW_1m,TW_3m,TW_15m,WS,WV,WD,WD_STD,WS_MAX,PREC,PA
+2015-01-01 00:00,3.149,     NaN,0.61,    NaN,    NaN,0.274,0.249,0.804,4.424,4.391,260,6.95,    NaN,   NaN,     NaN
+2015-01-01 01:00,2.76,0,1.489,    NaN,    NaN,0.204,0.209,0.987,6.794,6.776,261.5,4.23,    NaN,   NaN,     NaN
+2015-01-01 02:00,2.824,0,1.856,    NaN,    NaN,0.214,0.239,0.927,5.7,5.672,262.9,5.71,    NaN,   NaN,     NaN
+2015-01-01 03:00,3.125,0,2.303,    NaN,    NaN,0.187,0.214,0.866,5.802,5.766,259.7,6.38,    NaN,   NaN,     NaN
+2015-01-01 04:00,2.996,0,2.635,    NaN,    NaN,0.174,0.211,0.89,6.493,6.451,258.2,6.58,    NaN,   NaN,     NaN
+2015-01-01 05:00,2.582,0,2.404,    NaN,    NaN,0.171,0.221,0.871,7.03,7,261.9,5.47,    NaN,   NaN,     NaN

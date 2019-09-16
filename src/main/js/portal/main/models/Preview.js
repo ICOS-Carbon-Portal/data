@@ -53,7 +53,7 @@ export default class Preview {
 		const items = objects.map(o => o.item);
 
 		if (options.type === config.TIMESERIES){
-			const xAxis = ['Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.some(op => op.colTitle === x));
+			const xAxis = ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.some(op => op.colTitle === x));
 			if (items && xAxis){
 				const url = getNewTimeseriesUrl(items, xAxis);
 				return new Preview(items.map(i => i.withUrl(url)), options.options, options.type, true);
