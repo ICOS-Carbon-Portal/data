@@ -88,9 +88,9 @@ export const prefixes = {
 };
 
 type IFilterCategories = {
-	[E in Envri]: Array<{
+	[E in Envri]: ReadonlyArray<{
 		panelTitle: string;
-		filterList: CategoryType[];
+		filterList: ReadonlyArray<CategoryType>;
 	}>
 }
 

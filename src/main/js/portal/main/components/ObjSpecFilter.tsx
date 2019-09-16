@@ -149,6 +149,6 @@ const ResetBtn = ({ resetFiltersAction, enabled }: IResetBtn) => {
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };
 
-const getNameList = (specTable: ISpecTable, list: string[]) => {
+const getNameList = (specTable: ISpecTable, list: ReadonlyArray<string>) => {
 	return list.map(colName => specTable.getColLabelNamePair(colName));
 };
