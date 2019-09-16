@@ -22,7 +22,7 @@ class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
 	import system.dispatcher
 
 	override def afterAll(): Unit = {
-		system.terminate()
+		Await.ready(system.terminate(), 3.seconds)
 	}
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)

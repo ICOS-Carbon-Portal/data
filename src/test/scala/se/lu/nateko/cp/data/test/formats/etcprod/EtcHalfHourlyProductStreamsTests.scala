@@ -21,7 +21,7 @@ class EtcHalfHourlyProductStreamsTests extends FunSuite with BeforeAndAfterAll {
 	import system.dispatcher
 
 	override def afterAll(): Unit = {
-		system.terminate()
+		Await.ready(system.terminate(), 3.seconds)
 	}
 
 	private val nRows = 29
