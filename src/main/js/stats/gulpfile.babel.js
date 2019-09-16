@@ -12,33 +12,26 @@ const project = currentPath.split('/').pop();
 
 const paths = {
 	main: 'main/main.jsx',
+	src: 'main/**/*.js*',
 	jsx: 'main/**/*.jsx',
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
-	target: '../../resources/',
 	bundleFile: project + '.js'
 };
 
 const clean = _ => {
-	return del([paths.target + paths.bundleFile], {force: true});
+	return del([buildConf.buildTarget + paths.bundleFile], {force: true});
 };
 
 const compileJs = _ =>  {
 	const isProduction = process.env.NODE_ENV === 'production';
 
-	let stream = buildConf.transformToBundle(isProduction, paths);
-
-	stream = isProduction
-		? stream
-			.pipe(buffer())
-			.pipe(gp_uglify())
-		: stream;
-
-	return stream
-		.pipe(gulp.dest(paths.target));
+	return buildConf.transformToBundle(isProduction, paths);
 };
 
 gulp.task('build', gulp.series(clean, compileJs));
+
+gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 
