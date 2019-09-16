@@ -1,5 +1,5 @@
 import Cart from "./models/Cart";
-import {DataObject} from "../../common/metacore";
+import {DataObject} from "../../common/main/metacore";
 
 export const actionTypes = {
 	ERROR: 'ERROR',

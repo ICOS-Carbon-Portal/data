@@ -73,7 +73,7 @@ lazy val data = (project in file("."))
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
 		cpFrontendJarImports := Seq(
-			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "metacore.ts")
+			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")
 		),
 
 		libraryDependencies ++= Seq(
