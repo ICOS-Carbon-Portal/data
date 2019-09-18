@@ -65,7 +65,7 @@ export default class Panel extends Component {
 						</div>
 					</Row>
 
-					<a href="https://www.icos-cp.eu/about-icos-data">
+					<a href="https://www.icos-cp.eu/about-icos-data" target="_blank">
 						<img src="//static.icos-cp.eu/images/Icos_Logo_CMYK_Regular.svg" style={{height:40}} />
 					</a>
 
