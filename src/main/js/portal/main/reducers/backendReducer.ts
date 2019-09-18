@@ -18,7 +18,7 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendObjectMetadataId){
-		return state.update({metadataId: payload.id});
+		return state.update({id: payload.id});
 	}
 
 	if (payload instanceof BackendObjectMetadata){

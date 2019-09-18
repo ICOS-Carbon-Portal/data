@@ -20,7 +20,7 @@ const hashKeys = [
 	'filterFreeText',
 	'tabs',
 	'page',
-	'metadataId',
+	'id',
 	'preview'
 ];
 
@@ -45,7 +45,7 @@ export default class State{
 			},
 			paging: {},
 			cart: new Cart(),
-			metadataId: undefined,
+			id: undefined,
 			metadata: {},
 			station: undefined,
 			preview: new Preview(),
@@ -167,9 +167,9 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		state.metadataId = state.metadataId === undefined
+		state.id = state.id === undefined
 			? undefined
-			: config.previewIdPrefix[config.envri] + state.metadataId;
+			: config.previewIdPrefix[config.envri] + state.id;
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
@@ -188,10 +188,10 @@ const specialCases = state => {
 	if (state.route === config.ROUTE_METADATA) {
 		return {
 			route: state.route,
-			metadataId: state.metadataId,
+			id: state.id,
 		};
 	} else {
-		delete state.metadataId;
+		delete state.id;
 		delete state.metadata;
 	}
 
@@ -327,7 +327,7 @@ const reduceState = state => {
 				acc[key] = part;
 			}
 
-		} else if (key === 'metadataId' && state[key] && state[key].length > 0){
+		} else if (state.route === config.ROUTE_METADATA && key === 'id' && state[key] && state[key].length > 0){
 			acc[key] = state[key].split('/').pop();
 
 		} else if (typeof state[key] === 'string'){

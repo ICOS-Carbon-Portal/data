@@ -189,10 +189,10 @@ export const restoreFromHistory = (historyState: any) => (dispatch: Function) =>
 };
 
 const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
-	const {route, metadata, metadataId}:
-		{route: string, metadata: DataObject & {id: UrlStr}, metadataId: UrlStr} = getState();
+	const {route, metadata, id}:
+		{route: string, metadata: DataObject & {id: UrlStr}, id: UrlStr} = getState();
 
-	if (route === config.ROUTE_METADATA && metadata.id !== metadataId) dispatch(setMetadataItem(metadataId));
+	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
 };
 
 export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
@@ -296,11 +296,11 @@ export const getFilteredDataObjects = (dispatch: Function, getState: Function) =
 const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dispatch, getState) => {
 	const state: any = getState();
 	const {specTable, route, preview, sorting, formatToRdfGraph,
-		tabs, filterTemporal, filterFreeText, cart, metadataId} = state;
+		tabs, filterTemporal, filterFreeText, cart, id} = state;
 
 	const getFilters = () => {
-		if (route === config.ROUTE_METADATA && metadataId) {
-			return [{category: 'pids', pids: [metadataId.split('/').pop()]}];
+		if (route === config.ROUTE_METADATA && id) {
+			return [{category: 'pids', pids: [id.split('/').pop()]}];
 
 		} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
 			return [{category: 'pids', pids: preview.pids}];
@@ -360,7 +360,7 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 				cacheSize,
 				isDataEndReached
 			});
-			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(metadataId));
+			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(id));
 			if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)

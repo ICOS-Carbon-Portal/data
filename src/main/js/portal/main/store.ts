@@ -35,7 +35,9 @@ const payloadMiddleware: Middleware<PortalDispatch, State, PortalDispatch> = sto
 const opts = window.location.hostname.startsWith('local-')
 	? {trace: true}
 	: {};
-const composeEnhancers = (window as any)['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__'](opts) as typeof compose || compose;
+const composeEnhancers = (window as any)['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__']
+	? (window as any)['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__'](opts) as typeof compose
+	: compose;
 
 const enhancer = composeEnhancers(
 	applyMiddleware(payloadMiddleware, thunkMiddleware)
