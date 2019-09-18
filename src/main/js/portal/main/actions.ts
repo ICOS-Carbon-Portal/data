@@ -49,6 +49,7 @@ import {saveToRestheart} from "../../common/main/backend";
 import {IKeyValStrPairs} from "./typescript/interfaces";
 import {Action} from "redux";
 import {IPortalThunkAction, PortalDispatch} from "./store";
+import {Sha256Str, UrlStr} from "./backend/declarations";
 
 export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
@@ -60,15 +61,19 @@ export interface IPortalPlainAction extends Action<string>{
 }
 
 export class BackendUserInfo extends BackendPayload{
-	constructor(readonly user: IUser, readonly profile: object){super();}
+	constructor(readonly user: User, readonly profile: object){super();}
 }
 
 export class BackendTables extends BackendPayload{
 	constructor(readonly allTables: object){super();}
 }
 
+export class BackendObjectMetadataId extends BackendPayload{
+	constructor(readonly id: UrlStr){super();}
+}
+
 export class BackendObjectMetadata extends BackendPayload{
-	constructor(readonly metadata: DataObject & {id: string}){super();}
+	constructor(readonly metadata: DataObject & {id: UrlStr}){super();}
 }
 
 export class MiscError extends MiscPayload{
@@ -83,7 +88,7 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
-interface IUser{
+interface User{
 	email: string | undefined;
 }
 
@@ -111,7 +116,7 @@ const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getSta
 export const init: IPortalThunkAction<void> = dispatch => {
 	const stateFromHash = hashToState();
 
-	getWhoIam().then((user: IUser) => {
+	getWhoIam().then((user: User) => {
 		if (stateFromHash.error){
 			if (user.email) logOut();
 			dispatch(loadFromError(user, stateFromHash.error));
@@ -122,7 +127,7 @@ export const init: IPortalThunkAction<void> = dispatch => {
 	});
 };
 
-const loadApp: (user: IUser) => IPortalThunkAction<void> = user => dispatch => {
+const loadApp: (user: User) => IPortalThunkAction<void> = user => dispatch => {
 	dispatch(new MiscInit());
 
 	getProfile(user.email).then(profile => {
@@ -177,9 +182,17 @@ export const restoreFromHistory = (historyState: any) => (dispatch: Function) =>
 			type: actionTypes.RESTORE_FROM_HISTORY,
 			historyState
 		});
+		dispatch(addStateMisingInHistory);
 	} else {
 		dispatch(init);
 	}
+};
+
+const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
+	const {route, metadata, metadataId}:
+		{route: string, metadata: DataObject & {id: UrlStr}, metadataId: UrlStr} = getState();
+
+	if (route === config.ROUTE_METADATA && metadata.id !== metadataId) dispatch(setMetadataItem(metadataId));
 };
 
 export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
@@ -283,11 +296,11 @@ export const getFilteredDataObjects = (dispatch: Function, getState: Function) =
 const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dispatch, getState) => {
 	const state: any = getState();
 	const {specTable, route, preview, sorting, formatToRdfGraph,
-		tabs, filterTemporal, filterFreeText, cart, metadata} = state;
+		tabs, filterTemporal, filterFreeText, cart, metadataId} = state;
 
 	const getFilters = () => {
-		if (route === config.ROUTE_METADATA && metadata.id) {
-			return [{category: 'pids', pids: [metadata.id.split('/').pop()]}];
+		if (route === config.ROUTE_METADATA && metadataId) {
+			return [{category: 'pids', pids: [metadataId.split('/').pop()]}];
 
 		} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
 			return [{category: 'pids', pids: preview.pids}];
@@ -347,7 +360,7 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 				cacheSize,
 				isDataEndReached
 			});
-			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(metadata.id));
+			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(metadataId));
 			if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
 		},
 		failWithError(dispatch)
@@ -417,9 +430,11 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 	}
 };
 
-export const setMetadataItem: (id: string) => IPortalThunkAction<void> = id => dispatch => {
+export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => dispatch => {
+	dispatch(new BackendObjectMetadataId(id));
+
 	(getMetadata(id) as Promise<DataObject>).then(metadata => {
-		const metadataWithId = Object.assign({}, metadata, {id: id});
+		const metadataWithId = Object.assign({}, metadata, {id});
 		dispatch(new BackendObjectMetadata(metadataWithId));
 	});
 };

@@ -3,16 +3,18 @@ import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, c
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
 import {ActionPayload, init, IPortalPlainAction} from './actions';
-import State from "./models/State";
+import State, {storeOverwatch} from "./models/State";
 
 
-// const logger = store => next => action => {
-// 	console.log('dispatching', action);
-// 	// Call the next dispatch method in the middleware chain.
-// 	let returnValue = next(action);
-// 	console.log('state after dispatch', store.getState());
-// 	return returnValue;
-// };
+const selectSubState = (state: any) => {
+	// What part of state we want to log
+	return {metadata: state.metadata};
+};
+const logStoreChange = (currentState: any, nextState: any, select: Function) => {
+	const historyState = history.state ? select(history.state) : undefined;
+	console.log({currentState, nextState, historyState, historyLength: history.state ? history.length : 0});
+};
+
 export interface IPortalThunkAction<R>{
 	(dispatch: PortalDispatch, getState: () => State): R
 }
@@ -36,7 +38,7 @@ const opts = window.location.hostname.startsWith('local-')
 const composeEnhancers = (window as any)['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__'](opts) as typeof compose || compose;
 
 const enhancer = composeEnhancers(
-	applyMiddleware(payloadMiddleware, thunkMiddleware)	//, logger)
+	applyMiddleware(payloadMiddleware, thunkMiddleware)
 );
 
 export default function(){
@@ -46,6 +48,10 @@ export default function(){
 		enhancer
 	);
 	store.dispatch(init);
+
+	// Use storeOverwatch to log changes in store (see selectSubState and logStoreChange above)
+	// storeOverwatch(store, selectSubState, logStoreChange);
+
 	return store;
 }
 

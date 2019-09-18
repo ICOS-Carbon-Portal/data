@@ -6,8 +6,8 @@ import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
-import Metadata from './Metadata';
 import config, {prefixes} from "../config";
+import deepequal from 'deep-equal';
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -20,7 +20,7 @@ const hashKeys = [
 	'filterFreeText',
 	'tabs',
 	'page',
-	'metadata',
+	'metadataId',
 	'preview'
 ];
 
@@ -45,7 +45,8 @@ export default class State{
 			},
 			paging: {},
 			cart: new Cart(),
-			metadata: new Metadata(),
+			metadataId: undefined,
+			metadata: {},
 			station: undefined,
 			preview: new Preview(),
 			toasterData: undefined,
@@ -67,6 +68,8 @@ export default class State{
 		return new State(Object.assign.apply(Object, [{ts: Date.now()}, this].concat(updates)));
 	}
 
+	// history state is only automatically updated when URL changes. Use this method to force
+	// history to store current state.
 	updateAndSave(){
 		const newState = this.update(...arguments);
 		history.replaceState(newState.serialize, null, window.location);
@@ -100,8 +103,7 @@ export default class State{
 			paging: this.paging.serialize,
 			cart: undefined,
 			preview: this.preview.serialize,
-			helpStorage: this.helpStorage.serialize,
-			metadata: this.metadata ? this.metadata.serialize : {},
+			helpStorage: this.helpStorage.serialize
 		});
 	}
 
@@ -146,8 +148,7 @@ const simplifyState = state => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
 		filterFreeText: state.filterFreeText.serialize,
-		preview: state.preview.pids,
-		id: state.metadata && state.metadata.id && state.metadata.id.split('/').pop()
+		preview: state.preview.pids
 	});
 };
 
@@ -166,11 +167,9 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		state.metadata = history.state && history.state.metadata
-			? new Metadata(history.state.metadata)
-			: state.id === undefined
-				? new Metadata()
-				: Object.assign({}, {id: config.previewIdPrefix[config.envri] + state.id});
+		state.metadataId = state.metadataId === undefined
+			? undefined
+			: config.previewIdPrefix[config.envri] + state.metadataId;
 	} catch(err) {
 		console.log({stateFromHash, state, err});
 		throw new Error("Could not convert json to state");
@@ -189,10 +188,10 @@ const specialCases = state => {
 	if (state.route === config.ROUTE_METADATA) {
 		return {
 			route: state.route,
-			id: state.id,
+			metadataId: state.metadataId,
 		};
 	} else {
-		delete state.id;
+		delete state.metadataId;
 		delete state.metadata;
 	}
 
@@ -232,6 +231,24 @@ export const hashUpdater = store => () => {
 			? history.pushState(state.serialize, null, window.location.href.split('#')[0])
 			: window.location.hash = encodeURIComponent(newHash);
 	}
+};
+
+export const storeOverwatch = (store, select, onChange) => {
+	let currentState;
+
+	const handleChange = () => {
+		const nextState = select(store.getState());
+
+		if (!deepequal(currentState, nextState)){
+			onChange(currentState, nextState, select);
+			currentState = nextState;
+		}
+	};
+
+	handleChange();
+
+	// Return unsubscriber
+	return store.subscribe(handleChange);
 };
 
 export const stateToHash = state => {
@@ -310,11 +327,15 @@ const reduceState = state => {
 				acc[key] = part;
 			}
 
+		} else if (key === 'metadataId' && state[key] && state[key].length > 0){
+			acc[key] = state[key].split('/').pop();
+
 		} else if (typeof state[key] === 'string'){
 			acc[key] = state[key];
 
 		} else if (typeof state[key] === 'number' && state[key] !== 0){
 			acc[key] = state[key];
+
 		}
 
 		return acc;
