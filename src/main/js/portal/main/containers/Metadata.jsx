@@ -87,6 +87,9 @@ export default class Metadata extends Component {
 								{metadata.specificInfo.acquisition &&
 									<React.Fragment>
 										{station && metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
+										{metadata.specificInfo.acquisition.site &&
+											metadataRow("Ecosystem", metadata.specificInfo.acquisition.site.ecosystem.label)
+										}
 										{metadataRow("Time coverage", `${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.start))}
 										\u2013
 										${formatDateTime(new Date(metadata.specificInfo.acquisition.interval.stop))}`)}
