@@ -46,10 +46,9 @@ import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
-import {IKeyValStrPairs} from "./typescript/interfaces";
 import {Action} from "redux";
 import {IPortalThunkAction, PortalDispatch} from "./store";
-import {Sha256Str, UrlStr} from "./backend/declarations";
+import {KeyStrVal, Sha256Str, UrlStr} from "./backend/declarations";
 
 export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
@@ -210,12 +209,11 @@ export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
 export const queryMeta: (id: string, search: string) => IPortalThunkAction<void> = (id, search) => dispatch => {
 	switch (id) {
 		case "dobj":
-			searchDobjs(search).then((data: any) => dispatchMeta(id, data, dispatch));
+			searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
 			break;
 
 		default:
 			failWithError(dispatch)(new Error(`Could not find a method matching ${id} to query metadata`));
-			// dispatch(failWithError({message: `Could not find a method matching ${id} to query metadata`}));
 	}
 };
 
@@ -266,7 +264,7 @@ export const specFilterUpdate = (varName: string, values: string[]) => (dispatch
 const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
 	if (Object.keys(filterCategories).length || filterTemporal.hasFilter || filterFreeText.hasFilter) {
 
-		const filters = Object.keys(filterCategories).reduce<IKeyValStrPairs>((acc: IKeyValStrPairs, columnName: string) => {
+		const filters = Object.keys(filterCategories).reduce<KeyStrVal>((acc: KeyStrVal, columnName: string) => {
 			acc[columnName] = specTable.getLabelFilter(columnName);
 			return acc;
 		}, {});
@@ -343,33 +341,47 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 
 	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
 
-	interface IFetchedDataObj {
+	interface FetchedDataObj {
 		rows: any,
 		cacheSize: number,
 		isDataEndReached: boolean
 	}
 
-	dataObjectsFetcher.fetch(options).then(
-		({rows, cacheSize, isDataEndReached}: IFetchedDataObj) => {
+	if (route === config.ROUTE_CART) {
+		const cartItems: CartItem[] = cart.items;
+		const rows = cartItems.map(ci => ci.item);
+		const dobjs = rows.map(r => r.dobj);
 
-			dispatch(fetchExtendedDataObjInfo(rows.map((d: any) => d.dobj)));
+		dispatch(fetchExtendedDataObjInfo(dobjs));
 
-			dispatch({
-				type: actionTypes.OBJECTS_FETCHED,
-				objectsTable: rows,
-				cacheSize,
-				isDataEndReached
-			});
-			if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(id));
-			if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
-		},
-		failWithError(dispatch)
-	);
+		dispatch({
+			type: actionTypes.OBJECTS_FETCHED,
+			objectsTable: rows,
+			cacheSize: rows.length,
+			isDataEndReached: true
+		});
+	} else {
+		dataObjectsFetcher.fetch(options).then(
+			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
+				dispatch(fetchExtendedDataObjInfo(rows.map((d: any) => d.dobj)));
+
+				dispatch({
+					type: actionTypes.OBJECTS_FETCHED,
+					objectsTable: rows,
+					cacheSize,
+					isDataEndReached
+				});
+				if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(id));
+				if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
+			},
+			failWithError(dispatch)
+		);
+	}
 };
 
 const fetchExtendedDataObjInfo: (dobjs: string[]) => IPortalThunkAction<void> = dobjs => dispatch => {
 	getExtendedDataObjInfo(dobjs).then(
-		(extendedDobjInfo: any) => {
+		extendedDobjInfo => {
 			dispatch({
 				type: actionTypes.EXTENDED_DOBJ_INFO_FETCHED,
 				extendedDobjInfo
@@ -433,7 +445,7 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => dispatch => {
 	dispatch(new BackendObjectMetadataId(id));
 
-	(getMetadata(id) as Promise<DataObject>).then(metadata => {
+	getMetadata(id).then(metadata => {
 		const metadataWithId = Object.assign({}, metadata, {id});
 		dispatch(new BackendObjectMetadata(metadataWithId));
 	});
@@ -560,7 +572,7 @@ export const getResourceHelpInfo: (helpItem: any) => IPortalThunkAction<void> = 
 			.filter((uri: string) => uri);
 
 		if (uriList.length) {
-			fetchResourceHelpInfo(uriList).then((resourceInfo: any) => {
+			fetchResourceHelpInfo(uriList).then(resourceInfo => {
 				dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
 			});
 		} else {

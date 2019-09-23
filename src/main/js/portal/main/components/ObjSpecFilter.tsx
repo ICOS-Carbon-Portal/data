@@ -3,11 +3,11 @@ import config, {placeholders, filters, CategoryType, CategoryNamesDict} from '..
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
-import {IKeyValStrPairs} from "../typescript/interfaces";
+import {KeyStrVal} from "../backend/declarations";
 
 interface ISpecTable {
 	names: CategoryType[];
-	findTable(name: string): { [key: string]: IKeyValStrPairs[] };
+	findTable(name: string): { [key: string]: KeyStrVal[] };
 	getFilter(name: string): string[];
 	getDistinctAvailableColValues(name: string): string[];
 	getColLabelNamePair(name: string): [string, string];

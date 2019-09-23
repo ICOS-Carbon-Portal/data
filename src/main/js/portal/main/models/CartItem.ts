@@ -1,7 +1,11 @@
-import {EDataType} from '../typescript/enums';
-import {IKeyValStrPairs} from "../typescript/interfaces";
+import {KeyStrVal} from "../backend/declarations";
+import commonConfig from '../../../common/main/config';
 
-interface IDataObject {
+
+const previewTypes = commonConfig.previewTypes;
+type DataType = typeof previewTypes.TIMESERIES | typeof previewTypes.NETCDF | typeof previewTypes.MAPGRAPH;
+
+interface DataObject {
 	dobj: string,
 	fileName: string,
 	format: string,
@@ -15,17 +19,17 @@ interface IDataObject {
 	themeLabel: string,
 	timeEnd: string,
 	timeStart: string,
-	type: EDataType | undefined
+	type: DataType | undefined
 }
 
 export default class CartItem {
 	readonly _id: string;
-	readonly _dataobject: IDataObject;
-	readonly _type: EDataType | undefined;
+	readonly _dataobject: DataObject;
+	readonly _type: DataType | undefined;
 	readonly _url: string | undefined;
-	private readonly _keyValPairs: IKeyValStrPairs;
+	private readonly _keyValPairs: KeyStrVal;
 
-	constructor(dataobject: IDataObject, type: EDataType | undefined, url: string | undefined = undefined){
+	constructor(dataobject: DataObject, type: DataType | undefined, url: string | undefined = undefined){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;
 		this._type = type;
@@ -50,7 +54,7 @@ export default class CartItem {
 		const searchStr = search.replace(/^\?/, '');
 		const keyValpairs = searchStr.split('&');
 
-		return keyValpairs.reduce<IKeyValStrPairs>((acc: IKeyValStrPairs, curr: string) => {
+		return keyValpairs.reduce<KeyStrVal>((acc: KeyStrVal, curr: string) => {
 			const p = curr.split('=');
 			acc[p[0]] = p[1];
 			return acc;
@@ -113,7 +117,7 @@ export default class CartItem {
 		return new CartItem(this._dataobject, this._type, url);
 	}
 
-	getNewUrl(keyVal: IKeyValStrPairs){
+	getNewUrl(keyVal: KeyStrVal){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
 		const matchArr = this._id.match(/^https?:\/\/([^/?#]+)(?:[/?#]|$)/i);
 		const matchedId = matchArr && matchArr.length > 0 ? matchArr[1] : '';

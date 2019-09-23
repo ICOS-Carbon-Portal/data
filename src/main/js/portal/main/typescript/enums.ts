@@ -1,5 +1,0 @@
-export enum EDataType {
-	TIMESERIES = "TIMESERIES",
-	NETCDF = "NETCDF",
-	MAPGRAPH = "MAPGRAPH"
-}

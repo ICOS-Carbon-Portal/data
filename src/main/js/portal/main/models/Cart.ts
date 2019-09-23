@@ -5,7 +5,6 @@ export default class Cart {
 	readonly _items: CartItem[];
 	readonly _ts: string;
 
-
 	constructor(name: string | undefined = undefined, items: CartItem[] | undefined = undefined){
 		this._name = name || 'My data cart';
 		this._items = items || [];
@@ -95,7 +94,7 @@ export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart:
 		? cartInSessionStorage.cart._items
 		: [];
 	const restheartItems = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._items
-		? cartInRestheart.cart._items
+		? cartInRestheart.cart._items.filter((item: any) => !Array.isArray(item))
 		: [];
 
 	const newItems = restheartItems.concat(sessionStorageItems).filter((item: any, i: number, items: any[]) => {
@@ -105,3 +104,6 @@ export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart:
 
 	return new Cart(newName, newCartItems);
 };
+
+const emptyJsonCart = new Cart().serialize;
+export type JsonCart = typeof emptyJsonCart;
