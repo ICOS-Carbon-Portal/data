@@ -35,7 +35,7 @@ export const actionTypes = {
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
-import {hashToState} from "./models/State";
+import stateUtils from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -106,14 +106,14 @@ const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getSta
 		error: {
 			app: 'portal',
 			message: error.message,
-			state: JSON.stringify(Object.assign({}, state.serialize, {user, cart: state.cart})),
+			state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {user, cart: state.cart})),
 			url: decodeURI(window.location.href)
 		}
 	});
 };
 
 export const init: IPortalThunkAction<void> = dispatch => {
-	const stateFromHash = hashToState();
+	const stateFromHash = stateUtils.hashToState();
 
 	getWhoIam().then((user: User) => {
 		if (stateFromHash.error){

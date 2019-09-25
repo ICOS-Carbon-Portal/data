@@ -3,11 +3,11 @@ import { Provider } from 'react-redux'
 import getStore from '../store';
 import App from './App.jsx';
 import {restoreFromHistory} from '../actions';
-import {hashUpdater} from '../models/State';
+import stateUtils from '../models/State';
 
 
 const store = getStore();
-store.subscribe(hashUpdater(store));
+store.subscribe(stateUtils.hashUpdater(store));
 
 export default class Root extends Component {
 
@@ -16,7 +16,7 @@ export default class Root extends Component {
 			if (history.state) {
 				store.dispatch(restoreFromHistory(history.state));
 			} else {
-				history.replaceState(store.getState().serialize, null, window.location);
+				history.replaceState(stateUtils.serialize(store.getState()), null, window.location);
 			}
 		});
 	}

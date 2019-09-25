@@ -1,11 +1,11 @@
 import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata} from "../actions";
-import State from "../models/State";
+import stateUtils, {State} from "../models/State";
 import config from "../config";
 
 export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
-		return state.update({
+		return stateUtils.update(state, {
 			user: {
 				profile: payload.profile,
 				email: payload.user.email
@@ -14,15 +14,15 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendTables){
-		return state.update({allTables: payload.allTables});
+		return stateUtils.update(state, {allTables: payload.allTables});
 	}
 
 	if (payload instanceof BackendObjectMetadataId){
-		return state.update({id: payload.id});
+		return stateUtils.update(state, {id: payload.id});
 	}
 
 	if (payload instanceof BackendObjectMetadata){
-		return state.update({
+		return stateUtils.update(state, {
 			route: config.ROUTE_METADATA,
 			metadata: payload.metadata
 		});

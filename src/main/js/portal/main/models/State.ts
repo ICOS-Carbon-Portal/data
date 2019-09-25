@@ -8,6 +8,8 @@ import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
 import config, {prefixes} from "../config";
 import deepequal from 'deep-equal';
+import {KeyAnyVal} from "../backend/declarations";
+import {Store} from "redux";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -24,96 +26,124 @@ const hashKeys = [
 	'preview'
 ];
 
-export default class State{
-	constructor(state = {}){
-		Object.assign(this, {
-			ts: Date.now(),
-			isRunningInit: false,
-			filterCategories: {},
-			filterTemporal: new FilterTemporal(),
-			filterFreeText: new FilterFreeText(),
-			user: {},
-			lookup: undefined,
-			specTable: new CompositeSpecTable({}),
-			extendedDobjInfo: [],
-			formatToRdfGraph: {},
-			objectsTable: [],
-			sorting: {
-				isEnabled: false,
-				varName: undefined,
-				ascending: true
-			},
-			paging: {},
-			cart: new Cart(),
-			id: undefined,
-			metadata: {},
-			station: undefined,
-			preview: new Preview(),
-			toasterData: undefined,
-			batchDownloadStatus: {
-				isAllowed: false,
-				ts: 0
-			},
-			checkedObjectsInSearch: [],
-			checkedObjectsInCart: [],
-			tabs: {},
-			page: 0,
-			tsSettings: {},
-			helpStorage: new HelpStorage()
-		}, state);
+export interface State {
+	ts: number | undefined
+	isRunningInit: boolean
+	route: any
+	filterCategories: any
+	filterTemporal: FilterTemporal
+	filterFreeText: FilterFreeText
+	user: {}
+	lookup: {} | undefined;
+	specTable: CompositeSpecTable
+	extendedDobjInfo: []
+	formatToRdfGraph: {}
+	objectsTable: []
+	sorting: {
+		isEnabled: boolean,
+		varName: string | undefined,
+		ascending: boolean
 	}
-
-	update(){
-		const updates = Array.from(arguments);
-		return new State(Object.assign.apply(Object, [{ts: Date.now()}, this].concat(updates)));
+	paging: Paging | {serialize: undefined}
+	cart: Cart
+	id: string | undefined;
+	metadata: {}
+	station: {} | undefined
+	preview: Preview
+	toasterData: {} | undefined;
+	batchDownloadStatus: {
+		isAllowed: boolean,
+		ts: number
 	}
-
-	// history state is only automatically updated when URL changes. Use this method to force
-	// history to store current state.
-	updateAndSave(){
-		const newState = this.update(...arguments);
-		history.replaceState(newState.serialize, null, window.location);
-
-		return newState;
-	}
-
-	static deserialize(jsonObj, cart){
-		const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
-
-		return new State(
-			Object.assign(jsonObj, {
-				filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
-				filterFreeText: FilterFreeText.deserialize(jsonObj.filterFreeText),
-				lookup: new Lookup(specTable),
-				specTable,
-				paging: Paging.deserialize(jsonObj.paging),
-				cart,
-				preview: Preview.deserialize(jsonObj.preview),
-				helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
-			})
-		);
-	}
-
-	get serialize(){
-		return Object.assign({}, this, {
-			filterTemporal: this.filterTemporal.serialize,
-			filterFreeText: this.filterFreeText.serialize,
-			lookup: undefined,
-			specTable: this.specTable.serialize,
-			paging: this.paging.serialize,
-			cart: undefined,
-			preview: this.preview.serialize,
-			helpStorage: this.helpStorage.serialize
-		});
-	}
-
-	get toPlainObject() {
-		return Object.assign({}, this);
-	}
+	checkedObjectsInSearch: []
+	checkedObjectsInCart: []
+	tabs: {}
+	page: number
+	tsSettings: {}
+	helpStorage: HelpStorage
 }
 
+export const defaultState: State = {
+	ts: Date.now(),
+	isRunningInit: false,
+	route: config.DEFAULT_ROUTE,
+	filterCategories: {},
+	filterTemporal: new FilterTemporal(),
+	filterFreeText: new FilterFreeText(),
+	user: {},
+	lookup: undefined,
+	specTable: new CompositeSpecTable({}),
+	extendedDobjInfo: [],
+	formatToRdfGraph: {},
+	objectsTable: [],
+	sorting: {
+		isEnabled: false,
+		varName: undefined,
+		ascending: true
+	},
+	paging: {serialize: undefined},
+	cart: new Cart(),
+	id: undefined,
+	metadata: {},
+	station: undefined,
+	preview: new Preview(),
+	toasterData: undefined,
+	batchDownloadStatus: {
+		isAllowed: false,
+		ts: 0
+	},
+	checkedObjectsInSearch: [],
+	checkedObjectsInCart: [],
+	tabs: {},
+	page: 0,
+	tsSettings: {},
+	helpStorage: new HelpStorage()
+};
+
+const update = (state: State, updates: any) => {
+	return Object.assign({}, state, updates, {ts: Date.now()});
+};
+
+// history state is only automatically updated when URL changes. Use this method to force
+// history to store current state.
+const updateAndSave = (state: State, updates: any) => {
+	const newState = update(state, updates);
+	history.replaceState(serialize(newState), '', window.location.href);
+
+	return newState;
+};
+
+const serialize = (state: State) => {
+	return Object.assign({}, state, {
+		filterTemporal: state.filterTemporal.serialize,
+		filterFreeText: state.filterFreeText.serialize,
+		lookup: undefined,
+		specTable: state.specTable.serialize,
+		paging: state.paging.serialize,
+		cart: undefined,
+		preview: state.preview.serialize,
+		helpStorage: state.helpStorage.serialize
+	});
+};
+
+const deserialize = (jsonObj: State, cart: Cart) => {
+	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
+	const props: State = Object.assign({}, jsonObj, {
+		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
+		filterFreeText: FilterFreeText.deserialize(jsonObj.filterFreeText),
+		lookup: new Lookup(specTable),
+		specTable,
+		paging: Paging.deserialize(jsonObj.paging),
+		cart,
+		preview: Preview.deserialize(jsonObj.preview),
+		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
+	});
+
+	return props;
+};
+
 // Hash to state and state to hash below
-export const getStateFromHash = hash => {
+const getStateFromHash = (hash: string | undefined = undefined) => {
 	const state = hash === undefined
 		? jsonToState(parseHash(getCurrentHash()))
 		: jsonToState(parseHash(decodeURIComponent(hash)));
@@ -121,7 +151,7 @@ export const getStateFromHash = hash => {
 };
 
 //No # in the beginning!
-const parseHash = hash => {
+const parseHash = (hash: string) => {
 	try {
 		return JSON.parse(hash);
 	} catch(err) {
@@ -129,7 +159,7 @@ const parseHash = hash => {
 	}
 };
 
-export const hashToState = () => {
+const hashToState = () => {
 	try {
 		return JSON.parse(getCurrentHash());
 	} catch(err) {
@@ -137,14 +167,14 @@ export const hashToState = () => {
 	}
 };
 
-const getStateFromStore = storeState => {
-	return hashKeys.reduce((acc, key) => {
+const getStateFromStore = (storeState: State & KeyAnyVal) => {
+	return hashKeys.reduce((acc: KeyAnyVal, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
 };
 
-const simplifyState = state => {
+const simplifyState = (state: State) => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
 		filterFreeText: state.filterFreeText.serialize,
@@ -152,7 +182,7 @@ const simplifyState = state => {
 	});
 };
 
-const jsonToState = state => {
+const jsonToState = (state: State) => {
 	const stateFromHash = Object.assign({}, state);
 
 	try {
@@ -167,6 +197,8 @@ const jsonToState = state => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
+		// state.id = undefined;
+		// state.id = '';
 		state.id = state.id === undefined
 			? undefined
 			: config.previewIdPrefix[config.envri] + state.id;
@@ -178,13 +210,13 @@ const jsonToState = state => {
 	return state;
 };
 
-const handleRoute = storeState => {
+const handleRoute = (storeState: State) => {
 	if (storeState.route === config.ROUTE_SEARCH){
 		delete storeState.route;
 	}
 };
 
-const specialCases = state => {
+const specialCases = (state: State) => {
 	if (state.route === config.ROUTE_METADATA) {
 		return {
 			route: state.route,
@@ -221,20 +253,20 @@ function getCurrentHash(){
 	return decodeURIComponent(window.location.hash.substr(1));
 }
 
-export const hashUpdater = store => () => {
+const hashUpdater = (store: Store) => () => {
 	const state = store.getState();
 	const newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
 
 	if (newHash !== oldHash){
 		newHash === ''
-			? history.pushState(state.serialize, null, window.location.href.split('#')[0])
+			? history.pushState(serialize(state), '', window.location.href.split('#')[0])
 			: window.location.hash = encodeURIComponent(newHash);
 	}
 };
 
-export const storeOverwatch = (store, select, onChange) => {
-	let currentState;
+const storeOverwatch = (store: Store, select: Function, onChange: Function) => {
+	let currentState: State;
 
 	const handleChange = () => {
 		const nextState = select(store.getState());
@@ -251,20 +283,20 @@ export const storeOverwatch = (store, select, onChange) => {
 	return store.subscribe(handleChange);
 };
 
-export const stateToHash = state => {
+const stateToHash = (state: State) => {
 	const currentStoreState = getStateFromStore(state);
-	const simplifiedStoreState = simplifyState(currentStoreState);
+	const simplifiedStoreState = simplifyState(currentStoreState as State);
 	const reducedStoreState = reduceState(simplifiedStoreState);
-	handleRoute(reducedStoreState);
-	const withSpecialCases = specialCases(reducedStoreState);
-	const final = shortenUrls(withSpecialCases);
+	handleRoute(reducedStoreState as State);
+	const withSpecialCases = specialCases(reducedStoreState as State);
+	const final = shortenUrls(withSpecialCases as State);
 
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-export const shortenUrls = (state = {}) => {
+const shortenUrls = (state: State = ({} as State)) => {
 	return managePrefixes(state,
-		(prefix, value) => {
+		(prefix: any, value: string) => {
 			if (Array.isArray(prefix)){
 				const prefixObj = prefix.find(p => value.startsWith(p.value));
 				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
@@ -275,9 +307,9 @@ export const shortenUrls = (state = {}) => {
 		});
 };
 
-export const extendUrls = (state = {}) => {
+const extendUrls = (state: State = ({} as State)) => {
 	return managePrefixes(state,
-		(prefix, value) => {
+		(prefix: any, value: string) => {
 			if (value.startsWith('http://') || value.startsWith('https://')) return value;
 			if (Array.isArray(prefix)){
 				const pLetter = value.slice(0, 1);
@@ -290,7 +322,7 @@ export const extendUrls = (state = {}) => {
 		});
 };
 
-const managePrefixes = (state = {}, transform) => {
+const managePrefixes = (state: State = ({} as State), transform: Function) => {
 	if (Object.keys(state).length === 0) return state;
 	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
 
@@ -299,11 +331,11 @@ const managePrefixes = (state = {}, transform) => {
 	const fc = state.filterCategories;
 
 	return Object.assign({}, state, {
-		filterCategories: categories.reduce((acc, category) => {
-			acc[category] = fc[category].map(value => {
-				if (Number.isInteger(value)) return value;
+		filterCategories: categories.reduce((acc: KeyAnyVal, category: string) => {
+			acc[category] = fc[category].map((value: string) => {
+				if (Number.isInteger(parseFloat(value))) return value;
 
-				const prefix = appPrefixes[category];
+				const prefix = (appPrefixes as KeyAnyVal)[category];
 				if (prefix === undefined) return value;
 
 				return transform(prefix, value);
@@ -314,8 +346,8 @@ const managePrefixes = (state = {}, transform) => {
 	});
 };
 
-const reduceState = state => {
-	return Object.keys(state).reduce((acc, key) => {
+const reduceState = (state: State & KeyAnyVal) => {
+	return Object.keys(state).reduce((acc: KeyAnyVal, key: string) => {
 
 		if (Array.isArray(state[key]) && state[key].length){
 			acc[key] = state[key];
@@ -327,8 +359,8 @@ const reduceState = state => {
 				acc[key] = part;
 			}
 
-		} else if (state.route === config.ROUTE_METADATA && key === 'id' && state[key] && state[key].length > 0){
-			acc[key] = state[key].split('/').pop();
+		} else if (state.route === config.ROUTE_METADATA && key === 'id' && state[key] && state[key]!.length > 0){
+			acc[key] = state[key]!.split('/').pop();
 
 		} else if (typeof state[key] === 'string'){
 			acc[key] = state[key];
@@ -340,4 +372,18 @@ const reduceState = state => {
 
 		return acc;
 	}, {});
+};
+
+export default {
+	update,
+	updateAndSave,
+	serialize,
+	deserialize,
+	getStateFromHash,
+	hashToState,
+	hashUpdater,
+	storeOverwatch,
+	stateToHash,
+	shortenUrls,
+	extendUrls
 };

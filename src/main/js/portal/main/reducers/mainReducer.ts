@@ -3,10 +3,10 @@ import backendReducer from './backendReducer';
 import miscReducer from './miscReducer';
 import oldReducer from '../reducer';
 import {BackendPayload,	IPortalPlainAction,	MiscPayload} from "../actions";
-import State from "../models/State";
+import {State, defaultState} from "../models/State";
 
 
-const reducer: Reducer<State, IPortalPlainAction> = (state: State = new State(), action: IPortalPlainAction) => {
+const reducer: Reducer<State, IPortalPlainAction> = (state: State = defaultState, action: IPortalPlainAction) => {
 	const payload = action.payload;
 
 	if (payload instanceof BackendPayload)

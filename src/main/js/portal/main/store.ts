@@ -3,7 +3,7 @@ import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, c
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
 import {ActionPayload, init, IPortalPlainAction} from './actions';
-import State, {storeOverwatch} from "./models/State";
+import stateUtils, {State} from "./models/State";
 
 
 const selectSubState = (state: any) => {
@@ -52,7 +52,7 @@ export default function(){
 	store.dispatch(init);
 
 	// Use storeOverwatch to log changes in store (see selectSubState and logStoreChange above)
-	// storeOverwatch(store, selectSubState, logStoreChange);
+	// stateUtils.storeOverwatch(store, selectSubState, logStoreChange);
 
 	return store;
 }

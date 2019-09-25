@@ -1,6 +1,6 @@
 import {actionTypes} from './actions';
 import * as Toaster from 'icos-cp-toaster';
-import State from './models/State';
+import stateUtils, {defaultState} from './models/State';
 import CompositeSpecTable from './models/CompositeSpecTable';
 import Lookup from './models/Lookup';
 import Preview from './models/Preview';
@@ -10,20 +10,20 @@ import Paging from './models/Paging';
 
 const specTableKeys = Object.keys(placeholders[config.envri]);
 
-export default function(state = new State(), action){
+export default function(state = defaultState, action){
 
 	switch(action.type){
 
 		case actionTypes.ERROR:
-			return state.update({
+			return stateUtils.update(state,{
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
 		case actionTypes.LOAD_ERROR:
-			return State.deserialize(action.state, action.cart);
+			return stateUtils.deserialize(action.state, action.cart);
 
 		case actionTypes.USER_INFO_FETCHED:
-			return state.update({
+			return stateUtils.update(state,{
 				user: {
 					profile: action.profile,
 					email: action.user.email
@@ -34,7 +34,7 @@ export default function(state = new State(), action){
 			specTable = new CompositeSpecTable(action.specTables);
 			let objCount = getObjCount(specTable);
 
-			return state.update({
+			return stateUtils.update(state,{
 				specTable,
 				formatToRdfGraph: action.formatToRdfGraph,
 				paging: new Paging({objCount}),
@@ -48,7 +48,7 @@ export default function(state = new State(), action){
 			objCount = getObjCount(specTable);
 			let paging = new Paging({objCount, offset: page * config.stepsize});
 
-			return state.update({
+			return stateUtils.update(state,{
 				specTable,
 				objectsTable: [],
 				paging,
@@ -56,13 +56,13 @@ export default function(state = new State(), action){
 			});
 
 		case actionTypes.RESTORE_FROM_HISTORY:
-			return State.deserialize(action.historyState, state.cart);
+			return stateUtils.deserialize(action.historyState, state.cart);
 
 		case actionTypes.SPEC_FILTER_UPDATED:
 			specTable = state.specTable.withFilter(action.varName, action.values);
 			objCount = getObjCount(specTable);
 
-			return state.update({
+			return stateUtils.update(state,{
 				specTable,
 				objectsTable: [],
 				paging: new Paging({objCount}),
@@ -75,7 +75,7 @@ export default function(state = new State(), action){
 			specTable = state.specTable.withResetFilters();
 			objCount = getObjCount(specTable);
 
-			return state.update({
+			return stateUtils.update(state,{
 				specTable,
 				paging: new Paging({objCount}),
 				sorting: updateSortingEnableness(state.sorting, objCount),
@@ -84,7 +84,7 @@ export default function(state = new State(), action){
 			});
 
 		case actionTypes.RESTORE_PREVIEW:
-			return state.update({
+			return stateUtils.update(state,{
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
@@ -102,32 +102,32 @@ export default function(state = new State(), action){
 			);
 			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
 
-			return state.update({
+			return stateUtils.update(state,{
 				objectsTable: extendedObjectsTable,
 				paging,
 				sorting: updateSortingEnableness(state.sorting, objCount)
 			});
 
 		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:
-			return state.updateAndSave({
+			return stateUtils.updateAndSave(state,{
 				extendedDobjInfo: action.extendedDobjInfo
 			});
 
 		case actionTypes.SORTING_TOGGLED:
-			return state.update({
+			return stateUtils.update(state,{
 				objectsTable: [],
 				sorting: updateSorting(state.sorting, action.varName)
 			});
 
 		case actionTypes.STEP_REQUESTED:
-			return state.update({
+			return stateUtils.update(state,{
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
 				page: state.page + action.direction
 			});
 
 		case actionTypes.ROUTE_UPDATED:
-			return state.update({
+			return stateUtils.update(state,{
 				route: action.route,
 				preview: action.route === config.ROUTE_PREVIEW ? state.preview : new Preview()
 			});
@@ -137,40 +137,40 @@ export default function(state = new State(), action){
 				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
 				.withOffset(0);
 
-			return state.update({
+			return stateUtils.update(state,{
 				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
 				paging,
 				page: 0
 			});
 
 		case actionTypes.PREVIEW:
-			return state.update({
+			return stateUtils.update(state,{
 				route: config.ROUTE_PREVIEW,
 				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
 			});
 
 		case actionTypes.PREVIEW_VISIBILITY:
-			return state.update({preview: action.visible ? state.preview.show() : state.preview.hide()});
+			return stateUtils.update(state,{preview: action.visible ? state.preview.show() : state.preview.hide()});
 
 		case actionTypes.PREVIEW_SETTING_UPDATED:
-			return state.update({
+			return stateUtils.update(state,{
 				cart: action.cart,
 				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
 			});
 
 		case actionTypes.ITEM_URL_UPDATED:
-			return state.update({
+			return stateUtils.update(state,{
 				preview: state.preview.withItemUrl(action.url)
 			});
 
 		case actionTypes.CART_UPDATED:
-			return state.update({
+			return stateUtils.update(state,{
 				cart: action.cart,
 				checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => action.cart.ids.includes(uri))
 			});
 
 		case actionTypes.TESTED_BATCH_DOWNLOAD:
-			return state.update({
+			return stateUtils.update(state,{
 				user: action.user.email,
 				batchDownloadStatus: {
 					isAllowed: action.isBatchDownloadOk,
@@ -179,7 +179,7 @@ export default function(state = new State(), action){
 			});
 
 		case actionTypes.TEMPORAL_FILTER:
-			return state.update({
+			return stateUtils.update(state,{
 				filterTemporal: action.filterTemporal,
 				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText)),
 				checkedObjectsInSearch: []
@@ -188,7 +188,7 @@ export default function(state = new State(), action){
 		case actionTypes.FREE_TEXT_FILTER:
 			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
 
-			return state.update({
+			return stateUtils.update(state,{
 				filterFreeText,
 				checkedObjectsInSearch: []
 			});
@@ -196,28 +196,28 @@ export default function(state = new State(), action){
 		case actionTypes.UPDATE_SELECTED_PIDS:
 			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
 
-			return state.update({
+			return stateUtils.update(state,{
 				filterFreeText,
 				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, filterFreeText))
 			});
 
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH:
-			return state.updateAndSave({
+			return stateUtils.updateAndSave(state,{
 				checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, action.checkedObjectInSearch)
 			});
 
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART:
-			return state.update({
+			return stateUtils.update(state,{
 				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
 			});
 
 		case actionTypes.TS_SETTINGS:
-			return state.update({
+			return stateUtils.update(state,{
 				tsSettings: action.tsSettings
 			});
 
 		case actionTypes.HELP_INFO_UPDATED:
-			return state.update({
+			return stateUtils.update(state,{
 				helpStorage: state.helpStorage.withUpdatedItem(action.helpItem)
 			});
 
