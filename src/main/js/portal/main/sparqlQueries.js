@@ -81,6 +81,8 @@ export function findDobjs(config, search){
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
   ?dobj  cpmeta:hasObjectSpec ?spec.
+  FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+  FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
   FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
 }
