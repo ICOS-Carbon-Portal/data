@@ -1,4 +1,4 @@
-import State, {getStateFromHash, stateToHash, shortenUrls, extendUrls} from '../src/main/models/State';
+import stateUtils, {defaultState} from '../src/main/models/State';
 import {fetchAllSpecTables} from '../src/main/backend';
 import 'isomorphic-fetch';
 import deepEqual from 'deep-equal';
@@ -22,17 +22,19 @@ describe("Testing State", () => {
 
 	it("produces a state object from an empty hash", () => {
 
-		const state = new State();
-		const stateFromHash = state.update(getStateFromHash(''));
-		delete stateFromHash.route;
+		const state = defaultState;
+		const stateFromHash = stateUtils.update(state, stateUtils.getStateFromHash(''));
+
+		state.ts = undefined;
+		stateFromHash.ts = undefined;
 
 		expect(deepEqual(state, stateFromHash, {strict: true})).toBe(true);
 	});
 
 	it("produces a state object from a hash", () => {
 
-		const state = new State();
-		const stateFromHash = state.update(getStateFromHash(hash));
+		const state = defaultState;
+		const stateFromHash = stateUtils.update(state, stateUtils.getStateFromHash(hash));
 
 		expect(deepEqual(state, stateFromHash, {strict: true})).toBe(false);
 		Object.keys(stateFromHash).forEach(key => {
@@ -44,9 +46,9 @@ describe("Testing State", () => {
 
 	it("produces a correct round trip from hash -> state -> hash", () => {
 
-		const state = new State();
-		const stateFromHash = state.update(getStateFromHash(hash));
-		const newHash = stateToHash(stateFromHash);
+		const state = defaultState;
+		const stateFromHash = stateUtils.update(state, stateUtils.getStateFromHash(hash));
+		const newHash = stateUtils.stateToHash(stateFromHash);
 
 		expect(decodeURIComponent(hash)).toBe(newHash);
 	});
@@ -87,7 +89,7 @@ describe("Testing State", () => {
 					let extended;
 
 					try {
-						extended = extendUrls(shortenUrls(original));
+						extended = stateUtils.extendUrls(stateUtils.shortenUrls(original));
 					} catch (e) {
 						done.fail(e.message);
 						return;
