@@ -23,6 +23,7 @@ export default class Metadata extends Component {
 
 	handleViewMetadata(id) {
 		this.props.setMetadataItem(id);
+		this.props.updateFilteredDataObjects();
 	}
 
 	render() {

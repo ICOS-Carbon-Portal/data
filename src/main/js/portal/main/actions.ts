@@ -293,6 +293,12 @@ export const getFilteredDataObjects = (dispatch: Function, getState: Function) =
 
 };
 
+export const updateFilteredDataObjects = () => (dispatch: Function, getState: Function) => {
+	const objectsTable = (getState() as State).objectsTable;
+
+	if (objectsTable.length === 0) dispatch(getFilteredDataObjectsWithoutUsageLogging);
+};
+
 const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dispatch, getState) => {
 	const state: State = getState();
 	const {specTable, route, preview, sorting,
@@ -445,7 +451,7 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 	}
 };
 
-export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => dispatch => {
+export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => (dispatch: Function) => {
 	dispatch(new BackendObjectMetadataId(id));
 
 	getMetadata(id).then(metadata => {
@@ -464,7 +470,7 @@ export const setPreviewItem = (id: string) => (dispatch: Function) => {
 };
 
 const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
-	const user = getState().user;
+	const user = (getState() as State).user;
 
 	return getTsSettings(user.email).then(tsSettings => {
 		dispatch({
@@ -475,7 +481,7 @@ const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 };
 
 export const storeTsPreviewSetting = (spec: any, type: string, val: any) => (dispatch: Function, getState: Function) => {
-	const user = getState().user;
+	const user = (getState() as State).user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
 		dispatch({
