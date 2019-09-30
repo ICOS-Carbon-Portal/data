@@ -5,6 +5,7 @@ import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import config from '../../common/main/config';
 import Dygraph from 'dygraphs';
 import './Dygraphs.css';
+import './custom.css';
 import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
 
@@ -40,6 +41,7 @@ export default class App {
 		this.graph = undefined;
 		this.tableFormat = undefined;
 		this.labels = [];
+		this.lastDateFormat = '';
 
 		const isSites = config.envri === "SITES";
 		this.spinner = new Spinner(isSites);
@@ -155,8 +157,14 @@ export default class App {
 		const labels = Array(labelCount).fill('');
 		const xLegendLabel = getColInfoParam(tableFormat, params.get('x'), 'label');
 		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
+		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime((valueFormatX));
 		const formatters = getFormatters(xLegendLabel, valueFormatX);
 		const drawPoints = params.get('type') !== 'line';
+
+		let daysDisplayed = 0;
+		const getDaysDisplayed = ([min, max]) => {
+			return (max - min) / (24 * 3600 * 1000);
+		};
 
 		this.graph = new Dygraph(
 			'graph',
@@ -186,9 +194,37 @@ export default class App {
 					y: {
 						axisLabelWidth: 100
 					}
+				},
+				drawCallback: (graph, isInitial) => {
+					if (xIsDate && daysDisplayed === 0) {
+						daysDisplayed = getDaysDisplayed(graph.xAxisRange());
+
+						if (daysDisplayed > 0) {
+							// Adjust x labels once when it has been filled with dates
+							this.updateAxisLabelFormatter(xLegendLabel, valueFormatX, daysDisplayed);
+						}
+					}
+				},
+				zoomCallback: (min, max, yRanges) => {
+					if (xIsDate) {
+						daysDisplayed = getDaysDisplayed([min, max]);
+						this.updateAxisLabelFormatter(xLegendLabel, valueFormatX, daysDisplayed);
+					}
 				}
 			}
 		);
+	}
+
+	updateAxisLabelFormatter(xLegendLabel, valueFormatX, daysDisplayed){
+		const currentDateTimeFormat = getDateTimeFormat(daysDisplayed);
+
+		if (currentDateTimeFormat === this.lastDateFormat) return;
+
+		if (valueFormatX.endsWith("iso8601dateTime")) {
+			const {axisLabelFormatter} = getFormatters(xLegendLabel, valueFormatX, daysDisplayed);
+			this.graph.updateOptions({axes: {x: {axisLabelFormatter}}});
+			this.lastDateFormat = currentDateTimeFormat;
+		}
 	}
 
 	legendFormatter(data){
@@ -253,69 +289,110 @@ export default class App {
 	}
 }
 
-const getFormatters = (xlabel, valueFormatX) => {
+const getFormatters = (xlabel, valueFormatX, daysDisplayed = Infinity) => {
 	const formatLbl = (val) => {
 		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`;
 	};
 
-	const parseDatetime = (converter, format, func) => {
-		const pad = (number) => {
-			return number < 10 ? '0' + number : number;
-		};
+	const pad = (number) => {
+		return number < 10 ? '0' + number : number;
+	};
 
-		return (timeUnit) => {
-			const fn = func ? func : (val) => val;
-			const date = new Date(converter * timeUnit);
+	const valueFormatter = (converter, format, func) => {
+		const fn = func ? func : (val) => val;
 
-			switch(format){
-				case "datetime":
-					return date.getUTCFullYear() +
-						'-' + pad(date.getUTCMonth() + 1) +
-						'-' + pad(date.getUTCDate()) +
-						' ' + pad(date.getUTCHours()) +
-						':' + pad(date.getUTCMinutes()) +
-						':' + pad(date.getUTCSeconds());
-
-				case "date":
-					return fn(date.getUTCFullYear() +
-						'-' + pad(date.getUTCMonth() + 1) +
-						'-' + pad(date.getUTCDate()));
-
-				case "hms":
-					return fn(pad(date.getUTCHours()) +
-						':' + pad(date.getUTCMinutes()) +
-						':' + pad(date.getUTCSeconds()));
-
-				case "hm":
-					return fn(pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()));
-
-				default:
-					return fn(timeUnit);
-			}
+		return (dataVal, opts, seriesName, graph, row, col) => {
+			return parseDatetime(dataVal, new Date(converter * dataVal), format, fn);
 		};
 	};
 
-	switch (valueFormatX) {
+	const axisLabelFormatter = (converter, format, func) => {
+		const fn = func ? func : (val) => val;
 
-		case 'http://meta.icos-cp.eu/ontologies/cpmeta/iso8601date':
-			const days2ms = 24 * 3600 * 1000;
-			return {valueFormatter: parseDatetime(days2ms, "date", formatLbl), axisLabelFormatter: parseDatetime(days2ms, "date")};
+		return (dataVal, granularity, opts, graph) => {
+			return parseDatetime(dataVal, new Date(converter * dataVal), format, fn);
+		};
+	};
 
-		case "http://meta.icos-cp.eu/ontologies/cpmeta/iso8601timeOfDay":
-			const sec2ms = 1000;
-			return {valueFormatter: parseDatetime(sec2ms, "hms", formatLbl), axisLabelFormatter: parseDatetime(sec2ms, "hm")};
+	const parseDatetime = (dataVal, date, format, fn) => {
+		switch(format){
+			case "date-hms":
+				return date.getUTCFullYear() +
+					'-' + pad(date.getUTCMonth() + 1) +
+					'-' + pad(date.getUTCDate()) +
+					' ' + pad(date.getUTCHours()) +
+					':' + pad(date.getUTCMinutes()) +
+					':' + pad(date.getUTCSeconds());
 
-		default:
-			return isTimestamp(valueFormatX)
-				? {valueFormatter: parseDatetime(1, "datetime"), axisLabelFormatter: parseDatetime(1, "date")}
-				: {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
+			case "date-hm":
+				return date.getUTCFullYear() +
+					'-' + pad(date.getUTCMonth() + 1) +
+					'-' + pad(date.getUTCDate()) +
+					' ' + pad(date.getUTCHours()) +
+					':' + pad(date.getUTCMinutes());
+
+			case "date":
+				return fn(date.getUTCFullYear() +
+					'-' + pad(date.getUTCMonth() + 1) +
+					'-' + pad(date.getUTCDate()));
+
+			case "hms":
+				return fn(pad(date.getUTCHours()) +
+					':' + pad(date.getUTCMinutes()) +
+					':' + pad(date.getUTCSeconds()));
+
+			case "hm":
+				return fn(pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()));
+
+			default:
+				return fn(dataVal);
+		}
+	};
+
+	const day2ms = 24 * 3600 * 1000;
+	const sec2ms = 1000;
+
+	if (isDateTime(valueFormatX)){
+		return {
+			valueFormatter: valueFormatter(1, "date-hms"),
+			axisLabelFormatter: axisLabelFormatter(1, getDateTimeFormat(daysDisplayed))
+		};
+	} else if (isDate(valueFormatX)) {
+		return {
+			valueFormatter: valueFormatter(day2ms, "date", formatLbl),
+			axisLabelFormatter: axisLabelFormatter(day2ms, "date")
+		};
+	} else if (isTime(valueFormatX)) {
+		return {
+			valueFormatter: valueFormatter(sec2ms, "hms", formatLbl),
+			axisLabelFormatter: axisLabelFormatter(sec2ms, "hm")
+		};
+	} else {
+		return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
 };
 
-const timeStampFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
+const getDateTimeFormat = (daysDisplayed) => {
+	if (daysDisplayed >= 7) return "date";
+	else if (daysDisplayed >= 1) return "date-hm";
+	else if (daysDisplayed < 1) return "hm";
+};
+
+// Stored as seconds since midnight
+const timeFormats = ['iso8601timeOfDay']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
-const isTimestamp = (valueFormat) => timeStampFormats.includes(valueFormat);
+// Stored as days since epoch
+const dateFormats = ['iso8601date', 'etcDate']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
+// Stored as milliseconds since epoch
+const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
+const isTime = (valueFormat) => timeFormats.includes(valueFormat);
+const isDate = (valueFormat) => dateFormats.includes(valueFormat);
+const isDateTime = (valueFormat) => dateTimeFormats.includes(valueFormat);
 
 const isColNameValid = (tableFormat, colName) => {
 	return tableFormat.getColumnIndex(colName) >= 0;
