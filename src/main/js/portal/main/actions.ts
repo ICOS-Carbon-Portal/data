@@ -35,7 +35,7 @@ export const actionTypes = {
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
-import stateUtils from "./models/State";
+import stateUtils, {Profile, State, User} from "./models/State";
 import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -87,26 +87,24 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
-interface User{
-	email: string | undefined;
-}
-
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new MiscError(error));
 	dispatch(logError(error));
 };
 
 const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getState) => {
-	const state: any = getState();
-	const user = state.user.email
-		? `${state.user.profile.profile.givenName} ${state.user.profile.profile.surname}`
+	const state: State = getState();
+	const user = state.user;
+	const profile = user.profile;
+	const userName = user.email
+		? `${(profile as Profile).givenName} ${(profile as Profile).surname}`
 		: undefined;
 
 	saveToRestheart({
 		error: {
 			app: 'portal',
 			message: error.message,
-			state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {user, cart: state.cart})),
+			state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {user: userName, cart: state.cart})),
 			url: decodeURI(window.location.href)
 		}
 	});
@@ -129,7 +127,11 @@ export const init: IPortalThunkAction<void> = dispatch => {
 const loadApp: (user: User) => IPortalThunkAction<void> = user => dispatch => {
 	dispatch(new MiscInit());
 
-	getProfile(user.email).then(profile => {
+	type LoggedIn = {_id: string, profile: Profile | {}};
+
+	getProfile(user.email).then((resp: {} | LoggedIn) => {
+		const profile = (resp as LoggedIn).profile || {};
+
 		dispatch(new BackendUserInfo(user, profile));
 		dispatch(getTsPreviewSettings());
 	});
@@ -292,9 +294,10 @@ export const getFilteredDataObjects = (dispatch: Function, getState: Function) =
 };
 
 const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dispatch, getState) => {
-	const state: any = getState();
-	const {specTable, route, preview, sorting, formatToRdfGraph,
+	const state: State = getState();
+	const {specTable, route, preview, sorting,
 		tabs, filterTemporal, filterFreeText, cart, id} = state;
+	const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
 
 	const getFilters = () => {
 		if (route === config.ROUTE_METADATA && id) {
@@ -310,7 +313,7 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 			}];
 
 		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
-			return filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids}]);
+			return [filterTemporal.filters, [{category: 'pids', pids: filterFreeText.selectedPids}]];
 
 		} else {
 			return [];
@@ -371,7 +374,7 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 					cacheSize,
 					isDataEndReached
 				});
-				if (route === config.ROUTE_METADATA) dispatch(setMetadataItem(id));
+				if (route === config.ROUTE_METADATA && id) dispatch(setMetadataItem(id));
 				if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
 			},
 			failWithError(dispatch)
@@ -490,18 +493,20 @@ export const setPreviewUrl = (url: string) => (dispatch: Function) => {
 };
 
 export const setCartName = (newName: string) => (dispatch: Function, getState: Function) => {
-	const state = getState();
+	const state: State = getState();
 
 	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
 };
 
 export const addToCart: (ids: string[]) => IPortalThunkAction<void> = ids => (dispatch, getState) => {
-	const state: any = getState();
+	const state: State = getState();
 	const cart = state.cart;
 
 	const newItems = ids.filter(id => !state.cart.hasItem(id)).map(id => {
-		const objInfo = state.objectsTable.find((o: any) => o.dobj === id);
-		const specLookup = state.lookup.getSpecLookup(objInfo.spec);
+		const objInfo: any = state.objectsTable.find((o: any) => o.dobj === id);
+		const specLookup = state.lookup && objInfo && objInfo.spec
+			? state.lookup.getSpecLookup(objInfo.spec)
+			: undefined;
 		const type = specLookup ? specLookup.type : undefined;
 		const xAxis = specLookup && specLookup.type === config.TIMESERIES
 			? specLookup.options.find((ao: string) => ao === 'TIMESTAMP')
@@ -519,7 +524,7 @@ export const addToCart: (ids: string[]) => IPortalThunkAction<void> = ids => (di
 };
 
 export const removeFromCart: (ids: string[]) => IPortalThunkAction<void> = ids => (dispatch, getState) => {
-	const state: any = getState();
+	const state: State = getState();
 	const cart = state.cart.removeItems(ids);
 
 	dispatch(updateCart(state.user.email, cart));

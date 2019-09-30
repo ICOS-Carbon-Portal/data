@@ -26,15 +26,39 @@ const hashKeys = [
 	'preview'
 ];
 
+type Routes = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
+
+export interface Profile {
+	icosLicenceOk: boolean
+	givenName: string
+	surname: string
+	orcid: string
+	affiliation: string
+	affiliation2: string
+	workPhone: string
+	mobilePhone: string
+	streetAddress: string
+	city: string
+	zipCode: string
+	country: string
+	gender: "Male" | "Female"
+	birthYear: string
+}
+
+export interface User {
+	profile: Profile | {}
+	email?: string
+}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
-	route: any
+	route: Routes
 	filterCategories: any
 	filterTemporal: FilterTemporal
 	filterFreeText: FilterFreeText
-	user: {}
-	lookup: {} | undefined;
+	user: User
+	lookup: Lookup | undefined;
 	specTable: CompositeSpecTable
 	extendedDobjInfo: []
 	formatToRdfGraph: {}
@@ -70,7 +94,10 @@ export const defaultState: State = {
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterFreeText: new FilterFreeText(),
-	user: {},
+	user: {
+		profile: {},
+		email: undefined
+	},
 	lookup: undefined,
 	specTable: new CompositeSpecTable({}),
 	extendedDobjInfo: [],
