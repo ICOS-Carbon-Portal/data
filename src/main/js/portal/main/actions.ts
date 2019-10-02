@@ -319,7 +319,7 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 			}];
 
 		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
-			return [filterTemporal.filters, [{category: 'pids', pids: filterFreeText.selectedPids}]];
+			return filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any]);
 
 		} else {
 			return [];
@@ -553,7 +553,7 @@ export const fetchIsBatchDownloadOk: IPortalThunkAction<void> = dispatch => {
 				isBatchDownloadOk,
 				user
 			}),
-			err => dispatch(failWithError(err))
+			failWithError(dispatch)
 		);
 };
 
