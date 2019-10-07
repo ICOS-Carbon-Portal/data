@@ -1,6 +1,13 @@
 import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata} from "../actions";
 import stateUtils, {State} from "../models/State";
 import config from "../config";
+import CompositeSpecTable from "../models/CompositeSpecTable";
+import Paging from "../models/Paging";
+import Lookup from "../models/Lookup";
+import {getObjCount, updateSortingEnableness} from "./utils";
+import {ThenArg, UrlStr} from "../backend/declarations";
+import {fetchAllSpecTables} from "../backend";
+
 
 export default function(state: State, payload: BackendPayload): State {
 
@@ -14,7 +21,7 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendTables){
-		return stateUtils.update(state, {allTables: payload.allTables});
+		return stateUtils.update(state, handleBackendTables(state, payload.allTables));
 	}
 
 	if (payload instanceof BackendObjectMetadataId){
@@ -30,4 +37,17 @@ export default function(state: State, payload: BackendPayload): State {
 
 	return state;
 
+};
+
+const handleBackendTables = (state: State, allTables: ThenArg<typeof fetchAllSpecTables>) => {
+	const specTable = CompositeSpecTable.deserialize(allTables.specTables);
+	const objCount = getObjCount(specTable);
+
+	return {
+		specTable,
+		formatToRdfGraph: allTables.formatToRdfGraph,
+		paging: new Paging({objCount}),
+		sorting: updateSortingEnableness(state.sorting, objCount),
+		lookup: new Lookup(specTable)
+	};
 };

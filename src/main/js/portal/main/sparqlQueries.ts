@@ -1,7 +1,14 @@
+import commonConfig from '../../common/main/config';
+import localConfig from './config';
+import {KeyAnyVal, UrlStr} from "./backend/declarations";
+import {Query} from './backend/sparql';
+
+const config = Object.assign(commonConfig, localConfig);
+
 export const SPECCOL = 'spec';
 
-export function specBasics(config){
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+export function specBasics(): Query<"spec" | "type" | "specLabel" | "level" | "format" | "formatLabel" | "theme" | "themeLabel", "dataset"> {
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel)
 where{
 	?spec cpmeta:hasDataLevel ?level .
@@ -15,10 +22,12 @@ where{
 	?spec cpmeta:hasFormat ?format .
 	?format rdfs:label ?formatLabel .
 }`;
+
+	return {text};
 }
 
-export function specColumnMeta(config){
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+export function specColumnMeta(): Query<"spec" | "colTitle" | "valType" | "valTypeLabel" | "quantityKindLabel" | "quantityUnit", "quantityKind"> {
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
@@ -36,10 +45,12 @@ where{
 	}
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
 }`;
+
+	return {text};
 }
 
 
-export function dobjOriginsAndCounts(config){
+export function dobjOriginsAndCounts(): Query<"spec" | "submitter" | "submitterLabel" | "project" | "projectLabel" | "count" | "stationLabel", "station"> {
 	//This is needed to get rid of duplicates due to multiple labels for stations.
 	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
 	const fromClauses = config.envri == 'ICOS'
@@ -49,7 +60,7 @@ from <http://meta.icos-cp.eu/resources/stations/>
 from <http://meta.icos-cp.eu/resources/wdcgg/>`
 		: '';
 
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
 (if(bound(?stationName), ?station0, ?stationName) as ?station)
@@ -75,19 +86,23 @@ where{
 	?submitter cpmeta:hasName ?submitterLabel .
 	?project rdfs:label ?projectLabel .
 	}`;
+
+	return {text};
 }
 
-export function findDobjs(config, search){
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+export function findDobjs(search: string): Query<string, "dobj"> {
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
   ?dobj  cpmeta:hasObjectSpec ?spec.
   FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
   FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
   FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
+
+	return {text};
 }
 
-export function findStations(config, search){
+export function findStations(search: string){
 	return `PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
 SELECT DISTINCT (str(?lName) AS ?Long_name)
 FROM <http://meta.icos-cp.eu/resources/stationentry/>
@@ -98,9 +113,9 @@ WHERE {
 ORDER BY ?Long_name`;
 }
 
-export const listFilteredDataObjects = (config, options) => {
+export const listFilteredDataObjects = (options: any) => {
 
-	function isEmpty(arr){return !arr || !arr.length;}
+	function isEmpty(arr: []){return !arr || !arr.length;}
 
 	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
 
@@ -122,24 +137,24 @@ export const listFilteredDataObjects = (config, options) => {
 
 	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
 
-	function stationsFilter(stations){
+	function stationsFilter(stations: any[]){
 		return stations.length === 1
 			? dobjStation + `<${stations[0]}> .`
 			: `VALUES ?station {<${stations.join('> <')}>}` +
 				'\n' + dobjStation + '?station .';
 	}
 
-	const stationSearch = isEmpty(stations) ? '' : stations.some(s => !s)
+	const stationSearch = isEmpty(stations) ? '' : stations.some((s: any) => !s)
 		? stations.length === 1
 			? noStationFilter
 			: `{{
 					${noStationFilter}
 				} UNION {
-					${stationsFilter(stations.filter(s => !!s))}
+					${stationsFilter(stations.filter((s: any) => !!s))}
 				}}`
 		: stationsFilter(stations);
 
-	const filterClauses = getFilterClauses(config, filters);
+	const filterClauses = getFilterClauses(filters);
 
 	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
 		? (
@@ -169,8 +184,8 @@ ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 };
 
-const getFilterClauses = (config, filters) => {
-	const andFilters = filters.reduce((acc, f) => {
+const getFilterClauses = (filters: KeyAnyVal) => {
+	const andFilters = filters.reduce((acc: any[], f: KeyAnyVal) => {
 		if (f.fromDateTimeStr) {
 			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
 			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
@@ -183,10 +198,10 @@ const getFilterClauses = (config, filters) => {
 		return acc;
 	}, []).join(' && ');
 
-	const orFilters = filters.reduce((acc, f) => {
+	const orFilters = filters.reduce((acc: any[], f: KeyAnyVal) => {
 		if (f.category === 'pids'){
 			// Do not use prefix since it cannot be used with pids starting with '-'
-			f.pids.forEach(fp => acc.push(`?dobj = <${config.cpmetaObjectUri}${fp}>`));
+			f.pids.forEach((fp: string) => acc.push(`?dobj = <${config.cpmetaObjectUri}${fp}>`));
 		}
 
 		return acc;
@@ -209,9 +224,9 @@ const getFilterClauses = (config, filters) => {
 	return filterClauses;
 };
 
-export const extendedDataObjectInfo = (config, dobjs) => {
+export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
 	{
@@ -238,14 +253,18 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
 	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
+
+	return {text};
 };
 
-export const resourceHelpInfo = uriList => {
-	return `select * where{
+export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri", "label" | "comment" | "webpage"> => {
+	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
 	?uri rdfs:label ?label .
 	OPTIONAL{?uri rdfs:comment ?comment}
 	OPTIONAL{?uri rdfs:seeAlso ?webpage}
 }
 order by ?label`;
+
+	return {text};
 };

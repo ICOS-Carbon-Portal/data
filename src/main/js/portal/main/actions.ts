@@ -48,7 +48,7 @@ import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {Action} from "redux";
 import {IPortalThunkAction, PortalDispatch} from "./store";
-import {KeyStrVal, Sha256Str, UrlStr} from "./backend/declarations";
+import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
 
 export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
@@ -64,7 +64,7 @@ export class BackendUserInfo extends BackendPayload{
 }
 
 export class BackendTables extends BackendPayload{
-	constructor(readonly allTables: object){super();}
+	constructor(readonly allTables: ThenArg<typeof fetchAllSpecTables>){super();}
 }
 
 export class BackendObjectMetadataId extends BackendPayload{
@@ -199,7 +199,7 @@ const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
 	fetchAllSpecTables().then(
 		allTables => {
-			dispatch(Object.assign({type: actionTypes.SPECTABLES_FETCHED}, allTables));
+			dispatch(new BackendTables(allTables));
 			dispatch({type: actionTypes.RESTORE_FILTERS});
 			dispatch(getFilteredDataObjects);
 		},
@@ -585,7 +585,7 @@ export const getResourceHelpInfo: (helpItem: any) => IPortalThunkAction<void> = 
 		if (uriList.length) {
 			fetchResourceHelpInfo(uriList).then(resourceInfo => {
 				dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
-			});
+			}, failWithError(dispatch));
 		} else {
 			dispatch(updateHelpInfo(helpItem));
 		}

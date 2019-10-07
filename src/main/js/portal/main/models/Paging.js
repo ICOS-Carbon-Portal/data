@@ -1,11 +1,10 @@
 import config from '../config';
-import FilterFreeText from "./FilterFreeText";
 
 
 export default class Paging{
-	constructor({objCount, offset, pageCount, filtersEnabled, cacheSize, cacheOffset, isDataEndReached}){
+	constructor({objCount, offset = 0, pageCount = undefined, filtersEnabled = undefined, cacheSize = undefined, cacheOffset = undefined, isDataEndReached = false}){
 		this._objCount = objCount;
-		this._offset = offset || 0;
+		this._offset = offset;
 		this._pageCount = pageCount;
 		this._limit = config.stepsize;
 		this._filtersEnabled = !!filtersEnabled;

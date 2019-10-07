@@ -1,11 +1,10 @@
 import {actionTypes} from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import stateUtils, {defaultState} from './models/State';
-import CompositeSpecTable from './models/CompositeSpecTable';
-import Lookup from './models/Lookup';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
+import {getObjCount, updateSortingEnableness} from "./reducers/utils";
 
 
 const specTableKeys = Object.keys(placeholders[config.envri]);
@@ -30,22 +29,10 @@ export default function(state = defaultState, action){
 				}
 			});
 
-		case actionTypes.SPECTABLES_FETCHED:
-			specTable = new CompositeSpecTable(action.specTables);
-			let objCount = getObjCount(specTable);
-
-			return stateUtils.update(state,{
-				specTable,
-				formatToRdfGraph: action.formatToRdfGraph,
-				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, objCount),
-				lookup: new Lookup(specTable)
-			});
-
 		case actionTypes.RESTORE_FILTERS:
 			let {filterCategories, page} = state;
 			let specTable = getSpecTable(state.specTable, filterCategories);
-			objCount = getObjCount(specTable);
+			let objCount = getObjCount(specTable);
 			let paging = new Paging({objCount, offset: page * config.stepsize});
 
 			return stateUtils.update(state,{
@@ -259,24 +246,10 @@ function updateSorting(old, varName){
 	return Object.assign({}, old, {varName, ascending});
 }
 
-function updateSortingEnableness(old, objCount){
-	const isEnabled = objCount <= config.dobjSortLimit;
-	return isEnabled === old.isEnabled
-		? old
-		: Object.assign({}, old, {isEnabled});
-}
-
 function getSpecTable(startTable, filterCategories){
 	return Object.keys(filterCategories).reduce((specTable, varName) => {
 		return specTableKeys.includes(varName)
 			? specTable.withFilter(varName, filterCategories[varName])
 			: specTable;
 	}, startTable);
-}
-
-function getObjCount(specTable){
-	const originsTable = specTable.getTable('origins');
-	return originsTable
-		? originsTable.filteredRows.reduce((acc, next) => acc + (next.count || 0), 0)
-		: 0;
 }

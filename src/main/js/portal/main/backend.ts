@@ -1,4 +1,5 @@
 import {sparql} from 'icos-cp-backend';
+import {sparqlFetch} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import SpecTable from './models/SpecTable';
 import commonConfig from '../../common/main/config';
@@ -6,57 +7,102 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import 'whatwg-fetch';
-import {SparqlResult, SparqlResultBinding} from './backend/sparql';
-import {KeyAnyVal, UrlStr} from "./backend/declarations";
+import {Query, SparqlResult, SparqlResultValue} from './backend/sparql';
+import {KeyAnyVal, KeyStrVal, PromiseTypeParam, ThenArg, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
+const fetchSpecBasics = () => {
+	const query = queries.specBasics();
+
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		spec: b.spec.value,
+		type: b.type.value,
+		specLabel: b.specLabel.value,
+		level: b.level.value,
+		dataset: b.dataset ? b.dataset.value : undefined,
+		format: b.format.value,
+		formatLabel: b.formatLabel.value,
+		theme: b.theme.value,
+		themeLabel: b.themeLabel.value
+	}));
+};
+
+const fetchSpecColumnMeta = () => {
+	const query = queries.specColumnMeta();
+
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		spec: b.spec.value,
+		colTitle: b.colTitle.value,
+		valType: b.valType.value,
+		valTypeLabel: b.valTypeLabel.value,
+		quantityKind: b.quantityKind ? b.quantityKind.value : undefined,
+		quantityKindLabel: b.quantityKindLabel.value,
+		quantityUnit: b.quantityUnit.value
+	}));
+};
+
+const fetchDobjOriginsAndCounts = () => {
+	const query = queries.dobjOriginsAndCounts();
+
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		spec: b.spec.value,
+		submitter: b.submitter.value,
+		submitterLabel: b.submitterLabel.value,
+		project: b.project.value,
+		projectLabel: b.projectLabel.value,
+		count: parseInt(b.count.value),
+		station: b.station ? b.station.value : undefined,
+		stationLabel: b.stationLabel.value
+	}));
+};
+
+const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
+	return fetch(config.metaServer + '/config/dataObjectGraphInfos')
+		.then(res => res.json())
+		.then(res => (res.reduce((acc: {[key: string]: UrlStr}, row: {format: UrlStr, graph: UrlStr}) => {
+				acc[row.format] = row.graph;
+				return acc;
+			}, {})
+		));
+};
+
 export function fetchAllSpecTables() {
-	const promises = [queries.specBasics, queries.specColumnMeta, queries.dobjOriginsAndCounts]
-		.map(qf => fetchSpecTable(qf));
+	const extendResult = <T>(rows: T[]) => ({
+		columnNames: rows && rows.length ? Object.keys(rows[0]) : [],
+		rows: rows && rows.length ? rows : []
+	});
 
-	promises.push(fetchFormatToRdfGraphTbl());
+	const specBasicsPromise = fetchSpecBasics().then(rows => extendResult(rows));
+	const specColumnMetaPromise = fetchSpecColumnMeta().then(rows => extendResult(rows));
+	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts().then(rows => extendResult(rows));
+	const formatToRDFGraphTblPromise = fetchFormatToRDFGraphTbl();
 
-	return Promise.all(promises).then(
-		([basics, columnMeta, origins, formatToRdfGraph]) => {
-			return {
+	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, formatToRDFGraphTblPromise])
+		.then(([basics, columnMeta, origins, formatToRdfGraph]) => (
+			{
 				specTables: {basics, columnMeta, origins},
 				formatToRdfGraph
-			};
-		}
-	);
-}
-
-function fetchSpecTable(queryFactory: Function) {
-	const query = queryFactory(config);
-
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(sparqlResultToSpecTable);
+			}
+		));
 }
 
 export function fetchFilteredDataObjects(options: {}){
-	const query = queries.listFilteredDataObjects(config, options);
+	const query = queries.listFilteredDataObjects(options);
 
 	return sparql(query, config.sparqlEndpoint, true)
 		.then(sparqlResultToColNamesAndRows);
 }
 
-export const searchDobjs = (search: string): Promise<string | undefined> => {
-	const query = queries.findDobjs(config, search);
+export const searchDobjs = (search: string) => {
+	const query = queries.findDobjs(search);
 
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(
-			(sparqlResult: SparqlResult<'dobj'>) => {
-				const bindings = sparqlResult.results.bindings;
-
-				return bindings
-					? Promise.resolve(bindings.map(b => b.dobj!.value.split('/').pop()))
-					: Promise.reject(new Error("Could not get dobjs from meta"));
-			}
-		);
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		dobj: b.dobj ? b.dobj.value.split('/').pop() || '' : ''
+	}));
 };
 
 export const saveCart = (email: string | undefined, cart: Cart): Promise<void> => {
@@ -121,7 +167,7 @@ export const getIsBatchDownloadOk = (): Promise<boolean> => {
 		.then(response => response.status === 200);
 };
 
-function sparqlResultToColNamesAndRows(sparqlResult: SparqlResult) {
+function sparqlResultToColNamesAndRows(sparqlResult: SparqlResult<string, string>) {
 	const columnNames = sparqlResult.head.vars;
 
 	const rows = sparqlResult.results.bindings.map(b => {
@@ -133,23 +179,7 @@ function sparqlResultToColNamesAndRows(sparqlResult: SparqlResult) {
 	return {columnNames, rows};
 }
 
-function sparqlResultToSpecTable(sparqlResult: SparqlResult) {
-	const {columnNames, rows} = sparqlResultToColNamesAndRows(sparqlResult);
-	return new SpecTable(columnNames, rows);
-}
-
-function fetchFormatToRdfGraphTbl(){
-	return fetch(config.metaServer + '/config/dataObjectGraphInfos')
-		.then(res => res.json())
-		.then(
-			res => res.reduce((acc: KeyAnyVal, row: KeyAnyVal) => {
-				acc[row.format] = row.graph;
-				return acc;
-			}, {})
-		);
-}
-
-function sparqlBindingToValue(b: SparqlResultBinding | undefined){
+function sparqlBindingToValue(b: SparqlResultValue | undefined){
 	if(!b) return undefined;
 	switch(b.datatype){
 		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value);
@@ -175,69 +205,33 @@ export const getProfile = (email: string | undefined) => {
 		: Promise.resolve({});
 };
 
-export interface ExtendedDataObjInfo {
-	dobj: string,
-	station: string | undefined,
-	stationId: string | undefined,
-	samplingHeight: string | undefined,
-	theme: string | undefined,
-	themeIcon: string | undefined,
-	title: string | undefined,
-	description: string | undefined,
-	columnNames: any | undefined
-}
-export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDataObjInfo | [] | Error> => {
+export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 	if (dobjs.length == 0) return Promise.resolve([]);
 
-	const query = queries.extendedDataObjectInfo(config, dobjs);
+	const query = queries.extendedDataObjectInfo(dobjs);
 
-	return sparql(query, config.sparqlEndpoint, true)
-		.then((sparqlResult: SparqlResult) => {
-			const bindings = sparqlResult.results.bindings;
-
-			return bindings
-				? bindings.map(b => {
-					return {
-						dobj: b.dobj!.value,
-						station: b.station ? b.station.value : undefined,
-						stationId: b.stationId ? b.stationId.value : undefined,
-						samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
-						theme: b.theme ? b.theme.value : undefined,
-						themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
-						title: b.title ? b.title.value : undefined,
-						description: b.description ? b.description.value : undefined,
-						columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined,
-					};
-				})
-				: new Error("Could not get extended info for data objects");
-			}
-		);
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		dobj: b.dobj!.value,
+		station: b.station ? b.station.value : undefined,
+		stationId: b.stationId ? b.stationId.value : undefined,
+		samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
+		theme: b.theme ? b.theme.value : undefined,
+		themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
+		title: b.title ? b.title.value : undefined,
+		description: b.description ? b.description.value : undefined,
+		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined
+	}));
 };
 
-export interface ResourceHelpInfo {
-	uri: string,
-	label: string | undefined,
-	comment: string | undefined,
-	webpage: string | undefined
-}
-
-export const fetchResourceHelpInfo = (uriList: UrlStr[]): Promise<ResourceHelpInfo | Error> => {
+export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 	const query = queries.resourceHelpInfo(uriList);
 
-	return sparql(query, config.sparqlEndpoint, true).then((sparqlResult: SparqlResult) => {
-		const bindings = sparqlResult.results.bindings;
-
-		return bindings
-			? Promise.resolve(bindings.map(b => {
-				return {
-					uri: b.uri!.value,
-					label: b.label ? b.label.value : undefined,
-					comment: b.comment ? b.comment.value : undefined,
-					webpage: b.webpage ? b.webpage.value : undefined
-				}
-			}))
-			: Promise.reject(new Error("Could not get resource info for list of uri=" + uriList.join(', ')));
-	})
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		uri: b.uri.value,
+		label: b.label ? b.label.value : undefined,
+		comment: b.comment ? b.comment.value : undefined,
+		webpage: b.webpage ? b.webpage.value : undefined
+	}));
 };
 
 export const saveTsSetting = (email: string | undefined, spec: string, type: string, val: string) => {
@@ -267,10 +261,6 @@ export const getTsSettings = (email: string | undefined) => {
 			return newSettings;
 		})
 		: Promise.resolve(tsSettings);
-};
-
-export const clearTsSettings = () => {
-	tsSettingsStorage.removeItem(tsSettingsStorageName);
 };
 
 export const getMetadata = (id: UrlStr): Promise<DataObject> => {

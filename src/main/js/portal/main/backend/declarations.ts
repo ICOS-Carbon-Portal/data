@@ -11,3 +11,12 @@ export interface KeyStrVal {
 export interface KeyAnyVal {
 	[key: string]: any
 }
+
+export type PromiseTypeParam<T> = T extends Promise<infer U> ? U : never;
+
+/** Extract type inside a Promise coming from a function */
+export type ThenArg<T> = T extends Promise<infer U>
+	? U
+	: T extends (...args: any[]) => Promise<infer U>
+		? U
+		: T;
