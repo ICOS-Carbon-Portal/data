@@ -239,7 +239,7 @@ export default class App {
 			if (this.params.get('linking') === 'concatenate') {
 				// Concatenation
 				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
-				return isTimestamp(valueFormatX)
+				return isDateTime(valueFormatX)
 					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]))
 					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => subrow)).sort((d1, d2) => d1[0] - d2[0]);
 			} else {
