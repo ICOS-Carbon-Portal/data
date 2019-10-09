@@ -57,7 +57,7 @@ describe("Testing State", () => {
 
 		fetchAllSpecTables().then(
 			allTables => {
-				const specTable = new CompositeSpecTable(allTables.specTables);
+				const specTable = new CompositeSpecTable.deserialize(allTables.specTables);
 
 				const categories = {};
 				specTable.tables.forEach(tbl => {
