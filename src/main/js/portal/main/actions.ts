@@ -36,7 +36,16 @@ export const actionTypes = {
 };
 
 import stateUtils, {Profile, State, User} from "./models/State";
-import {fetchAllSpecTables, searchDobjs, getCart, saveCart, logOut, fetchResourceHelpInfo, getMetadata} from './backend';
+import {
+	fetchAllSpecTables,
+	searchDobjs,
+	getCart,
+	saveCart,
+	logOut,
+	fetchResourceHelpInfo,
+	getMetadata,
+	fetchKnownDataObjects
+} from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
 import {areFiltersEnabled} from './reducer';
@@ -211,7 +220,10 @@ export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
 export const queryMeta: (id: string, search: string) => IPortalThunkAction<void> = (id, search) => dispatch => {
 	switch (id) {
 		case "dobj":
-			searchDobjs(search).then(data => dispatchMeta(id, data, dispatch));
+			searchDobjs(search).then(data => {
+				const dobjs = data.map(d => d.dobj);
+				dispatchMeta(id, dobjs, dispatch)
+			});
 			break;
 
 		default:
@@ -219,7 +231,7 @@ export const queryMeta: (id: string, search: string) => IPortalThunkAction<void>
 	}
 };
 
-const dispatchMeta = (id: string, data: any, dispatch: Function) => {
+const dispatchMeta = (id: string, data: string[], dispatch: Function) => {
 	dispatch({
 		type: actionTypes.FREE_TEXT_FILTER,
 		id,
@@ -282,79 +294,34 @@ const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: a
 	}
 };
 
-export const getFilteredDataObjects = (dispatch: Function, getState: Function) => {
-	dispatch(getFilteredDataObjectsWithoutUsageLogging);
-
-	const {route, specTable, filterCategories, filterTemporal, filterFreeText} = getState();
-
-	if (route === undefined || route === config.ROUTE_SEARCH) {
-		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
-	}
-
-};
-
 export const updateFilteredDataObjects = () => (dispatch: Function, getState: Function) => {
 	const objectsTable = (getState() as State).objectsTable;
 
-	if (objectsTable.length === 0) dispatch(getFilteredDataObjectsWithoutUsageLogging);
+	if (objectsTable.length === 0) dispatch(getFilteredDataObjects);
 };
 
-const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dispatch, getState) => {
+const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => IPortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
+	fetchKnownDataObjects(dobjs).then(rows => {
+			dispatch({
+				type: actionTypes.OBJECTS_FETCHED,
+				objectsTable: rows,
+				cacheSize: rows.length,
+				isDataEndReached: true
+			});
+
+			if (cb) dispatch(cb);
+		},
+		failWithError(dispatch)
+	);
+};
+
+const restorePreview: IPortalThunkAction<void> = (dispatch) => {
+	dispatch({type: actionTypes.RESTORE_PREVIEW});
+};
+
+const getFilteredDataObjects: IPortalThunkAction<void> = (dispatch, getState) => {
 	const state: State = getState();
-	const {specTable, route, preview, sorting,
-		tabs, filterTemporal, filterFreeText, cart, id} = state;
-	const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
-
-	const getFilters = () => {
-		if (route === config.ROUTE_METADATA && id) {
-			return [{category: 'pids', pids: [id.split('/').pop()]}];
-
-		} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
-			return [{category: 'pids', pids: preview.pids}];
-
-		} else if (route === config.ROUTE_CART) {
-			return [{
-				category: 'pids',
-				pids: cart.ids.map((id: string) => id.split('/').pop())
-			}];
-
-		} else if (areFiltersEnabled(tabs, filterTemporal, filterFreeText)) {
-			return filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any]);
-
-		} else {
-			return [];
-		}
-	};
-
-	const filters = getFilters();
-
-	const specs = route === config.ROUTE_CART
-		? []
-		: specTable.getSpeciesFilter(null);
-
-	const stations = route === config.ROUTE_CART
-		? []
-		: specTable.getFilter('station');
-
-	const submitters = route === config.ROUTE_CART
-		? []
-		: specTable.getFilter('submitter');
-
-	const rdfGraphs = route === config.ROUTE_CART
-		? []
-		: specTable.getColumnValuesFilter('format').map((f: string) => formatToRdfGraph[f]);
-
-	const paging = route === config.ROUTE_CART
-		? {offset: 0, limit: cart.ids.length}
-		: state.paging;
-
-	const options = {specs, stations, submitters, sorting, paging, rdfGraphs, filters};
-
-	interface FetchedDataObj {
-		rows: any,
-		cacheSize: number,
-		isDataEndReached: boolean
-	}
+	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterFreeText} = state;
 
 	if (route === config.ROUTE_CART) {
 		const cartItems: CartItem[] = cart.items;
@@ -369,7 +336,42 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 			cacheSize: rows.length,
 			isDataEndReached: true
 		});
+
+	} else if (route === config.ROUTE_METADATA && id) {
+		const hash: Sha256Str | undefined = id.split('/').pop();
+
+		if (hash) {
+			dispatch(getKnownDataObjInfo([hash]));
+			dispatch(setMetadataItem(id));
+		}
+
+	} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
+		dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
+
 	} else {
+		const {specTable, sorting, tabs, filterTemporal, filterFreeText, paging} = state;
+		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
+
+		const filters = areFiltersEnabled(tabs, filterTemporal, filterFreeText)
+			? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any])
+			: [];
+
+		const options = {
+			specs: specTable.getSpeciesFilter(null),
+			stations: specTable.getFilter('station'),
+			submitters: specTable.getFilter('submitter'),
+			sorting,
+			paging,
+			rdfGraphs: specTable.getColumnValuesFilter('format').map((f: string) => formatToRdfGraph[f]),
+			filters
+		};
+
+		interface FetchedDataObj {
+			rows: any,
+			cacheSize: number,
+			isDataEndReached: boolean
+		}
+
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
 				dispatch(fetchExtendedDataObjInfo(rows.map((d: any) => d.dobj)));
@@ -380,11 +382,13 @@ const getFilteredDataObjectsWithoutUsageLogging: IPortalThunkAction<void> = (dis
 					cacheSize,
 					isDataEndReached
 				});
-				if (route === config.ROUTE_METADATA && id) dispatch(setMetadataItem(id));
-				if (route === config.ROUTE_PREVIEW) dispatch({type: actionTypes.RESTORE_PREVIEW});
 			},
 			failWithError(dispatch)
 		);
+	}
+
+	if (route === undefined || route === config.ROUTE_SEARCH) {
+		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
 	}
 };
 
@@ -410,7 +414,7 @@ export const toggleSort = (varName: string) => (dispatch: Function) => {
 		type: actionTypes.SORTING_TOGGLED,
 		varName
 	});
-	dispatch(getFilteredDataObjectsWithoutUsageLogging);
+	dispatch(getFilteredDataObjects);
 };
 
 export const requestStep = (direction: number) => (dispatch: Function) => {
@@ -418,7 +422,7 @@ export const requestStep = (direction: number) => (dispatch: Function) => {
 		type: actionTypes.STEP_REQUESTED,
 		direction
 	});
-	dispatch(getFilteredDataObjectsWithoutUsageLogging);
+	dispatch(getFilteredDataObjects);
 };
 
 export const updateRoute = (route: string) => (dispatch: Function, getState: Function) => {

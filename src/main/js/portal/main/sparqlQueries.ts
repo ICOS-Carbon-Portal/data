@@ -113,6 +113,24 @@ WHERE {
 ORDER BY ?Long_name`;
 }
 
+export const listKnownDataObjects = (dobjs: string[]): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd
+where {
+VALUES ?dobj { ${values} }
+?dobj cpmeta:hasObjectSpec ?spec .
+?dobj cpmeta:hasSizeInBytes ?size .
+?dobj cpmeta:hasName ?fileName .
+?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
+?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
+}`;
+
+	return {text};
+};
+
 export const listFilteredDataObjects = (options: any) => {
 
 	function isEmpty(arr: []){return !arr || !arr.length;}

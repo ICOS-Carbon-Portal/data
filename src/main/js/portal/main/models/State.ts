@@ -8,7 +8,7 @@ import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
 import config, {prefixes} from "../config";
 import deepequal from 'deep-equal';
-import {KeyAnyVal} from "../backend/declarations";
+import {KeyAnyVal, UrlStr} from "../backend/declarations";
 import {Store} from "redux";
 
 
@@ -70,7 +70,7 @@ export interface State {
 	}
 	paging: Paging | {serialize: undefined}
 	cart: Cart
-	id: string | undefined;
+	id: UrlStr | undefined;
 	metadata: {}
 	station: {} | undefined
 	preview: Preview

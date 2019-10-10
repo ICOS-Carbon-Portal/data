@@ -1,14 +1,13 @@
 import {sparql} from 'icos-cp-backend';
 import {sparqlFetch} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
-import SpecTable from './models/SpecTable';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import 'whatwg-fetch';
-import {Query, SparqlResult, SparqlResultValue} from './backend/sparql';
-import {KeyAnyVal, KeyStrVal, PromiseTypeParam, ThenArg, UrlStr} from "./backend/declarations";
+import {SparqlResult, SparqlResultValue} from './backend/sparql';
+import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -89,6 +88,20 @@ export function fetchAllSpecTables() {
 			}
 		));
 }
+
+export const fetchKnownDataObjects = (dobjs: string[]) => {
+	const query = queries.listKnownDataObjects(dobjs);
+
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		dobj: b.dobj.value,
+		spec: b.spec.value,
+		fileName: b.fileName.value,
+		size: b.size.value,
+		submTime: b.submTime.value,
+		timeStart: b.timeStart.value,
+		timeEnd: b.timeEnd.value
+	}));
+};
 
 export function fetchFilteredDataObjects(options: {}){
 	const query = queries.listFilteredDataObjects(options);
