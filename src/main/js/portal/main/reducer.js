@@ -4,7 +4,7 @@ import stateUtils, {defaultState} from './models/State';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
-import {getObjCount, updateSortingEnableness} from "./reducers/utils";
+import {getObjCount} from "./reducers/utils";
 
 
 const specTableKeys = Object.keys(placeholders[config.envri]);
@@ -38,8 +38,7 @@ export default function(state = defaultState, action){
 			return stateUtils.update(state,{
 				specTable,
 				objectsTable: [],
-				paging,
-				sorting: updateSortingEnableness(state.sorting, objCount)
+				paging
 			});
 
 		case actionTypes.RESTORE_FROM_HISTORY:
@@ -53,7 +52,6 @@ export default function(state = defaultState, action){
 				specTable,
 				objectsTable: [],
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, objCount),
 				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values}),
 				checkedObjectsInSearch: []
 			});
@@ -65,7 +63,6 @@ export default function(state = defaultState, action){
 			return stateUtils.update(state,{
 				specTable,
 				paging: new Paging({objCount}),
-				sorting: updateSortingEnableness(state.sorting, objCount),
 				filterCategories: {},
 				checkedObjectsInSearch: []
 			});
@@ -91,8 +88,7 @@ export default function(state = defaultState, action){
 
 			return stateUtils.update(state,{
 				objectsTable: extendedObjectsTable,
-				paging,
-				sorting: updateSortingEnableness(state.sorting, objCount)
+				paging
 			});
 
 		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:

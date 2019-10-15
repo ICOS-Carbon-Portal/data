@@ -357,7 +357,7 @@ const getFilteredDataObjects: IPortalThunkAction<void> = (dispatch, getState) =>
 			: [];
 
 		const options = {
-			specs: specTable.getSpeciesFilter(null),
+			specs: specTable.getSpeciesFilter(null, true),
 			stations: specTable.getFilter('station'),
 			submitters: specTable.getFilter('submitter'),
 			sorting,

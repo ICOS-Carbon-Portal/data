@@ -50,7 +50,7 @@ export default class SimpleDataObjectsTable extends Component{
 
 						<Dropdown
 							isSorter={true}
-							isEnabled={props.sorting.isEnabled}
+							isEnabled={true}
 							selectedItemKey={props.sorting.varName}
 							isAscending={props.sorting.ascending}
 							itemClickAction={props.toggleSort}

@@ -68,7 +68,7 @@ export default class CompositeSpecTable{
 		return this.getTable(this.findTableName(columnName));
 	}
 
-	getSpeciesFilter(targetTableName){
+	getSpeciesFilter(targetTableName, getAllIfAllAllowed = false){
 		const filters = this.tableNames
 			.filter(tname => tname !== targetTableName) //only apply other tables' species filters to each table
 			.map(tname => this.getTable(tname).speciesFilter)
@@ -78,7 +78,9 @@ export default class CompositeSpecTable{
 				const currSet = new Set(curr);
 				return acc.filter(elem => currSet.has(elem));
 			})
-			: [];
+			: getAllIfAllAllowed
+				? this._tables.basics.getDistinctAvailableColValues(SPECCOL)
+				: [];
 	}
 
 	withFilter(colName, values){

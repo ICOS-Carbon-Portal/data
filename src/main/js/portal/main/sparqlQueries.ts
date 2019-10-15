@@ -174,7 +174,7 @@ export const listFilteredDataObjects = (options: any) => {
 
 	const filterClauses = getFilterClauses(filters);
 
-	const orderBy = (sorting && sorting.isEnabled && sorting.varName)
+	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
 				? `order by ?${sorting.varName}`

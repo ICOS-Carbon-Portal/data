@@ -52,22 +52,20 @@ export default function(props){
 
 const SortButton = props => {
 	const sorting = props.sorting || {};
-	const disabled = !sorting.isEnabled;
 
 	const glyphClass = 'glyphicon glyphicon-sort' + (
-		(disabled || sorting.varName !== props.varName)
+		(sorting.varName !== props.varName)
 			? ''
 			: sorting.ascending
 				? '-by-attributes'
 				: '-by-attributes-alt'
 	);
 
-	const title = disabled ? 'To sort, filter down the amount of objects first' : 'Sort';
 	const style = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
 	return (
-		<button className="btn btn-default" disabled={disabled} title={title} onClick={sortHandler} style={style}>
+		<button className="btn btn-default" title="Sort" onClick={sortHandler} style={style}>
 			<span className={glyphClass} />
 		</button>
 	);

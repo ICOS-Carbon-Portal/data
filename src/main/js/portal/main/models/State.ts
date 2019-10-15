@@ -64,7 +64,6 @@ export interface State {
 	formatToRdfGraph: {}
 	objectsTable: []
 	sorting: {
-		isEnabled: boolean,
 		varName: string | undefined,
 		ascending: boolean
 	}
@@ -104,7 +103,6 @@ export const defaultState: State = {
 	formatToRdfGraph: {},
 	objectsTable: [],
 	sorting: {
-		isEnabled: false,
 		varName: undefined,
 		ascending: true
 	},

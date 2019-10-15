@@ -4,7 +4,7 @@ import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
-import {getObjCount, updateSortingEnableness} from "./utils";
+import {getObjCount} from "./utils";
 import {ThenArg, UrlStr} from "../backend/declarations";
 import {fetchAllSpecTables} from "../backend";
 
@@ -47,7 +47,6 @@ const handleBackendTables = (state: State, allTables: ThenArg<typeof fetchAllSpe
 		specTable,
 		formatToRdfGraph: allTables.formatToRdfGraph,
 		paging: new Paging({objCount}),
-		sorting: updateSortingEnableness(state.sorting, objCount),
 		lookup: new Lookup(specTable)
 	};
 };

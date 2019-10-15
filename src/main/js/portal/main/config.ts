@@ -29,8 +29,7 @@ export default {
 		ICOS: 'https://meta.icos-cp.eu/objects/',
 		SITES: 'https://meta.fieldsites.se/objects/'
 	},
-	historyStateMaxAge: (1000 * 3600 * 24),
-	dobjSortLimit: 2000,
+	historyStateMaxAge: (1000 * 3600 * 24)
 };
 
 const defaultCategNames = {

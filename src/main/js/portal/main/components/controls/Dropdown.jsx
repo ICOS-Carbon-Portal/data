@@ -45,7 +45,6 @@ export default class Dropdown extends Component{
 				{
 					isSorter
 						? <SortButton
-							isEnabled={isEnabled}
 							selectedItemKey={selectedItemKey}
 							isAscending={isAscending}
 							clickAction={this.onDropdownClick.bind(this)}
@@ -73,31 +72,22 @@ export default class Dropdown extends Component{
 	}
 }
 
-const SortButton = ({isEnabled, selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by'}) => {
-	if (isEnabled) {
-		const glyphCls = selectedItemKey
-			? isAscending
-				? 'glyphicon glyphicon-sort-by-attributes'
-				: 'glyphicon glyphicon-sort-by-attributes-alt'
-			: '';
+const SortButton = ({selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by'}) => {
+	const glyphCls = selectedItemKey
+		? isAscending
+			? 'glyphicon glyphicon-sort-by-attributes'
+			: 'glyphicon glyphicon-sort-by-attributes-alt'
+		: '';
 
-		const lbl = selectedItemKey
-			? lookup[selectedItemKey]
-			: defaultLbl;
+	const lbl = selectedItemKey
+		? lookup[selectedItemKey]
+		: defaultLbl;
 
-		return (
-			<button className="btn btn-default dropdown-toggle" type="button" onClick={clickAction}>
-				<span><span className={glyphCls}/> {lbl}</span> <span className="caret"/>
-			</button>
-		);
-	} else {
-		const title = `Sort up to ${config.dobjSortLimit} results. Please refine your search!`;
-		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button" title={title} style={{pointerEvents:'auto'}}>
-				<span>{defaultLbl}</span> <span className="caret"/>
-			</button>
-		);
-	}
+	return (
+		<button className="btn btn-default dropdown-toggle" type="button" onClick={clickAction}>
+			<span><span className={glyphCls}/> {lbl}</span> <span className="caret"/>
+		</button>
+	);
 };
 
 const Button = ({isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 'Select option'}) => {
