@@ -8,6 +8,8 @@ import './Dygraphs.css';
 import './custom.css';
 import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
+import {getCssText} from '../../common/main/style';
+import {addHelpSection} from "./HelpSection";
 
 
 const spinnerDelay = 100;
@@ -33,6 +35,25 @@ const errMsg = `
 		<a href="?objId=-xQ2wgAt-ZjdGaCEJnKQIEIu,0EwfR9LutvnBbvgW-KJdq2U0&x=TIMESTAMP&linking=overlap&y=co2&legendLabels=HPB 93.0,SMR 67.2&legendClosed">Example</a>
 	</div>
 </div>`;
+
+const stylesCollapsibleSection = {
+	details: getCssText({
+		position: 'absolute',
+		zIndex: 9999,
+		backgroundColor: 'white',
+		border: '1px solid black',
+		padding: 5,
+		borderRadius: 5,
+		boxShadow: '9px 8px 20px -18px rgba(0,0,0,0.75)'
+	}),
+	summary: getCssText({
+		fontWeight: 'bold',
+		cursor: 'pointer'
+	}),
+	anchor: getCssText({
+		marginTop: 7
+	})
+};
 
 export default class App {
 	constructor(config, params){
@@ -71,13 +92,7 @@ export default class App {
 			}
 		}
 
-		const styles = {
-			details: 'position:absolute; z-index:999; background-color:white; border:1px solid black; padding:5px;' +
-				' border-radius:5px; box-shadow: 9px 8px 20px -18px rgba(0,0,0,0.75);',
-			summary: "font-weight:bold; cursor:pointer;",
-			anchor: "margin-top: 7px;"
-		};
-		this.legend = new CollapsibleSection('legend', 'Legend', styles, this.params.get('legendClosed'), true);
+		this.legend = new CollapsibleSection('legend', 'Legend', stylesCollapsibleSection, this.params.get('legendClosed'), true);
 	}
 
 	main(){
@@ -263,11 +278,11 @@ export default class App {
 		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
 
 		this.graph.updateOptions( { file: data, strokeWidth } );
-		this.showLegend();
+		this.showCollapsible();
 		this.showSpinner(false);
 	}
 
-	showLegend(){
+	showCollapsible(){
 		const xAxisRange = this.graph.xAxisExtremes();
 		const xCoord = this.graph.toDomXCoord(xAxisRange[0]);
 		const titleHeight = this.graph.getOption('titleHeight');
@@ -275,8 +290,20 @@ export default class App {
 		const top = parseInt(graphStyle.top);
 		const left = parseInt(graphStyle.left);
 
-		this.legend.setPosition(top + titleHeight + 2, left + xCoord + 2);
+		const posLegend = {
+			top: top + titleHeight + 2,
+			left: left + xCoord + 2
+		};
+
+		this.legend.setPosition(posLegend);
 		this.legend.show();
+
+		// Help section
+		const collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, false);
+		collapsibleHelp.setPosition({top: posLegend.top, right: 10});
+
+		addHelpSection(document.getElementById('help'));
+
 	}
 
 	showSpinner(show){

@@ -20,9 +20,8 @@ export default class CollapsibleSection{
 		this.details.appendChild(legendClone);
 	}
 
-	setPosition(top, left){
-		this.details.style.top = top + "px";
-		this.details.style.left = left + "px";
+	setPosition(position){
+		Object.keys(position).forEach(key => this.details.style[key] = position[key] + "px");
 	}
 
 	hide(){

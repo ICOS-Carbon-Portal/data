@@ -7,11 +7,14 @@ import buildConf from '../common/main/buildConf';
 
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
+const tsTarget = './tsTarget/';
 
 const paths = {
-	main: 'main/main.jsx',
-	src: 'main/**/*.js*',
-	commonjs: '../common/main/**/*.js*',
+	main: `${tsTarget}${project}/main/main.js`,
+	src: `${tsTarget}${project}/main/**/*.js*`,
+	cssSrc: './main/*.css*',
+	cssTarget: `${tsTarget}${project}/main/`,
+	commonjs: `${tsTarget}common/main/**/*.js*`,
 	bundleFile: project + '.js'
 };
 
@@ -25,7 +28,12 @@ const compileSrc = _ => {
 	return buildConf.transformToBundle(isProduction, paths);
 };
 
-gulp.task('build', gulp.series(clean, compileSrc));
+const copyCSS = _ => {
+	return gulp.src(paths.cssSrc)
+		.pipe(gulp.dest(paths.cssTarget));
+};
+
+gulp.task('build', gulp.series(clean, copyCSS, compileSrc));
 
 gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
 

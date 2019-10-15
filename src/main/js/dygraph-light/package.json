@@ -5,9 +5,9 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp buildWatch",
+    "default": "./publish.sh",
+    "publish": "./publish.sh",
+    "build": "./build.sh",
     "gulp": "gulp"
   },
   "repository": {
@@ -33,8 +33,7 @@
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "babel": {
     "presets": [
-      "@babel/preset-env",
-      "@babel/typescript"
+      "@babel/preset-env"
     ],
     "plugins": [
       "@babel/proposal-class-properties",
@@ -51,18 +50,18 @@
     "@babel/register": "^7.4.4",
     "@babel/plugin-proposal-class-properties": "^7.4.4",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
-    "@babel/preset-typescript": "^7.3.3",
+    "@babel/preset-typescript": "^7.6.0",
     "del": "^3.0.0",
     "gulp": "^4.0.1",
     "gulp-replace": "^1.0.0",
     "react": "^16.8.6",
-    "browserify-css": "^0.15.0"
+    "browserify-css": "^0.15.0",
+    "typescript": "^3.6.4"
   },
   "dependencies": {
     "babel-polyfill": "^6.13.0",
     "dygraphs": "^2.1.0",
     "icos-cp-backend": "^0.3.10",
-    "icos-cp-spinner": "^0.1.4",
-    "typescript": "^3.5.1"
+    "icos-cp-spinner": "^0.1.4"
   }
 }
