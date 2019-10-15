@@ -143,9 +143,7 @@ export const listFilteredDataObjects = (options: any) => {
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: (specs.length > 1)
-			? `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}'
-			: `BIND(<${specs[0]}> AS ?${SPECCOL})`;
+		: `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}';
 
 	const submitterSearch = isEmpty(submitters) ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
@@ -156,10 +154,8 @@ export const listFilteredDataObjects = (options: any) => {
 	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
 
 	function stationsFilter(stations: any[]){
-		return stations.length === 1
-			? dobjStation + `<${stations[0]}> .`
-			: `VALUES ?station {<${stations.join('> <')}>}` +
-				'\n' + dobjStation + '?station .';
+		return `VALUES ?station {<${stations.join('> <')}>}` +
+			'\n' + dobjStation + '?station .';
 	}
 
 	const stationSearch = isEmpty(stations) ? '' : stations.some((s: any) => !s)
