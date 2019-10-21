@@ -1,14 +1,13 @@
-import {sparql} from 'icos-cp-backend';
-import {sparqlFetch} from './backend/SparqlFetch';
+import {sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import 'whatwg-fetch';
-import {SparqlResult, SparqlResultValue} from './backend/sparql';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
+import {SparqlResultBinding, SparqlResultValue} from "./backend/sparql";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -106,9 +105,29 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 export function fetchFilteredDataObjects(options: {}){
 	const query = queries.listFilteredDataObjects(options);
 
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(sparqlResultToColNamesAndRows);
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+			dobj: sparqlBindingToValue<string>(b.dobj),
+			spec: sparqlBindingToValue<string>(b.spec),
+			fileName: sparqlBindingToValue<string>(b.fileName),
+			size: sparqlBindingToValue<number>(b.size),
+			submTime: sparqlBindingToValue<Date>(b.submTime),
+			timeStart: sparqlBindingToValue<Date>(b.timeStart),
+			timeEnd: sparqlBindingToValue<Date>(b.timeEnd)
+	}));
 }
+
+// TODO: Make parsing to data type more elegant, if possible
+const sparqlBindingToValue = <T extends string | number | boolean | Date>(b: SparqlResultValue): T => {
+	switch(b.datatype){
+		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value) as T;
+		case "http://www.w3.org/2001/XMLSchema#long": return parseInt(b.value) as T;
+		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value) as T;
+		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value) as T;
+		case "http://www.w3.org/2001/XMLSchema#dateTime": return new Date(b.value) as T;
+		case "http://www.w3.org/2001/XMLSchema#boolean": return (b.value === "true") as T;
+		default: return b.value as T;
+	}
+};
 
 export const searchDobjs = (search: string) => {
 	const query = queries.findDobjs(search);
@@ -179,29 +198,6 @@ export const getIsBatchDownloadOk = (): Promise<boolean> => {
 	return fetch('../objects?ids=[]&fileName=test', {credentials: 'include'})
 		.then(response => response.status === 200);
 };
-
-function sparqlResultToColNamesAndRows(sparqlResult: SparqlResult<string, string>) {
-	const columnNames = sparqlResult.head.vars;
-
-	const rows = sparqlResult.results.bindings.map(b => {
-		const row: KeyAnyVal = {};
-		columnNames.forEach(colName => row[colName] = sparqlBindingToValue(b[colName]));
-		return row;
-	});
-
-	return {columnNames, rows};
-}
-
-function sparqlBindingToValue(b: SparqlResultValue | undefined){
-	if(!b) return undefined;
-	switch(b.datatype){
-		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value);
-		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value);
-		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value);
-		case "http://www.w3.org/2001/XMLSchema#dateTime": return new Date(b.value);
-		default: return b.value;
-	}
-}
 
 export function getWhoIam(){
 	return fetch('/whoami', {credentials: 'include'})

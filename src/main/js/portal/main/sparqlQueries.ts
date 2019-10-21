@@ -131,7 +131,7 @@ VALUES ?dobj { ${values} }
 	return {text};
 };
 
-export const listFilteredDataObjects = (options: any) => {
+export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
 
 	function isEmpty(arr: []){return !arr || !arr.length;}
 
@@ -178,7 +178,7 @@ export const listFilteredDataObjects = (options: any) => {
 			)
 		: '';
 
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
@@ -196,6 +196,8 @@ ${fromClause}where {
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
+
+	return {text};
 };
 
 const getFilterClauses = (filters: KeyAnyVal) => {

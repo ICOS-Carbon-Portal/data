@@ -12,6 +12,13 @@ export interface KeyAnyVal {
 	[key: string]: any
 }
 
+/**	From https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-inference-in-conditional-types	*/
+export type Unpacked<T> =
+	T extends (infer U)[] ? U :
+		T extends (...args: any[]) => infer U ? U :
+			T extends Promise<infer U> ? U :
+				T;
+
 export type PromiseTypeParam<T> = T extends Promise<infer U> ? U : never;
 
 /** Extract type inside a Promise coming from a function */
