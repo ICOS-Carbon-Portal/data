@@ -20,7 +20,7 @@ const fetchSpecBasics = () => {
 		spec: b.spec.value,
 		type: b.type.value,
 		specLabel: b.specLabel.value,
-		level: b.level.value,
+		level: parseInt(b.level.value),
 		dataset: b.dataset ? b.dataset.value : undefined,
 		format: b.format.value,
 		formatLabel: b.formatLabel.value,
