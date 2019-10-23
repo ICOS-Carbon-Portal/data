@@ -3,6 +3,7 @@ import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
 import { formatBytes, formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
+import {LinkifyText} from "../components/LinkifyText";
 
 export default class Metadata extends Component {
 	constructor(props) {
@@ -71,7 +72,7 @@ export default class Metadata extends Component {
 									</div>
 								</div>
 								{metadata.specificInfo.description &&
-									metadataRow("Description", metadata.specificInfo.description)
+									metadataRow("Description", metadata.specificInfo.description, true)
 								}
 								{metadata.doi &&
 									metadataRow("DOI", doiLink(metadata.doi))
@@ -197,11 +198,15 @@ const areDatesDifferent = (date1, date2) => {
 	return date1.setUTCHours(0,0,0,0) != date2.setUTCHours(0,0,0,0) ? true : false;
 };
 
-const metadataRow = (label, value) => {
+const metadataRow = (label, value, linkify = false) => {
+	const text = linkify
+		? <LinkifyText text={value} />
+		: value;
+
 	return (
 		<div className="row">
 			<div className="col-md-2"><label>{label}</label></div>
-			<div className="col-md-10 mb-2">{value}</div>
+			<div className="col-md-10 mb-2">{text}</div>
 		</div>
 	);
 };
