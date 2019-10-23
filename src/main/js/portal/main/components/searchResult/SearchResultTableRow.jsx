@@ -38,7 +38,7 @@ export default class SimpleObjectTableRow extends Component{
 		const checkBtnTitle = checkboxDisabled
 			? 'You cannot download or preview level 0 data through this portal'
 			: `Click to select this data object for preview or add to cart`;
-
+		const metadataHash = getMetadataHash(objInfo.dobj);
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -53,7 +53,7 @@ export default class SimpleObjectTableRow extends Component{
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>
-						<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
+						<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					{extendedInfo &&
@@ -72,6 +72,15 @@ export default class SimpleObjectTableRow extends Component{
 		);
 	}
 }
+
+const getMetadataHash = (dobj) => {
+	const hashObj = {
+		route: 'metadata',
+		id: dobj.split('/').pop()
+	};
+
+	return "#" + encodeURIComponent(JSON.stringify(hashObj));
+};
 
 const Description = ({extendedInfo, truncateStyle}) => {
 	if (!(extendedInfo && extendedInfo.description)) return null;
