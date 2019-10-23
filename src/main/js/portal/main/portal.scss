@@ -43,3 +43,10 @@ ul.dashed > li:before {
 .mb-2 {
 	margin-bottom: 0.5rem;
 }
+// Customize width of Multiselect so that it does not flow over when screen is narrow
+.rw-multiselect .rw-dropdown-list-autofill,
+.rw-multiselect .rw-filter-input,
+.rw-multiselect .rw-input,
+.rw-multiselect .rw-input-reset {
+  width:100% !important;
+}
