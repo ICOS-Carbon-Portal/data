@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import CheckBtn from '../buttons/ChechBtn.jsx';
 import {isSmallDevice} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
+import config from '../../config';
 
 
 const truncateStyle = {
@@ -11,9 +12,9 @@ const truncateStyle = {
 	textOverflow: 'ellipsis'
 };
 
-const iconPin = '//static.icos-cp.eu/images/icons/pin.svg';
-const iconCalendar = '//static.icos-cp.eu/images/icons/calendar.svg';
+const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
+const iconTime = '//static.icos-cp.eu/images/icons/time.svg'
 
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
@@ -32,7 +33,10 @@ export default class SimpleObjectTableRow extends Component{
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
-		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : objInfo.specLabel;
+		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
+		const locationString = location ? ` from ${location}` : '';
+		const dateString = `${formatDate(objInfo.timeStart)} \u2013 ${formatDate(objInfo.timeEnd)}`;
+		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${objInfo.specLabel}${locationString}, ${dateString}`;
 		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled
@@ -59,12 +63,11 @@ export default class SimpleObjectTableRow extends Component{
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
-						{extendedInfo.station &&
-						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconPin} />
+						{config.envri === "SITES" && extendedInfo.station &&
+						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
 						}
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
-						<ExtendedInfoItem item={`From ${formatDate(objInfo.timeStart)} to ${formatDate(objInfo.timeEnd)}`} icon={iconCalendar} />
-						<ExtendedInfoItem item={objInfo.fileName} icon={'//static.icos-cp.eu/images/icons/file.svg'} />
+						<ExtendedInfoItem item={objInfo.temporalResolution} icon={iconTime} iconHeight={16} title="Time resolution" />
 					</div>
 					}
 				</td>
@@ -90,12 +93,12 @@ const Description = ({extendedInfo, truncateStyle}) => {
 		: <LinkifyText text={extendedInfo.description} />;
 };
 
-const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title, children}) => {
-	const imgStyle = {height: iconHeight, marginTop: -2, marginRight: iconRightMargin};
+const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title}) => {
+	const imgStyle = {height: iconHeight, marginRight: iconRightMargin};
 
 	return (item && icon
 		? <span className="extended-info-item" >
-			<img src={icon} title={title} style={imgStyle}/> {children ? children : item}
+			<img src={icon} title={title} style={imgStyle}/> <span style={{verticalAlign: 'middle'}}>{item}</span>
 		</span>
 		: null
 	);

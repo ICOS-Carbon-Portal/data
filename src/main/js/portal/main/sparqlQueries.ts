@@ -9,14 +9,17 @@ export const SPECCOL = 'spec';
 
 export function specBasics(): Query<"spec" | "type" | "specLabel" | "level" | "format" | "formatLabel" | "theme" | "themeLabel", "dataset"> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel)
+select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
 where{
 	?spec cpmeta:hasDataLevel ?level .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasDataTheme ?theme .
 	?theme rdfs:label ?themeLbl .
-	OPTIONAL{?spec cpmeta:containsDataset ?dataset}
+	OPTIONAL{
+		?spec cpmeta:containsDataset ?dataset .
+		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
+	}
 	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . filter not exists {[] cpmeta:isNextVersionOf ?dobj}}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .
@@ -240,13 +243,13 @@ const getFilterClauses = (filters: KeyAnyVal) => {
 	return filterClauses;
 };
 
-export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames"> => {
+export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site where{
 	{
-		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) where{
+		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?site0) as ?site) where{
 			VALUES ?dobj { ${dobjsList} }
 			OPTIONAL{
 				?dobj cpmeta:wasAcquiredBy ?acq.
@@ -254,6 +257,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 				OPTIONAL{ ?stationUri cpmeta:hasName ?station0 }
 				OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId0 }
 				OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight0 }
+				OPTIONAL{ ?acq cpmeta:wasPerformedAt/cpmeta:hasSpatialCoverage/rdfs:label ?site0 }
 			}
 		}
 		group by ?dobj

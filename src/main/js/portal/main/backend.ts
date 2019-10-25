@@ -233,7 +233,8 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 		themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
 		title: b.title ? b.title.value : undefined,
 		description: b.description ? b.description.value : undefined,
-		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined
+		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined,
+		site: b.site ? b.site.value : undefined,
 	}));
 };
 
