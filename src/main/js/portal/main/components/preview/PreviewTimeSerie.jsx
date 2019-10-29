@@ -58,10 +58,15 @@ export default class PreviewTimeSerie extends Component {
 		}, true);
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
-		const options = allItemsHaveColumnNames
-			? filterOptions([...new Set([...items.flatMap(item => item.columnNames)])]
-				.map(colName => preview.options.find(opt => opt.colTitle === colName)))
-			: filterOptions(preview.options);
+		const options = filterOptions(allItemsHaveColumnNames
+			? [...new Set([...items.flatMap(item => item.columnNames)])]
+				.map(colName =>
+					Object.assign({},
+						preview.options.find(opt => new RegExp(opt.colTitle).test(colName)),
+						{colTitle: colName}
+					)
+				)
+			: preview.options);
 		const chartTypeOptions = [
 			{colTitle: 'scatter', valTypeLabel: 'scatter'},
 			{colTitle: 'line', valTypeLabel: 'line'},
