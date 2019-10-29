@@ -467,14 +467,17 @@ export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => (
 	});
 };
 
-export const setPreviewItem = (id: string) => (dispatch: Function) => {
+export const setPreviewItem = (id: string) => (dispatch: Function, getState: Function) => {
 	dispatch(getTsPreviewSettings()).then(() => {
 		dispatch({
 			type: actionTypes.PREVIEW,
 			id
 		});
+		
+		if (!(getState() as State).preview.items.length) {
+			dispatch(fetchExtendedDataObjInfo([id]));
+		}
 	});
-	dispatch(fetchExtendedDataObjInfo([id]));
 };
 
 const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
