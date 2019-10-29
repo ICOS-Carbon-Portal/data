@@ -56,32 +56,28 @@ where{
 export function dobjOriginsAndCounts(): Query<"spec" | "submitter" | "submitterLabel" | "project" | "projectLabel" | "count" | "stationLabel", "station"> {
 	//This is needed to get rid of duplicates due to multiple labels for stations.
 	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
-	const fromClauses = config.envri == 'ICOS'
-		? `from <http://meta.icos-cp.eu/resources/cpmeta/>
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
-from <http://meta.icos-cp.eu/resources/stations/>
-from <http://meta.icos-cp.eu/resources/wdcgg/>`
-		: '';
 
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
-(if(bound(?stationName), ?station0, ?stationName) as ?station)
+(if(bound(?stationName), ?stationOrDummy, ?stationName) as ?station)
 (if(bound(?stationName), CONCAT(?stPrefix, ?stationName), "(not applicable)") as ?stationLabel)
-${fromClauses}
 where{
 	{
-		select * where{
-			[] cpmeta:hasStatProps [
-				cpmeta:hasStatCount ?count;
-				cpmeta:hasStatStation ?station0;
-				cpmeta:hasStatSpec ?spec;
-				cpmeta:hasStatSubmitter ?submitter
-			] .
-			OPTIONAL{?station0 cpmeta:hasName ?stationName}
-			OPTIONAL{?station0 cpmeta:hasStationId ?stId}
+		select
+			(if(bound(?stationOpt), ?stationOpt, <https://dummy.unbound.station>) as ?stationOrDummy)
+			?submitter ?spec (count(?dobj) as ?count)
+		where{
+			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
+			?dobj cpmeta:hasObjectSpec ?spec .
+			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationOpt }
+			?dobj cpmeta:hasSizeInBytes ?size .
+			FILTER NOT EXISTS{[] cpmeta:isNextVersionOf ?dobj}
 		}
+		group by ?spec ?submitter ?stationOpt
 	}
+	OPTIONAL{?stationOrDummy cpmeta:hasName ?stationName}
+	OPTIONAL{?stationOrDummy cpmeta:hasStationId ?stId}
 	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
