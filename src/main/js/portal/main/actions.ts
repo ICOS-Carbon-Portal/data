@@ -348,6 +348,9 @@ const getFilteredDataObjects: IPortalThunkAction<void> = (dispatch, getState) =>
 	} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
 		dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
 
+		let ids = preview.pids.map((id: string) => config.previewIdPrefix[config.envri] + id);
+		dispatch(fetchExtendedDataObjInfo(ids));
+
 	} else {
 		const {specTable, sorting, tabs, filterTemporal, filterFreeText, paging} = state;
 		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
@@ -471,6 +474,7 @@ export const setPreviewItem = (id: string) => (dispatch: Function) => {
 			id
 		});
 	});
+	dispatch(fetchExtendedDataObjInfo([id]));
 };
 
 const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
