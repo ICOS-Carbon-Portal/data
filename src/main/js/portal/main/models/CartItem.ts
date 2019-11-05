@@ -5,7 +5,7 @@ import commonConfig from '../../../common/main/config';
 const previewTypes = commonConfig.previewTypes;
 type DataType = typeof previewTypes.TIMESERIES | typeof previewTypes.NETCDF | typeof previewTypes.MAPGRAPH;
 
-interface DataObject {
+export interface DataObject {
 	dobj: string,
 	fileName: string,
 	format: string,

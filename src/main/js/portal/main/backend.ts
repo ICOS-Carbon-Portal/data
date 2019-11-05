@@ -8,12 +8,7 @@ import { FilterRequest } from './models/FilterRequest';
 import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
-import {
-	SparqlResultValue,
-	XMLSchemaDateTime,
-	XMLSchemaInteger,
-	XMLSchemaString
-} from "./backend/sparql";
+import {SparqlResultValue, XMLSchema} from "./backend/sparql";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -112,13 +107,13 @@ export function fetchFilteredDataObjects(options: {}){
 	const query = queries.listFilteredDataObjects(options);
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
-			dobj: sparqlBindingToValue<XMLSchemaString>(b.dobj),
-			spec: sparqlBindingToValue<XMLSchemaString>(b.spec),
-			fileName: sparqlBindingToValue<XMLSchemaString>(b.fileName),
-			size: sparqlBindingToValue<XMLSchemaInteger>(b.size),
-			submTime: sparqlBindingToValue<XMLSchemaDateTime>(b.submTime),
-			timeStart: sparqlBindingToValue<XMLSchemaDateTime>(b.timeStart),
-			timeEnd: sparqlBindingToValue<XMLSchemaDateTime>(b.timeEnd)
+			dobj: sparqlBindingToValue<XMLSchema.String>(b.dobj),
+			spec: sparqlBindingToValue<XMLSchema.String>(b.spec),
+			fileName: sparqlBindingToValue<XMLSchema.String>(b.fileName),
+			size: sparqlBindingToValue<XMLSchema.Integer>(b.size),
+			submTime: sparqlBindingToValue<XMLSchema.DateTime>(b.submTime),
+			timeStart: sparqlBindingToValue<XMLSchema.DateTime>(b.timeStart),
+			timeEnd: sparqlBindingToValue<XMLSchema.DateTime>(b.timeEnd)
 	}));
 }
 

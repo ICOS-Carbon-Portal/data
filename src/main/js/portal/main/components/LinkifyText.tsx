@@ -2,12 +2,12 @@ import * as React from 'react';
 import LinkifyIt from 'linkify-it';
 
 const linkifyIt = LinkifyIt();
-interface IProps {
+interface Props {
 	text: string,
 	style?: object
 }
 
-export const LinkifyText: React.FunctionComponent<IProps> = ({text, style}) => {
+export const LinkifyText: React.FunctionComponent<Props> = ({text, style}) => {
 	const matches = linkifyIt.match(text);
 
 	if (matches === null) return <div>{text}</div>;

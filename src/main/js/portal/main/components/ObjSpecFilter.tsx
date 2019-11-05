@@ -1,30 +1,18 @@
-import React from 'react';
-import config, {placeholders, filters, CategoryType, CategoryNamesDict} from '../config';
+import React, {Component} from 'react';
+import config, {placeholders, filters, CategoryType} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
-import {KeyStrVal} from "../backend/declarations";
+import {ReducedProps} from "../containers/Search";
+import {PickClassFunctions, UrlStr} from "../backend/declarations";
 
-interface ISpecTable {
-	names: CategoryType[];
-	findTable(name: string): { [key: string]: KeyStrVal[] };
-	getFilter(name: string): string[];
-	getDistinctAvailableColValues(name: string): string[];
-	getColLabelNamePair(name: string): [string, string];
-}
 
-interface IObjSpecFilterProps {
-	search: CategoryNamesDict;
-	specTable: ISpecTable;
-	helpStorage: any;
-	getResourceHelpInfo: Function;
-	specFiltersReset: Function;
-	updateFilter: Function;
-}
+type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
+type ObjSpecFilterActions = PickClassFunctions<typeof ObjSpecFilter>;
 
-export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> {
+export default class ObjSpecFilter extends Component<OwnProps> {
 
-	search: {[C in CategoryType]?: any} = {} //values are set by MultiSelectFilter
+	search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
 	getCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
@@ -33,7 +21,7 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> 
 
 		if (specTable) {
 			const colTbl = specTable.findTable(name);
-			if (colTbl) colTbl.rows.forEach(row => {
+			if (colTbl) colTbl.rows.forEach((row: any) => {
 				lookupTable[row[name]] = row[labelName];
 			});
 		}
@@ -41,14 +29,14 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> 
 		const filterUris = specTable.getFilter(name);
 		const data = specTable
 			? specTable.getDistinctAvailableColValues(name)
-				.map(value => {return {value, text: lookupTable[value]};})
+				.map((value: string) => {return {value, text: lookupTable[value]};})
 			: [];
-		const value = filterUris.map(uri => data.some(d => d.value === uri) ? uri : lookupTable[uri]);
+		const value = filterUris.map((uri: UrlStr) => data.some((d: any) => d.value === uri) ? uri : lookupTable[uri]);
 
 		if (data[0]) {
 			typeof data[0].text === "string"
-				? data.sort((d1, d2) => d1.text.localeCompare(d2.text))
-				: data.sort((d1, d2) => d1.text - d2.text);
+				? data.sort((d1: any, d2: any) => d1.text.localeCompare(d2.text))
+				: data.sort((d1: any, d2: any) => d1.text - d2.text);
 		}
 
 		const placeholder = data.length === 1
@@ -82,7 +70,7 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> 
 
 	render(){
 		const {specTable, specFiltersReset} = this.props;
-		const colNames = specTable.names.filter(name => !!placeholders[config.envri][name]);
+		const colNames = specTable.names.filter((name: string) => !!placeholders[config.envri][name]);
 		const activeFilters = colNames.map(colName => specTable.getFilter(colName));
 		const resetBtnEnabled = !!activeFilters.reduce((acc, curr) => {
 			return acc + curr.length;
@@ -93,7 +81,7 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> 
 			<div>
 				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 
-				{availableFilters.map((filterPanel, i) =>
+				{availableFilters.map((filterPanel: any, i: number) =>
 					<FilterPanel
 						key={"filter_" + i}
 						header={filterPanel.panelTitle}
@@ -108,15 +96,15 @@ export default class ObjSpecFilter extends React.Component<IObjSpecFilterProps> 
 	}
 }
 
-interface IFilterPanel {
+interface FilterPanel {
 	header: string,
 	nameList: [string, string][],
 	colNames: string[],
-	getCtrl: Function,
+	getCtrl: ObjSpecFilterActions['getCtrl'],
 	startCollapsed?: boolean
 }
 
-const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = false }: IFilterPanel) => {
+const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = false }: FilterPanel) => {
 	if (colNames.length === 0) return null;
 
 	return (
@@ -134,12 +122,12 @@ const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = fal
 	);
 };
 
-interface IResetBtn {
+interface ResetBtn {
 	resetFiltersAction: Function,
 	enabled: boolean
 }
 
-const ResetBtn = ({ resetFiltersAction, enabled }: IResetBtn) => {
+const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
 	const style = enabled
 		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
@@ -149,6 +137,6 @@ const ResetBtn = ({ resetFiltersAction, enabled }: IResetBtn) => {
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };
 
-const getNameList = (specTable: ISpecTable, list: ReadonlyArray<string>) => {
-	return list.map(colName => specTable.getColLabelNamePair(colName));
+const getNameList = (specTable: OwnProps['specTable'], list: ReadonlyArray<string>): [string, string][] => {
+	return list.map((colName: string) => specTable.getColLabelNamePair(colName) as [string, string]);
 };

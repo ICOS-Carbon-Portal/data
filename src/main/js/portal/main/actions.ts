@@ -56,15 +56,16 @@ import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {Action} from "redux";
-import {IPortalThunkAction, PortalDispatch} from "./store";
+import {PortalThunkAction, PortalDispatch} from "./store";
 import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
+import {Item} from "./models/HelpStorage";
 
 export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
 export abstract class MiscPayload extends ActionPayload{}
 
 
-export interface IPortalPlainAction extends Action<string>{
+export interface PortalPlainAction extends Action<string>{
 	payload: ActionPayload
 }
 
@@ -101,7 +102,7 @@ export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void
 	dispatch(logError(error));
 };
 
-const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getState) => {
+const logError: (error: Error) => PortalThunkAction<void> = error => (_, getState) => {
 	const state: State = getState();
 	const user = state.user;
 	const profile = user.profile;
@@ -119,7 +120,7 @@ const logError: (error: Error) => IPortalThunkAction<void> = error => (_, getSta
 	});
 };
 
-export const init: IPortalThunkAction<void> = dispatch => {
+export const init: PortalThunkAction<void> = dispatch => {
 	const stateFromHash = stateUtils.hashToState();
 
 	getWhoIam().then((user: User) => {
@@ -133,7 +134,7 @@ export const init: IPortalThunkAction<void> = dispatch => {
 	});
 };
 
-const loadApp: (user: User) => IPortalThunkAction<void> = user => dispatch => {
+const loadApp: (user: User) => PortalThunkAction<void> = user => dispatch => {
 	dispatch(new MiscInit());
 
 	type LoggedIn = {_id: string, profile: Profile | {}};
@@ -205,7 +206,7 @@ const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
 };
 
-export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
+export const getAllSpecTables: PortalThunkAction<void> = dispatch => {
 	fetchAllSpecTables().then(
 		allTables => {
 			dispatch(new BackendTables(allTables));
@@ -217,7 +218,7 @@ export const getAllSpecTables: IPortalThunkAction<void> = dispatch => {
 };
 
 
-export const queryMeta: (id: string, search: string) => IPortalThunkAction<void> = (id, search) => dispatch => {
+export const queryMeta: (id: string, search: string) => PortalThunkAction<void> = (id, search) => dispatch => {
 	switch (id) {
 		case "dobj":
 			searchDobjs(search).then(data => {
@@ -243,7 +244,7 @@ const dispatchMeta = (id: string, data: string[], dispatch: Function) => {
 	}
 };
 
-export const updateSelectedPids = (selectedPids: string[]) => (dispatch: Function) => {
+export const updateSelectedPids = (selectedPids: Sha256Str[]) => (dispatch: Function) => {
 	dispatch({
 		type: actionTypes.UPDATE_SELECTED_PIDS,
 		selectedPids
@@ -252,14 +253,14 @@ export const updateSelectedPids = (selectedPids: string[]) => (dispatch: Functio
 	dispatch(getFilteredDataObjects);
 };
 
-export const updateCheckedObjectsInSearch = (checkedObjectInSearch: CartItem) => (dispatch: Function) => {
+export const updateCheckedObjectsInSearch = (checkedObjectInSearch: UrlStr[]) => (dispatch: Function) => {
 	dispatch({
 		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH,
 		checkedObjectInSearch
 	});
 };
 
-export const updateCheckedObjectsInCart = (checkedObjectInCart: CartItem) => (dispatch: Function) => {
+export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr[]) => (dispatch: Function) => {
 	dispatch({
 		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART,
 		checkedObjectInCart
@@ -300,7 +301,7 @@ export const updateFilteredDataObjects = () => (dispatch: Function, getState: Fu
 	if (objectsTable.length === 0) dispatch(getFilteredDataObjects);
 };
 
-const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => IPortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
+const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
 	fetchKnownDataObjects(dobjs).then(rows => {
 			dispatch({
 				type: actionTypes.OBJECTS_FETCHED,
@@ -315,11 +316,11 @@ const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => IPortalThunkActio
 	);
 };
 
-const restorePreview: IPortalThunkAction<void> = (dispatch) => {
+const restorePreview: PortalThunkAction<void> = (dispatch) => {
 	dispatch({type: actionTypes.RESTORE_PREVIEW});
 };
 
-const getFilteredDataObjects: IPortalThunkAction<void> = (dispatch, getState) => {
+const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => {
 	const state: State = getState();
 	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterFreeText} = state;
 
@@ -395,7 +396,7 @@ const getFilteredDataObjects: IPortalThunkAction<void> = (dispatch, getState) =>
 	}
 };
 
-const fetchExtendedDataObjInfo: (dobjs: string[]) => IPortalThunkAction<void> = dobjs => dispatch => {
+const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {
 	getExtendedDataObjInfo(dobjs).then(
 		extendedDobjInfo => {
 			dispatch({
@@ -458,7 +459,7 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 	}
 };
 
-export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => (dispatch: Function) => {
+export const setMetadataItem: (id: UrlStr) => PortalThunkAction<void> = id => (dispatch: Function) => {
 	dispatch(new BackendObjectMetadataId(id));
 
 	getMetadata(id).then(metadata => {
@@ -467,15 +468,15 @@ export const setMetadataItem: (id: UrlStr) => IPortalThunkAction<void> = id => (
 	});
 };
 
-export const setPreviewItem = (id: string) => (dispatch: Function, getState: Function) => {
+export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: Function) => {
 	dispatch(getTsPreviewSettings()).then(() => {
 		dispatch({
 			type: actionTypes.PREVIEW,
 			id
 		});
-		
+
 		if (!(getState() as State).preview.items.length) {
-			dispatch(fetchExtendedDataObjInfo([id]));
+			dispatch(fetchExtendedDataObjInfo(id));
 		}
 	});
 };
@@ -491,7 +492,7 @@ const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 	});
 };
 
-export const storeTsPreviewSetting = (spec: any, type: string, val: any) => (dispatch: Function, getState: Function) => {
+export const storeTsPreviewSetting = (spec: string, type: string, val: string) => (dispatch: Function, getState: Function) => {
 	const user = (getState() as State).user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
@@ -502,7 +503,7 @@ export const storeTsPreviewSetting = (spec: any, type: string, val: any) => (dis
 	});
 };
 
-export const setPreviewUrl = (url: string) => (dispatch: Function) => {
+export const setPreviewUrl = (url: UrlStr) => (dispatch: Function) => {
 	dispatch({
 		type: actionTypes.ITEM_URL_UPDATED,
 		url
@@ -515,7 +516,7 @@ export const setCartName = (newName: string) => (dispatch: Function, getState: F
 	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
 };
 
-export const addToCart: (ids: string[]) => IPortalThunkAction<void> = ids => (dispatch, getState) => {
+export const addToCart: (ids: UrlStr[]) => PortalThunkAction<void> = ids => (dispatch, getState) => {
 	const state: State = getState();
 	const cart = state.cart;
 
@@ -540,14 +541,14 @@ export const addToCart: (ids: string[]) => IPortalThunkAction<void> = ids => (di
 	}
 };
 
-export const removeFromCart: (ids: string[]) => IPortalThunkAction<void> = ids => (dispatch, getState) => {
+export const removeFromCart: (ids: UrlStr[]) => PortalThunkAction<void> = ids => (dispatch, getState) => {
 	const state: State = getState();
 	const cart = state.cart.removeItems(ids);
 
 	dispatch(updateCart(state.user.email, cart));
 };
 
-function updateCart(email: string | undefined, cart: Cart): IPortalThunkAction<Promise<any>> {
+function updateCart(email: string | undefined, cart: Cart): PortalThunkAction<Promise<any>> {
 	return dispatch => saveCart(email, cart).then(() =>
 		dispatch({
 			type: actionTypes.CART_UPDATED,
@@ -556,7 +557,7 @@ function updateCart(email: string | undefined, cart: Cart): IPortalThunkAction<P
 	);
 };
 
-export const fetchIsBatchDownloadOk: IPortalThunkAction<void> = dispatch => {
+export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
 		.then(
 			([isBatchDownloadOk, user]) => dispatch({
@@ -568,7 +569,7 @@ export const fetchIsBatchDownloadOk: IPortalThunkAction<void> = dispatch => {
 		);
 };
 
-export const setFilterTemporal: (filterTemporal: any) => IPortalThunkAction<void> = filterTemporal => dispatch => {
+export const setFilterTemporal: (filterTemporal: any) => PortalThunkAction<void> = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error) {
 		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 	}
@@ -586,7 +587,7 @@ export const setFilterTemporal: (filterTemporal: any) => IPortalThunkAction<void
 	dispatch(getFilteredDataObjects);
 };
 
-export const getResourceHelpInfo: (helpItem: any) => IPortalThunkAction<void> = helpItem => (dispatch, getState) => {
+export const getResourceHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => (dispatch, getState) => {
 	if (helpItem.shouldFetchList) {
 		const {specTable} = getState() as any;
 		const uriList = specTable
@@ -605,7 +606,7 @@ export const getResourceHelpInfo: (helpItem: any) => IPortalThunkAction<void> = 
 	}
 };
 
-const updateHelpInfo: (helpItem: any) => IPortalThunkAction<void> = helpItem => dispatch => {
+const updateHelpInfo: (helpItem: any) => PortalThunkAction<void> = helpItem => dispatch => {
 	dispatch({
 		type: actionTypes.HELP_INFO_UPDATED,
 		helpItem

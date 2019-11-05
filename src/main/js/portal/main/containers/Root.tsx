@@ -16,7 +16,7 @@ export default class Root extends Component {
 			if (history.state) {
 				store.dispatch(restoreFromHistory(history.state));
 			} else {
-				history.replaceState(stateUtils.serialize(store.getState()), null, window.location);
+				history.replaceState(stateUtils.serialize(store.getState()), '', window.location.href);
 			}
 		});
 	}

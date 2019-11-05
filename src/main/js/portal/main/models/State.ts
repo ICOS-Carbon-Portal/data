@@ -8,8 +8,11 @@ import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
 import config, {prefixes} from "../config";
 import deepequal from 'deep-equal';
-import {KeyAnyVal, UrlStr} from "../backend/declarations";
+import {KeyAnyVal, ThenArg, UrlStr} from "../backend/declarations";
 import {Store} from "redux";
+import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
+import {DataObject} from "./CartItem";
+import {DataObject as DO} from "../../../common/main/metacore";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -26,7 +29,7 @@ const hashKeys = [
 	'preview'
 ];
 
-type Routes = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
+export type Routes = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
 
 export interface Profile {
 	icosLicenceOk: boolean
@@ -50,6 +53,21 @@ export interface User {
 	email?: string
 }
 
+export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects> & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
+export interface ExtendedDobjInfo {
+	dobj: UrlStr
+	station: string
+	stationId: string
+	samplingHeight: number
+	theme: string
+	themeIcon: UrlStr
+}
+
+// TODO: Add coverageGeoJson to metacore.ts
+export interface MetaDataObject extends DO{
+	coverageGeoJson: string
+}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
@@ -60,17 +78,17 @@ export interface State {
 	user: User
 	lookup: Lookup | undefined;
 	specTable: CompositeSpecTable
-	extendedDobjInfo: []
+	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
-	objectsTable: []
+	objectsTable: ObjectsTable[]
 	sorting: {
 		varName: string | undefined,
 		ascending: boolean
 	}
-	paging: Paging | {serialize: undefined}
+	paging: Paging
 	cart: Cart
 	id: UrlStr | undefined;
-	metadata: {}
+	metadata?: MetaDataObject & {id: UrlStr}
 	station: {} | undefined
 	preview: Preview
 	toasterData: {} | undefined;
@@ -78,9 +96,9 @@ export interface State {
 		isAllowed: boolean,
 		ts: number
 	}
-	checkedObjectsInSearch: []
+	checkedObjectsInSearch: UrlStr[]
 	checkedObjectsInCart: []
-	tabs: {}
+	tabs: {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
 	page: number
 	tsSettings: {}
 	helpStorage: HelpStorage
@@ -106,10 +124,10 @@ export const defaultState: State = {
 		varName: undefined,
 		ascending: true
 	},
-	paging: {serialize: undefined},
+	paging: new Paging({objCount: 0}),
 	cart: new Cart(),
 	id: undefined,
-	metadata: {},
+	metadata: undefined,
 	station: undefined,
 	preview: new Preview(),
 	toasterData: undefined,
@@ -119,7 +137,7 @@ export const defaultState: State = {
 	},
 	checkedObjectsInSearch: [],
 	checkedObjectsInCart: [],
-	tabs: {},
+	tabs: {tabName: undefined, selectedTabId: undefined, searchTab: undefined, resultTab: undefined},
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage()

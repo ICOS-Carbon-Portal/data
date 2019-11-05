@@ -1,6 +1,12 @@
-import React from 'react';
+import React, {MouseEvent} from 'react';
 
-export const StepButton = props => {
+interface Props {
+	direction: 'forward' | 'backward'
+	enabled: boolean
+	onStep: (event: MouseEvent<HTMLDivElement>) => void
+}
+
+export const StepButton = (props: Props) => {
 	const baseStyle = {display: 'inline', paddingLeft: 4, fontSize: '150%'};
 	const style = props.enabled
 		? Object.assign(baseStyle, {cursor: 'pointer'})

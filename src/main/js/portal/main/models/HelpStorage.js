@@ -56,7 +56,7 @@ export default class HelpStorage{
 	}
 }
 
-class Item {
+export class Item {
 	constructor(name, header, main, list){
 		// list === undefined -> Never show list
 		// list === [] -> Fetch list from backend when requested

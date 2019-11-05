@@ -1,3 +1,5 @@
+import {Component, ComponentLifecycle} from "react";
+
 /** Absolute URL as string */
 export type UrlStr = string;
 
@@ -27,3 +29,9 @@ export type ThenArg<T> = T extends Promise<infer U>
 	: T extends (...args: any[]) => Promise<infer U>
 		? U
 		: T;
+
+export type ExtractPrototypes<C extends KeyAnyVal> = {
+	[Key in keyof C['prototype']]: C['prototype'][Key]
+}
+
+export type PickClassFunctions<C> = Omit<ExtractPrototypes<C>, keyof Component | keyof ComponentLifecycle<never, never>>;

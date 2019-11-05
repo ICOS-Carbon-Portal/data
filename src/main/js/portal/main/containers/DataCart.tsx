@@ -1,30 +1,54 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {setPreviewItem, setPreviewUrl, setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions';
+import {
+	setPreviewItem,
+	setPreviewUrl,
+	setCartName,
+	fetchIsBatchDownloadOk,
+	updateCheckedObjectsInCart,
+	updateRoute
+} from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
 import BackButton from '../components/buttons/BackButton.jsx';
+import {UrlStr} from "../backend/declarations";
+import {PortalDispatch} from "../store";
+import {Profile, State} from "../models/State";
 
 
-class DataCart extends Component {
-	constructor(props) {
+type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
+type DataCartProps = StateProps & DispatchProps;
+
+
+class DataCart extends Component<DataCartProps> {
+	constructor(props: DataCartProps) {
 		super(props);
 	}
 
-	handlePreview(id){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(id);
+	handlePreview(ids: UrlStr[]){
+		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+	}
+
+	handleBackButton(previousRoute: string){
+		this.props.updateRoute(previousRoute);
+	}
+
+	handleRouteClick(newRoute: string){
+		this.props.updateCheckedObjectsInCart([]);
+		this.props.updateRoute(newRoute);
 	}
 
 	handleAllCheckboxesChange() {
 		if (this.props.checkedObjectsInCart.length > 0) {
-			this.props.updateCheckedObjects([]);
+			this.props.updateCheckedObjectsInCart([]);
 		} else {
-			const checkedObjects = this.props.objectsTable.reduce((acc, o) => {
+			const checkedObjects = this.props.objectsTable.reduce((acc: string[], o) => {
 				if (o.level > 0) acc.push(o.dobj);
 				return acc;
 			}, []);
-			this.props.updateCheckedObjects(checkedObjects);
+			this.props.updateCheckedObjectsInCart(checkedObjects);
 		}
 	}
 
@@ -33,8 +57,8 @@ class DataCart extends Component {
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
 		const getSpecLookupType = props.lookup
 			? props.lookup.getSpecLookupType.bind(props.lookup)
-			: _ => _;
-		const downloadTitle = props.user.email && props.user.icosLicenceOk
+			: () => {};
+		const downloadTitle = props.user.email && (props.user.profile as Profile).icosLicenceOk
 			? 'Download cart content'
 			: 'Accept license and download cart content';
 		const fileName = props.cart.name;
@@ -42,7 +66,7 @@ class DataCart extends Component {
 
 		return (
 			<div>
-				<BackButton action={props.backButtonAction} previousRoute={config.ROUTE_SEARCH}/>
+				<BackButton action={this.handleBackButton.bind(this)} previousRoute={config.ROUTE_SEARCH}/>
 				{props.cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-8 col-lg-9">
@@ -50,7 +74,7 @@ class DataCart extends Component {
 								previewitemId={previewitemId}
 								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
-								updateCheckedObjects={props.updateCheckedObjects}
+								updateCheckedObjects={props.updateCheckedObjectsInCart}
 								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 								{...props}
 							/>
@@ -82,7 +106,7 @@ class DataCart extends Component {
 					<div className="text-center" style={{margin: '5vh 0'}}>
 						<h2>Your cart is empty</h2>
 						<p>Search for data and add it to your cart.</p>
-						<button className="btn btn-primary" onClick={props.routeAction.bind(this, config.ROUTE_SEARCH)}>
+						<button className="btn btn-primary" onClick={this.handleRouteClick.bind(this, config.ROUTE_SEARCH)}>
 							Find data
 						</button>
 					</div>
@@ -92,14 +116,26 @@ class DataCart extends Component {
 	}
 }
 
-function dispatchToProps(dispatch){
+function stateToProps(state: State){
 	return {
-		setPreviewItem: id => dispatch(setPreviewItem(id)),
-		setCartName: newName => dispatch(setCartName(newName)),
-		setPreviewUrl: url => dispatch(setPreviewUrl(url)),
-		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
-		updateCheckedObjects: ids => dispatch(updateCheckedObjectsInCart(ids)),
+		cart: state.cart,
+		lookup: state.lookup,
+		user: state.user,
+		preview: state.preview,
+		checkedObjectsInCart: state.checkedObjectsInCart,
+		objectsTable: state.objectsTable,
 	};
 }
 
-export default connect(state => state, dispatchToProps)(DataCart);
+function dispatchToProps(dispatch: PortalDispatch | Function){
+	return {
+		updateRoute: (hash: string) => dispatch(updateRoute(hash)),
+		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),
+		setCartName: (newName: string) => dispatch(setCartName(newName)),
+		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
+		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
+		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(DataCart);

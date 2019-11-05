@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
-import {ActionPayload, init, IPortalPlainAction} from './actions';
+import {ActionPayload, init, PortalPlainAction} from './actions';
 import stateUtils, {State} from "./models/State";
 
 
@@ -15,14 +15,14 @@ const logStoreChange = (currentState: any, nextState: any, select: Function) => 
 	console.log({currentState, nextState, historyState, historyLength: history.state ? history.length : 0});
 };
 
-export interface IPortalThunkAction<R>{
+export interface PortalThunkAction<R>{
 	(dispatch: PortalDispatch, getState: () => State): R
 }
 
-//TODO When the old reducer is not used any more, change Dispatch's type param to IPortalPlainAction
+//TODO When the old reducer is not used any more, change Dispatch's type param to PortalPlainAction
 export interface PortalDispatch extends Dispatch<Action<string>>{
-	<R>(asyncAction: IPortalThunkAction<R>): R
-	(payload: ActionPayload): IPortalPlainAction
+	<R>(asyncAction: PortalThunkAction<R>): R
+	(payload: ActionPayload): PortalPlainAction
 }
 
 const payloadMiddleware: Middleware<PortalDispatch, State, PortalDispatch> = store => next => action => {
@@ -58,7 +58,7 @@ export default function(){
 	return store;
 }
 
-function createAction(payload: ActionPayload): IPortalPlainAction {
+function createAction(payload: ActionPayload): PortalPlainAction {
 	return {
 		type: payload.constructor.name,
 		payload

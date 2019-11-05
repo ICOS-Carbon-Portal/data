@@ -1,6 +1,6 @@
 
-export const getNewTimeseriesUrl = (items, xAxis) => {
-	const objIds = items.map(item => item.id.split('/').pop()).join();
+export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
+	const objIds = items.map((item:any) => item.id.split('/').pop()).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
@@ -12,7 +12,7 @@ export const getRouteFromLocationHash = () => {
 	return window.location.hash.substr(1).split('?')[0];
 };
 
-export const formatBytes = (bytes, decimals = 2) => {
+export const formatBytes = (bytes: number, decimals = 2) => {
 	if (isNaN(bytes)) return "";
 	if(bytes === 0) return '0 Bytes';
 
@@ -22,7 +22,7 @@ export const formatBytes = (bytes, decimals = 2) => {
 	return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
 };
 
-export const varType = variable => {
+export const varType = (variable: any) => {
 	const isString = typeof variable === 'string';
 	if (isString) return 'string';
 
@@ -35,11 +35,11 @@ export const varType = variable => {
 	return 'unknown';
 };
 
-export const isSmallDevice = _ => {
+export const isSmallDevice = () => {
 	return window.innerWidth <= 768;
 };
 
-export const formatDateWithOptionalTime = d => {
+export const formatDateWithOptionalTime = (d?: Date) => {
 	if(!d) return '';
 
 	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
@@ -48,18 +48,42 @@ export const formatDateWithOptionalTime = d => {
 	return time === "00:00" ? `${date}` : `${date} ${time}`;
 };
 
-export const formatDate = d => {
+export const formatDate = (d?: Date) => {
 	if (!d) return '';
 
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 };
 
-export const formatDateTime = d => {
+export const formatDateTime = (d?: Date) => {
 	if (!d) return '';
 
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
 };
 
-const pad2 = s => {
+const pad2 = (s: number | string) => {
 	return ("0" + s).substr(-2, 2);
+};
+
+export const copyprops = <T extends Object, K extends keyof T>(source: T, keys: K[]): Pick<T, K> => {
+	const target: any = {};
+
+	keys.forEach((key) => {
+		if (source.hasOwnProperty(key)) {
+			target[key as string] = source[key];
+		}
+	});
+
+	return target;
+};
+
+export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[]): Pick<T, K> => {
+	const target: any = {};
+
+	keys.forEach((key) => {
+		if (source.hasOwnProperty(key)) {
+			target[key as string] = source[key];
+		}
+	});
+
+	return target;
 };

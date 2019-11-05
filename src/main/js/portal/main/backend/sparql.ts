@@ -13,11 +13,14 @@ export type SparqlResultBinding<Mandatories extends string, Optionals extends st
 	[v in Optionals]?: SparqlResultValue
 }
 
-export type XMLSchemaString = string
-export type XMLSchemaInteger = number
-export type XMLSchemaFloat = number
-export type XMLSchemaDateTime = Date
-export type XMLSchemaBoolean = boolean
+export namespace XMLSchema {
+	/** Used for bindings that lacks datatype	*/
+	export type String = string;
+	export type Integer = number;
+	export type Float = number;
+	export type DateTime = Date;
+	export type Boolean = boolean;
+}
 
 export interface SparqlResultValue{
 	type: "uri" | "literal"

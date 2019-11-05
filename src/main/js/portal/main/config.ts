@@ -1,4 +1,5 @@
 import commonConfig, {ICOS, SITES} from '../../common/main/config';
+import {KeyAnyVal, KeyStrVal} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
 
@@ -32,7 +33,7 @@ export default {
 	historyStateMaxAge: (1000 * 3600 * 24)
 };
 
-const defaultCategNames = {
+const defaultCategNames: KeyStrVal = {
 	type: 'Data type',
 	level: 'Data level',
 	format: 'Format',
