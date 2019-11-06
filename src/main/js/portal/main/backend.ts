@@ -4,6 +4,7 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
+import { FilterRequest } from './models/FilterRequest';
 import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
@@ -48,8 +49,8 @@ const fetchSpecColumnMeta = () => {
 	}));
 };
 
-const fetchDobjOriginsAndCounts = () => {
-	const query = queries.dobjOriginsAndCounts();
+export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
+	const query = queries.dobjOriginsAndCounts(filters);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
@@ -81,7 +82,7 @@ export function fetchAllSpecTables() {
 
 	const specBasicsPromise = fetchSpecBasics().then(rows => extendResult(rows));
 	const specColumnMetaPromise = fetchSpecColumnMeta().then(rows => extendResult(rows));
-	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts().then(rows => extendResult(rows));
+	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts([]).then(rows => extendResult(rows));
 	const formatToRDFGraphTblPromise = fetchFormatToRDFGraphTbl();
 
 	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, formatToRDFGraphTblPromise])

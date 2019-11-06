@@ -2,6 +2,7 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {Query} from './backend/sparql';
+import {FilterRequest, TemporalFilterRequest, isPidFilter, isTemporalFilter, isDeprecatedFilter} from './models/FilterRequest';
 
 const config = Object.assign(commonConfig, localConfig);
 
@@ -20,7 +21,7 @@ where{
 		?spec cpmeta:containsDataset ?dataset .
 		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
 	}
-	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . filter not exists {[] cpmeta:isNextVersionOf ?dobj}}
+	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .
 	?format rdfs:label ?formatLabel .
@@ -53,9 +54,7 @@ where{
 }
 
 
-export function dobjOriginsAndCounts(): Query<"spec" | "submitter" | "submitterLabel" | "project" | "projectLabel" | "count" | "stationLabel", "station"> {
-	//This is needed to get rid of duplicates due to multiple labels for stations.
-	//TODO Stop fetching labels in this query, use a dedicated label fetcher that prepares label lookup
+export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<"spec" | "submitter" | "submitterLabel" | "project" | "projectLabel" | "count" | "stationLabel", "station"> {
 
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -72,7 +71,7 @@ where{
 			?dobj cpmeta:hasObjectSpec ?spec .
 			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationOpt }
 			?dobj cpmeta:hasSizeInBytes ?size .
-			FILTER NOT EXISTS{[] cpmeta:isNextVersionOf ?dobj}
+			${getFilterClauses(filters, true)}
 		}
 		group by ?spec ?submitter ?stationOpt
 	}
@@ -92,10 +91,10 @@ where{
 export function findDobjs(search: string): Query<string, "dobj"> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
-  ?dobj  cpmeta:hasObjectSpec ?spec.
-  FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-  FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
-  FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
+	?dobj  cpmeta:hasObjectSpec ?spec.
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	${deprecatedFilterClause}
+	FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
 
 	return {text};
@@ -112,6 +111,18 @@ WHERE {
 ORDER BY ?Long_name`;
 }
 
+const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
+const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
+const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
+const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
+
+const standardDobjPropsDef =
+`?dobj cpmeta:hasSizeInBytes ?size .
+?dobj cpmeta:hasName ?fileName .
+${submTimeDef}
+${timeStartDef}
+${timeEndDef}`;
+
 export const listKnownDataObjects = (dobjs: string[]): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -120,11 +131,7 @@ select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
 VALUES ?dobj { ${values} }
 ?dobj cpmeta:hasObjectSpec ?spec .
-?dobj cpmeta:hasSizeInBytes ?size .
-?dobj cpmeta:hasName ?fileName .
-?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
-?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
-?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
+${standardDobjPropsDef}
 }`;
 
 	return {text};
@@ -134,7 +141,14 @@ export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "
 
 	function isEmpty(arr: []){return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
+	const {specs, stations, submitters, sorting, paging, rdfGraphs} = options;
+	const filters: FilterRequest[] = options.filters;
+
+	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
+
+	const pidListFilter = pidsList.length == 0
+		? ''
+		: `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 
 	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
 
@@ -167,8 +181,6 @@ export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "
 				}}`
 		: stationsFilter(stations);
 
-	const filterClauses = getFilterClauses(filters);
-
 	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
@@ -181,17 +193,12 @@ export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
-	${specsValues}
+	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	${stationSearch}
 	${submitterSearch}
-	FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
-	?dobj cpmeta:hasSizeInBytes ?size .
-	?dobj cpmeta:hasName ?fileName .
-	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
-	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
-	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
-	${filterClauses}
+	${standardDobjPropsDef}
+	${getFilterClauses(filters, false)}
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
@@ -199,45 +206,52 @@ offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 	return {text};
 };
 
-const getFilterClauses = (filters: KeyAnyVal) => {
-	const andFilters = filters.reduce((acc: any[], f: KeyAnyVal) => {
-		if (f.fromDateTimeStr) {
-			const cond = f.category === 'dataTime' ? '?timeStart' : '?submTime';
-			acc.push(`${cond} >= '${f.fromDateTimeStr}'^^xsd:dateTime`);
-		}
-		if (f.toDateTimeStr) {
-			const cond = f.category === 'dataTime' ? '?timeEnd' : '?submTime';
-			acc.push(`${cond} <= '${f.toDateTimeStr}'^^xsd:dateTime`);
-		}
+function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
+	const deprFilter = allFilters.find(isDeprecatedFilter);
+	const deprFilterStr = (deprFilter && deprFilter.allow) ? '' : deprecatedFilterClause.concat('\n');
 
-		return acc;
-	}, []).join(' && ');
+	const tempFilters = allFilters.filter(isTemporalFilter);
+	const tempConds: string[] = tempFilters.flatMap(getFilterConditions);
+	const varDefs = supplyVarDefs ? tempFilters.flatMap(getVarDefs) : [];
+	const distinctVarDefs = varDefs.filter((s, i) => varDefs.indexOf(s) === i);
+	const varDefStr = distinctVarDefs.map(s => `${s}\n`).join("");
 
-	const orFilters = filters.reduce((acc: any[], f: KeyAnyVal) => {
-		if (f.category === 'pids'){
-			// Do not use prefix since it cannot be used with pids starting with '-'
-			f.pids.forEach((fp: string) => acc.push(`?dobj = <${config.cpmetaObjectUri}${fp}>`));
-		}
+	const tempFilterStr = tempConds.length ? `${varDefStr}FILTER( ${tempConds.join(' && ')} )` : '';
 
-		return acc;
-	}, []).join(' || ');
+	return deprFilterStr.concat(tempFilterStr);
+}
 
-	let filterClauses = andFilters.length || orFilters.length
-		? 'FILTER ('
-		: '';
-	if (filterClauses.length){
-		if (andFilters.length && orFilters.length){
-			filterClauses += `${andFilters} && (${orFilters}))`;
-		} else if (andFilters.length){
-			filterClauses += `${andFilters})`;
-		}
-		else if (orFilters.length){
-			filterClauses += `${orFilters})`;
-		}
+function getVarDefs(filter: TemporalFilterRequest): string[]{
+	const res: string[] = [];
+	switch(filter.category){
+		case "dataTime":
+			if(filter.fromDateTimeStr) res.push(timeStartDef);
+			if(filter.toDateTimeStr) res.push(timeEndDef);
+			break;
+		case "submission":
+			if(filter.fromDateTimeStr || filter.toDateTimeStr) res.push(submTimeDef);
 	}
+	return res;
+}
 
-	return filterClauses;
-};
+function getFilterConditions(filter: TemporalFilterRequest): string[]{
+	const res: string[] = [];
+
+	function add(varName: "timeStart" | "timeEnd" | "submTime", cmp: ">=" | "<=", timeStr: string | undefined): void{
+		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`)
+	}
+	switch(filter.category){
+		case "dataTime":
+			add("timeStart", ">=", filter.fromDateTimeStr);
+			add("timeEnd",   "<=", filter.toDateTimeStr);
+			break;
+		case "submission":
+			add("submTime",  ">=", filter.fromDateTimeStr);
+			add("submTime",  "<=", filter.toDateTimeStr);
+			break;
+	}
+	return res;
+}
 
 export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
