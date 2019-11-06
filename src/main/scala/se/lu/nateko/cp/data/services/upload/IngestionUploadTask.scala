@@ -47,13 +47,13 @@ class IngestionUploadTask(
 
 			case `asciiEtcTimeSer` =>
 				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)
-			
+
 			case `asciiOtcSocatTimeSer` =>
 				defaultStandardSink(otc.OtcCsvStreams.socatTsvParser)
-			
+
 			case `asciiOtcProductCsv` =>
 				defaultStandardSink(otc.OtcCsvStreams.otcProductParser)
-			
+
 			case `simpleSitesCsvTimeSer` =>
 				standardSink{nRows =>
 					val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
@@ -65,7 +65,8 @@ class IngestionUploadTask(
 
 			case `sitesDelimitedHeaderCsvTimeSer` =>
 				standardSink{nRows =>
-					delimitedheadercsv.SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, defaultColumnFormats)
+					val colFormats = ColumnsMetaWithTsCol(colsMeta, "TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES")
+					delimitedheadercsv.SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, colFormats)
 				}
 
 			case `asciiEtcHalfHourlyProdTimeSer` =>

@@ -31,12 +31,12 @@ class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAl
 
 	private val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(Iso8601DateTime, "TIME", isOptional = false),
+			PlainColumn(IsoLikeLocalDateTime, "TIMESTAMP", isOptional = false),
 			PlainColumn(FloatValue, "SR_IN", isOptional = false),
 			PlainColumn(FloatValue, "PPFD", isOptional = false),
 			PlainColumn(FloatValue, "TA", isOptional = true)
 		)),
-		"TIME"
+		"TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES"
 	)
 
 	private val rowsSource = StreamConverters
@@ -69,7 +69,7 @@ class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAl
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
-		assert(readResult.count === 1166)
+		assert(readResult.count === 1171)
 		assert(firstRow.header.nRows === nRows)
 		assert(nRowsWritten === nRows)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) ===
