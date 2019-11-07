@@ -15,7 +15,7 @@ export default class CheckAllBoxes extends Component {
 		return (
 			<div style={checkAllBoxesStyle}>
 				<CheckBtn
-					updateCheckedObjects={props.onChange}
+					onClick={props.onChange}
 					isChecked={areAllChecked}
 					checkboxDisabled={props.disabled}
 					title={checkAllBoxesTitle}

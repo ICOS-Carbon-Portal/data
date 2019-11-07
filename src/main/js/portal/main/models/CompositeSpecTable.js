@@ -105,6 +105,14 @@ export default class CompositeSpecTable{
 		return new CompositeSpecTable(tables);
 	}
 
+	withOriginsTable(originJson){
+		return new CompositeSpecTable({
+			basics: this.getTable('basics'),
+			columnMeta: this.getTable('columnMeta'),
+			origins: new SpecTable(...Object.keys(originJson).map(t => originJson[t]))
+		});
+	}
+
 	getFilter(colName){
 		return this.findTable(colName).getFilter(colName);
 	}

@@ -1,10 +1,12 @@
-import React, {Component} from 'react';
+import React, {Component, Fragment} from 'react';
 import config, {placeholders, filters, CategoryType} from '../config';
 import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 import {ReducedProps} from "../containers/Search";
 import {PickClassFunctions, UrlStr} from "../backend/declarations";
+import PickDates from "./filters/PickDates";
+import CheckBtn from "./buttons/ChechBtn";
 
 
 type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
@@ -14,7 +16,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 	search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
-	getCtrl(name: CategoryType, labelName: string){
+	getMultiselectCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
 
 		const lookupTable: {[key: string]: any} = {};
@@ -68,6 +70,26 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 		);
 	}
 
+	getTemporalCtrls(){
+		return (
+			<Fragment>
+				<PickDates
+					filterTemporal={this.props.filterTemporal}
+					setFilterTemporal={this.props.setFilterTemporal}
+					category="dataTime"
+					header="Data sampled"
+				/>
+				<PickDates
+					marginTop={25}
+					filterTemporal={this.props.filterTemporal}
+					setFilterTemporal={this.props.setFilterTemporal}
+					category="submission"
+					header="Submission of data"
+				/>
+			</Fragment>
+		);
+	}
+
 	render(){
 		const {specTable, specFiltersReset} = this.props;
 		const colNames = specTable.names.filter((name: string) => !!placeholders[config.envri][name]);
@@ -79,17 +101,30 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 		return (
 			<div>
-				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
+				<div className="row" style={{marginLeft:0}}>
+					<div className="col-lg-9 col-md-12 col-sm-12 col-xs-12 text-nowrap" style={{padding:'10px 12px'}}>
+						<CheckBtn onClick={() => {}} isChecked={true} style={{margin:'5px 2px', fontSize:10}} />
+						<span style={{marginLeft:3, paddingRight:5}}>Show deprecated objects</span>
+					</div>
+					<div className="col-lg-3 col-md-12 col-sm-12 col-xs-12 text-nowrap" style={{padding:'6px 20px'}}>
+						<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
+					</div>
+				</div>
 
-				{availableFilters.map((filterPanel: any, i: number) =>
-					<FilterPanel
+				{availableFilters.map((filterPanel, i: number) =>
+					<FilterPanelMultiselect
 						key={"filter_" + i}
 						header={filterPanel.panelTitle}
-						nameList={getNameList(specTable, filterPanel.filterList)}
+						nameList={getNameList(specTable, filterPanel.filterList as string[])}
 						colNames={colNames}
-						getCtrl={this.getCtrl.bind(this)}
+						getMultiselectCtrl={this.getMultiselectCtrl.bind(this)}
 					/>
 				)}
+
+				<FilterPanel
+					header="Temporal filters"
+					contentGenerator={this.getTemporalCtrls.bind(this)}
+				/>
 
 			</div>
 		);
@@ -97,14 +132,36 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 }
 
 interface FilterPanel {
-	header: string,
-	nameList: [string, string][],
-	colNames: string[],
-	getCtrl: ObjSpecFilterActions['getCtrl'],
+	header: string
+	contentGenerator: Function
 	startCollapsed?: boolean
 }
 
-const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = false }: FilterPanel) => {
+const FilterPanel = ({ header, contentGenerator, startCollapsed = false }: FilterPanel) => {
+	return (
+		<div className="panel panel-default">
+			<div className="panel-heading">
+				<h3 className="panel-title">{header}</h3>
+			</div>
+
+			<Slider startCollapsed={startCollapsed}>
+				<div className="panel-body" style={{paddingTop:0}}>
+					{contentGenerator()}
+				</div>
+			</Slider>
+		</div>
+	);
+};
+
+interface FilterPanelMultiselect {
+	header: string,
+	nameList: [string, string][],
+	colNames: string[],
+	getMultiselectCtrl: ObjSpecFilterActions['getMultiselectCtrl'],
+	startCollapsed?: boolean
+}
+
+const FilterPanelMultiselect = ({ header, nameList, colNames, getMultiselectCtrl, startCollapsed = false }: FilterPanelMultiselect) => {
 	if (colNames.length === 0) return null;
 
 	return (
@@ -115,7 +172,7 @@ const FilterPanel = ({ header, nameList, colNames, getCtrl, startCollapsed = fal
 
 			<Slider startCollapsed={startCollapsed}>
 				<div className="panel-body" style={{paddingTop:0}}>
-					{nameList.map(name => getCtrl(...name))}
+					{nameList.map(name => getMultiselectCtrl(...name))}
 				</div>
 			</Slider>
 		</div>
@@ -130,11 +187,11 @@ interface ResetBtn {
 const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
 	const style = enabled
-		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
-		: {margin: '5px 2px', textDecoration: 'underline'};
+		? {padding:0, margin:0, textDecoration: 'underline', cursor: 'pointer'}
+		: {padding:0, margin:0, textDecoration: 'underline'};
 	const onClick = () => enabled ? resetFiltersAction() : {};
 
-	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
+	return <button className={className} style={style} onClick={onClick}>Clear categories</button>;
 };
 
 const getNameList = (specTable: OwnProps['specTable'], list: ReadonlyArray<string>): [string, string][] => {

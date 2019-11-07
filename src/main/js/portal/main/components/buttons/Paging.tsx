@@ -5,11 +5,12 @@ import P from "../../models/Paging";
 interface Paging {
 	type: 'header' | 'footer'
 	paging: P
-	requestStep: (direction: number) => void | undefined
+	requestStep: (direction: -1 | 1) => void | undefined
 }
 
 export const Paging = ({type, paging, requestStep}: Paging) => {
 	const {offset, objCount, pageCount, isCountKnown} = paging;
+	// console.log({offset, objCount, pageCount, isCountKnown});
 	const to = offset + pageCount;
 	const isForwardEnabled = isCountKnown
 		? to < objCount

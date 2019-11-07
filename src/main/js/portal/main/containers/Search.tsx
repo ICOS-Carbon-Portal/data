@@ -39,7 +39,7 @@ const reducedProps = (props: SearchProps) => ({
 	filters: pick(props,'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText'),
 	objSpecFilter: pick(props,'specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 		'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
-		'helpStorage', 'getResourceHelpInfo'),
+		'helpStorage', 'getResourceHelpInfo', 'filterTemporal', 'showDeprecated'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
 		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
@@ -168,6 +168,7 @@ function stateToProps(state: State){
 		specTable: state.specTable,
 		paging: state.paging,
 		sorting: state.sorting,
+		showDeprecated: state.showDeprecated,
 	};
 }
 
@@ -176,7 +177,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		queryMeta: (id: string, search: string) => dispatch(queryMeta(id, search)),
 		updateFilter: (varName: string, values: string[]) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
-		requestStep: (direction: number) => dispatch(requestStep(direction)),
+		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),

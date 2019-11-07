@@ -9,10 +9,16 @@ import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
 import {SparqlResultValue, XMLSchema} from "./backend/sparql";
+import {Options} from "./actions";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
+
+const extendResult = <T>(rows: T[]) => ({
+	columnNames: rows && rows.length ? Object.keys(rows[0]) : [],
+	rows: rows && rows.length ? rows : []
+});
 
 const fetchSpecBasics = () => {
 	const query = queries.specBasics();
@@ -27,7 +33,7 @@ const fetchSpecBasics = () => {
 		formatLabel: b.formatLabel.value,
 		theme: b.theme.value,
 		themeLabel: b.themeLabel.value
-	}));
+	})).then(rows => extendResult(rows));
 };
 
 const fetchSpecColumnMeta = () => {
@@ -41,7 +47,7 @@ const fetchSpecColumnMeta = () => {
 		quantityKind: b.quantityKind ? b.quantityKind.value : undefined,
 		quantityKindLabel: b.quantityKindLabel.value,
 		quantityUnit: b.quantityUnit.value
-	}));
+	})).then(rows => extendResult(rows));
 };
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
@@ -56,7 +62,7 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		count: parseInt(b.count.value),
 		station: b.station ? b.station.value : undefined,
 		stationLabel: b.stationLabel.value
-	}));
+	})).then(rows => extendResult(rows));
 };
 
 const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
@@ -70,14 +76,9 @@ const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
 };
 
 export function fetchAllSpecTables() {
-	const extendResult = <T>(rows: T[]) => ({
-		columnNames: rows && rows.length ? Object.keys(rows[0]) : [],
-		rows: rows && rows.length ? rows : []
-	});
-
-	const specBasicsPromise = fetchSpecBasics().then(rows => extendResult(rows));
-	const specColumnMetaPromise = fetchSpecColumnMeta().then(rows => extendResult(rows));
-	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts([]).then(rows => extendResult(rows));
+	const specBasicsPromise = fetchSpecBasics();
+	const specColumnMetaPromise = fetchSpecColumnMeta();
+	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts([]);
 	const formatToRDFGraphTblPromise = fetchFormatToRDFGraphTbl();
 
 	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, formatToRDFGraphTblPromise])
@@ -103,7 +104,7 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 	}));
 };
 
-export function fetchFilteredDataObjects(options: {}){
+export function fetchFilteredDataObjects(options: Options){
 	const query = queries.listFilteredDataObjects(options);
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({

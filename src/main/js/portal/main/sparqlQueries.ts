@@ -2,6 +2,7 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {Query} from './backend/sparql';
+import {Options} from "./actions";
 import {FilterRequest, TemporalFilterRequest, isPidFilter, isTemporalFilter, isDeprecatedFilter} from './models/FilterRequest';
 
 const config = Object.assign(commonConfig, localConfig);
@@ -137,7 +138,7 @@ ${standardDobjPropsDef}
 	return {text};
 };
 
-export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+export const listFilteredDataObjects = (options: Options): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
 
 	function isEmpty(arr: []){return !arr || !arr.length;}
 

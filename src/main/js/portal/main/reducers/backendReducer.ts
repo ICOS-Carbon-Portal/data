@@ -1,4 +1,5 @@
-import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata} from "../actions";
+import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
+	BackendOriginsTable} from "./declarations";
 import stateUtils, {State} from "../models/State";
 import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
@@ -22,6 +23,10 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendTables){
 		return stateUtils.update(state, handleBackendTables(state, payload.allTables));
+	}
+
+	if (payload instanceof BackendOriginsTable){
+		return stateUtils.update(state, payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts));
 	}
 
 	if (payload instanceof BackendObjectMetadataId){

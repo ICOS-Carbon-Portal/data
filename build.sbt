@@ -60,7 +60,7 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.4"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.5"
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)

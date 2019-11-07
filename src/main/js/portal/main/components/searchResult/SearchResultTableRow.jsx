@@ -48,8 +48,7 @@ export default class SimpleObjectTableRow extends Component{
 			<tr style={{margin: '20px 0'}}>
 				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
 					<CheckBtn
-						updateCheckedObjects={props.updateCheckedObjects}
-						id={objInfo.dobj}
+						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
 						checkboxDisabled={checkboxDisabled ? "disabled" : ""}

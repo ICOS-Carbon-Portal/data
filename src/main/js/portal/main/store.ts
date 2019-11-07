@@ -2,8 +2,9 @@ import 'babel-polyfill';
 import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
-import {ActionPayload, init, PortalPlainAction} from './actions';
+import {init} from './actions';
 import stateUtils, {State} from "./models/State";
+import {ActionPayload, PortalPlainAction} from "./reducers/declarations";
 
 
 const selectSubState = (state: any) => {

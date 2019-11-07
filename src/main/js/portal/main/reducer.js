@@ -77,13 +77,14 @@ export default function(state = defaultState, action){
 				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 				return Object.assign(ot, spec);
 			});
-			paging = state.paging.withObjCount(
-				getObjCount(state.specTable),
-				action.objectsTable.length,
-				areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
-				action.cacheSize,
-				action.isDataEndReached
-			);
+			paging = state.paging.withObjCount({
+				objCount: getObjCount(state.specTable),
+				pageCount: action.objectsTable.length,
+				filtersEnabled: areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
+				cacheSize: action.cacheSize,
+				isDataEndReached: action.isDataEndReached
+	}		);
+			// console.log('OBJECTS_FETCHED', paging.objCount);
 			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
 
 			return stateUtils.update(state,{
@@ -103,6 +104,7 @@ export default function(state = defaultState, action){
 			});
 
 		case actionTypes.STEP_REQUESTED:
+			console.log('STEP_REQUESTED', state.paging.withDirection(action.direction).objCount);
 			return stateUtils.update(state,{
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
@@ -219,10 +221,8 @@ const updateCheckedObjects = (existingObjs, newObj) => {
 		: existingObjs.concat([newObj]);
 };
 
-export const areFiltersEnabled = (tabs, filterTemporal, filterFreeText) => {
-	return tabs.searchTab === 1
-		&& ((filterTemporal !== undefined && filterTemporal.hasFilter)
-			|| (filterFreeText !== undefined && filterFreeText.hasFilter));
+export const areFiltersEnabled = (tabs, filterFreeText) => {
+	return tabs.searchTab === 1  && filterFreeText !== undefined && filterFreeText.hasFilter;
 };
 
 function updateFreeTextFilter(id, data, filterFreeText){

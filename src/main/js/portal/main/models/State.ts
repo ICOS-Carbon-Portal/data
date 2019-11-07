@@ -63,7 +63,6 @@ export interface ExtendedDobjInfo {
 	themeIcon: UrlStr
 }
 
-// TODO: Add coverageGeoJson to metacore.ts
 export interface MetaDataObject extends DO{
 	coverageGeoJson: string
 }
@@ -71,6 +70,7 @@ export interface MetaDataObject extends DO{
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
+	showDeprecated: boolean
 	route: Routes
 	filterCategories: any
 	filterTemporal: FilterTemporal
@@ -107,6 +107,7 @@ export interface State {
 export const defaultState: State = {
 	ts: Date.now(),
 	isRunningInit: false,
+	showDeprecated: false,
 	route: config.DEFAULT_ROUTE,
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),

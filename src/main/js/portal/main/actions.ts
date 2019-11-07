@@ -44,7 +44,7 @@ import {
 	logOut,
 	fetchResourceHelpInfo,
 	getMetadata,
-	fetchKnownDataObjects
+	fetchKnownDataObjects, fetchDobjOriginsAndCounts
 } from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -59,39 +59,17 @@ import {Action} from "redux";
 import {PortalThunkAction, PortalDispatch} from "./store";
 import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
 import {Item} from "./models/HelpStorage";
-
-export abstract class ActionPayload{}
-export abstract class BackendPayload extends ActionPayload{}
-export abstract class MiscPayload extends ActionPayload{}
-
-
-export interface PortalPlainAction extends Action<string>{
-	payload: ActionPayload
-}
-
-export class BackendUserInfo extends BackendPayload{
-	constructor(readonly user: User, readonly profile: object){super();}
-}
-
-export class BackendTables extends BackendPayload{
-	constructor(readonly allTables: ThenArg<typeof fetchAllSpecTables>){super();}
-}
-
-export class BackendObjectMetadataId extends BackendPayload{
-	constructor(readonly id: UrlStr){super();}
-}
-
-export class BackendObjectMetadata extends BackendPayload{
-	constructor(readonly metadata: DataObject & {id: UrlStr}){super();}
-}
-
-export class MiscError extends MiscPayload{
-	constructor(readonly error: Error){super();}
-}
-
-export class MiscInit extends MiscPayload{
-	constructor(){super();}
-}
+import FilterTemporal from "./models/FilterTemporal";
+import CompositeSpecTable from "./models/CompositeSpecTable";
+import Paging from "./models/Paging";
+import {
+	BackendObjectMetadata,
+	BackendObjectMetadataId,
+	BackendOriginsTable, BackendTables,
+	BackendUserInfo,
+	MiscError,
+	MiscInit
+} from "./reducers/declarations";
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -217,6 +195,16 @@ export const getAllSpecTables: PortalThunkAction<void> = dispatch => {
 	);
 };
 
+const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: Function) => {
+	const {specTable} = getState() as State;
+
+	fetchDobjOriginsAndCounts([]).then(
+		dobjOriginsAndCounts => {
+			dispatch(new BackendOriginsTable(specTable, dobjOriginsAndCounts));
+		},
+		failWithError(dispatch)
+	);
+};
 
 export const queryMeta: (id: string, search: string) => PortalThunkAction<void> = (id, search) => dispatch => {
 	switch (id) {
@@ -356,11 +344,12 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 		const {specTable, sorting, tabs, filterTemporal, filterFreeText, paging} = state;
 		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
 
-		const filters = areFiltersEnabled(tabs, filterTemporal, filterFreeText)
-			? filterTemporal.filters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any])
-			: [];
+		const temporalFilters = filterTemporal.hasFilter ? filterTemporal.filters : [];
+		const filters = areFiltersEnabled(tabs, filterFreeText)
+			? temporalFilters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any])
+			: temporalFilters;
 
-		const options = {
+		const options: Options = {
 			specs: specTable.getSpeciesFilter(null, true),
 			stations: specTable.getFilter('station'),
 			submitters: specTable.getFilter('submitter'),
@@ -389,12 +378,24 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 			},
 			failWithError(dispatch)
 		);
+
+		dispatch(getOriginsTable);
 	}
 
 	if (route === undefined || route === config.ROUTE_SEARCH) {
 		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
 	}
 };
+
+export interface Options {
+	specs: ReturnType<typeof CompositeSpecTable.prototype.getSpeciesFilter>
+	stations: ReturnType<typeof CompositeSpecTable.prototype.getFilter>
+	submitters: ReturnType<typeof CompositeSpecTable.prototype.getFilter>
+	sorting: State['sorting']
+	paging: Paging
+	rdfGraphs: ReturnType<typeof CompositeSpecTable.prototype.getColumnValuesFilter>
+	filters: any[]
+}
 
 const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {
 	getExtendedDataObjInfo(dobjs).then(
@@ -421,7 +422,7 @@ export const toggleSort = (varName: string) => (dispatch: Function) => {
 	dispatch(getFilteredDataObjects);
 };
 
-export const requestStep = (direction: number) => (dispatch: Function) => {
+export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
 	dispatch({
 		type: actionTypes.STEP_REQUESTED,
 		direction
@@ -569,7 +570,7 @@ export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 		);
 };
 
-export const setFilterTemporal: (filterTemporal: any) => PortalThunkAction<void> = filterTemporal => dispatch => {
+export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkAction<void> = filterTemporal => dispatch => {
 	if (filterTemporal.dataTime.error) {
 		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 	}

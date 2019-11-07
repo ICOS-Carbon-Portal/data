@@ -1,4 +1,4 @@
-import {MiscError, MiscInit, MiscPayload} from "../actions";
+import {MiscError, MiscInit, MiscPayload} from "./declarations";
 import stateUtils, {State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 
