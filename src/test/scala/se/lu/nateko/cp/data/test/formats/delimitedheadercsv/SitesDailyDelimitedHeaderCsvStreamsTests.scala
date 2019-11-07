@@ -8,14 +8,14 @@ import akka.stream.scaladsl.{Sink, StreamConverters}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvStreams
+import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDailyDelimitedHeaderCsvStreams
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
+class SitesDailyDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
-	private implicit val system: ActorSystem = ActorSystem("sitesdelimitedheadercsvstreamstest")
+	private implicit val system: ActorSystem = ActorSystem("sitesdailydelimitedheadercsvstreamstest")
 	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
@@ -25,13 +25,13 @@ class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAl
 
 	private val nRows = 6
 	private val binTableSink = BinTableSink(
-		new File(getClass.getResource("/").getFile + "/sites_delimiter.cpb"),
+		new File(getClass.getResource("/").getFile + "/sites_daily_delimiter.cpb"),
 		overwrite = true
 	)
 
 	private val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(IsoLikeLocalDateTime, "TIMESTAMP", isOptional = false),
+			PlainColumn(Iso8601Date, "TIMESTAMP", isOptional = false),
 			PlainColumn(FloatValue, "SR_IN", isOptional = false),
 			PlainColumn(FloatValue, "PPFD", isOptional = false),
 			PlainColumn(FloatValue, "TA", isOptional = true)
@@ -40,9 +40,9 @@ class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAl
 	)
 
 	private val rowsSource = StreamConverters
-		.fromInputStream(() => getClass.getResourceAsStream("/sites_delimiter.csv"))
+		.fromInputStream(() => getClass.getResourceAsStream("/sites_daily_delimiter.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, formats))
+		.via(SitesDailyDelimitedHeaderCsvStreams.standardCsvParser(nRows, formats))
 
 	test("Parsing a SITES time series with delimited header example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)
@@ -69,7 +69,7 @@ class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAl
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
-		assert(readResult.count === 1171)
+		assert(readResult.count === 1135)
 		assert(firstRow.header.nRows === nRows)
 		assert(nRowsWritten === nRows)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) ===

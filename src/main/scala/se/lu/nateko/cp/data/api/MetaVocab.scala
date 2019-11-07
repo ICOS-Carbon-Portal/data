@@ -47,4 +47,5 @@ object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/onto
 	val simpleSitesCsvTimeSer = getRelative("simpleSitesCsv")
 	val dailySitesCsvTimeSer = getRelative("dailySitesCsv")
 	val sitesDelimitedHeaderCsvTimeSer = getRelative("delimitedHeaderCsv")
+	val sitesDailyDelimitedHeaderCsvTimeSer = getRelative("dailyDelimitedHeaderCsv")
 }
