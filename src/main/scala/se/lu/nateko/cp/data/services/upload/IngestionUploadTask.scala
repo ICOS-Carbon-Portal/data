@@ -54,15 +54,6 @@ class IngestionUploadTask(
 			case `asciiOtcProductCsv` =>
 				defaultStandardSink(otc.OtcCsvStreams.otcProductParser)
 
-			case `simpleSitesCsvTimeSer` =>
-				standardSink{nRows =>
-					val colFormats = ColumnsMetaWithTsCol(colsMeta, "UTC_TIMESTAMP")
-					simplesitescsv.SimpleSitesCsvStreams.standardCsvParser(nRows, colFormats)
-				}
-
-			case `dailySitesCsvTimeSer` =>
-				defaultStandardSink(dailysitescsv.DailySitesCsvStreams.standardCsvParser)
-
 			case `sitesDelimitedHeaderCsvTimeSer` =>
 				standardSink{nRows =>
 					val colFormats = ColumnsMetaWithTsCol(colsMeta, "TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES")

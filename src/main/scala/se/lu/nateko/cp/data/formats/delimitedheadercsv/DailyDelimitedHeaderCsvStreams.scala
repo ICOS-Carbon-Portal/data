@@ -30,4 +30,6 @@ object SitesDailyDelimitedHeaderCsvStreams extends StandardCsvStreams {
 	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser =
 		new DelimitedHeaderCsvParser(format.colsMeta, columnSeparator, headerDelimitor)
 
+	override def acqIntervalTimeStep = Some(1L -> ChronoUnit.DAYS)
+
 }
