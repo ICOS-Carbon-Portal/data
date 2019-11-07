@@ -138,7 +138,7 @@ export const defaultState: State = {
 	},
 	checkedObjectsInSearch: [],
 	checkedObjectsInCart: [],
-	tabs: {tabName: undefined, selectedTabId: undefined, searchTab: undefined, resultTab: undefined},
+	tabs: {},
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage()
@@ -226,8 +226,8 @@ const simplifyState = (state: State) => {
 	});
 };
 
-const jsonToState = (state: State) => {
-	const stateFromHash = Object.assign({}, state);
+const jsonToState = (state0: State) => {
+	const state = Object.assign({}, state0);
 
 	try {
 		state.route = state.route || config.DEFAULT_ROUTE;
@@ -247,7 +247,7 @@ const jsonToState = (state: State) => {
 			? undefined
 			: config.previewIdPrefix[config.envri] + state.id;
 	} catch(err) {
-		console.log({stateFromHash, state, err});
+		console.log({state, state0, err});
 		throw new Error("Could not convert json to state");
 	}
 

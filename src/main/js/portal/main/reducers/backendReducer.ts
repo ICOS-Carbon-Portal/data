@@ -1,5 +1,5 @@
 import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable} from "./declarations";
+	BackendOriginsTable} from "./actionpayloads";
 import stateUtils, {State} from "../models/State";
 import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";

@@ -60,6 +60,7 @@ import {PortalThunkAction, PortalDispatch} from "./store";
 import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
 import {Item} from "./models/HelpStorage";
 import FilterTemporal from "./models/FilterTemporal";
+import { FilterRequest, TemporalFilterRequest } from "./models/FilterRequest";
 import CompositeSpecTable from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
@@ -69,7 +70,7 @@ import {
 	BackendUserInfo,
 	MiscError,
 	MiscInit
-} from "./reducers/declarations";
+} from "./reducers/actionpayloads";
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -344,7 +345,9 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 		const {specTable, sorting, tabs, filterTemporal, filterFreeText, paging} = state;
 		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
 
-		const temporalFilters = filterTemporal.hasFilter ? filterTemporal.filters : [];
+		const temporalFilters: FilterRequest[] = filterTemporal.hasFilter
+			? filterTemporal.filters as TemporalFilterRequest[]
+			: [];
 		const filters = areFiltersEnabled(tabs, filterFreeText)
 			? temporalFilters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any])
 			: temporalFilters;
@@ -394,7 +397,7 @@ export interface Options {
 	sorting: State['sorting']
 	paging: Paging
 	rdfGraphs: ReturnType<typeof CompositeSpecTable.prototype.getColumnValuesFilter>
-	filters: any[]
+	filters: FilterRequest[]
 }
 
 const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {

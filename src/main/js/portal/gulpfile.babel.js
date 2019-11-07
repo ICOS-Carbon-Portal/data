@@ -81,7 +81,7 @@ const cleanTest = _ => {
 
 const transform = (src, dest) => {
 	return gulp.src(src)
-		.pipe(babel({presets: buildConf.presets}))
+		.pipe(babel({presets: buildConf.presets, plugins: buildConf.plugins}))
 		.pipe(gulp.dest(dest));
 };
 

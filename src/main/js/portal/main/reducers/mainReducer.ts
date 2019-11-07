@@ -2,7 +2,7 @@ import { Reducer } from 'redux';
 import backendReducer from './backendReducer';
 import miscReducer from './miscReducer';
 import oldReducer from '../reducer';
-import {BackendPayload,	PortalPlainAction,	MiscPayload} from "./declarations";
+import {BackendPayload,	PortalPlainAction,	MiscPayload} from "./actionpayloads";
 import {State, defaultState} from "../models/State";
 
 

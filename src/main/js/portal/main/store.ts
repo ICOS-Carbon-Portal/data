@@ -4,7 +4,7 @@ import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
 import {init} from './actions';
 import stateUtils, {State} from "./models/State";
-import {ActionPayload, PortalPlainAction} from "./reducers/declarations";
+import {ActionPayload, PortalPlainAction} from "./reducers/actionpayloads";
 
 
 const selectSubState = (state: any) => {

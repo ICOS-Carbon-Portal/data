@@ -27,6 +27,8 @@ const presets = [
 	]
 ];
 
+const plugins = ["@babel/plugin-proposal-nullish-coalescing-operator"];
+
 const applyProdEnvironment = cb => {
 	process.env.NODE_ENV = 'production';
 	return cb();
@@ -69,7 +71,8 @@ const transformToBundle = (isProduction, paths, gulpReplace) => {
 			minifyOptions: {compatibility: '*'}
 		})
 		.transform(babelify, {
-			presets: presets,
+			presets,
+			plugins,
 			extensions: ['.js', '.jsx', '.ts', '.tsx']
 		})
 		.bundle()
@@ -94,6 +97,7 @@ const transformToBundle = (isProduction, paths, gulpReplace) => {
 
 module.exports = {
 	presets,
+	plugins,
 	buildTarget,
 	watch,
 	applyProdEnvironment,

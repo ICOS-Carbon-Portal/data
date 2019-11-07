@@ -142,8 +142,7 @@ export const listFilteredDataObjects = (options: Options): Query<"dobj" | "spec"
 
 	function isEmpty(arr: []){return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, rdfGraphs} = options;
-	const filters: FilterRequest[] = options.filters;
+	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
 
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 

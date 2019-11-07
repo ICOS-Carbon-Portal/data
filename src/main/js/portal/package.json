@@ -40,6 +40,7 @@
   "devDependencies": {
     "@babel/cli": "^7.6.2",
     "@babel/core": "^7.6.2",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "7.4.4",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/preset-env": "^7.6.2",
     "@babel/preset-es2015": "^7.0.0-beta.53",
@@ -49,6 +50,7 @@
     "@types/linkify-it": "^2.1.0",
     "@types/react": "^16.9.5",
     "@types/react-redux": "^7.1.4",
+    "array.prototype.flatmap": "1.2.2",
     "babelify": "^10.0.0",
     "browserify": "^16.2.3",
     "browserify-css": "^0.15.0",
@@ -61,10 +63,9 @@
     "gulp-sass": "^3.1.0",
     "gulp-sass-variables": "^1.2.0",
     "gulp-uglify": "^3.0.2",
-    "typescript": "^3.6.3",
+    "typescript": "3.7.2",
     "vinyl-buffer": "^1.0.1",
-    "vinyl-source-stream": "^2.0.0",
-    "array.prototype.flatmap": "1.2.2"
+    "vinyl-source-stream": "^2.0.0"
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
