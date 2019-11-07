@@ -51,7 +51,7 @@ export type CategoryType = keyof CategoryNamesDict;
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	ICOS: defaultCategNames,
-	SITES: {...defaultCategNames, station: 'Station'},
+	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic program'},
 };
 
 export const prefixes = {

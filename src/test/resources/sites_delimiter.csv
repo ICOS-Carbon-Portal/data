@@ -15,7 +15,7 @@ WS_MAX	Explanation and unit
 PREC	Explanation and unit
 PA	Explanation and unit
 ####
-TIME,SR_IN,PPFD,TA,RH,PH2O,TW_1m,TW_3m,TW_15m,WS,WV,WD,WD_STD,WS_MAX,PREC,PA
+TIMESTAMP,SR_IN,PPFD,TA,RH,PH2O,TW_1m,TW_3m,TW_15m,WS,WV,WD,WD_STD,WS_MAX,PREC,PA
 2015-01-01 00:00,3.149,     NaN,0.61,    NaN,    NaN,0.274,0.249,0.804,4.424,4.391,260,6.95,    NaN,   NaN,     NaN
 2015-01-01 01:00,2.76,0,1.489,    NaN,    NaN,0.204,0.209,0.987,6.794,6.776,261.5,4.23,    NaN,   NaN,     NaN
 2015-01-01 02:00,2.824,0,1.856,    NaN,    NaN,0.214,0.239,0.927,5.7,5.672,262.9,5.71,    NaN,   NaN,     NaN
