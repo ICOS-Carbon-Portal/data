@@ -67,10 +67,14 @@ export interface MetaDataObject extends DO{
 	coverageGeoJson: string
 }
 
+export interface SearchOptions {
+	showDeprecated: boolean
+}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
-	showDeprecated: boolean
+	searchOptions: SearchOptions
 	route: Routes
 	filterCategories: any
 	filterTemporal: FilterTemporal
@@ -107,7 +111,9 @@ export interface State {
 export const defaultState: State = {
 	ts: Date.now(),
 	isRunningInit: false,
-	showDeprecated: false,
+	searchOptions: {
+		showDeprecated: false
+	},
 	route: config.DEFAULT_ROUTE,
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
@@ -144,7 +150,7 @@ export const defaultState: State = {
 	helpStorage: new HelpStorage()
 };
 
-const update = (state: State, updates: any) => {
+const update = (state: State, updates: Partial<State>): State => {
 	return Object.assign({}, state, updates, {ts: Date.now()});
 };
 

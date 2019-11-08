@@ -6,7 +6,7 @@ import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
 import {getObjCount} from "./utils";
-import {ThenArg, UrlStr} from "../backend/declarations";
+import {ThenArg} from "../backend/declarations";
 import {fetchAllSpecTables} from "../backend";
 
 
@@ -26,7 +26,9 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendOriginsTable){
-		return stateUtils.update(state, payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts));
+		return stateUtils.update(state, {
+			specTable: payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts)
+		});
 	}
 
 	if (payload instanceof BackendObjectMetadataId){

@@ -19,7 +19,7 @@ import {
 	updateCheckedObjectsInSearch,
 	switchTab,
 	setFilterTemporal,
-	addToCart, getResourceHelpInfo, setMetadataItem
+	addToCart, getResourceHelpInfo, setMetadataItem, updateSearchOption, SearchOption
 } from '../actions';
 import HelpSection from "../components/help/HelpSection";
 import {isSmallDevice, pick} from '../utils';
@@ -27,6 +27,7 @@ import {PickClassFunctions, Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {State} from "../models/State";
 import {Item} from "../models/HelpStorage";
+import AdvancedSettings from "../components/AdvancedSettings";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -36,15 +37,16 @@ type SearchProps = StateProps & DispatchProps;
 
 const reducedProps = (props: SearchProps) => ({
 	helpSection: pick(props,'helpStorage', 'getResourceHelpInfo'),
-	filters: pick(props,'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText'),
+	filters: pick(props,'queryMeta', 'filterFreeText'),
 	objSpecFilter: pick(props,'specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
 		'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
-		'helpStorage', 'getResourceHelpInfo', 'filterTemporal', 'showDeprecated'),
+		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
 		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
-		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup')
+		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup'),
+	advanced: pick(props, 'searchOptions', 'updateSearchOption')
 });
 
 export type SearchActions = PickClassFunctions<typeof Search>;
@@ -105,10 +107,10 @@ class Search extends Component<SearchProps, OurState> {
 	render(){
 		const props = this.props;
 		const tabs = props.tabs;
-		const {helpSection, objSpecFilter, filters, searchResultTable, compactSearchResultTable} = reducedProps(this.props);
+		const {helpSection, objSpecFilter, filters, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
-
+console.log({advanced});
 		return (
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
@@ -127,6 +129,7 @@ class Search extends Component<SearchProps, OurState> {
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
 							<ObjSpecFilter tabHeader="Categories" {...objSpecFilter} />
 							<Filters tabHeader="Filters" {...filters}/>
+							<AdvancedSettings tabHeader="Options" {...advanced} />
 						</Tabs>
 					</div>
 				</div>
@@ -168,7 +171,7 @@ function stateToProps(state: State){
 		specTable: state.specTable,
 		paging: state.paging,
 		sorting: state.sorting,
-		showDeprecated: state.showDeprecated,
+		searchOptions: state.searchOptions,
 	};
 }
 
@@ -189,6 +192,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		getResourceHelpInfo: (helpItem: Item) => dispatch(getResourceHelpInfo(helpItem)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
+		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption)),
 	};
 }
 

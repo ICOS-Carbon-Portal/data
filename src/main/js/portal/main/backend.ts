@@ -7,9 +7,9 @@ import Storage from './models/Storage';
 import { FilterRequest } from './models/FilterRequest';
 import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
-import {DataObject} from "../../common/main/metacore";
 import {SparqlResultValue, XMLSchema} from "./backend/sparql";
 import {Options} from "./actions";
+import {MetaDataObject} from "./models/State";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -275,7 +275,7 @@ export const getTsSettings = (email: string | undefined) => {
 		: Promise.resolve(tsSettings);
 };
 
-export const getMetadata = (id: UrlStr): Promise<DataObject> => {
+export const getMetadata = (id: UrlStr): Promise<MetaDataObject> => {
 	return fetch(id, {
 		headers: new Headers({
 			'Accept': 'application/json'

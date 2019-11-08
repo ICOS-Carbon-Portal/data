@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import LinkifyIt from 'linkify-it';
 
 const linkifyIt = LinkifyIt();

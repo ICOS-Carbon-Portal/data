@@ -35,7 +35,7 @@ export const actionTypes = {
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
-import stateUtils, {Profile, State, User} from "./models/State";
+import stateUtils, {MetaDataObject, Profile, State, User} from "./models/State";
 import {
 	fetchAllSpecTables,
 	searchDobjs,
@@ -69,7 +69,8 @@ import {
 	BackendOriginsTable, BackendTables,
 	BackendUserInfo,
 	MiscError,
-	MiscInit
+	MiscInit,
+	MiscUpdateSearchOption
 } from "./reducers/actionpayloads";
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -180,7 +181,7 @@ export const restoreFromHistory = (historyState: any) => (dispatch: Function) =>
 
 const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 	const {route, metadata, id}:
-		{route: string, metadata: DataObject & {id: UrlStr}, id: UrlStr} = getState();
+		{route: string, metadata: MetaDataObject & {id: UrlStr}, id: UrlStr} = getState();
 
 	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
 };
@@ -615,4 +616,12 @@ const updateHelpInfo: (helpItem: any) => PortalThunkAction<void> = helpItem => d
 		type: actionTypes.HELP_INFO_UPDATED,
 		helpItem
 	});
+};
+
+export interface SearchOption{
+	name: string
+	value: boolean
+}
+export const updateSearchOption: (searchOption: SearchOption) => PortalThunkAction<void> = searchOption => (dispatch, getState) => {
+	dispatch(new MiscUpdateSearchOption(getState().searchOptions, searchOption));
 };

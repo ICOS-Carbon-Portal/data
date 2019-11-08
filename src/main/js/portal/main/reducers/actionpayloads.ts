@@ -1,9 +1,9 @@
 import {Action} from "redux";
-import {User} from "../models/State";
+import {MetaDataObject, SearchOptions, User} from "../models/State";
 import {ThenArg, UrlStr} from "../backend/declarations";
 import {fetchAllSpecTables, fetchDobjOriginsAndCounts} from "../backend";
 import CompositeSpecTable from "../models/CompositeSpecTable";
-import {DataObject} from "../../../common/main/metacore";
+import {SearchOption} from "../actions";
 
 
 export abstract class ActionPayload{}
@@ -32,7 +32,7 @@ export class BackendObjectMetadataId extends BackendPayload{
 }
 
 export class BackendObjectMetadata extends BackendPayload{
-	constructor(readonly metadata: DataObject & {id: UrlStr}){super();}
+	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
 }
 
 export class MiscError extends MiscPayload{
@@ -41,4 +41,8 @@ export class MiscError extends MiscPayload{
 
 export class MiscInit extends MiscPayload{
 	constructor(){super();}
+}
+
+export class MiscUpdateSearchOption extends MiscPayload{
+	constructor(readonly oldSearchOptions: SearchOptions, readonly newSearchOption: SearchOption){super();}
 }

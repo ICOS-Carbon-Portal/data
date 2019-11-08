@@ -6,7 +6,6 @@ import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 import {ReducedProps} from "../containers/Search";
 import {PickClassFunctions, UrlStr} from "../backend/declarations";
 import PickDates from "./filters/PickDates";
-import CheckBtn from "./buttons/ChechBtn";
 
 
 type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
@@ -101,15 +100,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 		return (
 			<div>
-				<div className="row" style={{marginLeft:0}}>
-					<div className="col-lg-9 col-md-12 col-sm-12 col-xs-12 text-nowrap" style={{padding:'10px 12px'}}>
-						<CheckBtn onClick={() => {}} isChecked={true} style={{margin:'5px 2px', fontSize:10}} />
-						<span style={{marginLeft:3, paddingRight:5}}>Show deprecated objects</span>
-					</div>
-					<div className="col-lg-3 col-md-12 col-sm-12 col-xs-12 text-nowrap" style={{padding:'6px 20px'}}>
-						<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
-					</div>
-				</div>
+				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
 
 				{availableFilters.map((filterPanel, i: number) =>
 					<FilterPanelMultiselect
@@ -187,11 +178,11 @@ interface ResetBtn {
 const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
 	const style = enabled
-		? {padding:0, margin:0, textDecoration: 'underline', cursor: 'pointer'}
-		: {padding:0, margin:0, textDecoration: 'underline'};
+		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
+		: {margin: '5px 2px', textDecoration: 'underline'};
 	const onClick = () => enabled ? resetFiltersAction() : {};
 
-	return <button className={className} style={style} onClick={onClick}>Clear categories</button>;
+	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
 };
 
 const getNameList = (specTable: OwnProps['specTable'], list: ReadonlyArray<string>): [string, string][] => {
