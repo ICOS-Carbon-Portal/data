@@ -8,7 +8,7 @@ const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-export function specBasics(): Query<"spec" | "type" | "specLabel" | "level" | "format" | "formatLabel" | "theme" | "themeLabel", "dataset"> {
+export function specBasics(): Query<"spec" | "type" | "specLabel" | "level" | "format" | "formatLabel" | "theme" | "themeLabel", "dataset" | "temporalResolution"> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
 where{

@@ -31,7 +31,8 @@ const fetchSpecBasics = () => {
 		format: b.format.value,
 		formatLabel: b.formatLabel.value,
 		theme: b.theme.value,
-		themeLabel: b.themeLabel.value
+		themeLabel: b.themeLabel.value,
+		temporalResolution: b.temporalResolution ? b.temporalResolution.value : undefined
 	}));
 };
 
