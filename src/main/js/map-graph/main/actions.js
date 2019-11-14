@@ -87,7 +87,7 @@ export const selectVar = valueIdx => (dispatch, getState) => {
 	} else if (valueIdx === value2Idx){
 		dispatch(selectVarY2(binTableData.valueIdx2DataIdx(valueIdx)));
 	} else {
-		dispatch(failWithError({message: "Could not determine what axel was selected"}));
+		dispatch(failWithError({message: "Could not determine which axis was selected"}));
 	}
 };
 
