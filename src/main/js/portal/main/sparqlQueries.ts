@@ -160,7 +160,7 @@ export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "
 
 	const submitterSearch = isEmpty(submitters) ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
-			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter`;
+			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 
