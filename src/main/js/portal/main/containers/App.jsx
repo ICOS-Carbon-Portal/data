@@ -45,9 +45,6 @@ export class App extends Component {
 				/>
 
 				<div className="row page-header">
-
-					<Disclaimer />
-
 					<Title
 						currentRoute={props.route}
 						metadata={props.metadata}
@@ -137,16 +134,6 @@ const Route = props => {
 		default:
 			return <Search {...props} />;
 	}
-};
-
-const Disclaimer = () => {
-	return(
-		config.envri === "SITES" &&
-			<div className="alert alert-warning" role="alert">
-				<strong>Please note!</strong>&nbsp;
-				The data portal is currently for preview only and is presenting test data.
-			</div>
-	);
 };
 
 function stateToProps(state){
