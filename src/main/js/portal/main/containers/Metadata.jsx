@@ -4,6 +4,7 @@ import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
 import { formatBytes, formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
+import config from '../config';
 
 export default class Metadata extends Component {
 	constructor(props) {
@@ -171,11 +172,15 @@ export default class Metadata extends Component {
 export const MetadataTitle = props => {
 	const { metadata } = props;
 	const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
+	const specLabel = metadata && config.envri === "SITES"
+		? metadata.specification.self.label.substr(0, metadata.specification.self.label.indexOf(','))
+		: metadata.specification.self.label;
+
 	return (
 		<React.Fragment>
 			{metadata && metadata.specificInfo &&
 				<h1>
-					{metadata.specificInfo.title || metadata.specification.self.label}
+					{metadata.specificInfo.title || specLabel}
 					{station && <span> from {station.name}</span>}
 					{metadata.specificInfo.acquisition &&
 						caption(new Date(metadata.specificInfo.acquisition.interval.start), new Date(metadata.specificInfo.acquisition.interval.stop))
