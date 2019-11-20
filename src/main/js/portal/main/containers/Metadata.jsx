@@ -172,9 +172,9 @@ export default class Metadata extends Component {
 export const MetadataTitle = props => {
 	const { metadata } = props;
 	const station = metadata && metadata.specificInfo && metadata.specificInfo.acquisition && metadata.specificInfo.acquisition.station;
-	const specLabel = metadata && config.envri === "SITES"
+	const specLabel = metadata && metadata.specification && (config.envri === "SITES"
 		? metadata.specification.self.label.substr(0, metadata.specification.self.label.indexOf(','))
-		: metadata.specification.self.label;
+		: metadata.specification.self.label);
 
 	return (
 		<React.Fragment>
