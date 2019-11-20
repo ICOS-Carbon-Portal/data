@@ -1,6 +1,9 @@
 {
  "name": "cpdata-frontend",
  "version": "0.1.0",
+ "engines": {
+   "npm": ">=6.12.0"
+ },
  "private": true,
  "description": "Carbon Portal Data Service",
  "repository": {
