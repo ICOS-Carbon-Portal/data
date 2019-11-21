@@ -58,7 +58,7 @@
   },
   "dependencies": {
     "deep-equal": "^1.0.1",
-    "icos-cp-backend": "^0.3.5",
+    "icos-cp-backend": "0.3.20",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",
     "react": "^16.8.6",

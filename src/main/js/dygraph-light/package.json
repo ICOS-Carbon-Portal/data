@@ -61,7 +61,7 @@
   "dependencies": {
     "babel-polyfill": "^6.13.0",
     "dygraphs": "^2.1.0",
-    "icos-cp-backend": "^0.3.10",
+    "icos-cp-backend": "0.3.20",
     "icos-cp-spinner": "^0.1.4"
   }
 }
