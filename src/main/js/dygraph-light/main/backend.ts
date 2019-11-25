@@ -1,9 +1,8 @@
-import 'babel-polyfill';
-import {sparql, getBinaryTable, tableFormatForSpecies} from 'icos-cp-backend';
-import {objectSpecification} from './sparqlQueries';
+import {sparql, getBinaryTable, tableFormatForSpecies, TableFormat} from 'icos-cp-backend';
+import {objectSpecification, Config} from './sparqlQueries';
 
 
-export function getTableFormatNrows(config, objIds){
+export function getTableFormatNrows(config: Config, objIds: string[]){
 	const query = objectSpecification(config, objIds);
 
 	return sparql(query, config.sparqlEndpoint)
@@ -23,18 +22,20 @@ export function getTableFormatNrows(config, objIds){
 					}))
 					: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));
 			}
-		).then(objects => Promise.all(objects.map(object => tableFormatForSpecies(object.objSpec, config)))
-			.then(tableFormats => {
+		)
+		.then(objects => Promise
+			.all(objects.map(object => tableFormatForSpecies(object.objSpec, config)))
+			.then(tableFormats =>
 				objects.map((object, index) => {
-					object.tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index]
+					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index]
+					return Object.assign({tableFormat}, object)
 				})
-				return objects;
-			})
+			)
 		);
 }
 
-export function getBinTable(xCol, yCol, objId, tableFormat, nRows){
+export function getBinTable(xCol: string, yCol: string, objId: string, tableFormat: TableFormat, nRows: number){
 	const axisIndices = [xCol, yCol].map(colName => tableFormat.getColumnIndex(colName));
 	const request = tableFormat.getRequest(objId, nRows, axisIndices);
-	return getBinaryTable(request, '/portal/tabular');
+	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);
 }
