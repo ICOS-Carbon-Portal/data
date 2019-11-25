@@ -3,20 +3,24 @@
 import gulp from 'gulp';
 import del from 'del';
 
-import buildConf from '../common/main/buildConf.js';
+import buildConf from '../common/main/buildConf';
 
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
+const tsTarget = './tsTarget/';
 
 const replaceSearch = "url(node_modules/leaflet/dist/images/";
 const replacement = "url(/style/map-graph/images/";
 
 const paths = {
-	main: 'main/main.jsx',
-	src: 'main/**/*.js*',
-	commonjs: '../common/main/**/*.js*',
+	main: `${tsTarget}${project}/main/main.jsx`,
+	src: `${tsTarget}${project}/main/**/*.js*`,
 	imagesSource: 'node_modules/leaflet/dist/**/*.png',
 	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
+	copyCss: {
+		from: '../common/main/Dygraphs.css',
+		to: `${tsTarget}/common/main/`
+	},
 	bundleFile: project + '.js'
 };
 
@@ -34,8 +38,11 @@ const copyImages = _ => {
 	return gulp.src(paths.imagesSource).pipe(gulp.dest(paths.styleTargetDir));
 };
 
+const copyCss = _ => {
+	return gulp.src(paths.copyCss.from).pipe(gulp.dest(paths.copyCss.to));
+};
 
-gulp.task('build', gulp.series(clean, copyImages, compileSrc));
+gulp.task('build', gulp.series(clean, copyImages, copyCss, compileSrc));
 
 gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
 

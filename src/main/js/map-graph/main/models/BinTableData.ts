@@ -1,13 +1,20 @@
 import config from '../config';
+import {TableFormat, BinTable, ColumnInfo} from 'icos-cp-backend';
+
+type Indices = {
+	date: number
+	latitude: number
+	longitude: number
+	data: number[]
+}
 
 export default class BinTableData{
-	constructor(tableFormat, binTable){
-		this._tableFormat = tableFormat;
-		this._indices = this._getIndices(tableFormat);
-		this._binTable = binTable;
+	readonly _indices: Indices
+	constructor(readonly _tableFormat: TableFormat, readonly _binTable: BinTable){
+		this._indices = this._getIndices(_tableFormat);
 	}
 
-	_getIndices(tableFormat){
+	_getIndices(tableFormat: TableFormat): Indices{
 		if (tableFormat === undefined) {
 			return {
 				date: -1,
@@ -18,7 +25,7 @@ export default class BinTableData{
 		}
 		const specialColNames = [config.dateColName, config.latitudeColName, config.longitudeColName];
 		const [dateIdx, latitudeIdx, longitudeIdx] = specialColNames.map(i => tableFormat.getColumnIndex(i));
-		const dataIndices = tableFormat._columnsInfo.reduce((acc, curr, idx) => {
+		const dataIndices = tableFormat.columns.reduce<number[]>((acc, curr, idx) => {
 			if (
 				!specialColNames.includes(curr.name) &&
 				curr.valueFormat != config.flagColumnsFormat
@@ -43,45 +50,45 @@ export default class BinTableData{
 		return indices.date >= 0 && indices.latitude >= 0 && indices.longitude >= 0 && indices.data.length > 0;
 	}
 
-	withBinTable(binTable){
+	withBinTable(binTable: BinTable){
 		return new BinTableData(this._tableFormat, binTable);
 	}
 
-	data(columnsArr){
+	data(columnsArr: number[]){
 		return this._binTable.values(columnsArr, r => r);
 	}
 
 	get allData(){
-		return this.data(Array.from({length: this._tableFormat._columnsInfo.length}, (_, i) => i));
+		return this.data(Array.from({length: this._tableFormat.columns.length}, (_, i) => i));
 	}
 
 
-	get columnsInfo(){
-		return this._tableFormat._columnsInfo;
+	get columnsInfo(): ReadonlyArray<ColumnInfo>{
+		return this._tableFormat.columns;
 	}
 
 	get dataColumnsInfo(){
 		return this.indices.data.map(idx => this.column(idx));
 	}
 
-	column(idx){
-		return this._tableFormat.columns(idx);
+	column(idx: number){
+		return this._tableFormat.columns[idx];
 	}
 
-	getColumnIndex(colName){
+	getColumnIndex(colName: string){
 		return this._tableFormat.getColumnIndex(colName);
 	}
 
-	dataIdx2ValueIdx(idx){
+	dataIdx2ValueIdx(idx: number){
 		return this.indices.data[idx];
 	}
 
-	valueIdx2DataIdx(idx){
+	valueIdx2DataIdx(idx: number){
 		return this.indices.data.findIndex(d => d === idx);
 	}
 
-	getColumnIndexByLabel(colLabel){
-		return this._tableFormat._columnsInfo.findIndex(col => col.label === colLabel);
+	getColumnIndexByLabel(colLabel: string){
+		return this._tableFormat.columns.findIndex(col => col.label === colLabel);
 	}
 
 	get nRows(){

@@ -40,14 +40,16 @@ export const updateURL = store => () => {
 	if (hasVals && !deepEqual(prevState, newHash)) {
 
 		if (prevState.y1 !== newHash.y1 || prevState.y2 !== newHash.y2 || prevState.map !== newHash.map) {
-			const labels = state.binTableData.columnsInfo.map(ci => ci.label);
-			saveToRestheart({
-				previewMapGraph: Object.assign({}, newHash, {
-					y1: labels[newHash.y1],
-					y2: labels[newHash.y2],
-					map: labels[newHash.map],
-				})
-			});
+			if(state.binTableData.columnsInfo){
+				const labels = state.binTableData.columnsInfo.map(ci => ci.label);
+				saveToRestheart({
+					previewMapGraph: Object.assign({}, newHash, {
+						y1: labels[newHash.y1],
+						y2: labels[newHash.y2],
+						map: labels[newHash.map],
+					})
+				});
+			}
 		}
 
 		const newURL = location.origin + location.pathname + '#' + JSON.stringify(newHash);
