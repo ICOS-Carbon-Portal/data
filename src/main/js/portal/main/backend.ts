@@ -5,7 +5,6 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import { FilterRequest } from './models/FilterRequest';
-import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
 import {

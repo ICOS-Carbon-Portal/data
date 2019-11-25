@@ -84,7 +84,6 @@
     "react-redux": "^7.1.1",
     "react-widgets": "^4.4.11",
     "redux": "^4.0.1",
-    "redux-thunk": "^2.3.0",
-    "whatwg-fetch": "^2.0.3"
+    "redux-thunk": "^2.3.0"
   }
 }

@@ -46,7 +46,6 @@
   "watchify": "^3.11.1"
  },
  "dependencies": {
-  "icos-cp-spatial": "^0.2.0",
-  "whatwg-fetch": "^2.0.4"
+  "icos-cp-spatial": "^0.2.0"
  }
 }

@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
