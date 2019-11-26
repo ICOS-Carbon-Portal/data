@@ -45,10 +45,11 @@ export default function(state: State, payload: BackendPayload): State {
 const handleOriginsTable = (payload: BackendOriginsTable) => {
 	const specTable = payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts);
 	const objCount = getObjCount(specTable);
+	const pageCount = Math.min(objCount, config.stepsize);
 
 	return {
 		specTable,
-		paging: new Paging({objCount})
+		paging: new Paging({objCount, pageCount})
 	}
 };
 

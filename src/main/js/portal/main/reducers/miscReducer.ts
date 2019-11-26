@@ -1,5 +1,4 @@
-import {MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters,
-	MiscUpdatePaging} from "./actionpayloads";
+import {MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters} from "./actionpayloads";
 import stateUtils, {SearchOptions, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 import {SearchOption} from "../actions";
@@ -27,12 +26,6 @@ export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscResetFilters){
 		return stateUtils.update(state, resetFilters(state));
-	}
-
-	if (payload instanceof MiscUpdatePaging){
-		return stateUtils.update(state, {
-			paging: new Paging({objCount: payload.objCount})
-		});
 	}
 
 	return state;

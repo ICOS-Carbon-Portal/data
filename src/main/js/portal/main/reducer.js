@@ -72,9 +72,8 @@ export default function(state = defaultState, action){
 				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText),
 				cacheSize: action.cacheSize,
 				isDataEndReached: action.isDataEndReached
-	}		);
+			});
 			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
-
 			return stateUtils.update(state,{
 				objectsTable: extendedObjectsTable,
 				paging

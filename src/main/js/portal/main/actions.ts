@@ -65,7 +65,7 @@ import {
 	BackendOriginsTable, BackendTables,
 	BackendUserInfo,
 	MiscError,
-	MiscInit, MiscResetFilters, MiscUpdatePaging,
+	MiscInit, MiscResetFilters,
 	MiscUpdateSearchOption
 } from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
@@ -189,7 +189,7 @@ export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<v
 		allTables => {
 			dispatch(new BackendTables(allTables));
 			dispatch({type: actionTypes.RESTORE_FILTERS});
-			dispatch(getFilteredDataObjects(false));
+			dispatch(getFilteredDataObjects(true));
 		},
 		failWithError(dispatch)
 	);
@@ -327,7 +327,7 @@ const getFilters = (state: State) => {
 	return filters;
 };
 
-const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<void> = fetchOriginsTable => (dispatch, getState) => {
+const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<void> = (fetchOriginsTable) => (dispatch, getState) => {
 	const state: State = getState();
 	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterFreeText} = state;
 
@@ -363,14 +363,15 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 		const {specTable, sorting, paging} = state;
 		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
 		const filters = getFilters(state);
+		const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
 		const options: Options = {
-			specs: specTable.getSpeciesFilter(null, true),
-			stations: specTable.getFilter('station'),
-			submitters: specTable.getFilter('submitter'),
+			specs: useOnlyPidFilter ? [] : specTable.getSpeciesFilter(null, true),
+			stations: useOnlyPidFilter ? [] : specTable.getFilter('station'),
+			submitters: useOnlyPidFilter ? [] : specTable.getFilter('submitter'),
 			sorting,
 			paging,
-			rdfGraphs: specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
+			rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
 			filters
 		};
 
@@ -383,7 +384,6 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
 				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-
 				dispatch({
 					type: actionTypes.OBJECTS_FETCHED,
 					objectsTable: rows,
@@ -474,7 +474,7 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 
 	if (tabName === 'searchTab'){
 		if (isPidFreeTextSearch(tabs, filterFreeText)){
-			dispatch(new MiscUpdatePaging(filterFreeText.selectedPids.length));
+			dispatch(getFilteredDataObjects(false));
 		} else {
 			dispatch(getFilteredDataObjects(true));
 		}

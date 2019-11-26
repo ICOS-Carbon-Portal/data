@@ -11,11 +11,10 @@ interface Paging {
 
 export const Paging = ({type, paging, requestStep}: Paging) => {
 	const {offset, objCount, pageCount, isCountKnown} = paging;
-	const to = Math.min(offset + pageCount, objCount);
+	const minObjs = Math.min(offset + pageCount, objCount);
+	const to = minObjs < pageCount ? pageCount : minObjs;
 	const count = pageCount < config.stepsize ? to : objCount;
-	const isForwardEnabled = isCountKnown
-		? to < count
-		: to <= count;
+	const isForwardEnabled = to < count;
 
 	if (type === "header") {
 		return (
