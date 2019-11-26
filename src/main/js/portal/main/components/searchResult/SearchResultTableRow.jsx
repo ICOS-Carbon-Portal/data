@@ -36,7 +36,8 @@ export default class SimpleObjectTableRow extends Component{
 		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
 		const locationString = location ? ` from ${location}` : '';
 		const dateString = `${formatDate(objInfo.timeStart)} \u2013 ${formatDate(objInfo.timeEnd)}`;
-		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${objInfo.specLabel}${locationString}, ${dateString}`;
+		const specLabel = config.envri === "SITES" ? objInfo.specLabel.substr(0, objInfo.specLabel.indexOf(',')) : objInfo.specLabel;
+		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}, ${dateString}`;
 		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled

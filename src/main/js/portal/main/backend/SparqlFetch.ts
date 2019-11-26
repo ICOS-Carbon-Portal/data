@@ -1,13 +1,11 @@
-import {SparqlResultBinding, SparqlResult, Query, SparqlResultValue} from "./sparql";
-import {sparql} from "icos-cp-backend";
-
+import {sparql, SparqlResultBinding, SparqlResult, Query} from 'icos-cp-backend';
 
 export const sparqlFetch = <Mandatories extends string, Optionals extends string, Res extends Row<Mandatories, Optionals>>(
 		query: Query<Mandatories, Optionals>,
 		sparqlEndpoint: string,
 		parser: (resp: SparqlResultBinding<Mandatories, Optionals>) => Res): Promise<Res[]> => {
 
-	return sparql(query.text, sparqlEndpoint, true)
+	return sparql(query, sparqlEndpoint, true)
 		.then((sparqlRes: SparqlResult<Mandatories, Optionals>) => {
 				try {
 					return sparqlRes.results.bindings.map(parser);
@@ -23,7 +21,7 @@ export const sparqlFetchAndParse = <Mandatories extends string, Optionals extend
 	sparqlEndpoint: string,
 	parser: (resp: SparqlResultBinding<Mandatories, Optionals>) => Res): Promise<{columnNames: string[], rows: Res[]}> => {
 
-	return sparql(query.text, sparqlEndpoint, true)
+	return sparql(query, sparqlEndpoint, true)
 		.then((sparqlRes: SparqlResult<Mandatories, Optionals>) => {
 				try {
 					return {

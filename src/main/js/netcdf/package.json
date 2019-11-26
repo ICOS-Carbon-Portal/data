@@ -1,6 +1,9 @@
 {
   "name": "cpdata-frontend",
   "version": "0.1.0",
+  "engines": {
+    "npm": ">=6.12.0"
+  },
   "private": true,
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
@@ -54,7 +57,7 @@
   "dependencies": {
     "deep-equal": "^1.0.1",
     "dygraphs": "^2.1.0",
-    "icos-cp-backend": "^0.3.5",
+    "icos-cp-backend": "0.3.20",
     "icos-cp-draggable": "^0.0.1",
     "icos-cp-leaflet-common": "^1.0.0",
     "icos-cp-legend": "^0.5.0",

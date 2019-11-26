@@ -48,8 +48,6 @@ export class App extends Component<AppProps> {
 
 				<div className="row page-header">
 
-					<Disclaimer />
-
 					<Title route={props.route} metadata={props.metadata} />
 
 					<div className="col-md-3 text-right" style={{marginTop: 30}}>
@@ -149,17 +147,6 @@ const Route = (props: AppProps) => {
 		default:
 			return <Search />;
 	}
-};
-
-const Disclaimer = () => {
-	if (config.envri !== "SITES") return null;
-
-	return(
-		<div className="alert alert-warning" role="alert">
-			<strong>Please note!</strong>&nbsp;
-			The data portal is currently for preview only and is presenting test data.
-		</div>
-	);
 };
 
 function stateToProps(state: State){

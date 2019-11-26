@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.test.formats.dailysitescsv
+package se.lu.nateko.cp.data.test.formats.delimitedheadercsv
 
 import java.io.File
 
@@ -8,14 +8,14 @@ import akka.stream.scaladsl.{Sink, StreamConverters}
 import org.scalatest.{BeforeAndAfterAll, FunSuite}
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.dailysitescsv.DailySitesCsvStreams
+import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDailyDelimitedHeaderCsvStreams
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
+class SitesDailyDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
-	private implicit val system: ActorSystem = ActorSystem("dailysitescsvstreamstest")
+	private implicit val system: ActorSystem = ActorSystem("sitesdailydelimitedheadercsvstreamstest")
 	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
@@ -23,28 +23,28 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 		Await.ready(system.terminate(), 3.seconds)
 	}
 
-	private val nRows = 29
+	private val nRows = 6
 	private val binTableSink = BinTableSink(
-		new File(getClass.getResource("/").getFile + "/atcCsvBinTest.cpb"),
+		new File(getClass.getResource("/").getFile + "/sites_daily_delimiter.cpb"),
 		overwrite = true
 	)
 
 	private val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
-			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false),
-			PlainColumn(FloatValue, "pH", isOptional = false),
-			PlainColumn(FloatValue, "Al (µg/l)", isOptional = false),
-			PlainColumn(FloatValue, "Optional column", isOptional = true)
+			PlainColumn(Iso8601Date, "TIMESTAMP", isOptional = false),
+			PlainColumn(FloatValue, "SR_IN", isOptional = false),
+			PlainColumn(FloatValue, "PPFD", isOptional = false),
+			PlainColumn(FloatValue, "TA", isOptional = true)
 		)),
-		"TIMESTAMP"
+		"TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES"
 	)
 
 	private val rowsSource = StreamConverters
-		.fromInputStream(() => getClass.getResourceAsStream("/sdp_c5chem_2004.csv"))
+		.fromInputStream(() => getClass.getResourceAsStream("/sites_daily_delimiter.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(DailySitesCsvStreams.standardCsvParser(nRows, formats))
+		.via(SitesDailyDelimitedHeaderCsvStreams.standardCsvParser(nRows, formats))
 
-	test("Parsing a daily SITES time series example") {
+	test("Parsing a SITES time series with delimited header example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)
 		val rows = Await.result(rowsFut, 1.second)
 
@@ -57,10 +57,10 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 		val row = Await.result(rowFut, 1.second)
 
 		assert(row.header.columnNames.contains(formats.timeStampColumn))
-		assert(row.cells.contains("2004-01-13T23:00:00Z"))
+		assert(row.cells.contains("2014-12-31T23:00:00Z"))
 	}
 
-	test("Parsing a daily SITES time series example and streaming to bintable") {
+	test("Parsing a SITES time series with delimited header example and streaming to bintable") {
 		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val graph = rowsSource
 			.wireTapMat(Sink.head[TableRow])(_ zip _)
@@ -69,11 +69,11 @@ class DailySitesCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)
 
-		assert(readResult.count === 2873)
+		assert(readResult.count === 1135)
 		assert(firstRow.header.nRows === nRows)
 		assert(nRowsWritten === nRows)
 		assert(formats.colsMeta.plainCols.keySet.diff(firstRow.header.columnNames.toSet) ===
-			Set("Optional column"))
+			Set())
 		assert(formats.colsMeta.findMissingColumns(firstRow.header.columnNames.toSeq).toSet === Set())
 	}
 

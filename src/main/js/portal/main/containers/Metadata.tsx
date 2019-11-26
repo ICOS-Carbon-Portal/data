@@ -10,6 +10,7 @@ import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person} from "../../../common/main/metacore";
+import config from '../config';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -46,13 +47,15 @@ class Metadata extends Component<MetadataProps> {
 		const isInCart = cart.hasItem(metadata.id);
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
-		const acquisition = metadata && metadata.specificInfo && (metadata.specificInfo as L2OrLessSpecificMeta).acquisition
-			? (metadata.specificInfo as L2OrLessSpecificMeta).acquisition
+		const specInfo = metadata.specificInfo
+
+		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
+			? (specInfo as L2OrLessSpecificMeta).acquisition
 			: undefined;
-		const productionInfo = metadata && metadata.specificInfo && (metadata.specificInfo as L3SpecificMeta).productionInfo
-			? (metadata.specificInfo as L3SpecificMeta).productionInfo
+		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
+			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
-		const station = metadata && metadata.specificInfo && (metadata.specificInfo as L2OrLessSpecificMeta).acquisition && (metadata.specificInfo as L2OrLessSpecificMeta).acquisition.station;
+		const station = (specInfo as L2OrLessSpecificMeta).acquisition && (specInfo as L2OrLessSpecificMeta).acquisition.station;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
 		const prevVersions = Array.isArray(metadata.previousVersion)
 			? metadata.previousVersion
@@ -91,8 +94,8 @@ class Metadata extends Component<MetadataProps> {
 										/>
 									</div>
 								</div>
-								{(metadata.specificInfo as L3SpecificMeta).description &&
-									metadataRow("Description", (metadata.specificInfo as L3SpecificMeta).description!, true)
+								{(specInfo as L3SpecificMeta).description &&
+									metadataRow("Description", (specInfo as L3SpecificMeta).description!, true)
 								}
 								{metadata.doi &&
 									metadataRow("DOI", doiLink(metadata.doi))
@@ -195,21 +198,24 @@ class Metadata extends Component<MetadataProps> {
 export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 	if (metadata === undefined) return null;
 
-	const acquisition = metadata.specificInfo && (metadata.specificInfo as L2OrLessSpecificMeta).acquisition
-		? (metadata.specificInfo as L2OrLessSpecificMeta).acquisition
+	const specInfo = metadata.specificInfo
+	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
+		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
 	const station = acquisition && acquisition.station
 		? acquisition.station
 		: undefined;
-	const title = (metadata.specificInfo as L3SpecificMeta).title
-		? (metadata.specificInfo as L3SpecificMeta).title
+	const title = (specInfo as L3SpecificMeta).title
+		? (specInfo as L3SpecificMeta).title
 		: undefined;
+	let specLabel = metadata.specification.self.label ?? "";
+	if(config.envri === "SITES") specLabel = specLabel.substr(specLabel.indexOf(','));
 
 	return (
 		<React.Fragment>
-			{metadata.specificInfo &&
+			{specInfo &&
 				<h1>
-					{title || metadata.specification.self.label}
+					{title || specLabel}
 					{station && <span> from {station.name}</span>}
 					{acquisition && acquisition.interval &&
 						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop))

@@ -426,7 +426,7 @@ const isColNameValid = (tableFormat, colName) => {
 };
 
 const getColInfoParam = (tableFormat, colName, param) => {
-	return tableFormat.columns(tableFormat.getColumnIndex(colName))[param];
+	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
 };
 
 const getLabel = (tableFormat, colName) => {

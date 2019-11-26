@@ -1,5 +1,4 @@
 import config from "./config";
-import 'whatwg-fetch';
 
 
 export const saveToRestheart = dataToSave => {

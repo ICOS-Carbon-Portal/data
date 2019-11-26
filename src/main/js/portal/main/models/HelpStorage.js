@@ -109,31 +109,56 @@ const initItems = [
 	new Item(
 		'level',
 		titles.level,
-		envri + ' distinguishes 4 levels of data in terms of how processed they are (ranging from raw data to modelling results):',
-		parseResourceInfo([
-			{
-				label: 0,
-				comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
-					' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
-				webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
-			},
-			{
-				label: 1,
-				comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
-				webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
-			},
-			{
-				label: 2,
-				comment: 'The final quality checked ICOS RI data set, published by the CFs, to be distributed through the Carbon Portal. This level is' +
-					' the ICOS-data product and free available for users.',
-				webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
-			},
-			{
-				label: 3,
-				comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
-				webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
-			}
-		])
+		envri + ' distinguishes 4 levels of data in terms of how processed they are' + (envri === 'ICOS' ? ' (ranging from raw data to modelling results)' : '') + ':',
+		envri === 'SITES'
+			? parseResourceInfo([
+				{
+					label: 0,
+					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
+						' subsequent processing. Stored internally but not distributed by the Data Portal.Data are in physical units either directly provided' +
+						' by the instruments or converted from engineer units.'
+				},
+				{
+					label: 1,
+					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are' +
+						' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of' +
+						' intended for internal use  and normally not distributed by the Data Portal.'
+				},
+				{
+					label: 2,
+					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,' +
+						' and within SITES community agreed, spatial and temporal output units and resolution. Distributed by the Data Portal.'
+				},
+				{
+					label: 3,
+					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
+						' SITES L1 or L2 data  Distributed by the Data Portal.'
+				}
+			])
+			: parseResourceInfo([
+				{
+					label: 0,
+					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
+						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
+					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+				},
+				{
+					label: 1,
+					comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
+					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+				},
+				{
+					label: 2,
+					comment: 'The final quality checked ICOS RI data set, published by the CFs, to be distributed through the Carbon Portal. This level is' +
+						' the ICOS-data product and free available for users.',
+					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+				},
+				{
+					label: 3,
+					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
+					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+				}
+			])
 	),
 
 	new Item('format', titles.format, 'Technical file format, indicating which software module is needed to read the data'),

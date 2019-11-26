@@ -1,9 +1,8 @@
-import 'babel-polyfill';
-import {sparql, getBinaryTable, tableFormatForSpecies} from 'icos-cp-backend';
-import {objectSpecification} from './sparqlQueries';
+import {sparql, getBinaryTable, tableFormatForSpecies, TableFormat, BinTable} from 'icos-cp-backend';
+import {objectSpecification, Config} from './sparqlQueries';
 
 
-export function getTableFormatNrows(config, objId){
+export function getTableFormatNrows(config: Config, objId: string){
 	const query = objectSpecification(config, objId);
 
 	return sparql(query, config.sparqlEndpoint)
@@ -29,8 +28,7 @@ export function getTableFormatNrows(config, objId){
 		);
 }
 
-export function getBinTable(objId, tableFormat, nRows){
-	const axisIndices = Array.from({length: tableFormat._columnsInfo.length}, (_, i) => i);
-	const request = tableFormat.getRequest(objId, nRows, axisIndices);
-	return getBinaryTable(request, '/portal/tabular');
+export function getBinTable(objId: string, tableFormat: TableFormat, nRows: number): Promise<BinTable>{
+	const request = tableFormat.getRequest(objId, nRows);
+	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);
 }

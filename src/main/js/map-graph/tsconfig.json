@@ -1,0 +1,30 @@
+{
+	"compilerOptions": {
+		"outDir": "./tsTarget/",
+		"removeComments": true,
+		"build": true,
+		// Enable incremental compilation by reading/writing information from prior compilations to a file on disk. This file is controlled by the --tsBuildInfoFile flag.
+		"incremental": true,
+		// Specify what file to store incremental build information in.
+		"tsBuildInfoFile": "./tsTarget/tsBuildInfoFile",
+		"skipLibCheck": true,
+		"jsx": "preserve",
+		// Target latest version of ECMAScript.
+		"target": "esnext",
+		// Search under node_modules for non-relative imports.
+		"moduleResolution": "node",
+		// Process & infer types from .js files.
+		"allowJs": true,
+		// Enable strictest settings like strictNullChecks & noImplicitAny.
+		"strict": true,
+		// Import non-ES modules as default imports.
+		"esModuleInterop": true
+	},
+	"include": [
+		"main/**/*.js",
+		"main/**/*.jsx",
+		"main/**/*.ts",
+		"../common/main/**/*.js",
+		"../common/main/**/*.ts"
+	]
+}

@@ -1,7 +1,7 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
-import {KeyAnyVal, UrlStr} from "./backend/declarations";
-import {Query} from './backend/sparql';
+import {UrlStr} from "./backend/declarations";
+import {Query} from 'icos-cp-backend';
 import {Options} from "./actions";
 import {
 	FilterRequest,
@@ -19,7 +19,7 @@ const config = Object.assign(commonConfig, localConfig);
 export const SPECCOL = 'spec';
 
 const basicColNamesMan = ["spec", "type", "specLabel", "level", "format", "formatLabel", "theme", "themeLabel"] as const;
-const basicColNamesOpt = ["dataset"] as const;
+const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
 export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
 
 export function specBasics(deprFilter: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
@@ -149,7 +149,9 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-export const listKnownDataObjects = (dobjs: string[]): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
+
+export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -163,7 +165,7 @@ ${standardDobjPropsDef}
 	return {text};
 };
 
-export const listFilteredDataObjects = (options: Options): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 
 	function isEmpty(arr: Value[]){return !arr || !arr.length;}
 

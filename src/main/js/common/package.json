@@ -1,6 +1,9 @@
 {
  "name": "cpdata-frontend",
  "version": "0.1.0",
+ "engines": {
+  "npm": ">=6.12.0"
+ },
  "private": true,
  "description": "Carbon Portal Data Service",
  "repository": {
@@ -43,7 +46,6 @@
   "watchify": "^3.11.1"
  },
  "dependencies": {
-  "icos-cp-spatial": "^0.2.0",
-  "whatwg-fetch": "^2.0.4"
+  "icos-cp-spatial": "^0.2.0"
  }
 }
