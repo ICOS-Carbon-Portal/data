@@ -7,12 +7,7 @@ import Storage from './models/Storage';
 import { FilterRequest } from './models/FilterRequest';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {DataObject} from "../../common/main/metacore";
-import {
-	SparqlResultValue,
-	XMLSchemaDateTime,
-	XMLSchemaInteger,
-	XMLSchemaString
-} from "./backend/sparql";
+import { sparqlParsers } from "./backend/sparql";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -26,12 +21,12 @@ const fetchSpecBasics = () => {
 		type: b.type.value,
 		specLabel: b.specLabel.value,
 		level: parseInt(b.level.value),
-		dataset: b.dataset ? b.dataset.value : undefined,
+		dataset: b.dataset?.value,
 		format: b.format.value,
 		formatLabel: b.formatLabel.value,
 		theme: b.theme.value,
 		themeLabel: b.themeLabel.value,
-		temporalResolution: b.temporalResolution ? b.temporalResolution.value : undefined
+		temporalResolution: b.temporalResolution?.value
 	}));
 };
 
@@ -43,7 +38,7 @@ const fetchSpecColumnMeta = () => {
 		colTitle: b.colTitle.value,
 		valType: b.valType.value,
 		valTypeLabel: b.valTypeLabel.value,
-		quantityKind: b.quantityKind ? b.quantityKind.value : undefined,
+		quantityKind: b.quantityKind?.value,
 		quantityKindLabel: b.quantityKindLabel.value,
 		quantityUnit: b.quantityUnit.value
 	}));
@@ -59,7 +54,7 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		project: b.project.value,
 		projectLabel: b.projectLabel.value,
 		count: parseInt(b.count.value),
-		station: b.station ? b.station.value : undefined,
+		station: b.station?.value,
 		stationLabel: b.stationLabel.value
 	}));
 };
@@ -112,28 +107,16 @@ export function fetchFilteredDataObjects(options: {}){
 	const query = queries.listFilteredDataObjects(options);
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
-			dobj: sparqlBindingToValue<XMLSchemaString>(b.dobj),
-			spec: sparqlBindingToValue<XMLSchemaString>(b.spec),
-			fileName: sparqlBindingToValue<XMLSchemaString>(b.fileName),
-			size: sparqlBindingToValue<XMLSchemaInteger>(b.size),
-			submTime: sparqlBindingToValue<XMLSchemaDateTime>(b.submTime),
-			timeStart: sparqlBindingToValue<XMLSchemaDateTime>(b.timeStart),
-			timeEnd: sparqlBindingToValue<XMLSchemaDateTime>(b.timeEnd)
+			dobj: sparqlParsers.fromUrl(b.dobj),
+			spec: sparqlParsers.fromUrl(b.spec),
+			fileName: sparqlParsers.fromString(b.fileName),
+			size: sparqlParsers.fromLong(b.size),
+			submTime: sparqlParsers.fromDateTime(b.submTime),
+			timeStart: sparqlParsers.fromDateTime(b.timeStart),
+			timeEnd: sparqlParsers.fromDateTime(b.timeEnd)
 	}));
 }
 
-// TODO: Make parsing to data type more elegant, if possible
-const sparqlBindingToValue = <T extends string | number | boolean | Date>(b: SparqlResultValue): T => {
-	switch(b.datatype){
-		case "http://www.w3.org/2001/XMLSchema#integer": return parseInt(b.value) as T;
-		case "http://www.w3.org/2001/XMLSchema#long": return parseInt(b.value) as T;
-		case "http://www.w3.org/2001/XMLSchema#float": return parseFloat(b.value) as T;
-		case "http://www.w3.org/2001/XMLSchema#double": return parseFloat(b.value) as T;
-		case "http://www.w3.org/2001/XMLSchema#dateTime": return new Date(b.value) as T;
-		case "http://www.w3.org/2001/XMLSchema#boolean": return (b.value === "true") as T;
-		default: return b.value as T;
-	}
-};
 
 export const searchDobjs = (search: string) => {
 	const query = queries.findDobjs(search);
@@ -227,8 +210,8 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		dobj: b.dobj!.value,
-		station: b.station ? b.station.value : undefined,
-		stationId: b.stationId ? b.stationId.value : undefined,
+		station: b.station?.value,
+		stationId: b.stationId?.value,
 		samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
 		theme: b.theme ? b.theme.value : undefined,
 		themeIcon: b.themeIcon ? b.themeIcon.value : undefined,

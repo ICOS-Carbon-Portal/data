@@ -1,35 +1,32 @@
-export interface SparqlResult<Mandatories extends string, Optionals extends string>{
-	head: {
-		vars: Array<Mandatories | Optionals>
+import { SparqlResultValue, SparqlResultLiteralValue } from 'icos-cp-backend'
+import {UrlStr} from './declarations'
+
+function resultIsLiteralValue(v: SparqlResultValue): v is SparqlResultLiteralValue {
+	return v.type === 'literal'
+}
+
+type LiteralDatatype = SparqlResultLiteralValue['datatype']
+
+function makeParser<T>(dt: LiteralDatatype | undefined, parser: (vs: string) => T): (v: SparqlResultValue) => T {
+	return v => {
+		if(!resultIsLiteralValue(v)) throw new Error(`SPARQL result parsing error, ${v} was not literal`)
+		if(dt !== undefined && v.datatype !== dt) throw new Error(`SPARQL result parsing error, expected ${v.value} to be ${dt} but it was ${v.datatype}`)
+		return parser(v.value)
 	}
-	results: {
-		bindings: [SparqlResultBinding<Mandatories, Optionals>]
-	}
 }
 
-export type SparqlResultBinding<Mandatories extends string, Optionals extends string> = {
-	[v in Mandatories]: SparqlResultValue
-} & {
-	[v in Optionals]?: SparqlResultValue
+function fromUrl(v: SparqlResultValue): UrlStr {
+	if(v.type !== 'uri') throw new Error(`SPARQL result parsing error, ${v} was not URI resource`)
+	return v.value
 }
 
-export type XMLSchemaString = string
-export type XMLSchemaInteger = number
-export type XMLSchemaFloat = number
-export type XMLSchemaDateTime = Date
-export type XMLSchemaBoolean = boolean
-
-export interface SparqlResultValue{
-	type: "uri" | "literal"
-	value: string
-	datatype?: 'http://www.w3.org/2001/XMLSchema#integer'
-		| 'http://www.w3.org/2001/XMLSchema#long'
-		| 'http://www.w3.org/2001/XMLSchema#float'
-		| 'http://www.w3.org/2001/XMLSchema#double'
-		| 'http://www.w3.org/2001/XMLSchema#dateTime'
-		| 'http://www.w3.org/2001/XMLSchema#boolean'
-}
-
-export interface Query<Mandatories extends string, Optionals extends string>{
-	text: string;
+export const sparqlParsers = {
+	fromInt: makeParser("http://www.w3.org/2001/XMLSchema#integer", parseInt),
+	fromLong: makeParser("http://www.w3.org/2001/XMLSchema#long", parseInt),
+	fromFloat: makeParser("http://www.w3.org/2001/XMLSchema#float", parseFloat),
+	fromDouble: makeParser("http://www.w3.org/2001/XMLSchema#double", parseFloat),
+	fromDateTime: makeParser("http://www.w3.org/2001/XMLSchema#dateTime", s => new Date(s)),
+	fromBoolean: makeParser("http://www.w3.org/2001/XMLSchema#boolean", s => (s.toLowerCase() === "true")),
+	fromString: makeParser(undefined, s => s),
+	fromUrl
 }

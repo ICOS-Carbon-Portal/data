@@ -1,7 +1,7 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
-import {Query} from './backend/sparql';
+import {Query} from 'icos-cp-backend';
 import {FilterRequest, TemporalFilterRequest, isPidFilter, isTemporalFilter, isDeprecatedFilter} from './models/FilterRequest';
 
 const config = Object.assign(commonConfig, localConfig);
@@ -123,7 +123,9 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-export const listKnownDataObjects = (dobjs: string[]): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
+
+export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -137,7 +139,7 @@ ${standardDobjPropsDef}
 	return {text};
 };
 
-export const listFilteredDataObjects = (options: any): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
+export const listFilteredDataObjects = (options: any): ObjInfoQuery => {
 
 	function isEmpty(arr: []){return !arr || !arr.length;}
 
