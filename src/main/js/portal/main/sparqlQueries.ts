@@ -3,13 +3,26 @@ import localConfig from './config';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {Query} from './backend/sparql';
 import {Options} from "./actions";
-import {FilterRequest, TemporalFilterRequest, isPidFilter, isTemporalFilter, isDeprecatedFilter} from './models/FilterRequest';
+import {
+	FilterRequest,
+	TemporalFilterRequest,
+	isPidFilter,
+	isTemporalFilter,
+	isDeprecatedFilter,
+	DeprecatedFilterRequest
+} from './models/FilterRequest';
+import {Value} from "./models/SpecTable";
+
 
 const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-export function specBasics(): Query<"spec" | "type" | "specLabel" | "level" | "format" | "formatLabel" | "theme" | "themeLabel", "dataset"> {
+const basicColNamesMan = ["spec", "type", "specLabel", "level", "format", "formatLabel", "theme", "themeLabel"] as const;
+const basicColNamesOpt = ["dataset"] as const;
+export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
+
+export function specBasics(deprFilter: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
 where{
@@ -22,7 +35,7 @@ where{
 		?spec cpmeta:containsDataset ?dataset .
 		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
 	}
-	FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}
+	${deprecatedFilter(deprFilter)}
 	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .
 	?format rdfs:label ?formatLabel .
@@ -31,7 +44,11 @@ where{
 	return {text};
 }
 
-export function specColumnMeta(): Query<"spec" | "colTitle" | "valType" | "valTypeLabel" | "quantityKindLabel" | "quantityUnit", "quantityKind"> {
+const columnMetaColNamesMan = ["spec", "colTitle", "valType", "valTypeLabel", "quantityKindLabel", "quantityUnit"] as const;
+const columnMetaColNamesOpt = ["quantityKind"] as const;
+export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
+
+export function specColumnMeta(deprFilter: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
@@ -48,15 +65,18 @@ where{
 		?valType cpmeta:hasQuantityKind ?quantityKind .
 		?quantityKind rdfs:label ?qKindLabel .
 	}
+	${deprecatedFilter(deprFilter)}
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
 }`;
 
 	return {text};
 }
 
+const originsColNamesMan = ["spec", "submitter", "submitterLabel", "project", "projectLabel", "count", "stationLabel"] as const;
+const originsColNamesOpt = ["station"] as const;
+export const originsColNames = [...originsColNamesMan, ...originsColNamesOpt];
 
-export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<"spec" | "submitter" | "submitterLabel" | "project" | "projectLabel" | "count" | "stationLabel", "station"> {
-
+export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof originsColNamesMan[number], typeof originsColNamesOpt[number]> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
@@ -113,6 +133,11 @@ ORDER BY ?Long_name`;
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
+const deprecatedFilter = (deprFilter: DeprecatedFilterRequest) => {
+	return deprFilter.allow
+		? ''
+		: `FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}`;
+};
 const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
@@ -140,7 +165,7 @@ ${standardDobjPropsDef}
 
 export const listFilteredDataObjects = (options: Options): Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", string> => {
 
-	function isEmpty(arr: []){return !arr || !arr.length;}
+	function isEmpty(arr: Value[]){return !arr || !arr.length;}
 
 	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
 
@@ -160,7 +185,7 @@ export const listFilteredDataObjects = (options: Options): Query<"dobj" | "spec"
 
 	const submitterSearch = isEmpty(submitters) ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
-			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter`;
+			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
 

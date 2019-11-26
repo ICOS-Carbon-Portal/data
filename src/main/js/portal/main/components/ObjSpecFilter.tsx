@@ -4,8 +4,10 @@ import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 import {ReducedProps} from "../containers/Search";
-import {PickClassFunctions, UrlStr} from "../backend/declarations";
+import {KeyStrVal, PickClassFunctions, UrlStr} from "../backend/declarations";
 import PickDates from "./filters/PickDates";
+import {ColNameLabels, ColNames} from "../models/CompositeSpecTable";
+import {Value} from "../models/SpecTable";
 
 
 type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
@@ -17,22 +19,26 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 	getMultiselectCtrl(name: CategoryType, labelName: string){
 		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
+		type StrNum = string | number
+		const lookupTable: {[key: string]: StrNum} = {};
 
-		const lookupTable: {[key: string]: any} = {};
-
-		if (specTable) {
-			const colTbl = specTable.findTable(name);
-			if (colTbl) colTbl.rows.forEach((row: any) => {
-				lookupTable[row[name]] = row[labelName];
+		const colTbl = specTable.findTable(name);
+		if (colTbl) {
+			colTbl.rows.forEach((row) => {
+				const val = row[name] as Value;
+				if (val !== undefined) lookupTable[val] = row[labelName] as StrNum;
 			});
 		}
 
 		const filterUris = specTable.getFilter(name);
 		const data = specTable
 			? specTable.getDistinctAvailableColValues(name)
-				.map((value: string) => {return {value, text: lookupTable[value]};})
+				.filter(v => v !== undefined)
+				.map(value => ({value, text: lookupTable[value!]})) as {value: StrNum, text: StrNum}[]
 			: [];
-		const value = filterUris.map((uri: UrlStr) => data.some((d: any) => d.value === uri) ? uri : lookupTable[uri]);
+		const value = filterUris
+			.map((uri: Value) => data.some((d: any) => d.value === uri) ? uri : lookupTable[uri!])
+			.filter(v => v);
 
 		if (data[0]) {
 			typeof data[0].text === "string"
@@ -90,23 +96,24 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 	}
 
 	render(){
-		const {specTable, specFiltersReset} = this.props;
-		const colNames = specTable.names.filter((name: string) => !!placeholders[config.envri][name]);
+		const {specTable, filtersReset, filterTemporal} = this.props;
+		const colNames = specTable.names.filter(name => !!(placeholders[config.envri] as KeyStrVal)[name]);
 		const activeFilters = colNames.map(colName => specTable.getFilter(colName));
-		const resetBtnEnabled = !!activeFilters.reduce((acc, curr) => {
+		const hasSpecFilters = !!activeFilters.reduce((acc, curr) => {
 			return acc + curr.length;
 		}, 0);
+		const resetBtnEnabled = hasSpecFilters || filterTemporal.hasFilter;
 		const availableFilters = filters[config.envri];
 
 		return (
 			<div>
-				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={specFiltersReset} />
+				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={filtersReset} />
 
 				{availableFilters.map((filterPanel, i: number) =>
 					<FilterPanelMultiselect
 						key={"filter_" + i}
 						header={filterPanel.panelTitle}
-						nameList={getNameList(specTable, filterPanel.filterList as string[])}
+						nameList={getNameList(specTable, filterPanel.filterList)}
 						colNames={colNames}
 						getMultiselectCtrl={this.getMultiselectCtrl.bind(this)}
 					/>
@@ -146,7 +153,7 @@ const FilterPanel = ({ header, contentGenerator, startCollapsed = false }: Filte
 
 interface FilterPanelMultiselect {
 	header: string,
-	nameList: [string, string][],
+	nameList: ColNameLabels[],
 	colNames: string[],
 	getMultiselectCtrl: ObjSpecFilterActions['getMultiselectCtrl'],
 	startCollapsed?: boolean
@@ -163,7 +170,7 @@ const FilterPanelMultiselect = ({ header, nameList, colNames, getMultiselectCtrl
 
 			<Slider startCollapsed={startCollapsed}>
 				<div className="panel-body" style={{paddingTop:0}}>
-					{nameList.map(name => getMultiselectCtrl(...name))}
+					{nameList.map(name => (getMultiselectCtrl as Function)(...name))}
 				</div>
 			</Slider>
 		</div>
@@ -182,9 +189,9 @@ const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 		: {margin: '5px 2px', textDecoration: 'underline'};
 	const onClick = () => enabled ? resetFiltersAction() : {};
 
-	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear categories</button></div>;
+	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear filters</button></div>;
 };
 
-const getNameList = (specTable: OwnProps['specTable'], list: ReadonlyArray<string>): [string, string][] => {
-	return list.map((colName: string) => specTable.getColLabelNamePair(colName) as [string, string]);
+const getNameList = (specTable: OwnProps['specTable'], list: ReadonlyArray<CategoryType>): ColNameLabels[] => {
+	return list.map((colName: ColNames) => specTable.getColLabelNamePair(colName));
 };

@@ -4,50 +4,59 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
-import { FilterRequest } from './models/FilterRequest';
+import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import 'whatwg-fetch';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import {SparqlResultValue, XMLSchema} from "./backend/sparql";
 import {Options} from "./actions";
 import {MetaDataObject} from "./models/State";
+import {
+	basicColNames,
+	columnMetaColNames,
+	originsColNames
+} from "./sparqlQueries";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
-const extendResult = <T>(rows: T[]) => ({
-	columnNames: rows && rows.length ? Object.keys(rows[0]) : [],
-	rows: rows && rows.length ? rows : []
+const extendResult = <C, R>(colNames: C[], rows: R[]) => ({
+	colNames,
+	rows: rows && rows.length ? rows : [],
+	filters: [],
+	extraSpecFilter: []
 });
 
-const fetchSpecBasics = () => {
-	const query = queries.specBasics();
+const fetchSpecBasics = (filters: FilterRequest[]) => {
+	const deprFilter = filters.filter(isDeprecatedFilter)[0];
+	const query = queries.specBasics(deprFilter);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		type: b.type.value,
 		specLabel: b.specLabel.value,
 		level: parseInt(b.level.value),
-		dataset: b.dataset ? b.dataset.value : undefined,
+		dataset: b.dataset?.value,
 		format: b.format.value,
 		formatLabel: b.formatLabel.value,
 		theme: b.theme.value,
 		themeLabel: b.themeLabel.value
-	})).then(rows => extendResult(rows));
+	})).then(rows => extendResult(basicColNames, rows));
 };
 
-const fetchSpecColumnMeta = () => {
-	const query = queries.specColumnMeta();
+const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
+	const deprFilter = filters.filter(isDeprecatedFilter)[0];
+	const query = queries.specColumnMeta(deprFilter);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		colTitle: b.colTitle.value,
 		valType: b.valType.value,
 		valTypeLabel: b.valTypeLabel.value,
-		quantityKind: b.quantityKind ? b.quantityKind.value : undefined,
+		quantityKind: b.quantityKind?.value,
 		quantityKindLabel: b.quantityKindLabel.value,
 		quantityUnit: b.quantityUnit.value
-	})).then(rows => extendResult(rows));
+	})).then(rows => extendResult(columnMetaColNames, rows));
 };
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
@@ -60,9 +69,9 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		project: b.project.value,
 		projectLabel: b.projectLabel.value,
 		count: parseInt(b.count.value),
-		station: b.station ? b.station.value : undefined,
+		station: b.station?.value,
 		stationLabel: b.stationLabel.value
-	})).then(rows => extendResult(rows));
+	})).then(rows => extendResult(originsColNames, rows));
 };
 
 const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
@@ -75,10 +84,10 @@ const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
 		));
 };
 
-export function fetchAllSpecTables() {
-	const specBasicsPromise = fetchSpecBasics();
-	const specColumnMetaPromise = fetchSpecColumnMeta();
-	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts([]);
+export function fetchAllSpecTables(filters: FilterRequest[]) {
+	const specBasicsPromise = fetchSpecBasics(filters);
+	const specColumnMetaPromise = fetchSpecColumnMeta(filters);
+	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts(filters);
 	const formatToRDFGraphTblPromise = fetchFormatToRDFGraphTbl();
 
 	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, formatToRDFGraphTblPromise])

@@ -7,7 +7,7 @@ import {
 	setCartName,
 	fetchIsBatchDownloadOk,
 	updateCheckedObjectsInCart,
-	updateRoute
+	updateRoute, setMetadataItem, removeFromCart
 } from '../actions';
 import {formatBytes} from '../utils';
 import config from '../config';
@@ -124,6 +124,7 @@ function stateToProps(state: State){
 		preview: state.preview,
 		checkedObjectsInCart: state.checkedObjectsInCart,
 		objectsTable: state.objectsTable,
+		extendedDobjInfo: state.extendedDobjInfo,
 	};
 }
 
@@ -135,6 +136,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
+		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
+		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 	};
 }
 

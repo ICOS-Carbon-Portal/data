@@ -1,7 +1,7 @@
 import Preview from "./Preview";
 import FilterFreeText from "./FilterFreeText";
 import FilterTemporal from "./FilterTemporal";
-import CompositeSpecTable from "./CompositeSpecTable";
+import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
@@ -13,6 +13,7 @@ import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
+import SpecTable from "./SpecTable";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -108,6 +109,12 @@ export interface State {
 	helpStorage: HelpStorage
 }
 
+const emptyCompositeSpecTable = new CompositeSpecTable(
+	new SpecTable<BasicsColNames>([], [], {}),
+	new SpecTable<ColumnMetaColNames>([], [], {}),
+	new SpecTable<OriginsColNames>([], [], {})
+);
+
 export const defaultState: State = {
 	ts: Date.now(),
 	isRunningInit: false,
@@ -123,7 +130,7 @@ export const defaultState: State = {
 		email: undefined
 	},
 	lookup: undefined,
-	specTable: new CompositeSpecTable({}),
+	specTable: emptyCompositeSpecTable,
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],

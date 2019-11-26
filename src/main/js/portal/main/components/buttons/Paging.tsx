@@ -1,6 +1,7 @@
 import React from 'react';
 import {StepButton} from './StepButton';
 import P from "../../models/Paging";
+import config from "../../config";
 
 interface Paging {
 	type: 'header' | 'footer'
@@ -10,16 +11,16 @@ interface Paging {
 
 export const Paging = ({type, paging, requestStep}: Paging) => {
 	const {offset, objCount, pageCount, isCountKnown} = paging;
-	// console.log({offset, objCount, pageCount, isCountKnown});
-	const to = offset + pageCount;
+	const to = Math.min(offset + pageCount, objCount);
+	const count = pageCount < config.stepsize ? to : objCount;
 	const isForwardEnabled = isCountKnown
-		? to < objCount
-		: to <= objCount;
+		? to < count
+		: to <= count;
 
 	if (type === "header") {
 		return (
 			<div className="panel-heading">
-				<CountHeader objCount={objCount} isCountKnown={isCountKnown} to={to} offset={offset}/>
+				<CountHeader objCount={count} isCountKnown={isCountKnown} to={to} offset={offset}/>
 				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
 					<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
@@ -50,7 +51,7 @@ interface CountHeader {
 const CountHeader = ({objCount, isCountKnown, to, offset}: CountHeader) => {
 	const countTxt = !isNaN(to) && !isNaN(objCount)
 		? isCountKnown
-			? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount}`
+			? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount.toLocaleString()}`
 			: `Data objects ${offset + 1} to ${to} of more than ${objCount}`
 		: <span>&nbsp;</span>;
 

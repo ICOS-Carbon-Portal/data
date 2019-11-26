@@ -33,7 +33,7 @@ export default {
 	historyStateMaxAge: (1000 * 3600 * 24)
 };
 
-const defaultCategNames: KeyStrVal = {
+const defaultCategNames = {
 	type: 'Data type',
 	level: 'Data level',
 	format: 'Format',

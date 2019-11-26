@@ -56,17 +56,6 @@ export default function(state = defaultState, action){
 				checkedObjectsInSearch: []
 			});
 
-		case actionTypes.SPEC_FILTER_RESET:
-			specTable = state.specTable.withResetFilters();
-			objCount = getObjCount(specTable);
-
-			return stateUtils.update(state,{
-				specTable,
-				paging: new Paging({objCount}),
-				filterCategories: {},
-				checkedObjectsInSearch: []
-			});
-
 		case actionTypes.RESTORE_PREVIEW:
 			return stateUtils.update(state,{
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
@@ -80,11 +69,10 @@ export default function(state = defaultState, action){
 			paging = state.paging.withObjCount({
 				objCount: getObjCount(state.specTable),
 				pageCount: action.objectsTable.length,
-				filtersEnabled: areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText),
+				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText),
 				cacheSize: action.cacheSize,
 				isDataEndReached: action.isDataEndReached
 	}		);
-			// console.log('OBJECTS_FETCHED', paging.objCount);
 			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
 
 			return stateUtils.update(state,{
@@ -104,7 +92,6 @@ export default function(state = defaultState, action){
 			});
 
 		case actionTypes.STEP_REQUESTED:
-			console.log('STEP_REQUESTED', state.paging.withDirection(action.direction).objCount);
 			return stateUtils.update(state,{
 				objectsTable: [],
 				paging: state.paging.withDirection(action.direction),
@@ -119,7 +106,7 @@ export default function(state = defaultState, action){
 
 		case actionTypes.SWITCH_TAB:
 			paging = state.paging
-				.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText))
+				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText))
 				.withOffset(0);
 
 			return stateUtils.update(state,{
@@ -166,7 +153,7 @@ export default function(state = defaultState, action){
 		case actionTypes.TEMPORAL_FILTER:
 			return stateUtils.update(state,{
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, state.filterFreeText)),
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText)),
 				checkedObjectsInSearch: []
 			});
 
@@ -183,7 +170,7 @@ export default function(state = defaultState, action){
 
 			return stateUtils.update(state,{
 				filterFreeText,
-				paging: state.paging.withFiltersEnabled(areFiltersEnabled(state.tabs, state.filterTemporal, filterFreeText))
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, filterFreeText))
 			});
 
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH:
@@ -221,7 +208,7 @@ const updateCheckedObjects = (existingObjs, newObj) => {
 		: existingObjs.concat([newObj]);
 };
 
-export const areFiltersEnabled = (tabs, filterFreeText) => {
+export const isPidFreeTextSearch = (tabs, filterFreeText) => {
 	return tabs.searchTab === 1  && filterFreeText !== undefined && filterFreeText.hasFilter;
 };
 

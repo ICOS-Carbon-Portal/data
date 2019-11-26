@@ -1,6 +1,4 @@
 import Cart from "./models/Cart";
-import {DataObject} from "../../common/main/metacore";
-
 export const actionTypes = {
 	ERROR: 'ERROR',
 //	INIT: 'INIT',
@@ -8,7 +6,6 @@ export const actionTypes = {
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
 	SPEC_FILTER_UPDATED: 'SPEC_FILTER_UPDATED',
-	SPEC_FILTER_RESET: 'SPEC_FILTER_RESET',
 	OBJECTS_FETCHED: 'OBJECTS_FETCHED',
 	SORTING_TOGGLED: 'SORTING_TOGGLED',
 	STEP_REQUESTED: 'STEP_REQUESTED',
@@ -35,7 +32,7 @@ export const actionTypes = {
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
-import stateUtils, {MetaDataObject, Profile, State, User} from "./models/State";
+import stateUtils, {MetaDataObject, Profile, State, User, SearchOptions} from "./models/State";
 import {
 	fetchAllSpecTables,
 	searchDobjs,
@@ -44,23 +41,22 @@ import {
 	logOut,
 	fetchResourceHelpInfo,
 	getMetadata,
-	fetchKnownDataObjects, fetchDobjOriginsAndCounts
+	fetchKnownDataObjects, fetchDobjOriginsAndCounts, fetchFilteredDataObjects
 } from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
-import {areFiltersEnabled} from './reducer';
+import {isPidFreeTextSearch} from './reducer';
 import {DataObjectsFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
 import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
-import {Action} from "redux";
 import {PortalThunkAction, PortalDispatch} from "./store";
 import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
 import {Item} from "./models/HelpStorage";
 import FilterTemporal from "./models/FilterTemporal";
-import { FilterRequest, TemporalFilterRequest } from "./models/FilterRequest";
+import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "./models/FilterRequest";
 import CompositeSpecTable from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
@@ -69,9 +65,10 @@ import {
 	BackendOriginsTable, BackendTables,
 	BackendUserInfo,
 	MiscError,
-	MiscInit,
+	MiscInit, MiscResetFilters, MiscUpdatePaging,
 	MiscUpdateSearchOption
 } from "./reducers/actionpayloads";
+import {Value} from "./models/SpecTable";
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -114,7 +111,7 @@ export const init: PortalThunkAction<void> = dispatch => {
 	});
 };
 
-const loadApp: (user: User) => PortalThunkAction<void> = user => dispatch => {
+const loadApp: (user: User) => PortalThunkAction<void> = user => (dispatch, getState) => {
 	dispatch(new MiscInit());
 
 	type LoggedIn = {_id: string, profile: Profile | {}};
@@ -131,9 +128,10 @@ const loadApp: (user: User) => PortalThunkAction<void> = user => dispatch => {
 
 			cartInRestheart.then(restheartCart => {
 				const cart = restoreCarts(cartInSessionStorage, restheartCart);
+				const filters = getFilters(getState());
 
 				dispatch(updateCart(user.email, cart))
-					.then(() => dispatch(getAllSpecTables));
+					.then(() => dispatch(getAllSpecTables(filters)));
 			});
 		}
 	);
@@ -186,12 +184,12 @@ const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
 };
 
-export const getAllSpecTables: PortalThunkAction<void> = dispatch => {
-	fetchAllSpecTables().then(
+export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => dispatch => {
+	fetchAllSpecTables(filters).then(
 		allTables => {
 			dispatch(new BackendTables(allTables));
 			dispatch({type: actionTypes.RESTORE_FILTERS});
-			dispatch(getFilteredDataObjects);
+			dispatch(getFilteredDataObjects(false));
 		},
 		failWithError(dispatch)
 	);
@@ -199,8 +197,9 @@ export const getAllSpecTables: PortalThunkAction<void> = dispatch => {
 
 const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: Function) => {
 	const {specTable} = getState() as State;
+	const filters = getFilters(getState());
 
-	fetchDobjOriginsAndCounts([]).then(
+	fetchDobjOriginsAndCounts(filters).then(
 		dobjOriginsAndCounts => {
 			dispatch(new BackendOriginsTable(specTable, dobjOriginsAndCounts));
 		},
@@ -230,7 +229,7 @@ const dispatchMeta = (id: string, data: string[], dispatch: Function) => {
 	});
 
 	if (id === 'dobj' && (data.length === 0 || data.length === 1)){
-		dispatch(getFilteredDataObjects);
+		dispatch(getFilteredDataObjects(true));
 	}
 };
 
@@ -240,7 +239,7 @@ export const updateSelectedPids = (selectedPids: Sha256Str[]) => (dispatch: Func
 		selectedPids
 	});
 
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjects(false));
 };
 
 export const updateCheckedObjectsInSearch = (checkedObjectInSearch: UrlStr[]) => (dispatch: Function) => {
@@ -263,7 +262,7 @@ export const specFilterUpdate = (varName: string, values: string[]) => (dispatch
 		varName,
 		values
 	});
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjects(true));
 };
 
 const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
@@ -288,7 +287,7 @@ const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: a
 export const updateFilteredDataObjects = () => (dispatch: Function, getState: Function) => {
 	const objectsTable = (getState() as State).objectsTable;
 
-	if (objectsTable.length === 0) dispatch(getFilteredDataObjects);
+	if (objectsTable.length === 0) dispatch(getFilteredDataObjects(true));
 };
 
 const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
@@ -310,7 +309,25 @@ const restorePreview: PortalThunkAction<void> = (dispatch) => {
 	dispatch({type: actionTypes.RESTORE_PREVIEW});
 };
 
-const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => {
+const getFilters = (state: State) => {
+	const {tabs, filterTemporal, filterFreeText, searchOptions} = state;
+	let filters: FilterRequest[] = [];
+
+	if (isPidFreeTextSearch(tabs, filterFreeText)){
+		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
+		filters.push({category: 'pids', pids: filterFreeText.selectedPids} as PidFilterRequest);
+	} else {
+		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
+
+		if (filterTemporal.hasFilter){
+			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
+		}
+	}
+
+	return filters;
+};
+
+const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<void> = fetchOriginsTable => (dispatch, getState) => {
 	const state: State = getState();
 	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterFreeText} = state;
 
@@ -343,15 +360,9 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 		dispatch(fetchExtendedDataObjInfo(ids));
 
 	} else {
-		const {specTable, sorting, tabs, filterTemporal, filterFreeText, paging} = state;
+		const {specTable, sorting, paging} = state;
 		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
-
-		const temporalFilters: FilterRequest[] = filterTemporal.hasFilter
-			? filterTemporal.filters as TemporalFilterRequest[]
-			: [];
-		const filters = areFiltersEnabled(tabs, filterFreeText)
-			? temporalFilters.concat([{category: 'pids', pids: filterFreeText.selectedPids} as any])
-			: temporalFilters;
+		const filters = getFilters(state);
 
 		const options: Options = {
 			specs: specTable.getSpeciesFilter(null, true),
@@ -359,19 +370,19 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 			submitters: specTable.getFilter('submitter'),
 			sorting,
 			paging,
-			rdfGraphs: specTable.getColumnValuesFilter('format').map((f: string) => formatToRdfGraph[f]),
+			rdfGraphs: specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
 			filters
 		};
 
 		interface FetchedDataObj {
-			rows: any,
+			rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
 			cacheSize: number,
 			isDataEndReached: boolean
 		}
 
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
-				dispatch(fetchExtendedDataObjInfo(rows.map((d: any) => d.dobj)));
+				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 
 				dispatch({
 					type: actionTypes.OBJECTS_FETCHED,
@@ -381,9 +392,9 @@ const getFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => 
 				});
 			},
 			failWithError(dispatch)
-		);
-
-		dispatch(getOriginsTable);
+		).then(() => {
+			if (fetchOriginsTable) dispatch(getOriginsTable);
+		});
 	}
 
 	if (route === undefined || route === config.ROUTE_SEARCH) {
@@ -413,9 +424,9 @@ const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = d
 	);
 };
 
-export const specFiltersReset = (dispatch: Function) => {
-	dispatch({type: actionTypes.SPEC_FILTER_RESET});
-	dispatch(getFilteredDataObjects);
+export const filtersReset = (dispatch: Function) => {
+	dispatch(new MiscResetFilters());
+	dispatch(getFilteredDataObjects(true));
 };
 
 export const toggleSort = (varName: string) => (dispatch: Function) => {
@@ -423,7 +434,7 @@ export const toggleSort = (varName: string) => (dispatch: Function) => {
 		type: actionTypes.SORTING_TOGGLED,
 		varName
 	});
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjects(true));
 };
 
 export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
@@ -431,7 +442,7 @@ export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
 		type: actionTypes.STEP_REQUESTED,
 		direction
 	});
-	dispatch(getFilteredDataObjects);
+	dispatch(getFilteredDataObjects(false));
 };
 
 export const updateRoute = (route: string) => (dispatch: Function, getState: Function) => {
@@ -444,14 +455,14 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 	});
 
 	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
-		dispatch(getFilteredDataObjects);
+		dispatch(getFilteredDataObjects(true));
 
 	} else if (newRoute === config.ROUTE_SEARCH && state.route === config.ROUTE_CART){
-		dispatch(getFilteredDataObjects);
+		dispatch(getFilteredDataObjects(true));
 	}
 };
 
-export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function) => {
+export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: Function) => {
 
 	dispatch({
 		type: actionTypes.SWITCH_TAB,
@@ -459,8 +470,14 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 		selectedTabId
 	});
 
+	const {tabs, filterFreeText, paging} = getState();
+
 	if (tabName === 'searchTab'){
-		dispatch(getFilteredDataObjects);
+		if (isPidFreeTextSearch(tabs, filterFreeText)){
+			dispatch(new MiscUpdatePaging(filterFreeText.selectedPids.length));
+		} else {
+			dispatch(getFilteredDataObjects(true));
+		}
 	}
 };
 
@@ -560,7 +577,7 @@ function updateCart(email: string | undefined, cart: Cart): PortalThunkAction<Pr
 			cart
 		})
 	);
-};
+}
 
 export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
@@ -574,7 +591,7 @@ export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 		);
 };
 
-export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkAction<void> = filterTemporal => dispatch => {
+export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkAction<void> = filterTemporal => (dispatch, getState) => {
 	if (filterTemporal.dataTime.error) {
 		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 	}
@@ -585,11 +602,18 @@ export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkA
 	dispatch({
 		type: actionTypes.TEMPORAL_FILTER,
 		filterTemporal
-	} as Action<string>);
+	});
 
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
-	dispatch(getFilteredDataObjects);
+	const {specTable} = getState();
+	const filters = getFilters(getState());
+
+	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
+		dispatch(new BackendOriginsTable(specTable, dobjOriginsAndCounts));
+		dispatch(getFilteredDataObjects(false));
+	}, failWithError(dispatch));
+
 };
 
 export const getResourceHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => (dispatch, getState) => {
@@ -618,10 +642,16 @@ const updateHelpInfo: (helpItem: any) => PortalThunkAction<void> = helpItem => d
 	});
 };
 
-export interface SearchOption{
-	name: string
+export type SearchOption = {
+	name: keyof SearchOptions
 	value: boolean
 }
 export const updateSearchOption: (searchOption: SearchOption) => PortalThunkAction<void> = searchOption => (dispatch, getState) => {
-	dispatch(new MiscUpdateSearchOption(getState().searchOptions, searchOption));
+	const {searchOptions, tabs, filterFreeText} = getState();
+
+	dispatch(new MiscUpdateSearchOption(searchOptions, searchOption));
+
+	if (!isPidFreeTextSearch(tabs, filterFreeText)){
+		dispatch(getFilteredDataObjects(true));
+	}
 };

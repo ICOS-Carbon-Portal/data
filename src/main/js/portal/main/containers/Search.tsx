@@ -2,7 +2,6 @@ import React, {Component} from 'react';
 import { connect } from 'react-redux';
 import {debounce, Events} from 'icos-cp-utils';
 import ObjSpecFilter from '../components/ObjSpecFilter';
-import Filters from '../components/filters/Filters';
 import Tabs from '../components/ui/Tabs';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable';
 import SearchResultTable from '../components/searchResult/SearchResultTable';
@@ -14,7 +13,7 @@ import {
 	removeFromCart,
 	setPreviewUrl,
 	setPreviewItem,
-	specFiltersReset,
+	filtersReset,
 	updateSelectedPids,
 	updateCheckedObjectsInSearch,
 	switchTab,
@@ -37,16 +36,15 @@ type SearchProps = StateProps & DispatchProps;
 
 const reducedProps = (props: SearchProps) => ({
 	helpSection: pick(props,'helpStorage', 'getResourceHelpInfo'),
-	filters: pick(props,'queryMeta', 'filterFreeText'),
-	objSpecFilter: pick(props,'specTable', 'updateFilter', 'specFiltersReset', 'switchTab',
-		'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText', 'updateSelectedPids',
+	objSpecFilter: pick(props,'specTable', 'updateFilter', 'filtersReset', 'switchTab',
+		'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText',
 		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
 		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
 		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup'),
-	advanced: pick(props, 'searchOptions', 'updateSearchOption')
+	advanced: pick(props, 'queryMeta', 'filterFreeText', 'updateSelectedPids', 'searchOptions', 'updateSearchOption')
 });
 
 export type SearchActions = PickClassFunctions<typeof Search>;
@@ -107,10 +105,10 @@ class Search extends Component<SearchProps, OurState> {
 	render(){
 		const props = this.props;
 		const tabs = props.tabs;
-		const {helpSection, objSpecFilter, filters, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
+		const {helpSection, objSpecFilter, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
-console.log({advanced});
+;
 		return (
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
@@ -127,9 +125,8 @@ console.log({advanced});
 					</button>
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={props.switchTab}>
-							<ObjSpecFilter tabHeader="Categories" {...objSpecFilter} />
-							<Filters tabHeader="Filters" {...filters}/>
-							<AdvancedSettings tabHeader="Options" {...advanced} />
+							<ObjSpecFilter tabHeader="Filters" {...objSpecFilter} />
+							<AdvancedSettings tabHeader="Advanced" {...advanced} />
 						</Tabs>
 					</div>
 				</div>
@@ -184,7 +181,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
-		specFiltersReset: () => dispatch(specFiltersReset),
+		filtersReset: () => dispatch(filtersReset),
 		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
 		updateCheckedObjects: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),

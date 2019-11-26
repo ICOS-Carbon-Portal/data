@@ -6,8 +6,6 @@ import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
 import {getObjCount} from "./utils";
-import {ThenArg} from "../backend/declarations";
-import {fetchAllSpecTables} from "../backend";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -22,13 +20,11 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendTables){
-		return stateUtils.update(state, handleBackendTables(state, payload.allTables));
+		return stateUtils.update(state, handleBackendTables(state, payload));
 	}
 
 	if (payload instanceof BackendOriginsTable){
-		return stateUtils.update(state, {
-			specTable: payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts)
-		});
+		return stateUtils.update(state, handleOriginsTable(payload));
 	}
 
 	if (payload instanceof BackendObjectMetadataId){
@@ -46,13 +42,23 @@ export default function(state: State, payload: BackendPayload): State {
 
 };
 
-const handleBackendTables = (state: State, allTables: ThenArg<typeof fetchAllSpecTables>) => {
-	const specTable = CompositeSpecTable.deserialize(allTables.specTables);
+const handleOriginsTable = (payload: BackendOriginsTable) => {
+	const specTable = payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts);
 	const objCount = getObjCount(specTable);
 
 	return {
 		specTable,
-		formatToRdfGraph: allTables.formatToRdfGraph,
+		paging: new Paging({objCount})
+	}
+};
+
+const handleBackendTables = (state: State, payload: BackendTables) => {
+	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables);
+	const objCount = getObjCount(specTable);
+
+	return {
+		specTable,
+		formatToRdfGraph: payload.allTables.formatToRdfGraph,
 		paging: new Paging({objCount}),
 		lookup: new Lookup(specTable)
 	};

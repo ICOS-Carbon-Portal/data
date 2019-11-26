@@ -43,6 +43,14 @@ export class MiscInit extends MiscPayload{
 	constructor(){super();}
 }
 
+export class MiscResetFilters extends MiscPayload{
+	constructor(){super();}
+}
+
 export class MiscUpdateSearchOption extends MiscPayload{
 	constructor(readonly oldSearchOptions: SearchOptions, readonly newSearchOption: SearchOption){super();}
+}
+
+export class MiscUpdatePaging extends MiscPayload{
+	constructor(readonly objCount: number){super();}
 }

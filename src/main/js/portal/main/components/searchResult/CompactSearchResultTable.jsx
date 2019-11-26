@@ -8,6 +8,7 @@ export default function(props){
 
 	return <div className="panel panel-default">
 		<Paging
+			type="header"
 			paging={paging}
 			showCount={showCount}
 			requestStep={requestStep}
