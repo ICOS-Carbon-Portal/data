@@ -22,7 +22,7 @@ const basicColNamesMan = ["spec", "type", "specLabel", "level", "format", "forma
 const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
 export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
 
-export function specBasics(deprFilter: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
+export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
 where{
@@ -48,7 +48,7 @@ const columnMetaColNamesMan = ["spec", "colTitle", "valType", "valTypeLabel", "q
 const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
-export function specColumnMeta(deprFilter: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
+export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
@@ -133,8 +133,8 @@ ORDER BY ?Long_name`;
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
-const deprecatedFilter = (deprFilter: DeprecatedFilterRequest) => {
-	return deprFilter.allow
+const deprecatedFilter = (deprFilter?: DeprecatedFilterRequest) => {
+	return (deprFilter && deprFilter.allow)
 		? ''
 		: `FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}`;
 };

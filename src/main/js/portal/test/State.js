@@ -58,10 +58,9 @@ describe("Testing State", () => {
 
 	it("produces a correct round trip from URI -> shortened URI -> URI", (done) => {
 
-		fetchAllSpecTables().then(
+		fetchAllSpecTables([]).then(
 			allTables => {
 				const specTable = new CompositeSpecTable.deserialize(allTables.specTables);
-
 				const categories = {};
 				specTable.tables.forEach(tbl => {
 					tbl.names.forEach(colName => categories[colName] = new Set())

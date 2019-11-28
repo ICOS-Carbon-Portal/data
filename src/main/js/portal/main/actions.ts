@@ -258,12 +258,9 @@ export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr[]) => (di
 	});
 };
 
-export const specFilterUpdate = (varName: ColNames, values: Value[]) => (dispatch: Function, getState: Function) => {
+export const specFilterUpdate = (varName: ColNames, values: Value[]) => (dispatch: Function) => {
 	dispatch(new BackendUpdateSpecFilter(varName, values));
-
-	const filterTemporal = (getState() as State).filterTemporal;
-	// dispatch(getFilteredDataObjects(false));
-	dispatch(getFilteredDataObjects(filterTemporal.hasFilter));
+	dispatch(getFilteredDataObjects(false));
 };
 
 const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
@@ -375,7 +372,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 			rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
 			filters
 		};
-console.log({useOnlyPidFilter, fetchOriginsTable, options});
+
 		interface FetchedDataObj {
 			rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
 			cacheSize: number,
@@ -435,7 +432,7 @@ export const toggleSort = (varName: string) => (dispatch: Function) => {
 		type: actionTypes.SORTING_TOGGLED,
 		varName
 	});
-	dispatch(getFilteredDataObjects(true));
+	dispatch(getFilteredDataObjects(false));
 };
 
 export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {

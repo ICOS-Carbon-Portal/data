@@ -28,7 +28,7 @@ const extendResult = <C, R>(colNames: C[], rows: R[]) => ({
 });
 
 const fetchSpecBasics = (filters: FilterRequest[]) => {
-	const deprFilter = filters.filter(isDeprecatedFilter)[0];
+	const deprFilter = filters.find(isDeprecatedFilter);
 	const query = queries.specBasics(deprFilter);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
@@ -46,7 +46,7 @@ const fetchSpecBasics = (filters: FilterRequest[]) => {
 };
 
 const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
-	const deprFilter = filters.filter(isDeprecatedFilter)[0];
+	const deprFilter = filters.find(isDeprecatedFilter);
 	const query = queries.specColumnMeta(deprFilter);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
