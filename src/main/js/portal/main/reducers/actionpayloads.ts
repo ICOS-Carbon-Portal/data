@@ -2,8 +2,9 @@ import {Action} from "redux";
 import {MetaDataObject, SearchOptions, User} from "../models/State";
 import {ThenArg, UrlStr} from "../backend/declarations";
 import {fetchAllSpecTables, fetchDobjOriginsAndCounts} from "../backend";
-import CompositeSpecTable from "../models/CompositeSpecTable";
+import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import {SearchOption} from "../actions";
+import {Value} from "../models/SpecTable";
 
 
 export abstract class ActionPayload{}
@@ -24,7 +25,11 @@ export class BackendTables extends BackendPayload{
 }
 
 export class BackendOriginsTable extends BackendPayload{
-	constructor(readonly orgSpecTables: CompositeSpecTable, readonly dobjOriginsAndCounts: ThenArg<typeof fetchDobjOriginsAndCounts>){super();}
+	constructor(readonly dobjOriginsAndCounts: ThenArg<typeof fetchDobjOriginsAndCounts>){super();}
+}
+
+export class BackendUpdateSpecFilter extends BackendPayload{
+	constructor(readonly varName: ColNames, readonly values: Value[]){super();}
 }
 
 export class BackendObjectMetadataId extends BackendPayload{

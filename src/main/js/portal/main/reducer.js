@@ -44,18 +44,6 @@ export default function(state = defaultState, action){
 		case actionTypes.RESTORE_FROM_HISTORY:
 			return stateUtils.deserialize(action.historyState, state.cart);
 
-		case actionTypes.SPEC_FILTER_UPDATED:
-			specTable = state.specTable.withFilter(action.varName, action.values);
-			objCount = getObjCount(specTable);
-
-			return stateUtils.update(state,{
-				specTable,
-				objectsTable: [],
-				paging: new Paging({objCount}),
-				filterCategories: Object.assign(state.filterCategories, {[action.varName]: action.values}),
-				checkedObjectsInSearch: []
-			});
-
 		case actionTypes.RESTORE_PREVIEW:
 			return stateUtils.update(state,{
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)

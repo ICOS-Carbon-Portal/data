@@ -1,7 +1,7 @@
 import Preview from "./Preview";
 import FilterFreeText from "./FilterFreeText";
 import FilterTemporal from "./FilterTemporal";
-import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
+import CompositeSpecTable, {BasicsColNames, ColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
@@ -13,7 +13,7 @@ import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
-import SpecTable from "./SpecTable";
+import SpecTable, {Value} from "./SpecTable";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).

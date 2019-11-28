@@ -26,11 +26,11 @@ export default class Paging{
 	constructor({objCount, offset, pageCount, filtersEnabled, cacheSize, cacheOffset, isDataEndReached}: Props){
 		this._objCount = objCount;
 		this._offset = offset || 0;
-		this._pageCount = pageCount || config.stepsize;
+		this._pageCount = pageCount ?? config.stepsize;
 		this._limit = config.stepsize;
 		this._filtersEnabled = filtersEnabled || false;
 		this._cacheSize = cacheSize || 0;
-		this._cacheOffset = cacheOffset || this._offset;
+		this._cacheOffset = cacheOffset ?? this._offset;
 		this._isDataEndReached = isDataEndReached || false;
 	}
 
@@ -71,11 +71,6 @@ export default class Paging{
 
 	get limit(){
 		return this._limit;
-	}
-
-	get isCountKnown(){
-		return true;
-		// return this._filtersEnabled ? this._isDataEndReached : true;
 	}
 
 	withOffset(offset: Offset){

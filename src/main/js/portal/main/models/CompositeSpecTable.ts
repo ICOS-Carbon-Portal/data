@@ -132,10 +132,10 @@ export default class CompositeSpecTable{
 		return new CompositeSpecTable(this.basics.withResetFilters(), this.columnMeta.withResetFilters(), this.origins.withResetFilters());
 	}
 
-	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins']){
+	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins'], useExtraFilter: boolean){
 		const newOrigins = new SpecTable(origins.colNames as Col<OriginsColNames>[], origins.rows, this.origins.filters);
 		const originSpecs = newOrigins.getDistinctColValues(SPECCOL);
-		const extraFilter = originSpecs.length >= this.basics.specsCount ? [] : originSpecs;
+		const extraFilter = useExtraFilter && originSpecs.length < this.basics.specsCount ? originSpecs : [];
 
 		return new CompositeSpecTable(
 			this.basics.withExtraSpecFilter(extraFilter),

@@ -27,6 +27,8 @@ import {PortalDispatch} from "../store";
 import {State} from "../models/State";
 import {Item} from "../models/HelpStorage";
 import AdvancedSettings from "../components/AdvancedSettings";
+import {ColNames} from "../models/CompositeSpecTable";
+import {Value} from "../models/SpecTable";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -175,7 +177,7 @@ function stateToProps(state: State){
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
 		queryMeta: (id: string, search: string) => dispatch(queryMeta(id, search)),
-		updateFilter: (varName: string, values: string[]) => dispatch(specFilterUpdate(varName, values)),
+		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),

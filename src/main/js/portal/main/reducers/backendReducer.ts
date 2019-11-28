@@ -1,5 +1,7 @@
-import {BackendPayload,	BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable} from "./actionpayloads";
+import {
+	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
+	BackendOriginsTable, BackendUpdateSpecFilter
+} from "./actionpayloads";
 import stateUtils, {State} from "../models/State";
 import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
@@ -24,7 +26,11 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendOriginsTable){
-		return stateUtils.update(state, handleOriginsTable(payload));
+		return stateUtils.update(state, handleOriginsTable(state, payload));
+	}
+
+	if (payload instanceof BackendUpdateSpecFilter){
+		return stateUtils.update(state, handleSpecFilterUpdate(state, payload));
 	}
 
 	if (payload instanceof BackendObjectMetadataId){
@@ -42,8 +48,23 @@ export default function(state: State, payload: BackendPayload): State {
 
 };
 
-const handleOriginsTable = (payload: BackendOriginsTable) => {
-	const specTable = payload.orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts);
+const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
+	const specTable = state.specTable.withFilter(payload.varName, payload.values);
+	const objCount = getObjCount(specTable);
+
+	return stateUtils.update(state,{
+		specTable,
+		objectsTable: [],
+		paging: new Paging({objCount}),
+		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.values}),
+		checkedObjectsInSearch: []
+	});
+};
+
+const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
+	const {filterTemporal} = state;
+	const orgSpecTables = state.specTable;
+	const specTable = orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts, filterTemporal.hasFilter);
 	const objCount = getObjCount(specTable);
 	const pageCount = Math.min(objCount, config.stepsize);
 

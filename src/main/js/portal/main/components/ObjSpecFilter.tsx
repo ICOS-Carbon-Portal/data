@@ -37,8 +37,8 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 				.map(value => ({value, text: lookupTable[value!]})) as {value: StrNum, text: StrNum}[]
 			: [];
 		const value = filterUris
-			.map((uri: Value) => data.some((d: any) => d.value === uri) ? uri : lookupTable[uri!])
-			.filter(v => v);
+			.map((val: Value) => data.some(d => d.value === val) ? val : lookupTable[val!])
+			.filter(v => v !== undefined);
 
 		if (data[0]) {
 			typeof data[0].text === "string"

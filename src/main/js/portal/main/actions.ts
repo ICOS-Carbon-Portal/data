@@ -5,7 +5,7 @@ export const actionTypes = {
 	LOAD_ERROR: 'LOAD_ERROR',
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
-	SPEC_FILTER_UPDATED: 'SPEC_FILTER_UPDATED',
+	// SPEC_FILTER_UPDATED: 'SPEC_FILTER_UPDATED',
 	OBJECTS_FETCHED: 'OBJECTS_FETCHED',
 	SORTING_TOGGLED: 'SORTING_TOGGLED',
 	STEP_REQUESTED: 'STEP_REQUESTED',
@@ -57,12 +57,12 @@ import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
 import {Item} from "./models/HelpStorage";
 import FilterTemporal from "./models/FilterTemporal";
 import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "./models/FilterRequest";
-import CompositeSpecTable from "./models/CompositeSpecTable";
+import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
 	BackendObjectMetadata,
 	BackendObjectMetadataId,
-	BackendOriginsTable, BackendTables,
+	BackendOriginsTable, BackendTables, BackendUpdateSpecFilter,
 	BackendUserInfo,
 	MiscError,
 	MiscInit, MiscResetFilters,
@@ -184,24 +184,26 @@ const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
 };
 
-export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => dispatch => {
+export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => (dispatch, getState) => {
 	fetchAllSpecTables(filters).then(
 		allTables => {
 			dispatch(new BackendTables(allTables));
 			dispatch({type: actionTypes.RESTORE_FILTERS});
-			dispatch(getFilteredDataObjects(true));
+
+			const {tabs, filterFreeText} = getState();
+			const fetchOriginsTable = !isPidFreeTextSearch(tabs, filterFreeText);
+			dispatch(getFilteredDataObjects(fetchOriginsTable));
 		},
 		failWithError(dispatch)
 	);
 };
 
 const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: Function) => {
-	const {specTable} = getState() as State;
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(
 		dobjOriginsAndCounts => {
-			dispatch(new BackendOriginsTable(specTable, dobjOriginsAndCounts));
+			dispatch(new BackendOriginsTable(dobjOriginsAndCounts));
 		},
 		failWithError(dispatch)
 	);
@@ -256,13 +258,12 @@ export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr[]) => (di
 	});
 };
 
-export const specFilterUpdate = (varName: string, values: string[]) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.SPEC_FILTER_UPDATED,
-		varName,
-		values
-	});
-	dispatch(getFilteredDataObjects(true));
+export const specFilterUpdate = (varName: ColNames, values: Value[]) => (dispatch: Function, getState: Function) => {
+	dispatch(new BackendUpdateSpecFilter(varName, values));
+
+	const filterTemporal = (getState() as State).filterTemporal;
+	// dispatch(getFilteredDataObjects(false));
+	dispatch(getFilteredDataObjects(filterTemporal.hasFilter));
 };
 
 const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
@@ -285,7 +286,7 @@ const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: a
 };
 
 export const updateFilteredDataObjects = () => (dispatch: Function, getState: Function) => {
-	const objectsTable = (getState() as State).objectsTable;
+	const objectsTable = getState().objectsTable;
 
 	if (objectsTable.length === 0) dispatch(getFilteredDataObjects(true));
 };
@@ -374,7 +375,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 			rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
 			filters
 		};
-
+console.log({useOnlyPidFilter, fetchOriginsTable, options});
 		interface FetchedDataObj {
 			rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
 			cacheSize: number,
@@ -606,11 +607,10 @@ export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkA
 
 	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
-	const {specTable} = getState();
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-		dispatch(new BackendOriginsTable(specTable, dobjOriginsAndCounts));
+		dispatch(new BackendOriginsTable(dobjOriginsAndCounts));
 		dispatch(getFilteredDataObjects(false));
 	}, failWithError(dispatch));
 

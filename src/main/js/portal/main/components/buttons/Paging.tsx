@@ -10,16 +10,18 @@ interface Paging {
 }
 
 export const Paging = ({type, paging, requestStep}: Paging) => {
-	const {offset, objCount, pageCount, isCountKnown} = paging;
+	const {offset, objCount, pageCount} = paging;
 	const minObjs = Math.min(offset + pageCount, objCount);
-	const to = minObjs < pageCount ? pageCount : minObjs;
+	const to = minObjs < pageCount
+		? pageCount
+		: minObjs;
 	const count = pageCount < config.stepsize ? to : objCount;
 	const isForwardEnabled = to < count;
 
 	if (type === "header") {
 		return (
 			<div className="panel-heading">
-				<CountHeader objCount={count} isCountKnown={isCountKnown} to={to} offset={offset}/>
+				<CountHeader objCount={count} to={to} offset={offset}/>
 				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
 					<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
@@ -41,17 +43,14 @@ export const Paging = ({type, paging, requestStep}: Paging) => {
 };
 
 interface CountHeader {
-	objCount: any
-	isCountKnown: any
-	to: any
-	offset: any
+	objCount: number
+	to: number
+	offset: number
 }
 
-const CountHeader = ({objCount, isCountKnown, to, offset}: CountHeader) => {
+const CountHeader = ({objCount, to, offset}: CountHeader) => {
 	const countTxt = !isNaN(to) && !isNaN(objCount)
-		? isCountKnown
-			? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount.toLocaleString()}`
-			: `Data objects ${offset + 1} to ${to} of more than ${objCount}`
+		? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount.toLocaleString()}`
 		: <span>&nbsp;</span>;
 
 	return <h3 className="panel-title" style={{display:'inline'}}>{countTxt}</h3>;
