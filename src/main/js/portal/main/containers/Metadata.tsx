@@ -209,7 +209,7 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 		? (specInfo as L3SpecificMeta).title
 		: undefined;
 	let specLabel = metadata.specification.self.label ?? "";
-	if(config.envri === "SITES") specLabel = specLabel.substr(specLabel.indexOf(','));
+	if(config.envri === "SITES") specLabel = specLabel.substr(0, specLabel.indexOf(','));
 
 	return (
 		<React.Fragment>
