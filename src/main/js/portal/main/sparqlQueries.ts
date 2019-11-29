@@ -23,7 +23,8 @@ const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
 export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
 
 export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# specBasics
+prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
 where{
 	?spec cpmeta:hasDataLevel ?level .
@@ -49,7 +50,8 @@ const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
 export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# specColumnMeta
+prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
@@ -77,7 +79,8 @@ const originsColNamesOpt = ["station"] as const;
 export const originsColNames = [...originsColNamesMan, ...originsColNamesOpt];
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof originsColNamesMan[number], typeof originsColNamesOpt[number]> {
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# dobjOriginsAndCounts
+prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
 (if(bound(?stationName), ?stationOrDummy, ?stationName) as ?station)
@@ -110,7 +113,8 @@ where{
 }
 
 export function findDobjs(search: string): Query<string, "dobj"> {
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# findDobjs
+prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
 	?dobj  cpmeta:hasObjectSpec ?spec.
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
@@ -122,7 +126,8 @@ SELECT ?dobj WHERE{
 }
 
 export function findStations(search: string){
-	return `PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
+	return `# findStations
+PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
 SELECT DISTINCT (str(?lName) AS ?Long_name)
 FROM <http://meta.icos-cp.eu/resources/stationentry/>
 WHERE {
@@ -153,7 +158,8 @@ type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# listKnownDataObjects
+prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
@@ -216,7 +222,8 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 			)
 		: '';
 
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# listFilteredDataObjects
+prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 ${fromClause}where {
@@ -282,7 +289,8 @@ function getFilterConditions(filter: TemporalFilterRequest): string[]{
 
 export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
-	const text = `prefix cpmeta: <${config.cpmetaOntoUri}>
+	const text = `# extendedDataObjectInfo
+prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site where{
 	{
