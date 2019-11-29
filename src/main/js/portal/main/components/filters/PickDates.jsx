@@ -88,7 +88,7 @@ export default class PickDates extends Component {
 					</div>
 
 					<div className="row">
-						<div className="col-md-6" style={{minWidth: 150}}>
+						<div className="col-md-6" style={{minWidth: 160}}>
 							<label style={{marginBottom: 0}}>From</label>
 
 							<DatePickerInput
@@ -103,7 +103,7 @@ export default class PickDates extends Component {
 							/>
 						</div>
 
-						<div className="col-md-6" style={{minWidth: 150}}>
+						<div className="col-md-6" style={{minWidth: 160}}>
 							<label style={{marginBottom: 0}}>To</label>
 
 							<DatePickerInput

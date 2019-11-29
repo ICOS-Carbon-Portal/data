@@ -52,7 +52,7 @@ export type CategoryType = keyof CategoryNamesDict;
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	ICOS: defaultCategNames,
-	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic program'},
+	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic program', valType: 'Parameter'},
 };
 
 export const prefixes = {
@@ -103,6 +103,6 @@ export const filters: IFilterCategories = {
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit']}
+		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'colTitle']}
 	]
 };
