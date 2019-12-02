@@ -49,24 +49,6 @@ export default function(state = defaultState, action){
 				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
 			});
 
-		case actionTypes.OBJECTS_FETCHED:
-			const extendedObjectsTable = action.objectsTable.map(ot => {
-				const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
-				return Object.assign(ot, spec);
-			});
-			paging = state.paging.withObjCount({
-				objCount: getObjCount(state.specTable),
-				pageCount: action.objectsTable.length,
-				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterFreeText),
-				cacheSize: action.cacheSize,
-				isDataEndReached: action.isDataEndReached
-			});
-			objCount = paging.isCountKnown ? paging.objCount : getObjCount(state.specTable);
-			return stateUtils.update(state,{
-				objectsTable: extendedObjectsTable,
-				paging
-			});
-
 		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:
 			return stateUtils.updateAndSave(state,{
 				extendedDobjInfo: action.extendedDobjInfo

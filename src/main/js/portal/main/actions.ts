@@ -1,12 +1,9 @@
 import Cart from "./models/Cart";
 export const actionTypes = {
 	ERROR: 'ERROR',
-//	INIT: 'INIT',
 	LOAD_ERROR: 'LOAD_ERROR',
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
-	// SPEC_FILTER_UPDATED: 'SPEC_FILTER_UPDATED',
-	OBJECTS_FETCHED: 'OBJECTS_FETCHED',
 	SORTING_TOGGLED: 'SORTING_TOGGLED',
 	STEP_REQUESTED: 'STEP_REQUESTED',
 	PREVIEW: 'PREVIEW',
@@ -61,7 +58,7 @@ import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
 	BackendObjectMetadata,
-	BackendObjectMetadataId,
+	BackendObjectMetadataId, BackendObjectsFetched,
 	BackendOriginsTable, BackendTables, BackendUpdateSpecFilter,
 	BackendUserInfo,
 	MiscError,
@@ -289,13 +286,8 @@ export const updateFilteredDataObjects = () => (dispatch: Function, getState: Fu
 };
 
 const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
-	fetchKnownDataObjects(dobjs).then(rows => {
-			dispatch({
-				type: actionTypes.OBJECTS_FETCHED,
-				objectsTable: rows,
-				cacheSize: rows.length,
-				isDataEndReached: true
-			});
+	fetchKnownDataObjects(dobjs).then(result => {
+			dispatch(new BackendObjectsFetched(result.rows, result.rows.length, true));
 
 			if (cb) dispatch(cb);
 		},
@@ -336,12 +328,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 
 		dispatch(fetchExtendedDataObjInfo(dobjs));
 
-		dispatch({
-			type: actionTypes.OBJECTS_FETCHED,
-			objectsTable: rows,
-			cacheSize: rows.length,
-			isDataEndReached: true
-		});
+		dispatch(new BackendObjectsFetched(rows, rows.length, true));
 
 	} else if (route === config.ROUTE_METADATA && id) {
 		const hash: Sha256Str | undefined = id.split('/').pop();
@@ -382,12 +369,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
 				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-				dispatch({
-					type: actionTypes.OBJECTS_FETCHED,
-					objectsTable: rows,
-					cacheSize,
-					isDataEndReached
-				});
+				dispatch(new BackendObjectsFetched(rows, cacheSize, isDataEndReached));
 			},
 			failWithError(dispatch)
 		).then(() => {

@@ -15,6 +15,7 @@ import {
 	columnMetaColNames,
 	originsColNames
 } from "./sparqlQueries";
+import {ObjInfoQuery} from "./sparqlQueries";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -101,22 +102,14 @@ export function fetchAllSpecTables(filters: FilterRequest[]) {
 }
 
 export const fetchKnownDataObjects = (dobjs: string[]) => {
-	const query = queries.listKnownDataObjects(dobjs);
-
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj.value,
-		spec: b.spec.value,
-		fileName: b.fileName.value,
-		size: b.size.value,
-		submTime: b.submTime.value,
-		timeStart: b.timeStart.value,
-		timeEnd: b.timeEnd.value
-	}));
+	return fetchAndParseDataObjects(queries.listKnownDataObjects(dobjs));
 };
 
 export function fetchFilteredDataObjects(options: Options){
-	const query = queries.listFilteredDataObjects(options);
+	return fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
+}
 
+const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		spec: sparqlParsers.fromUrl(b.spec),
@@ -126,8 +119,7 @@ export function fetchFilteredDataObjects(options: Options){
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd)
 	}));
-}
-
+};
 
 export const searchDobjs = (search: string) => {
 	const query = queries.findDobjs(search);

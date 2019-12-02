@@ -1,10 +1,11 @@
 import {Action} from "redux";
 import {MetaDataObject, SearchOptions, User} from "../models/State";
 import {ThenArg, UrlStr} from "../backend/declarations";
-import {fetchAllSpecTables, fetchDobjOriginsAndCounts} from "../backend";
-import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
+import {fetchAllSpecTables, fetchDobjOriginsAndCounts, fetchKnownDataObjects} from "../backend";
+import {ColNames} from "../models/CompositeSpecTable";
 import {SearchOption} from "../actions";
 import {Value} from "../models/SpecTable";
+import {DataObject} from "../models/CartItem";
 
 
 export abstract class ActionPayload{}
@@ -38,6 +39,11 @@ export class BackendObjectMetadataId extends BackendPayload{
 
 export class BackendObjectMetadata extends BackendPayload{
 	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
+}
+
+type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];
+export class BackendObjectsFetched extends BackendPayload{
+	constructor(readonly objectsTable: ObjectsTable, readonly cacheSize: number, readonly isDataEndReached: boolean){super();}
 }
 
 export class MiscError extends MiscPayload{

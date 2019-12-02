@@ -154,7 +154,7 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
+export type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');

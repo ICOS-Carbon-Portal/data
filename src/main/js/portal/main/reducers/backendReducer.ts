@@ -1,13 +1,14 @@
 import {
 	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable, BackendUpdateSpecFilter
+	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched
 } from "./actionpayloads";
-import stateUtils, {State} from "../models/State";
+import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
 import {getObjCount} from "./utils";
+import {isPidFreeTextSearch} from "../reducer";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -44,8 +45,32 @@ export default function(state: State, payload: BackendPayload): State {
 		});
 	}
 
+	if (payload instanceof BackendObjectsFetched){
+		return stateUtils.update(state, handleObjectsFetched(state, payload));
+	}
+
 	return state;
 
+};
+
+const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
+	const objectsTable = payload.objectsTable as ObjectsTable[];
+	const extendedObjectsTable = objectsTable.map(ot => {
+		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
+		return Object.assign(ot, spec);
+	});
+	const paging = state.paging.withObjCount({
+		objCount: getObjCount(state.specTable),
+		pageCount: payload.objectsTable.length,
+		filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterFreeText),
+		cacheSize: payload.cacheSize,
+		isDataEndReached: payload.isDataEndReached
+	});
+
+	return {
+		objectsTable: extendedObjectsTable,
+		paging
+	};
 };
 
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {

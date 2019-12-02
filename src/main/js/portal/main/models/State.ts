@@ -54,7 +54,7 @@ export interface User {
 	email?: string
 }
 
-export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects> & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
+export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
 export interface ExtendedDobjInfo {
 	dobj: UrlStr
 	station: string
