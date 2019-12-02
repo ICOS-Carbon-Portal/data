@@ -254,8 +254,6 @@ const jsonToState = (state0: State) => {
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
-		// state.id = undefined;
-		// state.id = '';
 		state.id = state.id === undefined
 			? undefined
 			: config.previewIdPrefix[config.envri] + state.id;

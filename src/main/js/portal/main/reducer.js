@@ -57,7 +57,7 @@ export default function(state = defaultState, action){
 			paging = state.paging.withObjCount({
 				objCount: getObjCount(state.specTable),
 				pageCount: action.objectsTable.length,
-				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText),
+				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterFreeText),
 				cacheSize: action.cacheSize,
 				isDataEndReached: action.isDataEndReached
 			});
@@ -92,8 +92,9 @@ export default function(state = defaultState, action){
 			});
 
 		case actionTypes.SWITCH_TAB:
+			// Switching tab resets paging
 			paging = state.paging
-				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText))
+				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText))
 				.withOffset(0);
 
 			return stateUtils.update(state,{
@@ -140,7 +141,7 @@ export default function(state = defaultState, action){
 		case actionTypes.TEMPORAL_FILTER:
 			return stateUtils.update(state,{
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, state.filterFreeText)),
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText)),
 				checkedObjectsInSearch: []
 			});
 
@@ -157,7 +158,7 @@ export default function(state = defaultState, action){
 
 			return stateUtils.update(state,{
 				filterFreeText,
-				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterTemporal, filterFreeText))
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, filterFreeText))
 			});
 
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH:

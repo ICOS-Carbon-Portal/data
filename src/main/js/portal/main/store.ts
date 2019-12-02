@@ -7,7 +7,7 @@ import stateUtils, {State} from "./models/State";
 import {ActionPayload, PortalPlainAction} from "./reducers/actionpayloads";
 
 
-const selectSubState = (state: any) => {
+const selectSubState = (state: State) => {
 	// What part of state we want to log
 	return {metadata: state.metadata};
 };

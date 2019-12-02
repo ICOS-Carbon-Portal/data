@@ -55,6 +55,7 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 	return stateUtils.update(state,{
 		specTable,
 		objectsTable: [],
+		page: 0,
 		paging: new Paging({objCount}),
 		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.values}),
 		checkedObjectsInSearch: []
@@ -70,7 +71,7 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 
 	return {
 		specTable,
-		paging: new Paging({objCount, pageCount})
+		paging: state.paging.withObjCount({objCount, pageCount})
 	}
 };
 
@@ -81,7 +82,7 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 	return {
 		specTable,
 		formatToRdfGraph: payload.allTables.formatToRdfGraph,
-		paging: new Paging({objCount}),
+		paging: state.paging.withObjCount({objCount}),
 		lookup: new Lookup(specTable)
 	};
 };
