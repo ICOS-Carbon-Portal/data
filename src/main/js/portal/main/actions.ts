@@ -1,6 +1,5 @@
 import Cart from "./models/Cart";
 export const actionTypes = {
-	ERROR: 'ERROR',
 	LOAD_ERROR: 'LOAD_ERROR',
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',

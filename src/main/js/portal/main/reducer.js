@@ -1,5 +1,4 @@
 import {actionTypes} from './actions';
-import * as Toaster from 'icos-cp-toaster';
 import stateUtils, {defaultState} from './models/State';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
@@ -12,11 +11,6 @@ const specTableKeys = Object.keys(placeholders[config.envri]);
 export default function(state = defaultState, action){
 
 	switch(action.type){
-
-		case actionTypes.ERROR:
-			return stateUtils.update(state,{
-				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
-			});
 
 		case actionTypes.LOAD_ERROR:
 			return stateUtils.deserialize(action.state, action.cart);
