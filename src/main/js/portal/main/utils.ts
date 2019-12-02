@@ -87,3 +87,7 @@ export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[
 
 	return target;
 };
+
+export function throwError(msg: string): never{
+	throw new Error(msg);
+}

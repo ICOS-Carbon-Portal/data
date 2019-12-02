@@ -112,7 +112,7 @@ where{
 	return {text};
 }
 
-export function findDobjs(search: string): Query<string, "dobj"> {
+export function findDobjs(search: string): Query<"dobj", never> {
 	const text = `# findDobjs
 prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{

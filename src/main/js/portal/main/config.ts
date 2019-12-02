@@ -1,5 +1,5 @@
 import commonConfig, {ICOS, SITES} from '../../common/main/config';
-import {KeyAnyVal, KeyStrVal} from "./backend/declarations";
+import {KeyAnyVal, KeyStrVal, UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
 
@@ -55,7 +55,10 @@ export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic program', valType: 'Parameter'},
 };
 
-export const prefixes = {
+export type CategPrefix = UrlStr | {prefix: string, value: UrlStr}[]
+type PrefixConfig = {[key in CategoryType]?: CategPrefix}
+
+export const prefixes: {[key in Envri]: PrefixConfig} = {
 	ICOS: {
 		project: 'http://meta.icos-cp.eu/resources/projects/',
 		theme: 'http://meta.icos-cp.eu/resources/themes/',

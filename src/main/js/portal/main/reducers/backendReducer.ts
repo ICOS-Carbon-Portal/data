@@ -7,7 +7,7 @@ import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
-import {getObjCount} from "./utils";
+import {getObjCount, isPidFreeTextSearch} from "./utils";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -66,6 +66,9 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 	const {filterTemporal} = state;
 	const orgSpecTables = state.specTable;
 	const specTable = orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts, filterTemporal.hasFilter);
+
+	if(isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable}
+
 	const objCount = getObjCount(specTable);
 	const pageCount = Math.min(objCount, config.stepsize);
 
@@ -73,6 +76,7 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 		specTable,
 		paging: state.paging.withObjCount({objCount, pageCount})
 	}
+
 };
 
 const handleBackendTables = (state: State, payload: BackendTables) => {

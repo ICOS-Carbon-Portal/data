@@ -10,8 +10,9 @@ type Props = ReducedProps['advanced'] & {tabHeader: string};
 
 export default class AdvancedSettings extends Component<Props> {
 	render(){
-		const {searchOptions, updateSearchOption, queryMeta, filterFreeText, updateSelectedPids} = this.props;
+		const {searchOptions, updateSearchOption, filterPids, updateSelectedPids} = this.props;
 		const {showDeprecated} = searchOptions;
+		const deprecationDisabled: boolean = filterPids.length > 0
 
 		return (
 			<Fragment>
@@ -23,9 +24,7 @@ export default class AdvancedSettings extends Component<Props> {
 					<Slider startCollapsed={false}>
 						<div className="panel-body" style={{paddingTop:0}}>
 							<FilterByPid
-								queryMeta={queryMeta}
-								pidList={filterFreeText.pidList}
-								selectedPids={filterFreeText.selectedPids}
+								selectedPids={filterPids}
 								updateSelectedPids={updateSelectedPids}
 							/>
 						</div>
@@ -40,6 +39,7 @@ export default class AdvancedSettings extends Component<Props> {
 					<Slider startCollapsed={false}>
 						<div className="panel-body">
 							<CheckButton
+								checkboxDisabled={deprecationDisabled}
 								onClick={() => updateSearchOption({name: 'showDeprecated', value: !showDeprecated})}
 								isChecked={showDeprecated}
 								text={'Show deprecated objects'}

@@ -20,7 +20,7 @@ export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscUpdateSearchOption){
 		return stateUtils.update(state, {
-			searchOptions: updateSearchOptions(payload.oldSearchOptions, payload.newSearchOption)
+			searchOptions: updateSearchOptions(state.searchOptions, payload.newSearchOption)
 		});
 	}
 
@@ -39,13 +39,13 @@ const updateSearchOptions = (oldSearchOptions: SearchOptions, newSearchOption: S
 const resetFilters = (state: State) => {
 	const specTable = state.specTable.withResetFilters();
 	const objCount = getObjCount(specTable);
-	const filterTemporal = new FilterTemporal();
 
 	return {
 		specTable,
 		paging: new Paging({objCount}),
 		filterCategories: {},
+		filterPids: [],
 		checkedObjectsInSearch: [],
-		filterTemporal
+		filterTemporal: new FilterTemporal()
 	};
 };

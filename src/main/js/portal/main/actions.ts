@@ -23,7 +23,6 @@ export const actionTypes = {
 	USER_INFO_FETCHED: 'USER_INFO_FETCHED',
 	TESTED_BATCH_DOWNLOAD: 'TESTED_BATCH_DOWNLOAD',
 	TEMPORAL_FILTER: 'TEMPORAL_FILTER',
-	FREE_TEXT_FILTER: 'FREE_TEXT_FILTER',
 	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS',
 	UPDATE_SELECTED_IDS: 'UPDATE_SELECTED_IDS',
 	UPDATE_CHECKED_OBJECTS_IN_SEARCH: 'UPDATE_CHECKED_OBJECTS_IN_SEARCH',
@@ -45,7 +44,7 @@ import {
 } from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
-import {isPidFreeTextSearch} from './reducer';
+import {isPidFreeTextSearch} from './reducers/utils';
 import {DataObjectsFetcher, CachedDataObjectsFetcher} from "./CachedDataObjectsFetcher";
 import {restoreCarts} from './models/Cart';
 import CartItem from './models/CartItem';
@@ -177,28 +176,24 @@ export const restoreFromHistory = (historyState: any) => (dispatch: Function) =>
 	}
 };
 
-const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
-	const {route, metadata, id}:
-		{route: string, metadata: MetaDataObject & {id: UrlStr}, id: UrlStr} = getState();
+const addStateMisingInHistory = (dispatch: Function, getState: () => State) => {
+	const {route, metadata, id} = getState();
 
-	if (route === config.ROUTE_METADATA && metadata.id !== id) dispatch(setMetadataItem(id));
+	if (route === config.ROUTE_METADATA && metadata && id !== undefined && metadata.id !== id) dispatch(setMetadataItem(id));
 };
 
-export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => (dispatch, getState) => {
+const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => dispatch => {
 	fetchAllSpecTables(filters).then(
 		allTables => {
 			dispatch(new BackendTables(allTables));
 			dispatch({type: actionTypes.RESTORE_FILTERS});
-
-			const {tabs, filterFreeText} = getState();
-			const fetchOriginsTable = !isPidFreeTextSearch(tabs, filterFreeText);
-			dispatch(getFilteredDataObjects(fetchOriginsTable));
+			dispatch(getFilteredDataObjects(false));
 		},
 		failWithError(dispatch)
 	);
 };
 
-const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: Function) => {
+const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: () => State) => {
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(
@@ -207,32 +202,6 @@ const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getS
 		},
 		failWithError(dispatch)
 	);
-};
-
-export const queryMeta: (id: string, search: string) => PortalThunkAction<void> = (id, search) => dispatch => {
-	switch (id) {
-		case "dobj":
-			searchDobjs(search).then(data => {
-				const dobjs = data.map(d => d.dobj);
-				dispatchMeta(id, dobjs, dispatch)
-			});
-			break;
-
-		default:
-			failWithError(dispatch)(new Error(`Could not find a method matching ${id} to query metadata`));
-	}
-};
-
-const dispatchMeta = (id: string, data: string[], dispatch: Function) => {
-	dispatch({
-		type: actionTypes.FREE_TEXT_FILTER,
-		id,
-		data
-	});
-
-	if (id === 'dobj' && (data.length === 0 || data.length === 1)){
-		dispatch(getFilteredDataObjects(true));
-	}
 };
 
 export const updateSelectedPids = (selectedPids: Sha256Str[]) => (dispatch: Function) => {
@@ -263,16 +232,22 @@ export const specFilterUpdate = (varName: ColNames, values: Value[]) => (dispatc
 	dispatch(getFilteredDataObjects(false));
 };
 
-const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: any, filterFreeText: any) => {
-	if (Object.keys(filterCategories).length || filterTemporal.hasFilter || filterFreeText.hasFilter) {
+const logPortalUsage = (state: State) => {
+	const {specTable, filterCategories, filterTemporal, searchOptions} = state
 
-		const filters = Object.keys(filterCategories).reduce<KeyStrVal>((acc: KeyStrVal, columnName: string) => {
-			acc[columnName] = specTable.getLabelFilter(columnName);
+	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : []
+	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>
+
+	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
+
+		const filters = categNames.reduce<any>((acc, columnName) => {
+			acc.columnName = specTable.getLabelFilter(columnName);
 			return acc;
 		}, {});
 
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
-		if (filterFreeText.hasFilter) filters.filterFreeText = filterFreeText.serialize;
+		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids
+		filters.searchOptions = searchOptions
 
 		saveToRestheart({
 			filterChange: {
@@ -282,7 +257,7 @@ const logPortalUsage = (specTable: any, filterCategories: any, filterTemporal: a
 	}
 };
 
-export const updateFilteredDataObjects = () => (dispatch: Function, getState: Function) => {
+export const updateFilteredDataObjects = () => (dispatch: Function, getState: () => State) => {
 	const objectsTable = getState().objectsTable;
 
 	if (objectsTable.length === 0) dispatch(getFilteredDataObjects(true));
@@ -308,12 +283,12 @@ const restorePreview: PortalThunkAction<void> = (dispatch) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterFreeText, searchOptions} = state;
+	const {tabs, filterTemporal, filterPids, searchOptions} = state;
 	let filters: FilterRequest[] = [];
 
-	if (isPidFreeTextSearch(tabs, filterFreeText)){
+	if (isPidFreeTextSearch(tabs, filterPids)){
 		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
-		filters.push({category: 'pids', pids: filterFreeText.selectedPids} as PidFilterRequest);
+		filters.push({category: 'pids', pids: filterPids} as PidFilterRequest);
 	} else {
 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
 
@@ -327,7 +302,7 @@ const getFilters = (state: State) => {
 
 const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<void> = (fetchOriginsTable) => (dispatch, getState) => {
 	const state: State = getState();
-	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterFreeText} = state;
+	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterPids} = state;
 
 	if (route === config.ROUTE_CART) {
 		const cartItems: CartItem[] = cart.items;
@@ -396,7 +371,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 	}
 
 	if (route === undefined || route === config.ROUTE_SEARCH) {
-		logPortalUsage(specTable, filterCategories, filterTemporal, filterFreeText);
+		logPortalUsage(state);
 	}
 };
 
@@ -422,9 +397,10 @@ const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = d
 	);
 };
 
-export const filtersReset = (dispatch: Function) => {
+export const filtersReset = (dispatch: Function, getState: () => State) => {
+	const shouldRefetchCounts = getState().filterTemporal.hasFilter
 	dispatch(new MiscResetFilters());
-	dispatch(getFilteredDataObjects(true));
+	dispatch(getFilteredDataObjects(shouldRefetchCounts));
 };
 
 export const toggleSort = (varName: string) => (dispatch: Function) => {
@@ -443,8 +419,7 @@ export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
 	dispatch(getFilteredDataObjects(false));
 };
 
-export const updateRoute = (route: string) => (dispatch: Function, getState: Function) => {
-	const state = getState();
+export const updateRoute = (route: string) => (dispatch: Function, getState: () => State) => {
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 	dispatch({
@@ -452,15 +427,15 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 		route: newRoute
 	});
 
-	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
+	if (newRoute === config.ROUTE_CART && getState().route !== newRoute){
 		dispatch(getFilteredDataObjects(true));
 
-	} else if (newRoute === config.ROUTE_SEARCH && state.route === config.ROUTE_CART){
+	} else if (newRoute === config.ROUTE_SEARCH && getState().route === config.ROUTE_CART){
 		dispatch(getFilteredDataObjects(true));
 	}
 };
 
-export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: Function) => {
+export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: () => State) => {
 
 	dispatch({
 		type: actionTypes.SWITCH_TAB,
@@ -468,14 +443,8 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 		selectedTabId
 	});
 
-	const {tabs, filterFreeText, paging} = getState();
-
-	if (tabName === 'searchTab'){
-		if (isPidFreeTextSearch(tabs, filterFreeText)){
-			dispatch(getFilteredDataObjects(false));
-		} else {
-			dispatch(getFilteredDataObjects(true));
-		}
+	if (tabName === 'searchTab' && getState().filterPids.length > 0){
+		dispatch(getFilteredDataObjects(false));
 	}
 };
 
@@ -488,7 +457,7 @@ export const setMetadataItem: (id: UrlStr) => PortalThunkAction<void> = id => (d
 	});
 };
 
-export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: Function) => {
+export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: () => State) => {
 	dispatch(getTsPreviewSettings()).then(() => {
 		dispatch({
 			type: actionTypes.PREVIEW,
@@ -501,7 +470,7 @@ export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: F
 	});
 };
 
-const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
+const getTsPreviewSettings = () => (dispatch: Function, getState: () => State) => {
 	const user = (getState() as State).user;
 
 	return getTsSettings(user.email).then(tsSettings => {
@@ -512,7 +481,7 @@ const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 	});
 };
 
-export const storeTsPreviewSetting = (spec: string, type: string, val: string) => (dispatch: Function, getState: Function) => {
+export const storeTsPreviewSetting = (spec: string, type: string, val: string) => (dispatch: Function, getState: () => State) => {
 	const user = (getState() as State).user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
@@ -530,7 +499,7 @@ export const setPreviewUrl = (url: UrlStr) => (dispatch: Function) => {
 	});
 };
 
-export const setCartName = (newName: string) => (dispatch: Function, getState: Function) => {
+export const setCartName = (newName: string) => (dispatch: Function, getState: () => State) => {
 	const state: State = getState();
 
 	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
@@ -643,12 +612,17 @@ export type SearchOption = {
 	name: keyof SearchOptions
 	value: boolean
 }
+
 export const updateSearchOption: (searchOption: SearchOption) => PortalThunkAction<void> = searchOption => (dispatch, getState) => {
-	const {searchOptions, tabs, filterFreeText} = getState();
+	const {searchOptions, tabs, filterPids} = getState();
 
-	dispatch(new MiscUpdateSearchOption(searchOptions, searchOption));
+	dispatch(new MiscUpdateSearchOption(searchOption));
 
-	if (!isPidFreeTextSearch(tabs, filterFreeText)){
-		dispatch(getFilteredDataObjects(true));
-	}
+	const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids)
+	const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated)
+
+	if (mustFetchObjs)
+		dispatch(getFilteredDataObjects(mustFetchCounts))
+	else if(mustFetchCounts)
+		dispatch(getOriginsTable)
 };

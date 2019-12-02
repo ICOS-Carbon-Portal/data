@@ -5,11 +5,11 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
-import {KeyAnyVal, UrlStr} from "./backend/declarations";
+import {KeyAnyVal, UrlStr, Sha256Str} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Options} from "./actions";
 import {MetaDataObject} from "./models/State";
-import {DataObject} from "../../common/main/metacore";
+import {throwError} from './utils';
 import {
 	basicColNames,
 	columnMetaColNames,
@@ -129,11 +129,11 @@ export function fetchFilteredDataObjects(options: Options){
 }
 
 
-export const searchDobjs = (search: string) => {
+export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	const query = queries.findDobjs(search);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj ? b.dobj.value.split('/').pop() || '' : ''
+		dobj: sparqlParsers.fromUrl(b.dobj).split('/').pop() || throwError(`Expected a data object URL, got ${b.dobj.value}`)
 	}));
 };
 

@@ -53,5 +53,5 @@ export class MiscResetFilters extends MiscPayload{
 }
 
 export class MiscUpdateSearchOption extends MiscPayload{
-	constructor(readonly oldSearchOptions: SearchOptions, readonly newSearchOption: SearchOption){super();}
+	constructor(readonly newSearchOption: SearchOption){super();}
 }

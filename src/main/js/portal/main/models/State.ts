@@ -1,19 +1,18 @@
 import Preview from "./Preview";
-import FilterFreeText from "./FilterFreeText";
 import FilterTemporal from "./FilterTemporal";
-import CompositeSpecTable, {BasicsColNames, ColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
+import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
-import config, {prefixes} from "../config";
+import config, {prefixes, CategoryType, CategPrefix} from "../config";
 import deepequal from 'deep-equal';
-import {KeyAnyVal, ThenArg, UrlStr} from "../backend/declarations";
+import {KeyAnyVal, ThenArg, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
-import SpecTable, {Value} from "./SpecTable";
+import SpecTable from "./SpecTable";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -23,7 +22,7 @@ const hashKeys = [
 	'route',
 	'filterCategories',
 	'filterTemporal',
-	'filterFreeText',
+	'filterPids',
 	'tabs',
 	'page',
 	'id',
@@ -72,14 +71,16 @@ export interface SearchOptions {
 	showDeprecated: boolean
 }
 
+type CategFilters = {[key in CategoryType]?: string[]}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
 	searchOptions: SearchOptions
 	route: Routes
-	filterCategories: any
+	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
-	filterFreeText: FilterFreeText
+	filterPids: Sha256Str[]
 	user: User
 	lookup: Lookup | undefined;
 	specTable: CompositeSpecTable
@@ -124,7 +125,7 @@ export const defaultState: State = {
 	route: config.DEFAULT_ROUTE,
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
-	filterFreeText: new FilterFreeText(),
+	filterPids:[],
 	user: {
 		profile: {},
 		email: undefined
@@ -173,7 +174,6 @@ const updateAndSave = (state: State, updates: any) => {
 const serialize = (state: State) => {
 	return Object.assign({}, state, {
 		filterTemporal: state.filterTemporal.serialize,
-		filterFreeText: state.filterFreeText.serialize,
 		lookup: undefined,
 		specTable: state.specTable.serialize,
 		paging: state.paging.serialize,
@@ -187,7 +187,6 @@ const deserialize = (jsonObj: State, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 	const props: State = Object.assign({}, jsonObj, {
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
-		filterFreeText: FilterFreeText.deserialize(jsonObj.filterFreeText),
 		lookup: new Lookup(specTable),
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
@@ -234,7 +233,6 @@ const getStateFromStore = (storeState: State & KeyAnyVal) => {
 const simplifyState = (state: State) => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
-		filterFreeText: state.filterFreeText.serialize,
 		preview: state.preview.pids
 	});
 };
@@ -248,9 +246,6 @@ const jsonToState = (state0: State) => {
 		state.filterTemporal = state.filterTemporal
 			? new FilterTemporal().restore(state.filterTemporal)
 			: new FilterTemporal();
-		state.filterFreeText = state.filterFreeText === undefined
-			? new FilterFreeText()
-			: FilterFreeText.deserialize(state.filterFreeText);
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
 		state.preview = new Preview().withPids(state.preview || []);
@@ -362,9 +357,9 @@ const shortenUrls = (state: State = ({} as State)) => {
 		});
 };
 
-const extendUrls = (state: State = ({} as State)) => {
+const extendUrls = (state: State) => {
 	return managePrefixes(state,
-		(prefix: any, value: string) => {
+		(prefix: CategPrefix, value: string) => {
 			if (value.startsWith('http://') || value.startsWith('https://')) return value;
 			if (Array.isArray(prefix)){
 				const pLetter = value.slice(0, 1);
@@ -377,20 +372,22 @@ const extendUrls = (state: State = ({} as State)) => {
 		});
 };
 
-const managePrefixes = (state: State = ({} as State), transform: Function) => {
+const managePrefixes = (state: State = ({} as State), transform: (pref: CategPrefix, value: string) => string) => {
 	if (Object.keys(state).length === 0) return state;
 	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
 
-	const categories = Object.keys(state.filterCategories);
+	const categories: CategoryType[] = Object.keys(state.filterCategories) as Array<keyof typeof state.filterCategories>;
 	const appPrefixes = prefixes[config.envri];
 	const fc = state.filterCategories;
 
 	return Object.assign({}, state, {
-		filterCategories: categories.reduce((acc: KeyAnyVal, category: string) => {
-			acc[category] = fc[category].map((value: string) => {
+		filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
+			const filterVals = fc[category]
+
+			if(filterVals !== undefined) acc[category] = filterVals.map((value: string) => {
 				if (Number.isInteger(parseFloat(value))) return value;
 
-				const prefix = (appPrefixes as KeyAnyVal)[category];
+				const prefix = appPrefixes[category];
 				if (prefix === undefined) return value;
 
 				return transform(prefix, value);

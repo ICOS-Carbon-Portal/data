@@ -4,7 +4,7 @@ import stateUtils, {defaultState} from './models/State';
 import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
-import {getObjCount} from "./reducers/utils";
+import {getObjCount, isPidFreeTextSearch} from "./reducers/utils";
 
 
 const specTableKeys = Object.keys(placeholders[config.envri]);
@@ -57,7 +57,7 @@ export default function(state = defaultState, action){
 			paging = state.paging.withObjCount({
 				objCount: getObjCount(state.specTable),
 				pageCount: action.objectsTable.length,
-				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterFreeText),
+				filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterPids),
 				cacheSize: action.cacheSize,
 				isDataEndReached: action.isDataEndReached
 			});
@@ -94,7 +94,7 @@ export default function(state = defaultState, action){
 		case actionTypes.SWITCH_TAB:
 			// Switching tab resets paging
 			paging = state.paging
-				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText))
+				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
 				.withOffset(0);
 
 			return stateUtils.update(state,{
@@ -141,24 +141,16 @@ export default function(state = defaultState, action){
 		case actionTypes.TEMPORAL_FILTER:
 			return stateUtils.update(state,{
 				filterTemporal: action.filterTemporal,
-				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText)),
-				checkedObjectsInSearch: []
-			});
-
-		case actionTypes.FREE_TEXT_FILTER:
-			let filterFreeText = updateFreeTextFilter(action.id, action.data, state.filterFreeText);
-
-			return stateUtils.update(state,{
-				filterFreeText,
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids)),
 				checkedObjectsInSearch: []
 			});
 
 		case actionTypes.UPDATE_SELECTED_PIDS:
-			filterFreeText = state.filterFreeText.withSelectedPids(action.selectedPids);
+			const {filterPids} = state;
 
 			return stateUtils.update(state,{
-				filterFreeText,
-				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, filterFreeText))
+				filterPids: action.selectedPids,
+				paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, filterPids))
 			});
 
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH:
@@ -195,20 +187,6 @@ const updateCheckedObjects = (existingObjs, newObj) => {
 		? existingObjs.filter(o => o !== newObj)
 		: existingObjs.concat([newObj]);
 };
-
-export const isPidFreeTextSearch = (tabs, filterFreeText) => {
-	return tabs.searchTab === 1  && filterFreeText !== undefined && filterFreeText.hasFilter;
-};
-
-function updateFreeTextFilter(id, data, filterFreeText){
-	switch(id){
-		case 'dobj':
-			return filterFreeText.withPidList(data);
-
-		default:
-			return filterFreeText;
-	}
-}
 
 function updateSorting(old, varName){
 	const ascending = (old.varName === varName)
