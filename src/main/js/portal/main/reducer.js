@@ -29,11 +29,6 @@ export default function(state = defaultState, action){
 		case actionTypes.RESTORE_FROM_HISTORY:
 			return stateUtils.deserialize(action.historyState, state.cart);
 
-		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:
-			return stateUtils.updateAndSave(state,{
-				extendedDobjInfo: action.extendedDobjInfo
-			});
-
 		case actionTypes.CART_UPDATED:
 			return stateUtils.update(state,{
 				cart: action.cart,
@@ -80,11 +75,6 @@ export default function(state = defaultState, action){
 		case actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART:
 			return stateUtils.update(state,{
 				checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, action.checkedObjectInCart)
-			});
-
-		case actionTypes.TS_SETTINGS:
-			return stateUtils.update(state,{
-				tsSettings: action.tsSettings
 			});
 
 		case actionTypes.HELP_INFO_UPDATED:

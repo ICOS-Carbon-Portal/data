@@ -212,16 +212,16 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 	const query = queries.extendedDataObjectInfo(dobjs);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj!.value,
+		dobj: b.dobj.value,
 		station: b.station?.value,
 		stationId: b.stationId?.value,
 		samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
-		theme: b.theme ? b.theme.value : undefined,
-		themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
-		title: b.title ? b.title.value : undefined,
-		description: b.description ? b.description.value : undefined,
-		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined,
-		site: b.site ? b.site.value : undefined,
+		theme: b.theme?.value,
+		themeIcon: b.themeIcon?.value,
+		title: b.title?.value,
+		description: b.description?.value,
+		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
+		site: b.site?.value,
 	}));
 };
 
@@ -236,11 +236,15 @@ export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 	}));
 };
 
+type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
+export type TsSettings = {
+	[key: string]: TsSetting
+}
 export const saveTsSetting = (email: string | undefined, spec: string, type: string, val: string) => {
-	const settings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
+	const settings: TsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 	const setting = settings[spec] || {};
-	const newSetting = Object.assign({}, setting, {[type]: val});
-	const newSettings = Object.assign({}, settings, {[spec]: newSetting});
+	const newSetting: TsSetting = Object.assign({}, setting, {[type]: val});
+	const newSettings: TsSettings = Object.assign({}, settings, {[spec]: newSetting});
 	tsSettingsStorage.setItem(tsSettingsStorageName, newSettings);
 
 	if (email){

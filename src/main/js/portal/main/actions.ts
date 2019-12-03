@@ -4,14 +4,12 @@ export const actionTypes = {
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	RESTORE_FILTERS: 'RESTORE_FILTERS',
 	CART_UPDATED: 'CART_UPDATED',
-	EXTENDED_DOBJ_INFO_FETCHED: 'EXTENDED_DOBJ_INFO_FETCHED',
 	TESTED_BATCH_DOWNLOAD: 'TESTED_BATCH_DOWNLOAD',
 	TEMPORAL_FILTER: 'TEMPORAL_FILTER',
 	FREE_TEXT_FILTER: 'FREE_TEXT_FILTER',
 	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS',
 	UPDATE_CHECKED_OBJECTS_IN_SEARCH: 'UPDATE_CHECKED_OBJECTS_IN_SEARCH',
 	UPDATE_CHECKED_OBJECTS_IN_CART: 'UPDATE_CHECKED_OBJECTS_IN_CART',
-	TS_SETTINGS: 'TS_SETTINGS',
 	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
 };
 
@@ -43,11 +41,12 @@ import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilter
 import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
+	BackendExtendedDataObjInfo,
 	BackendObjectMetadata,
 	BackendObjectMetadataId,
 	BackendObjectsFetched,
 	BackendOriginsTable,
-	BackendTables,
+	BackendTables, BackendTsSettings,
 	BackendUpdateSpecFilter,
 	BackendUserInfo,
 	MiscError,
@@ -388,13 +387,9 @@ export interface Options {
 }
 
 const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {
-	getExtendedDataObjInfo(dobjs).then(
-		extendedDobjInfo => {
-			dispatch({
-				type: actionTypes.EXTENDED_DOBJ_INFO_FETCHED,
-				extendedDobjInfo
-			});
-		},
+	getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
+		dispatch(new BackendExtendedDataObjInfo(extendedDobjInfo));
+	},
 		failWithError(dispatch)
 	);
 };
@@ -465,10 +460,7 @@ const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 	const user = (getState() as State).user;
 
 	return getTsSettings(user.email).then(tsSettings => {
-		dispatch({
-			type: actionTypes.TS_SETTINGS,
-			tsSettings
-		});
+		dispatch(new BackendTsSettings(tsSettings));
 	});
 };
 
@@ -476,10 +468,7 @@ export const storeTsPreviewSetting = (spec: string, type: string, val: string) =
 	const user = (getState() as State).user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
-		dispatch({
-			type: actionTypes.TS_SETTINGS,
-			tsSettings
-		});
+		dispatch(new BackendTsSettings(tsSettings));
 	});
 };
 
@@ -589,7 +578,7 @@ export const getResourceHelpInfo: (helpItem: Item) => PortalThunkAction<void> = 
 	}
 };
 
-const updateHelpInfo: (helpItem: any) => PortalThunkAction<void> = helpItem => dispatch => {
+const updateHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => dispatch => {
 	dispatch({
 		type: actionTypes.HELP_INFO_UPDATED,
 		helpItem

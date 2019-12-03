@@ -36,7 +36,7 @@ export const sparqlFetchAndParse = <Mandatories extends string, Optionals extend
 		);
 };
 
-type Parsed = string | number | boolean | Date;
+type Parsed = string | string[] | number | boolean | Date;
 
 type Row<Mandatories extends string, Optionals extends string> = {
 	[v in Mandatories]: Parsed

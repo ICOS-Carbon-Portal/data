@@ -1,7 +1,13 @@
 import {Action} from "redux";
 import {MetaDataObject, SearchOptions, User} from "../models/State";
 import {ThenArg, UrlStr} from "../backend/declarations";
-import {fetchAllSpecTables, fetchDobjOriginsAndCounts, fetchKnownDataObjects} from "../backend";
+import {
+	fetchAllSpecTables,
+	fetchDobjOriginsAndCounts,
+	fetchKnownDataObjects,
+	getExtendedDataObjInfo,
+	TsSettings
+} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {SearchOption} from "../actions";
 import {Value} from "../models/SpecTable";
@@ -41,6 +47,14 @@ export class BackendObjectMetadataId extends BackendPayload{
 
 export class BackendObjectMetadata extends BackendPayload{
 	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
+}
+
+export class BackendExtendedDataObjInfo extends BackendPayload{
+	constructor(readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>){super();}
+}
+
+export class BackendTsSettings extends BackendPayload{
+	constructor(readonly tsSettings: TsSettings){super();}
 }
 
 type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];

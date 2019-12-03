@@ -1,6 +1,6 @@
 import {
 	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched
+	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo, BackendTsSettings
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -47,6 +47,18 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendObjectsFetched){
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendExtendedDataObjInfo){
+		return stateUtils.updateAndSave(state,{
+			extendedDobjInfo: payload.extendedDobjInfo
+		});
+	}
+
+	if (payload instanceof BackendTsSettings){
+		return stateUtils.update(state,{
+			tsSettings: payload.tsSettings
+		});
 	}
 
 	return state;
