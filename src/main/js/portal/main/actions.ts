@@ -5,14 +5,9 @@ export const actionTypes = {
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
 	SORTING_TOGGLED: 'SORTING_TOGGLED',
 	STEP_REQUESTED: 'STEP_REQUESTED',
-	PREVIEW: 'PREVIEW',
-	PREVIEW_VISIBILITY: 'PREVIEW_VISIBILITY',
-	PREVIEW_SETTING_UPDATED: 'PREVIEW_SETTING_UPDATED',
-	ITEM_URL_UPDATED: 'ITEM_URL_UPDATED',
 	ROUTE_UPDATED: 'ROUTE_UPDATED',
 	SWITCH_TAB: 'SWITCH_TAB',
 	RESTORE_FILTERS: 'RESTORE_FILTERS',
-	RESTORE_PREVIEW: 'RESTORE_PREVIEW',
 	CART_UPDATED: 'CART_UPDATED',
 	WHOAMI_FETCHED: 'WHOAMI_FETCHED',
 	EXTENDED_DOBJ_INFO_FETCHED: 'EXTENDED_DOBJ_INFO_FETCHED',
@@ -62,7 +57,7 @@ import {
 	BackendUserInfo,
 	MiscError,
 	MiscInit, MiscResetFilters,
-	MiscUpdateSearchOption
+	MiscUpdateSearchOption, RestorePreview, SetPreviewFromCart, SetPreviewItem
 } from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
 
@@ -194,11 +189,10 @@ export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<v
 	);
 };
 
-const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: Function) => {
+const getOriginsTable: PortalThunkAction<void> = (dispatch, getState) => {
 	const filters = getFilters(getState());
 
-	fetchDobjOriginsAndCounts(filters).then(
-		dobjOriginsAndCounts => {
+	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
 			dispatch(new BackendOriginsTable(dobjOriginsAndCounts));
 		},
 		failWithError(dispatch)
@@ -254,7 +248,7 @@ export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr[]) => (di
 	});
 };
 
-export const specFilterUpdate = (varName: ColNames, values: Value[]) => (dispatch: Function) => {
+export const specFilterUpdate: (varName: ColNames, values: Value[]) => PortalThunkAction<void> = (varName, values) => (dispatch) => {
 	dispatch(new BackendUpdateSpecFilter(varName, values));
 	dispatch(getFilteredDataObjects(false));
 };
@@ -295,7 +289,7 @@ const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction
 };
 
 const restorePreview: PortalThunkAction<void> = (dispatch) => {
-	dispatch({type: actionTypes.RESTORE_PREVIEW});
+	dispatch(new RestorePreview());
 };
 
 const getFilters = (state: State) => {
@@ -471,10 +465,7 @@ export const setMetadataItem: (id: UrlStr) => PortalThunkAction<void> = id => (d
 
 export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: Function) => {
 	dispatch(getTsPreviewSettings()).then(() => {
-		dispatch({
-			type: actionTypes.PREVIEW,
-			id
-		});
+		dispatch(new SetPreviewFromCart(id));
 
 		if (!(getState() as State).preview.items.length) {
 			dispatch(fetchExtendedDataObjInfo(id));
@@ -505,10 +496,7 @@ export const storeTsPreviewSetting = (spec: string, type: string, val: string) =
 };
 
 export const setPreviewUrl = (url: UrlStr) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.ITEM_URL_UPDATED,
-		url
-	});
+	dispatch(new SetPreviewItem(url));
 };
 
 export const setCartName = (newName: string) => (dispatch: Function, getState: Function) => {

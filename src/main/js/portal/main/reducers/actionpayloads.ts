@@ -11,6 +11,7 @@ import {DataObject} from "../models/CartItem";
 export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
 export abstract class MiscPayload extends ActionPayload{}
+export abstract class PreviewPayload extends ActionPayload{}
 
 
 export interface PortalPlainAction extends Action<string>{
@@ -60,4 +61,16 @@ export class MiscResetFilters extends MiscPayload{
 
 export class MiscUpdateSearchOption extends MiscPayload{
 	constructor(readonly oldSearchOptions: SearchOptions, readonly newSearchOption: SearchOption){super();}
+}
+
+export class RestorePreview extends PreviewPayload{
+	constructor(){super();}
+}
+
+export class SetPreviewFromCart extends PreviewPayload{
+	constructor(readonly id: UrlStr[]){super();}
+}
+
+export class SetPreviewItem extends PreviewPayload{
+	constructor(readonly url: UrlStr){super();}
 }

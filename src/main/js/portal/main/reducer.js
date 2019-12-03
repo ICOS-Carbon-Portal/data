@@ -38,11 +38,6 @@ export default function(state = defaultState, action){
 		case actionTypes.RESTORE_FROM_HISTORY:
 			return stateUtils.deserialize(action.historyState, state.cart);
 
-		case actionTypes.RESTORE_PREVIEW:
-			return stateUtils.update(state,{
-				preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)
-			});
-
 		case actionTypes.EXTENDED_DOBJ_INFO_FETCHED:
 			return stateUtils.updateAndSave(state,{
 				extendedDobjInfo: action.extendedDobjInfo
@@ -77,26 +72,6 @@ export default function(state = defaultState, action){
 				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
 				paging,
 				page: 0
-			});
-
-		case actionTypes.PREVIEW:
-			return stateUtils.update(state,{
-				route: config.ROUTE_PREVIEW,
-				preview: state.preview.initPreview(state.lookup.table, state.cart, action.id, state.objectsTable)
-			});
-
-		case actionTypes.PREVIEW_VISIBILITY:
-			return stateUtils.update(state,{preview: action.visible ? state.preview.show() : state.preview.hide()});
-
-		case actionTypes.PREVIEW_SETTING_UPDATED:
-			return stateUtils.update(state,{
-				cart: action.cart,
-				preview: state.preview.withItemSetting(action.setting, action.value, state.preview.type)
-			});
-
-		case actionTypes.ITEM_URL_UPDATED:
-			return stateUtils.update(state,{
-				preview: state.preview.withItemUrl(action.url)
 			});
 
 		case actionTypes.CART_UPDATED:
