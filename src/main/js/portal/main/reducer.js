@@ -1,6 +1,5 @@
 import {actionTypes} from './actions';
 import stateUtils, {defaultState} from './models/State';
-import Preview from './models/Preview';
 import config, {placeholders} from './config';
 import Paging from './models/Paging';
 import {getObjCount} from "./reducers/utils";
@@ -14,14 +13,6 @@ export default function(state = defaultState, action){
 
 		case actionTypes.LOAD_ERROR:
 			return stateUtils.deserialize(action.state, action.cart);
-
-		case actionTypes.USER_INFO_FETCHED:
-			return stateUtils.update(state,{
-				user: {
-					profile: action.profile,
-					email: action.user.email
-				}
-			});
 
 		case actionTypes.RESTORE_FILTERS:
 			let {filterCategories, page} = state;
