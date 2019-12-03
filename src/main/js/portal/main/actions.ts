@@ -3,10 +3,6 @@ export const actionTypes = {
 	LOAD_ERROR: 'LOAD_ERROR',
 	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
 	SPECTABLES_FETCHED: 'SPECTABLES_FETCHED',
-	SORTING_TOGGLED: 'SORTING_TOGGLED',
-	STEP_REQUESTED: 'STEP_REQUESTED',
-	ROUTE_UPDATED: 'ROUTE_UPDATED',
-	SWITCH_TAB: 'SWITCH_TAB',
 	RESTORE_FILTERS: 'RESTORE_FILTERS',
 	CART_UPDATED: 'CART_UPDATED',
 	WHOAMI_FETCHED: 'WHOAMI_FETCHED',
@@ -52,12 +48,22 @@ import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import {
 	BackendObjectMetadata,
-	BackendObjectMetadataId, BackendObjectsFetched,
-	BackendOriginsTable, BackendTables, BackendUpdateSpecFilter,
+	BackendObjectMetadataId,
+	BackendObjectsFetched,
+	BackendOriginsTable,
+	BackendTables,
+	BackendUpdateSpecFilter,
 	BackendUserInfo,
 	MiscError,
-	MiscInit, MiscResetFilters,
-	MiscUpdateSearchOption, RestorePreview, SetPreviewFromCart, SetPreviewItem
+	MiscInit,
+	MiscResetFilters,
+	MiscUpdateSearchOption,
+	RestorePreview,
+	SetPreviewFromCart,
+	SetPreviewItem,
+	UiStepRequested, UiSwitchTab,
+	UiToggleSorting,
+	UiUpdateRoute
 } from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
 
@@ -403,18 +409,12 @@ export const filtersReset = (dispatch: Function) => {
 };
 
 export const toggleSort = (varName: string) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.SORTING_TOGGLED,
-		varName
-	});
+	dispatch(new UiToggleSorting(varName));
 	dispatch(getFilteredDataObjects(false));
 };
 
 export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.STEP_REQUESTED,
-		direction
-	});
+	dispatch(new UiStepRequested(direction));
 	dispatch(getFilteredDataObjects(false));
 };
 
@@ -422,10 +422,7 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 	const state = getState();
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
-	dispatch({
-		type: actionTypes.ROUTE_UPDATED,
-		route: newRoute
-	});
+	dispatch(new UiUpdateRoute(route));
 
 	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
 		dispatch(getFilteredDataObjects(true));
@@ -436,14 +433,9 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 };
 
 export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: Function) => {
+	dispatch(new UiSwitchTab(tabName, selectedTabId));
 
-	dispatch({
-		type: actionTypes.SWITCH_TAB,
-		tabName,
-		selectedTabId
-	});
-
-	const {tabs, filterFreeText, paging} = getState();
+	const {tabs, filterFreeText} = getState();
 
 	if (tabName === 'searchTab'){
 		if (isPidFreeTextSearch(tabs, filterFreeText)){

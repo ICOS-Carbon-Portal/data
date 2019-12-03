@@ -43,37 +43,6 @@ export default function(state = defaultState, action){
 				extendedDobjInfo: action.extendedDobjInfo
 			});
 
-		case actionTypes.SORTING_TOGGLED:
-			return stateUtils.update(state,{
-				objectsTable: [],
-				sorting: updateSorting(state.sorting, action.varName)
-			});
-
-		case actionTypes.STEP_REQUESTED:
-			return stateUtils.update(state,{
-				objectsTable: [],
-				paging: state.paging.withDirection(action.direction),
-				page: state.page + action.direction
-			});
-
-		case actionTypes.ROUTE_UPDATED:
-			return stateUtils.update(state,{
-				route: action.route,
-				preview: action.route === config.ROUTE_PREVIEW ? state.preview : new Preview()
-			});
-
-		case actionTypes.SWITCH_TAB:
-			// Switching tab resets paging
-			paging = state.paging
-				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText))
-				.withOffset(0);
-
-			return stateUtils.update(state,{
-				tabs: Object.assign({}, state.tabs, {[action.tabName]: action.selectedTabId}),
-				paging,
-				page: 0
-			});
-
 		case actionTypes.CART_UPDATED:
 			return stateUtils.update(state,{
 				cart: action.cart,
@@ -159,13 +128,6 @@ function updateFreeTextFilter(id, data, filterFreeText){
 		default:
 			return filterFreeText;
 	}
-}
-
-function updateSorting(old, varName){
-	const ascending = (old.varName === varName)
-		? !old.ascending
-		: true;
-	return Object.assign({}, old, {varName, ascending});
 }
 
 function getSpecTable(startTable, filterCategories){

@@ -12,6 +12,7 @@ export abstract class ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
 export abstract class MiscPayload extends ActionPayload{}
 export abstract class PreviewPayload extends ActionPayload{}
+export abstract class UiPayload extends ActionPayload{}
 
 
 export interface PortalPlainAction extends Action<string>{
@@ -73,4 +74,20 @@ export class SetPreviewFromCart extends PreviewPayload{
 
 export class SetPreviewItem extends PreviewPayload{
 	constructor(readonly url: UrlStr){super();}
+}
+
+export class UiToggleSorting extends UiPayload{
+	constructor(readonly varName: string){super();}
+}
+
+export class UiStepRequested extends UiPayload{
+	constructor(readonly direction: -1 | 1){super();}
+}
+
+export class UiUpdateRoute extends UiPayload{
+	constructor(readonly route: string){super();}
+}
+
+export class UiSwitchTab extends UiPayload{
+	constructor(readonly tabName: string, readonly selectedTabId: string){super();}
 }
