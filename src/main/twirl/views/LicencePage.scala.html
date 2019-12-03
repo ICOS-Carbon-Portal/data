@@ -19,7 +19,8 @@
 
 <div class="col_1">
   <div class="inner">
-    <h4><img src="https://www.icos-cp.eu/sites/default/files/inline-images/creativecommons.png" style="margin-right:10px" />@name DATA is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
+    <h4><img src="https://www.icos-cp.eu/sites/default/files/inline-images/creativecommons.png" style="margin-right:10px" />
+			@name data is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence</a></h4>
   </div>
 </div>
 
@@ -91,7 +92,7 @@
 }
 
 @pageTitle = @{
-	name + " Data Licence"
+	if(envri == Envri.SITES) name + " Data Policy" else name + " Data Licence"
 }
 
 @name = @{
