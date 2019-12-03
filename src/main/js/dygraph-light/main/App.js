@@ -63,6 +63,7 @@ export default class App {
 		this.tableFormat = undefined;
 		this.labels = [];
 		this.lastDateFormat = '';
+		this.isHelpAdded = false;
 
 		const isSites = config.envri === "SITES";
 		this.spinner = new Spinner(isSites);
@@ -299,11 +300,13 @@ export default class App {
 		this.legend.show();
 
 		// Help section
+		if (this.isHelpAdded) return;
+
 		const collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, false);
 		collapsibleHelp.setPosition({top: posLegend.top, right: 10});
 
 		addHelpSection(document.getElementById('help'));
-
+		this.isHelpAdded = true;
 	}
 
 	showSpinner(show){
