@@ -8,8 +8,7 @@ import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {KeyAnyVal, UrlStr} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Options} from "./actions";
-import {MetaDataObject} from "./models/State";
-import {DataObject} from "../../common/main/metacore";
+import {MetaDataObject, WhoAmI} from "./models/State";
 import {
 	basicColNames,
 	columnMetaColNames,
@@ -129,14 +128,14 @@ export const searchDobjs = (search: string) => {
 	}));
 };
 
-export const saveCart = (email: string | undefined, cart: Cart): Promise<void> => {
+export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
 	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
-const updatePersonalRestheart = (email: string | undefined, data: {}): void => {
+const updatePersonalRestheart = (email: string, data: {}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
@@ -164,7 +163,7 @@ export const logOut = (): Promise<boolean> => {
 	});
 };
 
-export const getCart = (email: string | undefined) => {
+export const getCart = (email: string | null) => {
 	const sessionStorageCart = sessionStorage.getItem('cp-cart');
 	const sessionStorageJson: JsonCart = sessionStorageCart
 		? JSON.parse(sessionStorageCart)
@@ -195,12 +194,12 @@ export function getWhoIam(){
 	return fetch('/whoami', {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
-				? resp.json()
-				: {email: undefined};
+				? resp.json() as unknown as WhoAmI
+				: {email: null};
 		});
 }
 
-export const getProfile = (email: string | undefined) => {
+export const getProfile = (email: string | null) => {
 	return email
 		? getFromRestheart(email, 'profile')
 		: Promise.resolve({});
@@ -240,7 +239,7 @@ type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter
 export type TsSettings = {
 	[key: string]: TsSetting
 }
-export const saveTsSetting = (email: string | undefined, spec: string, type: string, val: string) => {
+export const saveTsSetting = (email: string | null, spec: string, type: string, val: string) => {
 	const settings: TsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 	const setting = settings[spec] || {};
 	const newSetting: TsSetting = Object.assign({}, setting, {[type]: val});
@@ -254,7 +253,7 @@ export const saveTsSetting = (email: string | undefined, spec: string, type: str
 	return Promise.resolve(newSettings);
 };
 
-export const getTsSettings = (email: string | undefined) => {
+export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email

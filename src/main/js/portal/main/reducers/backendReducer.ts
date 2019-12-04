@@ -1,6 +1,7 @@
 import {
 	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo, BackendTsSettings
+	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
+	BackendTsSettings, BackendBatchDownload, BackendUpdateCart
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -14,12 +15,11 @@ import {isPidFreeTextSearch} from "../reducer";
 export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
-		return stateUtils.update(state, {
-			user: {
-				profile: payload.profile,
-				email: payload.user.email
-			}
-		});
+		return stateUtils.update(state, handleUserInfo(state, payload));
+	}
+
+	if (payload instanceof BackendBatchDownload){
+		return stateUtils.update(state, handleBatchDownload(state, payload));
 	}
 
 	if (payload instanceof BackendTables){
@@ -58,6 +58,13 @@ export default function(state: State, payload: BackendPayload): State {
 	if (payload instanceof BackendTsSettings){
 		return stateUtils.update(state,{
 			tsSettings: payload.tsSettings
+		});
+	}
+
+	if (payload instanceof BackendUpdateCart){
+		return stateUtils.update(state,{
+			cart: payload.cart,
+			checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => payload.cart.ids.includes(uri))
 		});
 	}
 
@@ -121,5 +128,24 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 		formatToRdfGraph: payload.allTables.formatToRdfGraph,
 		paging: state.paging.withObjCount({objCount}),
 		lookup: new Lookup(specTable)
+	};
+};
+
+const handleUserInfo = (state: State, payload: BackendUserInfo) => {
+	return {
+		user: {
+			profile: payload.profile,
+			email: payload.user.email
+		}
+	};
+};
+
+const handleBatchDownload = (state: State, payload: BackendBatchDownload) => {
+	return {
+		user: Object.assign({}, state.user, payload.user),
+		batchDownloadStatus: {
+			isAllowed: payload.isBatchDownloadOk,
+			ts: Date.now()
+		}
 	};
 };

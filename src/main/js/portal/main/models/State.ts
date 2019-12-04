@@ -49,9 +49,9 @@ export interface Profile {
 	birthYear: string
 }
 
-export interface User {
+export interface WhoAmI {email: string | null}
+export interface User extends WhoAmI {
 	profile: Profile | {}
-	email?: string
 }
 
 export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
@@ -72,12 +72,17 @@ export interface SearchOptions {
 	showDeprecated: boolean
 }
 
+interface FilterCategoriesIdx {[key: string]: UrlStr[]}
+export type FilterCategories = {
+	[key in BasicsColNames | ColumnMetaColNames | OriginsColNames]: UrlStr[]
+} & FilterCategoriesIdx | {} & FilterCategoriesIdx
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
 	searchOptions: SearchOptions
 	route: Routes
-	filterCategories: any
+	filterCategories: FilterCategories
 	filterTemporal: FilterTemporal
 	filterFreeText: FilterFreeText
 	user: User
@@ -102,7 +107,7 @@ export interface State {
 		ts: number
 	}
 	checkedObjectsInSearch: UrlStr[]
-	checkedObjectsInCart: []
+	checkedObjectsInCart: UrlStr[]
 	tabs: {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
 	page: number
 	tsSettings: {}
@@ -127,7 +132,7 @@ export const defaultState: State = {
 	filterFreeText: new FilterFreeText(),
 	user: {
 		profile: {},
-		email: undefined
+		email: null
 	},
 	lookup: undefined,
 	specTable: emptyCompositeSpecTable,

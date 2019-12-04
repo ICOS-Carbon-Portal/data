@@ -1,19 +1,11 @@
 import Cart from "./models/Cart";
 export const actionTypes = {
-	LOAD_ERROR: 'LOAD_ERROR',
-	RESTORE_FROM_HISTORY: 'RESTORE_FROM_HISTORY',
-	RESTORE_FILTERS: 'RESTORE_FILTERS',
-	CART_UPDATED: 'CART_UPDATED',
-	TESTED_BATCH_DOWNLOAD: 'TESTED_BATCH_DOWNLOAD',
 	TEMPORAL_FILTER: 'TEMPORAL_FILTER',
 	FREE_TEXT_FILTER: 'FREE_TEXT_FILTER',
-	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS',
-	UPDATE_CHECKED_OBJECTS_IN_SEARCH: 'UPDATE_CHECKED_OBJECTS_IN_SEARCH',
-	UPDATE_CHECKED_OBJECTS_IN_CART: 'UPDATE_CHECKED_OBJECTS_IN_CART',
-	HELP_INFO_UPDATED: 'HELP_INFO_UPDATED'
+	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS'
 };
 
-import stateUtils, {MetaDataObject, Profile, State, User, SearchOptions} from "./models/State";
+import stateUtils, {MetaDataObject, Profile, State, User, SearchOptions, WhoAmI} from "./models/State";
 import {
 	fetchAllSpecTables,
 	searchDobjs,
@@ -40,26 +32,7 @@ import FilterTemporal from "./models/FilterTemporal";
 import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "./models/FilterRequest";
 import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
-import {
-	BackendExtendedDataObjInfo,
-	BackendObjectMetadata,
-	BackendObjectMetadataId,
-	BackendObjectsFetched,
-	BackendOriginsTable,
-	BackendTables, BackendTsSettings,
-	BackendUpdateSpecFilter,
-	BackendUserInfo,
-	MiscError,
-	MiscInit,
-	MiscResetFilters,
-	MiscUpdateSearchOption,
-	RestorePreview,
-	SetPreviewFromCart,
-	SetPreviewItem,
-	UiStepRequested, UiSwitchTab,
-	UiToggleSorting,
-	UiUpdateRoute
-} from "./reducers/actionpayloads";
+import * as Payloads from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -67,7 +40,7 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	: new DataObjectsFetcher();
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
-	dispatch(new MiscError(error));
+	dispatch(new Payloads.MiscError(error));
 	dispatch(logError(error));
 };
 
@@ -92,7 +65,7 @@ const logError: (error: Error) => PortalThunkAction<void> = error => (_, getStat
 export const init: PortalThunkAction<void> = dispatch => {
 	const stateFromHash = stateUtils.hashToState();
 
-	getWhoIam().then((user: User) => {
+	getWhoIam().then((user: WhoAmI) => {
 		if (stateFromHash.error){
 			if (user.email) logOut();
 			dispatch(loadFromError(user, stateFromHash.error));
@@ -103,15 +76,15 @@ export const init: PortalThunkAction<void> = dispatch => {
 	});
 };
 
-const loadApp: (user: User) => PortalThunkAction<void> = user => (dispatch, getState) => {
-	dispatch(new MiscInit());
+const loadApp: (user: WhoAmI) => PortalThunkAction<void> = user => (dispatch, getState) => {
+	dispatch(new Payloads.MiscInit());
 
 	type LoggedIn = {_id: string, profile: Profile | {}};
 
 	getProfile(user.email).then((resp: {} | LoggedIn) => {
 		const profile = (resp as LoggedIn).profile || {};
 
-		dispatch(new BackendUserInfo(user, profile));
+		dispatch(new Payloads.BackendUserInfo(user, profile));
 		dispatch(getTsPreviewSettings());
 	});
 
@@ -141,28 +114,24 @@ const loadFromError = (user: any, errorId: string) => (dispatch: Function) => {
 				});
 			});
 			const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
-			const state = Object.assign({},
+			const state: State = Object.assign({},
 				stateJSON,
 				{objectsTable, ts: undefined, user: {}}
 			);
 
-			dispatch({
-				type: actionTypes.LOAD_ERROR,
-				state,
-				cart
-			});
+			dispatch(new Payloads.MiscLoadError(state, cart));
+
 		} else {
 			dispatch(loadApp(user));
 		}
 	});
 };
 
-export const restoreFromHistory = (historyState: any) => (dispatch: Function) => {
-	if (Date.now() - historyState.ts < config.historyStateMaxAge) {
-		dispatch({
-			type: actionTypes.RESTORE_FROM_HISTORY,
-			historyState
-		});
+export const restoreFromHistory = (historyState: State) => (dispatch: Function) => {
+	const ts = historyState.ts ?? Date.now();
+
+	if (Date.now() - ts < config.historyStateMaxAge) {
+		dispatch(new Payloads.MiscRestoreFromHistory(historyState));
 		dispatch(addStateMisingInHistory);
 	} else {
 		dispatch(init);
@@ -179,8 +148,8 @@ const addStateMisingInHistory = (dispatch: Function, getState: Function) => {
 export const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => (dispatch, getState) => {
 	fetchAllSpecTables(filters).then(
 		allTables => {
-			dispatch(new BackendTables(allTables));
-			dispatch({type: actionTypes.RESTORE_FILTERS});
+			dispatch(new Payloads.BackendTables(allTables));
+			dispatch(new Payloads.MiscRestoreFilters());
 
 			const {tabs, filterFreeText} = getState();
 			const fetchOriginsTable = !isPidFreeTextSearch(tabs, filterFreeText);
@@ -194,7 +163,7 @@ const getOriginsTable: PortalThunkAction<void> = (dispatch, getState) => {
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-			dispatch(new BackendOriginsTable(dobjOriginsAndCounts));
+			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
 		},
 		failWithError(dispatch)
 	);
@@ -235,22 +204,16 @@ export const updateSelectedPids = (selectedPids: Sha256Str[]) => (dispatch: Func
 	dispatch(getFilteredDataObjects(false));
 };
 
-export const updateCheckedObjectsInSearch = (checkedObjectInSearch: UrlStr[]) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_SEARCH,
-		checkedObjectInSearch
-	});
+export const updateCheckedObjectsInSearch = (checkedObjectInSearch: UrlStr | UrlStr[]) => (dispatch: Function) => {
+	dispatch(new Payloads.UiUpdateCheckedObjsInSearch(checkedObjectInSearch));
 };
 
-export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr[]) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.UPDATE_CHECKED_OBJECTS_IN_CART,
-		checkedObjectInCart
-	});
+export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr | UrlStr[]) => (dispatch: Function) => {
+	dispatch(new Payloads.UiUpdateCheckedObjsInCart(checkedObjectInCart));
 };
 
 export const specFilterUpdate: (varName: ColNames, values: Value[]) => PortalThunkAction<void> = (varName, values) => (dispatch) => {
-	dispatch(new BackendUpdateSpecFilter(varName, values));
+	dispatch(new Payloads.BackendUpdateSpecFilter(varName, values));
 	dispatch(getFilteredDataObjects(false));
 };
 
@@ -281,7 +244,7 @@ export const updateFilteredDataObjects = () => (dispatch: Function, getState: Fu
 
 const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
 	fetchKnownDataObjects(dobjs).then(result => {
-			dispatch(new BackendObjectsFetched(result.rows, result.rows.length, true));
+			dispatch(new Payloads.BackendObjectsFetched(result.rows, result.rows.length, true));
 
 			if (cb) dispatch(cb);
 		},
@@ -290,7 +253,7 @@ const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction
 };
 
 const restorePreview: PortalThunkAction<void> = (dispatch) => {
-	dispatch(new RestorePreview());
+	dispatch(new Payloads.RestorePreview());
 };
 
 const getFilters = (state: State) => {
@@ -322,7 +285,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 
 		dispatch(fetchExtendedDataObjInfo(dobjs));
 
-		dispatch(new BackendObjectsFetched(rows, rows.length, true));
+		dispatch(new Payloads.BackendObjectsFetched(rows, rows.length, true));
 
 	} else if (route === config.ROUTE_METADATA && id) {
 		const hash: Sha256Str | undefined = id.split('/').pop();
@@ -363,7 +326,7 @@ const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
 				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-				dispatch(new BackendObjectsFetched(rows, cacheSize, isDataEndReached));
+				dispatch(new Payloads.BackendObjectsFetched(rows, cacheSize, isDataEndReached));
 			},
 			failWithError(dispatch)
 		).then(() => {
@@ -388,24 +351,24 @@ export interface Options {
 
 const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {
 	getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
-		dispatch(new BackendExtendedDataObjInfo(extendedDobjInfo));
+		dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
 	},
 		failWithError(dispatch)
 	);
 };
 
 export const filtersReset = (dispatch: Function) => {
-	dispatch(new MiscResetFilters());
+	dispatch(new Payloads.MiscResetFilters());
 	dispatch(getFilteredDataObjects(true));
 };
 
 export const toggleSort = (varName: string) => (dispatch: Function) => {
-	dispatch(new UiToggleSorting(varName));
+	dispatch(new Payloads.UiToggleSorting(varName));
 	dispatch(getFilteredDataObjects(false));
 };
 
 export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
-	dispatch(new UiStepRequested(direction));
+	dispatch(new Payloads.UiStepRequested(direction));
 	dispatch(getFilteredDataObjects(false));
 };
 
@@ -413,7 +376,7 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 	const state = getState();
 	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
-	dispatch(new UiUpdateRoute(route));
+	dispatch(new Payloads.UiUpdateRoute(route));
 
 	if (newRoute === config.ROUTE_CART && state.route !== newRoute){
 		dispatch(getFilteredDataObjects(true));
@@ -424,7 +387,7 @@ export const updateRoute = (route: string) => (dispatch: Function, getState: Fun
 };
 
 export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: Function) => {
-	dispatch(new UiSwitchTab(tabName, selectedTabId));
+	dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
 	const {tabs, filterFreeText} = getState();
 
@@ -438,17 +401,17 @@ export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: 
 };
 
 export const setMetadataItem: (id: UrlStr) => PortalThunkAction<void> = id => (dispatch: Function) => {
-	dispatch(new BackendObjectMetadataId(id));
+	dispatch(new Payloads.BackendObjectMetadataId(id));
 
 	getMetadata(id).then(metadata => {
 		const metadataWithId = Object.assign({}, metadata, {id});
-		dispatch(new BackendObjectMetadata(metadataWithId));
+		dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 	});
 };
 
 export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: Function) => {
 	dispatch(getTsPreviewSettings()).then(() => {
-		dispatch(new SetPreviewFromCart(id));
+		dispatch(new Payloads.SetPreviewFromCart(id));
 
 		if (!(getState() as State).preview.items.length) {
 			dispatch(fetchExtendedDataObjInfo(id));
@@ -460,7 +423,7 @@ const getTsPreviewSettings = () => (dispatch: Function, getState: Function) => {
 	const user = (getState() as State).user;
 
 	return getTsSettings(user.email).then(tsSettings => {
-		dispatch(new BackendTsSettings(tsSettings));
+		dispatch(new Payloads.BackendTsSettings(tsSettings));
 	});
 };
 
@@ -468,12 +431,12 @@ export const storeTsPreviewSetting = (spec: string, type: string, val: string) =
 	const user = (getState() as State).user;
 
 	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
-		dispatch(new BackendTsSettings(tsSettings));
+		dispatch(new Payloads.BackendTsSettings(tsSettings));
 	});
 };
 
 export const setPreviewUrl = (url: UrlStr) => (dispatch: Function) => {
-	dispatch(new SetPreviewItem(url));
+	dispatch(new Payloads.SetPreviewItem(url));
 };
 
 export const setCartName = (newName: string) => (dispatch: Function, getState: Function) => {
@@ -514,23 +477,16 @@ export const removeFromCart: (ids: UrlStr[]) => PortalThunkAction<void> = ids =>
 	dispatch(updateCart(state.user.email, cart));
 };
 
-function updateCart(email: string | undefined, cart: Cart): PortalThunkAction<Promise<any>> {
+function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
 	return dispatch => saveCart(email, cart).then(() =>
-		dispatch({
-			type: actionTypes.CART_UPDATED,
-			cart
-		})
+		dispatch(new Payloads.BackendUpdateCart(cart))
 	);
 }
 
 export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 	Promise.all([getIsBatchDownloadOk(), getWhoIam()])
-		.then(
-			([isBatchDownloadOk, user]) => dispatch({
-				type: actionTypes.TESTED_BATCH_DOWNLOAD,
-				isBatchDownloadOk,
-				user
-			}),
+		.then(([isBatchDownloadOk, user]) =>
+			dispatch(new Payloads.BackendBatchDownload(isBatchDownloadOk, user)),
 			failWithError(dispatch)
 		);
 };
@@ -553,7 +509,7 @@ export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkA
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-		dispatch(new BackendOriginsTable(dobjOriginsAndCounts));
+		dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
 		dispatch(getFilteredDataObjects(false));
 	}, failWithError(dispatch));
 
@@ -579,10 +535,7 @@ export const getResourceHelpInfo: (helpItem: Item) => PortalThunkAction<void> = 
 };
 
 const updateHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => dispatch => {
-	dispatch({
-		type: actionTypes.HELP_INFO_UPDATED,
-		helpItem
-	});
+	dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
 };
 
 export type SearchOption = {
@@ -592,7 +545,7 @@ export type SearchOption = {
 export const updateSearchOption: (searchOption: SearchOption) => PortalThunkAction<void> = searchOption => (dispatch, getState) => {
 	const {searchOptions, tabs, filterFreeText} = getState();
 
-	dispatch(new MiscUpdateSearchOption(searchOptions, searchOption));
+	dispatch(new Payloads.MiscUpdateSearchOption(searchOptions, searchOption));
 
 	if (!isPidFreeTextSearch(tabs, filterFreeText)){
 		dispatch(getFilteredDataObjects(true));

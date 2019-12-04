@@ -1,8 +1,16 @@
 import stateUtils, {State} from "../models/State";
-import {UiPayload, UiStepRequested, UiSwitchTab, UiToggleSorting, UiUpdateRoute} from "./actionpayloads";
+import {
+	UiPayload,
+	UiStepRequested,
+	UiSwitchTab,
+	UiToggleSorting, UiUpdateCheckedObjsInCart, UiUpdateCheckedObjsInSearch,
+	UiUpdateHelpInfo,
+	UiUpdateRoute
+} from "./actionpayloads";
 import config from "../config";
 import Preview from "../models/Preview";
 import {isPidFreeTextSearch} from "../reducer";
+import {UrlStr} from "../backend/declarations";
 
 export default function(state: State, payload: UiPayload): State{
 
@@ -27,6 +35,24 @@ export default function(state: State, payload: UiPayload): State{
 
 	if (payload instanceof UiSwitchTab){
 		return stateUtils.update(state, handleSwitchTab(state, payload));
+	}
+
+	if (payload instanceof UiUpdateHelpInfo){
+		return stateUtils.update(state,{
+			helpStorage: state.helpStorage.withUpdatedItem(payload.helpItem)
+		});
+	}
+
+	if (payload instanceof UiUpdateCheckedObjsInSearch){
+		return stateUtils.updateAndSave(state,{
+			checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, payload.checkedObjectInSearch)
+		});
+	}
+
+	if (payload instanceof UiUpdateCheckedObjsInCart){
+		return stateUtils.update(state,{
+			checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, payload.checkedObjectInCart)
+		});
 	}
 
 	return state;
@@ -54,4 +80,14 @@ const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
 		paging,
 		page: 0
 	});
+};
+
+const updateCheckedObjects = (existingObjs: UrlStr[], newObj: UrlStr | UrlStr[]) => {
+	if (Array.isArray(newObj)){
+		return newObj.length === 0 ? [] : newObj;
+	}
+
+	return existingObjs.includes(newObj)
+		? existingObjs.filter(o => o !== newObj)
+		: existingObjs.concat([newObj]);
 };
