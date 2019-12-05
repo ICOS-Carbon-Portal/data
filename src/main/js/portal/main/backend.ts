@@ -8,13 +8,14 @@ import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {KeyAnyVal, UrlStr, Sha256Str} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Options} from "./actions";
-import {MetaDataObject} from "./models/State";
+import {MetaDataObject, WhoAmI} from "./models/State";
 import {throwError} from './utils';
 import {
 	basicColNames,
 	columnMetaColNames,
 	originsColNames
 } from "./sparqlQueries";
+import {ObjInfoQuery} from "./sparqlQueries";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -101,22 +102,14 @@ export function fetchAllSpecTables(filters: FilterRequest[]) {
 }
 
 export const fetchKnownDataObjects = (dobjs: string[]) => {
-	const query = queries.listKnownDataObjects(dobjs);
-
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj.value,
-		spec: b.spec.value,
-		fileName: b.fileName.value,
-		size: b.size.value,
-		submTime: b.submTime.value,
-		timeStart: b.timeStart.value,
-		timeEnd: b.timeEnd.value
-	}));
+	return fetchAndParseDataObjects(queries.listKnownDataObjects(dobjs));
 };
 
 export function fetchFilteredDataObjects(options: Options){
-	const query = queries.listFilteredDataObjects(options);
+	return fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
+}
 
+const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		spec: sparqlParsers.fromUrl(b.spec),
@@ -126,8 +119,7 @@ export function fetchFilteredDataObjects(options: Options){
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd)
 	}));
-}
-
+};
 
 export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	const query = queries.findDobjs(search);
@@ -137,14 +129,14 @@ export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	}));
 };
 
-export const saveCart = (email: string | undefined, cart: Cart): Promise<void> => {
+export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
 	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
 };
 
-const updatePersonalRestheart = (email: string | undefined, data: {}): void => {
+const updatePersonalRestheart = (email: string, data: {}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
@@ -172,7 +164,7 @@ export const logOut = (): Promise<boolean> => {
 	});
 };
 
-export const getCart = (email: string | undefined) => {
+export const getCart = (email: string | null) => {
 	const sessionStorageCart = sessionStorage.getItem('cp-cart');
 	const sessionStorageJson: JsonCart = sessionStorageCart
 		? JSON.parse(sessionStorageCart)
@@ -203,12 +195,12 @@ export function getWhoIam(){
 	return fetch('/whoami', {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
-				? resp.json()
-				: {email: undefined};
+				? resp.json() as unknown as WhoAmI
+				: {email: null};
 		});
 }
 
-export const getProfile = (email: string | undefined) => {
+export const getProfile = (email: string | null) => {
 	return email
 		? getFromRestheart(email, 'profile')
 		: Promise.resolve({});
@@ -220,16 +212,16 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 	const query = queries.extendedDataObjectInfo(dobjs);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj!.value,
+		dobj: b.dobj.value,
 		station: b.station?.value,
 		stationId: b.stationId?.value,
 		samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
-		theme: b.theme ? b.theme.value : undefined,
-		themeIcon: b.themeIcon ? b.themeIcon.value : undefined,
-		title: b.title ? b.title.value : undefined,
-		description: b.description ? b.description.value : undefined,
-		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) : undefined,
-		site: b.site ? b.site.value : undefined,
+		theme: b.theme?.value,
+		themeIcon: b.themeIcon?.value,
+		title: b.title?.value,
+		description: b.description?.value,
+		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
+		site: b.site?.value,
 	}));
 };
 
@@ -244,11 +236,15 @@ export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 	}));
 };
 
-export const saveTsSetting = (email: string | undefined, spec: string, type: string, val: string) => {
-	const settings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
+type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
+export type TsSettings = {
+	[key: string]: TsSetting
+}
+export const saveTsSetting = (email: string | null, spec: string, type: string, val: string) => {
+	const settings: TsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 	const setting = settings[spec] || {};
-	const newSetting = Object.assign({}, setting, {[type]: val});
-	const newSettings = Object.assign({}, settings, {[spec]: newSetting});
+	const newSetting: TsSetting = Object.assign({}, setting, {[type]: val});
+	const newSettings: TsSettings = Object.assign({}, settings, {[spec]: newSetting});
 	tsSettingsStorage.setItem(tsSettingsStorageName, newSettings);
 
 	if (email){
@@ -258,7 +254,7 @@ export const saveTsSetting = (email: string | undefined, spec: string, type: str
 	return Promise.resolve(newSettings);
 };
 
-export const getTsSettings = (email: string | undefined) => {
+export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email

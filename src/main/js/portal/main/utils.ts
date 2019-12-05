@@ -40,7 +40,8 @@ export const isSmallDevice = () => {
 };
 
 export const formatDateWithOptionalTime = (d?: Date) => {
-	if(!d) return '';
+	// TODO: date can come in as string if it comes from cart view
+	if (!d || !d.getUTCFullYear) return '';
 
 	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;

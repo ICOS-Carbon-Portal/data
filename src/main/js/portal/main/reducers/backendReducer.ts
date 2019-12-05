@@ -1,8 +1,9 @@
 import {
 	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable, BackendUpdateSpecFilter
+	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
+	BackendTsSettings, BackendBatchDownload, BackendUpdateCart
 } from "./actionpayloads";
-import stateUtils, {State} from "../models/State";
+import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
@@ -13,12 +14,11 @@ import {getObjCount, isPidFreeTextSearch} from "./utils";
 export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
-		return stateUtils.update(state, {
-			user: {
-				profile: payload.profile,
-				email: payload.user.email
-			}
-		});
+		return stateUtils.update(state, handleUserInfo(state, payload));
+	}
+
+	if (payload instanceof BackendBatchDownload){
+		return stateUtils.update(state, handleBatchDownload(state, payload));
 	}
 
 	if (payload instanceof BackendTables){
@@ -44,8 +44,51 @@ export default function(state: State, payload: BackendPayload): State {
 		});
 	}
 
+	if (payload instanceof BackendObjectsFetched){
+		return stateUtils.update(state, handleObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendExtendedDataObjInfo){
+		return stateUtils.updateAndSave(state,{
+			extendedDobjInfo: payload.extendedDobjInfo
+		});
+	}
+
+	if (payload instanceof BackendTsSettings){
+		return stateUtils.update(state,{
+			tsSettings: payload.tsSettings
+		});
+	}
+
+	if (payload instanceof BackendUpdateCart){
+		return stateUtils.update(state,{
+			cart: payload.cart,
+			checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => payload.cart.ids.includes(uri))
+		});
+	}
+
 	return state;
 
+};
+
+const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
+	const objectsTable = payload.objectsTable as ObjectsTable[];
+	const extendedObjectsTable = objectsTable.map(ot => {
+		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
+		return Object.assign(ot, spec);
+	});
+	const paging = state.paging.withObjCount({
+		objCount: getObjCount(state.specTable),
+		pageCount: payload.objectsTable.length,
+		filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterPids),
+		cacheSize: payload.cacheSize,
+		isDataEndReached: payload.isDataEndReached
+	});
+
+	return {
+		objectsTable: extendedObjectsTable,
+		paging
+	};
 };
 
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
@@ -76,7 +119,6 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 		specTable,
 		paging: state.paging.withObjCount({objCount, pageCount})
 	}
-
 };
 
 const handleBackendTables = (state: State, payload: BackendTables) => {
@@ -88,5 +130,24 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 		formatToRdfGraph: payload.allTables.formatToRdfGraph,
 		paging: state.paging.withObjCount({objCount}),
 		lookup: new Lookup(specTable)
+	};
+};
+
+const handleUserInfo = (state: State, payload: BackendUserInfo) => {
+	return {
+		user: {
+			profile: payload.profile,
+			email: payload.user.email
+		}
+	};
+};
+
+const handleBatchDownload = (state: State, payload: BackendBatchDownload) => {
+	return {
+		user: Object.assign({}, state.user, payload.user),
+		batchDownloadStatus: {
+			isAllowed: payload.isBatchDownloadOk,
+			ts: Date.now()
+		}
 	};
 };

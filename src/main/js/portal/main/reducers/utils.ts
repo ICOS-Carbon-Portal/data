@@ -11,7 +11,7 @@ export function isPidFreeTextSearch(tabs: State['tabs'], filterPids: State['filt
 }
 
 function toNumber(v: Value): number{
-	if(v === undefined) return 0
-	if(typeof v === 'string') return parseInt(v)
+	if(v === undefined) return 0;
+	if(typeof v === 'string') return parseInt(v);
 	return v
 }

@@ -48,12 +48,12 @@ export interface Profile {
 	birthYear: string
 }
 
-export interface User {
+export interface WhoAmI {email: string | null}
+export interface User extends WhoAmI {
 	profile: Profile | {}
-	email?: string
 }
 
-export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects> & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
+export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
 export interface ExtendedDobjInfo {
 	dobj: UrlStr
 	station: string
@@ -71,7 +71,7 @@ export interface SearchOptions {
 	showDeprecated: boolean
 }
 
-type CategFilters = {[key in CategoryType]?: string[]}
+export type CategFilters = {[key in CategoryType]?: string[]}
 
 export interface State {
 	ts: number | undefined
@@ -103,7 +103,7 @@ export interface State {
 		ts: number
 	}
 	checkedObjectsInSearch: UrlStr[]
-	checkedObjectsInCart: []
+	checkedObjectsInCart: UrlStr[]
 	tabs: {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
 	page: number
 	tsSettings: {}
@@ -128,7 +128,7 @@ export const defaultState: State = {
 	filterPids:[],
 	user: {
 		profile: {},
-		email: undefined
+		email: null
 	},
 	lookup: undefined,
 	specTable: emptyCompositeSpecTable,

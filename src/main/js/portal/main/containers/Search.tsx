@@ -109,7 +109,7 @@ class Search extends Component<SearchProps, OurState> {
 		const {helpSection, objSpecFilter, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
-;
+
 		return (
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
