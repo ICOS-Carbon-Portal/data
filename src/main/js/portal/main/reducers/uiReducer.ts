@@ -9,7 +9,7 @@ import {
 } from "./actionpayloads";
 import config from "../config";
 import Preview from "../models/Preview";
-import {isPidFreeTextSearch} from "../reducer";
+import {isPidFreeTextSearch} from "../reducers/utils";
 import {UrlStr} from "../backend/declarations";
 
 export default function(state: State, payload: UiPayload): State{
@@ -72,7 +72,7 @@ const handleToggleSorting = (state: State, payload: UiToggleSorting) => {
 const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
 	// Switching tab resets paging
 	const paging = state.paging
-		.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterFreeText))
+		.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
 		.withOffset(0);
 
 	return stateUtils.update(state,{

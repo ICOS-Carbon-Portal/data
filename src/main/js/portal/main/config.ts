@@ -47,7 +47,7 @@ const defaultCategNames = {
 	project: 'Project'
 };
 
-export type CategoryNamesDict = typeof defaultCategNames;
+type CategoryNamesDict = typeof defaultCategNames;
 export type CategoryType = keyof CategoryNamesDict;
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {

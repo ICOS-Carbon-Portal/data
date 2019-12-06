@@ -66,10 +66,9 @@ const resetFilters = (state: State) => {
 };
 
 const restoreFilters = (state: State) => {
-	const {filterCategories, page} = state;
-	const specTable = getSpecTable(state.specTable, filterCategories);
+	const specTable = getSpecTable(state.specTable, state.filterCategories);
 	const objCount = getObjCount(specTable);
-	const paging = new Paging({objCount, offset: page * config.stepsize});
+	const paging = new Paging({objCount, offset: state.page * config.stepsize});
 
 	return {
 		specTable,
@@ -78,12 +77,16 @@ const restoreFilters = (state: State) => {
 	};
 };
 
-const specTableKeys = Object.keys(placeholders[config.envri]);
 
-const getSpecTable = (startTable: CompositeSpecTable, filterCategories: CategFilters) => {
-	return Object.keys(filterCategories).reduce((specTable, varName) => {
-		return specTableKeys.includes(varName)
-			? specTable.withFilter(varName as BasicsColNames | ColumnMetaColNames | OriginsColNames, filterCategories[varName])
-			: specTable;
-	}, startTable);
-};
+function getSpecTable(startTable: CompositeSpecTable, filterCategories: CategFilters): CompositeSpecTable {
+
+	const categoryTypes: CategoryType[] = Object.keys(filterCategories) as Array<keyof typeof filterCategories>
+
+	return categoryTypes.reduce(
+		(specTable, categType) => {
+			const filter = filterCategories[categType]
+			return filter === undefined ? specTable : specTable.withFilter(categType, filter)
+		},
+		startTable
+	);
+}
