@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, SearchOptions, State, WhoAmI} from "../models/State";
+import {MetaDataObject, State, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchAllSpecTables,
@@ -22,7 +22,7 @@ export abstract class BackendPayload extends ActionPayload{}
 export abstract class MiscPayload extends ActionPayload{}
 export abstract class PreviewPayload extends ActionPayload{}
 export abstract class UiPayload extends ActionPayload{}
-export abstract class Filters extends ActionPayload{}
+export abstract class FiltersPayload extends ActionPayload{}
 
 
 export interface PortalPlainAction extends Action<string>{
@@ -142,14 +142,10 @@ export class UiUpdateCheckedObjsInCart extends UiPayload{
 	constructor(readonly checkedObjectInCart: UrlStr | UrlStr[]){super();}
 }
 
-export class FiltersTemporal extends Filters{
+export class FiltersTemporal extends FiltersPayload{
 	constructor(readonly filterTemporal: FilterTemporal){super();}
 }
 
-export class FiltersPids extends Filters{
-	constructor(){super();}
-}
-
-export class FiltersUpdatePids extends Filters{
+export class FiltersUpdatePids extends FiltersPayload{
 	constructor(readonly selectedPids: Sha256Str[]){super();}
 }

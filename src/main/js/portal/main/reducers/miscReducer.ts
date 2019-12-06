@@ -6,8 +6,8 @@ import {SearchOption} from "../actions";
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
 import FilterTemporal from "../models/FilterTemporal";
-import config, {CategoryType, placeholders} from "../config";
-import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "../models/CompositeSpecTable";
+import config, {CategoryType} from "../config";
+import CompositeSpecTable from "../models/CompositeSpecTable";
 
 export default function(state: State, payload: MiscPayload): State{
 
@@ -80,11 +80,11 @@ const restoreFilters = (state: State) => {
 
 function getSpecTable(startTable: CompositeSpecTable, filterCategories: CategFilters): CompositeSpecTable {
 
-	const categoryTypes: CategoryType[] = Object.keys(filterCategories) as Array<keyof typeof filterCategories>
+	const categoryTypes: CategoryType[] = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
 	return categoryTypes.reduce(
 		(specTable, categType) => {
-			const filter = filterCategories[categType]
+			const filter = filterCategories[categType];
 			return filter === undefined ? specTable : specTable.withFilter(categType, filter)
 		},
 		startTable

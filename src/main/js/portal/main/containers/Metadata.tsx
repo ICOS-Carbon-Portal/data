@@ -323,7 +323,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		setPreviewItem: (id: UrlStr[]) => dispatch(setPreviewItem(id)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
-		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects())
+		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects)
 	};
 }
 

@@ -1,13 +1,7 @@
 import Cart from "./models/Cart";
-export const actionTypes = {
-	TEMPORAL_FILTER: 'TEMPORAL_FILTER',
-	UPDATE_SELECTED_PIDS: 'UPDATE_SELECTED_PIDS'
-};
-
-import stateUtils, {MetaDataObject, Profile, State, User, SearchOptions, WhoAmI} from "./models/State";
+import stateUtils, {Profile, State, SearchOptions, WhoAmI, ObjectsTable} from "./models/State";
 import {
 	fetchAllSpecTables,
-	searchDobjs,
 	getCart,
 	saveCart,
 	logOut,
@@ -33,6 +27,7 @@ import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import * as Payloads from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
+import {FiltersTemporal, FiltersUpdatePids} from "./reducers/actionpayloads";
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -43,23 +38,28 @@ export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void
 	dispatch(logError(error));
 };
 
-const logError: (error: Error) => PortalThunkAction<void> = error => (_, getState) => {
-	const state: State = getState();
-	const user = state.user;
-	const profile = user.profile;
-	const userName = user.email
-		? `${(profile as Profile).givenName} ${(profile as Profile).surname}`
-		: undefined;
+function logError(error: Error): PortalThunkAction<void> {
+	return (_, getState) => {
+		const state = getState();
+		const user = state.user;
+		const profile = user.profile;
+		const userName = user.email
+			? `${(profile as Profile).givenName} ${(profile as Profile).surname}`
+			: undefined;
 
-	saveToRestheart({
-		error: {
-			app: 'portal',
-			message: error.message,
-			state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {user: userName, cart: state.cart})),
-			url: decodeURI(window.location.href)
-		}
-	});
-};
+		saveToRestheart({
+			error: {
+				app: 'portal',
+				message: error.message,
+				state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {
+					user: userName,
+					cart: state.cart
+				})),
+				url: decodeURI(window.location.href)
+			}
+		});
+	}
+}
 
 export const init: PortalThunkAction<void> = dispatch => {
 	const stateFromHash = stateUtils.hashToState();
@@ -75,86 +75,95 @@ export const init: PortalThunkAction<void> = dispatch => {
 	});
 };
 
-const loadApp: (user: WhoAmI) => PortalThunkAction<void> = user => (dispatch, getState) => {
-	dispatch(new Payloads.MiscInit());
+function loadApp(user: WhoAmI): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		dispatch(new Payloads.MiscInit());
 
-	type LoggedIn = {_id: string, profile: Profile | {}};
+		type LoggedIn = {_id: string, profile: Profile | {}};
 
-	getProfile(user.email).then((resp: {} | LoggedIn) => {
-		const profile = (resp as LoggedIn).profile || {};
+		getProfile(user.email).then((resp: {} | LoggedIn) => {
+			const profile = (resp as LoggedIn).profile || {};
 
-		dispatch(new Payloads.BackendUserInfo(user, profile));
-		dispatch(getTsPreviewSettings());
-	});
+			dispatch(new Payloads.BackendUserInfo(user, profile));
+			dispatch(getTsPreviewSettings);
+		});
 
-	getCart(user.email).then(
-		({cartInSessionStorage, cartInRestheart}) => {
+		getCart(user.email).then(
+			({cartInSessionStorage, cartInRestheart}) => {
 
-			cartInRestheart.then(restheartCart => {
-				const cart = restoreCarts(cartInSessionStorage, restheartCart);
-				const filters = getFilters(getState());
+				cartInRestheart.then(restheartCart => {
+					const cart = restoreCarts(cartInSessionStorage, restheartCart);
+					const filters = getFilters(getState());
 
-				dispatch(updateCart(user.email, cart))
-					.then(() => dispatch(getAllSpecTables(filters)));
-			});
-		}
-	);
-};
-
-const loadFromError = (user: any, errorId: string) => (dispatch: Function) => {
-	getError(errorId).then(response => {
-		if (response && response.error && response.error.state) {
-			const stateJSON = JSON.parse(response.error.state);
-			const objectsTable = stateJSON.objectsTable.map((ot: any) => {
-				return Object.assign(ot, {
-					submTime: new Date(ot.submTime),
-					timeStart: new Date(ot.timeStart),
-					timeEnd: new Date(ot.timeEnd)
+					dispatch(updateCart(user.email, cart))
+						.then(() => dispatch(getAllSpecTables(filters)));
 				});
-			});
-			const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
-			const state: State = Object.assign({},
-				stateJSON,
-				{objectsTable, ts: undefined, user: {}}
-			);
+			}
+		);
+	};
+}
 
-			dispatch(new Payloads.MiscLoadError(state, cart));
+function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		getError(errorId).then(response => {
+			if (response && response.error && response.error.state) {
+				const stateJSON = JSON.parse(response.error.state);
+				const objectsTable = stateJSON.objectsTable.map((ot: ObjectsTable) => {
+					return Object.assign(ot, {
+						submTime: new Date(ot.submTime),
+						timeStart: new Date(ot.timeStart),
+						timeEnd: new Date(ot.timeEnd)
+					});
+				});
+				const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
+				const state: State = Object.assign({},
+					stateJSON,
+					{objectsTable, ts: undefined, user: {}}
+				);
 
+				dispatch(new Payloads.MiscLoadError(state, cart));
+
+			} else {
+				dispatch(loadApp(user));
+			}
+		});
+	};
+}
+
+export function restoreFromHistory(historyState: State): PortalThunkAction<void> {
+	return (dispatch) => {
+		const ts = historyState.ts ?? Date.now();
+
+		if (Date.now() - ts < config.historyStateMaxAge) {
+			dispatch(new Payloads.MiscRestoreFromHistory(historyState));
+			dispatch(addStateMisingInHistory);
 		} else {
-			dispatch(loadApp(user));
+			dispatch(init);
 		}
-	});
-};
+	};
+}
 
-export const restoreFromHistory = (historyState: State) => (dispatch: Function) => {
-	const ts = historyState.ts ?? Date.now();
-
-	if (Date.now() - ts < config.historyStateMaxAge) {
-		dispatch(new Payloads.MiscRestoreFromHistory(historyState));
-		dispatch(addStateMisingInHistory);
-	} else {
-		dispatch(init);
-	}
-};
-
-const addStateMisingInHistory = (dispatch: Function, getState: () => State) => {
+const addStateMisingInHistory: PortalThunkAction<void> = (dispatch, getState) => {
 	const {route, metadata, id} = getState();
 
-	if (route === config.ROUTE_METADATA && metadata && id !== undefined && metadata.id !== id) dispatch(setMetadataItem(id));
+	if (route === config.ROUTE_METADATA && metadata && id !== undefined && metadata.id !== id)
+		dispatch(setMetadataItem(id));
 };
 
-const getAllSpecTables: (filters: FilterRequest[]) => PortalThunkAction<void> = filters => dispatch => {
-	fetchAllSpecTables(filters).then(
-		allTables => {
-			dispatch(new Payloads.BackendTables(allTables));
-			dispatch(new Payloads.MiscRestoreFilters());
-			dispatch(getFilteredDataObjects(false));
-		},
-		failWithError(dispatch)
-	);
-};
+function getAllSpecTables(filters: FilterRequest[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		fetchAllSpecTables(filters).then(
+			allTables => {
+				dispatch(new Payloads.BackendTables(allTables));
+				dispatch(new Payloads.MiscRestoreFilters());
+				dispatch(getFilteredDataObjects(false));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
 
-const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getState: () => State) => {
+const getOriginsTable: PortalThunkAction<void> = (dispatch, getState) => {
 	const filters = getFilters(getState());
 
 	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
@@ -164,33 +173,37 @@ const getOriginsTable: PortalThunkAction<void> = (dispatch: PortalDispatch, getS
 	);
 };
 
-export const updateSelectedPids = (selectedPids: Sha256Str[]) => (dispatch: Function) => {
-	dispatch({
-		type: actionTypes.UPDATE_SELECTED_PIDS,
-		selectedPids
-	});
+export function updateSelectedPids(selectedPids: Sha256Str[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersUpdatePids(selectedPids));
+		dispatch(getFilteredDataObjects(false));
+	};
+}
 
-	dispatch(getFilteredDataObjects(false));
-};
+export function updateCheckedObjectsInSearch(checkedObjectInSearch: UrlStr | UrlStr[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiUpdateCheckedObjsInSearch(checkedObjectInSearch));
+	};
+}
 
-export const updateCheckedObjectsInSearch = (checkedObjectInSearch: UrlStr | UrlStr[]) => (dispatch: Function) => {
-	dispatch(new Payloads.UiUpdateCheckedObjsInSearch(checkedObjectInSearch));
-};
+export function updateCheckedObjectsInCart(checkedObjectInCart: UrlStr | UrlStr[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiUpdateCheckedObjsInCart(checkedObjectInCart));
+	};
+}
 
-export const updateCheckedObjectsInCart = (checkedObjectInCart: UrlStr | UrlStr[]) => (dispatch: Function) => {
-	dispatch(new Payloads.UiUpdateCheckedObjsInCart(checkedObjectInCart));
-};
-
-export const specFilterUpdate: (varName: ColNames, values: Value[]) => PortalThunkAction<void> = (varName, values) => (dispatch) => {
-	dispatch(new Payloads.BackendUpdateSpecFilter(varName, values));
-	dispatch(getFilteredDataObjects(false));
-};
+export function specFilterUpdate(varName: ColNames, values: Value[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.BackendUpdateSpecFilter(varName, values));
+		dispatch(getFilteredDataObjects(false));
+	};
+}
 
 const logPortalUsage = (state: State) => {
-	const {specTable, filterCategories, filterTemporal, searchOptions} = state
+	const {specTable, filterCategories, filterTemporal, searchOptions} = state;
 
-	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : []
-	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>
+	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : [];
+	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
 	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
 
@@ -200,8 +213,8 @@ const logPortalUsage = (state: State) => {
 		}, {});
 
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
-		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids
-		filters.searchOptions = searchOptions
+		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids;
+		filters.searchOptions = searchOptions;
 
 		saveToRestheart({
 			filterChange: {
@@ -211,21 +224,23 @@ const logPortalUsage = (state: State) => {
 	}
 };
 
-export const updateFilteredDataObjects = () => (dispatch: Function, getState: () => State) => {
+export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => {
 	const objectsTable = getState().objectsTable;
 
 	if (objectsTable.length === 0) dispatch(getFilteredDataObjects(true));
 };
 
-const getKnownDataObjInfo: (dobjs: string[], cb?: Function) => PortalThunkAction<void> = (dobjs, cb) => (dispatch) => {
-	fetchKnownDataObjects(dobjs).then(result => {
-			dispatch(new Payloads.BackendObjectsFetched(result.rows, result.rows.length, true));
+function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunkAction<void> {
+	return (dispatch) => {
+		fetchKnownDataObjects(dobjs).then(result => {
+				dispatch(new Payloads.BackendObjectsFetched(result.rows, result.rows.length, true));
 
-			if (cb) dispatch(cb);
-		},
-		failWithError(dispatch)
-	);
-};
+				if (cb) dispatch(cb);
+			},
+			failWithError(dispatch)
+		);
+	};
+}
 
 const restorePreview: PortalThunkAction<void> = (dispatch) => {
 	dispatch(new Payloads.RestorePreview());
@@ -249,70 +264,72 @@ const getFilters = (state: State) => {
 	return filters;
 };
 
-const getFilteredDataObjects: (fetchOriginsTable: boolean) => PortalThunkAction<void> = (fetchOriginsTable) => (dispatch, getState) => {
-	const state: State = getState();
-	const {route, cart, id, preview, specTable, filterCategories, filterTemporal, filterPids} = state;
+function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		const {route, cart, id, preview} = state;
 
-	if (route === config.ROUTE_CART) {
-		const cartItems: CartItem[] = cart.items;
-		const rows = cartItems.map(ci => ci.item);
-		const dobjs = rows.map(r => r.dobj);
+		if (route === config.ROUTE_CART) {
+			const cartItems: CartItem[] = cart.items;
+			const rows = cartItems.map(ci => ci.item);
+			const dobjs = rows.map(r => r.dobj);
 
-		dispatch(fetchExtendedDataObjInfo(dobjs));
+			dispatch(fetchExtendedDataObjInfo(dobjs));
 
-		dispatch(new Payloads.BackendObjectsFetched(rows, rows.length, true));
+			dispatch(new Payloads.BackendObjectsFetched(rows, rows.length, true));
 
-	} else if (route === config.ROUTE_METADATA && id) {
-		const hash: Sha256Str | undefined = id.split('/').pop();
+		} else if (route === config.ROUTE_METADATA && id) {
+			const hash: Sha256Str | undefined = id.split('/').pop();
 
-		if (hash) {
-			dispatch(getKnownDataObjInfo([hash]));
-			dispatch(setMetadataItem(id));
+			if (hash) {
+				dispatch(getKnownDataObjInfo([hash]));
+				dispatch(setMetadataItem(id));
+			}
+
+		} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
+			dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
+
+			let ids = preview.pids.map((id: string) => config.previewIdPrefix[config.envri] + id);
+			dispatch(fetchExtendedDataObjInfo(ids));
+
+		} else {
+			const {specTable, sorting, paging} = state;
+			const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
+			const filters = getFilters(state);
+			const useOnlyPidFilter = filters.some(f => f.category === "pids");
+
+			const options: Options = {
+				specs: useOnlyPidFilter ? [] : specTable.getSpeciesFilter(null, true),
+				stations: useOnlyPidFilter ? [] : specTable.getFilter('station'),
+				submitters: useOnlyPidFilter ? [] : specTable.getFilter('submitter'),
+				sorting,
+				paging,
+				rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
+				filters
+			};
+
+			interface FetchedDataObj {
+				rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
+				cacheSize: number,
+				isDataEndReached: boolean
+			}
+
+			dataObjectsFetcher.fetch(options).then(
+				({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
+					dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
+					dispatch(new Payloads.BackendObjectsFetched(rows, cacheSize, isDataEndReached));
+				},
+				failWithError(dispatch)
+			).then(() => {
+				if (fetchOriginsTable) dispatch(getOriginsTable);
+			});
 		}
 
-	} else if (route === config.ROUTE_PREVIEW && preview.hasPids){
-		dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
-
-		let ids = preview.pids.map((id: string) => config.previewIdPrefix[config.envri] + id);
-		dispatch(fetchExtendedDataObjInfo(ids));
-
-	} else {
-		const {specTable, sorting, paging} = state;
-		const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
-		const filters = getFilters(state);
-		const useOnlyPidFilter = filters.some(f => f.category === "pids");
-
-		const options: Options = {
-			specs: useOnlyPidFilter ? [] : specTable.getSpeciesFilter(null, true),
-			stations: useOnlyPidFilter ? [] : specTable.getFilter('station'),
-			submitters: useOnlyPidFilter ? [] : specTable.getFilter('submitter'),
-			sorting,
-			paging,
-			rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
-			filters
-		};
-
-		interface FetchedDataObj {
-			rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
-			cacheSize: number,
-			isDataEndReached: boolean
+		if (route === undefined || route === config.ROUTE_SEARCH) {
+			logPortalUsage(state);
 		}
-
-		dataObjectsFetcher.fetch(options).then(
-			({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
-				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-				dispatch(new Payloads.BackendObjectsFetched(rows, cacheSize, isDataEndReached));
-			},
-			failWithError(dispatch)
-		).then(() => {
-			if (fetchOriginsTable) dispatch(getOriginsTable);
-		});
-	}
-
-	if (route === undefined || route === config.ROUTE_SEARCH) {
-		logPortalUsage(state);
-	}
-};
+	};
+}
 
 export interface Options {
 	specs: ReturnType<typeof CompositeSpecTable.prototype.getSpeciesFilter>
@@ -324,127 +341,154 @@ export interface Options {
 	filters: FilterRequest[]
 }
 
-const fetchExtendedDataObjInfo: (dobjs: string[]) => PortalThunkAction<void> = dobjs => dispatch => {
-	getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
-		dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
-	},
-		failWithError(dispatch)
-	);
-};
+function fetchExtendedDataObjInfo(dobjs: string[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
+				dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
 
-export const filtersReset = (dispatch: Function, getState: () => State) => {
-	const shouldRefetchCounts = getState().filterTemporal.hasFilter
+export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
+	const shouldRefetchCounts = getState().filterTemporal.hasFilter;
 	dispatch(new Payloads.MiscResetFilters());
 	dispatch(getFilteredDataObjects(shouldRefetchCounts));
 };
 
-export const toggleSort = (varName: string) => (dispatch: Function) => {
-	dispatch(new Payloads.UiToggleSorting(varName));
-	dispatch(getFilteredDataObjects(false));
-};
-
-export const requestStep = (direction: -1 | 1) => (dispatch: Function) => {
-	dispatch(new Payloads.UiStepRequested(direction));
-	dispatch(getFilteredDataObjects(false));
-};
-
-export const updateRoute = (route: string) => (dispatch: Function, getState: () => State) => {
-	const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
-
-	dispatch(new Payloads.UiUpdateRoute(route));
-
-	if (newRoute === config.ROUTE_CART && getState().route !== newRoute){
-		dispatch(getFilteredDataObjects(true));
-
-	} else if (newRoute === config.ROUTE_SEARCH && getState().route === config.ROUTE_CART){
-		dispatch(getFilteredDataObjects(true));
-	}
-};
-
-export const switchTab = (tabName: string, selectedTabId: string) => (dispatch: Function, getState: () => State) => {
-	dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
-
-	if (tabName === 'searchTab' && getState().filterPids.length > 0){
+export function toggleSort(varName: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiToggleSorting(varName));
 		dispatch(getFilteredDataObjects(false));
-	}
-};
+	};
+}
 
-export const setMetadataItem: (id: UrlStr) => PortalThunkAction<void> = id => (dispatch: Function) => {
-	dispatch(new Payloads.BackendObjectMetadataId(id));
+export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiStepRequested(direction));
+		dispatch(getFilteredDataObjects(false));
+	};
+}
 
-	getMetadata(id).then(metadata => {
-		const metadataWithId = Object.assign({}, metadata, {id});
-		dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
-	});
-};
+export function updateRoute(route: string): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
-export const setPreviewItem = (id: UrlStr[]) => (dispatch: Function, getState: () => State) => {
-	dispatch(getTsPreviewSettings()).then(() => {
-		dispatch(new Payloads.SetPreviewFromCart(id));
+		dispatch(new Payloads.UiUpdateRoute(route));
 
-		if (!(getState() as State).preview.items.length) {
-			dispatch(fetchExtendedDataObjInfo(id));
+		if (newRoute === config.ROUTE_CART && getState().route !== newRoute){
+			dispatch(getFilteredDataObjects(true));
+
+		} else if (newRoute === config.ROUTE_SEARCH && getState().route === config.ROUTE_CART){
+			dispatch(getFilteredDataObjects(true));
 		}
-	});
-};
+	};
+}
 
-const getTsPreviewSettings = () => (dispatch: Function, getState: () => State) => {
-	const user = (getState() as State).user;
+export function switchTab(tabName: string, selectedTabId: string): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
+
+		if (tabName === 'searchTab' && getState().filterPids.length > 0){
+			dispatch(getFilteredDataObjects(false));
+		}
+	};
+}
+
+export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.BackendObjectMetadataId(id));
+
+		getMetadata(id).then(metadata => {
+			const metadataWithId = Object.assign({}, metadata, {id});
+			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
+		});
+	};
+}
+
+export function setPreviewItem(id: UrlStr[]): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		dispatch(getTsPreviewSettings).then(() => {
+			dispatch(new Payloads.SetPreviewFromCart(id));
+
+			if (!getState().preview.items.length) {
+				dispatch(fetchExtendedDataObjInfo(id));
+			}
+		});
+	};
+}
+
+const getTsPreviewSettings: PortalThunkAction<Promise<any>> = (dispatch, getState) => {
+	const user = getState().user;
 
 	return getTsSettings(user.email).then(tsSettings => {
 		dispatch(new Payloads.BackendTsSettings(tsSettings));
 	});
 };
 
-export const storeTsPreviewSetting = (spec: string, type: string, val: string) => (dispatch: Function, getState: () => State) => {
-	const user = (getState() as State).user;
+export function storeTsPreviewSetting(spec: string, type: string, val: string): PortalThunkAction<void>{
+	return (dispatch, getState) => {
+		const user = getState().user;
 
-	saveTsSetting(user.email, spec, type, val).then(tsSettings => {
-		dispatch(new Payloads.BackendTsSettings(tsSettings));
-	});
-};
+		saveTsSetting(user.email, spec, type, val).then(tsSettings => {
+			dispatch(new Payloads.BackendTsSettings(tsSettings));
+		});
+	};
+}
 
-export const setPreviewUrl = (url: UrlStr) => (dispatch: Function) => {
-	dispatch(new Payloads.SetPreviewItem(url));
-};
+export function setPreviewUrl(url: UrlStr): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.SetPreviewItem(url));
+	};
+}
 
-export const setCartName = (newName: string) => (dispatch: Function, getState: () => State) => {
-	const state: State = getState();
+export function setCartName(newName: string): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
 
-	dispatch(updateCart(state.user.email, state.cart.withName(newName)));
-};
+		dispatch(updateCart(state.user.email, state.cart.withName(newName)));
+	};
+}
 
-export const addToCart: (ids: UrlStr[]) => PortalThunkAction<void> = ids => (dispatch, getState) => {
-	const state: State = getState();
-	const cart = state.cart;
+export function addToCart(ids: UrlStr[]): PortalThunkAction<void>{
+	return (dispatch, getState) => {
+		const state = getState();
+		const cart = state.cart;
 
-	const newItems = ids.filter(id => !state.cart.hasItem(id)).map(id => {
-		const objInfo: any = state.objectsTable.find((o: any) => o.dobj === id);
-		const specLookup = state.lookup && objInfo && objInfo.spec
-			? state.lookup.getSpecLookup(objInfo.spec)
-			: undefined;
-		const type = specLookup ? specLookup.type : undefined;
-		const xAxis = specLookup && specLookup.type === config.TIMESERIES
-			? specLookup.options.find((ao: string) => ao === 'TIMESTAMP')
-			: undefined;
-		const item = new CartItem(objInfo, type);
+		const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
+			const objInfo: ObjectsTable | undefined = state.objectsTable.find(o => o.dobj === id);
+			if (objInfo === undefined)
+				throw new Error(`Could not find objTable with id=${id} in ${state.objectsTable}`);
 
-		return xAxis
-			? item.withUrl(getNewTimeseriesUrl([item], xAxis))
-			: item;
-	});
+			const specLookup = state.lookup && objInfo && objInfo.spec
+				? state.lookup.getSpecLookup(objInfo.spec)
+				: undefined;
+			const type = specLookup ? specLookup.type : undefined;
+			const xAxis = specLookup && specLookup.type === config.TIMESERIES
+				? specLookup.options.find((ao: string) => ao === 'TIMESTAMP')
+				: undefined;
+			const item = new CartItem(objInfo, type);
 
-	if (newItems.length > 0) {
-		dispatch(updateCart(state.user.email, cart.addItem(newItems)));
-	}
-};
+			return xAxis
+				? item.withUrl(getNewTimeseriesUrl([item], xAxis))
+				: item;
+		});
 
-export const removeFromCart: (ids: UrlStr[]) => PortalThunkAction<void> = ids => (dispatch, getState) => {
-	const state: State = getState();
-	const cart = state.cart.removeItems(ids);
+		if (newItems.length > 0) {
+			dispatch(updateCart(state.user.email, cart.addItem(newItems)));
+		}
+	};
+}
 
-	dispatch(updateCart(state.user.email, cart));
-};
+export function removeFromCart(ids: UrlStr[]): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		const cart = state.cart.removeItems(ids);
+
+		dispatch(updateCart(state.user.email, cart));
+	};
+}
 
 function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
 	return dispatch => saveCart(email, cart).then(() =>
@@ -460,68 +504,73 @@ export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
 		);
 };
 
-export const setFilterTemporal: (filterTemporal: FilterTemporal) => PortalThunkAction<void> = filterTemporal => (dispatch, getState) => {
-	if (filterTemporal.dataTime.error) {
-		failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
-	}
-	if (filterTemporal.submission.error) {
-		failWithError(dispatch)(new Error(filterTemporal.submission.error));
-	}
+export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		if (filterTemporal.dataTime.error) {
+			failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
+		}
+		if (filterTemporal.submission.error) {
+			failWithError(dispatch)(new Error(filterTemporal.submission.error));
+		}
 
-	dispatch({
-		type: actionTypes.TEMPORAL_FILTER,
-		filterTemporal
-	});
+		dispatch(new FiltersTemporal(filterTemporal));
 
-	if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
+		if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
-	const filters = getFilters(getState());
+		const filters = getFilters(getState());
 
-	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-		dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
-		dispatch(getFilteredDataObjects(false));
-	}, failWithError(dispatch));
+		fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
+			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
+			dispatch(getFilteredDataObjects(false));
+		}, failWithError(dispatch));
 
-};
+	};
+}
 
-export const getResourceHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => (dispatch, getState) => {
-	if (helpItem.shouldFetchList) {
-		const {specTable} = getState() as any;
-		const uriList = specTable
-			.getAllDistinctAvailableColValues(helpItem.name)
-			.filter((uri: string) => uri);
+export function getResourceHelpInfo(helpItem: Item): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		if (helpItem.shouldFetchList) {
+			const {specTable} = getState();
+			const uriList = specTable
+				.getAllDistinctAvailableColValues(helpItem.name)
+				.filter(uri => uri);
 
-		if (uriList.length) {
-			fetchResourceHelpInfo(uriList).then(resourceInfo => {
-				dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
-			}, failWithError(dispatch));
+			if (uriList.length) {
+				fetchResourceHelpInfo(uriList).then(resourceInfo => {
+					dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
+				}, failWithError(dispatch));
+			} else {
+				dispatch(updateHelpInfo(helpItem));
+			}
 		} else {
 			dispatch(updateHelpInfo(helpItem));
 		}
-	} else {
-		dispatch(updateHelpInfo(helpItem));
-	}
-};
+	};
+}
 
-const updateHelpInfo: (helpItem: Item) => PortalThunkAction<void> = helpItem => dispatch => {
-	dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
-};
+function updateHelpInfo(helpItem: Item): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+	};
+}
 
 export type SearchOption = {
 	name: keyof SearchOptions
 	value: boolean
 }
 
-export const updateSearchOption: (searchOption: SearchOption) => PortalThunkAction<void> = searchOption => (dispatch, getState) => {
-	const {searchOptions, tabs, filterPids} = getState();
+export function updateSearchOption(searchOption: SearchOption): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const {searchOptions, tabs, filterPids} = getState();
 
-	dispatch(new Payloads.MiscUpdateSearchOption(searchOption));
+		dispatch(new Payloads.MiscUpdateSearchOption(searchOption));
 
-	const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids)
-	const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated)
+		const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids);
+		const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated);
 
-	if (mustFetchObjs)
-		dispatch(getFilteredDataObjects(mustFetchCounts))
-	else if(mustFetchCounts)
-		dispatch(getOriginsTable)
-};
+		if (mustFetchObjs)
+			dispatch(getFilteredDataObjects(mustFetchCounts));
+		else if (mustFetchCounts)
+			dispatch(getOriginsTable);
+	};
+}

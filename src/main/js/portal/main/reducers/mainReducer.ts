@@ -3,8 +3,8 @@ import backendReducer from './backendReducer';
 import miscReducer from './miscReducer';
 import previewReducer from './previewReducer';
 import uiReducer from './uiReducer';
-import oldReducer from '../reducer';
-import {BackendPayload, PortalPlainAction, MiscPayload, PreviewPayload, UiPayload} from "./actionpayloads";
+import filtersReducer from './filtersReducer';
+import {BackendPayload, PortalPlainAction, MiscPayload, PreviewPayload, UiPayload, FiltersPayload} from "./actionpayloads";
 import {State, defaultState} from "../models/State";
 
 
@@ -23,7 +23,10 @@ const reducer: Reducer<State, PortalPlainAction> = (state: State = defaultState,
 	if (payload instanceof UiPayload)
 		return uiReducer(state, payload);
 
-	return oldReducer(state, action);
+	if (payload instanceof FiltersPayload)
+		return filtersReducer(state, payload);
+
+	return state;
 };
 
 export default reducer;

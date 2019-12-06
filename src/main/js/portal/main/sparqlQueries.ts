@@ -322,7 +322,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	return {text};
 };
 
-export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri", "label" | "comment" | "webpage"> => {
+export const resourceHelpInfo = (uriList: Value[]): Query<"uri", "label" | "comment" | "webpage"> => {
 	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
 	?uri rdfs:label ?label .
