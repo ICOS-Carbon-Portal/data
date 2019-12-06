@@ -112,6 +112,9 @@ class Metadata extends Component<MetadataProps> {
 								{acquisition &&
 									<React.Fragment>
 										{station && metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
+										{station && station.responsibleOrganization &&
+											metadataRow("Responsible organization", <a href={station.responsibleOrganization.self.uri}>{station.responsibleOrganization.name}</a>)
+										}
 										{acquisition.site && acquisition.site.ecosystem.label &&
 											metadataRow("Ecosystem", acquisition.site.ecosystem.label)
 										}
