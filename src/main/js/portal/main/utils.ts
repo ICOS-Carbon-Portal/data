@@ -92,3 +92,7 @@ export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[
 export function throwError(msg: string): never{
 	throw new Error(msg);
 }
+
+export function distinct<T>(arr: T[]): T[]{
+	return Array.from(new Set(arr).values());
+}

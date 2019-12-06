@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import {distinct} from '../../utils'
 import config from '../../config.js';
 
 export default class PreviewTimeSerie extends Component {
@@ -53,14 +54,15 @@ export default class PreviewTimeSerie extends Component {
 			}, 'overlap');
 		}, '');
 
-		const allItemsHaveColumnNames = items.reduce((acc, cur) =>{
-			return !!(acc && cur.columnNames);
-		}, true);
+		const allItemsHaveColumnNames = items.every(cur => !!(cur.columnNames));
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
+
 		const options = filterOptions(allItemsHaveColumnNames
-			? [...new Set([...items.flatMap(item => item.columnNames)])]
+			? distinct(items.flatMap(item => item.columnNames))
 				.map(colName =>
+					//TODO Fix this by adding proper awareness about whether colTitle is a regexp or a plain column name
+					preview.options.find(opt => opt.colTitle === colName) ||
 					Object.assign({},
 						preview.options.find(opt => new RegExp(opt.colTitle).test(colName)),
 						{colTitle: colName}

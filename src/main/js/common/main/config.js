@@ -1,6 +1,9 @@
 
 export const ICOS = "ICOS";
 export const SITES = "SITES";
+export const TIMESERIES = "TIMESERIES";
+export const NETCDF = "NETCDF";
+export const MAPGRAPH = "MAPGRAPH";
 
 const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? SITES : ICOS;
 const host = envri === SITES ? 'meta.fieldsites.se' : 'meta.icos-cp.eu';
@@ -23,8 +26,8 @@ export default {
 	envri,
 	sparqlGraphFilter,
 	previewTypes: {
-		TIMESERIES: 'TIMESERIES',
-		NETCDF: 'NETCDF',
-		MAPGRAPH: 'MAPGRAPH'
+		TIMESERIES,
+		NETCDF,
+		MAPGRAPH
 	}
 };

@@ -1,7 +1,8 @@
-import commonConfig, {ICOS, SITES} from '../../common/main/config';
-import {KeyAnyVal, KeyStrVal, UrlStr} from "./backend/declarations";
+import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
+import {UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
+export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
 export default {
 	envri: commonConfig.envri as Envri,

@@ -1,4 +1,5 @@
 import {SPECCOL} from '../sparqlQueries';
+import {distinct} from '../utils'
 
 export type Value = number | string | undefined;
 export type Col<T extends string> = T | typeof SPECCOL;
@@ -97,8 +98,3 @@ export default class SpecTable<T extends string = string>{
 	}
 
 }
-
-function distinct(stringArray: Value[]){
-	return Array.from(new Set(stringArray).values());
-}
-

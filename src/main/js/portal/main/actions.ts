@@ -464,11 +464,13 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void>{
 			const specLookup = state.lookup && objInfo && objInfo.spec
 				? state.lookup.getSpecLookup(objInfo.spec)
 				: undefined;
-			const type = specLookup ? specLookup.type : undefined;
-			const xAxis = specLookup && specLookup.type === config.TIMESERIES
-				? specLookup.options.find((ao: string) => ao === 'TIMESTAMP')
+
+//TODO This is unexpected operation to do when adding to cart. Was always resulting in undefined until recently.
+			const xAxis = specLookup && specLookup.type === 'TIMESERIES'
+				? specLookup.options.find(ao => ao.colTitle === 'TIMESTAMP')?.colTitle
 				: undefined;
-			const item = new CartItem(objInfo, type);
+
+			const item = new CartItem(objInfo, specLookup?.type);
 
 			return xAxis
 				? item.withUrl(getNewTimeseriesUrl([item], xAxis))
