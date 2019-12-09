@@ -275,7 +275,6 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 			const dobjs = rows.map(r => r.dobj);
 
 			dispatch(fetchExtendedDataObjInfo(dobjs));
-
 			dispatch(new Payloads.BackendObjectsFetched(rows, rows.length, true));
 
 		} else if (route === config.ROUTE_METADATA && id) {
@@ -372,15 +371,12 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export function updateRoute(route: string): PortalThunkAction<void> {
-	return (dispatch, getState) => {
+	return (dispatch) => {
 		const newRoute = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 		dispatch(new Payloads.UiUpdateRoute(route));
 
-		if (newRoute === config.ROUTE_CART && getState().route !== newRoute){
-			dispatch(getFilteredDataObjects(true));
-
-		} else if (newRoute === config.ROUTE_SEARCH && getState().route === config.ROUTE_CART){
+		if (newRoute === config.ROUTE_CART || newRoute === config.ROUTE_SEARCH){
 			dispatch(getFilteredDataObjects(true));
 		}
 	};
