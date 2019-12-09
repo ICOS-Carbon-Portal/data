@@ -1,10 +1,17 @@
 import CompositeSpecTable from "../models/CompositeSpecTable";
-import {KeyAnyVal} from "../backend/declarations";
+import { State } from "../models/State";
+import { Value } from "../models/SpecTable";
 
-export const getObjCount = (specTable: CompositeSpecTable): number => {
-	const originsTable = specTable.getTable('origins');
+export function getObjCount(specTable: CompositeSpecTable): number {
+	return specTable.origins.filteredRows.reduce((acc, next) => acc + toNumber(next.count), 0)
+}
 
-	return originsTable
-		? originsTable.filteredRows.reduce((acc: number, next: KeyAnyVal) => acc + (next.count || 0), 0)
-		: 0;
-};
+export function isPidFreeTextSearch(tabs: State['tabs'], filterPids: State['filterPids']): boolean {
+	return tabs.searchTab === 1  && filterPids.length > 0;
+}
+
+function toNumber(v: Value): number{
+	if(v === undefined) return 0;
+	if(typeof v === 'string') return parseInt(v);
+	return v
+}

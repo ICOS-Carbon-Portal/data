@@ -6,7 +6,6 @@ import Tabs from '../components/ui/Tabs';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable';
 import SearchResultTable from '../components/searchResult/SearchResultTable';
 import {
-	queryMeta,
 	specFilterUpdate,
 	toggleSort,
 	requestStep,
@@ -39,14 +38,14 @@ type SearchProps = StateProps & DispatchProps;
 const reducedProps = (props: SearchProps) => ({
 	helpSection: pick(props,'helpStorage', 'getResourceHelpInfo'),
 	objSpecFilter: pick(props,'specTable', 'updateFilter', 'filtersReset', 'switchTab',
-		'filterTemporal', 'setFilterTemporal', 'queryMeta', 'filterFreeText',
+		'filterTemporal', 'setFilterTemporal',
 		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
 		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
 		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup'),
-	advanced: pick(props, 'queryMeta', 'filterFreeText', 'updateSelectedPids', 'searchOptions', 'updateSearchOption')
+	advanced: pick(props, 'filterPids', 'updateSelectedPids', 'searchOptions', 'updateSearchOption')
 });
 
 export type SearchActions = PickClassFunctions<typeof Search>;
@@ -110,7 +109,7 @@ class Search extends Component<SearchProps, OurState> {
 		const {helpSection, objSpecFilter, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
-;
+
 		return (
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
@@ -166,7 +165,7 @@ function stateToProps(state: State){
 		helpStorage: state.helpStorage,
 		objectsTable: state.objectsTable,
 		filterTemporal: state.filterTemporal,
-		filterFreeText: state.filterFreeText,
+		filterPids: state.filterPids,
 		specTable: state.specTable,
 		paging: state.paging,
 		sorting: state.sorting,
@@ -176,7 +175,6 @@ function stateToProps(state: State){
 
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
-		queryMeta: (id: string, search: string) => dispatch(queryMeta(id, search)),
 		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),

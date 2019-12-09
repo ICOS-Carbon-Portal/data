@@ -1,5 +1,5 @@
 import 'babel-polyfill';
-import {createStore, applyMiddleware, Middleware, AnyAction, Action, Dispatch, compose} from 'redux';
+import {createStore, applyMiddleware, Middleware, AnyAction, Dispatch, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
 import {init} from './actions';
@@ -20,8 +20,7 @@ export interface PortalThunkAction<R>{
 	(dispatch: PortalDispatch, getState: () => State): R
 }
 
-//TODO When the old reducer is not used any more, change Dispatch's type param to PortalPlainAction
-export interface PortalDispatch extends Dispatch<Action<string>>{
+export interface PortalDispatch extends Dispatch<PortalPlainAction>{
 	<R>(asyncAction: PortalThunkAction<R>): R
 	(payload: ActionPayload): PortalPlainAction
 }

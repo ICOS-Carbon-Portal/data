@@ -40,7 +40,8 @@ export const isSmallDevice = () => {
 };
 
 export const formatDateWithOptionalTime = (d?: Date) => {
-	if(!d) return '';
+	// TODO: date can come in as string if it comes from cart view
+	if (!d || !d.getUTCFullYear) return '';
 
 	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 	const time = `${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
@@ -87,3 +88,11 @@ export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[
 
 	return target;
 };
+
+export function throwError(msg: string): never{
+	throw new Error(msg);
+}
+
+export function distinct<T>(arr: T[]): T[]{
+	return Array.from(new Set(arr).values());
+}

@@ -52,12 +52,12 @@ export default class CompositeSpecTable{
 
 	static deserialize(tables: CompositeSpecTable | JsonCompositeSpecTable) {
 		const {basics, columnMeta, origins} = tables;
+		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters as Filters<BasicsColNames>)
+		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>)
+		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters as Filters<OriginsColNames>)
+		const extraFilter = getExtraFilter(basicsTbl.specsCount, originsTbl)
 
-		return new CompositeSpecTable(
-			new SpecTable(basics.colNames as Col<BasicsColNames>[], basics.rows, basics.filters as Filters<BasicsColNames>, basics.extraSpecFilter),
-			new SpecTable(columnMeta.colNames as Col<ColumnMetaColNames>[], columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>, columnMeta.extraSpecFilter),
-			new SpecTable(origins.colNames as Col<OriginsColNames>[], origins.rows, origins.filters as Filters<OriginsColNames>, origins.extraSpecFilter)
-		);
+		return new CompositeSpecTable(basicsTbl.withExtraSpecFilter(extraFilter), columnMetaTbl.withExtraSpecFilter(extraFilter), originsTbl)
 	}
 
 	get tables(){
@@ -134,8 +134,7 @@ export default class CompositeSpecTable{
 
 	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins'], useExtraFilter: boolean){
 		const newOrigins = new SpecTable<OriginsColNames>(origins.colNames, origins.rows, this.origins.filters);
-		const originSpecs = newOrigins.getAllColValues(SPECCOL);
-		const extraFilter = useExtraFilter && originSpecs.length < this.basics.specsCount ? originSpecs : [];
+		const extraFilter = useExtraFilter ? getExtraFilter(this.basics.specsCount, newOrigins) : [];
 
 		return new CompositeSpecTable(
 			this.basics.withExtraSpecFilter(extraFilter),
@@ -186,4 +185,9 @@ export default class CompositeSpecTable{
 			});
 		}
 	}
+}
+
+function getExtraFilter(specsCount: number, origins: SpecTable<OriginsColNames>): Value[]{
+	const originSpecs = origins.getAllColValues(SPECCOL);
+	return originSpecs.length < specsCount ? originSpecs : [];
 }

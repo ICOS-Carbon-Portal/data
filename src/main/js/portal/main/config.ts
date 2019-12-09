@@ -1,7 +1,8 @@
-import commonConfig, {ICOS, SITES} from '../../common/main/config';
-import {KeyAnyVal, KeyStrVal} from "./backend/declarations";
+import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
+import {UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
+export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
 export default {
 	envri: commonConfig.envri as Envri,
@@ -47,7 +48,7 @@ const defaultCategNames = {
 	project: 'Project'
 };
 
-export type CategoryNamesDict = typeof defaultCategNames;
+type CategoryNamesDict = typeof defaultCategNames;
 export type CategoryType = keyof CategoryNamesDict;
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
@@ -55,7 +56,10 @@ export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic program', valType: 'Parameter'},
 };
 
-export const prefixes = {
+export type CategPrefix = UrlStr | {prefix: string, value: UrlStr}[]
+type PrefixConfig = {[key in CategoryType]?: CategPrefix}
+
+export const prefixes: {[key in Envri]: PrefixConfig} = {
 	ICOS: {
 		project: 'http://meta.icos-cp.eu/resources/projects/',
 		theme: 'http://meta.icos-cp.eu/resources/themes/',

@@ -112,7 +112,7 @@ where{
 	return {text};
 }
 
-export function findDobjs(search: string): Query<string, "dobj"> {
+export function findDobjs(search: string): Query<"dobj", never> {
 	const text = `# findDobjs
 prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
@@ -154,7 +154,7 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
+export type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
@@ -322,7 +322,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	return {text};
 };
 
-export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri", "label" | "comment" | "webpage"> => {
+export const resourceHelpInfo = (uriList: Value[]): Query<"uri", "label" | "comment" | "webpage"> => {
 	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
 	?uri rdfs:label ?label .
