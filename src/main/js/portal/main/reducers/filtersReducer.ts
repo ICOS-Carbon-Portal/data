@@ -15,7 +15,9 @@ export default function(state: State, payload: FiltersPayload): State{
 	if (payload instanceof FiltersUpdatePids){
 		return stateUtils.update(state,{
 			filterPids: payload.selectedPids,
-			paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
+			paging: state.paging
+				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
+				.withOffset(0)
 		});
 	}
 

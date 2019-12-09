@@ -17,12 +17,12 @@ interface PidFilterState{
 }
 
 export default class FilterByPid extends Component<PidFilterProps, PidFilterState>{
-	private readonly makeQueryDebounced: (q: string) => void
-	private search: string | undefined
+	private readonly makeQueryDebounced: (q: string) => void;
+	private search: string | undefined;
 
 	constructor(props: PidFilterProps){
 		super(props);
-		this.state = {pidList: []}
+		this.state = {pidList: []};
 		this.makeQueryDebounced = debounce(this.makeQuery.bind(this));
 	}
 
@@ -49,7 +49,7 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 	listItem(props: {text: string}){
 		const text = props.text.toLowerCase();
 		const start = this.search === undefined ? -1 : text.indexOf(this.search.toLowerCase());
-		const searchLen = this.search?.length || 0
+		const searchLen = this.search?.length || 0;
 
 		if (start < 0) {
 			return <span>{props.text}</span>;
@@ -72,8 +72,8 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 	}
 
 	render(){
-		const {selectedPids} = this.props
-		const {pidList} = this.state
+		const {selectedPids} = this.props;
+		const {pidList} = this.state;
 
 		return (
 			<div className="row" style={{marginTop: 10}}>
