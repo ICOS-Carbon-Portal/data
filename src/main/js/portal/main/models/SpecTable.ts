@@ -83,8 +83,7 @@ export default class SpecTable<T extends string = string>{
 
 	get speciesFilter(): Value[]{
 		if(this.names.every(name => this.getFilter(name).length === 0)) return [];
-		const filter = this.getDistinctAvailableColValues(SPECCOL);
-		return filter.length === this.specsCount ? [] : filter;
+		return this.getDistinctAvailableColValues(SPECCOL);
 	}
 
 	getColumnValuesFilter(colName: Col<T>): Value[]{
