@@ -96,3 +96,10 @@ export function throwError(msg: string): never{
 export function distinct<T>(arr: T[]): T[]{
 	return Array.from(new Set(arr).values());
 }
+
+export function wholeStringRegExp(anyRegex: string): RegExp {
+	const prologue = anyRegex.startsWith('^') ? '' : '^';
+	const epilogue = anyRegex.endsWith("$") ? '' : '$';
+
+	return new RegExp([prologue, anyRegex, epilogue].join(''));
+}

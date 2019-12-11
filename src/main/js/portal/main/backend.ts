@@ -8,7 +8,7 @@ import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {KeyAnyVal, UrlStr, Sha256Str, KeyStrVal} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Options} from "./actions";
-import {MetaDataObject, Profile, User, WhoAmI} from "./models/State";
+import {MetaDataObject, Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {throwError} from './utils';
 import {
 	basicColNames,
@@ -237,10 +237,6 @@ export const fetchResourceHelpInfo = (uriList: Value[]) => {
 	}));
 };
 
-type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
-export type TsSettings = {
-	[key: string]: TsSetting
-}
 export const saveTsSetting = (email: string | null, spec: string, type: string, val: string) => {
 	const settings: TsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 	const setting = settings[spec] || {};

@@ -1,12 +1,11 @@
 import {Action} from "redux";
-import {MetaDataObject, State, WhoAmI} from "../models/State";
+import {MetaDataObject, State, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchAllSpecTables,
 	fetchDobjOriginsAndCounts,
 	fetchKnownDataObjects,
-	getExtendedDataObjInfo,
-	TsSettings
+	getExtendedDataObjInfo
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {SearchOption} from "../actions";

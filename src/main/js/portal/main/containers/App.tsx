@@ -6,7 +6,14 @@ import DataCart from './DataCart';
 import Preview from '../components/preview/Preview';
 import Metadata, { MetadataTitle } from './Metadata';
 import ErrorBoundary from '../components/ErrorBoundary';
-import {failWithError, updateRoute, updateCheckedObjectsInCart, setPreviewUrl, storeTsPreviewSetting} from '../actions';
+import {
+	failWithError,
+	updateRoute,
+	updateCheckedObjectsInCart,
+	setPreviewUrl,
+	storeTsPreviewSetting,
+	addToCart, removeFromCart, setMetadataItem
+} from '../actions';
 import config from '../config';
 import {MetaDataObject, Routes, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
@@ -139,6 +146,9 @@ const Route = (props: AppProps) => {
 					tsSettings={props.tsSettings}
 					setPreviewUrl={props.setPreviewUrl}
 					storeTsPreviewSetting={props.storeTsPreviewSetting}
+					addToCart={props.addToCart}
+					removeFromCart={props.removeFromCart}
+					setMetadataItem={props.setMetadataItem}
 				/>);
 
 		case config.ROUTE_METADATA:
@@ -169,6 +179,9 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
+		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
+		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 	};
 }
 

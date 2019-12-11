@@ -54,14 +54,7 @@ export interface User extends WhoAmI {
 }
 
 export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
-export interface ExtendedDobjInfo {
-	dobj: UrlStr
-	station: string
-	stationId: string
-	samplingHeight: number
-	theme: string
-	themeIcon: UrlStr
-}
+export type ExtendedDobjInfo = ThenArg<typeof getExtendedDataObjInfo>
 
 export interface MetaDataObject extends DO{
 	coverageGeoJson: string
@@ -72,6 +65,11 @@ export interface SearchOptions {
 }
 
 export type CategFilters = {[key in CategoryType]?: string[]}
+
+export type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
+export type TsSettings = {
+	[key: string]: TsSetting
+}
 
 export interface State {
 	ts: number | undefined
@@ -84,7 +82,7 @@ export interface State {
 	user: User
 	lookup: Lookup | undefined;
 	specTable: CompositeSpecTable
-	extendedDobjInfo: ExtendedDobjInfo[]
+	extendedDobjInfo: ExtendedDobjInfo
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
 	sorting: {
@@ -106,7 +104,7 @@ export interface State {
 	checkedObjectsInCart: UrlStr[]
 	tabs: {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
 	page: number
-	tsSettings: {}
+	tsSettings: TsSettings
 	helpStorage: HelpStorage
 }
 
