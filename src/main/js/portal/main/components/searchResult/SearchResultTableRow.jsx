@@ -14,15 +14,16 @@ const truncateStyle = {
 
 const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
-const iconTime = '//static.icos-cp.eu/images/icons/time.svg'
+const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
 
 export default class SimpleObjectTableRow extends Component{
 	constructor(props){
 		super(props);
 	}
 
-	handleViewMetadata(){
-		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
+	handleViewMetadata(ev){
+		if (this.props.viewMetadata && !ev.ctrlKey)
+			this.props.viewMetadata(this.props.objInfo.dobj);
 	}
 
 	render(){
@@ -76,7 +77,7 @@ export default class SimpleObjectTableRow extends Component{
 	}
 }
 
-const getMetadataHash = (dobj) => {
+export const getMetadataHash = (dobj) => {
 	const hashObj = {
 		route: 'metadata',
 		id: dobj.split('/').pop()

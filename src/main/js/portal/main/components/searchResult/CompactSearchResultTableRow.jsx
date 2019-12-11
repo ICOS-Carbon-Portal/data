@@ -3,6 +3,7 @@ import {copyprops} from 'icos-cp-utils';
 import CartIcon from '../buttons/CartIcon.jsx';
 import PreviewIcon from '../buttons/PreviewIcon.jsx';
 import {formatBytes, formatDateWithOptionalTime} from '../../utils';
+import {getMetadataHash} from "./SearchResultTableRow";
 
 
 export default class CompactSearchResultTableRow extends Component {
@@ -14,8 +15,9 @@ export default class CompactSearchResultTableRow extends Component {
 		if (this.props.previewAction) this.props.previewAction([id]);
 	}
 
-	handleViewMetadata(){
-		if (this.props.viewMetadata) this.props.viewMetadata(this.props.objInfo.dobj);
+	handleViewMetadata(ev){
+		if (this.props.viewMetadata && !ev.ctrlKey)
+			this.props.viewMetadata(this.props.objInfo.dobj);
 	}
 
 	render(){
@@ -28,6 +30,7 @@ export default class CompactSearchResultTableRow extends Component {
 			? "list-group-item-info"
 			: "";
 		const size = parseInt(objInfo.size);
+		const metadataHash = getMetadataHash(objInfo.dobj);
 
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
@@ -42,7 +45,7 @@ export default class CompactSearchResultTableRow extends Component {
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a title="View metadata" onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{stripExt(objInfo.fileName)}</a>
+				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{stripExt(objInfo.fileName)}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(objInfo.submTime)}</td>
