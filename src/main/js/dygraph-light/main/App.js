@@ -134,7 +134,8 @@ export default class App {
 							}
 						}
 
-						return objects;
+						// Sort by date so that dygraph can display the time serie
+						return objects.sort((obj1, obj2) => new Date(obj1.startedAtTime) - new Date(obj2.startedAtTime));
 					}
 				}
 			)

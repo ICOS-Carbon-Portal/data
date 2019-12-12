@@ -17,6 +17,7 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 							nRows: parseInt(binding.nRows.value),
 							filename: binding.fileName.value,
 							specLabel: binding.specLabel.value,
+							startedAtTime: binding.startedAtTime.value,
 							columnNames: binding.columnNames ? JSON.parse(binding.columnNames.value) : undefined,
 						}
 					}))
@@ -27,7 +28,7 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 			.all(objects.map(object => tableFormatForSpecies(object.objSpec, config)))
 			.then(tableFormats =>
 				objects.map((object, index) => {
-					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index]
+					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index];
 					return Object.assign({tableFormat}, object)
 				})
 			)
