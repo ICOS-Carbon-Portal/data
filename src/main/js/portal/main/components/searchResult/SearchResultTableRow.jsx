@@ -22,7 +22,7 @@ export default class SimpleObjectTableRow extends Component{
 	}
 
 	handleViewMetadata(ev){
-		if (this.props.viewMetadata && !ev.ctrlKey)
+		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey)
 			this.props.viewMetadata(this.props.objInfo.dobj);
 	}
 
