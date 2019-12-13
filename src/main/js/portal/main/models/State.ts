@@ -1,5 +1,5 @@
 import Preview from "./Preview";
-import FilterTemporal from "./FilterTemporal";
+import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
@@ -184,7 +184,7 @@ const serialize = (state: State) => {
 const deserialize = (jsonObj: State, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 	const props: State = Object.assign({}, jsonObj, {
-		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
+		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
 		lookup: new Lookup(specTable),
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
@@ -242,7 +242,7 @@ const jsonToState = (state0: State) => {
 		state.route = state.route || config.DEFAULT_ROUTE;
 		state.filterCategories = state.filterCategories || {};
 		state.filterTemporal = state.filterTemporal
-			? new FilterTemporal().restore(state.filterTemporal)
+			? new FilterTemporal().restore(state.filterTemporal as SerializedFilterTemporal)
 			: new FilterTemporal();
 		state.tabs = state.tabs || {};
 		state.page = state.page || 0;
