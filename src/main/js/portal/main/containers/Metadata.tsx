@@ -9,7 +9,7 @@ import {MetaDataObject, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person} from "../../../common/main/metacore";
+import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
 import config from '../config';
 
 
@@ -171,6 +171,11 @@ class Metadata extends Component<MetadataProps> {
 										{metadataRow("Creation date", formatDateTime(new Date(productionInfo.dateTime)))}
 									</React.Fragment>
 								}
+								{metadata.specification.documentation.length &&
+									<React.Fragment>
+										{metadataRow("Documentation", documentationLinks(metadata.specification.documentation))}
+									</React.Fragment>
+								}
 							</div>
 							<div className="col-sm-4">
 								{metadata.coverageGeoJson &&
@@ -301,6 +306,15 @@ const creatorLink = (creator: Agent) => {
 		? <a href={creator.self.uri}>{(creator as Organization).name}</a> :
 		<a href={creator.self.uri}>{(creator as Person).firstName} {(creator as Person).lastName}</a>;
 };
+
+const documentationLinks = (documentation: PlainStaticObject[]) => {
+	return documentation.map((doc, i) =>
+		<React.Fragment key={"key_" + i}>
+			<a href={doc.res}>{doc.name}</a>
+			{i != documentation.length - 1 && <br />}
+		</React.Fragment>
+	)
+}
 
 const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
 	if (dataLevel == 0) {
