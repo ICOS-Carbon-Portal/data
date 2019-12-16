@@ -171,7 +171,7 @@ class Metadata extends Component<MetadataProps> {
 										{metadataRow("Creation date", formatDateTime(new Date(productionInfo.dateTime)))}
 									</React.Fragment>
 								}
-								{metadata.specification.documentation.length &&
+								{metadata.specification.documentation && metadata.specification.documentation.length &&
 									<React.Fragment>
 										{metadataRow("Documentation", documentationLinks(metadata.specification.documentation))}
 									</React.Fragment>
