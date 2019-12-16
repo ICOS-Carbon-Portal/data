@@ -70,7 +70,7 @@ export class BackendBatchDownload extends BackendPayload{
 
 type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];
 export class BackendObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTable, readonly cacheSize: number, readonly isDataEndReached: boolean){super();}
+	constructor(readonly objectsTable: ObjectsTable, readonly isDataEndReached: boolean){super();}
 }
 
 export class MiscError extends MiscPayload{

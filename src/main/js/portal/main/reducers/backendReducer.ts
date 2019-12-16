@@ -81,7 +81,6 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 		objCount: getObjCount(state.specTable),
 		pageCount: payload.objectsTable.length,
 		filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterPids),
-		cacheSize: payload.cacheSize,
 		isDataEndReached: payload.isDataEndReached
 	});
 

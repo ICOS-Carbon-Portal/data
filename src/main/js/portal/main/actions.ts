@@ -233,7 +233,7 @@ export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, get
 function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchKnownDataObjects(dobjs).then(result => {
-				dispatch(new Payloads.BackendObjectsFetched(result.rows, result.rows.length, true));
+				dispatch(new Payloads.BackendObjectsFetched(result.rows, true));
 
 				if (cb) dispatch(cb);
 			},
@@ -275,7 +275,7 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 			const dobjs = rows.map(r => r.dobj);
 
 			dispatch(fetchExtendedDataObjInfo(dobjs));
-			dispatch(new Payloads.BackendObjectsFetched(rows, rows.length, true));
+			dispatch(new Payloads.BackendObjectsFetched(rows, true));
 
 		} else if (route === config.ROUTE_METADATA && id) {
 			const hash: Sha256Str | undefined = id.split('/').pop();
@@ -307,16 +307,10 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 				filters
 			};
 
-			interface FetchedDataObj {
-				rows: ThenArg<typeof fetchFilteredDataObjects>['rows'],
-				cacheSize: number,
-				isDataEndReached: boolean
-			}
-
 			dataObjectsFetcher.fetch(options).then(
-				({rows, cacheSize, isDataEndReached}: FetchedDataObj) => {
+				({rows, cacheSize, isDataEndReached}) => {
 					dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-					dispatch(new Payloads.BackendObjectsFetched(rows, cacheSize, isDataEndReached));
+					dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
 				},
 				failWithError(dispatch)
 			).then(() => {

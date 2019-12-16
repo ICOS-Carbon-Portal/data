@@ -5,13 +5,12 @@ interface Props {
 	offset?: number
 	pageCount?: number
 	filtersEnabled?: boolean
-	cacheSize?: number
 	cacheOffset?: number
 	isDataEndReached?: boolean
 }
-type Offset = Required<Pick<Props, 'offset'>>['offset'];
+type Offset = number;
 type FiltersEnabled = Required<Pick<Props, 'filtersEnabled'>>['filtersEnabled'];
-type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'cacheSize' | 'isDataEndReached'>;
+type WithProps = Pick<Props, 'objCount' | 'pageCount' | 'filtersEnabled' | 'isDataEndReached'>;
 
 export default class Paging{
 	private _objCount: number;
@@ -19,17 +18,15 @@ export default class Paging{
 	private _pageCount: number;
 	private _limit: number;
 	private _filtersEnabled: boolean;
-	private _cacheSize: number;
 	private _cacheOffset: number;
 	private _isDataEndReached: boolean;
 
-	constructor({objCount, offset, pageCount, filtersEnabled, cacheSize, cacheOffset, isDataEndReached}: Props){
+	constructor({objCount, offset, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props){
 		this._objCount = objCount;
 		this._offset = offset || 0;
 		this._pageCount = pageCount ?? config.stepsize;
 		this._limit = config.stepsize;
 		this._filtersEnabled = filtersEnabled || false;
-		this._cacheSize = cacheSize || 0;
 		this._cacheOffset = cacheOffset ?? this._offset;
 		this._isDataEndReached = isDataEndReached || false;
 	}
@@ -40,7 +37,6 @@ export default class Paging{
 			offset: this._offset,
 			pageCount: this._pageCount,
 			filtersEnabled: this._filtersEnabled,
-			cacheSize: this._cacheSize,
 			cacheOffset: this._cacheOffset,
 			isDataEndReached: this._isDataEndReached
 		};
@@ -52,9 +48,6 @@ export default class Paging{
 
 	get objCount(){
 		return this._objCount;
-		// return this._filtersEnabled
-		// 	? Math.max(this._cacheOffset + this._cacheSize || 0, this._offset + this._pageCount)
-		// 	: this._objCount;
 	}
 
 	get offset(){
@@ -79,7 +72,6 @@ export default class Paging{
 			offset: offset,
 			pageCount: this._pageCount,
 			filtersEnabled: this._filtersEnabled,
-			cacheSize: this._cacheSize,
 			isDataEndReached: this._isDataEndReached
 		});
 	}
@@ -108,13 +100,12 @@ export default class Paging{
 		} else return this;
 	}
 
-	withObjCount({objCount, pageCount, filtersEnabled, cacheSize, isDataEndReached}: WithProps){
+	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached}: WithProps){
 		return new Paging({
 			objCount,
 			offset: this._offset,
 			pageCount,
 			filtersEnabled,
-			cacheSize,
 			cacheOffset: this._cacheOffset,
 			isDataEndReached: isDataEndReached
 		});
@@ -126,7 +117,6 @@ export default class Paging{
 			offset: this._offset,
 			pageCount: this._pageCount,
 			filtersEnabled,
-			cacheSize: this._cacheSize,
 			isDataEndReached: this._isDataEndReached
 		});
 	}
