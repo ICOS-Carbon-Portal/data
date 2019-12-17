@@ -1,29 +1,31 @@
 // Modelled after Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Storage
 
+import {KeyAnyVal} from "../backend/declarations";
+import {Int, isInt} from "../types";
+
 export default class Storage{
-	constructor(){
-		this.state = {};
-	}
+	private state: KeyAnyVal = {};
 
 	get length(){
+		const t = this.key(2 as Int);
 		return Object.keys(this.state).length;
 	}
 
-	key(n){
-		return Number.isInteger(n) && n >= 0 && n < Object.keys(this.state).length
+	key(n: Int){
+		return isInt(n) && n >= 0 && n < Object.keys(this.state).length
 			? Object.keys(this.state)[n]
 			: null;
 	}
 
-	getItem(key){
+	getItem(key: string){
 		return key in this.state ? this.state[key] : null;
 	}
 
-	setItem(key, val){
+	setItem(key: string, val: any){
 		this.state[key] = val;
 	}
 
-	removeItem(key){
+	removeItem(key: string){
 		delete this.state[key];
 	}
 
