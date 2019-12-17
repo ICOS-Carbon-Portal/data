@@ -60,6 +60,7 @@ class Metadata extends Component<MetadataProps> {
 		const prevVersions = Array.isArray(metadata.previousVersion)
 			? metadata.previousVersion
 			: metadata.previousVersion ? [metadata.previousVersion] : [];
+		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const self = this;
 
 		return (
@@ -103,7 +104,7 @@ class Metadata extends Component<MetadataProps> {
 								{metadata.pid &&
 									metadataRow("PID", <a href={`https://hdl.handle.net/${metadata.pid}`}>{metadata.pid}</a>)
 								}
-								{metadata.specification.project.label && metadataRow("Affiliation", metadata.specification.project.label)}
+								{metadata.specification.project.label && metadataRow(projectLabel, metadata.specification.project.label)}
 								{metadata.specification.self.label && metadataRow("Type", metadata.specification.self.label)}
 								{metadataRow("Level", metadata.specification.dataLevel.toString())}
 								{metadataRow("File name", metadata.fileName)}
