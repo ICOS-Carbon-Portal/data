@@ -16,8 +16,10 @@ export default class CompactSearchResultTableRow extends Component {
 	}
 
 	handleViewMetadata(ev){
-		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey)
+		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey) {
+			ev.preventDefault();
 			this.props.viewMetadata(this.props.objInfo.dobj);
+		}
 	}
 
 	render(){

@@ -201,7 +201,7 @@ const getStateFromHash = (hash: string | undefined = undefined) => {
 	const state = hash === undefined
 		? jsonToState(parseHash(getCurrentHash()))
 		: jsonToState(parseHash(decodeURIComponent(hash)));
-	return extendUrls(state);
+	return extendUrls(state as State);
 };
 
 //No # in the beginning!
@@ -235,21 +235,30 @@ const simplifyState = (state: State) => {
 	});
 };
 
-const jsonToState = (state0: State) => {
-	const state = Object.assign({}, state0);
+type JsonHashState = {
+	route?: Routes
+	filterCategories?: CategFilters
+	filterTemporal?: FilterTemporal
+	tabs?: State['tabs']
+	page?: number
+	preview?: Sha256Str[]
+	id?: UrlStr
+}
+const jsonToState = (state0: JsonHashState) => {
+	const state = defaultState;
 
 	try {
-		state.route = state.route || config.DEFAULT_ROUTE;
-		state.filterCategories = state.filterCategories || {};
-		state.filterTemporal = state.filterTemporal
-			? new FilterTemporal().restore(state.filterTemporal as SerializedFilterTemporal)
+		state.route = state0.route || config.DEFAULT_ROUTE;
+		state.filterCategories = state0.filterCategories || {};
+		state.filterTemporal = state0.filterTemporal
+			? new FilterTemporal().restore(state0.filterTemporal as SerializedFilterTemporal)
 			: new FilterTemporal();
-		state.tabs = state.tabs || {};
-		state.page = state.page || 0;
-		state.preview = new Preview().withPids(state.preview || []);
-		state.id = state.id === undefined
+		state.tabs = state0.tabs || {};
+		state.page = state0.page || 0;
+		state.preview = new Preview().withPids(state0.preview ?? []);
+		state.id = state0.id === undefined
 			? undefined
-			: config.previewIdPrefix[config.envri] + state.id;
+			: config.previewIdPrefix[config.envri] + state0.id;
 	} catch(err) {
 		console.log({state, state0, err});
 		throw new Error("Could not convert json to state");

@@ -9,7 +9,7 @@ import {ActionPayload, PortalPlainAction} from "./reducers/actionpayloads";
 
 const selectSubState = (state: State) => {
 	// What part of state we want to log
-	return {metadata: state.metadata};
+	return {route: state.route};
 };
 const logStoreChange = (currentState: any, nextState: any, select: Function) => {
 	const historyState = history.state ? select(history.state) : undefined;

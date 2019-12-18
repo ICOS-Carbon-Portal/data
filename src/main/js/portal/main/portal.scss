@@ -43,3 +43,15 @@ ul.dashed > li:before {
 .mb-2 {
 	margin-bottom: 0.5rem;
 }
+.cp-link{
+	cursor: pointer;
+	color: #0a96f0;
+	text-decoration: none;
+	background-color: transparent;
+	box-sizing: border-box;
+}
+.cp-link:hover{
+	color: #0769A8;
+	text-decoration: underline;
+	outline: 0;
+}

@@ -2,8 +2,7 @@ import {KeyStrVal} from "../backend/declarations";
 import commonConfig from '../../../common/main/config';
 
 
-const previewTypes = commonConfig.previewTypes;
-type DataType = typeof previewTypes.TIMESERIES | typeof previewTypes.NETCDF | typeof previewTypes.MAPGRAPH;
+type DataType = keyof typeof commonConfig.previewTypes;
 
 export interface DataObject {
 	dobj: string,
@@ -29,7 +28,7 @@ export default class CartItem {
 	readonly _url: string | undefined;
 	private readonly _keyValPairs: KeyStrVal;
 
-	constructor(dataobject: DataObject, type: DataType | undefined, url: string | undefined = undefined){
+	constructor(dataobject: DataObject, type?: DataType, url?: string){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;
 		this._type = type;

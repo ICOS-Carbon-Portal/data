@@ -21,20 +21,20 @@ interface OtherPreviewInfo extends PreviewTypeInfo{
 type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 
 export default class Lookup{
-	readonly table: {[key: string]: PreviewInfo | undefined}
+	readonly table: {[key: string]: PreviewInfo | undefined};
 
 	constructor(specTable: CompositeSpecTable){
-		this.table = {}
+		this.table = {};
 
 		specTable.columnMeta.rows.forEach(({spec, colTitle, valTypeLabel}) => {
 			if(typeof spec === 'string' && typeof colTitle === 'string' && typeof valTypeLabel === 'string'){
 				let defaultInfo: TimeSeriesPreviewInfo = {type: "TIMESERIES", options: []};
 				const currentInfo = this.table[spec];
-				const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo
-				if (info === defaultInfo) this.table[spec] = info
+				const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
+				if (info === defaultInfo) this.table[spec] = info;
 				info.options.push({colTitle, valTypeLabel});
 			}
-		})
+		});
 
 		specTable.basics.rows.forEach(({spec, format}) => {
 			if(typeof spec === 'string' && typeof format === 'string'){

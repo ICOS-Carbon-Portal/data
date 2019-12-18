@@ -1,10 +1,10 @@
-import React, {ChangeEvent, Component, MouseEvent} from 'react';
+import React, {ChangeEvent, Component} from 'react';
 import {distinct, wholeStringRegExp} from '../../utils'
 import config from '../../config';
-import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
+import {State, TsSetting} from "../../models/State";
 import {KeyStrVal, UrlStr} from "../../backend/declarations";
 import CartItem from "../../models/CartItem";
-import Preview from "../../models/Preview";
+import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
 
 
 interface OurProps {
@@ -19,13 +19,6 @@ interface OurProps {
 	setMetadataItem: (id: UrlStr) => void
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
-
-type Option = {
-	colTitle: string
-	valTypeLabel: string
-}
-
-type Item = CartItem & ExtendedDobjInfo[0]
 
 const iFrameBaseUrl = (config.iFrameBaseUrl as KeyStrVal)[config.TIMESERIES];
 
@@ -58,7 +51,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		return this.props.extendedDobjInfo.length === 0 && nextProps.extendedDobjInfo.length > 0;
 	}
 
-	getIFrame(objIds: string[], linking: string, x?: string, y?: string, type?: 'line' | 'scatter', legendLabels?: string){
+	getIFrame(objIds: string, linking: string, x?: string, y?: string, type?: 'line' | 'scatter', legendLabels?: string){
 		const yParam = y ? `&y=${y}` : '';
 		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
 
@@ -72,7 +65,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		const {preview, extendedDobjInfo, iframeSrcChange, tsSettings} = this.props;
 
 		// Add station information
-		const items: Item[] = preview.items.map((item: Item) => {
+		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {
 			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.id);
 			item.station = extendedInfo ? extendedInfo.station : undefined;
 			item.stationId = extendedInfo ? extendedInfo.stationId : undefined;
@@ -82,8 +75,8 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		});
 
 		// Determine if curves should concatenate or overlap
-		const linking: string = items.reduce((acc: string, curr: Item) => {
-			return items.reduce((acc2: string, curr2: Item) => {
+		const linking: string = items.reduce((acc: string, curr: PreviewItem) => {
+			return items.reduce((acc2: string, curr2: PreviewItem) => {
 				if ((curr.id !== curr2.id) &&
 					(curr.station === curr2.station) &&
 					((curr.timeEnd < curr2.timeStart) ||
@@ -95,21 +88,21 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 			}, 'overlap');
 		}, '');
 
-		const allItemsHaveColumnNames = items.every((cur: Item) => !!(cur.columnNames));
+		const allItemsHaveColumnNames = items.every((cur: PreviewItem) => !!(cur.columnNames));
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
 
-		const options: Option[] = filterOptions(allItemsHaveColumnNames
-			? distinct(items.flatMap((item: Item) => item.columnNames ?? []))
+		const options: PreviewOption[] = filterOptions(allItemsHaveColumnNames
+			? distinct(items.flatMap<string>((item: PreviewItem) => item.columnNames ?? []))
 				.map(colName => (
-					preview.options.find((opt: Option) => opt.colTitle === colName) ??
+					preview.options.find((opt: PreviewOption) => opt.colTitle === colName) ??
 					{
-						...preview.options.find((opt: Option) => wholeStringRegExp(opt.colTitle).test(colName)),
+						...preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.colTitle).test(colName)),
 						...{colTitle: colName}
-					}
+					} as PreviewOption
 				))
 			: preview.options);
-		const chartTypeOptions: Option[] = [
+		const chartTypeOptions: PreviewOption[] = [
 			{colTitle: 'scatter', valTypeLabel: 'scatter'},
 			{colTitle: 'line', valTypeLabel: 'line'},
 		];
@@ -170,9 +163,9 @@ type Axes = {
 	yAxis?: string
 	type?: 'line' | 'scatter'
 }
-const getAxes = (options: Option[], preview: Preview, specSettings: TsSetting): Axes => {
+const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSetting): Axes => {
 	const getColName = (colName: string) => {
-		const option = options.find((opt: Option) => opt.colTitle === colName);
+		const option = options.find((opt: PreviewOption) => opt.colTitle === colName);
 		return option ? option.colTitle : undefined;
 	};
 
@@ -185,8 +178,8 @@ const getAxes = (options: Option[], preview: Preview, specSettings: TsSetting): 
 		: {xAxis: undefined, yAxis: undefined, type: undefined};
 };
 
-const filterOptions = (options: Option[]) => {
-	return options.filter((opt: Option) => !opt.colTitle.startsWith('Flag'));
+const filterOptions = (options: PreviewOption[]) => {
+	return options.filter((opt: PreviewOption) => !opt.colTitle.startsWith('Flag'));
 };
 
 type SelectorProps = {
@@ -198,7 +191,7 @@ type SelectorProps = {
 }
 const Selector = (props: SelectorProps) => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
-	const getTxt = (option: Option) => {
+	const getTxt = (option: PreviewOption) => {
 		return option.colTitle === option.valTypeLabel
 			? option.colTitle
 			: `${option.colTitle}—${option.valTypeLabel}`;
@@ -209,13 +202,13 @@ const Selector = (props: SelectorProps) => {
 			<label>{props.label}</label>
 			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
-				{props.options.map((o: Option, i: number) =>
+				{props.options.map((o: PreviewOption, i: number) =>
 					<option value={o.colTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
 			</select>
 		</span>
 	);
 };
 
-const getLegendLabels = (items: Item[]) => {
+const getLegendLabels = (items: PreviewItem[]) => {
 	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight} m Level ${item.item.level}` : '').join(',');
 };

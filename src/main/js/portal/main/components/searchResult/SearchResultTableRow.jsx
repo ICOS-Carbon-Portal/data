@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import CheckBtn from '../buttons/ChechBtn.jsx';
+import CheckBtn from '../buttons/ChechBtn';
 import {isSmallDevice} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
@@ -22,8 +22,10 @@ export default class SimpleObjectTableRow extends Component{
 	}
 
 	handleViewMetadata(ev){
-		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey)
+		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey) {
+			ev.preventDefault();
 			this.props.viewMetadata(this.props.objInfo.dobj);
+		}
 	}
 
 	render(){
