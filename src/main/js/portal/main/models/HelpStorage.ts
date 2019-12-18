@@ -1,27 +1,34 @@
 import config, {placeholders} from '../config';
+import {Int} from "../types";
+import {UrlStr} from "../backend/declarations";
+import {ColNames} from "./CompositeSpecTable";
+
 
 const titles = placeholders[config.envri];
 
-export default class HelpStorage{
-	constructor(storage, visibility){
-		this.storage = storage || initItems;
-		this.visibility = visibility || this.storage.map(_ => false);
+export default class HelpStorage {
+	private readonly storage: Item[];
+	private readonly visibility: boolean[];
+
+	constructor(storage?: Item[], visibility?: boolean[]){
+		this.storage = storage ?? initItems;
+		this.visibility = visibility ?? this.storage.map(_ => false);
 	}
 
 	get serialize(){
 		return Object.assign({}, this);
 	}
 
-	static deserialize(json) {
+	static deserialize(json: HelpStorage) {
 		const storage = json.storage.map(({name, header, main, list}) => new Item(name, header, main, list));
 		return new HelpStorage(storage, json.visibility);
 	}
 
-	has(name){
+	has(name: string){
 		return this.storage.some(item => item.name === name);
 	}
 
-	getHelpItem(name){
+	getHelpItem(name: string){
 		return this.storage.find(item => item.name === name);
 	}
 
@@ -30,17 +37,17 @@ export default class HelpStorage{
 		return this.storage[idx];
 	}
 
-	isActive(name){
+	isActive(name: string){
 		const idx = this.storage.findIndex(item => item.name === name);
 		return this.visibility[idx];
 	}
 
-	shouldFetchList(name){
+	shouldFetchList(name: string){
 		const item = this.getHelpItem(name);
 		return item ? item.shouldFetchList : false;
 	}
 
-	withUpdatedItem(newItem){
+	withUpdatedItem(newItem: Item){
 		let visibility = this.visibility.slice();
 		const storage = this.storage.map((item, idx) => {
 			if (item.name === newItem.name){
@@ -56,8 +63,19 @@ export default class HelpStorage{
 	}
 }
 
+export type HelpStorageListEntry = {
+	label: Int | string
+	comment: string
+	webpage?: UrlStr
+}
+type ListEntryParsed = {
+	lbl: Int | string
+	txt: string
+	webpage?: UrlStr
+}
+type HelpItemName = ColNames | "preview"
 export class Item {
-	constructor(name, header, main, list){
+	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: HelpStorageListEntry[] | ListEntryParsed[]){
 		// list === undefined -> Never show list
 		// list === [] -> Fetch list from backend when requested
 		this.name = name;
@@ -70,12 +88,12 @@ export class Item {
 		return this.list !== undefined && this.list.length === 0;
 	}
 
-	withList(list){
+	withList(list: HelpStorageListEntry[]){
 		return new Item(this.name, this.header, this.main, parseResourceInfo(list));
 	}
 }
 
-const parseResourceInfo = resourceInfo => {
+const parseResourceInfo = (resourceInfo: HelpStorageListEntry[]): ListEntryParsed[] => {
 	return resourceInfo.map(ri => {
 		return {
 			lbl: ri.label,
@@ -91,7 +109,7 @@ const projectDescr = envri === 'SITES'
 	? 'SITES Data Portal stores data from the following projects:'
 	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
 
-const initItems = [
+const initItems: Item[] = [
 
 	new Item('project', titles.project, projectDescr, []),
 
@@ -113,48 +131,48 @@ const initItems = [
 		envri === 'SITES'
 			? parseResourceInfo([
 				{
-					label: 0,
+					label: 0 as Int,
 					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
 						' subsequent processing. Stored internally but not distributed by the Data Portal.Data are in physical units either directly provided' +
 						' by the instruments or converted from engineer units.'
 				},
 				{
-					label: 1,
+					label: 1 as Int,
 					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are' +
 						' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of' +
 						' intended for internal use  and normally not distributed by the Data Portal.'
 				},
 				{
-					label: 2,
+					label: 2 as Int,
 					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,' +
 						' and within SITES community agreed, spatial and temporal output units and resolution. Distributed by the Data Portal.'
 				},
 				{
-					label: 3,
+					label: 3 as Int,
 					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
 						' SITES L1 or L2 data  Distributed by the Data Portal.'
 				}
 			])
 			: parseResourceInfo([
 				{
-					label: 0,
+					label: 0 as Int,
 					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
 						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				},
 				{
-					label: 1,
+					label: 1 as Int,
 					comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				},
 				{
-					label: 2,
+					label: 2 as Int,
 					comment: 'The final quality checked ICOS RI data set, published by the CFs, to be distributed through the Carbon Portal. This level is' +
 						' the ICOS-data product and free available for users.',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				},
 				{
-					label: 3,
+					label: 3 as Int,
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				}

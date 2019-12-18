@@ -20,7 +20,7 @@ import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {PortalThunkAction, PortalDispatch} from "./store";
 import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
-import {Item} from "./models/HelpStorage";
+import {HelpStorageListEntry, Item} from "./models/HelpStorage";
 import FilterTemporal from "./models/FilterTemporal";
 import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "./models/FilterRequest";
 import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
@@ -28,6 +28,7 @@ import Paging from "./models/Paging";
 import * as Payloads from "./reducers/actionpayloads";
 import {Value} from "./models/SpecTable";
 import {FiltersTemporal, FiltersUpdatePids} from "./reducers/actionpayloads";
+import {Int} from "./types";
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -524,11 +525,17 @@ export function getResourceHelpInfo(helpItem: Item): PortalThunkAction<void> {
 		if (helpItem.shouldFetchList) {
 			const {specTable} = getState();
 			const uriList = specTable
-				.getAllDistinctAvailableColValues(helpItem.name)
+				.getAllDistinctAvailableColValues(helpItem.name as ColNames)
 				.filter(uri => uri);
 
 			if (uriList.length) {
-				fetchResourceHelpInfo(uriList).then(resourceInfo => {
+				fetchResourceHelpInfo(uriList).then(resourceInfoRaw => {
+					// The request from backend contains 'uri' since a Query requires at least one mandatory field
+					const resourceInfo: HelpStorageListEntry[] = resourceInfoRaw.map(r => ({
+						label: r.label as string | Int,
+						comment: r.comment as string,
+						webpage: r.webpage as UrlStr | undefined
+					}));
 					dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
 				}, failWithError(dispatch));
 			} else {
