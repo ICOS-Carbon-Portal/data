@@ -220,7 +220,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 				? `order by ?${sorting.varName}`
 				: `order by desc(?${sorting.varName})`
 			)
-		: 'order by desc(?submTime)';
+		: '';
 
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
