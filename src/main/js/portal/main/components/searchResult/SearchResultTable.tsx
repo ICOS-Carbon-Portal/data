@@ -15,6 +15,7 @@ const dropdownLookup = {
 	size: 'File size',
 	timeStart: 'Data start date',
 	timeEnd: 'Data end date',
+	submTime: 'Submission time'
 };
 
 type OurProps = ReducedProps['searchResultTable']

@@ -134,8 +134,8 @@ export const defaultState: State = {
 	formatToRdfGraph: {},
 	objectsTable: [],
 	sorting: {
-		varName: undefined,
-		ascending: true
+		varName: "submTime",
+		ascending: false
 	},
 	paging: new Paging({objCount: 0}),
 	cart: new Cart(),
