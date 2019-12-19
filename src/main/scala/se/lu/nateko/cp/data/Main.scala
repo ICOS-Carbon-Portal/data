@@ -21,6 +21,7 @@ import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
+import se.lu.nateko.cp.meta.core.data.Envri
 
 object Main extends App {
 
@@ -54,7 +55,7 @@ object Main extends App {
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val downloadRoute = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore).route
+	val downloadRouting = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore)
 	val integrityRoute = new IntegrityRouting(integrityService).route
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
@@ -73,11 +74,14 @@ object Main extends App {
 
 	val route = handleExceptions(exceptionHandler){
 		pathEndOrSingleSlash{
-			redirect("/portal/", StatusCodes.Found)
+			downloadRouting.extractEnvri{envri =>
+				val urlHash = if(envri == Envri.ICOS) """#{"filterCategories"%3A{"project"%3A["icos"]%2C"level"%3A[2]}}""" else ""
+				redirect(s"/portal/$urlHash", StatusCodes.Found)
+			}
 		} ~
 		netcdfRoute ~
 		legacyNetcdfRoute ~
-		downloadRoute ~
+		downloadRouting.route ~
 		uploadRoute ~
 		tabularRoute ~
 		staticRoute ~
