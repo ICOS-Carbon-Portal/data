@@ -194,8 +194,10 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private def docAccessRoute(doc: DocObject): Route = {
 		val file = uploadService.getFile(doc)
-		if (file.exists) getFromFile(file, getContentType(doc.fileName))
-		else complete(StatusCodes.NotFound -> "Contents of this document are not found on the server.")
+		if (file.exists) respondWithAttachment(doc.fileName){
+			getFromFile(file, getContentType(doc.fileName))
+		} else
+			complete(StatusCodes.NotFound -> "Contents of this document are not found on the server.")
 	}
 
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
