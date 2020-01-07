@@ -16,6 +16,7 @@ object GeoFeaturePointSink {
 	val DefaultBudget = 20
 
 	def sink(implicit ctxt: ExecutionContext): Sink[Point, Future[GeoFeature]] = Flow.apply[Point]
+		.filter(_.isValid)
 		.alsoToMat(trackSink())(Keep.right)
 		.toMat(polygonSink()){(trackFut, hullFut) =>
 			trackFut.flatMap{trackOpt =>
@@ -24,7 +25,7 @@ object GeoFeaturePointSink {
 		}
 
 
-	def trackSink(
+	private def trackSink(
 			budget: Int = DefaultBudget,
 			maxErrorFactor: Double = 0.05
 	)(implicit ctxt: ExecutionContext): Sink[Point, Future[Option[GeoTrack]]] = StatefulInitSink(() => {
@@ -39,7 +40,7 @@ object GeoFeaturePointSink {
 	}).mapMaterializedValue(_.flatten.map(PointReducer.getCoverage(maxErrorFactor)))
 
 
-	def polygonSink(
+	private def polygonSink(
 			budget: Int = DefaultBudget,
 			hardBudget: Int = 100,
 			batchSize: Int = 40,

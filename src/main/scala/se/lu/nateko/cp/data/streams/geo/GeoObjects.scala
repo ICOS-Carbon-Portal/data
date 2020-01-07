@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.streams.geo
 
 
 class BBox(var left: Point, var top: Point, var right: Point, var bottom: Point){
-	def this() = this(new Point(1000, 0), new Point(0, -1000), new Point(-1000, 0), new Point(0, 1000))
+	def this() = this(new Point(Double.MaxValue, 0), new Point(0, -Double.MinValue), new Point(Double.MinValue, 0), new Point(0, Double.MaxValue))
 
 	def updateWith(lon: Double, lat: Double): Unit = {
 		if(lon < left.lon) left = new Point(lon, lat)
@@ -28,6 +28,8 @@ case class Point(lon: Double, lat: Double){
 	def sameAs(lon2: Double, lat2: Double): Boolean = lon2 == lon && lat2 == lat
 
 	override def toString = s"($lon, $lat)"
+
+	def isValid: Boolean = !(lon.isNaN || lat.isNaN || lon > 180 || lon < -180 || lat > 90 | lat < -90)
 }
 
 class GeoVector(val dlon: Double, val dlat: Double){
