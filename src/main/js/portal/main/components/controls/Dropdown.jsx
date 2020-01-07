@@ -61,11 +61,16 @@ export default class Dropdown extends Component{
 				}
 
 				<ul className="dropdown-menu">{
-					Object.keys(lookup).map((key, idx) =>
-						<li key={'ddl' + idx}>
-							<a onClick={this.onDropDownItemClick.bind(this, key)} style={{cursor:'pointer'}}>{lookup[key]}</a>
-						</li>
-					)
+					Object.keys(lookup).map((key, idx) => {
+						const glyphCls = key == selectedItemKey ? 'glyphicon glyphicon-sort' : '';
+						return (
+							<li key={'ddl' + idx}>
+								<a onClick={this.onDropDownItemClick.bind(this, key)} style={{ cursor: 'pointer' }}>
+									<span className={glyphCls} style={{ display: 'inline-block', width: 14, margin: '0 5px 0 -5px' }}/> {lookup[key]}
+								</a>
+							</li>
+						);
+					})
 				}</ul>
 			</span>
 		);
