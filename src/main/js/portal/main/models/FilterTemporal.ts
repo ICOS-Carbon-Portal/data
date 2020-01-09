@@ -165,7 +165,8 @@ export class FromToDates {
 	}
 
 	get fromDateStr(){
-		return this._from ? this._from.toLocaleDateString('se-SE') : undefined;
+		// Jasmine test cannot handle toLocaleDateString('se-SE')
+		return this._from ? this._from.toISOString().substr(0, 10) : undefined;
 	}
 
 	get fromDateTimeStr(){
@@ -177,7 +178,8 @@ export class FromToDates {
 	}
 
 	get toDateStr(){
-		return this._to ? this._to.toLocaleDateString('se-SE') : undefined;
+		// Jasmine test cannot handle toLocaleDateString('se-SE')
+		return this._to ? this._to.toISOString().substr(0, 10) : undefined;
 	}
 
 	get toDateTimeStr(){

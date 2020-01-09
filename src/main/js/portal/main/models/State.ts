@@ -238,27 +238,23 @@ const simplifyState = (state: State) => {
 type JsonHashState = {
 	route?: Routes
 	filterCategories?: CategFilters
-	filterTemporal?: FilterTemporal
+	filterTemporal?: SerializedFilterTemporal
 	tabs?: State['tabs']
 	page?: number
 	preview?: Sha256Str[]
 	id?: UrlStr
 }
 const jsonToState = (state0: JsonHashState) => {
-	const state = defaultState;
+	const state = {...defaultState, ...state0};
 
 	try {
-		state.route = state0.route || config.DEFAULT_ROUTE;
-		state.filterCategories = state0.filterCategories || {};
-		state.filterTemporal = state0.filterTemporal
-			? new FilterTemporal().restore(state0.filterTemporal as SerializedFilterTemporal)
-			: new FilterTemporal();
-		state.tabs = state0.tabs || {};
-		state.page = state0.page || 0;
+		if (state0.filterTemporal){
+			state.filterTemporal = new FilterTemporal().restore(state0.filterTemporal);
+		}
 		state.preview = new Preview().withPids(state0.preview ?? []);
-		state.id = state0.id === undefined
-			? undefined
-			: config.previewIdPrefix[config.envri] + state0.id;
+		if (state0.id){
+			state.id = config.previewIdPrefix[config.envri] + state0.id;
+		}
 	} catch(err) {
 		console.log({state, state0, err});
 		throw new Error("Could not convert json to state");

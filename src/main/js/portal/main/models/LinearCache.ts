@@ -5,10 +5,10 @@ type Rows = ThenArg<typeof fetchFilteredDataObjects>["rows"];
 type Fetcher = (offset: number, limit: number) => Promise<Rows>
 
 export default class LinearCache{
-	private cache: Rows = [];
+	public cache: Rows = [];
 	public isDataEndReached = false;
 
-	constructor(private readonly fetcher: Fetcher, private readonly startLimit: number, private offset: number){}
+	constructor(private readonly fetcher: Fetcher, private readonly startLimit: number, public offset: number){}
 
 	get length(){
 		return this.cache.length;
@@ -65,7 +65,7 @@ export default class LinearCache{
 			} else {
 				throw new Error("No match in fetcher");
 			}
-
+			// console.log({cache: this.cache, offset: this.offset, data: fromCache(), length: this.length, isDataEndReached: this.isDataEndReached});
 			return fromCache();
 		});
 	}

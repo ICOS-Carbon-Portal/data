@@ -6,7 +6,7 @@ import deepEqual from 'deep-equal';
 import CompositeSpecTable from "../src/main/models/CompositeSpecTable";
 
 
-const hash = '{"filterCategories"%3A{"level"%3A[2]%2C"theme"%3A["atmosphere"]%2C"type"%3A["atcCo2L2DataObject"]}%2C"filterTemporal"%3A{"df"%3A"1960-01-01"%2C"dt"%3A"2019-01-11"%2C"sf"%3A"1960-01-01"%2C"st"%3A"2019-01-01"}%2C"filterPids"%3A["-xQ2wgAt-ZjdGaCEJnKQIEIu"]%2C"page"%3A1}';
+const hash = encodeURIComponent('{"filterCategories":{"level":[2],"theme":["atmosphere"],"type":["atcCo2L2DataObject"]},"filterTemporal":{"df":"1960-01-01","dt":"2019-01-11","sf":"1960-01-01","st":"2019-01-01"},"filterPids":["-xQ2wgAt-ZjdGaCEJnKQIEIu"],"page":1}');
 
 flatMap.shim();
 
