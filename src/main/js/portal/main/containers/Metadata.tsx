@@ -2,15 +2,18 @@ import React, { Component, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
-import { formatBytes, formatDate, formatDateTime } from '../utils';
+import { formatDate } from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
+import { L2OrLessSpecificMeta, L3SpecificMeta, PlainStaticObject} from "../../../common/main/metacore";
 import config from '../config';
+import AboutSection from '../components/metadata/AboutSection';
+import AcquisitionSection from '../components/metadata/AcquisitionSection';
+import ProductionSection from '../components/metadata/ProductionSection';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -50,12 +53,10 @@ class Metadata extends Component<MetadataProps> {
 		const specInfo = metadata.specificInfo
 
 		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
-			? (specInfo as L2OrLessSpecificMeta).acquisition
-			: undefined;
+			&& (specInfo as L2OrLessSpecificMeta).acquisition;
 		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
 			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
-		const station = (specInfo as L2OrLessSpecificMeta).acquisition && (specInfo as L2OrLessSpecificMeta).acquisition.station;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
 		const prevVersions = Array.isArray(metadata.previousVersion)
 			? metadata.previousVersion
@@ -71,14 +72,17 @@ class Metadata extends Component<MetadataProps> {
 							<div className="alert alert-warning">Upload not complete, data is missing.</div>
 						}
 						{metadata.nextVersion &&
-							<div className="alert alert-warning">A newer version of this data is available: <a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">View next version</a></div>
+							<div className="alert alert-warning">
+								A newer version of this data is available:
+								<a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">
+									View next version
+								</a>
+							</div>
 						}
 						<div className="row">
 							<div className="col-sm-8">
 								<div className="row">
-									<div className="col-md-2">
-									</div>
-									<div className="col-md-10">
+									<div className="col-md-10 col-md-offset-2">
 										<CartBtn
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
 											checkedObjects={[metadata.id]}
@@ -95,42 +99,13 @@ class Metadata extends Component<MetadataProps> {
 										/>
 									</div>
 								</div>
-								{(specInfo as L3SpecificMeta).description &&
-									metadataRow("Description", (specInfo as L3SpecificMeta).description!, true)
-								}
-								{metadata.doi &&
-									metadataRow("DOI", doiLink(metadata.doi))
-								}
-								{metadata.pid &&
-									metadataRow("PID", <a href={`https://hdl.handle.net/${metadata.pid}`}>{metadata.pid}</a>)
-								}
-								{metadata.specification.project.label && metadataRow(projectLabel, metadata.specification.project.label)}
-								{metadata.specification.self.label && metadataRow("Type", metadata.specification.self.label)}
-								{metadataRow("Level", metadata.specification.dataLevel.toString())}
-								{metadataRow("File name", metadata.fileName)}
-								{metadata.size !== undefined && metadataRow("Size", formatBytes(metadata.size, 0))}
-								<br />
+
+								<AboutSection metadata={metadata} projectLabel={projectLabel}/>
+
 								{acquisition &&
-									<React.Fragment>
-										{station && metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
-										{station && station.responsibleOrganization &&
-											metadataRow("Responsible organization", <a href={station.responsibleOrganization.self.uri}>{station.responsibleOrganization.name}</a>)
-										}
-										{acquisition.site && acquisition.site.ecosystem.label &&
-											metadataRow("Ecosystem", acquisition.site.ecosystem.label)
-										}
-										{acquisition.interval && metadataRow("Time coverage", `${formatDateTime(new Date(acquisition.interval.start))}
-										\u2013
-										${formatDateTime(new Date(acquisition.interval.stop))}`)}
-										{acquisition.instrument &&
-											instrumentRow(acquisition.instrument)
-										}
-										{acquisition.samplingHeight &&
-											metadataRow("Sampling height", `${acquisition.samplingHeight} m`)
-										}
-										<br />
-									</React.Fragment>
+									<AcquisitionSection acquisition={acquisition}/>
 								}
+
 								{metadata.citationString &&
 									<React.Fragment>
 										{metadataRow("Citation", metadata.citationString)}
@@ -148,29 +123,7 @@ class Metadata extends Component<MetadataProps> {
 								)}
 								{prevVersions.length > 0 && <br />}
 								{productionInfo &&
-									<React.Fragment>
-										{metadataRow("Made by", creatorLink(productionInfo.creator))}
-										{productionInfo.contributors.length > 0 &&
-											metadataRow("Contributors", productionInfo.contributors.map((contributor, index) => {
-												const name = (contributor as Organization).name
-													? (contributor as Organization).name
-													: `${(contributor as Person).firstName} ${(contributor as Person).lastName}`;
-
-												return(
-													<span key={contributor.self.uri}>
-														<a href={contributor.self.uri}>
-															{name}
-														</a>
-														{index != productionInfo.contributors.length - 1 && ', '}
-													</span>);
-											}))
-										}
-										{productionInfo.host &&
-											metadataRow("Host organization", <a href={productionInfo.host.self.uri}>{productionInfo.host.name}</a>)
-										}
-										{productionInfo.comment && metadataRow("Comment", productionInfo.comment)}
-										{metadataRow("Creation date", formatDateTime(new Date(productionInfo.dateTime)))}
-									</React.Fragment>
+									<ProductionSection production={productionInfo} />
 								}
 								{metadata.specification.documentation && metadata.specification.documentation.length > 0 &&
 									<React.Fragment>
@@ -247,7 +200,7 @@ const areDatesDifferent = (date1: Date, date2: Date) => {
 	return date1.setUTCHours(0, 0, 0, 0) !== date2.setUTCHours(0, 0, 0, 0);
 };
 
-const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {
+export const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {
 	const text = linkify && typeof value === "string"
 		? <LinkifyText text={value} />
 		: value;
@@ -257,30 +210,6 @@ const metadataRow = (label: string, value: string | ReactElement | ReactElement[
 			<div className="col-md-2"><label>{label}</label></div>
 			<div className="col-md-10 mb-2">{text}</div>
 		</div>
-	);
-};
-
-const doiLink = (doi: string) => {
-	return (
-		<span>
-			<a href={`https://doi.org/${doi}`}>{doi}</a>&nbsp;
-			(<a target="_blank" href={`https://search.datacite.org/works/${doi}`}>metadata</a>)
-		</span>
-	);
-};
-
-const instrumentRow = (instruments: UrlStr  | UrlStr[]) => {
-	return(
-		Array.isArray(instruments)
-			? metadataRow("Instruments", instruments.map((instrument: UrlStr, index) => {
-				return(
-					<span key={instrument}>
-						<a href={instrument}>{instrument.split('/').pop()}</a>
-						{index != instruments.length - 1 && ', '}
-					</span>
-				);
-			}))
-			: metadataRow("Instrument", <a href={instruments}>{instruments.split('/').pop()}</a>)
 	);
 };
 
@@ -300,12 +229,6 @@ const map = (coverage: string, icon?: string) => {
 	return (
 		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
 	);
-};
-
-const creatorLink = (creator: Agent) => {
-	return (creator as Organization).name
-		? <a href={creator.self.uri}>{(creator as Organization).name}</a> :
-		<a href={creator.self.uri}>{(creator as Person).firstName} {(creator as Person).lastName}</a>;
 };
 
 const documentationLinks = (documentation: PlainStaticObject[]) => {
