@@ -16,7 +16,7 @@ import {
 	originsColNames
 } from "./sparqlQueries";
 import {ObjInfoQuery} from "./sparqlQueries";
-import {Value} from "./models/SpecTable";
+import {Filter, Value} from "./models/SpecTable";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -107,7 +107,12 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 };
 
 export function fetchFilteredDataObjects(options: Options){
-	return fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
+	return Filter.allowsNothing(options.specs)
+		? Promise.resolve({
+			columnNames: [],
+			rows: []
+		})
+		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
 }
 
 const fetchAndParseDataObjects = (query: ObjInfoQuery) => {

@@ -65,7 +65,7 @@ export default class LinearCache{
 			} else {
 				throw new Error("No match in fetcher");
 			}
-			// console.log({cache: this.cache, offset: this.offset, data: fromCache(), length: this.length, isDataEndReached: this.isDataEndReached});
+
 			return fromCache();
 		});
 	}

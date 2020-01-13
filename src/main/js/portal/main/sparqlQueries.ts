@@ -11,7 +11,7 @@ import {
 	isDeprecatedFilter,
 	DeprecatedFilterRequest
 } from './models/FilterRequest';
-import {Value} from "./models/SpecTable";
+import {Filter, Value} from "./models/SpecTable";
 
 
 const config = Object.assign(commonConfig, localConfig);
@@ -173,26 +173,23 @@ ${standardDobjPropsDef}
 
 export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 
-	function isEmpty(arr: Value[]){return !arr || !arr.length;}
+	function isEmpty(arr: Filter) {return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, rdfGraphs, filters} = options;
-
+	const {specs, stations, submitters, sorting, paging, filters} = options;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
 		? ''
 		: `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 
-	const fromClause = isEmpty(rdfGraphs) ? '' : 'FROM <' + rdfGraphs.join('>\nFROM <') + '>\n';
-
 	const specsValues = isEmpty(specs)
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: `VALUES ?${SPECCOL} {<` + specs.join('> <') + '>}';
+		: `VALUES ?${SPECCOL} {<${ (specs as Value[]).join('> <') }>}`;
 
 	const submitterSearch = isEmpty(submitters) ? ''
-		: `VALUES ?submitter {<${submitters.join('> <')}>}
+		: `VALUES ?submitter {<${(submitters as Value[]).join('> <')}>}
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
@@ -204,16 +201,15 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 			'\n' + dobjStation + '?station .';
 	}
 
-	const stationSearch = isEmpty(stations) ? '' : stations.some((s: any) => !s)
-		? stations.length === 1
+	const stationSearch = isEmpty(stations) ? '' : (stations as Value[]).some((s: any) => !s)
+		? (stations as Value[]).length === 1
 			? noStationFilter
 			: `{{
 					${noStationFilter}
 				} UNION {
-					${stationsFilter(stations.filter((s: any) => !!s))}
+					${stationsFilter((stations as Value[]).filter((s: any) => !!s))}
 				}}`
-		: stationsFilter(stations);
-
+		: stationsFilter((stations as Value[]));
 	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
@@ -226,7 +222,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
-${fromClause}where {
+where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	${stationSearch}

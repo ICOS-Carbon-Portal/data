@@ -30,7 +30,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 			});
 		}
 
-		const filterUris = specTable.getFilter(name);
+		const filterUris = specTable.getFilter(name) ?? [];
 		const data = specTable
 			? specTable.getDistinctAvailableColValues(name)
 				.filter(v => v !== undefined)
@@ -99,9 +99,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 		const {specTable, filtersReset, filterTemporal} = this.props;
 		const colNames = specTable.names.filter(name => !!(placeholders[config.envri] as KeyStrVal)[name]);
 		const activeFilters = colNames.map(colName => specTable.getFilter(colName));
-		const hasSpecFilters = !!activeFilters.reduce((acc, curr) => {
-			return acc + curr.length;
-		}, 0);
+		const hasSpecFilters = activeFilters.some(f => f !== null);
 		const resetBtnEnabled = hasSpecFilters || filterTemporal.hasFilter;
 		const availableFilters = filters[config.envri];
 

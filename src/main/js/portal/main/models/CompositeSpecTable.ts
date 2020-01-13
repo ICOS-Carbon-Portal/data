@@ -4,7 +4,7 @@ import {
 	originsColNames,
 	SPECCOL
 } from '../sparqlQueries';
-import SpecTable, {Col, Filters, Value} from "./SpecTable";
+import SpecTable, {Filters, Value, Filter} from "./SpecTable";
 import {KeyStrVal, ThenArg} from "../backend/declarations";
 import {fetchAllSpecTables} from "../backend";
 import {CategoryType} from "../config";
@@ -52,10 +52,10 @@ export default class CompositeSpecTable{
 
 	static deserialize(tables: CompositeSpecTable | JsonCompositeSpecTable) {
 		const {basics, columnMeta, origins} = tables;
-		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters as Filters<BasicsColNames>)
-		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>)
-		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters as Filters<OriginsColNames>)
-		const extraFilter = getExtraFilter(basicsTbl.specsCount, originsTbl)
+		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters as Filters<BasicsColNames>);
+		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>);
+		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters as Filters<OriginsColNames>);
+		const extraFilter = getExtraFilter(basicsTbl.specsCount, originsTbl);
 
 		return new CompositeSpecTable(basicsTbl.withExtraSpecFilter(extraFilter), columnMetaTbl.withExtraSpecFilter(extraFilter), originsTbl)
 	}
@@ -95,26 +95,24 @@ export default class CompositeSpecTable{
 		return this.getTable(this.findTableName(columnName)!);
 	}
 
-	getSpeciesFilter(targetTableName: TableNames | null, getAllIfAllAllowed = false){
+	getSpeciesFilter(targetTableName: TableNames | null, getAllIfAllAllowed = false): Filter{
 		const filters = this.tableNames
 			.filter(tname => tname !== targetTableName) //only apply other tables' species filters to each table
 			.map(tname => this.getTable(tname).speciesFilter)
-			.filter(f => f.length); //empty means "all allowed"
+			.filter(f => f !== null); //null means "all allowed"
+
 		return filters.length
-			? filters.reduce((acc, curr) => { //AND-op on species filters
-				const currSet = new Set(curr);
-				return acc.filter(elem => currSet.has(elem));
-			})
+			? Filter.and(filters)
 			: getAllIfAllAllowed
 				? this.basics.getDistinctAvailableColValues(SPECCOL)
-				: [];
+				: null;
 	}
 
-	withFilter(colName: ColNames, values: Value[]){
+	withFilter(colName: ColNames, filter: Filter){
 		const tableName = this.findTableName(colName)!;
 		let tables = tableNames.map(tName => {
 			return tName === tableName
-				? this.getTable(tName).withFilter(colName, values)
+				? this.getTable(tName).withFilter(colName, filter)
 				: this.getTable(tName)
 		});
 
@@ -134,7 +132,7 @@ export default class CompositeSpecTable{
 
 	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins'], useExtraFilter: boolean){
 		const newOrigins = new SpecTable<OriginsColNames>(origins.colNames, origins.rows, this.origins.filters);
-		const extraFilter = useExtraFilter ? getExtraFilter(this.basics.specsCount, newOrigins) : [];
+		const extraFilter = useExtraFilter ? getExtraFilter(this.basics.specsCount, newOrigins) : null;
 
 		return new CompositeSpecTable(
 			this.basics.withExtraSpecFilter(extraFilter),
@@ -143,7 +141,7 @@ export default class CompositeSpecTable{
 		);
 	}
 
-	getFilter(colName: ColNames): Value[] {
+	getFilter(colName: ColNames): Filter {
 		return this.findTable(colName).getFilter(colName);
 	}
 
@@ -151,7 +149,7 @@ export default class CompositeSpecTable{
 		return this.findTable(colName).getDistinctAvailableColValues(colName);
 	}
 
-	getAllDistinctAvailableColValues(colName: ColNames){
+	getAllDistinctAvailableColValues(colName: ColNames): Value[]{
 		const table = this.findTable(colName);
 		return table
 			? table.getAllColValues(colName)
@@ -179,7 +177,7 @@ export default class CompositeSpecTable{
 		} else {
 			const rows = this.findTable(colName).rows;
 
-			return columnValues.map(val => {
+			return columnValues === null ? null : columnValues.map(val => {
 				const row = rows.find((row) => val === row[colName]);
 				return row ? row[labelName] : undefined;
 			});
@@ -187,7 +185,7 @@ export default class CompositeSpecTable{
 	}
 }
 
-function getExtraFilter(specsCount: number, origins: SpecTable<OriginsColNames>): Value[]{
+function getExtraFilter(specsCount: number, origins: SpecTable<OriginsColNames>): Filter{
 	const originSpecs = origins.getAllColValues(SPECCOL);
-	return originSpecs.length < specsCount ? originSpecs : [];
+	return originSpecs.length < specsCount ? originSpecs : null;
 }

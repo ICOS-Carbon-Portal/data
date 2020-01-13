@@ -2,18 +2,33 @@ import {SPECCOL} from '../sparqlQueries';
 import {distinct} from '../utils'
 
 export type Value = number | string | undefined;
+export type Filter = null | Array<Value>;
 export type Col<T extends string> = T | typeof SPECCOL;
-export type Filters<T extends string> = {[key in Col<T>]?: Value[]};
+export type Filters<T extends string> = {[key in Col<T>]?: Filter};
 export type Row<T extends string> = {[key in Col<T>]: Value};
 
 function isNonSpecCol<T extends string>(col: Col<T>): col is T{
 	return col !== SPECCOL;
 }
 
+export const Filter = {
+	and: function (fs: Filter[]): Filter {
+		return fs.reduce((acc, curr) => {
+			if(acc === null) return curr;
+			if(curr === null) return acc;
+			const soFar = new Set(acc);
+			return curr.filter(v => soFar.has(v));
+		}, null);
+	},
+	allowsNothing: function(f: Filter): boolean {
+		return f !== null && f.length === 0;
+	}
+};
+
 export default class SpecTable<T extends string = string>{
 	readonly specsCount: number;
 
-	constructor(readonly colNames: Col<T>[], readonly rows: Row<T>[], readonly filters: Filters<T>, readonly extraSpecFilter: Value[] = []){
+	constructor(readonly colNames: Col<T>[], readonly rows: Row<T>[], readonly filters: Filters<T>, readonly extraSpecFilter: Filter = null){
 		this.specsCount = distinct(rows.map(row => row[SPECCOL])).length;
 	}
 
@@ -30,25 +45,25 @@ export default class SpecTable<T extends string = string>{
 		return this.colNames.filter(isNonSpecCol);
 	}
 
-	withExtraSpecFilter(vals: Value[]){
-		return new SpecTable<T>(this.colNames, this.rows, this.filters, vals);
+	withExtraSpecFilter(extraFilter: Filter){
+		return new SpecTable<T>(this.colNames, this.rows, this.filters, extraFilter);
 	}
 
-	withFilter(colName: Col<T>, values: Value[]): SpecTable<T>{
+	withFilter(colName: Col<T>, filter: Filter): SpecTable<T>{
 		if(!this.colNames.includes(colName)) return this;
-		const newFilters = Object.assign({}, this.filters, {[colName]: values});
+		const newFilters = Object.assign({}, this.filters, {[colName]: filter});
 		return new SpecTable(this.colNames, this.rows, newFilters, this.extraSpecFilter);
 	}
 
-	getFilter(colName: Col<T>): Value[]{
-		return this.filters[colName] ?? [];
+	getFilter(colName: Col<T>): Filter {
+		return this.filters[colName] ?? null;
 	}
 
 	withResetFilters(){
 		return new SpecTable(this.colNames, this.rows, {});
 	}
 
-	getDistinctAvailableColValues(colName: Col<T>): Value[]{
+	getDistinctAvailableColValues(colName: Col<T>): Value[] {
 		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}
 
@@ -58,7 +73,7 @@ export default class SpecTable<T extends string = string>{
 
 	rowsFilteredByOthers(excludedColumn: Col<T>){
 		const filters = Object.assign({}, this.filters);
-		filters[excludedColumn] = [];
+		filters[excludedColumn] = null;
 		return this.filterRows(filters);
 	}
 
@@ -68,28 +83,29 @@ export default class SpecTable<T extends string = string>{
 
 	private filterRows(filters: Filters<T>): Row<T>[]{
 		const colNames = Object.keys(filters) as T[];
+		const esFilter = this.extraSpecFilter;
 		const extraFilter: (row: Row<T>) => boolean =
-			this.extraSpecFilter.length > 0
-				? row => this.extraSpecFilter.includes(row[SPECCOL])
+			esFilter != null
+				? row => esFilter.includes(row[SPECCOL])
 				: _ => true;
 
 		return this.rows.filter(row => {
 			return colNames.every(colName => {
-				const filter: Value[] = filters[colName] ?? [];
-				return !filter.length || filter.includes(row[colName]);
+				const filter: Filter = filters[colName] ?? null;
+				return filter == null || filter.includes(row[colName]);
 			}) && extraFilter(row);
 		});
 	}
 
-	get speciesFilter(): Value[]{
-		if(this.names.every(name => this.getFilter(name).length === 0)) return [];
+	get speciesFilter(): Filter{
+		if(this.names.every(name => this.getFilter(name) === null)) return null;
 		return this.getDistinctAvailableColValues(SPECCOL);
 	}
 
-	getColumnValuesFilter(colName: Col<T>): Value[]{
-		return this.colNames.some(name => this.getFilter(name).length !== 0)
+	getColumnValuesFilter(colName: Col<T>): Filter{
+		return this.colNames.some(name => this.getFilter(name) !== null)
 			? this.getDistinctColValues(colName)
-			: [];
+			: null;
 	}
 
 	getAllColValues(colName: Col<T>): Value[]{

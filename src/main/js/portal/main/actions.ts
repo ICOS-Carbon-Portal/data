@@ -26,7 +26,7 @@ import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilter
 import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import * as Payloads from "./reducers/actionpayloads";
-import {Value} from "./models/SpecTable";
+import {Filter, Value} from "./models/SpecTable";
 import {FiltersTemporal, FiltersUpdatePids} from "./reducers/actionpayloads";
 import {Int} from "./types";
 
@@ -294,7 +294,6 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 
 		} else {
 			const {specTable, sorting, paging} = state;
-			const formatToRdfGraph: {} & KeyStrVal = state.formatToRdfGraph;
 			const filters = getFilters(state);
 			const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
@@ -304,7 +303,6 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 				submitters: useOnlyPidFilter ? [] : specTable.getFilter('submitter'),
 				sorting,
 				paging,
-				rdfGraphs: useOnlyPidFilter ? [] : specTable.getColumnValuesFilter('format').map((f: Value) => formatToRdfGraph[f!]),
 				filters
 			};
 
@@ -326,12 +324,11 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 }
 
 export interface Options {
-	specs: ReturnType<typeof CompositeSpecTable.prototype.getSpeciesFilter>
-	stations: ReturnType<typeof CompositeSpecTable.prototype.getFilter>
-	submitters: ReturnType<typeof CompositeSpecTable.prototype.getFilter>
+	specs: Filter
+	stations: Filter
+	submitters: Filter
 	sorting: State['sorting']
 	paging: Paging
-	rdfGraphs: ReturnType<typeof CompositeSpecTable.prototype.getColumnValuesFilter>
 	filters: FilterRequest[]
 }
 
