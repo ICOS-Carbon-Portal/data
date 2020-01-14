@@ -16,6 +16,8 @@ export default class GraphContainer extends Component{
 		this.events = new Events();
 
 		this.handleResize = debounce(_ => {
+			if (this.g === undefined) return;
+
 			this.canvasOverlay.width = this.g.graph.graphDiv.clientWidth;
 			this.canvasOverlay.height = this.g.graph.graphDiv.clientHeight;
 		});

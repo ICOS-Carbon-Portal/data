@@ -59,14 +59,14 @@ export default class Map extends Component{
 	}
 
 	addMarker(position){
-		if (position){
+		if (position && !isNaN(position.latitude) && !isNaN(position.longitude)){
 			if (this.boatMarker){
 				this.boatMarker.setLatLng([position.latitude, position.longitude]);
 			} else {
 				this.boatMarker = getMarker(position);
 				this.leafletMap.addLayer(this.boatMarker);
 			}
-		} else {
+		} else if (this.boatMarker) {
 			this.leafletMap.removeLayer(this.boatMarker);
 			this.boatMarker = undefined;
 		}
