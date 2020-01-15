@@ -41,7 +41,7 @@ const reducedProps = (props: SearchProps) => ({
 		'filterTemporal', 'setFilterTemporal', 'labelLookup',
 		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
-		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
+		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'labelLookup', 'extendedDobjInfo',
 		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
 		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup'),

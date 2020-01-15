@@ -89,7 +89,7 @@ export default class CartPanel extends Component {
 
 								return (
 									<SearchResultTableRow
-										lookup={props.lookup}
+										labelLookup={props.labelLookup}
 										extendedInfo={extendedInfo}
 										viewMetadata={this.handleViewMetadata.bind(this)}
 										preview={props.preview}

@@ -23,7 +23,7 @@ type OurProps = ReducedProps['searchResultTable']
 	& Pick<SearchActions, 'handleViewMetadata' | 'handlePreview' | 'handleAddToCart' | 'handleAllCheckboxesChange'>;
 
 const SimpleDataObjectsTable = (props: OurProps) => {
-	const {paging, requestStep, handlePreview, lookup, handleViewMetadata, preview, extendedDobjInfo, helpStorage,
+	const {paging, requestStep, handlePreview, lookup, labelLookup, handleViewMetadata, preview, extendedDobjInfo, helpStorage,
 		getResourceHelpInfo, objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
 		updateCheckedObjects} = props;
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
@@ -103,7 +103,7 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 
 							return (
 								<SearchResultTableRow
-									lookup={lookup}
+									labelLookup={labelLookup}
 									extendedInfo={extendedInfo}
 									viewMetadata={handleViewMetadata}
 									preview={preview}

@@ -120,6 +120,7 @@ function stateToProps(state: State){
 	return {
 		cart: state.cart,
 		lookup: state.lookup,
+		labelLookup: state.labelLookup,
 		user: state.user,
 		preview: state.preview,
 		checkedObjectsInCart: state.checkedObjectsInCart,
