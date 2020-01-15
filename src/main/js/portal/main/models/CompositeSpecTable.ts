@@ -6,7 +6,7 @@ import {
 } from '../sparqlQueries';
 import SpecTable, {Filters, Value, Filter} from "./SpecTable";
 import {KeyStrVal, ThenArg} from "../backend/declarations";
-import {fetchAllSpecTables} from "../backend";
+import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
 
 
@@ -21,7 +21,7 @@ const labelColNameMapper: KeyStrVal = {
 	quantityKind: 'quantityKindLabel'
 };
 
-type JsonCompositeSpecTable = ThenArg<typeof fetchAllSpecTables>['specTables'];
+type JsonCompositeSpecTable = ThenArg<typeof fetchBoostrapData>['specTables'];
 export type BasicsColNames = typeof basicColNames[number];
 export type ColumnMetaColNames = typeof columnMetaColNames[number];
 export type OriginsColNames = typeof originsColNames[number];

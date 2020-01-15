@@ -1,6 +1,5 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
-import {UrlStr} from "./backend/declarations";
 import {Query} from 'icos-cp-backend';
 import {Options} from "./actions";
 import {
@@ -18,41 +17,38 @@ const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-const basicColNamesMan = ["spec", "type", "specLabel", "level", "format", "formatLabel", "theme", "themeLabel"] as const;
+const basicColNamesMan = ["spec", "type", "level", "format", "theme"] as const;
 const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
 export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
 
 export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec (?spec as ?type) ?specLabel ?level ?dataset ?format ?formatLabel ?theme (if(bound(?theme), ?themeLbl, "(not applicable)") as ?themeLabel) ?temporalResolution
+select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
 where{
 	?spec cpmeta:hasDataLevel ?level .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasDataTheme ?theme .
-	?theme rdfs:label ?themeLbl .
 	OPTIONAL{
 		?spec cpmeta:containsDataset ?dataset .
 		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
 	}
 	${deprecatedFilter(deprFilter)}
-	?spec rdfs:label ?specLabel .
 	?spec cpmeta:hasFormat ?format .
-	?format rdfs:label ?formatLabel .
 }`;
 
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "colTitle", "valType", "valTypeLabel", "quantityKindLabel", "quantityUnit"] as const;
+const columnMetaColNamesMan = ["spec", "colTitle", "valType", "quantityUnit"] as const;
 const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
 export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?colTitle ?valType ?valTypeLabel ?quantityKind
+select distinct ?spec ?colTitle ?valType ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
@@ -62,7 +58,6 @@ where{
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valType .
-	?valType rdfs:label ?valTypeLabel .
 	OPTIONAL{
 		?valType cpmeta:hasQuantityKind ?quantityKind .
 		?quantityKind rdfs:label ?qKindLabel .
@@ -74,7 +69,7 @@ where{
 	return {text};
 }
 
-const originsColNamesMan = ["spec", "submitter", "submitterLabel", "project", "projectLabel", "count", "stationLabel"] as const;
+const originsColNamesMan = ["spec", "submitter", "project", "count"] as const;
 const originsColNamesOpt = ["station"] as const;
 export const originsColNames = [...originsColNamesMan, ...originsColNamesOpt];
 
@@ -82,9 +77,8 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof ori
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?submitterLabel ?project ?projectLabel ?count
+select ?spec ?submitter ?project ?count
 (if(bound(?stationName), ?stationOrDummy, ?stationName) as ?station)
-(if(bound(?stationName), CONCAT(?stPrefix, ?stationName), "(not applicable)") as ?stationLabel)
 where{
 	{
 		select
@@ -101,13 +95,28 @@ where{
 	}
 	OPTIONAL{?stationOrDummy cpmeta:hasName ?stationName}
 	OPTIONAL{?stationOrDummy cpmeta:hasStationId ?stId}
-	BIND( IF(bound(?stId), CONCAT("(", ?stId, ") "),"") AS ?stPrefix)
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	?submitter cpmeta:hasName ?submitterLabel .
-	?project rdfs:label ?projectLabel .
 	}`;
+
+	return {text};
+}
+
+export function labelLookup(): Query<'uri' | 'label', string> {
+	const fromClause = config.envri === "ICOS"
+		? `from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <http://meta.icos-cp.eu/resources/cpmeta/>
+from <http://meta.icos-cp.eu/resources/icos/>`
+		: 'from <https://meta.fieldsites.se/resources/sites/>';
+
+	const text = `# labelLookup
+prefix cpmeta: <${config.cpmetaOntoUri}>
+select distinct ?uri ?label
+${fromClause}
+where {
+	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
+}`;
 
 	return {text};
 }

@@ -36,13 +36,10 @@ const fetchSpecBasics = (filters: FilterRequest[]) => {
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		type: b.type.value,
-		specLabel: b.specLabel.value,
 		level: parseInt(b.level.value),
 		dataset: b.dataset?.value,
 		format: b.format.value,
-		formatLabel: b.formatLabel.value,
 		theme: b.theme.value,
-		themeLabel: b.themeLabel.value,
 		temporalResolution: b.temporalResolution?.value
 	})).then(rows => extendResult(basicColNames, rows));
 };
@@ -55,9 +52,7 @@ const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
 		spec: b.spec.value,
 		colTitle: b.colTitle.value,
 		valType: b.valType.value,
-		valTypeLabel: b.valTypeLabel.value,
 		quantityKind: b.quantityKind?.value,
-		quantityKindLabel: b.quantityKindLabel.value,
 		quantityUnit: b.quantityUnit.value
 	})).then(rows => extendResult(columnMetaColNames, rows));
 };
@@ -68,13 +63,19 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		submitter: b.submitter.value,
-		submitterLabel: b.submitterLabel.value,
 		project: b.project.value,
-		projectLabel: b.projectLabel.value,
 		count: parseInt(b.count.value),
-		station: b.station?.value,
-		stationLabel: b.stationLabel.value
+		station: b.station?.value
 	})).then(rows => extendResult(originsColNames, rows));
+};
+
+export const fetchLabelLookup = () => {
+	const query = queries.labelLookup();
+
+	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+		uri: b.uri.value,
+		label: b.label.value
+	}));
 };
 
 const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
@@ -87,17 +88,17 @@ const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
 		));
 };
 
-export function fetchAllSpecTables(filters: FilterRequest[]) {
+export function fetchBoostrapData(filters: FilterRequest[]) {
 	const specBasicsPromise = fetchSpecBasics(filters);
 	const specColumnMetaPromise = fetchSpecColumnMeta(filters);
 	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts(filters);
-	const formatToRDFGraphTblPromise = fetchFormatToRDFGraphTbl();
+	const labelLookupPromise = fetchLabelLookup();
 
-	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, formatToRDFGraphTblPromise])
-		.then(([basics, columnMeta, origins, formatToRdfGraph]) => (
+	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, labelLookupPromise])
+		.then(([basics, columnMeta, origins, labelLookup]) => (
 			{
 				specTables: {basics, columnMeta, origins},
-				formatToRdfGraph
+				labelLookup
 			}
 		));
 }

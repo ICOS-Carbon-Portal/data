@@ -38,7 +38,7 @@ type SearchProps = StateProps & DispatchProps;
 const reducedProps = (props: SearchProps) => ({
 	helpSection: pick(props,'helpStorage', 'getResourceHelpInfo'),
 	objSpecFilter: pick(props,'specTable', 'updateFilter', 'filtersReset', 'switchTab',
-		'filterTemporal', 'setFilterTemporal',
+		'filterTemporal', 'setFilterTemporal', 'labelLookup',
 		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'extendedDobjInfo',
@@ -170,6 +170,7 @@ function stateToProps(state: State){
 		paging: state.paging,
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
+		labelLookup: state.labelLookup,
 	};
 }
 

@@ -9,6 +9,7 @@ import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
+import {KeyStrVal} from "../backend/declarations";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -109,7 +110,7 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 	const orgSpecTables = state.specTable;
 	const specTable = orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts, filterTemporal.hasFilter);
 
-	if(isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable}
+	if(isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
 
 	const objCount = getObjCount(specTable);
 	const pageCount = Math.min(objCount, config.stepsize);
@@ -123,12 +124,16 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 const handleBackendTables = (state: State, payload: BackendTables) => {
 	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables);
 	const objCount = getObjCount(specTable);
-
+	const labelLookup = payload.allTables.labelLookup.reduce((acc, curr) => {
+		acc[curr.uri] = curr.label;
+		return acc;
+	}, {} as KeyStrVal);
+console.log({specTable});
 	return {
 		specTable,
-		formatToRdfGraph: payload.allTables.formatToRdfGraph,
+		labelLookup,
 		paging: state.paging.withObjCount({objCount}),
-		lookup: new Lookup(specTable)
+		lookup: new Lookup(specTable, labelLookup)
 	};
 };
 

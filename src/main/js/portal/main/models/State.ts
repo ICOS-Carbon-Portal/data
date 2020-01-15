@@ -7,7 +7,7 @@ import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
 import config, {prefixes, CategoryType, CategPrefix} from "../config";
 import deepequal from 'deep-equal';
-import {KeyAnyVal, ThenArg, UrlStr, Sha256Str} from "../backend/declarations";
+import {KeyAnyVal, ThenArg, UrlStr, Sha256Str, KeyStrVal} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
@@ -82,6 +82,7 @@ export interface State {
 	filterPids: Sha256Str[]
 	user: User
 	lookup: Lookup | undefined;
+	labelLookup: KeyStrVal;
 	specTable: CompositeSpecTable
 	extendedDobjInfo: ExtendedDobjInfo
 	formatToRdfGraph: {}
@@ -130,6 +131,7 @@ export const defaultState: State = {
 		email: null
 	},
 	lookup: undefined,
+	labelLookup: {},
 	specTable: emptyCompositeSpecTable,
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
@@ -186,7 +188,7 @@ const deserialize = (jsonObj: State, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 	const props: State = Object.assign({}, jsonObj, {
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
-		lookup: new Lookup(specTable),
+		lookup: new Lookup(specTable, jsonObj.labelLookup),
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,

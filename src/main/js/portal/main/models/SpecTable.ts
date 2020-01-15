@@ -25,6 +25,12 @@ export const Filter = {
 	}
 };
 
+export const Value = {
+	isDefined: function(v: Value): v is (number | string) {
+		return v !== undefined;
+	}
+};
+
 export default class SpecTable<T extends string = string>{
 	readonly specsCount: number;
 

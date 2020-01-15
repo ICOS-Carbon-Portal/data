@@ -1,13 +1,12 @@
 import Cart from "./models/Cart";
 import stateUtils, {Profile, State, SearchOptions, WhoAmI, ObjectsTable} from "./models/State";
 import {
-	fetchAllSpecTables,
 	getCart,
 	saveCart,
 	logOut,
 	fetchResourceHelpInfo,
 	getMetadata,
-	fetchKnownDataObjects, fetchDobjOriginsAndCounts
+	fetchKnownDataObjects, fetchDobjOriginsAndCounts, fetchBoostrapData
 } from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -80,6 +79,9 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		dispatch(new Payloads.MiscInit());
 
+		const filters = getFilters(getState());
+		dispatch(getBootstrapData(filters));
+
 		type LoggedIn = {_id: string, profile: Profile | {}};
 
 		getProfile(user.email).then((resp: {} | LoggedIn) => {
@@ -94,10 +96,7 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 
 				cartInRestheart.then(restheartCart => {
 					const cart = restoreCarts(cartInSessionStorage, restheartCart);
-					const filters = getFilters(getState());
-
-					dispatch(updateCart(user.email, cart))
-						.then(() => dispatch(getAllSpecTables(filters)));
+					dispatch(updateCart(user.email, cart));
 				});
 			}
 		);
@@ -151,9 +150,9 @@ const addStateMisingInHistory: PortalThunkAction<void> = (dispatch, getState) =>
 		dispatch(setMetadataItem(id));
 };
 
-function getAllSpecTables(filters: FilterRequest[]): PortalThunkAction<void> {
+function getBootstrapData(filters: FilterRequest[]): PortalThunkAction<void> {
 	return (dispatch) => {
-		fetchAllSpecTables(filters).then(
+		fetchBoostrapData(filters).then(
 			allTables => {
 				dispatch(new Payloads.BackendTables(allTables));
 				dispatch(new Payloads.MiscRestoreFilters());

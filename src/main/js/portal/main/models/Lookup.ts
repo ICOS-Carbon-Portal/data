@@ -1,6 +1,6 @@
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
-import { UrlStr } from '../backend/declarations';
+import {KeyStrVal, UrlStr} from '../backend/declarations';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -23,15 +23,16 @@ type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 export default class Lookup{
 	readonly table: {[key: string]: PreviewInfo | undefined};
 
-	constructor(specTable: CompositeSpecTable){
+	constructor(specTable: CompositeSpecTable, labelLookup: KeyStrVal){
 		this.table = {};
 
-		specTable.columnMeta.rows.forEach(({spec, colTitle, valTypeLabel}) => {
-			if(typeof spec === 'string' && typeof colTitle === 'string' && typeof valTypeLabel === 'string'){
+		specTable.columnMeta.rows.forEach(({spec, colTitle, valType}) => {
+			if(typeof spec === 'string' && typeof colTitle === 'string' && typeof valType === 'string'){
 				let defaultInfo: TimeSeriesPreviewInfo = {type: "TIMESERIES", options: []};
 				const currentInfo = this.table[spec];
 				const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
 				if (info === defaultInfo) this.table[spec] = info;
+				const valTypeLabel = labelLookup[valType];
 				info.options.push({colTitle, valTypeLabel});
 			}
 		});

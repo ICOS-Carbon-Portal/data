@@ -17,27 +17,18 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 	search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
-	getMultiselectCtrl(name: CategoryType, labelName: string){
-		const {specTable, helpStorage, getResourceHelpInfo} = this.props;
+	getMultiselectCtrl(name: CategoryType){
+		const {specTable, helpStorage, getResourceHelpInfo, labelLookup} = this.props;
 		type StrNum = string | number
-		const lookupTable: {[key: string]: StrNum} = {};
-
-		const colTbl = specTable.findTable(name);
-		if (colTbl) {
-			colTbl.rows.forEach((row) => {
-				const val = row[name] as Value;
-				if (val !== undefined) lookupTable[val] = row[labelName] as StrNum;
-			});
-		}
 
 		const filterUris = specTable.getFilter(name) ?? [];
 		const data = specTable
 			? specTable.getDistinctAvailableColValues(name)
-				.filter(v => v !== undefined)
-				.map(value => ({value, text: lookupTable[value!]})) as {value: StrNum, text: StrNum}[]
+				.filter(Value.isDefined)
+				.map(value => ({value, text: labelLookup[value] ?? value})) as {value: StrNum, text: StrNum}[]
 			: [];
 		const value = filterUris
-			.map((val: Value) => data.some(d => d.value === val) ? val : lookupTable[val!])
+			.map((val: Value) => data.some(d => d.value === val) ? val : labelLookup[val!])
 			.filter(v => v !== undefined);
 
 		if (data[0]) {

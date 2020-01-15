@@ -2,7 +2,7 @@ import {Action} from "redux";
 import {MetaDataObject, State, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
-	fetchAllSpecTables,
+	fetchBoostrapData,
 	fetchDobjOriginsAndCounts,
 	fetchKnownDataObjects,
 	getExtendedDataObjInfo
@@ -33,7 +33,7 @@ export class BackendUserInfo extends BackendPayload{
 }
 
 export class BackendTables extends BackendPayload{
-	constructor(readonly allTables: ThenArg<typeof fetchAllSpecTables>){super();}
+	constructor(readonly allTables: ThenArg<typeof fetchBoostrapData>){super();}
 }
 
 export class BackendOriginsTable extends BackendPayload{
