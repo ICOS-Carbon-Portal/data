@@ -9,7 +9,7 @@ import {
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {SearchOption} from "../actions";
-import {Value} from "../models/SpecTable";
+import {Filter, Value} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
 import {Item} from "../models/HelpStorage";
 import Cart from "../models/Cart";
@@ -41,7 +41,7 @@ export class BackendOriginsTable extends BackendPayload{
 }
 
 export class BackendUpdateSpecFilter extends BackendPayload{
-	constructor(readonly varName: ColNames, readonly values: Value[]){super();}
+	constructor(readonly varName: ColNames, readonly filter: Filter){super();}
 }
 
 export class BackendObjectMetadataId extends BackendPayload{

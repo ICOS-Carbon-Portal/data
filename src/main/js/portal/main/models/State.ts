@@ -64,7 +64,8 @@ export interface SearchOptions {
 	showDeprecated: boolean
 }
 
-export type CategFilters = {[key in CategoryType]?: string[]}
+//TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
+export type CategFilters = {[key in CategoryType]?: string[] | null}
 
 export type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
 export type TsSettings = {
@@ -387,7 +388,7 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 		filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
 			const filterVals = fc[category]
 
-			if(filterVals !== undefined) acc[category] = filterVals.map((value: string) => {
+			if(filterVals) acc[category] = filterVals.map((value: string) => {
 				if (Number.isInteger(parseFloat(value))) return value;
 
 				const prefix = appPrefixes[category];
@@ -404,24 +405,29 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 const reduceState = (state: State & KeyAnyVal) => {
 	return Object.keys(state).reduce((acc: KeyAnyVal, key: string) => {
 
-		if (Array.isArray(state[key]) && state[key].length){
-			acc[key] = state[key];
+		const val = state[key];
 
-		} else if (typeof state[key] === 'object') {
-			const part = reduceState(state[key]);
+		if (Array.isArray(val) && val.length){
+			acc[key] = val;
 
-			if (Object.keys(part).length) {
-				acc[key] = part;
+		} else if (typeof val === 'object') {
+			if(val === null) acc[key] = null;
+			else {
+				const part = reduceState(val);
+
+				if (Object.keys(part).length) {
+					acc[key] = part;
+				}
 			}
 
-		} else if (state.route === config.ROUTE_METADATA && key === 'id' && state[key] && state[key]!.length > 0){
-			acc[key] = state[key]!.split('/').pop();
+		} else if (state.route === config.ROUTE_METADATA && key === 'id' && val && val!.length > 0){
+			acc[key] = val!.split('/').pop();
 
-		} else if (typeof state[key] === 'string'){
-			acc[key] = state[key];
+		} else if (typeof val === 'string'){
+			acc[key] = val;
 
-		} else if (typeof state[key] === 'number' && state[key] !== 0){
-			acc[key] = state[key];
+		} else if (typeof val === 'number' && val !== 0){
+			acc[key] = val;
 
 		}
 

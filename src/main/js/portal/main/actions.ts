@@ -7,7 +7,7 @@ import {
 	logOut,
 	fetchResourceHelpInfo,
 	getMetadata,
-	fetchKnownDataObjects, fetchDobjOriginsAndCounts, fetchFilteredDataObjects
+	fetchKnownDataObjects, fetchDobjOriginsAndCounts
 } from './backend';
 import {getIsBatchDownloadOk, getWhoIam, getProfile, getError, getTsSettings, saveTsSetting} from './backend';
 import {getExtendedDataObjInfo} from './backend';
@@ -195,7 +195,8 @@ export function updateCheckedObjectsInCart(checkedObjectInCart: UrlStr | UrlStr[
 
 export function specFilterUpdate(varName: ColNames, values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
-		dispatch(new Payloads.BackendUpdateSpecFilter(varName, values));
+		const filter: Filter = values.length === 0 ? null : values;
+		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
 		dispatch(getFilteredDataObjects(false));
 	};
 }
@@ -298,9 +299,9 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 			const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
 			const options: Options = {
-				specs: useOnlyPidFilter ? [] : specTable.getSpeciesFilter(null, true),
-				stations: useOnlyPidFilter ? [] : specTable.getFilter('station'),
-				submitters: useOnlyPidFilter ? [] : specTable.getFilter('submitter'),
+				specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
+				stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+				submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
 				sorting,
 				paging,
 				filters

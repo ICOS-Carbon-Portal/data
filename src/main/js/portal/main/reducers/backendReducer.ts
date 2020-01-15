@@ -91,7 +91,7 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 };
 
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
-	const specTable = state.specTable.withFilter(payload.varName, payload.values);
+	const specTable = state.specTable.withFilter(payload.varName, payload.filter);
 	const objCount = getObjCount(specTable);
 
 	return stateUtils.update(state,{
@@ -99,7 +99,7 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 		objectsTable: [],
 		page: 0,
 		paging: new Paging({objCount}),
-		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.values}),
+		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.filter}),
 		checkedObjectsInSearch: []
 	});
 };

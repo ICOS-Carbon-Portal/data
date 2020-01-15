@@ -107,7 +107,7 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 };
 
 export function fetchFilteredDataObjects(options: Options){
-	return Filter.allowsNothing(options.specs)
+	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations)
 		? Promise.resolve({
 			columnNames: [],
 			rows: []
