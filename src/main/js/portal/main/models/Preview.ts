@@ -1,4 +1,4 @@
-import CartItem from './CartItem';
+import CartItem, {CartItemSerialized} from './CartItem';
 import {getNewTimeseriesUrl} from '../utils';
 import config from "../config";
 import commonConfig from '../../../common/main/config';
@@ -10,6 +10,7 @@ import {KeyAnyVal, Sha256Str, UrlStr} from "../backend/declarations";
 
 
 export type PreviewItem = CartItem & Partial<ExtendedDobjInfo[0]>
+export type PreviewItemSerialized = CartItemSerialized & Partial<ExtendedDobjInfo[0]>
 export type PreviewOption = {
 	colTitle: string
 	valTypeLabel: string
@@ -17,6 +18,12 @@ export type PreviewOption = {
 
 type PreviewTypes = keyof typeof commonConfig.previewTypes
 type PreviewType = PreviewTypes | 'unknown'
+export interface PreviewSerialized {
+	items: PreviewItemSerialized[]
+	options: PreviewOption[],
+	type: PreviewType,
+	visible: boolean
+}
 
 export default class Preview {
 	public readonly items: PreviewItem[];
@@ -34,7 +41,7 @@ export default class Preview {
 		this.visible = visible ?? false;
 	}
 
-	get serialize(){
+	get serialize(): PreviewSerialized {
 		return {
 			items: this.items.map(item => item.serialize),
 			options: this.options,
@@ -43,8 +50,8 @@ export default class Preview {
 		};
 	}
 
-	static deserialize(jsonPreview: Preview) {
-		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item._dataobject, item.type, item.url));
+	static deserialize(jsonPreview: PreviewSerialized) {
+		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item.dataobject, item.type, item.url));
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
 		const visible = jsonPreview.visible;

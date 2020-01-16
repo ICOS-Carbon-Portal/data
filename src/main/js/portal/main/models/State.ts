@@ -1,4 +1,4 @@
-import Preview from "./Preview";
+import Preview, {PreviewSerialized} from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
@@ -159,6 +159,10 @@ export const defaultState: State = {
 	helpStorage: new HelpStorage()
 };
 
+export type StateSerialized = Omit<State, 'preview'> & {
+	preview: PreviewSerialized
+}
+
 const update = (state: State, updates: Partial<State>): State => {
 	return Object.assign({}, state, updates, {ts: Date.now()});
 };
@@ -172,7 +176,7 @@ const updateAndSave = (state: State, updates: any) => {
 	return newState;
 };
 
-const serialize = (state: State) => {
+const serialize = (state: State): StateSerialized => {
 	return Object.assign({}, state, {
 		filterTemporal: state.filterTemporal.serialize,
 		lookup: undefined,
@@ -184,7 +188,7 @@ const serialize = (state: State) => {
 	});
 };
 
-const deserialize = (jsonObj: State, cart: Cart) => {
+const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 	const props: State = Object.assign({}, jsonObj, {
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),

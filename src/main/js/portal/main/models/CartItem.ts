@@ -1,4 +1,4 @@
-import {KeyStrVal} from "../backend/declarations";
+import {KeyStrVal, UrlStr} from "../backend/declarations";
 import commonConfig from '../../../common/main/config';
 
 
@@ -21,11 +21,19 @@ export interface DataObject {
 	type: DataType | undefined
 }
 
+export interface CartItemSerialized {
+	id: string
+	dataobject: DataObject
+	type: DataType | undefined
+	url: UrlStr | undefined
+	keyValPairs: KeyStrVal
+}
+
 export default class CartItem {
 	readonly _id: string;
 	readonly _dataobject: DataObject;
 	readonly _type: DataType | undefined;
-	readonly _url: string | undefined;
+	readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: KeyStrVal;
 
 	constructor(dataobject: DataObject, type?: DataType, url?: string){

@@ -1,5 +1,5 @@
 import Cart from "./models/Cart";
-import stateUtils, {Profile, State, SearchOptions, WhoAmI, ObjectsTable} from "./models/State";
+import stateUtils, {Profile, State, SearchOptions, WhoAmI, ObjectsTable, StateSerialized} from "./models/State";
 import {
 	getCart,
 	saveCart,
@@ -116,7 +116,7 @@ function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<void> {
 					});
 				});
 				const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
-				const state: State = Object.assign({},
+				const state: StateSerialized = Object.assign({},
 					stateJSON,
 					{objectsTable, ts: undefined, user: {}}
 				);
@@ -130,7 +130,7 @@ function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<void> {
 	};
 }
 
-export function restoreFromHistory(historyState: State): PortalThunkAction<void> {
+export function restoreFromHistory(historyState: StateSerialized): PortalThunkAction<void> {
 	return (dispatch) => {
 		const ts = historyState.ts ?? Date.now();
 

@@ -128,7 +128,7 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 		acc[curr.uri] = curr.label;
 		return acc;
 	}, {} as KeyStrVal);
-console.log({specTable});
+
 	return {
 		specTable,
 		labelLookup,

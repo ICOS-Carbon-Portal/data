@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, State, TsSettings, WhoAmI} from "../models/State";
+import {MetaDataObject, State, StateSerialized, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchBoostrapData,
@@ -78,7 +78,7 @@ export class MiscError extends MiscPayload{
 }
 
 export class MiscLoadError extends MiscPayload{
-	constructor(readonly state: State, readonly cart: Cart){super();}
+	constructor(readonly state: StateSerialized, readonly cart: Cart){super();}
 }
 
 export class MiscInit extends MiscPayload{
@@ -86,7 +86,7 @@ export class MiscInit extends MiscPayload{
 }
 
 export class MiscRestoreFromHistory extends MiscPayload{
-	constructor(readonly historyState: State){super();}
+	constructor(readonly historyState: StateSerialized){super();}
 }
 
 export class MiscResetFilters extends MiscPayload{
