@@ -1,6 +1,5 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
-import {UrlStr} from "./backend/declarations";
 import {Query} from 'icos-cp-backend';
 import {Options} from "./actions";
 import {
@@ -215,7 +214,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 			sorting.ascending
 				? `order by ?${sorting.varName}`
 				: `order by desc(?${sorting.varName})`
-			)
+		)
 		: '';
 
 	const text = `# listFilteredDataObjects
@@ -268,7 +267,7 @@ function getFilterConditions(filter: TemporalFilterRequest): string[]{
 	const res: string[] = [];
 
 	function add(varName: "timeStart" | "timeEnd" | "submTime", cmp: ">=" | "<=", timeStr: string | undefined): void{
-		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`)
+		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`);
 	}
 	switch(filter.category){
 		case "dataTime":
@@ -308,11 +307,9 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 		rdfs:label ?theme ;
 		cpmeta:hasIcon ?themeIcon
 	]}
-	OPTIONAL{?specUri rdfs:comment ?spec }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
-	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
+	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description }
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
-	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
 
 	return {text};
