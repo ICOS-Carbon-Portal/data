@@ -28,7 +28,9 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 				.map(value => ({value, text: labelLookup[value] ?? value})) as {value: StrNum, text: StrNum}[]
 			: [];
 		const value = filterUris
-			.map((val: Value) => data.some(d => d.value === val) ? val : labelLookup[val!])
+			.map((val: Value) => data.some(d => d.value === val)
+				? val
+				: labelLookup[val!] ?? val)
 			.filter(v => v !== undefined);
 
 		if (data[0]) {
