@@ -2,18 +2,19 @@ import React, { Component, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
-import { formatDate } from '../utils';
+import { formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import { L2OrLessSpecificMeta, L3SpecificMeta, PlainStaticObject} from "../../../common/main/metacore";
+import { L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
+import ContentSection from '../components/metadata/ContentSection';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -50,7 +51,7 @@ class Metadata extends Component<MetadataProps> {
 		const isInCart = cart.hasItem(metadata.id);
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
-		const specInfo = metadata.specificInfo
+		const specInfo = metadata.specificInfo;
 
 		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
 			&& (specInfo as L2OrLessSpecificMeta).acquisition;
@@ -58,11 +59,7 @@ class Metadata extends Component<MetadataProps> {
 			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
-		const prevVersions = Array.isArray(metadata.previousVersion)
-			? metadata.previousVersion
-			: metadata.previousVersion ? [metadata.previousVersion] : [];
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
-		const self = this;
 
 		return (
 			<div>
@@ -73,7 +70,7 @@ class Metadata extends Component<MetadataProps> {
 						}
 						{metadata.nextVersion &&
 							<div className="alert alert-warning">
-								A newer version of this data is available:
+								A newer version of this data is available:&nbsp;
 								<a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">
 									View next version
 								</a>
@@ -81,10 +78,30 @@ class Metadata extends Component<MetadataProps> {
 						}
 						<div className="row">
 							<div className="col-sm-8">
+
+								<AboutSection metadata={metadata} projectLabel={projectLabel} handleViewMetadata={this.handleViewMetadata.bind(this)}/>
+
+								<ContentSection metadata={metadata} />
+
+								{acquisition &&
+									<AcquisitionSection acquisition={acquisition}/>
+								}
+
+								{productionInfo &&
+									<ProductionSection production={productionInfo} />
+								}
+
+								<React.Fragment>
+									<h2>Submission</h2>
+									{metadata.submission.stop && metadataRow("Submission time", formatDateTime(new Date(metadata.submission.stop)))}
+								</React.Fragment>
+
+							</div>
+							<div className="col-sm-4">
 								<div className="row">
-									<div className="col-md-10 col-md-offset-2">
+									<div className="col-md-12">
 										<CartBtn
-											style={{ float: 'left', margin: '20px 10px 30px 0' }}
+											style={{ float: 'right', margin: '20px 0 30px 10px' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
 											enabled={isCartEnabled}
@@ -92,46 +109,14 @@ class Metadata extends Component<MetadataProps> {
 											title={cartTitle}
 										/>
 										<PreviewBtn
-											style={{ float: 'left', margin: '20px 10px 30px 0' }}
-											checkedObjects={[{'dobj': metadata.id, 'spec': metadata.specification.self.uri, 'nextVersion': metadata.nextVersion}]}
+											style={{ float: 'right', margin: '20px 0 30px 10px' }}
+											checkedObjects={[{ 'dobj': metadata.id, 'spec': metadata.specification.self.uri, 'nextVersion': metadata.nextVersion }]}
 											clickAction={this.handlePreview.bind(this)}
 											lookup={lookup}
 										/>
 									</div>
 								</div>
-
-								<AboutSection metadata={metadata} projectLabel={projectLabel}/>
-
-								{acquisition &&
-									<AcquisitionSection acquisition={acquisition}/>
-								}
-
-								{metadata.citationString &&
-									<React.Fragment>
-										{metadataRow("Citation", metadata.citationString)}
-										<br />
-									</React.Fragment>
-								}
-
-								{prevVersions.map((previousVersion, i) =>
-									<React.Fragment key={"key_" + i}>
-										{metadataRow(
-											"Previous version",
-											<a onClick={self.handleViewMetadata.bind(self, previousVersion)} style={{cursor: 'pointer'}}>View previous version</a>
-										)}
-									</React.Fragment>
-								)}
-								{prevVersions.length > 0 && <br />}
-								{productionInfo &&
-									<ProductionSection production={productionInfo} />
-								}
-								{metadata.specification.documentation && metadata.specification.documentation.length > 0 &&
-									<React.Fragment>
-										{metadataRow("Documentation", documentationLinks(metadata.specification.documentation))}
-									</React.Fragment>
-								}
-							</div>
-							<div className="col-sm-4">
+								<br />
 								{metadata.coverageGeoJson &&
 									<React.Fragment>
 										<div className="row">
@@ -160,7 +145,7 @@ class Metadata extends Component<MetadataProps> {
 export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 	if (metadata === undefined) return null;
 
-	const specInfo = metadata.specificInfo
+	const specInfo = metadata.specificInfo;
 	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
 		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
@@ -204,11 +189,13 @@ export const metadataRow = (label: string, value: string | ReactElement | ReactE
 	const text = linkify && typeof value === "string"
 		? <LinkifyText text={value} />
 		: value;
+	const labelColSize = config.envri === "SITES" ? "col-md-3" : "col-md-2";
+	const textColSize = config.envri === "SITES" ? "col-md-9 mb-2" : "col-md-10 mb-2";
 
 	return (
 		<div className="row">
-			<div className="col-md-2"><label>{label}</label></div>
-			<div className="col-md-10 mb-2">{text}</div>
+			<div className={labelColSize}><label>{label}</label></div>
+			<div className={textColSize}>{text}</div>
 		</div>
 	);
 };
@@ -230,15 +217,6 @@ const map = (coverage: string, icon?: string) => {
 		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
 	);
 };
-
-const documentationLinks = (documentation: PlainStaticObject[]) => {
-	return documentation.map((doc, i) =>
-		<React.Fragment key={"key_" + i}>
-			<a href={doc.res}>{doc.name}</a>
-			{i != documentation.length - 1 && <br />}
-		</React.Fragment>
-	)
-}
 
 const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
 	if (dataLevel == 0) {
