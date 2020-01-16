@@ -408,22 +408,20 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 	});
 };
 
-const reduceState = (state: State & KeyAnyVal) => {
+const reduceState = (state: KeyAnyVal) => {
 	return Object.keys(state).reduce((acc: KeyAnyVal, key: string) => {
 
 		const val = state[key];
+		if (!val) return acc;
 
 		if (Array.isArray(val) && val.length){
 			acc[key] = val;
 
 		} else if (typeof val === 'object') {
-			if(val === null) acc[key] = null;
-			else {
-				const part = reduceState(val);
+			const part = reduceState(val);
 
-				if (Object.keys(part).length) {
-					acc[key] = part;
-				}
+			if (Object.keys(part).length) {
+				acc[key] = part;
 			}
 
 		} else if (state.route === config.ROUTE_METADATA && key === 'id' && val && val!.length > 0){
