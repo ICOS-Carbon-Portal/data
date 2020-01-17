@@ -12,11 +12,11 @@ const ContentSection = (props: ContentSectionProps) => {
 
 	return (
 		<React.Fragment>
-			<h2>Content</h2>
 			{metadata.specification.self.label && metadataRow("Type", metadata.specification.self.label)}
 			{metadataRow("Level", metadata.specification.dataLevel.toString())}
 			{metadataRow("File name", <span style={{ wordBreak: 'break-word' }}>{metadata.fileName}</span>)}
 			{metadata.size !== undefined && metadataRow("Size", formatBytes(metadata.size, 0))}
+			<br />
 		</React.Fragment>
 	);
 };

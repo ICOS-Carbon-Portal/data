@@ -9,7 +9,6 @@ interface AboutSectionProps {
 	handleViewMetadata: (doj: string) => void
 }
 
-
 const AboutSection = (props: AboutSectionProps) => {
 	const { metadata, projectLabel } = props;
 	const prevVersions = Array.isArray(metadata.previousVersion)
@@ -20,7 +19,7 @@ const AboutSection = (props: AboutSectionProps) => {
 
 	return (
 		<React.Fragment>
-			<h2>About</h2>
+			<h2 style={{ fontSize: 28 }}>About</h2>
 			{metadata.doi &&
 				metadataRow("DOI", doiLink(metadata.doi))
 			}

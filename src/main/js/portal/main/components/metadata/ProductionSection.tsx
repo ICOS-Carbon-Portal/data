@@ -12,7 +12,7 @@ const ProductionSection = (props: ProductionSectionProps) => {
 
 	return(
 		<React.Fragment>
-			<h2>Production</h2>
+			<h2 style={{fontSize: 28}}>Production</h2>
 			{metadataRow("Made by", creatorLink(production.creator))}
 			<Contributors contributors={production.contributors} />
 			{production.host &&
@@ -20,6 +20,7 @@ const ProductionSection = (props: ProductionSectionProps) => {
 			}
 			{production.comment && metadataRow("Comment", production.comment)}
 			{metadataRow("Creation date", formatDateTime(new Date(production.dateTime)))}
+			<br />
 		</React.Fragment>
 	);
 };

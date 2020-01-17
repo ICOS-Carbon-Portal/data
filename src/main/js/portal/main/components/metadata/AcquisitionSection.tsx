@@ -13,7 +13,10 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 
 	return(
 		<React.Fragment>
-			<h2>Acquisition</h2>
+			<h2 style={{ fontSize: 28 }}>Acquisition</h2>
+			{acquisition.site && acquisition.site.location?.label &&
+				metadataRow("Location", acquisition.site.location?.label)
+			}
 			{acquisition.station &&
 				metadataRow("Station", <a href={acquisition.station.org.self.uri}>{acquisition.station.name}</a>)
 			}
@@ -34,6 +37,7 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 			{acquisition.samplingHeight &&
 				metadataRow("Sampling height", `${acquisition.samplingHeight} m`)
 			}
+			<br />
 		</React.Fragment>
 	);
 };

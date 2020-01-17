@@ -92,8 +92,9 @@ class Metadata extends Component<MetadataProps> {
 								}
 
 								<React.Fragment>
-									<h2>Submission</h2>
+									<h2 style={{ fontSize: 28 }}>Submission</h2>
 									{metadata.submission.stop && metadataRow("Submission time", formatDateTime(new Date(metadata.submission.stop)))}
+									<br />
 								</React.Fragment>
 
 							</div>
