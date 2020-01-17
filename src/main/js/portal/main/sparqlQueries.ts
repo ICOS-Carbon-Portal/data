@@ -104,19 +104,35 @@ where{
 }
 
 export function labelLookup(): Query<'uri' | 'label', string> {
-	const fromClause = config.envri === "ICOS"
-		? `from <http://meta.icos-cp.eu/ontologies/cpmeta/>
-from <http://meta.icos-cp.eu/resources/cpmeta/>
-from <http://meta.icos-cp.eu/resources/icos/>`
-		: 'from <https://meta.fieldsites.se/resources/sites/>';
+	let text = '# labelLookup';
 
-	const text = `# labelLookup
-prefix cpmeta: <${config.cpmetaOntoUri}>
+	if (config.envri === "ICOS"){
+		text += `
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select distinct ?uri ?label
-${fromClause}
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <http://meta.icos-cp.eu/resources/cpmeta/>
+from <http://meta.icos-cp.eu/resources/icos/>
+from <http://meta.icos-cp.eu/resources/extrastations/>
+from named <http://meta.icos-cp.eu/resources/wdcgg/>
+where {
+	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label} UNION {
+		graph <http://meta.icos-cp.eu/resources/wdcgg/> {
+			?uri a cpmeta:Station .
+			?uri cpmeta:hasName ?label .
+		}
+	}
+}`;
+	} else {
+		text += `
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select distinct ?uri ?label
+from <https://meta.fieldsites.se/resources/sites/>
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 where {
 	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
 }`;
+	}
 
 	return {text};
 }
