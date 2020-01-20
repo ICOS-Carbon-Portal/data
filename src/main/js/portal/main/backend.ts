@@ -273,7 +273,7 @@ export const getTsSettings = (email: string | null) => {
 };
 
 export const getMetadata = (id: UrlStr): Promise<MetaDataObject> => {
-	return fetch(id, {
+	return fetch(`${id}?format=json`, {
 		headers: new Headers({
 			'Accept': 'application/json'
 		})
