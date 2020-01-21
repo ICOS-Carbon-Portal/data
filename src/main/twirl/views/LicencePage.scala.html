@@ -39,7 +39,7 @@
 			@for(licenceAcceptUri <- uris.licenceAcceptUri){
 				@acceptLicence{
 					@yesNoButtonsDiv{
-						<a class="btn btn-primary btn-lg btn-licence" target="_blank" href=@{licenceAcceptUri}>Yes, I accept</a>
+						<a class="btn btn-primary btn-lg btn-licence" href=@{licenceAcceptUri}>Yes, I accept</a>
 					}
 				}
 			}
@@ -83,7 +83,7 @@
 @yesNoButtonsDiv(yesButton: Html) = {
 	<div class="buttons inner">
 		@yesButton
-		<a class="btn btn-default btn-lg btn-licence" href="javascript:window.close();">No</a>
+		<a class="btn btn-default btn-lg btn-licence" href="javascript:window.history.go(-1);">Go back</a>
 	</div>
 }
 

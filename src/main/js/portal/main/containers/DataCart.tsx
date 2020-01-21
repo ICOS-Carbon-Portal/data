@@ -86,7 +86,7 @@ class DataCart extends Component<DataCartProps> {
 								</div>
 								<div className="panel-body text-center">
 
-									<form action="/objects" method="post" target="_blank">
+									<form action="/objects" method="post">
 										<input type="hidden" name="fileName" value={fileName} />
 										<input type="hidden" name="ids" value={hashes} />
 
