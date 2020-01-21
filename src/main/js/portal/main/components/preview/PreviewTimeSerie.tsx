@@ -62,7 +62,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 	}
 
 	render(){
-		const {preview, extendedDobjInfo, iframeSrcChange, tsSettings} = this.props;
+		const {preview, extendedDobjInfo, tsSettings} = this.props;
 
 		// Add station information
 		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {

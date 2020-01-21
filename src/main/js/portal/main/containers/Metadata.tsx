@@ -7,7 +7,13 @@ import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, State} from "../models/State";
 import {PortalDispatch} from "../store";
-import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
+import {
+	addToCart,
+	removeFromCart,
+	setMetadataItem,
+	setPreviewItem,
+	updateFilteredDataObjects
+} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
 import config from '../config';

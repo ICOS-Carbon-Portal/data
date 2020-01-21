@@ -18,11 +18,11 @@ import {getNewTimeseriesUrl, getRouteFromLocationHash} from './utils';
 import config from './config';
 import {saveToRestheart} from "../../common/main/backend";
 import {PortalThunkAction, PortalDispatch} from "./store";
-import {KeyStrVal, Sha256Str, ThenArg, UrlStr} from "./backend/declarations";
+import {Sha256Str, UrlStr} from "./backend/declarations";
 import {HelpStorageListEntry, Item} from "./models/HelpStorage";
 import FilterTemporal from "./models/FilterTemporal";
 import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "./models/FilterRequest";
-import CompositeSpecTable, {ColNames} from "./models/CompositeSpecTable";
+import {ColNames} from "./models/CompositeSpecTable";
 import Paging from "./models/Paging";
 import * as Payloads from "./reducers/actionpayloads";
 import {Filter, Value} from "./models/SpecTable";
@@ -400,7 +400,9 @@ export function setPreviewItem(id: UrlStr[]): PortalThunkAction<void> {
 		dispatch(getTsPreviewSettings).then(() => {
 			dispatch(new Payloads.SetPreviewFromCart(id));
 
-			if (!getState().preview.items.length) {
+			const {preview, extendedDobjInfo} = getState();
+
+			if (!preview.items.length || !extendedDobjInfo.length) {
 				dispatch(fetchExtendedDataObjInfo(id));
 			}
 		});
