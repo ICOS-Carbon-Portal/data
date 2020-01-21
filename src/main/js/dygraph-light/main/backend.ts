@@ -1,9 +1,10 @@
-import {sparql, getBinaryTable, tableFormatForSpecies, TableFormat} from 'icos-cp-backend';
+import {sparql, getBinaryTable, TableFormat} from 'icos-cp-backend';
 import {objectSpecification, Config} from './sparqlQueries';
-
+import TableFormatCache from "./TableFormatCache";
 
 export function getTableFormatNrows(config: Config, objIds: string[]){
 	const query = objectSpecification(config, objIds);
+	const tfCache = new TableFormatCache(config);
 
 	return sparql(query, config.sparqlEndpoint)
 		.then(
@@ -25,7 +26,7 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 			}
 		)
 		.then(objects => Promise
-			.all(objects.map(object => tableFormatForSpecies(object.objSpec, config)))
+			.all(objects.map(object => tfCache.getTableFormat(object.objSpec)))
 			.then(tableFormats =>
 				objects.map((object, index) => {
 					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index];
