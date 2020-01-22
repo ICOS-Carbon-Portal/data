@@ -12,7 +12,7 @@ export default class AdvancedSettings extends Component<Props> {
 	render(){
 		const {searchOptions, updateSearchOption, filterPids, updateSelectedPids} = this.props;
 		const {showDeprecated} = searchOptions;
-		const deprecationDisabled: boolean = filterPids.length > 0
+		const deprecationDisabled: boolean = filterPids.length > 0;
 
 		return (
 			<Fragment>

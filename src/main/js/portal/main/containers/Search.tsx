@@ -28,6 +28,7 @@ import {Item} from "../models/HelpStorage";
 import AdvancedSettings from "../components/AdvancedSettings";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";
+import FiltersTemporal from '../models/FilterTemporal';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -83,7 +84,7 @@ class Search extends Component<SearchProps, OurState> {
 		if (this.props.checkedObjectsInSearch.length > 0) {
 			this.props.updateCheckedObjects([]);
 		} else {
-			const checkedObjects = this.props.objectsTable.reduce((acc: any, o) => {
+			const checkedObjects = this.props.objectsTable.reduce((acc: string[], o) => {
 				if (o.level > 0) acc.push(o.dobj);
 				return acc;
 			}, []);
@@ -143,8 +144,8 @@ class Search extends Component<SearchProps, OurState> {
 						/>
 						<CompactSearchResultTable
 							tabHeader="Compact view"
-							viewMetadata={this.handleViewMetadata.bind(this)}
-							previewAction={this.handlePreview.bind(this)}
+							handleViewMetadata={this.handleViewMetadata.bind(this)}
+							handlePreview={this.handlePreview.bind(this)}
 							{...compactSearchResultTable}
 						/>
 					</Tabs>
@@ -185,7 +186,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
 		updateCheckedObjects: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
-		setFilterTemporal: (filterTemporal: any) => dispatch(setFilterTemporal(filterTemporal)),
+		setFilterTemporal: (filterTemporal: FiltersTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		getResourceHelpInfo: (helpItem: Item) => dispatch(getResourceHelpInfo(helpItem)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),

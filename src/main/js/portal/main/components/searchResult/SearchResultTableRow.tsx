@@ -25,9 +25,9 @@ interface SimpleObjectTableRowProps {
 	extendedInfo: Partial<ExtendedDobjInfo[0]> | undefined
 	lookup: Lookup | undefined
 	preview: Preview
-	updateCheckedObjects: (ids: string[]) => any
+	updateCheckedObjects: (ids: string[]) => void
 	isChecked: boolean
-	checkedObjects: any[]
+	checkedObjects: ObjectsTable[]
 }
 
 export default class SimpleObjectTableRow extends Component<SimpleObjectTableRowProps> {
@@ -119,7 +119,8 @@ const ExtendedInfoItem: React.FunctionComponent<{
 	icon?: string,
 	iconHeight?: number,
 	iconRightMargin?: number,
-	title?: string}> = ({ item, icon, iconHeight = 18, iconRightMargin = 0, title = "" }) => {
+	title?: string
+}> = ({ item, icon, iconHeight = 18, iconRightMargin = 0, title = "" }) => {
 	const imgStyle = {height: iconHeight, marginRight: iconRightMargin};
 
 	return (item && icon

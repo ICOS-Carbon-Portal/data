@@ -27,7 +27,7 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 		getResourceHelpInfo, objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
 		updateCheckedObjects} = props;
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-	const checkedObjects = checkedObjectsInSearch.reduce((acc: any[], uri) => {
+	const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
 		return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
 	}, []);
 
