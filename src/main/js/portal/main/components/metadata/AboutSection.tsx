@@ -15,7 +15,7 @@ const AboutSection = (props: AboutSectionProps) => {
 		? metadata.previousVersion
 		: metadata.previousVersion ? [metadata.previousVersion] : [];
 	const description = (metadata.specificInfo as L3SpecificMeta).description
-		?? (metadata.specification.description && metadata.specification.description.join('\n'));
+		?? (metadata.specification.self.comments && metadata.specification.self.comments.join('\n'));
 
 	return (
 		<React.Fragment>

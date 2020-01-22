@@ -10,7 +10,7 @@ import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewItem, updateFilteredDataObjects} from "../actions";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import { L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
-import config from '../config';
+import config, {timezone} from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
@@ -84,16 +84,19 @@ class Metadata extends Component<MetadataProps> {
 								<ContentSection metadata={metadata} />
 
 								{acquisition &&
-									<AcquisitionSection acquisition={acquisition}/>
+									<AcquisitionSection acquisition={acquisition} timezone={timezone[config.envri]} />
 								}
 
 								{productionInfo &&
-									<ProductionSection production={productionInfo} />
+									<ProductionSection production={productionInfo} timezone={timezone[config.envri]} />
 								}
 
 								<React.Fragment>
 									<h2 style={{ fontSize: 28 }}>Submission</h2>
-									{metadata.submission.stop && metadataRow("Submission time", formatDateTime(new Date(metadata.submission.stop)))}
+									{metadata.submission.stop &&
+										metadataRow(`Submission time (${timezone[config.envri].label})`,
+											formatDateTime(new Date(metadata.submission.stop), timezone[config.envri].offset))
+									}
 									<br />
 								</React.Fragment>
 
@@ -175,15 +178,20 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 };
 
 const caption = (startDate: Date, stopDate: Date) => {
+	const startDateString = formatDate(startDate, timezone[config.envri].offset);
+	const stopDateString = areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate, timezone[config.envri].offset)}`;
+
 	return (
 		<div className="text-muted">
-			<small>{formatDate(startDate)}{areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate)}`}</small>
+			<small>{startDateString}{stopDateString}</small>
 		</div>
 	);
 };
 
 const areDatesDifferent = (date1: Date, date2: Date) => {
-	return date1.setUTCHours(0, 0, 0, 0) !== date2.setUTCHours(0, 0, 0, 0);
+	const utcDate1 = new Date(date1).setUTCHours(0, 0, 0, 0);
+	const utcDate2 = new Date(date2).setUTCHours(0, 0, 0, 0);
+	return utcDate1 !== utcDate2;
 };
 
 export const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {

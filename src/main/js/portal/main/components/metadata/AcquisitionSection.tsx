@@ -6,10 +6,11 @@ import { formatDateTime } from '../../utils';
 
 interface AquisitionSectionProps {
 	acquisition: DataAcquisition
+	timezone: { offset: number, label: string}
 }
 
 const AcquisitionSection = (props: AquisitionSectionProps) => {
-	const { acquisition } = props;
+	const { acquisition, timezone } = props;
 
 	return(
 		<React.Fragment>
@@ -28,9 +29,9 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 			{acquisition.site && acquisition.site.ecosystem.label &&
 				metadataRow("Ecosystem", acquisition.site.ecosystem.label)
 			}
-			{acquisition.interval && metadataRow("Temporal coverage", `${formatDateTime(new Date(acquisition.interval.start))}
+			{acquisition.interval && metadataRow(`Temporal coverage (${timezone.label})`, `${formatDateTime(new Date(acquisition.interval.start), timezone.offset)}
 										\u2013
-										${formatDateTime(new Date(acquisition.interval.stop))}`)}
+										${formatDateTime(new Date(acquisition.interval.stop), timezone.offset)}`)}
 			{acquisition.instrument &&
 				instrumentRow(acquisition.instrument)
 			}

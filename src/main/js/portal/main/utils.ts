@@ -39,7 +39,7 @@ export const isSmallDevice = () => {
 	return window.innerWidth <= 768;
 };
 
-export const formatDateWithOptionalTime = (d?: Date) => {
+export const formatDateWithOptionalTime = (d: Date) => {
 	// TODO: date can come in as string if it comes from cart view
 	if (!d || !d.getUTCFullYear) return '';
 
@@ -49,14 +49,14 @@ export const formatDateWithOptionalTime = (d?: Date) => {
 	return time === "00:00" ? `${date}` : `${date} ${time}`;
 };
 
-export const formatDate = (d?: Date) => {
-	if (!d) return '';
+export const formatDate = (d: Date, offset: number = 0) => {
+	d.setUTCHours(d.getUTCHours() + offset);
 
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
 };
 
-export const formatDateTime = (d?: Date) => {
-	if (!d) return '';
+export const formatDateTime = (d: Date, offset: number = 0) => {
+	d.setUTCHours(d.getUTCHours() + offset);
 
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
 };

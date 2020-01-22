@@ -5,10 +5,11 @@ import { formatDateTime } from '../../utils';
 
 interface ProductionSectionProps {
 	production: DataProduction
+	timezone: { offset: number, label: string }
 }
 
 const ProductionSection = (props: ProductionSectionProps) => {
-	const { production } = props;
+	const { production, timezone } = props;
 
 	return(
 		<React.Fragment>
@@ -19,7 +20,7 @@ const ProductionSection = (props: ProductionSectionProps) => {
 				metadataRow("Host organization", <a href={production.host.self.uri}>{production.host.name}</a>)
 			}
 			{production.comment && metadataRow("Comment", production.comment)}
-			{metadataRow("Creation date", formatDateTime(new Date(production.dateTime)))}
+			{metadataRow(`Creation date (${timezone.label})`, formatDateTime(new Date(production.dateTime), timezone.offset))}
 			<br />
 		</React.Fragment>
 	);

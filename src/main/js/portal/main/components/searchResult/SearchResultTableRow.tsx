@@ -1,11 +1,14 @@
-import React, { Component } from 'react';
+import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice} from '../../utils';
+import {isSmallDevice, formatDate} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
-import config from '../../config';
+import config, {timezone} from '../../config';
+import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
+import Lookup from '../../models/Lookup';
+import Preview from '../../models/Preview';
 
 
-const truncateStyle = {
+const truncateStyle: CSSProperties = {
 	maxWidth: '100%',
 	whiteSpace: 'nowrap',
 	overflow: 'hidden',
@@ -16,13 +19,24 @@ const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
 
-export default class SimpleObjectTableRow extends Component{
-	constructor(props){
+interface SimpleObjectTableRowProps {
+	objInfo: ObjectsTable
+	viewMetadata: (doj: string) => void
+	extendedInfo: Partial<ExtendedDobjInfo[0]> | undefined
+	lookup: Lookup | undefined
+	preview: Preview
+	updateCheckedObjects: (ids: string[]) => any
+	isChecked: boolean
+	checkedObjects: any[]
+}
+
+export default class SimpleObjectTableRow extends Component<SimpleObjectTableRowProps> {
+	constructor(props: SimpleObjectTableRowProps){
 		super(props);
 	}
 
-	handleViewMetadata(ev){
-		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey) {
+	handleViewMetadata(ev: MouseEvent){
+		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey && this.props.objInfo.dobj) {
 			ev.preventDefault();
 			this.props.viewMetadata(this.props.objInfo.dobj);
 		}
@@ -38,8 +52,9 @@ export default class SimpleObjectTableRow extends Component{
 			: props.extendedInfo;
 		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
 		const locationString = location ? ` from ${location}` : '';
-		const dateString = `${formatDate(objInfo.timeStart)} \u2013 ${formatDate(objInfo.timeEnd)}`;
-		const specLabel = config.envri === "SITES" && objInfo.specLabel.includes(',') ? objInfo.specLabel.substr(0, objInfo.specLabel.indexOf(',')) : objInfo.specLabel;
+		const offset = timezone[config.envri].offset;
+		const dateString = `${formatDate(new Date(objInfo.timeStart ?? ""), offset)} \u2013 ${formatDate(new Date(objInfo.timeEnd ?? ""), offset)}`;
+		const specLabel = config.envri === "SITES" && objInfo.specLabel?.includes(',') ? objInfo.specLabel.substr(0, objInfo.specLabel.indexOf(',')) : objInfo.specLabel;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}, ${dateString}`;
 		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
@@ -52,10 +67,10 @@ export default class SimpleObjectTableRow extends Component{
 			<tr style={{margin: '20px 0'}}>
 				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
 					<CheckBtn
-						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
+						onClick={() => props.updateCheckedObjects([objInfo.dobj])}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={checkboxDisabled ? "disabled" : ""}
+						checkboxDisabled={checkboxDisabled ? true : false}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
@@ -79,16 +94,19 @@ export default class SimpleObjectTableRow extends Component{
 	}
 }
 
-export const getMetadataHash = (dobj) => {
+export const getMetadataHash = (dobj?: string) => {
 	const hashObj = {
 		route: 'metadata',
-		id: dobj.split('/').pop()
+		id: dobj?.split('/').pop()
 	};
 
 	return "#" + encodeURIComponent(JSON.stringify(hashObj));
 };
 
-const Description = ({extendedInfo, truncateStyle}) => {
+const Description: React.FunctionComponent<{
+	extendedInfo: Partial<ExtendedDobjInfo[0]> | undefined,
+	truncateStyle: CSSProperties
+}> = ({ extendedInfo, truncateStyle}) => {
 	if (!(extendedInfo && extendedInfo.description)) return null;
 
 	return isSmallDevice()
@@ -96,7 +114,12 @@ const Description = ({extendedInfo, truncateStyle}) => {
 		: <LinkifyText text={extendedInfo.description} />;
 };
 
-const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, title}) => {
+const ExtendedInfoItem: React.FunctionComponent<{
+	item?: string,
+	icon?: string,
+	iconHeight?: number,
+	iconRightMargin?: number,
+	title?: string}> = ({ item, icon, iconHeight = 18, iconRightMargin = 0, title = "" }) => {
 	const imgStyle = {height: iconHeight, marginRight: iconRightMargin};
 
 	return (item && icon
@@ -106,9 +129,3 @@ const ExtendedInfoItem = ({item, icon, iconHeight = 18, iconRightMargin = 0, tit
 		: null
 	);
 };
-
-function formatDate(d){
-	if(!d || isNaN(d)) return '';
-
-	return d.toISOString().substr(0, 10);
-}
