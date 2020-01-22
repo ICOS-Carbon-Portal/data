@@ -18,7 +18,8 @@ export interface DataObject {
 	themeLabel: string,
 	timeEnd: string,
 	timeStart: string,
-	type: DataType | undefined
+	type: DataType | undefined,
+	temporalResolution: string
 }
 
 export interface CartItemSerialized {

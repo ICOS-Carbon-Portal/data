@@ -110,3 +110,14 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'colTitle']}
 	]
 };
+
+export const timezone = {
+	ICOS: {
+		offset: 0,
+		label: "UTC"
+	},
+	SITES: {
+		offset: 1,
+		label: "UTC+1"
+	}
+};
