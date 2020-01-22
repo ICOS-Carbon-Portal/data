@@ -84,7 +84,7 @@ object AtcProdParser {
 		if (ambigs.isEmpty) names else names.scanLeft(("", "")) {
 			case ((varName, _), nextColName) =>
 				if (ambigs.contains(nextColName))
-					(varName, nextColName + "_" + varName)
+					(varName, s"$varName-$nextColName")
 				else
 					(nextColName, nextColName)
 		}.drop(1).map(_._2)

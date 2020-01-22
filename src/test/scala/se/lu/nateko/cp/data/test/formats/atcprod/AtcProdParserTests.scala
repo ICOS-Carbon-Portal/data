@@ -27,7 +27,7 @@ class AtcProdParserTests extends FunSuite{
 	}
 
 	def expectedColGroup(mainVar: String): Array[String] = mainVar +:
-		Array("Stdev", "NbPoints", "Flag", "QualityId").map(_ + "_" + mainVar)
+		Array("Stdev", "NbPoints", "Flag", "QualityId").map(mainVar + "-" + _)
 
 	test("AtcProdParser.disambiguateColumnNames keeps unique column lists intact if not forced otherwise"){
 		val input = "a;b;c;d;e;f;blabla;some;more;columns;Stdev;NbPoints;Flag;QualityId;InstrumentId".split(";")
@@ -36,7 +36,7 @@ class AtcProdParserTests extends FunSuite{
 
 	test("AtcProdParser.disambiguateColumnNames renames 'meta'-columns in a single-main-var list when forced"){
 		val input = "a;b;c;some;other;var;Stdev;NbPoints;Flag;QualityId;InstrumentId;more;vars".split(";")
-		val expected = "a;b;c;some;other;var;Stdev_var;NbPoints_var;Flag_var;QualityId_var;InstrumentId;more;vars".split(";")
+		val expected = "a;b;c;some;other;var;var-Stdev;var-NbPoints;var-Flag;var-QualityId;InstrumentId;more;vars".split(";")
 		assert(disambiguateColumnNames(input, true) === expected)
 	}
 }
