@@ -13,6 +13,7 @@ tsTarget/
 target/
 project/target/
 /views/target/
+project/metals.sbt
 
 # Scala-IDE specific
 .scala_dependencies

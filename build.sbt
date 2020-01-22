@@ -1,6 +1,6 @@
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-scalaVersion in ThisBuild := "2.12.9"
+scalaVersion in ThisBuild := "2.12.10"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -20,8 +20,8 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.5.23"
-val akkaHttpVersion = "10.1.8"
+val akkaVersion = "2.5.27"
+val akkaHttpVersion = "10.1.11"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
