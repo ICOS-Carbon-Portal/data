@@ -69,23 +69,17 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	})).then(rows => extendResult(originsColNames, rows));
 };
 
-export const fetchLabelLookup = () => {
+export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
 	const query = queries.labelLookup();
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		uri: b.uri.value,
-		label: b.label.value
-	}));
-};
-
-const fetchFormatToRDFGraphTbl = (): Promise<{[key: string]: UrlStr}> => {
-	return fetch(config.metaServer + '/config/dataObjectGraphInfos')
-		.then(res => res.json())
-		.then(res => (res.reduce((acc: {[key: string]: UrlStr}, row: {format: UrlStr, graph: UrlStr}) => {
-				acc[row.format] = row.graph;
-				return acc;
-			}, {})
-		));
+		label: b.label.value,
+		stationId: b.stationId?.value
+	})).then(ll => ll.map(item => ({
+		uri: item.uri,
+		label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label
+	})));
 };
 
 export function fetchBoostrapData(filters: FilterRequest[]) {

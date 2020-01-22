@@ -103,14 +103,14 @@ where{
 	return {text};
 }
 
-export function labelLookup(): Query<'uri' | 'label', string> {
-	let text = '# labelLookup';
+export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
+	let text = `# labelLookup
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select distinct ?uri ?label ?stationId
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>`;
 
 	if (config.envri === "ICOS"){
 		text += `
-prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select distinct ?uri ?label
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <http://meta.icos-cp.eu/resources/cpmeta/>
 from <http://meta.icos-cp.eu/resources/icos/>
 from <http://meta.icos-cp.eu/resources/extrastations/>
@@ -122,13 +122,11 @@ where {
 			?uri cpmeta:hasName ?label .
 		}
 	}
+	optional {?uri cpmeta:hasStationId ?stationId }
 }`;
 	} else {
 		text += `
-prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select distinct ?uri ?label
 from <https://meta.fieldsites.se/resources/sites/>
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 where {
 	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
 }`;
