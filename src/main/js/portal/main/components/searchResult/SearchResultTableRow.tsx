@@ -4,7 +4,6 @@ import {isSmallDevice, formatDate} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config, {timezone} from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
-import Lookup from '../../models/Lookup';
 import Preview from '../../models/Preview';
 
 
@@ -23,11 +22,11 @@ interface SimpleObjectTableRowProps {
 	objInfo: ObjectsTable
 	viewMetadata: (doj: string) => void
 	extendedInfo: Partial<ExtendedDobjInfo[0]> | undefined
-	lookup: Lookup | undefined
 	preview: Preview
 	updateCheckedObjects: (ids: string[]) => void
 	isChecked: boolean
 	checkedObjects: ObjectsTable[]
+	labelLookup: any
 }
 
 export default class SimpleObjectTableRow extends Component<SimpleObjectTableRowProps> {
