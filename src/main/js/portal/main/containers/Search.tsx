@@ -185,7 +185,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		filtersReset: () => dispatch(filtersReset),
 		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
-		updateCheckedObjects: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInSearch(ids)),
+		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: (filterTemporal: FiltersTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),

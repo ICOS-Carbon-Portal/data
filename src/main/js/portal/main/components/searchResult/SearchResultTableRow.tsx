@@ -23,7 +23,7 @@ interface SimpleObjectTableRowProps {
 	viewMetadata: (doj: string) => void
 	extendedInfo: Partial<ExtendedDobjInfo[0]> | undefined
 	preview: Preview
-	updateCheckedObjects: (ids: string[]) => void
+	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
 	checkedObjects: ObjectsTable[]
 	labelLookup: any
@@ -69,7 +69,7 @@ export default class SimpleObjectTableRow extends Component<SimpleObjectTableRow
 			<tr style={{margin: '20px 0'}}>
 				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
 					<CheckBtn
-						onClick={() => props.updateCheckedObjects([objInfo.dobj])}
+						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
 						checkboxDisabled={checkboxDisabled ? true : false}
