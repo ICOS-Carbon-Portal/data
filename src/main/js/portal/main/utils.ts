@@ -1,3 +1,4 @@
+import {Route} from "./models/State";
 
 export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
 	const objIds = items.map((item:any) => item.id.split('/').pop()).join();
@@ -9,7 +10,7 @@ export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
 };
 
 export const getRouteFromLocationHash = () => {
-	return window.location.hash.substr(1).split('?')[0];
+	return window.location.hash.substr(1).split('?')[0] as Route;
 };
 
 export const formatBytes = (bytes: number, decimals = 2) => {

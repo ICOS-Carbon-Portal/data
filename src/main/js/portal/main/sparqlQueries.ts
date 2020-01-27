@@ -1,7 +1,7 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import {Query} from 'icos-cp-backend';
-import {Options} from "./actions";
+import {Options} from "./actions/types";
 import {
 	FilterRequest,
 	TemporalFilterRequest,

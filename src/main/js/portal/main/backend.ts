@@ -7,7 +7,6 @@ import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {KeyAnyVal, UrlStr, Sha256Str, KeyStrVal} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import {Options} from "./actions";
 import {MetaDataObject, Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {throwError} from './utils';
 import {
@@ -17,6 +16,7 @@ import {
 } from "./sparqlQueries";
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter, Value} from "./models/SpecTable";
+import {Options} from "./actions/types";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';

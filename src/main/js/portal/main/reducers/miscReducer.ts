@@ -2,12 +2,12 @@ import {MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilte
 	MiscLoadError, MiscRestoreFilters} from "./actionpayloads";
 import stateUtils, {CategFilters, SearchOptions, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
-import {SearchOption} from "../actions";
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
 import FilterTemporal from "../models/FilterTemporal";
 import config, {CategoryType} from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
+import {SearchOption} from "../actions/types";
 
 export default function(state: State, payload: MiscPayload): State{
 

@@ -132,4 +132,10 @@ export default class Preview {
 	get item() {
 		return this.items[0];
 	}
+
+	get hasAllItems(){
+		const itemPids = this.items.map(item => item.id.split('/').pop());
+
+		return this.pids.every(pid => itemPids.includes(pid));
+	}
 }

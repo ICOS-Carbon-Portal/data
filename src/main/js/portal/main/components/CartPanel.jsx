@@ -25,7 +25,7 @@ export default class CartPanel extends Component {
 	}
 
 	handlePreview(ids){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+		this.props.previewItemAction(ids);
 	}
 
 	handleAllCheckboxesChange() {

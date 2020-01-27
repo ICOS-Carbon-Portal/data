@@ -9,13 +9,16 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import {
 	failWithError,
 	updateRoute,
-	updateCheckedObjectsInCart,
 	setPreviewUrl,
-	storeTsPreviewSetting,
-	addToCart, removeFromCart, setMetadataItem
-} from '../actions';
+	addToCart,
+	removeFromCart,
+	setMetadataItem,
+	switchToPreview
+} from '../actions/main';
+import {updateCheckedObjectsInCart} from '../actions/cart';
+import {storeTsPreviewSetting} from '../actions/preview';
 import config from '../config';
-import {MetaDataObject, Routes, State} from "../models/State";
+import {MetaDataObject, Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import Cart from "../models/Cart";
@@ -32,7 +35,7 @@ export class App extends Component<AppProps> {
 
 	handleRouteClick(newRoute: string){
 		this.props.updateCheckedObjectsInCart([]);
-		this.props.updateRoute(newRoute);
+		this.props.updateRoute(newRoute as Route);
 	}
 
 	componentWillReceiveProps(nextProps: AppProps) {
@@ -74,7 +77,7 @@ export class App extends Component<AppProps> {
 	}
 }
 
-const Title = (props: {route: Routes, metadata?: MetaDataObject & {id: UrlStr}}) => {
+const Title = (props: {route: Route, metadata?: MetaDataObject & {id: UrlStr}}) => {
 
 	switch(props.route) {
 		case config.ROUTE_SEARCH:
@@ -98,7 +101,7 @@ const Title = (props: {route: Routes, metadata?: MetaDataObject & {id: UrlStr}})
 interface ButtonProps {
 	handleRouteClick: (newRoute: string) => void
 	cart: Cart
-	route: Routes
+	route: Route
 }
 
 const SwitchRouteBtn = (props: ButtonProps) => {
@@ -175,9 +178,10 @@ function stateToProps(state: State){
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
-		updateRoute: (hash: string) => dispatch(updateRoute(hash)),
+		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
+		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),

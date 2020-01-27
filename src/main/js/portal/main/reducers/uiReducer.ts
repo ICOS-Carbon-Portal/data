@@ -28,8 +28,7 @@ export default function(state: State, payload: UiPayload): State{
 
 	if (payload instanceof UiUpdateRoute){
 		return stateUtils.update(state,{
-			route: payload.route,
-			preview: payload.route === config.ROUTE_PREVIEW ? state.preview : new Preview()
+			route: payload.route
 		});
 	}
 

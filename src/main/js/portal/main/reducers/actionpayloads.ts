@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, State, StateSerialized, TsSettings, WhoAmI} from "../models/State";
+import {MetaDataObject, Route, State, StateSerialized, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchBoostrapData,
@@ -8,12 +8,12 @@ import {
 	getExtendedDataObjInfo
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
-import {SearchOption} from "../actions";
 import {Filter, Value} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
 import {Item} from "../models/HelpStorage";
 import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
+import {SearchOption} from "../actions/types";
 
 
 export abstract class ActionPayload{}
@@ -106,7 +106,11 @@ export class RestorePreview extends PreviewPayload{
 }
 
 export class SetPreviewFromCart extends PreviewPayload{
-	constructor(readonly id: UrlStr[]){super();}
+	constructor(readonly ids: UrlStr[]){super();}
+}
+
+export class SetPreviewUrls extends PreviewPayload{
+	constructor(readonly urls: UrlStr[]){super();}
 }
 
 export class SetPreviewItem extends PreviewPayload{
@@ -122,7 +126,7 @@ export class UiStepRequested extends UiPayload{
 }
 
 export class UiUpdateRoute extends UiPayload{
-	constructor(readonly route: string){super();}
+	constructor(readonly route: Route){super();}
 }
 
 export class UiSwitchTab extends UiPayload{

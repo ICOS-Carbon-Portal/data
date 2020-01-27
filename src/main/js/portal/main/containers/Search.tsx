@@ -5,29 +5,29 @@ import ObjSpecFilter from '../components/ObjSpecFilter';
 import Tabs from '../components/ui/Tabs';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable';
 import SearchResultTable from '../components/searchResult/SearchResultTable';
+import {SearchOption} from "../actions/types";
+import {removeFromCart, setPreviewUrl, addToCart, setMetadataItem, switchToPreview} from "../actions/main";
 import {
 	specFilterUpdate,
 	toggleSort,
 	requestStep,
-	removeFromCart,
-	setPreviewUrl,
-	setPreviewItem,
 	filtersReset,
 	updateSelectedPids,
 	updateCheckedObjectsInSearch,
 	switchTab,
 	setFilterTemporal,
-	addToCart, getResourceHelpInfo, setMetadataItem, updateSearchOption, SearchOption
-} from '../actions';
+	getResourceHelpInfo, updateSearchOption
+} from '../actions/search';
 import HelpSection from "../components/help/HelpSection";
 import {isSmallDevice, pick} from '../utils';
 import {PickClassFunctions, Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
-import {State} from "../models/State";
+import {Route, State} from "../models/State";
 import {Item} from "../models/HelpStorage";
 import AdvancedSettings from "../components/AdvancedSettings";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";
+import config from "../config";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -71,7 +71,7 @@ class Search extends Component<SearchProps, OurState> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+		this.props.setPreview(ids, config.ROUTE_PREVIEW);
 	}
 
 	handleAddToCart(objInfo: UrlStr[]) {
@@ -179,7 +179,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
-		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),
+		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		filtersReset: () => dispatch(filtersReset),

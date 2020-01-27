@@ -5,15 +5,10 @@ import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
 import { formatBytes, formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
-import {MetaDataObject, State} from "../models/State";
+import {MetaDataObject, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
-import {
-	addToCart,
-	removeFromCart,
-	setMetadataItem,
-	setPreviewItem,
-	updateFilteredDataObjects
-} from "../actions";
+import {updateFilteredDataObjects} from '../actions/metadata';
+import {addToCart, removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/main";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
 import config from '../config';
@@ -37,7 +32,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		this.props.setPreviewItem(ids);
+		this.props.setPreview(ids, config.ROUTE_PREVIEW);
 	}
 
 	handleViewMetadata(id: UrlStr) {
@@ -53,7 +48,7 @@ class Metadata extends Component<MetadataProps> {
 		const isInCart = cart.hasItem(metadata.id);
 		const actionButtonType = isInCart ? 'remove' : 'add';
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
-		const specInfo = metadata.specificInfo
+		const specInfo = metadata.specificInfo;
 
 		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
 			? (specInfo as L2OrLessSpecificMeta).acquisition
@@ -321,7 +316,7 @@ const documentationLinks = (documentation: PlainStaticObject[]) => {
 			{i != documentation.length - 1 && <br />}
 		</React.Fragment>
 	)
-}
+};
 
 const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
 	if (dataLevel == 0) {
@@ -345,7 +340,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		setPreviewItem: (id: UrlStr[]) => dispatch(setPreviewItem(id)),
+		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects)
 	};

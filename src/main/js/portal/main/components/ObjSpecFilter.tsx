@@ -4,7 +4,7 @@ import Slider from './ui/Slider.jsx';
 import HelpButton from './help/HelpButton.jsx';
 import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
 import {ReducedProps} from "../containers/Search";
-import {KeyStrVal, PickClassFunctions, UrlStr} from "../backend/declarations";
+import {KeyStrVal, PickClassFunctions} from "../backend/declarations";
 import PickDates from "./filters/PickDates";
 import {ColNameLabels, ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";

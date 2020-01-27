@@ -30,7 +30,7 @@ export interface CartItemSerialized {
 }
 
 export default class CartItem {
-	readonly _id: string;
+	readonly _id: UrlStr;
 	readonly _dataobject: DataObject;
 	readonly _type: DataType | undefined;
 	readonly _url: UrlStr | undefined;

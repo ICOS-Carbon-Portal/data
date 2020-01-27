@@ -3,7 +3,7 @@ import {fetchFilteredDataObjects} from "./backend";
 import deepEqual from 'deep-equal';
 import config from './config';
 import {ThenArg} from "./backend/declarations";
-import {Options} from "./actions";
+import {Options} from "./actions/types";
 
 
 type FetchFilteredDataObjects = ThenArg<typeof fetchFilteredDataObjects>;

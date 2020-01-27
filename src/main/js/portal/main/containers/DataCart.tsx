@@ -1,20 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {
-	setPreviewItem,
-	setPreviewUrl,
-	setCartName,
-	fetchIsBatchDownloadOk,
-	updateCheckedObjectsInCart,
-	updateRoute, setMetadataItem, removeFromCart
-} from '../actions';
+import {updateRoute, setMetadataItem, removeFromCart, switchToPreview} from '../actions/main';
+import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions/cart';
 import {formatBytes} from '../utils';
 import config from '../config';
 import BackButton from '../components/buttons/BackButton.jsx';
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
-import {Profile, State} from "../models/State";
+import {Profile, Route, State} from "../models/State";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -28,14 +22,14 @@ class DataCart extends Component<DataCartProps> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		if (this.props.setPreviewItem) this.props.setPreviewItem(ids);
+		this.props.setPreview(ids, config.ROUTE_PREVIEW);
 	}
 
-	handleBackButton(previousRoute: string){
+	handleBackButton(previousRoute: Route){
 		this.props.updateRoute(previousRoute);
 	}
 
-	handleRouteClick(newRoute: string){
+	handleRouteClick(newRoute: Route){
 		this.props.updateCheckedObjectsInCart([]);
 		this.props.updateRoute(newRoute);
 	}
@@ -131,10 +125,9 @@ function stateToProps(state: State){
 
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
-		updateRoute: (hash: string) => dispatch(updateRoute(hash)),
-		setPreviewItem: (ids: UrlStr[]) => dispatch(setPreviewItem(ids)),
+		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
+		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		setCartName: (newName: string) => dispatch(setCartName(newName)),
-		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),

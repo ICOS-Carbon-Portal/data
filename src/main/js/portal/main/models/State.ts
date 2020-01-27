@@ -29,7 +29,7 @@ const hashKeys = [
 	'preview'
 ];
 
-export type Routes = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
+export type Route = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
 
 export interface Profile {
 	icosLicenceOk: boolean
@@ -76,7 +76,7 @@ export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
 	searchOptions: SearchOptions
-	route: Routes
+	route: Route
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[]
@@ -243,7 +243,7 @@ const simplifyState = (state: State) => {
 };
 
 type JsonHashState = {
-	route?: Routes
+	route?: Route
 	filterCategories?: CategFilters
 	filterTemporal?: SerializedFilterTemporal
 	tabs?: State['tabs']

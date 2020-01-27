@@ -2,7 +2,8 @@ import 'babel-polyfill';
 import {createStore, applyMiddleware, Middleware, AnyAction, Dispatch, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
-import {init} from './actions';
+// import {init} from './actions';
+import {init} from './actions/main';
 import stateUtils, {State} from "./models/State";
 import {ActionPayload, PortalPlainAction} from "./reducers/actionpayloads";
 
