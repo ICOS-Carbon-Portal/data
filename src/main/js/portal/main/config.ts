@@ -39,7 +39,7 @@ const defaultCategNames = {
 	level: 'Data level',
 	format: 'Format',
 	theme: 'Theme',
-	colTitle: 'Column name',
+	column: 'Column name',
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
 	quantityUnit: 'Unit of measurement',
@@ -102,12 +102,12 @@ export const filters: IFilterCategories = {
 	ICOS: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['colTitle', 'valType', 'quantityUnit', 'quantityKind']}
+		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
-		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'colTitle']}
+		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']}
 	]
 };
 

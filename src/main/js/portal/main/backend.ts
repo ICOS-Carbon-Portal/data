@@ -50,7 +50,7 @@ const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
-		colTitle: b.colTitle.value,
+		column: b.column.value,
 		valType: b.valType.value,
 		quantityKind: b.quantityKind?.value,
 		quantityUnit: b.quantityUnit.value

@@ -26,13 +26,14 @@ export default class Lookup{
 	constructor(specTable: CompositeSpecTable, labelLookup: KeyStrVal){
 		this.table = {};
 
-		specTable.columnMeta.rows.forEach(({spec, colTitle, valType}) => {
-			if(typeof spec === 'string' && typeof colTitle === 'string' && typeof valType === 'string'){
+		specTable.columnMeta.rows.forEach(({spec, column, valType}) => {
+			if(typeof spec === 'string' && typeof column === 'string' && typeof valType === 'string'){
 				let defaultInfo: TimeSeriesPreviewInfo = {type: "TIMESERIES", options: []};
 				const currentInfo = this.table[spec];
 				const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
 				if (info === defaultInfo) this.table[spec] = info;
 				const valTypeLabel = labelLookup[valType];
+				const colTitle = labelLookup[column];
 				info.options.push({colTitle, valTypeLabel});
 			}
 		});

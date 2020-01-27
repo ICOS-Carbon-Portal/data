@@ -41,14 +41,14 @@ where{
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "colTitle", "valType", "quantityUnit"] as const;
+const columnMetaColNamesMan = ["spec", "column", "valType", "quantityUnit"] as const;
 const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
 export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?colTitle ?valType ?quantityKind
+select distinct ?spec ?column ?valType ?quantityKind
 (if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
@@ -56,7 +56,6 @@ where{
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
-	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valType .
 	OPTIONAL{
 		?valType cpmeta:hasQuantityKind ?quantityKind .
@@ -77,24 +76,18 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof ori
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?project ?count
-(if(bound(?stationName), ?stationOrDummy, ?stationName) as ?station)
+select ?spec ?submitter ?project ?count ?station
 where{
 	{
-		select
-			(if(bound(?stationOpt), ?stationOpt, <https://dummy.unbound.station>) as ?stationOrDummy)
-			?submitter ?spec (count(?dobj) as ?count)
-		where{
+		select ?station ?submitter ?spec (count(?dobj) as ?count) where{
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
 			?dobj cpmeta:hasObjectSpec ?spec .
-			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationOpt }
+			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station }
 			?dobj cpmeta:hasSizeInBytes ?size .
 			${getFilterClauses(filters, true)}
 		}
-		group by ?spec ?submitter ?stationOpt
+		group by ?spec ?submitter ?station
 	}
-	OPTIONAL{?stationOrDummy cpmeta:hasName ?stationName}
-	OPTIONAL{?stationOrDummy cpmeta:hasStationId ?stId}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
