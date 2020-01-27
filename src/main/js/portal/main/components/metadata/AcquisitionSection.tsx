@@ -38,6 +38,9 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 			{acquisition.samplingHeight &&
 				metadataRow("Sampling height", `${acquisition.samplingHeight} m`)
 			}
+			{acquisition.station.org.email &&
+				metadataRow("Contact", <a href={emailLink(acquisition.station.org.email)}>{acquisition.station.org.email}</a>)
+			}
 			<br />
 		</React.Fragment>
 	);
@@ -56,6 +59,10 @@ const instrumentRow = (instruments: UrlStr | UrlStr[]) => {
 			}))
 			: metadataRow("Instrument", <a href={instruments}>{instruments.split('/').pop()}</a>)
 	);
+};
+
+const emailLink = (email: string) => {
+	return `mailto:${email}`;
 };
 
 export default AcquisitionSection;
