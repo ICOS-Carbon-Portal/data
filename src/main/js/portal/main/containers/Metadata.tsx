@@ -159,9 +159,10 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
 		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
-	const station = acquisition && acquisition.station
-		? acquisition.station
-		: undefined;
+	const location = acquisition && acquisition.station &&
+		(acquisition.site
+			? `${acquisition.site.location?.label} (${acquisition.station.name})`
+			: acquisition.station.name);
 	const title = (specInfo as L3SpecificMeta).title
 		? (specInfo as L3SpecificMeta).title
 		: undefined;
@@ -173,7 +174,7 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 			{specInfo &&
 				<h1>
 					{title || specLabel}
-					{station && <span> from {station.name}</span>}
+					{location && <span> from {location}</span>}
 					{acquisition && acquisition.interval &&
 						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop))
 					}
