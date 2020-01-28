@@ -49,7 +49,6 @@ export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<type
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?column ?valType ?quantityKind
-(if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
@@ -57,12 +56,9 @@ where{
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasValueType ?valType .
-	OPTIONAL{
-		?valType cpmeta:hasQuantityKind ?quantityKind .
-		?quantityKind rdfs:label ?qKindLabel .
-	}
 	${deprecatedFilter(deprFilter)}
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
+	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
 
 	return {text};

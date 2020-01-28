@@ -65,6 +65,10 @@ export default class SpecTable<T extends string = string>{
 		return this.filters[colName] ?? null;
 	}
 
+	get hasActiveFilters(): boolean{
+		return Object.values(this.filters).some(f => !!f) || (this.extraSpecFilter != null);
+	}
+
 	withResetFilters(){
 		return new SpecTable(this.colNames, this.rows, {});
 	}

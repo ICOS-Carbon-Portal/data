@@ -209,7 +209,7 @@ const logPortalUsage = (state: State) => {
 	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
-			acc.columnName = specTable.getLabelFilter(columnName);
+			acc.columnName = specTable.getFilter(columnName);
 			return acc;
 		}, {});
 
@@ -299,8 +299,8 @@ function getFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<v
 
 			const options: Options = {
 				specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
-				stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
-				submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
+				stations: useOnlyPidFilter ? null : specTable.getFilter('station') ?? null,
+				submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter') ?? null,
 				sorting,
 				paging,
 				filters
