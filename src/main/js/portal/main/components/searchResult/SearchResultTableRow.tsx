@@ -53,7 +53,7 @@ export default class SimpleObjectTableRow extends Component<SimpleObjectTableRow
 		const locationString = location ? ` from ${location}` : '';
 		const offset = timezone[config.envri].offset;
 		const dateString = `${formatDate(new Date(objInfo.timeStart ?? ""), offset)} \u2013 ${formatDate(new Date(objInfo.timeEnd ?? ""), offset)}`;
-		const orgSpecLabel = props.labelLookup[objInfo.spec];
+		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
 		const specLabel = config.envri === "SITES" && orgSpecLabel.includes(',')
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
