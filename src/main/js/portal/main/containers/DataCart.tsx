@@ -38,10 +38,7 @@ class DataCart extends Component<DataCartProps> {
 		if (this.props.checkedObjectsInCart.length > 0) {
 			this.props.updateCheckedObjectsInCart([]);
 		} else {
-			const checkedObjects = this.props.objectsTable.reduce((acc: string[], o) => {
-				if (o.level > 0) acc.push(o.dobj);
-				return acc;
-			}, []);
+			const checkedObjects = this.props.cart.items.map(item => item.id);
 			this.props.updateCheckedObjectsInCart(checkedObjects);
 		}
 	}
