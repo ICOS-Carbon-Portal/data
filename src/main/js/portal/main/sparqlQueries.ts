@@ -41,20 +41,21 @@ where{
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "column", "valType", "quantityUnit"] as const;
+const columnMetaColNamesMan = ["spec", "column", "colTitle", "valType", "quantityUnit"] as const;
 const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
 export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?column ?valType ?quantityKind
+select distinct ?spec ?column ?colTitle ?valType ?quantityKind
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
+	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valType .
 	${deprecatedFilter(deprFilter)}
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }

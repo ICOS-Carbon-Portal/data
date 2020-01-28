@@ -122,8 +122,8 @@ export default class CompositeSpecTable{
 		);
 	}
 
-	getFilter(colName: ColNames): Filter | undefined {
-		return this.findTable(colName)?.getFilter(colName);
+	getFilter(colName: ColNames): Filter {
+		return this.findTable(colName)?.getFilter(colName) ?? null;
 	}
 
 	get hasActiveFilters(): boolean{
@@ -141,8 +141,8 @@ export default class CompositeSpecTable{
 			: [];
 	}
 
-	getColumnValuesFilter(colName: ColNames): Filter | undefined{
-		return this.findTable(colName)?.getColumnValuesFilter(colName);
+	getColumnValuesFilter(colName: ColNames): Filter {
+		return this.findTable(colName)?.getColumnValuesFilter(colName) ?? null;
 	}
 
 }

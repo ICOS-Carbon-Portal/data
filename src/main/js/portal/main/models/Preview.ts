@@ -86,7 +86,7 @@ export default class Preview {
 
 		if (options.type === config.TIMESERIES){
 			const xAxis = ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.some((op: any) => op.colTitle === x));
-			if (items && xAxis){
+			if (items.length && xAxis){
 				const url = getNewTimeseriesUrl(items, xAxis);
 				return new Preview(items.map(i => i.withUrl(url)), options.options, options.type, true);
 			}
