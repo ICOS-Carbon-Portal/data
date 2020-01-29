@@ -31,6 +31,7 @@ export default {
 		ICOS: 'https://meta.icos-cp.eu/objects/',
 		SITES: 'https://meta.fieldsites.se/objects/'
 	},
+	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
 	historyStateMaxAge: (1000 * 3600 * 24)
 };
 
