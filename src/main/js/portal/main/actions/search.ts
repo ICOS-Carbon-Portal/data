@@ -44,7 +44,7 @@ function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction
 			paging,
 			filters
 		};
-		console.log({fetchOriginsTable, filters, options});
+
 		dataObjectsFetcher.fetch(options).then(
 			({rows, cacheSize, isDataEndReached}) => {
 				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));

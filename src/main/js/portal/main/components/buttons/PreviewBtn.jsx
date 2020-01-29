@@ -12,11 +12,9 @@ export default class PreviewBtn extends Component{
 	}
 
 	render(){
-		const {checkedObjects, style, lookup} = this.props;
+		const {datasets, previewTypes, style} = this.props;
 
-		if (lookup === undefined) return null;
-
-		const [enabled, title] = this.isPreviewEnabled(checkedObjects, lookup);
+		const [enabled, title] = this.isPreviewEnabled(datasets, previewTypes);
 		const className = "btn btn-default " + (enabled ? "" : "disabled");
 		const btnStyle = title.length ? {pointerEvents:'auto'} : {};
 
@@ -29,12 +27,9 @@ export default class PreviewBtn extends Component{
 		);
 	}
 
-	isPreviewEnabled(checkedObjects, lookup) {
-		if (!checkedObjects.length)
+	isPreviewEnabled(datasets, previewTypes) {
+		if (!datasets.length || !previewTypes.length)
 			return [false, ""];
-
-		const datasets = checkedObjects.map(obj => obj.dataset);
-		const previewTypes = checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec));
 
 		if (previewTypes.length !== datasets.length)
 			throw new Error("Unexpected error in PreviewBtn:isPreviewEnabled");
@@ -42,7 +37,7 @@ export default class PreviewBtn extends Component{
 		if (previewTypes.includes(undefined))
 			return [false, "You have selected a data object that cannot be previewed"];
 
-		else if (!datasets.every(dataset => dataset === datasets[0]))
+		else if (!datasets.every(dataset => dataset && dataset === datasets[0]))
 			return [false, "Multiple previews are only available for data of same type"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))
@@ -50,9 +45,6 @@ export default class PreviewBtn extends Component{
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
 			return [false, "You can only preview one shipping line at a time"];
-
-		else if (checkedObjects.reduce((accumulator, currentValue) => accumulator || typeof currentValue.nextVersion !== 'undefined', false))
-			return [false, "You can only preview the newest version"];
 
 		else
 			return [true, ""];

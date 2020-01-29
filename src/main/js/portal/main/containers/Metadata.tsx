@@ -9,9 +9,10 @@ import {MetaDataObject, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects} from '../actions/metadata';
 import {addToCart, removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/main";
-import {Sha256Str, UrlStr} from "../backend/declarations";
+import {KeyStrVal, Sha256Str, UrlStr} from "../backend/declarations";
 import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
 import config from '../config';
+import {UriResource} from "../../../common/main/metacore";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -62,6 +63,15 @@ class Metadata extends Component<MetadataProps> {
 			? metadata.previousVersion
 			: metadata.previousVersion ? [metadata.previousVersion] : [];
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
+		const datasetSpec = metadata.specification.datasetSpec as UriResource | undefined;
+		const checkedObjects = [{
+			'dataset': datasetSpec ? datasetSpec.uri : undefined,
+			'dobj': metadata.id,
+			'spec': metadata.specification.self.uri,
+			'nextVersion': metadata.nextVersion
+		}];
+		const datasets = checkedObjects.map(obj => obj.dataset);
+		const previewTypes = lookup ? [lookup.getSpecLookupType(metadata.specification.self.uri)] : [];
 		const self = this;
 
 		return (
@@ -90,9 +100,10 @@ class Metadata extends Component<MetadataProps> {
 										/>
 										<PreviewBtn
 											style={{ float: 'left', margin: '20px 10px 30px 0' }}
-											checkedObjects={[{'dobj': metadata.id, 'spec': metadata.specification.self.uri, 'nextVersion': metadata.nextVersion}]}
+											checkedObjects={checkedObjects}
+											datasets={datasets}
+											previewTypes={previewTypes}
 											clickAction={this.handlePreview.bind(this)}
-											lookup={lookup}
 										/>
 									</div>
 								</div>

@@ -9,7 +9,7 @@ import {getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
 
 export default function bootstrapCart(): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {cart, lookup, labelLookup, user, checkedObjectsInCart, objectsTable, extendedDobjInfo} = getState();
+		const {cart, objectsTable} = getState();
 
 		const cartItems: CartItem[] = cart.items;
 		const rowsAsObjectsTable = cartItems.map(ci => ci.item);

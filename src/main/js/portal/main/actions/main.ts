@@ -69,6 +69,7 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 		dispatch(getBackendTables(filters)).then(_ => {
 			// Then bootstrap current route
 			dispatch(bootstrapRoute);
+			dispatch(new Payloads.MiscRestoreFilters());
 		});
 
 		type LoggedIn = {_id: string, profile: Profile | {}};
@@ -85,7 +86,7 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 
 const bootstrapRoute: PortalThunkAction<void> = (dispatch, getState) => {
 	const {route, id, user} = getState();
-	// console.log({route, id, user});
+
 	switch (route) {
 		case config.DEFAULT_ROUTE:
 		case config.ROUTE_SEARCH:

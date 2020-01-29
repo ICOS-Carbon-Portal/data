@@ -30,6 +30,8 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 	const checkedObjects = checkedObjectsInSearch.reduce((acc: any[], uri) => {
 		return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
 	}, []);
+	const datasets = checkedObjects.map(obj => obj.dataset);
+	const previewTypes = lookup ? checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec)) : [];
 
 	const handleAllCheckboxesChange = () => {
 		props.handleAllCheckboxesChange();
@@ -77,8 +79,9 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 						<PreviewBtn
 							style={{float: 'right', marginBottom: 10, marginRight: 10}}
 							checkedObjects={checkedObjects}
+							datasets={datasets}
+							previewTypes={previewTypes}
 							clickAction={handlePreview}
-							lookup={lookup}
 						/>
 
 						<div style={{float: 'right', position:'relative', top:7, marginRight: 10}}>

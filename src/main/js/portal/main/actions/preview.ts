@@ -9,17 +9,14 @@ import {UrlStr} from "../backend/declarations";
 
 export default function bootstrapPreview(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {preview, cart, extendedDobjInfo, tsSettings} = getState();
-console.log({user, preview, hasPids: preview.hasPids, hasAllItems: preview.hasAllItems, cart, extendedDobjInfo, tsSettings});
+		const {preview, tsSettings} = getState();
+
 		if (preview.hasPids){
 			if (!preview.hasAllItems) {
 				dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
 
 				const ids: UrlStr[] = preview.pids.map((id: string) => config.previewIdPrefix[config.envri] + id);
 				dispatch(fetchExtendedDataObjInfo(ids));
-
-			} else {
-				failWithError(dispatch)(new Error('Unexpected state in preview-actions: Preview has all items in bootstrap'));
 			}
 
 		} else {

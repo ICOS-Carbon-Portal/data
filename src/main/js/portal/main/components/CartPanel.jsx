@@ -39,6 +39,11 @@ export default class CartPanel extends Component {
 	render(){
 		const props = this.props;
 		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
+		const checkedObjects = props.cart.items
+			.filter(item => props.checkedObjectsInCart.includes(item.id));
+		const datasets = checkedObjects.map(obj => obj.item.dataset);
+		const previewTypes = checkedObjects.map(obj => obj.type);
+		console.log({props});
 
 		return (
 			<div className="panel panel-default">
@@ -72,9 +77,10 @@ export default class CartPanel extends Component {
 							/>
 							<PreviewBtn
 								style={{marginBottom: 10, marginRight: 10}}
-								checkedObjects={props.checkedObjectsInCart.flatMap(c => props.objectsTable.filter(o => o.dobj === c))}
+								checkedObjects={checkedObjects}
+								datasets={datasets}
+								previewTypes={previewTypes}
 								clickAction={this.handlePreview.bind(this)}
-								lookup={props.lookup}
 							/>
 						</div>
 					</div>

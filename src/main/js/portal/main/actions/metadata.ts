@@ -7,12 +7,10 @@ import {failWithError, getKnownDataObjInfo} from "./main";
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const {metadata} = getState();
-		console.log({id, metadata});
 
 		if (id){
 			if (metadata === undefined || id !== metadata.id) {
 				dispatch(getMetadataItem(id));
-
 			}
 		} else {
 			failWithError(dispatch)(new Error('Invalid state: Metadata id is missing'));
@@ -31,7 +29,6 @@ function getMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		getMetadata(id).then(metadata => {
 			const metadataWithId = {...metadata, ...{id}};
-			console.log({metadataWithId});
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
 	};
