@@ -115,7 +115,6 @@ function stateToProps(state: State){
 		user: state.user,
 		preview: state.preview,
 		checkedObjectsInCart: state.checkedObjectsInCart,
-		// objectsTable: state.objectsTable,
 		extendedDobjInfo: state.extendedDobjInfo,
 	};
 }

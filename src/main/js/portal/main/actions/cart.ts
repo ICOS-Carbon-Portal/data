@@ -9,16 +9,15 @@ import {getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
 
 export default function bootstrapCart(): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {cart, objectsTable} = getState();
+		const {cart} = getState();
 
 		const cartItems: CartItem[] = cart.items;
 		const rowsAsObjectsTable = cartItems.map(ci => ci.item);
 		const dobjs: UrlStr[] = rowsAsObjectsTable.map(r => r.dobj);
 
-		if (objectsTable.length === 0) {
-			dispatch(fetchExtendedDataObjInfo(dobjs));
-			dispatch(new Payloads.BackendObjectsFetched(rowsAsObjectsTable, true));
-		}
+		dispatch(fetchExtendedDataObjInfo(dobjs));
+		dispatch(new Payloads.BackendObjectsFetched(rowsAsObjectsTable, true));
+
 	};
 }
 

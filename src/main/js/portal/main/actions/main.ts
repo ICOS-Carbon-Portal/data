@@ -68,8 +68,7 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			// Then bootstrap current route
-			dispatch(bootstrapRoute);
-			dispatch(new Payloads.MiscRestoreFilters());
+			dispatch(bootstrapRoute(user));
 		});
 
 		type LoggedIn = {_id: string, profile: Profile | {}};
@@ -84,38 +83,41 @@ function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	};
 }
 
-const bootstrapRoute: PortalThunkAction<void> = (dispatch, getState) => {
-	const {route, id, user} = getState();
+function bootstrapRoute(user: WhoAmI): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const {route, id} = getState();
 
-	switch (route) {
-		case config.DEFAULT_ROUTE:
-		case config.ROUTE_SEARCH:
-			dispatch(bootstrapSearch(true));
-			break;
+		switch (route) {
+			case config.DEFAULT_ROUTE:
+			case config.ROUTE_SEARCH:
+				dispatch(new Payloads.MiscRestoreFilters());
+				dispatch(bootstrapSearch(true));
+				break;
 
-		case config.ROUTE_PREVIEW:
-			dispatch(bootstrapPreview(user));
-			break;
+			case config.ROUTE_PREVIEW:
+				dispatch(bootstrapPreview(user));
+				break;
 
-		case config.ROUTE_CART:
-			dispatch(bootstrapCart());
-			break;
+			case config.ROUTE_CART:
+				dispatch(bootstrapCart());
+				break;
 
-		case config.ROUTE_METADATA:
-			dispatch(bootstrapMetadata(id));
-			break;
+			case config.ROUTE_METADATA:
+				dispatch(bootstrapMetadata(id));
+				break;
 
-		default:
-			failWithError(dispatch)(new Error(`Argument for route '${route}' is not managed`));
-	}
-};
+			default:
+				failWithError(dispatch)(new Error(`Argument for route '${route}' is not managed`));
+		}
+	};
+}
 
 export function updateRoute(route?: Route): PortalThunkAction<void> {
-	return (dispatch) => {
+	return (dispatch, getState) => {
 		const newRoute: Route = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
 
 		dispatch(new Payloads.UiUpdateRoute(newRoute));
-		dispatch(bootstrapRoute);
+		dispatch(bootstrapRoute(getState().user));
 	};
 }
 

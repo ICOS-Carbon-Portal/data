@@ -43,7 +43,6 @@ export default class CartPanel extends Component {
 			.filter(item => props.checkedObjectsInCart.includes(item.id));
 		const datasets = checkedObjects.map(obj => obj.item.dataset);
 		const previewTypes = checkedObjects.map(obj => obj.type);
-		console.log({props});
 
 		return (
 			<div className="panel panel-default">
