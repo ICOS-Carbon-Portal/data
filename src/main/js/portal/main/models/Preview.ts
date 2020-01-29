@@ -85,11 +85,16 @@ export default class Preview {
 		const items: CartItem[] = objects.filter(o => o.item).map(o => o.item!);
 
 		if (options.type === config.TIMESERIES){
-			const xAxis = ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'].find(x => options.options.some((op: any) => op.colTitle === x));
-			if (items && xAxis){
-				const url = getNewTimeseriesUrl(items, xAxis);
-				return new Preview(items.map(i => i.withUrl(url)), options.options, options.type, true);
+			if (items.length){
+				let previewItems = items;
+				const xAxis = config.previewXaxisCols.find(x => options.options.some((op: any) => op.colTitle === x));
+				if(xAxis){
+					const url = getNewTimeseriesUrl(items, xAxis);
+					previewItems = items.map(i => i.withUrl(url));
+				}
+				return new Preview(previewItems, options.options, options.type, true);
 			}
+			else throw new Error("No items to preview");
 		} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
 			return new Preview(items, options.options, options.type, true);
 		}

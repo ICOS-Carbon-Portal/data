@@ -209,7 +209,7 @@ const logPortalUsage = (state: State) => {
 	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
-			acc.columnName = specTable.getLabelFilter(columnName);
+			acc.columnName = specTable.getFilter(columnName);
 			return acc;
 		}, {});
 
