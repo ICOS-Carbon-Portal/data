@@ -59,7 +59,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	}
 
 	private def hostOpt(implicit envri: Envri): Option[String] =
-		envriConfs.get(envri).map(_.metaPrefix.getHost)
+		envriConfs.get(envri).map(_.metaHost)
 
 	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[StaticObject] =
 		lookupItem[StaticObject](hash, objectPathPrefix)

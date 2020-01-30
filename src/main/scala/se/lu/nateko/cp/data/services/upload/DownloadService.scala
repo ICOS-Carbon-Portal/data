@@ -122,7 +122,7 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService)(implicit 
 				Some("Data object is not distributed by Carbon Portal as open data")
 
 			case Some(url) =>
-				if(!url.toString.startsWith(envriConf.dataPrefix.toString))
+				if(url.getHost != envriConf.dataHost)
 					Some("Data object is distributed by third parties")
 
 				else if(!upload.getFile(obj).exists)

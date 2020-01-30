@@ -62,7 +62,7 @@ class Metadata extends Component<MetadataProps> {
 			: undefined;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
-		const datasetSpec = metadata.specification.datasetSpec as UriResource | undefined;
+		const datasetSpec = metadata.specification.datasetSpec;
 		const checkedObjects = [{
 			'dataset': datasetSpec ? datasetSpec.uri : undefined,
 			'dobj': metadata.id,

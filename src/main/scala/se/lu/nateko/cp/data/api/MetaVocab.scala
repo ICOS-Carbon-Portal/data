@@ -24,7 +24,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	}
 
 	def getDataObject(hash: Sha256Sum)(implicit envri: EnvriConfig) =
-		new URI(s"${envri.metaPrefix}objects/${hash.id}")
+		new URI(s"${envri.dataItemPrefix}objects/${hash.id}")
 
 	val float32 = getRelative("float32")
 	val float64 = getRelative("float64")

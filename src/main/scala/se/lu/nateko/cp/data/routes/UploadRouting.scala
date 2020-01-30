@@ -91,7 +91,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		}
 
 	private def addAccessControlHeaders(implicit envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
-		case Some(origin) if envriConfs(envri).metaPrefix.toString.startsWith(origin.value) =>
+		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
 			respondWithHeaders( //allowing uploads from meta-hosted browser web apps
 				`Access-Control-Allow-Origin`(origin.value), `Access-Control-Allow-Credentials`(true)
 			)

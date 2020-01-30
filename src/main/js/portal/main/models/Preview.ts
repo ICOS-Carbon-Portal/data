@@ -87,7 +87,7 @@ export default class Preview {
 		if (options.type === config.TIMESERIES){
 			if (items.length){
 				let previewItems = items;
-				const xAxis = config.previewXaxisCols.find(x => options.options.some((op: any) => op.colTitle === x));
+				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.colTitle === x));
 				if(xAxis){
 					const url = getNewTimeseriesUrl(items, xAxis);
 					previewItems = items.map(i => i.withUrl(url));
