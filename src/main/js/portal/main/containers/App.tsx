@@ -80,7 +80,7 @@ export class App extends Component<AppProps> {
 const Title = (props: {route: Route, metadata?: MetaDataObject & {id: UrlStr}}) => {
 
 	switch(props.route) {
-		case config.ROUTE_SEARCH:
+		case 'search':
 			return (
 				<h1 className="col-md-9">
 					{config.envri} data portal
@@ -88,7 +88,7 @@ const Title = (props: {route: Route, metadata?: MetaDataObject & {id: UrlStr}}) 
 				</h1>
 			);
 
-		case config.ROUTE_METADATA:
+		case 'metadata':
 			return (
 				<div className="col-md-9">{MetadataTitle(props.metadata)}</div>
 			);
@@ -107,10 +107,10 @@ interface ButtonProps {
 const SwitchRouteBtn = (props: ButtonProps) => {
 	switch(props.route){
 
-		case config.ROUTE_SEARCH:
+		case 'search':
 			return <SearchBtn {...props} />;
 
-		case config.ROUTE_CART:
+		case 'cart':
 			return null;
 
 		default:
@@ -123,7 +123,7 @@ const SearchBtn = (props: ButtonProps) => {
 	const colCount = cart.count;
 
 	return (
-		<button className="btn btn-primary" onClick={() => handleRouteClick(config.ROUTE_CART)}>
+		<button className="btn btn-primary" onClick={() => handleRouteClick('cart')}>
 			View data cart
 			<span style={{marginLeft: 5}} className="badge">
 				{colCount} {colCount === 1 ? ' item' : ' items'}
@@ -134,13 +134,13 @@ const SearchBtn = (props: ButtonProps) => {
 
 const Route = (props: AppProps) => {
 	switch(props.route){
-		case config.ROUTE_SEARCH:
+		case 'search':
 			return <Search />;
 
-		case config.ROUTE_CART:
+		case 'cart':
 			return <DataCart />;
 
-		case config.ROUTE_PREVIEW:
+		case 'preview':
 			return (
 				<Preview
 					preview={props.preview}
@@ -154,7 +154,7 @@ const Route = (props: AppProps) => {
 					setMetadataItem={props.setMetadataItem}
 				/>);
 
-		case config.ROUTE_METADATA:
+		case 'metadata':
 			return <Metadata />;
 
 		default:

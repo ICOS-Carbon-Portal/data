@@ -37,7 +37,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, config.ROUTE_PREVIEW);
+		this.props.setPreview(ids, 'preview');
 	}
 
 	handleViewMetadata(id: UrlStr) {

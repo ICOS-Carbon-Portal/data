@@ -88,21 +88,20 @@ function bootstrapRoute(user: WhoAmI): PortalThunkAction<void> {
 		const {route, id} = getState();
 
 		switch (route) {
-			case config.DEFAULT_ROUTE:
-			case config.ROUTE_SEARCH:
+			case 'search':
 				dispatch(new Payloads.MiscRestoreFilters());
 				dispatch(bootstrapSearch(true));
 				break;
 
-			case config.ROUTE_PREVIEW:
+			case 'preview':
 				dispatch(bootstrapPreview(user));
 				break;
 
-			case config.ROUTE_CART:
+			case 'cart':
 				dispatch(bootstrapCart());
 				break;
 
-			case config.ROUTE_METADATA:
+			case 'metadata':
 				dispatch(bootstrapMetadata(id));
 				break;
 
@@ -114,7 +113,7 @@ function bootstrapRoute(user: WhoAmI): PortalThunkAction<void> {
 
 export function updateRoute(route?: Route): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const newRoute: Route = route || getRouteFromLocationHash() || config.ROUTE_SEARCH;
+		const newRoute: Route = route || getRouteFromLocationHash() || 'search';
 
 		dispatch(new Payloads.UiUpdateRoute(newRoute));
 		dispatch(bootstrapRoute(getState().user));
@@ -233,20 +232,11 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void>{
 			if (objInfo === undefined)
 				throw new Error(`Could not find objTable with id=${id} in ${state.objectsTable}`);
 
-			const specLookup = state.lookup && objInfo && objInfo.spec
+			const specLookup = state.lookup && objInfo.spec
 				? state.lookup.getSpecLookup(objInfo.spec)
 				: undefined;
 
-//TODO This is unexpected operation to do when adding to cart. Was always resulting in undefined until recently.
-			const xAxis = specLookup && specLookup.type === 'TIMESERIES'
-				? specLookup.options.find(ao => ao.colTitle === 'TIMESTAMP')?.colTitle
-				: undefined;
-
-			const item = new CartItem(objInfo, specLookup?.type);
-
-			return xAxis
-				? item.withUrl(getNewTimeseriesUrl([item], xAxis))
-				: item;
+			return new CartItem(objInfo, specLookup?.type);
 		});
 
 		if (newItems.length > 0) {
@@ -287,7 +277,7 @@ export function restoreFromHistory(historyState: StateSerialized): PortalThunkAc
 const addStateMisingInHistory: PortalThunkAction<void> = (dispatch, getState) => {
 	const {route, metadata, id} = getState();
 
-	if (route === config.ROUTE_METADATA && metadata && id !== undefined && metadata.id !== id)
+	if (route === 'metadata' && metadata && id !== undefined && metadata.id !== id)
 		dispatch(setMetadataItem(id));
 };
 

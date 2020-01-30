@@ -29,7 +29,7 @@ const hashKeys = [
 	'preview'
 ];
 
-export type Route = typeof config.DEFAULT_ROUTE | typeof config.ROUTE_CART | typeof config.ROUTE_METADATA | typeof config.ROUTE_PREVIEW | typeof config.ROUTE_SEARCH;
+export type Route = 'search' | 'metadata' | 'preview' | 'cart';
 
 export interface Profile {
 	icosLicenceOk: boolean
@@ -123,7 +123,7 @@ export const defaultState: State = {
 	searchOptions: {
 		showDeprecated: false
 	},
-	route: config.DEFAULT_ROUTE,
+	route: 'search',
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterPids:[],
@@ -272,13 +272,13 @@ const jsonToState = (state0: JsonHashState) => {
 };
 
 const handleRoute = (storeState: State) => {
-	if (storeState.route === config.ROUTE_SEARCH){
+	if (storeState.route === 'search'){
 		delete storeState.route;
 	}
 };
 
 const specialCases = (state: State) => {
-	if (state.route === config.ROUTE_METADATA) {
+	if (state.route === 'metadata') {
 		return {
 			route: state.route,
 			id: state.id,
@@ -288,7 +288,7 @@ const specialCases = (state: State) => {
 		delete state.metadata;
 	}
 
-	if (state.route === config.ROUTE_PREVIEW) {
+	if (state.route === 'preview') {
 		return {
 			route: state.route,
 			preview: state.preview
@@ -297,13 +297,13 @@ const specialCases = (state: State) => {
 		delete state.preview;
 	}
 
-	if (state.route === config.ROUTE_CART){
+	if (state.route === 'cart'){
 		return {
 			route: state.route
 		}
 	}
 
-	if (state.route === config.ROUTE_SEARCH){
+	if (state.route === 'search'){
 		delete state.route;
 	}
 
@@ -425,7 +425,7 @@ const reduceState = (state: KeyAnyVal) => {
 				acc[key] = part;
 			}
 
-		} else if (state.route === config.ROUTE_METADATA && key === 'id' && val && val!.length > 0){
+		} else if (state.route === 'metadata' && key === 'id' && val && val!.length > 0){
 			acc[key] = val!.split('/').pop();
 
 		} else if (typeof val === 'string'){

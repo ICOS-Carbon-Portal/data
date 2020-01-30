@@ -22,7 +22,7 @@ class DataCart extends Component<DataCartProps> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, config.ROUTE_PREVIEW);
+		this.props.setPreview(ids, 'preview');
 	}
 
 	handleBackButton(previousRoute: Route){
@@ -57,7 +57,7 @@ class DataCart extends Component<DataCartProps> {
 
 		return (
 			<div>
-				<BackButton action={this.handleBackButton.bind(this)} previousRoute={config.ROUTE_SEARCH}/>
+				<BackButton action={this.handleBackButton.bind(this)} previousRoute={'search'}/>
 				{props.cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-8 col-lg-9">
@@ -97,7 +97,7 @@ class DataCart extends Component<DataCartProps> {
 					<div className="text-center" style={{margin: '5vh 0'}}>
 						<h2>Your cart is empty</h2>
 						<p>Search for data and add it to your cart.</p>
-						<button className="btn btn-primary" onClick={this.handleRouteClick.bind(this, config.ROUTE_SEARCH)}>
+						<button className="btn btn-primary" onClick={this.handleRouteClick.bind(this, 'search')}>
 							Find data
 						</button>
 					</div>

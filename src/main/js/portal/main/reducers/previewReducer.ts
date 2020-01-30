@@ -1,7 +1,6 @@
 import stateUtils, {State} from "../models/State";
 import {PreviewPayload, RestorePreview, SetPreviewFromCart, SetPreviewItem, SetPreviewUrls} from "./actionpayloads";
 import Preview from "../models/Preview";
-import config from "../config";
 import {Sha256Str} from "../backend/declarations";
 
 
@@ -42,13 +41,13 @@ const handleRestorePreview = (state: State) => {
 		: {preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)};
 };
 
-const handleSetPreviewFromCart = (state: State, payload: SetPreviewFromCart) => {
+const handleSetPreviewFromCart = (state: State, payload: SetPreviewFromCart): Partial<State> => {
 	const preview = state.lookup === undefined
 		? new Preview()
 		: state.preview.initPreview(state.lookup.table, state.cart, payload.ids, state.objectsTable);
 
 	return {
-		route: config.ROUTE_PREVIEW,
+		route: 'preview',
 		preview
 	}
 };

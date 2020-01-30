@@ -4,17 +4,8 @@ import {UrlStr} from "./backend/declarations";
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
-const routes = {
-	ROUTE_SEARCH: 'search',
-	ROUTE_CART: 'cart',
-	ROUTE_METADATA: 'metadata',
-	ROUTE_PREVIEW: 'preview',
-	DEFAULT_ROUTE: 'search'
-} as const;
-
 export default {
 	envri: commonConfig.envri as Envri,
-	...routes,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	mapGraphFormats: [

@@ -40,7 +40,7 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendObjectMetadata){
 		return stateUtils.update(state, {
-			route: config.ROUTE_METADATA,
+			route: 'metadata',
 			metadata: payload.metadata
 		});
 	}

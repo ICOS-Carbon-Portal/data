@@ -72,7 +72,7 @@ class Search extends Component<SearchProps, OurState> {
 	}
 
 	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, config.ROUTE_PREVIEW);
+		this.props.setPreview(ids, 'preview');
 	}
 
 	handleAddToCart(objInfo: UrlStr[]) {
