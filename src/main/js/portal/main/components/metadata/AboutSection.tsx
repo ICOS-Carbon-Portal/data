@@ -33,6 +33,12 @@ const AboutSection = (props: AboutSectionProps) => {
 			{description &&
 				metadataRow("Description", <span style={{ whiteSpace: 'pre-line' }}>{description}</span>, true)
 			}
+			{metadata.parentCollections.length > 0 &&
+				metadataRow("Part of",
+					metadata.parentCollections.map(collection => {
+						return (<div><a href={collection.uri}>{collection.label}</a></div>)
+					}))
+			}
 			{metadata.citationString &&
 				<React.Fragment>
 					{metadataRow("Citation", metadata.citationString)}

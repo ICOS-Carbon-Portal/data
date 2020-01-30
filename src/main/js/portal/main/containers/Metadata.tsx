@@ -8,15 +8,14 @@ import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects} from '../actions/metadata';
-import {addToCart, removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/main";
-import {KeyStrVal, Sha256Str, UrlStr} from "../backend/declarations";
-import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
+import {addToCart, removeFromCart, setMetadataItem, switchToPreview} from "../actions/main";
+import {Sha256Str, UrlStr} from "../backend/declarations";
+import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config, {timezone} from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
-import {UriResource} from "../../../common/main/metacore";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
