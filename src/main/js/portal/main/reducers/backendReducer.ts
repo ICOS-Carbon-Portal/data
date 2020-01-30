@@ -76,8 +76,9 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 	const objectsTable = payload.objectsTable as ObjectsTable[];
 	const extendedObjectsTable = objectsTable.map(ot => {
 		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
-		return Object.assign(ot, spec);
+		return {...ot, ...spec};
 	});
+
 	const paging = state.paging.withObjCount({
 		objCount: getObjCount(state.specTable),
 		pageCount: payload.objectsTable.length,

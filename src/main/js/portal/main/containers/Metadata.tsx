@@ -2,7 +2,7 @@ import React, { Component, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
-import { formatBytes, formatDate, formatDateTime } from '../utils';
+import { formatDate, formatDateTime } from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, Route, State} from "../models/State";
@@ -11,7 +11,11 @@ import {updateFilteredDataObjects} from '../actions/metadata';
 import {addToCart, removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/main";
 import {KeyStrVal, Sha256Str, UrlStr} from "../backend/declarations";
 import {Agent, L2OrLessSpecificMeta, L3SpecificMeta, Organization, Person, PlainStaticObject} from "../../../common/main/metacore";
-import config from '../config';
+import config, {timezone} from '../config';
+import AboutSection from '../components/metadata/AboutSection';
+import AcquisitionSection from '../components/metadata/AcquisitionSection';
+import ProductionSection from '../components/metadata/ProductionSection';
+import ContentSection from '../components/metadata/ContentSection';
 import {UriResource} from "../../../common/main/metacore";
 
 
@@ -52,16 +56,11 @@ class Metadata extends Component<MetadataProps> {
 		const specInfo = metadata.specificInfo;
 
 		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
-			? (specInfo as L2OrLessSpecificMeta).acquisition
-			: undefined;
+			&& (specInfo as L2OrLessSpecificMeta).acquisition;
 		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
 			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
-		const station = (specInfo as L2OrLessSpecificMeta).acquisition && (specInfo as L2OrLessSpecificMeta).acquisition.station;
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
-		const prevVersions = Array.isArray(metadata.previousVersion)
-			? metadata.previousVersion
-			: metadata.previousVersion ? [metadata.previousVersion] : [];
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec as UriResource | undefined;
 		const checkedObjects = [{
@@ -72,7 +71,6 @@ class Metadata extends Component<MetadataProps> {
 		}];
 		const datasets = checkedObjects.map(obj => obj.dataset);
 		const previewTypes = lookup ? [lookup.getSpecLookupType(metadata.specification.self.uri)] : [];
-		const self = this;
 
 		return (
 			<div>
@@ -82,16 +80,43 @@ class Metadata extends Component<MetadataProps> {
 							<div className="alert alert-warning">Upload not complete, data is missing.</div>
 						}
 						{metadata.nextVersion &&
-							<div className="alert alert-warning">A newer version of this data is available: <a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">View next version</a></div>
+							<div className="alert alert-warning">
+								A newer version of this data is available:&nbsp;
+								<a onClick={this.handleViewMetadata.bind(this, metadata.nextVersion)} style={{cursor: 'pointer'}} className="alert-link">
+									View next version
+								</a>
+							</div>
 						}
 						<div className="row">
 							<div className="col-sm-8">
+
+								<AboutSection metadata={metadata} projectLabel={projectLabel} handleViewMetadata={this.handleViewMetadata.bind(this)}/>
+
+								<ContentSection metadata={metadata} />
+
+								{acquisition &&
+									<AcquisitionSection acquisition={acquisition} timezone={timezone[config.envri]} />
+								}
+
+								{productionInfo &&
+									<ProductionSection production={productionInfo} timezone={timezone[config.envri]} />
+								}
+
+								<React.Fragment>
+									<h2 style={{ fontSize: 28 }}>Submission</h2>
+									{metadata.submission.stop &&
+										metadataRow(`Submission time (${timezone[config.envri].label})`,
+											formatDateTime(new Date(metadata.submission.stop), timezone[config.envri].offset))
+									}
+									<br />
+								</React.Fragment>
+
+							</div>
+							<div className="col-sm-4">
 								<div className="row">
-									<div className="col-md-2">
-									</div>
-									<div className="col-md-10">
+									<div className="col-md-12">
 										<CartBtn
-											style={{ float: 'left', margin: '20px 10px 30px 0' }}
+											style={{ float: 'right', margin: '20px 0 30px 10px' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
 											enabled={isCartEnabled}
@@ -99,7 +124,7 @@ class Metadata extends Component<MetadataProps> {
 											title={cartTitle}
 										/>
 										<PreviewBtn
-											style={{ float: 'left', margin: '20px 10px 30px 0' }}
+											style={{ float: 'right', margin: '20px 0 30px 10px' }}
 											checkedObjects={checkedObjects}
 											datasets={datasets}
 											previewTypes={previewTypes}
@@ -107,90 +132,7 @@ class Metadata extends Component<MetadataProps> {
 										/>
 									</div>
 								</div>
-								{(specInfo as L3SpecificMeta).description &&
-									metadataRow("Description", (specInfo as L3SpecificMeta).description!, true)
-								}
-								{metadata.doi &&
-									metadataRow("DOI", doiLink(metadata.doi))
-								}
-								{metadata.pid &&
-									metadataRow("PID", <a href={`https://hdl.handle.net/${metadata.pid}`}>{metadata.pid}</a>)
-								}
-								{metadata.specification.project.label && metadataRow(projectLabel, metadata.specification.project.label)}
-								{metadata.specification.self.label && metadataRow("Type", metadata.specification.self.label)}
-								{metadataRow("Level", metadata.specification.dataLevel.toString())}
-								{metadataRow("File name", metadata.fileName)}
-								{metadata.size !== undefined && metadataRow("Size", formatBytes(metadata.size, 0))}
 								<br />
-								{acquisition &&
-									<React.Fragment>
-										{station && metadataRow("Station", <a href={station.org.self.uri}>{station.name}</a>)}
-										{station && station.responsibleOrganization &&
-											metadataRow("Responsible organization", <a href={station.responsibleOrganization.self.uri}>{station.responsibleOrganization.name}</a>)
-										}
-										{acquisition.site && acquisition.site.ecosystem.label &&
-											metadataRow("Ecosystem", acquisition.site.ecosystem.label)
-										}
-										{acquisition.interval && metadataRow("Time coverage", `${formatDateTime(new Date(acquisition.interval.start))}
-										\u2013
-										${formatDateTime(new Date(acquisition.interval.stop))}`)}
-										{acquisition.instrument &&
-											instrumentRow(acquisition.instrument)
-										}
-										{acquisition.samplingHeight &&
-											metadataRow("Sampling height", `${acquisition.samplingHeight} m`)
-										}
-										<br />
-									</React.Fragment>
-								}
-								{metadata.citationString &&
-									<React.Fragment>
-										{metadataRow("Citation", metadata.citationString)}
-										<br />
-									</React.Fragment>
-								}
-
-								{prevVersions.map((previousVersion, i) =>
-									<React.Fragment key={"key_" + i}>
-										{metadataRow(
-											"Previous version",
-											<a onClick={self.handleViewMetadata.bind(self, previousVersion)} style={{cursor: 'pointer'}}>View previous version</a>
-										)}
-									</React.Fragment>
-								)}
-								{prevVersions.length > 0 && <br />}
-								{productionInfo &&
-									<React.Fragment>
-										{metadataRow("Made by", creatorLink(productionInfo.creator))}
-										{productionInfo.contributors.length > 0 &&
-											metadataRow("Contributors", productionInfo.contributors.map((contributor, index) => {
-												const name = (contributor as Organization).name
-													? (contributor as Organization).name
-													: `${(contributor as Person).firstName} ${(contributor as Person).lastName}`;
-
-												return(
-													<span key={contributor.self.uri}>
-														<a href={contributor.self.uri}>
-															{name}
-														</a>
-														{index != productionInfo.contributors.length - 1 && ', '}
-													</span>);
-											}))
-										}
-										{productionInfo.host &&
-											metadataRow("Host organization", <a href={productionInfo.host.self.uri}>{productionInfo.host.name}</a>)
-										}
-										{productionInfo.comment && metadataRow("Comment", productionInfo.comment)}
-										{metadataRow("Creation date", formatDateTime(new Date(productionInfo.dateTime)))}
-									</React.Fragment>
-								}
-								{metadata.specification.documentation && metadata.specification.documentation.length > 0 &&
-									<React.Fragment>
-										{metadataRow("Documentation", documentationLinks(metadata.specification.documentation))}
-									</React.Fragment>
-								}
-							</div>
-							<div className="col-sm-4">
 								{metadata.coverageGeoJson &&
 									<React.Fragment>
 										<div className="row">
@@ -219,13 +161,14 @@ class Metadata extends Component<MetadataProps> {
 export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 	if (metadata === undefined) return null;
 
-	const specInfo = metadata.specificInfo
+	const specInfo = metadata.specificInfo;
 	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
 		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
-	const station = acquisition && acquisition.station
-		? acquisition.station
-		: undefined;
+	const location = acquisition && acquisition.station &&
+		(acquisition.site
+			? `${acquisition.site.location?.label} (${acquisition.station.name})`
+			: acquisition.station.name);
 	const title = (specInfo as L3SpecificMeta).title
 		? (specInfo as L3SpecificMeta).title
 		: undefined;
@@ -237,7 +180,7 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 			{specInfo &&
 				<h1>
 					{title || specLabel}
-					{station && <span> from {station.name}</span>}
+					{location && <span> from {location}</span>}
 					{acquisition && acquisition.interval &&
 						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop))
 					}
@@ -248,51 +191,34 @@ export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
 };
 
 const caption = (startDate: Date, stopDate: Date) => {
+	const startDateString = formatDate(startDate, timezone[config.envri].offset);
+	const stopDateString = areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate, timezone[config.envri].offset)}`;
+
 	return (
 		<div className="text-muted">
-			<small>{formatDate(startDate)}{areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate)}`}</small>
+			<small>{startDateString}{stopDateString}</small>
 		</div>
 	);
 };
 
 const areDatesDifferent = (date1: Date, date2: Date) => {
-	return date1.setUTCHours(0, 0, 0, 0) !== date2.setUTCHours(0, 0, 0, 0);
+	const utcDate1 = new Date(date1).setUTCHours(0, 0, 0, 0);
+	const utcDate2 = new Date(date2).setUTCHours(0, 0, 0, 0);
+	return utcDate1 !== utcDate2;
 };
 
-const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {
+export const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {
 	const text = linkify && typeof value === "string"
 		? <LinkifyText text={value} />
 		: value;
+	const labelColSize = config.envri === "SITES" ? "col-md-3" : "col-md-2";
+	const textColSize = config.envri === "SITES" ? "col-md-9 mb-2" : "col-md-10 mb-2";
 
 	return (
 		<div className="row">
-			<div className="col-md-2"><label>{label}</label></div>
-			<div className="col-md-10 mb-2">{text}</div>
+			<div className={labelColSize}><label>{label}</label></div>
+			<div className={textColSize}>{text}</div>
 		</div>
-	);
-};
-
-const doiLink = (doi: string) => {
-	return (
-		<span>
-			<a href={`https://doi.org/${doi}`}>{doi}</a>&nbsp;
-			(<a target="_blank" href={`https://search.datacite.org/works/${doi}`}>metadata</a>)
-		</span>
-	);
-};
-
-const instrumentRow = (instruments: UrlStr  | UrlStr[]) => {
-	return(
-		Array.isArray(instruments)
-			? metadataRow("Instruments", instruments.map((instrument: UrlStr, index) => {
-				return(
-					<span key={instrument}>
-						<a href={instrument}>{instrument.split('/').pop()}</a>
-						{index != instruments.length - 1 && ', '}
-					</span>
-				);
-			}))
-			: metadataRow("Instrument", <a href={instruments}>{instruments.split('/').pop()}</a>)
 	);
 };
 
@@ -312,21 +238,6 @@ const map = (coverage: string, icon?: string) => {
 	return (
 		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
 	);
-};
-
-const creatorLink = (creator: Agent) => {
-	return (creator as Organization).name
-		? <a href={creator.self.uri}>{(creator as Organization).name}</a> :
-		<a href={creator.self.uri}>{(creator as Person).firstName} {(creator as Person).lastName}</a>;
-};
-
-const documentationLinks = (documentation: PlainStaticObject[]) => {
-	return documentation.map((doc, i) =>
-		<React.Fragment key={"key_" + i}>
-			<a href={doc.res}>{doc.name}</a>
-			{i != documentation.length - 1 && <br />}
-		</React.Fragment>
-	)
 };
 
 const cartState = (dataLevel: number, nextVersion?: UrlStr) => {

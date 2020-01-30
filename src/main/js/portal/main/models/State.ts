@@ -12,7 +12,7 @@ import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
-import SpecTable from "./SpecTable";
+import SpecTable, {Row} from "./SpecTable";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -53,8 +53,9 @@ export interface User extends WhoAmI {
 	profile: Profile | {}
 }
 
-export type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] & ThenArg<typeof getExtendedDataObjInfo> & DataObject;
-export type ExtendedDobjInfo = ThenArg<typeof getExtendedDataObjInfo>
+type KnownDataObject = ThenArg<typeof fetchKnownDataObjects>['rows'][0]
+export type ExtendedDobjInfo = ThenArg<typeof getExtendedDataObjInfo>[0]
+export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
 export interface MetaDataObject extends DO{
 	coverageGeoJson: string
@@ -84,7 +85,7 @@ export interface State {
 	lookup: Lookup | undefined;
 	labelLookup: KeyStrVal;
 	specTable: CompositeSpecTable
-	extendedDobjInfo: ExtendedDobjInfo
+	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
 	sorting: {

@@ -1,0 +1,10 @@
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?dobj
+where {
+	VALUES ?spec {<http://meta.icos-cp.eu/resources/cpmeta/atcMeteoGrowingNrtDataObject>}
+	?dobj cpmeta:hasObjectSpec ?spec .
+	?dobj cpmeta:hasSizeInBytes ?size .
+	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+	#FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+}

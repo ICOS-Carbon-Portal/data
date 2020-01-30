@@ -4,29 +4,17 @@ import {
 	originsColNames,
 	SPECCOL
 } from '../sparqlQueries';
-import SpecTable, {Filters, Value, Filter} from "./SpecTable";
-import {KeyStrVal, ThenArg} from "../backend/declarations";
+import SpecTable, {Filters, Value, Filter, Row} from "./SpecTable";
+import {ThenArg} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
 
-
-const labelColNameMapper: KeyStrVal = {
-	project: 'projectLabel',
-	theme: 'themeLabel',
-	station: 'stationLabel',
-	submitter: 'submitterLabel',
-	type: 'specLabel',
-	format: 'formatLabel',
-	valType: 'valTypeLabel',
-	quantityKind: 'quantityKindLabel'
-};
 
 type JsonCompositeSpecTable = ThenArg<typeof fetchBoostrapData>['specTables'];
 export type BasicsColNames = typeof basicColNames[number];
 export type ColumnMetaColNames = typeof columnMetaColNames[number];
 export type OriginsColNames = typeof originsColNames[number];
 export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | CategoryType;
-export type ColNameLabels = [ColNames, ColNames] | [ColNames, typeof labelColNameMapper[keyof typeof labelColNameMapper]];
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;
 type TableNames = typeof tableNames[number];
@@ -72,8 +60,20 @@ export default class CompositeSpecTable{
 		}
 	}
 
-	getTableRows(name: TableNames){
+	getTableRows(name: TableNames): Row<string>[]{
 		return this.getTable(name).rows;
+	}
+
+	get basicsRows(){
+		return this.basics.rows;
+	}
+
+	get columnMetaRows(){
+		return this.columnMeta.rows;
+	}
+
+	get originsRows(){
+		return this.origins.rows;
 	}
 
 	get names(): Array<ColNames>{
@@ -85,14 +85,10 @@ export default class CompositeSpecTable{
 		return tableNames.slice();
 	}
 
-	findTableName(columnName: ColNames){
-		return this.tableNames.find(tname =>
-			(this.getTable(tname).names as ColNames[]).includes(columnName)
+	findTable(columnName: ColNames): SpecTable<string> | undefined{
+		return this.tables.find(tbl =>
+			(tbl.names as ColNames[]).includes(columnName)
 		);
-	}
-
-	findTable(columnName: ColNames): SpecTable<string>{
-		return this.getTable(this.findTableName(columnName)!);
 	}
 
 	getSpeciesFilter(targetTableName: TableNames | null, getAllIfAllAllowed = false): Filter{
@@ -108,13 +104,10 @@ export default class CompositeSpecTable{
 				: null;
 	}
 
-	withFilter(colName: ColNames, filter: Filter){
-		const tableName = this.findTableName(colName)!;
-		let tables = tableNames.map(tName => {
-			return tName === tableName
-				? this.getTable(tName).withFilter(colName, filter)
-				: this.getTable(tName)
-		});
+	withFilter(colName: ColNames, filter: Filter): CompositeSpecTable{
+		const table = this.findTable(colName);
+		if(table === undefined) return this;
+		let tables = this.tables.map(tbl => tbl === table ? table.withFilter(colName, filter) : tbl);
 
 		const pass1 = CompositeSpecTable.fromTables(tables);
 
@@ -142,11 +135,15 @@ export default class CompositeSpecTable{
 	}
 
 	getFilter(colName: ColNames): Filter {
-		return this.findTable(colName).getFilter(colName);
+		return this.findTable(colName)?.getFilter(colName) ?? null;
 	}
 
-	getDistinctAvailableColValues(colName: ColNames){
-		return this.findTable(colName).getDistinctAvailableColValues(colName);
+	get hasActiveFilters(): boolean{
+		return this.tables.some(tbl => tbl.hasActiveFilters);
+	}
+
+	getDistinctAvailableColValues(colName: ColNames): Value[]{
+		return this.findTable(colName)?.getDistinctAvailableColValues(colName) ?? [];
 	}
 
 	getAllDistinctAvailableColValues(colName: ColNames): Value[]{
@@ -156,33 +153,10 @@ export default class CompositeSpecTable{
 			: [];
 	}
 
-	getColumnValuesFilter(colName: ColNames){
-		return this.findTable(colName).getColumnValuesFilter(colName);
+	getColumnValuesFilter(colName: ColNames): Filter {
+		return this.findTable(colName)?.getColumnValuesFilter(colName) ?? null;
 	}
 
-	getColLabelNamePair(colName: ColNames): ColNameLabels{
-		return labelColNameMapper[colName] ? [colName, labelColNameMapper[colName]] : [colName, colName];
-	}
-
-	getLabelName(colName: ColNames){
-		return labelColNameMapper[colName] ? labelColNameMapper[colName] : colName;
-	}
-
-	getLabelFilter(colName: ColNames){
-		const columnValues = this.getFilter(colName);
-		const labelName = this.getLabelName(colName);
-
-		if (colName === labelName) {
-			return columnValues;
-		} else {
-			const rows = this.findTable(colName).rows;
-
-			return columnValues === null ? null : columnValues.map(val => {
-				const row = rows.find((row) => val === row[colName]);
-				return row ? row[labelName] : undefined;
-			});
-		}
-	}
 }
 
 function getExtraFilter(specsCount: number, origins: SpecTable<OriginsColNames>): Filter{

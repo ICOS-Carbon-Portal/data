@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
 import {Paging} from '../buttons/Paging.jsx';
+import { SearchActions, ReducedProps } from "../../containers/Search";
+import { State } from '../../models/State.js';
+import config, { timezone } from '../../config';
 
-export default function(props){
-	const {paging, requestStep, cart, previewAction, lookup, preview, showCount, viewMetadata} = props;
-	const headerStyle = {whiteSpace: 'nowrap', paddingRight: 0};
+type CompactSearchResultTableProps = ReducedProps['compactSearchResultTable']
+	& { tabHeader: string }
+	& Pick<SearchActions, 'handleViewMetadata' | 'handlePreview'>;
+
+const CompactSearchResultTable = (props: CompactSearchResultTableProps) => {
+	const { paging, requestStep, cart, handlePreview, lookup, preview, handleViewMetadata} = props;
+	const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0};
 
 	return <div className="panel panel-default">
 		<Paging
 			type="header"
 			paging={paging}
-			showCount={showCount}
 			requestStep={requestStep}
 		/>
 
@@ -21,9 +27,9 @@ export default function(props){
 						<tr>
 							<th style={headerStyle}>Data object<SortButton varName="fileName" {...props}/></th>
 							<th style={headerStyle}>Size<SortButton varName="size" {...props}/></th>
-							<th style={headerStyle}>Submission time (UTC)<SortButton varName="submTime" {...props}/></th>
-							<th style={headerStyle}>From time (UTC)<SortButton varName="timeStart" {...props}/></th>
-							<th style={headerStyle}>To time (UTC)<SortButton varName="timeEnd" {...props}/></th>
+							<th style={headerStyle}>Submission time ({timezone[config.envri].label})<SortButton varName="submTime" {...props}/></th>
+							<th style={headerStyle}>From time ({timezone[config.envri].label})<SortButton varName="timeStart" {...props}/></th>
+							<th style={headerStyle}>To time ({timezone[config.envri].label})<SortButton varName="timeEnd" {...props}/></th>
 						</tr>
 					</thead>
 					<tbody>{
@@ -34,13 +40,13 @@ export default function(props){
 								<CompactSearchResultTableRow
 									lookup={lookup}
 									preview={preview}
-									previewAction={previewAction}
+									handlePreview={handlePreview}
 									objInfo={objInfo}
 									isAddedToCart={isAddedToCart}
 									addToCart={props.addToCart}
 									removeFromCart={props.removeFromCart}
 									key={'dobj_' + i}
-									viewMetadata={viewMetadata}
+									handleViewMetadata={handleViewMetadata}
 								/>
 							);
 						})
@@ -49,9 +55,13 @@ export default function(props){
 			</div>
 		</div>
 	</div>;
-}
+};
 
-const SortButton = props => {
+const SortButton: React.FunctionComponent<{
+	sorting: State['sorting'],
+	varName: string,
+	toggleSort: (varName: string) => void
+}> = props => {
 	const sorting = props.sorting || {};
 
 	const glyphClass = 'glyphicon glyphicon-sort' + (
@@ -62,7 +72,7 @@ const SortButton = props => {
 				: '-by-attributes-alt'
 	);
 
-	const style = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
+	const style: CSSProperties = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
 	return (
@@ -71,3 +81,5 @@ const SortButton = props => {
 		</button>
 	);
 };
+
+export default CompactSearchResultTable;

@@ -27,10 +27,10 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 		getResourceHelpInfo, objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
 		updateCheckedObjects} = props;
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-	const checkedObjects = checkedObjectsInSearch.reduce((acc: any[], uri) => {
+	const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
 		return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
 	}, []);
-	const datasets = checkedObjects.map(obj => obj.dataset);
+	const datasets = checkedObjects.map((obj: ObjectsTable) => obj.dataset);
 	const previewTypes = lookup ? checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec)) : [];
 
 	const handleAllCheckboxesChange = () => {

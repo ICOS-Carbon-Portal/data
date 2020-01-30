@@ -37,7 +37,7 @@ export default class PreviewBtn extends Component{
 		if (previewTypes.includes(undefined))
 			return [false, "You have selected a data object that cannot be previewed"];
 
-		else if (!datasets.every(dataset => dataset && dataset === datasets[0]))
+		else if (!datasets.every(dataset => dataset === datasets[0]))
 			return [false, "Multiple previews are only available for data of same type"];
 
 		else if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))

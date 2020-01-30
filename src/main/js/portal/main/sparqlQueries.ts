@@ -41,15 +41,14 @@ where{
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "colTitle", "valType", "quantityUnit"] as const;
+const columnMetaColNamesMan = ["spec", "column", "colTitle", "valType", "quantityUnit"] as const;
 const columnMetaColNamesOpt = ["quantityKind"] as const;
 export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
 
 export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?colTitle ?valType ?quantityKind
-(if(bound(?quantityKind), ?qKindLabel, "(not applicable)") as ?quantityKindLabel)
+select distinct ?spec ?column ?colTitle ?valType ?quantityKind
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
 	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
@@ -58,12 +57,9 @@ where{
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	?column cpmeta:hasColumnTitle ?colTitle .
 	?column cpmeta:hasValueType ?valType .
-	OPTIONAL{
-		?valType cpmeta:hasQuantityKind ?quantityKind .
-		?quantityKind rdfs:label ?qKindLabel .
-	}
 	${deprecatedFilter(deprFilter)}
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
+	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
 
 	return {text};
@@ -77,24 +73,18 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof ori
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?project ?count
-(if(bound(?stationName), ?stationOrDummy, ?stationName) as ?station)
+select ?spec ?submitter ?project ?count ?station
 where{
 	{
-		select
-			(if(bound(?stationOpt), ?stationOpt, <https://dummy.unbound.station>) as ?stationOrDummy)
-			?submitter ?spec (count(?dobj) as ?count)
-		where{
+		select ?station ?submitter ?spec (count(?dobj) as ?count) where{
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
 			?dobj cpmeta:hasObjectSpec ?spec .
-			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?stationOpt }
+			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station }
 			?dobj cpmeta:hasSizeInBytes ?size .
 			${getFilterClauses(filters, true)}
 		}
-		group by ?spec ?submitter ?stationOpt
+		group by ?spec ?submitter ?station
 	}
-	OPTIONAL{?stationOrDummy cpmeta:hasName ?stationName}
-	OPTIONAL{?stationOrDummy cpmeta:hasStationId ?stId}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
@@ -238,7 +228,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 			sorting.ascending
 				? `order by ?${sorting.varName}`
 				: `order by desc(?${sorting.varName})`
-			)
+		)
 		: '';
 
 	const text = `# listFilteredDataObjects
@@ -291,7 +281,7 @@ function getFilterConditions(filter: TemporalFilterRequest): string[]{
 	const res: string[] = [];
 
 	function add(varName: "timeStart" | "timeEnd" | "submTime", cmp: ">=" | "<=", timeStr: string | undefined): void{
-		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`)
+		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`);
 	}
 	switch(filter.category){
 		case "dataTime":
@@ -331,11 +321,9 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 		rdfs:label ?theme ;
 		cpmeta:hasIcon ?themeIcon
 	]}
-	OPTIONAL{?specUri rdfs:comment ?spec }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
-	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description0 }
+	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description }
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
-	BIND ( IF(bound(?description0), ?description0, ?spec) AS ?description)
 }`;
 
 	return {text};
