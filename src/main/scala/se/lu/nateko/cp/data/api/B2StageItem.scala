@@ -21,10 +21,8 @@ object B2StageItem extends DefaultJsonProtocol{
 	val Root = IrodsColl("", None)
 
 	case class ApiResponseItem(dataName: Option[String], collectionName: String)
-	type ApiResponse = Array[ApiResponseItem]
 
 	implicit val apiResponseItemFormat = jsonFormat2(ApiResponseItem)
-	implicit val apiResponseFormat: RootJsonReader[ApiResponse] = arrayFormat[ApiResponseItem]
 
 	private def toCollection(apiPath: String): IrodsColl = {
 		def makeColl(segments: List[String]): IrodsColl = segments match{

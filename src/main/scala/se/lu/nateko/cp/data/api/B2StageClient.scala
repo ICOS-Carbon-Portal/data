@@ -26,6 +26,7 @@ import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
 import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Framing
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Materializer) {
 
@@ -43,7 +44,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		BasicHttpCredentials(config.username, config.password)
 	)
 
-	def list(coll: IrodsColl): Future[Seq[B2StageItem]] =
+	def list(coll: IrodsColl): Future[Source[B2StageItem, Any]] =
 		withAuth(HttpRequest(uri = getUri(coll)))
 			.flatMap(parseItemsIfOk)
 
@@ -101,9 +102,14 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		req.withHeaders(req.headers :+ authHeader)
 	}
 
-	private def parseItemsIfOk(resp: HttpResponse): Future[Seq[B2StageItem]] = analyzeResponse(resp){
+	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2StageItem, Any]] = analyzeResponse(resp){_ =>
 		import B2StageItem._
-		Unmarshal(_).to[ApiResponse].map(_.map(toB2StageItem))
+		import spray.json._
+		val resStream = resp.entity.withoutSizeLimit.dataBytes
+			.via(Framing.delimiter(ByteString("\n"), 8000))
+			.map(bs => bs.utf8String.parseJson.convertTo[ApiResponseItem])
+			.map(toB2StageItem)
+		Future.successful(resStream)
 	}
 
 	private def failIfNotSuccess(resp: HttpResponse): Future[Done] = analyzeResponse(resp){

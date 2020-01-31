@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.test.api
 import se.lu.nateko.cp.data.api._
 import akka.util.ByteString
 import akka.stream.scaladsl.Source
+import scala.concurrent.Future
 
 object B2Playground{
 	import akka.actor.ActorSystem
@@ -19,13 +20,23 @@ object B2Playground{
 
 	def stop() = system.terminate()
 
-	val b2config = ConfigReader.getDefault.upload.b2stage.copy(dryRun = false)
+	val b2config = ConfigReader.getDefault.upload.b2stage.copy(dryRun = false, host = "https://eud-res01.csc.fi:8443")
 	val default = new B2StageClient(b2config, http)
 
 	def list(path: String, parent: Option[IrodsColl] = Some(B2StageItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
-		items.foreach(println)
-		items
+		items.runForeach(println)
+	}
+
+	def listRoot() = {
+		val items = Await.result(default.list(B2StageItem.Root), 5.seconds)
+		items.runForeach(println)
+	}
+
+	def countItems(path: String, parent: Option[IrodsColl] = Some(B2StageItem.Root)): Future[Int] = {
+		default.list(IrodsColl(path, parent)).flatMap{
+			_.runFold(0)((sum, _) => sum + 1)
+		}
 	}
 
 	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2StageItem.Root) = {
