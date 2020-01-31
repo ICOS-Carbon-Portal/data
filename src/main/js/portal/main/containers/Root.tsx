@@ -3,7 +3,7 @@ import { Provider } from 'react-redux'
 import getStore from '../store';
 import App from './App.jsx';
 import stateUtils from '../models/State';
-import {restoreFromHistory} from "../actions/main";
+import {restoreFromHistory} from "../actions/common";
 
 
 const store = getStore();

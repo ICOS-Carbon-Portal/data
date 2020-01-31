@@ -2,7 +2,7 @@ import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import {getMetadata} from "../backend";
-import {failWithError, getKnownDataObjInfo} from "./main";
+import {failWithError, getKnownDataObjInfo} from "./common";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {

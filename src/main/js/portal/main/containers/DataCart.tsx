@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
-import {updateRoute, setMetadataItem, removeFromCart, switchToPreview} from '../actions/main';
 import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions/cart';
 import {formatBytes} from '../utils';
 import config from '../config';
@@ -9,6 +8,7 @@ import BackButton from '../components/buttons/BackButton.jsx';
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
+import {removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;

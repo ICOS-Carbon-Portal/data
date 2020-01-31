@@ -6,7 +6,6 @@ import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
-import {failWithError, fetchExtendedDataObjInfo} from "./main";
 import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
@@ -17,6 +16,7 @@ import {HelpStorageListEntry, Item} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
+import {failWithError, fetchExtendedDataObjInfo} from "./common";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache

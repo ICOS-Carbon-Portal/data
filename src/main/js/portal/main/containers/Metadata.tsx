@@ -8,7 +8,6 @@ import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects} from '../actions/metadata';
-import {addToCart, removeFromCart, setMetadataItem, switchToPreview} from "../actions/main";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config, {timezone} from '../config';
@@ -16,6 +15,7 @@ import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
+import {addToCart, removeFromCart, setMetadataItem, switchToPreview} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;

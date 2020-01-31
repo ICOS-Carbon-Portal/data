@@ -1,10 +1,10 @@
 import {PortalThunkAction} from "../store";
 import CartItem from "../models/CartItem";
 import * as Payloads from "../reducers/actionpayloads";
-import {failWithError, fetchExtendedDataObjInfo} from "./main";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
 import {getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
+import {failWithError, fetchExtendedDataObjInfo} from "./common";
 
 
 export default function bootstrapCart(): PortalThunkAction<void> {

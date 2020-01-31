@@ -2,9 +2,9 @@ import {PortalThunkAction} from "../store";
 import {WhoAmI} from "../models/State";
 import {getTsSettings, saveTsSetting} from "../backend";
 import * as Payloads from "../reducers/actionpayloads";
-import {failWithError, fetchExtendedDataObjInfo, getKnownDataObjInfo} from "./main";
 import config from "../config";
 import {UrlStr} from "../backend/declarations";
+import {failWithError, fetchExtendedDataObjInfo, getKnownDataObjInfo} from "./common";
 
 
 export default function bootstrapPreview(user: WhoAmI): PortalThunkAction<void> {

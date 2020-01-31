@@ -6,7 +6,6 @@ import Tabs from '../components/ui/Tabs';
 import CompactSearchResultTable from '../components/searchResult/CompactSearchResultTable';
 import SearchResultTable from '../components/searchResult/SearchResultTable';
 import {SearchOption} from "../actions/types";
-import {removeFromCart, setPreviewUrl, addToCart, setMetadataItem, switchToPreview} from "../actions/main";
 import {
 	specFilterUpdate,
 	toggleSort,
@@ -29,6 +28,7 @@ import {ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";
 import config from "../config";
 import FiltersTemporal from '../models/FilterTemporal';
+import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl, switchToPreview} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;

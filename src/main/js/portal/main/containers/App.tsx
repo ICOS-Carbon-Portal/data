@@ -6,15 +6,6 @@ import DataCart from './DataCart';
 import Preview from '../components/preview/Preview';
 import Metadata, { MetadataTitle } from './Metadata';
 import ErrorBoundary from '../components/ErrorBoundary';
-import {
-	failWithError,
-	updateRoute,
-	setPreviewUrl,
-	addToCart,
-	removeFromCart,
-	setMetadataItem,
-	switchToPreview
-} from '../actions/main';
 import {updateCheckedObjectsInCart} from '../actions/cart';
 import {storeTsPreviewSetting} from '../actions/preview';
 import config from '../config';
@@ -22,6 +13,14 @@ import {MetaDataObject, Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import Cart from "../models/Cart";
+import {
+	addToCart, failWithError,
+	removeFromCart,
+	setMetadataItem,
+	setPreviewUrl,
+	switchToPreview,
+	updateRoute
+} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
