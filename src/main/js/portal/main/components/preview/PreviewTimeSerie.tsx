@@ -61,6 +61,15 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		/>;
 	}
 
+	private makePreviewOption(actColName: string): PreviewOption | undefined {
+		const {preview} = this.props;
+		const verbatimMatch = preview.options.find(opt => opt.colTitle === actColName);
+		if(verbatimMatch) return verbatimMatch;
+		const regexMatch = preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.colTitle).test(actColName));
+		if(!regexMatch) return; //no preview for columns that are not in portal app's metadata (e.g. flag columns)
+		return {...regexMatch, ...{colTitle: actColName}};
+	}
+
 	render(){
 		const {preview, extendedDobjInfo, tsSettings} = this.props;
 
@@ -92,16 +101,11 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
 
-		const options: PreviewOption[] = filterOptions(allItemsHaveColumnNames
-			? distinct(items.flatMap<string>((item: PreviewItem) => item.columnNames ?? []))
-				.map(colName => (
-					preview.options.find((opt: PreviewOption) => opt.colTitle === colName) ??
-					{
-						...preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.colTitle).test(colName)),
-						...{colTitle: colName}
-					} as PreviewOption
-				))
-			: preview.options);
+		const options: PreviewOption[] = allItemsHaveColumnNames
+			? distinct(items.flatMap(item  => item.columnNames ?? []))
+				.flatMap(colName => this.makePreviewOption(colName) ?? [])
+			: preview.options;
+
 		const chartTypeOptions: PreviewOption[] = [
 			{colTitle: 'scatter', valTypeLabel: 'scatter'},
 			{colTitle: 'line', valTypeLabel: 'line'},
@@ -176,10 +180,6 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 			type: specSettings.type || preview.items[0].getUrlSearchValue('type')
 		}
 		: {xAxis: undefined, yAxis: undefined, type: undefined};
-};
-
-const filterOptions = (options: PreviewOption[]) => {
-	return options.filter((opt: PreviewOption) => !opt.colTitle.startsWith('Flag'));
 };
 
 type SelectorProps = {
