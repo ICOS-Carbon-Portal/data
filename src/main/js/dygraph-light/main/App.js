@@ -252,13 +252,24 @@ export default class App {
 	}
 
 	drawGraph(binTables){
+		let allXValsAreNaN = true;
+		let allYValsAreNaN = true;
+
 		const data = () => {
 			if (this.params.get('linking') === 'concatenate') {
 				// Concatenation
 				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
 				return isDateTime(valueFormatX)
-					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => [new Date(subrow[0]), subrow[1]]))
-					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => subrow)).sort((d1, d2) => d1[0] - d2[0]);
+					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => {
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
+						return [new Date(subrow[0]), subrow[1]];
+					}))
+					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => {
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
+						return subrow;
+					})).sort((d1, d2) => d1[0] - d2[0]);
 			} else {
 				// Overlap
 				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0]));
@@ -269,10 +280,11 @@ export default class App {
 					binTable.values([0, 1], subrow => {
 						let v = dateList.get(subrow[0]);
 						v[index] = subrow[1];
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
 						dateList.set(subrow[0], v);
 					});
 				});
-
 				return Array.from(dateList).map(k => k.flatten()).sort((d1, d2) => d1[0] - d2[0]);
 			}
 		};
@@ -282,6 +294,16 @@ export default class App {
 		this.graph.updateOptions( { file: data, strokeWidth } );
 		this.showCollapsible();
 		this.showSpinner(false);
+
+		if (allXValsAreNaN && allYValsAreNaN) {
+			presentError(`Selected columns (X: ${this.params.get('x')}, Y: ${this.params.get('y')}) does not contain any values`);
+
+		} else if (allXValsAreNaN) {
+			presentError(`Selected X column (${this.params.get('x')}) does not contain any values`);
+
+		} else if (allYValsAreNaN) {
+			presentError(`Selected Y column (${this.params.get('y')}) does not contain any values`);
+		}
 	}
 
 	showCollapsible(){
