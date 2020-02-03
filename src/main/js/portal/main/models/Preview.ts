@@ -1,5 +1,5 @@
 import CartItem, {CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl} from '../utils';
+import {getNewTimeseriesUrl, isDefined} from '../utils';
 import config from "../config";
 import commonConfig from '../../../common/main/config';
 import deepEqual from 'deep-equal';
@@ -82,7 +82,7 @@ export default class Preview {
 			}
 		});
 
-		const items: CartItem[] = objects.filter(o => o.item).map(o => o.item!);
+		const items: CartItem[] = objects.map(o => o.item).filter(isDefined);
 
 		if (options.type === config.TIMESERIES){
 			if (items.length){

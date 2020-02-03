@@ -105,3 +105,7 @@ export function wholeStringRegExp(anyRegex: string): RegExp {
 
 	return new RegExp([prologue, anyRegex, epilogue].join(''));
 }
+
+export function isDefined<T>(x: T | undefined): x is T{
+	return x !== undefined;
+}
