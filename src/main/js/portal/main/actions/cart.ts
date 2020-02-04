@@ -18,6 +18,7 @@ export default function bootstrapCart(): PortalThunkAction<void> {
 		dispatch(fetchExtendedDataObjInfo(dobjs));
 		dispatch(new Payloads.BackendObjectsFetched(rowsAsObjectsTable, true));
 
+		dispatch(new Payloads.UiUpdateRoute('cart'));
 	};
 }
 

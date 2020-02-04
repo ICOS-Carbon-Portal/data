@@ -35,8 +35,8 @@ const AboutSection = (props: AboutSectionProps) => {
 			}
 			{metadata.parentCollections.length > 0 &&
 				metadataRow("Part of",
-					metadata.parentCollections.map(collection => {
-						return (<div><a href={collection.uri}>{collection.label}</a></div>)
+					metadata.parentCollections.map((collection, i) => {
+						return (<div key={'key_' + i}><a href={collection.uri}>{collection.label}</a></div>)
 					}))
 			}
 			{metadata.citationString &&

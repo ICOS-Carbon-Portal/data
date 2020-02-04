@@ -48,12 +48,10 @@ function logError(error: Error): PortalThunkAction<void> {
 	}
 }
 
-export function updateRoute(route?: Route): PortalThunkAction<void> {
+export function updateRoute(route: Route): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const newRoute: Route = route || getRouteFromLocationHash() || 'search';
-
-		dispatch(new Payloads.UiUpdateRoute(newRoute));
-		dispatch(bootstrapRoute(getState().user));
+		// The actual route is registered in state in the bootstrap function for each route
+		dispatch(bootstrapRoute(getState().user, route));
 	};
 }
 

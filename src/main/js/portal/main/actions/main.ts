@@ -1,6 +1,6 @@
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import stateUtils, {Profile, WhoAmI} from "../models/State";
+import stateUtils, {Profile, Route, WhoAmI} from "../models/State";
 import {getProfile, getWhoIam, logOut} from "../backend";
 import bootstrapMetadata from "./metadata";
 import bootstrapPreview from "./preview";
@@ -47,11 +47,12 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	};
 }
 
-export function bootstrapRoute(user: WhoAmI): PortalThunkAction<void> {
+export function bootstrapRoute(user: WhoAmI, forceRoute?: Route): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const {route, id} = getState();
+		const newRoute = forceRoute ?? route;
 
-		switch (route) {
+		switch (newRoute) {
 			case 'search':
 				dispatch(new Payloads.MiscRestoreFilters());
 				dispatch(bootstrapSearch(true));

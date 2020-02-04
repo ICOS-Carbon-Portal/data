@@ -15,6 +15,8 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 		} else {
 			failWithError(dispatch)(new Error('Invalid state: Metadata id is missing'));
 		}
+
+		dispatch(new Payloads.UiUpdateRoute('metadata'));
 	}
 }
 

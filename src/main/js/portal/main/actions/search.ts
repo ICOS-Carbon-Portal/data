@@ -55,6 +55,8 @@ function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction
 			if (fetchOriginsTable) dispatch(getOriginsTable);
 		});
 
+		dispatch(new Payloads.UiUpdateRoute('search'));
+
 		logPortalUsage(state);
 	};
 }

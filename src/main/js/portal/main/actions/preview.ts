@@ -26,6 +26,8 @@ export default function bootstrapPreview(user: WhoAmI): PortalThunkAction<void> 
 		if (Object.keys(tsSettings).length === 0){
 			dispatch(getTsPreviewSettings(user));
 		}
+
+		dispatch(new Payloads.UiUpdateRoute('preview'));
 	}
 }
 
