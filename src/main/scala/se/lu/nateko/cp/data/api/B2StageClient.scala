@@ -85,8 +85,9 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 	}
 
 	private def innerReqFlow[T]: Flow[(HttpRequest, T), (Try[HttpResponse], T), Any] = {
-		val host = Uri(config.host).authority.host.toString
-		http.cachedHostConnectionPoolHttps[T](host)
+		val auth = Uri(config.host).authority
+		val port = if(auth.port == 0) 443 else auth.port
+		http.cachedHostConnectionPoolHttps[T](auth.host.toString, port)
 	}
 
 	private def objUploadHttpRequest(obj: IrodsData, source: Source[ByteString, Any]): HttpRequest = {
@@ -128,7 +129,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 		}
 
 		val out = innerReqFlow[IrodsData].mapAsyncUnordered(1){
-			case (resp, obj) =>
+			case (resp, _) =>
 				Future.fromTry(resp).flatMap(failIfNotSuccess).transform{
 					doneTry => Success(doneTry)
 				}
