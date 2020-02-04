@@ -7,9 +7,35 @@
 @(profile: LicenceProfile, loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri.Envri)
 
 @template{
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-	<script src="https://static.icos-cp.eu/constant/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 	<style>@LicenceStyle()</style>
+	<style type="text/css">
+		details{
+			border: 1px solid #ddd;
+			border-radius: 3px;
+			margin-bottom: 20px;
+		}
+		details summary{
+			padding: 15px;
+			font-size: 20px;
+			text-align: center;
+			cursor: pointer;
+			background-color: #f5f5f5;
+		}
+		details summary:hover{
+			background-color:#d5d5d5;
+		}
+		details summary img{
+			height: 50px;
+		}
+		details summary h4{
+			font-size: 20px;
+			margin-top: 15px;
+			margin-bottom: 0;
+		}
+		details div{
+			padding: 15px;
+		}
+	</style>
 }{
 <div class="cp_page_container">
 
@@ -52,11 +78,52 @@
 							<input type="hidden" name="@name" value="@value" />
 						}
 						@yesNoButtonsDiv{
-							<button class="btn btn-primary btn-lg btn-licence">Yes, I accept</button>
+							<button id="downloadBtn" class="btn btn-primary btn-lg btn-licence">Yes, I accept</button>
 						}
 					</form>
 				}
 			}
+			<script type="application/javascript">
+				function toggleBtn(disabled){
+					if (disabled){
+						downloadBtn.setAttribute("disabled", disabled.toString());
+						downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence disabled");
+					} else {
+						downloadBtn.removeAttribute("disabled");
+						downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence");
+					}
+				}
+
+				function addCheckbox(){
+					const checkBoxBtn = document.createElement("button");
+					checkBoxBtn.setAttribute("class", "btn btn-default");
+					checkBoxBtn.setAttribute("style", "pointer-events: auto; padding: 2px 5px; margin-right: 5px;");
+
+					checkBoxBtn.addEventListener("click", function(){
+						const disabled = !!parseInt(this.firstChild.style.opacity);
+						this.firstChild.style.opacity = disabled ? "0" : "1";
+						toggleBtn(disabled);
+					});
+
+					const checkBoxTick = document.createElement("span");
+					checkBoxTick.setAttribute("class", "glyphicon glyphicon-ok");
+					checkBoxTick.setAttribute("style", "opacity: 0;");
+					checkBoxBtn.appendChild(checkBoxTick);
+
+					const agreementChkBx = document.getElementById("agreementChkBx");
+					agreementChkBx.append(checkBoxBtn);
+				}
+
+				const downloadBtn = document.getElementById("downloadBtn");
+				downloadBtn.innerHTML = "Download";
+
+				const cancelBtn = document.getElementById("cancelBtn");
+				cancelBtn.setAttribute("style", "display: inline-block;");
+
+				toggleBtn(true);
+				addCheckbox();
+
+			</script>
 		}
 	}
 
@@ -71,7 +138,13 @@
 @acceptLicence(yesNoButtons: Html) = {
 	<div class="col-sm-6 col-md-4 col-md-offset-2">
 		<div class="notice inner">
-			<p>I hereby confirm that I have taken notice of the information provided to inform me about the data and good practices of data usage. These guidelines do not define additional contractual conditions.</p>
+			<p style="display: grid;">
+				<span id="agreementChkBx" style="grid-column: 1"></span>
+				<span style="grid-column: 2">
+					I hereby confirm that I have taken notice of the information provided to inform me about the data and
+					good practices of data usage. These guidelines do not define additional contractual conditions.
+				</span>
+			</p>
 		</div>
 	</div>
 
@@ -83,7 +156,7 @@
 @yesNoButtonsDiv(yesButton: Html) = {
 	<div class="buttons inner">
 		@yesButton
-		<a class="btn btn-default btn-lg btn-licence" href="javascript:window.history.go(-1);">Go back</a>
+		<a id="cancelBtn" class="btn btn-default btn-lg btn-licence" style="display:none;" href="javascript:window.history.go(-1);">Go back</a>
 	</div>
 }
 
