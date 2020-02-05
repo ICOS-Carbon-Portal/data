@@ -15,9 +15,10 @@ import java.nio.file.Path
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
 	import IntegrityControlService._
-	import MetaClient.DobjStorageInfo
+	import MetaClient.{DobjStorageInfo, Paging}
 
-	def getReportOnLocal(fetchBaddiesFromRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
+	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging): ReportSource = uploader
+		.meta.getDobjStorageInfos(paging).map(_
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
 
@@ -46,7 +47,8 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.mapConcat(_.reports)
 	)
 
-	def getReportOnRemote(uploadMissingToRemote: Boolean): ReportSource = uploader.meta.getDobjStorageInfos.map(_
+	def getReportOnRemote(uploadMissingToRemote: Boolean, paging: Paging): ReportSource = uploader
+		.meta.getDobjStorageInfos(paging).map(_
 		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 

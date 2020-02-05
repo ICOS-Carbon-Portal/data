@@ -170,27 +170,41 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
 
-	def getDobjStorageInfos: Future[Source[DobjStorageInfo, Any]] = sparql.streamedSelect(
-		"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-		|select * where{
-		|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
-		|	?dobj cpmeta:hasSizeInBytes ?size .
-		|	?dobj cpmeta:hasName ?fileName .
-		|	filter (?format != cpmeta:asciiWdcggTimeSer)
-		|}""".stripMargin
-	).map(_.mapConcat{
-		binding => Try{
-			val size = binding("size").toLong
-			val fileName = binding("fileName")
-			val landingPage = new URI(binding("dobj"))
-			val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
-			val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
-			val format = new URI(binding("format"))
-			new DobjStorageInfo(fileName, landingPage, hash, size, format)
-		}.fold(_ => Iterable.empty, Iterable(_))
-	})
+	def getDobjStorageInfos(paging: Paging = noPaging): Future[Source[DobjStorageInfo, Any]] = {
+		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|prefix prov: <http://www.w3.org/ns/prov#>
+			|select ?dobj ?format ?size ?fileName where{
+			|	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+			|	?dobj cpmeta:hasSizeInBytes ?size .
+			|	?dobj cpmeta:hasName ?fileName .
+			|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
+			|}
+			|${paging.sparqlClauses}""".stripMargin
+
+		sparql.streamedSelect(query).map(_.mapConcat{
+			binding => Try{
+				val size = binding("size").toLong
+				val fileName = binding("fileName")
+				val landingPage = new URI(binding("dobj"))
+				val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
+				val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
+				val format = new URI(binding("format"))
+				new DobjStorageInfo(fileName, landingPage, hash, size, format)
+			}.fold(_ => Iterable.empty, Iterable(_))
+			.filter(dosi => dosi.format != CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
+		})
+	}
 }
 
 object MetaClient{
 	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: URI)
+	class Paging(val offset: Int = 0, val limit: Option[Int] = None){
+		def sparqlClauses: String = {
+			val offClause: Option[String] = if(offset > 0) Some(s"offset $offset") else None
+			val limitClause = limit.map("limit " + _.toString)
+			Seq(offClause, limitClause).flatten.mkString("\n")
+		}
+	}
+
+	val noPaging = new Paging()
 }

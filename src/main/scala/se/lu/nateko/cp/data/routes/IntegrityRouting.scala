@@ -8,6 +8,7 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import akka.http.scaladsl.model.HttpEntity
 import java.nio.charset.StandardCharsets
+import se.lu.nateko.cp.data.api.MetaClient.Paging
 
 import scala.concurrent.duration.DurationInt
 
@@ -15,7 +16,8 @@ class IntegrityRouting(service: IntegrityControlService){
 	import IntegrityControlService.ReportSource
 
 	val route = pathPrefix("integrityControl"){
-		parameter("fix".?){fix =>
+		parameters(("fix".?, "offset".as[Int].?, "limit".as[Int].?)){(fix, offsetOpt, limitOpt) =>
+			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 
 			def respondWithReport(maker: Boolean => ReportSource) = onSuccess(maker(fix.contains("true"))){src =>
 				val data = src
@@ -27,10 +29,10 @@ class IntegrityRouting(service: IntegrityControlService){
 			}
 
 			path("local"){
-				respondWithReport(service.getReportOnLocal)
+				respondWithReport(service.getReportOnLocal(_, paging))
 			} ~
 			path("remote"){
-				respondWithReport(service.getReportOnRemote)
+				respondWithReport(service.getReportOnRemote(_, paging))
 			}
 		}
 	}
