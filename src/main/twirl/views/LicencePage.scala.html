@@ -65,7 +65,7 @@
 			@for(licenceAcceptUri <- uris.licenceAcceptUri){
 				@acceptLicence{
 					@yesNoButtonsDiv{
-						<a class="btn btn-primary btn-lg btn-licence" href=@{licenceAcceptUri}>Yes, I accept</a>
+						<a id="downloadBtn" class="btn btn-primary btn-lg btn-licence" href=@{licenceAcceptUri}>Yes, I accept</a>
 					}
 				}
 			}
@@ -83,47 +83,6 @@
 					</form>
 				}
 			}
-			<script type="application/javascript">
-				function toggleBtn(disabled){
-					if (disabled){
-						downloadBtn.setAttribute("disabled", disabled.toString());
-						downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence disabled");
-					} else {
-						downloadBtn.removeAttribute("disabled");
-						downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence");
-					}
-				}
-
-				function addCheckbox(){
-					const checkBoxBtn = document.createElement("button");
-					checkBoxBtn.setAttribute("class", "btn btn-default");
-					checkBoxBtn.setAttribute("style", "pointer-events: auto; padding: 2px 5px; margin-right: 5px;");
-
-					checkBoxBtn.addEventListener("click", function(){
-						const disabled = !!parseInt(this.firstChild.style.opacity);
-						this.firstChild.style.opacity = disabled ? "0" : "1";
-						toggleBtn(disabled);
-					});
-
-					const checkBoxTick = document.createElement("span");
-					checkBoxTick.setAttribute("class", "glyphicon glyphicon-ok");
-					checkBoxTick.setAttribute("style", "opacity: 0;");
-					checkBoxBtn.appendChild(checkBoxTick);
-
-					const agreementChkBx = document.getElementById("agreementChkBx");
-					agreementChkBx.append(checkBoxBtn);
-				}
-
-				const downloadBtn = document.getElementById("downloadBtn");
-				downloadBtn.innerHTML = "Download";
-
-				const cancelBtn = document.getElementById("cancelBtn");
-				cancelBtn.setAttribute("style", "display: inline-block;");
-
-				toggleBtn(true);
-				addCheckbox();
-
-			</script>
 		}
 	}
 
@@ -157,6 +116,49 @@
 	<div class="buttons inner">
 		@yesButton
 		<a id="cancelBtn" class="btn btn-default btn-lg btn-licence" style="display:none;" href="javascript:window.history.go(-1);">Go back</a>
+		<script type="application/javascript">
+			function toggleBtn(disabled){
+				if (disabled){
+					downloadBtn.setAttribute("disabled", disabled.toString());
+					downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence disabled");
+				} else {
+					downloadBtn.removeAttribute("disabled");
+					downloadBtn.setAttribute("class", "btn btn-primary btn-lg btn-licence");
+				}
+			}
+
+			function addCheckbox(){
+				const checkBoxBtn = document.createElement("button");
+				checkBoxBtn.setAttribute("class", "btn btn-default");
+				checkBoxBtn.setAttribute("style", "pointer-events: auto; padding: 2px 5px; margin-right: 5px;");
+
+				checkBoxBtn.addEventListener("click", function(){
+					const disabled = !!parseInt(this.firstChild.style.opacity);
+					this.firstChild.style.opacity = disabled ? "0" : "1";
+					toggleBtn(disabled);
+				});
+
+				const checkBoxTick = document.createElement("span");
+				checkBoxTick.setAttribute("class", "glyphicon glyphicon-ok");
+				checkBoxTick.setAttribute("style", "opacity: 0;");
+				checkBoxBtn.appendChild(checkBoxTick);
+
+				const agreementChkBx = document.getElementById("agreementChkBx");
+				agreementChkBx.append(checkBoxBtn);
+			}
+
+			window.addEventListener("load", () => {
+				const downloadBtn = document.getElementById("downloadBtn");
+				downloadBtn.innerHTML = "Download";
+
+				const cancelBtn = document.getElementById("cancelBtn");
+				cancelBtn.setAttribute("style", "display: inline-block;");
+
+				toggleBtn(true);
+				addCheckbox();
+			});
+
+		</script>
 	</div>
 }
 
