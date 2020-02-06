@@ -22,7 +22,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
 
-			problem.fold[Future[Report]](Future.successful(OkReport)){prob =>
+			problem.fold[Future[Report]](Future.successful(new OkReport(dobjStInfo))){prob =>
 
 				if(fetchBaddiesFromRemote){
 					uploader.getRemoteStorageSource(dobjStInfo.format, dobjStInfo.hash)
@@ -43,8 +43,6 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 				} else Future.successful(new ProblemReport(dobjStInfo, prob, false))
 			}
 		}
-		.scan(new ReportAcc(0, None))(_ next _)
-		.mapConcat(_.reports)
 	)
 
 	def getReportOnRemote(uploadMissingToRemote: Boolean, paging: Paging): ReportSource = uploader
@@ -54,7 +52,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 
 			uploader.b2StageSourceExists(format, hash).flatMap{
 				case true =>
-					Future.successful(OkReport)
+					Future.successful(new OkReport(dobjStInfo))
 				case false =>
 					val (file, localProb) = localFileProblem(dobjStInfo)
 					val prob = "file absent in B2STAGE" + localProb.fold("")("; " + _)
@@ -76,8 +74,6 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 					new ProblemReport(dobjStInfo, "problem checking presence on remote: " + err.getMessage, false)
 			}
 		}
-		.scan(new ReportAcc(0, None))(_ next _)
-		.mapConcat(_.reports)
 	)
 
 	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Option[String]) = {
@@ -95,48 +91,22 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 }
 
 object IntegrityControlService{
-	val SuccessBunchSize = 500
+	import MetaClient.DobjStorageInfo
 
-	type ReportSource = Future[Source[ReportScan, Any]]
+	type ReportSource = Future[Source[Report, Any]]
 
-	sealed trait Report
-	object OkReport extends Report
-	sealed trait ReportScan{
+	sealed trait Report{
 		def statement: String
 	}
-	class OkCount(count: Int) extends ReportScan{
-		def statement: String = s"OK: $count files"
+
+	class OkReport(obj: DobjStorageInfo) extends Report{
+		def statement: String = s"OK: ${obj.landingPage}, ${obj.fileName}"
 	}
-	class ProblemReport(obj: MetaClient.DobjStorageInfo, problem: String, solved: Boolean) extends ReportScan with Report{
+	class ProblemReport(obj: DobjStorageInfo, problem: String, solved: Boolean) extends Report{
 		def statement: String = {
 			val title = if(solved) "Fixed problem" else "Problem"
 			s"$title: ${obj.landingPage}, ${obj.fileName} ($problem)"
 		}
 	}
 
-	class ReportAcc(val successCount: Int, val problem: Option[ProblemReport]){
-
-		private val shouldResetSuccessCount: Boolean = problem.isDefined || successCount % SuccessBunchSize == 0
-
-		def reports: Iterable[ReportScan] = {
-
-			val okReport: Iterable[ReportScan] = if(successCount > 0 && shouldResetSuccessCount)
-				Iterable(new OkCount(successCount)) else Iterable.empty
-
-			val problemReport: Iterable[ReportScan] = problem.fold(Iterable.empty[ReportScan])(prob => Iterable(prob))
-
-			okReport ++ problemReport
-		}
-
-		def next(report: Report): ReportAcc = {
-			val nextNewCountBase = (if(shouldResetSuccessCount) 0 else successCount)
-
-			report match {
-				case probRep: ProblemReport =>
-					new ReportAcc(nextNewCountBase, Some(probRep))
-				case OkReport =>
-					new ReportAcc(nextNewCountBase + 1, None)
-			}
-		}
-	}
 }
