@@ -11,6 +11,7 @@ import akka.stream.Materializer
 import se.lu.nateko.cp.data.streams.KeepFuture
 import scala.util.Failure
 import scala.util.Success
+import scala.concurrent.duration.DurationInt
 import java.nio.file.Path
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
@@ -74,6 +75,10 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 					new ProblemReport(dobjStInfo, "problem checking presence on remote: " + err.getMessage, false)
 			}
 		}
+	)
+
+	def getObjectsList(paging: Paging): ReportSource = uploader.meta.getDobjStorageInfos(paging).map(
+		_.map(new OkReport(_)).throttle(10, 1.second)
 	)
 
 	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Option[String]) = {

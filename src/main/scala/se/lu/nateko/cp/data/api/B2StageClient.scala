@@ -8,7 +8,6 @@ import scala.util.Try
 import akka.Done
 import akka.NotUsed
 import akka.http.scaladsl.HttpExt
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpMethods
@@ -21,6 +20,7 @@ import akka.http.scaladsl.model.headers.BasicHttpCredentials
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Framing
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
@@ -30,8 +30,7 @@ import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
-import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Framing
+import spray.json.{DefaultJsonProtocol, JsonFormat}
 
 class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Materializer) {
 
@@ -152,7 +151,6 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 	}
 
 	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2StageItem, Any]] = analyzeResponse(resp){_ =>
-		import B2StageItem._
 		import spray.json._
 		val resStream = resp.entity.withoutSizeLimit.dataBytes
 			.via(Framing.delimiter(ByteString("\n"), 8000))
@@ -179,9 +177,29 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 				Future.failed[T](new CpDataException(s"B2STAGE error: $msg"))
 			}
 	}
+
+	private def toB2StageItem(item: ApiResponseItem): B2StageItem = {
+		def makeColl(segments: List[String]): IrodsColl = segments match{
+			case Nil => B2StageItem.Root
+			case head :: tail => IrodsColl(head, Some(makeColl(tail)))
+		}
+
+		val collPathSegments = item.collectionName
+			.stripPrefix(config.homePath).stripPrefix("/")
+			.split("/").reverse.filterNot(_.isEmpty).toList
+
+		val coll = makeColl(collPathSegments)
+
+		item.dataName.fold[B2StageItem](coll)(IrodsData(_, coll))
+	}
 }
 
-object B2StageClient{
+object B2StageClient extends DefaultJsonProtocol{
 	class UploadRequest[T](val context: T, val obj: IrodsData, val src: Source[ByteString, Any])
 	class UploadResponse[T](val context: T, val result: Try[Sha256Sum])
+
+	private case class ApiResponseItem(dataName: Option[String], collectionName: String)
+
+	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem)
+
 }

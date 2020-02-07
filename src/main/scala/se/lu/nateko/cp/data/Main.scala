@@ -56,7 +56,7 @@ object Main extends App {
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
 	val downloadRouting = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, ConfigReader.metaCore)
-	val integrityRoute = new IntegrityRouting(integrityService).route
+	val integrityRoute = IntegrityRouting.route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
 	val staticRoute = new StaticRouting(config.auth).route

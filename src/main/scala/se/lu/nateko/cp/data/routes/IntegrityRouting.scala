@@ -11,21 +11,19 @@ import java.nio.charset.StandardCharsets
 import se.lu.nateko.cp.data.api.MetaClient.Paging
 
 import scala.concurrent.duration.DurationInt
+import akka.stream.scaladsl.Source
 
-class IntegrityRouting(service: IntegrityControlService){
+object IntegrityRouting{
 	import IntegrityControlService.ReportSource
 
-	val route = pathPrefix("integrityControl"){
+	def route(service: IntegrityControlService) = pathPrefix("integrityControl"){
+
 		parameters(("fix".?, "offset".as[Int].?, "limit".as[Int].?)){(fix, offsetOpt, limitOpt) =>
+
 			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 
 			def respondWithReport(maker: Boolean => ReportSource) = onSuccess(maker(fix.contains("true"))){src =>
-				val data = src
-					.map(_.statement)
-					.via(Flow.apply[String].keepAlive(50.second, () => "Working..."))
-					.map(statement => ByteString(s"${statement}\n", StandardCharsets.UTF_8))
-				val entity = HttpEntity(ContentTypes.`text/plain(UTF-8)`, data)
-				complete(entity)
+				complete(responseEntity(src.map(_.statement)))
 			}
 
 			path("local"){
@@ -33,8 +31,19 @@ class IntegrityRouting(service: IntegrityControlService){
 			} ~
 			path("remote"){
 				respondWithReport(service.getReportOnRemote(_, paging))
+			} ~
+			path("objectslist"){
+				respondWithReport(_ => service.getObjectsList(paging))
+			} ~
+			path("dummy"){
+				val src = Source.repeat("Dummy string to test long-running responses to HTTP GET requests in Akka HTTP")
+				complete(responseEntity(src.throttle(10, 1.second)))
 			}
 		}
 	}
 
+	private def responseEntity(text: Source[String, Any]) = HttpEntity(
+		ContentTypes.`text/plain(UTF-8)`,
+		text.map(s => ByteString(s"${s}\n", StandardCharsets.UTF_8))
+	)
 }
