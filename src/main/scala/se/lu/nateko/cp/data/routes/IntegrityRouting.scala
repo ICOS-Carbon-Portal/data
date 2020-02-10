@@ -22,7 +22,8 @@ object IntegrityRouting{
 
 			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 
-			def respondWithReport(maker: Boolean => ReportSource) = onSuccess(maker(fix.contains("true"))){src =>
+			def respondWithReport(maker: Boolean => ReportSource) = {
+				val src = maker(fix.contains("true"))
 				complete(responseEntity(src.map(_.statement)))
 			}
 

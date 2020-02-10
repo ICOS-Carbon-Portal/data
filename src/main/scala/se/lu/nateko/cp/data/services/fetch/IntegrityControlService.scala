@@ -19,7 +19,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 	import MetaClient.{DobjStorageInfo, Paging}
 
 	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging): ReportSource = uploader
-		.meta.getDobjStorageInfos(paging).map(_
+		.meta.getDobjStorageInfos(paging)
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
 
@@ -44,10 +44,10 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 				} else Future.successful(new ProblemReport(dobjStInfo, prob, false))
 			}
 		}
-	)
+
 
 	def getReportOnRemote(uploadMissingToRemote: Boolean, paging: Paging): ReportSource = uploader
-		.meta.getDobjStorageInfos(paging).map(_
+		.meta.getDobjStorageInfos(paging)
 		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 
@@ -75,11 +75,10 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 					new ProblemReport(dobjStInfo, "problem checking presence on remote: " + err.getMessage, false)
 			}
 		}
-	)
 
-	def getObjectsList(paging: Paging): ReportSource = uploader.meta.getDobjStorageInfos(paging).map(
-		_.map(new OkReport(_)).throttle(10, 1.second)
-	)
+
+	def getObjectsList(paging: Paging): ReportSource = uploader.meta.getDobjStorageInfos(paging)
+		.map(new OkReport(_)).throttle(10, 1.second)
 
 	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Option[String]) = {
 		import dobjStInfo.{format, hash, size}
@@ -98,7 +97,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 object IntegrityControlService{
 	import MetaClient.DobjStorageInfo
 
-	type ReportSource = Future[Source[Report, Any]]
+	type ReportSource = Source[Report, Any]
 
 	sealed trait Report{
 		def statement: String

@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.api
 
 import scala.concurrent.Future
+import scala.collection.immutable
 import scala.collection.immutable.Iterable
 
 import akka.Done
@@ -23,7 +24,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
-import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
+import se.lu.nateko.cp.meta.core.sparql._
 import spray.json.JsBoolean
 import spray.json.JsValue
 import spray.json.JsNumber
@@ -170,7 +171,21 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
 
-	def getDobjStorageInfos(paging: Paging = noPaging): Future[Source[DobjStorageInfo, Any]] = {
+	def getDobjStorageInfos(paging: Paging = noPaging): Source[DobjStorageInfo, Any] = {
+		val PageSize = 1000
+		val pageIter: Iterator[Paging] = paging.limit match{
+			case None =>
+				Iterator.from(0).map{i =>
+					new Paging(paging.offset + i * PageSize, Some(PageSize))
+				}
+			case Some(limit) =>
+				Range(paging.offset, paging.offset + limit).sliding(PageSize, PageSize)
+					.map(range => new Paging(range(0), Some(range.size)))
+		}
+		Source.fromIterator(() => pageIter).mapAsync(1)(objStorageInfos).mapConcat(identity)
+	}
+
+	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|prefix prov: <http://www.w3.org/ns/prov#>
 			|select ?dobj ?format ?size ?fileName where{
@@ -179,20 +194,23 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			|	?dobj cpmeta:hasName ?fileName .
 			|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
 			|}
+			|order by ?submTime
 			|${paging.sparqlClauses}""".stripMargin
 
-		sparql.streamedSelect(query).map(_.mapConcat{
-			binding => Try{
-				val size = binding("size").toLong
-				val fileName = binding("fileName")
-				val landingPage = new URI(binding("dobj"))
-				val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
-				val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
-				val format = new URI(binding("format"))
-				new DobjStorageInfo(fileName, landingPage, hash, size, format)
-			}.fold(_ => Iterable.empty, Iterable(_))
+		sparql.select(query).map(
+			_.results.bindings.toVector.flatMap{
+				binding => Try{
+					val size = asLiteral(binding, "size").toLong
+					val fileName = asLiteral(binding, "fileName")
+					val landingPage = asResource(binding, "dobj")
+					val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
+					val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
+					val format = asResource(binding, "format")
+					new DobjStorageInfo(fileName, landingPage, hash, size, format)
+				}.toOption
+			}
 			.filter(dosi => dosi.format != CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
-		})
+		)
 	}
 }
 
@@ -207,4 +225,16 @@ object MetaClient{
 	}
 
 	val noPaging = new Paging()
+
+	def asResource(b: Binding, varName: String): URI = b.get(varName) match{
+		case None => throw new Exception(s"Unexpected SPARQL result: no value for $varName")
+		case Some(BoundUri(uri)) => uri
+		case Some(BoundLiteral(_, _)) => throw new Exception("Unexpected SPARQL result: expected URI resource, got literal")
+	}
+
+	def asLiteral(b: Binding, varName: String): String = b.get(varName) match{
+		case None => throw new Exception(s"Unexpected SPARQL result: no value for $varName")
+		case Some(BoundLiteral(value, _)) => value
+		case Some(BoundUri(_)) => throw new Exception("Unexpected SPARQL result: expected literal, got URI resource")
+	}
 }
