@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, Route, State, StateSerialized, TsSettings, WhoAmI} from "../models/State";
+import {MetaDataObject, Route, StateSerialized, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchBoostrapData,
@@ -17,6 +17,7 @@ import {SearchOption} from "../actions/types";
 
 
 export abstract class ActionPayload{}
+export abstract class BootstrapRoutePayload extends ActionPayload{}
 export abstract class BackendPayload extends ActionPayload{}
 export abstract class MiscPayload extends ActionPayload{}
 export abstract class PreviewPayload extends ActionPayload{}
@@ -26,6 +27,26 @@ export abstract class FiltersPayload extends ActionPayload{}
 
 export interface PortalPlainAction extends Action<string>{
 	payload: ActionPayload
+}
+
+export class BootstrapRouteSearch extends BootstrapRoutePayload{
+	constructor(){super();}
+}
+
+export class BootstrapRoutePreview extends BootstrapRoutePayload{
+	constructor(
+		readonly pids: Sha256Str[],
+		readonly objectsTable: ObjectsTableLike,
+		readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>
+	){super();}
+}
+
+export class BootstrapRouteMetadata extends BootstrapRoutePayload{
+	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
+}
+
+export class BootstrapRouteCart extends BootstrapRoutePayload{
+	constructor(readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>, readonly objectsTable: ObjectsTableLike){super();}
 }
 
 export class BackendUserInfo extends BackendPayload{
@@ -68,9 +89,9 @@ export class BackendBatchDownload extends BackendPayload{
 	constructor(readonly isBatchDownloadOk: boolean, readonly user: WhoAmI){super();}
 }
 
-type ObjectsTable = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];
+export type ObjectsTableLike = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];
 export class BackendObjectsFetched extends BackendPayload{
-	constructor(readonly objectsTable: ObjectsTable, readonly isDataEndReached: boolean){super();}
+	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
 export class MiscError extends MiscPayload{
@@ -109,11 +130,7 @@ export class SetPreviewFromCart extends PreviewPayload{
 	constructor(readonly ids: UrlStr[]){super();}
 }
 
-export class SetPreviewUrls extends PreviewPayload{
-	constructor(readonly urls: UrlStr[]){super();}
-}
-
-export class SetPreviewItem extends PreviewPayload{
+export class SetPreviewUrl extends PreviewPayload{
 	constructor(readonly url: UrlStr){super();}
 }
 

@@ -1,4 +1,5 @@
-import {Route} from "./models/State";
+import {Sha256Str, UrlStr} from "./backend/declarations";
+import config from "./config";
 
 export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
 	const objIds = items.map((item:any) => item.id.split('/').pop()).join();
@@ -7,10 +8,6 @@ export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
 		x: xAxis,
 		type: 'scatter'
 	});
-};
-
-export const getRouteFromLocationHash = () => {
-	return window.location.hash.substr(1).split('?')[0] as Route;
 };
 
 export const formatBytes = (bytes: number, decimals = 2) => {
@@ -67,18 +64,6 @@ const pad2 = (s: number | string) => {
 	return ("0" + s).substr(-2, 2);
 };
 
-export const copyprops = <T extends Object, K extends keyof T>(source: T, keys: K[]): Pick<T, K> => {
-	const target: any = {};
-
-	keys.forEach((key) => {
-		if (source.hasOwnProperty(key)) {
-			target[key as string] = source[key];
-		}
-	});
-
-	return target;
-};
-
 export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[]): Pick<T, K> => {
 	const target: any = {};
 
@@ -108,4 +93,26 @@ export function wholeStringRegExp(anyRegex: string): RegExp {
 
 export function isDefined<T>(x: T | undefined): x is T{
 	return x !== undefined;
+}
+
+export function getLastSegmentInUrl(url: UrlStr): string | Sha256Str {
+	// Return everything after the last slash (usually an object id) in the URL
+	const idx = url.lastIndexOf('/');
+
+	if (idx === -1) throw new Error(`Cannot get last segment from ${url}`);
+
+	return url.substr(idx + 1);
+}
+
+export function getLastSegmentsInUrls(urls: UrlStr[]): string[] | Sha256Str[] {
+	// Convert an array of URLs to an array of last URL segments (usually object ids)
+	return urls.map(url => getLastSegmentInUrl(url));
+}
+
+export function getUrlFromPid(pid: Sha256Str): UrlStr {
+	return config.previewIdPrefix[config.envri] + pid;
+}
+
+export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
+	return pids.map(pid => getUrlFromPid(pid));
 }

@@ -2,13 +2,12 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel.jsx';
 import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions/cart';
-import {formatBytes} from '../utils';
-import config from '../config';
+import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import BackButton from '../components/buttons/BackButton.jsx';
-import {UrlStr} from "../backend/declarations";
+import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
-import {removeFromCart, setMetadataItem, switchToPreview, updateRoute} from "../actions/common";
+import {removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -21,8 +20,8 @@ class DataCart extends Component<DataCartProps> {
 		super(props);
 	}
 
-	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, 'preview');
+	handlePreview(urls: UrlStr[]){
+		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
 	}
 
 	handleBackButton(previousRoute: Route){
@@ -121,8 +120,7 @@ function stateToProps(state: State){
 
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
-		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
-		updateRoute: (route: Route) => dispatch(updateRoute(route)),
+		updateRoute: (route: Route, previewPids?: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		setCartName: (newName: string) => dispatch(setCartName(newName)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),

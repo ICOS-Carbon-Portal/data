@@ -7,6 +7,7 @@ import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
 import bootstrapSearch from "./search";
 import {failWithError, fetchCart, getBackendTables, getFilters, loadFromError} from "./common";
+import {Sha256Str} from "../backend/declarations";
 
 
 export const init: PortalThunkAction<void> = dispatch => {
@@ -32,7 +33,8 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			// Then bootstrap current route
-			dispatch(bootstrapRoute(user));
+			const {route, preview} = getState();
+			dispatch(bootstrapRoute(user, route, preview.pids));
 		});
 
 		type LoggedIn = {_id: string, profile: Profile | {}};
@@ -47,19 +49,22 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	};
 }
 
-export function bootstrapRoute(user: WhoAmI, forceRoute?: Route): PortalThunkAction<void> {
+export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {route, id} = getState();
-		const newRoute = forceRoute ?? route;
+		const {id} = getState();
 
-		switch (newRoute) {
+		switch (route) {
 			case 'search':
 				dispatch(new Payloads.MiscRestoreFilters());
 				dispatch(bootstrapSearch(true));
 				break;
 
 			case 'preview':
-				dispatch(bootstrapPreview(user));
+				if (previewPids === undefined || previewPids.length === 0){
+					failWithError(dispatch)(new Error('Preview cannot be initialized'));
+					break;
+				}
+				dispatch(bootstrapPreview(user, previewPids as unknown as Sha256Str[]));
 				break;
 
 			case 'cart':

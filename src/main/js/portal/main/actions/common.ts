@@ -5,18 +5,16 @@ import {
 	fetchKnownDataObjects,
 	getCart,
 	getError,
-	getExtendedDataObjInfo,
 	getMetadata,
 	saveCart
 } from "../backend";
 import Cart, {restoreCarts} from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
-import {UrlStr} from "../backend/declarations";
+import {Sha256Str, UrlStr} from "../backend/declarations";
 import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "../models/FilterRequest";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
-import {getRouteFromLocationHash} from "../utils";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
 
@@ -48,10 +46,10 @@ function logError(error: Error): PortalThunkAction<void> {
 	}
 }
 
-export function updateRoute(route: Route): PortalThunkAction<void> {
+export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		// The actual route is registered in state in the bootstrap function for each route
-		dispatch(bootstrapRoute(getState().user, route));
+		dispatch(bootstrapRoute(getState().user, route, previewPids));
 	};
 }
 
@@ -111,16 +109,6 @@ export function removeFromCart(ids: UrlStr[]): PortalThunkAction<void> {
 	};
 }
 
-export function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
-	return (dispatch) => {
-		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
-				dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
-			},
-			failWithError(dispatch)
-		);
-	};
-}
-
 export function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchKnownDataObjects(dobjs).then(result => {
@@ -133,27 +121,9 @@ export function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunk
 	};
 }
 
-export function switchToPreview(url: UrlStr | UrlStr[], newRoute: Route): PortalThunkAction<void> {
-	return dispatch => {
-		if (Array.isArray(url)) {
-			dispatch(setPreviewUrls(url));
-		} else {
-			dispatch(setPreviewUrl(url));
-		}
-
-		dispatch(updateRoute(newRoute));
-	};
-}
-
 export function setPreviewUrl(url: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewItem(url));
-	};
-}
-
-function setPreviewUrls(urls: UrlStr[]): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewUrls(urls));
+		dispatch(new Payloads.SetPreviewUrl(url));
 	};
 }
 

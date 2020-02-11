@@ -12,7 +12,6 @@ interface OurProps {
 	cart: State['cart']
 	extendedDobjInfo: State['extendedDobjInfo']
 	tsSettings: State['tsSettings']
-	setPreviewUrl: (url: UrlStr) => void
 	storeTsPreviewSetting: (spec: string, type: string, val: string) => void
 	addToCart: (ids: UrlStr[]) => void
 	removeFromCart: (ids: UrlStr[]) => void

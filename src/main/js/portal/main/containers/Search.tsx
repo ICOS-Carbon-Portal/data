@@ -18,7 +18,7 @@ import {
 	getResourceHelpInfo, updateSearchOption
 } from '../actions/search';
 import HelpSection from "../components/help/HelpSection";
-import {isSmallDevice, pick} from '../utils';
+import {getLastSegmentsInUrls, isSmallDevice, pick} from '../utils';
 import {PickClassFunctions, Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Route, State} from "../models/State";
@@ -26,9 +26,8 @@ import {Item} from "../models/HelpStorage";
 import AdvancedSettings from "../components/AdvancedSettings";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";
-import config from "../config";
 import FiltersTemporal from '../models/FilterTemporal';
-import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl, switchToPreview} from "../actions/common";
+import {addToCart, removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -71,8 +70,8 @@ class Search extends Component<SearchProps, OurState> {
 		this.events.addToTarget(window, "resize", this.handleResize);
 	}
 
-	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, 'preview');
+	handlePreview(urls: UrlStr[]){
+		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
 	}
 
 	handleAddToCart(objInfo: UrlStr[]) {
@@ -180,9 +179,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
-		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
+		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		filtersReset: () => dispatch(filtersReset),
 		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),

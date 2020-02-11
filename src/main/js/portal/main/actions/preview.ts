@@ -1,33 +1,29 @@
 import {PortalThunkAction} from "../store";
 import {WhoAmI} from "../models/State";
-import {getTsSettings, saveTsSetting} from "../backend";
+import {fetchKnownDataObjects, getExtendedDataObjInfo, getTsSettings, saveTsSetting} from "../backend";
 import * as Payloads from "../reducers/actionpayloads";
-import config from "../config";
-import {UrlStr} from "../backend/declarations";
-import {failWithError, fetchExtendedDataObjInfo, getKnownDataObjInfo} from "./common";
+import {Sha256Str} from "../backend/declarations";
+import {failWithError} from "./common";
+import {getUrlsFromPids} from "../utils";
 
 
-export default function bootstrapPreview(user: WhoAmI): PortalThunkAction<void> {
+export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {preview, tsSettings} = getState();
+		const {tsSettings} = getState();
 
-		if (preview.hasPids){
-			if (!preview.hasAllItems) {
-				dispatch(getKnownDataObjInfo(preview.pids, restorePreview));
+		const promises = Promise.all([
+			fetchKnownDataObjects(pids),
+			getExtendedDataObjInfo(getUrlsFromPids(pids))
+		]);
 
-				const ids: UrlStr[] = preview.pids.map((id: string) => config.previewIdPrefix[config.envri] + id);
-				dispatch(fetchExtendedDataObjInfo(ids));
-			}
-
-		} else {
-			failWithError(dispatch)(new Error('Invalid state: Preview is missing pids'));
-		}
+		promises.then(([knownDataObjInfos, extendedDataObjInfo]) => {
+				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo));
+			},
+			failWithError(dispatch));
 
 		if (Object.keys(tsSettings).length === 0){
 			dispatch(getTsPreviewSettings(user));
 		}
-
-		dispatch(new Payloads.UiUpdateRoute('preview'));
 	}
 }
 
@@ -48,7 +44,3 @@ export function storeTsPreviewSetting(spec: string, type: string, val: string): 
 		});
 	};
 }
-
-const restorePreview: PortalThunkAction<void> = (dispatch) => {
-	dispatch(new Payloads.RestorePreview());
-};

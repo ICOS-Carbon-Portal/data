@@ -50,7 +50,12 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendExtendedDataObjInfo){
-		return stateUtils.updateAndSave(state,{
+		// Save updates in history state if we are beyond init procedure since this is called last for the search route
+		const updater = state.isRunningInit
+			? stateUtils.update
+			: stateUtils.updateAndSave;
+
+		return updater(state,{
 			extendedDobjInfo: payload.extendedDobjInfo
 		});
 	}

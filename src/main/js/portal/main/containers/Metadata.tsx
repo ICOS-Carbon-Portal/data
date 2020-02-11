@@ -2,7 +2,7 @@ import React, { Component, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
-import { formatDate, formatDateTime } from '../utils';
+import {formatDate, formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {MetaDataObject, Route, State} from "../models/State";
@@ -15,7 +15,7 @@ import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
-import {addToCart, removeFromCart, setMetadataItem, switchToPreview} from "../actions/common";
+import {addToCart, removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -35,8 +35,8 @@ class Metadata extends Component<MetadataProps> {
 		this.props.removeFromCart(ids);
 	}
 
-	handlePreview(ids: UrlStr[]){
-		this.props.setPreview(ids, 'preview');
+	handlePreview(urls: UrlStr[]){
+		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
 	}
 
 	handleViewMetadata(id: UrlStr) {
@@ -261,7 +261,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
+		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects)
 	};

@@ -3,8 +3,8 @@ import CartItem from "../models/CartItem";
 import * as Payloads from "../reducers/actionpayloads";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
-import {getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
-import {failWithError, fetchExtendedDataObjInfo} from "./common";
+import {getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
+import {failWithError} from "./common";
 
 
 export default function bootstrapCart(): PortalThunkAction<void> {
@@ -15,10 +15,11 @@ export default function bootstrapCart(): PortalThunkAction<void> {
 		const rowsAsObjectsTable = cartItems.map(ci => ci.item);
 		const dobjs: UrlStr[] = rowsAsObjectsTable.map(r => r.dobj);
 
-		dispatch(fetchExtendedDataObjInfo(dobjs));
-		dispatch(new Payloads.BackendObjectsFetched(rowsAsObjectsTable, true));
-
-		dispatch(new Payloads.UiUpdateRoute('cart'));
+		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
+				dispatch(new Payloads.BootstrapRouteCart(extendedDobjInfo, rowsAsObjectsTable));
+			},
+			failWithError(dispatch)
+		);
 	};
 }
 

@@ -6,7 +6,7 @@ import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
-import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo} from "../backend";
+import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersUpdatePids} from "../reducers/actionpayloads";
@@ -16,7 +16,7 @@ import {HelpStorageListEntry, Item} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
-import {failWithError, fetchExtendedDataObjInfo} from "./common";
+import {failWithError} from "./common";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -32,7 +32,7 @@ export default function bootstrapSearch(fetchOriginsTable: boolean): PortalThunk
 function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const state = getState();
-		const {specTable, paging, sorting} = state;
+		const {specTable, paging, sorting, isRunningInit} = state;
 		const filters = getFilters(state);
 		const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
@@ -55,9 +55,19 @@ function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction
 			if (fetchOriginsTable) dispatch(getOriginsTable);
 		});
 
-		dispatch(new Payloads.UiUpdateRoute('search'));
+		dispatch(new Payloads.BootstrapRouteSearch());
 
 		logPortalUsage(state);
+	};
+}
+
+function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
+				dispatch(new Payloads.BackendExtendedDataObjInfo(extendedDobjInfo));
+			},
+			failWithError(dispatch)
+		);
 	};
 }
 

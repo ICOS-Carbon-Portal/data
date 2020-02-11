@@ -18,7 +18,6 @@ import {
 	removeFromCart,
 	setMetadataItem,
 	setPreviewUrl,
-	switchToPreview,
 	updateRoute
 } from "../actions/common";
 
@@ -180,7 +179,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
-		setPreview: (url: UrlStr | UrlStr[], newRoute: Route) => dispatch(switchToPreview(url, newRoute)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),

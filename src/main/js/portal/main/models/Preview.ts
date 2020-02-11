@@ -1,5 +1,5 @@
 import CartItem, {CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl, isDefined} from '../utils';
+import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
 import config from "../config";
 import commonConfig from '../../../common/main/config';
 import deepEqual from 'deep-equal';
@@ -21,8 +21,7 @@ type PreviewType = PreviewTypes | 'unknown'
 export interface PreviewSerialized {
 	items: PreviewItemSerialized[]
 	options: PreviewOption[],
-	type: PreviewType,
-	visible: boolean
+	type: PreviewType
 }
 
 export default class Preview {
@@ -30,23 +29,20 @@ export default class Preview {
 	public pids: Sha256Str[];
 	public readonly options: PreviewOption[];
 	public readonly type: PreviewType;
-	public readonly visible: boolean;
 
 
-	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType, visible?: boolean){
+	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
 		this.pids = this.items.map(item => item._id.split('/').pop()!) ?? [];
 		this.options = options ?? [];
 		this.type = type ?? 'unknown';
-		this.visible = visible ?? false;
 	}
 
 	get serialize(): PreviewSerialized {
 		return {
 			items: this.items.map(item => item.serialize),
 			options: this.options,
-			type: this.type,
-			visible: this.visible
+			type: this.type
 		};
 	}
 
@@ -54,12 +50,11 @@ export default class Preview {
 		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item.dataobject, item.type, item.url));
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
-		const visible = jsonPreview.visible;
 
-		return new Preview(items, options, type, visible);
+		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: Lookup['table'] & KeyAnyVal, cart: Cart, ids: string[], objectsTable: ObjectsTable[]) {
+	initPreview(lookup: Lookup['table'] & KeyAnyVal, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[]) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 			type OptionWithType = {
@@ -92,20 +87,18 @@ export default class Preview {
 					const url = getNewTimeseriesUrl(items, xAxis);
 					previewItems = items.map(i => i.withUrl(url));
 				}
-				return new Preview(previewItems, options.options, options.type, true);
+				return new Preview(previewItems, options.options, options.type);
 			}
 			else throw new Error("No items to preview");
 		} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
-			return new Preview(items, options.options, options.type, true);
+			return new Preview(items, options.options, options.type);
 		}
 
 		throw new Error('Could not initialize Preview');
 	}
 
 	restore(lookup: Lookup['table'], cart: Cart, objectsTable: ObjectsTable[]) {
-		if (this.visible){
-			return this;
-		} else if (this.pids.length > 0) {
+		if (this.hasPids) {
 			return this.initPreview(lookup, cart, this.pids.map(pid => config.previewIdPrefix[config.envri] + pid), objectsTable);
 		} else {
 			return this;
@@ -119,15 +112,7 @@ export default class Preview {
 	}
 
 	withItemUrl(url: UrlStr){
-		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type, this.visible);
-	}
-
-	show(){
-		return new Preview(this.items, this.options, this.type, true);
-	}
-
-	hide(){
-		return new Preview(this.items, this.options, this.type, false);
+		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type);
 	}
 
 	get hasPids(){
@@ -139,8 +124,8 @@ export default class Preview {
 	}
 
 	get hasAllItems(){
-		const itemPids = this.items.map(item => item.id.split('/').pop());
+		const itemPids = this.items.map(item => getLastSegmentInUrl(item.id));//
 
-		return this.pids.every(pid => itemPids.includes(pid));
+		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
 	}
 }

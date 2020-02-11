@@ -10,13 +10,17 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 
 		if (id){
 			if (metadata === undefined || id !== metadata.id) {
-				dispatch(getMetadataItem(id));
+
+				getMetadata(id).then(metadata => {
+						const metadataWithId = {...metadata, ...{id}};
+						dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId));
+					},
+					failWithError(dispatch)
+				);
 			}
 		} else {
 			failWithError(dispatch)(new Error('Invalid state: Metadata id is missing'));
 		}
-
-		dispatch(new Payloads.UiUpdateRoute('metadata'));
 	}
 }
 

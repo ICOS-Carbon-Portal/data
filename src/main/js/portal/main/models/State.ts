@@ -119,7 +119,7 @@ const emptyCompositeSpecTable = new CompositeSpecTable(
 
 export const defaultState: State = {
 	ts: Date.now(),
-	isRunningInit: false,
+	isRunningInit: true,
 	searchOptions: {
 		showDeprecated: false
 	},

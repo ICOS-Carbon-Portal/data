@@ -4,12 +4,24 @@ import miscReducer from './miscReducer';
 import previewReducer from './previewReducer';
 import uiReducer from './uiReducer';
 import filtersReducer from './filtersReducer';
-import {BackendPayload, PortalPlainAction, MiscPayload, PreviewPayload, UiPayload, FiltersPayload} from "./actionpayloads";
+import {
+	BackendPayload,
+	PortalPlainAction,
+	MiscPayload,
+	PreviewPayload,
+	UiPayload,
+	FiltersPayload,
+	BootstrapRoutePayload
+} from "./actionpayloads";
 import {State, defaultState} from "../models/State";
+import bootstrapRouteReducer from "./bootstrapRouteReducer";
 
 
 const reducer: Reducer<State, PortalPlainAction> = (state: State = defaultState, action: PortalPlainAction) => {
 	const payload = action.payload;
+
+	if (payload instanceof BootstrapRoutePayload)
+		return bootstrapRouteReducer(state, payload);
 
 	if (payload instanceof BackendPayload)
 		return backendReducer(state, payload);

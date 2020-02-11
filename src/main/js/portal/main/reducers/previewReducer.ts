@@ -1,7 +1,11 @@
 import stateUtils, {State} from "../models/State";
-import {PreviewPayload, RestorePreview, SetPreviewFromCart, SetPreviewItem, SetPreviewUrls} from "./actionpayloads";
+import {
+	PreviewPayload,
+	RestorePreview,
+	SetPreviewFromCart,
+	SetPreviewUrl
+} from "./actionpayloads";
 import Preview from "../models/Preview";
-import {Sha256Str} from "../backend/declarations";
 
 
 export default function(state: State, payload: PreviewPayload): State{
@@ -14,26 +18,16 @@ export default function(state: State, payload: PreviewPayload): State{
 		return stateUtils.update(state, handleSetPreviewFromCart(state, payload));
 	}
 
-	if (payload instanceof SetPreviewUrls){
-		return stateUtils.update(state, handleSetPreviewUrls(state, payload));
-	}
-
-	if (payload instanceof SetPreviewItem){
-		return stateUtils.update(state,{
+	if (payload instanceof SetPreviewUrl){
+		// Save exact state of Preview in history when it's URL changes.
+		// This will recreate all changes in the preview when navigating back to it.
+		return stateUtils.updateAndSave(state,{
 			preview: state.preview.withItemUrl(payload.url)
 		});
 	}
 
 	return state;
 }
-
-const handleSetPreviewUrls = (state: State, payload: SetPreviewUrls) => {
-	const pids: Sha256Str[] = payload.urls.map(url => url.split('/').pop()!);
-
-	return {
-		preview: state.preview.withPids(pids)
-	};
-};
 
 const handleRestorePreview = (state: State) => {
 	return state.lookup === undefined
