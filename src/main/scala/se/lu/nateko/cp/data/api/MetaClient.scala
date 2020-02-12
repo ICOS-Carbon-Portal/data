@@ -173,7 +173,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 
 	def getDobjStorageInfos(paging: Paging = noPaging): Source[DobjStorageInfo, Any] = {
 		val PageSize = 1000
-		val pageIter: Iterator[Paging] = paging.limit match{
+		def pageIter(): Iterator[Paging] = paging.limit match{
 			case None =>
 				Iterator.from(0).map{i =>
 					new Paging(paging.offset + i * PageSize, Some(PageSize))
@@ -182,7 +182,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				Range(paging.offset, paging.offset + limit).sliding(PageSize, PageSize)
 					.map(range => new Paging(range(0), Some(range.size)))
 		}
-		Source.fromIterator(() => pageIter).mapAsync(1)(objStorageInfos).mapConcat(identity)
+		Source.fromIterator(pageIter).mapAsync(1)(objStorageInfos).takeWhile(!_.isEmpty).mapConcat(identity)
 	}
 
 	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
