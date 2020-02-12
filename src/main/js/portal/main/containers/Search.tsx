@@ -42,9 +42,9 @@ const reducedProps = (props: SearchProps) => ({
 		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'labelLookup', 'extendedDobjInfo',
-		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects'),
+		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects', 'searchOptions'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
-		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup'),
+		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'searchOptions'),
 	advanced: pick(props, 'filterPids', 'updateSelectedPids', 'searchOptions', 'updateSearchOption')
 });
 

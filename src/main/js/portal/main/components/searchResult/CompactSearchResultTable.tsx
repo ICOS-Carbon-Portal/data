@@ -1,8 +1,8 @@
 import React, { CSSProperties } from 'react';
-import CompactSearchResultTableRow from './CompactSearchResultTableRow.jsx';
-import {Paging} from '../buttons/Paging.jsx';
+import CompactSearchResultTableRow from './CompactSearchResultTableRow';
+import {Paging} from '../buttons/Paging';
 import { SearchActions, ReducedProps } from "../../containers/Search";
-import { State } from '../../models/State.js';
+import { State } from '../../models/State';
 import config, { timezone } from '../../config';
 
 type CompactSearchResultTableProps = ReducedProps['compactSearchResultTable']
@@ -10,11 +10,12 @@ type CompactSearchResultTableProps = ReducedProps['compactSearchResultTable']
 	& Pick<SearchActions, 'handleViewMetadata' | 'handlePreview'>;
 
 const CompactSearchResultTable = (props: CompactSearchResultTableProps) => {
-	const { paging, requestStep, cart, handlePreview, lookup, preview, handleViewMetadata} = props;
+	const { paging, requestStep, cart, handlePreview, lookup, preview, handleViewMetadata, searchOptions} = props;
 	const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0};
 
 	return <div className="panel panel-default">
 		<Paging
+			searchOptions={searchOptions}
 			type="header"
 			paging={paging}
 			requestStep={requestStep}

@@ -25,7 +25,7 @@ type OurProps = ReducedProps['searchResultTable']
 const SimpleDataObjectsTable = (props: OurProps) => {
 	const {paging, requestStep, handlePreview, lookup, labelLookup, handleViewMetadata, preview, extendedDobjInfo, helpStorage,
 		getResourceHelpInfo, objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
-		updateCheckedObjects} = props;
+		updateCheckedObjects, searchOptions} = props;
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
 		return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
@@ -40,6 +40,7 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 	return (
 		<div className="panel panel-default">
 			<Paging
+				searchOptions={searchOptions}
 				type="header"
 				paging={paging}
 				requestStep={requestStep}
@@ -122,6 +123,7 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 				</table>
 			</div>
 			<Paging
+				searchOptions={undefined}
 				type="footer"
 				paging={paging}
 				requestStep={requestStep}
