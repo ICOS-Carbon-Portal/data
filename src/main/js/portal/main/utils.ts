@@ -2,7 +2,7 @@ import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
 
 export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
-	const objIds = items.map((item:any) => item.id.split('/').pop()).join();
+	const objIds = items.map((item:any) => getLastSegmentInUrl(item.id)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
@@ -98,18 +98,17 @@ export function isDefined<T>(x: T | undefined): x is T{
 export function getLastSegmentInUrl(url: UrlStr): string | Sha256Str {
 	// Return everything after the last slash (usually an object id) in the URL
 	const idx = url.lastIndexOf('/');
-
-	if (idx === -1) throw new Error(`Cannot get last segment from ${url}`);
+	if (idx === -1) throw new Error(`Cannot get last segment from '${url}'`);
 
 	return url.substr(idx + 1);
 }
 
-export function getLastSegmentsInUrls(urls: UrlStr[]): string[] | Sha256Str[] {
+export function getLastSegmentsInUrls(urls: UrlStr[]): (string | Sha256Str)[] {
 	// Convert an array of URLs to an array of last URL segments (usually object ids)
 	return urls.map(url => getLastSegmentInUrl(url));
 }
 
-export function getUrlFromPid(pid: Sha256Str): UrlStr {
+function getUrlFromPid(pid: Sha256Str): UrlStr {
 	return config.previewIdPrefix[config.envri] + pid;
 }
 

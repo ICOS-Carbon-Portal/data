@@ -2,7 +2,7 @@ import React from 'react';
 import { DataAcquisition } from '../../../../common/main/metacore';
 import { metadataRow } from '../../containers/Metadata';
 import { UrlStr } from '../../backend/declarations';
-import { formatDateTime } from '../../utils';
+import {formatDateTime, getLastSegmentInUrl} from '../../utils';
 
 interface AquisitionSectionProps {
 	acquisition: DataAcquisition
@@ -52,12 +52,12 @@ const instrumentRow = (instruments: UrlStr | UrlStr[]) => {
 			? metadataRow("Instruments", instruments.map((instrument: UrlStr, index) => {
 				return (
 					<span key={instrument}>
-						<a href={instrument}>{instrument.split('/').pop()}</a>
+						<a href={instrument}>{getLastSegmentInUrl(instrument)}</a>
 						{index != instruments.length - 1 && ', '}
 					</span>
 				);
 			}))
-			: metadataRow("Instrument", <a href={instruments}>{instruments.split('/').pop()}</a>)
+			: metadataRow("Instrument", <a href={instruments}>{getLastSegmentInUrl(instruments)}</a>)
 	);
 };
 

@@ -3,6 +3,7 @@ import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import {getMetadata} from "../backend";
 import {failWithError, getKnownDataObjInfo} from "./common";
+import {getLastSegmentInUrl} from "../utils";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -44,11 +45,9 @@ export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, get
 	const {objectsTable, id} = getState();
 
 	if (objectsTable.length === 0 && id !== undefined) {
-		const hash: Sha256Str | undefined = id.split('/').pop();
+		const hash: Sha256Str = getLastSegmentInUrl(id);
 
-		if (hash) {
-			dispatch(getKnownDataObjInfo([hash]));
-			dispatch(setMetadataItem(id));
-		}
+		dispatch(getKnownDataObjInfo([hash]));
+		dispatch(setMetadataItem(id));
 	}
 };

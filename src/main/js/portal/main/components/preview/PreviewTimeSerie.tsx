@@ -1,5 +1,5 @@
 import React, {ChangeEvent, Component} from 'react';
-import {distinct, wholeStringRegExp} from '../../utils'
+import {distinct, getLastSegmentInUrl, wholeStringRegExp} from '../../utils'
 import config from '../../config';
 import {State, TsSetting} from "../../models/State";
 import {KeyStrVal, UrlStr} from "../../backend/declarations";
@@ -112,7 +112,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {};
 		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
-		const objIds = preview.items.map((i: CartItem) => i.id.split('/').pop()).join();
+		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.id)).join();
 
 		return (
 			<div>

@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice, formatDate} from '../../utils';
+import {isSmallDevice, formatDate, getLastSegmentInUrl} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config, {timezone} from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
@@ -72,7 +72,7 @@ export default class SimpleObjectTableRow extends Component<SimpleObjectTableRow
 						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={checkboxDisabled ? true : false}
+						checkboxDisabled={checkboxDisabled}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
@@ -96,10 +96,10 @@ export default class SimpleObjectTableRow extends Component<SimpleObjectTableRow
 	}
 }
 
-export const getMetadataHash = (dobj?: string) => {
+export const getMetadataHash = (dobj: string) => {
 	const hashObj = {
 		route: 'metadata',
-		id: dobj?.split('/').pop()
+		id: getLastSegmentInUrl(dobj)
 	};
 
 	return "#" + encodeURIComponent(JSON.stringify(hashObj));

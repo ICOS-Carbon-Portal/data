@@ -13,6 +13,7 @@ import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
 import SpecTable, {Row} from "./SpecTable";
+import {getLastSegmentInUrl} from "../utils";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -425,8 +426,8 @@ const reduceState = (state: KeyAnyVal) => {
 				acc[key] = part;
 			}
 
-		} else if (state.route === 'metadata' && key === 'id' && val && val!.length > 0){
-			acc[key] = val!.split('/').pop();
+		} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0){
+			acc[key] = getLastSegmentInUrl(val);
 
 		} else if (typeof val === 'string'){
 			acc[key] = val;

@@ -33,7 +33,7 @@ export default class Preview {
 
 	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
-		this.pids = this.items.map(item => item._id.split('/').pop()!) ?? [];
+		this.pids = this.items.map(item => getLastSegmentInUrl(item._id));
 		this.options = options ?? [];
 		this.type = type ?? 'unknown';
 	}

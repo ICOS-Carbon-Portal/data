@@ -8,7 +8,7 @@ import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {KeyAnyVal, UrlStr, Sha256Str, KeyStrVal} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {MetaDataObject, Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
-import {throwError} from './utils';
+import {getLastSegmentInUrl, throwError} from './utils';
 import {
 	basicColNames,
 	columnMetaColNames,
@@ -127,7 +127,7 @@ export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	const query = queries.findDobjs(search);
 
 	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: sparqlParsers.fromUrl(b.dobj).split('/').pop() || throwError(`Expected a data object URL, got ${b.dobj.value}`)
+		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)
 	}));
 }
 
