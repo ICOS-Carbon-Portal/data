@@ -99,13 +99,11 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
 	const specTable = state.specTable.withFilter(payload.varName, payload.filter);
-	const objCount = getObjCount(specTable);
 
 	return stateUtils.update(state,{
 		specTable,
 		objectsTable: [],
-		page: 0,
-		paging: new Paging({objCount}),
+		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: Object.assign(state.filterCategories, {[payload.varName]: payload.filter}),
 		checkedObjectsInSearch: []
 	});
@@ -116,20 +114,34 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 	const orgSpecTables = state.specTable;
 	const specTable = orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts, filterTemporal.hasFilter);
 
-	if(isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
-
-	const objCount = getObjCount(specTable);
-	const pageCount = Math.min(objCount, config.stepsize);
+	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
 
 	return {
 		specTable,
-		paging: state.paging.withObjCount({objCount, pageCount})
+		...getNewPaging(state.paging, state.page, specTable, payload.resetPaging)
+	}
+};
+
+export const getNewPaging = (currentPaging: Paging, currentPage: number, specTable: CompositeSpecTable, resetPaging: boolean) => {
+	const objCount = getObjCount(specTable);
+
+	if (resetPaging){
+		return {
+			paging: new Paging({objCount}),
+			page: 0
+		};
+
+	} else {
+		const pageCount = Math.min(objCount, config.stepsize);
+		return {
+			paging: currentPaging.withObjCount({objCount, pageCount}),
+			page: currentPage
+		};
 	}
 };
 
 const handleBackendTables = (state: State, payload: BackendTables) => {
 	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables);
-	const objCount = getObjCount(specTable);
 	const labelLookup = payload.allTables.labelLookup.reduce((acc, curr) => {
 		acc[curr.uri] = curr.label;
 		return acc;
@@ -138,7 +150,7 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 	return {
 		specTable,
 		labelLookup,
-		paging: state.paging.withObjCount({objCount}),
+		...getNewPaging(state.paging, state.page, specTable, false),
 		lookup: new Lookup(specTable, labelLookup)
 	};
 };

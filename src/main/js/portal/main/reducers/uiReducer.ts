@@ -4,11 +4,9 @@ import {
 	UiStepRequested,
 	UiSwitchTab,
 	UiToggleSorting, UiUpdateCheckedObjsInCart, UiUpdateCheckedObjsInSearch,
-	UiUpdateHelpInfo,
-	UiUpdateRoute
+	UiUpdateHelpInfo
 } from "./actionpayloads";
 import config from "../config";
-import Preview from "../models/Preview";
 import {isPidFreeTextSearch} from "./utils";
 import {UrlStr} from "../backend/declarations";
 
@@ -23,12 +21,6 @@ export default function(state: State, payload: UiPayload): State{
 			objectsTable: [],
 			paging: state.paging.withDirection(payload.direction),
 			page: state.page + payload.direction
-		});
-	}
-
-	if (payload instanceof UiUpdateRoute){
-		return stateUtils.update(state,{
-			route: payload.route
 		});
 	}
 

@@ -1,13 +1,15 @@
-import {MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
-	MiscLoadError, MiscRestoreFilters} from "./actionpayloads";
-import stateUtils, {CategFilters, SearchOptions, State} from "../models/State";
+import {
+	MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscLoadError, MiscRestoreFilters
+} from "./actionpayloads";
+import stateUtils, {CategFilters, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
 import FilterTemporal from "../models/FilterTemporal";
 import config, {CategoryType} from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
-import {SearchOption} from "../actions/types";
+import {getNewPaging} from "./backendReducer";
 
 export default function(state: State, payload: MiscPayload): State{
 
@@ -26,9 +28,7 @@ export default function(state: State, payload: MiscPayload): State{
 	}
 
 	if (payload instanceof MiscUpdateSearchOption){
-		return stateUtils.update(state, {
-			searchOptions: updateSearchOptions(state.searchOptions, payload.newSearchOption)
-		});
+		return stateUtils.update(state, handleMiscUpdateSearchOption(state, payload));
 	}
 
 	if (payload instanceof MiscResetFilters){
@@ -47,17 +47,21 @@ export default function(state: State, payload: MiscPayload): State{
 
 };
 
-const updateSearchOptions = (oldSearchOptions: SearchOptions, newSearchOption: SearchOption) => {
-	return Object.assign({}, oldSearchOptions, {[newSearchOption.name]: newSearchOption.value});
+const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOption): Partial<State> => {
+	const searchOptions = {...state.searchOptions, ...{[payload.newSearchOption.name]: payload.newSearchOption.value}};
+
+	return {
+		searchOptions,
+		...getNewPaging(state.paging, state.page, state.specTable, true),
+	};
 };
 
 const resetFilters = (state: State) => {
 	const specTable = state.specTable.withResetFilters();
-	const objCount = getObjCount(specTable);
 
 	return {
 		specTable,
-		paging: new Paging({objCount}),
+		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: {},
 		filterPids: [],
 		checkedObjectsInSearch: [],

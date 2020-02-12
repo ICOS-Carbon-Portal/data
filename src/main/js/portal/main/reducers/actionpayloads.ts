@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, Route, StateSerialized, TsSettings, WhoAmI} from "../models/State";
+import {MetaDataObject, StateSerialized, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
 import {
 	fetchBoostrapData,
@@ -8,7 +8,7 @@ import {
 	getExtendedDataObjInfo
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
-import {Filter, Value} from "../models/SpecTable";
+import {Filter} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
 import {Item} from "../models/HelpStorage";
 import Cart from "../models/Cart";
@@ -58,7 +58,7 @@ export class BackendTables extends BackendPayload{
 }
 
 export class BackendOriginsTable extends BackendPayload{
-	constructor(readonly dobjOriginsAndCounts: ThenArg<typeof fetchDobjOriginsAndCounts>){super();}
+	constructor(readonly dobjOriginsAndCounts: ThenArg<typeof fetchDobjOriginsAndCounts>, readonly resetPaging: boolean = false){super();}
 }
 
 export class BackendUpdateSpecFilter extends BackendPayload{
@@ -140,10 +140,6 @@ export class UiToggleSorting extends UiPayload{
 
 export class UiStepRequested extends UiPayload{
 	constructor(readonly direction: -1 | 1){super();}
-}
-
-export class UiUpdateRoute extends UiPayload{
-	constructor(readonly route: Route){super();}
 }
 
 export class UiSwitchTab extends UiPayload{

@@ -32,7 +32,7 @@ export default function bootstrapSearch(fetchOriginsTable: boolean): PortalThunk
 function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const state = getState();
-		const {specTable, paging, sorting, isRunningInit} = state;
+		const {specTable, paging, sorting} = state;
 		const filters = getFilters(state);
 		const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
@@ -192,7 +192,7 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
+			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts, true));
 			dispatch(fetchFilteredDataObjects(false));
 		}, failWithError(dispatch));
 
