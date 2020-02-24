@@ -81,7 +81,7 @@ export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
 		uri: item.uri,
 		label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label
 	})));
-};
+}
 
 export function fetchBoostrapData(filters: FilterRequest[]) {
 	const specBasicsPromise = fetchSpecBasics(filters);
@@ -267,8 +267,10 @@ export const getTsSettings = (email: string | null) => {
 		: Promise.resolve(tsSettings);
 };
 
-export const getMetadata = (id: UrlStr): Promise<MetaDataObject> => {
-	return fetch(`${id}?format=json`, {
+export const fetchJson = <T>(url: UrlStr, method: string = 'GET'): Promise<T> => {
+	return fetch(url, {
+		method,
+		mode: 'cors',
 		headers: new Headers({
 			'Accept': 'application/json'
 		})

@@ -2,6 +2,7 @@ import config, {placeholders} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";
 import {ColNames} from "./CompositeSpecTable";
+import {getLastSegmentInUrl} from "../utils";
 
 
 const titles = placeholders[config.envri];
@@ -28,6 +29,10 @@ export default class HelpStorage {
 		return this.storage.some(item => item.name === name);
 	}
 
+	get names(){
+		return this.storage.map(item => item.name);
+	}
+
 	getHelpItem(name: string){
 		return this.storage.find(item => item.name === name);
 	}
@@ -37,8 +42,9 @@ export default class HelpStorage {
 		return this.storage[idx];
 	}
 
-	isActive(name: string){
-		const idx = this.storage.findIndex(item => item.name === name);
+	isActive(name: string, url?: UrlStr){
+		const helpName = url ?? name;
+		const idx = this.storage.findIndex(item => item.name === helpName);
 		return this.visibility[idx];
 	}
 
@@ -47,12 +53,12 @@ export default class HelpStorage {
 		return item ? item.shouldFetchList : false;
 	}
 
-	withUpdatedItem(newItem: Item){
+	withUpdatedItem(existingItem: Item){
 		let visibility = this.visibility.slice();
 		const storage = this.storage.map((item, idx) => {
-			if (item.name === newItem.name){
+			if (item.name === existingItem.name){
 				visibility[idx] = !visibility[idx];
-				return newItem;
+				return existingItem;
 			} else {
 				visibility[idx] = false;
 				return item;
@@ -60,6 +66,12 @@ export default class HelpStorage {
 		});
 
 		return new HelpStorage(storage, visibility);
+	}
+
+	withNewItem(newItem: Item){
+		const newStorage = this.storage.concat(newItem);
+		const newVisibility = newStorage.map((s, idx) => idx === newStorage.length - 1);
+		return new HelpStorage(newStorage, newVisibility);
 	}
 }
 
@@ -69,11 +81,11 @@ export type HelpStorageListEntry = {
 	webpage?: UrlStr
 }
 type ListEntryParsed = {
-	lbl: Int | string
+	lbl?: Int | string
 	txt: string
 	webpage?: UrlStr
 }
-type HelpItemName = ColNames | "preview"
+type HelpItemName = ColNames | "preview" | string
 export class Item {
 	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: HelpStorageListEntry[] | ListEntryParsed[]){
 		// list === undefined -> Never show list

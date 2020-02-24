@@ -146,6 +146,10 @@ export class UiSwitchTab extends UiPayload{
 	constructor(readonly tabName: string, readonly selectedTabId: string){super();}
 }
 
+export class UiAddHelpInfo extends UiPayload{
+	constructor(readonly helpItem: Item){super();}
+}
+
 export class UiUpdateHelpInfo extends UiPayload{
 	constructor(readonly helpItem: Item){super();}
 }

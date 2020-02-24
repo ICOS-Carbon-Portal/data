@@ -5,7 +5,7 @@ import {Paging} from '../buttons/Paging';
 import PreviewBtn from '../buttons/PreviewBtn';
 import CartBtn from '../buttons/CartBtn';
 import CheckAllBoxes from '../controls/CheckAllBoxes';
-import HelpButton from '../help/HelpButton';
+import HelpButton from '../../containers/help/HelpButton';
 import {SearchActions, ReducedProps} from "../../containers/Search";
 import {ObjectsTable} from "../../models/State";
 
@@ -23,8 +23,8 @@ type OurProps = ReducedProps['searchResultTable']
 	& Pick<SearchActions, 'handleViewMetadata' | 'handlePreview' | 'handleAddToCart' | 'handleAllCheckboxesChange'>;
 
 const SimpleDataObjectsTable = (props: OurProps) => {
-	const {paging, requestStep, handlePreview, lookup, labelLookup, handleViewMetadata, preview, extendedDobjInfo, helpStorage,
-		getResourceHelpInfo, objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
+	const {paging, requestStep, handlePreview, lookup, labelLookup, handleViewMetadata, preview, extendedDobjInfo,
+		objectsTable, checkedObjectsInSearch, sorting, toggleSort, handleAddToCart,
 		updateCheckedObjects, searchOptions} = props;
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
@@ -86,12 +86,12 @@ const SimpleDataObjectsTable = (props: OurProps) => {
 						/>
 
 						<div style={{float: 'right', position:'relative', top:7, marginRight: 10}}>
+
 							<HelpButton
-								isActive={helpStorage.isActive('preview')}
-								helpItem={helpStorage.getHelpItem('preview')}
+								name={'preview'}
 								title="View help about Preview"
-								getResourceHelpInfo={getResourceHelpInfo}
 							/>
+
 						</div>
 					</div>
 

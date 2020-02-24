@@ -1,11 +1,19 @@
-import stateUtils, {ObjectsTable, Profile, Route, State, StateSerialized, WhoAmI} from "../models/State";
+import stateUtils, {
+	MetaDataObject,
+	ObjectsTable,
+	Profile,
+	Route,
+	State,
+	StateSerialized,
+	WhoAmI
+} from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
 import {
 	fetchBoostrapData,
 	fetchKnownDataObjects,
 	getCart,
 	getError,
-	getMetadata,
+	fetchJson,
 	saveCart
 } from "../backend";
 import Cart, {restoreCarts} from "../models/Cart";
@@ -159,7 +167,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 
 function fetchMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
-		getMetadata(id).then(metadata => {
+		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
 			const metadataWithId = Object.assign({}, metadata, {id});
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});

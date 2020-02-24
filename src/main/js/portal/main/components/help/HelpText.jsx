@@ -43,6 +43,10 @@ const List = ({list}) => {
 };
 
 const ListItem = ({item}) => {
+	const label = item.lbl
+		? <b>{item.lbl}: </b>
+		: null;
+
 	const link = item.webpage
 		? <a href={item.webpage} title="More information" target="_blank">
 			<span className="glyphicon glyphicon-share" style={{marginLeft:15}} />
@@ -51,7 +55,7 @@ const ListItem = ({item}) => {
 
 	return (
 		<li style={{marginTop: 5}}>
-			<b>{item.lbl}:</b> <span>{item.txt}</span>{link}
+			{label}<span>{item.txt}</span>{link}
 		</li>
 	);
 };

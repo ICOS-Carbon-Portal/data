@@ -1,9 +1,10 @@
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import {getMetadata} from "../backend";
+import {fetchJson} from "../backend";
 import {failWithError, getKnownDataObjInfo} from "./common";
 import {getLastSegmentInUrl} from "../utils";
+import {MetaDataObject} from "../models/State";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -12,7 +13,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 		if (id){
 			if (metadata === undefined || id !== metadata.id) {
 
-				getMetadata(id).then(metadata => {
+				fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
 						const metadataWithId = {...metadata, ...{id}};
 						dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId));
 					},
@@ -34,7 +35,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 
 function getMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
-		getMetadata(id).then(metadata => {
+		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
 			const metadataWithId = {...metadata, ...{id}};
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});

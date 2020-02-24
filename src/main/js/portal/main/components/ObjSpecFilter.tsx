@@ -1,34 +1,36 @@
 import React, {Component, Fragment} from 'react';
 import config, {placeholders, filters, CategoryType} from '../config';
-import Slider from './ui/Slider.jsx';
-import HelpButton from './help/HelpButton.jsx';
-import MultiSelectFilter from "./controls/MultiSelectFilter.jsx";
+import Slider from './ui/Slider';
+import HelpButton from '../containers/help/HelpButton';
+import MultiSelectFilter from "./controls/MultiSelectFilter";
 import {ReducedProps} from "../containers/Search";
 import PickDates from "./filters/PickDates";
 import {Value} from "../models/SpecTable";
+import {isDefined} from "../utils";
 
 
 type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
+const helpButtonsToShow = ['project', 'station', 'submitter', 'type', 'level', 'format', 'quantityKind', 'valType'];
 
 export default class ObjSpecFilter extends Component<OwnProps> {
 
 	search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
 	getMultiselectCtrl(name: CategoryType){
-		const {specTable, helpStorage, getResourceHelpInfo, labelLookup} = this.props;
+		const {specTable, labelLookup} = this.props;
 		type StrNum = string | number
 
 		const filterUris = specTable.getFilter(name) ?? [];
 		const data = specTable
 			? specTable.getDistinctAvailableColValues(name)
-				.filter(Value.isDefined)
+				.filter(isDefined)
 				.map(value => ({value, text: labelLookup[value] ?? value})) as {value: StrNum, text: StrNum}[]
 			: [];
-		const value = filterUris
+		const value: Value[] = filterUris
 			.map((val: Value) => data.some(d => d.value === val)
 				? val
 				: labelLookup[val!] ?? val)
-			.filter(v => v !== undefined);
+			.filter(isDefined);
 
 		if (data[0]) {
 			typeof data[0].text === "string"
@@ -45,12 +47,11 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 				<div className="col-md-12">
 					<label style={{marginBottom: 0}}>{placeholders[config.envri][name]}</label>
 
+					{helpButtonsToShow.includes(name) &&
 					<HelpButton
-						isActive={helpStorage.isActive(name)}
-						helpItem={helpStorage.getHelpItem(name)}
+						name={name}
 						title="Click to toggle help"
-						getResourceHelpInfo={getResourceHelpInfo}
-					/>
+					/>}
 
 					<MultiSelectFilter
 						name={name}

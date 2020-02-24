@@ -43,7 +43,7 @@ export default class HelpSection extends Component{
 
 	onCloseBtnClick(){
 		const {helpStorage, getResourceHelpInfo} = this.props;
-		getResourceHelpInfo(helpStorage.visibleHelpItem);
+		getResourceHelpInfo(helpStorage.visibleHelpItem.name);
 		this.setState({
 			isOpen: !this.state.isOpen
 		});

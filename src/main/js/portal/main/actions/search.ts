@@ -6,7 +6,7 @@ import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
-import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo} from "../backend";
+import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersUpdatePids} from "../reducers/actionpayloads";
@@ -17,6 +17,7 @@ import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
 import {failWithError} from "./common";
+import {DataObjectSpec} from "../../../common/main/metacore";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -199,8 +200,13 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 	};
 }
 
-export function getResourceHelpInfo(helpItem: Item): PortalThunkAction<void> {
+export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 	return (dispatch, getState) => {
+		const {helpStorage} = getState();
+		const helpItem = helpStorage.getHelpItem(name);
+
+		if (helpItem === undefined) return;
+
 		if (helpItem.shouldFetchList) {
 			const {specTable} = getState();
 			const uriList = specTable
@@ -223,6 +229,40 @@ export function getResourceHelpInfo(helpItem: Item): PortalThunkAction<void> {
 		} else {
 			dispatch(updateHelpInfo(helpItem));
 		}
+	};
+}
+
+export function getObjectHelpInfo(name: string, header: string, url: UrlStr): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const {helpStorage} = getState();
+		const helpItemName = url;
+
+		if (helpStorage.has(helpItemName)){
+			const helpItem = helpStorage.getHelpItem(helpItemName);
+			if (helpItem) dispatch(updateHelpInfo(helpItem));
+
+		} else {
+			const correctedUrl = new URL(url);
+			correctedUrl.protocol = "https:";
+
+			fetchJson<DataObjectSpec>(correctedUrl.href).then((resp?: DataObjectSpec) => {
+				if (resp) {
+					const main = resp.self.label ?? '';
+					const list = resp.self.comments.map(comment => ({
+						txt: comment ?? resp.self.label
+					}));
+					const helpItem = new Item(helpItemName, header, main, list);
+
+					dispatch(addHelpInfo(helpItem));
+				}
+			}, failWithError(dispatch))
+		}
+	};
+}
+
+function addHelpInfo(helpItem: Item): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.UiAddHelpInfo(helpItem));
 	};
 }
 

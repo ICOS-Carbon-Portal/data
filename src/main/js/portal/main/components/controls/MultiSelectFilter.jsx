@@ -1,5 +1,6 @@
-import React, {Component, Fragment} from 'react';
+import React, {Component} from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
+import HelpButton from "../../containers/help/HelpButton";
 
 
 export default class MultiSelectFilter extends Component {
@@ -21,11 +22,11 @@ export default class MultiSelectFilter extends Component {
 	}
 
 	handleToggle(value){
-		if (this.itemCount === value.length - 1){
-			this.setState({open: false});
-		} else {
-			this.setState({open: !this.state.open});
-		}
+		const open = this.itemCount === value.length - 1
+			? false
+			: !this.state.open;
+
+		this.setState({open});
 	}
 
 	handleSearch(name, value){
@@ -38,31 +39,51 @@ export default class MultiSelectFilter extends Component {
 		const start = text.indexOf(searchStr);
 
 		if (start < 0) {
-			return props.text;
+			return (
+				<>
+					<span>{props.text}</span>
+					{this.helpBtn(name, props.value)}
+				</>
+			);
 		} else if (start === 0) {
 			return (
-				<Fragment>
+				<>
 					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
 					<span>{props.text.slice(start + searchStr.length)}</span>
-				</Fragment>
+					{this.helpBtn(name, props.value)}
+				</>
 			);
 		} else {
 			return (
-				<Fragment>
+				<>
 					<span>{props.text.slice(0, start)}</span>
 					<strong>{props.text.slice(start, start + searchStr.length)}</strong>
 					<span>{props.text.slice(start + searchStr.length)}</span>
-				</Fragment>
+					{this.helpBtn(name, props.value)}
+				</>
 			);
 		}
 	}
 
-	tagItem({item}){
-		const textItem = typeof item === 'object' ? item : {text: item};
+	helpBtn(name, urlStr){
+		if (name === "type" && urlStr){
+			return (
+				<HelpButton
+					name={name}
+					url={urlStr}
+				/>
+			);
+		} else {
+			return null;
+		}
+	}
 
-		return typeof item === 'object'
-			? <span style={{}}>{textItem.text}</span>
-			: <span style={{color: 'gray'}} title="Not present with current filters">{textItem.text}</span>;
+	tagItem(name, value, props){
+		const textItem = typeof props.item === 'object' ? props.item : {text: props.item};
+
+		return typeof props.item === 'object'
+			? <><span>{textItem.text}</span>{this.helpBtn(name, textItem.value)}</>
+			: <><span style={{color: 'gray'}} title="Not present with current filters">{textItem.text}</span>{this.helpBtn(name, textItem.value)}</>;
 	}
 
 	render(){
@@ -82,7 +103,7 @@ export default class MultiSelectFilter extends Component {
 				onSearch={this.handleSearch.bind(this, name)}
 				onToggle={this.handleToggle.bind(this, value)}
 				itemComponent={this.listItem.bind(this, name)}
-				tagComponent={this.tagItem.bind(this)}
+				tagComponent={this.tagItem.bind(this, name, value)}
 			/>
 		);
 	}

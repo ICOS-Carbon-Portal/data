@@ -15,14 +15,13 @@ import {
 	updateCheckedObjectsInSearch,
 	switchTab,
 	setFilterTemporal,
-	getResourceHelpInfo, updateSearchOption
+	updateSearchOption
 } from '../actions/search';
-import HelpSection from "../components/help/HelpSection";
+import Help from "./help/Help";
 import {getLastSegmentsInUrls, isSmallDevice, pick} from '../utils';
 import {PickClassFunctions, Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Route, State} from "../models/State";
-import {Item} from "../models/HelpStorage";
 import AdvancedSettings from "../components/AdvancedSettings";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Value} from "../models/SpecTable";
@@ -36,13 +35,11 @@ type OurState = {expandedFilters: boolean};
 type SearchProps = StateProps & DispatchProps;
 
 const reducedProps = (props: SearchProps) => ({
-	helpSection: pick(props,'helpStorage', 'getResourceHelpInfo'),
 	objSpecFilter: pick(props,'specTable', 'updateFilter', 'filtersReset', 'switchTab',
-		'filterTemporal', 'setFilterTemporal', 'labelLookup',
-		'helpStorage', 'getResourceHelpInfo', 'filterTemporal'),
+		'filterTemporal', 'setFilterTemporal', 'labelLookup'),
 	searchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting', 'requestStep',
 		'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'labelLookup', 'extendedDobjInfo',
-		'checkedObjectsInSearch', 'helpStorage', 'getResourceHelpInfo', 'updateCheckedObjects', 'searchOptions'),
+		'checkedObjectsInSearch', 'updateCheckedObjects', 'searchOptions'),
 	compactSearchResultTable: pick(props, 'objectsTable', 'toggleSort', 'sorting',
 		'requestStep', 'paging', 'preview', 'cart', 'addToCart', 'removeFromCart', 'lookup', 'searchOptions'),
 	advanced: pick(props, 'filterPids', 'updateSelectedPids', 'searchOptions', 'updateSearchOption')
@@ -106,7 +103,7 @@ class Search extends Component<SearchProps, OurState> {
 	render(){
 		const props = this.props;
 		const tabs = props.tabs;
-		const {helpSection, objSpecFilter, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
+		const {objSpecFilter, searchResultTable, compactSearchResultTable, advanced} = reducedProps(this.props);
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 
@@ -114,10 +111,7 @@ class Search extends Component<SearchProps, OurState> {
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
 					<div style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
-						<HelpSection
-							width={300}
-							{...helpSection}
-						/>
+						<Help />
 					</div>
 				</div>
 				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
@@ -162,7 +156,6 @@ function stateToProps(state: State){
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		extendedDobjInfo: state.extendedDobjInfo,
 		tabs: state.tabs,
-		helpStorage: state.helpStorage,
 		objectsTable: state.objectsTable,
 		filterTemporal: state.filterTemporal,
 		filterPids: state.filterPids,
@@ -170,7 +163,7 @@ function stateToProps(state: State){
 		paging: state.paging,
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
-		labelLookup: state.labelLookup,
+		labelLookup: state.labelLookup
 	};
 }
 
@@ -187,7 +180,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
 		setFilterTemporal: (filterTemporal: FiltersTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
-		getResourceHelpInfo: (helpItem: Item) => dispatch(getResourceHelpInfo(helpItem)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption)),
 	};
