@@ -12,7 +12,7 @@ import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
-import {HelpStorageListEntry, Item} from "../models/HelpStorage";
+import {Documentation, HelpStorageListEntry, Item, ItemExtended} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
@@ -251,7 +251,11 @@ export function getObjectHelpInfo(name: string, header: string, url: UrlStr): Po
 					const list = resp.self.comments.map(comment => ({
 						txt: comment ?? resp.self.label
 					}));
-					const helpItem = new Item(helpItemName, header, main, list);
+					const documentation: Documentation[] = resp.documentation.map(doc => ({
+						txt: doc.name,
+						url: doc.res
+					}));
+					const helpItem = new ItemExtended(helpItemName, header, main, list, documentation);
 
 					dispatch(addHelpInfo(helpItem));
 				}

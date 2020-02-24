@@ -376,6 +376,7 @@ const extendUrls = (state: State) => {
 			if (Array.isArray(prefix)){
 				const pLetter = value.slice(0, 1);
 				const prefixObj = prefix.find(p => p.prefix === pLetter);
+
 				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
 				return prefixObj.value + value.slice(1);
 			} else {
@@ -394,15 +395,17 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 
 	return Object.assign({}, state, {
 		filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
-			const filterVals = fc[category]
+			const filterVals = fc[category];
 
 			if(filterVals) acc[category] = filterVals.map((value: string) => {
-				if (Number.isInteger(parseFloat(value))) return value;
+				if (appPrefixes[category]) {
+					const prefix = appPrefixes[category];
+					if (prefix === undefined) return value;
 
-				const prefix = appPrefixes[category];
-				if (prefix === undefined) return value;
-
-				return transform(prefix, value);
+					return transform(prefix, value);
+				} else {
+					return value;
+				}
 			});
 
 			return acc;

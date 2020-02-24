@@ -27,6 +27,7 @@ export default class HelpText extends Component{
 			<div style={{fontSize: '90%'}}>
 				<p>{helpTxtItem.main}</p>
 				<List list={helpTxtItem.list} />
+				<DocumentationList list={helpTxtItem.documentation} />
 			</div>
 		);
 	}
@@ -56,6 +57,27 @@ const ListItem = ({item}) => {
 	return (
 		<li style={{marginTop: 5}}>
 			{label}<span>{item.txt}</span>{link}
+		</li>
+	);
+};
+
+const DocumentationList = ({list}) => {
+	if (list === undefined || list.length === 0) return null;
+
+	return (
+		<ul className="dashed">
+			{list.map((item, idx) => <Documentation key={'l' + idx} item={item} />)}
+		</ul>
+	);
+};
+
+const Documentation = ({item}) => {
+	const url = new URL(item.url);
+	url.hostname = url.hostname.replace(/^meta/, 'data');
+
+	return (
+		<li style={{marginTop: 5}}>
+			<a href={url.href} title={"Download file " + item.txt}>Download documentation</a>
 		</li>
 	);
 };

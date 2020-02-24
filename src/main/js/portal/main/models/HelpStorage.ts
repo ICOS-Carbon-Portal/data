@@ -85,6 +85,10 @@ type ListEntryParsed = {
 	txt: string
 	webpage?: UrlStr
 }
+export type Documentation = {
+	txt: string,
+	url: UrlStr
+}
 type HelpItemName = ColNames | "preview" | string
 export class Item {
 	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: HelpStorageListEntry[] | ListEntryParsed[]){
@@ -102,6 +106,12 @@ export class Item {
 
 	withList(list: HelpStorageListEntry[]){
 		return new Item(this.name, this.header, this.main, parseResourceInfo(list));
+	}
+}
+
+export class ItemExtended extends Item {
+	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: ListEntryParsed[], readonly documentation?: Documentation[]){
+		super(name, header, main, list);
 	}
 }
 
