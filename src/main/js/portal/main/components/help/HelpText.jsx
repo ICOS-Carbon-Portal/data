@@ -44,9 +44,9 @@ const List = ({list}) => {
 };
 
 const ListItem = ({item}) => {
-	const label = item.lbl
-		? <b>{item.lbl}: </b>
-		: null;
+	const label = item.lbl === undefined
+		? null
+		: <b>{item.lbl}: </b>;
 
 	const link = item.webpage
 		? <a href={item.webpage} title="More information" target="_blank">

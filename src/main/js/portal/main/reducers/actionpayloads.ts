@@ -154,6 +154,10 @@ export class UiUpdateHelpInfo extends UiPayload{
 	constructor(readonly helpItem: Item){super();}
 }
 
+export class UiInactivateAllHelp extends UiPayload{
+	constructor(){super();}
+}
+
 export class UiUpdateCheckedObjsInSearch extends UiPayload{
 	constructor(readonly checkedObjectInSearch: UrlStr | UrlStr[]){super();}
 }

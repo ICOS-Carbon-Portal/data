@@ -53,6 +53,10 @@ export default class HelpStorage {
 		return item ? item.shouldFetchList : false;
 	}
 
+	setAllInactive(){
+		return new HelpStorage(this.storage);
+	}
+
 	withUpdatedItem(existingItem: Item){
 		let visibility = this.visibility.slice();
 		const storage = this.storage.map((item, idx) => {

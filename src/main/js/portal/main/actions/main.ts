@@ -8,6 +8,7 @@ import bootstrapCart from "./cart";
 import bootstrapSearch from "./search";
 import {failWithError, fetchCart, getBackendTables, getFilters, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
+import {UiInactivateAllHelp} from "../reducers/actionpayloads";
 
 
 export const init: PortalThunkAction<void> = dispatch => {
@@ -57,6 +58,7 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 			case 'search':
 				dispatch(new Payloads.MiscRestoreFilters());
 				dispatch(bootstrapSearch(true));
+				dispatch(new UiInactivateAllHelp());
 				break;
 
 			case 'preview':
