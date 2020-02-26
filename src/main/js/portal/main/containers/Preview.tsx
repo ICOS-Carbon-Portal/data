@@ -1,32 +1,26 @@
 import React, {ChangeEvent, Component} from 'react';
-import PreviewTimeSerie from './PreviewTimeSerie';
-import PreviewSelfContained from './PreviewSelfContained';
-import CopyValue from '../controls/CopyValue';
-import config from '../../config';
-import CartBtn from '../buttons/CartBtn';
+import {connect} from "react-redux";
+import PreviewTimeSerie from '../components/preview/PreviewTimeSerie';
+import PreviewSelfContained from '../components/preview/PreviewSelfContained';
+import CopyValue from '../components/controls/CopyValue';
+import config from '../config';
+import CartBtn from '../components/buttons/CartBtn';
 import {Events} from 'icos-cp-utils';
-import {State} from "../../models/State";
-import {UrlStr} from "../../backend/declarations";
-import CartItem from "../../models/CartItem";
+import {State} from "../models/State";
+import {UrlStr} from "../backend/declarations";
+import CartItem from "../models/CartItem";
+import {PortalDispatch} from "../store";
+import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl} from "../actions/common";
+import {storeTsPreviewSetting} from "../actions/preview";
+import {pick} from "../utils";
 
 
-interface OurProps {
-	preview: State['preview']
-	cart: State['cart']
-	extendedDobjInfo: State['extendedDobjInfo']
-	tsSettings: State['tsSettings']
-	setPreviewUrl: (url: UrlStr) => void
-	storeTsPreviewSetting: (spec: string, type: string, val: string) => void
-	addToCart: (ids: UrlStr[]) => void
-	removeFromCart: (ids: UrlStr[]) => void
-	setMetadataItem: (id: UrlStr) => void
-}
+type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
+type OurProps = StateProps & DispatchProps
+interface OurState {iframeSrc: UrlStr | ''}
 
-interface OurState {
-	iframeSrc: UrlStr | ''
-}
-
-export default class Preview extends Component<OurProps, OurState> {
+class Preview extends Component<OurProps, OurState> {
 	private events: typeof Events = null;
 
 	constructor(props: OurProps){
@@ -104,20 +98,23 @@ export default class Preview extends Component<OurProps, OurState> {
 										/>
 									</div>
 									{preview.items &&
-										<div className="col-sm-2">
-											<CartBtn
-												style={{float: 'right', marginBottom: 10}}
-												checkedObjects={preview.items.map((item: CartItem) => item.id)}
-												clickAction={buttonAction}
-												enabled={true}
-												type={actionButtonType}
-											/>
-										</div>
+									<div className="col-sm-2">
+										<CartBtn
+											style={{float: 'right', marginBottom: 10}}
+											checkedObjects={preview.items.map((item: CartItem) => item.id)}
+											clickAction={buttonAction}
+											enabled={true}
+											type={actionButtonType}
+										/>
+									</div>
 									}
 								</div>
 							</div>
 
-							<PreviewRoute iframeSrcChange={this.handleIframeSrcChange.bind(this)} {...this.props} />
+							<PreviewRoute
+								iframeSrcChange={this.handleIframeSrcChange.bind(this)}
+								{...this.props}
+							/>
 
 						</div>
 					</div>
@@ -128,23 +125,22 @@ export default class Preview extends Component<OurProps, OurState> {
 }
 
 const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement> | MessageEvent) => void}) => {
-	switch (props.preview.type){
+	const previewType = props.preview.type;
 
-		case config.TIMESERIES:
-			return <PreviewTimeSerie {...props} />;
+	if (previewType === config.TIMESERIES){
+		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'iframeSrcChange');
+		return <PreviewTimeSerie {...tsProps} />;
 
-		case config.NETCDF:
-			return <PreviewSelfContained {...props} />;
+	} else if (previewType === config.NETCDF || previewType === config.MAPGRAPH){
+		const scProps = pick(props, 'preview', 'iframeSrcChange');
+		return <PreviewSelfContained {...scProps} />;
 
-		case config.MAPGRAPH:
-			return <PreviewSelfContained {...props} />;
+	} else {
+		const msg = props.preview.items.length
+			? "This type of preview is not yet implemented"
+			: "Fetching data for preview...";
 
-		default:
-			const msg = props.preview.items.length
-				? "This type of preview is not yet implemented"
-				: "Fetching data for preview...";
-
-			return <div className="panel-body">{msg}</div>;
+		return <div className="panel-body">{msg}</div>;
 	}
 };
 
@@ -155,3 +151,24 @@ const previewUrl = (item: CartItem, type: string, iframeSrc: UrlStr) => {
 		return item ? iframeSrc : '';
 	}
 };
+
+function stateToProps(state: State){
+	return {
+		preview: state.preview,
+		cart: state.cart,
+		extendedDobjInfo: state.extendedDobjInfo,
+		tsSettings: state.tsSettings,
+	};
+}
+
+function dispatchToProps(dispatch: PortalDispatch | Function){
+	return {
+		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
+		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
+		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
+		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(Preview);

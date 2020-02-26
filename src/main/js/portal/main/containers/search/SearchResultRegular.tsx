@@ -1,0 +1,166 @@
+import React, {Component} from 'react';
+import { connect } from 'react-redux';
+import {ObjectsTable, State} from "../../models/State";
+import {PortalDispatch} from "../../store";
+import {requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
+import {UrlStr} from "../../backend/declarations";
+import {Paging} from "../../components/buttons/Paging";
+import CheckAllBoxes from "../../components/controls/CheckAllBoxes";
+import Dropdown from "../../components/controls/Dropdown";
+import CartBtn from "../../components/buttons/CartBtn";
+import PreviewBtn from "../../components/buttons/PreviewBtn";
+import HelpButton from "../help/HelpButton";
+import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
+
+
+type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
+type IncomingActions = {
+	handleViewMetadata: (id: UrlStr) => void
+	handlePreview: (id: UrlStr[]) => void
+	handleAddToCart: (objInfo: UrlStr[]) => void
+	handleAllCheckboxesChange: () => void
+}
+type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
+
+const dropdownLookup = {
+	fileName: 'File name',
+	size: 'File size',
+	timeStart: 'Data start date',
+	timeEnd: 'Data end date',
+	submTime: 'Submission time'
+};
+
+class SearchResultRegular extends Component<OurProps> {
+	render(){
+		const {preview, cart, objectsTable, lookup, paging, sorting, searchOptions,
+			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
+			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart, handleAllCheckboxesChange} = this.props;
+
+		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
+		const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
+			return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
+		}, []);
+		const datasets = checkedObjects.map((obj: ObjectsTable) => obj.dataset);
+		const previewTypes = lookup ? checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec)) : [];
+
+		return (
+			<div className="panel panel-default">
+				<Paging
+					searchOptions={searchOptions}
+					type="header"
+					paging={paging}
+					requestStep={requestStep}
+				/>
+
+				<div className="panel-body">
+
+					<div className="panel-srollable-controls clearfix">
+						<CheckAllBoxes
+							checkCount={checkedObjectsInSearch.length}
+							totalCount={paging.pageCount}
+							onChange={handleAllCheckboxesChange}
+							disabled={objectsTable.filter(o => o.level > 0).length === 0} />
+
+						<Dropdown
+							isSorter={true}
+							isEnabled={true}
+							selectedItemKey={sorting.varName}
+							isAscending={sorting.ascending}
+							itemClickAction={toggleSort}
+							lookup={dropdownLookup}
+						/>
+
+						{ checkedObjectsInSearch.length > 0 &&
+						<span style={{marginLeft: 16, verticalAlign: 7}}>{checkedObjectsInSearch.length} {objectText} selected</span>
+						}
+
+						<div style={{float: 'right'}}>
+							<CartBtn
+								style={{float: 'right', marginBottom: 10}}
+								checkedObjects={checkedObjectsInSearch}
+								clickAction={handleAddToCart}
+								enabled={checkedObjectsInSearch.length}
+								type='add'
+							/>
+
+							<PreviewBtn
+								style={{float: 'right', marginBottom: 10, marginRight: 10}}
+								checkedObjects={checkedObjects}
+								datasets={datasets}
+								previewTypes={previewTypes}
+								clickAction={handlePreview}
+							/>
+
+							<div style={{float: 'right', position:'relative', top:7, marginRight: 10}}>
+
+								<HelpButton
+									name={'preview'}
+									title="View help about Preview"
+								/>
+
+							</div>
+						</div>
+
+					</div>
+
+					<table className="table">
+						<tbody>{
+							objectsTable.map((objInfo: ObjectsTable, i) => {
+								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+								const isChecked = extendedInfo ?
+									checkedObjectsInSearch.includes(objInfo.dobj)
+									: false;
+
+								return (
+									<SearchResultRegularRow
+										labelLookup={labelLookup}
+										extendedInfo={extendedInfo}
+										viewMetadata={handleViewMetadata}
+										preview={preview}
+										objInfo={objInfo}
+										key={'dobj_' + i}
+										updateCheckedObjects={updateCheckedObjects}
+										isChecked={isChecked}
+										checkedObjects={checkedObjects}
+									/>
+								);
+							})
+						}</tbody>
+					</table>
+				</div>
+				<Paging
+					searchOptions={undefined}
+					type="footer"
+					paging={paging}
+					requestStep={requestStep}
+				/>
+			</div>
+		);
+	}
+}
+
+function stateToProps(state: State){
+	return {
+		lookup: state.lookup,
+		labelLookup: state.labelLookup,
+		checkedObjectsInSearch: state.checkedObjectsInSearch,
+		objectsTable: state.objectsTable,
+		preview: state.preview,
+		cart: state.cart,
+		paging: state.paging,
+		sorting: state.sorting,
+		searchOptions: state.searchOptions,
+		extendedDobjInfo: state.extendedDobjInfo,
+	};
+}
+
+function dispatchToProps(dispatch: PortalDispatch){
+	return {
+		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
+		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
+		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(SearchResultRegular);

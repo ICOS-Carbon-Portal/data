@@ -90,7 +90,7 @@ export interface State {
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
 	sorting: {
-		varName: string | undefined,
+		varName: string,
 		ascending: boolean
 	}
 	paging: Paging

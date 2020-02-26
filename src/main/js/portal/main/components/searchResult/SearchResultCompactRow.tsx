@@ -3,13 +3,12 @@ import {copyprops} from 'icos-cp-utils';
 import CartIcon from '../buttons/CartIcon.jsx';
 import PreviewIcon from '../buttons/PreviewIcon.jsx';
 import {formatBytes, formatDateWithOptionalTime} from '../../utils';
-import {getMetadataHash} from "./SearchResultTableRow";
-import { SearchActions } from "../../containers/Search";
+import {getMetadataHash} from "./SearchResultRegularRow";
 import { ObjectsTable } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
 import Lookup from '../../models/Lookup.js';
-import { UrlStr } from '../../backend/declarations.js';
+import { UrlStr } from '../../backend/declarations';
 
 type CompactSearchResultTableRowProps =  {
 	objInfo: ObjectsTable,
@@ -18,13 +17,11 @@ type CompactSearchResultTableRowProps =  {
 	lookup: Lookup | undefined,
 	addToCart: (ids: UrlStr[]) => void,
 	removeFromCart: (ids: UrlStr[]) => void
-} & Pick<SearchActions, 'handleViewMetadata' | 'handlePreview'>;
+	handlePreview: (id: UrlStr[]) => void
+	handleViewMetadata: (id: UrlStr) => void
+};
 
-export default class CompactSearchResultTableRow extends Component<CompactSearchResultTableRowProps> {
-	constructor(props: CompactSearchResultTableRowProps){
-		super(props);
-	}
-
+export default class SearchResultCompactRow extends Component<CompactSearchResultTableRowProps> {
 	handlePreviewClick(id: string){
 		if (this.props.handlePreview) this.props.handlePreview([id]);
 	}

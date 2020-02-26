@@ -9,13 +9,9 @@ import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
 
 interface OurProps {
 	preview: State['preview']
-	cart: State['cart']
 	extendedDobjInfo: State['extendedDobjInfo']
 	tsSettings: State['tsSettings']
 	storeTsPreviewSetting: (spec: string, type: string, val: string) => void
-	addToCart: (ids: UrlStr[]) => void
-	removeFromCart: (ids: UrlStr[]) => void
-	setMetadataItem: (id: UrlStr) => void
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
