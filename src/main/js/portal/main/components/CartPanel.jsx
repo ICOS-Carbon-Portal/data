@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PreviewBtn from './buttons/PreviewBtn.jsx';
 import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
-import SearchResultTableRow from './searchResult/SearchResultTableRow.jsx';
+import SearchResultRegularRow from './searchResult/SearchResultRegularRow';
 import CartBtn from './buttons/CartBtn.jsx';
 import CheckAllBoxes from './controls/CheckAllBoxes.jsx';
 
@@ -93,7 +93,7 @@ export default class CartPanel extends Component {
 								objInfo.dobj = objInfo.id;
 
 								return (
-									<SearchResultTableRow
+									<SearchResultRegularRow
 										labelLookup={props.labelLookup}
 										extendedInfo={extendedInfo}
 										viewMetadata={this.handleViewMetadata.bind(this)}

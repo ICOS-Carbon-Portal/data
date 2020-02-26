@@ -1,25 +1,18 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
-import Search from './Search.jsx';
+import Search from './search/Search.jsx';
 import DataCart from './DataCart';
-import Preview from '../components/preview/Preview';
+import Preview from './Preview';
 import Metadata, { MetadataTitle } from './Metadata';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {updateCheckedObjectsInCart} from '../actions/cart';
-import {storeTsPreviewSetting} from '../actions/preview';
 import config from '../config';
-import {MetaDataObject, Route, State} from "../models/State";
+import {Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import Cart from "../models/Cart";
-import {
-	addToCart, failWithError,
-	removeFromCart,
-	setMetadataItem,
-	setPreviewUrl,
-	updateRoute
-} from "../actions/common";
+import {failWithError, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -68,14 +61,14 @@ export class App extends Component<AppProps> {
 				</div>
 
 				<ErrorBoundary failWithError={props.failWithError}>
-					<Route {...props} />
+					<Route route={props.route} />
 				</ErrorBoundary>
 			</div>
 		);
 	}
 }
 
-const Title = (props: {route: Route, metadata?: MetaDataObject & {id: UrlStr}}) => {
+const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 
 	switch(props.route) {
 		case 'search':
@@ -103,16 +96,11 @@ interface ButtonProps {
 }
 
 const SwitchRouteBtn = (props: ButtonProps) => {
-	switch(props.route){
+	if (props.route === 'cart'){
+		return null;
 
-		case 'search':
-			return <SearchBtn {...props} />;
-
-		case 'cart':
-			return null;
-
-		default:
-			return <SearchBtn {...props} />;
+	} else {
+		return <SearchBtn {...props} />;
 	}
 };
 
@@ -130,8 +118,8 @@ const SearchBtn = (props: ButtonProps) => {
 	);
 };
 
-const Route = (props: AppProps) => {
-	switch(props.route){
+const Route = ({route}: {route: Route}) => {
+	switch(route){
 		case 'search':
 			return <Search />;
 
@@ -140,23 +128,10 @@ const Route = (props: AppProps) => {
 
 		case 'preview':
 			return (
-				<Preview
-					preview={props.preview}
-					cart={props.cart}
-					extendedDobjInfo={props.extendedDobjInfo}
-					tsSettings={props.tsSettings}
-					setPreviewUrl={props.setPreviewUrl}
-					storeTsPreviewSetting={props.storeTsPreviewSetting}
-					addToCart={props.addToCart}
-					removeFromCart={props.removeFromCart}
-					setMetadataItem={props.setMetadataItem}
-				/>);
+				<Preview />);
 
 		case 'metadata':
 			return <Metadata />;
-
-		default:
-			return <Search />;
 	}
 };
 
@@ -164,12 +139,8 @@ function stateToProps(state: State){
 	return {
 		route: state.route,
 		toasterData: state.toasterData,
-		preview: state.preview,
 		cart: state.cart,
 		metadata: state.metadata,
-		lookup: state.lookup,
-		extendedDobjInfo: state.extendedDobjInfo,
-		tsSettings: state.tsSettings,
 	};
 }
 
@@ -178,11 +149,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
-		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
-		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
-		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
-		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 	};
 }
 

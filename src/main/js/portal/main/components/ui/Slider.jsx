@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Events} from 'icos-cp-utils';
+import {debounce, Events} from 'icos-cp-utils';
 
 
 const defaultIconStyle = {
@@ -27,6 +27,11 @@ export default class Slider extends Component{
 		};
 
 		this.events = new Events();
+		this.handleResize = debounce(() => {
+			// Trigger a rerender on resize so it adjusts height
+			this.setState({height: this.state.height});
+		});
+		this.events.addToTarget(window, "resize", this.handleResize);
 	}
 
 	onClick(){
@@ -36,6 +41,12 @@ export default class Slider extends Component{
 			isOpen,
 			isOpening: isOpen
 		});
+	}
+
+	componentDidUpdate(prevProps, prevState, snapshot) {
+		if (this.props.children !== prevProps.children) {
+			this.setHeight();
+		}
 	}
 
 	componentWillUnmount(){
@@ -75,9 +86,12 @@ export default class Slider extends Component{
 		);
 	}
 
+	setHeight(){
+		this.setState({height: getHeight(this.content)});
+	}
+
 	componentDidMount(){
-		const height = getHeight(this.content);
-		this.setState({height});
+		this.setHeight();
 
 		this.events.addToTarget(this.content, "transitionend", this.transitionEnded.bind(this));
 	}

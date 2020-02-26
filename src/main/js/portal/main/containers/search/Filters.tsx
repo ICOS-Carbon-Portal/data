@@ -1,18 +1,25 @@
-import React, {Component, Fragment} from 'react';
-import config, {placeholders, filters, CategoryType} from '../config';
-import Slider from './ui/Slider';
-import HelpButton from '../containers/help/HelpButton';
-import MultiSelectFilter from "./controls/MultiSelectFilter";
-import {ReducedProps} from "../containers/Search";
-import PickDates from "./filters/PickDates";
-import {Value} from "../models/SpecTable";
-import {isDefined} from "../utils";
+import React, {Component} from 'react';
+import {connect} from 'react-redux';
+import config, {placeholders, filters, CategoryType} from '../../config';
+import Slider from '../../components/ui/Slider';
+import HelpButton from '../help/HelpButton';
+import MultiSelectFilter from "../../components/controls/MultiSelectFilter";
+import PickDates from "../../components/filters/PickDates";
+import {Value} from "../../models/SpecTable";
+import {isDefined} from "../../utils";
+import {State} from "../../models/State";
+import {PortalDispatch} from "../../store";
+import {ColNames} from "../../models/CompositeSpecTable";
+import {filtersReset, setFilterTemporal, specFilterUpdate} from "../../actions/search";
+import FiltersTemporal from "../../models/FilterTemporal";
 
 
-type OwnProps = ReducedProps['objSpecFilter'] & {tabHeader: string};
+type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
+type OurProps = StateProps & DispatchProps & {tabHeader: string};
 const helpButtonsToShow = ['project', 'station', 'submitter', 'type', 'level', 'format', 'quantityKind', 'valType'];
 
-export default class ObjSpecFilter extends Component<OwnProps> {
+class Filters extends Component<OurProps> {
 
 	search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
@@ -68,7 +75,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 
 	getTemporalCtrls(){
 		return (
-			<Fragment>
+			<>
 				<PickDates
 					filterTemporal={this.props.filterTemporal}
 					setFilterTemporal={this.props.setFilterTemporal}
@@ -82,7 +89,7 @@ export default class ObjSpecFilter extends Component<OwnProps> {
 					category="submission"
 					header="Submission of data"
 				/>
-			</Fragment>
+			</>
 		);
 	}
 
@@ -175,3 +182,21 @@ const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 
 	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear filters</button></div>;
 };
+
+function stateToProps(state: State){
+	return {
+		filterTemporal: state.filterTemporal,
+		specTable: state.specTable,
+		labelLookup: state.labelLookup
+	};
+}
+
+function dispatchToProps(dispatch: PortalDispatch){
+	return {
+		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
+		filtersReset: () => dispatch(filtersReset),
+		setFilterTemporal: (filterTemporal: FiltersTemporal) => dispatch(setFilterTemporal(filterTemporal)),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(Filters);

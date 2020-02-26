@@ -5,7 +5,7 @@ import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
 import {formatDate, formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
-import {MetaDataObject, Route, State} from "../models/State";
+import {Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
@@ -157,7 +157,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 }
 
-export const MetadataTitle = (metadata?: MetaDataObject & {id: UrlStr}) => {
+export const MetadataTitle = (metadata?: State['metadata']) => {
 	if (metadata === undefined) return null;
 
 	const specInfo = metadata.specificInfo;
@@ -235,7 +235,7 @@ const metadataLinks = (id: Sha256Str, fileName: string) => {
 const map = (coverage: string, icon?: string) => {
 	const style = { border: '1px solid #ddd', width: '100%', height: '400px' };
 	return (
-		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style}></iframe>
+		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style} />
 	);
 };
 

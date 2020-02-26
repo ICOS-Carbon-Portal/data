@@ -18,7 +18,7 @@ const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
 
-interface SimpleObjectTableRowProps {
+interface OurProps {
 	objInfo: ObjectsTable
 	viewMetadata: (doj: string) => void
 	extendedInfo: Partial<ExtendedDobjInfo> | undefined
@@ -29,11 +29,7 @@ interface SimpleObjectTableRowProps {
 	labelLookup: any
 }
 
-export default class SimpleObjectTableRow extends Component<SimpleObjectTableRowProps> {
-	constructor(props: SimpleObjectTableRowProps){
-		super(props);
-	}
-
+export default class SearchResultRegularRow extends Component<OurProps> {
 	handleViewMetadata(ev: MouseEvent){
 		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey && this.props.objInfo.dobj) {
 			ev.preventDefault();

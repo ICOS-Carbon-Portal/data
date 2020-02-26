@@ -1,14 +1,20 @@
-import React, {Component, Fragment, MouseEvent, CSSProperties} from 'react';
-import CheckBtn from "./buttons/ChechBtn";
-import {Style} from "../../../common/main/style";
-import {ReducedProps} from "../containers/Search";
-import Slider from "./ui/Slider";
-import FilterByPid from "./filters/FilterByPid";
+import React, {Component, CSSProperties, Fragment, MouseEvent} from 'react';
+import { connect } from 'react-redux';
+import {State} from "../../models/State";
+import {PortalDispatch} from "../../store";
+import {updateSearchOption, updateSelectedPids} from "../../actions/search";
+import {Sha256Str} from "../../backend/declarations";
+import {SearchOption} from "../../actions/types";
+import Slider from "../../components/ui/Slider";
+import FilterByPid from "../../components/filters/FilterByPid";
+import {Style} from "../../../../common/main/style";
+import CheckBtn from "../../components/buttons/ChechBtn";
 
+type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
+type OurProps = StateProps & DispatchProps & {tabHeader: string};
 
-type Props = ReducedProps['advanced'] & {tabHeader: string};
-
-export default class AdvancedSettings extends Component<Props> {
+class Advanced extends Component<OurProps> {
 	render(){
 		const {searchOptions, updateSearchOption, filterPids, updateSelectedPids} = this.props;
 		const {showDeprecated} = searchOptions;
@@ -80,3 +86,19 @@ const CheckButton = (props: CheckButton) => {
 		</div>
 	);
 };
+
+function stateToProps(state: State){
+	return {
+		filterPids: state.filterPids,
+		searchOptions: state.searchOptions,
+	};
+}
+
+function dispatchToProps(dispatch: PortalDispatch){
+	return {
+		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
+		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption)),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(Advanced);
