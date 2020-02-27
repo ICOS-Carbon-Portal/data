@@ -191,7 +191,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-//		B2StageUploadTask(obj, b2) :+
+		B2StageUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =
