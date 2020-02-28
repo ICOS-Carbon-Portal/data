@@ -63,21 +63,31 @@ export default class Graph extends Component{
 }
 
 const json2csv = statsGraph => {
-	const headers = statsGraph.dateUnit === 'week'
-		? 'Date,Week,Downloads\n'
-		: 'Date,Downloads\n';
+	switch (statsGraph.dateUnit) {
+		case "week":
+			const weekData = statsGraph.data.reduce((acc, curr, idx) => {
+				acc += `${toDate(curr[0])},${statsGraph.weeks[idx]},${curr[1]}\n`;
+				return acc;
+			}, '');
+			return 'Date,Week,Downloads\n' + weekData;
 
-	const vals = statsGraph.dateUnit === 'week'
-		? statsGraph.data.reduce((acc, curr, idx) => {
-			acc += `${curr[0].toISOString()},${statsGraph.weeks[idx]},${curr[1]}\n`;
-			return acc;
-		}, '')
-		: statsGraph.data.reduce((acc, curr) => {
-			acc += `${curr[0].toISOString()},${curr[1]}\n`;
-			return acc;
-		}, '');
+		case "month":
+			const monthData = statsGraph.data.reduce((acc, curr) => {
+				acc += `${curr[0].getFullYear()},${toMonth(curr[0])},${curr[1]}\n`;
+				return acc;
+			}, '');
+			return 'Year,Month,Downloads\n' + monthData;
 
-	return headers + vals;
+		case "year":
+			const yearData = statsGraph.data.reduce((acc, curr) => {
+				acc += `${curr[0].getFullYear()},${curr[1]}\n`;
+				return acc;
+			}, '');
+			return 'Year,Downloads\n' + yearData;
+
+		default:
+			throw new Error(`Cannot get header for unit ${statsGraph.dateUnit}`);
+	}
 };
 
 const renderGraph = (chartDiv, labelsDiv, statsGraph) => {
@@ -136,17 +146,16 @@ const dateFormatter = (dateUnit, weeks) => {
 		case 'week':
 			return weeks && weeks.length
 			? (ms, opts, seriesName, dygraph, row) => {
-				return `${new Date(ms).toISOString().substring(0, 10)} (week ${weeks[row]})`;
+				return `${toDate(new Date(ms))} (week ${weeks[row]})`;
 			}
 			: ms => {
-					return new Date(ms).toISOString().substring(0, 10);
+					return toDate(new Date(ms));
 				};
 
 		case 'month':
 			return ms => {
 				const date = new Date(ms);
-				const locale = "en-us";
-				return `${date.toLocaleString(locale, {month: "long"})} ${date.getFullYear()}`;
+				return `${toMonth(date)} ${date.getFullYear()}`;
 			};
 
 		case 'year':
@@ -187,3 +196,6 @@ const barChartPlotter = (e => {
 		ctx.strokeRect(center_x - bar_width / 2, p.canvasy, bar_width, y_bottom - p.canvasy);
 	}
 });
+
+const toDate = (d) => d.toLocaleString('se-SE', {year: 'numeric', month: '2-digit', day: '2-digit'});
+const toMonth = (d) => d.toLocaleString('en-US', { month: 'long' });
