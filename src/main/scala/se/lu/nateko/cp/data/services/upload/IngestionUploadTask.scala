@@ -43,7 +43,7 @@ class IngestionUploadTask(
 				makeIngestionSink(wdcggParser(defaultColumnFormats), linesFromBinary)
 
 			case `asciiAtcProdTimeSer` =>
-				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats))
+				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats, ingSpec.nRows))
 
 			case `asciiEtcTimeSer` =>
 				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)

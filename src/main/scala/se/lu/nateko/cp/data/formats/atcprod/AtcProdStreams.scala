@@ -12,7 +12,7 @@ import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 object AtcProdStreams {
 	import AtcProdParser._
 
-	def atcProdParser(format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
+	def atcProdParser(format: ColumnsMetaWithTsCol, nRowsExplicit: Option[Int] = None)(implicit ctxt: ExecutionContext)
 	: Flow[String, TableRow, Future[IngestionMetadataExtract]] =
 		Flow[String]
 			.scan(seed)(parseLine(format.colsMeta))
@@ -20,7 +20,7 @@ object AtcProdStreams {
 			.keepGoodRows
 			.map(acc => {
 				TableRow(
-					TableRowHeader(format.timeStampColumn +: acc.header.columnNames, acc.header.nRows),
+					TableRowHeader(format.timeStampColumn +: acc.header.columnNames, nRowsExplicit.getOrElse(acc.header.nRows)),
 					makeTimeStamp(acc.cells, acc.header.columnNames).toString +: replaceNullValues(acc.cells, acc.formats)
 				)
 			})
