@@ -1,4 +1,4 @@
-import {KeyStrVal, UrlStr} from "../backend/declarations";
+import {IdxSig, UrlStr} from "../backend/declarations";
 import commonConfig from '../../../common/main/config';
 
 
@@ -27,7 +27,7 @@ export interface CartItemSerialized {
 	dataobject: DataObject
 	type: DataType | undefined
 	url: UrlStr | undefined
-	keyValPairs: KeyStrVal
+	keyValPairs: IdxSig
 }
 
 export default class CartItem {
@@ -35,7 +35,7 @@ export default class CartItem {
 	readonly _dataobject: DataObject;
 	readonly _type: DataType | undefined;
 	readonly _url: UrlStr | undefined;
-	private readonly _keyValPairs: KeyStrVal;
+	private readonly _keyValPairs: IdxSig;
 
 	constructor(dataobject: DataObject, type?: DataType, url?: string){
 		this._id = dataobject.dobj;
@@ -62,7 +62,7 @@ export default class CartItem {
 		const searchStr = search.replace(/^\?/, '');
 		const keyValpairs = searchStr.split('&');
 
-		return keyValpairs.reduce<KeyStrVal>((acc: KeyStrVal, curr: string) => {
+		return keyValpairs.reduce<IdxSig>((acc, curr) => {
 			const p = curr.split('=');
 			acc[p[0]] = p[1];
 			return acc;
@@ -125,7 +125,7 @@ export default class CartItem {
 		return new CartItem(this._dataobject, this._type, url);
 	}
 
-	getNewUrl(keyVal: KeyStrVal){
+	getNewUrl(keyVal: IdxSig){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
 		const matchArr = this._id.match(/^https?:\/\/([^/?#]+)(?:[/?#]|$)/i);
 		const matchedId = matchArr && matchArr.length > 0 ? matchArr[1] : '';

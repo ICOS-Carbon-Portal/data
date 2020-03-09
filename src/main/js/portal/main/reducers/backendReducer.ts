@@ -5,11 +5,11 @@ import {
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
-import CompositeSpecTable from "../models/CompositeSpecTable";
+import CompositeSpecTable, {SpecTableSerialized} from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import Lookup from "../models/Lookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
-import {KeyStrVal} from "../backend/declarations";
+import {IdxSig} from "../backend/declarations";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -141,11 +141,11 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 };
 
 const handleBackendTables = (state: State, payload: BackendTables) => {
-	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables);
-	const labelLookup = payload.allTables.labelLookup.reduce((acc, curr) => {
+	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables as SpecTableSerialized);
+	const labelLookup = payload.allTables.labelLookup.reduce<IdxSig>((acc, curr) => {
 		acc[curr.uri] = curr.label;
 		return acc;
-	}, {} as KeyStrVal);
+	}, {});
 
 	return {
 		specTable,

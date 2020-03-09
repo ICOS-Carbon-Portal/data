@@ -8,7 +8,7 @@ import {
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
-	DeprecatedFilterRequest
+	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
 
@@ -235,7 +235,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd ?samplingHeight
 where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
@@ -262,7 +262,39 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 
 	const tempFilterStr = tempConds.length ? `${varDefStr}FILTER( ${tempConds.join(' && ')} )` : '';
 
-	return deprFilterStr.concat(tempFilterStr);
+	const numberFilterConds = getNumberFilterConditions(allFilters.filter(isNumberFilter));
+
+	return deprFilterStr.concat(tempFilterStr, '\n', numberFilterConds);
+}
+
+function getNumberFilterConditions(filterNumbers: NumberFilterRequest[]){
+	return filterNumbers.map(nf => getNumberFilterConds(nf).join('\n')).join('\n');
+}
+
+function getNumberFilterConds(numberFilter: NumberFilterRequest) {
+	const res: string[] = [numberFilter.sparqlPattern];
+	const filter: string = getFilter();
+
+	function getFilter(){
+		const {category, type, vals, cmp} = numberFilter;
+
+		switch(type){
+			case "limit":
+				return `?${category} ${cmp[0]} ${vals[0]}`;
+
+			case "span":
+				return `?${category} ${cmp[0]} ${vals[0]} && ?${category} ${cmp[1]} ${vals[1]}`;
+
+			case "list":
+				const list = vals.map((val, i) => `?${category} ${cmp[i]} ${val}`);
+				return list.join(' || ');
+
+			default:
+				return '';
+		}
+	}
+
+	return res.concat(`filter(${filter}) .`);
 }
 
 function getVarDefs(filter: TemporalFilterRequest): string[]{

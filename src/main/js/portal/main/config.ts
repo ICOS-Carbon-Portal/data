@@ -1,5 +1,5 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
-import {UrlStr} from "./backend/declarations";
+import {IdxSig, UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
@@ -16,7 +16,7 @@ export default {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
 		MAPGRAPH: '/map-graph/'
-	},
+	} as IdxSig,
 	restheartBaseUrl: commonConfig.restheartBaseUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
@@ -46,6 +46,20 @@ const defaultCategNames = {
 
 type CategoryNamesDict = typeof defaultCategNames;
 export type CategoryType = keyof CategoryNamesDict;
+
+export const numberFilterKeys = ['samplingHeight', 'fileSize'] as const;
+export type NumberFilterCategories = typeof numberFilterKeys[number];
+
+export const numberFilterCategories: IdxSig<{label: string, sparqlPattern: string}, NumberFilterCategories> = {
+	'samplingHeight': {
+		label: 'Sampling height',
+		sparqlPattern: '?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight .'
+	},
+	'fileSize': {
+		label: 'File size',
+		sparqlPattern: '?dobj cpmeta:hasSizeInBytes ?fileSize .'
+	}
+};
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	ICOS: defaultCategNames,
@@ -90,15 +104,16 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 type IFilterCategories = {
 	[E in Envri]: ReadonlyArray<{
 		panelTitle: string;
-		filterList: ReadonlyArray<CategoryType>;
+		filterList: ReadonlyArray<CategoryType | NumberFilterCategories>;
 	}>
 }
 
 export const filters: IFilterCategories = {
 	ICOS: [
-		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter']},
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']}
+		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']},
+		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},

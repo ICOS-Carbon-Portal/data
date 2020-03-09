@@ -135,6 +135,21 @@ const projectDescr = envri === 'SITES'
 	? 'SITES Data Portal stores data from the following projects:'
 	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
 
+const numberFilterList = parseResourceInfo([
+	{
+		label: 'List',
+		comment: 'Provide a list of one or more numbers separated by spaces. E.g. 120 180.'
+	},
+	{
+		label: 'Between',
+		comment: 'Provide min and max values separated by a dash ("-"). E.g. 50-150.'
+	},
+	{
+		label: 'Limit',
+		comment: 'Provide a number preceded by "<" (less than) or ">" (more than). E.g. <50.'
+	}
+]);
+
 const initItems: Item[] = [
 
 	new Item('project', titles.project, projectDescr, []),
@@ -241,5 +256,21 @@ const initItems: Item[] = [
 				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
 			}
 		])
+	),
+
+	new Item(
+		'samplingHeight',
+		'Sampling height',
+		'Only applicable for data sampled at various heights (mostly atmospheric data). The filter accepts decimal numbers, using "." as decimal character and' +
+			' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
+		numberFilterList
+	),
+
+	new Item(
+		'fileSize',
+		'File size',
+		'The filter accepts decimal numbers, using "." as decimal character and can be specified in three different ways. All filtering is inclusive. ' +
+			'The filter "<50000" will return data objects with a file size of 50 000 or less.',
+		numberFilterList
 	)
 ];

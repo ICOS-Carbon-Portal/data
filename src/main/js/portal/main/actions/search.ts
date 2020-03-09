@@ -1,7 +1,12 @@
 import {PortalThunkAction} from "../store";
 import {Filter, Value} from "../models/SpecTable";
 import {State} from "../models/State";
-import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "../models/FilterRequest";
+import {
+	DeprecatedFilterRequest,
+	FilterRequest,
+	PidFilterRequest,
+	TemporalFilterRequest
+} from "../models/FilterRequest";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
@@ -9,7 +14,7 @@ import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjects
 import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FiltersUpdatePids} from "../reducers/actionpayloads";
+import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {Documentation, HelpStorageListEntry, Item, ItemExtended} from "../models/HelpStorage";
@@ -18,6 +23,7 @@ import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
 import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
+import {FilterNumber} from "../models/FilterNumbers";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -98,7 +104,7 @@ const logPortalUsage = (state: State) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, searchOptions} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions} = state;
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
@@ -110,6 +116,8 @@ const getFilters = (state: State) => {
 		if (filterTemporal.hasFilter){
 			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
 		}
+
+		filters = filters.concat(filterNumbers.validFilters);
 	}
 
 	return filters;
@@ -178,7 +186,7 @@ export function switchTab(tabName: string, selectedTabId: string): PortalThunkAc
 }
 
 export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAction<void> {
-	return (dispatch, getState) => {
+	return (dispatch) => {
 		if (filterTemporal.dataTime.error) {
 			failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 		}
@@ -190,6 +198,19 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 
 		if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
+		dispatch(getDobjOriginsAndCounts());
+	};
+}
+
+export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersNumber(numberFilter));
+		dispatch(getDobjOriginsAndCounts());
+	};
+}
+
+export function getDobjOriginsAndCounts(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
 		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {

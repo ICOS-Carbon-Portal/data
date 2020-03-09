@@ -14,6 +14,7 @@ import {Item} from "../models/HelpStorage";
 import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
+import {FilterNumber} from "../models/FilterNumbers";
 
 
 export abstract class ActionPayload{}
@@ -168,6 +169,10 @@ export class UiUpdateCheckedObjsInCart extends UiPayload{
 
 export class FiltersTemporal extends FiltersPayload{
 	constructor(readonly filterTemporal: FilterTemporal){super();}
+}
+
+export class FiltersNumber extends FiltersPayload{
+	constructor(readonly numberFilter: FilterNumber){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{

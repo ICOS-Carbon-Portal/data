@@ -31,6 +31,13 @@ export const Value = {
 	}
 };
 
+export type TableSerialized<T extends string> = {
+	colNames: Col<T>[]
+	rows: Row<T>[]
+	filters: Filters<T>
+	extraSpecFilter: Filter
+}
+
 export default class SpecTable<T extends string = string>{
 	readonly specsCount: number;
 
@@ -38,7 +45,7 @@ export default class SpecTable<T extends string = string>{
 		this.specsCount = distinct(rows.map(row => row[SPECCOL])).length;
 	}
 
-	get serialize(){
+	get serialize(): TableSerialized<T>{
 		return {
 			colNames: this.colNames,
 			rows: this.rows,

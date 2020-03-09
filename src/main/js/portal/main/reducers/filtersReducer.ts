@@ -1,5 +1,10 @@
 import stateUtils, {State} from "../models/State";
-import {FiltersPayload, FiltersTemporal, FiltersUpdatePids} from "./actionpayloads";
+import {
+	FiltersPayload,
+	FiltersNumber,
+	FiltersTemporal,
+	FiltersUpdatePids
+} from "./actionpayloads";
 import {isPidFreeTextSearch} from "./utils";
 
 export default function(state: State, payload: FiltersPayload): State{
@@ -21,5 +26,11 @@ export default function(state: State, payload: FiltersPayload): State{
 		});
 	}
 
-	return state
+	if (payload instanceof FiltersNumber){
+		return stateUtils.update(state, {
+			filterNumbers: state.filterNumbers.withFilter(payload.numberFilter)
+		});
+	}
+
+	return state;
 }
