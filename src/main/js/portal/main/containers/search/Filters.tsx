@@ -1,15 +1,13 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import PickDates from "../../components/filters/PickDates";
 import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {ColNames} from "../../models/CompositeSpecTable";
 import {filtersReset, setNumberFilter, setFilterTemporal, specFilterUpdate} from "../../actions/search";
-import FiltersTemporal from "../../models/FilterTemporal";
-import {FilterPanel} from "../../components/filters/FilterPanel";
 import {PanelsWithFilters} from "../../components/filters/PanelsWithFilters";
 import {FilterNumber} from "../../models/FilterNumbers";
+import FilterTemporal from "../../models/FilterTemporal";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -32,24 +30,10 @@ class Filters extends Component<OurProps> {
 					labelLookup={labelLookup}
 					updateFilter={updateFilter}
 					setNumberFilter={setNumberFilter}
+					filterTemporal={filterTemporal}
+					setFilterTemporal={setFilterTemporal}
 					startCollapsed={false}
 				/>
-
-				<FilterPanel header="Temporal filters">
-					<PickDates
-						filterTemporal={filterTemporal}
-						setFilterTemporal={setFilterTemporal}
-						category="dataTime"
-						header="Data sampled"
-					/>
-					<PickDates
-						marginTop={25}
-						filterTemporal={filterTemporal}
-						setFilterTemporal={setFilterTemporal}
-						category="submission"
-						header="Submission of data"
-					/>
-				</FilterPanel>
 
 			</div>
 		);
@@ -84,7 +68,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		filtersReset: () => dispatch(filtersReset),
-		setFilterTemporal: (filterTemporal: FiltersTemporal) => dispatch(setFilterTemporal(filterTemporal)),
+		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
 	};
 }
