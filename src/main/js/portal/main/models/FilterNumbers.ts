@@ -1,4 +1,4 @@
-import {numberFilterCategories, NumberFilterCategories} from "../config";
+import {NumberFilterCategories} from "../config";
 
 
 export interface NumberFilterValidation {
@@ -93,13 +93,6 @@ export class FilterNumber {
 		return this.validation.cmp;
 	}
 
-	get label(){
-		return numberFilterCategories[this.category].label;
-	}
-
-	get sparqlPattern(){
-		return numberFilterCategories[this.category].sparqlPattern;
-	}
 }
 
 const validate = (category: NumberFilterCategories, value: string): NumberFilterValidation => {
@@ -139,7 +132,8 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		};
 	}
 
-	const list = value.split(' ');
+	//only single value for now
+	const list = [value];//.split(' ');
 
 	if (list.length){
 		return list.reduce<NumberFilterValidation>((acc, curr) => {

@@ -50,15 +50,9 @@ export type CategoryType = keyof CategoryNamesDict;
 export const numberFilterKeys = ['samplingHeight', 'fileSize'] as const;
 export type NumberFilterCategories = typeof numberFilterKeys[number];
 
-export const numberFilterCategories: IdxSig<{label: string, sparqlPattern: string}, NumberFilterCategories> = {
-	'samplingHeight': {
-		label: 'Sampling height (meters)',
-		sparqlPattern: '?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight .'
-	},
-	'fileSize': {
-		label: 'File size (bytes)',
-		sparqlPattern: '?dobj cpmeta:hasSizeInBytes ?fileSize .'
-	}
+export const numericFilterLabels: {[key in NumberFilterCategories]: string} = {
+	"samplingHeight": 'Sampling height (meters)',
+	"fileSize": 'File size (bytes)'
 };
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
@@ -113,14 +107,15 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
 		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']},
-		{panelTitle: "Misc", filterList: ['fileSize']},
-		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
+		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
+		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
 		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']},
-		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
+		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
+		{panelTitle: "Misc", filterList: ['fileSize']}
 	]
 };
 

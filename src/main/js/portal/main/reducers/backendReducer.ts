@@ -110,9 +110,9 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 };
 
 const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
-	const {filterTemporal} = state;
-	const orgSpecTables = state.specTable;
-	const specTable = orgSpecTables.withOriginsTable(payload.dobjOriginsAndCounts, filterTemporal.hasFilter);
+	const useExtraFilter = state.filterTemporal.hasFilter || state.filterNumbers.hasFilters;
+
+	const specTable = state.specTable.withOriginsTable(payload.dobjOriginsAndCounts, useExtraFilter);
 
 	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
 

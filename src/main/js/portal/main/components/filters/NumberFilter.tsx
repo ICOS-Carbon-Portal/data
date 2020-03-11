@@ -1,6 +1,7 @@
 import React, {ChangeEvent, Component} from "react";
 import HelpButton from "../../containers/help/HelpButton";
 import {FilterNumber} from "../../models/FilterNumbers";
+import { numericFilterLabels } from "../../config";
 
 
 interface OurProps {
@@ -48,7 +49,7 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 		return (
 			<div className="row" style={{marginTop: 10}}>
 				<div className="col-md-12">
-					<label style={{marginBottom: 0}}>{filterNumber.label}</label>
+					<label style={{marginBottom: 0}}>{numericFilterLabels[filterNumber.category]}</label>
 
 					<HelpButton
 						name={filterNumber.category}
