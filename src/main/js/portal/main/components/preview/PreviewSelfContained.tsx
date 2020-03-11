@@ -2,7 +2,6 @@ import React, {ChangeEvent, Component, CSSProperties} from 'react';
 import config, {PreviewType} from '../../config';
 import {getLastSegmentInUrl} from "../../utils";
 import {State} from "../../models/State";
-import {KeyStrVal} from "../../backend/declarations";
 
 
 interface OurProps {
@@ -22,7 +21,7 @@ export default class PreviewSelfContained extends Component<OurProps>{
 		const {preview, iframeSrcChange} = this.props;
 		// Use preview.item.url if present since that one has all client changes recorded in history
 		const url = preview.item.url ? preview.item.url : preview.item.id;
-		const iFrameBaseUrl = (config.iFrameBaseUrl as KeyStrVal)[preview.type];
+		const iFrameBaseUrl = config.iFrameBaseUrl[preview.type];
 		const src = `${iFrameBaseUrl}${getLastSegmentInUrl(url)}`;
 		const containerStyle: CSSProperties = {position: 'relative', width: '100%', height: getHeight(preview.type), padding: '20%'};
 		const iframeStyle: CSSProperties = {border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'};

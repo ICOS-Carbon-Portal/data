@@ -4,7 +4,7 @@ import {
 	originsColNames,
 	SPECCOL
 } from '../sparqlQueries';
-import SpecTable, {Filters, Value, Filter, Row} from "./SpecTable";
+import SpecTable, {Filters, Value, Filter, Row, TableSerialized} from "./SpecTable";
 import {ThenArg} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
@@ -18,6 +18,11 @@ export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | C
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;
 type TableNames = typeof tableNames[number];
+export type SpecTableSerialized = {
+	basics: TableSerialized<BasicsColNames>
+	columnMeta: TableSerialized<ColumnMetaColNames>
+	origins: TableSerialized<OriginsColNames>
+}
 
 export default class CompositeSpecTable{
 	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<ColumnMetaColNames>, readonly origins: SpecTable<OriginsColNames>){}
@@ -30,7 +35,7 @@ export default class CompositeSpecTable{
 		);
 	}
 
-	get serialize(){
+	get serialize(): SpecTableSerialized {
 		return {
 			basics: this.basics.serialize,
 			columnMeta: this.columnMeta.serialize,
@@ -38,7 +43,7 @@ export default class CompositeSpecTable{
 		}
 	}
 
-	static deserialize(tables: CompositeSpecTable | JsonCompositeSpecTable) {
+	static deserialize(tables: SpecTableSerialized) {
 		const {basics, columnMeta, origins} = tables;
 		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters as Filters<BasicsColNames>);
 		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>);

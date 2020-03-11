@@ -5,7 +5,7 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
-import {KeyAnyVal, UrlStr, Sha256Str, KeyStrVal} from "./backend/declarations";
+import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {MetaDataObject, Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, throwError} from './utils';
@@ -150,7 +150,7 @@ const updatePersonalRestheart = (email: string, data: {}): void => {
 	});
 };
 
-export const getError = (errorId: string): Promise<KeyAnyVal> => {
+export const getError = (errorId: string): Promise<IdxSig<any>> => {
 	return fetch(`${config.portalUseLogUrl}/${errorId}`).then(resp => {
 		return resp.status === 200
 			? Promise.resolve(resp.json())
@@ -256,7 +256,7 @@ export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email
-		? getFromRestheart<KeyStrVal>(email, tsSettingsStorageName).then(settings => {
+		? getFromRestheart<IdxSig>(email, tsSettingsStorageName).then(settings => {
 			const newSettings = settings
 				? Object.assign({}, settings[tsSettingsStorageName], tsSettings)
 				: tsSettings;

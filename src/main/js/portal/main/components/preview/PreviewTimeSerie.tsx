@@ -2,7 +2,6 @@ import React, {ChangeEvent, Component} from 'react';
 import {distinct, getLastSegmentInUrl, wholeStringRegExp} from '../../utils'
 import config from '../../config';
 import {State, TsSetting} from "../../models/State";
-import {KeyStrVal, UrlStr} from "../../backend/declarations";
 import CartItem from "../../models/CartItem";
 import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
 
@@ -15,7 +14,7 @@ interface OurProps {
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
-const iFrameBaseUrl = (config.iFrameBaseUrl as KeyStrVal)[config.TIMESERIES];
+const iFrameBaseUrl = config.iFrameBaseUrl[config.TIMESERIES];
 
 export default class PreviewTimeSerie extends Component<OurProps> {
 	private iframe: HTMLIFrameElement | null = null;

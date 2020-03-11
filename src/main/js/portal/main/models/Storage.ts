@@ -1,10 +1,10 @@
 // Modelled after Web Storage API: https://developer.mozilla.org/en-US/docs/Web/API/Storage
 
-import {KeyAnyVal} from "../backend/declarations";
+import {IdxSig} from "../backend/declarations";
 import {Int, isInt} from "../types";
 
 export default class Storage{
-	private state: KeyAnyVal = {};
+	private state: IdxSig<any> = {};
 
 	get length(){
 		const t = this.key(2 as Int);

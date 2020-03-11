@@ -8,7 +8,7 @@ import {
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
-	DeprecatedFilterRequest
+	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
 
@@ -235,7 +235,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd ?samplingHeight
 where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
@@ -255,17 +255,66 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const deprFilterStr = (deprFilter && deprFilter.allow) ? '' : deprecatedFilterClause.concat('\n');
 
 	const tempFilters = allFilters.filter(isTemporalFilter);
-	const tempConds: string[] = tempFilters.flatMap(getFilterConditions);
-	const varDefs = supplyVarDefs ? tempFilters.flatMap(getVarDefs) : [];
+	const numFilters = allFilters.filter(isNumberFilter);
+
+	const tempVarDefs = supplyVarDefs ? tempFilters.flatMap(getTempVarDefs) : [];
+	const varDefs = tempVarDefs.concat(numFilters.flatMap(getNumVarDefs));
 	const distinctVarDefs = varDefs.filter((s, i) => varDefs.indexOf(s) === i);
 	const varDefStr = distinctVarDefs.map(s => `${s}\n`).join("");
 
-	const tempFilterStr = tempConds.length ? `${varDefStr}FILTER( ${tempConds.join(' && ')} )` : '';
+	const filterConds: string[] = tempFilters.flatMap(getFilterConditions).concat(numFilters.flatMap(getNumberFilterConds));
+	const filterStr = filterConds.length ? `${varDefStr}FILTER( ${filterConds.join(' && ')} )` : '';
 
-	return deprFilterStr.concat(tempFilterStr);
+	return deprFilterStr.concat(filterStr);
 }
 
-function getVarDefs(filter: TemporalFilterRequest): string[]{
+function getNumberFilterConds(numberFilter: NumberFilterRequest): string[] {
+	const varName = getNumVarName(numberFilter);
+	const xsdType = getXsdType(numberFilter);
+	const {type, vals, cmp} = numberFilter;
+
+	function cond(op: string, val: number): string{
+		return `?${varName} ${op} "${val}"^^xsd:${xsdType}`;
+	}
+	switch(type){
+		case "limit":
+			return [cond(cmp[0], vals[0])];
+
+		case "span":
+			return [cond(cmp[0], vals[0]), cond(cmp[1], vals[1])];
+
+		case "list":
+			//boolean or is not supported by the back end yet, and needs different signature of this func, anyway
+			//const list = vals.map((val, i) => `?${category} ${cmp[i]} ${val}`);
+			return [cond(cmp[0], vals[0])];
+
+		default:
+			return [];
+	}
+}
+
+function getNumVarDefs(filter: NumberFilterRequest): string[]{
+	switch(filter.category){
+		case "fileSize": return [];
+		case "samplingHeight": return ["?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight ."];
+	}
+}
+
+function getXsdType(filter: NumberFilterRequest): string{
+	switch(filter.category){
+		case "fileSize": return "long";
+		case "samplingHeight": return "float";
+	}
+}
+
+function getNumVarName(filter: NumberFilterRequest): string{
+	switch(filter.category){
+		case "fileSize": return "size";
+		case "samplingHeight": return filter.category;
+	}
+}
+
+function getTempVarDefs(filter: TemporalFilterRequest): string[]{
 	const res: string[] = [];
 	switch(filter.category){
 		case "dataTime":

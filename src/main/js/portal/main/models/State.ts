@@ -1,19 +1,25 @@
-import Preview, {PreviewSerialized} from "./Preview";
+import Preview from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
-import config, {prefixes, CategoryType, CategPrefix} from "../config";
+import config, {
+	prefixes,
+	CategoryType,
+	CategPrefix,
+	numberFilterKeys
+} from "../config";
 import deepequal from 'deep-equal';
-import {KeyAnyVal, ThenArg, UrlStr, Sha256Str, KeyStrVal} from "../backend/declarations";
+import {ThenArg, UrlStr, Sha256Str, IdxSig} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
 import SpecTable, {Row} from "./SpecTable";
 import {getLastSegmentInUrl} from "../utils";
+import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -24,6 +30,7 @@ const hashKeys = [
 	'filterCategories',
 	'filterTemporal',
 	'filterPids',
+	'filterNumbers',
 	'tabs',
 	'page',
 	'id',
@@ -82,9 +89,10 @@ export interface State {
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[]
+	filterNumbers: FilterNumbers
 	user: User
 	lookup: Lookup | undefined;
-	labelLookup: KeyStrVal;
+	labelLookup: IdxSig;
 	specTable: CompositeSpecTable
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
@@ -128,6 +136,7 @@ export const defaultState: State = {
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterPids:[],
+	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
 	user: {
 		profile: {},
 		email: null
@@ -161,10 +170,6 @@ export const defaultState: State = {
 	helpStorage: new HelpStorage()
 };
 
-export type StateSerialized = Omit<State, 'preview'> & {
-	preview: PreviewSerialized
-}
-
 const update = (state: State, updates: Partial<State>): State => {
 	return Object.assign({}, state, updates, {ts: Date.now()});
 };
@@ -178,29 +183,33 @@ const updateAndSave = (state: State, updates: any) => {
 	return newState;
 };
 
-const serialize = (state: State): StateSerialized => {
-	return Object.assign({}, state, {
+const serialize = (state: State) => {
+	return {...state, ...{
 		filterTemporal: state.filterTemporal.serialize,
+		filterNumbers: state.filterNumbers.serialize,
 		lookup: undefined,
 		specTable: state.specTable.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
-	});
+	}};
 };
+
+export type StateSerialized = ReturnType<typeof serialize>
 
 const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
-	const props: State = Object.assign({}, jsonObj, {
+	const props: State = {...jsonObj, ...{
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
+		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
 		lookup: new Lookup(specTable, jsonObj.labelLookup),
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
-	});
+	}};
 
 	return props;
 };
@@ -230,8 +239,8 @@ const hashToState = () => {
 	}
 };
 
-const getStateFromStore = (storeState: State & KeyAnyVal) => {
-	return hashKeys.reduce((acc: KeyAnyVal, key: string) => {
+const getStateFromStore = (storeState: State & IdxSig<any>) => {
+	return hashKeys.reduce((acc: IdxSig<any>, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
@@ -240,6 +249,7 @@ const getStateFromStore = (storeState: State & KeyAnyVal) => {
 const simplifyState = (state: State) => {
 	return Object.assign(state, {
 		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
+		filterNumbers: state.filterNumbers.serialize,
 		preview: state.preview.pids
 	});
 };
@@ -248,6 +258,7 @@ type JsonHashState = {
 	route?: Route
 	filterCategories?: CategFilters
 	filterTemporal?: SerializedFilterTemporal
+	filterNumbers?: FilterNumberSerialized[]
 	tabs?: State['tabs']
 	page?: number
 	preview?: Sha256Str[]
@@ -259,6 +270,9 @@ const jsonToState = (state0: JsonHashState) => {
 	try {
 		if (state0.filterTemporal){
 			state.filterTemporal = new FilterTemporal().restore(state0.filterTemporal);
+		}
+		if (state0.filterNumbers){
+			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 		state.preview = new Preview().withPids(state0.preview ?? []);
 		if (state0.id){
@@ -413,8 +427,8 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 	});
 };
 
-const reduceState = (state: KeyAnyVal) => {
-	return Object.keys(state).reduce((acc: KeyAnyVal, key: string) => {
+const reduceState = (state: IdxSig<any>) => {
+	return Object.keys(state).reduce((acc: IdxSig<any>, key: string) => {
 
 		const val = state[key];
 		if (!val) return acc;

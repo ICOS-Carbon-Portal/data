@@ -5,7 +5,7 @@ import {getProfile, getWhoIam, logOut} from "../backend";
 import bootstrapMetadata from "./metadata";
 import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
-import bootstrapSearch from "./search";
+import {getOriginsThenDobjList} from "./search";
 import {failWithError, fetchCart, getBackendTables, getFilters, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
 import {UiInactivateAllHelp} from "../reducers/actionpayloads";
@@ -57,7 +57,7 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 		switch (route) {
 			case 'search':
 				dispatch(new Payloads.MiscRestoreFilters());
-				dispatch(bootstrapSearch(true));
+				dispatch(getOriginsThenDobjList);
 				dispatch(new UiInactivateAllHelp());
 				break;
 

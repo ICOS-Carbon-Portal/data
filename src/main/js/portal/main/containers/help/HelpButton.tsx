@@ -2,7 +2,7 @@ import React, {Component, CSSProperties, MouseEvent} from "react";
 import {connect} from "react-redux";
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import config, {CategoryType, placeholders} from "../../config";
+import config, {CategoryType, NumberFilterCategories, numberFilterKeys, placeholders} from "../../config";
 import {UrlStr} from "../../backend/declarations";
 import {getObjectHelpInfo, getResourceHelpInfo} from "../../actions/search";
 
@@ -17,10 +17,11 @@ const defaultIconStyle: CSSProperties = {
 	paddingLeft: 5
 };
 
+type HelpName = CategoryType | 'preview' | NumberFilterCategories
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingProps = {
-	name: CategoryType | 'preview',
+	name: HelpName,
 	title?: string,
 	url?: UrlStr
 }
@@ -44,7 +45,7 @@ class HelpButton extends Component<OurProps> {
 
 	render(){
 		const {name, title, helpStorage, url} = this.props;
-		if (name === undefined) return null;
+		if (name === undefined || !helpStorage.has(name)) return null;
 
 		const className = helpStorage.isActive(name, url) ? activeBtn : defaultBtn;
 
@@ -57,10 +58,10 @@ class HelpButton extends Component<OurProps> {
 	}
 }
 
-const getTitle = (name: CategoryType | 'preview') => {
-	return name === 'preview'
+const getTitle = (name: HelpName) => {
+	return name === 'preview' || numberFilterKeys.includes(name as NumberFilterCategories)
 		? ''
-		: placeholders[config.envri][name];
+		: placeholders[config.envri][name as CategoryType];
 };
 
 function stateToProps(state: State){

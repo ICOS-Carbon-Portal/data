@@ -6,12 +6,9 @@ export type UrlStr = string;
 /** Base64-url string of Sha256 hash, most often truncated to first 18 bytes (24 characters) */
 export type Sha256Str = string;
 
-export interface KeyStrVal {
-	[key: string]: string
-}
-
-export interface KeyAnyVal {
-	[key: string]: any
+/** Index signature for objects	*/
+export type IdxSig<Value = string, Keys extends string | number | symbol = string> = {
+	[Key in Keys]: Value
 }
 
 /**	From https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-inference-in-conditional-types	*/
@@ -30,7 +27,7 @@ export type ThenArg<T> = T extends Promise<infer U>
 		? U
 		: T;
 
-export type ExtractPrototypes<C extends KeyAnyVal> = {
+export type ExtractPrototypes<C extends IdxSig<any>> = {
 	[Key in keyof C['prototype']]: C['prototype'][Key]
 }
 

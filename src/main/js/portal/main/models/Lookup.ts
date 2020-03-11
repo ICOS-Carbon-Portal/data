@@ -1,6 +1,6 @@
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
-import {KeyStrVal, UrlStr} from '../backend/declarations';
+import {IdxSig, UrlStr} from '../backend/declarations';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -23,7 +23,7 @@ type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 export default class Lookup{
 	readonly table: {[key: string]: PreviewInfo | undefined};
 
-	constructor(specTable: CompositeSpecTable, labelLookup: KeyStrVal){
+	constructor(specTable: CompositeSpecTable, labelLookup: IdxSig){
 		this.table = {};
 
 		specTable.columnMeta.rows.forEach(({spec, colTitle, valType}) => {

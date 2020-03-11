@@ -6,7 +6,7 @@ import deepEqual from 'deep-equal';
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import {ExtendedDobjInfo, ObjectsTable} from "./State";
-import {KeyAnyVal, Sha256Str, UrlStr} from "../backend/declarations";
+import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
 
 
 export type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
@@ -54,7 +54,7 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: Lookup['table'] & KeyAnyVal, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[]) {
+	initPreview(lookup: Lookup['table'] & IdxSig<any>, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[]) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 			type OptionWithType = {

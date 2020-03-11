@@ -1,7 +1,12 @@
 import {PortalThunkAction} from "../store";
 import {Filter, Value} from "../models/SpecTable";
 import {State} from "../models/State";
-import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "../models/FilterRequest";
+import {
+	DeprecatedFilterRequest,
+	FilterRequest,
+	PidFilterRequest,
+	TemporalFilterRequest
+} from "../models/FilterRequest";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
@@ -9,7 +14,7 @@ import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjects
 import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FiltersUpdatePids} from "../reducers/actionpayloads";
+import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {Documentation, HelpStorageListEntry, Item, ItemExtended} from "../models/HelpStorage";
@@ -18,49 +23,62 @@ import {saveToRestheart} from "../../../common/main/backend";
 import {Options, SearchOption} from "./types";
 import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
+import {FilterNumber} from "../models/FilterNumbers";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
 	: new DataObjectsFetcher();
 
-export default function bootstrapSearch(fetchOriginsTable: boolean): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(fetchFilteredDataObjects(fetchOriginsTable));
-	};
-}
+export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
+const getOriginsTable: PortalThunkAction<void> = getDobjOriginsAndCounts(false);
 
-function fetchFilteredDataObjects(fetchOriginsTable: boolean): PortalThunkAction<void> {
+function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const state = getState();
-		const {specTable, paging, sorting} = state;
-		const filters = getFilters(state);
-		const useOnlyPidFilter = filters.some(f => f.category === "pids");
+		const filters = getFilters(getState());
 
-		const options: Options = {
-			specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
-			stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
-			submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
-			sorting,
-			paging,
-			filters
-		};
+		fetchDobjOriginsAndCounts(filters).then(
+			dobjOriginsAndCounts => {
 
-		dataObjectsFetcher.fetch(options).then(
-			({rows, cacheSize, isDataEndReached}) => {
-				dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
-				dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
+				dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts, true));
+
+				if(fetchObjListWhenDone) dispatch(fetchFilteredDataObjects);
+
 			},
 			failWithError(dispatch)
-		).then(() => {
-			if (fetchOriginsTable) dispatch(getOriginsTable);
-		});
+		);
 
-		dispatch(new Payloads.BootstrapRouteSearch());
-
-		logPortalUsage(state);
 	};
 }
+
+const fetchFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) => {
+	const state = getState();
+	const {specTable, paging, sorting} = state;
+	const filters = getFilters(state);
+	const useOnlyPidFilter = filters.some(f => f.category === "pids");
+
+	const options: Options = {
+		specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
+		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
+		sorting,
+		paging,
+		filters
+	};
+
+	dataObjectsFetcher.fetch(options).then(
+		({rows, cacheSize, isDataEndReached}) => {
+			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
+			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
+		},
+		failWithError(dispatch)
+	);
+
+	dispatch(new Payloads.BootstrapRouteSearch());
+
+	logPortalUsage(state);
+};
+
 
 function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 	return (dispatch) => {
@@ -98,7 +116,7 @@ const logPortalUsage = (state: State) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, searchOptions} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions} = state;
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
@@ -110,54 +128,48 @@ const getFilters = (state: State) => {
 		if (filterTemporal.hasFilter){
 			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
 		}
+
+		filters = filters.concat(filterNumbers.validFilters);
 	}
 
 	return filters;
-};
-
-const getOriginsTable: PortalThunkAction<void> = (dispatch, getState) => {
-	const filters = getFilters(getState());
-
-	fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts));
-		},
-		failWithError(dispatch)
-	);
 };
 
 export function specFilterUpdate(varName: ColNames, values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		const filter: Filter = values.length === 0 ? null : values;
 		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
-		dispatch(fetchFilteredDataObjects(false));
+		dispatch(fetchFilteredDataObjects);
 	};
 }
 
 export function toggleSort(varName: string): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.UiToggleSorting(varName));
-		dispatch(fetchFilteredDataObjects(false));
+		dispatch(fetchFilteredDataObjects);
 	};
 }
 
 export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.UiStepRequested(direction));
-		dispatch(fetchFilteredDataObjects(false));
+		dispatch(fetchFilteredDataObjects);
 	};
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const shouldRefetchCounts = getState().filterTemporal.hasFilter;
+	const state = getState();
+	const shouldRefetchCounts = state.filterTemporal.hasFilter || state.filterNumbers.hasFilters;
 
 	dispatch(new Payloads.MiscResetFilters());
-	dispatch(fetchFilteredDataObjects(shouldRefetchCounts));
+	if(shouldRefetchCounts) dispatch(getOriginsThenDobjList)
+	else dispatch(fetchFilteredDataObjects);
 };
 
 export function updateSelectedPids(selectedPids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new FiltersUpdatePids(selectedPids));
-		dispatch(fetchFilteredDataObjects(false));
+		dispatch(fetchFilteredDataObjects);
 	};
 }
 
@@ -172,13 +184,13 @@ export function switchTab(tabName: string, selectedTabId: string): PortalThunkAc
 		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
 		if (tabName === 'searchTab' && getState().filterPids.length > 0){
-			dispatch(fetchFilteredDataObjects(false));
+			dispatch(fetchFilteredDataObjects);
 		}
 	};
 }
 
 export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAction<void> {
-	return (dispatch, getState) => {
+	return (dispatch) => {
 		if (filterTemporal.dataTime.error) {
 			failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
 		}
@@ -190,13 +202,14 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 
 		if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
 
-		const filters = getFilters(getState());
+		dispatch(getOriginsThenDobjList);
+	};
+}
 
-		fetchDobjOriginsAndCounts(filters).then(dobjOriginsAndCounts => {
-			dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts, true));
-			dispatch(fetchFilteredDataObjects(false));
-		}, failWithError(dispatch));
-
+export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersNumber(numberFilter));
+		dispatch(getOriginsThenDobjList);
 	};
 }
 
@@ -285,9 +298,7 @@ export function updateSearchOption(searchOption: SearchOption): PortalThunkActio
 		const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids);
 		const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated);
 
-		if (mustFetchObjs)
-			dispatch(fetchFilteredDataObjects(mustFetchCounts));
-		else if (mustFetchCounts)
-			dispatch(getOriginsTable);
+		if(mustFetchCounts) dispatch(getDobjOriginsAndCounts(mustFetchObjs))
+		else if (mustFetchObjs) dispatch(fetchFilteredDataObjects);
 	};
 }

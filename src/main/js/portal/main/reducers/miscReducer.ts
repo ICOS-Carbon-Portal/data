@@ -7,9 +7,10 @@ import * as Toaster from 'icos-cp-toaster';
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
 import FilterTemporal from "../models/FilterTemporal";
-import config, {CategoryType} from "../config";
+import config, {CategoryType, numberFilterKeys} from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import {getNewPaging} from "./backendReducer";
+import {FilterNumber, FilterNumbers} from "../models/FilterNumbers";
 
 export default function(state: State, payload: MiscPayload): State{
 
@@ -65,7 +66,8 @@ const resetFilters = (state: State) => {
 		filterCategories: {},
 		filterPids: [],
 		checkedObjectsInSearch: [],
-		filterTemporal: new FilterTemporal()
+		filterTemporal: new FilterTemporal(),
+		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat)))
 	};
 };
 

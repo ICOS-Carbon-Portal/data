@@ -5,10 +5,10 @@ import {PortalDispatch} from "../../store";
 import {updateSearchOption, updateSelectedPids} from "../../actions/search";
 import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
-import Slider from "../../components/ui/Slider";
 import FilterByPid from "../../components/filters/FilterByPid";
 import {Style} from "../../../../common/main/style";
 import CheckBtn from "../../components/buttons/ChechBtn";
+import {FilterPanel} from "../../components/filters/FilterPanel";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -22,37 +22,21 @@ class Advanced extends Component<OurProps> {
 
 		return (
 			<Fragment>
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3 className="panel-title">Free text filters</h3>
-					</div>
+				<FilterPanel header="Free text filters">
+					<FilterByPid
+						selectedPids={filterPids}
+						updateSelectedPids={updateSelectedPids}
+					/>
+				</FilterPanel>
 
-					<Slider startCollapsed={false}>
-						<div className="panel-body" style={{paddingTop:0}}>
-							<FilterByPid
-								selectedPids={filterPids}
-								updateSelectedPids={updateSelectedPids}
-							/>
-						</div>
-					</Slider>
-				</div>
-
-				<div className="panel panel-default">
-					<div className="panel-heading">
-						<h3 className="panel-title">Search options</h3>
-					</div>
-
-					<Slider startCollapsed={false}>
-						<div className="panel-body">
-							<CheckButton
-								checkboxDisabled={deprecationDisabled}
-								onClick={() => updateSearchOption({name: 'showDeprecated', value: !showDeprecated})}
-								isChecked={showDeprecated}
-								text={'Show deprecated objects'}
-							/>
-						</div>
-					</Slider>
-				</div>
+				<FilterPanel header="Search options">
+					<CheckButton
+						checkboxDisabled={deprecationDisabled}
+						onClick={() => updateSearchOption({name: 'showDeprecated', value: !showDeprecated})}
+						isChecked={showDeprecated}
+						text={'Show deprecated objects'}
+					/>
+				</FilterPanel>
 			</Fragment>
 		);
 	}
