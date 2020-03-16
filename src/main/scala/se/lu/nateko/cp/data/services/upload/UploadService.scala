@@ -60,6 +60,8 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 	def uploadToB2Stage(format: URI, hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
 		B2StageUploadTask(format, hash, b2).uploadObject(src)
 
+	def listIrodsFolder(path: String) = irods2.listFolderContents(path)
+
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
 			dataObj <- meta.lookupPackage(hash);

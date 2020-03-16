@@ -36,6 +36,9 @@ object IntegrityRouting{
 			path("objectslist"){
 				respondWithReport(_ => service.getObjectsList(paging))
 			} ~
+			(path("listirodsfolder") & parameter("path")){path =>
+				complete(service.listIrodsFolder(path).mkString("\n"))
+			} ~
 			path("dummy"){
 				val src = Source.repeat("Dummy string to test long-running responses to HTTP GET requests in Akka HTTP")
 				complete(responseEntity(src.throttle(10, 1.second)))

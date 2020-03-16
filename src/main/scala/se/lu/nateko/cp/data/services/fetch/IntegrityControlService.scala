@@ -76,6 +76,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 			}
 		}
 
+	def listIrodsFolder(folderPath: String) = uploader.listIrodsFolder(folderPath)
 
 	def getObjectsList(paging: Paging): ReportSource = uploader.meta.getDobjStorageInfos(paging)
 		.map(new OkReport(_)).throttle(10, 1.second)

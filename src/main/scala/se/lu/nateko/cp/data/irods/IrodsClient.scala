@@ -23,6 +23,7 @@ import se.lu.nateko.cp.data.IrodsConfig
 import se.lu.nateko.cp.data.streams.ByteStringBuffer
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import java.nio.file.Path
 
 object IrodsClient{
 	val bufferSize: Int = 2 << 22 //8 MB
@@ -105,6 +106,13 @@ class IrodsClient private(config: IrodsConfig, connPool: IRODSConnectionPool){
 				existingFolderPaths.add(folderPath)
 			}
 		}
+
+	def listFolderContents(folderPath: String): Array[Path] = withFileApi{api =>
+		val file = api.makeFile(folderPath)
+		if(file.isDirectory()) file.listFiles().map(_.toPath)
+		else if(file.exists()) Array(file.getAbsoluteFile.toPath)
+		else Array.empty
+	}
 
 	def getChecksum(relFilePath: String): Sha256Sum =
 		if(config.dryRun) Sha256Sum.fromString("0" * 64).get
