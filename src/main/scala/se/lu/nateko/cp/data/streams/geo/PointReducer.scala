@@ -139,7 +139,7 @@ object PointReducer {
 		if(err <= maxErrorFactor * bboxSizeEst) Some(GeoTrack(
 			state.latLongs.map{
 				case (lat, lon) => Position(lat, lon, None)
-			}
+			}.toIndexedSeq
 		)) else None
 	}
 }

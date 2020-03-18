@@ -29,7 +29,7 @@ object AtcProdStreams {
 			)(Keep.right)
 
 	private def makeTimeStamp(cells: Array[String], columnNames: Array[String]): Instant = {
-		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(columnNames.indexOf)
+		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(cn => columnNames.indexOf(cn))
 
 		def pad0(s: String) = if (s.length == 1) "0" + s else s
 

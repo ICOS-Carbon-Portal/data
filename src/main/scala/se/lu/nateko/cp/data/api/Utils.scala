@@ -11,12 +11,12 @@ import scala.concurrent.Future
 
 object Utils {
 
-	def waitForAll(futures: TraversableOnce[Future[Any]])(implicit exec: ExecutionContext): Future[Unit] = {
-		val safeFutures: TraversableOnce[Future[Any]] = futures.map(_.recover{case _ => null})
+	def waitForAll(futures: Iterable[Future[Any]])(implicit exec: ExecutionContext): Future[Unit] = {
+		val safeFutures: Iterable[Future[Any]] = futures.map(_.recover{case _ => null})
 		Future.sequence(safeFutures).map(_ => ())
 	}
 
-	def runSequentially[T](elems: TraversableOnce[T])(f: T => Future[Any])(implicit exec: ExecutionContext): Unit = {
+	def runSequentially[T](elems: IterableOnce[T])(f: T => Future[Any])(implicit exec: ExecutionContext): Unit = {
 		elems.foldLeft[Future[Any]](Future.successful(())){(acc, elem) =>
 			acc.transformWith{_ => f(elem)}
 		}
