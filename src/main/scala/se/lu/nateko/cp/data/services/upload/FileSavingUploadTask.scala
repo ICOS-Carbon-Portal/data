@@ -13,6 +13,9 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpDataException
+import java.nio.file.Paths
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends UploadTask{
 
@@ -47,7 +50,10 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 				}.flatten
 
 				UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
-					if(file.exists) file.delete()
+					if(file.exists) {
+						val newPath = Paths.get(file.getAbsolutePath + "_failed")
+						Files.move(file.toPath, newPath, StandardCopyOption.REPLACE_EXISTING)
+					}
 					Done
 				})
 		}
