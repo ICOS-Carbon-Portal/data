@@ -6,15 +6,13 @@ lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
 
 	scalacOptions ++= Seq(
-		"-target:jvm-1.8",
 		"-encoding", "UTF-8",
 		"-unchecked",
 		"-feature",
 		"-deprecation",
 		"-Wdead-code",
 		"-Wnumeric-widen"
-	),
-	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+	)
 )
 
 val akkaVersion = "2.6.3"
@@ -59,6 +57,13 @@ lazy val netcdf = (project in file("netcdf"))
 
 val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.12"
 
+val osName: String = System.getProperty("os.name") match {
+	case name if name.startsWith("Linux") => "linux"
+	case name if name.startsWith("Mac") => "mac"
+	case name if name.startsWith("Windows") => "win"
+	case _ => throw new Exception("Unknown platform!")
+}
+
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
 	.aggregate(netcdf)
@@ -84,7 +89,11 @@ lazy val data = (project in file("."))
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.2",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 
-			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
+			"org.openjfx"         % "javafx-base"      % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-controls"  % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-fxml"      % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-graphics"  % "11" % "test" classifier osName,
+			"org.gillius"         % "jfxutils"         % "1.0" % "test",
 			"org.scalatest"      %% "scalatest"        % "3.1.0" % "test"
 		),
 
