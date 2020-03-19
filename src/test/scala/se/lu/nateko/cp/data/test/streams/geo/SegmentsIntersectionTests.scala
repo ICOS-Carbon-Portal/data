@@ -1,10 +1,10 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.geo.SegmentsIntersection._
 import se.lu.nateko.cp.data.streams.geo.Point
 
-class SegmentsIntersectionTests extends FunSuite{
+class SegmentsIntersectionTests extends AnyFunSuite{
 
 	test("non-intersecting segments are reported as such"){
 		assert(forSegments(Point(-1, -1), Point(1, 1), Point(0.1, 0.05), Point(1,0)) === NoIntersection)

@@ -37,7 +37,7 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService)(implicit 
 
 		val destiniesSource: Source[FileDestiny, NotUsed] = Source(hashes.toList)
 			.flatMapConcat{
-				hash => Source.fromFuture(
+				hash => Source.future(
 					upload.meta.lookupPackage(hash).andThen{
 						case Failure(err) =>
 							log.error(err, s"Could not retrieve metadata for ${hash.id}")
@@ -108,7 +108,7 @@ class DownloadService(coreConf: MetaCoreConfig, upload: UploadService)(implicit 
 				pid =>
 				import coreConf.{handleProxies => prox}
 				val hdlProxy = if(dest.obj.doi.isDefined) prox.doi else prox.basic
-				hdlProxy + pid
+				s"$hdlProxy$pid"
 			}
 			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$omissionReason\n"
 		}

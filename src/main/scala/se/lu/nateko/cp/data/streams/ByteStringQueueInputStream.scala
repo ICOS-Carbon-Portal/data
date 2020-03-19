@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.streams
 import java.io.InputStream
 import java.util.concurrent.LinkedBlockingQueue
 import akka.util.ByteString
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters.CollectionHasAsScala
 import java.io.IOException
 
 class ByteStringQueueInputStream extends InputStream {

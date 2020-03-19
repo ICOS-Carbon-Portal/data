@@ -100,8 +100,8 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield {
 			if(!aggrs.cached.isEmpty){
 				log.info(s"Setting up RestHeart/MongoDb aggregation cache updates for ${collDef.name}/${aggrs.cached.mkString(" | ")} ($envri)")
-				http.system.scheduler.schedule(1.second, aggrs.cacheValidityInMinutes.minutes){
-					makeCacheForAggrs(aggrs.cached.toList).failed.foreach(err =>
+				http.system.scheduler.scheduleWithFixedDelay(1.second, aggrs.cacheValidityInMinutes.minutes){
+					() => makeCacheForAggrs(aggrs.cached.toList).failed.foreach(err =>
 						log.error(err, "updating/creating cache for aggregations on " + collDef.name)
 					)
 				}

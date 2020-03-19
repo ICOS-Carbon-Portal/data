@@ -30,13 +30,8 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 						.toMat(FileIO.toPath(file))(KeepFuture.right)
 						.run()
 						.map{iores =>
-							val extraProblem: Option[String] = iores.status match{
-								case Success(_) =>
-									if(iores.count == dobjStInfo.size) None
-									else Some(s"wrong byte count while fetching from remote (${iores.count} instead of ${dobjStInfo.size})")
-								case Failure(ex) =>
-									Some(s"failed fetching from remote (${ex.getMessage})")
-							}
+							val extraProblem: Option[String] = if(iores.count == dobjStInfo.size) None
+								else Some(s"wrong byte count while fetching from remote (${iores.count} instead of ${dobjStInfo.size})")
 							extraProblem.fold(new ProblemReport(dobjStInfo, prob, true)){extraProb =>
 								new ProblemReport(dobjStInfo, prob + "; " + extraProb, false)
 							}

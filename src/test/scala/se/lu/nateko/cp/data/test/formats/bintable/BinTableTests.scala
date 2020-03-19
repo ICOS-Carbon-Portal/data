@@ -1,11 +1,11 @@
 package se.lu.nateko.cp.data.test.formats.bintable
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
 import se.lu.nateko.cp.data.test.TestUtils._
 
-class BinTableTest extends FunSuite{
+class BinTableTest extends AnyFunSuite{
 
 	test("Simple write, then read test"){
 		val file = getFileInTarget("binTableWriterTest.cpb")

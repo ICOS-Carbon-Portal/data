@@ -1,10 +1,10 @@
 package se.lu.nateko.cp.data.test.formats
 
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.formats._
 import java.util.Locale
 
-class ValueParserTests extends FunSpec{
+class ValueParserTests extends AnyFunSpec{
 
 	private [this] val parser = new ValueFormatParser
 

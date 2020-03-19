@@ -51,7 +51,7 @@ private class SourceFromCloseableIterator[T](iterFactory: () => (Iterator[T], ()
 					}catch{
 						case ex: Throwable => failBinTable(ex)
 					}
-				override def onDownstreamFinish(): Unit = completeBinTable()
+				override def onDownstreamFinish(cause: Throwable): Unit = completeBinTable()
 			})
 
 			private def failBinTable(exc: Throwable): Unit = {

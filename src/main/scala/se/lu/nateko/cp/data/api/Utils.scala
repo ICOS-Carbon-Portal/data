@@ -17,7 +17,7 @@ object Utils {
 	}
 
 	def runSequentially[T](elems: IterableOnce[T])(f: T => Future[Any])(implicit exec: ExecutionContext): Unit = {
-		elems.foldLeft[Future[Any]](Future.successful(())){(acc, elem) =>
+		elems.iterator.foldLeft[Future[Any]](Future.successful(())){(acc, elem) =>
 			acc.transformWith{_ => f(elem)}
 		}
 	}
@@ -25,7 +25,7 @@ object Utils {
 	def waitForAll(futures: Future[Any]*)(implicit exec: ExecutionContext): Future[Unit] = waitForAll(futures)
 
 	def iterateChildren[T](folder: Path, glob: Option[String] = None)(eagerExtractor: Iterator[Path] => T): T = {
-		import scala.collection.JavaConverters._
+		import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 		if(Files.exists(folder) && Files.isDirectory(folder)){
 			val dirStream = glob.fold(Files.newDirectoryStream(folder))(Files.newDirectoryStream(folder, _))
@@ -43,4 +43,6 @@ object Utils {
 				.map(strict => strict.data.decodeString("UTF-8"))
 				.recover{case _: Throwable => resp.status.toString}
 	}
+
+	def bytesToHex(bytes: Iterator[Byte]): String = bytes.map(String.format("%02x", _)).mkString
 }

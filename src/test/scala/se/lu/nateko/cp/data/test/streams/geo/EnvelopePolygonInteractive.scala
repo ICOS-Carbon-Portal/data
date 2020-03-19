@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters.SeqHasAsJava
 import scala.collection.mutable.Buffer
 
 import javafx.application.Application
@@ -23,7 +23,7 @@ object EnvelopePolygonInteractive{
 		Application.launch(classOf[EnvelopePolygonInteractive], args: _*)
 	}
 
-	def refreshSeries(series: XYChart.Series[Number, Number], points: Seq[Point]): Unit = {
+	def refreshSeries(series: XYChart.Series[Number, Number], points: collection.Seq[Point]): Unit = {
 		val data = series.getData
 		data.clear()
 		data.addAll(

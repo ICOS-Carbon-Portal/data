@@ -8,7 +8,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 import scala.collection.immutable.Iterable
@@ -23,7 +23,6 @@ import se.lu.nateko.cp.data.formats.csv.CsvParser
 
 class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	import SparqlClient._
-	implicit val materializer = ActorMaterializer()
 	import system.dispatcher
 
 	private val sparqlJson = MediaType.custom("application/sparql-results+json", binary = false)

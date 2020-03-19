@@ -3,9 +3,10 @@ package se.lu.nateko.cp.data.test.formats.delimitedheadercsv
 import java.io.File
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, StreamConverters}
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvStreams
@@ -13,10 +14,10 @@ import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvSt
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class SitesDelimitedHeaderCsvStreamsTests extends FunSuite with BeforeAndAfterAll {
+class SitesDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll {
 
 	private implicit val system: ActorSystem = ActorSystem("sitesdelimitedheadercsvstreamstest")
-	private implicit val materializer: ActorMaterializer = ActorMaterializer()
+
 	import system.dispatcher
 
 	override def afterAll(): Unit = {

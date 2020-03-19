@@ -3,9 +3,10 @@ package se.lu.nateko.cp.data.test.formats.otc
 import java.io.File
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl._
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.otc.OtcCsvStreams._
@@ -14,10 +15,9 @@ import se.lu.nateko.cp.data.streams.KeepFuture
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class OtcCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
+class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system: ActorSystem = ActorSystem("otccsvstreamstest")
-	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
 	override def afterAll(): Unit = {

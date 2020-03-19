@@ -1,11 +1,11 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 
-class EnvelopePolygonDebug extends FunSuite with EnvelopePolygonHelpers{
+class EnvelopePolygonDebug extends AnyFunSuite with EnvelopePolygonHelpers{
 
 	ignore("EnvelopePolygon debug"){
 		implicit val p = EnvelopePolygon.defaultEmpty

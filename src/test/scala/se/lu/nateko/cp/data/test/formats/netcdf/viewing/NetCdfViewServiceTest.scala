@@ -1,18 +1,18 @@
 package se.lu.nateko.cp.data.test.formats.netcdf.viewing
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 //import scala.collection.JavaConverters._
 //import se.lu.nateko.cp.data.formats.netcdf.viewing._
 //import se.lu.nateko.cp.data.formats.netcdf.viewing.impl._
 
-class NetCdfViewServiceTest extends FunSuite {
+class NetCdfViewServiceTest extends AnyFunSuite {
   
   def time[T](str: String)(thunk: => T): T = {
     print(str + ": ")
     val t1 = System.currentTimeMillis
     val x = thunk
     val t2 = System.currentTimeMillis
-    println((t2 - t1) + " ms")
+    println(s"${t2 - t1} ms")
     x
   }
   

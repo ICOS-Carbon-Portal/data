@@ -1,10 +1,10 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.geo.EdgeRayRelationship._
 import se.lu.nateko.cp.data.streams.geo.Point
 
-class EdgeRayRelationshipTests extends FunSuite{
+class EdgeRayRelationshipTests extends AnyFunSuite{
 
 	test("Simple ray crossing gives 'Cross'"){
 		assert(computeRelationship(Point(0,0), Point(1,1), Point(0, 0.5f)) == Cross)

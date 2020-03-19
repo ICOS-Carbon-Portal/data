@@ -26,7 +26,7 @@ class B2StageUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: 
 	}
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
-		val sinkFut = existsFut.map{
+		val sinkFut: Future[Sink[ByteString, Future[UploadTaskResult]]] = existsFut.map{
 			case true => Sink.cancelled.mapMaterializedValue(
 					_ => Future.successful(B2StageSuccess)
 				)
@@ -39,11 +39,8 @@ class B2StageUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: 
 				)
 		}
 
-		Sink.lazyInitAsync(() => sinkFut).mapMaterializedValue(_
-			.flatMap{
-				case None => Future.failed(new CpDataException("No data came through"))
-				case Some(inner) => inner
-			}
+		Sink.lazyFutureSink(() => sinkFut).mapMaterializedValue(_
+			.flatten
 			.recover{
 				case err => B2StageFailure(err)
 			}

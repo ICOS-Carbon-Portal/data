@@ -61,7 +61,7 @@ object WdcggStreams{
 			firstRow <- firstRowFut;
 			lastRow <- lastRowFut
 		) yield{
-			val customMetadata = keyValues.filterKeys(headerKeys.contains).toMap
+			val customMetadata = keyValues.view.filterKeys(headerKeys.contains).toMap
 			val start = Instant.parse(firstRow.cells(0))
 			val stop = Instant.parse(lastRow.cells(0))
 

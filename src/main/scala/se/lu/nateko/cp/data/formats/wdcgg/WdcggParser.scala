@@ -133,7 +133,7 @@ object WdcggParser {
 
 	private def makeKv(harmonizedKey: String, value: String): (String, String) = harmonizedKey match {
 		case CountryKey =>
-			val country = value.split(' ').map(part => part.head + part.tail.toLowerCase).mkString(" ")
+			val country = value.split(' ').map(_.toLowerCase.capitalize).mkString(" ")
 			(harmonizedKey, countryRenamings.getOrElse(country, country).trim)
 		case SamplingTypeKey =>
 			(harmonizedKey, if(value == "Remote sensing") "remote sensing" else value)

@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 import java.io.File
 import se.lu.nateko.cp.data.streams.geo._
 import java.io.PrintWriter
 
-class PointReducerTests extends FunSuite {
+class PointReducerTests extends AnyFunSuite {
 
 	ignore("PointReducer playground"){
 		val nmax = 31

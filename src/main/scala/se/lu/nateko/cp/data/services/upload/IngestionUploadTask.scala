@@ -29,7 +29,7 @@ class IngestionUploadTask(
 
 	//TODO Switch to java.nio classes
 	val file = new File(originalFile.getAbsolutePath + FileExtension)
-	private val tmpFile = new File(file.getAbsoluteFile + ".working")
+	private val tmpFile = new File(file.getAbsolutePath + ".working")
 	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
 	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
@@ -143,9 +143,9 @@ class IngestionSpec(
 object IngestionSpec{
 	def apply(dobj: DataObject): IngestionSpec = new IngestionSpec(
 		dobj.specification,
-		dobj.specificInfo.right.toOption.flatMap(_.nRows),
+		dobj.specificInfo.toOption.flatMap(_.nRows),
 		Some(dobj.hash.id),
-		dobj.specificInfo.right.toOption.map(_.acquisition.station.id)
+		dobj.specificInfo.toOption.map(_.acquisition.station.id)
 	)
 }
 
@@ -155,7 +155,7 @@ object IngestionUploadTask{
 	type IngestionSink = Sink[ByteString, Future[UploadTaskResult]]
 
 	def apply(ingSpec: IngestionSpec, originalFile: File, meta: MetaClient): Future[IngestionUploadTask] = {
-		import meta.materializer.executionContext
+		import meta.dispatcher
 
 		val formatsFut = getColumnFormats(ingSpec.objSpec, meta.sparql)
 
@@ -168,8 +168,7 @@ object IngestionUploadTask{
 			new IngestionUploadTask(ingSpec, originalFile, formats, utcOffset)
 	}
 
-	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient): Future[ColumnsMeta] = {
-		import sparql.materializer.executionContext
+	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient)(implicit ctxt: ExecutionContext): Future[ColumnsMeta] = {
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select ?colName ?valFormat ?isRegex ?isOptional where{

@@ -116,8 +116,8 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 	}
 
 	def downloadObjectReusable(obj: IrodsData): Source[ByteString, Future[Done]] = Source
-		.lazily(() => Source.fromFutureSource(downloadObjectOnce(obj)))
-		.mapMaterializedValue(_.flatten.map(_ => Done))
+		.lazyFutureSource(() => downloadObjectOnce(obj))
+		.mapMaterializedValue(_.map(_ => Done))
 
 	def delete(item: B2StageItem): Future[Done] = if(config.dryRun) done else
 		withAuth(objDeleteHttpRequest(item)).flatMap(failIfNotSuccess)

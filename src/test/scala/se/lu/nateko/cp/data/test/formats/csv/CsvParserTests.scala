@@ -1,15 +1,15 @@
 package se.lu.nateko.cp.data.test.formats.csv
 
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.formats.csv.CsvParser
 
-class CsvParserTests extends FunSpec{
+class CsvParserTests extends AnyFunSpec{
 
 	import CsvParser._
 
 	def parse(csv: String, parser: CsvParser): IndexedSeq[Accumulator] = {
 		val lines = csv.stripMargin.trim.split("\n").map(_.replace("\r", ""))
-		lines.scanLeft(seed)(parser.parseLine).tail
+		lines.scanLeft(seed)(parser.parseLine).toIndexedSeq.tail
 	}
 
 	def assertCells(acc: Accumulator, values: String*): Unit = {

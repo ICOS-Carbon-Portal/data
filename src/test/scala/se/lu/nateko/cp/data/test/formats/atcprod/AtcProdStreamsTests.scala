@@ -6,19 +6,19 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
 import se.lu.nateko.cp.data.formats.bintable._
 
-class AtcProdStreamsTests extends FunSuite with BeforeAndAfterAll{
+class AtcProdStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system: ActorSystem = ActorSystem("atccsvstreamstest")
-	private implicit val materializer: ActorMaterializer = ActorMaterializer()
+
 	import system.dispatcher
 
 	override def afterAll(): Unit = {

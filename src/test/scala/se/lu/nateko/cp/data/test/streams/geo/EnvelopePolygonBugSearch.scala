@@ -1,11 +1,11 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 import scala.util.Random
 
-class EnvelopePolygonBugSearch extends FunSuite with EnvelopePolygonHelpers{
+class EnvelopePolygonBugSearch extends AnyFunSuite with EnvelopePolygonHelpers{
 
 	private val rnd = new Random
 
@@ -51,7 +51,4 @@ class EnvelopePolygonBugSearch extends FunSuite with EnvelopePolygonHelpers{
 				succeed
 		}
 	}
-}
-
-object EnvelopePolygonBugSearch{
 }

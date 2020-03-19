@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.test.streams.geo
 import scala.io.Source
 import java.io.PrintWriter
 import scala.collection.Seq
+import Ordering.Double.TotalOrdering
 import se.lu.nateko.cp.data.streams.geo.DummyCostStats
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
@@ -98,7 +99,7 @@ object EnvelopePolygonParamScans {
 
 		writer.println("SampleId\tBatchSize\tMaxAngle\tMaxCostFraction\tDistanceCostFactor\tArea\tTime\tNvertices")
 
-		paramsStream.par.foreach{params =>
+		paramsStream.foreach{params =>
 			samples.foreach{sample =>
 				import sample._
 				import params._
@@ -123,10 +124,11 @@ object EnvelopePolygonParamScans {
 				)
 			}.toSeq
 
-		val minAreaRes: Map[String, RunResult] = logEntries.groupBy(_._1).mapValues(_.minBy(_._3.area)._3).toSeq.toMap
+		val minAreaRes: Map[String, RunResult] = logEntries.groupMapReduce(_._1)(_._3)(Seq(_, _).minBy(_.area))
 		val sampleSizes: Map[String, Int] = samples.map(ds => (ds.id, ds.latLongs.size)).toMap
 
 		val bestParams = logEntries.groupBy(_._2)//.filter(_._2.maxCostFraction == 0)
+			.view
 			.mapValues{entries =>
 				val areaCostFactor = entries.map{t => t._3.area / minAreaRes(t._1).area}.sum / 4
 				val timeCostFactor = entries.map{t => t._3.timeMs.toDouble / sampleSizes(t._1)}.sum / 4

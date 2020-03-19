@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.streams.geo
 import scala.annotation.tailrec
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
+import Ordering.Double.TotalOrdering
 
 import GeoAlgorithms._
 import se.lu.nateko.cp.meta.core.data.Polygon
@@ -263,7 +264,7 @@ object EnvelopePolygon{
 
 	def defaultEmpty = new EnvelopePolygon(defaultConfig)
 
-	def apply(vertices: TraversableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
+	def apply(vertices: IterableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
 		val p = new EnvelopePolygon(conf)
 		p.verts ++= vertices
 		p.nearests ++= p.verts

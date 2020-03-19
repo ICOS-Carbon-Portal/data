@@ -13,7 +13,7 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.Akka.done
@@ -35,7 +35,6 @@ import scala.util.Try
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher = system.dispatcher
-	implicit val materializer = ActorMaterializer(None, Some("metaClientMat"))
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
 	import MetaClient._
 

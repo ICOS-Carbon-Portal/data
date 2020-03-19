@@ -20,7 +20,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
@@ -54,7 +54,6 @@ object MassUpload extends CommonJsonSupport{
 
 	implicit val system = ActorSystem("massUpload")
 	import system.dispatcher
-	implicit val materializer = ActorMaterializer(namePrefix = Some("massUpload_mat"))
 	implicit val uploadMetadataDtoFormat = jsonFormat5(UploadMetadataDto)
 	private val http = Http()
 	var cookie = HttpCookiePair("dummy", "dummy")
@@ -70,7 +69,7 @@ object MassUpload extends CommonJsonSupport{
 	
 	val fileSource: Source[Path, NotUsed] = {
 		def getFiles(folder: File): Seq[File] = {
-			val children = Seq(folder.listFiles :_*)
+			val children = folder.listFiles.toIndexedSeq
 			children.filter(_.isFile) ++ children.filter(_.isDirectory).flatMap(getFiles)
 		}
 		Source(getFiles(new File(RootFolder))).map(_.toPath)

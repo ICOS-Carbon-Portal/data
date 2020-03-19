@@ -154,7 +154,7 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 				}
 				pushResultOut()
 			}
-			override def onDownstreamFinish(): Unit = {
+			override def onDownstreamFinish(cause: Throwable): Unit = {
 				oq.finishAppending()
 				zis.close()
 				oq.close()
