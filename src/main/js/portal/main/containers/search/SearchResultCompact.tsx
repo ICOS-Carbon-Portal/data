@@ -93,11 +93,11 @@ const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props
 	const sorting = props.sorting || {};
 
 	const glyphClass = 'glyphicon glyphicon-sort' + (
-		(sorting.varName !== props.sorting.varName)
+		sorting.varName !== props.varName
 			? ''
 			: sorting.ascending
-			? '-by-attributes'
-			: '-by-attributes-alt'
+				? '-by-attributes'
+				: '-by-attributes-alt'
 	);
 
 	const style: CSSProperties = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
