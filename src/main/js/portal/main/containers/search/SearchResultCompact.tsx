@@ -101,7 +101,7 @@ const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props
 	);
 
 	const style: CSSProperties = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
-	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.sorting.varName) : undefined;
+	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
 	return (
 		<button className="btn btn-default" title="Sort" onClick={sortHandler} style={style}>
