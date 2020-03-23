@@ -57,10 +57,11 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.11"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.12"
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
+	.aggregate(netcdf)
 	.enablePlugins(SbtTwirl, IcosCpSbtDeployPlugin, IcosCpSbtFrontendPlugin)
 	.settings(commonSettings: _*)
 	.settings(

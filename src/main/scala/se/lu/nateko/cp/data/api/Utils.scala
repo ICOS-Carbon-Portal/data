@@ -44,5 +44,4 @@ object Utils {
 				.recover{case _: Throwable => resp.status.toString}
 	}
 
-	def bytesToHex(bytes: Iterator[Byte]): String = bytes.map(String.format("%02x", _)).mkString
 }
