@@ -1,9 +1,6 @@
-import {ERROR, COUNTRIES_FETCHED, VARIABLES_AND_DATES_FETCHED, ELEVATIONS_FETCHED, RASTER_FETCHED,
-	SERVICE_SET, SERVICE_SELECTED, VARIABLE_SELECTED, DATE_SELECTED, ELEVATION_SELECTED, GAMMA_SELECTED, DELAY_SELECTED,
-	PUSH_PLAY, INCREMENT_RASTER, SERVICES_FETCHED, TITLE_FETCHED, TIMESERIE_FETCHED, TOGGLE_TS_SPINNER,
-	TIMESERIE_RESET, FETCHING_TIMESERIE} from './actions';
-import {Control} from './models/ControlsHelper';
-import ColorMaker from '../../common/main/models/ColorMaker';
+import {actionTypes} from './actions';
+import {Control, ControlColorRamp} from './models/ControlsHelper';
+import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
 
@@ -11,12 +8,12 @@ export default function(state, action){
 
 	switch(action.type){
 
-		case ERROR:
+		case actionTypes.ERROR:
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case COUNTRIES_FETCHED:
+		case actionTypes.COUNTRIES_FETCHED:
 			return update({
 				countriesTopo: {
 					ts: Date.now(),
@@ -24,28 +21,28 @@ export default function(state, action){
 				}
 			});
 
-		case SERVICES_FETCHED:
+		case actionTypes.SERVICES_FETCHED:
 			return update({
 				controls: state.controls.withServices(new Control(action.services))
 			});
 
-		case SERVICE_SET:
+		case actionTypes.SERVICE_SET:
 			return update({
 				controls: state.controls.withServices(new Control(action.services, 0))
 			});
 
-		case SERVICE_SELECTED:
+		case actionTypes.SERVICE_SELECTED:
 			return update({
 				controls: state.controls.withSelectedService(action.idx),
 				timeserieParams: undefined
 			});
 
-		case TITLE_FETCHED:
+		case actionTypes.TITLE_FETCHED:
 			return update({
 				title: action.title
 			});
 
-		case VARIABLES_AND_DATES_FETCHED:
+		case actionTypes.VARIABLES_AND_DATES_FETCHED:
 			if (isFetched(state, action)){
 				const vIdx = action.variables.indexOf(state.initSearchParams.varName);
 				const dIdx = action.dates.indexOf(state.initSearchParams.date);
@@ -61,7 +58,7 @@ export default function(state, action){
 				return state;
 			}
 
-		case ELEVATIONS_FETCHED:
+		case actionTypes.ELEVATIONS_FETCHED:
 			if (isElevationsFetched(state, action)) {
 				const elevations = filterElevations(action.elevations);
 				const eIdx = elevations.length
@@ -82,19 +79,19 @@ export default function(state, action){
 				return state;
 			}
 
-		case VARIABLE_SELECTED:
+		case actionTypes.VARIABLE_SELECTED:
 			return update({controls: state.controls.withSelectedVariable(action.idx)});
 
-		case DATE_SELECTED:
+		case actionTypes.DATE_SELECTED:
 			return update({controls: state.controls.withSelectedDate(action.idx)});
 
-		case ELEVATION_SELECTED:
+		case actionTypes.ELEVATION_SELECTED:
 			return update({
 				lastElevation: state.controls.elevations.values[action.idx],
 				controls: state.controls.withSelectedElevation(action.idx)
 			});
 
-		case DELAY_SELECTED:
+		case actionTypes.DELAY_SELECTED:
 			const delayCtrls = state.controls.withSelectedDelay(action.idx);
 			const rasterDataFetcher = new RasterDataFetcher(
 				getDataObjectVariables(delayCtrls),
@@ -108,37 +105,62 @@ export default function(state, action){
 				rasterDataFetcher
 			});
 
-		case GAMMA_SELECTED:
-			const newGammaControls = state.controls.withSelectedGamma(action.idx);
-			const selectedGamma = newGammaControls.gammas.selected;
+		case actionTypes.RASTER_FETCHED:
+			let colorMaker = new ColorMakerRamps(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected, state.controls.colorRamps.selected);
+			let controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
 
-			if(state.raster){
-				state.raster.id = state.raster.basicId + selectedGamma;
-			}
-
-			return update({
-				controls: newGammaControls,
-				colorMaker: state.raster
-					? new ColorMaker(state.raster.stats.min, state.raster.stats.max, selectedGamma)
-					: null
-			});
-
-		case RASTER_FETCHED:
 			return isRasterFetched(state, action)
 				? update({
 					rasterFetchCount: state.rasterFetchCount + 1,
 					raster: action.raster,
-					colorMaker: new ColorMaker(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected)
+					colorMaker,
+					controls: state.controls.withColorRamps(controlColorRamp)
 				})
 				: state;
 
-		case FETCHING_TIMESERIE:
+		case actionTypes.GAMMA_SELECTED:
+			const newGammaControls = state.controls.withSelectedGamma(action.idx);
+			const selectedGamma = newGammaControls.gammas.selected;
+			colorMaker = state.raster
+				? new ColorMakerRamps(state.raster.stats.min, state.raster.stats.max, selectedGamma, state.colorMaker.colorRampName)
+				: state.colorMaker;
+			controlColorRamp = colorMaker
+				? new ControlColorRamp(colorMaker.colorRamps, newGammaControls.selectedIdxs.colorRampIdx)
+				: undefined;
+
+			if (state.raster){
+				state.raster.id = state.raster.basicId + selectedGamma;
+			}
+
+			return update({
+				colorMaker,
+				controls: newGammaControls.withColorRamps(controlColorRamp)
+			});
+
+		case actionTypes.COLORRAMP_SELECTED:
+			const selectedColorRamp = state.colorMaker
+				? state.colorMaker.colorRamps[action.idx].name
+				: colorRamps[action.idx].name;
+			colorMaker = state.raster
+				? new ColorMakerRamps(state.raster.stats.min, state.raster.stats.max, state.controls.gammas.selected, selectedColorRamp)
+				: state.colorMaker;
+
+			if (state.raster){
+				state.raster.id = state.raster.basicId + selectedColorRamp;
+			}
+
+			return update({
+				colorMaker,
+				controls: state.controls.withSelectedColorRamp(action.idx)
+			});
+
+		case actionTypes.FETCHING_TIMESERIE:
 			return update({
 				isFetchingTimeserieData: true,
 				timeserieData: []
 			});
 
-		case TIMESERIE_FETCHED:
+		case actionTypes.TIMESERIE_FETCHED:
 			return update({
 				isFetchingTimeserieData: false,
 				timeserieData: getTimeserieData(state.controls.dates.values, action.yValues),
@@ -149,25 +171,25 @@ export default function(state, action){
 				}
 			});
 
-		case TIMESERIE_RESET:
+		case actionTypes.TIMESERIE_RESET:
 			return update({
 				timeserieData: [],
 				timeserieParams: undefined
 			});
 
-		case TOGGLE_TS_SPINNER:
+		case actionTypes.TOGGLE_TS_SPINNER:
 			return update({
 				showTSSpinner: action.showTSSpinner
 			});
 
-		case PUSH_PLAY:
+		case actionTypes.PUSH_PLAY:
 			const playingMovie = !state.playingMovie;
 			const did = playingMovie
 				? state.rasterDataFetcher.getDesiredId(state.controls.selectedIdxs)
 				: state.desiredId;
 			return update({playingMovie, desiredId: did});
 
-		case INCREMENT_RASTER:
+		case actionTypes.INCREMENT_RASTER:
 			const controls = state.controls.withIncrementedDate(action.increment);
 			const desiredId = state.rasterDataFetcher.getDesiredId(controls.selectedIdxs);
 

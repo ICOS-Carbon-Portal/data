@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
 import Selector from './Selector.jsx';
+import DropdownColors from "./DropdownColors";
 
 export default class Controls extends Component {
 	constructor(props){
 		super(props);
+
+		this.state = {
+			colorRamps: []
+		};
 	}
 
 	render(){
@@ -58,6 +63,11 @@ export default class Controls extends Component {
 
 				<div className="col-md-1">
 					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.handleGammaChange}/>
+				</div>
+
+				<div className="col-md-1">
+					<span style={{fontWeight: 'bold'}}>Map color:</span>
+					<DropdownColors control={controls.colorRamps} action={props.handleColorRampChange} />
 				</div>
 			</div>
 		);

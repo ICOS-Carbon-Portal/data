@@ -34,12 +34,13 @@ export default class Map extends Component {
 	}
 
 	componentDidMount(){
-		this.updateHeight();
+		const self = this;
+		setTimeout(self.updateHeight.bind(self), 100);
 	}
 
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
-			const {dates, elevations, gammas, variables} = this.props.controls;
+			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
 
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
 				this.prevVariables = variables;
@@ -52,8 +53,9 @@ export default class Map extends Component {
 			const varNameParam = variables.selectedIdx > 0 && variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
+			const color = colorRamps.selected ? `color=${colorRamps.selected}` : undefined;
 
-			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom];
+			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
 
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
@@ -164,6 +166,7 @@ export default class Map extends Component {
 						handleDateChange={props.dateChanged}
 						handleGammaChange={props.gammaChanged}
 						handleElevationChange={props.elevationChanged}
+						handleColorRampChange={props.colorRampChanged}
 					/>
 
 					<Timeserie

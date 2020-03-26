@@ -3,27 +3,31 @@ import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, get
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
 
-export const ERROR = 'ERROR';
-export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
-export const SERVICES_FETCHED = 'SERVICES_FETCHED';
-export const VARIABLES_AND_DATES_FETCHED = 'VARIABLES_AND_DATES_FETCHED';
-export const ELEVATIONS_FETCHED = 'ELEVATIONS_FETCHED';
-export const RASTER_FETCHED = 'RASTER_FETCHED';
-export const SERVICE_SET = 'SERVICE_SET';
-export const SERVICE_SELECTED = 'SERVICE_SELECTED';
-export const VARIABLE_SELECTED = 'VARIABLE_SELECTED';
-export const DATE_SELECTED = 'DATE_SELECTED';
-export const ELEVATION_SELECTED = 'ELEVATION_SELECTED';
-export const GAMMA_SELECTED = 'GAMMA_SELECTED';
-export const DELAY_SELECTED = 'DELAY_SELECTED';
-export const PUSH_PLAY = 'PUSH_PLAY';
-export const SET_DELAY = 'SET_DELAY';
-export const INCREMENT_RASTER = 'INCREMENT_RASTER';
-export const TITLE_FETCHED = 'TITLE_FETCHED';
-export const FETCHING_TIMESERIE = 'FETCHING_TIMESERIE';
-export const TIMESERIE_FETCHED = 'TIMESERIE_FETCHED';
-export const TOGGLE_TS_SPINNER = 'TOGGLE_TS_SPINNER';
-export const TIMESERIE_RESET = 'TIMESERIE_RESET';
+export const actionTypes = {
+	ERROR: 'ERROR',
+	COUNTRIES_FETCHED: 'COUNTRIES_FETCHED',
+	SERVICES_FETCHED: 'SERVICES_FETCHED',
+	VARIABLES_AND_DATES_FETCHED: 'VARIABLES_AND_DATES_FETCHED',
+	ELEVATIONS_FETCHED: 'ELEVATIONS_FETCHED',
+	RASTER_FETCHED: 'RASTER_FETCHED',
+	SERVICE_SET: 'SERVICE_SET',
+	SERVICE_SELECTED: 'SERVICE_SELECTED',
+	VARIABLE_SELECTED: 'VARIABLE_SELECTED',
+	DATE_SELECTED: 'DATE_SELECTED',
+	ELEVATION_SELECTED: 'ELEVATION_SELECTED',
+	GAMMA_SELECTED: 'GAMMA_SELECTED',
+	DELAY_SELECTED: 'DELAY_SELECTED',
+	PUSH_PLAY: 'PUSH_PLAY',
+	SET_DELAY: 'SET_DELAY',
+	INCREMENT_RASTER: 'INCREMENT_RASTER',
+	TITLE_FETCHED: 'TITLE_FETCHED',
+	FETCHING_TIMESERIE: 'FETCHING_TIMESERIE',
+	TIMESERIE_FETCHED: 'TIMESERIE_FETCHED',
+	TOGGLE_TS_SPINNER: 'TOGGLE_TS_SPINNER',
+	TIMESERIE_RESET: 'TIMESERIE_RESET',
+	COLORRAMP_SELECTED: 'COLORRAMP_SELECTED',
+};
+
 
 export function failWithError(error){
 	console.log(error);
@@ -31,7 +35,7 @@ export function failWithError(error){
 	logError(config.previewTypes.NETCDF, error.message);
 
 	return {
-		type: ERROR,
+		type: actionTypes.ERROR,
 		error
 	};
 }
@@ -40,7 +44,7 @@ export const fetchServices = dispatch => {
 	getServices().then(
 		services => {
 			dispatch({
-				type: SERVICES_FETCHED,
+				type: actionTypes.SERVICES_FETCHED,
 				services
 			});
 
@@ -54,7 +58,7 @@ export const fetchTitle = pid => dispatch => {
 	getTitle(pid).then(
 		title => {
 			dispatch({
-				type: TITLE_FETCHED,
+				type: actionTypes.TITLE_FETCHED,
 				title
 			});
 		},
@@ -66,7 +70,7 @@ export const fetchCountriesTopo = dispatch => {
 	getCountriesGeoJson().then(
 		countriesTopo => {
 			dispatch({
-				type: COUNTRIES_FETCHED,
+				type: actionTypes.COUNTRIES_FETCHED,
 				countriesTopo
 			});
 		},
@@ -76,7 +80,7 @@ export const fetchCountriesTopo = dispatch => {
 
 export const setService = pid => dispatch => {
 	dispatch({
-		type: SERVICE_SET,
+		type: actionTypes.SERVICE_SET,
 		services: [pid]
 	});
 	dispatch(fetchVariablesAndDates);
@@ -84,7 +88,7 @@ export const setService = pid => dispatch => {
 
 export const selectService = idx => dispatch => {
 	dispatch({
-		type: SERVICE_SELECTED,
+		type: actionTypes.SERVICE_SELECTED,
 		idx
 	});
 	dispatch(fetchVariablesAndDates);
@@ -99,7 +103,7 @@ const fetchVariablesAndDates = (dispatch, getState) => {
 		({variables, dates}) => {
 
 			dispatch({
-				type: VARIABLES_AND_DATES_FETCHED,
+				type: actionTypes.VARIABLES_AND_DATES_FETCHED,
 				variables,
 				dates,
 				service: services.selected
@@ -118,7 +122,7 @@ const fetchElevations = (dispatch, getState) => {
 	getElevations(controls.services.selected, controls.variables.selected).then(
 		elevations => {
 			dispatch({
-				type: ELEVATIONS_FETCHED,
+				type: actionTypes.ELEVATIONS_FETCHED,
 				controlName: 'elevations',
 				elevations,
 				controls
@@ -139,7 +143,7 @@ const fetchRaster = (dispatch, getState) => {
 
 	getRaster(services.selected, variables.selected, dates.selected, elevation, gammas.selected).then(
 		raster => dispatch({
-			type: RASTER_FETCHED,
+			type: actionTypes.RASTER_FETCHED,
 			raster,
 			controls
 		}),
@@ -148,10 +152,10 @@ const fetchRaster = (dispatch, getState) => {
 };
 
 export const fetchTimeSerie = params => dispatch => {
-	dispatch({type: FETCHING_TIMESERIE});
+	dispatch({type: actionTypes.FETCHING_TIMESERIE});
 
 	const showSpinnerTimer = setTimeout(() => dispatch({
-		type: TOGGLE_TS_SPINNER,
+		type: actionTypes.TOGGLE_TS_SPINNER,
 		showTSSpinner: true
 	}), 300);
 
@@ -160,12 +164,12 @@ export const fetchTimeSerie = params => dispatch => {
 
 		if (yValues.length > 0) {
 			dispatch({
-				type: TOGGLE_TS_SPINNER,
+				type: actionTypes.TOGGLE_TS_SPINNER,
 				showTSSpinner: false
 			});
 
 			dispatch({
-				type: TIMESERIE_FETCHED,
+				type: actionTypes.TIMESERIE_FETCHED,
 				yValues,
 				timeserieParams: params
 			});
@@ -174,19 +178,19 @@ export const fetchTimeSerie = params => dispatch => {
 };
 
 export const resetTimeserieData = dispatch => {
-	dispatch({type: TIMESERIE_RESET});
+	dispatch({type: actionTypes.TIMESERIE_RESET});
 };
 
 export const pushPlayButton = (dispatch, getState) => {
 	if (!getState().rasterDataFetcher) return;
 
-	dispatch({type: PUSH_PLAY});
+	dispatch({type: actionTypes.PUSH_PLAY});
 	dispatch(incrementIfNeeded);
 };
 
 export const incrementRasterData = increment => dispatch => {
 	dispatch({
-		type: INCREMENT_RASTER,
+		type: actionTypes.INCREMENT_RASTER,
 		increment
 	});
 
@@ -203,7 +207,7 @@ const fetchRasterData = (dispatch, getState) => {
 		state.rasterDataFetcher.fetch(state.controls.selectedIdxs).then(
 			raster => {
 				dispatch({
-					type: RASTER_FETCHED,
+					type: actionTypes.RASTER_FETCHED,
 					desiredId: state.desiredId,
 					controls: state.controls,
 					raster
@@ -224,7 +228,7 @@ export const incrementIfNeeded = (dispatch, getState) => {
 
 export const selectVariable = idx => (dispatch, getState) => {
 	dispatch({
-		type: VARIABLE_SELECTED,
+		type: actionTypes.VARIABLE_SELECTED,
 		idx
 	});
 	dispatch(fetchElevations);
@@ -239,7 +243,7 @@ export const selectVariable = idx => (dispatch, getState) => {
 
 export const selectDate = idx => dispatch => {
 	dispatch({
-		type: DATE_SELECTED,
+		type: actionTypes.DATE_SELECTED,
 		idx
 	});
 	dispatch(fetchRaster);
@@ -247,7 +251,7 @@ export const selectDate = idx => dispatch => {
 
 export const selectElevation = idx => dispatch => {
 	dispatch({
-		type: ELEVATION_SELECTED,
+		type: actionTypes.ELEVATION_SELECTED,
 		idx
 	});
 	dispatch(fetchRaster);
@@ -255,14 +259,21 @@ export const selectElevation = idx => dispatch => {
 
 export const selectGamma = idx => dispatch => {
 	dispatch({
-		type: GAMMA_SELECTED,
+		type: actionTypes.GAMMA_SELECTED,
 		idx
 	});
 };
 
 export const selectDelay = idx => dispatch => {
 	dispatch({
-		type: DELAY_SELECTED,
+		type: actionTypes.DELAY_SELECTED,
+		idx
+	});
+};
+
+export const selectColorRamp = idx => dispatch => {
+	dispatch({
+		type: actionTypes.COLORRAMP_SELECTED,
 		idx
 	});
 };
