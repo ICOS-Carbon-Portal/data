@@ -114,8 +114,7 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
 		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']},
-		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
-		{panelTitle: "Misc", filterList: ['fileSize']}
+		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
 };
 
