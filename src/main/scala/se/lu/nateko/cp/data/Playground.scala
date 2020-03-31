@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data
 import se.lu.nateko.cp.data.irods.IrodsClient
 import akka.stream.scaladsl.Source
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -21,7 +21,6 @@ import java.nio.file.Paths
 object Playground {
 
 	implicit val system = ActorSystem("playgr")
-	implicit val materializer = ActorMaterializer(namePrefix = Some("playgr_mat"))
 	implicit val blockingExeCtxt = system.dispatchers.lookup("akka.stream.default-blocking-io-dispatcher")
 
 	val config = ConfigReader.getDefault
@@ -40,7 +39,7 @@ object Playground {
 	def largeSrc = repeat(rowBlock, 1000)
 	def smallSrc = repeat(rowBlock, 5)
 
-	def failing = Source.fromFuture(Future.failed(new Exception("I was born to fail!")))
+	def failing = Source.failed(new Exception("I was born to fail!"))
 	def failingLater = smallSrc.concat(failing)
 
 	def uploadToPath(path: String, src: Source[ByteString, Any]): Future[Sha256Sum] = {

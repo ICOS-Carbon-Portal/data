@@ -4,18 +4,17 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.test.TestUtils._
 
-class BinTableSourceTests extends FunSuite with BeforeAndAfterAll{
+class BinTableSourceTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system = ActorSystem("binTableSinkTests")
-	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll(): Unit = {
 		system.terminate()

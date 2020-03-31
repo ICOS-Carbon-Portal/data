@@ -16,8 +16,8 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
-import javax.xml.bind.DatatypeConverter
-import se.lu.nateko.cp.meta.core.crypto.Md5Sum
+import se.lu.nateko.cp.data.api.Utils
+import se.lu.nateko.cp.meta.core.crypto.{Md5Sum, Sha256Sum}
 
 case class UploadReceipt(timeStamp: Instant, file: EtcFilename, md5: Md5Sum){
 	def report: String = {
@@ -55,7 +55,7 @@ class UploadReceiptCrypto(secret: String){
 		val bb = ByteBuffer.wrap(bytes, 0, 8)
 		val timeStamp = Instant.ofEpochMilli(bb.getLong)
 		val md5arr = Arrays.copyOfRange(bytes, 8, 24)
-		val md5Hex = DatatypeConverter.printHexBinary(md5arr).toLowerCase
+		val md5Hex = md5arr.iterator.map(Sha256Sum.formatByte).mkString
 
 		val fileName = new String(bytes, 24, bytes.length - 24, StandardCharsets.UTF_8)
 

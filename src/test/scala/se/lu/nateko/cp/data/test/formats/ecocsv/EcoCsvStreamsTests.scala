@@ -3,9 +3,10 @@ package se.lu.nateko.cp.data.test.formats.ecocsv
 import java.io.File
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl._
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
@@ -13,10 +14,10 @@ import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class EcoCsvStreamsTests extends FunSuite with BeforeAndAfterAll{
+class EcoCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system: ActorSystem = ActorSystem("ecocsvstreamstest")
-	private implicit val materializer: ActorMaterializer = ActorMaterializer()
+
 	import system.dispatcher
 
 	override def afterAll(): Unit = {

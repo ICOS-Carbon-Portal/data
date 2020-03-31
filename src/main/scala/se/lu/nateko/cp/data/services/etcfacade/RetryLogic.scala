@@ -41,7 +41,7 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 	def schedule() = {
 		val timeToFirst = timeToNextTick(nowUtc, FacadeService.ForceEcUploadTime, RetryPeriod)
 		if(timeToFirst > 1.hour) mat.scheduleOnce(1.minute, retry)
-		mat.schedulePeriodically(timeToFirst, RetryPeriod, retry)
+		mat.scheduleWithFixedDelay(timeToFirst, RetryPeriod, retry)
 	}
 
 	private def retryStuckFiles(forceEc: Boolean): Future[Done] = retryEntities[EtcFilename](

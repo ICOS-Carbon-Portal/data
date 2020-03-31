@@ -65,9 +65,9 @@ private class DigestFlow[T](digest: String, map: Array[Byte] => T) extends Graph
 			setHandler(out, new OutHandler {
 				override def onPull(): Unit = pull(in)
 
-				override def onDownstreamFinish(): Unit = {
+				override def onDownstreamFinish(cause: Throwable): Unit = {
 					completeDigest()
-					super.onDownstreamFinish()
+					super.onDownstreamFinish(cause)
 				}
 			})
 		}

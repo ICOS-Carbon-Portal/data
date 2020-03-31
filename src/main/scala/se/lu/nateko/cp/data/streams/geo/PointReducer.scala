@@ -1,5 +1,7 @@
 package se.lu.nateko.cp.data.streams.geo
 
+import Ordering.Double.TotalOrdering
+
 import PointReducer._
 import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Position
@@ -139,7 +141,7 @@ object PointReducer {
 		if(err <= maxErrorFactor * bboxSizeEst) Some(GeoTrack(
 			state.latLongs.map{
 				case (lat, lon) => Position(lat, lon, None)
-			}
+			}.toIndexedSeq
 		)) else None
 	}
 }

@@ -3,10 +3,11 @@ package se.lu.nateko.cp.data.test.formats.wdcgg
 import java.io.File
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, IOResult}
+import akka.stream.{Materializer, IOResult}
 import akka.stream.scaladsl._
 import akka.util.ByteString
-import org.scalatest.{BeforeAndAfterAll, FunSuite}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
@@ -14,10 +15,9 @@ import se.lu.nateko.cp.data.formats.wdcgg.WdcggStreams._
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
-class WdcggStreamsTests extends FunSuite with BeforeAndAfterAll{
+class WdcggStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system: ActorSystem = ActorSystem("wdcggstreamstest")
-	private implicit val materializer: ActorMaterializer = ActorMaterializer()
 	import system.dispatcher
 
 	override def afterAll(): Unit = {

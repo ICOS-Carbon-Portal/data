@@ -7,14 +7,13 @@ import scala.concurrent.Future
 
 object B2Playground{
 	import akka.actor.ActorSystem
-	import akka.stream.ActorMaterializer
+	import akka.stream.Materializer
 	import scala.concurrent.Await
 	import scala.concurrent.duration.DurationInt
 	import se.lu.nateko.cp.data.ConfigReader
 
 	implicit private val system = ActorSystem("B2StageClient")
 	system.log
-	implicit private val materializer = ActorMaterializer(namePrefix = Some("B2StageClient_mat"))
 	implicit val dispatcher = system.dispatcher
 	private val http = akka.http.scaladsl.Http()
 

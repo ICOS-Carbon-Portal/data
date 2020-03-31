@@ -1,5 +1,7 @@
 package se.lu.nateko.cp.data.streams.geo
 
+import Ordering.Double.TotalOrdering
+
 object GeoAlgorithms {
 
 	def triangleArea2(a: Point, b: Point, c: Point): Double = Math.abs(

@@ -9,11 +9,11 @@ trait EnvelopePolygonHelpers {
 	def add(lon: Double, lat: Double)(implicit poly: EnvelopePolygon): Boolean =
 		poly.addVertice(new Point(lon, lat))
 
-	def printarr(axis: String, extr: Point => Double)(points: Seq[Point]): Unit =
+	def printarr(axis: String, extr: Point => Double)(points: collection.Seq[Point]): Unit =
 		println(points.map(extr).mkString(s"$axis${points.size} = [", ", ", "]"))
 
-	def printXarr(points: Seq[Point]) = printarr("x", _.lon)(points)
-	def printYarr(points: Seq[Point]) = printarr("y", _.lat)(points)
+	def printXarr(points: collection.Seq[Point]) = printarr("x", _.lon)(points)
+	def printYarr(points: collection.Seq[Point]) = printarr("y", _.lat)(points)
 
 	def round(p: Point) = Point(Math.rint(p.lon), Math.rint(p.lat))
 

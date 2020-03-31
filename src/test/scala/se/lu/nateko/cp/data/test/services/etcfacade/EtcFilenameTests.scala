@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.test.services.etcfacade
 
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
 import se.lu.nateko.cp.meta.core.etcupload.DataType
 import java.time.LocalDate
 import java.time.LocalTime
 
-class EtcFilenameTests extends FunSpec{
+class EtcFilenameTests extends AnyFunSpec{
 
 	describe("Parsing"){
 		val ec = "FA-Lso_EC_201202040437_L03_F12.csv"

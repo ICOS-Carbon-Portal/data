@@ -65,7 +65,7 @@ class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 		)
 
 		private def assertNoMissingColumns(): Unit = {
-			val missingColumns = colsMeta.findMissingColumns(header.columnNames).map(_.toString)
+			val missingColumns = colsMeta.findMissingColumns(header.columnNames.toIndexedSeq).map(_.toString)
 			if(!missingColumns.isEmpty) throw new CpDataParsingException(
 				s"Required columns were missing in the data: ${missingColumns.mkString(", ")}"
 			)

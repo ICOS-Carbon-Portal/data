@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.test.services.etcfacade
 
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 
 import java.time.LocalTime
 import scala.concurrent.duration.DurationInt
 import se.lu.nateko.cp.data.services.etcfacade.RetryLogic
 
-class RetryLogicTests extends FunSpec{
+class RetryLogicTests extends AnyFunSpec{
 
 	describe("timeToNextTick"){
 		import RetryLogic.timeToNextTick

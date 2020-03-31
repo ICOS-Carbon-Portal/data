@@ -109,8 +109,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 				(md5Fut, ioFut) => {
 					for(
 						md5Actual <- md5Fut;
-						ioRes <- ioFut;
-						_ <- Future.fromTry(ioRes.status);
+						_ <- ioFut;
 						done <- if(md5Actual == md5) Future(transactUpload()) else Future.failed(
 							new ChecksumError(s"Expected MD5 checksum $md5, got $md5Actual")
 						)
@@ -274,8 +273,7 @@ object FacadeService{
 				case (hashFut, ioFut) => {
 					for(
 						hash <- hashFut;
-						io <- ioFut;
-						_ <- Future.fromTry(io.status)
+						_ <- ioFut
 					) yield tmpFile -> hash
 				}.andThen{
 					case Failure(_) =>

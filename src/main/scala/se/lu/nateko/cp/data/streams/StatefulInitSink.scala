@@ -36,7 +36,7 @@ private class StatefulInitSink[T, M](sinkFactory: () => Sink[T, M]) extends Grap
 				sourceOut = new SubSourceOutlet[T]("StatefulInitSink")
 				sourceOut.setHandler(new OutHandler {
 					override def onPull(): Unit = pull(in)
-					override def onDownstreamFinish(): Unit = {
+					override def onDownstreamFinish(cause: Throwable): Unit = {
 						sourceOut.complete()
 						completeStage()
 					}

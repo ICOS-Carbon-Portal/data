@@ -1,19 +1,18 @@
 package se.lu.nateko.cp.data.test.streams
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.StatefulInitSink
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import org.scalatest.BeforeAndAfterAll
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class StatefulInitSinkTests extends FunSuite with BeforeAndAfterAll{
+class StatefulInitSinkTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	private implicit val system = ActorSystem("StatefulInitSinkTests")
-	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll(): Unit = {
 		system.terminate()

@@ -11,7 +11,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
@@ -27,7 +27,6 @@ object Main extends App {
 
 	implicit val system = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
-	implicit val materializer = ActorMaterializer(namePrefix = Some("cpdata_mat"))
 	implicit val dispatcher = system.dispatcher
 
 	val config = ConfigReader.getDefault
@@ -35,7 +34,7 @@ object Main extends App {
 
 	private def netCdfServiceFactory(netCdfFolder: String) = {
 		import config.netcdf._
-		import scala.collection.JavaConverters._
+		import scala.jdk.CollectionConverters.SeqHasAsJava
 		new ViewServiceFactoryImpl(netCdfFolder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
 	}
 

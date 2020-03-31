@@ -1,6 +1,6 @@
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-scalaVersion in ThisBuild := "2.12.10"
+scalaVersion in ThisBuild := "2.13.1"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -11,23 +11,20 @@ lazy val commonSettings = Seq(
 		"-unchecked",
 		"-feature",
 		"-deprecation",
-		"-Xfuture",
-		"-Yno-adapted-args",
-		"-Ywarn-dead-code",
-		"-Ywarn-numeric-widen",
-		"-Ywarn-unused"
+		"-Wdead-code",
+		"-Wnumeric-widen"
 	),
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.5.27"
+val akkaVersion = "2.6.3"
 val akkaHttpVersion = "10.1.11"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.1.3-SNAPSHOT",
+		version := "0.1.4",
 		libraryDependencies ++= Seq(
 			//repo.icos-cp.eu acts as proxy to https://artifacts.unidata.ucar.edu
 			"edu.ucar"            % "cdm"                                % "4.6.11" excludeAll(
@@ -60,15 +57,23 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.10"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.12"
+
+val osName: String = System.getProperty("os.name") match {
+	case name if name.startsWith("Linux") => "linux"
+	case name if name.startsWith("Mac") => "mac"
+	case name if name.startsWith("Windows") => "win"
+	case _ => throw new Exception("Unknown platform!")
+}
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
+	.aggregate(netcdf)
 	.enablePlugins(SbtTwirl, IcosCpSbtDeployPlugin, IcosCpSbtFrontendPlugin)
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.4.7",
+		version := "0.4.8",
 
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
@@ -81,20 +86,24 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.0-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.1",
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.1-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.2",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 
-			"org.gillius"         % "jfxutils"         % "1.0"   % "test",
-			"org.scalatest"      %% "scalatest"        % "3.0.3" % "test"
+			"org.openjfx"         % "javafx-base"      % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-controls"  % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-fxml"      % "11" % "test" classifier osName,
+			"org.openjfx"         % "javafx-graphics"  % "11" % "test" classifier osName,
+			"org.gillius"         % "jfxutils"         % "1.0" % "test",
+			"org.scalatest"      %% "scalatest"        % "3.1.0" % "test"
 		),
 
 		fork in (Test, run) := true,
 
 		logBuffered in Test := false,
 
-		scalacOptions += "-Ywarn-unused-import:false",
+		scalacOptions += "-Wunused:-imports",
 
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",

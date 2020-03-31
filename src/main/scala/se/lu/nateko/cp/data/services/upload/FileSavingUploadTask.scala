@@ -59,9 +59,6 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 		}
 	}
 
-	private def ioResultToTaskResult(ioRes: IOResult): UploadTaskResult = ioRes.status match{
-		case Success(_) => FileWriteSuccess(ioRes.count)
-		case Failure(err) => FileWriteFailure(err)
-	}
+	private def ioResultToTaskResult(ioRes: IOResult): UploadTaskResult = FileWriteSuccess(ioRes.count)
 
 }

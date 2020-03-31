@@ -115,7 +115,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val batchObjectDownload: Route = pathEnd {
 		get{
-			parameters(('ids.as[Seq[Sha256Sum]], 'fileName)){(hashes, fileName) =>
+			parameters(("ids".as[Seq[Sha256Sum]], "fileName")){(hashes, fileName) =>
 				val licenceCheck: Directive1[Boolean] = licenceCookieHashsums.map(
 					dobjs => hashes.diff(dobjs).isEmpty
 				)
@@ -126,7 +126,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			complete(StatusCodes.BadRequest -> "Expected fileName URL parameter and js array of SHA256 hashsums in 'ids' URL parameter")
 		} ~
 		post{
-			formFields(('fileName, 'ids.as[Seq[Sha256Sum]], 'licenceOk.as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
+			formFields(("fileName", "ids".as[Seq[Sha256Sum]], "licenceOk".as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
 
 				batchDownload(hashes, fileName, provide(licenceOk)){
 					val licProfile = new FormLicenceProfile(hashes, fileName)
@@ -143,7 +143,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		case _ => None
 	}
 
-	private val downloadLogging: Route = parameters(('ip.?, 'endUser.?)){(ipOpt, endUserOpt) =>
+	private val downloadLogging: Route = parameters(("ip".?, "endUser".?)){(ipOpt, endUserOpt) =>
 		withBestAvailableIp(ipOpt){ip =>
 			extractHashsums{hashes =>
 				extractEnvri{implicit envri =>
@@ -298,7 +298,7 @@ object DownloadRouting{
 			provide{
 				entity.data.utf8String.split("\n").map{pid =>
 					Sha256Sum.fromBase64Url(pid.split('/').last.trim).get
-				}
+				}.toIndexedSeq
 			}
 		} catch{
 			case err: Throwable => complete(

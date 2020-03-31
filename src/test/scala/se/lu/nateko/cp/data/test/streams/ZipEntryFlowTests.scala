@@ -8,10 +8,10 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
@@ -20,9 +20,8 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow._
 import se.lu.nateko.cp.data.test.TestUtils
 import akka.NotUsed
 
-class ZipEntryFlowTests extends FunSuite with BeforeAndAfterAll{
+class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 	private implicit val system = ActorSystem("ZipEntryFlowTests")
-	private implicit val materializer = ActorMaterializer()
 
 	override def afterAll(): Unit = {
 		system.terminate()

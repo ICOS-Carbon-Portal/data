@@ -45,14 +45,14 @@ class TsvDataTable(source: Source) extends ArrayTextTable {
 
 	override val columnNames: Seq[String] = reader.next().toSeq
 
-	final override protected def arrays: Stream[Array[String]] = {
+	final override protected def arrays: LazyList[Array[String]] = {
 		if(!reader.hasNext) {
 			source.close()
-			Stream.empty
+			LazyList.empty
 		}
 		else {
 			val row = reader.next()
-			Stream.cons(row, arrays)
+			LazyList.cons(row, arrays)
 		}
 	}
 }

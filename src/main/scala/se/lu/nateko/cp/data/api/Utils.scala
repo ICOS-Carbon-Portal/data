@@ -11,13 +11,13 @@ import scala.concurrent.Future
 
 object Utils {
 
-	def waitForAll(futures: TraversableOnce[Future[Any]])(implicit exec: ExecutionContext): Future[Unit] = {
-		val safeFutures: TraversableOnce[Future[Any]] = futures.map(_.recover{case _ => null})
+	def waitForAll(futures: Iterable[Future[Any]])(implicit exec: ExecutionContext): Future[Unit] = {
+		val safeFutures: Iterable[Future[Any]] = futures.map(_.recover{case _ => null})
 		Future.sequence(safeFutures).map(_ => ())
 	}
 
-	def runSequentially[T](elems: TraversableOnce[T])(f: T => Future[Any])(implicit exec: ExecutionContext): Unit = {
-		elems.foldLeft[Future[Any]](Future.successful(())){(acc, elem) =>
+	def runSequentially[T](elems: IterableOnce[T])(f: T => Future[Any])(implicit exec: ExecutionContext): Unit = {
+		elems.iterator.foldLeft[Future[Any]](Future.successful(())){(acc, elem) =>
 			acc.transformWith{_ => f(elem)}
 		}
 	}
@@ -25,7 +25,7 @@ object Utils {
 	def waitForAll(futures: Future[Any]*)(implicit exec: ExecutionContext): Future[Unit] = waitForAll(futures)
 
 	def iterateChildren[T](folder: Path, glob: Option[String] = None)(eagerExtractor: Iterator[Path] => T): T = {
-		import scala.collection.JavaConverters._
+		import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 		if(Files.exists(folder) && Files.isDirectory(folder)){
 			val dirStream = glob.fold(Files.newDirectoryStream(folder))(Files.newDirectoryStream(folder, _))
@@ -43,4 +43,5 @@ object Utils {
 				.map(strict => strict.data.decodeString("UTF-8"))
 				.recover{case _: Throwable => resp.status.toString}
 	}
+
 }

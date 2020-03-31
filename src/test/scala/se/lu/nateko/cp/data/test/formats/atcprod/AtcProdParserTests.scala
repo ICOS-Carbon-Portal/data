@@ -1,9 +1,9 @@
 package se.lu.nateko.cp.data.test.formats.atcprod
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats.atcprod.AtcProdParser.disambiguateColumnNames
 
-class AtcProdParserTests extends FunSuite{
+class AtcProdParserTests extends AnyFunSuite{
 
 	test("AtcProdParser.disambiguateColumnNames disambiguates as expected"){
 		val input = (

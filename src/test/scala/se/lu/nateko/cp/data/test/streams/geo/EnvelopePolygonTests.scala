@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
-import org.scalatest.FunSpec
+import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.streams.geo.EnvelopePolygon
 import se.lu.nateko.cp.data.streams.geo.Point
 
 import org.scalactic.Tolerance
 
-class EnvelopePolygonTests extends FunSpec with Tolerance with EnvelopePolygonHelpers{
+class EnvelopePolygonTests extends AnyFunSpec with Tolerance with EnvelopePolygonHelpers{
 
 	private def triangle = {
 		implicit val p = EnvelopePolygon.defaultEmpty

@@ -2,11 +2,11 @@ package se.lu.nateko.cp.data.test.services.etcfacade
 
 import java.time.LocalDate
 
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
 
-class EtcFilenameToEcDailyTests extends FunSuite{
+class EtcFilenameToEcDailyTests extends AnyFunSuite{
 
 	def dateOpt(file: String): Option[LocalDate] =
 		EtcFilename.parse(file).toOption.flatMap(_.toEcDaily).map(_.date)

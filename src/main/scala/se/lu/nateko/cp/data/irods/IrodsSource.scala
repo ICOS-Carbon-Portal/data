@@ -53,14 +53,16 @@ private class IrodsSource(filePath: String, account: IRODSAccount, connPool: IRO
 						push(out, nextRow)
 						if(nextRow.size < bufferSize) {
 							complete(out)
-							onDownstreamFinish()
+							closeInputAndSessionAndCompleteStage()
 						}
 					}catch{
 						case exc: Throwable => failIrodsSource(exc)
 					}
 				}
 
-				override def onDownstreamFinish(): Unit = {
+				override def onDownstreamFinish(cause: Throwable): Unit = closeInputAndSessionAndCompleteStage()
+
+				private def closeInputAndSessionAndCompleteStage(): Unit = {
 					closeInStreamAndSession()
 
 					if(!countPromise.isCompleted){

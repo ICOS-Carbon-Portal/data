@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.streams.geo
 import scala.annotation.tailrec
 import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
+import Ordering.Double.TotalOrdering
 
 import GeoAlgorithms._
 import se.lu.nateko.cp.meta.core.data.Polygon
@@ -15,7 +16,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 	private val nearests = Buffer.empty[Point]
 	private[this] val edgeReplacements = Map.empty[Int, Point]
 
-	def vertices: Seq[Point] = verts
+	def vertices: collection.Seq[Point] = verts
 	def vertice(idx: Int): Point = verts(shortcircuit(idx))
 	def nearestTo(idx: Int): Point = nearests(shortcircuit(idx))
 	def size: Int = verts.size
@@ -213,8 +214,8 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho1 = orthoNormVector(vert, v1)
 						val ortho2 = orthoNormVector(v1, v2)
 						val nanoShifted = v1 + (ortho1 + ortho2) * conf.epsilon
-						verts.insert(nearest.baseIdx, vert, nanoShifted)
-						nearests.insert(nearest.baseIdx, vert, nanoShifted)
+						verts.insertAll(nearest.baseIdx, Iterable(vert, nanoShifted))
+						nearests.insertAll(nearest.baseIdx, Iterable(vert, nanoShifted))
 
 					case SecondVertice =>
 						val v2 = nearest.point
@@ -222,8 +223,8 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val ortho1 = orthoNormVector(v1, v2)
 						val ortho2 = orthoNormVector(v2, vert)
 						val nanoShifted = v2 + (ortho1 + ortho2) * conf.epsilon
-						verts.insert(nearest.baseIdx, nanoShifted, vert)
-						nearests.insert(nearest.baseIdx, nanoShifted, vert)
+						verts.insertAll(nearest.baseIdx, Iterable(nanoShifted, vert))
+						nearests.insertAll(nearest.baseIdx, Iterable(nanoShifted, vert))
 
 					case InnerPoint =>
 						val np = nearest.point
@@ -232,8 +233,8 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 						val dir2 = normVector(np, v1)
 						val shifted1 = np + (dir1 + dir2) * conf.epsilon
 						val shifted2 = np + (dir1 - dir2) * conf.epsilon
-						verts.insert(nearest.baseIdx, shifted1, vert, shifted2)
-						nearests.insert(nearest.baseIdx, shifted1, vert, shifted2)
+						verts.insertAll(nearest.baseIdx, Iterable(shifted1, vert, shifted2))
+						nearests.insertAll(nearest.baseIdx, Iterable(shifted1, vert, shifted2))
 				}
 				true
 			}
@@ -263,7 +264,7 @@ object EnvelopePolygon{
 
 	def defaultEmpty = new EnvelopePolygon(defaultConfig)
 
-	def apply(vertices: TraversableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
+	def apply(vertices: IterableOnce[Point])(conf: EnvelopePolygonConfig): EnvelopePolygon = {
 		val p = new EnvelopePolygon(conf)
 		p.verts ++= vertices
 		p.nearests ++= p.verts
@@ -311,6 +312,6 @@ object EnvelopePolygon{
 	}
 
 	def getGeoFeature(poly: EnvelopePolygon) = Polygon(
-		poly.vertices.map(p => Position(lat = p.lat, lon = p.lon, alt = None))
+		poly.vertices.toIndexedSeq.map(p => Position(lat = p.lat, lon = p.lon, alt = None))
 	)
 }
