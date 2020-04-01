@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import LegendText from './LegendText';
 import LegendAxis from './LegendAxis';
-import RangeSlider from "./RangeSlider";
 
 export default class Legend extends Component {
 	constructor(props) {
@@ -69,8 +68,6 @@ export default class Legend extends Component {
 		} else {
 			ctx.strokeRect(0, props.margin - 0.5, width, length);
 		}
-
-		// this.rangeSlider.init(canvas, props.margin, 600);
 	}
 
 	render() {

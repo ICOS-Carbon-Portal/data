@@ -67,43 +67,43 @@ export const colorRamps = [
 		name: 'BuGn',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[44,162,95, 255], [153,216,201, 255], [229,245,249, 255]]
+		colors: [[229,245,249, 255], [44,162,95, 255]]
 	},
 	{
 		name: 'BuPu',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[136,86,167, 255], [158,188,218, 255], [224,236,244, 255]]
+		colors: [[224,236,244, 255], [136,86,167, 255]]
 	},
 	{
 		name: 'GnBu',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[67,162,202, 255], [168,221,181, 255], [224,243,219, 255]]
+		colors: [[224,243,219, 255], [67,162,202, 255]]
 	},
 	{
 		name: 'OrRd',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[227,74,51, 255], [253,187,132, 255], [254,232,200, 255]]
+		colors: [[254,232,200, 255], [227,74,51, 255]]
 	},
 	{
 		name: 'Blues',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[49,130,189, 255], [158,202,225], [222,235,247, 255]]
+		colors: [[222,235,247, 255], [49,130,189, 255]]
 	},
 	{
 		name: 'Greens',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[49,163,84, 255], [161,217,155, 255], [229,245,224, 255]]
+		colors: [[229,245,224, 255], [49,163,84, 255]]
 	},
 	{
 		name: 'Greys',
 		colorMaker: undefined,
 		domain: [0, 1],
-		colors: [[99,99,99, 255], [189,189,189, 255], [240,240,240, 255]]
+		colors: [[240,240,240, 255], [99,99,99, 255]]
 	}
 ];
 
@@ -120,7 +120,6 @@ export const updateElement = (elementCreator) => {
 
 export default class ColorMaker{
 	constructor(minVal, maxVal, gamma, colorRamp){
-		// console.log('new ColorMaker', {minVal, maxVal, gamma, colorRamp});
 		this._gamma = gamma;
 		this._domain = [minVal, maxVal];
 		this._normalize = minVal < 0 && maxVal > 0
@@ -170,7 +169,7 @@ export class ColorMakerRamps extends ColorMaker {
 		const selectedColorRamp = filteredColorRamps[colorRampIdx];
 
 		super(minVal, maxVal, gamma, selectedColorRamp);
-// console.log('new ColorMakerRamps', colorRampName, selectedColorRamp);
+
 		this.colorRampName = colorRampName;
 		this.colorRampIdx = colorRampIdx;
 		this.colorRamps = filteredColorRamps.map(cr => ({
