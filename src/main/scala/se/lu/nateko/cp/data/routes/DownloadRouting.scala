@@ -115,21 +115,21 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val batchObjectDownload: Route = pathEnd {
 		get{
-			parameters(("ids".as[Seq[Sha256Sum]], "fileName")){(hashes, fileName) =>
+			parameters(("ids".as[Array[Sha256Sum]], "fileName")){(hashes, fileName) =>
 				val licenceCheck: Directive1[Boolean] = licenceCookieHashsums.map(
 					dobjs => hashes.diff(dobjs).isEmpty
 				)
-				batchDownload(hashes, fileName, licenceCheck){
-					redirect(new UriLicenceProfile(hashes, Some(fileName), false).licenceUri, StatusCodes.Found)
+				batchDownload(hashes.toIndexedSeq, fileName, licenceCheck){
+					redirect(new UriLicenceProfile(hashes.toIndexedSeq, Some(fileName), false).licenceUri, StatusCodes.Found)
 				}
 			} ~
 			complete(StatusCodes.BadRequest -> "Expected fileName URL parameter and js array of SHA256 hashsums in 'ids' URL parameter")
 		} ~
 		post{
-			formFields(("fileName", "ids".as[Seq[Sha256Sum]], "licenceOk".as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
+			formFields(("fileName", "ids".as[Array[Sha256Sum]], "licenceOk".as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
 
-				batchDownload(hashes, fileName, provide(licenceOk)){
-					val licProfile = new FormLicenceProfile(hashes, fileName)
+				batchDownload(hashes.toIndexedSeq, fileName, provide(licenceOk)){
+					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
 					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
 				}
 			} ~

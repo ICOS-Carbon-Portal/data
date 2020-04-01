@@ -27,9 +27,9 @@ class LicenceRouting(userOpt: Directive1[Option[UserId]], handleProxies: HandleP
 
 	private def dataLicence(prof: LicenceProfile): Route = dataLicenceRoute(prof, userOpt, handleProxies)
 
-	def route: Route = parameter(("ids".as[Seq[Sha256Sum]], "fileName".?, "isColl".as[Boolean] ? false)){(hashes, fileOpt, isColl) =>
+	def route: Route = parameter(("ids".as[Array[Sha256Sum]], "fileName".?, "isColl".as[Boolean] ? false)){(hashes, fileOpt, isColl) =>
 
-		val profile = new UriLicenceProfile(hashes, fileOpt, isColl)
+		val profile = new UriLicenceProfile(hashes.toIndexedSeq, fileOpt, isColl)
 
 		path(LicenceAcceptPath){
 			val target = profile.downloadUri
