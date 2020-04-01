@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
-import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
+// import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
+import NetCDFMap, {getTileHelper} from './NetCDFMap';
 import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
-import Legend from 'icos-cp-legend';
+// import Legend from 'icos-cp-legend';
+import Legend from './legend/Legend';
 import Controls from './Controls.jsx';
 import {throttle, Events} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
@@ -17,7 +19,9 @@ export default class Map extends Component {
 		super(props);
 		this.state = {
 			height: null,
-			isShowTimeserieActive: false
+			isShowTimeserieActive: false,
+			rangeValues: {},
+			valueFilter: _ => true
 		};
 
 		this.countriesTs = Date.now();
@@ -35,7 +39,7 @@ export default class Map extends Component {
 
 	componentDidMount(){
 		const self = this;
-		setTimeout(self.updateHeight.bind(self), 100);
+		setTimeout(self.updateHeight.bind(self), 200);
 	}
 
 	updateURL(){
@@ -127,6 +131,18 @@ export default class Map extends Component {
 		}
 	}
 
+	rangeFilterChanged(rangeValues){
+		const valueFilter = rangeValues.minRange !== undefined && rangeValues.maxRange !== undefined
+			? v => v > rangeValues.minRange && v < rangeValues.maxRange
+			: rangeValues.minRange !== undefined
+				? v => v > rangeValues.minRange
+				: rangeValues.maxRange !== undefined
+					? v => v < rangeValues.maxRange
+					: _ => true;
+
+		this.setState({valueFilter, rangeValues});
+	}
+
 	render() {
 		const state = this.state;
 		const props = this.props;
@@ -135,7 +151,7 @@ export default class Map extends Component {
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
 		const legendId = props.raster
-			? props.raster.id + '_' + state.gamma
+			? props.raster.id + '_' + state.gamma + '_' + JSON.stringify(state.rangeValues)
 			: "";
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
@@ -144,6 +160,10 @@ export default class Map extends Component {
 			props.raster
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
+
+		if (props.raster) {
+			props.raster.id = props.raster.basicId + state.gamma + '_' + JSON.stringify(state.rangeValues);
+		}
 
 		return (
 			<div id="content" className="container-fluid">
@@ -189,6 +209,7 @@ export default class Map extends Component {
 							}}
 							raster={props.raster}
 							colorMaker={colorMaker}
+							valueFilter={state.valueFilter}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
 							events={[
@@ -210,6 +231,7 @@ export default class Map extends Component {
 					<div id="legend" ref={div => this.legendDiv = div}>{
 						getLegend
 							? <Legend
+								allowRanges={true}
 								horizontal={false}
 								canvasWidth={20}
 								containerHeight={containerHeight}
@@ -218,6 +240,7 @@ export default class Map extends Component {
 								legendId={legendId}
 								legendText="Legend"
 								decimals={3}
+								rangeFilterChanged={this.rangeFilterChanged.bind(this)}
 							/>
 							: null
 					}</div>

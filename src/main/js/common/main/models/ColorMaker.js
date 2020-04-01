@@ -175,7 +175,7 @@ export class ColorMakerRamps extends ColorMaker {
 		this.colorRampIdx = colorRampIdx;
 		this.colorRamps = filteredColorRamps.map(cr => ({
 			...cr,
-			...{colorMaker: new ColorMaker(cr.domain[0] * 120, cr.domain.slice(-1)[0] * 120, gamma, cr)}
+			...{colorMaker: new ColorMaker(cr.domain[0], cr.domain.slice(-1)[0], gamma, cr)}
 		}));
 	}
 }

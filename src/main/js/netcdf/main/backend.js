@@ -1,8 +1,51 @@
-import {sparql, getBinRaster, getJson} from 'icos-cp-backend';
+import {sparql, getJson, checkStatus, getUrlQuery} from 'icos-cp-backend';
 import {feature} from 'topojson';
 import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
 
+var BinRaster = /** @class */ (function () {
+	function BinRaster(arrayBuf, id) {
+		var _this = this;
+		this._data = new DataView(arrayBuf);
+		this.id = id;
+		var getHeaderValue = function (i) { return _this._data.getFloat64(i << 3, false); };
+		this.height = getHeaderValue(0);
+		this.width = getHeaderValue(1);
+		this.stats = {
+			min: getHeaderValue(2),
+			max: getHeaderValue(3)
+		};
+		this.boundingBox = {
+			latMin: getHeaderValue(4),
+			latMax: getHeaderValue(5),
+			lonMin: getHeaderValue(6),
+			lonMax: getHeaderValue(7)
+		};
+	}
+	BinRaster.prototype.getValue = function (y, x) {
+		var i = (this.height - 1 - y) * this.width + x;
+		return this._data.getFloat64((i << 3) + 64, false);
+	};
+	return BinRaster;
+}());
+
+function getBinRaster(id, url) {
+	var keyValues = [];
+	for (var _i = 2; _i < arguments.length; _i++) {
+		keyValues[_i - 2] = arguments[_i];
+	}
+	var fullUrl = url + getUrlQuery(keyValues);
+	return fetch(fullUrl, {
+		headers: {
+			'Accept': 'application/octet-stream'
+		}
+	})
+		.then(checkStatus)
+		.then(function (response) { return response.arrayBuffer(); })
+		.then(function (response) {
+			return new BinRaster(response, id || fullUrl);
+		});
+}
 
 export const getRaster = (service, variable, date, elevation, gamma) => {
 	const basicIdRaster = getBinRaster(null, '/netcdf/getSlice', ['service', service], ['varName', variable], ['date', date], ['elevation', elevation]);
