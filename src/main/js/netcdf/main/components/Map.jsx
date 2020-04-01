@@ -162,7 +162,11 @@ export default class Map extends Component {
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
 
 		if (props.raster) {
-			props.raster.id = props.raster.basicId + state.gamma + '_' + JSON.stringify(state.rangeValues);
+			// A change in raster id triggers a rerender of map
+			props.raster.id = props.raster.basicId
+				+ props.controls.gammas.selectedIdx
+				+ props.controls.colorRamps.selectedIdx
+				+ '_' + JSON.stringify(state.rangeValues);
 		}
 
 		return (

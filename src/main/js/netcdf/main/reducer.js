@@ -128,10 +128,6 @@ export default function(state, action){
 				? new ControlColorRamp(colorMaker.colorRamps, newGammaControls.selectedIdxs.colorRampIdx)
 				: undefined;
 
-			if (state.raster){
-				state.raster.id = state.raster.basicId + selectedGamma;
-			}
-
 			return update({
 				colorMaker,
 				controls: newGammaControls.withColorRamps(controlColorRamp)
@@ -144,10 +140,6 @@ export default function(state, action){
 			colorMaker = state.raster
 				? new ColorMakerRamps(state.raster.stats.min, state.raster.stats.max, state.controls.gammas.selected, selectedColorRamp)
 				: state.colorMaker;
-
-			if (state.raster){
-				state.raster.id = state.raster.basicId + selectedColorRamp;
-			}
 
 			return update({
 				colorMaker,
