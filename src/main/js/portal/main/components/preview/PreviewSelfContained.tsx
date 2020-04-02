@@ -40,7 +40,7 @@ export default class PreviewSelfContained extends Component<OurProps>{
 const getHeight = (previewType: OurPreviewType) => {
 	switch(previewType){
 		case config.NETCDF: return 600;
-		case config.MAPGRAPH: return 980;
+		case config.MAPGRAPH: return 1100;
 		default: return 600;
 	}
 };
