@@ -38,6 +38,11 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 		}
 	}
 
+	componentDidUpdate(prevProps: OurProps){
+		if (prevProps.filterNumber.txt !== "" && this.props.filterNumber.txt === "")
+			this.setState({val: undefined, isValid: true});
+	}
+
 	render() {
 		const {isEnabled = true, filterNumber} = this.props;
 		if (!isEnabled) return null;
