@@ -68,13 +68,16 @@ val osName: String = System.getProperty("os.name") match {
 
 lazy val data = (project in file("."))
 	.dependsOn(netcdf)
-	.aggregate(netcdf)
 	.enablePlugins(SbtTwirl, IcosCpSbtDeployPlugin, IcosCpSbtFrontendPlugin)
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
 		version := "0.4.8",
 
+		Test / test := {
+			(netcdf / Test / test).value
+			(Test / test).value
+		},
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
 		cpFrontendJarImports := Seq(
