@@ -24,6 +24,7 @@
 		"main/**/*.js",
 		"main/**/*.ts",
 		"../common/main/**/*.js",
-		"../common/main/**/*.ts"
+		"../common/main/**/*.ts",
+		"external-modules/**/*.d.ts"
 	]
 }

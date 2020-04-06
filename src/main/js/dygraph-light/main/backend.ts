@@ -30,6 +30,7 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 			.then(tableFormats =>
 				objects.map((object, index) => {
 					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index];
+					console.log(Object.assign({tableFormat}, object));
 					return Object.assign({tableFormat}, object)
 				})
 			)

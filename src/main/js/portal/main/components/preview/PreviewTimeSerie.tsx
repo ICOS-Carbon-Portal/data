@@ -116,7 +116,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 						<div className="panel-body" style={{paddingTop: 0}}>
 							<div className="row">
-								<div className="col-md-4">
+								<div className="col-md-3">
 									<Selector
 										name="x"
 										label="X axis"
@@ -125,7 +125,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
-								<div className="col-md-4">
+								<div className="col-md-3">
 									<Selector
 										name="y"
 										label="Y axis"
@@ -134,7 +134,16 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
-								<div className="col-md-4">
+								<div className="col-md-3">
+									<Selector
+										name="y2"
+										label="Y2 axis"
+										selected={yAxis}
+										options={options}
+										selectAction={this.handleSelectAction.bind(this)}
+									/>
+								</div>
+								<div className="col-md-1">
 									<Selector
 										name="type"
 										label="Chart type"

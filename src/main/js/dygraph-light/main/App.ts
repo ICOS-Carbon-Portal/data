@@ -10,7 +10,16 @@ import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
 import {getCssText} from '../../common/main/style';
 import {addHelpSection} from "./HelpSection";
+import {BinTable, ColumnInfo, TableFormat} from "icos-cp-backend";
+import {ColumnDataType} from "icos-cp-backend/lib/BinTable";
 
+type IdxSig<Value = string, Keys extends string | number | symbol = string> = {
+	[Key in Keys]: Value
+}
+
+function isDefined<T>(x: T | undefined): x is T{
+	return x !== undefined;
+}
 
 const spinnerDelay = 100;
 const errMsg = `
@@ -56,9 +65,18 @@ const stylesCollapsibleSection = {
 };
 
 export default class App {
-	constructor(config, params){
-		this.config = config;
-		this.params = params;
+	private graph: any;
+	private tableFormat: any;
+	private labels: any;
+	private lastDateFormat: any;
+	private isHelpAdded: boolean;
+	private spinner: any;
+	private legend: CollapsibleSection;
+	private timer: number = 0;
+
+	constructor(readonly config: any, private params: UrlSearchParams){
+		// this.config = config;
+		// this.params = params;
 		this.graph = undefined;
 		this.tableFormat = undefined;
 		this.labels = [];
@@ -72,7 +90,7 @@ export default class App {
 			this.showSpinner(false);
 			if (params.isValidParams) this.main();
 
-			window.onmessage = event => {
+			window.onmessage = (event: MessageEvent) => {
 				const urlParams = new URL(event.data).search;
 				this.params = new UrlSearchParams(urlParams, ['objId', 'x', 'y']);
 				if (this.params.isValidParams) {
@@ -135,20 +153,19 @@ export default class App {
 						}
 
 						// Sort by date so that dygraph can display the time serie
-						return objects.sort((obj1, obj2) => new Date(obj1.startedAtTime) - new Date(obj2.startedAtTime));
+						return objects.sort((obj1, obj2) =>
+							new Date(obj1.startedAtTime).getTime() - new Date(obj2.startedAtTime).getTime());
 					}
 				}
 			)
 			.then(
 				objects => {
 					return Promise.all(
-						objects.map(object => {
-							if(isColNameValid(object.tableFormat, params.get('y'))) {
-								return getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows);
-							} else {
-								return [];
-							}
-						})
+						objects.map(object =>
+							isColNameValid(object.tableFormat, params.get('y'))
+								? getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows)
+								: Promise.resolve([] as any)
+						)
 					);
 				}
 			)
@@ -164,7 +181,7 @@ export default class App {
 			});
 	}
 
-	initGraph(tableFormat, title){
+	initGraph(tableFormat: TableFormat, title: string){
 		this.showSpinner(true);
 
 		const params = this.params;
@@ -179,9 +196,7 @@ export default class App {
 		const drawPoints = params.get('type') !== 'line';
 
 		let daysDisplayed = 0;
-		const getDaysDisplayed = ([min, max]) => {
-			return (max - min) / (24 * 3600 * 1000);
-		};
+		const getDaysDisplayed = ([min, max]: number[]) => (max - min) / (24 * 3600 * 1000);
 
 		this.graph = new Dygraph(
 			'graph',
@@ -204,15 +219,15 @@ export default class App {
 					x: {
 						drawGrid: false,
 						axisLabelWidth: 80,
-						valueFormatter: formatters.valueFormatter,
-						axisLabelFormatter: formatters.axisLabelFormatter,
+						valueFormatter: formatters.valueFormatter as ValueFormatter,
+						axisLabelFormatter: formatters.axisLabelFormatter as AxisLabelFormatter,
 						pixelsPerLabel: 100
 					},
 					y: {
 						axisLabelWidth: 100
 					}
 				},
-				drawCallback: (graph, isInitial) => {
+				drawCallback: (graph: any, isInitial: boolean) => {
 					if (xIsDate && daysDisplayed === 0) {
 						daysDisplayed = getDaysDisplayed(graph.xAxisRange());
 
@@ -222,7 +237,7 @@ export default class App {
 						}
 					}
 				},
-				zoomCallback: (min, max, yRanges) => {
+				zoomCallback: (min: number, max: number) => {
 					if (xIsDate) {
 						daysDisplayed = getDaysDisplayed([min, max]);
 						this.updateAxisLabelFormatter(xLegendLabel, valueFormatX, daysDisplayed);
@@ -232,7 +247,7 @@ export default class App {
 		);
 	}
 
-	updateAxisLabelFormatter(xLegendLabel, valueFormatX, daysDisplayed){
+	updateAxisLabelFormatter(xLegendLabel: string, valueFormatX: string, daysDisplayed: number){
 		const currentDateTimeFormat = getDateTimeFormat(daysDisplayed);
 
 		if (currentDateTimeFormat === this.lastDateFormat) return;
@@ -244,14 +259,14 @@ export default class App {
 		}
 	}
 
-	legendFormatter(data){
-		return `${data.x === undefined ? '' : data.xHTML}<br><table>` + data.series.map(series =>
+	legendFormatter(data: any){
+		return `${data.x === undefined ? '' : data.xHTML}<br><table>` + data.series.map((series: any) =>
 			`<tr style="color:${series.color}"><td>${series.labelHTML}:</td>` +
 			`<td>${isNaN(series.yHTML) ? '' : series.yHTML}</td></tr>`
 		).join('') + '</table>';
 	}
 
-	drawGraph(binTables){
+	drawGraph(binTables: BinTable[]){
 		let allXValsAreNaN = true;
 		let allYValsAreNaN = true;
 
@@ -261,31 +276,34 @@ export default class App {
 				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
 				return isDateTime(valueFormatX)
 					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => {
-						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
-						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
 						return [new Date(subrow[0]), subrow[1]];
 					}))
 					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => {
-						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
-						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
-						return subrow;
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
+						return subrow as number[];
 					})).sort((d1, d2) => d1[0] - d2[0]);
 			} else {
 				// Overlap
-				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0]));
+				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0])) as number[];
 				const uniqueDates = Array.from(new Set(dates));
-				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)]));
+				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)])) as Map<number, number[]>;
 
 				binTables.map((binTable, index) => {
-					binTable.values([0, 1], subrow => {
-						let v = dateList.get(subrow[0]);
-						v[index] = subrow[1];
-						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0]);
-						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1]);
-						dateList.set(subrow[0], v);
+					binTable.values([0, 1], (subrow) => {
+						let v = dateList.get(subrow[0] as number);
+						if (v === undefined) throw new Error("Could not get subrow from dateList");
+
+						v[index] = subrow[1] as number;
+						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
+						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
+						dateList.set(subrow[0] as number, v);
 					});
 				});
-				return Array.from(dateList).map(k => k.flatten()).sort((d1, d2) => d1[0] - d2[0]);
+
+				return Array.from(dateList).map(([k, v]) => [k].concat(v)).sort((d1, d2) => d1[0] - d2[0]);
 			}
 		};
 
@@ -310,7 +328,7 @@ export default class App {
 		const xAxisRange = this.graph.xAxisExtremes();
 		const xCoord = this.graph.toDomXCoord(xAxisRange[0]);
 		const titleHeight = this.graph.getOption('titleHeight');
-		const graphStyle = window.getComputedStyle(document.getElementById("graph"));
+		const graphStyle = window.getComputedStyle(document.getElementById("graph")!);
 		const top = parseInt(graphStyle.top);
 		const left = parseInt(graphStyle.left);
 
@@ -328,11 +346,11 @@ export default class App {
 		const collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, false);
 		collapsibleHelp.setPosition({top: posLegend.top, right: 10});
 
-		addHelpSection(document.getElementById('help'));
+		addHelpSection(document.getElementById('help') as HTMLDivElement);
 		this.isHelpAdded = true;
 	}
 
-	showSpinner(show){
+	showSpinner(show: boolean){
 		if (show) {
 			this.timer = setTimeout(() => this.spinner.show(), spinnerDelay);
 		} else {
@@ -342,32 +360,40 @@ export default class App {
 	}
 }
 
-const getFormatters = (xlabel, valueFormatX, daysDisplayed = Infinity) => {
-	const formatLbl = (val) => {
+type AxisLabelFormatter = (
+	(v: number | Date, granularity?: number, opts?: (name: string) => any, dygraph?: Dygraph) => string | any)
+	| undefined
+
+type ValueFormatter = (
+	(v: number, opts?: (name: string) => any, seriesName?: string, dygraph?: Dygraph, row?: number, col?: number) => any)
+	| undefined
+
+const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Infinity) => {
+	const formatLbl = (val: number) => {
 		return `<span style="font-weight: bold; color: rgb(0,128,128);">${xlabel}</span>: ${val}`;
 	};
 
-	const pad = (number) => {
-		return number < 10 ? '0' + number : number;
+	const pad = (num: number) => {
+		return num < 10 ? '0' + num : num;
 	};
 
-	const valueFormatter = (converter, format, func) => {
-		const fn = func ? func : (val) => val;
+	const valueFormatter = (converter: number, format: string, func?: Function): ValueFormatter => {
+		const fn = func ? func : (val: any) => val;
 
 		return (dataVal, opts, seriesName, graph, row, col) => {
-			return parseDatetime(dataVal, new Date(converter * dataVal), format, fn);
+			return parseDatetime(dataVal as number, new Date(converter as number * (dataVal as number)), format, fn);
 		};
 	};
 
-	const axisLabelFormatter = (converter, format, func) => {
-		const fn = func ? func : (val) => val;
+	const axisLabelFormatter = (converter: number, format: ReturnType<typeof getDateTimeFormat>, func?: Function): AxisLabelFormatter => {
+		const fn = func ? func : (val: any) => val;
 
 		return (dataVal, granularity, opts, graph) => {
-			return parseDatetime(dataVal, new Date(converter * dataVal), format, fn);
+			return parseDatetime(dataVal as number, new Date(converter as number * (dataVal as number)), format, fn);
 		};
 	};
 
-	const parseDatetime = (dataVal, date, format, fn) => {
+	const parseDatetime = (dataVal: number, date: Date, format: any, fn: Function) => {
 		switch(format){
 			case "date-hms":
 				return date.getUTCFullYear() +
@@ -421,11 +447,11 @@ const getFormatters = (xlabel, valueFormatX, daysDisplayed = Infinity) => {
 			axisLabelFormatter: axisLabelFormatter(sec2ms, "hm")
 		};
 	} else {
-		return {valueFormatter: formatLbl, axisLabelFormatter: (val) => val % 1 !== 0 ? +val.toFixed(15) : val};
+		return {valueFormatter: formatLbl, axisLabelFormatter: (val: number) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
 };
 
-const getDateTimeFormat = (daysDisplayed) => {
+const getDateTimeFormat = (daysDisplayed: number) => {
 	if (daysDisplayed >= 7) return "date";
 	else if (daysDisplayed >= 1) return "date-hm";
 	else if (daysDisplayed < 1) return "hm";
@@ -443,42 +469,43 @@ const dateFormats = ['iso8601date', 'etcDate']
 const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
-const isTime = (valueFormat) => timeFormats.includes(valueFormat);
-const isDate = (valueFormat) => dateFormats.includes(valueFormat);
-const isDateTime = (valueFormat) => dateTimeFormats.includes(valueFormat);
+const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
+const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
+const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
 
-const isColNameValid = (tableFormat, colName) => {
+const isColNameValid = (tableFormat: TableFormat, colName: string) => {
 	return tableFormat.getColumnIndex(colName) >= 0;
 };
 
-const getColInfoParam = (tableFormat, colName, param) => {
-	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
+const getColInfoParam = (tableFormat: TableFormat, colName: string, param: string) => {
+	const colInfo = tableFormat.columns[tableFormat.getColumnIndex(colName)] as ColumnInfo & IdxSig;
+	return colInfo[param];
 };
 
-const getLabel = (tableFormat, colName) => {
+const getLabel = (tableFormat: TableFormat, colName: string) => {
 	const unit = getColInfoParam(tableFormat, colName, 'unit');
 	const label = getColInfoParam(tableFormat, colName, 'label');
 
 	return unit === '?' ? label : `${label} [${unit}]`;
 };
 
-const fail = (message) => {
+const fail = (message: string) => {
 	logError(config.previewTypes.TIMESERIES, message);
 	return Promise.reject(new Error(message));
 };
 
-const presentError = (errMsg) => {
-	document.getElementById('error').style.display = 'flex';
-	document.getElementById('error').innerHTML = errMsg;
+const presentError = (errMsg: string) => {
+	document.getElementById('error')!.style.display = 'flex';
+	document.getElementById('error')!.innerHTML = errMsg;
 
 	logError(config.previewTypes.TIMESERIES, errMsg);
 };
 
 const hideError = () => {
-	document.getElementById('error').style.display = 'none';
+	document.getElementById('error')!.style.display = 'none';
 };
 
-const formatData = dataToSave => {
+const formatData = (dataToSave: UrlSearchParams) => {
 	return {
 		previewTimeserie: {
 			params: {
