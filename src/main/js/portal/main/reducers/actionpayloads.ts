@@ -43,7 +43,7 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 }
 
 export class BootstrapRouteMetadata extends BootstrapRoutePayload{
-	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
+	constructor(readonly metadata: MetaDataObject & {id: UrlStr}, readonly objectsTable?: ObjectsTableLike){super();}
 }
 
 export class BootstrapRouteCart extends BootstrapRoutePayload{

@@ -65,9 +65,13 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 };
 
 const handleRouteMetadata = (state: State, payload: BootstrapRouteMetadata): State => {
+	const objectsTable = payload.objectsTable
+		? getObjectsTable(state.specTable, payload.objectsTable)
+		: state.objectsTable;
 	const newPartialState: BootstrapState = {
 		route: 'metadata',
 		metadata: payload.metadata,
+		objectsTable,
 		isRunningInit: false
 	};
 
