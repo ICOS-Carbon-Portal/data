@@ -19,7 +19,7 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 							filename: binding.fileName.value,
 							specLabel: binding.specLabel.value,
 							startedAtTime: binding.startedAtTime.value,
-							columnNames: binding.columnNames ? JSON.parse(binding.columnNames.value) : undefined,
+							columnNames: binding.columnNames ? JSON.parse(binding.columnNames.value) as string[] : undefined,
 						}
 					}))
 					: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));
@@ -30,15 +30,17 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 			.then(tableFormats =>
 				objects.map((object, index) => {
 					const tableFormat = object.columnNames ? tableFormats[index].withColumnNames(object.columnNames) : tableFormats[index];
-					console.log(Object.assign({tableFormat}, object));
-					return Object.assign({tableFormat}, object)
+
+					return {...{tableFormat}, ...object}
 				})
 			)
 		);
 }
 
-export function getBinTable(xCol: string, yCol: string, objId: string, tableFormat: TableFormat, nRows: number){
-	const axisIndices = [xCol, yCol].map(colName => tableFormat.getColumnIndex(colName));
+export function getBinTable(xCol: string, yCol: string, objId: string, tableFormat: TableFormat, nRows: number, y2Col?: string){
+	const cols = y2Col ? [xCol, yCol, y2Col] : [xCol, yCol];
+	const axisIndices = cols.map(colName => tableFormat.getColumnIndex(colName));
 	const request = tableFormat.getRequest(objId, nRows, axisIndices);
+
 	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);
 }

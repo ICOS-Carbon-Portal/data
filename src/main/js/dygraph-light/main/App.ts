@@ -10,19 +10,13 @@ import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
 import {getCssText} from '../../common/main/style';
 import {addHelpSection} from "./HelpSection";
-import {BinTable, ColumnInfo, TableFormat} from "icos-cp-backend";
-import {ColumnDataType} from "icos-cp-backend/lib/BinTable";
-
-type IdxSig<Value = string, Keys extends string | number | symbol = string> = {
-	[Key in Keys]: Value
-}
-
-function isDefined<T>(x: T | undefined): x is T{
-	return x !== undefined;
-}
+import {BinTable} from "icos-cp-backend";
+import LegendData = dygraphs.LegendData;
+import SeriesLegendData = dygraphs.SeriesLegendData;
+import LabelMaker from "./LabelMaker";
 
 const spinnerDelay = 100;
-const errMsg = `
+const invalidReqMsg = `
 <div>
 	<h2>Invalid request</h2>
 
@@ -38,6 +32,8 @@ const errMsg = `
 		<li>linking: Defaults to <i>overlap</i>. Use <i>concatenate</i> to display data objects as one series.</li>
 		<li>legendLabels: List (comma separated matching order of objId) of labels for legend. Defaults to file name.</li>
 		<li>legendClosed: Start with legend collapsed. Defaults to legend open.</li>
+		<li>y2: Parameter name for a second Y axis.</li>
+		<li>legendLabelsY2: List (comma separated matching order of objId) of labels for second Y axis for legend. Defaults to file name.</li>
 	</ul>
 
 	<div style="margin-top:30px;">
@@ -65,23 +61,21 @@ const stylesCollapsibleSection = {
 };
 
 export default class App {
-	private graph: any;
-	private tableFormat: any;
-	private labels: any;
-	private lastDateFormat: any;
+	private graph?: Dygraph;
+	private lastDateFormat?: ReturnType<typeof getDateTimeFormat>;
 	private isHelpAdded: boolean;
-	private spinner: any;
+	private spinner: typeof Spinner;
 	private legend: CollapsibleSection;
 	private timer: number = 0;
+	private labelMaker: LabelMaker;
+	private legendY2: CollapsibleSection;
+	private collapsibleHelp: CollapsibleSection;
 
 	constructor(readonly config: any, private params: UrlSearchParams){
-		// this.config = config;
-		// this.params = params;
 		this.graph = undefined;
-		this.tableFormat = undefined;
-		this.labels = [];
-		this.lastDateFormat = '';
+		this.lastDateFormat = undefined;
 		this.isHelpAdded = false;
+		this.labelMaker = new LabelMaker(params);
 
 		const isSites = config.envri === "SITES";
 		this.spinner = new Spinner(isSites);
@@ -93,10 +87,15 @@ export default class App {
 			window.onmessage = (event: MessageEvent) => {
 				const urlParams = new URL(event.data).search;
 				this.params = new UrlSearchParams(urlParams, ['objId', 'x', 'y']);
+
 				if (this.params.isValidParams) {
 					hideError();
 					this.graph = undefined;
-					this.labels = [];
+
+					this.labelMaker = new LabelMaker(this.params);
+					this.legend.updateSummary(this.labelMaker.legendTitles.y);
+					this.legendY2.updateSummary(this.labelMaker.legendTitles.y2);
+
 					this.main();
 				} else {
 					presentError(`Please choose a value for ${this.params.missingParams.join(', ')}.`);
@@ -107,93 +106,65 @@ export default class App {
 				this.main();
 			} else {
 				this.showSpinner(false);
-				presentError(errMsg);
+				presentError(invalidReqMsg);
 			}
 		}
 
-		this.legend = new CollapsibleSection('legend', 'Legend', stylesCollapsibleSection, this.params.get('legendClosed'), true);
+		this.legend = new CollapsibleSection('legend', this.labelMaker.legendTitles.y, stylesCollapsibleSection, this.params.get('legendClosed'), true);
+		this.legendY2 = new CollapsibleSection('legendY2', this.labelMaker.legendTitles.y2, stylesCollapsibleSection, this.params.get('legendClosed'), true);
+
+		this.collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, true);
+		addHelpSection(document.getElementById('help') as HTMLDivElement);
 	}
 
 	main(){
 		const params = this.params;
 		saveToRestheart(formatData(params));
 
-		const ids = params.get('objId').split(',');
-		const legendLabels = params.has('legendLabels') ? params.get('legendLabels').split(',') : [];
+		const colNameX = params.get('x');
+		const colNameY = params.get('y');
+		const colNameY2 = params.get('y2');
 
-		return getTableFormatNrows(this.config, ids)
-			.then(
-				(objects) => {
-					const object = objects.find(object =>
-						isColNameValid(object.tableFormat, params.get('x')) &&
-						isColNameValid(object.tableFormat, params.get('y')));
-					if (!object) {
-						return fail(`Parameter x (${params.get('x')}) or parameter y (${params.get('y')}) does not exist in data`);
-					} else {
-						if (typeof this.graph === "undefined") {
-							const specList = Array.from(new Set(objects.map(o => o.specLabel))).join(' / ');
-							const title = `${specList} - ${params.get('y')}`;
-							this.initGraph(object.tableFormat, title);
-							this.tableFormat = object.tableFormat;
-							this.labels.push(getColInfoParam(object.tableFormat, params.get('x'), 'label'));
+		return getTableFormatNrows(this.config, this.labelMaker.ids).then(objects => {
+			this.labelMaker.objects = objects;
 
-							if (params.get('linking') === 'concatenate'){
-								this.labels.push(params.has('legendLabels') && params.get('legendLabels').length
-									? params.get('legendLabels').split(',')[0]
-									: getLabel(object.tableFormat, params.get('y')));
-							} else {
-								objects.forEach((object, idx) => {
-									const filename = object.filename;
-									const yLabel = legendLabels.length > idx && legendLabels[idx].length > 0
-										? legendLabels[idx]
-										: filename.slice(0, filename.lastIndexOf('.'));
-									this.labels.push(yLabel);
-								});
-							}
-						}
+			if (this.labelMaker.object === undefined) {
+				const msg = colNameY2
+					? `Parameter x (${colNameX}), parameter y (${colNameY}) or parameter y2 (${colNameY2}) does not exist in data`
+					: `Parameter x (${colNameX}) or parameter y (${colNameY}) does not exist in data`;
+				return fail(msg);
+			}
 
-						// Sort by date so that dygraph can display the time serie
-						return objects.sort((obj1, obj2) =>
-							new Date(obj1.startedAtTime).getTime() - new Date(obj2.startedAtTime).getTime());
-					}
-				}
+			this.initGraph();
+			return this.labelMaker.sorted;
+
+		})
+		.then(labelMaker =>
+			Promise.all(
+				labelMaker.map(dobj =>
+					getBinTable(colNameX, colNameY, dobj.object.id, dobj.object.tableFormat, dobj.object.nRows, colNameY2)
+				)
 			)
-			.then(
-				objects => {
-					return Promise.all(
-						objects.map(object =>
-							isColNameValid(object.tableFormat, params.get('y'))
-								? getBinTable(params.get('x'), params.get('y'), object.id, object.tableFormat, object.nRows)
-								: Promise.resolve([] as any)
-						)
-					);
-				}
-			)
-			.then(binTables => {
-				if (binTables.length > 0) {
-					this.graph.updateOptions({ labels: this.labels });
-					this.drawGraph(binTables);
-				}
-			})
-			.catch(err => {
-				this.showSpinner(false);
-				presentError(err.message);
-			});
+		)
+		.then(binTables => {
+			if (binTables.length > 0 && binTables.every(bt => bt && bt.nCols)) {
+				this.drawGraph(binTables);
+			}
+		})
+		.catch(err => {
+			this.showSpinner(false);
+			presentError(err.message);
+		});
 	}
 
-	initGraph(tableFormat: TableFormat, title: string){
+	initGraph(){
 		this.showSpinner(true);
 
-		const params = this.params;
-		const xlabel = getLabel(tableFormat, params.get('x'));
-		const ylabel = getLabel(tableFormat, params.get('y'));
-		const labelCount = params.get('linking') === 'concatenate' ? 2 : params.get('objId').split(',').length + 1;
-		const labels = Array(labelCount).fill('');
-		const xLegendLabel = getColInfoParam(tableFormat, params.get('x'), 'label');
-		const valueFormatX = getColInfoParam(tableFormat, params.get('x'), 'valueFormat');
+		const {xlabel, xLegendLabel, ylabel, y2label, labels, valueFormatX, series} = this.labelMaker;
+		const strokeWidth = this.params.get('type') === 'line' ? 1 : 0;
 		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime((valueFormatX));
 		const formatters = getFormatters(xLegendLabel, valueFormatX);
-		const drawPoints = params.get('type') !== 'line';
+		const drawPoints = this.params.get('type') !== 'line';
 
 		let daysDisplayed = 0;
 		const getDaysDisplayed = ([min, max]: number[]) => (max - min) / (24 * 3600 * 1000);
@@ -202,16 +173,17 @@ export default class App {
 			'graph',
 			[Array(labels.length).fill(0)],
 			{
-				title: title,
-				strokeWidth: 0,
+				title: this.labelMaker.title,
+				strokeWidth,
 				drawPoints,
 				legend: 'always',
 				labelsDiv: 'legend',
 				labelsSeparateLines: true,
-				legendFormatter: this.legendFormatter,
+				legendFormatter: this.legendFormatter.bind(this),
 				xlabel,
 				ylabel,
-				labels: labels,
+				y2label,
+				labels,
 				xRangePad: 5,
 				connectSeparatedPoints: true,
 				digitsAfterDecimal: 4,
@@ -224,10 +196,16 @@ export default class App {
 						pixelsPerLabel: 100
 					},
 					y: {
-						axisLabelWidth: 100
+						axisLabelWidth: 100,
+						independentTicks: true
+					},
+					y2: {
+						axisLabelWidth: 100,
+						independentTicks: false
 					}
 				},
-				drawCallback: (graph: any, isInitial: boolean) => {
+				series,
+				drawCallback: (graph: Dygraph, isInitial: boolean) => {
 					if (xIsDate && daysDisplayed === 0) {
 						daysDisplayed = getDaysDisplayed(graph.xAxisRange());
 
@@ -254,80 +232,117 @@ export default class App {
 
 		if (valueFormatX.endsWith("iso8601dateTime")) {
 			const {axisLabelFormatter} = getFormatters(xLegendLabel, valueFormatX, daysDisplayed);
-			this.graph.updateOptions({axes: {x: {axisLabelFormatter}}});
+			this.graph!.updateOptions({axes: {x: {axisLabelFormatter: axisLabelFormatter as AxisLabelFormatter}}});
 			this.lastDateFormat = currentDateTimeFormat;
 		}
 	}
 
-	legendFormatter(data: any){
-		return `${data.x === undefined ? '' : data.xHTML}<br><table>` + data.series.map((series: any) =>
-			`<tr style="color:${series.color}"><td>${series.labelHTML}:</td>` +
-			`<td>${isNaN(series.yHTML) ? '' : series.yHTML}</td></tr>`
-		).join('') + '</table>';
+	legendFormatter(data: LegendData){
+		const series = this.labelMaker.legendData(data);
+
+		if (this.labelMaker.hasY2) {
+			this.legendY2.updateContent(this.getLegendContent(data.x, data.xHTML, series.y2));
+		}
+
+		return this.getLegendContent(data.x, data.xHTML, series.y);
+	}
+
+	getLegendContent(x: number, xHTML: string, series: SeriesLegendData[]){
+		return `${x === undefined ? '' : xHTML}<br><table>` + series.map(serie => {
+			if (serie === undefined) return '';
+			return `<tr style="color:${serie.color}"><td>${serie.labelHTML}:</td><td>${isNaN(serie.yHTML as unknown as number) ? '' : serie.yHTML}</td></tr>`
+		}).join('') + '</table>';
 	}
 
 	drawGraph(binTables: BinTable[]){
 		let allXValsAreNaN = true;
 		let allYValsAreNaN = true;
+		let allY2ValsAreNaN = this.labelMaker.hasY2;
 
-		const data = () => {
+		const dataFn = () => {
+			const colIndices = this.labelMaker.hasY2 ? [0, 1, 2] : [0, 1];
+
 			if (this.params.get('linking') === 'concatenate') {
 				// Concatenation
-				const valueFormatX = getColInfoParam(this.tableFormat, this.params.get('x'), 'valueFormat');
-				return isDateTime(valueFormatX)
-					? binTables.flatMap(binTable => binTable.values([0, 1], (subrow) => {
+
+				if (isDateTime(this.labelMaker.valueFormatX)){
+					return binTables.flatMap(binTable => binTable.values(colIndices, subrow => {
 						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
 						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
-						return [new Date(subrow[0]), subrow[1]];
-					}))
-					: binTables.flatMap(binTable => binTable.values([0, 1], subrow => {
+
+						if (this.labelMaker.hasY2)
+							allY2ValsAreNaN = allY2ValsAreNaN && isNaN(subrow[2] as number);
+
+						return this.labelMaker.hasY2
+							? [new Date(subrow[0]), subrow[1], subrow[2]]
+							: [new Date(subrow[0]), subrow[1]];
+					}));
+
+				} else {
+					return binTables.flatMap(binTable => binTable.values(colIndices, subrow => {
 						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
 						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
+
+						if (this.labelMaker.hasY2)
+							allY2ValsAreNaN = allY2ValsAreNaN && isNaN(subrow[2] as number);
+
 						return subrow as number[];
 					})).sort((d1, d2) => d1[0] - d2[0]);
+				}
+
 			} else {
 				// Overlap
 				const dates = binTables.filter(binTable => binTable.length).flatMap(binTable => binTable.values([0], v => v[0])) as number[];
 				const uniqueDates = Array.from(new Set(dates));
-				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(NaN)])) as Map<number, number[]>;
+				const emptySubRow = colIndices.slice(1).map(_ => NaN);
+				let dateList = new Map(uniqueDates.map(i => [i, Array(binTables.length).fill(emptySubRow)])) as Map<number, number[][]>;
 
-				binTables.map((binTable, index) => {
-					binTable.values([0, 1], (subrow) => {
+				binTables.forEach((binTable, index) => {
+					binTable.values(colIndices, (subrow) => {
 						let v = dateList.get(subrow[0] as number);
 						if (v === undefined) throw new Error("Could not get subrow from dateList");
 
-						v[index] = subrow[1] as number;
+						v[index] = subrow.slice(1) as number[];
 						allXValsAreNaN = allXValsAreNaN && isNaN(subrow[0] as number);
 						allYValsAreNaN = allYValsAreNaN && isNaN(subrow[1] as number);
+
+						if (this.labelMaker.hasY2)
+							allY2ValsAreNaN = allY2ValsAreNaN && isNaN(subrow[2] as number);
+
 						dateList.set(subrow[0] as number, v);
 					});
 				});
 
-				return Array.from(dateList).map(([k, v]) => [k].concat(v)).sort((d1, d2) => d1[0] - d2[0]);
+				return Array.from(dateList).map(([k, v]) => [k].concat(v.flat(1))).sort((d1, d2) => d1[0] - d2[0]);
 			}
 		};
 
-		const strokeWidth = this.params.get('type') !== 'line' ? 0 : 1;
+		const data = dataFn();
 
-		this.graph.updateOptions( { file: data, strokeWidth } );
+		if (allXValsAreNaN || allYValsAreNaN || allY2ValsAreNaN){
+			if (allXValsAreNaN) {
+				presentError(`Selected X column (${this.params.get('x')}) does not contain any values`);
+
+			} else if (allYValsAreNaN) {
+				presentError(`Selected Y column (${this.params.get('y')}) does not contain any values`);
+
+			} else if (allY2ValsAreNaN) {
+				presentError(`Selected Y2 column (${this.params.get('y2')}) does not contain any values`);
+			}
+
+			this.showSpinner(false);
+			return;
+		}
+
+		this.graph!.updateOptions({file: data as any});
 		this.showCollapsible();
 		this.showSpinner(false);
-
-		if (allXValsAreNaN && allYValsAreNaN) {
-			presentError(`Selected columns (X: ${this.params.get('x')}, Y: ${this.params.get('y')}) does not contain any values`);
-
-		} else if (allXValsAreNaN) {
-			presentError(`Selected X column (${this.params.get('x')}) does not contain any values`);
-
-		} else if (allYValsAreNaN) {
-			presentError(`Selected Y column (${this.params.get('y')}) does not contain any values`);
-		}
 	}
 
 	showCollapsible(){
-		const xAxisRange = this.graph.xAxisExtremes();
-		const xCoord = this.graph.toDomXCoord(xAxisRange[0]);
-		const titleHeight = this.graph.getOption('titleHeight');
+		const xAxisRange = this.graph!.xAxisExtremes();
+		const xCoord = this.graph!.toDomXCoord(xAxisRange[0]);
+		const titleHeight = this.graph!.getOption('titleHeight');
 		const graphStyle = window.getComputedStyle(document.getElementById("graph")!);
 		const top = parseInt(graphStyle.top);
 		const left = parseInt(graphStyle.left);
@@ -340,14 +355,15 @@ export default class App {
 		this.legend.setPosition(posLegend);
 		this.legend.show();
 
-		// Help section
-		if (this.isHelpAdded) return;
+		if (this.labelMaker.hasY2) {
+			this.legendY2.setPosition({top: posLegend.top, right: 123});
+			this.legendY2.show();
+		} else {
+			this.legendY2.hide();
+		}
 
-		const collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, false);
-		collapsibleHelp.setPosition({top: posLegend.top, right: 10});
-
-		addHelpSection(document.getElementById('help') as HTMLDivElement);
-		this.isHelpAdded = true;
+		this.collapsibleHelp.setPosition({top: posLegend.top, right: 1});
+		this.collapsibleHelp.show();
 	}
 
 	showSpinner(show: boolean){
@@ -454,7 +470,7 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 const getDateTimeFormat = (daysDisplayed: number) => {
 	if (daysDisplayed >= 7) return "date";
 	else if (daysDisplayed >= 1) return "date-hm";
-	else if (daysDisplayed < 1) return "hm";
+	else return "hm";
 };
 
 // Stored as seconds since midnight
@@ -472,22 +488,6 @@ const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDat
 const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
 const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
 const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
-
-const isColNameValid = (tableFormat: TableFormat, colName: string) => {
-	return tableFormat.getColumnIndex(colName) >= 0;
-};
-
-const getColInfoParam = (tableFormat: TableFormat, colName: string, param: string) => {
-	const colInfo = tableFormat.columns[tableFormat.getColumnIndex(colName)] as ColumnInfo & IdxSig;
-	return colInfo[param];
-};
-
-const getLabel = (tableFormat: TableFormat, colName: string) => {
-	const unit = getColInfoParam(tableFormat, colName, 'unit');
-	const label = getColInfoParam(tableFormat, colName, 'label');
-
-	return unit === '?' ? label : `${label} [${unit}]`;
-};
 
 const fail = (message: string) => {
 	logError(config.previewTypes.TIMESERIES, message);
