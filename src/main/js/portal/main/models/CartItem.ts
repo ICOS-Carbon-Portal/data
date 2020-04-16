@@ -125,8 +125,18 @@ export default class CartItem {
 		return new CartItem(this._dataobject, this._type, url);
 	}
 
+	deleteKeyValPair(key: string){
+		delete this._keyValPairs[key];
+	}
+
+	getValue(key: string){
+		return this._keyValPairs[key];
+	}
+
 	getNewUrl(keyVal: IdxSig){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
+		if (newKeyVal.hasOwnProperty('y2') && newKeyVal.hasOwnProperty('legendLabels'))
+			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
 		const matchArr = this._id.match(/^https?:\/\/([^/?#]+)(?:[/?#]|$)/i);
 		const matchedId = matchArr && matchArr.length > 0 ? matchArr[1] : '';
 		const host = matchedId.replace('meta', 'data');

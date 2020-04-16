@@ -25,19 +25,24 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 	handleSelectAction(ev: ChangeEvent<HTMLSelectElement>){
 		const {preview, iframeSrcChange, storeTsPreviewSetting} = this.props;
-		const selectedIdx = ev.target.selectedIndex;
+		const {name, selectedIndex, options} = ev.target;
 
-		if (selectedIdx > 0 && iframeSrcChange) {
-			const selectedVal = ev.target.options[selectedIdx].value;
-			const setting = ev.target.name;
-			const newUrl = preview.items[0].getNewUrl({[setting]: selectedVal});
-
+		if ((selectedIndex > 0 || name === 'y2') && iframeSrcChange) {
+			if (selectedIndex === 0){
+				preview.items[0].deleteKeyValPair(name);
+			}
+			const keyVal = selectedIndex === 0
+				? {}
+				: {[name]: options[selectedIndex].value};
+			const newUrl = preview.items[0].getNewUrl(keyVal);
 			iframeSrcChange({target: {src: newUrl}} as ChangeEvent<HTMLIFrameElement>);
+
 			if (this.iframe && this.iframe.contentWindow) {
 				this.iframe.contentWindow.postMessage(newUrl, "*");
 			}
 
-			storeTsPreviewSetting(preview.item.spec, setting, selectedVal);
+			if (selectedIndex > 0)
+				storeTsPreviewSetting(preview.item.spec, name, options[selectedIndex].value);
 		}
 	}
 
@@ -138,7 +143,6 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 									<Selector
 										name="y2"
 										label="Y2 axis"
-										selected={yAxis}
 										options={options}
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
