@@ -21,7 +21,7 @@ export default class Map extends Component {
 			height: null,
 			isShowTimeserieActive: false,
 			rangeValues: {},
-			valueFilter: _ => true
+			valueFilter: v => v
 		};
 
 		this.countriesTs = Date.now();
@@ -132,13 +132,23 @@ export default class Map extends Component {
 	}
 
 	rangeFilterChanged(rangeValues){
-		const valueFilter = rangeValues.minRange !== undefined && rangeValues.maxRange !== undefined
-			? v => v > rangeValues.minRange && v < rangeValues.maxRange
-			: rangeValues.minRange !== undefined
-				? v => v > rangeValues.minRange
-				: rangeValues.maxRange !== undefined
-					? v => v < rangeValues.maxRange
-					: _ => true;
+		const hasMinRange = rangeValues.minRange;
+		const hasMaxRange = rangeValues.maxRange;
+
+		const valueFilter = v => {
+			if (!hasMinRange && !hasMaxRange)
+				return v;
+
+			if (hasMinRange && v < rangeValues.minRange) {
+				return rangeValues.minRange;
+
+			} else if (hasMaxRange && v > rangeValues.maxRange) {
+				return rangeValues.maxRange;
+
+			} else {
+				return v;
+			}
+		};
 
 		this.setState({valueFilter, rangeValues});
 	}
