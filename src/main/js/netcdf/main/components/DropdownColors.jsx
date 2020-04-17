@@ -6,7 +6,8 @@ export default class DropdownColors extends Component{
 		super(props);
 
 		this.state = {
-			dropdownOpen: false
+			dropdownOpen: false,
+			selectedIdx: 0
 		};
 
 		this.outsideClickHandler = this.handleOutsideClick.bind(this);
@@ -25,7 +26,7 @@ export default class DropdownColors extends Component{
 
 	onDropDownItemClick(selectedItemKey){
 		if (this.props.action) {
-			this.setState({dropdownOpen: !this.state.dropdownOpen});
+			this.setState({dropdownOpen: !this.state.dropdownOpen, selectedIdx: selectedItemKey});
 			this.props.action(selectedItemKey);
 		}
 	}
@@ -35,7 +36,7 @@ export default class DropdownColors extends Component{
 	}
 
 	render(){
-		const {dropdownOpen} = this.state;
+		const {dropdownOpen, selectedIdx} = this.state;
 		const {control} = this.props;
 		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 		const selectedColorRamp = control.colorRamps[control.selectedIdx];
@@ -51,6 +52,8 @@ export default class DropdownColors extends Component{
 						return (
 							<ListItem
 								key={idx}
+								idx={idx}
+								selectedIdx={selectedIdx}
 								onClick={this.onDropDownItemClick.bind(this, idx)}
 								cr={cr}
 							/>);
@@ -74,15 +77,18 @@ const Button = ({clickAction, getLegend, label = 'Select option'}) => {
 	);
 };
 
-const ListItem = ({onClick, cr}) => {
+const ListItem = ({onClick, cr, idx, selectedIdx}) => {
 	const getLegend = cr.colorMaker ? cr.colorMaker.getLegend.bind(cr.colorMaker) : null;
+	const style = selectedIdx === idx
+		? {cursor: 'pointer', backgroundColor: 'rgb(200,200,200)'}
+		: {cursor: 'pointer'};
 	const child = getLegend
 		? <img src={renderCanvas(120, 15, getLegend)} />
 		: cr.name;
 
 	return (
 		<li>
-			<a onClick={onClick} style={{ cursor: 'pointer' }}>{child}</a>
+			<a onClick={onClick} style={style}>{child}</a>
 		</li>
 	);
 };
