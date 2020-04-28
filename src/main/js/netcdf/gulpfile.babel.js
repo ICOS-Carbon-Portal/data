@@ -37,7 +37,7 @@ const copyImages = _ => {
 
 gulp.task('build', gulp.series(clean, copyImages, compileSrc));
 
-gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src], gulp.series('build'))));
+gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src, paths.commonjs], gulp.series('build'))));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 

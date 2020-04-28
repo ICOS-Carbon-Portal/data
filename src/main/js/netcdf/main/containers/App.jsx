@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Map from '../components/Map.jsx';
 import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton,
-	incrementRasterData, fetchTimeSerie, resetTimeserieData} from '../actions.js';
+	incrementRasterData, fetchTimeSerie, resetTimeserieData, selectColorRamp} from '../actions.js';
 import {AnimatedToasters} from 'icos-cp-toaster';
 
 class App extends Component {
@@ -37,6 +37,7 @@ const AppDiv = props => {
 			delayChanged={props.delayChanged}
 			elevationChanged={props.elevationChanged}
 			gammaChanged={props.gammaChanged}
+			colorRampChanged={props.colorRampChanged}
 			increment={props.increment}
 			playingMovie={props.playingMovie}
 			playPauseMovie={props.playPauseMovie}
@@ -72,6 +73,7 @@ const dispatchToProps = dispatch => {
 		playPauseMovie: () => dispatch(pushPlayButton),
 		fetchTimeSerie: params => dispatch(fetchTimeSerie(params)),
 		resetTimeserieData: () => dispatch(resetTimeserieData),
+		colorRampChanged: (newIdx) => dispatch(selectColorRamp(newIdx)),
 	};
 };
 

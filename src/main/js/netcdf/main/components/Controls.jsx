@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
 import Selector from './Selector.jsx';
+import DropdownColors from "./DropdownColors";
 
 export default class Controls extends Component {
 	constructor(props){
 		super(props);
+
+		this.state = {
+			colorRamps: []
+		};
 	}
 
 	render(){
@@ -13,6 +18,10 @@ export default class Controls extends Component {
 		const elevationsStyle = controls.elevations.selected ? 'inline' : 'none';
 		const playClass = "glyphicon glyphicon-" + (props.playingMovie ? 'pause' : 'play');
 		const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
+
+		const rangeFilterInputsBtnCls = props.isRangeFilterInputsActive
+			? 'glyphicon glyphicon-filter text-primary'
+			: 'glyphicon glyphicon-filter';
 
 		const toNext = () => props.increment(1);
 		const toPrevious = () => props.increment(-1);
@@ -29,7 +38,7 @@ export default class Controls extends Component {
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
-				<div className={getClassName(3, props.isPIDProvided)}>
+				<div className={getClassName(2, props.isPIDProvided)}>
 					<Selector className="dates" caption="Date" control={controls.dates} action={props.handleDateChange} />
 				</div>
 
@@ -58,6 +67,18 @@ export default class Controls extends Component {
 
 				<div className="col-md-1">
 					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.handleGammaChange}/>
+				</div>
+
+				<div className="col-md-1">
+					<span style={{fontWeight: 'bold'}}>Map color:</span>
+					<DropdownColors control={controls.colorRamps} action={props.handleColorRampChange} />
+				</div>
+
+				<div className="col-md-1">
+					<div style={{fontWeight: 'bold'}}>Filter:</div>
+					<button className="btn btn-default" onClick={props.handleRangeFilterInputsChange}>
+						<span className={rangeFilterInputsBtnCls} />
+					</button>
 				</div>
 			</div>
 		);

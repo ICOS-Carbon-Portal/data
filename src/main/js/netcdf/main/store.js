@@ -4,6 +4,8 @@ import reducer from './reducer';
 import {fetchServices, setService, fetchTitle, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper';
 import config from '../../common/main/config';
+import {selectColorRamp} from "./actions";
+import {colorRamps} from '../../common/main/models/ColorMaker';
 
 const isSites = config.envri === "SITES";
 
@@ -26,6 +28,10 @@ export const defaultGamma = 1;
 const gammaIdx = searchParams.gamma
 	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
 	: controls.gammas.values.indexOf(defaultGamma);
+let colorIdx = searchParams.color
+	? colorRamps.findIndex(color => color.name === searchParams.color)
+	: 0;
+colorIdx = colorIdx === -1 ? 0 : colorIdx;
 
 const initState = {
 	isSites,
@@ -45,6 +51,7 @@ const initState = {
 		elevation: searchParams.elevation,
 		center: searchParams.center,
 		zoom: searchParams.zoom,
+		color: searchParams.color,
 	},
 	playingMovie: false,
 	rasterFetchCount: 0,
@@ -78,6 +85,7 @@ export default function(){
 	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
 	store.dispatch(fetchCountriesTopo);
 	store.dispatch(selectGamma(gammaIdx));
+	store.dispatch(selectColorRamp(colorIdx));
 
 	if (isPIDProvided) {
 		if (!window.frameElement) {

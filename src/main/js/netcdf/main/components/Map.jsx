@@ -1,13 +1,14 @@
 import React, { Component } from 'react';
-import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
+import NetCDFMap, {getTileHelper} from './NetCDFMap';
 import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
-import {throttle, Events} from 'icos-cp-utils';
+import {throttle, Events, debounce} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
-import Timeserie from './Timeserie.jsx';
+import Timeserie from './Timeserie';
+import RangeFilterInput from './RangeFilterInput';
 
 
 const minHeight = 300;
@@ -17,7 +18,10 @@ export default class Map extends Component {
 		super(props);
 		this.state = {
 			height: null,
-			isShowTimeserieActive: false
+			isShowTimeserieActive: false,
+			isRangeFilterInputsActive: false,
+			rangeValues: {},
+			valueFilter: v => v
 		};
 
 		this.countriesTs = Date.now();
@@ -28,18 +32,14 @@ export default class Map extends Component {
 		this.prevVariables = undefined;
 
 		this.events = new Events();
-		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this)));
+		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this), 300));
 
 		this.getRasterXYFromLatLng = undefined;
 	}
 
-	componentDidMount(){
-		this.updateHeight();
-	}
-
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
-			const {dates, elevations, gammas, variables} = this.props.controls;
+			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
 
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
 				this.prevVariables = variables;
@@ -52,8 +52,9 @@ export default class Map extends Component {
 			const varNameParam = variables.selectedIdx > 0 && variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
+			const color = colorRamps.selected ? `color=${colorRamps.selected}` : undefined;
 
-			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom];
+			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
 
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
@@ -75,6 +76,8 @@ export default class Map extends Component {
 
 	componentWillReceiveProps(nextProps) {
 		if (nextProps.raster){
+			if (this.state.height === null) this.updateHeight();
+
 			this.getRasterXYFromLatLng = getRasterXYFromLatLng(nextProps.raster);
 
 			// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
@@ -125,6 +128,33 @@ export default class Map extends Component {
 		}
 	}
 
+	updateRangeFilterInputsVisibility(){
+		this.setState({isRangeFilterInputsActive: !this.state.isRangeFilterInputsActive});
+	}
+
+	rangeFilterChanged(rangeValueChanges){
+		const rangeValues = {...this.state.rangeValues, ...rangeValueChanges};
+		const hasMinRange = rangeValues.minRange !== undefined;
+		const hasMaxRange = rangeValues.maxRange !== undefined;
+
+		const valueFilter = v => {
+			if (!hasMinRange && !hasMaxRange)
+				return v;
+
+			if (hasMinRange && v < rangeValues.minRange) {
+				return rangeValues.minRange;
+
+			} else if (hasMaxRange && v > rangeValues.maxRange) {
+				return rangeValues.maxRange;
+
+			} else {
+				return v;
+			}
+		};
+
+		this.setState({valueFilter, rangeValues});
+	}
+
 	render() {
 		const state = this.state;
 		const props = this.props;
@@ -133,7 +163,7 @@ export default class Map extends Component {
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
 		const legendId = props.raster
-			? props.raster.id + '_' + state.gamma
+			? props.raster.id + '_' + state.gamma + '_' + JSON.stringify(state.rangeValues)
 			: "";
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
@@ -142,6 +172,18 @@ export default class Map extends Component {
 			props.raster
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
+
+		if (props.raster) {
+			// A change in raster id triggers a rerender of map
+			props.raster.id = props.raster.basicId
+				+ props.controls.gammas.selectedIdx
+				+ props.controls.colorRamps.selectedIdx
+				+ '_' + JSON.stringify(state.rangeValues);
+		}
+
+		const minMax = props.raster
+			? props.raster.stats
+			: undefined;
 
 		return (
 			<div id="content" className="container-fluid">
@@ -164,6 +206,9 @@ export default class Map extends Component {
 						handleDateChange={props.dateChanged}
 						handleGammaChange={props.gammaChanged}
 						handleElevationChange={props.elevationChanged}
+						handleColorRampChange={props.colorRampChanged}
+						isRangeFilterInputsActive={state.isRangeFilterInputsActive}
+						handleRangeFilterInputsChange={this.updateRangeFilterInputsVisibility.bind(this)}
 					/>
 
 					<Timeserie
@@ -186,6 +231,7 @@ export default class Map extends Component {
 							}}
 							raster={props.raster}
 							colorMaker={colorMaker}
+							valueFilter={state.valueFilter}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
 							events={[
@@ -215,9 +261,19 @@ export default class Map extends Component {
 								legendId={legendId}
 								legendText="Legend"
 								decimals={3}
+								useRangeValueFilters={true}
+								rangeValues={state.rangeValues}
+								rangeFilterChanged={this.rangeFilterChanged.bind(this)}
 							/>
 							: null
 					}</div>
+
+					<RangeFilterInput
+						isActive={state.isRangeFilterInputsActive}
+						minMax={minMax}
+						rangeValues={state.rangeValues}
+						rangeFilterChanged={debounce(this.rangeFilterChanged.bind(this), 500)}
+					/>
 				</div>
 
 				<ReactSpinner isSites={props.isSites} show={showSpinner} />
@@ -226,18 +282,6 @@ export default class Map extends Component {
 		);
 	}
 }
-
-export const Spinner = props => {
-	return props.show
-		? <div id="cp-spinner">
-			<div className="bounce1" />
-			<div className="bounce2" />
-			<div />
-			<span>Carbon</span>
-			<span>Portal</span>
-		</div>
-		: null;
-};
 
 const getRasterXYFromLatLng = raster => {
 	const tileHelper = getTileHelper(raster);
