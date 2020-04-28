@@ -37,11 +37,17 @@
   "babel": {
     "presets": [
       "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/plugin-proposal-nullish-coalescing-operator",
+      "@babel/plugin-proposal-optional-chaining"
     ]
   },
   "devDependencies": {
     "@babel/cli": "^7.4.3",
     "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.7.4",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
     "@babel/preset-env": "^7.4.3",
     "@babel/preset-es2015": "^7.0.0-beta.53",
@@ -60,9 +66,9 @@
     "icos-cp-backend": "0.3.20",
     "icos-cp-draggable": "^0.0.1",
     "icos-cp-leaflet-common": "^1.0.0",
-    "icos-cp-legend": "^0.5.0",
-    "icos-cp-netcdfmap": "^1.0.0",
-    "icos-cp-spatial": "^0.2.1",
+    "icos-cp-legend": "1.0.0",
+    "icos-cp-netcdfmap": "2.0.1",
+    "icos-cp-spatial": "0.3.0",
     "icos-cp-spinner": "^0.1.4",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",

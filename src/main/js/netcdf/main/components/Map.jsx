@@ -1,15 +1,14 @@
 import React, { Component } from 'react';
-// import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
 import NetCDFMap, {getTileHelper} from './NetCDFMap';
 import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
-// import Legend from 'icos-cp-legend';
-import Legend from './legend/Legend';
+import Legend from 'icos-cp-legend';
 import Controls from './Controls.jsx';
-import {throttle, Events} from 'icos-cp-utils';
+import {throttle, Events, debounce} from 'icos-cp-utils';
 import {defaultGamma} from '../store';
 import {saveToRestheart} from '../../../common/main/backend';
-import Timeserie from './Timeserie.jsx';
+import Timeserie from './Timeserie';
+import RangeFilterInput from './RangeFilterInput';
 
 
 const minHeight = 300;
@@ -20,6 +19,7 @@ export default class Map extends Component {
 		this.state = {
 			height: null,
 			isShowTimeserieActive: false,
+			isRangeFilterInputsActive: false,
 			rangeValues: {},
 			valueFilter: v => v
 		};
@@ -32,14 +32,9 @@ export default class Map extends Component {
 		this.prevVariables = undefined;
 
 		this.events = new Events();
-		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this)));
+		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this), 300));
 
 		this.getRasterXYFromLatLng = undefined;
-	}
-
-	componentDidMount(){
-		const self = this;
-		setTimeout(self.updateHeight.bind(self), 200);
 	}
 
 	updateURL(){
@@ -81,6 +76,8 @@ export default class Map extends Component {
 
 	componentWillReceiveProps(nextProps) {
 		if (nextProps.raster){
+			if (this.state.height === null) this.updateHeight();
+
 			this.getRasterXYFromLatLng = getRasterXYFromLatLng(nextProps.raster);
 
 			// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
@@ -131,9 +128,14 @@ export default class Map extends Component {
 		}
 	}
 
-	rangeFilterChanged(rangeValues){
-		const hasMinRange = rangeValues.minRange;
-		const hasMaxRange = rangeValues.maxRange;
+	updateRangeFilterInputsVisibility(){
+		this.setState({isRangeFilterInputsActive: !this.state.isRangeFilterInputsActive});
+	}
+
+	rangeFilterChanged(rangeValueChanges){
+		const rangeValues = {...this.state.rangeValues, ...rangeValueChanges};
+		const hasMinRange = rangeValues.minRange !== undefined;
+		const hasMaxRange = rangeValues.maxRange !== undefined;
 
 		const valueFilter = v => {
 			if (!hasMinRange && !hasMaxRange)
@@ -179,6 +181,10 @@ export default class Map extends Component {
 				+ '_' + JSON.stringify(state.rangeValues);
 		}
 
+		const minMax = props.raster
+			? props.raster.stats
+			: undefined;
+
 		return (
 			<div id="content" className="container-fluid">
 				{!window.frameElement && props.title &&
@@ -201,6 +207,8 @@ export default class Map extends Component {
 						handleGammaChange={props.gammaChanged}
 						handleElevationChange={props.elevationChanged}
 						handleColorRampChange={props.colorRampChanged}
+						isRangeFilterInputsActive={state.isRangeFilterInputsActive}
+						handleRangeFilterInputsChange={this.updateRangeFilterInputsVisibility.bind(this)}
 					/>
 
 					<Timeserie
@@ -245,7 +253,6 @@ export default class Map extends Component {
 					<div id="legend" ref={div => this.legendDiv = div}>{
 						getLegend
 							? <Legend
-								allowRanges={true}
 								horizontal={false}
 								canvasWidth={20}
 								containerHeight={containerHeight}
@@ -254,10 +261,19 @@ export default class Map extends Component {
 								legendId={legendId}
 								legendText="Legend"
 								decimals={3}
+								useRangeValueFilters={true}
+								rangeValues={state.rangeValues}
 								rangeFilterChanged={this.rangeFilterChanged.bind(this)}
 							/>
 							: null
 					}</div>
+
+					<RangeFilterInput
+						isActive={state.isRangeFilterInputsActive}
+						minMax={minMax}
+						rangeValues={state.rangeValues}
+						rangeFilterChanged={debounce(this.rangeFilterChanged.bind(this), 500)}
+					/>
 				</div>
 
 				<ReactSpinner isSites={props.isSites} show={showSpinner} />
@@ -266,18 +282,6 @@ export default class Map extends Component {
 		);
 	}
 }
-
-export const Spinner = props => {
-	return props.show
-		? <div id="cp-spinner">
-			<div className="bounce1" />
-			<div className="bounce2" />
-			<div />
-			<span>Carbon</span>
-			<span>Portal</span>
-		</div>
-		: null;
-};
 
 const getRasterXYFromLatLng = raster => {
 	const tileHelper = getTileHelper(raster);
