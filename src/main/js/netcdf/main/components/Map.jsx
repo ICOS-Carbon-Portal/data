@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import NetCDFMap, {getTileHelper} from './NetCDFMap';
+import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
 import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
