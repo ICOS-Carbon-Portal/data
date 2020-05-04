@@ -9,7 +9,7 @@ import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.data.api.B2StageClient
+import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
@@ -17,7 +17,7 @@ import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-class B2StageUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2StageClient)(implicit ctxt: ExecutionContext) extends UploadTask{
+class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2SafeClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
 	private[this] val existsFut: Future[Boolean] = client.exists(irodsData.parent).flatMap{
 		//TODO Add hash control to the existence check
@@ -72,13 +72,13 @@ class B2StageUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: 
 		}
 }
 
-object B2StageUploadTask{
+object B2SafeUploadTask{
 
-	def apply(statObj: StaticObject, client: B2StageClient)(implicit ctxt: ExecutionContext) =
-		new B2StageUploadTask(statObj.hash, irodsData(statObj), client)
+	def apply(statObj: StaticObject, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
+		new B2SafeUploadTask(statObj.hash, irodsData(statObj), client)
 
-	def apply(format: URI, hash: Sha256Sum, client: B2StageClient)(implicit ctxt: ExecutionContext) =
-		new B2StageUploadTask(hash, irodsData(format, hash), client)
+	def apply(format: URI, hash: Sha256Sum, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
+		new B2SafeUploadTask(hash, irodsData(format, hash), client)
 
 	def irodsData(statObj: StaticObject): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
 	def irodsData(format: URI, hash: Sha256Sum): IrodsData = irodsData(UploadService.fileFolder(format), hash)

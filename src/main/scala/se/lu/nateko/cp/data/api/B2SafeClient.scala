@@ -25,17 +25,17 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.data.B2StageConfig
+import se.lu.nateko.cp.data.B2SafeConfig
 import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.data.streams.DigestFlow
 import spray.json.{DefaultJsonProtocol, JsonFormat}
 
-class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Materializer) {
+class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializer) {
 
 	import mat.executionContext
-	import B2StageClient._
+	import B2SafeClient._
 
 	def getUri(item: B2StageItem) = {
 		val pathPrefix = item match{
@@ -194,7 +194,7 @@ class B2StageClient(config: B2StageConfig, http: HttpExt)(implicit mat: Material
 	}
 }
 
-object B2StageClient extends DefaultJsonProtocol{
+object B2SafeClient extends DefaultJsonProtocol{
 	class UploadRequest[T](val context: T, val obj: IrodsData, val src: Source[ByteString, Any])
 	class UploadResponse[T](val context: T, val result: Try[Sha256Sum])
 

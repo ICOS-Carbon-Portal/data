@@ -20,7 +20,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
-import se.lu.nateko.cp.data.api.B2StageClient
+import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
@@ -44,12 +44,12 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 //	private val irods = IrodsClient(config.irods)
 	private val irods2 = IrodsClient(config.irods2)
-	private val b2 = new B2StageClient(config.b2stage, Http())
+	private val b2 = new B2SafeClient(config.b2safe, Http())
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
 	def b2StageSourceExists(format: URI, hash: Sha256Sum): Future[Boolean] =
-		b2.exists(B2StageUploadTask.irodsData(format, hash))
+		b2.exists(B2SafeUploadTask.irodsData(format, hash))
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(dataObj))
@@ -58,7 +58,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		irods2.getFileSource(filePathSuffix(format, hash))
 
 	def uploadToB2Stage(format: URI, hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
-		B2StageUploadTask(format, hash, b2).uploadObject(src)
+		B2SafeUploadTask(format, hash, b2).uploadObject(src)
 
 	def listIrodsFolder(path: String) = irods2.listFolderContents(path)
 

@@ -22,7 +22,7 @@ case class NetCdfConfig(
 	elevationVars: Seq[String]
 )
 
-case class B2StageConfig(
+case class B2SafeConfig(
 	host: String,
 	username: String,
 	password: String,
@@ -48,7 +48,7 @@ case class UploadConfig(
 	folder: String,
 	irods: IrodsConfig,
 	irods2: IrodsConfig,
-	b2stage: B2StageConfig,
+	b2safe: B2SafeConfig,
 	dlReporter: DownloadReporterConfig
 )
 
@@ -110,7 +110,7 @@ object ConfigReader extends CommonJsonSupport{
 
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
 	implicit val irodsConfigFormat = jsonFormat9(IrodsConfig)
-	implicit val b2stageConfigFormat = jsonFormat5(B2StageConfig)
+	implicit val b2stageConfigFormat = jsonFormat5(B2SafeConfig)
 	implicit val downloadReporterConfigFormat = jsonFormat2(DownloadReporterConfig)
 	implicit val uploadConfigFormat = jsonFormat5(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
