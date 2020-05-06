@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.csv.CsvParser
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.services.upload.IngestionUploadTask.RowParser
 import se.lu.nateko.cp.data.streams.geo.{GeoFeaturePointSink, Point}
@@ -17,6 +18,7 @@ object OtcCsvStreams {
 
 	val LonColName = "Longitude"
 	val LatColName = "Latitude"
+	private val csvParser = CsvParser.default
 
 	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): RowParser = Flow[String]
 		.dropWhile(line => !line.contains("*/"))
@@ -37,7 +39,10 @@ object OtcCsvStreams {
 		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
 	def otcProductParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): RowParser = Flow[String]
-		.map(_.trim.split(','))
+		.scan(CsvParser.seed)((acc, line) => csvParser.parseLine(acc, line))
+		.collect{
+			case acc if acc.lastState == CsvParser.Init && acc.cells.length > 0 => acc.cells
+		}
 		.scan(TableRow.empty(nRows)) {
 			(row, cells) =>
 				if (row.header.columnNames.length == 0) {
