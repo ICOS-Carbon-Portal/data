@@ -1,3 +1,4 @@
+import { TemporalFilterRequest } from "./FilterRequest";
 
 const minDate = new Date(-8640000000000000);
 const maxDate = new Date(8640000000000000);
@@ -90,7 +91,7 @@ export default class FilterTemporal {
 		return this._submission;
 	}
 
-	get filters(){
+	get filters(): TemporalFilterRequest[]{
 		return [
 			{
 				category: 'dataTime',

@@ -4,7 +4,7 @@ import Paging from "../models/Paging";
 import {FilterRequest} from "../models/FilterRequest";
 
 
-export interface Options {
+export interface QueryParameters {
 	specs: Filter
 	stations: Filter
 	submitters: Filter

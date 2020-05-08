@@ -1,14 +1,15 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import {Query} from 'icos-cp-backend';
-import {Options} from "./actions/types";
+import {QueryParameters} from "./actions/types";
 import {
 	FilterRequest,
 	TemporalFilterRequest,
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
-	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest
+	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest,
+	VariableFilterRequest, isVariableFilter
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
 
@@ -185,11 +186,11 @@ ${standardDobjPropsDef}
 	return {text};
 };
 
-export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
+export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
 	function isEmpty(arr: Filter) {return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, filters} = options;
+	const {specs, stations, submitters, sorting, paging, filters} = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -224,6 +225,7 @@ export const listFilteredDataObjects = (options: Options): ObjInfoQuery => {
 					${stationsFilter((stations as Value[]).filter((s: any) => !!s))}
 				}}`
 		: stationsFilter((stations as Value[]));
+
 	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
@@ -265,7 +267,9 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterConds: string[] = tempFilters.flatMap(getFilterConditions).concat(numFilters.flatMap(getNumberFilterConds));
 	const filterStr = filterConds.length ? `${varDefStr}FILTER( ${filterConds.join(' && ')} )` : '';
 
-	return deprFilterStr.concat(filterStr);
+	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
+
+	return deprFilterStr.concat(filterStr).concat(varNameFilterStr);
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string[] {
@@ -344,6 +348,26 @@ function getFilterConditions(filter: TemporalFilterRequest): string[]{
 			break;
 	}
 	return res;
+}
+
+function getVarFilter(filter: VariableFilterRequest): string{
+	function cond(varName: string): string{
+		if(varName.startsWith("^") && varName.endsWith("$")) {
+			const patt = varName.replace(/\\/gi, '\\\\');
+			return `regex(?varName, "${patt}")`
+		} else
+			return `?varName = "${varName}"`
+	}
+	if(filter.names.length == 0) return '';
+	return `
+	{
+		{FILTER NOT EXISTS {?dobj cpmeta:hasVariableName ?varName}}
+		UNION
+		{
+			?dobj cpmeta:hasVariableName ?varName
+			FILTER (${filter.names.map(cond).join(' || ')})
+		}
+	}`;
 }
 
 export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
