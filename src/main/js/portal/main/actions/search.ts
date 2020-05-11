@@ -12,7 +12,7 @@ import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
 import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
-import {ColNames} from "../models/CompositeSpecTable";
+import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
@@ -20,7 +20,7 @@ import {FiltersTemporal} from "../reducers/actionpayloads";
 import {Documentation, HelpStorageListEntry, Item, ItemExtended} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
-import {Options, SearchOption} from "./types";
+import {QueryParameters, SearchOption} from "./types";
 import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
@@ -57,7 +57,7 @@ const fetchFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) 
 	const filters = getFilters(state);
 	const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
-	const options: Options = {
+	const options: QueryParameters = {
 		specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
 		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
 		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
@@ -116,17 +116,24 @@ const logPortalUsage = (state: State) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions, specTable} = state;
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
-		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
-		filters.push({category: 'pids', pids: filterPids} as PidFilterRequest);
+		filters.push({category: 'deprecated', allow: true});
+		filters.push({category: 'pids', pids: filterPids});
 	} else {
-		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
+		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
 
 		if (filterTemporal.hasFilter){
-			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
+			filters = filters.concat(filterTemporal.filters);
+		}
+
+		if(varNamesAreFiltered(specTable)){
+			const titles = specTable.getColumnValuesFilter('colTitle')
+			if(titles != null){
+				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
+			}
 		}
 
 		filters = filters.concat(filterNumbers.validFilters);
@@ -135,11 +142,19 @@ const getFilters = (state: State) => {
 	return filters;
 };
 
+const varNameAffectingCategs: ReadonlyArray<ColNames> = ['column', 'valType'];
+
+function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
+	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
+}
+
 export function specFilterUpdate(varName: ColNames, values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		const filter: Filter = values.length === 0 ? null : values;
 		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
-		dispatch(fetchFilteredDataObjects);
+
+		if(varNameAffectingCategs.includes(varName)) dispatch(getOriginsThenDobjList)
+		else dispatch(fetchFilteredDataObjects);
 	};
 }
 
@@ -158,8 +173,8 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const state = getState();
-	const shouldRefetchCounts = state.filterTemporal.hasFilter || state.filterNumbers.hasFilters;
+	const {filterTemporal, filterNumbers, specTable} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable);
 
 	dispatch(new Payloads.MiscResetFilters());
 	if(shouldRefetchCounts) dispatch(getOriginsThenDobjList)

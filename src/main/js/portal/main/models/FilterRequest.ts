@@ -1,7 +1,7 @@
 import {NumberFilterCategories, numberFilterKeys} from "../config";
 import {FilterNumber} from "./FilterNumbers";
 
-export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest | NumberFilterRequest
+export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest | NumberFilterRequest | VariableFilterRequest
 
 export interface PidFilterRequest{
 	category: "pids"
@@ -22,6 +22,11 @@ export interface DeprecatedFilterRequest{
 	allow: boolean
 }
 
+export interface VariableFilterRequest{
+	category: "variableNames"
+	names: string[]
+}
+
 export function isPidFilter(filter: FilterRequest): filter is PidFilterRequest{
 	return filter.category === "pids";
 }
@@ -36,4 +41,8 @@ export function isNumberFilter(filter: FilterRequest): filter is NumberFilterReq
 
 export function isDeprecatedFilter(filter: FilterRequest): filter is DeprecatedFilterRequest{
 	return filter.category === "deprecated";
+}
+
+export function isVariableFilter(filter: FilterRequest): filter is VariableFilterRequest{
+	return filter.category === "variableNames";
 }

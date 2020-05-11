@@ -21,6 +21,7 @@ object SitesDailyDelimitedHeaderCsvStreams extends StandardCsvStreams {
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN" || value == ""
+		case IsoLikeLocalDateTime => value == "NaN"
 		case _ => false
 	}
 

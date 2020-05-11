@@ -3,7 +3,7 @@ import {fetchFilteredDataObjects} from "./backend";
 import deepEqual from 'deep-equal';
 import config from './config';
 import {ThenArg} from "./backend/declarations";
-import {Options} from "./actions/types";
+import {QueryParameters} from "./actions/types";
 
 
 type FetchFilteredDataObjects = ThenArg<typeof fetchFilteredDataObjects>;
@@ -24,7 +24,7 @@ export class CachedDataObjectsFetcher{
 		this.linearCache = undefined;
 	}
 
-	fetch(options: Options): FetchedDataObjs {
+	fetch(options: QueryParameters): FetchedDataObjs {
 		const cacheId = Object.assign({}, options, {paging: null});
 		const {offset, limit}: {offset: number, limit: number} = options.paging;
 
@@ -50,7 +50,7 @@ export class CachedDataObjectsFetcher{
 }
 
 export class DataObjectsFetcher{
-	fetch(options: Options): FetchedDataObjs {
+	fetch(options: QueryParameters): FetchedDataObjs {
 		return fetchFilteredDataObjects(options).then(({rows}) => {
 			return {
 				rows,

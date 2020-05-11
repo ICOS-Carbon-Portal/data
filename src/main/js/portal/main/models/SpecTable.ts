@@ -28,6 +28,9 @@ export const Filter = {
 export const Value = {
 	isDefined: function(v: Value): v is (number | string) {
 		return v !== undefined;
+	},
+	isString: function(v: Value): v is string{
+		return v !== undefined && (typeof v) == "string"
 	}
 };
 
