@@ -43,6 +43,8 @@ const DownloadsView = props => {
 					style={{width: '100%', height: 300}}
 					statsGraph={props.statsGraph}
 					radioAction={props.fetchDownloadStatsPerDateUnit}
+					downloadStats={props.downloadStats}
+					filters={props.filters}
 				/>
 			</div>
 			<div className="col-md-8">

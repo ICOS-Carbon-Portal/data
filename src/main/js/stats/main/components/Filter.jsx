@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 
-const placeholders = {
+export const placeholders = {
 	specification: 'Specification',
 	dataLevel: 'Data level',
 	format: 'Format',
@@ -18,7 +18,7 @@ export default class Filter extends Component {
 	}
 
 	render() {
-		const {filters} = this.props;
+		const {filters, downloadStats, fetchDownloadStats} = this.props;
 
 		const Row = ({filter}) => {
 			return (
@@ -28,18 +28,18 @@ export default class Filter extends Component {
 					</div>
 					<div className="col-md-8">
 						<Multiselect
-								placeholder={placeholders[filter.name]}
-								valueField="_id"
-								textField="label"
-								data={filter.values}
-								value={this.props.downloadStats.getFilter(filter.name)}
-								filter="contains"
-								onChange={this.handleSelectionChange.bind(this, filter)}
-							/>
+							placeholder={placeholders[filter.name]}
+							valueField="_id"
+							textField="label"
+							data={filter.values}
+							value={downloadStats.getFilter(filter.name)}
+							filter="contains"
+							onChange={this.handleSelectionChange.bind(this, filter)}
+						/>
 					</div>
 				</div>
 			)
-		}
+		};
 
 		const showResetBtn = !!filters;
 
@@ -47,15 +47,15 @@ export default class Filter extends Component {
 			<div className="panel panel-default">
 				<div className="panel-heading">
 					{showResetBtn
-						? <ResetBtn resetFiltersAction={() => this.props.fetchDownloadStats({})} />
+						? <ResetBtn resetFiltersAction={() => fetchDownloadStats({})} />
 						: null
 					}
 					<h3 className="panel-title">Data object specification filter</h3>
 				</div>
 				<div className="panel-body">
 					{ filters
-					? filters.map((filter, idx) => <Row key={'row-'+idx} filter={filter} />)
-					: null
+						? filters.map((filter, idx) => <Row key={'row-'+idx} filter={filter} />)
+						: null
 					}
 				</div>
 			</div>

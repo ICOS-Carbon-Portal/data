@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Radio from './Radio.jsx';
 import deepEqual from 'deep-equal';
 import FileDownload from './FileDownload.jsx';
-
+import {placeholders} from "./Filter";
 
 export default class Graph extends Component{
 	constructor(props){
@@ -25,8 +25,23 @@ export default class Graph extends Component{
 	}
 
 	onDownloadClick(){
-		const {statsGraph} = this.props;
-		const blob = new Blob([json2csv(statsGraph)], {type : 'text/csv'});
+		const {statsGraph, downloadStats, filters} = this.props;
+		const filtersUserFriendly = Object.keys(downloadStats.filters).reduce((acc, key) => {
+			const filterIds = downloadStats.getFilter(key);
+
+			if (filterIds.length) {
+				const filterName = placeholders[key];
+
+				const filterValues = filters.find(filter => filter.name === key).values;
+				const labels = filterIds.map(id => filterValues.find(val => val._id === id).label);
+				acc.push({filterName, labels});
+				return acc;
+			} else {
+				return acc;
+			}
+		}, []);
+
+		const blob = new Blob([json2csv(statsGraph, filtersUserFriendly)], {type : 'text/csv'});
 		this.setState({blob, fileName: `Downloads per ${statsGraph.dateUnit}.csv`, ts: Date.now()});
 	}
 
@@ -62,32 +77,53 @@ export default class Graph extends Component{
 	}
 }
 
-const json2csv = statsGraph => {
-	switch (statsGraph.dateUnit) {
-		case "week":
-			const weekData = statsGraph.data.reduce((acc, curr, idx) => {
-				acc += `${toDate(curr[0])},${statsGraph.weeks[idx]},${curr[1]}\n`;
-				return acc;
-			}, '');
-			return 'Date,Week,Downloads\n' + weekData;
+const json2csv = (statsGraph, filtersUserFriendly) => {
+	let header = "ICOS Carbon Portal Download Statistics\n";
+	header += `Report created ${toDateTime(new Date())}\n\n`;
 
-		case "month":
-			const monthData = statsGraph.data.reduce((acc, curr) => {
-				acc += `${curr[0].getFullYear()},${toMonth(curr[0])},${curr[1]}\n`;
-				return acc;
-			}, '');
-			return 'Year,Month,Downloads\n' + monthData;
-
-		case "year":
-			const yearData = statsGraph.data.reduce((acc, curr) => {
-				acc += `${curr[0].getFullYear()},${curr[1]}\n`;
-				return acc;
-			}, '');
-			return 'Year,Downloads\n' + yearData;
-
-		default:
-			throw new Error(`Cannot get header for unit ${statsGraph.dateUnit}`);
+	if (filtersUserFriendly.length) {
+		header += "# Filter Settings\n";
+		filtersUserFriendly.forEach(f => {
+			header += `${f.filterName},${f.labels.join('; ')}\n`;
+		});
+		header += '\n';
 	}
+
+	header += "# Statistics\n";
+
+	const dataFormatter = (dateUnit) => {
+		switch (dateUnit) {
+			case "week":
+				return {
+					colNames: `Date,Week,Downloads\n`,
+					rowFormatter: (row, idx) => `${toDate(row[0])},${statsGraph.weeks[idx]},${row[1]}\n`
+				};
+
+			case "month":
+				return {
+					colNames: `Year,Month,Downloads\n`,
+					rowFormatter: (row) => `${row[0].getFullYear()},${toMonth(row[0])},${row[1]}\n`
+				};
+
+			case "year":
+				return {
+					colNames: `Year,Downloads\n`,
+					rowFormatter: (row) => `${row[0].getFullYear()},${row[1]}\n`
+				};
+
+			default:
+				throw new Error(`Cannot get header for unit ${statsGraph.dateUnit}`);
+		}
+	};
+
+	const {colNames, rowFormatter} = dataFormatter(statsGraph.dateUnit);
+	let dataRows = '';
+
+	for (let idx=0; idx<statsGraph.data.length; idx++){
+		dataRows += rowFormatter(statsGraph.data[idx], idx);
+	}
+
+	return header + colNames + dataRows;
 };
 
 const renderGraph = (chartDiv, labelsDiv, statsGraph) => {
@@ -145,10 +181,10 @@ const dateFormatter = (dateUnit, weeks) => {
 	switch (dateUnit) {
 		case 'week':
 			return weeks && weeks.length
-			? (ms, opts, seriesName, dygraph, row) => {
-				return `${toDate(new Date(ms))} (week ${weeks[row]})`;
-			}
-			: ms => {
+				? (ms, opts, seriesName, dygraph, row) => {
+					return `${toDate(new Date(ms))} (week ${weeks[row]})`;
+				}
+				: ms => {
 					return toDate(new Date(ms));
 				};
 
@@ -197,5 +233,6 @@ const barChartPlotter = (e => {
 	}
 });
 
+const toDateTime = (d) => d.toLocaleString('se-SE', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'});
 const toDate = (d) => d.toLocaleString('se-SE', {year: 'numeric', month: '2-digit', day: '2-digit'});
 const toMonth = (d) => d.toLocaleString('en-US', { month: 'long' });
