@@ -21,7 +21,7 @@ object SitesDelimitedHeaderCsvStreams extends StandardCsvStreams {
 	private val headerDelimitor = "####"
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "NaN" || value == ""
+		case FloatValue => value == "NaN" || value == "LOD" || value == ""
 		case _ => false
 	}
 
