@@ -23,7 +23,7 @@ export class FilterNumbers {
 	}
 
 	get serialize(): FilterNumberSerialized[]{
-		return this.validFilters.map(nf => ({
+		return this.list.map(nf => ({
 			cat: nf.category,
 			txt: nf.txt
 		}));
