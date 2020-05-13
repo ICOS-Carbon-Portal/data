@@ -264,15 +264,25 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const distinctVarDefs = varDefs.filter((s, i) => varDefs.indexOf(s) === i);
 	const varDefStr = distinctVarDefs.map(s => `${s}\n`).join("");
 
-	const filterConds: string[] = tempFilters.flatMap(getFilterConditions).concat(numFilters.flatMap(getNumberFilterConds));
-	const filterStr = filterConds.length ? `${varDefStr}FILTER( ${filterConds.join(' && ')} )` : '';
+	const tempFilterStr = tempFilters
+		.map(getTempFilterConds)
+		.filter(nf => nf.length)
+		.map(nf => `FILTER( ${nf.join(' && ')} )`)
+		.join('\n');
 
+	const numFilterStr = numFilters
+		.map(getNumberFilterConds)
+		.map(nf => `FILTER( ${nf} )`)
+		.join('\n');
+
+	const filterConds: string[] = [tempFilterStr].concat(numFilterStr);
+	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
 	return deprFilterStr.concat(filterStr).concat(varNameFilterStr);
 }
 
-function getNumberFilterConds(numberFilter: NumberFilterRequest): string[] {
+function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
 	const varName = getNumVarName(numberFilter);
 	const xsdType = getXsdType(numberFilter);
 	const {type, vals, cmp} = numberFilter;
@@ -280,20 +290,19 @@ function getNumberFilterConds(numberFilter: NumberFilterRequest): string[] {
 	function cond(op: string, val: number): string{
 		return `?${varName} ${op} "${val}"^^xsd:${xsdType}`;
 	}
+
 	switch(type){
 		case "limit":
-			return [cond(cmp[0], vals[0])];
+			return cond(cmp[0], vals[0]);
 
 		case "span":
-			return [cond(cmp[0], vals[0]), cond(cmp[1], vals[1])];
+			return [cond(cmp[0], vals[0]), cond(cmp[1], vals[1])].join(' && ');
 
 		case "list":
-			//boolean or is not supported by the back end yet, and needs different signature of this func, anyway
-			//const list = vals.map((val, i) => `?${category} ${cmp[i]} ${val}`);
-			return [cond(cmp[0], vals[0])];
+			return vals.map((val, i) => cond(cmp[i], val)).join(' || ');
 
 		default:
-			return [];
+			return '';
 	}
 }
 
@@ -331,7 +340,7 @@ function getTempVarDefs(filter: TemporalFilterRequest): string[]{
 	return res;
 }
 
-function getFilterConditions(filter: TemporalFilterRequest): string[]{
+function getTempFilterConds(filter: TemporalFilterRequest): string[]{
 	const res: string[] = [];
 
 	function add(varName: "timeStart" | "timeEnd" | "submTime", cmp: ">=" | "<=", timeStr: string | undefined): void{

@@ -137,11 +137,11 @@ const projectDescr = envri === 'SITES'
 
 const numberFilterList = parseResourceInfo([
 	{
-		label: 'Single number',
-		comment: 'Provide a single number.'
+		label: 'List',
+		comment: 'Provide a list of numbers separated by spaces or a single number. E.g. 5 15 20.'
 	},
 	{
-		label: 'Numeric range',
+		label: 'Range',
 		comment: 'Provide min and max values separated by a dash ("-"). E.g. 50-150.'
 	},
 	{

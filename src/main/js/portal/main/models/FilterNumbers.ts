@@ -106,7 +106,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		};
 	}
 
-	const minMax = value.match(/^(<|>){1}(\d+\.*\d*)$/);
+	const minMax = value.match(/^(<|>){1}(\d+\.?\d*)$/);
 
 	if (minMax !== null){
 		return {
@@ -119,7 +119,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		};
 	}
 
-	const span = value.match(/^(\d+\.*\d*)-(\d+\.*\d*)$/);
+	const span = value.match(/^(\d+\.?\d*)-(\d+\.?\d*)$/);
 
 	if (span !== null){
 		return {
@@ -132,12 +132,11 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		};
 	}
 
-	//only single value for now
-	const list = [value];//.split(' ');
+	const list = value.split(' ');
 
 	if (list.length){
 		return list.reduce<NumberFilterValidation>((acc, curr) => {
-			const num = curr.match(/^(\d+\.*\d*)$/);
+			const num = curr.match(/^(\d+\.?\d*)$/);
 
 			if (num !== null){
 				return {
