@@ -17,6 +17,7 @@ const truncateStyle: CSSProperties = {
 const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
+const iconFile = '//static.icos-cp.eu/images/icons/file.svg';
 
 interface OurProps {
 	objInfo: ObjectsTable
@@ -81,6 +82,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
 						{config.envri === "SITES" && extendedInfo.station &&
 						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
+						}
+						{config.envri === "ICOS" && objInfo.fileName &&
+						<ExtendedInfoItem item={objInfo.fileName} icon={iconFile} iconHeight={16} title="File name" />
 						}
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
 						<ExtendedInfoItem item={objInfo.temporalResolution} icon={iconTime} iconHeight={16} title="Time resolution" />
