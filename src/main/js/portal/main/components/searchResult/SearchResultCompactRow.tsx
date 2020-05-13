@@ -58,7 +58,7 @@ export default class SearchResultCompactRow extends Component<CompactSearchResul
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{stripExt(objInfo.fileName)}</a>
+				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{objInfo.fileName}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.submTime), timezone[config.envri].offset)}</td>
@@ -66,8 +66,4 @@ export default class SearchResultCompactRow extends Component<CompactSearchResul
 			<td>{formatDateWithOptionalTime(new Date(objInfo.timeEnd), timezone[config.envri].offset)}</td>
 		</tr>;
 	}
-}
-
-function stripExt(fileName: string){
-	return fileName.slice(0, fileName.lastIndexOf('.'));
 }
