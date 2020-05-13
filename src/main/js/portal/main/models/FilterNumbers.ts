@@ -1,4 +1,5 @@
-import {NumberFilterCategories} from "../config";
+import {NumberFilterCategories, numberFilterKeys} from "../config";
+import {defaultState} from "./State";
 
 
 export interface NumberFilterValidation {
@@ -23,19 +24,24 @@ export class FilterNumbers {
 	}
 
 	get serialize(): FilterNumberSerialized[]{
-		return this.list.map(nf => ({
+		return this.validFilters.map(nf => ({
 			cat: nf.category,
 			txt: nf.txt
 		}));
 	}
 
 	static deserialize(jsonFilterNumber: FilterNumberSerialized[]){
-		return new FilterNumbers(jsonFilterNumber.map(jfn => new FilterNumber(jfn.cat, jfn.txt)));
+		const list = defaultState.filterNumbers.list;
+		const restoredFilterNumbers = new FilterNumbers(jsonFilterNumber.map(jfn => new FilterNumber(jfn.cat, jfn.txt)));
+		const newList = list.map(nf => restoredFilterNumbers.getFilter(nf.category) ?? nf);
+
+		return new FilterNumbers(newList);
 	};
 
 	restore(jsonFilterNumber: FilterNumberSerialized[]){
 		const restoredFilterNumbers = FilterNumbers.deserialize(jsonFilterNumber);
 		const newList = this.list.map(nf => restoredFilterNumbers.getFilter(nf.category) ?? nf);
+
 		return new FilterNumbers(newList);
 	}
 
