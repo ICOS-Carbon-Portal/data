@@ -147,7 +147,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 										selectAction={this.handleSelectAction.bind(this)}
 									/>
 								</div>
-								<div className="col-md-1">
+								<div className="col-md-3">
 									<Selector
 										name="type"
 										label="Chart type"
