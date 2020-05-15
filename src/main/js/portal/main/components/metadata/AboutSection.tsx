@@ -39,9 +39,9 @@ const AboutSection = (props: AboutSectionProps) => {
 						return (<div key={'key_' + i}><a href={collection.uri}>{collection.label}</a></div>)
 					}))
 			}
-			{metadata.citationString &&
+			{metadata.references.citationString &&
 				<React.Fragment>
-					{metadataRow("Citation", metadata.citationString)}
+					{metadataRow("Citation", metadata.references.citationString)}
 				</React.Fragment>
 			}
 			{prevVersions.map((previousVersion, i) =>
