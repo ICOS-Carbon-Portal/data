@@ -192,10 +192,13 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def docAccessRoute(doc: DocObject): Route = {
+	private def docAccessRoute(doc: DocObject)(implicit envri: Envri): Route = {
 		val file = uploadService.getFile(doc)
 		if (file.exists) respondWithAttachment(doc.fileName){
-			getFromFile(file, getContentType(doc.fileName))
+			getClientIp{ip =>
+				logPublicDownloadInfo(doc, ip)
+				getFromFile(file, getContentType(doc.fileName))
+			}
 		} else
 			complete(StatusCodes.NotFound -> "Contents of this document are not found on the server.")
 	}
@@ -214,15 +217,15 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 		Utils.runSequentially(hashes){hash =>
 			uploadService.meta.lookupPackage(hash).andThen{
-				case Success(obj) => obj.asDataObject.foreach(logPublicDownloadInfo(_, ip, extraInfo))
+				case Success(obj) => logPublicDownloadInfo(obj, ip, extraInfo)
 				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 			}
 		}
 	}
 
-	private def logPublicDownloadInfo(dobj: DataObject, ip: String, extraInfo: Seq[(String, String)] = Nil)(implicit envri: Envri): Unit =
-		logClient.logDownload(dobj, ip, extraInfo:_*).failed.foreach(
-			log.error(_, s"Failed logging download of object ${dobj.hash} from $ip to RestHeart")
+	private def logPublicDownloadInfo(obj: StaticObject, ip: String, extraInfo: Seq[(String, String)] = Nil)(implicit envri: Envri): Unit =
+		logClient.logDownload(obj, ip, extraInfo:_*).failed.foreach(
+			log.error(_, s"Failed logging download of object ${obj.hash} from $ip to RestHeart")
 		)
 
 	private def logCollDownload(coll: StaticCollection)(implicit envri: Envri): ExtraBatchLog = (ip, uidOpt) => {

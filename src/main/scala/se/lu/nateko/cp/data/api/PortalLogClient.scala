@@ -14,6 +14,8 @@ import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.RestHeartConfig
 import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.meta.core.data.StaticObject
+import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.StaticCollection
@@ -23,15 +25,19 @@ class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	import http.system.dispatcher
 
-	def logDownload(dobj: DataObject, ip: String, extraProps: (String, String)*)(implicit envri: Envri): Future[Done] = {
-		import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
+	def logDownload(obj: StaticObject, ip: String, extraProps: (String, String)*)(implicit envri: Envri): Future[Done] = {
+		import se.lu.nateko.cp.meta.core.data.JsonSupport.staticObjectFormat
+		val (prop, descr) = obj match{
+			case _: DataObject => ("dobj", "data object")
+			case _: DocObject => ("doc", "document object")
+		}
 
 		val basePayload = extraProps.map{
 				case(prop, value) => prop -> JsString(value)
-			} :+ "dobj" -> dobj.toJson
+			} :+ prop -> obj.toJson
 
 		val logUri = Uri(config.dobjDownloadLogUri.toASCIIString)
-		logDownloadInternal(logUri, basePayload, ip, "data object")
+		logDownloadInternal(logUri, basePayload, ip, descr)
 	}
 
 	def logDownload(coll: StaticCollection, ip: String)(implicit envri: Envri): Future[Done] = {
