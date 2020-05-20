@@ -109,7 +109,7 @@ export function getLastSegmentsInUrls(urls: UrlStr[]): (string | Sha256Str)[] {
 }
 
 function getUrlFromPid(pid: Sha256Str): UrlStr {
-	return config.previewIdPrefix[config.envri] + pid;
+	return config.objectUriPrefix[config.envri] + pid;
 }
 
 export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {

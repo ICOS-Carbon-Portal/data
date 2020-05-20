@@ -99,7 +99,7 @@ export default class Preview {
 
 	restore(lookup: Lookup['table'], cart: Cart, objectsTable: ObjectsTable[]) {
 		if (this.hasPids) {
-			return this.initPreview(lookup, cart, this.pids.map(pid => config.previewIdPrefix[config.envri] + pid), objectsTable);
+			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
 		} else {
 			return this;
 		}

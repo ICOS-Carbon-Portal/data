@@ -99,11 +99,11 @@ export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
 	let text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select distinct ?uri ?label ?stationId
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>`;
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <${config.metaResourceGraph[config.envri]}>`;
 
 	if (config.envri === "ICOS"){
 		text += `
-from <http://meta.icos-cp.eu/resources/cpmeta/>
 from <http://meta.icos-cp.eu/resources/icos/>
 from <http://meta.icos-cp.eu/resources/extrastations/>
 from named <http://meta.icos-cp.eu/resources/wdcgg/>
@@ -118,12 +118,35 @@ where {
 }`;
 	} else {
 		text += `
-from <https://meta.fieldsites.se/resources/sites/>
 where {
 	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
 }`;
 	}
 
+	return {text};
+}
+
+export function specProjKeywords(): Query<'proj' | 'spec', 'pKeywords' | 'sKeywords'>{
+	const text = `# project- and spec- keywords
+prefix cpmeta: <${config.cpmetaOntoUri}>
+select ?proj ?spec ?pKeywords ?sKeywords
+from <${config.metaResourceGraph[config.envri]}>
+where{
+	?spec cpmeta:hasAssociatedProject ?proj
+	filter not exists {?proj cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	optional {?proj cpmeta:hasKeywords ?pKeywords }
+	optional {?spec cpmeta:hasKeywords ?sKeywords }
+}`;
+	return {text};
+}
+
+export function dobjLevelKeywords(): Query<'keywords'>{
+	const text = `# data(/doc)-object-specific keywords
+prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+select distinct ?keywords where{
+	?dobj cpmeta:hasKeywords ?keywords .
+	FILTER(strstarts(str(?dobj), ${config.objectUriPrefix[config.envri]}))
+}`;
 	return {text};
 }
 

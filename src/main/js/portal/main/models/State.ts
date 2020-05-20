@@ -276,7 +276,7 @@ const jsonToState = (state0: JsonHashState) => {
 		}
 		state.preview = new Preview().withPids(state0.preview ?? []);
 		if (state0.id){
-			state.id = config.previewIdPrefix[config.envri] + state0.id;
+			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
 	} catch(err) {
 		console.log({state, state0, err});

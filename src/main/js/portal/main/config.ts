@@ -4,6 +4,18 @@ import {IdxSig, UrlStr} from "./backend/declarations";
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
+type EnvriUrl = {[E in Envri]: UrlStr}
+
+const objectUriPrefix: EnvriUrl = {
+	ICOS: 'https://meta.icos-cp.eu/objects/',
+	SITES: 'https://meta.fieldsites.se/objects/'
+};
+
+const metaResourceGraph: EnvriUrl = {
+	ICOS: 'http://meta.icos-cp.eu/resources/cpmeta/',
+	SITES: 'https://meta.fieldsites.se/resources/sites/'
+};
+
 export default {
 	envri: commonConfig.envri as Envri,
 	...commonConfig.previewTypes,
@@ -22,10 +34,8 @@ export default {
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 60,
 	dobjExtendedCacheFetchLimit: 20,
-	previewIdPrefix: {
-		ICOS: 'https://meta.icos-cp.eu/objects/',
-		SITES: 'https://meta.fieldsites.se/objects/'
-	},
+	objectUriPrefix,
+	metaResourceGraph,
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
 	historyStateMaxAge: (1000 * 3600 * 24)
 };
