@@ -1,12 +1,7 @@
 import {PortalThunkAction} from "../store";
 import {Filter, Value} from "../models/SpecTable";
 import {State} from "../models/State";
-import {
-	DeprecatedFilterRequest,
-	FilterRequest,
-	PidFilterRequest,
-	TemporalFilterRequest
-} from "../models/FilterRequest";
+import {FilterRequest} from "../models/FilterRequest";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
@@ -31,7 +26,6 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	: new DataObjectsFetcher();
 
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
-const getOriginsTable: PortalThunkAction<void> = getDobjOriginsAndCounts(false);
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -239,7 +233,7 @@ export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 			const {specTable} = getState();
 			const uriList = specTable
 				.getAllDistinctAvailableColValues(helpItem.name as ColNames)
-				.filter(uri => uri);
+				.filter(Value.isString);
 
 			if (uriList.length) {
 				fetchResourceHelpInfo(uriList).then(resourceInfoRaw => {

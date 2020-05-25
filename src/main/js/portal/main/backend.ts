@@ -1,4 +1,4 @@
-import {sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
+import {sparqlFetchAndParse} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
@@ -7,13 +7,8 @@ import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
 import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import {MetaDataObject, Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
+import {Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, throwError} from './utils';
-import {
-	basicColNames,
-	columnMetaColNames,
-	originsColNames
-} from "./sparqlQueries";
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter, Value} from "./models/SpecTable";
 import {QueryParameters} from "./actions/types";
@@ -22,18 +17,11 @@ const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
-const extendResult = <C, R>(colNames: C[], rows: R[]) => ({
-	colNames,
-	rows: rows && rows.length ? rows : [],
-	filters: [],
-	extraSpecFilter: []
-});
-
 const fetchSpecBasics = (filters: FilterRequest[]) => {
 	const deprFilter = filters.find(isDeprecatedFilter);
 	const query = queries.specBasics(deprFilter);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		type: b.type.value,
 		level: parseInt(b.level.value),
@@ -41,43 +29,43 @@ const fetchSpecBasics = (filters: FilterRequest[]) => {
 		format: b.format.value,
 		theme: b.theme.value,
 		temporalResolution: b.temporalResolution?.value
-	})).then(rows => extendResult(basicColNames, rows));
+	}));
 };
 
 const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
 	const deprFilter = filters.find(isDeprecatedFilter);
 	const query = queries.specColumnMeta(deprFilter);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		column: b.column.value,
 		colTitle: b.colTitle.value,
 		valType: b.valType.value,
-		quantityKind: b.quantityKind?.value,
+		quantityKind: sparqlParsers.fromUrl(b.quantityKind),
 		quantityUnit: b.quantityUnit.value
-	})).then(rows => extendResult(columnMetaColNames, rows));
+	}));
 };
 
 export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	const query = queries.dobjOriginsAndCounts(filters);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
 		submitter: b.submitter.value,
 		project: b.project.value,
 		count: parseInt(b.count.value),
 		station: b.station?.value
-	})).then(rows => extendResult(originsColNames, rows));
+	}));
 };
 
 export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
 	const query = queries.labelLookup();
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		uri: b.uri.value,
 		label: b.label.value,
 		stationId: b.stationId?.value
-	})).then(ll => ll.map(item => ({
+	})).then(ll => ll.rows.map(item => ({
 		uri: item.uri,
 		label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label
 	})));
@@ -105,7 +93,7 @@ export const fetchKnownDataObjects = (dobjs: string[]) => {
 export function fetchFilteredDataObjects(options: QueryParameters){
 	return Filter.allowsNothing(options.specs) || Filter.allowsNothing(options.submitters) || Filter.allowsNothing(options.stations)
 		? Promise.resolve({
-			columnNames: [],
+			colNames: [],
 			rows: []
 		})
 		: fetchAndParseDataObjects(queries.listFilteredDataObjects(options));
@@ -126,9 +114,9 @@ const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	const query = queries.findDobjs(search);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)
-	}));
+	})).then(res => res.rows);
 }
 
 export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
@@ -213,29 +201,29 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 
 	const query = queries.extendedDataObjectInfo(dobjs);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		dobj: b.dobj.value,
-		station: b.station?.value,
-		stationId: b.stationId?.value,
-		samplingHeight: b.samplingHeight ? parseFloat(b.samplingHeight.value) : undefined,
-		theme: b.theme?.value,
-		themeIcon: b.themeIcon?.value,
-		title: b.title?.value,
-		description: b.description?.value,
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+		dobj: sparqlParsers.fromUrl(b.dobj),
+		station: sparqlParsers.fromString(b.station),
+		stationId: sparqlParsers.fromString(b.stationId),
+		samplingHeight: sparqlParsers.fromFloat(b.samplingHeight),
+		theme: sparqlParsers.fromString(b.theme),
+		themeIcon: sparqlParsers.fromString(b.themeIcon),
+		title: sparqlParsers.fromString(b.title),
+		description: sparqlParsers.fromString(b.description),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
-	}));
+	})).then(res => res.rows);
 };
 
-export const fetchResourceHelpInfo = (uriList: Value[]) => {
+export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 	const query = queries.resourceHelpInfo(uriList);
 
-	return sparqlFetch(query, config.sparqlEndpoint, b => ({
-		uri: b.uri.value,
-		label: b.label ? b.label.value : undefined,
-		comment: b.comment ? b.comment.value : undefined,
-		webpage: b.webpage ? b.webpage.value : undefined
-	}));
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+		uri: sparqlParsers.fromUrl(b.uri),
+		label: sparqlParsers.fromString(b.label),
+		comment: sparqlParsers.fromString(b.comment),
+		webpage: sparqlParsers.fromString(b.webpage)
+	})).then(res => res.rows);
 };
 
 export const saveTsSetting = (email: string | null, spec: string, type: string, val: string) => {

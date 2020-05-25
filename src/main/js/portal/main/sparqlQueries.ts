@@ -12,17 +12,14 @@ import {
 	VariableFilterRequest, isVariableFilter
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
+import { UrlStr } from './backend/declarations';
 
 
 const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-const basicColNamesMan = ["spec", "type", "level", "format", "theme"] as const;
-const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
-export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
-
-export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
+export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution"> {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
@@ -42,11 +39,7 @@ where{
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "column", "colTitle", "valType", "quantityUnit"] as const;
-const columnMetaColNamesOpt = ["quantityKind"] as const;
-export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
-
-export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
+export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind"> {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?column ?colTitle ?valType ?quantityKind
@@ -67,11 +60,7 @@ where{
 	return {text};
 }
 
-const originsColNamesMan = ["spec", "submitter", "project", "count"] as const;
-const originsColNamesOpt = ["station"] as const;
-export const originsColNames = [...originsColNamesMan, ...originsColNamesOpt];
-
-export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof originsColNamesMan[number], typeof originsColNamesOpt[number]> {
+export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<"spec" | "submitter" | "project" | "count", "station"> {
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -126,16 +115,20 @@ where {
 	return {text};
 }
 
-export function specProjKeywords(): Query<'proj' | 'spec', 'pKeywords' | 'sKeywords'>{
-	const text = `# project- and spec- keywords
+//proj keywords are inherited
+export function specKeywords(): Query<'spec' | 'keywords'>{
+	const text = `# spec keywords
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?proj ?spec ?pKeywords ?sKeywords
+select ?spec ?keywords
 from <${config.metaResourceGraph[config.envri]}>
 where{
 	?spec cpmeta:hasAssociatedProject ?proj
+	{
+		{?proj cpmeta:hasKeywords ?keywords }
+		UNION
+		{?spec cpmeta:hasKeywords ?keywords }
+	}
 	filter not exists {?proj cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	optional {?proj cpmeta:hasKeywords ?pKeywords }
-	optional {?spec cpmeta:hasKeywords ?sKeywords }
 }`;
 	return {text};
 }
@@ -402,7 +395,7 @@ function getVarFilter(filter: VariableFilterRequest): string{
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -435,7 +428,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	return {text};
 };
 
-export const resourceHelpInfo = (uriList: Value[]): Query<"uri", "label" | "comment" | "webpage"> => {
+export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "comment" | "webpage"> => {
 	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
 	?uri rdfs:label ?label .

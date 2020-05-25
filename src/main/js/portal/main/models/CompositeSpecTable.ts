@@ -1,19 +1,20 @@
 import {
-	basicColNames,
-	columnMetaColNames,
-	originsColNames,
+	specBasics,
+	specColumnMeta,
+	dobjOriginsAndCounts,
 	SPECCOL
 } from '../sparqlQueries';
 import SpecTable, {Filters, Value, Filter, Row, TableSerialized} from "./SpecTable";
 import {ThenArg} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
+import { QueryResultColumns } from '../backend/sparql';
 
 
 type JsonCompositeSpecTable = ThenArg<typeof fetchBoostrapData>['specTables'];
-export type BasicsColNames = typeof basicColNames[number];
-export type ColumnMetaColNames = typeof columnMetaColNames[number];
-export type OriginsColNames = typeof originsColNames[number];
+export type BasicsColNames = QueryResultColumns<ReturnType<typeof specBasics>>;
+export type ColumnMetaColNames = QueryResultColumns<ReturnType<typeof specColumnMeta>>;
+export type OriginsColNames = QueryResultColumns<ReturnType<typeof dobjOriginsAndCounts>>;
 export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | CategoryType;
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;
