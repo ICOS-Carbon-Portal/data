@@ -1,5 +1,5 @@
 import {
-	BackendPayload, BackendTables, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
+	BackendPayload, BootstrapInfo, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
 	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
 	BackendTsSettings, BackendBatchDownload, BackendUpdateCart
 } from "./actionpayloads";
@@ -22,8 +22,8 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, handleBatchDownload(state, payload));
 	}
 
-	if (payload instanceof BackendTables){
-		return stateUtils.update(state, handleBackendTables(state, payload));
+	if (payload instanceof BootstrapInfo){
+		return stateUtils.update(state, bootstrapInfoUpdates(state, payload));
 	}
 
 	if (payload instanceof BackendOriginsTable){
@@ -140,9 +140,10 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 	}
 };
 
-const handleBackendTables = (state: State, payload: BackendTables) => {
-	const specTable = CompositeSpecTable.deserialize(payload.allTables.specTables as SpecTableSerialized);
-	const labelLookup = payload.allTables.labelLookup.reduce<IdxSig>((acc, curr) => {
+function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
+	const specTable = CompositeSpecTable.deserialize(payload.info.specTables as SpecTableSerialized);
+
+	const labelLookup = payload.info.labelLookup.reduce<IdxSig>((acc, curr) => {
 		acc[curr.uri] = curr.label;
 		return acc;
 	}, {});
@@ -151,7 +152,8 @@ const handleBackendTables = (state: State, payload: BackendTables) => {
 		specTable,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
-		lookup: new Lookup(specTable, labelLookup)
+		lookup: new Lookup(specTable, labelLookup),
+		keywords: payload.info.keywords
 	};
 };
 

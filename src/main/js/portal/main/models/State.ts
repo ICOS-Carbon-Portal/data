@@ -12,7 +12,7 @@ import config, {
 	numberFilterKeys
 } from "../config";
 import deepequal from 'deep-equal';
-import {ThenArg, UrlStr, Sha256Str, IdxSig} from "../backend/declarations";
+import {AsyncResult, UrlStr, Sha256Str, IdxSig} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
@@ -20,6 +20,7 @@ import {DataObject as DO} from "../../../common/main/metacore";
 import SpecTable, {Row} from "./SpecTable";
 import {getLastSegmentInUrl} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
+import { KeywordsInfo } from "../backend/keywordsInfo";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -61,8 +62,8 @@ export interface User extends WhoAmI {
 	profile: Profile | {}
 }
 
-type KnownDataObject = ThenArg<typeof fetchKnownDataObjects>['rows'][0]
-export type ExtendedDobjInfo = ThenArg<typeof getExtendedDataObjInfo>[0]
+type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
+export type ExtendedDobjInfo = AsyncResult<typeof getExtendedDataObjInfo>[0]
 export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
 export interface MetaDataObject extends DO{
@@ -118,6 +119,7 @@ export interface State {
 	page: number
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
+	keywords: KeywordsInfo
 }
 
 const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -167,7 +169,8 @@ export const defaultState: State = {
 	tabs: {},
 	page: 0,
 	tsSettings: {},
-	helpStorage: new HelpStorage()
+	helpStorage: new HelpStorage(),
+	keywords: {specLookup: {}, dobjKeywords: []}
 };
 
 const update = (state: State, updates: Partial<State>): State => {

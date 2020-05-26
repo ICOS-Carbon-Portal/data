@@ -5,12 +5,13 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
-import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
+import {UrlStr, Sha256Str, IdxSig, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, throwError} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
-import {Filter, Value} from "./models/SpecTable";
+import {Filter} from "./models/SpecTable";
+import keywordsInfo from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -71,19 +72,23 @@ export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
 	})));
 }
 
-export function fetchBoostrapData(filters: FilterRequest[]) {
-	const specBasicsPromise = fetchSpecBasics(filters);
-	const specColumnMetaPromise = fetchSpecColumnMeta(filters);
-	const dobjOriginsAndCountsPromise = fetchDobjOriginsAndCounts(filters);
-	const labelLookupPromise = fetchLabelLookup();
+export type BootstrapData = AsyncResult<typeof fetchBoostrapData>;
 
-	return Promise.all([specBasicsPromise, specColumnMetaPromise, dobjOriginsAndCountsPromise, labelLookupPromise])
-		.then(([basics, columnMeta, origins, labelLookup]) => (
-			{
-				specTables: {basics, columnMeta, origins},
-				labelLookup
-			}
-		));
+export async function fetchBoostrapData(filters: FilterRequest[]) {
+
+	const [basics, columnMeta, origins, labelLookup, keywords] = await Promise.all([
+		fetchSpecBasics(filters),
+		fetchSpecColumnMeta(filters),
+		fetchDobjOriginsAndCounts(filters),
+		fetchLabelLookup(),
+		keywordsInfo.fetch()
+	]);
+
+	return {
+		specTables: { basics, columnMeta, origins },
+		labelLookup,
+		keywords
+	};
 }
 
 export const fetchKnownDataObjects = (dobjs: string[]) => {

@@ -19,7 +19,9 @@ const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution"> {
+export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
+
+export function specBasics(deprFilter?: DeprecatedFilterRequest): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
@@ -39,7 +41,9 @@ where{
 	return {text};
 }
 
-export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind"> {
+export type SpecColumnMetaQuery = Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind">
+
+export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): SpecColumnMetaQuery {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?column ?colTitle ?valType ?quantityKind
@@ -60,7 +64,9 @@ where{
 	return {text};
 }
 
-export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<"spec" | "submitter" | "project" | "count", "station"> {
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station">
+
+export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -112,34 +118,6 @@ where {
 }`;
 	}
 
-	return {text};
-}
-
-//proj keywords are inherited
-export function specKeywords(): Query<'spec' | 'keywords'>{
-	const text = `# spec keywords
-prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?spec ?keywords
-from <${config.metaResourceGraph[config.envri]}>
-where{
-	?spec cpmeta:hasAssociatedProject ?proj
-	{
-		{?proj cpmeta:hasKeywords ?keywords }
-		UNION
-		{?spec cpmeta:hasKeywords ?keywords }
-	}
-	filter not exists {?proj cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-}`;
-	return {text};
-}
-
-export function dobjLevelKeywords(): Query<'keywords'>{
-	const text = `# data(/doc)-object-specific keywords
-prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select distinct ?keywords where{
-	?dobj cpmeta:hasKeywords ?keywords .
-	FILTER(strstarts(str(?dobj), ${config.objectUriPrefix[config.envri]}))
-}`;
 	return {text};
 }
 

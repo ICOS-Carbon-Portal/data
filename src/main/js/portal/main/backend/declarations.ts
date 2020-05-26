@@ -11,21 +11,10 @@ export type IdxSig<Value = string, Keys extends string | number | symbol = strin
 	[Key in Keys]: Value
 }
 
-/**	From https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-inference-in-conditional-types	*/
-export type Unpacked<T> =
-	T extends (infer U)[] ? U :
-		T extends (...args: any[]) => infer U ? U :
-			T extends Promise<infer U> ? U :
-				T;
-
 export type PromiseTypeParam<T> = T extends Promise<infer U> ? U : never;
 
 /** Extract type inside a Promise coming from a function */
-export type ThenArg<T> = T extends Promise<infer U>
-	? U
-	: T extends (...args: any[]) => Promise<infer U>
-		? U
-		: T;
+export type AsyncResult<F extends (...args: any[]) => Promise<any>> = F extends (...args: any[]) => Promise<infer R> ? R : never;
 
 export type ExtractPrototypes<C extends IdxSig<any>> = {
 	[Key in keyof C['prototype']]: C['prototype'][Key]

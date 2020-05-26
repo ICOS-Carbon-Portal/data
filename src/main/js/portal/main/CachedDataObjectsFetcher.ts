@@ -2,11 +2,11 @@ import LinearCache from "./models/LinearCache";
 import {fetchFilteredDataObjects} from "./backend";
 import deepEqual from 'deep-equal';
 import config from './config';
-import {ThenArg} from "./backend/declarations";
+import {AsyncResult} from "./backend/declarations";
 import {QueryParameters} from "./actions/types";
 
 
-type FetchFilteredDataObjects = ThenArg<typeof fetchFilteredDataObjects>;
+type FetchFilteredDataObjects = AsyncResult<typeof fetchFilteredDataObjects>;
 type Rows = FetchFilteredDataObjects["rows"];
 type FetchedDataObjs = Promise<{
 	rows: Rows

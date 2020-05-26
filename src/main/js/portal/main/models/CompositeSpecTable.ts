@@ -1,20 +1,20 @@
 import {
-	specBasics,
-	specColumnMeta,
-	dobjOriginsAndCounts,
+	SpecBasicsQuery,
+	SpecColumnMetaQuery,
+	DobjOriginsAndCountsQuery,
 	SPECCOL
 } from '../sparqlQueries';
 import SpecTable, {Filters, Value, Filter, Row, TableSerialized} from "./SpecTable";
-import {ThenArg} from "../backend/declarations";
+import {AsyncResult} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
 import { QueryResultColumns } from '../backend/sparql';
 
 
-type JsonCompositeSpecTable = ThenArg<typeof fetchBoostrapData>['specTables'];
-export type BasicsColNames = QueryResultColumns<ReturnType<typeof specBasics>>;
-export type ColumnMetaColNames = QueryResultColumns<ReturnType<typeof specColumnMeta>>;
-export type OriginsColNames = QueryResultColumns<ReturnType<typeof dobjOriginsAndCounts>>;
+type JsonCompositeSpecTable = AsyncResult<typeof fetchBoostrapData>['specTables'];
+export type BasicsColNames = QueryResultColumns<SpecBasicsQuery>;
+export type ColumnMetaColNames = QueryResultColumns<SpecColumnMetaQuery>;
+export type OriginsColNames = QueryResultColumns<DobjOriginsAndCountsQuery>;
 export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | CategoryType;
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;

@@ -1,7 +1,7 @@
-import {ThenArg} from "../backend/declarations";
+import {AsyncResult} from "../backend/declarations";
 import {fetchFilteredDataObjects} from "../backend";
 
-type Rows = ThenArg<typeof fetchFilteredDataObjects>["rows"];
+type Rows = AsyncResult<typeof fetchFilteredDataObjects>["rows"];
 type Fetcher = (offset: number, limit: number) => Promise<Rows>
 
 export default class LinearCache{
