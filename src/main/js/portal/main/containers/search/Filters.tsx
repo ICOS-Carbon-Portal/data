@@ -4,7 +4,13 @@ import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {ColNames} from "../../models/CompositeSpecTable";
-import {filtersReset, setNumberFilter, setFilterTemporal, specFilterUpdate} from "../../actions/search";
+import {
+	filtersReset,
+	setNumberFilter,
+	setFilterTemporal,
+	specFilterUpdate,
+	setKeywordFilter
+} from "../../actions/search";
 import {PanelsWithFilters} from "../../components/filters/PanelsWithFilters";
 import {FilterNumber} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
@@ -17,7 +23,7 @@ type OurProps = StateProps & DispatchProps & {tabHeader: string};
 class Filters extends Component<OurProps> {
 	render(){
 		const {specTable, filtersReset, filterTemporal, labelLookup, updateFilter, setFilterTemporal,
-			setNumberFilter, filterNumbers} = this.props;
+			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter} = this.props;
 		const resetBtnEnabled = filterTemporal.hasFilter || specTable.hasActiveFilters || filterNumbers.hasFilters;
 
 		return (
@@ -32,6 +38,9 @@ class Filters extends Component<OurProps> {
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
+					keywords={keywords}
+					filterKeywords={filterKeywords}
+					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
 				/>
 
@@ -60,7 +69,9 @@ function stateToProps(state: State){
 		filterTemporal: state.filterTemporal,
 		filterNumbers: state.filterNumbers,
 		specTable: state.specTable,
-		labelLookup: state.labelLookup
+		labelLookup: state.labelLookup,
+		keywords: state.keywords,
+		filterKeywords: state.filterKeywords,
 	};
 }
 
@@ -70,6 +81,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		filtersReset: () => dispatch(filtersReset),
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
+		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),
 	};
 }
 

@@ -276,13 +276,14 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters));
 }
 
-function getKeywordFilter(allFilters: FilterRequest[]): string{
+function getKeywordFilter(allFilters: FilterRequest[]): string {
 	const requests = allFilters.filter(isKeywordsFilter);
 	if(requests.length === 0) return '';
 	if(requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one")
 	const req = requests[0];
 	if(req.dobjKeywords.length === 0 && req.specs.length === 0) return '';
-	
+
+	throw new Error('not implemented');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {

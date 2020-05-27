@@ -83,6 +83,7 @@ export async function fetchBoostrapData(filters: FilterRequest[]) {
 		fetchLabelLookup(),
 		keywordsInfo.fetch()
 	]);
+	console.log({keywords});
 
 	return {
 		specTables: { basics, columnMeta, origins },

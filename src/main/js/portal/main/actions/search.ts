@@ -222,6 +222,12 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
+export function setKeywordFilter(filterKeywords: string[]): PortalThunkAction<void> {
+	return (dispatch) => {
+
+	};
+}
+
 export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const {helpStorage} = getState();

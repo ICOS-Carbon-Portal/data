@@ -105,24 +105,25 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 	}
 };
 
+export type FilterName = CategoryType | NumberFilterCategories | 'temporalFilter' | 'keywordFilter';
 type IFilterCategories = {
 	[E in Envri]: ReadonlyArray<{
-		panelTitle: string;
-		filterList: ReadonlyArray<CategoryType | NumberFilterCategories | 'temporalFilter'>;
+		panelTitle: string
+		filterList: ReadonlyArray<FilterName>
 	}>
 }
 
 export const filters: IFilterCategories = {
 	ICOS: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter', 'samplingHeight']},
-		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
 		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
 		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},
-		{panelTitle: "Data types", filterList: ['type', 'level', 'format']},
+		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
 		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
