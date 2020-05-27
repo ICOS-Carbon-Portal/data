@@ -9,7 +9,7 @@ import {
 	isTemporalFilter,
 	isDeprecatedFilter,
 	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest,
-	VariableFilterRequest, isVariableFilter
+	VariableFilterRequest, isVariableFilter, KeywordFilterRequest, isKeywordsFilter
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
 import { UrlStr } from './backend/declarations';
@@ -273,7 +273,16 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
-	return deprFilterStr.concat(filterStr).concat(varNameFilterStr);
+	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters));
+}
+
+function getKeywordFilter(allFilters: FilterRequest[]): string{
+	const requests = allFilters.filter(isKeywordsFilter);
+	if(requests.length === 0) return '';
+	if(requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one")
+	const req = requests[0];
+	if(req.dobjKeywords.length === 0 && req.specs.length === 0) return '';
+	
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {

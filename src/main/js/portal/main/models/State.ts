@@ -120,6 +120,7 @@ export interface State {
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
 	keywords: KeywordsInfo
+	filterKeywords: string[]
 }
 
 const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -170,7 +171,8 @@ export const defaultState: State = {
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
-	keywords: {specLookup: {}, dobjKeywords: []}
+	keywords: {specLookup: {}, dobjKeywords: []},
+	filterKeywords: []
 };
 
 const update = (state: State, updates: Partial<State>): State => {

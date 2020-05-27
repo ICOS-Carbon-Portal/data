@@ -148,6 +148,8 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		return acc;
 	}, {});
 
+console.log({kws: payload.info.keywords});
+
 	return {
 		specTable,
 		labelLookup,
