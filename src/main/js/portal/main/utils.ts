@@ -109,9 +109,20 @@ export function getLastSegmentsInUrls(urls: UrlStr[]): (string | Sha256Str)[] {
 }
 
 function getUrlFromPid(pid: Sha256Str): UrlStr {
-	return config.previewIdPrefix[config.envri] + pid;
+	return config.objectUriPrefix[config.envri] + pid;
 }
 
 export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 	return pids.map(pid => getUrlFromPid(pid));
+}
+
+export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)
+
+//converts a regular single-argument function to a function that accepts optional value and returns optional result
+export function liftToOptional<I, O>(f: (i:I) => O): OptFunction<I, O> {
+	return io0 => {
+		const io: I | undefined = io0
+		if(io === undefined) return undefined as any
+		return f(io)
+	}
 }

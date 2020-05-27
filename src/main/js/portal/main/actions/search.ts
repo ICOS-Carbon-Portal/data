@@ -1,12 +1,7 @@
 import {PortalThunkAction} from "../store";
 import {Filter, Value} from "../models/SpecTable";
 import {State} from "../models/State";
-import {
-	DeprecatedFilterRequest,
-	FilterRequest,
-	PidFilterRequest,
-	TemporalFilterRequest
-} from "../models/FilterRequest";
+import {FilterRequest} from "../models/FilterRequest";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
@@ -24,6 +19,7 @@ import {QueryParameters, SearchOption} from "./types";
 import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
+import keywordsInfo from "../backend/keywordsInfo";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -31,7 +27,6 @@ const dataObjectsFetcher = config.useDataObjectsCache
 	: new DataObjectsFetcher();
 
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
-const getOriginsTable: PortalThunkAction<void> = getDobjOriginsAndCounts(false);
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -116,7 +111,7 @@ const logPortalUsage = (state: State) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions, specTable} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
@@ -134,6 +129,12 @@ const getFilters = (state: State) => {
 			if(titles != null){
 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
 			}
+		}
+
+		if(filterKeywords.length > 0){
+			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
+			const specs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+			filters.push({category: 'keywords', dobjKeywords, specs});
 		}
 
 		filters = filters.concat(filterNumbers.validFilters);
@@ -173,8 +174,8 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const {filterTemporal, filterNumbers, specTable} = getState();
-	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable);
+	const {filterTemporal, filterNumbers, specTable, filterKeywords} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0;
 
 	dispatch(new Payloads.MiscResetFilters());
 	if(shouldRefetchCounts) dispatch(getOriginsThenDobjList)
@@ -228,6 +229,13 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
+export function setKeywordFilter(filterKeywords: string[]): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.FilterKeywords(filterKeywords));
+		dispatch(getOriginsThenDobjList);
+	};
+}
+
 export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const {helpStorage} = getState();
@@ -239,7 +247,7 @@ export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 			const {specTable} = getState();
 			const uriList = specTable
 				.getAllDistinctAvailableColValues(helpItem.name as ColNames)
-				.filter(uri => uri);
+				.filter(Value.isString);
 
 			if (uriList.length) {
 				fetchResourceHelpInfo(uriList).then(resourceInfoRaw => {

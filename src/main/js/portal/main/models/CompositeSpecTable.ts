@@ -1,19 +1,20 @@
 import {
-	basicColNames,
-	columnMetaColNames,
-	originsColNames,
+	SpecBasicsQuery,
+	SpecColumnMetaQuery,
+	DobjOriginsAndCountsQuery,
 	SPECCOL
 } from '../sparqlQueries';
 import SpecTable, {Filters, Value, Filter, Row, TableSerialized} from "./SpecTable";
-import {ThenArg} from "../backend/declarations";
+import {AsyncResult} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
 import {CategoryType} from "../config";
+import { QueryResultColumns } from '../backend/sparql';
 
 
-type JsonCompositeSpecTable = ThenArg<typeof fetchBoostrapData>['specTables'];
-export type BasicsColNames = typeof basicColNames[number];
-export type ColumnMetaColNames = typeof columnMetaColNames[number];
-export type OriginsColNames = typeof originsColNames[number];
+type JsonCompositeSpecTable = AsyncResult<typeof fetchBoostrapData>['specTables'];
+export type BasicsColNames = QueryResultColumns<SpecBasicsQuery>;
+export type ColumnMetaColNames = QueryResultColumns<SpecColumnMetaQuery>;
+export type OriginsColNames = QueryResultColumns<DobjOriginsAndCountsQuery>;
 export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | CategoryType;
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;
@@ -45,9 +46,9 @@ export default class CompositeSpecTable{
 
 	static deserialize(tables: SpecTableSerialized) {
 		const {basics, columnMeta, origins} = tables;
-		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters as Filters<BasicsColNames>);
-		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters as Filters<ColumnMetaColNames>);
-		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters as Filters<OriginsColNames>);
+		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters || {});
+		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters || {});
+		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters || {});
 		const extraFilter = getExtraFilter(basicsTbl.specsCount, originsTbl);
 
 		return new CompositeSpecTable(basicsTbl.withExtraSpecFilter(extraFilter), columnMetaTbl.withExtraSpecFilter(extraFilter), originsTbl)

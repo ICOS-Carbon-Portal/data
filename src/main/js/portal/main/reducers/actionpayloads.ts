@@ -1,11 +1,11 @@
 import {Action} from "redux";
 import {MetaDataObject, StateSerialized, TsSettings, WhoAmI} from "../models/State";
-import {Sha256Str, ThenArg, UrlStr} from "../backend/declarations";
+import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
-	fetchBoostrapData,
 	fetchDobjOriginsAndCounts,
 	fetchKnownDataObjects,
-	getExtendedDataObjInfo
+	getExtendedDataObjInfo,
+	BootstrapData
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Filter} from "../models/SpecTable";
@@ -38,7 +38,7 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 	constructor(
 		readonly pids: Sha256Str[],
 		readonly objectsTable: ObjectsTableLike,
-		readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>
+		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>
 	){super();}
 }
 
@@ -47,19 +47,19 @@ export class BootstrapRouteMetadata extends BootstrapRoutePayload{
 }
 
 export class BootstrapRouteCart extends BootstrapRoutePayload{
-	constructor(readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>, readonly objectsTable: ObjectsTableLike){super();}
+	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>, readonly objectsTable: ObjectsTableLike){super();}
 }
 
 export class BackendUserInfo extends BackendPayload{
 	constructor(readonly user: WhoAmI, readonly profile: object){super();}
 }
 
-export class BackendTables extends BackendPayload{
-	constructor(readonly allTables: ThenArg<typeof fetchBoostrapData>){super();}
+export class BootstrapInfo extends BackendPayload{
+	constructor(readonly info: BootstrapData){super();}
 }
 
 export class BackendOriginsTable extends BackendPayload{
-	constructor(readonly dobjOriginsAndCounts: ThenArg<typeof fetchDobjOriginsAndCounts>, readonly resetPaging: boolean = false){super();}
+	constructor(readonly dobjOriginsAndCounts: AsyncResult<typeof fetchDobjOriginsAndCounts>, readonly resetPaging: boolean = false){super();}
 }
 
 export class BackendUpdateSpecFilter extends BackendPayload{
@@ -75,7 +75,7 @@ export class BackendObjectMetadata extends BackendPayload{
 }
 
 export class BackendExtendedDataObjInfo extends BackendPayload{
-	constructor(readonly extendedDobjInfo: ThenArg<typeof getExtendedDataObjInfo>){super();}
+	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>){super();}
 }
 
 export class BackendTsSettings extends BackendPayload{
@@ -90,7 +90,7 @@ export class BackendBatchDownload extends BackendPayload{
 	constructor(readonly isBatchDownloadOk: boolean, readonly user: WhoAmI){super();}
 }
 
-export type ObjectsTableLike = ThenArg<typeof fetchKnownDataObjects>['rows'] | DataObject[];
+export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | DataObject[];
 export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
@@ -173,6 +173,10 @@ export class FiltersTemporal extends FiltersPayload{
 
 export class FiltersNumber extends FiltersPayload{
 	constructor(readonly numberFilter: FilterNumber){super();}
+}
+
+export class FilterKeywords extends FiltersPayload{
+	constructor(readonly keywords: string[]){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{

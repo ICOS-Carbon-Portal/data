@@ -1,5 +1,5 @@
 import React from 'react';
-import config, {filters, CategoryType, NumberFilterCategories} from "../../config";
+import config, {filters, CategoryType, NumberFilterCategories, FilterName} from "../../config";
 import CompositeSpecTable, {ColNames} from "../../models/CompositeSpecTable";
 import {IdxSig} from "../../backend/declarations";
 import {Value} from "../../models/SpecTable";
@@ -10,6 +10,8 @@ import NumberFilter from "./NumberFilter";
 import {FilterNumber, FilterNumbers} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
 import PickDates from "./PickDates";
+import keywordsInfo, {KeywordsInfo} from "../../backend/keywordsInfo";
+import {KeywordFilter} from "./KeywordFilter";
 
 
 interface CommonProps {
@@ -23,15 +25,17 @@ interface CommonProps {
 
 interface PanelsWithMultiselects extends CommonProps {
 	filterNumbers: FilterNumbers
+	keywords: KeywordsInfo
+	filterKeywords: string[]
+	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
 }
 
 const availableFilters = filters[config.envri];
-type FilterName = CategoryType | NumberFilterCategories | 'temporalFilter'
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal} = props;
+		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter} = props;
 
 	return (
 		<>
@@ -47,6 +51,9 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
+					keywords={keywords}
+					filterKeywords={filterKeywords}
+					setKeywordFilter={setKeywordFilter}
 					startCollapsed={startCollapsed}
 				/>
 			)}
@@ -58,12 +65,15 @@ interface Panel extends CommonProps {
 	header: string
 	filterList: ReadonlyArray<FilterName>
 	filterNumbers: FilterNumbers
+	keywords: KeywordsInfo
+	filterKeywords: string[]
+	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
 }
 
 const Panel: React.FunctionComponent<Panel> = props => {
 	const { header, filterList, specTable, labelLookup, updateFilter, setNumberFilter, filterNumbers,
-		startCollapsed = false, filterTemporal, setFilterTemporal } = props;
+		startCollapsed = false, filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter } = props;
 	if (filterList.length === 0) return null;
 
 	return (
@@ -79,6 +89,9 @@ const Panel: React.FunctionComponent<Panel> = props => {
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
+					keywords={keywords}
+					filterKeywords={filterKeywords}
+					setKeywordFilter={setKeywordFilter}
 				/>
 			)}
 		</FilterPanel>
@@ -88,47 +101,60 @@ const Panel: React.FunctionComponent<Panel> = props => {
 interface FilterCtrl extends CommonProps {
 	filterName: FilterName
 	filterNumbers: FilterNumbers
+	keywords: KeywordsInfo
+	filterKeywords: string[]
+	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	const { filterName, specTable, labelLookup, updateFilter, setNumberFilter, filterNumbers,
-		filterTemporal, setFilterTemporal} = props;
+		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter} = props;
 	const filterNumber: FilterNumber | undefined = filterNumbers.getFilter(filterName as NumberFilterCategories);
 
-	if (filterNumber === undefined){
-		if (filterName === "temporalFilter"){
-			return (
-				<>
-					<PickDates
-						filterTemporal={filterTemporal}
-						setFilterTemporal={setFilterTemporal}
-						category="dataTime"
-						header="Data sampled"
-					/>
-					<PickDates
-						marginTop={25}
-						filterTemporal={filterTemporal}
-						setFilterTemporal={setFilterTemporal}
-						category="submission"
-						header="Submission of data"
-					/>
-				</>
-			);
-		} else {
-			return (
-				<MultiselectCtrl
-					name={filterName as CategoryType}
-					specTable={specTable}
-					labelLookup={labelLookup}
-					updateFilter={updateFilter}
-				/>
-			);
-		}
-	} else {
+	if (filterNumber !== undefined){
 		return (
 			<NumberFilter
 				filterNumber={filterNumber}
 				action={debounce((val: FilterNumber) => setNumberFilter(val), 600)}
+			/>
+		);
+	}
+
+	if (filterName === "temporalFilter") {
+		return (
+			<>
+				<PickDates
+					filterTemporal={filterTemporal}
+					setFilterTemporal={setFilterTemporal}
+					category="dataTime"
+					header="Data sampled"
+				/>
+				<PickDates
+					marginTop={25}
+					filterTemporal={filterTemporal}
+					setFilterTemporal={setFilterTemporal}
+					category="submission"
+					header="Submission of data"
+				/>
+			</>
+		);
+
+	} else if (filterName === "keywordFilter") {
+		return (
+			<KeywordFilter
+				keywords={keywords}
+				filterKeywords={filterKeywords}
+				setKeywordFilter={setKeywordFilter}
+			/>
+		);
+
+	} else {
+		return (
+			<MultiselectCtrl
+				name={filterName as CategoryType}
+				specTable={specTable}
+				labelLookup={labelLookup}
+				updateFilter={updateFilter}
 			/>
 		);
 	}

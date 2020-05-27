@@ -82,7 +82,7 @@ export const getFilters = (state: State) => {
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
 		return fetchBoostrapData(filters).then(allTables => {
-				dispatch(new Payloads.BackendTables(allTables));
+				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)
 		);

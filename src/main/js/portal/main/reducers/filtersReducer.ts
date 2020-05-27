@@ -3,7 +3,8 @@ import {
 	FiltersPayload,
 	FiltersNumber,
 	FiltersTemporal,
-	FiltersUpdatePids
+	FiltersUpdatePids,
+	FilterKeywords
 } from "./actionpayloads";
 import {isPidFreeTextSearch} from "./utils";
 
@@ -30,6 +31,10 @@ export default function(state: State, payload: FiltersPayload): State{
 		return stateUtils.update(state, {
 			filterNumbers: state.filterNumbers.withFilter(payload.numberFilter)
 		});
+	}
+
+	if (payload instanceof FilterKeywords){
+		return stateUtils.update(state, {filterKeywords: payload.keywords});
 	}
 
 	return state;

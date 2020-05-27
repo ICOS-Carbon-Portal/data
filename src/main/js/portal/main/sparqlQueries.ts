@@ -9,20 +9,19 @@ import {
 	isTemporalFilter,
 	isDeprecatedFilter,
 	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest,
-	VariableFilterRequest, isVariableFilter
+	VariableFilterRequest, isVariableFilter, KeywordFilterRequest, isKeywordsFilter
 } from './models/FilterRequest';
 import {Filter, Value} from "./models/SpecTable";
+import { UrlStr } from './backend/declarations';
 
 
 const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-const basicColNamesMan = ["spec", "type", "level", "format", "theme"] as const;
-const basicColNamesOpt = ["dataset", "temporalResolution"] as const;
-export const basicColNames = [...basicColNamesMan, ...basicColNamesOpt];
+export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
 
-export function specBasics(deprFilter?: DeprecatedFilterRequest): Query<typeof basicColNamesMan[number], typeof basicColNamesOpt[number]> {
+export function specBasics(deprFilter?: DeprecatedFilterRequest): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
@@ -42,11 +41,9 @@ where{
 	return {text};
 }
 
-const columnMetaColNamesMan = ["spec", "column", "colTitle", "valType", "quantityUnit"] as const;
-const columnMetaColNamesOpt = ["quantityKind"] as const;
-export const columnMetaColNames = [...columnMetaColNamesMan, ...columnMetaColNamesOpt];
+export type SpecColumnMetaQuery = Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind">
 
-export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): Query<typeof columnMetaColNamesMan[number], typeof columnMetaColNamesOpt[number]> {
+export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): SpecColumnMetaQuery {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select distinct ?spec ?column ?colTitle ?valType ?quantityKind
@@ -67,11 +64,9 @@ where{
 	return {text};
 }
 
-const originsColNamesMan = ["spec", "submitter", "project", "count"] as const;
-const originsColNamesOpt = ["station"] as const;
-export const originsColNames = [...originsColNamesMan, ...originsColNamesOpt];
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station">
 
-export function dobjOriginsAndCounts(filters: FilterRequest[]): Query<typeof originsColNamesMan[number], typeof originsColNamesOpt[number]> {
+export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -99,11 +94,11 @@ export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
 	let text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select distinct ?uri ?label ?stationId
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>`;
+from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <${config.metaResourceGraph[config.envri]}>`;
 
 	if (config.envri === "ICOS"){
 		text += `
-from <http://meta.icos-cp.eu/resources/cpmeta/>
 from <http://meta.icos-cp.eu/resources/icos/>
 from <http://meta.icos-cp.eu/resources/extrastations/>
 from named <http://meta.icos-cp.eu/resources/wdcgg/>
@@ -118,7 +113,6 @@ where {
 }`;
 	} else {
 		text += `
-from <https://meta.fieldsites.se/resources/sites/>
 where {
 	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
 }`;
@@ -279,7 +273,30 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
-	return deprFilterStr.concat(filterStr).concat(varNameFilterStr);
+	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters, supplyVarDefs));
+}
+
+function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): string{
+	const requests = allFilters.filter(isKeywordsFilter);
+	if(requests.length === 0) return '';
+	if(requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
+	const req = requests[0];
+
+	const noDobjKws = req.dobjKeywords.length === 0;
+	const noSpecs = req.specs.length === 0;
+
+	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <') }>}`;
+	const dobjKwsFilter = noDobjKws ? '' :
+	`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
+	?dobj cpmeta:hasKeyword ?keyword`;
+
+	return noDobjKws && noSpecs ? '' : `
+		` + (noDobjKws ? specsFilter : noSpecs ? dobjKwsFilter : `{
+			{${specsFilter}}
+			UNION
+			{${dobjKwsFilter}}
+		}`
+	);
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
@@ -379,7 +396,7 @@ function getVarFilter(filter: VariableFilterRequest): string{
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: string[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -412,7 +429,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	return {text};
 };
 
-export const resourceHelpInfo = (uriList: Value[]): Query<"uri", "label" | "comment" | "webpage"> => {
+export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "comment" | "webpage"> => {
 	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
 	?uri rdfs:label ?label .

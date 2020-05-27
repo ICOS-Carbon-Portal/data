@@ -1,7 +1,9 @@
 import {NumberFilterCategories, numberFilterKeys} from "../config";
 import {FilterNumber} from "./FilterNumbers";
+import { UrlStr } from "../backend/declarations";
 
-export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest | NumberFilterRequest | VariableFilterRequest
+export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest |
+	NumberFilterRequest | VariableFilterRequest | KeywordFilterRequest
 
 export interface PidFilterRequest{
 	category: "pids"
@@ -27,6 +29,12 @@ export interface VariableFilterRequest{
 	names: string[]
 }
 
+export interface KeywordFilterRequest{
+	category: "keywords"
+	dobjKeywords: string[]
+	specs: UrlStr[]
+}
+
 export function isPidFilter(filter: FilterRequest): filter is PidFilterRequest{
 	return filter.category === "pids";
 }
@@ -45,4 +53,8 @@ export function isDeprecatedFilter(filter: FilterRequest): filter is DeprecatedF
 
 export function isVariableFilter(filter: FilterRequest): filter is VariableFilterRequest{
 	return filter.category === "variableNames";
+}
+
+export function isKeywordsFilter(filter: FilterRequest): filter is KeywordFilterRequest{
+	return filter.category === "keywords";
 }
