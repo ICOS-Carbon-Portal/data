@@ -88,7 +88,7 @@ function dobjLevelKeywordsQuery(): Query<'keywords', never>{
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 select distinct ?keywords where{
 	?dobj cpmeta:hasKeywords ?keywords .
-	FILTER(strstarts(str(?dobj), ${config.objectUriPrefix[config.envri]}))
+	FILTER(strstarts(str(?dobj), "${config.objectUriPrefix[config.envri]}"))
 }`;
 	return {text};
 }

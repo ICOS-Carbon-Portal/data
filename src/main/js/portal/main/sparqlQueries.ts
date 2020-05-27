@@ -273,16 +273,30 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
-	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters));
+	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters, supplyVarDefs));
 }
 
-function getKeywordFilter(allFilters: FilterRequest[]): string{
+function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): string{
 	const requests = allFilters.filter(isKeywordsFilter);
 	if(requests.length === 0) return '';
 	if(requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one")
 	const req = requests[0];
-	if(req.dobjKeywords.length === 0 && req.specs.length === 0) return '';
-	
+	const noDobjKws = req.dobjKeywords.length === 0
+	const noSpecs = req.specs.length === 0
+
+	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <') }>}`;
+	const dobjKwsFilter = noDobjKws ? '' :
+	`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
+	?dobj cpmeta:hasKeyword ?keyword`;
+
+	return noDobjKws && noSpecs ? '' : `
+		` + (noDobjKws ? specsFilter : noSpecs ? dobjKwsFilter : `{
+			{${specsFilter}}
+			UNION
+			{${dobjKwsFilter}}
+		}`
+	);
+
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {

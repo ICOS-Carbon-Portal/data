@@ -37,8 +37,8 @@ export const Value = {
 export type TableSerialized<T extends string> = {
 	colNames: Col<T>[]
 	rows: Row<T>[]
-	filters: Filters<T>
-	extraSpecFilter: Filter
+	filters?: Filters<T>
+	extraSpecFilter?: Filter
 }
 
 export default class SpecTable<T extends string = string>{
