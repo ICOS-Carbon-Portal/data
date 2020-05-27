@@ -67,7 +67,8 @@ const resetFilters = (state: State) => {
 		filterPids: [],
 		checkedObjectsInSearch: [],
 		filterTemporal: new FilterTemporal(),
-		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat)))
+		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
+		filterKeywords: []
 	};
 };
 

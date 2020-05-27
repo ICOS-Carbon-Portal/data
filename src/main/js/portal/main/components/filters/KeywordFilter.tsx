@@ -9,8 +9,6 @@ interface OurProps {
 	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
-const search = {'keywordFilter': []};
-
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {keywords, filterKeywords, setKeywordFilter} = props;
 
@@ -18,7 +16,6 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const placeholder = data.length === 1
 		? `${data[0]}`
 		: `(${data.length} items)`;
-	console.log({search, placeholder, data, filterKeywords});
 
 	return (
 		<div className="row" style={{marginTop: 10}}>
@@ -27,8 +24,8 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 
 				<MultiSelectFilter
 					name={"keywordFilter"}
-					search={search}
-					updateFilter={setKeywordFilter}
+					search={{}}
+					updateFilter={(_: any, keywords: string[]) => setKeywordFilter(keywords)}
 					placeholder={placeholder}
 					data={data}
 					value={filterKeywords}

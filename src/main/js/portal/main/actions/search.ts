@@ -174,8 +174,8 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const {filterTemporal, filterNumbers, specTable} = getState();
-	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable);
+	const {filterTemporal, filterNumbers, specTable, filterKeywords} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0;
 
 	dispatch(new Payloads.MiscResetFilters());
 	if(shouldRefetchCounts) dispatch(getOriginsThenDobjList)
@@ -231,7 +231,8 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 
 export function setKeywordFilter(filterKeywords: string[]): PortalThunkAction<void> {
 	return (dispatch) => {
-
+		dispatch(new Payloads.FilterKeywords(filterKeywords));
+		dispatch(getOriginsThenDobjList);
 	};
 }
 

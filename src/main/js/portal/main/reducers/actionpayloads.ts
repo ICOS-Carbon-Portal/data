@@ -175,6 +175,10 @@ export class FiltersNumber extends FiltersPayload{
 	constructor(readonly numberFilter: FilterNumber){super();}
 }
 
+export class FilterKeywords extends FiltersPayload{
+	constructor(readonly keywords: string[]){super();}
+}
+
 export class FiltersUpdatePids extends FiltersPayload{
 	constructor(readonly selectedPids: Sha256Str[]){super();}
 }
