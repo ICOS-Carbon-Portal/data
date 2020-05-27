@@ -15,9 +15,10 @@ export interface KeywordsInfo{
 }
 
 export default{
-	fetch: async function(): Promise<KeywordsInfo>{
-		const [specLookup, dobjKeywords] = await Promise.all([getSpecLookup(), getDobjLevelKeywords()]);
-		return { specLookup, dobjKeywords };
+	fetch: function(): Promise<KeywordsInfo>{
+		return Promise.all([getSpecLookup(), getDobjLevelKeywords()]).then(
+			([specLookup, dobjKeywords]) => ({ specLookup, dobjKeywords })
+		);
 	},
 
 	allKeywords: function(info: KeywordsInfo): string[]{

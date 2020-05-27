@@ -81,21 +81,21 @@ export type BootstrapData = {
 	keywords: KeywordsInfo
 }
 
-export async function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
+export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
-	const [basics, columnMeta, origins, labelLookup, keywords] = await Promise.all([
+	return Promise.all([
 		fetchSpecBasics(filters),
 		fetchSpecColumnMeta(filters),
 		fetchDobjOriginsAndCounts(filters),
 		fetchLabelLookup(),
 		keywordsInfo.fetch()
-	]);
-
-	return {
-		specTables: { basics, columnMeta, origins },
-		labelLookup,
-		keywords
-	};
+	]).then(
+		([basics, columnMeta, origins, labelLookup, keywords]) => ({
+			specTables: { basics, columnMeta, origins },
+			labelLookup,
+			keywords
+		})
+	)
 }
 
 export const fetchKnownDataObjects = (dobjs: string[]) => {
