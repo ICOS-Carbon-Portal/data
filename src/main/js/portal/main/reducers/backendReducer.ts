@@ -141,14 +141,12 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 };
 
 function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
-	const specTable = CompositeSpecTable.deserialize(payload.info.specTables as SpecTableSerialized);
+	const specTable = CompositeSpecTable.deserialize(payload.info.specTables);
 
 	const labelLookup = payload.info.labelLookup.reduce<IdxSig>((acc, curr) => {
 		acc[curr.uri] = curr.label;
 		return acc;
 	}, {});
-
-console.log({kws: payload.info.keywords});
 
 	return {
 		specTable,

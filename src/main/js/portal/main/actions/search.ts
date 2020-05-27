@@ -19,6 +19,7 @@ import {QueryParameters, SearchOption} from "./types";
 import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
+import keywordsInfo from "../backend/keywordsInfo";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -110,7 +111,7 @@ const logPortalUsage = (state: State) => {
 };
 
 const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, filterNumbers, searchOptions, specTable} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
@@ -128,6 +129,12 @@ const getFilters = (state: State) => {
 			if(titles != null){
 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
 			}
+		}
+
+		if(filterKeywords.length > 0){
+			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
+			const specs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+			filters.push({category: 'keywords', dobjKeywords, specs});
 		}
 
 		filters = filters.concat(filterNumbers.validFilters);

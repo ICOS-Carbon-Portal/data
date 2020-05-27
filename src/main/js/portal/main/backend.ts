@@ -5,14 +5,15 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
-import {UrlStr, Sha256Str, IdxSig, AsyncResult} from "./backend/declarations";
+import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, throwError} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
-import keywordsInfo from "./backend/keywordsInfo";
+import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
+import { SpecTableSerialized } from './models/CompositeSpecTable';
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -59,7 +60,9 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	}));
 };
 
-export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
+type LabelLookup = {uri: UrlStr, label: string}[]
+
+export function fetchLabelLookup(): Promise<LabelLookup> {
 	const query = queries.labelLookup();
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
@@ -72,9 +75,13 @@ export function fetchLabelLookup(): Promise<{uri: string, label: string}[]> {
 	})));
 }
 
-export type BootstrapData = AsyncResult<typeof fetchBoostrapData>;
+export type BootstrapData = {
+	specTables: SpecTableSerialized
+	labelLookup: LabelLookup
+	keywords: KeywordsInfo
+}
 
-export async function fetchBoostrapData(filters: FilterRequest[]) {
+export async function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
 	const [basics, columnMeta, origins, labelLookup, keywords] = await Promise.all([
 		fetchSpecBasics(filters),
