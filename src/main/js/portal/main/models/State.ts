@@ -32,6 +32,7 @@ const hashKeys = [
 	'filterTemporal',
 	'filterPids',
 	'filterNumbers',
+	'filterKeywords',
 	'tabs',
 	'page',
 	'id',
