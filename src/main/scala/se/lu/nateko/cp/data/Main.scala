@@ -22,6 +22,7 @@ import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 
 object Main extends App {
 
@@ -61,6 +62,8 @@ object Main extends App {
 	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
+	val postgresDlLog = new PostgresDlLog(config.downloads)
+
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
 			val traceWriter = new java.io.StringWriter()
@@ -92,6 +95,8 @@ object Main extends App {
 		integrityRoute ~
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
+
+	postgresDlLog.initLogTable()
 
 	restHeart.init.flatMap{_ =>
 		http.bindAndHandle(route, config.interface, config.port)

@@ -93,6 +93,7 @@ lazy val data = (project in file("."))
 			metaCoreModule,
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.2",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
+			"org.postgresql"      % "postgresql"                         % "42.2.12",
 
 			"org.openjfx"         % "javafx-base"      % "11" % "test" classifier osName,
 			"org.openjfx"         % "javafx-controls"  % "11" % "test" classifier osName,

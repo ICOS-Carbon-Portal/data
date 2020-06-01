@@ -42,14 +42,24 @@ case class IrodsConfig(
 	dryRun: Boolean
 )
 
-case class DownloadReporterConfig(username: String, password: String)
+case class CredentialsConfig(username: String, password: String)
 
 case class UploadConfig(
 	folder: String,
 	irods: IrodsConfig,
 	irods2: IrodsConfig,
 	b2safe: B2SafeConfig,
-	dlReporter: DownloadReporterConfig
+	dlReporter: CredentialsConfig
+)
+
+case class DownloadStatsConfig(
+	hostname: String,
+	dbName: String,
+	port: Int,
+	admin: CredentialsConfig,
+	reader: CredentialsConfig,
+	writer: CredentialsConfig,
+	dbAccessPoolSize: Int
 )
 
 case class MetaServiceConfig(
@@ -74,7 +84,8 @@ case class RestHeartConfig(
 	usersCollection: String,
 	portalUsage: RestheartCollDef,
 	dobjDownloads: RestheartCollDef,
-	collDownloads: RestheartCollDef
+	collDownloads: RestheartCollDef,
+	skipInit: Boolean
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
 	def dobjDownloadLogUri(implicit envri: Envri) = downloadLogUri(dobjDownloads)
@@ -101,6 +112,7 @@ case class CpdataConfig(
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
 	restheart: RestHeartConfig,
+	downloads: DownloadStatsConfig,
 	etcFacade: EtcFacadeConfig
 )
 
@@ -111,7 +123,7 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
 	implicit val irodsConfigFormat = jsonFormat9(IrodsConfig)
 	implicit val b2stageConfigFormat = jsonFormat5(B2SafeConfig)
-	implicit val downloadReporterConfigFormat = jsonFormat2(DownloadReporterConfig)
+	implicit val credentialsConfigFormat = jsonFormat2(CredentialsConfig)
 	implicit val uploadConfigFormat = jsonFormat5(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
@@ -121,9 +133,10 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val mongoDbIndexFormat = jsonFormat3(MongoDbIndex)
 	implicit val mongoDbAggregationsFormat = jsonFormat3(MongoDbAggregations)
 	implicit val restheartCollDefFormat = jsonFormat4(RestheartCollDef)
-	implicit val restHeartConfigFormat = jsonFormat7(RestHeartConfig)
+	implicit val restHeartConfigFormat = jsonFormat8(RestHeartConfig)
+	implicit val dlStatsConfigFormat = jsonFormat7(DownloadStatsConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
-	implicit val cpdataConfigFormat = jsonFormat8(CpdataConfig)
+	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load
