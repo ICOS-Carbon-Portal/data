@@ -3,6 +3,16 @@ import Dropdown from '../components/Dropdown.jsx';
 import G from '../models/Graph';
 import {debounce, Events} from 'icos-cp-utils';
 
+const errorStyle = {
+	display: 'none',
+	width:'99%',
+	height:'calc(55vh - 60px)',
+	fontSize: '120%',
+	alignItems: 'center',
+	justifyContent: 'center',
+	position: 'absolute',
+	flexDirection: 'column'
+};
 
 export default class GraphContainer extends Component{
 	constructor(props){
@@ -11,6 +21,7 @@ export default class GraphContainer extends Component{
 		this.g = undefined;
 		this.canvasOverlay = undefined;
 		this.graphElement = undefined;
+		this.errorElement = undefined;
 		this.labelElement = undefined;
 		this.graphMouseMove = props.graphMouseMove;
 		this.events = new Events();
@@ -25,7 +36,19 @@ export default class GraphContainer extends Component{
 	}
 
 	componentDidUpdate(prevProps){
-		const {binTableData, value1Idx, value2Idx, fromMap} = this.props;
+		const {binTableData, value1Idx, value2Idx, fromMap, pointReducer} = this.props;
+
+		if (pointReducer && pointReducer.pointCount === 0) {
+			const label = binTableData.columnsInfo[pointReducer.valueIdx].label;
+			this.graphElement.style.display = 'none';
+			this.errorElement.style.display = 'flex';
+			this.errorElement.innerHTML = `<b>${label}</b><div>This variable contains no data. Please select another variable.</div>`;
+			return;
+
+		} else {
+			this.graphElement.style.display = 'block';
+			this.errorElement.style.display = 'none';
+		}
 
 		const graph = this.g ? this.g.graph : undefined;
 
@@ -41,7 +64,11 @@ export default class GraphContainer extends Component{
 
 			this.canvasOverlay = createCanvasOverlay(this.graphElement, this.g.graph);
 			this.graphElement.firstChild.appendChild(this.canvasOverlay);
+
 		} else if (graph && (prevProps.value1Idx !== value1Idx || prevProps.value2Idx !== value2Idx)) {
+			this.g.updateGraph(value1Idx, value2Idx);
+
+		} else if (graph && pointReducer && prevProps.pointReducer && prevProps.pointReducer.pointCount === 0 && pointReducer.pointCount > 0) {
 			this.g.updateGraph(value1Idx, value2Idx);
 		}
 
@@ -88,6 +115,7 @@ export default class GraphContainer extends Component{
 				<div className="row">
 					<div className="col-md-12" onMouseOut={graphMouseOut}>
 						<div ref={div => this.graphElement = div} style={{width:'100%', height:'calc(55vh - 60px)'}} />
+						<div ref={div => this.errorElement = div} style={errorStyle} />
 					</div>
 				</div>
 			</Fragment>

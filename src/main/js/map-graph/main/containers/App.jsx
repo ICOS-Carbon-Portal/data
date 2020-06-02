@@ -18,7 +18,6 @@ export class App extends Component {
 		this.graphMouseMove = this.onGraphMouseMove.bind(this);
 		this.graphMouseOut = this.onGraphMouseOut.bind(this);
 		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
-		this.mapPointMouseOver = this.onMapPointMouseOver.bind(this);
 
 		this.state = {
 			pointReducer: undefined,
@@ -99,6 +98,7 @@ export class App extends Component {
 
 				<GraphContainer
 					binTableData={binTableData}
+					pointReducer={pointReducer}
 					value1Idx={value1Idx}
 					value2Idx={value2Idx}
 					selectVarY1={selectVarY1}
