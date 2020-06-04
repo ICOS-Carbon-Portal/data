@@ -7,7 +7,11 @@ import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
-import {updateFilteredDataObjects} from '../actions/metadata';
+import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata'
+import {
+	filtersReset,
+	setKeywordFilter
+} from "../actions/search";;
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config, {timezone} from '../config';
@@ -37,6 +41,14 @@ class Metadata extends Component<MetadataProps> {
 
 	handlePreview(urls: UrlStr[]){
 		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
+	}
+
+	handleKeywordSearch(keyword: string) {
+		this.props.filtersReset()
+		this.props.setKeywordFilter([keyword]);
+		this.props.updateRoute('search');
+		// this.props.filtersReset().then(this.props.setKeywordFilter([keyword])).then(this.props.updateRoute('search'));
+		// this.props.searchKeyword(keyword);
 	}
 
 	handleViewMetadata(id: UrlStr) {
@@ -70,6 +82,11 @@ class Metadata extends Component<MetadataProps> {
 		}];
 		const datasets = checkedObjects.map(obj => obj.dataset);
 		const previewTypes = lookup ? [lookup.getSpecLookupType(metadata.specification.self.uri)] : [];
+		const keywords = [
+			...metadata.references.keywords || [],
+			...metadata.specification.keywords || [],
+			...metadata.specification.project.keywords || []
+		].sort((a, b) => a.localeCompare(b));
 
 		return (
 			<div>
@@ -131,6 +148,17 @@ class Metadata extends Component<MetadataProps> {
 										/>
 									</div>
 								</div>
+								<br />
+								{keywords.length &&
+									<div>
+										<label>Keywords</label>
+										<div>
+											{keywords.map((keyword, i) => {
+												return <a key={'keyword_' + i} onClick={() => this.handleKeywordSearch(keyword)} className="label label-primary" style={{marginRight: 5}}>{keyword}</a>
+											})}
+										</div>
+									</div>
+								}
 								<br />
 								{metadata.coverageGeoJson &&
 									<React.Fragment>
@@ -261,9 +289,12 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
+		updateRoute: (route: Route, previewPids?: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
-		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects)
+		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects),
+		filtersReset: () => dispatch(filtersReset),
+		setKeywordFilter: (keywords: string[]) => dispatch(setKeywordFilter(keywords)),
+		searchKeyword: (keyword: string) => dispatch(searchKeyword(keyword)),
 	};
 }
 

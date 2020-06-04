@@ -1,10 +1,12 @@
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import {fetchJson, fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
-import {failWithError, getKnownDataObjInfo} from "./common";
-import {getLastSegmentInUrl, getUrlsFromPids} from "../utils";
+import {fetchJson, fetchKnownDataObjects} from "../backend";
+import {updateRoute} from "../actions/common";
+import {failWithError, getKnownDataObjInfo, } from "./common";
+import {getLastSegmentInUrl} from "../utils";
 import {MetaDataObject} from "../models/State";
+import {filtersReset, setKeywordFilter} from "../actions/search";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -39,7 +41,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 	}
 }
 
-export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
+function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.BackendObjectMetadataId(id));
 		dispatch(getMetadataItem(id));
@@ -65,3 +67,11 @@ export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, get
 		dispatch(setMetadataItem(id));
 	}
 };
+
+export function searchKeyword(keyword: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(filtersReset);
+		dispatch(setKeywordFilter([keyword]))
+		dispatch(updateRoute('search'))
+	}
+}

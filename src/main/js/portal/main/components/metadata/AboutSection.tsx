@@ -27,9 +27,9 @@ const AboutSection = (props: AboutSectionProps) => {
 				metadataRow("PID", <a href={`https://hdl.handle.net/${metadata.pid}`}>{metadata.pid}</a>)
 			}
 			{metadata.specification.theme.self.label &&
-				metadata.specification.project.label && metadataRow("Theme", metadata.specification.theme.self.label)
+				metadata.specification.project.self.label && metadataRow("Theme", metadata.specification.theme.self.label)
 			}
-			{metadata.specification.project.label && metadataRow(projectLabel, metadata.specification.project.label)}
+			{metadata.specification.project.self.label && metadataRow(projectLabel, metadata.specification.project.self.label)}
 			{description &&
 				metadataRow("Description", <span style={{ whiteSpace: 'pre-line' }}>{description}</span>, true)
 			}
