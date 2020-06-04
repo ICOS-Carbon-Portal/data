@@ -86,20 +86,22 @@ function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 }
 
 const logPortalUsage = (state: State) => {
-	const {specTable, filterCategories, filterTemporal, searchOptions} = state;
+	const {specTable, filterCategories, filterTemporal, filterNumbers, filterKeywords, searchOptions} = state;
 
 	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : [];
 	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
-	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
+	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids.length > 0) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
-			acc.columnName = specTable.getFilter(columnName);
+			acc[columnName] = specTable.getFilter(columnName);
 			return acc;
 		}, {});
 
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
+		if (filterNumbers.hasFilters) filters.filterNumbers = filterNumbers.serialize;
 		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids;
+		if (filterKeywords.length > 0) filters.filterKeywords = filterKeywords;
 		filters.searchOptions = searchOptions;
 
 		saveToRestheart({
