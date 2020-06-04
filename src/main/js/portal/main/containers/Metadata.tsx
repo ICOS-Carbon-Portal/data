@@ -1,4 +1,4 @@
-import React, { Component, ReactElement } from 'react';
+import React, { Component, MouseEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
@@ -7,11 +7,7 @@ import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
-import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata'
-import {
-	filtersReset,
-	setKeywordFilter
-} from "../actions/search";;
+import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config, {timezone} from '../config';
@@ -43,12 +39,11 @@ class Metadata extends Component<MetadataProps> {
 		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
 	}
 
-	handleKeywordSearch(keyword: string) {
-		this.props.filtersReset()
-		this.props.setKeywordFilter([keyword]);
-		this.props.updateRoute('search');
-		// this.props.filtersReset().then(this.props.setKeywordFilter([keyword])).then(this.props.updateRoute('search'));
-		// this.props.searchKeyword(keyword);
+	handleKeywordSearch(keyword: string, ev: MouseEvent) {
+		if (!ev.ctrlKey && !ev.metaKey) {
+			ev.preventDefault();
+			this.props.searchKeyword(keyword);
+		}
 	}
 
 	handleViewMetadata(id: UrlStr) {
@@ -154,7 +149,13 @@ class Metadata extends Component<MetadataProps> {
 										<label>Keywords</label>
 										<div>
 											{keywords.map((keyword, i) => {
-												return <a key={'keyword_' + i} onClick={() => this.handleKeywordSearch(keyword)} className="label label-primary" style={{marginRight: 5}}>{keyword}</a>
+												return <a href={getKeywordHash(keyword)}
+													key={'keyword_' + i}
+													onClick={this.handleKeywordSearch.bind(this, keyword)}
+													className="label label-keyword"
+													style={{marginRight: 5}}>
+														{keyword}
+													</a>
 											})}
 										</div>
 									</div>
@@ -277,6 +278,15 @@ const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
 	}
 };
 
+ 	const getKeywordHash = (keyword: string) => {
+		const hashObj = {
+			route: 'search',
+			filterKeywords: [keyword]
+		};
+
+		return "#" + encodeURIComponent(JSON.stringify(hashObj));
+	};
+
 function stateToProps(state: State){
 	return {
 		cart: state.cart,
@@ -292,8 +302,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateRoute: (route: Route, previewPids?: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects),
-		filtersReset: () => dispatch(filtersReset),
-		setKeywordFilter: (keywords: string[]) => dispatch(setKeywordFilter(keywords)),
 		searchKeyword: (keyword: string) => dispatch(searchKeyword(keyword)),
 	};
 }

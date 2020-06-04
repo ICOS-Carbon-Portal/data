@@ -6,7 +6,7 @@ import {updateRoute} from "../actions/common";
 import {failWithError, getKnownDataObjInfo, } from "./common";
 import {getLastSegmentInUrl} from "../utils";
 import {MetaDataObject} from "../models/State";
-import {filtersReset, setKeywordFilter} from "../actions/search";
+import {setKeywordFilter} from "../actions/search";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -70,8 +70,7 @@ export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, get
 
 export function searchKeyword(keyword: string): PortalThunkAction<void> {
 	return (dispatch) => {
-		dispatch(filtersReset);
-		dispatch(setKeywordFilter([keyword]))
+		dispatch(setKeywordFilter([keyword], true))
 		dispatch(updateRoute('search'))
 	}
 }

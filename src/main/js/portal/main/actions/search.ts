@@ -229,8 +229,11 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
-export function setKeywordFilter(filterKeywords: string[]): PortalThunkAction<void> {
+export function setKeywordFilter(filterKeywords: string[], reset: boolean = false): PortalThunkAction<void> {
 	return (dispatch) => {
+		if (reset) {
+			dispatch(new Payloads.MiscResetFilters());
+		}
 		dispatch(new Payloads.FilterKeywords(filterKeywords));
 		dispatch(getOriginsThenDobjList);
 	};
