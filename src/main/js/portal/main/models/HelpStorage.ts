@@ -142,7 +142,7 @@ const numberFilterList = parseResourceInfo([
 	},
 	{
 		label: 'Range',
-		comment: 'Provide min and max values separated by a dash ("-"). E.g. 50-150.'
+		comment: 'Provide min and max values separated by a colon (":"). E.g. 50:150.'
 	},
 	{
 		label: 'Limit',

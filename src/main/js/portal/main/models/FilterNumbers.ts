@@ -112,28 +112,28 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		};
 	}
 
-	const minMax = value.match(/^(<|>){1}(\d+\.?\d*)$/);
+	const limit = value.match(/^(<|>){1}(-?\d+\.?\d*)$/);
 
-	if (minMax !== null){
+	if (limit !== null){
 		return {
 			category,
 			txt: value,
 			type: 'limit',
 			isValid: true,
-			vals: [parseFloat(minMax[2])],
-			cmp: minMax[1] === '<' ? ['<='] : ['>=']
+			vals: [parseFloat(limit[2])],
+			cmp: limit[1] === '<' ? ['<='] : ['>=']
 		};
 	}
 
-	const span = value.match(/^(\d+\.?\d*)-(\d+\.?\d*)$/);
+	const range = value.match(/^(-?\d+\.?\d*):(-?\d+\.?\d*)$/);
 
-	if (span !== null){
+	if (range !== null){
 		return {
 			category,
 			txt: value,
 			type: 'span',
 			isValid: true,
-			vals: [parseFloat(span[1]), parseFloat(span[2])].sort((a, b) => a - b),
+			vals: [parseFloat(range[1]), parseFloat(range[2])].sort((a, b) => a - b),
 			cmp: ['>=', '<=']
 		};
 	}
@@ -142,7 +142,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 
 	if (list.length){
 		return list.reduce<NumberFilterValidation>((acc, curr) => {
-			const num = curr.match(/^(\d+\.?\d*)$/);
+			const num = curr.match(/^(-?\d+\.?\d*)$/);
 
 			if (num !== null){
 				return {
