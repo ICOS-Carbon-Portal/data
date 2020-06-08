@@ -54,7 +54,7 @@ case class UploadConfig(
 
 case class DownloadStatsConfig(
 	hostname: String,
-	dbName: String,
+	dbNames: Map[Envri, String],
 	port: Int,
 	admin: CredentialsConfig,
 	reader: CredentialsConfig,

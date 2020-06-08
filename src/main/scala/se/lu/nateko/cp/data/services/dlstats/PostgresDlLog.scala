@@ -4,6 +4,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 import se.lu.nateko.cp.data.DownloadStatsConfig
 import se.lu.nateko.cp.data.CredentialsConfig
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import java.sql.ResultSet
+import java.sql.Statement
 
 class PostgresDlLog(conf: DownloadStatsConfig) {
 
@@ -34,20 +37,19 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 		|GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO ${conf.writer.username};
 		|""".stripMargin
 
-		withConnection(conf.admin){conn =>
-			val st = conn.createStatement
-			st.execute(query)
-			st.close()
+		conf.dbNames.keys.foreach{implicit envri =>
+			withTransaction(conf.admin)(_.execute(query))
 		}
 	}
 
-	private def getConnection(creds: CredentialsConfig): Connection = {
+	private def getConnection(creds: CredentialsConfig)(implicit envri: Envri): Connection = {
 		driverClass
-		val url = s"jdbc:postgresql://${conf.hostname}:${conf.port}/${conf.dbName}"
+		val dbName = conf.dbNames(envri)
+		val url = s"jdbc:postgresql://${conf.hostname}:${conf.port}/$dbName"
 		DriverManager.getConnection(url, creds.username, creds.password)
 	}
 
-	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T): T = {
+	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): T = {
 		//TODO Use a configured fixed-size thread pool to produce a Future[T] instead of T
 		val conn = getConnection(creds)
 		try{
@@ -57,4 +59,15 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 		}
 	}
 
+	private def withTransaction(creds: CredentialsConfig)(act: Statement => Unit)(implicit envri: Envri): Unit = {
+		withConnection(creds){conn =>
+			val st = conn.createStatement()
+			try{
+				act(st)
+				conn.commit()
+			}finally{
+				st.close()
+			}
+		}
+	}
 }
