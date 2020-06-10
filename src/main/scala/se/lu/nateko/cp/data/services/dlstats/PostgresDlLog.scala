@@ -67,9 +67,9 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 			}
 
 			val contributorValues: String = dobj.specificInfo match {
-				case Left(specific) => s"""ARRAY['$specific.productionInfo.contributors.map(agent => agent.self.uri.toString()).mkString("', '")']"""
+				case Left(specific) => specific.productionInfo.contributors.map(agent => agent.self.uri).mkString("ARRAY['", "', '", "']")
 				case Right(lessSpecific) => lessSpecific.productionInfo match { 
-					case Some(productionInfo) => s"""ARRAY['$productionInfo.contributors.map(agent => agent.self.uri.toString()).mkString("', '")']"""
+					case Some(productionInfo) => productionInfo.contributors.map(agent => agent.self.uri).mkString("ARRAY['", "', '", "']")
 					case None => "NULL"
 				}
 			}
