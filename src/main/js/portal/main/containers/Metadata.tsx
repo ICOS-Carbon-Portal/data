@@ -144,7 +144,7 @@ class Metadata extends Component<MetadataProps> {
 									</div>
 								</div>
 								<br />
-								{keywords.length &&
+								{keywords.length > 0 &&
 									<div>
 										<label>Keywords</label>
 										<div>
