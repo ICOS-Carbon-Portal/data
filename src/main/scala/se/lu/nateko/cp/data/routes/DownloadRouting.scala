@@ -31,9 +31,10 @@ import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 
 class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
-	restHeart: RestHeartClient, logClient: PortalLogClient, coreConf: MetaCoreConfig
+	restHeart: RestHeartClient, logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
 )(implicit mat: Materializer) {
 	import DownloadRouting._
 	import UploadRouting._
@@ -204,6 +205,9 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(implicit envri: Envri): Unit = {
+		pgClient.writeDobjInfo(dobj).failed.foreach(
+			log.error(_, s"Failed saving log to postgres for hash id ${dobj.hash.id}")
+		)
 		logPublicDownloadInfo(dobj, ip)
 		for(uid <- uidOpt){
 			restHeart.saveDownload(dobj, uid).failed.foreach(
