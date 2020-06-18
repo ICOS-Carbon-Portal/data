@@ -13,52 +13,27 @@ import se.lu.nateko.cp.meta.core.data.L3SpecificMeta
 import java.sql.PreparedStatement
 import scala.concurrent.Future
 import akka.Done
+import scala.util.Try
+import scala.util.Success
+import scala.util.Failure
+import java.nio.file.Files
+import java.nio.file.Paths
+import scala.io.Source
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) {
 
 	private lazy val driverClass = Class.forName("org.postgresql.Driver")
 
-	def initLogTable(): Unit = {
-		val query = s"""
-		|--DROP TABLE IF EXISTS downloads;
-		|--DROP TABLE IF EXISTS contributors;
-		|--DROP TABLE IF EXISTS dobjs;
-		|CREATE EXTENSION IF NOT EXISTS postgis;
-		|CREATE TABLE IF NOT EXISTS public.dobjs (
-		|	hash_id text NOT NULL PRIMARY KEY,
-		|	spec text NOT NULL,
-		|	submitter text NOT NULL,
-		|	station text NULL
-		|);
-		|CREATE INDEX IF NOT EXISTS idx_dobj_spec ON public.dobjs USING HASH(spec);
-		|CREATE TABLE IF NOT EXISTS public.downloads (
-		|	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-		|	ts timestamptz NOT NULL,
-		|	hash_id text NOT NULL REFERENCES public.dobjs,
-		|	ip text NULL,
-		|	city text NULL,
-		|	country_code text NULL,
-		|	pos geometry NULL
-		|);
-		|CREATE INDEX IF NOT EXISTS downloads_hash_id ON public.downloads USING HASH(hash_id);
-		|GRANT SELECT ON ALL TABLES IN SCHEMA public TO ${conf.reader.username};
-		|GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO ${conf.writer.username};
-		|CREATE TABLE IF NOT EXISTS public.contributors (
-		|	hash_id text NOT NULL REFERENCES public.dobjs,
-		|	contributor text NOT NULL,
-		|	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
-		|);
-		|""".stripMargin
-
+	def initLogTables(): Unit = {
 		conf.dbNames.keys.foreach{implicit envri =>
 			withConnection(conf.admin){
-				_.createStatement().execute(query)
+				_.createStatement().execute(Source.fromResource("sql/logging/initLogTables.sql").mkString)
 			}
 		}
 	}
 
-	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {
+	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Try[Done] = {
 		execute(conf.admin)(conn => {
 			val dobjsQuery = """
 				|INSERT INTO dobjs(hash_id, spec, submitter, station)
@@ -128,7 +103,7 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 		}
 	}
 
-	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Future[Done] = {
+	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Try[Done] = {
 		withConnection(credentials){conn =>
 			val initAutoCom = conn.getAutoCommit
 			conn.setAutoCommit(false)
@@ -136,11 +111,11 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 			try {
 				action(conn)
 				conn.commit()
-				Future.successful(Done)
+				Success(Done)
 			} catch {
 				case ex: Throwable =>
 					conn.rollback()
-					Future.failed(ex)
+					Failure(ex)
 			} finally {
 				conn.setAutoCommit(initAutoCom)
 			}
