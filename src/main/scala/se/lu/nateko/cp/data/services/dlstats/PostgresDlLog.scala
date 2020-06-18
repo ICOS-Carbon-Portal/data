@@ -26,9 +26,11 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 	private lazy val driverClass = Class.forName("org.postgresql.Driver")
 
 	def initLogTables(): Unit = {
+		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
+
 		conf.dbNames.keys.foreach{implicit envri =>
 			withConnection(conf.admin){
-				_.createStatement().execute(Source.fromResource("sql/logging/initLogTables.sql").mkString)
+				_.createStatement().execute(query)
 			}
 		}
 	}
