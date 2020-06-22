@@ -4,6 +4,12 @@
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
+-- Revoke user rights here and set them at the end when tables are guaranteed to exist
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
+
+-- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
 	hash_id text NOT NULL PRIMARY KEY,
 	spec text NOT NULL,
@@ -29,5 +35,9 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
 );
 
+-- Set user rights
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
-GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO writer;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
+
+GRANT INSERT, UPDATE ON public.dobjs TO writer;
+GRANT INSERT, DELETE ON public.contributors TO writer;

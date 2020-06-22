@@ -36,7 +36,7 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 	}
 
 	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Try[Done] = {
-		execute(conf.admin)(conn => {
+		execute(conf.writer)(conn => {
 			val dobjsQuery = """
 				|INSERT INTO dobjs(hash_id, spec, submitter, station)
 				|VALUES (?, ?, ?, ?)
