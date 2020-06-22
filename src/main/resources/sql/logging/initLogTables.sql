@@ -1,3 +1,8 @@
+/*
+	Databases specified in application.conf > cpdata > downloads > dbNames must exist before
+	running this initialization. The host must also have postgis installed.
+*/
+
 --DROP TABLE IF EXISTS downloads;
 --DROP TABLE IF EXISTS contributors;
 --DROP TABLE IF EXISTS dobjs;
@@ -36,6 +41,8 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 );
 
 -- Set user rights
+GRANT USAGE ON SCHEMA public TO reader;
+GRANT USAGE ON SCHEMA public TO writer;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
 
