@@ -108,6 +108,7 @@ object Main extends App {
 				val doneFuture = binding
 					.unbind()
 					.flatMap(_ => system.terminate())(exeCtxt)
+				postgresLog.close()
 				Await.result(doneFuture, 3 seconds)
 			}
 			system.log.info(s"Started data: $binding")

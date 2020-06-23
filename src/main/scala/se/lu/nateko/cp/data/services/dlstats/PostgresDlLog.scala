@@ -19,11 +19,41 @@ import scala.util.Failure
 import java.nio.file.Files
 import java.nio.file.Paths
 import scala.io.Source
+import scala.concurrent.ExecutionContext
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.ArrayBlockingQueue
+import org.postgresql.ds.PGConnectionPoolDataSource
+import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 
 
-class PostgresDlLog(conf: DownloadStatsConfig) {
+class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 
-	private lazy val driverClass = Class.forName("org.postgresql.Driver")
+	private[this] val executor = {
+		val maxThreads = conf.dbAccessPoolSize * conf.dbNames.size
+		new ThreadPoolExecutor(
+			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
+		)
+	}
+
+	private[this] implicit val exeCtxt = ExecutionContext.fromExecutor(executor)
+
+	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
+		val pgDs = new PGConnectionPoolDataSource()
+		pgDs.setServerNames(Array(conf.hostname))
+		pgDs.setDatabaseName(dbName)
+		pgDs.setPortNumbers(Array(conf.port))
+		val ds = new SharedPoolDataSource()
+		ds.setMaxTotal(conf.dbAccessPoolSize)
+		ds.setConnectionPoolDataSource(pgDs)
+		ds.setDefaultAutoCommit(false)
+		ds
+	}.toMap
+
+	override def close(): Unit = {
+		executor.shutdown()
+		dataSources.valuesIterator.foreach{_.close()}
+	}
 
 	def initLogTables(): Unit = {
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
@@ -35,7 +65,7 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 		}
 	}
 
-	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Try[Done] = {
+	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {
 		execute(conf.writer)(conn => {
 			val dobjsQuery = """
 				|INSERT INTO dobjs(hash_id, spec, submitter, station)
@@ -76,9 +106,7 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 				}
 
 				insertContribSt.executeBatch()
-				
-			} catch {
-				case ex: Throwable => throw ex
+
 			} finally {
 				dobjsSt.close()
 				deleteContribSt.close()
@@ -87,55 +115,42 @@ class PostgresDlLog(conf: DownloadStatsConfig) {
 		})
 	}
 
-	private def getConnection(creds: CredentialsConfig)(implicit envri: Envri): Connection = {
-		driverClass
-		val dbName = conf.dbNames(envri)
-		val url = s"jdbc:postgresql://${conf.hostname}:${conf.port}/$dbName"
-		DriverManager.getConnection(url, creds.username, creds.password)
+	private def getConnection(creds: CredentialsConfig)(implicit envri: Envri): Future[Connection] = Future{
+		dataSources(envri).getConnection(creds.username, creds.password)
 	}
 
-	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): T = {
-		//TODO Use a configured fixed-size thread pool to produce a Future[T] instead of T
-		val conn = getConnection(creds)
-		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
-		try {
-			act(conn)
-		} finally{
-			conn.close()
+	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] =
+		getConnection(creds).map{conn =>
+			conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
+			try {
+				act(conn)
+			} finally{
+				conn.close()
+			}
 		}
-	}
 
-	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Try[Done] = {
+	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Future[Done] = {
 		withConnection(credentials){conn =>
-			val initAutoCom = conn.getAutoCommit
-			conn.setAutoCommit(false)
-
 			try {
 				action(conn)
 				conn.commit()
-				Success(Done)
+				Done
 			} catch {
 				case ex: Throwable =>
 					conn.rollback()
-					Failure(ex)
-			} finally {
-				conn.setAutoCommit(initAutoCom)
+					throw ex
 			}
 		}
 	}
 
 	private def withTransaction(creds: CredentialsConfig)(query: String)(act: PreparedStatement => Unit)(implicit envri: Envri): Unit = {
 		withConnection(creds){conn =>
-			val initAutoCom = conn.getAutoCommit
-			conn.setAutoCommit(false)
 			val st = conn.prepareStatement(query)
-
 			try{
 				act(st)
 				conn.commit()
 			}finally{
 				st.close()
-				conn.setAutoCommit(initAutoCom)
 			}
 		}
 	}
