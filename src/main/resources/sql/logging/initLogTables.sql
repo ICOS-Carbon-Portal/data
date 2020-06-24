@@ -3,9 +3,9 @@
 	running this initialization. The host must also have postgis installed.
 */
 
---DROP TABLE IF EXISTS downloads;
---DROP TABLE IF EXISTS contributors;
---DROP TABLE IF EXISTS dobjs;
+DROP TABLE IF EXISTS public.downloads;
+DROP TABLE IF EXISTS public.contributors;
+DROP TABLE IF EXISTS public.dobjs;
 
 CREATE EXTENSION IF NOT EXISTS postgis;
 
@@ -17,6 +17,7 @@ REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 -- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
 	hash_id text NOT NULL PRIMARY KEY,
+	obj_type text NOT NULL CHECK(obj_type IN('document', 'data')),
 	spec text NOT NULL,
 	submitter text NOT NULL,
 	station text NULL
