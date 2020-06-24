@@ -64,26 +64,33 @@ where{
 	return {text};
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
+	const siteQueries = config.envri === "SITES" ?
+		`?site cpmeta:hasEcosystemType ?ecosystem .
+		?site cpmeta:hasSpatialCoverage ?location .`
+		: "";
+
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?project ?count ?station
+select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site
 where{
 	{
-		select ?station ?submitter ?spec (count(?dobj) as ?count) where{
+		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
 			?dobj cpmeta:hasObjectSpec ?spec .
 			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station }
+			OPTIONAL {?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site }
 			?dobj cpmeta:hasSizeInBytes ?size .
 			${getFilterClauses(filters, true)}
 		}
-		group by ?spec ?submitter ?station
+		group by ?spec ?submitter ?station ?site
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
+	${siteQueries}
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	}`;
 
@@ -184,7 +191,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 
 	function isEmpty(arr: Filter) {return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, filters} = query;
+	const {specs, stations, submitters, sites, sorting, paging, filters} = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -210,6 +217,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 			'\n' + dobjStation + '?station .';
 	}
 
+	//TODO Investigate if this empty-station case handling is still needed, and if yes, apply it to sites
 	const stationSearch = isEmpty(stations) ? '' : (stations as Value[]).some((s: any) => !s)
 		? (stations as Value[]).length === 1
 			? noStationFilter
@@ -219,6 +227,11 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 					${stationsFilter((stations as Value[]).filter((s: any) => !!s))}
 				}}`
 		: stationsFilter((stations as Value[]));
+
+	const siteSearch = !sites || isEmpty(sites.filter(Value.isDefined))
+				? ''
+				: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
+				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
 	const orderBy = (sorting && sorting.varName)
 		? (
@@ -236,6 +249,7 @@ where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	${stationSearch}
+	${siteSearch}
 	${submitterSearch}
 	${standardDobjPropsDef}
 	${getFilterClauses(filters, false)}

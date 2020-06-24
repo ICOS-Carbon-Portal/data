@@ -55,6 +55,7 @@ const fetchFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) 
 	const options: QueryParameters = {
 		specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
 		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
 		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
 		sorting,
 		paging,
