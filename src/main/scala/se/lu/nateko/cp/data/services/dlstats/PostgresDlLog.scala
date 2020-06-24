@@ -69,17 +69,17 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {
 		execute(conf.writer)(conn => {
 			val dobjsQuery = """
-				|INSERT INTO dobjs(hash_id, obj_type, spec, submitter, station)
-				|VALUES (?, ?, ?, ?, ?)
+				|INSERT INTO dobjs(hash_id, spec, submitter, station)
+				|VALUES (?, ?, ?, ?)
 				|ON CONFLICT (hash_id) DO UPDATE
-				|	SET obj_type = EXCLUDED.obj_type, spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
+				|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
 				|""".stripMargin
 			val dobjsSt = conn.prepareStatement(dobjsQuery)
 			val deleteContribSt = conn.prepareStatement("DELETE FROM contributors WHERE hash_id = ?")
 			val insertContribSt = conn.prepareStatement("INSERT INTO contributors(hash_id, contributor) VALUES (?, ?)")
 
 			try {
-				val Seq(hash_id, obj_type, spec, submitter, station) = 1 to 5
+				val Seq(hash_id, spec, submitter, station) = 1 to 4
 
 				val stationValue: String = dobj.specificInfo match {
 					case Left(_) => "NULL"
@@ -92,7 +92,6 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 				)
 
 				dobjsSt.setString(hash_id, dobj.hash.id)
-				dobjsSt.setString(obj_type, "data")
 				dobjsSt.setString(spec, dobj.specification.self.uri.toString)
 				dobjsSt.setString(submitter, dobj.submission.submitter.self.uri.toString)
 				dobjsSt.setString(station, stationValue)
