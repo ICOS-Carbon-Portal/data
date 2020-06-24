@@ -45,6 +45,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		pgDs.setPortNumbers(Array(conf.port))
 		val ds = new SharedPoolDataSource()
 		ds.setMaxTotal(conf.dbAccessPoolSize)
+		ds.setDefaultMinIdle(1)
+		ds.setDefaultMaxIdle(2)
 		ds.setConnectionPoolDataSource(pgDs)
 		ds.setDefaultAutoCommit(false)
 		ds
@@ -116,19 +118,15 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		})
 	}
 
-	private def getConnection(creds: CredentialsConfig)(implicit envri: Envri): Future[Connection] = Future{
-		dataSources(envri).getConnection(creds.username, creds.password)
-	}
-
-	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] =
-		getConnection(creds).map{conn =>
-			conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
-			try {
-				act(conn)
-			} finally{
-				conn.close()
-			}
+	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] = Future{
+		val conn = dataSources(envri).getConnection(creds.username, creds.password)
+		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
+		try {
+			act(conn)
+		} finally{
+			conn.close()
 		}
+	}
 
 	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Future[Done] = {
 		withConnection(credentials){conn =>
@@ -144,15 +142,4 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		}
 	}
 
-	private def withTransaction(creds: CredentialsConfig)(query: String)(act: PreparedStatement => Unit)(implicit envri: Envri): Unit = {
-		withConnection(creds){conn =>
-			val st = conn.prepareStatement(query)
-			try{
-				act(st)
-				conn.commit()
-			}finally{
-				st.close()
-			}
-		}
-	}
 }

@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_dobj_spec ON public.dobjs USING HASH(spec);
 
 CREATE TABLE IF NOT EXISTS public.downloads (
 	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-	obj_type text NOT NULL CHECK(obj_type IN('document', 'data', 'collection')),
+	item_type text NOT NULL CHECK(item_type IN('document', 'data', 'collection')),
 	ts timestamptz NOT NULL,
 	hash_id text NOT NULL,
 	ip text NULL,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 	pos geometry NULL
 );
 CREATE INDEX IF NOT EXISTS downloads_hash_id ON public.downloads USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS downloads_obj_type ON public.downloads USING HASH(obj_type);
+CREATE INDEX IF NOT EXISTS downloads_item_type ON public.downloads USING HASH(item_type);
 
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
