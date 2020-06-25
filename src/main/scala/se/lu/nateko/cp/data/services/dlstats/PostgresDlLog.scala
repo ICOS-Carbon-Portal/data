@@ -57,15 +57,16 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		dataSources.valuesIterator.foreach{_.close()}
 	}
 
-	def initLogTables(): Unit = {
+	def initLogTables(): Future[Done] = {
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
 
-		conf.dbNames.keys.foreach{implicit envri =>
+		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn => {
 				conn.createStatement().execute(query)
 				conn.commit()
 			})
-		}
+		}.toIndexedSeq
+		Future.sequence(futs).map(_ => Done)
 	}
 
 	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {

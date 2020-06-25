@@ -97,9 +97,7 @@ object Main extends App {
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
-	postgresDlLog.initLogTables()
-
-	restHeart.init.flatMap{_ =>
+	restHeart.init.zip(postgresDlLog.initLogTables()).flatMap{_ =>
 		http.bindAndHandle(route, config.interface, config.port)
 	}.onComplete{
 		case Success(binding) =>

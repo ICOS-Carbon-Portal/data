@@ -57,7 +57,7 @@ lazy val netcdf = (project in file("netcdf"))
 	)
 
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.13"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.16"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
