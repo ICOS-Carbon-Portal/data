@@ -63,8 +63,6 @@ object Main extends App {
 	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
-	val postgresDlLog = new PostgresDlLog(config.downloads)
-
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
 			val traceWriter = new java.io.StringWriter()
@@ -97,7 +95,7 @@ object Main extends App {
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
-	restHeart.init.zip(postgresDlLog.initLogTables()).flatMap{_ =>
+	restHeart.init.zip(postgresLog.initLogTables()).flatMap{_ =>
 		http.bindAndHandle(route, config.interface, config.port)
 	}.onComplete{
 		case Success(binding) =>
@@ -106,14 +104,18 @@ object Main extends App {
 				val doneFuture = binding
 					.unbind()
 					.flatMap(_ => system.terminate())(exeCtxt)
-				postgresLog.close()
-				Await.result(doneFuture, 3 seconds)
+				try{
+					Await.result(doneFuture, 3 seconds)
+				} finally{
+					postgresLog.close()
+				}
 			}
 			system.log.info(s"Started data: $binding")
 
 		case Failure(err) =>
 			system.log.error(err, "Could not start 'data' service")
 			system.terminate()
+			postgresLog.close()
 	}
 
 }
