@@ -50,3 +50,4 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
 
 GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, DELETE ON public.contributors TO writer;
+GRANT INSERT ON public.downloads TO writer;
