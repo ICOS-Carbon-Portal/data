@@ -21,6 +21,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 		val asciiEtcHalfHourlyProdTimeSer = getRelative("asciiEtcHalfHourlyProductTimeSer")
 		val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
 		val asciiOtcProductCsv = getRelative("asciiOtcProductCsv")
+		val netCdfSpatial = getRelative("netcdf")
 	}
 
 	def getDataObject(hash: Sha256Sum)(implicit envri: EnvriConfig) =

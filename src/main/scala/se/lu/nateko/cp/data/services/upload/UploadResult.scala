@@ -83,3 +83,6 @@ case object FileExists extends UploadTaskCancellation
 case class IngestionSuccess(extract: IngestionMetadataExtract) extends UploadTaskSuccess
 case class IngestionFailure(error: Throwable) extends UploadTaskFailure
 case class UploadCompletionSuccess(response: String) extends UploadTaskSuccess
+
+case object DummySuccess extends UploadTaskSuccess
+case object NotApplicable extends UploadTaskCancellation

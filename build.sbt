@@ -56,8 +56,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.4.15"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.5.0"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"

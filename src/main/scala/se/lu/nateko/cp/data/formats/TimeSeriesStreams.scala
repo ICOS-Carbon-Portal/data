@@ -5,7 +5,7 @@ import java.time.Instant
 import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
-import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesUploadCompletion}
+import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesExtract}
 import se.lu.nateko.cp.data.utils.Akka.done
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,7 +39,7 @@ object TimeSeriesStreams {
 		columnsMeta: ColumnsMeta,
 		provideNRows: Boolean = false,
 		timeStep: Option[(Long, TemporalUnit)] = None
-	)(firstLast: FirstLastRows)(implicit ctxt: ExecutionContext): Future[TimeSeriesUploadCompletion] =
+	)(firstLast: FirstLastRows)(implicit ctxt: ExecutionContext): Future[TimeSeriesExtract] =
 		for (
 			firstRow <- firstLast.first;
 			lastRow <- firstLast.last
@@ -64,7 +64,7 @@ object TimeSeriesStreams {
 			val ingestionExtract = TabularIngestionExtract(columnNames, TimeInterval(start, stop))
 			val nRowsInfo = if(provideNRows) Some(firstRow.header.nRows) else None
 
-			TimeSeriesUploadCompletion(ingestionExtract, nRowsInfo)
+			TimeSeriesExtract(ingestionExtract, nRowsInfo)
 		}
 
 	def digestSink[R](extractor: FirstLastRows => R): Sink[TableRow, R] = Flow
