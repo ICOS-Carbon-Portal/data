@@ -28,6 +28,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.Envri
 import java.net.URI
+import se.lu.nateko.cp.data.api.CpDataParsingException
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -184,14 +185,15 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 	}
 
 	private def ingestionTaskFut(dobj: DataObject): Future[UploadTask] = {
-		val spec = dobj.specification.format.uri
+		val specFormat: URI = dobj.specification.format.uri
 		import CpMetaVocab.ObjectFormats._
 		val file = getFile(dobj)
-		if(spec == asciiWdcggTimeSer) IngestionUploadTask(IngestionSpec(dobj), file, meta)
-		else if(spec == netCdfSpatial) {
+		if(specFormat == asciiWdcggTimeSer) IngestionUploadTask(IngestionSpec(dobj), file, meta)
+		else if(specFormat == netCdfSpatial) {
 			val varNames: Seq[String] = dobj.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			Future.successful(new NetCdfStatsTask(varNames, file))
-		} else IngestionUploadTask(IngestionSpec(dobj), file, meta)
+		} else if(dobj.specification.dataLevel <= 2) IngestionUploadTask(IngestionSpec(dobj), file, meta)
+		else Future.failed(new CpDataParsingException(s"Could not find ingester for format $specFormat"))
 	}
 
 	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(
