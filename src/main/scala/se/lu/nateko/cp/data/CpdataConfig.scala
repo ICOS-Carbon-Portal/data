@@ -88,12 +88,10 @@ case class RestHeartConfig(
 	skipInit: Boolean
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
-	def dobjDownloadLogUri(implicit envri: Envri) = downloadLogUri(dobjDownloads)
-	def collDownloadLogUri(implicit envri: Envri) = downloadLogUri(collDownloads)
 
-	private def downloadLogUri(dlColl: RestheartCollDef)(implicit envri: Envri): URI = {
+	def downloadLogUri(implicit envri: Envri): URI = {
 		val baseUri = downloadLogUris(envri)
-		baseUri.resolve(dlColl.name)
+		baseUri.resolve("downloads")
 	}
 }
 

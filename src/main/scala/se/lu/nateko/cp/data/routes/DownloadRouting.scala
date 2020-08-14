@@ -1,5 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
+import java.time.Instant
+
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
@@ -32,6 +34,11 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.cpauth.core.DocumentDownloadInfo
+import se.lu.nateko.cp.cpauth.core.CollectionDownloadInfo
+import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
+import se.lu.nateko.cp.meta.core.data.JsonSupport.{dataObjectFormat, docObjectFormat, staticCollFormat}
+import spray.json._
 
 class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	restHeart: RestHeartClient, logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
@@ -197,7 +204,13 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		val file = uploadService.getFile(doc)
 		if (file.exists) respondWithAttachment(doc.fileName){
 			getClientIp{ip =>
-				logPublicDownloadInfo(doc, ip)
+				val dlInfo = DocumentDownloadInfo(
+					time = Instant.now(),
+					hashId = doc.hash.id,
+					ip = ip,
+					doc = doc.toJson.asJsObject
+				)
+				logClient.logDownload(dlInfo)
 				getFromFile(file, getContentType(doc.fileName))
 			}
 		} else
@@ -221,21 +234,38 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 		Utils.runSequentially(hashes){hash =>
 			uploadService.meta.lookupPackage(hash).andThen{
-				case Success(obj) => logPublicDownloadInfo(obj, ip, extraInfo)
-				case Failure(err) => log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
+				case Success(dobj: DataObject) =>
+					logPublicDownloadInfo(dobj, ip, Some(thirdParty), endUser)
+				case Failure(err) =>
+					log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
+				case _ =>
 			}
 		}
 	}
 
-	private def logPublicDownloadInfo(obj: StaticObject, ip: String, extraInfo: Seq[(String, String)] = Nil)(implicit envri: Envri): Unit =
-		logClient.logDownload(obj, ip, extraInfo:_*).failed.foreach(
-			log.error(_, s"Failed logging download of object ${obj.hash} from $ip to RestHeart")
+	private def logPublicDownloadInfo(
+		dobj: DataObject, ip: String, thirdParty: Option[String] = None, endUser: Option[String] = None
+	)(implicit envri: Envri): Unit = {
+		val dlInfo = DataObjDownloadInfo(
+			time = Instant.now(),
+			ip = ip,
+			dobj = dobj.toJson.asJsObject,
+			hashId = dobj.hash.id,
+			endUser = endUser,
+			distributor = thirdParty
 		)
 
+		logClient.logDownload(dlInfo)
+	}
+
 	private def logCollDownload(coll: StaticCollection)(implicit envri: Envri): ExtraBatchLog = (ip, uidOpt) => {
-		logClient.logDownload(coll, ip).failed.foreach(
-			log.error(_, s"Failed logging download of collection ${coll.res} from $ip to RestHeart")
+		val dlInfo = CollectionDownloadInfo(
+			time = Instant.now(),
+			ip = ip,
+			hashId = coll.res.getPath.split("/").last,
+			coll = coll.toJson.asJsObject
 		)
+		logClient.logDownload(dlInfo)
 		for(uid <- uidOpt){
 			restHeart.saveDownload(coll, uid).failed.foreach(
 				log.error(_, s"Failed saving download of collection ${coll.res} to ${uid.email}'s user profile")
