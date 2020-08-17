@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.ArrayBlockingQueue
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
+import java.sql.Types
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
@@ -84,11 +85,6 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 			try {
 				val Seq(hash_id, spec, submitter, station) = 1 to 4
 
-				val stationValue: String = dobj.specificInfo match {
-					case Left(_) => "NULL"
-					case Right(lessSpecific) => lessSpecific.acquisition.station.org.self.uri.toString
-				}
-
 				val contribs = dobj.specificInfo.fold(
 					_.productionInfo.contributors,
 					_.productionInfo.toSeq.flatMap(_.contributors)
@@ -97,7 +93,10 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 				dobjsSt.setString(hash_id, dobj.hash.id)
 				dobjsSt.setString(spec, dobj.specification.self.uri.toString)
 				dobjsSt.setString(submitter, dobj.submission.submitter.self.uri.toString)
-				dobjsSt.setString(station, stationValue)
+				dobj.specificInfo match {
+					case Left(_) => dobjsSt.setNull(station, Types.VARCHAR)
+					case Right(lessSpecific) => dobjsSt.setString(station, lessSpecific.acquisition.station.org.self.uri.toString)
+				}
 				dobjsSt.executeUpdate()
 
 				deleteContribSt.setString(1, dobj.hash.id)
