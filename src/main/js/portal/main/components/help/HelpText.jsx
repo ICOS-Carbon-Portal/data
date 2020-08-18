@@ -44,9 +44,9 @@ const List = ({list}) => {
 };
 
 const ListItem = ({item}) => {
-	const label = item.lbl === undefined
+	const label = item.label === undefined
 		? null
-		: <b>{item.lbl}: </b>;
+		: <b>{item.label}: </b>;
 
 	const link = item.webpage
 		? <a href={item.webpage} title="More information" target="_blank">
@@ -56,7 +56,7 @@ const ListItem = ({item}) => {
 
 	return (
 		<li style={{marginTop: 5}}>
-			{label}<span>{item.txt}</span>{link}
+			{label}<span>{item.comment || item.label}</span>{link}
 		</li>
 	);
 };

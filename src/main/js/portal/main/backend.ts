@@ -4,7 +4,7 @@ import commonConfig from '../../common/main/config';
 import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
-import {FilterRequest, isDeprecatedFilter} from './models/FilterRequest';
+import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import {Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
@@ -19,9 +19,8 @@ const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
 const tsSettingsStorage = new Storage();
 
-const fetchSpecBasics = (filters: FilterRequest[]) => {
-	const deprFilter = filters.find(isDeprecatedFilter);
-	const query = queries.specBasics(deprFilter);
+const fetchSpecBasics = () => {
+	const query = queries.specBasics();
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
@@ -34,14 +33,13 @@ const fetchSpecBasics = (filters: FilterRequest[]) => {
 	}));
 };
 
-const fetchSpecColumnMeta = (filters: FilterRequest[]) => {
-	const deprFilter = filters.find(isDeprecatedFilter);
-	const query = queries.specColumnMeta(deprFilter);
+const fetchSpecColumnMeta = () => {
+	const query = queries.specColumnMeta();
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
-		column: b.column.value,
-		colTitle: b.colTitle.value,
+		variable: b.variable.value,
+		varTitle: b.varTitle.value,
 		valType: b.valType.value,
 		quantityKind: sparqlParsers.fromUrl(b.quantityKind),
 		quantityUnit: b.quantityUnit.value
@@ -87,8 +85,8 @@ export type BootstrapData = {
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
 	return Promise.all([
-		fetchSpecBasics(filters),
-		fetchSpecColumnMeta(filters),
+		fetchSpecBasics(),
+		fetchSpecColumnMeta(),
 		fetchDobjOriginsAndCounts(filters),
 		fetchLabelLookup(),
 		keywordsInfo.fetch()

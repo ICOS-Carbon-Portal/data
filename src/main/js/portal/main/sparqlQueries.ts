@@ -21,7 +21,7 @@ export const SPECCOL = 'spec';
 
 export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
 
-export function specBasics(deprFilter?: DeprecatedFilterRequest): SpecBasicsQuery {
+export function specBasics(): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
@@ -34,29 +34,35 @@ where{
 		?spec cpmeta:containsDataset ?dataset .
 		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
 	}
-	${deprecatedFilter(deprFilter)}
 	?spec cpmeta:hasFormat ?format .
 }`;
 
 	return {text};
 }
 
-export type SpecColumnMetaQuery = Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind">
+export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType" | "quantityUnit", "quantityKind">
 
-export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): SpecColumnMetaQuery {
+export function specColumnMeta(): SpecVarMetaQuery {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?column ?colTitle ?valType ?quantityKind
+select distinct ?spec ?variable ?varTitle ?valType ?quantityKind
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
-	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
-	FILTER NOT EXISTS {?column cpmeta:isQualityFlagFor [] }
+	?spec cpmeta:containsDataset ?datasetSpec .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
-	?column cpmeta:hasColumnTitle ?colTitle .
-	?column cpmeta:hasValueType ?valType .
-	${deprecatedFilter(deprFilter)}
+	{
+		{
+			?datasetSpec cpmeta:hasColumn ?variable .
+			?variable cpmeta:hasColumnTitle ?varTitle .
+		} UNION {
+			?datasetSpec cpmeta:hasVariable ?variable .
+			?variable cpmeta:hasVariableTitle ?varTitle .
+		}
+	}
+	FILTER NOT EXISTS {?variable cpmeta:isQualityFlagFor [] }
+	?variable cpmeta:hasValueType ?valType .
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
 	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
@@ -154,11 +160,6 @@ ORDER BY ?Long_name`;
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
-const deprecatedFilter = (deprFilter?: DeprecatedFilterRequest) => {
-	return (deprFilter && deprFilter.allow)
-		? ''
-		: `FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}`;
-};
 const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";

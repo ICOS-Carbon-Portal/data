@@ -45,7 +45,7 @@ const defaultCategNames = {
 	level: 'Data level',
 	format: 'Format',
 	theme: 'Theme',
-	column: 'Column name',
+	variable: 'Variable name',
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
 	quantityUnit: 'Unit of measurement',
@@ -121,14 +121,14 @@ export const filters: IFilterCategories = {
 	ICOS: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']},
+		{panelTitle: "Value types", filterList: ['variable', 'valType', 'quantityUnit', 'quantityKind']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
 		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level']},
-		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']},
+		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'variable']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
 };

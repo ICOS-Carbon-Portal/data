@@ -1,6 +1,6 @@
 import stateUtils, {State} from "../models/State";
 import {
-	UiAddHelpInfo, UiInactivateAllHelp,
+	UiInactivateAllHelp,
 	UiPayload,
 	UiStepRequested,
 	UiSwitchTab,
@@ -29,15 +29,9 @@ export default function(state: State, payload: UiPayload): State{
 		return stateUtils.update(state, handleSwitchTab(state, payload));
 	}
 
-	if (payload instanceof UiAddHelpInfo){
-		return stateUtils.update(state,{
-			helpStorage: state.helpStorage.withNewItem(payload.helpItem)
-		});
-	}
-
 	if (payload instanceof UiUpdateHelpInfo){
 		return stateUtils.update(state,{
-			helpStorage: state.helpStorage.withUpdatedItem(payload.helpItem)
+			helpStorage: state.helpStorage.withItem(payload.helpItem)
 		});
 	}
 

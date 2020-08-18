@@ -1,19 +1,20 @@
-import config, {placeholders} from '../config';
+import config, {placeholders, numericFilterLabels} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";
-import {ColNames} from "./CompositeSpecTable";
-import {getLastSegmentInUrl} from "../utils";
 
 
-const titles = placeholders[config.envri];
+const titles = {...placeholders[config.envri], ...numericFilterLabels, preview: "Preview / Add to cart"};
+
+type HelpId = HelpItemName | UrlStr
+type HelpDict = {[key in HelpId]?: HelpItem}
 
 export default class HelpStorage {
-	private readonly storage: Item[];
-	private readonly visibility: boolean[];
+	private readonly helpItems: HelpDict;
+	private readonly visible: HelpId | undefined;
 
-	constructor(storage?: Item[], visibility?: boolean[]){
-		this.storage = storage ?? initItems;
-		this.visibility = visibility ?? this.storage.map(_ => false);
+	constructor(helpStorage?: HelpDict, visible?: HelpId){
+		this.helpItems = helpStorage ?? toDict(initItems);
+		this.visible = visible;
 	}
 
 	get serialize(){
@@ -21,113 +22,82 @@ export default class HelpStorage {
 	}
 
 	static deserialize(json: HelpStorage) {
-		const storage = json.storage.map(({name, header, main, list}) => new Item(name, header, main, list));
-		return new HelpStorage(storage, json.visibility);
+		const helpItems = Object.values(json.helpItems).flatMap(js => js ? [HelpItem.clone(js)] : []);
+		return new HelpStorage(toDict(helpItems), json.visible);
 	}
 
-	has(name: string){
-		return this.storage.some(item => item.name === name);
+	getHelpItem(id: HelpId): HelpItem | undefined {
+		return this.helpItems[id];
 	}
 
-	get names(){
-		return this.storage.map(item => item.name);
+	get visibleHelpItem(): HelpItem | undefined{
+		return this.visible ? this.helpItems[this.visible] : undefined;
 	}
 
-	getHelpItem(name: string){
-		return this.storage.find(item => item.name === name);
+	isActive(id: HelpId): boolean{
+		return id === this.visible;
 	}
 
-	get visibleHelpItem(){
-		const idx = this.visibility.findIndex(v => v);
-		return this.storage[idx];
+	setAllInactive(): HelpStorage {
+		return new HelpStorage(this.helpItems, undefined);
 	}
 
-	isActive(name: string, url?: UrlStr){
-		const helpName = url ?? name;
-		const idx = this.storage.findIndex(item => item.name === helpName);
-		return this.visibility[idx];
-	}
+	withItem(item: HelpItem): HelpStorage {
+		const newVisibility = this.visible === item.id ? undefined : item.id;
+		return new HelpStorage({...this.helpItems, [item.id]: item}, newVisibility);
+}
 
-	shouldFetchList(name: string){
-		const item = this.getHelpItem(name);
-		return item ? item.shouldFetchList : false;
-	}
+}
 
-	setAllInactive(){
-		return new HelpStorage(this.storage);
-	}
-
-	withUpdatedItem(existingItem: Item){
-		let visibility = this.visibility.slice();
-		const storage = this.storage.map((item, idx) => {
-			if (item.name === existingItem.name){
-				visibility[idx] = !visibility[idx];
-				return existingItem;
-			} else {
-				visibility[idx] = false;
-				return item;
-			}
-		});
-
-		return new HelpStorage(storage, visibility);
-	}
-
-	withNewItem(newItem: Item){
-		const newStorage = this.storage.concat(newItem);
-		const newVisibility = newStorage.map((s, idx) => idx === newStorage.length - 1);
-		return new HelpStorage(newStorage, newVisibility);
-	}
+function toDict(items: HelpItem[]): HelpDict {
+	return items.reduce<HelpDict>((acc, curr) => {
+		acc[curr.id] = curr;
+		return acc;
+	}, {});
 }
 
 export type HelpStorageListEntry = {
-	label: Int | string
-	comment: string
+	label?: Int | string
+	comment?: string
 	webpage?: UrlStr
 }
-type ListEntryParsed = {
-	lbl?: Int | string
-	txt: string
-	webpage?: UrlStr
-}
-export type Documentation = {
+
+export interface Documentation {
 	txt: string,
 	url: UrlStr
 }
-type HelpItemName = ColNames | "preview" | string
-export class Item {
-	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: HelpStorageListEntry[] | ListEntryParsed[]){
-		// list === undefined -> Never show list
-		// list === [] -> Fetch list from backend when requested
-		this.name = name;
-		this.header = header;
-		this.main = main;
-		this.list = list;
+
+export type HelpItemName = keyof typeof titles;
+
+export class HelpItem {
+	constructor(
+		readonly name: HelpItemName,
+		readonly main: string,
+		readonly url?: UrlStr,
+		readonly list?: HelpStorageListEntry[],
+		readonly documentation?: Documentation[]
+	){}
+
+	get id(): HelpItemName | UrlStr {
+		return this.url ?? this.name;
 	}
 
-	get shouldFetchList(){
+	get header(): string {
+		return titles[this.name];
+	}
+
+	get shouldFetchList(): boolean {
 		return this.list !== undefined && this.list.length === 0;
 	}
 
 	withList(list: HelpStorageListEntry[]){
-		return new Item(this.name, this.header, this.main, parseResourceInfo(list));
+		return new HelpItem(this.name, this.main, this.url, list, this.documentation);
+	}
+
+	static clone(item: HelpItem): HelpItem{
+		return new HelpItem(item.name, item.main, item.url, item.list, item.documentation);
 	}
 }
-
-export class ItemExtended extends Item {
-	constructor(readonly name: HelpItemName, readonly header: string, readonly main: string, readonly list?: ListEntryParsed[], readonly documentation?: Documentation[]){
-		super(name, header, main, list);
-	}
-}
-
-const parseResourceInfo = (resourceInfo: HelpStorageListEntry[]): ListEntryParsed[] => {
-	return resourceInfo.map(ri => {
-		return {
-			lbl: ri.label,
-			txt: ri.comment || '',
-			webpage: ri.webpage
-		};
-	});
-};
 
 const {envri} = config;
 
@@ -135,7 +105,7 @@ const projectDescr = envri === 'SITES'
 	? 'SITES Data Portal stores data from the following projects:'
 	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
 
-const numberFilterList = parseResourceInfo([
+const numberFilterList = [
 	{
 		label: 'List',
 		comment: 'Provide a list of numbers separated by spaces or a single number. E.g. 5 15 20.'
@@ -148,29 +118,29 @@ const numberFilterList = parseResourceInfo([
 		label: 'Limit',
 		comment: 'Provide a number preceded by "<" (less than) or ">" (more than). E.g. <50.'
 	}
-]);
+];
 
-const initItems: Item[] = [
+const initItems: HelpItem[] = [
 
-	new Item('project', titles.project, projectDescr, []),
+	new HelpItem('project', projectDescr, undefined, []),
 
-	new Item('station', titles.station, 'If applicable, the research station that produced the original data for this data object. ' +
+	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
 
-	new Item('submitter', titles.submitter, 'Organization credited for submission of the data object. ' +
+	new HelpItem('submitter', 'Organization credited for submission of the data object. ' +
 		'Acquisition and production are credited independently of submission.'),
 
-	new Item('type', titles.type, 'Kind of data object. Encompasses most of characteristics related to data content, ' +
+	new HelpItem('type', 'Kind of data object. Encompasses most of characteristics related to data content, ' +
 		'that can be shared by multiple data objects, namely: ' +
 		`${titles.project}, ${titles.theme}, ${titles.level}, ${titles.format}, and ` +
 		'(in the case of tabular data with well-defined content) the list of columns.'),
 
-	new Item(
+	new HelpItem(
 		'level',
-		titles.level,
 		envri + ' distinguishes 4 levels of data in terms of how processed they are' + (envri === 'ICOS' ? ' (ranging from raw data to modelling results)' : '') + ':',
+		undefined,
 		envri === 'SITES'
-			? parseResourceInfo([
+			? [
 				{
 					label: 0 as Int,
 					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
@@ -193,8 +163,8 @@ const initItems: Item[] = [
 					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
 						' SITES L1 or L2 data  Distributed by the Data Portal.'
 				}
-			])
-			: parseResourceInfo([
+			]
+			: [
 				{
 					label: 0 as Int,
 					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
@@ -217,27 +187,38 @@ const initItems: Item[] = [
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				}
-			])
+			]
 	),
 
-	new Item('format', titles.format, 'Technical file format, indicating which software module is needed to read the data'),
+	new HelpItem('format', 'Technical file format, indicating which software module is needed to read the data'),
 
-	new Item(
+	new HelpItem('variable', 'Variable used in the actual data objects, such as column name in a tabular time-series dataset. ' +
+		'Usually a plain variable name, but can also refer to a group of variables using a regular expression. ' +
+		'May be defined as optional, in which case explicitly selecting the variable is necessary to find the data objects that actually do contain it.'),
+
+	new HelpItem('valType', 'A specific kind of physical quantity used in a certain scientific field. ' +
+		'When applicable, is associated with a fixed unit of measurement and/or a single quantity kind.'),
+
+	new HelpItem(
+		'quantityUnit',
+		'Unit of measurement of the physical quantity behind the variable in question. ' +
+		nonStrictnessWarning(titles.quantityUnit)
+	),
+	
+	new HelpItem(
 		'quantityKind',
-		titles.quantityKind,
 		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. ' +
-			'Implies an associated physical quantity dimension but does not have a fixed unit of measurement.',
+			'Implies an associated physical quantity dimension but does not have a fixed unit of measurement. ' +
+			nonStrictnessWarning(titles.quantityKind),
+		undefined,
 		[]
 	),
 
-	new Item('valType', titles.valType, 'A specific kind of physical quantity used in a certain scientific field. ' +
-		'When applicable, is associated with a fixed unit of measurement and/or a single quantity kind.'),
-
-	new Item(
+	new HelpItem(
 		'preview',
-		'Preview / Add to cart',
 		'How \"Preview\" and \"Add to cart\" buttons work:',
-		parseResourceInfo([
+		undefined,
+		[
 			{
 				label: 'preview availability',
 				comment: 'normally available for single-table data objects of levels 1 and 2 and for NetCDF data objects (level 3)'
@@ -255,22 +236,27 @@ const initItems: Item[] = [
 				label: 'adding to cart',
 				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
 			}
-		])
+		]
 	),
 
-	new Item(
+	new HelpItem(
 		'samplingHeight',
-		'Sampling height',
 		'Only applicable for data sampled at various heights (mostly atmospheric data). The filter accepts decimal numbers, using "." as decimal character and' +
 			' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
+		undefined,
 		numberFilterList
 	),
 
-	new Item(
+	new HelpItem(
 		'fileSize',
-		'File size',
 		'The filter accepts decimal numbers, using "." as decimal character and can be specified in three different ways. All filtering is inclusive. ' +
 			'The filter "<50000" will return data objects with a file size of 50 000 or less.',
+		undefined,
 		numberFilterList
 	)
 ];
+
+function nonStrictnessWarning(title: String): string{
+	return `Note that ${title} selection does not filter data objects strictly, there may be false positives in the results. ` +
+		`To avoid them, also filter by either ${titles.valType} or ${titles.variable}.`;
+}

@@ -1,9 +1,10 @@
 import React, {Component} from "react";
 import { State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {getResourceHelpInfo} from "../../actions/search";
+import {getFilterHelpInfo} from "../../actions/search";
 import {connect} from "react-redux";
 import HelpSection from "../../components/help/HelpSection";
+import { HelpItemName } from "../../models/HelpStorage";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -12,13 +13,13 @@ type OurProps = StateProps & DispatchProps;
 class Help extends Component<OurProps> {
 
 	render(){
-		const {helpStorage, getResourceHelpInfo} = this.props;
+		const {helpStorage, getFilterHelpInfo} = this.props;
 
 		return (
 			<HelpSection
 				width={300}
 				helpStorage={helpStorage}
-				getResourceHelpInfo={getResourceHelpInfo}
+				getFilterHelpInfo={getFilterHelpInfo}
 			/>
 		);
 	}
@@ -30,9 +31,9 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		getResourceHelpInfo: (name: string) => dispatch(getResourceHelpInfo(name))
+		getFilterHelpInfo: (name: HelpItemName) => dispatch(getFilterHelpInfo(name))
 	};
 }
 

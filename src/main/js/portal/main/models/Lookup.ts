@@ -9,7 +9,7 @@ interface PreviewTypeInfo{
 interface TimeSeriesPreviewInfo extends PreviewTypeInfo{
 	type: "TIMESERIES"
 	options: {
-		colTitle: string
+		varTitle: string
 		valTypeLabel: string
 	}[]
 }
@@ -26,14 +26,14 @@ export default class Lookup{
 	constructor(specTable: CompositeSpecTable, labelLookup: IdxSig){
 		this.table = {};
 
-		specTable.columnMeta.rows.forEach(({spec, colTitle, valType}) => {
-			if(typeof spec === 'string' && typeof colTitle === 'string' && typeof valType === 'string'){
+		specTable.columnMeta.rows.forEach(({spec, varTitle, valType}) => {
+			if(typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string'){
 				let defaultInfo: TimeSeriesPreviewInfo = {type: "TIMESERIES", options: []};
 				const currentInfo = this.table[spec];
 				const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
 				if (info === defaultInfo) this.table[spec] = info;
 				const valTypeLabel = labelLookup[valType];
-				info.options.push({colTitle, valTypeLabel});
+				info.options.push({varTitle, valTypeLabel});
 			}
 		});
 

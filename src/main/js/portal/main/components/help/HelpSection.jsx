@@ -42,8 +42,8 @@ export default class HelpSection extends Component{
 	}
 
 	onCloseBtnClick(){
-		const {helpStorage, getResourceHelpInfo} = this.props;
-		getResourceHelpInfo(helpStorage.visibleHelpItem.name);
+		const {helpStorage, getFilterHelpInfo} = this.props;
+		getFilterHelpInfo(helpStorage.visibleHelpItem.name);
 		this.setState({
 			isOpen: !this.state.isOpen
 		});
@@ -51,8 +51,10 @@ export default class HelpSection extends Component{
 
 	render() {
 		const {helpItem, isOpen} = this.state;
+console.log({helpItem});
 		const {width} = this.props;
 		const header = helpItem ? helpItem.header : undefined;
+console.log({header});
 
 		return (
 			<div style={{overflow:'hidden'}}>

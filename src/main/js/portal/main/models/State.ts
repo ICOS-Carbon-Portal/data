@@ -1,6 +1,6 @@
 import Preview from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
-import CompositeSpecTable, {BasicsColNames, ColumnMetaColNames, OriginsColNames} from "./CompositeSpecTable";
+import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import Lookup from "./Lookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
@@ -126,7 +126,7 @@ export interface State {
 
 const emptyCompositeSpecTable = new CompositeSpecTable(
 	new SpecTable<BasicsColNames>([], [], {}),
-	new SpecTable<ColumnMetaColNames>([], [], {}),
+	new SpecTable<VariableMetaColNames>([], [], {}),
 	new SpecTable<OriginsColNames>([], [], {})
 );
 
