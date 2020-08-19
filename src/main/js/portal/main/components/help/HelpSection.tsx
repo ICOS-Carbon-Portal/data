@@ -1,15 +1,17 @@
 import React, { Component } from 'react';
 import SlideIn from '../ui/SlideIn.jsx';
 import HelpText from './HelpText.jsx';
+import HelpStorage, { HelpItem } from '../../models/HelpStorage.js';
 
 
-const closeBtnStyle = {
+const closeBtnStyle: React.CSSProperties = {
 	float: 'right',
 	top: -5,
 	fontSize: 26,
 	cursor: 'pointer'
 };
-const panelBodyStyle = {
+
+const panelBodyStyle: React.CSSProperties = {
 	width: '100%',
 	padding: 10,
 	minHeight: 400,
@@ -18,8 +20,19 @@ const panelBodyStyle = {
 	backgroundColor: 'rgba(255, 254, 151, 0.36)'
 };
 
-export default class HelpSection extends Component{
-	constructor(props){
+type HelpState = {
+	helpItem: HelpItem | undefined,
+	isOpen: boolean
+}
+
+type HelpProps = {
+	width: number,
+	helpStorage: HelpStorage,
+	onHelpClose(): void
+}
+
+export default class HelpSection extends Component<HelpProps, HelpState>{
+	constructor(props: HelpProps){
 		super(props);
 
 		this.state = {
@@ -28,33 +41,20 @@ export default class HelpSection extends Component{
 		};
 	}
 
-	componentWillReceiveProps(nextProps) {
-		if (nextProps.helpStorage.visibleHelpItem === undefined){
-			this.setState({
-				isOpen: false
-			});
-		} else {
-			this.setState({
-				helpItem: nextProps.helpStorage.visibleHelpItem,
-				isOpen: true
-			});
-		}
+	componentWillReceiveProps(nextProps: HelpProps) {
+		const helpItem = nextProps.helpStorage.visibleHelpItem;
+		if(helpItem) this.setState({helpItem, isOpen: true})
+		else this.setState({isOpen: false});
 	}
 
 	onCloseBtnClick(){
-		const {helpStorage, getFilterHelpInfo} = this.props;
-		getFilterHelpInfo(helpStorage.visibleHelpItem.name);
-		this.setState({
-			isOpen: !this.state.isOpen
-		});
+		this.setState({isOpen: false});
+		this.props.onHelpClose();
 	}
 
 	render() {
 		const {helpItem, isOpen} = this.state;
-console.log({helpItem});
 		const {width} = this.props;
-		const header = helpItem ? helpItem.header : undefined;
-console.log({header});
 
 		return (
 			<div style={{overflow:'hidden'}}>
@@ -63,7 +63,7 @@ console.log({header});
 
 						<div className="panel-heading">
 							<h3 className="panel-title">
-								{header}
+								{helpItem?.header}
 								<span
 									title="Close"
 									className="glyphicon glyphicon-remove-sign text-info"
@@ -74,7 +74,7 @@ console.log({header});
 						</div>
 
 						<div className="panel-body" style={panelBodyStyle}>
-							<HelpText helpTxtItem={helpItem} />
+							<HelpText helpItem={helpItem} />
 						</div>
 					</div>
 				</SlideIn>

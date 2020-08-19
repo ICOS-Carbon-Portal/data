@@ -44,7 +44,13 @@ export default class HelpStorage {
 
 	withItem(item: HelpItem): HelpStorage {
 		const newVisibility = this.visible === item.id ? undefined : item.id;
-		return new HelpStorage({...this.helpItems, [item.id]: item}, newVisibility);
+		const newStorage = this.helpItems[item.id] === item
+			? this.helpItems
+			: {...this.helpItems, [item.id]: item};
+
+		return (newVisibility === this.visible && newStorage === this.helpItems)
+			? this
+			: new HelpStorage(newStorage, newVisibility);
 }
 
 }

@@ -244,8 +244,7 @@ export function setKeywordFilter(filterKeywords: string[], reset: boolean = fals
 
 export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {helpStorage} = getState();
-		const helpItem = helpStorage.getHelpItem(name);
+		const helpItem = getState().helpStorage.getHelpItem(name);
 
 		if (helpItem === undefined) {
 			dispatch(new Payloads.MiscError(new Error("Could not locate help information for " + name)));
@@ -276,7 +275,12 @@ export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 }
 
 export function getResourceHelpInfo(name: HelpItemName, url: UrlStr): PortalThunkAction<void> {
-	return dispatch => {
+	return (dispatch, getState) => {
+		const helpItem = getState().helpStorage.getHelpItem(url);
+		if(helpItem){
+			dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+			return;
+		}
 
 		const correctedUrl = new URL(url);
 		correctedUrl.protocol = "https:";
