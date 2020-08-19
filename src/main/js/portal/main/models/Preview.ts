@@ -12,7 +12,7 @@ import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
 export type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
 export type PreviewItemSerialized = CartItemSerialized & Partial<ExtendedDobjInfo>
 export type PreviewOption = {
-	colTitle: string
+	varTitle: string
 	valTypeLabel: string
 }
 
@@ -82,7 +82,7 @@ export default class Preview {
 		if (options.type === config.TIMESERIES){
 			if (items.length){
 				let previewItems = items;
-				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.colTitle === x));
+				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
 				if(xAxis){
 					const url = getNewTimeseriesUrl(items, xAxis);
 					previewItems = items.map(i => i.withUrl(url));

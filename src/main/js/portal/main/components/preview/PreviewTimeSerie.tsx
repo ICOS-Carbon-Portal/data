@@ -62,9 +62,9 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 	private makePreviewOption(actColName: string): PreviewOption | undefined {
 		const {preview} = this.props;
-		const verbatimMatch = preview.options.find(opt => opt.colTitle === actColName);
+		const verbatimMatch = preview.options.find(opt => opt.varTitle === actColName);
 		if(verbatimMatch) return verbatimMatch;
-		const regexMatch = preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.colTitle).test(actColName));
+		const regexMatch = preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.varTitle).test(actColName));
 		if(!regexMatch) return; //no preview for columns that are not in portal app's metadata (e.g. flag columns)
 		return {...regexMatch, ...{colTitle: actColName}};
 	}
@@ -106,8 +106,8 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 			: preview.options;
 
 		const chartTypeOptions: PreviewOption[] = [
-			{colTitle: 'scatter', valTypeLabel: 'scatter'},
-			{colTitle: 'line', valTypeLabel: 'line'},
+			{varTitle: 'scatter', valTypeLabel: 'scatter'},
+			{varTitle: 'line', valTypeLabel: 'line'},
 		];
 
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {};
@@ -176,8 +176,8 @@ type Axes = {
 }
 const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSetting): Axes => {
 	const getColName = (colName: string) => {
-		const option = options.find((opt: PreviewOption) => opt.colTitle === colName);
-		return option ? option.colTitle : undefined;
+		const option = options.find((opt: PreviewOption) => opt.varTitle === colName);
+		return option ? option.varTitle : undefined;
 	};
 
 	return preview.items[0] && preview.items[0].hasKeyValPairs
@@ -193,15 +193,15 @@ type SelectorProps = {
 	name: string
 	label: string
 	selected?: string
-	options: {colTitle: string, valTypeLabel: string}[]
+	options: PreviewOption[]
 	selectAction: (event: ChangeEvent<HTMLSelectElement>) => void
 }
 const Selector = (props: SelectorProps) => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
 	const getTxt = (option: PreviewOption) => {
-		return option.colTitle === option.valTypeLabel
-			? option.colTitle
-			: `${option.colTitle}—${option.valTypeLabel}`;
+		return option.varTitle === option.valTypeLabel
+			? option.varTitle
+			: `${option.varTitle}—${option.valTypeLabel}`;
 	};
 
 	return (
@@ -210,7 +210,7 @@ const Selector = (props: SelectorProps) => {
 			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
 				{props.options.map((o: PreviewOption, i: number) =>
-					<option value={o.colTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
+					<option value={o.varTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
 			</select>
 		</span>
 	);
