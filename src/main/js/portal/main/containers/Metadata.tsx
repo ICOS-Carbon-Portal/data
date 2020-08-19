@@ -52,7 +52,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	render() {
-		const { metadata, cart, lookup } = this.props;
+		const { metadata, cart, previewLookup } = this.props;
 
 		if (metadata === undefined) return null;
 
@@ -76,7 +76,7 @@ class Metadata extends Component<MetadataProps> {
 			'nextVersion': metadata.nextVersion
 		}];
 		const datasets = checkedObjects.map(obj => obj.dataset);
-		const previewTypes = lookup ? [lookup.getSpecLookupType(metadata.specification.self.uri)] : [];
+		const previewTypes = previewLookup ? [previewLookup.forDataObjSpec(metadata.specification.self.uri)?.type] : [];
 		const keywords = [
 			...metadata.references.keywords || [],
 			...metadata.specification.keywords || [],
@@ -290,7 +290,7 @@ const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
 function stateToProps(state: State){
 	return {
 		cart: state.cart,
-		lookup: state.lookup,
+		previewLookup: state.previewLookup,
 		metadata: state.metadata,
 	};
 }

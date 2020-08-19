@@ -1,7 +1,7 @@
 import Preview from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";
-import Lookup from "./Lookup";
+import PreviewLookup from "./PreviewLookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
 import HelpStorage from './HelpStorage';
@@ -93,7 +93,7 @@ export interface State {
 	filterPids: Sha256Str[]
 	filterNumbers: FilterNumbers
 	user: User
-	lookup: Lookup | undefined;
+	previewLookup: PreviewLookup | undefined;
 	labelLookup: IdxSig;
 	specTable: CompositeSpecTable
 	extendedDobjInfo: ExtendedDobjInfo[]
@@ -145,7 +145,7 @@ export const defaultState: State = {
 		profile: {},
 		email: null
 	},
-	lookup: undefined,
+	previewLookup: undefined,
 	labelLookup: {},
 	specTable: emptyCompositeSpecTable,
 	extendedDobjInfo: [],
@@ -190,7 +190,7 @@ const updateAndSave = (state: State, updates: any) => {
 };
 
 const serialize = (state: State) => {
-	return {...state, ...{
+	return {...state,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		lookup: undefined,
@@ -199,23 +199,23 @@ const serialize = (state: State) => {
 		cart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
-	}};
+	};
 };
 
 export type StateSerialized = ReturnType<typeof serialize>
 
 const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
-	const props: State = {...jsonObj, ...{
+	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
 		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
-		lookup: new Lookup(specTable, jsonObj.labelLookup),
+		previewLookup: new PreviewLookup(specTable, jsonObj.labelLookup),
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
-	}};
+	};
 
 	return props;
 };

@@ -9,8 +9,6 @@ interface OurProps {
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
-type OurPreviewType = PreviewType | 'unknown'
-
 export default class PreviewSelfContained extends Component<OurProps>{
 	shouldComponentUpdate(nextProps: OurProps){
 		// Prevent preview component from updating iframe src if we are viewing the same data object
@@ -19,9 +17,12 @@ export default class PreviewSelfContained extends Component<OurProps>{
 
 	render(){
 		const {preview, iframeSrcChange} = this.props;
+		const previewType = preview.type;
+		if(previewType === undefined) return null;
+
 		// Use preview.item.url if present since that one has all client changes recorded in history
 		const url = preview.item.url ? preview.item.url : preview.item.id;
-		const iFrameBaseUrl = config.iFrameBaseUrl[preview.type];
+		const iFrameBaseUrl = config.iFrameBaseUrl[previewType];
 		const src = `${iFrameBaseUrl}${getLastSegmentInUrl(url)}`;
 		const containerStyle: CSSProperties = {position: 'relative', width: '100%', height: getHeight(preview.type), padding: '20%'};
 		const iframeStyle: CSSProperties = {border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'};
@@ -37,7 +38,7 @@ export default class PreviewSelfContained extends Component<OurProps>{
 	}
 }
 
-const getHeight = (previewType: OurPreviewType) => {
+function getHeight(previewType?: PreviewType): number {
 	switch(previewType){
 		case config.NETCDF: return 600;
 		case config.MAPGRAPH: return 1100;

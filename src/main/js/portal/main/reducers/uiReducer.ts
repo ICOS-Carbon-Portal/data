@@ -68,7 +68,7 @@ const handleToggleSorting = (state: State, payload: UiToggleSorting) => {
 };
 
 const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
-	const tabs = {...state.tabs, ...{[payload.tabName]: payload.selectedTabId}};
+	const tabs = {...state.tabs, [payload.tabName]: payload.selectedTabId};
 	const hasPidSearchResult = isPidFreeTextSearch(tabs, state.filterPids);
 	const offset = hasPidSearchResult ? 0 : state.paging.offset;
 

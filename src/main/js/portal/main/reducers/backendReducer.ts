@@ -5,9 +5,9 @@ import {
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
-import CompositeSpecTable, {SpecTableSerialized} from "../models/CompositeSpecTable";
+import CompositeSpecTable from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
-import Lookup from "../models/Lookup";
+import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
 import {IdxSig} from "../backend/declarations";
 
@@ -152,7 +152,7 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		specTable,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
-		lookup: new Lookup(specTable, labelLookup),
+		previewLookup: new PreviewLookup(specTable, labelLookup),
 		keywords: payload.info.keywords
 	};
 };

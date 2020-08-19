@@ -3,7 +3,7 @@ import {connect} from "react-redux";
 import PreviewTimeSerie from '../components/preview/PreviewTimeSerie';
 import PreviewSelfContained from '../components/preview/PreviewSelfContained';
 import CopyValue from '../components/controls/CopyValue';
-import config from '../config';
+import config, { PreviewType } from '../config';
 import CartBtn from '../components/buttons/CartBtn';
 import {Events} from 'icos-cp-utils';
 import {State} from "../models/State";
@@ -63,6 +63,9 @@ class Preview extends Component<OurProps, OurState> {
 
 	render(){
 		const {preview, cart} = this.props;
+		const previewType = preview.type;
+		if(previewType === undefined) return null;
+
 		const areItemsInCart: boolean = preview.items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.id), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
@@ -94,7 +97,7 @@ class Preview extends Component<OurProps, OurState> {
 										<CopyValue
 											btnText="Copy preview chart URL"
 											copyHelpText="Click to copy preview chart URL to clipboard"
-											valToCopy={previewUrl(preview.items[0], preview.type, this.state.iframeSrc)}
+											valToCopy={previewUrl(preview.items[0], previewType, this.state.iframeSrc)}
 										/>
 									</div>
 									{preview.items &&
@@ -144,7 +147,7 @@ const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HT
 	}
 };
 
-const previewUrl = (item: CartItem, type: string, iframeSrc: UrlStr) => {
+function previewUrl(item: CartItem, type: PreviewType, iframeSrc: UrlStr): UrlStr {
 	if (type === config.TIMESERIES){
 		return (item && item.getUrlSearchValue('x') && item.getUrlSearchValue('y')) ? iframeSrc : '';
 	} else {

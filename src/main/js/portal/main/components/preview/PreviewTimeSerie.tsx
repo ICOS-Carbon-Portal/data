@@ -66,7 +66,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		if(verbatimMatch) return verbatimMatch;
 		const regexMatch = preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.varTitle).test(actColName));
 		if(!regexMatch) return; //no preview for columns that are not in portal app's metadata (e.g. flag columns)
-		return {...regexMatch, ...{colTitle: actColName}};
+		return {...regexMatch, varTitle: actColName};
 	}
 
 	render(){

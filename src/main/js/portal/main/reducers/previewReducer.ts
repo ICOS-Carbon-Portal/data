@@ -30,15 +30,15 @@ export default function(state: State, payload: PreviewPayload): State{
 }
 
 const handleRestorePreview = (state: State) => {
-	return state.lookup === undefined
+	return state.previewLookup === undefined
 		? {preview: new Preview()}
-		: {preview: state.preview.restore(state.lookup.table, state.cart, state.objectsTable)};
+		: {preview: state.preview.restore(state.previewLookup, state.cart, state.objectsTable)};
 };
 
 const handleSetPreviewFromCart = (state: State, payload: SetPreviewFromCart): Partial<State> => {
-	const preview = state.lookup === undefined
+	const preview = state.previewLookup === undefined
 		? new Preview()
-		: state.preview.initPreview(state.lookup.table, state.cart, payload.ids, state.objectsTable);
+		: state.preview.initPreview(state.previewLookup, state.cart, payload.ids, state.objectsTable);
 
 	return {
 		route: 'preview',

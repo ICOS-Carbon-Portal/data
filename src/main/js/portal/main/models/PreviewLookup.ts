@@ -1,6 +1,7 @@
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
 import {IdxSig, UrlStr} from '../backend/declarations';
+import { PreviewOption } from './Preview';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -8,22 +9,19 @@ interface PreviewTypeInfo{
 
 interface TimeSeriesPreviewInfo extends PreviewTypeInfo{
 	type: "TIMESERIES"
-	options: {
-		varTitle: string
-		valTypeLabel: string
-	}[]
+	options: PreviewOption[]
 }
 
 interface OtherPreviewInfo extends PreviewTypeInfo{
 	type: "NETCDF" | "MAPGRAPH"
 }
 
-type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
+export type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 
-export default class Lookup{
-	readonly table: {[key: string]: PreviewInfo | undefined};
+export default class PreviewLookup{
+	private readonly table: {[key: string]: PreviewInfo | undefined};
 
-	constructor(specTable: CompositeSpecTable, labelLookup: IdxSig){
+	constructor(specTable: CompositeSpecTable, labelLookup: IdxSig<string, string>){
 		this.table = {};
 
 		specTable.columnMeta.rows.forEach(({spec, varTitle, valType}) => {
@@ -45,12 +43,8 @@ export default class Lookup{
 		})
 	}
 
-	getSpecLookup(spec: UrlStr): PreviewInfo | undefined {
+	forDataObjSpec(spec: UrlStr): PreviewInfo | undefined {
 		return this.table[spec]
-	}
-
-	getSpecLookupType(spec: UrlStr): PreviewType | undefined {
-		return this.table[spec]?.type
 	}
 
 }

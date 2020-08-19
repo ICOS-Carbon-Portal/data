@@ -7,27 +7,27 @@ import {getMetadataHash} from "./SearchResultRegularRow";
 import { ObjectsTable } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
-import Lookup from '../../models/Lookup.js';
+import PreviewLookup from '../../models/PreviewLookup';
 import { UrlStr } from '../../backend/declarations';
 
-type CompactSearchResultTableRowProps =  {
+type Props =  {
 	objInfo: ObjectsTable,
 	isAddedToCart: boolean,
 	preview: Preview,
-	lookup: Lookup | undefined,
+	lookup: PreviewLookup | undefined,
 	addToCart: (ids: UrlStr[]) => void,
 	removeFromCart: (ids: UrlStr[]) => void
 	handlePreview: (id: UrlStr[]) => void
 	handleViewMetadata: (id: UrlStr) => void
 };
 
-export default class SearchResultCompactRow extends Component<CompactSearchResultTableRowProps> {
-	handlePreviewClick(id: string){
-		if (this.props.handlePreview) this.props.handlePreview([id]);
+export default class SearchResultCompactRow extends Component<Props> {
+	handlePreviewClick(){
+		this.props.handlePreview([this.props.objInfo.dobj]);
 	}
 
 	handleViewMetadata(ev: MouseEvent){
-		if (this.props.handleViewMetadata && !ev.ctrlKey && !ev.metaKey) {
+		if (!ev.ctrlKey && !ev.metaKey) {
 			ev.preventDefault();
 			this.props.handleViewMetadata(this.props.objInfo.dobj);
 		}
@@ -38,7 +38,7 @@ export default class SearchResultCompactRow extends Component<CompactSearchResul
 		const objInfo = props.objInfo;
 		const preview = props.preview;
 		const previewItem = preview.item;
-		const previewType = props.lookup?.getSpecLookupType(objInfo.spec);
+		const previewType = props.lookup?.forDataObjSpec(objInfo.spec)?.type;
 		const className = previewItem && previewItem.id === objInfo.dobj
 			? "list-group-item-info"
 			: "";
@@ -54,7 +54,6 @@ export default class SearchResultCompactRow extends Component<CompactSearchResul
 				/>
 				<PreviewIcon
 					style={{marginRight: 10}}
-					id={objInfo.dobj}
 					previewType={previewType}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>

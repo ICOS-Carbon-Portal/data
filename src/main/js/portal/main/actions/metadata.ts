@@ -17,7 +17,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 
 				if (objectsTable.length){
 					fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-							const metadataWithId = {...metadata, ...{id}};
+							const metadataWithId = {...metadata, id};
 							dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId));
 						},
 						failWithError(dispatch)
@@ -30,7 +30,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 					]);
 
 					promises.then(([knownDataObjInfos, metadata]) => {
-						const metadataWithId = {...metadata, ...{id}};
+						const metadataWithId = {...metadata, id};
 						dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId, knownDataObjInfos.rows));
 					});
 				}
@@ -51,7 +51,7 @@ function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 function getMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-			const metadataWithId = {...metadata, ...{id}};
+			const metadataWithId = {...metadata, id};
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
 	};

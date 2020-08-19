@@ -33,7 +33,7 @@ const dropdownLookup = {
 
 class SearchResultRegular extends Component<OurProps> {
 	render(){
-		const {preview, cart, objectsTable, lookup, paging, sorting, searchOptions,
+		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart, handleAllCheckboxesChange} = this.props;
 
@@ -42,7 +42,7 @@ class SearchResultRegular extends Component<OurProps> {
 			return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
 		}, []);
 		const datasets = checkedObjects.map((obj: ObjectsTable) => obj.dataset);
-		const previewTypes = lookup ? checkedObjects.map(obj => lookup.getSpecLookupType(obj.spec)) : [];
+		const previewTypes = previewLookup ? checkedObjects.map(obj => previewLookup.forDataObjSpec(obj.spec)?.type) : [];
 
 		return (
 			<div className="panel panel-default">
@@ -142,7 +142,7 @@ class SearchResultRegular extends Component<OurProps> {
 
 function stateToProps(state: State){
 	return {
-		lookup: state.lookup,
+		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,

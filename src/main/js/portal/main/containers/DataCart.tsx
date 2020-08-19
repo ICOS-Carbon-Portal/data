@@ -45,9 +45,6 @@ class DataCart extends Component<DataCartProps> {
 	render(){
 		const props = this.props;
 		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
-		const getSpecLookupType = props.lookup
-			? props.lookup.getSpecLookupType.bind(props.lookup)
-			: () => {};
 		const downloadTitle = props.user.email && (props.user.profile as Profile).icosLicenceOk
 			? 'Download cart content'
 			: 'Accept license and download cart content';
@@ -62,7 +59,6 @@ class DataCart extends Component<DataCartProps> {
 						<div className="col-sm-8 col-lg-9">
 							<CartPanel
 								previewitemId={previewitemId}
-								getSpecLookupType={getSpecLookupType}
 								previewItemAction={this.handlePreview.bind(this)}
 								updateCheckedObjects={props.updateCheckedObjectsInCart}
 								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
@@ -109,7 +105,7 @@ class DataCart extends Component<DataCartProps> {
 function stateToProps(state: State){
 	return {
 		cart: state.cart,
-		lookup: state.lookup,
+		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		user: state.user,
 		preview: state.preview,

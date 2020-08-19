@@ -112,7 +112,7 @@ const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props
 
 function stateToProps(state: State){
 	return {
-		lookup: state.lookup,
+		lookup: state.previewLookup,
 		objectsTable: state.objectsTable,
 		preview: state.preview,
 		cart: state.cart,
