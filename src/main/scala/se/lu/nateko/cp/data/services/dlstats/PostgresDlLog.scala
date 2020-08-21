@@ -26,6 +26,8 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import java.sql.Types
+import se.lu.nateko.cp.data.routes.QueryParams
+import se.lu.nateko.cp.data.routes.DownloadStats
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
@@ -118,6 +120,77 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		})
 	}
 
+	def downloadsByCountry(queryParams: QueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] = {
+		query(conf.writer)(conn => {
+			val queryStr = """
+				|SELECT
+				|	COUNT(downloads.hash_id ) AS count,
+				|	downloads.country_code
+				|FROM dobjs
+				|	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+				|WHERE (
+				|	(FALSE = ? OR dobjs.spec = ANY (?))
+				|	AND (FALSE = ? OR dobjs.station = ANY (?))
+				|	AND (FALSE = ? OR dobjs.submitter = ANY (?))
+				|	AND (FALSE = ? OR EXISTS (SELECT 1 FROM contributors WHERE hash_id = dobjs.hash_id AND contributor = ANY(?)))
+				|)
+				|GROUP BY country_code
+				|""".stripMargin
+
+			val Seq(useSpec, spec, useStation, station, useSubmitter, submitter, useContributor, contributor) = 1 to 8
+			val preparedSt = conn.prepareStatement(queryStr)
+			
+			queryParams.specs match {
+				case Some(list) =>
+					preparedSt.setBoolean(useSpec, true)
+					preparedSt.setArray(spec, conn.createArrayOf("varchar", list.toArray))
+				case None =>
+					preparedSt.setBoolean(useSpec, false)
+					preparedSt.setArray(spec, conn.createArrayOf("varchar", Array()))
+			}
+
+			queryParams.stations match {
+				case Some(list) =>
+					preparedSt.setBoolean(useStation, true)
+					preparedSt.setArray(station, conn.createArrayOf("varchar", list.toArray))
+				case None =>
+					preparedSt.setBoolean(useStation, false)
+					preparedSt.setArray(station, conn.createArrayOf("varchar", Array()))
+			}
+
+			queryParams.submitters match {
+				case Some(list) =>
+					preparedSt.setBoolean(useSubmitter, true)
+					preparedSt.setArray(submitter, conn.createArrayOf("varchar", list.toArray))
+				case None =>
+					preparedSt.setBoolean(useSubmitter, false)
+					preparedSt.setArray(submitter, conn.createArrayOf("varchar", Array()))
+			}
+
+			queryParams.contributors match {
+				case Some(list) =>
+					preparedSt.setBoolean(useContributor, true)
+					preparedSt.setArray(contributor, conn.createArrayOf("varchar", list.toArray))
+				case None =>
+					preparedSt.setBoolean(useContributor, false)
+					preparedSt.setArray(contributor, conn.createArrayOf("varchar", Array()))
+			}
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				DownloadStats(rs.getInt("count"), rs.getString("country_code"))
+			}
+		})
+	}
+
+	def consumeResultSet[T](resultSet: ResultSet)(fn: ResultSet => T): IndexedSeq[T] = {
+		val res = scala.collection.mutable.Buffer.empty[T]
+		while(resultSet.next()){
+			res += fn(resultSet)
+		}
+		resultSet.close()
+		res.toIndexedSeq
+	}
+
 	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] = Future{
 		val conn = dataSources(envri).getConnection(creds.username, creds.password)
 		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
@@ -125,6 +198,12 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 			act(conn)
 		} finally{
 			conn.close()
+		}
+	}
+
+	private def query[T](credentials: CredentialsConfig)(action: Connection => IndexedSeq[T])(implicit envri: Envri): Future[IndexedSeq[T]] = {
+		withConnection(credentials){conn =>
+			action(conn)
 		}
 	}
 

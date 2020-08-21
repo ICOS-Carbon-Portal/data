@@ -63,6 +63,8 @@ object Main extends App {
 	val staticRoute = new StaticRouting(config.auth).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
+	val statsRoute = new StatsRouting(postgresLog, ConfigReader.metaCore)
+
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
 			val traceWriter = new java.io.StringWriter()
@@ -85,6 +87,7 @@ object Main extends App {
 		downloadRouting.route ~
 		uploadRoute ~
 		tabularRoute ~
+		statsRoute.route ~
 		staticRoute ~
 		licenceRoute ~
 		etcUploadRoute ~
