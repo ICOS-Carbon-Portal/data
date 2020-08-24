@@ -26,8 +26,10 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import java.sql.Types
-import se.lu.nateko.cp.data.routes.QueryParams
-import se.lu.nateko.cp.data.routes.DownloadStats
+import se.lu.nateko.cp.data.routes.StatsQueryParams
+import se.lu.nateko.cp.data.routes.DownloadsByCountry
+import se.lu.nateko.cp.data.routes.DownloadsPerWeek
+import se.lu.nateko.cp.data.routes.DownloadsPerTimeframe
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
@@ -120,66 +122,64 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		})
 	}
 
-	def downloadsByCountry(queryParams: QueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] = {
+	def downloadsByCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsByCountry]] = {
 		query(conf.writer)(conn => {
-			val queryStr = """
-				|SELECT
-				|	COUNT(downloads.hash_id ) AS count,
-				|	downloads.country_code
-				|FROM dobjs
-				|	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
-				|WHERE (
-				|	(FALSE = ? OR dobjs.spec = ANY (?))
-				|	AND (FALSE = ? OR dobjs.station = ANY (?))
-				|	AND (FALSE = ? OR dobjs.submitter = ANY (?))
-				|	AND (FALSE = ? OR EXISTS (SELECT 1 FROM contributors WHERE hash_id = dobjs.hash_id AND contributor = ANY(?)))
-				|)
-				|GROUP BY country_code
-				|""".stripMargin
-
-			val Seq(useSpec, spec, useStation, station, useSubmitter, submitter, useContributor, contributor) = 1 to 8
-			val preparedSt = conn.prepareStatement(queryStr)
-			
-			queryParams.specs match {
-				case Some(list) =>
-					preparedSt.setBoolean(useSpec, true)
-					preparedSt.setArray(spec, conn.createArrayOf("varchar", list.toArray))
-				case None =>
-					preparedSt.setBoolean(useSpec, false)
-					preparedSt.setArray(spec, conn.createArrayOf("varchar", Array()))
-			}
-
-			queryParams.stations match {
-				case Some(list) =>
-					preparedSt.setBoolean(useStation, true)
-					preparedSt.setArray(station, conn.createArrayOf("varchar", list.toArray))
-				case None =>
-					preparedSt.setBoolean(useStation, false)
-					preparedSt.setArray(station, conn.createArrayOf("varchar", Array()))
-			}
-
-			queryParams.submitters match {
-				case Some(list) =>
-					preparedSt.setBoolean(useSubmitter, true)
-					preparedSt.setArray(submitter, conn.createArrayOf("varchar", list.toArray))
-				case None =>
-					preparedSt.setBoolean(useSubmitter, false)
-					preparedSt.setArray(submitter, conn.createArrayOf("varchar", Array()))
-			}
-
-			queryParams.contributors match {
-				case Some(list) =>
-					preparedSt.setBoolean(useContributor, true)
-					preparedSt.setArray(contributor, conn.createArrayOf("varchar", list.toArray))
-				case None =>
-					preparedSt.setBoolean(useContributor, false)
-					preparedSt.setArray(contributor, conn.createArrayOf("varchar", Array()))
-			}
+			val queryStr = "SELECT count, country_code FROM downloadsByCountry(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
 
 			consumeResultSet(preparedSt.executeQuery()){rs => 
-				DownloadStats(rs.getInt("count"), rs.getString("country_code"))
+				DownloadsByCountry(rs.getInt("count"), rs.getString("country_code"))
 			}
 		})
+	}
+
+	def downloadsPerWeek(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerWeek]] = {
+		query(conf.writer)(conn => {
+			val queryStr = "SELECT count, ts, week FROM downloadsperweek(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				DownloadsPerWeek(rs.getInt("count"), rs.getTimestamp("ts").toInstant, rs.getDouble("week"))
+			}
+		})
+	}
+
+	def downloadsPerMonth(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] = {
+		query(conf.writer)(conn => {
+			val queryStr = "SELECT count, ts FROM downloadsPerMonth(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
+			}
+		})
+	}
+
+	def downloadsPerYear(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] = {
+		query(conf.writer)(conn => {
+			val queryStr = "SELECT count, ts FROM downloadsPerYear(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
+			}
+		})
+	}
+
+	def getPreparedStatement(conn: Connection, queryParams: StatsQueryParams, queryStr: String): PreparedStatement = {
+		val preparedSt = conn.prepareStatement(queryStr)
+
+		import queryParams._
+		Seq(specs, stations, submitters, contributors)
+			.zipWithIndex
+			.foreach{
+				case (None, idx) =>
+					preparedSt.setNull(idx + 1, Types.ARRAY)
+				case (Some(values), idx) =>
+					preparedSt.setArray(idx + 1, conn.createArrayOf("varchar", values.toArray))
+			}
+			
+		preparedSt
 	}
 
 	def consumeResultSet[T](resultSet: ResultSet)(fn: ResultSet => T): IndexedSeq[T] = {

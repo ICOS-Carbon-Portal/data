@@ -51,3 +51,114 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
 GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
+
+
+--	Stored Procedures
+---------------------
+
+CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int8,
+		country_code text
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	downloads.country_code
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+WHERE (
+	(_specs IS NULL OR dobjs.spec = ANY (_specs))
+	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
+	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+)
+GROUP BY country_code;
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int8,
+		ts timestamptz,
+		week double precision
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	MIN(ts) AS ts,
+	MIN(EXTRACT('week' from ts)) AS week
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+WHERE (
+	(_specs IS NULL OR dobjs.spec = ANY (_specs))
+	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
+	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+)
+-- Group by year-week
+GROUP BY to_char(ts, 'IYYY-IW');
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int8,
+		ts timestamptz
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	MIN(ts) AS ts
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+WHERE (
+	(_specs IS NULL OR dobjs.spec = ANY (_specs))
+	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
+	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+)
+-- Group by year-month
+GROUP BY to_char(ts, 'YYYY-MONTH');
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.downloadsPerYear(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int8,
+		ts timestamptz
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	MIN(ts) AS ts
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+WHERE (
+	(_specs IS NULL OR dobjs.spec = ANY (_specs))
+	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
+	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+)
+-- Group by year
+GROUP BY to_char(ts, 'YYYY');
+
+$$;
