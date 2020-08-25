@@ -26,10 +26,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import java.sql.Types
-import se.lu.nateko.cp.data.routes.StatsQueryParams
-import se.lu.nateko.cp.data.routes.DownloadsByCountry
-import se.lu.nateko.cp.data.routes.DownloadsPerWeek
-import se.lu.nateko.cp.data.routes.DownloadsPerTimeframe
+import se.lu.nateko.cp.data.routes.{StatsQueryParams, DownloadsByCountry, DownloadsPerWeek, DownloadsPerTimeframe, DownloadStats, Specifications, Contributors, Stations}
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
@@ -123,8 +120,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	}
 
 	def downloadsByCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsByCountry]] = {
-		query(conf.writer)(conn => {
-			val queryStr = "SELECT count, country_code FROM downloadsByCountry(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, country_code FROM downloadsByCountry(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
 			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
 
 			consumeResultSet(preparedSt.executeQuery()){rs => 
@@ -134,8 +131,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	}
 
 	def downloadsPerWeek(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerWeek]] = {
-		query(conf.writer)(conn => {
-			val queryStr = "SELECT count, ts, week FROM downloadsperweek(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, ts, week FROM downloadsperweek(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
 			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
 
 			consumeResultSet(preparedSt.executeQuery()){rs => 
@@ -145,8 +142,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	}
 
 	def downloadsPerMonth(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] = {
-		query(conf.writer)(conn => {
-			val queryStr = "SELECT count, ts FROM downloadsPerMonth(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, ts FROM downloadsPerMonth(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
 			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
 
 			consumeResultSet(preparedSt.executeQuery()){rs => 
@@ -156,8 +153,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	}
 
 	def downloadsPerYear(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] = {
-		query(conf.writer)(conn => {
-			val queryStr = "SELECT count, ts FROM downloadsPerYear(_specs := ?, _stations:= ?, _submitters := ?, _contributors := ?)"
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, ts FROM downloadsPerYear(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
 			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
 
 			consumeResultSet(preparedSt.executeQuery()){rs => 
@@ -166,11 +163,54 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		})
 	}
 
+	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] = {
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, hash_id FROM downloadStats(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
+			val preparedSt = getPreparedStatement(conn, queryParams, queryStr)
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				DownloadStats(rs.getInt("count"), rs.getString("hash_id"))
+			}
+		})
+	}
+
+	def specifications()(implicit envri: Envri): Future[IndexedSeq[Specifications]] = {
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, spec FROM specifications()"
+			val preparedSt = conn.prepareStatement(queryStr)
+
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				Specifications(rs.getInt("count"), rs.getString("spec"))
+			}
+		})
+	}
+
+	def contributors()(implicit envri: Envri): Future[IndexedSeq[Contributors]] = {
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, contributor FROM contributors()"
+			val preparedSt = conn.prepareStatement(queryStr)
+			
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				Contributors(rs.getInt("count"), rs.getString("contributor"))
+			}
+		})
+	}
+
+	def stations()(implicit envri: Envri): Future[IndexedSeq[Stations]] = {
+		query(conf.reader)(conn => {
+			val queryStr = "SELECT count, station FROM stations()"
+			val preparedSt = conn.prepareStatement(queryStr)
+			
+			consumeResultSet(preparedSt.executeQuery()){rs => 
+				Stations(rs.getInt("count"), rs.getString("station"))
+			}
+		})
+	}
+
 	def getPreparedStatement(conn: Connection, queryParams: StatsQueryParams, queryStr: String): PreparedStatement = {
 		val preparedSt = conn.prepareStatement(queryStr)
 
-		import queryParams._
-		Seq(specs, stations, submitters, contributors)
+		Seq(queryParams.specs, queryParams.stations, queryParams.submitters, queryParams.contributors)
 			.zipWithIndex
 			.foreach{
 				case (None, idx) =>

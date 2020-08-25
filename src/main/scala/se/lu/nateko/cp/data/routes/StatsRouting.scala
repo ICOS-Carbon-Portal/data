@@ -17,11 +17,20 @@ case class StatsQueryParams(specs: Option[Seq[String]], stations: Option[Seq[Str
 case class DownloadsByCountry(count: Int, countryCode: String)
 case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
 case class DownloadsPerTimeframe(count: Int, ts: Instant)
+case class DownloadStats(count: Int, hashId: String)
+case class Specifications(count: Int, spec: String)
+case class Contributors(count: Int, contributor: String)
+case class Stations(count: Int, station: String)
 
 class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends DefaultJsonProtocol {
 	implicit val downloadsByCountryFormat = jsonFormat2(DownloadsByCountry)
 	implicit val downloadsPerWeekFormat = jsonFormat3(DownloadsPerWeek)
 	implicit val downloadsPerTimeframeFormat = jsonFormat2(DownloadsPerTimeframe)
+	implicit val downloadStatsFormat = jsonFormat2(DownloadStats)
+	implicit val specificationsFormat = jsonFormat2(Specifications)
+	implicit val contributorsFormat = jsonFormat2(Contributors)
+	implicit val stationsFormat = jsonFormat2(Stations)
+	
 	implicit val envriConfs = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
@@ -39,39 +48,52 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 
 		path("downloadsByCountry"){
 			statsParams{queryParams =>
-				val downloadsByCountry = pgClient.downloadsByCountry(queryParams)
-				
-				onSuccess(downloadsByCountry){dbc =>
+				onSuccess(pgClient.downloadsByCountry(queryParams)){dbc =>
 					complete(dbc)
 				}
-			} ~
-			complete(StatusCodes.BadRequest -> "Expecting only 'specs', 'stations', 'submitters' or 'contributors' as parameters")
+			}
 		} ~
 		path("downloadsPerWeek"){
 			statsParams{queryParams =>
-				val downloadsPerWeek = pgClient.downloadsPerWeek(queryParams)
-				
-				onSuccess(downloadsPerWeek){dbc =>
+				onSuccess(pgClient.downloadsPerWeek(queryParams)){dbc =>
 					complete(dbc)
 				}
 			}
 		} ~
 		path("downloadsPerMonth"){
 			statsParams{queryParams =>
-				val downloadsPerMonth = pgClient.downloadsPerMonth(queryParams)
-				
-				onSuccess(downloadsPerMonth){dbc =>
+				onSuccess(pgClient.downloadsPerMonth(queryParams)){dbc =>
 					complete(dbc)
 				}
 			}
 		} ~
 		path("downloadsPerYear"){
 			statsParams{queryParams =>
-				val downloadsPerYear = pgClient.downloadsPerYear(queryParams)
-				
-				onSuccess(downloadsPerYear){dbc =>
+				onSuccess(pgClient.downloadsPerYear(queryParams)){dbc =>
 					complete(dbc)
 				}
+			}
+		} ~
+		path("downloadStats"){
+			statsParams{queryParams =>
+				onSuccess(pgClient.downloadStats(queryParams)){dbc =>
+					complete(dbc)
+				}
+			}
+		} ~
+		path("specifications"){
+			onSuccess(pgClient.specifications()){dbc =>
+				complete(dbc)
+			}
+		} ~
+		path("contributors"){
+			onSuccess(pgClient.contributors()){dbc =>
+				complete(dbc)
+			}
+		} ~
+		path("stations"){
+			onSuccess(pgClient.stations()){dbc =>
+				complete(dbc)
 			}
 		} ~
 		complete(StatusCodes.NotFound)

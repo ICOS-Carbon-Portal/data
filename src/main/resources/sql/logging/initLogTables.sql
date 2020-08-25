@@ -162,3 +162,90 @@ WHERE (
 GROUP BY to_char(ts, 'YYYY');
 
 $$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int8,
+		hash_id text
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	downloads.hash_id
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+WHERE (
+	(_specs IS NULL OR dobjs.spec = ANY (_specs))
+	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
+	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+)
+GROUP BY downloads.hash_id;
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.specifications()
+	RETURNS TABLE(
+		count int8,
+		spec text
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	dobjs.spec
+FROM dobjs
+	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+GROUP BY dobjs.spec;
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.contributors()
+	RETURNS TABLE(
+		count int8,
+		contributor text
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	contributors.contributor
+FROM downloads
+	INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
+GROUP BY contributors.contributor;
+
+$$;
+
+---------------------
+
+CREATE OR REPLACE FUNCTION public.stations()
+	RETURNS TABLE(
+		count int8,
+		station text
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	COUNT(downloads.hash_id) AS count,
+	dobjs.station
+FROM downloads
+	INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
+WHERE dobjs.station IS NOT NULL
+GROUP BY dobjs.station;
+
+$$;
