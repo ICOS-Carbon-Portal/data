@@ -82,17 +82,17 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 			}
 		} ~
 		path("specifications"){
-			onSuccess(pgClient.specifications()){dbc =>
+			onSuccess(pgClient.specifications){dbc =>
 				complete(dbc)
 			}
 		} ~
 		path("contributors"){
-			onSuccess(pgClient.contributors()){dbc =>
+			onSuccess(pgClient.contributors){dbc =>
 				complete(dbc)
 			}
 		} ~
 		path("stations"){
-			onSuccess(pgClient.stations()){dbc =>
+			onSuccess(pgClient.stations){dbc =>
 				complete(dbc)
 			}
 		} ~
