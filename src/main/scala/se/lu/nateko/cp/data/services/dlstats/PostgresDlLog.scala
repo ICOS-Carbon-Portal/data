@@ -120,42 +120,27 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	}
 
 	def downloadsByCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsByCountry]] =
-		runAnalyticalQuery(
-			"SELECT count, country_code FROM downloadsByCountry(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)",
-			Some(queryParams)
-		){rs =>
+		runAnalyticalQuery("SELECT count, country_code FROM downloadsByCountry", Some(queryParams)){rs =>
 			DownloadsByCountry(rs.getInt("count"), rs.getString("country_code"))
 		}
 
 	def downloadsPerWeek(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerWeek]] =
-		runAnalyticalQuery(
-			"SELECT count, ts, week FROM downloadsperweek(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)",
-			Some(queryParams)
-		){rs =>
+		runAnalyticalQuery("SELECT count, ts, week FROM downloadsperweek", Some(queryParams)){rs =>
 			DownloadsPerWeek(rs.getInt("count"), rs.getTimestamp("ts").toInstant, rs.getDouble("week"))
 		}
 
 	def downloadsPerMonth(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runAnalyticalQuery(
-			"SELECT count, ts FROM downloadsPerMonth(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)",
-			Some(queryParams)
-		){rs =>
+		runAnalyticalQuery("SELECT count, ts FROM downloadsPerMonth", Some(queryParams)){rs =>
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
 		}
 
 	def downloadsPerYear(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runAnalyticalQuery(
-			"SELECT count, ts FROM downloadsPerYear(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)",
-			Some(queryParams)
-		){rs =>
+		runAnalyticalQuery("SELECT count, ts FROM downloadsPerYear", Some(queryParams)){rs =>
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
 		}
 
 	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] =
-		runAnalyticalQuery(
-			"SELECT count, hash_id FROM downloadStats(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)",
-			Some(queryParams)
-		){rs =>
+		runAnalyticalQuery("SELECT count, hash_id FROM downloadStats", Some(queryParams)){rs =>
 			DownloadStats(rs.getInt("count"), rs.getString("hash_id"))
 		}
 
@@ -179,8 +164,10 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 	def runAnalyticalQuery[T](
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
-		query(conf.reader){conn =>
-			val preparedSt = conn.prepareStatement(queryStr)
+		withConnection(conf.reader){conn =>
+			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
+
+			val preparedSt = conn.prepareStatement(fullQueryString)
 
 			params.foreach{queryParams =>
 				Seq(queryParams.specs, queryParams.stations, queryParams.submitters, queryParams.contributors)
@@ -212,12 +199,6 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 			act(conn)
 		} finally{
 			conn.close()
-		}
-	}
-
-	private def query[T](credentials: CredentialsConfig)(action: Connection => IndexedSeq[T])(implicit envri: Envri): Future[IndexedSeq[T]] = {
-		withConnection(credentials){conn =>
-			action(conn)
 		}
 	}
 
