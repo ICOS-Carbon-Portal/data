@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS public.dobjs (
 	submitter text NOT NULL,
 	station text NULL
 );
-CREATE INDEX IF NOT EXISTS idx_dobj_spec ON public.dobjs USING HASH(spec);
+CREATE INDEX IF NOT EXISTS idx_dobjs_hash_id ON public.dobjs USING HASH(hash_id);
+CREATE INDEX IF NOT EXISTS idx_dobjs_spec ON public.dobjs USING HASH(spec);
 
 CREATE TABLE IF NOT EXISTS public.downloads (
 	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -33,8 +34,8 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 	country_code text NULL,
 	pos geometry NULL
 );
-CREATE INDEX IF NOT EXISTS downloads_hash_id ON public.downloads USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS downloads_item_type ON public.downloads USING HASH(item_type);
+CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
+CREATE INDEX IF NOT EXISTS idx_downloads_item_type ON public.downloads USING HASH(item_type);
 
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
@@ -52,10 +53,38 @@ GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
 
+--DROP MATERIALIZED VIEW downloads_mv;
+CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_mv AS
+	SELECT
+		downloads.id,
+		downloads.hash_id,
+		downloads.ts,
+		date_trunc('year', ts)::date AS year_start,
+		date_trunc('month', ts)::date AS month_start,
+		date_trunc('week', ts)::date AS week_start,
+		downloads.ip,
+		downloads.city,
+		downloads.country_code,
+		downloads.pos,
+		dobjs.spec,
+		dobjs.submitter,
+		dobjs.station,
+		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = downloads.hash_id) AS contributors
+	FROM downloads
+		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
+	ORDER BY ts;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_mv_id ON public.downloads_mv (id);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_hash_id ON public.downloads_mv USING HASH(hash_id);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_country_code ON public.downloads_mv USING HASH(country_code);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_year_start ON public.downloads_mv (year_start);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_month_start ON public.downloads_mv (month_start);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_week_start ON public.downloads_mv (week_start);
+CREATE INDEX IF NOT EXISTS idx_downloads_mv_contributors ON public.downloads_mv USING gin (contributors);
+--REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_mv;
 
 --	Stored Procedures
 ---------------------
-
+--DROP FUNCTION downloadsByCountry;
 CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int8,
@@ -66,26 +95,26 @@ CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL,
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
-	downloads.country_code
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	COUNT(*) AS count,
+	country_code
+FROM downloads_mv
 WHERE (
-	(_specs IS NULL OR dobjs.spec = ANY (_specs))
-	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
-	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
-GROUP BY country_code;
+GROUP BY country_code
+ORDER BY 1 DESC;
 
 $$;
 
 ---------------------
-
+--DROP FUNCTION downloadsPerWeek;
 CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int8,
-		ts timestamptz,
+		day date,
 		week double precision
 	)
 	LANGUAGE sql
@@ -93,78 +122,75 @@ CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
-	MIN(ts) AS ts,
-	MIN(EXTRACT('week' from ts)) AS week
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	COUNT(*) AS count,
+	week_start AS day,
+	EXTRACT('week' from week_start) AS week
+FROM downloads_mv
 WHERE (
-	(_specs IS NULL OR dobjs.spec = ANY (_specs))
-	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
-	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
--- Group by year-week
-GROUP BY to_char(ts, 'IYYY-IW');
+GROUP BY week_start
+ORDER BY week_start;
 
 $$;
 
 ---------------------
-
+--DROP FUNCTION downloadsPerMonth;
 CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int8,
-		ts timestamptz
+		day date
 	)
 	LANGUAGE sql
 	STABLE
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
-	MIN(ts) AS ts
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	COUNT(*) AS count,
+	month_start AS day
+FROM downloads_mv
 WHERE (
-	(_specs IS NULL OR dobjs.spec = ANY (_specs))
-	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
-	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
--- Group by year-month
-GROUP BY to_char(ts, 'YYYY-MONTH');
+GROUP BY month_start
+ORDER BY month_start;
 
 $$;
 
 ---------------------
-
+--DROP FUNCTION public.downloadsPerYear;
 CREATE OR REPLACE FUNCTION public.downloadsPerYear(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int8,
-		ts timestamptz
+		day date
 	)
 	LANGUAGE sql
 	STABLE
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
-	MIN(ts) AS ts
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	COUNT(*) AS count,
+	year_start AS day
+FROM downloads_mv
 WHERE (
-	(_specs IS NULL OR dobjs.spec = ANY (_specs))
-	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
-	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
--- Group by year
-GROUP BY to_char(ts, 'YYYY');
+GROUP BY year_start
+ORDER BY year_start;
 
 $$;
 
 ---------------------
-
+--DROP FUNCTION downloadStats;
 CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int8,
@@ -175,17 +201,17 @@ CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _sta
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
-	downloads.hash_id
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	COUNT(*) AS count,
+	hash_id
+FROM downloads_mv
 WHERE (
-	(_specs IS NULL OR dobjs.spec = ANY (_specs))
-	AND (_stations IS NULL OR dobjs.station = ANY (_stations))
-	AND (_submitters IS NULL OR dobjs.submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR EXISTS (SELECT 1 FROM contributors WHERE contributors.hash_id = dobjs.hash_id AND contributors.contributor = ANY(_contributors))) 
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
-GROUP BY downloads.hash_id;
+GROUP BY hash_id
+ORDER BY 1 DESC;
 
 $$;
 
