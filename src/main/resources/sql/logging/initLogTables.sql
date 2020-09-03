@@ -53,41 +53,103 @@ GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
 
---DROP MATERIALIZED VIEW downloads_mv;
-CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_mv AS
+
+--	Materialized views to speed up queries
+
+--DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
+CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_country_mv AS
 	SELECT
-		downloads.id,
-		downloads.hash_id,
-		downloads.ts,
-		date_trunc('year', ts)::date AS year_start,
-		date_trunc('month', ts)::date AS month_start,
-		date_trunc('week', ts)::date AS week_start,
-		downloads.ip,
-		downloads.city,
+		MIN(downloads.id) AS id,
+		COUNT(*) AS count,
 		downloads.country_code,
-		downloads.pos,
 		dobjs.spec,
 		dobjs.submitter,
 		dobjs.station,
 		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = downloads.hash_id) AS contributors
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	ORDER BY ts;
-CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_mv_id ON public.downloads_mv (id);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_hash_id ON public.downloads_mv USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_country_code ON public.downloads_mv USING HASH(country_code);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_year_start ON public.downloads_mv (year_start);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_month_start ON public.downloads_mv (month_start);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_week_start ON public.downloads_mv (week_start);
-CREATE INDEX IF NOT EXISTS idx_downloads_mv_contributors ON public.downloads_mv USING gin (contributors);
---REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_mv;
+	GROUP BY downloads.country_code, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_country_mv_id ON public.downloads_country_mv (id);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_spec ON public.downloads_country_mv USING HASH(spec);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_submitter ON public.downloads_country_mv USING HASH(submitter);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_station ON public.downloads_country_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_contributors ON public.downloads_country_mv USING gin (contributors);
+
+--DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
+CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_timebins_mv AS
+	SELECT
+		MIN(downloads.id) AS id,
+		COUNT(*) AS count,
+		date_trunc('year', ts)::date AS year_start,
+		date_trunc('month', ts)::date AS month_start,
+		date_trunc('week', ts)::date AS week_start,
+		dobjs.spec,
+		dobjs.submitter,
+		dobjs.station,
+		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = downloads.hash_id) AS contributors
+	FROM downloads
+		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
+	GROUP BY year_start, month_start, week_start, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_timebins_mv_id ON public.downloads_timebins_mv (id);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_spec ON public.downloads_timebins_mv USING HASH(spec);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_submitter ON public.downloads_timebins_mv USING HASH(submitter);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_station ON public.downloads_timebins_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_contributors ON public.downloads_timebins_mv USING gin (contributors);
+
+--DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
+CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_mv AS
+	SELECT
+		dl.count,
+		dl.hash_id,
+		dobjs.spec,
+		dobjs.submitter,
+		dobjs.station,
+		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = dl.hash_id) AS contributors
+	FROM (
+			SELECT
+				COUNT(downloads.hash_id) AS count,
+				downloads.hash_id
+			FROM downloads
+			GROUP BY downloads.hash_id
+		) dl
+		INNER JOIN dobjs ON dl.hash_id = dobjs.hash_id
+	ORDER BY dl.count DESC;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_mv_hash_id ON public.dlstats_mv (hash_id);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_id ON public.dlstats_mv USING HASH(hash_id);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_spec ON public.dlstats_mv USING HASH(spec);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_submitter ON public.dlstats_mv USING HASH(submitter);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_station ON public.dlstats_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_contributors ON public.dlstats_mv USING gin (contributors);
+
+-- Testing performance. Can be deleted
+CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats2_mv AS
+	SELECT
+		dl.count,
+		dl.id,
+		dl.hash_id,
+		dobjs.spec,
+		dobjs.submitter,
+		dobjs.station,
+		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = dl.hash_id) AS contributors
+	FROM (
+			SELECT
+				COUNT(downloads.hash_id) AS count,
+				downloads.hash_id, 
+				MIN(downloads.id) AS id
+			FROM downloads
+			GROUP BY downloads.hash_id
+		) dl
+		INNER JOIN dobjs ON dl.hash_id = dobjs.hash_id
+	ORDER BY dl.count DESC;
+
 
 --	Stored Procedures
+
 ---------------------
---DROP FUNCTION downloadsByCountry;
+-- DROP FUNCTION IF EXISTS downloadsByCountry;
 CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
-		count int8,
+		count int,
 		country_code text
 	)
 	LANGUAGE sql
@@ -95,9 +157,9 @@ CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL,
 AS $$
 
 SELECT
-	COUNT(*) AS count,
+	SUM(count)::int AS count,
 	country_code
-FROM downloads_mv
+FROM downloads_country_mv
 WHERE (
 	(_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
@@ -110,10 +172,10 @@ ORDER BY 1 DESC;
 $$;
 
 ---------------------
---DROP FUNCTION downloadsPerWeek;
+-- DROP FUNCTION IF EXISTS downloadsPerWeek;
 CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
-		count int8,
+		count int,
 		day date,
 		week double precision
 	)
@@ -122,10 +184,10 @@ CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _
 AS $$
 
 SELECT
-	COUNT(*) AS count,
+	SUM(count)::int AS count,
 	week_start AS day,
 	EXTRACT('week' from week_start) AS week
-FROM downloads_mv
+FROM downloads_timebins_mv
 WHERE (
 	(_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
@@ -138,10 +200,10 @@ ORDER BY week_start;
 $$;
 
 ---------------------
---DROP FUNCTION downloadsPerMonth;
+-- DROP FUNCTION IF EXISTS downloadsPerMonth;
 CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
-		count int8,
+		count int,
 		day date
 	)
 	LANGUAGE sql
@@ -149,9 +211,9 @@ CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_specs text[] DEFAULT NULL, 
 AS $$
 
 SELECT
-	COUNT(*) AS count,
+	SUM(count)::int AS count,
 	month_start AS day
-FROM downloads_mv
+FROM downloads_timebins_mv
 WHERE (
 	(_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
@@ -164,10 +226,10 @@ ORDER BY month_start;
 $$;
 
 ---------------------
---DROP FUNCTION public.downloadsPerYear;
+-- DROP FUNCTION IF EXISTS public.downloadsPerYear;
 CREATE OR REPLACE FUNCTION public.downloadsPerYear(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
-		count int8,
+		count int,
 		day date
 	)
 	LANGUAGE sql
@@ -175,9 +237,9 @@ CREATE OR REPLACE FUNCTION public.downloadsPerYear(_specs text[] DEFAULT NULL, _
 AS $$
 
 SELECT
-	COUNT(*) AS count,
+	SUM(count)::int AS count,
 	year_start AS day
-FROM downloads_mv
+FROM downloads_timebins_mv
 WHERE (
 	(_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
@@ -190,20 +252,20 @@ ORDER BY year_start;
 $$;
 
 ---------------------
---DROP FUNCTION downloadStats;
+-- DROP FUNCTION IF EXISTS downloadStats;
 CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
-		count int8,
+		count int,
 		hash_id text
 	)
 	LANGUAGE sql
-	STABLE
+	VOLATILE
 AS $$
 
 SELECT
-	COUNT(*) AS count,
+	SUM(count)::int AS count,
 	hash_id
-FROM downloads_mv
+FROM dlstats_mv
 WHERE (
 	(_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
@@ -215,11 +277,36 @@ ORDER BY 1 DESC;
 
 $$;
 
----------------------
+-- Test using int for GROUP BY. Can be deleted
+CREATE OR REPLACE FUNCTION public.downloadStats2(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		count int,
+		hash_id text
+	)
+	LANGUAGE sql
+	VOLATILE
+AS $$
 
+SELECT
+	SUM(count)::int AS count,
+	MIN(hash_id) AS hash_id
+FROM dlstats2_mv
+WHERE (
+	(_specs IS NULL OR spec = ANY (_specs))
+	AND (_stations IS NULL OR station = ANY (_stations))
+	AND (_submitters IS NULL OR submitter = ANY (_submitters))
+	AND (_contributors IS NULL OR contributors ?| _contributors)
+)
+GROUP BY id
+ORDER BY 1 DESC;
+
+$$;
+
+---------------------
+-- DROP FUNCTION IF EXISTS specifications;
 CREATE OR REPLACE FUNCTION public.specifications()
 	RETURNS TABLE(
-		count int8,
+		count int,
 		spec text
 	)
 	LANGUAGE sql
@@ -227,7 +314,7 @@ CREATE OR REPLACE FUNCTION public.specifications()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
+	COUNT(downloads.hash_id)::int AS count,
 	dobjs.spec
 FROM dobjs
 	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
@@ -236,10 +323,10 @@ GROUP BY dobjs.spec;
 $$;
 
 ---------------------
-
+-- DROP FUNCTION IF EXISTS contributors;
 CREATE OR REPLACE FUNCTION public.contributors()
 	RETURNS TABLE(
-		count int8,
+		count int,
 		contributor text
 	)
 	LANGUAGE sql
@@ -247,7 +334,7 @@ CREATE OR REPLACE FUNCTION public.contributors()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
+	COUNT(downloads.hash_id)::int AS count,
 	contributors.contributor
 FROM downloads
 	INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
@@ -256,10 +343,10 @@ GROUP BY contributors.contributor;
 $$;
 
 ---------------------
-
+-- DROP FUNCTION IF EXISTS stations;
 CREATE OR REPLACE FUNCTION public.stations()
 	RETURNS TABLE(
-		count int8,
+		count int,
 		station text
 	)
 	LANGUAGE sql
@@ -267,7 +354,7 @@ CREATE OR REPLACE FUNCTION public.stations()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id) AS count,
+	COUNT(downloads.hash_id)::int AS count,
 	dobjs.station
 FROM downloads
 	INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
