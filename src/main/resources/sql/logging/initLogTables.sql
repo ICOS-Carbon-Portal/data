@@ -57,6 +57,8 @@ GRANT INSERT ON public.downloads TO writer;
 --	Materialized views to speed up queries
 
 --DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
+--REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_country_mv;
+--VACUUM (ANALYZE) downloads_country_mv
 CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_country_mv AS
 	SELECT
 		MIN(downloads.id) AS id,
@@ -76,6 +78,8 @@ CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_station ON public.downloads_
 CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_contributors ON public.downloads_country_mv USING gin (contributors);
 
 --DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
+--REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_timebins_mv;
+--VACUUM (ANALYZE) downloads_timebins_mv
 CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_timebins_mv AS
 	SELECT
 		MIN(downloads.id) AS id,
@@ -97,6 +101,8 @@ CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_station ON public.downloads
 CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_contributors ON public.downloads_timebins_mv USING gin (contributors);
 
 --DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
+--REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_mv;
+--VACUUM (ANALYZE) dlstats_mv
 CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_mv AS
 	SELECT
 		dl.count,
@@ -121,26 +127,17 @@ CREATE INDEX IF NOT EXISTS idx_dlstats_mv_submitter ON public.dlstats_mv USING H
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_station ON public.dlstats_mv USING HASH(station);
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_contributors ON public.dlstats_mv USING gin (contributors);
 
--- Testing performance. Can be deleted
-CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats2_mv AS
+--DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
+--REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_full_mv;
+--VACUUM dlstats_full_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_full_mv AS
 	SELECT
-		dl.count,
-		dl.id,
-		dl.hash_id,
-		dobjs.spec,
-		dobjs.submitter,
-		dobjs.station,
-		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = dl.hash_id) AS contributors
-	FROM (
-			SELECT
-				COUNT(downloads.hash_id) AS count,
-				downloads.hash_id, 
-				MIN(downloads.id) AS id
-			FROM downloads
-			GROUP BY downloads.hash_id
-		) dl
-		INNER JOIN dobjs ON dl.hash_id = dobjs.hash_id
-	ORDER BY dl.count DESC;
+		COUNT(hash_id)::int AS count,
+		hash_id
+	FROM downloads
+	GROUP BY hash_id
+	ORDER BY count DESC;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_full_mv_hash_id ON public.dlstats_full_mv (hash_id);
 
 
 --	Stored Procedures
@@ -258,48 +255,34 @@ CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _sta
 		count int,
 		hash_id text
 	)
-	LANGUAGE sql
+	LANGUAGE plpgsql
 	VOLATILE
 AS $$
-
-SELECT
-	SUM(count)::int AS count,
-	hash_id
-FROM dlstats_mv
-WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-)
-GROUP BY hash_id
-ORDER BY 1 DESC;
-
-$$;
-
--- Test using int for GROUP BY. Can be deleted
-CREATE OR REPLACE FUNCTION public.downloadStats2(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
-	RETURNS TABLE(
-		count int,
-		hash_id text
-	)
-	LANGUAGE sql
-	VOLATILE
-AS $$
-
-SELECT
-	SUM(count)::int AS count,
-	MIN(hash_id) AS hash_id
-FROM dlstats2_mv
-WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-)
-GROUP BY id
-ORDER BY 1 DESC;
-
+-- Solve confusion with returned column 'count'
+#variable_conflict use_column
+BEGIN
+	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _contributors IS NULL THEN
+		RETURN QUERY
+			SELECT
+				count,
+				hash_id
+			FROM dlstats_full_mv;
+	ELSE
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				hash_id
+			FROM dlstats_mv
+			WHERE (
+				(_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+			)
+			GROUP BY hash_id
+			ORDER BY 1 DESC;
+	END IF;
+END
 $$;
 
 ---------------------
