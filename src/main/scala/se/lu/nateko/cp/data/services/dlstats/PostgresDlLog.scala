@@ -27,6 +27,7 @@ import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import java.sql.Types
 import se.lu.nateko.cp.data.routes.{StatsQueryParams, DownloadsByCountry, DownloadsPerWeek, DownloadsPerTimeframe, DownloadStats, Specifications, Contributors, Stations}
+import java.time.ZoneOffset
 
 
 class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
@@ -125,18 +126,18 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		}
 
 	def downloadsPerWeek(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerWeek]] =
-		runAnalyticalQuery("SELECT count, ts, week FROM downloadsperweek", Some(queryParams)){rs =>
-			DownloadsPerWeek(rs.getInt("count"), rs.getTimestamp("ts").toInstant, rs.getDouble("week"))
+		runAnalyticalQuery("SELECT count, day, week FROM downloadsperweek", Some(queryParams)){rs =>
+			DownloadsPerWeek(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant, rs.getDouble("week"))
 		}
 
 	def downloadsPerMonth(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runAnalyticalQuery("SELECT count, ts FROM downloadsPerMonth", Some(queryParams)){rs =>
-			DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
+		runAnalyticalQuery("SELECT count, day FROM downloadsPerMonth", Some(queryParams)){rs =>
+			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
 	def downloadsPerYear(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runAnalyticalQuery("SELECT count, ts FROM downloadsPerYear", Some(queryParams)){rs =>
-			DownloadsPerTimeframe(rs.getInt("count"), rs.getTimestamp("ts").toInstant)
+		runAnalyticalQuery("SELECT count, day FROM downloadsPerYear", Some(queryParams)){rs =>
+			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
 	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] =

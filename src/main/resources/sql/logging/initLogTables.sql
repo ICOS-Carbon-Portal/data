@@ -158,7 +158,8 @@ SELECT
 	country_code
 FROM downloads_country_mv
 WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
+	country_code IS NOT NULL
+	AND (_specs IS NULL OR spec = ANY (_specs))
 	AND (_stations IS NULL OR station = ANY (_stations))
 	AND (_submitters IS NULL OR submitter = ANY (_submitters))
 	AND (_contributors IS NULL OR contributors ?| _contributors)
