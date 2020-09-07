@@ -28,6 +28,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.Envri
 import java.net.URI
+import se.lu.nateko.cp.data.api.CpDataParsingException
 
 class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
@@ -98,20 +99,21 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 			_ <- meta.userIsAllowedUpload(dataObj, user);
 			origFile = getFile(dataObj);
 			ingTask <- {
-				if(origFile.exists) IngestionUploadTask(IngestionSpec(dataObj), origFile, meta)
-				else throw new FileNotFoundException(
+				if(origFile.exists) ingestionTaskFut(dataObj)
+				else Future.failed(new FileNotFoundException(
 					s"File for ${dataObj.hash} not found on the server, can not reingest"
-				)
+				))
 			};
-			completionInfo <- {
-				FileIO.fromPath(origFile.toPath).runWith(ingTask.sink).transform{
+			completionInfo <- FileIO.fromPath(origFile.toPath)
+				.runWith(ingTask.sink)
+				.flatMap(ownResult => ingTask.onComplete(ownResult, Nil))
+				.transform{
 					case Success(res: UploadTaskFailure) => Failure(res.error)
 					case Success(IngestionSuccess(metaExtr)) =>
 						Success(UploadCompletionInfo(origFile.length, Some(metaExtr)))
 					case Success(taskRes) => Failure(new CpDataException(s"Unexpected UploadTaskResult $taskRes"))
 					case Failure(err) => Failure(err)
-				}
-			};
+				};
 			_ <- meta.completeUpload(hash, completionInfo)
 		) yield Done
 
@@ -163,20 +165,16 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 	private def getDobjUploadTasks(dobj: DataObject): Future[IndexedSeq[UploadTask]] = {
 
-		val spec = dobj.specification
-
-		def ingest =
-			if(spec.format.uri == CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
-				IngestionUploadTask(IngestionSpec(dobj), getFile(dobj), meta).map{ingestionTask =>
-					mandatoryTasks(dobj) :+ ingestionTask
-				}
-			else
-				IngestionUploadTask(IngestionSpec(dobj), getFile(dobj), meta).map{ingestionTask =>
-					defaultTasks(dobj) :+ ingestionTask
-				}
+		import dobj.{specification => spec}
 
 		spec.dataLevel match{
-			case 1 | 2 if (spec.datasetSpec.isDefined) => ingest
+			case 1 | 2 | 3 if (spec.datasetSpec.isDefined) =>
+				ingestionTaskFut(dobj).map{ingestionTask =>
+					(
+						if(spec.format.uri == CpMetaVocab.ObjectFormats.asciiWdcggTimeSer) mandatoryTasks(dobj)
+						else defaultTasks(dobj)
+					) :+ ingestionTask
+				}
 			case 0 | 1 | 2 | 3 => Future.successful(defaultTasks(dobj))
 
 			case dataLevel => Future.successful(
@@ -184,6 +182,18 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 				new NotSupportedUploadTask(s"Upload of data objects of level $dataLevel is not supported")
 			)
 		}
+	}
+
+	private def ingestionTaskFut(dobj: DataObject): Future[UploadTask] = {
+		val specFormat: URI = dobj.specification.format.uri
+		import CpMetaVocab.ObjectFormats._
+		val file = getFile(dobj)
+		if(specFormat == asciiWdcggTimeSer) IngestionUploadTask(IngestionSpec(dobj), file, meta)
+		else if(specFormat == netCdfSpatial) {
+			val varNames: Seq[String] = dobj.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
+			Future.successful(new NetCdfStatsTask(varNames, file))
+		} else if(dobj.specification.dataLevel <= 2) IngestionUploadTask(IngestionSpec(dobj), file, meta)
+		else Future.failed(new CpDataParsingException(s"Could not find ingester for format $specFormat"))
 	}
 
 	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(

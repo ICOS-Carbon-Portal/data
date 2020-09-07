@@ -62,6 +62,10 @@ export default class LinearCache{
 				this.cache = arr.concat(this.cache);
 				this.offset = offset;
 
+			} else if (offset === 0 && arr.length === this.length) {
+				// ≡≡≡≡
+				// cache already have all data
+
 			} else {
 				throw new Error("No match in fetcher");
 			}

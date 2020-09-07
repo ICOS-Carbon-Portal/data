@@ -1,10 +1,12 @@
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import {fetchJson, fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
-import {failWithError, getKnownDataObjInfo} from "./common";
-import {getLastSegmentInUrl, getUrlsFromPids} from "../utils";
+import {fetchJson, fetchKnownDataObjects} from "../backend";
+import {updateRoute} from "../actions/common";
+import {failWithError, getKnownDataObjInfo, } from "./common";
+import {getLastSegmentInUrl} from "../utils";
 import {MetaDataObject} from "../models/State";
+import {setKeywordFilter} from "../actions/search";
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
@@ -15,7 +17,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 
 				if (objectsTable.length){
 					fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-							const metadataWithId = {...metadata, ...{id}};
+							const metadataWithId = {...metadata, id};
 							dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId));
 						},
 						failWithError(dispatch)
@@ -28,7 +30,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 					]);
 
 					promises.then(([knownDataObjInfos, metadata]) => {
-						const metadataWithId = {...metadata, ...{id}};
+						const metadataWithId = {...metadata, id};
 						dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId, knownDataObjInfos.rows));
 					});
 				}
@@ -39,7 +41,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 	}
 }
 
-export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
+function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.BackendObjectMetadataId(id));
 		dispatch(getMetadataItem(id));
@@ -49,7 +51,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 function getMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-			const metadataWithId = {...metadata, ...{id}};
+			const metadataWithId = {...metadata, id};
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
 	};
@@ -65,3 +67,10 @@ export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, get
 		dispatch(setMetadataItem(id));
 	}
 };
+
+export function searchKeyword(keyword: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(setKeywordFilter([keyword], true))
+		dispatch(updateRoute('search'))
+	}
+}

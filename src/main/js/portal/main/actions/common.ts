@@ -137,23 +137,22 @@ export function setPreviewUrl(url: UrlStr): PortalThunkAction<void> {
 
 export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const state = getState();
-		const cart = state.cart;
+
+		const {previewLookup, objectsTable, user, cart} = getState();
 
 		const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
-			const objInfo: ObjectsTable | undefined = state.objectsTable.find(o => o.dobj === id);
+			const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
+
 			if (objInfo === undefined)
-				throw new Error(`Could not find objTable with id=${id} in ${state.objectsTable}`);
+				throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
 
-			const specLookup = state.lookup && objInfo.spec
-				? state.lookup.getSpecLookup(objInfo.spec)
-				: undefined;
+			const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type
 
-			return new CartItem(objInfo, specLookup?.type);
+			return new CartItem(objInfo, previewType);
 		});
 
 		if (newItems.length > 0) {
-			dispatch(updateCart(state.user.email, cart.addItem(newItems)));
+			dispatch(updateCart(user.email, cart.addItem(newItems)));
 		}
 	};
 }

@@ -45,11 +45,11 @@ const getObjectsTable = (specTable: CompositeSpecTable, objectsTable: ObjectsTab
 
 const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State => {
 	const objectsTable = getObjectsTable(state.specTable, payload.objectsTable);
-	const preview = state.lookup === undefined
+	const preview = state.previewLookup === undefined
 		? new Preview()
 		: state.preview
 			.withPids(payload.pids)
-			.restore(state.lookup.table, state.cart, objectsTable);
+			.restore(state.previewLookup, state.cart, objectsTable);
 
 	const newPartialState: BootstrapState = {
 		route: 'preview',

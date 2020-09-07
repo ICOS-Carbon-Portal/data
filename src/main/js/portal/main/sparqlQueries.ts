@@ -21,7 +21,7 @@ export const SPECCOL = 'spec';
 
 export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
 
-export function specBasics(deprFilter?: DeprecatedFilterRequest): SpecBasicsQuery {
+export function specBasics(): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
@@ -34,29 +34,35 @@ where{
 		?spec cpmeta:containsDataset ?dataset .
 		OPTIONAL{?dataset cpmeta:hasTemporalResolution ?temporalResolution}
 	}
-	${deprecatedFilter(deprFilter)}
 	?spec cpmeta:hasFormat ?format .
 }`;
 
 	return {text};
 }
 
-export type SpecColumnMetaQuery = Query<"spec" | "column" | "colTitle" | "valType" | "quantityUnit", "quantityKind">
+export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType" | "quantityUnit", "quantityKind">
 
-export function specColumnMeta(deprFilter?: DeprecatedFilterRequest): SpecColumnMetaQuery {
+export function specColumnMeta(): SpecVarMetaQuery {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
-select distinct ?spec ?column ?colTitle ?valType ?quantityKind
+select distinct ?spec ?variable ?varTitle ?valType ?quantityKind
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
-	?spec cpmeta:containsDataset [cpmeta:hasColumn ?column ] .
-	FILTER NOT EXISTS {?column cpmeta:isQualityFlagFor [] }
+	?spec cpmeta:containsDataset ?datasetSpec .
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
-	?column cpmeta:hasColumnTitle ?colTitle .
-	?column cpmeta:hasValueType ?valType .
-	${deprecatedFilter(deprFilter)}
+	{
+		{
+			?datasetSpec cpmeta:hasColumn ?variable .
+			?variable cpmeta:hasColumnTitle ?varTitle .
+		} UNION {
+			?datasetSpec cpmeta:hasVariable ?variable .
+			?variable cpmeta:hasVariableTitle ?varTitle .
+		}
+	}
+	FILTER NOT EXISTS {?variable cpmeta:isQualityFlagFor [] }
+	?variable cpmeta:hasValueType ?valType .
 	OPTIONAL{?valType cpmeta:hasUnit ?unit }
 	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
@@ -64,26 +70,33 @@ where{
 	return {text};
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
+	const siteQueries = config.envri === "SITES" ?
+		`?site cpmeta:hasEcosystemType ?ecosystem .
+		?site cpmeta:hasSpatialCoverage ?location .`
+		: "";
+
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?spec ?submitter ?project ?count ?station
+select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site
 where{
 	{
-		select ?station ?submitter ?spec (count(?dobj) as ?count) where{
+		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .
 			?dobj cpmeta:hasObjectSpec ?spec .
 			OPTIONAL {?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station }
+			OPTIONAL {?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site }
 			?dobj cpmeta:hasSizeInBytes ?size .
 			${getFilterClauses(filters, true)}
 		}
-		group by ?spec ?submitter ?station
+		group by ?spec ?submitter ?station ?site
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
+	${siteQueries}
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	}`;
 
@@ -147,11 +160,6 @@ ORDER BY ?Long_name`;
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
-const deprecatedFilter = (deprFilter?: DeprecatedFilterRequest) => {
-	return (deprFilter && deprFilter.allow)
-		? ''
-		: `FILTER EXISTS{?dobj cpmeta:hasObjectSpec ?spec . ${deprecatedFilterClause}}`;
-};
 const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
@@ -184,7 +192,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 
 	function isEmpty(arr: Filter) {return !arr || !arr.length;}
 
-	const {specs, stations, submitters, sorting, paging, filters} = query;
+	const {specs, stations, submitters, sites, sorting, paging, filters} = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -210,6 +218,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 			'\n' + dobjStation + '?station .';
 	}
 
+	//TODO Investigate if this empty-station case handling is still needed, and if yes, apply it to sites
 	const stationSearch = isEmpty(stations) ? '' : (stations as Value[]).some((s: any) => !s)
 		? (stations as Value[]).length === 1
 			? noStationFilter
@@ -219,6 +228,11 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 					${stationsFilter((stations as Value[]).filter((s: any) => !!s))}
 				}}`
 		: stationsFilter((stations as Value[]));
+
+	const siteSearch = !sites || isEmpty(sites.filter(Value.isDefined))
+				? ''
+				: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
+				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
 	const orderBy = (sorting && sorting.varName)
 		? (
@@ -236,6 +250,7 @@ where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	${stationSearch}
+	${siteSearch}
 	${submitterSearch}
 	${standardDobjPropsDef}
 	${getFilterClauses(filters, false)}

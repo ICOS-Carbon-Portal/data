@@ -12,12 +12,12 @@ import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
-import {Documentation, HelpStorageListEntry, Item, ItemExtended} from "../models/HelpStorage";
+import {Documentation, HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
 import {QueryParameters, SearchOption} from "./types";
 import {failWithError} from "./common";
-import {DataObjectSpec} from "../../../common/main/metacore";
+import {DataObjectSpec, UriResource} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
 import keywordsInfo from "../backend/keywordsInfo";
 
@@ -55,6 +55,7 @@ const fetchFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) 
 	const options: QueryParameters = {
 		specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
 		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
 		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
 		sorting,
 		paging,
@@ -86,20 +87,22 @@ function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 }
 
 const logPortalUsage = (state: State) => {
-	const {specTable, filterCategories, filterTemporal, searchOptions} = state;
+	const {specTable, filterCategories, filterTemporal, filterNumbers, filterKeywords, searchOptions} = state;
 
 	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : [];
 	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
-	if (categNames.length || filterTemporal.hasFilter || effectiveFilterPids.length > 0) {
+	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids.length > 0) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
-			acc.columnName = specTable.getFilter(columnName);
+			acc[columnName] = specTable.getFilter(columnName);
 			return acc;
 		}, {});
 
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
+		if (filterNumbers.hasFilters) filters.filterNumbers = filterNumbers.serialize;
 		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids;
+		if (filterKeywords.length > 0) filters.filterKeywords = filterKeywords;
 		filters.searchOptions = searchOptions;
 
 		saveToRestheart({
@@ -125,7 +128,7 @@ const getFilters = (state: State) => {
 		}
 
 		if(varNamesAreFiltered(specTable)){
-			const titles = specTable.getColumnValuesFilter('colTitle')
+			const titles = specTable.getColumnValuesFilter('varTitle')
 			if(titles != null){
 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
 			}
@@ -143,7 +146,7 @@ const getFilters = (state: State) => {
 	return filters;
 };
 
-const varNameAffectingCategs: ReadonlyArray<ColNames> = ['column', 'valType'];
+const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
 
 function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
@@ -229,21 +232,24 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
-export function setKeywordFilter(filterKeywords: string[]): PortalThunkAction<void> {
+export function setKeywordFilter(filterKeywords: string[], reset: boolean = false): PortalThunkAction<void> {
 	return (dispatch) => {
+		if (reset) {
+			dispatch(new Payloads.MiscResetFilters());
+		}
 		dispatch(new Payloads.FilterKeywords(filterKeywords));
 		dispatch(getOriginsThenDobjList);
 	};
 }
 
-export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
+export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {helpStorage} = getState();
-		const helpItem = helpStorage.getHelpItem(name);
+		const helpItem = getState().helpStorage.getHelpItem(name);
 
-		if (helpItem === undefined) return;
+		if (helpItem === undefined) {
+			dispatch(new Payloads.MiscError(new Error("Could not locate help information for " + name)));
 
-		if (helpItem.shouldFetchList) {
+		} else if (helpItem.shouldFetchList) {
 			const {specTable} = getState();
 			const uriList = specTable
 				.getAllDistinctAvailableColValues(helpItem.name as ColNames)
@@ -257,58 +263,41 @@ export function getResourceHelpInfo(name: string): PortalThunkAction<void> {
 						comment: r.comment as string,
 						webpage: r.webpage as UrlStr | undefined
 					}));
-					dispatch(updateHelpInfo(helpItem.withList(resourceInfo)));
+					dispatch(new Payloads.UiUpdateHelpInfo(helpItem.withList(resourceInfo)))
 				}, failWithError(dispatch));
 			} else {
-				dispatch(updateHelpInfo(helpItem));
+				dispatch(new Payloads.UiUpdateHelpInfo(helpItem))
 			}
 		} else {
-			dispatch(updateHelpInfo(helpItem));
+			dispatch(new Payloads.UiUpdateHelpInfo(helpItem))
 		}
 	};
 }
 
-export function getObjectHelpInfo(name: string, header: string, url: UrlStr): PortalThunkAction<void> {
+export function getResourceHelpInfo(name: HelpItemName, url: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {helpStorage} = getState();
-		const helpItemName = url;
-
-		if (helpStorage.has(helpItemName)){
-			const helpItem = helpStorage.getHelpItem(helpItemName);
-			if (helpItem) dispatch(updateHelpInfo(helpItem));
-
-		} else {
-			const correctedUrl = new URL(url);
-			correctedUrl.protocol = "https:";
-
-			fetchJson<DataObjectSpec>(correctedUrl.href).then((resp?: DataObjectSpec) => {
-				if (resp) {
-					const main = resp.self.label ?? '';
-					const list = resp.self.comments.map(comment => ({
-						txt: comment ?? resp.self.label
-					}));
-					const documentation: Documentation[] = resp.documentation.map(doc => ({
-						txt: doc.name,
-						url: doc.res
-					}));
-					const helpItem = new ItemExtended(helpItemName, header, main, list, documentation);
-
-					dispatch(addHelpInfo(helpItem));
-				}
-			}, failWithError(dispatch))
+		const helpItem = getState().helpStorage.getHelpItem(url);
+		if(helpItem){
+			dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+			return;
 		}
-	};
-}
 
-function addHelpInfo(helpItem: Item): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.UiAddHelpInfo(helpItem));
-	};
-}
+		const correctedUrl = new URL(url);
+		correctedUrl.protocol = "https:";
 
-function updateHelpInfo(helpItem: Item): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+		fetchJson<DataObjectSpec>(correctedUrl.href).then(
+			spec => {
+				const res = spec.self;
+				const documentation: Documentation[] = spec.documentation.map(doc => ({
+					txt: doc.name,
+					url: doc.res
+				}));
+				const helpItem = new HelpItem(name, res.label ?? '', url, res.comments.map(comment => {return {comment};}), documentation);
+
+				dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+			},
+			failWithError(dispatch)
+		)
 	};
 }
 

@@ -7,6 +7,7 @@ import {FilterRequest} from "../models/FilterRequest";
 export interface QueryParameters {
 	specs: Filter
 	stations: Filter
+	sites: Filter
 	submitters: Filter
 	sorting: State['sorting']
 	paging: Paging

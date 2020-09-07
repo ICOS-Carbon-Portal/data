@@ -1,8 +1,5 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
-import commonConfig from '../../../common/main/config';
-
-
-type DataType = keyof typeof commonConfig.previewTypes;
+import { PreviewType } from "../config";
 
 export interface DataObject {
 	dobj: string,
@@ -18,14 +15,14 @@ export interface DataObject {
 	themeLabel: string,
 	timeEnd: string,
 	timeStart: string,
-	type: DataType | undefined,
+	type: PreviewType | undefined,
 	temporalResolution: string
 }
 
 export interface CartItemSerialized {
 	id: string
 	dataobject: DataObject
-	type: DataType | undefined
+	type: PreviewType | undefined
 	url: UrlStr | undefined
 	keyValPairs: IdxSig
 }
@@ -33,11 +30,11 @@ export interface CartItemSerialized {
 export default class CartItem {
 	readonly _id: UrlStr;
 	readonly _dataobject: DataObject;
-	readonly _type: DataType | undefined;
+	readonly _type: PreviewType | undefined;
 	readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: IdxSig;
 
-	constructor(dataobject: DataObject, type?: DataType, url?: string){
+	constructor(dataobject: DataObject, type?: PreviewType, url?: string){
 		this._id = dataobject.dobj;
 		this._dataobject = dataobject;
 		this._type = type;

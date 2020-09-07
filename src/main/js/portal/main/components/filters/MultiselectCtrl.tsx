@@ -14,7 +14,6 @@ interface OurProps {
 	updateFilter: (varName: ColNames, values: Value[]) => void
 }
 
-const helpButtonsToShow = ['project', 'station', 'submitter', 'type', 'level', 'format', 'quantityKind', 'valType'];
 const search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
@@ -48,11 +47,10 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 			<div className="col-md-12">
 				<label style={{marginBottom: 0}}>{placeholders[config.envri][name]}</label>
 
-				{helpButtonsToShow.includes(name) &&
 				<HelpButton
 					name={name}
 					title="Click to toggle help"
-				/>}
+				/>
 
 				<MultiSelectFilter
 					name={name}

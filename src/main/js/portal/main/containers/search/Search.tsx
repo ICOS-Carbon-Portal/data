@@ -4,7 +4,6 @@ import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
 import {updateCheckedObjectsInSearch, switchTab} from '../../actions/search';
-import Help from "../help/Help";
 import {getLastSegmentsInUrls, isSmallDevice, pick} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
@@ -13,6 +12,8 @@ import {addToCart, setMetadataItem, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
+import { UiInactivateAllHelp } from '../../reducers/actionpayloads';
+import HelpSection from '../../components/help/HelpSection';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -81,7 +82,7 @@ class Search extends Component<OurProps, OurState> {
 			<div className="row" style={{position:'relative'}}>
 				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
 					<div style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
-						<Help />
+						<HelpSection width={300} onHelpClose={this.props.onHelpClose} helpStorage={this.props.helpStorage}/>
 					</div>
 				</div>
 				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
@@ -125,6 +126,7 @@ function stateToProps(state: State){
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
 		tabs: state.tabs,
+		helpStorage: state.helpStorage
 	};
 }
 
@@ -134,7 +136,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
-		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId))
+		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
+		onHelpClose: () => dispatch(new UiInactivateAllHelp())
 	};
 }
 

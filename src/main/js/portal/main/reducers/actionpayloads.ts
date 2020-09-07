@@ -10,7 +10,7 @@ import {
 import {ColNames} from "../models/CompositeSpecTable";
 import {Filter} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
-import {Item} from "../models/HelpStorage";
+import {HelpItem} from "../models/HelpStorage";
 import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
@@ -147,12 +147,8 @@ export class UiSwitchTab extends UiPayload{
 	constructor(readonly tabName: string, readonly selectedTabId: string){super();}
 }
 
-export class UiAddHelpInfo extends UiPayload{
-	constructor(readonly helpItem: Item){super();}
-}
-
 export class UiUpdateHelpInfo extends UiPayload{
-	constructor(readonly helpItem: Item){super();}
+	constructor(readonly helpItem: HelpItem){super();}
 }
 
 export class UiInactivateAllHelp extends UiPayload{

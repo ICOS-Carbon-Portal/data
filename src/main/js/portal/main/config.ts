@@ -45,13 +45,15 @@ const defaultCategNames = {
 	level: 'Data level',
 	format: 'Format',
 	theme: 'Theme',
-	column: 'Column name',
+	variable: 'Variable name',
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
 	quantityUnit: 'Unit of measurement',
 	submitter: 'Data submitter',
 	station: 'Station of origin',
-	project: 'Project'
+	project: 'Project',
+	ecosystem: 'Ecosystem',
+	location: 'Location'
 };
 
 type CategoryNamesDict = typeof defaultCategNames;
@@ -94,6 +96,8 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 		project: 'https://meta.fieldsites.se/resources/projects/',
 		theme: 'https://meta.fieldsites.se/resources/themes/',
 		station: 'https://meta.fieldsites.se/resources/stations/',
+		location: 'https://meta.fieldsites.se/resources/areas/',
+		ecosystem: 'https://meta.fieldsites.se/resources/ecosystems/',
 		submitter: [
 			{prefix: 'o', value: 'https://meta.fieldsites.se/resources/organizations/'},
 			{prefix: 's', value: 'https://meta.fieldsites.se/resources/stations/'}
@@ -117,14 +121,14 @@ export const filters: IFilterCategories = {
 	ICOS: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['column', 'valType', 'quantityUnit', 'quantityKind']},
+		{panelTitle: "Value types", filterList: ['variable', 'valType', 'quantityUnit', 'quantityKind']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
 		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
-		{panelTitle: "Data origin", filterList: ['theme', 'station', 'project']},
-		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
-		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'column']},
+		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
+		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level']},
+		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'variable']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
 };

@@ -1,37 +1,36 @@
 import {
 	SpecBasicsQuery,
-	SpecColumnMetaQuery,
+	SpecVarMetaQuery,
 	DobjOriginsAndCountsQuery,
 	SPECCOL
 } from '../sparqlQueries';
-import SpecTable, {Filters, Value, Filter, Row, TableSerialized} from "./SpecTable";
+import SpecTable, {Value, Filter, Row, TableSerialized} from "./SpecTable";
 import {AsyncResult} from "../backend/declarations";
 import {fetchBoostrapData} from "../backend";
-import {CategoryType} from "../config";
 import { QueryResultColumns } from '../backend/sparql';
 
 
 type JsonCompositeSpecTable = AsyncResult<typeof fetchBoostrapData>['specTables'];
 export type BasicsColNames = QueryResultColumns<SpecBasicsQuery>;
-export type ColumnMetaColNames = QueryResultColumns<SpecColumnMetaQuery>;
+export type VariableMetaColNames = QueryResultColumns<SpecVarMetaQuery>;
 export type OriginsColNames = QueryResultColumns<DobjOriginsAndCountsQuery>;
-export type ColNames = BasicsColNames | ColumnMetaColNames | OriginsColNames | CategoryType;
+export type ColNames = BasicsColNames | VariableMetaColNames | OriginsColNames;
 
 const tableNames = ['basics', 'columnMeta', 'origins'] as const;
 type TableNames = typeof tableNames[number];
 export type SpecTableSerialized = {
 	basics: TableSerialized<BasicsColNames>
-	columnMeta: TableSerialized<ColumnMetaColNames>
+	columnMeta: TableSerialized<VariableMetaColNames>
 	origins: TableSerialized<OriginsColNames>
 }
 
 export default class CompositeSpecTable{
-	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<ColumnMetaColNames>, readonly origins: SpecTable<OriginsColNames>){}
+	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>){}
 
 	static fromTables(tables: SpecTable[]){
 		return new CompositeSpecTable(
 			tables[0] as SpecTable<BasicsColNames>,
-			tables[1] as SpecTable<ColumnMetaColNames>,
+			tables[1] as SpecTable<VariableMetaColNames>,
 			tables[2] as SpecTable<OriginsColNames>
 		);
 	}
@@ -46,10 +45,17 @@ export default class CompositeSpecTable{
 
 	static deserialize(tables: SpecTableSerialized) {
 		const {basics, columnMeta, origins} = tables;
-		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters || {});
-		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters || {});
 		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters || {});
-		const extraFilter = getExtraFilter(basicsTbl.specsCount, originsTbl);
+		const specValues = new Set(originsTbl.rows.map(row => row[SPECCOL]));
+
+		function whereRelevantSpec<T extends string>(rows: Row<T>[]): Row<T>[]{
+			return rows.filter(row => specValues.has(row[SPECCOL]));
+		}
+
+		const basicsTbl = new SpecTable(basics.colNames, whereRelevantSpec(basics.rows), basics.filters || {});
+		const columnMetaTbl = new SpecTable(columnMeta.colNames, whereRelevantSpec(columnMeta.rows), columnMeta.filters || {});
+
+		const extraFilter = getExtraFilter(specValues.size, originsTbl);
 
 		return new CompositeSpecTable(basicsTbl.withExtraSpecFilter(extraFilter), columnMetaTbl.withExtraSpecFilter(extraFilter), originsTbl)
 	}

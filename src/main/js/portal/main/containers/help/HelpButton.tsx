@@ -2,9 +2,9 @@ import React, {Component, CSSProperties, MouseEvent} from "react";
 import {connect} from "react-redux";
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import config, {CategoryType, NumberFilterCategories, numberFilterKeys, placeholders} from "../../config";
 import {UrlStr} from "../../backend/declarations";
-import {getObjectHelpInfo, getResourceHelpInfo} from "../../actions/search";
+import {getResourceHelpInfo, getFilterHelpInfo} from "../../actions/search";
+import { HelpItemName } from "../../models/HelpStorage";
 
 
 const defaultBtn = 'glyphicon glyphicon-question-sign text-info';
@@ -17,11 +17,10 @@ const defaultIconStyle: CSSProperties = {
 	paddingLeft: 5
 };
 
-type HelpName = CategoryType | 'preview' | NumberFilterCategories
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingProps = {
-	name: HelpName,
+	name: HelpItemName,
 	title?: string,
 	url?: UrlStr
 }
@@ -31,23 +30,24 @@ type OurProps = StateProps & DispatchProps & IncomingProps;
 class HelpButton extends Component<OurProps> {
 
 	handleBtnClick = (event: MouseEvent<HTMLSpanElement>) => {
-		const {getResourceHelpInfo, getObjectHelpInfo, name, url} = this.props;
+		const {getFilterHelpInfo, getResourceHelpInfo, name, url} = this.props;
 
 		if (url === undefined) {
-			getResourceHelpInfo(name);
+			getFilterHelpInfo(name);
 
 		} else {
 			// Help for dropdown list items
 			event.stopPropagation();
-			getObjectHelpInfo(name, getTitle(name), url);
+			getResourceHelpInfo(name, url);
 		}
 	};
 
 	render(){
 		const {name, title, helpStorage, url} = this.props;
-		if (name === undefined || !helpStorage.has(name)) return null;
 
-		const className = helpStorage.isActive(name, url) ? activeBtn : defaultBtn;
+		if (name === undefined || !helpStorage.getHelpItem(name)) return null;
+
+		const className = helpStorage.isActive(url ?? name) ? activeBtn : defaultBtn;
 
 		return <span
 			className={className}
@@ -58,22 +58,16 @@ class HelpButton extends Component<OurProps> {
 	}
 }
 
-const getTitle = (name: HelpName) => {
-	return name === 'preview' || numberFilterKeys.includes(name as NumberFilterCategories)
-		? ''
-		: placeholders[config.envri][name as CategoryType];
-};
-
 function stateToProps(state: State){
 	return {
 		helpStorage: state.helpStorage
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		getResourceHelpInfo: (name: string) => dispatch(getResourceHelpInfo(name)),
-		getObjectHelpInfo: (name: string, header: string, url: UrlStr) => dispatch(getObjectHelpInfo(name, header, url)),
+		getFilterHelpInfo: (name: HelpItemName) => dispatch(getFilterHelpInfo(name)),
+		getResourceHelpInfo: (name: HelpItemName, url: UrlStr) => dispatch(getResourceHelpInfo(name, url)),
 	};
 }
 

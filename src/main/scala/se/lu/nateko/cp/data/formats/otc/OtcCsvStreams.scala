@@ -55,7 +55,7 @@ object OtcCsvStreams {
 		.drop(2)
 		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
-	def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesUploadCompletion]] = {
+	def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesExtract]] = {
 
 		Flow.apply[TableRow]
 			.alsoToMat(
@@ -66,7 +66,7 @@ object OtcCsvStreams {
 					tsUplCompl <- tsUplComplFut;
 					coverage <- coverageFut
 				) yield
-					SpatialTimeSeriesUploadCompletion(tsUplCompl.tabular, coverage)
+					SpatialTimeSeriesExtract(tsUplCompl.tabular, coverage)
 			}
 	}
 

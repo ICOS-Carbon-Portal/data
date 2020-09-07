@@ -19,16 +19,27 @@ Control.LegendCtr = Control.extend({
 	},
 
 	toggle: function() {
+		if (DomUtil.get(iconId).style.display === 'none') {
+			this.hide();
+		} else {
+			this.show();
+		}
+	},
+
+	hide: function() {
 		const iconElement = DomUtil.get(iconId);
 		const legendElement = DomUtil.get(legendId);
 
-		if (iconElement.style.display === 'none') {
-			iconElement.setAttribute("style", iconStyle);
-			legendElement.setAttribute("style", "display:none;");
-		} else {
-			iconElement.setAttribute("style", "display:none;");
-			legendElement.setAttribute("style", "display:inline;");
-		}
+		iconElement.setAttribute("style", iconStyle);
+		legendElement.setAttribute("style", "display:none;");
+	},
+
+	show: function() {
+		const iconElement = DomUtil.get(iconId);
+		const legendElement = DomUtil.get(legendId);
+
+		iconElement.setAttribute("style", "display:none;");
+		legendElement.setAttribute("style", "display:inline;");
 	},
 
 	addEvent: function(obj, types, fn, context){

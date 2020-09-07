@@ -153,16 +153,23 @@ export default class Map extends Component{
 			layerGroup.addLayer(cm);
 		});
 
-		if (zoomToPoints) {
-			const updateLegend = this.updateLegend.bind(this);
-			map.on('resize', resizeCB(stats.min, stats.max, updateLegend));
+		if (pointReducer.pointCount > 0) {
+			this.legendCtrl.show();
 
-			const points = pointReducer.reducedPoints.map(row => [row[pointReducer.latIdx], row[pointReducer.lngIdx]]);
-			if (!this.setInitCenterZoom) map.fitBounds(points);
-			this.fullExtentCtrl.updatePoints(points);
-			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
-		} else if (redefineColor) {
-			this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
+			if (zoomToPoints) {
+				const updateLegend = this.updateLegend.bind(this);
+				map.on('resize', resizeCB(stats.min, stats.max, updateLegend));
+
+				const points = pointReducer.reducedPoints.map(row => [row[pointReducer.latIdx], row[pointReducer.lngIdx]]);
+
+				if (!this.setInitCenterZoom) map.fitBounds(points);
+				this.fullExtentCtrl.updatePoints(points);
+				this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
+			} else if (redefineColor) {
+				this.handleMoveEnd(_ => this.addPoints(false, false, binTableData, valueIdx, afterPointsFiltered));
+			}
+		} else {
+			this.legendCtrl.hide();
 		}
 
 		if (afterPointsFiltered) afterPointsFiltered(pointReducer, map.getCenter(), map.getZoom());

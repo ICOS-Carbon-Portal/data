@@ -1,41 +1,39 @@
 import CartItem, {CartItemSerialized} from './CartItem';
 import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
-import config from "../config";
-import commonConfig from '../../../common/main/config';
+import config, {PreviewType} from "../config";
 import deepEqual from 'deep-equal';
-import Lookup from "./Lookup";
+import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
 import {ExtendedDobjInfo, ObjectsTable} from "./State";
-import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
+import {Sha256Str, UrlStr} from "../backend/declarations";
 
 
 export type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
 export type PreviewItemSerialized = CartItemSerialized & Partial<ExtendedDobjInfo>
-export type PreviewOption = {
-	colTitle: string
+
+export interface PreviewOption {
+	varTitle: string
 	valTypeLabel: string
 }
 
-type PreviewTypes = keyof typeof commonConfig.previewTypes
-type PreviewType = PreviewTypes | 'unknown'
 export interface PreviewSerialized {
 	items: PreviewItemSerialized[]
 	options: PreviewOption[],
-	type: PreviewType
+	type: PreviewType | undefined
 }
 
 export default class Preview {
 	public readonly items: PreviewItem[];
 	public pids: Sha256Str[];
 	public readonly options: PreviewOption[];
-	public readonly type: PreviewType;
+	public readonly type: PreviewType | undefined;
 
 
 	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
 		this.pids = this.items.map(item => getLastSegmentInUrl(item._id));
 		this.options = options ?? [];
-		this.type = type ?? 'unknown';
+		this.type = type;
 	}
 
 	get serialize(): PreviewSerialized {
@@ -54,16 +52,27 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: Lookup['table'] & IdxSig<any>, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[]) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[]) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
+
 			type OptionWithType = {
 				options: PreviewOption[]
-				type: PreviewTypes
+				type: PreviewType | undefined
 			}
-			const options: OptionWithType = objInfo
-				? lookup[objInfo.spec]
-				: cart.hasItem(id) ? lookup[cart.item(id)!.spec] : {};
+
+			const previewInfo: PreviewInfo | undefined = objInfo
+				? lookup.forDataObjSpec(objInfo.spec)
+				: cart.hasItem(id)
+					? lookup.forDataObjSpec(cart.item(id)!.spec)
+					: undefined;
+
+			const options: OptionWithType = previewInfo == undefined
+				? {type: undefined, options: []}
+				: previewInfo.type === "TIMESERIES"
+					? previewInfo
+					: {type: previewInfo.type, options: []};
+
 			const item = cart.hasItem(id)
 				? cart.item(id)
 				: objInfo ? new CartItem(objInfo, options.type) : undefined;
@@ -82,7 +91,7 @@ export default class Preview {
 		if (options.type === config.TIMESERIES){
 			if (items.length){
 				let previewItems = items;
-				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.colTitle === x));
+				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
 				if(xAxis){
 					const url = getNewTimeseriesUrl(items, xAxis);
 					previewItems = items.map(i => i.withUrl(url));
@@ -97,7 +106,7 @@ export default class Preview {
 		throw new Error('Could not initialize Preview');
 	}
 
-	restore(lookup: Lookup['table'], cart: Cart, objectsTable: ObjectsTable[]) {
+	restore(lookup: PreviewLookup, cart: Cart, objectsTable: ObjectsTable[]) {
 		if (this.hasPids) {
 			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
 		} else {
