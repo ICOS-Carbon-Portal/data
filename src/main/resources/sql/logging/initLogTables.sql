@@ -139,6 +139,40 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_full_mv AS
 	ORDER BY count DESC;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_full_mv_hash_id ON public.dlstats_full_mv (hash_id);
 
+--DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
+--REFRESH MATERIALIZED VIEW specifications_mv;
+--VACUUM specifications_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS specifications_mv AS
+	SELECT
+		COUNT(downloads.hash_id)::int AS count,
+		dobjs.spec
+	FROM dobjs
+		INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
+	GROUP BY dobjs.spec;
+
+--DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
+--REFRESH MATERIALIZED VIEW contributors_mv;
+--VACUUM contributors_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS contributors_mv AS
+	SELECT
+		COUNT(downloads.hash_id)::int AS count,
+		contributors.contributor
+	FROM downloads
+		INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
+	GROUP BY contributors.contributor;
+
+--DROP MATERIALIZED VIEW IF EXISTS stations_mv;
+--REFRESH MATERIALIZED VIEW stations_mv;
+--VACUUM stations_mv
+CREATE MATERIALIZED VIEW IF NOT EXISTS stations_mv AS
+	SELECT
+		COUNT(downloads.hash_id)::int AS count,
+		dobjs.station
+	FROM downloads
+		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
+	WHERE dobjs.station IS NOT NULL
+	GROUP BY dobjs.station;
+
 
 --	Stored Procedures
 
@@ -310,11 +344,10 @@ CREATE OR REPLACE FUNCTION public.specifications()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id)::int AS count,
-	dobjs.spec
-FROM dobjs
-	INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
-GROUP BY dobjs.spec;
+	count,
+	spec
+FROM specifications_mv
+ORDER BY count;
 
 $$;
 
@@ -330,11 +363,10 @@ CREATE OR REPLACE FUNCTION public.contributors()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id)::int AS count,
-	contributors.contributor
-FROM downloads
-	INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
-GROUP BY contributors.contributor;
+	count,
+	contributor
+FROM contributors_mv
+ORDER BY count;
 
 $$;
 
@@ -350,11 +382,9 @@ CREATE OR REPLACE FUNCTION public.stations()
 AS $$
 
 SELECT
-	COUNT(downloads.hash_id)::int AS count,
-	dobjs.station
-FROM downloads
-	INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-WHERE dobjs.station IS NOT NULL
-GROUP BY dobjs.station;
+	count,
+	station
+FROM stations_mv
+ORDER BY count;
 
 $$;
