@@ -143,8 +143,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_full_mv_hash_id ON public.dlstats_
 --	Stored Procedures
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadsByCountry;
-CREATE OR REPLACE FUNCTION public.downloadsByCountry(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+--DROP FUNCTION IF EXISTS downloadsByCountry;
+CREATE OR REPLACE FUNCTION public.downloadsByCountry(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,
 		country_code text
@@ -165,13 +165,15 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY country_code
-ORDER BY 1 DESC;
+ORDER BY count DESC
+LIMIT _pagesize
+OFFSET _page * _pagesize - _pagesize;
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadsPerWeek;
-CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+--DROP FUNCTION IF EXISTS downloadsPerWeek;
+CREATE OR REPLACE FUNCTION public.downloadsPerWeek(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,
 		day date,
@@ -193,13 +195,15 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY week_start
-ORDER BY week_start;
+ORDER BY week_start
+LIMIT _pagesize
+OFFSET _page * _pagesize - _pagesize;
 
 $$;
 
 ---------------------
 -- DROP FUNCTION IF EXISTS downloadsPerMonth;
-CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.downloadsPerMonth(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,
 		day date
@@ -219,13 +223,15 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY month_start
-ORDER BY month_start;
+ORDER BY month_start
+LIMIT _pagesize
+OFFSET _page * _pagesize - _pagesize;
 
 $$;
 
 ---------------------
 -- DROP FUNCTION IF EXISTS public.downloadsPerYear;
-CREATE OR REPLACE FUNCTION public.downloadsPerYear(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.downloadsPerYear(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,
 		day date
@@ -245,13 +251,15 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY year_start
-ORDER BY year_start;
+ORDER BY year_start
+LIMIT _pagesize
+OFFSET _page * _pagesize - _pagesize;
 
 $$;
 
 ---------------------
 -- DROP FUNCTION IF EXISTS downloadStats;
-CREATE OR REPLACE FUNCTION public.downloadStats(_specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.downloadStats(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,
 		hash_id text
@@ -267,7 +275,9 @@ BEGIN
 			SELECT
 				count,
 				hash_id
-			FROM dlstats_full_mv;
+			FROM dlstats_full_mv
+			LIMIT _pagesize
+			OFFSET _page * _pagesize - _pagesize;
 	ELSE
 		RETURN QUERY
 			SELECT
@@ -281,7 +291,9 @@ BEGIN
 				AND (_contributors IS NULL OR contributors ?| _contributors)
 			)
 			GROUP BY hash_id
-			ORDER BY 1 DESC;
+			ORDER BY count DESC
+			LIMIT _pagesize
+			OFFSET _page * _pagesize - _pagesize;
 	END IF;
 END
 $$;

@@ -166,18 +166,21 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
+			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
 			params.foreach{queryParams =>
-				Seq(queryParams.specs, queryParams.stations, queryParams.submitters, queryParams.contributors)
+				Seq(queryParams.page, queryParams.pagesize, queryParams.specs, queryParams.stations, queryParams.submitters, queryParams.contributors)
 					.zipWithIndex
 					.foreach{
+						// TODO: Fix elimination
+						case (Some(values: Seq[String]), idx: Int) =>
+							preparedSt.setArray(idx + 1, conn.createArrayOf("varchar", values.toArray))
+						case (value: Int, idx: Int) =>
+							preparedSt.setInt(idx + 1, value)
 						case (None, idx) =>
 							preparedSt.setNull(idx + 1, Types.ARRAY)
-						case (Some(values), idx) =>
-							preparedSt.setArray(idx + 1, conn.createArrayOf("varchar", values.toArray))
 					}
 			}
 

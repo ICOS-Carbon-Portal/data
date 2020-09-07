@@ -12,8 +12,7 @@ import se.lu.nateko.cp.data.CpdataJsonProtocol.javaTimeInstantFormat
 import java.time.Instant
 import akka.http.scaladsl.model.StatusCodes
 
-
-case class StatsQueryParams(specs: Option[Seq[String]], stations: Option[Seq[String]], submitters: Option[Seq[String]], contributors: Option[Seq[String]])
+case class StatsQueryParams(page: Int, pagesize: Int, specs: Option[Seq[String]], stations: Option[Seq[String]], submitters: Option[Seq[String]], contributors: Option[Seq[String]])
 case class DownloadsByCountry(count: Int, countryCode: String)
 case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
 case class DownloadsPerTimeframe(count: Int, ts: Instant)
@@ -35,13 +34,16 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
 	val statsParams: Directive1[StatsQueryParams] = parameters(
+		"page".as[Int].?,
+		"pagesize".as[Int].?,
 		"specs".as[List[String]].?,
 		"stations".as[List[String]].?,
 		"submitters".as[List[String]].?,
 		"contributors".as[List[String]].?
 	).tmap{
-		case (specs, stations, submitters, contributors) =>
-			Tuple1(StatsQueryParams(specs, stations, submitters, contributors))
+		case (page, pagesize, specs, stations, submitters, contributors) =>
+			// TODO: Set default page and pagesize in config? 
+			Tuple1(StatsQueryParams(page.getOrElse(1), pagesize.getOrElse(100), specs, stations, submitters, contributors))
 	}
 
 	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
