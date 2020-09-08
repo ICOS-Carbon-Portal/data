@@ -170,18 +170,18 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
-			params.foreach{queryParams =>
-				Seq(queryParams.page, queryParams.pagesize, queryParams.specs, queryParams.stations, queryParams.submitters, queryParams.contributors)
-					.zipWithIndex
-					.foreach{
-						// TODO: Fix elimination
-						case (Some(values: Seq[String]), idx: Int) =>
-							preparedSt.setArray(idx + 1, conn.createArrayOf("varchar", values.toArray))
-						case (value: Int, idx: Int) =>
-							preparedSt.setInt(idx + 1, value)
-						case (None, idx) =>
-							preparedSt.setNull(idx + 1, Types.ARRAY)
-					}
+			def initArray(idx: Int, arr: Option[Seq[String]]): Unit = arr match {
+				case Some(values) => preparedSt.setArray(idx, conn.createArrayOf("varchar", values.toArray))
+				case None => preparedSt.setNull(idx, Types.ARRAY)
+			}
+
+			params.foreach{qp =>
+				preparedSt.setInt(1, qp.page)
+				preparedSt.setInt(2, qp.pagesize)
+				initArray(        3, qp.specs)
+				initArray(        4, qp.stations)
+				initArray(        5, qp.submitters)
+				initArray(        6, qp.contributors)
 			}
 
 			consumeResultSet(preparedSt.executeQuery())(parser)
