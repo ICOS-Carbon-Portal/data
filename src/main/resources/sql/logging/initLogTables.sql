@@ -43,16 +43,6 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
 );
 
--- Set user rights
-GRANT USAGE ON SCHEMA public TO reader;
-GRANT USAGE ON SCHEMA public TO writer;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
-
-GRANT INSERT, UPDATE ON public.dobjs TO writer;
-GRANT INSERT, DELETE ON public.contributors TO writer;
-GRANT INSERT ON public.downloads TO writer;
-
 
 --	Materialized views to speed up queries
 
@@ -388,3 +378,14 @@ FROM stations_mv
 ORDER BY count;
 
 $$;
+
+
+-- Set user rights
+GRANT USAGE ON SCHEMA public TO reader;
+GRANT USAGE ON SCHEMA public TO writer;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
+
+GRANT INSERT, UPDATE ON public.dobjs TO writer;
+GRANT INSERT, DELETE ON public.contributors TO writer;
+GRANT INSERT ON public.downloads TO writer;

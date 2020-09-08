@@ -89,3 +89,18 @@ VACUUM (VERBOSE, ANALYZE) contributors;
 REINDEX TABLE dobjs;
 REINDEX TABLE downloads;
 REINDEX TABLE contributors;
+
+REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_country_mv;
+VACUUM (ANALYZE) downloads_country_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_timebins_mv;
+VACUUM (VERBOSE, ANALYZE) downloads_timebins_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_mv;
+VACUUM (VERBOSE, ANALYZE) dlstats_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_full_mv;
+VACUUM (VERBOSE) dlstats_full_mv;
+REFRESH MATERIALIZED VIEW specifications_mv;
+VACUUM (VERBOSE) specifications_mv;
+REFRESH MATERIALIZED VIEW contributors_mv;
+VACUUM (VERBOSE) contributors_mv;
+REFRESH MATERIALIZED VIEW stations_mv;
+VACUUM (VERBOSE) stations_mv;
