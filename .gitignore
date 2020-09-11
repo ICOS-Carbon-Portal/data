@@ -13,7 +13,7 @@ tsTarget/
 target/
 project/target/
 /views/target/
-project/metals.sbt
+metals.sbt
 
 # Scala-IDE specific
 .metals/
