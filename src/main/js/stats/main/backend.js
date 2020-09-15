@@ -3,7 +3,6 @@ import config from '../../common/main/config';
 import {feature} from 'topojson';
 import localConfig from './config';
 
-
 const pagesize = localConfig.pagesize;
 
 const restheartBaseUrl = location.host.startsWith("local-")
@@ -32,12 +31,16 @@ export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
 };
 
 export const getAvars = (filters, stationCountryCodeLookup = []) => {
+	const searchParams = getSearchParams(filters, stationCountryCodeLookup);
+
 	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : wildcardLevel;
 	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : wildcardText;
 	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : wildcardText;
 	const stationsName = stationFilters(filters, stationCountryCodeLookup);
 	const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : wildcardText;
 	const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : wildcardText;
+
+	console.log({ searchParams, dataLevel, format, specification, stationsName, contributors, themes });
 
 	return `{
 		"specification":[${specification}],
@@ -47,6 +50,24 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 		"contributors":[${contributors}],
 		"themes":[${themes}]
 	}`;
+};
+
+export const getSearchParams = (filters, stationCountryCodeLookup = []) => {
+	const searchParams = {
+		specs: filters.specification && filters.specification.length ? filters.specification : undefined,
+		stations: filters.stations && filters.stations.length ? filters.stations : undefined,
+		submitters: undefined,
+		contributors: undefined
+	};
+
+	return searchParams;
+
+	// const filterParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
+	// 	if (filterParams[key]) acc.push({ name: key, values: searchParams[key] });
+	// 	return acc;
+	// }, []);
+
+	// return filterParamsReduced.map(fp => `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`).join('&');
 };
 
 const stationFilters = (filters, stationCountryCodeLookup) => {
@@ -254,4 +275,15 @@ const formatPopularTimeserieVars = popularTimeserieVars => {
 	});
 
 	return conformData(popularTimeserieVars, formattedData);
+};
+
+export const postToApi = (searchParams, endpoint) => {
+	return fetch(endpoint, {
+		method: 'POST',
+		mode: 'cors',
+		headers: new Headers({
+			'Content-Type': 'application/json'
+		}),
+		body: JSON.stringify(searchParams)
+	});
 };
