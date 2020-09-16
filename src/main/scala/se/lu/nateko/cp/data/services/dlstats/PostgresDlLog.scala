@@ -1,36 +1,42 @@
 package se.lu.nateko.cp.data.services.dlstats
 
-import java.sql.Connection
-import java.sql.DriverManager
 import se.lu.nateko.cp.data.DownloadStatsConfig
 import se.lu.nateko.cp.data.CredentialsConfig
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import java.sql.ResultSet
-import java.sql.Statement
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.L2OrLessSpecificMeta
 import se.lu.nateko.cp.meta.core.data.L3SpecificMeta
-import java.sql.PreparedStatement
-import scala.concurrent.Future
+import se.lu.nateko.cp.data.routes.{StatsQueryParams, DownloadsByCountry, DownloadsPerWeek, DownloadsPerTimeframe, DownloadStats, Specifications, Contributors, Stations}
+
 import akka.Done
+import akka.event.LoggingAdapter
+
 import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
-import java.nio.file.Files
-import java.nio.file.Paths
 import scala.io.Source
 import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+import java.sql.Statement
+import java.sql.Types
+import java.time.ZoneOffset
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.ArrayBlockingQueue
+
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
-import java.sql.Types
-import se.lu.nateko.cp.data.routes.{StatsQueryParams, DownloadsByCountry, DownloadsPerWeek, DownloadsPerTimeframe, DownloadStats, Specifications, Contributors, Stations}
-import java.time.ZoneOffset
 
-
-class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
+class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
 
 	private[this] val executor = {
 		val maxThreads = conf.dbAccessPoolSize * conf.dbNames.size
@@ -38,6 +44,8 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
 		)
 	}
+
+	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
 
 	private[this] implicit val exeCtxt = ExecutionContext.fromExecutor(executor)
 
@@ -57,19 +65,26 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 
 	override def close(): Unit = {
 		executor.shutdown()
+		scheduler.shutdown()
 		dataSources.valuesIterator.foreach{_.close()}
 	}
 
 	def initLogTables(): Future[Done] = {
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
+		val matViews = Seq(
+			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",
+			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv"
+		)
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn => {
 				conn.createStatement().execute(query)
 				conn.commit()
-			})
+			}).map{_ =>
+				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
+			}
 		}.toIndexedSeq
-		Future.sequence(futs).map(_ => Done)
+		Future.sequence(futs).map{_ => Done}
 	}
 
 	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {
@@ -196,10 +211,21 @@ class PostgresDlLog(conf: DownloadStatsConfig) extends AutoCloseable{
 		res.toIndexedSeq
 	}
 
+	private def updateMatView(matView: String)(implicit envri: Envri): Unit =
+		withConnectionEager(conf.writer){
+			_.prepareStatement(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ; VACUUM $matView ;").execute()
+		}.failed.foreach{
+			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
+		}
+
 	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] = Future{
+		Future.fromTry(withConnectionEager(creds)(act))
+	}.flatten
+
+	private def withConnectionEager[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Try[T] = Try{
 		val conn = dataSources(envri).getConnection(creds.username, creds.password)
-		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
 		try {
+			conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
 			act(conn)
 		} finally{
 			conn.close()

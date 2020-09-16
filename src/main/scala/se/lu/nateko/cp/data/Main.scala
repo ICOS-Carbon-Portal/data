@@ -55,7 +55,7 @@ object Main extends App {
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val postgresLog = new PostgresDlLog(config.downloads)
+	val postgresLog = new PostgresDlLog(config.downloads, system.log)
 	val downloadRouting = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, postgresLog, ConfigReader.metaCore)
 	val integrityRoute = IntegrityRouting.route(integrityService)
 
