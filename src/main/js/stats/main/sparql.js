@@ -1,17 +1,12 @@
 import {sparql} from 'icos-cp-backend';
 import config from 'config'
 
-function runSparql(query){
-	return sparql(query, config.sparqlEndpoint, true);
-}
-
-//Returns a Promise of a dictionary-object with labels
 export function getObjSpecLabels(specUris){
 	const query = `select * where {
 		VALUES ?spec { <${specUris.join("> <")}> }
 		?spec rdfs:label ?label
 	}`;
-	return runSparql(query).then(makeLabelsDict("spec", "label"));
+	return sparqlLabels(query, "spec", "label");
 }
 
 export function getStationLabels(stationUris){
@@ -21,18 +16,27 @@ export function getStationLabels(stationUris){
 			values ?station { <${stationUris.join("> <")}> }
 			?station cpmeta:hasStationId ?id ; cpmeta:hasName ?name .
 			bind (concat("(", ?id, ") ", ?name) as ?label)
-		}`
-	return runSparql(query).then(makeLabelsDict("station", "label"));
+		}`;
+	return sparqlLabels(query, "station", "label");
 }
 
-function makeLabelsDict(resourceVar, labelVar){
-	return function(sparqlResults){
-		return sparqlResults.results.bindings.reduce(
+export function getFileNames(dobjUris){
+	const query = `select * where{
+			values ?dobj { <${dobjUris.join("> <")}> }
+			?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/hasName> ?fname .
+		}`;
+	return sparqlLabels(query, "dobj", "fname");
+}
+
+//Returns a Promise of a dictionary-object with labels
+function sparqlLabels(query, resourceVar, labelVar){
+	return sparql(query, config.sparqlEndpoint, true).then(sparqlResults =>
+		sparqlResults.results.bindings.reduce(
 			(acc, curr) => {
 				acc[curr[resourceVar].value] = curr[labelVar].value;
 				return acc;
 			},
 			{}
-		);
-	};
+		)
+	);
 }
