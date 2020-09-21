@@ -14,19 +14,31 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import scala.concurrent.Future
 
-case class StatsQueryParams(page: Int, pagesize: Int, specs: Option[Seq[String]], stations: Option[Seq[String]], submitters: Option[Seq[String]], contributors: Option[Seq[String]])
-case class DownloadsByCountry(count: Int, countryCode: String)
-case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
-case class DownloadsPerTimeframe(count: Int, ts: Instant)
-case class DownloadStats(count: Int, hashId: String)
-case class Specifications(count: Int, spec: String)
-case class Contributors(count: Int, contributor: String)
-case class Stations(count: Int, station: String)
+object StatsRouting{
+	case class StatsQueryParams(
+		page: Int,
+		pagesize: Int,
+		specs: Option[Seq[String]],
+		stations: Option[Seq[String]],
+		submitters: Option[Seq[String]],
+		contributors: Option[Seq[String]]
+	)
+	case class DownloadsByCountry(count: Int, countryCode: String)
+	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
+	case class DownloadsPerTimeframe(count: Int, ts: Instant)
+	case class DownloadObjStat(count: Int, hashId: String)
+	case class DownloadStats(stats: IndexedSeq[DownloadObjStat], size: Int)
+	case class Specifications(count: Int, spec: String)
+	case class Contributors(count: Int, contributor: String)
+	case class Stations(count: Int, station: String)
+}
 
 class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends DefaultJsonProtocol {
+	import StatsRouting._
 	implicit val downloadsByCountryFormat = jsonFormat2(DownloadsByCountry)
 	implicit val downloadsPerWeekFormat = jsonFormat3(DownloadsPerWeek)
 	implicit val downloadsPerTimeframeFormat = jsonFormat2(DownloadsPerTimeframe)
+	implicit val downloadObjStatFormat = jsonFormat2(DownloadObjStat)
 	implicit val downloadStatsFormat = jsonFormat2(DownloadStats)
 	implicit val specificationsFormat = jsonFormat2(Specifications)
 	implicit val contributorsFormat = jsonFormat2(Contributors)

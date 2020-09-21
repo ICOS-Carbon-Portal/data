@@ -46,9 +46,7 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 
 --	Materialized views to speed up queries
 
---DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
---REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_country_mv;
---VACUUM (ANALYZE) downloads_country_mv
+-- DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_country_mv AS
 	SELECT
 		MIN(downloads.id) AS id,
@@ -67,9 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_submitter ON public.download
 CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_station ON public.downloads_country_mv USING HASH(station);
 CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_contributors ON public.downloads_country_mv USING gin (contributors);
 
---DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
---REFRESH MATERIALIZED VIEW CONCURRENTLY downloads_timebins_mv;
---VACUUM (ANALYZE) downloads_timebins_mv
+-- DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_timebins_mv AS
 	SELECT
 		MIN(downloads.id) AS id,
@@ -90,9 +86,7 @@ CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_submitter ON public.downloa
 CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_station ON public.downloads_timebins_mv USING HASH(station);
 CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_contributors ON public.downloads_timebins_mv USING gin (contributors);
 
---DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
---REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_mv;
---VACUUM (ANALYZE) dlstats_mv
+-- DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_mv AS
 	SELECT
 		dl.count,
@@ -117,9 +111,7 @@ CREATE INDEX IF NOT EXISTS idx_dlstats_mv_submitter ON public.dlstats_mv USING H
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_station ON public.dlstats_mv USING HASH(station);
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_contributors ON public.dlstats_mv USING gin (contributors);
 
---DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
---REFRESH MATERIALIZED VIEW CONCURRENTLY dlstats_full_mv;
---VACUUM dlstats_full_mv
+-- DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_full_mv AS
 	SELECT
 		COUNT(hash_id)::int AS count,
@@ -129,9 +121,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_full_mv AS
 	ORDER BY count DESC;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_full_mv_hash_id ON public.dlstats_full_mv (hash_id);
 
---DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
---REFRESH MATERIALIZED VIEW specifications_mv;
---VACUUM specifications_mv
+-- DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS specifications_mv AS
 	SELECT
 		COUNT(downloads.hash_id)::int AS count,
@@ -139,10 +129,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS specifications_mv AS
 	FROM dobjs
 		INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
 	GROUP BY dobjs.spec;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_specifications_mv ON public.specifications_mv (spec);
 
---DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
---REFRESH MATERIALIZED VIEW contributors_mv;
---VACUUM contributors_mv
+-- DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS contributors_mv AS
 	SELECT
 		COUNT(downloads.hash_id)::int AS count,
@@ -150,10 +139,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS contributors_mv AS
 	FROM downloads
 		INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
 	GROUP BY contributors.contributor;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_contributors_mv ON public.contributors_mv (contributor);
 
---DROP MATERIALIZED VIEW IF EXISTS stations_mv;
---REFRESH MATERIALIZED VIEW stations_mv;
---VACUUM stations_mv
+-- DROP MATERIALIZED VIEW IF EXISTS stations_mv;
 CREATE MATERIALIZED VIEW IF NOT EXISTS stations_mv AS
 	SELECT
 		COUNT(downloads.hash_id)::int AS count,
@@ -162,7 +150,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS stations_mv AS
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
 	WHERE dobjs.station IS NOT NULL
 	GROUP BY dobjs.station;
-
+CREATE UNIQUE INDEX IF NOT EXISTS idx_stations_mv ON public.stations_mv (station);
 
 --	Stored Procedures
 
@@ -189,9 +177,7 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY country_code
-ORDER BY count DESC
-LIMIT _pagesize
-OFFSET _page * _pagesize - _pagesize;
+ORDER BY count DESC;
 
 $$;
 
@@ -219,9 +205,7 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY week_start
-ORDER BY week_start
-LIMIT _pagesize
-OFFSET _page * _pagesize - _pagesize;
+ORDER BY week_start;
 
 $$;
 
@@ -247,9 +231,7 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY month_start
-ORDER BY month_start
-LIMIT _pagesize
-OFFSET _page * _pagesize - _pagesize;
+ORDER BY month_start;
 
 $$;
 
@@ -275,14 +257,41 @@ WHERE (
 	AND (_contributors IS NULL OR contributors ?| _contributors)
 )
 GROUP BY year_start
-ORDER BY year_start
-LIMIT _pagesize
-OFFSET _page * _pagesize - _pagesize;
+ORDER BY year_start;
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadStats;
+-- DROP FUNCTION IF EXISTS downloadStatsSize;
+CREATE OR REPLACE FUNCTION public.downloadStatsSize(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
+	RETURNS TABLE(
+		size int
+	)
+	LANGUAGE plpgsql
+	VOLATILE
+AS $$
+
+BEGIN
+	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _contributors IS NULL THEN
+		RETURN QUERY
+			SELECT COUNT(*)::int AS size
+			FROM dlstats_full_mv;
+	ELSE
+		RETURN QUERY
+			SELECT COUNT(*)::int AS size
+			FROM dlstats_mv
+			WHERE (
+				(_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+			);
+	END IF;
+END
+$$;
+
+---------------------
+--  DROP FUNCTION IF EXISTS downloadStats;
 CREATE OR REPLACE FUNCTION public.downloadStats(_page int, _pagesize int, _specs text[] DEFAULT NULL, _stations text[] DEFAULT NULL, _submitters text[] DEFAULT NULL, _contributors text[] DEFAULT NULL)
 	RETURNS TABLE(
 		count int,

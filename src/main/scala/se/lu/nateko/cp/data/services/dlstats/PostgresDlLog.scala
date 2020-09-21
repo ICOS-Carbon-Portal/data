@@ -6,7 +6,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.L2OrLessSpecificMeta
 import se.lu.nateko.cp.meta.core.data.L3SpecificMeta
-import se.lu.nateko.cp.data.routes.{StatsQueryParams, DownloadsByCountry, DownloadsPerWeek, DownloadsPerTimeframe, DownloadStats, Specifications, Contributors, Stations}
+import se.lu.nateko.cp.data.routes.StatsRouting._
 
 import akka.Done
 import akka.event.LoggingAdapter
@@ -155,11 +155,18 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
-	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadStats]] =
-		runAnalyticalQuery("SELECT count, hash_id FROM downloadStats", Some(queryParams)){rs =>
-			DownloadStats(rs.getInt("count"), rs.getString("hash_id"))
+	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[DownloadStats] = {
+		val objStatsFut = runAnalyticalQuery("SELECT count, hash_id FROM downloadStats", Some(queryParams)){rs =>
+			DownloadObjStat(rs.getInt("count"), rs.getString("hash_id"))
 		}
+		val sizeFut = runAnalyticalQuery("SELECT size FROM downloadStatsSize", Some(queryParams)){
+			rs => rs.getInt("size")
+		}.map(_.head)
 
+		objStatsFut.zip(sizeFut).map{
+			case (stats, size) => DownloadStats(stats, size)
+		}
+	}
 
 	def specifications(implicit envri: Envri): Future[IndexedSeq[Specifications]] = {
 		runAnalyticalQuery("SELECT count, spec FROM specifications()"){rs =>
@@ -212,8 +219,16 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 	}
 
 	private def updateMatView(matView: String)(implicit envri: Envri): Unit =
-		withConnectionEager(conf.writer){
-			_.prepareStatement(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ; VACUUM $matView ;").execute()
+		withConnectionEager(conf.admin){conn =>
+			// Disable transactions
+			conn.setAutoCommit(true)
+			val st = conn.createStatement
+			try{
+				st.execute(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ;")
+				st.execute(s"VACUUM (ANALYZE) $matView ;")
+			}finally{
+				st.close()
+			}
 		}.failed.foreach{
 			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
 		}
