@@ -1,5 +1,5 @@
 import {sparql} from 'icos-cp-backend';
-import config from 'config'
+import config from './config'
 
 export function getObjSpecLabels(specUris){
 	const query = `select * where {
@@ -26,6 +26,22 @@ export function getFileNames(dobjUris){
 			?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/hasName> ?fname .
 		}`;
 	return sparqlLabels(query, "dobj", "fname");
+}
+
+export function getContributorNames(contribUris){
+	const query = `
+		prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		select ?contrib ?name where{
+			values ?contrib { <${contribUris.join("> <")}> }
+			{
+			  ?contrib cpmeta:hasFirstName ?firstName .
+			  ?contrib cpmeta:hasLastName ?lastName .
+			  BIND(CONCAT(?firstName, " ", ?lastName) AS ?name)
+		   } UNION {
+			  ?contrib cpmeta:hasName ?name
+		   }
+		}`;
+	return sparqlLabels(query, "contrib", "name");
 }
 
 //Returns a Promise of a dictionary-object with labels

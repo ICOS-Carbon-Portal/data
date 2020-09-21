@@ -1,6 +1,7 @@
 import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
+import { getFileNames, getStationLabels, getObjSpecLabels, getContributorNames } from './sparql';
 import localConfig from './config';
 
 const pagesize = localConfig.pagesize;
@@ -40,8 +41,6 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : wildcardText;
 	const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : wildcardText;
 
-	console.log({ searchParams, dataLevel, format, specification, stationsName, contributors, themes });
-
 	return `{
 		"specification":[${specification}],
 		"format":[${format}],
@@ -52,22 +51,20 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	}`;
 };
 
-export const getSearchParams = (filters, stationCountryCodeLookup = []) => {
+export const getSearchParams = (filters) => {
 	const searchParams = {
 		specs: filters.specification && filters.specification.length ? filters.specification : undefined,
 		stations: filters.stations && filters.stations.length ? filters.stations : undefined,
 		submitters: undefined,
-		contributors: undefined
+		contributors: filters.contributors && filters.contributors.length ? filters.contributors : undefined
 	};
 
-	return searchParams;
+	const searchParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
+		if (searchParams[key]) acc.push({ name: key, values: searchParams[key] });
+		return acc;
+	}, []);
 
-	// const filterParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
-	// 	if (filterParams[key]) acc.push({ name: key, values: searchParams[key] });
-	// 	return acc;
-	// }, []);
-
-	// return filterParamsReduced.map(fp => `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`).join('&');
+	return searchParamsReduced.map(fp => `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`).join('&');
 };
 
 const stationFilters = (filters, stationCountryCodeLookup) => {
@@ -158,7 +155,7 @@ order by ?label`;
 
 
 // Previews
-const getFileNames = resultList => {
+const getFileNamesFromSparql = resultList => {
 	const dobjs = resultList.map(obj => `<${config.cpmetaObjectUri}${obj._id}>`).join(' ');
 
 	return `
@@ -170,7 +167,7 @@ select ?dobj ?fileName where{
 };
 
 const combineWithFileNames = (aggregationResult) => {
-	const sparqlResult = sparql(getFileNames(aggregationResult._embedded), config.sparqlEndpoint, true);
+	const sparqlResult = sparql(getFileNamesFromSparql(aggregationResult._embedded), config.sparqlEndpoint, true);
 
 	return sparqlResult.then(res => {
 		const fileNameMappings = res.results.bindings.reduce((acc, curr) => {
@@ -275,6 +272,74 @@ const formatPopularTimeserieVars = popularTimeserieVars => {
 	});
 
 	return conformData(popularTimeserieVars, formattedData);
+};
+
+export const getDownloadStatsApi = async (page, searchParams) => {
+	const downloadStats = await callApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`);
+
+	if (downloadStats.size === 0) {
+		return Promise.resolve(downloadStats);
+	}
+
+	return getFileNames(downloadStats.stats.map(ds => config.cpmetaObjectUri + ds.hashId))
+		.then(fileNames => ({
+			size: downloadStats.size,
+			stats: downloadStats.stats.map(ds => ({ ...ds, ...{ fileName: fileNames[config.cpmetaObjectUri + ds.hashId] } }))
+		}));
+};
+
+export const getSpecsApi = async () => {
+	const specifications = await callApi('specifications');
+
+	if (specifications.size === 0) {
+		return Promise.resolve(specifications);
+	}
+
+	return getObjSpecLabels(specifications.map(s => s.spec))
+		.then(specLabels => specifications.map(s => ({
+			id: s.spec,
+			count: s.count,
+			label: specLabels[s.spec]
+		})));
+};
+
+export const getStationsApi = async () => {
+	const stations = await callApi('stations');
+
+	if (stations.size === 0) {
+		return Promise.resolve(stations);
+	}
+
+	return getStationLabels(stations.map(s => s.station))
+		.then(stationNames => stations.map(st => ({
+			id: st.station,
+			count: st.count,
+			label: stationNames[st.station]
+		})));
+};
+
+export const getContributorsApi = async () => {
+	const contributors = await callApi('contributors');
+
+	if (contributors.size === 0) {
+		return Promise.resolve(contributors);
+	}
+
+	return getContributorNames(contributors.map(s => s.contributor))
+		.then(contributorNames => {
+			return contributors.map(c => ({
+				id: c.contributor,
+				count: c.count,
+				label: contributorNames[c.contributor]
+			}))
+		});
+};
+
+export const callApi = (endpoint, searchParams, parser) => {
+	const url = searchParams ? `api/${endpoint}?${searchParams}` : `api/${endpoint}`;
+
+	return getJson(url)
+		.then(data => parser ? data.map(parser): data);
 };
 
 export const postToApi = (searchParams, endpoint) => {

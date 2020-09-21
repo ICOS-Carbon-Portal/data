@@ -18,7 +18,7 @@ export default class Filter extends Component {
 	}
 
 	render() {
-		const {filters, downloadStats, fetchDownloadStats} = this.props;
+		const { filters, downloadStats, resetFilters } = this.props;
 
 		const Row = ({filter}) => {
 			return (
@@ -29,7 +29,7 @@ export default class Filter extends Component {
 					<div className="col-md-8">
 						<Multiselect
 							placeholder={placeholders[filter.name]}
-							valueField="_id"
+							valueField="id"
 							textField="label"
 							data={filter.values}
 							value={downloadStats.getFilter(filter.name)}
@@ -47,14 +47,14 @@ export default class Filter extends Component {
 			<div className="panel panel-default">
 				<div className="panel-heading">
 					{showResetBtn
-						? <ResetBtn resetFiltersAction={() => fetchDownloadStats({})} />
+						? <ResetBtn resetFiltersAction={() => resetFilters()} />
 						: null
 					}
 					<h3 className="panel-title">Data object specification filter</h3>
 				</div>
 				<div className="panel-body">
 					{ filters
-						? filters.map((filter, idx) => <Row key={'row-'+idx} filter={filter} />)
+						? filters.map((filter, idx) => filter.values ? <Row key={'row-'+idx} filter={filter} /> : null)
 						: null
 					}
 				</div>
@@ -63,7 +63,7 @@ export default class Filter extends Component {
 	}
 
 	handleSelectionChange(filter, values) {
-		this.props.updateTableWithFilter(filter.name, values.map(value => value._id));
+		this.props.updateTableWithFilter(filter.name, values.map(value => value.id));
 	}
 
 	tagItem({item}) {

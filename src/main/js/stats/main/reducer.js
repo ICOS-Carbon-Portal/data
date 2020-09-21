@@ -1,9 +1,8 @@
-import {ERROR, COUNTRIES_FETCHED, DOWNLOAD_STATS_FETCHED, FILTERS, STATS_UPDATE, STATS_UPDATED,
-	DOWNLOAD_STATS_PER_DATE_FETCHED, SET_VIEW_MODE,
-	RADIO_CREATE, PREVIEW_DATA_FETCHED, RADIO_UPDATED} from './actions';
+import { actionTypes } from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
 import StatsGraph from './models/StatsGraph';
+import BackendSource from "./models/BackendSource";
 import ViewMode from "./models/ViewMode";
 import StatsMap from "./models/StatsMap";
 import {RadioConfig} from "./models/RadioConfig";
@@ -11,12 +10,13 @@ import localConfig from './config';
 
 
 export const initState = {
+	backendSource: new BackendSource(),
 	view: new ViewMode(),
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
 	paging: {
-		offset: 0,
+		page: 0,
 		to: 0,
 		objCount: 0,
 		pagesize: localConfig.pagesize
@@ -28,84 +28,92 @@ export default function(state = initState, action){
 
 	switch(action.type){
 
-		case ERROR:
+		case actionTypes.ERROR:
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
 
-		case SET_VIEW_MODE:
+		case actionTypes.SET_VIEW_MODE:
 			return update({
 				view: state.view.setMode(action.mode),
 				statsGraph: {},
 				dateUnit: initState.dateUnit
 			});
 
-		case COUNTRIES_FETCHED:
+		case actionTypes.COUNTRIES_FETCHED:
 			return update({statsMap: state.statsMap.withCountriesTopo(action.countriesTopo)});
 
-		case DOWNLOAD_STATS_FETCHED:
+		case actionTypes.DOWNLOAD_STATS_FETCHED:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats._embedded, action.filters),
-				statsMap: state.statsMap.withCountryStats(action.countryStats._embedded),
+				downloadStats: new StatsTable(action.downloadStats, action.filters),
+				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
-					offset: action.page,
-					to: action.downloadStats._returned,
-					objCount: action.downloadStats._size,
+					page: action.page,
+					to: action.to,
+					objCount: action.objCount,
 					pagesize: localConfig.pagesize
 				}
 			});
 
-		case DOWNLOAD_STATS_PER_DATE_FETCHED:
+		case actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED:
 			return update({
 				statsGraph: new StatsGraph(action.dateUnit, action.downloadsPerDateUnit),
 				dateUnit: action.dateUnit
 			});
 
-		case FILTERS:
+		case actionTypes.FILTERS:
 			return update({
+				stationCountryCodeLookup: action.stationCountryCodeLookup,
 				filters: [{
 					name: "specification",
-					values: action.specifications._embedded
+					values: action.specifications
 				}, {
 					name: "format",
-					values: action.formats._embedded
+					values: action.formats
 				}, {
 					name: "dataLevel",
-					values: action.dataLevels._embedded
+					values: action.dataLevels
 				}, {
 					name: "stations",
-					values: action.stations._embedded
+					values: action.stations
 				}, {
 					name: "contributors",
-					values: action.contributors._embedded
+					values: action.contributors
 				}, {
 					name: "themes",
-					values: action.themes._embedded
+					values: action.themes
 				}, {
 					name: "countryCodes",
 					values: action.countryCodes
 				}]
 			});
 
-		case STATS_UPDATE:
+		case actionTypes.STATS_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withFilter(action.varName, action.values)
 			});
-
-		case STATS_UPDATED:
+		
+		case actionTypes.RESET_FILTERS:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats._embedded, state.downloadStats.filters),
-				statsMap: state.statsMap.withCountryStats(action.countryStats._embedded),
+				downloadStats: state.downloadStats.withoutFilter()
+			});
+
+		case actionTypes.STATS_UPDATED:
+			return update({
+				downloadStats: new StatsTable(action.downloadStats, state.downloadStats.filters),
+				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
-					offset: 1,
-					to: action.downloadStats._returned,
-					objCount: action.downloadStats._size,
+					page: 1,
+					to: action.to,
+					objCount: action.objCount,
 					pagesize: localConfig.pagesize
 				}
 			});
 
-		case PREVIEW_DATA_FETCHED:
-			const formattedData = action.previewDataResult;
+		case actionTypes.PREVIEW_DATA_FETCHED:
+			const data = action.previewDataResult.data.map(d => ({ ...d, ...{ hashId: d._id } }));
+			const formattedData = { ...action.previewDataResult, ...{ data } };
+			// const formattedData = action.previewDataResult;
 			const previewData = filterPreviewData(state.subRadio, formattedData.data);
 			const paging = getPreviewPaging(
 				formattedData.data,
@@ -115,7 +123,7 @@ export default function(state = initState, action){
 				state.mainRadio,
 				state.subRadio
 			);
-
+			console.log({ action, data, formattedData, previewData, paging });
 			return update({
 				lastPreviewCall: action.fetchFn,
 				previewDataFull: formattedData.data,
@@ -124,7 +132,7 @@ export default function(state = initState, action){
 				paging
 			});
 
-		case RADIO_CREATE:
+		case actionTypes.RADIO_CREATE:
 			const radio = new RadioConfig(action.radioConfig, action.radioAction);
 			const name = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";
 
@@ -132,9 +140,14 @@ export default function(state = initState, action){
 				[name]: radio
 			});
 
-		case RADIO_UPDATED:
+		case actionTypes.RADIO_UPDATED:
 			return update(updateRadiosAndPreviewData(state, action));
+		
+		case actionTypes.SET_BACKEND_SOURCE:
+			const newBackendSource = new BackendSource(action.source);
 
+			return { ...initState, ...{ backendSource: newBackendSource } };
+		
 		default:
 			return state;
 	}
@@ -162,7 +175,7 @@ const updateRadiosAndPreviewData = (state, action) => {
 		state.previewDataFull,
 		previewData,
 		state.previewSize,
-		state.paging.offset,
+		state.paging.page,
 		state.mainRadio,
 		state.subRadio
 	);
@@ -175,14 +188,14 @@ const updateRadiosAndPreviewData = (state, action) => {
 	};
 };
 
-const getPreviewPaging = (previewDataFull, previewData, previewSize, offset, mainRadio, subRadio) => {
+const getPreviewPaging = (previewDataFull, previewData, previewSize, page, mainRadio, subRadio) => {
 	const adjustPaging = mainRadio.selected.parentTo === subRadio.name;
 	const [to, objCount] = adjustPaging
 		? [previewData.length, previewData.length]
 		: [previewDataFull.length, previewSize];
 
 	return {
-		offset,
+		page,
 		to,
 		objCount,
 		pagesize: localConfig.pagesize

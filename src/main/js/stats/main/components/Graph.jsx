@@ -33,7 +33,7 @@ export default class Graph extends Component{
 				const filterName = placeholders[key];
 
 				const filterValues = filters.find(filter => filter.name === key).values;
-				const labels = filterIds.map(id => filterValues.find(val => val._id === id).label);
+				const labels = filterIds.map(id => filterValues.find(val => val.id === id).label);
 				acc.push({filterName, labels});
 				return acc;
 			} else {

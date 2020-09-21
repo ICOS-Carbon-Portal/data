@@ -8,7 +8,7 @@ export default class StatsGraph {
 	}
 
 	parseData(data){
-		this._data = data.map(d => [new Date(d._id.$date), d.count]);
+		this._data = data.map(d => [d.date, d.count]);
 		this._weeks = data.map(d => d.week);
 	}
 

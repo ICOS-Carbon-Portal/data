@@ -28,8 +28,9 @@ const DownloadsView = props => {
 				<Filter
 					filters={props.filters}
 					updateTableWithFilter={props.updateTableWithFilter}
+					resetFilters={props.resetFilters}
 					downloadStats={props.downloadStats}
-					fetchDownloadStats={props.fetchDownloadStats}/>
+				/>
 
 				<h4>Downloads per country</h4>
 				<Map

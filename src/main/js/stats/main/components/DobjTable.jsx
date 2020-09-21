@@ -8,17 +8,17 @@ export default class DobjTable extends Component {
   }
 
   render() {
-    const {dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging} = this.props;
-    const start = (paging.offset - 1) * paging.pagesize;
-    const end = start + paging.to;
+	const {dataList, paging, requestPage, panelTitle, tableHeaders, disablePaging} = this.props;
+	const start = paging.objCount === 0 ? -1 : (paging.page - 1) * paging.pagesize;
+	const end = paging.objCount === 0 ? 0 : start + paging.to;
 
-    return (
+	return (
 		<div className="panel panel-default">
 			<div className="panel-heading">
 				{!disablePaging
 					? <div style={{float: 'right'}}>
-						<StepButton direction="backward" enabled={start > 0} onStep={() => requestPage(paging.offset-1)} />
-						<StepButton direction="forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.offset+1)} />
+						<StepButton direction="backward" enabled={start > 0} onStep={() => requestPage(paging.page-1)} />
+						<StepButton direction="forward" enabled={end < paging.objCount} onStep={() => requestPage(paging.page+1)} />
 					</div>
 					: null
 				}
@@ -68,17 +68,19 @@ const RowSwitch = ({dobj}) => {
 	}
 };
 
-const RowDownloads = ({dobj}) => {
-  return (
-    <tr>
-      <td>{dobj.fileName}</td>
-		<td><LandingPageLink id={dobj._id} /></td>
-      <td>{dobj.count}</td>
-    </tr>
-  )
+const RowDownloads = ({ dobj }) => {
+	const fileName = dobj.fileName || <i>Data object does no longer exist</i>;
+
+	return (
+		<tr>
+			<td>{fileName}</td>
+			<td><LandingPageLink hashId={dobj.hashId} /></td>
+			<td>{dobj.count}</td>
+		</tr>
+	)
 };
 
-const RowPreviewTS = ({dobj}) => {
+const RowPreviewTS = ({ dobj }) => {
 	return (
 		<tr>
 			<td>
@@ -89,7 +91,7 @@ const RowPreviewTS = ({dobj}) => {
 					<div><u>Variables on Y:</u> {dobj.y}</div>
 				</details>
 			</td>
-			<td><LandingPageLink id={dobj._id} /></td>
+			<td><LandingPageLink hashId={dobj.hashId} /></td>
 			<td>{dobj.count}</td>
 		</tr>
 	);
@@ -105,13 +107,13 @@ const RowPreviewNetCDF = ({dobj}) => {
 					<div><u>Variables:</u> {dobj.variables}</div>
 				</details>
 			</td>
-			<td><LandingPageLink id={dobj._id} /></td>
+			<td><LandingPageLink hashId={dobj.hashId} /></td>
 			<td>{dobj.count}</td>
 		</tr>
 	);
 };
 
-const RowPreviewMapGraph = ({dobj}) => {
+const RowPreviewMapGraph = ({ dobj }) => {
 	return (
 		<tr>
 			<td>
@@ -123,7 +125,7 @@ const RowPreviewMapGraph = ({dobj}) => {
 					<div><u>Shown in graph (Y2):</u> {dobj.y2}</div>
 				</details>
 			</td>
-			<td><LandingPageLink id={dobj._id} /></td>
+			<td><LandingPageLink hashId={dobj.hashId} /></td>
 			<td>{dobj.count}</td>
 		</tr>
 	);
@@ -138,8 +140,8 @@ const RowPreviewPopularTSVals = ({dobj}) => {
 	);
 };
 
-const LandingPageLink = ({id}) => {
-	return <a href={`${config.cpmetaObjectUri}${id}`} target="_blank">{id.slice(0, 24)}</a>
+const LandingPageLink = ({ hashId }) => {
+	return <a href={`${config.cpmetaObjectUri}${hashId}`} target="_blank">{hashId.slice(0, 24)}</a>
 };
 
 const StepButton = props => {

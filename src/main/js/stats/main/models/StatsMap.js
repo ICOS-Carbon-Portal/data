@@ -27,8 +27,8 @@ export default class StatsMap {
 		return this._isReadyForMapUpdate;
 	}
 
-	getCount(isoCode){
-		return this._countryStats.find(stat => stat._id === isoCode).count;
+	getCount(isoCode) {
+		return this._countryStats.find(stat => stat.countryCode === isoCode).count;
 	}
 
 	get minCount(){

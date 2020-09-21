@@ -59,7 +59,7 @@ export default class Map extends Component {
 
 		this._countriesTopoLayer = L.geoJSON(statsMap.countriesTopo, {
 			filter: feature => {
-				return statsMap.countryStats.some(stat => stat._id === feature.properties.iso2);
+				return statsMap.countryStats.some(stat => stat.countryCode === feature.properties.iso2);
 			},
 			style: feature => {
 				const count = statsMap.getCount(feature.properties.iso2);

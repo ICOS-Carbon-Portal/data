@@ -1,24 +1,29 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
 	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
-	getPreviewAggregation, getPopularTimeserieVars} from './backend';
+	getPreviewAggregation, getPopularTimeserieVars, callApi, getSearchParams, getDownloadStatsApi, getStationsApi,
+	getSpecsApi, getContributorsApi} from './backend';
 import {getConfig} from "./models/RadioConfig";
 
-export const ERROR = 'ERROR';
-export const DOWNLOAD_STATS_FETCHED = 'DOWNLOAD_STATS_FETCHED';
-export const FILTERS = 'FILTERS';
-export const STATS_UPDATE = 'STATS_UPDATE';
-export const STATS_UPDATED = 'STATS_UPDATED';
-export const COUNTRIES_FETCHED = 'COUNTRIES_FETCHED';
-export const DOWNLOAD_STATS_PER_DATE_FETCHED = 'DOWNLOAD_STATS_PER_DATE_FETCHED';
-export const SET_VIEW_MODE = 'SET_VIEW_MODE';
-export const RADIO_CREATE = 'RADIO_CREATE';
-export const PREVIEW_DATA_FETCHED = 'PREVIEW_DATA_FETCHED';
-export const RADIO_UPDATED = 'RADIO_UPDATED';
+export const actionTypes = {
+	ERROR: 'ERROR',
+	DOWNLOAD_STATS_FETCHED: 'DOWNLOAD_STATS_FETCHED',
+	FILTERS: 'FILTERS',
+	STATS_UPDATE: 'STATS_UPDATE',
+	STATS_UPDATED: 'STATS_UPDATED',
+	COUNTRIES_FETCHED: 'COUNTRIES_FETCHED',
+	DOWNLOAD_STATS_PER_DATE_FETCHED: 'DOWNLOAD_STATS_PER_DATE_FETCHED',
+	SET_VIEW_MODE: 'SET_VIEW_MODE',
+	RADIO_CREATE: 'RADIO_CREATE',
+	PREVIEW_DATA_FETCHED: 'PREVIEW_DATA_FETCHED',
+	RADIO_UPDATED: 'RADIO_UPDATED',
+	SET_BACKEND_SOURCE: 'SET_BACKEND_SOURCE',
+	RESET_FILTERS: 'RESET_FILTERS',
+}
 
 const failWithError = dispatch => error => {
 	console.log(error);
 	dispatch({
-		type: ERROR,
+		type: actionTypes.ERROR,
 		error
 	});
 };
@@ -30,7 +35,7 @@ export const init = (dispatch, getState) => {
 
 export const setViewMode = mode => dispatch => {
 	dispatch({
-		type: SET_VIEW_MODE,
+		type: actionTypes.SET_VIEW_MODE,
 		mode
 	});
 
@@ -45,10 +50,10 @@ const fetchDataForView = viewMode => dispatch => {
 	}
 };
 
-const initDownloads = dispatch => {
-	dispatch(fetchDownloadStats({}));
-	dispatch(fetchFilters);
+const initDownloads = (dispatch) => {
 	dispatch(fetchCountries);
+	dispatch(fetchFilters);
+	dispatch(fetchDownloadStats());
 };
 
 const initPreviewView = dispatch => {
@@ -57,7 +62,7 @@ const initPreviewView = dispatch => {
 	const radioConfigMain = getConfig('main');
 
 	dispatch({
-		type: RADIO_CREATE,
+		type: actionTypes.RADIO_CREATE,
 		radioConfig: radioConfigMain,
 		radioAction: actionTxt => {
 			dispatch(radioSelected(radioConfigMain, actionTxt));
@@ -68,7 +73,7 @@ const initPreviewView = dispatch => {
 	const radioConfigSub = getConfig('popularTSVars');
 
 	dispatch({
-		type: RADIO_CREATE,
+		type: actionTypes.RADIO_CREATE,
 		radioConfig: radioConfigSub,
 		radioAction: actionTxt => dispatch(radioSelected(radioConfigSub, actionTxt))
 	});
@@ -84,7 +89,7 @@ const fetchPreviewData = actionTxt => dispatch => {
 const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
 	fetchFn(page).then(previewDataResult => {
 		dispatch({
-			type: PREVIEW_DATA_FETCHED,
+			type: actionTypes.PREVIEW_DATA_FETCHED,
 			page,
 			previewDataResult,
 			fetchFn
@@ -94,7 +99,7 @@ const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
 
 export const radioSelected = (radioConfig, actionTxt) => dispatch => {
 	dispatch({
-		type: RADIO_UPDATED,
+		type: actionTypes.RADIO_UPDATED,
 		radioConfig,
 		actionTxt
 	});
@@ -104,7 +109,7 @@ const fetchCountries = dispatch => {
 	getCountriesGeoJson().then(
 		countriesTopo => {
 			dispatch({
-				type: COUNTRIES_FETCHED,
+				type: actionTypes.COUNTRIES_FETCHED,
 				countriesTopo
 			});
 		},
@@ -112,121 +117,173 @@ const fetchCountries = dispatch => {
 	);
 };
 
-export const fetchDownloadStats = filters => (dispatch, getState) => {
-	const state = getState();
-	const useFullColl = useFullCollection(filters);
-	const avars = getAvars(filters, state.stationCountryCodeLookup);
+export const resetFilters = () => dispatch => {
+	dispatch({
+		type: actionTypes.RESET_FILTERS
+	});
+	dispatch(fetchDownloadStats())
+};
 
-	Promise.all([getDownloadCounts(useFullColl, avars), getDownloadsByCountry(useFullColl, avars)])
-		.then(([downloadStats, countryStats]) => {
-			dispatch({
-				type: DOWNLOAD_STATS_FETCHED,
-				downloadStats,
-				countryStats,
-				filters,
-				page: 1
+export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
+	const { downloadStats, stationCountryCodeLookup, dateUnit, backendSource } = getState();
+	const filters = downloadStats.filters;
+	const page = newPage || 1;
+
+	if (backendSource.source === 'restheart') {
+		const useFullColl = useFullCollection(filters);
+		const avars = getAvars(filters, stationCountryCodeLookup);
+
+		Promise.all([getDownloadCounts(useFullColl, avars, page), getDownloadsByCountry(useFullColl, avars)])
+			.then(([downloadStats, countryStats]) => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_FETCHED,
+					downloadStats: downloadStats._embedded.map(d => ({ ...d, ...{ hashId: d._id } })),
+					countryStats: countryStats._embedded.map(d => ({ ...d, ...{ countryCode: d._id } })),
+					filters,
+					page,
+					to: downloadStats._returned,
+					objCount: downloadStats._size
+				});
 			});
+		dispatch(fetchDownloadStatsPerDateUnit(dateUnit, avars));
+		
+	} else {
+		const searchParams = getSearchParams(filters);
 
-			dispatch(fetchDownloadStatsPerDateUnit(state.dateUnit, avars));
-		});
+		Promise.all([getDownloadStatsApi(page, searchParams), callApi('downloadsByCountry', searchParams)])
+			.then(([downloadStats, countryStats]) => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_FETCHED,
+					downloadStats: downloadStats.stats,
+					countryStats,
+					filters,
+					page,
+					to: downloadStats.stats.length,
+					objCount: downloadStats.size
+				});
+			});
+		dispatch(fetchDownloadStatsPerDateUnit(dateUnit));
+	}
 };
 
 const fetchFilters = (dispatch, getState) => {
-	Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
-		([specifications, formats, dataLevels, stations, contributors, themes, countryCodes]) => {
-			const state = getState();
-			let countryCodesLabels = countryCodes.countryCodeFilter;
-			state.stationCountryCodeLookup = countryCodes.stationCountryCodeLookup;
-			dispatch({
-				type: FILTERS,
-				specifications,
-				formats,
-				dataLevels,
-				stations,
-				contributors,
-				themes,
-				countryCodes: countryCodesLabels
-			});
-		}
-	)
+	const { backendSource } = getState();
+
+	if (backendSource.source === 'restheart') {
+		Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
+			([specifications, formats, dataLevels, stations, contributors, themes, countryCodes]) => {
+				let countryCodesLabels = countryCodes.countryCodeFilter;
+				const parser = d => ({ ...d, ...{ id: d._id } });
+
+				dispatch({
+					type: actionTypes.FILTERS,
+					specifications: specifications._embedded.map(parser),
+					formats: formats._embedded.map(parser),
+					dataLevels: dataLevels._embedded.map(parser),
+					stations: stations._embedded.map(parser),
+					contributors: contributors._embedded.map(parser),
+					themes: themes._embedded.map(parser),
+					countryCodes: countryCodesLabels,
+					stationCountryCodeLookup: countryCodes.stationCountryCodeLookup
+				});
+			}
+		);
+	
+	} else {
+		Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi()]).then(
+			([specifications, contributors, stations]) => {
+				dispatch({
+					type: actionTypes.FILTERS,
+					specifications,
+					stations,
+					contributors
+				});
+			}
+		);
+	}
 };
 
 export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, getState) => {
-	const state = getState();
-	const filters = state.downloadStats.filters;
-	const useFullColl = useFullCollection(filters);
+	const { stationCountryCodeLookup, downloadStats, backendSource } = getState();
+	const filters = downloadStats.filters;
 
-	const avarsGetter = avars => {
-		if (avars === undefined){
-			return getAvars(filters, state.stationCountryCodeLookup);
-		} else {
-			return avars;
-		}
-	};
+	if (backendSource.source === 'restheart') {
+		const useFullColl = useFullCollection(filters);
 
-	getDownloadsPerDateUnit(useFullColl, dateUnit, avarsGetter(avars))
-		.then(downloadsPerDateUnit => {
-			dispatch({
-				type: DOWNLOAD_STATS_PER_DATE_FETCHED,
-				dateUnit,
-				downloadsPerDateUnit
+		const avarsGetter = avars => {
+			if (avars === undefined) {
+				return getAvars(filters, stationCountryCodeLookup);
+			} else {
+				return avars;
+			}
+		};
+
+		getDownloadsPerDateUnit(useFullColl, dateUnit, avarsGetter(avars))
+			.then(downloadsPerDateUnit => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED,
+					dateUnit,
+					downloadsPerDateUnit: downloadsPerDateUnit.map(d => ({ ...d, ...{ date: new Date(d._id.$date) } }))
+				});
 			});
-		});
+		
+	} else {
+		const endpoint = 'downloadsPer' + dateUnit.slice(0, 1).toUpperCase() + dateUnit.slice(1);
+		const searchParams = getSearchParams(filters);
+		const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
+
+		callApi(endpoint, searchParams, parser)
+			.then(downloadsPerDateUnit => {
+				dispatch({
+					type: actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED,
+					dateUnit,
+					downloadsPerDateUnit
+				});
+			});
+	}
 };
 
 export const statsUpdate = (varName, values) => (dispatch, getState) => {
 
 	dispatch({
-		type: STATS_UPDATE,
+		type: actionTypes.STATS_UPDATE,
 		varName,
 		values
 	});
 
-	const state = getState();
-	const filters = state.downloadStats.filters;
-	const useFullColl = useFullCollection(filters);
-	const avars = getAvars(filters, state.stationCountryCodeLookup);
+	const { stationCountryCodeLookup, statsGraph, downloadStats, backendSource } = getState();
+	const filters = downloadStats.filters;
 
-	Promise.all([getDownloadCounts(useFullColl, avars), getDownloadsByCountry(useFullColl, avars)])
-		.then(([downloadStats, countryStats]) => {
-			dispatch({
-				type: STATS_UPDATED,
-				downloadStats,
-				countryStats
+	if (backendSource.source === 'restheart') {
+		const useFullColl = useFullCollection(filters);
+		const avars = getAvars(filters, stationCountryCodeLookup);
+
+		Promise.all([getDownloadCounts(useFullColl, avars), getDownloadsByCountry(useFullColl, avars)])
+			.then(([downloadStats, countryStats]) => {
+				dispatch({
+					type: actionTypes.STATS_UPDATED,
+					downloadStats: downloadStats._embedded.map(d => ({ ...d, ...{ hashId: d._id } })),
+					countryStats: countryStats._embedded.map(d => ({ ...d, ...{ countryCode: d._id } })),
+					to: downloadStats._returned,
+					objCount: downloadStats._size
+				});
+
+				dispatch(fetchDownloadStatsPerDateUnit(statsGraph.dateUnit, avars))
 			});
 
-			dispatch(fetchDownloadStatsPerDateUnit(state.statsGraph.dateUnit, avars))
-		});
+	} else {
+		dispatch(fetchDownloadStats(1));
+	}
 };
 
 export const requestPage = page => (dispatch, getState) => {
 	const viewMode = getState().view.mode;
 
 	if (viewMode === "downloads"){
-		dispatch(requestPageDownloads(page));
+		dispatch(fetchDownloadStats(page));
 	} else if (viewMode === "previews"){
 		dispatch(requestPagePreviews(page));
 	}
-};
-
-const requestPageDownloads = page => (dispatch, getState) => {
-	const state = getState();
-	const filters = state.downloadStats.filters;
-	const useFullColl = useFullCollection(filters);
-	const avars = getAvars(filters, state.stationCountryCodeLookup);
-
-	Promise.all([getDownloadCounts(useFullColl, avars, page), getDownloadsByCountry(useFullColl, avars)])
-		.then(([downloadStats, countryStats]) => {
-			dispatch({
-				type: DOWNLOAD_STATS_FETCHED,
-				downloadStats,
-				countryStats,
-				filters,
-				page
-			});
-
-			dispatch(fetchDownloadStatsPerDateUnit(state.statsGraph.dateUnit, avars));
-		});
 };
 
 const requestPagePreviews = page => (dispatch, getState) => {
@@ -237,4 +294,13 @@ const requestPagePreviews = page => (dispatch, getState) => {
 
 const useFullCollection = filters => {
 	return Object.keys(filters).length === 0 || Object.keys(filters).every(key => filters[key].length === 0);
+};
+
+export const setBackendSource = source => dispatch => {
+	dispatch({
+		type: actionTypes.SET_BACKEND_SOURCE,
+		source
+	});
+
+	dispatch(init);
 };
