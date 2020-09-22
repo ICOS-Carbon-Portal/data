@@ -309,6 +309,7 @@ BEGIN
 				count,
 				hash_id
 			FROM dlstats_full_mv
+			ORDER BY count DESC
 			LIMIT _pagesize
 			OFFSET _page * _pagesize - _pagesize;
 	ELSE
