@@ -46,7 +46,8 @@ export function getContributorNames(contribUris){
 
 //Returns a Promise of a dictionary-object with labels
 function sparqlLabels(query, resourceVar, labelVar){
-	return sparql(query, config.sparqlEndpoint, true).then(sparqlResults =>
+
+	return sparql({text: query}, config.sparqlEndpoint, false).then(sparqlResults =>
 		sparqlResults.results.bindings.reduce(
 			(acc, curr) => {
 				acc[curr[resourceVar].value] = curr[labelVar].value;

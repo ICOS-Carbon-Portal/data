@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 
 export const placeholders = {
-	specification: 'Specification',
+	specification: 'Data types',
 	dataLevel: 'Data level',
 	format: 'Format',
 	stations: 'Stations',
