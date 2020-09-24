@@ -113,7 +113,7 @@ export function getThemes() {
 }
 
 export function getStationsCountryCode() {
-	return sparql(stationsCountryCode(), config.sparqlEndpoint, true)
+	return sparql({text: stationsCountryCode()}, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				// Create an array of country codes [SV,EN,...]
@@ -141,7 +141,7 @@ export function getStationsCountryCode() {
 export function fetchSpecTable(queryFactory) {
 	const query = queryFactory();
 
-	return sparql(query, config.sparqlEndpoint, true);
+	return sparql({text: query}, config.sparqlEndpoint, true);
 }
 
 function stationsCountryCode() {
@@ -167,7 +167,8 @@ select ?dobj ?fileName where{
 };
 
 const combineWithFileNames = (aggregationResult) => {
-	const sparqlResult = sparql(getFileNamesFromSparql(aggregationResult._embedded), config.sparqlEndpoint, true);
+	const query = getFileNamesFromSparql(aggregationResult._embedded);
+	const sparqlResult = sparql({text: query}, config.sparqlEndpoint, true);
 
 	return sparqlResult.then(res => {
 		const fileNameMappings = res.results.bindings.reduce((acc, curr) => {
