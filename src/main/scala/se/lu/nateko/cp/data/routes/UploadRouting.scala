@@ -35,7 +35,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 	private implicit val uriFSU = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
 
 	private val log = uploadService.log
-	val extractEnvri = extractEnvriDirective
+	private val extractEnvri = extractEnvriDirective
+	private val extractEnvriSoft = extractEnvriDirective
+
 
 	private val upload: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
 		extractEnvri{implicit envri =>
@@ -79,7 +81,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 	}
 
 	private val uploadHttpOptions: Route =
-		extractEnvri{implicit envri =>
+		extractEnvri{envri =>
 			addAccessControlHeaders(envri){
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.PUT),
@@ -90,7 +92,21 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			}
 		}
 
-	private def addAccessControlHeaders(implicit envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
+	private val errHandler = ExceptionHandler{
+		//TODO Handle the case of data object metadata not found, and the case of metadata service being down
+		case authErr: UnauthorizedUpload => reportError(StatusCodes.Unauthorized, authErr)
+		case userErr: UploadUserError => reportError(StatusCodes.BadRequest, userErr)
+		case err => reportError(StatusCodes.InternalServerError, err)
+	}
+
+	private def reportError(code: StatusCode, err: Throwable): Route = {
+		val plainError = complete(code -> err.getMessage)
+		extractEnvriSoft{envri =>
+			addAccessControlHeaders(envri){plainError}
+		} ~ plainError
+	}
+
+	private def addAccessControlHeaders(envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
 			respondWithHeaders( //allowing uploads from meta-hosted browser web apps
 				`Access-Control-Allow-Origin`(origin.value), `Access-Control-Allow-Credentials`(true)
@@ -111,6 +127,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			options { uploadHttpOptions }
 		}
 	}
+
 }
 
 object UploadRouting{
@@ -122,18 +139,16 @@ object UploadRouting{
 		case None => complete(StatusCodes.BadRequest -> s"Expected base64Url- or hex-encoded SHA-256 hash")
 	}
 
-	private val errHandler = ExceptionHandler{
-		//TODO Handle the case of data object metadata not found, and the case of metadata service being down
-		case authErr: UnauthorizedUpload =>
-			complete((StatusCodes.Unauthorized, authErr.getMessage))
-		case userErr: UploadUserError =>
-			complete((StatusCodes.BadRequest, userErr.getMessage))
-		case err => throw err
-	}
-
 	def extractEnvriDirective(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
 		Envri.infer(h) match{
 			case None => complete(StatusCodes.BadRequest -> s"Unexpected host $h, cannot find corresponding ENVRI")
+			case Some(envri) => provide(envri)
+		}
+	}
+
+	def extractEnvriDirectiveSoft(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
+		Envri.infer(h) match{
+			case None => reject
 			case Some(envri) => provide(envri)
 		}
 	}
