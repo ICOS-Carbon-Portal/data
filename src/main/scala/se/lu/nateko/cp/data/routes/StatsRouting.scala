@@ -21,7 +21,8 @@ object StatsRouting{
 		specs: Option[Seq[String]],
 		stations: Option[Seq[String]],
 		submitters: Option[Seq[String]],
-		contributors: Option[Seq[String]]
+		contributors: Option[Seq[String]],
+		dlfrom: Option[Seq[String]],
 	)
 	case class DownloadsByCountry(count: Int, countryCode: String)
 	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
@@ -30,7 +31,9 @@ object StatsRouting{
 	case class DownloadStats(stats: IndexedSeq[DownloadObjStat], size: Int)
 	case class Specifications(count: Int, spec: String)
 	case class Contributors(count: Int, contributor: String)
+	case class Submitters(count: Int, submitter: String)
 	case class Stations(count: Int, station: String)
+	case class DownloadedFrom(count: Int, countryCode: String)
 }
 
 class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends DefaultJsonProtocol {
@@ -42,7 +45,9 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 	implicit val downloadStatsFormat = jsonFormat2(DownloadStats)
 	implicit val specificationsFormat = jsonFormat2(Specifications)
 	implicit val contributorsFormat = jsonFormat2(Contributors)
+	implicit val submittersFormat = jsonFormat2(Submitters)
 	implicit val stationsFormat = jsonFormat2(Stations)
+	implicit val downloadedFromFormat = jsonFormat2(DownloadedFrom)
 	
 	implicit val envriConfs = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
@@ -54,11 +59,12 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 			"specs".as[List[String]].?,
 			"stations".as[List[String]].?,
 			"submitters".as[List[String]].?,
-			"contributors".as[List[String]].?
-		){(page, pagesize, specs, stations, submitters, contributors) =>
+			"contributors".as[List[String]].?,
+			"dlfrom".as[List[String]].?
+		){(page, pagesize, specs, stations, submitters, contributors, dlfrom) =>
 			//The constants in the next line can be moved to a config, if needed
 			val pageSize = Math.min(100000, pagesize.getOrElse(100))
-			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors)
+			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors, dlfrom)
 			onSuccess(fetcher(qp)){res =>
 				complete(res)
 			}
@@ -82,8 +88,18 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 				complete(dbc)
 			}
 		} ~
+		path("submitters"){
+			onSuccess(pgClient.submitters){dbc =>
+				complete(dbc)
+			}
+		} ~
 		path("stations"){
 			onSuccess(pgClient.stations){dbc =>
+				complete(dbc)
+			}
+		} ~
+		path("dlfrom"){
+			onSuccess(pgClient.dlfrom){dbc =>
 				complete(dbc)
 			}
 		} ~
