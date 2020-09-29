@@ -7,8 +7,10 @@ export const placeholders = {
 	format: 'Format',
 	stations: 'Stations',
 	contributors: 'Contributors',
+	submitters: 'Submitters',
 	themes: 'Theme',
-	countryCodes: 'Country codes'
+	dlfrom: 'Download from',
+	dataOriginCountries: 'Data origin',
 };
 
 export default class Filter extends Component {
@@ -54,7 +56,7 @@ export default class Filter extends Component {
 				</div>
 				<div className="panel-body">
 					{ filters
-						? filters.map((filter, idx) => filter.values ? <Row key={'row-'+idx} filter={filter} /> : null)
+						? filters.map((filter, idx) => filter.values && filter.values.length ? <Row key={'row-'+idx} filter={filter} /> : null)
 						: null
 					}
 				</div>

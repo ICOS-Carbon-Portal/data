@@ -1,7 +1,8 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
 	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
 	getPreviewAggregation, getPopularTimeserieVars, callApi, getSearchParams, getDownloadStatsApi, getStationsApi,
-	getSpecsApi, getContributorsApi} from './backend';
+	getSpecsApi, getContributorsApi, getSubmittersApi, getCountryCodesLookup} from './backend';
+import {getStationCountryCodes} from './sparql';
 import {getConfig} from "./models/RadioConfig";
 
 export const actionTypes = {
@@ -18,6 +19,7 @@ export const actionTypes = {
 	RADIO_UPDATED: 'RADIO_UPDATED',
 	SET_BACKEND_SOURCE: 'SET_BACKEND_SOURCE',
 	RESET_FILTERS: 'RESET_FILTERS',
+	COUNTRY_CODES_FETCHED: 'COUNTRY_CODES_FETCHED',
 }
 
 const failWithError = dispatch => error => {
@@ -52,6 +54,7 @@ const fetchDataForView = viewMode => dispatch => {
 
 const initDownloads = (dispatch) => {
 	dispatch(fetchCountries);
+	// dispatch(fetchCountryCodesLookup);
 	dispatch(fetchFilters);
 	dispatch(fetchDownloadStats());
 };
@@ -117,6 +120,18 @@ const fetchCountries = dispatch => {
 	);
 };
 
+// const fetchCountryCodesLookup = dispatch => {
+// 	getCountryCodesLookup().then(
+// 		countryCodesLookup => {
+// 			dispatch({
+// 				type: actionTypes.COUNTRY_CODES_FETCHED,
+// 				countryCodesLookup
+// 			});
+// 		},
+// 		err => dispatch(failWithError(err))
+// 	);
+// };
+
 export const resetFilters = () => dispatch => {
 	dispatch({
 		type: actionTypes.RESET_FILTERS
@@ -126,12 +141,11 @@ export const resetFilters = () => dispatch => {
 
 export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 	const { downloadStats, stationCountryCodeLookup, dateUnit, backendSource } = getState();
-	const filters = downloadStats.filters;
 	const page = newPage || 1;
 
 	if (backendSource.source === 'restheart') {
-		const useFullColl = useFullCollection(filters);
-		const avars = getAvars(filters, stationCountryCodeLookup);
+		const useFullColl = useFullCollection(downloadStats.filters);
+		const avars = getAvars(downloadStats.filters, stationCountryCodeLookup);
 
 		Promise.all([getDownloadCounts(useFullColl, avars, page), getDownloadsByCountry(useFullColl, avars)])
 			.then(([downloadStats, countryStats]) => {
@@ -139,7 +153,7 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 					type: actionTypes.DOWNLOAD_STATS_FETCHED,
 					downloadStats: downloadStats._embedded.map(d => ({ ...d, ...{ hashId: d._id } })),
 					countryStats: countryStats._embedded.map(d => ({ ...d, ...{ countryCode: d._id } })),
-					filters,
+					filters: downloadStats.filters,
 					page,
 					to: downloadStats._returned,
 					objCount: downloadStats._size
@@ -148,18 +162,18 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 		dispatch(fetchDownloadStatsPerDateUnit(dateUnit, avars));
 		
 	} else {
-		const searchParams = getSearchParams(filters);
+		const searchParams = getSearchParams(downloadStats.getSearchParamFilters());
 
 		Promise.all([getDownloadStatsApi(page, searchParams), callApi('downloadsByCountry', searchParams)])
-			.then(([downloadStats, countryStats]) => {
+			.then(([dlStats, countryStats]) => {
 				dispatch({
 					type: actionTypes.DOWNLOAD_STATS_FETCHED,
-					downloadStats: downloadStats.stats,
+					downloadStats: dlStats.stats,
 					countryStats,
-					filters,
+					filters: downloadStats.filters,
 					page,
-					to: downloadStats.stats.length,
-					objCount: downloadStats.size
+					to: dlStats.stats.length,
+					objCount: dlStats.size
 				});
 			});
 		dispatch(fetchDownloadStatsPerDateUnit(dateUnit));
@@ -190,29 +204,39 @@ const fetchFilters = (dispatch, getState) => {
 		);
 	
 	} else {
-		Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi()]).then(
-			([specifications, contributors, stations]) => {
-				dispatch({
-					type: actionTypes.FILTERS,
-					specifications,
-					stations,
-					contributors
-				});
-			}
+		getCountryCodesLookup().then(
+			countryCodeLookup => {
+				Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi(), getSubmittersApi(), callApi('dlfrom'), getStationCountryCodes()]).then(
+					([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
+						dispatch({
+							type: actionTypes.FILTERS,
+							specifications,
+							stations,
+							contributors,
+							submitters,
+							countryCodeLookup,
+							dlfrom,
+							stationCountryCodes
+						});
+					}
+				);
+			},
+			err => dispatch(failWithError(err))
 		);
+
+		
 	}
 };
 
 export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, getState) => {
 	const { stationCountryCodeLookup, downloadStats, backendSource } = getState();
-	const filters = downloadStats.filters;
 
 	if (backendSource.source === 'restheart') {
-		const useFullColl = useFullCollection(filters);
+		const useFullColl = useFullCollection(downloadStats.filters);
 
 		const avarsGetter = avars => {
 			if (avars === undefined) {
-				return getAvars(filters, stationCountryCodeLookup);
+				return getAvars(downloadStats.filters, stationCountryCodeLookup);
 			} else {
 				return avars;
 			}
@@ -229,7 +253,7 @@ export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, get
 		
 	} else {
 		const endpoint = 'downloadsPer' + dateUnit.slice(0, 1).toUpperCase() + dateUnit.slice(1);
-		const searchParams = getSearchParams(filters);
+		const searchParams = getSearchParams(downloadStats.getSearchParamFilters());
 		const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
 
 		callApi(endpoint, searchParams, parser)

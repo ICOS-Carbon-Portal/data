@@ -73,7 +73,8 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
 		val matViews = Seq(
 			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",
-			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv"
+			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv",
+			"submitters_mv"
 		)
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
@@ -178,17 +179,27 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		runAnalyticalQuery("SELECT count, contributor FROM contributors()"){rs =>
 			Contributors(rs.getInt("count"), rs.getString("contributor"))
 		}
+	
+	def submitters(implicit envri: Envri): Future[IndexedSeq[Submitters]] =
+		runAnalyticalQuery("SELECT count, submitter FROM submitters()"){rs =>
+			Submitters(rs.getInt("count"), rs.getString("submitter"))
+		}
 
 	def stations(implicit envri: Envri): Future[IndexedSeq[Stations]] =
 		runAnalyticalQuery("SELECT count, station FROM stations()"){rs =>
 			Stations(rs.getInt("count"), rs.getString("station"))
 		}
 
+	def dlfrom(implicit envri: Envri): Future[IndexedSeq[DownloadedFrom]] =
+		runAnalyticalQuery("SELECT count, country_code FROM dlfrom()"){rs =>
+			DownloadedFrom(rs.getInt("count"), rs.getString("country_code"))
+		}
+
 	def runAnalyticalQuery[T](
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?)"
+			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?)"
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
@@ -204,6 +215,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				initArray(        4, qp.stations)
 				initArray(        5, qp.submitters)
 				initArray(        6, qp.contributors)
+				initArray(        7, qp.dlfrom)
 			}
 
 			consumeResultSet(preparedSt.executeQuery())(parser)

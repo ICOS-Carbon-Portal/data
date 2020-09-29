@@ -31,9 +31,11 @@ export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
 	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregate}?${parameters}`);
 };
 
-export const getAvars = (filters, stationCountryCodeLookup = []) => {
-	const searchParams = getSearchParams(filters, stationCountryCodeLookup);
+export const getCountryCodesLookup = () => {
+	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
+};
 
+export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : wildcardLevel;
 	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : wildcardText;
 	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : wildcardText;
@@ -51,12 +53,15 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	}`;
 };
 
-export const getSearchParams = (filters) => {
+export const getSearchParams = (downloadStatsFilters) => {
+	const { specification, stations, submitters, contributors, dlfrom } = downloadStatsFilters;
+
 	const searchParams = {
-		specs: filters.specification && filters.specification.length ? filters.specification : undefined,
-		stations: filters.stations && filters.stations.length ? filters.stations : undefined,
-		submitters: undefined,
-		contributors: filters.contributors && filters.contributors.length ? filters.contributors : undefined
+		specs: specification && specification.length ? specification : undefined,
+		stations: stations && stations.length ? stations : undefined,
+		submitters: submitters && submitters.length ? submitters : undefined,
+		contributors: contributors && contributors.length ? contributors : undefined,
+		dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 	};
 
 	const searchParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
@@ -123,7 +128,7 @@ export function getStationsCountryCode() {
 				let uniqueCountryCodes = [...new Set(bindings)];
 
 				// Expand elements to objects with _id and label fields
-				let countryCodeFilter = uniqueCountryCodes.map(code => ({_id: code, label: code}));
+				let countryCodeFilter = uniqueCountryCodes.map(code => ({id: code, label: code}));
 
 				// Create an array to map country codes with their names and uri
 				const stationCountryCodeLookup = sparqlResult.results.bindings.map(b => ({
@@ -275,64 +280,94 @@ const formatPopularTimeserieVars = popularTimeserieVars => {
 	return conformData(popularTimeserieVars, formattedData);
 };
 
-export const getDownloadStatsApi = async (page, searchParams) => {
-	const downloadStats = await callApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`);
+export const getDownloadStatsApi = (page, searchParams) => {
+	return callApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`)
+		.then(downloadStats => {
+			if (downloadStats.size === 0) {
+				return Promise.resolve(downloadStats);
+			}
 
-	if (downloadStats.size === 0) {
-		return Promise.resolve(downloadStats);
-	}
-
-	return getFileNames(downloadStats.stats.map(ds => config.cpmetaObjectUri + ds.hashId))
-		.then(fileNames => ({
-			size: downloadStats.size,
-			stats: downloadStats.stats.map(ds => ({ ...ds, ...{ fileName: fileNames[config.cpmetaObjectUri + ds.hashId] } }))
-		}));
+			return getFileNames(downloadStats.stats.map(ds => config.cpmetaObjectUri + ds.hashId))
+				.then(fileNames => ({
+					size: downloadStats.size,
+					stats: downloadStats.stats.map(ds => ({ ...ds, ...{ fileName: fileNames[config.cpmetaObjectUri + ds.hashId] } }))
+				}));
+		});
 };
 
-export const getSpecsApi = async () => {
-	const specifications = await callApi('specifications');
+export const getSpecsApi = () => {
+	return callApi('specifications')
+		.then(specifications => {
+			if (specifications.length === 0) {
+				return Promise.resolve(specifications);
+			}
 
-	if (specifications.size === 0) {
-		return Promise.resolve(specifications);
-	}
-
-	return getObjSpecLabels(specifications.map(s => s.spec))
-		.then(specLabels => specifications.map(s => ({
-			id: s.spec,
-			count: s.count,
-			label: specLabels[s.spec]
-		})));
+			return getObjSpecLabels(specifications.map(s => s.spec))
+				.then(specLabels =>
+					specifications.map(s => ({
+						id: s.spec,
+						count: s.count,
+						label: specLabels[s.spec] || s.spec.split('/').pop()
+					}))
+						.sort((a, b) => a.label.localeCompare(b.label))
+				);
+		});
 };
 
-export const getStationsApi = async () => {
-	const stations = await callApi('stations');
+export const getStationsApi = () => {
+	return callApi('stations')
+		.then(stations => {
+			if (stations.length === 0) {
+				return Promise.resolve(stations);
+			}
 
-	if (stations.size === 0) {
-		return Promise.resolve(stations);
-	}
-
-	return getStationLabels(stations.map(s => s.station))
-		.then(stationNames => stations.map(st => ({
-			id: st.station,
-			count: st.count,
-			label: stationNames[st.station]
-		})));
+			return getStationLabels(stations.map(s => s.station))
+				.then(stationNames =>
+					stations.map(st => ({
+						id: st.station,
+						count: st.count,
+						label: stationNames[st.station] || st.station.split('/').pop()
+					}))
+						.sort((a, b) => a.label.localeCompare(b.label))
+				);
+		});
 };
 
-export const getContributorsApi = async () => {
-	const contributors = await callApi('contributors');
+export const getContributorsApi = () => {
+	return callApi('contributors')
+		.then(contributors => {
+			if (contributors.length === 0) {
+				return Promise.resolve(contributors);
+			}
 
-	if (contributors.size === 0) {
-		return Promise.resolve(contributors);
-	}
+			return getContributorNames(contributors.map(s => s.contributor))
+				.then(contributorNames => 
+					contributors.map(c => ({
+						id: c.contributor,
+						count: c.count,
+						label: contributorNames[c.contributor] || c.contributor.split('/').pop()
+					}))
+						.sort((a, b) => a.label.localeCompare(b.label))
+				);
+		});
+};
 
-	return getContributorNames(contributors.map(s => s.contributor))
-		.then(contributorNames => {
-			return contributors.map(c => ({
-				id: c.contributor,
-				count: c.count,
-				label: contributorNames[c.contributor]
-			}))
+export const getSubmittersApi = () => {
+	return callApi('submitters')
+		.then(submitters => {
+			if (submitters.length === 0) {
+				return Promise.resolve(submitters);
+			}
+
+			return getStationLabels(submitters.map(s => s.submitter))
+				.then(submitterNames =>
+					submitters.map(c => ({
+						id: c.submitter,
+						count: c.count,
+						label: submitterNames[c.submitter] || c.submitter.split('/').pop()
+					}))
+						.sort((a, b) => a.label.localeCompare(b.label))
+				);
 		});
 };
 
