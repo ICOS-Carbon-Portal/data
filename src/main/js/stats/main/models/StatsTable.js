@@ -1,30 +1,55 @@
 export default class StatsTable {
 
-  constructor(stats, filters = {}, page = 1) {
-    this._stats = stats;
-    this._filters = filters;
-    this._page = page;
-  }
+	constructor(stats, filters = {}, page = 1, stationCountryCodes) {
+		this._stats = stats;
+		this._filters = filters;
+		this._page = page;
+		this._stationCountryCodes = stationCountryCodes;
+	}
 
-  get stats() {
-    return this._stats;
-  }
+	get stats() {
+		return this._stats;
+	}
 
-  get filters() {
-    return this._filters;
-  }
+	get filters() {
+		return this._filters;
+	}
 
-  withFilter(filterName, filterValue) {
-    const newFilters = Object.assign({}, this._filters, {[filterName]: filterValue});
-    return new StatsTable(this._stats, newFilters);
-  }
+	update(stats, filters, page) {
+		return new StatsTable(stats, filters, page, this._stationCountryCodes);
+	}
 
-  withoutFilter() {
-    return new StatsTable(this._stats);
-  }
+	withFilter(filterName, filterValue) {
+		const newFilters = Object.assign({}, this._filters, { [filterName]: filterValue });
+		return new StatsTable(this._stats, newFilters, this._page, this._stationCountryCodes);
+	}
 
-  getFilter(name) {
-    return this._filters[name] || [];
-  }
+	withStationCountryCodes(stationCountryCodes) {
+		return new StatsTable(this._stats, this._filters, this._page, stationCountryCodes);
+	}
 
+	withoutFilter() {
+		return new StatsTable(this._stats, {}, this._page, this._stationCountryCodes);
+	}
+
+	getFilter(name) {
+		return this._filters[name] || [];
+	}
+
+	getSearchParamFilters() {
+		return Object.assign({}, this._filters, {
+			'stations': (this._filters.stations || []).concat(getDataOriginStations(this._filters.dataOriginCountries, this._stationCountryCodes))
+		});
+	}
 }
+
+const getDataOriginStations = (dataOriginCountries, stationCountryCodes) => {
+	if (dataOriginCountries === undefined) return [];
+
+	return Object.keys(stationCountryCodes).reduce((acc, stationUri) => {
+		if (dataOriginCountries.includes(stationCountryCodes[stationUri])) {
+			acc.push(stationUri);
+		}
+		return acc;
+	}, []);
+};

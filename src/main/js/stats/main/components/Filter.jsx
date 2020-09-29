@@ -2,13 +2,15 @@ import React, { Component } from 'react';
 import Multiselect from 'react-widgets/lib/Multiselect';
 
 export const placeholders = {
-	specification: 'Specification',
+	specification: 'Data types',
 	dataLevel: 'Data level',
 	format: 'Format',
 	stations: 'Stations',
 	contributors: 'Contributors',
+	submitters: 'Submitters',
 	themes: 'Theme',
-	countryCodes: 'Country codes'
+	dlfrom: 'Download from',
+	dataOriginCountries: 'Data origin',
 };
 
 export default class Filter extends Component {
@@ -54,7 +56,7 @@ export default class Filter extends Component {
 				</div>
 				<div className="panel-body">
 					{ filters
-						? filters.map((filter, idx) => filter.values ? <Row key={'row-'+idx} filter={filter} /> : null)
+						? filters.map((filter, idx) => filter.values && filter.values.length ? <Row key={'row-'+idx} filter={filter} /> : null)
 						: null
 					}
 				</div>

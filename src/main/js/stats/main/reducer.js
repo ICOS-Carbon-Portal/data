@@ -15,6 +15,7 @@ export const initState = {
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
+	countryCodesLookup: undefined,
 	paging: {
 		page: 0,
 		to: 0,
@@ -41,11 +42,14 @@ export default function(state = initState, action){
 			});
 
 		case actionTypes.COUNTRIES_FETCHED:
-			return update({statsMap: state.statsMap.withCountriesTopo(action.countriesTopo)});
+			return update({ statsMap: state.statsMap.withCountriesTopo(action.countriesTopo) });
+		
+		case actionTypes.COUNTRY_CODES_FETCHED:
+			return update({ countryCodesLookup: action.countryCodesLookup });
 
 		case actionTypes.DOWNLOAD_STATS_FETCHED:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats, action.filters),
+				downloadStats: state.downloadStats.update(action.downloadStats, action.filters, action.page),
 				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
 					page: action.page,
@@ -62,8 +66,30 @@ export default function(state = initState, action){
 			});
 
 		case actionTypes.FILTERS:
+			const dlFromValues = state.backendSource.source === 'restheart'
+				? action.countryCodes
+				: (action.dlfrom || [])
+					.map(dl => ({id: dl.countryCode, count: dl.count, label: action.countryCodeLookup[dl.countryCode]}))
+					.sort((a, b) => a.label.localeCompare(b.label));
+			const { stationCountryCodes, countryCodeLookup, stations} = action;
+			const dataOriginCountryValues = stations.reduce((acc, station) => {
+				const countryCode = (stationCountryCodes || [])[station.id];
+				if (countryCode !== undefined) {
+					const record = acc.find(st => st.id === countryCode);
+
+					if (record) {
+						record.count += station.count;
+					} else {
+						acc.push({ id: countryCode, count: station.count, label: countryCodeLookup[countryCode] });
+					}
+				}
+				return acc;
+			}, []).sort((a, b) => a.label.localeCompare(b.label));
+			
 			return update({
 				stationCountryCodeLookup: action.stationCountryCodeLookup,
+				downloadStats: state.downloadStats.withStationCountryCodes(action.stationCountryCodes),
+				countryCodeLookup,
 				filters: [{
 					name: "specification",
 					values: action.specifications
@@ -75,7 +101,7 @@ export default function(state = initState, action){
 					values: action.dataLevels
 				}, {
 					name: "stations",
-					values: action.stations
+					values: stations
 				}, {
 					name: "contributors",
 					values: action.contributors
@@ -83,8 +109,14 @@ export default function(state = initState, action){
 					name: "themes",
 					values: action.themes
 				}, {
-					name: "countryCodes",
-					values: action.countryCodes
+					name: "submitters",
+					values: action.submitters
+				}, {
+					name: "dlfrom",
+					values: dlFromValues
+				}, {
+					name: "dataOriginCountries",
+					values: dataOriginCountryValues
 				}]
 			});
 
@@ -100,7 +132,7 @@ export default function(state = initState, action){
 
 		case actionTypes.STATS_UPDATED:
 			return update({
-				downloadStats: new StatsTable(action.downloadStats, state.downloadStats.filters),
+				downloadStats: state.downloadStats.update(action.downloadStats, state.downloadStats.filters, 1),
 				statsMap: state.statsMap.withCountryStats(action.countryStats),
 				paging: {
 					page: 1,
@@ -113,7 +145,6 @@ export default function(state = initState, action){
 		case actionTypes.PREVIEW_DATA_FETCHED:
 			const data = action.previewDataResult.data.map(d => ({ ...d, ...{ hashId: d._id } }));
 			const formattedData = { ...action.previewDataResult, ...{ data } };
-			// const formattedData = action.previewDataResult;
 			const previewData = filterPreviewData(state.subRadio, formattedData.data);
 			const paging = getPreviewPaging(
 				formattedData.data,
@@ -123,7 +154,7 @@ export default function(state = initState, action){
 				state.mainRadio,
 				state.subRadio
 			);
-			console.log({ action, data, formattedData, previewData, paging });
+
 			return update({
 				lastPreviewCall: action.fetchFn,
 				previewDataFull: formattedData.data,
