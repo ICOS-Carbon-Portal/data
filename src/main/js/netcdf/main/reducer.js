@@ -12,6 +12,12 @@ export default function(state, action){
 			return update({
 				toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, action.error.message.split('\n')[0])
 			});
+		
+		case actionTypes.METADATA_FETCHED:
+			return update({
+				metadata: action.metadata,
+				legendLabel: getLegendLabel(getVariableInfo(state.controls, action.metadata))
+			})
 
 		case actionTypes.COUNTRIES_FETCHED:
 			return update({
@@ -52,7 +58,8 @@ export default function(state, action){
 					.withDates(new Control(action.dates, dIdx));
 
 				return update({
-					controls
+					controls,
+					legendLabel: getLegendLabel(getVariableInfo(controls, state.metadata))
 				});
 			} else {
 				return state;
@@ -80,7 +87,12 @@ export default function(state, action){
 			}
 
 		case actionTypes.VARIABLE_SELECTED:
-			return update({controls: state.controls.withSelectedVariable(action.idx)});
+			const newControls = state.controls.withSelectedVariable(action.idx);
+
+			return update({
+				controls: newControls,
+				legendLabel: getLegendLabel(getVariableInfo(newControls, state.metadata))
+			});
 
 		case actionTypes.DATE_SELECTED:
 			return update({controls: state.controls.withSelectedDate(action.idx)});
@@ -106,11 +118,14 @@ export default function(state, action){
 			});
 
 		case actionTypes.RASTER_FETCHED:
-			let colorMaker = new ColorMakerRamps(action.raster.stats.min, action.raster.stats.max, state.controls.gammas.selected, state.controls.colorRamps.selected);
+			const variableInfo = getVariableInfo(state.controls, state.metadata);
+			const minMax = getGlobalMinMax(variableInfo) || { min: action.raster.stats.min, max: action.raster.stats.max };
+			let colorMaker = new ColorMakerRamps(minMax.min, minMax.max, state.controls.gammas.selected, state.controls.colorRamps.selected);
 			let controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
 
 			return isRasterFetched(state, action)
 				? update({
+					minMax,
 					rasterFetchCount: state.rasterFetchCount + 1,
 					raster: action.raster,
 					colorMaker,
@@ -198,6 +213,33 @@ export default function(state, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
+
+const getVariableInfo = (controls, metadata) => {
+	if (controls === undefined) return;
+
+	const selectedVariable = controls.variables.selected;
+	if (selectedVariable === undefined) return;
+
+	const metadataVariables = metadata ? metadata.specificInfo.variables : undefined;
+	if (metadataVariables === undefined) return;
+
+	return metadataVariables.find(v => v.label === selectedVariable);
+};
+
+const getGlobalMinMax = (metadataVariable) => {
+	if (metadataVariable === undefined) return;
+
+	const [min, max] = metadataVariable.minMax;
+	return { min, max };
+};
+
+const getLegendLabel = (metadataVariable) => {
+	if (metadataVariable && metadataVariable.valueType && metadataVariable.valueType.self && metadataVariable.valueType.self.label && metadataVariable.valueType.unit) {
+		return `${metadataVariable.valueType.self.label} [${metadataVariable.valueType.unit}]`;
+	}
+
+	return 'Legend';
+};
 
 const getTimeserieData = (dates, yValues) => {
 	return dates.length === yValues.length

@@ -29,6 +29,8 @@ const AppDiv = props => {
 		: <Map
 			isSites={props.isSites}
 			isPIDProvided={props.isPIDProvided}
+			minMax={props.minMax}
+			legendLabel={props.legendLabel}
 			services={props.services}
 			colorMaker={props.colorMaker}
 			controls={props.controls}

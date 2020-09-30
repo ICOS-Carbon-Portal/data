@@ -92,3 +92,7 @@ export const getTitle = (objId) => {
 export const getTimeserie = ({objId, variable, elevation, x, y}) => {
 	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}&elevation=${elevation}&lonInd=${x}&latInd=${y}`);
 };
+
+export const getMetadata = (objId) => {
+	return getJson(`https://meta.icos-cp.eu/objects/${objId}`);
+};

@@ -1,10 +1,9 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
-import {fetchServices, setService, fetchTitle, fetchCountriesTopo, selectGamma, failWithError} from './actions.js';
 import {ControlsHelper} from './models/ControlsHelper';
 import config from '../../common/main/config';
-import {selectColorRamp} from "./actions";
+import { selectColorRamp, fetchServices, setService, fetchTitle, fetchCountriesTopo, selectGamma, failWithError, fetchMetadata } from "./actions";
 import {colorRamps} from '../../common/main/models/ColorMaker';
 
 const isSites = config.envri === "SITES";
@@ -36,6 +35,9 @@ colorIdx = colorIdx === -1 ? 0 : colorIdx;
 const initState = {
 	isSites,
 	isPIDProvided,
+	metadata: undefined,
+	minMax: undefined,
+	legendLabel: 'Legend',
 	colorMaker: undefined,
 	controls,
 	countriesTopo: {
@@ -88,6 +90,8 @@ export default function(){
 	store.dispatch(selectColorRamp(colorIdx));
 
 	if (isPIDProvided) {
+		store.dispatch(fetchMetadata(pid));
+
 		if (!window.frameElement) {
 			store.dispatch(fetchTitle(pid));
 		}

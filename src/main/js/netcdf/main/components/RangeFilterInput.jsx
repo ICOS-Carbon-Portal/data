@@ -98,13 +98,16 @@ export default function RangeFilterInput(props) {
 	const maxRangeCls = maxRangeErrMsg === undefined ? 'form-group' : 'form-group has-error';
 	const minRangeCls = minRangeErrMsg === undefined ? 'form-group' : 'form-group has-error';
 
+	const closeBtnStyle = { float: 'right', fontSize: '150%', cursor: 'pointer' };
+
 	if (!show) return null;
 
 	return (
 		<div style={{position:'absolute', width:300, zIndex:9999, top:135, right:156}}>
 			<div className="panel panel-default" style={{margin:0}}>
 				<div id="cp-drag-element" className="panel-heading">
-					<span style={{fontWeight:'bold', fontSize:'110%'}}>Set min/max range</span>
+					<span style={{ fontWeight: 'bold', fontSize: '110%' }}>Set min/max range</span>
+					<span className="glyphicon glyphicon-remove-circle" style={closeBtnStyle} onClick={props.onClose} title="Close" />
 				</div>
 
 				<div className="panel-body" style={{padding:'5px', height: 190}}>

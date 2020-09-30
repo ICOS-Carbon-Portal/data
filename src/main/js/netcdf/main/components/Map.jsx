@@ -158,7 +158,7 @@ export default class Map extends Component {
 	render() {
 		const state = this.state;
 		const props = this.props;
-
+		
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
@@ -180,10 +180,6 @@ export default class Map extends Component {
 				+ props.controls.colorRamps.selectedIdx
 				+ '_' + JSON.stringify(state.rangeValues);
 		}
-
-		const minMax = props.raster
-			? props.raster.stats
-			: undefined;
 
 		return (
 			<div id="content" className="container-fluid">
@@ -259,7 +255,7 @@ export default class Map extends Component {
 								margin={7}
 								getLegend={getLegend}
 								legendId={legendId}
-								legendText="Legend"
+								legendText={props.legendLabel}
 								decimals={3}
 								useRangeValueFilters={true}
 								rangeValues={state.rangeValues}
@@ -270,7 +266,8 @@ export default class Map extends Component {
 
 					<RangeFilterInput
 						isActive={state.isRangeFilterInputsActive}
-						minMax={minMax}
+						onClose={this.updateRangeFilterInputsVisibility.bind(this)}
+						minMax={props.minMax}
 						rangeValues={state.rangeValues}
 						rangeFilterChanged={debounce(this.rangeFilterChanged.bind(this), 500)}
 					/>

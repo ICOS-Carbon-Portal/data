@@ -1,5 +1,5 @@
 import {getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle,
-	getTimeserie} from './backend.js';
+	getTimeserie, getMetadata} from './backend.js';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
 
@@ -9,6 +9,7 @@ export const actionTypes = {
 	SERVICES_FETCHED: 'SERVICES_FETCHED',
 	VARIABLES_AND_DATES_FETCHED: 'VARIABLES_AND_DATES_FETCHED',
 	ELEVATIONS_FETCHED: 'ELEVATIONS_FETCHED',
+	METADATA_FETCHED: 'METADATA_FETCHED',
 	RASTER_FETCHED: 'RASTER_FETCHED',
 	SERVICE_SET: 'SERVICE_SET',
 	SERVICE_SELECTED: 'SERVICE_SELECTED',
@@ -40,6 +41,18 @@ export function failWithError(error){
 	};
 }
 
+export const fetchMetadata = pid => dispatch => {
+	getMetadata(pid).then(
+		metadata => {
+			dispatch({
+				type: actionTypes.METADATA_FETCHED,
+				metadata
+			});
+		},
+		err => dispatch(failWithError(err))
+	);
+};
+
 export const fetchServices = dispatch => {
 	getServices().then(
 		services => {
@@ -62,7 +75,7 @@ export const fetchTitle = pid => dispatch => {
 				title
 			});
 		},
-		err => dispatch(failWithError(error))
+		err => dispatch(failWithError(err))
 	);
 };
 

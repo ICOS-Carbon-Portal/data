@@ -34,7 +34,7 @@ export default class Controls extends Component {
 					</div>
 					: null
 				}
-				<div className={getClassName(3, props.isPIDProvided)}>
+				<div className={getClassName(2, props.isPIDProvided)}>
 					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
@@ -69,7 +69,7 @@ export default class Controls extends Component {
 					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.handleGammaChange}/>
 				</div>
 
-				<div className="col-md-1">
+				<div className="col-md-1" style={{minWidth: 190}}>
 					<span style={{fontWeight: 'bold'}}>Map color:</span>
 					<DropdownColors control={controls.colorRamps} action={props.handleColorRampChange} />
 				</div>
