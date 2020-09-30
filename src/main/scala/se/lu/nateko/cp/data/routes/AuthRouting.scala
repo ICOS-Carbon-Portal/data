@@ -85,9 +85,11 @@ class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: E
 	}
 
 	val logout: Route = (get & path("logout") & extractEnvri){implicit envri =>
-		deleteCookie(authConfig.authCookieName, domain = authConfig.authCookieDomain, path = "/"){
-			complete(StatusCodes.OK)
-		}
+		val cookie = HttpCookie(authConfig.authCookieName, "deleted")
+			.withDomain(authConfig.authCookieDomain)
+			.withSameSite(SameSite.Strict)
+			.withMaxAge(1)
+		setCookie(cookie){complete(StatusCodes.OK)}
 	}
 
 	private def toMessage(err: Throwable): String = {
