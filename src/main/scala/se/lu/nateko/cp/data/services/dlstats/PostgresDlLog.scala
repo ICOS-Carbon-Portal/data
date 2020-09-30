@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.services.dlstats
 
 import se.lu.nateko.cp.data.DownloadStatsConfig
 import se.lu.nateko.cp.data.CredentialsConfig
+import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.L2OrLessSpecificMeta
@@ -103,9 +104,12 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 			try {
 				val Seq(hash_id, spec, submitter, station) = 1 to 4
 
-				val contribs = dobj.specificInfo.fold(
-					_.productionInfo.contributors,
-					_.productionInfo.toSeq.flatMap(_.contributors)
+				val contribs: Seq[Agent] = (
+					dobj.references.authors.toSeq.flatten ++
+					dobj.specificInfo.fold(
+						_.productionInfo.contributors,
+						_.productionInfo.toSeq.flatMap(_.contributors)
+					)
 				)
 
 				dobjsSt.setString(hash_id, dobj.hash.id)
