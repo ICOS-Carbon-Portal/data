@@ -34,12 +34,12 @@ object NetcdfRoute {
 				}
 			} ~
 			path("listElevations"){
-				parameter(("service", "varName")){ (service, varName) =>
+				parameter("service", "varName"){ (service, varName) =>
 					complete(factory.getNetCdfViewService(service).getAvailableElevations(varName))
 				}
 			} ~
 			path("getSlice"){
-				parameters(("service", "date", "varName", "elevation".?)){(service, date, varName, elevation) =>
+				parameters("service", "date", "varName", "elevation".?){(service, date, varName, elevation) =>
 					val raster = factory
 						.getNetCdfViewService(service)
 						.getRaster(date, varName, elevation.orNull)
@@ -47,7 +47,7 @@ object NetcdfRoute {
 				}
 			} ~
 			path("getCrossSection"){
-				parameters(("service", "varName", "latInd".as[Int], "lonInd".as[Int], "elevation".?)){(service, varName, latInd, lonInd, elevation) =>
+				parameters("service", "varName", "latInd".as[Int], "lonInd".as[Int], "elevation".?){(service, varName, latInd, lonInd, elevation) =>
 					val raster = factory
 						.getNetCdfViewService(service)
 						.getTemporalCrossSection(varName, latInd, lonInd, elevation.orNull)
@@ -77,12 +77,12 @@ object NetcdfRoute {
 				}
 			} ~
 			path("listElevations"){
-				parameter(("service".as[Sha256Sum], "varName")){ (hash, varName) =>
+				parameter("service".as[Sha256Sum], "varName"){ (hash, varName) =>
 					complete(factory.getNetCdfViewService(hash.id).getAvailableElevations(varName))
 				}
 			} ~
 			path("getSlice"){
-				parameters(("service".as[Sha256Sum], "date", "varName", "elevation".?)){(hash, date, varName, elevation) =>
+				parameters("service".as[Sha256Sum], "date", "varName", "elevation".?){(hash, date, varName, elevation) =>
 					val raster = factory
 						.getNetCdfViewService(hash.id)
 						.getRaster(date, varName, elevation.orNull)
@@ -90,7 +90,7 @@ object NetcdfRoute {
 				}
 			} ~
 			path("getCrossSection"){
-				parameters(("service".as[Sha256Sum], "varName", "latInd".as[Int], "lonInd".as[Int], "elevation".?)){(hash, varName, latInd, lonInd, elevation) =>
+				parameters("service".as[Sha256Sum], "varName", "latInd".as[Int], "lonInd".as[Int], "elevation".?){(hash, varName, latInd, lonInd, elevation) =>
 					val raster = factory
 						.getNetCdfViewService(hash.id)
 						.getTemporalCrossSection(varName, latInd, lonInd, elevation.orNull)

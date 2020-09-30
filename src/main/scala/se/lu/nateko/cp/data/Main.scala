@@ -99,7 +99,7 @@ object Main extends App {
 	}
 
 	restHeart.init.zip(postgresLog.initLogTables()).flatMap{_ =>
-		http.bindAndHandle(route, config.interface, config.port)
+		http.newServerAt(config.interface, config.port).bind(route)
 	}.onComplete{
 		case Success(binding) =>
 			sys.addShutdownHook{

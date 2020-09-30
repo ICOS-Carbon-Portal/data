@@ -18,7 +18,7 @@ object IntegrityRouting{
 
 	def route(service: IntegrityControlService) = pathPrefix("integrityControl"){
 
-		parameters(("fix".?, "offset".as[Int].?, "limit".as[Int].?)){(fix, offsetOpt, limitOpt) =>
+		parameters("fix".?, "offset".as[Int].?, "limit".as[Int].?){(fix, offsetOpt, limitOpt) =>
 
 			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 

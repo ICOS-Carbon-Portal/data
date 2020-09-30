@@ -123,7 +123,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val batchObjectDownload: Route = pathEnd {
 		get{
-			parameters(("ids".as[Array[Sha256Sum]], "fileName")){(hashes, fileName) =>
+			parameters("ids".as[Array[Sha256Sum]], "fileName"){(hashes, fileName) =>
 				val licenceCheck: Directive1[Boolean] = licenceCookieHashsums.map(
 					dobjs => hashes.diff(dobjs).isEmpty
 				)
@@ -134,7 +134,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			complete(StatusCodes.BadRequest -> "Expected fileName URL parameter and js array of SHA256 hashsums in 'ids' URL parameter")
 		} ~
 		post{
-			formFields(("fileName", "ids".as[Array[Sha256Sum]], "licenceOk".as[Boolean] ? false)){(fileName, hashes, licenceOk) =>
+			formFields("fileName", "ids".as[Array[Sha256Sum]], "licenceOk".as[Boolean] ? false){(fileName, hashes, licenceOk) =>
 
 				batchDownload(hashes.toIndexedSeq, fileName, provide(licenceOk)){
 					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
@@ -151,7 +151,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		case _ => None
 	}
 
-	private val downloadLogging: Route = parameters(("ip".?, "endUser".?)){(ipOpt, endUserOpt) =>
+	private val downloadLogging: Route = parameters("ip".?, "endUser".?){(ipOpt, endUserOpt) =>
 		withBestAvailableIp(ipOpt){ip =>
 			extractHashsums{hashes =>
 				extractEnvri{implicit envri =>
@@ -304,7 +304,7 @@ object DownloadRouting{
 	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType): Route =
 		complete(HttpResponse(entity = HttpEntity.CloseDelimited(contentType, src)))
 
-	val getClientIp: Directive1[String] = optionalHeaderValueByType[`X-Forwarded-For`](()).flatMap{
+	val getClientIp: Directive1[String] = optionalHeaderValueByType(`X-Forwarded-For`).flatMap{
 		case Some(xff) => provide(xff.value)
 		case None => complete(
 			StatusCodes.BadRequest -> "Missing 'X-Forwarded-For' header, bad reverse proxy configuration on the server"

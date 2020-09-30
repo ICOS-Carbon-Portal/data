@@ -67,7 +67,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 
 	private val tryIngest: Route = extractEnvri{implicit envri =>
 		addAccessControlHeaders(envri){
-			parameters(("specUri".as[Uri], "nRows".as[Int].?)){(specUri, nRowsOpt) =>
+			parameters("specUri".as[Uri], "nRows".as[Int].?){(specUri, nRowsOpt) =>
 				extractRequest { req =>
 					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt).flatMap(req.entity.dataBytes.runWith)
 					onComplete(resFut) {
@@ -106,7 +106,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		} ~ plainError
 	}
 
-	private def addAccessControlHeaders(envri: Envri): Directive0 = optionalHeaderValueByType[Origin](()).flatMap{
+	private def addAccessControlHeaders(envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
 			respondWithHeaders( //allowing uploads from meta-hosted browser web apps
 				`Access-Control-Allow-Origin`(origin.value), `Access-Control-Allow-Credentials`(true)

@@ -1,6 +1,6 @@
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-scalaVersion in ThisBuild := "2.13.1"
+scalaVersion in ThisBuild := "2.13.3"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -17,8 +17,8 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
-val akkaVersion = "2.6.3"
-val akkaHttpVersion = "10.1.11"
+val akkaVersion = "2.6.9"
+val akkaHttpVersion = "10.2.0"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
@@ -56,7 +56,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.5.0"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.5.1"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
