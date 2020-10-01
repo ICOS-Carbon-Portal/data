@@ -3,6 +3,8 @@ package se.lu.nateko.cp.data.routes
 import scala.util.Failure
 import scala.util.Success
 import akka.http.javadsl.server.CustomRejection
+import akka.http.scaladsl.model.headers.HttpCookie
+import akka.http.scaladsl.model.headers.SameSite
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
