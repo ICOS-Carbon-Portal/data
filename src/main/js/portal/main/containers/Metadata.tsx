@@ -264,7 +264,7 @@ const metadataLinks = (id: Sha256Str, fileName: string) => {
 const map = (coverage: string, icon?: string) => {
 	const style = { border: '1px solid #ddd', width: '100%', height: '400px' };
 	return (
-		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${coverage}`} style={style} />
+		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${encodeURI(coverage)}`} style={style} />
 	);
 };
 
