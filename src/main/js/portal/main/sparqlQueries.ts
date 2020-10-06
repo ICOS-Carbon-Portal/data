@@ -1,7 +1,7 @@
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
-import {Query} from 'icos-cp-backend';
-import {QueryParameters} from "./actions/types";
+import { Query } from 'icos-cp-backend';
+import { QueryParameters } from "./actions/types";
 import {
 	FilterRequest,
 	TemporalFilterRequest,
@@ -11,7 +11,7 @@ import {
 	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest,
 	VariableFilterRequest, isVariableFilter, KeywordFilterRequest, isKeywordsFilter
 } from './models/FilterRequest';
-import {Filter, Value} from "./models/SpecTable";
+import { Filter, Value } from "./models/SpecTable";
 import { UrlStr } from './backend/declarations';
 
 
@@ -37,7 +37,7 @@ where{
 	?spec cpmeta:hasFormat ?format .
 }`;
 
-	return {text};
+	return { text };
 }
 
 export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType" | "quantityUnit", "quantityKind">
@@ -67,7 +67,7 @@ where{
 	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
 
-	return {text};
+	return { text };
 }
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site">
@@ -100,7 +100,7 @@ where{
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	}`;
 
-	return {text};
+	return { text };
 }
 
 export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
@@ -110,7 +110,7 @@ select distinct ?uri ?label ?stationId
 from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>`;
 
-	if (config.envri === "ICOS"){
+	if (config.envri === "ICOS") {
 		text += `
 from <http://meta.icos-cp.eu/resources/icos/>
 from <http://meta.icos-cp.eu/resources/extrastations/>
@@ -131,7 +131,7 @@ where {
 }`;
 	}
 
-	return {text};
+	return { text };
 }
 
 export function findDobjs(search: string): Query<"dobj", never> {
@@ -144,10 +144,10 @@ SELECT ?dobj WHERE{
 	FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
 
-	return {text};
+	return { text };
 }
 
-export function findStations(search: string){
+export function findStations(search: string) {
 	return `# findStations
 PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
 SELECT DISTINCT (str(?lName) AS ?Long_name)
@@ -165,7 +165,7 @@ const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:s
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
 
 const standardDobjPropsDef =
-`?dobj cpmeta:hasSizeInBytes ?size .
+	`?dobj cpmeta:hasSizeInBytes ?size .
 ?dobj cpmeta:hasName ?fileName .
 ${submTimeDef}
 ${timeStartDef}
@@ -185,14 +185,14 @@ VALUES ?dobj { ${values} }
 ${standardDobjPropsDef}
 }`;
 
-	return {text};
+	return { text };
 };
 
 export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
-	function isEmpty(arr: Filter) {return !arr || !arr.length;}
+	function isEmpty(arr: Filter) { return !arr || !arr.length; }
 
-	const {specs, stations, submitters, sites, sorting, paging, filters} = query;
+	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -203,7 +203,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: `VALUES ?${SPECCOL} {<${ (specs as Value[]).join('> <') }>}`;
+		: `VALUES ?${SPECCOL} {<${(specs as Value[]).join('> <')}>}`;
 
 	const submitterSearch = isEmpty(submitters) ? ''
 		: `VALUES ?submitter {<${(submitters as Value[]).join('> <')}>}
@@ -213,7 +213,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 
 	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
 
-	function stationsFilter(stations: any[]){
+	function stationsFilter(stations: any[]) {
 		return `VALUES ?station {<${stations.join('> <')}>}` +
 			'\n' + dobjStation + '?station .';
 	}
@@ -230,8 +230,8 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 		: stationsFilter((stations as Value[]));
 
 	const siteSearch = !sites || isEmpty(sites.filter(Value.isDefined))
-				? ''
-				: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
+		? ''
+		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
 				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
 	const orderBy = (sorting && sorting.varName)
@@ -258,7 +258,7 @@ where {
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 
-	return {text};
+	return { text };
 };
 
 function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
@@ -275,8 +275,8 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 
 	const tempFilterStr = tempFilters
 		.map(getTempFilterConds)
-		.filter(nf => nf.length)
-		.map(nf => `FILTER( ${nf.join(' && ')} )`)
+		.filter(tf => tf.length)
+		.map(tf => `FILTER( ${tf} ) `)
 		.join('\n');
 
 	const numFilterStr = numFilters
@@ -291,18 +291,18 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters, supplyVarDefs));
 }
 
-function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): string{
+function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
 	const requests = allFilters.filter(isKeywordsFilter);
-	if(requests.length === 0) return '';
-	if(requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
+	if (requests.length === 0) return '';
+	if (requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
 	const req = requests[0];
 
 	const noDobjKws = req.dobjKeywords.length === 0;
 	const noSpecs = req.specs.length === 0;
 
-	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <') }>}`;
+	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <')}>}`;
 	const dobjKwsFilter = noDobjKws ? '' :
-	`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
+		`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
 	?dobj cpmeta:hasKeyword ?keyword`;
 
 	return noDobjKws && noSpecs ? '' : `
@@ -311,19 +311,19 @@ function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 			UNION
 			{${dobjKwsFilter}}
 		}`
-	);
+		);
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
 	const varName = getNumVarName(numberFilter);
 	const xsdType = getXsdType(numberFilter);
-	const {type, vals, cmp} = numberFilter;
+	const { type, vals, cmp } = numberFilter;
 
-	function cond(op: string, val: number): string{
+	function cond(op: string, val: number): string {
 		return `?${varName} ${op} "${val}"^^xsd:${xsdType}`;
 	}
 
-	switch(type){
+	switch (type) {
 		case "limit":
 			return cond(cmp[0], vals[0]);
 
@@ -338,68 +338,76 @@ function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
 	}
 }
 
-function getNumVarDefs(filter: NumberFilterRequest): string[]{
-	switch(filter.category){
+function getNumVarDefs(filter: NumberFilterRequest): string[] {
+	switch (filter.category) {
 		case "fileSize": return [];
 		case "samplingHeight": return ["?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight ."];
 	}
 }
 
-function getXsdType(filter: NumberFilterRequest): string{
-	switch(filter.category){
+function getXsdType(filter: NumberFilterRequest): string {
+	switch (filter.category) {
 		case "fileSize": return "long";
 		case "samplingHeight": return "float";
 	}
 }
 
-function getNumVarName(filter: NumberFilterRequest): string{
-	switch(filter.category){
+function getNumVarName(filter: NumberFilterRequest): string {
+	switch (filter.category) {
 		case "fileSize": return "size";
 		case "samplingHeight": return filter.category;
 	}
 }
 
-function getTempVarDefs(filter: TemporalFilterRequest): string[]{
+function getTempVarDefs(filter: TemporalFilterRequest): string[] {
 	const res: string[] = [];
-	switch(filter.category){
+	switch (filter.category) {
 		case "dataTime":
-			if(filter.fromDateTimeStr) res.push(timeStartDef);
-			if(filter.toDateTimeStr) res.push(timeEndDef);
+			if (filter.fromDateTimeStr || filter.toDateTimeStr) {
+				res.push(timeEndDef);
+				res.push(timeStartDef);
+			}
 			break;
 		case "submission":
-			if(filter.fromDateTimeStr || filter.toDateTimeStr) res.push(submTimeDef);
+			if (filter.fromDateTimeStr || filter.toDateTimeStr) res.push(submTimeDef);
 	}
 	return res;
 }
 
-function getTempFilterConds(filter: TemporalFilterRequest): string[]{
-	const res: string[] = [];
+function getTempFilterConds(filter: TemporalFilterRequest): string {
+	const { category, fromDateTimeStr, toDateTimeStr } = filter;
 
-	function add(varName: "timeStart" | "timeEnd" | "submTime", cmp: ">=" | "<=", timeStr: string | undefined): void{
-		if(timeStr) res.push(`?${varName} ${cmp} '${timeStr}'^^xsd:dateTime`);
-	}
-	switch(filter.category){
-		case "dataTime":
-			add("timeStart", ">=", filter.fromDateTimeStr);
-			add("timeEnd",   "<=", filter.toDateTimeStr);
-			break;
-		case "submission":
-			add("submTime",  ">=", filter.fromDateTimeStr);
-			add("submTime",  "<=", filter.toDateTimeStr);
-			break;
-	}
-	return res;
+	if (category === "dataTime" && fromDateTimeStr && toDateTimeStr)
+		return `!(?timeStart > '${toDateTimeStr}'^^xsd:dateTime || ?timeEnd < '${fromDateTimeStr}'^^xsd:dateTime)`;
+
+	else if (category === "dataTime" && fromDateTimeStr)
+		return `'${fromDateTimeStr}'^^xsd:dateTime <= ?timeEnd`;
+
+	else if (category === "dataTime" && toDateTimeStr)
+		return `'${toDateTimeStr}'^^xsd:dateTime >= ?timeStart`;
+
+	else if (category === "submission" && fromDateTimeStr && toDateTimeStr)
+		return `?submTime >= '${fromDateTimeStr}'^^xsd:dateTime && ?submTime <= '${toDateTimeStr}'^^xsd:dateTime`;
+
+	else if (category === "submission" && fromDateTimeStr)
+		return `?submTime >= '${fromDateTimeStr}'^^xsd:dateTime`;
+
+	else if (category === "submission" && toDateTimeStr)
+		return `?submTime <= '${toDateTimeStr}'^^xsd:dateTime`;
+
+	else
+		return '';
 }
 
-function getVarFilter(filter: VariableFilterRequest): string{
-	function cond(varName: string): string{
-		if(varName.startsWith("^") && varName.endsWith("$")) {
+function getVarFilter(filter: VariableFilterRequest): string {
+	function cond(varName: string): string {
+		if (varName.startsWith("^") && varName.endsWith("$")) {
 			const patt = varName.replace(/\\/gi, '\\\\');
 			return `regex(?varName, "${patt}")`
 		} else
 			return `?varName = "${varName}"`
 	}
-	if(filter.names.length == 0) return '';
+	if (filter.names.length == 0) return '';
 	return `
 	{
 		{FILTER NOT EXISTS {?dobj cpmeta:hasVariableName ?varName}}
@@ -441,7 +449,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
 }`;
 
-	return {text};
+	return { text };
 };
 
 export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "comment" | "webpage"> => {
@@ -453,5 +461,5 @@ export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "com
 }
 order by ?label`;
 
-	return {text};
+	return { text };
 };
