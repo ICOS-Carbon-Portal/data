@@ -44,7 +44,7 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
  * Encodes the behaviour and logic of the ETC logger data upload facade.
  * Main features:
  * 	- integrity control with MD5 checksums
- * 	- staging area for files uploaded from the loggers but not uploaded to CP yet
+ * 	- staging area for files uploaded from the loggers
  * 	- upload to CP, if the ETC metadata for the filename is available on the meta service
  * 	- packaging EC half-hourly files into daily packages (zip archives)
  * 	- version handling in the case of re-uploads of files with the same filename
@@ -149,9 +149,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 				zipToArchive(srcFiles, daily).flatMap{
 					case (file, hash) =>
-						if(isFullPackage)
-							srcFiles.foreach(Files.deleteIfExists)
-						else fresh.foreach{case (file, _) =>
+						fresh.foreach{case (file, _) =>
 							val target = uploadedFolder.resolve(file.getFileName)
 							Files.move(file, target, REPLACE_EXISTING)
 						}
