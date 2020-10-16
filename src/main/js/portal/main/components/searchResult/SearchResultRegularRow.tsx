@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice, formatDate, getLastSegmentInUrl} from '../../utils';
+import {isSmallDevice, formatDate, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config, {timezone} from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
@@ -113,7 +113,7 @@ const Description: React.FunctionComponent<{
 
 	return isSmallDevice()
 		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-		: <LinkifyText text={extendedInfo.description} />;
+		: <LinkifyText text={extendedInfo.description} style={linesToShowStyle(5)} />;
 };
 
 const ExtendedInfoItem: React.FunctionComponent<{

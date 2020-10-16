@@ -1,5 +1,6 @@
 import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
+import {CSSProperties} from "react";
 
 export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
 	const objIds = items.map((item:any) => getLastSegmentInUrl(item.id)).join();
@@ -126,3 +127,11 @@ export function liftToOptional<I, O>(f: (i:I) => O): OptFunction<I, O> {
 		return f(io)
 	}
 }
+
+export const linesToShowStyle = (linesToShow: number): CSSProperties => ({
+	overflow: 'hidden',
+	textOverflow: 'ellipsis',
+	display: '-webkit-box',
+	WebkitLineClamp: linesToShow,
+	WebkitBoxOrient: 'vertical'
+});
