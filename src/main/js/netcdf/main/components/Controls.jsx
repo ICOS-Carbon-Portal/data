@@ -11,6 +11,10 @@ export default class Controls extends Component {
 		};
 	}
 
+	variablePresenter(key){
+		return this.props.variableEnhancer[key] ?? key;
+	}
+
 	render(){
 		const props = this.props;
 		const controls = props.controls;
@@ -35,7 +39,7 @@ export default class Controls extends Component {
 					: null
 				}
 				<div className={getClassName(2, props.isPIDProvided)}>
-					<Selector className="variables" caption="Variable" control={controls.variables} action={props.handleVarNameChange}/>
+					<Selector className="variables" caption="Variable" presenter={this.variablePresenter.bind(this)} control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
 				<div className={getClassName(2, props.isPIDProvided)}>
@@ -57,25 +61,25 @@ export default class Controls extends Component {
 					</div>
 				</div>
 
-				<div className="col-md-2">
-					<Selector className="delays" caption="Playback delay" presenter={delayPresenter} control={controls.delays} action={props.delayChanged}/>
+				<div className="col-md-1" style={{ minWidth: 145 }}>
+					<Selector className="delays" caption="Playback speed" presenter={delayPresenter} control={controls.delays} action={props.delayChanged}/>
 				</div>
 
 				<div className="col-md-1" style={{display: elevationsStyle}}>
 					<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.handleElevationChange}/>
 				</div>
 
-				<div className="col-md-1">
-					<Selector className="gammas" caption="Gamma" control={controls.gammas} action={props.handleGammaChange}/>
-				</div>
-
 				<div className="col-md-1" style={{minWidth: 190}}>
-					<span style={{fontWeight: 'bold'}}>Map color:</span>
+					<div style={{ fontWeight: 'bold' }}>Map color:</div>
 					<DropdownColors control={controls.colorRamps} action={props.handleColorRampChange} />
 				</div>
 
+				<div className="col-md-1" style={{ minWidth: 110 }}>
+					<Selector className="gammas" caption="Shift color" control={controls.gammas} action={props.handleGammaChange} />
+				</div>
+
 				<div className="col-md-1">
-					<div style={{fontWeight: 'bold'}}>Filter:</div>
+					<div style={{fontWeight: 'bold'}}>Range:</div>
 					<button className="btn btn-default" onClick={props.handleRangeFilterInputsChange}>
 						<span className={rangeFilterInputsBtnCls} />
 					</button>
@@ -92,13 +96,13 @@ const getClassName = (defaultWidth, isPIDProvided) => {
 
 function delayPresenter(delay){
 	switch (delay){
-		case 0 : return 'Fastest (processor-limited)';
-		case 50 : return 'Very fast (up to 20 fps)';
-		case 100 : return 'Fast (up to 10 fps)';
-		case 200 : return 'Medium (up to 5 fps)';
-		case 500 : return 'Medium (up to 2 fps)';
-		case 1000 : return 'Slow (up to 1 fps)';
-		case 3000 : return 'Very slow (0.33 fps)';
+		case 0 : return 'Fastest';
+		case 50 : return 'Very fast';
+		case 100 : return 'Fast';
+		case 200 : return 'Medium';
+		case 500 : return 'Medium';
+		case 1000 : return 'Slow';
+		case 3000 : return 'Very slow';
 		default : return (1000 / delay) + ' fps';
 	}
 }

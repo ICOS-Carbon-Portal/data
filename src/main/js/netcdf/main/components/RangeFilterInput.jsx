@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
 const numberReg = /^-?\d+(\.\d+|\.\d+[eE]-?\d+|[eE]-?\d+)?$/;
+const resetLnkStyle = { marginLeft: 10, cursor: 'pointer' };
 
 export default function RangeFilterInput(props) {
-	const {isActive, rangeValues, rangeFilterChanged, minMax} = props;
+	const {isActive, rangeValues, rangeFilterChanged} = props;
 
 	const [show, setShow] = useState(isActive);
 	const [prevProps, setPrevProps] = useState(props);
+	// ourRangeValues stores values as strings
 	const [ourRangeValues, setOurRangeValues] = useState({});
 	const [maxRangeErrMsg, setMaxRangeErrMsg] = useState();
 	const [minRangeErrMsg, setMinRangeErrMsg] = useState();
 
 	useEffect(_ => {
 		if (prevProps.rangeValues.maxRange !== rangeValues.maxRange || prevProps.rangeValues.minRange !== rangeValues.minRange) {
-			// To preserve scientific notation in input element, compare incoming props with our state using loose equality
-			if (ourRangeValues.maxRange != rangeValues.maxRange)
-				setOurRangeValues({...ourRangeValues, ...{'maxRange': rangeValues.maxRange}});
-
-			else if (ourRangeValues.minRange != rangeValues.minRange)
-				setOurRangeValues({...ourRangeValues, ...{'minRange': rangeValues.minRange}});
-
+			setOurRangeValues(rangeValues);
 			setPrevProps(props);
 		}
 
@@ -28,58 +24,80 @@ export default function RangeFilterInput(props) {
 	}, [rangeValues, isActive]);
 
 	const minValChanged = (ev) => {
-		const isNumber = numberReg.test(ev.target.value);
-		rangeValueChanged(isNumber, 'minRange', ev.target);
+		rangeValueChanged('minRange', ev.target.value);
 	};
 
 	const maxValChanged = (ev) => {
-		const isNumber = numberReg.test(ev.target.value);
-		rangeValueChanged(isNumber, 'maxRange', ev.target);
+		rangeValueChanged('maxRange', ev.target.value);
 	};
 
-	const rangeValueChanged = (isNumber, key, input) => {
-		if (input.value === "") {
-			setOurRangeValues({...ourRangeValues, ...{[key]: undefined}});
-			rangeFilterChanged({...ourRangeValues, ...{[key]: undefined}});
-			setMaxRangeErrMsg();
-			return;
+	const rangeValueChanged = (key, value) => {
+		const rangeValues = { ...ourRangeValues };
+
+		// Kepp values as strings in the front end form
+		rangeValues[key] = value === "" ? undefined : value;
+		setOurRangeValues(rangeValues);
+
+		const numericRangeValues = getNumericRangeValues(rangeValues);
+		const { minRange, maxRange, minIsNumberlike, maxIsNumberlike } = numericRangeValues;
+		const errorMessages = {
+			min: undefined,
+			max: undefined
+		};
+
+		if (maxRange <= minRange) {
+			errorMessages.min = 'Must be smaller than max range';
+			errorMessages.max = 'Must be larger than min range';
 		}
 
-		setOurRangeValues({...ourRangeValues, ...{[key]: input.value}});
+		if (maxRange > props.fullMinMax.max)
+			errorMessages.max = 'Must be smaller than raster max value';
 
-		if (isNumber) {
-			const val = parseFloat(input.value);
-			const maxRange = key === "maxRange" ? val : ourRangeValues.maxRange;
-			const minRange = key === "minRange" ? val : ourRangeValues.minRange;
+		if (maxRange <= props.fullMinMax.min)
+			errorMessages.max = 'Must be larger than raster min value';
 
-			if (maxRange < minRange) {
-				setMaxRangeErrMsg('Must be larger than min range');
-				setMinRangeErrMsg('Must be smaller than max range');
+		if (minRange < props.fullMinMax.min)
+			errorMessages.min = 'Must be larger than raster min value';
 
-			} else if (maxRange > minMax.max){
-				setMaxRangeErrMsg('Must be smaller than raster max value');
+		if (minRange >= props.fullMinMax.max)
+			errorMessages.min = 'Must be smaller than raster max value';
 
-			} else if (minRange < minMax.min){
-				setMinRangeErrMsg('Must be larger than raster min value');
+		if (!minIsNumberlike)
+			errorMessages.min = 'Must be a number';
+		
+		if (!maxIsNumberlike)
+			errorMessages.max = 'Must be a number';
 
-			} else {
-				setMaxRangeErrMsg();
-				setMinRangeErrMsg();
+		setMinRangeErrMsg(errorMessages.min);
+		setMaxRangeErrMsg(errorMessages.max);
 
-				rangeFilterChanged({[key]: val});
-			}
-
-		} else {
-			if (key === "maxRange")
-				if (input.value === "")
-					setMaxRangeErrMsg();
-				else
-					setMaxRangeErrMsg('Must be a number');
-			else if (input.value === "")
-				setMinRangeErrMsg();
-			else
-				setMinRangeErrMsg('Must be a number');
+		if (numericRangeValues.isReady && errorMessages.min === undefined && errorMessages.max === undefined) {
+			rangeFilterChanged(numericRangeValues);
 		}
+	}
+
+	const getNumericRangeValues = (rangeValues) => {
+		const min = parseRangeValue(rangeValues.minRange);
+		const max = parseRangeValue(rangeValues.maxRange);
+
+		return {
+			minRange: min.val,
+			minIsNumberlike: min.isNumberlike,
+			maxRange: max.val,
+			maxIsNumberlike: max.isNumberlike,
+			isReady: min.isNumberlike && max.isNumberlike
+		}
+	}
+
+	const parseRangeValue = (rangeValue) => {
+		if (rangeValue === undefined)
+			return { val: undefined, isNumberlike: true };
+		
+		const isNumber = numberReg.test(rangeValue);
+
+		return isNumber
+			? { val: parseFloat(rangeValue), isNumberlike: true }
+			: { val: rangeValue, isNumberlike: false };
 	};
 
 	// To preserve scientific notation in input element, compare incoming props with our state using loose equality
@@ -116,6 +134,8 @@ export default function RangeFilterInput(props) {
 							<div className={maxRangeCls}>
 
 								<label>Max range</label>
+								<a onClick={() => rangeValueChanged('maxRange', '')} style={resetLnkStyle}>Clear</a>
+
 								<input
 									type="text"
 									className="form-control"
@@ -133,6 +153,8 @@ export default function RangeFilterInput(props) {
 							<div className={minRangeCls}>
 
 								<label>Min range</label>
+								<a onClick={() => rangeValueChanged('minRange', '')} style={resetLnkStyle}>Clear</a>
+
 								<input
 									type="text"
 									className="form-control"

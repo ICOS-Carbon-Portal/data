@@ -27,6 +27,7 @@ export const actionTypes = {
 	TOGGLE_TS_SPINNER: 'TOGGLE_TS_SPINNER',
 	TIMESERIE_RESET: 'TIMESERIE_RESET',
 	COLORRAMP_SELECTED: 'COLORRAMP_SELECTED',
+	SET_RANGEFILTER: 'SET_RANGEFILTER',
 };
 
 
@@ -288,5 +289,12 @@ export const selectColorRamp = idx => dispatch => {
 	dispatch({
 		type: actionTypes.COLORRAMP_SELECTED,
 		idx
+	});
+};
+
+export const setRangeFilter = rangeFilter => dispatch => {
+	dispatch({
+		type: actionTypes.SET_RANGEFILTER,
+		rangeFilter
 	});
 };

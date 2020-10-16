@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Map from '../components/Map.jsx';
 import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton,
-	incrementRasterData, fetchTimeSerie, resetTimeserieData, selectColorRamp} from '../actions.js';
+	incrementRasterData, fetchTimeSerie, resetTimeserieData, selectColorRamp, setRangeFilter} from '../actions.js';
 import {AnimatedToasters} from 'icos-cp-toaster';
 
 class App extends Component {
@@ -30,10 +30,12 @@ const AppDiv = props => {
 			isSites={props.isSites}
 			isPIDProvided={props.isPIDProvided}
 			minMax={props.minMax}
+			fullMinMax={props.fullMinMax}
 			legendLabel={props.legendLabel}
 			services={props.services}
 			colorMaker={props.colorMaker}
 			controls={props.controls}
+			variableEnhancer={props.variableEnhancer}
 			countriesTopo={props.countriesTopo}
 			dateChanged={props.dateChanged}
 			delayChanged={props.delayChanged}
@@ -56,6 +58,8 @@ const AppDiv = props => {
 			showTSSpinner={props.showTSSpinner}
 			resetTimeserieData={props.resetTimeserieData}
 			isFetchingTimeserieData={props.isFetchingTimeserieData}
+			rangeFilter={props.rangeFilter}
+			setRangeFilter={props.setRangeFilter}
 		/>;
 };
 
@@ -76,6 +80,7 @@ const dispatchToProps = dispatch => {
 		fetchTimeSerie: params => dispatch(fetchTimeSerie(params)),
 		resetTimeserieData: () => dispatch(resetTimeserieData),
 		colorRampChanged: (newIdx) => dispatch(selectColorRamp(newIdx)),
+		setRangeFilter: (rangeFilter) => dispatch(setRangeFilter(rangeFilter)),
 	};
 };
 

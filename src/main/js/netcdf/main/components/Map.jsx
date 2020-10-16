@@ -19,9 +19,7 @@ export default class Map extends Component {
 		this.state = {
 			height: null,
 			isShowTimeserieActive: false,
-			isRangeFilterInputsActive: false,
-			rangeValues: {},
-			valueFilter: v => v
+			isRangeFilterInputsActive: false
 		};
 
 		this.countriesTs = Date.now();
@@ -133,7 +131,7 @@ export default class Map extends Component {
 	}
 
 	rangeFilterChanged(rangeValueChanges){
-		const rangeValues = {...this.state.rangeValues, ...rangeValueChanges};
+		const rangeValues = { ...this.props.rangeFilter.rangeValues, ...rangeValueChanges};
 		const hasMinRange = rangeValues.minRange !== undefined;
 		const hasMaxRange = rangeValues.maxRange !== undefined;
 
@@ -152,18 +150,19 @@ export default class Map extends Component {
 			}
 		};
 
-		this.setState({valueFilter, rangeValues});
+		this.props.setRangeFilter({ rangeValues, valueFilter });
 	}
 
 	render() {
 		const state = this.state;
 		const props = this.props;
 		
+		const { rangeValues, valueFilter } = props.rangeFilter;
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
 		const legendId = props.raster
-			? props.raster.id + '_' + state.gamma + '_' + JSON.stringify(state.rangeValues)
+			? `${props.raster.id}_${state.gamma}_${props.colorMaker.colorRampName}_${JSON.stringify(rangeValues)}`
 			: "";
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
@@ -178,7 +177,7 @@ export default class Map extends Component {
 			props.raster.id = props.raster.basicId
 				+ props.controls.gammas.selectedIdx
 				+ props.controls.colorRamps.selectedIdx
-				+ '_' + JSON.stringify(state.rangeValues);
+				+ '_' + JSON.stringify(rangeValues);
 		}
 
 		return (
@@ -193,6 +192,7 @@ export default class Map extends Component {
 						services={props.services}
 						marginTop={5}
 						controls={props.controls}
+						variableEnhancer={props.variableEnhancer}
 						playingMovie={props.playingMovie}
 						increment={props.increment}
 						playPauseMovie={props.playPauseMovie}
@@ -227,7 +227,7 @@ export default class Map extends Component {
 							}}
 							raster={props.raster}
 							colorMaker={colorMaker}
-							valueFilter={state.valueFilter}
+							valueFilter={valueFilter}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
 							events={[
@@ -258,7 +258,7 @@ export default class Map extends Component {
 								legendText={props.legendLabel}
 								decimals={3}
 								useRangeValueFilters={true}
-								rangeValues={state.rangeValues}
+								rangeValues={rangeValues}
 								rangeFilterChanged={this.rangeFilterChanged.bind(this)}
 							/>
 							: null
@@ -268,7 +268,8 @@ export default class Map extends Component {
 						isActive={state.isRangeFilterInputsActive}
 						onClose={this.updateRangeFilterInputsVisibility.bind(this)}
 						minMax={props.minMax}
-						rangeValues={state.rangeValues}
+						fullMinMax={props.fullMinMax}
+						rangeValues={rangeValues}
 						rangeFilterChanged={debounce(this.rangeFilterChanged.bind(this), 500)}
 					/>
 				</div>

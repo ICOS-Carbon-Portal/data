@@ -1,4 +1,4 @@
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducer';
 import {ControlsHelper} from './models/ControlsHelper';
@@ -32,14 +32,23 @@ let colorIdx = searchParams.color
 	: 0;
 colorIdx = colorIdx === -1 ? 0 : colorIdx;
 
+export const defaultRangeFilter = {
+	rangeValues: {},
+	valueFilter: v => v
+};
+
 const initState = {
 	isSites,
 	isPIDProvided,
 	metadata: undefined,
 	minMax: undefined,
+	isDivergingData: undefined,
+	fullMinMax: undefined,
+	rangeFilter: defaultRangeFilter,
 	legendLabel: 'Legend',
 	colorMaker: undefined,
 	controls,
+	variableEnhancer: [],
 	countriesTopo: {
 		ts: 0,
 		data: undefined
@@ -68,23 +77,20 @@ const initState = {
 	showTSSpinner: false
 };
 
-// function logger({ getState }) {
-// 	return (next) => (action) => {
-// 		console.log('will dispatch', action)
-//
-// 		// Call the next dispatch method in the middleware chain.
-// 		let returnValue = next(action)
-//
-// 		console.log('state after dispatch', getState())
-//
-// 		// This will likely be the action itself, unless
-// 		// a middleware further in chain changed it.
-// 		return returnValue
-// 	}
-// }
+const opts = window.location.hostname.startsWith('local-')
+	? { trace: true }
+	: {};
+const REDUX_DEVTOOLS_EXTENSION_COMPOSE = window['__REDUX_DEVTOOLS_EXTENSION_COMPOSE__'];
+const composeEnhancers = REDUX_DEVTOOLS_EXTENSION_COMPOSE
+	? REDUX_DEVTOOLS_EXTENSION_COMPOSE(opts)
+	: compose;
+
+const enhancer = composeEnhancers(
+	applyMiddleware(thunkMiddleware)
+);
 
 export default function(){
-	const store = createStore(reducer, initState, applyMiddleware(thunkMiddleware));
+	const store = createStore(reducer, initState, enhancer);
 	store.dispatch(fetchCountriesTopo);
 	store.dispatch(selectGamma(gammaIdx));
 	store.dispatch(selectColorRamp(colorIdx));
