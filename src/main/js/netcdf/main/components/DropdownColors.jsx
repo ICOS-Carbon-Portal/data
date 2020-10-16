@@ -6,8 +6,7 @@ export default class DropdownColors extends Component{
 		super(props);
 
 		this.state = {
-			dropdownOpen: false,
-			selectedIdx: 0
+			dropdownOpen: false
 		};
 
 		this.outsideClickHandler = this.handleOutsideClick.bind(this);
@@ -24,10 +23,10 @@ export default class DropdownColors extends Component{
 		this.setState({dropdownOpen: !this.state.dropdownOpen});
 	}
 
-	onDropDownItemClick(selectedItemKey){
+	onDropDownItemClick(selectedIdx){
 		if (this.props.action) {
-			this.setState({dropdownOpen: !this.state.dropdownOpen, selectedIdx: selectedItemKey});
-			this.props.action(selectedItemKey);
+			this.setState({dropdownOpen: !this.state.dropdownOpen});
+			this.props.action(selectedIdx);
 		}
 	}
 
@@ -36,7 +35,7 @@ export default class DropdownColors extends Component{
 	}
 
 	render(){
-		const {dropdownOpen, selectedIdx} = this.state;
+		const {dropdownOpen} = this.state;
 		const {control} = this.props;
 		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 		const selectedColorRamp = control.colorRamps[control.selectedIdx];
@@ -53,7 +52,7 @@ export default class DropdownColors extends Component{
 							<ListItem
 								key={idx}
 								idx={idx}
-								selectedIdx={selectedIdx}
+								selectedIdx={control.selectedIdx}
 								onClick={this.onDropDownItemClick.bind(this, idx)}
 								cr={cr}
 							/>);
@@ -94,7 +93,7 @@ const ListItem = ({onClick, cr, idx, selectedIdx}) => {
 };
 
 const renderCanvas = (width, height, getLegend) => {
-	const {colorMaker} = getLegend(0, 119);
+	const { colorMaker } = getLegend(0, width - 1);
 
 	const canvas = document.createElement("canvas");
 
@@ -103,7 +102,7 @@ const renderCanvas = (width, height, getLegend) => {
 
 	const ctx = canvas.getContext('2d');
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+	
 	for (let i = 0; i < width; i++) {
 		const color = colorMaker(i);
 		const rgba = `rgba(${Math.round(color[0])},${Math.round(color[1])},${Math.round(color[2])},${Math.round(color[3])})`;

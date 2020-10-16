@@ -36,7 +36,7 @@ export class ControlColorRamp extends Control {
 }
 
 const defaultControl = new Control([], -1);
-const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 0);
+const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 const defaultColorRamps = new ControlColorRamp(colorRamps);
 
