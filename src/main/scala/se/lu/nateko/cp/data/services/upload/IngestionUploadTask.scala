@@ -176,7 +176,7 @@ object IngestionUploadTask{
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .
-		| OPTIONAL{?column cpmeta:isRegexColumn ?isRegex}
+		|	OPTIONAL{?column cpmeta:isRegexColumn ?isRegex}
 		|	OPTIONAL{?column cpmeta:isOptionalColumn ?isOptional}
 		|}""".stripMargin
 
