@@ -106,7 +106,7 @@ export default class LabelMaker {
 
 		// Use a single scale if y and y2 have the same valueFormat
 		if (this.object &&
-			getColInfoParam(this.object.tableFormat, this.params.get('y'), 'valueFormat') ==
+			getColInfoParam(this.object.tableFormat, this.params.get('y'), 'valueFormat') ===
 			getColInfoParam(this.object.tableFormat, this.params.get('y2'), 'valueFormat')) {
 				return {};
 		}
