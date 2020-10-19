@@ -23,6 +23,7 @@ object StatsRouting{
 		submitters: Option[Seq[String]],
 		contributors: Option[Seq[String]],
 		dlfrom: Option[Seq[String]],
+		originStations: Option[Seq[String]],
 	)
 	case class DownloadsByCountry(count: Int, countryCode: String)
 	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
@@ -60,11 +61,12 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends De
 			"stations".as[List[String]].?,
 			"submitters".as[List[String]].?,
 			"contributors".as[List[String]].?,
-			"dlfrom".as[List[String]].?
-		){(page, pagesize, specs, stations, submitters, contributors, dlfrom) =>
+			"dlfrom".as[List[String]].?,
+			"originStations".as[List[String]].?,
+		){(page, pagesize, specs, stations, submitters, contributors, dlfrom, originStations) =>
 			//The constants in the next line can be moved to a config, if needed
 			val pageSize = Math.min(100000, pagesize.getOrElse(100))
-			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors, dlfrom)
+			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors, dlfrom, originStations)
 			onSuccess(fetcher(qp)){res =>
 				complete(res)
 			}

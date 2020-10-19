@@ -54,7 +54,7 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 };
 
 export const getSearchParams = (downloadStatsFilters) => {
-	const { specification, stations, submitters, contributors, dlfrom } = downloadStatsFilters;
+	const { specification, stations, submitters, contributors, dlfrom, originStations } = downloadStatsFilters;
 
 	const searchParams = {
 		specs: specification && specification.length ? specification : undefined,
@@ -62,6 +62,7 @@ export const getSearchParams = (downloadStatsFilters) => {
 		submitters: submitters && submitters.length ? submitters : undefined,
 		contributors: contributors && contributors.length ? contributors : undefined,
 		dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
+		originStations: originStations && originStations.length ? originStations : undefined
 	};
 
 	const searchParamsReduced = Object.keys(searchParams).reduce((acc, key) => {

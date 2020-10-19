@@ -37,14 +37,16 @@ export default class StatsTable {
 	}
 
 	getSearchParamFilters() {
-		return Object.assign({}, this._filters, {
-			'stations': (this._filters.stations || []).concat(getDataOriginStations(this._filters.dataOriginCountries, this._stationCountryCodes))
-		});
+		return {
+			...this._filters,
+			...{ originStations: getDataOriginStations(this._filters.dataOriginCountries, this._stationCountryCodes) }
+		};
 	}
 }
 
+// Convert data origin countries to a list of stations
 const getDataOriginStations = (dataOriginCountries, stationCountryCodes) => {
-	if (dataOriginCountries === undefined) return [];
+	if (dataOriginCountries === undefined) return;
 
 	return Object.keys(stationCountryCodes).reduce((acc, stationUri) => {
 		if (dataOriginCountries.includes(stationCountryCodes[stationUri])) {

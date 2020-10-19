@@ -203,7 +203,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?)"
+			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?)"
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
@@ -220,6 +220,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				initArray(        5, qp.submitters)
 				initArray(        6, qp.contributors)
 				initArray(        7, qp.dlfrom)
+				initArray(        8, qp.originStations)
 			}
 
 			consumeResultSet(preparedSt.executeQuery())(parser)

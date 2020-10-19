@@ -179,7 +179,8 @@ CREATE OR REPLACE FUNCTION public.downloadsByCountry(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -200,6 +201,7 @@ WHERE (
 	AND (_submitters IS NULL OR submitter = ANY (_submitters))
 	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 	AND (_contributors IS NULL OR contributors ?| _contributors)
+	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 )
 GROUP BY country_code
 ORDER BY count DESC;
@@ -215,7 +217,8 @@ CREATE OR REPLACE FUNCTION public.downloadsPerWeek(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -237,6 +240,7 @@ WHERE (
 	AND (_submitters IS NULL OR submitter = ANY (_submitters))
 	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 	AND (_contributors IS NULL OR contributors ?| _contributors)
+	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 )
 GROUP BY week_start
 ORDER BY week_start;
@@ -252,7 +256,8 @@ CREATE OR REPLACE FUNCTION public.downloadsPerMonth(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -272,6 +277,7 @@ WHERE (
 	AND (_submitters IS NULL OR submitter = ANY (_submitters))
 	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 	AND (_contributors IS NULL OR contributors ?| _contributors)
+	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 )
 GROUP BY month_start
 ORDER BY month_start;
@@ -287,7 +293,8 @@ CREATE OR REPLACE FUNCTION public.downloadsPerYear(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -307,6 +314,7 @@ WHERE (
 	AND (_submitters IS NULL OR submitter = ANY (_submitters))
 	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 	AND (_contributors IS NULL OR contributors ?| _contributors)
+	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 )
 GROUP BY year_start
 ORDER BY year_start;
@@ -322,7 +330,8 @@ CREATE OR REPLACE FUNCTION public.downloadStatsSize(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		size int
@@ -350,6 +359,7 @@ BEGIN
 					AND (_submitters IS NULL OR submitter = ANY (_submitters))
 					AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 					AND (_contributors IS NULL OR contributors ?| _contributors)
+					AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 				)
 				GROUP BY hash_id
 			) dl;
@@ -366,7 +376,8 @@ CREATE OR REPLACE FUNCTION public.downloadStats(
 		_stations text[] DEFAULT NULL,
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
-		_downloaded_from text [] DEFAULT NULL
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -399,6 +410,7 @@ BEGIN
 				AND (_submitters IS NULL OR submitter = ANY (_submitters))
 				AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
 				AND (_contributors IS NULL OR contributors ?| _contributors)
+				AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
 			)
 			GROUP BY hash_id
 			ORDER BY count DESC
