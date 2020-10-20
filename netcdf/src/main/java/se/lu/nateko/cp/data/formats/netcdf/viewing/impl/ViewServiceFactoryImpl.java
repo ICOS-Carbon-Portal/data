@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.formats.netcdf.viewing.impl;
 
 import java.util.List;
+import java.io.IOException;
 
 import se.lu.nateko.cp.data.formats.netcdf.util.NetCdfFiles;
 import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService;
@@ -26,7 +27,7 @@ public class ViewServiceFactoryImpl implements ViewServiceFactory{
 		return new NetCdfFiles(netCdfFolder).getNetCdfFiles();
 	}
 	
-	public NetCdfViewService getNetCdfViewService(String fileName){
+	public NetCdfViewService getNetCdfViewService(String fileName) throws IOException{
 		return new NetCdfViewServiceImpl(netCdfFolder + fileName, dates, lats, longs, elevations);
 	}
 

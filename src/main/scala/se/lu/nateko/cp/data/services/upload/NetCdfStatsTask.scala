@@ -11,8 +11,9 @@ import ucar.nc2.{NetcdfFile, Variable}
 import ucar.ma2.MAMath
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import se.lu.nateko.cp.data.api.CpDataParsingException
+import se.lu.nateko.cp.data.NetCdfConfig
 
-class NetCdfStatsTask(varNames: Seq[String], file: File)(implicit ctxt: ExecutionContext) extends UploadTask {
+class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig)(implicit ctxt: ExecutionContext) extends UploadTask {
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = Sink.cancelled
 		.mapMaterializedValue(_ => Future.successful(DummySuccess))

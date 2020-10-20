@@ -28,17 +28,14 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 
 	private VariableSpecification variables = new VariableSpecification();
 
-	private File file = null;
+	private final File file;
 
 	public NetCdfViewServiceImpl(String fileName, List<String> dates, List<String> lats, List<String> longs,
-			List<String> elevations)
+			List<String> elevations) throws IOException
 	{
 		file = new File(fileName);
-		NetcdfDataset ds = null;
 
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
-
+		withDataset(ds -> {
 			if (dates != null) {
 				for (String value : dates) {
 					if (ds.findVariable(value) != null) {
@@ -84,30 +81,29 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			dimensions.setElevationDimension(
 					ds.findVariable(variables.getElevationVariable()).getDimension(0).getShortName());
 
-		}
-		catch (Exception e) {
+			return null;
+		});
 
-		}
-		finally {
-			if (ds != null)
-				try {
-					ds.close();
-				}
-				catch (IOException e) {
+	}
 
-				}
-		}
+	private <R> R withDataset(DatasetConsumer<R> consumer) throws IOException{
+		NetcdfDataset ds = null;
 
+		try {
+			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+			return consumer.apply(ds);
+		} catch (Throwable exc){
+			throw new IOException("Problem with file " + file.getAbsolutePath(), exc);
+		} finally{
+			if(ds != null) ds.close();
+		}
 	}
 
 	@Override
 	public String[] getAvailableDates()
 		throws IOException
 	{
-		NetcdfDataset ds = null;
-
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+		return withDataset(ds -> {
 
 			Variable ncVar = ds.findVariable(variables.dateVariable);
 			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
@@ -118,14 +114,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 
 			return sliceAxis.getCalendarDates().stream().map(calendarDate -> calendarDate.toString()).toArray(
 					n -> new String[n]);
-		}
-		catch (IOException ioe) {
-			throw new IOException("Could not open file " + file.getAbsolutePath());
-		}
-		finally {
-			if (ds != null)
-				ds.close();
-		}
+		});
 	}
 
 	@Override
@@ -133,10 +122,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		throws IOException
 	{
 		if (variables.elevationVariable != null) {
-			NetcdfDataset ds = null;
-
-			try {
-				ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+			return withDataset(ds -> {
 
 				// First see if this requested variable contains the elevation dimension
 				// TODO: This requires that the variable name is the same as the dimension name
@@ -159,15 +145,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 				else {
 					return new String[] { "null" };
 				}
-
-			}
-			catch (IOException ioe) {
-				throw new IOException("Could not open file " + file.getAbsolutePath());
-			}
-			finally {
-				if (ds != null)
-					ds.close();
-			}
+			});
 		}
 		else {
 			return new String[] { "null" };
@@ -178,10 +156,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 	public String[] getVariables()
 		throws IOException
 	{
-		NetcdfDataset ds = null;
-
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+		return withDataset(ds -> {
 
 			List<String> varList = new ArrayList<String>();
 
@@ -218,14 +193,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 
 			return varList.toArray(new String[varList.size()]);
 
-		}
-		catch (IOException ioe) {
-			throw new IOException("Could not open file " + file.getAbsolutePath());
-		}
-		finally {
-			if (ds != null)
-				ds.close();
-		}
+		});
 	}
 
 	@Override
@@ -233,10 +201,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		throws IOException,
 		InvalidRangeException
 	{
-		NetcdfDataset ds = null;
-
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+		return withDataset(ds -> {
 
 			Variable ncVar = ds.findVariable(varName);
 
@@ -320,24 +285,14 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			return new RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, latMin,
 					latMax, lonMin, lonMax);
 
-		}
-		catch (IOException ioe) {
-			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
-		}
-		finally {
-			if (ds != null)
-				ds.close();
-		}
+		});
 	}
 
 	public double[] getTemporalCrossSection(String varName, int latInd, int lonInd, String elevation)
 		throws IOException,
 		InvalidRangeException
 	{
-		NetcdfDataset ds = null;
-
-		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+		return withDataset(ds -> {
 
 			Variable ncVar = ds.findVariable(varName);
 
@@ -396,14 +351,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 
 			return (double[])arrFullDim.get1DJavaArray(double.class);
 
-		}
-		catch (IOException ioe) {
-			throw new IOException("IO error when working with file " + file.getAbsolutePath(), ioe);
-		}
-		finally {
-			if (ds != null)
-				ds.close();
-		}
+		});
 	}
 
 }

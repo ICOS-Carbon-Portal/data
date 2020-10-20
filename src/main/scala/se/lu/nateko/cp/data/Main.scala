@@ -12,17 +12,17 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
 import akka.stream.Materializer
-import se.lu.nateko.cp.data.routes._
-import se.lu.nateko.cp.data.services.upload.UploadService
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
-import se.lu.nateko.cp.data.api.MetaClient
-import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
-import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.cpdata.BuildInfo
+import se.lu.nateko.cp.data.routes._
+import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.PortalLogClient
-import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
+import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
+import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
+import se.lu.nateko.cp.data.services.upload.UploadService
 
 object Main extends App {
 
@@ -33,22 +33,18 @@ object Main extends App {
 	val config = ConfigReader.getDefault
 	implicit val envriConfigs = ConfigReader.metaCore.envriConfigs
 
-	private def netCdfServiceFactory(netCdfFolder: String) = {
-		import config.netcdf._
-		import scala.jdk.CollectionConverters.SeqHasAsJava
-		new ViewServiceFactoryImpl(netCdfFolder, dateVars.asJava, latitudeVars.asJava, longitudeVars.asJava, elevationVars.asJava)
-	}
+	private val netcdfUtil = new NetcdfUtil(config.netcdf)
 
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
 	val portalLog = new PortalLogClient(config.restheart, http)
 
-	val uploadService = new UploadService(config.upload, metaClient)
+	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
 
-	val netcdfRoute = NetcdfRoute.cp(netCdfServiceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
-	val legacyNetcdfRoute = NetcdfRoute(netCdfServiceFactory(config.netcdf.folder))
+	val netcdfRoute = NetcdfRoute.cp(netcdfUtil.serviceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
+	val legacyNetcdfRoute = NetcdfRoute(netcdfUtil.serviceFactory(config.netcdf.folder))
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRoute = new TabularFetchRouting(binTableFetcher).route

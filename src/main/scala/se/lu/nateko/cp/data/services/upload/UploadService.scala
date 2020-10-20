@@ -24,6 +24,7 @@ import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
+import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.Envri
@@ -31,7 +32,7 @@ import java.net.URI
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import java.io.File
 
-class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
+class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
 	import UploadService._
 	import meta.{ dispatcher, system }
@@ -196,7 +197,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			)
-			Future.successful(new NetCdfStatsTask(varNames, file))
+			Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf))
 		} else if(spec.dataLevel <= 2) {
 			val ingSpec = req.fold(
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
