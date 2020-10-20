@@ -162,7 +162,7 @@ export default class App {
 
 		const {xlabel, xLegendLabel, ylabel, y2label, labels, valueFormatX, series} = this.labelMaker;
 		const strokeWidth = this.params.get('type') === 'line' ? 1 : 0;
-		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime((valueFormatX));
+		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime(valueFormatX) || isYear(valueFormatX);
 		const formatters = getFormatters(xLegendLabel, valueFormatX);
 		const drawPoints = this.params.get('type') !== 'line';
 
@@ -401,7 +401,7 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 		};
 	};
 
-	const axisLabelFormatter = (converter: number, format: ReturnType<typeof getDateTimeFormat>, func?: Function): AxisLabelFormatter => {
+	const axisLabelFormatter = (converter: number, format: ReturnType<typeof getDateTimeFormat> | "year", func?: Function): AxisLabelFormatter => {
 		const fn = func ? func : (val: any) => val;
 
 		return (dataVal, granularity, opts, graph) => {
@@ -439,6 +439,9 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 			case "hm":
 				return fn(pad(date.getUTCHours()) + ':' + pad(date.getUTCMinutes()));
 
+			case "year":
+				return date.getUTCFullYear();
+
 			default:
 				return fn(dataVal);
 		}
@@ -462,6 +465,11 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 			valueFormatter: valueFormatter(sec2ms, "hms", formatLbl),
 			axisLabelFormatter: axisLabelFormatter(sec2ms, "hm")
 		};
+	} else if (isYear(valueFormatX)) {
+		return {
+			valueFormatter: valueFormatter(day2ms, "year", formatLbl),
+			axisLabelFormatter: axisLabelFormatter(day2ms, "year")
+		}
 	} else {
 		return {valueFormatter: formatLbl, axisLabelFormatter: (val: number) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
@@ -481,12 +489,17 @@ const timeFormats = ['iso8601timeOfDay']
 const dateFormats = ['iso8601date', 'etcDate']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
+// Stored as days since epoch
+const yearFormats = ['yearDateFormat']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
 // Stored as milliseconds since epoch
 const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
 const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
 const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
+const isYear = (valueFormat: string) => yearFormats.includes(valueFormat);
 const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
 
 const fail = (message: string) => {

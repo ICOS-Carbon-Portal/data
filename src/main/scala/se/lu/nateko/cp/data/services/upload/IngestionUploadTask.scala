@@ -66,6 +66,12 @@ class IngestionUploadTask(
 					delimitedheadercsv.SitesDailyDelimitedHeaderCsvStreams.standardCsvParser(nRows, colFormats)
 				}
 
+			case `sitesYearlyDelimitedHeaderCsvTimeSer` =>
+				standardSink{nRows =>
+					val colFormats = ColumnsMetaWithTsCol(colsMeta, "TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES")
+					delimitedheadercsv.SitesYearlyDelimitedHeaderCsvStreams.standardCsvParser(nRows, colFormats)
+				}
+
 			case `asciiEtcHalfHourlyProdTimeSer` =>
 				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).standardCsvParser)
 

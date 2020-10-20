@@ -4,6 +4,8 @@ import java.time._
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.temporal.ChronoField
 
 class ValueFormatParser {
 
@@ -41,6 +43,8 @@ class ValueFormatParser {
 				parseLocalDateTime(value, isoLikeDateFormater)
 			case EtcLocalDateTime =>
 				parseLocalDateTime(value, etcDateTimeFormatter)
+			case YearDateFormat => 
+				Int.box(LocalDate.parse(value, yearDateFormatter).toEpochDay.toInt)
 		}
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
@@ -49,7 +53,7 @@ class ValueFormatParser {
 		case DoubleValue => DataType.DOUBLE
 		case Utf16CharValue => DataType.CHAR
 		case StringValue => DataType.STRING
-		case Iso8601Date | EtcDate => DataType.INT
+		case Iso8601Date | EtcDate | YearDateFormat => DataType.INT
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => DataType.DOUBLE
 		case Iso8601TimeOfDay => DataType.INT
 	}
@@ -60,7 +64,7 @@ class ValueFormatParser {
 		case DoubleValue => Double.box(Double.NaN)
 		case Utf16CharValue => Character.valueOf(Character.MIN_VALUE)
 		case StringValue => ""
-		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
+		case Iso8601Date | EtcDate | YearDateFormat => Int.box(Int.MinValue)
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => Double.box(Double.NaN)
 		case Iso8601TimeOfDay => Int.box(Int.MinValue)
 	}
@@ -70,6 +74,11 @@ object ValueFormatParser {
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+	val yearDateFormatter = new DateTimeFormatterBuilder()
+		.appendPattern("yyyy")
+		.parseDefaulting(ChronoField.MONTH_OF_YEAR, 1)
+		.parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+		.toFormatter();
 
 	def parseIsoTimeOfDay(time: String): Integer =
 		Int.box(LocalTime.parse(time).toSecondOfDay)
