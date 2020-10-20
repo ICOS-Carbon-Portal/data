@@ -36,6 +36,7 @@ import java.util.concurrent.ArrayBlockingQueue
 
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
 
@@ -199,11 +200,42 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 			DownloadedFrom(rs.getInt("count"), rs.getString("country_code"))
 		}
 
+	def downloadCount(hashId: Sha256Sum)(implicit envri: Envri): Future[IndexedSeq[DownloadCount]] =
+		runAnalyticalQuery(s"SELECT COUNT(*) AS download_count FROM downloads WHERE hash_id = '${hashId}'"){rs =>
+			DownloadCount(rs.getInt("download_count"))
+	}
+
+	def lastDownloads(limit: Int, itemType: Option[DlItemType.Value])(implicit envri: Envri): Future[IndexedSeq[Download]] = {
+		val whereClause = itemType.fold("")(value => s"WHERE item_type = '$value'")
+		// Limit coordinates to 5 decimals in function ST_AsGeoJSON
+		val query = s"""
+			|SELECT
+			|	item_type, ts, hash_id, ip, city, country_code, ST_AsGeoJSON(pos, 5) AS geojson
+			|FROM downloads
+			|${whereClause}
+			|ORDER BY id DESC
+			|LIMIT ${limit}
+			|""".stripMargin
+
+		runAnalyticalQuery(query){rs =>
+			Download(
+				rs.getString("item_type"),
+				rs.getTimestamp("ts").toLocalDateTime.toInstant(ZoneOffset.UTC),
+				rs.getString("hash_id"),
+				rs.getString("ip"),
+				Option(rs.getString("city")),
+				Option(rs.getString("country_code")),
+				Option(rs.getString("geojson")).flatMap(parsePointPosition)
+			)
+		}
+	}
+
 	def runAnalyticalQuery[T](
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val fullQueryString = if(params.isEmpty) queryStr else queryStr + "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?)"
+			val functionParams = "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?)"
+			val fullQueryString = if(params.isEmpty) queryStr else queryStr + functionParams
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
