@@ -105,10 +105,16 @@ export default class LabelMaker {
 			return {};
 
 		// Use a single scale if y and y2 have the same value type
-		if (this.object &&
-			getColInfoParam(this.object.tableFormat, this.params.get('y'), 'label') ===
-			getColInfoParam(this.object.tableFormat, this.params.get('y2'), 'label')) {
-				return {};
+		if (this.object){
+			const mwtf = this.object;//to keep the compiler happy
+			const yColInfo = (ycol: 'y' | 'y2', key: keyof ColumnInfo) => {
+				return getColInfoParam(mwtf.tableFormat, this.params.get(ycol), key);
+			}
+
+			const sameValueType = (['label', 'unit'] as const).every(key =>
+				yColInfo('y', key) === yColInfo('y2', key)
+			)
+			if(sameValueType) return {};
 		}
 
 		return this.metadata.reduce<{[k: string]: PerSeriesOptions}>((acc, dobj) => {
@@ -219,6 +225,6 @@ const getLabel = (tableFormat: TableFormat, colName: string) => {
 	return unit === '?' ? label : `${label} [${unit}]`;
 };
 
-const getColInfoParam = (tableFormat: TableFormat, colName: string, param: keyof Omit<ColumnInfo, 'isRegex' | 'flagCol'>) => {
+function getColInfoParam<T extends keyof ColumnInfo>(tableFormat: TableFormat, colName: string, param: T) {
 	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
 };
