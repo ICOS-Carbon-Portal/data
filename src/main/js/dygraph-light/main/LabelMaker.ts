@@ -104,6 +104,13 @@ export default class LabelMaker {
 		if (!this.hasY2 || !this.metadata || this.metadata.some(dobj => dobj.labels.y2 === undefined))
 			return {};
 
+		// Use a single scale if y and y2 have the same value type
+		if (this.object &&
+			getColInfoParam(this.object.tableFormat, this.params.get('y'), 'label') ===
+			getColInfoParam(this.object.tableFormat, this.params.get('y2'), 'label')) {
+				return {};
+		}
+
 		return this.metadata.reduce<{[k: string]: PerSeriesOptions}>((acc, dobj) => {
 			acc[dobj.labels.y] = {axis: 'y1'};
 			acc[dobj.labels.y2!] = {axis: 'y2'};
@@ -212,7 +219,6 @@ const getLabel = (tableFormat: TableFormat, colName: string) => {
 	return unit === '?' ? label : `${label} [${unit}]`;
 };
 
-const getColInfoParam = (tableFormat: TableFormat, colName: string, param: string) => {
-	const colInfo = tableFormat.columns[tableFormat.getColumnIndex(colName)] as ColumnInfo & Obj;
-	return colInfo[param];
+const getColInfoParam = (tableFormat: TableFormat, colName: string, param: keyof Omit<ColumnInfo, 'isRegex' | 'flagCol'>) => {
+	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
 };
