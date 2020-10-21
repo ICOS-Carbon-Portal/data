@@ -5,6 +5,7 @@ import akka.util.ByteString
 
 import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Try, Using}
 import java.io.File
 import se.lu.nateko.cp.meta.core.data.NetCdfExtract
 import ucar.nc2.{NetcdfFile, Variable}
@@ -12,6 +13,7 @@ import ucar.ma2.MAMath
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.NetCdfConfig
+import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 
 class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig)(implicit ctxt: ExecutionContext) extends UploadTask {
 
@@ -23,25 +25,33 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig)(i
 			val failures = otherTaskResults.collect{
 				case fail: UploadTaskFailure => fail
 			}
-			if(!failures.isEmpty) Future.successful(CancelledBecauseOfOthers(failures))
+			if(!failures.isEmpty)
+				Future.successful(CancelledBecauseOfOthers(failures))
 			else Future{
-				IngestionSuccess(readNetCdf)
+				readNetCdf.fold(IngestionFailure.apply, IngestionSuccess.apply)
 			}
 		}
 
-	private def readNetCdf: NetCdfExtract = {
-		val ncf = NetcdfFile.open(file.getAbsolutePath)
-		try {
-			val varLookup = ncf.getVariables.asScala.map(v => v.getShortName -> v).toMap
-			val varInfos = varNames.map{varName =>
-				val v = varLookup.getOrElse(varName, throw new CpDataParsingException(s"Variable $varName not found in the NetCdf file"))
-				assert(v.getRank >= 3, s"Variable $varName has ${v.getRank} dimenstions, expected at least 3")
-				calcMinMax(v)
-			}
-			NetCdfExtract(varInfos)
+	private def readNetCdf: Try[NetCdfExtract] =
+		Try(new NetcdfUtil(config).service(file.toPath)).flatMap{service =>
+			val availableVars = service.getVariables.toSet
+			val missingVariables = varNames.filterNot(availableVars.contains)
+
+			if(missingVariables.isEmpty) Using(NetcdfFile.open(file.getAbsolutePath)){ncf =>
+				val varInfos = varNames.map{varName =>
+					val v = ncf.findVariable(null, varName)
+					calcMinMax(v)
+				}
+				NetCdfExtract(varInfos)
+			} else throw new CpDataParsingException({
+				import se.lu.nateko.cp.data.ConfigReader.netcdfConfigFormat
+				import spray.json._
+				s"""The following variable(s) cannot be previewable: ${missingVariables.mkString(", ")}.
+				|This may be due to them missing in the file, or lacking the expected lat/lon and time dimensions.
+				|Please refer to the following config to learn about supported names for dimension variables:
+				|${config.copy(folder = null).toJson.prettyPrint}""".stripMargin
+			})
 		}
-		finally ncf.close()
-	}
 
 	private def calcMinMax(v: Variable): VarInfo = {
 		val data = v.read()
