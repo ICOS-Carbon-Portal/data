@@ -110,7 +110,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.getOrElse(ok)
 
-	def init: Future[Done] = if (config.skipInit) Future.successful(Done) else Future.sequence{
+	def init: Future[Done] = if (config.skipInit) ok else Future.sequence{
 		config.dbNames.keys.map{implicit envri =>
 			ensureDbExists.flatMap{
 				_ => setupCollection(config.dobjDownloads)

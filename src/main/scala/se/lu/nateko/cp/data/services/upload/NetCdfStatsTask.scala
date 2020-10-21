@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
+import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 
@@ -8,20 +9,26 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Using}
 import java.io.File
 import se.lu.nateko.cp.meta.core.data.NetCdfExtract
-import ucar.nc2.{NetcdfFile, Variable}
+import ucar.nc2.Variable
+import ucar.nc2.dataset.NetcdfDataset;
 import ucar.ma2.MAMath
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 
-class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig)(implicit ctxt: ExecutionContext) extends UploadTask {
+class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean)(implicit ctxt: ExecutionContext) extends UploadTask {
 
-	def sink: Sink[ByteString, Future[UploadTaskResult]] = Sink.cancelled
-		.mapMaterializedValue(_ => Future.successful(DummySuccess))
+	def sink: Sink[ByteString, Future[UploadTaskResult]] =
+		if (tryIngest) //need to save to the file, as no FileSavingUploadTask is being run in parallel
+			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioRes => FileWriteSuccess(ioRes.count)))
+		else
+			Sink.cancelled.mapMaterializedValue(_ => Future.successful(DummySuccess))
 
 	def onComplete(own: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) =
-		if(varNames.isEmpty) Future.successful(NotApplicable) else {
+		if(varNames.isEmpty)
+			Future.successful(IngestionSuccess(NetCdfExtract(Nil)))
+		else {
 			val failures = otherTaskResults.collect{
 				case fail: UploadTaskFailure => fail
 			}
@@ -37,9 +44,9 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig)(i
 			val availableVars = service.getVariables.toSet
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
-			if(missingVariables.isEmpty) Using(NetcdfFile.open(file.getAbsolutePath)){ncf =>
+			if(missingVariables.isEmpty) Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>
 				val varInfos = varNames.map{varName =>
-					val v = ncf.findVariable(null, varName)
+					val v = ncd.findVariable(varName)
 					calcMinMax(v)
 				}
 				NetCdfExtract(varInfos)

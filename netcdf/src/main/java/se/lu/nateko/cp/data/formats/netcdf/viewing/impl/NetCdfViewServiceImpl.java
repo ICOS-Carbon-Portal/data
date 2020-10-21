@@ -78,8 +78,11 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 					ds.findVariable(variables.getLatVariable()).getDimension(0).getShortName());
 			dimensions.setLonDimension(
 					ds.findVariable(variables.getLonVariable()).getDimension(0).getShortName());
-			dimensions.setElevationDimension(
-					ds.findVariable(variables.getElevationVariable()).getDimension(0).getShortName());
+
+			String elevVar = variables.getElevationVariable();
+			if(elevVar != null) dimensions.setElevationDimension(
+				ds.findVariable(elevVar).getDimension(0).getShortName()
+			);
 
 			return null;
 		});
@@ -93,7 +96,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
 			return consumer.apply(ds);
 		} catch (Throwable exc){
-			throw new IOException("Problem with file " + file.getAbsolutePath(), exc);
+			throw new IOException("Problem reading netcdf " + file.getAbsolutePath() + " : " + exc.getClass().getName() + " : " + exc.getMessage());
 		} finally{
 			if(ds != null) ds.close();
 		}

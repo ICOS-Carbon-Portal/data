@@ -59,7 +59,8 @@ case class DownloadStatsConfig(
 	admin: CredentialsConfig,
 	reader: CredentialsConfig,
 	writer: CredentialsConfig,
-	dbAccessPoolSize: Int
+	dbAccessPoolSize: Int,
+	skipInit: Boolean
 )
 
 case class MetaServiceConfig(
@@ -132,7 +133,7 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val mongoDbAggregationsFormat = jsonFormat3(MongoDbAggregations)
 	implicit val restheartCollDefFormat = jsonFormat4(RestheartCollDef)
 	implicit val restHeartConfigFormat = jsonFormat8(RestHeartConfig)
-	implicit val dlStatsConfigFormat = jsonFormat7(DownloadStatsConfig)
+	implicit val dlStatsConfigFormat = jsonFormat8(DownloadStatsConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
 

@@ -25,7 +25,7 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 		else {
 			val folder = file.getParentFile
 			if(folder != null && !folder.exists) folder.mkdir()
-			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioResultToTaskResult))
+			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioRes => FileWriteSuccess(ioRes.count)))
 		}
 	}
 
@@ -58,7 +58,4 @@ class FileSavingUploadTask(file: File)(implicit ctxt: ExecutionContext) extends 
 				})
 		}
 	}
-
-	private def ioResultToTaskResult(ioRes: IOResult): UploadTaskResult = FileWriteSuccess(ioRes.count)
-
 }

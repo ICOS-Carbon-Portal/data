@@ -80,14 +80,23 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			val ingReq = new IngestRequest(origFile.toFile, spec, nRows, varnames)
 			ingestionTaskFut(Left(ingReq))
 		}.map{task =>
-			task.sink.mapMaterializedValue(_.map{taskRes =>
-				Files.deleteIfExists(origFile)
-				taskRes match{
-					case IngestionSuccess(metaExtract) => metaExtract
-					case fail: UploadTaskFailure => throw fail.error
-					case _ => throw new CpDataException(s"Unexpected UploadTaskResult $taskRes")
+
+			def unpackTaskResult(taskRes: UploadTaskResult): Future[IngestionMetadataExtract] = taskRes match{
+				case IngestionSuccess(metaExtract) =>
+					Future.successful(metaExtract)
+				case fail: UploadTaskFailure =>
+					Future.failed(fail.error)
+				case ok: UploadTaskSuccess =>
+					task.onComplete(ok, Nil).flatMap(unpackTaskResult)
+				case _ =>
+					Future.failed(new CpDataException(s"Unexpected UploadTaskResult $taskRes"))
+			}
+
+			task.sink.mapMaterializedValue(
+				_.flatMap(unpackTaskResult).andThen{
+					case _ => Files.deleteIfExists(origFile)
 				}
-			})
+			)
 		}.map{
 			SinkCombiner.ignoreOnCancel
 		}
@@ -192,12 +201,18 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		val specFormat: URI = spec.format.uri
 		val file = req.fold(_.file, getFile)
 		import CpMetaVocab.ObjectFormats._
+
 		if(specFormat == netCdfSpatial) {
 			val varNames: Seq[String] = req.fold(
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			)
-			Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf))
+			val isTryIngest = req.isLeft
+			if(isTryIngest && varNames.isEmpty)
+				Future.failed(new CpDataException("Ingestion pointless: no variable names provided for validation"))
+			else
+				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
+
 		} else if(spec.dataLevel <= 2) {
 			val ingSpec = req.fold(
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
