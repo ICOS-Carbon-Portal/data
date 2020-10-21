@@ -8,6 +8,7 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.L2OrLessSpecificMeta
 import se.lu.nateko.cp.meta.core.data.L3SpecificMeta
 import se.lu.nateko.cp.data.routes.StatsRouting._
+import se.lu.nateko.cp.data.utils.Akka.done
 
 import akka.Done
 import akka.event.LoggingAdapter
@@ -71,7 +72,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		dataSources.valuesIterator.foreach{_.close()}
 	}
 
-	def initLogTables(): Future[Done] = {
+	def initLogTables(): Future[Done] = if(conf.skipInit) done else {
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
 		val matViews = Seq(
 			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",

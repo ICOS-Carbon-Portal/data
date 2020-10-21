@@ -12,6 +12,7 @@ Data service for:
 ---
 
 ## Instruction for uploading ICOS data objects
+
 In HTTP protocol terms, the upload is performed by HTTP-PUTing the contents of the data object with chunked transfer encoding and cookie authentication to a URL of the form `https://data.icos-cp.eu/objects/<data object id>`, where `<data object id>` is either [base64url](https://en.wikipedia.org/wiki/Base64#URL_applications)- or hex-encoded representation of the first 18 bytes of a SHA-256 hashsum of the data object's contents. The complete 32-byte representations are also accepted. You will have obtained the data object id by the time you have completed the [first step](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) of the [2-step upload procedure](https://github.com/ICOS-Carbon-Portal/meta#data-object-registration-and-upload-instructions). The authentication cookie can be obtained from [CPauth](https://cpauth.icos-cp.eu) as described [here](https://github.com/ICOS-Carbon-Portal/meta#authentication).
 
 For example, using the command-line tool `curl`, one can perform the upload as follows:
@@ -23,12 +24,34 @@ Alternatively, if you previously logged in to CPauth with `curl` and wrote the a
 `curl -v --cookie cookies.txt -H "Transfer-Encoding: chunked" --upload-file <file> https://data.icos-cp.eu/objects/<data object id>`
 
 ### Trying ingestion
-When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>`, where `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec)), and `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files). With curl, the test can be performed for example as follows:
 
-`curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" --upload-file ICOS_ATC_NRT_MTO.zip https://data.icos-cp.eu/tryingest`
+When developing client code for data upload, one may wish to test data objects for compliance with a certain format, to be sure that upload will work for a certain exact binary version of a data object. This is useful to avoid registering metadata packages for invalid data objects. The API is available through (similar to the standard upload) HTTP PUTing the data object contents to URL of the form
 
+`https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&nRows=<number of rows>` (for tabular data), or
+
+`https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&varnames=<variable names>` (for spatial NetCDF data), where
+
+- `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec))
+- `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files)
+- `varnames` is URL-encoded JSON array with names of the variables that are expected to be previewable
+
+With curl, the test can be performed for example as follows:
+
+```bash
+curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" \
+--upload-file ICOS_ATC_NRT_MTO.zip https://data.icos-cp.eu/tryingest
+```
+
+or
+
+```bash
+curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/inversionModelingSpatial" \
+--data-urlencode 'varnames=["co2flux_land", "co2flux_ocean"]' \
+--upload-file Jena_s99_v3.7_monthly.nc  https://data.icos-cp.eu/tryingest
+```
 
 ### Internal re-ingestion
+
 In some circumstances one may need to update the binary results of data ingestion without changing the data itself. In this case the server can use data objects that are already available, and redo only the ingestion part of the upload. This process can be initiated by an empty-payload HTTP POST call to data object's upload URL, like so:
 
 `curl -X POST -H "Cookie: cpauthToken=<base64-encoded signed token>" https://data.icos-cp.eu/objects/<data object id>`
@@ -36,6 +59,7 @@ In some circumstances one may need to update the binary results of data ingestio
 ---
 
 ## Simplified ETC-specific facade API for data uploads
+
 The facade uses Basic HTTP Authentication. Username is the station's id.
 For testing purposes one can use fake station `FA-Lso` and password `p4ssw0rd`.
 The uploaded data is analyzed (MD5 sum gets calculated for it), and, if the checksum matches, the facade performs [upload metadata registration](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) and internal data object upload.
@@ -92,6 +116,7 @@ Upload of every new file (provided that the file content is unique!) will result
 You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.)
 
 ### Obtaining a receipt from the logger facade
+
 For increased traceability of file uploads to the logger facade, the latter returns unique receipts for every accepted data file. The receipt is returned as the value of a custom HTTP header `X-ICOSCP-Receipt`. A receipt can look as follow:
 
 `hGWKklUBlC3WslvazCuikpOTwlKTl4c9NpiFi_KoJUQ_ymH2FJyADaXCwpmgbYtxSt813pr-0smsxgzwF2spVuolYcRVCUy8HKSWgb9im40`
@@ -114,6 +139,7 @@ Here is an example of the API usage with `curl` from Linux command line:
 The example reports download of two data objects (PIDs are separated with `\n`) by a machine with IP address `123.234.1.1` (random example). Correct password must be used.
 
 ---
+
 ## Information for developers
 
 ### Getting started with the front-end part

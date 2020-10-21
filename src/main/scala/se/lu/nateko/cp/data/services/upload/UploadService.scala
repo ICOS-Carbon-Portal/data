@@ -24,13 +24,15 @@ import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
+import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
 import Envri.Envri
 import java.net.URI
 import se.lu.nateko.cp.data.api.CpDataParsingException
+import java.io.File
 
-class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Materializer) {
+class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
 	import UploadService._
 	import meta.{ dispatcher, system }
@@ -71,24 +73,34 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		) yield sink
 	}
 
-	def getTryIngestSink(objSpec: Uri, nRows: Option[Int])(implicit envri: Envri): Future[TryIngestSink] =
+	def getTryIngestSink(objSpec: Uri, nRows: Option[Int], varnames: Option[Seq[String]])(implicit envri: Envri): Future[TryIngestSink] = {
+		val origFile = Files.createTempFile("ingestionTest", null)
+		Files.delete(origFile)
 		meta.lookupObjSpec(objSpec).flatMap{spec =>
-			val ingSpec = new IngestionSpec(spec, nRows, spec.self.label, None)
-			val origFile = Files.createTempFile("ingestionTest", null)
-			Files.delete(origFile)
-			IngestionUploadTask(ingSpec, origFile.toFile, meta)
+			val ingReq = new IngestRequest(origFile.toFile, spec, nRows, varnames)
+			ingestionTaskFut(Left(ingReq))
 		}.map{task =>
-			task.sink.mapMaterializedValue(_.map{taskRes =>
-				Files.deleteIfExists(task.file.toPath)
-				taskRes match{
-					case IngestionSuccess(metaExtract) => metaExtract
-					case fail: UploadTaskFailure => throw fail.error
-					case _ => throw new CpDataException(s"Unexpected UploadTaskResult $taskRes")
+
+			def unpackTaskResult(taskRes: UploadTaskResult): Future[IngestionMetadataExtract] = taskRes match{
+				case IngestionSuccess(metaExtract) =>
+					Future.successful(metaExtract)
+				case fail: UploadTaskFailure =>
+					Future.failed(fail.error)
+				case ok: UploadTaskSuccess =>
+					task.onComplete(ok, Nil).flatMap(unpackTaskResult)
+				case _ =>
+					Future.failed(new CpDataException(s"Unexpected UploadTaskResult $taskRes"))
+			}
+
+			task.sink.mapMaterializedValue(
+				_.flatMap(unpackTaskResult).andThen{
+					case _ => Files.deleteIfExists(origFile)
 				}
-			})
+			)
 		}.map{
 			SinkCombiner.ignoreOnCancel
 		}
+	}
 
 	def reingest(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[Done] =
 		for(
@@ -99,7 +111,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 			_ <- meta.userIsAllowedUpload(dataObj, user);
 			origFile = getFile(dataObj);
 			ingTask <- {
-				if(origFile.exists) ingestionTaskFut(dataObj)
+				if(origFile.exists) ingestionTaskFut(Right(dataObj))
 				else Future.failed(new FileNotFoundException(
 					s"File for ${dataObj.hash} not found on the server, can not reingest"
 				))
@@ -169,7 +181,7 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 
 		spec.dataLevel match{
 			case 1 | 2 | 3 if (spec.datasetSpec.isDefined) =>
-				ingestionTaskFut(dobj).map{ingestionTask =>
+				ingestionTaskFut(Right(dobj)).map{ingestionTask =>
 					(
 						if(spec.format.uri == CpMetaVocab.ObjectFormats.asciiWdcggTimeSer) mandatoryTasks(dobj)
 						else defaultTasks(dobj)
@@ -184,16 +196,30 @@ class UploadService(config: UploadConfig, val meta: MetaClient)(implicit mat: Ma
 		}
 	}
 
-	private def ingestionTaskFut(dobj: DataObject): Future[UploadTask] = {
-		val specFormat: URI = dobj.specification.format.uri
+	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] = {
+		val spec: DataObjectSpec = req.fold(_.spec, _.specification)
+		val specFormat: URI = spec.format.uri
+		val file = req.fold(_.file, getFile)
 		import CpMetaVocab.ObjectFormats._
-		val file = getFile(dobj)
-		if(specFormat == asciiWdcggTimeSer) IngestionUploadTask(IngestionSpec(dobj), file, meta)
-		else if(specFormat == netCdfSpatial) {
-			val varNames: Seq[String] = dobj.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
-			Future.successful(new NetCdfStatsTask(varNames, file))
-		} else if(dobj.specification.dataLevel <= 2) IngestionUploadTask(IngestionSpec(dobj), file, meta)
-		else Future.failed(new CpDataParsingException(s"Could not find ingester for format $specFormat"))
+
+		if(specFormat == netCdfSpatial) {
+			val varNames: Seq[String] = req.fold(
+				_.vars.toSeq.flatten,
+				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
+			)
+			val isTryIngest = req.isLeft
+			if(isTryIngest && varNames.isEmpty)
+				Future.failed(new CpDataException("Ingestion pointless: no variable names provided for validation"))
+			else
+				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
+
+		} else if(spec.dataLevel <= 2) {
+			val ingSpec = req.fold(
+				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
+				dobj => IngestionSpec(dobj)
+			)
+			IngestionUploadTask(ingSpec, file, meta)
+		} else Future.failed(new CpDataParsingException(s"Could not find ingester for format $specFormat"))
 	}
 
 	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(
@@ -216,6 +242,8 @@ object UploadService{
 	type UploadTaskSink = Sink[ByteString, Future[UploadTaskResult]]
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
 	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract]]
+
+	class IngestRequest(val file: File, val spec: DataObjectSpec, val nRows: Option[Int], val vars: Option[Seq[String]])
 
 	def fileName(hash: Sha256Sum): String = hash.id
 	def fileName(obj: StaticObject): String = fileName(obj.hash)
