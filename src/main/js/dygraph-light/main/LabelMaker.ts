@@ -104,13 +104,6 @@ export default class LabelMaker {
 		if (!this.hasY2 || !this.metadata || this.metadata.some(dobj => dobj.labels.y2 === undefined))
 			return {};
 
-		// Use a single scale if y and y2 have the same valueFormat
-		if (this.object &&
-			getColInfoParam(this.object.tableFormat, this.params.get('y'), 'valueFormat') ===
-			getColInfoParam(this.object.tableFormat, this.params.get('y2'), 'valueFormat')) {
-				return {};
-		}
-
 		return this.metadata.reduce<{[k: string]: PerSeriesOptions}>((acc, dobj) => {
 			acc[dobj.labels.y] = {axis: 'y1'};
 			acc[dobj.labels.y2!] = {axis: 'y2'};
