@@ -3,12 +3,33 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Downloads from Carbon Portal</title>
-	<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png" />
 	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css">
 
 	<script type="application/javascript">
-		var map, table, limitSelector, itemTypeSelector, recordsLbl, countryLookup;
+		window.onload = init;
+		var map, table, limitSelector, itemTypeSelector, recordsLbl, countryLookup, metaHostName;
+
+		if (location.hostname.endsWith("data.icos-cp.eu")) {
+			document.title = "Downloads from Carbon Portal";
+			metaHostName = "meta.icos-cp.eu";
+
+			var cpIcon = document.createElement("link");
+			cpIcon.rel = "shortcut icon";
+			cpIcon.type = "image/png";
+			cpIcon.href = "https://static.icos-cp.eu/images/favicon.png";
+			document.head.append(cpIcon);
+
+		} else {
+			document.title = "Downloads from SITES";
+			metaHostName = "meta.fieldsites.se";
+
+			var sitesIcon = document.createElement("link");
+			sitesIcon.rel = "icon";
+			sitesIcon.type = "image/x-icon";
+			sitesIcon.href = "https://static.icos-cp.eu/images/sites-favicon.ico";
+			document.head.append(sitesIcon);
+		}
+
 		var limitOpts = {
 			action: (newLimit) => {
 				limit = newLimit;
@@ -66,7 +87,8 @@
 				})
 				.then(payload => {
 					recordsLbl.innerHTML = 'Records to show (' + payload.length + ' found)';
-					table.innerHTML = ""
+					table.innerHTML = "";
+					
 					payload.forEach(record => {
 						table.append(getRow(record));
 					});
@@ -75,11 +97,14 @@
 
 		function getRow(record) {
 			var tr = document.createElement("tr");
+			var metaBaseUrl = record.itemType === "collection"
+				? `https://${metaHostName}/collections/`
+				: `https://${metaHostName}/objects/`;
 
 			tr.append(getTxt(record.ip));
-			tr.append(getTxt(new Date(record.ts).toLocaleString('SWE', { timeZone: 'UTC' })));
+			tr.append(getTxt(new Date(record.ts).toLocaleString('SWE')));
 			tr.append(getTxt(record.itemType));
-			tr.append(getLnk("https://meta.icos-cp.eu/objects/" + record.hashId, record.hashId));
+			tr.append(getLnk(metaBaseUrl + record.hashId, record.hashId));
 			tr.append(getTxt(countryLookup[record.countryCode]));
 			tr.append(getPosLnk(record.city, record.geoJson));
 
@@ -136,7 +161,10 @@
 			var div = document.createElement("div");
 			div.className = "dropdown";
 
-			var toggleClsName = (ev) => { div.className = getCls(div.className); ev.stopPropagation(); }
+			var toggleClsName = (ev) => { 
+				div.className = getCls(div.className);
+				ev.stopPropagation();
+			}
 
 			var btn = document.createElement("button");
 			btn.className = "btn btn-default dropdown-toggle";
@@ -154,9 +182,7 @@
 
 			var ul = document.createElement("ul");
 			ul.className = "dropdown-menu";
-
 			dropdownOptions(options, toggleClsName).forEach(li => ul.append(li));
-
 			div.append(ul);
 			placeholder.append(div);
 		}
@@ -176,7 +202,7 @@
 	</script>
 </head>
 
-<body onload="init()">
+<body>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-md-8">
@@ -184,7 +210,7 @@
 					<thead style="top:0px; position:sticky; background-color:white;">
 						<tr>
 							<th>IP</th>
-							<th>Date</th>
+							<th>Date (local time)</th>
 							<th>Type</th>
 							<th>Data object</th>
 							<th>Country</th>
