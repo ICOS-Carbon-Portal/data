@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Downloads from Carbon Portal</title>
+	<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png" />
+	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css">
+
+	<script type="application/javascript">
+		var map, table, limitSelector, itemTypeSelector, recordsLbl, countryLookup;
+		var limitOpts = {
+			action: (newLimit) => {
+				limit = newLimit;
+				fetchLog();
+				addDropdown(limitSelector, newLimit, limitOpts);
+			},
+			vals: [200, 500, 1000, 5000, 10_000]
+		};
+		var itemTypeOpts = {
+			action: (newType) => {
+				itemType = newType === 'Any type' ? '' : newType;
+				fetchLog();
+				addDropdown(itemTypeSelector, newType, itemTypeOpts);
+			},
+			vals: ['Any type', 'Data', 'Collection', 'Document']
+		};
+		var limit = limitOpts.vals[2];
+		var itemType = itemTypeOpts.vals[0];
+
+		function init() {
+			map = document.getElementById("map");
+			table = document.getElementById("table");
+			limitSelector = document.getElementById('limitSelector');
+			itemTypeSelector = document.getElementById('itemTypeSelector');
+			recordsLbl = document.getElementById('recordsLbl');
+
+			fetch('https://static.icos-cp.eu/constant/misc/countries.json')
+				.then(response => {
+					return response.json();
+				})
+				.then(payload => {
+					countryLookup = payload;
+				});
+
+			fetchLog();
+
+			addDropdown(limitSelector, limit, limitOpts);
+			addDropdown(itemTypeSelector, itemType, itemTypeOpts);
+
+			document.body.addEventListener("click", closeDropdowns)
+		}
+
+		function prepareItemType(type) {
+			return type === itemTypeOpts.vals[0]
+				? ''
+				: type.toLowerCase();
+		}
+
+		function fetchLog() {
+			recordsLbl.innerHTML = 'Fetching data...';
+
+			fetch('/stats/api/lastDownloads?limit=' + limit + '&itemType=' + prepareItemType(itemType))
+				.then(response => {
+					return response.json();
+				})
+				.then(payload => {
+					recordsLbl.innerHTML = 'Records to show (' + payload.length + ' found)';
+					table.innerHTML = ""
+					payload.forEach(record => {
+						table.append(getRow(record));
+					});
+				});
+		}
+
+		function getRow(record) {
+			var tr = document.createElement("tr");
+
+			tr.append(getTxt(record.ip));
+			tr.append(getTxt(new Date(record.ts).toLocaleString('SWE', { timeZone: 'UTC' })));
+			tr.append(getTxt(record.itemType));
+			tr.append(getLnk("https://meta.icos-cp.eu/objects/" + record.hashId, record.hashId));
+			tr.append(getTxt(countryLookup[record.countryCode]));
+			tr.append(getPosLnk(record.city, record.geoJson));
+
+			return tr;
+		}
+
+		function getTxt(content) {
+			var td = document.createElement("td");
+			td.innerHTML = content;
+			return td;
+		}
+
+		function getLnk(url, txt) {
+			var td = document.createElement("td");
+			var a = document.createElement("a");
+
+			a.href = url;
+			a.target = "_blank";
+			a.innerHTML = txt;
+			td.append(a);
+
+			return td;
+		}
+
+		function getPosLnk(txt, geoJson) {
+			var td = document.createElement("td");
+			var a = document.createElement("a");
+
+			a.onclick = () => showPosition(geoJson);
+			a.innerHTML = txt;
+			a.style.cursor = 'pointer';
+			td.append(a);
+
+			return td;
+		}
+
+		function showPosition(geoJson) {
+			map.src = "https://meta.icos-cp.eu/station/?coverage=" + encodeURIComponent(JSON.stringify(geoJson));
+			map.style.display = 'inline';
+		}
+
+		function closeDropdowns(ev) {
+			Array.from(document.getElementsByClassName("dropdown"))
+				.forEach(div => div.className = "dropdown");
+		}
+
+
+		function addDropdown(placeholder, selectedValue, options) {
+			function getCls(className) {
+				return className === "dropdown" ? "dropdown open" : "dropdown";
+			}
+			placeholder.innerHTML = '';
+
+			var div = document.createElement("div");
+			div.className = "dropdown";
+
+			var toggleClsName = (ev) => { div.className = getCls(div.className); ev.stopPropagation(); }
+
+			var btn = document.createElement("button");
+			btn.className = "btn btn-default dropdown-toggle";
+			btn.addEventListener("click", toggleClsName);
+
+			var selected = document.createElement("span");
+			selected.innerHTML = selectedValue;
+			btn.append(selected);
+
+			var caret = document.createElement("span");
+			caret.className = "caret";
+			caret.style.marginLeft = "5px";
+			btn.append(caret);
+			div.append(btn);
+
+			var ul = document.createElement("ul");
+			ul.className = "dropdown-menu";
+
+			dropdownOptions(options, toggleClsName).forEach(li => ul.append(li));
+
+			div.append(ul);
+			placeholder.append(div);
+		}
+
+		function dropdownOptions(options, toggleClsName) {
+			return options.vals.map(val => {
+				var li = document.createElement("li");
+				var a = document.createElement("a");
+				a.innerHTML = Number.isInteger(val) ? val.toLocaleString() : val;
+				a.style.cursor = 'pointer';
+				a.addEventListener("click", (ev) => { toggleClsName(ev); options.action(val); });
+				li.append(a);
+
+				return li;
+			});
+		}
+	</script>
+</head>
+
+<body onload="init()">
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-8">
+				<table class="table table-striped">
+					<thead style="top:0px; position:sticky; background-color:white;">
+						<tr>
+							<th>IP</th>
+							<th>Date</th>
+							<th>Type</th>
+							<th>Data object</th>
+							<th>Country</th>
+							<th>City</th>
+						</tr>
+					</thead>
+					<tbody id="table" />
+				</table>
+			</div>
+			<div class="col-md-4" style="padding-top:8px; top:0px; position:sticky; height:100vh;">
+				<div class="row">
+					<div class="col-md-5">
+						<label id="recordsLbl">Records to show</label>
+						<div id="limitSelector"></div>
+					</div>
+					<div class="col-md-5">
+						<label>Type to show</label>
+						<div id="itemTypeSelector"></div>
+					</div>
+				</div>
+				<div class="row" style="width:100%; height:100%; padding-top: 10px;">
+					<div col="col-md-12" style="height:100%;">
+						<iframe id="map" style="display:none; border:none; width:100%; height:calc(100% - 90px);" />
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+
+</html>
