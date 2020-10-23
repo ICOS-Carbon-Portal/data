@@ -50,13 +50,13 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 				s"""The following variable(s) cannot be previewable: ${missingVariables.mkString(", ")}.
 				|This may be due to them missing in the file, or lacking the expected lat/lon and time dimensions.
 				|Please refer to the following config to learn about supported names for dimension variables:
-				|${config.copy(folder = null).toJson.prettyPrint}""".stripMargin
+				|${config.copy(folder = "<omitted>").toJson.prettyPrint}""".stripMargin
 			})
 
 			val date0 = service.getAvailableDates()(0)
 			varNames.foreach{varName =>
 				val elevation0 = service.getAvailableElevations(varName).headOption.orNull
-				service.getRaster(varName, date0, elevation0)
+				service.getRaster(date0, varName, elevation0)
 			}
 
 			Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>

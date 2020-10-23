@@ -207,6 +207,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		return withDataset(ds -> {
 
 			Variable ncVar = ds.findVariable(varName);
+			if(ncVar == null) throw new IllegalArgumentException("Variable " + varName + " was not found in the file");
 
 			int dimCount = ncVar.getRank();
 
