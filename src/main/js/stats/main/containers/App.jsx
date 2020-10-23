@@ -41,7 +41,7 @@ export class App extends Component {
 
 				<div className="page-header">
 					<h1>
-						{config.envri} Data Statistics
+						{config.envri} Data Usage Statistics
 						<Radio
 							horizontal={true}
 							containerStyle={{ display: 'inline', float: 'right' }}
