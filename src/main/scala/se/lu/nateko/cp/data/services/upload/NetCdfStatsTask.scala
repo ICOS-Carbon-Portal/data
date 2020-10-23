@@ -44,13 +44,7 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			val availableVars = service.getVariables.toSet
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
-			if(missingVariables.isEmpty) Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>
-				val varInfos = varNames.map{varName =>
-					val v = ncd.findVariable(varName)
-					calcMinMax(v)
-				}
-				NetCdfExtract(varInfos)
-			} else throw new CpDataParsingException({
+			if(!missingVariables.isEmpty) throw new CpDataParsingException({
 				import se.lu.nateko.cp.data.ConfigReader.netcdfConfigFormat
 				import spray.json._
 				s"""The following variable(s) cannot be previewable: ${missingVariables.mkString(", ")}.
@@ -58,6 +52,20 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 				|Please refer to the following config to learn about supported names for dimension variables:
 				|${config.copy(folder = null).toJson.prettyPrint}""".stripMargin
 			})
+
+			val date0 = service.getAvailableDates()(0)
+			varNames.foreach{varName =>
+				val elevation0 = service.getAvailableElevations(varName).headOption.orNull
+				service.getRaster(varName, date0, elevation0)
+			}
+
+			Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>
+				val varInfos = varNames.map{varName =>
+					val v = ncd.findVariable(varName)
+					calcMinMax(v)
+				}
+				NetCdfExtract(varInfos)
+			}
 		}
 
 	private def calcMinMax(v: Variable): VarInfo = {

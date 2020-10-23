@@ -72,8 +72,8 @@ private class PerAccountPool(
 	}
 
 	def close(): Unit = synchronized{
-		_occupied.values.foreach(_.closeConnection)
-		_available.foreach(_.closeConnection)
+		_occupied.values.foreach(_.closeConnection())
+		_available.foreach(_.closeConnection())
 		_occupied = Map.empty
 		_available = Set.empty
 	}

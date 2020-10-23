@@ -26,7 +26,7 @@ private class StatefulInitSink[T, M](sinkFactory: () => Sink[T, M]) extends Grap
 	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[M]) = {
 		val theSink = sinkFactory().withAttributes(inheritedAttributes)
 
-		val promise = Promise.apply[M]
+		val promise = Promise.apply[M]()
 
 		val logic = new GraphStageLogic(shape) with InHandler {
 
