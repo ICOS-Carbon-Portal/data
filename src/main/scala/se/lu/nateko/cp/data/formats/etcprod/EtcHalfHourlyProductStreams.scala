@@ -14,10 +14,10 @@ class EtcHalfHourlyProductStreams(utcOffset: Int) extends SimpleCsvStreams(","){
 		case _ => false
 	}
 
-	override def makeTimeStamp(cells: Array[String]): Instant = {
+	override def makeTimeStamp(cells: Array[String], timestampValueFormat: Option[ValueFormat]): Instant = {
 		//Averaging period's end
 		LocalDateTime.parse(cells(1), ValueFormatParser.etcDateTimeFormatter).toInstant(ZoneOffset.ofHours(utcOffset))
 	}
 
-	override def acqIntervalTimeStep = Some(-30L -> ChronoUnit.MINUTES)
+	override def acqIntervalTimeStep(timestampValueFormat: Option[ValueFormat]) = Some(-30L -> ChronoUnit.MINUTES)
 }
