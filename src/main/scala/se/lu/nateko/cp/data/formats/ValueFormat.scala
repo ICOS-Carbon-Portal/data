@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.formats
 
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.CpDataException
-import se.lu.nateko.cp.meta.core.data.ValueTypeLookup
 
 sealed trait ValueFormat
 

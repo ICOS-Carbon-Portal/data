@@ -47,17 +47,15 @@ object TimeSeriesStreams {
 			lastRow <- firstLast.last
 		) yield {
 
-			val defaultStart = Instant.parse(firstRow.cells(0))
+			val defaultStart = Instant.parse(firstRow.cells(0)).atOffset(ZoneOffset.UTC)
 			val start = timeStep.collect{
-				case (step, unit) if unit == ChronoUnit.YEARS => defaultStart.atOffset(ZoneOffset.ofHours(1)).plusYears(step).toInstant()
 				case (step, unit) if step < 0 => defaultStart.plus(step, unit)
-			}.getOrElse(defaultStart)
+			}.getOrElse(defaultStart).toInstant
 
-			val defaultStop = Instant.parse(lastRow.cells(0))
+			val defaultStop = Instant.parse(lastRow.cells(0)).atOffset(ZoneOffset.UTC)
 			val stop = timeStep.collect{
-				case (step, unit) if unit == ChronoUnit.YEARS => defaultStop.atOffset(ZoneOffset.ofHours(1)).plusYears(step).toInstant()
 				case (step, unit) if step > 0 => defaultStop.plus(step, unit)
-			}.getOrElse(defaultStop)
+			}.getOrElse(defaultStop).toInstant
 
 			val columnNames =
 				if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns)

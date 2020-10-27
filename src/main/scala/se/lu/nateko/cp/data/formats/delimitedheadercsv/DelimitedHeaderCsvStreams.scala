@@ -22,26 +22,28 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 	private val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	private val columnSeparator = ","
 	private val headerDelimitor = "####"
+	private val timeStampValueFormat: Option[ValueFormat] = colsMeta.matchColumn("TIMESTAMP")
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN" || value == "LOD" || value == ""
 		case _ => false
 	}
 
-	def makeTimeStamp(cells: Array[String]): Instant = colsMeta.matchColumn("TIMESTAMP") match {
-		case Some(IsoLikeLocalDateTime) => LocalDateTime.parse(cells(0), isoLikeDateFormater).toInstant(ZoneOffset.ofHours(1))
-		case Some(Iso8601Date) => LocalDate.parse(cells(0)).atTime(LocalTime.MIN).toInstant(ZoneOffset.ofHours(1))
-		case Some(IntValue) => LocalDate.parse(cells(0) + "-01-01").atTime(LocalTime.MIN).toInstant(ZoneOffset.ofHours(1))
-		case _ => Instant.EPOCH
-	}
+	def makeTimeStamp(cells: Array[String]): Instant = timeStampValueFormat
+		.collect{
+			case IsoLikeLocalDateTime => LocalDateTime.parse(cells(0), isoLikeDateFormater)
+			case Iso8601Date          => LocalDate    .parse(cells(0)           ).atTime(LocalTime.MIN)
+			case IntValue             => LocalDate    .parse(cells(0) + "-01-01").atTime(LocalTime.MIN)
+		}
+		.map(_.toInstant(ZoneOffset.ofHours(1)))
+		.getOrElse(Instant.EPOCH)
 
 	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser =
 		new DelimitedHeaderCsvParser(format.colsMeta, columnSeparator, headerDelimitor)
 
-	override def acqIntervalTimeStep = colsMeta.matchColumn("TIMESTAMP") match {
-		case Some(Iso8601Date) => Some(1L -> ChronoUnit.DAYS)
-		case Some(IntValue) => Some(1L -> ChronoUnit.YEARS)
-		case _ => None
+	override def acqIntervalTimeStep = timeStampValueFormat.collect{
+		case Iso8601Date => 1L -> ChronoUnit.DAYS
+		case IntValue => 1L -> ChronoUnit.YEARS
 	}
 
 }
