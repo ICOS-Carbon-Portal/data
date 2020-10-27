@@ -10,6 +10,8 @@ import se.lu.nateko.cp.data.utils.Akka.done
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.temporal.TemporalUnit
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 object TimeSeriesStreams {
 
@@ -47,11 +49,13 @@ object TimeSeriesStreams {
 
 			val defaultStart = Instant.parse(firstRow.cells(0))
 			val start = timeStep.collect{
+				case (step, unit) if unit == ChronoUnit.YEARS => defaultStart.atOffset(ZoneOffset.ofHours(1)).plusYears(step).toInstant()
 				case (step, unit) if step < 0 => defaultStart.plus(step, unit)
 			}.getOrElse(defaultStart)
 
 			val defaultStop = Instant.parse(lastRow.cells(0))
 			val stop = timeStep.collect{
+				case (step, unit) if unit == ChronoUnit.YEARS => defaultStop.atOffset(ZoneOffset.ofHours(1)).plusYears(step).toInstant()
 				case (step, unit) if step > 0 => defaultStop.plus(step, unit)
 			}.getOrElse(defaultStop)
 

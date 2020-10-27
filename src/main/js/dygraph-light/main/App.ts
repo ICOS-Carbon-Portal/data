@@ -401,7 +401,7 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 		};
 	};
 
-	const axisLabelFormatter = (converter: number, format: ReturnType<typeof getDateTimeFormat> | "year", func?: Function): AxisLabelFormatter => {
+	const axisLabelFormatter = (converter: number, format: ReturnType<typeof getDateTimeFormat>, func?: Function): AxisLabelFormatter => {
 		const fn = func ? func : (val: any) => val;
 
 		return (dataVal, granularity, opts, graph) => {

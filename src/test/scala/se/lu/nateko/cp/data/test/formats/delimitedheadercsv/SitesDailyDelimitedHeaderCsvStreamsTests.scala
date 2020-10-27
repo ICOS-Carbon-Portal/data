@@ -43,7 +43,7 @@ class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAn
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/sites_daily_delimiter.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, formats))
+		.via(new SitesDelimitedHeaderCsvStreams(formats.colsMeta).standardCsvParser(nRows, formats))
 
 	test("Parsing a SITES time series with delimited header example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)
