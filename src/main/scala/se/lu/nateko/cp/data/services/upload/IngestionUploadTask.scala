@@ -57,13 +57,7 @@ class IngestionUploadTask(
 			case `sitesDelimitedHeaderCsvTimeSer` =>
 				standardSink{nRows =>
 					val colFormats = ColumnsMetaWithTsCol(colsMeta, "TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES")
-					delimitedheadercsv.SitesDelimitedHeaderCsvStreams.standardCsvParser(nRows, colFormats)
-				}
-
-			case `sitesDailyDelimitedHeaderCsvTimeSer` =>
-				standardSink{nRows =>
-					val colFormats = ColumnsMetaWithTsCol(colsMeta, "TEMP_UTC_TIMESTAMP_FOR_EXTRACTING_DATES")
-					delimitedheadercsv.SitesDailyDelimitedHeaderCsvStreams.standardCsvParser(nRows, colFormats)
+					new delimitedheadercsv.SitesDelimitedHeaderCsvStreams(colsMeta).standardCsvParser(nRows, colFormats)
 				}
 
 			case `asciiEtcHalfHourlyProdTimeSer` =>

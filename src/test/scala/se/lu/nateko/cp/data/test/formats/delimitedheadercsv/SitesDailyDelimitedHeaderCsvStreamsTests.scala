@@ -9,7 +9,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDailyDelimitedHeaderCsvStreams
+import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvStreams
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -43,7 +43,7 @@ class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAn
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/sites_daily_delimiter.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(SitesDailyDelimitedHeaderCsvStreams.standardCsvParser(nRows, formats))
+		.via(new SitesDelimitedHeaderCsvStreams(formats.colsMeta).standardCsvParser(nRows, formats))
 
 	test("Parsing a SITES time series with delimited header example") {
 		val rowsFut = rowsSource.runWith(Sink.seq)

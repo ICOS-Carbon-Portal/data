@@ -162,7 +162,7 @@ export default class App {
 
 		const {xlabel, xLegendLabel, ylabel, y2label, labels, valueFormatX, series} = this.labelMaker;
 		const strokeWidth = this.params.get('type') === 'line' ? 1 : 0;
-		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime((valueFormatX));
+		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime(valueFormatX);
 		const formatters = getFormatters(xLegendLabel, valueFormatX);
 		const drawPoints = this.params.get('type') !== 'line';
 
@@ -409,7 +409,7 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 		};
 	};
 
-	const parseDatetime = (dataVal: number, date: Date, format: any, fn: Function) => {
+	const parseDatetime = (dataVal: number, date: Date, format: any, fn: Function): string => {
 		switch(format){
 			case "date-hms":
 				return date.getUTCFullYear() +
@@ -462,6 +462,11 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 			valueFormatter: valueFormatter(sec2ms, "hms", formatLbl),
 			axisLabelFormatter: axisLabelFormatter(sec2ms, "hm")
 		};
+	} else if (isInt(valueFormatX)) {
+		return {
+			valueFormatter: ((value: number) => value),
+			axisLabelFormatter: ((value: number) => value.toFixed(0))
+		}
 	} else {
 		return {valueFormatter: formatLbl, axisLabelFormatter: (val: number) => val % 1 !== 0 ? +val.toFixed(15) : val};
 	}
@@ -485,9 +490,13 @@ const dateFormats = ['iso8601date', 'etcDate']
 const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
+const integerFormat = ['int32']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
 const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
 const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
 const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
+const isInt = (valueFormat: string) => integerFormat.includes(valueFormat);
 
 const fail = (message: string) => {
 	logError(config.previewTypes.TIMESERIES, message);
