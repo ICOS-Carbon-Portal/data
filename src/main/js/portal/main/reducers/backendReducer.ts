@@ -49,15 +49,13 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
 	}
 
-	if (payload instanceof BackendExtendedDataObjInfo){
+	if (payload instanceof BackendExtendedDataObjInfo) {
 		// Save updates in history state if we are beyond init procedure since this is called last for the search route
 		const updater = state.isRunningInit
 			? stateUtils.update
 			: stateUtils.updateAndSave;
 
-		return updater(state,{
-			extendedDobjInfo: payload.extendedDobjInfo
-		});
+		return updater(state, handleExtendedDataObjInfo(state, payload));
 	}
 
 	if (payload instanceof BackendTsSettings){
@@ -75,6 +73,19 @@ export default function(state: State, payload: BackendPayload): State {
 
 	return state;
 
+};
+
+const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObjInfo): Pick<State, 'extendedDobjInfo' | 'previewLookup'> => {
+	const varInfo = payload.extendedDobjInfo
+		.reduce<IdxSig<boolean>>((acc, ext) => {
+			acc[ext.dobj] = ext.hasVarInfo ?? false;
+			return acc;
+		}, {});
+	
+	return {
+		extendedDobjInfo: payload.extendedDobjInfo,
+		previewLookup: state.previewLookup?.withVarInfo(varInfo)
+	};
 };
 
 const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {

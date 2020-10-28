@@ -206,10 +206,16 @@ export type StateSerialized = ReturnType<typeof serialize>
 
 const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
+
+	const { table, varInfo } = jsonObj.previewLookup ?? {};
+	const previewLookup = table && varInfo
+		? new PreviewLookup(undefined, undefined, table, varInfo)
+		: new PreviewLookup(specTable, jsonObj.labelLookup);
+
 	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
 		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
-		previewLookup: new PreviewLookup(specTable, jsonObj.labelLookup),
+		previewLookup,
 		specTable,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,

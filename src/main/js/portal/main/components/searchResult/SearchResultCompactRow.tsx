@@ -39,6 +39,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 		const preview = props.preview;
 		const previewItem = preview.item;
 		const previewType = props.lookup?.forDataObjSpec(objInfo.spec)?.type;
+		const isL3Previewable = props.lookup?.hasVarInfo(objInfo.dobj) ?? false;
 		const className = previewItem && previewItem.id === objInfo.dobj
 			? "list-group-item-info"
 			: "";
@@ -53,8 +54,9 @@ export default class SearchResultCompactRow extends Component<Props> {
 					{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
 				/>
 				<PreviewIcon
-					style={{marginRight: 10}}
+					style={{ marginRight: 10 }}
 					previewType={previewType}
+					isL3Previewable={isL3Previewable}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
 				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{objInfo.fileName}</a>

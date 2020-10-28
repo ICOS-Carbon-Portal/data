@@ -38,11 +38,12 @@ class SearchResultRegular extends Component<OurProps> {
 			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart, handleAllCheckboxesChange} = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-		const checkedObjects = checkedObjectsInSearch.reduce((acc: ObjectsTable[], uri) => {
-			return acc.concat(objectsTable.filter((o: ObjectsTable) => o.dobj === uri));
+		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
+			return acc.concat(objectsTable.filter(o => o.dobj === uri));
 		}, []);
 		const datasets = checkedObjects.map((obj: ObjectsTable) => obj.dataset);
 		const previewTypes = previewLookup ? checkedObjects.map(obj => previewLookup.forDataObjSpec(obj.spec)?.type) : [];
+		const isL3Previewable = previewLookup ? checkedObjects.map(obj => previewLookup.hasVarInfo(obj.dobj) ?? false) : [];
 
 		return (
 			<div className="panel panel-default">
@@ -87,6 +88,7 @@ class SearchResultRegular extends Component<OurProps> {
 							<PreviewBtn
 								style={{float: 'right', marginBottom: 10, marginRight: 10}}
 								checkedObjects={checkedObjects}
+								isL3Previewable={isL3Previewable}
 								datasets={datasets}
 								previewTypes={previewTypes}
 								clickAction={handlePreview}

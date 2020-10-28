@@ -120,7 +120,8 @@ const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 		size: sparqlParsers.fromLong(b.size),
 		submTime: sparqlParsers.fromDateTime(b.submTime),
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
-		timeEnd: sparqlParsers.fromDateTime(b.timeEnd)
+		timeEnd: sparqlParsers.fromDateTime(b.timeEnd),
+		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
 	}));
 };
 
@@ -225,6 +226,7 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 		description: sparqlParsers.fromString(b.description),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
+		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
 	})).then(res => res.rows);
 };
 

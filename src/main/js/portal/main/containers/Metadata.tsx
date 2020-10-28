@@ -1,7 +1,7 @@
 import React, { Component, MouseEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
-import PreviewBtn from '../components/buttons/PreviewBtn.jsx';
+import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx';
 import {formatDate, formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
@@ -52,7 +52,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	render() {
-		const { metadata, cart, previewLookup } = this.props;
+		const { metadata, cart, previewLookup, objectsTable } = this.props;
 
 		if (metadata === undefined) return null;
 
@@ -69,7 +69,7 @@ class Metadata extends Component<MetadataProps> {
 		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;
-		const checkedObjects = [{
+		const checkedObjects: CheckedObject[] = [{
 			'dataset': datasetSpec ? datasetSpec.uri : undefined,
 			'dobj': metadata.id,
 			'spec': metadata.specification.self.uri,
@@ -77,6 +77,7 @@ class Metadata extends Component<MetadataProps> {
 		}];
 		const datasets = checkedObjects.map(obj => obj.dataset);
 		const previewTypes = previewLookup ? [previewLookup.forDataObjSpec(metadata.specification.self.uri)?.type] : [];
+		const isL3Previewable = [previewLookup?.hasVarInfo(metadata.id) ?? objectsTable.find(ot => ot.dobj === metadata.id)?.hasVarInfo ?? false];
 		const keywords = [
 			...metadata.references.keywords || [],
 			...metadata.specification.keywords || [],
@@ -139,6 +140,7 @@ class Metadata extends Component<MetadataProps> {
 											checkedObjects={checkedObjects}
 											datasets={datasets}
 											previewTypes={previewTypes}
+											isL3Previewable={isL3Previewable}
 											clickAction={this.handlePreview.bind(this)}
 										/>
 									</div>
@@ -292,6 +294,7 @@ function stateToProps(state: State){
 		cart: state.cart,
 		previewLookup: state.previewLookup,
 		metadata: state.metadata,
+		objectsTable: state.objectsTable,
 	};
 }
 

@@ -171,18 +171,22 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-export type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd", never>
+export type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo", never>
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `# listKnownDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd
+select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
 where {
 VALUES ?dobj { ${values} }
 ?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
+OPTIONAL {
+	BIND ("true"^^xsd:boolean as ?hasVarInfo)
+	filter exists{?dobj cpmeta:hasActualVariable [] }
+}
 }`;
 
 	return { text };
@@ -419,12 +423,12 @@ function getVarFilter(filter: VariableFilterRequest): string {
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo where{
 	{
 		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?site0) as ?site) where{
 			VALUES ?dobj { ${dobjsList} }
@@ -447,6 +451,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description }
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
+	OPTIONAL { ?dobj cpmeta:hasActualVariable [].BIND ("true"^^xsd:boolean as ?hasVarInfo) }
 }`;
 
 	return { text };
