@@ -3,15 +3,21 @@ import {StepButton} from './StepButton';
 import P from "../../models/Paging";
 import config from "../../config";
 import {SearchOptions} from "../../models/State";
+import { FileDownload } from './FileDownload';
 
 interface Paging {
 	type: 'header' | 'footer'
 	paging: P
-	requestStep: (direction: -1 | 1) => void | undefined,
+	requestStep: (direction: -1 | 1) => void | undefined
 	searchOptions: SearchOptions | undefined
+	getAllFilteredDataObjects: () => void
+	csvData: Blob
 }
 
-export const Paging = ({type, paging, requestStep, searchOptions}: Paging) => {
+export const Paging = (props: Paging) => {
+	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, csvData } = props;
+	
+
 	const {offset, objCount, pageCount} = paging;
 	const minObjs = Math.min(offset + pageCount, objCount);
 	const to = minObjs < pageCount
@@ -25,6 +31,9 @@ export const Paging = ({type, paging, requestStep, searchOptions}: Paging) => {
 		return (
 			<div className="panel-heading">
 				<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
+
+				<FileDownload csvData={csvData} getAllFilteredDataObjects={getAllFilteredDataObjects} />
+
 				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
 					<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>

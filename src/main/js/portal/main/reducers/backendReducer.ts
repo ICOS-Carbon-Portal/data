@@ -1,7 +1,7 @@
 import {
 	BackendPayload, BootstrapInfo, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
 	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
-	BackendTsSettings, BackendBatchDownload, BackendUpdateCart
+	BackendTsSettings, BackendBatchDownload, BackendUpdateCart, BackendCSVData
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -47,6 +47,10 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendObjectsFetched){
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendCSVData) {
+		return stateUtils.update(state, handleCSVDataFetched(payload));
 	}
 
 	if (payload instanceof BackendExtendedDataObjInfo) {
@@ -105,6 +109,19 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 	return {
 		objectsTable: extendedObjectsTable,
 		paging
+	};
+};
+
+const handleCSVDataFetched = (payload: BackendCSVData) => {
+	const rows = payload.rows;
+	const csvRows = ['Data object,File name,Size,Submission time (UTC),From time (UTC),To time (UTC)\n'];
+
+	for (let i = 0; i < payload.rows.length; i++) {
+		csvRows.push(`${rows[i].dobj},${rows[i].fileName},${rows[i].size},${rows[i].submTime},${rows[i].timeStart},${rows[i].timeEnd}\n`);
+	}
+
+	return {
+		csvData: new Blob(csvRows, { type: 'text/csv' })
 	};
 };
 

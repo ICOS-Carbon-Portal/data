@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import { connect } from 'react-redux';
 import {ObjectsTable, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
+import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
 import {Paging} from "../../components/buttons/Paging";
 import CheckAllBoxes from "../../components/controls/CheckAllBoxes";
@@ -35,7 +35,8 @@ class SearchResultRegular extends Component<OurProps> {
 	render(){
 		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
-			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart, handleAllCheckboxesChange} = this.props;
+			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart,
+			handleAllCheckboxesChange, getAllFilteredDataObjects, csvData } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
@@ -52,6 +53,8 @@ class SearchResultRegular extends Component<OurProps> {
 					type="header"
 					paging={paging}
 					requestStep={requestStep}
+					getAllFilteredDataObjects={getAllFilteredDataObjects}
+					csvData={csvData}
 				/>
 
 				<div className="panel-body">
@@ -136,6 +139,8 @@ class SearchResultRegular extends Component<OurProps> {
 					type="footer"
 					paging={paging}
 					requestStep={requestStep}
+					getAllFilteredDataObjects={getAllFilteredDataObjects}
+					csvData={csvData}
 				/>
 			</div>
 		);
@@ -154,6 +159,7 @@ function stateToProps(state: State){
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
 		extendedDobjInfo: state.extendedDobjInfo,
+		csvData: state.csvData,
 	};
 }
 
@@ -162,6 +168,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
+		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects()),
 	};
 }
 

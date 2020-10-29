@@ -4,7 +4,7 @@ import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
 import {updateCheckedObjectsInSearch, switchTab} from '../../actions/search';
-import {getLastSegmentsInUrls, isSmallDevice, pick} from '../../utils';
+import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
 import {Route, State} from "../../models/State";

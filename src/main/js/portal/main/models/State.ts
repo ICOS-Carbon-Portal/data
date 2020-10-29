@@ -122,6 +122,7 @@ export interface State {
 	helpStorage: HelpStorage
 	keywords: KeywordsInfo
 	filterKeywords: string[]
+	csvData: Blob
 }
 
 const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -173,7 +174,8 @@ export const defaultState: State = {
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
 	keywords: {specLookup: {}, dobjKeywords: []},
-	filterKeywords: []
+	filterKeywords: [],
+	csvData: new Blob()
 };
 
 const update = (state: State, updates: Partial<State>): State => {
@@ -190,7 +192,8 @@ const updateAndSave = (state: State, updates: any) => {
 };
 
 const serialize = (state: State) => {
-	return {...state,
+	const { csvData, ...partialState } = state;
+	return {...partialState,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		lookup: undefined,
@@ -220,7 +223,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),
-		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage)
+		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
+		csvData: new Blob()
 	};
 
 	return props;

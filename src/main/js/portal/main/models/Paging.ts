@@ -3,6 +3,7 @@ import config from '../config';
 interface Props {
 	objCount: number
 	offset?: number
+	limit?: number
 	pageCount?: number
 	filtersEnabled?: boolean
 	cacheOffset?: number
@@ -21,11 +22,11 @@ export default class Paging{
 	private _cacheOffset: number;
 	private _isDataEndReached: boolean;
 
-	constructor({objCount, offset, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props){
+	constructor({objCount, offset, limit, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props){
 		this._objCount = objCount;
 		this._offset = offset || 0;
 		this._pageCount = pageCount ?? config.stepsize;
-		this._limit = config.stepsize;
+		this._limit = limit ?? config.stepsize;
 		this._filtersEnabled = filtersEnabled || false;
 		this._cacheOffset = cacheOffset ?? this._offset;
 		this._isDataEndReached = isDataEndReached || false;

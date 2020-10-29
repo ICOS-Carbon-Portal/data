@@ -2,7 +2,7 @@ import React, {Component, CSSProperties} from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {requestStep, toggleSort} from "../../actions/search";
+import {getAllFilteredDataObjects, requestStep, toggleSort} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
 import {addToCart, removeFromCart, setMetadataItem} from "../../actions/common";
 import config, {timezone} from "../../config";
@@ -28,7 +28,8 @@ const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0};
 class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
-			toggleSort, requestStep,removeFromCart, handleViewMetadata, handlePreview} = this.props;
+			toggleSort, requestStep, removeFromCart, handleViewMetadata, handlePreview,
+			getAllFilteredDataObjects, csvData} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
@@ -38,6 +39,8 @@ class SearchResultCompact extends Component<OurProps> {
 					type="header"
 					paging={paging}
 					requestStep={requestStep}
+					getAllFilteredDataObjects={getAllFilteredDataObjects}
+					csvData={csvData}
 				/>
 
 				<div className="panel-body">
@@ -119,6 +122,7 @@ function stateToProps(state: State){
 		paging: state.paging,
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
+		csvData: state.csvData,
 	};
 }
 
@@ -129,6 +133,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects()),
 	};
 }
 

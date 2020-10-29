@@ -95,6 +95,10 @@ export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
+export class BackendCSVData extends BackendPayload {
+	constructor(readonly rows: AsyncResult<typeof fetchKnownDataObjects>['rows']) { super(); }
+}
+
 export class MiscError extends MiscPayload{
 	constructor(readonly error: Error){super();}
 }
