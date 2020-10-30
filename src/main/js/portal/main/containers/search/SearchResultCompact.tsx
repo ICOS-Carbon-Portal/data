@@ -29,7 +29,7 @@ class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, removeFromCart, handleViewMetadata, handlePreview,
-			getAllFilteredDataObjects, csvData} = this.props;
+			getAllFilteredDataObjects, exportQuery} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
@@ -40,7 +40,7 @@ class SearchResultCompact extends Component<OurProps> {
 					paging={paging}
 					requestStep={requestStep}
 					getAllFilteredDataObjects={getAllFilteredDataObjects}
-					csvData={csvData}
+					exportQuery={exportQuery}
 				/>
 
 				<div className="panel-body">
@@ -122,7 +122,7 @@ function stateToProps(state: State){
 		paging: state.paging,
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
-		csvData: state.csvData,
+		exportQuery: state.exportQuery,
 	};
 }
 

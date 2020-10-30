@@ -1,4 +1,4 @@
-import {sparqlFetchAndParse} from './backend/SparqlFetch';
+import {sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
@@ -124,6 +124,11 @@ const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
 	}));
 };
+
+export function sparqlFetchBlob(queryTxt: string, acceptCachedResults: boolean = true) {
+	return sparqlFetch(queryTxt, config.sparqlEndpoint, 'CSV', acceptCachedResults)
+		.then(resp => resp.blob());
+}
 
 export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	const query = queries.findDobjs(search);

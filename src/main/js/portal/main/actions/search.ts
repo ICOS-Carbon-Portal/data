@@ -21,6 +21,8 @@ import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
 import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
+import { listFilteredDataObjects } from '../sparqlQueries';
+import { sparqlFetchBlob } from "../backend";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -50,6 +52,9 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) => {
 	const state = getState();
 	const options = getOptions(state);
+
+	const sparqQuery = listFilteredDataObjects(options);
+	dispatch(new Payloads.BackendExportQuery(false, sparqQuery.text));
 
 	dataObjectsFetcher.fetch(options).then(
 		({rows, cacheSize, isDataEndReached}) => {
@@ -82,14 +87,22 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 
 export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 	return (dispatch, getState) => {
-		const options = getOptions(getState(), new Paging({ objCount: 0, offset: 0, limit: 20000 }));
+		const state = getState();
+		const sparqClientQuery = state.exportQuery.sparqClientQuery;
+		
+		dispatch(new Payloads.BackendExportQuery(true, sparqClientQuery));
 
-		fetchFilteredDataObjects(options).then(
-			({ rows }) => {
-				dispatch(new Payloads.BackendCSVData(rows));
-			},
-			failWithError(dispatch)
-		);
+		const options = getOptions(state, new Paging({ objCount: 0, offset: 0, limit: config.exportCSVLimit }));
+		const query = listFilteredDataObjects(options);
+
+		sparqlFetchBlob(query.text).then(blob => {
+			const lnk = document.createElement("a");
+			lnk.href = window.URL.createObjectURL(blob);
+			lnk.download = "Carbon Portal Search Result.csv";
+			lnk.click();
+
+			dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
+		});
 	};
 }
 

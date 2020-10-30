@@ -1,33 +1,43 @@
-import React, { useState } from 'react';
+import React, { CSSProperties } from 'react';
+import config from '../../config';
+import { ExportQuery } from '../../models/State';
 
 interface Props {
 	getAllFilteredDataObjects: () => void
-	csvData: Blob
+	exportQuery: ExportQuery
 }
 
-export const FileDownload = (props: Props) => {
-	const { getAllFilteredDataObjects, csvData } = props;
-	const [blob, setBlob] = useState(csvData);
-	const [isProcessing, setProcessing] = useState(false);
+const iconStyle: CSSProperties = {
+	marginLeft: 10,
+	cursor: 'pointer'
+};
+const saveTitle = `Export first ${config.exportCSVLimit.toLocaleString()} records to CSV`;
 
-	const downloadFileClick = () => {
-		setProcessing(true);
-		getAllFilteredDataObjects();
-	}
+export const FileDownload = ({ getAllFilteredDataObjects, exportQuery }: Props) => {
+	const { isFetchingCVS, sparqClientQuery } = exportQuery;
 
-	if (blob !== csvData) {
-		setBlob(csvData);
-		setProcessing(false);
+	const openSparqlQuery = () => {
+		const form = document.getElementById("sparqlClientForm") as HTMLFormElement;
+		form.submit();
+	};
 
-		const lnk = document.createElement("a");
-		lnk.href = window.URL.createObjectURL(csvData);
-		lnk.download = "Carbon Portal Search Result.csv";
-		lnk.click();
-	}
-
-	if (isProcessing)
-		return <span style={{ marginLeft: 10}}>Processing...</span>;
+	if (isFetchingCVS)
+		return (
+			<span>
+				<span style={{ ...iconStyle, ...{ color: 'gray' } }} className="glyphicon glyphicon-download-alt" title="Fetching CSV..." />
+				<span style={iconStyle} onClick={openSparqlQuery} className="glyphicon glyphicon-share" title="Open SPARQL query" />
+			</span>
+		);
 
 	else
-		return <a style={{ marginLeft: 10, cursor: 'pointer' }} onClick={downloadFileClick}>Save result to CSV</a>;
+		return (
+			<span>
+				<span style={iconStyle} onClick={getAllFilteredDataObjects} className="glyphicon glyphicon-download-alt" title={saveTitle} />
+				<span style={iconStyle} onClick={openSparqlQuery} className="glyphicon glyphicon-share" title="Open SPARQL query" />
+
+				<form id="sparqlClientForm" method="POST" action="https://meta.icos-cp.eu/sparqlclient/" target="_blank" style={{display: 'none'}}>
+					<input type="hidden" name="query" value={sparqClientQuery} />
+				</form>
+			</span>
+		);
 };

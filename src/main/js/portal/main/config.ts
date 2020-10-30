@@ -37,7 +37,8 @@ export default {
 	objectUriPrefix,
 	metaResourceGraph,
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
-	historyStateMaxAge: (1000 * 3600 * 24)
+	historyStateMaxAge: (1000 * 3600 * 24),
+	exportCSVLimit: 20_000
 };
 
 const defaultCategNames = {

@@ -2,7 +2,7 @@ import React from 'react';
 import {StepButton} from './StepButton';
 import P from "../../models/Paging";
 import config from "../../config";
-import {SearchOptions} from "../../models/State";
+import {ExportQuery, SearchOptions} from "../../models/State";
 import { FileDownload } from './FileDownload';
 
 interface Paging {
@@ -11,11 +11,11 @@ interface Paging {
 	requestStep: (direction: -1 | 1) => void | undefined
 	searchOptions: SearchOptions | undefined
 	getAllFilteredDataObjects: () => void
-	csvData: Blob
+	exportQuery: ExportQuery
 }
 
 export const Paging = (props: Paging) => {
-	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, csvData } = props;
+	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, exportQuery } = props;
 	
 
 	const {offset, objCount, pageCount} = paging;
@@ -32,7 +32,7 @@ export const Paging = (props: Paging) => {
 			<div className="panel-heading">
 				<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
-				<FileDownload csvData={csvData} getAllFilteredDataObjects={getAllFilteredDataObjects} />
+				<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} />
 
 				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>

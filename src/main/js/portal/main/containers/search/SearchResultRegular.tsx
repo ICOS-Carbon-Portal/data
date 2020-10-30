@@ -36,7 +36,7 @@ class SearchResultRegular extends Component<OurProps> {
 		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart,
-			handleAllCheckboxesChange, getAllFilteredDataObjects, csvData } = this.props;
+			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
@@ -54,7 +54,7 @@ class SearchResultRegular extends Component<OurProps> {
 					paging={paging}
 					requestStep={requestStep}
 					getAllFilteredDataObjects={getAllFilteredDataObjects}
-					csvData={csvData}
+					exportQuery={exportQuery}
 				/>
 
 				<div className="panel-body">
@@ -140,7 +140,7 @@ class SearchResultRegular extends Component<OurProps> {
 					paging={paging}
 					requestStep={requestStep}
 					getAllFilteredDataObjects={getAllFilteredDataObjects}
-					csvData={csvData}
+					exportQuery={exportQuery}
 				/>
 			</div>
 		);
@@ -159,7 +159,7 @@ function stateToProps(state: State){
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
 		extendedDobjInfo: state.extendedDobjInfo,
-		csvData: state.csvData,
+		exportQuery: state.exportQuery,
 	};
 }
 

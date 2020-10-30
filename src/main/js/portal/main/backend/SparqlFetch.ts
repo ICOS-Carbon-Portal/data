@@ -20,6 +20,42 @@ export function sparqlFetchAndParse<Mandatories extends string, Optionals extend
 		});
 };
 
+export type SparqlResponseType = 'JSON' | 'CSV' | 'XML' | 'TSV or Turtle'
+
+export function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResponseType: SparqlResponseType, acceptCachedResults?: boolean): Promise<Response> {
+	const getType = (): string => {
+		switch (sparqlResponseType) {
+			case 'JSON': return 'application/json';
+			case 'CSV': return 'text/csv';
+			case 'XML': return 'application/xml';
+			case 'TSV or Turtle': return 'text/plain';
+		}
+	};
+
+	const cacheHeader: HeadersInit = acceptCachedResults
+		? { 'Cache-Control': 'max-age=1000000' } //server decides how old the cache can get
+		: {}; //expecting no-cache default behaviour from the server
+	const headers: HeadersInit = {
+		'Accept': getType(),
+		'Content-Type': 'text/plain'
+	};
+
+	return fetch(sparqlEndpoint, {
+		method: 'post',
+		headers: new Headers({ ...cacheHeader, ...headers }),
+		body: queryTxt
+	})
+		.then(resp => {
+			if (resp.ok) {
+				return resp;
+			} else {
+				return resp.text().then(txt =>
+					Promise.reject(new Error(txt || resp.statusText || "Ajax response status: " + resp.status))
+				);
+			}
+		});
+}
+
 type Parsed = string | string[] | number | boolean | Date;
 
 type Row<Mandatories extends string, Optionals extends string> = {

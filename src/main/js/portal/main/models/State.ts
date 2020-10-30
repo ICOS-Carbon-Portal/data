@@ -83,6 +83,11 @@ export type TsSettings = {
 	[key: string]: TsSetting
 }
 
+export type ExportQuery = {
+	isFetchingCVS: boolean
+	sparqClientQuery: string
+}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
@@ -122,7 +127,7 @@ export interface State {
 	helpStorage: HelpStorage
 	keywords: KeywordsInfo
 	filterKeywords: string[]
-	csvData: Blob
+	exportQuery: ExportQuery
 }
 
 const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -175,7 +180,10 @@ export const defaultState: State = {
 	helpStorage: new HelpStorage(),
 	keywords: {specLookup: {}, dobjKeywords: []},
 	filterKeywords: [],
-	csvData: new Blob()
+	exportQuery: {
+		isFetchingCVS: false,
+		sparqClientQuery: ''
+	}
 };
 
 const update = (state: State, updates: Partial<State>): State => {
@@ -192,8 +200,7 @@ const updateAndSave = (state: State, updates: any) => {
 };
 
 const serialize = (state: State) => {
-	const { csvData, ...partialState } = state;
-	return {...partialState,
+	return {...state,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		lookup: undefined,
@@ -224,7 +231,7 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
-		csvData: new Blob()
+		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery}
 	};
 
 	return props;
