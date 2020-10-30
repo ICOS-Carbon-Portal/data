@@ -249,7 +249,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd ?samplingHeight
+select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
