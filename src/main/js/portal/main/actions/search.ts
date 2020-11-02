@@ -54,7 +54,13 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 	const options = getOptions(state);
 
 	const sparqQuery = listFilteredDataObjects(options);
-	dispatch(new Payloads.BackendExportQuery(false, sparqQuery.text));
+	const queryRows = sparqQuery.text.split('\n');
+	// Skip first row that displays function name and empty rows
+	const sparqClientQuery = queryRows
+		.filter((row, idx) => idx > 0 && row.length > 0 && !row.match(/^\t+$/))
+		.join('\n');
+
+	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
 	dataObjectsFetcher.fetch(options).then(
 		({rows, cacheSize, isDataEndReached}) => {
