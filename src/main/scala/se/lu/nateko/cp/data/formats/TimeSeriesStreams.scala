@@ -59,7 +59,7 @@ object TimeSeriesStreams {
 
 			val columnNames =
 				if (columnsMeta.hasAnyRegexCols || columnsMeta.hasOptionalColumns)
-					Some(columnsMeta.actualColumnNames(firstRow.header.columnNames.toIndexedSeq))
+					Some(firstRow.header.columnNames.filter(columnsMeta.matchesColumn).toIndexedSeq)
 				else
 					None
 

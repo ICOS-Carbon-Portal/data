@@ -55,19 +55,21 @@ object OtcCsvStreams {
 		.drop(2)
 		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
-	def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[SpatialTimeSeriesExtract]] = {
+	def uploadCompletionSink(columnsMeta: ColumnsMeta)(implicit ctxt: ExecutionContext): Sink[TableRow, Future[IngestionMetadataExtract]] = {
+		val tabularExtractSink = digestSink(getCompletionInfo(columnsMeta))
 
-		Flow.apply[TableRow]
-			.alsoToMat(
-				digestSink(getCompletionInfo(columnsMeta))
-			)(Keep.right)
-			.toMat(coverageSink) { (tsUplComplFut, coverageFut) =>
-				for (
-					tsUplCompl <- tsUplComplFut;
-					coverage <- coverageFut
-				) yield
-					SpatialTimeSeriesExtract(tsUplCompl.tabular, coverage)
-			}
+		if(columnsMeta.matchesColumn(LatColName) && columnsMeta.matchesColumn(LonColName))
+			Flow.apply[TableRow]
+				.alsoToMat(tabularExtractSink)(Keep.right)
+				.toMat(coverageSink) { (tsUplComplFut, coverageFut) =>
+					for (
+						tsUplCompl <- tsUplComplFut;
+						coverage <- coverageFut
+					) yield
+						SpatialTimeSeriesExtract(tsUplCompl.tabular, coverage)
+				}
+		else
+			Flow.apply[TableRow].toMat(tabularExtractSink)(Keep.right)
 	}
 
 	def coverageSink(implicit ctxt: ExecutionContext): Sink[TableRow, Future[GeoFeature]] = {

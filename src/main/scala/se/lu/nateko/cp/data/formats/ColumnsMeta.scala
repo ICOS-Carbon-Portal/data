@@ -11,14 +11,12 @@ class ColumnsMeta(val columns: Seq[ColumnMeta]) {
 	val hasAnyRegexCols: Boolean = regexCols.nonEmpty
 	val hasOptionalColumns: Boolean = columns.exists(_.isOptional)
 
-	def actualColumnNames(actualColumns: Seq[String]): Seq[String] =
-		actualColumns.filter(colTitle => plainCols.get(colTitle).orElse {
-			regexCols.find(_.matches(colTitle))
-		}.isDefined)
-
 	def matchColumn(colTitle: String): Option[ValueFormat] = plainCols.get(colTitle).orElse {
 		regexCols.find(_.matches(colTitle)).map(_.format)
 	}
+
+	def matchesColumn(colTitle: String): Boolean =
+		plainCols.contains(colTitle) || regexCols.exists(_.matches(colTitle))
 
 	def findMissingColumns(actualColumns: Seq[String]): Seq[ColumnMeta] =
 		columns.filter(c => !c.isOptional && !actualColumns.exists(c.matches))
