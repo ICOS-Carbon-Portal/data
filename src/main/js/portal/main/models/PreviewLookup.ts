@@ -55,6 +55,9 @@ export default class PreviewLookup{
 const getTable = (specTable: CompositeSpecTable, labelLookup: IdxSig): Table => {
 	const table: Table = {};
 
+	const specsWithLat = new Set<string>();
+	const specsWithLon = new Set<string>();
+
 	specTable.columnMeta.rows.forEach(({ spec, varTitle, valType }) => {
 		if (typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string') {
 			let defaultInfo: TimeSeriesPreviewInfo = { type: "TIMESERIES", options: [] };
@@ -63,13 +66,19 @@ const getTable = (specTable: CompositeSpecTable, labelLookup: IdxSig): Table => 
 			if (info === defaultInfo) table[spec] = info;
 			const valTypeLabel = labelLookup[valType];
 			info.options.push({ varTitle, valTypeLabel });
+			if(valType === config.mapGraph.latValueType) specsWithLat.add(spec);
+			if(valType === config.mapGraph.lonValueType) specsWithLon.add(spec);
 		}
 	});
 
 	specTable.basics.rows.forEach(({ spec, format }) => {
 		if (typeof spec === 'string' && typeof format === 'string') {
-			if (format === config.netCdfFormat) table[spec] = { type: "NETCDF" };
-			else if (config.mapGraphFormats.includes(format)) table[spec] = { type: "MAPGRAPH" };
+			if (format === config.netCdfFormat)
+				table[spec] = { type: "NETCDF" };
+			else if (
+				config.mapGraph.formats.includes(format) &&
+				specsWithLat.has(spec) && specsWithLon.has(spec)
+			) table[spec] = { type: "MAPGRAPH" };
 		}
 	});
 

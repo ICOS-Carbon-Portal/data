@@ -20,10 +20,14 @@ export default {
 	envri: commonConfig.envri as Envri,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
-	mapGraphFormats: [
-		'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcSocatTimeSer',
-		'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcProductCsv'
-	],
+	mapGraph: {
+		latValueType: 'http://meta.icos-cp.eu/resources/cpmeta/latitude',
+		lonValueType: 'http://meta.icos-cp.eu/resources/cpmeta/longitude',
+		formats: [
+			'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcSocatTimeSer',
+			'http://meta.icos-cp.eu/ontologies/cpmeta/asciiOtcProductCsv'
+		]
+	},
 	iFrameBaseUrl: {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
