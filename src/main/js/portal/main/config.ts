@@ -16,6 +16,11 @@ const metaResourceGraph: EnvriUrl = {
 	SITES: 'https://meta.fieldsites.se/resources/sites/'
 };
 
+const searchResultsCSVName = {
+	ICOS: 'Carbon Portal Search Result.csv',
+	SITES: 'SITES Data Portal Search Results.csv'
+}
+
 export default {
 	envri: commonConfig.envri as Envri,
 	...commonConfig.previewTypes,
@@ -38,7 +43,8 @@ export default {
 	metaResourceGraph,
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
 	historyStateMaxAge: (1000 * 3600 * 24),
-	exportCSVLimit: 20_000
+	exportCSVLimit: 20_000,
+	searchResultsCSVName
 };
 
 const defaultCategNames = {

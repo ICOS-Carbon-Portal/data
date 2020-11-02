@@ -98,7 +98,7 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 		sparqlFetchBlob(query.text).then(blob => {
 			const lnk = document.createElement("a");
 			lnk.href = window.URL.createObjectURL(blob);
-			lnk.download = "Carbon Portal Search Result.csv";
+			lnk.download = config.searchResultsCSVName[config.envri];
 			lnk.click();
 
 			dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
