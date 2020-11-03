@@ -32,7 +32,7 @@ export const Paging = (props: Paging) => {
 			<div className="panel-heading">
 				<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
-				<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} />
+				<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
 
 				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
 					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
