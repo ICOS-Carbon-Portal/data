@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice, formatDate, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
+import {isSmallDevice, formatDate, formatYear, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config, {timezone} from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
@@ -49,7 +49,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
 		const locationString = location ? ` from ${location}` : '';
 		const offset = timezone[config.envri].offset;
-		const dateString = `${formatDate(new Date(objInfo.timeStart ?? ""), offset)} \u2013 ${formatDate(new Date(objInfo.timeEnd ?? ""), offset)}`;
+		const dateString = objInfo.temporalResolution && (objInfo.temporalResolution.toLowerCase() == "annual")
+			? `${formatYear(new Date(objInfo.timeStart), offset)} \u2013 ${formatYear(new Date(objInfo.timeEnd), offset - 1)}`
+			: `${formatDate(new Date(objInfo.timeStart), offset)} \u2013 ${formatDate(new Date(objInfo.timeEnd), offset)}`;
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
 		const specLabel = config.envri === "SITES" && orgSpecLabel.includes(',')
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))

@@ -61,6 +61,12 @@ export const formatDateTime = (d: Date, offset = 0) => {
 	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())} ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}:${pad2(d.getUTCSeconds())}`;
 };
 
+export const formatYear = (d: Date, offset = 0) => {
+	d.setUTCHours(d.getUTCHours() + offset);
+
+	return d.getUTCFullYear();
+};
+
 const pad2 = (s: number | string) => {
 	return ("0" + s).substr(-2, 2);
 };

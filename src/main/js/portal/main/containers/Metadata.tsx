@@ -2,7 +2,7 @@ import React, { Component, MouseEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx';
-import {formatDate, formatDateTime, getLastSegmentsInUrls} from '../utils';
+import {formatDate, formatDateTime, formatYear, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {Route, State} from "../models/State";
@@ -70,7 +70,7 @@ class Metadata extends Component<MetadataProps> {
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;
 		const checkedObjects: CheckedObject[] = [{
-			'dataset': datasetSpec ? datasetSpec.uri : undefined,
+			'dataset': datasetSpec ? datasetSpec.self.uri : undefined,
 			'dobj': metadata.id,
 			'spec': metadata.specification.self.uri,
 			'nextVersion': metadata.nextVersion
@@ -212,7 +212,7 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 					{title || specLabel}
 					{location && <span> from {location}</span>}
 					{acquisition && acquisition.interval &&
-						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop))
+						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop), metadata.specification.datasetSpec?.resolution)
 					}
 				</h1>
 			}
@@ -220,9 +220,13 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 	);
 };
 
-const caption = (startDate: Date, stopDate: Date) => {
-	const startDateString = formatDate(startDate, timezone[config.envri].offset);
-	const stopDateString = areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate, timezone[config.envri].offset)}`;
+const caption = (startDate: Date, stopDate: Date, resolution?: string) => {
+	const startDateString = resolution && resolution.toLowerCase() == "annual"
+		? formatYear(startDate, timezone[config.envri].offset)
+		: formatDate(startDate, timezone[config.envri].offset);
+	const stopDateString = areDatesDifferent(startDate, stopDate) && resolution && resolution.toLowerCase() == "annual"
+		? ` \u2013 ${formatYear(stopDate, timezone[config.envri].offset - 1)}`
+		: ` \u2013 ${formatDate(stopDate, timezone[config.envri].offset)}`;
 
 	return (
 		<div className="text-muted">
