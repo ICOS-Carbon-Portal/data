@@ -1,4 +1,4 @@
-import {sparql, getBinaryTable, TableFormat} from 'icos-cp-backend';
+import {sparql, getBinaryTable, TableFormat, BinTable} from 'icos-cp-backend';
 import {objectSpecification, Config} from './sparqlQueries';
 import TableFormatCache from "./TableFormatCache";
 
@@ -40,6 +40,9 @@ export function getTableFormatNrows(config: Config, objIds: string[]){
 export function getBinTable(xCol: string, yCol: string, objId: string, tableFormat: TableFormat, nRows: number, y2Col?: string){
 	const cols = y2Col ? [xCol, yCol, y2Col] : [xCol, yCol];
 	const axisIndices = cols.map(colName => tableFormat.getColumnIndex(colName));
+
+	if (axisIndices.includes(-1)) return;
+
 	const request = tableFormat.getRequest(objId, nRows, axisIndices);
 
 	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);

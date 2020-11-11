@@ -60,6 +60,13 @@ const stylesCollapsibleSection = {
 	})
 };
 
+type BinTableLike = Pick<BinTable, 'nCols' | 'values' | 'length'>
+const emptyBinTable = {
+	nCols: 2,
+	values: <T>(columnIndices: number[], converter: (subrow: Array<string | number>) => T) => [0],
+	length: 0
+} as BinTableLike;
+
 export default class App {
 	private graph?: Dygraph;
 	private lastDateFormat?: ReturnType<typeof getDateTimeFormat>;
@@ -147,8 +154,10 @@ export default class App {
 			)
 		)
 		.then(binTables => {
-			if (binTables.length > 0 && binTables.every(bt => bt && bt.nCols)) {
-				this.drawGraph(binTables);
+			const definedBinTables = binTables.map(bt => bt === undefined ? emptyBinTable : bt);
+
+			if (definedBinTables.length > 0 && definedBinTables.every(bt => bt && bt.nCols)) {
+				this.drawGraph(definedBinTables);
 			}
 		})
 		.catch(err => {
@@ -254,7 +263,7 @@ export default class App {
 		}).join('') + '</table>';
 	}
 
-	drawGraph(binTables: BinTable[]){
+	drawGraph(binTables: (BinTable | BinTableLike)[]){
 		let allXValsAreNaN = true;
 		let allYValsAreNaN = true;
 		let allY2ValsAreNaN = this.labelMaker.hasY2;
