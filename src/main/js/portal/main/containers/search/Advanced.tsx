@@ -47,8 +47,8 @@ interface CheckButton {
 	isChecked: boolean
 	text: string
 	checkboxDisabled?: boolean
-	styleBtn?: Style
-	styleTxt?: Style
+	styleBtn?: CSSProperties
+	styleTxt?: CSSProperties
 }
 
 const CheckButton = (props: CheckButton) => {
@@ -59,8 +59,8 @@ const CheckButton = (props: CheckButton) => {
 		? Object.assign(defaultStyleBtn, props.styleBtn)
 		: defaultStyleBtn;
 	const defaultStyleTxt: CSSProperties = {marginLeft:5, top:1, position:'relative'};
-	const styleTxt: Style = props.styleTxt
-		? Object.assign(defaultStyleTxt, props.styleTxt)
+	const styleTxt: CSSProperties = props.styleTxt
+		? { ...defaultStyleTxt, ...props.styleTxt }
 		: defaultStyleTxt;
 
 	return (

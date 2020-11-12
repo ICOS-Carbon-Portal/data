@@ -238,11 +238,11 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 };
 
 // Hash to state and state to hash below
-const getStateFromHash = (hash: string | undefined = undefined) => {
+const getStateFromHash = (hash?: string) => {
 	const state = hash === undefined
 		? jsonToState(parseHash(getCurrentHash()))
 		: jsonToState(parseHash(decodeURIComponent(hash)));
-	return extendUrls(state as State);
+	return extendUrls(state as State) as State;
 };
 
 //No # in the beginning!
@@ -309,13 +309,13 @@ const jsonToState = (state0: JsonHashState) => {
 	return state;
 };
 
-const handleRoute = (storeState: State) => {
+const handleRoute = (storeState: Partial<StateSerialized>) => {
 	if (storeState.route === 'search'){
 		delete storeState.route;
 	}
 };
 
-const specialCases = (state: State) => {
+const specialCases = (state: Partial<StateSerialized>) => {
 	if (state.route === 'metadata') {
 		return {
 			route: state.route,
@@ -386,14 +386,14 @@ const stateToHash = (state: State) => {
 	const currentStoreState = getStateFromStore(state);
 	const simplifiedStoreState = simplifyState(currentStoreState as State);
 	const reducedStoreState = reduceState(simplifiedStoreState);
-	handleRoute(reducedStoreState as State);
-	const withSpecialCases = specialCases(reducedStoreState as State);
-	const final = shortenUrls(withSpecialCases as State);
+	handleRoute(reducedStoreState as Partial<StateSerialized>);
+	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
+	const final = shortenUrls(withSpecialCases);
 
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
-const shortenUrls = (state: State = ({} as State)) => {
+const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSerialized>)) => {
 	return managePrefixes(state,
 		(prefix: any, value: string) => {
 			if (Array.isArray(prefix)){
@@ -422,7 +422,7 @@ const extendUrls = (state: State) => {
 		});
 };
 
-const managePrefixes = (state: State = ({} as State), transform: (pref: CategPrefix, value: string) => string) => {
+const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial<StateSerialized>), transform: (pref: CategPrefix, value: string) => string) => {
 	if (Object.keys(state).length === 0) return state;
 	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
 
@@ -430,24 +430,26 @@ const managePrefixes = (state: State = ({} as State), transform: (pref: CategPre
 	const appPrefixes = prefixes[config.envri];
 	const fc = state.filterCategories;
 
-	return Object.assign({}, state, {
-		filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
-			const filterVals = fc[category];
+	return {
+		...state, ...{
+			filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
+				const filterVals = fc[category];
 
-			if(filterVals) acc[category] = filterVals.map((value: string) => {
-				if (appPrefixes[category]) {
-					const prefix = appPrefixes[category];
-					if (prefix === undefined) return value;
+				if (filterVals) acc[category] = filterVals.map((value: string) => {
+					if (appPrefixes[category]) {
+						const prefix = appPrefixes[category];
+						if (prefix === undefined) return value;
 
-					return transform(prefix, value);
-				} else {
-					return value;
-				}
-			});
+						return transform(prefix, value);
+					} else {
+						return value;
+					}
+				});
 
-			return acc;
-		}, {})
-	});
+				return acc;
+			}, {})
+		}
+	};
 };
 
 const reduceState = (state: IdxSig<any>) => {
