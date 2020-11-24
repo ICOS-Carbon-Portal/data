@@ -7,14 +7,17 @@ import buildConf from '../common/main/buildConf.js';
 
 const currentPath = __dirname;
 const project = currentPath.split('/').pop();
-
+const tsTarget = './tsTarget/';
 const replaceSearch = "url(node_modules/icos-cp-netcdfmap/dist/images/";
 const replacement = "url(/style/netcdf/images/";
 
+const jsToWatch = ['js', 'jsx'].map(ext => `${tsTarget}**/*.${ext}`);
+
 const paths = {
-	main: 'main/main.jsx',
+	main: `${tsTarget}${project}/main/main.jsx`,
 	src: 'main/**/*.js*',
 	commonjs: '../common/main/**/*.js*',
+	tsTarget,
 	imagesSource: 'node_modules/icos-cp-netcdfmap/dist/**/*.png',
 	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
 	bundleFile: project + '.js'
@@ -37,7 +40,7 @@ const copyImages = _ => {
 
 gulp.task('build', gulp.series(clean, copyImages, compileSrc));
 
-gulp.task('buildWatch', gulp.series('build', buildConf.watch([paths.src, paths.commonjs], gulp.series('build'))));
+gulp.task('buildWatch', gulp.series('build', buildConf.watch(jsToWatch, gulp.series('build'))));
 
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 

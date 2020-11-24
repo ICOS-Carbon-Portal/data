@@ -1,21 +1,35 @@
 import {getRaster} from '../backend';
 import {ensureDelay, retryPromise} from 'icos-cp-utils';
+import { Obj } from '../../../common/main/types';
+import { BinRasterExtended } from './BinRasterExtended';
 
-export default class RasterDataFetcher{
-	constructor(dataObjectVars, options){
+type DataObjectVars = {
+	dates: string[]
+	elevations: string[]
+	gammas: number[]
+	services: string[]
+	variables: string[]
+}
+type Options = { delay: number } & Obj<string | number>
+
+export default class RasterDataFetcher {
+	private _dataObjectVars: DataObjectVars;
+	private _options: Options;
+	private _lastFetched: number;
+	private _cache: {};
+
+	constructor(dataObjectVars: DataObjectVars, options?: Options) {
 		this._dataObjectVars = dataObjectVars;
-		this._options = Object.assign({
-			delay: 200,
-		}, options);
+		this._options = {...{ delay: 200 }, ...options};
 		this._lastFetched = Date.now();
 		this._cache = {};
 	}
 
-	withDelay(delay){
-		return this.clone({delay});
+	withDelay(delay: number){
+		return this.clone({ ...this._options, ...{ delay } });
 	}
 
-	clone(optionsUpdate){
+	clone(optionsUpdate: { delay: number }){
 		return new RasterDataFetcher(this._dataObjectVars, optionsUpdate);
 	}
 
@@ -23,17 +37,16 @@ export default class RasterDataFetcher{
 		return this._options.delay;
 	}
 
-	fetchPlainly(selectedIdxs){
+	fetchPlainly(selectedIdxs: Obj<number>){
 		return retryPromise(getRaster.bind(
 			null,
 			this._dataObjectVars.services[selectedIdxs.serviceIdx],
 			this._dataObjectVars.variables[selectedIdxs.variableIdx],
 			this._dataObjectVars.dates[selectedIdxs.dateIdx],
-			getElevation(this._dataObjectVars.elevations, selectedIdxs.elevationIdx),
-			this._dataObjectVars.gammas[selectedIdxs.gammaIdx]), 5);
+			getElevation(this._dataObjectVars.elevations, selectedIdxs.elevationIdx) ?? ''), 5);
 	}
 
-	getDesiredId(selectedIdxs){
+	getDesiredId(selectedIdxs: Obj<number>){
 		const baseURI = '/netcdf/getSlice?';
 
 		return baseURI
@@ -44,7 +57,7 @@ export default class RasterDataFetcher{
 			+ this._dataObjectVars.gammas[selectedIdxs.gammaIdx];
 	}
 
-	fetch(selectedIdxs){
+	fetch(selectedIdxs: Obj<number>): Promise<BinRasterExtended>{
 		const self = this;
 		this._cache = self.fetchPlainly(selectedIdxs);
 
@@ -56,7 +69,7 @@ export default class RasterDataFetcher{
 
 }
 
-function getElevation(elevations, elevationIdx){
+function getElevation(elevations: string[], elevationIdx: number){
 	return elevations[elevationIdx] ? elevations[elevationIdx] : null;
 }
 

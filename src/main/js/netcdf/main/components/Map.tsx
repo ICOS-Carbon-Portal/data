@@ -1,29 +1,51 @@
 import React, { Component } from 'react';
 import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
-import '../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
+import '.../../../../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
-import Controls from './Controls.jsx';
+import Controls from './Controls';
 import {throttle, Events, debounce} from 'icos-cp-utils';
-import {defaultGamma} from '../store';
+import {defaultGamma, Latlng, RangeValues} from '../models/State';
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie';
 import RangeFilterInput from './RangeFilterInput';
+import { AppProps } from '../containers/App';
+import { Control } from '../models/ControlsHelper';
+import { ColorMakerRamps } from '../../../common/main/models/ColorMaker';
+import { BinRasterExtended } from '../models/BinRasterExtended';
 
+
+type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
+	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'rasterDataFetcher' | 'serviceChanged' | 'title'
+	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
+type OurState = {
+	height: number,
+	isShowTimeserieActive: boolean,
+	isRangeFilterInputsActive: boolean
+}
 
 const minHeight = 300;
 
-export default class Map extends Component {
-	constructor(props){
+export default class Map extends Component<OurProps, OurState> {
+	private countriesTs: number;
+	private center: string[];
+	private zoom: string | number;
+	private objId?: string;
+	private prevVariables?: Control;
+	private events: typeof Events;
+	private getRasterXYFromLatLng?: Function;
+	private legendDiv: HTMLDivElement;
+
+	constructor(props: OurProps){
 		super(props);
 		this.state = {
-			height: null,
+			height: 0,
 			isShowTimeserieActive: false,
 			isRangeFilterInputsActive: false
 		};
 
 		this.countriesTs = Date.now();
-		this.center = props.initSearchParams.center && props.initSearchParams.center.split(',') || [52.5, 10];
+		this.center = props.initSearchParams.center && props.initSearchParams.center.split(',') || ['52.5', '10'];
 		this.zoom = props.initSearchParams.zoom || 2;
 
 		this.objId = location.pathname.split('/').filter(part => part.length > 20).pop();
@@ -33,13 +55,14 @@ export default class Map extends Component {
 		this.events.addToTarget(window, "resize", throttle(this.updateHeight.bind(this), 300));
 
 		this.getRasterXYFromLatLng = undefined;
+		this.legendDiv = document.createElement('div');
 	}
 
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
 			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
 
-			if (this.prevVariables === undefined || this.prevVariables.selected !== variables.selected) {
+			if (this.prevVariables === undefined || this.prevVariables!.selected !== variables.selected) {
 				this.prevVariables = variables;
 				saveToRestheart(formatData({objId: this.objId, variable: variables.selected}));
 			}
@@ -72,9 +95,9 @@ export default class Map extends Component {
 		this.setState({height: this.legendDiv.clientHeight});
 	}
 
-	componentWillReceiveProps(nextProps) {
+	componentWillReceiveProps(nextProps: OurProps) {
 		if (nextProps.raster){
-			if (this.state.height === null) this.updateHeight();
+			if (this.state.height === 0) this.updateHeight();
 
 			this.getRasterXYFromLatLng = getRasterXYFromLatLng(nextProps.raster);
 
@@ -85,7 +108,7 @@ export default class Map extends Component {
 		}
 	}
 
-	componentDidUpdate(nextProps){
+	componentDidUpdate(nextProps: OurProps){
 		this.updateURL();
 	}
 
@@ -93,7 +116,7 @@ export default class Map extends Component {
 		this.events.clear();
 	}
 
-	mapEventCallback(event, payload){
+	mapEventCallback(event: string, payload: { center: Latlng, zoom: number }){
 		if (event === 'moveend' && payload && payload.center && payload.zoom) {
 			const decimals = 5;
 			this.center = [payload.center.lat.toFixed(decimals), payload.center.lng.toFixed(decimals)];
@@ -102,7 +125,7 @@ export default class Map extends Component {
 		}
 	}
 
-	timeserieToggle(isShowTimeserieActive){
+	timeserieToggle(isShowTimeserieActive: boolean){
 		this.setState({isShowTimeserieActive});
 
 		if (!isShowTimeserieActive) this.props.resetTimeserieData();
@@ -112,7 +135,7 @@ export default class Map extends Component {
 		this.timeserieToggle(false);
 	}
 
-	timeserieMapClick(eventName, e){
+	timeserieMapClick(eventName: string, e: { latlng: Latlng}){
 		if (this.getRasterXYFromLatLng && this.props.fetchTimeSerie) {
 			const objId = this.props.controls.services.selected;
 			const variable = this.props.controls.variables.selected;
@@ -130,19 +153,17 @@ export default class Map extends Component {
 		this.setState({isRangeFilterInputsActive: !this.state.isRangeFilterInputsActive});
 	}
 
-	rangeFilterChanged(rangeValueChanges){
+	rangeFilterChanged(rangeValueChanges: RangeValues){
 		const rangeValues = { ...this.props.rangeFilter.rangeValues, ...rangeValueChanges};
-		const hasMinRange = rangeValues.minRange !== undefined;
-		const hasMaxRange = rangeValues.maxRange !== undefined;
 
-		const valueFilter = v => {
-			if (!hasMinRange && !hasMaxRange)
+		const valueFilter = (v: number) => {
+			if (rangeValues.minRange === undefined && rangeValues.maxRange === undefined)
 				return v;
 
-			if (hasMinRange && v < rangeValues.minRange) {
+			if (rangeValues.minRange !== undefined && v < rangeValues.minRange) {
 				return rangeValues.minRange;
 
-			} else if (hasMaxRange && v > rangeValues.maxRange) {
+			} else if (rangeValues.maxRange !== undefined && v > rangeValues.maxRange) {
 				return rangeValues.maxRange;
 
 			} else {
@@ -156,28 +177,26 @@ export default class Map extends Component {
 	render() {
 		const state = this.state;
 		const props = this.props;
-		
+		const raster = props.raster;
+		const { gammas, colorRamps } = props.controls;
 		const { rangeValues, valueFilter } = props.rangeFilter;
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
-		const legendId = props.raster
-			? `${props.raster.id}_${state.gamma}_${props.colorMaker.colorRampName}_${JSON.stringify(rangeValues)}`
+		const mapId = raster && gammas && colorRamps
+			? `${raster.basicId}${gammas.selectedIdx}${colorRamps.selectedIdx}${rangeValues.minRange}${rangeValues.maxRange}`
 			: "";
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
 			props.initSearchParams.center,
 			props.initSearchParams.zoom,
-			props.raster
+			raster
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
 
-		if (props.raster) {
-			// A change in raster id triggers a rerender of map
-			props.raster.id = props.raster.basicId
-				+ props.controls.gammas.selectedIdx
-				+ props.controls.colorRamps.selectedIdx
-				+ '_' + JSON.stringify(rangeValues);
+		if (raster && gammas && colorRamps) {
+			// A change in raster id triggers a rerender of map and legend
+			raster.id = mapId;
 		}
 
 		return (
@@ -189,7 +208,6 @@ export default class Map extends Component {
 				<div id="map-container">
 					<Controls
 						isPIDProvided={props.isPIDProvided}
-						services={props.services}
 						marginTop={5}
 						controls={props.controls}
 						variableEnhancer={props.variableEnhancer}
@@ -233,20 +251,20 @@ export default class Map extends Component {
 							events={[
 								{
 									event: 'moveend',
-									fn: leafletMap => {
+									fn: (leafletMap: L.Map) => {
 										return {center: leafletMap.getCenter(), zoom: leafletMap.getZoom()};
 									},
 									callback: this.mapEventCallback.bind(this)
 								},
 								{
 									event: 'click',
-									fn: (leafletMap, e) => e,
+									fn: (leafletMap: L.Map, e: Event) => e,
 									callback: this.timeserieMapClick.bind(this)
 								}
 							]}
 						/>
 					</div>
-					<div id="legend" ref={div => this.legendDiv = div}>{
+					<div id="legend" ref={(div: HTMLDivElement) => this.legendDiv = div}>{
 						getLegend
 							? <Legend
 								horizontal={false}
@@ -254,7 +272,7 @@ export default class Map extends Component {
 								containerHeight={containerHeight}
 								margin={7}
 								getLegend={getLegend}
-								legendId={legendId}
+								legendId={mapId}
 								legendText={props.legendLabel}
 								decimals={3}
 								useRangeValueFilters={true}
@@ -281,10 +299,10 @@ export default class Map extends Component {
 	}
 }
 
-const getRasterXYFromLatLng = raster => {
+const getRasterXYFromLatLng = (raster: BinRasterExtended) => {
 	const tileHelper = getTileHelper(raster);
 
-	return latlng => {
+	return (latlng: Latlng) => {
 		const xy = tileHelper.lookupPixel(latlng.lng, latlng.lat);
 
 		return xy
@@ -296,16 +314,16 @@ const getRasterXYFromLatLng = raster => {
 	}
 };
 
-const getLatLngBounds = (rasterFetchCount, initCenter, initZoom, raster) => {
+const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRasterExtended) => {
 	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
-		? L.latLngBounds(
-			L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
-			L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
+		? window.L.latLngBounds(
+			window.L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
+			window.L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
 		)
 		: undefined;
 };
 
-const formatData = dataToSave => {
+const formatData = (dataToSave: { objId?: string, variable: string }) => {
 	return {
 		previewNetCDF: {
 			params: {
