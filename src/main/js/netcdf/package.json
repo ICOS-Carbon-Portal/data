@@ -44,15 +44,15 @@
     ]
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
+    "@babel/cli": "^7.12.8",
+    "@babel/core": "^7.12.9",
     "@babel/plugin-proposal-nullish-coalescing-operator": "^7.7.4",
-    "@babel/plugin-proposal-optional-chaining": "^7.7.4",
+    "@babel/plugin-proposal-optional-chaining": "^7.12.7",
     "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-    "@babel/preset-env": "^7.4.3",
+    "@babel/preset-env": "^7.12.7",
     "@babel/preset-es2015": "^7.0.0-beta.53",
-    "@babel/preset-react": "^7.0.0",
-    "@babel/preset-typescript": "^7.12.1",
+    "@babel/preset-react": "^7.12.7",
+    "@babel/preset-typescript": "^7.12.7",
     "@babel/register": "^7.4.0",
     "@types/leaflet": "^1.5.19",
     "@types/react": "^17.0.0",
@@ -67,7 +67,7 @@
     "vinyl-buffer": "^1.0.1"
   },
   "dependencies": {
-    "deep-equal": "^1.0.1",
+    "deep-equal": "^1.1.1",
     "dygraphs": "^2.1.0",
     "icos-cp-backend": "0.4.2",
     "icos-cp-draggable": "^0.0.1",
@@ -78,11 +78,11 @@
     "icos-cp-spinner": "^0.1.4",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",
-    "leaflet": "^1.4.0",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
+    "leaflet": "^1.7.1",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "react-redux": "^6.0.1",
-    "redux": "^4.0.1",
+    "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "topojson": "^3.0.2"
   }
