@@ -70,7 +70,7 @@ class Metadata extends Component<MetadataProps> {
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;
 		const checkedObjects: CheckedObject[] = [{
-			'dataset': datasetSpec ? datasetSpec.uri : undefined,
+			'dataset': datasetSpec ? datasetSpec.self.uri : undefined,
 			'dobj': metadata.id,
 			'spec': metadata.specification.self.uri,
 			'nextVersion': metadata.nextVersion
