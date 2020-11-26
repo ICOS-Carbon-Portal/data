@@ -32,10 +32,18 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 	ip text NULL,
 	city text NULL,
 	country_code text NULL,
-	pos geometry NULL
+	pos geometry NULL,
+	distributor text NULL,
+	endUser text NULL
 );
 CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
 CREATE INDEX IF NOT EXISTS idx_downloads_item_type ON public.downloads USING HASH(item_type);
+-- Added 2020-11-25, can be removed when columns are present in production
+-- Begin table enhancement
+ALTER TABLE public.downloads ADD COLUMN IF NOT EXISTS distributor text NULL;
+ALTER TABLE public.downloads ADD COLUMN IF NOT EXISTS endUser text NULL;
+-- End table enhancement
+CREATE INDEX IF NOT EXISTS idx_downloads_has_distributor ON public.downloads ((1)) WHERE distributor IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
