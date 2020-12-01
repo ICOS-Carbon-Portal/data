@@ -1,4 +1,4 @@
-import { sparqlFetch, sparqlFetchAndParse, BiblioInfo} from './backend/SparqlFetch';
+import { sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
@@ -14,6 +14,7 @@ import {Filter} from "./models/SpecTable";
 import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
+import { References } from '../../common/main/metacore';
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -232,8 +233,13 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
 		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo),
-		biblioInfo: b.biblioInfo ? JSON.parse(b.biblioInfo.value) as BiblioInfo : undefined
-	})).then(res => res.rows);
+		biblioInfo: sparqlParsers.fromString(b.biblioInfo)
+	})).then(res => res.rows.map(
+		({biblioInfo, ...row}) => ({
+			...row,
+			biblioInfo: biblioInfo ? JSON.parse(biblioInfo) as References : undefined
+		})
+	));
 };
 
 export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {

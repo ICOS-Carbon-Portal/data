@@ -56,8 +56,7 @@ export function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResp
 		});
 }
 
-export type BiblioInfo = { citationString: string, temporalCoverageDisplay: string }
-type Parsed = string | string[] | number | boolean | Date | BiblioInfo;
+type Parsed = string | string[] | number | boolean | Date;
 
 type Row<Mandatories extends string, Optionals extends string> = {
 	[v in Mandatories]: Parsed
