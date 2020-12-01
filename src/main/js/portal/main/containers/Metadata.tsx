@@ -10,7 +10,7 @@ import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
-import config, {timezone} from '../config';
+import config, { timezone, featureFlags} from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
@@ -104,7 +104,7 @@ class Metadata extends Component<MetadataProps> {
 
 								<AboutSection metadata={metadata} projectLabel={projectLabel} handleViewMetadata={this.handleViewMetadata.bind(this)}/>
 
-								<ContentSection metadata={metadata} />
+								<ContentSection metadata={metadata} displayDataLevel={featureFlags[config.envri].displayDataLevel} />
 
 								{acquisition &&
 									<AcquisitionSection acquisition={acquisition} timezone={timezone[config.envri]} />
@@ -196,14 +196,14 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
 	const location = acquisition && acquisition.station &&
-		(config.envri === "SITES" && acquisition.site
+		(acquisition.site
 			? `${acquisition.site.location?.label} (${acquisition.station.name.split(" ").shift()})`
 			: acquisition.station.name);
 	const title = (specInfo as L3SpecificMeta).title
 		? (specInfo as L3SpecificMeta).title
 		: undefined;
 	let specLabel = metadata.specification.self.label ?? "";
-	if(config.envri === "SITES" && specLabel.includes(',')) specLabel = specLabel.substr(0, specLabel.indexOf(','));
+	if (featureFlags[config.envri].shortenDataTypeLabel) specLabel = specLabel.substr(0, specLabel.indexOf(','));
 
 	return (
 		<React.Fragment>

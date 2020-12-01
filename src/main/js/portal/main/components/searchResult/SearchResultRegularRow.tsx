@@ -2,7 +2,7 @@ import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
 import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
-import config, {timezone} from '../../config';
+import config, { featureFlags } from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
 import Preview from '../../models/Preview';
 
@@ -46,11 +46,11 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
-		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
-		const locationString = location ? ` from ${location}` : '';
+		const location = extendedInfo?.site ? extendedInfo.site : extendedInfo?.station?.trim();
+		const locationString = location ? ` from ${location}` : "";
 		const dateString = extendedInfo && extendedInfo.biblioInfo ? `, ${extendedInfo.biblioInfo.temporalCoverageDisplay}` : "";
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
-		const specLabel = config.envri === "SITES" && orgSpecLabel.includes(',')
+		const specLabel = featureFlags[config.envri].shortenDataTypeLabel
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}${dateString}`;
@@ -79,10 +79,10 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
-						{config.envri === "SITES" && extendedInfo.station &&
+						{featureFlags[config.envri].displayStationInExtendedInfo && extendedInfo.station &&
 						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
 						}
-						{config.envri === "ICOS" && objInfo.fileName &&
+						{featureFlags[config.envri].displayFileNameInExtendedInfo && objInfo.fileName &&
 						<ExtendedInfoItem item={objInfo.fileName} icon={iconFile} iconHeight={16} title="File name" />
 						}
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />

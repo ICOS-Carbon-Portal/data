@@ -138,7 +138,7 @@ export const filters: IFilterCategories = {
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
-		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level']},
+		{panelTitle: "Data types", filterList: ['type', 'keywordFilter']},
 		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'variable']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
@@ -154,3 +154,18 @@ export const timezone = {
 		label: "UTC+1"
 	}
 };
+
+export const featureFlags = {
+	ICOS: {
+		shortenDataTypeLabel: false,
+		displayStationInExtendedInfo: false,
+		displayFileNameInExtendedInfo: true,
+		displayDataLevel: true,
+	},
+	SITES: {
+		shortenDataTypeLabel: true,
+		displayStationInExtendedInfo: true,
+		displayFileNameInExtendedInfo: false,
+		displayDataLevel: false
+	}
+}
