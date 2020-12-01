@@ -49,12 +49,6 @@ export const formatDateWithOptionalTime = (d: Date, offset = 0) => {
 	return time === "00:00" ? `${date}` : `${date} ${time}`;
 };
 
-export const formatDate = (d: Date, offset = 0) => {
-	d.setUTCHours(d.getUTCHours() + offset);
-
-	return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-};
-
 export const formatDateTime = (d: Date, offset = 0) => {
 	d.setUTCHours(d.getUTCHours() + offset);
 

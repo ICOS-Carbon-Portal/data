@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice, formatDate, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
+import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config, {timezone} from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
@@ -48,13 +48,12 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 			: props.extendedInfo;
 		const location = extendedInfo && (extendedInfo.site ? extendedInfo.site : extendedInfo.station ? extendedInfo.station.trim() : undefined);
 		const locationString = location ? ` from ${location}` : '';
-		const offset = timezone[config.envri].offset;
-		const dateString = `${formatDate(new Date(objInfo.timeStart ?? ""), offset)} \u2013 ${formatDate(new Date(objInfo.timeEnd ?? ""), offset)}`;
+		const dateString = extendedInfo && extendedInfo.biblioInfo ? `, ${extendedInfo.biblioInfo.temporalCoverageDisplay}` : "";
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
 		const specLabel = config.envri === "SITES" && orgSpecLabel.includes(',')
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
-		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}, ${dateString}`;
+		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}${dateString}`;
 		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled

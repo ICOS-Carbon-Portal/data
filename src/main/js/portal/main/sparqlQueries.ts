@@ -423,12 +423,12 @@ function getVarFilter(filter: VariableFilterRequest): string {
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo" | "biblioInfo"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?biblioInfo where{
 	{
 		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?site0) as ?site) where{
 			VALUES ?dobj { ${dobjsList} }
@@ -450,8 +450,9 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	]}
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
 	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description }
-	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
-	OPTIONAL { ?dobj cpmeta:hasActualVariable [].BIND ("true"^^xsd:boolean as ?hasVarInfo) }
+	OPTIONAL{ ?dobj cpmeta:hasActualColumnNames ?columnNames }
+	OPTIONAL{ ?dobj cpmeta:hasActualVariable [].BIND ("true"^^xsd:boolean as ?hasVarInfo) }
+	OPTIONAL{ ?dobj cpmeta:hasBiblioInfo ?biblioInfo}
 }`;
 
 	return { text };

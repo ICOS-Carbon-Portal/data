@@ -1,4 +1,4 @@
-import {sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
+import { sparqlFetch, sparqlFetchAndParse, BiblioInfo} from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
@@ -231,7 +231,8 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 		description: sparqlParsers.fromString(b.description),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
-		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
+		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo),
+		biblioInfo: b.biblioInfo ? JSON.parse(b.biblioInfo.value) as BiblioInfo : undefined
 	})).then(res => res.rows);
 };
 

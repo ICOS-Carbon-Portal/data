@@ -2,7 +2,7 @@ import React, { Component, MouseEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
 import CartBtn from '../components/buttons/CartBtn.jsx';
 import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx';
-import {formatDate, formatDateTime, getLastSegmentsInUrls} from '../utils';
+import {formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
 import {Route, State} from "../models/State";
@@ -211,23 +211,10 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 				<h1>
 					{title || specLabel}
 					{location && <span> from {location}</span>}
-					{acquisition && acquisition.interval &&
-						caption(new Date(acquisition.interval.start), new Date(acquisition.interval.stop))
-					}
+					<div className="text-muted"><small>{metadata.references.temporalCoverageDisplay}</small></div>
 				</h1>
 			}
 		</React.Fragment>
-	);
-};
-
-const caption = (startDate: Date, stopDate: Date) => {
-	const startDateString = formatDate(startDate, timezone[config.envri].offset);
-	const stopDateString = areDatesDifferent(startDate, stopDate) && ` \u2013 ${formatDate(stopDate, timezone[config.envri].offset)}`;
-
-	return (
-		<div className="text-muted">
-			<small>{startDateString}{stopDateString}</small>
-		</div>
 	);
 };
 
