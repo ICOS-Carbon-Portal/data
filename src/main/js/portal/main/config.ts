@@ -21,6 +21,21 @@ const searchResultsCSVName = {
 	SITES: 'SITES Data Portal Search Results.csv'
 }
 
+const featureFlags = {
+	ICOS: {
+		shortenDataTypeLabel: false,
+		displayStationInExtendedInfo: false,
+		displayFileNameInExtendedInfo: true,
+		displayDataLevel: true,
+	},
+	SITES: {
+		shortenDataTypeLabel: true,
+		displayStationInExtendedInfo: true,
+		displayFileNameInExtendedInfo: false,
+		displayDataLevel: false
+	}
+}
+
 export default {
 	envri: commonConfig.envri as Envri,
 	...commonConfig.previewTypes,
@@ -48,7 +63,8 @@ export default {
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,
-	searchResultsCSVName
+	searchResultsCSVName,
+	features: featureFlags[commonConfig.envri as Envri]
 };
 
 const defaultCategNames = {
@@ -154,18 +170,3 @@ export const timezone = {
 		label: "UTC+1"
 	}
 };
-
-export const featureFlags = {
-	ICOS: {
-		shortenDataTypeLabel: false,
-		displayStationInExtendedInfo: false,
-		displayFileNameInExtendedInfo: true,
-		displayDataLevel: true,
-	},
-	SITES: {
-		shortenDataTypeLabel: true,
-		displayStationInExtendedInfo: true,
-		displayFileNameInExtendedInfo: false,
-		displayDataLevel: false
-	}
-}

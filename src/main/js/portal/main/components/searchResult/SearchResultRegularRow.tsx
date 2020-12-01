@@ -2,7 +2,7 @@ import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
 import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
-import config, { featureFlags } from '../../config';
+import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
 import Preview from '../../models/Preview';
 
@@ -50,7 +50,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const locationString = location ? ` from ${location}` : "";
 		const dateString = extendedInfo && extendedInfo.biblioInfo ? `, ${extendedInfo.biblioInfo.temporalCoverageDisplay}` : "";
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
-		const specLabel = featureFlags[config.envri].shortenDataTypeLabel
+		const specLabel = config.features.shortenDataTypeLabel
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}${dateString}`;
@@ -79,10 +79,10 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
-						{featureFlags[config.envri].displayStationInExtendedInfo && extendedInfo.station &&
+						{config.features.displayStationInExtendedInfo && extendedInfo.station &&
 						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
 						}
-						{featureFlags[config.envri].displayFileNameInExtendedInfo && objInfo.fileName &&
+						{config.features.displayFileNameInExtendedInfo && objInfo.fileName &&
 						<ExtendedInfoItem item={objInfo.fileName} icon={iconFile} iconHeight={16} title="File name" />
 						}
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
