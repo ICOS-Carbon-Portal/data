@@ -13,6 +13,7 @@ const ContentSection = (props: ContentSectionProps) => {
 	return (
 		<React.Fragment>
 			{metadata.specification.self.label && metadataRow("Type", metadata.specification.self.label)}
+			{metadata.specification.datasetSpec?.resolution && metadataRow("Temporal resolution", metadata.specification.datasetSpec.resolution)}
 			{metadataRow("Level", metadata.specification.dataLevel.toString())}
 			{metadataRow("File name", <span style={{ wordBreak: 'break-word' }}>{metadata.fileName}</span>)}
 			{metadata.size !== undefined && metadataRow("Size", formatBytes(metadata.size, 0))}
