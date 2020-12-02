@@ -58,7 +58,7 @@ class EtcFilenameTests extends AnyFunSpec{
 
 		testBad(ec.replace(".csv", ".blabla"), "too long file extension")
 		testBad(ec.replace(".csv", ".xxx"), "unsupported file extension")
-		testBad(ec.replace("-Lso", "-lso"), "bad station id format")
+		testGood(ec.replace("-Lso", "-lso")) //because of historical CZ-wet
 		testBad(ec.replace("FA-Lso", "FAA-Lso"), "bad station id format")
 		testBad(ec.replace("_L03", ""), "logger number missing")
 		testBad(ec.replace("EC", "XX"), "bad data type")
