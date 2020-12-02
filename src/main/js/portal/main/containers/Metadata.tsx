@@ -203,7 +203,7 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 		? (specInfo as L3SpecificMeta).title
 		: undefined;
 	let specLabel = metadata.specification.self.label ?? "";
-	if (config.features.shortenDataTypeLabel) specLabel = specLabel.substr(0, specLabel.indexOf(','));
+	if (config.features.shortenDataTypeLabel && specLabel.includes(',')) specLabel = specLabel.substr(0, specLabel.indexOf(','));
 
 	return (
 		<React.Fragment>

@@ -50,7 +50,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const locationString = location ? ` from ${location}` : "";
 		const dateString = extendedInfo && extendedInfo.biblioInfo ? `, ${extendedInfo.biblioInfo.temporalCoverageDisplay}` : "";
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
-		const specLabel = config.features.shortenDataTypeLabel
+		const specLabel = config.features.shortenDataTypeLabel && orgSpecLabel.includes(',')
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
 		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}${dateString}`;
