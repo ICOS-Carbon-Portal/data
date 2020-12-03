@@ -3,11 +3,13 @@ package se.lu.nateko.cp.data.routes
 import java.time.Instant
 
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
 import LicenceRouting.parseLicenceCookie
+import akka.Done
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
@@ -28,6 +30,7 @@ import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -232,20 +235,21 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private def logExternalDownloads(hashes: Seq[Sha256Sum], ip: String, thirdParty: String, endUser: Option[String])(implicit envri: Envri): Unit = {
 		val extraInfo = ("distributor" -> thirdParty) :: endUser.filterNot(_.trim.isEmpty).map{"endUser" -> _}.toList
 
-		Utils.runSequentially(hashes){hash =>
-			uploadService.meta.lookupPackage(hash).andThen{
+		Utils.runSequentially(hashes.distinct){hash =>
+			uploadService.meta.lookupPackage(hash).transformWith{
 				case Success(dobj: DataObject) =>
 					logPublicDownloadInfo(dobj, ip, Some(thirdParty), endUser)
 				case Failure(err) =>
 					log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
-				case _ =>
+					done
+				case _ => done
 			}
 		}
 	}
 
 	private def logPublicDownloadInfo(
 		dobj: DataObject, ip: String, thirdParty: Option[String] = None, endUser: Option[String] = None
-	)(implicit envri: Envri): Unit = {
+	)(implicit envri: Envri): Future[Done] = {
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
 			ip = ip,
