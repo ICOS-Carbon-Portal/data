@@ -70,6 +70,9 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	} ~
 	pathPrefix("style"){
 		getFromResourceDirectory("style")
+	} ~
+	path("robots.txt"){
+		getFromResource("robots.txt")
 	}
 }
 
