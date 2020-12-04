@@ -3,6 +3,7 @@ import Radio from './Radio.jsx';
 import deepEqual from 'deep-equal';
 import FileDownload from './FileDownload.jsx';
 import {placeholders} from "./Filter";
+import config from '../config';
 
 export default class Graph extends Component{
 	constructor(props){
@@ -78,7 +79,7 @@ export default class Graph extends Component{
 }
 
 const json2csv = (statsGraph, filtersUserFriendly) => {
-	let header = "ICOS Carbon Portal Download Statistics\n";
+	let header = `${config.envri} Download Statistics\n`;
 	header += `Report created ${toDateTime(new Date())}\n\n`;
 
 	if (filtersUserFriendly.length) {
