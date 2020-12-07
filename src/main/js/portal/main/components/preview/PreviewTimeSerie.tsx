@@ -87,6 +87,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 			return items.reduce((acc2: string, curr2: PreviewItem) => {
 				if ((curr.id !== curr2.id) &&
 					(curr.station === curr2.station) &&
+					(curr.site && curr2.site && curr.site === curr2.site) &&
 					((curr.timeEnd < curr2.timeStart) ||
 					(curr.timeStart > curr2.timeEnd)) &&
 					(!curr.samplingHeight || curr.samplingHeight === curr2.samplingHeight)) {
