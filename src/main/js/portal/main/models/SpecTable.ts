@@ -65,7 +65,9 @@ export default class SpecTable<T extends string = string>{
 		return new SpecTable<T>(this.colNames, this.rows, this.filters, extraFilter);
 	}
 
-	get ownSpecFilter(): Value[]{
+	get ownSpecFilter(): Filter{
+		const filts = this.filters;
+		if(this.colNames.every(colName => !filts[colName])) return null;
 		return this.withExtraSpecFilter(null).getDistinctColValues(SPECCOL);
 	}
 
@@ -106,18 +108,18 @@ export default class SpecTable<T extends string = string>{
 
 	private filterRows(filters: Filters<T>): Row<T>[]{
 		const colNames = Object.keys(filters) as T[];
-		const esFilter = this.extraSpecFilter;
-		const extraFilter: (row: Row<T>) => boolean =
-			esFilter != null
-				? row => esFilter.includes(row[SPECCOL])
-				: _ => true;
+		const eFilter: Filter = this.extraSpecFilter;
 
-		return this.rows.filter(row => {
-			return colNames.every(colName => {
-				const filter: Filter = filters[colName] ?? null;
-				return filter == null || filter.includes(row[colName]);
-			}) && extraFilter(row);
-		});
+		return this.rows.filter(row =>
+			colNames.every(
+				colName => {
+					const filter: Filter = filters[colName] ?? null;
+					return filter == null || filter.includes(row[colName]);
+				}
+			) && (
+				eFilter == null || eFilter.includes(row[SPECCOL])
+			)
+		);
 	}
 
 	getColumnValuesFilter(colName: Col<T>): Filter{
