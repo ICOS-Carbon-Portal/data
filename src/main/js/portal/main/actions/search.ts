@@ -21,7 +21,7 @@ import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
 import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
-import { listFilteredDataObjects } from '../sparqlQueries';
+import { listFilteredDataObjects, SPECCOL } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 
 
@@ -81,7 +81,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 	const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
 	return {
-		specs: useOnlyPidFilter ? null : specTable.getSpeciesFilter(null, true),
+		specs: useOnlyPidFilter ? null : specTable.basics.getDistinctColValues(SPECCOL),
 		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
 		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
 		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),

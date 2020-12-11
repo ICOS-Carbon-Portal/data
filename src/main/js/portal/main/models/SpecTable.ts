@@ -65,6 +65,10 @@ export default class SpecTable<T extends string = string>{
 		return new SpecTable<T>(this.colNames, this.rows, this.filters, extraFilter);
 	}
 
+	get ownSpecFilter(): Value[]{
+		return this.withExtraSpecFilter(null).getDistinctColValues(SPECCOL);
+	}
+
 	withFilter(colName: Col<T>, filter: Filter): SpecTable<T>{
 		if(!this.colNames.includes(colName)) return this;
 		const newFilters = Object.assign({}, this.filters, {[colName]: filter});
@@ -91,9 +95,8 @@ export default class SpecTable<T extends string = string>{
 		return distinct(this.filteredRows.map(row => row[colName]));
 	}
 
-	rowsFilteredByOthers(excludedColumn: Col<T>){
-		const filters = Object.assign({}, this.filters);
-		filters[excludedColumn] = null;
+	private rowsFilteredByOthers(excludedColumn: Col<T>){
+		const filters: Filters<T> = {...this.filters, [excludedColumn]: null};
 		return this.filterRows(filters);
 	}
 
@@ -115,11 +118,6 @@ export default class SpecTable<T extends string = string>{
 				return filter == null || filter.includes(row[colName]);
 			}) && extraFilter(row);
 		});
-	}
-
-	get speciesFilter(): Filter{
-		if(this.names.every(name => this.getFilter(name) === null)) return null;
-		return this.getDistinctAvailableColValues(SPECCOL);
 	}
 
 	getColumnValuesFilter(colName: Col<T>): Filter{
