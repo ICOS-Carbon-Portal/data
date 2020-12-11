@@ -66,8 +66,10 @@ export default class SpecTable<T extends string = string>{
 	}
 
 	get ownSpecFilter(): Filter{
-		const filts = this.filters;
-		if(this.colNames.every(colName => !filts[colName])) return null;
+		return this.hasOwnFilters ? this.implicitOwnSpecFilter : null;
+	}
+
+	get implicitOwnSpecFilter(): Filter{
 		return this.withExtraSpecFilter(null).getDistinctColValues(SPECCOL);
 	}
 
@@ -82,7 +84,11 @@ export default class SpecTable<T extends string = string>{
 	}
 
 	get hasActiveFilters(): boolean{
-		return Object.values(this.filters).some(f => !!f) || (this.extraSpecFilter != null);
+		return this.hasOwnFilters || (this.extraSpecFilter != null);
+	}
+
+	get hasOwnFilters(): boolean{
+		return Object.values(this.filters).some(f => !!f);
 	}
 
 	withResetFilters(){

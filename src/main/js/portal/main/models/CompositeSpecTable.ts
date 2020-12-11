@@ -45,15 +45,10 @@ export default class CompositeSpecTable{
 
 	static deserialize(tables: SpecTableSerialized) {
 		const {basics, columnMeta, origins} = tables;
+
+		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters || {});
+		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters || {});
 		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters || {});
-		const specValues = new Set(originsTbl.rows.map(row => row[SPECCOL]));
-
-		function whereRelevantSpec<T extends string>(rows: Row<T>[]): Row<T>[]{
-			return rows.filter(row => specValues.has(row[SPECCOL]));
-		}
-
-		const basicsTbl = new SpecTable(basics.colNames, whereRelevantSpec(basics.rows), basics.filters || {});
-		const columnMetaTbl = new SpecTable(columnMeta.colNames, whereRelevantSpec(columnMeta.rows), columnMeta.filters || {});
 
 		return new CompositeSpecTable(basicsTbl, columnMetaTbl, originsTbl).withFilterReflection;
 	}
@@ -112,7 +107,11 @@ export default class CompositeSpecTable{
 
 	get withFilterReflection(): CompositeSpecTable {
 
-		const specFilter0 = Filter.and(this.tables.map(t => t.ownSpecFilter));
+		const specFilter0 = Filter.and([
+			this.basics.ownSpecFilter,
+			this.columnMeta.ownSpecFilter,
+			this.origins.implicitOwnSpecFilter
+		]);
 
 		const specFilter: Filter = specFilter0 === null
 			? null
