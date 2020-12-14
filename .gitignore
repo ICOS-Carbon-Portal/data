@@ -29,6 +29,7 @@ nohup.out
 /src/main/python/update-restheart/badRecords.txt
 /src/main/python/geoip/DB/ip.sqlite
 /src/main/python/geoip/venv/
+/src/main/python/mongo-to-pg/database.ini
 /src/main/python/mongo-to-pg/venv/
 /src/main/python/mongo-to-pg/windows-venv/
 __pycache__/
