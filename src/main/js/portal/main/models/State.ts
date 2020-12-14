@@ -18,7 +18,7 @@ import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO} from "../../../common/main/metacore";
 import SpecTable, {Row} from "./SpecTable";
-import {getLastSegmentInUrl} from "../utils";
+import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
 
@@ -364,14 +364,22 @@ const hashUpdater = (store: Store) => () => {
 	}
 };
 
-const storeOverwatch = (store: Store, select: Function, onChange: Function) => {
+const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Function) => {
 	let currentState: State;
 
 	const handleChange = () => {
-		const nextState = select(store.getState());
+		const nextState = pick(store.getState(), ...stateKeys);
+		if (currentState === undefined)
+			currentState = nextState;
+		
+		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
+			if (!deepequal(currentState[key], nextState[key]))
+				acc[key] = nextState[key];
+			return acc;
+		}, {});
 
-		if (!deepequal(currentState, nextState)){
-			onChange(currentState, nextState, select);
+		if (Object.keys(changes).length) {
+			onChange(currentState, nextState, changes, (state: State) => pick(state, ...stateKeys));
 			currentState = nextState;
 		}
 	};

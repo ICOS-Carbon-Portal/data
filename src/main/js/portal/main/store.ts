@@ -2,19 +2,14 @@ import 'babel-polyfill';
 import {createStore, applyMiddleware, Middleware, AnyAction, Dispatch, compose} from 'redux';
 import thunkMiddleware from 'redux-thunk';
 import reducer from './reducers/mainReducer';
-// import {init} from './actions';
 import {init} from './actions/main';
 import stateUtils, {State} from "./models/State";
 import {ActionPayload, PortalPlainAction} from "./reducers/actionpayloads";
 
 
-const selectSubState = (state: State) => {
-	// What part of state we want to log
-	return {route: state.route};
-};
-const logStoreChange = (currentState: any, nextState: any, select: Function) => {
+const logStoreChange = (currentState: Partial<State>, nextState: Partial<State>, changes: Partial<State>, select: (state: State) => Partial<State>) => {
 	const historyState = history.state ? select(history.state) : undefined;
-	console.log({currentState, nextState, historyState, historyLength: history.state ? history.length : 0});
+	console.log({ currentState, nextState, changes, historyState, historyLength: history.state ? history.length : 0});
 };
 
 export interface PortalThunkAction<R>{
@@ -53,8 +48,8 @@ export default function(){
 	);
 	store.dispatch(init);
 
-	// Use storeOverwatch to log changes in store (see selectSubState and logStoreChange above)
-	// stateUtils.storeOverwatch(store, selectSubState, logStoreChange);
+	// Use storeOverwatch to log changes in store
+	// stateUtils.storeOverwatch(store, ['specTable', 'paging'], logStoreChange);
 
 	return store;
 }
