@@ -349,7 +349,7 @@ CREATE OR REPLACE FUNCTION public.downloadStatsSize(
 AS $$
 
 BEGIN
-	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL THEN
+	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
 		RETURN QUERY
 			SELECT COUNT(*)::int AS size
 			FROM dlstats_full_mv;
@@ -397,7 +397,7 @@ AS $$
 -- Solve confusion with returned column 'count'
 #variable_conflict use_column
 BEGIN
-	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL THEN
+	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
 		RETURN QUERY
 			SELECT
 				count,
