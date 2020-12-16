@@ -104,7 +104,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 				respondWithHeader(`Access-Control-Allow-Origin`(origin))
 			case _ => pass
 		}
-	}
+	}.or(pass)
 
 
 	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
