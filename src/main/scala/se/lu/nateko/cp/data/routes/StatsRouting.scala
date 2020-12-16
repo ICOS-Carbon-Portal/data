@@ -95,13 +95,17 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 	}
 
 	private def setOriginHeader(implicit envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{ case Tuple1(originH) =>
-		val envriConf = envriConfs(envri)
+		def isFromEnvri(origin: HttpOrigin): Boolean = envriConfs.get(envri).exists{ envriConf =>
+			val envriDomain = envriConf.dataHost.split(".").takeRight(2).mkString(".")
+			origin.host.toString.endsWith(envriDomain)
+		}
 		originH.origins.toList match{
-			case origin :: _ if envriConf.matchesHost(origin.host.toString) =>
+			case origin :: _ if isFromEnvri(origin) =>
 				respondWithHeader(`Access-Control-Allow-Origin`(origin))
 			case _ => pass
 		}
 	}
+
 
 	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
 		(get & setOriginHeader){
