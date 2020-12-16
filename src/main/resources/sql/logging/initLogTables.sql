@@ -181,27 +181,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_submitters_mv ON public.submitters_mv (sub
 ---------------------
 --DROP FUNCTION IF EXISTS downloadsByCountry;
 CREATE OR REPLACE FUNCTION public.downloadsByCountry(
-		_hash_id text
-	)
-	RETURNS TABLE(
-		count int,
-		country_code text
-	)
-	LANGUAGE sql
-	STABLE
-AS $$
-
-SELECT
-	COUNT(*)::int AS count,
-	country_code
-FROM downloads
-WHERE hash_id = _hash_id
-GROUP BY country_code
-ORDER BY count DESC;
-
-$$;
-
-CREATE OR REPLACE FUNCTION public.downloadsByCountry(
 		_page int,
 		_pagesize int,
 		_specs text[] DEFAULT NULL,
