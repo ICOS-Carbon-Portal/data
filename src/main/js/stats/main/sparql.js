@@ -2,16 +2,18 @@ import {sparql} from 'icos-cp-backend';
 import config from './config';
 import commonConfig from '../../common/main/config';
 
-export function getObjSpecLabels(specUris){
-	const query = `select * where {
+export function getObjSpecInfo(specUris){
+	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
+		select * where {
 		VALUES ?spec { <${specUris.join("> <")}> }
-		?spec rdfs:label ?label
+		?spec rdfs:label ?label .
+		?spec cpmeta:hasDataLevel ?level
 	}`;
-	return sparqlLabels(query, "spec", "label");
+	return sparqlParser(query, "spec", ["label", "level"]);
 }
 
 export function getStationLabels(stationUris){
-	const query = `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select ?station ?label where{
 			values ?station { <${stationUris.join("> <")}> }
 			?station cpmeta:hasStationId ?id ; cpmeta:hasName ?name .
@@ -21,15 +23,16 @@ export function getStationLabels(stationUris){
 }
 
 export function getFileNames(dobjUris){
-	const query = `select * where{
+	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
+		select * where{
 			values ?dobj { <${dobjUris.join("> <")}> }
-			?dobj <http://meta.icos-cp.eu/ontologies/cpmeta/hasName> ?fname .
+			?dobj cpmeta:hasName ?fname .
 		}`;
 	return sparqlLabels(query, "dobj", "fname");
 }
 
 export function getContributorNames(contribUris){
-	const query = `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select ?contrib ?name where{
 			${contribUris.length
 				? `values ?contrib { <${contribUris.join("> <")}> }` 
@@ -61,6 +64,22 @@ function sparqlLabels(query, resourceVar, labelVar){
 		sparqlResults.results.bindings.reduce(
 			(acc, curr) => {
 				acc[curr[resourceVar].value] = curr[labelVar].value;
+				return acc;
+			},
+			{}
+		)
+	);
+}
+
+function sparqlParser(query, key, valueKeys){
+
+	return sparql({text: query}, config.sparqlEndpoint, false).then(sparqlResults =>
+		sparqlResults.results.bindings.reduce(
+			(acc, curr) => {
+				acc[curr[key].value] = valueKeys.reduce((acc2, currKey) => {
+					acc2[currKey] = curr[currKey].value;
+					return acc2;
+				}, {});
 				return acc;
 			},
 			{}

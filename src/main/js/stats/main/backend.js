@@ -1,7 +1,7 @@
 import {getJson, sparql} from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
-import { getFileNames, getStationLabels, getObjSpecLabels, getContributorNames } from './sparql';
+import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
 import localConfig from './config';
 
 const pagesize = localConfig.pagesize;
@@ -53,11 +53,16 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 	}`;
 };
 
-export const getSearchParams = (downloadStatsFilters) => {
-	const { specification, stations, submitters, contributors, dlfrom, originStations } = downloadStatsFilters;
+export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations } = downloadStatsFilters;
+
+	const specSpecs = specification && specification.length ? specification : [];
+	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
+	const combinedSpecs = specSpecs.concat(dataLevelSpecs);
+	const specs = combinedSpecs.length ? combinedSpecs : undefined;
 
 	const searchParams = {
-		specs: specification && specification.length ? specification : undefined,
+		specs,
 		stations: stations && stations.length ? stations : undefined,
 		submitters: submitters && submitters.length ? submitters : undefined,
 		contributors: contributors && contributors.length ? contributors : undefined,
@@ -303,12 +308,13 @@ export const getSpecsApi = () => {
 				return Promise.resolve(specifications);
 			}
 
-			return getObjSpecLabels(specifications.map(s => s.spec))
+			return getObjSpecInfo(specifications.map(s => s.spec))
 				.then(specLabels =>
 					specifications.map(s => ({
 						id: s.spec,
 						count: s.count,
-						label: specLabels[s.spec] || s.spec.split('/').pop()
+						label: specLabels[s.spec] ? specLabels[s.spec].label : s.spec.split('/').pop(),
+						level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified'
 					}))
 						.sort((a, b) => a.label.localeCompare(b.label))
 				);
