@@ -1,22 +1,29 @@
 package se.lu.nateko.cp.data.routes
 
-import se.lu.nateko.cp.data.ConfigReader
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Directive1
-import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
-import se.lu.nateko.cp.meta.core.MetaCoreConfig
-import spray.json.DefaultJsonProtocol
-import spray.json._
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import se.lu.nateko.cp.data.CpdataJsonProtocol.javaTimeInstantFormat
+import akka.http.scaladsl.server.{Directive1, Directive0}
+
 import java.time.Instant
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.marshalling.ToResponseMarshallable
+
 import scala.concurrent.Future
 import scala.util.Try
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+
+import spray.json.DefaultJsonProtocol
+import spray.json._
+
+import se.lu.nateko.cp.data.ConfigReader
+import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.data.CpdataJsonProtocol.javaTimeInstantFormat
 import se.lu.nateko.cp.data.services.dlstats.DlItemType
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.MetaCoreConfig
 
 object StatsRouting extends DefaultJsonProtocol{
 	case class StatsQueryParams(
@@ -87,57 +94,76 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 		}
 	}
 
-	val route: Route = (get & pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
+	private def setOriginHeader(implicit envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{ case Tuple1(originH) =>
+		def isFromEnvri(origin: HttpOrigin): Boolean = envriConfs.get(envri).exists{ envriConf =>
+			val envriDomain = envriConf.dataHost.split(".").takeRight(2).mkString(".")
+			origin.host.toString.endsWith(envriDomain)
+		}
+		originH.origins.toList match{
+			case origin :: _ if isFromEnvri(origin) =>
+				respondWithHeader(`Access-Control-Allow-Origin`(origin))
+			case _ => pass
+		}
+	}.or(pass)
 
-		statsQuery("downloadsByCountry", pgClient.downloadsByCountry) ~
-		statsQuery("downloadsPerWeek", pgClient.downloadsPerWeek) ~
-		statsQuery("downloadsPerMonth", pgClient.downloadsPerMonth) ~
-		statsQuery("downloadsPerYear", pgClient.downloadsPerYear) ~
-		statsQuery("downloadStats", pgClient.downloadStats) ~
-		path("specifications"){
-			onSuccess(pgClient.specifications){dbc =>
-				complete(dbc)
-			}
-		} ~
-		path("contributors"){
-			onSuccess(pgClient.contributors){dbc =>
-				complete(dbc)
-			}
-		} ~
-		path("submitters"){
-			onSuccess(pgClient.submitters){dbc =>
-				complete(dbc)
-			}
-		} ~
-		path("stations"){
-			onSuccess(pgClient.stations){dbc =>
-				complete(dbc)
-			}
-		} ~
-		path("dlfrom"){
-			onSuccess(pgClient.dlfrom){dbc =>
-				complete(dbc)
-			}
-		} ~
-		path("downloadCount"){
-			parameter("hashId") {hash =>
-				val hashId = Sha256Sum.fromString(hash).get
 
-				onSuccess(pgClient.downloadCount(hashId)){dbc =>
+	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
+		(get & setOriginHeader){
+
+			statsQuery("downloadsByCountry", pgClient.downloadsByCountry) ~
+			statsQuery("downloadsPerWeek", pgClient.downloadsPerWeek) ~
+			statsQuery("downloadsPerMonth", pgClient.downloadsPerMonth) ~
+			statsQuery("downloadsPerYear", pgClient.downloadsPerYear) ~
+			statsQuery("downloadStats", pgClient.downloadStats) ~
+			path("specifications"){
+				onSuccess(pgClient.specifications){dbc =>
 					complete(dbc)
 				}
-			}
-		} ~
-		path("lastDownloads"){
-			parameters("limit".as[Int].?, "itemType".as[String].?) {(limitParam, itemTypeParam) =>
-				val limit = Math.min(limitParam.getOrElse(1000), 100000)
-				val itemType = itemTypeParam.flatMap(DlItemType.parse)
-				onSuccess(pgClient.lastDownloads(limit, itemType)){dbc =>
+			} ~
+			path("contributors"){
+				onSuccess(pgClient.contributors){dbc =>
 					complete(dbc)
 				}
-			}
+			} ~
+			path("submitters"){
+				onSuccess(pgClient.submitters){dbc =>
+					complete(dbc)
+				}
+			} ~
+			path("stations"){
+				onSuccess(pgClient.stations){dbc =>
+					complete(dbc)
+				}
+			} ~
+			path("dlfrom"){
+				onSuccess(pgClient.dlfrom){dbc =>
+					complete(dbc)
+				}
+			} ~
+			path("downloadCount"){
+				parameter("hashId") {hash =>
+					val hashId = Sha256Sum.fromString(hash).get
+
+					onSuccess(pgClient.downloadCount(hashId)){dbc =>
+						complete(dbc)
+					}
+				}
+			} ~
+			path("lastDownloads"){
+				parameters("limit".as[Int].?, "itemType".as[String].?) {(limitParam, itemTypeParam) =>
+					val limit = Math.min(limitParam.getOrElse(1000), 100000)
+					val itemType = itemTypeParam.flatMap(DlItemType.parse)
+					onSuccess(pgClient.lastDownloads(limit, itemType)){dbc =>
+						complete(dbc)
+					}
+				}
+			} ~
+			complete(StatusCodes.NotFound)
 		} ~
-		complete(StatusCodes.NotFound)
+		(options & setOriginHeader){
+			respondWithHeader(`Access-Control-Allow-Methods`(HttpMethods.GET)){
+				complete(StatusCodes.OK)
+			}
+		}
 	}
-
 }
