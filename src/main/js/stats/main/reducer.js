@@ -15,6 +15,7 @@ export const initState = {
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
+	specLevelLookup: undefined,
 	countryCodesLookup: undefined,
 	paging: {
 		page: 0,
@@ -70,7 +71,7 @@ export default function(state = initState, action){
 				? action.countryCodes
 				: (action.dlfrom || [])
 					.map(dl => ({id: dl.countryCode, count: dl.count, label: action.countryCodeLookup[dl.countryCode]}))
-					.sort((a, b) => a.label.localeCompare(b.label));
+					.sort(labelSorter);
 			const { stationCountryCodes, countryCodeLookup, stations} = action;
 			const dataOriginCountryValues = stations.reduce((acc, station) => {
 				const countryCode = (stationCountryCodes || [])[station.id];
@@ -84,8 +85,8 @@ export default function(state = initState, action){
 					}
 				}
 				return acc;
-			}, []).sort((a, b) => a.label.localeCompare(b.label));
-			
+			}, []).sort(labelSorter);
+
 			return update({
 				stationCountryCodeLookup: action.stationCountryCodeLookup,
 				downloadStats: state.downloadStats.withStationCountryCodes(action.stationCountryCodes),
@@ -123,6 +124,11 @@ export default function(state = initState, action){
 		case actionTypes.STATS_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withFilter(action.varName, action.values)
+			});
+
+		case actionTypes.SET_SPEC_LEVEL_LOOKUP:
+			return update({
+				specLevelLookup: action.specLevelLookup
 			});
 		
 		case actionTypes.RESET_FILTERS:
@@ -188,6 +194,8 @@ export default function(state = initState, action){
 		return Object.assign.apply(Object, [{}, state].concat(updates));
 	}
 }
+
+export const labelSorter = (a, b) => a.label.localeCompare(b.label);
 
 const updateRadiosAndPreviewData = (state, action) => {
 	const radioName = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";

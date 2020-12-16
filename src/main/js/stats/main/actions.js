@@ -4,6 +4,7 @@ import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, 
 	getSpecsApi, getContributorsApi, getSubmittersApi, getCountryCodesLookup} from './backend';
 import {getStationCountryCodes} from './sparql';
 import {getConfig} from "./models/RadioConfig";
+import {labelSorter} from './reducer';
 
 export const actionTypes = {
 	ERROR: 'ERROR',
@@ -20,6 +21,7 @@ export const actionTypes = {
 	SET_BACKEND_SOURCE: 'SET_BACKEND_SOURCE',
 	RESET_FILTERS: 'RESET_FILTERS',
 	COUNTRY_CODES_FETCHED: 'COUNTRY_CODES_FETCHED',
+	SET_SPEC_LEVEL_LOOKUP: 'SET_SPEC_LEVEL_LOOKUP',
 }
 
 const failWithError = dispatch => error => {
@@ -140,7 +142,7 @@ export const resetFilters = () => dispatch => {
 };
 
 export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
-	const { downloadStats, stationCountryCodeLookup, dateUnit, backendSource } = getState();
+	const { downloadStats, stationCountryCodeLookup, specLevelLookup, dateUnit, backendSource } = getState();
 	const page = newPage || 1;
 
 	if (backendSource.source === 'restheart') {
@@ -162,7 +164,7 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 		dispatch(fetchDownloadStatsPerDateUnit(dateUnit, avars));
 		
 	} else {
-		const searchParams = getSearchParams(downloadStats.getSearchParamFilters());
+		const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
 
 		Promise.all([getDownloadStatsApi(page, searchParams), callApi('downloadsByCountry', searchParams)])
 			.then(([dlStats, countryStats]) => {
@@ -181,7 +183,7 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 };
 
 const fetchFilters = (dispatch, getState) => {
-	const { backendSource } = getState();
+	const { backendSource, specLevelLookup } = getState();
 
 	if (backendSource.source === 'restheart') {
 		Promise.all([getSpecifications(), getFormats(), getDataLevels(), getStations(), getContributors(), getThemes(), getStationsCountryCode()]).then(
@@ -208,9 +210,26 @@ const fetchFilters = (dispatch, getState) => {
 			countryCodeLookup => {
 				Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi(), getSubmittersApi(), callApi('dlfrom'), getStationCountryCodes()]).then(
 					([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
+						const dataLevels = specifications.reduce((acc, curr) => {
+							const lvl = acc.find(l => l.id === curr.level);
+							if (lvl === undefined){
+								acc.push({
+									id: curr.level,
+									specs: [curr.id],
+									count: curr.count,
+									label: curr.level
+								})
+							} else {
+								lvl.count += curr.count;
+								lvl.specs.push(curr.id);
+							}
+							return acc;
+						}, []).sort(labelSorter);
+
 						dispatch({
 							type: actionTypes.FILTERS,
 							specifications,
+							dataLevels,
 							stations,
 							contributors,
 							submitters,
@@ -218,6 +237,16 @@ const fetchFilters = (dispatch, getState) => {
 							dlfrom,
 							stationCountryCodes
 						});
+
+						if (specLevelLookup === undefined){
+							dispatch({
+								type: actionTypes.SET_SPEC_LEVEL_LOOKUP,
+								specLevelLookup: dataLevels.reduce((acc, dl) => {
+									acc[dl.id] = dl.specs;
+									return acc;
+								}, {})
+							})
+						}
 					}
 				);
 			},
@@ -229,7 +258,7 @@ const fetchFilters = (dispatch, getState) => {
 };
 
 export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, getState) => {
-	const { stationCountryCodeLookup, downloadStats, backendSource } = getState();
+	const { stationCountryCodeLookup, specLevelLookup, downloadStats, backendSource } = getState();
 
 	if (backendSource.source === 'restheart') {
 		const useFullColl = useFullCollection(downloadStats.filters);
@@ -253,7 +282,7 @@ export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, get
 		
 	} else {
 		const endpoint = 'downloadsPer' + dateUnit.slice(0, 1).toUpperCase() + dateUnit.slice(1);
-		const searchParams = getSearchParams(downloadStats.getSearchParamFilters());
+		const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
 		const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
 
 		callApi(endpoint, searchParams, parser)
