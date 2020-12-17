@@ -108,11 +108,10 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 
 				val contribs: Seq[Agent] = (
 					dobj.references.authors.toSeq.flatten ++
-					dobj.specificInfo.fold(
-						l3 => l3.productionInfo.contributors :+ l3.productionInfo.creator,
-						_.productionInfo.toSeq.flatMap(prodInfo => prodInfo.contributors :+ prodInfo.creator)
+					dobj.production.toSeq.flatMap(prodInfo =>
+						prodInfo.contributors :+ prodInfo.creator
 					)
-				)
+				).distinct
 
 				dobjsSt.setString(hash_id, dobj.hash.id)
 				dobjsSt.setString(spec, dobj.specification.self.uri.toString)
