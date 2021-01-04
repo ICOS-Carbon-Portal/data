@@ -26,13 +26,19 @@ export default class Graph extends Component{
 	}
 
 	onDownloadClick(){
-		const {statsGraph, downloadStats, filters} = this.props;
+		const { statsGraph, downloadStats, filters } = this.props;
 		const filtersUserFriendly = Object.keys(downloadStats.filters).reduce((acc, key) => {
+			if (key === "hashId") {
+				return [{
+					filterName: "Single data object",
+					labels: [config.cpmetaObjectUri + downloadStats.getFilter("hashId")]
+				}];
+			}
+
 			const filterIds = downloadStats.getFilter(key);
 
 			if (filterIds.length) {
 				const filterName = placeholders[key];
-
 				const filterValues = filters.find(filter => filter.name === key).values;
 				const labels = filterIds.map(id => filterValues.find(val => val.id === id).label);
 				acc.push({filterName, labels});

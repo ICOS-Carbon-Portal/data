@@ -22,6 +22,8 @@ export const ViewSwitcher = props => {
 };
 
 const DownloadsView = props => {
+	const hasHashIdFilter = props.downloadStats.getFilter("hashId").length > 0;
+
 	return (
 		<div className="row">
 			<div className="col-md-4">
@@ -55,6 +57,8 @@ const DownloadsView = props => {
 					dataList={props.downloadStats.stats}
 					paging={props.paging}
 					requestPage={props.requestPage}
+					updateTableWithFilter={props.updateTableWithFilter}
+					hasHashIdFilter={hasHashIdFilter}
 				/>
 			</div>
 		</div>

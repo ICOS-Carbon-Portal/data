@@ -35,6 +35,7 @@ object StatsRouting extends DefaultJsonProtocol{
 		contributors: Option[Seq[String]],
 		dlfrom: Option[Seq[String]],
 		originStations: Option[Seq[String]],
+		hashId: Option[String],
 	)
 	case class DownloadsByCountry(count: Int, countryCode: String)
 	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
@@ -84,10 +85,11 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 			"contributors".as[List[String]].?,
 			"dlfrom".as[List[String]].?,
 			"originStations".as[List[String]].?,
-		){(page, pagesize, specs, stations, submitters, contributors, dlfrom, originStations) =>
+			"hashId".as[String].?,
+		){(page, pagesize, specs, stations, submitters, contributors, dlfrom, originStations, hashId) =>
 			//The constants in the next line can be moved to a config, if needed
 			val pageSize = Math.min(100000, pagesize.getOrElse(100))
-			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors, dlfrom, originStations)
+			val qp = StatsQueryParams(page.getOrElse(1), pageSize, specs, stations, submitters, contributors, dlfrom, originStations, hashId)
 			onSuccess(fetcher(qp)){res =>
 				complete(res)
 			}

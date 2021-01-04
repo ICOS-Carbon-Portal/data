@@ -234,7 +234,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val functionParams = "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?)"
+			val functionParams = "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?, _hash_id:=?)"
 			val fullQueryString = if(params.isEmpty) queryStr else queryStr + functionParams
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
@@ -244,15 +244,21 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				case None => preparedSt.setNull(idx, Types.ARRAY)
 			}
 
+			def initString(idx: Int, str: Option[String]): Unit = str match {
+				case Some(value) => preparedSt.setString(idx, value)
+				case None => preparedSt.setNull(idx, Types.VARCHAR)
+			}
+
 			params.foreach{qp =>
-				preparedSt.setInt(1, qp.page)
-				preparedSt.setInt(2, qp.pagesize)
-				initArray(        3, qp.specs)
-				initArray(        4, qp.stations)
-				initArray(        5, qp.submitters)
-				initArray(        6, qp.contributors)
-				initArray(        7, qp.dlfrom)
-				initArray(        8, qp.originStations)
+				preparedSt.setInt(	1, qp.page)
+				preparedSt.setInt(	2, qp.pagesize)
+				initArray(        	3, qp.specs)
+				initArray(        	4, qp.stations)
+				initArray(        	5, qp.submitters)
+				initArray(        	6, qp.contributors)
+				initArray(        	7, qp.dlfrom)
+				initArray(        	8, qp.originStations)
+				initString(        	9, qp.hashId)
 			}
 
 			consumeResultSet(preparedSt.executeQuery())(parser)

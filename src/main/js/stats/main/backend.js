@@ -54,7 +54,7 @@ export const getAvars = (filters, stationCountryCodeLookup = []) => {
 };
 
 export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations } = downloadStatsFilters;
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId } = downloadStatsFilters;
 
 	const specSpecs = specification && specification.length ? specification : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
@@ -67,15 +67,20 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 		submitters: submitters && submitters.length ? submitters : undefined,
 		contributors: contributors && contributors.length ? contributors : undefined,
 		dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
-		originStations: originStations && originStations.length ? originStations : undefined
+		originStations: originStations && originStations.length ? originStations : undefined,
+		hashId: hashId && hashId.length ? hashId[0] : undefined,
 	};
-
+	
 	const searchParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
 		if (searchParams[key]) acc.push({ name: key, values: searchParams[key] });
 		return acc;
 	}, []);
 
-	return searchParamsReduced.map(fp => `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`).join('&');
+	return searchParamsReduced.map(fp => {
+		return fp.name === "hashId"
+			? `${fp.name}=${fp.values}`
+			: `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`;
+	}).join('&');
 };
 
 const stationFilters = (filters, stationCountryCodeLookup) => {

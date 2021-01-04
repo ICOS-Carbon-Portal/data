@@ -179,7 +179,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_submitters_mv ON public.submitters_mv (sub
 --	Stored Procedures
 
 ---------------------
---DROP FUNCTION IF EXISTS downloadsByCountry;
+DROP FUNCTION IF EXISTS downloadsByCountry;
 CREATE OR REPLACE FUNCTION public.downloadsByCountry(
 		_page int,
 		_pagesize int,
@@ -188,36 +188,82 @@ CREATE OR REPLACE FUNCTION public.downloadsByCountry(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
 		country_code text
+	)
+	LANGUAGE plpgsql
+	STABLE
+AS $$
+#variable_conflict use_column
+
+BEGIN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT
+				COUNT(*)::int AS count,
+				country_code
+			FROM downloads
+			WHERE hash_id = _hash_id AND country_code IS NOT NULL
+			GROUP BY country_code
+			ORDER BY count DESC;
+	ELSE
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				country_code
+			FROM downloads_country_mv
+			WHERE (
+				country_code IS NOT NULL
+				AND (_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+				AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
+			)
+			GROUP BY country_code
+			ORDER BY count DESC;
+	END IF;
+END
+
+$$;
+
+---------------------
+DROP FUNCTION IF EXISTS downloads_timebins;
+CREATE OR REPLACE FUNCTION public.downloads_timebins(
+		_hash_id text
+	)
+	RETURNS TABLE(
+		id int8,
+		count int,
+		country_code text,
+		year_start date,
+		month_start date,
+		week_start date
 	)
 	LANGUAGE sql
 	STABLE
 AS $$
 
 SELECT
-	SUM(count)::int AS count,
-	country_code
-FROM downloads_country_mv
-WHERE (
-	country_code IS NOT NULL
-	AND (_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
-)
-GROUP BY country_code
-ORDER BY count DESC;
+	MIN(id) AS id,
+	COUNT(*)::int AS count,
+	country_code,
+	date_trunc('year', ts)::date AS year_start,
+	date_trunc('month', ts)::date AS month_start,
+	date_trunc('week', ts)::date AS week_start
+FROM downloads
+WHERE hash_id = _hash_id
+GROUP BY country_code, year_start, month_start, week_start;
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadsPerWeek;
+DROP FUNCTION IF EXISTS downloadsPerWeek;
 CREATE OR REPLACE FUNCTION public.downloadsPerWeek(
 		_page int,
 		_pagesize int,
@@ -226,37 +272,53 @@ CREATE OR REPLACE FUNCTION public.downloadsPerWeek(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
 		day date,
 		week double precision
 	)
-	LANGUAGE sql
+	LANGUAGE plpgsql
 	STABLE
 AS $$
+#variable_conflict use_column
 
-SELECT
-	SUM(count)::int AS count,
-	week_start AS day,
-	EXTRACT('week' from week_start) AS week
-FROM downloads_timebins_mv
-WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
-)
-GROUP BY week_start
-ORDER BY week_start;
+BEGIN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				week_start AS day,
+				EXTRACT('week' from week_start) AS week
+			FROM downloads_timebins(_hash_id)
+			GROUP BY week_start
+			ORDER BY week_start;
+	ELSE
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				week_start AS day,
+				EXTRACT('week' from week_start) AS week
+			FROM downloads_timebins_mv
+			WHERE (
+				(_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+				AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
+			)
+			GROUP BY week_start
+			ORDER BY week_start;
+	END IF;
+END
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadsPerMonth;
+DROP FUNCTION IF EXISTS downloadsPerMonth;
 CREATE OR REPLACE FUNCTION public.downloadsPerMonth(
 		_page int,
 		_pagesize int,
@@ -265,35 +327,50 @@ CREATE OR REPLACE FUNCTION public.downloadsPerMonth(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
 		day date
 	)
-	LANGUAGE sql
+	LANGUAGE plpgsql
 	STABLE
 AS $$
+#variable_conflict use_column
 
-SELECT
-	SUM(count)::int AS count,
-	month_start AS day
-FROM downloads_timebins_mv
-WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
-)
-GROUP BY month_start
-ORDER BY month_start;
+BEGIN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				month_start AS day
+			FROM downloads_timebins(_hash_id)
+			GROUP BY month_start
+			ORDER BY month_start;
+	ELSE
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				month_start AS day
+			FROM downloads_timebins_mv
+			WHERE (
+				(_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+				AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
+			)
+			GROUP BY month_start
+			ORDER BY month_start;
+	END IF;
+END
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS public.downloadsPerYear;
+DROP FUNCTION IF EXISTS public.downloadsPerYear;
 CREATE OR REPLACE FUNCTION public.downloadsPerYear(
 		_page int,
 		_pagesize int,
@@ -302,35 +379,50 @@ CREATE OR REPLACE FUNCTION public.downloadsPerYear(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
 		day date
 	)
-	LANGUAGE sql
+	LANGUAGE plpgsql
 	STABLE
 AS $$
+#variable_conflict use_column
 
-SELECT
-	SUM(count)::int AS count,
-	year_start AS day
-FROM downloads_timebins_mv
-WHERE (
-	(_specs IS NULL OR spec = ANY (_specs))
-	AND (_stations IS NULL OR station = ANY (_stations))
-	AND (_submitters IS NULL OR submitter = ANY (_submitters))
-	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
-	AND (_contributors IS NULL OR contributors ?| _contributors)
-	AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
-)
-GROUP BY year_start
-ORDER BY year_start;
+BEGIN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				year_start AS day
+			FROM downloads_timebins(_hash_id)
+			GROUP BY year_start
+			ORDER BY year_start;
+	ELSE
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				year_start AS day
+			FROM downloads_timebins_mv
+			WHERE (
+				(_specs IS NULL OR spec = ANY (_specs))
+				AND (_stations IS NULL OR station = ANY (_stations))
+				AND (_submitters IS NULL OR submitter = ANY (_submitters))
+				AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+				AND (_contributors IS NULL OR contributors ?| _contributors)
+				AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
+			)
+			GROUP BY year_start
+			ORDER BY year_start;
+	END IF;
+END
 
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadStatsSize;
+DROP FUNCTION IF EXISTS downloadStatsSize;
 CREATE OR REPLACE FUNCTION public.downloadStatsSize(
 		_page int,
 		_pagesize int,
@@ -339,7 +431,8 @@ CREATE OR REPLACE FUNCTION public.downloadStatsSize(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		size int
@@ -349,10 +442,17 @@ CREATE OR REPLACE FUNCTION public.downloadStatsSize(
 AS $$
 
 BEGIN
-	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT count
+			FROM dlstats_full_mv
+			WHERE hash_id = _hash_id;
+
+	ELSIF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
 		RETURN QUERY
 			SELECT COUNT(*)::int AS size
 			FROM dlstats_full_mv;
+
 	ELSE
 		RETURN QUERY
 			SELECT COUNT(*)::int AS size
@@ -376,7 +476,7 @@ END
 $$;
 
 ---------------------
--- DROP FUNCTION IF EXISTS downloadStats;
+DROP FUNCTION IF EXISTS downloadStats;
 CREATE OR REPLACE FUNCTION public.downloadStats(
 		_page int,
 		_pagesize int,
@@ -385,7 +485,8 @@ CREATE OR REPLACE FUNCTION public.downloadStats(
 		_submitters text[] DEFAULT NULL,
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
-		_origin_stations text [] DEFAULT NULL
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
 	)
 	RETURNS TABLE(
 		count int,
@@ -396,8 +497,20 @@ CREATE OR REPLACE FUNCTION public.downloadStats(
 AS $$
 -- Solve confusion with returned column 'count'
 #variable_conflict use_column
+
 BEGIN
-	IF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
+	IF _hash_id IS NOT NULL THEN
+		RETURN QUERY
+			SELECT
+				SUM(count)::int AS count,
+				hash_id
+			FROM dlstats_mv
+			WHERE hash_id = _hash_id
+			GROUP BY hash_id
+			LIMIT _pagesize
+			OFFSET _page * _pagesize - _pagesize;
+
+	ELSIF _specs IS NULL AND _stations IS NULL AND _submitters IS NULL AND _downloaded_from IS NULL AND _contributors IS NULL AND _origin_stations IS NULL THEN
 		RETURN QUERY
 			SELECT
 				count,
