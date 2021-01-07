@@ -51,6 +51,9 @@
     "gulp": "^4.0.1",
     "gulp-uglify": "^3.0.0",
     "vinyl-buffer": "^1.0.1",
+    "gulp-sass": "4.1.0",
+    "gulp-sass-variables": "1.2.0",
+    "gulp-clean-css": "3.9.3",
     "browserify-css": "^0.15.0"
   },
   "dependencies": {
@@ -64,7 +67,7 @@
     "react": "^15.3.2",
     "react-dom": "^15.3.2",
     "react-redux": "^5.0.6",
-    "react-widgets": "^3.4.6",
+    "react-widgets": "^4.6.1",
     "redux": "^3.6.0",
     "redux-thunk": "^2.1.0",
     "topojson": "^3.0.2"

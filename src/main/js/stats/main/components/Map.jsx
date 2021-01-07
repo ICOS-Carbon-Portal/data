@@ -7,6 +7,7 @@ import {debounce} from 'icos-cp-utils';
 
 
 const decimals = 0;
+const dlFromFilterName = "dlfrom";
 
 export default class Map extends Component {
 	constructor(props){
@@ -70,9 +71,11 @@ export default class Map extends Component {
 					fillOpacity: 0.5
 				};
 			}
-		}).bindTooltip(e =>
-			`<b>${e.feature.properties.name}<br><b>Downloads: </b>${statsMap.getCount(e.feature.properties.iso2)}`
-			, {sticky: true});
+		})
+			.bindTooltip(e =>
+				`<b>${e.feature.properties.name}<br><b>Downloads: </b>${statsMap.getCount(e.feature.properties.iso2)}`
+				, { sticky: true })
+			.on('click', this.applyDlFromFilter.bind(this));
 
 		map.addLayer(this._countriesTopoLayer);
 
@@ -87,6 +90,14 @@ export default class Map extends Component {
 		const updateLegend = this.updateLegend.bind(this);
 		this.clearEvents();
 		this.addEvent('resize', resizeCB(min, max, updateLegend));
+	}
+
+	applyDlFromFilter(ev) {
+		const existingDlFilter = this.props.downloadStats.getFilter(dlFromFilterName);
+
+		if (existingDlFilter.length === 0) {
+			this.props.updateTableWithFilter(dlFromFilterName, [ev.propagatedFrom.feature.properties.iso2]);
+		}
 	}
 
 	componentWillUnmount() {

@@ -1,5 +1,5 @@
 import React from 'react';
-import Filter from './Filter.jsx';
+import Filters from './Filters.jsx';
 import DobjTable from './DobjTable.jsx';
 import Map from './Map.jsx';
 import Graph from './Graph.jsx';
@@ -27,18 +27,20 @@ const DownloadsView = props => {
 	return (
 		<div className="row">
 			<div className="col-md-4">
-				<Filter
+				<Filters
 					filters={props.filters}
 					updateTableWithFilter={props.updateTableWithFilter}
 					resetFilters={props.resetFilters}
 					downloadStats={props.downloadStats}
 				/>
 
-				<h4>Downloads per country</h4>
+				<h4>Downloads from country</h4>
 				<Map
 					countryStats={props.countryStats}
 					countriesTopo={props.countriesTopo}
 					statsMap={props.statsMap}
+					updateTableWithFilter={props.updateTableWithFilter}
+					downloadStats={props.downloadStats}
 				/>
 
 				<h4 style={{marginTop:15}}>Downloads per time period</h4>
