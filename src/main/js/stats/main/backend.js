@@ -14,43 +14,8 @@ const restheartDbUrl = config.envri === "ICOS"
 	? `${restheartBaseUrl}db/`
 	: `${restheartBaseUrl}sitesdb/`;
 
-const wildcardText = "/^\\w/, null";
-const wildcardLevel = "0,1,2,3";
-
-export const getDownloadCounts = (useFullCollection, avars, page = 1) => {
-	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
-	const aggregate = useFullCollection ? 'getDownloadStatsFull' : 'getDownloadStats';
-
-	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregate}?${parameters}`);
-};
-
-export const getDownloadsByCountry = (useFullCollection, avars, page = 1) => {
-	const parameters = `page=${page}&pagesize=${pagesize}&avars=${avars}`;
-	const aggregate = useFullCollection ? 'downloadsByCountryFull' : 'downloadsByCountry';
-
-	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregate}?${parameters}`);
-};
-
 export const getCountryCodesLookup = () => {
 	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
-};
-
-export const getAvars = (filters, stationCountryCodeLookup = []) => {
-	const dataLevel = filters.dataLevel && filters.dataLevel.length ? filters.dataLevel : wildcardLevel;
-	const format = filters.format && filters.format.length ? filters.format.map(format => `"${format}"`) : wildcardText;
-	const specification = filters.specification && filters.specification.length ? filters.specification.map(spec => `"${spec}"`) : wildcardText;
-	const stationsName = stationFilters(filters, stationCountryCodeLookup);
-	const contributors = filters.contributors && filters.contributors.length ? filters.contributors.map(contributor => `"${contributor}"`) : wildcardText;
-	const themes = filters.themes && filters.themes.length ? filters.themes.map(theme => `"${theme}"`) : wildcardText;
-
-	return `{
-		"specification":[${specification}],
-		"format":[${format}],
-		"dataLevel":[${dataLevel}],
-		"stations":[${stationsName}],
-		"contributors":[${contributors}],
-		"themes":[${themes}]
-	}`;
 };
 
 export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
@@ -73,92 +38,10 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 		};
 };
 
-const stationFilters = (filters, stationCountryCodeLookup) => {
-	let stations = filters.stations && filters.stations.length ? filters.stations.map(station => `"${station}"`) : [];
-	let ccStations = filters.countryCodes && filters.countryCodes.length ? stationCountryCodeLookup.filter(cc => filters.countryCodes.includes(cc.code)) : [];
-	let stationsName = stations.concat(ccStations.map(cc => `"${cc.name}"`));
-
-	return stationsName.length ? stationsName : wildcardText;
-};
-
 export const getCountriesGeoJson = () => {
 	return getJson('https://static.icos-cp.eu/js/topojson/countries-topo-iso2.json')
 		.then(topo => feature(topo, topo.objects.countries));
 };
-
-export const getDownloadsPerDateUnit = (useFullCollection, dateUnit, avars) => {
-	let aggregation = `downloadsPer${dateUnit.charAt(0).toUpperCase()}${dateUnit.slice(1)}`;
-	if (useFullCollection) aggregation += 'Full';
-
-	return getJson(`${restheartDbUrl}dobjdls/_aggrs/${aggregation}?pagesize=1000&np&avars=${avars}`);
-};
-
-// Sorting is lost in the bulk insert to new collection. Specify sort order here with key "sort_by".
-export function getDataLevels() {
-	return getJson(`${restheartDbUrl}cacheForGetDataLevels?sort_by=label&pagesize=1000&page=1`);
-}
-
-export function getFormats() {
-	return getJson(`${restheartDbUrl}cacheForGetFormats?sort_by=label&pagesize=1000&page=1`);
-}
-
-export function getSpecifications() {
-	return getJson(`${restheartDbUrl}cacheForGetSpecifications?sort_by=count&pagesize=1000&page=1`);
-}
-
-export function getStations() {
-	return getJson(`${restheartDbUrl}cacheForGetStations?sort_by=label&pagesize=1000&page=1`);
-}
-
-export function getContributors() {
-	return getJson(`${restheartDbUrl}cacheForGetContributors?sort_by=label&pagesize=1000&page=1`);
-}
-
-export function getThemes() {
-	return getJson(`${restheartDbUrl}cacheForGetThemes?sort_by=label&pagesize=1000&page=1`);
-}
-
-export function getStationsCountryCode() {
-	return sparql({text: stationsCountryCode()}, config.sparqlEndpoint, true)
-		.then(
-			sparqlResult => {
-				// Create an array of country codes [SV,EN,...]
-				const bindings = sparqlResult.results.bindings.map(b => b.countryCode.value);
-
-				// Remove duplicates
-				let uniqueCountryCodes = [...new Set(bindings)];
-
-				// Expand elements to objects with _id and label fields
-				let countryCodeFilter = uniqueCountryCodes.map(code => ({id: code, label: code}));
-
-				// Create an array to map country codes with their names and uri
-				const stationCountryCodeLookup = sparqlResult.results.bindings.map(b => ({
-					name: b.name.value,
-					code: b.countryCode.value
-				}));
-
-				return uniqueCountryCodes
-					? Promise.resolve({stationCountryCodeLookup, countryCodeFilter})
-					: Promise.reject(new Error("Could not get stations from meta"));
-			}
-		)
-}
-
-export function fetchSpecTable(queryFactory) {
-	const query = queryFactory();
-
-	return sparql({text: query}, config.sparqlEndpoint, true);
-}
-
-function stationsCountryCode() {
-	return `prefix cpmeta: <${config.cpmetaOntoUri}>
-select ?name ?countryCode where{
-  ?station cpmeta:hasName ?name .
-  ?station cpmeta:countryCode ?countryCode .
-}
-order by ?label`;
-}
-
 
 // Previews
 const getFileNamesFromSparql = resultList => {
@@ -281,9 +164,8 @@ const formatPopularTimeserieVars = popularTimeserieVars => {
 	return conformData(popularTimeserieVars, formattedData);
 };
 
-export const getDownloadStatsApi = (page, searchParams) => {
-	// return postToApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`)
-	return postToApi('downloadStats', { ...{ page, pagesize: localConfig.pagesize }, ...searchParams })
+export const getDownloadStatsApi = (pageOpt, searchParams) => {
+	return postToApi('downloadStats', { ...{ pageOpt, pagesizeOpt: localConfig.pagesize }, ...searchParams })
 		.then(downloadStats => {
 			if (downloadStats.size === 0) {
 				return Promise.resolve(downloadStats);
@@ -376,21 +258,6 @@ export const getSubmittersApi = () => {
 
 export const postToApi = (endpoint, searchParams, parser) => {
 	const url = `api/${endpoint}`;
-		
-	if (searchParams) {
-		//TODO Get rid of the explicit renaming when RestHeart use for downloads is retired
-		searchParams = Object.keys(searchParams).reduce((acc, key) => {
-			if (key === "page") {
-				acc.pageOpt = searchParams.page;
-			} else if (key === "pagesize") {
-				acc.pagesizeOpt = searchParams.pagesize;
-			} else {
-				acc[key] = searchParams[key];
-			}
-
-			return acc;
-		}, {});
-	}
 
 	return fetch(url, {
 		method: 'POST',

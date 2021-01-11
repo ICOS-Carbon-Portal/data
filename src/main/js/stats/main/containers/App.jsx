@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { AnimatedToasters } from 'icos-cp-toaster';
-import { statsUpdate, requestPage, fetchDownloadStatsPerDateUnit, setViewMode, setBackendSource, resetFilters } from '../actions';
+import { statsUpdate, requestPage, fetchDownloadStatsPerDateUnit, setViewMode, resetFilters } from '../actions';
 import Radio from "../components/Radio.jsx";
 import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
 import config from '../config';
@@ -16,14 +16,6 @@ export class App extends Component {
 				txt: mode.charAt(0).toUpperCase() + mode.slice(1),
 				isActive: props.view.mode === mode,
 				actionTxt: mode
-			}
-		});
-
-		this.backendSources = props.backendSource.sources.map(source => {
-			return {
-				txt: source.charAt(0).toUpperCase() + source.slice(1),
-				isActive: props.backendSource.source === source,
-				actionTxt: source
 			}
 		});
 	}
@@ -48,15 +40,6 @@ export class App extends Component {
 							radios={this.viewModes}
 							action={props.setViewMode}
 						/>
-
-						{props.backendSource.isVisible &&
-							<Radio
-								horizontal={true}
-								containerStyle={{ display: 'inline', float: 'right', marginRight: 50 }}
-								radios={this.backendSources}
-								action={props.setBackendSource}
-							/>
-						}
 					</h1>
 				</div>
 
@@ -88,7 +71,6 @@ function dispatchToProps(dispatch) {
 		requestPage: page => dispatch(requestPage(page)),
 		fetchDownloadStatsPerDateUnit: dateUnit => dispatch(fetchDownloadStatsPerDateUnit(dateUnit)),
 		setViewMode: mode => dispatch(setViewMode(mode)),
-		setBackendSource: source => dispatch(setBackendSource(source)),
 		resetFilters: () => dispatch(resetFilters()),
 	};
 }

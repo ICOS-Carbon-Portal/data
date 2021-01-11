@@ -2,7 +2,6 @@ import { actionTypes } from './actions';
 import * as Toaster from 'icos-cp-toaster';
 import StatsTable from './models/StatsTable';
 import StatsGraph from './models/StatsGraph';
-import BackendSource from "./models/BackendSource";
 import ViewMode from "./models/ViewMode";
 import StatsMap from "./models/StatsMap";
 import {RadioConfig} from "./models/RadioConfig";
@@ -10,7 +9,6 @@ import localConfig from './config';
 
 
 export const initState = {
-	backendSource: new BackendSource(),
 	view: new ViewMode(),
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
@@ -67,9 +65,8 @@ export default function(state = initState, action){
 			});
 
 		case actionTypes.FILTERS:
-			const dlFromValues = state.backendSource.source === 'restheart'
-				? action.countryCodes
-				: (action.dlfrom || [])
+			const dlFromValues =
+				(action.dlfrom || [])
 					.map(dl => ({id: dl.countryCode, count: dl.count, label: action.countryCodeLookup[dl.countryCode]}))
 					.sort(labelSorter);
 			const { stationCountryCodes, countryCodeLookup, stations} = action;
@@ -179,11 +176,6 @@ export default function(state = initState, action){
 
 		case actionTypes.RADIO_UPDATED:
 			return update(updateRadiosAndPreviewData(state, action));
-		
-		case actionTypes.SET_BACKEND_SOURCE:
-			const newBackendSource = new BackendSource(action.source);
-
-			return { ...initState, ...{ backendSource: newBackendSource } };
 		
 		default:
 			return state;
