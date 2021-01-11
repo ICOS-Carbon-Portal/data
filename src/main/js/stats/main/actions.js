@@ -1,6 +1,6 @@
 import { getDownloadCounts, getDownloadsByCountry, getAvars, getSpecifications, getFormats, getDataLevels, getStations,
 	getContributors, getCountriesGeoJson, getThemes, getStationsCountryCode, getDownloadsPerDateUnit,
-	getPreviewAggregation, getPopularTimeserieVars, callApi, getSearchParams, getDownloadStatsApi, getStationsApi,
+	getPreviewAggregation, getPopularTimeserieVars, postToApi, getSearchParams, getDownloadStatsApi, getStationsApi,
 	getSpecsApi, getContributorsApi, getSubmittersApi, getCountryCodesLookup} from './backend';
 import {getStationCountryCodes} from './sparql';
 import {getConfig} from "./models/RadioConfig";
@@ -166,7 +166,7 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 	} else {
 		const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
 
-		Promise.all([getDownloadStatsApi(page, searchParams), callApi('downloadsByCountry', searchParams)])
+		Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
 			.then(([dlStats, countryStats]) => {
 				dispatch({
 					type: actionTypes.DOWNLOAD_STATS_FETCHED,
@@ -208,7 +208,7 @@ const fetchFilters = (dispatch, getState) => {
 	} else {
 		getCountryCodesLookup().then(
 			countryCodeLookup => {
-				Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi(), getSubmittersApi(), callApi('dlfrom'), getStationCountryCodes()]).then(
+				Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi(), getSubmittersApi(), postToApi('dlfrom'), getStationCountryCodes()]).then(
 					([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
 						const dataLevels = specifications.reduce((acc, curr) => {
 							const lvl = acc.find(l => l.id === curr.level);
@@ -285,7 +285,7 @@ export const fetchDownloadStatsPerDateUnit = (dateUnit, avars) => (dispatch, get
 		const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
 		const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
 
-		callApi(endpoint, searchParams, parser)
+		postToApi(endpoint, searchParams, parser)
 			.then(downloadsPerDateUnit => {
 				dispatch({
 					type: actionTypes.DOWNLOAD_STATS_PER_DATE_FETCHED,

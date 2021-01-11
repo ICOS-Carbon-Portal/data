@@ -1,4 +1,4 @@
-import {getJson, sparql} from 'icos-cp-backend';
+import { getJson, sparql, checkStatus } from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
 import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
@@ -61,26 +61,16 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 	const combinedSpecs = specSpecs.concat(dataLevelSpecs);
 	const specs = combinedSpecs.length ? combinedSpecs : undefined;
 
-	const searchParams = {
-		specs,
-		stations: stations && stations.length ? stations : undefined,
-		submitters: submitters && submitters.length ? submitters : undefined,
-		contributors: contributors && contributors.length ? contributors : undefined,
-		dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
-		originStations: originStations && originStations.length ? originStations : undefined,
-		hashId: hashId && hashId.length ? hashId[0] : undefined,
-	};
-	
-	const searchParamsReduced = Object.keys(searchParams).reduce((acc, key) => {
-		if (searchParams[key]) acc.push({ name: key, values: searchParams[key] });
-		return acc;
-	}, []);
-
-	return searchParamsReduced.map(fp => {
-		return fp.name === "hashId"
-			? `${fp.name}=${fp.values}`
-			: `${fp.name}=${encodeURIComponent(JSON.stringify(fp.values))}`;
-	}).join('&');
+	return hashId && hashId.length
+		? { hashId: hashId[0] }
+		: {
+			specs,
+			stations: stations && stations.length ? stations : undefined,
+			submitters: submitters && submitters.length ? submitters : undefined,
+			contributors: contributors && contributors.length ? contributors : undefined,
+			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
+			originStations: originStations && originStations.length ? originStations : undefined
+		};
 };
 
 const stationFilters = (filters, stationCountryCodeLookup) => {
@@ -292,7 +282,8 @@ const formatPopularTimeserieVars = popularTimeserieVars => {
 };
 
 export const getDownloadStatsApi = (page, searchParams) => {
-	return callApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`)
+	// return postToApi('downloadStats', `page=${page}&pagesize=${localConfig.pagesize}&${searchParams}`)
+	return postToApi('downloadStats', { ...{ page, pagesize: localConfig.pagesize }, ...searchParams })
 		.then(downloadStats => {
 			if (downloadStats.size === 0) {
 				return Promise.resolve(downloadStats);
@@ -307,7 +298,7 @@ export const getDownloadStatsApi = (page, searchParams) => {
 };
 
 export const getSpecsApi = () => {
-	return callApi('specifications')
+	return postToApi('specifications')
 		.then(specifications => {
 			if (specifications.length === 0) {
 				return Promise.resolve(specifications);
@@ -327,7 +318,7 @@ export const getSpecsApi = () => {
 };
 
 export const getStationsApi = () => {
-	return callApi('stations')
+	return postToApi('stations')
 		.then(stations => {
 			if (stations.length === 0) {
 				return Promise.resolve(stations);
@@ -346,7 +337,7 @@ export const getStationsApi = () => {
 };
 
 export const getContributorsApi = () => {
-	return callApi('contributors')
+	return postToApi('contributors')
 		.then(contributors => {
 			if (contributors.length === 0) {
 				return Promise.resolve(contributors);
@@ -365,7 +356,7 @@ export const getContributorsApi = () => {
 };
 
 export const getSubmittersApi = () => {
-	return callApi('submitters')
+	return postToApi('submitters')
 		.then(submitters => {
 			if (submitters.length === 0) {
 				return Promise.resolve(submitters);
@@ -383,20 +374,32 @@ export const getSubmittersApi = () => {
 		});
 };
 
-export const callApi = (endpoint, searchParams, parser) => {
-	const url = searchParams ? `api/${endpoint}?${searchParams}` : `api/${endpoint}`;
+export const postToApi = (endpoint, searchParams, parser) => {
+	const url = `api/${endpoint}`;
+		
+	if (searchParams) {
+		//TODO Get rid of the explicit renaming when RestHeart use for downloads is retired
+		searchParams = Object.keys(searchParams).reduce((acc, key) => {
+			if (key === "page") {
+				acc.pageOpt = searchParams.page;
+			} else if (key === "pagesize") {
+				acc.pagesizeOpt = searchParams.pagesize;
+			} else {
+				acc[key] = searchParams[key];
+			}
 
-	return getJson(url)
-		.then(data => parser ? data.map(parser): data);
-};
+			return acc;
+		}, {});
+	}
 
-export const postToApi = (searchParams, endpoint) => {
-	return fetch(endpoint, {
+	return fetch(url, {
 		method: 'POST',
-		mode: 'cors',
 		headers: new Headers({
 			'Content-Type': 'application/json'
 		}),
 		body: JSON.stringify(searchParams)
-	});
+	})
+		.then(checkStatus)
+		.then(response => response.json())
+		.then(data => parser ? data.map(parser) : data);
 };
