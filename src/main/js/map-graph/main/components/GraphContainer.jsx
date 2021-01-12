@@ -114,7 +114,7 @@ export default class GraphContainer extends Component{
 
 				<div className="row">
 					<div className="col-md-12" onMouseOut={graphMouseOut}>
-						<div ref={div => this.graphElement = div} style={{width:'100%', height:'calc(55vh - 60px)'}} />
+						<div ref={div => this.graphElement = div} style={{width:'100%'}} />
 						<div ref={div => this.errorElement = div} style={errorStyle} />
 					</div>
 				</div>

@@ -112,13 +112,12 @@ class Preview extends Component<OurProps, OurState> {
 									</div>
 									}
 								</div>
+
+								<PreviewRoute
+									iframeSrcChange={this.handleIframeSrcChange.bind(this)}
+									{...this.props}
+								/>
 							</div>
-
-							<PreviewRoute
-								iframeSrcChange={this.handleIframeSrcChange.bind(this)}
-								{...this.props}
-							/>
-
 						</div>
 					</div>
 					: null
