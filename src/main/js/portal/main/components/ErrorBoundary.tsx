@@ -1,8 +1,15 @@
 import React, { Component } from 'react';
 
+type Props = {
+	failWithError: (err: Error) => void
+}
 
-export default class ErrorBoundary extends Component{
-	constructor(props){
+type State = {
+	hasError: boolean
+}
+
+export default class ErrorBoundary extends Component<Props, State>{
+	constructor(props: Props){
 		super(props);
 
 		this.state = {
@@ -10,7 +17,7 @@ export default class ErrorBoundary extends Component{
 		};
 	}
 
-	componentDidCatch(error, info) {
+	componentDidCatch(error: Error) {
 		this.setState({hasError: true});
 		if (this.props.failWithError) this.props.failWithError(error);
 	}

@@ -84,7 +84,7 @@ class SearchResultRegular extends Component<OurProps> {
 								style={{float: 'right', marginBottom: 10}}
 								checkedObjects={checkedObjectsInSearch}
 								clickAction={handleAddToCart}
-								enabled={checkedObjectsInSearch.length}
+								enabled={checkedObjectsInSearch.length > 0}
 								type='add'
 							/>
 

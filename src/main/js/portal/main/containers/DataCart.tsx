@@ -12,7 +12,7 @@ import {removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type DataCartProps = StateProps & DispatchProps;
+export type DataCartProps = StateProps & DispatchProps;
 
 
 class DataCart extends Component<DataCartProps> {
@@ -37,14 +37,14 @@ class DataCart extends Component<DataCartProps> {
 		if (this.props.checkedObjectsInCart.length > 0) {
 			this.props.updateCheckedObjectsInCart([]);
 		} else {
-			const checkedObjects = this.props.cart.items.map(item => item.id);
+			const checkedObjects = this.props.cart.items.map(item => item.dobj);
 			this.props.updateCheckedObjectsInCart(checkedObjects);
 		}
 	}
 
 	render(){
 		const props = this.props;
-		const previewitemId = props.preview.item ? props.preview.item.id : undefined;
+		const previewitemId = props.preview.item ? props.preview.item.dobj : undefined;
 		const downloadTitle = props.user.email && (props.user.profile as Profile).icosLicenceOk
 			? 'Download cart content'
 			: 'Accept license and download cart content';

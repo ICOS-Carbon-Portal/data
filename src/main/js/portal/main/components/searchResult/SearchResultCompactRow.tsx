@@ -1,8 +1,7 @@
 import React, { Component, MouseEvent } from 'react';
-import {copyprops} from 'icos-cp-utils';
 import CartIcon from '../buttons/CartIcon.jsx';
 import PreviewIcon from '../buttons/PreviewIcon.jsx';
-import {formatBytes, formatDateWithOptionalTime} from '../../utils';
+import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
 import {getMetadataHash} from "./SearchResultRegularRow";
 import { ObjectsTable } from "../../models/State";
 import config, { timezone } from '../../config';
@@ -40,7 +39,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 		const previewItem = preview.item;
 		const previewType = props.lookup?.forDataObjSpec(objInfo.spec)?.type;
 		const isL3Previewable = props.lookup?.hasVarInfo(objInfo.dobj) ?? false;
-		const className = previewItem && previewItem.id === objInfo.dobj
+		const className = previewItem && previewItem.dobj === objInfo.dobj
 			? "list-group-item-info"
 			: "";
 		const size = parseInt(objInfo.size);
@@ -49,9 +48,9 @@ export default class SearchResultCompactRow extends Component<Props> {
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
 				<CartIcon
-					style={{marginRight: 10}}
-					id={objInfo.dobj}
-					{...copyprops(props, ['addToCart', 'removeFromCart', 'isAddedToCart', 'objInfo'])}
+					style={{ marginRight: 10 }}
+					objInfo={objInfo}
+					{...pick(props, 'addToCart', 'removeFromCart', 'isAddedToCart')}
 				/>
 				<PreviewIcon
 					style={{ marginRight: 10 }}

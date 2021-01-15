@@ -1,8 +1,8 @@
-import React, { Component } from 'react';
+import React, { Component, CSSProperties, RefObject } from 'react';
 import {debounce, Events} from 'icos-cp-utils';
 
 
-const defaultIconStyle = {
+const defaultIconStyle: CSSProperties = {
 	fontSize: 14,
 	position: 'absolute',
 	float: 'right',
@@ -13,12 +13,34 @@ const defaultIconStyle = {
 	padding: 10
 };
 
-export default class Slider extends Component{
-	constructor(props){
+type Props = {
+	startCollapsed: boolean
+	rootStyle?: CSSProperties
+	iconStyle?: CSSProperties
+	openClsName?: string
+	closedClsName?: string
+	title?: string
+}
+
+type State = {
+	isOpen: boolean
+	height?: number
+	isOpening: boolean
+}
+
+export default class Slider extends Component<Props, State>{
+	private rootStyle: CSSProperties
+	private iconStyle: CSSProperties
+	private events: any
+	private handleResize: () => void
+	private content: RefObject<HTMLDivElement>
+
+	constructor(props: Props){
 		super(props);
 
-		this.rootStyle = Object.assign({position:'relative'}, props.rootStyle);
-		this.iconStyle = Object.assign({}, defaultIconStyle, props.iconStyle);
+		this.content = React.createRef<HTMLDivElement>();
+		this.rootStyle = { ...{ position: 'relative' }, ...props.rootStyle };
+		this.iconStyle = { ...defaultIconStyle, ...props.iconStyle };
 
 		this.state = {
 			isOpen: props.startCollapsed === undefined ? true : !props.startCollapsed,
@@ -43,7 +65,7 @@ export default class Slider extends Component{
 		});
 	}
 
-	componentDidUpdate(prevProps, prevState, snapshot) {
+	componentDidUpdate(prevProps: Props & {children: React.ReactNode}) {
 		if (this.props.children !== prevProps.children) {
 			this.setHeight();
 		}
@@ -68,7 +90,7 @@ export default class Slider extends Component{
 		const iconCls = isOpen
 			? openClsName || 'glyphicon glyphicon-menu-up'
 			: closedClsName || 'glyphicon glyphicon-menu-down';
-		const baseStyle = {
+		const baseStyle: CSSProperties = {
 			transition: 'height 0.3s ease-in-out',
 			height
 		};
@@ -79,7 +101,7 @@ export default class Slider extends Component{
 		return (
 			<div style={this.rootStyle}>
 				<span className={iconCls} style={this.iconStyle} onClick={this.onClick.bind(this)} title={title} />
-				<div ref={content => this.content = content} style={contentStyle}>
+				<div ref={this.content} style={contentStyle}>
 					{children}
 				</div>
 			</div>
@@ -93,10 +115,12 @@ export default class Slider extends Component{
 	componentDidMount(){
 		this.setHeight();
 
-		this.events.addToTarget(this.content, "transitionend", this.transitionEnded.bind(this));
+		this.events.addToTarget(this.content.current, "transitionend", this.transitionEnded.bind(this));
 	}
 }
 
-const getHeight = content => {
-	return Array.from(content.childNodes).reduce((acc, curr) => acc + curr.clientHeight, 0);
+const getHeight = (content: RefObject<HTMLDivElement>) => {
+	return content.current
+		? Array.from(content.current.childNodes).reduce((acc, curr) => acc + (curr as HTMLElement).clientHeight, 0)
+		: 0;
 };

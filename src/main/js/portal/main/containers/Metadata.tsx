@@ -5,7 +5,7 @@ import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx'
 import {formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
-import {Route, State} from "../models/State";
+import {MetaDataObject, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
@@ -66,7 +66,7 @@ class Metadata extends Component<MetadataProps> {
 		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
 			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
-		const [isCartEnabled, cartTitle] = metadata.specification ? cartState(metadata.specification.dataLevel, metadata.nextVersion) : [];
+		const [isCartEnabled, cartTitle] = cartState(metadata);
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;
 		const checkedObjects: CheckedObject[] = [{
@@ -218,12 +218,6 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 	);
 };
 
-const areDatesDifferent = (date1: Date, date2: Date) => {
-	const utcDate1 = new Date(date1).setUTCHours(0, 0, 0, 0);
-	const utcDate2 = new Date(date2).setUTCHours(0, 0, 0, 0);
-	return utcDate1 !== utcDate2;
-};
-
 export const metadataRow = (label: string, value: string | ReactElement | ReactElement[], linkify = false) => {
 	const text = linkify && typeof value === "string"
 		? <LinkifyText text={value} />
@@ -257,24 +251,30 @@ const map = (coverage: string, icon?: string) => {
 	);
 };
 
-const cartState = (dataLevel: number, nextVersion?: UrlStr) => {
-	if (dataLevel == 0) {
+const cartState = (metadata: MetaDataObject & { id: string }): [boolean, string] => {
+	if (metadata.specification === undefined) {
+		return [false, ""];
+	}
+
+	if (metadata.specification.dataLevel == 0) {
 		return [false, "Data level 0 is available on demand only"];
-	} else if (nextVersion) {
+
+	} else if (metadata.nextVersion) {
 		return [false, "You can only download the newest version"];
+
 	} else {
 		return [true, ""];
 	}
 };
 
- 	const getKeywordHash = (keyword: string) => {
-		const hashObj = {
-			route: 'search',
-			filterKeywords: [keyword]
-		};
-
-		return "#" + encodeURIComponent(JSON.stringify(hashObj));
+const getKeywordHash = (keyword: string) => {
+	const hashObj = {
+		route: 'search',
+		filterKeywords: [keyword]
 	};
+
+	return "#" + encodeURIComponent(JSON.stringify(hashObj));
+};
 
 function stateToProps(state: State){
 	return {

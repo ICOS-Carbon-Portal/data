@@ -1,9 +1,31 @@
-import React, { Component } from 'react';
-import {DatePickerInput} from 'rc-datepicker';
+import React, { Component, RefObject } from 'react';
+import ReactDOM from 'react-dom';
+import { DatePickerInput } from 'rc-datepicker';
+import FilterTemporal from '../../models/FilterTemporal';
+import { Obj } from '../../../../common/main/types';
 
+type Props = {
+	marginTop?: number
+	filterTemporal: FilterTemporal
+	setFilterTemporal: (filterTemporal: FilterTemporal) => void
+	category: 'dataTime' | 'submission'
+	header: string
+}
 
-export default class PickDates extends Component {
-	constructor(props){
+type State = {
+	fromInvalid: boolean
+	toInvalid: boolean
+} & Obj<boolean>
+
+export default class PickDates extends Component<Props, State> {
+	private fromInput: HTMLElement | null = null
+	private toInput: HTMLElement | null = null
+	private datePickerInputFrom: RefObject<DatePickerInput> | null = null
+	private datePickerInputTo: RefObject<DatePickerInput> | null = null
+	private onFromKeyUpHandler: (evt: KeyboardEvent) => void
+	private onToKeyUpHandler: (evt: KeyboardEvent) => void
+
+	constructor(props: Props){
 		super(props);
 
 		this.state = {
@@ -11,39 +33,41 @@ export default class PickDates extends Component {
 			toInvalid: false
 		};
 
-		this.fromInput = undefined;
-		this.toInput = undefined;
+		this.datePickerInputFrom = React.createRef<DatePickerInput>();
+		this.datePickerInputTo = React.createRef<DatePickerInput>();
 		this.onFromKeyUpHandler = this.onFromKeyUp.bind(this);
 		this.onToKeyUpHandler = this.onToKeyUp.bind(this);
 	}
 
-	componentDidMount(){
+	componentDidMount() {
+		if (this.datePickerInputFrom === null || this.datePickerInputTo === null) return;
+
 		// Add handler for emptying date picker input
-		this.fromInput = this.datePickerInputFrom.getDatePickerInput().firstChild.firstChild;
-		this.toInput = this.datePickerInputTo.getDatePickerInput().firstChild.firstChild;
+		this.fromInput = ReactDOM.findDOMNode(this.datePickerInputFrom.current)!.firstChild!.firstChild! as HTMLElement;
+		this.toInput = ReactDOM.findDOMNode(this.datePickerInputTo.current)!.firstChild!.firstChild! as HTMLElement;
 
 		this.fromInput.addEventListener('keyup', this.onFromKeyUpHandler);
 		this.toInput.addEventListener('keyup', this.onToKeyUpHandler);
 	}
 
-	onFromKeyUp(evt){
-		if (evt.target.value === '') {
+	onFromKeyUp(evt: KeyboardEvent){
+		if (evt.target && (evt.target as HTMLInputElement).value === '') {
 			this.onDateSet('from');
 		}
 	}
 
-	onToKeyUp(evt){
-		if (evt.target.value === '') {
+	onToKeyUp(evt: KeyboardEvent) {
+		if (evt.target && (evt.target as HTMLInputElement).value === '') {
 			this.onDateSet('to');
 		}
 	}
 
 	componentWillUnmount(){
-		this.fromInput.removeEventListener("keyup", this.onFromKeyUpHandler);
-		this.toInput.removeEventListener("keyup", this.onToKeyUpHandler);
+		this.fromInput!.removeEventListener("keyup", this.onFromKeyUpHandler);
+		this.toInput!.removeEventListener("keyup", this.onToKeyUpHandler);
 	}
 
-	onDateSet(sender, dateObj, dateString){
+	onDateSet(sender: 'from' | 'to', dateObj?: Date, dateString?: string){
 		if (dateString === 'Invalid date') {
 			this.setState({[sender + 'Invalid']: true});
 			return;
@@ -92,10 +116,10 @@ export default class PickDates extends Component {
 							<label style={{marginBottom: 0}}>From</label>
 
 							<DatePickerInput
-								ref={dpi => this.datePickerInputFrom = dpi}
+								ref={this.datePickerInputFrom}
 								showOnInputClick={false}
 								value={from}
-								className={error || fromInvalid ? 'cp-dpi-error' : ''}
+								className={getClassName(fromInvalid, error)}
 								onChange={this.onDateSet.bind(this, 'from')}
 								onClear={this.onDateSet.bind(this, 'from')}
 								displayFormat="YYYY-MM-DD"
@@ -107,10 +131,10 @@ export default class PickDates extends Component {
 							<label style={{marginBottom: 0}}>To</label>
 
 							<DatePickerInput
-								ref={dpi => this.datePickerInputTo = dpi}
+								ref={this.datePickerInputTo}
 								showOnInputClick={false}
 								value={to}
-								className={error || toInvalid ? 'cp-dpi-error' : ''}
+								className={getClassName(toInvalid, error)}
 								onChange={this.onDateSet.bind(this, 'to')}
 								onClear={this.onDateSet.bind(this, 'to')}
 								displayFormat="YYYY-MM-DD"
@@ -123,3 +147,7 @@ export default class PickDates extends Component {
 		);
 	}
 }
+
+const getClassName = (isInvalid: boolean, error?: string) => {
+	return error || isInvalid ? 'cp-dpi-error' : '';
+};

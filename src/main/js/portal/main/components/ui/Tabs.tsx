@@ -1,21 +1,34 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 
+type Props = {
+	tabName: string
+	selectedTabId?: number
+	switchTab: Function
+} & { children: ReactNode[] }
 
-export default class Tabs extends Component{
-	constructor(props){
+type TabState = {
+	id: number
+	tabHeader: string
+	isActive: boolean
+}
+
+export default class Tabs extends Component<Props>{
+	private tabState: TabState[]
+
+	constructor(props: Props){
 		super(props);
 
-		const selectedTabId = props.selectedTabId || 0;
-		this.tabState = props.children.map((child, idx) => {
-			return {
+		const selectedTabId = props.selectedTabId ?? 0;
+		this.tabState = props.children.map((child: any, idx) => (
+			{
 				id: idx,
 				tabHeader: child.props.tabHeader,
 				isActive: idx === selectedTabId
-			};
-		});
+			}
+		));
 	}
 
-	componentWillUpdate(nextProps){
+	componentWillUpdate(nextProps: Props){
 		this.setActiveTab(nextProps.selectedTabId);
 	}
 
@@ -23,7 +36,7 @@ export default class Tabs extends Component{
 		this.tabState.forEach(tab => tab.isActive = tab.id === tabId);
 	}
 
-	onTabClick(selectedTabId){
+	onTabClick(selectedTabId: number){
 		const {tabName, switchTab} = this.props;
 		if (tabName && switchTab) switchTab(tabName, selectedTabId);
 	}

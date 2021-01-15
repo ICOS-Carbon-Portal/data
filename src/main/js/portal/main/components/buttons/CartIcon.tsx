@@ -1,19 +1,29 @@
-import React, { Component } from 'react';
-import {styles} from '../styles';
+import React, { Component, CSSProperties } from 'react';
+import { UrlStr } from '../../backend/declarations';
+import { ObjectsTable } from '../../models/State';
+import { styles } from '../styles';
 
-export default class CartIcon extends Component {
-	constructor(props){
+type Props = {
+	style: CSSProperties
+	objInfo: ObjectsTable
+	addToCart: (ids: UrlStr[]) => void
+	removeFromCart: (ids: UrlStr[]) => void
+	isAddedToCart: boolean
+}
+
+export default class CartIcon extends Component<Props> {
+	constructor(props: Props){
 		super(props);
 	}
 
 	handleAddToCartClick(){
-		const {id, addToCart} = this.props;
-		if (addToCart) addToCart([id]);
+		const { objInfo, addToCart} = this.props;
+		if (addToCart) addToCart([objInfo.dobj]);
 	}
 
 	handleRemoveFromCartClick(){
-		const {id, removeFromCart} = this.props;
-		if (removeFromCart) removeFromCart(id);
+		const { objInfo, removeFromCart} = this.props;
+		if (removeFromCart) removeFromCart([objInfo.dobj]);
 	}
 
 	render(){

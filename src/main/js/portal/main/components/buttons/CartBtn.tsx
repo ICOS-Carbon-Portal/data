@@ -1,7 +1,16 @@
-import React, { Component } from 'react';
+import React, { Component, CSSProperties } from 'react';
 
-export default class CartBtn extends Component {
-	constructor(props){
+type Props = {
+	style: CSSProperties
+	checkedObjects: string[]
+	clickAction: (ids: string[]) => void
+	enabled: boolean
+	type?: 'remove' | 'add'
+	title?: string
+}
+
+export default class CartBtn extends Component<Props> {
+	constructor(props: Props){
 		super(props);
 	}
 
@@ -15,7 +24,7 @@ export default class CartBtn extends Component {
 		const btnText = (type === 'remove') ? 'Remove from cart' : 'Add to cart';
 		const btnType = (type === 'remove') ? 'btn-default' : 'btn-primary';
 		const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
-		const btnStyle = enabled ? {} : {pointerEvents: 'auto'};
+		const btnStyle: CSSProperties = enabled ? {} : {pointerEvents: 'auto'};
 
 		return (
 			<div style={style}>

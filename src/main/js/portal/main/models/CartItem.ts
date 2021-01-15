@@ -3,6 +3,7 @@ import { PreviewType } from "../config";
 
 export interface DataObject {
 	dobj: string,
+	dataset: string,
 	fileName: string,
 	format: string,
 	formatLabel: string,
@@ -28,10 +29,10 @@ export interface CartItemSerialized {
 }
 
 export default class CartItem {
-	readonly _id: UrlStr;
-	readonly _dataobject: DataObject;
-	readonly _type: PreviewType | undefined;
-	readonly _url: UrlStr | undefined;
+	private readonly _id: UrlStr;
+	private readonly _dataobject: DataObject;
+	private readonly _type: PreviewType | undefined;
+	private readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: IdxSig;
 
 	constructor(dataobject: DataObject, type?: PreviewType, url?: string){
@@ -70,8 +71,20 @@ export default class CartItem {
 		return Object.getOwnPropertyNames(this._keyValPairs).length > 0;
 	}
 
-	get id(){
+	get dobj() {
 		return this._id;
+	}
+
+	get level() {
+		return this._dataobject.level;
+	}
+
+	get temporalResolution() {
+		return this._dataobject.temporalResolution;
+	}
+
+	get dataset() {
+		return this._dataobject.dataset;
 	}
 
 	get type(){
@@ -96,6 +109,10 @@ export default class CartItem {
 		}
 
 		return stripExt(this._dataobject.fileName);
+	}
+
+	get fileName() {
+		return this.itemName;
 	}
 
 	get url(){

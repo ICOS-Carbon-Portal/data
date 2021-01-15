@@ -24,12 +24,12 @@ export default class Cart {
 	}
 
 	removeItems(ids: string[]){
-		return new Cart(this._name, this._items.filter(item => !ids.includes(item.id)));
+		return new Cart(this._name, this._items.filter(item => !ids.includes(item.dobj)));
 	}
 
 	withItemUrl(id: string, url: string){
 		const items = this._items.map(item => {
-			return item.id === id
+			return item.dobj === id
 				? item.withUrl(url)
 				: item;
 		});
@@ -42,11 +42,11 @@ export default class Cart {
 	}
 
 	get ids(){
-		return this._items.map(item => item.id);
+		return this._items.map(item => item.dobj);
 	}
 
 	get pids(){
-		return this._items.map(item => item.id.slice(item.id.lastIndexOf('/') + 1));
+		return this._items.map(item => item.dobj.slice(item.dobj.lastIndexOf('/') + 1));
 	}
 
 	get count(){
@@ -58,11 +58,11 @@ export default class Cart {
 	}
 
 	item(id: string){
-		return this._items.find(item => item.id === id);
+		return this._items.find(item => item.dobj === id);
 	}
 
 	hasItem(id: string){
-		return !!this._items.find(item => item.id === id);
+		return !!this._items.find(item => item.dobj === id);
 	}
 
 	get name(){
@@ -81,12 +81,12 @@ export default class Cart {
 export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart: {cart: any}) => {
 	const sessionStorageTs = cartInSessionStorage.cart && cartInSessionStorage.cart._ts
 		? parseInt(cartInSessionStorage.cart._ts)
-		: '0';
+		: 0;
 	const restheartTs = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._ts
 		? parseInt(cartInRestheart.cart._ts)
-		: '0';
+		: 0;
 
-	const newName = restheartTs > sessionStorageTs
+	const newName: string = restheartTs > sessionStorageTs
 		? cartInRestheart.cart._name
 		: cartInSessionStorage.cart._name;
 
@@ -100,7 +100,7 @@ export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart:
 	const newItems = restheartItems.concat(sessionStorageItems).filter((item: any, i: number, items: any[]) => {
 		return items.findIndex(itm => itm._id === item._id) === i;
 	});
-	const newCartItems = newItems.map((item: any) => new CartItem(item._dataobject, item._type, item._url));
+	const newCartItems: CartItem[] = newItems.map((item: any) => new CartItem(item._dataobject, item._type, item._url));
 
 	return new Cart(newName, newCartItems);
 };

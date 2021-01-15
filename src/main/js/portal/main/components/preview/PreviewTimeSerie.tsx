@@ -74,7 +74,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 		// Add station information
 		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {
-			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.id);
+			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.dobj);
 			item.station = extendedInfo ? extendedInfo.station : undefined;
 			item.stationId = extendedInfo ? extendedInfo.stationId : undefined;
 			item.samplingHeight = extendedInfo ? extendedInfo.samplingHeight : undefined;
@@ -85,7 +85,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		// Determine if curves should concatenate or overlap
 		const linking: string = items.reduce((acc: string, curr: PreviewItem) => {
 			return items.reduce((acc2: string, curr2: PreviewItem) => {
-				if ((curr.id !== curr2.id) &&
+				if ((curr.dobj !== curr2.dobj) &&
 					(curr.station === curr2.station) &&
 					(curr.site && curr2.site && curr.site === curr2.site) &&
 					((curr.timeEnd < curr2.timeStart) ||
@@ -113,7 +113,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {};
 		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
-		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.id)).join();
+		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
 		return (
 			<div>

@@ -1,6 +1,7 @@
 import React, { CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
 import config from "../../config";
+import CartItem from '../../models/CartItem';
 import { Value } from '../../models/SpecTable';
 
 
@@ -16,13 +17,13 @@ type PreviewTypes = ("TIMESERIES" | "NETCDF" | "MAPGRAPH" | undefined)[]
 interface Props {
 	datasets: Value[]
 	previewTypes: PreviewTypes
-	checkedObjects: CheckedObject[]
+	checkedObjects: (CartItem | CheckedObject)[]
 	style: CSSProperties
 	clickAction: (objInfo: string[]) => void
-	isL3Previewable: boolean[]
+	isL3Previewable?: boolean[]
 }
 
-const PreviewBtn: React.FunctionComponent<Props> = ({ datasets, previewTypes, isL3Previewable, checkedObjects, style, clickAction }) => {
+const PreviewBtn: React.FunctionComponent<Props> = ({ datasets, previewTypes, isL3Previewable = [false], checkedObjects, style, clickAction }) => {
 	const handlePreviewClick = () => {
 		if (clickAction)
 			clickAction(checkedObjects.flatMap(co => co.dobj));

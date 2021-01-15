@@ -1,9 +1,25 @@
 import React, { Component } from 'react';
-import config from '../../config';
+import { Obj } from '../../../../common/main/types';
 
+type Props = {
+	isSorter: boolean
+	isEnabled: boolean
+	selectedItemKey: string
+	isAscending: boolean
+	itemClickAction: (varName: string) => void
+	lookup: Obj
+	defaultLbl?: string
+}
 
-export default class Dropdown extends Component{
-	constructor(props){
+type State = {
+	dropdownOpen: boolean
+}
+
+export default class Dropdown extends Component<Props, State>{
+	private outsideClickHandler: (e: any) => void
+	private node: HTMLSpanElement | null = null
+
+	constructor(props: Props){
 		super(props);
 
 		this.state = {
@@ -14,8 +30,11 @@ export default class Dropdown extends Component{
 		document.addEventListener('click', this.outsideClickHandler, false);
 	}
 
-	handleOutsideClick(e){
-		if (this.node && !this.node.contains(e.target) && this.state.dropdownOpen) {
+	handleOutsideClick(e: MouseEvent) {
+		if (!this.node) return;
+		if (e.target === null) return;
+
+		if (!this.node.contains(e.target as Node) && this.state.dropdownOpen) {
 			this.setState({dropdownOpen: false});
 		}
 	}
@@ -24,7 +43,7 @@ export default class Dropdown extends Component{
 		this.setState({dropdownOpen: !this.state.dropdownOpen});
 	}
 
-	onDropDownItemClick(selectedItemKey){
+	onDropDownItemClick(selectedItemKey: string){
 		if (this.props.itemClickAction) {
 			this.setState({dropdownOpen: !this.state.dropdownOpen});
 			this.props.itemClickAction(selectedItemKey);
@@ -41,7 +60,7 @@ export default class Dropdown extends Component{
 		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 
 		return (
-			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
+			<span ref={span => this.node = span} className={nodeClass} style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
 				{
 					isSorter
 						? <SortButton
@@ -77,7 +96,9 @@ export default class Dropdown extends Component{
 	}
 }
 
-const SortButton = ({selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by'}) => {
+type SortButtonProps = Pick<Props, 'selectedItemKey' | 'isAscending' | 'lookup' | 'defaultLbl'> & { clickAction: () => void }
+
+const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by' }: SortButtonProps) => {
 	const glyphCls = selectedItemKey
 		? isAscending
 			? 'glyphicon glyphicon-sort-by-attributes'
@@ -95,7 +116,9 @@ const SortButton = ({selectedItemKey, isAscending, clickAction, lookup, defaultL
 	);
 };
 
-const Button = ({isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 'Select option'}) => {
+type ButtonProps = Pick<Props, 'selectedItemKey' | 'isEnabled' | 'lookup' | 'defaultLbl'> & { clickAction: () => void }
+
+const Button = ({ isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 'Select option' }: ButtonProps) => {
 	if (isEnabled) {
 		const lbl = selectedItemKey
 			? lookup[selectedItemKey]

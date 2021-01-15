@@ -31,7 +31,7 @@ export default class Preview {
 
 	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
-		this.pids = this.items.map(item => getLastSegmentInUrl(item._id));
+		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
 	}
@@ -133,7 +133,7 @@ export default class Preview {
 	}
 
 	get hasAllItems(){
-		const itemPids = this.items.map(item => getLastSegmentInUrl(item.id));//
+		const itemPids = this.items.map(item => getLastSegmentInUrl(item.dobj));//
 
 		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
 	}

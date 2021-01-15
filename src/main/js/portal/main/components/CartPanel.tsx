@@ -4,27 +4,37 @@ import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
 import SearchResultRegularRow from './searchResult/SearchResultRegularRow';
 import CartBtn from './buttons/CartBtn.jsx';
 import CheckAllBoxes from './controls/CheckAllBoxes.jsx';
+import { DataCartProps } from '../containers/DataCart.jsx';
+import { ObjectsTable } from '../models/State.js';
 
+type Props = {
+	previewitemId?: string
+	previewItemAction: (urls: string[]) => void
+	updateCheckedObjects: (urls: any) => any
+	handleAllCheckboxesChange: () => void
+} & DataCartProps
 
-export default class CartPanel extends Component {
-	constructor(props){
+type State = {
+	selectedItemId?: string
+}
+
+export default class CartPanel extends Component<Props, State> {
+	constructor(props: Props){
 		super(props);
 		this.state = {
 			selectedItemId: props.previewitemId
 		};
-
-		this.mouseClick = undefined;
 	}
 
-	handleItemClick(id){
+	handleItemClick(id: string){
 		this.setState({selectedItemId: id});
 	}
 
-	handleSaveCartName(newName){
+	handleSaveCartName(newName: string){
 		if (this.props.setCartName) this.props.setCartName(newName);
 	}
 
-	handlePreview(ids){
+	handlePreview(ids: string[]){
 		this.props.previewItemAction(ids);
 	}
 
@@ -32,7 +42,7 @@ export default class CartPanel extends Component {
 		this.props.handleAllCheckboxesChange();
 	}
 
-	handleViewMetadata(id) {
+	handleViewMetadata(id: string) {
 		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
 	}
 
@@ -40,8 +50,8 @@ export default class CartPanel extends Component {
 		const props = this.props;
 		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
 		const checkedObjects = props.cart.items
-			.filter(item => props.checkedObjectsInCart.includes(item.id));
-		const datasets = checkedObjects.map(obj => obj.item.dataset);
+			.filter(item => props.checkedObjectsInCart.includes(item.dobj));
+		const datasets = checkedObjects.map(obj => obj.dataset);
 		const previewTypes = checkedObjects.map(obj => obj.type);
 
 		return (
@@ -71,7 +81,7 @@ export default class CartPanel extends Component {
 								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
 								checkedObjects={props.checkedObjectsInCart}
 								clickAction={props.removeFromCart}
-								enabled={props.checkedObjectsInCart.length}
+								enabled={props.checkedObjectsInCart.length > 0}
 								type='remove'
 							/>
 							<PreviewBtn
@@ -87,10 +97,8 @@ export default class CartPanel extends Component {
 					<table className="table">
 						<tbody>{
 							props.cart.items.map((objInfo, i) => {
-								const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.id);
-								const isChecked = props.checkedObjectsInCart.includes(objInfo.id);
-								objInfo.fileName = objInfo.itemName;
-								objInfo.dobj = objInfo.id;
+								const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+								const isChecked = props.checkedObjectsInCart.includes(objInfo.dobj);
 
 								return (
 									<SearchResultRegularRow

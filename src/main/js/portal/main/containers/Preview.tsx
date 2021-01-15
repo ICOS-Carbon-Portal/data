@@ -66,7 +66,7 @@ class Preview extends Component<OurProps, OurState> {
 		const previewType = preview.type;
 		if(previewType === undefined) return null;
 
-		const areItemsInCart: boolean = preview.items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.id), false);
+		const areItemsInCart: boolean = preview.items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 
@@ -80,11 +80,11 @@ class Preview extends Component<OurProps, OurState> {
 								<span className="panel-title">
 									{preview.items.map((item: CartItem) => {
 										return (
-											<span key={item.id} style={{marginRight: 10}}>
+											<span key={item.dobj} style={{marginRight: 10}}>
 												<span style={{marginRight: 10}}>
 													{item.itemName}
 												</span>
-												<span onClick={this.handleViewMetadata.bind(this, item.id)} style={{cursor: 'pointer'}} className="glyphicon glyphicon-info-sign" />
+												<span onClick={this.handleViewMetadata.bind(this, item.dobj)} style={{cursor: 'pointer'}} className="glyphicon glyphicon-info-sign" />
 											</span>
 										);
 									})}
@@ -104,7 +104,7 @@ class Preview extends Component<OurProps, OurState> {
 									<div className="col-sm-2">
 										<CartBtn
 											style={{float: 'right', marginBottom: 10}}
-											checkedObjects={preview.items.map((item: CartItem) => item.id)}
+											checkedObjects={preview.items.map((item: CartItem) => item.dobj)}
 											clickAction={buttonAction}
 											enabled={true}
 											type={actionButtonType}

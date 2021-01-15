@@ -1,7 +1,19 @@
 import React, { Component } from 'react';
 
-export default class CopyValue extends Component {
-	constructor(props){
+type Props = {
+	btnText: string
+	copyHelpText: string
+	valToCopy: string
+}
+
+type State = {
+	showCopy: boolean
+}
+
+export default class CopyValue extends Component<Props, State> {
+	urlInput?: HTMLInputElement | null
+
+	constructor(props: Props){
 		super(props);
 		this.state = {
 			showCopy: false
@@ -12,8 +24,10 @@ export default class CopyValue extends Component {
 		this.setState({showCopy: true});
 	}
 
-	copyUrl(){
-		this.urlInput.select();
+	copyUrl() {
+		if (this.urlInput)
+			this.urlInput.select();
+		
 		document.execCommand('copy');
 		this.setState({showCopy: false});
 	}
@@ -40,7 +54,7 @@ export default class CopyValue extends Component {
 	}
 }
 
-const Btn = ({show, btnText, clickAction}) => {
+const Btn = ({show, btnText, clickAction}: {show: boolean, btnText: string, clickAction: () => void}) => {
 	return (
 		<button	onClick={clickAction} className="btn btn-default" style={show ? {marginBottom: 10} : {visibility: 'hidden'}}>
 			{btnText}
@@ -48,9 +62,10 @@ const Btn = ({show, btnText, clickAction}) => {
 	);
 };
 
-const CopyCtr = ({self, valToCopy, copyHelpText, copyClick}) => {
+const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick }: { self: CopyValue, valToCopy: string, copyHelpText: string, copyClick: () => void }) => {
 	const inputClick = () => {
-		self.urlInput.select();
+		if (self.urlInput)
+			self.urlInput.select();
 	};
 
 	return (

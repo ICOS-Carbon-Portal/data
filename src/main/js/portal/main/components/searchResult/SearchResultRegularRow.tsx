@@ -5,6 +5,7 @@ import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
 import Preview from '../../models/Preview';
+import CartItem from '../../models/CartItem';
 
 
 const truncateStyle: CSSProperties = {
@@ -20,13 +21,13 @@ const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
 const iconFile = '//static.icos-cp.eu/images/icons/file.svg';
 
 interface OurProps {
-	objInfo: ObjectsTable
+	objInfo: ObjectsTable | CartItem
 	viewMetadata: (doj: string) => void
 	extendedInfo: Partial<ExtendedDobjInfo> | undefined
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
-	checkedObjects: ObjectsTable[]
+	checkedObjects?: ObjectsTable[]
 	labelLookup: any
 }
 

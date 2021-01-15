@@ -15,7 +15,7 @@ export default function PreviewIcon({ previewType, isL3Previewable, style, click
 		return (
 			<span style={style}>
 				<span
-					style={styles.clickIcon as React.CSSProperties}
+					style={styles.clickIcon}
 					title="Preview data"
 					className="glyphicon glyphicon-eye-open"
 					onClick={clickAction}
@@ -26,7 +26,7 @@ export default function PreviewIcon({ previewType, isL3Previewable, style, click
 		return (
 			<span style={style}>
 				<span
-					style={styles.disabledClickIcon as React.CSSProperties}
+					style={styles.disabledClickIcon}
 					title="No preview available for this data object"
 					className="glyphicon glyphicon-eye-open text-muted"
 				/>

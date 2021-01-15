@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import SlideIn from '../ui/SlideIn.jsx';
+import { SlideIn } from '../ui/SlideIn.jsx';
 import HelpText from './HelpText.jsx';
 import HelpStorage, { HelpItem } from '../../models/HelpStorage.js';
 

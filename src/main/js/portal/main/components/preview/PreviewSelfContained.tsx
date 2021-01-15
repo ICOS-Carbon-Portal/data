@@ -13,7 +13,7 @@ interface OurProps {
 export default class PreviewSelfContained extends Component<OurProps>{
 	shouldComponentUpdate(nextProps: OurProps){
 		// Prevent preview component from updating iframe src if we are viewing the same data object
-		return this.props.preview.item.id !== nextProps.preview.item.id;
+		return this.props.preview.item.dobj !== nextProps.preview.item.dobj;
 	}
 
 	render(){
@@ -22,7 +22,7 @@ export default class PreviewSelfContained extends Component<OurProps>{
 		if (previewType === undefined) return null;
 
 		// Use preview.item.url if present since that one has all client changes recorded in history
-		const url = preview.item.url ? preview.item.url : preview.item.id;
+		const url = preview.item.url ? preview.item.url : preview.item.dobj;
 		const iFrameBaseUrl = config.iFrameBaseUrl[previewType];
 		const src = `${iFrameBaseUrl}${getLastSegmentInUrl(url)}`;
 		const containerStyle: CSSProperties = { position: 'relative', width: '100%', height: getHeight(preview.type), padding: 0};
