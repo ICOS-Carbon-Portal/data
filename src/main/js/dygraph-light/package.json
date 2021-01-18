@@ -44,28 +44,28 @@
     ]
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-    "@babel/preset-env": "^7.4.3",
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.12.1",
+    "@babel/plugin-proposal-object-rest-spread": "^7.12.1",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/preset-env": "^7.12.11",
     "@babel/preset-es2015": "^7.0.0-beta.53",
-    "@babel/preset-react": "^7.0.0",
-    "@babel/preset-typescript": "^7.6.0",
-    "@babel/register": "^7.4.4",
-    "@types/dygraphs": "^1.1.10",
+    "@babel/preset-react": "^7.12.10",
+    "@babel/preset-typescript": "^7.12.7",
+    "@babel/register": "^7.12.10",
+    "@types/dygraphs": "^1.1.12",
     "browserify-css": "^0.15.0",
     "del": "^3.0.0",
-    "gulp": "^4.0.1",
+    "gulp": "^4.0.2",
     "gulp-replace": "^1.0.0",
-    "react": "^16.8.6",
-    "typescript": "3.7.2"
+    "react": "17.0.1",
+    "typescript": "4.1.3"
   },
   "dependencies": {
-    "babel-polyfill": "^6.13.0",
+    "babel-polyfill": "^6.26.0",
     "dygraphs": "^2.1.0",
-    "icos-cp-backend": "0.4.1",
+    "icos-cp-backend": "0.4.2",
     "icos-cp-spinner": "^0.1.4"
   }
 }
