@@ -1,9 +1,10 @@
 import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
 import {CSSProperties} from "react";
+import CartItem from "./models/CartItem";
 
-export const getNewTimeseriesUrl = (items: any, xAxis: string) => {
-	const objIds = items.map((item:any) => getLastSegmentInUrl(item.id)).join();
+export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string) => {
+	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
