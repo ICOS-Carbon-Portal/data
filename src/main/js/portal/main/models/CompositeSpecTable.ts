@@ -106,20 +106,24 @@ export default class CompositeSpecTable{
 	}
 
 	get withFilterReflection(): CompositeSpecTable {
-
-		const specFilter0 = Filter.and([
+		const self = this;
+		const specFilters = [
 			this.basics.ownSpecFilter,
 			this.columnMeta.ownSpecFilter,
-			this.origins.implicitOwnSpecFilter
-		]);
+			this.origins.implicitOwnSpecFilter //origins is special, affected by continuous-var filters
+		];
 
-		const specFilter: Filter = specFilter0 === null
-			? null
-			: specFilter0.length < this.basics.specsCount
-				? specFilter0
-				: null;
+		function specFilterJoin(excludedIdx: number): Filter {
+			const chosenFilts = specFilters.filter((_, idx) => idx != excludedIdx);
+			const specFilter0 = Filter.and(chosenFilts);
+			return specFilter0 === null
+				? null
+				: specFilter0.length < self.basics.specsCount
+					? specFilter0
+					: null;
+		}
 
-		const reflectedTables = this.tables.map(t => t.withExtraSpecFilter(specFilter));
+		const reflectedTables = this.tables.map((t, idx) => t.withExtraSpecFilter(specFilterJoin(idx)));
 		return CompositeSpecTable.fromTables(reflectedTables);
 	}
 
