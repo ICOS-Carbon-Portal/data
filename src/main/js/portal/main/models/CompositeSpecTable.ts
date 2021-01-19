@@ -127,8 +127,8 @@ export default class CompositeSpecTable{
 		return CompositeSpecTable.fromTables(reflectedTables);
 	}
 
-	withResetFilters(){
-		return new CompositeSpecTable(this.basics.withResetFilters(), this.columnMeta.withResetFilters(), this.origins.withResetFilters());
+	withResetFilters() {
+		return new CompositeSpecTable(this.basics.withResetFilters(), this.columnMeta.withResetFilters(), this.origins.withResetFilters()).withFilterReflection;
 	}
 
 	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins']){
