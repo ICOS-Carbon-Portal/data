@@ -197,8 +197,8 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 		: undefined;
 	const location = acquisition && acquisition.station &&
 		(acquisition.site
-			? `${acquisition.site.location?.label} (${acquisition.station.name.split(" ").shift()})`
-			: acquisition.station.name);
+			? `${acquisition.site.location?.label} (${acquisition.station.org.name.split(" ").shift()})`
+			: acquisition.station.org.name);
 	const title = (specInfo as L3SpecificMeta).title
 		? (specInfo as L3SpecificMeta).title
 		: undefined;

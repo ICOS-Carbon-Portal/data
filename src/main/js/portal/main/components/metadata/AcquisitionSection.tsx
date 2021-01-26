@@ -19,7 +19,7 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 				metadataRow("Location", acquisition.site.location?.label)
 			}
 			{acquisition.station &&
-				metadataRow("Station", <a href={acquisition.station.org.self.uri}>{acquisition.station.name}</a>)
+				metadataRow("Station", <a href={acquisition.station.org.self.uri}>{acquisition.station.org.name}</a>)
 			}
 			{acquisition.station && acquisition.station.responsibleOrganization &&
 				metadataRow("Responsible organization",
