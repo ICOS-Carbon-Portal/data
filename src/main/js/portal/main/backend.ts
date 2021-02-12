@@ -249,7 +249,7 @@ export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 		uri: sparqlParsers.fromUrl(b.uri),
 		label: sparqlParsers.fromString(b.label),
 		comment: sparqlParsers.fromString(b.comment),
-		webpage: sparqlParsers.fromString(b.webpage)
+		webpage: sparqlParsers.fromUrl(b.webpage)
 	})).then(res => res.rows);
 };
 
