@@ -68,7 +68,7 @@ export type ExtendedDobjInfo = AsyncResult<typeof getExtendedDataObjInfo>[0]
 export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
 export interface MetaDataObject extends DO{
-	coverageGeoJson: string
+	coverageGeo: object
 }
 
 export interface SearchOptions {
