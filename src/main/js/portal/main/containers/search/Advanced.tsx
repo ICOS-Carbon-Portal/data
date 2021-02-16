@@ -13,6 +13,7 @@ import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
 import { getFilters, getOptions } from '../../actions/common';
+import { specKeywordsQuery } from '../../backend/keywordsInfo';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -42,7 +43,7 @@ class Advanced extends Component<OurProps> {
 					/>
 				</FilterPanel>
 
-				<FilterPanel header="Sparql queries">
+				<FilterPanel header="SPARQL queries" helpItemName="publicQuery">
 					<QueryList getPublicQuery={getPublicQuery} />
 				</FilterPanel>
 			</Fragment>
@@ -52,23 +53,17 @@ class Advanced extends Component<OurProps> {
 
 const QueryList = ({ getPublicQuery }: { getPublicQuery: (queryName: QueryName) => string }) => {
 	return (
-		<>
-			<p style={{ marginTop: 15 }}>
-				View SPARQL queries that are currently used to filter data objects. Hover above a query to see a short description.
-			</p>
-
-			<ul style={{ marginTop: 10, listStyle: 'none', padding: 5 }}>
-				{(Object.keys(publicQueries) as QueryName[]).map((queryName, idx) => {
-					const { label, info } = publicQueries[queryName];
-					return (
-						<li key={idx} style={{ marginTop: 7 }}>
-							<span className="glyphicon glyphicon-share" style={{ marginRight: 5 }} />
-							<ToSparqlClient queryName={queryName} getPublicQuery={getPublicQuery} label={label} info={info} />
-						</li>
-					);
-				})}
-			</ul>
-		</>
+		<ul style={{ marginTop: 10, listStyle: 'none', padding: 5 }}>
+			{(Object.keys(publicQueries) as QueryName[]).map((queryName, idx) => {
+				const { label, comment } = publicQueries[queryName];
+				return (
+					<li key={idx} style={{ marginTop: 7 }}>
+						<span className="glyphicon glyphicon-share" style={{ marginRight: 5 }} />
+						<ToSparqlClient queryName={queryName} getPublicQuery={getPublicQuery} label={label} comment={comment} />
+					</li>
+				);
+			})}
+		</ul>
 	);
 };
 
@@ -111,6 +106,10 @@ const getPublicQuery = (state: State) => (queryName: QueryName): string => {
 			case 'dobjOriginsAndCounts': return queries.dobjOriginsAndCounts(getFilters(state));
 
 			case 'extendedDataObjectInfo': return queries.extendedDataObjectInfo(state.extendedDobjInfo.map(d => d.dobj));
+
+			case 'labelLookup': return queries.labelLookup();
+			
+			case 'specKeywordsQuery': return specKeywordsQuery();
 		}
 	};
 

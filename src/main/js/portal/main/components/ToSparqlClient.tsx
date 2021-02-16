@@ -21,7 +21,7 @@ export const ToSparqlClient: FunctionComponent<Props> = (props) => {
 		form.submit();
 	};
 
-	const { info, label, queryName, getPublicQuery } = props;
+	const { comment, label, queryName, getPublicQuery } = props;
 	const formId = `form_toSparql_${queryName.replaceAll(" ", "")}`;
 	const queryId = `query_toSparql_${queryName.replaceAll(" ", "")}`;
 
@@ -30,7 +30,7 @@ export const ToSparqlClient: FunctionComponent<Props> = (props) => {
 			<span
 				style={{ cursor: 'pointer', color: defaultColor }}
 				onClick={postToSparql}
-				title={info}
+				title={comment}
 				onMouseOver={handleMouseOver}
 				onMouseOut={handleMouseOut}
 			>{label}</span>

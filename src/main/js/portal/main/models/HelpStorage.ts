@@ -1,9 +1,9 @@
-import config, {placeholders, numericFilterLabels} from '../config';
+import config, {placeholders, numericFilterLabels, publicQueries, QueryName} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";
 
 
-const titles = {...placeholders[config.envri], ...numericFilterLabels, preview: "Preview / Add to cart"};
+const titles = { ...placeholders[config.envri], ...numericFilterLabels, preview: "Preview / Add to cart", publicQuery: "SPARQL queries"};
 
 type HelpId = HelpItemName | UrlStr
 type HelpDict = {[key in HelpId]?: HelpItem}
@@ -259,6 +259,13 @@ const initItems: HelpItem[] = [
 			'The filter "<50000" will return data objects with a file size of 50 000 or less.',
 		undefined,
 		numberFilterList
+	),
+
+	new HelpItem(
+		'publicQuery',
+		'View SPARQL queries that are currently used in this application. Changes to filters are reflected in queries if applicable. Open them again to see updates.',
+		undefined,
+		(Object.keys(publicQueries) as QueryName[]).map(queryName => publicQueries[queryName])
 	)
 ];
 

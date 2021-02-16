@@ -58,7 +58,7 @@ function getSpecLookup(): Promise<SpecLookupByKeyword> {
 
 
 //proj keywords are inherited
-function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
+export function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
 	const text = `# spec keywords
 prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 select ?spec ?keywords

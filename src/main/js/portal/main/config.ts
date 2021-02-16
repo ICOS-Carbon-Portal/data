@@ -174,26 +174,34 @@ export const timezone = {
 };
 export interface PublicQueryDeclaration {
 	label: string
-	info: string
+	comment: string
 }
 
-export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'extendedDataObjectInfo'
+export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'extendedDataObjectInfo' | 'labelLookup' | 'specKeywordsQuery'
 
 export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 	specBasics: {
 		label: 'Specification basics',
-		info: 'Some information about this particular query.'
+		comment: 'Some information about this particular query.'
 	},
 	specColumnMeta: {
 		label: 'Specification column meta',
-		info: 'Some information about this particular query.'
+		comment: 'Some information about this particular query.'
 	},
 	dobjOriginsAndCounts: {
 		label: 'Origins and counts',
-		info: 'Some information about this particular query.'
+		comment: 'Some information about this particular query.'
 	},
 	extendedDataObjectInfo: {
-		label: 'Search result - Detailed',
-		info: 'Search result with more details about each returned object.'
+		label: 'Detailed search result',
+		comment: 'Search result with more details about each returned object. The result includes max 20 objects.'
+	},
+	labelLookup: {
+		label: 'Labels',
+		comment: 'List labels for attributes.'
+	},
+	specKeywordsQuery: {
+		label: 'Keywords',
+		comment: 'List keywords for objects.'
 	},
 };

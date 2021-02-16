@@ -37,7 +37,7 @@ export const FileDownload = ({ getAllFilteredDataObjects, exportQuery, searchRes
 		return (
 			<span>
 				<span style={iconStyle} onClick={getAllFilteredDataObjects} className="glyphicon glyphicon-download-alt" title={saveTitle} />
-				<span style={iconStyle} onClick={openSparqlQuery} className="glyphicon glyphicon-share" title="Open SPARQL query" />
+				<span style={iconStyle} onClick={openSparqlQuery} className="glyphicon glyphicon-share" title="Open SPARQL query for basic search result. See Advanced tab for more queries." />
 
 				<form id="sparqlClientForm" method="POST" action={sparqlUrl} target="_blank" style={{display: 'none'}}>
 					<input type="hidden" name="query" value={sparqClientQuery} />
