@@ -4,9 +4,9 @@ import {State} from "../models/State";
 import {FilterRequest} from "../models/FilterRequest";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
-import config, { QueryName } from "../config";
+import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
-import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson, fetchFilteredDataObjects} from "../backend";
+import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
@@ -23,7 +23,6 @@ import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
-import * as queries from '../sparqlQueries';
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -72,7 +71,7 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 	logPortalUsage(state);
 };
 
-const makeQuerySubmittable = (orgQuery: string) => {
+export const makeQuerySubmittable = (orgQuery: string) => {
 	const queryRows = orgQuery.split('\n');
 	// Skip first row that displays function name and empty rows
 	return queryRows
@@ -234,28 +233,6 @@ export function switchTab(tabName: string, selectedTabId: string): PortalThunkAc
 		}
 	};
 }
-
-export function getPublicQuery(queryName: QueryName): PortalThunkAction<string> {
-	return (dispatch, getState) => {
-
-		function query() {
-			switch (queryName) {
-				case 'specBasics': return queries.specBasics();
-
-				case 'specColumnMeta': return queries.specColumnMeta();
-
-				case 'dobjOriginsAndCounts': return queries.dobjOriginsAndCounts(getFilters(getState()));
-
-				case 'listFilteredDataObjects': return queries.listFilteredDataObjects(getOptions(getState()));
-
-				case 'extendedDataObjectInfo': return queries.extendedDataObjectInfo(getState().extendedDobjInfo.map(d => d.dobj));
-			}
-		};
-
-		return makeQuerySubmittable(query().text);
-
-	}
-};
 
 export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAction<void> {
 	return (dispatch) => {

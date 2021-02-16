@@ -177,7 +177,7 @@ export interface PublicQueryDeclaration {
 	info: string
 }
 
-export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'listFilteredDataObjects' | 'extendedDataObjectInfo'
+export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'extendedDataObjectInfo'
 
 export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 	specBasics: {
@@ -191,10 +191,6 @@ export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 	dobjOriginsAndCounts: {
 		label: 'Origins and counts',
 		info: 'Some information about this particular query.'
-	},
-	listFilteredDataObjects: {
-		label: 'Search result - Basic',
-		info: 'Search result with basic information about each returned object.'
 	},
 	extendedDataObjectInfo: {
 		label: 'Search result - Detailed',

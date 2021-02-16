@@ -2,7 +2,7 @@ import React, {Component, CSSProperties, Fragment, MouseEvent} from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {getPublicQuery, updateSearchOption, updateSelectedPids} from "../../actions/search";
+import {makeQuerySubmittable, updateSearchOption, updateSelectedPids} from "../../actions/search";
 import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
 import FilterByPid from "../../components/filters/FilterByPid";
@@ -11,6 +11,8 @@ import CheckBtn from "../../components/buttons/ChechBtn";
 import {FilterPanel} from "../../components/filters/FilterPanel";
 import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';
+import * as queries from '../../sparqlQueries';
+import { getFilters, getOptions } from '../../actions/common';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -99,18 +101,34 @@ const CheckButton = (props: CheckButton) => {
 	);
 };
 
-function stateToProps(state: State){
+const getPublicQuery = (state: State) => (queryName: QueryName): string => {
+	function query() {
+		switch (queryName) {
+			case 'specBasics': return queries.specBasics();
+
+			case 'specColumnMeta': return queries.specColumnMeta();
+
+			case 'dobjOriginsAndCounts': return queries.dobjOriginsAndCounts(getFilters(state));
+
+			case 'extendedDataObjectInfo': return queries.extendedDataObjectInfo(state.extendedDobjInfo.map(d => d.dobj));
+		}
+	};
+
+	return makeQuerySubmittable(query().text);
+};
+
+function stateToProps(state: State) {
 	return {
 		filterPids: state.filterPids,
 		searchOptions: state.searchOptions,
+		getPublicQuery: getPublicQuery(state)
 	};
 }
 
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
-		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption)),
-		getPublicQuery: (queryName: QueryName) => dispatch(getPublicQuery(queryName)),
+		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption))
 	};
 }
 
