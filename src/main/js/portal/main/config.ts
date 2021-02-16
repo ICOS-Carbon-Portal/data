@@ -1,4 +1,6 @@
+import { Query } from 'icos-cp-backend';
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
+import { Obj } from '../../common/main/types';
 import {IdxSig, UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
@@ -169,4 +171,33 @@ export const timezone = {
 		offset: 1,
 		label: "UTC+1"
 	}
+};
+export interface PublicQueryDeclaration {
+	label: string
+	info: string
+}
+
+export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'listFilteredDataObjects' | 'extendedDataObjectInfo'
+
+export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
+	specBasics: {
+		label: 'Specification basics',
+		info: 'Some information about this particular query.'
+	},
+	specColumnMeta: {
+		label: 'Specification column meta',
+		info: 'Some information about this particular query.'
+	},
+	dobjOriginsAndCounts: {
+		label: 'Origins and counts',
+		info: 'Some information about this particular query.'
+	},
+	listFilteredDataObjects: {
+		label: 'Search result - Basic',
+		info: 'Search result with basic information about each returned object.'
+	},
+	extendedDataObjectInfo: {
+		label: 'Search result - Detailed',
+		info: 'Search result with more details about each returned object.'
+	},
 };

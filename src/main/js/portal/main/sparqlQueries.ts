@@ -8,8 +8,8 @@ import {
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
-	DeprecatedFilterRequest, isNumberFilter, NumberFilterRequest,
-	VariableFilterRequest, isVariableFilter, KeywordFilterRequest, isKeywordsFilter
+	isNumberFilter, NumberFilterRequest,
+	VariableFilterRequest, isVariableFilter, isKeywordsFilter
 } from './models/FilterRequest';
 import { Filter, Value } from "./models/SpecTable";
 import { UrlStr } from './backend/declarations';
@@ -145,18 +145,6 @@ SELECT ?dobj WHERE{
 }`;
 
 	return { text };
-}
-
-export function findStations(search: string) {
-	return `# findStations
-PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
-SELECT DISTINCT (str(?lName) AS ?Long_name)
-FROM <http://meta.icos-cp.eu/resources/stationentry/>
-WHERE {
-  ?s cpst:hasLongName ?lName .
-  FILTER CONTAINS(LCASE(STR(?lName)), LCASE("${search}"))
-}
-ORDER BY ?Long_name`;
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
