@@ -182,15 +182,15 @@ export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts'
 export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 	specBasics: {
 		label: 'Specification basics',
-		comment: 'Some information about this particular query.'
+		comment: 'Basic information about data specifications.'
 	},
 	specColumnMeta: {
-		label: 'Specification column meta',
-		comment: 'Some information about this particular query.'
+		label: 'Specification variables',
+		comment: 'Variable information about data specifications.'
 	},
 	dobjOriginsAndCounts: {
-		label: 'Origins and counts',
-		comment: 'Some information about this particular query.'
+		label: 'Specification origins and counts',
+		comment: 'Origins and counts for specifications.'
 	},
 	extendedDataObjectInfo: {
 		label: 'Detailed search result',
