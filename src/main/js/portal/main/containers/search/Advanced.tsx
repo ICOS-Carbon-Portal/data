@@ -105,7 +105,7 @@ function getQueryBuilder(state: State): (queryName: QueryName) => string {
 		dobjOriginsAndCounts:   () => queries.dobjOriginsAndCounts(getFilters(state)),
 		extendedDataObjectInfo: () => queries.extendedDataObjectInfo(state.extendedDobjInfo.map(d => d.dobj)),
 		labelLookup:                  queries.labelLookup,
-		specKeywordsQuery:                    specKeywordsQuery
+		specKeywordsQuery:            specKeywordsQuery
 	};
 
 	return qName => makeQuerySubmittable(lookup[qName]().text);
