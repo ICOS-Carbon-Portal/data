@@ -15,13 +15,13 @@ import {FiltersTemporal} from "../reducers/actionpayloads";
 import {Documentation, HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
 import {Int} from "../types";
 import {saveToRestheart} from "../../../common/main/backend";
-import {SearchOption} from "./types";
-import {failWithError, getOptions} from "./common";
+import {QueryParameters, SearchOption} from "./types";
+import {failWithError} from "./common";
 import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
 import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
-import { listFilteredDataObjects } from '../sparqlQueries';
+import { listFilteredDataObjects, SPECCOL } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 
 
@@ -69,6 +69,22 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 	dispatch(new Payloads.BootstrapRouteSearch());
 
 	logPortalUsage(state);
+};
+
+const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
+	const { specTable, paging, sorting } = state;
+	const filters = getFilters(state);
+	const useOnlyPidFilter = filters.some(f => f.category === "pids");
+
+	return {
+		specs: useOnlyPidFilter ? null : specTable.basics.getDistinctColValues(SPECCOL),
+		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
+		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
+		sorting,
+		paging: customPaging ?? paging,
+		filters
+	};
 };
 
 export const makeQuerySubmittable = (orgQuery: string) => {

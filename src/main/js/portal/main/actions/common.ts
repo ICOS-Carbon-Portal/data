@@ -25,9 +25,6 @@ import {isPidFreeTextSearch} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
-import Paging from "../models/Paging";
-import { QueryParameters } from "./types";
-import { SPECCOL } from "../sparqlQueries";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -80,22 +77,6 @@ export const getFilters = (state: State) => {
 	}
 
 	return filters;
-};
-
-export const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
-	const { specTable, paging, sorting } = state;
-	const filters = getFilters(state);
-	const useOnlyPidFilter = filters.some(f => f.category === "pids");
-
-	return {
-		specs: useOnlyPidFilter ? null : specTable.basics.getDistinctColValues(SPECCOL),
-		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
-		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
-		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
-		sorting,
-		paging: customPaging ?? paging,
-		filters
-	};
 };
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {

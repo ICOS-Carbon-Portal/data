@@ -1,4 +1,3 @@
-import { Query } from 'icos-cp-backend';
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
 import { Obj } from '../../common/main/types';
 import {IdxSig, UrlStr} from "./backend/declarations";
@@ -181,27 +180,27 @@ export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts'
 
 export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 	specBasics: {
-		label: 'Specification basics',
-		comment: 'Basic information about data specifications.'
+		label: 'Data type basics',
+		comment: 'Basic information about data types.'
 	},
 	specColumnMeta: {
-		label: 'Specification variables',
-		comment: 'Variable information about data specifications.'
+		label: 'Variables',
+		comment: 'Variable metadata, relation to data types.'
 	},
 	dobjOriginsAndCounts: {
-		label: 'Specification origins and counts',
-		comment: 'Origins and counts for specifications.'
+		label: 'Statistics of data object origins',
+		comment: 'Data object counts per data type/station/submitter/site (optional).'
 	},
 	extendedDataObjectInfo: {
-		label: 'Detailed search result',
-		comment: 'Search result with more details about each returned object. The result includes max 20 objects.'
+		label: 'Detailed data object info',
+		comment: 'Details about the data objects in the visible search result list (20 items).'
 	},
 	labelLookup: {
 		label: 'Labels',
-		comment: 'List labels for attributes.'
+		comment: 'User-friendly labels for various metadata entities (URI resources).'
 	},
 	specKeywordsQuery: {
 		label: 'Keywords',
-		comment: 'List keywords for objects.'
+		comment: 'Keywords associated with data types.'
 	},
 };

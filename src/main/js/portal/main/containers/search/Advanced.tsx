@@ -12,7 +12,7 @@ import {FilterPanel} from "../../components/filters/FilterPanel";
 import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
-import { getFilters, getOptions } from '../../actions/common';
+import { getFilters } from '../../actions/common';
 import { specKeywordsQuery } from '../../backend/keywordsInfo';
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -96,31 +96,26 @@ const CheckButton = (props: CheckButton) => {
 	);
 };
 
-const getPublicQuery = (state: State) => (queryName: QueryName): string => {
-	function query() {
-		switch (queryName) {
-			case 'specBasics': return queries.specBasics();
+function getQueryBuilder(state: State): (queryName: QueryName) => string {
+	type QueryThunk = () => {text: string}
 
-			case 'specColumnMeta': return queries.specColumnMeta();
-
-			case 'dobjOriginsAndCounts': return queries.dobjOriginsAndCounts(getFilters(state));
-
-			case 'extendedDataObjectInfo': return queries.extendedDataObjectInfo(state.extendedDobjInfo.map(d => d.dobj));
-
-			case 'labelLookup': return queries.labelLookup();
-			
-			case 'specKeywordsQuery': return specKeywordsQuery();
-		}
+	const lookup: {[key in QueryName]: QueryThunk} = {
+		specBasics:                   queries.specBasics,
+		specColumnMeta:               queries.specColumnMeta,
+		dobjOriginsAndCounts:   () => queries.dobjOriginsAndCounts(getFilters(state)),
+		extendedDataObjectInfo: () => queries.extendedDataObjectInfo(state.extendedDobjInfo.map(d => d.dobj)),
+		labelLookup:                  queries.labelLookup,
+		specKeywordsQuery:                    specKeywordsQuery
 	};
 
-	return makeQuerySubmittable(query().text);
+	return qName => makeQuerySubmittable(lookup[qName]().text);
 };
 
 function stateToProps(state: State) {
 	return {
 		filterPids: state.filterPids,
 		searchOptions: state.searchOptions,
-		getPublicQuery: getPublicQuery(state)
+		getPublicQuery: getQueryBuilder(state)
 	};
 }
 
