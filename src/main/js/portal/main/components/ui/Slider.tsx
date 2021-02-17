@@ -45,7 +45,7 @@ export default class Slider extends Component<Props, State>{
 		this.state = {
 			isOpen: props.startCollapsed === undefined ? true : !props.startCollapsed,
 			height: undefined,
-			isOpening: false
+			isOpening: true
 		};
 
 		this.events = new Events();
