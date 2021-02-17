@@ -73,9 +73,9 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 
 export const makeQuerySubmittable = (orgQuery: string) => {
 	const queryRows = orgQuery.split('\n');
-	// Skip first row that displays function name and empty rows
+	// Skip rows starting with a comment char and empty rows
 	return queryRows
-		.filter((row, idx) => idx > 0 && row.length > 0 && !row.match(/^\t+$/))
+		.filter(row => row.length > 0 && !row.match(/^\s*#/) && !row.match(/^\t+$/))
 		.join('\n');
 };
 

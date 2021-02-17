@@ -24,6 +24,7 @@ export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "them
 export function specBasics(): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
 where{
 	?spec cpmeta:hasDataLevel ?level .
@@ -45,6 +46,7 @@ export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType
 export function specColumnMeta(): SpecVarMetaQuery {
 	const text = `# specColumnMeta
 prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select distinct ?spec ?variable ?varTitle ?valType ?quantityKind
 (if(bound(?unit), ?unit, "(not applicable)") as ?quantityUnit)
 where{
@@ -81,6 +83,7 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site
 where{
 	{
@@ -106,6 +109,7 @@ where{
 export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
 	let text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 select distinct ?uri ?label ?stationId
 from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>`;
@@ -416,6 +420,8 @@ export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station"
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?biblioInfo where{
 	{
 		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?site0) as ?site) where{

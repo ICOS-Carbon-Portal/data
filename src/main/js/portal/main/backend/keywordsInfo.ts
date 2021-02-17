@@ -61,6 +61,7 @@ function getSpecLookup(): Promise<SpecLookupByKeyword> {
 export function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
 	const text = `# spec keywords
 prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select ?spec ?keywords
 from <${config.metaResourceGraph[config.envri]}>
 where{
