@@ -59,8 +59,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val objectDownload: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
-			onSuccess(uploadService.meta.lookupPackage(hashsum)){
-				case dobj: DataObject =>
+			onComplete(uploadService.meta.lookupPackage(hashsum)){
+				case Success(dobj: DataObject) =>
 					licenceCookieHashsums{dobjs =>
 						deleteCookie(LicenceCookieName){
 							if(dobjs.contains(hashsum)) (accessRoute(dobj))
@@ -74,8 +74,10 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 						}
 					} ~
 					redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
-				case doc: DocObject =>
+				case Success(doc: DocObject) =>
 					docAccessRoute(doc)
+				case Failure(err) =>
+					complete(StatusCodes.NotFound -> err.getMessage())
 			}
 		}
 	}
