@@ -2,6 +2,7 @@ import React from 'react';
 import { metadataRow } from '../../containers/Metadata';
 import { MetaDataObject } from '../../models/State';
 import { L3SpecificMeta, PlainStaticObject } from '../../../../common/main/metacore';
+import { LinkifyText } from '../LinkifyText';
 
 interface AboutSectionProps {
 	metadata: MetaDataObject,
@@ -30,8 +31,9 @@ const AboutSection = (props: AboutSectionProps) => {
 				metadata.specification.project.self.label && metadataRow("Theme", metadata.specification.theme.self.label)
 			}
 			{metadata.specification.project.self.label && metadataRow(projectLabel, metadata.specification.project.self.label)}
+			{/* Preserve line breaks in description with white-space: pre-line  */}
 			{description &&
-				metadataRow("Description", <span style={{ whiteSpace: 'pre-line' }}>{description}</span>, true)
+				metadataRow("Description", <LinkifyText text={description} style={{ whiteSpace: 'pre-line' }} />)
 			}
 			{metadata.parentCollections.length > 0 &&
 				metadataRow("Part of",
