@@ -19,26 +19,26 @@ object B2Playground{
 
 	def stop() = system.terminate()
 
-	val b2config = ConfigReader.getDefault.upload.b2safe.copy(dryRun = false, host = "https://eud-res02.csc.fi:8443")
+	val b2config = ConfigReader.getDefault.upload.b2safe.copy(dryRun = false)
 	val default = new B2SafeClient(b2config, http)
 
-	def list(path: String, parent: Option[IrodsColl] = Some(B2StageItem.Root)) = {
+	def list(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
 		items.runForeach(println)
 	}
 
 	def listRoot() = {
-		val items = Await.result(default.list(B2StageItem.Root), 5.seconds)
+		val items = Await.result(default.list(B2SafeItem.Root), 5.seconds)
 		items.runForeach(println)
 	}
 
-	def countItems(path: String, parent: Option[IrodsColl] = Some(B2StageItem.Root)): Future[Int] = {
+	def countItems(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)): Future[Int] = {
 		default.list(IrodsColl(path, parent)).flatMap{
 			_.runFold(0)((sum, _) => sum + 1)
 		}
 	}
 
-	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2StageItem.Root) = {
+	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) = {
 		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 		val dobj = IrodsData(name, parent)
 
@@ -55,7 +55,7 @@ object B2Playground{
 		println(s"SHA256 = $hash, elapsed $elapsed ms")
 	}
 
-	def testDownload(name: String, parent: IrodsColl = B2StageItem.Root): Unit = {
+	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit = {
 		val lfut = default.downloadObjectOnce(IrodsData(name, parent)).flatMap(
 			_.runFold(0L)((sum, bs) => {println(sum); sum + bs.length})
 		)

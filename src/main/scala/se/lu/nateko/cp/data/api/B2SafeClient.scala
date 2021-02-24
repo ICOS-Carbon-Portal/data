@@ -37,24 +37,28 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 	import mat.executionContext
 	import B2SafeClient._
 
-	def getUri(item: B2StageItem) = {
+	def getUri(item: B2SafeItem): Uri = {
 		val pathPrefix = item match{
 			case _: IrodsData => "/objects"
 			case _: IrodsColl => "/collections"
 		}
-		Uri(config.host + pathPrefix + item.path)
+		getUri(pathPrefix, item)
 	}
+
+	private def getUri(pathPrefix: String, item: B2SafeItem) =
+		Uri(config.host + pathPrefix + config.homePath + item.path)
+
 
 	private val authHeader = headers.Authorization(
 		BasicHttpCredentials(config.username, config.password)
 	)
 
-	def list(coll: IrodsColl): Future[Source[B2StageItem, Any]] =
+	def list(coll: IrodsColl): Future[Source[B2SafeItem, Any]] =
 		withAuth(HttpRequest(uri = getUri(coll)))
 			.flatMap(parseItemsIfOk)
 
 	def create(coll: IrodsColl): Future[Done] = if(config.dryRun) done else withAuth(
-			HttpRequest(uri = getUri(coll), method = HttpMethods.PUT)
+			HttpRequest(uri = getUri(coll).withRawQueryString("recursive"), method = HttpMethods.PUT)
 		).flatMap(failIfNotSuccess)
 
 	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Sha256Sum] =
@@ -119,7 +123,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		.lazyFutureSource(() => downloadObjectOnce(obj))
 		.mapMaterializedValue(_.map(_ => Done))
 
-	def delete(item: B2StageItem): Future[Done] = if(config.dryRun) done else
+	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
 		withAuth(objDeleteHttpRequest(item)).flatMap(failIfNotSuccess)
 
 	def deleteFlow: Flow[IrodsData, Try[Done], NotUsed] = {
@@ -136,21 +140,27 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		in via out
 	}
 
-	private def objDeleteHttpRequest(item: B2StageItem) =
+	private def objDeleteHttpRequest(item: B2SafeItem) =
 		HttpRequest(uri = getUri(item).withRawQueryString("notrash"), method = HttpMethods.DELETE)
 
-	def exists(item: B2StageItem): Future[Boolean] =
+	def exists(item: B2SafeItem): Future[Boolean] =
 		withAuth(HttpRequest(uri = getUri(item), method = HttpMethods.HEAD))
 			.map{resp =>
 				resp.discardEntityBytes()
 				resp.status.isSuccess()
 			}
 
+	def getHashsum(data: IrodsData): Future[Option[Sha256Sum]] = {
+		val uri = getUri("/metadata", data)
+		//TODO Implement
+		???
+	}
+
 	private def withAuth(req: HttpRequest): Future[HttpResponse] = http.singleRequest{
 		req.withHeaders(req.headers :+ authHeader)
 	}
 
-	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2StageItem, Any]] = analyzeResponse(resp){_ =>
+	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2SafeItem, Any]] = analyzeResponse(resp){_ =>
 		import spray.json._
 		val resStream = resp.entity.withoutSizeLimit.dataBytes
 			.via(Framing.delimiter(ByteString("\n"), 8000))
@@ -174,13 +184,13 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		else
 			Unmarshal(resp).to[String].flatMap{body =>
 				val msg = if(body.trim.isEmpty) resp.status.value else body.trim
-				Future.failed[T](new CpDataException(s"B2STAGE error: $msg"))
+				Future.failed[T](new CpDataException(s"B2SAFE error: $msg"))
 			}
 	}
 
-	private def toB2StageItem(item: ApiResponseItem): B2StageItem = {
+	private def toB2StageItem(item: ApiResponseItem): B2SafeItem = {
 		def makeColl(segments: List[String]): IrodsColl = segments match{
-			case Nil => B2StageItem.Root
+			case Nil => B2SafeItem.Root
 			case head :: tail => IrodsColl(head, Some(makeColl(tail)))
 		}
 
@@ -190,7 +200,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 
 		val coll = makeColl(collPathSegments)
 
-		item.dataName.fold[B2StageItem](coll)(IrodsData(_, coll))
+		item.dataName.fold[B2SafeItem](coll)(IrodsData(_, coll))
 	}
 }
 

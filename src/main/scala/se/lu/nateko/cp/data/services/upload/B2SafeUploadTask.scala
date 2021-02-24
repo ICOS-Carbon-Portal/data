@@ -19,11 +19,8 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2SafeClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val existsFut: Future[Boolean] = client.exists(irodsData.parent).flatMap{
-		//TODO Add hash control to the existence check
-		case true => client.exists(irodsData)
-		case false => client.create(irodsData.parent).map(_ => false)
-	}
+	private[this] val existsFut: Future[Boolean] =
+		client.getHashsum(irodsData).map(_.contains(hash))
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val sinkFut: Future[Sink[ByteString, Future[UploadTaskResult]]] = existsFut.map{
@@ -34,7 +31,7 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 				client.objectSink(irodsData).mapMaterializedValue(
 					_.map{resHash =>
 						if(resHash == hash) B2StageSuccess
-						else B2StageFailure(hashError(resHash))
+						else B2SafeFailure(hashError(resHash))
 					}
 				)
 		}
@@ -42,7 +39,7 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 		Sink.lazyFutureSink(() => sinkFut).mapMaterializedValue(_
 			.flatten
 			.recover{
-				case err => B2StageFailure(err)
+				case err => B2SafeFailure(err)
 			}
 		)
 	}
@@ -83,6 +80,9 @@ object B2SafeUploadTask{
 	def irodsData(statObj: StaticObject): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
 	def irodsData(format: URI, hash: Sha256Sum): IrodsData = irodsData(UploadService.fileFolder(format), hash)
 
-	private def irodsData(folder: String, hash: Sha256Sum): IrodsData =
-		IrodsData(UploadService.fileName(hash), IrodsColl(folder)) //parent is root
+	private def irodsData(folder: String, hash: Sha256Sum): IrodsData = {
+		val baseColl = IrodsColl(folder)//parent is root
+		val coll = IrodsColl(hash.base64Url.take(2), Some(baseColl))
+		IrodsData(UploadService.fileName(hash), coll)
+	}
 }

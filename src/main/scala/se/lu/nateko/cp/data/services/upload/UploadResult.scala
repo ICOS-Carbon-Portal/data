@@ -74,7 +74,7 @@ case class IrodsHashsumFailure(failure: HashsumCheckFailure) extends UploadTaskF
 }
 
 case object B2StageSuccess extends UploadTaskSuccess
-case class B2StageFailure(error: Throwable) extends UploadTaskFailure
+case class B2SafeFailure(error: Throwable) extends UploadTaskFailure
 
 case class FileWriteSuccess(bytesWritten: Long) extends UploadTaskSuccess
 case class FileWriteFailure(error: Throwable) extends UploadTaskFailure
