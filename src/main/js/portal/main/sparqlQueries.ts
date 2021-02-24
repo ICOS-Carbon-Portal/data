@@ -186,8 +186,6 @@ OPTIONAL {
 
 export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
-	function isEmpty(arr: Filter) { return !arr || !arr.length; }
-
 	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
@@ -195,37 +193,22 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 		? ''
 		: `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 
-	const specsValues = isEmpty(specs)
+	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: `VALUES ?${SPECCOL} {<${(specs as Value[]).join('> <')}>}`;
+		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
 
-	const submitterSearch = isEmpty(submitters) ? ''
-		: `VALUES ?submitter {<${(submitters as Value[]).join('> <')}>}
+	const submitterSearch = submitters == null ? ''
+		: `VALUES ?submitter {<${submitters.join('> <')}>}
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
-	const dobjStation = '?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ';
+	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
+		? ''
+		: `VALUES ?station {<${stations.filter(Value.isDefined).join('> <')}>}
+			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
 
-	const noStationFilter = `FILTER NOT EXISTS{${dobjStation} []}`;
-
-	function stationsFilter(stations: any[]) {
-		return `VALUES ?station {<${stations.join('> <')}>}` +
-			'\n' + dobjStation + '?station .';
-	}
-
-	//TODO Investigate if this empty-station case handling is still needed, and if yes, apply it to sites
-	const stationSearch = isEmpty(stations) ? '' : (stations as Value[]).some((s: any) => !s)
-		? (stations as Value[]).length === 1
-			? noStationFilter
-			: `{{
-					${noStationFilter}
-				} UNION {
-					${stationsFilter((stations as Value[]).filter((s: any) => !!s))}
-				}}`
-		: stationsFilter((stations as Value[]));
-
-	const siteSearch = !sites || isEmpty(sites.filter(Value.isDefined))
+	const siteSearch = sites == null || sites.filter(Value.isDefined).length === 0
 		? ''
 		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
 				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
@@ -284,10 +267,10 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
-	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters, supplyVarDefs));
+	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters));
 }
 
-function getKeywordFilter(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
+function getKeywordFilter(allFilters: FilterRequest[]): string {
 	const requests = allFilters.filter(isKeywordsFilter);
 	if (requests.length === 0) return '';
 	if (requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");

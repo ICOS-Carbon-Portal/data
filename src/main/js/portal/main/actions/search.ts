@@ -33,7 +33,7 @@ export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAnd
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const filters = getFilters(getState());
+		const filters = getFilters(getState(), true);
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
@@ -103,9 +103,9 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 		dispatch(new Payloads.BackendExportQuery(true, sparqClientQuery));
 
 		const options = getOptions(state, new Paging({ objCount: 0, offset: 0, limit: config.exportCSVLimit }));
-		const query = listFilteredDataObjects(options);
+		const query = makeQuerySubmittable(listFilteredDataObjects(options).text);
 
-		sparqlFetchBlob(query.text).then(blob => {
+		sparqlFetchBlob(query).then(blob => {
 			const lnk = document.createElement("a");
 			lnk.href = window.URL.createObjectURL(blob);
 			lnk.download = config.searchResultsCSVName[config.envri];
@@ -154,7 +154,7 @@ const logPortalUsage = (state: State) => {
 	}
 };
 
-const getFilters = (state: State) => {
+function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
 	let filters: FilterRequest[] = [];
 
@@ -177,7 +177,14 @@ const getFilters = (state: State) => {
 
 		if(filterKeywords.length > 0){
 			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
-			const specs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+			let specs = kwSpecs;
+
+			if(!forStatCountsQuery){
+				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
+				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
+			};
+
 			filters.push({category: 'keywords', dobjKeywords, specs});
 		}
 
