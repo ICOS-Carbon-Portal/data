@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.api
 
 import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -26,11 +27,12 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.B2SafeConfig
+import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.data.streams.DigestFlow
-import spray.json.{DefaultJsonProtocol, JsonFormat}
+import spray.json.DefaultJsonProtocol
+import spray.json.JsonFormat
 
 class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializer) {
 
@@ -150,11 +152,19 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 				resp.status.isSuccess()
 			}
 
-	def getHashsum(data: IrodsData): Future[Option[Sha256Sum]] = {
-		val uri = getUri("/metadata", data)
-		//TODO Implement
-		???
-	}
+	def getHashsum(data: IrodsData): Future[Option[Sha256Sum]] =
+		withAuth(HttpRequest(uri = getUri("/metadata", data))).flatMap{resp =>
+			if(resp.status == StatusCodes.NotFound) {
+				resp.discardEntityBytes()
+				Future.successful(None)
+			} else analyzeResponse(resp){resp =>
+				import spray.json._
+				resp.entity.toStrict(3.seconds).map{_
+					.data.utf8String.parseJson.convertTo[MetaItem].checksum
+					.flatMap(cs => Sha256Sum.fromBase64(cs.stripPrefix("sha2:")).toOption)
+				}
+			}
+		}
 
 	private def withAuth(req: HttpRequest): Future[HttpResponse] = http.singleRequest{
 		req.withHeaders(req.headers :+ authHeader)
@@ -165,7 +175,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		val resStream = resp.entity.withoutSizeLimit.dataBytes
 			.via(Framing.delimiter(ByteString("\n"), 8000))
 			.map(bs => bs.utf8String.parseJson.convertTo[ApiResponseItem])
-			.map(toB2StageItem)
+			.map(toB2SafeItem)
 		Future.successful(resStream)
 	}
 
@@ -188,7 +198,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 			}
 	}
 
-	private def toB2StageItem(item: ApiResponseItem): B2SafeItem = {
+	private def toB2SafeItem(item: ApiResponseItem): B2SafeItem = {
 		def makeColl(segments: List[String]): IrodsColl = segments match{
 			case Nil => B2SafeItem.Root
 			case head :: tail => IrodsColl(head, Some(makeColl(tail)))
@@ -209,7 +219,9 @@ object B2SafeClient extends DefaultJsonProtocol{
 	class UploadResponse[T](val context: T, val result: Try[Sha256Sum])
 
 	private case class ApiResponseItem(dataName: Option[String], collectionName: String)
+	private case class MetaItem(checksum: Option[String])
 
 	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem)
+	private implicit val metaItemReader: JsonFormat[MetaItem] = jsonFormat1(MetaItem)
 
 }

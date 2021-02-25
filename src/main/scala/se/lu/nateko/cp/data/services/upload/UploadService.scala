@@ -229,7 +229,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-		//B2StageUploadTask(obj, b2) :+
+		B2SafeUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =

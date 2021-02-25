@@ -14,13 +14,15 @@ import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
 import se.lu.nateko.cp.data.utils.Akka.done
-import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.StaticObject
 
 class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2SafeClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val existsFut: Future[Boolean] =
-		client.getHashsum(irodsData).map(_.contains(hash))
+	private[this] val existsFut: Future[Boolean] = client.getHashsum(irodsData).flatMap{
+		case Some(`hash`) => Future.successful(true)
+		case _ => client.create(irodsData.parent).map(_ => false)
+	}
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val sinkFut: Future[Sink[ByteString, Future[UploadTaskResult]]] = existsFut.map{
