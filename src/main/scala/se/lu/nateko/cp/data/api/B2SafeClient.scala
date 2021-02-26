@@ -181,9 +181,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 						)
 					)
 				){
-					loc =>
-					println(s"Redirected to ${loc.uri}")
-					http.singleRequest(origReq.withUri(loc.uri))
+					loc => http.singleRequest(origReq.withUri(loc.uri))
 				}
 			}
 			else if(req.entity.contentLengthOption.contains(0L)) Future.successful(resp)
