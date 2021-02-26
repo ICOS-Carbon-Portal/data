@@ -18,6 +18,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers
 import akka.http.scaladsl.model.headers.BasicHttpCredentials
+import akka.http.scaladsl.model.headers.Location
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
@@ -106,7 +107,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 			case header if header.is("x-checksum") =>
 				Sha256Sum.fromBase64(header.value.stripPrefix("sha2:"))
 		}.getOrElse(
-			Failure(new CpDataException("No X-Checksum header in HTTP response from B2STAGE"))
+			Failure(new CpDataException("No X-Checksum header in HTTP response from B2SAFE"))
 		)
 
 	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))
@@ -166,8 +167,29 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 			}
 		}
 
-	private def withAuth(req: HttpRequest): Future[HttpResponse] = http.singleRequest{
-		req.withHeaders(req.headers :+ authHeader)
+	private def withAuth(req: HttpRequest): Future[HttpResponse] = {
+		val origReq = req.withHeaders(req.headers :+ authHeader)
+		val redirectToStorage = 307
+
+		http.singleRequest(origReq.withEntity(HttpEntity.Empty)).flatMap{resp =>
+			if(resp.status.intValue == redirectToStorage){
+				resp.discardEntityBytes()
+				resp.header[Location].fold(
+					Future.failed[HttpResponse](
+						new CpDataException(
+							s"Got a $redirectToStorage redirect from B2SAFE, but no target URI (Location)"
+						)
+					)
+				){
+					loc =>
+					println(s"Redirected to ${loc.uri}")
+					http.singleRequest(origReq.withUri(loc.uri))
+				}
+			}
+			else if(req.entity.contentLengthOption.contains(0L)) Future.successful(resp)
+			else http.singleRequest(origReq)
+
+		}
 	}
 
 	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2SafeItem, Any]] = analyzeResponse(resp){_ =>
