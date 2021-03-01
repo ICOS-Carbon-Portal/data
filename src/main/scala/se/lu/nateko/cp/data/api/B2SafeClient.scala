@@ -185,7 +185,10 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 				}
 			}
 			else if(req.entity.contentLengthOption.contains(0L)) Future.successful(resp)
-			else http.singleRequest(origReq)
+			else {
+				resp.discardEntityBytes()
+				http.singleRequest(origReq)
+			}
 
 		}
 	}
