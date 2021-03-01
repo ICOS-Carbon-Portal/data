@@ -168,29 +168,42 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 			}
 		}
 
-	private def withAuth(req: HttpRequest): Future[HttpResponse] = {
-		val authReq = req.withHeaders(req.headers :+ authHeader)
+	private def withAuth(origReq: HttpRequest): Future[HttpResponse] = {
 
-		http.singleRequest(authReq.withEntity(HttpEntity.Empty)).flatMap{resp =>
-			if(resp.status.isRedirection){
-				resp.discardEntityBytes()
-				resp.header[Location].fold(
-					Future.failed[HttpResponse](
-						new CpDataException(
-							s"Got a ${resp.status.intValue} redirect from B2SAFE, but no target URI (Location)"
+		def withRedirects(req: HttpRequest, visited: Set[Uri]): Future[HttpResponse] =
+			if(visited.contains(req.uri)) {
+				val msg = s"B2SAFE redirection loop, visited URLs: ${visited.mkString(", ")}"
+				Future.failed(new CpDataException(msg))
+
+			} else if(visited.size > 10) {
+				val msg = s"B2SAFE problem: too many redirects, visited URLs:\n${visited.mkString("\n")}"
+				Future.failed(new CpDataException(msg))
+
+			} else http.singleRequest(req.withEntity(HttpEntity.Empty)).flatMap{resp =>
+
+				if(resp.status.isRedirection){
+					resp.discardEntityBytes()
+					resp.header[Location].fold(
+						Future.failed[HttpResponse](
+							new CpDataException(
+								s"Got a ${resp.status.intValue} redirect from B2SAFE, but no target URI (Location)"
+							)
 						)
-					)
-				){
-					loc => http.singleRequest(authReq.withUri(loc.uri))
+					){
+						loc => withRedirects(req.withUri(loc.uri), visited + req.uri)
+					}
 				}
-			}
-			else if(req.entity.contentLengthOption.contains(0L)) Future.successful(resp)
-			else {
-				resp.discardEntityBytes()
-				http.singleRequest(authReq)
+				else if(req.entity.contentLengthOption.contains(0L) || resp.status.isFailure) Future.successful(resp)
+				else { //success, but the original request had non-empty payload
+					resp.discardEntityBytes()
+					//redoing the request with the payload this time
+					http.singleRequest(req)
+				}
+
 			}
 
-		}
+		val authReq = origReq.withHeaders(origReq.headers :+ authHeader)
+		withRedirects(authReq, Set.empty)
 	}
 
 	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2SafeItem, Any]] = analyzeResponse(resp){_ =>

@@ -46,12 +46,12 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 
-			uploader.b2StageSourceExists(format, hash).flatMap{
+			uploader.b2SafeSourceExists(format, hash).flatMap{
 				case true =>
 					Future.successful(new OkReport(dobjStInfo))
 				case false =>
 					val (file, localProb) = localFileProblem(dobjStInfo)
-					val prob = "file absent in B2STAGE" + localProb.fold("")("; " + _)
+					val prob = "file absent in B2SAFE" + localProb.fold("")("; " + _)
 
 					if(uploadMissingToRemote && localProb.isEmpty){
 						uploader.uploadToB2Stage(format, hash, FileIO.fromPath(file)).map{_ =>

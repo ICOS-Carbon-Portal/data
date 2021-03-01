@@ -51,7 +51,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
-	def b2StageSourceExists(format: URI, hash: Sha256Sum): Future[Boolean] =
+	def b2SafeSourceExists(format: URI, hash: Sha256Sum): Future[Boolean] =
 		b2.exists(B2SafeUploadTask.irodsData(format, hash))
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
