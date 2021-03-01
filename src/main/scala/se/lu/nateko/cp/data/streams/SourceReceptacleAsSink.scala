@@ -20,7 +20,12 @@ object SourceReceptacleAsSink {
 
 		Sink.queue[T]().mapMaterializedValue{sinkQ =>
 			val srcQueueProm = Promise[SourceQueueWithComplete[T]]()
-			val src = Source.queue[T](1, OverflowStrategy.backpressure).mapMaterializedValue(srcQueueProm.success)
+
+			val src = Source.queue[T](1, OverflowStrategy.backpressure).mapMaterializedValue{srcQ =>
+				if(!srcQueueProm.trySuccess(srcQ)) throw new IllegalStateException(
+					"The Source receiver has tried to run the received Source more than once"
+				)
+			}
 			val resFut = receiver(src)
 
 			srcQueueProm.future.transformWith{

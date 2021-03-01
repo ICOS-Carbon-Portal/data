@@ -148,7 +148,8 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 				val results = uploadResults.toIndexedSeq
 
 				results.foreach{
-					case fail: UploadTaskFailure => log.error(fail.error, "Upload task failure")
+					case fail: UploadTaskFailure =>
+						log.error(fail.error, s"Upload failure for ${dataObj.fileName} (${dataObj.hash})")
 					case _ =>
 				}
 
@@ -229,7 +230,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		new IrodsUploadTask(obj, irods2) :+
-		//B2SafeUploadTask(obj, b2) :+
+		B2SafeUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =

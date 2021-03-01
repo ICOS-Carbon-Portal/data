@@ -4,6 +4,8 @@ import java.net.URI
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
 
 import akka.Done
 import akka.stream.scaladsl.Sink
@@ -27,14 +29,23 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val sinkFut: Future[Sink[ByteString, Future[UploadTaskResult]]] = existsFut.map{
 			case true => Sink.cancelled.mapMaterializedValue(
-					_ => Future.successful(B2StageSuccess)
+					_ => Future.successful(B2SafeSuccess)
 				)
 			case false =>
 				client.objectSink(irodsData).mapMaterializedValue(
-					_.map{resHash =>
-						if(resHash == hash) B2StageSuccess
-						else B2SafeFailure(hashError(resHash))
+					_.transform{
+						case Success(upHash) =>
+							if(upHash != hash) println(s"B2SAFE ERROR: expected SHA-256 $hash , got $upHash")
+							Success(B2SafeSuccess)
+						case Failure(exc) =>
+							println(s"B2SAFE ERROR: ${exc.getMessage}")
+							exc.printStackTrace()
+							Success(B2SafeSuccess)
 					}
+					// _.map{resHash =>
+					// 	if(resHash == hash) B2SafeSuccess
+					// 	else B2SafeFailure(hashError(resHash))
+					// }
 				)
 		}
 

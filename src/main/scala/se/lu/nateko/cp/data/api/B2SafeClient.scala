@@ -106,9 +106,10 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		.collectFirst{
 			case header if header.is("x-checksum") =>
 				Sha256Sum.fromBase64(header.value.stripPrefix("sha2:"))
-		}.getOrElse(
-			Failure(new CpDataException("No X-Checksum header in HTTP response from B2SAFE"))
-		)
+		}.getOrElse{
+			val msg = s"No X-Checksum header in ${resp.status.intValue} HTTP response from B2SAFE"
+			Failure(new CpDataException(msg))
+		}
 
 	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))
 
@@ -168,26 +169,25 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 		}
 
 	private def withAuth(req: HttpRequest): Future[HttpResponse] = {
-		val origReq = req.withHeaders(req.headers :+ authHeader)
-		val redirectToStorage = 307
+		val authReq = req.withHeaders(req.headers :+ authHeader)
 
-		http.singleRequest(origReq.withEntity(HttpEntity.Empty)).flatMap{resp =>
-			if(resp.status.intValue == redirectToStorage){
+		http.singleRequest(authReq.withEntity(HttpEntity.Empty)).flatMap{resp =>
+			if(resp.status.isRedirection){
 				resp.discardEntityBytes()
 				resp.header[Location].fold(
 					Future.failed[HttpResponse](
 						new CpDataException(
-							s"Got a $redirectToStorage redirect from B2SAFE, but no target URI (Location)"
+							s"Got a ${resp.status.intValue} redirect from B2SAFE, but no target URI (Location)"
 						)
 					)
 				){
-					loc => http.singleRequest(origReq.withUri(loc.uri))
+					loc => http.singleRequest(authReq.withUri(loc.uri))
 				}
 			}
 			else if(req.entity.contentLengthOption.contains(0L)) Future.successful(resp)
 			else {
 				resp.discardEntityBytes()
-				http.singleRequest(origReq)
+				http.singleRequest(authReq)
 			}
 
 		}
