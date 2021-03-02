@@ -55,6 +55,7 @@ object StatsRouting extends DefaultJsonProtocol{
 	case class DownloadCount(downloadCount: Int)
 	case class PointPosition(`type`: String, coordinates: Tuple2[Double, Double])
 	case class Download(itemType: String, ts: Instant, hashId: String, ip: String, city: Option[String], countryCode: Option[String], geoJson: Option[PointPosition])
+	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
 	implicit val statsQueryParamsFormat = jsonFormat9(StatsQueryParams)
 	implicit val pointPositionFormat = jsonFormat2(PointPosition)
@@ -70,6 +71,7 @@ object StatsRouting extends DefaultJsonProtocol{
 	implicit val downloadedFromFormat = jsonFormat2(DownloadedFrom)
 	implicit val downloadCountFormat = jsonFormat1(DownloadCount)
 	implicit val downloadFormat = jsonFormat7(Download)
+	implicit val customDownloadsPerYearCountryFormat = jsonFormat3(CustomDownloadsPerYearCountry)
 
 	def parsePointPosition(jsonStr: String): Option[PointPosition] =
 		Try{jsonStr.parseJson.convertTo[PointPosition]}.toOption
@@ -173,6 +175,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 					complete(dbc)
 				}
 			} ~
+			statsQuery("customDownloadsPerYearCountry", pgClient.customDownloadsPerYearCountry) ~
 			complete(StatusCodes.NotFound)
 		} ~
 		(options & setOriginHeader){

@@ -638,6 +638,50 @@ ORDER BY count;
 
 $$;
 
+---------------------
+DROP FUNCTION IF EXISTS public.customDownloadsPerYearCountry;
+CREATE OR REPLACE FUNCTION public.customDownloadsPerYearCountry(
+		_page int DEFAULT 1,
+		_pagesize int DEFAULT 10000,
+		_specs text[] DEFAULT NULL,
+		_stations text[] DEFAULT NULL,
+		_submitters text[] DEFAULT NULL,
+		_contributors text[] DEFAULT NULL,
+		_downloaded_from text [] DEFAULT NULL,
+		_origin_stations text [] DEFAULT NULL,
+		_hash_id text DEFAULT NULL
+	)
+	RETURNS TABLE(
+		year int,
+		country text,
+		downloads int
+	)
+	LANGUAGE plpgsql
+	STABLE
+AS $$
+
+BEGIN
+	RETURN QUERY
+		SELECT
+			date_part('year', year_start)::int AS year,
+			country_code AS country,
+			SUM(count)::int AS downloads
+		FROM downloads_timebins_mv
+		WHERE (
+			country_code IS NOT NULL AND
+			(_specs IS NULL OR spec = ANY (_specs))
+			AND (_stations IS NULL OR station = ANY (_stations))
+			AND (_submitters IS NULL OR submitter = ANY (_submitters))
+			AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+			AND (_contributors IS NULL OR contributors ?| _contributors)
+			AND (_origin_stations IS NULL OR station = ANY (_origin_stations))
+		)
+		GROUP BY year, country
+		ORDER BY year DESC, downloads DESC;
+END
+
+$$;
+
 
 -- Set user rights
 GRANT USAGE ON SCHEMA public TO reader;

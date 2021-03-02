@@ -230,6 +230,11 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		}
 	}
 
+	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
+		runAnalyticalQuery("SELECT year, country, downloads FROM customDownloadsPerYearCountry", Some(queryParams)){rs =>
+			CustomDownloadsPerYearCountry(rs.getInt("year"), rs.getString("country"), rs.getInt("downloads"))
+		}
+
 	def runAnalyticalQuery[T](
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
