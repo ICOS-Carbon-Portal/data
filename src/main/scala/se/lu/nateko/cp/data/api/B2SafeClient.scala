@@ -190,13 +190,16 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 							)
 						)
 					){
-						loc => withRedirects(req.withUri(loc.uri), visited + req.uri)
+						loc =>
+						println(s"B2SAFE: empty-content ${req.method} request to ${req.uri} got redirected to ${loc.uri}")
+						withRedirects(req.withUri(loc.uri), visited + req.uri)
 					}
 				}
-				else if(req.entity.contentLengthOption.contains(0L) || resp.status.isFailure) Future.successful(resp)
+				else if(req.entity.isKnownEmpty || resp.status.isFailure) Future.successful(resp)
 				else { //success, but the original request had non-empty payload
 					resp.discardEntityBytes()
 					//redoing the request with the payload this time
+					println(s"B2SAFE: Re-doing ${req.method} request to ${req.uri}, but with intended HTTP entity this time")
 					http.singleRequest(req)
 				}
 
@@ -225,7 +228,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 	}
 
 	private def analyzeResponse[T](resp: HttpResponse)(extractor: HttpResponse => Future[T]): Future[T] = {
-		if(resp.status.isSuccess)
+		if(resp.status.isSuccess && !resp.status.isRedirection)
 			extractor(resp)
 		else
 			Unmarshal(resp).to[String].flatMap{body =>
