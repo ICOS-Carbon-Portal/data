@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import Radio from './Radio.jsx';
 import deepEqual from 'deep-equal';
 import FileDownload from './FileDownload.jsx';
-import {placeholders} from "./Filter";
+import {placeholders} from "./Filters";
 import config from '../config';
 
 export default class Graph extends Component{
