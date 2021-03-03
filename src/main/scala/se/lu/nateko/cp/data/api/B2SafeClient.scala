@@ -191,22 +191,31 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 						)
 					){
 						loc =>
-						println(s"B2SAFE: empty-content ${req.method} request to ${req.uri} got redirected to ${loc.uri}")
+						//println(s"B2SAFE: empty-content ${req.method} request to ${req.uri} got redirected to ${loc.uri}")
 						withRedirects(req.withUri(loc.uri), visited + req.uri)
 					}
 				}
 				else if(req.entity.isKnownEmpty || resp.status.isFailure) Future.successful(resp)
 				else { //success, but the original request had non-empty payload
 					resp.discardEntityBytes()
-					//redoing the request with the payload this time
-					println(s"B2SAFE: Re-doing ${req.method} request to ${req.uri}, but with intended HTTP entity this time")
-					http.singleRequest(req)
+					//redoing the request with the payload this time, and asking for no redirect
+					val finalReq = withNoRedirect(req)
+					//println(s"B2SAFE: Re-doing ${finalReq.method} request to ${finalReq.uri}, but with intended HTTP entity this time")
+					http.singleRequest(finalReq)
 				}
 
 			}
 
 		val authReq = origReq.withHeaders(origReq.headers :+ authHeader)
 		withRedirects(authReq, Set.empty)
+	}
+
+	private def withNoRedirect(req: HttpRequest): HttpRequest = {
+		val noredir = "noredirect"
+		val queryString = req.uri.rawQueryString.getOrElse("")
+		if(queryString.contains(noredir)) req else req.withUri(
+				req.uri.withRawQueryString((if(queryString.isEmpty) "" else queryString + "&") + noredir)
+		)
 	}
 
 	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2SafeItem, Any]] = analyzeResponse(resp){_ =>
