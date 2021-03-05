@@ -70,6 +70,7 @@ const handleRouteMetadata = (state: State, payload: BootstrapRouteMetadata): Sta
 		: state.objectsTable;
 	const newPartialState: BootstrapState = {
 		route: 'metadata',
+		id: payload.id,
 		metadata: payload.metadata,
 		objectsTable,
 		isRunningInit: false

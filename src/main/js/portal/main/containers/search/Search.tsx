@@ -8,12 +8,13 @@ import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
 import {Route, State} from "../../models/State";
-import {addToCart, setMetadataItem, updateRoute} from "../../actions/common";
+import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import { UiInactivateAllHelp } from '../../reducers/actionpayloads';
 import HelpSection from '../../components/help/HelpSection';
+import bootstrapMetadata from '../../actions/metadata';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -62,7 +63,7 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	handleViewMetadata(id: UrlStr) {
-		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
+		this.props.bootstrapMetadata(id);
 	}
 
 	toggleFilters() {
@@ -135,7 +136,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
+		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
 		onHelpClose: () => dispatch(new UiInactivateAllHelp())
 	};

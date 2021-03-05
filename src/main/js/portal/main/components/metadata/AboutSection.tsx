@@ -1,11 +1,11 @@
 import React from 'react';
 import { metadataRow } from '../../containers/Metadata';
-import { MetaDataObject } from '../../models/State';
+import { MetaData } from '../../models/State';
 import { L3SpecificMeta, PlainStaticObject } from '../../../../common/main/metacore';
 import { LinkifyText } from '../LinkifyText';
 
 interface AboutSectionProps {
-	metadata: MetaDataObject,
+	metadata: MetaData,
 	projectLabel: string,
 	handleViewMetadata: (doj: string) => void
 }

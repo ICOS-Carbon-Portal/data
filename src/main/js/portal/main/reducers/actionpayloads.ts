@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import {MetaDataObject, StateSerialized, TsSettings, WhoAmI} from "../models/State";
+import { MetaData, MetaDataWStats, StateSerialized, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchDobjOriginsAndCounts,
@@ -43,7 +43,7 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 }
 
 export class BootstrapRouteMetadata extends BootstrapRoutePayload{
-	constructor(readonly metadata: MetaDataObject & {id: UrlStr}, readonly objectsTable?: ObjectsTableLike){super();}
+	constructor(readonly id: UrlStr, readonly metadata: MetaDataWStats, readonly objectsTable?: ObjectsTableLike){super();}
 }
 
 export class BootstrapRouteCart extends BootstrapRoutePayload{
@@ -71,7 +71,7 @@ export class BackendObjectMetadataId extends BackendPayload{
 }
 
 export class BackendObjectMetadata extends BackendPayload{
-	constructor(readonly metadata: MetaDataObject & {id: UrlStr}){super();}
+	constructor(readonly metadata: MetaData){super();}
 }
 
 export class BackendExtendedDataObjInfo extends BackendPayload{

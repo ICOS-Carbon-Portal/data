@@ -1,60 +1,82 @@
-import {Sha256Str, UrlStr} from "../backend/declarations";
+import {AsyncResult, Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import {fetchJson, fetchKnownDataObjects} from "../backend";
-import {updateRoute} from "../actions/common";
+import {setMetadataItem, updateRoute} from "../actions/common";
 import {failWithError, getKnownDataObjInfo, } from "./common";
 import {getLastSegmentInUrl} from "../utils";
-import {MetaDataObject} from "../models/State";
+import {MetaDataObject, MetaDataWStats} from "../models/State";
 import {setKeywordFilter} from "../actions/search";
+import config from "../../../common/main/config";
+
+type DownloadCount = [{ downloadCount: number }];
+type PreviewCount = [{ count: number }?];
+type DispatchMetaProps = [
+	downloads: DownloadCount,
+	previews: PreviewCount,
+	metadataObj?: MetaDataObject,
+	knownDataObjInfos?: AsyncResult<typeof fetchKnownDataObjects>
+];
 
 export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {metadata, objectsTable, specTable} = getState();
+		const {metadata, objectsTable} = getState();
 
-		if (id){
+		if (id) {
+
+			const pid = getLastSegmentInUrl(id);
+			
+			const downloadsPromise = fetchJson<DownloadCount>(`/stats/api/downloadCount?hashId=${pid}`);
+			const previewsUrl = `${config.restheartBaseUrl}db/portaluse/_aggrs/getPreviewCountForPid?avars=${encodeURIComponent(JSON.stringify({ pid }))}&np`;
+			const previewsPromise = fetchJson<PreviewCount>(previewsUrl);
+
+			
+			const dispatchMeta = ([downloads, previews, metadataObj, knownDataObjInfos]: DispatchMetaProps) => {
+				const downloadCount = downloads[0].downloadCount;
+				const previewCount = previews.length ? previews[0]!.count : 0;
+				const metaDataWStats: MetaDataWStats = metadataObj === undefined
+					? { ...metadata!, id, downloadCount, previewCount }
+					: { ...metadataObj, id, downloadCount, previewCount };
+				const objectsTable = knownDataObjInfos === undefined
+					? undefined
+					: knownDataObjInfos.rows
+
+				dispatch(new Payloads.BootstrapRouteMetadata(id, metaDataWStats, objectsTable));
+			};
+
 			if (metadata === undefined || id !== metadata.id) {
-
-				if (objectsTable.length){
-					fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-							const metadataWithId = {...metadata, id};
-							dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId));
-						},
-						failWithError(dispatch)
-					);
-
-				} else {
+				if (objectsTable.length) {
 					const promises = Promise.all([
-						fetchKnownDataObjects([getLastSegmentInUrl(id)]),
+						downloadsPromise,
+						previewsPromise,
 						fetchJson<MetaDataObject>(`${id}?format=json`)
 					]);
 
-					promises.then(([knownDataObjInfos, metadata]) => {
-						const metadataWithId = {...metadata, id};
-						dispatch(new Payloads.BootstrapRouteMetadata(metadataWithId, knownDataObjInfos.rows));
-					});
+					promises.then(dispatchMeta, failWithError(dispatch));
+
+				} else {
+					const promises = Promise.all([
+						downloadsPromise,
+						previewsPromise,
+						fetchJson<MetaDataObject>(`${id}?format=json`),
+						fetchKnownDataObjects([pid])
+					]);
+
+					promises.then(dispatchMeta, failWithError(dispatch));
 				}
+			} else {
+				const promises = Promise.all([
+					downloadsPromise,
+					previewsPromise
+				]);
+
+				promises.then(dispatchMeta, failWithError(dispatch));
 			}
+
 		} else {
 			failWithError(dispatch)(new Error('Invalid state: Metadata id is missing'));
 		}
 	}
-}
-
-function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.BackendObjectMetadataId(id));
-		dispatch(getMetadataItem(id));
-	};
-}
-
-function getMetadataItem(id: UrlStr): PortalThunkAction<void> {
-	return (dispatch) => {
-		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-			const metadataWithId = {...metadata, id};
-			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
-		});
-	};
 }
 
 export const updateFilteredDataObjects: PortalThunkAction<void> = (dispatch, getState) => {

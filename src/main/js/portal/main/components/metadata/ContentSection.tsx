@@ -1,10 +1,10 @@
 import React from 'react';
 import { formatBytes } from '../../utils';
 import { metadataRow } from '../../containers/Metadata';
-import { MetaDataObject } from '../../models/State';
+import { MetaData } from '../../models/State';
 
 interface ContentSectionProps {
-	metadata: MetaDataObject,
+	metadata: MetaData,
 	displayDataLevel: Boolean
 }
 

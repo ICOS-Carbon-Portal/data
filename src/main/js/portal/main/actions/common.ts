@@ -167,7 +167,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 function fetchMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
 		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
-			const metadataWithId = Object.assign({}, metadata, {id});
+			const metadataWithId = { ...metadata, id };
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
 	};

@@ -70,6 +70,14 @@ export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row
 export interface MetaDataObject extends DO{
 	coverageGeo: object
 }
+export interface MetaData extends MetaDataObject {
+	id: UrlStr
+}
+
+export interface MetaDataWStats extends MetaData {
+	downloadCount: number,
+	previewCount: number
+}
 
 export interface SearchOptions {
 	showDeprecated: boolean
@@ -87,7 +95,6 @@ export type ExportQuery = {
 	isFetchingCVS: boolean
 	sparqClientQuery: string
 }
-
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
@@ -111,7 +118,7 @@ export interface State {
 	paging: Paging
 	cart: Cart
 	id: UrlStr | undefined;
-	metadata?: MetaDataObject & {id: UrlStr}
+	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
 	preview: Preview
 	toasterData: {} | undefined;

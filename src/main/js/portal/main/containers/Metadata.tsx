@@ -5,9 +5,9 @@ import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx'
 import {formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
-import {MetaDataObject, Route, State} from "../models/State";
+import { MetaData, MetaDataWStats, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
-import {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
+import bootstrapMetadata, {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
 import config, { timezone } from '../config';
@@ -15,7 +15,8 @@ import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
-import {addToCart, removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
+import {addToCart, removeFromCart, updateRoute} from "../actions/common";
+import StatsSection from '../components/metadata/StatsSection.jsx';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -47,7 +48,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	handleViewMetadata(id: UrlStr) {
-		this.props.setMetadataItem(id);
+		this.props.bootstrapMetadata(id);
 		this.props.updateFilteredDataObjects();
 	}
 
@@ -114,14 +115,16 @@ class Metadata extends Component<MetadataProps> {
 									<ProductionSection production={productionInfo} timezone={timezone[config.envri]} />
 								}
 
-								<React.Fragment>
+								<>
 									<h2 style={{ fontSize: 28 }}>Submission</h2>
 									{metadata.submission.stop &&
 										metadataRow(`Submission time (${timezone[config.envri].label})`,
 											formatDateTime(new Date(metadata.submission.stop), timezone[config.envri].offset))
 									}
 									<br />
-								</React.Fragment>
+								</>
+								
+								<StatsSection metadata={metadata as MetaDataWStats} />
 
 							</div>
 							<div className="col-sm-4">
@@ -252,7 +255,7 @@ const map = (coverageObj: object, icon?: string) => {
 	);
 };
 
-const cartState = (metadata: MetaDataObject & { id: string }): [boolean, string] => {
+const cartState = (metadata: MetaData): [boolean, string] => {
 	if (metadata.specification === undefined) {
 		return [false, ""];
 	}
@@ -291,7 +294,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		updateRoute: (route: Route, previewPids?: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
+		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
 		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects),
 		searchKeyword: (keyword: string) => dispatch(searchKeyword(keyword)),
 	};
