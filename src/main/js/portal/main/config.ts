@@ -1,6 +1,6 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
 import { Obj } from '../../common/main/types';
-import {IdxSig, UrlStr} from "./backend/declarations";
+import {UrlStr} from "./backend/declarations";
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
@@ -53,7 +53,7 @@ export default {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
 		MAPGRAPH: '/map-graph/'
-	} as IdxSig,
+	} as Obj,
 	restheartBaseUrl: commonConfig.restheartBaseUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,

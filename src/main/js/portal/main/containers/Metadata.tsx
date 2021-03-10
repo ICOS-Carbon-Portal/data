@@ -15,7 +15,7 @@ import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
-import {addToCart, removeFromCart, updateRoute} from "../actions/common";
+import {addToCart, failWithError, removeFromCart, updateRoute} from "../actions/common";
 import StatsSection from '../components/metadata/StatsSection.jsx';
 
 
@@ -53,7 +53,7 @@ class Metadata extends Component<MetadataProps> {
 	}
 
 	render() {
-		const { metadata, cart, previewLookup, objectsTable } = this.props;
+		const { metadata, cart, previewLookup, objectsTable, failWithError } = this.props;
 
 		if (metadata === undefined) return null;
 
@@ -103,7 +103,7 @@ class Metadata extends Component<MetadataProps> {
 						<div className="row">
 							<div className="col-sm-8">
 
-								<AboutSection metadata={metadata} projectLabel={projectLabel} handleViewMetadata={this.handleViewMetadata.bind(this)}/>
+								<AboutSection metadata={metadata} projectLabel={projectLabel} handleViewMetadata={this.handleViewMetadata.bind(this)} failWithError={failWithError} />
 
 								<ContentSection metadata={metadata} displayDataLevel={config.features.displayDataLevel} />
 
@@ -297,6 +297,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
 		updateFilteredDataObjects: () => dispatch(updateFilteredDataObjects),
 		searchKeyword: (keyword: string) => dispatch(searchKeyword(keyword)),
+		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
 	};
 }
 
