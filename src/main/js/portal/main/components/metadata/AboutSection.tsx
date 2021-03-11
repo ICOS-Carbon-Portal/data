@@ -90,7 +90,7 @@ const StructuredCitation = ({ citation, citationStyle, failWithError }: { citati
 
 	return (
 		<details>
-			<summary style={{ cursor: 'pointer', color: '#0a96f0' }}>{lnkTxt}</summary>
+			<summary className="btn-link" style={{ cursor: 'pointer', display: "inline-block" }}>{lnkTxt}</summary>
 			<div style={{ display: 'block' }}>
 				<div>
 					<button className="btn btn-default glyphicon glyphicon-copy" onClick={() => copyToClipboard(citation, failWithError)} style={{ marginBottom: 5 }} title={title} />
