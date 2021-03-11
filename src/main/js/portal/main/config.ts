@@ -156,7 +156,7 @@ export const filters: IFilterCategories = {
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter']},
-		{panelTitle: "Measurements", filterList: ['valType', 'quantityUnit', 'variable']},
+		{panelTitle: "Measurements", filterList: ['valType', 'variable']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
 };

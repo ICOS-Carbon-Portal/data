@@ -90,7 +90,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.2",
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.4",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.5",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features
 			"org.postgresql"      % "postgresql"                         % "42.2.12",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
