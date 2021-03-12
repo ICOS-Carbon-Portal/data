@@ -1,47 +1,69 @@
 package se.lu.nateko.cp.data.routes
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
+
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.DurationInt
+
+import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import se.lu.nateko.cp.data.UploadConfig
+import se.lu.nateko.cp.data.api.MetaClient.Paging
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.model.ContentTypes
-import akka.stream.scaladsl.Flow
-import akka.util.ByteString
-import akka.http.scaladsl.model.HttpEntity
-import java.nio.charset.StandardCharsets
-import se.lu.nateko.cp.data.api.MetaClient.Paging
-
-import scala.concurrent.duration.DurationInt
-import akka.stream.scaladsl.Source
-
-object IntegrityRouting{
+class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit mat: Materializer, ctxt: ExecutionContext){
 	import IntegrityControlService.ReportSource
 
-	def route(service: IntegrityControlService) = pathPrefix("integrityControl"){
+	def route(service: IntegrityControlService) = (pathPrefix("integrityControl") & authRouting.userRequired){ uid =>
 
-		parameters("fix".?, "offset".as[Int].?, "limit".as[Int].?){(fix, offsetOpt, limitOpt) =>
+		if(!config.admins.contains(uid.email)) complete(StatusCodes.Forbidden -> "Only admins can perform integrity control")
+		else parameters("fix".?, "offset".as[Int].?, "limit".as[Int].?){(fix, offsetOpt, limitOpt) =>
 
 			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 
-			def respondWithReport(maker: Boolean => ReportSource) = {
-				val src = maker(fix.contains("true"))
-				complete(responseEntity(src.map(_.statement)))
+			def produceReport(prefix: String, maker: Boolean => ReportSource) = {
+
+				val src = maker(fix.contains("true")).map{
+					report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8)
+				}
+				val df = DateTimeFormatter.ofPattern(s"'${prefix}_'yyyy-MM-dd_HH_mm_ss'.txt'").withZone(ZoneId.systemDefault)
+				val reportPath = Paths.get("").resolve("integrityReports")
+					.resolve(df.format(Instant.now()))
+				Files.createDirectories(reportPath.getParent)
+
+				src.toMat(FileIO.toPath(reportPath))(Keep.right).run().failed.foreach{err =>
+					Files.writeString(reportPath, err.getMessage, StandardOpenOption.APPEND)
+				}
+				complete(s"Integrity control '$prefix' started, logging to $reportPath")
 			}
 
 			path("local"){
-				respondWithReport(service.getReportOnLocal(_, paging))
+				produceReport("local", service.getReportOnLocal(_, paging))
 			} ~
 			path("remote"){
-				respondWithReport(service.getReportOnRemote(_, paging))
+				produceReport("remote", service.getReportOnRemote(_, paging))
 			} ~
 			path("objectslist"){
-				respondWithReport(_ => service.getObjectsList(paging))
+				produceReport("objectslist", _ => service.getObjectsList(paging))
 			} ~
 			(path("listirodsfolder") & parameter("path")){path =>
 				complete(service.listIrodsFolder(path).mkString("\n"))
-			} ~
-			path("dummy"){
-				val src = Source.repeat("Dummy string to test long-running responses to HTTP GET requests in Akka HTTP")
-				complete(responseEntity(src.throttle(10, 1.second)))
 			}
 		}
 	}
