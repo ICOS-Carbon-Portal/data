@@ -181,7 +181,11 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				Range(paging.offset, paging.offset + limit).sliding(PageSize, PageSize)
 					.map(range => new Paging(range(0), Some(range.size)))
 		}
-		Source.fromIterator(pageIter).mapAsync(1)(objStorageInfos).takeWhile(!_.isEmpty).mapConcat(identity)
+		Source.fromIterator(pageIter)
+			.mapAsync(1)(objStorageInfos)
+			.takeWhile(!_.isEmpty)
+			.mapConcat(identity)
+			.filter(dosi => dosi.format != CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
 	}
 
 	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
@@ -208,7 +212,6 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 					new DobjStorageInfo(fileName, landingPage, hash, size, format)
 				}.toOption
 			}
-			.filter(dosi => dosi.format != CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
 		)
 	}
 }
