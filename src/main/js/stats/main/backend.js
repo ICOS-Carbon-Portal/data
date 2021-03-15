@@ -6,14 +6,6 @@ import localConfig from './config';
 
 const pagesize = localConfig.pagesize;
 
-const restheartBaseUrl = location.host.startsWith("local-")
-	? config.restheartBaseUrl.replace("//", "//local-")
-	: config.restheartBaseUrl;
-
-const restheartDbUrl = config.envri === "ICOS"
-	? `${restheartBaseUrl}db/`
-	: `${restheartBaseUrl}sitesdb/`;
-
 export const getCountryCodesLookup = () => {
 	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
 };
@@ -78,7 +70,7 @@ const combineWithFileNames = (aggregationResult) => {
 
 export const getPreviewAggregation = aggregationName => {
 	return (page = 1) => {
-		return getJson(`${restheartDbUrl}portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
+		return getJson(`${config.restheartDbUrl}portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
 			.then(aggregationResult => {
 
 				return combineWithFileNames(aggregationResult);
@@ -93,7 +85,7 @@ export const getPreviewAggregation = aggregationName => {
 };
 
 export const getPopularTimeserieVars = _ => {
-	return getJson(`${restheartDbUrl}portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1`)
+	return getJson(`${config.restheartDbUrl}portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1`)
 		.then(aggregationResult => formatPopularTimeserieVars(aggregationResult));
 };
 

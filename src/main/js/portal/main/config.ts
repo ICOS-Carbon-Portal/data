@@ -54,7 +54,7 @@ export default {
 		NETCDF: '/netcdf/',
 		MAPGRAPH: '/map-graph/'
 	} as Obj,
-	restheartBaseUrl: commonConfig.restheartBaseUrl,
+	restheartDbUrl: commonConfig.restheartDbUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
 	dobjCacheFetchLimit: 60,

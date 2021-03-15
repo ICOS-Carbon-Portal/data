@@ -27,7 +27,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 			const pid = getLastSegmentInUrl(id);
 			
 			const downloadsPromise = fetchJson<DownloadCount>(`/stats/api/downloadCount?hashId=${pid}`);
-			const previewsUrl = `${config.restheartBaseUrl}db/portaluse/_aggrs/getPreviewCountForPid?avars=${encodeURIComponent(JSON.stringify({ pid }))}&np`;
+			const previewsUrl = `${config.restheartDbUrl}portaluse/_aggrs/getPreviewCountForPid?avars=${encodeURIComponent(JSON.stringify({ pid }))}&np`;
 			const previewsPromise = fetchJson<PreviewCount>(previewsUrl);
 
 			

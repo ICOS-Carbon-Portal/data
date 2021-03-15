@@ -12,11 +12,12 @@ const sparqlGraphFilter = envri === SITES ? 'https://meta.fieldsites.se/' : 'htt
 const authHost = envri === SITES ? 'auth.fieldsites.se' : 'cpauth.icos-cp.eu';
 
 const metaServer = envri === SITES ? 'https://meta.fieldsites.se' : 'https://meta.icos-cp.eu';
+const restheartDb = envri === SITES ? 'sitesdb' : 'db';
 
 export default {
 	metaServer,
 	sparqlEndpoint: metaServer + '/sparql',
-	restheartBaseUrl: `//restheart.icos-cp.eu/`,
+	restheartDbUrl: `//restheart.icos-cp.eu/${restheartDb}/`,
 	restheartProfileBaseUrl: `//${authHost}/db/users`,
 	portalUseLogUrl: `//${authHost}/logs/portaluse`,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
