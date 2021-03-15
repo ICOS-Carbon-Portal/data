@@ -189,16 +189,21 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	}
 
 	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
-		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		val query = s"""|prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|prefix prov: <http://www.w3.org/ns/prov#>
 			|select ?dobj ?format ?size ?fileName where{
-			|	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
-			|	?dobj cpmeta:hasSizeInBytes ?size .
-			|	?dobj cpmeta:hasName ?fileName .
-			|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
-			|}
-			|order by ?submTime
-			|${paging.sparqlClauses}""".stripMargin
+			|	{
+			|		select * where{
+			|			?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
+			|			?dobj cpmeta:hasSizeInBytes ?size .
+			|			?dobj cpmeta:hasName ?fileName .
+			|			?dobj cpmeta:hasObjectSpec ?spec .
+			|		}
+			|		order by ?submTime
+			|		${paging.sparqlClauses}
+			|	}
+			|	?spec cpmeta:hasFormat ?format .
+			|}""".stripMargin
 
 		sparql.select(query).map(
 			_.results.bindings.toVector.flatMap{

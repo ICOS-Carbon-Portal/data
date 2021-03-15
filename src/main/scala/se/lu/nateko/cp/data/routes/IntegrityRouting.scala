@@ -12,6 +12,8 @@ import java.time.temporal.TemporalUnit
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.DurationInt
+import scala.util.Failure
+import scala.util.Success
 
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
@@ -47,8 +49,12 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 					.resolve(df.format(Instant.now()))
 				Files.createDirectories(reportPath.getParent)
 
-				src.toMat(FileIO.toPath(reportPath))(Keep.right).run().failed.foreach{err =>
-					Files.writeString(reportPath, err.getMessage, StandardOpenOption.APPEND)
+				src.toMat(FileIO.toPath(reportPath))(Keep.right).run().onComplete{ioTry =>
+					val msg = ioTry match{
+						case Failure(err) => "FAIL: " + err.getMessage
+						case Success(io) => s"SUCCESS: report writing finished, written ${io.count} bytes"
+					}
+					Files.write(reportPath, msg.getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND)
 				}
 				complete(s"Integrity control '$prefix' started, logging to $reportPath")
 			}
