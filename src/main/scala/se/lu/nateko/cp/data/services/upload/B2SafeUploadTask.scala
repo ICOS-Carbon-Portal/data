@@ -33,19 +33,10 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 				)
 			case false =>
 				client.objectSink(irodsData).mapMaterializedValue(
-					_.transform{
-						case Success(upHash) =>
-							if(upHash != hash) println(s"B2SAFE ERROR: expected SHA-256 $hash , got $upHash")
-							Success(B2SafeSuccess)
-						case Failure(exc) =>
-							println(s"B2SAFE ERROR: ${exc.getMessage}")
-							exc.printStackTrace()
-							Success(B2SafeSuccess)
+					_.map{resHash =>
+						if(resHash == hash) B2SafeSuccess
+						else B2SafeFailure(hashError(resHash))
 					}
-					// _.map{resHash =>
-					// 	if(resHash == hash) B2SafeSuccess
-					// 	else B2SafeFailure(hashError(resHash))
-					// }
 				)
 		}
 
@@ -69,7 +60,7 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 			res
 	}
 
-	private def hashError(actual: Sha256Sum) = new CpDataException(s"B2STAGE returned SHA256 $actual instead of $hash")
+	private def hashError(actual: Sha256Sum) = new CpDataException(s"B2SAFE returned SHA256 $actual instead of $hash")
 
 	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult] =
 		existsFut.flatMap{
