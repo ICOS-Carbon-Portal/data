@@ -41,8 +41,13 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		}
 
 
-	def getReportOnRemote(uploadMissingToRemote: Boolean, paging: Paging): ReportSource = uploader
-		.meta.getDobjStorageInfos(paging)
+	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, paging: Paging): ReportSource =
+		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(paging))
+
+	def getDocObjRemoteReport(uploadMissingToRemote: Boolean): ReportSource =
+		getReportOnRemote(uploadMissingToRemote, uploader.meta.docObjsStorageInfos)
+
+	private def getReportOnRemote(uploadMissingToRemote: Boolean, storage: Source[DobjStorageInfo, Any]): ReportSource = storage
 		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 

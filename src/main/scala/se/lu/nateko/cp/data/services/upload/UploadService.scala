@@ -51,17 +51,17 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
-	def b2SafeSourceExists(format: URI, hash: Sha256Sum): Future[Boolean] = b2
+	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum): Future[Boolean] = b2
 		.getHashsum(B2SafeUploadTask.irodsData(format, hash))
 		.map(_.contains(hash))
 
 	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(dataObj))
 
-	def getRemoteStorageSource(format: URI, hash: Sha256Sum): Source[ByteString, Future[Long]] =
+	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum): Source[ByteString, Future[Long]] =
 		irods2.getFileSource(filePathSuffix(format, hash))
 
-	def uploadToB2Stage(format: URI, hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
+	def uploadToB2Stage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
 		B2SafeUploadTask(format, hash, b2).uploadObject(src)
 
 	def listIrodsFolder(path: String) = irods2.listFolderContents(path)
@@ -136,7 +136,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	}
 
 	def getFile(dataObj: StaticObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
-	def getFile(format: URI, hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
+	def getFile(format: Option[URI], hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
 
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
@@ -250,17 +250,15 @@ object UploadService{
 	def fileName(hash: Sha256Sum): String = hash.id
 	def fileName(obj: StaticObject): String = fileName(obj.hash)
 
-	def fileFolder(format: URI): String = format.toString.stripSuffix("/").split('/').last
+	def fileFolder(format: Option[URI]): String = format.fold("documents")(_.toString.stripSuffix("/").split('/').last)
 
-	def fileFolder(obj: StaticObject): String = obj match{
-		case dobj: DataObject =>
-			fileFolder(dobj.specification.format.uri)
-		case _: DocObject =>
-			"documents"
-	}
+	def fileFolder(obj: StaticObject): String = fileFolder(obj match{
+		case dobj: DataObject => Some(dobj.specification.format.uri)
+		case _: DocObject => None
+	})
 
 	def filePathSuffix(obj: StaticObject): String = fileFolder(obj) + "/" + fileName(obj)
-	def filePathSuffix(format: URI, hash: Sha256Sum): String = fileFolder(format) + "/" + fileName(hash)
+	def filePathSuffix(format: Option[URI], hash: Sha256Sum): String = fileFolder(format) + "/" + fileName(hash)
 
 	def combineTaskSinks(sinks: Seq[UploadTaskSink])(implicit ctxt: ExecutionContext): CombinedUploadSink = {
 		SinkCombiner.combineMat(sinks).mapMaterializedValue{uploadResultFuts =>

@@ -185,7 +185,17 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			.mapAsync(1)(objStorageInfos)
 			.takeWhile(!_.isEmpty)
 			.mapConcat(identity)
-			.filter(dosi => dosi.format != CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
+			.filter(dosi => !dosi.format.contains(CpMetaVocab.ObjectFormats.asciiWdcggTimeSer))
+	}
+
+	val docObjsStorageInfos: Source[DobjStorageInfo, Any] = {
+		val query = """prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|select * where{
+			|	?dobj a cpmeta:DocumentObject .
+			|	?dobj cpmeta:hasName ?fileName .
+			|	?dobj cpmeta:hasSizeInBytes ?size .
+			|}""".stripMargin
+		Source.lazyFuture(() => sparqlDobjStorageInfos(query)).mapConcat(identity)
 	}
 
 	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
@@ -202,9 +212,13 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			|		order by ?submTime
 			|		${paging.sparqlClauses}
 			|	}
+			|	filter(bound(?spec)) #needed due to issue https://github.com/ICOS-Carbon-Portal/meta/issues/105
 			|	?spec cpmeta:hasFormat ?format .
 			|}""".stripMargin
+		sparqlDobjStorageInfos(query)
+	}
 
+	private def sparqlDobjStorageInfos(query: String): Future[immutable.Seq[DobjStorageInfo]] = {
 		sparql.select(query).map(
 			_.results.bindings.toVector.flatMap{
 				binding => Try{
@@ -213,7 +227,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 					val landingPage = asResource(binding, "dobj")
 					val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
 					val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
-					val format = asResource(binding, "format")
+					val format = asResourceOpt(binding, "format")
 					new DobjStorageInfo(fileName, landingPage, hash, size, format)
 				}.toOption
 			}
@@ -222,20 +236,25 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 }
 
 object MetaClient{
-	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: URI)
+	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: Option[URI])
 	class Paging(val offset: Int = 0, val limit: Option[Int] = None){
 		def sparqlClauses: String = {
 			val offClause: Option[String] = if(offset > 0) Some(s"offset $offset") else None
 			val limitClause = limit.map("limit " + _.toString)
 			Seq(offClause, limitClause).flatten.mkString("\n")
 		}
+		def fileNamePart: String = s"$offset--${limit.fold("end")(_.toString)}"
 	}
 
 	val noPaging = new Paging()
 
-	def asResource(b: Binding, varName: String): URI = b.get(varName) match{
-		case None => throw new Exception(s"Unexpected SPARQL result: no value for $varName")
-		case Some(BoundUri(uri)) => uri
+	def asResource(b: Binding, varName: String): URI = asResourceOpt(b, varName).getOrElse(
+		throw new Exception(s"Unexpected SPARQL result: no value for $varName")
+	)
+
+	def asResourceOpt(b: Binding, varName: String): Option[URI] = b.get(varName) match{
+		case None => None
+		case Some(BoundUri(uri)) => Some(uri)
 		case Some(BoundLiteral(_, _)) => throw new Exception("Unexpected SPARQL result: expected URI resource, got literal")
 	}
 

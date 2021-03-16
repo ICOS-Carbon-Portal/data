@@ -78,11 +78,11 @@ object B2SafeUploadTask{
 	def apply(statObj: StaticObject, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
 		new B2SafeUploadTask(statObj.hash, irodsData(statObj), client)
 
-	def apply(format: URI, hash: Sha256Sum, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
+	def apply(format: Option[URI], hash: Sha256Sum, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
 		new B2SafeUploadTask(hash, irodsData(format, hash), client)
 
 	def irodsData(statObj: StaticObject): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
-	def irodsData(format: URI, hash: Sha256Sum): IrodsData = irodsData(UploadService.fileFolder(format), hash)
+	def irodsData(format: Option[URI], hash: Sha256Sum): IrodsData = irodsData(UploadService.fileFolder(format), hash)
 
 	private def irodsData(folder: String, hash: Sha256Sum): IrodsData = {
 		val baseColl = IrodsColl(folder)//parent is root

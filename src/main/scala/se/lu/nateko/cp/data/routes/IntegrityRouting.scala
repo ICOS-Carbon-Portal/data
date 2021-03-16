@@ -44,7 +44,10 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 				val src = maker(fix.contains("true")).map{
 					report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8)
 				}
-				val df = DateTimeFormatter.ofPattern(s"'${prefix}_'yyyy-MM-dd_HH_mm_ss'.txt'").withZone(ZoneId.systemDefault)
+				val df = DateTimeFormatter.ofPattern(
+					s"'${prefix}_'yyyy-MM-dd_HH_mm_ss'_${paging.fileNamePart}.txt'"
+				).withZone(ZoneId.systemDefault)
+
 				val reportPath = Paths.get("").resolve("integrityReports")
 					.resolve(df.format(Instant.now()))
 				Files.createDirectories(reportPath.getParent)
@@ -63,7 +66,10 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 				produceReport("local", service.getReportOnLocal(_, paging))
 			} ~
 			path("remote"){
-				produceReport("remote", service.getReportOnRemote(_, paging))
+				produceReport("remote", service.getDataObjRemoteReport(_, paging))
+			} ~
+			path("remotedocs"){
+				produceReport("remotedocs", service.getDocObjRemoteReport)
 			} ~
 			path("objectslist"){
 				produceReport("objectslist", _ => service.getObjectsList(paging))
