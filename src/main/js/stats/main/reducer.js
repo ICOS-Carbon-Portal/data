@@ -4,24 +4,31 @@ import StatsTable from './models/StatsTable';
 import StatsGraph from './models/StatsGraph';
 import ViewMode from "./models/ViewMode";
 import StatsMap from "./models/StatsMap";
-import {RadioConfig} from "./models/RadioConfig";
+import {Radio} from "./models/RadioConfig";
 import localConfig from './config';
 
 
 export const initState = {
-	view: new ViewMode(),
+	view: new ViewMode(localConfig.envri),
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
 	specLevelLookup: undefined,
-	countryCodesLookup: undefined,
+	countryCodeLookup: undefined,
 	paging: {
 		page: 0,
 		to: 0,
 		objCount: 0,
 		pagesize: localConfig.pagesize
 	},
-	dateUnit: 'week'
+	dateUnit: 'week',
+	previewData: undefined,
+	previewDataFull: undefined,
+	previewSize: undefined,
+	filters: undefined,
+	mainRadio: undefined,
+	subRadio: undefined,
+	variousStats: undefined,
 };
 
 export default function(state = initState, action){
@@ -42,9 +49,6 @@ export default function(state = initState, action){
 
 		case actionTypes.COUNTRIES_FETCHED:
 			return update({ statsMap: state.statsMap.withCountriesTopo(action.countriesTopo) });
-		
-		case actionTypes.COUNTRY_CODES_FETCHED:
-			return update({ countryCodesLookup: action.countryCodesLookup });
 
 		case actionTypes.DOWNLOAD_STATS_FETCHED:
 			return update({
@@ -85,7 +89,6 @@ export default function(state = initState, action){
 			}, []).sort(labelSorter);
 
 			return update({
-				stationCountryCodeLookup: action.stationCountryCodeLookup,
 				downloadStats: state.downloadStats.withStationCountryCodes(action.stationCountryCodes),
 				countryCodeLookup,
 				filters: [{
@@ -146,7 +149,7 @@ export default function(state = initState, action){
 			});
 
 		case actionTypes.PREVIEW_DATA_FETCHED:
-			const data = action.previewDataResult.data.map(d => ({ ...d, ...{ hashId: d._id } }));
+			const data = aggrResultFormatter[state.mainRadio.actionTxt](action.previewDataResult);
 			const formattedData = { ...action.previewDataResult, ...{ data } };
 			const previewData = filterPreviewData(state.subRadio, formattedData.data);
 			const paging = getPreviewPaging(
@@ -159,7 +162,6 @@ export default function(state = initState, action){
 			);
 
 			return update({
-				lastPreviewCall: action.fetchFn,
 				previewDataFull: formattedData.data,
 				previewSize: formattedData._size,
 				previewData,
@@ -167,15 +169,32 @@ export default function(state = initState, action){
 			});
 
 		case actionTypes.RADIO_CREATE:
-			const radio = new RadioConfig(action.radioConfig, action.radioAction);
-			const name = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";
+			const radio = new Radio(action.radioConfig, action.radioAction);
+			const radioName = action.isMain ? "mainRadio" : "subRadio";
 
 			return update({
-				[name]: radio
+				[radioName]: radio
 			});
 
 		case actionTypes.RADIO_UPDATED:
-			return update(updateRadiosAndPreviewData(state, action));
+			const partialState = state.view.mode === "previews"
+				? updateRadiosAndPreviewData(state, action)
+				: { mainRadio: state.mainRadio.withSelected(action.actionTxt) };
+			
+			return update(partialState);
+		
+		case actionTypes.VARIOUS_STATS_FETCHED:
+			const variousStats = aggrResultFormatter[state.mainRadio.actionTxt](action.variousStats, state);
+
+			return update({
+				variousStats,
+				paging: {
+					page: action.page,
+					to: action.variousStats._returned,
+					objCount: action.variousStats._size,
+					pagesize: localConfig.pagesize
+				}
+			});
 		
 		default:
 			return state;
@@ -189,10 +208,66 @@ export default function(state = initState, action){
 
 export const labelSorter = (a, b) => a.label.localeCompare(b.label);
 
+const aggrResultFormatter = {
+	getPopularTimeserieVars: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			name: r.name,
+			val: r.val,
+			count: r.occurrences
+		}))
+	,
+	getPreviewTimeserie: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			...r, ...{
+				hashId: r._id,
+				x: r.x.sort((a, b) => a.count < b.count).map(x => x.name).join(', '),
+				y: r.y.sort((a, b) => a.count < b.count).map(y => y.name).join(', ')
+			}
+		}))
+	,
+	getPreviewNetCDF: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			...r, ...{
+				hashId: r._id,
+				variables: r.variables.sort((a, b) => a.count < b.count).map(variable => variable.name).join(', ')
+			}
+		}))
+	,
+	getPreviewMapGraph: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			...r, ...{
+				hashId: r._id,
+				mapView: r.mapView.sort((a, b) => a.count < b.count).map(mapView => mapView.name).join(', '),
+				y1: r.y1.sort((a, b) => a.count < b.count).map(y1 => y1.name).join(', '),
+				y2: r.y2.sort((a, b) => a.count < b.count).map(y2 => y2.name).join(', ')
+			}
+		}))
+	,
+	getLibDownloadsByDobj: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			objId: r._id,
+			fileName: r.fileName,
+			count: r.count
+		}))
+	,
+	getLibDownloadsByCountry: (aggrResult, state) =>
+		aggrResult._embedded.map(r => ({
+			val: state.countryCodeLookup[r._id] ?? "Unknown but likely from local server",
+			count: r.count
+		}))
+	,
+	getLibDownloadsByVersion: (aggrResult) =>
+		aggrResult._embedded.map(r => ({
+			val: r._id,
+			count: r.count
+		}))
+	
+};
+
 const updateRadiosAndPreviewData = (state, action) => {
-	const radioName = action.radioConfig.name === "main" ? "mainRadio" : "subRadio";
+	const radioName = action.isMain ? "mainRadio" : "subRadio";
 	const newRadio = state[radioName].withSelected(action.actionTxt);
-	const previewData = action.radioConfig.name === "main"
+	const previewData = action.radioConfig.name === "mainPreview"
 		? state.previewData
 		: filterPreviewData(newRadio, state.previewDataFull);
 	const mainRadio = radioName === "mainRadio" ? newRadio : state.mainRadio;
@@ -201,7 +276,7 @@ const updateRadiosAndPreviewData = (state, action) => {
 		: mainRadio.selected.parentTo === state.subRadio.name
 			? state.subRadio.setActive()
 			: state.subRadio.setInactive();
-
+	
 	const paging = getPreviewPaging(
 		state.previewDataFull,
 		previewData,
@@ -233,14 +308,14 @@ const getPreviewPaging = (previewDataFull, previewData, previewSize, page, mainR
 	};
 };
 
-const filterPreviewData = (radio, previewData) => {
-	if (!radio.isActive) return previewData;
+const filterPreviewData = (radio, statData) => {
+	if (!radio.isActive) return statData;
 
 	const selectedRadio = radio && radio.radios && radio.radios.length
 		? radio.selected
 		: undefined;
 
 	return selectedRadio
-		? previewData.filter(d => d.name === selectedRadio.actionTxt)
-		: previewData;
+		? statData.filter(d => d.name === selectedRadio.actionTxt)
+		: statData;
 };

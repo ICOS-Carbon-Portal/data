@@ -3,7 +3,7 @@ import Filters from './Filters.jsx';
 import DobjTable from './DobjTable.jsx';
 import Map from './Map.jsx';
 import Graph from './Graph.jsx';
-import PreviewCtrlPanel from './PreviewCtrlPanel.jsx';
+import CtrlPanel from './CtrlPanel.jsx';
 
 
 const defaultTableHeaders = ["File Name", "Landing Page", "Count"];
@@ -15,6 +15,9 @@ export const ViewSwitcher = props => {
 
 		case 'previews':
 			return <PreviewsView {...props} />;
+		
+		case 'library':
+			return <LibDownloadsView {...props} />;
 
 		default:
 			return <DownloadsView {...props} />;
@@ -69,16 +72,17 @@ const DownloadsView = props => {
 
 const PreviewsView = props => {
 	const dataList = props.previewData;
-	const [panelTitle, tableHeaders, disablePaging] = props.radiosPreviewSub && props.radiosPreviewSub.isActive
-		? ["Variables", [props.radiosPreviewSub.selected.txt, "Count"], true]
+	const [panelTitle, tableHeaders, disablePaging] = props.subRadio && props.subRadio.isActive
+		? ["Variables", [props.subRadio.selected.txt, "Count"], true]
 		: ["Data objects", defaultTableHeaders, false];
-
+	
 	return (
 		<div className="row">
 			<div className="col-md-4">
-				<PreviewCtrlPanel
-					radiosPreviewMain={props.radiosPreviewMain}
-					radiosPreviewSub={props.radiosPreviewSub}
+				<CtrlPanel
+					panelHeader="Type of previewed data"
+					mainRadio={props.mainRadio}
+					subRadio={props.subRadio}
 				/>
 			</div>
 
@@ -94,4 +98,38 @@ const PreviewsView = props => {
 			</div>
 		</div>
 	);
+};
+
+const LibDownloadsView = props => {
+	const dataList = props.variousStats;
+	const [panelTitle, tableHeaders, disablePaging] = libDownloadsViewSettings[props.mainRadio.actionTxt];
+
+	return (
+		<div className="row">
+			<div className="col-md-4">
+				<CtrlPanel
+					panelHeader="Downloads from python library"
+					mainRadio={props.mainRadio}
+					subRadio={props.subRadio}
+				/>
+			</div>
+
+			<div className="col-md-8">
+				<DobjTable
+					panelTitle={panelTitle}
+					disablePaging={disablePaging}
+					tableHeaders={tableHeaders}
+					dataList={dataList}
+					paging={props.paging}
+					requestPage={props.requestPage}
+				/>
+			</div>
+		</div>
+	);
+};
+
+const libDownloadsViewSettings = {
+	getLibDownloadsByDobj: ["Data objects", defaultTableHeaders, false],
+	getLibDownloadsByCountry: ["Countries", ["Country", "Count"], false],
+	getLibDownloadsByVersion: ["Versions", ["Version", "Count"], false]
 };

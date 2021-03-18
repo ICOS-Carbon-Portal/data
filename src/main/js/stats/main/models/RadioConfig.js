@@ -1,21 +1,25 @@
 const configs = [
 	{
-		name: "main",
+		name: "mainPreview",
 		config: [
 			{
+				envri: ['ICOS', 'SITES'],
 				txt: 'Popular Timeserie variables',
 				parentTo: "popularTSVars",
 				actionTxt: 'getPopularTimeserieVars'
 			},
 			{
+				envri: ['ICOS', 'SITES'],
 				txt: 'Timeserie',
 				actionTxt: 'getPreviewTimeserie'
 			},
 			{
+				envri: ['ICOS'],
 				txt: 'NetCDF',
 				actionTxt: 'getPreviewNetCDF'
 			},
 			{
+				envri: ['ICOS'],
 				txt: 'Map and Graph (Shipping lines)',
 				actionTxt: 'getPreviewMapGraph'
 			}
@@ -26,22 +30,50 @@ const configs = [
 		label: "Select popular variable",
 		config: [
 			{
+				envri: ['ICOS', 'SITES'],
 				txt: 'Graph Type',
 				actionTxt: 'type'
 			},
 			{
+				envri: ['ICOS', 'SITES'],
 				txt: 'X',
 				actionTxt: 'x'
 			},
 			{
+				envri: ['ICOS', 'SITES'],
 				txt: 'Y',
 				actionTxt: 'y'
+			}
+		]
+	},
+	{
+		name: "mainLib",
+		config: [
+			{
+				envri: ['ICOS'],
+				txt: 'Downloads by country',
+				actionTxt: 'getLibDownloadsByCountry'
+			},
+			{
+				envri: ['ICOS'],
+				txt: 'Downloads by data object',
+				actionTxt: 'getLibDownloadsByDobj'
+			},
+			{
+				envri: ['ICOS'],
+				txt: 'Downloads by library version',
+				actionTxt: 'getLibDownloadsByVersion'
 			}
 		]
 	}
 ];
 
-export class RadioConfig{
+export const emptyRadioConf = {
+	name: "empty",
+	config: []
+};
+
+export class Radio{
 	constructor(radioConf, action, actionTxt, active = true){
 		this.active = active;
 		this.radioConf = radioConf;
@@ -63,16 +95,20 @@ export class RadioConfig{
 		return this.radios.find(r => r.isActive);
 	}
 
+	get actionTxt() {
+		return this.selected?.actionTxt;
+	}
+
 	withSelected(actionTxt){
-		return new RadioConfig(this.radioConf, this.action, actionTxt);
+		return new Radio(this.radioConf, this.action, actionTxt);
 	}
 
-	setInactive(){
-		return new RadioConfig(this.radioConf, this.action, undefined, false);
+	setInactive() {
+		return new Radio(this.radioConf, this.action, undefined, false);
 	}
 
-	setActive(){
-		return new RadioConfig(this.radioConf, this.action, undefined, true);
+	setActive() {
+		return new Radio(this.radioConf, this.action, undefined, true);
 	}
 }
 

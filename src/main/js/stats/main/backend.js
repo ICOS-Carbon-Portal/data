@@ -4,8 +4,6 @@ import {feature} from 'topojson';
 import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
 import localConfig from './config';
 
-const pagesize = localConfig.pagesize;
-
 const restheartBaseUrl = location.host.startsWith("local-")
 	? config.restheartBaseUrl.replace("//", "//local-")
 	: config.restheartBaseUrl;
@@ -57,7 +55,7 @@ select ?dobj ?fileName where{
 
 const combineWithFileNames = (aggregationResult) => {
 	const query = getFileNamesFromSparql(aggregationResult._embedded);
-	const sparqlResult = sparql({text: query}, config.sparqlEndpoint, true);
+	const sparqlResult = sparql({ text: query }, config.sparqlEndpoint, true);
 
 	return sparqlResult.then(res => {
 		const fileNameMappings = res.results.bindings.reduce((acc, curr) => {
@@ -76,92 +74,24 @@ const combineWithFileNames = (aggregationResult) => {
 	});
 };
 
-export const getPreviewAggregation = aggregationName => {
-	return (page = 1) => {
+const shouldHaveFilenames = [
+	"getPreviewTimeserie",
+	"getPreviewNetCDF",
+	"getPreviewMapGraph",
+	"getLibDownloadsByDobj"
+];
+
+export const getAggregationResult = aggregationName => {
+	return (page = 1, pagesize = localConfig.pagesize) => {
 		return getJson(`${restheartDbUrl}portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
 			.then(aggregationResult => {
 
-				return combineWithFileNames(aggregationResult);
-
-			}).then(resultWithFileNames => {
-
-				const formatter = getFormatter(aggregationName);
-				return formatter(resultWithFileNames);
+				return shouldHaveFilenames.includes(aggregationName)
+					? combineWithFileNames(aggregationResult)
+					: aggregationResult;
 
 			});
 	};
-};
-
-export const getPopularTimeserieVars = _ => {
-	return getJson(`${restheartDbUrl}portaluse/_aggrs/getPopularTimeserieVars?pagesize=1000&page=1`)
-		.then(aggregationResult => formatPopularTimeserieVars(aggregationResult));
-};
-
-const getFormatter = aggregationName => {
-	switch (aggregationName){
-
-		case 'getPreviewTimeserie':
-			return formatTimeserieData;
-
-		case 'getPreviewNetCDF':
-			return formatNetCDFData;
-
-		case 'getPreviewMapGraph':
-			return formatMapGraphData;
-	}
-};
-
-const conformData = (previewData, data) => {
-	return {
-		data,
-		_size: previewData._size,
-		_returned: previewData._returned
-	}
-};
-
-const formatTimeserieData = joinedResult => {
-	const formattedData = joinedResult._embedded.map(dobj => {
-		return Object.assign(dobj, {
-			x: dobj.x.sort((a, b) => a.count < b.count).map(x => x.name).join(', '),
-			y: dobj.y.sort((a, b) => a.count < b.count).map(y => y.name).join(', ')
-		})
-	});
-
-	return conformData(joinedResult, formattedData);
-};
-
-const formatNetCDFData = joinedResult => {
-	const formattedData = joinedResult._embedded.map(dobj => {
-		return Object.assign(dobj, {
-			variables: dobj.variables.sort((a, b) => a.count < b.count).map(variable => variable.name).join(', ')
-		})
-	});
-
-	return conformData(joinedResult, formattedData);
-};
-
-const formatMapGraphData = joinedResult => {
-	const formattedData = joinedResult._embedded.map(dobj => {
-		return Object.assign(dobj, {
-			mapView: dobj.mapView.sort((a, b) => a.count < b.count).map(mapView => mapView.name).join(', '),
-			y1: dobj.y1.sort((a, b) => a.count < b.count).map(y1 => y1.name).join(', '),
-			y2: dobj.y2.sort((a, b) => a.count < b.count).map(y2 => y2.name).join(', ')
-		})
-	});
-
-	return conformData(joinedResult, formattedData);
-};
-
-const formatPopularTimeserieVars = popularTimeserieVars => {
-	const formattedData = popularTimeserieVars._embedded.map(p => {
-		return {
-			name: p.name,
-			val: p.val,
-			count: p.occurrences
-		};
-	});
-
-	return conformData(popularTimeserieVars, formattedData);
 };
 
 export const getDownloadStatsApi = (pageOpt, searchParams) => {
