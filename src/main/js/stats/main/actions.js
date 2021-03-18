@@ -1,8 +1,9 @@
-import { getCountriesGeoJson, getPreviewAggregation, getPopularTimeserieVars, postToApi, getSearchParams, getDownloadStatsApi, getStationsApi,
-	getSpecsApi, getContributorsApi, getSubmittersApi, getCountryCodesLookup} from './backend';
+import { getCountriesGeoJson, postToApi, getSearchParams, getDownloadStatsApi, getStationsApi,
+	getSpecsApi, getContributorsApi, getSubmittersApi, getCountryCodesLookup, getAggregationResult} from './backend';
 import {getStationCountryCodes} from './sparql';
-import {getConfig} from "./models/RadioConfig";
-import {labelSorter} from './reducer';
+import { getConfig, emptyRadioConf } from "./models/RadioConfig";
+import { labelSorter } from './reducer';
+import localConfig from './config';
 
 export const actionTypes = {
 	ERROR: 'ERROR',
@@ -17,8 +18,8 @@ export const actionTypes = {
 	PREVIEW_DATA_FETCHED: 'PREVIEW_DATA_FETCHED',
 	RADIO_UPDATED: 'RADIO_UPDATED',
 	RESET_FILTERS: 'RESET_FILTERS',
-	COUNTRY_CODES_FETCHED: 'COUNTRY_CODES_FETCHED',
 	SET_SPEC_LEVEL_LOOKUP: 'SET_SPEC_LEVEL_LOOKUP',
+	VARIOUS_STATS_FETCHED: 'VARIOUS_STATS_FETCHED',
 }
 
 const failWithError = dispatch => error => {
@@ -46,8 +47,12 @@ export const setViewMode = mode => dispatch => {
 const fetchDataForView = viewMode => dispatch => {
 	if (viewMode === "downloads"){
 		dispatch(initDownloads);
+
 	} else if (viewMode === "previews"){
 		dispatch(initPreviewView);
+
+	} else if (viewMode === "library") {
+		dispatch(initLibraryDownloads);
 	}
 };
 
@@ -58,33 +63,35 @@ const initDownloads = (dispatch) => {
 };
 
 const initPreviewView = dispatch => {
-	dispatch(fetchPreviewData('getPopularTimeserieVars'));
+	dispatch(fetchPreviewDataFromBackend(getFetchFn("previews", "getPopularTimeserieVars")));
 
-	const radioConfigMain = getConfig('main');
+	const radioConfigMain = limitRadiosByEnvri(getConfig('mainPreview'));
 
 	dispatch({
 		type: actionTypes.RADIO_CREATE,
 		radioConfig: radioConfigMain,
+		isMain: true,
 		radioAction: actionTxt => {
-			dispatch(radioSelected(radioConfigMain, actionTxt));
-			dispatch(fetchPreviewData(actionTxt));
+			dispatch(radioSelected(radioConfigMain, true, actionTxt));
+			dispatch(fetchPreviewDataFromBackend(getFetchFn("previews", actionTxt)));
 		}
 	});
 
-	const radioConfigSub = getConfig('popularTSVars');
+	const radioConfigSub = limitRadiosByEnvri(getConfig('popularTSVars'));
 
 	dispatch({
 		type: actionTypes.RADIO_CREATE,
 		radioConfig: radioConfigSub,
-		radioAction: actionTxt => dispatch(radioSelected(radioConfigSub, actionTxt))
+		isMain: false,
+		radioAction: actionTxt => dispatch(radioSelected(radioConfigSub, false, actionTxt))
 	});
 };
 
-const fetchPreviewData = actionTxt => dispatch => {
-	const fetchFn = actionTxt === "getPopularTimeserieVars"
-		? getPopularTimeserieVars
-		: getPreviewAggregation(actionTxt);
-	dispatch(fetchPreviewDataFromBackend(fetchFn));
+const limitRadiosByEnvri = (radioConfig) => {
+	return {
+		name: radioConfig.name,
+		config: radioConfig.config.filter(conf => conf.envri.includes(localConfig.envri))
+	};
 };
 
 const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
@@ -98,10 +105,60 @@ const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
 	});
 };
 
-export const radioSelected = (radioConfig, actionTxt) => dispatch => {
+const initLibraryDownloads = (dispatch, getState) => {
+	dispatch(fetchVariousStatsFromBackend(getAggregationResult('getLibDownloadsByCountry')));
+	
+	const radioConfigMain = limitRadiosByEnvri(getConfig('mainLib'));
+
+	dispatch({
+		type: actionTypes.RADIO_CREATE,
+		radioConfig: radioConfigMain,
+		isMain: true,
+		radioAction: actionTxt => {
+			dispatch(radioSelected(radioConfigMain, true, actionTxt));
+			dispatch(fetchVariousStatsFromBackend(getFetchFn(getState().view.mode, actionTxt)));
+		}
+	});
+
+	dispatch({
+		type: actionTypes.RADIO_CREATE,
+		radioConfig: emptyRadioConf,
+		isMain: false,
+		radioAction: _ => _
+	});
+};
+
+const getFetchFn = (viewMode, actionTxt) => {
+	switch (viewMode) {
+		case "previews":
+			return actionTxt === "getPopularTimeserieVars"
+				? (page) => getAggregationResult(actionTxt)(page, 1000)
+				: getAggregationResult(actionTxt);
+
+		case "library":
+			return getAggregationResult(actionTxt);
+
+		default:
+			throw new Error(`Unsupported view mode: ${viewMode}`);
+	}
+};
+
+const fetchVariousStatsFromBackend = (fetchFn, page = 1) => dispatch => {
+	fetchFn(page).then(variousStats => {
+		dispatch({
+			type: actionTypes.VARIOUS_STATS_FETCHED,
+			page,
+			variousStats,
+			fetchFn
+		})
+	});
+};
+
+const radioSelected = (radioConfig, isMain, actionTxt) => dispatch => {
 	dispatch({
 		type: actionTypes.RADIO_UPDATED,
 		radioConfig,
+		isMain,
 		actionTxt
 	});
 };
@@ -226,16 +283,18 @@ export const statsUpdate = (varName, values) => (dispatch) => {
 };
 
 export const requestPage = page => (dispatch, getState) => {
-	const viewMode = getState().view.mode;
+	const state = getState();
+	const viewMode = state.view.mode;
+	const mainRadio = state.mainRadio;
 
 	if (viewMode === "downloads"){
 		dispatch(fetchDownloadStats(page));
-	} else if (viewMode === "previews"){
-		dispatch(requestPagePreviews(page));
-	}
-};
 
-const requestPagePreviews = page => (dispatch, getState) => {
-	const fetchFn = getState().lastPreviewCall;
-	dispatch(fetchPreviewDataFromBackend(fetchFn, page));
+	} else if (viewMode === "previews"){
+		// dispatch(requestPagePreviews(page));
+		dispatch(fetchPreviewDataFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
+
+	} else if (viewMode === "library") {
+		dispatch(fetchVariousStatsFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
+	}
 };

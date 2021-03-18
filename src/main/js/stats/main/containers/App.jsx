@@ -60,8 +60,9 @@ function stateToProps(state) {
 		filters: state.filters,
 		view: state.view,
 		previewData: state.previewData,
-		radiosPreviewMain: state.mainRadio,
-		radiosPreviewSub: state.subRadio,
+		mainRadio: state.mainRadio,
+		subRadio: state.subRadio,
+		variousStats: state.variousStats,
 	};
 }
 
