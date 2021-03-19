@@ -29,7 +29,7 @@ const RowValCount = ({ dobj }) => {
 	return (
 		<tr>
 			<td>{dobj.val}</td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	);
 };
@@ -41,7 +41,7 @@ const RowDownloads = ({ dobj }) => {
 		<tr>
 			<td>{fileName}</td>
 			<td><LandingPageLink hashId={dobj.objId} /></td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	)
 };
@@ -55,7 +55,7 @@ const RowDownloadsWithLinks = ({ dobj, onFileNameClick }) => {
 				<a style={{ cursor: 'pointer' }} onClick={() => onFileNameClick(dobj.hashId)} title="Show stats only for this data object">{fileName}</a>
 			</td>
 			<td><LandingPageLink hashId={dobj.hashId} /></td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	)
 };
@@ -72,7 +72,7 @@ const RowPreviewTS = ({ dobj }) => {
 				</details>
 			</td>
 			<td><LandingPageLink hashId={dobj.hashId} /></td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	);
 };
@@ -88,7 +88,7 @@ const RowPreviewNetCDF = ({ dobj }) => {
 				</details>
 			</td>
 			<td><LandingPageLink hashId={dobj.hashId} /></td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	);
 };
@@ -106,7 +106,7 @@ const RowPreviewMapGraph = ({ dobj }) => {
 				</details>
 			</td>
 			<td><LandingPageLink hashId={dobj.hashId} /></td>
-			<td>{dobj.count}</td>
+			<td>{dobj.count.toLocaleString()}</td>
 		</tr>
 	);
 };

@@ -60,7 +60,7 @@ const Paging = ({ hasHashIdFilter, disablePaging, paging, requestPage, panelTitl
 				</div>
 				: null
 			}
-			<h3 className="panel-title">{panelTitle} {start + 1} to {end} of {paging.objCount}</h3>
+			<h3 className="panel-title">{panelTitle} {start + 1} to {end} of {paging.objCount.toLocaleString()}</h3>
 		</div>
 	);
 };
