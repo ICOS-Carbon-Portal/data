@@ -16,7 +16,7 @@ export const ViewSwitcher = props => {
 		case 'previews':
 			return <PreviewsView {...props} />;
 		
-		case 'library':
+		case 'pylib':
 			return <LibDownloadsView {...props} />;
 
 		default:

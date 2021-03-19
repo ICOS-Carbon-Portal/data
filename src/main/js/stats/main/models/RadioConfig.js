@@ -61,7 +61,7 @@ const configs = [
 			},
 			{
 				envri: ['ICOS'],
-				txt: 'Downloads by library version',
+				txt: 'Downloads by pylib version',
 				actionTxt: 'getLibDownloadsByVersion'
 			}
 		]

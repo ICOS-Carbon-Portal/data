@@ -1,11 +1,11 @@
-const allViews = ['downloads', 'previews', 'library'];
+const allViews = ['downloads', 'previews', 'pylib'];
 
 export default class ViewMode{
 	constructor(envri, selectedMode) {
 		this.envri = envri;
 		this._modes = envri === "ICOS"
 			? allViews
-			: allViews.filter(v => v !== "library");
+			: allViews.filter(v => v !== "pylib");
 		this._selectedMode = selectedMode
 			? this._modes[this._modes.indexOf(selectedMode)]
 			: this._modes[0];

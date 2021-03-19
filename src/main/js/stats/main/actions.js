@@ -51,7 +51,7 @@ const fetchDataForView = viewMode => dispatch => {
 	} else if (viewMode === "previews"){
 		dispatch(initPreviewView);
 
-	} else if (viewMode === "library") {
+	} else if (viewMode === "pylib") {
 		dispatch(initLibraryDownloads);
 	}
 };
@@ -135,7 +135,7 @@ const getFetchFn = (viewMode, actionTxt) => {
 				? (page) => getAggregationResult(actionTxt)(page, 1000)
 				: getAggregationResult(actionTxt);
 
-		case "library":
+		case "pylib":
 			return getAggregationResult(actionTxt);
 
 		default:
@@ -294,7 +294,7 @@ export const requestPage = page => (dispatch, getState) => {
 		// dispatch(requestPagePreviews(page));
 		dispatch(fetchPreviewDataFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
 
-	} else if (viewMode === "library") {
+	} else if (viewMode === "pylib") {
 		dispatch(fetchVariousStatsFromBackend(getFetchFn(viewMode, mainRadio.actionTxt), page));
 	}
 };
