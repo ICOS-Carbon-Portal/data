@@ -1,8 +1,6 @@
 package se.lu.nateko.cp.data.api
 
 import scala.concurrent.Future
-import scala.collection.immutable
-import scala.collection.immutable.Iterable
 
 import akka.Done
 import akka.actor.ActorSystem
@@ -188,6 +186,17 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			.filter(dosi => !dosi.format.contains(CpMetaVocab.ObjectFormats.asciiWdcggTimeSer))
 	}
 
+	def getDobjStorageInfos(dobjs: Seq[URI]): Source[DobjStorageInfo, Any] = {
+		val query = s"""|prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|select * where{
+			|	values ?dobj {${dobjs.map{dobj => s"<$dobj>"}.mkString(" ")}}
+			|	?dobj cpmeta:hasSizeInBytes ?size .
+			|	?dobj cpmeta:hasName ?fileName .
+			|	?dobj cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
+			|}""".stripMargin
+		Source.lazyFuture(() => sparqlDobjStorageInfos(query)).mapConcat(identity)
+	}
+
 	val docObjsStorageInfos: Source[DobjStorageInfo, Any] = {
 		val query = """prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|select * where{
@@ -198,7 +207,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		Source.lazyFuture(() => sparqlDobjStorageInfos(query)).mapConcat(identity)
 	}
 
-	private def objStorageInfos(paging: Paging): Future[immutable.Seq[DobjStorageInfo]] = {
+	private def objStorageInfos(paging: Paging): Future[Seq[DobjStorageInfo]] = {
 		val query = s"""|prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|prefix prov: <http://www.w3.org/ns/prov#>
 			|select ?dobj ?format ?size ?fileName where{
@@ -218,7 +227,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		sparqlDobjStorageInfos(query)
 	}
 
-	private def sparqlDobjStorageInfos(query: String): Future[immutable.Seq[DobjStorageInfo]] = {
+	private def sparqlDobjStorageInfos(query: String): Future[Seq[DobjStorageInfo]] = {
 		sparql.select(query).map(
 			_.results.bindings.toVector.flatMap{
 				binding => Try{
@@ -243,7 +252,7 @@ object MetaClient{
 			val limitClause = limit.map("limit " + _.toString)
 			Seq(offClause, limitClause).flatten.mkString("\n")
 		}
-		def fileNamePart: String = s"$offset--${limit.fold("end")(_.toString)}"
+		def fileNamePart: String = if(offset != 0 || limit.isDefined) s"$offset--${limit.fold("end")(_.toString)}" else "all"
 	}
 
 	val noPaging = new Paging()

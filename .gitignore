@@ -1,5 +1,6 @@
 /application.conf
 /fileStorage/
+/integrityReports/
 *.class
 *.log
 

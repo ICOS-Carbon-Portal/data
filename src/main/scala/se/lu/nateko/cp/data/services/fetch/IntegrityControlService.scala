@@ -13,6 +13,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.concurrent.duration.DurationInt
 import java.nio.file.Path
+import java.net.URI
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
 	import IntegrityControlService._
@@ -43,6 +44,9 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 
 	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, paging: Paging): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(paging))
+
+	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, dobjs: Seq[URI]): ReportSource =
+		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(dobjs))
 
 	def getDocObjRemoteReport(uploadMissingToRemote: Boolean): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.docObjsStorageInfos)

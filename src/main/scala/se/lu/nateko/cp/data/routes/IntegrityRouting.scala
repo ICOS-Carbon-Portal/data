@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.routes
 
+import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -19,6 +20,7 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.StandardRoute
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
@@ -39,7 +41,7 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 
 			val paging = new Paging(offsetOpt.getOrElse(0), limitOpt)
 
-			def produceReport(prefix: String, maker: Boolean => ReportSource) = {
+			def produceReport(prefix: String, maker: Boolean => ReportSource): StandardRoute = {
 
 				val src = maker(fix.contains("true")).map{
 					report => ByteString(s"${report.statement}\n", StandardCharsets.UTF_8)
@@ -66,7 +68,15 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 				produceReport("local", service.getReportOnLocal(_, paging))
 			} ~
 			path("remote"){
-				produceReport("remote", service.getDataObjRemoteReport(_, paging))
+				get {
+					produceReport("remote", service.getDataObjRemoteReport(_, paging))
+				} ~
+				post{
+					entity(as[String]){ent =>
+						val dobjs = ent.trim.split("\n").map(ustr => new URI(ustr.trim)).toSeq
+						produceReport("remoteselected", service.getDataObjRemoteReport(_, dobjs))
+					}
+				}
 			} ~
 			path("remotedocs"){
 				produceReport("remotedocs", service.getDocObjRemoteReport)
