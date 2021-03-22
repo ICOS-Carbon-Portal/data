@@ -53,6 +53,11 @@ object Playground {
 		src.runWith(sink)
 	}
 
+	def download(toPath: String, fromRelIrodsPath: String) = {
+		val sink = FileIO.toPath(Paths.get(toPath))
+		val src = client.getFileSource(fromRelIrodsPath)
+		src.runWith(sink)
+	}
 	def digestFileFromDisk(path: String): Future[Sha256Sum] = {
 		val file = new java.io.File(path)
 		val src = FileIO.fromPath(file.toPath)
