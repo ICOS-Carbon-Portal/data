@@ -78,7 +78,7 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 	const siteQueries = config.envri === "SITES" ?
 		`?site cpmeta:hasEcosystemType ?ecosystem .
 		?site cpmeta:hasSpatialCoverage ?location .`
-		: "";
+		: "OPTIONAL { ?station cpmeta:hasEcosystemType ?ecosystem }";
 
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
