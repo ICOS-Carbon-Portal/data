@@ -324,6 +324,28 @@ export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 }
 
 export function getResourceHelpInfo(name: HelpItemName, url: UrlStr): PortalThunkAction<void> {
+	type HelpInfo = {
+		comments: string[]
+		label: string
+		uri: string
+		documentation?: Documentation[]
+	}
+
+	const getHelpInfo = (resp: DataObjectSpec): HelpInfo => {
+		const res = resp.self;
+		const documentation: Documentation[] = resp.documentation.map(doc => ({
+			txt: doc.name,
+			url: doc.res
+		}));
+
+		return {
+			comments: res.comments,
+			label: res.label ?? '',
+			uri: url,
+			documentation
+		}
+	};
+
 	return (dispatch, getState) => {
 		const helpItem = getState().helpStorage.getHelpItem(url);
 		if(helpItem){
@@ -334,14 +356,13 @@ export function getResourceHelpInfo(name: HelpItemName, url: UrlStr): PortalThun
 		const correctedUrl = new URL(url);
 		correctedUrl.protocol = "https:";
 
-		fetchJson<DataObjectSpec>(correctedUrl.href).then(
-			spec => {
-				const res = spec.self;
-				const documentation: Documentation[] = spec.documentation.map(doc => ({
-					txt: doc.name,
-					url: doc.res
-				}));
-				const helpItem = new HelpItem(name, res.label ?? '', url, res.comments.map(comment => {return {comment};}), documentation);
+		fetchJson<DataObjectSpec | HelpInfo>(correctedUrl.href).then(
+			resp => {
+				const helpInfo: HelpInfo = resp.documentation === undefined
+					? resp as HelpInfo
+					: getHelpInfo(resp as DataObjectSpec);
+
+				const helpItem = new HelpItem(name, helpInfo.label, url, helpInfo.comments.map(comment => { return { comment }; }), helpInfo.documentation);
 
 				dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
 			},

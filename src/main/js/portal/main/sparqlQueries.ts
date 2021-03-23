@@ -75,10 +75,9 @@ where{
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
-	const siteQueries = config.envri === "SITES" ?
-		`?site cpmeta:hasEcosystemType ?ecosystem .
-		?site cpmeta:hasSpatialCoverage ?location .`
-		: "OPTIONAL { ?station cpmeta:hasEcosystemType ?ecosystem }";
+	const siteQueries = config.envri === "SITES"
+		? `?site cpmeta:hasEcosystemType ?ecosystem .\n\t?site cpmeta:hasSpatialCoverage ?location .`
+		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)\n\tOPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}`;
 
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>

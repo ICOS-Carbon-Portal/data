@@ -132,6 +132,8 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
+	
+	new HelpItem('ecosystem', 'Type of ecosystem. Each type is described individually in the drop down.'),
 
 	new HelpItem('submitter', 'Organization credited for submission of the data object. ' +
 		'Acquisition and production are credited independently of submission.'),

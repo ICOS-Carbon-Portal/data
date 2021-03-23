@@ -83,7 +83,7 @@ export default class MultiSelectFilter extends Component<Props, State> {
 	}
 
 	helpBtn(name: string, urlStr: UrlStr){
-		if (name === "type" && urlStr){
+		if ((name === "type" || name === "ecosystem") && urlStr){
 			return (
 				<HelpButton
 					name={name}
