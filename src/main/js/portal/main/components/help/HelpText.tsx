@@ -1,13 +1,18 @@
 import React from 'react';
-import { HelpItem, HelpStorageListEntry, Documentation } from '../../models/HelpStorage';
+import { HelpItem, HelpStorageListEntry, Documentation, EnvrifiedHelpMain } from '../../models/HelpStorage';
+import config from '../../config';
 
 
 export default function HelpText(props: {helpItem: HelpItem | undefined}){
-	const {helpItem} = props;
+	const { helpItem } = props;
+	if (helpItem === undefined) return null;
+
+	const main = (helpItem.main as EnvrifiedHelpMain)[config.envri] ?? helpItem.main;
+
 	return helpItem
 		? (
 			<div style={{fontSize: '90%'}}>
-				<p>{helpItem.main}</p>
+				<p>{main}</p>
 				<List list={helpItem.list} />
 				<DocumentationList list={helpItem.documentation} />
 			</div>

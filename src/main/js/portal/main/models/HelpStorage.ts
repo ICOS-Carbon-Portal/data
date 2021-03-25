@@ -1,6 +1,7 @@
-import config, {placeholders, numericFilterLabels, publicQueries, QueryName} from '../config';
+import config, {placeholders, numericFilterLabels, publicQueries, QueryName, Envri} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";
+import { Obj } from '../../../common/main/types';
 
 
 const titles = { ...placeholders[config.envri], ...numericFilterLabels, preview: "Preview / Add to cart", publicQuery: "SPARQL queries"};
@@ -74,11 +75,12 @@ export interface Documentation {
 }
 
 export type HelpItemName = keyof typeof titles;
+export type EnvrifiedHelpMain = Obj<string, Envri>;
 
 export class HelpItem {
 	constructor(
 		readonly name: HelpItemName,
-		readonly main: string,
+		readonly main: string | EnvrifiedHelpMain,
 		readonly url?: UrlStr,
 		readonly list?: HelpStorageListEntry[],
 		readonly documentation?: Documentation[]
@@ -133,7 +135,13 @@ const initItems: HelpItem[] = [
 	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
 	
-	new HelpItem('ecosystem', 'Type of ecosystem. Each type is described individually in the drop down.'),
+	new HelpItem(
+		'ecosystem',
+		{
+			ICOS: 'Only applicable to measurement data from ecosystem stations where ecosystem-type information is available.',
+			SITES: 'Type of ecosystem. Each type is described individually in the drop down.'
+		}
+	),
 
 	new HelpItem('submitter', 'Organization credited for submission of the data object. ' +
 		'Acquisition and production are credited independently of submission.'),

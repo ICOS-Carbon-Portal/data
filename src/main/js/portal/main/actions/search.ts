@@ -78,7 +78,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 
 	return {
 		specs: useOnlyPidFilter ? null : specTable.basics.getDistinctColValues(SPECCOL),
-		stations: useOnlyPidFilter ? null : specTable.getFilter('station'),
+		stations: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('station'),
 		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
 		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
 		sorting,

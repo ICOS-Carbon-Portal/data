@@ -80,7 +80,7 @@ const defaultCategNames = {
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	project: 'Project',
-	ecosystem: 'Ecosystem',
+	ecosystem: 'Ecosystem type',
 	location: 'Location'
 };
 
@@ -97,7 +97,7 @@ export const numericFilterLabels: {[key in NumberFilterCategories]: string} = {
 
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	ICOS: defaultCategNames,
-	SITES: {...defaultCategNames, station: 'Station', project: 'Thematic programme', valType: 'Parameter'},
+	SITES: { ...defaultCategNames, station: 'Station', ecosystem: 'Ecosystem', project: 'Thematic programme', valType: 'Parameter'},
 };
 
 export type CategPrefix = UrlStr | {prefix: string, value: UrlStr}[]
@@ -111,6 +111,7 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 			{prefix: 'w', value: 'http://meta.icos-cp.eu/resources/wdcgg/station/'},
 			{prefix: 'i', value: 'http://meta.icos-cp.eu/resources/stations/'}
 		],
+		ecosystem: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
 		submitter: [
 			{prefix: 'o', value: 'http://meta.icos-cp.eu/resources/organizations/'},
 			{prefix: 's', value: 'http://meta.icos-cp.eu/resources/stations/'}
