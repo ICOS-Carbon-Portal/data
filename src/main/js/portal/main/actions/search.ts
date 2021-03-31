@@ -76,15 +76,27 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 	const filters = getFilters(state);
 	const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
-	return {
-		specs: useOnlyPidFilter ? null : specTable.basics.getDistinctColValues(SPECCOL),
-		stations: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('station'),
-		sites: useOnlyPidFilter ? null : specTable.getColumnValuesFilter('site'),
-		submitters: useOnlyPidFilter ? null : specTable.getFilter('submitter'),
+	function stationFilter(): Filter{
+		const o = specTable.origins;
+		return o.getFilter('ecosystem') == null ? o.getFilter('station') : o.getColumnValuesFilter('station');
+	}
+
+	const pidFilterQparams: QueryParameters = {
+		specs: null,
+		stations: null,
+		sites: null,
+		submitters: null,
 		sorting,
 		paging: customPaging ?? paging,
 		filters
 	};
+
+	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
+		specs: specTable.basics.getDistinctColValues(SPECCOL),
+		stations: stationFilter(),
+		sites: specTable.getColumnValuesFilter('site'),
+		submitters: specTable.getFilter('submitter'),
+	});
 };
 
 export const makeQuerySubmittable = (orgQuery: string) => {

@@ -129,9 +129,7 @@ export default class SpecTable<T extends string = string>{
 	}
 
 	getColumnValuesFilter(colName: Col<T>): Filter{
-		return this.colNames.some(name => this.getFilter(name) !== null)
-			? this.getDistinctColValues(colName)
-			: null;
+		return this.hasOwnFilters ? this.getDistinctColValues(colName) : null;
 	}
 
 	getAllColValues(colName: Col<T>): Value[]{
