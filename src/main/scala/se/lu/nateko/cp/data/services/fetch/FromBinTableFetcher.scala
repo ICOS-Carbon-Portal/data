@@ -6,6 +6,7 @@ import scala.concurrent.Future
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import akka.Done
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
@@ -21,7 +22,7 @@ class FromBinTableFetcher(folder: File){
 
 	assert(folder.isDirectory, "BinTable folder path must be a directory: " + folder.getAbsolutePath)
 
-	def getSource(request: BinTableRequest): Source[ByteString, Future[Unit]] = {
+	def getSource(request: BinTableRequest): Source[ByteString, Future[Done]] = {
 
 		assert(!request.schema.hasStringColumn, "Only numeric BinTables can be fetched as binary data.")
 

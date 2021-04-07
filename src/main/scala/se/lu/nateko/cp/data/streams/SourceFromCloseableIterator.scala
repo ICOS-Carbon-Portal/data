@@ -10,23 +10,24 @@ import akka.stream.scaladsl.Source
 import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.GraphStageWithMaterializedValue
 import akka.stream.stage.OutHandler
+import akka.Done
 
 object SourceFromCloseableIterator {
 
-	def apply[T](iterFactory: () => (Iterator[T], () => Unit)): Source[T, Future[Unit]] =
+	def apply[T](iterFactory: () => (Iterator[T], () => Unit)): Source[T, Future[Done]] =
 		Source.fromGraph(new SourceFromCloseableIterator(iterFactory))
 }
 
 private class SourceFromCloseableIterator[T](iterFactory: () => (Iterator[T], () => Unit))
-								extends GraphStageWithMaterializedValue[SourceShape[T], Future[Unit]]{
+								extends GraphStageWithMaterializedValue[SourceShape[T], Future[Done]]{
 
 	private val out: Outlet[T] = Outlet("BinTableColumnBinaryOutput")
 
 	override val shape = SourceShape(out)
 
-	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Unit]) = {
+	override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, Future[Done]) = {
 
-		val donePromise = Promise[Unit]()
+		val donePromise = Promise[Done]()
 
 		val logic = new GraphStageLogic(shape){
 
@@ -64,7 +65,7 @@ private class SourceFromCloseableIterator[T](iterFactory: () => (Iterator[T], ()
 				try{
 					completeStage()
 					closeReader()
-					donePromise.success(())
+					donePromise.success(Done)
 				}catch{
 					case ex: Throwable => donePromise.failure(ex)
 				}

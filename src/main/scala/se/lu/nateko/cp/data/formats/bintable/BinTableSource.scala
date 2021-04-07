@@ -7,6 +7,7 @@ import scala.concurrent.Future
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import akka.Done
 import se.lu.nateko.cp.data.streams.SourceFromCloseableIterator
 
 
@@ -16,7 +17,7 @@ object BinTableSource {
 
 	val MAX_CHUNK_SIZE = 8192
 
-	def apply(file: File, schema: Schema, cols: Seq[Int], slice: Option[BinTableSlice] = None): Source[ByteString, Future[Unit]] =
+	def apply(file: File, schema: Schema, cols: Seq[Int], slice: Option[BinTableSlice] = None): Source[ByteString, Future[Done]] =
 		SourceFromCloseableIterator(() => {
 			val binTblReader = new BinTableReader(file, schema)
 			val byteStringIter = getColumns(binTblReader, cols, slice)
