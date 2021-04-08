@@ -1,9 +1,12 @@
 package se.lu.nateko.cp.data.formats
 
-import java.time._
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
+
+import java.text.NumberFormat
+import java.time._
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class ValueFormatParser {
 
@@ -64,12 +67,41 @@ class ValueFormatParser {
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => Double.box(Double.NaN)
 		case Iso8601TimeOfDay => Int.box(Int.MinValue)
 	}
+
+	def numCsvSerializer(format: ValueFormat): AnyVal => String = {
+
+		val ser: AnyVal => String = format match {
+
+			case Iso8601Date | EtcDate =>
+				v => LocalDate.ofEpochDay(v.asInstanceOf[Int].toLong).toString
+
+			case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime =>
+				v => Instant.ofEpochMilli(v.asInstanceOf[Double].toLong).toString
+
+			case Iso8601TimeOfDay =>
+				v => LocalTime.ofSecondOfDay(v.asInstanceOf[Int].toLong % 86400).toString
+
+			case Utf16CharValue | IntValue | StringValue =>
+				v => v.toString
+
+			case FloatValue =>
+				v => numberFormat.format(v.asInstanceOf[Float].toDouble)
+
+			case DoubleValue =>
+				v => numberFormat.format(v.asInstanceOf[Double])
+		}
+
+		val nullRepr = getNullRepresentation(format)
+
+		v => if(nullRepr == v) "" else ser(v)
+	}
 }
 
 object ValueFormatParser {
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+	val numberFormat = NumberFormat.getNumberInstance(Locale.ROOT)
 
 	def parseIsoTimeOfDay(time: String): Integer =
 		Int.box(LocalTime.parse(time).toSecondOfDay)

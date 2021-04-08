@@ -267,9 +267,13 @@ object MetaClient{
 		case Some(BoundLiteral(_, _)) => throw new Exception("Unexpected SPARQL result: expected URI resource, got literal")
 	}
 
-	def asLiteral(b: Binding, varName: String): String = b.get(varName) match{
-		case None => throw new Exception(s"Unexpected SPARQL result: no value for $varName")
-		case Some(BoundLiteral(value, _)) => value
-		case Some(BoundUri(_)) => throw new Exception("Unexpected SPARQL result: expected literal, got URI resource")
+	def asLiteral(b: Binding, varName: String): String = asLiteralOpt(b, varName).getOrElse{
+		throw new Exception(s"Unexpected SPARQL result: no value for $varName")
+	}
+
+	def asLiteralOpt(b: Binding, varName: String): Option[String] = b.get(varName) match{
+		case None => None
+		case Some(BoundLiteral(value, _)) => Some(value)
+		case Some(BoundUri(_)) => throw new Exception(s"Unexpected SPARQL result: expected literal in $varName, got URI resource")
 	}
 }
