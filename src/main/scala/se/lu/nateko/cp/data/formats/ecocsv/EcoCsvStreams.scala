@@ -11,8 +11,6 @@ import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object EcoCsvStreams {
 
-	protected val valueFormatParser = new ValueFormatParser
-
 	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
 	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
 		val parser = new EcoCsvParser
@@ -33,8 +31,8 @@ object EcoCsvStreams {
 	}
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
-		val date = valueFormatParser.parse(localDate, EtcDate).asInstanceOf[Int]
-		val time = valueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
+		val date = ValueFormatParser.parse(localDate, EtcDate).asInstanceOf[Int]
+		val time = ValueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
 		val locDate = LocalDate.ofEpochDay(date.toLong)
 
 		val dt =

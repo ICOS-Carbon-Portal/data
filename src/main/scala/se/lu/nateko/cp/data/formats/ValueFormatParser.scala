@@ -8,11 +8,17 @@ import java.time._
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-class ValueFormatParser {
-
-	import ValueFormatParser._
+object ValueFormatParser {
 
 	private[this] val parser = new ValueParser
+	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
+	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
+	val numberFormat: NumberFormat = {
+		val nf = NumberFormat.getNumberInstance(Locale.ROOT)
+		nf.setGroupingUsed(false)
+		nf
+	}
 
 	def parse(value: String, format: ValueFormat): AnyRef =
 		if (value == "") getNullRepresentation(format)
@@ -45,6 +51,12 @@ class ValueFormatParser {
 			case EtcLocalDateTime =>
 				parseLocalDateTime(value, etcDateTimeFormatter)
 		}
+
+	def parseIsoTimeOfDay(time: String): Integer =
+		Int.box(LocalTime.parse(time).toSecondOfDay)
+
+	def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
+		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
 		case IntValue => DataType.INT
@@ -91,21 +103,16 @@ class ValueFormatParser {
 				v => numberFormat.format(v.asInstanceOf[Double])
 		}
 
-		val nullRepr = getNullRepresentation(format)
+		val nullTest: AnyVal => Boolean = getBinTableDataType(format) match{
+			case DataType.FLOAT =>
+				v => (v.asInstanceOf[Float] != v.asInstanceOf[Float])
+			case DataType.DOUBLE =>
+				v => (v.asInstanceOf[Double] != v.asInstanceOf[Double])
+			case _ =>
+				val nullRepr = getNullRepresentation(format)
+				v => nullRepr == v
+		}
 
-		v => if(nullRepr == v) "" else ser(v)
+		v => if(nullTest(v)) "" else ser(v)
 	}
-}
-
-object ValueFormatParser {
-	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
-	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
-	val numberFormat = NumberFormat.getNumberInstance(Locale.ROOT)
-
-	def parseIsoTimeOfDay(time: String): Integer =
-		Int.box(LocalTime.parse(time).toSecondOfDay)
-
-	def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
-		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 }

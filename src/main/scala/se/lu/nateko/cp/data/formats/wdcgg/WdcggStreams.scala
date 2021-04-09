@@ -17,7 +17,6 @@ import scala.concurrent.{ExecutionContext, Future}
 object WdcggStreams{
 
 	private val charSet = Charset.forName("Windows-1252").name()
-	protected val valueFormatParser = new ValueFormatParser
 
 	def linesFromBinary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 1000, allowTruncation = true)
@@ -69,8 +68,8 @@ object WdcggStreams{
 		}
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
-		val date = valueFormatParser.parse(localDate, Iso8601Date).asInstanceOf[Int]
-		val time = valueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
+		val date = ValueFormatParser.parse(localDate, Iso8601Date).asInstanceOf[Int]
+		val time = ValueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
 		val locDate = LocalDate.ofEpochDay(date.toLong)
 
 		val dt =

@@ -18,6 +18,7 @@ import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
 import scala.concurrent.{ExecutionContext, Future}
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import java.net.URI
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
@@ -151,7 +152,7 @@ object IngestionUploadTask{
 	def apply(ingSpec: IngestionSpec, originalFile: File, meta: MetaClient): Future[IngestionUploadTask] = {
 		import meta.dispatcher
 
-		val formatsFut = getColumnFormats(ingSpec.objSpec, meta.sparql)
+		val formatsFut = getColumnFormats(ingSpec.objSpec.self.uri, meta.sparql)
 
 		val utcOffsetFut: Future[Int] = ingSpec.stationId.collect{
 			case StationId(stationId) if(ingSpec.objSpec.format.uri == asciiEtcHalfHourlyProdTimeSer) =>
@@ -162,11 +163,11 @@ object IngestionUploadTask{
 			new IngestionUploadTask(ingSpec, originalFile, formats, utcOffset)
 	}
 
-	def getColumnFormats(spec: DataObjectSpec, sparql: SparqlClient)(implicit ctxt: ExecutionContext): Future[ColumnsMeta] = {
+	def getColumnFormats(objSpec: URI, sparql: SparqlClient)(implicit ctxt: ExecutionContext): Future[ColumnsMeta] = {
 
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		|select ?colName ?valFormat ?isRegex ?isOptional where{
-		|	<${spec.self.uri}> cpmeta:containsDataset ?dataSet .
+		|	<$objSpec> cpmeta:containsDataset ?dataSet .
 		|	?dataSet cpmeta:hasColumn ?column .
 		|	?column cpmeta:hasColumnTitle ?colName .
 		|	?column cpmeta:hasValueFormat ?valFormat .

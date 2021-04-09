@@ -6,7 +6,7 @@ import java.util.Locale
 
 class ValueParserTests extends AnyFunSpec{
 
-	private [this] val parser = new ValueFormatParser
+	private [this] val parser = ValueFormatParser
 
 	describe("ValueFormatParser"){
 		//this must not affect the results, and that is what is being tested here

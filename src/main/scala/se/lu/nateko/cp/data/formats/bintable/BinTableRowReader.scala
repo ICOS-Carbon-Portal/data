@@ -30,25 +30,26 @@ class BinTableRowReader(file: File, schema: Schema) {
 		rows(columns, offset, sizeLong.toInt)
 	}
 
-	def rows(columns: Array[Int], offset: Long, size: Int): Source[Array[AnyVal], Future[Done]] = SourceFromCloseableIterator(() => {
+	def rows(columns: Array[Int], offset: Long, limit: Int): Source[Array[AnyVal], Future[Done]] = SourceFromCloseableIterator(() => {
 
 		val reader = new BinTableReader(file, schema)
-		val buffers = columns.map(reader.read(_, offset, size))
-		var n = 0L
 
-		val iter = Iterator.continually{n += 1; n}.takeWhile(_ <= size).map{_ =>
-			columns.indices.map{i =>
-				val buf = buffers(i)
-				schema.columns(i) match {
-					case FLOAT  => buf.asInstanceOf[FloatBuffer].get()
-					case BYTE   => buf.asInstanceOf[ByteBuffer].get()
-					case SHORT  => buf.asInstanceOf[ShortBuffer].get()
-					case CHAR   => buf.asInstanceOf[CharBuffer].get()
-					case DOUBLE => buf.asInstanceOf[DoubleBuffer].get()
-					case INT    => buf.asInstanceOf[IntBuffer].get()
+		val cellReaders: Array[() => AnyVal] = columns.map{colIdx =>
+				val buf = reader.read(colIdx, offset, limit)
+				schema.columns(colIdx) match {
+					case FLOAT  => buf.asInstanceOf[FloatBuffer].get
+					case BYTE   => buf.asInstanceOf[ByteBuffer].get
+					case SHORT  => buf.asInstanceOf[ShortBuffer].get
+					case CHAR   => buf.asInstanceOf[CharBuffer].get
+					case DOUBLE => buf.asInstanceOf[DoubleBuffer].get
+					case INT    => buf.asInstanceOf[IntBuffer].get
 					case STRING => throw new IllegalStateException("String BinTable columns are not supported")
 				}
-			}.toArray
+		}
+
+		var n = 0L
+		val iter = Iterator.continually{n += 1; n}.takeWhile(_ <= limit).map{_ =>
+			cellReaders.map(_.apply())
 		}
 
 		(iter, reader.close)
