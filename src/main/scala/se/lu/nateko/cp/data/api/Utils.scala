@@ -44,4 +44,10 @@ object Utils {
 				.recover{case _: Throwable => resp.status.toString}
 	}
 
+	def dropFileExtension(fileName: String): String = {
+		val idx = fileName.lastIndexOf(".")
+		if(idx < 0) fileName
+		else fileName.substring(0, idx)
+	}
+
 }
