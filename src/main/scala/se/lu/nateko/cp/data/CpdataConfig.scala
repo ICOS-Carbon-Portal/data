@@ -82,17 +82,20 @@ case class RestheartCollDef(
 case class RestHeartConfig(
 	baseUri: String,
 	dbNames: Map[Envri, String],
-	downloadLogUris: Map[Envri, URI],
+	activityLogUriBases: Map[Envri, URI],
 	usersCollection: String,
 	portalUsage: RestheartCollDef,
 	skipInit: Boolean
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
 
-	def downloadLogUri(implicit envri: Envri): URI = {
-		val baseUri = downloadLogUris(envri)
-		baseUri.resolve("downloads")
+	private def logUri(logType: String)(implicit envri: Envri): URI = {
+		val baseUri = activityLogUriBases(envri)
+		baseUri.resolve(logType)
 	}
+
+	def downloadLogUri(implicit envri: Envri): URI = logUri("downloads")
+	def portaluseLogUri(implicit envri: Envri): URI = logUri("portaluse")
 }
 
 case class EtcFacadeConfig(

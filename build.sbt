@@ -1,6 +1,6 @@
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-scalaVersion in ThisBuild := "2.13.4"
+scalaVersion in ThisBuild := "2.13.5"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -88,7 +88,7 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.2",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.4",
 			metaCoreModule,
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.5",
 			"org.irods.jargon"    % "jargon-core"                        % "4.3.0.1-RELEASE", //IRODS client core features

@@ -17,6 +17,7 @@ import scala.concurrent.Future
 
 class BinTableRowReader(file: File, schema: Schema) {
 
+	assert(file.exists(), s"File ${file.getName} was not found on the server")
 	assert(!schema.hasStringColumn, "string-value columns in BinTable are not supported in BinTableRowReader")
 
 	def rows(columns: Array[Int]): Source[Array[AnyVal], Future[Done]] = rows(columns, 0L)
