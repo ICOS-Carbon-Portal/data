@@ -85,8 +85,6 @@ case class RestHeartConfig(
 	downloadLogUris: Map[Envri, URI],
 	usersCollection: String,
 	portalUsage: RestheartCollDef,
-	dobjDownloads: RestheartCollDef,
-	collDownloads: RestheartCollDef,
 	skipInit: Boolean
 ){
 	def dbName(implicit envri: Envri) = dbNames(envri)
@@ -133,7 +131,7 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val mongoDbIndexFormat = jsonFormat3(MongoDbIndex)
 	implicit val mongoDbAggregationsFormat = jsonFormat3(MongoDbAggregations)
 	implicit val restheartCollDefFormat = jsonFormat4(RestheartCollDef)
-	implicit val restHeartConfigFormat = jsonFormat8(RestHeartConfig)
+	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
 	implicit val dlStatsConfigFormat = jsonFormat8(DownloadStatsConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
 	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)

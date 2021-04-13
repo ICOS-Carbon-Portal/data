@@ -113,11 +113,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	def init: Future[Done] = if (config.skipInit) ok else Future.sequence{
 		config.dbNames.keys.map{implicit envri =>
 			ensureDbExists.flatMap{
-				_ => setupCollection(config.dobjDownloads)
-			}.flatMap{
 				_ => setupCollection(config.portalUsage)
-			}.flatMap{
-				_ => setupCollection(config.collDownloads)
 			}
 		}
 	}.map(_ => Done)
