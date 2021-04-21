@@ -58,6 +58,30 @@ In some circumstances one may need to update the binary results of data ingestio
 
 ---
 
+## Accessing data objects
+
+After having been uploaded to Carbon Portal, the data objects can be accessed using a variety of methods. Access to the original data objects and their metadata can be performed anonymously, but some of the services require prior user login and acceptance of the [data licence](https://data.icos-cp.eu/licence) in your [user profile](https://cpauth.icos-cp.eu/), as described below.
+
+### Accepting the data licence
+
+To avoid being repeatedly asked to accept the [data licence](https://data.icos-cp.eu/licence) during every download operation, users have the option of [logging in](https://cpauth.icos-cp.eu/login/) using a number of supported login methods: eduGAIN university trust federation, ORCID ID, Facebook account, or a traditional username/password (functional email account is required for account creation in the latter case). After logging in, the user may choose to read and accept the [data licence](https://data.icos-cp.eu/licence) in their [user profile](https://cpauth.icos-cp.eu/) by marking the corresponding checkbox and saving their Carbon Portal user profile. In addition to avoiding the repeated licence acceptance ceremony in the future, this will also enable programmatic access to the data objects.
+
+### Accessing the data object metadata
+
+Described [here](https://github.com/ICOS-Carbon-Portal/meta/#data-objects)
+### Access using the portal web app
+
+### Access through data object landing pages
+
+### Downloading originals programmatically
+
+### CSV download for tabular time-series data
+
+### Python library for data and metadata access
+
+
+---
+
 ## Simplified ETC-specific facade API for data uploads
 
 The facade uses Basic HTTP Authentication. Username is the station's id.

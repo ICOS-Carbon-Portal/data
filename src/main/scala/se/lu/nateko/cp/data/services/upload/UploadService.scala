@@ -39,6 +39,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	val log = system.log
 	val folder = new java.io.File(config.folder)
+	private[this] val objLock = new ObjectLock("is currently already being uploaded")
 
 	if(!folder.exists) {
 		assert(folder.mkdirs(), "Failed to create directory " + folder.getAbsolutePath)
@@ -141,10 +142,11 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
 
-	private def getSpecificSink(dataObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] = {
-		val postTasks = getPostUploadTasks(dataObj)
-
-		getUploadTasks(dataObj).map{tasks =>
+	private def getSpecificSink(dataObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] =
+		for(
+			tasks <- getUploadTasks(dataObj);
+			_ <- Future.fromTry(objLock.lock(dataObj.hash))
+		) yield {
 			combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
 				val results = uploadResults.toIndexedSeq
 
@@ -163,13 +165,17 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 					theTask.onComplete(ownResult, otherTaskResults)
 				})
 
-				for(
+				val resFut = for(
 					taskResults <- Future.sequence(taskResultFutures);
-					postTaskResults <- Future.sequence(postTasks.map(_.perform(taskResults)))
+					postResultFuts = getPostUploadTasks(dataObj).map(_.perform(taskResults));
+					postTaskResults <- Future.sequence(postResultFuts)
 				) yield new UploadResult(taskResults ++ postTaskResults)
+
+				resFut.andThen{
+					case _ => objLock.unlock(dataObj.hash)
+				}
 			}))
 		}
-	}
 
 	private def getUploadTasks(obj: StaticObject): Future[IndexedSeq[UploadTask]] = obj match {
 		case dobj: DataObject => getDobjUploadTasks(dobj)
