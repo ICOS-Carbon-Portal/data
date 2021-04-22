@@ -82,6 +82,8 @@ Using this API with, for example, `curl`, one can save a data object to a curren
 
 `curl -JO 'https://data.icos-cp.eu/objects/-YB8ISMm1AT8EVv9zgjK-6S2' --cookie "cpauthToken=..."`
 
+The authentication tokens have a limited validity time (100000 seconds or 27.8 hours), which makes it necessary to refresh them daily. For everyday usage, this becomes an inconvenience. It is possible to renew the token programmatically. For this, a user needs to create a "traditional" username/password account at CP. After this, a fresh token can be retrieved [as described](https://github.com/ICOS-Carbon-Portal/meta/#authentication) in the instructions for data object metadata upload.
+
 ### Accessing the data object metadata
 
 CP data objects are accompanied with extensive metadata which can be used, among other things, for interpretation of the object's contents. Ways to access the metadata are described [here](https://github.com/ICOS-Carbon-Portal/meta/#data-objects)
@@ -94,7 +96,10 @@ This makes the data objects findable by variables of interest, and enables CP to
 Additionally, this extra treatment makes it possible to offer direct programmatic data access to selected columns in the datasets, while providing the data in a standardized plain CSV format, uniform for all tabular datasets, regardless of the format of the original.
 (In practice, data objects supplied by various research communities significantly differ in many important details, even if the formats are CSV-based; this complicates data reuse, forcing users to write their own parsing code for each of the formats).
 
-The API to download the plain CSV serialization is similar to that for download of data object originals, but with a different access URL and extra URL parameters for column selection, row offset and row limit.
+**It must be noted** that CSV download is not guaranteed to be a full-fledged replacement of the original data objects.
+This is an extra service offered by the Carbon Portal on a best-effort basis, effectively constitutes a format transformation from the original (even if the original was a CSV), and may offer fewer columns than the original, as the original objects may contain extra columns not mentioned in the columnar metadata (and therefore not available for CSV download).
+
+The API to download the plain CSV serialization is similar to that for [download of data object originals](#downloading-originals-programmatically), but with a different access URL and extra URL parameters for column selection, row offset and row limit.
 Example:
 
 `curl -JO https://data.icos-cp.eu/csv/x7l3Y6Mvg83ig0rINEBfEQVe?col=TIMESTAMP&col=ch4&col=Flag&offset=0&limit=20 --cookie "cpauthToken=..."`
@@ -104,6 +109,11 @@ All the URL parameters are optional. When none are present, all the columns know
 ### Python library for data and metadata access
 
 The APIs described above are HTTP-based and programming language agnostic, therefore can be used from arbitrary programming language. For Python users, there exists a [dedicated library](https://icos-carbon-portal.github.io/pylib/) that provides a high-level API for Carbon Portal data and metadata access.
+
+### Spatiotemporal NetCDF files
+
+Another format of data that is offered extended support is spatiotemporal (geo data with temporal component) NetCDF.
+CP does not, at the time of this writing, offer a documented programmatic access to the data in these files, but does provide variable metadata, guarantees presence of the announced variables in the NetCDF files, and hosts a GUI app for the data previews ([example](https://data.icos-cp.eu/netcdf/OPun_V09Pcat5jomRRF-5o0H?gamma=0.5&center=53.92090,10.37109&zoom=4&color=yellowRed)).
 
 ---
 
