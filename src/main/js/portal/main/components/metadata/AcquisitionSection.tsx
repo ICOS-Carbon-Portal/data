@@ -1,5 +1,5 @@
 import React from 'react';
-import { DataAcquisition } from '../../../../common/main/metacore';
+import { DataAcquisition, UriResource } from '../../../../common/main/metacore';
 import { metadataRow } from '../../containers/Metadata';
 import { UrlStr } from '../../backend/declarations';
 import {formatDateTime, getLastSegmentInUrl} from '../../utils';
@@ -46,18 +46,18 @@ const AcquisitionSection = (props: AquisitionSectionProps) => {
 	);
 };
 
-const instrumentRow = (instruments: UrlStr | UrlStr[]) => {
+const instrumentRow = (instruments: UriResource | UriResource[]) => {
 	return (
 		Array.isArray(instruments)
-			? metadataRow("Instruments", instruments.map((instrument: UrlStr, index) => {
+			? metadataRow("Instruments", instruments.map((instrument: UriResource, index) => {
 				return (
-					<span key={instrument}>
-						<a href={instrument}>{getLastSegmentInUrl(instrument)}</a>
+					<span key={instrument.uri}>
+						<a href={instrument.uri}>{instrument.label ?? getLastSegmentInUrl(instrument.uri)}</a>
 						{index != instruments.length - 1 && ', '}
 					</span>
 				);
 			}))
-			: metadataRow("Instrument", <a href={instruments}>{getLastSegmentInUrl(instruments)}</a>)
+			: metadataRow("Instrument", <a href={instruments.uri}>{instruments.label ?? getLastSegmentInUrl(instruments.uri)}</a>)
 	);
 };
 
