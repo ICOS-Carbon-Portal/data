@@ -55,16 +55,18 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
 			rawPathPrefix(maybeSha256SumIfNetCdfProj(proj)){pageFactory =>
+				pathSingleSlash{
+					if(pageFactory.isDefinedAt(prEnvri))
+						complete(pageFactory(prEnvri))
+					else {
+						getFromResource(s"$proj/$proj.html") ~
+						complete(StatusCodes.NotFound -> s"Could not find the main webpage for project $proj")
+					}
+				} ~
 				path(Segment){fileName =>
-					if(fileName.endsWith(".js"))
-						getFromResource(proj + "/" + fileName)
-					else reject
-				} ~ (
-				if(pageFactory.isDefinedAt(prEnvri)){
-					complete(pageFactory(prEnvri))
-				} else pathSingleSlash{
-					getFromResource(proj + ".html")
-				})
+					getFromResource(proj + "/" + fileName) ~
+					complete(StatusCodes.NotFound -> s"File $fileName not found in frontend project $proj")
+				}
 			}
 		} else reject
 	} ~
