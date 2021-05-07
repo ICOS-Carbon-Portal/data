@@ -24,6 +24,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private val NetCdfProj = "netcdf"
 
 	val projects = Set(NetCdfProj, "portal", "wdcgg", "dygraph-light", "stats", "etcfacade", "map-graph", "dashboard", "lastDownloads")
+	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
 		case ("wdcgg", _) => views.html.WdcggPage()
@@ -50,28 +51,19 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private val extractEnvri = UploadRouting.extractEnvriDirective
 
 	val route = (pathPrefix(Segment) & extractEnvri){case prEnvri @ (proj, _) =>
-		if(projects.contains(proj)){
+
+		if(!projects.contains(proj)) reject else {
 			pathEnd{
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
 			rawPathPrefix(maybeSha256SumIfNetCdfProj(proj)){pageFactory =>
 				pathSingleSlash{
-					if(pageFactory.isDefinedAt(prEnvri))
-						complete(pageFactory(prEnvri))
-					else {
-						getFromResource(s"$proj/$proj.html") ~
-						complete(StatusCodes.NotFound -> s"Could not find the main webpage for project $proj")
-					}
+					if(pageFactory.isDefinedAt(prEnvri)) complete(pageFactory(prEnvri))
+					else getFromResource(s"$jsAppFolder/$proj/$proj.html")
 				} ~
-				path(Segment){fileName =>
-					getFromResource(proj + "/" + fileName) ~
-					complete(StatusCodes.NotFound -> s"File $fileName not found in frontend project $proj")
-				}
+				getFromResourceDirectory(s"$jsAppFolder/$proj")
 			}
-		} else reject
-	} ~
-	pathPrefix("style"){
-		getFromResourceDirectory("style")
+		}
 	} ~
 	path("robots.txt"){
 		getFromResource("robots.txt")

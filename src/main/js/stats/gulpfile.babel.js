@@ -24,7 +24,7 @@ const paths = {
 		'node_modules/react-widgets/lib/**/fonts/*',
 		'node_modules/react-widgets/lib/**/img/*'
 	],
-	sassTarget: buildConf.buildTarget + 'style/' + project + '/',
+	sassTarget: buildConf.buildTarget + project + '/',
 	commonjs: '../common/main/**/*.js*',
 	bundleFile: path.resolve(project, project + '.js')
 };
@@ -37,7 +37,7 @@ const clean = _ => {
 	return del(patterns, { force: true });
 };
 
-const compileJs = _ =>  {
+const compileJs = _ => {
 	const isProduction = process.env.NODE_ENV === 'production';
 
 	return buildConf.transformToBundle(isProduction, paths);
@@ -46,8 +46,8 @@ const compileJs = _ =>  {
 const transformSass = _ => {
 	return gulp.src(paths.sassSources)
 		.pipe(sassVars({
-			'$font-path': '/style/stats/fonts',
-			'$img-path': '/style/stats/img'
+			'$font-path': `/${project}/fonts`,
+			'$img-path': `/${project}/img`
 		}))
 		.pipe(sass())
 		.pipe(cleanCSS({ compatibility: '*' }))	//Internet Explorer 10+ compatibility mode
@@ -73,4 +73,3 @@ gulp.task('buildWatch', gulp.series('build', buildConf.watch(filesToWatch, gulp.
 gulp.task('publish', gulp.series(buildConf.applyProdEnvironment, 'build'));
 
 gulp.task('default', gulp.series('publish'));
-

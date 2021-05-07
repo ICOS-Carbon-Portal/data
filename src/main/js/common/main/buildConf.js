@@ -32,7 +32,7 @@ const applyProdEnvironment = cb => {
 	return cb();
 };
 
-const buildTarget = '../../../../target/scala-2.13/classes/';
+const buildTarget = '../../../../target/scala-2.13/classes/frontendapps/';
 
 const watch = (filesToWatch, buildTask) => {
 	return function watch() {

@@ -7,7 +7,7 @@ const buildConf = require('../common/main/buildConf.js');
 const buildFolder = path.resolve(__dirname, 'dist');
 const appName = path.basename(__dirname);
 const destinationFolderJs = path.resolve(buildConf.buildTarget, appName);
-const destinationFolderStyle = path.resolve(buildConf.buildTarget, 'style', appName, 'css');
+const destinationFolderStyle = path.resolve(buildConf.buildTarget, appName, 'css');
 
 const filesInDestinationToClean = fs.existsSync(buildFolder)
 	? fs.readdirSync(buildFolder).map(file => {

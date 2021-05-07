@@ -9,7 +9,7 @@ import buildConf from '../common/main/buildConf.js';
 const project = path.basename(__dirname);
 const tsTarget = './tsTarget/';
 const replaceSearch = "url(node_modules/icos-cp-netcdfmap/dist/images/";
-const replacement = "url(/style/netcdf/images/";
+const replacement = `url(/${project}/images/`;
 
 const jsToWatch = ['js', 'jsx'].map(ext => `${tsTarget}**/*.${ext}`);
 
@@ -19,7 +19,7 @@ const paths = {
 	commonjs: '../common/main/**/*.js*',
 	tsTarget,
 	imagesSource: 'node_modules/icos-cp-netcdfmap/dist/**/*.png',
-	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
+	styleTargetDir: buildConf.buildTarget + project + '/',
 	bundleFile: path.resolve(project, project + '.js')
 };
 

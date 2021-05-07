@@ -10,13 +10,13 @@ const project = path.basename(__dirname);
 const tsTarget = './tsTarget/';
 
 const replaceSearch = "url(node_modules/leaflet/dist/images/";
-const replacement = "url(/style/map-graph/images/";
+const replacement = `url(/${project}/images/`;
 
 const paths = {
 	main: `${tsTarget}${project}/main/main.jsx`,
 	src: `${tsTarget}${project}/main/**/*.js*`,
 	imagesSource: 'node_modules/leaflet/dist/**/*.png',
-	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
+	styleTargetDir: buildConf.buildTarget + project + '/',
 	copyCss: {
 		from: '../common/main/Dygraphs.css',
 		to: `${tsTarget}/common/main/`
