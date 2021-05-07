@@ -130,32 +130,38 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializ
 	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
 		withAuth(objDeleteHttpRequest(item)).flatMap(failIfNotSuccess)
 
-	def deleteFlow: Flow[IrodsData, Try[Done], NotUsed] = {
-		val in = Flow.apply[IrodsData].map{obj =>
-			objDeleteHttpRequest(obj) -> obj
-		}
+	def deleteFlow: Flow[IrodsData, Try[Done], NotUsed] =
+		if(config.dryRun)
+			Flow.apply[IrodsData].map(_ => Success(Done))
+		else {
+			val in = Flow.apply[IrodsData].map{obj =>
+				objDeleteHttpRequest(obj) -> obj
+			}
 
-		val out = innerReqFlow[IrodsData].mapAsyncUnordered(1){
-			case (resp, _) =>
-				Future.fromTry(resp).flatMap(failIfNotSuccess).transform{
-					doneTry => Success(doneTry)
-				}
+			val out = innerReqFlow[IrodsData].mapAsyncUnordered(1){
+				case (resp, _) =>
+					Future.fromTry(resp).flatMap(failIfNotSuccess).transform{
+						doneTry => Success(doneTry)
+					}
+			}
+			in via out
 		}
-		in via out
-	}
 
 	private def objDeleteHttpRequest(item: B2SafeItem) =
 		HttpRequest(uri = getUri(item).withRawQueryString("notrash"), method = HttpMethods.DELETE)
 
 	def exists(item: B2SafeItem): Future[Boolean] =
-		withAuth(HttpRequest(uri = getUri(item), method = HttpMethods.HEAD))
+		if(config.dryRun) Future.successful(false)
+		else withAuth(HttpRequest(uri = getUri(item), method = HttpMethods.HEAD))
 			.map{resp =>
 				resp.discardEntityBytes()
 				resp.status.isSuccess()
 			}
 
 	def getHashsum(data: IrodsData): Future[Option[Sha256Sum]] =
-		withAuth(HttpRequest(uri = getUri("/metadata", data))).flatMap{resp =>
+		if(config.dryRun)
+			Future.successful(None)
+		else withAuth(HttpRequest(uri = getUri("/metadata", data))).flatMap{resp =>
 			if(resp.status == StatusCodes.NotFound) {
 				resp.discardEntityBytes()
 				Future.successful(None)

@@ -58,6 +58,65 @@ In some circumstances one may need to update the binary results of data ingestio
 
 ---
 
+## Accessing data objects
+
+After having been uploaded to Carbon Portal, the data objects can be accessed using a variety of methods. Access to the original data objects and their metadata can be performed anonymously, but some of the services require prior user login and acceptance of the [data licence](https://data.icos-cp.eu/licence) in your [user profile](https://cpauth.icos-cp.eu/), as described below.
+
+### Accepting the data licence
+
+To avoid being repeatedly asked to accept the [data licence](https://data.icos-cp.eu/licence) during every download operation, users have the option of [logging in](https://cpauth.icos-cp.eu/login/) using a number of supported login methods: eduGAIN university trust federation, ORCID ID, Facebook account, or a traditional username/password (functional email account is required for account creation in the latter case). After logging in, the user may choose to read and accept the [data licence](https://data.icos-cp.eu/licence) in their [user profile](https://cpauth.icos-cp.eu/) by marking the corresponding checkbox and saving their Carbon Portal user profile. In addition to avoiding the repeated licence acceptance ceremony in the future, this will also enable programmatic access to the data objects.
+
+### Access using the portal web app
+
+The most user-friendly way of accessing the data objects is through the [portal app](https://data.icos-cp.eu/portal/), which allows multi-faceted search, data preview and download, including batch download of many objects selected into a so-called "data cart". Raw ICOS data (level 0) is often findable, but not openly available for preview and download due to ICOS policy (the data is still available on request).
+
+### Access through data object landing pages
+
+Data objects are identified using cryptographic SHA-256 hashsums of their binary content. Most of them are issued a PID based on the hashsum, for example `11676/-YB8ISMm1AT8EVv9zgjK-6S2`, which can be resolved to the location of data object's landing page using <https://handle.net> service, for example <https://hdl.handle.net/11676/-YB8ISMm1AT8EVv9zgjK-6S2>. Where applicable, the landing pages contain access URLs for downloading of the original data objects. The download process will involve licence acceptance, if the user is not logged in with CP or has not [accepted the licence](#accepting-the-data-licence). This method is also user-friendly, usable from a Web browser.
+
+### Downloading originals programmatically
+
+Users that have [accepted the data licence](#accepting-the-data-licence) can also download the data objects programmatically by sending an HTTP GET request to the access URL and supplying their `cpauthToken` (available on the [user profile page](https://cpauth.icos-cp.eu/home/)) as a cookie. Typically, access URL has the form `https://data.icos-cp.eu/objects/<hash_id>`, where `<hash_id>` is a PID suffix, for example `aYB8ISMm1AT8EVv9zgjKn6S2`. The server will respond with data object contents in the response payload, and supply the file name in HTTP header `content-disposition: attachment; filename="..."`.
+
+Using this API with, for example, `curl`, one can save a data object to a current directory using the file name from the server response like so:
+
+`curl -JO 'https://data.icos-cp.eu/objects/-YB8ISMm1AT8EVv9zgjK-6S2' --cookie "cpauthToken=..."`
+
+The authentication tokens have a limited validity time (100000 seconds or 27.8 hours), which makes it necessary to refresh them daily. For everyday usage, this becomes an inconvenience. It is possible to renew the token programmatically. For this, a user needs to create a "traditional" username/password account at CP. After this, a fresh token can be retrieved [as described](https://github.com/ICOS-Carbon-Portal/meta/#authentication) in the instructions for data object metadata upload.
+
+### Accessing the data object metadata
+
+CP data objects are accompanied with extensive metadata which can be used, among other things, for interpretation of the object's contents. Ways to access the metadata are described [here](https://github.com/ICOS-Carbon-Portal/meta/#data-objects)
+
+### CSV download for tabular time-series data
+
+Storage and preservation is the basic level of support offered to all data objects.
+Some, usually simple tabular time-series data of levels 1 and 2, are also supplied with extensive metadata about their columnar content, and undergo parsing, validation and ingestion processes during upload.
+This makes the data objects findable by variables of interest, and enables CP to offer very efficient data previews ([example](https://data.icos-cp.eu/dygraph-light/?objId=EBmVEuoJaOmOw8QmUyyh6G-n&x=TIMESTAMP&y=H_F_MDS&type=line&linking=overlap)).
+Additionally, this extra treatment makes it possible to offer direct programmatic data access to selected columns in the datasets, while providing the data in a standardized plain CSV format, uniform for all tabular datasets, regardless of the format of the original.
+(In practice, data objects supplied by various research communities significantly differ in many important details, even if the formats are CSV-based; this complicates data reuse, forcing users to write their own parsing code for each of the formats).
+
+**It must be noted** that CSV download is not guaranteed to be a full-fledged replacement of the original data objects.
+This is an extra service offered by the Carbon Portal on a best-effort basis, effectively constitutes a format transformation from the original (even if the original was a CSV), and may offer fewer columns than the original, as the original objects may contain extra columns not mentioned in the columnar metadata (and therefore not available for CSV download).
+
+The API to download the plain CSV serialization is similar to that for [download of data object originals](#downloading-originals-programmatically), but with a different access URL and extra URL parameters for column selection, row offset and row limit.
+Example:
+
+`curl -JO https://data.icos-cp.eu/csv/x7l3Y6Mvg83ig0rINEBfEQVe?col=TIMESTAMP&col=ch4&col=Flag&offset=0&limit=20 --cookie "cpauthToken=..."`
+
+All the URL parameters are optional. When none are present, all the columns known to the metadata store will be provided. When offset is not present, zero offset is assumed; when limit is not present, end of the dataset is assumed. The list of columns can be [looked up](https://github.com/ICOS-Carbon-Portal/meta/#data-objects) in data object metadata, either on the landing page, or programmatically. **Note** that just like with [downloading the originals](#downloading-originals-programmatically), this API is simple to use with a Web browser, one only needs to login with CP, accept the data licence and visit the CSV access URL (the cookie will be supplied by the browser).
+
+### Python library for data and metadata access
+
+The APIs described above are HTTP-based and programming language agnostic, therefore can be used from arbitrary programming language. For Python users, there exists a [dedicated library](https://icos-carbon-portal.github.io/pylib/) that provides a high-level API for Carbon Portal data and metadata access.
+
+### Spatiotemporal NetCDF files
+
+Another format of data that is offered extended support is spatiotemporal (geo data with temporal component) NetCDF.
+CP does not, at the time of this writing, offer a documented programmatic access to the data in these files, but does provide variable metadata, guarantees presence of the announced variables in the NetCDF files, and hosts a GUI app for the data previews ([example](https://data.icos-cp.eu/netcdf/OPun_V09Pcat5jomRRF-5o0H?gamma=0.5&center=53.92090,10.37109&zoom=4&color=yellowRed)).
+
+---
+
 ## Simplified ETC-specific facade API for data uploads
 
 The facade uses Basic HTTP Authentication. Username is the station's id.
