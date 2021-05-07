@@ -15,20 +15,33 @@ import Advanced from "./Advanced";
 import { UiInactivateAllHelp } from '../../reducers/actionpayloads';
 import HelpSection from '../../components/help/HelpSection';
 import bootstrapMetadata from '../../actions/metadata';
+import SearchResultMap from './SearchResultMap';
+import { SupportedSRIDs } from '../../models/ol/projections';
+import config from '../../config';
+import { PersistedMapProps } from '../../models/ol/OLWrapper';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type OurProps = StateProps & DispatchProps;
-type OurState = {expandedFilters: boolean};
-
+type OurState = {
+	expandedFilters: boolean
+	srid: SupportedSRIDs
+};
 
 class Search extends Component<OurProps, OurState> {
 	private events: typeof Events;
 	private handleResize: Function;
+	private persistedMapProps: PersistedMapProps = {
+		baseMapName: config.defaultBaseMapName,
+		srid: config.defaultSRID
+	};
 
 	constructor(props: OurProps) {
 		super(props);
-		this.state = {expandedFilters: !isSmallDevice()};
+		this.state = {
+			expandedFilters: !isSmallDevice(),
+			srid: this.persistedMapProps.srid
+		};
 
 		this.events = new Events();
 		this.handleResize = debounce(() => {
@@ -66,6 +79,16 @@ class Search extends Component<OurProps, OurState> {
 		this.props.bootstrapMetadata(id);
 	}
 
+	updatePersistedMapProps(mapProps: PersistedMapProps) {
+		this.persistedMapProps = { ...this.persistedMapProps, ...mapProps };
+	}
+
+	updateMapSelectedSRID(srid: SupportedSRIDs) {
+		this.persistedMapProps = { srid, baseMapName: this.persistedMapProps.baseMapName };
+		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
+		this.setState({ srid });
+	}
+
 	toggleFilters() {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
@@ -75,7 +98,8 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const {tabs, switchTab} = this.props;
+		const { tabs, switchTab } = this.props;
+		const { srid } = this.state;
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 
@@ -114,6 +138,13 @@ class Search extends Component<OurProps, OurState> {
 							tabHeader="Compact view"
 							handleViewMetadata={this.handleViewMetadata.bind(this)}
 							handlePreview={this.handlePreview.bind(this)}
+						/>
+						<SearchResultMap
+							key={srid}
+							tabHeader="Stations map"
+							persistedMapProps={this.persistedMapProps}
+							updatePersistedMapProps={this.updatePersistedMapProps.bind(this)}
+							updateMapSelectedSRID={this.updateMapSelectedSRID.bind(this)}
 						/>
 					</Tabs>
 				</div>

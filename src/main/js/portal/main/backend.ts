@@ -1,4 +1,4 @@
-import { sparqlFetch, sparqlFetchAndParse} from './backend/SparqlFetch';
+import { sparqlFetch, sparqlFetchAndParse } from './backend/SparqlFetch';
 import * as queries from './sparqlQueries';
 import commonConfig from '../../common/main/config';
 import localConfig from './config';
@@ -7,14 +7,16 @@ import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import {Profile, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
-import {getLastSegmentInUrl, throwError} from './utils';
+import {Profile, StationPos4326Lookup, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
+import {getLastSegmentInUrl, isDefined, throwError} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
 import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
-import { SpecTableSerialized } from './models/CompositeSpecTable';
+import CompositeSpecTable, { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
+import { TransformPointFn } from './models/InitMap';
+import { sparql, SparqlResultBinding } from 'icos-cp-backend';
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -62,6 +64,27 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	}));
 };
 
+export const fetchStationPositions = () => {
+	const query = queries.stationPositions();
+
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+		station: b.station.value,
+		lon: parseFloat(b.lon.value),
+		lat: parseFloat(b.lat.value)
+	}));
+};
+
+// export const fetchStationPositions = (pointTransformer: TransformPointFn) => {
+// 	const query = queries.stationPositions();
+
+// 	return sparqlFetchAndParseCustom(query, config.sparqlEndpoint, b => ({
+// 		coord: pointTransformer(parseFloat(b.lon.value), parseFloat(b.lat.value)),
+// 		attributes: {
+// 			stationUri: b.station.value
+// 		}
+// 	}));
+// };
+
 type LabelLookup = {uri: UrlStr, label: string}[]
 
 export function fetchLabelLookup(): Promise<LabelLookup> {
@@ -85,6 +108,7 @@ export type BootstrapData = {
 
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
+	// Do not ask more than 5 question in parallel
 	return Promise.all([
 		fetchSpecBasics(),
 		fetchSpecColumnMeta(),
@@ -255,9 +279,9 @@ export const fetchResourceHelpInfo = (uriList: UrlStr[]) => {
 
 export const saveTsSetting = (email: string | null, spec: string, type: string, val: string) => {
 	const settings: TsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
-	const setting = settings[spec] || {};
-	const newSetting: TsSetting = Object.assign({}, setting, {[type]: val});
-	const newSettings: TsSettings = Object.assign({}, settings, {[spec]: newSetting});
+	const setting = settings[spec] || {} as TsSetting;
+	const newSetting: TsSetting = { ...setting, ...{ [type]: val } };
+	const newSettings: TsSettings = { ...settings, ...{ [spec]: newSetting } };
 	tsSettingsStorage.setItem(tsSettingsStorageName, newSettings);
 
 	if (email){

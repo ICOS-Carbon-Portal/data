@@ -1,16 +1,14 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
-import gp_uglify from 'gulp-uglify';
-import buffer from 'vinyl-buffer';
 import del from 'del';
 import babel from 'gulp-babel';
 import jasmine from 'gulp-jasmine';
 
 import buildConf from '../common/main/buildConf';
 
-const currentPath = __dirname;
-const project = currentPath.split('/').pop();
+const project = path.basename(__dirname);
 const testRoot = 'target/';
 const testMain = testRoot + 'src/main/';
 const testCommon = testRoot + 'common/main/';
@@ -23,7 +21,7 @@ const paths = {
 	js: 'main/**/*.js',
 	commonjs: '../common/main/**/*.js*',
 	jasmineSrc: 'test/**/*.js',
-	bundleFile: project + '.js'
+	bundleFile: path.resolve(project, project + '.js')
 };
 
 const clean = _ => {

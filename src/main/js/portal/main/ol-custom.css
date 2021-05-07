@@ -1,0 +1,171 @@
+.ol-popup {
+	position: absolute;
+	background-color: white;
+	min-width: 210px;
+	max-width: 400px;
+	-webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
+	padding: 0;
+	border-radius: 10px;
+	border: 1px solid #cccccc;
+	bottom: 12px;
+	left: -50px;
+	font-size: 14px;
+}
+
+.ol-popup:after, .ol-popup:before {
+	top: 100%;
+	border: solid transparent;
+	content: " ";
+	height: 0;
+	width: 0;
+	position: absolute;
+	pointer-events: none;
+}
+
+.ol-popup:after {
+	border-top-color: white;
+	border-width: 10px;
+	left: 48px;
+	margin-left: -10px;
+}
+
+.ol-popup:before {
+	border-top-color: #cccccc;
+	border-width: 11px;
+	left: 48px;
+	margin-left: -11px;
+}
+
+.ol-popup-header {
+	white-space: nowrap;
+	background-color: #dcdcdc;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	padding: 5px 10px;
+	border-bottom: lightgray solid 1px;
+	margin-bottom: 5px;
+}
+
+.ol-popup-content {
+	margin-bottom: 10px;
+}
+
+.ol-popup-content-record {
+	padding: 2px 5px;
+}
+
+.ol-mouse-position {
+	top: calc(100% - 30px);
+	right: 8px;
+	position: absolute;
+	background-color: white;
+	padding: 3px;
+	font-size: 9pt;
+	border: gray solid 1px;
+	border-radius: 5px;
+}
+
+.ol-layer-control {
+	position: absolute;
+	background-color: lightgray;
+	padding: 3px;
+	font-size: 9pt;
+	border: gray solid 1px;
+	border-radius: 5px;
+}
+
+.ol-layer-control-ur {
+	top: 8px;
+	right: 8px;
+}
+
+.ol-layer-control-lr {
+	bottom: 28px;
+	right: 8px;
+}
+
+.ol-layer-control button.ol {
+	float: right;
+	width: 38px;
+	height: 38px;
+	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==');
+	background-repeat: no-repeat;
+	background-position: 2px;
+	background-color: lightgray;
+	border: none;
+}
+
+.ol-layer-control button.dl {
+	float: right;
+	width: 29px;
+	height: 28px;
+	background-image: url('//static.icos-cp.eu/images/download_25x30.png');
+	background-repeat: no-repeat;
+	background-position: 2px;
+	background-color: lightgray;
+	border: none;
+}
+
+.ol-layer-control button.dl-action {
+	background: #337ab7;
+	color: white;
+	display: inline-block;
+	padding: 5px 10px;
+	margin-bottom: 0;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.42857143;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: 4px;
+}
+
+.ol-layer-control div.row {
+	display: flex;
+	align-items: center;
+	height: 25px;
+}
+
+.ol-layer-control-basemaps {
+	margin: 3px 3px 5px 3px
+}
+
+.ol-layer-control-basemaps > label, .ol-layer-control-toggles > label {
+	font-weight: bold;
+}
+
+.ol-layer-control-basemaps div.row input {
+	margin-left: 15px;
+	width: unset;
+	max-width: unset;
+}
+
+.ol-layer-control-basemaps div.row label {
+	margin-left: 5px;
+	width: unset;
+	max-width: unset;
+	padding-left: unset;
+	padding-right: 25px;
+	margin-top: 9px;
+}
+
+.ol-layer-control-toggles {
+	margin: 10px 3px 3px 3px
+}
+
+.ol-layer-control-toggles canvas {
+	margin-right: 5px;
+}
+
+.ol-layer-control-toggles input {
+	margin-left: 5px;
+}
+
+#attribution {
+	z-index: 99;
+	font-size: 1rem;
+}

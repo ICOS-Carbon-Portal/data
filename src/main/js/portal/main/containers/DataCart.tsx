@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import CartPanel from '../components/CartPanel.jsx';
+import CartPanel from '../components/CartPanel';
 import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
-import BackButton from '../components/buttons/BackButton.jsx';
+import BackButton from '../components/buttons/BackButton';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";

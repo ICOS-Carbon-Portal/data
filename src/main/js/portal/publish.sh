@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rm -rf ./tsTarget/* ; npx tsc ; gulp publish
+npx webpack --config webpack.prod.js

@@ -434,6 +434,19 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 	return { text };
 };
 
+export const stationPositions = (): Query<"station" | "lat" | "lon", never> => {
+	const text = `# stationPositions
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT * WHERE {
+	?station a/rdfs:subClassOf* cpmeta:Station ;
+		cpmeta:hasLatitude ?lat ;
+		cpmeta:hasLongitude ?lon .
+}`;
+	
+	return { text };
+};
+
 export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "comment" | "webpage"> => {
 	const text = `select * where{
 	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }

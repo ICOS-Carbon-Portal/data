@@ -1,12 +1,12 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf';
 
-const currentPath = __dirname;
-const project = currentPath.split('/').pop();
+const project = path.basename(__dirname);
 const tsTarget = './tsTarget/';
 
 const replaceSearch = "url(node_modules/leaflet/dist/images/";
@@ -21,7 +21,7 @@ const paths = {
 		from: '../common/main/Dygraphs.css',
 		to: `${tsTarget}/common/main/`
 	},
-	bundleFile: project + '.js'
+	bundleFile: path.resolve(project, project + '.js')
 };
 
 const clean = _ => {

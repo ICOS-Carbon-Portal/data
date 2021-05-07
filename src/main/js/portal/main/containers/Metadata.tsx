@@ -1,7 +1,7 @@
 import React, { Component, MouseEvent, ReactElement } from 'react';
 import { connect } from 'react-redux';
-import CartBtn from '../components/buttons/CartBtn.jsx';
-import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn.jsx';
+import CartBtn from '../components/buttons/CartBtn';
+import PreviewBtn, { CheckedObject } from '../components/buttons/PreviewBtn';
 import {formatDateTime, getLastSegmentsInUrls} from '../utils';
 import commonConfig from '../../../common/main/config';
 import {LinkifyText} from "../components/LinkifyText";
@@ -16,7 +16,7 @@ import AcquisitionSection from '../components/metadata/AcquisitionSection';
 import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
 import {addToCart, failWithError, removeFromCart, updateRoute} from "../actions/common";
-import StatsSection from '../components/metadata/StatsSection.jsx';
+import StatsSection from '../components/metadata/StatsSection';
 
 
 type StateProps = ReturnType<typeof stateToProps>;

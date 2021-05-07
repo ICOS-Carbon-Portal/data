@@ -1,5 +1,5 @@
 import React, { CSSProperties } from 'react';
-import CheckBtn from '../buttons/ChechBtn.jsx';
+import CheckBtn from '../buttons/ChechBtn';
 
 
 type Props = {

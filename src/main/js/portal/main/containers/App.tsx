@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
-import Search from './search/Search.jsx';
+import Search from './search/Search';
 import DataCart from './DataCart';
 import Preview from './Preview';
 import Metadata, { MetadataTitle } from './Metadata';

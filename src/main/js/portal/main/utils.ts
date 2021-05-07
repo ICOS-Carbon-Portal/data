@@ -130,3 +130,15 @@ export const linesToShowStyle = (linesToShow: number): CSSProperties => ({
 	WebkitLineClamp: linesToShow,
 	WebkitBoxOrient: 'vertical'
 });
+
+export const areEqual = (arr1: any[], arr2: any[]) => {
+	if (arr1.length !== arr2.length)
+		return false;
+	
+	for (let i = 0; i < arr1.length; i++){
+		if (arr1[i] !== arr2[i])
+			return false;
+	}
+	
+	return true;
+};

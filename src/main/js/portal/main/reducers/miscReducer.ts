@@ -57,7 +57,7 @@ const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOpt
 	};
 };
 
-const resetFilters = (state: State) => {
+const resetFilters = (state: State): Partial<State> => {
 	const specTable = state.specTable.withResetFilters();
 
 	return {
@@ -72,7 +72,7 @@ const resetFilters = (state: State) => {
 	};
 };
 
-const restoreFilters = (state: State) => {
+const restoreFilters = (state: State): Partial<State> => {
 	const specTable = getSpecTable(state.specTable, state.filterCategories);
 	const objCount = getObjCount(specTable);
 	const paging = new Paging({objCount, offset: state.page * config.stepsize});

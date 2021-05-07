@@ -56,7 +56,7 @@ export default function(state: State, payload: UiPayload): State{
 	return state;
 }
 
-const handleToggleSorting = (state: State, payload: UiToggleSorting) => {
+const handleToggleSorting = (state: State, payload: UiToggleSorting): Partial<State> => {
 	const ascending = state.sorting.varName === payload.varName
 		? !state.sorting.ascending
 		: true;

@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent } from 'react';
-import CartIcon from '../buttons/CartIcon.jsx';
-import PreviewIcon from '../buttons/PreviewIcon.jsx';
+import CartIcon from '../buttons/CartIcon';
+import PreviewIcon from '../buttons/PreviewIcon';
 import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
 import {getMetadataHash} from "./SearchResultRegularRow";
 import { ObjectsTable } from "../../models/State";

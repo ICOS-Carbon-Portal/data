@@ -1,5 +1,6 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
 import sass from 'gulp-sass';
 import sassVars from 'gulp-sass-variables';
@@ -8,8 +9,7 @@ import del from 'del';
 
 import buildConf from '../common/main/buildConf.js';
 
-const currentPath = __dirname;
-const project = currentPath.split('/').pop();
+const project = path.basename(__dirname);
 
 const paths = {
 	main: 'main/main.jsx',
@@ -26,7 +26,7 @@ const paths = {
 	],
 	sassTarget: buildConf.buildTarget + 'style/' + project + '/',
 	commonjs: '../common/main/**/*.js*',
-	bundleFile: project + '.js'
+	bundleFile: path.resolve(project, project + '.js')
 };
 
 const clean = _ => {

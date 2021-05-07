@@ -93,7 +93,7 @@ class SearchResultCompact extends Component<OurProps> {
 }
 
 const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props => {
-	const sorting = props.sorting || {};
+	const sorting = props.sorting || {} as State['sorting'];
 
 	const glyphClass = 'glyphicon glyphicon-sort' + (
 		sorting.varName !== props.varName

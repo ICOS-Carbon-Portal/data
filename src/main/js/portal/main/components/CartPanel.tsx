@@ -1,11 +1,10 @@
 import React, { Component } from 'react';
-import PreviewBtn from './buttons/PreviewBtn.jsx';
-import EditablePanelHeading from './controls/EditablePanelHeading.jsx';
+import PreviewBtn from './buttons/PreviewBtn';
+import EditablePanelHeading from './controls/EditablePanelHeading';
 import SearchResultRegularRow from './searchResult/SearchResultRegularRow';
-import CartBtn from './buttons/CartBtn.jsx';
-import CheckAllBoxes from './controls/CheckAllBoxes.jsx';
-import { DataCartProps } from '../containers/DataCart.jsx';
-import { ObjectsTable } from '../models/State.js';
+import CartBtn from './buttons/CartBtn';
+import CheckAllBoxes from './controls/CheckAllBoxes';
+import { DataCartProps } from '../containers/DataCart';
 
 type Props = {
 	previewitemId?: string

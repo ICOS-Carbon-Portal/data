@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import { MetaData, MetaDataWStats, StateSerialized, TsSettings, WhoAmI} from "../models/State";
+import { MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchDobjOriginsAndCounts,
@@ -56,6 +56,10 @@ export class BackendUserInfo extends BackendPayload{
 
 export class BootstrapInfo extends BackendPayload{
 	constructor(readonly info: BootstrapData){super();}
+}
+
+export class StationPositions4326Lookup extends BackendPayload{
+	constructor(readonly stationPos4326Lookup: StationPos4326Lookup[]){super();}
 }
 
 export class BackendOriginsTable extends BackendPayload{

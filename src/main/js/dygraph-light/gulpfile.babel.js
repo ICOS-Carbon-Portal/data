@@ -1,12 +1,12 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf';
 
-const currentPath = __dirname;
-const project = currentPath.split('/').pop();
+const project = path.basename(__dirname);
 const tsTarget = './tsTarget/';
 
 const paths = {
@@ -15,7 +15,7 @@ const paths = {
 	cssSrc: './main/*.css*',
 	cssTarget: `${tsTarget}${project}/main/`,
 	commonjs: `${tsTarget}common/main/**/*.js*`,
-	bundleFile: project + '.js'
+	bundleFile: path.resolve(project, project + '.js')
 };
 
 const clean = _ => {

@@ -56,8 +56,8 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 			} ~
 			rawPathPrefix(maybeSha256SumIfNetCdfProj(proj)){pageFactory =>
 				path(Segment){fileName =>
-					if(fileName.startsWith(proj + "."))
-						getFromResource(fileName)
+					if(fileName.endsWith(".js"))
+						getFromResource(proj + "/" + fileName)
 					else reject
 				} ~ (
 				if(pageFactory.isDefinedAt(prEnvri)){

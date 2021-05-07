@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { Provider } from 'react-redux'
 import getStore from '../store';
-import App from './App.jsx';
+import App from './App';
 import stateUtils from '../models/State';
 import {restoreFromHistory} from "../actions/common";
 

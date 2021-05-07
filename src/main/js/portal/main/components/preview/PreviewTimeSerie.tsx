@@ -111,7 +111,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 			{varTitle: 'line', valTypeLabel: 'line'},
 		];
 
-		const specSettings: TsSetting = tsSettings[preview.item.spec] || {};
+		const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;
 		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
@@ -185,7 +185,7 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 		? {
 			xAxis: getColName(specSettings.x as unknown as string) || preview.items[0].getUrlSearchValue('x'),
 			yAxis: getColName(specSettings.y as unknown as string) || preview.items[0].getUrlSearchValue('y'),
-			type: specSettings.type || preview.items[0].getUrlSearchValue('type')
+			type: specSettings.type || preview.items[0].getUrlSearchValue('type') as Axes['type']
 		}
 		: {xAxis: undefined, yAxis: undefined, type: undefined};
 };

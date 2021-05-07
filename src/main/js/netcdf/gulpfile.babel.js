@@ -1,12 +1,12 @@
 'use strict';
 
+import path from 'path';
 import gulp from 'gulp';
 import del from 'del';
 
 import buildConf from '../common/main/buildConf.js';
 
-const currentPath = __dirname;
-const project = currentPath.split('/').pop();
+const project = path.basename(__dirname);
 const tsTarget = './tsTarget/';
 const replaceSearch = "url(node_modules/icos-cp-netcdfmap/dist/images/";
 const replacement = "url(/style/netcdf/images/";
@@ -20,7 +20,7 @@ const paths = {
 	tsTarget,
 	imagesSource: 'node_modules/icos-cp-netcdfmap/dist/**/*.png',
 	styleTargetDir: buildConf.buildTarget + 'style/' + project + '/',
-	bundleFile: project + '.js'
+	bundleFile: path.resolve(project, project + '.js')
 };
 
 const clean = _ => {

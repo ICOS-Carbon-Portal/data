@@ -1,11 +1,16 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
 import { Obj } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
+import { BaseMapName } from './models/ol/baseMaps';
+import { SupportedSRIDs } from './models/ol/projections';
+import { BaseMapFilter } from './models/ol/utils';
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
-type EnvriUrl = {[E in Envri]: UrlStr}
+type EnvriUrl = { [E in Envri]: UrlStr }
+
+const envri = commonConfig.envri as Envri;
 
 const objectUriPrefix: EnvriUrl = {
 	ICOS: 'https://meta.icos-cp.eu/objects/',
@@ -37,8 +42,17 @@ const featureFlags = {
 	}
 }
 
+const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '54030' : '3006';
+const defaultBaseMapName: BaseMapName = envri === 'ICOS' ? 'Physical' : 'LM Topo gray';
+const baseMapFilter: BaseMapFilter = envri === 'SITES'
+	? bm => !bm.isWorldWide || bm.name === 'Imagery'
+	: bm => bm.isWorldWide
+
 export default {
-	envri: commonConfig.envri as Envri,
+	envri,
+	defaultSRID,
+	defaultBaseMapName,
+	baseMapFilter,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	mapGraph: {
@@ -65,7 +79,7 @@ export default {
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,
 	searchResultsCSVName,
-	features: featureFlags[commonConfig.envri as Envri]
+	features: featureFlags[envri]
 };
 
 const defaultCategNames = {

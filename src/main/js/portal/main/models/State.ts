@@ -12,7 +12,7 @@ import config, {
 	numberFilterKeys
 } from "../config";
 import deepequal from 'deep-equal';
-import {AsyncResult, UrlStr, Sha256Str, IdxSig} from "../backend/declarations";
+import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
 import {DataObject} from "./CartItem";
@@ -21,6 +21,7 @@ import SpecTable, {Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
+import { Obj } from "../../../common/main/types";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -95,6 +96,9 @@ export type ExportQuery = {
 	isFetchingCVS: boolean
 	sparqClientQuery: string
 }
+
+export type StationPos4326Lookup = { station: UrlStr, lon: number, lat: number }
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
@@ -106,7 +110,8 @@ export interface State {
 	filterNumbers: FilterNumbers
 	user: User
 	previewLookup: PreviewLookup | undefined;
-	labelLookup: IdxSig;
+	labelLookup: Obj;
+	stationPos4326Lookup: StationPos4326Lookup[]
 	specTable: CompositeSpecTable
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
@@ -160,6 +165,7 @@ export const defaultState: State = {
 	},
 	previewLookup: undefined,
 	labelLookup: {},
+	stationPos4326Lookup: [],
 	specTable: emptyCompositeSpecTable,
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
@@ -210,10 +216,10 @@ const serialize = (state: State) => {
 	return {...state,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
-		lookup: undefined,
+		// lookup: undefined,
 		specTable: state.specTable.serialize,
 		paging: state.paging.serialize,
-		cart: undefined,
+		cart: undefined as Cart,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
 	};
@@ -269,8 +275,8 @@ const hashToState = () => {
 	}
 };
 
-const getStateFromStore = (storeState: State & IdxSig<any>) => {
-	return hashKeys.reduce((acc: IdxSig<any>, key: string) => {
+const getStateFromStore = (storeState: State & Obj<any>) => {
+	return hashKeys.reduce((acc: Obj<any>, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
@@ -467,8 +473,8 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial
 	};
 };
 
-const reduceState = (state: IdxSig<any>) => {
-	return Object.keys(state).reduce((acc: IdxSig<any>, key: string) => {
+const reduceState = (state: Obj<any>) => {
+	return Object.keys(state).reduce((acc: Obj<any>, key: string) => {
 
 		const val = state[key];
 		if (!val) return acc;

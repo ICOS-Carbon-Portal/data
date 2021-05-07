@@ -1,7 +1,7 @@
 import {
 	BackendPayload, BootstrapInfo, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
 	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
-	BackendTsSettings, BackendBatchDownload, BackendUpdateCart, BackendExportQuery
+	BackendTsSettings, BackendBatchDownload, BackendUpdateCart, BackendExportQuery, StationPositions4326Lookup
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -24,6 +24,12 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BootstrapInfo){
 		return stateUtils.update(state, bootstrapInfoUpdates(state, payload));
+	}
+
+	if (payload instanceof StationPositions4326Lookup) {
+		return stateUtils.update(state, {
+			stationPos4326Lookup: payload.stationPos4326Lookup
+		});
 	}
 
 	if (payload instanceof BackendOriginsTable){
