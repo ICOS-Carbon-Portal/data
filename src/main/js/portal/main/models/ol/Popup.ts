@@ -1,7 +1,6 @@
 import Overlay from "ol/Overlay";
 import { Obj } from "../../../../common/main/types";
 
-
 export default class Popup {
 	private rootElement: HTMLElement;
 

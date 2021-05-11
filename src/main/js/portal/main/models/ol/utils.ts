@@ -9,7 +9,7 @@ import Control from "ol/control/Control";
 
 export type BaseMapFilter = (bm: BasemapOptions) => boolean
 
-export const getBaseMapLayers = (selectedBaseMap: string, layerFilter: BaseMapFilter) => {
+export const getBaseMapLayers = (selectedBaseMap: string, layerFilter: BaseMapFilter = _ => true) => {
 	const getNewTileLayer = ({ name, isWorldWide, source, esriServiceName }: BasemapOptions) => {
 		return new TileLayerExtended({
 			visible: selectedBaseMap === name,

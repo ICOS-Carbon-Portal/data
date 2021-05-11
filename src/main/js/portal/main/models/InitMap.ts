@@ -1,11 +1,10 @@
 import OLWrapper, { MapOptions, PersistedMapProps, PointData } from './ol/OLWrapper';
 import { getBaseMapLayers, getDefaultControls } from "./ol/utils";
-import { EpsgCode, getProjection, getTransformPointFn, getViewParams, SupportedSRIDs, supportedSRIDs } from './ol/projections';
+import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './ol/projections';
 import Style from 'ol/style/Style';
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
-import { Collection, View } from 'ol';
-import BaseObject from 'ol/Object';
+import { Collection, Feature } from 'ol';
 import { State, StationPos4326Lookup } from './State';
 import Popup from './ol/Popup';
 import { ControlLayerGroup, LayerControl } from './ol/LayerControl';
@@ -16,7 +15,7 @@ import Circle from 'ol/style/Circle';
 import Fill from 'ol/style/Fill';
 import Stroke from 'ol/style/Stroke';
 import { UrlStr } from '../backend/declarations';
-import { areEqual } from '../utils';
+import { areEqual, pick } from '../utils';
 import { Value } from './SpecTable';
 import { Color } from 'ol/color';
 import { ColorLike } from 'ol/colorlike';
@@ -25,6 +24,8 @@ import config from '../config';
 import { Coordinate } from 'ol/coordinate';
 import { ProjectionControl } from './ol/ProjectionControl';
 import { esriBaseMapNames } from './ol/baseMaps';
+import RegularShape from 'ol/style/RegularShape';
+import Point from 'ol/geom/Point';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
@@ -49,13 +50,30 @@ interface UpdateProps {
 
 type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
 
-const pointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
+const cirlcePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
 	image: new Circle({
 		radius,
 		fill: new Fill({ color: fillColor }),
 		stroke: new Stroke({ color: strokeColor, width: strokeWidth })
 	})
 });
+
+const trianglePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
+	image: new RegularShape({
+		radius,
+		fill: new Fill({ color: fillColor }),
+		stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+		points: 3,
+	}),
+});
+
+const supportedSRIDsFriendlyNames: Obj<string, SupportedSRIDs> = {
+	"3006": "Sweden (SWEREF99 TM)",
+	"3035": "Europe (LAEA)",
+	"4326": "World (Degrees)",
+	"3857": "World (Mercator)",
+	"54030": "World (Robinson)",
+};
 
 const excludedStationsId = 'excludedStations';
 const includedStationsId = 'includedStations';
@@ -103,9 +121,13 @@ export default class InitMap {
 			updateCtrl: this.updateCtrl
 		});
 		this.layerControl.on('change', _ => updatePersistedMapProps({ baseMapName: this.layerControl.selectedBaseMap }));
+
+		const appSrids = config.envri === 'ICOS'
+			? pick(supportedSRIDsFriendlyNames, '3035', '54030')
+			: pick(supportedSRIDsFriendlyNames, '3006', '3035', '54030');
 		const projectionControl = new ProjectionControl({
 			element: document.getElementById('projSwitchCtrl') ?? undefined,
-			supportedSRIDs,
+			supportedSRIDs: appSrids,
 			selectedSRID: persistedMapProps.srid ?? config.defaultSRID,
 			switchProjAction: updateMapSelectedSRID
 		});
@@ -116,7 +138,7 @@ export default class InitMap {
 			tileLayers,
 			mapOptions: this.mapOptions,
 			popupTemplate: this.popup,
-			controls: controls.concat([this.layerControl]),
+			controls: controls.concat([this.layerControl, projectionControl]),
 			updatePersistedMapProps
 		};
 
@@ -147,7 +169,7 @@ export default class InitMap {
 				excludedStations,
 				{ id: excludedStationsId },
 				updatableLayersFilter(excludedStationsId),
-				pointStyle('gold', 'darkslategray', 4, 2),
+				trianglePointStyle('white', 'black', 6, 1),
 				{ zIndex: 100, interactive: true }
 			);
 
@@ -156,7 +178,7 @@ export default class InitMap {
 			includedStations,
 			{ id: includedStationsId },
 			updatableLayersFilter(includedStationsId),
-			pointStyle('tomato', 'white', 6, 2),
+			cirlcePointStyle('tomato', 'white', 6, 2),
 			{ zIndex: 100, interactive: true }
 		);
 	}
@@ -271,7 +293,7 @@ export default class InitMap {
 		map.addInteraction(select);
 
 		select.on('select', e => {
-			const features: Collection<BaseObject> = e.target.getFeatures();
+			const features: Collection<Feature<Point>> = e.target.getFeatures();
 			const numberOfFeatures = features.getLength();
 
 			if (numberOfFeatures) {
@@ -289,7 +311,7 @@ export default class InitMap {
 				if (numberOfFeatures > 1)
 					popup.addTxtToContent(`Zoom in to see ${numberOfFeatures - 1} more`);
 
-				popupOverlay.setPosition(e.mapBrowserEvent.coordinate);
+				popupOverlay.setPosition(feature.getGeometry().getCoordinates());
 
 			} else {
 				popupOverlay.setPosition(undefined);

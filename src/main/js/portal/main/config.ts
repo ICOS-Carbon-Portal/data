@@ -42,10 +42,10 @@ const featureFlags = {
 	}
 }
 
-const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '54030' : '3006';
+const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '3035' : '3006';
 const defaultBaseMapName: BaseMapName = envri === 'ICOS' ? 'Physical' : 'LM Topo gray';
 const baseMapFilter: BaseMapFilter = envri === 'SITES'
-	? bm => !bm.isWorldWide || bm.name === 'Imagery'
+	? _ => true
 	: bm => bm.isWorldWide
 
 export default {
