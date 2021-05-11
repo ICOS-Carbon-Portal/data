@@ -20,10 +20,12 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
 class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller
+	import UploadRouting.Sha256Segment
 	private type PageFactory = PartialFunction[(String, Envri), Html]
 	private val NetCdfProj = "netcdf"
+	private val MapGraphProj = "map-graph"
 
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "dygraph-light", "stats", "etcfacade", "map-graph", "dashboard", "lastDownloads")
+	val projects = Set(NetCdfProj, "portal", "wdcgg", "dygraph-light", "stats", "etcfacade", MapGraphProj, "dashboard", "lastDownloads")
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
@@ -32,18 +34,21 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 		case ("stats", envri) => views.html.StatsPage()(envri)
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
 		case ("dygraph-light", _) => views.html.DygraphLight()
-		case ("map-graph", _) => views.html.MapGraph()
 		case ("dashboard", _) => views.html.Dashboard()
 	}
 
-	private def maybeSha256SumIfNetCdfProj(proj: String): PathMatcher1[PageFactory] = proj match {
+	private def maybeDobjVis(proj: String): PathMatcher1[PageFactory] = proj match {
 		case NetCdfProj =>
-			(Slash ~ UploadRouting.Sha256Segment).?.tmap(x => x._1 match {
+			(Slash ~ Sha256Segment).?.tmap(x => x._1 match {
 				case Some(_) =>
 					Tuple1{case (NetCdfProj, _) => views.html.NetCDFPage(true)}
 				case None =>
 					Tuple1{case (NetCdfProj, _) => views.html.NetCDFPage(false)}
 			})
+		case MapGraphProj =>
+			(Slash ~ Sha256Segment).?.tmap(_ =>
+				Tuple1{case (MapGraphProj, _) => views.html.MapGraph()}
+			)
 		case _ =>
 			Neutral.tmap(_ => Tuple1(standardPageFactory))
 	}
@@ -56,8 +61,8 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 			pathEnd{
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
-			rawPathPrefix(maybeSha256SumIfNetCdfProj(proj)){pageFactory =>
-				pathSingleSlash{
+			rawPathPrefix(maybeDobjVis(proj)){pageFactory =>
+				pathEndOrSingleSlash{
 					if(pageFactory.isDefinedAt(prEnvri)) complete(pageFactory(prEnvri))
 					else getFromResource(s"$jsAppFolder/$proj/$proj.html")
 				} ~
