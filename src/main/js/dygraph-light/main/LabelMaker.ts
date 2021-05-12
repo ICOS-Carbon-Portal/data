@@ -131,6 +131,17 @@ export default class LabelMaker {
 			y2: this.legendDataSerieIndexes.y2.map(i => data.series[i])
 		};
 	}
+
+	get uniqueLabels() {
+		return this.labels.reduce<string[]>((acc, lbl, idx) => {
+			if (acc.includes(lbl))
+				acc.push(`${idx} ${lbl}`);
+			else
+				acc.push(lbl);
+			
+			return acc;
+		}, []);
+	}
 }
 
 const getLegendDataIndexes = (linking: Linking, ids: string[], hasY2: boolean): LegendDataSerieIndexes => {

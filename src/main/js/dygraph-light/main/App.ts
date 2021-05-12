@@ -169,7 +169,7 @@ export default class App {
 	initGraph(){
 		this.showSpinner(true);
 
-		const {xlabel, xLegendLabel, ylabel, y2label, labels, valueFormatX, series} = this.labelMaker;
+		const { xlabel, xLegendLabel, ylabel, y2label, labels, uniqueLabels, valueFormatX, series } = this.labelMaker;
 		const strokeWidth = this.params.get('type') === 'line' ? 1 : 0;
 		const xIsDate = isDate(valueFormatX) || isDateTime(valueFormatX) || isTime(valueFormatX);
 		const formatters = getFormatters(xLegendLabel, valueFormatX);
@@ -192,7 +192,7 @@ export default class App {
 				xlabel,
 				ylabel,
 				y2label,
-				labels,
+				labels: uniqueLabels,
 				xRangePad: 5,
 				connectSeparatedPoints: true,
 				digitsAfterDecimal: 4,
