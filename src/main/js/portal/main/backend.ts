@@ -250,6 +250,7 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
 		station: sparqlParsers.fromString(b.station),
 		stationId: sparqlParsers.fromString(b.stationId),
 		samplingHeight: sparqlParsers.fromFloat(b.samplingHeight),
+		samplingPoint: sparqlParsers.fromString(b.samplingPoint),
 		theme: sparqlParsers.fromString(b.theme),
 		themeIcon: sparqlParsers.fromString(b.themeIcon),
 		title: sparqlParsers.fromString(b.title),

@@ -123,7 +123,7 @@ class Metadata extends Component<MetadataProps> {
 									}
 									<br />
 								</>
-								
+
 								<StatsSection metadata={metadata as MetaDataWStats} />
 
 							</div>
@@ -198,9 +198,14 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
 		? (specInfo as L2OrLessSpecificMeta).acquisition
 		: undefined;
+	const samplingPoint = acquisition && acquisition?.samplingPoint && acquisition?.samplingPoint.label
+		? `${acquisition.samplingPoint.label}`
+		: acquisition?.site
+			? acquisition?.site.location?.label
+			: "";
 	const location = acquisition && acquisition.station &&
 		(acquisition.site
-			? `${acquisition.site.location?.label} (${acquisition.station.org.name.split(" ").shift()})`
+			? `${samplingPoint} (${acquisition.station.org.name.split(" ").shift()})`
 			: acquisition.station.org.name);
 	const title = (specInfo as L3SpecificMeta).title
 		? (specInfo as L3SpecificMeta).title

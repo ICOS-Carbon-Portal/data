@@ -19,6 +19,7 @@ const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
 const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
 const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
 const iconFile = '//static.icos-cp.eu/images/icons/file.svg';
+const iconCalendar = '//static.icos-cp.eu/images/icons/calendar-alt-regular.svg';
 
 interface OurProps {
 	objInfo: ObjectsTable | CartItem
@@ -33,7 +34,7 @@ interface OurProps {
 
 export default class SearchResultRegularRow extends Component<OurProps> {
 	handleViewMetadata(ev: MouseEvent){
-		if (this.props.viewMetadata && !ev.ctrlKey && !ev.metaKey && this.props.objInfo.dobj) {
+		if (!ev.ctrlKey && !ev.metaKey && this.props.objInfo.dobj) {
 			ev.preventDefault();
 			this.props.viewMetadata(this.props.objInfo.dobj);
 		}
@@ -47,14 +48,17 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				? props.extendedInfo
 				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
 			: props.extendedInfo;
-		const location = extendedInfo?.site ? extendedInfo.site : extendedInfo?.station?.trim();
+		const location = extendedInfo?.samplingPoint
+			? extendedInfo.samplingPoint
+			: extendedInfo?.site
+				? extendedInfo?.site
+				: extendedInfo?.station?.trim();
 		const locationString = location ? ` from ${location}` : "";
-		const dateString = extendedInfo && extendedInfo.biblioInfo ? `, ${extendedInfo.biblioInfo.temporalCoverageDisplay}` : "";
 		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
 		const specLabel = config.features.shortenDataTypeLabel && orgSpecLabel.includes(',')
 			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
 			: orgSpecLabel;
-		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}${dateString}`;
+		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}`;
 		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled
@@ -88,6 +92,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						}
 						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
 						<ExtendedInfoItem item={objInfo.temporalResolution} icon={iconTime} iconHeight={16} title="Time resolution" />
+						{extendedInfo.biblioInfo &&
+						<ExtendedInfoItem item={extendedInfo.biblioInfo.temporalCoverageDisplay} icon={iconCalendar} iconHeight={12} iconRightMargin={2} title="Temporal coverage" />
+						}
 					</div>
 					}
 				</td>
