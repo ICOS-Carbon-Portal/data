@@ -14,25 +14,32 @@ interface OurProps {
 	updateFilter: (varName: ColNames, values: Value[]) => void
 }
 
-const search: {[C in CategoryType]?: any} = {}; //values are set by MultiSelectFilter
+const search: { [C in CategoryType]?: any } = {}; //values are set by MultiSelectFilter
+
+type StrNum = string | number
+type Data = {
+	value: StrNum
+	text: StrNum
+}
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 	const {name, specTable, labelLookup, updateFilter} = props;
-	type StrNum = string | number
 
 	const filterUris = specTable.getFilter(name) ?? [];
-	const data = specTable
-		? specTable.getDistinctAvailableColValues(name)
+	const data: Data[] = specTable
+		? makeUniqueDataText(name === 'valType', specTable, specTable.getDistinctAvailableColValues(name)
 			.filter(isDefined)
-			.map(value => ({value, text: labelLookup[value] ?? value})) as {value: StrNum, text: StrNum}[]
+			.map(value => ({ value, text: labelLookup[value] ?? value }))
+		)
 		: [];
+	
 	const value: Value[] = filterUris
 		.map((val: Value) => data.some(d => d.value === val)
 			? val
 			: labelLookup[val!] ?? val)
 		.filter(isDefined);
 
-	if (data[0]) {
+	if (data.length) {
 		typeof data[0].text === "string"
 			? data.sort((d1: any, d2: any) => d1.text.localeCompare(d2.text))
 			: data.sort((d1: any, d2: any) => d1.text - d2.text);
@@ -63,4 +70,22 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 			</div>
 		</div>
 	);
+};
+
+const makeUniqueDataText = (makeUnique: boolean, specTable: CompositeSpecTable, data: Data[]): Data[] => {
+	if (!makeUnique) return data;
+
+	const dataLookup = data.reduce<IdxSig<number, StrNum>>((acc, curr) => {
+		acc[curr.text] = (acc[curr.text] ?? 0) + 1;
+		return acc;
+	}, {});
+
+	return data.map(d => {
+		return dataLookup[d.text] === 1
+			? d
+			: {
+				value: d.value,
+				text: `${d.text} [${specTable.columnMetaRows.find(r => r.valType === d.value)?.quantityUnit ?? 'unknown unit'}]`
+			};
+	});
 };
