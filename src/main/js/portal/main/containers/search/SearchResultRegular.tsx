@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
-import {ObjectsTable, State} from "../../models/State";
+import { ObjectsTable, State, ExtendedDobjInfo} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
@@ -113,11 +113,8 @@ class SearchResultRegular extends Component<OurProps> {
 						<tbody>{
 							objectsTable.map((objInfo: ObjectsTable, i) => {
 								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-								const isChecked = extendedInfo ?
-									checkedObjectsInSearch.includes(objInfo.dobj)
-									: false;
 
-								return (
+								return extendedInfo && (
 									<SearchResultRegularRow
 										labelLookup={labelLookup}
 										extendedInfo={extendedInfo}
@@ -126,7 +123,7 @@ class SearchResultRegular extends Component<OurProps> {
 										objInfo={objInfo}
 										key={'dobj_' + i}
 										updateCheckedObjects={updateCheckedObjects}
-										isChecked={isChecked}
+										isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
 										checkedObjects={checkedObjects}
 									/>
 								);

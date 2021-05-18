@@ -7,7 +7,7 @@ import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import {Profile, StationPos4326Lookup, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
+import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, isDefined, throwError} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
@@ -240,7 +240,7 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 		: Promise.resolve({});
 };
 
-export const getExtendedDataObjInfo = (dobjs: UrlStr[]) => {
+export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInfo[]> => {
 	if (dobjs.length == 0) return Promise.resolve([]);
 
 	const query = queries.extendedDataObjectInfo(dobjs);

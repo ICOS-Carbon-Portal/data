@@ -24,7 +24,7 @@ const iconCalendar = '//static.icos-cp.eu/images/icons/calendar-alt-regular.svg'
 interface OurProps {
 	objInfo: ObjectsTable | CartItem
 	viewMetadata: (doj: string) => void
-	extendedInfo: Partial<ExtendedDobjInfo> | undefined
+	extendedInfo: ExtendedDobjInfo
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
@@ -43,28 +43,16 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		const extendedInfo = props.extendedInfo
-			? props.extendedInfo.theme && props.extendedInfo.themeIcon
+		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
-				: {theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg'}
-			: props.extendedInfo;
-		const location = extendedInfo?.samplingPoint
-			? extendedInfo.samplingPoint
-			: extendedInfo?.site
-				? extendedInfo?.site
-				: extendedInfo?.station?.trim();
-		const locationString = location ? ` from ${location}` : "";
-		const orgSpecLabel = props.labelLookup[objInfo.spec] ?? "";
-		const specLabel = config.features.shortenDataTypeLabel && orgSpecLabel.includes(',')
-			? orgSpecLabel.substr(0, orgSpecLabel.indexOf(','))
-			: orgSpecLabel;
-		const title = extendedInfo && extendedInfo.title ? extendedInfo.title : `${specLabel}${locationString}`;
-		const samplingHeight = extendedInfo && extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
+				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
+		const specLabel = props.labelLookup[objInfo.spec] ?? "";
+		const title = extendedInfo.title ?? makeL2OrLessTitle(extendedInfo, specLabel);
+		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;
 		const checkBtnTitle = checkboxDisabled
 			? 'You cannot download or preview level 0 data through this portal'
 			: `Click to select this data object for preview or add to cart`;
-		const metadataHash = getMetadataHash(objInfo.dobj);
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -78,10 +66,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 style={{marginTop: 0}}>
-						<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
+						<a title="View metadata" href={getMetadataHash(objInfo.dobj)} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
-					{extendedInfo &&
 					<div className="extended-info" style={{marginTop: 4}}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
 						{config.features.displayStationInExtendedInfo && extendedInfo.station &&
@@ -96,11 +83,18 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						<ExtendedInfoItem item={extendedInfo.biblioInfo.temporalCoverageDisplay} icon={iconCalendar} iconHeight={12} iconRightMargin={2} title="Temporal coverage" />
 						}
 					</div>
-					}
 				</td>
 			</tr>
 		);
 	}
+}
+
+const makeL2OrLessTitle = (extendedInfo: ExtendedDobjInfo, specLabel: String) => {
+	const location = extendedInfo.samplingPoint ?? extendedInfo.site ?? extendedInfo.station?.trim();
+
+	if (config.features.shortenDataTypeLabel && specLabel.includes(',')) specLabel.substr(0, specLabel.indexOf(','))
+
+	return `${specLabel} from ${location}`
 }
 
 export const getMetadataHash = (dobj: string) => {

@@ -14,9 +14,9 @@ import config, {
 import deepequal from 'deep-equal';
 import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
-import {fetchKnownDataObjects, getExtendedDataObjInfo} from "../backend";
+import {fetchKnownDataObjects} from "../backend";
 import {DataObject} from "./CartItem";
-import {DataObject as DO} from "../../../common/main/metacore";
+import {DataObject as DO, References} from "../../../common/main/metacore";
 import SpecTable, {Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
@@ -65,10 +65,24 @@ export interface User extends WhoAmI {
 }
 
 type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
-export type ExtendedDobjInfo = AsyncResult<typeof getExtendedDataObjInfo>[0]
+export type ExtendedDobjInfo = {
+	dobj: string
+	station: string | undefined
+	stationId: string | undefined
+	samplingHeight: number | undefined
+	samplingPoint: string | undefined
+	theme: string | undefined
+	themeIcon: string | undefined
+	title: string | undefined
+	description: string | undefined
+	columnNames: string[] | undefined
+	site: string | undefined
+	hasVarInfo: boolean | undefined
+	biblioInfo: References | undefined
+}
 export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
-export interface MetaDataObject extends DO{
+export interface MetaDataObject extends DO {
 	coverageGeo: object
 }
 export interface MetaData extends MetaDataObject {
@@ -384,7 +398,7 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 		const nextState = pick(store.getState(), ...stateKeys);
 		if (currentState === undefined)
 			currentState = nextState;
-		
+
 		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
 			if (!deepequal(currentState[key], nextState[key]))
 				acc[key] = nextState[key];
