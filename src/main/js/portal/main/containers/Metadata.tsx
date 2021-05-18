@@ -9,7 +9,7 @@ import { MetaData, MetaDataWStats, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import bootstrapMetadata, {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {L2OrLessSpecificMeta, L3SpecificMeta} from "../../../common/main/metacore";
+import {L2OrLessSpecificMeta, L3SpecificMeta, DataAcquisition} from "../../../common/main/metacore";
 import config, { timezone } from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
@@ -123,7 +123,7 @@ class Metadata extends Component<MetadataProps> {
 									}
 									<br />
 								</>
-								
+
 								<StatsSection metadata={metadata as MetaDataWStats} />
 
 							</div>
@@ -191,32 +191,33 @@ class Metadata extends Component<MetadataProps> {
 	}
 }
 
+const makeL2OrLessTitle = (acquisition: DataAcquisition, specLabel: String) => {
+	const samplingPoint = acquisition.samplingPoint
+		? acquisition.samplingPoint.label
+		: acquisition.site
+			? acquisition.site.location?.label
+			: ""
+	const location = samplingPoint
+		? `${samplingPoint} (${acquisition.station.org.name.split(" ").shift()})`
+		: acquisition.station.org.name
+
+	if (config.features.shortenDataTypeLabel && specLabel.includes(',')) specLabel = specLabel.substr(0, specLabel.indexOf(','));
+
+	return `${specLabel} from ${location}`
+}
+
 export const MetadataTitle = (metadata?: State['metadata']) => {
 	if (metadata === undefined) return null;
 
 	const specInfo = metadata.specificInfo;
-	const acquisition =  (specInfo as L2OrLessSpecificMeta).acquisition
-		? (specInfo as L2OrLessSpecificMeta).acquisition
-		: undefined;
-	const location = acquisition && acquisition.station &&
-		(acquisition.site
-			? `${acquisition.site.location?.label} (${acquisition.station.org.name.split(" ").shift()})`
-			: acquisition.station.org.name);
-	const title = (specInfo as L3SpecificMeta).title
-		? (specInfo as L3SpecificMeta).title
-		: undefined;
-	let specLabel = metadata.specification.self.label ?? "";
-	if (config.features.shortenDataTypeLabel && specLabel.includes(',')) specLabel = specLabel.substr(0, specLabel.indexOf(','));
+	const title = ("title" in specInfo) ? specInfo.title : makeL2OrLessTitle(specInfo.acquisition, metadata.specification.self.label ?? "");
 
 	return (
 		<React.Fragment>
-			{specInfo &&
-				<h1>
-					{title || specLabel}
-					{location && <span> from {location}</span>}
-					<div className="text-muted"><small>{metadata.references.temporalCoverageDisplay}</small></div>
-				</h1>
-			}
+			<h1>
+				{title}
+				<div className="text-muted"><small>{metadata.references.temporalCoverageDisplay}</small></div>
+			</h1>
 		</React.Fragment>
 	);
 };
