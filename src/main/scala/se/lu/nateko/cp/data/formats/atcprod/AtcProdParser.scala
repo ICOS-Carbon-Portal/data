@@ -91,7 +91,7 @@ object AtcProdParser {
 	}
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99"
+		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99" || value.trim.isEmpty
 		case IntValue => value == null || value.trim.isEmpty
 		case Utf16CharValue => value == null || value.isEmpty
 		case vf => throw new Exception(s"Did not expect value format $vf in ATC product time series data")
