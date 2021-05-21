@@ -28,7 +28,7 @@ class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 		}
 
 		def parse(row: TableRow): BinTableRow = {
-			assertConsistency(row.header)
+			assertConsistency(row)
 
 			val parsed = Array.ofDim[AnyRef](indices.length)
 
@@ -41,17 +41,24 @@ class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 			new BinTableRow(parsed, schema)
 		}
 
-		private def assertConsistency(latestHeader: TableRowHeader): Unit = if(
-			(header ne latestHeader) && (
-				header.nRows != latestHeader.nRows ||
-				!ju.Arrays.equals(
-					header.columnNames.asInstanceOf[Array[AnyRef]],
-					latestHeader.columnNames.asInstanceOf[Array[AnyRef]]
-				)
+		private def assertConsistency(latestRow: TableRow): Unit = {
+			if(latestRow.cells.length != header.columnNames.length) throw new CpDataParsingException(
+				s"Expected ${header.columnNames.length} row cell values, got ${latestRow.cells.length}: " +
+				latestRow.cells.mkString(", ")
 			)
-		) throw new CpDataParsingException(
-			"Sequential rows had different headers. Could be due to reuse of TimeSeriesToBinTableConverter instance. Contact developers."
-		)
+			val latestHeader = latestRow.header
+			if(
+				(header ne latestHeader) && (
+					header.nRows != latestHeader.nRows ||
+					!ju.Arrays.equals(
+						header.columnNames.asInstanceOf[Array[AnyRef]],
+						latestHeader.columnNames.asInstanceOf[Array[AnyRef]]
+					)
+				)
+			) throw new CpDataParsingException(
+				"Sequential rows had different headers. Could be due to reuse of TimeSeriesToBinTableConverter instance. Contact developers."
+			)
+		}
 
 		private def assertNoMissingColumns(): Unit = {
 			val missingColumns = colsMeta.findMissingColumns(header.columnNames.toIndexedSeq).map(_.toString)

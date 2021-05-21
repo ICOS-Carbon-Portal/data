@@ -34,7 +34,7 @@ object AtcProdParser {
 
 	private val totLinesPattern = """# TOTAL LINES: (\d+)""".r
 	private val headLinesPattern = """# HEADER LINES: (\d+)""".r
-	private val sep = ';'
+	private val sep = ";"
 
 	def seed = Accumulator(Header(0, 0, Array.empty), 0, Array.empty, Array.empty, None)
 
@@ -42,7 +42,7 @@ object AtcProdParser {
 		if (acc.error.isDefined) acc
 
 		else if (acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength)
-			acc.copy(cells = line.split(sep), lineNumber = acc.lineNumber + 1)
+			acc.copy(cells = line.split(sep, -1), lineNumber = acc.lineNumber + 1)
 
 		else if (acc.lineNumber == acc.header.headerLength - 1) {
 			val ambiguousColNames = line.drop(1).split(sep)
@@ -91,9 +91,10 @@ object AtcProdParser {
 	}
 
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99" || value.trim.isEmpty
-		case IntValue => value == null || value.trim.isEmpty
-		case Utf16CharValue => value == null || value.isEmpty
+		//empty values are always treated as missing
+		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99"
+		case IntValue => value == null
+		case Utf16CharValue => value == null
 		case vf => throw new Exception(s"Did not expect value format $vf in ATC product time series data")
 	}
 }
