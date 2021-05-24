@@ -23,7 +23,7 @@ object OtcCsvStreams {
 	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext): RowParser = Flow[String]
 		.dropWhile(line => !line.contains("*/"))
 		.drop(1)
-		.map(_.trim.split('\t'))
+		.map(_.trim.split("\t", -1))
 		.scan(TableRow.empty(nRows)) {
 			(row, cells) =>
 				if (row.header.columnNames.length == 0) {

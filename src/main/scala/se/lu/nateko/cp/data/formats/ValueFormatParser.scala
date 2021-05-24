@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.formats
 
+import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 
@@ -21,7 +22,15 @@ object ValueFormatParser {
 	}
 
 	def parse(value: String, format: ValueFormat): AnyRef =
-		if (value == "") getNullRepresentation(format)
+		try{
+			parseInner(value, format)
+		} catch{
+			case err: Throwable =>
+				throw new CpDataParsingException(s"Could not parse '$value' as $format : ${err.getMessage}")
+		}
+
+	private def parseInner(value: String, format: ValueFormat): AnyRef =
+		if (value == null || value.trim.isEmpty) getNullRepresentation(format)
 		else format match {
 			case IntValue =>
 				parser.parse(value, DataType.INT)
@@ -52,10 +61,10 @@ object ValueFormatParser {
 				parseLocalDateTime(value, etcDateTimeFormatter)
 		}
 
-	def parseIsoTimeOfDay(time: String): Integer =
+	private def parseIsoTimeOfDay(time: String): Integer =
 		Int.box(LocalTime.parse(time).toSecondOfDay)
 
-	def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
+	private def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
 		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {

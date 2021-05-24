@@ -397,16 +397,16 @@ function getVarFilter(filter: VariableFilterRequest): string {
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo" | "biblioInfo"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo" | "biblioInfo"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?biblioInfo where{
+select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?biblioInfo where{
 	{
-		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?site0) as ?site) where{
+		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?samplingPoint0) as ?samplingPoint) (sample(?site0) as ?site) where{
 			VALUES ?dobj { ${dobjsList} }
 			OPTIONAL{
 				?dobj cpmeta:wasAcquiredBy ?acq.
@@ -414,6 +414,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?theme ?themeIcon ?tit
 				OPTIONAL{ ?stationUri cpmeta:hasName ?station0 }
 				OPTIONAL{ ?stationUri cpmeta:hasStationId ?stationId0 }
 				OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight0 }
+				OPTIONAL{ ?acq cpmeta:hasSamplingPoint/rdfs:label ?samplingPoint0 }
 				OPTIONAL{ ?acq cpmeta:wasPerformedAt/cpmeta:hasSpatialCoverage/rdfs:label ?site0 }
 			}
 		}

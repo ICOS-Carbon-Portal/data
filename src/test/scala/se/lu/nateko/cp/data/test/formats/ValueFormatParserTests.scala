@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.test.formats
 
+import se.lu.nateko.cp.data.api.CpDataParsingException
 import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.formats._
 import java.util.Locale
@@ -43,7 +44,7 @@ class ValueParserTests extends AnyFunSpec{
 			testCase("-3.154e-1", -3.154e-1f)
 
 			it("fails on 1,48348"){
-				assertThrows[NumberFormatException]{
+				assertThrows[CpDataParsingException]{
 					parser.parse("1,48348", FloatValue)
 				}
 			}
