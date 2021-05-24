@@ -69,7 +69,7 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick }: { self: CopyValue
 	};
 
 	return (
-		<span className="input-group">
+		<span className="input-group" style={{display: 'inline-table'}}>
 			<span className="input-group-btn">
 				<button className="btn btn-default" onClick={copyClick} title={copyHelpText} style={{marginBottom: 10}}>
 					<span className="glyphicon glyphicon-copy" />

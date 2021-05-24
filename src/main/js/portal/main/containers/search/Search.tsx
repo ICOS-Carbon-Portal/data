@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, ReactNode} from 'react';
 import { connect } from 'react-redux';
 import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
@@ -12,8 +12,6 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import { UiInactivateAllHelp } from '../../reducers/actionpayloads';
-import HelpSection from '../../components/help/HelpSection';
 import bootstrapMetadata from '../../actions/metadata';
 import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from '../../models/ol/projections';
@@ -22,7 +20,7 @@ import { PersistedMapProps } from '../../models/ol/OLWrapper';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type OurProps = StateProps & DispatchProps;
+type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
 	srid: SupportedSRIDs
@@ -98,19 +96,16 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const { tabs, switchTab } = this.props;
+		const { HelpSection, tabs, switchTab } = this.props;
 		const { srid } = this.state;
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
 		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
 
 		return (
-			<div className="row" style={{position:'relative'}}>
-				<div style={{position:'absolute',top:-20,right:15,bottom:0}}>
-					<div style={{position:'sticky',top:2,padding:0,zIndex:9999}}>
-						<HelpSection width={300} onHelpClose={this.props.onHelpClose} helpStorage={this.props.helpStorage}/>
-					</div>
-				</div>
-				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
+			<div className="row" style={{ position: 'relative' }}>
+				{HelpSection}
+
+				<div className="col-sm-4 col-md-3" style={{ marginBottom: 20 }}>
 
 					<button className="btn btn-default btn-block visible-xs-block" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
 						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}} />
@@ -157,8 +152,7 @@ function stateToProps(state: State){
 	return {
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
-		tabs: state.tabs,
-		helpStorage: state.helpStorage
+		tabs: state.tabs
 	};
 }
 
@@ -168,8 +162,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
-		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
-		onHelpClose: () => dispatch(new UiInactivateAllHelp())
+		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId))
 	};
 }
 

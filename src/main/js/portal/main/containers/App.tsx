@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './search/Search';
@@ -13,6 +13,8 @@ import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import Cart from "../models/Cart";
 import {failWithError, updateRoute} from "../actions/common";
+import HelpSection from '../components/help/HelpSection';
+import { UiInactivateAllHelp } from '../reducers/actionpayloads';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -61,7 +63,13 @@ export class App extends Component<AppProps> {
 				</div>
 
 				<ErrorBoundary failWithError={props.failWithError}>
-					<Route route={props.route} />
+					<Route route={props.route}>
+						<div style={{ position: 'absolute', top: -20, right: 15, bottom: 0 }}>
+							<div style={{ position: 'sticky', top: 2, padding: 0, zIndex: 9999 }}>
+								<HelpSection width={300} onHelpClose={this.props.onHelpClose} helpStorage={this.props.helpStorage} />
+							</div>
+						</div>
+					</Route>
 				</ErrorBoundary>
 			</div>
 		);
@@ -118,17 +126,20 @@ const SearchBtn = (props: ButtonProps) => {
 	);
 };
 
-const Route = ({route}: {route: Route}) => {
+const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
 	switch(route){
 		case 'search':
-			return <Search />;
+			return (
+				<Search HelpSection={children} />
+			);
 
 		case 'cart':
 			return <DataCart />;
 
 		case 'preview':
 			return (
-				<Preview />);
+				<Preview HelpSection={children} />
+			);
 
 		case 'metadata':
 			return <Metadata />;
@@ -141,6 +152,7 @@ function stateToProps(state: State){
 		toasterData: state.toasterData,
 		cart: state.cart,
 		metadata: state.metadata,
+		helpStorage: state.helpStorage,
 	};
 }
 
@@ -149,6 +161,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
+		onHelpClose: () => dispatch(new UiInactivateAllHelp())
 	};
 }
 

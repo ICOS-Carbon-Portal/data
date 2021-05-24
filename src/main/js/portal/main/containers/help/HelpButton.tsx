@@ -20,9 +20,10 @@ const defaultIconStyle: CSSProperties = {
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingProps = {
-	name: HelpItemName,
-	title?: string,
+	name: HelpItemName
+	title?: string
 	url?: UrlStr
+	overrideStyles?: CSSProperties
 }
 type OurProps = StateProps & DispatchProps & IncomingProps;
 
@@ -43,7 +44,8 @@ class HelpButton extends Component<OurProps> {
 	};
 
 	render(){
-		const {name, title, helpStorage, url} = this.props;
+		const { name, title, helpStorage, url } = this.props;
+		const styles = { ...defaultIconStyle, ...(this.props.overrideStyles ?? {}) };
 
 		if (name === undefined || !helpStorage.getHelpItem(name)) return null;
 
@@ -51,7 +53,7 @@ class HelpButton extends Component<OurProps> {
 
 		return <span
 			className={className}
-			style={defaultIconStyle}
+			style={styles}
 			title={title}
 			onClick={this.handleBtnClick.bind(this)}
 		/>;

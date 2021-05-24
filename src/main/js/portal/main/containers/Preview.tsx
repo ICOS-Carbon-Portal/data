@@ -1,4 +1,4 @@
-import React, {ChangeEvent, Component} from 'react';
+import React, {ChangeEvent, Component, ReactNode} from 'react';
 import {connect} from "react-redux";
 import PreviewTimeSerie from '../components/preview/PreviewTimeSerie';
 import PreviewSelfContained from '../components/preview/PreviewSelfContained';
@@ -12,26 +12,50 @@ import CartItem from "../models/CartItem";
 import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl} from "../actions/common";
 import {storeTsPreviewSetting} from "../actions/preview";
-import {pick} from "../utils";
+import { isDefined, pick } from "../utils";
+import commonConfig from '../../../common/main/config';
+import TableFormatCache from '../../../common/main/TableFormatCache';
+import HelpButton from './help/HelpButton';
+import { lastUrlPart, TableFormat } from 'icos-cp-backend';
+import PreviewObj from '../models/Preview';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type OurProps = StateProps & DispatchProps
-interface OurState {iframeSrc: UrlStr | ''}
+type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode }
+interface OurState {
+	iframeSrc: UrlStr | ''
+	tableFormat?: TableFormat
+}
+
+const hostname = config.envri === 'ICOS'
+	? 'data.icos-cp.eu'
+	: 'data.fieldsites.se';
 
 class Preview extends Component<OurProps, OurState> {
 	private events: typeof Events = null;
+	private tfCache: TableFormatCache = new TableFormatCache(commonConfig);
 
 	constructor(props: OurProps){
 		super(props);
 
 		this.state = {
-			iframeSrc: ''
+			iframeSrc: '',
+			tableFormat: undefined
 		};
 
 		this.events = new Events();
 		this.events.addToTarget(window, "message", this.handleIframeSrcChange.bind(this));
+	}
+
+	getTableFormat(previewType: PreviewType, idx: number = 0) {
+		if (previewType !== config.TIMESERIES) return;
+
+		const preview = this.props.preview;
+		if (preview.items.length === 0 || this.tfCache.isInCache(preview.items[idx].spec)) return;
+
+		this.tfCache.getTableFormat(preview.items[idx].spec)
+			.then(tableFormat => this.setState({ tableFormat }));
 	}
 
 	handleIframeSrcChange(event: ChangeEvent<HTMLIFrameElement> | MessageEvent){
@@ -62,9 +86,12 @@ class Preview extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const {preview, cart} = this.props;
+		const { HelpSection, preview, cart } = this.props;
+		const { tableFormat, iframeSrc } = this.state;
 		const previewType = preview.type;
-		if(previewType === undefined) return null;
+		if (previewType === undefined) return null;
+
+		this.getTableFormat(previewType);
 
 		const areItemsInCart: boolean = preview.items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
@@ -73,7 +100,8 @@ class Preview extends Component<OurProps, OurState> {
 		return (
 			<div>
 				{preview
-					? <div>
+					? <div className="row" style={{ position: 'relative' }}>
+						{HelpSection}
 
 						<div className="panel panel-default">
 							<div className="panel-heading">
@@ -94,12 +122,9 @@ class Preview extends Component<OurProps, OurState> {
 							<div className="panel-body">
 								<div className="row">
 									<div className="col-sm-10">
-										<CopyValue
-											btnText="Copy preview chart URL"
-											copyHelpText="Click to copy preview chart URL to clipboard"
-											valToCopy={previewUrl(preview.items[0], previewType, this.state.iframeSrc)}
-										/>
+										<UrlPresenters previewType={previewType} preview={preview} tableFormat={tableFormat} iframeSrc={iframeSrc} />
 									</div>
+
 									{preview.items &&
 									<div className="col-sm-2">
 										<CartBtn
@@ -125,6 +150,61 @@ class Preview extends Component<OurProps, OurState> {
 		);
 	}
 }
+
+type URLPresenters = {
+	previewType: PreviewType
+	preview: PreviewObj
+	tableFormat: TableFormat
+	iframeSrc: string
+}
+const UrlPresenters = ({ previewType, preview, tableFormat, iframeSrc}: URLPresenters) => {
+	if (previewType === 'TIMESERIES') {
+		return (
+			<div className="row">
+				<div className="col-md-6">
+					<CsvDownloadCopyValue downloadUrl={csvDownloadUrl(preview.items[0], previewType, tableFormat)} />
+				</div>
+
+				<div className="col-md-6">
+					<CopyValue
+						btnText="Copy preview chart URL"
+						copyHelpText="Click to copy preview chart URL to clipboard"
+						valToCopy={previewUrl(preview.items[0], previewType, iframeSrc)}
+					/>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<CopyValue
+			btnText="Copy preview chart URL"
+			copyHelpText="Click to copy preview chart URL to clipboard"
+			valToCopy={previewUrl(preview.items[0], previewType, iframeSrc)}
+		/>
+	);
+};
+
+const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl?: string }) => {
+	if (downloadUrl === '') return null;
+
+	return (
+		<div style={{ display: 'block', whiteSpace: 'nowrap' }}>
+			<CopyValue
+				btnText="Copy preview CSV download URL"
+				copyHelpText="Click to copy download URL to clipboard"
+				valToCopy={downloadUrl}
+			/>
+
+			<span style={{ position:'relative', verticalAlign:'top', top: 10 }}>
+				<HelpButton
+					name="previewCsvDownload"
+					title="Click to toggle help"
+				/>
+			</span>
+		</div>
+	);
+};
 
 const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement> | MessageEvent) => void}) => {
 	const previewType = props.preview.type;
@@ -154,16 +234,46 @@ function previewUrl(item: CartItem, type: PreviewType, iframeSrc: UrlStr): UrlSt
 	}
 };
 
+function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFormat): UrlStr {
+	if (tableFormat === undefined) return '';
+
+	if (type === config.TIMESERIES) {
+		const x = item.getUrlSearchValue('x');
+		const y = item.getUrlSearchValue('y');
+		const y2 = item.getUrlSearchValue('y2');
+		
+		if (x === undefined || (y === undefined && y2 === undefined)) return '';
+
+		const hashId = lastUrlPart(item.dobj);
+		const cols = [x, y, y2].filter(isDefined).reduce<string[]>((acc, colName) => {
+			acc.push(colName);
+
+			const flagCol = tableFormat.columns.find(col => col.name === colName)?.flagCol;
+
+			if (flagCol !== undefined)
+				acc.push(flagCol);
+
+			return acc;
+		}, [])
+			.map(col => `col=${col}`).join('&');
+		
+		return `https://${hostname}/csv/${hashId}?${cols}`;
+	}
+
+	return '';
+};
+
 function stateToProps(state: State){
 	return {
 		preview: state.preview,
 		cart: state.cart,
 		extendedDobjInfo: state.extendedDobjInfo,
 		tsSettings: state.tsSettings,
+		user: state.user
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),

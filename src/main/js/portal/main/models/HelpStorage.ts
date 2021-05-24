@@ -4,7 +4,13 @@ import {UrlStr} from "../backend/declarations";
 import { Obj } from '../../../common/main/types';
 
 
-const titles = { ...placeholders[config.envri], ...numericFilterLabels, preview: "Preview / Add to cart", publicQuery: "SPARQL queries"};
+const titles = {
+	...placeholders[config.envri],
+	...numericFilterLabels,
+	preview: "Preview / Add to cart",
+	publicQuery: "SPARQL queries",
+	previewCsvDownload: "Download preview data as CSV"
+};
 
 type HelpId = HelpItemName | UrlStr
 type HelpDict = {[key in HelpId]?: HelpItem}
@@ -112,6 +118,9 @@ const {envri} = config;
 const projectDescr = envri === 'SITES'
 	? 'SITES Data Portal stores data from the following projects:'
 	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
+const projectStr = envri === 'SITES'
+	? 'SITES'
+	: 'the Carbon Portal';
 
 const numberFilterList = [
 	{
@@ -160,24 +169,24 @@ const initItems: HelpItem[] = [
 				{
 					label: 0 as Int,
 					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
-						' subsequent processing. Stored internally but not distributed by the Data Portal.Data are in physical units either directly provided' +
+						` subsequent processing. Stored internally but not distributed by ${projectStr}.Data are in physical units either directly provided` +
 						' by the instruments or converted from engineer units.'
 				},
 				{
 					label: 1 as Int,
 					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are' +
 						' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of' +
-						' intended for internal use  and normally not distributed by the Data Portal.'
+						` intended for internal use  and normally not distributed by ${projectStr}.`
 				},
 				{
 					label: 2 as Int,
 					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,' +
-						' and within SITES community agreed, spatial and temporal output units and resolution. Distributed by the Data Portal.'
+						` and within SITES community agreed, spatial and temporal output units and resolution. Distributed by ${projectStr}.`
 				},
 				{
 					label: 3 as Int,
 					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
-						' SITES L1 or L2 data  Distributed by the Data Portal.'
+						` SITES L1 or L2 data  Distributed by ${projectStr}.`
 				}
 			]
 			: [
@@ -194,7 +203,7 @@ const initItems: HelpItem[] = [
 				},
 				{
 					label: 2 as Int,
-					comment: 'The final quality checked ICOS RI data set, published by the CFs, to be distributed through the Carbon Portal. This level is' +
+					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is` +
 						' the ICOS-data product and free available for users.',
 					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
 				},
@@ -276,7 +285,12 @@ const initItems: HelpItem[] = [
 		'View SPARQL queries that are currently used in this application. Changes to filters are reflected in queries if applicable. Open them again to see updates.',
 		undefined,
 		(Object.keys(publicQueries) as QueryName[]).map(queryName => publicQueries[queryName])
-	)
+	),
+
+	new HelpItem(
+		'previewCsvDownload',
+		`You can only download preview data as CSV if you are logged in and have accepted the license agreement. Downloaded CSV data only includes columns selected in the preview chart and associated quality flags, if there are any. This is an extra service offered by ${projectStr} on a best-effort basis, effectively constitutes a format transformation from the original (even if the original was a CSV).`
+	),
 ];
 
 function nonStrictnessWarning(title: String): string{

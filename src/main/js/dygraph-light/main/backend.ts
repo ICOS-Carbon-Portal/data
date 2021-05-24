@@ -1,8 +1,8 @@
-import {sparql, getBinaryTable, TableFormat, BinTable} from 'icos-cp-backend';
-import {objectSpecification, Config} from './sparqlQueries';
-import TableFormatCache from "./TableFormatCache";
+import {sparql, getBinaryTable, TableFormat} from 'icos-cp-backend';
+import {objectSpecification, ObjectSpecConfig} from '../../common/main/sparqlQueries';
+import TableFormatCache from "../../common/main/TableFormatCache";
 
-export function getTableFormatNrows(config: Config, objIds: string[]){
+export function getTableFormatNrows(config: ObjectSpecConfig, objIds: string[]){
 	const query = objectSpecification(config, objIds);
 	const tfCache = new TableFormatCache(config);
 
