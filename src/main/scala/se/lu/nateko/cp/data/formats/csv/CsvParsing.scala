@@ -73,7 +73,7 @@ class CsvParser(opts: CsvOptions) {
 			case Init | Text => Init //entry done, 0 or more cells parced
 			case Esc => errors.append("Unexpected end of line while in escape mode"); Error
 			case Quote => cells.last.append('\n'); Quote //line ended while quoting => multi-line entry
-			case Sep => Init //entry done, last cell empty
+			case Sep => cells.append(newCell); Init //entry done, last cell empty
 		}
 		case c => state match {
 			case Init | Sep => cells.append(new StringBuilder(c.toString)); Text

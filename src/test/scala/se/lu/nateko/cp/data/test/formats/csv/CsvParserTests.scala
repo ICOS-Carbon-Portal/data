@@ -71,5 +71,11 @@ class CsvParserTests extends AnyFunSpec{
 			assertCells(accs(1), "value with\n a line break")
 		}
 
+		it("Supports multiple trailing empty values"){
+			val csv = "h1,h2,h3,h4\nc1,,,\nc1,c2,c3,c4"
+			val accs = parse(csv, parser)
+			assertCells(accs(1), "c1", "", "", "")
+		}
+
 	}
 }
