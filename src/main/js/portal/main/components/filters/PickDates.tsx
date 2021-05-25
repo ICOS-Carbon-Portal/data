@@ -92,7 +92,7 @@ export default class PickDates extends Component<Props, State> {
 			throw new Error('Unknown sender category: ' + sender);
 		}
 
-		if (newFilter && setFilterTemporal) setFilterTemporal(newFilter);
+		if (newFilter) setFilterTemporal(newFilter);
 	}
 
 	render(){

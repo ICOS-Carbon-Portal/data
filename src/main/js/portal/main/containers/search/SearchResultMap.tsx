@@ -52,7 +52,7 @@ class SearchResultMap extends Component<OurProps> {
 				'../../models/InitMap'
 			);
 			this.initMap = new InitMap({
-				mapRootelement: document.getElementById('map'),
+				mapRootelement: document.getElementById('map')!,
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
@@ -67,13 +67,15 @@ class SearchResultMap extends Component<OurProps> {
 	}
 
 	componentWillUnmount() {
-		this.initMap.olWrapper.map
-			.getLayers()
-			.getArray()
-			.filter(l => l.get('layerType') === 'baseMap')
-			.forEach(bm => (bm as TileLayerExtended).getSource().clear());
-		this.initMap.olWrapper.destroyMap();
-		this.initMap = null;
+		if (this.initMap) {
+			this.initMap.olWrapper.map
+				.getLayers()
+				.getArray()
+				.filter(l => l.get('layerType') === 'baseMap')
+				.forEach(bm => (bm as TileLayerExtended).getSource().clear());
+			this.initMap.olWrapper.destroyMap();
+			this.initMap = undefined;
+		}
 	}
 }
 

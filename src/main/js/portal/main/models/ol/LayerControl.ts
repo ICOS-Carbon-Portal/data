@@ -24,7 +24,7 @@ export class LayerControl extends Control {
 	public layersDiv: HTMLDivElement;
 	private updateLayerGroups?: (map: Map) => () => void
 	private updateCtrl: () => void
-	public selectedBaseMap: BaseMapName
+	public selectedBaseMap?: BaseMapName
 
 	constructor(options: LayerControlOptions) {
 		super(options);

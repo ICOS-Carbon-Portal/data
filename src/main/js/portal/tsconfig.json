@@ -13,7 +13,7 @@
         "jsx": "react",
         "moduleResolution": "node",
 		"skipLibCheck": true,
-        "strict": false
+        "strict": true
     },
 	"files": [ "main/main.tsx" ],
     "include": [

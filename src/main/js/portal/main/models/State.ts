@@ -233,7 +233,7 @@ const serialize = (state: State) => {
 		// lookup: undefined,
 		specTable: state.specTable.serialize,
 		paging: state.paging.serialize,
-		cart: undefined as Cart,
+		cart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
 	};

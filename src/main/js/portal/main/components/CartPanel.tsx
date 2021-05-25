@@ -97,6 +97,8 @@ export default class CartPanel extends Component<Props, State> {
 						<tbody>{
 							props.cart.items.map((objInfo, i) => {
 								const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+								if (extendedInfo === undefined) return null;
+								
 								const isChecked = props.checkedObjectsInCart.includes(objInfo.dobj);
 
 								return (

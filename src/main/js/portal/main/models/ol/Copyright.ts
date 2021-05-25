@@ -4,6 +4,7 @@ import Projection from 'ol/proj/Projection';
 import { View } from 'ol';
 import { TileLayerExtended } from './baseMaps';
 import { fetchJson } from '../../backend';
+import { Obj } from '../../../../common/main/types';
 
 // https://developers.arcgis.com/terms/attribution/
 export default class Copyright {
@@ -48,7 +49,7 @@ export default class Copyright {
 
 		} else if (currentBasemap) {
 			const source = currentBasemap.getSource();
-			const attributions = source.getAttributions()(undefined);
+			const attributions = source.getAttributions()(undefined!);
 			this.attributionElement.innerHTML = Array.isArray(attributions) ? attributions.join(', ') : attributions;
 
 		} else {
@@ -57,12 +58,14 @@ export default class Copyright {
 	}
 }
 
-export const getESRICopyRight = async (services: string[]) => {
-	const promises = services.map(service => fetchJson<any>('https://static.arcgis.com/attribution/' + service + '?f=json'));
+export const getESRICopyRight = async (services: (string | undefined)[]) => {
+	if (services.length === 0) return Promise.resolve({});
+
+	const promises = services.map(service => fetchJson<Obj<any>>('https://static.arcgis.com/attribution/' + service + '?f=json'));
 
 	return Promise.all(promises).then(results => {
 		return results.reduce((acc, doc, idx) => {
-			acc[services[idx]] = doc;
+			acc[services[idx]!] = doc;
 			return acc;
 		}, {});
 	});

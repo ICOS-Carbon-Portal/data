@@ -154,7 +154,7 @@ class Preview extends Component<OurProps, OurState> {
 type URLPresenters = {
 	previewType: PreviewType
 	preview: PreviewObj
-	tableFormat: TableFormat
+	tableFormat?: TableFormat
 	iframeSrc: string
 }
 const UrlPresenters = ({ previewType, preview, tableFormat, iframeSrc}: URLPresenters) => {
@@ -185,7 +185,7 @@ const UrlPresenters = ({ previewType, preview, tableFormat, iframeSrc}: URLPrese
 	);
 };
 
-const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl?: string }) => {
+const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl: string }) => {
 	if (downloadUrl === '') return null;
 
 	return (

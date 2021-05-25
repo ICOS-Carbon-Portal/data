@@ -293,6 +293,8 @@ export default class InitMap {
 		map.addInteraction(select);
 
 		select.on('select', e => {
+			if (popupOverlay === undefined) return;
+
 			const features: Collection<Feature<Point>> = e.target.getFeatures();
 			const numberOfFeatures = features.getLength();
 
@@ -311,7 +313,7 @@ export default class InitMap {
 				if (numberOfFeatures > 1)
 					popup.addTxtToContent(`Zoom in to see ${numberOfFeatures - 1} more`);
 
-				popupOverlay.setPosition(feature.getGeometry().getCoordinates());
+				popupOverlay.setPosition(feature.getGeometry()?.getCoordinates() ?? e.mapBrowserEvent.coordinate);
 
 			} else {
 				popupOverlay.setPosition(undefined);
@@ -337,9 +339,11 @@ const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], point
 		return acc;
 	}, {});
 
-const createPointData = (stations: Value[], stationPosLookup: StationPosLookup, additionalAttributes: PointData['attributes'] = {}) => {
+const createPointData = (stations: Value[], stationPosLookup?: StationPosLookup, additionalAttributes: PointData['attributes'] = {}) => {
+	if (stationPosLookup === undefined) return [];
+
 	return stations.reduce<PointData[]>((acc, st) => {
-		if (stationPosLookup[st]) {
+		if (st && stationPosLookup[st]) {
 			const { coord, ...attributes } = stationPosLookup[st];
 			acc.push({
 				coord: coord,

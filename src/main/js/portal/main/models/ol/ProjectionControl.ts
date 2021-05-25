@@ -1,10 +1,11 @@
 import Control, { Options } from 'ol/control/Control';
 import { Obj } from '../../../../common/main/types';
+import { SupportedSRIDs } from './projections';
 
 export interface ProjectionControlOptions extends Options {
 	supportedSRIDs: Obj<string>
 	selectedSRID: string
-	switchProjAction: (newSRID: string) => void
+	switchProjAction: (newSRID: SupportedSRIDs) => void
 }
 
 export class ProjectionControl extends Control {
@@ -28,7 +29,7 @@ export class ProjectionControl extends Control {
 		});
 
 		select.onchange = (ev => {
-			switchProjAction((ev.target as HTMLSelectElement).value);
+			switchProjAction((ev.target as HTMLSelectElement).value as SupportedSRIDs);
 		});
 
 		this.element.appendChild(select);

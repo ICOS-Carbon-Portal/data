@@ -122,8 +122,7 @@ export default class OLWrapper {
 	// }
 
 	destroyMap() {
-		this.map.setTarget(null);
-		this.map = null;
+		this.map.setTarget(undefined);
 	}
 
 	private geoJsonToFeatures(geoJsonData: GeoJSONFeatureCollection, epsgCodeForData: EpsgCode) {

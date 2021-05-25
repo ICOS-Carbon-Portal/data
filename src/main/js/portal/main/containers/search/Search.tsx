@@ -23,7 +23,7 @@ type DispatchProps = ReturnType<typeof dispatchToProps>;
 type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
 type OurState = {
 	expandedFilters: boolean
-	srid: SupportedSRIDs
+	srid?: SupportedSRIDs
 };
 
 class Search extends Component<OurProps, OurState> {
