@@ -397,16 +397,17 @@ function getVarFilter(filter: VariableFilterRequest): string {
 	}`;
 }
 
-export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo" | "biblioInfo"> => {
+export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "columnNames" | "site" | "hasVarInfo" | "dois" | "biblioInfo"> => {
 	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?biblioInfo where{
+prefix dcterms: <http://purl.org/dc/terms/>
+select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme ?themeIcon ?title ?description ?columnNames ?site ?hasVarInfo ?dois ?biblioInfo where{
 	{
-		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?samplingPoint0) as ?samplingPoint) (sample(?site0) as ?site) where{
+		select ?dobj (min(?station0) as ?station) (sample(?stationId0) as ?stationId) (sample(?samplingHeight0) as ?samplingHeight) (sample(?samplingPoint0) as ?samplingPoint) (sample(?site0) as ?site) (group_concat(?doi ; separator="|") as ?dois) where{
 			VALUES ?dobj { ${dobjsList} }
 			OPTIONAL{
 				?dobj cpmeta:wasAcquiredBy ?acq.
@@ -416,6 +417,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 				OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight0 }
 				OPTIONAL{ ?acq cpmeta:hasSamplingPoint/rdfs:label ?samplingPoint0 }
 				OPTIONAL{ ?acq cpmeta:wasPerformedAt/cpmeta:hasSpatialCoverage/rdfs:label ?site0 }
+				OPTIONAL{?coll dcterms:hasPart ?dobj ; cpmeta:hasDoi ?doi}
 			}
 		}
 		group by ?dobj
@@ -425,8 +427,8 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 		rdfs:label ?theme ;
 		cpmeta:hasIcon ?themeIcon
 	]}
-	OPTIONAL{ ?dobj <http://purl.org/dc/terms/title> ?title }
-	OPTIONAL{ ?dobj <http://purl.org/dc/terms/description> ?description }
+	OPTIONAL{ ?dobj dcterms:title ?title }
+	OPTIONAL{ ?dobj dcterms:description ?description }
 	OPTIONAL{ ?dobj cpmeta:hasActualColumnNames ?columnNames }
 	OPTIONAL{ ?dobj cpmeta:hasActualVariable [].BIND ("true"^^xsd:boolean as ?hasVarInfo) }
 	OPTIONAL{ ?dobj cpmeta:hasBiblioInfo ?biblioInfo}
