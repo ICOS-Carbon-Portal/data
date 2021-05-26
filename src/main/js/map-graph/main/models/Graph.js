@@ -80,7 +80,7 @@ export default class {
 	}
 
 	getLabel(idx){
-		return idx
+		return idx !== undefined
 			? `${this._binTableData.column(idx).label} [${this._binTableData.column(idx).unit}]`
 			: '';
 	}
