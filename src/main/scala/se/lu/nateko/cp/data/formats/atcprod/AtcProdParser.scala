@@ -41,8 +41,14 @@ object AtcProdParser {
 	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) acc
 
-		else if (acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength)
-			acc.copy(cells = line.split(sep, -1), lineNumber = acc.lineNumber + 1)
+		else if (acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength){
+			val cells0 = line.split(sep, -1)
+			val missingCellsN = acc.header.columnNames.size - cells0.size
+			val cells: Array[String] = if(missingCellsN > 0)
+					cells0 :++ Iterable.fill(missingCellsN)("") //append trailing empty strings for missing cells
+				else cells0
+			acc.copy(cells = cells, lineNumber = acc.lineNumber + 1)
+		}
 
 		else if (acc.lineNumber == acc.header.headerLength - 1) {
 			val ambiguousColNames = line.drop(1).split(sep)
