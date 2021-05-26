@@ -3,6 +3,7 @@ import { metadataRow } from '../../containers/Metadata';
 import { MetaData } from '../../models/State';
 import { L3SpecificMeta, PlainStaticObject, References } from '../../../../common/main/metacore';
 import { LinkifyText } from '../LinkifyText';
+import CollectionBtn from '../buttons/CollectionBtn';
 
 interface AboutSectionProps {
 	metadata: MetaData,
@@ -39,7 +40,12 @@ const AboutSection = (props: AboutSectionProps) => {
 			{metadata.parentCollections.length > 0 &&
 				metadataRow("Part of",
 					metadata.parentCollections.map((collection, i) => {
-						return (<div key={'key_' + i}><a href={collection.uri}>{collection.label}</a></div>)
+						return (
+							<div key={'key_' + i}>
+								<CollectionBtn url={collection.uri} iconStyle={{ marginRight: 13 }} />
+								<a href={collection.uri}>{collection.label}</a>
+							</div>
+						);
 					}))
 			}
 

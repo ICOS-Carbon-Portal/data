@@ -78,6 +78,7 @@ export type ExtendedDobjInfo = {
 	columnNames: string[] | undefined
 	site: string | undefined
 	hasVarInfo: boolean | undefined
+	dois: UrlStr[] | undefined
 	biblioInfo: References | undefined
 }
 export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;

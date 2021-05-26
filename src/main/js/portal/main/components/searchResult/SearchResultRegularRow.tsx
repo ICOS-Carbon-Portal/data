@@ -6,6 +6,8 @@ import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
 import Preview from '../../models/Preview';
 import CartItem from '../../models/CartItem';
+import { UrlStr } from '../../backend/declarations';
+import CollectionBtn from '../buttons/CollectionBtn';
 
 
 const truncateStyle: CSSProperties = {
@@ -69,8 +71,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						<a title="View metadata" href={getMetadataHash(objInfo.dobj)} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
-					<div className="extended-info" style={{marginTop: 4}}>
+					<div className="extended-info" style={{ marginTop: 4 }}>
 						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
+						<CollectionLinks dois={extendedInfo.dois} />
 						{config.features.displayStationInExtendedInfo && extendedInfo.station &&
 						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
 						}
@@ -116,14 +119,14 @@ const Description: React.FunctionComponent<{
 		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
 		: <LinkifyText text={extendedInfo.description} style={linesToShowStyle(5)} />;
 };
-
-const ExtendedInfoItem: React.FunctionComponent<{
+interface ExtendedInfoItemProps {
 	item?: string,
 	icon?: string,
 	iconHeight?: number,
 	iconRightMargin?: number,
 	title?: string
-}> = ({ item, icon, iconHeight = 18, iconRightMargin = 0, title = "" }) => {
+}
+const ExtendedInfoItem: React.FunctionComponent<ExtendedInfoItemProps> = ({ item, icon, iconHeight = 18, iconRightMargin = 0, title = "" }) => {
 	const imgStyle = {height: iconHeight, marginRight: iconRightMargin};
 
 	return (item && icon
@@ -131,5 +134,19 @@ const ExtendedInfoItem: React.FunctionComponent<{
 			<img src={icon} title={title} style={imgStyle}/> <span style={{verticalAlign: 'middle'}}>{item}</span>
 		</span>
 		: null
+	);
+};
+
+const CollectionLinks: React.FunctionComponent<{ dois?: UrlStr[] }> = ({ dois }) => {
+	if (dois === undefined) return null;
+
+	return (
+		<>{
+			dois.map((doi, i) =>
+				<span key={i} className="extended-info-item">
+					<CollectionBtn url={doi} />
+				</span>
+			)
+		}</>
 	);
 };

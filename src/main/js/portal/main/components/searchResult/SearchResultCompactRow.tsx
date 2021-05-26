@@ -3,16 +3,18 @@ import CartIcon from '../buttons/CartIcon';
 import PreviewIcon from '../buttons/PreviewIcon';
 import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
 import {getMetadataHash} from "./SearchResultRegularRow";
-import { ObjectsTable } from "../../models/State";
+import { ExtendedDobjInfo, ObjectsTable } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
 import PreviewLookup from '../../models/PreviewLookup';
 import { UrlStr } from '../../backend/declarations';
+import CollectionBtn from '../buttons/CollectionBtn';
 
 type Props =  {
 	objInfo: ObjectsTable,
 	isAddedToCart: boolean,
 	preview: Preview,
+	extendedDobjInfo?: (ExtendedDobjInfo | undefined)[]
 	lookup: PreviewLookup | undefined,
 	addToCart: (ids: UrlStr[]) => void,
 	removeFromCart: (ids: UrlStr[]) => void
@@ -58,7 +60,8 @@ export default class SearchResultCompactRow extends Component<Props> {
 					isL3Previewable={isL3Previewable}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
-				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{objInfo.fileName}</a>
+				<CollectionLinks extendedDobjInfo={props.extendedDobjInfo} dobj={objInfo.dobj} />
+				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{ cursor: 'pointer' }}>{objInfo.fileName}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.submTime), timezone[config.envri].offset)}</td>
@@ -67,3 +70,18 @@ export default class SearchResultCompactRow extends Component<Props> {
 		</tr>;
 	}
 }
+
+const CollectionLinks: React.FunctionComponent<{ extendedDobjInfo?: (ExtendedDobjInfo | undefined)[], dobj: string }> = ({ extendedDobjInfo, dobj }) => {
+	if (extendedDobjInfo === undefined || extendedDobjInfo[0] === undefined) return null;
+
+	const dois = extendedDobjInfo.find(eDobjInfo => eDobjInfo!.dobj === dobj)?.dois;
+	if (dois === undefined) return null;
+
+	return (
+		<>{
+			dois.map((doi, i) =>
+				<CollectionBtn key={i} url={doi} iconStyle={{ marginLeft:10, marginRight: 13 }} />
+			)
+		}</>
+	);
+};

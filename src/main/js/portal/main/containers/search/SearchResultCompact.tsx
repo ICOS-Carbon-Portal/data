@@ -29,7 +29,7 @@ class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, removeFromCart, handleViewMetadata, handlePreview,
-			getAllFilteredDataObjects, exportQuery} = this.props;
+			getAllFilteredDataObjects, exportQuery, extendedDobjInfo} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
@@ -73,6 +73,7 @@ class SearchResultCompact extends Component<OurProps> {
 										<SearchResultCompactRow
 											lookup={lookup}
 											preview={preview}
+											extendedDobjInfo={extendedDobjInfo}
 											handlePreview={handlePreview}
 											objInfo={objInfo}
 											isAddedToCart={isAddedToCart}
@@ -123,6 +124,7 @@ function stateToProps(state: State){
 		sorting: state.sorting,
 		searchOptions: state.searchOptions,
 		exportQuery: state.exportQuery,
+		extendedDobjInfo: state.extendedDobjInfo,
 	};
 }
 
