@@ -141,12 +141,13 @@ const CollectionLinks: React.FunctionComponent<{ dois?: UrlStr[] }> = ({ dois })
 	if (dois === undefined) return null;
 
 	return (
-		<>{
-			dois.map((doi, i) =>
+		<>
+			{dois.map((doi, i) =>
 				<span key={i} className="extended-info-item">
-					<CollectionBtn url={doi} />
+					<CollectionBtn />
+					<a href={config.doiBaseUrl + doi} style={{ marginLeft: 7 }} target="_blank">{doi}</a>
 				</span>
-			)
-		}</>
+			)}
+		</>
 	);
 };

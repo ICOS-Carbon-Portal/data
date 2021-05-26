@@ -42,7 +42,7 @@ const AboutSection = (props: AboutSectionProps) => {
 					metadata.parentCollections.map((collection, i) => {
 						return (
 							<div key={'key_' + i}>
-								<CollectionBtn url={collection.uri} iconStyle={{ marginRight: 13 }} />
+								<CollectionBtn iconStyle={{ marginRight: 10 }} />
 								<a href={collection.uri}>{collection.label}</a>
 							</div>
 						);

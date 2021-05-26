@@ -2,9 +2,10 @@ import React, { CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
 
 type Props = {
-	url: UrlStr
+	url?: UrlStr
 	openInNewTab?: boolean
 	iconStyle?: CSSProperties
+	title?: string
 }
 
 const defaultIconStyle: CSSProperties = {
@@ -12,10 +13,15 @@ const defaultIconStyle: CSSProperties = {
 	fontSize: 13
 }
 
-export default function CollectionBtn({ url, openInNewTab = true, iconStyle = {} }: Props) {
+export default function CollectionBtn({ url, openInNewTab = true, iconStyle = {}, title }: Props) {
+	const icon = <span className="glyphicon glyphicon-folder-open" style={{ ...defaultIconStyle, ...iconStyle }} title={title ?? "Part of collection"} />;
+
+	if (url === undefined)
+		return icon;
+
 	return (
 		<a href={url} target={openInNewTab ? '_blank' : '_self'}>
-			<span className="glyphicon glyphicon-folder-open" style={{ ...defaultIconStyle, ...iconStyle }} title="Part of collection" />
+			{icon}
 		</a>
 	);
 }

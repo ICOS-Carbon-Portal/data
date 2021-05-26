@@ -79,7 +79,8 @@ export default {
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,
 	searchResultsCSVName,
-	features: featureFlags[envri]
+	features: featureFlags[envri],
+	doiBaseUrl: "https://doi.org/"
 };
 
 const defaultCategNames = {

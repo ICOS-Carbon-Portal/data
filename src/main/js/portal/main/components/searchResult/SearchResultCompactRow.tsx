@@ -80,7 +80,7 @@ const CollectionLinks: React.FunctionComponent<{ extendedDobjInfo?: (ExtendedDob
 	return (
 		<>{
 			dois.map((doi, i) =>
-				<CollectionBtn key={i} url={doi} iconStyle={{ marginLeft:10, marginRight: 13 }} />
+				<CollectionBtn key={i} url={config.doiBaseUrl + doi} title={`Part of collection ${doi}`} iconStyle={{ marginLeft:10, marginRight: 13 }} />
 			)
 		}</>
 	);
