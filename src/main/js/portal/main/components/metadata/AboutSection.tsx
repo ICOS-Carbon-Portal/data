@@ -53,6 +53,11 @@ const AboutSection = (props: AboutSectionProps) => {
 			<CitationRow references={metadata.references} citationStyle="citationBibTex" failWithError={failWithError} />
 			<CitationRow references={metadata.references} citationStyle="citationRis" failWithError={failWithError} />
 
+			{metadata.references.acknowledgements.map((ack, i) =>
+				<React.Fragment key={"ackkey_" + i}>
+					{metadataRow("Acknowledgement", ack)}
+				</React.Fragment>
+			)}
 			{prevVersions.map((previousVersion, i) =>
 				<React.Fragment key={"key_" + i}>
 					{metadataRow(
