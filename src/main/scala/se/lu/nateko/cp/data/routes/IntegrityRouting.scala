@@ -83,9 +83,6 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 			} ~
 			path("objectslist"){
 				produceReport("objectslist", _ => service.getObjectsList(paging))
-			} ~
-			(path("listirodsfolder") & parameter("path")){path =>
-				complete(service.listIrodsFolder(path).mkString("\n"))
 			}
 		}
 	}

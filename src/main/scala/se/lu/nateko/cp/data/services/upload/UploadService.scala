@@ -22,7 +22,6 @@ import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
 import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
-import se.lu.nateko.cp.data.irods.IrodsClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -46,26 +45,17 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
-//	private val irods = IrodsClient(config.irods)
-	private val irods2 = IrodsClient(config.irods2)
 	private val b2 = new B2SafeClient(config.b2safe, Http())
-
-	def remoteStorageSourceExists(dataObj: DataObject): Boolean = irods2.fileExists(filePathSuffix(dataObj))
 
 	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum): Future[Boolean] = b2
 		.getHashsum(B2SafeUploadTask.irodsData(format, hash))
 		.map(_.contains(hash))
 
-	def getRemoteStorageSource(dataObj: DataObject): Source[ByteString, Future[Long]] =
-		irods2.getFileSource(filePathSuffix(dataObj))
-
-	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum): Source[ByteString, Future[Long]] =
-		irods2.getFileSource(filePathSuffix(format, hash))
+	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum): Source[ByteString, Future[Done]] =
+		b2.downloadObjectReusable(B2SafeUploadTask.irodsData(format, hash))
 
 	def uploadToB2Stage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
 		B2SafeUploadTask(format, hash, b2).uploadObject(src)
-
-	def listIrodsFolder(path: String) = irods2.listFolderContents(path)
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
@@ -236,7 +226,6 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	)
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
-		new IrodsUploadTask(obj, irods2) :+
 		B2SafeUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj))
 

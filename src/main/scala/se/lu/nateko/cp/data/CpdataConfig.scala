@@ -30,24 +30,10 @@ case class B2SafeConfig(
 	dryRun: Boolean
 )
 
-case class IrodsConfig(
-	host: String,
-	port: Int,
-	username: String,
-	password: String,
-	homeDirectory: String,
-	zone: String,
-	defaultResource: String,
-	authenticationScheme: Option[String],
-	dryRun: Boolean
-)
-
 case class CredentialsConfig(username: String, password: String)
 
 case class UploadConfig(
 	folder: String,
-	irods: IrodsConfig,
-	irods2: IrodsConfig,
 	b2safe: B2SafeConfig,
 	dlReporter: CredentialsConfig,
 	admins: Seq[String]
@@ -122,10 +108,9 @@ object ConfigReader extends CommonJsonSupport{
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
 
 	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
-	implicit val irodsConfigFormat = jsonFormat9(IrodsConfig)
 	implicit val b2stageConfigFormat = jsonFormat5(B2SafeConfig)
 	implicit val credentialsConfigFormat = jsonFormat2(CredentialsConfig)
-	implicit val uploadConfigFormat = jsonFormat6(UploadConfig)
+	implicit val uploadConfigFormat = jsonFormat4(UploadConfig)
 	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
 	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
 

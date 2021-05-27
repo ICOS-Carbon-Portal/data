@@ -190,14 +190,10 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 					val contentType = getContentType(fileName)
 					val file = uploadService.getFile(dobj)
 
-					if(file.exists || uploadService.remoteStorageSourceExists(dobj)){
+					if(file.exists){
 						logDownload(dobj, ip, uidOpt)
 						respondWithAttachment(fileName){
-							if(file.exists) getFromFile(file, contentType)
-							else {
-								val src = uploadService.getRemoteStorageSource(dobj)
-								completeWithSource(src, contentType)
-							}
+							getFromFile(file, contentType)
 						}
 					}
 					else complete(StatusCodes.NotFound -> "Contents of this data object are not found on the server.")
