@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
+import HelpButton from '../../containers/help/HelpButton';
+import { HelpItemName } from '../../models/HelpStorage';
 
 type Props = {
 	btnText: string
 	copyHelpText: string
 	valToCopy: string
+	helpButtonName?: HelpItemName
 }
 
 type State = {
@@ -34,7 +37,7 @@ export default class CopyValue extends Component<Props, State> {
 
 	render(){
 		const {showCopy} = this.state;
-		const {btnText, copyHelpText, valToCopy} = this.props;
+		const {btnText, copyHelpText, valToCopy, helpButtonName} = this.props;
 
 		return(
 			<span>{showCopy
@@ -42,6 +45,7 @@ export default class CopyValue extends Component<Props, State> {
 					self={this}
 					valToCopy={valToCopy}
 					copyHelpText={copyHelpText}
+					helpButtonName={helpButtonName}
 					copyClick={this.copyUrl.bind(this)}
 				/>
 				: <Btn
@@ -62,7 +66,15 @@ const Btn = ({show, btnText, clickAction}: {show: boolean, btnText: string, clic
 	);
 };
 
-const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick }: { self: CopyValue, valToCopy: string, copyHelpText: string, copyClick: () => void }) => {
+type CopyCtrProps = {
+	self: CopyValue
+	valToCopy: string
+	copyHelpText: string
+	copyClick: () => void
+	helpButtonName?: HelpItemName
+}
+
+const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick, helpButtonName}: CopyCtrProps) => {
 	const inputClick = () => {
 		if (self.urlInput)
 			self.urlInput.select();
@@ -74,6 +86,11 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick }: { self: CopyValue
 				<button className="btn btn-default" onClick={copyClick} title={copyHelpText} style={{marginBottom: 10}}>
 					<span className="glyphicon glyphicon-copy" />
 				</button>
+				{helpButtonName &&
+					<button className="btn btn-default" style={{marginBottom: 10, cursor: "default"}}>
+						<HelpButton name={helpButtonName} title="Click to toggle help" overrideStyles={{paddingLeft: 0}}/>
+					</button>
+				}
 			</span>
 			<input
 				ref={urlInput => self.urlInput = urlInput}

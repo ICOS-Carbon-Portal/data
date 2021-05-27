@@ -158,6 +158,14 @@ type URLPresenters = {
 	iframeSrc: string
 }
 const UrlPresenters = ({ previewType, preview, tableFormat, iframeSrc}: URLPresenters) => {
+	const previewLinkPresenter = (
+		<CopyValue
+			btnText="Copy preview chart URL"
+			copyHelpText="Click to copy preview chart URL to clipboard"
+			valToCopy={previewUrl(preview.items[0], previewType, iframeSrc)}
+			helpButtonName="previewURL"
+		/>
+	);
 	if (previewType === 'TIMESERIES') {
 		return (
 			<div className="row">
@@ -165,24 +173,12 @@ const UrlPresenters = ({ previewType, preview, tableFormat, iframeSrc}: URLPrese
 					<CsvDownloadCopyValue downloadUrl={csvDownloadUrl(preview.items[0], previewType, tableFormat)} />
 				</div>
 
-				<div className="col-md-6">
-					<CopyValue
-						btnText="Copy preview chart URL"
-						copyHelpText="Click to copy preview chart URL to clipboard"
-						valToCopy={previewUrl(preview.items[0], previewType, iframeSrc)}
-					/>
-				</div>
+				<div className="col-md-6">{previewLinkPresenter}</div>
 			</div>
 		);
 	}
 
-	return (
-		<CopyValue
-			btnText="Copy preview chart URL"
-			copyHelpText="Click to copy preview chart URL to clipboard"
-			valToCopy={previewUrl(preview.items[0], previewType, iframeSrc)}
-		/>
-	);
+	return previewLinkPresenter;
 };
 
 const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl: string }) => {
@@ -194,14 +190,8 @@ const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl: string }) => {
 				btnText="Copy preview CSV download URL"
 				copyHelpText="Click to copy download URL to clipboard"
 				valToCopy={downloadUrl}
+				helpButtonName="previewCsvDownload"
 			/>
-
-			<span style={{ position:'relative', verticalAlign:'top', top: 10 }}>
-				<HelpButton
-					name="previewCsvDownload"
-					title="Click to toggle help"
-				/>
-			</span>
 		</div>
 	);
 };

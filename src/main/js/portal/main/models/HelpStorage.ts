@@ -9,7 +9,8 @@ const titles = {
 	...numericFilterLabels,
 	preview: "Preview / Add to cart",
 	publicQuery: "SPARQL queries",
-	previewCsvDownload: "Download preview data as CSV"
+	previewCsvDownload: "CSV download",
+	previewURL: "Preview chart URL"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -289,8 +290,28 @@ const initItems: HelpItem[] = [
 
 	new HelpItem(
 		'previewCsvDownload',
-		`You can only download preview data as CSV if you are logged in and have accepted the license agreement. Downloaded CSV data only includes columns selected in the preview chart and associated quality flags, if there are any. This is an extra service offered by ${projectStr} on a best-effort basis, effectively constitutes a format transformation from the original (even if the original was a CSV).`
+		'This is an example URL for downloading the columns selected for preview and their related quality flags, if there are any',
+		undefined,
+		[{
+			label: 'full CSV',
+			comment: 'if column information is excluded from the URL, all the columns described in the metadata will be downloaded'
+		},{
+			label: 'multi-preview',
+			comment: 'in the case of multiple-dataset preview, the URL will only provide data from one of the datasets'
+		},{
+			label: 'licencing',
+			comment: 'you can only download the tabular data as CSV if you are logged in with the portal and have accepted the license agreement in your user profile'
+		},{
+			label: 'disclaimer',
+			comment: `CSV download is an extra service offered by ${projectStr} on a best-effort basis; ` +
+			'the CSV is typically an abridged (some columns may not be available) and transformed version of the original (even if the latter is a CSV)'
+		}]
 	),
+
+	new HelpItem(
+		'previewURL',
+		'Useful for sharing the chart with a colleague, or for embedding it in a Web page as an HTML <iframe>'
+	)
 ];
 
 function nonStrictnessWarning(title: String): string{
