@@ -6,7 +6,7 @@ lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
 
 	scalacOptions ++= Seq(
-		"-target:jvm-1.8",
+		"-target:jvm-1.11",
 		"-encoding", "UTF-8",
 		"-unchecked",
 		"-feature",
