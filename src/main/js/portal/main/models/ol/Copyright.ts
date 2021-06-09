@@ -49,6 +49,10 @@ export default class Copyright {
 
 		} else if (currentBasemap) {
 			const source = currentBasemap.getSource();
+
+			if (source.getAttributions() === null)
+				return;
+
 			const attributions = source.getAttributions()(undefined!);
 			this.attributionElement.innerHTML = Array.isArray(attributions) ? attributions.join(', ') : attributions;
 

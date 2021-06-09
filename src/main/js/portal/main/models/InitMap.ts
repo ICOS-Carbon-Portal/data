@@ -1,31 +1,26 @@
-import OLWrapper, { MapOptions, PersistedMapProps, PointData } from './ol/OLWrapper';
-import { getBaseMapLayers, getDefaultControls } from "./ol/utils";
+import OLWrapper, { MapOptions, PersistedMapProps, PointData, LayerWrapper } from './ol/OLWrapper';
+import { getBaseMapLayers, getDefaultControls, getLayerIcon, getLayerVisibility } from "./ol/utils";
 import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './ol/projections';
-import Style from 'ol/style/Style';
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
 import { State, StationPos4326Lookup } from './State';
 import Popup from './ol/Popup';
-import { ControlLayerGroup, LayerControl } from './ol/LayerControl';
+import { LayerControl } from './ol/LayerControl';
 import Copyright, { getESRICopyRight } from './ol/Copyright';
 import { Obj } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
-import Circle from 'ol/style/Circle';
-import Fill from 'ol/style/Fill';
-import Stroke from 'ol/style/Stroke';
 import { UrlStr } from '../backend/declarations';
-import { areEqual, pick } from '../utils';
+import { areEqual } from '../utils';
 import { Value } from './SpecTable';
-import { Color } from 'ol/color';
-import { ColorLike } from 'ol/colorlike';
-import BaseLayer from 'ol/layer/Base';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
 import { ProjectionControl } from './ol/ProjectionControl';
-import { esriBaseMapNames } from './ol/baseMaps';
-import RegularShape from 'ol/style/RegularShape';
+import { BaseMapName, esriBaseMapNames } from './ol/baseMaps';
 import Point from 'ol/geom/Point';
+import VectorLayer from 'ol/layer/Vector';
+import { CountriesTopo, getCountriesGeoJson } from '../backend';
+import olStyles from './ol/styles';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
@@ -50,35 +45,26 @@ interface UpdateProps {
 
 type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
 
-const cirlcePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
-	image: new Circle({
-		radius,
-		fill: new Fill({ color: fillColor }),
-		stroke: new Stroke({ color: strokeColor, width: strokeWidth })
-	})
-});
+const toggleLayerProps = {
+	countries: {
+		id: 'countries',
+		name: 'Countries'
+	},
+	countryBorders: {
+		id: 'countryBorders',
+		name: 'Country borders'
+	},
+	includedStations: {
+		id: 'includedStations',
+		name: 'Station'
+	},
+	excludedStations: {
+		id: 'excludedStations',
+		name: 'Station filtered out'
+	}
+}
 
-const trianglePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
-	image: new RegularShape({
-		radius,
-		fill: new Fill({ color: fillColor }),
-		stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
-		points: 3,
-	}),
-});
-
-const supportedSRIDsFriendlyNames: Obj<string, SupportedSRIDs> = {
-	"3006": "Sweden (SWEREF99 TM)",
-	"3035": "Europe (LAEA)",
-	"4326": "World (Degrees)",
-	"3857": "World (Mercator)",
-	"54030": "World (Robinson)",
-};
-
-const excludedStationsId = 'excludedStations';
-const includedStationsId = 'includedStations';
-const updatableLayersFilter = (id: string) => (layer: BaseLayer) => layer.get('id') === id;
-
+const olMapSettings = config.olMapSettings;
 
 export default class InitMap {
 	private olwrapper: OLWrapper;
@@ -91,15 +77,19 @@ export default class InitMap {
 	private prevStationUris: UrlStr[] = [];
 	private stationPos4326Lookup: StationPos4326Lookup[];
 	private labelLookup: State['labelLookup'];
+	private countriesTopo?: CountriesTopo;
+	private persistedMapProps: PersistedMapProps<BaseMapName | 'Countries'>;
 
 	constructor(props: Props) {
 		const { mapRootelement, specTable, stationPos4326Lookup, labelLookup, updateMapSelectedSRID, persistedMapProps, updatePersistedMapProps } = props;
+		this.persistedMapProps = persistedMapProps;
+		this.fetchCountriesTopo();
 
 		this.stationPos4326Lookup = stationPos4326Lookup;
 		this.labelLookup = labelLookup;
 
 		this.appEPSGCode = persistedMapProps.srid === undefined
-			? `EPSG:${config.defaultSRID}` as EpsgCode
+			? `EPSG:${olMapSettings.defaultSRID}` as EpsgCode
 			: `EPSG:${persistedMapProps.srid}` as EpsgCode;
 		const projection = getProjection(this.appEPSGCode);
 		this.pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode);
@@ -111,34 +101,32 @@ export default class InitMap {
 			hitTolerance: 5
 		};
 
-		const tileLayers = getBaseMapLayers(persistedMapProps.baseMapName ?? config.defaultBaseMapName, config.baseMapFilter);
+		const selectedBaseMapName = persistedMapProps.baseMapName ?? olMapSettings.defaultBaseMapName;
+		const tileLayers = getBaseMapLayers(selectedBaseMapName, olMapSettings.baseMapFilter);
 		this.popup = new Popup('popover');
 
 		const controls = getDefaultControls(projection);
 		this.layerControl = new LayerControl({
 			element: document.getElementById('layerCtrl') ?? undefined,
-			mapLayerFilter: ml => ml.get('name'),
-			updateCtrl: this.updateCtrl
+			selectedBaseMapName,
+			updateCtrl: this.updateLayerCtrl
 		});
-		this.layerControl.on('change', _ => updatePersistedMapProps({ baseMapName: this.layerControl.selectedBaseMap }));
+		this.layerControl.on('change', _ => updatePersistedMapProps({
+			baseMapName: this.layerControl.selectedBaseMap,
+			visibleToggles: this.layerControl.visibleToggleLayers
+		}));
+		controls.push(this.layerControl);
 
-		const appSrids = config.envri === 'ICOS'
-			? pick(supportedSRIDsFriendlyNames, '3035', '54030')
-			: pick(supportedSRIDsFriendlyNames, '3006', '3035', '54030');
-		const projectionControl = new ProjectionControl({
-			element: document.getElementById('projSwitchCtrl') ?? undefined,
-			supportedSRIDs: appSrids,
-			selectedSRID: persistedMapProps.srid ?? config.defaultSRID,
-			switchProjAction: updateMapSelectedSRID
-		});
-
+		if (Object.keys(olMapSettings.sridsInMap).length > 1)
+			controls.push(this.createProjectionControl(persistedMapProps, updateMapSelectedSRID));
+		
 		const olProps = {
 			mapRootelement: mapRootelement,
 			projection,
 			tileLayers,
 			mapOptions: this.mapOptions,
 			popupTemplate: this.popup,
-			controls: controls.concat([this.layerControl, projectionControl]),
+			controls,
 			updatePersistedMapProps
 		};
 
@@ -154,7 +142,57 @@ export default class InitMap {
 		});
 
 		if (stationPos4326Lookup.length)
-			this.updateProps({ specTable, stationPos4326Lookup, labelLookup });
+			this.incommingPropsUpdated({ specTable, stationPos4326Lookup, labelLookup });
+	}
+
+	private async fetchCountriesTopo() {
+		if (config.envri === 'SITES')
+			return;
+		
+		this.countriesTopo = await getCountriesGeoJson();
+
+		if (this.countriesTopo) {
+			const countriesTopoBM: LayerWrapper = {
+				id: toggleLayerProps.countries.id,
+				layerType: 'baseMap',
+				geoType: 'geojson',
+				name: toggleLayerProps.countries.name,
+				layerProps: {},
+				visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.countries.id, this.persistedMapProps.baseMapName === toggleLayerProps.countries.name),
+				data: this.countriesTopo,
+				style: olStyles.countryStyle,
+				options: { zIndex: 100, interactive: false }
+			};
+			this.olwrapper.addGeoJson(countriesTopoBM, 'EPSG:4326', this.olWrapper.projection, this.olWrapper.viewParams.extent);
+
+			const visibleToggles = this.persistedMapProps.visibleToggles;
+			const countriesTopoToggle: LayerWrapper = {
+				id: toggleLayerProps.countryBorders.id,
+				layerType: 'toggle',
+				geoType: 'geojson',
+				name: toggleLayerProps.countryBorders.name,
+				layerProps: {},
+				visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.countryBorders.id, this.toggleLayerVisibility(toggleLayerProps.countryBorders.id)),
+				data: this.countriesTopo,
+				style: olStyles.countryBorderStyle,
+				options: { zIndex: 100, interactive: false }
+			};
+			this.olwrapper.addToggleLayers([countriesTopoToggle]);
+		}
+	}
+
+	private toggleLayerVisibility(layerId: string) {
+		const visibleToggles = this.persistedMapProps.visibleToggles;
+		return visibleToggles === undefined || visibleToggles.includes(layerId)
+	}
+
+	private createProjectionControl(persistedMapProps: PersistedMapProps, updateMapSelectedSRID: UpdateMapSelectedSRID) {
+		return new ProjectionControl({
+			element: document.getElementById('projSwitchCtrl') ?? undefined,
+			supportedSRIDs: olMapSettings.sridsInMap,
+			selectedSRID: persistedMapProps.srid ?? olMapSettings.defaultSRID,
+			switchProjAction: updateMapSelectedSRID
+		});
 	}
 
 	updatePoints(props: UpdateProps, urisForStations?: Value[]) {
@@ -163,27 +201,36 @@ export default class InitMap {
 		const allStationUris = specTable.getAllDistinctAvailableColValues('station');
 		const stationUrisDiff = allStationUris.filter(st => !stationUris.includes(st));
 		const excludedStations = createPointData(stationUrisDiff, this.stationPosLookup);
-
-		if (excludedStations.length)
-			this.olwrapper.updatePoints(
-				excludedStations,
-				{ id: excludedStationsId },
-				updatableLayersFilter(excludedStationsId),
-				trianglePointStyle('white', 'black', 6, 1),
-				{ zIndex: 100, interactive: true }
-			);
-
 		const includedStations = createPointData(stationUris, this.stationPosLookup, { zoomToLayerExtent: true });
-		this.olwrapper.updatePoints(
-			includedStations,
-			{ id: includedStationsId },
-			updatableLayersFilter(includedStationsId),
-			cirlcePointStyle('tomato', 'white', 6, 2),
-			{ zIndex: 100, interactive: true }
-		);
+
+		const excludedStationsToggle: LayerWrapper = {
+			id: toggleLayerProps.excludedStations.id,
+			layerType: 'toggle',
+			geoType: 'point',
+			name: toggleLayerProps.excludedStations.name,
+			layerProps: { id: toggleLayerProps.excludedStations.id },
+			visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.excludedStations.id, this.toggleLayerVisibility(toggleLayerProps.excludedStations.id)),
+			data: excludedStations,
+			style: olMapSettings.iconStyles.excludedStation,
+			options: { zIndex: 110, interactive: true }
+		};
+		const includedStationsToggle: LayerWrapper = {
+			id: toggleLayerProps.includedStations.id,
+			layerType: 'toggle',
+			geoType: 'point',
+			name: toggleLayerProps.includedStations.name,
+			layerProps: { id: toggleLayerProps.includedStations.id },
+			visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.includedStations.id, this.toggleLayerVisibility(toggleLayerProps.includedStations.id)),
+			data: includedStations,
+			style: olMapSettings.iconStyles.includedStation,
+			options: { zIndex: 120, interactive: true }
+		};
+
+		this.olwrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
+		this.layerControl.updateCtrl();
 	}
 
-	updateProps(props: UpdateProps) {
+	incommingPropsUpdated(props: UpdateProps) {
 		const { specTable, stationPos4326Lookup, labelLookup } = props;
 
 		this.stationPos4326Lookup = stationPos4326Lookup;
@@ -206,11 +253,14 @@ export default class InitMap {
 		}
 	}
 
-	updateCtrl(self: LayerControl): () => void {
+	updateLayerCtrl(self: LayerControl): () => void {
 		return () => {
+			if (self.map === undefined)
+				return;
+			
 			self.layersDiv.innerHTML = '';
-			const baseMaps = self.layerGroups.filter(lg => lg.layerType === 'baseMap');
-			const toggles = self.layerGroups.filter(lg => lg.layerType === 'toggle');
+			const baseMaps = self.baseMaps;
+			const toggles = self.toggles;
 
 			if (baseMaps.length) {
 				const root = document.createElement('div');
@@ -221,22 +271,22 @@ export default class InitMap {
 
 				baseMaps.forEach(bm => {
 					const row = document.createElement('div');
-					const id = self.createId('radio', bm.name);
-					row.setAttribute('class', 'row');
+					const id = self.createId('radio', bm.get('name'));
 
 					const radio = document.createElement('input');
 					radio.setAttribute('id', id);
 					radio.setAttribute('name', 'basemap');
 					radio.setAttribute('type', 'radio');
-					if (bm.layers[0].getVisible()) {
+					radio.setAttribute('style', 'margin:0px 5px 0px 0px;');
+					if (bm.getVisible()) {
 						radio.setAttribute('checked', 'true');
 					}
-					radio.addEventListener('change', () => self.toggleBaseMaps((lg: ControlLayerGroup) => true, bm.name));
+					radio.addEventListener('change', () => self.toggleBaseMaps(bm.get('name')));
 					row.appendChild(radio);
 
 					const lbl = document.createElement('label');
 					lbl.setAttribute('for', id);
-					lbl.innerHTML = bm.name;
+					lbl.innerHTML = bm.get('name');
 					row.appendChild(lbl);
 
 					root.appendChild(row);
@@ -246,33 +296,96 @@ export default class InitMap {
 			}
 
 			if (toggles.length) {
+				// const addToggleLayer = (toggleLayer: VectorLayer) => {
+				// 	const legendItem = getLayerIcon(toggleLayer);
+				// 	const row = document.createElement('div');
+				// 	const id = self.createId('toggle', toggleLayer.get('name'));
+
+				// 	const toggle = document.createElement('input');
+				// 	toggle.setAttribute('id', id);
+				// 	toggle.setAttribute('type', 'checkbox');
+				// 	toggle.setAttribute('style', 'margin:0px 3px 0px 0px; vertical-align:middle;');
+				// 	if (toggleLayer.getVisible()) {
+				// 		toggle.setAttribute('checked', 'true');
+				// 	}
+				// 	toggle.addEventListener('change', () => self.toggleLayers(toggleLayer.get('id'), toggle.checked));
+				// 	row.appendChild(toggle);
+
+				// 	const lbl = document.createElement('label');
+				// 	lbl.setAttribute('for', id);
+				// 	lbl.style.verticalAlign = 'text-top';
+
+				// 	if (legendItem) {
+				// 		const legendItemContainer = document.createElement('span');
+				// 		legendItemContainer.setAttribute('style', 'display:inline-block; width:20px; text-align:center;');
+				// 		legendItem.id = id.replace('toggle', 'canvas');
+				// 		legendItem.setAttribute('style', 'display:inline; vertical-align:middle;');
+				// 		legendItemContainer.appendChild(legendItem);
+				// 		lbl.appendChild(legendItemContainer);
+				// 	} else {
+				// 		lbl.style.marginLeft = '2px';
+				// 	}
+
+				// 	const lblTxt = document.createElement('span');
+				// 	lblTxt.innerHTML = toggleLayer.get('name');
+				// 	lbl.appendChild(lblTxt);
+				// 	row.appendChild(lbl);
+
+				// 	root.appendChild(row);
+				// };
+				const addToggleLayer = (toggleLayer: VectorLayer) => {
+					const legendItem = getLayerIcon(toggleLayer);
+					const row = document.createElement('div');
+					row.setAttribute('style', 'display:table;');
+					const id = self.createId('toggle', toggleLayer.get('name'));
+
+					const toggle = document.createElement('input');
+					toggle.setAttribute('id', id);
+					toggle.setAttribute('type', 'checkbox');
+					toggle.setAttribute('style', 'display:table-cell;');
+					if (toggleLayer.getVisible()) {
+						toggle.setAttribute('checked', 'true');
+					}
+					toggle.addEventListener('change', () => self.toggleLayers(toggleLayer.get('id'), toggle.checked));
+					row.appendChild(toggle);
+
+					if (legendItem) {
+						const legendItemContainer = document.createElement('span');
+						legendItemContainer.setAttribute('style', 'display:table-cell; width:21px; text-align:center;');						
+						legendItem.id = id.replace('toggle', 'canvas');
+						legendItem.setAttribute('style', 'vertical-align:sub; margin-right:unset;');
+						legendItemContainer.appendChild(legendItem);
+						row.appendChild(legendItemContainer);
+					} else {
+						const emptyCell = document.createElement('span');
+						emptyCell.setAttribute('style', 'display:table-cell; width:5px;');
+						row.appendChild(emptyCell);
+					}
+
+					const lbl = document.createElement('label');
+					lbl.setAttribute('for', id);
+					lbl.setAttribute('style', 'display:table-cell;');
+
+					const lblTxt = document.createElement('span');
+					lblTxt.innerHTML = toggleLayer.get('name');
+					lbl.appendChild(lblTxt);
+					row.appendChild(lbl);
+
+					root.appendChild(row);
+				};
+
 				const root = document.createElement('div');
 				root.setAttribute('class', 'ol-layer-control-toggles');
 				const lbl = document.createElement('label');
 				lbl.innerHTML = 'Layers';
 				root.appendChild(lbl);
 
-				toggles.forEach(toggleGroup => {
-					const row = document.createElement('div');
-					const id = self.createId('toggle', toggleGroup.name);
-					row.setAttribute('class', 'row');
-
-					const toggle = document.createElement('input');
-					toggle.setAttribute('id', id);
-					toggle.setAttribute('type', 'checkbox');
-					if (toggleGroup.layers[0].getVisible()) {
-						toggle.setAttribute('checked', 'true');
-					}
-					toggle.addEventListener('change', () => self.toggleLayerGroup(toggleGroup.name, toggle.checked));
-					row.appendChild(toggle);
-
-					const lbl = document.createElement('label');
-					lbl.setAttribute('for', id);
-					lbl.innerHTML = toggleGroup.name;
-					row.appendChild(lbl);
-
-					root.appendChild(row);
-				});
+				toggles
+					.filter(toggleLayer => toggleLayer.get('name') === toggleLayerProps.countryBorders.name)
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
+				toggles
+					.filter(toggleLayer => toggleLayer.get('name') !== toggleLayerProps.countryBorders.name)
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
 
 				self.layersDiv.appendChild(root);
 			}
@@ -303,11 +416,10 @@ export default class InitMap {
 
 				const feature = features.getArray()[0];
 				const name = feature.get('stationLbl');
-				const isIncluded = feature.get('zoomToLayerExtent') ? 'Yes' : 'No';
+				const isIncluded = !!feature.get('zoomToLayerExtent');
 
-				popup.addContent('Station', {
-					Name: name,
-					'Included in search': isIncluded
+				popup.addContent(`${isIncluded ? 'Included' : 'Excluded'} station`, {
+					Name: name
 				});
 
 				if (numberOfFeatures > 1)

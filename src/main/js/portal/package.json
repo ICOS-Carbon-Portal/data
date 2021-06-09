@@ -41,6 +41,7 @@
     "@types/react-dom": "17.0.0",
     "@types/react-redux": "7.1.15",
     "@types/react-widgets": "4.4.3",
+    "@types/topojson": "^3.2.3",
     "@webpack-cli/generators": "2.0.0",
     "clean-terminal-webpack-plugin": "^3.0.0",
     "css-loader": "^5.2.0",
@@ -72,6 +73,7 @@
     "react-redux": "7.2.2",
     "react-widgets": "4.6.1",
     "redux": "4.0.5",
-    "redux-thunk": "2.3.0"
+    "redux-thunk": "2.3.0",
+    "topojson": "3.0.2"
   }
 }

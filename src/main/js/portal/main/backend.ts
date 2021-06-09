@@ -5,7 +5,7 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
-import {UrlStr, Sha256Str, IdxSig} from "./backend/declarations";
+import {UrlStr, Sha256Str, IdxSig, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
 import {getLastSegmentInUrl, throwError} from './utils';
@@ -15,6 +15,9 @@ import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
+import { getJson } from 'icos-cp-backend';
+import { feature } from 'topojson';
+import { GeometryCollection } from "topojson-specification";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -318,4 +321,21 @@ export const fetchJson = <T>(url: UrlStr, method: string = 'GET'): Promise<T> =>
 			? resp.json()
 			: undefined;
 	});
+};
+
+export type CountriesTopo = GeoJSON.FeatureCollection<GeoJSON.GeometryObject, GeoJSON.GeoJsonProperties>
+export const getCountriesGeoJson = async (): Promise<CountriesTopo> => {
+	const sessionStorageKey = 'countriesTopo';
+	const countriesTopoStorage = sessionStorage.getItem(sessionStorageKey);
+
+	if (countriesTopoStorage)
+		return Promise.resolve(JSON.parse(countriesTopoStorage));
+	
+	return getJson('https://static.icos-cp.eu/js/topojson/map-2.5k.json')
+		.then(topo => {
+			const countriesTopo = feature(topo, topo.objects.map as GeometryCollection<GeoJSON.GeoJsonProperties>);
+			sessionStorage.setItem(sessionStorageKey, JSON.stringify(countriesTopo));
+
+			return countriesTopo
+		});
 };

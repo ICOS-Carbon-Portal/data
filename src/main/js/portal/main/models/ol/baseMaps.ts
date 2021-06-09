@@ -2,7 +2,6 @@ import TileLayer from "ol/layer/Tile";
 import { Options } from "ol/layer/BaseTile";
 import OSM, { ATTRIBUTION } from "ol/source/OSM";
 import Stamen from "ol/source/Stamen";
-import TileArcGISRest from 'ol/source/TileArcGISRest';
 import XYZ from 'ol/source/XYZ';
 
 
@@ -44,8 +43,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		name: 'Imagery',
 		isWorldWide: true,
 		esriServiceName: 'World_Imagery',
-		source: new TileArcGISRest({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 			crossOrigin: 'anonymous'
 		})
 	},
@@ -53,8 +52,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		name: 'Topography',
 		isWorldWide: true,
 		esriServiceName: 'World_Topo_Map',
-		source: new TileArcGISRest({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
 			attributions: 'Fetching from server...',
 			crossOrigin: 'anonymous'
 		})
@@ -63,16 +62,16 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		name: 'Ocean',
 		isWorldWide: true,
 		esriServiceName: 'Ocean_Basemap',
-		source: new TileArcGISRest({
-			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
 			crossOrigin: 'anonymous'
 		})
 	},
 	{
 		name: 'Physical',
 		isWorldWide: true,
-		source: new TileArcGISRest({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
 			attributions: "Source: US National Park Service",
 			crossOrigin: 'anonymous'
 		})
@@ -80,8 +79,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	{
 		name: 'Shaded relief',
 		isWorldWide: true,
-		source: new TileArcGISRest({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer',
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
 			attributions: "Copyright:(c) 2014 Esri",
 			crossOrigin: 'anonymous'
 		})

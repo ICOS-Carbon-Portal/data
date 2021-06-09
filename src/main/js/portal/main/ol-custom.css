@@ -131,7 +131,7 @@
 }
 
 .ol-layer-control-basemaps {
-	margin: 3px 3px 5px 3px
+	margin: 3px 5px 5px 3px
 }
 
 .ol-layer-control-basemaps > label, .ol-layer-control-toggles > label {
@@ -154,7 +154,7 @@
 }
 
 .ol-layer-control-toggles {
-	margin: 10px 3px 3px 3px
+	margin: 10px 5px 3px 3px
 }
 
 .ol-layer-control-toggles canvas {

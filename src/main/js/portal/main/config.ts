@@ -2,8 +2,9 @@ import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../com
 import { Obj } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
 import { BaseMapName } from './models/ol/baseMaps';
-import { SupportedSRIDs } from './models/ol/projections';
+import { supportedSRIDsFriendlyNames, SupportedSRIDs } from './models/ol/projections';
 import { BaseMapFilter } from './models/ol/utils';
+import olStyles from './models/ol/styles';
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
@@ -42,17 +43,36 @@ const featureFlags = {
 	}
 }
 
+const sridsInMap: Partial<Obj<string, SupportedSRIDs>> = envri === 'ICOS'
+	? {
+		'3035': supportedSRIDsFriendlyNames['3035'],
+		'54030': supportedSRIDsFriendlyNames['54030']
+	}
+	: { '3006': supportedSRIDsFriendlyNames['3006'] };
 const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '3035' : '3006';
 const defaultBaseMapName: BaseMapName = envri === 'ICOS' ? 'Physical' : 'LM Topo gray';
 const baseMapFilter: BaseMapFilter = envri === 'SITES'
 	? _ => true
-	: bm => bm.isWorldWide
+	: bm => bm.isWorldWide;
+const includedStation = envri === 'ICOS'
+	? olStyles.cirlcePointStyle('tomato', 'white', 6, 2)
+	: olStyles.cirlcePointStyle('Magenta', 'white', 6, 2);
+const excludedStation = envri === 'ICOS'
+	? olStyles.cirlcePointStyle('white', 'DarkRed', 4, 2)
+	: olStyles.cirlcePointStyle('white', 'DarkMagenta', 4, 2);
 
 export default {
 	envri,
-	defaultSRID,
-	defaultBaseMapName,
-	baseMapFilter,
+	olMapSettings: {
+		sridsInMap,
+		defaultSRID,
+		defaultBaseMapName,
+		baseMapFilter,
+		iconStyles: {
+			includedStation,
+			excludedStation
+		}
+	},
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	mapGraph: {

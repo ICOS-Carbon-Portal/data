@@ -38,6 +38,14 @@ export const supportedSRIDs = {
 } as const;
 export type SupportedSRIDs = keyof typeof supportedSRIDs
 
+export const supportedSRIDsFriendlyNames: Obj<string, SupportedSRIDs> = {
+	"3006": "Sweden (SWEREF99 TM)",
+	"3035": "Europe (LAEA)",
+	"4326": "World (Degrees)",
+	"3857": "World (Mercator)",
+	"54030": "World (Robinson)",
+};
+
 // These cannot be managed by openlayers so use proj4 for them
 export type EpsgCodeWithProj = 'EPSG:3006' | 'EPSG:3035' | 'EPSG:54009' | 'EPSG:54030'
 const projDefinitions: Obj<string, EpsgCodeWithProj> = {
@@ -58,11 +66,10 @@ const getRect = (bBox: BBox) => [
 
 export type BBox = [[number, number], [number, number]]
 export const getViewParams = (epsgCode: EpsgCode) => {
-	//const bBox3006: BBox = [[181896, 6101648], [864416, 7689478]];
 	const bBox3006: BBox = [[190000, 6101648], [970000, 7689478]];
 	const bBox4326: BBox = [[-180, -90], [180, 90]];
 	const bBox3857: BBox = [[-20026376.39, -20048966.10], [20026376.39, 20048966.10]];
-	const bBox3035: BBox = [[1896628.618, 1330000], [7058042.778, 6827128.02]];
+	const bBox3035: BBox = [[1896628.618, 1330000], [7390000, 6827128]];
 	const bBox54030: BBox = [[-18e6, -9e6], [18e6, 9e6]];
 
 	switch (epsgCode) {

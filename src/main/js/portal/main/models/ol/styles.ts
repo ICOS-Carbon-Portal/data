@@ -4,16 +4,24 @@ import Stroke from "ol/style/Stroke";
 import Circle from "ol/style/Circle";
 import { Color } from "ol/color";
 import { ColorLike } from "ol/colorlike";
+import RegularShape from "ol/style/RegularShape";
 
-const ptStyle = (fillColor: Color | ColorLike, strokeColor = 'black', strokeWidth = 1, radius = 4) => {
-	return new Style({
-		image: new Circle({
-			radius,
-			fill: new Fill({ color: fillColor }),
-			stroke: new Stroke({ color: strokeColor, width: strokeWidth })
-		})
-	});
-};
+const cirlcePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
+	image: new Circle({
+		radius,
+		fill: new Fill({ color: fillColor }),
+		stroke: new Stroke({ color: strokeColor, width: strokeWidth })
+	})
+});
+
+const trianglePointStyle = (fillColor: Color | ColorLike, strokeColor: Color | ColorLike, radius: number, strokeWidth: number) => new Style({
+	image: new RegularShape({
+		radius,
+		fill: new Fill({ color: fillColor }),
+		stroke: new Stroke({ color: strokeColor, width: strokeWidth }),
+		points: 3,
+	}),
+});
 
 const oceanColor = 'rgb(92,43,147)';
 // Eco is officially rgb(174,192,0), made brighter in map
@@ -24,33 +32,34 @@ const ecoAtmoColor = 'rgb(0,171,201)';
 export default {
 	countryStyle: new Style({
 		fill: new Fill({
-			color: 'rgb(205,170,102)'
+			color: 'PapayaWhip'
 		}),
 		stroke: new Stroke({
-			color: 'rgb(100,100,100)',
+			color: 'DimGray',
 			width: 1
 		})
 	}),
 	countryBorderStyle: [
 		new Style({
 			stroke: new Stroke({
-				color: 'rgb(175,175,175)',
-				width: 3
+				color: 'DarkGray',
+				width: 2
 			})
 		}),
 		new Style({
 			stroke: new Stroke({
-				color: 'rgb(50,50,50)',
+				color: 'DarkSlateGray',
 				width: 1
 			})
 		})
 	],
-	ptStyle,
+	cirlcePointStyle,
+	trianglePointStyle,
 
-	oceanStyle: ptStyle(oceanColor),
-	ecoStyle: ptStyle(ecoColor),
-	atmoStyle: ptStyle(atmoColor),
-	ecoAtmoStyle: ptStyle(ecoAtmoColor),
+	oceanStyle: cirlcePointStyle(oceanColor, 'black', 4, 1),
+	ecoStyle: cirlcePointStyle(ecoColor, 'black', 4, 1),
+	atmoStyle: cirlcePointStyle(atmoColor, 'black', 4, 1),
+	ecoAtmoStyle: cirlcePointStyle(ecoAtmoColor, 'black', 4, 1),
 
 	lnStyle: new Style({
 		stroke: new Stroke({

@@ -4,16 +4,19 @@ import { State } from "../../models/State";
 import InitMap, { UpdateMapSelectedSRID } from '../../models/InitMap';
 import { PersistedMapProps } from '../../models/ol/OLWrapper';
 import { TileLayerExtended } from '../../models/ol/baseMaps';
+import { PortalDispatch } from '../../store';
+import { failWithError } from '../../actions/common';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
+type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
 	persistedMapProps: PersistedMapProps
 	updatePersistedMapProps: (mapProps: PersistedMapProps) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 }
-type OurProps = StateProps & incommingProps
+type OurProps = StateProps & DispatchProps & incommingProps
 
 class SearchResultMap extends Component<OurProps> {
 	private initMap?: InitMap = undefined;
@@ -24,7 +27,7 @@ class SearchResultMap extends Component<OurProps> {
 
 	render() {
 		if (this.initMap)
-			this.initMap.updateProps({
+			this.initMap.incommingPropsUpdated({
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				labelLookup: this.props.labelLookup,
@@ -62,7 +65,7 @@ class SearchResultMap extends Component<OurProps> {
 			});
 		})()
 			.catch(error => {
-				console.error(error);
+				this.props.failWithError(error);
 			});
 	}
 
@@ -87,4 +90,10 @@ function stateToProps(state: State) {
 	};
 }
 
-export default connect(stateToProps)(SearchResultMap);
+function dispatchToProps(dispatch: PortalDispatch) {
+	return {
+		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
+	};
+}
+
+export default connect(stateToProps, dispatchToProps)(SearchResultMap);

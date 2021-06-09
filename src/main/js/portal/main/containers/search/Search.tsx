@@ -30,8 +30,8 @@ class Search extends Component<OurProps, OurState> {
 	private events: typeof Events;
 	private handleResize: Function;
 	private persistedMapProps: PersistedMapProps = {
-		baseMapName: config.defaultBaseMapName,
-		srid: config.defaultSRID
+		baseMapName: config.olMapSettings.defaultBaseMapName,
+		srid: config.olMapSettings.defaultSRID
 	};
 
 	constructor(props: OurProps) {
@@ -82,7 +82,7 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
-		this.persistedMapProps = { srid, baseMapName: this.persistedMapProps.baseMapName };
+		this.persistedMapProps = { ...this.persistedMapProps, srid };
 		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
