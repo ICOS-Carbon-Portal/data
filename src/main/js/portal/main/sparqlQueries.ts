@@ -417,7 +417,10 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 				OPTIONAL{ ?acq cpmeta:hasSamplingHeight ?samplingHeight0 }
 				OPTIONAL{ ?acq cpmeta:hasSamplingPoint/rdfs:label ?samplingPoint0 }
 				OPTIONAL{ ?acq cpmeta:wasPerformedAt/cpmeta:hasSpatialCoverage/rdfs:label ?site0 }
-				OPTIONAL{?coll dcterms:hasPart ?dobj ; cpmeta:hasDoi ?doi}
+			}
+			OPTIONAL{
+				?coll dcterms:hasPart ?dobj ; cpmeta:hasDoi ?doi .
+				filter not exists{[] cpmeta:isNextVersionOf ?coll}
 			}
 		}
 		group by ?dobj
