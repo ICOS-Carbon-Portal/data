@@ -4,7 +4,7 @@ import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
-import { emptyCompositeSpecTable, State, StationPos4326Lookup } from './State';
+import { State, StationPos4326Lookup } from './State';
 import Popup from './ol/Popup';
 import { LayerControl } from './ol/LayerControl';
 import Copyright, { getESRICopyRight } from './ol/Copyright';
