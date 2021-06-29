@@ -351,6 +351,16 @@ export const savePersistedMapProps = (persistedMapProps: PersistedMapPropsExtend
 	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
 };
 
+export const clearDrawFeaturesInPersistedMapProps = () => {
+	const persistedMapProps = getPersistedMapProps();
+	
+	if (persistedMapProps === undefined)
+		return;
+
+	const { drawFeatures, ...mapProps } = persistedMapProps;
+	savePersistedMapProps(mapProps);
+};
+
 export const getPersistedMapProps = (): PersistedMapPropsExtended | undefined => {
 	const sessStorageMapProps = sessionStorage.getItem(persistedMapPropsSessStorageKey);
 

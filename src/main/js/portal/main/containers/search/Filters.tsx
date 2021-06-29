@@ -5,7 +5,6 @@ import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {ColNames} from "../../models/CompositeSpecTable";
 import {
-	filtersReset,
 	setNumberFilter,
 	setFilterTemporal,
 	specFilterUpdate,
@@ -18,17 +17,21 @@ import FilterTemporal from "../../models/FilterTemporal";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type OurProps = StateProps & DispatchProps & {tabHeader: string};
+type incommingProps = {
+	tabHeader: string
+	handleFilterReset: () => void
+}
+type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
 	render(){
-		const {specTable, filtersReset, filterTemporal, labelLookup, updateFilter, setFilterTemporal,
+		const {specTable, filterTemporal, labelLookup, updateFilter, handleFilterReset, setFilterTemporal,
 			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter} = this.props;
 		const resetBtnEnabled = filterTemporal.hasFilter || specTable.hasActiveFilters || filterNumbers.hasFilters;
 
 		return (
 			<div>
-				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={filtersReset} />
+				<ResetBtn enabled={resetBtnEnabled} resetFiltersAction={handleFilterReset} />
 
 				<PanelsWithFilters
 					filterNumbers={filterNumbers}
@@ -78,7 +81,6 @@ function stateToProps(state: State){
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
-		filtersReset: () => dispatch(filtersReset),
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
 		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),
