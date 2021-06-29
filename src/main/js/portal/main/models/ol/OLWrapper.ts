@@ -16,7 +16,8 @@ import { geoJsonToLayer, pointsToLayer } from './utils';
 import { CountriesTopo } from '../../backend';
 import { Extent } from 'ol/extent';
 
-export type PersistedMapProps<BMN = BaseMapName> = {
+
+export interface PersistedMapProps<BMN = BaseMapName> {
 	srid?: SupportedSRIDs
 	center?: Coordinate
 	zoom?: number
@@ -66,7 +67,6 @@ export default class OLWrapper {
 	public projection: Projection;
 	private readonly tileLayers: TileLayerExtended[];
 	private readonly controls: Control[];
-	private readonly layerCtrl: LayerControl;
 	public readonly mapOptions: ViewOptions & MapOptions;
 	public readonly viewParams: ReturnType<typeof getViewParams>;
 	public map: Map;
@@ -76,7 +76,6 @@ export default class OLWrapper {
 		this.projection = projection;
 		this.tileLayers = tileLayers;
 		this.controls = controls;
-		this.layerCtrl = controls.find(ctrl => ctrl instanceof LayerControl) as LayerControl;
 		this.mapOptions = { ...defaultMapOptions, ...mapOptions };
 		this.viewParams = getViewParams(projection.getCode() as EpsgCode);
 

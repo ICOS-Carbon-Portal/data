@@ -25,7 +25,11 @@ export type SpecTableSerialized = {
 }
 
 export default class CompositeSpecTable{
-	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>){}
+	public readonly id: Symbol;
+
+	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>){
+		this.id = Symbol();
+	}
 
 	static fromTables(tables: SpecTable[]){
 		return new CompositeSpecTable(

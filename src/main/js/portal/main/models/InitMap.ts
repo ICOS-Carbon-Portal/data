@@ -4,14 +4,14 @@ import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
-import { State, StationPos4326Lookup } from './State';
+import { emptyCompositeSpecTable, State, StationPos4326Lookup } from './State';
 import Popup from './ol/Popup';
 import { LayerControl } from './ol/LayerControl';
 import Copyright, { getESRICopyRight } from './ol/Copyright';
 import { Obj } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
-import { areEqual } from '../utils';
+import { difference } from '../utils';
 import { Value } from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
@@ -21,49 +21,36 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import { CountriesTopo, getCountriesGeoJson } from '../backend';
 import olStyles from './ol/styles';
+import { DrawFeature, StateStationUris, StationFilterControl, StationUris } from './StationFilterControl';
 
 
+type LayerWrapperArgs = Pick<LayerWrapper, 'id' | 'layerType' | 'geoType' | 'name' | 'style' | 'data'> & { zIndex: number, interactive: boolean }
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
 export type TransformPointFn = (lon: number, lat: number) => number[]
 interface MapOptionsExpanded extends Partial<MapOptions> {
 	center?: Coordinate
 	hitTolerance: number
 }
-
+export interface PersistedMapPropsExtended<BMN = BaseMapName> extends PersistedMapProps<BMN> {
+	drawFeatures?: DrawFeature[]
+	isStationFilterCtrlActive?: boolean
+	stateStationUris?: StateStationUris
+}
 interface Props extends UpdateProps {
 	mapRootelement: HTMLElement
-	persistedMapProps: PersistedMapProps
-	updatePersistedMapProps: (mapProps: PersistedMapProps) => void
+	persistedMapProps: PersistedMapPropsExtended
+	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
+	updateStationFilterInState: (stationUrisToState: Value[]) => void
 }
-
 interface UpdateProps {
 	specTable: CompositeSpecTable
 	stationPos4326Lookup: StationPos4326Lookup[]
 	labelLookup: State['labelLookup']
 }
+export type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
 
-type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
-
-const toggleLayerProps = {
-	countries: {
-		id: 'countries',
-		name: 'Countries'
-	},
-	countryBorders: {
-		id: 'countryBorders',
-		name: 'Country borders'
-	},
-	includedStations: {
-		id: 'includedStations',
-		name: 'Station'
-	},
-	excludedStations: {
-		id: 'excludedStations',
-		name: 'Station filtered out'
-	}
-}
-
+const countryBordersId = 'countryBorders';
 const olMapSettings = config.olMapSettings;
 
 export default class InitMap {
@@ -72,21 +59,31 @@ export default class InitMap {
 	private mapOptions: MapOptionsExpanded;
 	private popup: Popup;
 	private readonly layerControl: LayerControl;
-	private stationPosLookup?: StationPosLookup = undefined;
+	private readonly stationFilterControl: StationFilterControl;
 	private pointTransformer: TransformPointFn;
-	private prevStationUris: UrlStr[] = [];
 	private stationPos4326Lookup: StationPos4326Lookup[];
-	private labelLookup: State['labelLookup'];
 	private countriesTopo?: CountriesTopo;
-	private persistedMapProps: PersistedMapProps<BaseMapName | 'Countries'>;
+	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
+	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
+	private updateStationFilterInState: (stationUrisToState: Value[]) => void
 
 	constructor(props: Props) {
-		const { mapRootelement, specTable, stationPos4326Lookup, labelLookup, updateMapSelectedSRID, persistedMapProps, updatePersistedMapProps } = props;
+		const {
+			mapRootelement,
+			specTable,
+			stationPos4326Lookup,
+			labelLookup,
+			updateMapSelectedSRID,
+			persistedMapProps,
+			updatePersistedMapProps,
+			updateStationFilterInState
+		} = props;
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
 		this.stationPos4326Lookup = stationPos4326Lookup;
-		this.labelLookup = labelLookup;
+		this.updatePersistedMapProps = updatePersistedMapProps;
+		this.updateStationFilterInState = updateStationFilterInState;
 
 		this.appEPSGCode = persistedMapProps.srid === undefined
 			? `EPSG:${olMapSettings.defaultSRID}` as EpsgCode
@@ -106,15 +103,23 @@ export default class InitMap {
 		this.popup = new Popup('popover');
 
 		const controls = getDefaultControls(projection);
+
+		this.stationFilterControl = new StationFilterControl({
+			element: document.getElementById('stationFilterCtrl') ?? undefined,
+			drawFeatures: persistedMapProps.drawFeatures ?? [],
+			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
+			updatePersistedMapProps: this.updatePersistedMapProps,
+			updateStationFilterInState: this.updateStationFilterInState.bind(this),
+			updateMap: this.updatePoints.bind(this),
+		});
+		controls.push(this.stationFilterControl);
+		
 		this.layerControl = new LayerControl({
 			element: document.getElementById('layerCtrl') ?? undefined,
 			selectedBaseMapName,
-			updateCtrl: this.updateLayerCtrl
+			updateCtrl: this.updateLayerCtrl,
+			updatePersistedMapProps
 		});
-		this.layerControl.on('change', _ => updatePersistedMapProps({
-			baseMapName: this.layerControl.selectedBaseMap,
-			visibleToggles: this.layerControl.visibleToggleLayers
-		}));
 		controls.push(this.layerControl);
 
 		if (Object.keys(olMapSettings.sridsInMap).length > 1)
@@ -146,39 +151,35 @@ export default class InitMap {
 	}
 
 	private async fetchCountriesTopo() {
+		// countriesTopo has geometric problems in SWEREF99 TM so skip it for SITES
 		if (config.envri === 'SITES')
 			return;
 		
 		this.countriesTopo = await getCountriesGeoJson();
 
-		if (this.countriesTopo) {
-			const countriesTopoBM: LayerWrapper = {
-				id: toggleLayerProps.countries.id,
-				layerType: 'baseMap',
-				geoType: 'geojson',
-				name: toggleLayerProps.countries.name,
-				layerProps: {},
-				visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.countries.id, this.persistedMapProps.baseMapName === toggleLayerProps.countries.name),
-				data: this.countriesTopo,
-				style: olStyles.countryStyle,
-				options: { zIndex: 100, interactive: false }
-			};
-			this.olwrapper.addGeoJson(countriesTopoBM, 'EPSG:4326', this.olWrapper.projection, this.olWrapper.viewParams.extent);
+		const countriesTopoBM: LayerWrapper = this.getLayerWrapper({
+			id: 'countries',
+			name: 'Countries',
+			layerType: 'baseMap',
+			geoType: 'geojson',
+			data: this.countriesTopo,
+			style: olStyles.countryStyle,
+			zIndex: 100,
+			interactive: false
+		});
+		this.olwrapper.addGeoJson(countriesTopoBM, 'EPSG:4326', this.olWrapper.projection, this.olWrapper.viewParams.extent);
 
-			const visibleToggles = this.persistedMapProps.visibleToggles;
-			const countriesTopoToggle: LayerWrapper = {
-				id: toggleLayerProps.countryBorders.id,
-				layerType: 'toggle',
-				geoType: 'geojson',
-				name: toggleLayerProps.countryBorders.name,
-				layerProps: {},
-				visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.countryBorders.id, this.toggleLayerVisibility(toggleLayerProps.countryBorders.id)),
-				data: this.countriesTopo,
-				style: olStyles.countryBorderStyle,
-				options: { zIndex: 100, interactive: false }
-			};
-			this.olwrapper.addToggleLayers([countriesTopoToggle]);
-		}
+		const countriesTopoToggle: LayerWrapper = this.getLayerWrapper({
+			id: countryBordersId,
+			name: 'Country borders',
+			layerType: 'toggle',
+			geoType: 'geojson',
+			data: this.countriesTopo,
+			style: olStyles.countryBorderStyle,
+			zIndex: 100,
+			interactive: false
+		});
+		this.olwrapper.addToggleLayers([countriesTopoToggle]);
 	}
 
 	private toggleLayerVisibility(layerId: string) {
@@ -186,7 +187,7 @@ export default class InitMap {
 		return visibleToggles === undefined || visibleToggles.includes(layerId)
 	}
 
-	private createProjectionControl(persistedMapProps: PersistedMapProps, updateMapSelectedSRID: UpdateMapSelectedSRID) {
+	private createProjectionControl(persistedMapProps: PersistedMapPropsExtended, updateMapSelectedSRID: UpdateMapSelectedSRID) {
 		return new ProjectionControl({
 			element: document.getElementById('projSwitchCtrl') ?? undefined,
 			supportedSRIDs: olMapSettings.sridsInMap,
@@ -195,61 +196,69 @@ export default class InitMap {
 		});
 	}
 
-	updatePoints(props: UpdateProps, urisForStations?: Value[]) {
-		const { specTable } = props;
-		const stationUris = urisForStations ?? specTable.getFilter('station') ?? specTable.getDistinctAvailableColValues('station');
-		const allStationUris = specTable.getAllDistinctAvailableColValues('station');
-		const stationUrisDiff = allStationUris.filter(st => !stationUris.includes(st));
-		const excludedStations = createPointData(stationUrisDiff, this.stationPosLookup);
-		const includedStations = createPointData(stationUris, this.stationPosLookup, { zoomToLayerExtent: true });
+	updatePoints(stationUris: StationUris) {
+		const { includedStationUris, allSpecTableStationUris } = stationUris;
+		const stationUrisDiff = difference(allSpecTableStationUris, includedStationUris);
+		const excludedStations = createPointData(stationUrisDiff, this.stationFilterControl.stationPosLookup);
+		const includedStations = createPointData(includedStationUris, this.stationFilterControl.stationPosLookup);
 
-		const excludedStationsToggle: LayerWrapper = {
-			id: toggleLayerProps.excludedStations.id,
+		const excludedStationsToggle: LayerWrapper = this.getLayerWrapper({
+			id: 'excludedStations',
+			name: 'Station filtered out',
 			layerType: 'toggle',
 			geoType: 'point',
-			name: toggleLayerProps.excludedStations.name,
-			layerProps: { id: toggleLayerProps.excludedStations.id },
-			visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.excludedStations.id, this.toggleLayerVisibility(toggleLayerProps.excludedStations.id)),
 			data: excludedStations,
 			style: olMapSettings.iconStyles.excludedStation,
-			options: { zIndex: 110, interactive: true }
-		};
-		const includedStationsToggle: LayerWrapper = {
-			id: toggleLayerProps.includedStations.id,
+			zIndex: 110,
+			interactive: true
+		});
+		const includedStationsToggle: LayerWrapper = this.getLayerWrapper({
+			id: 'includedStations',
+			name: 'Station',
 			layerType: 'toggle',
 			geoType: 'point',
-			name: toggleLayerProps.includedStations.name,
-			layerProps: { id: toggleLayerProps.includedStations.id },
-			visible: getLayerVisibility(this.olWrapper.map, toggleLayerProps.includedStations.id, this.toggleLayerVisibility(toggleLayerProps.includedStations.id)),
 			data: includedStations,
 			style: olMapSettings.iconStyles.includedStation,
-			options: { zIndex: 120, interactive: true }
-		};
+			zIndex: 120,
+			interactive: true
+		});
 
 		this.olwrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
 		this.layerControl.updateCtrl();
 	}
 
+	getLayerWrapper({id, name, layerType, geoType, data, style, zIndex, interactive}: LayerWrapperArgs): LayerWrapper {
+		const visible = layerType === 'toggle'
+			? getLayerVisibility(this.olWrapper.map, id, this.toggleLayerVisibility(id))
+			: getLayerVisibility(this.olWrapper.map, id, this.persistedMapProps.baseMapName === name);
+
+		return {
+			id,
+			layerType,
+			geoType,
+			name,
+			layerProps: { id },
+			visible,
+			data,
+			style,
+			options: { zIndex, interactive }
+		};
+	}
+
 	incommingPropsUpdated(props: UpdateProps) {
 		const { specTable, stationPos4326Lookup, labelLookup } = props;
 
-		this.stationPos4326Lookup = stationPos4326Lookup;
-		this.labelLookup = labelLookup;
-
-		if (this.stationPosLookup === undefined && stationPos4326Lookup.length) {
-			this.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup);
+		if (this.stationFilterControl.stationPosLookup.empty && stationPos4326Lookup.length && specTable.originsRows.length) {
+			this.stationPos4326Lookup = stationPos4326Lookup;
+			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup, specTable.getDistinctAvailableColValues('station'));
 		}
 
-		if (this.stationPosLookup !== undefined && specTable.originsRows.length) {
-			
-			const stationUris = specTable.getFilter('station') ?? specTable.getDistinctAvailableColValues('station');
-			const shouldRenderStations = !areEqual(stationUris, this.prevStationUris);
+		if (!this.stationFilterControl.stationPosLookup.empty && specTable.originsRows.length) {
+			const stationUris = this.stationFilterControl.updateStationUris(specTable);
 
-			if (shouldRenderStations) {
-				this.updatePoints(props, stationUris);
+			if (stationUris.hasChanged) {
+				this.updatePoints(stationUris);
 			}
-
-			this.prevStationUris = stationUris as UrlStr[];
 		}
 	}
 
@@ -296,43 +305,6 @@ export default class InitMap {
 			}
 
 			if (toggles.length) {
-				// const addToggleLayer = (toggleLayer: VectorLayer) => {
-				// 	const legendItem = getLayerIcon(toggleLayer);
-				// 	const row = document.createElement('div');
-				// 	const id = self.createId('toggle', toggleLayer.get('name'));
-
-				// 	const toggle = document.createElement('input');
-				// 	toggle.setAttribute('id', id);
-				// 	toggle.setAttribute('type', 'checkbox');
-				// 	toggle.setAttribute('style', 'margin:0px 3px 0px 0px; vertical-align:middle;');
-				// 	if (toggleLayer.getVisible()) {
-				// 		toggle.setAttribute('checked', 'true');
-				// 	}
-				// 	toggle.addEventListener('change', () => self.toggleLayers(toggleLayer.get('id'), toggle.checked));
-				// 	row.appendChild(toggle);
-
-				// 	const lbl = document.createElement('label');
-				// 	lbl.setAttribute('for', id);
-				// 	lbl.style.verticalAlign = 'text-top';
-
-				// 	if (legendItem) {
-				// 		const legendItemContainer = document.createElement('span');
-				// 		legendItemContainer.setAttribute('style', 'display:inline-block; width:20px; text-align:center;');
-				// 		legendItem.id = id.replace('toggle', 'canvas');
-				// 		legendItem.setAttribute('style', 'display:inline; vertical-align:middle;');
-				// 		legendItemContainer.appendChild(legendItem);
-				// 		lbl.appendChild(legendItemContainer);
-				// 	} else {
-				// 		lbl.style.marginLeft = '2px';
-				// 	}
-
-				// 	const lblTxt = document.createElement('span');
-				// 	lblTxt.innerHTML = toggleLayer.get('name');
-				// 	lbl.appendChild(lblTxt);
-				// 	row.appendChild(lbl);
-
-				// 	root.appendChild(row);
-				// };
 				const addToggleLayer = (toggleLayer: VectorLayer) => {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
@@ -381,10 +353,10 @@ export default class InitMap {
 				root.appendChild(lbl);
 
 				toggles
-					.filter(toggleLayer => toggleLayer.get('name') === toggleLayerProps.countryBorders.name)
+					.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
 					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
 				toggles
-					.filter(toggleLayer => toggleLayer.get('name') !== toggleLayerProps.countryBorders.name)
+					.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
 					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
 
 				self.layersDiv.appendChild(root);
@@ -442,12 +414,14 @@ export default class InitMap {
 	}
 }
 
-const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], pointTransformer: TransformPointFn, labelLookup: State['labelLookup']) =>
+const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], pointTransformer: TransformPointFn, labelLookup: State['labelLookup'], allSpecTableStationUris: Value[]) =>
 	stationPos4326Lookup.reduce<StationPosLookup>((acc, st) => {
-		acc[st.station] = {
-			coord: pointTransformer(st.lon, st.lat),
-			stationLbl: labelLookup[st.station] ?? st.station
-		};
+		if (allSpecTableStationUris.includes(st.station)) {
+			acc[st.station] = {
+				coord: pointTransformer(st.lon, st.lat),
+				stationLbl: labelLookup[st.station] ?? st.station
+			};
+		}
 		return acc;
 	}, {});
 

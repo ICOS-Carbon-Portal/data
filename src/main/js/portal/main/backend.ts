@@ -18,6 +18,9 @@ import { References } from '../../common/main/metacore';
 import { getJson } from 'icos-cp-backend';
 import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
+import { PersistedMapPropsExtended } from './models/InitMap';
+import { Obj } from '../../common/main/types';
+import { DrawFeature } from './models/StationFilterControl';
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -338,4 +341,45 @@ export const getCountriesGeoJson = async (): Promise<CountriesTopo> => {
 
 			return countriesTopo
 		});
+};
+
+const persistedMapPropsSessStorageKey = 'persistedMapProps';
+export const savePersistedMapProps = (persistedMapProps: PersistedMapPropsExtended) => {
+	const drawFeatures = persistedMapProps.drawFeatures ?? [];
+	const mapProps = {...persistedMapProps, ...{drawFeatures: drawFeatures.map(serializeDrawFeature)}};
+	
+	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
+};
+
+export const getPersistedMapProps = (): PersistedMapPropsExtended | undefined => {
+	const sessStorageMapProps = sessionStorage.getItem(persistedMapPropsSessStorageKey);
+
+	if (sessStorageMapProps){
+		const persistedMapProps = JSON.parse(sessStorageMapProps);
+		const drawFeatures = persistedMapProps.drawFeatures;
+		const mapProps = drawFeatures === undefined
+			? persistedMapProps
+			: {...persistedMapProps, ...{ drawFeatures: drawFeatures.map(deserializeDrawFeature) }};
+
+		return mapProps;
+	}
+	
+	return undefined;
+};
+
+const serializeDrawFeature = (drawFeature: DrawFeature) => {
+	return {
+		type: drawFeature.type,
+		coords: drawFeature.coords,
+		stationUris: drawFeature.stationUris
+	};
+};
+
+const deserializeDrawFeature = (drawFeature: Omit<DrawFeature, 'id'>) => {
+	return {
+		id: Symbol(),
+		type: drawFeature.type,
+		coords: drawFeature.coords,
+		stationUris: drawFeature.stationUris,
+	};
 };

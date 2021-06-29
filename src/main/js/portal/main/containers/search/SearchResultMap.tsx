@@ -1,19 +1,22 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { State } from "../../models/State";
-import InitMap, { UpdateMapSelectedSRID } from '../../models/InitMap';
-import { PersistedMapProps } from '../../models/ol/OLWrapper';
+import { State, StationPos4326Lookup } from "../../models/State";
+import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { TileLayerExtended } from '../../models/ol/baseMaps';
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
+import { specFilterUpdate } from '../../actions/search';
+import { Value } from '../../models/SpecTable';
+import { ColNames } from '../../models/CompositeSpecTable';
+import { intersection, union } from '../../utils';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
-	persistedMapProps: PersistedMapProps
-	updatePersistedMapProps: (mapProps: PersistedMapProps) => void
+	persistedMapProps: PersistedMapPropsExtended
+	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 }
 type OurProps = StateProps & DispatchProps & incommingProps
@@ -23,6 +26,10 @@ class SearchResultMap extends Component<OurProps> {
 
 	constructor(props: OurProps) {
 		super(props);
+	}
+
+	handleStationFilterUpdate(stationUrisToState: Value[]){
+		setTimeout(() => this.props.updateStationFilter(stationUrisToState), 50);
 	}
 
 	render() {
@@ -35,6 +42,7 @@ class SearchResultMap extends Component<OurProps> {
 
 		return (
 			<div id="map" style={{ width: '100%', height: '90vh' }} tabIndex={1}>
+				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
 				<div id="popover" className="ol-popup"></div>
 				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
 				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
@@ -62,6 +70,7 @@ class SearchResultMap extends Component<OurProps> {
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
 				labelLookup: this.props.labelLookup,
+				updateStationFilterInState: this.handleStationFilterUpdate.bind(this)
 			});
 		})()
 			.catch(error => {
@@ -93,6 +102,7 @@ function stateToProps(state: State) {
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
+		updateStationFilter: (filteredStationUris: Value[]) => dispatch(specFilterUpdate('station', filteredStationUris)),
 	};
 }
 

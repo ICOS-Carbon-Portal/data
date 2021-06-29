@@ -157,7 +157,7 @@ export interface State {
 	exportQuery: ExportQuery
 }
 
-const emptyCompositeSpecTable = new CompositeSpecTable(
+export const emptyCompositeSpecTable = new CompositeSpecTable(
 	new SpecTable<BasicsColNames>([], [], {}),
 	new SpecTable<VariableMetaColNames>([], [], {}),
 	new SpecTable<OriginsColNames>([], [], {})

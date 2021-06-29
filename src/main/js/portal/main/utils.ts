@@ -2,6 +2,7 @@ import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
 import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
+import { Value } from "./models/SpecTable";
 
 export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
@@ -76,10 +77,6 @@ export function throwError(msg: string): never{
 	throw new Error(msg);
 }
 
-export function distinct<T>(arr: T[]): T[]{
-	return Array.from(new Set(arr).values());
-}
-
 export function wholeStringRegExp(anyRegex: string): RegExp {
 	const prologue = anyRegex.startsWith('^') ? '' : '^';
 	const epilogue = anyRegex.endsWith("$") ? '' : '$';
@@ -131,7 +128,7 @@ export const linesToShowStyle = (linesToShow: number): CSSProperties => ({
 	WebkitBoxOrient: 'vertical'
 });
 
-export const areEqual = (arr1: any[], arr2: any[]) => {
+export const areEqual = <T>(arr1: T[], arr2: T[]) => {
 	if (arr1.length !== arr2.length)
 		return false;
 	
@@ -141,4 +138,29 @@ export const areEqual = (arr1: any[], arr2: any[]) => {
 	}
 	
 	return true;
+};
+
+export const distinct = <T>(...arrs: T[][]): T[] => {
+	return [...new Set(arrs.flatMap(arr => arr))];
+};
+
+type SetOperation = <T>(arr1: T[], arr2: T[]) => T[]
+export const intersection: SetOperation = (arr1, arr2) => {
+	// All elements that are in both arr1 and arr2
+	return arr1.filter(val => arr2.includes(val));
+};
+
+export const difference: SetOperation = (arr1, arr2) => {
+	// All elements from arr1 that are not in arr2
+	return arr1.filter(val => !arr2.includes(val));
+};
+
+export const symmetricalDifference: SetOperation = (arr1, arr2) => {
+	// All elements from arr1 that are not in arr2 and all element from arr2 that are not in arr1
+	return difference(arr1, arr2).concat(difference(arr2, arr1));
+};
+
+export const union: SetOperation = (arr1, arr2) => {
+	// All unique elements from arr1 and arr2
+	return distinct(arr1, arr2);
 };

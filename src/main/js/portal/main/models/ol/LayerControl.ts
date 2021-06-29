@@ -4,11 +4,13 @@ import TileLayer from 'ol/layer/Tile';
 import BaseLayer from 'ol/layer/Base';
 import { BaseMapName } from './baseMaps';
 import { findLayers } from './utils';
+import { PersistedMapProps } from './OLWrapper';
 
 export interface LayerControlOptions extends Options {
 	selectedBaseMapName: BaseMapName
 	updateLayerGroups?: (map: Map) => () => void
 	updateCtrl: (self: LayerControl) => () => void
+	updatePersistedMapProps: (mapProps: PersistedMapProps) => void
 }
 
 export type ControlLayerGroup = {
@@ -64,6 +66,11 @@ export class LayerControl extends Control {
 
 		this.element.appendChild(switchBtn);
 		this.element.appendChild(this.layersDiv);
+
+		this.on('change', _ => options.updatePersistedMapProps({
+			baseMapName: this.selectedBaseMap,
+			visibleToggles: this.visibleToggleLayers
+		}));
 	}
 
 	setMap(map: Map) {

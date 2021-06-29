@@ -16,7 +16,8 @@ import bootstrapMetadata from '../../actions/metadata';
 import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from '../../models/ol/projections';
 import config from '../../config';
-import { PersistedMapProps } from '../../models/ol/OLWrapper';
+import { PersistedMapPropsExtended } from '../../models/InitMap';
+import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -29,17 +30,10 @@ type OurState = {
 class Search extends Component<OurProps, OurState> {
 	private events: typeof Events;
 	private handleResize: Function;
-	private persistedMapProps: PersistedMapProps = {
-		baseMapName: config.olMapSettings.defaultBaseMapName,
-		srid: config.olMapSettings.defaultSRID
-	};
+	private persistedMapProps: PersistedMapPropsExtended;
 
 	constructor(props: OurProps) {
 		super(props);
-		this.state = {
-			expandedFilters: !isSmallDevice(),
-			srid: this.persistedMapProps.srid
-		};
 
 		this.events = new Events();
 		this.handleResize = debounce(() => {
@@ -50,6 +44,16 @@ class Search extends Component<OurProps, OurState> {
 			this.setState({expandedFilters: expanded});
 		});
 		this.events.addToTarget(window, "resize", this.handleResize);
+
+		this.persistedMapProps = getPersistedMapProps() ?? {
+			baseMapName: config.olMapSettings.defaultBaseMapName,
+			srid: config.olMapSettings.defaultSRID
+		};
+
+		this.state = {
+			expandedFilters: !isSmallDevice(),
+			srid: this.persistedMapProps.srid
+		};
 	}
 
 	handlePreview(urls: UrlStr[]){
@@ -77,12 +81,20 @@ class Search extends Component<OurProps, OurState> {
 		this.props.bootstrapMetadata(id);
 	}
 
-	updatePersistedMapProps(mapProps: PersistedMapProps) {
+	updatePersistedMapProps(mapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...mapProps };
+		this.props.savePersistedMapProps(this.persistedMapProps);
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
-		this.persistedMapProps = { ...this.persistedMapProps, srid };
+		const { isStationFilterCtrlActive, baseMapName, visibleToggles } = this.persistedMapProps;
+		this.persistedMapProps = { 
+			isStationFilterCtrlActive,
+			baseMapName,
+			visibleToggles,
+			drawFeatures: [],
+			srid
+		};
 		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
 		this.setState({ srid });
 	}
@@ -162,7 +174,9 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
-		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId))
+		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
+		getPersistedMapProps: () => getPersistedMapProps(),
+		savePersistedMapProps: (mapProps: PersistedMapPropsExtended) => savePersistedMapProps(mapProps),
 	};
 }
 
