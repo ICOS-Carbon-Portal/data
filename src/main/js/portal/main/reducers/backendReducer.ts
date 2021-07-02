@@ -10,6 +10,8 @@ import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
 import {IdxSig} from "../backend/declarations";
+import { isDefined } from "../utils";
+import { Value } from "../models/SpecTable";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -133,7 +135,6 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 };
 
 const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
-
 	const specTable = state.specTable.withOriginsTable(payload.dobjOriginsAndCounts);
 
 	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
@@ -164,7 +165,7 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 
 function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
 	const specTable = CompositeSpecTable.deserialize(payload.info.specTables);
-
+	const allStationUris = specTable.getAllDistinctAvailableColValues('station').filter<Value>(isDefined);
 	const labelLookup = payload.info.labelLookup.reduce<IdxSig>((acc, curr) => {
 		acc[curr.uri] = curr.label;
 		return acc;
@@ -172,6 +173,7 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 
 	return {
 		specTable,
+		allStationUris,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),

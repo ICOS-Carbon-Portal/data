@@ -1,14 +1,13 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { State, StationPos4326Lookup } from "../../models/State";
+import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { TileLayerExtended } from '../../models/ol/baseMaps';
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import { specFilterUpdate } from '../../actions/search';
 import { Value } from '../../models/SpecTable';
-import { ColNames } from '../../models/CompositeSpecTable';
-import { intersection, union } from '../../utils';
+import Layer from 'ol/layer/Layer';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -29,13 +28,14 @@ class SearchResultMap extends Component<OurProps> {
 	}
 
 	handleStationFilterUpdate(stationUrisToState: Value[]){
-		setTimeout(() => this.props.updateStationFilter(stationUrisToState), 50);
+		this.props.updateStationFilter(stationUrisToState);
 	}
 
 	render() {
 		if (this.initMap)
 			this.initMap.incommingPropsUpdated({
 				specTable: this.props.specTable,
+				allStationUris: this.props.allStationUris,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				labelLookup: this.props.labelLookup,
 			});
@@ -64,6 +64,7 @@ class SearchResultMap extends Component<OurProps> {
 			);
 			this.initMap = new InitMap({
 				mapRootelement: document.getElementById('map')!,
+				allStationUris: this.props.allStationUris,
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
@@ -80,11 +81,6 @@ class SearchResultMap extends Component<OurProps> {
 
 	componentWillUnmount() {
 		if (this.initMap) {
-			this.initMap.olWrapper.map
-				.getLayers()
-				.getArray()
-				.filter(l => l.get('layerType') === 'baseMap')
-				.forEach(bm => (bm as TileLayerExtended).getSource().clear());
 			this.initMap.olWrapper.destroyMap();
 			this.initMap = undefined;
 		}
@@ -94,6 +90,7 @@ class SearchResultMap extends Component<OurProps> {
 function stateToProps(state: State) {
 	return {
 		specTable: state.specTable,
+		allStationUris: state.allStationUris,
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
 	};

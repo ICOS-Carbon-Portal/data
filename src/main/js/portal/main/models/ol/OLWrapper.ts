@@ -161,6 +161,9 @@ export default class OLWrapper {
 	}
 
 	set attributionUpdater(copyright: Copyright) {
+		if (!copyright.isInitialized)
+			return;
+
 		const view = this.map.getView();
 		const tileLayers = this.tileLayers;
 		const layerSwitcher = this.controls.find(control => control instanceof LayerControl);

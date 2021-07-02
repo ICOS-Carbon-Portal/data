@@ -17,7 +17,7 @@ import {Store} from "redux";
 import {fetchKnownDataObjects} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO, References} from "../../../common/main/metacore";
-import SpecTable, {Row} from "./SpecTable";
+import SpecTable, {Row, Value} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
@@ -128,6 +128,7 @@ export interface State {
 	labelLookup: Obj;
 	stationPos4326Lookup: StationPos4326Lookup[]
 	specTable: CompositeSpecTable
+	allStationUris: Value[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
@@ -182,6 +183,7 @@ export const defaultState: State = {
 	labelLookup: {},
 	stationPos4326Lookup: [],
 	specTable: emptyCompositeSpecTable,
+	allStationUris: [],
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],
@@ -330,7 +332,7 @@ const jsonToState = (state0: JsonHashState) => {
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
 	} catch(err) {
-		console.log({state, state0, err});
+		console.error({state, state0, err});
 		throw new Error("Could not convert json to state");
 	}
 
@@ -433,7 +435,8 @@ const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSeria
 	return managePrefixes(state,
 		(prefix: any, value: string) => {
 			if (Array.isArray(prefix)){
-				const prefixObj = prefix.find(p => value.startsWith(p.value));
+				// TODO: remove prefix handling since wdcgg is no longer present
+				const prefixObj = prefix.find(p => value.startsWith(p.value) || p.prefix === 'i');
 				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
 				return prefixObj.prefix + value.slice(prefixObj.value.length);
 			} else {

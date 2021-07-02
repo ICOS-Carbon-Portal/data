@@ -21,7 +21,7 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import { CountriesTopo, getCountriesGeoJson } from '../backend';
 import olStyles from './ol/styles';
-import { DrawFeature, StateStationUris, StationFilterControl, StationUris } from './StationFilterControl';
+import { DrawFeature, StateStationUris, StationFilterControl } from './StationFilterControl';
 
 
 type LayerWrapperArgs = Pick<LayerWrapper, 'id' | 'layerType' | 'geoType' | 'name' | 'style' | 'data'> & { zIndex: number, interactive: boolean }
@@ -45,6 +45,7 @@ interface Props extends UpdateProps {
 }
 interface UpdateProps {
 	specTable: CompositeSpecTable
+	allStationUris: Value[]
 	stationPos4326Lookup: StationPos4326Lookup[]
 	labelLookup: State['labelLookup']
 }
@@ -65,12 +66,13 @@ export default class InitMap {
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
-	private updateStationFilterInState: (stationUrisToState: Value[]) => void
+	private updateStationFilterInState: (stationUrisToState: Value[]) => void;
 
 	constructor(props: Props) {
 		const {
 			mapRootelement,
 			specTable,
+			allStationUris,
 			stationPos4326Lookup,
 			labelLookup,
 			updateMapSelectedSRID,
@@ -109,8 +111,7 @@ export default class InitMap {
 			drawFeatures: persistedMapProps.drawFeatures ?? [],
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
 			updatePersistedMapProps: this.updatePersistedMapProps,
-			updateStationFilterInState: this.updateStationFilterInState.bind(this),
-			updateMap: this.updatePoints.bind(this),
+			updateStationFilterInState: this.updateStationFilterInState.bind(this)
 		});
 		controls.push(this.stationFilterControl);
 		
@@ -147,7 +148,7 @@ export default class InitMap {
 		});
 
 		if (stationPos4326Lookup.length)
-			this.incommingPropsUpdated({ specTable, stationPos4326Lookup, labelLookup });
+			this.incommingPropsUpdated({ specTable, allStationUris, stationPos4326Lookup, labelLookup });
 	}
 
 	private async fetchCountriesTopo() {
@@ -196,8 +197,7 @@ export default class InitMap {
 		});
 	}
 
-	updatePoints(stationUris: StationUris) {
-		const { includedStationUris, allSpecTableStationUris } = stationUris;
+	updatePoints(includedStationUris: Value[], allSpecTableStationUris: Value[]) {
 		const stationUrisDiff = difference(allSpecTableStationUris, includedStationUris);
 		const excludedStations = createPointData(stationUrisDiff, this.stationFilterControl.stationPosLookup);
 		const includedStations = createPointData(includedStationUris, this.stationFilterControl.stationPosLookup);
@@ -246,18 +246,18 @@ export default class InitMap {
 	}
 
 	incommingPropsUpdated(props: UpdateProps) {
-		const { specTable, stationPos4326Lookup, labelLookup } = props;
+		const { specTable, allStationUris, stationPos4326Lookup, labelLookup } = props;
 
-		if (this.stationFilterControl.stationPosLookup.empty && stationPos4326Lookup.length && specTable.originsRows.length) {
+		if (this.stationFilterControl.stationPosLookup.empty !== undefined && stationPos4326Lookup.length > 0) {
 			this.stationPos4326Lookup = stationPos4326Lookup;
-			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup, specTable.getDistinctAvailableColValues('station'));
+			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup, allStationUris);
 		}
 
-		if (!this.stationFilterControl.stationPosLookup.empty && specTable.originsRows.length) {
-			const stationUris = this.stationFilterControl.updateStationUris(specTable);
+		if (this.stationFilterControl.stationPosLookup.empty === undefined) {
+			const stationUris = this.stationFilterControl.updateStationUris(specTable, allStationUris);
 
 			if (stationUris.hasChanged) {
-				this.updatePoints(stationUris);
+				this.updatePoints(stationUris.includedStationUris, allStationUris);
 			}
 		}
 	}

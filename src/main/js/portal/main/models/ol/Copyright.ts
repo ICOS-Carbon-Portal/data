@@ -9,12 +9,19 @@ import { Obj } from '../../../../common/main/types';
 // https://developers.arcgis.com/terms/attribution/
 export default class Copyright {
 	private readonly attributionElement: HTMLElement;
+	public readonly isInitialized: boolean;
 
 	constructor(private readonly attributionESRI: any, private readonly projection: Projection, htmlElementId: string, private readonly minWidth: number) {
 		const attributionElement = document.getElementById(htmlElementId);
-		if (attributionElement === null)
-			throw new Error(`Could not find html element with id = ${htmlElementId} in DOM`);
-		this.attributionElement = attributionElement;
+		if (attributionElement === null) {
+			console.error(`Could not find html element with id = ${htmlElementId} in DOM. Attribution is disabled.`);
+			this.isInitialized = false;
+			this.attributionElement = document.createElement('i');
+
+		} else {
+			this.isInitialized = true;
+			this.attributionElement = attributionElement;
+		}
 	}
 
 	getAttribution(bbox: olExtent.Extent, serviceName: string, zoom: number = 1) {

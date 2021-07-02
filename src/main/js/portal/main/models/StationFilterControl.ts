@@ -17,8 +17,8 @@ import { PersistedMapPropsExtended, StationPosLookup } from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
 import { emptyCompositeSpecTable } from './State';
-import { Filter, Value } from './SpecTable';
-import { areEqual, intersection, isDefined, union } from '../utils';
+import { Value } from './SpecTable';
+import { areEqual, intersection, union } from '../utils';
 import CompositeSpecTable from './CompositeSpecTable';
 
 export interface DrawFeature {
@@ -32,18 +32,15 @@ export interface StationFilterControlOptions extends Options {
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateStationFilterInState: (stationUrisToState: Value[]) => void
-	updateMap: (stationUris: StationUris) => void
 }
 export interface StationUris {
 	hasChanged: boolean
-	allSpecTableStationUris: Value[]
 	includedStationUris: Value[]
 }
 export interface StateStationUris {
-	explicitSpecTableStationUris: Filter
+	explicitSpecTableStationUris: Value[]
 	spatiallyFilteredStationUris: Value[]
 	specTableStationUris: Value[]
-	allSpecTableStationUris: Value[]
 }
 
 const delIconOffsetX = -13;
@@ -81,10 +78,9 @@ export class StationFilterControl extends Control {
 	};
 	private specTable: CompositeSpecTable = emptyCompositeSpecTable;
 	public stateStationUris: StateStationUris = {
-		allSpecTableStationUris: [],
-		explicitSpecTableStationUris: [],
-		spatiallyFilteredStationUris: [],
-		specTableStationUris: []
+		explicitSpecTableStationUris: [''],
+		spatiallyFilteredStationUris: [''],
+		specTableStationUris: ['']
 	}
 
 	constructor(options: StationFilterControlOptions) {
@@ -128,69 +124,57 @@ export class StationFilterControl extends Control {
 	}
 
 	private pickStationUrisToState(): Value[] {
-		const stationUrisFromSpecTable = {
-			explicitSpecTableStationUris: this.stateStationUris.explicitSpecTableStationUris,
-			allSpecTableStationUris: this.stateStationUris.allSpecTableStationUris,
-			specTableStationUris: this.stateStationUris.specTableStationUris
-		};
+		// Spatial filter has changed in map. Figure out what stations to send to state.
+		const explicitSpecTableStationUris = this.stateStationUris.explicitSpecTableStationUris;
 		const prevSpatiallyFilteredStationUris = this.stateStationUris.spatiallyFilteredStationUris;
 		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
 
 		if (spatiallyFilteredStationUris.length < prevSpatiallyFilteredStationUris.length) {
-			return stationUrisFromSpecTable.explicitSpecTableStationUris === null
+			return explicitSpecTableStationUris === null
 				? spatiallyFilteredStationUris
-				: intersection(spatiallyFilteredStationUris, stationUrisFromSpecTable.explicitSpecTableStationUris);
+				: intersection(spatiallyFilteredStationUris, explicitSpecTableStationUris);
 		}
 
-		if (spatiallyFilteredStationUris.length === 0 && stationUrisFromSpecTable.explicitSpecTableStationUris === null)
+		if (spatiallyFilteredStationUris.length === 0 && explicitSpecTableStationUris === null)
 			return [];
 		
 		if (spatiallyFilteredStationUris.length === 0)
-			return stationUrisFromSpecTable.explicitSpecTableStationUris as Value[];
+			return explicitSpecTableStationUris as Value[];
 		
-		if (stationUrisFromSpecTable.explicitSpecTableStationUris === null)
+		if (explicitSpecTableStationUris === null)
 			return spatiallyFilteredStationUris;
 
-		return union(spatiallyFilteredStationUris, stationUrisFromSpecTable.explicitSpecTableStationUris);
+		return union(spatiallyFilteredStationUris, explicitSpecTableStationUris);
 	}
 
-	updateStationUris(specTable: CompositeSpecTable): StationUris {
+	updateStationUris(specTable: CompositeSpecTable, allSpecTableStationUris: Value[]): StationUris {
 		if (specTable.id === this.specTable.id) {
 			return {
 				hasChanged: false,
-				allSpecTableStationUris: [],
 				includedStationUris: []
 			}; 
 		}
 
 		this.specTable = specTable;
-		const explicitSpecTableStationUris = specTable.getFilter('station');
-		const allSpecTableStationUris = this.stateStationUris.allSpecTableStationUris.length
-			? this.stateStationUris.allSpecTableStationUris
-			: specTable.getDistinctAvailableColValues('station').filter(isDefined);
-		const specTableStationUris = explicitSpecTableStationUris ?? allSpecTableStationUris;
-		let spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
+		// List of stations based on all filters
+		const filteredSpecTableStationUris = specTable.origins.getDistinctColValues('station');
+		// List of stations from station filter
+		const explicitSpecTableStationUris = specTable.getFilter('station') ?? [];
+		const specTableStationUris = filteredSpecTableStationUris ?? allSpecTableStationUris;
+		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
 
-		let hasSpatialFilterChanged = !areEqual(spatiallyFilteredStationUris, this.stateStationUris.spatiallyFilteredStationUris);
-		const hasExplicitSpecTableChanged = !areEqual(explicitSpecTableStationUris ?? [], this.stateStationUris.explicitSpecTableStationUris ?? []);
+		const hasSpatialFilterChanged = !areEqual(spatiallyFilteredStationUris, this.stateStationUris.spatiallyFilteredStationUris);
+		const hasExplicitSpecTableChanged = !areEqual(explicitSpecTableStationUris, this.stateStationUris.explicitSpecTableStationUris);
 		const hasSpecTableChanged = !areEqual(specTableStationUris, this.stateStationUris.specTableStationUris);
 		const hasChanged = hasSpatialFilterChanged || hasSpecTableChanged;
 
 		if (hasExplicitSpecTableChanged) {
-			this.findDrawFeaturesForDeletion(explicitSpecTableStationUris ?? [])
+			// Remove drawFeatures that has stations no longer mentioned in explicitSpecTableStationUris
+			this.findDrawFeaturesForDeletion(explicitSpecTableStationUris)
 				.forEach(drawFeature => this.removeSpatialFilter(drawFeature.id));
-			spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
-			hasSpatialFilterChanged = !areEqual(spatiallyFilteredStationUris, this.stateStationUris.spatiallyFilteredStationUris);
 		}
 
-		let includedStationUris = hasSpatialFilterChanged
-			? union(spatiallyFilteredStationUris, explicitSpecTableStationUris ?? [])
-			: specTableStationUris;
-		if (includedStationUris.length === 0)
-			includedStationUris	= allSpecTableStationUris;
-
 		this.stateStationUris = {
-			allSpecTableStationUris,
 			explicitSpecTableStationUris,
 			spatiallyFilteredStationUris,
 			specTableStationUris
@@ -198,8 +182,7 @@ export class StationFilterControl extends Control {
 
 		return {
 			hasChanged,
-			allSpecTableStationUris,
-			includedStationUris
+			includedStationUris: specTableStationUris
 		};
 	}
 
