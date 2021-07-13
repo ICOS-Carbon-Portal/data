@@ -235,7 +235,8 @@ $$;
 ---------------------
 DROP FUNCTION IF EXISTS downloads_timebins;
 CREATE OR REPLACE FUNCTION public.downloads_timebins(
-		_hash_id text
+		_hash_id text,
+		_downloaded_from text[] DEFAULT NULL
 	)
 	RETURNS TABLE(
 		id int8,
@@ -257,7 +258,10 @@ SELECT
 	date_trunc('month', ts)::date AS month_start,
 	date_trunc('week', ts)::date AS week_start
 FROM downloads
-WHERE hash_id = _hash_id
+WHERE (
+	hash_id = _hash_id
+	AND (_downloaded_from IS NULL OR country_code = ANY (_downloaded_from))
+)
 GROUP BY country_code, year_start, month_start, week_start;
 
 $$;
@@ -292,7 +296,7 @@ BEGIN
 				SUM(count)::int AS count,
 				week_start AS day,
 				EXTRACT('week' from week_start) AS week
-			FROM downloads_timebins(_hash_id)
+			FROM downloads_timebins(_hash_id, _downloaded_from)
 			GROUP BY week_start
 			ORDER BY week_start;
 	ELSE
@@ -345,7 +349,7 @@ BEGIN
 			SELECT
 				SUM(count)::int AS count,
 				month_start AS day
-			FROM downloads_timebins(_hash_id)
+			FROM downloads_timebins(_hash_id, _downloaded_from)
 			GROUP BY month_start
 			ORDER BY month_start;
 	ELSE
@@ -397,7 +401,7 @@ BEGIN
 			SELECT
 				SUM(count)::int AS count,
 				year_start AS day
-			FROM downloads_timebins(_hash_id)
+			FROM downloads_timebins(_hash_id, _downloaded_from)
 			GROUP BY year_start
 			ORDER BY year_start;
 	ELSE
