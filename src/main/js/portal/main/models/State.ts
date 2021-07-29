@@ -83,10 +83,7 @@ export type ExtendedDobjInfo = {
 }
 export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
-export interface MetaDataObject extends DO {
-	coverageGeo: object
-}
-export interface MetaData extends MetaDataObject {
+export interface MetaData extends DO {
 	id: UrlStr
 }
 

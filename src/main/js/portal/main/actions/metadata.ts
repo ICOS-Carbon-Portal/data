@@ -5,16 +5,17 @@ import {fetchJson, fetchKnownDataObjects} from "../backend";
 import {setMetadataItem, updateRoute} from "../actions/common";
 import {failWithError, getKnownDataObjInfo, } from "./common";
 import {getLastSegmentInUrl} from "../utils";
-import {MetaDataObject, MetaDataWStats} from "../models/State";
+import {MetaDataWStats} from "../models/State";
 import {setKeywordFilter} from "../actions/search";
 import config from "../../../common/main/config";
+import { DataObject } from "../../../common/main/metacore";
 
 type DownloadCount = [{ downloadCount: number }];
 type PreviewCount = [{ count: number }?];
 type DispatchMetaProps = [
 	downloads: DownloadCount,
 	previews: PreviewCount,
-	metadataObj?: MetaDataObject,
+	metadataObj?: DataObject,
 	knownDataObjInfos?: AsyncResult<typeof fetchKnownDataObjects>
 ];
 
@@ -49,7 +50,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 					const promises = Promise.all([
 						downloadsPromise,
 						previewsPromise,
-						fetchJson<MetaDataObject>(`${id}?format=json`)
+						fetchJson<DataObject>(`${id}?format=json`)
 					]);
 
 					promises.then(dispatchMeta, failWithError(dispatch));
@@ -58,7 +59,7 @@ export default function bootstrapMetadata(id?: UrlStr): PortalThunkAction<void> 
 					const promises = Promise.all([
 						downloadsPromise,
 						previewsPromise,
-						fetchJson<MetaDataObject>(`${id}?format=json`),
+						fetchJson<DataObject>(`${id}?format=json`),
 						fetchKnownDataObjects([pid])
 					]);
 

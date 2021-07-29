@@ -166,16 +166,14 @@ class Metadata extends Component<MetadataProps> {
 									</div>
 								}
 								<br />
-								{metadata.coverageGeo &&
-									<React.Fragment>
-										<div className="row">
-											<div className="col-md-12">
-												{map(metadata.coverageGeo, metadata.specification.theme.markerIcon)}
-											</div>
+								<React.Fragment>
+									<div className="row">
+										<div className="col-md-12">
+											{map(metadata.id, metadata.specification.theme.markerIcon)}
 										</div>
-										<br />
-									</React.Fragment>
-								}
+									</div>
+									<br />
+								</React.Fragment>
 								<div className="row">
 									<div className="col-md-12">
 										<label>Metadata</label>
@@ -248,11 +246,10 @@ const metadataLinks = (id: Sha256Str, fileName: string) => {
 	);
 };
 
-const map = (coverageObj: object, icon?: string) => {
+const map = (dobjUrl: string, icon?: string) => {
 	const style = { border: '1px solid #ddd', width: '100%', height: '400px' };
-	const coverage = JSON.stringify(coverageObj);
 	return (
-		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&coverage=${encodeURI(coverage)}`} style={style} />
+		<iframe src={`${commonConfig.metaBaseUri}station/?icon=${icon != undefined ? icon : ""}&dobj=${encodeURI(dobjUrl)}`} style={style} />
 	);
 };
 

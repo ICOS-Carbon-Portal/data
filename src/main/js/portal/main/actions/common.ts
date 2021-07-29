@@ -1,5 +1,4 @@
 import stateUtils, {
-	MetaDataObject,
 	ObjectsTable,
 	Profile,
 	Route,
@@ -27,6 +26,7 @@ import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
 import { StationPositions4326Lookup } from "../reducers/actionpayloads";
+import { DataObject } from "../../../common/main/metacore";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -179,7 +179,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 
 function fetchMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
-		fetchJson<MetaDataObject>(`${id}?format=json`).then(metadata => {
+		fetchJson<DataObject>(`${id}?format=json`).then(metadata => {
 			const metadataWithId = { ...metadata, id };
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
