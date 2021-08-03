@@ -66,7 +66,7 @@ export interface User extends WhoAmI {
 
 type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
 export type ExtendedDobjInfo = {
-	dobj: string
+	dobj: UrlStr
 	station: string | undefined
 	stationId: string | undefined
 	samplingHeight: number | undefined

@@ -240,3 +240,16 @@ export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
 		comment: 'Keywords associated with data types.'
 	},
 };
+
+export type Breadcrumb = { label: string, url: UrlStr }
+export const breadcrumbs: { [E in Envri]: ReadonlyArray<Breadcrumb> } = {
+	ICOS: [
+		{ label: "Home", url: "https://www.icos-cp.eu/" },
+		{ label: "Data & Services", url: "https://www.icos-cp.eu/data-services" },
+		{ label: "ICOS Data Portal", url: "/portal"}
+	],
+	SITES: [
+		{ label: "Home", url: "https://www.fieldsites.se" },
+		{ label: "Data catalogue", url: "/portal" }
+	]
+};

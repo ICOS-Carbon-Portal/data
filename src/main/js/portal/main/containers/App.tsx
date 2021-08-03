@@ -1,4 +1,4 @@
-import React, { Component, ReactNode } from 'react';
+import React, { Component, ReactNode, MouseEvent } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './search/Search';
@@ -7,7 +7,7 @@ import Preview from './Preview';
 import Metadata, { MetadataTitle } from './Metadata';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {updateCheckedObjectsInCart} from '../actions/cart';
-import config from '../config';
+import config, {breadcrumbs, Breadcrumb} from '../config';
 import {Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
@@ -51,6 +51,8 @@ export class App extends Component<AppProps> {
 
 				<div className="row page-header">
 
+					<Breadcrumbs handleRouteClick={this.handleRouteClick.bind(this)} route={props.route}/>
+
 					<Title route={props.route} metadata={props.metadata} />
 
 					<div className="col-md-3 text-right" style={{marginTop: 30}}>
@@ -74,6 +76,28 @@ export class App extends Component<AppProps> {
 			</div>
 		);
 	}
+}
+
+const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route}) => {
+	return (
+		<nav role="navigation" aria-label="breadcrumb">
+			<ol className="breadcrumb">
+				{breadcrumbs[config.envri].map(b => BreadcrumbItem(b, props.handleRouteClick, props.route))}
+			</ol>
+		</nav>
+	)
+}
+
+const BreadcrumbItem = (item: Breadcrumb, handleRouteClick: (newRoute: string) => void, route: Route) => {
+	const onclick: (event: MouseEvent<HTMLAnchorElement>) => void =
+		(item.url == "/portal") ? (e: MouseEvent) => {
+			e.preventDefault()
+			handleRouteClick('search')
+		} : _ => _;
+
+	return ((item.url == "/portal" && route == 'search') ?
+		<li key={item.label} className="breadcrumb-item active">{item.label}</li> :
+		<li key={item.label} className="breadcrumb-item"><a onClick={e => onclick(e)} href={item.url}>{item.label}</a></li>)
 }
 
 const Title = (props: {route: Route, metadata?: State['metadata']}) => {
