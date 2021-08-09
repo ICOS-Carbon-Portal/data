@@ -492,7 +492,7 @@ const reduceState = (state: Obj<any>) => {
 	return Object.keys(state).reduce((acc: Obj<any>, key: string) => {
 
 		const val = state[key];
-		if (val === undefined) return acc;
+		if (val == null) return acc;
 
 		if (Array.isArray(val) && val.length){
 			acc[key] = val;
