@@ -37,7 +37,8 @@ const hashKeys = [
 	'tabs',
 	'page',
 	'id',
-	'preview'
+	'preview',
+	'searchOptions'
 ];
 
 export type Route = 'search' | 'metadata' | 'preview' | 'cart';
@@ -424,7 +425,6 @@ const stateToHash = (state: State) => {
 	handleRoute(reducedStoreState as Partial<StateSerialized>);
 	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
 	const final = shortenUrls(withSpecialCases);
-
 	return Object.keys(final).length ? JSON.stringify(final) : '';
 };
 
@@ -492,7 +492,7 @@ const reduceState = (state: Obj<any>) => {
 	return Object.keys(state).reduce((acc: Obj<any>, key: string) => {
 
 		const val = state[key];
-		if (!val) return acc;
+		if (val === undefined) return acc;
 
 		if (Array.isArray(val) && val.length){
 			acc[key] = val;
@@ -511,6 +511,9 @@ const reduceState = (state: Obj<any>) => {
 			acc[key] = val;
 
 		} else if (typeof val === 'number' && val !== 0){
+			acc[key] = val;
+
+		} else if (key === 'showDeprecated' && val) {
 			acc[key] = val;
 
 		}
