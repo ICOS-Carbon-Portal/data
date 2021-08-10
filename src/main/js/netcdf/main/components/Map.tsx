@@ -11,7 +11,7 @@ import Timeserie from './Timeserie';
 import RangeFilterInput from './RangeFilterInput';
 import { AppProps } from '../containers/App';
 import { Control } from '../models/ControlsHelper';
-import { ColorMakerRamps } from '../../../common/main/models/ColorMaker';
+import { Copyright } from 'icos-cp-copyright';
 import { BinRasterExtended } from '../models/BinRasterExtended';
 
 
@@ -263,6 +263,7 @@ export default class Map extends Component<OurProps, OurState> {
 								}
 							]}
 						/>
+						<Copyright rootStyleOverride={{position:'absolute', bottom:2, right:3}} />
 					</div>
 					<div id="legend" ref={(div: HTMLDivElement) => this.legendDiv = div}>{
 						getLegend

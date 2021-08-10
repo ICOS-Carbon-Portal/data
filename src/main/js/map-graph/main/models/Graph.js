@@ -42,7 +42,7 @@ export default class {
 			this._graphElement,
 			this.getData(),
 			{
-				height: 500,
+				height: 480,
 				strokeWidth: 0,
 				drawPoints: true,
 				legend: 'always',

@@ -78,6 +78,7 @@
     "icos-cp-spinner": "^0.1.4",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",
+    "icos-cp-copyright": "^0.0.1",
     "leaflet": "^1.7.1",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",

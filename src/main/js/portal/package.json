@@ -63,6 +63,7 @@
     "icos-cp-draggable": "0.0.1",
     "icos-cp-toaster": "0.6.2",
     "icos-cp-utils": "0.1.5",
+    "icos-cp-copyright": "^0.0.1",
     "linkify-it": "2.2.0",
     "ol": "^6.5.0",
     "proj4": "^2.7.2",

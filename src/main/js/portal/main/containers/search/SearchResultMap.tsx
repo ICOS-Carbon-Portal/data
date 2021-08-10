@@ -2,12 +2,11 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
-import { TileLayerExtended } from '../../models/ol/baseMaps';
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import { specFilterUpdate } from '../../actions/search';
 import { Value } from '../../models/SpecTable';
-import Layer from 'ol/layer/Layer';
+import { Copyright } from 'icos-cp-copyright';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -47,6 +46,11 @@ class SearchResultMap extends Component<OurProps> {
 				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
 				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
 				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
+					<ul>
+						<li>
+							<Copyright />
+						</li>
+					</ul>
 					<ul>
 						<li id="baseMapAttribution" />
 					</ul>

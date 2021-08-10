@@ -5,6 +5,7 @@ import Map from '../components/Map.jsx';
 import GraphContainer from '../components/GraphContainer.jsx';
 import Table from '../components/Table.jsx';
 import Radio from '../components/Radio.jsx';
+import { Copyright } from 'icos-cp-copyright';
 import {selectVar, selectVarY1, selectVarY2, mapStateChanged} from '../actions';
 
 
@@ -108,6 +109,8 @@ export class App extends Component {
 					graphMouseMove={this.graphMouseMove}
 					graphMouseOut={this.graphMouseOut}
 				/>
+
+				<Copyright rootStyleOverride={{float:'right', position:'relative', left:20}} />
 			</div>
 		);
 	}

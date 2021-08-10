@@ -181,7 +181,8 @@ export default class Map extends Component{
 				ref={div => this.mapElement = div} id="map"
 				style={{
 					width: '100%',
-					height: 500,
+					minHeight: 470,
+					maxHeight: 580,
 					border: '1px solid #ddd',
 					borderRadius: '4px'
 				}}
