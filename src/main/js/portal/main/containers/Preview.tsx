@@ -15,7 +15,6 @@ import {storeTsPreviewSetting} from "../actions/preview";
 import { isDefined, pick } from "../utils";
 import commonConfig from '../../../common/main/config';
 import TableFormatCache from '../../../common/main/TableFormatCache';
-import HelpButton from './help/HelpButton';
 import { lastUrlPart, TableFormat } from 'icos-cp-backend';
 import PreviewObj from '../models/Preview';
 
@@ -222,7 +221,7 @@ function previewUrl(item: CartItem, type: PreviewType, iframeSrc: UrlStr): UrlSt
 	} else {
 		return item ? iframeSrc : '';
 	}
-};
+}
 
 function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFormat): UrlStr {
 	if (tableFormat === undefined) return '';
@@ -251,7 +250,7 @@ function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFo
 	}
 
 	return '';
-};
+}
 
 function stateToProps(state: State){
 	return {

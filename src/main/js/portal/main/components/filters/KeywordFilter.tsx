@@ -1,5 +1,8 @@
 import React from "react";
 import keywordsInfo, {KeywordsInfo} from "../../backend/keywordsInfo";
+import { Value } from "../../models/SpecTable";
+import { isDefined } from "../../utils";
+import { Item } from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
 
 
@@ -12,7 +15,10 @@ interface OurProps {
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {keywords, filterKeywords, setKeywordFilter} = props;
 
-	const data = keywordsInfo.allKeywords(keywords);
+	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
+	const data: Item[] = keywordsInfo.allKeywords(keywords)
+		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
+		.filter(item => !value.some(v => v.value == item.value));
 	const placeholder = data.length === 1
 		? `${data[0]}`
 		: `(${data.length} items)`;
@@ -24,11 +30,12 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 
 				<MultiSelectFilter
 					name={"keywordFilter"}
+					shouldUseExternalListEntry={false}
 					search={{}}
-					updateFilter={(_: any, keywords: string[]) => setKeywordFilter(keywords)}
+					updateFilter={(_: any, keywords: Value[]) => setKeywordFilter(keywords.filter(isDefined).map(kw => kw + ''))}
 					placeholder={placeholder}
 					data={data}
-					value={filterKeywords}
+					value={value}
 				/>
 			</div>
 		</div>

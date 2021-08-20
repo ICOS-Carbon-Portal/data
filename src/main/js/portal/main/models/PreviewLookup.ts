@@ -2,6 +2,7 @@ import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
 import {IdxSig, UrlStr} from '../backend/declarations';
 import { PreviewOption } from './Preview';
+import { LabelLookup } from './State';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -25,7 +26,7 @@ export default class PreviewLookup{
 	readonly table: Table = {};
 	readonly varInfo: VarInfo = {};
 
-	constructor(specTable?: CompositeSpecTable, labelLookup?: IdxSig, table?: Table, varInfo?: VarInfo) {
+	constructor(specTable?: CompositeSpecTable, labelLookup?: LabelLookup, table?: Table, varInfo?: VarInfo) {
 		if (specTable && labelLookup) {
 			this.table = getTable(specTable, labelLookup);
 
@@ -52,7 +53,7 @@ export default class PreviewLookup{
 
 }
 
-const getTable = (specTable: CompositeSpecTable, labelLookup: IdxSig): Table => {
+const getTable = (specTable: CompositeSpecTable, labelLookup: LabelLookup): Table => {
 	const table: Table = {};
 
 	const specsWithLat = new Set<string>();
@@ -64,7 +65,7 @@ const getTable = (specTable: CompositeSpecTable, labelLookup: IdxSig): Table => 
 			const currentInfo = table[spec];
 			const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
 			if (info === defaultInfo) table[spec] = info;
-			const valTypeLabel = labelLookup[valType];
+			const valTypeLabel = labelLookup[valType].label;
 			info.options.push({ varTitle, valTypeLabel });
 			if(valType === config.mapGraph.latValueType) specsWithLat.add(spec);
 			if(valType === config.mapGraph.lonValueType) specsWithLon.add(spec);

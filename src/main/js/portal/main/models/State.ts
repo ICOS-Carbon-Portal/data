@@ -4,7 +4,7 @@ import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColName
 import PreviewLookup from "./PreviewLookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
-import HelpStorage from './HelpStorage';
+import HelpStorage, {HelpStorageListEntry} from './HelpStorage';
 import config, {
 	prefixes,
 	CategoryType,
@@ -111,6 +111,7 @@ export type ExportQuery = {
 }
 
 export type StationPos4326Lookup = { station: UrlStr, lon: number, lat: number }
+export type LabelLookup = Obj<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
 
 export interface State {
 	ts: number | undefined
@@ -123,7 +124,7 @@ export interface State {
 	filterNumbers: FilterNumbers
 	user: User
 	previewLookup: PreviewLookup | undefined;
-	labelLookup: Obj;
+	labelLookup: LabelLookup;
 	stationPos4326Lookup: StationPos4326Lookup[]
 	specTable: CompositeSpecTable
 	allStationUris: Value[]

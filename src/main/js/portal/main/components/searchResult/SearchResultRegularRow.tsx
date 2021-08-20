@@ -3,7 +3,7 @@ import CheckBtn from '../buttons/ChechBtn';
 import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
-import { ObjectsTable, ExtendedDobjInfo } from "../../models/State";
+import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
 import Preview from '../../models/Preview';
 import CartItem from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
@@ -31,7 +31,7 @@ interface OurProps {
 	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
 	checkedObjects?: ObjectsTable[]
-	labelLookup: any
+	labelLookup: LabelLookup
 }
 
 export default class SearchResultRegularRow extends Component<OurProps> {
@@ -48,7 +48,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
-		const specLabel = props.labelLookup[objInfo.spec] ?? "";
+		const specLabel = props.labelLookup[objInfo.spec].label ?? "";
 		const title = extendedInfo.title ?? makeL2OrLessTitle(extendedInfo, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const checkboxDisabled = objInfo.level === 0;

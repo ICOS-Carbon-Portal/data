@@ -6,18 +6,21 @@ import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
-import {fetchDobjOriginsAndCounts, fetchResourceHelpInfo, getExtendedDataObjInfo, fetchJson} from "../backend";
+import {
+	fetchDobjOriginsAndCounts,
+	fetchResourceHelpInfo,
+	getExtendedDataObjInfo,
+	makeHelpStorageListItem
+} from "../backend";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
-import {Documentation, HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
-import {Int} from "../types";
+import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
 import {saveToRestheart} from "../../../common/main/backend";
 import {QueryParameters, SearchOption} from "./types";
 import {failWithError} from "./common";
-import {DataObjectSpec} from "../../../common/main/metacore";
 import {FilterNumber} from "../models/FilterNumbers";
 import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
@@ -212,12 +215,12 @@ function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
 }
 
-export function specFilterUpdate(varName: ColNames, values: Value[]): PortalThunkAction<void> {
+export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		const filter: Filter = values.length === 0 ? null : values;
 		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
 
-		if(varNameAffectingCategs.includes(varName)) dispatch(getOriginsThenDobjList)
+		if(varNameAffectingCategs.includes(varName as ColNames)) dispatch(getOriginsThenDobjList)
 		else dispatch(getFilteredDataObjects);
 	};
 }
@@ -303,7 +306,7 @@ export function setKeywordFilter(filterKeywords: string[], reset: boolean = fals
 	};
 }
 
-export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
+export function getFilterHelpInfo(name: ColNames | HelpItemName): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const helpItem = getState().helpStorage.getHelpItem(name);
 
@@ -318,13 +321,8 @@ export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 
 			if (uriList.length) {
 				fetchResourceHelpInfo(uriList).then(resourceInfoRaw => {
-					// The request from backend contains 'uri' since a Query requires at least one mandatory field
-					const resourceInfo: HelpStorageListEntry[] = resourceInfoRaw.map(r => ({
-						label: r.label as string | Int,
-						comment: r.comment as string,
-						webpage: r.webpage as UrlStr | undefined
-					}));
-					dispatch(new Payloads.UiUpdateHelpInfo(helpItem.withList(resourceInfo)))
+					const resourceInfo: HelpStorageListEntry[] = resourceInfoRaw.map(makeHelpStorageListItem);
+					dispatch(new Payloads.UiUpdateHelpInfo(helpItem.withList(resourceInfo)));
 				}, failWithError(dispatch));
 			} else {
 				dispatch(new Payloads.UiUpdateHelpInfo(helpItem))
@@ -335,51 +333,28 @@ export function getFilterHelpInfo(name: HelpItemName): PortalThunkAction<void> {
 	};
 }
 
-export function getResourceHelpInfo(name: HelpItemName, url: UrlStr): PortalThunkAction<void> {
-	type HelpInfo = {
-		comments: string[]
-		label: string
-		uri: string
-		documentation?: Documentation[]
-	}
-
-	const getHelpInfo = (resp: DataObjectSpec): HelpInfo => {
-		const res = resp.self;
-		const documentation: Documentation[] = resp.documentation.map(doc => ({
-			txt: doc.name,
-			url: doc.res
-		}));
-
-		return {
-			comments: res.comments,
-			label: res.label ?? '',
-			uri: url,
-			documentation
-		}
-	};
-
+export type HelpContent = {
+	url: string
+	main: string
+	helpStorageListEntry: HelpStorageListEntry[]
+}
+export function setFilterHelpInfo(name: ColNames | HelpItemName, helpContent: HelpContent): PortalThunkAction<void> {
+	// helpContent is compiled from labelLookup so no need to ask backend
 	return (dispatch, getState) => {
-		const helpItem = getState().helpStorage.getHelpItem(url);
-		if(helpItem){
-			dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
+		const existingHelpItem = getState().helpStorage.getHelpItem(helpContent.url);
+
+		if (existingHelpItem){
+			dispatch(new Payloads.UiUpdateHelpInfo(existingHelpItem));
 			return;
 		}
 
-		const correctedUrl = new URL(url);
-		correctedUrl.protocol = "https:";
-
-		fetchJson<DataObjectSpec | HelpInfo>(correctedUrl.href).then(
-			resp => {
-				const helpInfo: HelpInfo = resp.documentation === undefined
-					? resp as HelpInfo
-					: getHelpInfo(resp as DataObjectSpec);
-
-				const helpItem = new HelpItem(name, helpInfo.label, url, helpInfo.comments.map(comment => { return { comment }; }), helpInfo.documentation);
-
-				dispatch(new Payloads.UiUpdateHelpInfo(helpItem));
-			},
-			failWithError(dispatch)
-		)
+		const newHelpItem = new HelpItem(
+			name as HelpItemName,
+			helpContent.main,
+			helpContent.url,
+			helpContent.helpStorageListEntry
+		);
+		dispatch(new Payloads.UiUpdateHelpInfo(newHelpItem));
 	};
 }
 

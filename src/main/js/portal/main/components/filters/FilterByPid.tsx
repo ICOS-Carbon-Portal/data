@@ -86,7 +86,7 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 						filter="contains"
 						onChange={this.handleChange.bind(this)}
 						onSearch={this.handleSearch.bind(this)}
-						itemComponent={this.listItem.bind(this)}
+						renderListItem={this.listItem.bind(this)}
 					/>
 				</div>
 			</div>

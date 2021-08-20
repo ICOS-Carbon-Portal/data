@@ -5,22 +5,23 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
-import {UrlStr, Sha256Str, IdxSig, AsyncResult} from "./backend/declarations";
+import {UrlStr, Sha256Str} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI} from "./models/State";
-import {getLastSegmentInUrl, throwError} from './utils';
+import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup} from "./models/State";
+import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
 import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
-import { getJson } from 'icos-cp-backend';
+import {getJson} from 'icos-cp-backend';
 import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
 import { Obj } from '../../common/main/types';
 import { DrawFeature } from './models/StationFilterControl';
+import {HelpStorageListEntry} from "./models/HelpStorage";
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -78,18 +79,18 @@ export const fetchStationPositions = () => {
 	}));
 };
 
-// export const fetchStationPositions = (pointTransformer: TransformPointFn) => {
-// 	const query = queries.stationPositions();
+export type RawListItem = {label?: string, comment?: string, webpage?: string, stationId?: string};
+export const makeHelpStorageListItem = (item: RawListItem): HelpStorageListEntry => {
+	if (item.label === undefined && item.comment === undefined && item.webpage === undefined)
+		// Log error so we can catch this in development
+		console.error("Cannot make makeHelpStorageListItem since all label, comment and webpage are undefined");
 
-// 	return sparqlFetchAndParseCustom(query, config.sparqlEndpoint, b => ({
-// 		coord: pointTransformer(parseFloat(b.lon.value), parseFloat(b.lat.value)),
-// 		attributes: {
-// 			stationUri: b.station.value
-// 		}
-// 	}));
-// };
-
-type LabelLookup = {uri: UrlStr, label: string}[]
+	return {
+		label: item.label,
+		comment: item.comment ? uppercaseFirstChar(item.comment) : undefined,
+		webpage: item.webpage ? item.webpage as UrlStr : undefined
+	};
+};
 
 export function fetchLabelLookup(): Promise<LabelLookup> {
 	const query = queries.labelLookup();
@@ -97,11 +98,25 @@ export function fetchLabelLookup(): Promise<LabelLookup> {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		uri: b.uri.value,
 		label: b.label.value,
-		stationId: b.stationId?.value
-	})).then(ll => ll.rows.map(item => ({
-		uri: item.uri,
-		label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label
-	})));
+		comment: b.comment?.value,
+		stationId: b.stationId?.value,
+		webpage: b.webpage?.value
+	})).then(ll => ll.rows.reduce<LabelLookup>((acc, item) => {
+
+		if (acc[item.uri] === undefined) {
+			acc[item.uri] = {
+				label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label,
+				list: item.comment
+					? [makeHelpStorageListItem({comment: item.comment, webpage: item.webpage})]
+					: []
+			};
+
+		} else if (item.comment) {
+			acc[item.uri].list.push(makeHelpStorageListItem({comment: item.comment, webpage: item.webpage}));
+
+		}
+		return acc;
+	}, {}));
 }
 
 export type BootstrapData = {
@@ -186,7 +201,7 @@ const updatePersonalRestheart = (email: string, data: {}): void => {
 	});
 };
 
-export const getError = (errorId: string): Promise<IdxSig<any>> => {
+export const getError = (errorId: string): Promise<Obj<any>> => {
 	return fetch(`${config.portalUseLogUrl}/${errorId}`).then(resp => {
 		return resp.status === 200
 			? Promise.resolve(resp.json())
@@ -301,7 +316,7 @@ export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email
-		? getFromRestheart<IdxSig>(email, tsSettingsStorageName).then(settings => {
+		? getFromRestheart<Obj>(email, tsSettingsStorageName).then(settings => {
 			const newSettings = settings
 				? Object.assign({}, settings[tsSettingsStorageName], tsSettings)
 				: tsSettings;

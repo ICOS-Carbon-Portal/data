@@ -5,7 +5,7 @@ import {
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
-import CompositeSpecTable from "../models/CompositeSpecTable";
+import CompositeSpecTable, { ColNames } from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
@@ -123,7 +123,7 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 };
 
 const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) => {
-	const specTable = state.specTable.withFilter(payload.varName, payload.filter);
+	const specTable = state.specTable.withFilter(payload.varName as ColNames, payload.filter);
 
 	return stateUtils.update(state,{
 		specTable,
@@ -166,10 +166,7 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
 	const specTable = CompositeSpecTable.deserialize(payload.info.specTables);
 	const allStationUris = specTable.getAllDistinctAvailableColValues('station').filter<Value>(isDefined);
-	const labelLookup = payload.info.labelLookup.reduce<IdxSig>((acc, curr) => {
-		acc[curr.uri] = curr.label;
-		return acc;
-	}, {});
+	const labelLookup = payload.info.labelLookup;
 
 	return {
 		specTable,

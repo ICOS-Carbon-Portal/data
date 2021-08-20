@@ -29,7 +29,7 @@ function List(props: {list?: HelpStorageListEntry[]}){
 			{list.map((item, idx) => <ListItem key={'helpList_' + idx} item={item} />)}
 		</ul>
 	);
-};
+}
 
 function ListItem(props: {item: HelpStorageListEntry}) {
 	const {item} = props;
@@ -45,10 +45,10 @@ function ListItem(props: {item: HelpStorageListEntry}) {
 
 	return (
 		<li style={{marginTop: 5}}>
-			{label}<span>{item.comment || item.label}</span>{link}
+			{label}<span>{item.comment ?? item.label}</span>{link}
 		</li>
 	);
-};
+}
 
 function DocumentationList(props: {list: Documentation[] | undefined}) {
 	const {list} = props;
@@ -59,7 +59,7 @@ function DocumentationList(props: {list: Documentation[] | undefined}) {
 			{list.map((item, idx) => <DocItem key={'l' + idx} item={item} />)}
 		</ul>
 	);
-};
+}
 
 function DocItem(props: {item: Documentation}) {
 	const {item} = props;
@@ -71,4 +71,4 @@ function DocItem(props: {item: Documentation}) {
 			<a href={url.href} title={"Download file " + item.txt}>Download documentation</a>
 		</li>
 	);
-};
+}

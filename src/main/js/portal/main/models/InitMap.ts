@@ -419,7 +419,7 @@ const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], point
 		if (allSpecTableStationUris.includes(st.station)) {
 			acc[st.station] = {
 				coord: pointTransformer(st.lon, st.lat),
-				stationLbl: labelLookup[st.station] ?? st.station
+				stationLbl: labelLookup[st.station].label ?? st.station
 			};
 		}
 		return acc;

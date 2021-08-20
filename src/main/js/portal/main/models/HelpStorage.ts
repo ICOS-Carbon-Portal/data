@@ -10,7 +10,8 @@ const titles = {
 	preview: "Preview / Add to cart",
 	publicQuery: "SPARQL queries",
 	previewCsvDownload: "CSV download",
-	previewURL: "Preview chart URL"
+	previewURL: "Preview chart URL",
+	keywordFilter: "Keyword"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -105,6 +106,10 @@ export class HelpItem {
 		return this.list !== undefined && this.list.length === 0;
 	}
 
+	get shouldUseExternalList(): boolean {
+		return this.list === undefined;
+	}
+
 	withList(list: HelpStorageListEntry[]){
 		return new HelpItem(this.name, this.main, this.url, list, this.documentation);
 	}
@@ -195,23 +200,23 @@ const initItems: HelpItem[] = [
 					label: 0 as Int,
 					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
 						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
-					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 1 as Int,
 					comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
-					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 2 as Int,
 					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is` +
 						' the ICOS-data product and free available for users.',
-					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 3 as Int,
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
-					webpage: 'https://www.icos-cp.eu/about-icos-data#Sect2'
+					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				}
 			]
 	),

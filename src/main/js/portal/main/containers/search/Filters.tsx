@@ -25,7 +25,7 @@ type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
 	render(){
-		const {specTable, filterTemporal, labelLookup, updateFilter, handleFilterReset, setFilterTemporal,
+		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal,
 			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter} = this.props;
 		const resetBtnEnabled = filterTemporal.hasFilter || specTable.hasActiveFilters || filterNumbers.hasFilters;
 
@@ -36,6 +36,7 @@ class Filters extends Component<OurProps> {
 				<PanelsWithFilters
 					filterNumbers={filterNumbers}
 					specTable={specTable}
+					helpStorage={helpStorage}
 					labelLookup={labelLookup}
 					updateFilter={updateFilter}
 					setNumberFilter={setNumberFilter}
@@ -72,6 +73,7 @@ function stateToProps(state: State){
 		filterTemporal: state.filterTemporal,
 		filterNumbers: state.filterNumbers,
 		specTable: state.specTable,
+		helpStorage: state.helpStorage,
 		labelLookup: state.labelLookup,
 		keywords: state.keywords,
 		filterKeywords: state.filterKeywords,
@@ -80,7 +82,7 @@ function stateToProps(state: State){
 
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		updateFilter: (varName: ColNames, values: Value[]) => dispatch(specFilterUpdate(varName, values)),
+		updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
 		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),

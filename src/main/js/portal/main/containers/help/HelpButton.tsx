@@ -3,8 +3,9 @@ import {connect} from "react-redux";
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {UrlStr} from "../../backend/declarations";
-import {getResourceHelpInfo, getFilterHelpInfo} from "../../actions/search";
-import { HelpItemName } from "../../models/HelpStorage";
+import {getFilterHelpInfo, HelpContent, setFilterHelpInfo} from "../../actions/search";
+import {HelpItemName} from "../../models/HelpStorage";
+import { ColNames } from "../../models/CompositeSpecTable";
 
 
 const defaultBtn = 'glyphicon glyphicon-question-sign text-info';
@@ -20,9 +21,10 @@ const defaultIconStyle: CSSProperties = {
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingProps = {
-	name: HelpItemName
+	name: ColNames | HelpItemName
 	title?: string
 	url?: UrlStr
+	helpContent?: HelpContent
 	overrideStyles?: CSSProperties
 }
 type OurProps = StateProps & DispatchProps & IncomingProps;
@@ -31,15 +33,14 @@ type OurProps = StateProps & DispatchProps & IncomingProps;
 class HelpButton extends Component<OurProps> {
 
 	handleBtnClick = (event: MouseEvent<HTMLSpanElement>) => {
-		const {getFilterHelpInfo, getResourceHelpInfo, name, url} = this.props;
+		const {getFilterHelpInfo, setFilterHelpInfo, name, helpContent} = this.props;
 
-		if (url === undefined) {
-			getFilterHelpInfo(name);
+		if (helpContent !== undefined) {
+			event.stopPropagation();
+			setFilterHelpInfo(name, helpContent);
 
 		} else {
-			// Help for dropdown list items
-			event.stopPropagation();
-			getResourceHelpInfo(name, url);
+			getFilterHelpInfo(name);
 		}
 	};
 
@@ -68,8 +69,8 @@ function stateToProps(state: State){
 
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		getFilterHelpInfo: (name: HelpItemName) => dispatch(getFilterHelpInfo(name)),
-		getResourceHelpInfo: (name: HelpItemName, url: UrlStr) => dispatch(getResourceHelpInfo(name, url)),
+		getFilterHelpInfo: (name: ColNames | HelpItemName) => dispatch(getFilterHelpInfo(name)),
+		setFilterHelpInfo: (name: ColNames | HelpItemName, helpContent: HelpContent) => dispatch(setFilterHelpInfo(name, helpContent)),
 	};
 }
 

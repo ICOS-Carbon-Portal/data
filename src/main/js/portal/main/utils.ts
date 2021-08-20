@@ -2,7 +2,6 @@ import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
 import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
-import { Value } from "./models/SpecTable";
 
 export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
@@ -163,4 +162,8 @@ export const symmetricalDifference: SetOperation = (arr1, arr2) => {
 export const union: SetOperation = (arr1, arr2) => {
 	// All unique elements from arr1 and arr2
 	return distinct(arr1, arr2);
+};
+
+export const uppercaseFirstChar = (txt: string) => {
+	return txt.charAt(0).toUpperCase() + txt.slice(1);
 };

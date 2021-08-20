@@ -67,7 +67,7 @@ export class BackendOriginsTable extends BackendPayload{
 }
 
 export class BackendUpdateSpecFilter extends BackendPayload{
-	constructor(readonly varName: ColNames, readonly filter: Filter){super();}
+	constructor(readonly varName: ColNames | 'keywordFilter', readonly filter: Filter){super();}
 }
 
 export class BackendObjectMetadataId extends BackendPayload{

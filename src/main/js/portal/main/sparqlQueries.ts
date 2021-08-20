@@ -11,7 +11,7 @@ import {
 	isNumberFilter, NumberFilterRequest,
 	VariableFilterRequest, isVariableFilter, isKeywordsFilter
 } from './models/FilterRequest';
-import { Filter, Value } from "./models/SpecTable";
+import { Value } from "./models/SpecTable";
 import { UrlStr } from './backend/declarations';
 
 
@@ -105,35 +105,35 @@ where{
 	return { text };
 }
 
-export function labelLookup(): Query<'uri' | 'label', 'stationId'> {
+export function labelLookup(): Query<'uri' | 'label' , 'stationId' | 'comment' | 'webpage'> {
 	let text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-select distinct ?uri ?label ?stationId
+
+select ?uri ?label ?comment ?stationId ?webpage
 from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>`;
 
 	if (config.envri === "ICOS") {
 		text += `
 from <http://meta.icos-cp.eu/resources/icos/>
-from <http://meta.icos-cp.eu/resources/extrastations/>
-from named <http://meta.icos-cp.eu/resources/wdcgg/>
-where {
-	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label} UNION {
-		graph <http://meta.icos-cp.eu/resources/wdcgg/> {
-			?uri a cpmeta:Station .
-			?uri cpmeta:hasName ?label .
-		}
+from <http://meta.icos-cp.eu/resources/extrastations/>`;
 	}
+	text +=`
+where {
+	?uri a ?class .
+	optional {?uri rdfs:label ?rdfsLabel }
+	optional {?uri cpmeta:hasName ?name}
+	bind(coalesce(?name, ?rdfsLabel) as ?label)
+	filter(
+		bound(?label) &&
+		?class != cpmeta:Instrument && ?class != cpmeta:Membership &&
+		!strstarts(str(?class), "http://www.w3.org/2002/07/owl#")
+	)
 	optional {?uri cpmeta:hasStationId ?stationId }
+	optional {?uri rdfs:comment ?comment }
+	optional {?uri rdfs:seeAlso ?webpage}
 }`;
-	} else {
-		text += `
-where {
-	{?uri rdfs:label ?label } UNION {?uri cpmeta:hasName ?label}
-}`;
-	}
-
 	return { text };
 }
 
