@@ -83,7 +83,7 @@ export type RawListItem = {label?: string, comment?: string, webpage?: string, s
 export const makeHelpStorageListItem = (item: RawListItem): HelpStorageListEntry => {
 	if (item.label === undefined && item.comment === undefined && item.webpage === undefined)
 		// Log error so we can catch this in development
-		console.error("Cannot make makeHelpStorageListItem since all label, comment and webpage are undefined");
+		console.error("Cannot make makeHelpStorageListItem since label, comment and webpage are undefined");
 
 	return {
 		label: item.label,
@@ -112,7 +112,11 @@ export function fetchLabelLookup(): Promise<LabelLookup> {
 			};
 
 		} else if (item.comment) {
-			acc[item.uri].list.push(makeHelpStorageListItem({comment: item.comment, webpage: item.webpage}));
+			// Filter out duplicate website urls
+			const webpage = acc[item.uri].list.some(list => list.webpage === item.webpage)
+				? undefined
+				: item.webpage;
+			acc[item.uri].list.push(makeHelpStorageListItem({comment: item.comment, webpage}));
 
 		}
 		return acc;
