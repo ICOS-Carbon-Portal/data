@@ -1,3 +1,5 @@
+Global / onChangedBuildSource := ReloadOnSourceChanges
+
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
 scalaVersion in ThisBuild := "2.13.5"
