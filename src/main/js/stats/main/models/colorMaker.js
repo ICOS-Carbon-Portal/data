@@ -11,16 +11,17 @@ const nTickIntervals = 4;
 
 
 export const colorMaker = (min, max, decimals, containerHeight) => {
-	const exponent = 1.5;
+	const exponent = 0.3;
 	const valueCompressor = val => Math.pow(val, exponent);
 	const valueStretcher = val => Math.pow(val, 1/exponent);
+	//const valueCompressor = val => Math.log(val - min + 1);
+	//const valueStretcher = val => Math.exp(val) + min - 1;
 
-	const stepSize = (max - min) / (colorDefs.length - 1);
-	const domain = Array.from({length: colorDefs.length - 1}).reduce(acc => {
-		acc.push(acc[acc.length - 1] + stepSize);
-		return acc;
-	}, [min])
-		.map(val => valueCompressor(val));
+	const domainMin = valueCompressor(min);
+	const stepSize = (valueCompressor(max) - domainMin) / (colorDefs.length - 1);
+	const domain = Array.from({length: colorDefs.length}).map(
+		(_, i) => domainMin + stepSize * i
+	);
 
 	const color = rgbaInterpolation(domain, colorDefs);
 	const getColor = value => color(valueCompressor(value)).map(c => Math.round(c));
