@@ -73,7 +73,7 @@ export default class Map extends Component {
 			}
 		})
 			.bindTooltip(e =>
-				`<b>${e.feature.properties.name}<br><b>Downloads: </b>${statsMap.getCount(e.feature.properties.iso2)}`
+				`<b>${e.feature.properties.name}<br><b>Downloads: </b>${statsMap.getCount(e.feature.properties.iso2).toLocaleString()}`
 				, { sticky: true })
 			.on('click', this.applyDlFromFilter.bind(this));
 

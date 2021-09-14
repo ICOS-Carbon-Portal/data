@@ -87,7 +87,7 @@ export default class PickDates extends Component {
 				<div className="col-md-12">
 
 					<div className="row">
-						<div className="col-md-6" style={{minWidth: 160}}>
+						<div className="col-md-6" style={{minWidth: 160, marginBottom: 5}}>
 							<DatePickerInput
 								ref={this.datePickerInputFrom}
 								placeholder="from"

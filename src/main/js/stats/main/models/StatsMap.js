@@ -32,7 +32,7 @@ export default class StatsMap {
 		const stats = this._countryStats.find(stat => stat.countryCode === isoCode);
 		return stats === undefined
 			? 'unknown'
-			: stats.count.toLocaleString();
+			: stats.count;
 	}
 
 	get minCount(){
