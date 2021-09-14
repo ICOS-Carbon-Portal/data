@@ -38,6 +38,8 @@ object StatsRouting extends DefaultJsonProtocol{
 		dlfrom: Option[Seq[String]],
 		originStations: Option[Seq[String]],
 		hashId: Option[String],
+		dlStart: Option[String],
+		dlEnd: Option[String],
 	){
 		def page = pageOpt.getOrElse(1)
 		def pagesize = Math.min(100000, pagesizeOpt.getOrElse(100))
@@ -57,7 +59,7 @@ object StatsRouting extends DefaultJsonProtocol{
 	case class Download(itemType: String, ts: Instant, hashId: String, ip: String, city: Option[String], countryCode: Option[String], geoJson: Option[PointPosition])
 	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
-	implicit val statsQueryParamsFormat = jsonFormat9(StatsQueryParams)
+	implicit val statsQueryParamsFormat = jsonFormat11(StatsQueryParams)
 	implicit val pointPositionFormat = jsonFormat2(PointPosition)
 	implicit val downloadsByCountryFormat = jsonFormat2(DownloadsByCountry)
 	implicit val downloadsPerWeekFormat = jsonFormat3(DownloadsPerWeek)
@@ -102,6 +104,8 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 				"dlfrom".as[List[String]].?,
 				"originStations".as[List[String]].?,
 				"hashId".as[String].?,
+				"dlStart".as[String].?,
+				"dlEnd".as[String].?
 			).as(StatsQueryParams.apply _){qp =>
 				onSuccess(fetcher(qp)){res =>
 					complete(res)

@@ -9,7 +9,8 @@ export const getCountryCodesLookup = () => {
 };
 
 export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId } = downloadStatsFilters;
+	console.log({downloadStatsFilters});
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId, dlStart, dlEnd } = downloadStatsFilters;
 
 	const specSpecs = specification && specification.length ? specification : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
@@ -17,14 +18,20 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 	const specs = combinedSpecs.length ? combinedSpecs : undefined;
 
 	return hashId && hashId.length
-		? { hashId: hashId[0] }
+		? { 
+			hashId: hashId[0],
+			dlStart,
+			dlEnd
+		}
 		: {
 			specs,
 			stations: stations && stations.length ? stations : undefined,
 			submitters: submitters && submitters.length ? submitters : undefined,
 			contributors: contributors && contributors.length ? contributors : undefined,
 			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
-			originStations: originStations && originStations.length ? originStations : undefined
+			originStations: originStations && originStations.length ? originStations : undefined,
+			dlStart,
+			dlEnd
 		};
 };
 
@@ -87,6 +94,7 @@ export const getAggregationResult = aggregationName => {
 };
 
 export const getDownloadStatsApi = (pageOpt, searchParams) => {
+	console.log({searchParams});
 	return postToApi('downloadStats', { ...{ pageOpt, pagesizeOpt: localConfig.pagesize }, ...searchParams })
 		.then(downloadStats => {
 			if (downloadStats.size === 0) {

@@ -10,6 +10,7 @@ export const actionTypes = {
 	DOWNLOAD_STATS_FETCHED: 'DOWNLOAD_STATS_FETCHED',
 	FILTERS: 'FILTERS',
 	STATS_UPDATE: 'STATS_UPDATE',
+	DOWNLOAD_DATES_UPDATE: 'DOWNLOAD_DATES_UPDATE',
 	STATS_UPDATED: 'STATS_UPDATED',
 	COUNTRIES_FETCHED: 'COUNTRIES_FETCHED',
 	DOWNLOAD_STATS_PER_DATE_FETCHED: 'DOWNLOAD_STATS_PER_DATE_FETCHED',
@@ -187,6 +188,7 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 	const page = newPage || 1;
 
 	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
+	console.log({downloadStats, specLevelLookup, dateUnit, searchParams});
 
 	Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
 		.then(([dlStats, countryStats]) => {
@@ -277,6 +279,17 @@ export const statsUpdate = (varName, values) => (dispatch) => {
 		type: actionTypes.STATS_UPDATE,
 		varName,
 		values
+	});
+
+	dispatch(fetchDownloadStats(1));
+};
+
+export const temporalFilterUpdate = (filterTemporal) => (dispatch) => {
+console.log({filterTemporal});
+
+	dispatch({
+		type: actionTypes.DOWNLOAD_DATES_UPDATE,
+		filterTemporal
 	});
 
 	dispatch(fetchDownloadStats(1));

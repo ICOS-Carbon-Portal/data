@@ -34,7 +34,8 @@ export default class Filter extends Component {
 
 	render() {
 		const { open } = this.state;
-		const { placeholder, filter, value } = this.props;
+		const { placeholder, filter, value, children } = this.props;
+
 
 		return (
 			<div className="row" key={filter.name} style={{ marginTop: 10, alignItems: 'center' }}>
@@ -42,17 +43,20 @@ export default class Filter extends Component {
 					<label style={{ marginBottom: 0, lineHeight: '34px' }}>{placeholder}</label>
 				</div>
 				<div className="col-md-8">
-					<Multiselect
-						open={open}
-						placeholder={placeholder}
-						valueField="id"
-						textField="label"
-						data={filter.values}
-						value={value}
-						filter="contains"
-						onChange={this.handleSelectionChange.bind(this, filter)}
-						onToggle={this.handleToggle.bind(this, value)}
-					/>
+					{children
+						? children
+						: <Multiselect
+							open={open}
+							placeholder={placeholder}
+							valueField="id"
+							textField="label"
+							data={filter.values}
+							value={value}
+							filter="contains"
+							onChange={this.handleSelectionChange.bind(this, filter)}
+							onToggle={this.handleToggle.bind(this, value)}
+						/>
+					}
 				</div>
 			</div>
 		);

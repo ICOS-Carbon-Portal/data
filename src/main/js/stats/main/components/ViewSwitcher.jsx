@@ -4,6 +4,7 @@ import DobjTable from './DobjTable.jsx';
 import Map from './Map.jsx';
 import Graph from './Graph.jsx';
 import CtrlPanel from './CtrlPanel.jsx';
+import {temporalFilterUpdate} from "../actions";
 
 
 const defaultTableHeaders = ["File Name", "Landing Page", "Count"];
@@ -33,6 +34,7 @@ const DownloadsView = props => {
 				<Filters
 					filters={props.filters}
 					updateTableWithFilter={props.updateTableWithFilter}
+					temporalFilterUpdate={props.temporalFilterUpdate}
 					resetFilters={props.resetFilters}
 					downloadStats={props.downloadStats}
 				/>

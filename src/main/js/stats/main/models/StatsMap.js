@@ -1,3 +1,4 @@
+import {undef} from "browserify-css/config/jshint";
 
 export default class StatsMap {
 	constructor(countryStats, countriesTopo, isReadyForMapUpdate){
@@ -28,7 +29,10 @@ export default class StatsMap {
 	}
 
 	getCount(isoCode) {
-		return this._countryStats.find(stat => stat.countryCode === isoCode).count;
+		const stats = this._countryStats.find(stat => stat.countryCode === isoCode);
+		return stats === undefined
+			? 'unknown'
+			: stats.count.toLocaleString();
 	}
 
 	get minCount(){
