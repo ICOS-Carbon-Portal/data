@@ -81,7 +81,9 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 
 	function stationFilter(): Filter{
 		const o = specTable.origins;
-		return o.getFilter('ecosystem') == null ? o.getFilter('station') : o.getColumnValuesFilter('station');
+		return o.getFilter('ecosystem') == null && o.getFilter('stationclass') == null
+			? o.getFilter('station')
+			: o.getColumnValuesFilter('station');
 	}
 
 	const pidFilterQparams: QueryParameters = {

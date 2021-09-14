@@ -149,6 +149,23 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
+
+	new HelpItem(
+		'stationclass',
+		'Specifies the degree of affinity of the research station (and its data) to ICOS',
+		undefined,
+		[{
+			label: 'ICOS',
+			comment: 'Proper ICOS station (ICOS class 1 or 2)'
+		},{
+			label: 'Associated',
+			comment: 'Associated with ICOS, but the data does not have the ICOS "quality stamp" (even if the data belongs to ICOS project)'
+		}, {
+			label: 'Other',
+			comment: 'Research stations unrelated to ICOS (or whose data present here are not ICOS data)'
+		}],
+		undefined
+	),
 	
 	new HelpItem(
 		'ecosystem',

@@ -72,18 +72,20 @@ where{
 	return { text };
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site" | "stationclass">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const siteQueries = config.envri === "SITES"
 		? `?site cpmeta:hasEcosystemType ?ecosystem .\n\t?site cpmeta:hasSpatialCoverage ?location .`
-		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)\n\tOPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}`;
+		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
+	OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
+	OPTIONAL {?boundStation cpmeta:hasStationClass ?stClassOpt}`;
 
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site
+select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -99,6 +101,11 @@ where{
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasAssociatedProject ?project .
 	${siteQueries}
+	BIND (IF(
+		bound(?stClassOpt),
+		IF(strstarts(?stClassOpt, "Ass"), "Associated", "ICOS"),
+		IF(bound(?station), "Other", ?stClassOpt)
+	) as ?stationclass)
 	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	}`;
 

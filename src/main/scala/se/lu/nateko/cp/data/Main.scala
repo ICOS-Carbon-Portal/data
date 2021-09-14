@@ -75,7 +75,9 @@ object Main extends App {
 	val route = handleExceptions(exceptionHandler){
 		pathEndOrSingleSlash{
 			downloadRouting.extractEnvri{envri =>
-				val urlHash = if(envri == Envri.ICOS) """#{"filterCategories"%3A{"project"%3A["icos"]%2C"level"%3A[2]}}""" else ""
+				val urlHash = if(envri == Envri.ICOS)
+					"""#{"filterCategories"%3A{"project"%3A["icos"]%2C"level"%3A[2]%2C"stationclass"%3A["ICOS"]}}"""
+				else ""
 				redirect(s"/portal/$urlHash", StatusCodes.Found)
 			}
 		} ~
