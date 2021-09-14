@@ -6,6 +6,7 @@ import ViewMode from "./models/ViewMode";
 import StatsMap from "./models/StatsMap";
 import {Radio} from "./models/RadioConfig";
 import localConfig from './config';
+import FilterTemporal from "./models/FilterTemporal";
 
 
 export const initState = {
@@ -118,12 +119,20 @@ export default function(state = initState, action){
 				}, {
 					name: "dataOriginCountries",
 					values: dataOriginCountryValues
+				}, {
+					name: "dlDates",
+					values: new FilterTemporal()
 				}]
 			});
 
 		case actionTypes.STATS_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withFilter(action.varName, action.values)
+			});
+
+		case actionTypes.DOWNLOAD_DATES_UPDATE:
+			return update({
+				downloadStats: state.downloadStats.withTemporalFilters(action.filterTemporal)
 			});
 
 		case actionTypes.SET_SPEC_LEVEL_LOOKUP:

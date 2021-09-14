@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { AnimatedToasters } from 'icos-cp-toaster';
-import { statsUpdate, requestPage, fetchDownloadStatsPerDateUnit, setViewMode, resetFilters } from '../actions';
+import {
+	statsUpdate,
+	requestPage,
+	fetchDownloadStatsPerDateUnit,
+	setViewMode,
+	resetFilters,
+	temporalFilterUpdate
+} from '../actions';
 import Radio from "../components/Radio.jsx";
 import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
 import config from '../config';
@@ -69,6 +76,7 @@ function stateToProps(state) {
 function dispatchToProps(dispatch) {
 	return {
 		updateTableWithFilter: (varName, values) => dispatch(statsUpdate(varName, values)),
+		temporalFilterUpdate: (filterTemporal) => dispatch(temporalFilterUpdate(filterTemporal)),
 		requestPage: page => dispatch(requestPage(page)),
 		fetchDownloadStatsPerDateUnit: dateUnit => dispatch(fetchDownloadStatsPerDateUnit(dateUnit)),
 		setViewMode: mode => dispatch(setViewMode(mode)),

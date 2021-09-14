@@ -38,6 +38,7 @@ import java.util.concurrent.ArrayBlockingQueue
 import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import java.sql.Date
 
 class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
 
@@ -239,7 +240,18 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		queryStr: String, params: Option[StatsQueryParams] = None
 	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
-			val functionParams = "(_page:=?, _pagesize:=?, _specs:=?, _stations:=?, _submitters:=?, _contributors:=?, _downloaded_from:=?, _origin_stations:=?, _hash_id:=?)"
+			val functionParams = """
+				|(_page:=?
+				|, _pagesize:=?
+				|, _specs:=?
+				|, _stations:=?
+				|, _submitters:=?
+				|, _contributors:=?
+				|, _downloaded_from:=?
+				|, _origin_stations:=?
+				|, _hash_id:=?
+				|, _date_from:=?
+				|, _date_to:=?)""".stripMargin
 			val fullQueryString = if(params.isEmpty) queryStr else queryStr + functionParams
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
@@ -254,6 +266,11 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				case None => preparedSt.setNull(idx, Types.VARCHAR)
 			}
 
+			def initDate(idx: Int, str: Option[String]): Unit = str match {
+				case Some(value) => preparedSt.setDate(idx, Date.valueOf(value))
+				case None => preparedSt.setNull(idx, Types.DATE)
+			}
+
 			params.foreach{qp =>
 				preparedSt.setInt(	1, qp.page)
 				preparedSt.setInt(	2, qp.pagesize)
@@ -264,6 +281,8 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				initArray(        	7, qp.dlfrom)
 				initArray(        	8, qp.originStations)
 				initString(        	9, qp.hashId)
+				initDate(        	10, qp.dlStart)
+				initDate(        	11, qp.dlEnd)
 			}
 
 			consumeResultSet(preparedSt.executeQuery())(parser)
