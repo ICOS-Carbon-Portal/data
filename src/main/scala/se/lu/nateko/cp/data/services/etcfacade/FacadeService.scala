@@ -140,7 +140,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			val uploaded = getZippableDailyECs(uploadedFolder, daily)
 			val fresh = getZippableDailyECs(getStationFolder(fn.station), daily)
 
-			val filePackage = fresh ++ uploaded
+			val filePackage = (fresh ++ uploaded).distinctBy(_._2)
 			val isFullPackage: Boolean = packageIsComplete(filePackage)
 
 			if(isFullPackage && uploaded.isEmpty || forceEc && isFromBeforeToday(daily)){
