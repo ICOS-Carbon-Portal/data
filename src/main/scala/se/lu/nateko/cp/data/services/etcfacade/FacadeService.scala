@@ -177,10 +177,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		.map(getUploadMeta(fn, _))
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
 		.transform(identity, err => {
+			val target = getFilePath(fn)
 			//file can be a temp file outside the staging folder. If not, the next line is a noop.
-			Files.move(file, getFilePath(fn), REPLACE_EXISTING)
+			if(!Files.isSameFile(file, target)) Files.move(file, target, REPLACE_EXISTING)
 			new Exception(s"ETC upload registration with meta service failed: ${err.getMessage}", err)
-			err
 		})
 		.flatMap{etcMeta =>
 			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
