@@ -55,6 +55,8 @@ INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.253', NULL, 'Internal download from ICOS partner');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('188.40.107.37', 'static.37.107.40.188.clients.your-server.de', 'Unknown German user');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('94.130.9.183', 'mail.waldvogel.name', 'Unknown German user');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('114.119.128.0/18', NULL, 'Petalbot');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('140.172.0.0/16', NULL, 'NOAA');
 
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
@@ -77,7 +79,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_country_mv AS
 		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = downloads.hash_id) AS contributors
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY 2, downloads.country_code, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_country_mv_id ON public.downloads_country_mv (id);
 CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_spec ON public.downloads_country_mv USING HASH(spec);
@@ -101,7 +103,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_timebins_mv AS
 		(SELECT jsonb_agg(contributor) FROM contributors WHERE contributors.hash_id = downloads.hash_id) AS contributors
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY country_code, year_start, month_start, week_start, day_date, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_timebins_mv_id ON public.downloads_timebins_mv (id);
 CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_country_code ON public.downloads_timebins_mv USING HASH(country_code);
@@ -130,7 +132,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_mv AS
 			hash_id,
 			country_code
 		FROM downloads
-		WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+		WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 		GROUP BY hash_id, day_date, country_code
 		) dl
 	INNER JOIN dobjs ON dl.hash_id = dobjs.hash_id;
@@ -149,7 +151,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_full_mv AS
 		downloads.hash_id
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY downloads.hash_id, day_date
 	ORDER BY count DESC;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_full_mv_hash_id_day_date ON public.dlstats_full_mv (hash_id, day_date);
@@ -161,7 +163,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS specifications_mv AS
 		dobjs.spec
 	FROM dobjs
 		INNER JOIN downloads ON dobjs.hash_id = downloads.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY dobjs.spec;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_specifications_mv ON public.specifications_mv (spec);
 
@@ -172,7 +174,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS contributors_mv AS
 		contributors.contributor
 	FROM downloads
 		INNER JOIN contributors ON downloads.hash_id = contributors.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY contributors.contributor;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_contributors_mv ON public.contributors_mv (contributor);
 
@@ -183,7 +185,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS stations_mv AS
 		dobjs.station
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip) AND dobjs.station IS NOT NULL
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist)) AND dobjs.station IS NOT NULL
 	GROUP BY dobjs.station;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_stations_mv ON public.stations_mv (station);
 
@@ -194,7 +196,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS submitters_mv AS
 		dobjs.submitter
 	FROM downloads
 		INNER JOIN dobjs ON downloads.hash_id = dobjs.hash_id
-	WHERE NOT EXISTS (SELECT 1 FROM downloads_graylist WHERE downloads_graylist.ip = downloads.ip)
+	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY dobjs.submitter;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_submitters_mv ON public.submitters_mv (submitter);
 

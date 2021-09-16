@@ -9,7 +9,6 @@ export const getCountryCodesLookup = () => {
 };
 
 export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
-	console.log({downloadStatsFilters});
 	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId, dlStart, dlEnd } = downloadStatsFilters;
 
 	const specSpecs = specification && specification.length ? specification : [];
@@ -94,7 +93,6 @@ export const getAggregationResult = aggregationName => {
 };
 
 export const getDownloadStatsApi = (pageOpt, searchParams) => {
-	console.log({searchParams});
 	return postToApi('downloadStats', { ...{ pageOpt, pagesizeOpt: localConfig.pagesize }, ...searchParams })
 		.then(downloadStats => {
 			if (downloadStats.size === 0) {

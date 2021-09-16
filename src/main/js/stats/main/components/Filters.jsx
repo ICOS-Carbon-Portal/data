@@ -53,7 +53,6 @@ const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFil
 			name: 'dlDates',
 			values: downloadStats.temporalFilters
 		}
-		console.log({temporalFilters, filters, downloadStats});
 
 		return (
 			<div>

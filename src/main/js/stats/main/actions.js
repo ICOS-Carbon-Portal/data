@@ -188,7 +188,6 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 	const page = newPage || 1;
 
 	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
-	console.log({downloadStats, specLevelLookup, dateUnit, searchParams});
 
 	Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
 		.then(([dlStats, countryStats]) => {
@@ -285,8 +284,6 @@ export const statsUpdate = (varName, values) => (dispatch) => {
 };
 
 export const temporalFilterUpdate = (filterTemporal) => (dispatch) => {
-console.log({filterTemporal});
-
 	dispatch({
 		type: actionTypes.DOWNLOAD_DATES_UPDATE,
 		filterTemporal
