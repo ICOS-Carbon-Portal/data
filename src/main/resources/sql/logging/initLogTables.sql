@@ -49,14 +49,14 @@ CREATE TABLE IF NOT EXISTS public.downloads_graylist (
 	reason text NULL
 );
 TRUNCATE TABLE public.downloads_graylist;
-INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.206.131.194', 'rx1-rm2-ru-unituscia.rm2.garr.net', 'Internal download from ICOS partner');
-INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.87', NULL, 'Internal download from ICOS partner');
-INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.215', NULL, 'Internal download from ICOS partner');
-INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.253', NULL, 'Internal download from ICOS partner');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.206.131.194', 'rx1-rm2-ru-unituscia.rm2.garr.net', 'Internal download from ETC');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.87', NULL, 'Internal download from ETC');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.215', NULL, 'Internal download from ETC');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.253', NULL, 'Internal download from ETC');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('188.40.107.37', 'static.37.107.40.188.clients.your-server.de', 'Unknown German user');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('94.130.9.183', 'mail.waldvogel.name', 'Unknown German user');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('114.119.128.0/18', NULL, 'Petalbot');
-INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('140.172.0.0/16', NULL, 'NOAA');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('140.172.0.0/16', NULL, 'NOAA downloads for their own distribution');
 
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
