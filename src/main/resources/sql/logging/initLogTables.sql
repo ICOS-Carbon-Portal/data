@@ -798,7 +798,7 @@ AS $$
 -- Returns 1 if record should NOT be included in download statistics
 SELECT 1
 FROM downloads d
-WHERE AGE(_ts, d.ts) > INTERVAL '0' AND AGE(_ts, d.ts) <= INTERVAL '1' MINUTE AND _ip = d.ip AND _hash_id = d.hash_id LIMIT 1;
+WHERE AGE(_ts, d.ts) <= INTERVAL '1' MINUTE AND _ip = d.ip AND _hash_id = d.hash_id LIMIT 1;
 
 $$;
 
