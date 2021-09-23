@@ -5,9 +5,7 @@ Data service for:
 - uploading and ingesting ICOS data objects for storage and PID assignment
 - searching, fetching data objects
 - previewing the datasets and their metadata
-- the above 3 for the [WDCGG datasets](https://data.icos-cp.eu/portal/)
 - viewing lat/lon geo grid [NetCDF data](https://data.icos-cp.eu/netcdf/)
-- visualizing the results of [STILT modeling](https://data.icos-cp.eu/stilt/)
 
 ---
 
