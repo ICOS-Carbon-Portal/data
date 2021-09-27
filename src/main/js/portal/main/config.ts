@@ -39,7 +39,7 @@ const featureFlags = {
 		shortenDataTypeLabel: true,
 		displayStationInExtendedInfo: true,
 		displayFileNameInExtendedInfo: false,
-		displayDataLevel: false
+		displayDataLevel: true
 	}
 }
 
@@ -192,7 +192,7 @@ export const filters: IFilterCategories = {
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
-		{panelTitle: "Data types", filterList: ['type', 'keywordFilter']},
+		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level']},
 		{panelTitle: "Measurements", filterList: ['valType', 'variable']},
 		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
 	]
