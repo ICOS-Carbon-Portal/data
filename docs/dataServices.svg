@@ -290,32 +290,31 @@
            id="tspan135665">previews</tspan></text>
     </g>
     <g
-       id="g137872"
-       transform="translate(68.79167,15.875)">
+       id="g151878">
       <rect
-         style="fill:#ace9bb;fill-opacity:1;stroke:#000000;stroke-width:0.346465;stroke-miterlimit:4;stroke-dasharray:none"
+         style="fill:#f1cdea;fill-opacity:1;stroke:#000000;stroke-width:0.346465;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect8949"
          width="73.130821"
          height="29.286503"
-         x="-76.046577"
-         y="92.069054"
+         x="-7.2549076"
+         y="107.94405"
          rx="4.99999"
          ry="4.99999" />
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:7.76111px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
-         x="-40.388878"
-         y="105.67583"
+         x="28.402792"
+         y="121.55083"
          id="text11941"><tspan
            sodipodi:role="line"
            id="tspan11939"
            style="font-size:7.76111px;text-align:center;text-anchor:middle;stroke-width:0.264583"
-           x="-40.388878"
-           y="105.67583">EUDAT/B2SAFE</tspan><tspan
+           x="28.402792"
+           y="121.55083">EUDAT/B2SAFE</tspan><tspan
            sodipodi:role="line"
            style="font-size:7.76111px;text-align:center;text-anchor:middle;stroke-width:0.264583"
-           x="-40.388878"
-           y="115.37721"
+           x="28.402792"
+           y="131.25221"
            id="tspan135808">client</tspan></text>
     </g>
     <g
@@ -462,7 +461,6 @@
        id="path138078"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0"
-       inkscape:connection-start="#g12820"
-       inkscape:connection-end="#g137872" />
+       inkscape:connection-start="#g12820" />
   </g>
 </svg>
