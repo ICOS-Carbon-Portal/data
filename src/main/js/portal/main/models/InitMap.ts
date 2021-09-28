@@ -53,6 +53,7 @@ export type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlS
 
 const countryBordersId = 'countryBorders';
 const olMapSettings = config.olMapSettings;
+const isIncludedStation = 'isIncluded';
 
 export default class InitMap {
 	private olwrapper: OLWrapper;
@@ -199,8 +200,8 @@ export default class InitMap {
 
 	updatePoints(includedStationUris: Value[], allSpecTableStationUris: Value[]) {
 		const stationUrisDiff = difference(allSpecTableStationUris, includedStationUris);
-		const excludedStations = createPointData(stationUrisDiff, this.stationFilterControl.stationPosLookup);
-		const includedStations = createPointData(includedStationUris, this.stationFilterControl.stationPosLookup);
+		const excludedStations = createPointData(stationUrisDiff, this.stationFilterControl.stationPosLookup, {[isIncludedStation]: false});
+		const includedStations = createPointData(includedStationUris, this.stationFilterControl.stationPosLookup, {[isIncludedStation]: true});
 
 		const excludedStationsToggle: LayerWrapper = this.getLayerWrapper({
 			id: 'excludedStations',
@@ -388,7 +389,7 @@ export default class InitMap {
 
 				const feature = features.getArray()[0];
 				const name = feature.get('stationLbl');
-				const isIncluded = !!feature.get('zoomToLayerExtent');
+				const isIncluded = feature.get(isIncludedStation);
 
 				popup.addContent(`${isIncluded ? 'Included' : 'Excluded'} station`, {
 					Name: name
