@@ -48,7 +48,7 @@ class CsvFetchRouting(
 					else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for CSV downloads")
 				}
 			} ~
-			complete(StatusCodes.Unauthorized -> "Carbon/data portal login is required for CSV downloads")
+			complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for CSV downloads")
 		}
 	}
 
