@@ -59,21 +59,19 @@ export default class HelpSection extends Component<HelpProps, HelpState>{
 		return (
 			<div style={{overflow:'hidden'}}>
 				<SlideIn isOpen={isOpen} width={width}>
-					<div className="panel panel-default" style={{marginBottom: 0, width}}>
+					<div className="card" style={{marginBottom: 0, width}}>
 
-						<div className="panel-heading">
-							<h3 className="panel-title">
-								{helpItem?.header}
-								<span
-									title="Close"
-									className="glyphicon glyphicon-remove-sign text-info"
-									style={closeBtnStyle}
-									onClick={this.onCloseBtnClick.bind(this)}
-								/>
-							</h3>
-						</div>
+						<h5 className="card-header">
+							{helpItem?.header}
+							<span
+								title="Close"
+								className="fas fa-times-circle text-primary"
+								style={closeBtnStyle}
+								onClick={this.onCloseBtnClick.bind(this)}
+							/>
+						</h5>
 
-						<div className="panel-body" style={panelBodyStyle}>
+						<div className="card-body" style={panelBodyStyle}>
 							<HelpText helpItem={helpItem} />
 						</div>
 					</div>

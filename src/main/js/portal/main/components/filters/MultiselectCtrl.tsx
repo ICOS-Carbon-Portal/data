@@ -54,7 +54,7 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 	return (
 		<div className="row" key={name} style={{marginTop: 10}}>
 			<div className="col-md-12">
-				<label style={{marginBottom: 0}}>{placeholders[config.envri][name]}</label>
+				<label>{placeholders[config.envri][name]}</label>
 
 				<HelpButton
 					name={name}

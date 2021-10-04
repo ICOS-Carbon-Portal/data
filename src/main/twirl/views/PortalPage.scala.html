@@ -5,8 +5,6 @@
 @(config: PublicAuthConfig)(implicit envri: Envri)
 @template{
 	<link rel="stylesheet" href="../portal/css/portal.css">
-	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/fontawesome/5.15.3/css/fontawesome.min.css">
-	<link rel="stylesheet" href="https://static.icos-cp.eu/constant/fontawesome/5.15.3/css/solid.min.css">
 	<style type="text/css">
 		@if(envri == Envri.SITES){
 			.sites-page {
@@ -19,6 +17,9 @@
 	<script src="/portal/portal.js"></script>
 }
 
+@bootstrapVersion = @{Some(5)}
+
 @template = @{
-if(envri == Envri.SITES) SitesPage("SITES data search") _ else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.authHost)) _
+if(envri == Envri.SITES) SitesPage("SITES data search", bootstrapVersion = bootstrapVersion) _
+else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.authHost), bootstrapVersion = bootstrapVersion) _
 }

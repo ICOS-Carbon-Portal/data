@@ -44,7 +44,7 @@ export const Stats = L.Control.extend({
 		container.setAttribute("style", this.options.style);
 		DomEvent.disableClickPropagation(container);
 
-		const iconElement = DomUtil.create('a', 'glyphicon glyphicon-info-sign', container);
+		const iconElement = DomUtil.create('a', 'fas fa-info-circle', container);
 		iconElement.setAttribute("role", "button");
 		iconElement.setAttribute("id", statIconId);
 		iconElement.setAttribute("title", "View statistics");

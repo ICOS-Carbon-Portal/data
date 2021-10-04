@@ -57,10 +57,10 @@ export default class Dropdown extends Component<Props, State>{
 	render(){
 		const {dropdownOpen} = this.state;
 		const {isEnabled, isSorter, selectedItemKey, isAscending, lookup, defaultLbl} = this.props;
-		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
+		const menuCls = dropdownOpen ? 'dropdown-menu show' : 'dropdown-menu';
 
 		return (
-			<span ref={span => this.node = span} className={nodeClass} style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
+			<span ref={span => this.node = span} className="dropdown" style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
 				{
 					isSorter
 						? <SortButton
@@ -79,14 +79,12 @@ export default class Dropdown extends Component<Props, State>{
 						/>
 				}
 
-				<ul className="dropdown-menu">{
+				<ul className={menuCls}>{
 					Object.keys(lookup).map((key, idx) => {
-						const glyphCls = key == selectedItemKey ? 'glyphicon glyphicon-sort' : '';
+						const glyphCls = key == selectedItemKey ? 'fas fa-sort' : '';
 						return (
-							<li key={'ddl' + idx}>
-								<a onClick={this.onDropDownItemClick.bind(this, key)} style={{ cursor: 'pointer' }}>
-									<span className={glyphCls} style={{ display: 'inline-block', width: 14, margin: '0 5px 0 -5px' }}/> {lookup[key]}
-								</a>
+							<li key={'ddl' + idx} className="dropdown-item" onClick={this.onDropDownItemClick.bind(this, key)} style={{ cursor: 'pointer' }}>
+								<span className={glyphCls} style={{ display: 'inline-block', width: 14, margin: '5px 5px 0 -5px' }}/> {lookup[key]}
 							</li>
 						);
 					})
@@ -101,8 +99,8 @@ type SortButtonProps = Pick<Props, 'selectedItemKey' | 'isAscending' | 'lookup' 
 const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by' }: SortButtonProps) => {
 	const glyphCls = selectedItemKey
 		? isAscending
-			? 'glyphicon glyphicon-sort-by-attributes'
-			: 'glyphicon glyphicon-sort-by-attributes-alt'
+			? 'fas fa-sort-amount-down'
+			: 'fas fa-sort-amount-down-alt'
 		: '';
 
 	const lbl = selectedItemKey
@@ -110,7 +108,7 @@ const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, default
 		: defaultLbl;
 
 	return (
-		<button className="btn btn-default dropdown-toggle" type="button" onClick={clickAction}>
+		<button className="btn btn-outline-secondary dropdown-toggle bg-white text-dark" type="button" onClick={clickAction}>
 			<span><span className={glyphCls}/> {lbl}</span> <span className="caret"/>
 		</button>
 	);
@@ -123,18 +121,15 @@ const Button = ({ isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 
 		const lbl = selectedItemKey
 			? lookup[selectedItemKey]
 			: defaultLbl;
-		const btnCls = isEnabled
-			? 'btn btn-default dropdown-toggle'
-			: 'btn btn-default dropdown-toggle disabled';
 
 		return (
-			<button className={btnCls} type="button" onClick={clickAction}>
+			<button className="btn btn-outline-secondary dropdown-toggle bg-white text-dark" type="button" onClick={clickAction}>
 				<span>{lbl}</span> <span className="caret" />
 			</button>
 		);
 	} else {
 		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button">
+			<button className="btn btn-outline-secondary dropdown-toggle disabled" type="button">
 				<span>{defaultLbl}</span> <span className="caret"/>
 			</button>
 		);

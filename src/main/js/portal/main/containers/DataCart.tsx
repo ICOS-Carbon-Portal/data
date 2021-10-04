@@ -66,18 +66,18 @@ class DataCart extends Component<DataCartProps> {
 							/>
 						</div>
 						<div className="col-sm-4 col-lg-3">
-							<div className="panel panel-default">
-								<div className="panel-heading">
+							<div className="card">
+								<div className="card-header">
 									{downloadTitle}
 								</div>
-								<div className="panel-body text-center">
+								<div className="card-body text-center">
 
 									<form action="/objects" method="post">
 										<input type="hidden" name="fileName" value={fileName} />
 										<input type="hidden" name="ids" value={hashes} />
 
 										<button className="btn btn-primary" style={{marginBottom: 15, whiteSpace: 'normal'}}>
-											<span className="glyphicon glyphicon-download-alt" style={{marginRight:9}} />Download
+											<span className="fas fa-download" style={{marginRight:9}} />Download
 										</button>
 									</form>
 

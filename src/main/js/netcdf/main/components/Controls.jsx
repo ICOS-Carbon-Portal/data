@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import Selector from './Selector.jsx';
 import DropdownColors from "./DropdownColors";
 
+const btnCls = 'btn btn-outline-secondary';
+const btnIconStyle = {fontSize: '150%', margin: 0, padding: 0};
+
 export default class Controls extends Component {
 	constructor(props){
 		super(props);
@@ -20,12 +23,12 @@ export default class Controls extends Component {
 		const controls = props.controls;
 
 		const elevationsStyle = controls.elevations.selected ? 'inline' : 'none';
-		const playClass = "glyphicon glyphicon-" + (props.playingMovie ? 'pause' : 'play');
+		const playClass = `fas fa-${props.playingMovie ? 'pause' : 'play'}-circle`;
 		const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
 
 		const rangeFilterInputsBtnCls = props.isRangeFilterInputsActive
-			? 'glyphicon glyphicon-filter text-primary'
-			: 'glyphicon glyphicon-filter';
+			? 'fas fa-filter text-primary'
+			: 'fas fa-filter';
 
 		const toNext = () => props.increment(1);
 		const toPrevious = () => props.increment(-1);
@@ -49,14 +52,14 @@ export default class Controls extends Component {
 				<div className="col-md-1" style={{minWidth: 120}}>
 					<div style={{fontWeight: 'bold'}}>Playback:</div>
 					<div className="btn-group" style={{minWidth: 120}}>
-						<button id="dateRev" className="btn btn-default" title="Reverse one time step" onClick={toPrevious}>
-							<span className="glyphicon glyphicon-triangle-left"></span>
+						<button id="dateRev" className={btnCls} style={btnIconStyle} title="Reverse one time step" onClick={toPrevious}>
+							<span className="fas fa-caret-left" />
 						</button>
-						<button id="datePlayPause" className="btn btn-default" title={playTitle} onClick={props.playPauseMovie}>
-							<span className={playClass}></span>
+						<button id="datePlayPause" className={btnCls} style={btnIconStyle} title={playTitle} onClick={props.playPauseMovie}>
+							<span className={playClass} />
 						</button>
-						<button id="dateAdv" className="btn btn-default" title="Advance one time step" onClick={toNext}>
-							<span className="glyphicon glyphicon-triangle-right"></span>
+						<button id="dateAdv" className={btnCls} style={btnIconStyle} title="Advance one time step" onClick={toNext}>
+							<span className="fas fa-caret-right"/>
 						</button>
 					</div>
 				</div>
@@ -80,7 +83,7 @@ export default class Controls extends Component {
 
 				<div className="col-md-1">
 					<div style={{fontWeight: 'bold'}}>Range:</div>
-					<button className="btn btn-default" onClick={props.handleRangeFilterInputsChange}>
+					<button className={btnCls} onClick={props.handleRangeFilterInputsChange}>
 						<span className={rangeFilterInputsBtnCls} />
 					</button>
 				</div>

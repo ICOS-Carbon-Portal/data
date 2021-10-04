@@ -157,7 +157,7 @@ class Metadata extends Component<MetadataProps> {
 												return <a href={getKeywordHash(keyword)}
 													key={'keyword_' + i}
 													onClick={this.handleKeywordSearch.bind(this, keyword)}
-													className="label label-keyword"
+													className="badge rounded-pill bg-secondary text-light fs-6"
 													style={{marginRight: 5}}>
 														{keyword}
 													</a>

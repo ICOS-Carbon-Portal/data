@@ -202,7 +202,7 @@ export default class Map extends Component<OurProps, OurState> {
 		return (
 			<div id="content" className="container-fluid">
 				{!window.frameElement && props.title &&
-					<h1>{props.title}</h1>
+					<h2>{props.title}</h2>
 				}
 
 				<div id="map-container">

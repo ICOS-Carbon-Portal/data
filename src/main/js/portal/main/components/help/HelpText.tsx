@@ -39,7 +39,7 @@ function ListItem(props: {item: HelpStorageListEntry}) {
 
 	const link = item.webpage
 		? <a href={item.webpage} title="More information" target="_blank">
-			<span className="glyphicon glyphicon-share" style={{marginLeft:15}} />
+			<span className="fas fa-share-square" style={{marginLeft:15}} />
 		</a>
 		: null;
 

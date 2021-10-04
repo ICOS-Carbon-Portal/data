@@ -54,8 +54,8 @@ export default class Tabs extends Component<Props>{
 			<div>
 				<ul className="nav nav-tabs">{
 					this.tabState.map(tab =>
-						<li key={'tabHeader' + tab.id} className={tab.isActive ? 'active' : ''}>
-							<a style={{cursor:'pointer'}} onClick={this.onTabClick.bind(this, tab.id)}>{
+						<li key={'tabHeader' + tab.id} className={'nav-item'}>
+							<a style={{cursor: 'pointer'}} className={tab.isActive ? 'nav-link active' : 'nav-link'} onClick={this.onTabClick.bind(this, tab.id)}>{
 								tab.tabHeader
 							}</a>
 						</li>

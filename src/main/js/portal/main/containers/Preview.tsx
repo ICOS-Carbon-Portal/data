@@ -97,29 +97,27 @@ class Preview extends Component<OurProps, OurState> {
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 
 		return (
-			<div>
+			<>
 				{preview
 					? <div className="row" style={{ position: 'relative' }}>
-						{HelpSection}
+						<div style={{ display:'inline-block' }}>
+							{HelpSection}
+						</div>
 
-						<div className="panel panel-default">
-							<div className="panel-heading">
-								<span className="panel-title">
-									{preview.items.map((item: CartItem) => {
-										return (
-											<span key={item.dobj} style={{marginRight: 10}}>
-												<span style={{marginRight: 10}}>
-													{item.itemName}
-												</span>
-												<span onClick={this.handleViewMetadata.bind(this, item.dobj)} style={{cursor: 'pointer'}} className="glyphicon glyphicon-info-sign" />
-											</span>
-										);
-									})}
-								</span>
+						<div className="card rounded-0" style={{padding:0}}>
+							<div className="card-header">
+								{preview.items.map((item: CartItem) => (
+									<span key={item.dobj} style={{marginRight: 10}}>
+										<span style={{marginRight: 10}}>
+											{item.itemName}
+										</span>
+										<span onClick={this.handleViewMetadata.bind(this, item.dobj)} style={{cursor: 'pointer'}} className="fas fa-info-circle fs-5" />
+									</span>
+								))}
 							</div>
 
-							<div className="panel-body">
-								<div className="row">
+							<div className="card-body">
+								<div className="row mb-3">
 									<div className="col-sm-10">
 										<UrlPresenters previewType={previewType} preview={preview} tableFormat={tableFormat} iframeSrc={iframeSrc} />
 									</div>
@@ -145,7 +143,7 @@ class Preview extends Component<OurProps, OurState> {
 						</div>
 					</div>
 					: null
-				}</div>
+				}</>
 		);
 	}
 }
@@ -211,7 +209,7 @@ const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HT
 			? "This type of preview is not yet implemented"
 			: "Fetching data for preview...";
 
-		return <div className="panel-body">{msg}</div>;
+		return <div className="card-body">{msg}</div>;
 	}
 };
 

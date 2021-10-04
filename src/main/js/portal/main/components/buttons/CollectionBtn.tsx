@@ -14,7 +14,7 @@ const defaultIconStyle: CSSProperties = {
 }
 
 export default function CollectionBtn({ url, openInNewTab = true, iconStyle = {}, title }: Props) {
-	const icon = <span className="glyphicon glyphicon-folder-open" style={{ ...defaultIconStyle, ...iconStyle }} title={title ?? "Part of collection"} />;
+	const icon = <span className="fas fa-folder-open" style={{ ...defaultIconStyle, ...iconStyle }} title={title ?? "Part of collection"} />;
 
 	if (url === undefined)
 		return icon;

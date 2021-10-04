@@ -30,7 +30,7 @@ const PreviewBtn: React.FunctionComponent<Props> = ({ datasets, previewTypes, is
 	};
 
 	const [enabled, title] = isPreviewEnabled(datasets, previewTypes, isL3Previewable);
-	const className = "btn btn-default " + (enabled ? "" : "disabled");
+	const className = "btn btn-outline-secondary " + (enabled ? "" : "disabled");
 	const btnStyle: CSSProperties = title.length ? { pointerEvents: 'auto' } : {};
 
 	return (

@@ -47,7 +47,7 @@ class SearchResultRegular extends Component<OurProps> {
 		const isL3Previewable = previewLookup ? checkedObjects.map(obj => previewLookup.hasVarInfo(obj.dobj) ?? false) : [];
 
 		return (
-			<div className="panel panel-default">
+			<div className="card rounded-0">
 				<Paging
 					searchOptions={searchOptions}
 					type="header"
@@ -57,7 +57,7 @@ class SearchResultRegular extends Component<OurProps> {
 					exportQuery={exportQuery}
 				/>
 
-				<div className="panel-body">
+				<div className="card-body">
 
 					<div className="panel-srollable-controls clearfix">
 						<CheckAllBoxes

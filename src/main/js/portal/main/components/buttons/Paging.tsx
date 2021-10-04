@@ -29,23 +29,24 @@ export const Paging = (props: Paging) => {
 
 	if (type === "header") {
 		return (
-			<div className="panel-heading">
-				<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
+			<div className="card-header">
+				<span className="align-middle">
+					<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
-				<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
-
-				<div style={{display: 'inline', float: 'right', position: 'relative', top: -3}}>
-					<StepButton direction="backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
-					<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
+					<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
+				</span>
+				<div className="float-end">
+					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
+					<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
 				</div>
 			</div>
 		);
 	} else if (type === "footer") {
 		return (
-			<div className="panel-footer">
+			<div className="card-footer">
 				<div style={{textAlign: 'right', lineHeight: '1rem'}}>
-					<StepButton direction="backward" enabled={offset > 0} onStep={() => {window.scrollTo(0, 0);requestStep(-1)}} />
-					<StepButton direction="forward" enabled={isForwardEnabled} onStep={() => {window.scrollTo(0, 0);requestStep(1)}} />
+					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => {window.scrollTo(0, 0);requestStep(-1)}} />
+					<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => {window.scrollTo(0, 0);requestStep(1)}} />
 				</div>
 			</div>
 		);
@@ -69,5 +70,5 @@ const CountHeader = ({objCount, to, offset, showDeprecated}: CountHeader) => {
 		? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount.toLocaleString()}${deprecatedTxt}`
 		: <span>&nbsp;</span>;
 
-	return <h3 className="panel-title" style={{display:'inline'}}>{countTxt}</h3>;
+	return <h5 style={{display:'inline'}}>{countTxt}</h5>;
 };

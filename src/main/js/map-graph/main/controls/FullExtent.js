@@ -23,7 +23,7 @@ export const FullExtent = L.Control.extend({
 		container.setAttribute("class", "leaflet-bar leaflet-control");
 		container.setAttribute("style", this.options.style);
 
-		const img = L.DomUtil.create('a', "glyphicon glyphicon-globe", container);
+		const img = L.DomUtil.create('a', "fas fa-globe", container);
 		img.setAttribute("role", "button");
 		img.setAttribute("title", "Zoom to full extent");
 

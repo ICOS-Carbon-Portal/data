@@ -1,0 +1,22 @@
+@import se.lu.nateko.cp.viewscore.ImportVersions._
+
+@(title: String)(customHeader: Html)(body: Html)
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="//static.icos-cp.eu/css/bootstrap/@{bootstrapCSS}/icos-bootstrap.css">
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/fontawesome/@{fontAwesome}/css/fontawesome.min.css">
+	<link rel="stylesheet" href="//static.icos-cp.eu/constant/fontawesome/@{fontAwesome}/css/solid.min.css">
+	<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png"/>
+
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	@customHeader
+
+	<title>@title</title>
+
+</head>
+<body>
+@body
+</body>

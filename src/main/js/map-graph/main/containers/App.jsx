@@ -56,7 +56,7 @@ export class App extends Component {
 		const {pointReducer, fromGraph, fromMap, row} = this.state;
 
 		return (
-			<div className="container-fluid" style={{margin: 10}}>
+			<div className="container-fluid">
 				<AnimatedToasters
 					autoCloseDelay={5000}
 					toasterData={toasterData}
@@ -65,7 +65,7 @@ export class App extends Component {
 
 				<div className="row">
 					<div className="col-md-9">
-						<div style={{position:'absolute', top:5, left:70, zIndex:999}}>
+						<div style={{position:'absolute', top:5, left:65, zIndex:999}}>
 							<Radio
 								horizontal={true}
 								containerStyle={{margin:'0 0 10px 0'}}

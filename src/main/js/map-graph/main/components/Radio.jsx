@@ -39,7 +39,7 @@ export default class Radio extends Component {
 		const {radios} = this.state;
 
 		return (
-			<div style={containerStyle}>
+			<div className="d-flex align-items-center" style={containerStyle}>
 				{radios.length
 					? radios.map((r, i) =>
 						<RadioCtrl
@@ -65,11 +65,11 @@ const RadioCtrl = ({horizontal, txt, isActive, action}) => {
 
 	return (
 		<span style={rootStyle} onClick={action}>
-			<div className="btn-group" data-toggle="buttons">
-				<label className="btn btn-default">
-					<span className="glyphicon glyphicon-ok" style={tickStyle} />
-				</label>
-				<span className="input-group-addon" style={{height:34, width:'auto'}}>{txt}</span>
+			<div className="input-group" data-toggle="buttons">
+				<span className="btn btn-outline-secondary text-secondary bg-white">
+					<span className="fas fa-check" style={tickStyle} />
+				</span>
+				<span className="input-group-text">{txt}</span>
 			</div>
 		</span>
 	);

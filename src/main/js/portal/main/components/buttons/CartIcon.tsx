@@ -34,19 +34,19 @@ export default class CartIcon extends Component<Props> {
 				? <span
 					style={styles.disabledClickIcon}
 					title="Data level 0 is available upon request"
-					className="glyphicon glyphicon-plus-sign text-muted"
+					className="fas fa-plus-circle text-muted"
 				/>
 				: isAddedToCart
 					? <span
 						style={styles.clickIcon}
 						title="Remove from data cart"
-						className="glyphicon glyphicon-minus-sign text-danger"
+						className="fas fa-minus-circle text-danger"
 						onClick={this.handleRemoveFromCartClick.bind(this)}
 					/>
 					: <span
 						style={styles.clickIcon}
 						title="Add to data cart"
-						className="glyphicon glyphicon-plus-sign text-primary"
+						className="fas fa-plus-circle text-primary"
 						onClick={this.handleAddToCartClick.bind(this)}
 					/>
 			}</span>

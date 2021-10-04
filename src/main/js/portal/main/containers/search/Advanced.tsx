@@ -58,7 +58,7 @@ const QueryList = ({ getPublicQuery }: { getPublicQuery: (queryName: QueryName) 
 				const { label, comment } = publicQueries[queryName];
 				return (
 					<li key={idx} style={{ marginTop: 7 }}>
-						<span className="glyphicon glyphicon-share" style={{ marginRight: 5 }} />
+						<span className="fas fa-share-square" style={{ marginRight: 5 }} />
 						<ToSparqlClient queryName={queryName} getPublicQuery={getPublicQuery} label={label} comment={comment} />
 					</li>
 				);

@@ -115,57 +115,53 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
+		if (!preview)
+			return null;
+
 		return (
-			<div>
-				{preview
-					? <div>
-
-						<div className="panel-body" style={{paddingTop: 0}}>
-							<div className="row">
-								<div className="col-md-3">
-									<Selector
-										name="x"
-										label="X axis"
-										selected={xAxis}
-										options={options}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-								</div>
-								<div className="col-md-3">
-									<Selector
-										name="y"
-										label="Y axis"
-										selected={yAxis}
-										options={options}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-								</div>
-								<div className="col-md-3">
-									<Selector
-										name="y2"
-										label="Y2 axis"
-										options={options}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-								</div>
-								<div className="col-md-3">
-									<Selector
-										name="type"
-										label="Chart type"
-										selected={type}
-										options={chartTypeOptions}
-										selectAction={this.handleSelectAction.bind(this)}
-									/>
-								</div>
-							</div>
-						</div>
-
-						<div className="panel-body" style={{position: 'relative', width: '100%', padding: '20%'}}>
-							{this.getIFrame(objIds, linking, xAxis, yAxis, type, legendLabels)}
-						</div>
+			<>
+				<div className="row">
+					<div className="col-md-3">
+						<Selector
+							name="x"
+							label="X axis"
+							selected={xAxis}
+							options={options}
+							selectAction={this.handleSelectAction.bind(this)}
+						/>
 					</div>
-					: null
-				}</div>
+					<div className="col-md-3">
+						<Selector
+							name="y"
+							label="Y axis"
+							selected={yAxis}
+							options={options}
+							selectAction={this.handleSelectAction.bind(this)}
+						/>
+					</div>
+					<div className="col-md-3">
+						<Selector
+							name="y2"
+							label="Y2 axis"
+							options={options}
+							selectAction={this.handleSelectAction.bind(this)}
+						/>
+					</div>
+					<div className="col-md-3">
+						<Selector
+							name="type"
+							label="Chart type"
+							selected={type}
+							options={chartTypeOptions}
+							selectAction={this.handleSelectAction.bind(this)}
+						/>
+					</div>
+				</div>
+
+				<div className="row" style={{position: 'relative', width: '100%', padding: '20%'}}>
+					{this.getIFrame(objIds, linking, xAxis, yAxis, type, legendLabels)}
+				</div>
+			</>
 		);
 	}
 }
@@ -208,7 +204,7 @@ const Selector = (props: SelectorProps) => {
 	return (
 		<span>
 			<label>{props.label}</label>
-			<select name={props.name} className="form-control" onChange={props.selectAction} defaultValue={value}>
+			<select name={props.name} className="form-select" onChange={props.selectAction} defaultValue={value}>
 				<option value="0">Select option</option>
 				{props.options.map((o: PreviewOption, i: number) =>
 					<option value={o.varTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}

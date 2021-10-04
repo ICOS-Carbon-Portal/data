@@ -17,7 +17,7 @@ export default function PreviewIcon({ previewType, isL3Previewable, style, click
 				<span
 					style={styles.clickIcon}
 					title="Preview data"
-					className="glyphicon glyphicon-eye-open"
+					className="fas fa-eye"
 					onClick={clickAction}
 				/>
 			</span>
@@ -28,7 +28,7 @@ export default function PreviewIcon({ previewType, isL3Previewable, style, click
 				<span
 					style={styles.disabledClickIcon}
 					title="No preview available for this data object"
-					className="glyphicon glyphicon-eye-open text-muted"
+					className="fas fa-eye text-muted"
 				/>
 			</span>
 		);
