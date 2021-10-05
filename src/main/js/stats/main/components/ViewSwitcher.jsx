@@ -4,7 +4,6 @@ import DobjTable from './DobjTable.jsx';
 import Map from './Map.jsx';
 import Graph from './Graph.jsx';
 import CtrlPanel from './CtrlPanel.jsx';
-import {temporalFilterUpdate} from "../actions";
 
 
 const defaultTableHeaders = ["File Name", "Landing Page", "Count"];
@@ -39,7 +38,7 @@ const DownloadsView = props => {
 					downloadStats={props.downloadStats}
 				/>
 
-				<h4>Downloads from country</h4>
+				<h4 style={{marginTop:25}}>Downloads from country</h4>
 				<Map
 					countryStats={props.countryStats}
 					countriesTopo={props.countriesTopo}
@@ -48,7 +47,7 @@ const DownloadsView = props => {
 					downloadStats={props.downloadStats}
 				/>
 
-				<h4 style={{marginTop:15}}>Downloads per time period</h4>
+				<h4 style={{marginTop:25}}>Downloads per time period</h4>
 				<Graph
 					style={{width: '100%', height: 300}}
 					statsGraph={props.statsGraph}

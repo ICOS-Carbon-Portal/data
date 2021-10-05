@@ -34,12 +34,15 @@ export default class Radio extends Component {
 	}
 
 	render(){
-		const containerStyle = this.props.containerStyle || {};
 		const horizontal = this.props.horizontal === undefined ? true : this.props.horizontal;
+		const containerStyle = this.props.containerStyle || {};
+		const containerCls = horizontal
+			? "d-flex align-items-center"
+			: "d-flex align-items-start flex-column mb-3"
 		const {radios} = this.state;
 
 		return (
-			<div className="d-flex align-items-center" style={containerStyle}>
+			<div className={containerCls} style={containerStyle}>
 				{radios.length
 					? radios.map((r, i) =>
 						<RadioCtrl
@@ -66,7 +69,7 @@ const RadioCtrl = ({horizontal, txt, isActive, action}) => {
 	return (
 		<span style={rootStyle} onClick={action}>
 			<div className="input-group" data-toggle="buttons">
-				<span className="btn btn-outline-secondary text-secondary bg-white">
+				<span className="form-control text-dark bg-white">
 					<span className="fas fa-check" style={tickStyle} />
 				</span>
 				<span className="input-group-text">{txt}</span>
