@@ -53,12 +53,12 @@ object Main extends App {
 	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
-	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting.user, config.auth).route
+	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
 
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
-	val staticRoute = new StaticRouting(config.auth).route
+	val staticRoute = new StaticRouting(config.auth.pub).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val statsRoute = new StatsRouting(postgresLog, ConfigReader.metaCore)

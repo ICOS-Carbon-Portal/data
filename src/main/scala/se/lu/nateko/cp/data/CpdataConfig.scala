@@ -14,6 +14,8 @@ import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import spray.json._
 
+case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
+
 case class NetCdfConfig(
 	folder: String,
 	dateVars: Seq[String],
@@ -94,7 +96,7 @@ case class EtcFacadeConfig(
 case class CpdataConfig(
 	interface: String,
 	port: Int,
-	auth: Map[Envri, PublicAuthConfig],
+	auth: AuthConfig,
 	netcdf: NetCdfConfig,
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
@@ -122,6 +124,7 @@ object ConfigReader extends CommonJsonSupport{
 	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
 	implicit val dlStatsConfigFormat = jsonFormat8(DownloadStatsConfig)
 	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
+	implicit val authConfigFormat = jsonFormat2(AuthConfig)
 	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
 
 	val appConfig: Config = {

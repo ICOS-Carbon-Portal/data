@@ -12,6 +12,8 @@ import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.StandardRoute
+import se.lu.nateko.cp.cpauth.core.CpbDownloadInfo
+import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.CpdataJsonProtocol._
@@ -23,15 +25,17 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
+import java.time.Instant
+
 class CpbFetchRouting(
 	fetcher: FromBinTableFetcher,
 	restHeart: RestHeartClient,
 	logClient: PortalLogClient,
-	user: Directive1[UserId],
-	authConf: Map[Envri, PublicAuthConfig]
+	authRouting: AuthRouting
 )(implicit envriConf: EnvriConfigs) {
 	import UploadRouting.requireShaHash
 	import DownloadRouting.getClientIp
+	import authRouting.userOpt
 
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
@@ -57,16 +61,19 @@ class CpbFetchRouting(
 	(pathPrefix("cpb") & extractEnvri){implicit envri =>
 		val controlOrigins = controlOriginsDir
 		post{
-			controlOrigins{
-				fetchCpbRoute
-			} ~
-			user{uid =>
-				onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
-					if(accepted) fetchCpbRoute
-					else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for binary downloads")
+			userOpt{uidOpt =>
+				controlOrigins{
+					fetchCpbRoute(uidOpt, true)
+				} ~
+				uidOpt.fold[Route]{
+					complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
+				}{uid =>
+					onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
+						if(accepted) fetchCpbRoute(uidOpt, false)
+						else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for binary downloads")
+					}
 				}
-			} ~
-			complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
+			}
 		} ~
 		options{
 			controlOrigins{
@@ -83,18 +90,28 @@ class CpbFetchRouting(
 
 	private def controlOriginsDir(implicit envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{
 		case Tuple1(Origin(Seq(o @ HttpOrigin(_, Host(Uri.NamedHost(host), _))))) =>
-			if(authConf.get(envri).map(_.authCookieDomain).contains(host.dropWhile(_ != '.')))
+			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(host.dropWhile(_ != '.')))
 				respondWithHeader(`Access-Control-Allow-Origin`(o))
 			else reject
 		case _ => reject
 	}
 
-	private def fetchCpbRoute(implicit envri: Envri): Route =
+	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Boolean)(implicit envri: Envri): Route =
 		entity(as[BinTableRequest]){ tableRequest =>
 			getClientIp{ip =>
-				val result = returnBinary(tableRequest)
-				//TODO Log usage
-				result
+				val dlInfo = CpbDownloadInfo(
+					time = Instant.now(),
+					ip = ip,
+					hashId = tableRequest.tableId.id,
+					cpUser = uid.map(authRouting.anonymizeCpUser),
+					colNums = tableRequest.columnNumbers,
+					slice = tableRequest.slice.map{bts =>
+						DownloadEventInfo.CpbSlice(bts.offset, bts.length)
+					},
+					localOrigin = localOrigin
+				)
+				logClient.logDownload(dlInfo)
+				returnBinary(tableRequest)
 			}
 		} ~
 		complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
