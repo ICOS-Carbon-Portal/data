@@ -78,13 +78,13 @@ const Panel = ({isSites, isFetchingTimeserieData, showDivNoData, showSpinner, cl
 	const style = {textAlign:'center', position:'relative', top:'40%'};
 
 	return (
-		<div className="panel panel-default" style={{margin:0}}>
-			<div id="cp-drag-element" className="panel-heading">
+		<div className="card" style={{margin:0}}>
+			<div id="cp-drag-element" className="card-header">
 				<span id="graphLegend">&nbsp;</span>
 				<CloseBtn closeTimeserie={closeTimeserie} />
 			</div>
 
-			<div className="panel-body" style={{padding:'5px 2px', height: panelBodyHeight}}>
+			<div className="card-body" style={{padding:'5px 2px', height: panelBodyHeight}}>
 				{showDivNoData && <div style={style}>No data found at that location</div>}
 				<div id="graph" style={graphStyle} />
 				<ReactSpinner isSites={isSites} show={showSpinner} />
@@ -95,7 +95,7 @@ const Panel = ({isSites, isFetchingTimeserieData, showDivNoData, showSpinner, cl
 
 const CloseBtn = ({closeTimeserie}) => {
 	const style = {float:'right', fontSize:22, cursor:'pointer'};
-	const className = "glyphicon glyphicon-remove-sign text-danger";
+	const className = "fas fa-times-circle text-danger";
 	const onClick = () => {
 		closeTimeserie();
 	};
