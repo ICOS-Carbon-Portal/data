@@ -1,3 +1,8 @@
+@import se.lu.nateko.cp.meta.core.data.Envri
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
+
+@()(implicit envri: Envri)
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,6 +30,8 @@
 	<div id="legendY2"></div>
 	<div id="error"></div>
 	<div id="help"></div>
+
+	@if(envri == Envri.ICOS) {
 	<div id="copyright">
 		<a href="https://www.icos-ri.eu/" target="_blank">© ICOS RI</a>
 		<span>&nbsp;-&nbsp;</span>
@@ -32,6 +39,7 @@
 			<img alt="Creative Commons License" src="//static.icos-cp.eu/images/cc4by_small.png">
 		</a>
 	</div>
+	}
 
 	<script type="text/javascript" src="./dygraph-light.js"></script>
 </body>
