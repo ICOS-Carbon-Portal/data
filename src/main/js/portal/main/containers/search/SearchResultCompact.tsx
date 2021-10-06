@@ -23,7 +23,7 @@ type SortProps = {
 	toggleSort: (varName: string) => void
 }
 
-const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0};
+const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0, paddingBottom: 0};
 
 class SearchResultCompact extends Component<OurProps> {
 	render(){
@@ -33,7 +33,7 @@ class SearchResultCompact extends Component<OurProps> {
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
-			<div className="panel panel-default">
+			<div className="card">
 				<Paging
 					searchOptions={searchOptions}
 					type="header"
@@ -43,7 +43,7 @@ class SearchResultCompact extends Component<OurProps> {
 					exportQuery={exportQuery}
 				/>
 
-				<div className="panel-body">
+				<div className="card-body">
 					<div className="table-responsive">
 						<table className="table">
 							<thead>
@@ -96,19 +96,19 @@ class SearchResultCompact extends Component<OurProps> {
 const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props => {
 	const sorting = props.sorting || {} as State['sorting'];
 
-	const glyphClass = 'glyphicon glyphicon-sort' + (
+	const glyphClass = 'fas fa-sort' + (
 		sorting.varName !== props.varName
 			? ''
 			: sorting.ascending
-				? '-by-attributes'
-				: '-by-attributes-alt'
+				? '-amount-down'
+				: '-amount-down-alt'
 	);
 
-	const style: CSSProperties = {pointerEvents: 'auto', borderWidth: 0, padding: 6};
+	const style: CSSProperties = {verticalAlign: 'baseline', padding: 6};
 	const sortHandler = props.toggleSort ? props.toggleSort.bind(null, props.varName) : undefined;
 
 	return (
-		<button className="btn btn-default" title="Sort" onClick={sortHandler} style={style}>
+		<button className="btn" title="Sort" onClick={sortHandler} style={style}>
 			<span className={glyphClass} />
 		</button>
 	);

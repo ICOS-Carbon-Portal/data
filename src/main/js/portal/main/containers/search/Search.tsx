@@ -117,15 +117,17 @@ class Search extends Component<OurProps, OurState> {
 		const { HelpSection, tabs, switchTab } = this.props;
 		const { srid } = this.state;
 		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
-		const filterIconClass = this.state.expandedFilters ? "glyphicon glyphicon-menu-up pull-right" : "glyphicon glyphicon-menu-down pull-right";
+		const filterIconClass = this.state.expandedFilters ? "fas fa-angle-up float-end" : "fas fa-angle-down float-end";
 
 		return (
 			<div className="row" style={{ position: 'relative' }}>
-				{HelpSection}
+				<div style={{ display:'inline-block' }}>
+					{HelpSection}
+				</div>
 
 				<div className="col-sm-4 col-md-3" style={{ marginBottom: 20 }}>
 
-					<button className="btn btn-default btn-block visible-xs-block" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
+					<button className="btn btn-outline-secondary w-100 d-block d-sm-none" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
 						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}} />
 					</button>
 

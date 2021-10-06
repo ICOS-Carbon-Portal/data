@@ -39,7 +39,7 @@ export class App extends Component {
 				/>
 
 				<div className="page-header">
-					<h1>
+					<h2>
 						{config.envri} Data Usage Statistics
 						<Radio
 							horizontal={true}
@@ -47,7 +47,7 @@ export class App extends Component {
 							radios={this.viewModes}
 							action={props.setViewMode}
 						/>
-					</h1>
+					</h2>
 				</div>
 
 				<ViewSwitcher {...props} />

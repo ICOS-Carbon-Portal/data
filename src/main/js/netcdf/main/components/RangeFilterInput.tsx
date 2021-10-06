@@ -151,20 +151,20 @@ export default function RangeFilterInput(props: OurProps) {
 	if (!show) return null;
 
 	return (
-		<div style={{position:'absolute', width:300, zIndex:9999, top:135, right:156}}>
-			<div className="panel panel-default" style={{margin:0}}>
-				<div id="cp-drag-element" className="panel-heading">
+		<div style={{position:'absolute', width:300, zIndex:9999, top:285, right:162}}>
+			<div className="card" style={{margin:0}}>
+				<div id="cp-drag-element" className="card-header">
 					<span style={{ fontWeight: 'bold', fontSize: '110%' }}>Set min/max range</span>
-					<span className="glyphicon glyphicon-remove-circle" style={closeBtnStyle} onClick={props.onClose} title="Close" />
+					<span className="fas fa-times-circle" style={closeBtnStyle} onClick={props.onClose} title="Close" />
 				</div>
 
-				<div className="panel-body" style={{padding:'5px', height: 190}}>
+				<div className="card-body" style={{padding:'5px', height: 190}}>
 					<div className="row">
 						<div className="col-md-12">
 							<div className={maxRangeCls}>
 
 								<label>Max range</label>
-								<a onClick={() => rangeValueChanged('maxRange', '')} style={resetLnkStyle}>Clear</a>
+								<a onClick={() => rangeValueChanged('maxRange', '')} className="link-primary" style={resetLnkStyle}>Clear</a>
 
 								<input
 									type="text"
@@ -183,7 +183,7 @@ export default function RangeFilterInput(props: OurProps) {
 							<div className={minRangeCls}>
 
 								<label>Min range</label>
-								<a onClick={() => rangeValueChanged('minRange', '')} style={resetLnkStyle}>Clear</a>
+								<a onClick={() => rangeValueChanged('minRange', '')} className="link-primary" style={resetLnkStyle}>Clear</a>
 
 								<input
 									type="text"

@@ -20,6 +20,9 @@
 	<script src="stats.js"></script>
 }
 
+@bootstrapVersion = @{Some(5)}
+
 @template = @{
-	if(envri == Envri.SITES) SitesPage("SITES Statistics") _ else CpCommonPage("Carbon Portal's Statistics", cpauthHostOpt = None) _
+	if(envri == Envri.SITES) SitesPage("SITES Statistics", bootstrapVersion = bootstrapVersion) _
+	else CpCommonPage("Carbon Portal's Statistics", bootstrapVersion = bootstrapVersion, cpauthHostOpt = None) _
 }

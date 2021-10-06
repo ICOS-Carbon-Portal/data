@@ -41,7 +41,7 @@ export class App extends Component<AppProps> {
 		const props = this.props;
 
 		return (
-			<div style={{marginTop: 10}}>
+			<div className="mt-2">
 
 				<AnimatedToasters
 					autoCloseDelay={5000}
@@ -49,13 +49,13 @@ export class App extends Component<AppProps> {
 					maxWidth={400}
 				/>
 
-				<div className="row page-header">
+				<div className="row page-header mb-3">
 
 					<Breadcrumbs handleRouteClick={this.handleRouteClick.bind(this)} route={props.route}/>
 
 					<Title route={props.route} metadata={props.metadata} />
 
-					<div className="col-md-3 text-right" style={{marginTop: 30}}>
+					<div className="col-md-3 mt-2">
 						<SwitchRouteBtn
 							route={props.route}
 							cart={props.cart}
@@ -81,7 +81,7 @@ export class App extends Component<AppProps> {
 const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route}) => {
 	return (
 		<nav role="navigation" aria-label="breadcrumb">
-			<ol className="breadcrumb">
+			<ol className="breadcrumb bg-light p-2">
 				{breadcrumbs[config.envri].map(b => BreadcrumbItem(b, props.handleRouteClick, props.route))}
 			</ol>
 		</nav>
@@ -107,7 +107,7 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 			return (
 				<h1 className="col-md-9">
 					{config.envri} data portal
-					<small> Search, preview, download data objects</small>
+					<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
 				</h1>
 			);
 
@@ -132,22 +132,18 @@ const SwitchRouteBtn = (props: ButtonProps) => {
 		return null;
 
 	} else {
-		return <SearchBtn {...props} />;
+		const {cart, handleRouteClick} = props;
+		const colCount = cart.count;
+
+		return (
+			<button className="btn btn-primary float-end" onClick={() => handleRouteClick('cart')}>
+				View data cart
+				<span style={{marginLeft: 5}} className="badge rounded-pill bg-light text-primary">
+					{colCount} {colCount === 1 ? ' item' : ' items'}
+				</span>
+			</button>
+		);
 	}
-};
-
-const SearchBtn = (props: ButtonProps) => {
-	const {cart, handleRouteClick} = props;
-	const colCount = cart.count;
-
-	return (
-		<button className="btn btn-primary" onClick={() => handleRouteClick('cart')}>
-			View data cart
-			<span style={{marginLeft: 5}} className="badge">
-				{colCount} {colCount === 1 ? ' item' : ' items'}
-			</span>
-		</button>
-	);
 };
 
 const Route = ({ route, children }: { route: Route, children: ReactNode }) => {

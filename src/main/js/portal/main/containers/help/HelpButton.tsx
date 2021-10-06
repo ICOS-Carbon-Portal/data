@@ -8,8 +8,8 @@ import {HelpItemName} from "../../models/HelpStorage";
 import { ColNames } from "../../models/CompositeSpecTable";
 
 
-const defaultBtn = 'glyphicon glyphicon-question-sign text-info';
-const activeBtn = 'glyphicon glyphicon-remove-sign text-info';
+const defaultBtn = 'fas fa-question-circle';
+const activeBtn = 'fas fa-times-circle';
 
 const defaultIconStyle: CSSProperties = {
 	fontSize: 15,

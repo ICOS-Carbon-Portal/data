@@ -40,13 +40,13 @@ export default class EditablePanelHeading extends Component<Props, State>{
 	render(){
 		const {editMode} = this.state;
 		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass, iconSaveTooltip } = this.props;
-		const style: CSSProperties = { position: 'absolute', top: 5, left: 0, margin: '0 20px' };
+		const style: CSSProperties = { position: 'absolute', top: 0, left: -20, margin: '0 20px' };
 
 		return (
-			<React.Fragment>
+			<>
 				{ editMode ?
-					<div className="panel-heading">
-						<span className="panel-title">{editValue}</span>
+					<div className="card-header">
+						<span className="card-title">{editValue}</span>
 						<form className="input-group" style={style} onSubmit={this.handleSaveClick.bind(this)}>
 							<input
 								ref={this.editCtrl}
@@ -55,23 +55,21 @@ export default class EditablePanelHeading extends Component<Props, State>{
 								defaultValue={editValue}
 								autoFocus
 							/>
-							<span className="input-group-btn">
-								<button className="btn btn-primary" onClick={this.handleSaveClick.bind(this)} title={iconSaveTooltip}>
-									<span className={iconSaveClass} />
-								</button>
-							</span>
+							<button className="btn btn-primary" onClick={this.handleSaveClick.bind(this)} title={iconSaveTooltip}>
+								<span className={iconSaveClass} />
+							</button>
 						</form>
 					</div>
 					:
-					<div className="panel-heading" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
-						<span className="panel-title">{editValue}</span>
+					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
+						<span className="card-title">{editValue}</span>
 						<span
 							className={iconEditClass}
 							style={{float: 'left', margin: '3px 5px'}}
 						/>
 					</div>
 				}
-			</React.Fragment>
+			</>
 		);
 	}
 }

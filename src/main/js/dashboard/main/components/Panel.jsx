@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component } from 'react';
 
 
 const style = {
@@ -27,32 +27,32 @@ export default class Panel extends Component {
 		const unit = formatUnit(metadata.unit);
 
 		return (
-			<div className="panel panel-default" style={style}>
+			<div className="card" style={style}>
 
-				<div className="panel-heading">
-					<h3 className="panel-title">{header}</h3>
+				<div className="card-header py-1 px-3">
+					{header}
 				</div>
 
-				<div className="panel-body" style={{padding: '5px 10px'}}>
+				<div className="card-body py-1 px-2">
 
-					<Row>
+					<Row style={{fontSize:'90%'}}>
 						<span>Sampled {getDateStr(timePeriod, startStop)}</span>
 					</Row>
 
-					<Row>
-						<span style={{fontSize:'16pt'}}>{`${mean.toFixed(1)} ${unit} mean`}</span>
+					<Row style={{fontSize:'16pt'}}>
+						<span>{`${mean.toFixed(1)} ${unit} mean`}</span>
 					</Row>
 
-					<Row>
+					<Row style={{fontSize:'95%'}}>
 						<span>{`${Math.round(min)} min`}</span>
-						<span style={{float:'right'}}>
+						<span className="float-end">
 							<a href={getPreviewLnk(metadata, valueType)} target="_blank">Preview</a>
 						</span>
 					</Row>
 
-					<Row>
+					<Row style={{fontSize:'95%'}}>
 						<span>{`${Math.round(max)} max`}</span>
-						<span style={{float:'right'}}>
+						<span className="float-end">
 							<a href={getDownloadLnk(metadata, valueType)} target="_blank">Download</a>
 						</span>
 					</Row>
@@ -77,12 +77,11 @@ export default class Panel extends Component {
 
 const Button = ({currTimePeriod, txt, onClick}) => {
 	const isActive = currTimePeriod === txt.toLowerCase();
-	const cls = isActive
-		? "btn btn-default active"
-		: "btn btn-default";
+	const baseCls = 'btn btn-outline-secondary';
+	const cls = isActive ? `${baseCls} active` : `${baseCls} text-dark bg-white`;
 	const event = isActive ? _ => _ : _ => onClick(txt.toLowerCase());
 
-	return <button type="button" className={cls} style={{width:'33%'}} onClick={event}>{txt}</button>;
+	return <button type="button" className={cls} style={{width:'33%', fontSize: '80%'}} onClick={event}>{txt}</button>;
 };
 
 const getDateStr = (timePeriod, startStop) => {
@@ -105,15 +104,15 @@ const getDateStr = (timePeriod, startStop) => {
 
 const getHeader = (timePeriod, startStop, stationId, valueType, height, station) => {
 	return (
-		<Fragment>
+		<>
 			<a href={station} target="_blank" style={{color:'#337ab7'}}>{stationId}</a>
 			<span style={{marginLeft: 20}} title="Measurement height">{height}m</span>
 			<span style={{marginLeft: 20}} title="Measured type">{valueType}</span>
-		</Fragment>);
+		</>);
 };
 
-const Row = ({children}) => {
-	return <div style={{marginBottom: 5}}>{children}</div>;
+const Row = ({style, children}) => {
+	return <div className="mb-1" style={style}>{children}</div>;
 };
 
 const getPreviewLnk = (metadata, valueType) => {

@@ -50,42 +50,29 @@ export default class Dropdown extends Component{
 	render(){
 		const {dropdownOpen} = this.state;
 		const props = this.props;
-		const isEnabled = props.isEnabled === undefined ? true : props.isEnabled;
-		const isSorter = props.isSorter === undefined ? false : props.isSorter;
-		const isAscending = props.isAscending === undefined ? false : props.isAscending;
 		const selectOptions = props.selectOptions || [];
 		const selectedItemKey = props.selectedItemKey;
 		const buttonLbl = props.buttonLbl;
 
-		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
 		const rootStyle = Object.assign({display: 'inline-block', marginBottom: 10}, props.style);
+		const menuCls = dropdownOpen ? 'dropdown-menu show' : 'dropdown-menu';
 
 		return (
-			<span ref={div => this.node = div} className={nodeClass} style={rootStyle}>{
-				isSorter && selectedItemKey !== 'thematic'
-					? <SortButton
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						isAscending={isAscending}
-						clickAction={this.onDropdownClick.bind(this)}
-						selectOptions={selectOptions}
-						buttonLbl={buttonLbl}
-					/>
-					: <Button
-						isEnabled={isEnabled}
-						selectedItemKey={selectedItemKey}
-						clickAction={this.onDropdownClick.bind(this)}
-						selectOptions={selectOptions}
-						buttonLbl={buttonLbl}
-					/>
-				}
+			<span ref={div => this.node = div} className="dropdown" style={rootStyle}>{
+				<Button
+					selectedItemKey={selectedItemKey}
+					clickAction={this.onDropdownClick.bind(this)}
+					selectOptions={selectOptions}
+					buttonLbl={buttonLbl}
+				/>
+			}
 
-				<ul className="dropdown-menu">
+				<ul className={menuCls}>
 					{
 					selectOptions.map((opt, idx) =>
 						<li
 							style={{padding: '2px 10px', cursor:'pointer', whiteSpace:'nowrap'}}
-							className="ddlOpt"
+							className="dropdown-item"
 							key={'ddl' + idx}
 							onClick={this.onDropDownItemClick.bind(this, idx)}>
 							{opt}
@@ -97,52 +84,14 @@ export default class Dropdown extends Component{
 	}
 }
 
-const SortButton = ({isEnabled, selectedItemKey, isAscending, clickAction, selectOptions, buttonLbl = 'Sort by'}) => {
-	if (isEnabled) {
-		const glyphCls = selectedItemKey
-			? isAscending
-				? 'glyphicon glyphicon-sort-by-attributes'
-				: 'glyphicon glyphicon-sort-by-attributes-alt'
-			: '';
+const Button = ({ selectedItemKey, clickAction, selectOptions, buttonLbl = 'Select option' }) => {
+	const lbl = selectedItemKey
+		? selectOptions[selectedItemKey]
+		: buttonLbl;
 
-		const lbl = selectedItemKey
-			? selectOptions[selectedItemKey]
-			: buttonLbl;
-
-		return (
-			<button className="btn btn-default dropdown-toggle" type="button" onClick={clickAction}>
-				<span><span className={glyphCls}/> {lbl}</span> <span className="caret"/>
-			</button>
-		);
-	} else {
-		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button">
-				<span>{buttonLbl}</span> <span className="caret"/>
-			</button>
-		);
-	}
-};
-
-const Button = ({isEnabled, selectedItemKey, clickAction, selectOptions, buttonLbl = 'Select option'}) => {
-	if (isEnabled) {
-		const lbl = selectedItemKey !== undefined
-			? selectOptions[selectedItemKey]
-			: buttonLbl;
-		const btnCls = isEnabled
-			? 'btn btn-default dropdown-toggle'
-			: 'btn btn-default dropdown-toggle disabled';
-
-		return (
-			<button className={btnCls} type="button" onClick={clickAction}>
-				<span>{lbl}</span> <span className="caret" />
-			</button>
-		);
-	} else {
-		return (
-			<button className="btn btn-default dropdown-toggle disabled" type="button">
-				<span>{buttonLbl}</span> <span className="caret"/>
-			</button>
-		);
-	}
-
+	return (
+		<button className="btn btn-outline-secondary dropdown-toggle bg-white text-dark" type="button" onClick={clickAction}>
+			<span>{lbl}</span> <span className="caret" />
+		</button>
+	);
 };

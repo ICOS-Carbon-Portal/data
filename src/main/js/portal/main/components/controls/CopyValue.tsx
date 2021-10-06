@@ -60,7 +60,7 @@ export default class CopyValue extends Component<Props, State> {
 
 const Btn = ({show, btnText, clickAction}: {show: boolean, btnText: string, clickAction: () => void}) => {
 	return (
-		<button	onClick={clickAction} className="btn btn-default" style={show ? {marginBottom: 10} : {visibility: 'hidden'}}>
+		<button	onClick={clickAction} className="btn btn-outline-secondary" style={show ? {marginBottom: 10} : {visibility: 'hidden'}}>
 			{btnText}
 		</button>
 	);
@@ -81,17 +81,15 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick, helpButtonName}: Co
 	};
 
 	return (
-		<span className="input-group" style={{display: 'inline-table'}}>
-			<span className="input-group-btn">
-				<button className="btn btn-default" onClick={copyClick} title={copyHelpText} style={{marginBottom: 10}}>
-					<span className="glyphicon glyphicon-copy" />
+		<span className="input-group">
+			<button className="btn btn-outline-secondary" onClick={copyClick} title={copyHelpText}>
+				<span className="fas fa-copy" />
+			</button>
+			{helpButtonName &&
+				<button className="btn btn-outline-secondary">
+					<HelpButton name={helpButtonName} title="Click to toggle help" overrideStyles={{paddingLeft: 0}}/>
 				</button>
-				{helpButtonName &&
-					<button className="btn btn-default" style={{marginBottom: 10, cursor: "default"}}>
-						<HelpButton name={helpButtonName} title="Click to toggle help" overrideStyles={{paddingLeft: 0}}/>
-					</button>
-				}
-			</span>
+			}
 			<input
 				ref={urlInput => self.urlInput = urlInput}
 				onClick={inputClick}

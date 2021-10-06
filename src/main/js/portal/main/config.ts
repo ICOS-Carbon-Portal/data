@@ -174,7 +174,8 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 	}
 };
 
-export type FilterName = CategoryType | NumberFilterCategories | 'temporalFilter' | 'keywordFilter';
+export type DateCategories = 'dataTime' | 'submission';
+export type FilterName = CategoryType | NumberFilterCategories | DateCategories | 'keywordFilter';
 type IFilterCategories = {
 	[E in Envri]: ReadonlyArray<{
 		panelTitle: string
@@ -187,14 +188,16 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
 		{panelTitle: "Value types", filterList: ['variable', 'valType', 'quantityUnit', 'quantityKind']},
-		{panelTitle: "Temporal filters", filterList: ['temporalFilter']},
+		{panelTitle: "Sampling date", filterList: ['dataTime']},
+		{panelTitle: "Submission date", filterList: ['submission']},
 		{panelTitle: "Misc", filterList: ['fileSize']}
 	],
 	SITES: [
 		{panelTitle: "Data origin", filterList: ['theme', 'station', 'location', 'ecosystem', 'project']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level']},
 		{panelTitle: "Measurements", filterList: ['valType', 'variable']},
-		{panelTitle: "Temporal filters", filterList: ['temporalFilter']}
+		{panelTitle: "Sampling date", filterList: ['dataTime']},
+		{panelTitle: "Submission date", filterList: ['submission']},
 	]
 };
 

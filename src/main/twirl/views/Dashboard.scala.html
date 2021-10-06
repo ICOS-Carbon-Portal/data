@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<title>Dashboard</title>
-		<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png"/>
-		<link rel="stylesheet" href="//static.icos-cp.eu/constant/bootstrap/3.3.4/css/bootstrap.min.css" />
-	</head>
-	<body style="background: none;">
-		<div id="main"></div>
-		<script src="dashboard.js"></script>
-	</body>
-</html>
+@pageTitle = @{"Dashboard"}
+@pageHeader = {}
+@pageBody = {
+<div id="main"></div>
+<script src="dashboard.js"></script>
+}
+
+@BarePage(pageTitle)(pageHeader)(pageBody)

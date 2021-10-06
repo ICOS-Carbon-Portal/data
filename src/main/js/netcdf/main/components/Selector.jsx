@@ -22,7 +22,7 @@ export default class Selector extends Component {
 
 			<span style={{fontWeight: 'bold'}}>{props.caption + ": "}</span>
 
-			<select ref={select => this.selector = select} value={optionTexter(selectedOption)} className="form-control" onChange={this.changeHandler.bind(this)}>{
+			<select ref={select => this.selector = select} value={optionTexter(selectedOption)} className="form-select" onChange={this.changeHandler.bind(this)}>{
 
 				control.values.map(function(optionValue, i){
 					return <option key={i}>{optionTexter(optionValue)}</option>;

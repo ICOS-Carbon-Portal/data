@@ -41,7 +41,7 @@ Control.LegendCtr = Control.extend({
 		container.setAttribute("style", this.options.style);
 		DomEvent.disableClickPropagation(container);
 
-		const iconElement = DomUtil.create('span', 'glyphicon glyphicon-list-alt', container);
+		const iconElement = DomUtil.create('span', 'fas fa-list-alt', container);
 		iconElement.setAttribute("id", iconId);
 		iconElement.setAttribute("title", "View legend");
 		iconElement.setAttribute("style", iconStyle);

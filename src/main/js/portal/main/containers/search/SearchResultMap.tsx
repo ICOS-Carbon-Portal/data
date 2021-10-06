@@ -40,7 +40,7 @@ class SearchResultMap extends Component<OurProps> {
 			});
 
 		return (
-			<div id="map" style={{ width: '100%', height: '90vh' }} tabIndex={1}>
+			<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
 				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
 				<div id="popover" className="ol-popup"></div>
 				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>

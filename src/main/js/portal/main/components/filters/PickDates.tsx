@@ -3,13 +3,12 @@ import ReactDOM from 'react-dom';
 import { DatePickerInput } from 'rc-datepicker';
 import FilterTemporal from '../../models/FilterTemporal';
 import { Obj } from '../../../../common/main/types';
+import { DateCategories } from "../../config";
 
 type Props = {
-	marginTop?: number
 	filterTemporal: FilterTemporal
 	setFilterTemporal: (filterTemporal: FilterTemporal) => void
-	category: 'dataTime' | 'submission'
-	header: string
+	category: DateCategories
 }
 
 type State = {
@@ -97,7 +96,7 @@ export default class PickDates extends Component<Props, State> {
 
 	render(){
 		const {fromInvalid, toInvalid} = this.state;
-		const {category, filterTemporal, header, marginTop} = this.props;
+		const {category, filterTemporal} = this.props;
 		const from = filterTemporal[category].from;
 		const to = filterTemporal[category].to;
 		const error = filterTemporal[category].error;
@@ -105,11 +104,6 @@ export default class PickDates extends Component<Props, State> {
 		return (
 			<div className="row">
 				<div className="col-md-12">
-					<div className="row" style={marginTop ? {marginTop} : {}}>
-						<div className="col-md-12">
-							<h4>{header}</h4>
-						</div>
-					</div>
 
 					<div className="row">
 						<div className="col-md-6" style={{minWidth: 160}}>

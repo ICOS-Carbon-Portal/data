@@ -104,7 +104,7 @@ const StructuredCitation = ({ citation, citationStyle, failWithError }: { citati
 			<summary className="btn-link" style={{ cursor: 'pointer', display: "inline-block" }}>{lnkTxt}</summary>
 			<div style={{ display: 'block' }}>
 				<div>
-					<button className="btn btn-default glyphicon glyphicon-copy" onClick={() => copyToClipboard(citation, failWithError)} style={{ marginBottom: 5 }} title={title} />
+					<button className="btn btn-outline-secondary fas fa-clipboard" onClick={() => copyToClipboard(citation, failWithError)} style={{ marginBottom: 5 }} title={title} />
 				</div>
 				<pre id={citationStyle} style={{ display: 'inline-block', maxWidth: '100%' }}>{citation}</pre>
 			</div>

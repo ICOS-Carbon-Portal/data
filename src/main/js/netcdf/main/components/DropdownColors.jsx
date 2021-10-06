@@ -37,16 +37,16 @@ export default class DropdownColors extends Component{
 	render(){
 		const {dropdownOpen} = this.state;
 		const {control} = this.props;
-		const nodeClass = dropdownOpen ? 'dropdown open' : 'dropdown';
+		const dropDownMenuCls = `dropdown-menu${dropdownOpen ? ' show' : ''}`;
 		const selectedColorRamp = control.colorRamps[control.selectedIdx];
 		const selectedColorMaker = selectedColorRamp ? selectedColorRamp.colorMaker : undefined;
 		const getLegend = selectedColorMaker ? selectedColorMaker.getLegend.bind(selectedColorMaker) : null;
 
 		return (
-			<span ref={div => this.node = div} className={nodeClass} style={{display: 'inline-block', zIndex:9999}}>
-				<Button clickAction={this.onDropdownClick.bind(this)} getLegend={getLegend} />
+			<span ref={div => this.node = div} className="dropdown" style={{display: 'inline-block', zIndex:9999}}>
+				<Button dropdownOpen={dropdownOpen} clickAction={this.onDropdownClick.bind(this)} getLegend={getLegend} />
 
-				<ul className="dropdown-menu">{
+				<ul className={dropDownMenuCls}>{
 					control.colorRamps.map((cr, idx) => {
 						return (
 							<ListItem
@@ -63,8 +63,8 @@ export default class DropdownColors extends Component{
 	}
 }
 
-const Button = ({clickAction, getLegend, label = 'Select option'}) => {
-	const btnCls = 'btn btn-default dropdown-toggle';
+const Button = ({dropdownOpen, clickAction, getLegend, label = 'Select option'}) => {
+	const btnCls = `btn btn-outline-secondary dropdown-toggle${dropdownOpen ? ' show' : ''}`;
 	const lbl = getLegend
 		? <img src={renderCanvas(120, 15, getLegend)} />
 		: <span>{label}</span>;
@@ -79,15 +79,15 @@ const Button = ({clickAction, getLegend, label = 'Select option'}) => {
 const ListItem = ({onClick, cr, idx, selectedIdx}) => {
 	const getLegend = cr.colorMaker ? cr.colorMaker.getLegend.bind(cr.colorMaker) : null;
 	const style = selectedIdx === idx
-		? {cursor: 'pointer', backgroundColor: 'rgb(200,200,200)'}
-		: {cursor: 'pointer'};
+		? {backgroundColor: 'rgb(200,200,200)'}
+		: {};
 	const child = getLegend
 		? <img src={renderCanvas(120, 15, getLegend)} />
 		: cr.name;
 
 	return (
-		<li>
-			<a onClick={onClick} style={style}>{child}</a>
+		<li className="dropdown-item" style={style}>
+			<a onClick={onClick} style={{cursor:'pointer', display:'inline', verticalAlign:'super'}}>{child}</a>
 		</li>
 	);
 };

@@ -9,12 +9,16 @@
 	z-index: 1;
 }
 
-.tab-pane .panel {
+.tab-pane .card {
 	margin-bottom: 0;
 	border: 0;
 	border-radius: 0;
 	-webkit-box-shadow: 0 -1px 0 #ddd;
 	box-shadow: 0 -1px 0 #ddd;
+}
+
+.tab-pane .card:last-child {
+	border-radius: 0 0 0.4rem 0.4rem;
 }
 
 .extended-info-item {
@@ -40,24 +44,13 @@ ul.dashed > li:before {
 	margin-right: 5px;
 }
 
-.mb-2 {
-	margin-bottom: 0.5rem;
-}
-.cp-link{
-	cursor: pointer;
-	color: #0a96f0;
-	text-decoration: none;
-	background-color: transparent;
-	box-sizing: border-box;
-}
-.cp-link:hover{
-	color: #0769A8;
-	text-decoration: underline;
-	outline: 0;
-}
 .cp-dpi-error div.react-datepicker-input {
 	background: #ebccd1 !important;
 }
 .cp-dpi-error i.icon-rc-datepicker_calendar {
 	color: black !important;
+}
+
+label {
+	font-weight: 700 !important;
 }

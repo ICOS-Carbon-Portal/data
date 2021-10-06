@@ -10,11 +10,11 @@ export default class CtrlPanel extends Component {
 		const { mainRadio, subRadio, panelHeader } = this.props;
 
 		return (
-			<div className="panel panel-default">
-				<div className="panel-heading">
-					<h3 className="panel-title">{panelHeader}</h3>
+			<div className="card">
+				<div className="card-header">
+					<h5 style={{display:'inline'}} className="card-title">{panelHeader}</h5>
 				</div>
-				<div className="panel-body">
+				<div className="card-body">
 
 					{mainRadio
 						? <Radio
@@ -26,14 +26,14 @@ export default class CtrlPanel extends Component {
 					}
 
 					{subRadio && subRadio.isActive
-						? <div style={{ marginTop: 40 }}>
+						? <>
 							<label>{subRadio.label}</label>
 							<Radio
 								horizontal={false}
 								radios={subRadio.radios}
 								action={subRadio.action}
 							/>
-						</div>
+						</>
 						: null
 					}
 

@@ -88,8 +88,8 @@ export default class Slider extends Component<Props, State>{
 			: 0;
 		const {children, openClsName, closedClsName, title} = this.props;
 		const iconCls = isOpen
-			? openClsName || 'glyphicon glyphicon-menu-up'
-			: closedClsName || 'glyphicon glyphicon-menu-down';
+			? openClsName || 'fas fa-angle-up'
+			: closedClsName || 'fas fa-angle-down';
 		const baseStyle: CSSProperties = {
 			transition: 'height 0.3s ease-in-out',
 			height

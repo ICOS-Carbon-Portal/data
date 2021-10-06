@@ -52,7 +52,11 @@ const RowDownloadsWithLinks = ({ dobj, onFileNameClick }) => {
 	return (
 		<tr>
 			<td>
-				<a style={{ cursor: 'pointer' }} onClick={() => onFileNameClick(dobj.hashId)} title="Show stats only for this data object">{fileName}</a>
+				<a
+					className="link-primary"
+					style={{ cursor: 'pointer' }}
+					onClick={() => onFileNameClick(dobj.hashId)}
+					title="Show stats only for this data object">{fileName}</a>
 			</td>
 			<td><LandingPageLink hashId={dobj.hashId} /></td>
 			<td>{dobj.count.toLocaleString()}</td>

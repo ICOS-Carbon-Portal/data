@@ -1,4 +1,4 @@
-import React, {Component, CSSProperties, Fragment, MouseEvent} from 'react';
+import React, {Component, CSSProperties, MouseEvent} from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
@@ -26,7 +26,7 @@ class Advanced extends Component<OurProps> {
 		const deprecationDisabled: boolean = filterPids.length > 0;
 
 		return (
-			<Fragment>
+			<>
 				<FilterPanel header="Free text filters">
 					<FilterByPid
 						selectedPids={filterPids}
@@ -46,7 +46,7 @@ class Advanced extends Component<OurProps> {
 				<FilterPanel header="SPARQL queries" helpItemName="publicQuery">
 					<QueryList getPublicQuery={getPublicQuery} />
 				</FilterPanel>
-			</Fragment>
+			</>
 		);
 	}
 }
@@ -58,7 +58,7 @@ const QueryList = ({ getPublicQuery }: { getPublicQuery: (queryName: QueryName) 
 				const { label, comment } = publicQueries[queryName];
 				return (
 					<li key={idx} style={{ marginTop: 7 }}>
-						<span className="glyphicon glyphicon-share" style={{ marginRight: 5 }} />
+						<span className="fas fa-share-square" style={{ marginRight: 5 }} />
 						<ToSparqlClient queryName={queryName} getPublicQuery={getPublicQuery} label={label} comment={comment} />
 					</li>
 				);

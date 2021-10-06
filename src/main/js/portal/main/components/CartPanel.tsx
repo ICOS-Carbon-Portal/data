@@ -54,19 +54,19 @@ export default class CartPanel extends Component<Props, State> {
 		const previewTypes = checkedObjects.map(obj => obj.type);
 
 		return (
-			<div className="panel panel-default">
+			<div className="card">
 				<EditablePanelHeading
 					editValue={props.cart.name}
 					saveValueAction={this.handleSaveCartName.bind(this)}
-					iconEditClass="glyphicon glyphicon-edit"
+					iconEditClass="fas fa-edit"
 					iconEditTooltip="Edit download name"
-					iconSaveClass="glyphicon glyphicon-floppy-save"
+					iconSaveClass="fas fa-save"
 					iconSaveTooltip="Save new cart name"
 				/>
 
-				<div className="panel-body">
-					<div className="panel-srollable-controls clearfix row">
-						<div className="col-xs-4">
+				<div className="card-body">
+					<div className="panel-srollable-controls clearfix row justify-content-between">
+						<div className="col-4">
 							<CheckAllBoxes
 								checkCount={props.checkedObjectsInCart.length}
 								totalCount={props.cart.count}
@@ -75,7 +75,7 @@ export default class CartPanel extends Component<Props, State> {
 								<span style={{marginLeft: 6, verticalAlign: -6}}>{props.checkedObjectsInCart.length} {objectText} selected</span>
 							}
 						</div>
-						<div className="col-xs-8 text-right">
+						<div className="col-8">
 							<CartBtn
 								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
 								checkedObjects={props.checkedObjectsInCart}
@@ -84,7 +84,7 @@ export default class CartPanel extends Component<Props, State> {
 								type='remove'
 							/>
 							<PreviewBtn
-								style={{marginBottom: 10, marginRight: 10}}
+								style={{float: 'right', marginBottom: 10, marginRight: 10}}
 								checkedObjects={checkedObjects}
 								datasets={datasets}
 								previewTypes={previewTypes}

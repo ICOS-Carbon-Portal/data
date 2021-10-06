@@ -1,7 +1,6 @@
 import React from 'react';
 import Filter from './Filter';
 import PickDates from "./PickDates";
-import {temporalFilterUpdate} from "../actions";
 
 export const placeholders = {
 	specification: 'Data types',
@@ -21,15 +20,20 @@ export default function Filters({ filters, downloadStats, resetFilters, updateTa
 	const showResetBtn = !!filters;
 
 	return (
-		<div className="panel panel-default">
-			<div className="panel-heading">
+		<div className="card">
+			<div className="card-header">
+				<div className="float-start">
+					<h5 style={{display:'inline'}}>Data object specification filter</h5>
+				</div>
 				{showResetBtn
-					? <ResetBtn resetFiltersAction={() => resetFilters()} />
+					? <div className="float-end">
+						<ResetBtn resetFiltersAction={() => resetFilters()} />
+					</div>
 					: null
 				}
-				<h3 className="panel-title">Data object specification filter</h3>
+
 			</div>
-			<div className="panel-body">
+			<div className="card-body">
 				<PanelBody
 					hasHashIdFilter={hasHashIdFilter}
 					filters={filters}
@@ -83,11 +87,8 @@ const Row = ({ filter, downloadStats, updateTableWithFilter }) => {
 
 const ResetBtn = props => {
 	return (
-		<div
-			className="glyphicon glyphicon-ban-circle"
-			style={{ display: 'inline', float: 'right', fontSize: '150%', cursor: 'pointer' }}
-			title="Clear all filters"
-			onClick={props.resetFiltersAction}
-		/>
+		<h5 style={{ display: 'inline', fontSize: '150%', cursor: 'pointer' }} onClick={props.resetFiltersAction}>
+			<span className="fas fa-ban" />
+		</h5>
 	);
 };

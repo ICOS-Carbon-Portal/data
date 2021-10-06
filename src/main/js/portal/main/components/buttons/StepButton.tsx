@@ -1,7 +1,7 @@
 import React, {MouseEvent} from 'react';
 
 interface Props {
-	direction: 'forward' | 'backward'
+	direction: 'step-forward' | 'step-backward'
 	enabled: boolean
 	onStep: (event: MouseEvent<HTMLDivElement>) => void
 }
@@ -14,7 +14,7 @@ export const StepButton = (props: Props) => {
 
 	return (
 		<div style={style} onClick={props.enabled ? props.onStep : _ => _}>
-			<span className={'glyphicon glyphicon-step-' + props.direction} />
+			<span className={'fas fa-' + props.direction} />
 		</div>
 	);
 };
