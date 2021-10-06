@@ -110,7 +110,7 @@ export class App extends Component {
 					graphMouseOut={this.graphMouseOut}
 				/>
 
-				<Copyright rootStyleOverride={{float:'right', position:'relative', left:20}} />
+				<Copyright rootStyleOverride={{float:'right', marginTop:20}} />
 			</div>
 		);
 	}
