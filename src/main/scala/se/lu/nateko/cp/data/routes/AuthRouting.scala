@@ -1,40 +1,37 @@
 package se.lu.nateko.cp.data.routes
 
-import scala.util.Failure
-import scala.util.Success
 import akka.http.javadsl.server.CustomRejection
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.headers.SameSite
-import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.MissingCookieRejection
 import akka.http.scaladsl.server.RejectionHandler
 import akka.http.scaladsl.server.Route
-import se.lu.nateko.cp.cpauth.core.Authenticator
-import se.lu.nateko.cp.cpauth.core.CookieToToken
-import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import se.lu.nateko.cp.cpauth.core.UserId
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import spray.json.{JsNull, JsObject, JsString}
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-
-import scala.util.Try
+import se.lu.nateko.cp.cpauth.core._
+import se.lu.nateko.cp.data.AuthConfig
+import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import spray.json.JsNull
+import spray.json.JsObject
+import spray.json.JsString
 
-class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: EnvriConfigs) {
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+class AuthRouting(val conf: AuthConfig)(implicit configs: EnvriConfigs) {
 
 	private val extractEnvri = UploadRouting.extractEnvriDirective
 
-	private def authConfig(implicit envri: Envri) = authConfigs(envri)
+	private def authConfig(implicit envri: Envri) = conf.pub(envri)
 	private def authenticator(implicit envri: Envri) = Authenticator(authConfig).get
 
-	private val authCookieNames = authConfigs.values.map(_.authCookieName).toSet
-
-	def userOpt(inner: Option[UserId] => Route): Route =
-		user{uid => inner(Some(uid))} ~
-		inner(None)
+	private val authCookieNames = conf.pub.values.map(_.authCookieName).toSet
 
 	val userTry: Directive1[Try[UserId]] = extractEnvri.flatMap{implicit envri =>
 		cookie(authConfig.authCookieName).map{cookie =>
@@ -42,7 +39,9 @@ class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: E
 				signedToken <- CookieToToken.recoverToken(cookie.value);
 				token <- authenticator.unwrapToken(signedToken)
 			) yield token.userId
-		}
+		}.or(
+			provide(Failure(new CpDataException(s"Missing cookie '${authConfig.authCookieName}'")))
+		)
 	}
 
 	val user: Directive1[UserId] = userTry.flatMap{
@@ -51,14 +50,7 @@ class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: E
 			reject(new CpauthAuthenticationFailedRejection("Could not decode the authentication cookie: " + toMessage(err)))
 	}
 
-	//TODO Try getting rid of "def userOpt" above
-	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).recover{rejections =>
-		val hasCookieRejection = rejections.collectFirst{
-			case MissingCookieRejection(cookieName) if authCookieNames.contains(cookieName) => true
-		}
-		if(hasCookieRejection.isDefined) provide(None)
-		else reject
-	}
+	val userOpt: Directive1[Option[UserId]] = userTry.map(_.toOption).or(provide(None))
 
 	private val forbidAuthenticationFailures: Directive0 = handleRejections(
 		RejectionHandler.newBuilder()
@@ -93,6 +85,9 @@ class AuthRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit configs: E
 			.withMaxAge(1)
 		setCookie(cookie){complete(StatusCodes.OK)}
 	}
+
+	def anonymizeCpUser(uid: UserId): DownloadEventInfo.AnonId =
+		DownloadEventInfo.anonymizeCpUser(uid, conf.userSecretSalt)
 
 	private def toMessage(err: Throwable): String = {
 		val msg = err.getMessage

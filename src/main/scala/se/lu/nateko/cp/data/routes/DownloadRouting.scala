@@ -1,14 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import java.time.Instant
-
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import LicenceRouting.LicenceCookieName
-import LicenceRouting.UriLicenceProfile
-import LicenceRouting.parseLicenceCookie
 import akka.Done
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
@@ -17,38 +8,50 @@ import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
+import akka.http.scaladsl.server.directives.Credentials.Provided
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import se.lu.nateko.cp.cpauth.core.CollectionDownloadInfo
+import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
+import se.lu.nateko.cp.cpauth.core.DocumentDownloadInfo
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
+import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
-import se.lu.nateko.cp.cpauth.core.DocumentDownloadInfo
-import se.lu.nateko.cp.cpauth.core.CollectionDownloadInfo
-import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
-import se.lu.nateko.cp.meta.core.data.JsonSupport.{dataObjectFormat, docObjectFormat, staticCollFormat}
+import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
+import se.lu.nateko.cp.meta.core.data.JsonSupport.docObjectFormat
+import se.lu.nateko.cp.meta.core.data.JsonSupport.staticCollFormat
+import se.lu.nateko.cp.meta.core.data._
 import spray.json._
+
+import java.time.Instant
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.util.Failure
+import scala.util.Success
+
+import LicenceRouting.LicenceCookieName
+import LicenceRouting.UriLicenceProfile
+import LicenceRouting.parseLicenceCookie
 
 class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	restHeart: RestHeartClient, logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
 )(implicit mat: Materializer) {
 	import DownloadRouting._
 	import UploadRouting._
-	import authRouting._
+	import authRouting.userOpt
 
 	private implicit val ex = mat.executionContext
 	private implicit val envriConfs = coreConf.envriConfigs
@@ -59,25 +62,29 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 
 	private val objectDownload: Route = requireShaHash{ hashsum =>
 		extractEnvri{implicit envri =>
-			onComplete(uploadService.meta.lookupPackage(hashsum)){
-				case Success(dobj: DataObject) =>
-					licenceCookieHashsums{dobjs =>
-						deleteCookie(LicenceCookieName){
-							if(dobjs.contains(hashsum)) (accessRoute(dobj))
-							else reject
+			userOpt{uidOpt =>
+				onComplete(uploadService.meta.lookupPackage(hashsum)){
+					case Success(dobj: DataObject) =>
+						licenceCookieHashsums{dobjs =>
+							deleteCookie(LicenceCookieName){
+								if(dobjs.contains(hashsum)) accessRoute(dobj, uidOpt)
+								else reject
+							}
+						} ~
+						uidOpt.fold[Route](
+							redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
+						){uid =>
+							onComplete(restHeart.getUserLicenseAcceptance(uid)){
+								case Success(true) => accessRoute(dobj, uidOpt)
+								case _ => reject
+							}
 						}
-					} ~
-					user{uid =>
-						onComplete(restHeart.getUserLicenseAcceptance(uid)){
-							case Success(true) => accessRoute(dobj)
-							case _ => reject
-						}
-					} ~
-					redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
-				case Success(doc: DocObject) =>
-					docAccessRoute(doc)
-				case Failure(err) =>
-					complete(StatusCodes.NotFound -> err.getMessage())
+
+					case Success(doc: DocObject) =>
+						docAccessRoute(doc, uidOpt)
+					case Failure(err) =>
+						complete(StatusCodes.NotFound -> err.getMessage())
+				}
 			}
 		}
 	}
@@ -182,26 +189,22 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			post{ downloadLogging }
 		}
 
-	private def accessRoute(dobj: DataObject)(implicit envri: Envri): Route = optionalFileName{_ => //legacy, can be removed later
-		getClientIp{ip =>
-				userOpt{uidOpt =>
+	private def accessRoute(dobj: DataObject, uid: Option[UserId])(implicit envri: Envri): Route = getClientIp{ip =>
+		val fileName = dobj.fileName
+		val contentType = getContentType(fileName)
+		val file = uploadService.getFile(dobj)
 
-					val fileName = dobj.fileName
-					val contentType = getContentType(fileName)
-					val file = uploadService.getFile(dobj)
-
-					if(file.exists){
-						logDownload(dobj, ip, uidOpt)
-						respondWithAttachment(fileName){
-							getFromFile(file, contentType)
-						}
-					}
-					else complete(StatusCodes.NotFound -> "Contents of this data object are not found on the server.")
-				}
+		if(file.exists){
+			logDownload(dobj, ip, uid)
+			respondWithAttachment(fileName){
+				getFromFile(file, contentType)
+			}
 		}
+		else complete(StatusCodes.NotFound -> "Contents of this data object are not found on the server.")
 	}
 
-	private def docAccessRoute(doc: DocObject)(implicit envri: Envri): Route = {
+
+	private def docAccessRoute(doc: DocObject, uid: Option[UserId])(implicit envri: Envri): Route = {
 		val file = uploadService.getFile(doc)
 		if (file.exists) respondWithAttachment(doc.fileName){
 			getClientIp{ip =>
@@ -209,7 +212,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 					time = Instant.now(),
 					hashId = doc.hash.id,
 					ip = ip,
-					doc = doc.toJson.asJsObject
+					cpUser = uid.map(authRouting.anonymizeCpUser),
+					doc = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 				)
 				logClient.logDownload(dlInfo)
 				getFromFile(file, getContentType(doc.fileName))
@@ -222,7 +226,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		pgClient.writeDobjInfo(dobj).failed.foreach(
 			log.error(_, s"Failed saving log to postgres for hash id ${dobj.hash.id}")
 		)
-		logPublicDownloadInfo(dobj, ip)
+		logPublicDownloadInfo(dobj, ip, uidOpt)
 		for(uid <- uidOpt){
 			restHeart.saveDownload(dobj, uid).failed.foreach(
 				log.error(_, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")
@@ -230,13 +234,15 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 		}
 	}
 
-	private def logExternalDownloads(hashes: Seq[Sha256Sum], ip: String, thirdParty: String, endUser: Option[String])(implicit envri: Envri): Unit = {
+	private def logExternalDownloads(
+		hashes: Seq[Sha256Sum], ip: String, thirdParty: String, endUser: Option[String]
+	)(implicit envri: Envri): Unit = {
 		val extraInfo = ("distributor" -> thirdParty) :: endUser.filterNot(_.trim.isEmpty).map{"endUser" -> _}.toList
 
 		Utils.runSequentially(hashes.distinct){hash =>
 			uploadService.meta.lookupPackage(hash).transformWith{
 				case Success(dobj: DataObject) =>
-					logPublicDownloadInfo(dobj, ip, Some(thirdParty), endUser)
+					logPublicDownloadInfo(dobj, ip, None, Some(thirdParty), endUser)
 				case Failure(err) =>
 					log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 					done
@@ -246,13 +252,14 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	}
 
 	private def logPublicDownloadInfo(
-		dobj: DataObject, ip: String, thirdParty: Option[String] = None, endUser: Option[String] = None
+		dobj: DataObject, ip: String, uid: Option[UserId], thirdParty: Option[String] = None, endUser: Option[String] = None
 	)(implicit envri: Envri): Future[Done] = {
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
 			ip = ip,
-			dobj = dobj.toJson.asJsObject,
 			hashId = dobj.hash.id,
+			cpUser = uid.map(authRouting.anonymizeCpUser),
+			dobj = JsObject.empty, //not used, a temp dummy now, needed for js-deserialization
 			endUser = endUser,
 			distributor = thirdParty
 		)
@@ -265,7 +272,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 			time = Instant.now(),
 			ip = ip,
 			hashId = coll.res.getPath.split("/").last,
-			coll = coll.toJson.asJsObject
+			cpUser = uidOpt.map(authRouting.anonymizeCpUser),
+			coll = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 		)
 		logClient.logDownload(dlInfo)
 		for(uid <- uidOpt){
@@ -280,15 +288,6 @@ object DownloadRouting{
 
 	type ExtraBatchLog = (String, Option[UserId]) => Unit
 	val noopBatchLog: ExtraBatchLog = (_, _) => ()
-
-	private val optionalFileName: Directive1[Option[String]] = Directive{nameToRoute =>
-		pathEndOrSingleSlash{
-			nameToRoute(Tuple1(None))
-		} ~
-		path(Segment.?){segmOpt =>
-			nameToRoute(Tuple1(segmOpt))
-		}
-	}
 
 	val licenceCookieHashsums: Directive1[Seq[Sha256Sum]] = cookie(LicenceCookieName).flatMap{licCookie =>
 		parseLicenceCookie(licCookie.value) match{

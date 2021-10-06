@@ -46,18 +46,19 @@ object Main extends App {
 	val netcdfRoute = NetcdfRoute.cp(netcdfUtil.serviceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
 	val legacyNetcdfRoute = NetcdfRoute(netcdfUtil.serviceFactory(config.netcdf.folder))
 
-	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
-	val tabularRoute = new TabularFetchRouting(binTableFetcher).route
-
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
 	val postgresLog = new PostgresDlLog(config.downloads, system.log)
 	val downloadRouting = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, postgresLog, ConfigReader.metaCore)
 	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
+
+	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
+	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
+
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
-	val staticRoute = new StaticRouting(config.auth).route
+	val staticRoute = new StaticRouting(config.auth.pub).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val statsRoute = new StatsRouting(postgresLog, ConfigReader.metaCore)

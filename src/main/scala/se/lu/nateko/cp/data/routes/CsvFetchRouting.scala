@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 import DownloadRouting.respondWithAttachment
+import se.lu.nateko.cp.cpauth.core.UserId
 
 
 class CsvFetchRouting(
@@ -44,22 +45,23 @@ class CsvFetchRouting(
 		requireShaHash{hash =>
 			user{uid =>
 				onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
-					if(accepted) fetchCsvRoute(hash)
+					if(accepted) fetchCsvRoute(hash, uid)
 					else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for CSV downloads")
 				}
 			} ~
-			complete(StatusCodes.Unauthorized -> "Carbon/data portal login is required for CSV downloads")
+			complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for CSV downloads")
 		}
 	}
 
-	private def fetchCsvRoute(hash: Sha256Sum)(implicit envri: Envri): Route = getClientIp{ip =>
+	private def fetchCsvRoute(hash: Sha256Sum, uid: UserId)(implicit envri: Envri): Route = getClientIp{ip =>
 		parameters("col".repeated, "offset".as[Long].optional, "limit".as[Int].optional){(cols, offsetOpt, limitOpt) =>
 
 			val onlyColumnsOpt = Option(cols.toArray.reverse).filterNot(_.isEmpty)
 
 			onSuccess(fetcher.csvSource(hash, onlyColumnsOpt, offsetOpt, limitOpt)){case (src, fileName) =>
 				val csvSelect = DownloadEventInfo.CsvSelect(onlyColumnsOpt.map(_.toIndexedSeq), offsetOpt, limitOpt)
-				val dlInfo = CsvDownloadInfo(Instant.now(), ip, hash.id, csvSelect)
+				val anonUser = Some(authRouting.anonymizeCpUser(uid))
+				val dlInfo = CsvDownloadInfo(Instant.now(), ip, hash.id, anonUser, csvSelect)
 				logClient.logDownload(dlInfo)
 				respondWithAttachment(fileName){
 					complete(
