@@ -45,5 +45,5 @@ export function getBinTable(xCol: string, yCol: string, objId: string, tableForm
 
 	const request = tableFormat.getRequest(objId, nRows, axisIndices);
 
-	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);
+	return getBinaryTable(request, '/cpb', tableFormat.flagGoodness);
 }

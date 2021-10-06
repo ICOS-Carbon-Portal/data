@@ -5,6 +5,7 @@ export const saveToRestheart = dataToSave => {
 	return fetch(`${config.portalUseLogUrl}`, {
 		method: 'POST',
 		mode: 'cors',
+		credentials: 'include',
 		headers: new Headers({
 			'Content-Type': 'application/json'
 		}),

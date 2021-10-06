@@ -30,5 +30,5 @@ export function getTableFormatNrows(config: Config, objId: string){
 
 export function getBinTable(objId: string, tableFormat: TableFormat, nRows: number): Promise<BinTable>{
 	const request = tableFormat.getRequest(objId, nRows);
-	return getBinaryTable(request, '/portal/tabular', tableFormat.flagGoodness);
+	return getBinaryTable(request, '/cpb', tableFormat.flagGoodness);
 }

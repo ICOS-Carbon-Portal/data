@@ -60,10 +60,10 @@ class CpbFetchRouting(
 	} ~ // end of the block to be removed
 	(pathPrefix("cpb") & extractEnvri){implicit envri =>
 		val controlOrigins = controlOriginsDir
-		post{
+		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
 			userOpt{uidOpt =>
 				controlOrigins{host =>
-					fetchCpbRoute(uidOpt, host.split(".").headOption)
+					fetchCpbRoute(uidOpt, host.split("\\.").headOption)
 				} ~
 				uidOpt.fold[Route]{
 					complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
@@ -79,6 +79,7 @@ class CpbFetchRouting(
 			controlOrigins{_ =>
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.POST),
+					`Access-Control-Allow-Credentials`(true),
 					`Access-Control-Allow-Headers`("Content-Type")
 				){
 					complete(StatusCodes.OK)

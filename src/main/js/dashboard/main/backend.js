@@ -61,5 +61,5 @@ export const fetchObjectSpecifications = objIds => {
 };
 
 export const fetchBinTable = request => {
-	return getBinaryTable(request, '/portal/tabular');
+	return getBinaryTable(request, '/cpb');
 };
