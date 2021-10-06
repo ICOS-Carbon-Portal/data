@@ -8,8 +8,8 @@ import {HelpItemName} from "../../models/HelpStorage";
 import { ColNames } from "../../models/CompositeSpecTable";
 
 
-const defaultBtn = 'fas fa-question-circle text-secondary';
-const activeBtn = 'fas fa-times-circle text-primary';
+const defaultBtn = 'fas fa-question-circle';
+const activeBtn = 'fas fa-times-circle';
 
 const defaultIconStyle: CSSProperties = {
 	fontSize: 15,

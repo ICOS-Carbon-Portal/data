@@ -1,4 +1,4 @@
-import React, {Component, CSSProperties, Fragment, MouseEvent} from 'react';
+import React, {Component, CSSProperties, MouseEvent} from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
@@ -26,7 +26,7 @@ class Advanced extends Component<OurProps> {
 		const deprecationDisabled: boolean = filterPids.length > 0;
 
 		return (
-			<Fragment>
+			<>
 				<FilterPanel header="Free text filters">
 					<FilterByPid
 						selectedPids={filterPids}
@@ -46,7 +46,7 @@ class Advanced extends Component<OurProps> {
 				<FilterPanel header="SPARQL queries" helpItemName="publicQuery">
 					<QueryList getPublicQuery={getPublicQuery} />
 				</FilterPanel>
-			</Fragment>
+			</>
 		);
 	}
 }

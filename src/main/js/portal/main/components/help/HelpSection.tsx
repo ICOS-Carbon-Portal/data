@@ -65,7 +65,7 @@ export default class HelpSection extends Component<HelpProps, HelpState>{
 							{helpItem?.header}
 							<span
 								title="Close"
-								className="fas fa-times-circle text-primary"
+								className="fas fa-times-circle"
 								style={closeBtnStyle}
 								onClick={this.onCloseBtnClick.bind(this)}
 							/>
