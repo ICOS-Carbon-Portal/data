@@ -2,7 +2,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-scalaVersion in ThisBuild := "2.13.6"
+ThisBuild / scalaVersion := "2.13.6"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -104,9 +104,9 @@ lazy val data = (project in file("."))
 			"org.scalatest"      %% "scalatest"        % "3.1.0" % "test"
 		),
 
-		fork in (Test, run) := true,
+		Test /run / fork := true,
 
-		logBuffered in Test := false,
+		Test / logBuffered := false,
 
 		scalacOptions += "-Wunused:-imports",
 
