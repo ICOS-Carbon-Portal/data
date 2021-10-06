@@ -104,7 +104,7 @@ class Preview extends Component<OurProps, OurState> {
 							{HelpSection}
 						</div>
 
-						<div className="card rounded-0" style={{padding:0}}>
+						<div className="card p-0">
 							<div className="card-header">
 								{preview.items.map((item: CartItem) => (
 									<span key={item.dobj} style={{marginRight: 10}}>
@@ -228,7 +228,7 @@ function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFo
 		const x = item.getUrlSearchValue('x');
 		const y = item.getUrlSearchValue('y');
 		const y2 = item.getUrlSearchValue('y2');
-		
+
 		if (x === undefined || (y === undefined && y2 === undefined)) return '';
 
 		const hashId = lastUrlPart(item.dobj);
@@ -243,7 +243,7 @@ function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFo
 			return acc;
 		}, [])
 			.map(col => `col=${col}`).join('&');
-		
+
 		return `https://${hostname}/csv/${hashId}?${cols}`;
 	}
 

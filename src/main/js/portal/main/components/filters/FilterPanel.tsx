@@ -13,16 +13,16 @@ export const FilterPanel: React.FunctionComponent<OurProps> = props => {
 	const { header, children, helpItemName, startCollapsed = false} = props;
 
 	return (
-		<div className="card rounded-0">
-			<h5 className="card-header">
+		<div className="card">
+			<div className="card-header">
 				<span>{header}</span>
-				{helpItemName && 
+				{helpItemName &&
 					<HelpButton
 						name={helpItemName}
 						title="Click to toggle help"
 					/>
 				}
-			</h5>
+			</div>
 
 			<Slider startCollapsed={startCollapsed}>
 				<div className="card-body" style={{paddingTop:0}}>

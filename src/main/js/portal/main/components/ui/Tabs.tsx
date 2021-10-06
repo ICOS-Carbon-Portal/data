@@ -51,18 +51,20 @@ export default class Tabs extends Component<Props>{
 		};
 
 		return (
-			<div>
-				<ul className="nav nav-tabs">{
-					this.tabState.map(tab =>
-						<li key={'tabHeader' + tab.id} className={'nav-item'}>
-							<a style={{cursor: 'pointer'}} className={tab.isActive ? 'nav-link active' : 'nav-link'} onClick={this.onTabClick.bind(this, tab.id)}>{
-								tab.tabHeader
-							}</a>
-						</li>
-					)
-				}</ul>
+			<div className="card">
+				<div className="card-header">
+					<ul className="nav nav-tabs card-header-tabs">{
+						this.tabState.map(tab =>
+							<li key={'tabHeader' + tab.id} className={'nav-item'}>
+								<a style={{cursor: 'pointer'}} className={tab.isActive ? 'nav-link active' : 'nav-link'} onClick={this.onTabClick.bind(this, tab.id)}>{
+									tab.tabHeader
+								}</a>
+							</li>
+						)
+					}</ul>
+				</div>
 
-				<div className="tab-content" style={tabContentStyle}>
+				<div className="tab-content card-body p-0">
 					<div className="tab-pane active">{
 						children.find((child, idx) => this.tabState[idx].isActive)
 					}</div>

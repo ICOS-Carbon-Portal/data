@@ -47,7 +47,7 @@ class SearchResultRegular extends Component<OurProps> {
 		const isL3Previewable = previewLookup ? checkedObjects.map(obj => previewLookup.hasVarInfo(obj.dobj) ?? false) : [];
 
 		return (
-			<div className="card rounded-0">
+			<div className="card">
 				<Paging
 					searchOptions={searchOptions}
 					type="header"

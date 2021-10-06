@@ -125,25 +125,16 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 		);
 	}
 
-	if (filterName === "temporalFilter") {
+	if (filterName === "dataTime" || filterName === "submission") {
 		return (
 			<>
 				<PickDates
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
-					category="dataTime"
-					header="Data sampled"
-				/>
-				<PickDates
-					marginTop={25}
-					filterTemporal={filterTemporal}
-					setFilterTemporal={setFilterTemporal}
-					category="submission"
-					header="Submission of data"
+					category={filterName}
 				/>
 			</>
 		);
-
 	} else if (filterName === "keywordFilter") {
 		return (
 			<KeywordFilter

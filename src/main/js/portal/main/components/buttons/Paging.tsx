@@ -16,7 +16,6 @@ interface Paging {
 
 export const Paging = (props: Paging) => {
 	const { type, paging, requestStep, searchOptions, getAllFilteredDataObjects, exportQuery } = props;
-	
 
 	const {offset, objCount, pageCount} = paging;
 	const minObjs = Math.min(offset + pageCount, objCount);
@@ -29,13 +28,13 @@ export const Paging = (props: Paging) => {
 
 	if (type === "header") {
 		return (
-			<div className="card-header">
+			<div className="card-header bg-transparent">
 				<span className="align-middle">
 					<CountHeader objCount={count} to={to} offset={offset} showDeprecated={showDeprecated} />
 
 					<FileDownload exportQuery={exportQuery} getAllFilteredDataObjects={getAllFilteredDataObjects} searchResultsCount={count} />
 				</span>
-				<div className="float-end">
+				<div className="float-end lh-sm">
 					<StepButton direction="step-backward" enabled={offset > 0} onStep={() => requestStep(-1)}/>
 					<StepButton direction="step-forward" enabled={isForwardEnabled} onStep={() => requestStep(1)}/>
 				</div>
@@ -70,5 +69,5 @@ const CountHeader = ({objCount, to, offset, showDeprecated}: CountHeader) => {
 		? `Data objects ${objCount === 0 ? 0 : offset + 1} to ${to} of ${objCount.toLocaleString()}${deprecatedTxt}`
 		: <span>&nbsp;</span>;
 
-	return <h5 style={{display:'inline'}}>{countTxt}</h5>;
+	return <span>{countTxt}</span>;
 };

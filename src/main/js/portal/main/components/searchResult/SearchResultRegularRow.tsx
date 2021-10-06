@@ -67,7 +67,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
-					<h4 style={{marginTop: 0}}>
+					<h4 className="fs-5">
 						<a title="View metadata" href={getMetadataHash(objInfo.dobj)} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />

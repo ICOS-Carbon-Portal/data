@@ -55,7 +55,7 @@ export class App extends Component<AppProps> {
 
 					<Title route={props.route} metadata={props.metadata} />
 
-					<div className="col-md-3" style={{marginTop: 30}}>
+					<div className="col-md-3 mt-2">
 						<SwitchRouteBtn
 							route={props.route}
 							cart={props.cart}

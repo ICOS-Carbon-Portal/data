@@ -151,13 +151,13 @@ class Metadata extends Component<MetadataProps> {
 								<br />
 								{keywords.length > 0 &&
 									<div>
-										<label>Keywords</label>
+										<label className="form-label">Keywords</label>
 										<div>
 											{keywords.map((keyword, i) => {
 												return <a href={getKeywordHash(keyword)}
 													key={'keyword_' + i}
 													onClick={this.handleKeywordSearch.bind(this, keyword)}
-													className="badge rounded-pill bg-secondary text-light fs-6"
+													className="badge badge-keyword rounded-pill bg-secondary text-light"
 													style={{marginRight: 5}}>
 														{keyword}
 													</a>
@@ -176,7 +176,7 @@ class Metadata extends Component<MetadataProps> {
 								</React.Fragment>
 								<div className="row">
 									<div className="col-md-12">
-										<label>Metadata</label>
+										<label className="form-label">Metadata</label>
 										{metadataLinks(metadata.id, metadata.fileName)}
 									</div>
 								</div>
@@ -214,8 +214,8 @@ export const MetadataTitle = (metadata?: State['metadata']) => {
 		<React.Fragment>
 			<h1>
 				{title}
-				<div className="text-muted"><small>{metadata.references.temporalCoverageDisplay}</small></div>
 			</h1>
+			<div className="fs-3 text-muted">{metadata.references.temporalCoverageDisplay}</div>
 		</React.Fragment>
 	);
 };
