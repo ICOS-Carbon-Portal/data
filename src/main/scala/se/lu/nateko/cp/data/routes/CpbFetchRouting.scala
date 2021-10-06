@@ -62,21 +62,21 @@ class CpbFetchRouting(
 		val controlOrigins = controlOriginsDir
 		post{
 			userOpt{uidOpt =>
-				controlOrigins{
-					fetchCpbRoute(uidOpt, true)
+				controlOrigins{host =>
+					fetchCpbRoute(uidOpt, host.split(".").headOption)
 				} ~
 				uidOpt.fold[Route]{
 					complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
 				}{uid =>
 					onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
-						if(accepted) fetchCpbRoute(uidOpt, false)
+						if(accepted) fetchCpbRoute(uidOpt, None)
 						else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for binary downloads")
 					}
 				}
 			}
 		} ~
 		options{
-			controlOrigins{
+			controlOrigins{_ =>
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.POST),
 					`Access-Control-Allow-Headers`("Content-Type")
@@ -88,15 +88,15 @@ class CpbFetchRouting(
 		}
 	}
 
-	private def controlOriginsDir(implicit envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{
+	private def controlOriginsDir(implicit envri: Envri): Directive1[String] = headerValueByType(Origin).tflatMap{
 		case Tuple1(Origin(Seq(o @ HttpOrigin(_, Host(Uri.NamedHost(host), _))))) =>
 			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(host.dropWhile(_ != '.')))
-				respondWithHeader(`Access-Control-Allow-Origin`(o))
+				respondWithHeader(`Access-Control-Allow-Origin`(o)).tflatMap(_ => provide(host))
 			else reject
 		case _ => reject
 	}
 
-	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Boolean)(implicit envri: Envri): Route =
+	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(implicit envri: Envri): Route =
 		entity(as[BinTableRequest]){ tableRequest =>
 			getClientIp{ip =>
 				val dlInfo = CpbDownloadInfo(

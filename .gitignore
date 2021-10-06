@@ -20,6 +20,7 @@ metals.sbt
 # Scala-IDE specific
 .metals/
 .bloop/
+.bsp/
 .vscode/
 
 nohup.out
