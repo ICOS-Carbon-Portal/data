@@ -38,10 +38,8 @@ export default class Filter extends Component {
 
 
 		return (
-			<div className="row" key={filter.name} style={{ marginTop: 10, alignItems: 'center' }}>
-				<div className="col-md-4">
-					<label style={{ marginBottom: 0, lineHeight: '34px' }}>{placeholder}</label>
-				</div>
+			<div className="row mt-2" key={filter.name}>
+				<label className="col-md-4 col-form-label">{placeholder}</label>
 				<div className="col-md-8">
 					{children
 						? children
