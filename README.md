@@ -108,6 +108,19 @@ All the URL parameters are optional. When none are present, all the columns know
 
 The APIs described above are HTTP-based and programming language agnostic, therefore can be used from arbitrary programming language. For Python users, there exists a [dedicated library](https://icos-carbon-portal.github.io/pylib/) that provides a high-level API for Carbon Portal data and metadata access.
 
+### (Internal use) HTTP access to ingested tabular time series in binary format
+
+Similarly to CSV downloads, one can request binary data in a trivial columnar format ("Carbon Portal binary") from the access URL https://data.icos-cp.eu/cpb .
+The client is expected to HTTP POST an `application/json` payload to the access URL, with a structure identical to the one expected by the (now deprecated) access URL https://data.icos-cp.eu/portal/tabular ; it is defined by class [BinTableRequest](https://github.com/ICOS-Carbon-Portal/data/blob/6c40c54a0a9685f671d216628acdd61be83e7b07/src/main/scala/se/lu/nateko/cp/data/services/fetch/FromBinTableFetcher.scala#L13).
+However, in addition to this payload, the request must also contain a `Cookie` header with a `cpauthToken` of a user, and the user must have accepted the [data licence](https://data.icos-cp.eu/licence) in their [CP user profile](https://cpauth.icos-cp.eu/home).
+Just like with CSV downloads and downloads of originals, retrieval of the `cpauthToken` can be easily automated, if the user has an email/password account with CP.
+However, unlike CSV and originals downloads, this API is not suitable for manual usage from a Web browser, and is intended for library authors, not for the end users of the data.
+
+Example `curl` request:
+
+`curl 'https://data.icos-cp.eu/cpb' -X POST -H 'Accept: application/octet-stream' -H 'Content-Type: application/json' -H 'Cookie: cpauthToken=...' --data-raw '{"tableId":"jp6gD9iKcmjorb0fBzQYFTGI","schema":{"columns":["CHAR","INT","FLOAT","DOUBLE","FLOAT"],"size":24},"columnNumbers":[3,4,0],"subFolder":"asciiAtcProductTimeSer"}'`
+
+
 ### Spatiotemporal NetCDF files
 
 Another format of data that is offered extended support is spatiotemporal (geo data with temporal component) NetCDF.
