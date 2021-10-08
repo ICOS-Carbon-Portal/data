@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
-import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart} from '../actions/cart';
+import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import BackButton from '../components/buttons/BackButton';
 import {Sha256Str, UrlStr} from "../backend/declarations";
@@ -16,9 +16,6 @@ export type DataCartProps = StateProps & DispatchProps;
 
 
 class DataCart extends Component<DataCartProps> {
-	constructor(props: DataCartProps) {
-		super(props);
-	}
 
 	handlePreview(urls: UrlStr[]){
 		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
@@ -42,27 +39,32 @@ class DataCart extends Component<DataCartProps> {
 		}
 	}
 
+	handleFormSubmit(){
+		const {name, pids} = this.props.cart;
+		logCartDownloadClick(name, pids);
+	}
+
 	render(){
-		const props = this.props;
-		const previewitemId = props.preview.item ? props.preview.item.dobj : undefined;
-		const downloadTitle = props.user.email && (props.user.profile as Profile).icosLicenceOk
+		const {preview, user, cart, updateCheckedObjectsInCart} = this.props;
+		const previewitemId = preview.item ? preview.item.dobj : undefined;
+		const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
 			? 'Download cart content'
 			: 'Accept license and download cart content';
-		const fileName = props.cart.name;
-		const hashes = JSON.stringify(props.cart.pids);
+		const fileName = cart.name;
+		const hashes = JSON.stringify(cart.pids);
 
 		return (
 			<div>
 				<BackButton action={this.handleBackButton.bind(this)} previousRoute={'search'}/>
-				{props.cart.count > 0 ?
+				{cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-8 col-lg-9">
 							<CartPanel
 								previewitemId={previewitemId}
 								previewItemAction={this.handlePreview.bind(this)}
-								updateCheckedObjects={props.updateCheckedObjectsInCart}
+								updateCheckedObjects={updateCheckedObjectsInCart}
 								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
-								{...props}
+								{...this.props}
 							/>
 						</div>
 						<div className="col-sm-4 col-lg-3">
@@ -72,7 +74,7 @@ class DataCart extends Component<DataCartProps> {
 								</div>
 								<div className="card-body text-center">
 
-									<form action="/objects" method="post">
+									<form action="/objects" method="post" onSubmit={this.handleFormSubmit.bind(this)} target="_blank">
 										<input type="hidden" name="fileName" value={fileName} />
 										<input type="hidden" name="ids" value={hashes} />
 
@@ -82,7 +84,7 @@ class DataCart extends Component<DataCartProps> {
 									</form>
 
 									<div style={{textAlign: 'center', fontSize:'90%'}}>
-										Total size: {formatBytes(props.cart.size)} (uncompressed)
+										Total size: {formatBytes(cart.size)} (uncompressed)
 									</div>
 								</div>
 							</div>

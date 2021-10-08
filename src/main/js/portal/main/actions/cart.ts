@@ -5,6 +5,7 @@ import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
 import {getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
 import {failWithError} from "./common";
+import {saveToRestheart} from "../../../common/main/backend";
 
 
 export default function bootstrapCart(): PortalThunkAction<void> {
@@ -35,6 +36,15 @@ function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise
 	return dispatch => saveCart(email, cart).then(() =>
 		dispatch(new Payloads.BackendUpdateCart(cart))
 	);
+}
+
+export function logCartDownloadClick(fileName: string, pids: string[]) {
+	saveToRestheart({
+		cartDownloadClick: {
+			fileName,
+			pids
+		}
+	});
 }
 
 export const fetchIsBatchDownloadOk: PortalThunkAction<void> = dispatch => {
