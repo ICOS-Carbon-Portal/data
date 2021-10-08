@@ -27,10 +27,6 @@ interface OurState {
 	tableFormat?: TableFormat
 }
 
-const hostname = config.envri === 'ICOS'
-	? 'data.icos-cp.eu'
-	: 'data.fieldsites.se';
-
 class Preview extends Component<OurProps, OurState> {
 	private events: typeof Events = null;
 	private tfCache: TableFormatCache = new TableFormatCache(commonConfig);
@@ -244,7 +240,8 @@ function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFo
 		}, [])
 			.map(col => `col=${col}`).join('&');
 
-		return `https://${hostname}/csv/${hashId}?${cols}`;
+		const baseUri = new URL('/csv', document.baseURI).href
+		return `${baseUri}/${hashId}?${cols}`;
 	}
 
 	return '';

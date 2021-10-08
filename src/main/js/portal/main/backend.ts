@@ -236,7 +236,8 @@ export const getCart = (email: string | null) => {
 };
 
 const getFromRestheart = <T>(email: string, key: string): Promise<T> => {
-	return fetch(`${config.restheartProfileBaseUrl}/${email}?keys={${key}:1}`, {credentials: 'include'})
+	const keyFilter = encodeURIComponent(`{${key}:1}`);
+	return fetch(`${config.restheartProfileBaseUrl}/${email}?keys=${keyFilter}`, {credentials: 'include'})
 		.then(resp => {
 			return resp.status === 200
 				? resp.json() as unknown as T
