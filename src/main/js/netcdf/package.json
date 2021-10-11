@@ -8,9 +8,9 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp buildWatch",
+    "default": "./publish.sh",
+    "publish": "./publish.sh",
+    "build": "./build.sh",
     "gulp": "gulp"
   },
   "repository": {
