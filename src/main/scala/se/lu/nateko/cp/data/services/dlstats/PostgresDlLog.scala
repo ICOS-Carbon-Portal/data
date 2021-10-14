@@ -201,6 +201,11 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 			DownloadedFrom(rs.getInt("count"), rs.getString("country_code"))
 		}
 
+	def downloadedCollections(implicit envri: Envri): Future[IndexedSeq[DateCount]] =
+		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
+			DateCount(rs.getString("month_start"), rs.getInt("count"))
+		}
+
 	def downloadCount(hashId: Sha256Sum)(implicit envri: Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"SELECT COUNT(*) AS download_count FROM downloads WHERE hash_id = '${hashId.id}'"){rs =>
 			DownloadCount(rs.getInt("download_count"))

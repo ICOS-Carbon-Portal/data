@@ -763,6 +763,27 @@ END
 $$;
 
 ---------------------
+DROP FUNCTION IF EXISTS downloadedCollections;
+CREATE OR REPLACE FUNCTION public.downloadedCollections()
+	RETURNS TABLE(
+		month_start text,
+		count int
+	)
+	LANGUAGE sql
+	STABLE
+AS $$
+
+SELECT
+	date_trunc('month', ts)::date::text AS month_start,
+	COUNT(*)::int AS count
+FROM downloads
+WHERE item_type = 'collection' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist)
+GROUP BY 1
+ORDER BY 1;
+
+$$;
+
+---------------------
 DROP FUNCTION IF EXISTS public.getMinMaxdate;
 CREATE OR REPLACE FUNCTION public.getMinMaxdate(_return_min boolean, _day date DEFAULT NULL)
 	RETURNS date
