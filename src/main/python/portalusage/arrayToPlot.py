@@ -36,7 +36,7 @@ def parse_response(resp):
 				xLabel = key
 				x.append(rec[key])
 	
-	return (xLabel, yLabel, x[::-1], y[::-1])
+	return (xLabel, yLabel, x, y)
 
 
 def plt_set_fullscreen(plt):
