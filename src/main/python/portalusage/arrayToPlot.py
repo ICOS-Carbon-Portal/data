@@ -13,7 +13,12 @@ locale.setlocale(locale.LC_ALL, '')
 
 requestOptions = RequestOptions()
 requestOptions.add_option('portal filter changes', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getFilterChanges?np')
-requestOptions.add_option('portal usage per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?np')
+requestOptions.add_option('portal usage: filterChange per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"filterChange"}&np')
+requestOptions.add_option('portal usage: previewTimeserie per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewTimeserie"}&np')
+requestOptions.add_option('portal usage: previewMapGraph per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewMapGraph"}&np')
+requestOptions.add_option('portal usage: previewNetCDF per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewNetCDF"}&np')
+requestOptions.add_option('portal usage: BinaryFileDownload per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"BinaryFileDownload"}&np')
+requestOptions.add_option('portal usage: error per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"error"}&np')
 requestOptions.add_option('downloaded collections per month', 'https://data.icos-cp.eu/stats/api/downloadedCollections')
 requestOptions.add_option('custom statistics', None)
 
