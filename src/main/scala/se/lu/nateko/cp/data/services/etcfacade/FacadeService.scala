@@ -143,19 +143,25 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			val filePackage = (fresh ++ uploaded).distinctBy(_._2)
 			val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-			if(isFullPackage && uploaded.isEmpty || forceEc && isFromBeforeToday(daily)){
+			if(!Files.exists(file)) done
+			else if(isFullPackage && uploaded.isEmpty || forceEc && isFromBeforeToday(daily)){
 
 				val srcFiles = filePackage.map(_._1).sortBy(_.getFileName.toString)
 
 				zipToArchive(srcFiles, daily).flatMap{
-					case (file, hash) =>
-						fresh.foreach{case (file, _) =>
-							val target = uploadedFolder.resolve(file.getFileName)
-							Files.move(file, target, REPLACE_EXISTING)
+					case (zipFile, hash) =>
+						performEtcUpload(zipFile, daily, Some(hash)).andThen{
+							case Success(_) =>
+								fresh.foreach{case (hhFile, _) =>
+									val target = uploadedFolder.resolve(hhFile.getFileName)
+									Files.move(hhFile, target, REPLACE_EXISTING)
+								}
+						}.andThen{
+							case _ => Files.deleteIfExists(zipFile)
 						}
-						performEtcUpload(file, daily, Some(hash))
 				}
-			} else done //no uploads for incomplete or previously incomplete packages, unless forced
+			}
+			else done //no uploads for incomplete or previously incomplete packages, unless forced
 
 		case None =>
 			performEtcUpload(file, fn, None)
@@ -176,12 +182,6 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		)
 		.map(getUploadMeta(fn, _))
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
-		.transform(identity, err => {
-			val target = getFilePath(fn)
-			//file can be a temp file outside the staging folder. If not, the next line is a noop.
-			if(!Files.isSameFile(file, target)) Files.move(file, target, REPLACE_EXISTING)
-			new Exception(s"ETC upload registration with meta service failed: ${err.getMessage}", err)
-		})
 		.flatMap{etcMeta =>
 			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
 			uploadDataObject(fn.station, etcMeta.hashSum)
