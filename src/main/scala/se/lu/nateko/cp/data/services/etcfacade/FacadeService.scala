@@ -51,13 +51,14 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
  * 	- automatic upload retries for all the files in staging
  *
  * EC file packaging and submission is done in the following way.
- * 	1) If upon upload of a half-hourly file a certain daily package becomes complete, the package
- * is uploaded and the half-hourly files are removed from staging.
- * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all half-hourly EC files in staging are packaged and uploaded,
- * but not completely removed from staging. Instead, they are put into a subfolder called {@code uploaded}.
+ * 	1) If upon upload of a half-hourly file a certain daily package becomes complete (48 files for a particular station, logger, and file number),
+ * and if no previous uploads of this daily package were recently performed (during last {@code FacadeService.OldFileMaxAge}),
+ * then the package is uploaded and the half-hourly files are moved into a subfolder called {@code uploaded}.
+ * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all previous-day half-hourly EC files in staging are packaged, uploaded,
+ * and moved into {@code uploaded} subfolder, replacing any previously-uploaded files with the same names there, if any.
  * 	3) Subsequent forced uploads of EC files are only performed if there are "fresh" files, but the files in {@code uploaded}
  * are included, and versioning is used, so that the latest uploaded file is the most complete and up to date.
- * 	4) After the daily forced EC upload, very old files (older than {@code FacadeService OldFileMaxAge}) are purged from staging.
+ * 	4) After the daily forced EC upload, old files (older than {@code FacadeService.OldFileMaxAge}) are purged from staging.
  */
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer) {
 	import FacadeService._
@@ -150,12 +151,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 				zipToArchive(srcFiles, daily).flatMap{
 					case (zipFile, hash) =>
-						performEtcUpload(zipFile, daily, Some(hash)).andThen{
-							case Success(_) =>
-								fresh.foreach{case (hhFile, _) =>
-									val target = uploadedFolder.resolve(hhFile.getFileName)
-									Files.move(hhFile, target, REPLACE_EXISTING)
-								}
+						performEtcUpload(zipFile, daily, Some(hash)).map{done =>
+							fresh.foreach{case (hhFile, _) =>
+								val hhUploadedFile = uploadedFolder.resolve(hhFile.getFileName)
+								Files.move(hhFile, hhUploadedFile, REPLACE_EXISTING)
+							}
+							done
 						}.andThen{
 							case _ => Files.deleteIfExists(zipFile)
 						}

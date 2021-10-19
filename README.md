@@ -134,7 +134,7 @@ The facade uses Basic HTTP Authentication. Username is the station's id.
 For testing purposes one can use fake station `FA-Lso` and password `p4ssw0rd`.
 The uploaded data is analyzed (MD5 sum gets calculated for it), and, if the checksum matches, the facade performs [upload metadata registration](https://github.com/ICOS-Carbon-Portal/meta#registering-the-metadata-package) and internal data object upload.
 
-The features and functional principles of the facade are described in more detail in [source code comments](https://github.com/ICOS-Carbon-Portal/data/blob/master/src/main/scala/se/lu/nateko/cp/data/services/etcfacade/FacadeService.scala#L40)
+The features and functional principles of the facade are described in more detail in [source code comments](https://github.com/ICOS-Carbon-Portal/data/blob/master/src/main/scala/se/lu/nateko/cp/data/services/etcfacade/FacadeService.scala#L45)
 
 Here is an example of uploading bytes in the string `test` to the service (performed on Linux command line):
 
@@ -177,13 +177,16 @@ File names are validated. Here is the output from our unit tests for this:
 	[info] - Parsing 'FA-Lso_EC_201202040437_L03_F12.csv' gives EtcFilename with correct toString
 	[info] - Parsing 'BE-Lon_BM_20170815_L99_F01.dat' gives EtcFilename with correct toString
 
-Please note that Eddy flux files (EC data type), being half-hourly rather than daily, are treated specially. They are not uploaded by the facade to CP immediately. Instead, they are kept in the staging area until a complete daily set (for certain station, logger id, and file id) has been uploaded. After that, the daily file set gets zip-archived and uploaded to CP as a single data object with a time-stripped filename. Additionally, there exists a deadline time of day (04:00 UTC at the time of writing) when even incomplete daily sets are packaged and uploaded.
+Please note that Eddy flux files (EC data type), being half-hourly rather than daily, are treated specially.
+Please see the [source code comments](https://github.com/ICOS-Carbon-Portal/data/blob/master/src/main/scala/se/lu/nateko/cp/data/services/etcfacade/FacadeService.scala#L53) for details.
+(At the time of this writing, the time of forced EC daily package uploads is 04:00 UTC, and the max age of old files in staging is 30 days)
 
-To observe the effect of the FA-Lso upload on the Carbon Portal metadata, you can inspect search results in the [portal](https://data.icos-cp.eu/portal/#search?station=%5B%22Test%20station%20(fake)%22%5D) webapp.
+Other types of files are uploaded by the facade to the Carbon Portal immediately.
 
-(Alternatively, you can visit the Carbon Portal "landing page" of the fake station [FA-Lso](http://meta.icos-cp.eu/resources/stations/ES_FA-Lso) and observe changes in the "Usages of this Resource by others" section.
-Upload of every new file (provided that the file content is unique!) will result in creation of two new html links there, one for the acquisition provenance object, and one for the submission provenance object.
-You can reach the landing page of your newly uploaded data object in two clicks: 1) one of the newly created links; 2) the landing page link in the "Usages..." section.)
+To observe the effect of an upload of a file to the facade, one can:
+
+- inspect the contents of the [staging folder](https://data.icos-cp.eu/etcfacade/) (half-hourly EC files and problematic files are to be found there, together with upload- and error logs)
+- search for the raw data submitted by a respective station on the [search app](https://data.icos-cp.eu/portal/) (due to Web browser cache, the files may take up to 1 hour to appear; you may want to temporarily disable cache in your Web browser to see the uploads sooner)
 
 ### Obtaining a receipt from the logger facade
 
