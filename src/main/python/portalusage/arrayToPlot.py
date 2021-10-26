@@ -1,47 +1,22 @@
 #!/usr/bin/env python
 
+from typing import Coroutine, Dict, List, List, Literal, Union
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.dates import DayLocator
-import requests
-import numbers
 import os
 import locale
-from RequestOptions import RequestOptions
+import numbers
+import numpy as np
+from numpy import number
+from RequestOptions import SelectedOptions, get_request_options
+import asyncio
+from Backend import Backend
 
+PlotType = Literal['bar', 'line']
 
 locale.setlocale(locale.LC_ALL, '')
-
-requestOptions = RequestOptions()
-requestOptions.add_option('portal filter changes', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getFilterChanges?np')
-requestOptions.add_option('portal usage: filterChange per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"filterChange"}&np')
-requestOptions.add_option('portal usage: previewTimeserie per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewTimeserie"}&np')
-requestOptions.add_option('portal usage: previewMapGraph per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewMapGraph"}&np')
-requestOptions.add_option('portal usage: previewNetCDF per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"previewNetCDF"}&np')
-requestOptions.add_option('portal usage: BinaryFileDownload per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"BinaryFileDownload"}&np')
-requestOptions.add_option('portal usage: error per month', 'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"error"}&np')
-requestOptions.add_option('downloaded collections per month', 'https://data.icos-cp.eu/stats/api/downloadedCollections')
-requestOptions.add_option('custom statistics', None)
-
-def get_response(url):
-	return requests.get(url, timeout=15)
-
-
-def parse_response(resp):
-	xLabel = 'X axis'
-	yLabel = 'Y axis'
-	x = []
-	y = []
-
-	for rec in resp.json():
-		for key in rec:
-			if isinstance(rec[key], numbers.Number):
-				yLabel = key
-				y.append(rec[key])
-			else:
-				xLabel = key
-				x.append(rec[key])
-	
-	return (xLabel, yLabel, x, y)
+request_options = get_request_options()
 
 
 def plt_set_fullscreen(plt):
@@ -58,62 +33,147 @@ def plt_set_fullscreen(plt):
 		mgr.window.showMaximized()
 
 
-def plot_response(plot_type, title, xLabel, yLabel, x, y):
-	fig, ax = plt.subplots()
+def find_data_idx(values: List, val: int):
+	array = np.asarray(values)
+	return (np.abs(array - val)).argmin()
 
-	if (plot_type == 'bar'):
-		ax.bar(x, y)
-	else:
-		ax.plot(x, y)
+
+def plot_responses(plot_type: PlotType, title: str, data):
+	fig, ax = plt.subplots()
+	plotter = ax.bar if plot_type == 'bar' else ax.plot
+	x_label = data['x_label']
+	y_labels = []
+	x_vals = data['x_vals']
+	y_data_dicts = data['y_vals']
+
+	colors = list(mcolors.TABLEAU_COLORS.values()) + ['tomato', 'peachpuff', 'gold', 'palegreen', 'teal', 'lavender']
+
+	for i, serie_label in enumerate(y_data_dicts.keys()):
+		y_labels.append(serie_label)
+		y_vals = np.asarray(y_data_dicts[serie_label])
+		
+		if i == 0:
+			bottom = y_vals
+			plotter(x_vals, y_vals, label=serie_label)
+		
+		else:
+			color = colors[i] if i < len(colors) else None
+			plotter(x_vals, y_vals, label=serie_label, color=color, bottom=bottom)
+			bottom = bottom + y_vals
 
 	plt.title(title.capitalize())
-	plt.xlabel(xLabel, fontsize=13)
-	plt.ylabel(yLabel, fontsize=13)
+	plt.xlabel(x_label, fontsize=13)
 
-	ax.format_coord = lambda xVal, yVal: f'{xLabel}={x[round(xVal)]}, {yLabel}={locale.format_string("%d", round(yVal), grouping=True)}'
+	if len(y_data_dicts.keys()) > 1:
+		ax.legend()
+	else:
+		y_data = y_data_dicts[next(iter(y_data_dicts))]
+		ax.format_coord = lambda x_val, y_val: f'{x_label}={x_vals[round(x_val)]}, {y_labels[0]}={locale.format_string("%d", y_data[int(x_val + 0.5)], grouping=True)}'
+		plt.ylabel(y_labels[0], fontsize=13)
 
 	plt_set_fullscreen(plt)
 
-	ax.set_xlim(x[0], x[-1])
-		
+	ax.set_xlim(x_vals[0], x_vals[-1])
 	ax.xaxis.set_major_locator(DayLocator())
 	fig.autofmt_xdate()
 
 	plt.show()
 
 
-def get_option():
-	availableOptions = [o.menu_txt(i + 1) for i,o in enumerate(requestOptions.options)]
-	availableOptions.append(f'Default is 1 - {requestOptions.get_title(1)}')
-	val = input(get_multiline_input_txt(availableOptions))
-	selectedOption = requestOptions.get_option(val)
+def get_options() -> SelectedOptions:
+	available_options = [o.menu_txt(i + 1) for i,o in enumerate(request_options.options)]
+	available_options.append(f'Default is 1 - {request_options.get_title(1)}')
+	val = input(get_multiline_input_txt(available_options))
+	selectedoptions = SelectedOptions(request_options.get_options(val))
 
-	if selectedOption.url == None:
-		selectedOption.url = input(get_multiline_input_txt(['Provide a URL that returns an array of objects. The objects must be 2 key values where one of the values are numeric.']))
+	if selectedoptions.is_custom_request():
+		custom_url = input(get_multiline_input_txt([
+			'Provide a URL that returns an array of objects. The objects must be 2 key values where one of the values are numeric.'
+		]))
+		selectedoptions.set_custom_request(custom_url)
 	
-	return selectedOption
+	return selectedoptions
 
 
-def get_plot_type():
-	plot_type = input(get_multiline_input_txt(['Enter 1 to use line', 'Enter 2 to use bar', 'Default is 1 - line']))
-	if plot_type == '2':
-		return 'bar'
-	else:
+def get_plot_type() -> PlotType:
+	selected_plot = input(get_multiline_input_txt(['Enter 1 to use bar', 'Enter 2 to use line', 'Default is 1 - bar']))
+	if selected_plot == '2':
 		return 'line'
+	else:
+		return 'bar'
 
 
-def get_multiline_input_txt(txt):
+def get_multiline_input_txt(txt: str):
 	return '\n' + '\n'.join(txt) + '\n>> '
 
-selectedOption = get_option()
 
-if selectedOption.url.startswith('http'):
-	plot_type = get_plot_type()
+def parse_response(raw_data: Dict[str, Coroutine]):
+	x_label: str = 'X axis'
+	x_val: Union[str, None] = None
+	y_val: Union[number, None] = None
+	series = set()
 
-	print(f'Fetching from {selectedOption.url}\nWait for plot to show...')
+	def add(serie: str, x_label: str, val: number):
+		if x_label not in data:
+			data[x_label] = {}
 
-	(xLabel, yLabel, x, y) = parse_response(get_response(selectedOption.url))
-	plot_response(plot_type, selectedOption.title, xLabel, yLabel, x, y)
+		data[x_label][serie] = val
 
-else:
-	print(f'You provided "{selectedOption.url}" which is not a valid url.')
+	data: Dict[str, Dict[str, str, str, List[number]]] = {}
+
+	for serie in raw_data.keys():
+		for data_dict in raw_data[serie]:
+			for axis_key in data_dict:
+				series.add(serie)
+
+				if isinstance(data_dict[axis_key], numbers.Number):
+					y_val = data_dict[axis_key]
+
+				else:
+					x_label = axis_key
+					x_val = data_dict[axis_key]
+				
+				if x_val is not None and y_val is not None:
+					add(serie, x_val, y_val)
+					x_val = None
+					y_val = None
+					
+	padded_data = {
+		x_val: {
+			serie: data[x_val][serie] if serie in data[x_val] else 0 for serie in series
+		} for x_val in data.keys()
+	}
+
+	x_vals = [x_val for x_val in data.keys()]
+	y_vals = {serie: [padded_data[x_val][serie] for x_val in data.keys()] for serie in series}
+
+	return {
+		'x_label': x_label,
+		'x_vals': x_vals,
+		'y_vals': dict(sorted(y_vals.items()))
+	}
+
+
+async def main():
+	selected_options = get_options()
+
+	if selected_options.is_valid():
+		plot_type = get_plot_type()
+
+		print('Wait for plot to show...')
+
+		request_objects = selected_options.get_request_objects()
+		urls = list(request_objects.keys())
+
+		async with Backend() as backend:
+			json_resp = await backend.get_responses(urls)
+		
+		legend = list(request_objects.values())
+		data = parse_response(dict(zip(legend, json_resp)))
+		plot_responses(plot_type, selected_options.get_title(), data)
+
+	else:
+		print(f'You provided "{selected_options.get_first_url()}" which is not a valid url.')
+
+
+asyncio.run(main())

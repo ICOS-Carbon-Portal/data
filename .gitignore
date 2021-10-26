@@ -35,4 +35,6 @@ nohup.out
 /src/main/python/mongo-to-pg/database.ini
 /src/main/python/mongo-to-pg/venv/
 /src/main/python/mongo-to-pg/windows-venv/
+/src/main/python/portalusage/build/
+/src/main/python/portalusage/*.spec
 __pycache__/
