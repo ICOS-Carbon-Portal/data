@@ -62,8 +62,8 @@ class CpbFetchRouting(
 		val controlOrigins = controlOriginsDir
 		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
 			userOpt{uidOpt =>
-				controlOrigins{host =>
-					fetchCpbRoute(uidOpt, host.split("\\.").headOption)
+				controlOrigins{originInfo =>
+					fetchCpbRoute(uidOpt, Some(originInfo))
 				} ~
 				uidOpt.fold[Route]{
 					complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
@@ -89,11 +89,19 @@ class CpbFetchRouting(
 		}
 	}
 
-	private def controlOriginsDir(implicit envri: Envri): Directive1[String] = headerValueByType(Origin).tflatMap{
-		case Tuple1(Origin(Seq(o @ HttpOrigin(_, Host(Uri.NamedHost(host), _))))) =>
-			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(host.dropWhile(_ != '.')))
-				respondWithHeader(`Access-Control-Allow-Origin`(o)).tflatMap(_ => provide(host))
-			else reject
+	private def controlOriginsDir(implicit envri: Envri): Directive1[String] = headerValueByType(Referer).tflatMap{
+		case Tuple1(Referer(uri)) =>
+			val hostStr = uri.authority.host.toString
+			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
+				import Uri.Path.{Segment, Slash}
+				val subDomain = hostStr.takeWhile(_ != '.')
+				val originInfo = uri.path match{
+					case Slash(Segment(pathseg, _)) => s"$subDomain/$pathseg"
+					case _ => subDomain
+				}
+				val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
+				respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
+			} else reject
 		case _ => reject
 	}
 
