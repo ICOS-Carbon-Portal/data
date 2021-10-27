@@ -54,7 +54,7 @@ export const getServices = () => {
 export const getTitle = (objId: string) => {
 	const query = objectSpecification(config, objId);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;

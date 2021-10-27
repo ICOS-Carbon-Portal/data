@@ -5,7 +5,7 @@ import {objectSpecification, Config} from './sparqlQueries';
 export function getTableFormatNrows(config: Config, objId: string){
 	const query = objectSpecification(config, objId);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const solution = sparqlResult.results.bindings[0];

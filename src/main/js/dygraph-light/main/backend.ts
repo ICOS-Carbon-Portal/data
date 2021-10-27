@@ -6,7 +6,7 @@ export function getTableFormatNrows(config: ObjectSpecConfig, objIds: string[]){
 	const query = objectSpecification(config, objIds);
 	const tfCache = new TableFormatCache(config);
 
-	return sparql(query, config.sparqlEndpoint)
+	return sparql(query, config.sparqlEndpoint, true)
 		.then(
 			sparqlResult => {
 				const bindings = sparqlResult.results.bindings;
