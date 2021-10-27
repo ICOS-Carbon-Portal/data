@@ -46,6 +46,8 @@ def plot_responses(plot_type: PlotType, title: str, data):
 	x_vals = data['x_vals']
 	y_data_dicts = data['y_vals']
 
+	all_y_vals_stacked = []
+
 	colors = list(mcolors.TABLEAU_COLORS.values()) + ['tomato', 'peachpuff', 'gold', 'palegreen', 'teal', 'lavender']
 
 	for i, serie_label in enumerate(y_data_dicts.keys()):
@@ -60,20 +62,45 @@ def plot_responses(plot_type: PlotType, title: str, data):
 			color = colors[i] if i < len(colors) else None
 			plotter(x_vals, y_vals, label=serie_label, color=color, bottom=bottom)
 			bottom = bottom + y_vals
+		
+		all_y_vals_stacked.append(bottom)
+	
+	y_data = np.array(all_y_vals_stacked)
 
 	plt.title(title.capitalize())
 	plt.xlabel(x_label, fontsize=13)
 
+	def format_hover_label(x_label, serie, num):
+		return f'{x_label}, {serie}: {locale.format_string("%d", num, grouping=True)}'
+
+	def format_coord_single(x_val, y_val):
+		return format_hover_label(x_vals[int(x_val + 0.5)], y_labels[0], y_data[0][int(x_val + 0.5)])
+
+	def format_coord_multiple(x, y):
+		col = int(x + 0.5)
+		row = int(y + 0.5)
+		vals = y_data[:, col]
+		val_idx = np.where(vals > row)[0][0] if len(np.where(vals > row)[0]) > 0 else None
+
+		if val_idx is None:
+			return ''
+
+		serie = y_labels[val_idx]
+		y_val = y_data_dicts[serie][col]
+
+		return format_hover_label(x_vals[col], serie, y_val)
+
 	if len(y_data_dicts.keys()) > 1:
+		ax.format_coord = format_coord_multiple
 		ax.legend()
 	else:
-		y_data = y_data_dicts[next(iter(y_data_dicts))]
-		ax.format_coord = lambda x_val, y_val: f'{x_label}={x_vals[round(x_val)]}, {y_labels[0]}={locale.format_string("%d", y_data[int(x_val + 0.5)], grouping=True)}'
+		ax.format_coord = format_coord_single
 		plt.ylabel(y_labels[0], fontsize=13)
 
 	plt_set_fullscreen(plt)
 
 	ax.set_xlim(x_vals[0], x_vals[-1])
+	ax.set_ylim(np.amin(all_y_vals_stacked), np.amax(all_y_vals_stacked), True, True)
 	ax.xaxis.set_major_locator(DayLocator())
 	fig.autofmt_xdate()
 
