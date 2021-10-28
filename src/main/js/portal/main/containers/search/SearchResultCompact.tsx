@@ -100,8 +100,8 @@ const SortButton: React.FunctionComponent<SortProps & {varName: string}> = props
 		sorting.varName !== props.varName
 			? ''
 			: sorting.ascending
-				? '-amount-down'
-				: '-amount-down-alt'
+				? '-amount-down-alt'
+				: '-amount-down'
 	);
 
 	const style: CSSProperties = {verticalAlign: 'baseline', padding: 6};
