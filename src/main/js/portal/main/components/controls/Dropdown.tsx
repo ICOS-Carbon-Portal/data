@@ -99,8 +99,8 @@ type SortButtonProps = Pick<Props, 'selectedItemKey' | 'isAscending' | 'lookup' 
 const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by' }: SortButtonProps) => {
 	const glyphCls = selectedItemKey
 		? isAscending
-			? 'fas fa-sort-amount-down'
-			: 'fas fa-sort-amount-down-alt'
+			? 'fas fa-sort-amount-down-alt'
+			: 'fas fa-sort-amount-down'
 		: '';
 
 	const lbl = selectedItemKey
