@@ -1,5 +1,6 @@
 import {fetchStationMeasurement, fetchObjectSpecifications, fetchBinTable} from './backend';
 import config from './config';
+import {saveToRestheart} from "../../common/main/backend";
 export const actionTypes = {
 	ERROR: 'ERROR',
 	DISPLAY_MSG: 'DISPLAY_MSG',
@@ -41,7 +42,30 @@ export const init = searchParams => dispatch => {
 	if (isValidRequest){
 		dispatch(getStationMeasurement(stationId, valueType, 1, height));
 		dispatch(getStationMeasurement(stationId, valueType, 2, height));
+
+		saveToRestheart({
+			dashboard: {
+				webHostUrl: getWebHostUrl(),
+				stationId,
+				valueType,
+				height
+			}
+		});
 	}
+};
+
+const getWebHostUrl = () => {
+	// Not loaded through an iframe
+	if (window.location === window.parent.location)
+		return undefined;
+
+	if (document.referrer)
+		return document.referrer;
+
+	if (document.location.ancestorOrigins && document.location.ancestorOrigins.length > 0)
+		return document.location.ancestorOrigins[0];
+
+	return 'unknown';
 };
 
 const getStationMeasurement = (stationId, valueType, dataLevel, height) => dispatch => {
