@@ -25,6 +25,15 @@ export default class Panel extends Component {
 		const {min, max, mean} = stats.calculatedStats;
 		const header = getHeader(timePeriod, startStop, stationId, valueType, height, metadata.station);
 		const unit = formatUnit(metadata.unit);
+		const meanTxt = isNaN(mean)
+			? "No data available"
+			: `${mean.toFixed(1)} ${unit} mean`;
+		const minTxt = min === Infinity
+			? "Unknown min"
+			: `${Math.round(min)} min`;
+		const maxTxt = max === -Infinity
+			? "Unknown max"
+			: `${Math.round(max)} max`;
 
 		return (
 			<div className="card" style={style}>
@@ -40,18 +49,18 @@ export default class Panel extends Component {
 					</Row>
 
 					<Row style={{fontSize:'16pt'}}>
-						<span>{`${mean.toFixed(1)} ${unit} mean`}</span>
+						<span>{meanTxt}</span>
 					</Row>
 
 					<Row style={{fontSize:'95%'}}>
-						<span>{`${Math.round(min)} min`}</span>
+						<span>{minTxt}</span>
 						<span className="float-end">
 							<a href={getPreviewLnk(metadata, valueType)} target="_blank">Preview</a>
 						</span>
 					</Row>
 
 					<Row style={{fontSize:'95%'}}>
-						<span>{`${Math.round(max)} max`}</span>
+						<span>{maxTxt}</span>
 						<span className="float-end">
 							<a href={getDownloadLnk(metadata, valueType)} target="_blank">Download</a>
 						</span>
