@@ -99,11 +99,11 @@ export default class MultiSelectFilter extends Component<Props, State> {
 			: null;
 	}
 
-	renderTagValue(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, hasData: boolean, props: {item: Item}){
-		const {text} = props.item;
+	renderTagValue(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, props: {item: Item}){
+		const {text, presentWithCurrentFilters} = props.item;
 
 		// Key word filter is not affected by other filters
-		return hasData || name === "keywordFilter"
+		return presentWithCurrentFilters || name === "keywordFilter"
 			? <><span>{text}</span>{this.helpBtn(name, shouldUseExternalListEntry, props.item)}</>
 			: <>
 				<span style={{color: 'gray'}} title="Not present with current filters">{text}</span>
@@ -127,7 +127,7 @@ export default class MultiSelectFilter extends Component<Props, State> {
 				onSearch={this.handleSearch.bind(this, name)}
 				onToggle={this.handleToggle.bind(this, value)}
 				renderListItem={this.renderListItem.bind(this, name, shouldUseExternalListEntry)}
-				renderTagValue={this.renderTagValue.bind(this, name, shouldUseExternalListEntry, data.length > 0)}
+				renderTagValue={this.renderTagValue.bind(this, name, shouldUseExternalListEntry)}
 			/>
 		);
 	}

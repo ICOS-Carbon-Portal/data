@@ -8,6 +8,7 @@ import MultiSelectFilter from "./MultiSelectFilter";
 import { Obj } from '../../../../common/main/types';
 import { LabelLookup } from '../../models/State';
 import {HelpItem, HelpStorageListEntry} from "../../models/HelpStorage";
+import bootstrapCart from "../../actions/cart";
 
 interface OurProps {
 	name: CategoryType
@@ -23,6 +24,7 @@ export type Item = {
 	value: Value
 	text: string
 	helpStorageListEntry: HelpStorageListEntry[]
+	presentWithCurrentFilters?: boolean
 }
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
@@ -30,8 +32,9 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 
 	const shouldUseExternalListEntry = helpItem?.shouldUseExternalList ?? false;
 	const filterUris = specTable.getFilter(name)?.filter(isDefined) ?? [];
+	const dataUris = specTable.getDistinctAvailableColValues(name);
 	const data: Item[] = specTable
-		? makeUniqueDataText(name === 'valType', specTable, specTable.getDistinctAvailableColValues(name)
+		? makeUniqueDataText(name === 'valType', specTable, dataUris
 			.filter(value => isDefined(value) && !filterUris.includes(value))
 			.map(value => ({
 				value: value,
@@ -44,7 +47,8 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 	const value: Item[] = filterUris.map(filterUri => ({
 		value: filterUri,
 		text: labelLookup[filterUri]?.label ?? filterUri,
-		helpStorageListEntry: labelLookup[filterUri]?.list ?? []
+		helpStorageListEntry: labelLookup[filterUri]?.list ?? [],
+		presentWithCurrentFilters: dataUris.includes(filterUri)
 	}));
 
 	const placeholder = data.length === 1
