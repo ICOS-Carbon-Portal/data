@@ -101,7 +101,7 @@
 				? `https://${metaHostName}/collections/`
 				: `https://${metaHostName}/objects/`;
 
-			tr.append(getTxt(record.ip));
+			tr.append(getLnk("https://ipinfo.io/" + record.ip, record.ip));
 			tr.append(getTxt(new Date(record.ts).toISOString().replace(/T/, " ").slice(0, -1)));
 			tr.append(getTxt(record.itemType));
 			tr.append(getLnk(metaBaseUrl + record.hashId, record.hashId));
