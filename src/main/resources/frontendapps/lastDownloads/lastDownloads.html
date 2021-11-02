@@ -102,7 +102,7 @@
 				: `https://${metaHostName}/objects/`;
 
 			tr.append(getTxt(record.ip));
-			tr.append(getTxt(new Date(record.ts).toLocaleString('SWE')));
+			tr.append(getTxt(new Date(record.ts).toISOString().replace(/T/, " ").slice(0, -1)));
 			tr.append(getTxt(record.itemType));
 			tr.append(getLnk(metaBaseUrl + record.hashId, record.hashId));
 			tr.append(getTxt(countryLookup[record.countryCode]));
@@ -113,7 +113,7 @@
 
 		function getTxt(content) {
 			var td = document.createElement("td");
-			td.innerHTML = content;
+			td.innerHTML = content ? content : "";
 			return td;
 		}
 
@@ -131,8 +131,13 @@
 
 		function getPosLnk(txt, geoJson) {
 			var td = document.createElement("td");
-			var a = document.createElement("a");
 
+			if (geoJson === undefined){
+				td.innerHTML = "";
+				return td;
+			}
+
+			var a = document.createElement("a");
 			a.onclick = () => showPosition(geoJson);
 			a.innerHTML = txt;
 			a.style.cursor = 'pointer';
@@ -210,7 +215,7 @@
 					<thead style="top:0px; position:sticky; background-color:white;">
 						<tr>
 							<th>IP</th>
-							<th>Date (local time)</th>
+							<th>Date (UTC)</th>
 							<th>Type</th>
 							<th>Data object</th>
 							<th>Country</th>
