@@ -3,7 +3,10 @@
 from typing import Coroutine, Dict, List, List, Literal, Union
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.dates as mdates
 from matplotlib.dates import DayLocator
+import datetime as dt
+from dateutil.parser import parse
 import os
 import locale
 import numbers
@@ -12,6 +15,7 @@ from numpy import number
 from RequestOptions import SelectedOptions, get_request_options
 import asyncio
 from Backend import Backend
+
 
 PlotType = Literal['bar', 'line']
 
@@ -33,9 +37,13 @@ def plt_set_fullscreen(plt):
 		mgr.window.showMaximized()
 
 
-def find_data_idx(values: List, val: int):
-	array = np.asarray(values)
-	return (np.abs(array - val)).argmin()
+def is_date(string, fuzzy=False):
+    try: 
+        parse(string, fuzzy=fuzzy)
+        return True
+
+    except ValueError:
+        return False
 
 
 def plot_responses(plot_type: PlotType, title: str, data):
@@ -43,12 +51,25 @@ def plot_responses(plot_type: PlotType, title: str, data):
 	plotter = ax.bar if plot_type == 'bar' else ax.plot
 	x_label = data['x_label']
 	y_labels = []
+	is_x_vals_dates = is_date(data['x_vals'][0])
 	x_vals = data['x_vals']
 	y_data_dicts = data['y_vals']
 
 	all_y_vals_stacked = []
 
+	red_color = mcolors.TABLEAU_COLORS['tab:red']
 	colors = list(mcolors.TABLEAU_COLORS.values()) + ['tomato', 'peachpuff', 'gold', 'palegreen', 'teal', 'lavender']
+	colors_wo_red = [color for color in colors if color != red_color]
+	
+	def get_color(idx: number, label: str):
+		if label == 'Error':
+			return red_color
+
+		if idx < len(colors_wo_red):
+			return colors_wo_red[idx]
+		
+		return None
+
 
 	for i, serie_label in enumerate(y_data_dicts.keys()):
 		y_labels.append(serie_label)
@@ -59,8 +80,7 @@ def plot_responses(plot_type: PlotType, title: str, data):
 			plotter(x_vals, y_vals, label=serie_label)
 		
 		else:
-			color = colors[i] if i < len(colors) else None
-			plotter(x_vals, y_vals, label=serie_label, color=color, bottom=bottom)
+			plotter(x_vals, y_vals, label=serie_label, color=get_color(i, serie_label), bottom=bottom)
 			bottom = bottom + y_vals
 		
 		all_y_vals_stacked.append(bottom)
@@ -89,7 +109,7 @@ def plot_responses(plot_type: PlotType, title: str, data):
 		y_val = y_data_dicts[serie][col]
 
 		return format_hover_label(x_vals[col], serie, y_val)
-
+	
 	if len(y_data_dicts.keys()) > 1:
 		ax.format_coord = format_coord_multiple
 		ax.legend()
@@ -101,7 +121,10 @@ def plot_responses(plot_type: PlotType, title: str, data):
 
 	ax.set_xlim(x_vals[0], x_vals[-1])
 	ax.set_ylim(np.amin(all_y_vals_stacked), np.amax(all_y_vals_stacked), True, True)
-	ax.xaxis.set_major_locator(DayLocator())
+
+	if is_x_vals_dates:
+		ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=10))
+
 	fig.autofmt_xdate()
 
 	plt.show()

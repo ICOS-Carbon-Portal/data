@@ -34,10 +34,10 @@ def get_request_options():
 		'Preview NetCDF'
 	)
 	request_options.add_option(
-		'portal usage: binary download per month',
-		'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"cpbDownload"}&np',
+		'portal usage: dashboard per month',
+		'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"dashboard"}&np',
 		'portalUsage',
-		'Binary download'
+		'Dashboard'
 	)
 	request_options.add_option(
 		'portal usage: BinaryFileDownload per month',
@@ -52,7 +52,13 @@ def get_request_options():
 		'Error'
 	)
 	request_options.add_option(
-		'portal usage: unique IPs per month',
+		'Binary download per month',
+		'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"cpbDownload"}&np',
+		None,
+		None
+	)
+	request_options.add_option(
+		'Unique IPs per month',
 		'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getMonthlyUniqueIps?np',
 		None,
 		None
