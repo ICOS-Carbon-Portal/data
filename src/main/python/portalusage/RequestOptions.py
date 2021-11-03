@@ -46,7 +46,7 @@ def get_request_options():
 		'Cart download'
 	)
 	request_options.add_option(
-		'portal usage: BinaryFileDownload per month',
+		'portal usage: python library downloads per month',
 		'https://restheart.icos-cp.eu/db/portaluse/_aggrs/getPortalUsagePerMonth?avars={"key":"BinaryFileDownload"}&np',
 		'portalUsage',
 		'Python library download'
