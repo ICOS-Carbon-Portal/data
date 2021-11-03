@@ -226,7 +226,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		runAnalyticalQuery(query){rs =>
 			Download(
 				rs.getString("item_type"),
-				rs.getTimestamp("ts").toLocalDateTime.toInstant(ZoneOffset.UTC),
+				rs.getTimestamp("ts").toInstant(),
 				rs.getString("hash_id"),
 				rs.getString("ip"),
 				Option(rs.getString("city")),
