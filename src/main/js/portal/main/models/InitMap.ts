@@ -12,7 +12,7 @@ import { Obj } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
 import { difference } from '../utils';
-import { Value } from './SpecTable';
+import {Filter, Value} from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
 import { ProjectionControl } from './ol/ProjectionControl';
@@ -41,13 +41,14 @@ interface Props extends UpdateProps {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
-	updateStationFilterInState: (stationUrisToState: Value[]) => void
+	updateStationFilterInState: (stationUrisToState: Filter) => void
 }
 interface UpdateProps {
 	specTable: CompositeSpecTable
 	allStationUris: Value[]
 	stationPos4326Lookup: StationPos4326Lookup[]
 	labelLookup: State['labelLookup']
+	spatialStationsFilter: Filter
 }
 export type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
 
@@ -67,7 +68,7 @@ export default class InitMap {
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
-	private updateStationFilterInState: (stationUrisToState: Value[]) => void;
+	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 
 	constructor(props: Props) {
 		const {
@@ -79,7 +80,8 @@ export default class InitMap {
 			updateMapSelectedSRID,
 			persistedMapProps,
 			updatePersistedMapProps,
-			updateStationFilterInState
+			updateStationFilterInState,
+			spatialStationsFilter
 		} = props;
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
@@ -149,7 +151,7 @@ export default class InitMap {
 		});
 
 		if (stationPos4326Lookup.length)
-			this.incommingPropsUpdated({ specTable, allStationUris, stationPos4326Lookup, labelLookup });
+			this.incomingPropsUpdated({ specTable, allStationUris, stationPos4326Lookup, labelLookup, spatialStationsFilter });
 	}
 
 	private async fetchCountriesTopo() {
@@ -246,8 +248,8 @@ export default class InitMap {
 		};
 	}
 
-	incommingPropsUpdated(props: UpdateProps) {
-		const { specTable, allStationUris, stationPos4326Lookup, labelLookup } = props;
+	incomingPropsUpdated(props: UpdateProps) {
+		const { specTable, allStationUris, stationPos4326Lookup, labelLookup, spatialStationsFilter } = props;
 
 		if (this.stationFilterControl.stationPosLookup.empty !== undefined && stationPos4326Lookup.length > 0) {
 			this.stationPos4326Lookup = stationPos4326Lookup;
@@ -255,7 +257,7 @@ export default class InitMap {
 		}
 
 		if (this.stationFilterControl.stationPosLookup.empty === undefined) {
-			const stationUris = this.stationFilterControl.updateStationUris(specTable, allStationUris);
+			const stationUris = this.stationFilterControl.updateStationUris(specTable, allStationUris, spatialStationsFilter);
 
 			if (stationUris.hasChanged) {
 				this.updatePoints(stationUris.includedStationUris, allStationUris);

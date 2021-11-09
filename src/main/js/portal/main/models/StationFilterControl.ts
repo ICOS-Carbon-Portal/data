@@ -17,8 +17,8 @@ import { PersistedMapPropsExtended, StationPosLookup } from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
 import { emptyCompositeSpecTable } from './State';
-import { Value } from './SpecTable';
-import { areEqual, intersection, union } from '../utils';
+import {Filter, Value} from './SpecTable';
+import { areEqual } from '../utils';
 import CompositeSpecTable from './CompositeSpecTable';
 
 export interface DrawFeature {
@@ -31,14 +31,13 @@ export interface StationFilterControlOptions extends Options {
 	drawFeatures: DrawFeature[]
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
-	updateStationFilterInState: (stationUrisToState: Value[]) => void
+	updateStationFilterInState: (stationUrisToState: Filter) => void
 }
 export interface StationUris {
 	hasChanged: boolean
 	includedStationUris: Value[]
 }
 export interface StateStationUris {
-	explicitSpecTableStationUris: Value[]
 	spatiallyFilteredStationUris: Value[]
 	specTableStationUris: Value[]
 }
@@ -69,7 +68,7 @@ export class StationFilterControl extends Control {
 	private seletcs: Obj<Select> = {};
 	private drawFeatures: DrawFeature[];
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
-	private updateStationFilterInState: (stationUrisToState: Value[]) => void;
+	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 	public stationPosLookup: StationPosLookup = {
 		empty: {
 			coord: [],
@@ -78,7 +77,6 @@ export class StationFilterControl extends Control {
 	};
 	private specTable: CompositeSpecTable = emptyCompositeSpecTable;
 	public stateStationUris: StateStationUris = {
-		explicitSpecTableStationUris: [''],
 		spatiallyFilteredStationUris: [''],
 		specTableStationUris: ['']
 	}
@@ -123,31 +121,14 @@ export class StationFilterControl extends Control {
 		this.updateStationFilterInState(this.pickStationUrisToState());
 	}
 
-	private pickStationUrisToState(): Value[] {
-		// Spatial filter has changed in map. Figure out what stations to send to state.
-		const explicitSpecTableStationUris = this.stateStationUris.explicitSpecTableStationUris;
-		const prevSpatiallyFilteredStationUris = this.stateStationUris.spatiallyFilteredStationUris;
+	private pickStationUrisToState(): Filter {
 		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
-
-		if (spatiallyFilteredStationUris.length < prevSpatiallyFilteredStationUris.length) {
-			return explicitSpecTableStationUris === null
-				? spatiallyFilteredStationUris
-				: intersection(spatiallyFilteredStationUris, explicitSpecTableStationUris);
-		}
-
-		if (spatiallyFilteredStationUris.length === 0 && explicitSpecTableStationUris === null)
-			return [];
-		
-		if (spatiallyFilteredStationUris.length === 0)
-			return explicitSpecTableStationUris as Value[];
-		
-		if (explicitSpecTableStationUris === null)
-			return spatiallyFilteredStationUris;
-
-		return union(spatiallyFilteredStationUris, explicitSpecTableStationUris);
+		return spatiallyFilteredStationUris.length === 0
+			? null
+			: spatiallyFilteredStationUris;
 	}
 
-	updateStationUris(specTable: CompositeSpecTable, allSpecTableStationUris: Value[]): StationUris {
+	updateStationUris(specTable: CompositeSpecTable, allSpecTableStationUris: Value[], spatialStationsFilter: Filter): StationUris {
 		if (specTable.id === this.specTable.id) {
 			return {
 				hasChanged: false,
@@ -158,24 +139,19 @@ export class StationFilterControl extends Control {
 		this.specTable = specTable;
 		// List of stations based on all filters
 		const filteredSpecTableStationUris = specTable.origins.getDistinctColValues('station');
-		// List of stations from station filter
-		const explicitSpecTableStationUris = specTable.getFilter('station') ?? [];
 		const specTableStationUris = filteredSpecTableStationUris ?? allSpecTableStationUris;
 		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
 
 		const hasSpatialFilterChanged = !areEqual(spatiallyFilteredStationUris, this.stateStationUris.spatiallyFilteredStationUris);
-		const hasExplicitSpecTableChanged = !areEqual(explicitSpecTableStationUris, this.stateStationUris.explicitSpecTableStationUris);
 		const hasSpecTableChanged = !areEqual(specTableStationUris, this.stateStationUris.specTableStationUris);
 		const hasChanged = hasSpatialFilterChanged || hasSpecTableChanged;
 
-		if (hasExplicitSpecTableChanged) {
-			// Remove drawFeatures that has stations no longer mentioned in explicitSpecTableStationUris
-			this.findDrawFeaturesForDeletion(explicitSpecTableStationUris)
-				.forEach(drawFeature => this.removeSpatialFilter(drawFeature.id));
+		if (hasChanged && spatialStationsFilter === null) {
+			this.removeAllDrawFeatures();
+			this.removeAllDeleteRectBtns();
 		}
 
 		this.stateStationUris = {
-			explicitSpecTableStationUris,
 			spatiallyFilteredStationUris,
 			specTableStationUris
 		};
@@ -259,24 +235,14 @@ export class StationFilterControl extends Control {
 		this.deleteRectBtnSource.clear(true);
 	}
 
+	private removeAllDrawFeatures() {
+		this.drawSource.clear(true);
+	}
+
 	private removeDrawFeature(id: Symbol) {
 		const idx = this.drawFeatures.findIndex(f => f.id === id);
 		this.drawFeatures.splice(idx, 1);
 		this.updateApp();
-	}
-
-	private removeSpatialFilter(id: Symbol) {
-		const idx = this.drawFeatures.findIndex(f => f.id === id);
-		if (idx < 0)
-			return;
-
-		this.drawSource.getFeatures().filter(f => f.get('id') === id)
-			.forEach(rectFeature => this.drawSource.removeFeature(rectFeature));
-		this.deleteRectBtnSource.getFeatures().filter(f => f.get('id') === id)
-			.forEach(delBtnFeature => this.deleteRectBtnSource.removeFeature(delBtnFeature));
-		this.drawFeatures.splice(idx, 1);
-
-		this.updatePersistedMapProps({ drawFeatures: this.drawFeatures });
 	}
 
 	private restoreDrawFeatures() {
@@ -284,16 +250,15 @@ export class StationFilterControl extends Control {
 			const feature = drawFeatureToFeature(df);
 			this.drawSource.addFeature(feature);
 		});
+
+		if (this.drawFeatures.length)
+			this.updateApp();
 	}
 
 	private restoreDeleteFilterRectBtns() {
 		this.drawFeatures.forEach(df => {
 			this.addDeleteFilterRectBtn(drawFeatureToFeature(df));
 		});
-	}
-
-	private findDrawFeaturesForDeletion(explicitSpecTableStationUris: Value[]) {
-		return this.drawFeatures.filter(df => intersection(explicitSpecTableStationUris, df.stationUris).length === 0);
 	}
 
 	private initSelectEvent(ev: SelectEvent) {

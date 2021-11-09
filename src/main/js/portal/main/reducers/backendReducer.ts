@@ -1,7 +1,19 @@
 import {
-	BackendPayload, BootstrapInfo, BackendUserInfo, BackendObjectMetadataId, BackendObjectMetadata,
-	BackendOriginsTable, BackendUpdateSpecFilter, BackendObjectsFetched, BackendExtendedDataObjInfo,
-	BackendTsSettings, BackendBatchDownload, BackendUpdateCart, BackendExportQuery, StationPositions4326Lookup
+	BackendPayload,
+	BootstrapInfo,
+	BackendUserInfo,
+	BackendObjectMetadataId,
+	BackendObjectMetadata,
+	BackendOriginsTable,
+	BackendUpdateSpecFilter,
+	BackendObjectsFetched,
+	BackendExtendedDataObjInfo,
+	BackendTsSettings,
+	BackendBatchDownload,
+	BackendUpdateCart,
+	BackendExportQuery,
+	StationPositions4326Lookup,
+	BackendUpdateSpatialFilter
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -11,7 +23,8 @@ import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
 import {IdxSig} from "../backend/declarations";
 import { isDefined } from "../utils";
-import { Value } from "../models/SpecTable";
+import {Filter, Value} from "../models/SpecTable";
+import {DobjOriginsAndCounts} from "../backend";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -35,7 +48,11 @@ export default function(state: State, payload: BackendPayload): State {
 	}
 
 	if (payload instanceof BackendOriginsTable){
-		return stateUtils.update(state, handleOriginsTable(state, payload));
+		return stateUtils.updateAndSave(state, handleOriginsTable(state, payload));
+	}
+
+	if (payload instanceof BackendUpdateSpatialFilter){
+		return stateUtils.updateAndSave(state, {spatialStationsFilter: payload.stations});
 	}
 
 	if (payload instanceof BackendUpdateSpecFilter){
@@ -134,14 +151,29 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 	});
 };
 
+function filterDobjStats(stats: DobjOriginsAndCounts, filter: Filter): DobjOriginsAndCounts {
+	if (filter === null)
+		return stats;
+
+	const set = new Set(filter);
+	return {
+		...stats,
+		rows: stats.rows.filter(row => set.has(row.station))
+	};
+}
+
 const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
-	const specTable = state.specTable.withOriginsTable(payload.dobjOriginsAndCounts);
+
+	const specTable = state.specTable.withOriginsTable(
+		filterDobjStats(payload.dobjOriginsAndCounts, state.spatialStationsFilter)
+	);
 
 	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
 
 	return {
 		specTable,
-		...getNewPaging(state.paging, state.page, specTable, payload.resetPaging)
+		...getNewPaging(state.paging, state.page, specTable, payload.resetPaging),
+		baseDobjStats: payload.isFakeFetchResult ? state.baseDobjStats : payload.dobjOriginsAndCounts
 	}
 };
 

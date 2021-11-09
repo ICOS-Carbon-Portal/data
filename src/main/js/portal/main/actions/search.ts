@@ -185,22 +185,22 @@ function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRe
 			filters = filters.concat(filterTemporal.filters);
 		}
 
-		if(varNamesAreFiltered(specTable)){
+		if (varNamesAreFiltered(specTable)){
 			const titles = specTable.getColumnValuesFilter('varTitle')
 			if(titles != null){
 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
 			}
 		}
 
-		if(filterKeywords.length > 0){
+		if (filterKeywords.length > 0){
 			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
 			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
 			let specs = kwSpecs;
 
-			if(!forStatCountsQuery){
+			if (!forStatCountsQuery){
 				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
 				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
-			};
+			}
 
 			filters.push({category: 'keywords', dobjKeywords, specs});
 		}
@@ -209,7 +209,7 @@ function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRe
 	}
 
 	return filters;
-};
+}
 
 const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
 
@@ -220,10 +220,18 @@ function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		const filter: Filter = values.length === 0 ? null : values;
+
 		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
 
 		if(varNameAffectingCategs.includes(varName as ColNames)) dispatch(getOriginsThenDobjList)
 		else dispatch(getFilteredDataObjects);
+	};
+}
+
+export function spatialFilterUpdate(stations: Filter): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		dispatch(new Payloads.BackendUpdateSpatialFilter(stations));
+		dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false, true));
 	};
 }
 
@@ -242,12 +250,15 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const {filterTemporal, filterNumbers, specTable, filterKeywords} = getState();
-	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0;
+	const {filterTemporal, filterNumbers, specTable, filterKeywords, spatialStationsFilter} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0 || spatialStationsFilter;
 
 	dispatch(new Payloads.MiscResetFilters());
-	if(shouldRefetchCounts) dispatch(getOriginsThenDobjList)
-	else dispatch(getFilteredDataObjects);
+
+	if (shouldRefetchCounts)
+		dispatch(getOriginsThenDobjList)
+	else
+		dispatch(getFilteredDataObjects);
 };
 
 export function updateSelectedPids(selectedPids: Sha256Str[]): PortalThunkAction<void> {

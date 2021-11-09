@@ -2,10 +2,9 @@ import {Action} from "redux";
 import { MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
-	fetchDobjOriginsAndCounts,
 	fetchKnownDataObjects,
 	getExtendedDataObjInfo,
-	BootstrapData
+	BootstrapData, DobjOriginsAndCounts
 } from "../backend";
 import {ColNames} from "../models/CompositeSpecTable";
 import {Filter} from "../models/SpecTable";
@@ -63,11 +62,19 @@ export class StationPositions4326Lookup extends BackendPayload{
 }
 
 export class BackendOriginsTable extends BackendPayload{
-	constructor(readonly dobjOriginsAndCounts: AsyncResult<typeof fetchDobjOriginsAndCounts>, readonly resetPaging: boolean = false){super();}
+	constructor(
+		readonly dobjOriginsAndCounts: DobjOriginsAndCounts,
+		readonly resetPaging: boolean = false,
+		readonly isFakeFetchResult: boolean = false //simulating back end call result for spatial filtering
+	){super();}
 }
 
 export class BackendUpdateSpecFilter extends BackendPayload{
 	constructor(readonly varName: ColNames | 'keywordFilter', readonly filter: Filter){super();}
+}
+
+export class BackendUpdateSpatialFilter extends BackendPayload{
+	constructor(readonly stations: Filter){super();}
 }
 
 export class BackendObjectMetadataId extends BackendPayload{

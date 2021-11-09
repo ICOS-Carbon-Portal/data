@@ -5,7 +5,7 @@ import localConfig from './config';
 import Cart, {JsonCart} from './models/Cart';
 import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
-import {UrlStr, Sha256Str} from "./backend/declarations";
+import {UrlStr, Sha256Str, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup} from "./models/State";
 import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
@@ -69,6 +69,8 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		stationclass: b.stationclass?.value
 	}));
 };
+
+export type DobjOriginsAndCounts = AsyncResult<typeof fetchDobjOriginsAndCounts>;
 
 export const fetchStationPositions = () => {
 	const query = queries.stationPositions();
@@ -368,7 +370,7 @@ const persistedMapPropsSessStorageKey = 'persistedMapProps';
 export const savePersistedMapProps = (persistedMapProps: PersistedMapPropsExtended) => {
 	const drawFeatures = persistedMapProps.drawFeatures ?? [];
 	const mapProps = {...persistedMapProps, ...{drawFeatures: drawFeatures.map(serializeDrawFeature)}};
-	
+
 	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
 };
 

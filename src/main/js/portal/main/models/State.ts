@@ -14,10 +14,10 @@ import config, {
 import deepequal from 'deep-equal';
 import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
-import {fetchKnownDataObjects} from "../backend";
+import {DobjOriginsAndCounts, fetchKnownDataObjects} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO, References} from "../../../common/main/metacore";
-import SpecTable, {Row, Value} from "./SpecTable";
+import SpecTable, {Filter, Row, Value} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
@@ -127,6 +127,8 @@ export interface State {
 	labelLookup: LabelLookup;
 	stationPos4326Lookup: StationPos4326Lookup[]
 	specTable: CompositeSpecTable
+	baseDobjStats: DobjOriginsAndCounts //without spatial filtering
+	spatialStationsFilter: Filter
 	allStationUris: Value[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
@@ -182,6 +184,8 @@ export const defaultState: State = {
 	labelLookup: {},
 	stationPos4326Lookup: [],
 	specTable: emptyCompositeSpecTable,
+	baseDobjStats: {colNames: [], rows: []},
+	spatialStationsFilter: null,
 	allStationUris: [],
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},

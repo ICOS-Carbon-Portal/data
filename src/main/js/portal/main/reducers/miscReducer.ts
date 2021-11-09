@@ -2,7 +2,7 @@ import {
 	MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
 	MiscLoadError, MiscRestoreFilters
 } from "./actionpayloads";
-import stateUtils, {CategFilters, State} from "../models/State";
+import stateUtils, {CategFilters, defaultState, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
@@ -62,6 +62,7 @@ const resetFilters = (state: State): Partial<State> => {
 
 	return {
 		specTable,
+		spatialStationsFilter: defaultState.spatialStationsFilter,
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: {},
 		filterPids: [],

@@ -4,8 +4,8 @@ import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
-import { specFilterUpdate } from '../../actions/search';
-import { Value } from '../../models/SpecTable';
+import {spatialFilterUpdate} from '../../actions/search';
+import {Filter} from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 
 
@@ -26,17 +26,18 @@ class SearchResultMap extends Component<OurProps> {
 		super(props);
 	}
 
-	handleStationFilterUpdate(stationUrisToState: Value[]){
+	handleStationFilterUpdate(stationUrisToState: Filter){
 		this.props.updateStationFilter(stationUrisToState);
 	}
 
 	render() {
 		if (this.initMap)
-			this.initMap.incommingPropsUpdated({
+			this.initMap.incomingPropsUpdated({
 				specTable: this.props.specTable,
 				allStationUris: this.props.allStationUris,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				labelLookup: this.props.labelLookup,
+				spatialStationsFilter: this.props.spatialStationsFilter
 			});
 
 		return (
@@ -75,7 +76,8 @@ class SearchResultMap extends Component<OurProps> {
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
 				labelLookup: this.props.labelLookup,
-				updateStationFilterInState: this.handleStationFilterUpdate.bind(this)
+				updateStationFilterInState: this.handleStationFilterUpdate.bind(this),
+				spatialStationsFilter: this.props.spatialStationsFilter
 			});
 		})()
 			.catch(error => {
@@ -97,13 +99,15 @@ function stateToProps(state: State) {
 		allStationUris: state.allStationUris,
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
+		spatialStationsFilter: state.spatialStationsFilter,
+		stateTs: state.ts
 	};
 }
 
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
-		updateStationFilter: (filteredStationUris: Value[]) => dispatch(specFilterUpdate('station', filteredStationUris)),
+		updateStationFilter: (filteredStationUris: Filter) => dispatch(spatialFilterUpdate(filteredStationUris)),
 	};
 }
 
