@@ -1,8 +1,8 @@
 import {
 	MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
-	MiscLoadError, MiscRestoreFilters
+	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps
 } from "./actionpayloads";
-import stateUtils, {CategFilters, defaultState, State} from "../models/State";
+import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
 import {getObjCount} from "./utils";
 import Paging from "../models/Paging";
@@ -11,6 +11,8 @@ import config, {CategoryType, numberFilterKeys} from "../config";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import {getNewPaging} from "./backendReducer";
 import {FilterNumber, FilterNumbers} from "../models/FilterNumbers";
+import {DrawFeature} from "../models/StationFilterControl";
+import {round, throwError} from "../utils";
 
 export default function(state: State, payload: MiscPayload): State{
 
@@ -40,12 +42,46 @@ export default function(state: State, payload: MiscPayload): State{
 		return stateUtils.update(state, restoreFilters(state));
 	}
 
+	if (payload instanceof MiscUpdateMapProps){
+		return stateUtils.update(state, handleUpdateMapProps(state, payload));
+	}
+
 	if (payload instanceof MiscLoadError){
 		return stateUtils.deserialize(payload.state, payload.cart);
 	}
 
 	return state;
 
+};
+
+const handleUpdateMapProps = (state: State, payload: MiscUpdateMapProps): Partial<State> => {
+	const persistedMapProps = payload.persistedMapProps;
+	const srid = persistedMapProps.srid ?? config.olMapSettings.defaultSRID;
+	const coordHandler = (df: DrawFeature): DrawRectBbox => {
+		const rect = df.coords[0];
+
+		switch(srid){
+			case '3006':
+			case '3035':
+			case '3857':
+			case '54030':
+				return rect[0].concat(rect[2]).map(val => Math.round(val)) as DrawRectBbox;
+
+			case '4326':
+				return rect[0].concat(rect[2]).map(val => round(val, 5)) as DrawRectBbox;
+
+			default:
+				throwError(`Unsupported SRID (${srid}) supplied`);
+		}
+	};
+	const mapProps: MapProps = {
+		srid,
+		rects: persistedMapProps.drawFeatures?.map(coordHandler) ?? state.mapProps.rects ?? []
+	};
+
+	return {
+		mapProps
+	};
 };
 
 const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOption): Partial<State> => {
@@ -63,6 +99,7 @@ const resetFilters = (state: State): Partial<State> => {
 	return {
 		specTable,
 		spatialStationsFilter: defaultState.spatialStationsFilter,
+		mapProps: defaultState.mapProps,
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: {},
 		filterPids: [],

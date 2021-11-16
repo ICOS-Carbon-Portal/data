@@ -4,14 +4,14 @@ import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
-import { State, StationPos4326Lookup } from './State';
+import {MapProps, State, StationPos4326Lookup} from './State';
 import Popup from './ol/Popup';
 import { LayerControl } from './ol/LayerControl';
 import Copyright, { getESRICopyRight } from './ol/Copyright';
 import { Obj } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
-import { difference } from '../utils';
+import {difference} from '../utils';
 import {Filter, Value} from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
@@ -39,7 +39,7 @@ export interface PersistedMapPropsExtended<BMN = BaseMapName> extends PersistedM
 interface Props extends UpdateProps {
 	mapRootelement: HTMLElement
 	persistedMapProps: PersistedMapPropsExtended
-	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
+	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
 	updateStationFilterInState: (stationUrisToState: Filter) => void
 }
@@ -49,6 +49,7 @@ interface UpdateProps {
 	stationPos4326Lookup: StationPos4326Lookup[]
 	labelLookup: State['labelLookup']
 	spatialStationsFilter: Filter
+	mapProps: MapProps
 }
 export type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
 
@@ -67,22 +68,19 @@ export default class InitMap {
 	private stationPos4326Lookup: StationPos4326Lookup[];
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
-	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
+	private updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void;
 	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 
 	constructor(props: Props) {
 		const {
 			mapRootelement,
-			specTable,
-			allStationUris,
 			stationPos4326Lookup,
-			labelLookup,
 			updateMapSelectedSRID,
 			persistedMapProps,
 			updatePersistedMapProps,
-			updateStationFilterInState,
-			spatialStationsFilter
+			updateStationFilterInState
 		} = props;
+
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
@@ -111,13 +109,12 @@ export default class InitMap {
 
 		this.stationFilterControl = new StationFilterControl({
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
-			drawFeatures: persistedMapProps.drawFeatures ?? [],
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
 			updatePersistedMapProps: this.updatePersistedMapProps,
 			updateStationFilterInState: this.updateStationFilterInState.bind(this)
 		});
 		controls.push(this.stationFilterControl);
-		
+
 		this.layerControl = new LayerControl({
 			element: document.getElementById('layerCtrl') ?? undefined,
 			selectedBaseMapName,
@@ -128,7 +125,7 @@ export default class InitMap {
 
 		if (Object.keys(olMapSettings.sridsInMap).length > 1)
 			controls.push(this.createProjectionControl(persistedMapProps, updateMapSelectedSRID));
-		
+
 		const olProps = {
 			mapRootelement: mapRootelement,
 			projection,
@@ -139,6 +136,7 @@ export default class InitMap {
 			updatePersistedMapProps
 		};
 
+		// Create map component in OLWrapper. Anything that uses map must be handled after map creation
 		this.olwrapper = new OLWrapper(olProps);
 		this.addInteractivity();
 
@@ -149,9 +147,6 @@ export default class InitMap {
 		getESRICopyRight(esriBaseMapNames).then(attributions => {
 			this.olwrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 		});
-
-		if (stationPos4326Lookup.length)
-			this.incomingPropsUpdated({ specTable, allStationUris, stationPos4326Lookup, labelLookup, spatialStationsFilter });
 	}
 
 	private async fetchCountriesTopo() {
@@ -249,18 +244,24 @@ export default class InitMap {
 	}
 
 	incomingPropsUpdated(props: UpdateProps) {
-		const { specTable, allStationUris, stationPos4326Lookup, labelLookup, spatialStationsFilter } = props;
+		const { specTable, allStationUris, stationPos4326Lookup, labelLookup, spatialStationsFilter, mapProps } = props;
+		const isReadyForStationPosLookup = this.stationFilterControl.stationPosLookup.empty !== undefined
+			&& stationPos4326Lookup.length
+			&& allStationUris.length
+			&& Object.keys(labelLookup).length;
 
-		if (this.stationFilterControl.stationPosLookup.empty !== undefined && stationPos4326Lookup.length > 0) {
+		if (isReadyForStationPosLookup) {
 			this.stationPos4326Lookup = stationPos4326Lookup;
 			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup, allStationUris);
+			this.stationFilterControl.restoreDrawFeaturesFromMapProps(mapProps);
 		}
 
-		if (this.stationFilterControl.stationPosLookup.empty === undefined) {
+		if (!this.stationFilterControl.stationPosLookup.empty !== undefined) {
 			const stationUris = this.stationFilterControl.updateStationUris(specTable, allStationUris, spatialStationsFilter);
 
 			if (stationUris.hasChanged) {
 				this.updatePoints(stationUris.includedStationUris, allStationUris);
+				this.stationFilterControl.restoreDrawFeaturesFromMapProps(mapProps);
 			}
 		}
 	}

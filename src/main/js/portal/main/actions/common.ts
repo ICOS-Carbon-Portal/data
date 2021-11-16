@@ -13,8 +13,7 @@ import {
 	getCart,
 	getError,
 	fetchJson,
-	saveCart,
-	fetchStationPositions
+	saveCart
 } from "../backend";
 import Cart, {restoreCarts} from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
@@ -25,7 +24,6 @@ import {isPidFreeTextSearch} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
-import { StationPositions4326Lookup } from "../reducers/actionpayloads";
 import { DataObject } from "../../../common/main/metacore";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
@@ -84,19 +82,8 @@ export const getFilters = (state: State) => {
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
 		return fetchBoostrapData(filters).then(allTables => {
-				dispatch(getStationPositions());
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
-			failWithError(dispatch)
-		);
-	};
-}
-
-function getStationPositions(): PortalThunkAction<Promise<void>> {
-	return (dispatch) => {
-		return fetchStationPositions().then(stationPos4326Lookup => {
-			dispatch(new StationPositions4326Lookup(stationPos4326Lookup.rows))
-		},
 			failWithError(dispatch)
 		);
 	};
@@ -192,14 +179,14 @@ export function restoreFromHistory(historyState: StateSerialized): PortalThunkAc
 
 		if (Date.now() - ts < config.historyStateMaxAge) {
 			dispatch(new Payloads.MiscRestoreFromHistory(historyState));
-			dispatch(addStateMisingInHistory);
+			dispatch(addStateMissingInHistory);
 		} else {
 			dispatch(init);
 		}
 	};
 }
 
-const addStateMisingInHistory: PortalThunkAction<void> = (dispatch, getState) => {
+const addStateMissingInHistory: PortalThunkAction<void> = (dispatch, getState) => {
 	const {route, metadata, id} = getState();
 
 	if (route === 'metadata' && metadata && id !== undefined && metadata.id !== id)

@@ -20,6 +20,7 @@ import { Options } from "ol/layer/BaseVector";
 import Map from 'ol/Map';
 import BaseLayer from "ol/layer/Base";
 import CircleStyle from "ol/style/Circle";
+import {Coordinate} from "ol/coordinate";
 
 export type BaseMapFilter = (bm: BasemapOptions) => boolean
 
@@ -123,4 +124,11 @@ export function getLayerIcon(layer: VectorLayer) {
 	const circleStyle = (style && style.getImage ? style.getImage() : undefined) as CircleStyle;
 
 	return circleStyle && circleStyle.getImage ? circleStyle.getImage(1) : undefined;
+}
+
+export function isPointInRectangle(rectangles: Coordinate[][], point: Coordinate) {
+	return rectangles.some(rect =>
+		point[0] >= rect[0][0] && point[0] <= rect[2][0] &&	// x
+		point[1] >= rect[0][1] && point[1] <= rect[2][1]	// y
+	);
 }

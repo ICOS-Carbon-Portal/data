@@ -16,10 +16,11 @@ import { Obj } from '../../../common/main/types';
 import { PersistedMapPropsExtended, StationPosLookup } from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
-import { emptyCompositeSpecTable } from './State';
+import {emptyCompositeSpecTable, MapProps} from './State';
 import {Filter, Value} from './SpecTable';
-import { areEqual } from '../utils';
+import {areEqual, drawRectBoxToCoords} from '../utils';
 import CompositeSpecTable from './CompositeSpecTable';
+import {isPointInRectangle} from "./ol/utils";
 
 export interface DrawFeature {
 	id: Symbol
@@ -28,7 +29,6 @@ export interface DrawFeature {
 	stationUris: Value[]
 }
 export interface StationFilterControlOptions extends Options {
-	drawFeatures: DrawFeature[]
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateStationFilterInState: (stationUrisToState: Filter) => void
@@ -40,6 +40,12 @@ export interface StationUris {
 export interface StateStationUris {
 	spatiallyFilteredStationUris: Value[]
 	specTableStationUris: Value[]
+}
+
+enum DrawEventType {
+	DRAWSTART = 'drawstart',
+	DRAWEND = 'drawend',
+	DRAWABORT = 'drawabort',
 }
 
 const delIconOffsetX = -13;
@@ -66,7 +72,7 @@ export class StationFilterControl extends Control {
 	private deleteRectBtnLayer: VectorLayer;
 	private isActive: boolean = false;
 	private seletcs: Obj<Select> = {};
-	private drawFeatures: DrawFeature[];
+	private drawFeatures: DrawFeature[] = [];
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
 	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 	public stationPosLookup: StationPosLookup = {
@@ -90,7 +96,6 @@ export class StationFilterControl extends Control {
 		});
 
 		this.isActive = options.isActive;
-		this.drawFeatures = options.drawFeatures;
 		this.updatePersistedMapProps = options.updatePersistedMapProps;
 		this.updateStationFilterInState = options.updateStationFilterInState;
 
@@ -110,10 +115,9 @@ export class StationFilterControl extends Control {
 			type: GeometryType.CIRCLE,
 			geometryFunction: createBox(),
 		});
-		this.draw.on('drawend', this.addDrawFeature.bind(this));
+		this.draw.on('drawend', this.addDrawFeatureAndUpdate.bind(this));
 
 		this.initSelects();
-		this.restoreDrawFeatures();
 	}
 
 	private updateApp() {
@@ -132,7 +136,7 @@ export class StationFilterControl extends Control {
 		if (specTable.id === this.specTable.id) {
 			return {
 				hasChanged: false,
-				includedStationUris: []
+				includedStationUris: this.stateStationUris.specTableStationUris
 			}; 
 		}
 
@@ -205,6 +209,7 @@ export class StationFilterControl extends Control {
 
 			features.forEach(delBtnFeature => {
 				const rectFeatures = this.drawSource.getFeatures().filter(drawRect => drawRect.get('id') === delBtnFeature.get('id'));
+
 				if (rectFeatures.length < 1)
 					return;
 
@@ -223,11 +228,33 @@ export class StationFilterControl extends Control {
 		this.setActiveState(this.isActive);
 	}
 
+	restoreDrawFeaturesFromMapProps(mapProps: MapProps) {
+		if (mapProps.rects === undefined || mapProps.rects.length === this.drawFeatures.length)
+			return;
+
+		this.removeAllDrawFeatures();
+		this.removeAllDeleteRectBtns();
+		this.drawFeatures = [];
+
+		mapProps.rects.forEach(rect => {
+			const geometry = new Polygon([drawRectBoxToCoords(rect)]);
+			const feature = new Feature({ geometry });
+			this.drawSource.addFeature(feature);
+			this.addDrawFeature(new DrawEvent(DrawEventType.DRAWEND, feature));
+		});
+
+		this.setActiveState(this.isActive);
+	}
+
 	private addDrawFeature(ev: DrawEvent) {
 		ev.feature.setProperties({ id: Symbol(), type: 'stationFilterRect' });
 		this.addDeleteFilterRectBtn(ev.feature);
 		const drawFeature = featureToDrawFeature(ev.feature, this.stationPosLookup);
 		this.drawFeatures.push(drawFeature);
+	}
+
+	private addDrawFeatureAndUpdate(ev: DrawEvent) {
+		this.addDrawFeature(ev);
 		this.updateApp();
 	}
 
@@ -243,22 +270,6 @@ export class StationFilterControl extends Control {
 		const idx = this.drawFeatures.findIndex(f => f.id === id);
 		this.drawFeatures.splice(idx, 1);
 		this.updateApp();
-	}
-
-	private restoreDrawFeatures() {
-		this.drawFeatures.forEach(df => {
-			const feature = drawFeatureToFeature(df);
-			this.drawSource.addFeature(feature);
-		});
-
-		if (this.drawFeatures.length)
-			this.updateApp();
-	}
-
-	private restoreDeleteFilterRectBtns() {
-		this.drawFeatures.forEach(df => {
-			this.addDeleteFilterRectBtn(drawFeatureToFeature(df));
-		});
 	}
 
 	private initSelectEvent(ev: SelectEvent) {
@@ -306,16 +317,14 @@ export class StationFilterControl extends Control {
 		this.setTooltip();
 	}
 
-	private setActiveState(isActive: boolean) {
+	private setActiveState(newActiveState: boolean) {
 		const map = this.getMap();
 
-		if (isActive) {
+		if (newActiveState) {
 			map.addInteraction(this.draw);
 			this.controlButton.setAttribute('style', 'background-color:DodgerBlue;');
 			map.addInteraction(this.seletcs.drawSelect);
 			map.addInteraction(this.seletcs.deleteRectSelect);
-
-			this.restoreDeleteFilterRectBtns();
 
 		} else {
 			this.draw.abortDrawing();
@@ -323,11 +332,9 @@ export class StationFilterControl extends Control {
 			this.controlButton.removeAttribute('style');
 			map.removeInteraction(this.seletcs.drawSelect);
 			map.removeInteraction(this.seletcs.deleteRectSelect);
-
-			this.removeAllDeleteRectBtns();
 		}
 
-		this.isActive = isActive;
+		this.isActive = newActiveState;
 	}
 }
 
@@ -348,19 +355,3 @@ function featureToDrawFeature(feature: Feature<Geometry>, stationPosLookup: Stat
 		stationUris
 	};
 }
-
-function drawFeatureToFeature(drawFeature: DrawFeature) {
-	return new Feature({
-		geometry: new Polygon(drawFeature.coords),
-		id: drawFeature.id,
-		type: drawFeature.type,
-		stationUris: drawFeature.stationUris
-	});
-}
-
-const isPointInRectangle = (rectangles: Coordinate[][], point: Coordinate) => {
-	return rectangles.some(rect => 
-		point[0] >= rect[0][0] && point[0] <= rect[2][0] &&	// x
-		point[1] >= rect[0][1] && point[1] <= rect[2][1]	// y
-	);
-};

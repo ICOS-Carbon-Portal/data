@@ -368,51 +368,16 @@ export const getCountriesGeoJson = async (): Promise<CountriesTopo> => {
 
 const persistedMapPropsSessStorageKey = 'persistedMapProps';
 export const savePersistedMapProps = (persistedMapProps: PersistedMapPropsExtended) => {
-	const drawFeatures = persistedMapProps.drawFeatures ?? [];
-	const mapProps = {...persistedMapProps, ...{drawFeatures: drawFeatures.map(serializeDrawFeature)}};
-
-	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
-};
-
-export const clearDrawFeaturesInPersistedMapProps = () => {
-	const persistedMapProps = getPersistedMapProps();
-	
-	if (persistedMapProps === undefined)
-		return;
-
 	const { drawFeatures, ...mapProps } = persistedMapProps;
-	savePersistedMapProps(mapProps);
+	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
 };
 
 export const getPersistedMapProps = (): PersistedMapPropsExtended | undefined => {
 	const sessStorageMapProps = sessionStorage.getItem(persistedMapPropsSessStorageKey);
 
 	if (sessStorageMapProps){
-		const persistedMapProps = JSON.parse(sessStorageMapProps);
-		const drawFeatures = persistedMapProps.drawFeatures;
-		const mapProps = drawFeatures === undefined
-			? persistedMapProps
-			: {...persistedMapProps, ...{ drawFeatures: drawFeatures.map(deserializeDrawFeature) }};
-
-		return mapProps;
+		return JSON.parse(sessStorageMapProps);
 	}
-	
+
 	return undefined;
-};
-
-const serializeDrawFeature = (drawFeature: DrawFeature) => {
-	return {
-		type: drawFeature.type,
-		coords: drawFeature.coords,
-		stationUris: drawFeature.stationUris
-	};
-};
-
-const deserializeDrawFeature = (drawFeature: Omit<DrawFeature, 'id'>) => {
-	return {
-		id: Symbol(),
-		type: drawFeature.type,
-		coords: drawFeature.coords,
-		stationUris: drawFeature.stationUris,
-	};
 };

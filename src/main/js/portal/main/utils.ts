@@ -2,6 +2,8 @@ import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
 import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
+import {DrawRectBbox} from "./models/State";
+import {Coordinate} from "ol/coordinate";
 
 export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
@@ -167,3 +169,15 @@ export const union: SetOperation = (arr1, arr2) => {
 export const uppercaseFirstChar = (txt: string) => {
 	return txt.charAt(0).toUpperCase() + txt.slice(1);
 };
+
+export const round = (num: number, decimals: number) => +num.toFixed(decimals);
+
+export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[]{
+	return [
+		[rect[0], rect[1]],
+		[rect[2], rect[1]],
+		[rect[2], rect[3]],
+		[rect[0], rect[3]],
+		[rect[0], rect[1]]
+	];
+}

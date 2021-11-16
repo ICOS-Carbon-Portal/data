@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {debounce, Events} from 'icos-cp-utils';
 import Tabs from '../../components/ui/Tabs';
 import SearchResultRegular from './SearchResultRegular';
-import {updateCheckedObjectsInSearch, switchTab, filtersReset} from '../../actions/search';
+import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps} from '../../actions/search';
 import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
 import {Sha256Str, UrlStr} from "../../backend/declarations";
 import {PortalDispatch} from "../../store";
@@ -17,7 +17,7 @@ import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from '../../models/ol/projections';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
-import { clearDrawFeaturesInPersistedMapProps, getPersistedMapProps, savePersistedMapProps } from '../../backend';
+import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -81,14 +81,9 @@ class Search extends Component<OurProps, OurState> {
 		this.props.bootstrapMetadata(id);
 	}
 
-	handleFilterReset(){
-		this.props.filtersReset();
-		this.persistedMapProps.drawFeatures = [];
-		this.props.clearDrawFeaturesInPersistedMapProps();
-	}
-
-	updatePersistedMapProps(mapProps: PersistedMapPropsExtended) {
-		this.persistedMapProps = { ...this.persistedMapProps, ...mapProps };
+	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
+		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
+		this.props.setMapProps(this.persistedMapProps);
 		this.props.savePersistedMapProps(this.persistedMapProps);
 	}
 
@@ -98,7 +93,6 @@ class Search extends Component<OurProps, OurState> {
 			isStationFilterCtrlActive,
 			baseMapName,
 			visibleToggles,
-			drawFeatures: [],
 			srid
 		};
 		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
@@ -133,7 +127,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" handleFilterReset={this.handleFilterReset.bind(this)} />
+							<Filters tabHeader="Filters" handleFilterReset={this.props.filtersReset.bind(this)} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>
@@ -185,8 +179,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
 		getPersistedMapProps: () => getPersistedMapProps(),
 		savePersistedMapProps: (mapProps: PersistedMapPropsExtended) => savePersistedMapProps(mapProps),
-		filtersReset: () => dispatch(filtersReset),
-		clearDrawFeaturesInPersistedMapProps: () => dispatch(clearDrawFeaturesInPersistedMapProps),
+		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),
+		filtersReset: () => dispatch(filtersReset)
 	};
 }
 

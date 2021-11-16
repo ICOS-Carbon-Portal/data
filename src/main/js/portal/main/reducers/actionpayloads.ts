@@ -14,6 +14,7 @@ import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
+import {PersistedMapPropsExtended} from "../models/InitMap";
 
 
 export abstract class ActionPayload{}
@@ -136,6 +137,10 @@ export class MiscRestoreFilters extends MiscPayload{
 
 export class MiscUpdateSearchOption extends MiscPayload{
 	constructor(readonly newSearchOption: SearchOption){super();}
+}
+
+export class MiscUpdateMapProps extends MiscPayload{
+	constructor(readonly persistedMapProps: PersistedMapPropsExtended){super();}
 }
 
 export class RestorePreview extends PreviewPayload{

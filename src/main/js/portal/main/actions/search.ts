@@ -26,6 +26,7 @@ import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
 import { listFilteredDataObjects, SPECCOL } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
+import {PersistedMapPropsExtended} from "../models/InitMap";
 
 
 const dataObjectsFetcher = config.useDataObjectsCache
@@ -282,6 +283,12 @@ export function switchTab(tabName: string, selectedTabId: string): PortalThunkAc
 		if (tabName === 'searchTab' && getState().filterPids.length > 0){
 			dispatch(getFilteredDataObjects);
 		}
+	};
+}
+
+export function setMapProps(persistedMapProps: PersistedMapPropsExtended): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
 	};
 }
 

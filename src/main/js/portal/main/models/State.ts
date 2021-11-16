@@ -22,6 +22,8 @@ import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
 import { Obj } from "../../../common/main/types";
+import {SupportedSRIDs} from "./ol/projections";
+import {restoreSpatialFilterFromMapProps} from "../actions/main";
 
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
@@ -38,7 +40,8 @@ const hashKeys = [
 	'page',
 	'id',
 	'preview',
-	'searchOptions'
+	'searchOptions',
+	'mapProps'
 ];
 
 export type Route = 'search' | 'metadata' | 'preview' | 'cart';
@@ -113,6 +116,13 @@ export type ExportQuery = {
 export type StationPos4326Lookup = { station: UrlStr, lon: number, lat: number }
 export type LabelLookup = Obj<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
 
+// 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
+export type DrawRectBbox = [number, number, number, number]
+export type MapProps = {
+	srid: SupportedSRIDs
+	rects?: DrawRectBbox[]
+}
+
 export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
@@ -129,6 +139,7 @@ export interface State {
 	specTable: CompositeSpecTable
 	baseDobjStats: DobjOriginsAndCounts //without spatial filtering
 	spatialStationsFilter: Filter
+	mapProps: MapProps
 	allStationUris: Value[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
@@ -186,6 +197,10 @@ export const defaultState: State = {
 	specTable: emptyCompositeSpecTable,
 	baseDobjStats: {colNames: [], rows: []},
 	spatialStationsFilter: null,
+	mapProps: {
+		srid: config.olMapSettings.defaultSRID,
+		rects: []
+	},
 	allStationUris: [],
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
@@ -254,12 +269,14 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const previewLookup = table && varInfo
 		? new PreviewLookup(undefined, undefined, table, varInfo)
 		: new PreviewLookup(specTable, jsonObj.labelLookup);
+	const spatialStationsFilter = restoreSpatialFilterFromMapProps(jsonObj.mapProps, jsonObj.stationPos4326Lookup);
 
 	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
 		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
 		previewLookup,
 		specTable,
+		spatialStationsFilter,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),
@@ -499,7 +516,11 @@ const reduceState = (state: Obj<any>) => {
 		const val = state[key];
 		if (val == null) return acc;
 
-		if (Array.isArray(val) && val.length){
+		if (key === 'mapProps'){
+			if ((val as MapProps).rects?.length)
+				acc[key] = val;
+
+		} else if (Array.isArray(val) && val.length){
 			acc[key] = val;
 
 		} else if (typeof val === 'object') {

@@ -30,16 +30,21 @@ class SearchResultMap extends Component<OurProps> {
 		this.props.updateStationFilter(stationUrisToState);
 	}
 
-	render() {
-		if (this.initMap)
-			this.initMap.incomingPropsUpdated({
-				specTable: this.props.specTable,
-				allStationUris: this.props.allStationUris,
-				stationPos4326Lookup: this.props.stationPos4326Lookup,
-				labelLookup: this.props.labelLookup,
-				spatialStationsFilter: this.props.spatialStationsFilter
-			});
+	componentDidUpdate(){
+		if (this.initMap === undefined)
+			return;
 
+		this.initMap.incomingPropsUpdated({
+			specTable: this.props.specTable,
+			allStationUris: this.props.allStationUris,
+			stationPos4326Lookup: this.props.stationPos4326Lookup,
+			mapProps: this.props.mapProps,
+			labelLookup: this.props.labelLookup,
+			spatialStationsFilter: this.props.spatialStationsFilter
+		});
+	}
+
+	render() {
 		return (
 			<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
 				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
@@ -73,6 +78,7 @@ class SearchResultMap extends Component<OurProps> {
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
+				mapProps: this.props.mapProps,
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
 				labelLookup: this.props.labelLookup,
@@ -100,7 +106,7 @@ function stateToProps(state: State) {
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
 		spatialStationsFilter: state.spatialStationsFilter,
-		stateTs: state.ts
+		mapProps: state.mapProps
 	};
 }
 
