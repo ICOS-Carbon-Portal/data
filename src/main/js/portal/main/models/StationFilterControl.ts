@@ -225,6 +225,7 @@ export class StationFilterControl extends Control {
 		super.setMap(map);
 		map.addLayer(this.drawLayer);
 		map.addLayer(this.deleteRectBtnLayer);
+		map.addInteraction(this.seletcs.deleteRectSelect);
 		this.setActiveState(this.isActive);
 	}
 
@@ -324,14 +325,12 @@ export class StationFilterControl extends Control {
 			map.addInteraction(this.draw);
 			this.controlButton.setAttribute('style', 'background-color:DodgerBlue;');
 			map.addInteraction(this.seletcs.drawSelect);
-			map.addInteraction(this.seletcs.deleteRectSelect);
 
 		} else {
 			this.draw.abortDrawing();
 			map.removeInteraction(this.draw);
 			this.controlButton.removeAttribute('style');
 			map.removeInteraction(this.seletcs.drawSelect);
-			map.removeInteraction(this.seletcs.deleteRectSelect);
 		}
 
 		this.isActive = newActiveState;

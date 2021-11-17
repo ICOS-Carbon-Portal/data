@@ -81,6 +81,11 @@ class Search extends Component<OurProps, OurState> {
 		this.props.bootstrapMetadata(id);
 	}
 
+	handleFilterReset() {
+		delete this.persistedMapProps.drawFeatures;
+		this.props.filtersReset();
+	}
+
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
@@ -127,7 +132,7 @@ class Search extends Component<OurProps, OurState> {
 
 					<div style={expandedFilters}>
 						<Tabs tabName="searchTab" selectedTabId={tabs.searchTab} switchTab={switchTab}>
-							<Filters tabHeader="Filters" handleFilterReset={this.props.filtersReset.bind(this)} />
+							<Filters tabHeader="Filters" handleFilterReset={this.handleFilterReset.bind(this)} />
 							<Advanced tabHeader="Advanced" />
 						</Tabs>
 					</div>

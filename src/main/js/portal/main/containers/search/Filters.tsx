@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, {Component, MouseEventHandler} from 'react';
 import {connect} from 'react-redux';
 import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
@@ -25,9 +25,14 @@ type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
 	render(){
-		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal,
-			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter} = this.props;
-		const resetBtnEnabled = filterTemporal.hasFilter || specTable.hasActiveFilters || filterNumbers.hasFilters;
+		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal, filterPids,
+			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, spatialStationsFilter} = this.props;
+		const resetBtnEnabled = filterTemporal.hasFilter
+			|| specTable.hasActiveFilters
+			|| filterNumbers.hasFilters
+			|| spatialStationsFilter !== null
+			|| filterKeywords.length > 0
+			|| filterPids.length > 0;
 
 		return (
 			<div>
@@ -59,13 +64,21 @@ interface ResetBtn {
 }
 
 const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
-	const className = enabled ? 'btn btn-link' : 'btn btn-link disabled';
-	const style = enabled
-		? {margin: '5px 2px', textDecoration: 'underline', cursor: 'pointer'}
-		: {margin: '5px 2px', textDecoration: 'underline'};
 	const onClick = () => enabled ? resetFiltersAction() : {};
+	const baseStyle = {margin: '10px', fontSize: 16};
+	const style = enabled
+		? {...baseStyle, cursor: 'pointer'}
+		: {...baseStyle, opacity: 0.5};
+	const title = enabled ? "Reset all filters" : "No active filters";
 
-	return <div style={{textAlign: 'right'}}><button className={className} style={style} onClick={onClick}>Clear filters</button></div>;
+	return (
+		<div className="d-flex justify-content-end">
+			<span className="fa-stack fa-1x" onClick={onClick} title={title} style={style}>
+		 		<i className="fas fa-filter fa-stack-1x" />
+	 			<i className="fas fa-ban fa-stack-2x" />
+			</span>
+		</div>
+	);
 };
 
 function stateToProps(state: State){
@@ -77,6 +90,8 @@ function stateToProps(state: State){
 		labelLookup: state.labelLookup,
 		keywords: state.keywords,
 		filterKeywords: state.filterKeywords,
+		filterPids: state.filterPids,
+		spatialStationsFilter: state.spatialStationsFilter
 	};
 }
 

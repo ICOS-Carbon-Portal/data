@@ -84,7 +84,7 @@ export default class SpecTable<T extends string = string>{
 	}
 
 	get hasActiveFilters(): boolean{
-		return this.hasOwnFilters || (this.extraSpecFilter != null);
+		return this.hasOwnFilters;
 	}
 
 	get hasOwnFilters(): boolean{
