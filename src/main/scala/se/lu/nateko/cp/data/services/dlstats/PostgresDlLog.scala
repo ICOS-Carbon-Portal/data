@@ -207,7 +207,11 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		}
 
 	def downloadCount(hashId: Sha256Sum)(implicit envri: Envri): Future[IndexedSeq[DownloadCount]] =
-		runAnalyticalQuery(s"SELECT COUNT(*) AS download_count FROM downloads WHERE hash_id = '${hashId.id}' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist)"){rs =>
+		runAnalyticalQuery(s"""
+				|SELECT COUNT(*) AS download_count
+				|FROM downloads
+				|WHERE hash_id = '${hashId.id}' AND (distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist)))
+				|""".stripMargin){rs =>
 			DownloadCount(rs.getInt("download_count"))
 	}
 
