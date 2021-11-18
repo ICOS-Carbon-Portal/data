@@ -65,7 +65,7 @@ interface ResetBtn {
 
 const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
 	const onClick = () => enabled ? resetFiltersAction() : {};
-	const baseStyle = {margin: '10px', fontSize: 16};
+	const baseStyle = {margin: '7px', fontSize: 14};
 	const style = enabled
 		? {...baseStyle, cursor: 'pointer'}
 		: {...baseStyle, opacity: 0.5};
