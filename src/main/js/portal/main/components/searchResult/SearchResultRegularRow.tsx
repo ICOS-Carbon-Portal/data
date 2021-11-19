@@ -5,7 +5,7 @@ import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
 import Preview from '../../models/Preview';
-import CartItem from '../../models/CartItem';
+import CartItem, { addingToCartProhibition } from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
 import CollectionBtn from '../buttons/CollectionBtn';
 
@@ -51,10 +51,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const specLabel = props.labelLookup[objInfo.spec].label ?? "";
 		const title = extendedInfo.title ?? makeL2OrLessTitle(extendedInfo, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
-		const checkboxDisabled = objInfo.level === 0;
-		const checkBtnTitle = checkboxDisabled
-			? 'You cannot download or preview level 0 data through this portal'
-			: `Click to select this data object for preview or add to cart`;
+		const cartProhibition = addingToCartProhibition(objInfo);
+		const checkBtnTitle = cartProhibition || `Click to select this data object for preview or add to cart`;
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -63,7 +61,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={checkboxDisabled}
+						checkboxDisabled={cartProhibition != null}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>

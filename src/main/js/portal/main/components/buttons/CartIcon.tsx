@@ -1,5 +1,6 @@
 import React, { Component, CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
+import { addingToCartProhibition } from '../../models/CartItem';
 import { ObjectsTable } from '../../models/State';
 import { styles } from '../styles';
 
@@ -28,12 +29,13 @@ export default class CartIcon extends Component<Props> {
 
 	render(){
 		const {isAddedToCart, objInfo, style} = this.props;
+		const cartProhibited = addingToCartProhibition(objInfo);
 
 		return(
-			<span style={style}>{objInfo && objInfo.level === 0
+			<span style={style}>{cartProhibited != null
 				? <span
 					style={styles.disabledClickIcon}
-					title="Data level 0 is available upon request"
+					title={cartProhibited}
 					className="fas fa-plus-circle text-muted"
 				/>
 				: isAddedToCart

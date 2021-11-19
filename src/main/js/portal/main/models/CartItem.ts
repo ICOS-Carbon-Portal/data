@@ -1,5 +1,6 @@
+import config from "../../../common/main/config";
 import {IdxSig, UrlStr} from "../backend/declarations";
-import { PreviewType } from "../config";
+import { PreviewType, themeUris } from "../config";
 
 export interface DataObject {
 	dobj: string,
@@ -95,6 +96,10 @@ export default class CartItem {
 		return this._dataobject.spec;
 	}
 
+	get theme(){
+		return this._dataobject.theme;
+	}
+
 	get size(){
 		return parseInt(this._dataobject.size || '0');
 	}
@@ -159,4 +164,10 @@ export default class CartItem {
 			.map(key => `${key}=${newKeyVal[key]}`)
 			.join('&');
 	}
+}
+
+export function addingToCartProhibition(dobj: CartItem | DataObject): string | null {
+	if(dobj.level > 0) return null;
+	else if(dobj.theme === themeUris.atmospheric) return "Raw atmospheric data are only available on request at the moment";
+	else return null;
 }

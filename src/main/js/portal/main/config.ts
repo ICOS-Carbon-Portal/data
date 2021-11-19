@@ -211,6 +211,11 @@ export const timezone = {
 		label: "UTC+1"
 	}
 };
+
+export const themeUris = {
+	atmospheric: "http://meta.icos-cp.eu/resources/themes/atmosphere"
+};
+
 export interface PublicQueryDeclaration {
 	label: string
 	comment: string
