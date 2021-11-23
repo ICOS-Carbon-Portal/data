@@ -11,6 +11,7 @@ import CartBtn from "../../components/buttons/CartBtn";
 import PreviewBtn from "../../components/buttons/PreviewBtn";
 import HelpButton from "../help/HelpButton";
 import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
+import { addingToCartProhibition } from '../../models/CartItem';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -64,7 +65,7 @@ class SearchResultRegular extends Component<OurProps> {
 							checkCount={checkedObjectsInSearch.length}
 							totalCount={paging.pageCount}
 							onChange={handleAllCheckboxesChange}
-							disabled={objectsTable.filter(o => o.level > 0).length === 0} />
+							disabled={objectsTable.every(o => addingToCartProhibition(o) != null)} />
 
 						<Dropdown
 							isSorter={true}

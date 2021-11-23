@@ -18,6 +18,7 @@ import { SupportedSRIDs } from '../../models/ol/projections';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
+import { addingToCartProhibition } from '../../models/CartItem';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -69,10 +70,9 @@ class Search extends Component<OurProps, OurState> {
 		if (this.props.checkedObjectsInSearch.length > 0) {
 			this.props.updateCheckedObjects([]);
 		} else {
-			const checkedObjects = this.props.objectsTable.reduce((acc: string[], o) => {
-				if (o.level > 0) acc.push(o.dobj);
-				return acc;
-			}, []);
+			const checkedObjects = this.props.objectsTable
+				.filter(o => addingToCartProhibition(o) == null)
+				.map(o => o.dobj);
 			this.props.updateCheckedObjects(checkedObjects);
 		}
 	}

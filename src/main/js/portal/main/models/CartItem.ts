@@ -166,7 +166,7 @@ export default class CartItem {
 	}
 }
 
-export function addingToCartProhibition(dobj: CartItem | DataObject): string | null {
+export function addingToCartProhibition(dobj: {theme: UrlStr, level: number}): string | null {
 	if(dobj.level > 0) return null;
 	else if(dobj.theme === themeUris.atmospheric) return "Raw atmospheric data are only available on request at the moment";
 	else return null;

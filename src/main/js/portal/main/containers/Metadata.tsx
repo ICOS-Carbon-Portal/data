@@ -17,6 +17,7 @@ import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
 import {addToCart, failWithError, removeFromCart, updateRoute} from "../actions/common";
 import StatsSection from '../components/metadata/StatsSection';
+import { addingToCartProhibition } from '../models/CartItem';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -254,19 +255,23 @@ const map = (dobjUrl: string, icon?: string) => {
 };
 
 const cartState = (metadata: MetaData): [boolean, string] => {
-	if (metadata.specification === undefined) {
-		return [false, ""];
-	}
+	const spec = metadata.specification;
+	if (spec === undefined) return [false, "Unexpected error"];
 
-	if (metadata.specification.dataLevel == 0) {
-		return [false, "Data level 0 is available on demand only"];
+	const cartProhibition = addingToCartProhibition({
+		theme: spec.theme.self.uri,
+		level: spec.dataLevel
+	});
 
-	} else if (metadata.nextVersion) {
+	if (cartProhibition != null)
+		return [false, cartProhibition];
+
+	else if (metadata.nextVersion)
 		return [false, "You can only download the newest version"];
 
-	} else {
+	else
 		return [true, ""];
-	}
+
 };
 
 const getKeywordHash = (keyword: string) => {
