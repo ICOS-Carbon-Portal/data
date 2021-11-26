@@ -62,7 +62,7 @@ const AboutSection = (props: AboutSectionProps) => {
 				<React.Fragment key={"key_" + i}>
 					{metadataRow(
 						"Previous version",
-						<a onClick={() => props.handleViewMetadata(previousVersion)} style={{ cursor: 'pointer' }}>View previous version</a>
+						<a className="link-primary" onClick={() => props.handleViewMetadata(previousVersion)} style={{ cursor: 'pointer' }}>View previous version</a>
 					)}
 				</React.Fragment>
 			)}
@@ -87,7 +87,7 @@ const CitationRow = ({ references, citationStyle, failWithError }: Citation) => 
 
 	if (citationTxt === undefined)
 		return null;
-	
+
 	const citation = citationStyle === 'citationString'
 		? citationTxt
 		: <StructuredCitation citation={citationTxt} citationStyle={citationStyle} failWithError={failWithError} />;
