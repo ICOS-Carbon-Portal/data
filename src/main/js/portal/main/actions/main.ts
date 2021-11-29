@@ -63,11 +63,8 @@ function getStationPosWithSpatialFilter(): PortalThunkAction<void> {
 				const stationPos4326Lookup: StationPos4326Lookup[] = stationPos4326.rows;
 				dispatch(new StationPositions4326Lookup(stationPos4326Lookup));
 
-				if (getState().tabs.resultTab === 2) {
-					// resultTab === 2 is map view
-					const spatialStationsFilter = restoreSpatialFilterFromMapProps(getState().mapProps, stationPos4326Lookup);
-					dispatch(new BackendUpdateSpatialFilter(spatialStationsFilter));
-				}
+				const spatialStationsFilter = restoreSpatialFilterFromMapProps(getState().mapProps, stationPos4326Lookup);
+				dispatch(new BackendUpdateSpatialFilter(spatialStationsFilter));
 			},
 			failWithError(dispatch)
 		);

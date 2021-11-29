@@ -76,15 +76,15 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 };
 
 const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
-	const { specTable, paging, sorting } = state;
+	const { specTable, paging, sorting, spatialStationsFilter } = state;
 	const filters = getFilters(state);
 	const useOnlyPidFilter = filters.some(f => f.category === "pids");
 
 	function stationFilter(): Filter{
 		const o = specTable.origins;
 		return o.getFilter('ecosystem') == null && o.getFilter('stationclass') == null
-			? o.getFilter('station')
-			: o.getColumnValuesFilter('station');
+			? o.getFilter('station') ?? spatialStationsFilter
+			: o.getColumnValuesFilter('station') ?? spatialStationsFilter;
 	}
 
 	const pidFilterQparams: QueryParameters = {
@@ -233,6 +233,7 @@ export function spatialFilterUpdate(stations: Filter): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		dispatch(new Payloads.BackendUpdateSpatialFilter(stations));
 		dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false, true));
+		dispatch(getFilteredDataObjects);
 	};
 }
 
