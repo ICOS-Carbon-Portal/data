@@ -108,7 +108,7 @@ export function fetchLabelLookup(): Promise<LabelLookup> {
 
 		if (acc[item.uri] === undefined) {
 			acc[item.uri] = {
-				label: item.stationId ? `(${item.stationId}) ${item.label}` : item.label,
+				label: item.stationId && config.features.displayStationIds ? `(${item.stationId}) ${item.label}` : item.label,
 				list: item.comment
 					? [makeHelpStorageListItem({comment: item.comment, webpage: item.webpage})]
 					: []
@@ -356,7 +356,7 @@ export const getCountriesGeoJson = async (): Promise<CountriesTopo> => {
 
 	if (countriesTopoStorage)
 		return Promise.resolve(JSON.parse(countriesTopoStorage));
-	
+
 	return getJson('https://static.icos-cp.eu/js/topojson/map-2.5k.json')
 		.then(topo => {
 			const countriesTopo = feature(topo, topo.objects.map as GeometryCollection<GeoJSON.GeoJsonProperties>);

@@ -34,12 +34,14 @@ const featureFlags = {
 		displayStationInExtendedInfo: false,
 		displayFileNameInExtendedInfo: true,
 		displayDataLevel: true,
+		displayStationIds: true
 	},
 	SITES: {
 		shortenDataTypeLabel: true,
 		displayStationInExtendedInfo: true,
 		displayFileNameInExtendedInfo: false,
-		displayDataLevel: true
+		displayDataLevel: true,
+		displayStationIds: false
 	}
 }
 
