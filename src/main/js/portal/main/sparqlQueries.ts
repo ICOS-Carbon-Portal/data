@@ -163,6 +163,7 @@ prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?dobj
 where {
 ?dobj cpmeta:hasName '${fileName}'
+filter not exists{ [] cpmeta:isNextVersionOf ?dobj }
 }`;
 
 	return { text };
