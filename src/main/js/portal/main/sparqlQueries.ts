@@ -157,6 +157,17 @@ SELECT ?dobj WHERE{
 	return { text };
 }
 
+export function getDobjByFileName(fileName: string): Query<"dobj", never> {
+	const text = `# getDobjByFileName
+prefix cpmeta: <${config.cpmetaOntoUri}>
+select ?dobj
+where {
+?dobj cpmeta:hasName '${fileName}'
+}`;
+
+	return { text };
+}
+
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
 const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";

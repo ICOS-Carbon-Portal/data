@@ -189,6 +189,14 @@ export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	})).then(res => res.rows);
 }
 
+export function searchDobjByFileName(fileName: string): Promise<{dobj: Sha256Str}[]> {
+	const query = queries.getDobjByFileName(fileName);
+
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)
+	})).then(res => res.rows);
+}
+
 export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	if (email){
 		updatePersonalRestheart(email, {cart});

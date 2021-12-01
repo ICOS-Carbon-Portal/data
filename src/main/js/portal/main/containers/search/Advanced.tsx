@@ -14,6 +14,7 @@ import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
 import { getFilters } from '../../actions/common';
 import { specKeywordsQuery } from '../../backend/keywordsInfo';
+import FilterByFileName from "../../components/filters/FilterByFileName";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -32,6 +33,7 @@ class Advanced extends Component<OurProps> {
 						selectedPids={filterPids}
 						updateSelectedPids={updateSelectedPids}
 					/>
+					<FilterByFileName updateSelectedPids={updateSelectedPids} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">
