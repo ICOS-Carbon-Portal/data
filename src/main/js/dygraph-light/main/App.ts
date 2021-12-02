@@ -166,6 +166,21 @@ export default class App {
 		});
 	}
 
+	getTitle(){
+		if (window.frameElement){
+			return this.labelMaker.title;
+		} else {
+			const logo = config.envri === "ICOS"
+			? '<img src="https://static.icos-cp.eu/images/Icos_cp_Logo.svg" style="height:30px;vertical-align:middle;margin-left:5px;position:relative;top:1px;" title="View in Carbon Portal" />'
+			: '<img src="https://static.icos-cp.eu/images/sites-logo.png" style="height:19px;vertical-align:initial;margin-left:10px;" title="View in SITES" />';
+			const hash = JSON.stringify({"route":"preview","preview":this.labelMaker.ids});
+			const url = `${location.origin}/portal/#${encodeURIComponent(hash)}`;
+			const portalLnk = `<a href="${url}">${logo}</a>`;
+
+			return `<div style="display:flex;align-items:center;justify-content:center;">${this.labelMaker.title + portalLnk}</div>`;
+		}
+	}
+
 	initGraph(){
 		this.showSpinner(true);
 
@@ -182,7 +197,7 @@ export default class App {
 			'graph',
 			[Array(labels.length).fill(0)],
 			{
-				title: this.labelMaker.title,
+				title: this.getTitle(),
 				strokeWidth,
 				drawPoints,
 				legend: 'always',
