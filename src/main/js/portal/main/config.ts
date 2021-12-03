@@ -114,6 +114,7 @@ const defaultCategNames = {
 	valType: 'Value type',
 	quantityKind: 'Quantity kind',
 	quantityUnit: 'Unit of measurement',
+	country: 'Responsible country',
 	submitter: 'Data submitter',
 	station: 'Station of origin',
 	stationclass: 'Station class',
@@ -187,7 +188,7 @@ type IFilterCategories = {
 
 export const filters: IFilterCategories = {
 	ICOS: [
-		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'submitter', 'samplingHeight']},
+		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'country', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
 		{panelTitle: "Value types", filterList: ['variable', 'valType', 'quantityUnit', 'quantityKind']},
 		{panelTitle: "Sampling date", filterList: ['dataTime']},

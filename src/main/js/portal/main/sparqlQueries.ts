@@ -72,7 +72,7 @@ where{
 	return { text };
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "ecosystem" | "location" | "site" | "stationclass">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "country" | "ecosystem" | "location" | "site" | "stationclass">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const siteQueries = config.envri === "SITES"
@@ -85,7 +85,7 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
+select ?spec ?country ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
