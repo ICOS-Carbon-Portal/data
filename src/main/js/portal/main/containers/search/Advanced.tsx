@@ -28,12 +28,12 @@ class Advanced extends Component<OurProps> {
 
 		return (
 			<>
-				<FilterPanel header="Free text filters">
+				<FilterPanel header="Text filters">
 					<FilterByPid
 						selectedPids={filterPids}
 						updateSelectedPids={updateSelectedPids}
 					/>
-					<FilterByFileName updateSelectedPids={updateSelectedPids} />
+					<FilterByFileName updateSelectedPids={updateSelectedPids} helpItemName="fileNameFilter" />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">

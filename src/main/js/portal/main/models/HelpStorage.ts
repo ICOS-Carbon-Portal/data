@@ -11,7 +11,8 @@ const titles = {
 	publicQuery: "SPARQL queries",
 	previewCsvDownload: "CSV download",
 	previewURL: "Preview chart URL",
-	keywordFilter: "Keyword"
+	keywordFilter: "Keyword",
+	fileNameFilter: "Filename"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -333,7 +334,9 @@ const initItems: HelpItem[] = [
 	new HelpItem(
 		'previewURL',
 		'Useful for sharing the chart with a colleague, or for embedding it in a Web page as an HTML <iframe>'
-	)
+	),
+
+	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
 ];
 
 function nonStrictnessWarning(title: String): string{

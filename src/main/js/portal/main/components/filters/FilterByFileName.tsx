@@ -2,9 +2,12 @@ import React, {ChangeEvent, Component} from "react";
 import {debounce} from 'icos-cp-utils';
 import { searchDobjByFileName } from "../../backend";
 import { Sha256Str } from "../../backend/declarations";
+import { HelpItemName } from "../../models/HelpStorage";
+import HelpButton from "../../containers/help/HelpButton";
 
 interface OurProps {
 	updateSelectedPids: (pidsArr: Sha256Str[]) => void
+	helpItemName?: HelpItemName
 }
 
 export default class FilterByFileName extends Component<OurProps> {
@@ -25,11 +28,18 @@ export default class FilterByFileName extends Component<OurProps> {
 	}
 
 	render() {
+		const helpItemName = this.props.helpItemName;
 
 		return (
 			<div className="row" style={{marginTop: 10}}>
 				<div className="col-md-12">
-					<label style={{marginBottom: 0}}>File name (exact)</label>
+					<label style={{marginBottom: 0}}>Filename (exact match only)</label>
+					{helpItemName &&
+						<HelpButton
+							name={helpItemName}
+							title="Click to toggle help"
+						/>
+					}
 
 					<input
 						type="text"
