@@ -20,7 +20,6 @@ import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
 import { Obj } from '../../common/main/types';
-import { DrawFeature } from './models/StationFilterControl';
 import {HelpStorageListEntry} from "./models/HelpStorage";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -59,7 +58,7 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
-		country: b.country?.value,
+		countryCode: b.countryCode?.value,
 		submitter: b.submitter.value,
 		project: b.project.value,
 		count: parseInt(b.count.value),
@@ -69,6 +68,10 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		location: b.location?.value,
 		stationclass: b.stationclass?.value
 	}));
+};
+
+export const getCountryCodesLookup = () => {
+	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
 };
 
 export type DobjOriginsAndCounts = AsyncResult<typeof fetchDobjOriginsAndCounts>;

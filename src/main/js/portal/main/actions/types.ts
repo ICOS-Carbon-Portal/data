@@ -12,6 +12,7 @@ export interface QueryParameters {
 	sorting: State['sorting']
 	paging: Paging
 	filters: FilterRequest[]
+	countryCodes: Filter
 }
 
 export type SearchOption = {

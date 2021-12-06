@@ -13,7 +13,7 @@ import {
 	BackendUpdateCart,
 	BackendExportQuery,
 	StationPositions4326Lookup,
-	BackendUpdateSpatialFilter
+	BackendUpdateSpatialFilter, BackendCountryCodes
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -31,6 +31,10 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
 		return stateUtils.update(state, handleUserInfo(state, payload));
+	}
+
+	if (payload instanceof BackendCountryCodes){
+		return stateUtils.update(state, { countryCodesLookup: payload.countryCodes});
 	}
 
 	if (payload instanceof BackendBatchDownload){

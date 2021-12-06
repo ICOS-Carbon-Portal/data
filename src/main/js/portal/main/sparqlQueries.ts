@@ -72,20 +72,21 @@ where{
 	return { text };
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "country" | "ecosystem" | "location" | "site" | "stationclass">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const siteQueries = config.envri === "SITES"
 		? `?site cpmeta:hasEcosystemType ?ecosystem .\n\t?site cpmeta:hasSpatialCoverage ?location .`
 		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
 	OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
+	OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}
 	OPTIONAL {?boundStation cpmeta:hasStationClass ?stClassOpt}`;
 
 	const text = `# dobjOriginsAndCounts
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec ?country ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
+select ?spec ?countryCode ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -204,7 +205,7 @@ OPTIONAL {
 
 export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
-	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
+	const { specs, stations, submitters, sites, sorting, paging, filters, countryCodes } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -220,6 +221,10 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 	const submitterSearch = submitters == null ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
+
+	const countryCodesSearch = countryCodes == null ? ''
+		: `VALUES ?countryCode {'${countryCodes.join("' '")}'}
+			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:countryCode ?countryCode .`;
 
 	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
 		? ''
@@ -249,6 +254,7 @@ where {
 	${stationSearch}
 	${siteSearch}
 	${submitterSearch}
+	${countryCodesSearch}
 	${standardDobjPropsDef}
 	${getFilterClauses(filters, false)}
 }

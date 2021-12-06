@@ -15,6 +15,7 @@ import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import {Obj} from "../../../common/main/types";
 
 
 export abstract class ActionPayload{}
@@ -56,6 +57,10 @@ export class BackendUserInfo extends BackendPayload{
 
 export class BootstrapInfo extends BackendPayload{
 	constructor(readonly info: BootstrapData){super();}
+}
+
+export class BackendCountryCodes extends BackendPayload{
+	constructor(readonly countryCodes: Obj ){super();}
 }
 
 export class StationPositions4326Lookup extends BackendPayload{

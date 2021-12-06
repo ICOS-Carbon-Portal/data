@@ -94,7 +94,8 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		submitters: null,
 		sorting,
 		paging: customPaging ?? paging,
-		filters
+		filters,
+		countryCodes: null
 	};
 
 	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
@@ -102,6 +103,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		stations: stationFilter(),
 		sites: specTable.getColumnValuesFilter('site'),
 		submitters: specTable.getFilter('submitter'),
+		countryCodes: specTable.getFilter('countryCode')
 	});
 };
 

@@ -13,10 +13,12 @@ import {KeywordsInfo} from "../../backend/keywordsInfo";
 import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
+import {Obj} from "../../../../common/main/types";
 
 interface CommonProps {
 	specTable: CompositeSpecTable
 	labelLookup: LabelLookup
+	countryCodesLookup: Obj
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 	setNumberFilter: (validation: FilterNumber) => void
 	filterTemporal: FilterTemporal
@@ -36,7 +38,7 @@ const availableFilters = filters[config.envri];
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter} = props;
+		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 
 	return (
 		<>
@@ -49,6 +51,7 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 					specTable={specTable}
 					helpStorage={helpStorage}
 					labelLookup={labelLookup}
+					countryCodesLookup={countryCodesLookup}
 					updateFilter={updateFilter}
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
@@ -75,7 +78,7 @@ interface Panel extends CommonProps {
 }
 
 const Panel: React.FunctionComponent<Panel> = props => {
-	const { header, filterList, specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers,
+	const { header, filterList, specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, countryCodesLookup,
 		startCollapsed = false, filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter } = props;
 	if (filterList.length === 0) return null;
 
@@ -89,6 +92,7 @@ const Panel: React.FunctionComponent<Panel> = props => {
 					filterNumbers={filterNumbers}
 					helpItem={helpStorage.getHelpItem(filterName)}
 					labelLookup={labelLookup}
+					countryCodesLookup={countryCodesLookup}
 					updateFilter={updateFilter}
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
@@ -113,7 +117,7 @@ interface FilterCtrl extends CommonProps {
 
 const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	const { filterName, specTable, labelLookup, helpItem, updateFilter, setNumberFilter, filterNumbers,
-		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter} = props;
+		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 	const filterNumber: FilterNumber | undefined = filterNumbers.getFilter(filterName as NumberFilterCategories);
 
 	if (filterNumber !== undefined){
@@ -151,6 +155,7 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 				specTable={specTable}
 				helpItem={helpItem}
 				labelLookup={labelLookup}
+				countryCodesLookup={countryCodesLookup}
 				updateFilter={updateFilter}
 			/>
 		);

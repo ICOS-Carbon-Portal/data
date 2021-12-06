@@ -1,14 +1,19 @@
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import stateUtils, {MapProps, Profile, Route, StationPos4326Lookup, WhoAmI} from "../models/State";
-import {fetchStationPositions, getProfile, getWhoIam, logOut} from "../backend";
+import {fetchStationPositions, getCountryCodesLookup, getProfile, getWhoIam, logOut} from "../backend";
 import bootstrapMetadata from "./metadata";
 import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
 import {getOriginsThenDobjList} from "./search";
 import {failWithError, fetchCart, getBackendTables, getFilters, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
-import {BackendUpdateSpatialFilter, StationPositions4326Lookup, UiInactivateAllHelp} from "../reducers/actionpayloads";
+import {
+	BackendCountryCodes,
+	BackendUpdateSpatialFilter,
+	StationPositions4326Lookup,
+	UiInactivateAllHelp
+} from "../reducers/actionpayloads";
 import {Coordinate} from "ol/coordinate";
 import {EpsgCode, getProjection, getTransformPointFn} from "../models/ol/projections";
 import {Filter} from "../models/SpecTable";
@@ -37,6 +42,7 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 		dispatch(getStationPosWithSpatialFilter());
 
 		// Load specTable, labelLookup, paging and lookup to state
+		getCountryCodesLookup().then(countryCodes => dispatch(new BackendCountryCodes(countryCodes)));
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			// Then bootstrap current route
