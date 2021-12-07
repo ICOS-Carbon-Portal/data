@@ -166,23 +166,40 @@ export default class App {
 		});
 	}
 
-	getTitle(){
-		if (window.frameElement){
-			return this.labelMaker.title;
-		} else {
-			const logo = config.envri === "ICOS"
-			? '<img src="https://static.icos-cp.eu/images/Icos_cp_Logo.svg" style="height:30px;vertical-align:middle;margin-left:5px;position:relative;top:1px;" title="View in Carbon Portal" />'
-			: '<img src="https://static.icos-cp.eu/images/sites-logo.png" style="height:19px;vertical-align:initial;margin-left:10px;" title="View in SITES" />';
-			const hash = JSON.stringify({"route":"preview","preview":this.labelMaker.ids});
-			const url = `${location.origin}/portal/#${encodeURIComponent(hash)}`;
-			const portalLnk = `<a href="${url}">${logo}</a>`;
+	getPortalLink(){
+		const callingUrl = window.frameElement
+			? new URL(window.frameElement.baseURI)
+			: undefined;
+		const hostname = callingUrl?.hostname;
+		const isIframeInPortal = hostname?.endsWith(".icos-cp.eu") || hostname?.endsWith(".fieldsites.se");
+console.log(isIframeInPortal);
+		if (isIframeInPortal)
+			return document.createElement("div");
 
-			return `<div style="display:flex;align-items:center;justify-content:center;">${this.labelMaker.title + portalLnk}</div>`;
-		}
+		const isIcos = config.envri === "ICOS";
+
+		const logo = document.createElement("img");
+		logo.src = isIcos ? "https://static.icos-cp.eu/images/Icos_cp_Logo.svg" : "https://static.icos-cp.eu/images/sites-logo.png";
+		logo.title = isIcos ? "View in Carbon Portal" : "View in SITES";
+		const logoStyle = isIcos
+			? "height:30px;vertical-align:middle;position:relative;top:-6px;"
+			: "height:19px;vertical-align:middle;";
+		logo.setAttribute("style", logoStyle);
+
+		const lnk = document.createElement("a");
+		const hash = JSON.stringify({"route":"preview","preview":this.labelMaker.ids});
+		lnk.href = `${location.origin}/portal/#${encodeURIComponent(hash)}`;
+		lnk.appendChild(logo);
+
+		return lnk;
 	}
 
 	initGraph(){
 		this.showSpinner(true);
+
+		const homeElement = document.getElementById("home");
+		if (homeElement)
+			homeElement.appendChild(this.getPortalLink());
 
 		const { xlabel, xLegendLabel, ylabel, y2label, labels, uniqueLabels, valueFormatX, series } = this.labelMaker;
 		const strokeWidth = this.params.get('type') === 'line' ? 1 : 0;
@@ -197,7 +214,7 @@ export default class App {
 			'graph',
 			[Array(labels.length).fill(0)],
 			{
-				title: this.getTitle(),
+				title: this.labelMaker.title,
 				strokeWidth,
 				drawPoints,
 				legend: 'always',

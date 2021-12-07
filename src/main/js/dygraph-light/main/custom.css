@@ -16,13 +16,16 @@ ul.dashed > li:before {
 	text-indent:-5px;
 	margin-right:5px
 }
-#copyright {
+#homeAndCopyright {
 	font-size: 12px;
 	position: absolute;
 	bottom: 10px;
 	right: 10px;
 	display: flex;
 }
-#copyright > a {
+#homeAndCopyright a {
 	text-decoration: none;
+}
+#home, #copyright {
+	display: flex;
 }
