@@ -102,7 +102,7 @@ const resetFilters = (state: State): Partial<State> => {
 		mapProps: defaultState.mapProps,
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: {},
-		filterPids: [],
+		filterPids: null,
 		checkedObjectsInSearch: [],
 		filterTemporal: new FilterTemporal(),
 		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),

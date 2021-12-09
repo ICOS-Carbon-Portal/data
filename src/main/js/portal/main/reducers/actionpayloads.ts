@@ -196,5 +196,5 @@ export class FilterKeywords extends FiltersPayload{
 }
 
 export class FiltersUpdatePids extends FiltersPayload{
-	constructor(readonly selectedPids: Sha256Str[]){super();}
+	constructor(readonly selectedPids: Sha256Str[] | null){super();}
 }

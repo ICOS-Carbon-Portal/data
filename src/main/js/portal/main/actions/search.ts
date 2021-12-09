@@ -78,7 +78,7 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 	const { specTable, paging, sorting, spatialStationsFilter } = state;
 	const filters = getFilters(state);
-	const useOnlyPidFilter = filters.some(f => f.category === "pids");
+	const useOnlyPidFilter = filters.some(f => f.category === "pids" && f.pids !== null);
 
 	function stationFilter(): Filter{
 		const o = specTable.origins;
@@ -151,7 +151,7 @@ const logPortalUsage = (state: State) => {
 	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : [];
 	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
-	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids.length > 0) {
+	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids !== null) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
 			acc[columnName] = specTable.getFilter(columnName);
@@ -160,7 +160,7 @@ const logPortalUsage = (state: State) => {
 
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
 		if (filterNumbers.hasFilters) filters.filterNumbers = filterNumbers.serialize;
-		if (effectiveFilterPids.length > 0) filters.filterPids = effectiveFilterPids;
+		if (effectiveFilterPids !== null) filters.filterPids = effectiveFilterPids;
 		if (filterKeywords.length > 0) filters.filterKeywords = filterKeywords;
 		filters.searchOptions = searchOptions;
 
@@ -181,6 +181,7 @@ function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRe
 		filters.push({category: 'pids', pids: filterPids});
 	} else {
 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
+		filters.push({category: 'pids', pids: null});
 
 		if (filterTemporal.hasFilter){
 			filters = filters.concat(filterTemporal.filters);
@@ -263,7 +264,7 @@ export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
 		dispatch(getFilteredDataObjects);
 };
 
-export function updateSelectedPids(selectedPids: Sha256Str[]): PortalThunkAction<void> {
+export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new FiltersUpdatePids(selectedPids));
 		dispatch(getFilteredDataObjects);
@@ -281,7 +282,7 @@ export function switchTab(tabName: string, selectedTabId: string): PortalThunkAc
 	return (dispatch, getState) => {
 		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
-		if (tabName === 'searchTab' && getState().filterPids.length > 0){
+		if (tabName === 'searchTab' && getState().filterPids !== null){
 			dispatch(getFilteredDataObjects);
 		}
 	};

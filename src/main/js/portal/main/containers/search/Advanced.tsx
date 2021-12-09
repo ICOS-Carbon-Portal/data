@@ -24,7 +24,7 @@ class Advanced extends Component<OurProps> {
 	render(){
 		const { searchOptions, updateSearchOption, filterPids, updateSelectedPids, getPublicQuery } = this.props;
 		const {showDeprecated} = searchOptions;
-		const deprecationDisabled: boolean = filterPids.length > 0;
+		const deprecationDisabled: boolean = filterPids !== null;
 
 		return (
 			<>
@@ -123,7 +123,7 @@ function stateToProps(state: State) {
 
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		updateSelectedPids: (pids: Sha256Str[]) => dispatch(updateSelectedPids(pids)),
+		updateSelectedPids: (pids: Sha256Str[] | null) => dispatch(updateSelectedPids(pids)),
 		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption))
 	};
 }

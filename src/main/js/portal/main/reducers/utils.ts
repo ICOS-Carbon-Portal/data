@@ -7,7 +7,7 @@ export function getObjCount(specTable: CompositeSpecTable): number {
 }
 
 export function isPidFreeTextSearch(tabs: State['tabs'], filterPids: State['filterPids']): boolean {
-	return tabs.searchTab === 1  && filterPids.length > 0;
+	return tabs.searchTab === 1  && filterPids !== null;
 }
 
 function toNumber(v: Value): number{

@@ -7,7 +7,7 @@ export type FilterRequest = PidFilterRequest | TemporalFilterRequest | Deprecate
 
 export interface PidFilterRequest{
 	category: "pids"
-	pids: string[]
+	pids: string[] | null
 }
 export interface TemporalFilterRequest{
 	category: "dataTime" | "submission"

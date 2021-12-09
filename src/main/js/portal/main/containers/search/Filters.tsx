@@ -32,7 +32,7 @@ class Filters extends Component<OurProps> {
 			|| filterNumbers.hasFilters
 			|| spatialStationsFilter !== null
 			|| filterKeywords.length > 0
-			|| filterPids.length > 0;
+			|| filterPids !== null;
 
 		return (
 			<div>

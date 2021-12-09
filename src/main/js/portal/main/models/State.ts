@@ -130,7 +130,7 @@ export interface State {
 	route: Route
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
-	filterPids: Sha256Str[]
+	filterPids: Sha256Str[] | null
 	filterNumbers: FilterNumbers
 	user: User
 	previewLookup: PreviewLookup | undefined;
@@ -185,7 +185,7 @@ export const defaultState: State = {
 	route: 'search',
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
-	filterPids:[],
+	filterPids: null,
 	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
 	user: {
 		profile: {},

@@ -202,14 +202,22 @@ OPTIONAL {
 	return { text };
 };
 
+const getPidListFilter = (pidsList: (string | null)[]) => {
+	if (pidsList.length === 1 && pidsList[0] === null)
+		return '';
+
+	if (pidsList.length === 0)
+		return 'VALUES ?dobj { <http://dummy> }\n';
+
+	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
+};
+
 export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
 	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
-	const pidListFilter = pidsList.length == 0
-		? ''
-		: `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
+	const pidListFilter = getPidListFilter(pidsList);
 
 	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .

@@ -8,8 +8,8 @@ import { searchDobjs } from '../../backend';
 const minLength = 3;
 
 interface PidFilterProps {
-	selectedPids: Sha256Str[]
-	updateSelectedPids: (pidsArr: Sha256Str[]) => void
+	selectedPids: Sha256Str[] | null
+	updateSelectedPids: (pidsArr: Sha256Str[] | null) => void
 }
 
 interface PidFilterState{
@@ -27,7 +27,8 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 	}
 
 	handleChange(pidsArr: Sha256Str[]){
-		this.props.updateSelectedPids(pidsArr);
+		const selectedPids = pidsArr.length ? pidsArr : null;
+		this.props.updateSelectedPids(selectedPids);
 	}
 
 	handleSearch(pidStr: string){
@@ -82,7 +83,7 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 					<Multiselect
 						placeholder="Search by PID"
 						data={pidList}
-						value={selectedPids}
+						value={selectedPids ?? []}
 						filter="contains"
 						onChange={this.handleChange.bind(this)}
 						onSearch={this.handleSearch.bind(this)}

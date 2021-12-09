@@ -6,7 +6,7 @@ import { HelpItemName } from "../../models/HelpStorage";
 import HelpButton from "../../containers/help/HelpButton";
 
 interface OurProps {
-	updateSelectedPids: (pidsArr: Sha256Str[]) => void
+	updateSelectedPids: (pidsArr: Sha256Str[] | null) => void
 	helpItemName?: HelpItemName
 }
 
@@ -22,9 +22,13 @@ export default class FilterByFileName extends Component<OurProps> {
 	private makeQuery(ev: ChangeEvent<HTMLInputElement>){
 		const fileName = ev.target.value;
 
-		searchDobjByFileName(fileName).then(dobjs => {
-			this.props.updateSelectedPids(dobjs.map(d => d.dobj));
-		});
+		if (fileName.length) {
+			searchDobjByFileName(fileName).then(dobjs => {
+				this.props.updateSelectedPids(dobjs.map(d => d.dobj));
+			});
+		} else {
+			this.props.updateSelectedPids(null);
+		}
 	}
 
 	render() {
