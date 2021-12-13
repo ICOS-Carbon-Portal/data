@@ -8,13 +8,13 @@ import MultiSelectFilter from "./MultiSelectFilter";
 import { Obj } from '../../../../common/main/types';
 import { LabelLookup } from '../../models/State';
 import {HelpItem, HelpStorageListEntry} from "../../models/HelpStorage";
-import bootstrapCart from "../../actions/cart";
 
 interface OurProps {
 	name: CategoryType
 	specTable: CompositeSpecTable
 	helpItem?: HelpItem
 	labelLookup: LabelLookup
+	countryCodesLookup: Obj
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 }
 
@@ -28,7 +28,13 @@ export type Item = {
 }
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
-	const {name, specTable, labelLookup, helpItem, updateFilter} = props;
+	const {name, specTable, labelLookup, countryCodesLookup, helpItem, updateFilter} = props;
+
+	const getText = (value: string | number) => {
+		return name === 'countryCode'
+			? countryCodesLookup[value]
+			: labelLookup[value]?.label;
+	};
 
 	const shouldUseExternalListEntry = helpItem?.shouldUseExternalList ?? false;
 	const filterUris = specTable.getFilter(name)?.filter(isDefined) ?? [];
@@ -38,17 +44,17 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 			.filter(value => isDefined(value) && !filterUris.includes(value))
 			.map(value => ({
 				value: value,
-				text: labelLookup[value!]?.label ?? value + '',
+				text: getText(value!) ?? value + '',
 				helpStorageListEntry: labelLookup[value!]?.list ?? []
 			}))
 		).sort((d1: any, d2: any) => d1.text.localeCompare(d2.text))
 		: [];
-	
-	const value: Item[] = filterUris.map(filterUri => ({
-		value: filterUri,
-		text: labelLookup[filterUri]?.label ?? filterUri,
-		helpStorageListEntry: labelLookup[filterUri]?.list ?? [],
-		presentWithCurrentFilters: dataUris.includes(filterUri)
+
+	const value: Item[] = filterUris.map(keyVal => ({
+		value: keyVal,
+		text: getText(keyVal) ?? keyVal,
+		helpStorageListEntry: labelLookup[keyVal]?.list ?? [],
+		presentWithCurrentFilters: dataUris.includes(keyVal)
 	}));
 
 	const placeholder = data.length === 1

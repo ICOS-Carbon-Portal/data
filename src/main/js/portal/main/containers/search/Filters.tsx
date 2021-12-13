@@ -26,7 +26,7 @@ type OurProps = StateProps & DispatchProps & incommingProps;
 class Filters extends Component<OurProps> {
 	render(){
 		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal, filterPids,
-			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, spatialStationsFilter} = this.props;
+			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, spatialStationsFilter, countryCodesLookup} = this.props;
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
 			|| filterNumbers.hasFilters
@@ -43,6 +43,7 @@ class Filters extends Component<OurProps> {
 					specTable={specTable}
 					helpStorage={helpStorage}
 					labelLookup={labelLookup}
+					countryCodesLookup={countryCodesLookup}
 					updateFilter={updateFilter}
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
@@ -88,6 +89,7 @@ function stateToProps(state: State){
 		specTable: state.specTable,
 		helpStorage: state.helpStorage,
 		labelLookup: state.labelLookup,
+		countryCodesLookup: state.countryCodesLookup,
 		keywords: state.keywords,
 		filterKeywords: state.filterKeywords,
 		filterPids: state.filterPids,

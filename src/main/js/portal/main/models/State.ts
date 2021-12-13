@@ -128,6 +128,7 @@ export interface State {
 	isRunningInit: boolean
 	searchOptions: SearchOptions
 	route: Route
+	countryCodesLookup: Obj
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
@@ -183,6 +184,7 @@ export const defaultState: State = {
 		showDeprecated: false
 	},
 	route: 'search',
+	countryCodesLookup: {},
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
 	filterPids: null,

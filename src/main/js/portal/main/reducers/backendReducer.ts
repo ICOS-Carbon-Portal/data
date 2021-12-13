@@ -206,7 +206,8 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),
-		keywords: payload.info.keywords
+		keywords: payload.info.keywords,
+		countryCodesLookup: payload.info.countryCodes
 	};
 };
 

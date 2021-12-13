@@ -20,7 +20,6 @@ import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
 import { Obj } from '../../common/main/types';
-import { DrawFeature } from './models/StationFilterControl';
 import {HelpStorageListEntry} from "./models/HelpStorage";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -59,6 +58,7 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
+		countryCode: b.countryCode?.value,
 		submitter: b.submitter.value,
 		project: b.project.value,
 		count: parseInt(b.count.value),
@@ -130,22 +130,24 @@ export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
 	keywords: KeywordsInfo
+	countryCodes: Obj
 }
 
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
-	// Do not ask more than 5 question in parallel
 	return Promise.all([
 		fetchSpecBasics(),
 		fetchSpecColumnMeta(),
 		fetchDobjOriginsAndCounts(filters),
 		fetchLabelLookup(),
-		keywordsInfo.fetch()
+		keywordsInfo.fetch(),
+		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([basics, columnMeta, origins, labelLookup, keywords]) => ({
+		([basics, columnMeta, origins, labelLookup, keywords, countryCodes]) => ({
 			specTables: { basics, columnMeta, origins },
 			labelLookup,
-			keywords
+			keywords,
+			countryCodes
 		})
 	)
 }

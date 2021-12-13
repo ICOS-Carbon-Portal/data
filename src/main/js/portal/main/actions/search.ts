@@ -80,13 +80,6 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 	const filters = getFilters(state);
 	const useOnlyPidFilter = filters.some(f => f.category === "pids" && f.pids !== null);
 
-	function stationFilter(): Filter{
-		const o = specTable.origins;
-		return o.getFilter('ecosystem') == null && o.getFilter('stationclass') == null
-			? o.getFilter('station') ?? spatialStationsFilter
-			: o.getColumnValuesFilter('station') ?? spatialStationsFilter;
-	}
-
 	const pidFilterQparams: QueryParameters = {
 		specs: null,
 		stations: null,
@@ -99,9 +92,9 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 
 	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
 		specs: specTable.basics.getDistinctColValues(SPECCOL),
-		stations: stationFilter(),
+		stations: Filter.and([specTable.origins.getColumnValuesFilter('station'), spatialStationsFilter]),
 		sites: specTable.getColumnValuesFilter('site'),
-		submitters: specTable.getFilter('submitter'),
+		submitters: specTable.getFilter('submitter')
 	});
 };
 

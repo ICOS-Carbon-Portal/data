@@ -8,7 +8,11 @@ import bootstrapCart from "./cart";
 import {getOriginsThenDobjList} from "./search";
 import {failWithError, fetchCart, getBackendTables, getFilters, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
-import {BackendUpdateSpatialFilter, StationPositions4326Lookup, UiInactivateAllHelp} from "../reducers/actionpayloads";
+import {
+	BackendUpdateSpatialFilter,
+	StationPositions4326Lookup,
+	UiInactivateAllHelp
+} from "../reducers/actionpayloads";
 import {Coordinate} from "ol/coordinate";
 import {EpsgCode, getProjection, getTransformPointFn} from "../models/ol/projections";
 import {Filter} from "../models/SpecTable";
