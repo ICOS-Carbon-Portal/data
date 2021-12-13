@@ -70,10 +70,6 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	}));
 };
 
-export const getCountryCodesLookup = () => {
-	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
-};
-
 export type DobjOriginsAndCounts = AsyncResult<typeof fetchDobjOriginsAndCounts>;
 
 export const fetchStationPositions = () => {
@@ -134,22 +130,24 @@ export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
 	keywords: KeywordsInfo
+	countryCodes: Obj
 }
 
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
-	// Do not ask more than 5 question in parallel
 	return Promise.all([
 		fetchSpecBasics(),
 		fetchSpecColumnMeta(),
 		fetchDobjOriginsAndCounts(filters),
 		fetchLabelLookup(),
-		keywordsInfo.fetch()
+		keywordsInfo.fetch(),
+		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([basics, columnMeta, origins, labelLookup, keywords]) => ({
+		([basics, columnMeta, origins, labelLookup, keywords, countryCodes]) => ({
 			specTables: { basics, columnMeta, origins },
 			labelLookup,
-			keywords
+			keywords,
+			countryCodes
 		})
 	)
 }

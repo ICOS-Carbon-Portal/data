@@ -13,7 +13,7 @@ import {
 	BackendUpdateCart,
 	BackendExportQuery,
 	StationPositions4326Lookup,
-	BackendUpdateSpatialFilter, BackendCountryCodes
+	BackendUpdateSpatialFilter
 } from "./actionpayloads";
 import stateUtils, {ObjectsTable, State} from "../models/State";
 import config from "../config";
@@ -31,10 +31,6 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendUserInfo){
 		return stateUtils.update(state, handleUserInfo(state, payload));
-	}
-
-	if (payload instanceof BackendCountryCodes){
-		return stateUtils.update(state, { countryCodesLookup: payload.countryCodes});
 	}
 
 	if (payload instanceof BackendBatchDownload){
@@ -210,7 +206,8 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),
-		keywords: payload.info.keywords
+		keywords: payload.info.keywords,
+		countryCodesLookup: payload.info.countryCodes
 	};
 };
 

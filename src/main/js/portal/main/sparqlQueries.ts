@@ -205,7 +205,7 @@ OPTIONAL {
 
 export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
 
-	const { specs, stations, submitters, sites, sorting, paging, filters, countryCodes } = query;
+	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = pidsList.length == 0
@@ -221,10 +221,6 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 	const submitterSearch = submitters == null ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
 			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
-
-	const countryCodesSearch = countryCodes == null ? ''
-		: `VALUES ?countryCode {'${countryCodes.join("' '")}'}
-			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith/cpmeta:countryCode ?countryCode .`;
 
 	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
 		? ''
@@ -254,7 +250,6 @@ where {
 	${stationSearch}
 	${siteSearch}
 	${submitterSearch}
-	${countryCodesSearch}
 	${standardDobjPropsDef}
 	${getFilterClauses(filters, false)}
 }
