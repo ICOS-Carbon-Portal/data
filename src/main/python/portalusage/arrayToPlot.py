@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from typing import Coroutine, Dict, List, List, Literal, Union
 import matplotlib.pyplot as plt

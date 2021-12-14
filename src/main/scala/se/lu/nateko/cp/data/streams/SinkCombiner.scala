@@ -26,7 +26,7 @@ object SinkCombiner {
 			sink.mapMaterializedValue(Seq(_))
 
 		case Seq(first, second) => Sink.fromGraph(
-			GraphDSL.create(first, second)(Seq(_, _)){ implicit b =>
+			GraphDSL.createGraph(first, second)(Seq(_, _)){ implicit b =>
 				import GraphDSL.Implicits._
 				val bcast = b.add(Broadcast[In](2, EagerCancel))
 				(sink1, sink2) => {
@@ -38,7 +38,7 @@ object SinkCombiner {
 		)
 
 		case Seq(first, second, third) => Sink.fromGraph(
-			GraphDSL.create(first, second, third)(Seq(_, _, _)){ implicit b =>
+			GraphDSL.createGraph(first, second, third)(Seq(_, _, _)){ implicit b =>
 				import GraphDSL.Implicits._
 				val bcast = b.add(Broadcast[In](3, EagerCancel))
 				(sink1, sink2, sink3) => {
@@ -51,7 +51,7 @@ object SinkCombiner {
 		)
 
 		case Seq(first, second, third, fourth) => Sink.fromGraph(
-			GraphDSL.create(first, second, third, fourth)(Seq(_, _, _, _)){ implicit b =>
+			GraphDSL.createGraph(first, second, third, fourth)(Seq(_, _, _, _)){ implicit b =>
 				import GraphDSL.Implicits._
 				val bcast = b.add(Broadcast[In](4, EagerCancel))
 				(sink1, sink2, sink3, sink4) => {
@@ -69,7 +69,7 @@ object SinkCombiner {
 			val firstHalf = combineMat(sinks.take(half))
 			val secondHalf = combineMat(sinks.drop(half))
 			Sink.fromGraph(
-				GraphDSL.create(firstHalf, secondHalf)(_ ++ _){ implicit b =>
+				GraphDSL.createGraph(firstHalf, secondHalf)(_ ++ _){ implicit b =>
 					import GraphDSL.Implicits._
 					val bcast = b.add(Broadcast[In](2, EagerCancel))
 					(sink1, sink2) => {
@@ -85,7 +85,7 @@ object SinkCombiner {
 		//The following shorter implementation does not work because wireTap drops elements
 		//(and 'alsoTo'-based solution does not work because 'alsoTo' cancels eagerly)
 		//Flow.apply[T].wireTapMat(sink)(Keep.right).toMat(Sink.ignore)(KeepFuture.left)
-		Sink.fromGraph(GraphDSL.create(sink, Sink.ignore)(KeepFuture.left){implicit b =>
+		Sink.fromGraph(GraphDSL.createGraph(sink, Sink.ignore)(KeepFuture.left){implicit b =>
 			import GraphDSL.Implicits._
 			val bcast = b.add(Broadcast[T](2, false))
 			(sink1, sink2) => {
