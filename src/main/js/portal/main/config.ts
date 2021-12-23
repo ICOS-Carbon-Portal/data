@@ -5,6 +5,7 @@ import { BaseMapName } from './models/ol/baseMaps';
 import { supportedSRIDsFriendlyNames, SupportedSRIDs } from './models/ol/projections';
 import { BaseMapFilter } from './models/ol/utils';
 import olStyles from './models/ol/styles';
+import {IndexedDBProps} from "./backend/IndexedDB";
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
@@ -63,8 +64,23 @@ const excludedStation = envri === 'ICOS'
 	? olStyles.cirlcePointStyle('white', 'DarkRed', 4, 2)
 	: olStyles.cirlcePointStyle('white', 'DarkMagenta', 4, 2);
 
+const portalHistoryStateProps: IndexedDBProps = {
+	dbName: 'portal',
+	storeName: 'state',
+	version: 1,
+	options: {
+		keyPath: "url",
+		indexes: [{
+			indexName: "url_idx",
+			keyPath: "url",
+			isUnique: true
+		}]
+	}
+}
+
 export default {
 	envri,
+	portalHistoryStateProps,
 	olMapSettings: {
 		sridsInMap,
 		defaultSRID,

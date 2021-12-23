@@ -24,7 +24,10 @@ import { KeywordsInfo } from "../backend/keywordsInfo";
 import { Obj } from "../../../common/main/types";
 import {SupportedSRIDs} from "./ol/projections";
 import {restoreSpatialFilterFromMapProps} from "../actions/main";
+import PortalHistoryState from "../backend/PortalHistoryState";
 
+
+export const portalHistoryState = new PortalHistoryState(config.portalHistoryStateProps);
 
 // hashKeys objects are automatically represented in the URL hash (with some special cases).
 // Changes to any of these objects are automatically saved in browser history state
@@ -244,7 +247,11 @@ const update = (state: State, updates: Partial<State>): State => {
 // history to store current state.
 const updateAndSave = (state: State, updates: any) => {
 	const newState = update(state, updates);
-	history.replaceState(serialize(newState), '', window.location.href);
+
+	portalHistoryState.replaceState(serialize(newState), window.location.href).then(
+		_ => _,
+		reason => console.error(`Failed to add value to indexed database because ${reason}`)
+	);
 
 	return newState;
 };
@@ -253,7 +260,6 @@ const serialize = (state: State) => {
 	return {...state,
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
-		// lookup: undefined,
 		specTable: state.specTable.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
@@ -405,14 +411,19 @@ function getCurrentHash(){
 }
 
 const hashUpdater = (store: Store) => () => {
-	const state = store.getState();
+	const state: State = store.getState();
 	const newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
 
-	if (newHash !== oldHash){
-		newHash === ''
-			? history.pushState(serialize(state), '', window.location.href.split('#')[0])
-			: window.location.hash = encodeURIComponent(newHash);
+	if (newHash !== oldHash) {
+		if (newHash === '') {
+			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0]).then(
+				_ => _,
+				reason => console.log(`Failed to add value to indexed database because ${reason}`)
+			);
+		} else {
+			window.location.hash = encodeURIComponent(newHash);
+		}
 	}
 };
 
