@@ -110,7 +110,7 @@ export function getAllFilteredDataObjects(): PortalThunkAction<void>{
 	return (dispatch, getState) => {
 		const state = getState();
 		const sparqClientQuery = state.exportQuery.sparqClientQuery;
-		
+
 		dispatch(new Payloads.BackendExportQuery(true, sparqClientQuery));
 
 		const options = getOptions(state, new Paging({ objCount: 0, offset: 0, limit: config.exportCSVLimit }));
@@ -289,17 +289,7 @@ export function setMapProps(persistedMapProps: PersistedMapPropsExtended): Porta
 
 export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAction<void> {
 	return (dispatch) => {
-		if (filterTemporal.dataTime.error) {
-			failWithError(dispatch)(new Error(filterTemporal.dataTime.error));
-		}
-		if (filterTemporal.submission.error) {
-			failWithError(dispatch)(new Error(filterTemporal.submission.error));
-		}
-
 		dispatch(new FiltersTemporal(filterTemporal));
-
-		if (filterTemporal.dataTime.error || filterTemporal.submission.error) return;
-
 		dispatch(getOriginsThenDobjList);
 	};
 }

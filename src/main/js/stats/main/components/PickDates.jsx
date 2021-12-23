@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
 import { DatePickerInput } from 'rc-datepicker';
-import '../../node_modules/rc-datepicker/lib/style.css';
 
 export default class PickDates extends Component {
 	// private fromInput: HTMLElement | null = null

@@ -44,13 +44,6 @@ ul.dashed > li:before {
 	margin-right: 5px;
 }
 
-.cp-dpi-error div.react-datepicker-input {
-	background: #ebccd1 !important;
-}
-.cp-dpi-error i.icon-rc-datepicker_calendar {
-	color: black !important;
-}
-
-label {
-	font-weight: 700 !important;
+.react-datepicker__navigation .react-datepicker__navigation-icon::before {
+	top: 12px;
 }

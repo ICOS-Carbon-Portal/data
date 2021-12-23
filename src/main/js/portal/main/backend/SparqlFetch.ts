@@ -15,7 +15,8 @@ export function sparqlFetchAndParse<Mandatories extends string, Optionals extend
 				};
 
 			} catch (err) {
-				throw new Error("Failed to parse SPARQL response: " + (err.message || "unspecified error"));
+				let message = (err instanceof Error) ? err.message : 'unspecified error';
+				throw new Error("Failed to parse SPARQL response: " + message);
 			}
 		});
 };
