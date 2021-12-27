@@ -1,5 +1,5 @@
 {
- "name": "cpdata-frontend",
+ "name": "cpdata-common",
  "version": "0.1.0",
  "engines": {
   "node": ">=14"
