@@ -2,7 +2,7 @@
  "name": "cpdata-common",
  "version": "0.1.0",
  "engines": {
-  "node": ">=14"
+  "node": ">=16"
  },
  "private": true,
  "description": "Carbon Portal Data Service",
@@ -46,7 +46,7 @@
   "watchify": "^4.0.0"
  },
  "dependencies": {
-  "icos-cp-backend": "^0.4.4",
-  "icos-cp-spatial": "^0.3.0"
+  "icos-cp-backend": "^0.4.5",
+  "icos-cp-spatial": "^0.3.1"
  }
 }

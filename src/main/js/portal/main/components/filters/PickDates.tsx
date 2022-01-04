@@ -40,10 +40,8 @@ export default class PickDates extends Component<Props> {
 			<div className="row">
 				<div className="col-md-12">
 
-					<div className="row">
+					<div className="row mt-3">
 						<div className="col-6">
-							<label>From</label>
-
 							<DatePicker
 								className="form-control"
 								selected={from}
@@ -55,12 +53,15 @@ export default class PickDates extends Component<Props> {
 								calendarStartDay={1}
 								dateFormat="yyyy-MM-dd"
 								isClearable={true}
+								showMonthDropdown
+								showYearDropdown
+								dropdownMode="select"
+								dateFormatCalendar=" "
+								placeholderText="From"
 								/>
 						</div>
 
 						<div className="col-6">
-							<label>To</label>
-
 							<DatePicker
 								className="form-control"
 								selected={to}
@@ -73,6 +74,11 @@ export default class PickDates extends Component<Props> {
 								calendarStartDay={1}
 								dateFormat="yyyy-MM-dd"
 								isClearable={true}
+								showMonthDropdown
+								showYearDropdown
+								dropdownMode="select"
+								dateFormatCalendar=" "
+								placeholderText="To"
 								/>
 						</div>
 					</div>

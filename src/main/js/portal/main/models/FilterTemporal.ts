@@ -1,8 +1,5 @@
 import { TemporalFilterRequest } from "./FilterRequest";
 
-const minDate = new Date(-8640000000000000);
-const maxDate = new Date(8640000000000000);
-
 export type SerializedFilterTemporal = { df?: string, dt?: string, sf?: string, st?: string }
 
 export default class FilterTemporal {
