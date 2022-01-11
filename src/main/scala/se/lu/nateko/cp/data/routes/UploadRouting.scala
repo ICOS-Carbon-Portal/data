@@ -44,6 +44,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			val resFuture: Future[UploadResult] = uploadService
 				.getSink(hashsum, uid)
 				.flatMap(req.entity.dataBytes.runWith)
+				.andThen{
+					case _ => uploadService.unlockUpload(hashsum)
+				}
 
 			addAccessControlHeaders(envri){
 				onSuccess(resFuture)(res => res.makeReport match{

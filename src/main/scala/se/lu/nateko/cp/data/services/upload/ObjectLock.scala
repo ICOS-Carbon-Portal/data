@@ -14,7 +14,7 @@ private[upload] class ObjectLock(msg: String) {
 	private[this] val locked = Set.empty[Sha256Sum]
 
 	def lock(hash: Sha256Sum): Try[Done] = synchronized{
-		if(locked.contains(hash)) Failure(new CpDataException(s"Object $hash $msg"))
+		if(locked.contains(hash)) Failure(new CpDataException(s"Object ${hash.id} $msg"))
 		else{
 			locked.add(hash)
 			Success(Done)

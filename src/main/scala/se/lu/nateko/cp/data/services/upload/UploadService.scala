@@ -59,9 +59,9 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
 		for(
-			dataObj <- meta.lookupPackage(hash);
-			_ <- meta.userIsAllowedUpload(dataObj, user);
-			sink <- getSpecificSink(dataObj) //dataObj has a complete hash (not truncated)
+			dObj <- meta.lookupPackage(hash);
+			_ <- meta.userIsAllowedUpload(dObj, user);
+			sink <- getSpecificSink(dObj) //dObj has a complete hash (not truncated)
 		) yield sink
 	}
 
@@ -132,17 +132,19 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
 
-	private def getSpecificSink(dataObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] =
+	def unlockUpload(hash: Sha256Sum): Done = objLock.unlock(hash)
+
+	private def getSpecificSink(dObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] =
 		for(
-			tasks <- getUploadTasks(dataObj);
-			_ <- Future.fromTry(objLock.lock(dataObj.hash))
+			tasks <- getUploadTasks(dObj);
+			_ <- Future.fromTry(objLock.lock(dObj.hash))
 		) yield {
 			combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
 				val results = uploadResults.toIndexedSeq
 
 				results.foreach{
 					case fail: UploadTaskFailure =>
-						log.error(fail.error, s"Upload failure for ${dataObj.fileName} (${dataObj.hash})")
+						log.error(fail.error, s"Upload failure for ${dObj.fileName} (${dObj.hash.id})")
 					case _ =>
 				}
 
@@ -157,12 +159,12 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 				val resFut = for(
 					taskResults <- Future.sequence(taskResultFutures);
-					postResultFuts = getPostUploadTasks(dataObj).map(_.perform(taskResults));
+					postResultFuts = getPostUploadTasks(dObj).map(_.perform(taskResults));
 					postTaskResults <- Future.sequence(postResultFuts)
 				) yield new UploadResult(taskResults ++ postTaskResults)
 
 				resFut.andThen{
-					case _ => objLock.unlock(dataObj.hash)
+					case _ => unlockUpload(dObj.hash)
 				}
 			}))
 		}
