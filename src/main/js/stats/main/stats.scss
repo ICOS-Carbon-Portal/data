@@ -6,3 +6,11 @@
 .rw-widget-picker {
 	display: inline-block;
 }
+
+.react-datepicker-popper {
+	z-index: 1500 !important;
+}
+
+.react-datepicker__navigation .react-datepicker__navigation-icon::before {
+	top: 12px;
+}

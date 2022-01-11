@@ -1,25 +1,25 @@
 {
-    "compilerOptions": {
-		"outDir": "./tsTarget/",
-		// Cannot remove comments here if we want to use magic comments for code splitting in webpack
-		"removeComments": false,
-        "allowSyntheticDefaultImports": true,
-        "noImplicitAny": true,
-		"esModuleInterop": true,
-        "module": "ESNext",
-        "lib": [ "ESNext", "DOM" ],
-        "target": "ESNext",
-        "allowJs": true,
-        "jsx": "react",
-        "moduleResolution": "node",
-		"skipLibCheck": true,
-        "strict": true
-    },
-	"files": [ "main/main.tsx" ],
-    "include": [
-		"main/**/*.ts*",
-		"../common/main/**/*.js",
-		"../common/main/**/*.ts",
-		"external-modules/**/*.d.ts"
-	]
+  "compilerOptions": {
+    "outDir": "./tsTarget/",
+    // Cannot remove comments here if we want to use magic comments for code splitting in webpack
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "lib": [ "ESNext", "DOM" ],
+    "target": "ESNext",
+    "allowJs": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "strict": true
+  },
+  "files": [ "main/main.tsx" ],
+  "include": [
+    "main/**/*.ts*",
+    "../common/main/**/*.js",
+    "../common/main/**/*.ts",
+    "external-modules/**/*.d.ts"
+  ]
 }

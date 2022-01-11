@@ -2,7 +2,8 @@
 
 import path from 'path';
 import gulp from 'gulp';
-import sass from 'gulp-sass';
+import dartSass from 'sass';
+import gulpSass from 'gulp-sass';
 import sassVars from 'gulp-sass-variables';
 import cleanCSS from 'gulp-clean-css';
 import del from 'del';
@@ -10,6 +11,7 @@ import del from 'del';
 import buildConf from '../common/main/buildConf.js';
 
 const project = path.basename(__dirname);
+const sass = gulpSass(dartSass)
 
 const paths = {
 	main: 'main/main.jsx',
@@ -17,7 +19,7 @@ const paths = {
 	jsx: 'main/**/*.jsx',
 	js: 'main/**/*.js',
 	sassSources: [
-		'main/react-widgets-override.scss',
+		'main/stats.scss',
 		'node_modules/react-widgets/lib/scss/react-widgets.scss'
 	],
 	sassExtSources: [

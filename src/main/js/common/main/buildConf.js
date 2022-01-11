@@ -13,13 +13,7 @@ const presets = [
 	[
 		"@babel/preset-env",
 		{
-			"targets": {
-				"chrome": "60",
-				"opera": "58",
-				"edge": "11",
-				"firefox": "68",
-				"safari": "12"
-			}
+			"targets": "defaults"
 		}
 	],
 	[

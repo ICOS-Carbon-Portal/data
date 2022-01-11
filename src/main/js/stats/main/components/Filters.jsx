@@ -49,7 +49,7 @@ export default function Filters({ filters, downloadStats, resetFilters, updateTa
 const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate }) => {
 	if (hasHashIdFilter) {
 		return (
-			<div>You are currently viewing statistics for a single data object. Clear filters to reset page.</div>
+			<>You are currently viewing statistics for a single data object. Clear filters to reset page.</>
 		);
 
 	} else if (filters && filters.length) {
@@ -59,14 +59,14 @@ const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFil
 		}
 
 		return (
-			<div>
+			<>
 				{filters.filter(f => f.values && f.values.length).map((filter, idx) =>
 					<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
 				)}
 				<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
 					<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
 				</Filter>
-			</div>
+			</>
 		);
 
 	} else {

@@ -1,8 +1,5 @@
 import { TemporalFilterRequest } from "./FilterRequest";
 
-const minDate = new Date(-8640000000000000);
-const maxDate = new Date(8640000000000000);
-
 export type SerializedFilterTemporal = { df?: string, dt?: string, sf?: string, st?: string }
 
 export default class FilterTemporal {
@@ -33,27 +30,19 @@ export default class FilterTemporal {
 	};
 
 	withDataTimeFrom(from: PotentialDate) {
-		const newFilter = new FilterTemporal(this._dataTime.withFrom(from), this._submission);
-		newFilter.validateDataTime();
-		return newFilter;
+		return new FilterTemporal(this._dataTime.withFrom(from), this._submission);
 	}
 
 	withDataTimeTo(to: PotentialDate) {
-		const newFilter = new FilterTemporal(this._dataTime.withTo(to), this._submission);
-		newFilter.validateDataTime();
-		return newFilter;
+		return new FilterTemporal(this._dataTime.withTo(to), this._submission);
 	}
 
 	withSubmissionFrom(from: PotentialDate) {
-		const newFilter = new FilterTemporal(this._dataTime, this._submission.withFrom(from));
-		newFilter.validateSubmission();
-		return newFilter;
+		return new FilterTemporal(this._dataTime, this._submission.withFrom(from));
 	}
 
 	withSubmissionTo(to: PotentialDate) {
-		const newFilter = new FilterTemporal(this._dataTime, this._submission.withTo(to));
-		newFilter.validateSubmission();
-		return newFilter;
+		return new FilterTemporal(this._dataTime, this._submission.withTo(to));
 	}
 
 	restore(dates?: SerializedFilterTemporal) {
@@ -95,44 +84,23 @@ export default class FilterTemporal {
 		return [
 			{
 				category: 'dataTime',
-				from: this._dataTime.error ? undefined : this._dataTime.from,
-				fromDateTimeStr: this._dataTime.error ? undefined : this._dataTime.fromDateTimeStr,
-				to: this._dataTime.error ? undefined : this._dataTime.to,
-				toDateTimeStr: this._dataTime.error ? undefined : this._dataTime.toDateTimeStr
+				from: this._dataTime.from,
+				fromDateTimeStr: this._dataTime.fromDateTimeStr,
+				to: this._dataTime.to,
+				toDateTimeStr: this._dataTime.toDateTimeStr
 			},
 			{
 				category: 'submission',
-				from: this._submission.error ? undefined : this._submission.from,
-				fromDateTimeStr: this._submission.error ? undefined : this._submission.fromDateTimeStr,
-				to: this._submission.error ? undefined : this._submission.to,
-				toDateTimeStr: this._submission.error ? undefined : this._submission.toDateTimeStr
+				from: this._submission.from,
+				fromDateTimeStr: this._submission.fromDateTimeStr,
+				to: this._submission.to,
+				toDateTimeStr: this._submission.toDateTimeStr
 			}
 		]
 	}
 
 	get hasFilter() {
 		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
-	}
-
-	validateDataTime() {
-		const error = this.isValid(this._dataTime)
-			? undefined
-			: "Invalid Data sample dates. 'From' date must be before 'To' date";
-		this._dataTime.setError(error);
-	}
-
-	validateSubmission() {
-		const error = this.isValid(this._submission)
-			? undefined
-			: "Invalid Submission dates. 'From' date must be before 'To' date";
-		this._submission.setError(error);
-	}
-
-	isValid(fromToDates: FromToDates) {
-		const from = fromToDates.from || minDate;
-		const to = fromToDates.to || maxDate;
-
-		return from.getTime() < to.getTime();
 	}
 }
 
@@ -141,24 +109,18 @@ type FromToDate = Date | undefined;
 export class FromToDates {
 	private readonly _from: FromToDate;
 	private readonly _to: FromToDate;
-	private _error?: string;
 
 	constructor(from?: PotentialDate, to?: PotentialDate, error?: string) {
 		this._from = createDate(from);
 		this._to = createDate(to);
-		this._error = error;
 	}
 
 	withFrom(from: PotentialDate) {
-		return new FromToDates(from, this._to, this._error);
+		return new FromToDates(from, this._to);
 	}
 
 	withTo(to: PotentialDate) {
-		return new FromToDates(this._from, to, this._error);
-	}
-
-	setError(err?: string) {
-		this._error = err;
+		return new FromToDates(this._from, to);
 	}
 
 	get from() {
@@ -185,10 +147,6 @@ export class FromToDates {
 
 	get toDateTimeStr() {
 		return this._to ? this._to.toISOString() : undefined;
-	}
-
-	get error() {
-		return this._error;
 	}
 }
 

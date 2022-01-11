@@ -27,6 +27,6 @@ export default class ErrorBoundary extends Component<Props, State>{
 			return <h4>An error occurred</h4>;
 		}
 
-		return this.props.children;
+		return <>{this.props.children}</>;
 	}
 }

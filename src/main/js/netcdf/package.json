@@ -1,5 +1,5 @@
 {
-  "name": "cpdata-frontend",
+  "name": "cpdata-netcdf",
   "version": "0.1.0",
   "engines": {
     "npm": ">=6.12.0"
