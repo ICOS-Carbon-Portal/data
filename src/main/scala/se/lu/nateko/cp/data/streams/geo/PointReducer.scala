@@ -127,11 +127,13 @@ object PointReducer {
 		y1.toDouble * (x2 - x3) + y2 * (x3 - x1) + y3 * (x1 - x2)
 	}
 
-	def sigmaError(state: PointReducerState): Float = Math.sqrt(
-		state.shortList.sliding(2)
-			.map(segm => segmentDistSquaredSum(segm(0), segm(1), state))
-			.sum / (state.lons.length - 1)
-	).toFloat
+	def sigmaError(state: PointReducerState): Float =
+		if(state.shortList.length < 2) 0f
+		else Math.sqrt(
+			state.shortList.sliding(2)
+				.map(segm => segmentDistSquaredSum(segm(0), segm(1), state))
+				.sum / (state.lons.length - 1)
+		).toFloat
 
 	def getCoverage(maxErrorFactor: Double)(state: PointReducerState): Option[GeoTrack] = {
 		val err = sigmaError(state)

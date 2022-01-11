@@ -17,6 +17,18 @@ class PointReducerTests extends AnyFunSuite {
 		println(res)
 	}
 
+	test("all points are same => single-point GeoTrack"){
+		val reducer = PointReducer.fullDistanceSquaredCost(31)
+		val rs = Iterator.range(1, 100).foldLeft(new PointReducerState){
+			(state, _) => reducer.nextState(state, 50.0d, 10.0d)
+		}
+		val coverage = PointReducer.getCoverage(0.05d)(rs)
+		coverage match{
+			case Some(track) => assert(track.points.length === 1)
+			case None => fail("Coverage could not be extracted")
+		}
+	}
+
 	private case class RunResult(elapsedMs: Int, sigma: Float, nPoints: Int)
 
 	private def singleRun(reducer: PointReducer, fileName: String): RunResult = {
