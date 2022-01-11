@@ -62,7 +62,7 @@
     "deep-equal": "^2.0.5",
     "icos-cp-backend": "0.4.5",
     "icos-cp-spatial": "^0.3.1",
-    "icos-cp-toaster": "^0.6.3",
+    "icos-cp-toaster": "^0.6.4",
     "icos-cp-utils": "^0.1.6",
     "leaflet": "^1.7.1",
     "react": "^17.0.2",
