@@ -8,7 +8,6 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import se.lu.nateko.cp.data.streams.StatefulInitSink
 import se.lu.nateko.cp.meta.core.data.GeoFeature
-import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Polygon
 
 object GeoFeaturePointSink {
@@ -28,7 +27,7 @@ object GeoFeaturePointSink {
 	private def trackSink(
 			budget: Int = DefaultBudget,
 			maxErrorFactor: Double = 0.05
-	)(implicit ctxt: ExecutionContext): Sink[Point, Future[Option[GeoTrack]]] = StatefulInitSink(() => {
+	)(implicit ctxt: ExecutionContext): Sink[Point, Future[Option[GeoFeature]]] = StatefulInitSink(() => {
 
 		val seed = new PointReducerState
 		val reducer = PointReducer.signedTriangleAreaCost(budget)

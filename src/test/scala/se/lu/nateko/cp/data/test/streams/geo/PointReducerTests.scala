@@ -5,6 +5,7 @@ import scala.io.Source
 import java.io.File
 import se.lu.nateko.cp.data.streams.geo._
 import java.io.PrintWriter
+import se.lu.nateko.cp.meta.core.data.Position
 
 class PointReducerTests extends AnyFunSuite {
 
@@ -17,14 +18,15 @@ class PointReducerTests extends AnyFunSuite {
 		println(res)
 	}
 
-	test("all points are same => single-point GeoTrack"){
+	test("all points are same => single-point GeoFeature"){
 		val reducer = PointReducer.fullDistanceSquaredCost(31)
 		val rs = Iterator.range(1, 100).foldLeft(new PointReducerState){
 			(state, _) => reducer.nextState(state, 50.0d, 10.0d)
 		}
 		val coverage = PointReducer.getCoverage(0.05d)(rs)
 		coverage match{
-			case Some(track) => assert(track.points.length === 1)
+			case Some(Position(50.0d, 10.0d, None, None)) => succeed
+			case Some(feat) => fail(s"Expected single point, got $feat")
 			case None => fail("Coverage could not be extracted")
 		}
 	}

@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.streams.geo
 import Ordering.Double.TotalOrdering
 
 import PointReducer._
+import se.lu.nateko.cp.meta.core.data.GeoFeature
 import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Position
 
@@ -135,16 +136,20 @@ object PointReducer {
 				.sum / (state.lons.length - 1)
 		).toFloat
 
-	def getCoverage(maxErrorFactor: Double)(state: PointReducerState): Option[GeoTrack] = {
+	def getCoverage(maxErrorFactor: Double)(state: PointReducerState): Option[GeoFeature] = {
 		val err = sigmaError(state)
 		import state.bbox
 		val bboxSizeEst = Math.sqrt(bbox.width * bbox.height)
 
-		if(err <= maxErrorFactor * bboxSizeEst) Some(GeoTrack(
-			state.latLongs.map{
+		if(err <= maxErrorFactor * bboxSizeEst) {
+			val points = state.latLongs.map{
 				case (lat, lon) => Position(lat, lon, None, None)
-			}.toIndexedSeq,
-			None
-		)) else None
+			}.toIndexedSeq
+			points match{
+				case Seq() => None
+				case Seq(singlePoint) => Some(singlePoint)
+				case many => Some(GeoTrack(many, None))
+			}
+		} else None
 	}
 }
