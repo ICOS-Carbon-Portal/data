@@ -172,7 +172,7 @@ export default class App {
 			: undefined;
 		const hostname = callingUrl?.hostname;
 		const isIframeInPortal = hostname?.endsWith(".icos-cp.eu") || hostname?.endsWith(".fieldsites.se");
-console.log(isIframeInPortal);
+
 		if (isIframeInPortal)
 			return document.createElement("div");
 
@@ -409,7 +409,7 @@ console.log(isIframeInPortal);
 
 	showSpinner(show: boolean){
 		if (show) {
-			this.timer = setTimeout(() => this.spinner.show(), spinnerDelay);
+			this.timer = window.setTimeout(() => this.spinner.show(), spinnerDelay);
 		} else {
 			clearTimeout(this.timer);
 			this.spinner.hide();
