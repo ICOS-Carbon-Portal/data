@@ -1,14 +1,16 @@
 import { TemporalFilterRequest } from "./FilterRequest";
+import config from "../config";
 
 export type SerializedFilterTemporal = { df?: string, dt?: string, sf?: string, st?: string }
+const defaultMaxSamplingDate = config.features.setMaxSamplingDateToToday ? new Date() : undefined;
 
 export default class FilterTemporal {
 	private readonly _dataTime: FromToDates;
 	private readonly _submission: FromToDates;
 
 	constructor(dataTime?: FromToDates, submission?: FromToDates) {
-		this._dataTime = dataTime || new FromToDates();
-		this._submission = submission || new FromToDates();
+		this._dataTime = dataTime || new FromToDates(undefined, undefined, defaultMaxSamplingDate);
+		this._submission = submission || new FromToDates(undefined, undefined, new Date());
 	}
 
 	get serialize() {
@@ -24,8 +26,8 @@ export default class FilterTemporal {
 
 	static deserialize(jsonFilterTemporal: SerializedFilterTemporal) {
 		return new FilterTemporal(
-			new FromToDates(jsonFilterTemporal.df, jsonFilterTemporal.dt),
-			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st)
+			new FromToDates(jsonFilterTemporal.df, jsonFilterTemporal.dt, defaultMaxSamplingDate),
+			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st, new Date())
 		);
 	};
 
@@ -109,18 +111,20 @@ type FromToDate = Date | undefined;
 export class FromToDates {
 	private readonly _from: FromToDate;
 	private readonly _to: FromToDate;
+	private readonly _maxDate?: Date;
 
-	constructor(from?: PotentialDate, to?: PotentialDate, error?: string) {
+	constructor(from?: PotentialDate, to?: PotentialDate, maxDate?: Date) {
 		this._from = createDate(from);
 		this._to = createDate(to);
+		this._maxDate = maxDate;
 	}
 
 	withFrom(from: PotentialDate) {
-		return new FromToDates(from, this._to);
+		return new FromToDates(from, this._to, this.maxDate);
 	}
 
 	withTo(to: PotentialDate) {
-		return new FromToDates(this._from, to);
+		return new FromToDates(this._from, to, this.maxDate);
 	}
 
 	get from() {
@@ -147,6 +151,10 @@ export class FromToDates {
 
 	get toDateTimeStr() {
 		return this._to ? this._to.toISOString() : undefined;
+	}
+
+	get maxDate() {
+		return this._maxDate;
 	}
 }
 

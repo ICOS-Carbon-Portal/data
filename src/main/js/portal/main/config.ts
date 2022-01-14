@@ -35,14 +35,16 @@ const featureFlags = {
 		displayStationInExtendedInfo: false,
 		displayFileNameInExtendedInfo: true,
 		displayDataLevel: true,
-		displayStationIds: true
+		displayStationIds: true,
+		setMaxSamplingDateToToday: false
 	},
 	SITES: {
 		shortenDataTypeLabel: true,
 		displayStationInExtendedInfo: true,
 		displayFileNameInExtendedInfo: false,
 		displayDataLevel: true,
-		displayStationIds: false
+		displayStationIds: false,
+		setMaxSamplingDateToToday: true
 	}
 }
 

@@ -35,6 +35,7 @@ export default class PickDates extends Component<Props> {
 		const {category, filterTemporal} = this.props;
 		const from = filterTemporal[category].from;
 		const to = filterTemporal[category].to;
+		const maxDate = filterTemporal[category].maxDate;
 
 		return (
 			<div className="row">
@@ -49,7 +50,7 @@ export default class PickDates extends Component<Props> {
 								selectsStart
 								startDate={from}
 								endDate={to}
-								maxDate={to ?? new Date()}
+								maxDate={to ?? maxDate}
 								calendarStartDay={1}
 								dateFormat="yyyy-MM-dd"
 								isClearable={true}
@@ -70,7 +71,7 @@ export default class PickDates extends Component<Props> {
 								startDate={from}
 								endDate={to}
 								minDate={from}
-								maxDate={new Date()}
+								maxDate={maxDate}
 								calendarStartDay={1}
 								dateFormat="yyyy-MM-dd"
 								isClearable={true}
