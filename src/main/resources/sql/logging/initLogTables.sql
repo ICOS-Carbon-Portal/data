@@ -729,7 +729,9 @@ CREATE OR REPLACE FUNCTION public.customDownloadsPerYearCountry(
 		_contributors text[] DEFAULT NULL,
 		_downloaded_from text [] DEFAULT NULL,
 		_origin_stations text [] DEFAULT NULL,
-		_hash_id text DEFAULT NULL
+		_hash_id text DEFAULT NULL,
+		_date_from date DEFAULT NULL,
+		_date_to date DEFAULT NULL
 	)
 	RETURNS TABLE(
 		year int,
