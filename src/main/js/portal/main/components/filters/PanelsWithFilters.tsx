@@ -3,7 +3,7 @@ import config, {filters, CategoryType, NumberFilterCategories, FilterName} from 
 import CompositeSpecTable, {ColNames} from "../../models/CompositeSpecTable";
 import {Value} from "../../models/SpecTable";
 import {FilterPanel} from "./FilterPanel";
-import {MultiselectCtrl} from "./MultiselectCtrl";
+import {Item, MultiselectCtrl} from "./MultiselectCtrl";
 import {debounce} from "icos-cp-utils";
 import NumberFilter from "./NumberFilter";
 import {FilterNumber, FilterNumbers} from "../../models/FilterNumbers";
@@ -14,6 +14,7 @@ import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
 import {Dict} from "../../../../common/main/types";
+import {isDefined} from "../../utils";
 
 interface CommonProps {
 	specTable: CompositeSpecTable
@@ -149,15 +150,66 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 		);
 
 	} else {
+		const {data, value} = getDataValue(filterName, specTable, countryCodesLookup, labelLookup);
+
 		return (
 			<MultiselectCtrl
 				name={filterName as CategoryType}
-				specTable={specTable}
+				data={data}
+				value={value}
 				helpItem={helpItem}
-				labelLookup={labelLookup}
-				countryCodesLookup={countryCodesLookup}
 				updateFilter={updateFilter}
 			/>
 		);
 	}
+};
+
+const getDataValue = (filterName: FilterName, specTable: CompositeSpecTable, countryCodesLookup: Dict, labelLookup: LabelLookup) => {
+	const getText = (value: string | number) => {
+		return filterName === 'countryCode'
+			? countryCodesLookup[value]
+			: labelLookup[value]?.label;
+	};
+
+	const name = filterName as CategoryType;
+	const filterUris = specTable.getFilter(name)?.filter(isDefined) ?? [];
+	const dataUris = specTable.getDistinctAvailableColValues(name);
+	const data: Item[] = specTable
+		? makeUniqueDataText(name === 'valType', specTable, dataUris
+			.filter(value => isDefined(value) && !filterUris.includes(value))
+			.map(value => ({
+				value: value,
+				text: getText(value!) ?? value + '',
+				helpStorageListEntry: labelLookup[value!]?.list ?? []
+			}))
+		).sort((d1: any, d2: any) => d1.text.localeCompare(d2.text))
+		: [];
+
+	const value: Item[] = filterUris.map(keyVal => ({
+		value: keyVal,
+		text: getText(keyVal) ?? keyVal,
+		helpStorageListEntry: labelLookup[keyVal]?.list ?? [],
+		presentWithCurrentFilters: dataUris.includes(keyVal)
+	}));
+
+	return { data, value };
+};
+
+const makeUniqueDataText = (makeUnique: boolean, specTable: CompositeSpecTable, data: Item[]): Item[] => {
+	if (!makeUnique) return data;
+
+	const dataLookup = data.reduce<Dict<number, string>>((acc, curr) => {
+		acc[curr.text] = (acc[curr.text] ?? 0) + 1;
+		return acc;
+	}, {});
+
+	return data.map(d => {
+		return dataLookup[d.text] === 1
+			? d
+			: {
+				value: d.value,
+				text: `${d.text} [${specTable.columnMetaRows.find(r => r.valType === d.value)?.quantityUnit ?? 'unknown unit'}]`,
+				helpStorageListEntry: d.helpStorageListEntry
+			};
+	});
 };

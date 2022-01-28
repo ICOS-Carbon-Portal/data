@@ -181,3 +181,10 @@ export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[]{
 		[rect[0], rect[1]]
 	];
 }
+
+export const simpleHash = (text: string) => {
+	// Source: https://gist.github.com/iperelivskiy/4110988?permalink_comment_id=2697447#gistcomment-2697447
+    for (var i = 0, h = 0xdeadbeef; i < text.length; i++)
+        h = Math.imul(h ^ text.charCodeAt(i), 2654435761);
+    return (h ^ h >>> 16) >>> 0;
+};

@@ -1,4 +1,4 @@
-import React, {Component, MouseEventHandler} from 'react';
+import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import {Value} from "../../models/SpecTable";
 import {State} from "../../models/State";
@@ -27,6 +27,7 @@ class Filters extends Component<OurProps> {
 	render(){
 		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal, filterPids,
 			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, spatialStationsFilter, countryCodesLookup} = this.props;
+
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
 			|| filterNumbers.hasFilters

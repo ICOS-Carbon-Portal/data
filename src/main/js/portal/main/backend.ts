@@ -8,7 +8,7 @@ import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
 import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup} from "./models/State";
-import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
+import {getLastSegmentInUrl, simpleHash, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
 import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
@@ -167,7 +167,7 @@ export function fetchFilteredDataObjects(options: QueryParameters){
 }
 
 const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+	return sparqlFetchAndParse(addHash(query), config.sparqlEndpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
 		hasNextVersion: sparqlParsers.fromBoolean(b.hasNextVersion),
 		spec: sparqlParsers.fromUrl(b.spec),
@@ -178,6 +178,12 @@ const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd),
 		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo)
 	}));
+};
+
+const addHash = (query: ObjInfoQuery) => {
+	return {
+		text: `#${simpleHash(query.text)}\n${query.text}`
+	};
 };
 
 export function sparqlFetchBlob(queryTxt: string, acceptCachedResults: boolean = true) {
