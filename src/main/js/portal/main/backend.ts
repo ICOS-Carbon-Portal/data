@@ -168,6 +168,7 @@ export function fetchFilteredDataObjects(options: QueryParameters){
 const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: sparqlParsers.fromUrl(b.dobj),
+		hasNextVersion: sparqlParsers.fromBoolean(b.hasNextVersion),
 		spec: sparqlParsers.fromUrl(b.spec),
 		fileName: sparqlParsers.fromString(b.fileName),
 		size: sparqlParsers.fromLong(b.size),

@@ -51,8 +51,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const specLabel = props.labelLookup[objInfo.spec].label ?? "";
 		const title = extendedInfo.title ?? makeL2OrLessTitle(extendedInfo, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
-		const cartProhibition = addingToCartProhibition(objInfo);
-		const checkBtnTitle = cartProhibition || `Click to select this data object for preview or add to cart`;
+		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
+		const checkBtnTitle = uiMessage ?? `Click to select this data object for preview or add to cart`;
 
 		return(
 			<tr style={{margin: '20px 0'}}>
@@ -61,7 +61,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={cartProhibition != null}
+						checkboxDisabled={!allowCartAdd}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>

@@ -17,7 +17,7 @@ import ProductionSection from '../components/metadata/ProductionSection';
 import ContentSection from '../components/metadata/ContentSection';
 import {addToCart, failWithError, removeFromCart, updateRoute} from "../actions/common";
 import StatsSection from '../components/metadata/StatsSection';
-import { addingToCartProhibition } from '../models/CartItem';
+import { addingToCartProhibition, CartProhibition } from '../models/CartItem';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -68,7 +68,7 @@ class Metadata extends Component<MetadataProps> {
 		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
 			? (specInfo as L3SpecificMeta).productionInfo
 			: undefined;
-		const [isCartEnabled, cartTitle] = cartState(metadata);
+		const {allowCartAdd, uiMessage} = cartState(metadata);
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;
 		const checkedObjects: CheckedObject[] = [{
@@ -135,9 +135,9 @@ class Metadata extends Component<MetadataProps> {
 											style={{ float: 'right', margin: '20px 0 30px 10px' }}
 											checkedObjects={[metadata.id]}
 											clickAction={buttonAction}
-											enabled={isCartEnabled}
+											enabled={allowCartAdd}
 											type={actionButtonType}
-											title={cartTitle}
+											title={uiMessage}
 										/>
 										<PreviewBtn
 											style={{ float: 'right', margin: '20px 0 30px 10px' }}
@@ -254,24 +254,15 @@ const map = (dobjUrl: string, icon?: string) => {
 	);
 };
 
-const cartState = (metadata: MetaData): [boolean, string] => {
+const cartState = (metadata: MetaData): CartProhibition => {
 	const spec = metadata.specification;
-	if (spec === undefined) return [false, "Unexpected error"];
+	if (spec === undefined) return { allowCartAdd: false, uiMessage: "Unexpected error" };
 
-	const cartProhibition = addingToCartProhibition({
+	return addingToCartProhibition({
 		theme: spec.theme.self.uri,
-		level: spec.dataLevel
+		level: spec.dataLevel,
+		hasNextVersion: metadata.nextVersion !== undefined
 	});
-
-	if (cartProhibition != null)
-		return [false, cartProhibition];
-
-	else if (metadata.nextVersion)
-		return [false, "You can only download the newest version"];
-
-	else
-		return [true, ""];
-
 };
 
 const getKeywordHash = (keyword: string) => {

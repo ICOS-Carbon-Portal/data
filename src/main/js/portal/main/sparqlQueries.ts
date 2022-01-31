@@ -182,18 +182,19 @@ ${submTimeDef}
 ${timeStartDef}
 ${timeEndDef}`;
 
-export type ObjInfoQuery = Query<"dobj" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo", never>
+export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
 	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
 	const text = `# listKnownDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
+select ?dobj ?hasNextVersion ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
 where {
 VALUES ?dobj { ${values} }
 ?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
+BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
 OPTIONAL {
 	BIND ("true"^^xsd:boolean as ?hasVarInfo)
 	filter exists{?dobj cpmeta:hasActualVariable [] }
@@ -251,10 +252,11 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
-select ?dobj ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
+select ?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
 	${stationSearch}
 	${siteSearch}
 	${submitterSearch}

@@ -1,9 +1,9 @@
-import config from "../../../common/main/config";
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
 
 export interface DataObject {
 	dobj: string,
+	hasNextVersion: boolean,
 	dataset: string,
 	fileName: string,
 	format: string,
@@ -74,6 +74,10 @@ export default class CartItem {
 
 	get dobj() {
 		return this._id;
+	}
+
+	get hasNextVersion() {
+		return this._dataobject.hasNextVersion;
 	}
 
 	get level() {
@@ -166,8 +170,16 @@ export default class CartItem {
 	}
 }
 
-export function addingToCartProhibition(dobj: {theme: UrlStr, level: number}): string | null {
-	if(dobj.level > 0) return null;
-	else if(dobj.theme === themeUris.atmospheric) return "Raw atmospheric data are only available on request at the moment";
-	else return null;
+export type CartProhibition = {
+	allowCartAdd: boolean
+	uiMessage?: string
+}
+export function addingToCartProhibition(dobj: {theme: UrlStr, level: number, hasNextVersion: boolean}): CartProhibition {
+	if (dobj.hasNextVersion === true)
+		return { allowCartAdd: false, uiMessage: "You can only download the newest version" };
+
+	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric)
+		return { allowCartAdd: false, uiMessage: "Raw atmospheric data are only available on request at the moment" };
+
+	return { allowCartAdd: true };
 }

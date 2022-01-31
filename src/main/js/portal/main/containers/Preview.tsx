@@ -8,7 +8,7 @@ import CartBtn from '../components/buttons/CartBtn';
 import {Events} from 'icos-cp-utils';
 import {State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
-import CartItem from "../models/CartItem";
+import CartItem, { addingToCartProhibition } from "../models/CartItem";
 import {PortalDispatch} from "../store";
 import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl} from "../actions/common";
 import {storeTsPreviewSetting} from "../actions/preview";
@@ -88,6 +88,11 @@ class Preview extends Component<OurProps, OurState> {
 
 		this.getTableFormat(previewType);
 
+		const allowCartAdd = preview.items
+			.map(item => addingToCartProhibition({level: item.level, theme: item.theme, hasNextVersion: item.hasNextVersion}))
+			.every(cartProhibition => cartProhibition.allowCartAdd);
+		const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
+
 		const areItemsInCart: boolean = preview.items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
 		const actionButtonType = areItemsInCart ? 'remove' : 'add';
 		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
@@ -124,7 +129,8 @@ class Preview extends Component<OurProps, OurState> {
 											style={{float: 'right', marginBottom: 10}}
 											checkedObjects={preview.items.map((item: CartItem) => item.dobj)}
 											clickAction={buttonAction}
-											enabled={true}
+											enabled={allowCartAdd}
+											title={uiMessage}
 											type={actionButtonType}
 										/>
 									</div>

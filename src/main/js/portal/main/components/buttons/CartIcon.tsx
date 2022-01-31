@@ -29,16 +29,11 @@ export default class CartIcon extends Component<Props> {
 
 	render(){
 		const {isAddedToCart, objInfo, style} = this.props;
-		const cartProhibited = addingToCartProhibition(objInfo);
+		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 
 		return(
-			<span style={style}>{cartProhibited != null
-				? <span
-					style={styles.disabledClickIcon}
-					title={cartProhibited}
-					className="fas fa-plus-circle text-muted"
-				/>
-				: isAddedToCart
+			<span style={style}>{allowCartAdd
+				? isAddedToCart
 					? <span
 						style={styles.clickIcon}
 						title="Remove from data cart"
@@ -51,6 +46,11 @@ export default class CartIcon extends Component<Props> {
 						className="fas fa-plus-circle text-primary"
 						onClick={this.handleAddToCartClick.bind(this)}
 					/>
+				: <span
+					style={styles.disabledClickIcon}
+					title={uiMessage}
+					className="fas fa-plus-circle text-muted"
+				/>
 			}</span>
 		);
 	}
