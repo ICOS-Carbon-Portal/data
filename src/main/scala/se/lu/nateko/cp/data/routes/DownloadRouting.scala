@@ -71,14 +71,13 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 								else reject
 							}
 						} ~
-						uidOpt.fold[Route](
-							redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
-						){uid =>
+						uidOpt.fold[Route](reject){uid =>
 							onComplete(restHeart.getUserLicenseAcceptance(uid)){
 								case Success(true) => accessRoute(dobj, uidOpt)
 								case _ => reject
 							}
-						}
+						} ~
+						redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
 
 					case Success(doc: DocObject) =>
 						docAccessRoute(doc, uidOpt)
