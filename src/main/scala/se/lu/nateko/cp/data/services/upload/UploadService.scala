@@ -137,7 +137,11 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	private def getSpecificSink(dObj: StaticObject)(implicit envri: Envri): Future[DataObjectSink] =
 		for(
 			tasks <- getUploadTasks(dObj);
-			_ <- Future.fromTry(objLock.lock(dObj.hash))
+			_ <- Future.fromTry{
+				val lock = objLock.lock(dObj.hash)
+				log.info(s"Locking ${dObj.hash} for uploads...${if(lock.isSuccess) "OK" else "Problem!"}")
+				lock
+			}
 		) yield {
 			combineTaskSinks(tasks.map(_.sink)).mapMaterializedValue(_.flatMap(uploadResults => {
 				val results = uploadResults.toIndexedSeq
@@ -164,7 +168,9 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 				) yield new UploadResult(taskResults ++ postTaskResults)
 
 				resFut.andThen{
-					case _ => unlockUpload(dObj.hash)
+					case _ =>
+						log.info(s"Unlocking future uploads of ${dObj.hash} (getSpecificSink...resFut.andThen)")
+						unlockUpload(dObj.hash)
 				}
 			}))
 		}

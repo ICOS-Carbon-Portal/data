@@ -1,8 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-import scala.util.{Failure, Success, Try}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
@@ -13,6 +10,9 @@ import akka.http.scaladsl.server.ExceptionHandler
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Keep
+import akka.util.ByteString
 import se.lu.nateko.cp.data.api.UnauthorizedUpload
 import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.services.upload.UploadResult
@@ -20,11 +20,17 @@ import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport.ingestionMetadataExtractFormat
+import se.lu.nateko.cp.meta.core.data._
 import spray.json._
+
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, coreConf: MetaCoreConfig)(implicit mat: Materializer) {
 	import UploadRouting._
@@ -41,11 +47,23 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 
 	private val upload: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
 		extractEnvri{implicit envri =>
+
+			val watchedFlow = Flow.apply[ByteString].watchTermination()(Keep.right).mapMaterializedValue{
+				_.onComplete{term =>
+					term.failed.foreach{err =>
+						log.error(err, s"Error while uploading $hashsum")
+					}
+					log.info(s"Unlocking future uploads of $hashsum (watchedFlow)")
+					uploadService.unlockUpload(hashsum)
+				}
+			}
 			val resFuture: Future[UploadResult] = uploadService
 				.getSink(hashsum, uid)
-				.flatMap(req.entity.dataBytes.runWith)
+				.flatMap(req.entity.dataBytes.via(watchedFlow).runWith)
 				.andThen{
-					case _ => uploadService.unlockUpload(hashsum)
+					case _ =>
+						log.info(s"Unlocking future uploads of $hashsum (resFuture.andThen)")
+						uploadService.unlockUpload(hashsum)
 				}
 
 			addAccessControlHeaders(envri){
