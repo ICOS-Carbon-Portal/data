@@ -9,7 +9,7 @@ import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData, VariableInfo } from './models/State';
-import { Obj } from '../../common/main/types';
+import { Dict } from '../../common/main/types';
 import { DataObject, L3SpecificMeta, L3VarInfo } from '../../common/main/metacore';
 import { BinRasterExtended } from './models/BinRasterExtended';
 
@@ -366,7 +366,7 @@ const getVariables = (metadata?: DataObject) => {
 	const specificInfo = metadata && metadata.specificInfo as L3SpecificMeta | undefined ;
 
 	if (specificInfo && specificInfo.variables)
-		return specificInfo.variables.reduce((acc: Obj, v: L3VarInfo) => {
+		return specificInfo.variables.reduce((acc: Dict, v: L3VarInfo) => {
 			acc[v.label] = `${v.valueType.self.label} (${v.label})`;
 			return acc;
 		}, {});

@@ -1,4 +1,4 @@
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import { addProjection, get, transform, fromLonLat } from 'ol/proj';
@@ -38,7 +38,7 @@ export const supportedSRIDs = {
 } as const;
 export type SupportedSRIDs = keyof typeof supportedSRIDs
 
-export const supportedSRIDsFriendlyNames: Obj<string, SupportedSRIDs> = {
+export const supportedSRIDsFriendlyNames: Dict<string, SupportedSRIDs> = {
 	"3006": "Sweden (SWEREF99 TM)",
 	"3035": "Europe (LAEA)",
 	"4326": "World (Degrees)",
@@ -48,7 +48,7 @@ export const supportedSRIDsFriendlyNames: Obj<string, SupportedSRIDs> = {
 
 // These cannot be managed by openlayers so use proj4 for them
 export type EpsgCodeWithProj = 'EPSG:3006' | 'EPSG:3035' | 'EPSG:54009' | 'EPSG:54030'
-const projDefinitions: Obj<string, EpsgCodeWithProj> = {
+const projDefinitions: Dict<string, EpsgCodeWithProj> = {
 	"EPSG:3006": "+proj=utm +zone=33 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
 	"EPSG:3035": "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs",
 	"EPSG:54009": "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",

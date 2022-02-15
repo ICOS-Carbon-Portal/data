@@ -4,7 +4,7 @@ import Projection from 'ol/proj/Projection';
 import { View } from 'ol';
 import { TileLayerExtended } from './baseMaps';
 import { fetchJson } from '../../backend';
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 
 // https://developers.arcgis.com/terms/attribution/
 export default class Copyright {
@@ -72,7 +72,7 @@ export default class Copyright {
 export const getESRICopyRight = async (services: (string | undefined)[]) => {
 	if (services.length === 0) return Promise.resolve({});
 
-	const promises = services.map(service => fetchJson<Obj<any>>('https://static.arcgis.com/attribution/' + service + '?f=json'));
+	const promises = services.map(service => fetchJson<Dict<any>>('https://static.arcgis.com/attribution/' + service + '?f=json'));
 
 	return Promise.all(promises).then(results => {
 		return results.reduce((acc, doc, idx) => {

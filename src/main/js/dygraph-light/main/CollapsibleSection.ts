@@ -1,4 +1,4 @@
-import {Obj} from "../../common/main/types";
+import {Dict} from "../../common/main/types";
 import {Style} from "../../common/main/style";
 
 type Styles = {
@@ -34,7 +34,7 @@ export default class CollapsibleSection {
 	}
 
 	setPosition(position: Style){
-		Object.keys(position).forEach(key => this.details.style.setProperty(key, (position as Obj)[key] + "px"));
+		Object.keys(position).forEach(key => this.details.style.setProperty(key, (position as Dict)[key] + "px"));
 	}
 
 	hide(){

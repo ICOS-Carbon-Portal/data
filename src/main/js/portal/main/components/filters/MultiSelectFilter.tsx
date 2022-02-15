@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import { RenderItemProp } from 'react-widgets/esm/List';
 import Multiselect from 'react-widgets/Multiselect';
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 import HelpButton from "../../containers/help/HelpButton";
 import { ColNames } from '../../models/CompositeSpecTable';
 import { HelpItemName } from '../../models/HelpStorage';
@@ -11,7 +11,7 @@ import { Item } from './MultiselectCtrl';
 type Props = {
 	name: ColNames | 'keywordFilter'
 	shouldUseExternalListEntry: boolean
-	search: Obj
+	search: Dict
 	updateFilter: (name: ColNames | 'keywordFilter', values: Value[]) => void
 	placeholder: string
 	data: Item[]
@@ -25,7 +25,7 @@ type State = {
 type RenderItem = Parameters<RenderItemProp<Item>>[0];
 
 export default class MultiSelectFilter extends Component<Props, State> {
-	private search: Obj<string, ColNames | 'keywordFilter'>;
+	private search: Dict<string, ColNames | 'keywordFilter'>;
 	private itemCount?: number;
 
 	constructor(props: Props){

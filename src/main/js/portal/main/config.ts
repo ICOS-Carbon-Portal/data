@@ -1,5 +1,5 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
-import { Obj } from '../../common/main/types';
+import { Dict } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
 import { BaseMapName } from './models/ol/baseMaps';
 import { supportedSRIDsFriendlyNames, SupportedSRIDs } from './models/ol/projections';
@@ -48,7 +48,7 @@ const featureFlags = {
 	}
 }
 
-const sridsInMap: Partial<Obj<string, SupportedSRIDs>> = envri === 'ICOS'
+const sridsInMap: Partial<Dict<string, SupportedSRIDs>> = envri === 'ICOS'
 	? {
 		'3035': supportedSRIDsFriendlyNames['3035'],
 		'54030': supportedSRIDsFriendlyNames['54030']
@@ -107,7 +107,7 @@ export default {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
 		MAPGRAPH: '/map-graph/'
-	} as Obj,
+	} as Dict,
 	restheartDbUrl: commonConfig.restheartDbUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
@@ -244,7 +244,7 @@ export interface PublicQueryDeclaration {
 
 export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'extendedDataObjectInfo' | 'labelLookup' | 'specKeywordsQuery'
 
-export const publicQueries: Obj<PublicQueryDeclaration, QueryName> = {
+export const publicQueries: Dict<PublicQueryDeclaration, QueryName> = {
 	specBasics: {
 		label: 'Data type basics',
 		comment: 'Basic information about data types.'

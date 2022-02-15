@@ -13,12 +13,12 @@ import {KeywordsInfo} from "../../backend/keywordsInfo";
 import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
-import {Obj} from "../../../../common/main/types";
+import {Dict} from "../../../../common/main/types";
 
 interface CommonProps {
 	specTable: CompositeSpecTable
 	labelLookup: LabelLookup
-	countryCodesLookup: Obj
+	countryCodesLookup: Dict
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 	setNumberFilter: (validation: FilterNumber) => void
 	filterTemporal: FilterTemporal

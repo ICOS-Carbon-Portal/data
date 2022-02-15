@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 
 type Props = {
 	isSorter: boolean
@@ -7,7 +7,7 @@ type Props = {
 	selectedItemKey: string
 	isAscending: boolean
 	itemClickAction: (varName: string) => void
-	lookup: Obj
+	lookup: Dict
 	defaultLbl?: string
 }
 

@@ -10,7 +10,7 @@ import Popup from './Popup';
 import Control from 'ol/control/Control';
 import { LayerControl } from './LayerControl';
 import Copyright from './Copyright';
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 import { Coordinate } from 'ol/coordinate';
 import { geoJsonToLayer, pointsToLayer } from './utils';
 import { CountriesTopo } from '../../backend';
@@ -31,7 +31,7 @@ type OurProps = {
 	tileLayers: TileLayerExtended[]
 	controls?: Control[]
 	popupTemplate?: Popup
-	mapOptions: Obj<any>
+	mapOptions: Dict<any>
 	updatePersistedMapProps?: (mapProps: PersistedMapProps) => void
 }
 export type MapOptions = typeof defaultMapOptions
@@ -47,16 +47,16 @@ const defaultMapOptions = {
 };
 export type PointData = {
 	coord: number[] | [number, number]
-	attributes: Obj<string | number | Date | boolean>
+	attributes: Dict<string | number | Date | boolean>
 }
-export type LayerOptions = Options | Obj<string | Date | boolean | number>
+export type LayerOptions = Options | Dict<string | Date | boolean | number>
 export type UpdateMapCenterZoom = (center?: Coordinate, zoom?: number) => void
 export type LayerWrapper = {
 	id: string
 	layerType: 'baseMap' | 'toggle'
 	geoType: 'point' | 'geojson'
 	name: string
-	layerProps: Obj
+	layerProps: Dict
 	visible: boolean
 	data: PointData[] | CountriesTopo
 	style: Style | Style[]

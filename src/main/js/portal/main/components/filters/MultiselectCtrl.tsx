@@ -5,7 +5,7 @@ import {isDefined} from "../../utils";
 import {Value} from "../../models/SpecTable";
 import HelpButton from "../../containers/help/HelpButton";
 import MultiSelectFilter from "./MultiSelectFilter";
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 import { LabelLookup } from '../../models/State';
 import {HelpItem, HelpStorageListEntry} from "../../models/HelpStorage";
 
@@ -14,7 +14,7 @@ interface OurProps {
 	specTable: CompositeSpecTable
 	helpItem?: HelpItem
 	labelLookup: LabelLookup
-	countryCodesLookup: Obj
+	countryCodesLookup: Dict
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 }
 
@@ -88,7 +88,7 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 const makeUniqueDataText = (makeUnique: boolean, specTable: CompositeSpecTable, data: Item[]): Item[] => {
 	if (!makeUnique) return data;
 
-	const dataLookup = data.reduce<Obj<number, string>>((acc, curr) => {
+	const dataLookup = data.reduce<Dict<number, string>>((acc, curr) => {
 		acc[curr.text] = (acc[curr.text] ?? 0) + 1;
 		return acc;
 	}, {});

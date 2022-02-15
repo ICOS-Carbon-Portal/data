@@ -1,4 +1,4 @@
-import {Obj} from "../../../common/main/types";
+import {Dict} from "../../../common/main/types";
 
 interface IndexedDBIndex {
 	indexName: string
@@ -98,7 +98,7 @@ export default class IndexedDB{
 		});
 	}
 
-	addValue(value: Obj<any>): Promise<IDBValidKey> {
+	addValue(value: Dict<any>): Promise<IDBValidKey> {
 		const {db, storeName} = this;
 
 		if (db === undefined)

@@ -1,5 +1,5 @@
 import Overlay from "ol/Overlay";
-import { Obj } from "../../../../common/main/types";
+import { Dict } from "../../../../common/main/types";
 
 export default class Popup {
 	private rootElement: HTMLElement;
@@ -15,7 +15,7 @@ export default class Popup {
 		this.rootElement.innerHTML = '';
 	}
 
-	addContent(headerTxt: string, rowsAndCols: Obj) {
+	addContent(headerTxt: string, rowsAndCols: Dict) {
 		const header = document.createElement("div");
 		header.setAttribute("class", "ol-popup-header");
 		header.innerHTML = headerTxt;

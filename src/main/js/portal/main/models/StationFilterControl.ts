@@ -12,7 +12,7 @@ import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
 import Fill from 'ol/style/Fill';
 import Geometry from 'ol/geom/Geometry';
-import { Obj } from '../../../common/main/types';
+import { Dict } from '../../../common/main/types';
 import { PersistedMapPropsExtended, StationPosLookup } from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
@@ -71,7 +71,7 @@ export class StationFilterControl extends Control {
 	private deleteRectBtnSource: VectorSource;
 	private deleteRectBtnLayer: VectorLayer;
 	private isActive: boolean = false;
-	private seletcs: Obj<Select> = {};
+	private seletcs: Dict<Select> = {};
 	private drawFeatures: DrawFeature[] = [];
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
 	private updateStationFilterInState: (stationUrisToState: Filter) => void;

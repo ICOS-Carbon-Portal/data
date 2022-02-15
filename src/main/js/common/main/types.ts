@@ -1,3 +1,1 @@
-export type Obj<Value = string, Keys extends string | number | symbol = string> = {
-	[Key in Keys]: Value
-}
+export type Dict<Value = string, Keys extends string | number | symbol = string> = Record<Keys, Value>

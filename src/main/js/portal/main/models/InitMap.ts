@@ -8,7 +8,7 @@ import {MapProps, State, StationPos4326Lookup} from './State';
 import Popup from './ol/Popup';
 import { LayerControl } from './ol/LayerControl';
 import Copyright, { getESRICopyRight } from './ol/Copyright';
-import { Obj } from '../../../common/main/types';
+import { Dict } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
 import {difference} from '../utils';
@@ -51,7 +51,7 @@ interface UpdateProps {
 	spatialStationsFilter: Filter
 	mapProps: MapProps
 }
-export type StationPosLookup = Obj<{ coord: number[], stationLbl: string }, UrlStr>
+export type StationPosLookup = Dict<{ coord: number[], stationLbl: string }, UrlStr>
 
 const countryBordersId = 'countryBorders';
 const olMapSettings = config.olMapSettings;

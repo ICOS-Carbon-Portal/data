@@ -21,7 +21,7 @@ import SpecTable, {Filter, Row, Value} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
-import { Obj } from "../../../common/main/types";
+import { Dict } from "../../../common/main/types";
 import {SupportedSRIDs} from "./ol/projections";
 import {restoreSpatialFilterFromMapProps} from "../actions/main";
 import PortalHistoryState from "../backend/PortalHistoryState";
@@ -117,7 +117,7 @@ export type ExportQuery = {
 }
 
 export type StationPos4326Lookup = { station: UrlStr, lon: number, lat: number }
-export type LabelLookup = Obj<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
+export type LabelLookup = Dict<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
 
 // 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
 export type DrawRectBbox = [number, number, number, number]
@@ -131,7 +131,7 @@ export interface State {
 	isRunningInit: boolean
 	searchOptions: SearchOptions
 	route: Route
-	countryCodesLookup: Obj
+	countryCodesLookup: Dict
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
@@ -320,8 +320,8 @@ const hashToState = () => {
 	}
 };
 
-const getStateFromStore = (storeState: State & Obj<any>) => {
-	return hashKeys.reduce((acc: Obj<any>, key: string) => {
+const getStateFromStore = (storeState: State & Dict<any>) => {
+	return hashKeys.reduce((acc: Dict<any>, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
@@ -523,8 +523,8 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial
 	};
 };
 
-const reduceState = (state: Obj<any>) => {
-	return Object.keys(state).reduce((acc: Obj<any>, key: string) => {
+const reduceState = (state: Dict<any>) => {
+	return Object.keys(state).reduce((acc: Dict<any>, key: string) => {
 
 		const val = state[key];
 		if (val == null) return acc;

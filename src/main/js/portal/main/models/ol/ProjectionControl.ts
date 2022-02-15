@@ -1,9 +1,9 @@
 import Control, { Options } from 'ol/control/Control';
-import { Obj } from '../../../../common/main/types';
+import { Dict } from '../../../../common/main/types';
 import { SupportedSRIDs } from './projections';
 
 export interface ProjectionControlOptions extends Options {
-	supportedSRIDs: Obj<string>
+	supportedSRIDs: Dict<string>
 	selectedSRID: string
 	switchProjAction: (newSRID: SupportedSRIDs) => void
 }

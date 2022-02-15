@@ -1,6 +1,6 @@
 import {getRaster} from '../backend';
 import {ensureDelay, retryPromise} from 'icos-cp-utils';
-import { Obj } from '../../../common/main/types';
+import { Dict } from '../../../common/main/types';
 import { BinRasterExtended } from './BinRasterExtended';
 
 type DataObjectVars = {
@@ -10,7 +10,7 @@ type DataObjectVars = {
 	services: string[]
 	variables: string[]
 }
-type Options = { delay: number } & Obj<string | number>
+type Options = { delay: number } & Dict<string | number>
 
 export default class RasterDataFetcher {
 	private _dataObjectVars: DataObjectVars;
@@ -37,7 +37,7 @@ export default class RasterDataFetcher {
 		return this._options.delay;
 	}
 
-	fetchPlainly(selectedIdxs: Obj<number>){
+	fetchPlainly(selectedIdxs: Dict<number>){
 		return retryPromise(getRaster.bind(
 			null,
 			this._dataObjectVars.services[selectedIdxs.serviceIdx],
@@ -46,7 +46,7 @@ export default class RasterDataFetcher {
 			getElevation(this._dataObjectVars.elevations, selectedIdxs.elevationIdx) ?? ''), 5);
 	}
 
-	getDesiredId(selectedIdxs: Obj<number>){
+	getDesiredId(selectedIdxs: Dict<number>){
 		const baseURI = '/netcdf/getSlice?';
 
 		return baseURI
@@ -57,7 +57,7 @@ export default class RasterDataFetcher {
 			+ this._dataObjectVars.gammas[selectedIdxs.gammaIdx];
 	}
 
-	fetch(selectedIdxs: Obj<number>): Promise<BinRasterExtended>{
+	fetch(selectedIdxs: Dict<number>): Promise<BinRasterExtended>{
 		const self = this;
 		this._cache = self.fetchPlainly(selectedIdxs);
 

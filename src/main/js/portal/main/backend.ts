@@ -19,7 +19,7 @@ import {getJson} from 'icos-cp-backend';
 import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
-import { Obj } from '../../common/main/types';
+import { Dict } from '../../common/main/types';
 import {HelpStorageListEntry} from "./models/HelpStorage";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -130,7 +130,7 @@ export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
 	keywords: KeywordsInfo
-	countryCodes: Obj
+	countryCodes: Dict
 }
 
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
@@ -219,7 +219,7 @@ const updatePersonalRestheart = (email: string, data: {}): void => {
 	});
 };
 
-export const getError = (errorId: string): Promise<Obj<any>> => {
+export const getError = (errorId: string): Promise<Dict<any>> => {
 	return fetch(`${config.portalUseLogUrl}/${errorId}`).then(resp => {
 		return resp.status === 200
 			? Promise.resolve(resp.json())
@@ -335,7 +335,7 @@ export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email
-		? getFromRestheart<Obj>(email, tsSettingsStorageName).then(settings => {
+		? getFromRestheart<Dict>(email, tsSettingsStorageName).then(settings => {
 			const newSettings = settings
 				? Object.assign({}, settings[tsSettingsStorageName], tsSettings)
 				: tsSettings;

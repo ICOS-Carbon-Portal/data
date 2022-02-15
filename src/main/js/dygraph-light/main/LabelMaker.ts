@@ -1,7 +1,7 @@
 import UrlSearchParams from "../../common/main/models/UrlSearchParams";
 import {ColumnInfo, TableFormat} from "icos-cp-backend";
 import PerSeriesOptions = dygraphs.PerSeriesOptions;
-import {Obj} from "../../common/main/types";
+import {Dict} from "../../common/main/types";
 import LegendData = dygraphs.LegendData;
 
 type MetaWithTableFormat = {
