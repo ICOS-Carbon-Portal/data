@@ -33,10 +33,10 @@ class SearchResultMap extends Component<OurProps> {
 	componentDidUpdate(){
 		if (this.initMap === undefined)
 			return;
-
+console.log({stationPos4326Lookup: this.props.stationPos4326Lookup});
 		this.initMap.incomingPropsUpdated({
 			specTable: this.props.specTable,
-			allStationUris: this.props.allStationUris,
+			// allStationUris: this.props.allStationUris,
 			stationPos4326Lookup: this.props.stationPos4326Lookup,
 			mapProps: this.props.mapProps,
 			labelLookup: this.props.labelLookup,
@@ -74,7 +74,7 @@ class SearchResultMap extends Component<OurProps> {
 			);
 			this.initMap = new InitMap({
 				mapRootelement: document.getElementById('map')!,
-				allStationUris: this.props.allStationUris,
+				// allStationUris: this.props.allStationUris,
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
@@ -102,7 +102,7 @@ class SearchResultMap extends Component<OurProps> {
 function stateToProps(state: State) {
 	return {
 		specTable: state.specTable,
-		allStationUris: state.allStationUris,
+		// allStationUris: state.allStationUris,
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
 		spatialStationsFilter: state.spatialStationsFilter,

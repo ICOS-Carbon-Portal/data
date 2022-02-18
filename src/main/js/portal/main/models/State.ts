@@ -103,6 +103,8 @@ export interface SearchOptions {
 	showDeprecated: boolean
 }
 
+export interface TabsState {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
+
 //TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
 export type CategFilters = {[key in CategoryType]?: string[] | null}
 
@@ -144,7 +146,7 @@ export interface State {
 	baseDobjStats: DobjOriginsAndCounts //without spatial filtering
 	spatialStationsFilter: Filter
 	mapProps: MapProps
-	allStationUris: Value[]
+	// allStationUris: Value[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
@@ -165,7 +167,7 @@ export interface State {
 	}
 	checkedObjectsInSearch: UrlStr[]
 	checkedObjectsInCart: UrlStr[]
-	tabs: {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
+	tabs: TabsState
 	page: number
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
@@ -206,7 +208,7 @@ export const defaultState: State = {
 		srid: config.olMapSettings.defaultSRID,
 		rects: []
 	},
-	allStationUris: [],
+	// allStationUris: [],
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],

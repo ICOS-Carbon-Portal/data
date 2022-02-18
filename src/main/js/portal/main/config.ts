@@ -11,6 +11,7 @@ export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
 
 type EnvriUrl = { [E in Envri]: UrlStr }
+type EnvriUrls = { [E in Envri]: UrlStr[] }
 
 const envri = commonConfig.envri as Envri;
 
@@ -23,6 +24,12 @@ const metaResourceGraph: EnvriUrl = {
 	ICOS: 'http://meta.icos-cp.eu/resources/cpmeta/',
 	SITES: 'https://meta.fieldsites.se/resources/sites/'
 };
+
+// in addition to metaResourceGraph, that is
+const additionalStationsGraphs: EnvriUrls = {
+	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/'],
+	SITES: []
+}
 
 const searchResultsCSVName = {
 	ICOS: 'Carbon Portal Search Result.csv',
@@ -115,6 +122,7 @@ export default {
 	dobjExtendedCacheFetchLimit: 20,
 	objectUriPrefix,
 	metaResourceGraph,
+	additionalStationsGraphs,
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,

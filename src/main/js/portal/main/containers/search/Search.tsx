@@ -181,7 +181,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
-		switchTab: (tabName: string, selectedTabId: string) => dispatch(switchTab(tabName, selectedTabId)),
+		switchTab: (tabName: string, selectedTabId: number) => dispatch(switchTab(tabName, selectedTabId)),
 		getPersistedMapProps: () => getPersistedMapProps(),
 		savePersistedMapProps: (mapProps: PersistedMapPropsExtended) => savePersistedMapProps(mapProps),
 		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),

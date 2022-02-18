@@ -119,7 +119,7 @@ export class MiscLoadError extends MiscPayload{
 	constructor(readonly state: StateSerialized, readonly cart: Cart){super();}
 }
 
-export class MiscInit extends MiscPayload{
+export class MiscRestoreFromHash extends MiscPayload{
 	constructor(){super();}
 }
 
@@ -164,7 +164,7 @@ export class UiStepRequested extends UiPayload{
 }
 
 export class UiSwitchTab extends UiPayload{
-	constructor(readonly tabName: string, readonly selectedTabId: string){super();}
+	constructor(readonly tabName: string, readonly selectedTabId: number){super();}
 }
 
 export class UiUpdateHelpInfo extends UiPayload{

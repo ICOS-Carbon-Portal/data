@@ -113,22 +113,20 @@ where{
 	return { text };
 }
 
+const stationGraphs = config.additionalStationsGraphs[config.envri].map(gr => `from <${gr}>\n`).join("");
+const fromOntoAndResAndStations =
+	`from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+from <${config.metaResourceGraph[config.envri]}>
+${stationGraphs}`;
+
 export function labelLookup(): Query<'uri' | 'label' , 'stationId' | 'comment' | 'webpage'> {
-	let text = `# labelLookup
+
+	const text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 select ?uri ?label ?comment ?stationId ?webpage
-from <http://meta.icos-cp.eu/ontologies/cpmeta/>
-from <${config.metaResourceGraph[config.envri]}>`;
-
-	if (config.envri === "ICOS") {
-		text += `
-from <http://meta.icos-cp.eu/resources/icos/>
-from <http://meta.icos-cp.eu/resources/extrastations/>`;
-	}
-	text +=`
-where {
+${fromOntoAndResAndStations}where {
 	?uri a ?class .
 	optional {?uri rdfs:label ?rdfsLabel }
 	optional {?uri cpmeta:hasName ?name}
@@ -319,7 +317,7 @@ function getKeywordFilter(allFilters: FilterRequest[]): string {
 			UNION
 			{${dobjKwsFilter}}
 		}`
-		);
+	);
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
@@ -470,16 +468,18 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 	return { text };
 };
 
-export const stationPositions = (): Query<"station" | "lat" | "lon", never> => {
+export const stationPositions = (): Query<"station" | "lat" | "lon" | "id", never> => {
 	const text = `# stationPositions
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT * WHERE {
+SELECT *
+${fromOntoAndResAndStations}WHERE {
 	?station a/rdfs:subClassOf* cpmeta:Station ;
+		cpmeta:hasStationId ?id ;
 		cpmeta:hasLatitude ?lat ;
 		cpmeta:hasLongitude ?lon .
 }`;
-	
+
 	return { text };
 };
 

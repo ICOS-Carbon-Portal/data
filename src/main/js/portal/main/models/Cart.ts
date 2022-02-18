@@ -41,6 +41,10 @@ export default class Cart {
 		return this._ts;
 	}
 
+	get isInitialized(){
+		return this._ts !== '0';
+	}
+
 	get ids(){
 		return this._items.map(item => item.dobj);
 	}

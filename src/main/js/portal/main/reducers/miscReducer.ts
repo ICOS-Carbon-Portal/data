@@ -1,5 +1,5 @@
 import {
-	MiscError, MiscInit, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscError, MiscRestoreFromHash, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
 	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps
 } from "./actionpayloads";
 import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
@@ -16,7 +16,7 @@ import {round, throwError} from "../utils";
 
 export default function(state: State, payload: MiscPayload): State{
 
-	if (payload instanceof MiscInit){
+	if (payload instanceof MiscRestoreFromHash){
 		return stateUtils.update(state, stateUtils.getStateFromHash());
 	}
 
@@ -57,22 +57,12 @@ export default function(state: State, payload: MiscPayload): State{
 const handleUpdateMapProps = (state: State, payload: MiscUpdateMapProps): Partial<State> => {
 	const persistedMapProps = payload.persistedMapProps;
 	const srid = persistedMapProps.srid ?? config.olMapSettings.defaultSRID;
+	const rounder = srid === '4326'
+		? (val: number) => round(val, 5)
+		: (val: number) => Math.round(val);
 	const coordHandler = (df: DrawFeature): DrawRectBbox => {
 		const rect = df.coords[0];
-
-		switch(srid){
-			case '3006':
-			case '3035':
-			case '3857':
-			case '54030':
-				return rect[0].concat(rect[2]).map(val => Math.round(val)) as DrawRectBbox;
-
-			case '4326':
-				return rect[0].concat(rect[2]).map(val => round(val, 5)) as DrawRectBbox;
-
-			default:
-				throwError(`Unsupported SRID (${srid}) supplied`);
-		}
+		return rect[0].concat(rect[2]).map(rounder) as DrawRectBbox;
 	};
 	const mapProps: MapProps = {
 		srid,
@@ -111,6 +101,7 @@ const resetFilters = (state: State): Partial<State> => {
 };
 
 const restoreFilters = (state: State): Partial<State> => {
+	console.log({filterCategories: state.filterCategories});
 	const specTable = getSpecTable(state.specTable, state.filterCategories);
 	const objCount = getObjCount(specTable);
 	const paging = new Paging({objCount, offset: state.page * config.stepsize});

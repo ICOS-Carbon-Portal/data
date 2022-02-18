@@ -15,8 +15,8 @@ import {
 	StationPositions4326Lookup,
 	BackendUpdateSpatialFilter
 } from "./actionpayloads";
-import stateUtils, {ObjectsTable, State} from "../models/State";
-import config from "../config";
+import stateUtils, {CategFilters, ObjectsTable, State} from "../models/State";
+import config, {CategoryType} from "../config";
 import CompositeSpecTable, { ColNames } from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
@@ -196,20 +196,40 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 };
 
 function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
-	const specTable = CompositeSpecTable.deserialize(payload.info.specTables);
-	const allStationUris = specTable.getAllDistinctAvailableColValues('station').filter<Value>(isDefined);
+	const startTable = CompositeSpecTable.deserialize(payload.info.specTables);
+	const specTable = applyFilterCategories(startTable, state.filterCategories);
+	// console.log({specTable,
+	// 	filterCategories: state.filterCategories,
+	// 	filterPids: state.filterPids,
+	// 	filterNumbers: state.filterNumbers,
+	// 	filterKeywords: state.filterKeywords
+	// });
+	// const allStationUris = specTable.getAllDistinctAvailableColValues('station').filter<Value>(isDefined);
 	const labelLookup = payload.info.labelLookup;
 
 	return {
 		specTable,
-		allStationUris,
+		// allStationUris,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),
 		keywords: payload.info.keywords,
 		countryCodesLookup: payload.info.countryCodes
 	};
-};
+}
+
+function applyFilterCategories(startTable: CompositeSpecTable, filterCategories: CategFilters): CompositeSpecTable {
+
+	const categoryTypes: CategoryType[] = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
+
+	return categoryTypes.reduce(
+		(specTable, categType) => {
+			const filter = filterCategories[categType];
+			return filter === undefined ? specTable : specTable.withFilter(categType, filter)
+		},
+		startTable
+	);
+}
 
 const handleUserInfo = (state: State, payload: BackendUserInfo) => {
 	return {

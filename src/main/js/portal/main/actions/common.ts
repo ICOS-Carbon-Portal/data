@@ -3,7 +3,7 @@ import stateUtils, {
 	Profile,
 	Route,
 	State,
-	StateSerialized,
+	StateSerialized, StationPos4326Lookup,
 	WhoAmI
 } from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
@@ -13,7 +13,7 @@ import {
 	getCart,
 	getError,
 	fetchJson,
-	saveCart
+	saveCart, fetchStationPositions
 } from "../backend";
 import Cart, {restoreCarts} from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
@@ -23,8 +23,14 @@ import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilter
 import {isPidFreeTextSearch} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
-import {bootstrapRoute, init, loadApp} from "./main";
+import {bootstrapRoute, init, loadApp, restoreSpatialFilterFromMapProps} from "./main";
 import { DataObject } from "../../../common/main/metacore";
+import {Filter, Value} from "../models/SpecTable";
+import keywordsInfo from "../backend/keywordsInfo";
+import {SPECCOL} from "../sparqlQueries";
+import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
+import {BackendUpdateSpatialFilter, StationPositions4326Lookup} from "../reducers/actionpayloads";
+import {getFilteredDataObjects} from "./search";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -61,26 +67,92 @@ export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThun
 	};
 }
 
-export const getFilters = (state: State) => {
-	const {tabs, filterTemporal, filterPids, searchOptions} = state;
+export function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
+	// console.log({tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords});
 	let filters: FilterRequest[] = [];
 
-	if (isPidFreeTextSearch(tabs, filterPids)) {
-		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
-		filters.push({category: 'pids', pids: filterPids} as PidFilterRequest);
+	if (isPidFreeTextSearch(tabs, filterPids)){
+		filters.push({category: 'deprecated', allow: true});
+		filters.push({category: 'pids', pids: filterPids});
 	} else {
-		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
+		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
+		filters.push({category: 'pids', pids: null});
 
-		if (filterTemporal.hasFilter) {
-			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
+		if (filterTemporal.hasFilter){
+			filters = filters.concat(filterTemporal.filters);
 		}
+
+		if (varNamesAreFiltered(specTable)){
+			const titles = specTable.getColumnValuesFilter('varTitle')
+			if(titles != null){
+				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
+			}
+		}
+
+		if (filterKeywords.length > 0){
+			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
+			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+			let specs = kwSpecs;
+
+			if (!forStatCountsQuery){
+				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
+				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
+			}
+
+			filters.push({category: 'keywords', dobjKeywords, specs});
+		}
+
+		filters = filters.concat(filterNumbers.validFilters);
 	}
 
 	return filters;
-};
+}
+
+export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
+
+export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
+	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
+}
+
+// export const getFilters = (state: State) => {
+// 	const {tabs, filterTemporal, filterPids, searchOptions} = state;
+// 	let filters: FilterRequest[] = [];
+//
+// 	if (isPidFreeTextSearch(tabs, filterPids)) {
+// 		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
+// 		filters.push({category: 'pids', pids: filterPids} as PidFilterRequest);
+// 	} else {
+// 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
+//
+// 		if (filterTemporal.hasFilter) {
+// 			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
+// 		}
+// 	}
+//
+// 	return filters;
+// };
+
+export function getStationPosWithSpatialFilter(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		if (getState().stationPos4326Lookup.length)
+			return;
+
+		fetchStationPositions().then(stationPos4326 => {
+				const stationPos4326Lookup: StationPos4326Lookup[] = stationPos4326.rows;
+				dispatch(new StationPositions4326Lookup(stationPos4326Lookup));
+
+				const spatialStationsFilter = restoreSpatialFilterFromMapProps(getState().mapProps, stationPos4326Lookup);
+				dispatch(new BackendUpdateSpatialFilter(spatialStationsFilter));
+			},
+			failWithError(dispatch)
+		);
+	};
+}
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
+		console.log("getBackendTables", {filters});
 		return fetchBoostrapData(filters).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
@@ -89,13 +161,13 @@ export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Pr
 	};
 }
 
-export function fetchCart(user: WhoAmI): PortalThunkAction<void> {
+export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		getCart(user.email).then(({cartInSessionStorage, cartInRestheart}) => {
+		return getCart(user.email).then(({cartInSessionStorage, cartInRestheart}) => {
 
-				cartInRestheart.then(restheartCart => {
+				return cartInRestheart.then(restheartCart => {
 					const cart = restoreCarts(cartInSessionStorage, restheartCart);
-					dispatch(updateCart(user.email, cart));
+					return dispatch(updateCart(user.email, cart));
 				});
 			}
 		);

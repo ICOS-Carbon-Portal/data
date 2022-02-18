@@ -1,7 +1,6 @@
 import {PortalThunkAction} from "../store";
 import {Filter, Value} from "../models/SpecTable";
-import {State} from "../models/State";
-import {FilterRequest} from "../models/FilterRequest";
+import {State, TabsState, WhoAmI} from "../models/State";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import config from "../config";
@@ -12,22 +11,46 @@ import {
 	getExtendedDataObjInfo,
 	makeHelpStorageListItem
 } from "../backend";
-import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
+import {ColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FiltersNumber, FiltersUpdatePids} from "../reducers/actionpayloads";
+import {FiltersNumber, FiltersUpdatePids, UiInactivateAllHelp} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
 import {saveToRestheart} from "../../../common/main/backend";
 import {QueryParameters, SearchOption} from "./types";
-import {failWithError} from "./common";
+import {
+	failWithError, fetchCart, getBackendTables,
+	getFilters,
+	getStationPosWithSpatialFilter,
+	varNameAffectingCategs,
+	varNamesAreFiltered
+} from "./common";
 import {FilterNumber} from "../models/FilterNumbers";
-import keywordsInfo from "../backend/keywordsInfo";
 import Paging from "../models/Paging";
 import { listFilteredDataObjects, SPECCOL } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 
+
+export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+
+		const filters = getFilters(getState());
+		dispatch(getBackendTables(filters)).then(_ => {
+			dispatch(getFilteredDataObjects);
+		});
+
+		dispatch(new Payloads.BootstrapRouteSearch());
+
+		if (tabs.resultTab === 2)
+			dispatch(getStationPosWithSpatialFilter());
+
+		dispatch(new UiInactivateAllHelp());
+
+		dispatch(fetchCart(user));
+	}
+}
 
 const dataObjectsFetcher = config.useDataObjectsCache
 	? new CachedDataObjectsFetcher(config.dobjCacheFetchLimit)
@@ -41,7 +64,6 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
-
 				dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts, true));
 
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
@@ -53,7 +75,7 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 	};
 }
 
-const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) => {
+export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) => {
 	const state = getState();
 	const options = getOptions(state);
 
@@ -69,8 +91,6 @@ const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getState) =>
 		},
 		failWithError(dispatch)
 	);
-
-	dispatch(new Payloads.BootstrapRouteSearch());
 
 	logPortalUsage(state);
 };
@@ -165,52 +185,53 @@ const logPortalUsage = (state: State) => {
 	}
 };
 
-function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
-	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
-	let filters: FilterRequest[] = [];
-
-	if (isPidFreeTextSearch(tabs, filterPids)){
-		filters.push({category: 'deprecated', allow: true});
-		filters.push({category: 'pids', pids: filterPids});
-	} else {
-		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
-		filters.push({category: 'pids', pids: null});
-
-		if (filterTemporal.hasFilter){
-			filters = filters.concat(filterTemporal.filters);
-		}
-
-		if (varNamesAreFiltered(specTable)){
-			const titles = specTable.getColumnValuesFilter('varTitle')
-			if(titles != null){
-				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
-			}
-		}
-
-		if (filterKeywords.length > 0){
-			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
-			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
-			let specs = kwSpecs;
-
-			if (!forStatCountsQuery){
-				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
-				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
-			}
-
-			filters.push({category: 'keywords', dobjKeywords, specs});
-		}
-
-		filters = filters.concat(filterNumbers.validFilters);
-	}
-
-	return filters;
-}
-
-const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
-
-function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
-	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
-}
+// function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
+// 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
+// 	console.log({tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords});
+// 	let filters: FilterRequest[] = [];
+//
+// 	if (isPidFreeTextSearch(tabs, filterPids)){
+// 		filters.push({category: 'deprecated', allow: true});
+// 		filters.push({category: 'pids', pids: filterPids});
+// 	} else {
+// 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
+// 		filters.push({category: 'pids', pids: null});
+//
+// 		if (filterTemporal.hasFilter){
+// 			filters = filters.concat(filterTemporal.filters);
+// 		}
+//
+// 		if (varNamesAreFiltered(specTable)){
+// 			const titles = specTable.getColumnValuesFilter('varTitle')
+// 			if(titles != null){
+// 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
+// 			}
+// 		}
+//
+// 		if (filterKeywords.length > 0){
+// 			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
+// 			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
+// 			let specs = kwSpecs;
+//
+// 			if (!forStatCountsQuery){
+// 				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
+// 				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
+// 			}
+//
+// 			filters.push({category: 'keywords', dobjKeywords, specs});
+// 		}
+//
+// 		filters = filters.concat(filterNumbers.validFilters);
+// 	}
+//
+// 	return filters;
+// }
+//
+// const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
+//
+// function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
+// 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
+// }
 
 export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
@@ -218,7 +239,7 @@ export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Va
 
 		dispatch(new Payloads.BackendUpdateSpecFilter(varName, filter));
 
-		if(varNameAffectingCategs.includes(varName as ColNames)) dispatch(getOriginsThenDobjList)
+		if (varNameAffectingCategs.includes(varName as ColNames)) dispatch(getOriginsThenDobjList)
 		else dispatch(getFilteredDataObjects);
 	};
 }
@@ -270,13 +291,17 @@ export function updateCheckedObjectsInSearch(checkedObjectInSearch: UrlStr | Url
 	};
 }
 
-// TODO: selectedTabId can be both string and number. Pick one or the other.
-export function switchTab(tabName: string, selectedTabId: string): PortalThunkAction<void> {
+export function switchTab(tabName: string, selectedTabId: number): PortalThunkAction<void> {
 	return (dispatch, getState) => {
+		console.log({tabName, selectedTabId});
 		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
 		if (tabName === 'searchTab' && getState().filterPids !== null){
 			dispatch(getFilteredDataObjects);
+		}
+
+		if (tabName === 'resultTab' && selectedTabId === 2){
+			dispatch(getStationPosWithSpatialFilter());
 		}
 	};
 }

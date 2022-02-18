@@ -78,7 +78,8 @@ export const fetchStationPositions = () => {
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		station: b.station.value,
 		lon: parseFloat(b.lon.value),
-		lat: parseFloat(b.lat.value)
+		lat: parseFloat(b.lat.value),
+		id: b.id.value
 	}));
 };
 

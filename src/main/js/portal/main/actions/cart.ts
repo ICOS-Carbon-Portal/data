@@ -4,23 +4,42 @@ import * as Payloads from "../reducers/actionpayloads";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
 import {getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
-import {failWithError} from "./common";
+import {failWithError, fetchCart, getBackendTables} from "./common";
 import {saveToRestheart} from "../../../common/main/backend";
+import {WhoAmI} from "../models/State";
 
 
-export default function bootstrapCart(): PortalThunkAction<void> {
+export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {cart} = getState();
+		const cartHandler = getState().cart.isInitialized
+			? Promise.resolve()
+			: dispatch(fetchCart(user));
 
-		const cartItems: CartItem[] = cart.items;
-		const rowsAsObjectsTable = cartItems.map(ci => ci.item);
-		const dobjs: UrlStr[] = rowsAsObjectsTable.map(r => r.dobj);
+		cartHandler.then(_ => {
+			const {cart} = getState();
+			const cartItems: CartItem[] = cart.items;
 
-		getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
-				dispatch(new Payloads.BootstrapRouteCart(extendedDobjInfo, rowsAsObjectsTable));
-			},
-			failWithError(dispatch)
-		);
+			if (cartItems.length === 0) {
+				dispatch(new Payloads.BootstrapRouteCart([], []));
+				return;
+			}
+
+			const specTableHandler = getState().specTable.isInitialized
+				? Promise.resolve()
+				: dispatch(getBackendTables([]));
+
+			specTableHandler.then(_ => {
+				const rowsAsObjectsTable = cartItems.map(ci => ci.item);
+				const dobjs: UrlStr[] = rowsAsObjectsTable.map(r => r.dobj);
+				console.log({cart, cartItems, rowsAsObjectsTable, dobjs});
+				getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
+						dispatch(new Payloads.BootstrapRouteCart(extendedDobjInfo, rowsAsObjectsTable));
+					},
+					failWithError(dispatch)
+				);
+			});
+
+		});
 	};
 }
 

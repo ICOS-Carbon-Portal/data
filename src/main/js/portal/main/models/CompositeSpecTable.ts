@@ -85,6 +85,10 @@ export default class CompositeSpecTable{
 		return this.origins.rows;
 	}
 
+	get isInitialized(){
+		return this.basicsRows.length > 0 && this.columnMetaRows.length > 0;
+	}
+
 	get names(): Array<ColNames>{
 		const toFlatMap = this.tables.map(tbl => tbl.names);
 		return Array.prototype.concat.apply([], toFlatMap);

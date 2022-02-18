@@ -3,7 +3,7 @@ import React, { Component, ReactNode } from 'react';
 type Props = {
 	tabName: string
 	selectedTabId?: number
-	switchTab: Function
+	switchTab: (tabName: string, selectedTabId: number) => void
 } & { children: ReactNode[] }
 
 type TabState = {
