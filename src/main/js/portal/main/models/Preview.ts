@@ -133,7 +133,7 @@ export default class Preview {
 	}
 
 	get hasAllItems(){
-		const itemPids = this.items.map(item => getLastSegmentInUrl(item.dobj));//
+		const itemPids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 
 		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
 	}

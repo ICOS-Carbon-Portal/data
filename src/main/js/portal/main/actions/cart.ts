@@ -31,7 +31,7 @@ export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
 			specTableHandler.then(_ => {
 				const rowsAsObjectsTable = cartItems.map(ci => ci.item);
 				const dobjs: UrlStr[] = rowsAsObjectsTable.map(r => r.dobj);
-				console.log({cart, cartItems, rowsAsObjectsTable, dobjs});
+
 				getExtendedDataObjInfo(dobjs).then(extendedDobjInfo => {
 						dispatch(new Payloads.BootstrapRouteCart(extendedDobjInfo, rowsAsObjectsTable));
 					},

@@ -19,7 +19,7 @@ import Cart, {restoreCarts} from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {DeprecatedFilterRequest, FilterRequest, PidFilterRequest, TemporalFilterRequest} from "../models/FilterRequest";
+import {FilterRequest} from "../models/FilterRequest";
 import {isPidFreeTextSearch} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
@@ -30,7 +30,6 @@ import keywordsInfo from "../backend/keywordsInfo";
 import {SPECCOL} from "../sparqlQueries";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import {BackendUpdateSpatialFilter, StationPositions4326Lookup} from "../reducers/actionpayloads";
-import {getFilteredDataObjects} from "./search";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -69,7 +68,6 @@ export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThun
 
 export function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
-	// console.log({tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords});
 	let filters: FilterRequest[] = [];
 
 	if (isPidFreeTextSearch(tabs, filterPids)){
@@ -115,24 +113,6 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
 }
 
-// export const getFilters = (state: State) => {
-// 	const {tabs, filterTemporal, filterPids, searchOptions} = state;
-// 	let filters: FilterRequest[] = [];
-//
-// 	if (isPidFreeTextSearch(tabs, filterPids)) {
-// 		filters.push({category: 'deprecated', allow: true} as DeprecatedFilterRequest);
-// 		filters.push({category: 'pids', pids: filterPids} as PidFilterRequest);
-// 	} else {
-// 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated} as DeprecatedFilterRequest);
-//
-// 		if (filterTemporal.hasFilter) {
-// 			filters = filters.concat(filterTemporal.filters as TemporalFilterRequest[]);
-// 		}
-// 	}
-//
-// 	return filters;
-// };
-
 export function getStationPosWithSpatialFilter(): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		if (getState().stationPos4326Lookup.length)
@@ -152,7 +132,6 @@ export function getStationPosWithSpatialFilter(): PortalThunkAction<void> {
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		console.log("getBackendTables", {filters});
 		return fetchBoostrapData(filters).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},

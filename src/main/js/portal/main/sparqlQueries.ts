@@ -469,15 +469,19 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 };
 
 export const stationPositions = (): Query<"station" | "lat" | "lon" | "id", never> => {
+	const envriDecl = config.envri === "ICOS"
+		? "not exists"
+		: "exists";
 	const text = `# stationPositions
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT *
-${fromOntoAndResAndStations}WHERE {
-	?station a/rdfs:subClassOf* cpmeta:Station ;
-		cpmeta:hasStationId ?id ;
-		cpmeta:hasLatitude ?lat ;
-		cpmeta:hasLongitude ?lon .
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX cpmeta: <${config.cpmetaOntoUri}>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?station ?id ?lat ?lon
+WHERE {
+	?station cpmeta:hasStationId ?id .
+	filter exists {[] prov:wasAssociatedWith ?station}
+	filter ${envriDecl} {?station a <https://meta.fieldsites.se/ontologies/sites/Station>}
+	?station cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon .
 }`;
 
 	return { text };

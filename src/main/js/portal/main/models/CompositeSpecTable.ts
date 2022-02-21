@@ -1,8 +1,7 @@
 import {
 	SpecBasicsQuery,
 	SpecVarMetaQuery,
-	DobjOriginsAndCountsQuery,
-	SPECCOL
+	DobjOriginsAndCountsQuery
 } from '../sparqlQueries';
 import SpecTable, {Value, Filter, Row, TableSerialized} from "./SpecTable";
 import {AsyncResult} from "../backend/declarations";

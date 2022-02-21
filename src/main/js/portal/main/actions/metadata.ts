@@ -5,7 +5,7 @@ import {fetchJson, fetchKnownDataObjects} from "../backend";
 import {getBackendTables, setMetadataItem, updateRoute} from "../actions/common";
 import {failWithError, getKnownDataObjInfo, } from "./common";
 import {getLastSegmentInUrl} from "../utils";
-import {MetaDataWStats, WhoAmI} from "../models/State";
+import {MetaDataWStats} from "../models/State";
 import {setKeywordFilter} from "../actions/search";
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";

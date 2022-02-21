@@ -45,7 +45,6 @@ interface Props extends UpdateProps {
 }
 interface UpdateProps {
 	specTable: CompositeSpecTable
-	// allStationUris: Value[]
 	stationPos4326Lookup: StationPos4326Lookup[]
 	labelLookup: State['labelLookup']
 	spatialStationsFilter: Filter
@@ -65,7 +64,6 @@ export default class InitMap {
 	private readonly layerControl: LayerControl;
 	private readonly stationFilterControl: StationFilterControl;
 	private pointTransformer: TransformPointFn;
-	private stationPos4326Lookup: StationPos4326Lookup[];
 	private allStationUris: Value[];
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
@@ -75,7 +73,6 @@ export default class InitMap {
 	constructor(props: Props) {
 		const {
 			mapRootelement,
-			// stationPos4326Lookup,
 			updateMapSelectedSRID,
 			persistedMapProps,
 			updatePersistedMapProps,
@@ -85,10 +82,7 @@ export default class InitMap {
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
-		this.stationPos4326Lookup = [];
 		this.allStationUris = [];
-		// this.stationPos4326Lookup = stationPos4326Lookup;
-		// this.allStationUris = stationPos4326Lookup.map(s => s.station);
 		this.updatePersistedMapProps = updatePersistedMapProps;
 		this.updateStationFilterInState = updateStationFilterInState;
 
@@ -249,18 +243,18 @@ export default class InitMap {
 
 	incomingPropsUpdated(props: UpdateProps) {
 		const { specTable, stationPos4326Lookup, labelLookup, spatialStationsFilter, mapProps } = props;
-		const isReadyForStationPosLookup = this.stationFilterControl.stationPosLookup.empty !== undefined
+		const isStationPosLookupEmpty = () => this.stationFilterControl.stationPosLookup.hasOwnProperty("empty");
+		const isReadyForStationPosLookup = isStationPosLookupEmpty()
 			&& stationPos4326Lookup.length > 0
 			&& Object.keys(labelLookup).length > 0;
 
 		if (isReadyForStationPosLookup) {
-			this.stationPos4326Lookup = stationPos4326Lookup;
 			this.allStationUris = stationPos4326Lookup.map(s => s.station);
-			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup, this.allStationUris);
+			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup);
 			this.stationFilterControl.restoreDrawFeaturesFromMapProps(mapProps);
 		}
 
-		if (this.stationFilterControl.stationPosLookup.empty === undefined) {
+		if (!isStationPosLookupEmpty()) {
 			const stationUris = this.stationFilterControl.updateStationUris(specTable, this.allStationUris, spatialStationsFilter);
 
 			if (stationUris.hasChanged) {
@@ -422,14 +416,12 @@ export default class InitMap {
 	}
 }
 
-const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], pointTransformer: TransformPointFn, labelLookup: State['labelLookup'], allSpecTableStationUris: Value[]) =>
+const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], pointTransformer: TransformPointFn, labelLookup: State['labelLookup']) =>
 	stationPos4326Lookup.reduce<StationPosLookup>((acc, st) => {
-		if (allSpecTableStationUris.includes(st.station)) {
-			acc[st.station] = {
-				coord: pointTransformer(st.lon, st.lat),
-				stationLbl: labelLookup[st.station].label ?? st.station
-			};
-		}
+		acc[st.station] = {
+			coord: pointTransformer(st.lon, st.lat),
+			stationLbl: labelLookup[st.station].label ?? st.station
+		};
 		return acc;
 	}, {});
 

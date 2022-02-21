@@ -185,54 +185,6 @@ const logPortalUsage = (state: State) => {
 	}
 };
 
-// function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
-// 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
-// 	console.log({tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords});
-// 	let filters: FilterRequest[] = [];
-//
-// 	if (isPidFreeTextSearch(tabs, filterPids)){
-// 		filters.push({category: 'deprecated', allow: true});
-// 		filters.push({category: 'pids', pids: filterPids});
-// 	} else {
-// 		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
-// 		filters.push({category: 'pids', pids: null});
-//
-// 		if (filterTemporal.hasFilter){
-// 			filters = filters.concat(filterTemporal.filters);
-// 		}
-//
-// 		if (varNamesAreFiltered(specTable)){
-// 			const titles = specTable.getColumnValuesFilter('varTitle')
-// 			if(titles != null){
-// 				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
-// 			}
-// 		}
-//
-// 		if (filterKeywords.length > 0){
-// 			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
-// 			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
-// 			let specs = kwSpecs;
-//
-// 			if (!forStatCountsQuery){
-// 				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
-// 				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
-// 			}
-//
-// 			filters.push({category: 'keywords', dobjKeywords, specs});
-// 		}
-//
-// 		filters = filters.concat(filterNumbers.validFilters);
-// 	}
-//
-// 	return filters;
-// }
-//
-// const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
-//
-// function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
-// 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
-// }
-
 export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Value[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		const filter: Filter = values.length === 0 ? null : values;
@@ -293,7 +245,6 @@ export function updateCheckedObjectsInSearch(checkedObjectInSearch: UrlStr | Url
 
 export function switchTab(tabName: string, selectedTabId: number): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		console.log({tabName, selectedTabId});
 		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
 		if (tabName === 'searchTab' && getState().filterPids !== null){

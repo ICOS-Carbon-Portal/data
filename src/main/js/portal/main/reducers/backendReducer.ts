@@ -22,7 +22,6 @@ import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
 import {IdxSig} from "../backend/declarations";
-import { isDefined } from "../utils";
 import {Filter, Value} from "../models/SpecTable";
 import {DobjOriginsAndCounts} from "../backend";
 
@@ -198,18 +197,10 @@ export const getNewPaging = (currentPaging: Paging, currentPage: number, specTab
 function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<State> {
 	const startTable = CompositeSpecTable.deserialize(payload.info.specTables);
 	const specTable = applyFilterCategories(startTable, state.filterCategories);
-	// console.log({specTable,
-	// 	filterCategories: state.filterCategories,
-	// 	filterPids: state.filterPids,
-	// 	filterNumbers: state.filterNumbers,
-	// 	filterKeywords: state.filterKeywords
-	// });
-	// const allStationUris = specTable.getAllDistinctAvailableColValues('station').filter<Value>(isDefined);
 	const labelLookup = payload.info.labelLookup;
 
 	return {
 		specTable,
-		// allStationUris,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),

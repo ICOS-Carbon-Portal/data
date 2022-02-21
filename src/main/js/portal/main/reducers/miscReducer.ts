@@ -101,7 +101,6 @@ const resetFilters = (state: State): Partial<State> => {
 };
 
 const restoreFilters = (state: State): Partial<State> => {
-	console.log({filterCategories: state.filterCategories});
 	const specTable = getSpecTable(state.specTable, state.filterCategories);
 	const objCount = getObjCount(specTable);
 	const paging = new Paging({objCount, offset: state.page * config.stepsize});

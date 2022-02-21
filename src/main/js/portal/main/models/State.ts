@@ -146,7 +146,6 @@ export interface State {
 	baseDobjStats: DobjOriginsAndCounts //without spatial filtering
 	spatialStationsFilter: Filter
 	mapProps: MapProps
-	// allStationUris: Value[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
 	objectsTable: ObjectsTable[]
@@ -208,7 +207,6 @@ export const defaultState: State = {
 		srid: config.olMapSettings.defaultSRID,
 		rects: []
 	},
-	// allStationUris: [],
 	extendedDobjInfo: [],
 	formatToRdfGraph: {},
 	objectsTable: [],
