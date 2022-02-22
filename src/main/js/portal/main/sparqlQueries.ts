@@ -453,11 +453,10 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 		}
 		group by ?dobj
 	}
-	?dobj cpmeta:hasObjectSpec ?specUri .
-	OPTIONAL{ ?specUri cpmeta:hasDataTheme [
-		rdfs:label ?theme ;
-		cpmeta:hasIcon ?themeIcon
-	]}
+	OPTIONAL{
+		?dobj cpmeta:hasObjectSpec/cpmeta:hasDataTheme ?themeUri .
+		?themeUri rdfs:label ?theme ; cpmeta:hasIcon ?themeIcon .
+	}
 	OPTIONAL{ ?dobj dcterms:title ?title }
 	OPTIONAL{ ?dobj dcterms:description ?description }
 	OPTIONAL{ ?dobj cpmeta:hasActualColumnNames ?columnNames }
