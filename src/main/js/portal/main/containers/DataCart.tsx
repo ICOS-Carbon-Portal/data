@@ -74,7 +74,7 @@ class DataCart extends Component<DataCartProps> {
 								</div>
 								<div className="card-body text-center">
 
-									<form action="/objects" method="post" onSubmit={this.handleFormSubmit.bind(this)} target="_blank">
+									<form action="/objects" method="post" onSubmit={this.handleFormSubmit.bind(this)}>
 										<input type="hidden" name="fileName" value={fileName} />
 										<input type="hidden" name="ids" value={hashes} />
 
