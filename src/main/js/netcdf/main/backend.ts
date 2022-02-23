@@ -13,7 +13,7 @@ function getBinRaster(url: string, ...keyValues: string[]) {
 		return acc;
 	}, []);
 
-	const fullUrl = url + getUrlQuery(...keyValuePairs);
+	const fullUrl = url + getUrlQuery(keyValuePairs);
 
 	return fetch(fullUrl, {
 		headers: {
