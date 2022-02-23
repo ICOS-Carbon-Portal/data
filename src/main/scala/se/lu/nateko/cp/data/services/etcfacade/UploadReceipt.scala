@@ -16,7 +16,6 @@ import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
-import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.meta.core.crypto.{Md5Sum, Sha256Sum}
 
 case class UploadReceipt(timeStamp: Instant, file: EtcFilename, md5: Md5Sum){

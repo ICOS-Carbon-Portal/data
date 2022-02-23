@@ -8,7 +8,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.Materializer
 import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 import scala.collection.immutable.Iterable

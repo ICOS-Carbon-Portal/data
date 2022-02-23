@@ -4,7 +4,6 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 
-import scala.jdk.CollectionConverters.CollectionHasAsScala
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Try, Using}
 import java.io.File

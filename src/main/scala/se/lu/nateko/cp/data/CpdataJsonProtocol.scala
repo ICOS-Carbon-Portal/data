@@ -11,9 +11,9 @@ import spray.json._
 
 object CpdataJsonProtocol extends CommonJsonSupport {
 
-	implicit val binTableSliceFormat = jsonFormat2(BinTableSlice)
+	implicit val binTableSliceFormat: RootJsonFormat[BinTableSlice] = jsonFormat2(BinTableSlice)
 
-	implicit val userIdFormat = jsonFormat1(UserId)
+	implicit val userIdFormat: RootJsonFormat[UserId] = jsonFormat1(UserId)
 
 
 	implicit object binTableDataTypeFormat extends JsonFormat[DataType]{
@@ -47,5 +47,5 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 			}
 	}
 
-	implicit val binTableRequestFormat = jsonFormat5(BinTableRequest)
+	implicit val binTableRequestFormat: RootJsonFormat[BinTableRequest] = jsonFormat5(BinTableRequest)
 }

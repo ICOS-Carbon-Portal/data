@@ -5,7 +5,6 @@ import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.data.api.MetaClient.asLiteral
 import se.lu.nateko.cp.data.api.MetaClient.asLiteralOpt
 import se.lu.nateko.cp.data.api.MetaClient.asResource
-import se.lu.nateko.cp.data.api.SparqlClient
 import se.lu.nateko.cp.data.api.Utils.dropFileExtension
 import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
 import se.lu.nateko.cp.data.formats.bintable
@@ -16,7 +15,6 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
-import se.lu.nateko.cp.meta.core.sparql.BoundUri
 
 import java.io.File
 import java.net.URI

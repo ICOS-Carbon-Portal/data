@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.common.StrictForm
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
@@ -8,7 +7,7 @@ import akka.http.scaladsl.model.headers._
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Directive1, Directive0}
+import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 
 import java.time.Instant
@@ -19,13 +18,13 @@ import scala.util.Try
 import spray.json.DefaultJsonProtocol
 import spray.json._
 
-import se.lu.nateko.cp.data.ConfigReader
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.CpdataJsonProtocol.javaTimeInstantFormat
 import se.lu.nateko.cp.data.services.dlstats.DlItemType
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
+import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 object StatsRouting extends DefaultJsonProtocol{
 	case class StatsQueryParams(
@@ -60,22 +59,22 @@ object StatsRouting extends DefaultJsonProtocol{
 	case class Download(itemType: String, ts: Instant, hashId: String, ip: String, city: Option[String], countryCode: Option[String], geoJson: Option[PointPosition])
 	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
-	implicit val statsQueryParamsFormat = jsonFormat11(StatsQueryParams)
-	implicit val pointPositionFormat = jsonFormat2(PointPosition)
-	implicit val downloadsByCountryFormat = jsonFormat2(DownloadsByCountry)
-	implicit val downloadsPerWeekFormat = jsonFormat3(DownloadsPerWeek)
-	implicit val downloadsPerTimeframeFormat = jsonFormat2(DownloadsPerTimeframe)
-	implicit val downloadObjStatFormat = jsonFormat2(DownloadObjStat)
-	implicit val downloadStatsFormat = jsonFormat2(DownloadStats)
-	implicit val specificationsFormat = jsonFormat2(Specifications)
-	implicit val contributorsFormat = jsonFormat2(Contributors)
-	implicit val submittersFormat = jsonFormat2(Submitters)
-	implicit val stationsFormat = jsonFormat2(Stations)
-	implicit val downloadedFromFormat = jsonFormat2(DownloadedFrom)
-	implicit val downloadCountFormat = jsonFormat1(DownloadCount)
-	implicit val DateCountFormat = jsonFormat2(DateCount)
-	implicit val downloadFormat = jsonFormat7(Download)
-	implicit val customDownloadsPerYearCountryFormat = jsonFormat3(CustomDownloadsPerYearCountry)
+	implicit val statsQueryParamsFormat: RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams)
+	implicit val pointPositionFormat: RootJsonFormat[PointPosition] = jsonFormat2(PointPosition)
+	implicit val downloadsByCountryFormat: RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry)
+	implicit val downloadsPerWeekFormat: RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek)
+	implicit val downloadsPerTimeframeFormat: RootJsonFormat[DownloadsPerTimeframe] = jsonFormat2(DownloadsPerTimeframe)
+	implicit val downloadObjStatFormat: RootJsonFormat[DownloadObjStat] = jsonFormat2(DownloadObjStat)
+	implicit val downloadStatsFormat: RootJsonFormat[DownloadStats] = jsonFormat2(DownloadStats)
+	implicit val specificationsFormat: RootJsonFormat[Specifications] = jsonFormat2(Specifications)
+	implicit val contributorsFormat: RootJsonFormat[Contributors] = jsonFormat2(Contributors)
+	implicit val submittersFormat: RootJsonFormat[Submitters] = jsonFormat2(Submitters)
+	implicit val stationsFormat: RootJsonFormat[Stations] = jsonFormat2(Stations)
+	implicit val downloadedFromFormat: RootJsonFormat[DownloadedFrom] = jsonFormat2(DownloadedFrom)
+	implicit val downloadCountFormat: RootJsonFormat[DownloadCount] = jsonFormat1(DownloadCount)
+	implicit val DateCountFormat: RootJsonFormat[DateCount] = jsonFormat2(DateCount)
+	implicit val downloadFormat: RootJsonFormat[Download] = jsonFormat7(Download)
+	implicit val customDownloadsPerYearCountryFormat: RootJsonFormat[CustomDownloadsPerYearCountry] = jsonFormat3(CustomDownloadsPerYearCountry)
 
 	def parsePointPosition(jsonStr: String): Option[PointPosition] =
 		Try{jsonStr.parseJson.convertTo[PointPosition]}.toOption
@@ -83,8 +82,8 @@ object StatsRouting extends DefaultJsonProtocol{
 
 class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 	import StatsRouting._
-	
-	implicit val envriConfs = coreConf.envriConfigs
+
+	implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
 	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(implicit conv: T => ToResponseMarshallable): Route = path(lastSegm){

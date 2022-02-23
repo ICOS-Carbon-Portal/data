@@ -12,10 +12,12 @@ import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 import spray.json.DefaultJsonProtocol._
+import akka.http.scaladsl.marshalling.ToResponseMarshaller
+import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 
 object NetcdfRoute {
 
-	private implicit val rasterMarshalling = RasterMarshalling.marshaller
+	private implicit val rasterMarshalling: ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
 	def apply(factory: ViewServiceFactory): Route = {
 

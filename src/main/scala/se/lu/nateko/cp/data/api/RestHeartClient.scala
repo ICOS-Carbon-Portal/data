@@ -281,6 +281,6 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 object RestHeartClient extends DefaultJsonProtocol{
 	case class KeyInfo(_id: String, key: JsObject)
 
-	implicit val keyInfoFormat = jsonFormat2(KeyInfo)
-	implicit val keyInfoUnmarsh = implicitly[Unmarshaller[ResponseEntity, Seq[KeyInfo]]]
+	implicit val keyInfoFormat: RootJsonFormat[KeyInfo] = jsonFormat2(KeyInfo.apply)
+	implicit val keyInfoUnmarsh: Unmarshaller[ResponseEntity, Seq[KeyInfo]] = implicitly[Unmarshaller[ResponseEntity, Seq[KeyInfo]]]
 }

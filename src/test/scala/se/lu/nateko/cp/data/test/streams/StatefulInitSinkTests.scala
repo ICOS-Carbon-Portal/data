@@ -12,7 +12,7 @@ import scala.concurrent.duration.DurationInt
 
 class StatefulInitSinkTests extends AnyFunSuite with BeforeAndAfterAll{
 
-	private implicit val system = ActorSystem("StatefulInitSinkTests")
+	private implicit val system: ActorSystem = ActorSystem("StatefulInitSinkTests")
 
 	override def afterAll(): Unit = {
 		system.terminate()

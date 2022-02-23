@@ -109,23 +109,23 @@ object ConfigReader extends CommonJsonSupport{
 
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
 
-	implicit val netcdfConfigFormat = jsonFormat5(NetCdfConfig)
-	implicit val b2stageConfigFormat = jsonFormat5(B2SafeConfig)
-	implicit val credentialsConfigFormat = jsonFormat2(CredentialsConfig)
-	implicit val uploadConfigFormat = jsonFormat4(UploadConfig)
-	implicit val sparqlConfigFormat = jsonFormat3(MetaServiceConfig)
-	implicit val pubAuthConfigFormat = jsonFormat4(PublicAuthConfig)
+	implicit val netcdfConfigFormat: RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig)
+	implicit val b2stageConfigFormat: RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig)
+	implicit val credentialsConfigFormat: RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig)
+	implicit val uploadConfigFormat: RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig)
+	implicit val sparqlConfigFormat: RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig)
+	implicit val pubAuthConfigFormat: RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig)
 
-	implicit val envriFormat = enumFormat(Envri)
+	implicit val envriFormat: RootJsonFormat[Envri.Value] = enumFormat(Envri)
 
-	implicit val mongoDbIndexFormat = jsonFormat3(MongoDbIndex)
-	implicit val mongoDbAggregationsFormat = jsonFormat3(MongoDbAggregations)
-	implicit val restheartCollDefFormat = jsonFormat4(RestheartCollDef)
-	implicit val restHeartConfigFormat = jsonFormat6(RestHeartConfig)
-	implicit val dlStatsConfigFormat = jsonFormat8(DownloadStatsConfig)
-	implicit val etcFacadeConfigFormat = jsonFormat4(EtcFacadeConfig)
-	implicit val authConfigFormat = jsonFormat2(AuthConfig)
-	implicit val cpdataConfigFormat = jsonFormat9(CpdataConfig)
+	implicit val mongoDbIndexFormat: RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex)
+	implicit val mongoDbAggregationsFormat: RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations)
+	implicit val restheartCollDefFormat: RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef)
+	implicit val restHeartConfigFormat: RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig)
+	implicit val dlStatsConfigFormat: RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig)
+	implicit val etcFacadeConfigFormat: RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig)
+	implicit val authConfigFormat: RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig)
+	implicit val cpdataConfigFormat: RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load

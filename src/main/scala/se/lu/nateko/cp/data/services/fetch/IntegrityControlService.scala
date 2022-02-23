@@ -5,12 +5,9 @@ import se.lu.nateko.cp.data.services.upload.UploadService
 import scala.concurrent.Future
 import akka.stream.scaladsl.Source
 import scala.concurrent.ExecutionContext
-import scala.collection.immutable.Iterable
 import akka.stream.scaladsl.FileIO
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.streams.KeepFuture
-import scala.util.Failure
-import scala.util.Success
 import scala.concurrent.duration.DurationInt
 import java.nio.file.Path
 import java.net.URI

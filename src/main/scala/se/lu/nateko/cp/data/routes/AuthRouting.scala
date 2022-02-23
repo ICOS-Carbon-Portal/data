@@ -16,9 +16,7 @@ import se.lu.nateko.cp.data.AuthConfig
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-import spray.json.JsNull
 import spray.json.JsObject
-import spray.json.JsString
 
 import scala.util.Failure
 import scala.util.Success

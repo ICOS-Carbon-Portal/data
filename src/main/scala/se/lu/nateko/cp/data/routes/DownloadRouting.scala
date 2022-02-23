@@ -4,7 +4,6 @@ import akka.Done
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
@@ -30,9 +29,6 @@ import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data.JsonSupport.dataObjectFormat
-import se.lu.nateko.cp.meta.core.data.JsonSupport.docObjectFormat
-import se.lu.nateko.cp.meta.core.data.JsonSupport.staticCollFormat
 import se.lu.nateko.cp.meta.core.data._
 import spray.json._
 
@@ -45,6 +41,7 @@ import scala.util.Success
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
 import LicenceRouting.parseLicenceCookie
+import scala.concurrent.ExecutionContextExecutor
 
 class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	restHeart: RestHeartClient, logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
@@ -53,8 +50,8 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	import UploadRouting._
 	import authRouting.userOpt
 
-	private implicit val ex = mat.executionContext
-	private implicit val envriConfs = coreConf.envriConfigs
+	private implicit val ex: ExecutionContextExecutor = mat.executionContext
+	private implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
 
 	private val downloadService = new DownloadService(coreConf, uploadService)
 	private val log = downloadService.log
@@ -236,7 +233,7 @@ class DownloadRouting(authRouting: AuthRouting, uploadService: UploadService,
 	private def logExternalDownloads(
 		hashes: Seq[Sha256Sum], ip: String, thirdParty: String, endUser: Option[String]
 	)(implicit envri: Envri): Unit = {
-		val extraInfo = ("distributor" -> thirdParty) :: endUser.filterNot(_.trim.isEmpty).map{"endUser" -> _}.toList
+		("distributor" -> thirdParty) :: endUser.filterNot(_.trim.isEmpty).map{"endUser" -> _}.toList
 
 		Utils.runSequentially(hashes.distinct){hash =>
 			uploadService.meta.lookupPackage(hash).transformWith{
