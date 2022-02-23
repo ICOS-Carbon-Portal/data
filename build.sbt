@@ -3,41 +3,19 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
 ThisBuild / scalaVersion := "3.1.1"
-// ThisBuild / scalaVersion := "2.13.7"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
 
 	scalacOptions ++= Seq(
-		// "-Xtarget:11",
-		// "-target:jvm-1.11",
+		"-Xtarget:11",
 		"-encoding", "UTF-8",
 		"-unchecked",
 		"-feature",
-		// "-deprecation"
-	) ++
-    (CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => Seq(
-        "-unchecked",
-        "-source:3.0-migration",
-				"-rewrite"
-      )
-      case _ => Seq(
-        // "-deprecation",
-        // "-Xfatal-warnings",
-        // "-Wunused:imports,privates,locals",
-        // "-Wvalue-discard"
-      )
-    }),
+		"-deprecation"
+	),
 	// javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
-
-// inThisBuild(List(
-//   semanticdbEnabled := true,
-//   semanticdbOptions += "-P:semanticdb:synthetics:on", // make sure to add this
-//   semanticdbVersion := scalafixSemanticdb.revision,
-//   scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
-// ))
 
 val akkaVersion = "2.6.18"
 val akkaHttpVersion = "10.2.8"
@@ -66,7 +44,7 @@ lazy val netcdf = (project in file("netcdf"))
 				ExclusionRule(organization = "org.slf4j", name = "slf4j-api")
 			),
 			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided" cross CrossVersion.for3Use2_13,
-			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided"
+			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided" cross CrossVersion.for3Use2_13
 		),
 		publishTo := {
 			val nexus = "https://repo.icos-cp.eu/content/repositories/"
@@ -108,15 +86,15 @@ lazy val data = (project in file("."))
 		libraryDependencies := {
 			libraryDependencies.value.map{
 				case m if m.name.startsWith("twirl-api") =>
-					m.cross(CrossVersion.for3Use2_13).excludeAll(ExclusionRule.everything)
+					m.cross(CrossVersion.for3Use2_13)
 				case m => m
 			}
 		},
 
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion cross CrossVersion.for3Use2_13,
-			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion,
-			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion,
+			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion cross CrossVersion.for3Use2_13,
+			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.5" cross CrossVersion.for3Use2_13,
 			metaCoreModule,
@@ -131,7 +109,7 @@ lazy val data = (project in file("."))
 			"org.openjfx"         % "javafx-fxml"      % "11" % "test" classifier osName,
 			"org.openjfx"         % "javafx-graphics"  % "11" % "test" classifier osName,
 			"org.gillius"         % "jfxutils"         % "1.0" % "test",
-			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test"
+			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test" exclude("org.scala-lang.modules", "scala-xml_3")
 		),
 
 		Test /run / fork := true,

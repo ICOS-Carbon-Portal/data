@@ -59,7 +59,7 @@ object StatsRouting extends DefaultJsonProtocol{
 	case class Download(itemType: String, ts: Instant, hashId: String, ip: String, city: Option[String], countryCode: Option[String], geoJson: Option[PointPosition])
 	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
-	implicit val statsQueryParamsFormat: RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams)
+	given RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams.apply)
 	implicit val pointPositionFormat: RootJsonFormat[PointPosition] = jsonFormat2(PointPosition)
 	implicit val downloadsByCountryFormat: RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry)
 	implicit val downloadsPerWeekFormat: RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek)
