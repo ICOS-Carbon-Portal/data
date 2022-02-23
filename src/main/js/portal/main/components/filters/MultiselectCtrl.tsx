@@ -27,11 +27,9 @@ export type Item = {
 }
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
-
 	const {name, data, value, helpItem, updateFilter} = props;
-
 	const shouldUseExternalListEntry = helpItem?.shouldUseExternalList ?? false;
-	const isInverterEnabled = value.length > 0 && name !== "variable" && name !== "valType";
+	const isInverterEnabled = value.length > 0 && data.length > 0 && name !== "variable" && name !== "valType";
 
 	const placeholder = data.length === 1
 		? `${data[0].text}`
