@@ -25,9 +25,10 @@ import {Coordinate} from "ol/coordinate";
 export type BaseMapFilter = (bm: BasemapOptions) => boolean
 
 export const getBaseMapLayers = (selectedBaseMap: string, layerFilter: BaseMapFilter = _ => true) => {
-	const getNewTileLayer = ({ name, isWorldWide, source, esriServiceName }: BasemapOptions) => {
+	const getNewTileLayer = ({ name, isEsri, isWorldWide, source, esriServiceName }: BasemapOptions) => {
 		return new TileLayerExtended({
 			visible: selectedBaseMap === name,
+			isEsri,
 			name,
 			isWorldWide,
 			esriServiceName,

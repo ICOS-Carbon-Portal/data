@@ -8,6 +8,7 @@ import XYZ from 'ol/source/XYZ';
 export type BaseMapName = 'OpenStreetMap' | 'Watercolor' | 'Imagery' | 'Topography' | 'Ocean' | 'Physical' | 'Shaded relief' | 'LM Topo' | 'LM Topo gray'
 export interface BasemapOptions extends Options {
 	name: string
+	isEsri: boolean
 	isWorldWide: boolean
 	visibility?: boolean
 	defaultVisibility?: boolean
@@ -26,6 +27,7 @@ const openLMApiKey = '70fed030-6e85-364e-9567-6e5579ef60bd';
 export const defaultBaseMaps: BasemapOptions[] = [
 	{
 		name: 'OpenStreetMap',
+		isEsri: false,
 		isWorldWide: true,
 		source: new OSM({
 			attributions: ATTRIBUTION,
@@ -34,6 +36,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Watercolor',
+		isEsri: false,
 		isWorldWide: true,
 		source: new Stamen({
 			layer: 'watercolor'
@@ -41,6 +44,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Imagery',
+		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'World_Imagery',
 		source: new XYZ({
@@ -50,6 +54,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Topography',
+		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'World_Topo_Map',
 		source: new XYZ({
@@ -60,6 +65,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Ocean',
+		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'Ocean_Basemap',
 		source: new XYZ({
@@ -69,6 +75,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Physical',
+		isEsri: true,
 		isWorldWide: true,
 		source: new XYZ({
 			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
@@ -78,6 +85,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'Shaded relief',
+		isEsri: true,
 		isWorldWide: true,
 		source: new XYZ({
 			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
@@ -87,6 +95,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'LM Topo',
+		isEsri: false,
 		isWorldWide: false,
 		source: new XYZ({
 			url: `//api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/${openLMApiKey}/1.0.0/topowebb/default/3857/{z}/{y}/{x}.png`
@@ -94,6 +103,7 @@ export const defaultBaseMaps: BasemapOptions[] = [
 	},
 	{
 		name: 'LM Topo gray',
+		isEsri: false,
 		isWorldWide: false,
 		source: new XYZ({
 			url: `//api.lantmateriet.se/open/topowebb-ccby/v1/wmts/token/${openLMApiKey}/1.0.0/topowebb_nedtonad/default/3857/{z}/{y}/{x}.png`

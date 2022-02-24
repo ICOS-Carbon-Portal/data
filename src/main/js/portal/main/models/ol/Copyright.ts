@@ -46,13 +46,15 @@ export default class Copyright {
 		if (width < this.minWidth) return;
 
 		const currentBasemap = layers.find(layer => layer.getVisible() && layer.get('layerType') === 'baseMap');
+		const isEsri = currentBasemap?.get('isEsri');
+		let attributionText = '';
 		const esriServiceName = currentBasemap
 			? currentBasemap.get('esriServiceName')
 			: undefined;
 
 		if (esriServiceName) {
 			const attributions = this.getAttribution(view.calculateExtent(), esriServiceName, view.getZoom());
-			this.attributionElement.innerHTML = attributions.join(', ');
+			attributionText = attributions.join(', ');
 
 		} else if (currentBasemap) {
 			const source = currentBasemap.getSource();
@@ -61,15 +63,18 @@ export default class Copyright {
 				return;
 
 			const attributions = source.getAttributions()(undefined!);
-			this.attributionElement.innerHTML = Array.isArray(attributions) ? attributions.join(', ') : attributions;
+			attributionText = Array.isArray(attributions) ? attributions.join(', ') : attributions;
 
-		} else {
-			this.attributionElement.innerHTML = '';
 		}
+
+		const poweredByESRI = isEsri
+			? attributionText.length > 0 ? 'Powered by ESRI - ' : 'Powered by ESRI'
+			: '';
+		this.attributionElement.innerHTML = poweredByESRI + attributionText;
 	}
 }
 
-export const getESRICopyRight = async (services: (string | undefined)[]) => {
+export const getESRICopyRight = (services: (string | undefined)[]) => {
 	if (services.length === 0) return Promise.resolve({});
 
 	const promises = services.map(service => fetchJson<Dict<any>>('https://static.arcgis.com/attribution/' + service + '?f=json'));
