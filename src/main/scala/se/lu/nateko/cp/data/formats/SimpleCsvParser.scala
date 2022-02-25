@@ -8,7 +8,7 @@ class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String) extends TextF
 
 	type A = Accumulator
 
-	def parseLine(acc: Accumulator, line: String): Accumulator =
+	def parseLine(acc: Accumulator, line: String): Accumulator = {
 		if(acc.error.isDefined)
 			acc
 		else if(acc.header.colNames.isEmpty) {
@@ -29,8 +29,9 @@ class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String) extends TextF
 				acc.copy(header = newHeader)
 			}
 		}
+	}
 
-		def seed: Accumulator = Accumulator(new StandardHeader(Array.empty, Array.empty, None), Array.empty)
+	def seed: Accumulator = Accumulator(new StandardHeader(Array.empty, Array.empty, None), Array.empty)
 }
 
 object SimpleCsvParser{

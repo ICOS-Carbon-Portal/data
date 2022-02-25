@@ -30,7 +30,7 @@ class CpbFetchRouting(
 	logClient: PortalLogClient,
 	authRouting: AuthRouting
 )(implicit envriConf: EnvriConfigs) {
-	
+
 	import DownloadRouting.getClientIp
 	import authRouting.userOpt
 
@@ -99,7 +99,7 @@ class CpbFetchRouting(
 				val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
 				respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
 			} else reject
-		case _ => reject
+		case null => reject
 	}
 
 	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(implicit envri: Envri): Route =

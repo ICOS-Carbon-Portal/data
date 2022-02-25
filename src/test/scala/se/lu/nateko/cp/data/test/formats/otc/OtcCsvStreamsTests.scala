@@ -72,7 +72,7 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	test("Parser preserves the amount of rows"){
 		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val countFut = rowsSource
-  		.map(converter.parseRow)
+			.map(converter.parseRow)
 			.toMat(Sink.fold(0)((count, _) => count + 1))(KeepFuture.right)
 		val count = Await.result(countFut.run(), 3.second)
 		assert(count === nRows)

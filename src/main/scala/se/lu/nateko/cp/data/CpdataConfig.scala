@@ -109,23 +109,23 @@ object ConfigReader extends CommonJsonSupport{
 
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
 
-	implicit val netcdfConfigFormat: RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig)
-	implicit val b2stageConfigFormat: RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig)
-	implicit val credentialsConfigFormat: RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig)
-	implicit val uploadConfigFormat: RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig)
-	implicit val sparqlConfigFormat: RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig)
-	implicit val pubAuthConfigFormat: RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig)
+	implicit val netcdfConfigFormat: RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
+	implicit val b2stageConfigFormat: RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
+	implicit val credentialsConfigFormat: RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
+	implicit val uploadConfigFormat: RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig.apply)
+	implicit val sparqlConfigFormat: RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
+	implicit val pubAuthConfigFormat: RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
 
 	implicit val envriFormat: RootJsonFormat[Envri.Value] = enumFormat(Envri)
 
-	implicit val mongoDbIndexFormat: RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex)
-	implicit val mongoDbAggregationsFormat: RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations)
-	implicit val restheartCollDefFormat: RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef)
-	implicit val restHeartConfigFormat: RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig)
-	implicit val dlStatsConfigFormat: RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig)
-	implicit val etcFacadeConfigFormat: RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig)
-	implicit val authConfigFormat: RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig)
-	implicit val cpdataConfigFormat: RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig)
+	implicit val mongoDbIndexFormat: RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
+	implicit val mongoDbAggregationsFormat: RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
+	implicit val restheartCollDefFormat: RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
+	implicit val restHeartConfigFormat: RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig.apply)
+	implicit val dlStatsConfigFormat: RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
+	implicit val etcFacadeConfigFormat: RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
+	implicit val authConfigFormat: RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
+	implicit val cpdataConfigFormat: RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load
@@ -140,7 +140,7 @@ object ConfigReader extends CommonJsonSupport{
 
 	private def fromAppConfig(applicationConfig: Config): CpdataConfig = {
 		val confJson: String = applicationConfig.getValue("cpdata").render(renderOpts)
-		
+
 		confJson.parseJson.convertTo[CpdataConfig]
 	}
 

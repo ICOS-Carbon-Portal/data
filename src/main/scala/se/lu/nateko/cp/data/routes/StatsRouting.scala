@@ -1,6 +1,8 @@
 package se.lu.nateko.cp.data.routes
 
+import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers._
@@ -26,7 +28,9 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-object StatsRouting extends DefaultJsonProtocol{
+object StatsRouting {
+	import DefaultJsonProtocol._
+
 	case class StatsQueryParams(
 		pageOpt: Option[Int],
 		pagesizeOpt: Option[Int],
@@ -60,21 +64,21 @@ object StatsRouting extends DefaultJsonProtocol{
 	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
 	given RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams.apply)
-	implicit val pointPositionFormat: RootJsonFormat[PointPosition] = jsonFormat2(PointPosition)
-	implicit val downloadsByCountryFormat: RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry)
-	implicit val downloadsPerWeekFormat: RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek)
-	implicit val downloadsPerTimeframeFormat: RootJsonFormat[DownloadsPerTimeframe] = jsonFormat2(DownloadsPerTimeframe)
-	implicit val downloadObjStatFormat: RootJsonFormat[DownloadObjStat] = jsonFormat2(DownloadObjStat)
-	implicit val downloadStatsFormat: RootJsonFormat[DownloadStats] = jsonFormat2(DownloadStats)
-	implicit val specificationsFormat: RootJsonFormat[Specifications] = jsonFormat2(Specifications)
-	implicit val contributorsFormat: RootJsonFormat[Contributors] = jsonFormat2(Contributors)
-	implicit val submittersFormat: RootJsonFormat[Submitters] = jsonFormat2(Submitters)
-	implicit val stationsFormat: RootJsonFormat[Stations] = jsonFormat2(Stations)
-	implicit val downloadedFromFormat: RootJsonFormat[DownloadedFrom] = jsonFormat2(DownloadedFrom)
-	implicit val downloadCountFormat: RootJsonFormat[DownloadCount] = jsonFormat1(DownloadCount)
-	implicit val DateCountFormat: RootJsonFormat[DateCount] = jsonFormat2(DateCount)
-	implicit val downloadFormat: RootJsonFormat[Download] = jsonFormat7(Download)
-	implicit val customDownloadsPerYearCountryFormat: RootJsonFormat[CustomDownloadsPerYearCountry] = jsonFormat3(CustomDownloadsPerYearCountry)
+	given RootJsonFormat[PointPosition] = jsonFormat2(PointPosition.apply)
+	given RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry.apply)
+	given RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek.apply)
+	given RootJsonFormat[DownloadsPerTimeframe] = jsonFormat2(DownloadsPerTimeframe.apply)
+	given RootJsonFormat[DownloadObjStat] = jsonFormat2(DownloadObjStat.apply)
+	given RootJsonFormat[DownloadStats] = jsonFormat2(DownloadStats.apply)
+	given RootJsonFormat[Specifications] = jsonFormat2(Specifications.apply)
+	given RootJsonFormat[Contributors] = jsonFormat2(Contributors.apply)
+	given RootJsonFormat[Submitters] = jsonFormat2(Submitters.apply)
+	given RootJsonFormat[Stations] = jsonFormat2(Stations.apply)
+	given RootJsonFormat[DownloadedFrom] = jsonFormat2(DownloadedFrom.apply)
+	given RootJsonFormat[DownloadCount] = jsonFormat1(DownloadCount.apply)
+	given RootJsonFormat[DateCount] = jsonFormat2(DateCount.apply)
+	given RootJsonFormat[Download] = jsonFormat7(Download.apply)
+	given RootJsonFormat[CustomDownloadsPerYearCountry] = jsonFormat3(CustomDownloadsPerYearCountry.apply)
 
 	def parsePointPosition(jsonStr: String): Option[PointPosition] =
 		Try{jsonStr.parseJson.convertTo[PointPosition]}.toOption
@@ -86,15 +90,16 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 	implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
-	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(implicit conv: T => ToResponseMarshallable): Route = path(lastSegm){
+	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(using conv: T => ToResponseMarshallable): Route = path(lastSegm){
 		post{
 			entity(as[StatsQueryParams]){ qp =>
 				onSuccess(fetcher(qp)){res =>
-					complete(res)
+					complete(conv(res))
 				}
 			}
 		} ~
 		get{
+			import DefaultJsonProtocol._
 			parameters(
 				"page".as[Int].?,
 				"pagesize".as[Int].?,
@@ -109,7 +114,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 				"dlEnd".as[String].?
 			).as(StatsQueryParams.apply _){qp =>
 				onSuccess(fetcher(qp)){res =>
-					complete(res)
+					complete(conv(res))
 				}
 			}
 		}
@@ -127,6 +132,8 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 		}
 	}.or(pass)
 
+	given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = DefaultJsonProtocol.immIndexedSeqFormat
+	given [T: RootJsonWriter]: ToEntityMarshaller[T] = SprayJsonSupport.sprayJsonMarshaller
 
 	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
 		((get | post) & setOriginHeader){

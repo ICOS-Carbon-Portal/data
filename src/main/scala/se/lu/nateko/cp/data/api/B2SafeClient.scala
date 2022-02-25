@@ -275,7 +275,7 @@ object B2SafeClient extends DefaultJsonProtocol{
 	private case class ApiResponseItem(dataName: Option[String], collectionName: String)
 	private case class MetaItem(checksum: Option[String])
 
-	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem)
-	private implicit val metaItemReader: JsonFormat[MetaItem] = jsonFormat1(MetaItem)
+	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem.apply)
+	private implicit val metaItemReader: JsonFormat[MetaItem] = jsonFormat1(MetaItem.apply)
 
 }

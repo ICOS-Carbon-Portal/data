@@ -163,7 +163,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 		val currentIndexKeys: Future[Map[String, JsObject]] = for(
 			resp <- http.singleRequest(HttpRequest(uri = indexUri.withRawQueryString("np")));
-			keyInfos <- Unmarshal(resp.entity).to[Seq[KeyInfo]](keyInfoUnmarsh, dispatcher, m)
+			keyInfos <- Unmarshal(resp.entity).to[Seq[KeyInfo]]
 		) yield keyInfos.map{ki => ki._id -> ki.key}.toMap
 
 		def uri(idxDef: MongoDbIndex) = indexUri.withPath(indexUri.path / idxDef.name)
@@ -281,6 +281,5 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 object RestHeartClient extends DefaultJsonProtocol{
 	case class KeyInfo(_id: String, key: JsObject)
 
-	implicit val keyInfoFormat: RootJsonFormat[KeyInfo] = jsonFormat2(KeyInfo.apply)
-	implicit val keyInfoUnmarsh: Unmarshaller[ResponseEntity, Seq[KeyInfo]] = implicitly[Unmarshaller[ResponseEntity, Seq[KeyInfo]]]
+	given keyInfoFormat: RootJsonFormat[KeyInfo] = jsonFormat2(KeyInfo.apply)
 }

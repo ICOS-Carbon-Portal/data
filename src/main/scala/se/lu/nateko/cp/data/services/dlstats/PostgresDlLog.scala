@@ -176,7 +176,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		runAnalyticalQuery("SELECT count, contributor FROM contributors()"){rs =>
 			Contributors(rs.getInt("count"), rs.getString("contributor"))
 		}
-	
+
 	def submitters(implicit envri: Envri): Future[IndexedSeq[Submitters]] =
 		runAnalyticalQuery("SELECT count, submitter FROM submitters()"){rs =>
 			Submitters(rs.getInt("count"), rs.getString("submitter"))
