@@ -9,7 +9,7 @@ export const fetchStationMeasurement = (stationId, valueType, dataLevel, height)
 	return sparql({text: query}, config.sparqlEndpoint, true)
 		.then(sparqlResult => {
 			const bindings = sparqlResult.results.bindings;
-			console.log({sparqlResult, bindings});
+
 			return bindings
 				? Promise.resolve(bindings.map(binding => {
 					return {
