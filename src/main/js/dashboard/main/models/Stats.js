@@ -176,7 +176,7 @@ const getMetadata = (objSpec, metadata, yCol) => {
 
 	const dobjs = metadata.dobjs.concat([objSpec.id]);
 	const unitIdx = objSpec.tableFormat.getColumnIndex(yCol);
-	const unit = objSpec.tableFormat.columns(unitIdx).unit;
+	const unit = objSpec.tableFormat.columns[unitIdx].unit;
 
 	return Object.assign({}, metadata, {dobjs, unit});
 };

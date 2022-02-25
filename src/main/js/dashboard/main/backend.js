@@ -6,9 +6,10 @@ import config from '../../common/main/config';
 export const fetchStationMeasurement = (stationId, valueType, dataLevel, height) => {
 	const query = queries.listStationMeasurement(config, stationId, valueType, dataLevel, height);
 
-	return sparql(query, config.sparqlEndpoint, true)
+	return sparql({text: query}, config.sparqlEndpoint, true)
 		.then(sparqlResult => {
 			const bindings = sparqlResult.results.bindings;
+			console.log({sparqlResult, bindings});
 			return bindings
 				? Promise.resolve(bindings.map(binding => {
 					return {
@@ -24,7 +25,7 @@ export const fetchStationMeasurement = (stationId, valueType, dataLevel, height)
 export const fetchObjectSpecifications = objIds => {
 	const query = queries.objectSpecifications(config, objIds);
 
-	return sparql(query, config.sparqlEndpoint, true)
+	return sparql({text: query}, config.sparqlEndpoint, true)
 		.then(sparqlResult => {
 			const bindings = sparqlResult.results.bindings;
 			return bindings.length
