@@ -26,12 +26,12 @@ import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 object Main extends App {
 
-	implicit val system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
+	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
-	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
+	import system.dispatcher
 
 	val config = ConfigReader.getDefault
-	implicit val envriConfigs: Map[Envri.Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
+	given Map[Envri.Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
 
 	private val netcdfUtil = new NetcdfUtil(config.netcdf)
 

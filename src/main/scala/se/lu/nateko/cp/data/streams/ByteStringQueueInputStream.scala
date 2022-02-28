@@ -66,7 +66,7 @@ class ByteStringQueueInputStream extends InputStream {
 				var haveRead = 0
 				var currOff = off
 
-				while(haveRead <= len && !headIsEmpty) {
+				while{
 					val toRead = Math.min(len - haveRead, head.length - pointer)
 					if(toRead > 0){
 						head.drop(pointer).copyToArray(buff, currOff, toRead)
@@ -76,8 +76,8 @@ class ByteStringQueueInputStream extends InputStream {
 					}
 
 					while(headIsEmpty && !q.isEmpty) fetchHead()
-
-				}
+					haveRead < len && !headIsEmpty
+				} do ()
 
 				haveRead
 			}

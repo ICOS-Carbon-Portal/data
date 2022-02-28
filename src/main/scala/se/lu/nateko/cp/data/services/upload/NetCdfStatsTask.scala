@@ -16,7 +16,7 @@ import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 
-class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean)(implicit ctxt: ExecutionContext) extends UploadTask {
+class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean)(using ExecutionContext) extends UploadTask {
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] =
 		if (tryIngest) //need to save to the file, as no FileSavingUploadTask is being run in parallel
@@ -44,8 +44,8 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
 			if(!missingVariables.isEmpty) throw new CpDataParsingException({
-				import se.lu.nateko.cp.data.ConfigReader.netcdfConfigFormat
 				import spray.json._
+				import se.lu.nateko.cp.data.ConfigReader.{given RootJsonFormat[NetCdfConfig]}
 				s"""The following variable(s) cannot be previewable: ${missingVariables.mkString(", ")}.
 				|This may be due to them missing in the file, or lacking the expected lat/lon and time dimensions.
 				|Please refer to the following config to learn about supported names for dimension variables:

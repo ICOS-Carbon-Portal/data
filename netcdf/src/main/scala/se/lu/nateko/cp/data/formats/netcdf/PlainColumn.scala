@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.formats.netcdf
 
 import ucar.nc2.Variable
 import ucar.ma2.{Array => CdmArray, DataType}
+import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
@@ -22,9 +23,9 @@ sealed trait PlainColumn{ self =>
 	def asBoolean: Try[BooleanColumn] = as[BooleanColumn]
 	def asByte: Try[ByteColumn] = as[ByteColumn]
 
-	private[this] def as[T <: PlainColumn](implicit mf: Manifest[T]): Try[T] = this match{
+	private[this] def as[T <: PlainColumn](using ct: ClassTag[T]): Try[T] = this match{
 		case f: T => Success(f)
-		case _ => Failure(new Error("The plain column was not of expected type " + mf.toString))
+		case _ => Failure(new Error("The plain column was not of expected type " + ct.toString))
 	}
 
 	def map(f: V => String): StringColumn = new StringColumn { def values = self.values.map(f) }

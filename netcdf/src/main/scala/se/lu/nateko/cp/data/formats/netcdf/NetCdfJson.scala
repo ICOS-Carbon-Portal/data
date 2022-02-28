@@ -4,9 +4,9 @@ import spray.json._
 
 object NetCdfJson extends DefaultJsonProtocol{
 
-	implicit val statsFormat: RootJsonFormat[Stats] = jsonFormat2(Stats.apply)
+	given RootJsonFormat[Stats] = jsonFormat2(Stats.apply)
 
-	implicit val boundingBoxFormat: RootJsonFormat[BoundingBox] = jsonFormat4(BoundingBox.apply)
+	given RootJsonFormat[BoundingBox] = jsonFormat4(BoundingBox.apply)
 
-	implicit val rasterFormat: RootJsonFormat[RasterMessage] = jsonFormat3(RasterMessage.apply)
+	given RootJsonFormat[RasterMessage] = jsonFormat3(RasterMessage.apply)
 }

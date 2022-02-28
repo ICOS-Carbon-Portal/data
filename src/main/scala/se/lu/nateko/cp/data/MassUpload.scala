@@ -52,9 +52,9 @@ object MassUpload extends CommonJsonSupport{
 		def fileName: String = file.toFile.getName
 	}
 
-	implicit val system: ActorSystem = ActorSystem("massUpload")
+	given system: ActorSystem = ActorSystem("massUpload")
 	import system.dispatcher
-	implicit val uploadMetadataDtoFormat: RootJsonFormat[UploadMetadataDto] = jsonFormat5(UploadMetadataDto.apply)
+	given RootJsonFormat[UploadMetadataDto] = jsonFormat5(UploadMetadataDto.apply)
 	private val http = Http()
 	var cookie = HttpCookiePair("dummy", "dummy")
 

@@ -18,7 +18,7 @@ case class Stats(min: Double, max: Double)
 
 object RasterMarshalling {
 
-	import NetCdfJson._
+	import NetCdfJson.given
 
 	def marshaller: ToResponseMarshaller[Raster] = Marshaller(
 		_ => raster => Future.successful(

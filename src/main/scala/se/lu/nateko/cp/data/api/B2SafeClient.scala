@@ -35,7 +35,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json.DefaultJsonProtocol
 import spray.json.JsonFormat
 
-class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializer) {
+class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer) {
 
 	import mat.executionContext
 	import B2SafeClient._

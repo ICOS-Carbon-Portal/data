@@ -75,15 +75,15 @@ case class RestHeartConfig(
 	portalUsage: RestheartCollDef,
 	skipInit: Boolean
 ){
-	def dbName(implicit envri: Envri) = dbNames(envri)
+	def dbName(using envri: Envri) = dbNames(envri)
 
-	private def logUri(logType: String)(implicit envri: Envri): URI = {
+	private def logUri(logType: String)(using envri: Envri): URI = {
 		val baseUri = activityLogUriBases(envri)
 		baseUri.resolve(logType)
 	}
 
-	def downloadLogUri(implicit envri: Envri): URI = logUri("downloads")
-	def portaluseLogUri(implicit envri: Envri): URI = logUri("portaluse")
+	def downloadLogUri(using Envri): URI = logUri("downloads")
+	def portaluseLogUri(using Envri): URI = logUri("portaluse")
 }
 
 case class EtcFacadeConfig(
@@ -109,23 +109,23 @@ object ConfigReader extends CommonJsonSupport{
 
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
 
-	implicit val netcdfConfigFormat: RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
-	implicit val b2stageConfigFormat: RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
-	implicit val credentialsConfigFormat: RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
-	implicit val uploadConfigFormat: RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig.apply)
-	implicit val sparqlConfigFormat: RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
-	implicit val pubAuthConfigFormat: RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
+	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
+	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
+	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
+	given RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig.apply)
+	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
+	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
 
-	implicit val envriFormat: RootJsonFormat[Envri.Value] = enumFormat(Envri)
+	given RootJsonFormat[Envri.Value] = enumFormat(Envri)
 
-	implicit val mongoDbIndexFormat: RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
-	implicit val mongoDbAggregationsFormat: RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
-	implicit val restheartCollDefFormat: RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	implicit val restHeartConfigFormat: RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig.apply)
-	implicit val dlStatsConfigFormat: RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
-	implicit val etcFacadeConfigFormat: RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
-	implicit val authConfigFormat: RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
-	implicit val cpdataConfigFormat: RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
+	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
+	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
+	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
+	given RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig.apply)
+	given RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
+	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
+	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
+	given RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val default = ConfigFactory.load

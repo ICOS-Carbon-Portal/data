@@ -14,7 +14,7 @@ import akka.http.scaladsl.server.StandardRoute
 import se.lu.nateko.cp.cpauth.core.CpbDownloadInfo
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.CpdataJsonProtocol._
+import se.lu.nateko.cp.data.CpdataJsonProtocol.given
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
@@ -29,7 +29,7 @@ class CpbFetchRouting(
 	restHeart: RestHeartClient,
 	logClient: PortalLogClient,
 	authRouting: AuthRouting
-)(implicit envriConf: EnvriConfigs) {
+)(using envriConf: EnvriConfigs) {
 
 	import DownloadRouting.getClientIp
 	import authRouting.userOpt
