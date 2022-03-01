@@ -9,13 +9,14 @@ import java.time.Instant
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 import akka.stream.scaladsl.Keep
 import java.time.temporal.ChronoUnit
+import se.lu.nateko.cp.data.streams.KeepFuture
 
 abstract class StandardCsvStreams {
 	def isNull(value: String, format: ValueFormat): Boolean
 	def makeTimeStamp(cells: Array[String]): Instant
 
 	def makeParser(format: ColumnsMetaWithTsCol): TextFormatParser
-	
+
 	/**
 	 * Temporal step from the measurement's UTC time stamp (which is expected to be either at the beginning or at the end of the interval) to the other end of the data acquisition interval
 	 */
@@ -40,7 +41,7 @@ abstract class StandardCsvStreams {
 			)
 			.alsoToMat(
 				digestSink(getCompletionInfo(format.colsMeta, timeStep = acqIntervalTimeStep))
-			)(Keep.right)
+			)(KeepFuture.right)
 	}
 
 	private def replaceNullValues(acc: StandardParsingAcculumator): Array[String] = acc.cells.indices

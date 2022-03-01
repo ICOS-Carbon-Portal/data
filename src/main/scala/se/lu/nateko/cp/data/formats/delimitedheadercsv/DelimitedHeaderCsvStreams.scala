@@ -8,8 +8,6 @@ import java.time.format.DateTimeFormatter
 
 class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvStreams {
 
-	
-
 	private val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	private val columnSeparator = ","
 	private val headerDelimitor = "####"
