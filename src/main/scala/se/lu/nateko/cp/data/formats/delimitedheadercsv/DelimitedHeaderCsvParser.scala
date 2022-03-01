@@ -13,7 +13,7 @@ class DelimitedHeaderCsvParser(
 
 	type A = Accumulator
 
-	def parseLine(acc: Accumulator, line: String): Accumulator =
+	def parseLine(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) {
 			acc
 		} else if (line == headerDelimitor) {
@@ -38,8 +38,9 @@ class DelimitedHeaderCsvParser(
 				acc.copy(header = newHeader)
 			}
 		}
+	}
 
-		def seed: Accumulator = Accumulator(new StandardHeader(Array.empty, Array.empty, None), Array.empty, false)
+	def seed: Accumulator = Accumulator(new StandardHeader(Array.empty, Array.empty, None), Array.empty, false)
 }
 
 object DelimitedHeaderCsvParser {

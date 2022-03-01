@@ -5,8 +5,6 @@ import se.lu.nateko.cp.data.CredentialsConfig
 import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.meta.core.data.L2OrLessSpecificMeta
-import se.lu.nateko.cp.meta.core.data.L3SpecificMeta
 import se.lu.nateko.cp.data.routes.StatsRouting._
 import se.lu.nateko.cp.data.utils.Akka.done
 
@@ -14,23 +12,15 @@ import akka.Done
 import akka.event.LoggingAdapter
 
 import scala.util.Try
-import scala.util.Success
-import scala.util.Failure
 import scala.io.Source
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.sql.Statement
 import java.sql.Types
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.ArrayBlockingQueue
@@ -39,6 +29,7 @@ import org.postgresql.ds.PGConnectionPoolDataSource
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import java.sql.Date
+import scala.concurrent.ExecutionContextExecutor
 
 class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
 
@@ -51,7 +42,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 
 	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
 
-	private[this] implicit val exeCtxt = ExecutionContext.fromExecutor(executor)
+	private[this] implicit val exeCtxt: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 
 	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
 		val pgDs = new PGConnectionPoolDataSource()
@@ -185,7 +176,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		runAnalyticalQuery("SELECT count, contributor FROM contributors()"){rs =>
 			Contributors(rs.getInt("count"), rs.getString("contributor"))
 		}
-	
+
 	def submitters(implicit envri: Envri): Future[IndexedSeq[Submitters]] =
 		runAnalyticalQuery("SELECT count, submitter FROM submitters()"){rs =>
 			Submitters(rs.getInt("count"), rs.getString("submitter"))

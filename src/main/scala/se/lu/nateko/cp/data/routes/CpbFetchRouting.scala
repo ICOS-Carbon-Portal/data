@@ -7,21 +7,18 @@ import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers._
-import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.StandardRoute
 import se.lu.nateko.cp.cpauth.core.CpbDownloadInfo
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
-import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.CpdataJsonProtocol._
+import se.lu.nateko.cp.data.CpdataJsonProtocol.given
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
@@ -32,8 +29,8 @@ class CpbFetchRouting(
 	restHeart: RestHeartClient,
 	logClient: PortalLogClient,
 	authRouting: AuthRouting
-)(implicit envriConf: EnvriConfigs) {
-	import UploadRouting.requireShaHash
+)(using envriConf: EnvriConfigs) {
+
 	import DownloadRouting.getClientIp
 	import authRouting.userOpt
 
@@ -102,7 +99,7 @@ class CpbFetchRouting(
 				val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
 				respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
 			} else reject
-		case _ => reject
+		case null => reject
 	}
 
 	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(implicit envri: Envri): Route =

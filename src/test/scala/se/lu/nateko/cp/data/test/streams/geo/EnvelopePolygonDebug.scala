@@ -27,10 +27,11 @@ class EnvelopePolygonDebug extends AnyFunSuite with EnvelopePolygonHelpers{
 		}
 		assert(nonRepeatedPointCount === p.size)
 
-		do{
+		while{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 6 && p.reduceVerticesByOne().isRight)
+			p.size > 6 && p.reduceVerticesByOne().isRight
+		} do ()
 
 		println(p.vertices.indices.map(p.verticeCost))
 		println(p.vertices.indices.map(p.edgeCost))
@@ -44,12 +45,13 @@ class EnvelopePolygonDebug extends AnyFunSuite with EnvelopePolygonHelpers{
 		add(109.0683283505391, 34.36887557724276)
 		add(-69.56969550016895, -28.094834450311147)
 		add(62.07176696517618, -15.082551343775236)
-		
 
-		do{
+
+		while{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 4 && p.reduceVerticesByOne().isRight)
+			p.size > 4 && p.reduceVerticesByOne().isRight
+		} do ()
 		assert(!selfIntersects(p))
 	}
 
@@ -61,10 +63,11 @@ class EnvelopePolygonDebug extends AnyFunSuite with EnvelopePolygonHelpers{
 		add(-165.18184457976855, -39.87243453740618)
 
 
-		do{
+		while{
 			printXarr(p.vertices)
 			printYarr(p.vertices)
-		}while(p.size > 4 && p.reduceVerticesByOne().isRight)
+			p.size > 4 && p.reduceVerticesByOne().isRight
+		} do ()
 		assert(!selfIntersects(p))
 	}
 }

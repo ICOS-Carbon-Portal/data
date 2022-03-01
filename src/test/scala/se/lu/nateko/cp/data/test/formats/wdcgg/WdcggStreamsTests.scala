@@ -78,7 +78,7 @@ class WdcggStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	test("Parsing (single pass) and writing using 'alsoToMat' of an example WDCGG time series data set"){
 		val g = rowsSource
 			.wireTapMat(Sink.head[TableRow])(_ zip _)
-  		.map(converter.parseRow)
+			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(g.run(), 1.second)

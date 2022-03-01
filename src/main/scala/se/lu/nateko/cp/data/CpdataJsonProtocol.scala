@@ -11,12 +11,12 @@ import spray.json._
 
 object CpdataJsonProtocol extends CommonJsonSupport {
 
-	implicit val binTableSliceFormat = jsonFormat2(BinTableSlice)
+	given RootJsonFormat[BinTableSlice] = jsonFormat2(BinTableSlice.apply)
 
-	implicit val userIdFormat = jsonFormat1(UserId)
+	given RootJsonFormat[UserId] = jsonFormat1(UserId.apply)
 
 
-	implicit object binTableDataTypeFormat extends JsonFormat[DataType]{
+	given JsonFormat[DataType] with{
 		override def write(dt: DataType) = JsString(dt.name())
 
 		override def read(value: JsValue) = value match{
@@ -31,7 +31,7 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 		}
 	}
 
-	implicit object binTableSchemaFormat extends RootJsonFormat[Schema]{
+	given RootJsonFormat[Schema] with{
 		override def write(schema: Schema) = JsObject(
 			"columns" -> schema.columns.toJson,
 			"size" -> JsNumber(schema.size)
@@ -47,5 +47,5 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 			}
 	}
 
-	implicit val binTableRequestFormat = jsonFormat5(BinTableRequest)
+	given RootJsonFormat[BinTableRequest] = jsonFormat5(BinTableRequest.apply)
 }

@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.formats.netcdf
 
-import spray.json.DefaultJsonProtocol
+import spray.json._
 
 object NetCdfJson extends DefaultJsonProtocol{
 
-	implicit val statsFormat = jsonFormat2(Stats)
+	given RootJsonFormat[Stats] = jsonFormat2(Stats.apply)
 
-	implicit val boundingBoxFormat = jsonFormat4(BoundingBox)
+	given RootJsonFormat[BoundingBox] = jsonFormat4(BoundingBox.apply)
 
-	implicit val rasterFormat = jsonFormat3(RasterMessage)
+	given RootJsonFormat[RasterMessage] = jsonFormat3(RasterMessage.apply)
 }

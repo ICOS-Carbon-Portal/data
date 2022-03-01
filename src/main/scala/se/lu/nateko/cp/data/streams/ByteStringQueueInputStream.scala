@@ -51,12 +51,14 @@ class ByteStringQueueInputStream extends InputStream {
 	override def read(buff: Array[Byte], off: Int, len: Int): Int =
 		if(len == 0)
 			0
-		else
-			if(len < 0 || off < 0 || len > buff.length - off)
+
+		else if(len < 0 || off < 0 || len > buff.length - off)
 			throw new IndexOutOfBoundsException("Bad arguments to ByteStringQueueInputStream's read method")
-		else
-			if(closed) throw new IOException("Reading from a closed stream")
-		else{
+
+		else if(closed)
+			throw new IOException("Reading from a closed stream")
+
+		else {
 			fetchHeadIfNeeded()
 
 			if(headIsEmpty) -1 else {
@@ -64,7 +66,7 @@ class ByteStringQueueInputStream extends InputStream {
 				var haveRead = 0
 				var currOff = off
 
-				do{
+				while{
 					val toRead = Math.min(len - haveRead, head.length - pointer)
 					if(toRead > 0){
 						head.drop(pointer).copyToArray(buff, currOff, toRead)
@@ -74,8 +76,8 @@ class ByteStringQueueInputStream extends InputStream {
 					}
 
 					while(headIsEmpty && !q.isEmpty) fetchHead()
-
-				} while(haveRead < len && !headIsEmpty)
+					haveRead < len && !headIsEmpty
+				} do ()
 
 				haveRead
 			}

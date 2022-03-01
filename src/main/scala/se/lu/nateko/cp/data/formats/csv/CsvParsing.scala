@@ -13,7 +13,7 @@ object CsvParser{
 	def apply(opts: CsvOptions) = new CsvParser(opts)
 	def default = new CsvParser(CsvOptions.default)
 	def tsv = new CsvParser(CsvOptions.tsv)
- }
+}
 
 class CsvParser(opts: CsvOptions) {
 	import opts._

@@ -11,7 +11,6 @@ import se.lu.nateko.cp.data.utils.Akka.done
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.temporal.TemporalUnit
 import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 
 object TimeSeriesStreams {
 

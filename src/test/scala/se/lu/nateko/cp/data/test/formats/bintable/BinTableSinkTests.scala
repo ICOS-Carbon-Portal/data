@@ -19,7 +19,7 @@ import se.lu.nateko.cp.data.test.TestUtils._
 
 class BinTableSinkTests extends AnyFunSuite with BeforeAndAfterAll{
 
-	private implicit val system = ActorSystem("binTableSinkTests")
+	private implicit val system: ActorSystem = ActorSystem("binTableSinkTests")
 
 	override def afterAll(): Unit = {
 		system.terminate()

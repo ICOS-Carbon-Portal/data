@@ -21,7 +21,7 @@ import se.lu.nateko.cp.data.test.TestUtils
 import akka.NotUsed
 
 class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
-	private implicit val system = ActorSystem("ZipEntryFlowTests")
+	private implicit val system: ActorSystem = ActorSystem("ZipEntryFlowTests")
 
 	override def afterAll(): Unit = {
 		system.terminate()

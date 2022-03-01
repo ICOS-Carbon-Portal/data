@@ -11,7 +11,6 @@ import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
-import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.Akka.done
@@ -30,9 +29,10 @@ import spray.json.JsNull
 import java.net.URI
 import akka.stream.scaladsl.Source
 import scala.util.Try
+import scala.concurrent.ExecutionContextExecutor
 
 class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
-	implicit val dispatcher = system.dispatcher
+	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
 	import MetaClient._
 
@@ -163,9 +163,9 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 				resp.discardEntityBytes()
 				Future.failed(failureHandler(status))
 			}
-		else
-			Utils.responseAsString(resp)
-				.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
+			else
+				Utils.responseAsString(resp)
+					.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
 	}
 
 	def getDobjStorageInfos(paging: Paging = noPaging): Source[DobjStorageInfo, Any] = {

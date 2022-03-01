@@ -35,7 +35,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json.DefaultJsonProtocol
 import spray.json.JsonFormat
 
-class B2SafeClient(config: B2SafeConfig, http: HttpExt)(implicit mat: Materializer) {
+class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer) {
 
 	import mat.executionContext
 	import B2SafeClient._
@@ -275,7 +275,7 @@ object B2SafeClient extends DefaultJsonProtocol{
 	private case class ApiResponseItem(dataName: Option[String], collectionName: String)
 	private case class MetaItem(checksum: Option[String])
 
-	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem)
-	private implicit val metaItemReader: JsonFormat[MetaItem] = jsonFormat1(MetaItem)
+	private implicit val apiResponseItemReader: JsonFormat[ApiResponseItem] = jsonFormat2(ApiResponseItem.apply)
+	private implicit val metaItemReader: JsonFormat[MetaItem] = jsonFormat1(MetaItem.apply)
 
 }

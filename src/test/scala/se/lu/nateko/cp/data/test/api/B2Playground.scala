@@ -4,6 +4,7 @@ import se.lu.nateko.cp.data.api._
 import akka.util.ByteString
 import akka.stream.scaladsl.Source
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContextExecutor
 
 object B2Playground{
 	import akka.actor.ActorSystem
@@ -12,9 +13,9 @@ object B2Playground{
 	import scala.concurrent.duration.DurationInt
 	import se.lu.nateko.cp.data.ConfigReader
 
-	implicit private val system = ActorSystem("B2StageClient")
+	implicit private val system: ActorSystem = ActorSystem("B2StageClient")
 	system.log
-	implicit val dispatcher = system.dispatcher
+	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
 	private val http = akka.http.scaladsl.Http()
 
 	def stop() = system.terminate()

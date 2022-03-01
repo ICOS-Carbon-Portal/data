@@ -10,8 +10,6 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
-import akka.http.scaladsl.server.RouteResult.route2HandlerFlow
-import akka.stream.Materializer
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.api.MetaClient
@@ -23,15 +21,17 @@ import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.data.services.upload.UploadService
+import scala.concurrent.ExecutionContextExecutor
+import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 object Main extends App {
 
-	implicit val system = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
+	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
-	implicit val dispatcher = system.dispatcher
+	import system.dispatcher
 
 	val config = ConfigReader.getDefault
-	implicit val envriConfigs = ConfigReader.metaCore.envriConfigs
+	given Map[Envri.Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
 
 	private val netcdfUtil = new NetcdfUtil(config.netcdf)
 
@@ -109,7 +109,7 @@ object Main extends App {
 					.unbind()
 					.flatMap(_ => system.terminate())(exeCtxt)
 				try{
-					Await.result(doneFuture, 3 seconds)
+					Await.result(doneFuture, 3.seconds)
 				} finally{
 					postgresLog.close()
 				}

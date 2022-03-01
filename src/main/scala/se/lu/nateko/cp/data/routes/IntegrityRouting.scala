@@ -8,24 +8,17 @@ import java.nio.file.StandardOpenOption
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 
-import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.StandardRoute
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.MetaClient.Paging
@@ -87,8 +80,5 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 		}
 	}
 
-	private def responseEntity(text: Source[String, Any]) = HttpEntity(
-		ContentTypes.`text/plain(UTF-8)`,
-		text.map(s => ByteString(s"${s}\n", StandardCharsets.UTF_8))
-	)
+	
 }

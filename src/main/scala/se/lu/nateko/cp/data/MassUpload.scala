@@ -20,7 +20,6 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers._
-import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
@@ -28,6 +27,7 @@ import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
+import spray.json.RootJsonFormat
 
 object MassUpload extends CommonJsonSupport{
 
@@ -52,9 +52,9 @@ object MassUpload extends CommonJsonSupport{
 		def fileName: String = file.toFile.getName
 	}
 
-	implicit val system = ActorSystem("massUpload")
+	given system: ActorSystem = ActorSystem("massUpload")
 	import system.dispatcher
-	implicit val uploadMetadataDtoFormat = jsonFormat5(UploadMetadataDto)
+	given RootJsonFormat[UploadMetadataDto] = jsonFormat5(UploadMetadataDto.apply)
 	private val http = Http()
 	var cookie = HttpCookiePair("dummy", "dummy")
 
@@ -66,7 +66,7 @@ object MassUpload extends CommonJsonSupport{
 
 	def metaHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9094)
 	def dataHttp[T]: HttpFlow[T] = http.cachedHostConnectionPool("127.0.0.1", 9010)
-	
+
 	val fileSource: Source[Path, NotUsed] = {
 		def getFiles(folder: File): Seq[File] = {
 			val children = folder.listFiles.toIndexedSeq
@@ -137,7 +137,7 @@ object MassUpload extends CommonJsonSupport{
 			case (Success(resp), payload) if resp.status == StatusCodes.OK =>
 				Future.successful((payload, None))
 			case (Success(resp), payload) =>
-				resp.entity.toStrict(2 second)
+				resp.entity.toStrict(2.second)
 					.map(": " + _.data.utf8String)
 					.recover{case _ => ""}
 					.map{ responseText =>

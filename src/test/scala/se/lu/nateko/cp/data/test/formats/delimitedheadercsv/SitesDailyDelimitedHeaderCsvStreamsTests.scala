@@ -54,7 +54,7 @@ class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAn
 
 	test("Timestamp column is injected into the table") {
 		val rowFut = rowsSource
-  		.runWith(Sink.head[TableRow])
+			.runWith(Sink.head[TableRow])
 		val row = Await.result(rowFut, 1.second)
 
 		assert(row.header.columnNames.contains(formats.timeStampColumn))
@@ -65,7 +65,7 @@ class SitesDailyDelimitedHeaderCsvStreamsTests extends AnyFunSuite with BeforeAn
 		val converter = new TimeSeriesToBinTableConverter(formats.colsMeta)
 		val graph = rowsSource
 			.wireTapMat(Sink.head[TableRow])(_ zip _)
-  		.map(converter.parseRow)
+			.map(converter.parseRow)
 			.toMat(binTableSink)(_ zip _)
 
 		val ((readResult, firstRow), nRowsWritten) = Await.result(graph.run(), 1.second)

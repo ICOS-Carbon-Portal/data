@@ -31,14 +31,15 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.concurrent.ExecutionContextExecutor
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, coreConf: MetaCoreConfig)(implicit mat: Materializer) {
 	import UploadRouting._
 	import authRouting._
 
-	private implicit val ex = mat.executionContext
-	private implicit val envriConfs = coreConf.envriConfigs
-	private implicit val uriFSU = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
+	private implicit val ex: ExecutionContextExecutor = mat.executionContext
+	private implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
+	private implicit val uriFSU: Unmarshaller[String,Uri] = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
 
 	private val log = uploadService.log
 	private val extractEnvri = extractEnvriDirective
