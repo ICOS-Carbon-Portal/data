@@ -61,18 +61,9 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>
 				val varInfos = varNames.map{varName =>
 					val v = ncd.findVariable(varName)
-					calcMinMax(v)
+					NetcdfUtil.calcMinMax(v)
 				}
 				NetCdfExtract(varInfos)
 			}
 		}
-
-	private def calcMinMax(v: Variable): VarInfo = {
-		val data = v.read()
-		val skipValue = Option(v.findAttribute("_FillValue"))
-		val minMax = skipValue.fold(MAMath.getMinMax(data)){ skip =>
-			MAMath.getMinMaxSkipMissingData(data, skip.getNumericValue().doubleValue())
-		}
-		VarInfo(v.getShortName, minMax.min, minMax.max)
-	}
 }
