@@ -102,7 +102,7 @@ export default class Preview {
 		} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
 			return new Preview(items, options.options, options.type);
 		}
-
+console.log({lookup, cart, ids, objectsTable, objects, options, items});
 		throw new Error('Could not initialize Preview');
 	}
 

@@ -137,18 +137,29 @@ export type BootstrapData = {
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 
 	return Promise.all([
-		fetchSpecBasics(),
-		fetchSpecColumnMeta(),
-		fetchDobjOriginsAndCounts(filters),
+		fetchSpecTableData(filters),
 		fetchLabelLookup(),
 		keywordsInfo.fetch(),
 		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([basics, columnMeta, origins, labelLookup, keywords, countryCodes]) => ({
-			specTables: { basics, columnMeta, origins },
+		([specTables, labelLookup, keywords, countryCodes]) => ({
+			specTables,
 			labelLookup,
 			keywords,
 			countryCodes
+		})
+	)
+}
+
+export function fetchSpecTableData(filters: FilterRequest[]): Promise<SpecTableSerialized> {
+
+	return Promise.all([
+		fetchSpecBasics(),
+		fetchSpecColumnMeta(),
+		fetchDobjOriginsAndCounts(filters)
+	]).then(
+		([basics, columnMeta, origins]) => ({
+			basics, columnMeta, origins
 		})
 	)
 }

@@ -12,7 +12,7 @@ import CompositeSpecTable from "../models/CompositeSpecTable";
 import {getNewPaging} from "./backendReducer";
 import {FilterNumber, FilterNumbers} from "../models/FilterNumbers";
 import {DrawFeature} from "../models/StationFilterControl";
-import {round, throwError} from "../utils";
+import {round} from "../utils";
 
 export default function(state: State, payload: MiscPayload): State{
 

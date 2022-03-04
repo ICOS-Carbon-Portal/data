@@ -1,8 +1,9 @@
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
-import {IdxSig, UrlStr} from '../backend/declarations';
+import {UrlStr} from '../backend/declarations';
 import { PreviewOption } from './Preview';
 import { LabelLookup } from './State';
+import { Dict } from '../../../common/main/types';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -17,8 +18,8 @@ interface OtherPreviewInfo extends PreviewTypeInfo{
 	type: "NETCDF" | "MAPGRAPH"
 }
 
-type Table = IdxSig<PreviewInfo | undefined>
-type VarInfo = IdxSig<boolean>
+type Table = Dict<PreviewInfo | undefined>
+type VarInfo = Dict<boolean>
 
 export type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 

@@ -1,6 +1,6 @@
 import {PortalThunkAction} from "../store";
 import {WhoAmI} from "../models/State";
-import {fetchKnownDataObjects, getExtendedDataObjInfo, getTsSettings, saveTsSetting} from "../backend";
+import {fetchKnownDataObjects, fetchLabelLookup, fetchSpecTableData, getExtendedDataObjInfo, getTsSettings, saveTsSetting} from "../backend";
 import * as Payloads from "../reducers/actionpayloads";
 import {Sha256Str} from "../backend/declarations";
 import {failWithError} from "./common";
@@ -9,15 +9,25 @@ import {getUrlsFromPids} from "../utils";
 
 export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {tsSettings} = getState();
+		const {tsSettings, specTable, labelLookup} = getState();
+
+		// specTable and labelLookup must be fetched from backend if app begins with a preview route
+		const specTablesPromise = specTable.isInitialized
+			? Promise.resolve(undefined)
+			: fetchSpecTableData([]);
+		const labelLookupPromise = Object.keys(labelLookup).length
+			? Promise.resolve(undefined)
+			: fetchLabelLookup();
 
 		const promises = Promise.all([
 			fetchKnownDataObjects(pids),
-			getExtendedDataObjInfo(getUrlsFromPids(pids))
+			getExtendedDataObjInfo(getUrlsFromPids(pids)),
+			specTablesPromise,
+			labelLookupPromise
 		]);
 
-		promises.then(([knownDataObjInfos, extendedDataObjInfo]) => {
-				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo));
+		promises.then(([knownDataObjInfos, extendedDataObjInfo, specTables, labelLookup]) => {
+				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup));
 			},
 			failWithError(dispatch));
 

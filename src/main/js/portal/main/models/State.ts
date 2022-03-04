@@ -296,10 +296,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 };
 
 // Hash to state and state to hash below
-const getStateFromHash = (hash?: string) => {
-	const state = hash === undefined
-		? jsonToState(parseHash(getCurrentHash()))
-		: jsonToState(parseHash(decodeURIComponent(hash)));
+const getStateFromHash = () => {
+	const state = jsonToState(parseHash(getCurrentHash()));
 	return extendUrls(state as State) as State;
 };
 

@@ -1,12 +1,12 @@
 import {Action} from "redux";
-import { MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
+import { LabelLookup, MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchKnownDataObjects,
 	getExtendedDataObjInfo,
 	BootstrapData, DobjOriginsAndCounts
 } from "../backend";
-import {ColNames} from "../models/CompositeSpecTable";
+import {ColNames, SpecTableSerialized} from "../models/CompositeSpecTable";
 import {Filter} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
 import {HelpItem} from "../models/HelpStorage";
@@ -38,7 +38,9 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 	constructor(
 		readonly pids: Sha256Str[],
 		readonly objectsTable: ObjectsTableLike,
-		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>
+		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>,
+		readonly specTables?: SpecTableSerialized,
+		readonly labelLookup?: LabelLookup
 	){super();}
 }
 

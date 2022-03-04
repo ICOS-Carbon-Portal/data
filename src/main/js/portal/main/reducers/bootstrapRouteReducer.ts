@@ -7,6 +7,7 @@ import {
 } from "./actionpayloads";
 import Preview from "../models/Preview";
 import CompositeSpecTable from "../models/CompositeSpecTable";
+import PreviewLookup from "../models/PreviewLookup";
 
 // Make sure state updates here forces isRunningInit to false
 type BootstrapState = Partial<State> & {isRunningInit: false}
@@ -44,18 +45,27 @@ const getObjectsTable = (specTable: CompositeSpecTable, objectsTable: ObjectsTab
 };
 
 const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State => {
-	const objectsTable = getObjectsTable(state.specTable, payload.objectsTable);
-	const preview = state.previewLookup === undefined
-		? new Preview()
-		: state.preview
+	const specTable = payload.specTables === undefined
+		? state.specTable
+		: CompositeSpecTable.deserialize(payload.specTables);
+	const objectsTable = getObjectsTable(specTable, payload.objectsTable);
+	const labelLookup = payload.labelLookup ?? state.labelLookup;
+	const previewLookup = state.previewLookup === undefined
+		? new PreviewLookup(specTable, labelLookup)
+		: state.previewLookup;
+
+	const preview = state.preview
 			.withPids(payload.pids)
-			.restore(state.previewLookup, state.cart, objectsTable);
+			.restore(previewLookup, state.cart, objectsTable);
 
 	const newPartialState: BootstrapState = {
 		route: 'preview',
+		specTable,
+		labelLookup,
 		objectsTable,
 		extendedDobjInfo: payload.extendedDobjInfo,
 		preview,
+		previewLookup,
 		isRunningInit: false
 	};
 
