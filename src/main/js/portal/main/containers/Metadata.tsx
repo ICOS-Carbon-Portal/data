@@ -9,7 +9,7 @@ import { MetaData, MetaDataWStats, Route, State} from "../models/State";
 import {PortalDispatch} from "../store";
 import bootstrapMetadata, {updateFilteredDataObjects, searchKeyword} from '../actions/metadata';
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {L2OrLessSpecificMeta, L3SpecificMeta, DataAcquisition} from "../../../common/main/metacore";
+import {StationTimeSeriesMeta, SpatioTemporalMeta, DataAcquisition} from "../../../common/main/metacore";
 import config, { timezone } from '../config';
 import AboutSection from '../components/metadata/AboutSection';
 import AcquisitionSection from '../components/metadata/AcquisitionSection';
@@ -63,11 +63,21 @@ class Metadata extends Component<MetadataProps> {
 		const buttonAction = isInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
 		const specInfo = metadata.specificInfo;
 
-		const acquisition = (specInfo as L2OrLessSpecificMeta).acquisition
-			&& (specInfo as L2OrLessSpecificMeta).acquisition;
-		const productionInfo = (specInfo as L3SpecificMeta).productionInfo
-			? (specInfo as L3SpecificMeta).productionInfo
-			: undefined;
+		const acquisition: DataAcquisition | undefined = (function(){
+			const acq = (specInfo as StationTimeSeriesMeta).acquisition;
+			if(acq) return acq;
+			const station = (specInfo as SpatioTemporalMeta).station;
+			if(station){
+				return {
+					station,
+					instrument: undefined,
+					samplingHeight: (specInfo as SpatioTemporalMeta).samplingHeight
+				};
+			}
+			return undefined;
+		})();
+
+		const productionInfo = specInfo.productionInfo;
 		const {allowCartAdd, uiMessage} = cartState(metadata);
 		const projectLabel = config.envri === "SITES" ? "Thematic programme" : "Affiliation";
 		const datasetSpec = metadata.specification.datasetSpec;

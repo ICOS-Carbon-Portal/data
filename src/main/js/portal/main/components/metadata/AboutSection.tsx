@@ -1,7 +1,7 @@
 import React from 'react';
 import { metadataRow } from '../../containers/Metadata';
 import { MetaData } from '../../models/State';
-import { L3SpecificMeta, PlainStaticObject, References } from '../../../../common/main/metacore';
+import { SpatioTemporalMeta, PlainStaticObject, References } from '../../../../common/main/metacore';
 import { LinkifyText } from '../LinkifyText';
 import CollectionBtn from '../buttons/CollectionBtn';
 
@@ -17,7 +17,7 @@ const AboutSection = (props: AboutSectionProps) => {
 	const prevVersions = Array.isArray(metadata.previousVersion)
 		? metadata.previousVersion
 		: metadata.previousVersion ? [metadata.previousVersion] : [];
-	const description = (metadata.specificInfo as L3SpecificMeta).description
+	const description = (metadata.specificInfo as SpatioTemporalMeta).description
 		?? (metadata.specification.self.comments && metadata.specification.self.comments.join('\n'));
 
 	return (
