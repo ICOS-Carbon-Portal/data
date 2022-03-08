@@ -6,7 +6,7 @@ import java.time._
 import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams.TimeSeriesParserEnhancer
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.wdcgg.WdcggParser._
 import se.lu.nateko.cp.meta.core.data.{IngestionMetadataExtract, TabularIngestionExtract, TimeInterval, WdcggExtract}

@@ -14,7 +14,7 @@ import java.time.ZoneOffset
 
 object TimeSeriesStreams {
 
-	implicit class TimeSeriesParserEnhancer[A <: ParsingAccumulator, M](val parser: Flow[String, A, M]) extends AnyVal {
+	extension [A <: ParsingAccumulator, M](parser: Flow[String, A, M]){
 
 		def exposeParsingError(implicit ctxt: ExecutionContext): Flow[String, A, Future[Done]] = {
 
