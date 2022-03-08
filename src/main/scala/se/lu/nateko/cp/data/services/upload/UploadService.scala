@@ -204,11 +204,9 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] = {
 		val spec: DataObjectSpec = req.fold(_.spec, _.specification)
-		val specFormat: URI = spec.format.uri
 		val file = req.fold(_.file, getFile)
-		import CpMetaVocab.ObjectFormats._
 
-		if(specFormat == netCdfSpatial) {
+		if(spec.isSpatiotemporal) {
 			val varNames: Seq[String] = req.fold(
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
@@ -219,13 +217,13 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
 
-		} else if(spec.dataLevel <= 2) {
+		} else if(spec.isStationTimeSer) {
 			val ingSpec = req.fold(
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
 				dobj => IngestionSpec(dobj)
 			)
 			IngestionUploadTask(ingSpec, file, meta)
-		} else Future.failed(new CpDataParsingException(s"Could not find ingester for format $specFormat"))
+		} else Future.failed(new CpDataParsingException(s"Could not find ingester for data obj spec ${spec.self.uri}}"))
 	}
 
 	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(
