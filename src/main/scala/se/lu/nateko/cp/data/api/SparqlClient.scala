@@ -5,7 +5,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.headers.Accept
+import akka.http.scaladsl.model.headers.{Accept, `Cache-Control`, CacheDirectives}
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import scala.concurrent.duration.Duration
@@ -27,6 +27,7 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 	private val sparqlJson = MediaType.custom("application/sparql-results+json", binary = false)
 	private val acceptJson = Accept(MediaTypes.`application/json`, sparqlJson)
 	private val acceptCsv = Accept(MediaTypes.`text/csv`)
+	private val nocache = `Cache-Control`(CacheDirectives.`no-cache`)
 
 	private def httpPost(entity: String, accept: Accept, longRunning: Boolean = false): Future[HttpResponse] = {
 		import ConnectionPoolSettings.default
@@ -42,7 +43,7 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 			HttpRequest(
 				method = HttpMethods.POST,
 				uri = url.toString,
-				headers = accept :: Nil,
+				headers = accept :: nocache :: Nil,
 				entity = entity
 			),
 			settings = connPoolSettings
