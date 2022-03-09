@@ -10,7 +10,7 @@ import RasterDataFetcher from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData, VariableInfo } from './models/State';
 import { Dict } from '../../common/main/types';
-import { DataObject, L3SpecificMeta, L3VarInfo } from '../../common/main/metacore';
+import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRasterExtended } from './models/BinRasterExtended';
 
 
@@ -320,16 +320,22 @@ const selectMinMax = (rangeFilterMinMax: Partial<MinMax>, globalMinMax: Partial<
 	};
 };
 
-const getVariableInfo = (controls?: ControlsHelper, metadata?: DataObject) => {
+function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
+	return dobj
+		? ((dobj.specificInfo as SpatioTemporalMeta).variables || (dobj.specificInfo as StationTimeSeriesMeta).columns)
+		: undefined;
+}
+
+function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VariableInfo | undefined {
 	if (controls === undefined) return;
 
 	const selectedVariable = controls.variables.selected;
 	if (selectedVariable === undefined) return;
 
-	const metadataVariables = metadata ? (metadata.specificInfo as L3SpecificMeta).variables : undefined;
+	const metadataVariables = getVarMetas(metadata);
 	if (metadataVariables === undefined) return;
 
-	return metadataVariables.find((v: L3VarInfo) => v.label === selectedVariable) as VariableInfo | undefined;
+	return metadataVariables.find((v: VarMeta) => v.label === selectedVariable) as VariableInfo | undefined;
 };
 
 const getGlobalMinMax = (controls?: ControlsHelper, metadata?: DataObject) => {
@@ -354,23 +360,23 @@ const getRasterMinMax = (raster?: BinRasterExtended) => {
 	}
 };
 
-const getLegendLabel = (metadataVariable?: VariableInfo) => {
-	if (metadataVariable && metadataVariable.valueType && metadataVariable.valueType.self && metadataVariable.valueType.self.label && metadataVariable.valueType.unit) {
-		return `${metadataVariable.valueType.self.label} [${metadataVariable.valueType.unit}]`;
+const getLegendLabel = (metaVar?: VarMeta) => {
+	if (metaVar && metaVar.valueType.self.label && metaVar.valueType.unit) {
+		return `${metaVar.valueType.self.label} [${metaVar.valueType.unit}]`;
 	}
 
 	return 'Legend';
 };
 
-const getVariables = (metadata?: DataObject) => {
-	const specificInfo = metadata && metadata.specificInfo as L3SpecificMeta | undefined ;
-
-	if (specificInfo && specificInfo.variables)
-		return specificInfo.variables.reduce((acc: Dict, v: L3VarInfo) => {
+function getVariables(metadata?: DataObject): Dict | undefined {
+	return getVarMetas(metadata)?.reduce(
+		(acc: Dict, v: VarMeta) => {
 			acc[v.label] = `${v.valueType.self.label} (${v.label})`;
 			return acc;
-		}, {});
-};
+		},
+		{}
+	);
+}
 
 const getTimeserieData = (dates: string[], yValues: number[]): TimeserieData[] => {
 	return dates.length === yValues.length

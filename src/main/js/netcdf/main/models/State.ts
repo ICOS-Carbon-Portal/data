@@ -1,5 +1,5 @@
 import config from "../../../common/main/config";
-import { DataObject, L3VarInfo } from "../../../common/main/metacore";
+import { DataObject, VarMeta } from "../../../common/main/metacore";
 import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
 import { Dict } from "../../../common/main/types";
 import { BinRasterExtended } from "./BinRasterExtended";
@@ -65,7 +65,7 @@ export type TimeserieParams = {
 	y: number,
 	latlng: Latlng
 }
-export interface VariableInfo extends L3VarInfo {
+export interface VariableInfo extends VarMeta {
 	minMax: [number, number]
 }
 
