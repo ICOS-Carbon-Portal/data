@@ -3,13 +3,19 @@ package se.lu.nateko.cp.data.formats.netcdf
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.NetCdfViewServiceImpl
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
+import se.lu.nateko.cp.data.utils.usingWithFuture
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath
 import ucar.ma2.Section
 import ucar.nc2.Variable
+import ucar.nc2.dataset.NetcdfDataset
 
+import java.io.File
 import java.nio.file.Path
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.util.Using
 
 class NetcdfUtil(config: NetCdfConfig) {
 	import config._
@@ -24,26 +30,43 @@ class NetcdfUtil(config: NetCdfConfig) {
 
 object NetcdfUtil{
 
-	def calcMinMax(v:Variable): VarInfo = {
-		val skipValue = Option(v.findAttribute("_FillValue"))
+	def calcMinMax(file: File, varname: String)(using ExecutionContext): Future[VarInfo] = {
+		def ds = NetcdfDataset.openDataset(file.getAbsolutePath, false, null)
 
-		val minMaxes = partition(v.getShape()).map{section =>
-			val data = v.read(section)
-			skipValue.fold(MAMath.getMinMax(data)){ skip =>
-				MAMath.getMinMaxSkipMissingData(data, skip.getNumericValue().doubleValue())
+		val sectionsTry = Using(ds){ncd =>
+			partition(ncd.findVariable(varname).getShape)
+		}
+		Future.fromTry(sectionsTry).flatMap{sections =>
+			val minMaxFuts = sections.map{section =>
+				usingWithFuture(ds){ncd =>
+					val v = ncd.findVariable(varname)
+					val skipValue = Option(v.findAttribute("_FillValue"))
+					Future{
+						//println(s"Reading $section (section size = ${section.computeSize}, var size = ${v.getSize})")
+						val data = v.read(section)
+						//println(s"Have read $section")
+						val mm = skipValue.fold(MAMath.getMinMax(data)){ skip =>
+							MAMath.getMinMaxSkipMissingData(data, skip.getNumericValue().doubleValue())
+						}
+						//println(s"Got partial minmax for $section : $mm")
+						mm
+					}
+				}
+			}
+			Future.sequence(minMaxFuts).map(_.reduce{(mm1, mm2) =>
+				val min = Math.min(mm1.min, mm2.min)
+				val max = Math.max(mm1.max, mm2.max)
+				new MAMath.MinMax(min, max)
+			}).map{minMax =>
+				//println(s"Got minmax: $minMax")
+				VarInfo(varname, minMax.min, minMax.max)
 			}
 		}
-		val minMax = minMaxes.reduce{(mm1, mm2) =>
-			val min = Math.min(mm1.min, mm2.min)
-			val max = Math.max(mm1.max, mm2.max)
-			new MAMath.MinMax(min, max)
-		}
-		VarInfo(v.getShortName, minMax.min, minMax.max)
 	}
 
 	def partition(shape: Array[Int]): Seq[Section] = {
 		val totalN: Long = shape.foldLeft(1L)(_ * _)
-		val maxN = 1L << 31
+		val maxN = 1L << 25
 		val sects: Seq[Section] = if(totalN <= maxN) IndexedSeq(new Section(shape)) else {
 			val factor: Int = (totalN / maxN).toInt + 1
 			val pagingDimensionIdx = shape.indexWhere(_ >= factor)

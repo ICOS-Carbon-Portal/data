@@ -21,7 +21,8 @@ case class NetCdfConfig(
 	dateVars: Seq[String],
 	latitudeVars: Seq[String],
 	longitudeVars: Seq[String],
-	elevationVars: Seq[String]
+	elevationVars: Seq[String],
+	statsCalcParallelizm: Int
 )
 
 case class B2SafeConfig(
@@ -109,7 +110,7 @@ object ConfigReader extends CommonJsonSupport{
 
 	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
 
-	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
+	given RootJsonFormat[NetCdfConfig] = jsonFormat6(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
 	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
 	given RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig.apply)

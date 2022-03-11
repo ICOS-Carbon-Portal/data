@@ -3,24 +3,30 @@ package se.lu.nateko.cp.data.services.upload
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Try, Using}
-import java.io.File
-import se.lu.nateko.cp.meta.core.data.NetCdfExtract
-import ucar.nc2.Variable
-import ucar.nc2.dataset.NetcdfDataset;
-import ucar.ma2.MAMath
-import se.lu.nateko.cp.meta.core.data.VarInfo
-import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.NetCdfConfig
+import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
+import se.lu.nateko.cp.meta.core.data.NetCdfExtract
+import se.lu.nateko.cp.meta.core.data.VarInfo
+import ucar.ma2.MAMath
+import ucar.nc2.Variable
+import ucar.nc2.dataset.NetcdfDataset
 
-class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean)(using ExecutionContext) extends UploadTask {
+import java.io.File
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Success
+import scala.util.Try
+import scala.util.Using
+
+import ExecutionContext.{global => ctxt}
+
+class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean) extends UploadTask {
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] =
 		if (tryIngest) //need to save to the file, as no FileSavingUploadTask is being run in parallel
-			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioRes => FileWriteSuccess(ioRes.count)))
+			FileIO.toPath(file.toPath).mapMaterializedValue(_.map(ioRes => FileWriteSuccess(ioRes.count))(ctxt))
 		else
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(DummySuccess))
 
@@ -33,13 +39,18 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			}
 			if(!failures.isEmpty)
 				Future.successful(CancelledBecauseOfOthers(failures))
-			else Future{
-				readNetCdf.fold(IngestionFailure.apply, IngestionSuccess.apply)
+			else {
+				val javaExe = Executors.newFixedThreadPool(config.statsCalcParallelizm)
+				given ExecutionContext = ExecutionContext.fromExecutorService(javaExe)
+				readNetCdf
+					.map(IngestionSuccess(_))
+					.recover{case err => IngestionFailure(err)}
+					.andThen(_ => javaExe.shutdown())(ctxt)
 			}
 		}
 
-	private def readNetCdf: Try[NetCdfExtract] =
-		Try(new NetcdfUtil(config).service(file.toPath)).flatMap{service =>
+	private def readNetCdf(using ExecutionContext): Future[NetCdfExtract] =
+		Future.fromTry(Try(new NetcdfUtil(config).service(file.toPath))).flatMap{service =>
 			val availableVars = service.getVariables.toSet
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
@@ -58,12 +69,7 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 				service.getRaster(date0, varName, elevation0)
 			}
 
-			Using(NetcdfDataset.openDataset(file.getAbsolutePath)){ncd =>
-				val varInfos = varNames.map{varName =>
-					val v = ncd.findVariable(varName)
-					NetcdfUtil.calcMinMax(v)
-				}
-				NetCdfExtract(varInfos)
-			}
+			val varInfoFuts = varNames.map(NetcdfUtil.calcMinMax(file, _))
+			Future.sequence(varInfoFuts).map(NetCdfExtract(_))
 		}
 }

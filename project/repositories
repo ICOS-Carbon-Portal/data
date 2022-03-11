@@ -3,3 +3,4 @@
   my-ivy-proxy-releases: https://repo.icos-cp.eu/content/groups/ivy-releases, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
   my-maven-proxy-releases: https://repo.icos-cp.eu/content/groups/public
   dice-repo: https://raw.github.com/DICE-UNC/DICE-Maven/master/releases
+  unidata-repo: https://artifacts.unidata.ucar.edu/repository/unidata-all
