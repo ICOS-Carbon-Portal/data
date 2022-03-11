@@ -65,7 +65,7 @@ class SearchResultRegular extends Component<OurProps> {
 							checkCount={checkedObjectsInSearch.length}
 							totalCount={paging.pageCount}
 							onChange={handleAllCheckboxesChange}
-							disabled={objectsTable.every(o => addingToCartProhibition(o) != null)} />
+							disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
 
 						<Dropdown
 							isSorter={true}

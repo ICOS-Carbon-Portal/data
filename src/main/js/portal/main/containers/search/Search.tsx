@@ -71,7 +71,7 @@ class Search extends Component<OurProps, OurState> {
 			this.props.updateCheckedObjects([]);
 		} else {
 			const checkedObjects = this.props.objectsTable
-				.filter(o => addingToCartProhibition(o) == null)
+				.filter(o => addingToCartProhibition(o).allowCartAdd)
 				.map(o => o.dobj);
 			this.props.updateCheckedObjects(checkedObjects);
 		}

@@ -175,7 +175,7 @@ export type CartProhibition = {
 	uiMessage?: string
 }
 export function addingToCartProhibition(dobj: {theme: UrlStr, level: number, hasNextVersion: boolean}): CartProhibition {
-	if (dobj.hasNextVersion === true)
+	if (dobj.hasNextVersion)
 		return { allowCartAdd: false, uiMessage: "You can only download the newest version" };
 
 	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric)
