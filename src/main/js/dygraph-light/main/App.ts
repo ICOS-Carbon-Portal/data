@@ -142,13 +142,14 @@ export default class App {
 				return fail(msg);
 			}
 
+			if (this.labelMaker.metadata === undefined) throw new Error('Data objects are not defined');
 			this.initGraph();
-			return this.labelMaker.sorted;
+			return this.labelMaker.metadata;
 
 		})
-		.then(labelMaker =>
+		.then(metadata =>
 			Promise.all(
-				labelMaker.map(dobj =>
+				metadata.map(dobj =>
 					getBinTable(colNameX, colNameY, dobj.object.id, dobj.object.tableFormat, dobj.object.nRows, colNameY2)
 				)
 			)
@@ -375,7 +376,7 @@ export default class App {
 			return;
 		}
 
-		this.graph!.updateOptions({file: data as any});
+		this.graph && this.graph.updateOptions({file: data as any});
 		this.showCollapsible();
 		this.showSpinner(false);
 	}

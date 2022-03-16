@@ -26,7 +26,7 @@ export default class LabelMaker {
 	readonly ids: string[];
 	readonly hasY2: boolean;
 	readonly linking: Linking;
-	private metadata?: Metadata[];
+	public metadata?: Metadata[];
 	readonly legendLabels: string[] = [];
 	public chartTitle?: string;
 	public xlabel: string = '';
@@ -56,14 +56,17 @@ export default class LabelMaker {
 	}
 
 	set objects(objects: MetaWithTableFormat[]){
-		const specList = Array.from(new Set(objects.map(o => o.specLabel))).join(' / ');
+		const sortedObjects = objects.sort((obj1, obj2) => 
+			new Date(obj1.startedAtTime).getTime() - new Date(obj2.startedAtTime).getTime()
+		);
+		const specList = Array.from(new Set(sortedObjects.map(o => o.specLabel))).join(' / ');
 		this.chartTitle = this.hasY2
 			? `${specList} - ${this.params.get('y')} and ${this.params.get('y2')}`
 			: `${specList} - ${this.params.get('y')}`;
 
-		this.metadata = objects.map((object, idx) => new Metadata(this.linking, object, idx, this.params));
+		this.metadata = sortedObjects.map((object, idx) => new Metadata(this.linking, object, idx, this.params));
 
-		this.object = objects.find(object =>
+		this.object = sortedObjects.find(object =>
 			isColNameValid(object.tableFormat, this.params.get('x'))
 			&& isColNameValid(object.tableFormat, this.params.get('y'))
 			&& (!this.hasY2 || isColNameValid(object.tableFormat, this.params.get('y2')))
@@ -91,13 +94,6 @@ export default class LabelMaker {
 
 	get title(){
 		return this.chartTitle || '';
-	}
-
-	get sorted(){
-		if (this.metadata === undefined) throw new Error('Data objects are not defined');
-
-		return this.metadata.sort((obj1, obj2) =>
-			new Date(obj1.object.startedAtTime).getTime() - new Date(obj2.object.startedAtTime).getTime());
 	}
 
 	get series(){
