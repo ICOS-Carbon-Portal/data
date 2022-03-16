@@ -49,7 +49,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
 		const specLabel = props.labelLookup[objInfo.spec].label ?? "";
-		const title = extendedInfo.title ?? makeL2OrLessTitle(extendedInfo, specLabel);
+		const title = extendedInfo.title ?? stationSpecificTitle(extendedInfo, objInfo.level, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 		const checkBtnTitle = uiMessage ?? `Click to select this data object for preview or add to cart`;
@@ -90,12 +90,16 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 	}
 }
 
-const makeL2OrLessTitle = (extendedInfo: ExtendedDobjInfo, specLabel: String) => {
+function stationSpecificTitle(extendedInfo: ExtendedDobjInfo, dataLevel: number, specLabel: String): string {
 	const location = extendedInfo.samplingPoint ?? extendedInfo.site ?? extendedInfo.station?.trim();
 
-	if (config.features.shortenDataTypeLabel && specLabel.includes(',')) specLabel.substr(0, specLabel.indexOf(','))
+	const spec = (config.features.shortenDataTypeLabel && specLabel.includes(','))
+		? specLabel.substring(0, specLabel.indexOf(','))
+		: specLabel;
 
-	return `${specLabel} from ${location}`
+	const preposition = (config.envri === 'ICOS' && dataLevel > 2) ? "for" : "from";
+
+	return `${spec} ${preposition} ${location}`
 }
 
 export const getMetadataHash = (dobj: string) => {
