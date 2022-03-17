@@ -49,7 +49,7 @@ export class BootstrapRouteMetadata extends BootstrapRoutePayload{
 }
 
 export class BootstrapRouteCart extends BootstrapRoutePayload{
-	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>, readonly objectsTable: ObjectsTableLike){super();}
+	constructor(readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>, readonly objectsTable: ObjectsTableLike, readonly labelLookup?: LabelLookup){super();}
 }
 
 export class BackendUserInfo extends BackendPayload{

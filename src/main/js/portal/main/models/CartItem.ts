@@ -23,7 +23,7 @@ export interface DataObject {
 
 export interface CartItemSerialized {
 	id: string
-	dataobject: DataObject
+	dataobject: DataObject | undefined
 	type: PreviewType | undefined
 	url: UrlStr | undefined
 	keyValPairs: IdxSig
@@ -31,13 +31,13 @@ export interface CartItemSerialized {
 
 export default class CartItem {
 	private readonly _id: UrlStr;
-	private readonly _dataobject: DataObject;
+	private readonly _dataobject: DataObject | undefined;
 	private readonly _type: PreviewType | undefined;
 	private readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: IdxSig;
 
-	constructor(dataobject: DataObject, type?: PreviewType, url?: string){
-		this._id = dataobject.dobj;
+	constructor(id: string, dataobject?: DataObject, type?: PreviewType, url?: string){
+		this._id = id;
 		this._dataobject = dataobject;
 		this._type = type;
 		this._url = url;
@@ -77,19 +77,19 @@ export default class CartItem {
 	}
 
 	get hasNextVersion() {
-		return this._dataobject.hasNextVersion;
+		return this._dataobject?.hasNextVersion ?? false;
 	}
 
 	get level() {
-		return this._dataobject.level;
+		return this._dataobject?.level ?? 0;
 	}
 
 	get temporalResolution() {
-		return this._dataobject.temporalResolution;
+		return this._dataobject?.temporalResolution;
 	}
 
 	get dataset() {
-		return this._dataobject.dataset;
+		return this._dataobject?.dataset;
 	}
 
 	get type(){
@@ -97,15 +97,15 @@ export default class CartItem {
 	}
 
 	get spec(){
-		return this._dataobject.spec;
+		return this._dataobject?.spec ?? "";
 	}
 
 	get theme(){
-		return this._dataobject.theme;
+		return this._dataobject?.theme ?? "";
 	}
 
 	get size(){
-		return parseInt(this._dataobject.size || '0');
+		return parseInt(this._dataobject?.size || '0');
 	}
 
 	get item(){
@@ -117,7 +117,7 @@ export default class CartItem {
 			return fileName.slice(0, fileName.lastIndexOf('.'));
 		}
 
-		return stripExt(this._dataobject.fileName);
+		return this._dataobject ? stripExt(this._dataobject.fileName) : "";
 	}
 
 	get fileName() {
@@ -129,15 +129,15 @@ export default class CartItem {
 	}
 
 	get specLabel() {
-		return this._dataobject.specLabel;
+		return this._dataobject?.specLabel ?? "";
 	}
 
 	get timeStart() {
-		return new Date(this._dataobject.timeStart);
+		return new Date(this._dataobject?.timeStart ?? "");
 	}
 
 	get timeEnd() {
-		return new Date(this._dataobject.timeEnd);
+		return new Date(this._dataobject?.timeEnd ?? "");
 	}
 
 	getUrlSearchValue(key: string) {
@@ -145,7 +145,7 @@ export default class CartItem {
 	}
 
 	withUrl(url: string){
-		return new CartItem(this._dataobject, this._type, url);
+		return new CartItem(this._id, this._dataobject, this._type, url);
 	}
 
 	deleteKeyValPair(key: string){

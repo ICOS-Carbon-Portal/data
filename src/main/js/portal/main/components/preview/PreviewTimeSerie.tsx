@@ -214,5 +214,5 @@ const Selector = (props: SelectorProps) => {
 };
 
 const getLegendLabels = (items: PreviewItem[]) => {
-	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight} m Level ${item.item.level}` : '').join(',');
+	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight} m Level ${item.level}` : '').join(',');
 };

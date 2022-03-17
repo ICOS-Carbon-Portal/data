@@ -216,7 +216,7 @@ export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	if (email){
 		updatePersonalRestheart(email, {cart});
 	}
-	return Promise.resolve(sessionStorage.setItem('cp-cart', JSON.stringify(cart)));
+	return Promise.resolve();
 };
 
 const updatePersonalRestheart = (email: string, data: {}): void => {
@@ -248,16 +248,9 @@ export const logOut = (): Promise<boolean> => {
 };
 
 export const getCart = (email: string | null) => {
-	const sessionStorageCart = sessionStorage.getItem('cp-cart');
-	const sessionStorageJson: JsonCart = sessionStorageCart
-		? JSON.parse(sessionStorageCart)
-		: new Cart().serialize;
-	const cartInSessionStorage = {cart: sessionStorageJson};
-	const cartInRestheart = email
-		? getFromRestheart<{cart: JsonCart}>(email, 'cart')
-		: Promise.resolve({cart: new Cart().serialize});
-
-	return Promise.resolve({cartInSessionStorage, cartInRestheart});
+	return email
+		? Promise.resolve(getFromRestheart<{ cart: JsonCart }>(email, 'cart'))
+		: Promise.resolve({ cart: new Cart().serialize });
 };
 
 const getFromRestheart = <T>(email: string, key: string): Promise<T> => {
