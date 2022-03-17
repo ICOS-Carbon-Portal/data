@@ -37,7 +37,7 @@ class SearchResultRegular extends Component<OurProps> {
 		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart,
-			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery } = this.props;
+			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
@@ -81,13 +81,16 @@ class SearchResultRegular extends Component<OurProps> {
 						}
 
 						<div style={{float: 'right'}}>
-							<CartBtn
-								style={{float: 'right', marginBottom: 10}}
-								checkedObjects={checkedObjectsInSearch}
-								clickAction={handleAddToCart}
-								enabled={checkedObjectsInSearch.length > 0}
-								type='add'
-							/>
+
+							{user.email &&
+								<CartBtn
+									style={{float: 'right', marginBottom: 10}}
+									checkedObjects={checkedObjectsInSearch}
+									clickAction={handleAddToCart}
+									enabled={checkedObjectsInSearch.length > 0}
+									type='add'
+								/>
+							}
 
 							<PreviewBtn
 								style={{float: 'right', marginBottom: 10, marginRight: 10}}
@@ -158,6 +161,7 @@ function stateToProps(state: State){
 		searchOptions: state.searchOptions,
 		extendedDobjInfo: state.extendedDobjInfo,
 		exportQuery: state.exportQuery,
+		user: state.user
 	};
 }
 

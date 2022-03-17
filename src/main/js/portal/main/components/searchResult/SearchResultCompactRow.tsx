@@ -3,7 +3,7 @@ import CartIcon from '../buttons/CartIcon';
 import PreviewIcon from '../buttons/PreviewIcon';
 import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
 import {getMetadataHash} from "./SearchResultRegularRow";
-import { ExtendedDobjInfo, ObjectsTable } from "../../models/State";
+import { ExtendedDobjInfo, ObjectsTable, WhoAmI } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
 import PreviewLookup from '../../models/PreviewLookup';
@@ -20,6 +20,7 @@ type Props =  {
 	removeFromCart: (ids: UrlStr[]) => void
 	handlePreview: (id: UrlStr[]) => void
 	handleViewMetadata: (id: UrlStr) => void
+	user: WhoAmI
 };
 
 export default class SearchResultCompactRow extends Component<Props> {
@@ -49,11 +50,13 @@ export default class SearchResultCompactRow extends Component<Props> {
 
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
-				<CartIcon
-					style={{ marginRight: 10 }}
-					objInfo={objInfo}
-					{...pick(props, 'addToCart', 'removeFromCart', 'isAddedToCart')}
-				/>
+				{props.user.email &&
+					<CartIcon
+						style={{ marginRight: 10 }}
+						objInfo={objInfo}
+						{...pick(props, 'addToCart', 'removeFromCart', 'isAddedToCart')}
+					/>
+				}
 				<PreviewIcon
 					style={{ marginRight: 10 }}
 					previewType={previewType}

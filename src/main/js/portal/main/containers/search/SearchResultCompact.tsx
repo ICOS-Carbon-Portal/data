@@ -29,7 +29,7 @@ class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, removeFromCart, handleViewMetadata, handlePreview,
-			getAllFilteredDataObjects, exportQuery, extendedDobjInfo} = this.props;
+			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
 		return (
@@ -81,6 +81,7 @@ class SearchResultCompact extends Component<OurProps> {
 											removeFromCart={removeFromCart}
 											key={'dobj_' + i}
 											handleViewMetadata={handleViewMetadata}
+											user={user}
 										/>
 									);
 								})
@@ -125,6 +126,7 @@ function stateToProps(state: State){
 		searchOptions: state.searchOptions,
 		exportQuery: state.exportQuery,
 		extendedDobjInfo: state.extendedDobjInfo,
+		user: state.user
 	};
 }
 
