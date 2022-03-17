@@ -72,11 +72,11 @@ export default class Cart {
 	}
 }
 
-export const restoreCart = (jsonCart: { cart: any }) => {
-	const name: string = jsonCart.cart._name;
-	const items: string[] = jsonCart.cart._items.map((i: { _id: any; }) => i._id)
+export const restoreCart = (jsonCart: { cart: JsonCart }) => {
+	const name: string = jsonCart.cart.name;
+	const items: CartItem[] = jsonCart.cart.items && jsonCart.cart.items.map(i => new CartItem(i.id))
 
-	return new Cart(name, items.map(i => new CartItem(i)));
+	return new Cart(name, items);
 };
 
 const emptyJsonCart = new Cart().serialize;

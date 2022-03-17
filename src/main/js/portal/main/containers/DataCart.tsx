@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
 import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
-import BackButton from '../components/buttons/BackButton';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
@@ -19,10 +18,6 @@ class DataCart extends Component<DataCartProps> {
 
 	handlePreview(urls: UrlStr[]){
 		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
-	}
-
-	handleBackButton(previousRoute: Route){
-		this.props.updateRoute(previousRoute);
 	}
 
 	handleRouteClick(newRoute: Route){
@@ -55,7 +50,6 @@ class DataCart extends Component<DataCartProps> {
 
 		return (
 			<div>
-				<BackButton action={this.handleBackButton.bind(this)} previousRoute={'search'}/>
 				{cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-8 col-lg-9">

@@ -11,7 +11,6 @@ import config, {breadcrumbs, Breadcrumb} from '../config';
 import {Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
-import Cart from "../models/Cart";
 import {failWithError, updateRoute} from "../actions/common";
 import HelpSection from '../components/help/HelpSection';
 import { UiInactivateAllHelp } from '../reducers/actionpayloads';
@@ -55,13 +54,6 @@ export class App extends Component<AppProps> {
 
 					<Title route={props.route} metadata={props.metadata} />
 
-					<div className="col-md-3 mt-2">
-						<SwitchRouteBtn
-							route={props.route}
-							cart={props.cart}
-							handleRouteClick={this.handleRouteClick.bind(this)}
-						/>
-					</div>
 				</div>
 
 				<ErrorBoundary failWithError={props.failWithError}>
@@ -107,7 +99,9 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 			return (
 				<h1 className="col-md-9">
 					{config.envri} data portal
-					<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
+					{config.envri === "ICOS" &&
+						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
+					}
 				</h1>
 			);
 
@@ -118,31 +112,6 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 
 		default:
 			return <div className="col-md-9" />;
-	}
-};
-
-interface ButtonProps {
-	handleRouteClick: (newRoute: string) => void
-	cart: Cart
-	route: Route
-}
-
-const SwitchRouteBtn = (props: ButtonProps) => {
-	if (props.route === 'cart'){
-		return null;
-
-	} else {
-		const {cart, handleRouteClick} = props;
-		const colCount = cart.count;
-
-		return (
-			<button className="btn btn-primary float-end" onClick={() => handleRouteClick('cart')}>
-				View data cart
-				<span style={{marginLeft: 5}} className="badge rounded-pill bg-light text-primary">
-					{colCount} {colCount === 1 ? ' item' : ' items'}
-				</span>
-			</button>
-		);
 	}
 };
 
