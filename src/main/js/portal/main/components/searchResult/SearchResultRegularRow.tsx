@@ -25,7 +25,6 @@ const iconCalendar = '//static.icos-cp.eu/images/icons/calendar-alt-regular.svg'
 
 interface OurProps {
 	objInfo: ObjectsTable | CartItem
-	viewMetadata: (doj: string) => void
 	extendedInfo: ExtendedDobjInfo
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
@@ -35,12 +34,6 @@ interface OurProps {
 }
 
 export default class SearchResultRegularRow extends Component<OurProps> {
-	handleViewMetadata(ev: MouseEvent){
-		if (!ev.ctrlKey && !ev.metaKey && this.props.objInfo.dobj) {
-			ev.preventDefault();
-			this.props.viewMetadata(this.props.objInfo.dobj);
-		}
-	}
 
 	render(){
 		const props = this.props;
@@ -66,7 +59,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 className="fs-5">
-						<a title="View metadata" href={getMetadataHash(objInfo.dobj)} onClick={this.handleViewMetadata.bind(this)} style={{cursor: 'pointer'}}>{title}</a>
+						<a title="View metadata" href={objInfo.dobj}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					<div className="extended-info" style={{ marginTop: 4 }}>

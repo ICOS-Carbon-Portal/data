@@ -1,8 +1,7 @@
-import React, { Component, MouseEvent } from 'react';
+import React, { Component } from 'react';
 import CartIcon from '../buttons/CartIcon';
 import PreviewIcon from '../buttons/PreviewIcon';
 import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
-import {getMetadataHash} from "./SearchResultRegularRow";
 import { ExtendedDobjInfo, ObjectsTable, WhoAmI } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
@@ -19,20 +18,12 @@ type Props =  {
 	addToCart: (ids: UrlStr[]) => void,
 	removeFromCart: (ids: UrlStr[]) => void
 	handlePreview: (id: UrlStr[]) => void
-	handleViewMetadata: (id: UrlStr) => void
 	user: WhoAmI
 };
 
 export default class SearchResultCompactRow extends Component<Props> {
 	handlePreviewClick(){
 		this.props.handlePreview([this.props.objInfo.dobj]);
-	}
-
-	handleViewMetadata(ev: MouseEvent){
-		if (!ev.ctrlKey && !ev.metaKey) {
-			ev.preventDefault();
-			this.props.handleViewMetadata(this.props.objInfo.dobj);
-		}
 	}
 
 	render(){
@@ -46,7 +37,6 @@ export default class SearchResultCompactRow extends Component<Props> {
 			? "list-group-item-info"
 			: "";
 		const size = parseInt(objInfo.size);
-		const metadataHash = getMetadataHash(objInfo.dobj);
 
 		return <tr className={className}>
 			<td style={{whiteSpace: 'nowrap'}}>
@@ -64,7 +54,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
 				<CollectionLinks extendedDobjInfo={props.extendedDobjInfo} dobj={objInfo.dobj} />
-				<a title="View metadata" href={metadataHash} onClick={this.handleViewMetadata.bind(this)} style={{ cursor: 'pointer' }}>{objInfo.fileName}</a>
+				<a title="View metadata" href={objInfo.dobj}>{objInfo.fileName}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.submTime), timezone[config.envri].offset)}</td>

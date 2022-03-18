@@ -72,9 +72,9 @@ export default class Cart {
 	}
 }
 
-export const restoreCart = (jsonCart: { cart: JsonCart }) => {
-	const name: string = jsonCart.cart.name;
-	const items: CartItem[] = jsonCart.cart.items && jsonCart.cart.items.map(i => new CartItem(i.id))
+export const restoreCart = (jsonCart: { cart: any }) => {
+	const name: string = jsonCart.cart._name;
+	const items: CartItem[] = jsonCart.cart._items && jsonCart.cart._items.map((i: {_id: any}) => new CartItem(i._id))
 
 	return new Cart(name, items);
 };

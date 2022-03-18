@@ -41,10 +41,6 @@ export default class CartPanel extends Component<Props, State> {
 		this.props.handleAllCheckboxesChange();
 	}
 
-	handleViewMetadata(id: string) {
-		if (this.props.setMetadataItem) this.props.setMetadataItem(id);
-	}
-
 	render(){
 		const props = this.props;
 		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
@@ -98,14 +94,13 @@ export default class CartPanel extends Component<Props, State> {
 							props.cart.items.map((objInfo, i) => {
 								const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
 								if (extendedInfo === undefined) return null;
-								
+
 								const isChecked = props.checkedObjectsInCart.includes(objInfo.dobj);
 
 								return (
 									<SearchResultRegularRow
 										labelLookup={props.labelLookup}
 										extendedInfo={extendedInfo}
-										viewMetadata={this.handleViewMetadata.bind(this)}
 										preview={props.preview}
 										objInfo={objInfo}
 										key={'dobj_' + i}

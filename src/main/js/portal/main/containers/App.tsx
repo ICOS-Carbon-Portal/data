@@ -4,7 +4,6 @@ import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './search/Search';
 import DataCart from './DataCart';
 import Preview from './Preview';
-import Metadata, { MetadataTitle } from './Metadata';
 import ErrorBoundary from '../components/ErrorBoundary';
 import {updateCheckedObjectsInCart} from '../actions/cart';
 import config, {breadcrumbs, Breadcrumb} from '../config';
@@ -105,11 +104,6 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 				</h1>
 			);
 
-		case 'metadata':
-			return (
-				<div className="col-md-9">{MetadataTitle(props.metadata)}</div>
-			);
-
 		default:
 			return <div className="col-md-9" />;
 	}
@@ -131,7 +125,7 @@ const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
 			);
 
 		case 'metadata':
-			return <Metadata />;
+			return <React.Fragment />;
 	}
 };
 

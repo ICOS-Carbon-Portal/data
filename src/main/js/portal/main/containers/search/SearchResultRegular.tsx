@@ -17,7 +17,6 @@ import { addingToCartProhibition } from '../../models/CartItem';
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingActions = {
-	handleViewMetadata: (id: UrlStr) => void
 	handlePreview: (id: UrlStr[]) => void
 	handleAddToCart: (objInfo: UrlStr[]) => void
 	handleAllCheckboxesChange: () => void
@@ -36,7 +35,7 @@ class SearchResultRegular extends Component<OurProps> {
 	render(){
 		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
-			updateCheckedObjects, handleViewMetadata, handlePreview, handleAddToCart,
+			updateCheckedObjects, handlePreview, handleAddToCart,
 			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
@@ -122,7 +121,6 @@ class SearchResultRegular extends Component<OurProps> {
 									<SearchResultRegularRow
 										labelLookup={labelLookup}
 										extendedInfo={extendedInfo}
-										viewMetadata={handleViewMetadata}
 										preview={preview}
 										objInfo={objInfo}
 										key={'dobj_' + i}

@@ -13,7 +13,6 @@ import SearchResultCompactRow from "../../components/searchResult/SearchResultCo
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type IncomingActions = {
-	handleViewMetadata: (id: UrlStr) => void
 	handlePreview: (id: UrlStr[]) => void
 }
 type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
@@ -28,7 +27,7 @@ const headerStyle: CSSProperties = {whiteSpace: 'nowrap', paddingRight: 0, paddi
 class SearchResultCompact extends Component<OurProps> {
 	render(){
 		const {preview, cart, objectsTable, addToCart, lookup, paging, sorting, searchOptions,
-			toggleSort, requestStep, removeFromCart, handleViewMetadata, handlePreview,
+			toggleSort, requestStep, removeFromCart, handlePreview,
 			getAllFilteredDataObjects, exportQuery, extendedDobjInfo, user} = this.props;
 		const sortProps: SortProps = {sorting, toggleSort};
 
@@ -80,7 +79,6 @@ class SearchResultCompact extends Component<OurProps> {
 											addToCart={addToCart}
 											removeFromCart={removeFromCart}
 											key={'dobj_' + i}
-											handleViewMetadata={handleViewMetadata}
 											user={user}
 										/>
 									);
