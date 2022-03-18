@@ -19,16 +19,16 @@ const config = Object.assign(commonConfig, localConfig);
 
 export const SPECCOL = 'spec';
 
-export type SpecBasicsQuery = Query<"spec" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
+export type SpecBasicsQuery = Query<"spec" | "project" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
 
 export function specBasics(): SpecBasicsQuery {
 	const text = `# specBasics
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
+select ?spec ?project (?spec as ?type) ?level ?dataset ?format ?theme ?temporalResolution
 where{
-	?spec cpmeta:hasDataLevel ?level .
-	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	?spec cpmeta:hasDataLevel ?level ; cpmeta:hasAssociatedProject ?project .
+	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	?spec cpmeta:hasDataTheme ?theme .
 	OPTIONAL{
@@ -72,7 +72,7 @@ where{
 	return { text };
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "project" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass">
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const siteQueries = config.envri === "SITES"
@@ -86,7 +86,7 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?spec ?countryCode ?submitter ?project ?count ?station ?ecosystem ?location ?site ?stationclass
+select ?spec ?countryCode ?submitter ?count ?station ?ecosystem ?location ?site ?stationclass
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -100,14 +100,13 @@ where{
 		group by ?spec ?submitter ?station ?site
 	}
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-	?spec cpmeta:hasAssociatedProject ?project .
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${siteQueries}
 	BIND (IF(
 		bound(?stClassOpt),
 		IF(strstarts(?stClassOpt, "Ass"), "Associated", "ICOS"),
 		IF(bound(?station), "Other", ?stClassOpt)
 	) as ?stationclass)
-	FILTER NOT EXISTS {?project cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	}`;
 
 	return { text };
@@ -250,6 +249,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 	const text = `# listFilteredDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select ?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
 	${pidListFilter}${specsValues}

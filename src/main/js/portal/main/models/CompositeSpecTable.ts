@@ -89,7 +89,7 @@ export default class CompositeSpecTable{
 	}
 
 	get names(): Array<ColNames>{
-		const toFlatMap = this.tables.map(tbl => tbl.names);
+		const toFlatMap = this.tables.map(tbl => tbl.colNames);
 		return Array.prototype.concat.apply([], toFlatMap);
 	}
 
@@ -99,7 +99,7 @@ export default class CompositeSpecTable{
 
 	findTable(columnName: ColNames): SpecTable<string> | undefined{
 		return this.tables.find(tbl =>
-			(tbl.names as ColNames[]).includes(columnName)
+			(tbl.colNames as ColNames[]).includes(columnName)
 		);
 	}
 
@@ -149,7 +149,7 @@ export default class CompositeSpecTable{
 	}
 
 	get hasActiveFilters(): boolean{
-		return this.tables.some(tbl => tbl.hasActiveFilters);
+		return this.tables.some(tbl => tbl.hasOwnFilters);
 	}
 
 	getDistinctAvailableColValues(colName: ColNames): Value[]{

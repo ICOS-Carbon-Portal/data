@@ -31,6 +31,7 @@ const fetchSpecBasics = () => {
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		spec: b.spec.value,
+		project: b.project.value,
 		type: b.type.value,
 		level: parseInt(b.level.value),
 		dataset: b.dataset?.value,
@@ -60,7 +61,6 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 		spec: b.spec.value,
 		countryCode: b.countryCode?.value,
 		submitter: b.submitter.value,
-		project: b.project.value,
 		count: parseInt(b.count.value),
 		station: b.station?.value,
 		site: b.site?.value,

@@ -110,9 +110,18 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		filters
 	};
 
+	const originsStationFilter: Filter = specTable.origins
+		.filteredColumns
+		.every(col => col === "submitter" || col === "spec")
+			? null
+			: specTable.origins.getColumnValuesFilter('station');
+
 	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
-		specs: specTable.basics.getDistinctColValues(SPECCOL),
-		stations: Filter.and([specTable.origins.getColumnValuesFilter('station'), spatialStationsFilter]),
+		specs: Filter.and([
+			specTable.basics.getColumnValuesFilter("type"),
+			specTable.columnMeta.getColumnValuesFilter("spec")
+		]),
+		stations: Filter.and([originsStationFilter, spatialStationsFilter]),
 		sites: specTable.getColumnValuesFilter('site'),
 		submitters: specTable.getFilter('submitter')
 	});

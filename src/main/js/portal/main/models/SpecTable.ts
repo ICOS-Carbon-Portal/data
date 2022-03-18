@@ -4,12 +4,9 @@ import {distinct} from '../utils'
 export type Value = number | string | undefined;
 export type Filter = null | Array<Value>;
 export type Col<T extends string> = T | typeof SPECCOL;
-export type Filters<T extends string> = {[key in Col<T>]?: Filter};
+export type Filters<T extends string> = {[key in T]?: Filter};
 export type Row<T extends string> = {[key in Col<T>]: Value};
 
-function isNonSpecCol<T extends string>(col: Col<T>): col is T{
-	return col !== SPECCOL;
-}
 
 export const Filter = {
 	and: function (fs: Filter[]): Filter {
@@ -44,7 +41,7 @@ export type TableSerialized<T extends string> = {
 export default class SpecTable<T extends string = string>{
 	readonly specsCount: number;
 
-	constructor(readonly colNames: Col<T>[], readonly rows: Row<T>[], readonly filters: Filters<T>, readonly extraSpecFilter: Filter = null){
+	constructor(readonly colNames: T[], readonly rows: Row<T>[], readonly filters: Filters<T>, readonly extraSpecFilter: Filter = null){
 		this.specsCount = distinct(rows.map(row => row[SPECCOL])).length;
 	}
 
@@ -55,10 +52,6 @@ export default class SpecTable<T extends string = string>{
 			filters: this.filters,
 			extraSpecFilter: this.extraSpecFilter
 		};
-	}
-
-	get names(): T[] {
-		return this.colNames.filter(isNonSpecCol);
 	}
 
 	withExtraSpecFilter(extraFilter: Filter){
@@ -73,18 +66,14 @@ export default class SpecTable<T extends string = string>{
 		return this.withExtraSpecFilter(null).getDistinctColValues(SPECCOL);
 	}
 
-	withFilter(colName: Col<T>, filter: Filter): SpecTable<T>{
+	withFilter(colName: T, filter: Filter): SpecTable<T>{
 		if(!this.colNames.includes(colName)) return this;
 		const newFilters = Object.assign({}, this.filters, {[colName]: filter});
 		return new SpecTable(this.colNames, this.rows, newFilters, this.extraSpecFilter);
 	}
 
-	getFilter(colName: Col<T>): Filter {
+	getFilter(colName: T): Filter {
 		return this.filters[colName] ?? null;
-	}
-
-	get hasActiveFilters(): boolean{
-		return this.hasOwnFilters;
 	}
 
 	get hasOwnFilters(): boolean{
@@ -110,6 +99,11 @@ export default class SpecTable<T extends string = string>{
 
 	get filteredRows(): Row<T>[]{
 		return this.filterRows(this.filters);
+	}
+
+	get filteredColumns(): T[]{
+		return (Object.keys(this.filters) as Array<keyof typeof this.filters>)
+			.filter(col => this.getFilter(col) !== null);
 	}
 
 	private filterRows(filters: Filters<T>): Row<T>[]{
