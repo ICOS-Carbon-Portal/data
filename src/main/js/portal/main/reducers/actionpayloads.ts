@@ -4,10 +4,10 @@ import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchKnownDataObjects,
 	getExtendedDataObjInfo,
-	BootstrapData, DobjOriginsAndCounts
+	BootstrapData
 } from "../backend";
-import {ColNames, SpecTableSerialized} from "../models/CompositeSpecTable";
-import {Filter} from "../models/SpecTable";
+import {ColNames, OriginsColNames, SpecTableSerialized} from "../models/CompositeSpecTable";
+import SpecTable, {Filter} from "../models/SpecTable";
 import {DataObject} from "../models/CartItem";
 import {HelpItem} from "../models/HelpStorage";
 import Cart from "../models/Cart";
@@ -66,9 +66,8 @@ export class StationPositions4326Lookup extends BackendPayload{
 
 export class BackendOriginsTable extends BackendPayload{
 	constructor(
-		readonly dobjOriginsAndCounts: DobjOriginsAndCounts,
-		readonly resetPaging: boolean = false,
-		readonly isFakeFetchResult: boolean = false //simulating back end call result for spatial filtering
+		readonly table: SpecTable<OriginsColNames>,
+		readonly resetPaging: boolean = false
 	){super();}
 }
 

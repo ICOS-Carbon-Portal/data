@@ -4,12 +4,9 @@ import {
 	DobjOriginsAndCountsQuery
 } from '../sparqlQueries';
 import SpecTable, {Value, Filter, Row, TableSerialized} from "./SpecTable";
-import {AsyncResult} from "../backend/declarations";
-import {fetchBoostrapData} from "../backend";
 import { QueryResultColumns } from '../backend/sparql';
 
 
-type JsonCompositeSpecTable = AsyncResult<typeof fetchBoostrapData>['specTables'];
 export type BasicsColNames = QueryResultColumns<SpecBasicsQuery>;
 export type VariableMetaColNames = QueryResultColumns<SpecVarMetaQuery>;
 export type OriginsColNames = QueryResultColumns<DobjOriginsAndCountsQuery>;
@@ -138,9 +135,8 @@ export default class CompositeSpecTable{
 		return new CompositeSpecTable(this.basics.withResetFilters(), this.columnMeta.withResetFilters(), this.origins.withResetFilters()).withFilterReflection;
 	}
 
-	withOriginsTable(origins: JsonCompositeSpecTable['origins'] | CompositeSpecTable['origins']){
-		const newOrigins = new SpecTable<OriginsColNames>(origins.colNames, origins.rows, this.origins.filters);
-
+	withOriginsTable(origins: SpecTable<OriginsColNames>): CompositeSpecTable {
+		const newOrigins = origins.withFilters(this.origins.filters);
 		return new CompositeSpecTable(this.basics, this.columnMeta, newOrigins).withFilterReflection;
 	}
 

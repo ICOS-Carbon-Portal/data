@@ -14,7 +14,7 @@ import config, {
 import deepequal from 'deep-equal';
 import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
-import {DobjOriginsAndCounts, fetchKnownDataObjects} from "../backend";
+import {fetchKnownDataObjects} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO, References} from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
@@ -143,7 +143,7 @@ export interface State {
 	labelLookup: LabelLookup;
 	stationPos4326Lookup: StationPos4326Lookup[]
 	specTable: CompositeSpecTable
-	baseDobjStats: DobjOriginsAndCounts //without spatial filtering
+	baseDobjStats: SpecTable<OriginsColNames> //without spatial filtering
 	spatialStationsFilter: Filter
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
@@ -201,7 +201,7 @@ export const defaultState: State = {
 	labelLookup: {},
 	stationPos4326Lookup: [],
 	specTable: emptyCompositeSpecTable,
-	baseDobjStats: {colNames: [], rows: []},
+	baseDobjStats: new SpecTable<OriginsColNames>([], [], {}),
 	spatialStationsFilter: null,
 	mapProps: {
 		srid: config.olMapSettings.defaultSRID,

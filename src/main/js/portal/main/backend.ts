@@ -70,8 +70,6 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	}));
 };
 
-export type DobjOriginsAndCounts = AsyncResult<typeof fetchDobjOriginsAndCounts>;
-
 export const fetchStationPositions = () => {
 	const query = queries.stationPositions();
 

@@ -1,5 +1,5 @@
 import {PortalThunkAction} from "../store";
-import {Filter, Value} from "../models/SpecTable";
+import SpecTable, {Filter, Value} from "../models/SpecTable";
 import {State, TabsState, WhoAmI} from "../models/State";
 import * as Payloads from "../reducers/actionpayloads";
 import {isPidFreeTextSearch} from "../reducers/utils";
@@ -11,7 +11,7 @@ import {
 	getExtendedDataObjInfo,
 	makeHelpStorageListItem
 } from "../backend";
-import {ColNames} from "../models/CompositeSpecTable";
+import {ColNames, OriginsColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FiltersNumber, FiltersUpdatePids, UiInactivateAllHelp} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
@@ -28,7 +28,7 @@ import {
 } from "./common";
 import {FilterNumber} from "../models/FilterNumbers";
 import Paging from "../models/Paging";
-import { listFilteredDataObjects, SPECCOL } from '../sparqlQueries';
+import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 
@@ -64,7 +64,8 @@ function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkActi
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
-				dispatch(new Payloads.BackendOriginsTable(dobjOriginsAndCounts, true));
+				const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
+				dispatch(new Payloads.BackendOriginsTable(tbl, true));
 
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
 
@@ -208,7 +209,7 @@ export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Va
 export function spatialFilterUpdate(stations: Filter): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		dispatch(new Payloads.BackendUpdateSpatialFilter(stations));
-		dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false, true));
+		dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false));
 		dispatch(getFilteredDataObjects);
 	};
 }

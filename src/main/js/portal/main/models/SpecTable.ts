@@ -84,11 +84,19 @@ export default class SpecTable<T extends string = string>{
 		return new SpecTable(this.colNames, this.rows, {});
 	}
 
+	withFilters(filters: Filters<T>){
+		return new SpecTable(this.colNames, this.rows, filters, this.extraSpecFilter);
+	}
+
+	get filteredSubtable(){
+		return new SpecTable(this.colNames, this.filteredRows, {});
+	}
+
 	getDistinctAvailableColValues(colName: Col<T>): Value[] {
 		return distinct(this.rowsFilteredByOthers(colName).map(row => row[colName]));
 	}
 
-	getDistinctColValues(colName: Col<T>){
+	getDistinctColValues(colName: Col<T>): Value[] {
 		return distinct(this.filteredRows.map(row => row[colName]));
 	}
 

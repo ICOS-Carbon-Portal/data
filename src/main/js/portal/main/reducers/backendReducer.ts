@@ -22,8 +22,6 @@ import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
 import {getObjCount, isPidFreeTextSearch} from "./utils";
 import {IdxSig} from "../backend/declarations";
-import {Filter, Value} from "../models/SpecTable";
-import {DobjOriginsAndCounts} from "../backend";
 
 
 export default function(state: State, payload: BackendPayload): State {
@@ -150,21 +148,10 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 	});
 };
 
-function filterDobjStats(stats: DobjOriginsAndCounts, filter: Filter): DobjOriginsAndCounts {
-	if (filter === null)
-		return stats;
-
-	const set = new Set(filter);
-	return {
-		...stats,
-		rows: stats.rows.filter(row => set.has(row.station))
-	};
-}
-
 const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 
 	const specTable = state.specTable.withOriginsTable(
-		filterDobjStats(payload.dobjOriginsAndCounts, state.spatialStationsFilter)
+		payload.table.withFilter("station", state.spatialStationsFilter).filteredSubtable
 	);
 
 	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
@@ -172,7 +159,7 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 	return {
 		specTable,
 		...getNewPaging(state.paging, state.page, specTable, payload.resetPaging),
-		baseDobjStats: payload.isFakeFetchResult ? state.baseDobjStats : payload.dobjOriginsAndCounts
+		baseDobjStats: payload.table
 	}
 };
 
@@ -201,6 +188,7 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 
 	return {
 		specTable,
+		baseDobjStats: specTable.origins,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),
