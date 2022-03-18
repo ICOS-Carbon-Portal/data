@@ -1,7 +1,6 @@
 import React from 'react';
 import { DataAcquisition, UriResource } from '../../../../common/main/metacore';
 import { metadataRow } from '../../containers/Metadata';
-import { UrlStr } from '../../backend/declarations';
 import {formatDateTime, getLastSegmentInUrl} from '../../utils';
 
 interface AquisitionSectionProps {

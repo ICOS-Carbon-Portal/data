@@ -18,7 +18,7 @@ const AboutSection = (props: AboutSectionProps) => {
 		? metadata.previousVersion
 		: metadata.previousVersion ? [metadata.previousVersion] : [];
 	const description = (metadata.specificInfo as SpatioTemporalMeta).description
-		?? (metadata.specification.self.comments && metadata.specification.self.comments.join('\n'));
+		?? metadata.specification.self.comments.join('\n');
 
 	return (
 		<React.Fragment>

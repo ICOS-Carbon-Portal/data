@@ -8,7 +8,7 @@ import {Control, ControlColorRamp, ControlsHelper} from './models/ControlsHelper
 import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
-import stateProps, { MinMax, RangeFilter, State, TimeserieData, VariableInfo } from './models/State';
+import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { Dict } from '../../common/main/types';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRasterExtended } from './models/BinRasterExtended';
@@ -326,25 +326,17 @@ function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
 		: undefined;
 }
 
-function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VariableInfo | undefined {
-	if (controls === undefined) return;
+function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VarMeta | undefined {
 
-	const selectedVariable = controls.variables.selected;
+	const selectedVariable = controls?.variables?.selected;
 	if (selectedVariable === undefined) return;
 
-	const metadataVariables = getVarMetas(metadata);
-	if (metadataVariables === undefined) return;
-
-	return metadataVariables.find((v: VarMeta) => v.label === selectedVariable) as VariableInfo | undefined;
+	return getVarMetas(metadata)?.find(v => v.label === selectedVariable);
 };
 
-const getGlobalMinMax = (controls?: ControlsHelper, metadata?: DataObject) => {
-	const variableInfo = getVariableInfo(controls, metadata);
-
-	if (variableInfo === undefined || variableInfo.minMax === undefined) return { min: undefined, max: undefined };
-
-	const [min, max] = variableInfo.minMax;
-	return { min, max };
+function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): Partial<MinMax> {
+	const minMax = getVariableInfo(controls, metadata)?.minMax;
+	return { min: minMax?.[0], max: minMax?.[1] };
 };
 
 const getRangeFilterMinMax = (rangeFilter: RangeFilter) => {

@@ -1,5 +1,5 @@
 import config from "../../../common/main/config";
-import { DataObject, VarMeta } from "../../../common/main/metacore";
+import { DataObject } from "../../../common/main/metacore";
 import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
 import { Dict } from "../../../common/main/types";
 import { BinRasterExtended } from "./BinRasterExtended";
@@ -64,9 +64,6 @@ export type TimeserieParams = {
 	x: number,
 	y: number,
 	latlng: Latlng
-}
-export interface VariableInfo extends VarMeta {
-	minMax: [number, number]
 }
 
 export interface State {

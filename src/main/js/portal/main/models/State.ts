@@ -17,7 +17,7 @@ import {Store} from "redux";
 import {DobjOriginsAndCounts, fetchKnownDataObjects} from "../backend";
 import {DataObject} from "./CartItem";
 import {DataObject as DO, References} from "../../../common/main/metacore";
-import SpecTable, {Filter, Row, Value} from "./SpecTable";
+import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
