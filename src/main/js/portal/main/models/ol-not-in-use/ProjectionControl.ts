@@ -1,5 +1,5 @@
 import Control, { Options } from 'ol/control/Control';
-import { Dict } from '../../../../common/main/types';
+import {Dict} from "./utils";
 import { SupportedSRIDs } from './projections';
 
 export interface ProjectionControlOptions extends Options {

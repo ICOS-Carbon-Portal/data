@@ -1,13 +1,14 @@
-import OLWrapper, { MapOptions, PersistedMapProps, PointData, LayerWrapper } from './ol/OLWrapper';
-import { getBaseMapLayers, getDefaultControls, getLayerIcon, getLayerVisibility } from "./ol/utils";
-import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './ol/projections';
+// import OLWrapper, { MapOptions, PersistedMapProps, PointData, LayerWrapper } from 'icos-cp-ol';
+import {cpOlUtils, cpOlStyles, cpOlProjections, cpOlPopup, cpOlWrapper, cpOlBaseMaps,
+	cpOlProjectionControl, cpOlExportControl, cpOlLayerControl, cpOlCopyright} from "icos-cp-ol";
+// import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './ol/projections';
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
 import {MapProps, State, StationPos4326Lookup} from './State';
-import Popup from './ol/Popup';
-import { LayerControl } from './ol/LayerControl';
-import Copyright, { getESRICopyRight } from './ol/Copyright';
+// import {Popup} from 'icos-cp-ol';
+// import { LayerControl } from 'icos-cp-ol';
+// import Copyright, { getESRICopyRight } from 'icos-cp-ol';
 import { Dict } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
@@ -15,29 +16,28 @@ import {difference} from '../utils';
 import {Filter, Value} from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
-import { ProjectionControl } from './ol/ProjectionControl';
-import { BaseMapName, esriBaseMapNames } from './ol/baseMaps';
+// import { ProjectionControl } from 'icos-cp-ol';
+// import { BaseMapId, esriBaseMapNames } from 'icos-cp-ol';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import { CountriesTopo, getCountriesGeoJson } from '../backend';
-import olStyles from './ol/styles';
+// import olStyles from './ol/styles';
 import { DrawFeature, StateStationUris, StationFilterControl } from './StationFilterControl';
 
 
-type LayerWrapperArgs = Pick<LayerWrapper, 'id' | 'layerType' | 'geoType' | 'name' | 'style' | 'data'> & { zIndex: number, interactive: boolean }
-export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
+export type UpdateMapSelectedSRID = (srid: cpOlProjections.SupportedSRIDs) => void
 export type TransformPointFn = (lon: number, lat: number) => number[]
-interface MapOptionsExpanded extends Partial<MapOptions> {
+interface MapOptionsExpanded extends Partial<cpOlWrapper.MapOptions> {
 	center?: Coordinate
 	hitTolerance: number
 }
-export interface PersistedMapPropsExtended<BMN = BaseMapName> extends PersistedMapProps<BMN> {
+export interface PersistedMapPropsExtended<BMN = cpOlBaseMaps.BaseMapId> extends cpOlWrapper.PersistedMapProps<BMN> {
 	drawFeatures?: DrawFeature[]
 	isStationFilterCtrlActive?: boolean
 	stateStationUris?: StateStationUris
 }
 interface Props extends UpdateProps {
-	mapRootelement: HTMLElement
+	mapRootElement: HTMLElement
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
@@ -60,19 +60,19 @@ export default class InitMap {
 	private olwrapper: OLWrapper;
 	private appEPSGCode: EpsgCode;
 	private mapOptions: MapOptionsExpanded;
-	private popup: Popup;
+	private popup: cpOlPopup.default;
 	private readonly layerControl: LayerControl;
 	private readonly stationFilterControl: StationFilterControl;
 	private pointTransformer: TransformPointFn;
 	private allStationUris: Value[];
 	private countriesTopo?: CountriesTopo;
-	private persistedMapProps: PersistedMapPropsExtended<BaseMapName | 'Countries'>;
+	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
 	private updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void;
 	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 
 	constructor(props: Props) {
 		const {
-			mapRootelement,
+			mapRootElement,
 			updateMapSelectedSRID,
 			persistedMapProps,
 			updatePersistedMapProps,
@@ -99,8 +99,8 @@ export default class InitMap {
 			hitTolerance: 5
 		};
 
-		const selectedBaseMapName = persistedMapProps.baseMapName ?? olMapSettings.defaultBaseMapName;
-		const tileLayers = getBaseMapLayers(selectedBaseMapName, olMapSettings.baseMapFilter);
+		const selectedBaseMap = persistedMapProps.baseMap ?? olMapSettings.defaultBaseMap;
+		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
 		this.popup = new Popup('popover');
 
 		const controls = getDefaultControls(projection);
@@ -115,7 +115,7 @@ export default class InitMap {
 
 		this.layerControl = new LayerControl({
 			element: document.getElementById('layerCtrl') ?? undefined,
-			selectedBaseMapName,
+			selectedBaseMap,
 			updateCtrl: this.updateLayerCtrl,
 			updatePersistedMapProps
 		});
@@ -125,13 +125,12 @@ export default class InitMap {
 			controls.push(this.createProjectionControl(persistedMapProps, updateMapSelectedSRID));
 
 		const olProps = {
-			mapRootelement: mapRootelement,
+			mapRootElement,
 			projection,
 			tileLayers,
 			mapOptions: this.mapOptions,
 			popupTemplate: this.popup,
-			controls,
-			updatePersistedMapProps
+			controls
 		};
 
 		// Create map component in OLWrapper. Anything that uses map must be handled after map creation
@@ -156,7 +155,7 @@ export default class InitMap {
 
 		const countriesTopoBM: LayerWrapper = this.getLayerWrapper({
 			id: 'countries',
-			name: 'Countries',
+			label: 'Countries',
 			layerType: 'baseMap',
 			geoType: 'geojson',
 			data: this.countriesTopo,
@@ -168,7 +167,7 @@ export default class InitMap {
 
 		const countriesTopoToggle: LayerWrapper = this.getLayerWrapper({
 			id: countryBordersId,
-			name: 'Country borders',
+			label: 'Country borders',
 			layerType: 'toggle',
 			geoType: 'geojson',
 			data: this.countriesTopo,
@@ -200,7 +199,7 @@ export default class InitMap {
 
 		const excludedStationsToggle: LayerWrapper = this.getLayerWrapper({
 			id: 'excludedStations',
-			name: 'Station filtered out',
+			label: 'Station filtered out',
 			layerType: 'toggle',
 			geoType: 'point',
 			data: excludedStations,
@@ -210,7 +209,7 @@ export default class InitMap {
 		});
 		const includedStationsToggle: LayerWrapper = this.getLayerWrapper({
 			id: 'includedStations',
-			name: 'Station',
+			label: 'Station',
 			layerType: 'toggle',
 			geoType: 'point',
 			data: includedStations,
@@ -223,22 +222,22 @@ export default class InitMap {
 		this.layerControl.updateCtrl();
 	}
 
-	getLayerWrapper({id, name, layerType, geoType, data, style, zIndex, interactive}: LayerWrapperArgs): LayerWrapper {
+	getLayerWrapper({id, label, layerType, geoType, data, style, zIndex, interactive}: Omit<LayerWrapperArgs, 'visible'>): LayerWrapper {
 		const visible = layerType === 'toggle'
 			? getLayerVisibility(this.olWrapper.map, id, this.toggleLayerVisibility(id))
-			: getLayerVisibility(this.olWrapper.map, id, this.persistedMapProps.baseMapName === name);
+			: getLayerVisibility(this.olWrapper.map, id, this.persistedMapProps.baseMap === id);
 
-		return {
+		return getLayerWrapper({
 			id,
+			label,
 			layerType,
-			geoType,
-			name,
-			layerProps: { id },
 			visible,
+			geoType,
 			data,
 			style,
-			options: { zIndex, interactive }
-		};
+			zIndex,
+			interactive
+		});
 	}
 
 	incomingPropsUpdated(props: UpdateProps) {
@@ -386,7 +385,7 @@ export default class InitMap {
 			const numberOfFeatures = features.getLength();
 
 			if (numberOfFeatures) {
-				popup.reset();
+				popup.resetContent();
 
 				const feature = features.getArray()[0];
 				const name = feature.get('stationLbl');

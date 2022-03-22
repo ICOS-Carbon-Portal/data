@@ -1,11 +1,12 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
 import { Dict } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
-import { BaseMapName } from './models/ol/baseMaps';
+import {BaseMapId, BaseMapName} from './models/ol/baseMaps';
 import { supportedSRIDsFriendlyNames, SupportedSRIDs } from './models/ol/projections';
 import { BaseMapFilter } from './models/ol/utils';
 import olStyles from './models/ol/styles';
 import {IndexedDBProps} from "./backend/IndexedDB";
+import Style from "ol/style/Style";
 
 export type Envri = typeof ICOS | typeof SITES;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
@@ -55,14 +56,14 @@ const featureFlags = {
 	}
 }
 
-const sridsInMap: Partial<Dict<string, SupportedSRIDs>> = envri === 'ICOS'
+const sridsInMap: Dict<string, SupportedSRIDs> = envri === 'ICOS'
 	? {
 		'3035': supportedSRIDsFriendlyNames['3035'],
 		'54030': supportedSRIDsFriendlyNames['54030']
 	}
 	: { '3006': supportedSRIDsFriendlyNames['3006'] };
 const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '3035' : '3006';
-const defaultBaseMapName: BaseMapName = envri === 'ICOS' ? 'Physical' : 'LM Topo gray';
+const defaultBaseMap: BaseMapId = envri === 'ICOS' ? 'physical' : 'lmTopoGray';
 const baseMapFilter: BaseMapFilter = envri === 'SITES'
 	? _ => true
 	: bm => bm.isWorldWide;
@@ -72,6 +73,24 @@ const includedStation = envri === 'ICOS'
 const excludedStation = envri === 'ICOS'
 	? olStyles.cirlcePointStyle('white', 'DarkRed', 4, 2)
 	: olStyles.cirlcePointStyle('white', 'DarkMagenta', 4, 2);
+
+export type OlMapSettings = {
+	sridsInMap: Dict<string, SupportedSRIDs>
+	defaultSRID: SupportedSRIDs
+	defaultBaseMap: BaseMapId
+	baseMapFilter: BaseMapFilter
+	iconStyles: Dict<Style>
+}
+const olMapSettings: OlMapSettings = {
+	sridsInMap,
+	defaultSRID,
+	defaultBaseMap,
+	baseMapFilter,
+	iconStyles: {
+		includedStation,
+		excludedStation
+	}
+};
 
 const portalHistoryStateProps: IndexedDBProps = {
 	dbName: 'portal',
@@ -90,16 +109,7 @@ const portalHistoryStateProps: IndexedDBProps = {
 export default {
 	envri,
 	portalHistoryStateProps,
-	olMapSettings: {
-		sridsInMap,
-		defaultSRID,
-		defaultBaseMapName,
-		baseMapFilter,
-		iconStyles: {
-			includedStation,
-			excludedStation
-		}
-	},
+	olMapSettings,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
 	mapGraph: {

@@ -10,7 +10,8 @@ import VectorSource from 'ol/source/Vector';
 import VectorLayer from 'ol/layer/Vector';
 import GeoJSON, { GeoJSONFeatureCollection } from 'ol/format/GeoJSON';
 import { Extent } from 'ol/extent';
-import Geometry from 'ol/geom/Geometry';
+import GeometryGeom from 'ol/geom/Geometry';
+import {Geometry} from "geojson";
 import Feature from 'ol/Feature';
 import { LayerWrapper, PointData } from "./OLWrapper";
 import Point from "ol/geom/Point";
@@ -21,15 +22,23 @@ import Map from 'ol/Map';
 import BaseLayer from "ol/layer/Base";
 import CircleStyle from "ol/style/Circle";
 import {Coordinate} from "ol/coordinate";
+import bboxClip from "@turf/bbox-clip";
+import {polygon} from "@turf/helpers";
+import {ParsedSparqlValue, ReducedStation} from "icos-cp-backend";
 
+export type Dict<Value = string, Keys extends string | number | symbol = string> = Record<Keys, Value>
 export type BaseMapFilter = (bm: BasemapOptions) => boolean
 
+export type LayerWrapperArgs = Pick<LayerWrapper, 'id' | 'layerType' | 'geoType' | 'label' | 'style' | 'data'>
+	& { visible: boolean, zIndex: number, interactive: boolean }
+
 export const getBaseMapLayers = (selectedBaseMap: string, layerFilter: BaseMapFilter = _ => true) => {
-	const getNewTileLayer = ({ name, isEsri, isWorldWide, source, esriServiceName }: BasemapOptions) => {
+	const getNewTileLayer = ({ id, label, isEsri, isWorldWide, source, esriServiceName }: BasemapOptions) => {
 		return new TileLayerExtended({
-			visible: selectedBaseMap === name,
+			visible: selectedBaseMap === id,
 			isEsri,
-			name,
+			id,
+			label,
 			isWorldWide,
 			esriServiceName,
 			layerType: 'baseMap',
@@ -51,7 +60,7 @@ export const getDefaultControls = (projection: Projection, controlFilter: (ctrl:
 	].filter(controlFilter);
 };
 
-export function geoJsonToFeatures(geoJsonData: GeoJSONFeatureCollection, epsgCodeForData: EpsgCode, projection: Projection): Feature<Geometry>[] {
+export function geoJsonToFeatures(geoJsonData: GeoJSONFeatureCollection, epsgCodeForData: EpsgCode, projection: Projection): Feature<GeometryGeom>[] {
 	return (new GeoJSON()).readFeatures(geoJsonData, {
 		dataProjection: epsgCodeForData,
 		featureProjection: projection
@@ -63,10 +72,10 @@ export function geoJsonToLayer(layer: LayerWrapper, epsgCodeForData: EpsgCode, p
 		features: geoJsonToFeatures(layer.data as GeoJSONFeatureCollection, epsgCodeForData, projection)
 	});
 
-	return sourceToLayer(source, layer, extent);
+	return sourceToLayer("geojson", source, layer, extent);
 }
 
-export function pointsToFeatures(points: PointData[]): Feature<Geometry>[] {
+export function pointsToFeatures(points: PointData[]): Feature<GeometryGeom>[] {
 	return points.map(p => new Feature({
 		...p.attributes,
 		geometry: new Point(p.coord, GeometryLayout.XY)
@@ -78,13 +87,14 @@ export function pointsToLayer(layer: LayerWrapper, extent: Extent): VectorLayerE
 		features: pointsToFeatures(layer.data as PointData[])
 	});
 
-	return sourceToLayer(source, layer, extent);
+	return sourceToLayer("point", source, layer, extent);
 }
 
-function sourceToLayer(source: VectorSource, layer: LayerWrapper, extent: Extent): VectorLayerExtended {
+function sourceToLayer(geoType: LayerWrapperArgs['geoType'], source: VectorSource, layer: LayerWrapper, extent: Extent): VectorLayerExtended {
 	const vectorLayer = new VectorLayerExtended({
 		id: layer.id,
-		name: layer.name,
+		geoType,
+		label: layer.label,
 		extent: extent,
 		source,
 		visible: layer.visible,
@@ -92,15 +102,31 @@ function sourceToLayer(source: VectorSource, layer: LayerWrapper, extent: Extent
 		...layer.options,
 		style: layer.style
 	});
+
 	vectorLayer.setProperties(layer.layerProps);
 
 	return vectorLayer;
 }
 
+export function getLayerWrapper({id, label, layerType, visible, geoType, data, style, zIndex, interactive}: LayerWrapperArgs): LayerWrapper {
+	return {
+		id,
+		layerType,
+		geoType,
+		label,
+		layerProps: { id },
+		visible,
+		data,
+		style,
+		options: { zIndex, interactive }
+	};
+}
+
 export interface VectorLayerOptions extends Options {
 	id?: string
-	name?: string
+	label?: string
 	layerType: 'baseMap' | 'toggle'
+	geoType: LayerWrapperArgs['geoType']
 }
 export class VectorLayerExtended extends VectorLayer {
 	constructor(props: VectorLayerOptions) {
@@ -132,4 +158,58 @@ export function isPointInRectangle(rectangles: Coordinate[][], point: Coordinate
 		point[0] >= rect[0][0] && point[0] <= rect[2][0] &&	// x
 		point[1] >= rect[0][1] && point[1] <= rect[2][1]	// y
 	);
+}
+
+export const createPointData = (station: ReducedStation): PointData => {
+	return {
+		coord: station.point as number[],
+		attributes: getProps(station)
+	};
+};
+
+export type SimpleGeometryJson = {
+	type: 'LineString' | 'Polygon'
+	coordinates: number[][]
+}
+export type GeometryCollectionJson = {
+	type: 'GeometryCollection'
+	geometries: SimpleGeometryJson[]
+}
+export const clipToBbox = (layer: ReducedStation) => {
+	const geoJson = layer.geoJson as unknown as GeometryCollectionJson | SimpleGeometryJson;
+
+	if (geoJson.type === "GeometryCollection") {
+		const originalCoords = geoJson.geometries.map(geom => geom.coordinates);
+		const clippedGeometries = originalCoords
+			.map((coords: any) => bboxClip(polygon(coords), [-180, 0, 180, 90]))
+			.map((f: any) => f.geometry);
+		geoJson.geometries = clippedGeometries;
+	}
+
+	return layer;
+};
+
+export function getFeatureCollection(stations: ReducedStation[]): GeoJSONFeatureCollection {
+	return {
+		type: "FeatureCollection",
+		features: stations.map(station => ({
+			id: station.id as string,
+			type: "Feature",
+			geometry: station.geoJson as unknown as Geometry,
+			properties: getProps(station)
+		}))
+	};
+}
+
+function getProps(station: ReducedStation){
+	return Object.keys(station).reduce<Dict<ParsedSparqlValue | boolean>>((acc, key) => {
+		const prop = key === 'geoJson'
+			? undefined
+			: station[key as keyof ReducedStation];
+
+		if (prop !== undefined && !Array.isArray(prop)){
+			acc[key] = prop;
+		}
+		return acc;
+	}, {});
 }

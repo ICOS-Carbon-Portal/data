@@ -2,7 +2,7 @@ import Map from 'ol/Map';
 import View, { ViewOptions } from 'ol/View';
 import Overlay from 'ol/Overlay';
 import Style from "ol/style/Style";
-import { BaseMapName, TileLayerExtended } from './baseMaps';
+import {BaseMapId, TileLayerExtended} from './baseMaps';
 import Projection from 'ol/proj/Projection';
 import { EpsgCode, getViewParams, SupportedSRIDs } from './projections';
 import BaseLayer, { Options } from 'ol/layer/Base';
@@ -10,29 +10,27 @@ import Popup from './Popup';
 import Control from 'ol/control/Control';
 import { LayerControl } from './LayerControl';
 import Copyright from './Copyright';
-import { Dict } from '../../../../common/main/types';
 import { Coordinate } from 'ol/coordinate';
-import { geoJsonToLayer, pointsToLayer } from './utils';
-import { CountriesTopo } from '../../backend';
+import {Dict, findLayers, geoJsonToLayer, pointsToLayer, VectorLayerExtended} from './utils';
 import { Extent } from 'ol/extent';
 
+export type GeoJsonFeatureCollection = GeoJSON.FeatureCollection<GeoJSON.GeometryObject, GeoJSON.GeoJsonProperties>
 
-export interface PersistedMapProps<BMN = BaseMapName> {
+export interface PersistedMapProps<BMN = BaseMapId> {
 	srid?: SupportedSRIDs
 	center?: Coordinate
 	zoom?: number
-	baseMapName?: BMN
+	baseMap?: BMN
 	visibleToggles?: string[]
 }
 
 type OurProps = {
-	mapRootelement: HTMLElement
+	mapRootElement: HTMLElement
 	projection: Projection
 	tileLayers: TileLayerExtended[]
 	controls?: Control[]
 	popupTemplate?: Popup
 	mapOptions: Dict<any>
-	updatePersistedMapProps?: (mapProps: PersistedMapProps) => void
 }
 export type MapOptions = typeof defaultMapOptions
 const defaultMapOptions = {
@@ -50,15 +48,14 @@ export type PointData = {
 	attributes: Dict<string | number | Date | boolean>
 }
 export type LayerOptions = Options | Dict<string | Date | boolean | number>
-export type UpdateMapCenterZoom = (center?: Coordinate, zoom?: number) => void
 export type LayerWrapper = {
 	id: string
 	layerType: 'baseMap' | 'toggle'
 	geoType: 'point' | 'geojson'
-	name: string
+	label: string
 	layerProps: Dict
 	visible: boolean
-	data: PointData[] | CountriesTopo
+	data: PointData[] | GeoJsonFeatureCollection
 	style: Style | Style[]
 	options: LayerOptions
 }
@@ -67,15 +64,17 @@ export default class OLWrapper {
 	public projection: Projection;
 	private readonly tileLayers: TileLayerExtended[];
 	private readonly controls: Control[];
+	private readonly layerCtrl?: LayerControl;
 	public readonly mapOptions: ViewOptions & MapOptions;
 	public readonly viewParams: ReturnType<typeof getViewParams>;
-	public map: Map;
+	public readonly map: Map;
 	public readonly popupOverlay?: Overlay;
 
-	constructor({ mapRootelement, projection, tileLayers = [], controls = [], popupTemplate, mapOptions, updatePersistedMapProps }: OurProps) {
+	constructor({ mapRootElement, projection, tileLayers = [], controls = [], popupTemplate, mapOptions }: OurProps) {
 		this.projection = projection;
 		this.tileLayers = tileLayers;
 		this.controls = controls;
+		this.layerCtrl = controls.find(ctrl => ctrl instanceof LayerControl) as LayerControl | undefined;
 		this.mapOptions = { ...defaultMapOptions, ...mapOptions };
 		this.viewParams = getViewParams(projection.getCode() as EpsgCode);
 
@@ -89,7 +88,6 @@ export default class OLWrapper {
 			})
 			: undefined;
 		const overlays = this.popupOverlay ? [this.popupOverlay] : [];
-
 		const baseMaps = tileLayers.filter(l => l.get('layerType') === 'baseMap');
 		const view = new View({
 			projection: this.projection,
@@ -99,7 +97,7 @@ export default class OLWrapper {
 		});
 
 		this.map = new Map({
-			target: mapRootelement,
+			target: mapRootElement,
 			view,
 			layers: baseMaps,
 			overlays,
@@ -108,13 +106,6 @@ export default class OLWrapper {
 
 		if (this.mapOptions.fitView) {
 			view.fit(this.viewParams.extent);
-		}
-
-		if (updatePersistedMapProps) {
-			this.map.on("moveend", e => {
-				const view = (e.target as Map).getView();
-				updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
-			});
 		}
 	}
 
@@ -125,11 +116,15 @@ export default class OLWrapper {
 	addGeoJson(layer: LayerWrapper, epsgCodeForData: EpsgCode, projection: Projection, extent: Extent) {
 		const vectorLayer = geoJsonToLayer(layer, epsgCodeForData, projection, extent);
 		this.map.addLayer(vectorLayer);
+
+		return vectorLayer;
 	}
 
 	addPoints(layer: LayerWrapper) {
 		const vectorLayer = pointsToLayer(layer, this.viewParams.extent);
 		this.map.addLayer(vectorLayer);
+
+		return vectorLayer;
 	}
 
 	updatePoints(layer: LayerWrapper, layerFilter: (layer: BaseLayer) => boolean) {
@@ -144,20 +139,30 @@ export default class OLWrapper {
 			.forEach(layer => this.map.removeLayer(layer));
 	}
 
-	addToggleLayers(toggleLayers: LayerWrapper[]) {
-		toggleLayers.forEach(tl => {
+	addToggleLayers(toggleLayers: LayerWrapper[]): VectorLayerExtended[] {
+		return toggleLayers.reduce<VectorLayerExtended[]>((acc, tl) => {
 			if (tl.geoType === 'point') {
 				this.removeLayers((layer: BaseLayer) => layer.get('id') === tl.id);
-				this.addPoints(tl);
+				acc.push(this.addPoints(tl));
 
 			} else if (tl.geoType === 'geojson') {
-				if (Array.isArray(tl.data)) {
-
-				} else {
-					this.addGeoJson(tl, 'EPSG:4326', this.projection, this.viewParams.extent);
-				}
+				this.removeLayers((layer: BaseLayer) => layer.get('id') === tl.id);
+				acc.push(this.addGeoJson(tl, 'EPSG:4326', this.projection, this.viewParams.extent));
 			}
-		});
+
+			return acc;
+		}, []);
+	}
+
+	get baseMaps(): BaseLayer[] {
+		return findLayers(this.map, (l) => l.get('layerType') === 'baseMap');
+	}
+
+	getToggleLayers(returnOnlyVisible: boolean): BaseLayer[] {
+		return findLayers(
+			this.map,
+			(l) => l.get('layerType') === 'toggle' && (!returnOnlyVisible || l.getVisible())
+		);
 	}
 
 	set attributionUpdater(copyright: Copyright) {

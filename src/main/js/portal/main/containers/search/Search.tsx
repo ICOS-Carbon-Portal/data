@@ -47,7 +47,7 @@ class Search extends Component<OurProps, OurState> {
 		this.events.addToTarget(window, "resize", this.handleResize);
 
 		this.persistedMapProps = getPersistedMapProps() ?? {
-			baseMapName: config.olMapSettings.defaultBaseMapName,
+			baseMap: config.olMapSettings.defaultBaseMap,
 			srid: config.olMapSettings.defaultSRID
 		};
 
@@ -93,10 +93,10 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
-		const { isStationFilterCtrlActive, baseMapName, visibleToggles } = this.persistedMapProps;
+		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
 		this.persistedMapProps = { 
 			isStationFilterCtrlActive,
-			baseMapName,
+			baseMap,
 			visibleToggles,
 			srid
 		};

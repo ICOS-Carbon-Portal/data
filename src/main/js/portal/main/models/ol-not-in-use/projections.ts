@@ -1,8 +1,9 @@
-import { Dict } from '../../../../common/main/types';
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4';
 import { addProjection, get, transform, fromLonLat } from 'ol/proj';
 import Projection from 'ol/proj/Projection';
+import {Dict} from "./utils";
+import {Coordinate} from "ol/coordinate";
 
 
 export const getProjection = (epsgCode: EpsgCode) => {
@@ -23,13 +24,14 @@ export const getProjection = (epsgCode: EpsgCode) => {
 	return get(epsgCode);
 };
 
-export const getTransformPointFn = (source: EpsgCode, destination: EpsgCode) =>
+export type TransformPointFn = (lonOrX: number, latOrY: number) => [number, number]
+export const getTransformPointFn = (source: EpsgCode, destination: EpsgCode): TransformPointFn =>
 	source === destination
 		? (lonOrX: number, latOrY: number) => [lonOrX, latOrY]
 		: (lonOrX: number, latOrY: number) => transform([lonOrX, latOrY], source, destination) as [number, number];
 
 export type EpsgCode = `EPSG:${SupportedSRIDs}`
-export const supportedSRIDs = {
+export const supportedSRIDs: Dict = {
 	"3006": "SWEREF99 TM",
 	"3035": "LAEA Europe",
 	"4326": "WGS 84",
@@ -54,6 +56,16 @@ const projDefinitions: Dict<string, EpsgCodeWithProj> = {
 	"EPSG:54009": "+proj=moll +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
 	"EPSG:54030": "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs",
 }
+
+export const roundCoord = (srid: SupportedSRIDs, coord?: Coordinate) => {
+	if (coord === undefined)
+		return;
+
+	if (srid === "4326")
+		return coord.map(d => +d.toFixed(5));
+
+	return coord.map(d => Math.round(d));
+};
 
 const getExtent = (bBox: BBox): [number, number, number, number] => [bBox[0][0], bBox[0][1], bBox[1][0], bBox[1][1]];
 const getRect = (bBox: BBox) => [

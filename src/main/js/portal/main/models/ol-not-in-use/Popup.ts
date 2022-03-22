@@ -1,5 +1,5 @@
 import Overlay from "ol/Overlay";
-import { Dict } from "../../../../common/main/types";
+import {Dict} from "./utils";
 
 export default class Popup {
 	private rootElement: HTMLElement;
@@ -11,7 +11,7 @@ export default class Popup {
 		this.rootElement = rootElement
 	}
 
-	reset() {
+	resetContent() {
 		this.rootElement.innerHTML = '';
 	}
 

@@ -59,11 +59,12 @@
   },
   "dependencies": {
     "deep-equal": "2.0.5",
-    "icos-cp-backend": "0.4.7",
+    "icos-cp-backend": "0.5.0",
     "icos-cp-copyright": "^0.0.2",
     "icos-cp-draggable": "0.0.2",
     "icos-cp-toaster": "0.6.4",
     "icos-cp-utils": "0.1.6",
+    "icos-cp-ol": "file:../../../../../npms/icos-cp-ol/",
     "linkify-it": "3.0.3",
     "ol": "^6.5.0",
     "proj4": "^2.7.5",

@@ -5,13 +5,14 @@ import Stamen from "ol/source/Stamen";
 import XYZ from 'ol/source/XYZ';
 
 
+export type BaseMapId = 'openStreetMap' | 'watercolor' | 'imagery' | 'topography' | 'ocean' | 'physical' | 'shadedRelief' | 'lmTopo' | 'lmTopoGray'
 export type BaseMapName = 'OpenStreetMap' | 'Watercolor' | 'Imagery' | 'Topography' | 'Ocean' | 'Physical' | 'Shaded relief' | 'LM Topo' | 'LM Topo gray'
 export interface BasemapOptions extends Options {
-	name: string
+	id: BaseMapId
+	label: BaseMapName
 	isEsri: boolean
 	isWorldWide: boolean
 	visibility?: boolean
-	defaultVisibility?: boolean
 	esriServiceName?: string
 	layerType?: 'baseMap' | 'toggle'
 }
@@ -26,7 +27,8 @@ const openLMApiKey = '70fed030-6e85-364e-9567-6e5579ef60bd';
 
 export const defaultBaseMaps: BasemapOptions[] = [
 	{
-		name: 'OpenStreetMap',
+		id: 'openStreetMap',
+		label: 'OpenStreetMap',
 		isEsri: false,
 		isWorldWide: true,
 		source: new OSM({
@@ -35,7 +37,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Watercolor',
+		id: 'watercolor',
+		label: 'Watercolor',
 		isEsri: false,
 		isWorldWide: true,
 		source: new Stamen({
@@ -43,7 +46,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Imagery',
+		id: 'imagery',
+		label: 'Imagery',
 		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'World_Imagery',
@@ -53,7 +57,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Topography',
+		id: 'topography',
+		label: 'Topography',
 		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'World_Topo_Map',
@@ -64,7 +69,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Ocean',
+		id: 'ocean',
+		label: 'Ocean',
 		isEsri: true,
 		isWorldWide: true,
 		esriServiceName: 'Ocean_Basemap',
@@ -74,7 +80,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Physical',
+		id: 'physical',
+		label: 'Physical',
 		isEsri: true,
 		isWorldWide: true,
 		source: new XYZ({
@@ -84,7 +91,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'Shaded relief',
+		id: 'shadedRelief',
+		label: 'Shaded relief',
 		isEsri: true,
 		isWorldWide: true,
 		source: new XYZ({
@@ -94,7 +102,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'LM Topo',
+		id: 'lmTopo',
+		label: 'LM Topo',
 		isEsri: false,
 		isWorldWide: false,
 		source: new XYZ({
@@ -102,7 +111,8 @@ export const defaultBaseMaps: BasemapOptions[] = [
 		})
 	},
 	{
-		name: 'LM Topo gray',
+		id: 'lmTopoGray',
+		label: 'LM Topo gray',
 		isEsri: false,
 		isWorldWide: false,
 		source: new XYZ({
