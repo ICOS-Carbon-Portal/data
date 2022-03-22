@@ -216,7 +216,7 @@ export const filters: IFilterCategories = {
 	ICOS: [
 		{panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'countryCode', 'submitter', 'samplingHeight']},
 		{panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format']},
-		{panelTitle: "Value types", filterList: ['variable', 'valType', 'quantityUnit', 'quantityKind']},
+		{panelTitle: "Value types", filterList: [ 'valType', 'variable','quantityUnit', 'quantityKind']},
 		{panelTitle: "Sampling date", filterList: ['dataTime']},
 		{panelTitle: "Submission date", filterList: ['submission']},
 		{panelTitle: "Misc", filterList: ['fileSize']}
