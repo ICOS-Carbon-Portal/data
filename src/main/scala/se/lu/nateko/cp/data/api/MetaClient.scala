@@ -183,7 +183,6 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			.mapAsync(1)(objStorageInfos)
 			.takeWhile(!_.isEmpty)
 			.mapConcat(identity)
-			.filter(dosi => !dosi.format.contains(CpMetaVocab.ObjectFormats.asciiWdcggTimeSer))
 	}
 
 	def getDobjStorageInfos(dobjs: Seq[URI]): Source[DobjStorageInfo, Any] = {

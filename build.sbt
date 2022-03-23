@@ -77,7 +77,7 @@ lazy val data = (project in file("."))
 			(netcdf / Test / test).value
 			(Test / test).value
 		},
-		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard"),
+		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
 		cpFrontendJarImports := Seq(
 			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")

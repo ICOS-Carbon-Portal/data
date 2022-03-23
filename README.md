@@ -30,7 +30,7 @@ When developing client code for data upload, one may wish to test data objects f
 `https://data.icos-cp.eu/tryingest?specUri=<obj spec uri>&varnames=<variable names>` (for spatial NetCDF data), where
 
 - `specUri` is URL-encoded URL of the planned object specification ([examples](https://meta.icos-cp.eu/ontologies/cpmeta/SimpleObjectSpec))
-- `nRows` is the number of rows in the time series (not needed for ATC and WDCGG files)
+- `nRows` is the number of rows in the time series (not needed for ATC files)
 - `varnames` is URL-encoded JSON array with names of the variables that are expected to be previewable
 
 With curl, the test can be performed for example as follows:

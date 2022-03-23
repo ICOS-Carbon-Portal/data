@@ -173,7 +173,6 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 		project: 'http://meta.icos-cp.eu/resources/projects/',
 		theme: 'http://meta.icos-cp.eu/resources/themes/',
 		station: [
-			{prefix: 'w', value: 'http://meta.icos-cp.eu/resources/wdcgg/station/'},
 			{prefix: 'i', value: 'http://meta.icos-cp.eu/resources/stations/'}
 		],
 		ecosystem: 'http://meta.icos-cp.eu/ontologies/cpmeta/',

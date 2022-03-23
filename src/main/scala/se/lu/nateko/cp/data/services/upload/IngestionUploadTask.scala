@@ -39,10 +39,6 @@ class IngestionUploadTask(
 
 		val ingestionSink = format.uri match {
 
-			case `asciiWdcggTimeSer` =>
-				import wdcgg.WdcggStreams.{wdcggParser, linesFromBinary}
-				makeIngestionSink(wdcggParser(defaultColumnFormats), linesFromBinary)
-
 			case `asciiAtcProdTimeSer` =>
 				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats, ingSpec.nRows))
 
