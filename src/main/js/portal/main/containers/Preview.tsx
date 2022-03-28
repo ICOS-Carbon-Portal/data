@@ -81,7 +81,7 @@ class Preview extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const { HelpSection, preview, cart } = this.props;
+		const { HelpSection, preview, cart, user } = this.props;
 		const { tableFormat, iframeSrc } = this.state;
 		const previewType = preview.type;
 		if (previewType === undefined) return null;
@@ -123,7 +123,7 @@ class Preview extends Component<OurProps, OurState> {
 										<UrlPresenters previewType={previewType} preview={preview} tableFormat={tableFormat} iframeSrc={iframeSrc} />
 									</div>
 
-									{preview.items &&
+									{preview.items && user.email &&
 									<div className="col-sm-2">
 										<CartBtn
 											style={{float: 'right', marginBottom: 10}}

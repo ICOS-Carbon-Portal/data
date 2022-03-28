@@ -12,7 +12,6 @@ import {addToCart, updateRoute} from "../../actions/common";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import bootstrapMetadata from '../../actions/metadata';
 import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from '../../models/ol/projections';
 import config from '../../config';
@@ -77,10 +76,6 @@ class Search extends Component<OurProps, OurState> {
 		}
 	}
 
-	handleViewMetadata(id: UrlStr) {
-		this.props.bootstrapMetadata(id);
-	}
-
 	handleFilterReset() {
 		delete this.persistedMapProps.drawFeatures;
 		this.props.filtersReset();
@@ -94,7 +89,7 @@ class Search extends Component<OurProps, OurState> {
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
 		const { isStationFilterCtrlActive, baseMapName, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		this.persistedMapProps = {
 			isStationFilterCtrlActive,
 			baseMapName,
 			visibleToggles,
@@ -143,14 +138,12 @@ class Search extends Component<OurProps, OurState> {
 					<Tabs tabName="resultTab" selectedTabId={tabs.resultTab} switchTab={switchTab}>
 						<SearchResultRegular
 							tabHeader="Search results"
-							handleViewMetadata={this.handleViewMetadata.bind(this)}
 							handlePreview={this.handlePreview.bind(this)}
 							handleAddToCart={this.handleAddToCart.bind(this)}
 							handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
 						/>
 						<SearchResultCompact
 							tabHeader="Compact view"
-							handleViewMetadata={this.handleViewMetadata.bind(this)}
 							handlePreview={this.handlePreview.bind(this)}
 						/>
 						<SearchResultMap
@@ -180,7 +173,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
-		bootstrapMetadata: (id: UrlStr) => dispatch(bootstrapMetadata(id)),
 		switchTab: (tabName: string, selectedTabId: number) => dispatch(switchTab(tabName, selectedTabId)),
 		getPersistedMapProps: () => getPersistedMapProps(),
 		savePersistedMapProps: (mapProps: PersistedMapPropsExtended) => savePersistedMapProps(mapProps),

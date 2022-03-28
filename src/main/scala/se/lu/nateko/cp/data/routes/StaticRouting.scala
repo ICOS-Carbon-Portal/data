@@ -29,7 +29,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
-		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
+		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri, envriConfigs)
 		case ("stats", envri) => views.html.StatsPage()(envri)
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)

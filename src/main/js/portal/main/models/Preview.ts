@@ -45,7 +45,7 @@ export default class Preview {
 	}
 
 	static deserialize(jsonPreview: PreviewSerialized) {
-		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item.dataobject, item.type, item.url));
+		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item.id, item.dataobject, item.type, item.url));
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
 
@@ -75,7 +75,7 @@ export default class Preview {
 
 			const item = cart.hasItem(id)
 				? cart.item(id)
-				: objInfo ? new CartItem(objInfo, options.type) : undefined;
+				: objInfo ? new CartItem(id, objInfo, options.type) : undefined;
 			return {options, item};
 		});
 
@@ -86,7 +86,7 @@ export default class Preview {
 			}
 		});
 
-		const items: CartItem[] = objects.map(o => o.item).filter(isDefined);
+		const items: PreviewItem[] = objects.map(o => o.item as PreviewItem).filter(isDefined);
 
 		if (options.type === config.TIMESERIES){
 			if (items.length){
@@ -94,7 +94,7 @@ export default class Preview {
 				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
 				if(xAxis){
 					const url = getNewTimeseriesUrl(items, xAxis);
-					previewItems = items.map(i => i.withUrl(url));
+					previewItems = items.map(i => i.withUrl(url) as PreviewItem);
 				}
 				return new Preview(previewItems, options.options, options.type);
 			}
@@ -121,7 +121,7 @@ export default class Preview {
 	}
 
 	withItemUrl(url: UrlStr){
-		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type);
+		return new Preview(this.items.map(i => i.withUrl(url) as PreviewItem), this.options, this.type);
 	}
 
 	get hasPids(){

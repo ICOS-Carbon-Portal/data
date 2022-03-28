@@ -15,7 +15,7 @@ import {
 	fetchJson,
 	saveCart, fetchStationPositions
 } from "../backend";
-import Cart, {restoreCarts} from "../models/Cart";
+import Cart, { restoreCart } from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
 import {Sha256Str, UrlStr} from "../backend/declarations";
@@ -142,14 +142,11 @@ export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Pr
 
 export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return getCart(user.email).then(({cartInSessionStorage, cartInRestheart}) => {
+		return getCart(user.email).then(restheartCart => {
+			const cart = restoreCart(restheartCart);
 
-				return cartInRestheart.then(restheartCart => {
-					const cart = restoreCarts(cartInSessionStorage, restheartCart);
-					return dispatch(updateCart(user.email, cart));
-				});
-			}
-		);
+			return dispatch(updateCart(user.email, cart));
+		});
 	};
 }
 
@@ -199,7 +196,7 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 
 			const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type
 
-			return new CartItem(objInfo, previewType);
+			return new CartItem(objInfo.dobj, objInfo, previewType);
 		});
 
 		if (newItems.length > 0) {
@@ -256,7 +253,7 @@ export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<
 						timeEnd: new Date(ot.timeEnd)
 					});
 				});
-				const cart = restoreCarts({cart: stateJSON.cart}, {cart: new Cart()});
+				const cart = restoreCart({cart: stateJSON.cart});
 				const state: StateSerialized = Object.assign({},
 					stateJSON,
 					{objectsTable, ts: undefined, user: {}}
