@@ -1,10 +1,7 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
 import { Dict } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
-import {BaseMapId, BaseMapName} from './models/ol/baseMaps';
-import { supportedSRIDsFriendlyNames, SupportedSRIDs } from './models/ol/projections';
-import { BaseMapFilter } from './models/ol/utils';
-import olStyles from './models/ol/styles';
+import {BaseMapId, BaseMapFilter, cirlcePointStyle, supportedSRIDsFriendlyNames, SupportedSRIDs} from 'icos-cp-ol';
 import {IndexedDBProps} from "./backend/IndexedDB";
 import Style from "ol/style/Style";
 
@@ -68,11 +65,11 @@ const baseMapFilter: BaseMapFilter = envri === 'SITES'
 	? _ => true
 	: bm => bm.isWorldWide;
 const includedStation = envri === 'ICOS'
-	? olStyles.cirlcePointStyle('tomato', 'white', 6, 2)
-	: olStyles.cirlcePointStyle('Magenta', 'white', 6, 2);
+	? cirlcePointStyle('tomato', 'white', 6, 2)
+	: cirlcePointStyle('Magenta', 'white', 6, 2);
 const excludedStation = envri === 'ICOS'
-	? olStyles.cirlcePointStyle('white', 'DarkRed', 4, 2)
-	: olStyles.cirlcePointStyle('white', 'DarkMagenta', 4, 2);
+	? cirlcePointStyle('white', 'DarkRed', 4, 2)
+	: cirlcePointStyle('white', 'DarkMagenta', 4, 2);
 
 export type OlMapSettings = {
 	sridsInMap: Dict<string, SupportedSRIDs>

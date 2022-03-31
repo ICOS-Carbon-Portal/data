@@ -20,7 +20,7 @@ import {emptyCompositeSpecTable, MapProps} from './State';
 import {Filter, Value} from './SpecTable';
 import {areEqual, drawRectBoxToCoords} from '../utils';
 import CompositeSpecTable from './CompositeSpecTable';
-import {isPointInRectangle} from "./ol/utils";
+import {isPointInRectangle} from "icos-cp-ol";
 
 export interface DrawFeature {
 	id: Symbol

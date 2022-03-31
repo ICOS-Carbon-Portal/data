@@ -22,7 +22,7 @@ import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
 import { Dict } from "../../../common/main/types";
-import {SupportedSRIDs} from "./ol/projections";
+import {SupportedSRIDs} from "icos-cp-ol";
 import {restoreSpatialFilterFromMapProps} from "../actions/main";
 import PortalHistoryState from "../backend/PortalHistoryState";
 

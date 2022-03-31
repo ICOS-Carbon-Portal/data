@@ -1,14 +1,7 @@
-// import OLWrapper, { MapOptions, PersistedMapProps, PointData, LayerWrapper } from 'icos-cp-ol';
-import {cpOlUtils, cpOlStyles, cpOlProjections, cpOlPopup, cpOlWrapper, cpOlBaseMaps,
-	cpOlProjectionControl, cpOlExportControl, cpOlLayerControl, cpOlCopyright} from "icos-cp-ol";
-// import { EpsgCode, getProjection, getTransformPointFn, SupportedSRIDs } from './ol/projections';
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
 import {MapProps, State, StationPos4326Lookup} from './State';
-// import {Popup} from 'icos-cp-ol';
-// import { LayerControl } from 'icos-cp-ol';
-// import Copyright, { getESRICopyRight } from 'icos-cp-ol';
 import { Dict } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
@@ -16,22 +9,36 @@ import {difference} from '../utils';
 import {Filter, Value} from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
-// import { ProjectionControl } from 'icos-cp-ol';
-// import { BaseMapId, esriBaseMapNames } from 'icos-cp-ol';
 import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import { CountriesTopo, getCountriesGeoJson } from '../backend';
-// import olStyles from './ol/styles';
 import { DrawFeature, StateStationUris, StationFilterControl } from './StationFilterControl';
+import Map from 'ol/Map';
+import {
+	BaseMapId, Copyright, countryBorderStyle, countryStyle,
+	EpsgCode, getLayerWrapper,
+	esriBaseMapNames,
+	getBaseMapLayers,
+	getDefaultControls,
+	getESRICopyRight, getLayerIcon, getLayerVisibility,
+	getProjection,
+	getTransformPointFn,
+	LayerControl, LayerWrapper, LayerWrapperArgs,
+	MapOptions,
+	OLWrapper,
+	PersistedMapProps, PointData,
+	Popup, ProjectionControl,
+	SupportedSRIDs
+} from "icos-cp-ol";
 
 
-export type UpdateMapSelectedSRID = (srid: cpOlProjections.SupportedSRIDs) => void
+export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
 export type TransformPointFn = (lon: number, lat: number) => number[]
-interface MapOptionsExpanded extends Partial<cpOlWrapper.MapOptions> {
+interface MapOptionsExpanded extends Partial<MapOptions> {
 	center?: Coordinate
 	hitTolerance: number
 }
-export interface PersistedMapPropsExtended<BMN = cpOlBaseMaps.BaseMapId> extends cpOlWrapper.PersistedMapProps<BMN> {
+export interface PersistedMapPropsExtended<BMN = BaseMapId> extends PersistedMapProps<BMN> {
 	drawFeatures?: DrawFeature[]
 	isStationFilterCtrlActive?: boolean
 	stateStationUris?: StateStationUris
@@ -57,10 +64,10 @@ const olMapSettings = config.olMapSettings;
 const isIncludedStation = 'isIncluded';
 
 export default class InitMap {
-	private olwrapper: OLWrapper;
+	public readonly olWrapper: OLWrapper;
 	private appEPSGCode: EpsgCode;
 	private mapOptions: MapOptionsExpanded;
-	private popup: cpOlPopup.default;
+	private popup: Popup;
 	private readonly layerControl: LayerControl;
 	private readonly stationFilterControl: StationFilterControl;
 	private pointTransformer: TransformPointFn;
@@ -86,9 +93,10 @@ export default class InitMap {
 		this.updatePersistedMapProps = updatePersistedMapProps;
 		this.updateStationFilterInState = updateStationFilterInState;
 
-		this.appEPSGCode = persistedMapProps.srid === undefined
-			? `EPSG:${olMapSettings.defaultSRID}` as EpsgCode
-			: `EPSG:${persistedMapProps.srid}` as EpsgCode;
+		const srid = persistedMapProps.srid === undefined
+			? olMapSettings.defaultSRID
+			: persistedMapProps.srid;
+		this.appEPSGCode = `EPSG:${srid}` as EpsgCode;
 		const projection = getProjection(this.appEPSGCode);
 		this.pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode);
 
@@ -108,7 +116,7 @@ export default class InitMap {
 		this.stationFilterControl = new StationFilterControl({
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
-			updatePersistedMapProps: this.updatePersistedMapProps,
+			updatePersistedMapProps,
 			updateStationFilterInState: this.updateStationFilterInState.bind(this)
 		});
 		controls.push(this.stationFilterControl);
@@ -116,8 +124,14 @@ export default class InitMap {
 		this.layerControl = new LayerControl({
 			element: document.getElementById('layerCtrl') ?? undefined,
 			selectedBaseMap,
-			updateCtrl: this.updateLayerCtrl,
-			updatePersistedMapProps
+			updateCtrl: this.updateLayerCtrl
+		});
+		this.layerControl.on('change', e => {
+			const layerCtrl = e.target as LayerControl;
+			updatePersistedMapProps({
+				baseMap: layerCtrl.selectedBaseMap,
+				visibleToggles: layerCtrl.visibleToggleLayerIds
+			});
 		});
 		controls.push(this.layerControl);
 
@@ -134,15 +148,21 @@ export default class InitMap {
 		};
 
 		// Create map component in OLWrapper. Anything that uses map must be handled after map creation
-		this.olwrapper = new OLWrapper(olProps);
+		this.olWrapper = new OLWrapper(olProps);
 		this.addInteractivity();
+
+		this.olWrapper.map.on("moveend", e => {
+			const map = e.target as Map;
+			const view = map.getView();
+			updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
+		});
 
 		const minWidth = 600;
 		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
 		if (width < minWidth) return;
 
 		getESRICopyRight(esriBaseMapNames).then(attributions => {
-			this.olwrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
+			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 		});
 	}
 
@@ -159,11 +179,11 @@ export default class InitMap {
 			layerType: 'baseMap',
 			geoType: 'geojson',
 			data: this.countriesTopo,
-			style: olStyles.countryStyle,
+			style: countryStyle,
 			zIndex: 100,
 			interactive: false
 		});
-		this.olwrapper.addGeoJson(countriesTopoBM, 'EPSG:4326', this.olWrapper.projection, this.olWrapper.viewParams.extent);
+		this.olWrapper.addGeoJson(countriesTopoBM, 'EPSG:4326', this.olWrapper.projection, this.olWrapper.viewParams.extent);
 
 		const countriesTopoToggle: LayerWrapper = this.getLayerWrapper({
 			id: countryBordersId,
@@ -171,11 +191,11 @@ export default class InitMap {
 			layerType: 'toggle',
 			geoType: 'geojson',
 			data: this.countriesTopo,
-			style: olStyles.countryBorderStyle,
+			style: countryBorderStyle,
 			zIndex: 100,
 			interactive: false
 		});
-		this.olwrapper.addToggleLayers([countriesTopoToggle]);
+		this.olWrapper.addToggleLayers([countriesTopoToggle]);
 	}
 
 	private toggleLayerVisibility(layerId: string) {
@@ -218,7 +238,7 @@ export default class InitMap {
 			interactive: true
 		});
 
-		this.olwrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
+		this.olWrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
 		this.layerControl.updateCtrl();
 	}
 
@@ -281,7 +301,7 @@ export default class InitMap {
 
 				baseMaps.forEach(bm => {
 					const row = document.createElement('div');
-					const id = self.createId('radio', bm.get('name'));
+					const id = self.createId('radio', bm.get('id'));
 
 					const radio = document.createElement('input');
 					radio.setAttribute('id', id);
@@ -291,12 +311,12 @@ export default class InitMap {
 					if (bm.getVisible()) {
 						radio.setAttribute('checked', 'true');
 					}
-					radio.addEventListener('change', () => self.toggleBaseMaps(bm.get('name')));
+					radio.addEventListener('change', () => self.toggleBaseMaps(bm.get('id')));
 					row.appendChild(radio);
 
 					const lbl = document.createElement('label');
 					lbl.setAttribute('for', id);
-					lbl.innerHTML = bm.get('name');
+					lbl.innerHTML = bm.get('label');
 					row.appendChild(lbl);
 
 					root.appendChild(row);
@@ -310,7 +330,7 @@ export default class InitMap {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
-					const id = self.createId('toggle', toggleLayer.get('name'));
+					const id = self.createId('toggle', toggleLayer.get('id'));
 
 					const toggle = document.createElement('input');
 					toggle.setAttribute('id', id);
@@ -340,7 +360,7 @@ export default class InitMap {
 					lbl.setAttribute('style', 'display:table-cell;');
 
 					const lblTxt = document.createElement('span');
-					lblTxt.innerHTML = toggleLayer.get('name');
+					lblTxt.innerHTML = toggleLayer.get('label');
 					lbl.appendChild(lblTxt);
 					row.appendChild(lbl);
 
@@ -366,8 +386,8 @@ export default class InitMap {
 	}
 
 	private addInteractivity() {
-		const map = this.olwrapper.map;
-		const popupOverlay = this.olwrapper.popupOverlay;
+		const map = this.olWrapper.map;
+		const popupOverlay = this.olWrapper.popupOverlay;
 		const popup = this.popup;
 
 		const select = new Select({
@@ -404,10 +424,6 @@ export default class InitMap {
 				popupOverlay.setPosition(undefined);
 			}
 		});
-	}
-
-	get olWrapper() {
-		return this.olwrapper;
 	}
 
 	get appDisplayEPSGCode() {

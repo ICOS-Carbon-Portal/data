@@ -14,7 +14,7 @@ import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import bootstrapMetadata from '../../actions/metadata';
 import SearchResultMap from './SearchResultMap';
-import { SupportedSRIDs } from '../../models/ol/projections';
+import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
@@ -87,6 +87,7 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
+		console.log({persistedMapProps});
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
 		this.props.savePersistedMapProps(this.persistedMapProps);
