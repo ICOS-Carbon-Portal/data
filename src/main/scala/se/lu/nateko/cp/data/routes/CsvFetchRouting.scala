@@ -36,7 +36,7 @@ class CsvFetchRouting(
 
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
-	val route: Route = (pathPrefix("csv") & get & extractEnvri){implicit envri =>
+	val route: Route = (pathPrefix("csv") & get) { extractEnvri { envri ?=>
 		requireShaHash{hash =>
 			user{uid =>
 				onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
@@ -46,7 +46,7 @@ class CsvFetchRouting(
 			} ~
 			complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for CSV downloads")
 		}
-	}
+	}}
 
 	private def fetchCsvRoute(hash: Sha256Sum, uid: UserId)(implicit envri: Envri): Route = getClientIp{ip =>
 		parameters("col".repeated, "offset".as[Long].optional, "limit".as[Int].optional){(cols, offsetOpt, limitOpt) =>

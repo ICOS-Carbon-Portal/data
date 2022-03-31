@@ -41,9 +41,15 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 
 	val zipEncoding = getRelative("zipEncoding")
 	val plainFile = getRelative("plainFileEncoding")
+	val ccby4 = getRelative("icosLicence")
 }
 
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
 
 	val sitesDelimitedHeaderCsvTimeSer = getRelative("delimitedHeaderCsv")
+	val ccby4 = getRelative("sitesLicence")
+}
+
+object CcMetaVocab extends MetaVocab(new URI("https://creativecommons.org/")){
+	val cc0 = getRelative("publicdomain/zero/1.0/")
 }

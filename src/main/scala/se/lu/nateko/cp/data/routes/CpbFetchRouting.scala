@@ -55,7 +55,7 @@ class CpbFetchRouting(
 			}
 		}
 	} ~ // end of the block to be removed
-	(pathPrefix("cpb") & extractEnvri){implicit envri =>
+	pathPrefix("cpb") { extractEnvri{envri ?=>
 		val controlOrigins = controlOriginsDir
 		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
 			userOpt{uidOpt =>
@@ -84,9 +84,9 @@ class CpbFetchRouting(
 			} ~
 			complete(StatusCodes.OK)
 		}
-	}
+	}}
 
-	private def controlOriginsDir(implicit envri: Envri): Directive1[String] = headerValueByType(Referer).tflatMap{
+	private def controlOriginsDir(using envri: Envri): Directive1[String] = headerValueByType(Referer).tflatMap{
 		case Tuple1(Referer(uri)) =>
 			val hostStr = uri.authority.host.toString
 			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
@@ -102,7 +102,7 @@ class CpbFetchRouting(
 		case null => reject
 	}
 
-	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(implicit envri: Envri): Route =
+	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(using Envri): Route =
 		entity(as[BinTableRequest]){ tableRequest =>
 			getClientIp{ip =>
 				val dlInfo = CpbDownloadInfo(

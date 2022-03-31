@@ -26,12 +26,12 @@ import se.lu.nateko.cp.meta.core.data.JsonSupport.ingestionMetadataExtractFormat
 import se.lu.nateko.cp.meta.core.data._
 import spray.json._
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
-import scala.concurrent.ExecutionContextExecutor
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, coreConf: MetaCoreConfig)(implicit mat: Materializer) {
 	import UploadRouting._
@@ -43,11 +43,11 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 
 	private val log = uploadService.log
 	private val extractEnvri = extractEnvriDirective
-	private val extractEnvriSoft = extractEnvriDirective
+	private val extractEnvriSoft = extractEnvriDirectiveSoft
 
 
 	private val upload: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
-		extractEnvri{implicit envri =>
+		extractEnvri{
 
 			val watchedFlow = Flow.apply[ByteString].watchTermination()(Keep.right).mapMaterializedValue{
 				_.onComplete{term =>
@@ -67,7 +67,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 						uploadService.unlockUpload(hashsum)
 				}
 
-			addAccessControlHeaders(envri){
+			addAccessControlHeaders{
 				onSuccess(resFuture)(res => res.makeReport match{
 					case Right(report) => complete(report)
 					case Left(errorMsg) =>
@@ -79,7 +79,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 	}
 
 	private val reIngest: Route = (requireShaHash & userRequired & extractRequest){ (hashsum, uid, req) =>
-		extractEnvri{implicit envri =>
+		extractEnvri{
 			req.discardEntityBytes()
 			onSuccess(uploadService.reingest(hashsum, uid)){_ =>
 				complete(StatusCodes.OK)
@@ -87,8 +87,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		}
 	}
 
-	private val tryIngest: Route = extractEnvri{implicit envri =>
-		addAccessControlHeaders(envri){
+	private val tryIngest: Route = extractEnvri{
+		addAccessControlHeaders{
 			parameters("specUri".as[Uri], "nRows".as[Int].?, "varnames".as[List[String]].?){(specUri, nRowsOpt, varnames) =>
 				extractRequest { req =>
 					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt, varnames).flatMap(req.entity.dataBytes.runWith)
@@ -103,8 +103,8 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 	}
 
 	private val uploadHttpOptions: Route =
-		extractEnvri{envri =>
-			addAccessControlHeaders(envri){
+		extractEnvri{
+			addAccessControlHeaders{
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.PUT),
 					`Access-Control-Allow-Headers`(`Content-Type`.name)
@@ -123,12 +123,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 
 	private def reportError(code: StatusCode, err: Throwable): Route = {
 		val plainError = complete(code -> err.getMessage)
-		extractEnvriSoft{envri =>
-			addAccessControlHeaders(envri){plainError}
+		extractEnvriSoft{
+			addAccessControlHeaders{plainError}
 		} ~ plainError
 	}
 
-	private def addAccessControlHeaders(envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
+	private def addAccessControlHeaders(using envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
 			respondWithHeaders( //allowing uploads from meta-hosted browser web apps
 				`Access-Control-Allow-Origin`(origin.value), `Access-Control-Allow-Credentials`(true)
@@ -153,7 +153,6 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 }
 
 object UploadRouting{
-
 	val Sha256Segment = Segment.flatMap(Sha256Sum.fromString(_).toOption)
 
 	val requireShaHash: Directive1[Sha256Sum] = path(Sha256Segment.?).flatMap{
@@ -161,17 +160,26 @@ object UploadRouting{
 		case None => complete(StatusCodes.BadRequest -> s"Expected base64Url- or hex-encoded SHA-256 hash")
 	}
 
-	def extractEnvriDirective(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
+	type EnvriDirective = (Envri ?=> Route) => Route
+
+	def envriDirective(akkaDir: Directive1[Envri]): EnvriDirective =
+		inner => akkaDir.apply(envri => inner(using envri))
+
+	def extractEnvriDirective(using EnvriConfigs) = envriDirective(extractEnvriAkkaDirective)
+
+	def extractEnvriAkkaDirective(using EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
 		Envri.infer(h) match{
 			case None => complete(StatusCodes.BadRequest -> s"Unexpected host $h, cannot find corresponding ENVRI")
 			case Some(envri) => provide(envri)
 		}
 	}
 
-	def extractEnvriDirectiveSoft(implicit configs: EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
-		Envri.infer(h) match{
-			case None => reject
-			case Some(envri) => provide(envri)
+	def extractEnvriDirectiveSoft(using EnvriConfigs) = envriDirective(
+		extractHost.flatMap{h =>
+			Envri.infer(h) match{
+				case None => reject
+				case Some(envri) => provide(envri)
+			}
 		}
-	}
+	)
 }

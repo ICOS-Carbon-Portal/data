@@ -1,28 +1,30 @@
 package se.lu.nateko.cp.data
 
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
-import scala.util.Success
-import scala.util.Failure
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.cpdata.BuildInfo
-import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
+import se.lu.nateko.cp.data.routes._
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
+import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
-import scala.concurrent.ExecutionContextExecutor
+import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
+
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration.DurationInt
+import scala.util.Failure
+import scala.util.Success
 
 object Main extends App {
 
@@ -49,7 +51,9 @@ object Main extends App {
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
 	val postgresLog = new PostgresDlLog(config.downloads, system.log)
-	val downloadRouting = new DownloadRouting(authRouting, uploadService, restHeart, portalLog, postgresLog, ConfigReader.metaCore)
+
+	val downloadService = new DownloadService(ConfigReader.metaCore, uploadService, restHeart)
+	val downloadRouting = new DownloadRouting(authRouting, downloadService, portalLog, postgresLog, ConfigReader.metaCore)
 	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
@@ -75,7 +79,7 @@ object Main extends App {
 
 	val route = handleExceptions(exceptionHandler){
 		pathEndOrSingleSlash{
-			downloadRouting.extractEnvri{envri =>
+			downloadRouting.extractEnvri{envri ?=>
 				val urlHash = if(envri == Envri.ICOS)
 					"""#{"filterCategories"%3A{"project"%3A["icos"]%2C"level"%3A[1%2C2]%2C"stationclass"%3A["ICOS"]}}"""
 				else ""

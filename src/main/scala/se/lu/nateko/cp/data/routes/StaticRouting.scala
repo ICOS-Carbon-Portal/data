@@ -1,24 +1,24 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import akka.http.scaladsl.model.StatusCodes
-import play.twirl.api.Html
 import akka.http.scaladsl.marshalling.Marshaller
-import akka.http.scaladsl.model.HttpCharset
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.marshalling.Marshalling.WithOpenCharset
+import akka.http.scaladsl.marshalling.ToResponseMarshaller
+import akka.http.scaladsl.model.ContentType
+import akka.http.scaladsl.model.HttpCharset
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.PathMatcher1
+import play.twirl.api.Html
+import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
+import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
 import scala.concurrent.Future
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.ContentType
-import akka.http.scaladsl.server.PathMatcher1
-import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
 
-class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envriConfigs: EnvriConfigs) {
+class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(using envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller
 	import UploadRouting.Sha256Segment
 	private type PageFactory = PartialFunction[(String, Envri), Html]
@@ -52,7 +52,7 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 			Neutral.tmap(_ => Tuple1(standardPageFactory))
 	}
 
-	private val extractEnvri = UploadRouting.extractEnvriDirective
+	private val extractEnvri = UploadRouting.extractEnvriAkkaDirective
 
 	val route = (pathPrefix(Segment) & extractEnvri){case prEnvri @ (proj, _) =>
 

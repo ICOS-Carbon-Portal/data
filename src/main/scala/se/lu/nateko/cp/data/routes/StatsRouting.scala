@@ -87,7 +87,7 @@ object StatsRouting {
 class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 	import StatsRouting._
 
-	implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
+	given envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
 	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(using conv: T => ToResponseMarshallable): Route = path(lastSegm){
@@ -120,7 +120,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 		}
 	}
 
-	private def setOriginHeader(implicit envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{ case Tuple1(originH) =>
+	private def setOriginHeader(using envri: Envri): Directive0 = headerValueByType(Origin).tflatMap{ case Tuple1(originH) =>
 		def isFromEnvri(origin: HttpOrigin): Boolean = envriConfs.get(envri).exists{ envriConf =>
 			val envriDomain = envriConf.dataHost.split(".").takeRight(2).mkString(".")
 			origin.host.toString.endsWith(envriDomain)
@@ -135,7 +135,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 	given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = DefaultJsonProtocol.immIndexedSeqFormat
 	given [T: RootJsonWriter]: ToEntityMarshaller[T] = SprayJsonSupport.sprayJsonMarshaller
 
-	val route: Route = (pathPrefix("stats" / "api") & extractEnvri){ implicit envri =>
+	val route: Route = pathPrefix("stats" / "api") { extractEnvri{
 		((get | post) & setOriginHeader){
 			get{
 				path("downloadCount"){
@@ -200,5 +200,5 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 				complete(StatusCodes.OK)
 			}
 		}
-	}
+	}}
 }

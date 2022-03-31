@@ -1,7 +1,5 @@
 package se.lu.nateko.cp.data.api
 
-import scala.concurrent.Future
-
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
@@ -9,29 +7,31 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport._
+import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql._
 import spray.json.JsBoolean
-import spray.json.JsValue
-import spray.json.JsNumber
 import spray.json.JsNull
-import java.net.URI
-import akka.stream.scaladsl.Source
-import scala.util.Try
-import scala.concurrent.ExecutionContextExecutor
+import spray.json.JsNumber
+import spray.json.JsValue
 
-class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, envriConfs: EnvriConfigs) {
+import java.net.URI
+import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.Future
+import scala.util.Try
+
+class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envriConfs: EnvriConfigs) {
 	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
 	import MetaClient._
@@ -56,16 +56,16 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		)
 	}
 
-	private def hostOpt(implicit envri: Envri): Option[String] =
+	private def hostOpt(using envri: Envri): Option[String] =
 		envriConfs.get(envri).map(_.metaHost)
 
-	def lookupPackage(hash: Sha256Sum)(implicit envri: Envri): Future[StaticObject] =
+	def lookupPackage(hash: Sha256Sum)(using Envri): Future[StaticObject] =
 		lookupItem[StaticObject](hash, objectPathPrefix)
 
-	def lookupCollection(hash: Sha256Sum)(implicit envri: Envri): Future[StaticCollection] =
+	def lookupCollection(hash: Sha256Sum)(using Envri): Future[StaticCollection] =
 		lookupItem[StaticCollection](hash, collectionPathPrefix)
 
-	private def lookupItem[T](hash: Sha256Sum, pathPrefix: String)(implicit envri: Envri, unm: FromEntityUnmarshaller[T]): Future[T] = {
+	private def lookupItem[T](hash: Sha256Sum, pathPrefix: String)(using Envri, FromEntityUnmarshaller[T]): Future[T] = {
 		val url = baseUrl + pathPrefix + hash.id
 		get(url, hostOpt).flatMap(
 			extractResult(Unmarshal(_).to[T]){
@@ -74,7 +74,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		)
 	}
 
-	def lookupObjSpec(spec: Uri)(implicit envri: Envri): Future[DataObjectSpec] = {
+	def lookupObjSpec(spec: Uri)(using Envri): Future[DataObjectSpec] = {
 		val baseUri = Uri(baseUrl)
 		val specUri = spec.withAuthority(baseUri.authority).withScheme(baseUri.scheme)
 
@@ -83,7 +83,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 		}
 	}
 
-	def userIsAllowedUpload(obj: StaticObject, user: UserId)(implicit envri: Envri): Future[Unit] = {
+	def userIsAllowedUpload(obj: StaticObject, user: UserId)(using Envri): Future[Unit] = {
 		val submitter = obj.submission.submitter
 		val submitterUri = submitter.self.uri.toString
 		val uri = Uri(s"$baseUrl$uploadApiPath/permissions").withQuery(
@@ -110,7 +110,7 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 	def registerEtcUpload(meta: EtcUploadMetadata): Future[Done] = {
 		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.etcUploatMetaFormat
 		val url = Uri(s"$baseUrl$uploadApiPath/etc")
-		post(url, meta, hostOpt(Envri.ICOS)).flatMap(extractIfSuccess{entity =>
+		post(url, meta, hostOpt(using Envri.ICOS)).flatMap(extractIfSuccess{entity =>
 			entity.discardBytes()
 			done
 		})
@@ -150,6 +150,26 @@ class MetaClient(config: MetaServiceConfig)(implicit val system: ActorSystem, en
 			}
 		}
 	}
+
+	def listLicences(objHashes: Seq[Sha256Sum])(using envri: Envri): Future[Seq[URI]] = envriConfs.get(envri)
+		.fold(Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))){conf =>
+
+			val objUris = objHashes.map(hash => conf.dataItemPrefix.toString + hash.base64Url)
+
+			val query = s"""select distinct ?lic where{
+			|	values ?dobj {
+			|		${objUris.mkString("<", ">\n\t\t<", ">")}
+			|	}
+			|	?dobj <http://purl.org/dc/terms/license> ?lic
+			|}""".stripMargin
+
+			sparql.select(query).map{res =>
+				res.results.bindings.flatMap(_.get("lic")).collect{
+					case BoundUri(uri) => uri
+				}
+			}
+		}
+
 
 	private def extractIfSuccess[T](extractor: ResponseEntity => Future[T]) = extractResult(extractor)(PartialFunction.empty)
 

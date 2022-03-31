@@ -22,16 +22,17 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-class AuthRouting(val conf: AuthConfig)(implicit configs: EnvriConfigs) {
+class AuthRouting(val conf: AuthConfig)(using EnvriConfigs) {
 
 	private val extractEnvri = UploadRouting.extractEnvriDirective
 
-	private def authConfig(implicit envri: Envri) = conf.pub(envri)
-	private def authenticator(implicit envri: Envri) = Authenticator(authConfig).get
+	private def authConfig(using envri: Envri) = conf.pub(envri)
+	private def authenticator(using envri: Envri) = Authenticator(authConfig).get
 
 	private val authCookieNames = conf.pub.values.map(_.authCookieName).toSet
 
-	val userTry: Directive1[Try[UserId]] = extractEnvri.flatMap{implicit envri =>
+	val userTry: Directive1[Try[UserId]] = UploadRouting.extractEnvriAkkaDirective.flatMap{envri =>
+		given Envri = envri
 		cookie(authConfig.authCookieName).map{cookie =>
 			for(
 				signedToken <- CookieToToken.recoverToken(cookie.value);
@@ -76,13 +77,13 @@ class AuthRouting(val conf: AuthConfig)(implicit configs: EnvriConfigs) {
 		JsObject("email" -> email)
 	}
 
-	val logout: Route = (get & path("logout") & extractEnvri){implicit envri =>
+	val logout: Route = (get & path("logout")){ extractEnvri{
 		val cookie = HttpCookie(authConfig.authCookieName, "deleted")
 			.withDomain(authConfig.authCookieDomain)
 			.withSameSite(SameSite.Strict)
 			.withMaxAge(1)
 		setCookie(cookie){complete(StatusCodes.OK)}
-	}
+	}}
 
 	def anonymizeCpUser(uid: UserId): DownloadEventInfo.AnonId =
 		DownloadEventInfo.anonymizeCpUser(uid, conf.userSecretSalt)

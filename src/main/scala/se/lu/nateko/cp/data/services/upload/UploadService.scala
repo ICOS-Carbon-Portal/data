@@ -1,14 +1,5 @@
 package se.lu.nateko.cp.data.services.upload
 
-import java.io.FileNotFoundException
-import java.nio.file.Files
-import java.nio.file.Paths
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-
 import akka.Done
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri
@@ -18,18 +9,28 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
+import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.UploadConfig
-import se.lu.nateko.cp.data.api.{ CpMetaVocab, MetaClient }
 import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
+import se.lu.nateko.cp.data.api.CpDataParsingException
+import se.lu.nateko.cp.data.api.CpMetaVocab
+import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
-import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data._
-import Envri.Envri
-import java.net.URI
-import se.lu.nateko.cp.data.api.CpDataParsingException
+
 import java.io.File
+import java.io.FileNotFoundException
+import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+
+import Envri.Envri
 
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
