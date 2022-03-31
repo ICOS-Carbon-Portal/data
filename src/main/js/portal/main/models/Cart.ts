@@ -27,16 +27,6 @@ export default class Cart {
 		return new Cart(this._name, this._items.filter(item => !ids.includes(item.dobj)));
 	}
 
-	withItemUrl(id: string, url: string){
-		const items = this._items.map(item => {
-			return item.dobj === id
-				? item.withUrl(url)
-				: item;
-		});
-
-		return new Cart(this._name, items);
-	}
-
 	get ts(){
 		return this._ts;
 	}
@@ -82,31 +72,11 @@ export default class Cart {
 	}
 }
 
-export const restoreCarts = (cartInSessionStorage: {cart: any}, cartInRestheart: {cart: any}) => {
-	const sessionStorageTs = cartInSessionStorage.cart && cartInSessionStorage.cart._ts
-		? parseInt(cartInSessionStorage.cart._ts)
-		: 0;
-	const restheartTs = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._ts
-		? parseInt(cartInRestheart.cart._ts)
-		: 0;
+export const restoreCart = (jsonCart: { cart: any }) => {
+	const name: string = jsonCart.cart._name;
+	const items: CartItem[] = jsonCart.cart._items && jsonCart.cart._items.map((i: {_id: any}) => new CartItem(i._id))
 
-	const newName: string = restheartTs > sessionStorageTs
-		? cartInRestheart.cart._name
-		: cartInSessionStorage.cart._name;
-
-	const sessionStorageItems = cartInSessionStorage.cart && cartInSessionStorage.cart._items
-		? cartInSessionStorage.cart._items
-		: [];
-	const restheartItems = cartInRestheart && cartInRestheart.cart && cartInRestheart.cart._items
-		? cartInRestheart.cart._items.filter((item: any) => !Array.isArray(item))
-		: [];
-
-	const newItems = restheartItems.concat(sessionStorageItems).filter((item: any, i: number, items: any[]) => {
-		return items.findIndex(itm => itm._id === item._id) === i;
-	});
-	const newCartItems: CartItem[] = newItems.map((item: any) => new CartItem(item._dataobject, item._type, item._url));
-
-	return new Cart(newName, newCartItems);
+	return new Cart(name, items);
 };
 
 const emptyJsonCart = new Cart().serialize;

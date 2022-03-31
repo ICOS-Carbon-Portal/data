@@ -2,7 +2,6 @@ import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import stateUtils, {MapProps, Profile, Route, StationPos4326Lookup, WhoAmI} from "../models/State";
 import {getProfile, getWhoIam, logOut} from "../backend";
-import bootstrapMetadata from "./metadata";
 import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
 import bootstrapSearch from "./search";
@@ -67,7 +66,8 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 				break;
 
 			case 'metadata':
-				dispatch(bootstrapMetadata(id));
+				if (id)
+					window.location.href = id;
 				break;
 
 			default:

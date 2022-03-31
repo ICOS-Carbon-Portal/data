@@ -77,7 +77,7 @@ lazy val data = (project in file("."))
 			(netcdf / Test / test).value
 			(Test / test).value
 		},
-		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "wdcgg", "dashboard"),
+		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
 		cpFrontendJarImports := Seq(
 			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")
@@ -98,7 +98,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.5" cross CrossVersion.for3Use2_13,
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.8" cross CrossVersion.for3Use2_13 excludeAll(
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.9" cross CrossVersion.for3Use2_13 excludeAll(
 				ExclusionRule.everything
 			),
 			"org.postgresql"      % "postgresql"                         % "42.2.12",

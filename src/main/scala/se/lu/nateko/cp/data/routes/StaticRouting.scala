@@ -25,12 +25,11 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(implicit val envr
 	private val NetCdfProj = "netcdf"
 	private val MapGraphProj = "map-graph"
 
-	val projects = Set(NetCdfProj, "portal", "wdcgg", "dygraph-light", "stats", "etcfacade", MapGraphProj, "dashboard", "lastDownloads")
+	val projects = Set(NetCdfProj, "portal", "dygraph-light", "stats", "etcfacade", MapGraphProj, "dashboard", "lastDownloads")
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
-		case ("wdcgg", _) => views.html.WdcggPage()
-		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri)
+		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri, envriConfigs)
 		case ("stats", envri) => views.html.StatsPage()(envri)
 		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)

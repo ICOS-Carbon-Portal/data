@@ -3,7 +3,7 @@
 displayUsage() {
 	echo "Usage: npm.sh <project> <operation>"
 	echo ""
-	echo "project is one of 'dashboard', 'dygraph-light', 'map-graph', 'netcdf', 'portal', 'stats' and 'wdcgg'."
+	echo "project is one of 'dashboard', 'dygraph-light', 'map-graph', 'netcdf', 'portal', and 'stats'."
 	echo ""
 	echo "operation is one of 'update', 'build' and 'install'."
 	echo "update: Update installed npm packages and attempt to fix security problems."
@@ -35,7 +35,7 @@ build() {
 	echo $"Building production version of $PROJECT"
 	cd $PROJECT
 	case "$PROJECT" in
-		dashboard|netcdf|stats|wdcgg)
+		dashboard|netcdf|stats)
 			gulp publish;;
 		*)
 			./publish.sh;;
@@ -52,7 +52,7 @@ if [[ -z "$PROJECT" || -z "$OPERATION" ]]; then
 fi
 
 case "$PROJECT" in
-	dashboard|dygraph-light|map-graph|netcdf|portal|stats|wdcgg)
+	dashboard|dygraph-light|map-graph|netcdf|portal|stats)
 		case "$OPERATION" in
 			update|build|install)
 				cd "$(dirname "$0")"

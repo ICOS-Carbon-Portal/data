@@ -188,10 +188,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		spec.dataLevel match{
 			case 1 | 2 | 3 if (spec.datasetSpec.isDefined) =>
 				ingestionTaskFut(Right(dobj)).map{ingestionTask =>
-					(
-						if(spec.format.uri == CpMetaVocab.ObjectFormats.asciiWdcggTimeSer) mandatoryTasks(dobj)
-						else defaultTasks(dobj)
-					) :+ ingestionTask
+					defaultTasks(dobj) :+ ingestionTask
 				}
 			case 0 | 1 | 2 | 3 => Future.successful(defaultTasks(dobj))
 
