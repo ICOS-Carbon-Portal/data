@@ -180,6 +180,7 @@ class DownloadRouting(
 			formFields("fileName", "ids".as[IndexedSeq[Sha256Sum]], "licenceOk".as[Boolean] ? false){(fileName, hashes, licenceOk) =>
 
 				batchLicenceCheck(hashes, _ => licenceOk){licUris =>
+					//TODO Make the licence-accept redirect convey the list of licences
 					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
 					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
 				}{
