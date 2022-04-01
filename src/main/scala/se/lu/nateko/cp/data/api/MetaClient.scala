@@ -11,6 +11,7 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.cpauth.core.UserId
+import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -153,12 +154,11 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 
 	def listLicences(objHashes: Seq[Sha256Sum])(using envri: Envri): Future[Seq[URI]] = envriConfs.get(envri)
 		.fold(Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))){conf =>
-
-			val objUris = objHashes.map(hash => conf.dataItemPrefix.toString + hash.base64Url)
+			given EnvriConfig = conf
 
 			val query = s"""select distinct ?lic where{
 			|	values ?dobj {
-			|		${objUris.mkString("<", ">\n\t\t<", ">")}
+			|		${objHashes.map(CpMetaVocab.getDataObject).mkString("<", ">\n\t\t<", ">")}
 			|	}
 			|	?dobj <http://purl.org/dc/terms/license> ?lic
 			|}""".stripMargin
