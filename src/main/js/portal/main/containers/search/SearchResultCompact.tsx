@@ -4,7 +4,7 @@ import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {getAllFilteredDataObjects, requestStep, toggleSort} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
-import {addToCart, removeFromCart, setMetadataItem} from "../../actions/common";
+import {addToCart, removeFromCart} from "../../actions/common";
 import config, {timezone} from "../../config";
 import {Paging} from "../../components/buttons/Paging";
 import SearchResultCompactRow from "../../components/searchResult/SearchResultCompactRow";
@@ -131,7 +131,6 @@ function stateToProps(state: State){
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),

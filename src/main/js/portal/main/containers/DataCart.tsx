@@ -6,7 +6,7 @@ import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
-import {removeFromCart, setMetadataItem, updateRoute} from "../actions/common";
+import {removeFromCart, updateRoute} from "../actions/common";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -116,7 +116,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		setCartName: (newName: string) => dispatch(setCartName(newName)),
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 	};
 }

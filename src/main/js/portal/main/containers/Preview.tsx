@@ -10,7 +10,7 @@ import {State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import CartItem, { addingToCartProhibition } from "../models/CartItem";
 import {PortalDispatch} from "../store";
-import {addToCart, removeFromCart, setMetadataItem, setPreviewUrl} from "../actions/common";
+import {addToCart, removeFromCart, setPreviewUrl} from "../actions/common";
 import {storeTsPreviewSetting} from "../actions/preview";
 import { isDefined, pick } from "../utils";
 import commonConfig from '../../../common/main/config';
@@ -72,10 +72,6 @@ class Preview extends Component<OurProps, OurState> {
 		this.props.removeFromCart(objInfo);
 	}
 
-	handleViewMetadata(id: UrlStr) {
-		this.props.setMetadataItem(id);
-	}
-
 	componentWillUnmount(){
 		this.events.clear();
 	}
@@ -112,7 +108,7 @@ class Preview extends Component<OurProps, OurState> {
 										<span style={{marginRight: 10}}>
 											{item.itemName}
 										</span>
-										<span onClick={this.handleViewMetadata.bind(this, item.dobj)} style={{cursor: 'pointer'}} className="fas fa-info-circle fs-5" />
+										<a href={item.dobj}><span className="fas fa-info-circle fs-5 text-dark" /></a>
 									</span>
 								))}
 							</div>
@@ -269,7 +265,6 @@ function dispatchToProps(dispatch: PortalDispatch){
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		setMetadataItem: (id: UrlStr) => dispatch(setMetadataItem(id)),
 	};
 }
 
