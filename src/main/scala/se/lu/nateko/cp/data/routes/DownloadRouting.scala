@@ -91,16 +91,15 @@ class DownloadRouting(
 	}
 
 	private def singleObjRoute(dobj: DataObject, uid: Option[UserId])(using Envri): Route = getClientIp{ip =>
-		val file = uploadService.getFile(dobj)
-
-		if(file.exists){
+		downloadService.inaccessibilityReason(dobj).fold{
 			val contentType = getContentType(dobj.fileName)
 			logDownload(dobj, ip, uid)
 			respondWithAttachment(dobj.fileName){
-				getFromFile(file, contentType)
+				getFromFile(uploadService.getFile(dobj), contentType)
 			}
+		}{
+			problem => complete(StatusCodes.NotFound -> problem)
 		}
-		else complete(StatusCodes.NotFound -> "Contents of this data object are not found on the server.")
 	}
 
 	private val collectionDownload: Route = requireShaHash{ hashsum =>

@@ -21,12 +21,14 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 
 import java.net.URI
+import java.time.Instant
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -100,6 +102,9 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		}
 	}
 
+	def inaccessibilityReason(dobj: StaticObject)(using Envri): Option[String] =
+		new FileDestiny(dobj, Set.empty).omissionReason
+
 	private def checkLicenceAcceptance(lic: URI, uidOpt: Option[UserId])(using envri: Envri): Future[Boolean] = uidOpt
 		.fold(Future.successful(false)){uid =>
 			mainLicences.get(envri) match{
@@ -156,21 +161,33 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		Source(lines.map(ByteString.apply))
 	}
 
-	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(implicit envri: Envri) extends Destiny{
-
-		val omissionReason: Option[String] = obj.accessUrl match {
-			case None =>
-				Some("Data object is not distributed by Carbon Portal as open data")
-
-			case Some(url) =>
-				if(url.getHost != envriConf.dataHost)
-					Some("Data object is distributed by third parties")
-
-				else if(!upload.getFile(obj).exists)
-					Some("File is missing on the server")
-				else
-					None
+	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(using envri: Envri) extends Destiny{
+		//TODO After next update of meta-core, simplify the following block as obj.size
+		private[this] val size = obj match{
+			case dobj: DataObject => dobj.size
+			case dobj: DocObject => dobj.size
 		}
+		val omissionReason: Option[String] =
+			if(size.isEmpty)
+				Some("Uploading of this object has not been completed.")
+
+			else if(obj.submission.stop.exists(_.compareTo(Instant.now()) > 0))
+				Some(s"Data object is under moratorium, will be available at ${obj.submission.stop.getOrElse("?")}")
+
+			else obj.accessUrl match {
+
+				case None =>
+					Some(s"Data object is not distributed by the Data Portal due to $envri policies")
+
+				case Some(url) =>
+					if(url.getHost != envriConf.dataHost)
+						Some("Data object is distributed by third parties")
+
+					else if(!upload.getFile(obj).exists)
+						Some("File with object contents is missing on the server")
+					else
+						None
+			}
 
 		val fileName = if(omissionReason.isDefined) obj.fileName else {
 
