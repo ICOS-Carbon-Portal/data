@@ -1,10 +1,12 @@
 @import akka.http.scaladsl.model.Uri
 @import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 @import se.lu.nateko.cp.meta.core.data.Envri
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
+@import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 @import se.lu.nateko.cp.meta.core.HandleProxiesConfig
 @import se.lu.nateko.cp.data.routes.LicenceRouting._
 
-@(profile: LicenceProfile, loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri.Envri)
+@(profile: LicenceProfile, loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri, envriConfigs: EnvriConfigs)
 
 @template{
 	<style>@LicenceStyle()</style>
@@ -163,7 +165,8 @@
 }
 
 @template = @{
-	if(envri == Envri.SITES) SitesPage(pageTitle) _ else CpCommonPage(pageTitle) _
+	if(envri == Envri.SITES) SitesPage(pageTitle, authHost = conf.authHost, dataHost = conf.dataHost) _
+	else CpCommonPage(pageTitle, authHost = conf.authHost, dataHost = conf.dataHost) _
 }
 
 @pageTitle = @{
@@ -173,3 +176,5 @@
 @name = @{
 	envri.toString
 }
+
+@conf = @{envriConfigs(envri)}

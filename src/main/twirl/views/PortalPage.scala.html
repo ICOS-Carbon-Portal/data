@@ -1,9 +1,8 @@
-@import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 @import se.lu.nateko.cp.meta.core.data.Envri
 @import se.lu.nateko.cp.meta.core.data.Envri.Envri
-@import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-@(config: PublicAuthConfig)(implicit envri: Envri, envriConfigs: EnvriConfigs)
+@()(implicit envri: Envri, conf: EnvriConfig)
 @template{
 	<link rel="stylesheet" href="../portal/css/portal.css">
 	<style type="text/css">
@@ -21,6 +20,6 @@
 @bootstrapVersion = @{Some(5)}
 
 @template = @{
-if(envri == Envri.SITES) SitesPage("SITES data search", bootstrapVersion = bootstrapVersion, bootstrapJavascript = false, authHost = Some(config.authHost), dataHost = Some(envriConfigs(envri).dataHost)) _
-else CpCommonPage("Carbon Portal's data search", cpauthHostOpt = Some(config.authHost), bootstrapVersion = bootstrapVersion, dataHost = Some(envriConfigs(envri).dataHost)) _
+if(envri == Envri.SITES) SitesPage("SITES data search", bootstrapVersion = bootstrapVersion, bootstrapJavascript = false, authHost = conf.authHost, dataHost = conf.dataHost) _
+else CpCommonPage("Carbon Portal's data search", authHost = conf.authHost, bootstrapVersion = bootstrapVersion, dataHost = conf.dataHost) _
 }

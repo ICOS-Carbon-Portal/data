@@ -98,7 +98,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.5" cross CrossVersion.for3Use2_13,
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.10" cross CrossVersion.for3Use2_13 excludeAll(
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.4.11" cross CrossVersion.for3Use2_13 excludeAll(
 				ExclusionRule.everything
 			),
 			"org.postgresql"      % "postgresql"                         % "42.2.12",

@@ -18,7 +18,7 @@ import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
 
 import scala.concurrent.Future
 
-class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(using envriConfigs: EnvriConfigs) {
+class StaticRouting()(using envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller
 	import UploadRouting.Sha256Segment
 	private type PageFactory = PartialFunction[(String, Envri), Html]
@@ -29,9 +29,9 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(using envriConfig
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
-		case ("portal", envri) => views.html.PortalPage(authConfigs(envri))(envri, envriConfigs)
-		case ("stats", envri) => views.html.StatsPage()(envri)
-		case ("etcfacade", envri) => views.html.EtcFacadePage(authConfigs(envri))
+		case ("portal", envri) => views.html.PortalPage()(envri, envriConfigs(envri))
+		case ("stats", envri) => views.html.StatsPage()(envri, envriConfigs(envri))
+		case ("etcfacade", envri) => views.html.EtcFacadePage()(envri, envriConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri)
 		case ("dashboard", _) => views.html.Dashboard()
 	}
@@ -40,9 +40,9 @@ class StaticRouting(authConfigs: Map[Envri, PublicAuthConfig])(using envriConfig
 		case NetCdfProj =>
 			(Slash ~ Sha256Segment).?.tmap(x => x._1 match {
 				case Some(_) =>
-					Tuple1{case (NetCdfProj, _) => views.html.NetCDFPage(true)}
+					Tuple1{case (NetCdfProj, envri) => views.html.NetCDFPage(true)(envri, envriConfigs(envri))}
 				case None =>
-					Tuple1{case (NetCdfProj, _) => views.html.NetCDFPage(false)}
+					Tuple1{case (NetCdfProj, envri) => views.html.NetCDFPage(false)(envri, envriConfigs(envri))}
 			})
 		case MapGraphProj =>
 			(Slash ~ Sha256Segment).?.tmap(_ =>

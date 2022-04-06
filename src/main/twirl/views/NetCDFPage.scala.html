@@ -1,10 +1,13 @@
-@(iframe: Boolean)
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
+
+@(iframe: Boolean)(implicit envri: Envri, conf: EnvriConfig)
 @if(iframe){
 	@BarePage(pageTitle){
 		@pageHeader
 	}(pageBody)
 } else {
-	@CpCommonPage(pageTitle, bootstrapVersion = Some(5))(pageHeader)(pageBody)
+	@CpCommonPage(pageTitle, bootstrapVersion = Some(5), authHost = conf.authHost, dataHost = conf.dataHost)(pageHeader)(pageBody)
 }
 
 @pageTitle = @{"Carbon Portal's NetCDF Viewer"}

@@ -1,7 +1,8 @@
 @import se.lu.nateko.cp.meta.core.data.Envri
 @import se.lu.nateko.cp.meta.core.data.Envri.Envri
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-@()(implicit envri: Envri)
+@()(implicit envri: Envri, conf: EnvriConfig)
 @template{
 	<script type="text/javascript" src="//static.icos-cp.eu/constant/dygraph/2.0.0/dygraph.min.js"></script>
 
@@ -23,6 +24,6 @@
 @bootstrapVersion = @{Some(5)}
 
 @template = @{
-	if(envri == Envri.SITES) SitesPage("SITES Statistics", bootstrapVersion = bootstrapVersion) _
-	else CpCommonPage("Carbon Portal's Statistics", bootstrapVersion = bootstrapVersion, cpauthHostOpt = None) _
+	if(envri == Envri.SITES) SitesPage("SITES Statistics", bootstrapVersion = bootstrapVersion, authHost = conf.authHost, dataHost = conf.dataHost) _
+	else CpCommonPage("Carbon Portal's Statistics", authHost = conf.authHost, bootstrapVersion = bootstrapVersion, dataHost = conf.dataHost) _
 }

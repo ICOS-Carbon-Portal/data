@@ -1,4 +1,7 @@
-@CpCommonPage("Carbon Portal's main data service prototype"){
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
+
+@()(implicit conf: EnvriConfig)
+@CpCommonPage("Carbon Portal's main data service prototype", authHost = conf.authHost, bootstrapVersion = Some(5), dataHost = conf.dataHost){
 
 	<script src="https://static.icos-cp.eu/constant/leaflet/1.0.1/leaflet.js"></script>
 	<script src="https://static.icos-cp.eu/constant/leaflet/markercluster/1.0.0/leaflet.markercluster.js"></script>

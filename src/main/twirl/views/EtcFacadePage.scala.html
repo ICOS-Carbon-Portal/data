@@ -1,7 +1,8 @@
-@import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
+@import se.lu.nateko.cp.meta.core.data.Envri.Envri
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-@(config: PublicAuthConfig)
-@CpCommonPage("ICOS ETC logger facade status", cpauthHostOpt = Some(config.authHost)){
+@()(implicit envri: Envri, conf: EnvriConfig)
+@CpCommonPage("ICOS ETC logger facade status", authHost = conf.authHost, dataHost = conf.dataHost){
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 	<script src="etcfacade.js"></script>
 }{
