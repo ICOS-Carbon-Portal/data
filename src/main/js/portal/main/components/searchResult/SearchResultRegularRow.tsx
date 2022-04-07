@@ -41,7 +41,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
-		const specLabel = props.labelLookup[objInfo.spec].label ?? "";
+		const specLabel = props.labelLookup[objInfo.spec]?.label ?? "Undefined data type";
 		const title = extendedInfo.title ?? stationSpecificTitle(extendedInfo, objInfo.level, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
