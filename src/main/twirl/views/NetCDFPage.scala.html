@@ -7,7 +7,7 @@
 		@pageHeader
 	}(pageBody)
 } else {
-	@CpCommonPage(pageTitle, bootstrapVersion = Some(5), authHost = conf.authHost, dataHost = conf.dataHost)(pageHeader)(pageBody)
+	@CpCommonPage(pageTitle, authHost = conf.authHost, dataHost = conf.dataHost)(pageHeader)(pageBody)
 }
 
 @pageTitle = @{"Carbon Portal's NetCDF Viewer"}
