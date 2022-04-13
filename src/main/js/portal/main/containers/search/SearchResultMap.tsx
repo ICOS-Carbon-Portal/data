@@ -72,7 +72,7 @@ class SearchResultMap extends Component<OurProps> {
 				'../../models/InitMap'
 			);
 			this.initMap = new InitMap({
-				mapRootelement: document.getElementById('map')!,
+				mapRootElement: document.getElementById('map')!,
 				specTable: this.props.specTable,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,

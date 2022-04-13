@@ -13,7 +13,7 @@ import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
 import SearchResultMap from './SearchResultMap';
-import { SupportedSRIDs } from '../../models/ol/projections';
+import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
 import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
@@ -46,7 +46,7 @@ class Search extends Component<OurProps, OurState> {
 		this.events.addToTarget(window, "resize", this.handleResize);
 
 		this.persistedMapProps = getPersistedMapProps() ?? {
-			baseMapName: config.olMapSettings.defaultBaseMapName,
+			baseMap: config.olMapSettings.defaultBaseMap,
 			srid: config.olMapSettings.defaultSRID
 		};
 
@@ -88,10 +88,10 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
-		const { isStationFilterCtrlActive, baseMapName, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = {
+		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
+		this.persistedMapProps = { 
 			isStationFilterCtrlActive,
-			baseMapName,
+			baseMap,
 			visibleToggles,
 			srid
 		};

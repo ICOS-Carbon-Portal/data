@@ -8,9 +8,8 @@ import bootstrapSearch from "./search";
 import {failWithError, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
 import {Coordinate} from "ol/coordinate";
-import {EpsgCode, getProjection, getTransformPointFn} from "../models/ol/projections";
+import {EpsgCode, getProjection, getTransformPointFn, isPointInRectangle} from "icos-cp-ol";
 import {Filter} from "../models/SpecTable";
-import {isPointInRectangle} from "../models/ol/utils";
 import {drawRectBoxToCoords} from "../utils";
 
 
