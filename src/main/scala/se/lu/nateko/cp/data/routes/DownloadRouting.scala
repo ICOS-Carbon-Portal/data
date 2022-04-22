@@ -125,7 +125,8 @@ class DownloadRouting(
 		extraOkCond: Seq[Sha256Sum] => Boolean
 	)(redirectFactory: Seq[URI] => Route)(using Envri): Directive0 = Directive.apply[Unit]{inner =>
 
-		licenceCookieHashsums{ hashes =>
+		if(extraOkCond(Nil)) inner(())
+		else licenceCookieHashsums{ hashes =>
 			deleteCookie(LicenceCookieName){
 				if(members.diff(hashes).isEmpty || extraOkCond(hashes)) inner(())
 				else reject
@@ -179,14 +180,14 @@ class DownloadRouting(
 			formFields("fileName", "ids".as[IndexedSeq[Sha256Sum]], "licenceOk".as[Boolean] ? false){(fileName, hashes, licenceOk) =>
 
 				batchLicenceCheck(hashes, _ => licenceOk){licUris =>
-					//TODO Make the licence-accept redirect convey the list of licences
+					//TODO Make the licence-accept page support the list of licences
 					val licProfile = new FormLicenceProfile(hashes.toIndexedSeq, fileName)
 					LicenceRouting.dataLicenceRoute(licProfile, authRouting.userOpt, coreConf.handleProxies)
 				}{
 					batchDownload(hashes.toIndexedSeq, fileName)
 				}
 			} ~
-			complete(StatusCodes.BadRequest -> "Expected js array of SHA256 hashsums in request payload")
+			complete(StatusCodes.BadRequest -> "Expected fileName and ids (js array of SHA256 hashsums) in request payload")
 		}
 	}}
 
