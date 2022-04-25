@@ -47,7 +47,7 @@ const hashKeys = [
 	'mapProps'
 ];
 
-export type Route = 'search' | 'metadata' | 'preview' | 'cart';
+export type Route = 'search' | 'metadata' | 'preview' | 'cart' | 'savedSearches';
 
 export interface Profile {
 	icosLicenceOk: boolean
@@ -64,6 +64,12 @@ export interface Profile {
 	country: string
 	gender: "Male" | "Female"
 	birthYear: string
+}
+
+export interface SavedSearch {
+	label: string
+	url: UrlStr
+	ts: number
 }
 
 export interface WhoAmI {email: string | null}
@@ -173,6 +179,7 @@ export interface State {
 	keywords: KeywordsInfo
 	filterKeywords: string[]
 	exportQuery: ExportQuery
+	savedSearches: SavedSearch[]
 }
 
 export const emptyCompositeSpecTable = new CompositeSpecTable(
@@ -236,7 +243,8 @@ export const defaultState: State = {
 	exportQuery: {
 		isFetchingCVS: false,
 		sparqClientQuery: ''
-	}
+	},
+	savedSearches: []
 };
 
 const update = (state: State, updates: Partial<State>): State => {

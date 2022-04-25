@@ -7,7 +7,7 @@ import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup} from "./models/State";
+import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup, SavedSearch} from "./models/State";
 import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
@@ -217,6 +217,26 @@ export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	return Promise.resolve();
 };
 
+
+export const saveSearch = (email: string | null, savedSearches: SavedSearch[]): Promise<void> => {
+	if (email){
+		updateSavedSearches(email, {savedSearches});
+	}
+	return Promise.resolve();
+};
+
+const updateSavedSearches = (email: string | null, saveddata:{savedSearches: SavedSearch[]}): void => {
+	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
+		credentials: 'include',
+		method: 'POST',
+		mode: 'cors',
+		headers: new Headers({
+			'Content-Type': 'application/json'
+		}),
+		body: JSON.stringify(saveddata)
+	});
+};
+
 const updatePersonalRestheart = (email: string, data: {}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
@@ -279,6 +299,13 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 	return email
 		? getFromRestheart<Profile>(email, 'profile')
 		: Promise.resolve({});
+};
+
+export const getSavedSearches = (email: string | null): Promise<SavedSearch[]> => {
+	return email
+		// ? getFromRestheart<SavedSearch[]>(email, 'savedSearches')
+		? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}])
+		: Promise.resolve([]);
 };
 
 export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInfo[]> => {

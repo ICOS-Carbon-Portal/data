@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import { LabelLookup, MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
+import { LabelLookup, MetaData, MetaDataWStats, SavedSearch, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchKnownDataObjects,
@@ -24,7 +24,7 @@ export abstract class MiscPayload extends ActionPayload{}
 export abstract class PreviewPayload extends ActionPayload{}
 export abstract class UiPayload extends ActionPayload{}
 export abstract class FiltersPayload extends ActionPayload{}
-
+export abstract class SavedSearchPayload extends ActionPayload {}
 
 export interface PortalPlainAction extends Action<string>{
 	payload: ActionPayload
@@ -32,6 +32,10 @@ export interface PortalPlainAction extends Action<string>{
 
 export class BootstrapRouteSearch extends BootstrapRoutePayload{
 	constructor(){super();}
+}
+
+export class BootstrapRouteSavedSearch extends SavedSearchPayload{
+	constructor(readonly savedSearches: Array<SavedSearch>){super();}
 }
 
 export class BootstrapRoutePreview extends BootstrapRoutePayload{

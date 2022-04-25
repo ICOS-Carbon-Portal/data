@@ -14,6 +14,7 @@ import {failWithError, updateRoute} from "../actions/common";
 import HelpSection from '../components/help/HelpSection';
 import { UiInactivateAllHelp } from '../reducers/actionpayloads';
 import Modal from '../components/Modal';
+import SavedSearches from './SavedSearches';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -122,13 +123,16 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 			return <div className="col-md-9" />;
 	}
 };
-console.log('hihi2');
+
 const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
 	switch(route){
 		case 'search':
 			return (
 				<Search HelpSection={children} />
 			);
+
+		case 'savedSearches':
+			return <SavedSearches />;
 
 		case 'cart':
 			return <DataCart />;

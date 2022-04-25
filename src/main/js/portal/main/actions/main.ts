@@ -11,6 +11,7 @@ import {Coordinate} from "ol/coordinate";
 import {EpsgCode, getProjection, getTransformPointFn, isPointInRectangle} from "icos-cp-ol";
 import {Filter} from "../models/SpecTable";
 import {drawRectBoxToCoords} from "../utils";
+import bootstrapSavedSearch from "./savedSearch";
 
 
 export const init: PortalThunkAction<void> = dispatch => {
@@ -52,7 +53,11 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 			case 'search':
 				dispatch(bootstrapSearch(user, tabs));
 				break;
-
+	
+			case 'savedSearches':
+				dispatch(bootstrapSavedSearch(user));
+				break;
+				
 			case 'preview':
 				if (previewPids === undefined || previewPids.length === 0){
 					failWithError(dispatch)(new Error('Preview cannot be initialized'));
@@ -64,11 +69,7 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 			case 'cart':
 				dispatch(bootstrapCart(user));
 				break;
-			
-			case 'search':
-				dispatch(bootstrapCart(user));
-				break;
-				
+		
 			case 'metadata':
 				if (id)
 					window.location.href = id;

@@ -4,6 +4,7 @@ import miscReducer from './miscReducer';
 import previewReducer from './previewReducer';
 import uiReducer from './uiReducer';
 import filtersReducer from './filtersReducer';
+import savedSearchReducer from './savedSearchReducer';
 import {
 	BackendPayload,
 	PortalPlainAction,
@@ -11,7 +12,8 @@ import {
 	PreviewPayload,
 	UiPayload,
 	FiltersPayload,
-	BootstrapRoutePayload
+	BootstrapRoutePayload,
+	SavedSearchPayload
 } from "./actionpayloads";
 import {State, defaultState} from "../models/State";
 import bootstrapRouteReducer from "./bootstrapRouteReducer";
@@ -37,6 +39,9 @@ const reducer: Reducer<State, PortalPlainAction> = (state: State = defaultState,
 
 	if (payload instanceof FiltersPayload)
 		return filtersReducer(state, payload);
+
+	if (payload instanceof SavedSearchPayload)
+		return savedSearchReducer(state, payload);
 
 	return state;
 };
