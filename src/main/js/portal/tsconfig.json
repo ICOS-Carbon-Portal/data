@@ -21,5 +21,5 @@
     "../common/main/**/*.js",
     "../common/main/**/*.ts",
     "external-modules/**/*.d.ts"
-  ]
+, "main/components/Modal.js"  ]
 }

@@ -7,7 +7,7 @@ import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
 import FilterByPid from "../../components/filters/FilterByPid";
 import {Style} from "../../../../common/main/style";
-import CheckBtn from "../../components/buttons/ChechBtn";
+import CheckBtn from "../../components/buttons/CheckBtn";
 import {FilterPanel} from "../../components/filters/FilterPanel";
 import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';

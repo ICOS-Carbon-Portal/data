@@ -1,4 +1,4 @@
-import React, { Component, ReactNode, MouseEvent } from 'react';
+import React, { Component, ReactNode, MouseEvent, useState } from 'react';
 import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import Search from './search/Search';
@@ -13,6 +13,7 @@ import {PortalDispatch} from "../store";
 import {failWithError, updateRoute} from "../actions/common";
 import HelpSection from '../components/help/HelpSection';
 import { UiInactivateAllHelp } from '../reducers/actionpayloads';
+import Modal from '../components/Modal';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -92,23 +93,36 @@ const BreadcrumbItem = (item: Breadcrumb, handleRouteClick: (newRoute: string) =
 }
 
 const Title = (props: {route: Route, metadata?: State['metadata']}) => {
+	const [isModalOpen, setIsModalOpen] = useState(false);
 
+	const toggleModal = () => setIsModalOpen(!isModalOpen);
+	
 	switch(props.route) {
 		case 'search':
-			return (
-				<h1 className="col-md-9">
+		 return (
+			 <>
+			 	<button
+        className="openModalBtn"
+        onClick={ toggleModal}
+      >
+        Open
+      </button>
+
+      {isModalOpen && <Modal onClose={toggleModal}  />}
+			<h1 className="col-md-9">
 					{config.envri} data portal
 					{config.envri === "ICOS" &&
-						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
+						<span className="fs-3 text-secondary"> Search, preview123, download data objects</span>
 					}
 				</h1>
+				</>
 			);
 
 		default:
 			return <div className="col-md-9" />;
 	}
 };
-
+console.log('hihi2');
 const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
 	switch(route){
 		case 'search':

@@ -1,5 +1,5 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
-import CheckBtn from '../buttons/ChechBtn';
+import CheckBtn from '../buttons/CheckBtn';
 import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';

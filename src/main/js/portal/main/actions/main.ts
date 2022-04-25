@@ -64,7 +64,11 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 			case 'cart':
 				dispatch(bootstrapCart(user));
 				break;
-
+			
+			case 'search':
+				dispatch(bootstrapCart(user));
+				break;
+				
 			case 'metadata':
 				if (id)
 					window.location.href = id;

@@ -28,7 +28,7 @@ const additionalStationsGraphs: EnvriUrls = {
 	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/'],
 	SITES: []
 }
-
+ 
 const searchResultsCSVName = {
 	ICOS: 'Carbon Portal Search Result.csv',
 	SITES: 'SITES Data Portal Search Results.csv'
