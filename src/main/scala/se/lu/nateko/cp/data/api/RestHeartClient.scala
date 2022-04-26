@@ -48,11 +48,12 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	}
 
 	def getUserLicenseAcceptance(uid: UserId)(implicit envri: Envri): Future[Boolean] =
-		getUserProps(uid, """{"profile.icosLicenceOk": 1}""").flatMap{ uobj =>
-			Future.fromTry(Try{
-				uobj.fields("profile").asJsObject.fields("icosLicenceOk").asInstanceOf[JsBoolean].value
-			})
-		}
+		getUserProps(uid, """{"profile.icosLicenceOk": 1}""").map(_
+			.fields.get("profile")
+			.collect{case JsObject(fields) => fields.get("icosLicenceOk")}
+			.collect{case Some(JsBoolean(v)) => v}
+			.getOrElse(false)
+		)
 
 	def ensureCollExists(collDef: RestheartCollDef)(implicit envri: Envri): Future[Done] = ensureResourceExists(
 		collUri(collDef.name),
