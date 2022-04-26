@@ -151,13 +151,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 
 				zipToArchive(srcFiles, daily).flatMap{
 					case (zipFile, hash) =>
-						performEtcUpload(zipFile, daily, Some(hash)).map{done =>
+						performEtcUpload(zipFile, daily, Some(hash), () =>
 							fresh.foreach{case (hhFile, _) =>
 								val hhUploadedFile = uploadedFolder.resolve(hhFile.getFileName)
 								Files.move(hhFile, hhUploadedFile, REPLACE_EXISTING)
 							}
-							done
-						}.andThen{
+						).andThen{
 							case _ => Files.deleteIfExists(zipFile)
 						}
 				}
@@ -173,7 +172,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			log.error(err, s"ETC facade error while uploading $fn")
 	}
 
-	private def performEtcUpload(file: Path, fn: EtcFilename, hashOpt: Option[Sha256Sum]): Future[Done] = hashOpt
+	private def performEtcUpload(
+		file: Path,
+		fn: EtcFilename,
+		hashOpt: Option[Sha256Sum],
+		extraSubFileMovement: () => Unit = () => ()
+	): Future[Done] = hashOpt
 		.map(Future.successful)
 		.getOrElse(FileIO
 			.fromPath(file)
@@ -185,6 +189,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
 		.flatMap{etcMeta =>
 			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
+			extraSubFileMovement()
 			uploadDataObject(fn.station, etcMeta.hashSum)
 		}
 
