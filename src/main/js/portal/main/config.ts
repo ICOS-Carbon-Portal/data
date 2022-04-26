@@ -138,7 +138,7 @@ export default {
 	doiBaseUrl: "https://doi.org/"
 };
 
-const defaultCategNames = {
+export const defaultCategNames = {
 	type: 'Data type',
 	level: 'Data level',
 	format: 'Format',

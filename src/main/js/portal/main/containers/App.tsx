@@ -113,7 +113,7 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 			<h1 className="col-md-9">
 					{config.envri} data portal
 					{config.envri === "ICOS" &&
-						<span className="fs-3 text-secondary"> Search, preview123, download data objects</span>
+						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
 					}
 				</h1>
 				</>

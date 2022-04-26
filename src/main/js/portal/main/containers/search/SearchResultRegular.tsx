@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
-import { ObjectsTable, State, ExtendedDobjInfo} from "../../models/State";
+import { ObjectsTable, State, ExtendedDobjInfo, Route} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
@@ -12,6 +12,9 @@ import PreviewBtn from "../../components/buttons/PreviewBtn";
 import HelpButton from "../help/HelpButton";
 import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
 import { addingToCartProhibition } from '../../models/CartItem';
+import SavedSearchesBtn from '../../components/buttons/SavedSearchesBtn';
+import { updateRoute } from '../../actions/common';
+import { addSearch } from '../../actions/savedSearch';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -35,8 +38,8 @@ class SearchResultRegular extends Component<OurProps> {
 	render(){
 		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
-			updateCheckedObjects, handlePreview, handleAddToCart,
-			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = this.props;
+			updateCheckedObjects, handlePreview, handleAddToCart, addSearch,
+			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user, updateRoute } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
@@ -82,13 +85,23 @@ class SearchResultRegular extends Component<OurProps> {
 						<div style={{float: 'right'}}>
 
 							{user.email &&
-								<CartBtn
-									style={{float: 'right', marginBottom: 10}}
-									checkedObjects={checkedObjectsInSearch}
-									clickAction={handleAddToCart}
-									enabled={checkedObjectsInSearch.length > 0}
-									type='add'
-								/>
+								<>
+									<CartBtn
+										style={{float: 'right', marginBottom: 10}}
+										checkedObjects={checkedObjectsInSearch}
+										clickAction={handleAddToCart}
+										enabled={checkedObjectsInSearch.length > 0}
+										type='add'
+									/>
+
+									<SavedSearchesBtn
+									 	style={{float: 'right', marginBottom: 10, marginRight: 10}}
+										updateRoute={updateRoute}
+										// enabled={checkedObjectsInSearch.length > 0}
+										addSearch={addSearch}
+									/>
+									
+								</>
 							}
 
 							<PreviewBtn
@@ -166,9 +179,11 @@ function stateToProps(state: State){
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
+		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),
 		requestStep: (direction: -1 | 1) => dispatch(requestStep(direction)),
 		getAllFilteredDataObjects: () => dispatch(getAllFilteredDataObjects()),
+		addSearch: (url:UrlStr) => dispatch(addSearch(url)),
 	};
 }
 

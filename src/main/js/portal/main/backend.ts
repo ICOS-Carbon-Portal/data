@@ -228,7 +228,7 @@ export const saveSearch = (email: string | null, savedSearches: SavedSearch[]): 
 const updateSavedSearches = (email: string | null, saveddata:{savedSearches: SavedSearch[]}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
-		method: 'POST',
+		method: 'PATCH',
 		mode: 'cors',
 		headers: new Headers({
 			'Content-Type': 'application/json'
@@ -304,7 +304,7 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 export const getSavedSearches = (email: string | null): Promise<SavedSearch[]> => {
 	return email
 		// ? getFromRestheart<SavedSearch[]>(email, 'savedSearches')
-		? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}])
+		? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}, {label: 'savedSearchesabc2', url: 'http://dn.se', ts: Date.now()}])  //mockup
 		: Promise.resolve([]);
 };
 

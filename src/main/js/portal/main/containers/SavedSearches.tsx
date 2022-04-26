@@ -1,12 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import CartPanel from '../components/CartPanel';
-import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick} from '../actions/cart';
-import {formatBytes, getLastSegmentsInUrls} from '../utils';
-import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
-import {Profile, Route, SavedSearch, State} from "../models/State";
-import {removeFromCart, updateRoute} from "../actions/common";
+import { SavedSearch, State} from "../models/State";
 import { saveSearches } from '../actions/savedSearch';
 
 
@@ -24,7 +19,7 @@ class SavedSearches extends Component<OurProps> {
 		
 		return (
 			<div>
-				hehehe
+				hehehe he
 			</div>
 		);
 	}
