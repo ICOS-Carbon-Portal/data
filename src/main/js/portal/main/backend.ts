@@ -21,6 +21,7 @@ import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
 import { Dict } from '../../common/main/types';
 import {HelpStorageListEntry} from "./models/HelpStorage";
+import SavedSearches from './containers/SavedSearches';
 
 const config = Object.assign(commonConfig, localConfig);
 const tsSettingsStorageName = 'tsSettings';
@@ -225,7 +226,7 @@ export const saveSearch = (email: string | null, savedSearches: SavedSearch[]): 
 	return Promise.resolve();
 };
 
-const updateSavedSearches = (email: string | null, saveddata:{savedSearches: SavedSearch[]}): void => {
+export const updateSavedSearches = (email: string | null, saveddata:{savedSearches: SavedSearch[]}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
 		credentials: 'include',
 		method: 'PATCH',
@@ -236,6 +237,21 @@ const updateSavedSearches = (email: string | null, saveddata:{savedSearches: Sav
 		body: JSON.stringify(saveddata)
 	});
 };
+
+
+export const getSavedSearches = (email: string | null): Promise<SavedSearch[]> => {
+	return email
+		? getFromRestheart<SavedSearch[]>(email, 'savedSearches')
+	//	? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}])  //mockup
+		: Promise.resolve([]);
+};
+
+// export const getSavedSearches = (email: string | null): Promise<{savedSearches: SavedSearch[]}> => {
+// 	return email
+//  	? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}, {label: 'savedSearchesabc2', url: 'http://dn.se', ts: Date.now()}])  //mockup
+//  ? getFromRestheart<{savedSearches: SavedSearch[]}>(email, 'savedSearches')
+// 		: Promise.resolve({savedSearches: []});
+// };
 
 const updatePersonalRestheart = (email: string, data: {}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
@@ -301,12 +317,6 @@ export const getProfile = (email: string | null): Promise<User['profile']> => {
 		: Promise.resolve({});
 };
 
-export const getSavedSearches = (email: string | null): Promise<SavedSearch[]> => {
-	return email
-		// ? getFromRestheart<SavedSearch[]>(email, 'savedSearches')
-		? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}, {label: 'savedSearchesabc2', url: 'http://dn.se', ts: Date.now()}])  //mockup
-		: Promise.resolve([]);
-};
 
 export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInfo[]> => {
 	if (dobjs.length == 0) return Promise.resolve([]);

@@ -9,7 +9,7 @@ type Props = {
 	title?: string
 }
 
-export default class SavedSearchesBtn extends Component<Props> {
+export default class SSBtn extends Component<Props> {
 	constructor(props: Props){
 		super(props);
 	}

@@ -12,8 +12,8 @@ import {
 	fetchKnownDataObjects,
 	getCart,
 	getError,
-	fetchJson,
-	saveCart, fetchStationPositions
+	fetchJson, saveSearch,
+	saveCart, fetchStationPositions, getSavedSearches, updateSavedSearches
 } from "../backend";
 import Cart, { restoreCart } from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
@@ -139,6 +139,17 @@ export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Pr
 		);
 	};
 }
+
+// export function fetchSavedSearches(user: WhoAmI): PortalThunkAction<void> {
+// 	return (dispatch) => {
+// 		return getSavedSearches(user.email).then(restheartCart => {
+// 			const savedSearches = restoreSavedSearches(restheartSavedSearthes);
+
+// 			return dispatch(updateSavedSearches(user.email, savedSearches));
+// 		})
+// 	}
+// }
+
 
 export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {

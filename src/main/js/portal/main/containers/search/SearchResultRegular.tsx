@@ -93,14 +93,12 @@ class SearchResultRegular extends Component<OurProps> {
 										enabled={checkedObjectsInSearch.length > 0}
 										type='add'
 									/>
-
-									<SavedSearchesBtn
+								 <SavedSearchesBtn
 									 	style={{float: 'right', marginBottom: 10, marginRight: 10}}
 										updateRoute={updateRoute}
 										// enabled={checkedObjectsInSearch.length > 0}
 										addSearch={addSearch}
 									/>
-									
 								</>
 							}
 

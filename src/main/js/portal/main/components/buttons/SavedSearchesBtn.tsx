@@ -26,8 +26,8 @@ export default class SavedSearchesBtn extends Component<Props> {
 		const {style, updateRoute} = this.props;
 
 		return (
-			<div style={style}>
-				<button onClick={this.handleClick.bind(this)} className="btn btn-primary"  title="Save search in your profile">
+			<div style={style} className="fa-solid fa-heart">
+				<button onClick={this.handleClick.bind(this)} className="btn btn-primary" title="Save search in your profile">
 					Save Search
 				</button>
 			</div>

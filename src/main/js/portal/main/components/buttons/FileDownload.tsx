@@ -25,11 +25,17 @@ export const FileDownload = ({ getAllFilteredDataObjects, exportQuery, searchRes
 		form.submit();
 	};
 
+	const saveSearch = () => {
+		
+	}
+
+	
 	if (isFetchingCVS)
 		return (
 			<span>
 				<span style={{ ...iconStyle, ...{ color: 'gray' } }} className="fas fa-download" title="Fetching CSV..." />
 				<span style={iconStyle} onClick={openSparqlQuery} className="fas fa-share-square" title="Open SPARQL query" />
+				<span style={iconStyle} onClick={saveSearch} className="fas fa-heart" title="Save Search" />
 			</span>
 		);
 
@@ -38,6 +44,7 @@ export const FileDownload = ({ getAllFilteredDataObjects, exportQuery, searchRes
 			<span>
 				<span style={iconStyle} onClick={getAllFilteredDataObjects} className="fas fa-download" title={saveTitle} />
 				<span style={iconStyle} onClick={openSparqlQuery} className="fas fa-share-square" title="Open SPARQL query for basic search result. See Advanced tab for more queries." />
+				<span style={iconStyle} onClick={saveSearch} className="fas fa-heart" title="Save Search" />
 
 				<form id="sparqlClientForm" method="POST" action={sparqlUrl} target="_blank" style={{display: 'none'}}>
 					<input type="hidden" name="query" value={sparqClientQuery} />

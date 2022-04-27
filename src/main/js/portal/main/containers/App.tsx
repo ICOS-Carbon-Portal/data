@@ -1,20 +1,22 @@
 import React, { Component, ReactNode, MouseEvent, useState } from 'react';
 import { connect } from 'react-redux';
-import {AnimatedToasters} from 'icos-cp-toaster';
+import { AnimatedToasters } from 'icos-cp-toaster';
 import Search from './search/Search';
 import DataCart from './DataCart';
 import Preview from './Preview';
 import ErrorBoundary from '../components/ErrorBoundary';
-import {updateCheckedObjectsInCart} from '../actions/cart';
-import config, {breadcrumbs, Breadcrumb} from '../config';
-import {Route, State} from "../models/State";
-import {UrlStr} from "../backend/declarations";
-import {PortalDispatch} from "../store";
-import {failWithError, updateRoute} from "../actions/common";
+import { updateCheckedObjectsInCart } from '../actions/cart';
+import config, { breadcrumbs, Breadcrumb } from '../config';
+import { Route, State } from "../models/State";
+import { UrlStr } from "../backend/declarations";
+import { PortalDispatch } from "../store";
+import { failWithError, updateRoute } from "../actions/common";
 import HelpSection from '../components/help/HelpSection';
 import { UiInactivateAllHelp } from '../reducers/actionpayloads';
 import Modal from '../components/Modal';
 import SavedSearches from './SavedSearches';
+import SavedSearchesBtn from '../components/buttons/SavedSearchesBtn';
+import { addSearch } from '../actions/savedSearch';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -22,13 +24,14 @@ type DispatchProps = ReturnType<typeof dispatchToProps>;
 export type AppProps = StateProps & DispatchProps;
 
 export class App extends Component<AppProps> {
-	constructor(props: AppProps){
+	constructor(props: AppProps) {
 		super(props);
 	}
 
-	handleRouteClick(newRoute: string){
+	handleRouteClick(newRoute: string) {
 		this.props.updateCheckedObjectsInCart([]);
 		this.props.updateRoute(newRoute as Route);
+		this.props.addSearch;
 	}
 
 	componentWillReceiveProps(nextProps: AppProps) {
@@ -37,7 +40,9 @@ export class App extends Component<AppProps> {
 		}
 	}
 
-	render(){
+	render() {
+		const { addSearch } = this.props;
+
 		const props = this.props;
 
 		return (
@@ -51,7 +56,7 @@ export class App extends Component<AppProps> {
 
 				<div className="row page-header mb-3">
 
-					<Breadcrumbs handleRouteClick={this.handleRouteClick.bind(this)} route={props.route}/>
+					<Breadcrumbs handleRouteClick={this.handleRouteClick.bind(this)} route={props.route} />
 
 					<Title route={props.route} metadata={props.metadata} />
 
@@ -71,7 +76,7 @@ export class App extends Component<AppProps> {
 	}
 }
 
-const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route}) => {
+const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route }) => {
 	return (
 		<nav role="navigation" aria-label="breadcrumb">
 			<ol className="breadcrumb bg-light p-2">
@@ -93,30 +98,41 @@ const BreadcrumbItem = (item: Breadcrumb, handleRouteClick: (newRoute: string) =
 		<li key={item.label} className="breadcrumb-item"><a onClick={e => onclick(e)} href={item.url}>{item.label}</a></li>)
 }
 
-const Title = (props: {route: Route, metadata?: State['metadata']}) => {
+const Title = (props: { route: Route, metadata?: State['metadata'] }) => {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
 	const toggleModal = () => setIsModalOpen(!isModalOpen);
-	
-	switch(props.route) {
-		case 'search':
-		 return (
-			 <>
-			 	<button
-        className="openModalBtn"
-        onClick={ toggleModal}
-      >
-        Open
-      </button>
 
-      {isModalOpen && <Modal onClose={toggleModal}  />}
-			<h1 className="col-md-9">
-					{config.envri} data portal
-					{config.envri === "ICOS" &&
-						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
-					}
-				</h1>
-				</>
+	switch (props.route) {
+		case 'search':
+			return (
+				<div>
+					{/* <button
+						className="openModalBtn"
+						onClick={toggleModal}
+					>
+						Open
+					</button> */}
+
+					{isModalOpen && <Modal onClose={toggleModal} />}
+					<span style={{float: 'left'}}>
+					<h1 className="col-md-9"  >
+						{config.envri} data portal
+						{config.envri === "ICOS" &&
+							<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
+						}
+					</h1>
+					</span>
+					<span className= "fa-solid fa-heart">
+						<SavedSearchesBtn
+							style={{ float: 'right', marginBottom: 10, marginRight: 10 }}
+							updateRoute={updateRoute}
+							//enabled={checkedObjectsInSearch.length > 0}
+							addSearch={addSearch}
+						/>
+
+					</span>
+				</div>
 			);
 
 		default:
@@ -125,7 +141,7 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 };
 
 const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
-	switch(route){
+	switch (route) {
 		case 'search':
 			return (
 				<Search HelpSection={children} />
@@ -147,7 +163,7 @@ const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
 	}
 };
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		route: state.route,
 		toasterData: state.toasterData,
@@ -157,13 +173,16 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch | Function) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
-		onHelpClose: () => dispatch(new UiInactivateAllHelp())
+		onHelpClose: () => dispatch(new UiInactivateAllHelp()),
+		addSearch: (url: UrlStr) => dispatch(addSearch(url)),
 	};
 }
 
 export default connect(stateToProps, dispatchToProps)(App);
+
+
