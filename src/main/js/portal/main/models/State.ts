@@ -69,7 +69,7 @@ export interface Profile {
 export interface SavedSearch {
 	label: string
 	url: UrlStr
-	ts: number
+	ts: string
 }
 
 export interface WhoAmI {email: string | null}

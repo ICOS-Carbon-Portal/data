@@ -1,12 +1,12 @@
 import stateUtils, {State} from "../models/State";
 import {
-	BootstrapRouteSavedSearch,
-	SavedSearchPayload
+	SavedSearchPayload,
+	UpdateSavedSearch
 } from "./actionpayloads";
 
 export default function(state: State, payload: SavedSearchPayload): State{
 
-	if (payload instanceof BootstrapRouteSavedSearch){
+	if (payload instanceof UpdateSavedSearch){
 		return stateUtils.update(state,{
 			savedSearches: payload.savedSearches
 		});

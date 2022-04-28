@@ -12,8 +12,8 @@ import {
 	fetchKnownDataObjects,
 	getCart,
 	getError,
-	fetchJson, saveSearch,
-	saveCart, fetchStationPositions, getSavedSearches, updateSavedSearches
+	fetchJson,
+	saveCart, fetchStationPositions
 } from "../backend";
 import Cart, { restoreCart } from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";

@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import {PortalDispatch} from "../store";
 import { SavedSearch, State} from "../models/State";
-import { saveSearches } from '../actions/savedSearch';
+// import { saveSearches } from '../actions/savedSearch';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -30,13 +30,12 @@ class SavedSearches extends Component<SavedSearchesProps> {
        {savedSearches.length > 0 ?
 			 <div className="row">
 			 <div className="col-sm-8 col-lg-9">
+				 Fetching lists hghghg
 			 </div>
-		  	</div>
-			 
-			 
+		   </div>
 			 :
 			 <div className="text-center" style={{margin: '5vh 0'}}>
-			 <h2>Your cart is empty</h2>
+			 <h2>Your saved Searches List is empty</h2>
 			 <p>Search for data and add it to your saved search.</p>
 			 {/* <button className="btn btn-primary" onClick={this.handleRouteClick.bind(this, 'search')}>
 							Find data
@@ -50,13 +49,14 @@ class SavedSearches extends Component<SavedSearchesProps> {
 
 function stateToProps(state: State){
 	return {
+		user: state.user,
 		savedSearches: state.savedSearches,
 	};
 }
 
 function dispatchToProps(dispatch: PortalDispatch | Function){
 	return {
-		saveSearches: (savedSearches: SavedSearch[]) => dispatch(saveSearches(savedSearches)),
+		// saveSearches: (savedSearches: SavedSearch[]) => dispatch(saveSearches(savedSearches)),
 	};
 }
 

@@ -221,37 +221,16 @@ export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 
 export const saveSearch = (email: string | null, savedSearches: SavedSearch[]): Promise<void> => {
 	if (email){
-		updateSavedSearches(email, {savedSearches});
+		updatePersonalRestheart(email, {savedSearches});
 	}
 	return Promise.resolve();
 };
 
-export const updateSavedSearches = (email: string | null, saveddata:{savedSearches: SavedSearch[]}): void => {
-	fetch(`${config.restheartProfileBaseUrl}/${email}`, {
-		credentials: 'include',
-		method: 'PATCH',
-		mode: 'cors',
-		headers: new Headers({
-			'Content-Type': 'application/json'
-		}),
-		body: JSON.stringify(saveddata)
-	});
-};
-
-
 export const getSavedSearches = (email: string | null): Promise<SavedSearch[]> => {
 	return email
-		? getFromRestheart<SavedSearch[]>(email, 'savedSearches')
-	//	? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}])  //mockup
+		? getFromRestheart<{savedSearches: SavedSearch[]}>(email, 'savedSearches').then(result => result.savedSearches)
 		: Promise.resolve([]);
 };
-
-// export const getSavedSearches = (email: string | null): Promise<{savedSearches: SavedSearch[]}> => {
-// 	return email
-//  	? Promise.resolve([{label: 'savedSearchesabc', url: 'http://localhost', ts: Date.now()}, {label: 'savedSearchesabc2', url: 'http://dn.se', ts: Date.now()}])  //mockup
-//  ? getFromRestheart<{savedSearches: SavedSearch[]}>(email, 'savedSearches')
-// 		: Promise.resolve({savedSearches: []});
-// };
 
 const updatePersonalRestheart = (email: string, data: {}): void => {
 	fetch(`${config.restheartProfileBaseUrl}/${email}`, {

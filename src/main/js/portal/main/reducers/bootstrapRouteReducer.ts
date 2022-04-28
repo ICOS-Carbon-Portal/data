@@ -3,9 +3,8 @@ import {
 	BootstrapRouteCart,
 	BootstrapRouteMetadata,
 	BootstrapRoutePayload,
-	BootstrapRoutePreview, BootstrapRouteSearch, ObjectsTableLike
+	BootstrapRoutePreview, BootstrapRouteSavedSearch, BootstrapRouteSearch, ObjectsTableLike
 } from "./actionpayloads";
-import Preview from "../models/Preview";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import PreviewLookup from "../models/PreviewLookup";
 import Cart from "../models/Cart";
@@ -28,6 +27,10 @@ export default function(state: State, payload: BootstrapRoutePayload): State {
 		return handleRoutePreview(state, payload);
 	}
 
+	if (payload instanceof BootstrapRouteSavedSearch){
+		return handleRouteSavedSearch(state, payload);
+	}
+
 	if (payload instanceof BootstrapRouteMetadata){
 		return handleRouteMetadata(state, payload);
 	}
@@ -45,6 +48,18 @@ const getObjectsTable = (specTable: CompositeSpecTable, objectsTable: ObjectsTab
 		return {...ot, ...spec};
 	});
 };
+
+function handleRouteSavedSearch(state: State, payload: BootstrapRouteSavedSearch): State {
+	const newPartialState: BootstrapState = {
+		isRunningInit: false,
+		savedSearches: payload.savedSearches,
+		route: 'savedSearches'
+	};
+
+	return state.isRunningInit
+		? stateUtils.updateAndSave(state, newPartialState)
+		: stateUtils.update(state, newPartialState);
+}
 
 const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State => {
 	const specTable = payload.specTables === undefined
@@ -114,3 +129,4 @@ const handleRouteCart = (state: State, payload: BootstrapRouteCart): State => {
 		? stateUtils.updateAndSave(state, newPartialState)
 		: stateUtils.update(state, newPartialState);
 };
+

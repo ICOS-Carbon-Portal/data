@@ -124,12 +124,6 @@ const Title = (props: { route: Route, metadata?: State['metadata'] }) => {
 					</h1>
 					</span>
 					<span className= "fa-solid fa-heart">
-						<SavedSearchesBtn
-							style={{ float: 'right', marginBottom: 10, marginRight: 10 }}
-							updateRoute={updateRoute}
-							//enabled={checkedObjectsInSearch.length > 0}
-							addSearch={addSearch}
-						/>
 
 					</span>
 				</div>

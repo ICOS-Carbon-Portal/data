@@ -34,7 +34,10 @@ export class BootstrapRouteSearch extends BootstrapRoutePayload{
 	constructor(){super();}
 }
 
-export class BootstrapRouteSavedSearch extends SavedSearchPayload{
+export class BootstrapRouteSavedSearch extends BootstrapRoutePayload{
+	constructor(readonly savedSearches: Array<SavedSearch>){super();}
+}
+export class UpdateSavedSearch extends SavedSearchPayload{
 	constructor(readonly savedSearches: Array<SavedSearch>){super();}
 }
 

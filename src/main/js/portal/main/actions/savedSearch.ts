@@ -1,35 +1,29 @@
 import { PortalThunkAction } from "../store";
 import { getSavedSearches, saveSearch } from "../backend";
 import { SavedSearch, WhoAmI } from "../models/State";
-import { BootstrapRouteSavedSearch, PortalPlainAction } from "../reducers/actionpayloads";
+import { BootstrapRouteSavedSearch, UpdateSavedSearch } from "../reducers/actionpayloads";
 import { UrlStr } from "../backend/declarations";
 import stateUtils from "../models/State";
 import { defaultCategNames } from "../config";
 import { Dict } from "../../../common/main/types";
 
 export default function bootstrapSavedSearch(user: WhoAmI): PortalThunkAction<void> {
-  return (dispatch) => {
+  return (dispatch, getState) => {
+		const savedSearches = getState().savedSearches;
+
     if (user.email === null) 
 			return;
-    else
-      dispatch(fetchSavedSearches(user.email));
+
+    else if (savedSearches.length === 0)
+			getSavedSearches(user.email).then(result => {
+				dispatch(new BootstrapRouteSavedSearch(result));
+			});
+
+		else
+			dispatch(new BootstrapRouteSavedSearch(savedSearches));
   };
 }
 
-function fetchSavedSearches(email: string): PortalThunkAction<Promise<SavedSearch[]>> {
-  return (dispatch) => {
-    return getSavedSearches(email).then(result => {
-			dispatch(new BootstrapRouteSavedSearch(result));
-			return result;
-		});
-	}
-}
-
-export function saveSearches(savedSearches: SavedSearch[]): PortalThunkAction<Promise<void>> {
-  return (dispatch, getState) => {
-    return saveSearch(getState().user.email, savedSearches);
-  };
-}
 export function addSearch(url: UrlStr): PortalThunkAction<Promise<void>> {
   return (dispatch, getState) => {
 		const {user} = getState();
@@ -39,24 +33,28 @@ export function addSearch(url: UrlStr): PortalThunkAction<Promise<void>> {
     const newSavedSearch = {
       url,
       label: getLabel(),
-      ts: Date.now(),
+      ts: new Date().toISOString(),
     };
 
-		return dispatch(fetchSavedSearches(user.email)).then(savedSearches => {
-			saveSearch(user.email, combineSavedSearches(newSavedSearch, savedSearches));
+		return getSavedSearches(user.email).then(existingSavedSearches => {
+			const savedSearches = combineSavedSearches(newSavedSearch, existingSavedSearches);
+			dispatch(new UpdateSavedSearch(savedSearches));
+			return saveSearch(user.email, savedSearches);
 		});
   };
 }
 
 function combineSavedSearches(newSavedSearch:SavedSearch, existingSavedSearches:SavedSearch[]){
-	const foundSearch = existingSavedSearches.find(ss => ss.url = newSavedSearch.url); 
-  if (foundSearch) {
-		foundSearch.ts = Date.now();
-		return existingSavedSearches;
+	const foundSearchIndex = existingSavedSearches.findIndex(ss => ss.url === newSavedSearch.url);
 
-	} else {
-		return existingSavedSearches.concat([newSavedSearch]);
+  if (foundSearchIndex !== -1) {
+		existingSavedSearches[foundSearchIndex].ts = new Date().toISOString();
+
+		return existingSavedSearches;
 	}
+
+	return existingSavedSearches.concat([newSavedSearch]);
+	
 } 
 
 function getLabel(): string{
