@@ -1,7 +1,6 @@
 import React, { Component, CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
 import {  Route } from '../../models/State';
-import { styles } from '../styles';
 
 type Props = {
 	style: CSSProperties,
@@ -23,7 +22,7 @@ export default class SavedSearchesBtn extends Component<Props> {
 
 
 	render(){
-		const {style, updateRoute} = this.props;
+		const {style} = this.props;
 
 		return (
 			<div style={style} className="fa-solid fa-heart">

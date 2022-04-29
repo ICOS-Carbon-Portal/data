@@ -1,4 +1,4 @@
-import React, { Component, MouseEvent, CSSProperties } from 'react';
+import React, { Component, CSSProperties } from 'react';
 import CheckBtn from '../buttons/CheckBtn';
 import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
 import {LinkifyText} from '../LinkifyText';
