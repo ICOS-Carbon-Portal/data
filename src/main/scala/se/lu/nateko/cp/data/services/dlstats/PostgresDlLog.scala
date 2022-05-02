@@ -211,7 +211,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 		// Limit coordinates to 5 decimals in function ST_AsGeoJSON
 		val query = s"""
 			|SELECT
-			|	item_type, ts, hash_id, ip, city, country_code, ST_AsGeoJSON(pos, 5) AS geojson
+			|	item_type, ts, hash_id, ip, city, country_code, endUser, ST_AsGeoJSON(pos, 5) AS geojson
 			|FROM downloads
 			|${whereClause}
 			|ORDER BY id DESC
@@ -220,13 +220,14 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 
 		runAnalyticalQuery(query){rs =>
 			Download(
-				rs.getString("item_type"),
-				rs.getTimestamp("ts").toInstant(),
-				rs.getString("hash_id"),
-				rs.getString("ip"),
-				Option(rs.getString("city")),
-				Option(rs.getString("country_code")),
-				Option(rs.getString("geojson")).flatMap(parsePointPosition)
+				itemType = rs.getString("item_type"),
+				ts = rs.getTimestamp("ts").toInstant(),
+				hashId = rs.getString("hash_id"),
+				ip = rs.getString("ip"),
+				city = Option(rs.getString("city")),
+				countryCode = Option(rs.getString("country_code")),
+				endUser = Option(rs.getString("endUser")),
+				geoJson = Option(rs.getString("geojson")).flatMap(parsePointPosition)
 			)
 		}
 	}

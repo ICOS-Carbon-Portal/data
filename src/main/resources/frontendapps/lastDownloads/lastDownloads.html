@@ -107,6 +107,7 @@
 			tr.append(getLnk(metaBaseUrl + record.hashId, record.hashId));
 			tr.append(getTxt(countryLookup[record.countryCode]));
 			tr.append(getPosLnk(record.city, record.geoJson));
+			tr.append(getTxt(record.endUser));
 
 			return tr;
 		}
@@ -220,6 +221,7 @@
 							<th>Data object</th>
 							<th>Country</th>
 							<th>City</th>
+							<th>User</th>
 						</tr>
 					</thead>
 					<tbody id="table" />

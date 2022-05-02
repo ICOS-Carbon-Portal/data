@@ -60,7 +60,16 @@ object StatsRouting {
 	case class DownloadCount(downloadCount: Int)
 	case class DateCount(date: String, count: Int)
 	case class PointPosition(`type`: String, coordinates: Tuple2[Double, Double])
-	case class Download(itemType: String, ts: Instant, hashId: String, ip: String, city: Option[String], countryCode: Option[String], geoJson: Option[PointPosition])
+	case class Download(
+		itemType: String,
+		ts: Instant,
+		hashId: String,
+		ip: String,
+		city: Option[String],
+		countryCode: Option[String],
+		endUser: Option[String],
+		geoJson: Option[PointPosition]
+	)
 	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
 
 	given RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams.apply)
@@ -77,7 +86,7 @@ object StatsRouting {
 	given RootJsonFormat[DownloadedFrom] = jsonFormat2(DownloadedFrom.apply)
 	given RootJsonFormat[DownloadCount] = jsonFormat1(DownloadCount.apply)
 	given RootJsonFormat[DateCount] = jsonFormat2(DateCount.apply)
-	given RootJsonFormat[Download] = jsonFormat7(Download.apply)
+	given RootJsonFormat[Download] = jsonFormat8(Download.apply)
 	given RootJsonFormat[CustomDownloadsPerYearCountry] = jsonFormat3(CustomDownloadsPerYearCountry.apply)
 
 	def parsePointPosition(jsonStr: String): Option[PointPosition] =
