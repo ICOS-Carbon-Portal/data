@@ -38,10 +38,20 @@ export function addSearch(url: UrlStr): PortalThunkAction<Promise<void>> {
 
 		return getSavedSearches(user.email).then(existingSavedSearches => {
 			const savedSearches = combineSavedSearches(newSavedSearch, existingSavedSearches);
-			dispatch(new UpdateSavedSearch(savedSearches));
-			return saveSearch(user.email, savedSearches);
+			return dispatch(updateSavedSearches(savedSearches));
 		});
   };
+}
+
+export function updateSavedSearches(savedSearches:SavedSearch[]): PortalThunkAction<Promise<void>>{
+	
+	return (dispatch, getState) => {
+		const {user} = getState();
+
+		if (user.email === null) return Promise.reject();
+		dispatch(new UpdateSavedSearch(savedSearches));
+		return saveSearch(user.email, savedSearches);
+	};
 }
 
 function combineSavedSearches(newSavedSearch:SavedSearch, existingSavedSearches:SavedSearch[]){
@@ -68,3 +78,33 @@ function getLabel(): string{
 
   return "Saved Search";
 }
+// export function removeSearch(url: UrlStr): PortalThunkAction<Promise<void>> {
+//   return (dispatch, getState) => {
+// 		const {user} = getState();
+
+// 		if (user.email === null) return Promise.reject();
+
+//     const newRemovedSearch = {
+//       url,
+//       label: getLabel(),
+//       ts: new Date().toISOString(),
+//     };
+
+// 		return getSavedSearches(user.email).then(existingSavedSearches => {
+// 			const savedSearches = removeSavedSearch(newRemovedSearch, existingSavedSearches);
+// 			return dispatch(updateSavedSearches(savedSearches));
+// 		});
+//   };
+// }
+
+// function removeSavedSearch(newSavedSearch:SavedSearch, existingSavedSearches:SavedSearch[]){
+// 	const foundSearchIndex = existingSavedSearches.findIndex(ss => ss.url === newSavedSearch.url);
+
+//   if (foundSearchIndex !== -1) {
+// 		existingSavedSearches[foundSearchIndex].ts = new Date().toISOString();
+
+// 		return existingSavedSearches;
+// 	}
+
+// 	return existingSavedSearches.slice(foundSearchIndex, 1);
+// }

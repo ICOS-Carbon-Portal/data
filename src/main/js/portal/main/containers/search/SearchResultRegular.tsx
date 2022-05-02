@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
-import { ObjectsTable, State, ExtendedDobjInfo, Route} from "../../models/State";
+import { ObjectsTable, State, Route} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";

@@ -5,7 +5,6 @@ import {  Route } from '../../models/State';
 type Props = {
 	style: CSSProperties,
   updateRoute: (route: Route) => void;
-	// enabled: boolean
 	addSearch: (url: UrlStr) => Promise<void>
 }
 
@@ -14,19 +13,17 @@ export default class SavedSearchesBtn extends Component<Props> {
 		super(props);
 	}
 
-	handleClick(){
+	handleAddSearchClick(){
 		this.props.addSearch(location.href).then(_ => this.props.updateRoute("savedSearches"))
 
 	}
- //andra rout on click, post nya ss object, till states, saved search, set en egen lable,
-
 
 	render(){
 		const {style} = this.props;
 
 		return (
 			<div style={style} className="fa-solid fa-heart">
-				<button onClick={this.handleClick.bind(this)} className="btn btn-primary" title="Save search in your profile">
+				<button onClick={this.handleAddSearchClick.bind(this)} className="btn btn-primary" title="Save search in your profile">
 					Save Search
 				</button>
 			</div>
