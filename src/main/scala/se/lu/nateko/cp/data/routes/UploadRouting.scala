@@ -18,11 +18,11 @@ import se.lu.nateko.cp.data.api.UploadUserError
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
-import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.JsonSupport.ingestionMetadataExtractFormat
+import se.lu.nateko.cp.meta.core.data.JsonSupport.given
 import se.lu.nateko.cp.meta.core.data._
 import spray.json._
 
@@ -36,10 +36,11 @@ import scala.util.Try
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, coreConf: MetaCoreConfig)(implicit mat: Materializer) {
 	import UploadRouting._
 	import authRouting._
+	import DefaultJsonProtocol.*
 
-	private implicit val ex: ExecutionContextExecutor = mat.executionContext
-	private implicit val envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
-	private implicit val uriFSU: Unmarshaller[String,Uri] = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
+	private given ExecutionContextExecutor = mat.executionContext
+	private given envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
+	private given Unmarshaller[String,Uri] = Unmarshaller[String, Uri](_ => s => Future.fromTry(Try(Uri(s))))
 
 	private val log = uploadService.log
 	private val extractEnvri = extractEnvriDirective
@@ -165,7 +166,7 @@ object UploadRouting{
 	def envriDirective(akkaDir: Directive1[Envri]): EnvriDirective =
 		inner => akkaDir.apply(envri => inner(using envri))
 
-	def extractEnvriDirective(using EnvriConfigs) = envriDirective(extractEnvriAkkaDirective)
+	def extractEnvriDirective(using EnvriConfigs): EnvriDirective = envriDirective(extractEnvriAkkaDirective)
 
 	def extractEnvriAkkaDirective(using EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
 		Envri.infer(h) match{

@@ -21,7 +21,7 @@ import spray.json.DefaultJsonProtocol
 import spray.json._
 
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
-import se.lu.nateko.cp.data.CpdataJsonProtocol.javaTimeInstantFormat
+import se.lu.nateko.cp.data.CpdataJsonProtocol.given
 import se.lu.nateko.cp.data.services.dlstats.DlItemType
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum

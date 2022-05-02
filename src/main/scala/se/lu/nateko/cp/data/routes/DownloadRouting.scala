@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.routes
 
 import akka.Done
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
+import akka.http.scaladsl.model.*
+import akka.http.scaladsl.model.headers.*
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.ContentTypeResolver
 import akka.http.scaladsl.server.directives.Credentials.Provided
@@ -28,11 +28,11 @@ import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
-import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data._
-import spray.json._
+import se.lu.nateko.cp.meta.core.data.*
+import spray.json.*
 
 import java.time.Instant
 import scala.concurrent.Future
@@ -52,8 +52,9 @@ class DownloadRouting(
 	logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
 )(using mat: Materializer) {
 
-	import DownloadRouting._
-	import UploadRouting._
+	import DownloadRouting.*
+	import UploadRouting.*
+	import DefaultJsonProtocol.*
 	import authRouting.userOpt
 
 	private given ExecutionContextExecutor = mat.executionContext

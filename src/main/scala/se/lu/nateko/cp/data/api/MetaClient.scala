@@ -17,9 +17,10 @@ import se.lu.nateko.cp.data.utils.Akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri.Envri
 import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
-import se.lu.nateko.cp.meta.core.data.JsonSupport._
+import se.lu.nateko.cp.meta.core.data.JsonSupport.given
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
+import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.meta.core.sparql._
 import spray.json.JsBoolean
@@ -109,7 +110,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 	}
 
 	def registerEtcUpload(meta: EtcUploadMetadata): Future[Done] = {
-		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.etcUploatMetaFormat
+		import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
 		val url = Uri(s"$baseUrl$uploadApiPath/etc")
 		post(url, meta, hostOpt(using Envri.ICOS)).flatMap(extractIfSuccess{entity =>
 			entity.discardBytes()

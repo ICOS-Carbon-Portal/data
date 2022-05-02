@@ -108,7 +108,8 @@ case class CpdataConfig(
 
 object ConfigReader extends CommonJsonSupport{
 
-	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.stationIdFormat
+	import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
+	import DefaultJsonProtocol.*
 
 	given RootJsonFormat[NetCdfConfig] = jsonFormat6(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)

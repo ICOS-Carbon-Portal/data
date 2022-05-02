@@ -142,14 +142,14 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		})
 	}
 
-	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny])(implicit envri: Envri): Source[ByteString, NotUsed] = {
+	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny])(using Envri): Source[ByteString, NotUsed] = {
 		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
 			val pidOpt = dest.obj.doi.orElse(dest.obj.pid)
 			val landingPage = pidOpt.fold(
-				staticObjLandingPage(dest.obj.hash)(envriConf).toString
+				staticObjLandingPage(dest.obj.hash)(using envriConf).toString
 			){
 				pid =>
 				import coreConf.{handleProxies => prox}

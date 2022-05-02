@@ -26,8 +26,9 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.crypto.JsonSupport._
+import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import spray.json.RootJsonFormat
+import spray.json.DefaultJsonProtocol._
 
 object MassUpload extends CommonJsonSupport{
 

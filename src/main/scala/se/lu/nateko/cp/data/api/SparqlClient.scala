@@ -12,7 +12,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 import scala.collection.immutable.Iterable
 import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
-import se.lu.nateko.cp.meta.core.sparql.JsonSupport._
+import se.lu.nateko.cp.meta.core.sparql.JsonSupport.given
 import java.net.URL
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Flow

@@ -20,7 +20,7 @@ import java.io.File
 import java.net.URI
 import scala.concurrent.Future
 
-class BinTableCsvReader(upload: UploadService)(implicit envriConf: EnvriConfigs) {
+class BinTableCsvReader(upload: UploadService)(using envriConf: EnvriConfigs) {
 
 	import upload.meta.{sparql, dispatcher}
 
@@ -31,7 +31,7 @@ class BinTableCsvReader(upload: UploadService)(implicit envriConf: EnvriConfigs)
 		limitOpt: Option[Int]
 	)(implicit envri: Envri): Future[(Source[String, NotUsed], String)] = {
 
-		val dobj = staticObjLandingPage(hash)(envriConf(envri))
+		val dobj = staticObjLandingPage(hash)(using envriConf(envri))
 
 		def mkFileName(origFileName: String): String = Array(
 			dropFileExtension(origFileName),
