@@ -14,8 +14,8 @@ import akka.http.scaladsl.server.Route
 import se.lu.nateko.cp.cpauth.core._
 import se.lu.nateko.cp.data.AuthConfig
 import se.lu.nateko.cp.data.api.CpDataException
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import spray.json.JsObject
 
 import scala.util.Failure

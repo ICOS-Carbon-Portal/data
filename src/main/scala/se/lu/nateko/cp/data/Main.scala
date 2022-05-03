@@ -33,7 +33,7 @@ object Main extends App {
 	import system.dispatcher
 
 	val config = ConfigReader.getDefault
-	given Map[Envri.Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
+	given Map[Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
 
 	private val netcdfUtil = new NetcdfUtil(config.netcdf)
 

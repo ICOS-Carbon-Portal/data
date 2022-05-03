@@ -52,14 +52,14 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 		val allowedIntersections = ((idx - 2) to (idx + 1)).map(shortcircuit).toSet
 
 		val noNewIntersections = verts.indices.forall{i =>
-			import SegmentsIntersection._
+			import SegmentsIntersection.*
 			val v1 = verts(i); val v2 = vertice(i + 1)
 			val inter = forSegments(v1, v2, start, stop)
 
 			inter == NoIntersection ||
 			inter == SingleVertice && allowedIntersections.contains(i) ||
-			inter <= forSegments(v1, v2, start, self) ||
-			inter <= forSegments(v1, v2, stop, self)
+			inter.ordinal <= forSegments(v1, v2, start, self).ordinal ||
+			inter.ordinal <= forSegments(v1, v2, stop, self).ordinal
 		}
 		if(noNewIntersections)
 			triangleArea2(start, self, stop)
@@ -92,7 +92,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 				val allowedIntersections = Set(idx -1, idx, idx + 1).map(shortcircuit)
 
 				val noNewIntersections = verts.indices.forall{i =>
-					import SegmentsIntersection._
+					import SegmentsIntersection.*
 					val v1 = verts(i); val v2 = vertice(i + 1)
 					Array(
 						forSegments(v1, v2, start, top),
@@ -100,7 +100,7 @@ class EnvelopePolygon(conf: EnvelopePolygonConfig) {
 					).forall{inter =>
 						inter == NoIntersection ||
 						inter == SingleVertice && allowedIntersections.contains(i) ||
-						inter <= forSegments(v1, v2, start, stop)
+						inter.ordinal <= forSegments(v1, v2, start, stop).ordinal
 					}
 				}
 				if(noNewIntersections){
@@ -280,11 +280,10 @@ object EnvelopePolygon{
 		else diff0
 	}
 
-	object NearestKind extends Enumeration{
-		val FirstVertice, SecondVertice, InnerPoint = Value
-	}
+	enum NearestKind:
+		case FirstVertice, SecondVertice, InnerPoint
 
-	class NearestOnEdge(val kind: NearestKind.Value, val point: Point, val distSq: Double){
+	class NearestOnEdge(val kind: NearestKind, val point: Point, val distSq: Double){
 		var baseIdx: Int = _
 	}
 

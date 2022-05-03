@@ -1,16 +1,12 @@
 package se.lu.nateko.cp.data.services.dlstats
 
-import java.{util => ju}
+enum DlItemType:
+	case data, collection, document
 
-object DlItemType extends Enumeration{
-
-	val Data = Value("data")
-	val Collection = Value("collection")
-	val Document = Value("document")
-
-	def parse(name: String): Option[Value] = try{
-		Some(withName(name))
+object DlItemType{
+	def parse(name: String): Option[DlItemType] = try{
+		Some(DlItemType.valueOf(name))
 	} catch{
-		case _: ju.NoSuchElementException => None
+		case _: IllegalArgumentException => None
 	}
 }

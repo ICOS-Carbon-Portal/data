@@ -1,9 +1,12 @@
 package se.lu.nateko.cp.data.streams.geo
 
-object EdgeRayRelationship extends Enumeration{
-	val Miss, Cross, Start = Value
+enum EdgeRayRelationship:
+	case Miss, Cross, Start
 
-	def computeRelationship(v1: Point, v2: Point, rayStart: Point): Value = {
+object EdgeRayRelationship{
+	import EdgeRayRelationship.{Miss, Cross, Start}
+
+	def computeRelationship(v1: Point, v2: Point, rayStart: Point): EdgeRayRelationship = {
 		val x = rayStart.lon
 		val y = rayStart.lat
 

@@ -10,12 +10,12 @@ import java.time.LocalDateTime
 case class EtcFilename(
 	station: StationId,
 	date: LocalDate,
-	timeOrDatatype: Either[LocalTime, DataType.Value],
+	timeOrDatatype: Either[LocalTime, DataType],
 	loggerNumber: Int,
 	fileNumber: Int,
 	extension: String
 ){
-	def dataType: DataType.Value = timeOrDatatype.fold(_ => DataType.EC, identity)
+	def dataType: DataType = timeOrDatatype.fold(_ => DataType.EC, identity)
 	def time: Option[LocalTime] = timeOrDatatype.left.toOption
 
 	def toEcDaily: Option[EtcFilename] = time.map{time =>
@@ -62,7 +62,7 @@ object EtcFilename{
 				case _ => argExc("Wrong station id: " + stationStr)
 			}
 
-			val dataType = DataType.withName(typeStr)
+			val dataType = DataType.valueOf(typeStr)
 
 			val date = LocalDate.parse(dateTimeStr.take(8), dateFormat)
 

@@ -14,7 +14,7 @@ import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.RestHeartConfig
 import se.lu.nateko.cp.data.utils.Akka.done
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 
 class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer){

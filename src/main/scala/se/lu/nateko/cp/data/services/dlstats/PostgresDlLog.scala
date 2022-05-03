@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.services.dlstats
 import se.lu.nateko.cp.data.DownloadStatsConfig
 import se.lu.nateko.cp.data.CredentialsConfig
 import se.lu.nateko.cp.meta.core.data.Agent
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.data.routes.StatsRouting._
 import se.lu.nateko.cp.data.utils.Akka.done
@@ -206,7 +206,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 			DownloadCount(rs.getInt("download_count"))
 	}
 
-	def lastDownloads(limit: Int, itemType: Option[DlItemType.Value])(implicit envri: Envri): Future[IndexedSeq[Download]] = {
+	def lastDownloads(limit: Int, itemType: Option[DlItemType])(implicit envri: Envri): Future[IndexedSeq[Download]] = {
 		val whereClause = itemType.fold("")(value => s"WHERE item_type = '$value'")
 		// Limit coordinates to 5 decimals in function ST_AsGeoJSON
 		val query = s"""

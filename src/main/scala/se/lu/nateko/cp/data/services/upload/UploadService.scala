@@ -30,8 +30,6 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-import Envri.Envri
-
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(implicit mat: Materializer) {
 
 	import UploadService._

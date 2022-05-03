@@ -2,10 +2,13 @@ package se.lu.nateko.cp.data.streams.geo
 
 import GeoAlgorithms.side
 
-object SegmentsIntersection extends Enumeration{
-	val NoIntersection, SingleVertice, CollinearOverlap, VerticeInside, InnerPoints = Value
+enum SegmentsIntersection:
+	case NoIntersection, SingleVertice, CollinearOverlap, VerticeInside, InnerPoints
 
-	def forSegments(a: Point, b: Point, c: Point, d: Point): Value = {
+object SegmentsIntersection{
+	import SegmentsIntersection._
+
+	def forSegments(a: Point, b: Point, c: Point, d: Point): SegmentsIntersection = {
 		val acd = side(a, c, d); val bcd = side(b, c, d)
 		val cab = side(c, a, b); val dab = side(d, a, b)
 		if(acd * bcd == 1 || cab * dab == 1) NoIntersection

@@ -12,8 +12,8 @@ import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
 import se.lu.nateko.cp.data.services.upload.IngestionUploadTask
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 
 import java.io.File

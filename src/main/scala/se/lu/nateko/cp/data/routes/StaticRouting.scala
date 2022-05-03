@@ -13,8 +13,8 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.PathMatcher1
 import play.twirl.api.Html
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
-import se.lu.nateko.cp.meta.core.data.Envri.EnvriConfigs
+import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 
 import scala.concurrent.Future
 

@@ -14,7 +14,7 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
 import se.lu.nateko.cp.data.utils.Akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.meta.core.data.Envri.Envri
+import se.lu.nateko.cp.meta.core.data.Envri
 import spray.json._
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import se.lu.nateko.cp.data.MongoDbIndex
