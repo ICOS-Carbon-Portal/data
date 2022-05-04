@@ -39,7 +39,7 @@ export class App extends Component<AppProps> {
 		const props = this.props;
 
 		return (
-			<div className="mt-2">
+			<div>
 
 				<AnimatedToasters
 					autoCloseDelay={5000}
