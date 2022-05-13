@@ -127,6 +127,7 @@ class SearchResultRegular extends Component<OurProps> {
 										updateCheckedObjects={updateCheckedObjects}
 										isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
 										checkedObjects={checkedObjects}
+										isCartView={false}
 									/>
 								);
 							})

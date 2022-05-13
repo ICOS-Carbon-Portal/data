@@ -31,6 +31,7 @@ interface OurProps {
 	isChecked: boolean
 	checkedObjects?: ObjectsTable[]
 	labelLookup: LabelLookup
+	isCartView: Boolean
 }
 
 export default class SearchResultRegularRow extends Component<OurProps> {
@@ -54,7 +55,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
 						title={checkBtnTitle}
 						isChecked={props.isChecked}
-						checkboxDisabled={!allowCartAdd}
+						checkboxDisabled={props.isCartView ? false : !allowCartAdd}
 					/>
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>

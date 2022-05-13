@@ -106,6 +106,7 @@ export default class CartPanel extends Component<Props, State> {
 										key={'dobj_' + i}
 										updateCheckedObjects={props.updateCheckedObjects}
 										isChecked={isChecked}
+										isCartView={true}
 									/>
 								);
 							})
