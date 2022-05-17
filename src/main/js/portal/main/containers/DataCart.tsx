@@ -50,7 +50,7 @@ class DataCart extends Component<DataCartProps> {
 
 		return (
 			<div>
-				{cart.count > 0 ?
+				{!cart.isInitialized || cart.count > 0 ?
 					<div className="row">
 						<div className="col-sm-8 col-lg-9">
 							<CartPanel
