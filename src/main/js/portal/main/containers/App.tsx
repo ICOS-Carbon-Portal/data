@@ -38,6 +38,10 @@ export class App extends Component<AppProps> {
 	render(){
 		const props = this.props;
 
+		if (!props.route) {
+			return null;
+		}
+
 		return (
 			<div>
 

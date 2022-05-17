@@ -32,7 +32,7 @@ export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 		dispatch(new Payloads.MiscRestoreFromHash());
 
 		const {route, preview} = getState();
-		dispatch(bootstrapRoute(user, route, preview.pids));
+		dispatch(bootstrapRoute(user, route ?? 'search', preview.pids));
 
 		type LoggedIn = {_id: string, profile: Profile | {}};
 

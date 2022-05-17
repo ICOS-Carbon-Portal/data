@@ -132,7 +132,7 @@ export interface State {
 	ts: number | undefined
 	isRunningInit: boolean
 	searchOptions: SearchOptions
-	route: Route
+	route: Route | undefined
 	countryCodesLookup: Dict
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
@@ -187,7 +187,7 @@ export const defaultState: State = {
 	searchOptions: {
 		showDeprecated: false
 	},
-	route: 'search',
+	route: undefined,
 	countryCodesLookup: {},
 	filterCategories: {},
 	filterTemporal: new FilterTemporal(),
