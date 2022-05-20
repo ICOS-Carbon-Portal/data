@@ -273,6 +273,10 @@ const initItems: HelpItem[] = [
 				comment: 'normally available for single-table data objects of levels 1 and 2 and for NetCDF data objects (level 3)'
 			},
 			{
+				label: 'data cart availability',
+				comment: 'available for logged-in users; allows batch-downloading of multiple data objects'
+			},
+			{
 				label: 'how to preview',
 				comment: 'select the data object(s) by ticking checkboxes, click the preview button (if active)'
 			},
@@ -282,7 +286,7 @@ const initItems: HelpItem[] = [
 					'the datasets are concatenated, otherwise, presented as different plot lines'
 			},
 			{
-				label: 'adding to cart',
+				label: 'adding to cart (logged-in users)',
 				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
 			}
 		]
