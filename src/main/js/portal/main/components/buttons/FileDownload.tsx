@@ -1,7 +1,7 @@
 import React, { CSSProperties } from 'react';
 import config from '../../config';
-import commonConfig from '../../../../common/main/config';
 import { ExportQuery } from '../../models/State';
+import { sparqlUrl } from '../ToSparqlClient';
 
 interface Props {
 	getAllFilteredDataObjects: () => void
@@ -18,7 +18,6 @@ export const FileDownload = ({ getAllFilteredDataObjects, exportQuery, searchRes
 	const { isFetchingCVS, sparqClientQuery } = exportQuery;
 	const downloadCount = searchResultsCount > config.exportCSVLimit ? `first ${config.exportCSVLimit.toLocaleString()}` : searchResultsCount.toLocaleString();
 	const saveTitle = `Export ${downloadCount} records to CSV`;
-	const sparqlUrl = `${commonConfig.metaBaseUri}sparqlclient/`;
 
 	const openSparqlQuery = () => {
 		const form = document.getElementById("sparqlClientForm") as HTMLFormElement;

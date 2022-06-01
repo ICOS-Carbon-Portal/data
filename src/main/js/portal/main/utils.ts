@@ -106,7 +106,7 @@ export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 }
 
 export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
-	return `${commonConfig.metaBaseUri}/objects/${dobj.split('/').pop()}`
+	return commonConfig.cpmetaObjectUri + dobj.split('/').pop()
 }
 
 export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)
