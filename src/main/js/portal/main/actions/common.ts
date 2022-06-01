@@ -151,6 +151,14 @@ export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
 }
 
 function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
+	const cartLinks = document.querySelectorAll('.cart-link');
+	cartLinks.forEach(link => {
+		const num = link.querySelector('.items-number')
+		if (num) {
+			num.textContent = cart.count.toString();
+		}
+	});
+
 	return dispatch => saveCart(email, cart).then(() =>
 		dispatch(new Payloads.BackendUpdateCart(cart))
 	);
