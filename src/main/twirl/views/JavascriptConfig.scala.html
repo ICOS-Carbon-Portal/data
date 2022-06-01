@@ -1,9 +1,8 @@
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
+@import se.lu.nateko.cp.data.utils.printEnvriConf
 
 @()(implicit conf: EnvriConfig)
 
 <script type="text/javascript">
-	window.configuration = {
-		META_HOST: '@conf.metaHost'
-	};
+	window.envriConfig = @Html(printEnvriConf(conf));
 </script>
