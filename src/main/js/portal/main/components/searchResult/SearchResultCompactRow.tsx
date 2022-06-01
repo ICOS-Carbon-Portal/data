@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import CartIcon from '../buttons/CartIcon';
 import PreviewIcon from '../buttons/PreviewIcon';
-import {formatBytes, formatDateWithOptionalTime, pick} from '../../utils';
+import { formatBytes, formatDateWithOptionalTime, pick, getUrlWithEnvironmentPrefix } from '../../utils';
 import { ExtendedDobjInfo, ObjectsTable, WhoAmI } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview from '../../models/Preview';
@@ -54,7 +54,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
 				<CollectionLinks extendedDobjInfo={props.extendedDobjInfo} dobj={objInfo.dobj} />
-				<a title="View metadata" href={objInfo.dobj}>{objInfo.fileName}</a>
+				<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj)}>{objInfo.fileName}</a>
 			</td>
 			<td>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.submTime), timezone[config.envri].offset)}</td>

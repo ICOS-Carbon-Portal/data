@@ -1,0 +1,9 @@
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
+
+@()(implicit conf: EnvriConfig)
+
+<script type="text/javascript">
+	window.configuration = {
+		META_HOST: '@conf.metaHost'
+	};
+</script>

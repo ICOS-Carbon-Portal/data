@@ -1,7 +1,7 @@
 @import se.lu.nateko.cp.meta.core.data.Envri
-@import se.lu.nateko.cp.meta.core.data.Envri
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-@()(implicit envri: Envri)
+@()(implicit envri: Envri, conf: EnvriConfig)
 
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +45,7 @@
 		} else {}
 	</div>
 
+	@JavascriptConfig()
 	<script type="text/javascript" src="./dygraph-light.js"></script>
 </body>
 </html>

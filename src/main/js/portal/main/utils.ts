@@ -1,5 +1,6 @@
 import {Sha256Str, UrlStr} from "./backend/declarations";
 import config from "./config";
+import commonConfig from '../../common/main/config';
 import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
 import {DrawRectBbox} from "./models/State";
@@ -102,6 +103,10 @@ function getUrlFromPid(pid: Sha256Str): UrlStr {
 
 export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 	return pids.map(pid => getUrlFromPid(pid));
+}
+
+export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
+	return `${commonConfig.metaBaseUri}/objects/${dobj.split('/').pop()}`
 }
 
 export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)

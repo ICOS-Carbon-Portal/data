@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import {isSmallDevice, getLastSegmentInUrl, linesToShowStyle} from '../../utils';
+import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix } from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
@@ -60,7 +60,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 				</td>
 				<td style={{maxWidth: 0, padding: '16px 8px'}}>
 					<h4 className="fs-5">
-						<a title="View metadata" href={objInfo.dobj}>{title}</a>
+						<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj)}>{title}</a>
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					<div className="extended-info" style={{ marginTop: 4 }}>

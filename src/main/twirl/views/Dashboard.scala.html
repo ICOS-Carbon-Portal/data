@@ -1,7 +1,12 @@
+@import se.lu.nateko.cp.meta.core.data.EnvriConfig
+
+@()(implicit conf: EnvriConfig)
+
 @pageTitle = @{"Dashboard"}
 @pageHeader = {}
 @pageBody = {
 <div id="main"></div>
+@JavascriptConfig()
 <script src="dashboard.js"></script>
 }
 
