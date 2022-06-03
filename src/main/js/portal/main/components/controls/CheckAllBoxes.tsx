@@ -11,7 +11,7 @@ type Props = {
 
 export default function CheckAllBoxes({ checkCount, totalCount, onChange, disabled }: Props) {
 	const areAllChecked = checkCount > 0;
-	const checkAllBoxesStyle = {float: 'left', width: 40, margin: '4px'} as CSSProperties;
+	const checkAllBoxesStyle = {margin: '4px 3px'} as CSSProperties;
 	if (!(checkCount === 0 || checkCount === totalCount)){
 		Object.assign(checkAllBoxesStyle, {opacity: 0.5});
 	}

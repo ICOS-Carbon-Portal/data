@@ -60,7 +60,7 @@ export default class Dropdown extends Component<Props, State>{
 		const menuCls = dropdownOpen ? 'dropdown-menu show' : 'dropdown-menu';
 
 		return (
-			<span ref={span => this.node = span} className="dropdown" style={{display: 'inline-block', marginLeft: 8, verticalAlign: 8}}>
+			<span ref={span => this.node = span} className="dropdown" style={{marginLeft: 8}}>
 				{
 					isSorter
 						? <SortButton

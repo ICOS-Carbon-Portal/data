@@ -61,30 +61,30 @@ export default class CartPanel extends Component<Props, State> {
 				/>
 
 				<div className="card-body">
-					<div className="panel-srollable-controls clearfix row justify-content-between">
-						<div className="col-4">
+					<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
+						<div className="d-flex mb-2">
 							<CheckAllBoxes
 								checkCount={props.checkedObjectsInCart.length}
 								totalCount={props.cart.count}
 								onChange={this.props.handleAllCheckboxesChange} />
 							{ props.checkedObjectsInCart.length > 0 &&
-								<span style={{marginLeft: 6, verticalAlign: -6}}>{props.checkedObjectsInCart.length} {objectText} selected</span>
+								<span style={{margin: "7px 10px"}}>{props.checkedObjectsInCart.length} {objectText} selected</span>
 							}
 						</div>
-						<div className="col-8">
-							<CartBtn
-								style={{float: 'right', marginBottom: 10, marginLeft: 10}}
-								checkedObjects={props.checkedObjectsInCart}
-								clickAction={props.removeFromCart}
-								enabled={props.checkedObjectsInCart.length > 0}
-								type='remove'
-							/>
+						<div className="d-flex mb-3">
 							<PreviewBtn
-								style={{float: 'right', marginBottom: 10, marginRight: 10}}
+								style={{}}
 								checkedObjects={checkedObjects}
 								datasets={datasets}
 								previewTypes={previewTypes}
 								clickAction={this.handlePreview.bind(this)}
+							/>
+							<CartBtn
+								style={{marginLeft: 10}}
+								checkedObjects={props.checkedObjectsInCart}
+								clickAction={props.removeFromCart}
+								enabled={props.checkedObjectsInCart.length > 0}
+								type='remove'
 							/>
 						</div>
 					</div>

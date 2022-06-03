@@ -12,6 +12,7 @@ import PreviewBtn from "../../components/buttons/PreviewBtn";
 import HelpButton from "../help/HelpButton";
 import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
 import { addingToCartProhibition } from '../../models/CartItem';
+import DownloadButton from '../../components/buttons/DownloadButton';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -59,40 +60,40 @@ class SearchResultRegular extends Component<OurProps> {
 
 				<div className="card-body">
 
-					<div className="panel-srollable-controls clearfix">
-						<CheckAllBoxes
-							checkCount={checkedObjectsInSearch.length}
-							totalCount={paging.pageCount}
-							onChange={handleAllCheckboxesChange}
-							disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
+					<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
+						<div className="d-flex mb-2">
+							<CheckAllBoxes
+								checkCount={checkedObjectsInSearch.length}
+								totalCount={paging.pageCount}
+								onChange={handleAllCheckboxesChange}
+								disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
 
-						<Dropdown
-							isSorter={true}
-							isEnabled={true}
-							selectedItemKey={sorting.varName}
-							isAscending={sorting.ascending}
-							itemClickAction={toggleSort}
-							lookup={dropdownLookup}
-						/>
+							<Dropdown
+								isSorter={true}
+								isEnabled={true}
+								selectedItemKey={sorting.varName}
+								isAscending={sorting.ascending}
+								itemClickAction={toggleSort}
+								lookup={dropdownLookup}
+							/>
 
-						{ checkedObjectsInSearch.length > 0 &&
-						<span style={{marginLeft: 16, verticalAlign: 7}}>{checkedObjectsInSearch.length} {objectText} selected</span>
-						}
-
-						<div style={{float: 'right'}}>
-
-							{user.email &&
-								<CartBtn
-									style={{float: 'right', marginBottom: 10}}
-									checkedObjects={checkedObjectsInSearch}
-									clickAction={handleAddToCart}
-									enabled={checkedObjectsInSearch.length > 0}
-									type='add'
-								/>
+							{checkedObjectsInSearch.length > 0 &&
+								<span style={{ marginLeft: 12, marginTop: 7 }}>{checkedObjectsInSearch.length} {objectText} selected</span>
 							}
+						</div>
+
+						<div className="d-flex mb-3">
+
+							<div style={{position:'relative', top:7, margin: '0 10px'}}>
+								<HelpButton
+									name={'preview'}
+									title="View help about Preview"
+									overrideStyles={{ paddingLeft: 0 }}
+								/>
+							</div>
 
 							<PreviewBtn
-								style={{float: 'right', marginBottom: 10, marginRight: 10}}
+								style={{ marginRight: 10 }}
 								checkedObjects={checkedObjects}
 								isL3Previewable={isL3Previewable}
 								datasets={datasets}
@@ -100,14 +101,22 @@ class SearchResultRegular extends Component<OurProps> {
 								clickAction={handlePreview}
 							/>
 
-							<div style={{float: 'right', position:'relative', top:7, marginRight: 10}}>
-
-								<HelpButton
-									name={'preview'}
-									title="View help about Preview"
+							{user.email &&
+								<CartBtn
+									style={{ marginRight: 10 }}
+									checkedObjects={checkedObjectsInSearch}
+									clickAction={handleAddToCart}
+									enabled={checkedObjectsInSearch.length > 0}
+									type='add'
 								/>
+							}
 
-							</div>
+							<DownloadButton
+								style={{}}
+								checkedObjects={checkedObjectsInSearch}
+								enabled={checkedObjectsInSearch.length > 0}
+							/>
+
 						</div>
 
 					</div>
