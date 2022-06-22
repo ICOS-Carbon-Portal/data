@@ -39,7 +39,7 @@ export const getCountriesGeoJson = () => {
 export const getVariablesAndDates = (service: string) => {
 	const vars = getJson('/netcdf/listVariables', ['service', service]) as Promise<string[]>;
 	const dates = getJson('/netcdf/listDates', ['service', service]) as Promise<string[]>;
-	
+
 	return Promise.all([vars, dates]).then(([variables, dates]) => {return {variables, dates};});
 };
 
@@ -70,5 +70,5 @@ export const getTimeserie = ({ objId, variable, elevation, x, y }: TimeseriePara
 };
 
 export const getMetadata = (objId: string): Promise<DataObject> => {
-	return getJson(`https://meta.icos-cp.eu/objects/${objId}`);
+	return getJson(`https://meta.icos-cp.eu/objects/${objId}?format=json`);
 };
