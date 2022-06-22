@@ -46,19 +46,21 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const title = extendedInfo.title ?? stationSpecificTitle(extendedInfo, objInfo.level, specLabel);
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
-		const checkBtnTitle = uiMessage ?? `Click to select this data object for preview or add to cart`;
+		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
 
 		return(
-			<tr style={{margin: '20px 0'}}>
-				<td style={{textAlign: 'center', width: 30, padding: '16px 0px'}}>
-					<CheckBtn
-						onClick={() => props.updateCheckedObjects(objInfo.dobj)}
-						title={checkBtnTitle}
-						isChecked={props.isChecked}
-						checkboxDisabled={props.isCartView ? false : !allowCartAdd}
-					/>
-				</td>
-				<td style={{maxWidth: 0, padding: '16px 8px'}}>
+			<div className='d-flex border-bottom py-3'>
+				<div className='pe-3'>
+					<label style={{margin:-5, padding:5}}>
+						<CheckBtn
+							onClick={() => props.updateCheckedObjects(objInfo.dobj)}
+							title={checkBtnTitle}
+							isChecked={props.isChecked}
+							checkboxDisabled={props.isCartView ? false : !allowCartAdd}
+							/>
+					</label>
+				</div>
+				<div>
 					<h4 className="fs-5">
 						<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj)}>{title}</a>
 					</h4>
@@ -78,8 +80,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						<ExtendedInfoItem item={extendedInfo.biblioInfo.temporalCoverageDisplay} icon={iconCalendar} iconHeight={12} iconRightMargin={2} title="Temporal coverage" />
 						}
 					</div>
-				</td>
-			</tr>
+				</div>
+			</div>
 		);
 	}
 }

@@ -1,13 +1,14 @@
-import React, { Component, CSSProperties, MouseEvent } from 'react';
+import React, { ChangeEventHandler, Component, MutableRefObject } from 'react';
 import {Style} from "../../../../common/main/style";
 
 
 interface Props {
-	onClick: (event: MouseEvent<HTMLButtonElement>) => void
+	onClick: ChangeEventHandler<HTMLInputElement>
 	title?: string
 	isChecked?: boolean
 	checkboxDisabled?: boolean
 	style?: Style
+	checkRef?: MutableRefObject<HTMLInputElement | null>
 }
 
 export default class CheckBtn extends Component<Props>{
@@ -15,17 +16,9 @@ export default class CheckBtn extends Component<Props>{
 		const onClick = this.props.onClick;
 		const title = this.props.title || '';
 		const isChecked = this.props.isChecked || false;
-		const checkboxDisabled = this.props.checkboxDisabled || false;
-		const disabledStyle: Style = checkboxDisabled
-			? { backgroundColor: 'rgb(216, 216, 216)', borderColor: 'rgb(114, 114, 114)', cursor: 'not-allowed' }
-			: {};
-		const style = this.props.style || {};
-		const btnStyle: Style = { ...{ pointerEvents: 'auto', padding: '0px 3px' }, ...style, ...disabledStyle };
 
 		return(
-			<button className="btn btn-outline-secondary" style={btnStyle as CSSProperties} onClick={onClick} title={title} disabled={checkboxDisabled}>
-				<span className="fas fa-check" style={{opacity: isChecked ? 1 : 0}} />
-			</button>
-		);
+			<input ref={this.props.checkRef} className="form-check-input" type="checkbox" onChange={onClick} checked={isChecked ?? "checked"} title={title}></input>
+		)
 	}
 }

@@ -121,8 +121,8 @@ class SearchResultRegular extends Component<OurProps> {
 
 					</div>
 
-					<table className="table">
-						<tbody>{
+					<div>
+						{
 							objectsTable.map((objInfo: ObjectsTable, i) => {
 								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
 
@@ -140,8 +140,8 @@ class SearchResultRegular extends Component<OurProps> {
 									/>
 								);
 							})
-						}</tbody>
-					</table>
+						}
+					</div>
 				</div>
 				<Paging
 					searchOptions={undefined}

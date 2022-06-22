@@ -1,4 +1,4 @@
-import React, {Component, CSSProperties, MouseEvent} from 'react';
+import React, { ChangeEventHandler, Component, CSSProperties } from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
@@ -70,7 +70,7 @@ const QueryList = ({ getPublicQuery }: { getPublicQuery: (queryName: QueryName) 
 };
 
 interface CheckButton {
-	onClick: (event: MouseEvent<HTMLButtonElement>) => void
+	onClick: ChangeEventHandler<HTMLInputElement>
 	isChecked: boolean
 	text: string
 	checkboxDisabled?: boolean
@@ -85,15 +85,17 @@ const CheckButton = (props: CheckButton) => {
 	const styleBtn: Style = props.styleBtn
 		? Object.assign(defaultStyleBtn, props.styleBtn)
 		: defaultStyleBtn;
-	const defaultStyleTxt: CSSProperties = {marginLeft:5, top:1, position:'relative'};
+	const defaultStyleTxt: CSSProperties = {marginLeft:5};
 	const styleTxt: CSSProperties = props.styleTxt
 		? { ...defaultStyleTxt, ...props.styleTxt }
 		: defaultStyleTxt;
 
 	return (
 		<div style={{marginTop:15}}>
-			<CheckBtn onClick={onClick} isChecked={isChecked} style={styleBtn} checkboxDisabled={checkboxDisabled} />
-			<span style={styleTxt}>{text}</span>
+			<label>
+				<CheckBtn onClick={onClick} isChecked={isChecked} style={styleBtn} checkboxDisabled={checkboxDisabled} />
+				<span style={styleTxt}>{text}</span>
+			</label>
 		</div>
 	);
 };

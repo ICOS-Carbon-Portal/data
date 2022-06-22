@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react';
+import React, { useEffect, useRef } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
 
 
@@ -11,20 +11,26 @@ type Props = {
 
 export default function CheckAllBoxes({ checkCount, totalCount, onChange, disabled }: Props) {
 	const areAllChecked = checkCount > 0;
-	const checkAllBoxesStyle = {margin: '4px 3px'} as CSSProperties;
-	if (!(checkCount === 0 || checkCount === totalCount)){
-		Object.assign(checkAllBoxesStyle, {opacity: 0.5});
-	}
 	const checkAllBoxesTitle = checkCount > 0 ? "Select none" : "Select all";
+	const checkRef = useRef<HTMLInputElement>(null);
+	useEffect(() => {
+		if (checkRef.current !== null) {
+			checkRef.current.checked = areAllChecked
+			checkRef.current.indeterminate = !(checkCount === 0 || checkCount === totalCount)
+		}
+	})
 
 	return (
-		<div style={checkAllBoxesStyle}>
-			<CheckBtn
-				onClick={onChange}
-				isChecked={areAllChecked}
-				checkboxDisabled={disabled}
-				title={checkAllBoxesTitle}
-			/>
+		<div className='py-2 pe-2'>
+			<label style={{ margin: -5, padding: 5 }}>
+				<CheckBtn
+					checkRef={checkRef}
+					onClick={onChange}
+					isChecked={areAllChecked}
+					checkboxDisabled={disabled}
+					title={checkAllBoxesTitle}
+				/>
+			</label>
 		</div>
 	);
 }
