@@ -3,6 +3,7 @@ package se.lu.nateko.cp.data.routes
 import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.marshalling.Marshalling.WithOpenCharset
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
+import akka.http.scaladsl.model.headers
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.HttpCharset
 import akka.http.scaladsl.model.HttpEntity
@@ -61,11 +62,14 @@ class StaticRouting()(using envriConfigs: EnvriConfigs) {
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
 			rawPathPrefix(maybeDobjVis(proj)){pageFactory =>
-				pathEndOrSingleSlash{
-					if(pageFactory.isDefinedAt(prEnvri)) complete(pageFactory(prEnvri))
-					else getFromResource(s"$jsAppFolder/$proj/$proj.html")
-				} ~
-				getFromResourceDirectory(s"$jsAppFolder/$proj")
+				val caches = Seq(headers.CacheDirectives.public, headers.CacheDirectives.`max-age`(86400))
+				respondWithHeader(headers.`Cache-Control`(caches)){
+					pathEndOrSingleSlash{
+						if(pageFactory.isDefinedAt(prEnvri)) complete(pageFactory(prEnvri))
+						else getFromResource(s"$jsAppFolder/$proj/$proj.html")
+					} ~
+					getFromResourceDirectory(s"$jsAppFolder/$proj")
+				}
 			}
 		}
 	} ~
