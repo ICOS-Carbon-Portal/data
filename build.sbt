@@ -2,7 +2,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-ThisBuild / scalaVersion := "3.1.1"
+ThisBuild / scalaVersion := "3.2.0-RC1"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
