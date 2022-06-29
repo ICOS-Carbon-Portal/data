@@ -9,9 +9,6 @@ interface Props extends PublicQueryDeclaration {
 	getPublicQuery: (queryName: QueryName) => string
 }
 
-const defaultColor = "#0a96f0";
-const hoverColor = "#0769a8";
-
 export const ToSparqlClient: FunctionComponent<Props> = (props) => {
 	const postToSparql = () => {
 		const form = document.getElementById(formId) as HTMLFormElement;
@@ -27,29 +24,15 @@ export const ToSparqlClient: FunctionComponent<Props> = (props) => {
 
 	return (
 		<>
-			<span
-				style={{ cursor: 'pointer', color: defaultColor }}
+			<button
+				className="btn btn-link p-0 text-start"
 				onClick={postToSparql}
 				title={comment}
-				onMouseOver={handleMouseOver}
-				onMouseOut={handleMouseOut}
-			>{label}</span>
+			><i className="fas fa-share-square"></i> {label}</button>
 
 			<form id={formId} method="POST" action={sparqlUrl} target="_blank" style={{ display: 'none' }}>
 				<input type="hidden" id={queryId} name="query" />
 			</form>
 		</>
 	);
-};
-
-const handleMouseOver = (event: React.MouseEvent<HTMLSpanElement>) => {
-	const span = event.target as HTMLSpanElement;
-	span.style.textDecoration = "underline";
-	span.style.color = hoverColor;
-};
-
-const handleMouseOut = (event: React.MouseEvent<HTMLSpanElement>) => {
-	const span = event.target as HTMLSpanElement;
-	span.style.textDecoration = "none";
-	span.style.color = defaultColor;
 };

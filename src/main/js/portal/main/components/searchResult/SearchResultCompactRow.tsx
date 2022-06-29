@@ -39,7 +39,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 		const size = parseInt(objInfo.size);
 
 		return <tr className={className}>
-			<td style={{whiteSpace: 'nowrap'}}>
+			<td className='text-nowrap'>
 				{props.user.email &&
 					<CartIcon
 						style={{ marginRight: 10 }}
@@ -56,7 +56,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 				<CollectionLinks extendedDobjInfo={props.extendedDobjInfo} dobj={objInfo.dobj} />
 				<a title="View metadata" href={getUrlWithEnvironmentPrefix(objInfo.dobj)}>{objInfo.fileName}</a>
 			</td>
-			<td>{formatBytes(size, 0)}</td>
+			<td className='text-nowrap'>{formatBytes(size, 0)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.submTime), timezone[config.envri].offset)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.timeStart), timezone[config.envri].offset)}</td>
 			<td>{formatDateWithOptionalTime(new Date(objInfo.timeEnd), timezone[config.envri].offset)}</td>
