@@ -17,11 +17,17 @@ const truncateStyle: CSSProperties = {
 	textOverflow: 'ellipsis'
 };
 
-const iconStation = '//static.icos-cp.eu/images/icons/station.svg';
-const iconArrows = '//static.icos-cp.eu/images/icons/arrows-alt-v-solid.svg';
-const iconTime = '//static.icos-cp.eu/images/icons/time.svg';
+const iconStation = '//static.icos-cp.eu/images/icons/tower-observation.svg';
+const iconArrows = '//static.icos-cp.eu/images/icons/arrows-up-down.svg';
+const iconTime = '//static.icos-cp.eu/images/icons/timer.svg';
 const iconFile = '//static.icos-cp.eu/images/icons/file.svg';
-const iconCalendar = '//static.icos-cp.eu/images/icons/calendar-alt-regular.svg';
+const iconCalendar = '//static.icos-cp.eu/images/icons/calendar.svg';
+const iconLevel = [
+	'//static.icos-cp.eu/images/icons/circle-0.svg',
+	'//static.icos-cp.eu/images/icons/circle-1.svg',
+	'//static.icos-cp.eu/images/icons/circle-2.svg',
+	'//static.icos-cp.eu/images/icons/circle-3.svg'
+];
 
 interface OurProps {
 	objInfo: ObjectsTable | CartItem
@@ -47,6 +53,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
+		const level = `Level ${objInfo.level}`
 
 		return(
 			<div className='d-flex border-bottom py-3'>
@@ -66,16 +73,17 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 					</h4>
 					<Description extendedInfo={extendedInfo} truncateStyle={truncateStyle} />
 					<div className="extended-info" style={{ marginTop: 4 }}>
-						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} />
+						<ExtendedInfoItem item={extendedInfo.theme} icon={extendedInfo.themeIcon} iconHeight={14} iconRightMargin={4} title="Theme"/>
+						<ExtendedInfoItem item={level} icon={iconLevel[objInfo.level]} iconHeight={14} title="Data level" />
 						<CollectionLinks dois={extendedInfo.dois} />
 						{config.features.displayStationInExtendedInfo && extendedInfo.station &&
-						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={16} />
+						<ExtendedInfoItem item={extendedInfo.station.trim()} icon={iconStation} iconHeight={13} title="Station"/>
 						}
 						{config.features.displayFileNameInExtendedInfo && objInfo.fileName &&
-						<ExtendedInfoItem item={objInfo.fileName} icon={iconFile} iconHeight={16} title="File name" />
+						<ExtendedInfoItem item={objInfo.fileName} icon={iconFile} iconHeight={13} title="File name" />
 						}
-						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={15} title="Sampling height" />
-						<ExtendedInfoItem item={objInfo.temporalResolution} icon={iconTime} iconHeight={16} title="Time resolution" />
+						<ExtendedInfoItem item={samplingHeight} icon={iconArrows} iconHeight={14} title="Sampling height" />
+						<ExtendedInfoItem item={objInfo.temporalResolution} icon={iconTime} iconHeight={13} title="Time resolution" />
 						{extendedInfo.biblioInfo &&
 						<ExtendedInfoItem item={extendedInfo.biblioInfo.temporalCoverageDisplay} icon={iconCalendar} iconHeight={12} iconRightMargin={2} title="Temporal coverage" />
 						}
@@ -128,8 +136,8 @@ const ExtendedInfoItem: React.FunctionComponent<ExtendedInfoItemProps> = ({ item
 	const imgStyle = {height: iconHeight, marginRight: iconRightMargin};
 
 	return (item && icon
-		? <span className="extended-info-item" >
-			<img src={icon} title={title} style={imgStyle}/> <span style={{verticalAlign: 'middle'}}>{item}</span>
+		? <span className="extended-info-item" title={title}>
+			<img src={icon} style={imgStyle}/> <span style={{verticalAlign: 'middle'}}>{item}</span>
 		</span>
 		: null
 	);
