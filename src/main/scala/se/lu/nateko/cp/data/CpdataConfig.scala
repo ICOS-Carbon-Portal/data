@@ -129,10 +129,13 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
 
 	val appConfig: Config = {
-		val default = ConfigFactory.load
 		val confFile = new java.io.File("application.conf").getAbsoluteFile
-		if(!confFile.exists) default
-		else ConfigFactory.parseFile(confFile).withFallback(default)
+		if(!confFile.exists) ConfigFactory.load
+		else
+			ConfigFactory.parseFile(confFile)
+				.withFallback(ConfigFactory.defaultApplication)
+				.withFallback(ConfigFactory.defaultReferenceUnresolved)
+				.resolve
 	}
 
 	def getDefault: CpdataConfig = fromAppConfig(appConfig)
