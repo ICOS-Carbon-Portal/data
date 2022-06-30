@@ -149,9 +149,9 @@ export function findDobjs(search: string): Query<"dobj", never> {
 prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
 	?dobj  cpmeta:hasObjectSpec ?spec.
+	FILTER CONTAINS(LCASE(SUBSTR(STR(?dobj), ${config.cpmetaObjectUri.length})), LCASE("${search}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${deprecatedFilterClause}
-	FILTER CONTAINS(LCASE(REPLACE(STR(?dobj), "${config.cpmetaObjectUri}", "")), LCASE("${search}"))
 }`;
 
 	return { text };
