@@ -108,15 +108,14 @@ object Main extends App {
 	}.onComplete{
 		case Success(binding) =>
 			sys.addShutdownHook{
-				val exeCtxt = ExecutionContext.Implicits.global
-				val doneFuture = binding
-					.unbind()
-					.flatMap(_ => system.terminate())(exeCtxt)
 				try{
-					Await.result(doneFuture, 3.seconds)
+					Await.result(binding.unbind(), 3.seconds)
+					println("'data' service has been successfully taken offline")
 				} finally{
 					postgresLog.close()
+					println("Postgres data object downloads log has been closed")
 				}
+				println("'data' service shutdown successful")
 			}
 			system.log.info(s"Started data: $binding")
 
