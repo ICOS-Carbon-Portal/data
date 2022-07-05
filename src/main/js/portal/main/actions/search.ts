@@ -9,11 +9,12 @@ import {
 	fetchDobjOriginsAndCounts,
 	fetchResourceHelpInfo,
 	getExtendedDataObjInfo,
-	makeHelpStorageListItem
+	makeHelpStorageListItem,
+	searchDobjByFileName
 } from "../backend";
 import {ColNames, OriginsColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FiltersNumber, FiltersUpdatePids, UiInactivateAllHelp} from "../reducers/actionpayloads";
+import { FiltersNumber, FiltersUpdatePids, FiltersUpdateFileName, UiInactivateAllHelp} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
@@ -247,6 +248,25 @@ export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThun
 	};
 }
 
+const updatePidsFromFileName: PortalThunkAction<void> = (dispatch, getState) => {
+	const { filterFileName } = getState();
+	if (filterFileName.length) {
+		const { searchOptions } = getState();
+		searchDobjByFileName(filterFileName, searchOptions.showDeprecated).then(dobjs => {
+			dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
+		});
+	} else {
+		dispatch(updateSelectedPids(null));
+	}
+}
+
+export function updateFileName(fileName: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersUpdateFileName(fileName));
+		dispatch(updatePidsFromFileName);
+	};
+}
+
 export function updateCheckedObjectsInSearch(checkedObjectInSearch: UrlStr | UrlStr[]): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.UiUpdateCheckedObjsInSearch(checkedObjectInSearch));
@@ -351,14 +371,16 @@ export function setFilterHelpInfo(name: ColNames | HelpItemName, helpContent: He
 
 export function updateSearchOption(searchOption: SearchOption): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {searchOptions, tabs, filterPids} = getState();
+		const {searchOptions, tabs, filterPids, filterFileName} = getState();
 
 		dispatch(new Payloads.MiscUpdateSearchOption(searchOption));
 
 		const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids);
 		const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated);
+		const mustFetchPIDs = (searchOption.name === 'showDeprecated') && filterFileName.length;
 
-		if(mustFetchCounts) dispatch(getDobjOriginsAndCounts(mustFetchObjs))
+		if(mustFetchPIDs) dispatch(updatePidsFromFileName)
+		else if(mustFetchCounts) dispatch(getDobjOriginsAndCounts(mustFetchObjs))
 		else if (mustFetchObjs) dispatch(getFilteredDataObjects);
 	};
 }

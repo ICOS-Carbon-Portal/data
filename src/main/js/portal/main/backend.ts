@@ -202,8 +202,8 @@ export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
 	})).then(res => res.rows);
 }
 
-export function searchDobjByFileName(fileName: string): Promise<{dobj: Sha256Str}[]> {
-	const query = queries.getDobjByFileName(fileName);
+export function searchDobjByFileName(fileName: string, showDeprecated: Boolean): Promise<{dobj: Sha256Str}[]> {
+	const query = queries.getDobjByFileName(fileName, showDeprecated);
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)

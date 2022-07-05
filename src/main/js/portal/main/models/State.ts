@@ -138,6 +138,7 @@ export interface State {
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
 	filterNumbers: FilterNumbers
+	filterFileName: string
 	user: User
 	previewLookup: PreviewLookup | undefined;
 	labelLookup: LabelLookup;
@@ -193,6 +194,7 @@ export const defaultState: State = {
 	filterTemporal: new FilterTemporal(),
 	filterPids: null,
 	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
+	filterFileName: "",
 	user: {
 		profile: {},
 		email: null

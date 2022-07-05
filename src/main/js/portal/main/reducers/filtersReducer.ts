@@ -4,6 +4,7 @@ import {
 	FiltersNumber,
 	FiltersTemporal,
 	FiltersUpdatePids,
+	FiltersUpdateFileName,
 	FilterKeywords
 } from "./actionpayloads";
 import {isPidFreeTextSearch} from "./utils";
@@ -24,6 +25,12 @@ export default function(state: State, payload: FiltersPayload): State{
 			paging: state.paging
 				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
 				.withOffset(0)
+		});
+	}
+
+	if (payload instanceof FiltersUpdateFileName) {
+		return stateUtils.update(state, {
+			filterFileName: payload.fileName
 		});
 	}
 

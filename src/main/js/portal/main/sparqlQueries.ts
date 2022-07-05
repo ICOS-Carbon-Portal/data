@@ -150,6 +150,7 @@ prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
 	?dobj  cpmeta:hasObjectSpec ?spec.
 	FILTER CONTAINS(LCASE(SUBSTR(STR(?dobj), ${config.cpmetaObjectUri.length + 1})), LCASE("${search}"))
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${deprecatedFilterClause}
 }`;
@@ -157,13 +158,16 @@ SELECT ?dobj WHERE{
 	return { text };
 }
 
-export function getDobjByFileName(fileName: string): Query<"dobj", never> {
+export function getDobjByFileName(fileName: string, showDeprecated: Boolean): Query<"dobj", never> {
 	const text = `# getDobjByFileName
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?dobj
 where {
-?dobj cpmeta:hasName '${fileName}'
-filter not exists{ [] cpmeta:isNextVersionOf ?dobj }
+	?dobj cpmeta:hasName '${fileName}' .
+	?dobj cpmeta:hasObjectSpec ?spec .
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	${showDeprecated ? '' : deprecatedFilterClause}
 }`;
 
 	return { text };

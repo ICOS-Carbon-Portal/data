@@ -2,7 +2,7 @@ import React, { ChangeEventHandler, Component, CSSProperties } from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {makeQuerySubmittable, updateSearchOption, updateSelectedPids} from "../../actions/search";
+import {makeQuerySubmittable, updateFileName, updateSearchOption, updateSelectedPids} from "../../actions/search";
 import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
 import FilterByPid from "../../components/filters/FilterByPid";
@@ -22,7 +22,7 @@ type OurProps = StateProps & DispatchProps & {tabHeader: string};
 
 class Advanced extends Component<OurProps> {
 	render(){
-		const { searchOptions, updateSearchOption, filterPids, updateSelectedPids, getPublicQuery } = this.props;
+		const { searchOptions, updateSearchOption, filterPids, updateSelectedPids, updateFileName, getPublicQuery } = this.props;
 		const {showDeprecated} = searchOptions;
 		const deprecationDisabled: boolean = filterPids !== null;
 
@@ -33,7 +33,7 @@ class Advanced extends Component<OurProps> {
 						selectedPids={filterPids}
 						updateSelectedPids={updateSelectedPids}
 					/>
-					<FilterByFileName updateSelectedPids={updateSelectedPids} helpItemName="fileNameFilter" />
+					<FilterByFileName updateFileName={updateFileName} helpItemName="fileNameFilter" showDeprecated={searchOptions.showDeprecated} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">
@@ -125,6 +125,7 @@ function stateToProps(state: State) {
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateSelectedPids: (pids: Sha256Str[] | null) => dispatch(updateSelectedPids(pids)),
+		updateFileName: (name: string) => dispatch(updateFileName(name)),
 		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption))
 	};
 }

@@ -1,13 +1,12 @@
 import React, {ChangeEvent, Component} from "react";
 import {debounce} from 'icos-cp-utils';
-import { searchDobjByFileName } from "../../backend";
-import { Sha256Str } from "../../backend/declarations";
 import { HelpItemName } from "../../models/HelpStorage";
 import HelpButton from "../../containers/help/HelpButton";
 
 interface OurProps {
-	updateSelectedPids: (pidsArr: Sha256Str[] | null) => void
+	updateFileName: (name: string) => void
 	helpItemName?: HelpItemName
+	showDeprecated: Boolean
 }
 
 export default class FilterByFileName extends Component<OurProps> {
@@ -22,13 +21,7 @@ export default class FilterByFileName extends Component<OurProps> {
 	private makeQuery(ev: ChangeEvent<HTMLInputElement>){
 		const fileName = ev.target.value;
 
-		if (fileName.length) {
-			searchDobjByFileName(fileName).then(dobjs => {
-				this.props.updateSelectedPids(dobjs.map(d => d.dobj));
-			});
-		} else {
-			this.props.updateSelectedPids(null);
-		}
+		this.props.updateFileName(fileName);
 	}
 
 	render() {
