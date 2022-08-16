@@ -2,7 +2,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-ThisBuild / scalaVersion := "3.2.0-RC1"
+ThisBuild / scalaVersion := "3.2.0-RC3"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -73,10 +73,6 @@ lazy val data = (project in file("."))
 		name := "data",
 		version := "0.5.0",
 
-		Test / test := {
-			(netcdf / Test / test).value
-			(Test / test).value
-		},
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
 		cpFrontendJarImports := Seq(
@@ -120,17 +116,7 @@ lazy val data = (project in file("."))
 
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
-
-		// Override the "assembly" command so that we always run "npm publish"
-		// first - thus generating javascript files - before we package the
-		// "fat" jarfile used for deployment.
-		assembly := (Def.taskDyn{
-			val original = assembly.taskValue
-			// Referencing the task's 'value' field will trigger the npm command
-			cpFrontendPublish.value
-			// Then just return the original "assembly command"
-			Def.task(original.value)
-		}).value,
+		cpDeployPreAssembly := Def.sequential(netcdf / Test / test, Test / test, cpFrontendPublish).value,
 
 //		initialCommands in console := """
 //			import se.lu.nateko.cp.data.api.B2Playground._
