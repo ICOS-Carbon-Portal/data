@@ -16,12 +16,7 @@ export const FilterPanel: React.FunctionComponent<OurProps> = props => {
 		<div className="card">
 			<div className="card-header">
 				<span>{header}</span>
-				{helpItemName &&
-					<HelpButton
-						name={helpItemName}
-						title="Click to toggle help"
-					/>
-				}
+				{helpItemName && <HelpButton name={helpItemName} />}
 			</div>
 
 			<Slider startCollapsed={startCollapsed}>

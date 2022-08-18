@@ -87,7 +87,7 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick, helpButtonName}: Co
 			</button>
 			{helpButtonName &&
 				<button className="btn btn-outline-secondary">
-					<HelpButton name={helpButtonName} title="Click to toggle help" overrideStyles={{paddingLeft: 0}}/>
+					<HelpButton name={helpButtonName} overrideStyles={{paddingLeft: 0}}/>
 				</button>
 			}
 			<input

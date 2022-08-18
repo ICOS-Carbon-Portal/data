@@ -65,10 +65,7 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 						<div>
 							<label>{numericFilterLabels[filterNumber.category]}</label>
 
-							<HelpButton
-								name={filterNumber.category}
-								title="Click to toggle help"
-							/>
+							<HelpButton name={filterNumber.category}/>
 						</div>
 	
 						<div>

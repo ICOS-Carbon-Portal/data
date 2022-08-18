@@ -7,14 +7,14 @@ import {
 	FiltersUpdateFileName,
 	FilterKeywords
 } from "./actionpayloads";
-import {isPidFreeTextSearch} from "./utils";
+import {isInPidFilteringMode} from "./utils";
 
 export default function(state: State, payload: FiltersPayload): State{
 
 	if (payload instanceof FiltersTemporal){
 		return stateUtils.update(state,{
 			filterTemporal: payload.filterTemporal,
-			paging: state.paging.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids)),
+			paging: state.paging.withFiltersEnabled(isInPidFilteringMode(state.tabs, state.filterPids)),
 			checkedObjectsInSearch: []
 		});
 	}
@@ -23,7 +23,7 @@ export default function(state: State, payload: FiltersPayload): State{
 		return stateUtils.update(state,{
 			filterPids: payload.selectedPids,
 			paging: state.paging
-				.withFiltersEnabled(isPidFreeTextSearch(state.tabs, state.filterPids))
+				.withFiltersEnabled(isInPidFilteringMode(state.tabs, state.filterPids))
 				.withOffset(0)
 		});
 	}

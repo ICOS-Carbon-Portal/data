@@ -15,7 +15,7 @@ import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
-import {getJson} from 'icos-cp-backend';
+import {getJson, sparql} from 'icos-cp-backend';
 import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
@@ -194,12 +194,9 @@ export function sparqlFetchBlob(queryTxt: string, acceptCachedResults: boolean =
 		.then(resp => resp.blob());
 }
 
-export function searchDobjs(search: string): Promise<{dobj: Sha256Str}[]> {
-	const query = queries.findDobjs(search);
-
-	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
-		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)
-	})).then(res => res.rows);
+export function checkDobjExists(search: Sha256Str, showDeprecated: Boolean): Promise<boolean> {
+	const query = queries.findDobjByUrlId(search, showDeprecated);
+	return sparql(query, config.sparqlEndpoint, true).then(res => res.results.bindings.length > 0);
 }
 
 export function searchDobjByFileName(fileName: string, showDeprecated: Boolean): Promise<{dobj: Sha256Str}[]> {

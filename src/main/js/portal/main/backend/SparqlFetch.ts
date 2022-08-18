@@ -34,8 +34,8 @@ export function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResp
 	};
 
 	const cacheHeader: HeadersInit = acceptCachedResults
-		? { 'Cache-Control': 'max-age=1000000' } //server decides how old the cache can get
-		: {}; //expecting no-cache default behaviour from the server
+		? {} //expecting default cache behaviour from the server
+		: { 'Cache-Control': 'no-cache'};
 	const headers: HeadersInit = {
 		'Accept': getType(),
 		'Content-Type': 'text/plain'

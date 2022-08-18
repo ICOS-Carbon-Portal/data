@@ -42,10 +42,7 @@ export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 					<div>
 						<label>{placeholders[config.envri][name]}</label>
 
-						<HelpButton
-							name={name}
-							title="Click to toggle help"
-						/>
+						<HelpButton name={name} />
 					</div>
 
 					<div>

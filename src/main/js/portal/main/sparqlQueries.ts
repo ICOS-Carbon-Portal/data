@@ -12,7 +12,7 @@ import {
 	VariableFilterRequest, isVariableFilter, isKeywordsFilter
 } from './models/FilterRequest';
 import { Value } from "./models/SpecTable";
-import { UrlStr } from './backend/declarations';
+import { Sha256Str, UrlStr } from './backend/declarations';
 
 
 const config = Object.assign(commonConfig, localConfig);
@@ -144,15 +144,14 @@ ${fromOntoAndResAndStations}where {
 	return { text };
 }
 
-export function findDobjs(search: string): Query<"dobj", never> {
-	const text = `# findDobjs
+export function findDobjByUrlId(id: Sha256Str, showDeprecated: Boolean): Query<"dobj", never> {
+	const text = `# findDobjByUrlId
 prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
-	?dobj  cpmeta:hasObjectSpec ?spec.
-	FILTER CONTAINS(LCASE(SUBSTR(STR(?dobj), ${config.cpmetaObjectUri.length + 1})), LCASE("${search}"))
-	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
+	BIND(<${config.cpmetaObjectUri + id}> as ?dobj)
+	?dobj cpmeta:hasObjectSpec ?spec.
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	${deprecatedFilterClause}
+	${showDeprecated ? '' : deprecatedFilterClause}
 }`;
 
 	return { text };

@@ -95,7 +95,7 @@ export default class MultiSelectFilter extends Component<Props, State> {
 		const {text, value, helpStorageListEntry} = item;
 
 		return shouldUseExternalListEntry && helpStorageListEntry.length
-			? <HelpButton url={value + ''} title="Click to toggle help" name={name} helpContent={{url: value + '', main: text, helpStorageListEntry}} />
+			? <HelpButton url={value + ''} name={name} helpContent={{url: value + '', main: text, helpStorageListEntry}} />
 			: null;
 	}
 

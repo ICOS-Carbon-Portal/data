@@ -12,7 +12,8 @@ const titles = {
 	previewCsvDownload: "CSV download",
 	previewURL: "Preview chart URL",
 	keywordFilter: "Keyword",
-	fileNameFilter: "Filename"
+	fileNameFilter: "Filename",
+	pidFilter: "PID"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -341,6 +342,8 @@ const initItems: HelpItem[] = [
 	),
 
 	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
+	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, ` +
+		'or just the suffix (24 characters)'),
 ];
 
 function nonStrictnessWarning(title: String): string{

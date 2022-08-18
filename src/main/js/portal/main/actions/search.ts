@@ -2,7 +2,7 @@ import {PortalThunkAction} from "../store";
 import SpecTable, {Filter, Value} from "../models/SpecTable";
 import {State, TabsState, WhoAmI} from "../models/State";
 import * as Payloads from "../reducers/actionpayloads";
-import {isPidFreeTextSearch} from "../reducers/utils";
+import {isInPidFilteringMode} from "../reducers/utils";
 import config from "../config";
 import {CachedDataObjectsFetcher, DataObjectsFetcher} from "../CachedDataObjectsFetcher";
 import {
@@ -172,7 +172,7 @@ function fetchExtendedDataObjInfo(dobjs: UrlStr[]): PortalThunkAction<void> {
 const logPortalUsage = (state: State) => {
 	const {specTable, filterCategories, filterTemporal, filterNumbers, filterKeywords, searchOptions} = state;
 
-	const effectiveFilterPids = isPidFreeTextSearch(state.tabs, state.filterPids) ? state.filterPids : [];
+	const effectiveFilterPids = isInPidFilteringMode(state.tabs, state.filterPids) ? state.filterPids : [];
 	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
 	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids !== null) {
@@ -375,9 +375,9 @@ export function updateSearchOption(searchOption: SearchOption): PortalThunkActio
 
 		dispatch(new Payloads.MiscUpdateSearchOption(searchOption));
 
-		const mustFetchObjs = !isPidFreeTextSearch(tabs, filterPids);
 		const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated);
-		const mustFetchPIDs = (searchOption.name === 'showDeprecated') && filterFileName.length;
+		const mustFetchObjs = !isInPidFilteringMode(tabs, filterPids) || mustFetchCounts;
+		const mustFetchPIDs = mustFetchCounts && filterFileName.length;
 
 		if(mustFetchPIDs) dispatch(updatePidsFromFileName)
 		else if(mustFetchCounts) dispatch(getDobjOriginsAndCounts(mustFetchObjs))

@@ -20,7 +20,7 @@ import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {FilterRequest} from "../models/FilterRequest";
-import {isPidFreeTextSearch} from "../reducers/utils";
+import {isInPidFilteringMode} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp, restoreSpatialFilterFromMapProps} from "./main";
@@ -70,11 +70,11 @@ export function getFilters(state: State, forStatCountsQuery: boolean = false): F
 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
 	let filters: FilterRequest[] = [];
 
-	if (isPidFreeTextSearch(tabs, filterPids)){
-		filters.push({category: 'deprecated', allow: true});
+	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
+
+	if (isInPidFilteringMode(tabs, filterPids)){
 		filters.push({category: 'pids', pids: filterPids});
 	} else {
-		filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
 		filters.push({category: 'pids', pids: null});
 
 		if (filterTemporal.hasFilter){

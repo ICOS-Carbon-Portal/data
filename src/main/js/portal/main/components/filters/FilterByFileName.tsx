@@ -1,11 +1,10 @@
 import React, {ChangeEvent, Component} from "react";
 import {debounce} from 'icos-cp-utils';
-import { HelpItemName } from "../../models/HelpStorage";
 import HelpButton from "../../containers/help/HelpButton";
 
 interface OurProps {
+	filterFileName: string
 	updateFileName: (name: string) => void
-	helpItemName?: HelpItemName
 	showDeprecated: Boolean
 }
 
@@ -25,24 +24,18 @@ export default class FilterByFileName extends Component<OurProps> {
 	}
 
 	render() {
-		const helpItemName = this.props.helpItemName;
-
 		return (
 			<div className="row" style={{marginTop: 10}}>
 				<div className="col-md-12">
 					<label style={{marginBottom: 0}}>Filename (exact match only)</label>
-					{helpItemName &&
-						<HelpButton
-							name={helpItemName}
-							title="Click to toggle help"
-						/>
-					}
+					<HelpButton name="fileNameFilter" />
 
 					<input
 						type="text"
 						placeholder="Paste in file name"
 						className="form-control"
 						onChange={this.makeQueryDebounced}
+						defaultValue={this.props.filterFileName}
 					/>
 
 				</div>

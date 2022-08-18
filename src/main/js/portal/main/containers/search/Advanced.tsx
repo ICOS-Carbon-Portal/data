@@ -22,23 +22,18 @@ type OurProps = StateProps & DispatchProps & {tabHeader: string};
 
 class Advanced extends Component<OurProps> {
 	render(){
-		const { searchOptions, updateSearchOption, filterPids, updateSelectedPids, updateFileName, getPublicQuery } = this.props;
+		const { searchOptions, filterPids, filterFileName, updateSearchOption, updateSelectedPids, updateFileName, getPublicQuery } = this.props;
 		const {showDeprecated} = searchOptions;
-		const deprecationDisabled: boolean = filterPids !== null;
 
 		return (
 			<>
 				<FilterPanel header="Text filters">
-					<FilterByPid
-						selectedPids={filterPids}
-						updateSelectedPids={updateSelectedPids}
-					/>
-					<FilterByFileName updateFileName={updateFileName} helpItemName="fileNameFilter" showDeprecated={searchOptions.showDeprecated} />
+					<FilterByPid {...{filterPids, filterFileName, updateSelectedPids, showDeprecated}} />
+					<FilterByFileName {...{showDeprecated, updateFileName, filterFileName}} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">
 					<CheckButton
-						checkboxDisabled={deprecationDisabled}
 						onClick={() => updateSearchOption({name: 'showDeprecated', value: !showDeprecated})}
 						isChecked={showDeprecated}
 						text={'Show deprecated objects'}
@@ -117,6 +112,7 @@ function getQueryBuilder(state: State): (queryName: QueryName) => string {
 function stateToProps(state: State) {
 	return {
 		filterPids: state.filterPids,
+		filterFileName: state.filterFileName,
 		searchOptions: state.searchOptions,
 		getPublicQuery: getQueryBuilder(state)
 	};

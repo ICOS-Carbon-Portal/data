@@ -105,6 +105,8 @@ export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 	return pids.map(pid => getUrlFromPid(pid));
 }
 
+export const pidRegexp = /^(?:[\d\.]+\d\/)?([a-zA-Z0-9\-_]{24})$/
+
 export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
 	return commonConfig.metaBaseUri + 'objects/' + dobj.split('/').pop()
 }

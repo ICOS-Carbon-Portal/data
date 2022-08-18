@@ -8,7 +8,7 @@ import {
 	UiUpdateHelpInfo
 } from "./actionpayloads";
 import config from "../config";
-import {isPidFreeTextSearch} from "./utils";
+import {isInPidFilteringMode} from "./utils";
 import {UrlStr} from "../backend/declarations";
 
 export default function(state: State, payload: UiPayload): State{
@@ -69,7 +69,7 @@ const handleToggleSorting = (state: State, payload: UiToggleSorting): Partial<St
 
 const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
 	const tabs = {...state.tabs, [payload.tabName]: payload.selectedTabId};
-	const hasPidSearchResult = isPidFreeTextSearch(tabs, state.filterPids);
+	const hasPidSearchResult = isInPidFilteringMode(tabs, state.filterPids);
 	const offset = hasPidSearchResult ? 0 : state.paging.offset;
 
 	return stateUtils.update(state,{

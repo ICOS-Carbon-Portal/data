@@ -20,7 +20,7 @@ import config, {CategoryType} from "../config";
 import CompositeSpecTable, { ColNames } from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
 import PreviewLookup from "../models/PreviewLookup";
-import {getObjCount, isPidFreeTextSearch} from "./utils";
+import {getObjCount, isInPidFilteringMode} from "./utils";
 import {IdxSig} from "../backend/declarations";
 
 
@@ -126,7 +126,7 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 	const paging = state.paging.withObjCount({
 		objCount: getObjCount(state.specTable),
 		pageCount: payload.objectsTable.length,
-		filtersEnabled: isPidFreeTextSearch(state.tabs, state.filterPids),
+		filtersEnabled: isInPidFilteringMode(state.tabs, state.filterPids),
 		isDataEndReached: payload.isDataEndReached
 	});
 
@@ -154,7 +154,7 @@ const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 		payload.table.withFilter("station", state.spatialStationsFilter).filteredSubtable
 	);
 
-	if (isPidFreeTextSearch(state.tabs, state.filterPids)) return {specTable};
+	if (isInPidFilteringMode(state.tabs, state.filterPids)) return {specTable};
 
 	return {
 		specTable,
