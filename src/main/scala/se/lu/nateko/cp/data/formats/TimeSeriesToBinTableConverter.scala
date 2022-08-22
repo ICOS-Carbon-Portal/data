@@ -12,7 +12,11 @@ class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 
 	def parseRow(row: TableRow): BinTableRow = {
 		if(parser == null) parser = new Parser(row.header)
-		parser.parse(row)
+		try
+			parser.parse(row)
+		catch
+			case err: Throwable =>
+				throw new CpDataParsingException(s"Problem parsing row $row\nError message: ${err.getMessage}")
 	}
 
 	private class Parser(header: TableRowHeader){
