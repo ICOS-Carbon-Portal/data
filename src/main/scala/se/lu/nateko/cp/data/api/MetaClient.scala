@@ -143,6 +143,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 				|?memb cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
 				|?memb cpmeta:atOrganization ?station .
 				|?station a cpmeta:ES .
+				|filter not exists {?memb cpmeta:hasEndTime []}
 				|?station cpmeta:hasStationId ?$stationVar .
 			|}""".stripMargin
 
