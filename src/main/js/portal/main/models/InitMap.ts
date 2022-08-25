@@ -52,7 +52,8 @@ interface Props extends UpdateProps {
 }
 interface UpdateProps {
 	specTable: CompositeSpecTable
-	stationPos4326Lookup: StationPos4326Lookup[]
+	allStations: UrlStr[],
+	stationPos4326Lookup: StationPos4326Lookup
 	labelLookup: State['labelLookup']
 	spatialStationsFilter: Filter
 	mapProps: MapProps
@@ -71,10 +72,9 @@ export default class InitMap {
 	private readonly layerControl: LayerControl;
 	private readonly stationFilterControl: StationFilterControl;
 	private pointTransformer: TransformPointFn;
-	private allStationUris: Value[];
+	private allStationUris: UrlStr[];
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
-	private updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void;
 	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 
 	constructor(props: Props) {
@@ -89,8 +89,7 @@ export default class InitMap {
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
-		this.allStationUris = [];
-		this.updatePersistedMapProps = updatePersistedMapProps;
+		this.allStationUris = props.allStations
 		this.updateStationFilterInState = updateStationFilterInState;
 
 		const srid = persistedMapProps.srid === undefined
@@ -262,14 +261,14 @@ export default class InitMap {
 
 	incomingPropsUpdated(props: UpdateProps) {
 		const { specTable, stationPos4326Lookup, labelLookup, spatialStationsFilter, mapProps } = props;
+		this.allStationUris = props.allStations
 		const isStationPosLookupEmpty = () => this.stationFilterControl.stationPosLookup.hasOwnProperty("empty");
 		const isReadyForStationPosLookup = isStationPosLookupEmpty()
-			&& stationPos4326Lookup.length > 0
+			&& this.allStationUris.length > 0
 			&& Object.keys(labelLookup).length > 0;
 
 		if (isReadyForStationPosLookup) {
-			this.allStationUris = stationPos4326Lookup.map(s => s.station);
-			this.stationFilterControl.stationPosLookup = getStationPosLookup(stationPos4326Lookup, this.pointTransformer, labelLookup);
+			this.stationFilterControl.stationPosLookup = getStationPosLookup(this.allStationUris, stationPos4326Lookup, this.pointTransformer, labelLookup);
 			this.stationFilterControl.restoreDrawFeaturesFromMapProps(mapProps);
 		}
 
@@ -431,16 +430,17 @@ export default class InitMap {
 	}
 }
 
-const getStationPosLookup = (stationPos4326Lookup: StationPos4326Lookup[], pointTransformer: TransformPointFn, labelLookup: State['labelLookup']) =>
-	stationPos4326Lookup.reduce<StationPosLookup>((acc, st) => {
-		acc[st.station] = {
-			coord: pointTransformer(st.lon, st.lat),
-			stationLbl: labelLookup[st.station].label ?? st.station
+const getStationPosLookup = (allStations: UrlStr[], lookup4326: StationPos4326Lookup, pointTransformer: TransformPointFn, labelLookup: State['labelLookup']) =>
+	allStations.reduce<StationPosLookup>((acc, st) => {
+		const latLon = lookup4326[st];
+		if(latLon) acc[st] = {
+			coord: pointTransformer(latLon.lon, latLon.lat),
+			stationLbl: labelLookup[st].label ?? st
 		};
 		return acc;
 	}, {});
 
-const createPointData = (stations: Value[], stationPosLookup?: StationPosLookup, additionalAttributes: PointData['attributes'] = {}) => {
+function createPointData(stations: Value[], stationPosLookup?: StationPosLookup, additionalAttributes: PointData['attributes'] = {}): PointData[] {
 	if (stationPosLookup === undefined) return [];
 
 	return stations.reduce<PointData[]>((acc, st) => {

@@ -7,7 +7,7 @@ import Storage from './models/Storage';
 import {FilterRequest} from './models/FilterRequest';
 import {UrlStr, Sha256Str, AsyncResult} from "./backend/declarations";
 import { sparqlParsers } from "./backend/sparql";
-import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup} from "./models/State";
+import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLookup, StationPos4326Lookup} from "./models/State";
 import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
@@ -70,15 +70,20 @@ export const fetchDobjOriginsAndCounts = (filters: FilterRequest[]) => {
 	}));
 };
 
-export const fetchStationPositions = () => {
+function fetchStationPositions(): Promise<StationPos4326Lookup> {
 	const query = queries.stationPositions();
 
 	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
 		station: b.station.value,
 		lon: parseFloat(b.lon.value),
-		lat: parseFloat(b.lat.value),
-		id: b.id.value
-	}));
+		lat: parseFloat(b.lat.value)
+	})).then(sparqlRes => sparqlRes.rows.reduce<StationPos4326Lookup>(
+		(acc, stLatLon) => {
+			acc[stLatLon.station] = stLatLon;
+			return acc;
+		},
+		{}
+	));
 };
 
 export type RawListItem = {label?: string, comment?: string, webpage?: string, stationId?: string};
@@ -130,6 +135,7 @@ export type BootstrapData = {
 	labelLookup: LabelLookup
 	keywords: KeywordsInfo
 	countryCodes: Dict
+	stationPos4326Lookup: StationPos4326Lookup
 }
 
 export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
@@ -138,13 +144,15 @@ export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapDa
 		fetchSpecTableData(filters),
 		fetchLabelLookup(),
 		keywordsInfo.fetch(),
+		fetchStationPositions(),
 		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([specTables, labelLookup, keywords, countryCodes]) => ({
+		([specTables, labelLookup, keywords, stationPos4326Lookup, countryCodes]) => ({
 			specTables,
 			labelLookup,
 			keywords,
-			countryCodes
+			countryCodes,
+			stationPos4326Lookup
 		})
 	)
 }

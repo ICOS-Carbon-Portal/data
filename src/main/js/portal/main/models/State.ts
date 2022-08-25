@@ -118,7 +118,7 @@ export type ExportQuery = {
 	sparqClientQuery: string
 }
 
-export type StationPos4326Lookup = { station: UrlStr, lon: number, lat: number }
+export type StationPos4326Lookup = Record<UrlStr, { lon: number, lat: number }>
 export type LabelLookup = Dict<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
 
 // 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
@@ -142,7 +142,7 @@ export interface State {
 	user: User
 	previewLookup: PreviewLookup | undefined;
 	labelLookup: LabelLookup;
-	stationPos4326Lookup: StationPos4326Lookup[]
+	stationPos4326Lookup: StationPos4326Lookup
 	specTable: CompositeSpecTable
 	baseDobjStats: SpecTable<OriginsColNames> //without spatial filtering
 	spatialStationsFilter: Filter
@@ -201,7 +201,7 @@ export const defaultState: State = {
 	},
 	previewLookup: undefined,
 	labelLookup: {},
-	stationPos4326Lookup: [],
+	stationPos4326Lookup: {},
 	specTable: emptyCompositeSpecTable,
 	baseDobjStats: new SpecTable<OriginsColNames>([], [], {}),
 	spatialStationsFilter: null,
@@ -263,6 +263,7 @@ const serialize = (state: State) => {
 		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		specTable: state.specTable.serialize,
+		baseDobjStats: state.baseDobjStats.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
 		preview: state.preview.serialize,
@@ -279,13 +280,16 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const previewLookup = table && varInfo
 		? new PreviewLookup(undefined, undefined, table, varInfo)
 		: new PreviewLookup(specTable, jsonObj.labelLookup);
-	const spatialStationsFilter = restoreSpatialFilterFromMapProps(jsonObj.mapProps, jsonObj.stationPos4326Lookup);
+	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
+	const allStations = baseDobjStats.getAllColValues("station");
+	const spatialStationsFilter = restoreSpatialFilterFromMapProps(jsonObj.mapProps, allStations, jsonObj.stationPos4326Lookup);
 
 	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
 		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
 		previewLookup,
 		specTable,
+		baseDobjStats,
 		spatialStationsFilter,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,

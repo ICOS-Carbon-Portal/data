@@ -230,7 +230,7 @@ export class StationFilterControl extends Control {
 	}
 
 	restoreDrawFeaturesFromMapProps(mapProps: MapProps) {
-		if (mapProps.rects === undefined || mapProps.rects.length === this.drawFeatures.length)
+		if (mapProps.rects === undefined)// || mapProps.rects.length === this.drawFeatures.length)
 			return;
 
 		this.removeAllDrawFeatures();

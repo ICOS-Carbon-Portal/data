@@ -46,9 +46,9 @@ export default class CompositeSpecTable{
 	static deserialize(tables: SpecTableSerialized) {
 		const {basics, columnMeta, origins} = tables;
 
-		const basicsTbl = new SpecTable(basics.colNames, basics.rows, basics.filters || {});
-		const columnMetaTbl = new SpecTable(columnMeta.colNames, columnMeta.rows, columnMeta.filters || {});
-		const originsTbl = new SpecTable(origins.colNames, origins.rows, origins.filters || {});
+		const basicsTbl = SpecTable.deserialize(basics)
+		const columnMetaTbl = SpecTable.deserialize(columnMeta)
+		const originsTbl = SpecTable.deserialize(origins)
 
 		return new CompositeSpecTable(basicsTbl, columnMetaTbl, originsTbl).withFilterReflection;
 	}

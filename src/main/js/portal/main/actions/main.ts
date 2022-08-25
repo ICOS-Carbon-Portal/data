@@ -9,7 +9,7 @@ import {failWithError, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
 import {Coordinate} from "ol/coordinate";
 import {EpsgCode, getProjection, getTransformPointFn, isPointInRectangle} from "icos-cp-ol";
-import {Filter} from "../models/SpecTable";
+import {Filter, Value} from "../models/SpecTable";
 import {drawRectBoxToCoords} from "../utils";
 
 
@@ -76,7 +76,7 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 	};
 }
 
-export function restoreSpatialFilterFromMapProps(mapProps: MapProps, stationPos4326LookupList: StationPos4326Lookup[]): Filter{
+export function restoreSpatialFilterFromMapProps(mapProps: MapProps, allStations: Value[], posLookup: StationPos4326Lookup): Filter{
 	if (mapProps.rects === undefined || mapProps.rects.length === 0)
 		return null;
 
@@ -86,10 +86,12 @@ export function restoreSpatialFilterFromMapProps(mapProps: MapProps, stationPos4
 	getProjection(`EPSG:${mapProps.srid}` as EpsgCode);
 	const pointTransformer = getTransformPointFn("EPSG:4326", destEpsgCode);
 
-	return stationPos4326LookupList
-		.filter(stationPos4326Lookup => {
-			const pos: Coordinate = pointTransformer(stationPos4326Lookup.lon, stationPos4326Lookup.lat);
+	return allStations
+		.filter(Value.isString)
+		.filter(stationUri => {
+			const latLon = posLookup[stationUri]
+			if(!latLon) return false;
+			const pos: Coordinate = pointTransformer(latLon.lon, latLon.lat);
 			return isPointInRectangle(coords, pos);
-		})
-		.map(stationPos4326Lookup => stationPos4326Lookup.station);
+		});
 }

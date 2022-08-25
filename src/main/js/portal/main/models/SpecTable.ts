@@ -32,7 +32,7 @@ export const Value = {
 };
 
 export type TableSerialized<T extends string> = {
-	colNames: Col<T>[]
+	colNames: T[]
 	rows: Row<T>[]
 	filters?: Filters<T>
 	extraSpecFilter?: Filter
@@ -52,6 +52,10 @@ export default class SpecTable<T extends string = string>{
 			filters: this.filters,
 			extraSpecFilter: this.extraSpecFilter
 		};
+	}
+
+	static deserialize<T extends string = string>(ts: TableSerialized<T>): SpecTable<T>{
+		return new SpecTable<T>(ts.colNames, ts.rows, ts.filters ?? {}, ts.extraSpecFilter);
 	}
 
 	withExtraSpecFilter(extraFilter: Filter){

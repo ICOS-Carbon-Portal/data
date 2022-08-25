@@ -12,7 +12,6 @@ import {
 	BackendBatchDownload,
 	BackendUpdateCart,
 	BackendExportQuery,
-	StationPositions4326Lookup,
 	BackendUpdateSpatialFilter
 } from "./actionpayloads";
 import stateUtils, {CategFilters, ObjectsTable, State} from "../models/State";
@@ -36,12 +35,6 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BootstrapInfo){
 		return stateUtils.update(state, bootstrapInfoUpdates(state, payload));
-	}
-
-	if (payload instanceof StationPositions4326Lookup) {
-		return stateUtils.update(state, {
-			stationPos4326Lookup: payload.stationPos4326Lookup
-		});
 	}
 
 	if (payload instanceof BackendOriginsTable){
@@ -193,7 +186,8 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: new PreviewLookup(specTable, labelLookup),
 		keywords: payload.info.keywords,
-		countryCodesLookup: payload.info.countryCodes
+		countryCodesLookup: payload.info.countryCodes,
+		stationPos4326Lookup: payload.info.stationPos4326Lookup
 	};
 }
 

@@ -60,10 +60,6 @@ export class BootstrapInfo extends BackendPayload{
 	constructor(readonly info: BootstrapData){super();}
 }
 
-export class StationPositions4326Lookup extends BackendPayload{
-	constructor(readonly stationPos4326Lookup: StationPos4326Lookup[]){super();}
-}
-
 export class BackendOriginsTable extends BackendPayload{
 	constructor(
 		readonly table: SpecTable<OriginsColNames>,

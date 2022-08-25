@@ -13,7 +13,7 @@ import {
 	getCart,
 	getError,
 	fetchJson,
-	saveCart, fetchStationPositions
+	saveCart
 } from "../backend";
 import Cart, { restoreCart } from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
@@ -23,13 +23,12 @@ import {FilterRequest} from "../models/FilterRequest";
 import {isInPidFilteringMode} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
-import {bootstrapRoute, init, loadApp, restoreSpatialFilterFromMapProps} from "./main";
+import {bootstrapRoute, init, loadApp} from "./main";
 import { DataObject } from "../../../common/main/metacore";
 import {Filter, Value} from "../models/SpecTable";
 import keywordsInfo from "../backend/keywordsInfo";
 import {SPECCOL} from "../sparqlQueries";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
-import {BackendUpdateSpatialFilter, StationPositions4326Lookup} from "../reducers/actionpayloads";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -111,23 +110,6 @@ export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'val
 
 export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
-}
-
-export function getStationPosWithSpatialFilter(): PortalThunkAction<void> {
-	return (dispatch, getState) => {
-		if (getState().stationPos4326Lookup.length)
-			return;
-
-		fetchStationPositions().then(stationPos4326 => {
-				const stationPos4326Lookup: StationPos4326Lookup[] = stationPos4326.rows;
-				dispatch(new StationPositions4326Lookup(stationPos4326Lookup));
-
-				const spatialStationsFilter = restoreSpatialFilterFromMapProps(getState().mapProps, stationPos4326Lookup);
-				dispatch(new BackendUpdateSpatialFilter(spatialStationsFilter));
-			},
-			failWithError(dispatch)
-		);
-	};
 }
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {

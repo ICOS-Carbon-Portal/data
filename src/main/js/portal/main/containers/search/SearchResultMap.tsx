@@ -5,7 +5,7 @@ import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../..
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
 import {spatialFilterUpdate} from '../../actions/search';
-import {Filter} from '../../models/SpecTable';
+import {Filter, Value} from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 
 
@@ -36,6 +36,7 @@ class SearchResultMap extends Component<OurProps> {
 
 		this.initMap.incomingPropsUpdated({
 			specTable: this.props.specTable,
+			allStations: this.props.allStations,
 			stationPos4326Lookup: this.props.stationPos4326Lookup,
 			mapProps: this.props.mapProps,
 			labelLookup: this.props.labelLookup,
@@ -74,11 +75,12 @@ class SearchResultMap extends Component<OurProps> {
 			this.initMap = new InitMap({
 				mapRootElement: document.getElementById('map')!,
 				specTable: this.props.specTable,
+				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
 				mapProps: this.props.mapProps,
-				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
+				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				labelLookup: this.props.labelLookup,
 				updateStationFilterInState: this.handleStationFilterUpdate.bind(this),
 				spatialStationsFilter: this.props.spatialStationsFilter
@@ -100,6 +102,7 @@ class SearchResultMap extends Component<OurProps> {
 function stateToProps(state: State) {
 	return {
 		specTable: state.specTable,
+		allStations: state.baseDobjStats.getAllColValues("station").filter(Value.isString),
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
 		spatialStationsFilter: state.spatialStationsFilter,

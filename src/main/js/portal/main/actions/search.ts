@@ -23,7 +23,6 @@ import {QueryParameters, SearchOption} from "./types";
 import {
 	failWithError, fetchCart, getBackendTables,
 	getFilters,
-	getStationPosWithSpatialFilter,
 	varNameAffectingCategs,
 	varNamesAreFiltered
 } from "./common";
@@ -43,9 +42,6 @@ export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThu
 		});
 
 		dispatch(new Payloads.BootstrapRouteSearch());
-
-		if (tabs.resultTab === 2)
-			dispatch(getStationPosWithSpatialFilter());
 
 		dispatch(new UiInactivateAllHelp());
 
@@ -281,9 +277,6 @@ export function switchTab(tabName: string, selectedTabId: number): PortalThunkAc
 			dispatch(getFilteredDataObjects);
 		}
 
-		if (tabName === 'resultTab' && selectedTabId === 2){
-			dispatch(getStationPosWithSpatialFilter());
-		}
 	};
 }
 
