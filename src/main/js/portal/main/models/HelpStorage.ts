@@ -1,7 +1,6 @@
 import config, {placeholders, numericFilterLabels, publicQueries, QueryName, Envri} from '../config';
 import {Int} from "../types";
 import {UrlStr} from "../backend/declarations";
-import { Dict } from '../../../common/main/types';
 
 
 const titles = {
@@ -85,7 +84,7 @@ export interface Documentation {
 }
 
 export type HelpItemName = keyof typeof titles;
-export type EnvrifiedHelpMain = Dict<string, Envri>;
+export type EnvrifiedHelpMain = Record<Envri, string>;
 
 export class HelpItem {
 	constructor(

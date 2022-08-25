@@ -14,7 +14,7 @@ interface OurProps {
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
-const iFrameBaseUrl = config.iFrameBaseUrl[config.TIMESERIES];
+const iFrameBaseUrl = config.iFrameBaseUrl["TIMESERIES"];
 
 export default class PreviewTimeSerie extends Component<OurProps> {
 	private iframe: HTMLIFrameElement | null = null;

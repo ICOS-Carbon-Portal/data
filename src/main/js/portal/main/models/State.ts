@@ -21,7 +21,6 @@ import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
-import { Dict } from "../../../common/main/types";
 import {SupportedSRIDs} from "icos-cp-ol";
 import {restoreSpatialFilterFromMapProps} from "../actions/main";
 import PortalHistoryState from "../backend/PortalHistoryState";
@@ -119,7 +118,7 @@ export type ExportQuery = {
 }
 
 export type StationPos4326Lookup = Record<UrlStr, { lon: number, lat: number }>
-export type LabelLookup = Dict<{label: string, list: HelpStorageListEntry[]}, UrlStr>;
+export type LabelLookup = Record<string, {label: string, list: HelpStorageListEntry[]}>;
 
 // 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
 export type DrawRectBbox = [number, number, number, number]
@@ -133,7 +132,7 @@ export interface State {
 	isRunningInit: boolean
 	searchOptions: SearchOptions
 	route: Route | undefined
-	countryCodesLookup: Dict
+	countryCodesLookup: Record<string, string>
 	filterCategories: CategFilters
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
@@ -324,8 +323,8 @@ const hashToState = () => {
 	}
 };
 
-const getStateFromStore = (storeState: State & Dict<any>) => {
-	return hashKeys.reduce((acc: Dict<any>, key: string) => {
+const getStateFromStore = (storeState: State & Record<string,any>) => {
+	return hashKeys.reduce((acc: Record<string,any>, key: string) => {
 		acc[key] = storeState[key];
 		return acc;
 	}, {});
@@ -527,8 +526,8 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial
 	};
 };
 
-const reduceState = (state: Dict<any>) => {
-	return Object.keys(state).reduce((acc: Dict<any>, key: string) => {
+const reduceState = (state: Record<string,any>) => {
+	return Object.keys(state).reduce((acc: Record<string,any>, key: string) => {
 
 		const val = state[key];
 		if (val == null) return acc;

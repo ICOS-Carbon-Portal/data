@@ -1,7 +1,6 @@
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
 import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
-import { Dict } from "../../../common/main/types";
 import { BinRasterExtended } from "./BinRasterExtended";
 import { ControlsHelper } from "./ControlsHelper";
 import RasterDataFetcher from "./RasterDataFetcher";
@@ -17,7 +16,7 @@ const isPIDProvided = pid !== '';
 
 const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
 const keyValpairs = searchStr.split('&');
-const searchParams = keyValpairs.reduce<Dict>((acc, curr) => {
+const searchParams = keyValpairs.reduce<Record<string,string>>((acc, curr) => {
 	const p = curr.split('=');
 	acc[p[0]] = p[1];
 	return acc;
@@ -77,7 +76,7 @@ export interface State {
 	legendLabel: string
 	colorMaker?: ColorMaker | ColorMakerRamps
 	controls: ControlsHelper
-	variableEnhancer: Dict
+	variableEnhancer: Record<string,string>
 	countriesTopo: {
 		ts: number,
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>

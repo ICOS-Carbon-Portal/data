@@ -2,7 +2,6 @@ import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
 import {MapProps, State, StationPos4326Lookup} from './State';
-import { Dict } from '../../../common/main/types';
 import CompositeSpecTable from './CompositeSpecTable';
 import { UrlStr } from '../backend/declarations';
 import {difference} from '../utils';
@@ -58,7 +57,7 @@ interface UpdateProps {
 	spatialStationsFilter: Filter
 	mapProps: MapProps
 }
-export type StationPosLookup = Dict<{ coord: number[], stationLbl: string }, UrlStr>
+export type StationPosLookup = Record<UrlStr, { coord: number[], stationLbl: string }>
 
 const countryBordersId = 'countryBorders';
 const olMapSettings = config.olMapSettings;
@@ -75,22 +74,19 @@ export default class InitMap {
 	private allStationUris: UrlStr[];
 	private countriesTopo?: CountriesTopo;
 	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
-	private updateStationFilterInState: (stationUrisToState: Filter) => void;
 
 	constructor(props: Props) {
 		const {
 			mapRootElement,
 			updateMapSelectedSRID,
 			persistedMapProps,
-			updatePersistedMapProps,
-			updateStationFilterInState
+			updatePersistedMapProps
 		} = props;
 
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
 		this.allStationUris = props.allStations
-		this.updateStationFilterInState = updateStationFilterInState;
 
 		const srid = persistedMapProps.srid === undefined
 			? olMapSettings.defaultSRID
@@ -116,7 +112,7 @@ export default class InitMap {
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
 			isActive: persistedMapProps.isStationFilterCtrlActive ?? false,
 			updatePersistedMapProps,
-			updateStationFilterInState: this.updateStationFilterInState.bind(this)
+			updateStationFilterInState: props.updateStationFilterInState.bind(this)
 		});
 		controls.push(this.stationFilterControl);
 

@@ -3,7 +3,6 @@ import CompositeSpecTable from './CompositeSpecTable';
 import {UrlStr} from '../backend/declarations';
 import { PreviewOption } from './Preview';
 import { LabelLookup } from './State';
-import { Dict } from '../../../common/main/types';
 
 interface PreviewTypeInfo{
 	type: PreviewType
@@ -18,8 +17,8 @@ interface OtherPreviewInfo extends PreviewTypeInfo{
 	type: "NETCDF" | "MAPGRAPH"
 }
 
-type Table = Dict<PreviewInfo | undefined>
-type VarInfo = Dict<boolean>
+type Table = Record<string,PreviewInfo | undefined>
+type VarInfo = Record<string,boolean>
 
 export type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 

@@ -1,5 +1,4 @@
 import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
-import { Dict } from '../../common/main/types';
 import {UrlStr} from "./backend/declarations";
 import {BaseMapId, BaseMapFilter, cirlcePointStyle, supportedSRIDsFriendlyNames, SupportedSRIDs} from 'icos-cp-ol';
 import {IndexedDBProps} from "./backend/IndexedDB";
@@ -53,7 +52,7 @@ const featureFlags = {
 	}
 }
 
-const sridsInMap: Dict<string, SupportedSRIDs> = envri === 'ICOS'
+const sridsInMap: Record<SupportedSRIDs, string> = envri === 'ICOS'
 	? {
 		'3035': supportedSRIDsFriendlyNames['3035'],
 		'54030': supportedSRIDsFriendlyNames['54030']
@@ -72,11 +71,11 @@ const excludedStation = envri === 'ICOS'
 	: cirlcePointStyle('white', 'DarkMagenta', 4, 2);
 
 export type OlMapSettings = {
-	sridsInMap: Dict<string, SupportedSRIDs>
+	sridsInMap: Record<SupportedSRIDs, string>
 	defaultSRID: SupportedSRIDs
 	defaultBaseMap: BaseMapId
 	baseMapFilter: BaseMapFilter
-	iconStyles: Dict<Style>
+	iconStyles: Record<string, Style>
 }
 const olMapSettings: OlMapSettings = {
 	sridsInMap,
@@ -121,7 +120,7 @@ export default {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
 		MAPGRAPH: '/map-graph/'
-	} as Dict,
+	},
 	restheartDbUrl: commonConfig.restheartDbUrl,
 	stepsize: 20,
 	useDataObjectsCache: true,
@@ -258,7 +257,7 @@ export interface PublicQueryDeclaration {
 
 export type QueryName = 'specBasics' | 'specColumnMeta' | 'dobjOriginsAndCounts' | 'extendedDataObjectInfo' | 'labelLookup' | 'specKeywordsQuery'
 
-export const publicQueries: Dict<PublicQueryDeclaration, QueryName> = {
+export const publicQueries: Record<QueryName, PublicQueryDeclaration> = {
 	specBasics: {
 		label: 'Data type basics',
 		comment: 'Basic information about data types.'

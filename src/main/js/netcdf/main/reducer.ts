@@ -9,7 +9,6 @@ import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
 import RasterDataFetcher from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
-import { Dict } from '../../common/main/types';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRasterExtended } from './models/BinRasterExtended';
 
@@ -360,9 +359,9 @@ const getLegendLabel = (metaVar?: VarMeta) => {
 	return 'Legend';
 };
 
-function getVariables(metadata?: DataObject): Dict | undefined {
+function getVariables(metadata?: DataObject): Record<string,string> | undefined {
 	return getVarMetas(metadata)?.reduce(
-		(acc: Dict, v: VarMeta) => {
+		(acc: Record<string,string>, v: VarMeta) => {
 			acc[v.label] = `${v.valueType.self.label} (${v.label})`;
 			return acc;
 		},

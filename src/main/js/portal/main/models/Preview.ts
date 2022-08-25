@@ -88,7 +88,7 @@ export default class Preview {
 
 		const items: PreviewItem[] = objects.map(o => o.item as PreviewItem).filter(isDefined);
 
-		if (options.type === config.TIMESERIES){
+		if (options.type === 'TIMESERIES'){
 			if (items.length){
 				let previewItems = items;
 				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));

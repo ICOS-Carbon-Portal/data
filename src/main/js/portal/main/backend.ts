@@ -19,7 +19,6 @@ import {getJson, sparql} from 'icos-cp-backend';
 import { feature } from 'topojson';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
-import { Dict } from '../../common/main/types';
 import {HelpStorageListEntry} from "./models/HelpStorage";
 
 const config = Object.assign(commonConfig, localConfig);
@@ -134,7 +133,7 @@ export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
 	keywords: KeywordsInfo
-	countryCodes: Dict
+	countryCodes: Record<string, string>
 	stationPos4326Lookup: StationPos4326Lookup
 }
 
@@ -234,7 +233,7 @@ const updatePersonalRestheart = (email: string, data: {}): void => {
 	});
 };
 
-export const getError = (errorId: string): Promise<Dict<any>> => {
+export const getError = (errorId: string): Promise<any> => {
 	return fetch(`${config.portalUseLogUrl}/${errorId}`).then(resp => {
 		return resp.status === 200
 			? Promise.resolve(resp.json())
@@ -343,7 +342,7 @@ export const getTsSettings = (email: string | null) => {
 	const tsSettings = tsSettingsStorage.getItem(tsSettingsStorageName) || {};
 
 	return email
-		? getFromRestheart<Dict>(email, tsSettingsStorageName).then(settings => {
+		? getFromRestheart<Record<string,string>>(email, tsSettingsStorageName).then(settings => {
 			const newSettings = settings
 				? Object.assign({}, settings[tsSettingsStorageName], tsSettings)
 				: tsSettings;

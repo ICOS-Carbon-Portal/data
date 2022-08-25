@@ -4,8 +4,6 @@ import {ColNames} from "../../models/CompositeSpecTable";
 import {Value} from "../../models/SpecTable";
 import HelpButton from "../../containers/help/HelpButton";
 import MultiSelectFilter from "./MultiSelectFilter";
-import { Dict } from '../../../../common/main/types';
-import { LabelLookup } from '../../models/State';
 import {HelpItem, HelpStorageListEntry} from "../../models/HelpStorage";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
 

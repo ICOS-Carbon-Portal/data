@@ -44,7 +44,7 @@ class Preview extends Component<OurProps, OurState> {
 	}
 
 	getTableFormat(previewType: PreviewType, idx: number = 0) {
-		if (previewType !== config.TIMESERIES) return;
+		if (previewType !== 'TIMESERIES') return;
 
 		const preview = this.props.preview;
 		if (preview.items.length === 0 || this.tfCache.isInCache(preview.items[idx].spec)) return;
@@ -194,7 +194,7 @@ const CsvDownloadCopyValue = ({ downloadUrl }: { downloadUrl: string }) => {
 const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement> | MessageEvent) => void}) => {
 	const previewType = props.preview.type;
 
-	if (previewType === config.TIMESERIES){
+	if (previewType === 'TIMESERIES'){
 		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'iframeSrcChange');
 		return <PreviewTimeSerie {...tsProps} />;
 
@@ -212,7 +212,7 @@ const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HT
 };
 
 function previewUrl(item: CartItem, type: PreviewType, iframeSrc: UrlStr): UrlStr {
-	if (type === config.TIMESERIES){
+	if (type === 'TIMESERIES'){
 		return (item && item.getUrlSearchValue('x') && item.getUrlSearchValue('y')) ? iframeSrc : '';
 	} else {
 		return item ? iframeSrc : '';
@@ -222,7 +222,7 @@ function previewUrl(item: CartItem, type: PreviewType, iframeSrc: UrlStr): UrlSt
 function csvDownloadUrl(item: CartItem, type: PreviewType, tableFormat?: TableFormat): UrlStr {
 	if (tableFormat === undefined) return '';
 
-	if (type === config.TIMESERIES) {
+	if (type === 'TIMESERIES') {
 		const x = item.getUrlSearchValue('x');
 		const y = item.getUrlSearchValue('y');
 		const y2 = item.getUrlSearchValue('y2');

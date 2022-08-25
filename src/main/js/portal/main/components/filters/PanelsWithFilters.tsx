@@ -13,13 +13,12 @@ import {KeywordsInfo} from "../../backend/keywordsInfo";
 import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
-import {Dict} from "../../../../common/main/types";
 import {isDefined} from "../../utils";
 
 interface CommonProps {
 	specTable: CompositeSpecTable
 	labelLookup: LabelLookup
-	countryCodesLookup: Dict
+	countryCodesLookup: Record<string, string>
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
 	setNumberFilter: (validation: FilterNumber) => void
 	filterTemporal: FilterTemporal
@@ -164,7 +163,7 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	}
 };
 
-const getDataValue = (filterName: FilterName, specTable: CompositeSpecTable, countryCodesLookup: Dict, labelLookup: LabelLookup) => {
+function getDataValue(filterName: FilterName, specTable: CompositeSpecTable, countryCodesLookup: Record<string,string>, labelLookup: LabelLookup){
 	const getText = (value: string | number) => {
 		return filterName === 'countryCode'
 			? countryCodesLookup[value]
@@ -198,7 +197,7 @@ const getDataValue = (filterName: FilterName, specTable: CompositeSpecTable, cou
 const makeUniqueDataText = (makeUnique: boolean, specTable: CompositeSpecTable, data: Item[]): Item[] => {
 	if (!makeUnique) return data;
 
-	const dataLookup = data.reduce<Dict<number, string>>((acc, curr) => {
+	const dataLookup = data.reduce<Record<string, number>>((acc, curr) => {
 		acc[curr.text] = (acc[curr.text] ?? 0) + 1;
 		return acc;
 	}, {});
