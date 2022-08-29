@@ -29,7 +29,6 @@ export const init: PortalThunkAction<void> = dispatch => {
 
 export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		dispatch(new Payloads.MiscRestoreFromHash());
 
 		const {route, preview} = getState();
 		dispatch(bootstrapRoute(user, route ?? 'search', preview.pids));

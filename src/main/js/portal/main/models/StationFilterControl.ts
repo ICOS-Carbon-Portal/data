@@ -12,33 +12,21 @@ import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
 import Fill from 'ol/style/Fill';
 import Geometry from 'ol/geom/Geometry';
-import { PersistedMapPropsExtended, StationPosLookup } from './InitMap';
+import { PersistedMapPropsExtended } from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import { Coordinate } from 'ol/coordinate';
-import {emptyCompositeSpecTable, MapProps} from './State';
-import {Filter, Value} from './SpecTable';
-import {areEqual, drawRectBoxToCoords} from '../utils';
-import CompositeSpecTable from './CompositeSpecTable';
-import {isPointInRectangle} from "icos-cp-ol";
+import { MapProps} from './State';
+import { drawRectBoxToCoords } from '../utils';
 
 export interface DrawFeature {
 	id: Symbol
 	type: string
 	coords: Coordinate[][]
-	stationUris: Value[]
 }
+
 export interface StationFilterControlOptions extends Options {
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
-	updateStationFilterInState: (stationUrisToState: Filter) => void
-}
-export interface StationUris {
-	hasChanged: boolean
-	includedStationUris: Value[]
-}
-export interface StateStationUris {
-	spatiallyFilteredStationUris: Value[]
-	specTableStationUris: Value[]
 }
 
 enum DrawEventType {
@@ -70,21 +58,9 @@ export class StationFilterControl extends Control {
 	private deleteRectBtnSource: VectorSource;
 	private deleteRectBtnLayer: VectorLayer;
 	private isActive: boolean = false;
-	private seletcs: Record<string, Select> = {};
+	private selects: Record<string, Select> = {};
 	private drawFeatures: DrawFeature[] = [];
 	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
-	private updateStationFilterInState: (stationUrisToState: Filter) => void;
-	public stationPosLookup: StationPosLookup = {
-		empty: {
-			coord: [],
-			stationLbl: ''
-		}
-	};
-	private specTable: CompositeSpecTable = emptyCompositeSpecTable;
-	public stateStationUris: StateStationUris = {
-		spatiallyFilteredStationUris: [''],
-		specTableStationUris: ['']
-	}
 
 	constructor(options: StationFilterControlOptions) {
 		super(options );
@@ -96,7 +72,6 @@ export class StationFilterControl extends Control {
 
 		this.isActive = options.isActive;
 		this.updatePersistedMapProps = options.updatePersistedMapProps;
-		this.updateStationFilterInState = options.updateStationFilterInState;
 
 		this.controlButton = this.drawCtrlBtn();
 		this.setTooltip();
@@ -121,58 +96,16 @@ export class StationFilterControl extends Control {
 
 	private updateApp() {
 		this.updatePersistedMapProps({ drawFeatures: this.drawFeatures });
-		this.updateStationFilterInState(this.pickStationUrisToState());
-	}
-
-	private pickStationUrisToState(): Filter {
-		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
-		return spatiallyFilteredStationUris.length === 0
-			? null
-			: spatiallyFilteredStationUris;
-	}
-
-	updateStationUris(specTable: CompositeSpecTable, allSpecTableStationUris: Value[], spatialStationsFilter: Filter): StationUris {
-		if (specTable.id === this.specTable.id) {
-			return {
-				hasChanged: false,
-				includedStationUris: this.stateStationUris.specTableStationUris
-			}; 
-		}
-
-		this.specTable = specTable;
-		// List of stations based on all filters
-		const filteredSpecTableStationUris = specTable.origins.getDistinctColValues('station');
-		const specTableStationUris = filteredSpecTableStationUris ?? allSpecTableStationUris;
-		const spatiallyFilteredStationUris = getSpatiallyFilteredStationUris(this.drawFeatures);
-
-		const hasSpatialFilterChanged = !areEqual(spatiallyFilteredStationUris, this.stateStationUris.spatiallyFilteredStationUris);
-		const hasSpecTableChanged = !areEqual(specTableStationUris, this.stateStationUris.specTableStationUris);
-		const hasChanged = hasSpatialFilterChanged || hasSpecTableChanged;
-
-		if (hasChanged && spatialStationsFilter === null) {
-			this.removeAllDrawFeatures();
-			this.removeAllDeleteRectBtns();
-		}
-
-		this.stateStationUris = {
-			spatiallyFilteredStationUris,
-			specTableStationUris
-		};
-
-		return {
-			hasChanged,
-			includedStationUris: specTableStationUris
-		};
 	}
 
 	private initSelects() {
-		this.seletcs.drawSelect = new Select({
+		this.selects.drawSelect = new Select({
 			condition: condition.pointerMove,
 			layers: [this.drawLayer, this.deleteRectBtnLayer],
 			multi: true,
 			hitTolerance: 2
 		});
-		this.seletcs.drawSelect.on('select', ev => {
+		this.selects.drawSelect.on('select', ev => {
 			const map = this.getMap();
 			const style = (map.getTarget() as HTMLElement).style;
 			const { features, numberOfFeatures } = this.initSelectEvent(ev);
@@ -196,14 +129,14 @@ export class StationFilterControl extends Control {
 			}
 		});
 
-		this.seletcs.deleteRectSelect = new Select({
+		this.selects.deleteRectSelect = new Select({
 			condition: condition.click,
 			layers: [this.deleteRectBtnLayer],
 			multi: false,
 			style: iconStyle,
 			hitTolerance: 2
 		});
-		this.seletcs.deleteRectSelect.on('select', ev => {
+		this.selects.deleteRectSelect.on('select', ev => {
 			const { features } = this.initSelectEvent(ev);
 
 			features.forEach(delBtnFeature => {
@@ -224,13 +157,12 @@ export class StationFilterControl extends Control {
 		super.setMap(map);
 		map.addLayer(this.drawLayer);
 		map.addLayer(this.deleteRectBtnLayer);
-		map.addInteraction(this.seletcs.deleteRectSelect);
+		map.addInteraction(this.selects.deleteRectSelect);
 		this.setActiveState(this.isActive);
 	}
 
-	restoreDrawFeaturesFromMapProps(mapProps: MapProps) {
-		if (mapProps.rects === undefined)// || mapProps.rects.length === this.drawFeatures.length)
-			return;
+	reDrawFeaturesFromMapProps(mapProps: MapProps) {
+		if (mapProps.rects === undefined || mapProps.rects.length === this.drawFeatures.length) return;
 
 		this.removeAllDrawFeatures();
 		this.removeAllDeleteRectBtns();
@@ -249,7 +181,7 @@ export class StationFilterControl extends Control {
 	private addDrawFeature(ev: DrawEvent) {
 		ev.feature.setProperties({ id: Symbol(), type: 'stationFilterRect' });
 		this.addDeleteFilterRectBtn(ev.feature);
-		const drawFeature = featureToDrawFeature(ev.feature, this.stationPosLookup);
+		const drawFeature = featureToDrawFeature(ev.feature);
 		this.drawFeatures.push(drawFeature);
 	}
 
@@ -323,33 +255,26 @@ export class StationFilterControl extends Control {
 		if (newActiveState) {
 			map.addInteraction(this.draw);
 			this.controlButton.setAttribute('style', 'background-color:DodgerBlue;');
-			map.addInteraction(this.seletcs.drawSelect);
+			map.addInteraction(this.selects.drawSelect);
 
 		} else {
 			this.draw.abortDrawing();
 			map.removeInteraction(this.draw);
 			this.controlButton.removeAttribute('style');
-			map.removeInteraction(this.seletcs.drawSelect);
+			map.removeInteraction(this.selects.drawSelect);
 		}
 
 		this.isActive = newActiveState;
 	}
 }
 
-function getSpatiallyFilteredStationUris(drawFeatures: DrawFeature[]){
-	return [...new Set(drawFeatures.flatMap(drawFeature => drawFeature.stationUris))];
-}
-
-function featureToDrawFeature(feature: Feature<Geometry>, stationPosLookup: StationPosLookup): DrawFeature {
+function featureToDrawFeature(feature: Feature<Geometry>): DrawFeature {
 	const geom = <Polygon>feature.getGeometry();
 	const coords = geom.getCoordinates();
-	const stationUris = Object.keys(stationPosLookup)
-		.filter(stationURI => isPointInRectangle(coords, stationPosLookup[stationURI].coord));
 
 	return {
 		id: feature.get('id'),
 		type: feature.get('type'),
-		coords,
-		stationUris
+		coords
 	};
 }

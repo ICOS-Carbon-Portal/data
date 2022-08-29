@@ -263,6 +263,7 @@ const serialize = (state: State) => {
 		filterNumbers: state.filterNumbers.serialize,
 		specTable: state.specTable.serialize,
 		baseDobjStats: state.baseDobjStats.serialize,
+		spatialStationsFilter: undefined,
 		paging: state.paging.serialize,
 		cart: undefined,
 		preview: state.preview.serialize,

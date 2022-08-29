@@ -10,6 +10,7 @@ import {
 	fetchResourceHelpInfo,
 	getExtendedDataObjInfo,
 	makeHelpStorageListItem,
+	savePersistedMapProps,
 	searchDobjByFileName
 } from "../backend";
 import {ColNames, OriginsColNames} from "../models/CompositeSpecTable";
@@ -31,6 +32,7 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import { restoreSpatialFilterFromMapProps } from "./main";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
@@ -203,13 +205,17 @@ export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Va
 	};
 }
 
-export function spatialFilterUpdate(stations: Filter): PortalThunkAction<void> {
-	return (dispatch, getState) => {
-		dispatch(new Payloads.BackendUpdateSpatialFilter(stations));
-		dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false));
-		dispatch(getFilteredDataObjects);
-	};
+const spatialFilterUpdate: PortalThunkAction<void> = (dispatch, getState) => {
+	const s = getState()
+	const newFilter = restoreSpatialFilterFromMapProps(s.mapProps, s.baseDobjStats.getAllColValues("station"), s.stationPos4326Lookup)
+
+	if(Filter.areEqual(getState().spatialStationsFilter, newFilter)) return
+
+	dispatch(new Payloads.BackendUpdateSpatialFilter(newFilter))
+	dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false))
+	dispatch(getFilteredDataObjects)
 }
+
 
 export function toggleSort(varName: string): PortalThunkAction<void> {
 	return (dispatch) => {
@@ -281,8 +287,10 @@ export function switchTab(tabName: string, selectedTabId: number): PortalThunkAc
 }
 
 export function setMapProps(persistedMapProps: PersistedMapPropsExtended): PortalThunkAction<void> {
-	return (dispatch, getState) => {
+	return (dispatch) => {
+		savePersistedMapProps(persistedMapProps)
 		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
+		dispatch(spatialFilterUpdate)
 	};
 }
 

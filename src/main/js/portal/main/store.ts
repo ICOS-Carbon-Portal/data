@@ -42,7 +42,7 @@ const enhancer = composeEnhancers(
 export default function(){
 	const store = createStore(
 		reducer,
-		undefined,
+		stateUtils.getStateFromHash(),
 		enhancer
 	);
 	store.dispatch(init);

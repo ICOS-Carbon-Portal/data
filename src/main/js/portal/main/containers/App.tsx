@@ -38,7 +38,7 @@ export class App extends Component<AppProps> {
 	render(){
 		const props = this.props;
 
-		if (!props.route) {
+		if (!props.route || !props.bootstrapDataArrived) {
 			return null;
 		}
 
@@ -140,6 +140,7 @@ function stateToProps(state: State){
 		cart: state.cart,
 		metadata: state.metadata,
 		helpStorage: state.helpStorage,
+		bootstrapDataArrived: Object.keys(state.stationPos4326Lookup).length > 0
 	};
 }
 

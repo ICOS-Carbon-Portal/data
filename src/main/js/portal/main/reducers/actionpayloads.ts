@@ -116,10 +116,6 @@ export class MiscLoadError extends MiscPayload{
 	constructor(readonly state: StateSerialized, readonly cart: Cart){super();}
 }
 
-export class MiscRestoreFromHash extends MiscPayload{
-	constructor(){super();}
-}
-
 export class MiscRestoreFromHistory extends MiscPayload{
 	constructor(readonly historyState: StateSerialized){super();}
 }

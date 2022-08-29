@@ -16,7 +16,7 @@ import SearchResultMap from './SearchResultMap';
 import { SupportedSRIDs } from 'icos-cp-ol';
 import config from '../../config';
 import { PersistedMapPropsExtended } from '../../models/InitMap';
-import { getPersistedMapProps, savePersistedMapProps } from '../../backend';
+import { getPersistedMapProps } from '../../backend';
 import { addingToCartProhibition } from '../../models/CartItem';
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -84,7 +84,6 @@ class Search extends Component<OurProps, OurState> {
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
 		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
 		this.props.setMapProps(this.persistedMapProps);
-		this.props.savePersistedMapProps(this.persistedMapProps);
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
@@ -174,8 +173,6 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		switchTab: (tabName: string, selectedTabId: number) => dispatch(switchTab(tabName, selectedTabId)),
-		getPersistedMapProps: () => getPersistedMapProps(),
-		savePersistedMapProps: (mapProps: PersistedMapPropsExtended) => savePersistedMapProps(mapProps),
 		setMapProps: (mapProps: PersistedMapPropsExtended) => dispatch(setMapProps(mapProps)),
 		filtersReset: () => dispatch(filtersReset)
 	};

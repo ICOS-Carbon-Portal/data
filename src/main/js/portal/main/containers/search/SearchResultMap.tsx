@@ -4,8 +4,7 @@ import { State } from "../../models/State";
 import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
 import { PortalDispatch } from '../../store';
 import { failWithError } from '../../actions/common';
-import {spatialFilterUpdate} from '../../actions/search';
-import {Filter, Value} from '../../models/SpecTable';
+import { Value } from '../../models/SpecTable';
 import { Copyright } from 'icos-cp-copyright';
 
 
@@ -26,21 +25,13 @@ class SearchResultMap extends Component<OurProps> {
 		super(props);
 	}
 
-	handleStationFilterUpdate(stationUrisToState: Filter){
-		this.props.updateStationFilter(stationUrisToState);
-	}
-
 	componentDidUpdate(){
-		if (this.initMap === undefined)
-			return;
+		if (this.initMap === undefined) return;
 
 		this.initMap.incomingPropsUpdated({
-			specTable: this.props.specTable,
 			allStations: this.props.allStations,
-			stationPos4326Lookup: this.props.stationPos4326Lookup,
 			mapProps: this.props.mapProps,
-			labelLookup: this.props.labelLookup,
-			spatialStationsFilter: this.props.spatialStationsFilter
+			selectedStations: this.props.selectedStations
 		});
 	}
 
@@ -74,7 +65,6 @@ class SearchResultMap extends Component<OurProps> {
 			);
 			this.initMap = new InitMap({
 				mapRootElement: document.getElementById('map')!,
-				specTable: this.props.specTable,
 				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
@@ -82,9 +72,8 @@ class SearchResultMap extends Component<OurProps> {
 				updateMapSelectedSRID: this.props.updateMapSelectedSRID,
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				labelLookup: this.props.labelLookup,
-				updateStationFilterInState: this.handleStationFilterUpdate.bind(this),
-				spatialStationsFilter: this.props.spatialStationsFilter
-			});
+				selectedStations: this.props.selectedStations
+			})
 		})()
 			.catch(error => {
 				this.props.failWithError(error);
@@ -105,7 +94,7 @@ function stateToProps(state: State) {
 		allStations: state.baseDobjStats.getAllColValues("station").filter(Value.isString),
 		stationPos4326Lookup: state.stationPos4326Lookup,
 		labelLookup: state.labelLookup,
-		spatialStationsFilter: state.spatialStationsFilter,
+		selectedStations: state.specTable.origins.getDistinctColValues("station").filter(Value.isString),
 		mapProps: state.mapProps
 	};
 }
@@ -113,7 +102,6 @@ function stateToProps(state: State) {
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
-		updateStationFilter: (filteredStationUris: Filter) => dispatch(spatialFilterUpdate(filteredStationUris)),
 	};
 }
 

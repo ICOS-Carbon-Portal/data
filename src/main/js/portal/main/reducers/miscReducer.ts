@@ -1,5 +1,5 @@
 import {
-	MiscError, MiscRestoreFromHash, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
 	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps
 } from "./actionpayloads";
 import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
@@ -16,15 +16,12 @@ import {round} from "../utils";
 
 export default function(state: State, payload: MiscPayload): State{
 
-	if (payload instanceof MiscRestoreFromHash){
-		return stateUtils.update(state, stateUtils.getStateFromHash());
-	}
-
 	if (payload instanceof MiscRestoreFromHistory){
 		return stateUtils.deserialize(payload.historyState, state.cart);
 	}
 
 	if (payload instanceof MiscError){
+		console.log(payload.error);
 		return stateUtils.update(state, {
 			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0])
 		});

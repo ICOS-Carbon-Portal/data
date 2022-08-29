@@ -149,13 +149,15 @@ export const distinct = <T>(...arrs: T[][]): T[] => {
 type SetOperation = <T>(arr1: T[], arr2: T[]) => T[]
 export const intersection: SetOperation = (arr1, arr2) => {
 	// All elements that are in both arr1 and arr2
-	return arr1.filter(val => arr2.includes(val));
+	const set2 = new Set(arr2)
+	return arr1.filter(val => set2.has(val));
 };
 
 export const difference: SetOperation = (arr1, arr2) => {
 	// All elements from arr1 that are not in arr2
-	return arr1.filter(val => !arr2.includes(val));
-};
+	const set2 = new Set(arr2)
+	return arr1.filter(val => !set2.has(val))
+}
 
 export const symmetricalDifference: SetOperation = (arr1, arr2) => {
 	// All elements from arr1 that are not in arr2 and all element from arr2 that are not in arr1

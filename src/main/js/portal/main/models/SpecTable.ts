@@ -1,5 +1,5 @@
 import {SPECCOL} from '../sparqlQueries';
-import {distinct} from '../utils'
+import {distinct, symmetricalDifference} from '../utils'
 
 export type Value = number | string | undefined;
 export type Filter = null | Array<Value>;
@@ -19,6 +19,11 @@ export const Filter = {
 	},
 	allowsNothing: function(f: Filter): boolean {
 		return f !== null && f.length === 0;
+	},
+	areEqual(f1: Filter, f2: Filter): boolean{
+		if(f1 === null && f2 === null) return true
+		if(f1 === null || f2 === null) return false
+		return symmetricalDifference(f1, f2).length === 0
 	}
 };
 

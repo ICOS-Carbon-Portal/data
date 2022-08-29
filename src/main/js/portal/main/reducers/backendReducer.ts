@@ -178,7 +178,6 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 	const startTable = CompositeSpecTable.deserialize(payload.info.specTables);
 	const specTable = applyFilterCategories(startTable, state.filterCategories);
 	const labelLookup = payload.info.labelLookup;
-
 	return {
 		specTable,
 		baseDobjStats: specTable.origins,
@@ -188,7 +187,7 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		keywords: payload.info.keywords,
 		countryCodesLookup: payload.info.countryCodes,
 		stationPos4326Lookup: payload.info.stationPos4326Lookup
-	};
+	}
 }
 
 function applyFilterCategories(startTable: CompositeSpecTable, filterCategories: CategFilters): CompositeSpecTable {
