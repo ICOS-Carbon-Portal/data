@@ -54,7 +54,6 @@ where{
 		?spec cpmeta:containsDataset ?datasetSpec .
 		FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 		FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
-		FILTER EXISTS {[] cpmeta:hasObjectSpec ?spec}
 	}
 	{
 		{
