@@ -55,8 +55,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
 		const level = `Level ${objInfo.level}`
 
-		return(
-			<div className='d-flex border-bottom py-3'>
+		return <tr>
+			<td className='d-flex border-bottom py-3'>
 				<div className='pe-3'>
 					<label style={{margin:-5, padding:5}}>
 						<CheckBtn
@@ -89,8 +89,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						}
 					</div>
 				</div>
-			</div>
-		);
+			</td>
+		</tr>
 	}
 }
 
