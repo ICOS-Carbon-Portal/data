@@ -140,7 +140,7 @@ function stateToProps(state: State){
 		cart: state.cart,
 		metadata: state.metadata,
 		helpStorage: state.helpStorage,
-		bootstrapDataArrived: Object.keys(state.stationPos4326Lookup).length > 0
+		bootstrapDataArrived: Object.keys(state.labelLookup).length > 0
 	};
 }
 
