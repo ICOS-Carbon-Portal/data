@@ -170,7 +170,9 @@ export function fetchSpecTableData(filters: FilterRequest[]): Promise<SpecTableS
 }
 
 export const fetchKnownDataObjects = (dobjs: string[]) => {
-	return fetchAndParseDataObjects(queries.listKnownDataObjects(dobjs));
+	return dobjs.length
+		? fetchAndParseDataObjects(queries.listKnownDataObjects(dobjs))
+		: Promise.resolve({colNames: [], rows: []});
 };
 
 export function fetchFilteredDataObjects(options: QueryParameters){

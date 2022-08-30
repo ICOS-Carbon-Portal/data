@@ -1,5 +1,4 @@
 import {PortalThunkAction} from "../store";
-import CartItem from "../models/CartItem";
 import * as Payloads from "../reducers/actionpayloads";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
@@ -14,39 +13,34 @@ export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const cartHandler = getState().cart.isInitialized
 			? Promise.resolve()
-			: dispatch(fetchCart(user));
+			: dispatch(fetchCart(user))
 
 		cartHandler.then(_ => {
-			const {cart} = getState();
-			const cartItems: CartItem[] = cart.items;
+			const state = getState()
 
-			if (cartItems.length === 0) {
-				dispatch(new Payloads.BootstrapRouteCart([], []));
-				return;
-			}
-
-			const specTableHandler = getState().specTable.isInitialized
+			const specTableHandler = (state.specTable.isInitialized || state.cart.items.length === 0)
 				? Promise.resolve()
 				: dispatch(getBackendTables([]));
-			const labelLookupPromise = Object.keys(getState().labelLookup).length
+
+			const labelLookupPromise = Object.keys(state.labelLookup).length
 				? Promise.resolve(undefined)
 				: fetchLabelLookup();
 
-			const pids = cartItems.map(ci => ci.dobj)
+			const pids = state.cart.items.map(ci => ci.dobj)
 
-			const promises = Promise.all([
+			Promise.all([
 				fetchKnownDataObjects(pids.map(id => getLastSegmentInUrl(id))),
 				getExtendedDataObjInfo(pids),
 				labelLookupPromise,
-				specTableHandler
-			]);
-
-			promises.then(([knownDataObjInfos, extendedDataObjInfo, labelLookup]) => {
-				dispatch(new Payloads.BootstrapRouteCart(extendedDataObjInfo, knownDataObjInfos.rows, labelLookup));
-			},
-			failWithError(dispatch));
-		});
-	};
+				specTableHandler //to wait for spec info initialization
+			]).then(
+				([knownDataObjInfos, extendedDataObjInfo, labelLookup]) => {
+					dispatch(new Payloads.BootstrapRouteCart(extendedDataObjInfo, knownDataObjInfos.rows, labelLookup));
+				},
+				failWithError(dispatch)
+			)
+		})
+	}
 }
 
 export function setCartName(newName: string): PortalThunkAction<void> {

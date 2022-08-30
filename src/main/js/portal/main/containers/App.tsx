@@ -141,7 +141,7 @@ function stateToProps(state: State){
 		metadata: state.metadata,
 		helpStorage: state.helpStorage,
 		bootstrapDataArrived: Object.keys(state.labelLookup).length > 0
-	};
+	}
 }
 
 function dispatchToProps(dispatch: PortalDispatch | Function){
