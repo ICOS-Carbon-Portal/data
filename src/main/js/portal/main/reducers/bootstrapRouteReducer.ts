@@ -5,7 +5,6 @@ import {
 	BootstrapRoutePayload,
 	BootstrapRoutePreview, BootstrapRouteSearch, ObjectsTableLike
 } from "./actionpayloads";
-import Preview from "../models/Preview";
 import CompositeSpecTable from "../models/CompositeSpecTable";
 import PreviewLookup from "../models/PreviewLookup";
 import Cart from "../models/Cart";
@@ -98,7 +97,8 @@ const handleRouteCart = (state: State, payload: BootstrapRouteCart): State => {
 	const labelLookup = payload.labelLookup ?? state.labelLookup;
 	const cart = new Cart(state.cart.name, state.cart.ids.map(id => {
 		const objInfo = objectsTable.find(o => o.dobj === id);
-		return new CartItem(id, objInfo);
+		const previewType = objInfo ? state.previewLookup?.forDataObjSpec(objInfo.spec) : undefined
+		return new CartItem(id, objInfo, previewType?.type);
 	}))
 
 	const newPartialState: BootstrapState = {
