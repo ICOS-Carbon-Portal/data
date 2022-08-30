@@ -342,7 +342,7 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
 	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, ` +
-		'or just the suffix (24 characters)'),
+		'or just the suffix (24 characters). Full URLs including the PID/DOI web resolver gateways (doi.org or hdl.handle.net) are permitted as well.'),
 ];
 
 function nonStrictnessWarning(title: String): string{

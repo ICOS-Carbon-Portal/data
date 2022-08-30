@@ -32,7 +32,7 @@ export default class FilterByFileName extends Component<OurProps> {
 
 					<input
 						type="text"
-						placeholder="Paste in file name"
+						placeholder="Paste a file name"
 						className="form-control"
 						onChange={this.makeQueryDebounced}
 						defaultValue={this.props.filterFileName}

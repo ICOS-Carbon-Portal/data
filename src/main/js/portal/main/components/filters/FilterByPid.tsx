@@ -61,13 +61,13 @@ export default class FilterByPid extends Component<PidFilterProps, PidFilterStat
 		return (
 			<div className="row" style={{marginTop: 10}}>
 				<div className="col-md-12">
-					<label style={{marginBottom: 0}}>PID</label>
+					<label style={{marginBottom: 0}}>PID (exact match only)</label>
 					<HelpButton name="pidFilter" />
 					<input
 						type="text"
 						className={"form-control" + this.state.validityClass}
 						title = {this.state.message}
-						placeholder="object PID or PID suffix"
+						placeholder="Paste a PID suffix or complete PID"
 						onChange={e => this.handleSearch(e.target.value)}
 						defaultValue={searchText}
 					/>
