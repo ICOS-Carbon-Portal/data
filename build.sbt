@@ -2,7 +2,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-ThisBuild / scalaVersion := "3.2.0-RC3"
+ThisBuild / scalaVersion := "3.2.0"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -43,8 +43,9 @@ lazy val netcdf = (project in file("netcdf"))
 				ExclusionRule(organization = "org.slf4j", name = "jcl-over-slf4j"),
 				ExclusionRule(organization = "org.slf4j", name = "slf4j-api")
 			),
-			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided" cross CrossVersion.for3Use2_13,
-			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided" cross CrossVersion.for3Use2_13
+			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided" excludeAll("io.spray") cross CrossVersion.for3Use2_13,
+			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided" cross CrossVersion.for3Use2_13,
+			"io.spray"            %% "spray-json"                        % "1.3.6"
 		),
 		publishTo := {
 			val nexus = "https://repo.icos-cp.eu/content/repositories/"
@@ -56,7 +57,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.3"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.4"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
@@ -79,24 +80,14 @@ lazy val data = (project in file("."))
 			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")
 		),
 
-		libraryDependencies := {
-			libraryDependencies.value.map{
-				case m if m.name.startsWith("twirl-api") =>
-					m.cross(CrossVersion.for3Use2_13)
-				case m => m
-			}
-		},
-
 		libraryDependencies ++= Seq(
-			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion cross CrossVersion.for3Use2_13,
+			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion excludeAll("io.spray") cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.6.5" cross CrossVersion.for3Use2_13,
-			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.5.3" cross CrossVersion.for3Use2_13 excludeAll(
-				ExclusionRule.everything
-			),
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.7.0",
+			metaCoreModule  excludeAll("io.spray"),
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.2",
 			"org.postgresql"      % "postgresql"                         % "42.2.12",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 
@@ -105,7 +96,7 @@ lazy val data = (project in file("."))
 			"org.openjfx"         % "javafx-fxml"      % "11" % "test" classifier osName,
 			"org.openjfx"         % "javafx-graphics"  % "11" % "test" classifier osName,
 			"org.gillius"         % "jfxutils"         % "1.0" % "test",
-			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test" exclude("org.scala-lang.modules", "scala-xml_3")
+			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test"
 		),
 
 		Test /run / fork := true,

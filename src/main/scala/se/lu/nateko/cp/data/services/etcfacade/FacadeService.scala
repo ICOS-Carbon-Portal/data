@@ -40,6 +40,10 @@ import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
+//TODO Consider write-locking per filename and "debouncing" EC archive upload for a few minutes upon completion of the full daily package:
+//	it's possible more files are coming right after the package completion. In this case, we don't want to initiate the upload immediately,
+//	and we want to avoid two uploads happening in parallel, too (they will not deprecate each other)
+
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
  * Main features:
