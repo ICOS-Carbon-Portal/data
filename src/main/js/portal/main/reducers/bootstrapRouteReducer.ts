@@ -54,10 +54,14 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 	const previewLookup = state.previewLookup === undefined
 		? new PreviewLookup(specTable, labelLookup)
 		: state.previewLookup;
+	const cart = new Cart(state.cart.name, state.cart.ids.map(id => {
+		const objInfo = objectsTable.find(o => o.dobj === id);
+		return new CartItem(id, objInfo);
+	}))
 
 	const preview = state.preview
 			.withPids(payload.pids)
-			.restore(previewLookup, state.cart, objectsTable);
+			.restore(previewLookup, cart, objectsTable);
 
 	const newPartialState: BootstrapState = {
 		route: 'preview',
@@ -67,6 +71,7 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 		extendedDobjInfo: payload.extendedDobjInfo,
 		preview,
 		previewLookup,
+		cart,
 		isRunningInit: false
 	};
 

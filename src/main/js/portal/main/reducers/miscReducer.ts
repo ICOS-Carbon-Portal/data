@@ -1,6 +1,6 @@
 import {
 	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
-	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps
+	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart
 } from "./actionpayloads";
 import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
 import * as Toaster from 'icos-cp-toaster';
@@ -45,6 +45,10 @@ export default function(state: State, payload: MiscPayload): State{
 
 	if (payload instanceof MiscLoadError){
 		return stateUtils.deserialize(payload.state, payload.cart);
+	}
+
+	if (payload instanceof MiscUpdateAddToCart) {
+		return stateUtils.update(state, { itemsToAddToCart: payload.addToCart });
 	}
 
 	return state;

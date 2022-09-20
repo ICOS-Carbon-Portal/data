@@ -9,7 +9,6 @@ import './custom.css';
 import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
 import {getCssText} from '../../common/main/style';
-import {addHelpSection} from "./HelpSection";
 import {BinTable} from "icos-cp-backend";
 import LegendData = dygraphs.LegendData;
 import SeriesLegendData = dygraphs.SeriesLegendData;
@@ -70,18 +69,15 @@ const emptyBinTable = {
 export default class App {
 	private graph?: Dygraph;
 	private lastDateFormat?: ReturnType<typeof getDateTimeFormat>;
-	private isHelpAdded: boolean;
 	private spinner: typeof Spinner;
 	private legend: CollapsibleSection;
 	private timer: number = 0;
 	private labelMaker: LabelMaker;
 	private legendY2: CollapsibleSection;
-	private collapsibleHelp: CollapsibleSection;
 
 	constructor(readonly config: any, private params: UrlSearchParams){
 		this.graph = undefined;
 		this.lastDateFormat = undefined;
-		this.isHelpAdded = false;
 		this.labelMaker = new LabelMaker(params);
 
 		const isSites = config.envri === "SITES";
@@ -119,9 +115,6 @@ export default class App {
 
 		this.legend = new CollapsibleSection('legend', this.labelMaker.legendTitles.y, stylesCollapsibleSection, this.params.get('legendClosed'), true);
 		this.legendY2 = new CollapsibleSection('legendY2', this.labelMaker.legendTitles.y2, stylesCollapsibleSection, this.params.get('legendClosed'), true);
-
-		this.collapsibleHelp = new CollapsibleSection('help', 'Help', stylesCollapsibleSection, false, true);
-		addHelpSection(document.getElementById('help') as HTMLDivElement);
 	}
 
 	main(){
@@ -216,6 +209,7 @@ export default class App {
 			[Array(labels.length).fill(0)],
 			{
 				title: this.labelMaker.title,
+				titleHeight: 44,
 				strokeWidth,
 				drawPoints,
 				legend: 'always',
@@ -238,11 +232,9 @@ export default class App {
 						pixelsPerLabel: 100
 					},
 					y: {
-						axisLabelWidth: 100,
 						independentTicks: true
 					},
 					y2: {
-						axisLabelWidth: 100,
 						independentTicks: false
 					}
 				},
@@ -398,14 +390,11 @@ export default class App {
 		this.legend.show();
 
 		if (this.labelMaker.hasY2) {
-			this.legendY2.setPosition({top: posLegend.top, right: 123});
+			this.legendY2.setPosition({top: posLegend.top, right: 1});
 			this.legendY2.show();
 		} else {
 			this.legendY2.hide();
 		}
-
-		this.collapsibleHelp.setPosition({top: posLegend.top, right: 1});
-		this.collapsibleHelp.show();
 	}
 
 	showSpinner(show: boolean){

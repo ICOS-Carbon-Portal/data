@@ -53,3 +53,28 @@ ul.dashed > li:before {
 	background-color: #c1c5c8;
 	border-color: rgba(0, 0, 0, 0.05);
 }
+
+.dropdown-details {
+	position: relative;
+}
+
+.dropdown-details .summary-button {
+	cursor: pointer;
+	border: 1px solid #ccc;
+	padding: .375rem .75rem;
+	border-radius: 5px;
+	list-style: none;
+	user-select: none;
+}
+
+.dropdown-details .dropdown {
+	position: absolute;
+	top: auto;
+	bottom: auto;
+	border: 1px solid #ccc;
+	z-index: 1;
+	margin-top: 0.4rem;
+	border-radius: 5px;
+	background: white;
+	box-shadow: 9px 8px 20px -18px rgba(0, 0, 0, 0.75);
+}

@@ -13,6 +13,7 @@ import {PortalDispatch} from "../store";
 import {failWithError, updateRoute} from "../actions/common";
 import HelpSection from '../components/help/HelpSection';
 import { UiInactivateAllHelp } from '../reducers/actionpayloads';
+import PreviewTitle from '../components/preview/PreviewTitle';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -51,7 +52,7 @@ export class App extends Component<AppProps> {
 					maxWidth={400}
 				/>
 
-				<div className="row page-header mb-3">
+				<div className="row">
 
 					<Breadcrumbs handleRouteClick={this.handleRouteClick.bind(this)} route={props.route}/>
 
@@ -100,13 +101,16 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 	switch(props.route) {
 		case 'search':
 			return (
-				<h1 className="col-md-9">
+				<h1 className="col-md-9 mb-3">
 					{config.envri} data portal
 					{config.envri === "ICOS" &&
 						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
 					}
 				</h1>
 			);
+
+		case 'preview':
+			return <PreviewTitle />;
 
 		default:
 			return <div className="col-md-9" />;

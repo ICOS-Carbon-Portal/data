@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import HelpButton from '../../containers/help/HelpButton';
 import { HelpItemName } from '../../models/HelpStorage';
 
 type Props = {
@@ -9,72 +8,41 @@ type Props = {
 	helpButtonName?: HelpItemName
 }
 
-type State = {
-	showCopy: boolean
-}
-
-export default class CopyValue extends Component<Props, State> {
+export default class CopyValue extends Component<Props> {
 	urlInput?: HTMLInputElement | null
-
-	constructor(props: Props){
-		super(props);
-		this.state = {
-			showCopy: false
-		};
-	}
-
-	handleBtnClick(){
-		this.setState({showCopy: true});
-	}
 
 	copyUrl() {
 		if (this.urlInput)
 			this.urlInput.select();
-		
+
 		document.execCommand('copy');
 		this.setState({showCopy: false});
 	}
 
 	render(){
-		const {showCopy} = this.state;
-		const {btnText, copyHelpText, valToCopy, helpButtonName} = this.props;
+		const {copyHelpText, valToCopy, helpButtonName} = this.props;
 
 		return(
-			<span>{showCopy
-				? <CopyCtr
+			<span className='fs-6'>
+				<CopyCtr
 					self={this}
 					valToCopy={valToCopy}
 					copyHelpText={copyHelpText}
-					helpButtonName={helpButtonName}
 					copyClick={this.copyUrl.bind(this)}
 				/>
-				: <Btn
-					show={!!valToCopy}
-					btnText={btnText}
-					clickAction={this.handleBtnClick.bind(this)}
-				/>
-			}</span>
+			</span>
 		);
 	}
 }
-
-const Btn = ({show, btnText, clickAction}: {show: boolean, btnText: string, clickAction: () => void}) => {
-	return (
-		<button	onClick={clickAction} className="btn btn-outline-secondary" style={show ? {marginBottom: 10} : {visibility: 'hidden'}}>
-			{btnText}
-		</button>
-	);
-};
 
 type CopyCtrProps = {
 	self: CopyValue
 	valToCopy: string
 	copyHelpText: string
 	copyClick: () => void
-	helpButtonName?: HelpItemName
 }
 
-const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick, helpButtonName}: CopyCtrProps) => {
+const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick}: CopyCtrProps) => {
 	const inputClick = () => {
 		if (self.urlInput)
 			self.urlInput.select();
@@ -82,22 +50,17 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick, helpButtonName}: Co
 
 	return (
 		<span className="input-group">
-			<button className="btn btn-outline-secondary" onClick={copyClick} title={copyHelpText}>
-				<span className="fas fa-copy" />
-			</button>
-			{helpButtonName &&
-				<button className="btn btn-outline-secondary">
-					<HelpButton name={helpButtonName} overrideStyles={{paddingLeft: 0}}/>
-				</button>
-			}
 			<input
 				ref={urlInput => self.urlInput = urlInput}
 				onClick={inputClick}
 				type="text"
-				className="form-control"
+				className="form-control form-control-sm"
 				value={valToCopy}
 				readOnly
 			/>
+			<button className="btn btn-outline-secondary" style={{ borderColor: '#ced4da' }} onClick={copyClick} title={copyHelpText}>
+				<span className="fas fa-copy" />
+			</button>
 		</span>
 	);
 };

@@ -9,19 +9,29 @@
 	<meta charset="UTF-8">
 	<title>Graph</title>
 
-	<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png"/>
+	@if(envri == Envri.SITES) {
+		<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/sites-favicon.ico"/>
+	} else {
+		<link rel="shortcut icon" type="image/png" href="https://static.icos-cp.eu/images/favicon.png"/>
+	}
 
 	<style type="text/css">
 		html {margin:0; padding:0; width:100%; height:100%;}
 		body {margin:0; font-family: "Open Sans", sans-serif;}
 		#y-label-container {position:absolute; left:10px; top:10px; bottom:40px; width:30px; height: 200px;}
+		#controls {height: 2rem; padding: 10px; display: flex; justify-content: end; gap: 0.25rem;}
+		#controls img { position: relative; height: 1rem; cursor: pointer; border: 1px solid #ccc; padding: 0.4rem; border-radius: 0.3rem; background: white;}
+		#controls img:hover {background: #eee;}
+		#help-control { position: relative; background: white;}
+		#help-control summary { list-style: none}
+		#help-control #help-text { font-size: 80%; width: 280px; padding: 0.5rem 1rem 1rem; position: absolute; top: auto; bottom: auto; right: 0; border: 1px solid #ccc; z-index: 1; border-radius: 5px; background: white; box-shadow: 9px 8px 20px -18px rgba(0,0,0,0.75);}
 		#graph {position:absolute; left:10px; right:10px; top:10px; bottom:40px;}
 		#error {display: none; height: 100%; align-items: center; justify-content: center; position: absolute; width: 100%; flex-direction: column;}
 		#error h2 { margin: 0 0 1em; }
 		#error p { margin: 0 0 1em; }
 		.dygraph-axis-label-x, .dygraph-axis-label-y { font-size: 0.9em;}
 		.dygraph-label{font-weight: bold; color: rgb(0,128,128);}
-		.dygraph-title { color: #333; }
+		.dygraph-title { color: #333; padding: 0.3rem 5rem; font-size: 1.2rem; }
 	</style>
 </head>
 <body>
@@ -30,6 +40,20 @@
 	<div id="legendY2"></div>
 	<div id="error"></div>
 	<div id="help"></div>
+	<div id="controls">
+		<details id="help-control">
+			<summary><img src="//static.icos-cp.eu/images/icons/question-circle-solid.svg" title="Help"></img></summary>
+			<div id="help-text">
+				<p>The graph can be navigated with zoom and pan.</p>
+				<ul class="dashed">
+					<li><b>Zoom: </b><span>Use mouse left to drag an area in the graph. You can drag horizontally or
+							vertically.</span></li>
+					<li><b>Pan: </b><span>Hold SHIFT and use mouse left to drag/pan in the graph.</span></li>
+					<li><b>Reset: </b><span>Double click in the graph to reset zoom/pan.</span></li>
+				</ul>
+			</div>
+		</details>
+	</div>
 
 	<div id="homeAndCopyright">
 		<div id="home"></div>

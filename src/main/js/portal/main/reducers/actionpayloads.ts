@@ -136,6 +136,10 @@ export class MiscUpdateMapProps extends MiscPayload{
 	constructor(readonly persistedMapProps: PersistedMapPropsExtended){super();}
 }
 
+export class MiscUpdateAddToCart extends MiscPayload {
+	constructor(readonly addToCart: Sha256Str[] | undefined) { super(); }
+}
+
 export class RestorePreview extends PreviewPayload{
 	constructor(){super();}
 }
@@ -146,6 +150,14 @@ export class SetPreviewFromCart extends PreviewPayload{
 
 export class SetPreviewUrl extends PreviewPayload{
 	constructor(readonly url: UrlStr){super();}
+}
+
+export class SetPreviewYAxis extends PreviewPayload {
+	constructor(readonly yAxis?: string) { super(); }
+}
+
+export class SetPreviewY2Axis extends PreviewPayload {
+	constructor(readonly y2Axis?: string) { super(); }
 }
 
 export class UiToggleSorting extends UiPayload{

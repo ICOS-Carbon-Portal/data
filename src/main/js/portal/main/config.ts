@@ -296,3 +296,18 @@ export const breadcrumbs: { [E in Envri]: ReadonlyArray<Breadcrumb> } = {
 		{ label: "Data catalogue", url: "/portal" }
 	]
 };
+
+export const iframeEmbedSize = {
+	TIMESERIES: {
+		width:"620",
+		height:"315"
+	},
+	NETCDF: {
+		width: "990",
+		height:"760"
+	},
+	MAPGRAPH: {
+		width: "1280",
+		height:"1280"
+	}
+}

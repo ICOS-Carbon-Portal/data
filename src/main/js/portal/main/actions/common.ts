@@ -29,6 +29,8 @@ import {Filter, Value} from "../models/SpecTable";
 import keywordsInfo from "../backend/keywordsInfo";
 import {SPECCOL} from "../sparqlQueries";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
+import commonConfig from '../../../common/main/config';
+import { getLastSegmentsInUrls } from "../utils";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -178,19 +180,29 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 
 		const {previewLookup, objectsTable, user, cart} = getState();
 
-		const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
-			const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
+		if (user.email) {
+			const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
+				const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
 
-			if (objInfo === undefined)
-				throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
+				if (objInfo === undefined)
+					throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
 
-			const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type
+				const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type
 
-			return new CartItem(objInfo.dobj, objInfo, previewType);
-		});
+				return new CartItem(objInfo.dobj, objInfo, previewType);
+			});
 
-		if (newItems.length > 0) {
-			dispatch(updateCart(user.email, cart.addItem(newItems)));
+			dispatch(new Payloads.MiscUpdateAddToCart(undefined));
+
+			if (newItems.length > 0) {
+				dispatch(updateCart(user.email, cart.addItem(newItems)));
+			}
+		} else {
+			dispatch(new Payloads.MiscUpdateAddToCart(getLastSegmentsInUrls(ids)));
+			const url = window.location;
+			url.hash = stateUtils.stateToHash(getState());
+			dispatch(new Payloads.MiscUpdateAddToCart(undefined));
+			window.location.href = `${commonConfig.authBaseUri}/login/?targetUrl=${encodeURIComponent(url.href)}`;
 		}
 	};
 }

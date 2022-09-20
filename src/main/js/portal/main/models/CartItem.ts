@@ -160,11 +160,9 @@ export default class CartItem {
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
 		if (newKeyVal.hasOwnProperty('y2') && newKeyVal.hasOwnProperty('legendLabels'))
 			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
-		const matchArr = this._id.match(/^https?:\/\/([^/?#]+)(?:[/?#]|$)/i);
-		const matchedId = matchArr && matchArr.length > 0 ? matchArr[1] : '';
-		const host = matchedId.replace('meta', 'data');
+		const host = new URL('/dygraph-light', document.baseURI).href;
 
-		return `https://${host}/dygraph-light/?` + Object.keys(newKeyVal)
+		return `${host}/?` + Object.keys(newKeyVal)
 			.map(key => `${key}=${newKeyVal[key]}`)
 			.join('&');
 	}

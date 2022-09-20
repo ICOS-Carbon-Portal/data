@@ -1,6 +1,6 @@
 import React, { Component, MouseEvent, CSSProperties } from 'react';
 import CheckBtn from '../buttons/ChechBtn';
-import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix } from '../../utils';
+import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix, stationSpecificTitle } from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
@@ -55,8 +55,8 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;
 		const level = `Level ${objInfo.level}`
 
-		return <tr>
-			<td className='d-flex border-bottom py-3'>
+		return(
+			<div className='d-flex border-bottom py-3'>
 				<div className='pe-3'>
 					<label style={{margin:-5, padding:5}}>
 						<CheckBtn
@@ -89,21 +89,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 						}
 					</div>
 				</div>
-			</td>
-		</tr>
+			</div>
+		)
 	}
-}
-
-function stationSpecificTitle(extendedInfo: ExtendedDobjInfo, dataLevel: number, specLabel: String): string {
-	const location = extendedInfo.samplingPoint ?? extendedInfo.site ?? extendedInfo.station?.trim();
-
-	const spec = (config.features.shortenDataTypeLabel && specLabel.includes(','))
-		? specLabel.substring(0, specLabel.indexOf(','))
-		: specLabel;
-
-	const preposition = (config.envri === 'ICOS' && dataLevel > 2) ? "for" : "from";
-
-	return `${spec} ${preposition} ${location}`
 }
 
 export const getMetadataHash = (dobj: string) => {

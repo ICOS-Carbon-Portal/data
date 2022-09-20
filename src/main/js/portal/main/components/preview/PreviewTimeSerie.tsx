@@ -1,9 +1,14 @@
-import React, {ChangeEvent, Component} from 'react';
-import {distinct, getLastSegmentInUrl, wholeStringRegExp} from '../../utils'
+import React, { ChangeEvent, Component } from 'react';
+import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../../utils'
 import config from '../../config';
 import {State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
 import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
+import { lastUrlPart, TableFormat } from 'icos-cp-backend';
+import { UrlStr } from '../../backend/declarations';
+import TableFormatCache from '../../../../common/main/TableFormatCache';
+import commonConfig, { TIMESERIES } from '../../../../common/main/config'
+import PreviewControls from './PreviewControls';
 
 
 interface OurProps {
@@ -11,20 +16,41 @@ interface OurProps {
 	extendedDobjInfo: State['extendedDobjInfo']
 	tsSettings: State['tsSettings']
 	storeTsPreviewSetting: (spec: string, type: string, val: string) => void
+	setPreviewYAxis: (y?: string) => void
+	setPreviewY2Axis: (y2?: string) => void
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
+}
+
+interface OurState {
+	tableFormat?: TableFormat
 }
 
 const iFrameBaseUrl = config.iFrameBaseUrl["TIMESERIES"];
 
-export default class PreviewTimeSerie extends Component<OurProps> {
+export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 	private iframe: HTMLIFrameElement | null = null;
+	private tfCache: TableFormatCache = new TableFormatCache(commonConfig);
 
 	constructor(props: OurProps){
 		super(props);
+
+		this.state = {
+			tableFormat: undefined
+		};
+
+		this.getTableFormat();
+	}
+
+	getTableFormat(idx: number = 0) {
+		const preview = this.props.preview;
+		if (preview.items.length === 0 || this.tfCache.isInCache(preview.items[idx].spec)) return;
+
+		this.tfCache.getTableFormat(preview.items[idx].spec)
+			.then(tableFormat => this.setState({ tableFormat }));
 	}
 
 	handleSelectAction(ev: ChangeEvent<HTMLSelectElement>){
-		const {preview, iframeSrcChange, storeTsPreviewSetting} = this.props;
+		const { preview, iframeSrcChange, storeTsPreviewSetting, setPreviewYAxis, setPreviewY2Axis } = this.props;
 		const {name, selectedIndex, options} = ev.target;
 
 		if ((selectedIndex > 0 || name === 'y2') && iframeSrcChange) {
@@ -43,21 +69,32 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 
 			if (selectedIndex > 0)
 				storeTsPreviewSetting(preview.item.spec, name, options[selectedIndex].value);
+
+			const value = selectedIndex > 0 ? options[selectedIndex].value : undefined;
+			if (name === 'y') {
+				setPreviewYAxis(value)
+			} else if (name === 'y2') {
+				setPreviewY2Axis(value)
+			}
 		}
 	}
 
-	shouldComponentUpdate(nextProps: OurProps) {
-		return this.props.extendedDobjInfo.length === 0 && nextProps.extendedDobjInfo.length > 0;
+	handleChartTypeAction(currentChartType: 'line' | 'scatter'){
+		const { preview, iframeSrcChange, storeTsPreviewSetting } = this.props;
+		const value = currentChartType == 'scatter' ? 'line' : 'scatter';
+		const newUrl = preview.items[0].getNewUrl({ ['type']: value});
+		iframeSrcChange({ target: { src: newUrl } } as ChangeEvent<HTMLIFrameElement>);
+
+		if (this.iframe && this.iframe.contentWindow) {
+			this.iframe.contentWindow.postMessage(newUrl, "*");
+		}
+
+		storeTsPreviewSetting(preview.item.spec, 'type', value);
+
 	}
 
-	getIFrame(objIds: string, linking: string, x?: string, y?: string, type?: 'line' | 'scatter', legendLabels?: string){
-		const yParam = y ? `&y=${y}` : '';
-		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
-
-		return <iframe ref={iframe => this.iframe = iframe} onLoad={this.props.iframeSrcChange}
-			style={{border: 'none', position: 'absolute', top: -5, left: 5, width: 'calc(100% - 10px)', height: '100%'}}
-			src={`${iFrameBaseUrl}?objId=${objIds}&x=${x}${yParam}&type=${type}&linking=${linking}${legendLabelsParams}`}
-		/>;
+	shouldComponentUpdate(nextProps: OurProps, nextState: OurState) {
+		return !!nextState.tableFormat || (this.props.extendedDobjInfo.length === 0 && nextProps.extendedDobjInfo.length > 0);
 	}
 
 	private makePreviewOption(actColName: string): PreviewOption | undefined {
@@ -70,7 +107,8 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 	}
 
 	render(){
-		const {preview, extendedDobjInfo, tsSettings} = this.props;
+		const { preview, extendedDobjInfo, tsSettings } = this.props;
+		const { tableFormat } = this.state;
 
 		// Add station information
 		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {
@@ -106,30 +144,21 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 				.flatMap(colName => this.makePreviewOption(colName) ?? [])
 			: preview.options;
 
-		const chartTypeOptions: PreviewOption[] = [
-			{varTitle: 'scatter', valTypeLabel: 'scatter'},
-			{varTitle: 'line', valTypeLabel: 'line'},
-		];
-
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;
-		const {xAxis, yAxis, type} = getAxes(options, preview, specSettings);
+		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
+
+		const yParam = yAxis ? `&y=${yAxis}` : '';
+		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
+		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
+		const iframeUrl = `${window.document.location.protocol}//${window.document.location.host}${iFrameBaseUrl}?objId=${objIds}&x=${xAxis}${yParam}${y2Param}&type=${type}&linking=${linking}${legendLabelsParams}`;
 
 		if (!preview)
 			return null;
 
 		return (
 			<>
-				<div className="row">
-					<div className="col-md-3">
-						<Selector
-							name="x"
-							label="X axis"
-							selected={xAxis}
-							options={options}
-							selectAction={this.handleSelectAction.bind(this)}
-						/>
-					</div>
+				<div className="row pb-2 gy-2">
 					<div className="col-md-3">
 						<Selector
 							name="y"
@@ -139,28 +168,57 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 							selectAction={this.handleSelectAction.bind(this)}
 						/>
 					</div>
+					{yAxis &&
 					<div className="col-md-3">
 						<Selector
 							name="y2"
 							label="Y2 axis"
+							selected={y2Axis}
 							options={options}
 							selectAction={this.handleSelectAction.bind(this)}
+							defaultOptionLabel="Select a second parameter"
 						/>
 					</div>
-					<div className="col-md-3">
-						<Selector
-							name="type"
-							label="Chart type"
-							selected={type}
-							options={chartTypeOptions}
-							selectAction={this.handleSelectAction.bind(this)}
+					}
+					{yAxis &&
+						<PreviewControls
+							iframeUrl={iframeUrl}
+							previewType={TIMESERIES}
+							csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
+							chartType={type}
+							chartTypeAction={this.handleChartTypeAction.bind(this)}
 						/>
-					</div>
+					}
 				</div>
 
-				<div className="row" style={{position: 'relative', width: '100%', padding: '20%'}}>
-					{this.getIFrame(objIds, linking, xAxis, yAxis, type, legendLabels)}
-				</div>
+				{yAxis ?
+				<>
+					<div className="row mb-4">
+						<div className="col">
+							<div style={{ position: 'relative', padding: '20%' }}>
+								<iframe ref={iframe => this.iframe = iframe} onLoad={this.props.iframeSrcChange}
+									style={{ border: '1px solid #eee', position: 'absolute', top: 5, left: 0, width: '100%', height: '100%' }}
+									src={iframeUrl}
+								/>
+							</div>
+						</div>
+					</div>
+
+					<div className="row">
+						<div className="col-md-3 ms-auto me-auto">
+							<Selector
+								name="x"
+								label="X axis"
+								selected={xAxis}
+								options={options}
+								selectAction={this.handleSelectAction.bind(this)}
+							/>
+						</div>
+					</div>
+				</>
+				:
+				<div className="py-2"></div>
+				}
 			</>
 		);
 	}
@@ -169,6 +227,7 @@ export default class PreviewTimeSerie extends Component<OurProps> {
 type Axes = {
 	xAxis?: string
 	yAxis?: string
+	y2Axis?: string
 	type?: 'line' | 'scatter'
 }
 const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSetting): Axes => {
@@ -179,11 +238,12 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 
 	return preview.items[0] && preview.items[0].hasKeyValPairs
 		? {
-			xAxis: getColName(specSettings.x as unknown as string) || preview.items[0].getUrlSearchValue('x'),
-			yAxis: getColName(specSettings.y as unknown as string) || preview.items[0].getUrlSearchValue('y'),
+			xAxis: preview.items[0].getUrlSearchValue('x') || getColName(specSettings.x),
+			yAxis: preview.items[0].getUrlSearchValue('y') || getColName(specSettings.y),
+			y2Axis: preview.items[0].getUrlSearchValue('y2'),
 			type: specSettings.type || preview.items[0].getUrlSearchValue('type') as Axes['type']
 		}
-		: {xAxis: undefined, yAxis: undefined, type: undefined};
+		: { xAxis: undefined, yAxis: undefined, y2Axis: undefined, type: undefined};
 };
 
 type SelectorProps = {
@@ -191,10 +251,12 @@ type SelectorProps = {
 	label: string
 	selected?: string
 	options: PreviewOption[]
+	defaultOptionLabel?: string
 	selectAction: (event: ChangeEvent<HTMLSelectElement>) => void
 }
 const Selector = (props: SelectorProps) => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
+	const defaultOptionLabel = props.defaultOptionLabel ?? "Select a parameter";
 	const getTxt = (option: PreviewOption) => {
 		return option.varTitle === option.valTypeLabel
 			? option.varTitle
@@ -203,9 +265,8 @@ const Selector = (props: SelectorProps) => {
 
 	return (
 		<span>
-			<label>{props.label}</label>
 			<select name={props.name} className="form-select" onChange={props.selectAction} defaultValue={value}>
-				<option value="0">Select option</option>
+				<option value="0">{defaultOptionLabel}</option>
 				{props.options.map((o: PreviewOption, i: number) =>
 					<option value={o.varTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
 			</select>
@@ -216,3 +277,29 @@ const Selector = (props: SelectorProps) => {
 const getLegendLabels = (items: PreviewItem[]) => {
 	return items.map(item => item.stationId && item.samplingHeight ? `${item.stationId} ${item.samplingHeight} m Level ${item.level}` : '').join(',');
 };
+
+function csvDownloadUrl(item: CartItem, tableFormat?: TableFormat): UrlStr {
+	if (tableFormat === undefined) return '';
+
+	const x = item.getUrlSearchValue('x');
+	const y = item.getUrlSearchValue('y');
+	const y2 = item.getUrlSearchValue('y2');
+
+	if (x === undefined || (y === undefined && y2 === undefined)) return '';
+
+	const hashId = lastUrlPart(item.dobj);
+	const cols = [x, y, y2].filter(isDefined).reduce<string[]>((acc, colName) => {
+		acc.push(colName);
+
+		const flagCol = tableFormat.columns.find(col => col.name === colName)?.flagCol;
+
+		if (flagCol !== undefined)
+			acc.push(flagCol);
+
+		return acc;
+	}, [])
+		.map(col => `col=${col}`).join('&');
+
+	const baseUri = new URL('/csv', document.baseURI).href
+	return `${baseUri}/${hashId}?${cols}`;
+}

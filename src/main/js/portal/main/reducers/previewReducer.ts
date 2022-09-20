@@ -3,7 +3,9 @@ import {
 	PreviewPayload,
 	RestorePreview,
 	SetPreviewFromCart,
-	SetPreviewUrl
+	SetPreviewUrl,
+	SetPreviewYAxis,
+	SetPreviewY2Axis
 } from "./actionpayloads";
 import Preview from "../models/Preview";
 
@@ -26,6 +28,18 @@ export default function(state: State, payload: PreviewPayload): State{
 		});
 	}
 
+	if (payload instanceof SetPreviewYAxis) {
+		return stateUtils.update(state, {
+			yAxis: payload.yAxis,
+		});
+	}
+
+	if (payload instanceof SetPreviewY2Axis) {
+		return stateUtils.update(state, {
+			y2Axis: payload.y2Axis,
+		});
+	}
+
 	return state;
 }
 
@@ -38,7 +52,7 @@ const handleRestorePreview = (state: State) => {
 const handleSetPreviewFromCart = (state: State, payload: SetPreviewFromCart): Partial<State> => {
 	const preview = state.previewLookup === undefined
 		? new Preview()
-		: state.preview.initPreview(state.previewLookup, state.cart, payload.ids, state.objectsTable);
+		: state.preview.initPreview(state.previewLookup, state.cart, payload.ids, state.objectsTable, state.yAxis, state.y2Axis);
 
 	return {
 		route: 'preview',

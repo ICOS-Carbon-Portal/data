@@ -61,7 +61,7 @@ export default class HelpStorage {
 		return (newVisibility === this.visible && newStorage === this.helpItems)
 			? this
 			: new HelpStorage(newStorage, newVisibility);
-}
+	}
 
 }
 
@@ -167,7 +167,7 @@ const initItems: HelpItem[] = [
 		}],
 		undefined
 	),
-	
+
 	new HelpItem(
 		'ecosystem',
 		{
@@ -253,7 +253,7 @@ const initItems: HelpItem[] = [
 		'Unit of measurement of the physical quantity behind the variable in question. ' +
 		nonStrictnessWarning(titles.quantityUnit)
 	),
-	
+
 	new HelpItem(
 		'quantityKind',
 		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. ' +

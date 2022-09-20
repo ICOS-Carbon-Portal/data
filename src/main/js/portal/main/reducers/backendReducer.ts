@@ -102,7 +102,7 @@ const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObj
 			acc[ext.dobj] = ext.hasVarInfo ?? false;
 			return acc;
 		}, {});
-	
+
 	return {
 		extendedDobjInfo: payload.extendedDobjInfo,
 		previewLookup: state.previewLookup?.withVarInfo(varInfo)

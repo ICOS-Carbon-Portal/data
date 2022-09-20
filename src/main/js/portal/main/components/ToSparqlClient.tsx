@@ -2,7 +2,7 @@ import React, { FunctionComponent } from "react";
 import { PublicQueryDeclaration, QueryName } from "../config";
 import commonConfig from '../../../common/main/config';
 
-export const sparqlUrl = `${commonConfig.metaBaseUri}sparqlclient/`;
+export const sparqlUrl = `${commonConfig.metaBaseUri}/sparqlclient/`;
 
 interface Props extends PublicQueryDeclaration {
 	queryName: QueryName

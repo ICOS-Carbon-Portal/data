@@ -3,14 +3,16 @@ import config from "./config";
 import commonConfig from '../../common/main/config';
 import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
-import {DrawRectBbox} from "./models/State";
+import {DrawRectBbox, ExtendedDobjInfo} from "./models/State";
 import {Coordinate} from "ol/coordinate";
 
-export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string) => {
+export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, yAxis?: string, y2Axis?: string) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
+		...(yAxis && {y: yAxis}),
+		...(y2Axis && {y2: y2Axis}),
 		type: 'scatter'
 	});
 };
@@ -89,7 +91,7 @@ export function getLastSegmentInUrl(url: UrlStr): string | Sha256Str {
 	const idx = url.lastIndexOf('/');
 	if (idx === -1) throw new Error(`Cannot get last segment from '${url}'`);
 
-	return url.substr(idx + 1);
+	return url.substring(idx + 1);
 }
 
 export function getLastSegmentsInUrls(urls: UrlStr[]): (string | Sha256Str)[] {
@@ -108,7 +110,7 @@ export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 export const pidRegexp = /^(?:https?\:\/\/(?:hdl\.handle\.net|doi\.org)\/)?(?:[\d\.]+\d\/)?([a-zA-Z0-9\-_]{24})$/
 
 export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
-	return commonConfig.metaBaseUri + 'objects/' + dobj.split('/').pop()
+	return commonConfig.metaBaseUri + '/objects/' + dobj.split('/').pop()
 }
 
 export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)
@@ -183,4 +185,16 @@ export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[]{
 		[rect[0], rect[3]],
 		[rect[0], rect[1]]
 	];
+}
+
+export const specLabelDisplay = (specLabel: String) => (config.features.shortenDataTypeLabel && specLabel.includes(','))
+	? specLabel.substring(0, specLabel.indexOf(','))
+	: specLabel;
+
+export function stationSpecificTitle(extendedInfo: ExtendedDobjInfo, dataLevel: number, specLabel: String): string {
+	const location = extendedInfo.samplingPoint ?? extendedInfo.site ?? extendedInfo.station?.trim();
+	const spec = specLabelDisplay(specLabel);
+	const preposition = (config.envri === 'ICOS' && dataLevel > 2) ? "for" : "from";
+
+	return `${spec} ${preposition} ${location}`
 }

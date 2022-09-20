@@ -29,8 +29,13 @@ export default class DownloadButton extends Component<Props> {
 
 const getDownloadLink = (objs: string[]): string => {
 	const dobjIds = objs.map(dobj => dobj.split('/').pop());
-	const ids = encodeURIComponent(JSON.stringify(dobjIds));
-	const fileName = encodeURIComponent('My data cart');
 
-	return `/objects?ids=${ids}&fileName=${fileName}`;
+	if (dobjIds.length == 1) {
+		return `/objects/${dobjIds[0]}`;
+	} else {
+		const ids = encodeURIComponent(JSON.stringify(dobjIds));
+		const fileName = encodeURIComponent('My data cart');
+
+		return `/objects?ids=${ids}&fileName=${fileName}`;
+	}
 };

@@ -3,13 +3,13 @@ import {WhoAmI} from "../models/State";
 import {fetchKnownDataObjects, fetchLabelLookup, fetchSpecTableData, getExtendedDataObjInfo, getTsSettings, saveTsSetting} from "../backend";
 import * as Payloads from "../reducers/actionpayloads";
 import {Sha256Str} from "../backend/declarations";
-import {failWithError} from "./common";
+import { failWithError, fetchCart, addToCart } from "./common";
 import {getUrlsFromPids} from "../utils";
 
 
 export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {tsSettings, specTable, labelLookup} = getState();
+		const {tsSettings, specTable, labelLookup, cart, itemsToAddToCart} = getState();
 
 		// specTable and labelLookup must be fetched from backend if app begins with a preview route
 		const specTablesPromise = specTable.isInitialized
@@ -18,16 +18,23 @@ export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): Porta
 		const labelLookupPromise = Object.keys(labelLookup).length
 			? Promise.resolve(undefined)
 			: fetchLabelLookup();
+		const cartPromise = cart.isInitialized
+			? Promise.resolve()
+			: dispatch(fetchCart(user));
 
 		const promises = Promise.all([
 			fetchKnownDataObjects(pids),
 			getExtendedDataObjInfo(getUrlsFromPids(pids)),
 			specTablesPromise,
-			labelLookupPromise
+			labelLookupPromise,
+			cartPromise
 		]);
 
 		promises.then(([knownDataObjInfos, extendedDataObjInfo, specTables, labelLookup]) => {
 				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup));
+				if (itemsToAddToCart) {
+					dispatch(addToCart(getUrlsFromPids(itemsToAddToCart)))
+				}
 			},
 			failWithError(dispatch));
 
@@ -52,5 +59,17 @@ export function storeTsPreviewSetting(spec: string, type: string, val: string): 
 		saveTsSetting(user.email, spec, type, val).then(tsSettings => {
 			dispatch(new Payloads.BackendTsSettings(tsSettings));
 		});
+	};
+}
+
+export function setPreviewYAxis(y?: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.SetPreviewYAxis(y))
+	};
+}
+
+export function setPreviewY2Axis(y2?: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new Payloads.SetPreviewY2Axis(y2))
 	};
 }

@@ -43,7 +43,10 @@ const hashKeys = [
 	'id',
 	'preview',
 	'searchOptions',
-	'mapProps'
+	'mapProps',
+	'yAxis',
+	'y2Axis',
+	'itemsToAddToCart'
 ];
 
 export type Route = 'search' | 'metadata' | 'preview' | 'cart';
@@ -155,11 +158,14 @@ export interface State {
 	}
 	paging: Paging
 	cart: Cart
-	id: UrlStr | undefined;
+	id: UrlStr | undefined
 	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
 	preview: Preview
-	toasterData: {} | undefined;
+	yAxis: string | undefined
+	y2Axis: string | undefined
+	itemsToAddToCart: Sha256Str[] | undefined
+	toasterData: {} | undefined
 	batchDownloadStatus: {
 		isAllowed: boolean,
 		ts: number
@@ -221,6 +227,9 @@ export const defaultState: State = {
 	metadata: undefined,
 	station: undefined,
 	preview: new Preview(),
+	yAxis: undefined,
+	y2Axis: undefined,
+	itemsToAddToCart: undefined,
 	toasterData: undefined,
 	batchDownloadStatus: {
 		isAllowed: false,
@@ -348,6 +357,8 @@ type JsonHashState = {
 	page?: number
 	preview?: Sha256Str[]
 	id?: UrlStr
+	yAxis?: string
+	y2Axis?: string
 }
 const jsonToState = (state0: JsonHashState) => {
 	const state = {...defaultState, ...state0};
@@ -360,6 +371,8 @@ const jsonToState = (state0: JsonHashState) => {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 		state.preview = new Preview().withPids(state0.preview ?? []);
+		state.preview.yAxis = state0.yAxis
+		state.preview.y2Axis = state0.y2Axis
 		if (state0.id){
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
@@ -378,20 +391,13 @@ const handleRoute = (storeState: Partial<StateSerialized>) => {
 };
 
 const specialCases = (state: Partial<StateSerialized>) => {
-	if (state.route === 'metadata') {
-		return {
-			route: state.route,
-			id: state.id,
-		};
-	} else {
-		delete state.id;
-		delete state.metadata;
-	}
-
 	if (state.route === 'preview') {
 		return {
 			route: state.route,
-			preview: state.preview
+			preview: state.preview,
+			yAxis: state.yAxis,
+			y2Axis: state.y2Axis,
+			itemsToAddToCart: state.itemsToAddToCart
 		};
 	} else {
 		delete state.preview;
@@ -411,7 +417,7 @@ const specialCases = (state: Partial<StateSerialized>) => {
 };
 
 function getCurrentHash(){
-	return decodeURIComponent(window.location.hash.substr(1));
+	return decodeURIComponent(window.location.hash.substring(1));
 }
 
 const hashUpdater = (store: Store) => () => {

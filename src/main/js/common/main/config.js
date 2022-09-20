@@ -6,18 +6,19 @@ export const NETCDF = "NETCDF";
 export const MAPGRAPH = "MAPGRAPH";
 
 const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? SITES : ICOS;
-const metaBaseUri = `https://${window.envriConfig.metaHost}/`;
-const authHost = window.envriConfig.authHost;
+const metaBaseUri = `https://${window.envriConfig.metaHost}`;
+const authBaseUri = `https://${window.envriConfig.authHost}`;
 const restheartDb = envri === SITES ? 'sitesdb' : 'db';
 
 export default {
-	sparqlEndpoint: metaBaseUri + 'sparql',
+	sparqlEndpoint: metaBaseUri + '/sparql',
 	restheartDbUrl: `//restheart.icos-cp.eu/${restheartDb}/`,
-	restheartProfileBaseUrl: `//${authHost}/db/users`,
-	portalUseLogUrl: `//${authHost}/logs/portaluse`,
+	restheartProfileBaseUrl: `${authBaseUri}/db/users`,
+	portalUseLogUrl: `${authBaseUri}/logs/portaluse`,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
 	cpmetaResUri: 'http://meta.icos-cp.eu/resources/cpmeta/',
 	metaBaseUri,
+	authBaseUri,
 	cpmetaObjectUri: window.envriConfig.dataItemPrefix + 'objects/',
 	envri,
 	sparqlGraphFilter: window.envriConfig.metaItemPrefix,

@@ -55,7 +55,7 @@ export default class LabelMaker {
 	}
 
 	set objects(objects: MetaWithTableFormat[]){
-		const sortedObjects = objects.sort((obj1, obj2) => 
+		const sortedObjects = objects.sort((obj1, obj2) =>
 			new Date(obj1.startedAtTime).getTime() - new Date(obj2.startedAtTime).getTime()
 		);
 		const specList = Array.from(new Set(sortedObjects.map(o => o.specLabel))).join(' / ');
@@ -92,7 +92,7 @@ export default class LabelMaker {
 	}
 
 	get title(){
-		return this.chartTitle || '';
+		return !window.frameElement && this.chartTitle || ' ';
 	}
 
 	get series(){
@@ -133,7 +133,7 @@ export default class LabelMaker {
 				acc.push(`${idx} ${lbl}`);
 			else
 				acc.push(lbl);
-			
+
 			return acc;
 		}, []);
 	}
