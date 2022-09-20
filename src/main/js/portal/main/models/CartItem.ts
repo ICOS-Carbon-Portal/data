@@ -163,7 +163,7 @@ export default class CartItem {
 		const host = new URL('/dygraph-light', document.baseURI).href;
 
 		return `${host}/?` + Object.keys(newKeyVal)
-			.map(key => `${key}=${newKeyVal[key]}`)
+			.map(key => `${key}=${encodeURIComponent(newKeyVal[key])}`)
 			.join('&');
 	}
 }
