@@ -7,6 +7,7 @@ import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
 import {removeFromCart, updateRoute} from "../actions/common";
+import Message from '../components/ui/Message';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -85,13 +86,9 @@ class DataCart extends Component<DataCartProps> {
 						</div>
 					</div>
 					:
-					<div className="text-center" style={{margin: '5vh 0'}}>
-						<h2>Your cart is empty</h2>
-						<p>Search for data and add it to your cart.</p>
-						<button className="btn btn-primary" onClick={this.handleRouteClick.bind(this, 'search')}>
-							Find data
-						</button>
-					</div>
+					<Message
+						title="Your cart is empty"
+						onclick={this.handleRouteClick.bind(this, 'search')} />
 				}
 			</div>
 		);

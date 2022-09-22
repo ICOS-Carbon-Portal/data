@@ -93,7 +93,7 @@ const BreadcrumbItem = (item: Breadcrumb, handleRouteClick: (newRoute: string) =
 
 	return ((item.url == "/portal" && route == 'search') ?
 		<li key={item.label} className="breadcrumb-item active">{item.label}</li> :
-		<li key={item.label} className="breadcrumb-item"><a onClick={e => onclick(e)} href={item.url}>{item.label}</a></li>)
+		<li key={item.label} className="breadcrumb-item"><a onClick={onclick} href={item.url}>{item.label}</a></li>)
 }
 
 const Title = (props: {route: Route, metadata?: State['metadata']}) => {

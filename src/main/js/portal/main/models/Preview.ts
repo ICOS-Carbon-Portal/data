@@ -98,19 +98,20 @@ export default class Preview {
 
 		const items: PreviewItem[] = objects.map(o => o.item as PreviewItem).filter(isDefined);
 
-		if (options.type === 'TIMESERIES'){
-			if (items.length){
-				let previewItems = items;
-				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
-				if(xAxis){
-					const url = getNewTimeseriesUrl(items, xAxis, yAxis, y2Axis);
-					previewItems = items.map(i => i.withUrl(url) as PreviewItem);
-				}
-				return new Preview(previewItems, options.options, options.type, yAxis, y2Axis);
+		if (items.length){
+			if (options.type === 'TIMESERIES'){
+					let previewItems = items;
+					const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
+					if(xAxis){
+						const url = getNewTimeseriesUrl(items, xAxis, yAxis, y2Axis);
+						previewItems = items.map(i => i.withUrl(url) as PreviewItem);
+					}
+					return new Preview(previewItems, options.options, options.type, yAxis, y2Axis);
+			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
+				return new Preview(items, options.options, options.type, yAxis, y2Axis);
 			}
-			else throw new Error("No items to preview");
-		} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
-			return new Preview(items, options.options, options.type, yAxis, y2Axis);
+		} else {
+			return new Preview(ids.map(id => new CartItem(id)));
 		}
 
 		throw new Error('Could not initialize Preview');

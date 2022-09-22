@@ -2,16 +2,16 @@ import React, {ChangeEvent, Component, ReactNode} from 'react';
 import {connect} from "react-redux";
 import PreviewTimeSerie from '../components/preview/PreviewTimeSerie';
 import PreviewSelfContained from '../components/preview/PreviewSelfContained';
-import config, { PreviewType } from '../config';
+import config from '../config';
 import {Events} from 'icos-cp-utils';
-import {State} from "../models/State";
+import {Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
-import CartItem from "../models/CartItem";
 import {PortalDispatch} from "../store";
-import {addToCart, removeFromCart, setPreviewUrl} from "../actions/common";
+import { addToCart, removeFromCart, setPreviewUrl, updateRoute } from "../actions/common";
 import { storeTsPreviewSetting, setPreviewYAxis, setPreviewY2Axis } from "../actions/preview";
 import { pick } from "../utils";
 import PreviewControls from '../components/preview/PreviewControls';
+import Message from '../components/ui/Message';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -46,6 +46,10 @@ class Preview extends Component<OurProps, OurState> {
 		}
 	}
 
+	handleSearchRouteClick() {
+		this.props.updateRoute('search');
+	}
+
 	componentWillUnmount(){
 		this.events.clear();
 	}
@@ -53,26 +57,28 @@ class Preview extends Component<OurProps, OurState> {
 	render(){
 		const { HelpSection, preview } = this.props;
 		const { iframeSrc } = this.state;
-		const previewType = preview.type;
-		if (previewType === undefined) return null;
 
-		return (
-			<>
-				{preview &&
-					<>
-						<div style={{ display:'inline-block' }}>
-							{HelpSection}
-						</div>
+		if (!preview || preview.type === undefined) {
+			return(
+				<Message
+					title="No data found"
+					onclick={this.handleSearchRouteClick.bind(this)} />
+			)
+		} else {
+			return (
+				<>
+					<div style={{ display: 'inline-block' }}>
+						{HelpSection}
+					</div>
 
-						<PreviewRoute
-							iframeSrcChange={this.handleIframeSrcChange.bind(this)}
-							iframeUrl={iframeSrc}
-							{...this.props}
-						/>
-					</>
-				}
-			</>
-		);
+					<PreviewRoute
+						iframeSrcChange={this.handleIframeSrcChange.bind(this)}
+						iframeUrl={iframeSrc}
+						{...this.props}
+					/>
+				</>
+			);
+		}
 	}
 }
 
@@ -117,6 +123,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		setPreviewY2Axis: (y2?: string) => dispatch(setPreviewY2Axis(y2)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		updateRoute: (route: Route) => dispatch(updateRoute(route)),
 	};
 }
 

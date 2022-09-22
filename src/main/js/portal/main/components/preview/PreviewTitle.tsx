@@ -16,8 +16,8 @@ type OurProps = StateProps & DispatchProps;
 class PreviewTitle extends Component<OurProps>{
 	render() {
 
-		const { items, extendedDobjInfo, labelLookup, cart, user } = this.props;
-		if (items.length == 0) return null;
+		const { items, extendedDobjInfo, labelLookup, cart } = this.props;
+		if (items.length == 0 || items[0].type == undefined) return null;
 		const specLabel = labelLookup[items[0].spec]?.label ?? "Undefined data type";
 		const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? stationSpecificTitle(extendedDobjInfo[0], items[0].level, specLabel);
 		const subtitle = items.length == 1 ? <div className="fs-3 text-muted">{extendedDobjInfo[0].biblioInfo?.temporalCoverageDisplay}</div> : null;
@@ -100,7 +100,6 @@ function stateToProps(state: State) {
 		extendedDobjInfo: state.extendedDobjInfo,
 		labelLookup: state.labelLookup,
 		cart: state.cart,
-		user: state.user
 	};
 }
 
