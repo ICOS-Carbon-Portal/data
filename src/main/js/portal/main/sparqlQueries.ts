@@ -452,7 +452,14 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 			}
 			OPTIONAL{
 				?coll dcterms:hasPart ?dobj ; cpmeta:hasDoi ?doi .
-				filter not exists{[] cpmeta:isNextVersionOf ?coll ; dcterms:hasPart ?dobj}
+				filter not exists{
+					?newerColl cpmeta:isNextVersionOf ?coll .
+					{
+						{?newerColl cpmeta:hasDoi ?doi }
+						UNION
+						{?newerColl dcterms:hasPart ?dobj ; cpmeta:hasDoi []}
+					}
+				}
 			}
 		}
 		group by ?dobj
