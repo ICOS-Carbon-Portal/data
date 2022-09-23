@@ -265,7 +265,7 @@ const Selector = (props: SelectorProps) => {
 
 	return (
 		<span>
-			<select name={props.name} className="form-select" onChange={props.selectAction} defaultValue={value}>
+			<select name={props.name} className="form-select" onChange={props.selectAction} value={value}>
 				<option value="0">{defaultOptionLabel}</option>
 				{props.options.map((o: PreviewOption, i: number) =>
 					<option value={o.varTitle} key={props.label.slice(0, 1) + i}>{getTxt(o)}</option>)}
