@@ -55,12 +55,12 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 
 		if ((selectedIndex > 0 || name === 'y2') && iframeSrcChange) {
 			if (selectedIndex === 0){
-				preview.items[0].deleteKeyValPair(name);
+				preview.item.deleteKeyValPair(name);
 			}
 			const keyVal = selectedIndex === 0
 				? {}
 				: {[name]: options[selectedIndex].value};
-			const newUrl = preview.items[0].getNewUrl(keyVal);
+			const newUrl = preview.item.getNewUrl(keyVal);
 			iframeSrcChange({target: {src: newUrl}} as ChangeEvent<HTMLIFrameElement>);
 
 			if (this.iframe && this.iframe.contentWindow) {
@@ -82,7 +82,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 	handleChartTypeAction(currentChartType: 'line' | 'scatter'){
 		const { preview, iframeSrcChange, storeTsPreviewSetting } = this.props;
 		const value = currentChartType == 'scatter' ? 'line' : 'scatter';
-		const newUrl = preview.items[0].getNewUrl({ ['type']: value});
+		const newUrl = preview.item.getNewUrl({ ['type']: value});
 		iframeSrcChange({ target: { src: newUrl } } as ChangeEvent<HTMLIFrameElement>);
 
 		if (this.iframe && this.iframe.contentWindow) {
@@ -107,12 +107,12 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 	}
 
 	render(){
-		const { preview, extendedDobjInfo, tsSettings } = this.props;
+		const { preview, extendedDobjInfo, tsSettings, storeTsPreviewSetting } = this.props;
 		const { tableFormat } = this.state;
 
 		// Add station information
 		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {
-			const extendedInfo = this.props.extendedDobjInfo.find(ext => ext.dobj === item.dobj);
+			const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === item.dobj);
 			item.station = extendedInfo ? extendedInfo.station : undefined;
 			item.stationId = extendedInfo ? extendedInfo.stationId : undefined;
 			item.samplingHeight = extendedInfo ? extendedInfo.samplingHeight : undefined;
@@ -155,6 +155,9 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 
 		if (!preview)
 			return null;
+
+		if (yAxis && specSettings.y != yAxis)
+			storeTsPreviewSetting(preview.item.spec, 'y', yAxis);
 
 		return (
 			<>
@@ -232,16 +235,16 @@ type Axes = {
 }
 const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSetting): Axes => {
 	const getColName = (colName: string) => {
-		const option = options.find((opt: PreviewOption) => opt.varTitle === colName);
-		return option ? option.varTitle : undefined;
+		const option = options.some((opt: PreviewOption) => opt.varTitle === colName);
+		return option ? colName : undefined;
 	};
 
-	return preview.items[0] && preview.items[0].hasKeyValPairs
+	return preview.item && preview.item.hasKeyValPairs
 		? {
-			xAxis: preview.items[0].getUrlSearchValue('x') || getColName(specSettings.x),
-			yAxis: preview.items[0].getUrlSearchValue('y') || getColName(specSettings.y),
-			y2Axis: preview.items[0].getUrlSearchValue('y2'),
-			type: specSettings.type || preview.items[0].getUrlSearchValue('type') as Axes['type']
+			xAxis: preview.item.getUrlSearchValue('x') || getColName(specSettings.x),
+			yAxis: preview.item.getUrlSearchValue('y') || getColName(specSettings.y),
+			y2Axis: preview.item.getUrlSearchValue('y2'),
+			type: specSettings.type || preview.item.getUrlSearchValue('type') as Axes['type']
 		}
 		: { xAxis: undefined, yAxis: undefined, y2Axis: undefined, type: undefined};
 };
