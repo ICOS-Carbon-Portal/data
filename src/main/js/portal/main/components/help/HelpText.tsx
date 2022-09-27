@@ -38,14 +38,12 @@ function ListItem(props: {item: HelpStorageListEntry}) {
 		: <b>{item.label}: </b>;
 
 	const link = item.webpage
-		? <a href={item.webpage} title="More information" target="_blank">
-			<span className="fas fa-share-square" style={{marginLeft:15}} />
-		</a>
+		? <a href={item.webpage} target="_blank" style={{whiteSpace: 'nowrap'}}>Read more</a>
 		: null;
 
 	return (
 		<li style={{marginTop: 5}}>
-			{label}<span>{item.comment ?? item.label}</span>{link}
+			{label}<span>{item.comment ?? item.label}</span> {link}
 		</li>
 	);
 }
@@ -68,7 +66,7 @@ function DocItem(props: {item: Documentation}) {
 
 	return (
 		<li style={{marginTop: 5}}>
-			<a href={url.href} title={"Download file " + item.txt}>Download documentation</a>
+			<a href={url.href} target='_blank'>{item.txt}</a>
 		</li>
 	);
 }

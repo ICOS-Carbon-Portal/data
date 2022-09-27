@@ -218,25 +218,22 @@ const initItems: HelpItem[] = [
 					label: 0 as Int,
 					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
 						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
-					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 1 as Int,
 					comment: 'Near Real Time Data (NRT) or Internal Work data (IW).',
-					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 2 as Int,
 					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is` +
 						' the ICOS-data product and free available for users.',
-					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				},
 				{
 					label: 3 as Int,
 					comment: 'All kinds of elaborated products by scientific communities that rely on ICOS data products are called Level 3 data.',
-					webpage: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality'
 				}
-			]
+			],
+			[{ txt: 'Read more about data levels', url: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality' }]
 	),
 
 	new HelpItem('format', 'Technical file format, indicating which software module is needed to read the data'),
