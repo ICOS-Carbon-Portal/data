@@ -10,18 +10,18 @@ import java.time.LocalDateTime
 case class EtcFilename(
 	station: StationId,
 	date: LocalDate,
-	timeOrDatatype: Either[LocalTime, DataType],
+	dataType: DataType,
+	time: Option[LocalTime],
 	loggerNumber: Int,
 	fileNumber: Int,
 	extension: String
 ){
-	def dataType: DataType = timeOrDatatype.fold(_ => DataType.EC, identity)
-	def time: Option[LocalTime] = timeOrDatatype.left.toOption
+	import DataType.*
 
-	def toEcDaily: Option[EtcFilename] = time.map{time =>
+	def toDaily(dtype: EC.type | PHEN.type): Option[EtcFilename] = time.filter(_ => this.dataType == dtype).map{time =>
 		copy(
 			date = LocalDateTime.of(date, time).minusMinutes(15).toLocalDate,
-			timeOrDatatype = Right(DataType.EC),
+			time = None,
 			extension = "zip"
 		)
 	}
@@ -50,7 +50,7 @@ object EtcFilename{
 	val timeFormat = DateTimeFormatter.ofPattern("HHmm")
 	val allowedExtensions = Set("csv", "zip", "bin", "dat", "txt")
 
-	def parse(text: String, allowDailyEcFiles: Boolean = false): Try[EtcFilename] = Try(text match{
+	def parse(text: String, allowDailyArchives: Boolean = false): Try[EtcFilename] = Try(text match{
 
 		case pattern(stationStr, typeStr, dateTimeStr, loggerStr, fileStr, extension) =>
 
@@ -68,19 +68,21 @@ object EtcFilename{
 
 			val timeStr = dateTimeStr.drop(8)
 
-			val timeOrDatatype = if(timeStr.isEmpty) {
-				if(dataType == DataType.EC && !allowDailyEcFiles) argExc("EC filenames must contain time")
-				Right(dataType)
-			}else {
-				if(dataType != DataType.EC) argExc("Only EC filenames can contain time")
-				Left(LocalTime.parse(timeStr, timeFormat))
-			}
+			val time = if(timeStr.isEmpty)
+				if(canBeDailyPackage(dataType) && !allowDailyArchives) argExc("EC filenames must contain time")
+				None
+			else
+				if(!canBeDailyPackage(dataType)) argExc("Only EC filenames can contain time")
+				Some(LocalTime.parse(timeStr, timeFormat))
 
-			EtcFilename(station, date, timeOrDatatype, loggerStr.toInt, fileStr.toInt, extension)
+
+			EtcFilename(station, date, dataType, time, loggerStr.toInt, fileStr.toInt, extension)
 
 		case _ =>
 			argExc("Wrong file name format, expecting CC-###_##_YYYYMMDD_LLN_FFN.zzz")
 	})
+
+	def canBeDailyPackage(dt: DataType) = dt == DataType.EC || dt == DataType.PHEN
 
 	private def argExc(msg: String) = throw new IllegalArgumentException(msg)
 }

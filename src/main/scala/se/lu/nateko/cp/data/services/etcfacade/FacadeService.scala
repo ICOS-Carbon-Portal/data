@@ -136,7 +136,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceEc: Boolean): Future[Done] =
 		if(fn.station == config.testStation) done else performUpload(file, fn, forceEc)
 
-	private def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean) = (fn.toEcDaily match{
+	private def performUpload(file: Path, fn: EtcFilename, forceEc: Boolean) = (fn.toDaily(???) match{
 		case Some(daily) =>
 
 			val uploadedFolder = getStationUploadedFolder(fn.station)
@@ -263,7 +263,7 @@ object FacadeService{
 	}
 
 	def getZippableDailyECs(folder: Path, dailyFile: EtcFilename): Vector[EtcFileInfo] =
-		getEtcFiles(folder).filter(_._2.toEcDaily.contains(dailyFile))
+		getEtcFiles(folder).filter(_._2.toDaily(???).contains(dailyFile))
 
 	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
 		import se.lu.nateko.cp.data.streams.ZipEntryFlow._

@@ -5,11 +5,12 @@ import java.time.LocalDate
 import org.scalatest.funsuite.AnyFunSuite
 
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
+import se.lu.nateko.cp.meta.core.etcupload.DataType
 
 class EtcFilenameToEcDailyTests extends AnyFunSuite{
 
 	def dateOpt(file: String): Option[LocalDate] =
-		EtcFilename.parse(file).toOption.flatMap(_.toEcDaily).map(_.date)
+		EtcFilename.parse(file).toOption.flatMap(_.toDaily(DataType.EC)).map(_.date)
 
 	def testSlot(date: String, file: String) =
 		test(s"Gives EC daily file date $date for $file"){

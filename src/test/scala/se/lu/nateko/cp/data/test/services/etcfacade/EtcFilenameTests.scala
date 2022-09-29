@@ -12,6 +12,7 @@ class EtcFilenameTests extends AnyFunSpec{
 		val ec = "FA-Lso_EC_201202040437_L03_F12.csv"
 		val bm = "BE-Lon_BM_20170815_L99_F01.dat"
 		val heat = "FA-Lso_SAHEAT_20100603_L01_F02.txt"
+		val phen = "BE-Lon_PHEN_202212040430_L03_F01.zip"
 
 		def testBad(fn: String, reason: String) = {
 			it(s"Parses $fn as not a valid filename ($reason)"){
@@ -53,7 +54,7 @@ class EtcFilenameTests extends AnyFunSpec{
 
 			assert(f.date === LocalDate.parse("2012-02-04"))
 
-			assert(f.timeOrDatatype === Left(LocalTime.parse("04:37")))
+			assert(f.time === Some(LocalTime.parse("04:37")))
 		}
 
 		testBad(ec.replace(".csv", ".blabla"), "too long file extension")
