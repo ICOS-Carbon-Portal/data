@@ -139,7 +139,7 @@ export default function(state = initState, action){
 			return update({
 				specLevelLookup: action.specLevelLookup
 			});
-		
+
 		case actionTypes.RESET_FILTERS:
 			return update({
 				downloadStats: state.downloadStats.withoutFilter()
@@ -189,9 +189,9 @@ export default function(state = initState, action){
 			const partialState = state.view.mode === "previews"
 				? updateRadiosAndPreviewData(state, action)
 				: { mainRadio: state.mainRadio.withSelected(action.actionTxt) };
-			
+
 			return update(partialState);
-		
+
 		case actionTypes.VARIOUS_STATS_FETCHED:
 			const variousStats = aggrResultFormatter[state.mainRadio.actionTxt](action.variousStats, state);
 
@@ -199,12 +199,12 @@ export default function(state = initState, action){
 				variousStats,
 				paging: {
 					page: action.page,
-					to: action.variousStats._returned,
+					to: action.variousStats._embedded.length,
 					objCount: action.variousStats._size,
 					pagesize: localConfig.pagesize
 				}
 			});
-		
+
 		default:
 			return state;
 	}
@@ -270,7 +270,6 @@ const aggrResultFormatter = {
 			val: r._id,
 			count: r.count
 		}))
-	
 };
 
 const updateRadiosAndPreviewData = (state, action) => {
@@ -285,7 +284,7 @@ const updateRadiosAndPreviewData = (state, action) => {
 		: mainRadio.selected.parentTo === state.subRadio.name
 			? state.subRadio.setActive()
 			: state.subRadio.setInactive();
-	
+
 	const paging = getPreviewPaging(
 		state.previewDataFull,
 		previewData,

@@ -17,7 +17,7 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 	const specs = combinedSpecs.length ? combinedSpecs : undefined;
 
 	return hashId && hashId.length
-		? { 
+		? {
 			hashId: hashId[0],
 			dlStart,
 			dlEnd
@@ -67,7 +67,7 @@ const combineWithFileNames = (aggregationResult) => {
 				fileName: fileNameMappings[pt._id]
 			})),
 			_size: aggregationResult._size,
-			_returned: aggregationResult._returned
+			_returned: aggregationResult._embedded.length
 		}
 	});
 };
@@ -82,7 +82,7 @@ const shouldHaveFilenames = [
 export const getAggregationResult = aggregationName => {
 	return (page = 1, pagesize = localConfig.pagesize) => {
 		return getJson(`${config.restheartDbUrl}portaluse/_aggrs/${aggregationName}?pagesize=${pagesize}&page=${page}`)
-			.then(aggregationResult => {
+			.then(([aggregationResult]) => {
 
 				return shouldHaveFilenames.includes(aggregationName)
 					? combineWithFileNames(aggregationResult)
@@ -154,7 +154,7 @@ export const getContributorsApi = () => {
 			}
 
 			return getContributorNames(contributors.map(s => s.contributor))
-				.then(contributorNames => 
+				.then(contributorNames =>
 					contributors.map(c => ({
 						id: c.contributor,
 						count: c.count,

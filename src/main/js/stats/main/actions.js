@@ -108,7 +108,7 @@ const fetchPreviewDataFromBackend = (fetchFn, page = 1) => dispatch => {
 
 const initLibraryDownloads = (dispatch, getState) => {
 	dispatch(fetchVariousStatsFromBackend(getAggregationResult('getLibDownloadsByCountry')));
-	
+
 	const radioConfigMain = limitRadiosByEnvri(getConfig('mainLib'));
 
 	dispatch({
