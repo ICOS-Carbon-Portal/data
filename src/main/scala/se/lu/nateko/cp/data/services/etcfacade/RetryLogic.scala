@@ -44,9 +44,9 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 		mat.scheduleWithFixedDelay(timeToFirst, RetryPeriod, retry)
 	}
 
-	private def retryStuckFiles(forceEc: Boolean): Future[Done] = retryEntities[EtcFilename](
+	private def retryStuckFiles(forceDaily: Boolean): Future[Done] = retryEntities[EtcFilename](
 		(_, filename) => EtcFilename.parse(filename, true),
-		fn => facade.performUploadIfNotTest(facade.getFilePath(fn), fn, forceEc),
+		fn => facade.performUploadIfNotTest(facade.getFilePath(fn), fn, forceDaily),
 		facade.getFilePath
 	)
 

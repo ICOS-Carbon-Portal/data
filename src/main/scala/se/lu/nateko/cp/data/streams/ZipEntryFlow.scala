@@ -32,8 +32,9 @@ object ZipEntryFlow {
 
 	type FileLikeSource = Source[ByteString, Any]
 	type FileEntry = (String, FileLikeSource)
+	type Compression = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
-	def getMultiEntryZipStream(entries: Source[FileEntry, NotUsed]) : Source[ByteString, NotUsed] = {
+	def getMultiEntryZipStream(entries: Source[FileEntry, NotUsed], compr: Option[Compression]) : Source[ByteString, NotUsed] = {
 		val zipFlowSources = entries.flatMapConcat{
 			case (fileName, fileSource) =>
 				val headerSource: Source[ZipFlowElement, NotUsed] = Source.single(new ZipEntryStart(fileName))
@@ -41,14 +42,14 @@ object ZipEntryFlow {
 					fileSource.map(bs => new ZipEntrySegment(bs)).mapMaterializedValue(_ => NotUsed)
 				headerSource.concat(bodySource)
 		}
-		zipFlowSources.via(Flow.fromGraph(new ZipEntryFlow))
+		zipFlowSources.via(Flow.fromGraph(new ZipEntryFlow(compr)))
 	}
 
 	val singleEntryUnzip: Flow[ByteString, ByteString, NotUsed] = Flow.fromGraph(new SingleEntryUnzipFlow)
 }
 
 
-private class ZipEntryFlow extends GraphStage[FlowShape[ZipFlowElement, ByteString]]{
+private class ZipEntryFlow(compr: Option[ZipEntryFlow.Compression]) extends GraphStage[FlowShape[ZipFlowElement, ByteString]]{
 
 	private val in: Inlet[ZipFlowElement] = Inlet("ZipEntryFlowInput")
 	private val out: Outlet[ByteString] = Outlet("ZipEntryFlowOutput")
@@ -66,6 +67,7 @@ private class ZipEntryFlow extends GraphStage[FlowShape[ZipFlowElement, ByteStri
 		}
 
 		private val zos = new ZipOutputStream(new BufferedOutputStream(os))
+		compr.foreach(zos.setLevel)
 
 		override def preStart(): Unit = pull(in) //initial pull
 

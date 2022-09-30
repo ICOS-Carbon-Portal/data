@@ -75,7 +75,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 			split.out(1) ~> destinyToAuxSourcesFlow ~> concat.in(1)
 			SourceShape(concat.out)
 		}
-		ZipEntryFlow.getMultiEntryZipStream(Source.fromGraph(sourcesSource))
+		ZipEntryFlow.getMultiEntryZipStream(Source.fromGraph(sourcesSource), Some(0))
 	}
 
 	def licenceToAccept(dobj: DataObject, uidOpt: Option[UserId])(using Envri): Future[Option[URI]] = {

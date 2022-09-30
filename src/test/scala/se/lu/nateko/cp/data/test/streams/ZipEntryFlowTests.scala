@@ -64,7 +64,7 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 			val zipEntrySrc: Source[FileEntry, NotUsed] = Source(List(
 				"theOnlyFile.txt" -> Source.single(ByteString(content))
 			))
-			val res = getMultiEntryZipStream(zipEntrySrc).via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+			val res = getMultiEntryZipStream(zipEntrySrc, Some(0)).via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
 			val gotBack = Await.result(res, 2.seconds).utf8String
 			assert(gotBack.length === content.length)
 			assert(gotBack === content)

@@ -18,7 +18,7 @@ case class EtcFilename(
 ){
 	import DataType.*
 
-	def toDaily(dtype: EC.type | PHEN.type): Option[EtcFilename] = time.filter(_ => this.dataType == dtype).map{time =>
+	def toDaily: Option[EtcFilename] = time.filter(_ => EtcFilename.canBeDailyPackage(this.dataType)).map{time =>
 		copy(
 			date = LocalDateTime.of(date, time).minusMinutes(15).toLocalDate,
 			time = None,
@@ -48,9 +48,14 @@ object EtcFilename{
 	val pattern = raw"(.{6})_([A-Z]{2,6})_(\d+)_L(\d+)_F(\d+)\.(\w{3})".r
 	val dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd")
 	val timeFormat = DateTimeFormatter.ofPattern("HHmm")
-	val allowedExtensions = Set("csv", "zip", "bin", "dat", "txt")
+	val allowedExtensions = Set("csv", "zip", "bin", "dat", "txt", "jpg")
 
-	def parse(text: String, allowDailyArchives: Boolean = false): Try[EtcFilename] = Try(text match{
+	def patch(fn: String): String =
+		if fn.endsWith("_img.zip") && fn.contains("_EC_")
+		then fn.replace("_EC_", "_PHEN_").replace("_img.zip", ".zip")
+		else fn
+
+	def parse(fn: String, allowDailyArchives: Boolean = false): Try[EtcFilename] = Try(patch(fn) match{
 
 		case pattern(stationStr, typeStr, dateTimeStr, loggerStr, fileStr, extension) =>
 
@@ -69,10 +74,10 @@ object EtcFilename{
 			val timeStr = dateTimeStr.drop(8)
 
 			val time = if(timeStr.isEmpty)
-				if(canBeDailyPackage(dataType) && !allowDailyArchives) argExc("EC filenames must contain time")
+				if(canBeDailyPackage(dataType) && !allowDailyArchives) argExc("EC and PHEN filenames must contain time")
 				None
 			else
-				if(!canBeDailyPackage(dataType)) argExc("Only EC filenames can contain time")
+				if(!canBeDailyPackage(dataType)) argExc("Only EC and PHEN filenames can contain time")
 				Some(LocalTime.parse(timeStr, timeFormat))
 
 
