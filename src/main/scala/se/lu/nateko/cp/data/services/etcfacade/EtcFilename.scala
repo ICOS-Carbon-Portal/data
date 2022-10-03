@@ -52,7 +52,7 @@ object EtcFilename{
 
 	def patch(fn: String): String =
 		if fn.endsWith("_img.zip") && fn.contains("_EC_")
-		then fn.replace("_EC_", "_PHEN_").replace("_img.zip", ".zip")
+		then fn.replace("_EC_", "_PHEN_").replace("_img.zip", ".jpg")
 		else fn
 
 	def parse(fn: String, allowDailyArchives: Boolean = false): Try[EtcFilename] = Try(patch(fn) match{
