@@ -3,7 +3,7 @@ from huedominance.hrdi import hrdi
 from huedominance.gcc import gcc
 
 #workFolder = "/home/oleg/Documents/CP/images/"
-workFolder = "/home/oleg/workspace/Playground/huedominance/"
+workFolder = "./"
 #imagePath = workFolder + "ES_FI-Let.jpg"
 imagePath = workFolder + "green_leaves.jpg"
 

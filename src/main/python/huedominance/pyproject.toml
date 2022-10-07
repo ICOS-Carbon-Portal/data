@@ -11,6 +11,10 @@ keywords = ["plant phenology", "phenocam", "vegetation"]
 classifiers = ["License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"]
 requires-python = ">=3.5"
 dynamic = ["version", "description"]
+dependencies = [
+	"Pillow",
+	"numpy"
+]
 
 [project.urls]
 Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/huedominance"
@@ -18,7 +22,3 @@ Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python
 [projects.scripts]
 huedominance = "__main__:main"
 
-dependencies = [
-	"Pillow",
-	"numpy"
-]
