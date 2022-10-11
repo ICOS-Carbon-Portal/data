@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.services.etcfacade
 
+import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -17,8 +18,10 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 
 import akka.Done
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
@@ -31,6 +34,8 @@ import se.lu.nateko.cp.data.api.ChecksumError
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
+import se.lu.nateko.cp.data.formats.zip
+import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.utils.Akka.done
@@ -40,9 +45,6 @@ import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
-import akka.NotUsed
-import scala.util.Try
-import se.lu.nateko.cp.data.services.upload.UploadResult
 
 //TODO Consider write-locking per filename and "debouncing" EC archive upload for a few minutes upon completion of the full daily package:
 //	it's possible more files are coming right after the package completion. In this case, we don't want to initiate the upload immediately,
@@ -219,6 +221,27 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	private[etcfacade] def uploadDataObjectHandleErrors(station: StationId, hash: Sha256Sum): Future[Done] =
 		uploadDataObject(station, hash).andThen(
 			handleErrors(hash.base64Url)
+		)
+
+	private def getUploadedHalfHourlies(daily: EtcFilename): Future[Map[EtcFilename, File]] =
+		EtcFilename
+			.dailyFileFormats
+			.get(daily.dataType)
+			.fold(
+				Future.failed(CpDataException(s"Not a daily file: $daily"))
+			)(dailyFormat =>
+				metaClient.getSameFilenameInfo(daily.toString).map(
+					_.foldLeft(Map.empty){(acc, sfi) =>
+						if sfi.format != dailyFormat then acc
+						else
+							val zipFile = upload.getFile(Some(sfi.format), sfi.hash)
+							val halfHourlies = zip.listEntryIds(zipFile).get
+								.flatMap(EtcFilename.parse(_).toOption)
+								.filterNot(acc.contains)
+								.map(_ -> zipFile)
+							acc ++ halfHourlies
+					}
+				)
 		)
 
 	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")

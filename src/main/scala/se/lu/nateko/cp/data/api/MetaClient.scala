@@ -290,7 +290,7 @@ object MetaClient:
 
 	val noPaging = new Paging()
 
-	class SameFilenameInfo(val hash: Sha256Sum, val submissionEnd: Instant, format: URI, nextVersion: Option[Sha256Sum])
+	class SameFilenameInfo(val hash: Sha256Sum, val submissionEnd: Instant, val format: URI, val nextVersion: Option[Sha256Sum])
 
 	def asResource(b: Binding, varName: String): URI = asResourceOpt(b, varName).getOrElse(
 		throw new Exception(s"Unexpected SPARQL result: no value for $varName")
