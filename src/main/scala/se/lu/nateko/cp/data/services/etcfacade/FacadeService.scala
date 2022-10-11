@@ -41,6 +41,8 @@ import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import akka.NotUsed
+import scala.util.Try
+import se.lu.nateko.cp.data.services.upload.UploadResult
 
 //TODO Consider write-locking per filename and "debouncing" EC archive upload for a few minutes upon completion of the full daily package:
 //	it's possible more files are coming right after the package completion. In this case, we don't want to initiate the upload immediately,
@@ -174,11 +176,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		case None =>
 			performEtcUpload(file, fn, None)
 
-	}).andThen{
-		case Failure(err) =>
-			appendError(s"Error while uploading $fn : " + err.getMessage)
-			log.error(err, s"ETC facade error while uploading $fn")
-	}
+	}).andThen(handleErrors(fn.toString))
 
 	private def performEtcUpload(
 		file: Path,
@@ -201,7 +199,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			uploadDataObject(fn.station, etcMeta.hashSum)
 		}
 
-	private[etcfacade] def uploadDataObject(station: StationId, hash: Sha256Sum): Future[Done] = upload
+	private def uploadDataObject(station: StationId, hash: Sha256Sum): Future[Done] = upload
 		.getEtcSink(hash)
 		.flatMap{sink =>
 			val srcPath = getObjectSource(station, hash)
@@ -218,6 +216,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			err => new Exception(s"ETC facade failure during internal object upload. Station $station, object $hash", err)
 		)
 
+	private[etcfacade] def uploadDataObjectHandleErrors(station: StationId, hash: Sha256Sum): Future[Done] =
+		uploadDataObject(station, hash).andThen(
+			handleErrors(hash.base64Url)
+		)
+
 	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")
 	private def logExternalUpload(fn: EtcFilename): Unit = appendLogMsgToFile(fn.toString, "externalUploadsLog.txt")
 
@@ -226,6 +229,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		val msgBytes = s"${Instant.now}\t$msg\n".getBytes(StandardCharsets.UTF_8)
 		Files.write(msgFile, msgBytes, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
 	}
+
+	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
+		case Failure(err) =>
+			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+			log.error(err, s"ETC facade error while uploading $uploadedObj")
+
 }
 
 object FacadeService{

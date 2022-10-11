@@ -52,7 +52,7 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 
 	private def retryStuckObjects(): Future[Done] = retryEntities(
 		(station, filename) => Sha256Sum.fromBase64Url(filename).map(station -> _),
-		(facade.uploadDataObject _).tupled,
+		(facade.uploadDataObjectHandleErrors _).tupled,
 		(facade.getObjectSource _).tupled
 	)
 
