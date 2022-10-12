@@ -310,7 +310,15 @@ object FacadeService{
 			file.getFileName.toString -> FileIO.fromPath(file)
 		}
 
-		getMultiEntryZipStream(Source(fileEntries), Some(0))
+		val alreadyCompressed = fileEntries.forall{
+			(fname, _) =>
+				val ext = fname.split(".").lastOption.map(_.toLowerCase)
+				ext.fold(false)(compressedExtensions.contains)
+		}
+
+		val compression: Option[Compression] = if(alreadyCompressed) Some(0) else None
+
+		getMultiEntryZipStream(Source(fileEntries), compression)
 			.viaMat(DigestFlow.sha256)(Keep.right)
 			.toMat(FileIO.toPath(tmpFile))(Keep.both)
 			.mapMaterializedValue{
@@ -326,6 +334,8 @@ object FacadeService{
 			}
 			.run()
 	}
+
+	val compressedExtensions = Set("zip", "jpg", "jpeg", "gz")
 
 	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
