@@ -38,7 +38,7 @@ def plt_set_fullscreen(plt):
 
 
 def is_date(string, fuzzy=False):
-    try: 
+    try:
         parse(string, fuzzy=fuzzy)
         return True
 
@@ -60,31 +60,31 @@ def plot_responses(plot_type: PlotType, title: str, data):
 	red_color = mcolors.TABLEAU_COLORS['tab:red']
 	colors = list(mcolors.TABLEAU_COLORS.values()) + ['tomato', 'peachpuff', 'gold', 'palegreen', 'teal', 'lavender']
 	colors_wo_red = [color for color in colors if color != red_color]
-	
+
 	def get_color(idx: number, label: str):
 		if label == 'Error':
 			return red_color
 
 		if idx < len(colors_wo_red):
 			return colors_wo_red[idx]
-		
+
 		return None
 
 
 	for i, serie_label in enumerate(y_data_dicts.keys()):
 		y_labels.append(serie_label)
 		y_vals = np.asarray(y_data_dicts[serie_label])
-		
+
 		if i == 0:
 			bottom = y_vals
 			plotter(x_vals, y_vals, label=serie_label)
-		
+
 		else:
 			plotter(x_vals, y_vals, label=serie_label, color=get_color(i, serie_label), bottom=bottom)
 			bottom = bottom + y_vals
-		
+
 		all_y_vals_stacked.append(bottom)
-	
+
 	y_data = np.array(all_y_vals_stacked)
 
 	plt.title(title.capitalize())
@@ -109,7 +109,7 @@ def plot_responses(plot_type: PlotType, title: str, data):
 		y_val = y_data_dicts[serie][col]
 
 		return format_hover_label(x_vals[col], serie, y_val)
-	
+
 	if len(y_data_dicts.keys()) > 1:
 		ax.format_coord = format_coord_multiple
 		ax.legend()
@@ -120,7 +120,7 @@ def plot_responses(plot_type: PlotType, title: str, data):
 	plt_set_fullscreen(plt)
 
 	ax.set_xlim(x_vals[0], x_vals[-1])
-	ax.set_ylim(np.amin(all_y_vals_stacked), np.amax(all_y_vals_stacked), True, True)
+	ax.set_ylim(np.amin(all_y_vals_stacked), np.amax(all_y_vals_stacked), emit=True, auto=True)
 
 	if is_x_vals_dates:
 		ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=10))
@@ -141,7 +141,7 @@ def get_options() -> SelectedOptions:
 			'Provide a URL that returns an array of objects. The objects must be 2 key values where one of the values are numeric.'
 		]))
 		selectedoptions.set_custom_request(custom_url)
-	
+
 	return selectedoptions
 
 
@@ -182,12 +182,12 @@ def parse_response(raw_data: Dict[str, Coroutine]):
 				else:
 					x_label = axis_key
 					x_val = data_dict[axis_key]
-				
+
 				if x_val is not None and y_val is not None:
 					add(serie, x_val, y_val)
 					x_val = None
 					y_val = None
-					
+
 	padded_data = {
 		x_val: {
 			serie: data[x_val][serie] if serie in data[x_val] else 0 for serie in series
@@ -217,7 +217,7 @@ async def main():
 
 		async with Backend() as backend:
 			json_resp = await backend.get_responses(urls)
-		
+
 		legend = list(request_objects.values())
 		data = parse_response(dict(zip(legend, json_resp)))
 		plot_responses(plot_type, selected_options.get_title(), data)
