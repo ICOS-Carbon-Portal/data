@@ -45,6 +45,7 @@ import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
+import se.lu.nateko.cp.data.streams.ZipEntrySource
 
 //TODO Consider write-locking per filename and "debouncing" EC archive upload for a few minutes upon completion of the full daily package:
 //	it's possible more files are coming right after the package completion. In this case, we don't want to initiate the upload immediately,
@@ -144,47 +145,44 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 	private[etcfacade] def performUploadIfNotTest(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
 		if(fn.station == config.testStation) done else performUpload(file, fn, forceDaily)
 
-	private def performUpload(file: Path, fn: EtcFilename, forceDaily: Boolean) = (fn.toDaily match{
-		case Some(daily) =>
 
-			val uploadedFolder = getStationUploadedFolder(fn.station)
-			Files.createDirectories(uploadedFolder)
+	private def performUpload(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
 
-			val uploaded = getZippableDailies(uploadedFolder, daily)
-			val fresh = getZippableDailies(getStationFolder(fn.station), daily)
+		fn.toDaily.fold(performEtcUpload(file, fn, None)){ daily =>
 
-			val filePackage = (fresh ++ uploaded).distinctBy(_._2)
-			val isFullPackage: Boolean = packageIsComplete(filePackage)
+			getUploadedHalfHourlies(daily).flatMap{uploaded =>
 
-			if(!Files.exists(file)) done
-			else if(isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)){
+				val stationFolder = getStationFolder(fn.station)
+				val fresh = getZippableDailies(stationFolder, daily)
 
-				val srcFiles = filePackage.map(_._1).sortBy(_.getFileName.toString)
+				val filePackage = uploaded ++ fresh
+				val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-				zipToArchive(srcFiles, daily).flatMap{
-					case (zipFile, hash) =>
-						performEtcUpload(zipFile, daily, Some(hash), () =>
-							fresh.foreach{case (hhFile, _) =>
-								val hhUploadedFile = uploadedFolder.resolve(hhFile.getFileName)
-								Files.move(hhFile, hhUploadedFile, REPLACE_EXISTING)
+				if(!Files.exists(file)) done
+				else if(isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)){
+
+					zipToArchive(filePackage, daily).flatMap{
+						(zipFile, hash) =>
+							performEtcUpload(zipFile, daily, Some(hash)).andThen{
+								case Success(_) =>
+									fresh.foreach{(hhFn, _) =>
+										val hhFile = stationFolder.resolve(hhFn.toString)
+										Files.deleteIfExists(hhFile)
+									}
+
+								case Failure(_) => Files.deleteIfExists(zipFile)
 							}
-						).andThen{
-							case _ => Files.deleteIfExists(zipFile)
-						}
+					}
 				}
+				else done //no uploads for incomplete or previously incomplete packages, unless forced
 			}
-			else done //no uploads for incomplete or previously incomplete packages, unless forced
 
-		case None =>
-			performEtcUpload(file, fn, None)
-
-	}).andThen(handleErrors(fn.toString))
+		}.andThen(handleErrors(fn.toString))
 
 	private def performEtcUpload(
 		file: Path,
 		fn: EtcFilename,
 		hashOpt: Option[Sha256Sum],
-		extraSubFileMovement: () => Unit = () => ()
 	): Future[Done] = hashOpt
 		.map(Future.successful)
 		.getOrElse(FileIO
@@ -197,7 +195,6 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 		.flatMap(etcMeta => metaClient.registerEtcUpload(etcMeta).map(_ => etcMeta))
 		.flatMap{etcMeta =>
 			Files.move(file, getObjectSource(fn.station, etcMeta.hashSum), REPLACE_EXISTING)
-			extraSubFileMovement()
 			uploadDataObject(fn.station, etcMeta.hashSum)
 		}
 
@@ -223,7 +220,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 			handleErrors(hash.base64Url)
 		)
 
-	private def getUploadedHalfHourlies(daily: EtcFilename): Future[Map[EtcFilename, File]] =
+	private def getUploadedHalfHourlies(daily: EtcFilename): Future[DailyPackage] =
 		EtcFilename
 			.dailyFileFormats
 			.get(daily.dataType)
@@ -236,13 +233,15 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 						else
 							val zipFile = upload.getFile(Some(sfi.format), sfi.hash)
 							val halfHourlies = zip.listEntryIds(zipFile).get
-								.flatMap(EtcFilename.parse(_).toOption)
-								.filterNot(acc.contains)
-								.map(_ -> zipFile)
+								.flatMap(zid => EtcFilename.parse(zid).toOption.map(_ -> zid))
+								.collect{
+									case (fn, zid) if !acc.contains(fn) =>
+										fn -> ZipEntrySource.source(zipFile, zid)
+								}
 							acc ++ halfHourlies
 					}
 				)
-		)
+			)
 
 	private def appendError(msg: String): Unit = appendLogMsgToFile(msg, "errorLog.txt")
 	private def logExternalUpload(fn: EtcFilename): Unit = appendLogMsgToFile(fn.toString, "externalUploadsLog.txt")
@@ -261,7 +260,10 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(implicit
 }
 
 object FacadeService{
+	import ZipEntryFlow._
+
 	type EtcFileInfo = (Path, EtcFilename)
+	type DailyPackage = Map[EtcFilename, FileLikeSource]
 
 	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
@@ -298,22 +300,23 @@ object FacadeService{
 		}
 	}
 
-	def getZippableDailies(folder: Path, dailyFile: EtcFilename): Vector[EtcFileInfo] =
-		getEtcFiles(folder).filter(_._2.toDaily.contains(dailyFile))
+	def getZippableDailies(folder: Path, dailyFile: EtcFilename): DailyPackage =
+		getEtcFiles(folder).collect{
+			case (path, fn) if fn.toDaily.contains(dailyFile) =>
+				fn -> FileIO.fromPath(path)
+		}.toMap
 
-	def zipToArchive(files: Vector[Path], fn: EtcFilename)(implicit mat: Materializer, ctxt: ExecutionContext): Future[(Path, Sha256Sum)] = {
-		import se.lu.nateko.cp.data.streams.ZipEntryFlow._
+	def zipToArchive(files: DailyPackage, fn: EtcFilename)(using Materializer, ExecutionContext): Future[(Path, Sha256Sum)] = {
 
 		val tmpFile = Files.createTempFile(fn.toString, "")
 
-		val fileEntries: Vector[FileEntry] = files.map{file =>
-			file.getFileName.toString -> FileIO.fromPath(file)
-		}
+		val fileEntries: Seq[FileEntry] = files.toSeq.map{
+			(fn, src) => fn.toString -> src
+		}.sortBy(_._1)
 
-		val alreadyCompressed = fileEntries.forall{
-			(fname, _) =>
-				val ext = fname.split(".").lastOption.map(_.toLowerCase)
-				ext.fold(false)(compressedExtensions.contains)
+		val alreadyCompressed = fileEntries.forall{ (fname, _) =>
+			val ext = fname.split(".").lastOption.map(_.toLowerCase)
+			ext.fold(false)(compressedExtensions.contains)
 		}
 
 		val compression: Option[Compression] = if(alreadyCompressed) Some(0) else None
@@ -339,6 +342,6 @@ object FacadeService{
 
 	def isFromBeforeToday(fn: EtcFilename): Boolean = LocalDate.now(ZoneOffset.UTC).compareTo(fn.date) > 0
 
-	private def packageIsComplete(fileInfos: Vector[EtcFileInfo]): Boolean =
-		fileInfos.map(_._2.slot).flatten.distinct.size == 48
+	private def packageIsComplete(pack: DailyPackage): Boolean =
+		pack.keysIterator.flatMap(_.slot).toSet.size == 48
 }
