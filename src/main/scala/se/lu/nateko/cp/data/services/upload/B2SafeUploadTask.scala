@@ -13,7 +13,7 @@ import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.StaticObject
 

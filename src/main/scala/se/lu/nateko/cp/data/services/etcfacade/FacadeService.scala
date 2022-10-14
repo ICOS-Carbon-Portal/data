@@ -14,6 +14,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -38,7 +39,8 @@ import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.data.utils.akka.Debouncer
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.DataType
@@ -46,10 +48,6 @@ import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntrySource
-
-//TODO Consider write-locking per filename and "debouncing" EC archive upload for a few minutes upon completion of the full daily package:
-//	it's possible more files are coming right after the package completion. In this case, we don't want to initiate the upload immediately,
-//	and we want to avoid two uploads happening in parallel, too (they will not deprecate each other)
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -74,6 +72,10 @@ import se.lu.nateko.cp.data.streams.ZipEntrySource
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer):
 	import FacadeService._
 	import mat.executionContext
+
+	private val debouncer =
+		val scheduler = upload.meta.system.scheduler
+		Debouncer[EtcFilename, Done](10.minutes, scheduler, "Daily package upload")
 
 	private val metaClient = upload.meta
 	private val log = upload.log
@@ -141,35 +143,36 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 	private def performUpload(file: Path, fn: EtcFilename, forceDaily: Boolean): Future[Done] =
 
 		fn.toDaily.fold(performEtcUpload(file, fn, None)){ daily =>
+			debouncer.debounce(daily){
+				getUploadedHalfHourlies(daily).flatMap{uploaded =>
 
-			getUploadedHalfHourlies(daily).flatMap{uploaded =>
+					val stationFolder = getStationFolder(fn.station)
+					val fresh = getZippableDailies(stationFolder, daily)
 
-				val stationFolder = getStationFolder(fn.station)
-				val fresh = getZippableDailies(stationFolder, daily)
+					val filePackage = uploaded ++ fresh
+					val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-				val filePackage = uploaded ++ fresh
-				val isFullPackage: Boolean = packageIsComplete(filePackage)
+					if(!Files.exists(file)) done
+					else if(isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)){
 
-				if(!Files.exists(file)) done
-				else if(isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)){
+						zipToArchive(filePackage, daily).flatMap{
+							(zipFile, hash) =>
+								performEtcUpload(zipFile, daily, Some(hash)).andThen{
+									case Success(_) =>
+										fresh.foreach{(hhFn, _) =>
+											val hhFile = stationFolder.resolve(hhFn.toString)
+											Files.deleteIfExists(hhFile)
+										}
 
-					zipToArchive(filePackage, daily).flatMap{
-						(zipFile, hash) =>
-							performEtcUpload(zipFile, daily, Some(hash)).andThen{
-								case Success(_) =>
-									fresh.foreach{(hhFn, _) =>
-										val hhFile = stationFolder.resolve(hhFn.toString)
-										Files.deleteIfExists(hhFile)
-									}
-
-								case Failure(_) =>
-									Files.deleteIfExists(zipFile)
-									val srcPath = getObjectSource(daily.station, hash)
-									Files.deleteIfExists(srcPath)
-							}
+									case Failure(_) =>
+										Files.deleteIfExists(zipFile)
+										val srcPath = getObjectSource(daily.station, hash)
+										Files.deleteIfExists(srcPath)
+								}
+						}
 					}
+					else done //no uploads for incomplete or previously incomplete packages, unless forced
 				}
-				else done //no uploads for incomplete or previously incomplete packages, unless forced
 			}
 
 		}.andThen(handleErrors(fn.toString))

@@ -12,7 +12,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
-import se.lu.nateko.cp.data.utils.Akka.{done => ok}
+import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri
 import spray.json._

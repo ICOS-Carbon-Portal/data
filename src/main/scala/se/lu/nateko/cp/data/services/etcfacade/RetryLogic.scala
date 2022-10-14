@@ -17,7 +17,7 @@ import akka.Done
 import akka.event.LoggingAdapter
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 

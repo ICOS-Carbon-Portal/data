@@ -13,7 +13,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.RestHeartConfig
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 

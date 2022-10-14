@@ -12,7 +12,7 @@ import scala.util.Success
 import akka.stream.QueueOfferResult.{ Failure => QueueFailure, _ }
 import scala.concurrent.ExecutionContext
 import akka.stream.scaladsl.Keep
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 
 object SourceReceptacleAsSink {
 
