@@ -21,6 +21,7 @@ metals.sbt
 .metals/
 .bloop/
 .bsp/
+.scala-build/
 .vscode/
 
 nohup.out

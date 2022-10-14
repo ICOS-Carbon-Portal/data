@@ -21,20 +21,21 @@ import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 
-private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit mat: Materializer) {
+private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(using mat: Materializer) {
 
 	import RetryLogic._
 	import mat.executionContext
 
 	private val retry: Runnable = () => {
-		val forcingEc = withinHalfHour(nowUtc, FacadeService.ForceEcUploadTime)
 
-		log.info("Retrying ETC logger facade uploads" + (if(forcingEc) ", forcing EC file uploads" else ""))
+		val forcingDaily = withinHalfHour(nowUtc, FacadeService.ForceEcUploadTime)
 
-		retryStuckFiles(forcingEc).transformWith{
+		log.info("Retrying ETC logger facade uploads" + (if(forcingDaily) ", forcing daily 48-half-hourly-pack uploads" else ""))
+
+		retryStuckFiles(forcingDaily).transformWith{
 			case _ => retryStuckObjects()
 		}.foreach{_ =>
-			if(forcingEc) getStations.foreach(facade.cleanupVeryOldFiles)
+			if(forcingDaily) getStations.foreach(facade.cleanupVeryOldFiles)
 		}
 	}
 
@@ -46,18 +47,21 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 
 	private def retryStuckFiles(forceDaily: Boolean): Future[Done] = retryEntities[EtcFilename](
 		(_, filename) => EtcFilename.parse(filename, true),
+		fn => fn.toDaily.getOrElse(fn),
 		fn => facade.performUploadIfNotTest(facade.getFilePath(fn), fn, forceDaily),
 		facade.getFilePath
 	)
 
 	private def retryStuckObjects(): Future[Done] = retryEntities(
 		(station, filename) => Sha256Sum.fromBase64Url(filename).map(station -> _),
+		identity,
 		(facade.uploadDataObjectHandleErrors _).tupled,
 		(facade.getObjectSource _).tupled
 	)
 
 	private def retryEntities[T](
 		parser: (StationId, String) => Try[T],
+		key: T => Any,
 		singleJob: T => Future[Done],
 		fileToCheck: T => Path
 	): Future[Done] = {
@@ -71,7 +75,7 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 				firstJob.transformWith(_ => retrySequentially(rest))
 		}
 
-		val queue = getStations.flatMap(station => getStuckEntities(station, parser(station, _)))
+		val queue = getStations.flatMap(station => getStuckEntities(station, parser(station, _), key))
 		retrySequentially(queue.toList)
 	}
 
@@ -83,9 +87,12 @@ private class RetryLogic(facade: FacadeService, log: LoggingAdapter)(implicit ma
 		.toIndexedSeq
 	}
 
-	private def getStuckEntities[T](station: StationId, parser: String => Try[T]): Seq[T] =
+	private def getStuckEntities[T](station: StationId, parser: String => Try[T], key: T => Any): Seq[T] =
 		iterateChildren(facade.getStationFolder(station)){_
 			.flatMap(path => parser(path.getFileName.toString).toOption)
+			.toSeq
+			.groupBy(key)
+			.map((_,group) => group.head)
 			.toIndexedSeq
 		}
 }
