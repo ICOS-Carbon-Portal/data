@@ -16,6 +16,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpDataException
 
 import java.io.BufferedOutputStream
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.zip.ZipEntry
@@ -53,6 +54,7 @@ object ZipEntryFlow {
 	def entryFromFile(path: Path): FileEntry =
 		val zentry = ZipEntry(path.getFileName.toString)
 		zentry.setTime(path.toFile.lastModified)
+		zentry.setSize(Files.size(path))
 		zentry -> FileIO.fromPath(path)
 }
 

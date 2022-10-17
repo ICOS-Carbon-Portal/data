@@ -35,7 +35,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val restHeart: RestHeartClient)(implicit ctxt: ExecutionContext) {
+class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val restHeart: RestHeartClient)(using ExecutionContext):
 
 	import DownloadService._
 
@@ -161,7 +161,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		Source(lines.map(ByteString.apply))
 	}
 
-	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(using envri: Envri) extends Destiny{
+	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(using envri: Envri) extends Destiny:
 		val omissionReason: Option[String] =
 			if(obj.size.isEmpty)
 				Some("Uploading of this object has not been completed.")
@@ -197,14 +197,16 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		val fileNamesUsed: Set[String] =
 			if(omissionReason.isDefined) fileNamesUsedEarlier
 			else fileNamesUsedEarlier + fileName
-	}
+
+	end FileDestiny
 
 	private def destToZentry(dest: FileDestiny): ZipEntry =
 		val zentry = ZipEntry(dest.fileName)
 		zentry.setTime(dest.obj.submission.start.toEpochMilli)
+		dest.obj.size.foreach(zentry.setSize)
 		zentry
 
-}
+end DownloadService
 
 private sealed trait Destiny{
 	def omissionReason: Option[String]
