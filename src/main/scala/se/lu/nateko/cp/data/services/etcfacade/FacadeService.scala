@@ -1,26 +1,5 @@
 package se.lu.nateko.cp.data.services.etcfacade
 
-import java.io.File
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption.REPLACE_EXISTING
-import java.nio.file.StandardOpenOption
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneOffset
-
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import akka.Done
 import akka.NotUsed
 import akka.stream.Materializer
@@ -39,15 +18,35 @@ import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.UploadResult
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
-import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.data.streams.ZipEntryFlow
+import se.lu.nateko.cp.data.streams.ZipEntrySource
 import se.lu.nateko.cp.data.utils.akka.Debouncer
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.DataType
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.StationId
-import se.lu.nateko.cp.data.streams.ZipEntryFlow
-import se.lu.nateko.cp.data.streams.ZipEntrySource
+
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
+import java.nio.file.StandardOpenOption
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneOffset
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -229,11 +228,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 						if sfi.format != dailyFormat then acc
 						else
 							val zipFile = upload.getFile(Some(sfi.format), sfi.hash)
-							val halfHourlies = zip.listEntryIds(zipFile).get
-								.flatMap(zid => EtcFilename.parse(zid).toOption.map(_ -> zid))
+							val halfHourlies = zip.listEntries(zipFile).get
+								.flatMap(zentry => EtcFilename.parse(zentry.getName).toOption.map(_ -> zentry))
 								.collect{
-									case (fn, zid) if !acc.contains(fn) =>
-										fn -> ZipEntrySource.source(zipFile, zid)
+									case (fn, zentry) if !acc.contains(fn) =>
+										fn -> ZipEntrySource.fileEntry(zipFile, zentry)
 								}
 							acc ++ halfHourlies
 					}
@@ -260,7 +259,7 @@ object FacadeService:
 	import ZipEntryFlow._
 
 	type EtcFileInfo = (Path, EtcFilename)
-	type DailyPackage = Map[EtcFilename, FileLikeSource]
+	type DailyPackage = Map[EtcFilename, FileEntry]
 
 	val ForceEcUploadTime = LocalTime.of(4, 0) //is to be interpreted as UTC time
 	val OldFileMaxAge = Duration.ofDays(30)
@@ -300,19 +299,17 @@ object FacadeService:
 	def getZippableDailies(folder: Path, dailyFile: EtcFilename): DailyPackage =
 		getEtcFiles(folder).collect{
 			case (path, fn) if fn.toDaily.contains(dailyFile) =>
-				fn -> FileIO.fromPath(path)
+				fn -> ZipEntryFlow.entryFromFile(path)
 		}.toMap
 
 	def zipToArchive(files: DailyPackage, fn: EtcFilename)(using Materializer, ExecutionContext): Future[(Path, Sha256Sum)] =
 
 		val tmpFile = Files.createTempFile(fn.toString, "")
 
-		val fileEntries: Seq[FileEntry] = files.toSeq.map{
-			(fn, src) => fn.toString -> src
-		}.sortBy(_._1)
+		val fileEntries: Seq[FileEntry] = files.values.toSeq.sortBy(_._1.getName)
 
-		val alreadyCompressed = fileEntries.forall{ (fname, _) =>
-			val ext = fname.split(".").lastOption.map(_.toLowerCase)
+		val alreadyCompressed = fileEntries.forall{ (zentry, _) =>
+			val ext = zentry.getName.split(".").lastOption.map(_.toLowerCase)
 			ext.fold(false)(compressedExtensions.contains)
 		}
 

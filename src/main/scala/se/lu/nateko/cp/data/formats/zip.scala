@@ -1,17 +1,15 @@
 package se.lu.nateko.cp.data.formats
 
-import scala.util.Using
+import java.io.File
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import scala.jdk.CollectionConverters.EnumerationHasAsScala
 import scala.util.Try
-import java.io.File
+import scala.util.Using
 
 object zip:
-	opaque type ZipEntryId <: String = String
 
-	def listEntryIds(zipFile: File): Try[IndexedSeq[ZipEntryId]] =
+	def listEntries(zipFile: File): Try[IndexedSeq[ZipEntry]] =
 		Using(ZipFile(zipFile)){
-			_.entries.asScala.collect{
-				case entry if !entry.isDirectory => entry.getName
-			}.toIndexedSeq
+			_.entries.asScala.filterNot(_.isDirectory).toIndexedSeq
 		}

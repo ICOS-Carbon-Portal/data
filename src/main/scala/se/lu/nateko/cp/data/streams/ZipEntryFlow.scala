@@ -1,20 +1,11 @@
 package se.lu.nateko.cp.data.streams
 
-import java.io.BufferedOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
-import java.util.zip.ZipOutputStream
-
-import scala.collection.mutable.Queue
-
-import ZipEntryFlow.ZipEntrySegment
-import ZipEntryFlow.ZipEntryStart
-import ZipEntryFlow.ZipFlowElement
 import akka.NotUsed
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
 import akka.stream.Outlet
+import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Source
 import akka.stream.stage.GraphStage
@@ -24,20 +15,32 @@ import akka.stream.stage.OutHandler
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpDataException
 
+import java.io.BufferedOutputStream
+import java.nio.file.Path
+import java.nio.file.attribute.FileTime
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+import scala.collection.mutable.Queue
+
+import ZipEntryFlow.ZipEntrySegment
+import ZipEntryFlow.ZipEntryStart
+import ZipEntryFlow.ZipFlowElement
+
 object ZipEntryFlow {
 
 	sealed trait ZipFlowElement
-	case class ZipEntryStart(fileName: String) extends ZipFlowElement
+	case class ZipEntryStart(entry: ZipEntry) extends ZipFlowElement
 	case class ZipEntrySegment(bytes: ByteString) extends ZipFlowElement
 
 	type FileLikeSource = Source[ByteString, Any]
-	type FileEntry = (String, FileLikeSource)
+	type FileEntry = (ZipEntry, FileLikeSource)
 	type Compression = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
 	def getMultiEntryZipStream(entries: Source[FileEntry, NotUsed], compr: Option[Compression]) : Source[ByteString, NotUsed] = {
 		val zipFlowSources = entries.flatMapConcat{
-			case (fileName, fileSource) =>
-				val headerSource: Source[ZipFlowElement, NotUsed] = Source.single(new ZipEntryStart(fileName))
+			case (zipEntry, fileSource) =>
+				val headerSource: Source[ZipFlowElement, NotUsed] = Source.single(ZipEntryStart(zipEntry))
 				val bodySource: Source[ZipFlowElement, NotUsed] =
 					fileSource.map(bs => new ZipEntrySegment(bs)).mapMaterializedValue(_ => NotUsed)
 				headerSource.concat(bodySource)
@@ -46,6 +49,11 @@ object ZipEntryFlow {
 	}
 
 	val singleEntryUnzip: Flow[ByteString, ByteString, NotUsed] = Flow.fromGraph(new SingleEntryUnzipFlow)
+
+	def entryFromFile(path: Path): FileEntry =
+		val zentry = ZipEntry(path.getFileName.toString)
+		zentry.setTime(path.toFile.lastModified)
+		zentry -> FileIO.fromPath(path)
 }
 
 

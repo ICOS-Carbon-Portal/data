@@ -23,12 +23,12 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 
 import java.net.URI
 import java.time.Instant
+import java.util.zip.ZipEntry
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -61,7 +61,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 
 		val destinyToDobjSourcesFlow: Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 			.filter(fd => fd.omissionReason.isEmpty)
-			.map(fd => (fd.fileName, singleObjectSource(fd.obj, downloadLogger)))
+			.map(fd => destToZentry(fd) -> singleObjectSource(fd.obj, downloadLogger))
 
 		val sourcesSource = GraphDSL.create(){implicit b =>
 			import GraphDSL.Implicits._
@@ -122,9 +122,9 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
 		.map{dests =>
-			("!TOC.csv", destiniesToTocFileSource(dests))
+			ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests)
 		}.concat(Source.single(
-			("!LICENCE.pdf", licenceSource)
+			ZipEntry("!LICENCE.pdf") -> licenceSource
 		))
 
 	private def singleObjectSource(obj: StaticObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
@@ -162,13 +162,8 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 	}
 
 	private class FileDestiny(val obj: StaticObject, fileNamesUsedEarlier: Set[String])(using envri: Envri) extends Destiny{
-		//TODO After next update of meta-core, simplify the following block as obj.size
-		private[this] val size = obj match{
-			case dobj: DataObject => dobj.size
-			case dobj: DocObject => dobj.size
-		}
 		val omissionReason: Option[String] =
-			if(size.isEmpty)
+			if(obj.size.isEmpty)
 				Some("Uploading of this object has not been completed.")
 
 			else if(obj.submission.stop.exists(_.compareTo(Instant.now()) > 0))
@@ -203,6 +198,12 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 			if(omissionReason.isDefined) fileNamesUsedEarlier
 			else fileNamesUsedEarlier + fileName
 	}
+
+	private def destToZentry(dest: FileDestiny): ZipEntry =
+		val zentry = ZipEntry(dest.fileName)
+		zentry.setTime(dest.obj.submission.start.toEpochMilli)
+		zentry
+
 }
 
 private sealed trait Destiny{
@@ -215,7 +216,7 @@ private object ZeroDestiny extends Destiny{
 	def fileNamesUsed = Set.empty
 }
 
-object DownloadService{
+object DownloadService:
 
 	val publicDomainLicences = Set(CcMetaVocab.cc0)
 
@@ -231,4 +232,3 @@ object DownloadService{
 			val segms = base.split('.')
 			segms.dropRight(1).mkString("", ".", s"($idx).${segms.last}")
 		}
-}
