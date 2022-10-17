@@ -1,24 +1,23 @@
 package se.lu.nateko.cp.data.test.streams
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.util.zip.ZipInputStream
-
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-
-import org.scalatest.BeforeAndAfterAll
-import org.scalatest.funsuite.AnyFunSuite
-
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.ZipEntryFlow._
 import se.lu.nateko.cp.data.test.TestUtils
-import akka.NotUsed
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
 
 class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 	private implicit val system: ActorSystem = ActorSystem("ZipEntryFlowTests")
@@ -62,7 +61,7 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 	def testRoundTrip(title: String, content: String) =
 		test(s"Round-trip test ($title)"){
 			val zipEntrySrc: Source[FileEntry, NotUsed] = Source(List(
-				"theOnlyFile.txt" -> Source.single(ByteString(content))
+				ZipEntry("theOnlyFile.txt") -> Source.single(ByteString(content))
 			))
 			val res = getMultiEntryZipStream(zipEntrySrc, Some(0)).via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
 			val gotBack = Await.result(res, 2.seconds).utf8String

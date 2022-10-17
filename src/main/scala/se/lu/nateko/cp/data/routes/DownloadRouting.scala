@@ -26,7 +26,7 @@ import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum

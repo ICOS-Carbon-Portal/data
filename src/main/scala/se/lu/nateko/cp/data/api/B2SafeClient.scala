@@ -30,7 +30,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.B2SafeConfig
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import spray.json.DefaultJsonProtocol
 import spray.json.JsonFormat

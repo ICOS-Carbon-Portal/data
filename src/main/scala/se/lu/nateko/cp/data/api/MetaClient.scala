@@ -13,7 +13,7 @@ import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.MetaServiceConfig
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
@@ -32,8 +32,9 @@ import java.net.URI
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.util.Try
+import java.time.Instant
 
-class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envriConfs: EnvriConfigs) {
+class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envriConfs: EnvriConfigs):
 	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
 	import MetaClient._
@@ -147,11 +148,11 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 				|?station cpmeta:hasStationId ?$stationVar .
 			|}""".stripMargin
 
-		sparql.select(query).map{res =>
-			res.results.bindings.map(_.get(stationVar)).collect{
-				case Some(BoundLiteral(StationId(id), _)) => id
+		sparql.selectMap(query)(
+			_.get(stationVar).collect{
+				case BoundLiteral(StationId(id), _) => id
 			}
-		}
+		)
 	}
 
 	def listLicences(objHashes: Seq[Sha256Sum])(using envri: Envri): Future[Seq[URI]] = envriConfs.get(envri)
@@ -165,13 +166,10 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			|	?dobj <http://purl.org/dc/terms/license> ?lic
 			|}""".stripMargin
 
-			sparql.select(query).map{res =>
-				res.results.bindings.flatMap(_.get("lic")).collect{
-					case BoundUri(uri) => uri
-				}
-			}
+			sparql.selectMap(query)(
+				_.get("lic").collect{ case BoundUri(uri) => uri }
+			)
 		}
-
 
 	private def extractIfSuccess[T](extractor: ResponseEntity => Future[T]) = extractResult(extractor)(PartialFunction.empty)
 
@@ -248,24 +246,38 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 		sparqlDobjStorageInfos(query)
 	}
 
-	private def sparqlDobjStorageInfos(query: String): Future[Seq[DobjStorageInfo]] = {
-		sparql.select(query).map(
-			_.results.bindings.toVector.flatMap{
-				binding => Try{
-					val size = asLiteral(binding, "size").toLong
-					val fileName = asLiteral(binding, "fileName")
-					val landingPage = asResource(binding, "dobj")
-					val dobjUrlSuff = landingPage.toString.stripSuffix("/").split('/').last
-					val hash = Sha256Sum.fromBase64Url(dobjUrlSuff).get
-					val format = asResourceOpt(binding, "format")
-					new DobjStorageInfo(fileName, landingPage, hash, size, format)
-				}.toOption
-			}
-		)
-	}
-}
+	private def sparqlDobjStorageInfos(query: String): Future[IndexedSeq[DobjStorageInfo]] =
+		sparql.selectMap(query)(binding => Try{
+			val size = asLiteral(binding, "size").toLong
+			val fileName = asLiteral(binding, "fileName")
+			val landingPage = asResource(binding, "dobj")
+			val hash = dobjHash(landingPage)
+			val format = asResourceOpt(binding, "format")
+			new DobjStorageInfo(fileName, landingPage, hash, size, format)
+		}.toOption)
 
-object MetaClient{
+	def getSameFilenameInfo(fileName: String): Future[IndexedSeq[SameFilenameInfo]] =
+		val query = s"""prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+			|prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|prefix prov: <http://www.w3.org/ns/prov#>
+			|select * where{
+			|	?dobj cpmeta:hasName "${fileName}"^^xsd:string ;
+			|		cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime ;
+			|		cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
+			|	optional{?newDobj cpmeta:isNextVersionOf ?dobj}
+			|} order by desc(?submTime)""".stripMargin
+
+		sparql.selectMap(query)(binding => Try{
+			val dobj = dobjHash(asResource(binding, "dobj"))
+			val submTime = Instant.parse(asLiteral(binding, "submTime"))
+			val newV = asResourceOpt(binding, "newDobj").map(dobjHash)
+			val format = asResource(binding, "format")
+			SameFilenameInfo(dobj, submTime, format, newV)
+		}.toOption)
+
+end MetaClient
+
+object MetaClient:
 	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: Option[URI])
 	class Paging(val offset: Int = 0, val limit: Option[Int] = None){
 		def sparqlClauses: String = {
@@ -277,6 +289,8 @@ object MetaClient{
 	}
 
 	val noPaging = new Paging()
+
+	class SameFilenameInfo(val hash: Sha256Sum, val submissionEnd: Instant, val format: URI, val nextVersion: Option[Sha256Sum])
 
 	def asResource(b: Binding, varName: String): URI = asResourceOpt(b, varName).getOrElse(
 		throw new Exception(s"Unexpected SPARQL result: no value for $varName")
@@ -297,4 +311,9 @@ object MetaClient{
 		case Some(BoundLiteral(value, _)) => Some(value)
 		case Some(BoundUri(_)) => throw new Exception(s"Unexpected SPARQL result: expected literal in $varName, got URI resource")
 	}
-}
+
+	def dobjHash(uri: URI): Sha256Sum =
+		val hashStr = uri.toString.stripSuffix("/").split('/').last
+		Sha256Sum.fromBase64Url(hashStr).get
+
+end MetaClient

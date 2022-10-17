@@ -34,10 +34,13 @@ class UploadResult(val taskResults: Seq[UploadTaskResult]){
 
 object UploadResult{
 	def extractMessage(error: Throwable): String = error match {
+		case null => "null"
 		case boxed: ExecutionException => extractMessage(boxed.getCause)
+		case _ if error.getCause != null =>
+			s"${error.getMessage}, caused by: ${extractMessage(error.getCause)}"
 		case nst: NoStackTrace => nst.getMessage
-		case otherError => otherError.getMessage +
-			otherError.getStackTrace.map(_.toString).mkString("\n")
+		case _ => error.getMessage +
+			error.getStackTrace.map(_.toString).mkString("\n")
 	}
 }
 

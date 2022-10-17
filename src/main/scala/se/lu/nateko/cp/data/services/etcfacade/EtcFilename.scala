@@ -6,6 +6,7 @@ import java.time.LocalTime
 import scala.util.Try
 import java.time.format.DateTimeFormatter
 import java.time.LocalDateTime
+import java.net.URI
 
 case class EtcFilename(
 	station: StationId,
@@ -87,7 +88,11 @@ object EtcFilename{
 			argExc("Wrong file name format, expecting CC-###_##_YYYYMMDD_LLN_FFN.zzz")
 	})
 
-	def canBeDailyPackage(dt: DataType) = dt == DataType.EC || dt == DataType.PHEN
+	def canBeDailyPackage(dt: DataType) = dailyFileFormats.contains(dt)
+
+	val dailyFileFormats: Map[DataType, URI] =
+		import se.lu.nateko.cp.data.api.CpMetaVocab.{ObjectFormats => OF}
+		Map(DataType.EC -> OF.etcRawTimeSerMultiZip, DataType.PHEN -> OF.multiImageZip)
 
 	private def argExc(msg: String) = throw new IllegalArgumentException(msg)
 }

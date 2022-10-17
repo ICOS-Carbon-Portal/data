@@ -11,6 +11,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import scala.concurrent.duration.Duration
 import scala.concurrent.Future
 import scala.collection.immutable.Iterable
+import se.lu.nateko.cp.meta.core.sparql.Binding
 import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
 import se.lu.nateko.cp.meta.core.sparql.JsonSupport.given
 import java.net.URL
@@ -19,8 +20,9 @@ import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.csv.CsvParser
+import scala.util.Try
 
-class SparqlClient(url: URL)(implicit system: ActorSystem) {
+class SparqlClient(url: URL)(using system: ActorSystem) {
 	import SparqlClient._
 	import system.dispatcher
 
@@ -72,11 +74,14 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 		)
 	}
 
-	def streamedSelect(selectQuery: String): Future[Source[Binding, Any]] =
+	def selectMap[T](query: String)(f: Binding => Option[T]): Future[IndexedSeq[T]] =
+		select(query).map(_.results.bindings.flatMap(f).toIndexedSeq)
+
+	def streamedSelect(selectQuery: String): Future[Source[StrBinding, Any]] =
 		httpPost(selectQuery, acceptCsv, longRunning = true)
 			.map(_.entity.withoutSizeLimit.dataBytes.via(csvResParser))
 
-	val csvResParser: Flow[ByteString, Binding, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary
+	val csvResParser: Flow[ByteString, StrBinding, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary
 		.scan(CsvParser.seed)(CsvParser.default.parseLine)
 		.collect{
 			case acc if acc.lastState == CsvParser.Init => acc.cells
@@ -86,12 +91,12 @@ class SparqlClient(url: URL)(implicit system: ActorSystem) {
 }
 
 object SparqlClient{
-	type Binding = Map[String, String]
+	type StrBinding = Map[String, String]
 
 	private def scanSeed = new CsvResScan(Array.empty, Array.empty)
 	private class CsvResScan(varNames: Array[String], values: Array[String]){
 
-		def getBinding: Iterable[Binding] =
+		def getBinding: Iterable[StrBinding] =
 			if(varNames.length == 0 || values.length != varNames.length) Iterable.empty
 			else Iterable(varNames.zip(values).toMap)
 

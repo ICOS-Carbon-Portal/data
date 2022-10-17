@@ -6,7 +6,7 @@ import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Framing, Keep, Sink}
 import akka.util.ByteString
 import se.lu.nateko.cp.meta.core.data.{TabularIngestionExtract, TimeInterval, TimeSeriesExtract}
-import se.lu.nateko.cp.data.utils.Akka.done
+import se.lu.nateko.cp.data.utils.akka.done
 
 import scala.concurrent.{ExecutionContext, Future}
 import java.time.temporal.TemporalUnit
