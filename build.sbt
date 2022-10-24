@@ -87,7 +87,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.7.0",
 			metaCoreModule  excludeAll("io.spray"),
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.3",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.4",
 			"org.postgresql"      % "postgresql"                         % "42.2.12",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 
