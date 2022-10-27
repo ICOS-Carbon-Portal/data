@@ -54,19 +54,19 @@ import scala.util.Try
  * 	- integrity control with MD5 checksums
  * 	- staging area for files uploaded from the loggers
  * 	- upload to CP, if the ETC metadata for the filename is available on the meta service
- * 	- packaging EC half-hourly files into daily packages (zip archives)
+ * 	- packaging EC and PHEN half-hourly files into daily packages (zip archives)
  * 	- version handling in the case of re-uploads of files with the same filename
  * 	- automatic upload retries for all the files in staging
  *
- * EC file packaging and submission is done in the following way.
+ * EC and PHEN file packaging and submission is done in the following way.
  * 	1) If upon upload of a half-hourly file a certain daily package becomes complete (48 files for a particular station, logger, and file number),
- * and if no previous uploads of this daily package were recently performed (during last {@code FacadeService.OldFileMaxAge}),
- * then the package is uploaded and the half-hourly files are moved into a subfolder called {@code uploaded}.
- * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all previous-day half-hourly EC files in staging are packaged, uploaded,
- * and moved into {@code uploaded} subfolder, replacing any previously-uploaded files with the same names there, if any.
- * 	3) Subsequent forced uploads of EC files are only performed if there are "fresh" files, but the files in {@code uploaded}
- * are included, and versioning is used, so that the latest uploaded file is the most complete and up to date.
- * 	4) After the daily forced EC upload, old files (older than {@code FacadeService.OldFileMaxAge}) are purged from staging.
+ * and if no previous uploads of this daily package were performed, then the package is uploaded is triggered through a debouncer
+ * with 10 minutes delay. Further potential half-hourly uploads for this package will debounce the upload. After a successful upload,
+ * the half-hourly files are removed.
+ * 	2) At {@code FacadeService.ForceEcUploadTime} time of day, all half-hourly EC files in staging are suplemented with latest
+ * previously-uploaded files (if any, and only by files from half-hourly slots not represented in staging), packaged and uploaded.
+ * Upon successful upload, the corresponding half-hourly files are purged from staging.
+ * 	3) After the daily forced EC upload, old files (older than {@code FacadeService.OldFileMaxAge}) are purged from staging.
  */
 class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer):
 	import FacadeService._

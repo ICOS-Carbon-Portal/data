@@ -1,24 +1,25 @@
 package se.lu.nateko.cp.data.routes
 
-import scala.concurrent.Future
-
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.RawHeader
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.services.etcfacade.AuthenticatorProvider
-import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.data.services.etcfacade.EtcFilename
+import se.lu.nateko.cp.data.services.etcfacade.FacadeService
+import se.lu.nateko.cp.data.services.etcfacade.UploadReceiptCrypto
+import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.meta.core.crypto.Md5Sum
+import se.lu.nateko.cp.meta.core.etcupload.StationId
+import spray.json._
+
+import java.time.LocalDate
+import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
-import spray.json._
-import se.lu.nateko.cp.data.services.upload.UploadService
-import se.lu.nateko.cp.data.services.etcfacade.FacadeService
-import se.lu.nateko.cp.meta.core.etcupload.StationId
-import se.lu.nateko.cp.data.services.etcfacade.UploadReceiptCrypto
-import akka.http.scaladsl.model.headers.RawHeader
 
 class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer){
 	import EtcUploadRouting._
@@ -70,8 +71,17 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 							complete((StatusCodes.BadRequest, err.getMessage))
 
 						case Success(file) =>
-							if(file.station.id != station.id)
-								forbid(s"This file must be uploaded by ${file.station.id}, not by ${station.id}!")
+							if file.station.id != station.id
+							then forbid(s"This file must be uploaded by ${file.station.id}, not by ${station.id}!")
+
+							else if file.date.compareTo(LocalDate.now().plusDays(1)) > 0
+							then forbid(s"File name date ${file.date} is in the future, cannot be right")
+
+							else if file.date.compareTo(LocalDate.of(2010, 1, 1)) < 0
+							then forbid(s"File name date ${file.date} is too far in the past")
+
+							else if file.toDaily.isDefined
+							then forbid("This is a daily-package filename. Upload the half-hourly files instead.")
 
 							else extractDataBytes { dataBytes =>
 								val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
