@@ -80,9 +80,6 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 							else if file.date.compareTo(LocalDate.of(2010, 1, 1)) < 0
 							then forbid(s"File name date ${file.date} is too far in the past")
 
-							else if file.toDaily.isDefined
-							then forbid("This is a daily-package filename. Upload the half-hourly files instead.")
-
 							else extractDataBytes { dataBytes =>
 								val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
 
