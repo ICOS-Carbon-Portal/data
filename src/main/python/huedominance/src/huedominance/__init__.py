@@ -6,4 +6,4 @@ popular Green Cromatic Coordinate (GCC) measure used as a vegetation index for p
 Please refer to the hrdi function documentation for specifics of the algorithm.
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"

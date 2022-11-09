@@ -2,7 +2,7 @@ from PIL import Image
 import numpy as np
 import math
 
-def hrdi(image: Image.Image, hue_min_deg: int, hue_max_deg: int, makeIllustration: bool = False) -> tuple[float, Image.Image]:
+def hrdi(image: Image.Image, hue_min_deg: int, hue_max_deg: int, make_illustration: bool = False) -> tuple[float, Image.Image]:
 	"""
 	Hue Range Dominance Index (HRDI) algorithm
 	
@@ -30,13 +30,13 @@ def hrdi(image: Image.Image, hue_min_deg: int, hue_max_deg: int, makeIllustratio
 		minimal hue value (angle) in degrees. Zero corresponds to red, 120 to green, 240 or -120 to blue
 	hue_max_deg: int
 		maximal hue value, save data type as for hue_min_deg
-	makeIllustration: bool, optional
+	make_illustration: bool, optional
 		a flag specifying whether the illustration image needs to be produced
 
 	Returns
 	-------
 	tuple[float, Image.Image]
-		a tuple of HRDI value and the illustration image. If makeIllustration is False, the second element in the tuple is None.
+		a tuple of HRDI value and the illustration image. If make_illustration is False, the second element in the tuple is None.
 	"""
 	hsv = image.convert("HSV")
 	hue = np.array(hsv.getchannel("H"))
@@ -59,7 +59,7 @@ def hrdi(image: Image.Image, hue_min_deg: int, hue_max_deg: int, makeIllustratio
 	total_v = np.sum(val)
 	dominance = hue_v / total_v
 
-	if not makeIllustration:
+	if not make_illustration:
 		return (dominance, None)
 	else:
 		v_adjusted = np.round(v_adjusted).astype("uint8")

@@ -1,7 +1,7 @@
 from PIL import Image
 import numpy as np
 
-def gcc(image: Image.Image, makeIllustration: bool = False) -> tuple[float, Image.Image]:
+def gcc(image: Image.Image, make_illustration: bool = False) -> tuple[float, Image.Image]:
 	"""
 	Green Chromatic Coordinate (GCC) algorithm to assess "greenness" of an image.
 
@@ -12,13 +12,13 @@ def gcc(image: Image.Image, makeIllustration: bool = False) -> tuple[float, Imag
 	----------
 	image: Image.Image
 		an image object as obtained using Pillow (PIL fork) library
-	makeIllustration: bool, optional
+	make_illustration: bool, optional
 		a flag specifying whether the illustration image needs to be produced
 
 	Returns
 	-------
 	tuple[float, Image.Image]
-		a tuple of GCC value and the illustration image. If makeIllustration is False, the second element in the tuple is None.
+		a tuple of GCC value and the illustration image. If make_illustration is False, the second element in the tuple is None.
 	"""
 	red   = np.array(image.getchannel("R"))
 	green = np.array(image.getchannel("G"))
@@ -30,7 +30,7 @@ def gcc(image: Image.Image, makeIllustration: bool = False) -> tuple[float, Imag
 
 	gcc_index = green_sum / (red_sum + green_sum + blue_sum)
 
-	if not makeIllustration:
+	if not make_illustration:
 		return (gcc_index, None)
 	else:
 		red = np.zeros(red.shape)

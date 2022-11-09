@@ -23,8 +23,8 @@ from PIL import Image
 
 image = Image.open('/path/to/your/image')
 
-green_leaves_hrdi, hrdi_image = hrdi(image, 100, 170, makeIllustration = True)
-green_leaves_gcc, gcc_image = gcc(image, makeIllustration = True)
+green_leaves_hrdi, hrdi_image = hrdi(image, 100, 170, make_illustration = True)
+green_leaves_gcc, gcc_image = gcc(image, make_illustration = True)
 
 hrdi_image.save('/path/to/hrdi/illustrative/signal/image', 'JPEG')
 gcc_image.save('/path/to/gcc/illustrative/signal/image', 'JPEG')
