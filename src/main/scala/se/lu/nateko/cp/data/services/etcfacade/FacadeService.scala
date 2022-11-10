@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.services.etcfacade
 
 import akka.Done
 import akka.NotUsed
+import akka.event.LoggingAdapter
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Flow
@@ -41,12 +42,14 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
+import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import scala.util.Using
 
 /**
  * Encodes the behaviour and logic of the ETC logger data upload facade.
@@ -125,6 +128,9 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 				}.andThen{
 					case Success(_) =>
 						logExternalUpload(fn)
+						if fn.time.isDefined && fn.extension.equalsIgnoreCase("zip") then
+							setLastModifiedFromZipContents(targetFile, log)
+
 						performUploadIfNotTest(targetFile, fn, false)
 					case Failure(_) => Files.deleteIfExists(tmpPath)
 				}
@@ -330,6 +336,16 @@ object FacadeService:
 				}
 			}
 			.run()
+
+	def setLastModifiedFromZipContents(zipFile: Path, log: LoggingAdapter): Unit =
+		Using(ZipFile(zipFile.toFile))(
+			_.entries().nextElement().getLastModifiedTime
+		)
+		.map(Files.setLastModifiedTime(zipFile, _))
+		.failed
+		.foreach{
+			log.error(_, "Could not set last modified date of the uploaded zip from its contents")
+		}
 
 
 	val compressedExtensions = Set("zip", "jpg", "jpeg", "gz")
