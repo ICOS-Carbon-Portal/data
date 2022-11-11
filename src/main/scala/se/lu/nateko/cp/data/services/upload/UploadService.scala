@@ -14,7 +14,7 @@ import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.api.CpMetaVocab
+import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.isNonIngestedZip
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -184,43 +184,47 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 		import dobj.{specification => spec}
 
-		spec.dataLevel match{
-			case 1 | 2 | 3 if (spec.datasetSpec.isDefined) =>
-				ingestionTaskFut(Right(dobj)).map{ingestionTask =>
-					defaultTasks(dobj) :+ ingestionTask
-				}
-			case 0 | 1 | 2 | 3 => Future.successful(defaultTasks(dobj))
-
-			case dataLevel => Future.successful(
+		if spec.dataLevel < 0 || spec.dataLevel > 3 then
+			Future.successful(
 				IndexedSeq.empty :+
-				new NotSupportedUploadTask(s"Upload of data objects of level $dataLevel is not supported")
+				new NotSupportedUploadTask(s"Upload of data objects of level ${spec.dataLevel} is not supported")
 			)
-		}
+		else if spec.datasetSpec.isDefined || isNonIngestedZip(spec.format.uri) then
+			ingestionTaskFut(Right(dobj)).map{ingestionTask =>
+				defaultTasks(dobj) :+ ingestionTask
+			}
+
+		else Future.successful(defaultTasks(dobj))
 	}
 
-	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] = {
+	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] =
 		val spec: DataObjectSpec = req.fold(_.spec, _.specification)
 		val file = req.fold(_.file, getFile)
 
-		if(spec.isSpatiotemporal) {
+		if spec.isSpatiotemporal then
 			val varNames: Seq[String] = req.fold(
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			)
 			val isTryIngest = req.isLeft
-			if(isTryIngest && varNames.isEmpty)
+			if isTryIngest && varNames.isEmpty then
 				Future.failed(new CpDataException("Ingestion pointless: no variable names provided for validation"))
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
 
-		} else if(spec.isStationTimeSer) {
+		else if spec.isStationTimeSer then
 			val ingSpec = req.fold(
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
 				dobj => IngestionSpec(dobj)
 			)
-			IngestionUploadTask(ingSpec, file, meta)
-		} else Future.failed(new CpDataParsingException(s"Could not find ingester for data obj spec ${spec.self.uri}}"))
-	}
+			IngestionUploadTask.apply(ingSpec, file, meta)
+
+		else if isNonIngestedZip(spec.format.uri) then
+			Future.successful(new ZipValidatingUploadTask)
+
+		else
+			Future.failed(new CpDataParsingException(s"Could not find ingester for data obj spec ${spec.self.uri}}"))
+
 
 	private def mandatoryTasks(obj: StaticObject) = IndexedSeq(
 		new HashsumCheckingUploadTask(obj.hash),
