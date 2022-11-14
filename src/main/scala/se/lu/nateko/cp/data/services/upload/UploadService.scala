@@ -72,19 +72,21 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			ingestionTaskFut(Left(ingReq))
 		}.map{task =>
 
-			def unpackTaskResult(taskRes: UploadTaskResult): Future[IngestionMetadataExtract] = taskRes match{
+			def unpackTaskResult(depth: Int)(taskRes: UploadTaskResult): Future[IngestionMetadataExtract | String] = taskRes match{
 				case IngestionSuccess(metaExtract) =>
 					Future.successful(metaExtract)
 				case fail: UploadTaskFailure =>
 					Future.failed(fail.error)
-				case ok: UploadTaskSuccess =>
-					task.onComplete(ok, Nil).flatMap(unpackTaskResult)
+				case ok: UploadTaskSuccess if depth < 3 =>
+					task.onComplete(ok, Nil).flatMap(unpackTaskResult(depth + 1))
+				case DummySuccess =>
+					Future.successful("Ingestion try was a success")
 				case _ =>
 					Future.failed(new CpDataException(s"Unexpected UploadTaskResult $taskRes"))
 			}
 
 			task.sink.mapMaterializedValue(
-				_.flatMap(unpackTaskResult).andThen{
+				_.flatMap(unpackTaskResult(0)).andThen{
 					case _ => Files.deleteIfExists(origFile)
 				}
 			)
@@ -244,7 +246,7 @@ object UploadService{
 	type DataObjectSink = Sink[ByteString, Future[UploadResult]]
 	type UploadTaskSink = Sink[ByteString, Future[UploadTaskResult]]
 	type CombinedUploadSink = Sink[ByteString, Future[Seq[UploadTaskResult]]]
-	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract]]
+	type TryIngestSink = Sink[ByteString, Future[IngestionMetadataExtract | String]]
 
 	class IngestRequest(val file: File, val spec: DataObjectSpec, val nRows: Option[Int], val vars: Option[Seq[String]])
 

@@ -92,7 +92,9 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 				extractRequest { req =>
 					val resFut = uploadService.getTryIngestSink(specUri, nRowsOpt, varnames).flatMap(req.entity.dataBytes.runWith)
 					onComplete(resFut) {
-						case Success(metaExtract) => complete(metaExtract.toJson)
+						case Success(metaExtract) => metaExtract match
+							case me: IngestionMetadataExtract => complete(me.toJson)
+							case s: String => complete(s)
 						case Failure(err) => complete(StatusCodes.BadRequest -> err.getMessage)
 					}
 				}

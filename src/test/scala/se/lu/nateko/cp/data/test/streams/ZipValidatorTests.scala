@@ -12,13 +12,12 @@ import se.lu.nateko.cp.data.test.TestUtils
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class ZipValidatorTests extends AnyFunSuite with BeforeAndAfterAll{
+class ZipValidatorTests extends AnyFunSuite with BeforeAndAfterAll:
 	private given system: ActorSystem = ActorSystem("ZipValidatorTests")
 	val zipSink = assertZipFormat(using system.dispatcher)
 
-	override def afterAll(): Unit = {
+	override def afterAll(): Unit =
 		system.terminate()
-	}
 
 	def testFile(
 		testName: String, inputFile: String, expectedType: Result
@@ -57,4 +56,3 @@ class ZipValidatorTests extends AnyFunSuite with BeforeAndAfterAll{
 
 		assert(res === Result.Valid)
 	}
-}
