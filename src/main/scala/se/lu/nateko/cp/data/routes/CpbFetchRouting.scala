@@ -17,6 +17,7 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.CpdataJsonProtocol.given
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
+import se.lu.nateko.cp.data.utils.akka.{gracefulBadReq, gracefulUnauth, gracefulForbid}
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.meta.core.data.Envri
@@ -43,7 +44,7 @@ class CpbFetchRouting(
 					returnBinary(tableRequest)
 				}
 			} ~
-			complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
+			gracefulBadReq(s"Expected a proper binary table request")
 		} ~
 		options{
 			respondWithHeaders(
@@ -63,11 +64,11 @@ class CpbFetchRouting(
 					fetchCpbRoute(uidOpt, Some(originInfo))
 				} ~
 				uidOpt.fold[Route]{
-					complete(StatusCodes.Unauthorized -> s"$envri data portal login is required for binary downloads")
+					gracefulUnauth(s"$envri data portal login is required for binary downloads")
 				}{uid =>
 					onSuccess(restHeart.getUserLicenseAcceptance(uid)){accepted =>
 						if(accepted) fetchCpbRoute(uidOpt, None)
-						else complete(StatusCodes.Forbidden -> "Accepting data licence in your user profile is required for binary downloads")
+						else gracefulForbid("Accepting data licence in your user profile is required for binary downloads")
 					}
 				}
 			}
@@ -120,7 +121,7 @@ class CpbFetchRouting(
 				returnBinary(tableRequest)
 			}
 		} ~
-		complete((StatusCodes.BadRequest, s"Expected a proper binary table request"))
+		gracefulBadReq(s"Expected a proper binary table request")
 
 	private def returnBinary(req: BinTableRequest): StandardRoute = complete(
 		HttpEntity(

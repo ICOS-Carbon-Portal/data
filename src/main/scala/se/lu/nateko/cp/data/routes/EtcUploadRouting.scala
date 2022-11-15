@@ -14,6 +14,7 @@ import se.lu.nateko.cp.data.services.etcfacade.UploadReceiptCrypto
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import se.lu.nateko.cp.data.utils.akka.{gracefulForbid, gracefulBadReq}
 import spray.json._
 
 import java.time.LocalDate
@@ -21,7 +22,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(implicit mat: Materializer){
+class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer){
 	import EtcUploadRouting._
 	import mat.executionContext
 
@@ -63,41 +64,42 @@ class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: Uploa
 
 			pathPrefix(Md5Segment){ md5 =>
 
-				path(Segment){ fileNameStr =>
+				blacklistedMd5.get(md5).map(gracefulBadReq).getOrElse{
+					path(Segment){ fileNameStr =>
 
-					EtcFilename.parse(fileNameStr) match{
+						EtcFilename.parse(fileNameStr) match
 
-						case Failure(err) =>
-							complete((StatusCodes.BadRequest, err.getMessage))
+							case Failure(err) =>
+								gracefulBadReq(err.getMessage)
 
-						case Success(file) =>
-							if file.station.id != station.id
-							then forbid(s"This file must be uploaded by ${file.station.id}, not by ${station.id}!")
+							case Success(file) =>
+								if file.station.id != station.id
+								then gracefulForbid(s"This file must be uploaded by ${file.station.id}, not by ${station.id}!")
 
-							else if file.date.compareTo(LocalDate.now().plusDays(1)) > 0
-							then forbid(s"File name date ${file.date} is in the future, cannot be right")
+								else if file.date.compareTo(LocalDate.now().plusDays(1)) > 0
+								then gracefulForbid(s"File name date ${file.date} is in the future, cannot be right")
 
-							else if file.date.compareTo(LocalDate.of(2010, 1, 1)) < 0
-							then forbid(s"File name date ${file.date} is too far in the past")
+								else if file.date.compareTo(LocalDate.of(2010, 1, 1)) < 0
+								then gracefulForbid(s"File name date ${file.date} is too far in the past")
 
-							else extractDataBytes { dataBytes =>
-								val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
+								else extractDataBytes { dataBytes =>
+									val doneFut = dataBytes.runWith(facade.getFileSink(file, md5))
 
-								onSuccess(doneFut){_ =>
-									val receipt = receiptCrypto.encryptNow(file, md5)
-									respondWithHeader(RawHeader("X-ICOSCP-Receipt", receipt)){
-										complete(StatusCodes.OK)
+									onSuccess(doneFut){_ =>
+										val receipt = receiptCrypto.encryptNow(file, md5)
+										respondWithHeader(RawHeader("X-ICOSCP-Receipt", receipt)){
+											complete(StatusCodes.OK)
+										}
 									}
 								}
-							}
-					}
-				} ~
-				complete(StatusCodes.BadRequest -> "Expected single URL segment with file name after the MD5 segment")
-
+						end match
+					} ~
+					gracefulBadReq("Expected single URL segment with file name after the MD5 segment")
+				}
 			} ~
-			complete(StatusCodes.BadRequest -> "Expected hex-encoded MD5 sum as URL segment after 'upload/etc'")
+			gracefulBadReq("Expected hex-encoded MD5 sum as URL segment after 'upload/etc'")
 		} ~
-		forbid("Authentication error")
+		gracefulForbid("Authentication error")
 	}
 }
 
@@ -105,10 +107,11 @@ object EtcUploadRouting{
 
 	val Md5Segment = Segment.flatMap(Md5Sum.fromHex(_).toOption)
 
-	def forbid(msg: String)(implicit mat: Materializer): Route = extractRequest{req =>
-		req.discardEntityBytes()
-		complete(StatusCodes.Forbidden -> msg)
-	}
+	private val EmptyMd5 = Md5Sum.fromHex("d41d8cd98f00b204e9800998ecf8427e").get
+
+	val blacklistedMd5: Map[Md5Sum, String] = Map(
+		EmptyMd5 -> "MD5 checksum corresponds to an empty file"
+	)
 
 	def getPassList(config: EtcFacadeConfig, stationsOpt: Option[Seq[StationId]]): JsObject = {
 		val statArray: JsValue = stationsOpt.map{stations =>

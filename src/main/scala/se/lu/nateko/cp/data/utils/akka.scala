@@ -3,6 +3,12 @@ package se.lu.nateko.cp.data.utils
 import _root_.akka.Done
 import _root_.akka.actor.Cancellable
 import _root_.akka.actor.Scheduler
+import _root_.akka.http.scaladsl.model.StatusCode
+import _root_.akka.http.scaladsl.model.StatusCodes
+import _root_.akka.http.scaladsl.server.Directives.complete
+import _root_.akka.http.scaladsl.server.Directives.{extractRequest, extractRequestContext}
+import _root_.akka.http.scaladsl.server.Route
+import _root_.akka.stream.Materializer
 import se.lu.nateko.cp.data.api.CpDataException
 
 import scala.collection.mutable
@@ -43,3 +49,15 @@ object akka:
 					case _ => synchronized{inProgress.remove(key)}
 				}
 		}
+	end Debouncer
+
+	def gracefulPlainResponse(code: StatusCode, message: String): Route =
+		extractRequestContext{reqCtxt =>
+			import reqCtxt.materializer
+			reqCtxt.request.discardEntityBytes()
+			complete(code -> message)
+		}
+
+	def gracefulForbid(msg: String): Route = gracefulPlainResponse(StatusCodes.Forbidden, msg)
+	def gracefulBadReq(msg: String): Route = gracefulPlainResponse(StatusCodes.BadRequest, msg)
+	def gracefulUnauth(msg: String): Route = gracefulPlainResponse(StatusCodes.Unauthorized, msg)
