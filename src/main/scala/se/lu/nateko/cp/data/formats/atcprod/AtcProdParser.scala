@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.formats.atcprod
 
 import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.api.CpDataParsingException
 
 object AtcProdParser {
 
@@ -18,12 +19,11 @@ object AtcProdParser {
 		cells: Array[String],
 		formats: Array[Option[ValueFormat]],
 		error: Option[Throwable],
-		headerConsumed: Boolean = false,
 	) extends ParsingAccumulator {
 
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 
-		def isOnData = (header.headerLength > 0 && lineNumber > header.headerLength)
+		def headerConsumed = (header.headerLength > 0 && lineNumber >= header.headerLength)
 
 		def changeHeader(
 			headerLength: Int = header.headerLength,
@@ -41,7 +41,7 @@ object AtcProdParser {
 
 	def headerError(headerLength: Int, lineNumber: Int) =
 		val quantifier = if lineNumber < headerLength then "few" else "many"
-		Some(new Exception(s"Got too $quantifier header lines (expected $headerLength)"))
+		Some(new CpDataParsingException(s"Got too $quantifier header lines (expected $headerLength)"))
 
 	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) acc
@@ -66,7 +66,7 @@ object AtcProdParser {
 			val isMultiVar = hasMultipleMainVariables(columnsMeta)
 			val colNames = disambiguateColumnNames(ambiguousColNames, isMultiVar)
 			val formats = colNames.map(columnsMeta.matchColumn)
-			acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine.copy(headerConsumed = true)
+			acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine
 		}
 
 		else (line match {
