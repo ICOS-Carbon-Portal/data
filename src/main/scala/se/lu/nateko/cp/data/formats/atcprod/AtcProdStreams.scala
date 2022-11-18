@@ -8,6 +8,7 @@ import akka.stream.scaladsl.{ Flow, Keep }
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
+import se.lu.nateko.cp.data.streams.KeepFuture
 
 object AtcProdStreams {
 	import AtcProdParser._
@@ -26,7 +27,7 @@ object AtcProdStreams {
 			})
 			.alsoToMat(
 				digestSink(getCompletionInfo(format.colsMeta, provideNRows = true))
-			)(Keep.right)
+			)(KeepFuture.right)
 
 	private def makeTimeStamp(cells: Array[String], columnNames: Array[String]): Instant = {
 		val timeIndices = Seq("Year", "Month", "Day", "Hour", "Minute", "Second").map(cn => columnNames.indexOf(cn))

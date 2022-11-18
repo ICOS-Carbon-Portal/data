@@ -17,7 +17,8 @@ object AtcProdParser {
 		lineNumber: Int,
 		cells: Array[String],
 		formats: Array[Option[ValueFormat]],
-		error: Option[Throwable]
+		error: Option[Throwable],
+		headerConsumed: Boolean = false,
 	) extends ParsingAccumulator {
 
 		def incrementLine = copy(lineNumber = lineNumber + 1)
@@ -38,8 +39,18 @@ object AtcProdParser {
 
 	def seed = Accumulator(Header(0, 0, Array.empty), 0, Array.empty, Array.empty, None)
 
+	def headerError(headerLength: Int, lineNumber: Int) =
+		val quantifier = if lineNumber < headerLength then "few" else "many"
+		Some(new Exception(s"Got too $quantifier header lines (expected $headerLength)"))
+
 	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) acc
+
+		else if(acc.headerConsumed && line.startsWith("#"))
+			acc.incrementLine.copy(error = headerError(acc.header.headerLength, acc.lineNumber))
+
+		else if(!acc.headerConsumed && !line.startsWith("#"))
+			acc.incrementLine.copy(error = headerError(acc.header.headerLength, acc.lineNumber))
 
 		else if (acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength){
 			val cells0 = line.split(sep, -1)
@@ -47,7 +58,7 @@ object AtcProdParser {
 			val cells: Array[String] = if(missingCellsN > 0)
 					cells0 :++ Iterable.fill(missingCellsN)("") //append trailing empty strings for missing cells
 				else cells0
-			acc.copy(cells = cells, lineNumber = acc.lineNumber + 1)
+			acc.copy(cells = cells).incrementLine
 		}
 
 		else if (acc.lineNumber == acc.header.headerLength - 1) {
@@ -55,7 +66,7 @@ object AtcProdParser {
 			val isMultiVar = hasMultipleMainVariables(columnsMeta)
 			val colNames = disambiguateColumnNames(ambiguousColNames, isMultiVar)
 			val formats = colNames.map(columnsMeta.matchColumn)
-			acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine
+			acc.changeHeader(columnNames = colNames).copy(formats = formats).incrementLine.copy(headerConsumed = true)
 		}
 
 		else (line match {
