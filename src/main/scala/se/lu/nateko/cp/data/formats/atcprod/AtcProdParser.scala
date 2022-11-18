@@ -24,6 +24,7 @@ object AtcProdParser {
 		def incrementLine = copy(lineNumber = lineNumber + 1)
 
 		def headerConsumed = (header.headerLength > 0 && lineNumber >= header.headerLength)
+		def isOnData = (header.headerLength > 0 && lineNumber > header.headerLength)
 
 		def changeHeader(
 			headerLength: Int = header.headerLength,
