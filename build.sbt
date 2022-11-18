@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
 		"-feature",
 		"-deprecation"
 	),
-	// javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+	javacOptions ++= Seq("-Xlint:deprecation")
 )
 
 val akkaVersion = "2.6.18"

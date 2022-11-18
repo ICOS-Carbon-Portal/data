@@ -13,12 +13,14 @@ import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster;
 import se.lu.nateko.cp.data.formats.netcdf.viewing.VariableSpecification;
 import ucar.ma2.Array;
 import ucar.ma2.ArrayFloat;
+import ucar.ma2.DataType;
 import ucar.ma2.InvalidRangeException;
 import ucar.ma2.MAMath;
 import ucar.ma2.Section;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
 import ucar.nc2.dataset.NetcdfDataset;
+import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.dataset.VariableDS;
 import ucar.nc2.time.CalendarDate;
 
@@ -93,7 +95,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		NetcdfDataset ds = null;
 
 		try {
-			ds = NetcdfDataset.openDataset(file.getAbsolutePath());
+			ds = NetcdfDatasets.openDataset(file.getAbsolutePath());
 			return consumer.apply(ds);
 		} catch (Throwable exc){
 			throw new IOException("Problem reading netcdf " + file.getAbsolutePath() + " : " + exc.getClass().getName() + " : " + exc.getMessage());
@@ -353,7 +355,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			Section sec = new Section(origin, size);
 			Array arrFullDim = ncVar.read(sec);
 
-			return (double[])arrFullDim.get1DJavaArray(double.class);
+			return (double[])arrFullDim.get1DJavaArray(DataType.DOUBLE);
 
 		});
 	}

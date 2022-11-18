@@ -8,7 +8,7 @@ import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath
 import ucar.ma2.Section
 import ucar.nc2.Variable
-import ucar.nc2.dataset.NetcdfDataset
+import ucar.nc2.dataset.NetcdfDatasets
 
 import java.io.File
 import java.nio.file.Path
@@ -31,7 +31,7 @@ class NetcdfUtil(config: NetCdfConfig) {
 object NetcdfUtil{
 
 	def calcMinMax(file: File, varname: String)(using ExecutionContext): Future[VarInfo] = {
-		def ds = NetcdfDataset.openDataset(file.getAbsolutePath, false, null)
+		def ds = NetcdfDatasets.openDataset(file.getAbsolutePath, false, null)
 
 		val sectionsTry = Using(ds){ncd =>
 			partition(ncd.findVariable(varname).getShape)
