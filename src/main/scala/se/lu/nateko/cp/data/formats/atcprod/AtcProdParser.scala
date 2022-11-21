@@ -40,18 +40,12 @@ object AtcProdParser {
 
 	def seed = Accumulator(Header(0, 0, Array.empty), 0, Array.empty, Array.empty, None)
 
-	def headerError(headerLength: Int, lineNumber: Int) =
-		val quantifier = if lineNumber < headerLength then "few" else "many"
-		Some(new CpDataParsingException(s"Got too $quantifier header lines (expected $headerLength)"))
-
 	def parseLine(columnsMeta: ColumnsMeta)(acc: Accumulator, line: String): Accumulator = {
 		if (acc.error.isDefined) acc
 
-		else if(acc.headerConsumed && line.startsWith("#"))
-			acc.incrementLine.copy(error = headerError(acc.header.headerLength, acc.lineNumber))
-
-		else if(!acc.headerConsumed && !line.startsWith("#"))
-			acc.incrementLine.copy(error = headerError(acc.header.headerLength, acc.lineNumber))
+		else if(acc.headerConsumed == line.startsWith("#"))
+			val quantifier = if acc.lineNumber < acc.header.headerLength then "few" else "many"
+			acc.incrementLine.copy(error = Some(new CpDataParsingException(s"Got too $quantifier header lines (expected ${acc.header.headerLength})")))
 
 		else if (acc.header.headerLength > 0 && acc.lineNumber >= acc.header.headerLength){
 			val cells0 = line.split(sep, -1)
