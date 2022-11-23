@@ -199,11 +199,15 @@ private class SingleEntryUnzipFlow extends GraphStage[FlowShape[ByteString, Byte
 				}
 			}
 
-			if(upstreamFinished && (readSize == entrySize || entrySize == -1 && nread < 0)) {
-				//oq must have been closed from the InputHandler by now
+			if upstreamFinished && (
+				readSize == entrySize ||
+				entrySize == -1 && nread < 0 ||
+				!gotFirstEntry
+			) then
 				zis.close()
+				oq.close()
 				completeStage()
-			}
+
 		}
 
 		private def upstreamFinished: Boolean = isClosed(in) && !isAvailable(in) && !hasBeenPulled(in)

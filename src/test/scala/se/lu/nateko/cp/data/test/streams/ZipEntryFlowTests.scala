@@ -86,4 +86,10 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 		val content = Await.result(fut, 2.seconds).utf8String
 		assert(content.length === 72044)
 	}
+
+	test("Unzipping empty stream"){
+		val resFut = Source.empty[ByteString].via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+		val res = Await.result(resFut, 2.seconds)
+		assert(res.isEmpty)
+	}
 }
