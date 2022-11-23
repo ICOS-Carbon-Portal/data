@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.streams
 
-import akka.NotUsed
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
@@ -39,14 +38,6 @@ object ZipValidator:
 					MagicDict.getOrElse(b.take(MagicLength), Invalid)
 				)
 			)
-		)
-
-	val assertZipFormatFlow: Flow[ByteString, Result, NotUsed] =
-		Flow[ByteString]
-		.scan(ByteString.empty)(_ ++ _)
-		.dropWhile(_.length < MagicLength)
-		.map(b => 
-			MagicDict.getOrElse(b.take(MagicLength), Invalid)
 		)
 
 	// type ValidatedZipChunk = (ByteString, Result)

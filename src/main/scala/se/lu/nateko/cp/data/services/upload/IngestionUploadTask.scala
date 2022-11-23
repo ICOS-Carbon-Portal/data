@@ -11,7 +11,7 @@ import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats._
 import se.lu.nateko.cp.data.api.SitesMetaVocab._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.{BinTableSink, FileExtension}
-import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow}
+import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow, ZipValidator}
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
 
@@ -19,18 +19,6 @@ import scala.concurrent.{ExecutionContext, Future}
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import java.net.URI
-import se.lu.nateko.cp.data.streams.ZipValidator
-import se.lu.nateko.cp.data.streams.ZipValidator._
-import ZipValidator.Result.*
-import akka.stream.scaladsl.Framing
-import akka.stream.scaladsl.RunnableGraph
-import akka.stream.scaladsl.GraphDSL
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Broadcast
-import akka.stream.scaladsl.Merge
-import akka.stream.ClosedShape
-import akka.stream.FlowShape
-import akka.stream.scaladsl.Zip
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
@@ -117,7 +105,7 @@ class IngestionUploadTask(
 			)
 	}
 
-	private def makeEncodingSpecificFlow(encoding: UriResource): Flow[ByteString, ByteString, NotUsed] = {
+	private def makeEncodingSpecificFlow(encoding: UriResource): ZipEntryFlow.Unzipper = {
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{plainFile, zipEncoding}
 		encoding.uri match{
 			case `plainFile` => 
