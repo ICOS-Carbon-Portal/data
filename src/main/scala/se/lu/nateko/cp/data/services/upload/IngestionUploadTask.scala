@@ -19,6 +19,18 @@ import scala.concurrent.{ExecutionContext, Future}
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import java.net.URI
+import se.lu.nateko.cp.data.streams.ZipValidator
+import se.lu.nateko.cp.data.streams.ZipValidator._
+import ZipValidator.Result.*
+import akka.stream.scaladsl.Framing
+import akka.stream.scaladsl.RunnableGraph
+import akka.stream.scaladsl.GraphDSL
+import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.Broadcast
+import akka.stream.scaladsl.Merge
+import akka.stream.ClosedShape
+import akka.stream.FlowShape
+import akka.stream.scaladsl.Zip
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
@@ -108,8 +120,11 @@ class IngestionUploadTask(
 	private def makeEncodingSpecificFlow(encoding: UriResource): Flow[ByteString, ByteString, NotUsed] = {
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{plainFile, zipEncoding}
 		encoding.uri match{
-			case `plainFile` => Flow.apply[ByteString]
-			case `zipEncoding` => ZipEntryFlow.singleEntryUnzip
+			case `plainFile` => 
+				Flow.apply[ByteString]
+			case `zipEncoding` =>
+				ZipValidator.unzipIfValidOrBypass(ZipEntryFlow.singleEntryUnzip)
+
 			case encUri => throw new CpDataException("Unsupported encoding " + encoding.label.getOrElse(encUri.toString))
 		}
 	}

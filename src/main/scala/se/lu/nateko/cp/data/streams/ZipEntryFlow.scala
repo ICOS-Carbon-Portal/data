@@ -34,6 +34,7 @@ object ZipEntryFlow {
 	case class ZipEntryStart(entry: ZipEntry) extends ZipFlowElement
 	case class ZipEntrySegment(bytes: ByteString) extends ZipFlowElement
 
+	type Unzipper = Flow[ByteString, ByteString, NotUsed]
 	type FileLikeSource = Source[ByteString, Any]
 	type FileEntry = (ZipEntry, FileLikeSource)
 	type Compression = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
@@ -49,7 +50,7 @@ object ZipEntryFlow {
 		zipFlowSources.via(Flow.fromGraph(new ZipEntryFlow(compr)))
 	}
 
-	val singleEntryUnzip: Flow[ByteString, ByteString, NotUsed] = Flow.fromGraph(new SingleEntryUnzipFlow)
+	val singleEntryUnzip: Unzipper = Flow.fromGraph(new SingleEntryUnzipFlow)
 
 	def entryFromFile(path: Path): FileEntry =
 		val zentry = ZipEntry(path.getFileName.toString)
