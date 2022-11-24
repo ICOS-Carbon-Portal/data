@@ -111,7 +111,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 		return withDataset(ds -> {
 
 			Variable ncVar = ds.findVariable(variables.dateVariable);
-			VariableDS ncVarDS = new VariableDS(null, ncVar, false);
+			VariableDS ncVarDS = VariableDS.builder().copyFrom(ncVar).build(null);
 
 			StringBuilder sb = new StringBuilder();
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
@@ -227,8 +227,7 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 			boolean latFirst = latDimInd < lonDimInd;
 
 			Variable dateVar = ds.findVariable(variables.dateVariable);
-			//TODO What does boolean enhance do
-			VariableDS dateVarDS = new VariableDS(null, dateVar, false);
+			VariableDS dateVarDS = VariableDS.builder().copyFrom(dateVar).build(null);
 			StringBuilder sb = new StringBuilder();
 			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
 

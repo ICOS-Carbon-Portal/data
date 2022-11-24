@@ -80,6 +80,7 @@ object NetcdfUtil{
 				new Section(origins, shapeCopy)
 			}.toIndexedSeq
 		}
-		sects.map(_.makeImmutable())
+		@annotation.nowarn val res = sects.map(_.makeImmutable())
+		res
 	}
 }
