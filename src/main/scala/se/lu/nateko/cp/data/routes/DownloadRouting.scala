@@ -4,6 +4,7 @@ import akka.Done
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.model.headers.*
+import akka.http.scaladsl.server.Directive
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.*
@@ -26,6 +27,7 @@ import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
+import se.lu.nateko.cp.data.streams.PrefetchedSource
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
@@ -34,7 +36,9 @@ import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.*
 import spray.json.*
 
+import java.net.URI
 import java.time.Instant
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
@@ -43,9 +47,6 @@ import scala.util.Success
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
 import LicenceRouting.parseLicenceCookie
-import scala.concurrent.ExecutionContextExecutor
-import akka.http.scaladsl.server.Directive
-import java.net.URI
 
 class DownloadRouting(
 	authRouting: AuthRouting, downloadService: DownloadService,
@@ -322,8 +323,16 @@ object DownloadRouting{
 		`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))
 	)
 
-	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType): Route =
-		complete(HttpResponse(entity = HttpEntity.CloseDelimited(contentType, src)))
+	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType)(using Materializer): Route =
+		val prefetchedSrc = PrefetchedSource.prefetchSource(src, 1000000)(_.length)
+
+		onComplete(prefetchedSrc){
+			case Success(s) => complete(HttpResponse(entity = HttpEntity.CloseDelimited(contentType, s)))
+			case Failure(exc) =>
+				val log = summon[Materializer].system.log
+				log.error("Data download problem", exc)
+				complete(StatusCodes.InternalServerError -> exc.getMessage)
+		}
 
 	val getClientIp: Directive1[String] = optionalHeaderValueByType(`X-Forwarded-For`).flatMap{
 		case Some(xff) => provide(xff.value)
