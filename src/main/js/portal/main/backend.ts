@@ -302,6 +302,7 @@ export const getExtendedDataObjInfo = (dobjs: UrlStr[]): Promise<ExtendedDobjInf
 		themeIcon: sparqlParsers.fromString(b.themeIcon),
 		title: sparqlParsers.fromString(b.title),
 		description: sparqlParsers.fromString(b.description),
+		specComments: sparqlParsers.fromString(b.specComments),
 		columnNames: b.columnNames ? JSON.parse(b.columnNames.value) as string[] : undefined,
 		site: b.site?.value,
 		hasVarInfo: sparqlParsers.fromBoolean(b.hasVarInfo),

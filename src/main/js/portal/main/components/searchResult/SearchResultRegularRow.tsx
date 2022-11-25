@@ -107,11 +107,16 @@ const Description: React.FunctionComponent<{
 	extendedInfo: Partial<ExtendedDobjInfo> | undefined,
 	truncateStyle: CSSProperties
 }> = ({ extendedInfo, truncateStyle}) => {
-	if (!(extendedInfo && extendedInfo.description)) return null;
+	if(!extendedInfo) return null
+	if (!extendedInfo.description && !extendedInfo.specComments) return null
+
+	const ownDescription = extendedInfo.description ?? ""
+	const separator = ownDescription && extendedInfo.specComments ? ". " : ""
+	const description = extendedInfo.specComments ?? "" + separator + ownDescription
 
 	return isSmallDevice()
-		? <div style={truncateStyle} title={extendedInfo.description}>{extendedInfo.description}</div>
-		: <LinkifyText text={extendedInfo.description} style={linesToShowStyle(5)} />;
+		? <div style={truncateStyle} title={description}>{description}</div>
+		: <LinkifyText text={description} style={linesToShowStyle(5)} />;
 };
 interface ExtendedInfoItemProps {
 	item?: string,

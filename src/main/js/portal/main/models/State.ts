@@ -84,6 +84,7 @@ export type ExtendedDobjInfo = {
 	themeIcon: string | undefined
 	title: string | undefined
 	description: string | undefined
+	specComments: string | undefined
 	columnNames: string[] | undefined
 	site: string | undefined
 	hasVarInfo: boolean | undefined
