@@ -47,6 +47,7 @@ import scala.util.Success
 import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
 import LicenceRouting.parseLicenceCookie
+import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 
 class DownloadRouting(
 	authRouting: AuthRouting, downloadService: DownloadService,
@@ -323,15 +324,18 @@ object DownloadRouting{
 		`Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> fileName))
 	)
 
-	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType)(using Materializer): Route =
+	def completeWithSource(src: Source[ByteString, Any], contentType: ContentType)(using mat: Materializer): Route =
 		val prefetchedSrc = PrefetchedSource.prefetchSource(src, 1000000)(_.length)
 
 		onComplete(prefetchedSrc){
 			case Success(s) => complete(HttpResponse(entity = HttpEntity.CloseDelimited(contentType, s)))
 			case Failure(exc) =>
-				val log = summon[Materializer].system.log
-				log.error("Data download problem", exc)
-				complete(StatusCodes.InternalServerError -> exc.getMessage)
+				mat.system.log.error("Data download problem", exc)
+
+				val httpCode = exc match
+					case _: MetadataObjectNotFound => StatusCodes.NotFound
+					case _ => StatusCodes.InternalServerError
+				complete(httpCode -> exc.getMessage)
 		}
 
 	val getClientIp: Directive1[String] = optionalHeaderValueByType(`X-Forwarded-For`).flatMap{
