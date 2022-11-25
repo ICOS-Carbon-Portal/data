@@ -111,8 +111,7 @@ class IngestionUploadTask(
 			case `plainFile` => 
 				Flow.apply[ByteString]
 			case `zipEncoding` =>
-				ZipEntryFlow.singleEntryUnzip
-				//ZipValidator.unzipIfValidOrBypass(ZipEntryFlow.singleEntryUnzip)
+				ZipValidator.unzipIfValidOrBypass(ZipEntryFlow.singleEntryUnzip)
 
 			case encUri => throw new CpDataException("Unsupported encoding " + encoding.label.getOrElse(encUri.toString))
 		}

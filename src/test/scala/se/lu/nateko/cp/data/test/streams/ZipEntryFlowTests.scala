@@ -10,6 +10,7 @@ import akka.util.ByteString
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.streams.ZipEntryFlow._
+import se.lu.nateko.cp.data.streams.ZipValidator
 import se.lu.nateko.cp.data.test.TestUtils
 
 import java.nio.charset.StandardCharsets
@@ -20,7 +21,8 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
 class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
-	private implicit val system: ActorSystem = ActorSystem("ZipEntryFlowTests")
+	private given system: ActorSystem = ActorSystem("ZipEntryFlowTests")
+	val singleEntryUnzipIfZip = ZipValidator.unzipIfValidOrBypass(singleEntryUnzip)
 
 	override def afterAll(): Unit = {
 		system.terminate()
@@ -36,7 +38,7 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 				else
 					basicSrc
 
-			val unzippedFut = src.via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+			val unzippedFut = src.via(singleEntryUnzipIfZip).runFold(ByteString.empty)(_ ++ _)
 			val unzipped = Await.result(unzippedFut, 2.seconds).utf8String
 
 			assert(unzipped === content)
@@ -63,7 +65,7 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 			val zipEntrySrc: Source[FileEntry, NotUsed] = Source(List(
 				ZipEntry("theOnlyFile.txt") -> Source.single(ByteString(content))
 			))
-			val res = getMultiEntryZipStream(zipEntrySrc, Some(0)).via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+			val res = getMultiEntryZipStream(zipEntrySrc, Some(0)).via(singleEntryUnzipIfZip).runFold(ByteString.empty)(_ ++ _)
 			val gotBack = Await.result(res, 2.seconds).utf8String
 			assert(gotBack.length === content.length)
 			assert(gotBack === content)
@@ -88,7 +90,7 @@ class ZipEntryFlowTests extends AnyFunSuite with BeforeAndAfterAll{
 	}
 
 	test("Unzipping empty stream"){
-		val resFut = Source.empty[ByteString].via(singleEntryUnzip).runFold(ByteString.empty)(_ ++ _)
+		val resFut = Source.empty[ByteString].via(singleEntryUnzipIfZip).runFold(ByteString.empty)(_ ++ _)
 		val res = Await.result(resFut, 2.seconds)
 		assert(res.isEmpty)
 	}
