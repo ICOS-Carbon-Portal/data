@@ -11,7 +11,7 @@ import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats._
 import se.lu.nateko.cp.data.api.SitesMetaVocab._
 import se.lu.nateko.cp.data.formats._
 import se.lu.nateko.cp.data.formats.bintable.{BinTableSink, FileExtension}
-import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow}
+import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow, ZipValidator}
 import se.lu.nateko.cp.meta.core.data._
 import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
 
@@ -105,11 +105,14 @@ class IngestionUploadTask(
 			)
 	}
 
-	private def makeEncodingSpecificFlow(encoding: UriResource): Flow[ByteString, ByteString, NotUsed] = {
+	private def makeEncodingSpecificFlow(encoding: UriResource): ZipEntryFlow.Unzipper = {
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{plainFile, zipEncoding}
 		encoding.uri match{
-			case `plainFile` => Flow.apply[ByteString]
-			case `zipEncoding` => ZipEntryFlow.singleEntryUnzip
+			case `plainFile` => 
+				Flow.apply[ByteString]
+			case `zipEncoding` =>
+				ZipValidator.unzipIfValidOrBypass(ZipEntryFlow.singleEntryUnzip)
+
 			case encUri => throw new CpDataException("Unsupported encoding " + encoding.label.getOrElse(encUri.toString))
 		}
 	}
