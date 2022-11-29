@@ -31,23 +31,18 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			Sink.cancelled.mapMaterializedValue(_ => Future.successful(DummySuccess))
 
 	def onComplete(own: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) =
-		if(varNames.isEmpty)
-			Future.successful(IngestionSuccess(NetCdfExtract(Nil)))
-		else {
-			val failures = otherTaskResults.collect{
-				case fail: UploadTaskFailure => fail
-			}
-			if(!failures.isEmpty)
-				Future.successful(CancelledBecauseOfOthers(failures))
-			else {
-				val javaExe = Executors.newFixedThreadPool(config.statsCalcParallelizm)
-				given ExecutionContext = ExecutionContext.fromExecutorService(javaExe)
-				readNetCdf
-					.map(IngestionSuccess(_))
-					.recover{case err => IngestionFailure(err)}
-					.andThen(_ => javaExe.shutdown())(ctxt)
-			}
-		}
+		(if varNames.isEmpty
+		then Future.successful(IngestionSuccess(NetCdfExtract(Nil)))
+		else failIfOthersFailed(otherTaskResults) {
+			val javaExe = Executors.newFixedThreadPool(config.statsCalcParallelizm)
+			given ExecutionContext = ExecutionContext.fromExecutorService(javaExe)
+			readNetCdf
+				.map(IngestionSuccess(_))
+				.recover{case err => IngestionFailure(err)}
+				.andThen(_ => javaExe.shutdown())(ctxt)
+		}).andThen{_ =>
+			if tryIngest && file.exists() then file.delete()
+		}(ctxt)
 
 	private def readNetCdf(using ExecutionContext): Future[NetCdfExtract] =
 		Future.fromTry(Try(new NetcdfUtil(config).service(file.toPath))).flatMap{service =>
@@ -63,6 +58,7 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 				|${config.copy(folder = "<omitted>").toJson.prettyPrint}""".stripMargin
 			})
 
+			//the following code block is to test readability and crash if the test fails
 			val date0 = service.getAvailableDates()(0)
 			varNames.foreach{varName =>
 				val elevation0 = service.getAvailableElevations(varName).headOption.orNull
