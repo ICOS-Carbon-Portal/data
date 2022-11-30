@@ -3,20 +3,21 @@ package se.lu.nateko.cp.data.services.upload
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.ColumnsMeta
+import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
 import se.lu.nateko.cp.data.utils.io.withSuffix
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import UploadTask.FUTR
-import akka.stream.scaladsl.Source
-import se.lu.nateko.cp.data.formats.bintable.BinTableSink.apply
 
 class ObspackNetCdfIngestionTask(
 	origFile: Path, colsMeta: ColumnsMeta, tryIngest: Boolean
@@ -33,11 +34,16 @@ class ObspackNetCdfIngestionTask(
 			val parser = ObspackNcToBinTable(origFile, colsMeta)
 			val file = origFile.withSuffix(FileExtension)
 			val tmpFile = file.withSuffix(".working")
-			Source
-				.apply(parser.readRows())
+			Source(parser.readRows())
 				.runWith(BinTableSink(tmpFile.toFile, true))
-				.map{
-					
+				.map{_ =>
+					import java.nio.file.StandardCopyOption.*
+					val extract = parser.getIngestionExtract()
+					if !tryIngest then Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
+					IngestionSuccess(extract)
 				}
-			???
+				.andThen{case _ =>
+					parser.close()
+					Files.deleteIfExists(tmpFile)
+				}
 		}

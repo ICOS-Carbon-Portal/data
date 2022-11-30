@@ -92,7 +92,7 @@ class IngestionUploadTask(
 			.toMat(BinTableSink(tmpFile.toFile, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
 				_.map{ingMeta =>
-					import java.nio.file.StandardCopyOption._
+					import java.nio.file.StandardCopyOption.*
 					Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
 					IngestionSuccess(ingMeta)
 				}.recover{
