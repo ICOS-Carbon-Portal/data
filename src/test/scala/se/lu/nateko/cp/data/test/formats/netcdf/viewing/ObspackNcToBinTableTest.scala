@@ -13,30 +13,34 @@ import scala.util.Success
 
 class ObspackNcToBinTableTest extends AnyFunSpec {
 
-	describe("Netcdf reader"){
-		val cm = new ColumnsMeta(Seq(PlainColumn(FloatValue, "value_std_dev", false)))
+	describe("Netcdf reading workbench"){
+		val cm = new ColumnsMeta(Seq(PlainColumn(FloatValue, "value", false)))
 		
-		def countRows(path: String) =
+		def countRows(path: String): Unit =
+			val watch = new StopWatch
 			val file = Path.of(path)
 			val ncFile = NetcdfDatasets.openFile(path, null)
-			val converter = ObspackNcToBinTable(file, cm)
+			val converter = ObspackNcToBinTable(file, cm).get
+			println(s"In ${watch.elapsedMs} ms, prepared ObspackNcToBinTable for $path")
+			val rows = converter.readRows()
+			var size: Int = 0
+			rows.foreach{_ => size += 1}
+			println(s"In ${watch.elapsedMs} ms, got number of rows: $size")
 
-			converter match {
-				case Success(c) => 
-					val rows = c.readRows()
 
-					println("Size: " + rows.size)
-
-				case Failure(e) => throw e
-			}
-
-		it("Counts the rows in the files"){
-			val path1 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl.nc"
-			val path2 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
+		ignore("Counts the rows in the files"){
+			//val path1 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl.nc"
+			val path1 = "/home/oleg/Documents/CP/netcdfNOAA/co2_con_aircraft-insitu_42_allvalid.nc"
+			//val path2 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
+			val path2 = "/home/oleg/Documents/CP/netcdfAlex/nc/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
 
 			countRows(path1)
 			countRows(path2)
 		}
 	}
+
+	private class StopWatch:
+		private val start = System.currentTimeMillis()
+		def elapsedMs: Long = System.currentTimeMillis() - start
 }
 
