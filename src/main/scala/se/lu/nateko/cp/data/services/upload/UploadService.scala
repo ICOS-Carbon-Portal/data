@@ -219,7 +219,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
 				dobj => IngestionSpec(dobj)
 			)
-			IngestionUploadTask.apply(ingSpec, file, meta)
+			IngestionUploadTask.apply(ingSpec, file.toPath, meta)
 
 		else if isNonIngestedZip(spec.format.uri) then
 			Future.successful(new ZipValidatingUploadTask)

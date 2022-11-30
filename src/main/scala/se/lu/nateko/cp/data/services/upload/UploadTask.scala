@@ -7,40 +7,41 @@ import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 
-trait UploadTask{
+import UploadTask.FUTR
 
-	def sink: Sink[ByteString, Future[UploadTaskResult]]
+trait UploadTask:
 
-	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): Future[UploadTaskResult]
+	def sink: Sink[ByteString, FUTR]
 
-}
+	def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]): FUTR
 
-trait PostUploadTask{
+	protected def failIfOthersFailed(otherTaskResults: Seq[UploadTaskResult])(orElse: => FUTR): FUTR =
+		val failures = otherTaskResults.collect{
+			case fail: UploadTaskFailure => fail
+		}
+		if !failures.isEmpty then
+			Future.successful(CancelledBecauseOfOthers(failures))
+		else orElse
 
-	def perform(taskResults: Seq[UploadTaskResult]): Future[UploadTaskResult]
 
-}
+trait PostUploadTask:
+	def perform(taskResults: Seq[UploadTaskResult]): FUTR
 
 
 object UploadTask{
 
-	def revertOnOwnFailure(
-		ownResult: UploadTaskResult, cleanup: () => Future[Done]
-	)
-	(implicit ctxt: ExecutionContext): Future[UploadTaskResult] = ownResult match {
+	type FUTR = Future[UploadTaskResult]
 
-		case _: UploadTaskFailure => cleanup().map(_ => ownResult)
-
-		case _ =>
-			Future.successful(ownResult)
-	}
+	def revertOnOwnFailure(ownResult: UploadTaskResult, cleanup: () => Future[Done])(using ExecutionContext): FUTR =
+		ownResult match
+			case _: UploadTaskFailure => cleanup().map(_ => ownResult)
+			case _ => Future.successful(ownResult)
 
 	def revertOnAnyFailure(
 		ownResult: UploadTaskResult,
 		otherTaskResults: Seq[UploadTaskResult],
 		cleanup: () => Future[Done]
-	)
-	(implicit ctxt: ExecutionContext): Future[UploadTaskResult] = ownResult match {
+	)(using ExecutionContext): FUTR = ownResult match {
 
 		case _: UploadTaskFailure => cleanup().map(_ => ownResult)
 

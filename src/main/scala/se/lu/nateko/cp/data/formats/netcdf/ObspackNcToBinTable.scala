@@ -20,6 +20,7 @@ import scala.util.Failure
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import ObspackNcToBinTable.TypedVar
 import se.lu.nateko.cp.meta.core.data.TimeSeriesExtract
+import scala.collection.immutable.Iterable
 
 class ObspackNcToBinTable private(netCdfDataset: NetcdfDataset, rowFactory: () => LazyList[BinTableRow]) extends AutoCloseable {
 

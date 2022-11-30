@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
-import java.io.File
-import java.nio.file.Files
+import java.nio.file.{Path, Files}
 
 import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Keep, Sink}
@@ -19,18 +18,17 @@ import scala.concurrent.{ExecutionContext, Future}
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import java.net.URI
+import se.lu.nateko.cp.data.utils.io.withSuffix
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
-	originalFile: File,
+	originalFile: Path,
 	colsMeta: ColumnsMeta,
 	utcOffset: Int
 )(implicit ctxt: ExecutionContext) extends UploadTask{
 	import IngestionUploadTask.{RowParser, IngestionSink}
 
-	//TODO Switch to java.nio classes
-	val file = new File(originalFile.getAbsolutePath + FileExtension)
-	private val tmpFile = new File(file.getAbsolutePath + ".working")
+	val file = originalFile.withSuffix(FileExtension)
 	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
 	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
@@ -87,19 +85,19 @@ class IngestionUploadTask(
 		rowParser: RowParser,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary,
 	): IngestionSink = {
-
+		val tmpFile = file.withSuffix(".working")
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.map(binTableConverter.parseRow)
-			.toMat(BinTableSink(tmpFile, overwrite = true))(KeepFuture.left)
+			.toMat(BinTableSink(tmpFile.toFile, overwrite = true))(KeepFuture.left)
 			.mapMaterializedValue(
 				_.map{ingMeta =>
-					import java.nio.file.StandardCopyOption._
-					Files.move(tmpFile.toPath, file.toPath, ATOMIC_MOVE, REPLACE_EXISTING)
+					import java.nio.file.StandardCopyOption.*
+					Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
 					IngestionSuccess(ingMeta)
 				}.recover{
 					case exc: Throwable =>
-						Files.deleteIfExists(tmpFile.toPath)
+						Files.deleteIfExists(tmpFile)
 						IngestionFailure(exc)
 				}
 			)
@@ -121,7 +119,7 @@ class IngestionUploadTask(
 		}
 
 		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
-			if(file.exists) file.delete()
+			Files.deleteIfExists(file)
 			Done
 		})
 	}
@@ -148,7 +146,7 @@ object IngestionUploadTask{
 	type RowParser = Flow[String, TableRow, Future[IngestionMetadataExtract]]
 	type IngestionSink = Sink[ByteString, Future[UploadTaskResult]]
 
-	def apply(ingSpec: IngestionSpec, originalFile: File, meta: MetaClient): Future[IngestionUploadTask] = {
+	def apply(ingSpec: IngestionSpec, originalFile: Path, meta: MetaClient): Future[IngestionUploadTask] = {
 		import meta.dispatcher
 
 		val formatsFut = getColumnFormats(ingSpec.objSpec.self.uri, meta.sparql)
