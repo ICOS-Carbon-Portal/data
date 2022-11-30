@@ -43,29 +43,33 @@ object ValueFormatParser {
 			case StringValue =>
 				value
 			case Iso8601Date =>
-				Int.box(LocalDate.parse(value).toEpochDay.toInt)
+				encodeLocalDate(LocalDate.parse(value))
 			case EtcDate =>
-				Int.box(LocalDate.parse(value, etcDateFormatter).toEpochDay.toInt)
+				encodeLocalDate(LocalDate.parse(value, etcDateFormatter))
 			case Iso8601DateTime =>
-				Double.box(Instant.parse(value).toEpochMilli.toDouble)
+				encodeInstant(Instant.parse(value))
 			case Iso8601TimeOfDay =>
 				if (value.startsWith("24:")) {
 					val residualTime = "00:" + value.substring(3)
-					Int.box(86400 + LocalTime.parse(residualTime).toSecondOfDay)
+					Int.box(isoTimeOfDayToBin(residualTime) + 86400)
 				}
-				else if (value.charAt(1) == ':') parseIsoTimeOfDay("0" + value)
-				else parseIsoTimeOfDay(value)
+				else if (value.charAt(1) == ':') isoTimeOfDayToBin("0" + value)
+				else isoTimeOfDayToBin(value)
 			case IsoLikeLocalDateTime =>
-				parseLocalDateTime(value, isoLikeDateFormater)
+				localDateTimeToBin(value, isoLikeDateFormater)
 			case EtcLocalDateTime =>
-				parseLocalDateTime(value, etcDateTimeFormatter)
+				localDateTimeToBin(value, etcDateTimeFormatter)
 		}
 
-	private def parseIsoTimeOfDay(time: String): Integer =
-		Int.box(LocalTime.parse(time).toSecondOfDay)
+	private def isoTimeOfDayToBin(time: String): Integer = encodeLocalTime(LocalTime.parse(time))
+	private def localDateTimeToBin(value: String, formatter: DateTimeFormatter): java.lang.Double =
+		encodeLocalDateTime(LocalDateTime.parse(value, formatter))
 
-	private def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
-		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
+	def encodeLocalDate(ld: LocalDate): Integer = Int.box(ld.toEpochDay.toInt)
+	def encodeLocalTime(lt: LocalTime): Integer = Int.box(lt.toSecondOfDay)
+	def encodeInstant(inst: Instant): java.lang.Double = Double.box(inst.toEpochMilli.toDouble)
+	def encodeLocalDateTime(dt: LocalDateTime): java.lang.Double =
+		Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
 		case IntValue => DataType.INT
