@@ -68,18 +68,17 @@ object ObspackNcToBinTable:
 
 			val cellsLookup: Array[Int => AnyRef] = sortedVars.map{ (v, vf) =>
 				import se.lu.nateko.cp.data.formats.*
-				//TODO Don't fetch all into the memory at once
-				val ncArr = v.read()
-				//TODO Handle netcdf fill values (i.e. missing values)
+				val nullValue = ValueFormatParser.getNullRepresentation(vf)
 				vf match
 					case IntValue =>
-						(i: Int) => Int.box(ncArr.getInt(i))
+						readNumeric(v, nullValue, _ getInt _)
 					case FloatValue =>
-						(i: Int) => Float.box(ncArr.getFloat(i))
+						readNumeric(v, nullValue, _ getFloat _)
 					case DoubleValue =>
-						(i: Int) => Double.box(ncArr.getDouble(i))
+						readNumeric(v, nullValue, _ getDouble _)
 					case Iso8601DateTime =>
 						(i: Int) => {
+							//TODO Read the timestamp, handle netcdf fill values (i.e. missing values)
 							val timeStamp: java.time.Instant = ???
 							ValueFormatParser.encodeInstant(timeStamp)
 						}
@@ -94,4 +93,17 @@ object ObspackNcToBinTable:
 			})
 		}
 	end apply
+
+	private def readNumeric[N <: Number](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
+		Option(v.findAttribute("_FillValue")).map(_.getNumericValue).fold{
+			(i: Int) => getter(readOne(v, i), 0)
+		}{fill =>
+			(i: Int) => {
+				val value = getter(readOne(v, i), 0)
+				if value == fill then nullValue else value
+			}
+		}
+
+	private inline def readOne(v: Variable, i: Int): ucar.ma2.Array = v.read(Array(i), Array(1))
+
 end ObspackNcToBinTable
