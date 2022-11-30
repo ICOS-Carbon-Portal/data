@@ -1,27 +1,42 @@
 package se.lu.nateko.cp.data.test.formats.netcdf.viewing
 
 import org.scalatest.funspec.AnyFunSpec
-// import java.nio.File
+import se.lu.nateko.cp.data.formats.ColumnsMeta
+import se.lu.nateko.cp.data.formats.FloatValue
+import se.lu.nateko.cp.data.formats.PlainColumn
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
+import ucar.nc2.dataset.NetcdfDatasets
+
 import java.nio.file.Path
+import scala.util.Failure
+import scala.util.Success
 
 class ObspackNcToBinTableTest extends AnyFunSpec {
 
 	describe("Netcdf reader"){
-		val file1 = Path.of("/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl.nc")
-		val file2 = Path.of("/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc")
+		val cm = new ColumnsMeta(Seq(PlainColumn(FloatValue, "value_std_dev", false)))
+		
+		def countRows(path: String) =
+			val file = Path.of(path)
+			val ncFile = NetcdfDatasets.openFile(path, null)
+			val converter = ObspackNcToBinTable(file, cm)
 
-		// val converter1 = ObspackNcToBinTable(file1, null)
-		// val converter2 = ObspackNcToBinTable(file2, null)
+			converter match {
+				case Success(c) => 
+					val rows = c.readRows()
 
-		// it("Reads two netcdf files"){
-		// 	val res1 = converter1.readRows()
-		// 	val res2 = converter2.readRows()
+					println("Size: " + rows.size)
 
-		// 	println("res 1?? " + res2)
-		// 	println("res 2?? " + res2)
+				case Failure(e) => throw e
+			}
 
-		// 	assert(true)
-		// }
+		it("Counts the rows in the files"){
+			val path1 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl.nc"
+			val path2 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
+
+			countRows(path1)
+			countRows(path2)
+		}
 	}
 }
+
