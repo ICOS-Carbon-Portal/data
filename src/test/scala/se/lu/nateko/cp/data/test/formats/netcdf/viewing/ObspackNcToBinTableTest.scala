@@ -18,14 +18,19 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 		
 		def countRows(path: String): Unit =
 			val watch = new StopWatch
+			import watch.elapsedMs
+
 			val file = Path.of(path)
 			val ncFile = NetcdfDatasets.openFile(path, null)
 			val converter = ObspackNcToBinTable(file, cm).get
-			println(s"In ${watch.elapsedMs} ms, prepared ObspackNcToBinTable for $path")
+			println(s"At time $elapsedMs ms, prepared ObspackNcToBinTable for $path")
+
 			val rows = converter.readRows()
+			println(s"At time $elapsedMs ms, prepared rows Iterable for $path")
+
 			var size: Int = 0
 			rows.foreach{_ => size += 1}
-			println(s"In ${watch.elapsedMs} ms, got number of rows: $size")
+			println(s"At time $elapsedMs ms, iterated through $size rows")
 
 
 		ignore("Counts the rows in the files"){

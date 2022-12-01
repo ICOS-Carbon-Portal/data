@@ -95,15 +95,17 @@ object ObspackNcToBinTable:
 	end apply
 
 	private def readNumeric[N <: Number](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
+		val ncArr = v.read()
+		var printedFillInfo = false
 		Option(v.findAttribute("_FillValue")).map(_.getNumericValue).fold{
-			(i: Int) => getter(readOne(v, i), 0)
+			(i: Int) => getter(ncArr, i)
 		}{fill =>
 			(i: Int) => {
-				val value = getter(readOne(v, i), 0)
+				val value = getter(ncArr, i)
+				// our nullValues are NaNs for Float and Double, so potentially
+				// failed NaN == NaN comparison (see the next line) is not a problem
 				if value == fill then nullValue else value
 			}
 		}
-
-	private inline def readOne(v: Variable, i: Int): ucar.ma2.Array = v.read(Array(i), Array(1))
 
 end ObspackNcToBinTable
