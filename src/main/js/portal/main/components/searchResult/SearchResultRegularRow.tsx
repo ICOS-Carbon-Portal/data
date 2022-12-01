@@ -112,7 +112,7 @@ const Description: React.FunctionComponent<{
 
 	const ownDescription = extendedInfo.description ?? ""
 	const separator = ownDescription && extendedInfo.specComments ? ". " : ""
-	const description = extendedInfo.specComments ?? "" + separator + ownDescription
+	const description = (extendedInfo.specComments ?? "") + separator + ownDescription
 
 	return isSmallDevice()
 		? <div style={truncateStyle} title={description}>{description}</div>
