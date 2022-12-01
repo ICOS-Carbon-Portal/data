@@ -18,7 +18,11 @@ export default class CheckBtn extends Component<Props>{
 		const isChecked = this.props.isChecked || false;
 
 		return(
-			<input ref={this.props.checkRef} className="form-check-input" type="checkbox" onChange={onClick} checked={isChecked ?? "checked"} title={title}></input>
+			<span title={title}>
+				<input ref={this.props.checkRef} className="form-check-input" type="checkbox" onChange={onClick}
+					checked={isChecked ?? "checked"} disabled={this.props.checkboxDisabled}>
+				</input>
+			</span>
 		)
 	}
 }
