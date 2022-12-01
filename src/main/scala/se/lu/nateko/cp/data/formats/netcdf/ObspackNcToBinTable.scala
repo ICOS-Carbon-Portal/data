@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.formats.netcdf
 
+import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.ColumnsMeta
 import se.lu.nateko.cp.data.formats.ValueFormat
 import se.lu.nateko.cp.data.formats.ValueFormatParser
@@ -8,23 +9,39 @@ import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.NetCdfViewServiceImpl
+import se.lu.nateko.cp.meta.core.data.TabularIngestionExtract
+import se.lu.nateko.cp.meta.core.data.TimeInterval
+import se.lu.nateko.cp.meta.core.data.TimeSeriesExtract
+import ucar.nc2.Group
 import ucar.nc2.Variable
+import ucar.nc2.dataset.CoordinateAxis1DTime
+import ucar.nc2.dataset.NetcdfDataset
 import ucar.nc2.dataset.NetcdfDatasets
+import ucar.nc2.dataset.VariableDS
 
 import java.nio.file.Path
+import java.time.Instant
+import java.util.Formatter
+import java.util.Locale
 import scala.collection.JavaConverters._
-import scala.util.Try
-import ucar.nc2.dataset.NetcdfDataset
-import scala.util.Success
-import scala.util.Failure
-import se.lu.nateko.cp.data.api.CpDataParsingException
-import ObspackNcToBinTable.TypedVar
-import se.lu.nateko.cp.meta.core.data.TimeSeriesExtract
 import scala.collection.immutable.Iterable
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
-class ObspackNcToBinTable private(netCdfDataset: NetcdfDataset, rowFactory: () => LazyList[BinTableRow]) extends AutoCloseable {
+import ObspackNcToBinTable.TypedVar
 
-	def getIngestionExtract(): TimeSeriesExtract = ???
+class ObspackNcToBinTable private(netCdfDataset: NetcdfDataset, rowFactory: () => LazyList[BinTableRow], columnsMeta: ColumnsMeta, nRows: Long) extends AutoCloseable {
+
+	def getIngestionExtract(): TimeSeriesExtract =
+		val sampleTimes = netCdfDataset.findVariable("time").read()
+		
+		val start = Instant.ofEpochSecond(sampleTimes.getLong(0))
+		val stop = Instant.ofEpochSecond(sampleTimes.getLong(nRows.toInt - 1))
+
+		val ingestionExtract = TabularIngestionExtract(None, TimeInterval(start, stop)) // TODO: add actualColumns
+
+		TimeSeriesExtract(ingestionExtract, Some(nRows.toInt))
 
 	def readRows(): Iterable[BinTableRow] = rowFactory()
 
@@ -77,11 +94,12 @@ object ObspackNcToBinTable:
 					case DoubleValue =>
 						readNumeric(v, nullValue, _ getDouble _)
 					case Iso8601DateTime =>
-						(i: Int) => {
-							//TODO Read the timestamp, handle netcdf fill values (i.e. missing values)
-							val timeStamp: java.time.Instant = ???
-							ValueFormatParser.encodeInstant(timeStamp)
-						}
+						val sb = new StringBuilder();
+						val formatter = new Formatter(Locale.ENGLISH);
+						val group = new Group(netCdfDataset, null, "x07") // deprecated constructor, TODO: Find alternative
+						val sliceAxis = CoordinateAxis1DTime.factory(netCdfDataset, VariableDS.builder().copyFrom(v).build(group), formatter);
+
+						sliceAxis.getCalendarDates().asScala.map(calendarDate => calendarDate.toString())
 					case _ => throw new CpDataParsingException(
 						s"Support for value format $vf in Netcdf has not been implemented yet"
 					)
@@ -90,7 +108,9 @@ object ObspackNcToBinTable:
 			new ObspackNcToBinTable(netCdfDataset, () => LazyList.tabulate(nRows.toInt){i =>
 				val cells = cellsLookup.map(_.apply(i))
 				BinTableRow(cells, schema)
-			})
+			},
+			colsMeta,
+			nRows)
 		}
 	end apply
 
