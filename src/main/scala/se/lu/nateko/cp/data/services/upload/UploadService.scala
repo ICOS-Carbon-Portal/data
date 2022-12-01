@@ -14,7 +14,7 @@ import se.lu.nateko.cp.data.UploadConfig
 import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.isNonIngestedZip
+import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -30,9 +30,10 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(implicit mat: Materializer) {
+class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(using Materializer) {
 
-	import UploadService._
+	import UploadService.*
+	import ObjectFormats.{isNonIngestedZip, netCdfTimeSer}
 	import meta.{ dispatcher, system }
 
 	val log = system.log
@@ -202,17 +203,22 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] =
 		val spec: DataObjectSpec = req.fold(_.spec, _.specification)
 		val file = req.fold(_.file, getFile)
+		val isTryIngest = req.isLeft
 
 		if spec.isSpatiotemporal then
 			val varNames: Seq[String] = req.fold(
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
 			)
-			val isTryIngest = req.isLeft
 			if isTryIngest && varNames.isEmpty then
 				Future.failed(new CpDataException("Ingestion pointless: no variable names provided for validation"))
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
+
+		else if spec.format.uri == netCdfTimeSer && spec.isStationTimeSer then
+			IngestionUploadTask.getColumnFormats(spec.self.uri, meta.sparql).map{colsMeta =>
+				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest)
+			}
 
 		else if spec.isStationTimeSer then
 			val ingSpec = req.fold(
