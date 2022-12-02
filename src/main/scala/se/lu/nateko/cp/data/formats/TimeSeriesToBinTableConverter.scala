@@ -111,7 +111,9 @@ object TimeSeriesToBinTableConverter {
 
 		val allColumns = actualColumnNames.getOrElse{
 			colsMeta.columns.collect{
-				case PlainColumn(_, colName, false) => colName
+				case PlainColumn(_, colName, false) => 
+					// println("all columns in getReadingSchema" + colName)
+					colName
 			}
 		}.toArray
 

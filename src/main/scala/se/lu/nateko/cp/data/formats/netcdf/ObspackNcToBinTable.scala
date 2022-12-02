@@ -31,7 +31,8 @@ import ObspackNcToBinTable.TypedVar
 class ObspackNcToBinTable private(
 	netCdfDataset: NetcdfDataset,
 	rowFactory: () => LazyList[BinTableRow],
-	val extract: TimeSeriesExtract
+	val extract: TimeSeriesExtract,
+	val schema: Schema
 ) extends AutoCloseable {
 
 	def readRows(): Iterable[BinTableRow] = rowFactory()
@@ -131,7 +132,8 @@ object ObspackNcToBinTable:
 					val cells = cellsLookup.map(_.apply(i))
 					BinTableRow(cells, schema)
 				},
-				TimeSeriesExtract(ingestionExtract, Some(nRows.toInt))
+				TimeSeriesExtract(ingestionExtract, Some(nRows.toInt)),
+				schema
 			)
 		}
 	end apply
