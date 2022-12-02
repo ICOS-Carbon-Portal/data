@@ -67,7 +67,8 @@ object ValueFormatParser {
 
 	def encodeLocalDate(ld: LocalDate): Integer = Int.box(ld.toEpochDay.toInt)
 	def encodeLocalTime(lt: LocalTime): Integer = Int.box(lt.toSecondOfDay)
-	def encodeInstant(inst: Instant): java.lang.Double = Double.box(inst.toEpochMilli.toDouble)
+	inline def encodeInstant(epochMillis: Long): java.lang.Double = Double.box(epochMillis.toDouble)
+	def encodeInstant(inst: Instant): java.lang.Double = encodeInstant(inst.toEpochMilli)
 	def encodeLocalDateTime(dt: LocalDateTime): java.lang.Double =
 		Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 

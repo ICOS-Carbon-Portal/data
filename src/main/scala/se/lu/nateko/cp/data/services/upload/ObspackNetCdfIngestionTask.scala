@@ -39,9 +39,8 @@ class ObspackNetCdfIngestionTask(
 					.runWith(BinTableSink(tmpFile.toFile, true))
 					.map{_ =>
 						import java.nio.file.StandardCopyOption.*
-						val extract = parser.getIngestionExtract()
 						if !tryIngest then Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
-						IngestionSuccess(extract)
+						IngestionSuccess(parser.extract)
 					}
 					.andThen{case _ =>
 						parser.close()
