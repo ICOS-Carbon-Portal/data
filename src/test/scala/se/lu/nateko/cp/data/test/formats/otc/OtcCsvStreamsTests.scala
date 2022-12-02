@@ -7,7 +7,8 @@ import akka.stream.Materializer
 import akka.stream.scaladsl._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.ValueFormat.*
 import se.lu.nateko.cp.data.formats.bintable._
 import se.lu.nateko.cp.data.formats.otc.OtcCsvStreams._
 import se.lu.nateko.cp.data.streams.KeepFuture

@@ -1,12 +1,12 @@
 package se.lu.nateko.cp.data.formats.ecocsv
 
-import java.time._
+import java.time.*
 
 import scala.concurrent.{ ExecutionContext, Future }
 
 import akka.stream.scaladsl.{ Flow, Keep }
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object EcoCsvStreams {
@@ -31,8 +31,8 @@ object EcoCsvStreams {
 	}
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
-		val date = ValueFormatParser.parse(localDate, EtcDate).asInstanceOf[Int]
-		val time = ValueFormatParser.parse(localTime, Iso8601TimeOfDay).asInstanceOf[Int]
+		val date = ValueFormatParser.parse(localDate, ValueFormat.EtcDate).asInstanceOf[Int]
+		val time = ValueFormatParser.parse(localTime, ValueFormat.Iso8601TimeOfDay).asInstanceOf[Int]
 		val locDate = LocalDate.ofEpochDay(date.toLong)
 
 		val dt =

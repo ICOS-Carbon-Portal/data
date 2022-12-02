@@ -2,8 +2,7 @@ package se.lu.nateko.cp.data.test.formats.netcdf.viewing
 
 import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.formats.ColumnsMeta
-import se.lu.nateko.cp.data.formats.FloatValue
-import se.lu.nateko.cp.data.formats.Iso8601DateTime
+import se.lu.nateko.cp.data.formats.ValueFormat.{FloatValue, Iso8601DateTime}
 import se.lu.nateko.cp.data.formats.PlainColumn
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
 import ucar.nc2.dataset.CoordinateAxisTimeHelper

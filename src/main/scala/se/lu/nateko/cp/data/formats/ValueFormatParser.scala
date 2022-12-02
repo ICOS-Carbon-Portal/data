@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 object ValueFormatParser {
+	import ValueFormat.*
 
 	private[this] val parser = new ValueParser
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")

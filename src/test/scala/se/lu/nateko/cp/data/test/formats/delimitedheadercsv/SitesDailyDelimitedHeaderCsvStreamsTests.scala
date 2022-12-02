@@ -7,7 +7,8 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, StreamConverters}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.ValueFormat.*
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.delimitedheadercsv.SitesDelimitedHeaderCsvStreams
 

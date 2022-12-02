@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.formats.netcdf
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.ColumnsMeta
-import se.lu.nateko.cp.data.formats.Iso8601DateTime
 import se.lu.nateko.cp.data.formats.ValueFormat
 import se.lu.nateko.cp.data.formats.ValueFormatParser
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
@@ -21,7 +20,7 @@ import ucar.nc2.time.CalendarDate
 
 import java.nio.file.Path
 import java.time.Instant
-import scala.collection.JavaConverters._
+import scala.collection.JavaConverters.*
 import scala.collection.immutable.Iterable
 import scala.util.Failure
 import scala.util.Success
@@ -42,6 +41,7 @@ class ObspackNcToBinTable private(
 }
 
 object ObspackNcToBinTable:
+	import ValueFormat.*
 	type TypedVar = (Variable, ValueFormat)
 
 	def apply(file: Path, colsMeta: ColumnsMeta): Try[ObspackNcToBinTable] =

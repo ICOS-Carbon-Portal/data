@@ -1,10 +1,11 @@
 package se.lu.nateko.cp.data.formats.delimitedheadercsv
 
 
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
 import java.time.temporal.ChronoUnit
 import java.time.{ Instant, LocalDateTime, LocalDate, LocalTime, ZoneOffset }
 import java.time.format.DateTimeFormatter
+import ValueFormat.*
 
 class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvStreams {
 

@@ -1,8 +1,9 @@
 package se.lu.nateko.cp.data.formats.atcprod
 
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
 
 object AtcProdParser {
+	import ValueFormat.*
 
 	case class Header(
 		headerLength: Int,

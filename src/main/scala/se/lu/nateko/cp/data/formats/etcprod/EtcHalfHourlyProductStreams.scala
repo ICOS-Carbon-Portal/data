@@ -5,12 +5,12 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
 
 class EtcHalfHourlyProductStreams(utcOffset: Int) extends SimpleCsvStreams(","){
 
 	override def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "-9999"
+		case ValueFormat.FloatValue => value == "-9999"
 		case _ => false
 	}
 
