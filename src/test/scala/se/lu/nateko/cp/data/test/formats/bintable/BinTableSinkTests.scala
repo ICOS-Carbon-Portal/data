@@ -12,10 +12,10 @@ import akka.stream.scaladsl.Framing
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.bintable._
+import se.lu.nateko.cp.data.formats.bintable.*
 import se.lu.nateko.cp.data.formats.csv.CsvParser
 import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
-import se.lu.nateko.cp.data.test.TestUtils._
+import se.lu.nateko.cp.data.test.TestUtils.*
 
 class BinTableSinkTests extends AnyFunSuite with BeforeAndAfterAll{
 

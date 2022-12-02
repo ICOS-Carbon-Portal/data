@@ -5,15 +5,15 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
+import se.lu.nateko.cp.data.formats.*
 import se.lu.nateko.cp.data.formats.csv.CsvParser
 import se.lu.nateko.cp.data.services.upload.IngestionUploadTask.RowParser
 import se.lu.nateko.cp.data.streams.geo.GeoFeaturePointSink
 import se.lu.nateko.cp.data.streams.geo.Point
-import se.lu.nateko.cp.meta.core.data._
+import se.lu.nateko.cp.meta.core.data.*
 
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future

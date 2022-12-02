@@ -14,7 +14,7 @@ import scala.util.Failure
 import scala.util.Success
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.StandardRoute
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO

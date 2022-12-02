@@ -6,12 +6,12 @@ import akka.{Done, NotUsed}
 import akka.stream.scaladsl.{Flow, Keep, Sink}
 import akka.util.ByteString
 import se.lu.nateko.cp.data.api.{CpDataException, SparqlClient}
-import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats._
-import se.lu.nateko.cp.data.api.SitesMetaVocab._
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.*
+import se.lu.nateko.cp.data.api.SitesMetaVocab.*
+import se.lu.nateko.cp.data.formats.*
 import se.lu.nateko.cp.data.formats.bintable.{BinTableSink, FileExtension}
 import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow}
-import se.lu.nateko.cp.meta.core.data._
+import se.lu.nateko.cp.meta.core.data.*
 import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
 
 import scala.concurrent.{ExecutionContext, Future}

@@ -9,7 +9,7 @@ import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.streams.ZipEntryFlow._
+import se.lu.nateko.cp.data.streams.ZipEntryFlow.*
 import se.lu.nateko.cp.data.test.TestUtils
 
 import java.nio.charset.StandardCharsets

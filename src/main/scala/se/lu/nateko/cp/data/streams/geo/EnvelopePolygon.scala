@@ -5,7 +5,7 @@ import scala.collection.mutable.Buffer
 import scala.collection.mutable.Map
 import Ordering.Double.TotalOrdering
 
-import GeoAlgorithms._
+import GeoAlgorithms.*
 import se.lu.nateko.cp.meta.core.data.Polygon
 import se.lu.nateko.cp.meta.core.data.Position
 

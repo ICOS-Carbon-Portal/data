@@ -1,7 +1,7 @@
 package se.lu.nateko.cp.data.formats.delimitedheadercsv
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
 
 class DelimitedHeaderCsvParser(
 	columnsMeta: ColumnsMeta,

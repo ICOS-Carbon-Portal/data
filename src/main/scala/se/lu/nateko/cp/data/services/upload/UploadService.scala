@@ -18,7 +18,7 @@ import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.streams.SinkCombiner
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data._
+import se.lu.nateko.cp.meta.core.data.*
 
 import java.io.File
 import java.io.FileNotFoundException

@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.formats.netcdf
 
-import spray.json._
+import spray.json.*
 
 object NetCdfJson extends DefaultJsonProtocol{
 

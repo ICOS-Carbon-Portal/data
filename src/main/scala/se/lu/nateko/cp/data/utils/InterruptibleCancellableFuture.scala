@@ -16,7 +16,7 @@ Copyright 2018 Viktor Klang
 
 package se.lu.nateko.cp.data.utils
 
-import scala.concurrent._
+import scala.concurrent.*
 import java.util.concurrent.CancellationException
 
 final class Interrupt extends (() => Boolean) {

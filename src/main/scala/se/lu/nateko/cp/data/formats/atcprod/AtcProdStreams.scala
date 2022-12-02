@@ -5,8 +5,8 @@ import java.time.Instant
 import scala.concurrent.{ ExecutionContext, Future }
 
 import akka.stream.scaladsl.{ Flow, Keep }
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
 object AtcProdStreams {

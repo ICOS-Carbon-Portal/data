@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.formats.bintable
 
 import akka.Done
 import akka.stream.scaladsl.Source
-import se.lu.nateko.cp.data.formats.bintable.DataType._
+import se.lu.nateko.cp.data.formats.bintable.DataType.*
 import se.lu.nateko.cp.data.streams.SourceFromCloseableIterator
 
 import java.io.File

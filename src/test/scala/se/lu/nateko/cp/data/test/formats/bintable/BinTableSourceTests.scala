@@ -9,8 +9,8 @@ import org.scalatest.funsuite.AnyFunSuite
 import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.bintable._
-import se.lu.nateko.cp.data.test.TestUtils._
+import se.lu.nateko.cp.data.formats.bintable.*
+import se.lu.nateko.cp.data.test.TestUtils.*
 
 class BinTableSourceTests extends AnyFunSuite with BeforeAndAfterAll{
 

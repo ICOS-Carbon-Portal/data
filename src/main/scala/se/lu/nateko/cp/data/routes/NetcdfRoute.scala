@@ -1,7 +1,7 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 
@@ -11,7 +11,7 @@ import se.lu.nateko.cp.data.formats.netcdf.RasterMarshalling
 import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-import spray.json.DefaultJsonProtocol._
+import spray.json.DefaultJsonProtocol.*
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 

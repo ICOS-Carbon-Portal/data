@@ -5,7 +5,7 @@ import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 
 import java.text.NumberFormat
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 

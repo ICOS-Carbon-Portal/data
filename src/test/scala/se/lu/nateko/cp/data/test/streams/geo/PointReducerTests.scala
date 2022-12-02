@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.test.streams.geo
 import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 import java.io.File
-import se.lu.nateko.cp.data.streams.geo._
+import se.lu.nateko.cp.data.streams.geo.*
 import java.io.PrintWriter
 import se.lu.nateko.cp.meta.core.data.Position
 
