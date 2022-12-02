@@ -19,10 +19,12 @@ import ucar.ma2.MAMath;
 import ucar.ma2.Section;
 import ucar.nc2.Variable;
 import ucar.nc2.dataset.CoordinateAxis1DTime;
+import ucar.nc2.dataset.CoordinateAxisTimeHelper;
 import ucar.nc2.dataset.NetcdfDataset;
 import ucar.nc2.dataset.NetcdfDatasets;
 import ucar.nc2.dataset.VariableDS;
 import ucar.nc2.time.CalendarDate;
+import ucar.nc2.time.Calendar;
 
 public class NetCdfViewServiceImpl implements NetCdfViewService {
 
@@ -110,15 +112,17 @@ public class NetCdfViewServiceImpl implements NetCdfViewService {
 	{
 		return withDataset(ds -> {
 
-			Variable ncVar = ds.findVariable(variables.dateVariable);
-			VariableDS ncVarDS = VariableDS.builder().copyFrom(ncVar).build(null);
+			Variable timeVar = ds.findVariable(variables.dateVariable);
+			Array ncArr = timeVar.read();
+			String[] dates = new String[(int)ncArr.getSize()];
+			String unit = timeVar.attributes().findAttribute("units").getStringValue();
+			CoordinateAxisTimeHelper timeHelper = new CoordinateAxisTimeHelper(Calendar.gregorian, unit);
 
-			StringBuilder sb = new StringBuilder();
-			Formatter formatter = new Formatter(sb, Locale.ENGLISH);
-			CoordinateAxis1DTime sliceAxis = CoordinateAxis1DTime.factory(ds, ncVarDS, formatter);
-
-			return sliceAxis.getCalendarDates().stream().map(calendarDate -> calendarDate.toString()).toArray(
-					n -> new String[n]);
+			for(int i = 0; i < dates.length; i++){
+				double tsOffset = ncArr.nextDouble();
+				dates[i] = timeHelper.makeCalendarDateFromOffset(tsOffset).toString();
+			}
+			return dates;
 		});
 	}
 
