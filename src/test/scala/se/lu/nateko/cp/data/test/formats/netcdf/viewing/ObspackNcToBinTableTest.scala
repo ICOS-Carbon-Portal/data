@@ -96,26 +96,15 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 			}.get
 		}
 
-		// val file = new File(origFile.getAbsolutePath + bintable.FileExtension)
-
 		it("Parses nc file as csv"){
 			import ObspackNcToBinTable.TypedVar
 
 			val file = Path.of(path1).withSuffix(FileExtension)
 			val tmpFile = file.withSuffix(".working")
 			val parser = getParserForFile(path1)
-
-
 			val nRows = parser.schema.size.toInt
-			val actualColumns = Some(Seq("time", "value"))
-
 			val readSchema = TimeSeriesToBinTableConverter.getReadingSchema(None, None, nRows, cm)
 
-			val flTest: AnyVal = 3.75e-4f
-			println("test float serializer: " + readSchema.serializers(1)(flTest).toString)
-
-			println("read schema indices: " + readSchema.fetchIndices.mkString(", "))
-			/*
 			var resFut = Source(parser.readRows()).runWith(BinTableSink(tmpFile.toFile, true))
 				.flatMap{nRowsWritten =>
 					println(s"Written $nRowsWritten")
@@ -124,24 +113,18 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 						.rows(readSchema.fetchIndices, 0L, 100)
 						.map{row =>
 							row.indices.map{i =>
-								row(i).toString//readSchema.serializers(i)(row(i))
+								readSchema.serializers(i)(row(i))
 							}.mkString("", ",", "\n")
 						}
 						.mapMaterializedValue(_ => NotUsed)
 					val header = Source.single(readSchema.fetchedColumns.mkString("", ",", "\n"))
 					val csvFile = Path.of("/home/klara/netcdf/co2_con_aircraft-insitu_42_allvalid.csv")
 					header.concat(rowsSrc).map(t => ByteString(t)).runWith(FileIO.toPath(csvFile))
-
-					// val result: Future[IOResult] = Source(csvSource).map(t => ByteString(t)).runWith(FileIO.toPath(Path.of("/home/klara/netcdf/co2_con_aircraft-insitu_42_allvalid.csv")))
-
-					
-					//Files.deleteIfExists(tmpFile)
-					// Files.deleteIfExists(csvFile)
 				}
 				.andThen{
 					case _ => parser.close()
 				}
-			println(Await.result(resFut, 200.seconds))*/
+			println(Await.result(resFut, 200.seconds))
 		}
 	}
 

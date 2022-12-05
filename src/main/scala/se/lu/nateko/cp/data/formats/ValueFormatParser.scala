@@ -8,6 +8,8 @@ import java.text.NumberFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.math.RoundingMode
+import java.text.DecimalFormat
 
 object ValueFormatParser {
 	import ValueFormat.*
@@ -16,11 +18,6 @@ object ValueFormatParser {
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
-	val numberFormat: NumberFormat = {
-		val nf = NumberFormat.getNumberInstance(Locale.ROOT)
-		nf.setGroupingUsed(false)
-		nf
-	}
 
 	def parse(value: String, format: ValueFormat): AnyRef =
 		try{
@@ -108,14 +105,8 @@ object ValueFormatParser {
 			case Iso8601TimeOfDay =>
 				v => LocalTime.ofSecondOfDay(v.asInstanceOf[Int].toLong % 86400).toString
 
-			case Utf16CharValue | IntValue | StringValue =>
+			case Utf16CharValue | IntValue | StringValue | FloatValue | DoubleValue =>
 				v => v.toString
-
-			case FloatValue =>
-				v => numberFormat.format(v.asInstanceOf[Float].toDouble)
-
-			case DoubleValue =>
-				v => numberFormat.format(v.asInstanceOf[Double])
 		}
 
 		val nullTest: AnyVal => Boolean = getBinTableDataType(format) match{
