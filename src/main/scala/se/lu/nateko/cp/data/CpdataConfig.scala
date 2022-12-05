@@ -11,6 +11,7 @@ import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.etcupload.StationId
+import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewServiceConfig
 import spray.json.*
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
@@ -22,7 +23,7 @@ case class NetCdfConfig(
 	longitudeVars: Seq[String],
 	elevationVars: Seq[String],
 	statsCalcParallelizm: Int
-)
+) extends NetCdfViewServiceConfig
 
 case class B2SafeConfig(
 	host: String,

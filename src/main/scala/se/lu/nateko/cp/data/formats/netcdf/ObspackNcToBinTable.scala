@@ -8,6 +8,7 @@ import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
+import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService.getDateParser
 import se.lu.nateko.cp.meta.core.data.TabularIngestionExtract
 import se.lu.nateko.cp.meta.core.data.TimeInterval
 import se.lu.nateko.cp.meta.core.data.TimeSeriesExtract
@@ -152,9 +153,6 @@ object ObspackNcToBinTable:
 			}
 		}
 
-	private def getDateParser(timeVar: Variable): Double => CalendarDate =
-		val unit = timeVar.attributes().findAttribute("units").getStringValue
-		val timeHelper = new CoordinateAxisTimeHelper(Calendar.gregorian, unit)
-		timeHelper.makeCalendarDateFromOffset
+
 
 end ObspackNcToBinTable
