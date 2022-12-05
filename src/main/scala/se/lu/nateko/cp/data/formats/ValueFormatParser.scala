@@ -4,12 +4,8 @@ import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.ValueParser
 
-import java.text.NumberFormat
 import java.time.*
 import java.time.format.DateTimeFormatter
-import java.util.Locale
-import java.math.RoundingMode
-import java.text.DecimalFormat
 
 object ValueFormatParser {
 	import ValueFormat.*

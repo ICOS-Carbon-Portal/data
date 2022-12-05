@@ -1,38 +1,31 @@
 package se.lu.nateko.cp.data.test.formats.netcdf.viewing
 
+import akka.NotUsed
+import akka.actor.ActorSystem
+import akka.stream.IOResult
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.data.formats.ColumnsMeta
-import se.lu.nateko.cp.data.formats.ValueFormat.{FloatValue, Iso8601DateTime}
 import se.lu.nateko.cp.data.formats.PlainColumn
+import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
+import se.lu.nateko.cp.data.formats.ValueFormat.FloatValue
+import se.lu.nateko.cp.data.formats.ValueFormat.Iso8601DateTime
+import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
+import se.lu.nateko.cp.data.formats.bintable.BinTableSink
+import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
+import se.lu.nateko.cp.data.utils.io.withSuffix
 import ucar.nc2.dataset.CoordinateAxisTimeHelper
 import ucar.nc2.dataset.NetcdfDatasets
 import ucar.nc2.time.Calendar
-import se.lu.nateko.cp.data.formats.bintable.FileExtension
-import se.lu.nateko.cp.data.utils.io.withSuffix
 
 import java.nio.file.Path
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Using
-import akka.stream.scaladsl.Source
-import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import scala.concurrent.ExecutionContext
-import java.nio.file.Files
-import akka.actor.ActorSystem
-import scala.concurrent.ExecutionContextExecutor
-import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
-import akka.NotUsed
-import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
-import scala.collection.JavaConverters._
-import java.io.File
-import akka.dispatch.Futures
-import scala.concurrent.Future
-import akka.stream.IOResult
-import akka.util.ByteString
-import akka.stream.scaladsl.FileIO
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationInt
+import scala.util.Using
 
 class ObspackNcToBinTableTest extends AnyFunSpec {
 
