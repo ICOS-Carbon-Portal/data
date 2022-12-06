@@ -26,16 +26,19 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationInt
 import scala.util.Using
+import java.time.Instant
+import org.scalatest.BeforeAndAfterAll
 
-class ObspackNcToBinTableTest extends AnyFunSpec {
+class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 
 	private given system: ActorSystem = ActorSystem("ObspackNcToBinTableTest")
 	given dispatcher: ExecutionContextExecutor = system.dispatcher
+	
+	val path1 = getClass.getResource("/co2_con_aircraft-insitu_42_allvalid_small.nc").getPath
+	val path2 = getClass.getResource("/co2_ssl_tower-insitu_23_allvalid-12magl_small.nc").getPath
 
-	val path1 = "/home/klara/netcdf/co2_con_aircraft-insitu_42_allvalid.nc"
-	// val path1 = "/home/oleg/Documents/CP/netcdfNOAA/co2_con_aircraft-insitu_42_allvalid.nc"
-	val path2 = "/home/klara/netcdf/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
-	// val path2 = "/home/oleg/Documents/CP/netcdfAlex/nc/co2_ssl_tower-insitu_23_allvalid-12magl_alex.nc"
+	val csvPath = Path.of(path1 + ".csv")
+	val tmpFile = Path.of(path1).withSuffix(FileExtension).withSuffix(".working")
 
 	describe("Netcdf reading workbench"){
 		val cm = new ColumnsMeta(Seq(
@@ -92,8 +95,6 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 		it("Parses nc file as csv"){
 			import ObspackNcToBinTable.TypedVar
 
-			val file = Path.of(path1).withSuffix(FileExtension)
-			val tmpFile = file.withSuffix(".working")
 			val parser = getParserForFile(path1)
 			val nRows = parser.schema.size.toInt
 			val readSchema = TimeSeriesToBinTableConverter.getReadingSchema(None, None, nRows, cm)
@@ -111,15 +112,33 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 						}
 						.mapMaterializedValue(_ => NotUsed)
 					val header = Source.single(readSchema.fetchedColumns.mkString("", ",", "\n"))
-					val csvFile = Path.of("/home/klara/netcdf/co2_con_aircraft-insitu_42_allvalid.csv")
-					header.concat(rowsSrc).map(t => ByteString(t)).runWith(FileIO.toPath(csvFile))
+					header.concat(rowsSrc).map(t => ByteString(t)).runWith(FileIO.toPath(csvPath))
 				}
 				.andThen{
 					case _ => parser.close()
 				}
-			println(Await.result(resFut, 200.seconds))
+
+			val res = Await.result(resFut, 200.seconds)
+		}
+
+		it("Csv contains correct values"){
+			val bufferedSource = io.Source.fromFile(csvPath.toFile)
+
+			val lines = bufferedSource.getLines()
+
+			lines.next() // skip csv header
+
+			val first = lines.next().split(",")
+			val second = lines.next().split(",")
+
+			assert(first(1).toString == Instant.ofEpochSecond(1131157384).toString)
+			assert(second(1).toString == Instant.ofEpochSecond(1131157394).toString)
 		}
 	}
+	
+	override protected def afterAll(): Unit =
+		csvPath.toFile().delete()
+		tmpFile.toFile().delete()
 
 	private class StopWatch:
 		private val start = System.currentTimeMillis()
