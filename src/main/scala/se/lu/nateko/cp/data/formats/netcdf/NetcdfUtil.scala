@@ -1,8 +1,6 @@
 package se.lu.nateko.cp.data.formats.netcdf
 
 import se.lu.nateko.cp.data.NetCdfConfig
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.NetCdfViewServiceImpl
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.ViewServiceFactoryImpl
 import se.lu.nateko.cp.data.utils.usingWithFuture
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath

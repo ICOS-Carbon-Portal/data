@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.{*, given}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshaller
@@ -19,10 +19,7 @@ import spray.json.JsonFormat
 import spray.json.JsonWriter
 
 object NetcdfRoute extends DefaultJsonProtocol {
-
-	private given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] with{
-
-	}
+	private given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = immIndexedSeqFormat
 	private given ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
 	def apply(factory: ViewServiceFactory): Route = {
@@ -57,10 +54,10 @@ object NetcdfRoute extends DefaultJsonProtocol {
 			path("getCrossSection"){
 				parameters("service", "varName", "latInd".as[Int], "lonInd".as[Int], "elevationInd".as[Int].?){
 					(service, varName, latInd, lonInd, elInd) =>
-						val raster = factory
+						val timeSeries = factory
 							.getNetCdfViewService(service)
 							.getTemporalCrossSection(varName, latInd, lonInd, elInd)
-						complete(raster)
+						complete(timeSeries)
 				}
 			}
 		}

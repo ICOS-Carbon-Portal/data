@@ -61,10 +61,10 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			})
 
 			//the following code block is to test readability and crash if the test fails
-			val date0 = service.getAvailableDates(0)
+			service.getAvailableDates
 			varNames.foreach{varName =>
-				val elevation0 = service.getAvailableElevations(varName).headOption
-				service.getRaster(date0, varName, elevation0.map(_ => 0))
+				val elevation0 = service.getAvailableElevations(varName).indices.headOption
+				service.getRaster(0, varName, elevation0)
 			}
 
 			val varInfoFuts = varNames.map(NetcdfUtil.calcMinMax(file, _))

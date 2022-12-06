@@ -23,9 +23,12 @@ trait NetCdfViewServiceConfig:
 	def elevationVars: Seq[String]
 
 class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
-	def getNetCdfFiles(): IndexedSeq[String] = ???
-	def getNetCdfViewService(fileName: String): NetCdfViewService = ???
-end ViewServiceFactory
+	def getNetCdfFiles(): IndexedSeq[String] =
+		folder.toFile.list((_, fn) => fn.endsWith(".nc")).toIndexedSeq
+
+	def getNetCdfViewService(fileName: String) =
+		NetCdfViewService(folder.resolve(fileName), config)
+
 
 object NetCdfViewService:
 	def getDateParser(timeVar: Variable): Double => CalendarDate =
@@ -136,14 +139,7 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 	def getRaster(dateTimeIdx: Int, varName: String, elevationIdx: Option[Int]): Raster = withDataset{ds =>
 
-		val ncVar = ds.findVariable(varName)
-		if(ncVar == null) throw new IllegalArgumentException(s"Variable $varName was not found in file ${ncFile.getFileName}")
-
-		val dimCount: Int = ncVar.getRank
-
-		if dimCount < 3 || dimCount > 4 then
-			throw new IllegalArgumentException("The variable " + varName
-					+ " contains an illegal number of dimensions (" + dimCount + ")")
+		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, elevationIdx)
 
 		val dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension)
 		val lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension)
@@ -155,8 +151,6 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 		val dateVar = ds.findVariable(variables.dateVariable)
 
-		val origin, size = Array.ofDim[Int](dimCount)
-
 		origin(dateDimInd) = dateTimeIdx
 		origin(lonDimInd) = 0
 		origin(latDimInd) = 0
@@ -164,12 +158,6 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		size(dateDimInd) = 1
 		size(lonDimInd) = sizeLon
 		size(latDimInd) = sizeLat
-
-		if dimCount == 4 then
-			validateElevationIdx(ds, elevationIdx)
-			val elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension)
-			origin(elevationDimInd) = elevationIdx
-			size(elevationDimInd) = 1
 
 		val sec = new Section(origin, size)
 
@@ -194,23 +182,42 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 	}
 
-	private def validateElevationIdx(ds: NetcdfDataset, elevationIdx: Int): Unit =
-		val elevationDim = ds.findDimension(dimensions.elevationDimension)
-		if elevationIdx >= elevationDim.getLength
-		then throw new IndexOutOfBoundsException(s"Too big elevation index $elevationIdx")
+	private def findVarPrepareSection(
+		ds: NetcdfDataset, varName: String, elevationIdxOpt: Option[Int]
+	): (Variable, Array[Int], Array[Int]) =
+
+		val ncVar = ds.findVariable(varName)
+		if(ncVar == null) throw new IllegalArgumentException(s"Variable $varName was not found in file ${ncFile.getFileName}")
+
+		val dimCount: Int = ncVar.getRank
+
+		if dimCount < 3 || dimCount > 4 then throw new IllegalArgumentException(
+			s"Variable $varName contains an illegal number of dimensions $dimCount (only 3 or 4 are accepted)"
+		)
+
+		val origin, size = Array.ofDim[Int](dimCount)
+
+		elevationIdxOpt.foreach{elevationIdx =>
+			if dimCount < 4 then throw new IllegalArgumentException(
+				s"Variable $varName contains an illegal number of dimensions $dimCount (at least 4 are needed for elevations)"
+			)
+			val elevationDim = ds.findDimension(dimensions.elevationDimension)
+			if elevationIdx >= elevationDim.getLength then
+				throw new IndexOutOfBoundsException(s"Too big elevation index $elevationIdx")
+			val elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension)
+			origin(elevationDimInd) = elevationIdx
+			size(elevationDimInd) = 1
+		}
+
+		(ncVar, origin, size)
+	end findVarPrepareSection
 
 
 	def getTemporalCrossSection(
 		varName: String, latInd: Int, lonInd: Int, elevationIdx: Option[Int]
 	): IndexedSeq[Double] = withDataset{ds =>
 
-		val ncVar = ds.findVariable(varName)
-
-		val dimCount = ncVar.getRank
-
-		if dimCount < 3 || dimCount > 4 then throw new IllegalArgumentException(
-			s"The variable $varName contains an illegal number of dimensions $dimCount (only 3 or 4 are accepted)"
-		)
+		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, elevationIdx)
 
 		val dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension)
 		val lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension)
@@ -222,8 +229,6 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		val latValues = ds.findVariable(variables.getLatVariable).read()
 		val latSorted: Boolean = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
 
-		val origin, size = Array.ofDim[Int](dimCount)
-
 		origin(dateDimInd) = 0
 		origin(lonDimInd) = lonInd
 		origin(latDimInd) = if latSorted then latInd else sizeLat - 1 - latInd
@@ -232,17 +237,10 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		size(lonDimInd) = 1
 		size(latDimInd) = 1
 
-		if (dimCount == 4) {
-			validateElevationIdx(ds, elevationIdx)
-			val elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension)
-			origin(elevationDimInd) = elevationIdx
-			size(elevationDimInd) = 1
-		}
-
 		val sec = new Section(origin, size)
 		val arrFullDim = ncVar.read(sec)
 
 		arrFullDim.get1DJavaArray(DataType.DOUBLE).asInstanceOf[Array[Double]].toIndexedSeq
-
 	}
+
 end NetCdfViewService
