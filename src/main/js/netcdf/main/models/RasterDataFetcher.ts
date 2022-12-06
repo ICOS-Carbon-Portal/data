@@ -1,15 +1,33 @@
-import {getRaster} from '../backend';
+import {getRaster, RasterId} from '../backend';
 import {ensureDelay, retryPromise} from 'icos-cp-utils';
-import { BinRasterExtended } from './BinRasterExtended';
+import { BinRaster } from 'icos-cp-backend';
 
 type DataObjectVars = {
 	dates: string[]
-	elevations: string[]
+	elevations: number[]
 	gammas: number[]
 	services: string[]
 	variables: string[]
 }
-type Options = { delay: number } & Record<string, string | number>
+type Options = { delay: number }
+
+export interface RasterRequestIdxs{
+	serviceIdx: number
+	variableIdx: number
+	dateIdx: number
+	elevationIdx?: number
+}
+
+export function getRasterId(req: RasterRequestIdxs): RasterId {
+	const components: Array<string | number> = [
+		'service', req.serviceIdx, 'var', req.variableIdx, 'date', req.dateIdx
+	]
+	if(req.elevationIdx !== undefined){
+		components.push('elevation')
+		components.push(req.elevationIdx)
+	}
+	return components.join("")
+}
 
 export default class RasterDataFetcher {
 	private _dataObjectVars: DataObjectVars;
@@ -36,27 +54,17 @@ export default class RasterDataFetcher {
 		return this._options.delay;
 	}
 
-	fetchPlainly(selectedIdxs: Record<string, number>){
-		return retryPromise(getRaster.bind(
-			null,
-			this._dataObjectVars.services[selectedIdxs.serviceIdx],
-			this._dataObjectVars.variables[selectedIdxs.variableIdx],
-			this._dataObjectVars.dates[selectedIdxs.dateIdx],
-			getElevation(this._dataObjectVars.elevations, selectedIdxs.elevationIdx) ?? ''), 5);
+	fetchPlainly(req: RasterRequestIdxs): Promise<BinRaster>{
+		const rasterId = getRasterId(req)
+		const service = this._dataObjectVars.services[req.serviceIdx]
+		const varName = this._dataObjectVars.variables[req.variableIdx]
+		return retryPromise(
+			() => getRaster(rasterId, service, varName, req.dateIdx, req.elevationIdx),
+			5
+		)
 	}
 
-	getDesiredId(selectedIdxs: Record<string, number>){
-		const baseURI = '/netcdf/getSlice?';
-
-		return baseURI
-			+ 'service=' + encodeURIComponent(this._dataObjectVars.services[selectedIdxs.serviceIdx])
-			+ '&varName=' + encodeURIComponent(this._dataObjectVars.variables[selectedIdxs.variableIdx])
-			+ '&date=' + encodeURIComponent(this._dataObjectVars.dates[selectedIdxs.dateIdx])
-			+ '&elevation=' + getElevation(this._dataObjectVars.elevations, selectedIdxs.elevationIdx)
-			+ this._dataObjectVars.gammas[selectedIdxs.gammaIdx];
-	}
-
-	fetch(selectedIdxs: Record<string, number>): Promise<BinRasterExtended>{
+	fetch(selectedIdxs: RasterRequestIdxs): Promise<BinRaster>{
 		const self = this;
 		this._cache = self.fetchPlainly(selectedIdxs);
 
@@ -67,8 +75,3 @@ export default class RasterDataFetcher {
 	}
 
 }
-
-function getElevation(elevations: string[], elevationIdx: number){
-	return elevations[elevationIdx] ? elevations[elevationIdx] : null;
-}
-

@@ -12,7 +12,7 @@ import RangeFilterInput from './RangeFilterInput';
 import { AppProps } from '../containers/App';
 import { Control } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
-import { BinRasterExtended } from '../models/BinRasterExtended';
+import { BinRaster } from 'icos-cp-backend';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
@@ -83,7 +83,7 @@ export default class Map extends Component<OurProps, OurState> {
 
 				if (window.frameElement) {
 					//Let calling page (through iframe) know what current url is
-					window.top.postMessage(newURL, '*');
+					window.top!.postMessage(newURL, '*');
 				} else {
 					history.pushState({urlPath: newURL}, "", newURL);
 				}
@@ -184,7 +184,7 @@ export default class Map extends Component<OurProps, OurState> {
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
 		const mapId = raster && gammas && colorRamps
-			? `${raster.basicId}${gammas.selectedIdx}${colorRamps.selectedIdx}${rangeValues.minRange}${rangeValues.maxRange}`
+			? `${raster.id}${gammas.selectedIdx}${colorRamps.selectedIdx}${rangeValues.minRange}${rangeValues.maxRange}`
 			: "";
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
@@ -300,7 +300,7 @@ export default class Map extends Component<OurProps, OurState> {
 	}
 }
 
-const getRasterXYFromLatLng = (raster: BinRasterExtended) => {
+const getRasterXYFromLatLng = (raster: BinRaster) => {
 	const tileHelper = getTileHelper(raster);
 
 	return (latlng: Latlng) => {
@@ -315,7 +315,7 @@ const getRasterXYFromLatLng = (raster: BinRasterExtended) => {
 	}
 };
 
-const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRasterExtended) => {
+const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRaster) => {
 	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
 		? window.L.latLngBounds(
 			window.L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),

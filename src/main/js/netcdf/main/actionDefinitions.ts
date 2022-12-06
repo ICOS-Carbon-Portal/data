@@ -3,7 +3,8 @@ import * as GeoJSON from "geojson";
 import { DataObject } from "../../common/main/metacore";
 import { RangeFilter, TimeserieParams } from "./models/State";
 import { ControlsHelper } from "./models/ControlsHelper";
-import { BinRasterExtended } from "./models/BinRasterExtended";
+import { BinRaster } from "icos-cp-backend";
+
 
 export abstract class ActionPayload { }
 export interface NetCDFPlainAction extends Action<string> {
@@ -53,7 +54,7 @@ export class SET_RANGEFILTER extends ActionPayload {
 	constructor(readonly rangeFilter: RangeFilter) { super(); }
 }
 export class RASTER_FETCHED extends ActionPayload {
-	constructor(readonly raster: BinRasterExtended, readonly controls: ControlsHelper) { super(); }
+	constructor(readonly raster: BinRaster, readonly controls: ControlsHelper) { super(); }
 }
 export class GAMMA_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }

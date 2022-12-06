@@ -6,11 +6,11 @@ import {
 } from './actionDefinitions';
 import {Control, ControlColorRamp, ControlsHelper} from './models/ControlsHelper';
 import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
-import RasterDataFetcher from './models/RasterDataFetcher';
+import RasterDataFetcher, { getRasterId } from './models/RasterDataFetcher';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
-import { BinRasterExtended } from './models/BinRasterExtended';
+import { BinRaster } from 'icos-cp-backend';
 
 
 export default function (state = stateProps.defaultState, action: NetCDFPlainAction) {
@@ -193,14 +193,14 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	if (payload instanceof PUSH_PLAY) {
 		const playingMovie = !state.playingMovie;
 		const did = playingMovie
-			? state.rasterDataFetcher!.getDesiredId(state.controls.selectedIdxs)
+			? getRasterId(state.controls.selectedIdxs)
 			: state.desiredId;
 		return update({ playingMovie, desiredId: did });
 	}
 
 	if (payload instanceof INCREMENT_RASTER) {
 		const controls = state.controls.withIncrementedDate(payload.increment);
-		const desiredId = state.rasterDataFetcher!.getDesiredId(controls.selectedIdxs);
+		const desiredId = getRasterId(controls.selectedIdxs)
 
 		return state.raster
 			? update({ controls, desiredId })
@@ -292,7 +292,7 @@ const handleColorrampSelected: HandleAction<COLORRAMP_SELECTED> = (state, payloa
 	};
 };
 
-const getMinMax = (controls: ControlsHelper, rangeFilter: RangeFilter, metadata?: DataObject, raster?: BinRasterExtended): Partial<MinMax> => {
+const getMinMax = (controls: ControlsHelper, rangeFilter: RangeFilter, metadata?: DataObject, raster?: BinRaster): Partial<MinMax> => {
 	const rangeFilterMinMax = getRangeFilterMinMax(rangeFilter);
 	if (rangeFilterMinMax.min !== undefined && rangeFilterMinMax.max !== undefined) return rangeFilterMinMax as MinMax;
 
@@ -342,7 +342,7 @@ const getRangeFilterMinMax = (rangeFilter: RangeFilter) => {
 	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange };
 };
 
-const getRasterMinMax = (raster?: BinRasterExtended) => {
+const getRasterMinMax = (raster?: BinRaster) => {
 	if (raster === undefined || raster.stats === undefined) return { min: undefined, max: undefined };
 
 	return {

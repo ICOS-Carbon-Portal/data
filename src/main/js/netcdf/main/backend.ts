@@ -1,35 +1,36 @@
-import { sparql, getJson, checkStatus, getUrlQuery} from 'icos-cp-backend';
+import { sparql, getJson, checkStatus, getUrlQuery, BinRaster} from 'icos-cp-backend';
 import {feature} from 'topojson';
 import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
 import { TimeserieParams } from './models/State';
 import { DataObject } from '../../common/main/metacore';
-import { BinRasterExtended } from './models/BinRasterExtended';
 
-function getBinRaster(url: string, ...keyValues: string[]) {
-	const keyValuePairs = keyValues.reduce<string[][]>((acc, value, idx) => {
-		if (idx % 2 === 0)
-			acc.push(keyValues.slice(idx, idx + 2));
-		return acc;
-	}, []);
+export type RasterId = string
 
-	const fullUrl = url + getUrlQuery(keyValuePairs);
+export function getRaster(
+	id: RasterId, service: string, variable: string, dateIdx: number, elevationIdx?: number
+): Promise<BinRaster> {
 
-	return fetch(fullUrl, {
-		headers: {
-			'Accept': 'application/octet-stream'
-		}
-	})
+	const queryParts = new Array<[string, string]>(
+		['service', service],
+		['varName', variable],
+		['dateInd', dateIdx.toString()]
+	)
+	if (elevationIdx !== undefined){
+		queryParts.push(['elevationInd', elevationIdx.toString()])
+	}
+	return fetch(
+			'/netcdf/getSlice' + getUrlQuery(queryParts),
+			{
+				headers: {'Accept': 'application/octet-stream'}
+			}
+		)
 		.then(checkStatus)
 		.then(response => response.arrayBuffer())
 		.then(response => {
-			return new BinRasterExtended(response, fullUrl, fullUrl);
-		});
+			return new BinRaster(response, id)
+		})
 }
-
-export const getRaster = (service: string, variable: string, date: string, elevation: string) => {
-	return getBinRaster('/netcdf/getSlice', 'service', service, 'varName', variable, 'date', date, 'elevation', elevation);
-};
 
 export const getCountriesGeoJson = () => {
 	return getJson('https://static.icos-cp.eu/js/topojson/readme-world.json')

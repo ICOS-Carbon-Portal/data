@@ -1,7 +1,7 @@
+import { BinRaster } from "icos-cp-backend";
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
 import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
-import { BinRasterExtended } from "./BinRasterExtended";
 import { ControlsHelper } from "./ControlsHelper";
 import RasterDataFetcher from "./RasterDataFetcher";
 
@@ -94,7 +94,7 @@ export interface State {
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
-	raster?: BinRasterExtended
+	raster?: BinRaster
 	rasterDataFetcher?: RasterDataFetcher
 	title?: string
 	toasterData?: {}

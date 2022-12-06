@@ -1,24 +1,26 @@
 import {colorRamps} from "../../../common/main/models/ColorMaker";
 
 export class Control{
-	constructor(values, selectedIdx){
+	public readonly values: string[]
+	public readonly selectedIdx: number | null
+	constructor(values: string[], selectedIdx: number | null){
 		this.values = values;
-		this.selectedIdx = selectedIdx > 0 ? selectedIdx : 0;
+		this.selectedIdx = selectedIdx
 	}
 
-	get isLoaded(){
-		return !!this.values;
+	get isLoaded(): boolean{
+		return this.values.length > 0;
 	}
 
-	get hasSelected(){
-		return this.isLoaded && this.selectedIdx >= 0 && this.selectedIdx < this.values.length;
+	get hasSelected(): boolean{
+		return this.isLoaded && this.selectedIdx != null
 	}
 
-	get selected(){
-		return this.hasSelected ? this.values[this.selectedIdx] : null;
+	get selected(): string | null {
+		return this.selectedIdx === null ? null : this.values[this.selectedIdx]
 	}
 
-	withSelected(selectedIdx){
+	withSelected(selectedIdx: number){
 		return new Control(this.values, selectedIdx);
 	}
 }
@@ -41,7 +43,14 @@ const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 const defaultColorRamps = new ControlColorRamp(colorRamps);
 
 export class ControlsHelper{
-	constructor(services, variables, dates, elevations, gammas, delays, colorRamps){
+	public readonly services: Control
+	public readonly variables: Control
+	public readonly dates: Control
+	public readonly elevations: Control
+	public readonly gammas: Control
+	public readonly delays: Control
+	public readonly colorRamps: Control
+	constructor(services: Control, variables: Control, dates: Control, elevations: Control, gammas: Control, delays: Control, colorRamps: Control){
 		this.services = services || defaultControl;
 		this.variables = variables || defaultControl;
 		this.dates = dates || defaultControl;
