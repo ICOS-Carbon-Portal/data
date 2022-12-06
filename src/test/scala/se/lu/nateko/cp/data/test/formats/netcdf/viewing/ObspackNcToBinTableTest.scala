@@ -33,11 +33,11 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 
 	private given system: ActorSystem = ActorSystem("ObspackNcToBinTableTest")
 	given dispatcher: ExecutionContextExecutor = system.dispatcher
-	
+
 	val path1 = getClass.getResource("/co2_con_aircraft-insitu_42_allvalid_small.nc").getPath
 	val path2 = getClass.getResource("/co2_ssl_tower-insitu_23_allvalid-12magl_small.nc").getPath
 
-	val csvPath = Path.of(path1 + ".csv")
+	val csvPath = Path.of("src/test/resources/co2_con_aircraft-insitu_42_allvalid_small.csv")
 	val tmpFile = Path.of(path1).withSuffix(FileExtension).withSuffix(".working")
 
 	describe("Netcdf reading workbench"){
@@ -49,7 +49,7 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 		def getParserForFile(path: String) =
 			val file = Path.of(path)
 			ObspackNcToBinTable(file, cm).get
-		
+
 		def countRows(path: String): Int =
 			val watch = new StopWatch
 			import watch.elapsedMs
@@ -70,7 +70,7 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 			countRows(path2)
 		}
 
-		ignore("Reading date variable test"){
+		ignore("Reading date variable"){
 			Using(NetcdfDatasets.openDataset(path1)){ncfile =>
 				val timeVar = ncfile.findVariable("time")
 				val unit = timeVar.attributes().findAttribute("units").getStringValue
@@ -92,7 +92,7 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 			}.get
 		}
 
-		it("Parses nc file as csv"){
+		it("Parses nc file as CSV"){
 			import ObspackNcToBinTable.TypedVar
 
 			val parser = getParserForFile(path1)
@@ -121,9 +121,8 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 			val res = Await.result(resFut, 200.seconds)
 		}
 
-		it("Csv contains correct values"){
+		it("Reads samples from CSV"){
 			val bufferedSource = io.Source.fromFile(csvPath.toFile)
-
 			val lines = bufferedSource.getLines()
 
 			lines.next() // skip csv header
@@ -131,11 +130,14 @@ class ObspackNcToBinTableTest extends AnyFunSpec with  BeforeAndAfterAll{
 			val first = lines.next().split(",")
 			val second = lines.next().split(",")
 
+			assert(first(0).toDouble == "0.00038232992".toDouble)
+			assert(second(0).toDouble == "0.00038208973".toDouble)
+
 			assert(first(1).toString == Instant.ofEpochSecond(1131157384).toString)
 			assert(second(1).toString == Instant.ofEpochSecond(1131157394).toString)
 		}
 	}
-	
+
 	override protected def afterAll(): Unit =
 		csvPath.toFile().delete()
 		tmpFile.toFile().delete()
