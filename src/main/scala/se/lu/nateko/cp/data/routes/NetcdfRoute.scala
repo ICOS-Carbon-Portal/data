@@ -44,10 +44,10 @@ object NetcdfRoute extends DefaultJsonProtocol {
 				}
 			} ~
 			path("getSlice"){
-				parameters("service", "dateInd".as[Int], "varName", "elevationInd".as[Int].?){(service, date, varName, elInd) =>
+				parameters("service", "dateInd".as[Int], "varName", "elevationInd".as[Int].?){(service, dateInd, varName, elInd) =>
 					val raster = factory
 						.getNetCdfViewService(service)
-						.getRaster(date, varName, elInd)
+						.getRaster(dateInd, varName, elInd)
 					complete(raster)
 				}
 			} ~

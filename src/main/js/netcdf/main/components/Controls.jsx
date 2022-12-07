@@ -78,7 +78,7 @@ export default class Controls extends Component {
 				</div>
 
 				<div className="col-md-1" style={{ minWidth: 110 }}>
-					<Selector className="gammas" caption="Shift color" control={controls.gammas} action={props.handleGammaChange} />
+					<Selector className="gammas" caption="Color gamma correction" control={controls.gammas} action={props.handleGammaChange} />
 				</div>
 
 				<div className="col-md-1">

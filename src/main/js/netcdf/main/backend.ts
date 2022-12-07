@@ -8,7 +8,7 @@ import { DataObject } from '../../common/main/metacore';
 export type RasterId = string
 
 export function getRaster(
-	id: RasterId, service: string, variable: string, dateIdx: number, elevationIdx?: number
+	id: RasterId, service: string, variable: string, dateIdx: number, elevationIdx: number | null
 ): Promise<BinRaster> {
 
 	const queryParts = new Array<[string, string]>(
@@ -16,7 +16,7 @@ export function getRaster(
 		['varName', variable],
 		['dateInd', dateIdx.toString()]
 	)
-	if (elevationIdx !== undefined){
+	if (elevationIdx !== null){
 		queryParts.push(['elevationInd', elevationIdx.toString()])
 	}
 	return fetch(
@@ -37,16 +37,16 @@ export const getCountriesGeoJson = () => {
 		.then(topo => feature(topo, topo.objects.countries));
 };
 
-export const getVariablesAndDates = (service: string) => {
-	const vars = getJson('/netcdf/listVariables', ['service', service]) as Promise<string[]>;
-	const dates = getJson('/netcdf/listDates', ['service', service]) as Promise<string[]>;
+export function getVariablesAndDates(service: string){
+	const vars: Promise<string[]> = getJson('/netcdf/listVariables', ['service', service])
+	const dates: Promise<string[]> = getJson('/netcdf/listDates', ['service', service])
 
-	return Promise.all([vars, dates]).then(([variables, dates]) => {return {variables, dates};});
-};
+	return Promise.all([vars, dates]).then(([variables, dates]) => ({variables, dates}))
+}
 
-export const getElevations = (service: string, variable: string): Promise<string[]> => {
+export function getElevations(service: string, variable: string): Promise<number[]>{
 	return getJson('/netcdf/listElevations', ['service', service], ['varName', variable]);
-};
+}
 
 export const getServices = () => {
 	return getJson('/netcdf/listNetCdfFiles');
@@ -71,5 +71,6 @@ export const getTimeserie = ({ objId, variable, elevation, x, y }: TimeseriePara
 };
 
 export const getMetadata = (objId: string): Promise<DataObject> => {
+	//TODO Parametrize the meta URL for different ENVRIes
 	return getJson(`https://meta.icos-cp.eu/objects/${objId}?format=json`);
 };

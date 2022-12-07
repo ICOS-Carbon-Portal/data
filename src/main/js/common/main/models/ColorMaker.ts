@@ -1,47 +1,44 @@
-import {rgbaInterpolation, linearInterpolation} from 'icos-cp-spatial';
-import { colorRampDefs} from './colorRampDefs';
+import {rgbaInterpolation, linearInterpolation, RGBA} from 'icos-cp-spatial';
+import { ColorRamp, colorRampDefs} from './colorRampDefs';
 
-const noValue = [255, 255, 255, 0];
+const noValue: RGBA = [255, 255, 255, 0];
 
-export const colorRamps = colorRampDefs.reduce((acc, cr) => {
-	acc.push(cr);
-	acc.push({
+export const colorRamps: ColorRamp[] = colorRampDefs.flatMap(cr => [
+	cr,
+	{
 		name: cr.name + '-rev',
 		domain: cr.domain,
 		colors: cr.colors.slice().reverse()
-	});
-	return acc;
-}, []);
-
-export const updateElement = (elementCreator) => {
-	return (colorRamp) => {
-		return {
-			name: colorRamp.name,
-			element: elementCreator(),
-			domain: colorRamp.domain,
-			colors: colorRamp.colors
-		};
 	}
-};
+])
+
+export function updateElement<T>(elementCreator: () => T): (cr: ColorRamp) => ColorRamp & {element: T} {
+	return (cr: ColorRamp) => Object.assign({}, cr, {element: elementCreator()})
+}
 
 export default class ColorMaker{
-	constructor(minVal, maxVal, gamma, colorRamp, isDivergingData) {
+	private readonly _gamma: number
+	private readonly _domain: [number, number]
+	private readonly _normalize: (x: number) => number
+	private readonly _colorize: (x: number) => RGBA
+
+	constructor(minVal: number, maxVal: number, gamma: number, colorRamp: ColorRamp | undefined, isDivergingData: boolean) {
 		this._gamma = gamma;
 		this._domain = [minVal, maxVal];
 		this._normalize = minVal < 0 && maxVal > 0
 			? linearInterpolation([minVal, 0, maxVal], [-1, 0, 1])
 			: linearInterpolation(this._domain, [0, 1]);
-		const cr = colorRamp === undefined
+		const cr: ColorRamp = colorRamp === undefined
 			? minVal < 0 && maxVal > 0
 				// Pick the first color ramp that satisfies the current domain
-				? colorRamps.find(cr => cr.domain.length === 3)
-				: colorRamps.find(cr => cr.domain.length === 2)
+				? colorRamps.find(cr => cr.domain.length === 3)! // we know we have some
+				: colorRamps.find(cr => cr.domain.length === 2)! // we know we have some
 			: colorRamp;
 
 		this._colorize = this.getColorizer(minVal, maxVal, isDivergingData, cr);
 	}
 
-	getColorizer(minVal, maxVal, isDivergingData, colorRamp) {
+	getColorizer(minVal: number, maxVal: number, isDivergingData: boolean, colorRamp: ColorRamp) {
 		const isDivergingRange = minVal < 0 && maxVal > 0;
 
 		if (!isDivergingRange && isDivergingData && colorRamp.colors.length === 3) {
@@ -53,7 +50,7 @@ export default class ColorMaker{
 		return rgbaInterpolation(colorRamp.domain, colorRamp.colors);;
 	}
 
-	makeColor(value){
+	makeColor(value: number){
 		if (isNaN(value)) return noValue;
 		
 		const normalized = this._normalize(value);
@@ -63,7 +60,7 @@ export default class ColorMaker{
 		return this._colorize(corrected);
 	}
 
-	getLegend(pixelMin, pixelMax) {
+	getLegend(pixelMin: number, pixelMax: number) {
 		const valueMaker = linearInterpolation([pixelMin, pixelMax], this._domain);
 		const pixelMaker = linearInterpolation(this._domain, [pixelMin, pixelMax]);
 		const nTickIntervals = Math.floor((pixelMax - pixelMin) / 80);
@@ -73,39 +70,40 @@ export default class ColorMaker{
 			valueMaker,
 			pixelMaker,
 			domain: this._domain,
-			colorMaker: pixel => this.makeColor(valueMaker(pixel)),
+			colorMaker: (pixel: number) => this.makeColor(valueMaker(pixel)),
 			suggestedTickLocations: Array.from({length: nTickIntervals + 1}, (_, i) => i).map(toPixel)
 		};
 	}
 }
 
 export class ColorMakerRamps extends ColorMaker {
-	constructor(minVal, maxVal, gamma, colorRampName, isDivergingData) {
+	public readonly colorRampIdx: number
+	public readonly colorRamps: Array<ColorRamp & {colorMaker: ColorMaker}>
+
+	constructor(minVal: number, maxVal: number, gamma: number, readonly colorRampName: string, isDivergingData: boolean) {
 		const filteredColorRamps = findColorRamps(minVal, maxVal, isDivergingData, colorRampName);
 		const colorRampIdx = filteredColorRamps.findIndex(cr => cr.name === colorRampName);
 		const selectedColorRamp = filteredColorRamps[colorRampIdx];
 
 		super(minVal, maxVal, gamma, selectedColorRamp, isDivergingData);
 
-		this.colorRampName = colorRampName;
 		this.colorRampIdx = colorRampIdx;
-		this.colorRamps = filteredColorRamps.map(cr => ({
-			...cr,
-			...{ colorMaker: new ColorMaker(cr.domain[0], cr.domain.slice(-1)[0], gamma, cr)}
-		}));
+		this.colorRamps = filteredColorRamps.map(cr =>
+			Object.assign({}, cr, {
+				colorMaker: new ColorMaker(cr.domain[0], cr.domain.slice(-1)[0], gamma, cr, isDivergingData)
+			})
+		)
 	}
 }
 
-const findColorRamps = (minVal, maxVal, isDivergingData, colorRampName) => {
-	const isDivergingRange = minVal < 0 && maxVal > 0;
-	let filteredColorRamps = [];
+function findColorRamps(minVal: number, maxVal: number, isDivergingData: boolean, colorRampName: string): ColorRamp[] {
 
-	if (isDivergingData) {
-		filteredColorRamps = filteredColorRamps.concat(colorRamps.filter(cr => cr.domain.length === 3));
-	} else {
-		filteredColorRamps = filteredColorRamps.concat(colorRamps.filter(cr => cr.domain.length === 2));
-	}
-	
+	let filteredColorRamps: ColorRamp[] = isDivergingData
+		? colorRamps.filter(cr => cr.domain.length === 3)
+		: colorRamps.filter(cr => cr.domain.length === 2)
+
+	const isDivergingRange = minVal < 0 && maxVal > 0
+
 	if (isDivergingRange) {
 		filteredColorRamps = filteredColorRamps.concat(colorRamps.filter(cr => cr.domain.length === 3));
 	} else {
@@ -121,4 +119,4 @@ const findColorRamps = (minVal, maxVal, isDivergingData, colorRampName) => {
 	}
 	
 	return [...new Set(filteredColorRamps)];
-};
+}

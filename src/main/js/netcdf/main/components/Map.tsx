@@ -31,7 +31,7 @@ export default class Map extends Component<OurProps, OurState> {
 	private center: string[];
 	private zoom: string | number;
 	private objId?: string;
-	private prevVariables?: Control;
+	private prevVariables?: Control<string>;
 	private events: typeof Events;
 	private getRasterXYFromLatLng?: Function;
 	private legendDiv: HTMLDivElement;
@@ -61,16 +61,16 @@ export default class Map extends Component<OurProps, OurState> {
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
 			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
-
-			if (this.prevVariables === undefined || this.prevVariables!.selected !== variables.selected) {
-				this.prevVariables = variables;
-				saveToRestheart(formatData({objId: this.objId, variable: variables.selected}));
+			const variable = variables.selected
+			if (this.prevVariables === undefined || this.prevVariables.selected !== variable) {
+				this.prevVariables = variables
+				if (variable !== null) saveToRestheart(formatData({objId: this.objId, variable}))
 			}
 
-			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
-			const elevationParam = elevations.selectedIdx > 0 && elevations.selected ? `elevation=${elevations.selected}` : undefined;
+			const dateParam = dates.selected ? `date=${dates.selected}` : undefined;
+			const elevationParam = elevations.selected !== null ? `elevation=${elevations.selected}` : undefined;
 			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
-			const varNameParam = variables.selectedIdx > 0 && variables.selected ? `varName=${variables.selected}` : undefined;
+			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
 			const color = colorRamps.selected ? `color=${colorRamps.selected}` : undefined;
@@ -142,7 +142,7 @@ export default class Map extends Component<OurProps, OurState> {
 			const elevation = this.props.controls.elevations.selected;
 			const xy = this.getRasterXYFromLatLng(e.latlng);
 
-			if (xy && this.props.fetchTimeSerie) {
+			if (xy && objId !== null && variable !== null) {
 				this.props.fetchTimeSerie({objId, variable, elevation, x: xy.x, y: xy.y, latlng: e.latlng});
 				this.timeserieToggle(true);
 			}

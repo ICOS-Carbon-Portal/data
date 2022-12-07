@@ -9,20 +9,19 @@ type DataObjectVars = {
 	services: string[]
 	variables: string[]
 }
-type Options = { delay: number }
 
 export interface RasterRequestIdxs{
 	serviceIdx: number
 	variableIdx: number
 	dateIdx: number
-	elevationIdx?: number
+	elevationIdx: number | null
 }
 
 export function getRasterId(req: RasterRequestIdxs): RasterId {
 	const components: Array<string | number> = [
 		'service', req.serviceIdx, 'var', req.variableIdx, 'date', req.dateIdx
 	]
-	if(req.elevationIdx !== undefined){
+	if(req.elevationIdx !== null){
 		components.push('elevation')
 		components.push(req.elevationIdx)
 	}
@@ -31,27 +30,17 @@ export function getRasterId(req: RasterRequestIdxs): RasterId {
 
 export default class RasterDataFetcher {
 	private _dataObjectVars: DataObjectVars;
-	private _options: Options;
 	private _lastFetched: number;
 	private _cache: {};
 
-	constructor(dataObjectVars: DataObjectVars, options?: Options) {
+	constructor(dataObjectVars: DataObjectVars, readonly delay: number = 200) {
 		this._dataObjectVars = dataObjectVars;
-		this._options = {...{ delay: 200 }, ...options};
 		this._lastFetched = Date.now();
 		this._cache = {};
 	}
 
 	withDelay(delay: number){
-		return this.clone({ ...this._options, ...{ delay } });
-	}
-
-	clone(optionsUpdate: { delay: number }){
-		return new RasterDataFetcher(this._dataObjectVars, optionsUpdate);
-	}
-
-	get delay(){
-		return this._options.delay;
+		return new RasterDataFetcher(this._dataObjectVars, delay);
 	}
 
 	fetchPlainly(req: RasterRequestIdxs): Promise<BinRaster>{
@@ -68,7 +57,7 @@ export default class RasterDataFetcher {
 		const self = this;
 		this._cache = self.fetchPlainly(selectedIdxs);
 
-		const delay = this._lastFetched - Date.now() + this._options.delay;
+		const delay = this._lastFetched - Date.now() + this.delay;
 		const res = ensureDelay(this._cache, delay);
 		res.then(() => self._lastFetched = Date.now());
 		return res;

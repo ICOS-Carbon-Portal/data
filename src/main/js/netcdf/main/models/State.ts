@@ -59,7 +59,7 @@ export type TimeserieData = [Date | number, number]
 export type TimeserieParams = {
 	objId: string
 	variable: string
-	elevation: string | null,
+	elevation: number | null,
 	x: number,
 	y: number,
 	latlng: Latlng
@@ -74,7 +74,7 @@ export interface State {
 	fullMinMax?: MinMax
 	rangeFilter: RangeFilter
 	legendLabel: string
-	colorMaker?: ColorMaker | ColorMakerRamps
+	colorMaker?: ColorMakerRamps
 	controls: ControlsHelper
 	variableEnhancer: Record<string,string>
 	countriesTopo: {
@@ -82,12 +82,12 @@ export interface State {
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
 	desiredId?: string
-	lastElevation?: string
+	lastElevation?: number
 	initSearchParams: {
 		varName: string
 		date: string
 		gamma: string
-		elevation: string
+		elevation: number | null
 		center: string
 		zoom: string
 		color: string
@@ -104,6 +104,8 @@ export interface State {
 	latlng?: Latlng
 	showTSSpinner: boolean
 }
+
+const urlQueryElevation = Number.parseFloat(searchParams.elevation)
 
 const defaultState: State = {
 	isSites,
@@ -127,7 +129,7 @@ const defaultState: State = {
 		varName: searchParams.varName,
 		date: searchParams.date,
 		gamma: searchParams.gamma,
-		elevation: searchParams.elevation,
+		elevation: isNaN(urlQueryElevation) ? null : urlQueryElevation,
 		center: searchParams.center,
 		zoom: searchParams.zoom,
 		color: searchParams.color,

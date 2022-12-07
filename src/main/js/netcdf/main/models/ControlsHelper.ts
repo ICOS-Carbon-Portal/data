@@ -1,23 +1,20 @@
 import {colorRamps} from "../../../common/main/models/ColorMaker";
+import { ColorRamp } from "../../../common/main/models/colorRampDefs";
+import { RasterRequestIdxs } from "./RasterDataFetcher";
 
-export class Control{
-	public readonly values: string[]
-	public readonly selectedIdx: number | null
-	constructor(values: string[], selectedIdx: number | null){
-		this.values = values;
-		this.selectedIdx = selectedIdx
-	}
+export class Control<T extends string | number>{
+
+	constructor(
+		public readonly values: T[],
+		public readonly selectedIdx: number | null = null
+	){}
 
 	get isLoaded(): boolean{
-		return this.values.length > 0;
+		return this.values.length > 0 || this.selectedIdx != null
 	}
 
-	get hasSelected(): boolean{
-		return this.isLoaded && this.selectedIdx != null
-	}
-
-	get selected(): string | null {
-		return this.selectedIdx === null ? null : this.values[this.selectedIdx]
+	get selected(): T | null {
+		return this.selectedIdx === null || this.selectedIdx < 0 ? null : this.values[this.selectedIdx]
 	}
 
 	withSelected(selectedIdx: number){
@@ -25,40 +22,29 @@ export class Control{
 	}
 }
 
-export class ControlColorRamp extends Control {
-	constructor(colorRamps, selectedIdx) {
+export class ControlColorRamp extends Control<string> {
+	constructor(public readonly colorRamps: ColorRamp[], selectedIdx: number | null = null) {
 		super(colorRamps.map(cr => cr.name), selectedIdx);
-
-		this.colorRamps = colorRamps;
 	}
 
-	withSelected(selectedIdx){
+	withSelected(selectedIdx: number){
 		return new ControlColorRamp(this.colorRamps, selectedIdx);
 	}
 }
 
-const defaultControl = new Control([], -1);
+const defaultControl = new Control([]);
 const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 const defaultColorRamps = new ControlColorRamp(colorRamps);
 
 export class ControlsHelper{
-	public readonly services: Control
-	public readonly variables: Control
-	public readonly dates: Control
-	public readonly elevations: Control
-	public readonly gammas: Control
-	public readonly delays: Control
-	public readonly colorRamps: Control
-	constructor(services: Control, variables: Control, dates: Control, elevations: Control, gammas: Control, delays: Control, colorRamps: Control){
-		this.services = services || defaultControl;
-		this.variables = variables || defaultControl;
-		this.dates = dates || defaultControl;
-		this.elevations = elevations || defaultControl;
-		this.gammas = gammas || defaultGammas;
-		this.delays = delays || defaultDelays;
-		this.colorRamps = colorRamps || defaultColorRamps;
-	}
+	readonly services: Control<string> = defaultControl
+	readonly variables: Control<string> = defaultControl
+	readonly dates: Control<string> = defaultControl
+	readonly elevations: Control<number> = defaultControl
+	readonly gammas: Control<number> = defaultGammas
+	readonly delays: Control<number> = defaultDelays
+	readonly colorRamps: ControlColorRamp = defaultColorRamps
 
 	get allControlsLoaded(){
 		return this.services.isLoaded
@@ -68,79 +54,66 @@ export class ControlsHelper{
 			&& this.colorRamps.isLoaded;
 	}
 
-	get selectedIdxs(){
+	// get selectedIdxs(){
+	// 	return {
+	// 		dateIdx: this.dates.selectedIdx,
+	// 		elevationIdx: this.elevations.selectedIdx,
+	// 		gammaIdx: this.gammas.selectedIdx,
+	// 		serviceIdx: this.services.selectedIdx,
+	// 		variableIdx: this.variables.selectedIdx,
+	// 		colorRampIdx: this.colorRamps.selectedIdx,
+	// 	};
+	// }
+
+	get rasterRequest(): RasterRequestIdxs | undefined {
+		const serviceIdx = this.services.selectedIdx
+		const variableIdx = this.variables.selectedIdx
+		const dateIdx = this.dates.selectedIdx
+		if(serviceIdx === null || variableIdx === null || dateIdx === null || !this.elevations.isLoaded) return
 		return {
-			dateIdx: this.dates.selectedIdx,
-			elevationIdx: this.elevations.selectedIdx,
-			gammaIdx: this.gammas.selectedIdx,
-			serviceIdx: this.services.selectedIdx,
-			variableIdx: this.variables.selectedIdx,
-			colorRampIdx: this.colorRamps.selectedIdx,
-		};
+			serviceIdx, variableIdx, dateIdx,
+			elevationIdx: this.elevations.selectedIdx
+		}
 	}
 
-	withServices(services){
-		return new ControlsHelper(services, defaultControl, defaultControl, defaultControl, this.gammas, this.delays, this.colorRamps);
+	copyWith(update: {[K in keyof ControlsHelper]?: ControlsHelper[K]}): ControlsHelper{
+		return Object.assign(Object.create(ControlsHelper.prototype), this, update)
 	}
 
-	withVariables(variables){
-		return new ControlsHelper(this.services, variables, this.dates, defaultControl, this.gammas, this.delays, this.colorRamps);
+	withSelectedService(idx: number){
+		return this.copyWith({services: this.services.withSelected(idx)})
 	}
 
-	withDates(dates){
-		return new ControlsHelper(this.services, this.variables, dates, this.elevations, this.gammas, this.delays, this.colorRamps);
+	withSelectedVariable(idx: number){
+		return this.copyWith({variables: this.variables.withSelected(idx)})
 	}
 
-	withElevations(elevations){
-		return new ControlsHelper(this.services, this.variables, this.dates, elevations, this.gammas, this.delays, this.colorRamps);
+	withSelectedDate(idx: number){
+		return this.copyWith({dates: this.dates.withSelected(idx)})
 	}
 
-	withGammas(gammas){
-		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, gammas, this.delays, this.colorRamps);
-	}
-
-	withDelays(delays){
-		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, this.gammas, delays, this.colorRamps);
-	}
-
-	withColorRamps(colorRamps){
-		return new ControlsHelper(this.services, this.variables, this.dates, this.elevations, this.gammas, this.delays, colorRamps);
-	}
-
-	withSelectedService(idx){
-		return this.withServices(this.services.withSelected(idx));
-	}
-
-	withSelectedVariable(idx){
-		return this.withVariables(this.variables.withSelected(idx));
-	}
-
-	withSelectedDate(idx){
-		return this.withDates(this.dates.withSelected(idx));
-	}
-
-	withIncrementedDate(increment){
-		const suggestedIdx = this.dates.selectedIdx + increment;
+	withIncrementedDate(increment: number){
+		const suggestedIdx = (this.dates.selectedIdx ?? 0) + increment;
 		const newIdx = suggestedIdx >= 0 && suggestedIdx < this.dates.values.length
-			? this.dates.selectedIdx + increment
+			? suggestedIdx
 			: 0;
 
-		return this.withDates(this.dates.withSelected(newIdx));
+		return this.copyWith({dates: this.dates.withSelected(newIdx)})
 	}
 
-	withSelectedElevation(idx){
-		return this.withElevations(this.elevations.withSelected(idx));
+	withSelectedElevation(idx: number){
+		return this.copyWith({elevations: this.elevations.withSelected(idx)})
 	}
 
-	withSelectedGamma(idx){
-		return this.withGammas(this.gammas.withSelected(idx));
+	withSelectedGamma(idx: number){
+		return this.copyWith({gammas: this.gammas.withSelected(idx)})
 	}
 
-	withSelectedDelay(idx){
-		return this.withDelays(this.delays.withSelected(idx));
+	withSelectedDelay(idx: number){
+		return this.copyWith({delays: this.delays.withSelected(idx)})
 	}
 
-	withSelectedColorRamp(idx){
-		return this.withColorRamps(this.colorRamps.withSelected(idx));
+	withSelectedColorRamp(idx: number){
+		return this.copyWith({colorRamps: this.colorRamps.withSelected(idx)})
 	}
 }

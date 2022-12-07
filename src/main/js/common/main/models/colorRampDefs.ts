@@ -1,4 +1,14 @@
-export const colorRampDefs = [
+import { RGBA } from "icos-cp-spatial";
+
+export type RampDomain = Array<-1 | 0 | 1>
+
+export interface ColorRamp{
+	name: string
+	domain: RampDomain
+	colors: RGBA[]
+}
+
+export const colorRampDefs: ColorRamp[] = [
 	{
 		name: 'blueYellowRed',
 		domain: [-1, 0, 1],
