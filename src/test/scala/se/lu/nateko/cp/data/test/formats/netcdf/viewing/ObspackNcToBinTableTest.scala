@@ -29,7 +29,6 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 
 		val parser = ObspackNcToBinTable(path, columnsMeta).get
 		val tmpFile = path.withSuffix(FileExtension).withSuffix(".working")
-
 		val nRows = parser.schema.size.toInt
 		val readSchema = TimeSeriesToBinTableConverter.getReadingSchema(None, None, nRows, columnsMeta)
 
@@ -38,7 +37,7 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 				println(s"Written $nRowsWritten")
 
 				val rowsSrc = new BinTableRowReader(tmpFile.toFile, readSchema.binSchema)
-					.rows(readSchema.fetchIndices, 0L, 100)
+					.rows(readSchema.fetchIndices, 0L, 350)
 					.map{row =>
 						row.indices.map{i =>
 							readSchema.serializers(i)(row(i))
@@ -52,20 +51,17 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 
 		resFut
 
-	def testDouble(description: String, data: Future[IndexedSeq[IndexedSeq[String]]], i: Int, j: Int, expectedVal: String) =
+	type Columns = IndexedSeq[IndexedSeq[String]]
+
+	def test(description: String, data: Future[Columns], getActualVal: Columns => String | Double, expectedVal: String | Double) =
 		it(description) {
-			data map { columns => assert(columns(i)(j).toDouble == expectedVal.toDouble) }
+			data map { columns => assert(getActualVal(columns) == expectedVal) }
 		}
 
-	def testString(description: String, data: Future[IndexedSeq[IndexedSeq[String]]], i: Int, j: Int, expectedVal: String) = 
-		it(description) {
-			data map { columns => assert(columns(i)(j) == expectedVal) }
-		}
-
-	val valueVarIndex = 0
-	val timestampVarIndex = 1
-	val latVarIndex = 2
-	val lonVarIndex = 3
+	val valueIndex = 0
+	val timestampIndex = 1
+	val latIndex = 2
+	val lonIndex = 3
 
 	describe("Read values from first file") {
 
@@ -79,17 +75,17 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		val path = Path.of(getClass.getResource("/co2_con_aircraft-insitu_42_allvalid_small.nc").getPath)
 		val data = readNCFile(path, columnsMeta, s" path: $path")
 
-		testDouble("First value", data, 0, valueVarIndex, "0.00038232992")
-		testDouble("Second value", data, 1, valueVarIndex, "0.00038208973")
+		test("First value", data, columns => columns(0)(valueIndex).toDouble, "0.00038232992".toDouble)
+		test("Last value", data, columns => columns(317)(valueIndex).toDouble, "0.00038731386".toDouble)
 
-		testString("First timestamp", data, 0, timestampVarIndex, "2005-11-05T02:23:04Z")
-		testString("Second timestamp", data, 1, timestampVarIndex, "2005-11-05T02:23:14Z")
+		test("First timestamp", data, columns => columns(0)(timestampIndex), "2005-11-05T02:23:04Z")
+		test("Last timestamp", data, columns => columns(317)(timestampIndex), "2005-11-05T21:07:34Z")
 
-		testString("First latitude value", data, 0, latVarIndex, "35.925")
-		testString("Second latitude value", data, 1, latVarIndex, "35.936")
+		test("First latitude", data, columns => columns(0)(latIndex), "35.925")
+		test("Last latitude", data, columns => columns(317)(latIndex), "35.618")
 
-		testString("First longitude value", data, 0, lonVarIndex, "140.3")
-		testString("Second longitude value", data, 1, lonVarIndex, "140.31")
+		test("First longitude", data, columns => columns(0)(lonIndex), "140.3")
+		test("Last longitude", data, columns => columns(317)(lonIndex), "140.47")
 
 	}
 
@@ -103,11 +99,11 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		val path = Path.of(getClass.getResource("/co2_ssl_tower-insitu_23_allvalid-12magl_small.nc").getPath)
 		val data = readNCFile(path, columnsMeta, s" path: $path")
 
-		testDouble("First value", data, 0, valueVarIndex, "0.000384392")
-		testDouble("Second value", data, 1, valueVarIndex, "0.000384236")
+		test("First value", data, columns => columns(0)(valueIndex).toDouble, "0.000384392".toDouble)
+		test("Last value", data, columns => columns(93)(valueIndex).toDouble, "0.00038229".toDouble)
 
-		testString("First timestamp", data, 0, timestampVarIndex, "2005-01-01T03:00:00Z")
-		testString("Second timestamp", data, 1, timestampVarIndex, "2005-01-01T04:00:00Z")
+		test("First timestamp", data, columns => columns(0)(timestampIndex), "2005-01-01T03:00:00Z")
+		test("Last timestamp", data, columns => columns(93)(timestampIndex), "2005-01-05T00:00:00Z")
 
 	}
 
