@@ -58,10 +58,10 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 			data map { rows => assert(getActualVal(rows) == expectedVal) }
 		}
 
-	val valueIndex = 0
-	val timestampIndex = 1
-	val latIndex = 2
-	val lonIndex = 3
+	val ValueIndex = 0
+	val TimestampIndex = 1
+	val LatIndex = 2
+	val LonIndex = 3
 
 	describe("Read values from first file") {
 
@@ -79,17 +79,17 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 			data map { rows => assert(rows.length == 318) }
 		}
 
-		test("First value", data, _(0)(valueIndex).toDouble, "0.00038232992".toDouble)
-		test("Last value", data, _(317)(valueIndex).toDouble, "0.00038731386".toDouble)
+		test("First value", data, _(0)(ValueIndex).toDouble, "0.00038232992".toDouble)
+		test("Last value", data, _(317)(ValueIndex).toDouble, "0.00038731386".toDouble)
 
-		test("First timestamp", data, _(0)(timestampIndex), "2005-11-05T02:23:04Z")
-		test("Last timestamp", data, _(317)(timestampIndex), "2005-11-05T21:07:34Z")
+		test("First timestamp", data, _(0)(TimestampIndex), "2005-11-05T02:23:04Z")
+		test("Last timestamp", data, _(317)(TimestampIndex), "2005-11-05T21:07:34Z")
 
-		test("First latitude", data, _(0)(latIndex), "35.925")
-		test("Last latitude", data, _(317)(latIndex), "35.618")
+		test("First latitude", data, _(0)(LatIndex), "35.925")
+		test("Last latitude", data, _(317)(LatIndex), "35.618")
 
-		test("First longitude", data, _(0)(lonIndex), "140.3")
-		test("Last longitude", data, _(317)(lonIndex), "140.47")
+		test("First longitude", data, _(0)(LonIndex), "140.3")
+		test("Last longitude", data, _(317)(LonIndex), "140.47")
 
 	}
 
@@ -108,11 +108,11 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 			data map { rows => assert(rows.length == 94) }
 		}
 
-		test("First value", data, _(0)(valueIndex).toDouble, "0.000384392".toDouble)
-		test("Last value", data, _(93)(valueIndex).toDouble, "0.00038229".toDouble)
+		test("First value", data, _(0)(ValueIndex).toDouble, "0.000384392".toDouble)
+		test("Last value", data, _(93)(ValueIndex).toDouble, "0.00038229".toDouble)
 
-		test("First timestamp", data, _(0)(timestampIndex), "2005-01-01T03:00:00Z")
-		test("Last timestamp", data, _(93)(timestampIndex), "2005-01-05T00:00:00Z")
+		test("First timestamp", data, _(0)(TimestampIndex), "2005-01-01T03:00:00Z")
+		test("Last timestamp", data, _(93)(TimestampIndex), "2005-01-05T00:00:00Z")
 
 	}
 
