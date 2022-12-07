@@ -37,7 +37,7 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 				println(s"Written $nRowsWritten")
 
 				val rowsSrc = new BinTableRowReader(tmpFile.toFile, readSchema.binSchema)
-					.rows(readSchema.fetchIndices, 0L, 350)
+					.rows(readSchema.fetchIndices, 0L, nRowsWritten.toInt)
 					.map{row =>
 						row.indices.map{i =>
 							readSchema.serializers(i)(row(i))
@@ -51,11 +51,11 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 
 		resFut
 
-	type Columns = IndexedSeq[IndexedSeq[String]]
+	type Rows = IndexedSeq[IndexedSeq[String]]
 
-	def test(description: String, data: Future[Columns], getActualVal: Columns => String | Double, expectedVal: String | Double) =
+	def test(description: String, data: Future[Rows], getActualVal: Rows => String | Double, expectedVal: String | Double) =
 		it(description) {
-			data map { columns => assert(getActualVal(columns) == expectedVal) }
+			data map { rows => assert(getActualVal(rows) == expectedVal) }
 		}
 
 	val valueIndex = 0
@@ -75,17 +75,21 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		val path = Path.of(getClass.getResource("/co2_con_aircraft-insitu_42_allvalid_small.nc").getPath)
 		val data = readNCFile(path, columnsMeta, s" path: $path")
 
-		test("First value", data, columns => columns(0)(valueIndex).toDouble, "0.00038232992".toDouble)
-		test("Last value", data, columns => columns(317)(valueIndex).toDouble, "0.00038731386".toDouble)
+		it("Reads correct number of rows") {
+			data map { rows => assert(rows.length == 318) }
+		}
 
-		test("First timestamp", data, columns => columns(0)(timestampIndex), "2005-11-05T02:23:04Z")
-		test("Last timestamp", data, columns => columns(317)(timestampIndex), "2005-11-05T21:07:34Z")
+		test("First value", data, _(0)(valueIndex).toDouble, "0.00038232992".toDouble)
+		test("Last value", data, _(317)(valueIndex).toDouble, "0.00038731386".toDouble)
 
-		test("First latitude", data, columns => columns(0)(latIndex), "35.925")
-		test("Last latitude", data, columns => columns(317)(latIndex), "35.618")
+		test("First timestamp", data, _(0)(timestampIndex), "2005-11-05T02:23:04Z")
+		test("Last timestamp", data, _(317)(timestampIndex), "2005-11-05T21:07:34Z")
 
-		test("First longitude", data, columns => columns(0)(lonIndex), "140.3")
-		test("Last longitude", data, columns => columns(317)(lonIndex), "140.47")
+		test("First latitude", data, _(0)(latIndex), "35.925")
+		test("Last latitude", data, _(317)(latIndex), "35.618")
+
+		test("First longitude", data, _(0)(lonIndex), "140.3")
+		test("Last longitude", data, _(317)(lonIndex), "140.47")
 
 	}
 
@@ -99,11 +103,16 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		val path = Path.of(getClass.getResource("/co2_ssl_tower-insitu_23_allvalid-12magl_small.nc").getPath)
 		val data = readNCFile(path, columnsMeta, s" path: $path")
 
-		test("First value", data, columns => columns(0)(valueIndex).toDouble, "0.000384392".toDouble)
-		test("Last value", data, columns => columns(93)(valueIndex).toDouble, "0.00038229".toDouble)
 
-		test("First timestamp", data, columns => columns(0)(timestampIndex), "2005-01-01T03:00:00Z")
-		test("Last timestamp", data, columns => columns(93)(timestampIndex), "2005-01-05T00:00:00Z")
+		it("Reads correct number of rows") {
+			data map { rows => assert(rows.length == 94) }
+		}
+
+		test("First value", data, _(0)(valueIndex).toDouble, "0.000384392".toDouble)
+		test("Last value", data, _(93)(valueIndex).toDouble, "0.00038229".toDouble)
+
+		test("First timestamp", data, _(0)(timestampIndex), "2005-01-01T03:00:00Z")
+		test("Last timestamp", data, _(93)(timestampIndex), "2005-01-05T00:00:00Z")
 
 	}
 
