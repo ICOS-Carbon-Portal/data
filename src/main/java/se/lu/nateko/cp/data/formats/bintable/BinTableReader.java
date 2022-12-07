@@ -14,9 +14,12 @@ public class BinTableReader extends BinTableFile {
 
 	private final String[] stringDictionary;
 	private final ObjectInputStream ois;
+	private final Long fileSizeInBytes;
 
 	public BinTableReader(File file, Schema schema) throws IOException {
 		super(file, schema, "r");
+
+		fileSizeInBytes = file.length();
 
 		if(schema.hasStringColumn()){
 			this.file.seek(columnOffsets[schema.columns.length]);
@@ -58,6 +61,9 @@ public class BinTableReader extends BinTableFile {
 		int valueSize = Utils.getDataTypeSize(dt);
 		long byteOffset = columnOffsets[column] + offset * valueSize;
 		int byteSize = valueSize * size;
+		if(byteOffset + byteSize > fileSizeInBytes) throw new IOException(
+			"Out of bounds when reading CP binary table file " + fileName
+		);
 
 		if(byteSize < 10000){
 			file.seek(byteOffset);

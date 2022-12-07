@@ -19,6 +19,9 @@ class BinTableRowReader(file: File, schema: Schema) {
 
 	assert(file.exists(), s"File ${file.getName} was not found on the server")
 	assert(!schema.hasStringColumn, "string-value columns in BinTable are not supported in BinTableRowReader")
+	private val minSize: Long =
+		schema.size * schema.columns.map(Utils.getDataTypeSize).sum
+	assert(minSize < file.length(), s"File ${file.getName} is too small for provided CP binary table file schema with ${schema.size} rows")
 
 	def rows(columns: Array[Int]): Source[Array[AnyVal], Future[Done]] = rows(columns, 0L)
 
