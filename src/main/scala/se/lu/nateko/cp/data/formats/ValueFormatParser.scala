@@ -12,7 +12,7 @@ import java.util.Locale
 object ValueFormatParser {
 	import ValueFormat.*
 
-	private[this] val parser = new ValueParser
+	private[this] val parser = ValueParser()
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
@@ -34,11 +34,11 @@ object ValueFormatParser {
 		if (value == null || value.trim.isEmpty) getNullRepresentation(format)
 		else format match {
 			case IntValue =>
-				parser.parse(value, DataType.INT)
+				parser.parse(value, DataType.INT).asInstanceOf[AnyRef]
 			case FloatValue =>
-				parser.parse(value, DataType.FLOAT)
+				parser.parse(value, DataType.FLOAT).asInstanceOf[AnyRef]
 			case DoubleValue =>
-				parser.parse(value, DataType.DOUBLE)
+				parser.parse(value, DataType.DOUBLE).asInstanceOf[AnyRef]
 			case Utf16CharValue =>
 				Character.valueOf(value.charAt(0))
 			case StringValue =>
