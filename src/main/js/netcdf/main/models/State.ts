@@ -3,7 +3,6 @@ import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
 import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
 import { ControlsHelper } from "./ControlsHelper";
-import RasterDataFetcher from "./RasterDataFetcher";
 
 
 const isSites = config.envri === "SITES";
@@ -81,7 +80,6 @@ export interface State {
 		ts: number,
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
-	desiredId?: string
 	lastElevation?: number
 	initSearchParams: {
 		varName: string
@@ -95,7 +93,6 @@ export interface State {
 	playingMovie: boolean
 	rasterFetchCount: number
 	raster?: BinRaster
-	rasterDataFetcher?: RasterDataFetcher
 	title?: string
 	toasterData?: {}
 	isFetchingTimeserieData: boolean
@@ -123,7 +120,6 @@ const defaultState: State = {
 		ts: 0,
 		data: undefined
 	},
-	desiredId: undefined,
 	lastElevation: undefined,
 	initSearchParams: {
 		varName: searchParams.varName,
@@ -137,7 +133,6 @@ const defaultState: State = {
 	playingMovie: false,
 	rasterFetchCount: 0,
 	raster: undefined,
-	rasterDataFetcher: undefined,
 	title: undefined,
 	toasterData: undefined,
 	isFetchingTimeserieData: false,

@@ -55,7 +55,6 @@ class App extends Component<AppProps> {
 					playPauseMovie={props.playPauseMovie}
 					rasterFetchCount={props.rasterFetchCount}
 					raster={props.raster}
-					rasterDataFetcher={props.rasterDataFetcher}
 					serviceChanged={props.serviceChanged}
 					title={props.title}
 					variableChanged={props.variableChanged}

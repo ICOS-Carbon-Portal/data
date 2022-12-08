@@ -16,7 +16,7 @@ import { BinRaster } from 'icos-cp-backend';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
-	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'rasterDataFetcher' | 'serviceChanged' | 'title'
+	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
 	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
 type OurState = {
 	height: number,
@@ -194,10 +194,10 @@ export default class Map extends Component<OurProps, OurState> {
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
 
-		if (raster && gammas && colorRamps) {
-			// A change in raster id triggers a rerender of map and legend
-			raster.id = mapId;
-		}
+		// if (raster && gammas && colorRamps) {
+		// 	// A change in raster id triggers a rerender of map and legend
+		// 	raster.id = mapId;
+		// }
 
 		return (
 			<div id="content" className="container-fluid">
@@ -237,7 +237,8 @@ export default class Map extends Component<OurProps, OurState> {
 					/>
 
 					<div id="map">
-						<NetCDFMap
+						{colorMaker
+						? <NetCDFMap
 							mapOptions={{
 								center: this.center,
 								zoom: this.zoom,
@@ -263,6 +264,7 @@ export default class Map extends Component<OurProps, OurState> {
 								}
 							]}
 						/>
+						: null}
 						<Copyright rootStyleOverride={{position:'absolute', bottom:2, right:3}} />
 					</div>
 					<div id="legend" ref={(div: HTMLDivElement) => this.legendDiv = div}>{

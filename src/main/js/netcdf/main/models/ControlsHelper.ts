@@ -1,6 +1,6 @@
 import {colorRamps} from "../../../common/main/models/ColorMaker";
 import { ColorRamp } from "../../../common/main/models/colorRampDefs";
-import { RasterRequestIdxs } from "./RasterDataFetcher";
+import { getRasterId, RasterRequest } from "../backend";
 
 export class Control<T extends string | number>{
 
@@ -9,12 +9,10 @@ export class Control<T extends string | number>{
 		public readonly selectedIdx: number | null = null
 	){}
 
-	get isLoaded(): boolean{
-		return this.values.length > 0 || this.selectedIdx != null
-	}
-
 	get selected(): T | null {
-		return this.selectedIdx === null || this.selectedIdx < 0 ? null : this.values[this.selectedIdx]
+		return (this.selectedIdx === null || this.selectedIdx < 0 || this.selectedIdx >= this.values.length)
+			? null
+			: this.values[this.selectedIdx]
 	}
 
 	withSelected(selectedIdx: number){
@@ -35,7 +33,7 @@ export class ControlColorRamp extends Control<string> {
 const defaultControl = new Control([]);
 const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
-const defaultColorRamps = new ControlColorRamp(colorRamps);
+const defaultColorRamps = new ControlColorRamp(colorRamps, 3)
 
 export class ControlsHelper{
 	readonly services: Control<string> = defaultControl
@@ -46,34 +44,20 @@ export class ControlsHelper{
 	readonly delays: Control<number> = defaultDelays
 	readonly colorRamps: ControlColorRamp = defaultColorRamps
 
-	get allControlsLoaded(){
-		return this.services.isLoaded
-			&& this.variables.isLoaded
-			&& this.dates.isLoaded
-			&& this.elevations.isLoaded
-			&& this.colorRamps.isLoaded;
+	get rasterRequest(): RasterRequest | undefined {
+		const service = this.services.selected
+		const variable = this.variables.selected
+		const dateIdx = this.dates.selectedIdx
+		const elevationIdx = this.elevations.selectedIdx
+
+		return (
+			service === null || variable === null || dateIdx === null || dateIdx < 0 || elevationIdx === null
+		) ? undefined : {service, variable, dateIdx, elevationIdx}
 	}
 
-	// get selectedIdxs(){
-	// 	return {
-	// 		dateIdx: this.dates.selectedIdx,
-	// 		elevationIdx: this.elevations.selectedIdx,
-	// 		gammaIdx: this.gammas.selectedIdx,
-	// 		serviceIdx: this.services.selectedIdx,
-	// 		variableIdx: this.variables.selectedIdx,
-	// 		colorRampIdx: this.colorRamps.selectedIdx,
-	// 	};
-	// }
-
-	get rasterRequest(): RasterRequestIdxs | undefined {
-		const serviceIdx = this.services.selectedIdx
-		const variableIdx = this.variables.selectedIdx
-		const dateIdx = this.dates.selectedIdx
-		if(serviceIdx === null || variableIdx === null || dateIdx === null || !this.elevations.isLoaded) return
-		return {
-			serviceIdx, variableIdx, dateIdx,
-			elevationIdx: this.elevations.selectedIdx
-		}
+	get rasterId(): string | undefined {
+		const req = this.rasterRequest
+		return req ? getRasterId(req) : undefined
 	}
 
 	copyWith(update: {[K in keyof ControlsHelper]?: ControlsHelper[K]}): ControlsHelper{

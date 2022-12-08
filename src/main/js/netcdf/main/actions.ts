@@ -1,6 +1,6 @@
 import {
-	getCountriesGeoJson, getRaster, getVariablesAndDates, getElevations, getServices, getTitle,
-	getTimeserie, getMetadata} from './backend';
+	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getElevations, getServices, getTitle,
+	getTimeserie, getMetadata, getRasterId} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
 import { NetCDFDispatch, NetCDFThunkAction } from './store';
@@ -11,7 +11,6 @@ import {
 	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
 import stateProps, { RangeFilter, TimeserieParams } from './models/State';
-import { getRasterId } from './models/RasterDataFetcher';
 
 export const failWithError = (error: Error): NetCDFThunkAction<void> => dispatch => {
 	console.log(error);
@@ -132,11 +131,9 @@ export const resetTimeserieData: NetCDFThunkAction<void> = dispatch => {
 };
 
 export const pushPlayButton: NetCDFThunkAction<void> = (dispatch, getState) => {
-	if (!getState().rasterDataFetcher) return;
-
-	dispatch(new PUSH_PLAY());
-	dispatch(incrementIfNeeded);
-};
+	dispatch(new PUSH_PLAY())
+	dispatch(incrementIfNeeded)
+}
 
 export const incrementRasterData = (increment: number): NetCDFThunkAction<void> => dispatch => {
 	dispatch(new INCREMENT_RASTER(increment));
@@ -144,20 +141,20 @@ export const incrementRasterData = (increment: number): NetCDFThunkAction<void> 
 };
 
 const fetchRasterData: NetCDFThunkAction<void> = (dispatch, getState) => {
-	const {controls, rasterDataFetcher, desiredId, raster} = getState()
+	const {controls, raster, playingMovie} = getState()
 
 	const request = controls.rasterRequest
 	if(request === undefined) return
 
-	const currentDesiredId = getRasterId(request)
+	const desiredId = getRasterId(request)
 
-	if (currentDesiredId !== desiredId || (raster && raster.id === desiredId)) {
+	if (raster && raster.id === desiredId) {
 		dispatch(incrementIfNeeded)
 		return
 	}
-	if (!rasterDataFetcher) return
-		
-	rasterDataFetcher.fetch(request).then(
+	const delay = playingMovie ? (controls.delays.selected ?? 200) : 0
+
+	rasterFetcher.fetch(request, delay).then(
 		raster => {
 			dispatch(new RASTER_FETCHED(raster));
 			dispatch(incrementIfNeeded);

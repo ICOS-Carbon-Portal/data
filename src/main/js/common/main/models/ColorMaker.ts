@@ -50,7 +50,7 @@ export default class ColorMaker{
 		return rgbaInterpolation(colorRamp.domain, colorRamp.colors);;
 	}
 
-	makeColor(value: number){
+	makeColor(value: number): RGBA{
 		if (isNaN(value)) return noValue;
 		
 		const normalized = this._normalize(value);
@@ -79,14 +79,16 @@ export default class ColorMaker{
 export class ColorMakerRamps extends ColorMaker {
 	public readonly colorRampIdx: number
 	public readonly colorRamps: Array<ColorRamp & {colorMaker: ColorMaker}>
+	public readonly colorRampName: string
 
-	constructor(minVal: number, maxVal: number, gamma: number, readonly colorRampName: string, isDivergingData: boolean) {
+	constructor(minVal: number, maxVal: number, gamma: number, colorRampName: string, isDivergingData: boolean) {
 		const filteredColorRamps = findColorRamps(minVal, maxVal, isDivergingData, colorRampName);
 		const colorRampIdx = filteredColorRamps.findIndex(cr => cr.name === colorRampName);
 		const selectedColorRamp = filteredColorRamps[colorRampIdx];
 
 		super(minVal, maxVal, gamma, selectedColorRamp, isDivergingData);
 
+		this.colorRampName = colorRampName
 		this.colorRampIdx = colorRampIdx;
 		this.colorRamps = filteredColorRamps.map(cr =>
 			Object.assign({}, cr, {

@@ -4,32 +4,42 @@ import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
 import { TimeserieParams } from './models/State';
 import { DataObject } from '../../common/main/metacore';
+import {ensureDelay, retryPromise} from 'icos-cp-utils';
 
-export type RasterId = string
+export interface RasterRequest{
+	service: string
+	variable: string
+	dateIdx: number
+	elevationIdx: number | null
+}
+class RasterFetcher {
+	private _lastFetched: number;
 
-export function getRaster(
-	id: RasterId, service: string, variable: string, dateIdx: number, elevationIdx: number | null
-): Promise<BinRaster> {
-
-	const queryParts = new Array<[string, string]>(
-		['service', service],
-		['varName', variable],
-		['dateInd', dateIdx.toString()]
-	)
-	if (elevationIdx !== null){
-		queryParts.push(['elevationInd', elevationIdx.toString()])
+	constructor(readonly numberOfRetries: number) {
+		this._lastFetched = Date.now();
 	}
-	return fetch(
-			'/netcdf/getSlice' + getUrlQuery(queryParts),
-			{
-				headers: {'Accept': 'application/octet-stream'}
-			}
-		)
-		.then(checkStatus)
-		.then(response => response.arrayBuffer())
-		.then(response => {
-			return new BinRaster(response, id)
-		})
+
+	fetch(request: RasterRequest, withDelay: number = 0): Promise<BinRaster>{
+		const plain = retryPromise(() => getRaster(request), this.numberOfRetries)
+		if(withDelay <= 0) return plain
+		const delay = this._lastFetched - Date.now() + withDelay
+		this._lastFetched = Date.now()
+		return ensureDelay(plain, delay)
+	}
+
+}
+
+export const rasterFetcher = new RasterFetcher(3)
+
+export function getRasterId(req: RasterRequest): string {
+	const components: Array<string | number> = [
+		'service_', req.service, '_var_', req.variable, '_date_', req.dateIdx
+	]
+	if(req.elevationIdx !== null && req.elevationIdx >= 0){
+		components.push('_elevation_')
+		components.push(req.elevationIdx)
+	}
+	return components.join("")
 }
 
 export const getCountriesGeoJson = () => {
@@ -74,3 +84,31 @@ export const getMetadata = (objId: string): Promise<DataObject> => {
 	//TODO Parametrize the meta URL for different ENVRIes
 	return getJson(`https://meta.icos-cp.eu/objects/${objId}?format=json`);
 };
+
+
+function getRaster(req: RasterRequest): Promise<BinRaster> {
+
+	const {service, variable, dateIdx, elevationIdx} = req
+
+	const queryParts = new Array<[string, string]>(
+		['service', service],
+		['varName', variable],
+		['dateInd', dateIdx.toString()]
+	)
+
+	if (elevationIdx !== null && elevationIdx >= 0){
+		queryParts.push(['elevationInd', elevationIdx.toString()])
+	}
+
+	return fetch(
+			'/netcdf/getSlice' + getUrlQuery(queryParts),
+			{
+				headers: {'Accept': 'application/octet-stream'}
+			}
+		)
+		.then(checkStatus)
+		.then(response => response.arrayBuffer())
+		.then(response => {
+			return new BinRaster(response, getRasterId(req))
+		})
+}
