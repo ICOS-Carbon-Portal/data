@@ -98,7 +98,7 @@ class ObspackNcToBinTableTest extends AnyFunSpec {
 
 		// val file = new File(origFile.getAbsolutePath + bintable.FileExtension)
 
-		it("Parses nc file as csv"){
+		ignore("Parses nc file as csv"){
 			import ObspackNcToBinTable.TypedVar
 
 			val file = Path.of(path1).withSuffix(FileExtension)

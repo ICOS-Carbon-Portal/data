@@ -1,22 +1,25 @@
 package se.lu.nateko.cp.data.formats.bintable
 
+import se.lu.nateko.cp.data.formats.bintable.DataType.*
+
 import java.io.BufferedOutputStream
 import java.io.File
-import java.io.IOException
 import java.io.ObjectOutputStream
 import java.io.OutputStream
 import java.nio.Buffer
-import java.nio.IntBuffer
-import java.nio.FloatBuffer
-import java.nio.DoubleBuffer
-import java.nio.ShortBuffer
-import java.nio.CharBuffer
 import java.nio.ByteBuffer
+import java.nio.CharBuffer
+import java.nio.DoubleBuffer
+import java.nio.FloatBuffer
+import java.nio.IntBuffer
 import java.nio.MappedByteBuffer
+import java.nio.ShortBuffer
 import java.nio.channels.Channels
 import java.nio.channels.FileChannel.MapMode
 import java.util.LinkedHashMap
+// import scala.collection.mutable.LinkedHashMap
 import scala.collection.mutable.Seq
+import scala.collection.mutable.Map
 
 case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 
@@ -29,72 +32,67 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 
 	private val typedBuffers: Array[Buffer] = new Array[Buffer](nCols)
 
-	private val stringDictionary: LinkedHashMap[String, Integer] = new LinkedHashMap[String, Integer]()
-	private var stringCount = 0
+	private val stringDictionary: LinkedHashMap[String, Integer] = LinkedHashMap[String, Integer]()
+	private var stringCount: Integer = 0
 
-	for(i <- 0 until nCols) {
+	for(i <- 0 until nCols)
 
 		buffers(i) = file.getChannel().map(MapMode.READ_WRITE, columnOffsets(i), columnSizes(i))
 
 		val dt: DataType = schema.columns(i)
 
-		dt match {
-			case DataType.INT =>
+		dt match
+			case INT =>
 				typedBuffers(i) = buffers(i).asIntBuffer()
-			case DataType.FLOAT =>
+			case FLOAT =>
 				typedBuffers(i) = buffers(i).asFloatBuffer()
-			case DataType.DOUBLE =>
+			case DOUBLE =>
 				typedBuffers(i) = buffers(i).asDoubleBuffer()
-			case DataType.SHORT =>
+			case SHORT =>
 				typedBuffers(i) = buffers(i).asShortBuffer()
-			case DataType.CHAR =>
+			case CHAR =>
 				typedBuffers(i) = buffers(i).asCharBuffer()
-			case DataType.BYTE =>
+			case BYTE =>
 				typedBuffers(i) = buffers(i)
-			case DataType.STRING =>
+			case STRING =>
 				typedBuffers(i) = buffers(i).asIntBuffer()
 
-			case null => throw Utils.unsupportedDatatypeException(dt)
-		}
-	}
-
-	@throws(classOf[IOException])
 	def writeRow(row: Seq[Object]): Unit =
 
-		for (i <- 0 until schema.columns.length) {
+		for (i <- 0 until schema.columns.length)
 			val dt = schema.columns(i)
 	
-			dt match {
-				case DataType.INT =>
+			dt match
+				case INT =>
 					typedBuffers(i).asInstanceOf[IntBuffer].put(row(i).asInstanceOf[Integer])
-				case DataType.FLOAT =>
+				case FLOAT =>
 					typedBuffers(i).asInstanceOf[FloatBuffer].put(row(i).asInstanceOf[Float])
-				case DataType.DOUBLE =>
+				case DOUBLE =>
 					typedBuffers(i).asInstanceOf[DoubleBuffer].put(row(i).asInstanceOf[Double])
-				case DataType.SHORT =>
+				case SHORT =>
 					typedBuffers(i).asInstanceOf[ShortBuffer].put(row(i).asInstanceOf[Short])
-				case DataType.CHAR =>
+				case CHAR =>
 					typedBuffers(i).asInstanceOf[CharBuffer].put(row(i).asInstanceOf[Character])
-				case DataType.BYTE =>
+				case BYTE =>
 					typedBuffers(i).asInstanceOf[ByteBuffer].put(row(i).asInstanceOf[Byte])
-				case DataType.STRING =>
+				case STRING =>
 					val s = row(i).asInstanceOf[String]
 					var stringIndex = 0
+					println(s)
+
+					// val stringIndex = stringDictionary.getOrElseUpdate(s, stringCount)
+					// println(stringDictionary)
+					// stringCount += 1
 
 					if(stringDictionary.containsKey(s))
 						stringIndex = stringDictionary.get(s)
-					else {
+					else
 						stringIndex = stringCount
 						stringDictionary.put(s, stringCount)
 						stringCount += 1
-					}
-					(typedBuffers(i).asInstanceOf[IntBuffer]).put(stringIndex)
-	
-				case null => throw Utils.unsupportedDatatypeException(dt)
-			}
-		}
 
-	@throws(classOf[IOException])
+					(typedBuffers(i).asInstanceOf[IntBuffer]).put(stringIndex)
+
 	override def close(): Unit =
 		file.seek(file.length())
 
@@ -103,13 +101,12 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 		oos.writeInt(stringCount)
 
 		stringDictionary.keySet().forEach(s => oos.writeUTF(s))
+		// stringDictionary.keys.foreach(s => oos.writeUTF(s))
 
-		for(buffer: MappedByteBuffer <- buffers){
+		for(buffer: MappedByteBuffer <- buffers)
 			buffer.force()
-		}
 
 		oos.close()
 		file.close()
 
 end BinTableWriter
-
