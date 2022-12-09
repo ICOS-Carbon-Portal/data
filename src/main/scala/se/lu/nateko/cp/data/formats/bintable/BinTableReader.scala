@@ -12,24 +12,21 @@ import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.channels.FileChannel.MapMode
 
-case class BinTableReader(readFile: File, schema: Schema) extends BinTableFile:
+class BinTableReader(f: File, schema: Schema) extends BinTableFile(f, "r", schema):
 
-	private var stringDictionary: Seq[String] = Vector.empty
-	private var ois: Option[ObjectInputStream] = None
-	private val file = super.file(readFile, "r")
-
-	if(schema.hasStringColumn)
-		file.seek(columnOffsets(schema.columns.length))
-
-		val is: InputStream = new BufferedInputStream(Channels.newInputStream(file.getChannel()))
-		ois = Some(new ObjectInputStream(is))
-
-		val nStrings: Int = ois.fold(0)(_.readInt())
-		stringDictionary = Vector.range(0, nStrings).map(_ => ois.get.readUTF)
-
-	else
-		stringDictionary = Vector.empty
-		ois = None
+	private val stringDictionary: Seq[String] =
+		if(schema.hasStringColumn)
+			val file = openRAF()
+			file.seek(columnOffsets.last)
+			val is: InputStream = new BufferedInputStream(Channels.newInputStream(file.getChannel()))
+			val ois = new ObjectInputStream(is)
+			try
+				val nStrings: Int = ois.readInt()
+				Vector.range(0, nStrings).map(_ => ois.readUTF)
+			finally
+				ois.close()
+		else
+			Vector.empty
 
 	def read(column: Int): Buffer =
 		ensureSizeIsInteger()
@@ -73,6 +70,4 @@ case class BinTableReader(readFile: File, schema: Schema) extends BinTableFile:
 
 	def getStringForIndex(index: Int): String = stringDictionary(index)
 
-	override def close(): Unit =
-		for (stream <- ois) yield stream.close()
-		file.close()
+	

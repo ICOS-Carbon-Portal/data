@@ -16,14 +16,10 @@ import java.nio.MappedByteBuffer
 import java.nio.ShortBuffer
 import java.nio.channels.Channels
 import java.nio.channels.FileChannel.MapMode
-import java.util.LinkedHashMap
-// import scala.collection.mutable.LinkedHashMap
-import scala.collection.mutable.Seq
-import scala.collection.mutable.Map
+import scala.collection.mutable.LinkedHashMap
 
-case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
+class BinTableWriter(f: File, schema: Schema) extends BinTableFile(f, "rw", schema):
 
-	private val file = super.file(writeFile, "rw")
 	val nCols = columnSizes.length
 
 	file.setLength(columnOffsets(nCols)) //offset AFTER the last column
@@ -32,8 +28,8 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 
 	private val typedBuffers: Array[Buffer] = new Array[Buffer](nCols)
 
-	private val stringDictionary: LinkedHashMap[String, Integer] = LinkedHashMap[String, Integer]()
-	private var stringCount: Integer = 0
+	private val stringDictionary = LinkedHashMap.empty[String, Int]
+	private var stringCount: Int = 0
 
 	for(i <- 0 until nCols)
 
@@ -57,7 +53,7 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 			case STRING =>
 				typedBuffers(i) = buffers(i).asIntBuffer()
 
-	def writeRow(row: Seq[Object]): Unit =
+	def writeRow(row: Array[AnyRef]): Unit =
 
 		for (i <- 0 until schema.columns.length)
 			val dt = schema.columns(i)
@@ -77,21 +73,11 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 					typedBuffers(i).asInstanceOf[ByteBuffer].put(row(i).asInstanceOf[Byte])
 				case STRING =>
 					val s = row(i).asInstanceOf[String]
-					var stringIndex = 0
-					println(s)
-
-					// val stringIndex = stringDictionary.getOrElseUpdate(s, stringCount)
-					// println(stringDictionary)
-					// stringCount += 1
-
-					if(stringDictionary.containsKey(s))
-						stringIndex = stringDictionary.get(s)
-					else
-						stringIndex = stringCount
-						stringDictionary.put(s, stringCount)
-						stringCount += 1
-
+					val stringIndex = stringDictionary.getOrElseUpdate(s, {stringCount +=1; stringCount - 1})
 					(typedBuffers(i).asInstanceOf[IntBuffer]).put(stringIndex)
+
+	def write(p: Product): Unit =
+	 	writeRow(p.productIterator.collect{case a: AnyRef => a}.toArray)
 
 	override def close(): Unit =
 		file.seek(file.length())
@@ -100,8 +86,7 @@ case class BinTableWriter(writeFile: File, schema: Schema) extends BinTableFile:
 		val oos: ObjectOutputStream = new ObjectOutputStream(os)
 		oos.writeInt(stringCount)
 
-		stringDictionary.keySet().forEach(s => oos.writeUTF(s))
-		// stringDictionary.keys.foreach(s => oos.writeUTF(s))
+		stringDictionary.keys.foreach(s => oos.writeUTF(s))
 
 		for(buffer: MappedByteBuffer <- buffers)
 			buffer.force()
