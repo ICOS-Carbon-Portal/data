@@ -51,12 +51,14 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 
 	else if (payload instanceof SERVICE_SET) {
 		return update({
+			raster: undefined,
 			controls: state.controls.copyWith({services: new Control([payload.service])})
 		});
 	}
 
 	else if (payload instanceof SERVICE_SELECTED) {
 		return update({
+			raster: undefined,
 			controls: state.controls.withSelectedService(payload.idx),
 			timeserieParams: undefined
 		});
@@ -94,16 +96,19 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof ELEVATIONS_FETCHED) {
 		if (isElevationsFetched(state, payload)) {
 			const elevations = payload.elevations
-			const eIdx = elevations.length
-				? state.lastElevation !== undefined
-					? elevations.indexOf(state.lastElevation)
-					: state.initSearchParams.elevation
-						? elevations.indexOf(state.initSearchParams.elevation)
-						: -1
-				: -1;
-			const controls = state.controls.copyWith({
-				elevations: new Control(elevations, eIdx)
-			})
+			let eIdx = -1
+			if(elevations.length > 0){
+				if(eIdx < 0 && state.lastElevation !== undefined){
+					const lastElevIdx = elevations.indexOf(state.lastElevation)
+					if(lastElevIdx >= 0) eIdx = lastElevIdx
+				}
+				const initElev = state.initSearchParams.elevation
+				if(eIdx < 0 && initElev !== null){
+					const initElevIdx = elevations.indexOf(initElev)
+					if(initElevIdx >= 0) eIdx = initElevIdx
+				}
+			}
+			const controls = state.controls.copyWith({elevations: new Control(elevations, eIdx)})
 
 			return update({
 				lastElevation: eIdx >= 0 ? elevations[eIdx] : state.lastElevation,
@@ -251,6 +256,7 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 		rasterFetchCount: state.rasterFetchCount + 1,
 		minMax: minMaxPart,
 		fullMinMax: toComplete(selectMinMax([globalMinMax, rasterMinMax])),
+		colorMaker: undefined,
 		isDivergingData
 	}
 	if(gamma === null || colorRampName === null || minMax === undefined || isDivergingData === undefined) return basicUpdate

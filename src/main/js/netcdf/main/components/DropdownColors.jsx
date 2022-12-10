@@ -43,7 +43,7 @@ export default class DropdownColors extends Component{
 		const getLegend = selectedColorMaker ? selectedColorMaker.getLegend.bind(selectedColorMaker) : null;
 
 		return (
-			<span ref={div => this.node = div} className="dropdown" style={{display: 'inline-block', zIndex:9999}}>
+			<span ref={div => this.node = div} className="dropdown" style={{display: 'inline-block', zIndex:750}}>
 				<Button dropdownOpen={dropdownOpen} clickAction={this.onDropdownClick.bind(this)} getLegend={getLegend} />
 
 				<ul className={dropDownMenuCls}>{

@@ -13,6 +13,7 @@ import { AppProps } from '../containers/App';
 import { Control } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
+import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
@@ -177,15 +178,21 @@ export default class Map extends Component<OurProps, OurState> {
 	render() {
 		const state = this.state;
 		const props = this.props;
-		const raster = props.raster;
 		const { gammas, colorRamps } = props.controls;
 		const { rangeValues, valueFilter } = props.rangeFilter;
+
+		const mapId = props.raster
+			? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorRamps.selectedIdx ?? "?"}` +
+				`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
+			: undefined
+
+		const needReset = !props.raster || !props.colorMaker
+		const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
+
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
 		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
 		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
-		const mapId = raster && gammas && colorRamps
-			? `${raster.id}${gammas.selectedIdx}${colorRamps.selectedIdx}${rangeValues.minRange}${rangeValues.maxRange}`
-			: "";
+
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
 			props.initSearchParams.center,
@@ -193,11 +200,6 @@ export default class Map extends Component<OurProps, OurState> {
 			raster
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
-
-		// if (raster && gammas && colorRamps) {
-		// 	// A change in raster id triggers a rerender of map and legend
-		// 	raster.id = mapId;
-		// }
 
 		return (
 			<div id="content" className="container-fluid">
@@ -237,14 +239,14 @@ export default class Map extends Component<OurProps, OurState> {
 					/>
 
 					<div id="map">
-						{colorMaker
-						? <NetCDFMap
+						<NetCDFMap
 							mapOptions={{
 								center: this.center,
 								zoom: this.zoom,
 								forceCenter: [52.5, 10]
 							}}
-							raster={props.raster}
+							raster={raster}
+							reset={needReset}
 							colorMaker={colorMaker}
 							valueFilter={valueFilter}
 							geoJson={props.countriesTopo.data}
@@ -264,7 +266,6 @@ export default class Map extends Component<OurProps, OurState> {
 								}
 							]}
 						/>
-						: null}
 						<Copyright rootStyleOverride={{position:'absolute', bottom:2, right:3}} />
 					</div>
 					<div id="legend" ref={(div: HTMLDivElement) => this.legendDiv = div}>{
