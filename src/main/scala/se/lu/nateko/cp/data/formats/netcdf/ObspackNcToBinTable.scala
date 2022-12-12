@@ -82,18 +82,19 @@ object ObspackNcToBinTable:
 				val nullValue = ValueFormatParser.getNullRepresentation(vf)
 				vf match
 					case IntValue =>
-						readNumeric(v, nullValue, _ getInt _)
+						readVal(v, nullValue, (ncArr, i) => Int.box(ncArr.getInt(i)))
 					case FloatValue =>
-						readNumeric(v, nullValue, _ getFloat _)
+						readVal(v, nullValue, (ncArr, i) => Float.box(ncArr.getFloat(i)))
 					case DoubleValue =>
-						readNumeric(v, nullValue, _ getDouble _)
+						readVal(v, nullValue, (ncArr, i) => Double.box(ncArr.getDouble(i)))
 					case Iso8601DateTime =>
 						val dateParser = getDateParser(v)
-						readNumeric(v, nullValue, (ncArr, i) => {
+						readVal(v, nullValue, (ncArr, i) => {
 							val calDate = dateParser(ncArr.getDouble(i))
 							ValueFormatParser.encodeInstant(calDate.getMillis)
 						})
-					//TODO Add support for character value format
+					case ValueFormat.Utf16CharValue =>
+						readVal(v, nullValue, (ncArr, i) => Char.box(ncArr.getChar(i)))
 					case _ => throw new CpDataParsingException(
 						s"Support for value format $vf in Netcdf has not been implemented yet"
 					)
@@ -138,18 +139,17 @@ object ObspackNcToBinTable:
 		}
 	end apply
 
-	private def readNumeric[N <: Number](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
+	private def readVal[N <: AnyRef](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
 		val ncArr = v.read()
 		var printedFillInfo = false
 		Option(v.findAttribute("_FillValue")).map(_.getNumericValue).fold{
 			(i: Int) => getter(ncArr, i)
 		}{fill =>
-			(i: Int) => {
+			(i: Int) =>
 				val value = getter(ncArr, i)
 				// our nullValues are NaNs for Float and Double, so potentially
 				// failed NaN == NaN comparison (see the next line) is not a problem
 				if value == fill then nullValue else value
-			}
 		}
 
 	private def getDateParser(timeVar: Variable): Double => CalendarDate =

@@ -9,6 +9,7 @@ import se.lu.nateko.cp.data.formats.PlainColumn
 import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
 import se.lu.nateko.cp.data.formats.ValueFormat.FloatValue
 import se.lu.nateko.cp.data.formats.ValueFormat.Iso8601DateTime
+import se.lu.nateko.cp.data.formats.ValueFormat.Utf16CharValue
 import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
 import se.lu.nateko.cp.data.formats.bintable.FileExtension
@@ -93,6 +94,8 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		test("First longitude", data, _(0)(LonIndex), "140.3")
 		test("Last longitude", data, _(317)(LonIndex), "140.47")
 
+		assert(true)
+
 	}
 
 	describe("Read values from second file") {
@@ -116,6 +119,25 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		test("First timestamp", data, _(0)(TimestampIndex), "2005-01-01T03:00:00Z")
 		test("Last timestamp", data, _(93)(TimestampIndex), "2005-01-05T00:00:00Z")
 
+		assert(true)
+
 	}
 
+	describe("Read qc flag from third file") {
+		val columnsMeta = new ColumnsMeta(Seq(
+			PlainColumn(Iso8601DateTime, "time", false),
+			PlainColumn(Utf16CharValue, "qc_flag", false)
+		))
+
+		val path = Path.of(getClass.getResource("/co2_htm_tower-insitu_424_allvalid-150magl.nc").getPath)
+		val data = readNCFile(path, columnsMeta, s" path: $path")
+
+		it("QC Flag") {
+			data map { rows =>
+				assert(rows(0)(1) == "O") 
+				assert(rows(1)(1) == "O")
+				assert(rows(2)(1) == "O")
+			}
+		}
+	}
 }
