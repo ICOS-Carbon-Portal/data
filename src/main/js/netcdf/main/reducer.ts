@@ -4,7 +4,7 @@ import {
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
 	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
-import {Control, ControlColorRamp, ControlsHelper} from './models/ControlsHelper';
+import {Control, ColormapControl, ControlsHelper} from './models/ControlsHelper';
 import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
@@ -217,7 +217,7 @@ type UpdateFactory<A> = (state: State, payload: A) => Partial<State>
 const handleSetRangefilter: UpdateFactory<SET_RANGEFILTER> = (state, payload) => {
 	const update: Partial<State> = {rangeFilter: payload.rangeFilter}
 	update.minMax = getMinMax({...state, ...update})
-	const minMax = toComplete(update.minMax)
+	const minMax = toCompleteMinMax(update.minMax)
 	if(minMax === undefined) return update
 
 	const selectedGamma = state.controls.gammas.selected
@@ -239,14 +239,14 @@ const handleSetRangefilter: UpdateFactory<SET_RANGEFILTER> = (state, payload) =>
 const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 	if(payload.raster.id !== state.controls.rasterId) return {}
 	const gamma = state.controls.gammas.selected
-	const colorRampName = state.controls.colorRamps.selected
+	const colorRampName = state.controls.colorMaps.selected?.ramp.name
 
 	const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
 	const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
-	const rasterMinMax = getRasterMinMax(payload.raster);
+	const rasterMinMax = payload.raster.stats
 
 	const minMaxPart = selectMinMax([rangeFilterMinMax, globalMinMax, rasterMinMax])
-	const minMax = toComplete(minMaxPart)
+	const minMax = toCompleteMinMax(minMaxPart)
 	const isDivergingData = state.isDivergingData === undefined && minMax != undefined
 		? minMax.min < 0 && minMax.max > 0
 		: state.isDivergingData;
@@ -255,7 +255,7 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 		raster: payload.raster,
 		rasterFetchCount: state.rasterFetchCount + 1,
 		minMax: minMaxPart,
-		fullMinMax: toComplete(selectMinMax([globalMinMax, rasterMinMax])),
+		fullMinMax: toCompleteMinMax(selectMinMax([globalMinMax, rasterMinMax])),
 		colorMaker: undefined,
 		isDivergingData
 	}
@@ -271,7 +271,7 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 	}
 }
 
-function toComplete(partialMm: Partial<MinMax>): MinMax | undefined {
+export function toCompleteMinMax(partialMm: Partial<MinMax>): MinMax | undefined {
 	const {min, max} = partialMm
 	return min === undefined || max === undefined ? undefined : {min, max}
 }
@@ -281,7 +281,7 @@ const handleGammaSelected: UpdateFactory<GAMMA_SELECTED> = (state, payload) => {
 	const selectedGamma = newControls.gammas.selected
 	if(selectedGamma === null) return {}
 
-	const minMax = toComplete(getMinMax(state))
+	const minMax = toCompleteMinMax(getMinMax(state))
 	if(minMax === undefined) return {}
 
 	const isDivergingData = state.isDivergingData || (minMax.min < 0 && minMax.max > 0)
@@ -336,15 +336,15 @@ function getMinMax(state: State): Partial<MinMax> {
 	if (metadata === undefined && raster === undefined) return rangeFilterMinMax;
 
 	const globalMinMax = getGlobalMinMax(controls, metadata);
-	const rasterMinMax = getRasterMinMax(raster);
+	const rasterMinMax = raster?.stats;
 
 	return selectMinMax([rangeFilterMinMax, globalMinMax, rasterMinMax]);
 };
 
-function selectMinMax(mms: Array<Partial<MinMax>>): Partial<MinMax> {
+function selectMinMax(mms: Array<Partial<MinMax> | undefined>): Partial<MinMax> {
 
 	const pickVal = (key: 'min' | 'max') =>
-		mms.map(mm => mm[key]).find(mm => mm !== undefined)
+		mms.map(mm => mm?.[key]).find(mm => mm !== undefined)
 
 	return {
 		min: pickVal('min'),
@@ -361,28 +361,20 @@ function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
 function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VarMeta | undefined {
 
 	const selectedVariable = controls?.variables?.selected;
-	if (selectedVariable === undefined) return;
+	if (!selectedVariable) return
 
 	return getVarMetas(metadata)?.find(v => v.label === selectedVariable);
 };
 
-function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): Partial<MinMax> {
-	const minMax = getVariableInfo(controls, metadata)?.minMax;
-	return { min: minMax?.[0], max: minMax?.[1] };
-};
+function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): MinMax | undefined {
+	const minMax = getVariableInfo(controls, metadata)?.minMax
+	if(minMax === undefined) return
+	return { min: minMax[0], max: minMax[1] }
+}
 
 function getRangeFilterMinMax(rangeFilter: RangeFilter): Partial<MinMax> {
 	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange };
-};
-
-const getRasterMinMax = (raster?: BinRaster) => {
-	if (raster === undefined || raster.stats === undefined) return { min: undefined, max: undefined };
-
-	return {
-		min: raster.stats.min,
-		max: raster.stats.max
-	}
-};
+}
 
 const getLegendLabel = (metaVar?: VarMeta) => {
 	if (metaVar && metaVar.valueType.self.label && metaVar.valueType.unit) {

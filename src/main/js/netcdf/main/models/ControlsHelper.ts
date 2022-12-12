@@ -1,12 +1,12 @@
 import {colorRamps} from "../../../common/main/models/ColorMaker";
-import { ColorRamp } from "../../../common/main/models/colorRampDefs";
 import { getRasterId, RasterRequest } from "../backend";
+import Colormap from "./Colormap";
 
-export class Control<T extends string | number>{
+export class Control<T>{
 
 	constructor(
-		public readonly values: T[],
-		public readonly selectedIdx: number | null = null
+		readonly values: T[],
+		readonly selectedIdx: number | null = null
 	){}
 
 	get selected(): T | null {
@@ -20,20 +20,25 @@ export class Control<T extends string | number>{
 	}
 }
 
-export class ControlColorRamp extends Control<string> {
-	constructor(public readonly colorRamps: ColorRamp[], selectedIdx: number | null = null) {
-		super(colorRamps.map(cr => cr.name), selectedIdx);
+export class ColormapControl extends Control<Colormap> {
+	constructor(colorMaps: Colormap[], selectedIdx: number | null = null) {
+		super(colorMaps, selectedIdx)
 	}
 
-	withSelected(selectedIdx: number){
-		return new ControlColorRamp(this.colorRamps, selectedIdx);
+	withGamma(newGamma: number){
+		return new ColormapControl(this.values.map(cm => cm.withGamma(newGamma)), this.selectedIdx)
+	}
+
+	withSelected(selectedIdx: number): ColormapControl {
+		return new ColormapControl(this.values, selectedIdx)
 	}
 }
 
 const defaultControl = new Control([]);
 const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
+const selectedGamma = defaultGammas.selected! //we selected one in the previous line
+const defaultColorMaps = new ColormapControl(colorRamps.map(cr => new Colormap(cr, selectedGamma)), 3)
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
-const defaultColorRamps = new ControlColorRamp(colorRamps, 3)
 
 export class ControlsHelper{
 	readonly services: Control<string> = defaultControl
@@ -42,7 +47,7 @@ export class ControlsHelper{
 	readonly elevations: Control<number> = defaultControl
 	readonly gammas: Control<number> = defaultGammas
 	readonly delays: Control<number> = defaultDelays
-	readonly colorRamps: ControlColorRamp = defaultColorRamps
+	readonly colorMaps: ColormapControl = defaultColorMaps
 
 	get rasterRequest(): RasterRequest | undefined {
 		const service = this.services.selected
@@ -98,6 +103,6 @@ export class ControlsHelper{
 	}
 
 	withSelectedColorRamp(idx: number){
-		return this.copyWith({colorRamps: this.colorRamps.withSelected(idx)})
+		return this.copyWith({colorMaps: this.colorMaps.withSelected(idx)})
 	}
 }

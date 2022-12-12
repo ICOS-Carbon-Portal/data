@@ -14,6 +14,8 @@ import { Control } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
 import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
+import { toCompleteMinMax } from '../reducer';
+import legendFactory from '../models/LegendFactory';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
@@ -61,7 +63,7 @@ export default class Map extends Component<OurProps, OurState> {
 
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
-			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
+			const {dates, elevations, gammas, variables, colorMaps} = this.props.controls;
 			const variable = variables.selected
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variable) {
 				this.prevVariables = variables
@@ -74,7 +76,7 @@ export default class Map extends Component<OurProps, OurState> {
 			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
-			const color = colorRamps.selected ? `color=${colorRamps.selected}` : undefined;
+			const color = colorMaps.selected ? `color=${colorMaps.selected.ramp.name}` : undefined;
 
 			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
@@ -178,11 +180,11 @@ export default class Map extends Component<OurProps, OurState> {
 	render() {
 		const state = this.state;
 		const props = this.props;
-		const { gammas, colorRamps } = props.controls;
+		const { gammas, colorMaps } = props.controls;
 		const { rangeValues, valueFilter } = props.rangeFilter;
 
 		const mapId = props.raster
-			? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorRamps.selectedIdx ?? "?"}` +
+			? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
 				`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
 			: undefined
 
@@ -190,8 +192,11 @@ export default class Map extends Component<OurProps, OurState> {
 		const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
 
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
-		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
-		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
+		const minMax = toCompleteMinMax(props.minMax)
+		const colorMap = colorMaps.selected
+		const getLegend = (minMax === undefined || colorMap === null)
+			? undefined
+			: legendFactory(minMax, colorMap)
 
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
@@ -247,7 +252,7 @@ export default class Map extends Component<OurProps, OurState> {
 							}}
 							raster={raster}
 							reset={needReset}
-							colorMaker={colorMaker}
+							colorMaker={props.colorMaker}
 							valueFilter={valueFilter}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}

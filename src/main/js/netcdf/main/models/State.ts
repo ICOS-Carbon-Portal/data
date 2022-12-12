@@ -1,7 +1,8 @@
 import { BinRaster } from "icos-cp-backend";
+import { RGBA } from "icos-cp-spatial";
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
-import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
+import { colorRamps } from "../../../common/main/models/ColorMaker";
 import { ControlsHelper } from "./ControlsHelper";
 
 
@@ -73,7 +74,7 @@ export interface State {
 	fullMinMax?: MinMax
 	rangeFilter: RangeFilter
 	legendLabel: string
-	colorMaker?: ColorMakerRamps
+	colorMaker?: (value: number) => RGBA
 	controls: ControlsHelper
 	variableEnhancer: Record<string,string>
 	countriesTopo: {
