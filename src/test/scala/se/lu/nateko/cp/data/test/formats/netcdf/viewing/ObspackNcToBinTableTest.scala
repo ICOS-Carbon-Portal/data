@@ -16,10 +16,10 @@ import se.lu.nateko.cp.data.formats.bintable.FileExtension
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
 import se.lu.nateko.cp.data.utils.io.withSuffix
 
+import java.nio.file.Files
 import java.nio.file.Path
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
-import java.nio.file.Files
 
 class ObspackNcToBinTableTest extends AsyncFunSpec {
 
@@ -94,8 +94,6 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		test("First longitude", data, _(0)(LonIndex), "140.3")
 		test("Last longitude", data, _(317)(LonIndex), "140.47")
 
-		assert(true)
-
 	}
 
 	describe("Read values from second file") {
@@ -119,8 +117,6 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		test("First timestamp", data, _(0)(TimestampIndex), "2005-01-01T03:00:00Z")
 		test("Last timestamp", data, _(93)(TimestampIndex), "2005-01-05T00:00:00Z")
 
-		assert(true)
-
 	}
 
 	describe("Read qc flag from third file") {
@@ -129,14 +125,17 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 			PlainColumn(Utf16CharValue, "qc_flag", false)
 		))
 
-		val path = Path.of(getClass.getResource("/co2_htm_tower-insitu_424_allvalid-150magl.nc").getPath)
+		val path = Path.of(getClass.getResource("/co2_htm_tower-insitu_424_allvalid-150magl_small.nc").getPath)
 		val data = readNCFile(path, columnsMeta, s" path: $path")
+
+		it("Reads correct number of rows") {
+			data map { rows => assert(rows.length == 100) }
+		}
 
 		it("QC Flag") {
 			data map { rows =>
-				assert(rows(0)(1) == "O") 
-				assert(rows(1)(1) == "O")
-				assert(rows(2)(1) == "O")
+				assert(rows(0)(1) == "O")
+				assert(rows(99)(1) == "O")
 			}
 		}
 	}
