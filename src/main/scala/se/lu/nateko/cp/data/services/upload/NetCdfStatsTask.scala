@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
+import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService
 import se.lu.nateko.cp.meta.core.data.NetCdfExtract
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath
@@ -21,6 +21,7 @@ import scala.util.Try
 import scala.util.Using
 
 import ExecutionContext.{global => ctxt}
+import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 
 class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean) extends UploadTask {
 
@@ -45,7 +46,8 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 		}(ctxt)
 
 	private def readNetCdf(using ExecutionContext): Future[NetCdfExtract] =
-		Future.fromTry(Try(new NetcdfUtil(config).service(file.toPath))).flatMap{service =>
+		Future{
+			val service = NetCdfViewService(file.toPath, config)
 			val availableVars = service.getVariables.toSet
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
@@ -59,13 +61,13 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			})
 
 			//the following code block is to test readability and crash if the test fails
-			val date0 = service.getAvailableDates()(0)
+			service.getAvailableDates
 			varNames.foreach{varName =>
-				val elevation0 = service.getAvailableElevations(varName).headOption.orNull
-				service.getRaster(date0, varName, elevation0)
+				val elevation0 = service.getAvailableElevations(varName).indices.headOption
+				service.getRaster(0, varName, elevation0)
 			}
 
 			val varInfoFuts = varNames.map(NetcdfUtil.calcMinMax(file, _))
 			Future.sequence(varInfoFuts).map(NetCdfExtract(_))
-		}
+		}.flatten
 }

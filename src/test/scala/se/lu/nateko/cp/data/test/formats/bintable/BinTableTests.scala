@@ -33,7 +33,7 @@ class BinTableTest extends AnyFunSuite{
 
 		assert(size === n)
 	}
-	
+
 	test("Write with a string column, then read"){
 		val file = getFileInTarget("binTableWriterStringTest.cpb")
 

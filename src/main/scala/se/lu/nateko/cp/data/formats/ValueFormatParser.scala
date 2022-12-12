@@ -2,15 +2,13 @@ package se.lu.nateko.cp.data.formats
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.DataType
-import se.lu.nateko.cp.data.formats.bintable.ValueParser
 
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-object ValueFormatParser {
+object ValueFormatParser:
 	import ValueFormat.*
 
-	private[this] val parser = new ValueParser
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
@@ -23,15 +21,25 @@ object ValueFormatParser {
 				throw new CpDataParsingException(s"Could not parse '$value' as $format : ${err.getMessage}")
 		}
 
+	private def parseFloat(value: String) =
+		val flt = value.toFloat
+		if flt.isInfinite() then throw new NumberFormatException(value + " is outside the range for Float.")
+		else flt
+
+	private def parseDouble(value: String) =
+		val dbl = value.toDouble
+		if dbl.isInfinite() then throw new NumberFormatException(value + " is outside the range for Double.")
+		else dbl
+
 	private def parseInner(value: String, format: ValueFormat): AnyRef =
 		if (value == null || value.trim.isEmpty) getNullRepresentation(format)
 		else format match {
-			case IntValue =>
-				parser.parse(value, DataType.INT)
-			case FloatValue =>
-				parser.parse(value, DataType.FLOAT)
-			case DoubleValue =>
-				parser.parse(value, DataType.DOUBLE)
+			case IntValue => 
+				Int.box(Integer.parseInt(value))
+			case FloatValue => 
+				Float.box(parseFloat(value))
+			case DoubleValue => 
+				Double.box(parseDouble(value))
 			case Utf16CharValue =>
 				Character.valueOf(value.charAt(0))
 			case StringValue =>
@@ -117,4 +125,5 @@ object ValueFormatParser {
 
 		v => if(nullTest(v)) "" else ser(v)
 	}
-}
+
+end ValueFormatParser

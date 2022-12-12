@@ -18,7 +18,7 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 
 
 	given JsonFormat[DataType] with{
-		override def write(dt: DataType) = JsString(dt.name())
+		override def write(dt: DataType) = JsString(dt.toString())
 
 		override def read(value: JsValue) = value match{
 			case JsString(dtName) =>
