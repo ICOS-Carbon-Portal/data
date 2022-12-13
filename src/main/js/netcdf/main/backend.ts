@@ -1,6 +1,5 @@
 import { sparql, getJson, checkStatus, getUrlQuery, BinRaster} from 'icos-cp-backend';
 import {feature} from 'topojson';
-import {objectSpecification} from './sparqlQueries';
 import config from '../../common/main/config';
 import { TimeserieParams } from './models/State';
 import { DataObject } from '../../common/main/metacore';
@@ -60,20 +59,6 @@ export function getElevations(service: string, variable: string): Promise<number
 
 export const getServices = () => {
 	return getJson('/netcdf/listNetCdfFiles');
-};
-
-export const getTitle = (objId: string) => {
-	const query = objectSpecification(config, objId);
-
-	return sparql(query, config.sparqlEndpoint, true)
-		.then(
-			sparqlResult => {
-				const bindings = sparqlResult.results.bindings;
-				return bindings
-					? Promise.resolve(bindings[0].specLabel.value)
-					: Promise.reject(new Error("Could not get dobjs from meta"));
-			}
-		);
 };
 
 export const getTimeserie = ({ objId, variable, elevation, x, y }: TimeserieParams): Promise<number[]> => {

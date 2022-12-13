@@ -1,5 +1,5 @@
 import {
-	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getElevations, getServices, getTitle,
+	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getElevations, getServices,
 	getTimeserie, getMetadata, getRasterId} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
@@ -8,7 +8,7 @@ import {
 	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, ELEVATIONS_FETCHED, ELEVATION_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
-	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
+	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
 import stateProps, { RangeFilter, TimeserieParams } from './models/State';
 
@@ -27,9 +27,6 @@ export const init = (dispatch: NetCDFDispatch) => {
 	if (stateProps.isPIDProvided) {
 		dispatch(fetchMetadata(stateProps.pid));
 
-		if (!window.frameElement) {
-			dispatch(fetchTitle(stateProps.pid));
-		}
 		if (stateProps.pid) {
 			dispatch(setService(stateProps.pid));
 		} else {
@@ -40,12 +37,12 @@ export const init = (dispatch: NetCDFDispatch) => {
 	}
 };
 
-export const fetchMetadata = (pid: string): NetCDFThunkAction<void> => dispatch => {
+export const fetchMetadata: (pid: string) => NetCDFThunkAction<void> = pid => dispatch => {
 	getMetadata(pid).then(
 		metadata => dispatch(new METADATA_FETCHED(metadata)),
 		err => dispatch(failWithError(err))
-	);
-};
+	)
+}
 
 export const fetchServices: NetCDFThunkAction<void> = dispatch => {
 	getServices().then(
@@ -53,13 +50,6 @@ export const fetchServices: NetCDFThunkAction<void> = dispatch => {
 			dispatch(new SERVICES_FETCHED(services));
 			dispatch(selectService(0));
 		},
-		err => dispatch(failWithError(err))
-	);
-};
-
-export const fetchTitle = (pid: string): NetCDFThunkAction<void> => dispatch => {
-	getTitle(pid).then(
-		title => dispatch(new TITLE_FETCHED(title)),
 		err => dispatch(failWithError(err))
 	);
 };

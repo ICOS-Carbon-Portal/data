@@ -29,9 +29,6 @@ export class SERVICE_SET extends ActionPayload {
 export class SERVICE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
 }
-export class TITLE_FETCHED extends ActionPayload {
-	constructor(readonly title: string) { super(); }
-}
 export class VARIABLES_AND_DATES_FETCHED extends ActionPayload {
 	constructor(readonly service: string, readonly variables: string[], readonly dates: string[]) { super(); }
 }

@@ -2,7 +2,7 @@ import {
 	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, ELEVATIONS_FETCHED, ELEVATION_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, NetCDFPlainAction, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
-	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
+	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
 import {Control, ColormapControl, ControlsHelper, defaultGammas} from './models/ControlsHelper';
 import * as Toaster from 'icos-cp-toaster';
@@ -29,10 +29,13 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	}
 
 	else if (payload instanceof METADATA_FETCHED) {
+		const md = payload.metadata
+		const title = window.frameElement ? undefined : md.references.title || md.specification.self.label
 		return update({
-			metadata: payload.metadata,
-			legendLabel: getLegendLabel(getVariableInfo(state.controls, payload.metadata)),
-			variableEnhancer: getVariables(payload.metadata)
+			title,
+			metadata: md,
+			legendLabel: getLegendLabel(getVariableInfo(state.controls, md)),
+			variableEnhancer: getVariables(md)
 		});
 	}
 
@@ -64,12 +67,6 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 			colorMaker: undefined,
 			controls: state.controls.withSelectedService(payload.idx),
 			timeserieParams: undefined
-		});
-	}
-
-	else if (payload instanceof TITLE_FETCHED) {
-		return update({
-			title: payload.title
 		});
 	}
 
