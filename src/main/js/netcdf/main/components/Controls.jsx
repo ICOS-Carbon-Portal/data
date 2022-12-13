@@ -99,13 +99,13 @@ const getClassName = (defaultWidth, isPIDProvided) => {
 
 function delayPresenter(delay){
 	switch (delay){
-		case 0 : return 'Fastest';
-		case 50 : return 'Very fast';
-		case 100 : return 'Fast';
-		case 200 : return 'Medium';
-		case 500 : return 'Medium';
-		case 1000 : return 'Slow';
-		case 3000 : return 'Very slow';
+		case 0 : return 'Fastest (cpu/network limit)';
+		case 50 : return 'Very fast (up to 20 fps)';
+		case 100 : return 'Fast (up to 10 fps)';
+		case 200 : return 'Medium (5 fps)';
+		case 500 : return 'Medium (2 fps)';
+		case 1000 : return 'Slow (1 fps)';
+		case 3000 : return 'Very slow (0.33 fps)';
 		default : return (1000 / delay) + ' fps';
 	}
 }
