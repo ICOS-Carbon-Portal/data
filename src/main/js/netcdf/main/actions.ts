@@ -131,17 +131,11 @@ export const incrementRasterData = (increment: number): NetCDFThunkAction<void> 
 };
 
 const fetchRasterData: NetCDFThunkAction<void> = (dispatch, getState) => {
-	const {controls, raster, playingMovie} = getState()
+	const {controls, playingMovie} = getState()
 
 	const request = controls.rasterRequest
 	if(request === undefined) return
 
-	const desiredId = getRasterId(request)
-
-	if (raster && raster.id === desiredId) {
-		dispatch(incrementIfNeeded)
-		return
-	}
 	const delay = playingMovie ? (controls.delays.selected ?? 200) : 0
 
 	rasterFetcher.fetch(request, delay).then(
