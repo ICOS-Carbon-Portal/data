@@ -2,7 +2,7 @@ import { BinRaster } from "icos-cp-backend";
 import { RGBA } from "icos-cp-spatial";
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
-import { colorRamps } from "../../../common/main/models/ColorMaker";
+import { colorRamps } from "../../../common/main/models/colorRampDefs";
 import { ControlsHelper } from "./ControlsHelper";
 
 
@@ -69,8 +69,7 @@ export interface State {
 	isSites: boolean
 	isPIDProvided: boolean
 	metadata?: DataObject
-	minMax: Partial<MinMax>
-	isDivergingData?: boolean
+	minMax?: MinMax
 	fullMinMax?: MinMax
 	rangeFilter: RangeFilter
 	legendLabel: string
@@ -109,8 +108,7 @@ const defaultState: State = {
 	isSites,
 	isPIDProvided,
 	metadata: undefined,
-	minMax: { min: undefined, max: undefined },
-	isDivergingData: undefined,
+	minMax: undefined,
 	fullMinMax: undefined,
 	rangeFilter: defaultRangeFilter,
 	legendLabel: 'Legend',

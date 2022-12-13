@@ -8,7 +8,7 @@ export interface ColorRamp{
 	colors: RGBA[]
 }
 
-export const colorRampDefs: ColorRamp[] = [
+const colorRampDefs: ColorRamp[] = [
 	{
 		name: 'blueYellowRed',
 		domain: [-1, 0, 1],
@@ -39,4 +39,13 @@ export const colorRampDefs: ColorRamp[] = [
 		domain: [0, 1],
 		colors: [[240, 240, 240, 255], [99, 99, 99, 255]]
 	}
-];
+]
+
+export const colorRamps: ColorRamp[] = colorRampDefs.flatMap(cr => [
+	cr,
+	{
+		name: cr.name + '-rev',
+		domain: cr.domain,
+		colors: cr.colors.slice().reverse()
+	}
+])

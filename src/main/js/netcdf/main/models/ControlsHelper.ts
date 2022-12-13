@@ -1,4 +1,4 @@
-import {colorRamps} from "../../../common/main/models/ColorMaker";
+import { colorRamps } from "../../../common/main/models/colorRampDefs";
 import { getRasterId, RasterRequest } from "../backend";
 import Colormap from "./Colormap";
 
@@ -35,9 +35,9 @@ export class ColormapControl extends Control<Colormap> {
 }
 
 const defaultControl = new Control([]);
-const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
+export const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const selectedGamma = defaultGammas.selected! //we selected one in the previous line
-const defaultColorMaps = new ColormapControl(colorRamps.map(cr => new Colormap(cr, selectedGamma)), 3)
+const defaultColorMaps = new ColormapControl(colorRamps.map(cr => new Colormap(cr, selectedGamma)), 0)
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 
 export class ControlsHelper{

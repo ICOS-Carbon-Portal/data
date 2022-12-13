@@ -38,23 +38,21 @@ export default class DropdownColors extends Component{
 		const {dropdownOpen} = this.state;
 		const {control} = this.props;
 		const dropDownMenuCls = `dropdown-menu${dropdownOpen ? ' show' : ''}`;
-		const selectedColorRamp = control.colorRamps[control.selectedIdx];
-		const selectedColorMaker = selectedColorRamp ? selectedColorRamp.colorMaker : undefined;
-		const getLegend = selectedColorMaker ? selectedColorMaker.getLegend.bind(selectedColorMaker) : null;
+		const colorMap = control.selected
 
 		return (
 			<span ref={div => this.node = div} className="dropdown" style={{display: 'inline-block', zIndex:750}}>
-				<Button dropdownOpen={dropdownOpen} clickAction={this.onDropdownClick.bind(this)} getLegend={getLegend} />
+				<Button dropdownOpen={dropdownOpen} clickAction={this.onDropdownClick.bind(this)} colorMap={colorMap} />
 
 				<ul className={dropDownMenuCls}>{
-					control.colorRamps.map((cr, idx) => {
+					control.values.map((cm, idx) => {
 						return (
 							<ListItem
 								key={idx}
 								idx={idx}
 								selectedIdx={control.selectedIdx}
 								onClick={this.onDropDownItemClick.bind(this, idx)}
-								cr={cr}
+								colorMap={cm}
 							/>);
 					})
 				}</ul>
@@ -63,11 +61,11 @@ export default class DropdownColors extends Component{
 	}
 }
 
-const Button = ({dropdownOpen, clickAction, getLegend, label = 'Select option'}) => {
+const Button = ({dropdownOpen, clickAction, colorMap}) => {
 	const btnCls = `btn btn-outline-secondary dropdown-toggle${dropdownOpen ? ' show' : ''}`;
-	const lbl = getLegend
-		? <img src={renderCanvas(120, 15, getLegend)} />
-		: <span>{label}</span>;
+	const lbl = colorMap
+		? <img src={renderCanvas(120, 15, colorMap)} />
+		: <span>Select option</span>
 
 	return (
 		<button className={btnCls} type="button" onClick={clickAction}>
@@ -76,13 +74,12 @@ const Button = ({dropdownOpen, clickAction, getLegend, label = 'Select option'})
 	);
 };
 
-const ListItem = ({onClick, cr, idx, selectedIdx}) => {
-	const getLegend = cr.colorMaker ? cr.colorMaker.getLegend.bind(cr.colorMaker) : null;
+const ListItem = ({onClick, colorMap, idx, selectedIdx}) => {
 	const style = selectedIdx === idx
 		? {backgroundColor: 'rgb(200,200,200)'}
 		: {};
-	const child = getLegend
-		? <img src={renderCanvas(120, 15, getLegend)} />
+	const child = colorMap
+		? <img src={renderCanvas(120, 15, colorMap)} />
 		: cr.name;
 
 	return (
@@ -92,8 +89,8 @@ const ListItem = ({onClick, cr, idx, selectedIdx}) => {
 	);
 };
 
-const renderCanvas = (width, height, getLegend) => {
-	const { colorMaker } = getLegend(0, width - 1);
+const renderCanvas = (width, height, colorMap) => {
+	const colorMaker = colorMap.getColormapSelectColorMaker(0, width - 1)
 
 	const canvas = document.createElement("canvas");
 

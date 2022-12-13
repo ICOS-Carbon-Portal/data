@@ -4,12 +4,14 @@ import {
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
 	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
-import {Control, ColormapControl, ControlsHelper} from './models/ControlsHelper';
-import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
+import {Control, ColormapControl, ControlsHelper, defaultGammas} from './models/ControlsHelper';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRaster } from 'icos-cp-backend';
+import Colormap from './models/Colormap';
+import { RGBA } from 'icos-cp-spatial';
+import { colorRamps } from '../../common/main/models/colorRampDefs';
 
 
 export default function (state = stateProps.defaultState, action: NetCDFPlainAction) {
@@ -59,6 +61,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof SERVICE_SELECTED) {
 		return update({
 			raster: undefined,
+			colorMaker: undefined,
 			controls: state.controls.withSelectedService(payload.idx),
 			timeserieParams: undefined
 		});
@@ -126,7 +129,8 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 			rangeFilter: stateProps.defaultRangeFilter,
 			controls: newControls,
 			legendLabel: getLegendLabel(getVariableInfo(newControls, state.metadata)),
-			isDivergingData: undefined
+			raster: undefined,
+			colorMaker: undefined
 		});
 	}
 
@@ -146,7 +150,13 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	}
 
 	else if (payload instanceof SET_RANGEFILTER) {
-		return update(handleSetRangefilter(state, payload));
+		const rangeMm = getRangeFilterMinMax(payload.rangeFilter)
+		const minMax = selectMinMax([rangeMm, state.fullMinMax])
+		return update({
+			minMax,
+			rangeFilter: payload.rangeFilter,
+			colorMaker: getColorMaker(minMax, state.controls.colorMaps)
+		})
 	}
 
 	else if (payload instanceof RASTER_FETCHED) {
@@ -212,144 +222,88 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 
 }
 
-type UpdateFactory<A> = (state: State, payload: A) => Partial<State>
-
-const handleSetRangefilter: UpdateFactory<SET_RANGEFILTER> = (state, payload) => {
-	const update: Partial<State> = {rangeFilter: payload.rangeFilter}
-	update.minMax = getMinMax({...state, ...update})
-	const minMax = toCompleteMinMax(update.minMax)
-	if(minMax === undefined) return update
-
-	const selectedGamma = state.controls.gammas.selected
-	const colorRampName = state.controls.colorRamps.selected
-	if(selectedGamma === null || colorRampName === null) return update
-
-	const isDivergingData = state.isDivergingData || (minMax.min < 0 && minMax.max > 0)
-
-	const colorMaker = new ColorMakerRamps(minMax.min, minMax.max, selectedGamma, colorRampName, isDivergingData)
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
-	
-	return {
-		...update,
-		colorMaker,
-		controls: state.controls.copyWith({colorRamps: controlColorRamp})
-	}
-}
+type UpdateFactory<A> = (state: State, payload: A) => (Partial<State> | null)
 
 const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
-	if(payload.raster.id !== state.controls.rasterId) return {}
-	const gamma = state.controls.gammas.selected
-	const colorRampName = state.controls.colorMaps.selected?.ramp.name
+	if(payload.raster.id !== state.controls.rasterId) return null
 
 	const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
 	const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
 	const rasterMinMax = payload.raster.stats
 
-	const minMaxPart = selectMinMax([rangeFilterMinMax, globalMinMax, rasterMinMax])
-	const minMax = toCompleteMinMax(minMaxPart)
-	const isDivergingData = state.isDivergingData === undefined && minMax != undefined
-		? minMax.min < 0 && minMax.max > 0
-		: state.isDivergingData;
+	const fullMinMax = selectMinMax([globalMinMax, rasterMinMax])
+	const minMax = selectMinMax([rangeFilterMinMax, fullMinMax]) || rasterMinMax
 
-	const basicUpdate: Partial<State> = {
+	const update = {
 		raster: payload.raster,
 		rasterFetchCount: state.rasterFetchCount + 1,
-		minMax: minMaxPart,
-		fullMinMax: toCompleteMinMax(selectMinMax([globalMinMax, rasterMinMax])),
-		colorMaker: undefined,
-		isDivergingData
+		minMax,
+		fullMinMax: selectMinMax([globalMinMax, rasterMinMax]),
+		controls: state.controls,
+		colorMaker: state.colorMaker
 	}
-	if(gamma === null || colorRampName === null || minMax === undefined || isDivergingData === undefined) return basicUpdate
 
-	const colorMaker = new ColorMakerRamps(minMax.min, minMax.max, gamma, colorRampName, isDivergingData);
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
+	const isDiverging = isDivergingData(payload.raster)
 
-	return {
-		...basicUpdate,
-		colorMaker,
-		controls: state.controls.copyWith({colorRamps: controlColorRamp}),
+	if ( isDiverging !== isDivergingData(state.raster) ) {
+		const gamma = state.controls.gammas.selected || defaultGammas.selected!
+		const suitableRamps = isDiverging ? colorRamps.filter(cr => cr.domain[0] < 0) : colorRamps.filter(cr => cr.domain[0] >= 0)
+		const colorMaps = new ColormapControl(suitableRamps.map(cr => new Colormap(cr, gamma)), 0)
+		update.controls = state.controls.copyWith({colorMaps})
 	}
+
+	if(minMax.min !== state.minMax?.min || minMax.max !== state.minMax?.max){
+		update.colorMaker = getColorMaker(minMax, update.controls.colorMaps)
+	}
+	return update
 }
 
-export function toCompleteMinMax(partialMm: Partial<MinMax>): MinMax | undefined {
-	const {min, max} = partialMm
-	return min === undefined || max === undefined ? undefined : {min, max}
+function isDivergingData(raster: BinRaster | undefined): boolean | undefined{
+	if(raster === undefined) return
+	return raster.stats.min < 0 && raster.stats.max > 0
 }
 
 const handleGammaSelected: UpdateFactory<GAMMA_SELECTED> = (state, payload) => {
-	const newControls = state.controls.withSelectedGamma(payload.idx);
-	const selectedGamma = newControls.gammas.selected
-	if(selectedGamma === null) return {}
+	let controls = state.controls.withSelectedGamma(payload.idx);
+	const selectedGamma = controls.gammas.selected
+	if(selectedGamma === null) return null
 
-	const minMax = toCompleteMinMax(getMinMax(state))
-	if(minMax === undefined) return {}
-
-	const isDivergingData = state.isDivergingData || (minMax.min < 0 && minMax.max > 0)
-
-	const colorMaker = state.raster && state.colorMaker && state.colorMaker
-		? new ColorMakerRamps(minMax.min, minMax.max, selectedGamma, state.colorMaker.colorRampName, isDivergingData)
-		: state.colorMaker;
-	if(colorMaker === undefined) return {}
-
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, newControls.colorRamps.selectedIdx)
-
+	controls = controls.copyWith({colorMaps: controls.colorMaps.withGamma(selectedGamma)})
 	return {
-		colorMaker,
-		controls: newControls.copyWith({colorRamps: controlColorRamp})
+		controls,
+		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
 	}
 }
 
 const handleColorrampSelected: UpdateFactory<COLORRAMP_SELECTED> = (state, payload) => {
 
-	const selectedGamma = state.controls.gammas.selected
-	if(selectedGamma === null) return {}
+	const colorMaps = state.controls.colorMaps.withSelected(payload.idx)
+	const colorMap = colorMaps.selected
+	if(colorMap === null) return null
 
-	const minMax = toComplete(getMinMax(state))
-	if(minMax === undefined) return {}
-
-	const selectedColorRamp = state.colorMaker
-		? state.colorMaker.colorRamps[payload.idx].name
-		: colorRamps[payload.idx].name;
-
-	const isDivergingData = state.isDivergingData || (minMax.min < 0 && minMax.max > 0)
-
-	const colorMaker = state.raster
-		? new ColorMakerRamps(minMax.min, minMax.max, selectedGamma, selectedColorRamp, isDivergingData)
-		: state.colorMaker;
-
-	if(colorMaker === undefined) return {}
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, payload.idx)
-
+	const controls = state.controls.copyWith({colorMaps})
 	return {
-		colorMaker,
-		controls: state.controls
-			.copyWith({colorRamps: controlColorRamp})
-			.withSelectedColorRamp(payload.idx)
+		controls,
+		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
 	}
 }
 
-function getMinMax(state: State): Partial<MinMax> {
-	const {controls, rangeFilter, metadata, raster} = state
-	const rangeFilterMinMax = getRangeFilterMinMax(rangeFilter);
-	if (rangeFilterMinMax.min !== undefined && rangeFilterMinMax.max !== undefined) return rangeFilterMinMax;
+function getColorMaker(minMax: MinMax | undefined, control: ColormapControl): ((v: number) => RGBA) | undefined{
+	if(minMax === undefined) return
+	const cm = control.selected
+	if(cm === null) return
+	return cm.getColorMaker(minMax.min, minMax.max)
+}
 
-	if (metadata === undefined && raster === undefined) return rangeFilterMinMax;
-
-	const globalMinMax = getGlobalMinMax(controls, metadata);
-	const rasterMinMax = raster?.stats;
-
-	return selectMinMax([rangeFilterMinMax, globalMinMax, rasterMinMax]);
-};
-
-function selectMinMax(mms: Array<Partial<MinMax> | undefined>): Partial<MinMax> {
+function selectMinMax(mms: Array<Partial<MinMax> | undefined>): MinMax | undefined {
 
 	const pickVal = (key: 'min' | 'max') =>
 		mms.map(mm => mm?.[key]).find(mm => mm !== undefined)
 
-	return {
-		min: pickVal('min'),
-		max: pickVal('max')
-	}
+	const min = pickVal('min')
+	const max = pickVal('max')
+
+	return (min === undefined || max === undefined) ? undefined : {min, max}
 }
 
 function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
@@ -373,12 +327,13 @@ function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): MinM
 }
 
 function getRangeFilterMinMax(rangeFilter: RangeFilter): Partial<MinMax> {
-	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange };
+	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange }
 }
 
 const getLegendLabel = (metaVar?: VarMeta) => {
-	if (metaVar && metaVar.valueType.self.label && metaVar.valueType.unit) {
-		return `${metaVar.valueType.self.label} [${metaVar.valueType.unit}]`;
+	if (metaVar && metaVar.valueType.self.label) {
+		const unit = metaVar.valueType.unit ? ` [${metaVar.valueType.unit}]` : ""
+		return `${metaVar.valueType.self.label}${unit}`;
 	}
 
 	return 'Legend';

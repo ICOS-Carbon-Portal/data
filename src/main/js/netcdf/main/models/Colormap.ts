@@ -30,17 +30,18 @@ export default class Colormap{
 	}
 
 	getColorMaker(min: number, max: number, treatAsFullRange: boolean = false): (value: number) => RGBA {
+		const midPoint = (min <= 0 && max >= 0) ? 0 : (min + max) / 2
 
 		const normalizer = treatAsFullRange
 			? this.isForDivergingData
-				? linearInterpolation([min, (min + max) / 2, max], [-1, 0, 1])
+				? linearInterpolation([min, midPoint, max], [-1, 0, 1])
 				: linearInterpolation([min, max], [0, 1])
 			: this.isForDivergingData
 				? max <= 0
 					? linearInterpolation([min, max], [-1, 0])
 					: min >= 0
 						? linearInterpolation([min, max], [0, 1])
-						: linearInterpolation([min, (min + max) / 2, max], [-1, 0, 1])
+						: linearInterpolation([min, 0, max], [-1, 0, 1])
 				: linearInterpolation([min, max], [0, 1])
 
 		const colorizer = this.colorize

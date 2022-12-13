@@ -14,7 +14,6 @@ import { Control } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
 import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
-import { toCompleteMinMax } from '../reducer';
 import legendFactory from '../models/LegendFactory';
 
 
@@ -192,11 +191,10 @@ export default class Map extends Component<OurProps, OurState> {
 		const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
 
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
-		const minMax = toCompleteMinMax(props.minMax)
 		const colorMap = colorMaps.selected
-		const getLegend = (minMax === undefined || colorMap === null)
+		const getLegend = (props.minMax === undefined || colorMap === null)
 			? undefined
-			: legendFactory(minMax, colorMap)
+			: legendFactory(props.minMax, colorMap)
 
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
