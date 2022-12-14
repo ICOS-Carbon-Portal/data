@@ -57,7 +57,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof SERVICE_SET) {
 		return update({
 			raster: undefined,
-			controls: state.controls.copyWith({services: new Control([payload.service])})
+			controls: state.controls.copyWith({services: new Control([payload.service], 0)})
 		});
 	}
 
