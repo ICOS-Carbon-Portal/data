@@ -22,7 +22,7 @@ class RasterFetcher {
 		const plain = retryPromise(() => getRaster(request), this.numberOfRetries)
 		if(withDelay <= 0) return plain
 		const delay = this._lastFetched - Date.now() + withDelay
-		this._lastFetched = Date.now() + delay
+		this._lastFetched = Date.now() + (delay > 0 ? delay : 0)
 		return ensureDelay(plain, delay)
 	}
 
