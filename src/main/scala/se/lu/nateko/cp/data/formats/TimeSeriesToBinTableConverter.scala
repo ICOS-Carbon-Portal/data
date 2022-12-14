@@ -4,14 +4,21 @@ import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.{BinTableRow, Schema}
 import java.{util => ju}
 
-//Instances of this class must not be reused for parsing different tables
 class TimeSeriesToBinTableConverter(colsMeta: ColumnsMeta) {
 	import TimeSeriesToBinTableConverter._
 
 	private var parser: Parser = null
+	private var header: TableRowHeader = null
+
+	private def getParser(currHeader: TableRowHeader) = synchronized{
+		if currHeader ne header then
+			header = currHeader
+			parser = new Parser(currHeader)
+		parser
+	}
 
 	def parseRow(row: TableRow): BinTableRow = {
-		if(parser == null) parser = new Parser(row.header)
+		val parser = getParser(row.header)
 		try
 			parser.parse(row)
 		catch
