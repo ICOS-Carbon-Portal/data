@@ -10,10 +10,11 @@ import org.scalatest.funsuite.AnyFunSuite
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import akka.stream.scaladsl._
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams._
-import se.lu.nateko.cp.data.formats.bintable._
+import akka.stream.scaladsl.*
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.ValueFormat.*
+import se.lu.nateko.cp.data.formats.atcprod.AtcProdStreams.*
+import se.lu.nateko.cp.data.formats.bintable.*
 
 class AtcProdStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 

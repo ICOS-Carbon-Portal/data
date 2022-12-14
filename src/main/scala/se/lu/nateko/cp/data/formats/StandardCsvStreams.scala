@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.formats
 import scala.concurrent.ExecutionContext
 import akka.stream.scaladsl.Flow
 
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams._
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
 import scala.concurrent.Future
 import java.time.Instant
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract

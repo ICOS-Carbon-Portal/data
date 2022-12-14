@@ -2,7 +2,7 @@ package se.lu.nateko.cp.data.streams.geo
 
 import Ordering.Double.TotalOrdering
 
-import PointReducer._
+import PointReducer.*
 import se.lu.nateko.cp.meta.core.data.GeoFeature
 import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Position

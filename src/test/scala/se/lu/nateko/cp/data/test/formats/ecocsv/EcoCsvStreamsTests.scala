@@ -4,12 +4,13 @@ import java.io.File
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import akka.stream.scaladsl._
+import akka.stream.scaladsl.*
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.formats._
-import se.lu.nateko.cp.data.formats.bintable._
-import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams._
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.ValueFormat.*
+import se.lu.nateko.cp.data.formats.bintable.*
+import se.lu.nateko.cp.data.formats.ecocsv.EcoCsvStreams.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt

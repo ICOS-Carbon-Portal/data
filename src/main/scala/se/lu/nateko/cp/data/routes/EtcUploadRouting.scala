@@ -1,9 +1,9 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.EtcFacadeConfig
@@ -15,7 +15,7 @@ import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.utils.akka.{gracefulForbid, gracefulBadReq}
-import spray.json._
+import spray.json.*
 
 import java.time.LocalDate
 import scala.concurrent.Future

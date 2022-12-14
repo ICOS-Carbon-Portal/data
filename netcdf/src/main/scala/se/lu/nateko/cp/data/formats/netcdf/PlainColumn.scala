@@ -6,7 +6,7 @@ import scala.reflect.ClassTag
 import scala.util.Try
 import scala.util.Success
 import scala.util.Failure
-import java.nio._
+import java.nio.*
 
 sealed trait PlainColumn{ self =>
 	type V

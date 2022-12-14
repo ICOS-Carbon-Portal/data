@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.test.api
 
-import se.lu.nateko.cp.data.api._
+import se.lu.nateko.cp.data.api.*
 import akka.util.ByteString
 import akka.stream.scaladsl.Source
 import scala.concurrent.Future

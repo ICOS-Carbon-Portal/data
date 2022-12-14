@@ -6,11 +6,11 @@ import scala.concurrent.Future
 import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.marshalling.Marshalling.WithFixedContentType
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
-import spray.json._
+import spray.json.*
 
 case class RasterMessage(stats: Stats, boundingBox: BoundingBox, array: Array[Array[Double]])
 case class BoundingBox(latMin: Double, latMax: Double, lonMin: Double, lonMax: Double)

@@ -3,14 +3,14 @@ package se.lu.nateko.cp.data
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
-import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
-import se.lu.nateko.cp.data.routes._
+import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
+import se.lu.nateko.cp.data.routes.*
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
@@ -25,6 +25,7 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
+import java.nio.file.Path
 
 object Main extends App {
 
@@ -35,8 +36,6 @@ object Main extends App {
 	val config = ConfigReader.getDefault
 	given Map[Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
 
-	private val netcdfUtil = new NetcdfUtil(config.netcdf)
-
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
@@ -45,8 +44,9 @@ object Main extends App {
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
 
-	val netcdfRoute = NetcdfRoute.cp(netcdfUtil.serviceFactory(uploadService.folder.getAbsolutePath + "/netcdf/"))
-	val legacyNetcdfRoute = NetcdfRoute(netcdfUtil.serviceFactory(config.netcdf.folder))
+	private def netcdfVcf(folder: Path) = ViewServiceFactory(folder, config.netcdf)
+	val netcdfRoute = NetcdfRoute.cp(netcdfVcf(uploadService.folder.toPath.resolve("netcdf/")))
+	val legacyNetcdfRoute = NetcdfRoute(netcdfVcf(Path.of(config.netcdf.folder)))
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route

@@ -1,17 +1,17 @@
 package se.lu.nateko.cp.data.routes
 
 import akka.http.javadsl.server.CustomRejection
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.HttpCookie
 import akka.http.scaladsl.model.headers.SameSite
 import akka.http.scaladsl.server.Directive0
 import akka.http.scaladsl.server.Directive1
-import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.MissingCookieRejection
 import akka.http.scaladsl.server.RejectionHandler
 import akka.http.scaladsl.server.Route
-import se.lu.nateko.cp.cpauth.core._
+import se.lu.nateko.cp.cpauth.core.*
 import se.lu.nateko.cp.data.AuthConfig
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.meta.core.data.Envri

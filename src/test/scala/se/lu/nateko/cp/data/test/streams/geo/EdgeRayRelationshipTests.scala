@@ -1,7 +1,7 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.streams.geo.EdgeRayRelationship._
+import se.lu.nateko.cp.data.streams.geo.EdgeRayRelationship.*
 import se.lu.nateko.cp.data.streams.geo.Point
 
 class EdgeRayRelationshipTests extends AnyFunSuite{

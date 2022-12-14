@@ -3,19 +3,12 @@ package se.lu.nateko.cp.data.formats
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.CpDataException
 
-sealed trait ValueFormat
-
-case object IntValue extends ValueFormat
-case object FloatValue extends ValueFormat
-case object DoubleValue extends ValueFormat
-case object Utf16CharValue extends ValueFormat
-case object StringValue extends ValueFormat
-case object Iso8601Date extends ValueFormat
-case object EtcDate extends ValueFormat
-case object Iso8601DateTime extends ValueFormat
-case object Iso8601TimeOfDay extends ValueFormat
-case object IsoLikeLocalDateTime extends ValueFormat
-case object EtcLocalDateTime extends ValueFormat
+enum ValueFormat:
+	case IntValue, FloatValue, DoubleValue
+	case Utf16CharValue, StringValue
+	case Iso8601Date, EtcDate
+	case Iso8601TimeOfDay
+	case Iso8601DateTime, IsoLikeLocalDateTime, EtcLocalDateTime
 
 object ValueFormat{
 

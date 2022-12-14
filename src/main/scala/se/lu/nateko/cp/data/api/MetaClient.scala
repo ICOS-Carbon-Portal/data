@@ -3,10 +3,10 @@ package se.lu.nateko.cp.data.api
 import akka.Done
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Source
@@ -18,11 +18,11 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport.given
-import se.lu.nateko.cp.meta.core.data._
+import se.lu.nateko.cp.meta.core.data.*
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
 import se.lu.nateko.cp.meta.core.etcupload.StationId
-import se.lu.nateko.cp.meta.core.sparql._
+import se.lu.nateko.cp.meta.core.sparql.*
 import spray.json.JsBoolean
 import spray.json.JsNull
 import spray.json.JsNumber

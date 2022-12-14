@@ -2,24 +2,16 @@ package se.lu.nateko.cp.data.formats
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.bintable.DataType
-import se.lu.nateko.cp.data.formats.bintable.ValueParser
 
-import java.text.NumberFormat
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
-object ValueFormatParser {
+object ValueFormatParser:
+	import ValueFormat.*
 
-	private[this] val parser = new ValueParser
 	val etcDateFormatter = DateTimeFormatter.ofPattern("d/M/yyyy")
 	val isoLikeDateFormater = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 	val etcDateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm")
-	val numberFormat: NumberFormat = {
-		val nf = NumberFormat.getNumberInstance(Locale.ROOT)
-		nf.setGroupingUsed(false)
-		nf
-	}
 
 	def parse(value: String, format: ValueFormat): AnyRef =
 		try{
@@ -29,43 +21,58 @@ object ValueFormatParser {
 				throw new CpDataParsingException(s"Could not parse '$value' as $format : ${err.getMessage}")
 		}
 
+	private def parseFloat(value: String) =
+		val flt = value.toFloat
+		if flt.isInfinite() then throw new NumberFormatException(value + " is outside the range for Float.")
+		else flt
+
+	private def parseDouble(value: String) =
+		val dbl = value.toDouble
+		if dbl.isInfinite() then throw new NumberFormatException(value + " is outside the range for Double.")
+		else dbl
+
 	private def parseInner(value: String, format: ValueFormat): AnyRef =
 		if (value == null || value.trim.isEmpty) getNullRepresentation(format)
 		else format match {
-			case IntValue =>
-				parser.parse(value, DataType.INT)
-			case FloatValue =>
-				parser.parse(value, DataType.FLOAT)
-			case DoubleValue =>
-				parser.parse(value, DataType.DOUBLE)
+			case IntValue => 
+				Int.box(Integer.parseInt(value))
+			case FloatValue => 
+				Float.box(parseFloat(value))
+			case DoubleValue => 
+				Double.box(parseDouble(value))
 			case Utf16CharValue =>
 				Character.valueOf(value.charAt(0))
 			case StringValue =>
 				value
 			case Iso8601Date =>
-				Int.box(LocalDate.parse(value).toEpochDay.toInt)
+				encodeLocalDate(LocalDate.parse(value))
 			case EtcDate =>
-				Int.box(LocalDate.parse(value, etcDateFormatter).toEpochDay.toInt)
+				encodeLocalDate(LocalDate.parse(value, etcDateFormatter))
 			case Iso8601DateTime =>
-				Double.box(Instant.parse(value).toEpochMilli.toDouble)
+				encodeInstant(Instant.parse(value))
 			case Iso8601TimeOfDay =>
 				if (value.startsWith("24:")) {
 					val residualTime = "00:" + value.substring(3)
-					Int.box(86400 + LocalTime.parse(residualTime).toSecondOfDay)
+					Int.box(isoTimeOfDayToBin(residualTime) + 86400)
 				}
-				else if (value.charAt(1) == ':') parseIsoTimeOfDay("0" + value)
-				else parseIsoTimeOfDay(value)
+				else if (value.charAt(1) == ':') isoTimeOfDayToBin("0" + value)
+				else isoTimeOfDayToBin(value)
 			case IsoLikeLocalDateTime =>
-				parseLocalDateTime(value, isoLikeDateFormater)
+				localDateTimeToBin(value, isoLikeDateFormater)
 			case EtcLocalDateTime =>
-				parseLocalDateTime(value, etcDateTimeFormatter)
+				localDateTimeToBin(value, etcDateTimeFormatter)
 		}
 
-	private def parseIsoTimeOfDay(time: String): Integer =
-		Int.box(LocalTime.parse(time).toSecondOfDay)
+	private def isoTimeOfDayToBin(time: String): Integer = encodeLocalTime(LocalTime.parse(time))
+	private def localDateTimeToBin(value: String, formatter: DateTimeFormatter): java.lang.Double =
+		encodeLocalDateTime(LocalDateTime.parse(value, formatter))
 
-	private def parseLocalDateTime(value: String, formatter: DateTimeFormatter): java.lang.Double =
-		Double.box(LocalDateTime.parse(value, formatter).toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
+	def encodeLocalDate(ld: LocalDate): Integer = Int.box(ld.toEpochDay.toInt)
+	def encodeLocalTime(lt: LocalTime): Integer = Int.box(lt.toSecondOfDay)
+	inline def encodeInstant(epochMillis: Long): java.lang.Double = Double.box(epochMillis.toDouble)
+	def encodeInstant(inst: Instant): java.lang.Double = encodeInstant(inst.toEpochMilli)
+	def encodeLocalDateTime(dt: LocalDateTime): java.lang.Double =
+		Double.box(dt.toInstant(ZoneOffset.UTC).toEpochMilli.toDouble)
 
 	def getBinTableDataType(format: ValueFormat): DataType = format match {
 		case IntValue => DataType.INT
@@ -102,14 +109,8 @@ object ValueFormatParser {
 			case Iso8601TimeOfDay =>
 				v => LocalTime.ofSecondOfDay(v.asInstanceOf[Int].toLong % 86400).toString
 
-			case Utf16CharValue | IntValue | StringValue =>
+			case Utf16CharValue | IntValue | StringValue | FloatValue | DoubleValue =>
 				v => v.toString
-
-			case FloatValue =>
-				v => numberFormat.format(v.asInstanceOf[Float].toDouble)
-
-			case DoubleValue =>
-				v => numberFormat.format(v.asInstanceOf[Double])
 		}
 
 		val nullTest: AnyVal => Boolean = getBinTableDataType(format) match{
@@ -124,4 +125,5 @@ object ValueFormatParser {
 
 		v => if(nullTest(v)) "" else ser(v)
 	}
-}
+
+end ValueFormatParser

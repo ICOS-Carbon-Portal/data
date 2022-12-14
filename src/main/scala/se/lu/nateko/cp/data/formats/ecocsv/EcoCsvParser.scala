@@ -1,7 +1,7 @@
 package se.lu.nateko.cp.data.formats.ecocsv
 
 import se.lu.nateko.cp.data.api.EcoCsvParsingException
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.*
 
 class EcoCsvParser {
 
@@ -55,7 +55,7 @@ class EcoCsvParser {
 
 object EcoCsvParser {
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
-		case FloatValue => value == "NaN"
+		case ValueFormat.FloatValue => value == "NaN"
 		case _ => false
 	}
 }

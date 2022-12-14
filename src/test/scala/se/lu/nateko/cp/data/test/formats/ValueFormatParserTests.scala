@@ -2,7 +2,8 @@ package se.lu.nateko.cp.data.test.formats
 
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import org.scalatest.funspec.AnyFunSpec
-import se.lu.nateko.cp.data.formats._
+import se.lu.nateko.cp.data.formats.ValueFormat.*
+import se.lu.nateko.cp.data.formats.ValueFormatParser
 import java.util.Locale
 
 class ValueParserTests extends AnyFunSpec{

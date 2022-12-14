@@ -2,19 +2,25 @@ import {
 	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, ELEVATIONS_FETCHED, ELEVATION_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, NetCDFPlainAction, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
-	TIMESERIE_RESET, TITLE_FETCHED, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
+	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
-import {Control, ControlColorRamp, ControlsHelper} from './models/ControlsHelper';
-import {colorRamps, ColorMakerRamps} from '../../common/main/models/ColorMaker';
-import RasterDataFetcher from './models/RasterDataFetcher';
+import {Control, ColormapControl, ControlsHelper, defaultGammas} from './models/ControlsHelper';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
-import { BinRasterExtended } from './models/BinRasterExtended';
+import { BinRaster } from 'icos-cp-backend';
+import Colormap from './models/Colormap';
+import { RGBA } from 'icos-cp-spatial';
+import { colorRamps } from '../../common/main/models/colorRampDefs';
 
 
 export default function (state = stateProps.defaultState, action: NetCDFPlainAction) {
 	const payload = action.payload;
+
+	function update(updates: Partial<State> | null | undefined): State{
+		if(!updates || Object.keys(updates).length === 0) return state
+		else return { ...state, ...updates }
+	}
 
 	if (payload instanceof ERROR) {
 		return update({
@@ -22,15 +28,18 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		});
 	}
 
-	if (payload instanceof METADATA_FETCHED) {
+	else if (payload instanceof METADATA_FETCHED) {
+		const md = payload.metadata
+		const title = window.frameElement ? undefined : md.references.title || md.specification.self.label
 		return update({
-			metadata: payload.metadata,
-			legendLabel: getLegendLabel(getVariableInfo(state.controls, payload.metadata)),
-			variableEnhancer: getVariables(payload.metadata)
+			title,
+			metadata: md,
+			legendLabel: getLegendLabel(getVariableInfo(state.controls, md)),
+			variableEnhancer: getVariables(md)
 		});
 	}
 
-	if (payload instanceof COUNTRIES_FETCHED) {
+	else if (payload instanceof COUNTRIES_FETCHED) {
 		return update({
 			countriesTopo: {
 				ts: Date.now(),
@@ -39,39 +48,41 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		});
 	}
 
-	if (payload instanceof SERVICES_FETCHED) {
+	else if (payload instanceof SERVICES_FETCHED) {
 		return update({
-			controls: state.controls.withServices(new Control(payload.services))
+			controls: state.controls.copyWith({services: new Control(payload.services)})
+		})
+	}
+
+	else if (payload instanceof SERVICE_SET) {
+		return update({
+			raster: undefined,
+			controls: state.controls.copyWith({services: new Control([payload.service])})
 		});
 	}
 
-	if (payload instanceof SERVICE_SET) {
+	else if (payload instanceof SERVICE_SELECTED) {
 		return update({
-			controls: state.controls.withServices(new Control(payload.services))
-		});
-	}
-
-	if (payload instanceof SERVICE_SELECTED) {
-		return update({
+			raster: undefined,
+			colorMaker: undefined,
 			controls: state.controls.withSelectedService(payload.idx),
 			timeserieParams: undefined
 		});
 	}
 
-	if (payload instanceof TITLE_FETCHED) {
-		return update({
-			title: payload.title
-		});
-	}
+	else if (payload instanceof VARIABLES_AND_DATES_FETCHED) {
+		if (payload.service === state.controls.services.selected) {
 
-	if (payload instanceof VARIABLES_AND_DATES_FETCHED) {
-		if (isFetched(state, payload)) {
-			const vIdx = payload.variables.indexOf(state.initSearchParams.varName);
-			const dIdx = payload.dates.indexOf(state.initSearchParams.date);
+			let vIdx = payload.variables.indexOf(state.initSearchParams.varName)
+			if (vIdx < 0 && payload.variables.length > 0) vIdx = 0
 
-			const controls = state.controls
-				.withVariables(new Control(payload.variables, vIdx))
-				.withDates(new Control(payload.dates, dIdx));
+			let dIdx = payload.dates.indexOf(state.initSearchParams.date)
+			if (dIdx < 0 && payload.dates.length > 0) dIdx = 0
+
+			const controls = state.controls.copyWith({
+				variables: new Control(payload.variables, vIdx),
+				dates: new Control(payload.dates, dIdx)
+			})
 
 			return update({
 				controls,
@@ -82,89 +93,89 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		}
 	}
 
-	if (payload instanceof ELEVATIONS_FETCHED) {
+	else if (payload instanceof ELEVATIONS_FETCHED) {
 		if (isElevationsFetched(state, payload)) {
-			const elevations = filterElevations(payload.elevations);
-			const eIdx = elevations.length
-				? state.lastElevation
-					? elevations.indexOf(state.lastElevation)
-					: state.initSearchParams.elevation
-						? elevations.indexOf(state.initSearchParams.elevation)
-						: -1
-				: -1;
-			const elevationCtrl = state.controls.withElevations(new Control(elevations, eIdx));
+			const elevations = payload.elevations
+			let eIdx = -1
+			if(elevations.length > 0){
+				if(eIdx < 0 && state.lastElevation !== undefined){
+					const lastElevIdx = elevations.indexOf(state.lastElevation)
+					if(lastElevIdx >= 0) eIdx = lastElevIdx
+				}
+				const initElev = state.initSearchParams.elevation
+				if(eIdx < 0 && initElev !== null){
+					const initElevIdx = elevations.indexOf(initElev)
+					if(initElevIdx >= 0) eIdx = initElevIdx
+				}
+			}
+			const controls = state.controls.copyWith({elevations: new Control(elevations, eIdx)})
 
 			return update({
 				lastElevation: eIdx >= 0 ? elevations[eIdx] : state.lastElevation,
-				controls: elevationCtrl,
-				rasterDataFetcher: new RasterDataFetcher(getDataObjectVariables(elevationCtrl))
-			});
+				controls
+			})
 		} else {
 			return state;
 		}
 	}
 
-	if (payload instanceof VARIABLE_SELECTED) {
+	else if (payload instanceof VARIABLE_SELECTED) {
 		const newControls = state.controls.withSelectedVariable(payload.idx);
 
 		return update({
 			rangeFilter: stateProps.defaultRangeFilter,
 			controls: newControls,
 			legendLabel: getLegendLabel(getVariableInfo(newControls, state.metadata)),
-			isDivergingData: undefined
+			raster: undefined,
+			colorMaker: undefined
 		});
 	}
 
-	if (payload instanceof DATE_SELECTED) {
+	else if (payload instanceof DATE_SELECTED) {
 		return update({ controls: state.controls.withSelectedDate(payload.idx) });
 	}
 
-	if (payload instanceof ELEVATION_SELECTED) {
+	else if (payload instanceof ELEVATION_SELECTED) {
 		return update({
 			lastElevation: state.controls.elevations.values[payload.idx],
 			controls: state.controls.withSelectedElevation(payload.idx)
 		});
 	}
 
-	if (payload instanceof DELAY_SELECTED) {
-		const delayCtrls = state.controls.withSelectedDelay(payload.idx);
-		const rasterDataFetcher = new RasterDataFetcher(
-			getDataObjectVariables(delayCtrls),
-			{
-				delay: delayCtrls.delays.selected
-			}
-		);
+	else if (payload instanceof DELAY_SELECTED) {
+		return update({controls: state.controls.withSelectedDelay(payload.idx)})
+	}
 
+	else if (payload instanceof SET_RANGEFILTER) {
+		const rangeMm = getRangeFilterMinMax(payload.rangeFilter)
+		const minMax = selectMinMax([rangeMm, state.fullMinMax])
 		return update({
-			controls: delayCtrls,
-			rasterDataFetcher
-		});
+			minMax,
+			rangeFilter: payload.rangeFilter,
+			colorMaker: getColorMaker(minMax, state.controls.colorMaps)
+		})
 	}
 
-	if (payload instanceof SET_RANGEFILTER) {
-		return update(handleSetRangefilter(state, payload));
-	}
-
-	if (payload instanceof RASTER_FETCHED) {
+	else if (payload instanceof RASTER_FETCHED) {
 		return update(handleRasterFetched(state, payload));
 	}
 
-	if (payload instanceof GAMMA_SELECTED) {
+	else if (payload instanceof GAMMA_SELECTED) {
 		return update(handleGammaSelected(state, payload));
 	}
 
-	if (payload instanceof COLORRAMP_SELECTED) {
+	else if (payload instanceof COLORRAMP_SELECTED) {
 		return update(handleColorrampSelected(state, payload));
 	}
 
-	if (payload instanceof FETCHING_TIMESERIE) {
+	else if (payload instanceof FETCHING_TIMESERIE) {
 		return update({
 			isFetchingTimeserieData: true,
 			timeserieData: []
 		});
 	}
 
-	if (payload instanceof TIMESERIE_FETCHED) {
+	else if (payload instanceof TIMESERIE_FETCHED) {
 		return update({
 			isFetchingTimeserieData: false,
 			timeserieData: getTimeserieData(state.controls.dates.values, payload.yValues),
@@ -177,147 +188,120 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		});
 	}
 
-	if (payload instanceof TIMESERIE_RESET) {
+	else if (payload instanceof TIMESERIE_RESET) {
 		return update({
 			timeserieData: [],
 			timeserieParams: undefined
 		});
 	}
 
-	if (payload instanceof TOGGLE_TS_SPINNER) {
+	else if (payload instanceof TOGGLE_TS_SPINNER) {
 		return update({
 			showTSSpinner: payload.showTSSpinner
 		});
 	}
 
-	if (payload instanceof PUSH_PLAY) {
+	else if (payload instanceof PUSH_PLAY) {
+		const request = state.controls.rasterRequest
+		if(request === undefined) return state
 		const playingMovie = !state.playingMovie;
-		const did = playingMovie
-			? state.rasterDataFetcher!.getDesiredId(state.controls.selectedIdxs)
-			: state.desiredId;
-		return update({ playingMovie, desiredId: did });
+		return update({playingMovie})
 	}
 
-	if (payload instanceof INCREMENT_RASTER) {
-		const controls = state.controls.withIncrementedDate(payload.increment);
-		const desiredId = state.rasterDataFetcher!.getDesiredId(controls.selectedIdxs);
-
-		return state.raster
-			? update({ controls, desiredId })
-			: state;
+	else if (payload instanceof INCREMENT_RASTER) {
+		const controls = state.controls.withIncrementedDate(payload.increment)
+		const request = controls.rasterRequest
+		if(request === undefined) return update({playingMovie: false})
+		return update({ controls})
 	}
 
-	return state;
+	else return state
 
-	function update(updates: Partial<State>): State{
-		return { ...state, ...updates };
+}
+
+type UpdateFactory<A> = (state: State, payload: A) => (Partial<State> | null)
+
+const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
+	if(payload.raster.id !== state.controls.rasterId) return null
+
+	const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
+	const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
+	const rasterMinMax = payload.raster.stats
+
+	const fullMinMax = selectMinMax([globalMinMax, rasterMinMax])
+	const minMax = selectMinMax([rangeFilterMinMax, fullMinMax]) || rasterMinMax
+
+	const update = {
+		raster: payload.raster,
+		rasterFetchCount: state.rasterFetchCount + 1,
+		minMax,
+		fullMinMax: selectMinMax([globalMinMax, rasterMinMax]),
+		controls: state.controls,
+		colorMaker: state.colorMaker
+	}
+
+	const isDiverging = isDivergingData(payload.raster)
+
+	if ( isDiverging !== isDivergingData(state.raster) ) {
+		const gamma = state.controls.gammas.selected || defaultGammas.selected!
+		const suitableRamps = isDiverging ? colorRamps.filter(cr => cr.domain[0] < 0) : colorRamps.filter(cr => cr.domain[0] >= 0)
+		const colorMaps = new ColormapControl(suitableRamps.map(cr => new Colormap(cr, gamma)), 0)
+		update.controls = state.controls.copyWith({colorMaps})
+	}
+
+	if(minMax.min !== state.minMax?.min || minMax.max !== state.minMax?.max){
+		update.colorMaker = getColorMaker(minMax, update.controls.colorMaps)
+	}
+	return update
+}
+
+function isDivergingData(raster: BinRaster | undefined): boolean | undefined{
+	if(raster === undefined) return
+	return raster.stats.min < 0 && raster.stats.max > 0
+}
+
+const handleGammaSelected: UpdateFactory<GAMMA_SELECTED> = (state, payload) => {
+	let controls = state.controls.withSelectedGamma(payload.idx);
+	const selectedGamma = controls.gammas.selected
+	if(selectedGamma === null) return null
+
+	controls = controls.copyWith({colorMaps: controls.colorMaps.withGamma(selectedGamma)})
+	return {
+		controls,
+		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
 	}
 }
 
-type HandleAction<A> = (state: State, payload: A) => Partial<State>
+const handleColorrampSelected: UpdateFactory<COLORRAMP_SELECTED> = (state, payload) => {
 
-const handleSetRangefilter: HandleAction<SET_RANGEFILTER> = (state, payload) => {
-	const minMax = getMinMax(state.controls, payload.rangeFilter, state.metadata, state.raster);
-	const colorMaker = new ColorMakerRamps(minMax.min, minMax.max, state.controls.gammas.selected, state.controls.colorRamps.selected, state.isDivergingData);
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
-	
+	const colorMaps = state.controls.colorMaps.withSelected(payload.idx)
+	const colorMap = colorMaps.selected
+	if(colorMap === null) return null
+
+	const controls = state.controls.copyWith({colorMaps})
 	return {
-		rangeFilter: payload.rangeFilter,
-		minMax,
-		colorMaker,
-		controls: state.controls.withColorRamps(controlColorRamp)
-	};
-};
+		controls,
+		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
+	}
+}
 
-const handleRasterFetched: HandleAction<RASTER_FETCHED> = (state, payload) => {
-	const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
-	const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
-	const rasterMinMax = getRasterMinMax(payload.raster);
+function getColorMaker(minMax: MinMax | undefined, control: ColormapControl): ((v: number) => RGBA) | undefined{
+	if(minMax === undefined) return
+	const cm = control.selected
+	if(cm === null) return
+	return cm.getColorMaker(minMax.min, minMax.max)
+}
 
-	const minMax = selectMinMax(rangeFilterMinMax, globalMinMax, rasterMinMax);
-	const isDivergingData = state.isDivergingData === undefined
-		? minMax.min < 0 && minMax.max > 0
-		: state.isDivergingData;
+function selectMinMax(mms: Array<Partial<MinMax> | undefined>): MinMax | undefined {
 
-	const colorMaker = new ColorMakerRamps(minMax.min, minMax.max, state.controls.gammas.selected, state.controls.colorRamps.selected, isDivergingData);
-	const controlColorRamp = new ControlColorRamp(colorMaker.colorRamps, colorMaker.colorRampIdx);
+	const pickVal = (key: 'min' | 'max') =>
+		mms.map(mm => mm?.[key]).find(mm => mm !== undefined)
 
-	return isRasterFetched(state, payload)
-		? {
-			minMax,
-			fullMinMax: selectMinMax({}, globalMinMax, rasterMinMax),
-			rasterFetchCount: state.rasterFetchCount + 1,
-			raster: payload.raster,
-			colorMaker,
-			controls: state.controls.withColorRamps(controlColorRamp),
-			isDivergingData
-		}
-		: state;
-};
+	const min = pickVal('min')
+	const max = pickVal('max')
 
-const handleGammaSelected: HandleAction<GAMMA_SELECTED> = (state, payload) => {
-	const newGammaControls = state.controls.withSelectedGamma(payload.idx);
-	const selectedGamma = newGammaControls.gammas.selected;
-	const minMax = getMinMax(state.controls, state.rangeFilter, state.metadata, state.raster);
-	const colorMaker = state.raster && state.colorMaker && state.colorMaker
-		? new ColorMakerRamps(minMax.min, minMax.max, selectedGamma, (state.colorMaker as ColorMakerRamps).colorRampName, state.isDivergingData)
-		: state.colorMaker;
-	const controlColorRamp = colorMaker
-		? new ControlColorRamp((colorMaker as ColorMakerRamps).colorRamps, newGammaControls.selectedIdxs.colorRampIdx)
-		: undefined;
-
-	return {
-		colorMaker,
-		controls: newGammaControls.withColorRamps(controlColorRamp)
-	};
-};
-
-const handleColorrampSelected: HandleAction<COLORRAMP_SELECTED> = (state, payload) => {
-	const selectedColorRamp = state.colorMaker
-		? (state.colorMaker as ColorMakerRamps).colorRamps[payload.idx].name
-		: colorRamps[payload.idx].name;
-	const minMax = getMinMax(state.controls, state.rangeFilter, state.metadata, state.raster);
-	const colorMaker = state.raster
-		? new ColorMakerRamps(minMax.min, minMax.max, state.controls.gammas.selected, selectedColorRamp, state.isDivergingData)
-		: state.colorMaker;
-	const controlColorRamp = colorMaker
-		? new ControlColorRamp((colorMaker as ColorMakerRamps).colorRamps, payload.idx)
-		: undefined;
-
-	return {
-		colorMaker,
-		controls: state.controls
-			.withColorRamps(controlColorRamp)
-			.withSelectedColorRamp(payload.idx)
-	};
-};
-
-const getMinMax = (controls: ControlsHelper, rangeFilter: RangeFilter, metadata?: DataObject, raster?: BinRasterExtended): Partial<MinMax> => {
-	const rangeFilterMinMax = getRangeFilterMinMax(rangeFilter);
-	if (rangeFilterMinMax.min !== undefined && rangeFilterMinMax.max !== undefined) return rangeFilterMinMax as MinMax;
-
-	if (metadata === undefined && raster === undefined) return rangeFilterMinMax;
-
-	const globalMinMax = getGlobalMinMax(controls, metadata);
-	const rasterMinMax = getRasterMinMax(raster);
-
-	return selectMinMax(rangeFilterMinMax, globalMinMax, rasterMinMax);
-};
-
-const selectMinMax = (rangeFilterMinMax: Partial<MinMax>, globalMinMax: Partial<MinMax>, rasterMinMax: Partial<MinMax>) => {
-	const pickVal = (key: 'min' | 'max', rangeFilter: Partial<MinMax>, global: Partial<MinMax>, raster: Partial<MinMax>) => {
-		if (rangeFilter[key] !== undefined) return rangeFilter[key]!;
-
-		if (global[key] !== undefined) return global[key]!;
-
-		return raster[key]!;
-	};
-
-	return {
-		min: pickVal('min', rangeFilterMinMax, globalMinMax, rasterMinMax),
-		max: pickVal('max', rangeFilterMinMax, globalMinMax, rasterMinMax)
-	};
-};
+	return (min === undefined || max === undefined) ? undefined : {min, max}
+}
 
 function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
 	return dobj
@@ -328,32 +312,25 @@ function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
 function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VarMeta | undefined {
 
 	const selectedVariable = controls?.variables?.selected;
-	if (selectedVariable === undefined) return;
+	if (!selectedVariable) return
 
 	return getVarMetas(metadata)?.find(v => v.label === selectedVariable);
 };
 
-function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): Partial<MinMax> {
-	const minMax = getVariableInfo(controls, metadata)?.minMax;
-	return { min: minMax?.[0], max: minMax?.[1] };
-};
+function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): MinMax | undefined {
+	const minMax = getVariableInfo(controls, metadata)?.minMax
+	if(minMax === undefined) return
+	return { min: minMax[0], max: minMax[1] }
+}
 
-const getRangeFilterMinMax = (rangeFilter: RangeFilter) => {
-	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange };
-};
-
-const getRasterMinMax = (raster?: BinRasterExtended) => {
-	if (raster === undefined || raster.stats === undefined) return { min: undefined, max: undefined };
-
-	return {
-		min: raster.stats.min,
-		max: raster.stats.max
-	}
-};
+function getRangeFilterMinMax(rangeFilter: RangeFilter): Partial<MinMax> {
+	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange }
+}
 
 const getLegendLabel = (metaVar?: VarMeta) => {
-	if (metaVar && metaVar.valueType.self.label && metaVar.valueType.unit) {
-		return `${metaVar.valueType.self.label} [${metaVar.valueType.unit}]`;
+	if (metaVar && metaVar.valueType.self.label) {
+		const unit = metaVar.valueType.unit ? ` [${metaVar.valueType.unit}]` : ""
+		return `${metaVar.valueType.self.label}${unit}`;
 	}
 
 	return 'Legend';
@@ -375,35 +352,7 @@ const getTimeserieData = (dates: string[], yValues: number[]): TimeserieData[] =
 		: [[0, 1]];
 };
 
-function filterElevations(elevations: string[]){
-	//TODO: Remove this when backend filters elevations
-	return elevations.length === 1 && elevations[0] === "null"
-		? []
-		: Array.from(new Set(elevations));
-}
-
-function isFetched(state: State, payload: VARIABLES_AND_DATES_FETCHED){
-	return payload.service === state.controls.services.selected;
-}
-
 function isElevationsFetched(state: State, payload: ELEVATIONS_FETCHED){
-	return payload.controls.services.selected === state.controls.services.selected
-		&& payload.controls.variables.selected === state.controls.variables.selected;
-}
-
-function isRasterFetched(state: State, payload: RASTER_FETCHED){
-	return payload.controls.services.selected === state.controls.services.selected &&
-		payload.controls.variables.selected === state.controls.variables.selected &&
-		payload.controls.dates.selected === state.controls.dates.selected &&
-		payload.controls.elevations.selected === state.controls.elevations.selected;
-}
-
-function getDataObjectVariables(controls: ControlsHelper){
-	return {
-		dates: controls.dates.values,
-		elevations: controls.elevations.values,
-		gammas: controls.gammas.values,
-		services: controls.services.values,
-		variables: controls.variables.values
-	};
+	return payload.service === state.controls.services.selected
+		&& payload.variable === state.controls.variables.selected
 }

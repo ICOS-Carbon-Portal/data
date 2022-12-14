@@ -14,7 +14,7 @@ lazy val commonSettings = Seq(
 		"-feature",
 		"-deprecation"
 	),
-	// javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
+	javacOptions ++= Seq("-Xlint:deprecation")
 )
 
 val akkaVersion = "2.6.18"
@@ -24,24 +24,15 @@ lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.2.0",
+		version := "0.2.1",
 		libraryDependencies ++= Seq(
 			//repo.icos-cp.eu acts as proxy to https://artifacts.unidata.ucar.edu
-			"edu.ucar"            % "cdm"                                % "4.6.11" excludeAll(
+			"edu.ucar"            % "cdm-core"                            % "5.5.3" excludeAll(
 				ExclusionRule(organization = "com.beust", name = "jcommander"),
-				ExclusionRule(organization = "com.amazonaws", name = "aws-java-sdk-s3"),
-				//ExclusionRule(organization = "com.google.guava", name = "guava"),
-				ExclusionRule(organization = "org.quartz-scheduler", name = "quartz"),
 				ExclusionRule(organization = "com.google.protobuf", name = "protobuf-java"),
-				ExclusionRule(organization = "com.fasterxml.jackson.core"),
-				//ExclusionRule(organization = "edu.ucar", name = "httpservices"),
-				ExclusionRule(organization = "net.sf.ehcache", name = "ehcache-core"),
-				ExclusionRule(organization = "org.apache.httpcomponents"),
-				ExclusionRule(organization = "org.itadaki", name = "bzip2"),
+				ExclusionRule(organization = "edu.ucar", name = "httpservices"),
+				// ExclusionRule(organization = "org.apache.httpcomponents"),
 				ExclusionRule(organization = "org.jdom", name = "jdom2"),
-				ExclusionRule(organization = "org.quartz-scheduler", name = "quartz"),
-				ExclusionRule(organization = "org.slf4j", name = "jcl-over-slf4j"),
-				ExclusionRule(organization = "org.slf4j", name = "slf4j-api")
 			),
 			"com.typesafe.akka"   %% "akka-http-spray-json"              % akkaHttpVersion % "provided" excludeAll("io.spray") cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"   %% "akka-stream"                       % akkaVersion     % "provided" cross CrossVersion.for3Use2_13,

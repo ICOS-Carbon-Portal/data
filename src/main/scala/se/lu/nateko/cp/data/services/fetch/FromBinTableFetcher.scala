@@ -7,7 +7,7 @@ import scala.concurrent.Future
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.Done
-import se.lu.nateko.cp.data.formats.bintable._
+import se.lu.nateko.cp.data.formats.bintable.*
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 case class BinTableRequest(
@@ -34,12 +34,11 @@ class FromBinTableFetcher(folder: File){
 	}
 
 	def getResponseSize(request: BinTableRequest): Long = {
-		import se.lu.nateko.cp.data.formats.bintable.Utils
 
 		val nRows = request.slice.fold(request.schema.size)(_.length.toLong)
 		request.columnNumbers.map{colNum =>
 			val col = request.schema.columns(colNum)
-			Utils.getDataTypeSize(col) * nRows
+			col.byteSize * nRows
 		}.sum
 	}
 }

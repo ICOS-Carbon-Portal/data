@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.services.etcfacade
 
-import se.lu.nateko.cp.meta.core.etcupload._
+import se.lu.nateko.cp.meta.core.etcupload.*
 import java.time.LocalDate
 import java.time.LocalTime
 import scala.util.Try

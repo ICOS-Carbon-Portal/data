@@ -1,7 +1,7 @@
 package se.lu.nateko.cp.data.test.streams.geo
 
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.streams.geo.SegmentsIntersection._
+import se.lu.nateko.cp.data.streams.geo.SegmentsIntersection.*
 import se.lu.nateko.cp.data.streams.geo.Point
 
 class SegmentsIntersectionTests extends AnyFunSuite{

@@ -1,4 +1,14 @@
-export const colorRampDefs = [
+import { RGBA } from "icos-cp-spatial";
+
+export type RampDomain = Array<-1 | 0 | 1>
+
+export interface ColorRamp{
+	name: string
+	domain: RampDomain
+	colors: RGBA[]
+}
+
+const colorRampDefs: ColorRamp[] = [
 	{
 		name: 'blueYellowRed',
 		domain: [-1, 0, 1],
@@ -29,4 +39,13 @@ export const colorRampDefs = [
 		domain: [0, 1],
 		colors: [[240, 240, 240, 255], [99, 99, 99, 255]]
 	}
-];
+]
+
+export const colorRamps: ColorRamp[] = colorRampDefs.flatMap(cr => [
+	cr,
+	{
+		name: cr.name + '-rev',
+		domain: cr.domain,
+		colors: cr.colors.slice().reverse()
+	}
+])

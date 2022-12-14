@@ -1,9 +1,9 @@
 package se.lu.nateko.cp.data.test.formats.bintable
 
 import org.scalatest.funsuite.AnyFunSuite
-import se.lu.nateko.cp.data.formats.bintable._
+import se.lu.nateko.cp.data.formats.bintable.*
 import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
-import se.lu.nateko.cp.data.test.TestUtils._
+import se.lu.nateko.cp.data.test.TestUtils.*
 
 class BinTableTest extends AnyFunSuite{
 
@@ -33,7 +33,7 @@ class BinTableTest extends AnyFunSuite{
 
 		assert(size === n)
 	}
-	
+
 	test("Write with a string column, then read"){
 		val file = getFileInTarget("binTableWriterStringTest.cpb")
 

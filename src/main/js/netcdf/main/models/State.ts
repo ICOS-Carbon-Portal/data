@@ -1,9 +1,9 @@
+import { BinRaster } from "icos-cp-backend";
+import { RGBA } from "icos-cp-spatial";
 import config from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
-import ColorMaker, { ColorMakerRamps, colorRamps } from "../../../common/main/models/ColorMaker";
-import { BinRasterExtended } from "./BinRasterExtended";
+import { colorRamps } from "../../../common/main/models/colorRampDefs";
 import { ControlsHelper } from "./ControlsHelper";
-import RasterDataFetcher from "./RasterDataFetcher";
 
 
 const isSites = config.envri === "SITES";
@@ -59,7 +59,7 @@ export type TimeserieData = [Date | number, number]
 export type TimeserieParams = {
 	objId: string
 	variable: string
-	elevation: string | null,
+	elevation: number | null,
 	x: number,
 	y: number,
 	latlng: Latlng
@@ -69,33 +69,30 @@ export interface State {
 	isSites: boolean
 	isPIDProvided: boolean
 	metadata?: DataObject
-	minMax: Partial<MinMax>
-	isDivergingData?: boolean
+	minMax?: MinMax
 	fullMinMax?: MinMax
 	rangeFilter: RangeFilter
 	legendLabel: string
-	colorMaker?: ColorMaker | ColorMakerRamps
+	colorMaker?: (value: number) => RGBA
 	controls: ControlsHelper
 	variableEnhancer: Record<string,string>
 	countriesTopo: {
 		ts: number,
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
-	desiredId?: string
-	lastElevation?: string
+	lastElevation?: number
 	initSearchParams: {
 		varName: string
 		date: string
 		gamma: string
-		elevation: string
+		elevation: number | null
 		center: string
 		zoom: string
 		color: string
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
-	raster?: BinRasterExtended
-	rasterDataFetcher?: RasterDataFetcher
+	raster?: BinRaster
 	title?: string
 	toasterData?: {}
 	isFetchingTimeserieData: boolean
@@ -105,12 +102,13 @@ export interface State {
 	showTSSpinner: boolean
 }
 
+const urlQueryElevation = Number.parseFloat(searchParams.elevation)
+
 const defaultState: State = {
 	isSites,
 	isPIDProvided,
 	metadata: undefined,
-	minMax: { min: undefined, max: undefined },
-	isDivergingData: undefined,
+	minMax: undefined,
 	fullMinMax: undefined,
 	rangeFilter: defaultRangeFilter,
 	legendLabel: 'Legend',
@@ -121,13 +119,12 @@ const defaultState: State = {
 		ts: 0,
 		data: undefined
 	},
-	desiredId: undefined,
 	lastElevation: undefined,
 	initSearchParams: {
 		varName: searchParams.varName,
 		date: searchParams.date,
 		gamma: searchParams.gamma,
-		elevation: searchParams.elevation,
+		elevation: isNaN(urlQueryElevation) ? null : urlQueryElevation,
 		center: searchParams.center,
 		zoom: searchParams.zoom,
 		color: searchParams.color,
@@ -135,7 +132,6 @@ const defaultState: State = {
 	playingMovie: false,
 	rasterFetchCount: 0,
 	raster: undefined,
-	rasterDataFetcher: undefined,
 	title: undefined,
 	toasterData: undefined,
 	isFetchingTimeserieData: false,

@@ -5,9 +5,9 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import akka.Done
 import akka.http.scaladsl.HttpExt
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.*
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
@@ -15,7 +15,7 @@ import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
 import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Envri
-import spray.json._
+import spray.json.*
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import se.lu.nateko.cp.data.MongoDbIndex
 import se.lu.nateko.cp.meta.core.data.StaticCollection
