@@ -74,11 +74,11 @@ export default class Controls extends Component {
 
 				<div className="col-md-1" style={{minWidth: 190}}>
 					<div style={{ fontWeight: 'bold' }}>Map color:</div>
-					<DropdownColors control={controls.colorRamps} action={props.handleColorRampChange} />
+					<DropdownColors control={controls.colorMaps} action={props.handleColorRampChange} />
 				</div>
 
 				<div className="col-md-1" style={{ minWidth: 110 }}>
-					<Selector className="gammas" caption="Shift color" control={controls.gammas} action={props.handleGammaChange} />
+					<Selector className="gammas" caption="Color gamma" control={controls.gammas} action={props.handleGammaChange} />
 				</div>
 
 				<div className="col-md-1">
@@ -99,13 +99,13 @@ const getClassName = (defaultWidth, isPIDProvided) => {
 
 function delayPresenter(delay){
 	switch (delay){
-		case 0 : return 'Fastest';
-		case 50 : return 'Very fast';
-		case 100 : return 'Fast';
-		case 200 : return 'Medium';
-		case 500 : return 'Medium';
-		case 1000 : return 'Slow';
-		case 3000 : return 'Very slow';
+		case 0 : return 'Fastest (cpu/network limit)';
+		case 50 : return 'Very fast (up to 20 fps)';
+		case 100 : return 'Fast (up to 10 fps)';
+		case 200 : return 'Medium (5 fps)';
+		case 500 : return 'Medium (2 fps)';
+		case 1000 : return 'Slow (1 fps)';
+		case 3000 : return 'Very slow (0.33 fps)';
 		default : return (1000 / delay) + ' fps';
 	}
 }

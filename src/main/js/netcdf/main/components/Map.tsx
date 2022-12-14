@@ -12,11 +12,13 @@ import RangeFilterInput from './RangeFilterInput';
 import { AppProps } from '../containers/App';
 import { Control } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
-import { BinRasterExtended } from '../models/BinRasterExtended';
+import { BinRaster } from 'icos-cp-backend';
+import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
+import legendFactory from '../models/LegendFactory';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
-	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'rasterDataFetcher' | 'serviceChanged' | 'title'
+	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
 	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
 type OurState = {
 	height: number,
@@ -31,7 +33,7 @@ export default class Map extends Component<OurProps, OurState> {
 	private center: string[];
 	private zoom: string | number;
 	private objId?: string;
-	private prevVariables?: Control;
+	private prevVariables?: Control<string>;
 	private events: typeof Events;
 	private getRasterXYFromLatLng?: Function;
 	private legendDiv: HTMLDivElement;
@@ -60,20 +62,20 @@ export default class Map extends Component<OurProps, OurState> {
 
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
-			const {dates, elevations, gammas, variables, colorRamps} = this.props.controls;
-
-			if (this.prevVariables === undefined || this.prevVariables!.selected !== variables.selected) {
-				this.prevVariables = variables;
-				saveToRestheart(formatData({objId: this.objId, variable: variables.selected}));
+			const {dates, elevations, gammas, variables, colorMaps} = this.props.controls;
+			const variable = variables.selected
+			if (this.prevVariables === undefined || this.prevVariables.selected !== variable) {
+				this.prevVariables = variables
+				if (variable !== null) saveToRestheart(formatData({objId: this.objId, variable}))
 			}
 
-			const dateParam = dates.selectedIdx > 0 && dates.selected ? `date=${dates.selected}` : undefined;
-			const elevationParam = elevations.selectedIdx > 0 && elevations.selected ? `elevation=${elevations.selected}` : undefined;
+			const dateParam = dates.selected ? `date=${dates.selected}` : undefined;
+			const elevationParam = elevations.selected !== null ? `elevation=${elevations.selected}` : undefined;
 			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
-			const varNameParam = variables.selectedIdx > 0 && variables.selected ? `varName=${variables.selected}` : undefined;
+			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
-			const color = colorRamps.selected ? `color=${colorRamps.selected}` : undefined;
+			const color = colorMaps.selected ? `color=${colorMaps.selected.ramp.name}` : undefined;
 
 			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
@@ -83,7 +85,7 @@ export default class Map extends Component<OurProps, OurState> {
 
 				if (window.frameElement) {
 					//Let calling page (through iframe) know what current url is
-					window.top.postMessage(newURL, '*');
+					window.top!.postMessage(newURL, '*');
 				} else {
 					history.pushState({urlPath: newURL}, "", newURL);
 				}
@@ -142,7 +144,7 @@ export default class Map extends Component<OurProps, OurState> {
 			const elevation = this.props.controls.elevations.selected;
 			const xy = this.getRasterXYFromLatLng(e.latlng);
 
-			if (xy && this.props.fetchTimeSerie) {
+			if (xy && objId !== null && variable !== null) {
 				this.props.fetchTimeSerie({objId, variable, elevation, x: xy.x, y: xy.y, latlng: e.latlng});
 				this.timeserieToggle(true);
 			}
@@ -177,15 +179,23 @@ export default class Map extends Component<OurProps, OurState> {
 	render() {
 		const state = this.state;
 		const props = this.props;
-		const raster = props.raster;
-		const { gammas, colorRamps } = props.controls;
+		const { gammas, colorMaps } = props.controls;
 		const { rangeValues, valueFilter } = props.rangeFilter;
+
+		const mapId = props.raster
+			? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
+				`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
+			: undefined
+
+		const needReset = !props.raster || !props.colorMaker
+		const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
+
 		const showSpinner = props.countriesTopo.ts > this.countriesTs && props.rasterFetchCount === 0;
-		const colorMaker = props.colorMaker ? props.colorMaker.makeColor.bind(props.colorMaker) : null;
-		const getLegend = props.colorMaker ? props.colorMaker.getLegend.bind(props.colorMaker) : null;
-		const mapId = raster && gammas && colorRamps
-			? `${raster.basicId}${gammas.selectedIdx}${colorRamps.selectedIdx}${rangeValues.minRange}${rangeValues.maxRange}`
-			: "";
+		const colorMap = colorMaps.selected
+		const getLegend = (props.minMax === undefined || colorMap === null)
+			? undefined
+			: legendFactory(props.minMax, colorMap)
+
 		const latLngBounds = getLatLngBounds(
 			props.rasterFetchCount,
 			props.initSearchParams.center,
@@ -193,11 +203,6 @@ export default class Map extends Component<OurProps, OurState> {
 			raster
 		);
 		const containerHeight = state.height < minHeight ? minHeight : state.height;
-
-		if (raster && gammas && colorRamps) {
-			// A change in raster id triggers a rerender of map and legend
-			raster.id = mapId;
-		}
 
 		return (
 			<div id="content" className="container-fluid">
@@ -243,8 +248,9 @@ export default class Map extends Component<OurProps, OurState> {
 								zoom: this.zoom,
 								forceCenter: [52.5, 10]
 							}}
-							raster={props.raster}
-							colorMaker={colorMaker}
+							raster={raster}
+							reset={needReset}
+							colorMaker={props.colorMaker}
 							valueFilter={valueFilter}
 							geoJson={props.countriesTopo.data}
 							latLngBounds={latLngBounds}
@@ -300,7 +306,7 @@ export default class Map extends Component<OurProps, OurState> {
 	}
 }
 
-const getRasterXYFromLatLng = (raster: BinRasterExtended) => {
+const getRasterXYFromLatLng = (raster: BinRaster) => {
 	const tileHelper = getTileHelper(raster);
 
 	return (latlng: Latlng) => {
@@ -315,7 +321,7 @@ const getRasterXYFromLatLng = (raster: BinRasterExtended) => {
 	}
 };
 
-const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRasterExtended) => {
+const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRaster) => {
 	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
 		? window.L.latLngBounds(
 			window.L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),

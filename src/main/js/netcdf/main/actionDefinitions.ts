@@ -3,7 +3,8 @@ import * as GeoJSON from "geojson";
 import { DataObject } from "../../common/main/metacore";
 import { RangeFilter, TimeserieParams } from "./models/State";
 import { ControlsHelper } from "./models/ControlsHelper";
-import { BinRasterExtended } from "./models/BinRasterExtended";
+import { BinRaster } from "icos-cp-backend";
+
 
 export abstract class ActionPayload { }
 export interface NetCDFPlainAction extends Action<string> {
@@ -20,22 +21,19 @@ export class COUNTRIES_FETCHED extends ActionPayload {
 	constructor(readonly countriesTopo: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>) { super(); }
 }
 export class SERVICES_FETCHED extends ActionPayload {
-	constructor(readonly services: string) { super(); }
+	constructor(readonly services: string[]) { super(); }
 }
 export class SERVICE_SET extends ActionPayload {
-	constructor(readonly services: string[]) { super(); }
+	constructor(readonly service: string) { super(); }
 }
 export class SERVICE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
-}
-export class TITLE_FETCHED extends ActionPayload {
-	constructor(readonly title: string) { super(); }
 }
 export class VARIABLES_AND_DATES_FETCHED extends ActionPayload {
 	constructor(readonly service: string, readonly variables: string[], readonly dates: string[]) { super(); }
 }
 export class ELEVATIONS_FETCHED extends ActionPayload {
-	constructor(readonly controlName: string, readonly elevations: string[], readonly controls: ControlsHelper) { super(); }
+	constructor(readonly service: string, readonly variable: string, readonly elevations: number[]) { super(); }
 }
 export class VARIABLE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
@@ -53,7 +51,7 @@ export class SET_RANGEFILTER extends ActionPayload {
 	constructor(readonly rangeFilter: RangeFilter) { super(); }
 }
 export class RASTER_FETCHED extends ActionPayload {
-	constructor(readonly raster: BinRasterExtended, readonly controls: ControlsHelper) { super(); }
+	constructor(readonly raster: BinRaster) { super(); }
 }
 export class GAMMA_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }

@@ -5,24 +5,25 @@ export default class Selector extends Component {
 		super(props);
 	}
 
-	changeHandler(){
-		const props = this.props;
-		const idx = this.selector.selectedIndex;
-		props.action(idx);
-	}
-
 	render(){
 		const props = this.props;
 		const control = props.control;
-		const selectedOption = control.hasSelected ? control.selected : props.caption;
-		const style = {visibility: control.hasSelected ? "visible" : "hidden"};
-		const optionTexter = value => props.presenter ? props.presenter(value) : value;
+
+		const style = {visibility: (control.values.length > 0) ? "visible" : "hidden"};
+
+		const selectedOption = control.selected === null ? props.caption : control.selected;
+
+		const optionTexter = props.presenter || (v => v);
+
+		function changeHandler(event){
+			if(props.action) props.action(event.target.selectedIndex);
+		}
 
 		return <div className={props.className} style={style}>
 
 			<span style={{fontWeight: 'bold'}}>{props.caption + ": "}</span>
 
-			<select ref={select => this.selector = select} value={optionTexter(selectedOption)} className="form-select" onChange={this.changeHandler.bind(this)}>{
+			<select value={optionTexter(selectedOption)} className="form-select" onChange={changeHandler}>{
 
 				control.values.map(function(optionValue, i){
 					return <option key={i}>{optionTexter(optionValue)}</option>;
