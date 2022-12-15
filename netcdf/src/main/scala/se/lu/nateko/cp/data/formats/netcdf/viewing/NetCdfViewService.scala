@@ -47,25 +47,25 @@ end NetCdfViewService
 
 class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
-	private val dimensions = new DimensionsSpecification()
+	private val dimensions = new DimensionSpecification(null, null, null, null)
 
-	private val variables = new VariableSpecification()
+	private val variables = new VariableSpecification(null, null, null, null)
 
 	withDataset{ds =>
 		def firstVarByName(nameOptions: Seq[String]): Option[String] =
 			nameOptions.find(varName => ds.findVariable(varName) != null)
 
-		firstVarByName(conf.dateVars).foreach(variables.setDateVariable)
-		firstVarByName(conf.latitudeVars).foreach(variables.setLatVariable)
-		firstVarByName(conf.longitudeVars).foreach(variables.setLonVariable)
-		firstVarByName(conf.elevationVars).foreach(variables.setElevationVariable)
+		firstVarByName(conf.dateVars).map(variables.setDateVariable)
+		firstVarByName(conf.latitudeVars).map(variables.setLatVariable)
+		firstVarByName(conf.longitudeVars).map(variables.setLonVariable)
+		firstVarByName(conf.elevationVars).map(variables.setElevationVariable)
 
 		dimensions.setDateDimension(
-				ds.findVariable(variables.getDateVariable()).getDimension(0).getShortName)
+				ds.findVariable(variables.getDateVariable).getDimension(0).getShortName)
 		dimensions.setLatDimension(
-				ds.findVariable(variables.getLatVariable()).getDimension(0).getShortName)
+				ds.findVariable(variables.getLatVariable).getDimension(0).getShortName)
 		dimensions.setLonDimension(
-				ds.findVariable(variables.getLonVariable()).getDimension(0).getShortName)
+				ds.findVariable(variables.getLonVariable).getDimension(0).getShortName)
 
 		val elevVar = variables.getElevationVariable
 		if(elevVar != null) dimensions.setElevationDimension(
