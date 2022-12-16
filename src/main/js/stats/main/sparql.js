@@ -34,17 +34,13 @@ export function getFileNames(dobjUris){
 export function getContributorNames(contribUris){
 	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select ?contrib ?name where{
-			${contribUris.length
-				? `values ?contrib { <${contribUris.join("> <")}> }` 
-				: ''
+			values ?contrib { <${contribUris.join("> <")}> }
+			optional{
+				?contrib cpmeta:hasFirstName ?firstName .
+				?contrib cpmeta:hasLastName ?lastName .
 			}
-			{
-			  ?contrib cpmeta:hasFirstName ?firstName .
-			  ?contrib cpmeta:hasLastName ?lastName .
-			  BIND(CONCAT(?firstName, " ", ?lastName) AS ?name)
-		   } UNION {
-			  ?contrib cpmeta:hasName ?name
-		   }
+			optional{?contrib cpmeta:hasName ?orgName}
+			BIND(if(bound(?orgName), ?orgName, CONCAT(?firstName, " ", ?lastName)) AS ?name)
 		}`;
 	return sparqlLabels(query, "contrib", "name");
 }
