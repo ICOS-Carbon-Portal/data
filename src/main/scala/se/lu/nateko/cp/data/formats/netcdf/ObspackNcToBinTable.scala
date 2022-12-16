@@ -7,7 +7,7 @@ import se.lu.nateko.cp.data.formats.ValueFormatParser
 import se.lu.nateko.cp.data.formats.bintable.BinTableRow
 import se.lu.nateko.cp.data.formats.bintable.DataType
 import se.lu.nateko.cp.data.formats.bintable.Schema
-import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService.getDateParser
+import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewService.getDateParser
 import se.lu.nateko.cp.meta.core.data.TabularIngestionExtract
 import se.lu.nateko.cp.meta.core.data.TimeInterval
 import se.lu.nateko.cp.meta.core.data.TimeSeriesExtract

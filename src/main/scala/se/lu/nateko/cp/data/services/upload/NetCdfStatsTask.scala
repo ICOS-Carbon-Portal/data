@@ -5,7 +5,7 @@ import akka.stream.scaladsl.Sink
 import akka.util.ByteString
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.api.CpDataParsingException
-import se.lu.nateko.cp.data.formats.netcdf.viewing.NetCdfViewService
+import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewService
 import se.lu.nateko.cp.meta.core.data.NetCdfExtract
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath

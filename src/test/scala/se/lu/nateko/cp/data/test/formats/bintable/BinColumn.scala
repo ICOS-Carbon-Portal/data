@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.formats.netcdf
+package se.lu.nateko.cp.data.formats.bintable
 
 import ucar.nc2.Variable
 import ucar.ma2.{Array => CdmArray, DataType}
@@ -8,7 +8,7 @@ import scala.util.Success
 import scala.util.Failure
 import java.nio.*
 
-sealed trait PlainColumn{ self =>
+sealed trait BinColumn{ self =>
 	type V
 	def values: Iterator[V]
 
@@ -23,7 +23,7 @@ sealed trait PlainColumn{ self =>
 	def asBoolean: Try[BooleanColumn] = as[BooleanColumn]
 	def asByte: Try[ByteColumn] = as[ByteColumn]
 
-	private[this] def as[T <: PlainColumn](using ct: ClassTag[T]): Try[T] = this match{
+	private[this] def as[T <: BinColumn](using ct: ClassTag[T]): Try[T] = this match{
 		case f: T => Success(f)
 		case _ => Failure(new Error("The plain column was not of expected type " + ct.toString))
 	}
@@ -31,20 +31,20 @@ sealed trait PlainColumn{ self =>
 	def map(f: V => String): StringColumn = new StringColumn { def values = self.values.map(f) }
 }
 
-trait IntColumn extends PlainColumn{ type V = Int }
-trait LongColumn extends PlainColumn{ type V = Long }
-trait FloatColumn extends PlainColumn{ type V = Float }
-trait DoubleColumn extends PlainColumn{ type V = Double }
-trait StringColumn extends PlainColumn{ type V = String }
+trait IntColumn extends BinColumn{ type V = Int }
+trait LongColumn extends BinColumn{ type V = Long }
+trait FloatColumn extends BinColumn{ type V = Float }
+trait DoubleColumn extends BinColumn{ type V = Double }
+trait StringColumn extends BinColumn{ type V = String }
 
-trait ShortColumn extends PlainColumn{ type V = Short }
-trait CharColumn extends PlainColumn{ type V = Char }
-trait BooleanColumn extends PlainColumn{ type V = Boolean }
-trait ByteColumn extends PlainColumn{ type V = Byte }
+trait ShortColumn extends BinColumn{ type V = Short }
+trait CharColumn extends BinColumn{ type V = Char }
+trait BooleanColumn extends BinColumn{ type V = Boolean }
+trait ByteColumn extends BinColumn{ type V = Byte }
 
-object PlainColumn{
+object BinColumn{
 
-	def apply(variable: Variable): Try[PlainColumn] = Try{
+	def apply(variable: Variable): Try[BinColumn] = Try{
 
 		assert(variable.getRank == 1, "Expecting NetCDF variable rank to be 1 to convert to a plain column")
 
@@ -66,7 +66,7 @@ object PlainColumn{
 
 	}
 	
-	def apply(array: CdmArray): Try[PlainColumn] = Try{
+	def apply(array: CdmArray): Try[BinColumn] = Try{
 
 		assert(array.getRank == 1, "Expecting NetCDF variable rank to be 1 to convert to a plain column")
 
@@ -86,7 +86,7 @@ object PlainColumn{
 	}
 
 
-	def apply(buffer: Buffer): Try[PlainColumn] = Try{
+	def apply(buffer: Buffer): Try[BinColumn] = Try{
 
 		def iter[T](getter: => T): Iterator[T] = {
 			buffer.rewind()

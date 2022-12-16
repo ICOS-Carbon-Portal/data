@@ -9,7 +9,7 @@ import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
-import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
+import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.data.routes.*
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher

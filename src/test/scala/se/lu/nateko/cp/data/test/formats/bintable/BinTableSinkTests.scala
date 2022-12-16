@@ -14,7 +14,6 @@ import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.bintable.*
 import se.lu.nateko.cp.data.formats.csv.CsvParser
-import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
 import se.lu.nateko.cp.data.test.TestUtils.*
 
 class BinTableSinkTests extends AnyFunSuite with BeforeAndAfterAll{
@@ -46,14 +45,14 @@ class BinTableSinkTests extends AnyFunSuite with BeforeAndAfterAll{
 
 		val reader = new BinTableReader(file, schema)
 
-		val firstCol = PlainColumn(reader.read(0, 0, schema.size.toInt)).flatMap(_.asInt).get.values
+		val firstCol = BinColumn(reader.read(0, 0, schema.size.toInt)).flatMap(_.asInt).get.values
 		val initFirstCol = getRowIterator.map(_.apply(0).asInstanceOf[Int])
 
 		assert(firstCol.zip(initFirstCol).forall{
 			case (readBack, initial) => readBack == initial
 		})
 
-		val secondCol = PlainColumn(reader.read(1, 0, schema.size.toInt)).flatMap(_.asDouble).get.values
+		val secondCol = BinColumn(reader.read(1, 0, schema.size.toInt)).flatMap(_.asDouble).get.values
 		val initSecondCol = getRowIterator.map(_.apply(1).asInstanceOf[Double])
 
 		assert(secondCol.zip(initSecondCol).forall{

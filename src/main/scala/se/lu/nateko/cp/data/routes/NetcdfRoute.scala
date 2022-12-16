@@ -1,22 +1,20 @@
 package se.lu.nateko.cp.data.routes
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
+import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-
-import scala.concurrent.Future
-
+import se.lu.nateko.cp.data.formats.netcdf.Raster
 import se.lu.nateko.cp.data.formats.netcdf.RasterMarshalling
-import se.lu.nateko.cp.data.formats.netcdf.viewing.ViewServiceFactory
+import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-
 import spray.json.DefaultJsonProtocol
-import akka.http.scaladsl.marshalling.ToResponseMarshaller
-import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
-import spray.json.RootJsonFormat
 import spray.json.JsonFormat
 import spray.json.JsonWriter
+import spray.json.RootJsonFormat
+
+import scala.concurrent.Future
 
 object NetcdfRoute extends DefaultJsonProtocol {
 	private given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = immIndexedSeqFormat

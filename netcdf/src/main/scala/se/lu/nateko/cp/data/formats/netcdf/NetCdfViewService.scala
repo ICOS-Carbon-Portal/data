@@ -1,20 +1,26 @@
-package se.lu.nateko.cp.data.formats.netcdf.viewing
+package se.lu.nateko.cp.data.formats.netcdf
 
-import java.nio.file.Path
-import scala.util.Using
-import ucar.nc2.time.CalendarDate
+import ucar.ma2.ArrayFloat
+import ucar.ma2.DataType
+import ucar.ma2.MAMath
+import ucar.ma2.Section
+import ucar.nc2.Variable
+import ucar.nc2.dataset.CoordinateAxisTimeHelper
 import ucar.nc2.dataset.NetcdfDataset
 import ucar.nc2.dataset.NetcdfDatasets
-import java.io.IOException
-import ucar.nc2.Variable
-import ucar.ma2.ArrayFloat
-import scala.collection.mutable.Buffer
-import ucar.nc2.dataset.CoordinateAxisTimeHelper
 import ucar.nc2.time.Calendar
-import ucar.ma2.Section
-import ucar.ma2.MAMath
-import se.lu.nateko.cp.data.formats.netcdf.viewing.impl.RasterImpl
-import ucar.ma2.DataType
+import ucar.nc2.time.CalendarDate
+
+import java.io.IOException
+import java.nio.file.Path
+import scala.collection.mutable.Buffer
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+import scala.util.Using
+import scala.util.control.NoStackTrace
+
+import collection.JavaConverters.asScalaBufferConverter
 
 trait NetCdfViewServiceConfig:
 	def dateVars: Seq[String]
@@ -44,37 +50,38 @@ object NetCdfViewService:
 		}
 end NetCdfViewService
 
+class VarSpec(
+	val dateVar: OneDimVar, val latVar: OneDimVar,
+	val lonVar: OneDimVar, val elevationVar: Option[OneDimVar]
+)
+
+case class OneDimVar(name: String, dimName: String)
 
 class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
-	private val dimensions = new DimensionSpecification(null, null, null, null)
-
-	private val variables = new VariableSpecification(null, null, null, null)
-
-	withDataset{ds =>
-		def firstVarByName(nameOptions: Seq[String]): Option[String] =
-			nameOptions.find(varName => ds.findVariable(varName) != null)
-
-		firstVarByName(conf.dateVars).map(variables.setDateVariable)
-		firstVarByName(conf.latitudeVars).map(variables.setLatVariable)
-		firstVarByName(conf.longitudeVars).map(variables.setLonVariable)
-		firstVarByName(conf.elevationVars).map(variables.setElevationVariable)
-
-		dimensions.setDateDimension(
-				ds.findVariable(variables.getDateVariable).getDimension(0).getShortName)
-		dimensions.setLatDimension(
-				ds.findVariable(variables.getLatVariable).getDimension(0).getShortName)
-		dimensions.setLonDimension(
-				ds.findVariable(variables.getLonVariable).getDimension(0).getShortName)
-
-		val elevVar = variables.getElevationVariable
-		if(elevVar != null) dimensions.setElevationDimension(
-			ds.findVariable(elevVar).getDimension(0).getShortName
-		)
-
+	private val singleDimVarsAndDims: Map[String, OneDimVar] = withDataset{ds =>
+		ds.getVariables.asScala.iterator.collect{
+			case v if v.getRank == 1 => v.getShortName -> OneDimVar(v.getShortName, v.getDimension(0).getShortName)
+		}.toMap
 	}
 
+	private def findOneDimVar(kind: String, options: Seq[String]): Try[OneDimVar] =
+		options.flatMap(singleDimVarsAndDims.get).headOption match
+			case None => Failure(
+				new Exception(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
+					with NoStackTrace
+			)
+			case Some(varNameAndDim) => Success(varNameAndDim)
 
+	val variables = (
+		for
+			dateVar <- findOneDimVar("date", conf.dateVars);
+			latVar <- findOneDimVar("latitude", conf.latitudeVars);
+			lonVar <- findOneDimVar("longitude", conf.longitudeVars);
+			elevVar = findOneDimVar("elevation", conf.elevationVars).toOption
+		yield
+			VarSpec(dateVar, latVar, lonVar, elevVar)
+	).get
 
 	private def withDataset[R](action: NetcdfDataset => R): R =
 		val pathStr = ncFile.toAbsolutePath.toString
@@ -85,71 +92,55 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 
 	def getAvailableDates: IndexedSeq[CalendarDate] = withDataset{ds =>
-		val timeVar = ds.findVariable(variables.dateVariable)
+		val timeVar = ds.findVariable(variables.dateVar.name)
 		NetCdfViewService.readAllDates(timeVar)
 	}
 
 	def getAvailableElevations(varName: String): IndexedSeq[Float] =
-		if (variables.elevationVariable != null) {
-			withDataset{ds =>
+		variables.elevationVar.fold(IndexedSeq.empty){
+			elevVar => withDataset{ds =>
 
 				// First see if this requested variable contains the elevation dimension
-				// TODO: This requires that the variable name is the same as the dimension name
 				val reqVar: Variable = ds.findVariable(varName)
-				val dimIndex: Int = reqVar.findDimensionIndex(variables.elevationVariable)
+				val dimIndex: Int = reqVar.findDimensionIndex(elevVar.dimName)
 
 				if dimIndex > 0 then
 					// It does. Continue to extract values from variable
-					val ncVar = ds.findVariable(variables.elevationVariable)
+					val ncVar = ds.findVariable(elevVar.dimName)
 					val data = ncVar.read().asInstanceOf[ArrayFloat]
 					data.copyTo1DJavaArray().asInstanceOf[Array[Float]].toIndexedSeq
 				else IndexedSeq.empty
 			}
 		}
-		else IndexedSeq.empty
+
+	private val expectedDimentionNames: Set[String] =
+		import variables.*
+		(Seq(dateVar, latVar, lonVar) ++ elevationVar).map(_.dimName).toSet
+
+	private def isSpatiotempVar(v: Variable): Boolean =
+		v.getDimensions.asScala.map(_.getShortName).toSet == expectedDimentionNames
+
 
 
 	def getVariables: IndexedSeq[String] = withDataset{ds =>
-
-		val varList = Buffer.empty[String]
-
-		ds.getVariables.forEach{v =>
-			//TODO: Make this more dynamic (order of dimensions)
-			if v.getRank == 3
-					&& v.getDimension(0).getShortName == dimensions.getDateDimension
-					&& v.getDimension(1).getShortName == dimensions.getLatDimension
-					&& v.getDimension(2).getShortName == dimensions.getLonDimension
-			then varList += v.getShortName
-			else if v.getRank == 3
-					&& v.getDimension(0).getShortName == dimensions.getDateDimension
-					&& v.getDimension(1).getShortName == dimensions.getLonDimension
-					&& v.getDimension(2).getShortName == dimensions.getLatDimension
-			then varList += v.getShortName
-			else if v.getRank == 4
-					&& v.getDimension(0).getShortName == dimensions.getDateDimension
-					&& v.getDimension(1).getShortName == dimensions.getElevationDimension
-					&& v.getDimension(2).getShortName == dimensions.getLatDimension
-					&& v.getDimension(3).getShortName == dimensions.getLonDimension
-			then varList += v.getShortName
-		}
-
-		varList.toIndexedSeq
-
+		ds.getVariables.asScala.collect{
+			case v if isSpatiotempVar(v) => v.getShortName
+		}.toIndexedSeq
 	}
 
 	def getRaster(dateTimeIdx: Int, varName: String, elevationIdx: Option[Int]): Raster = withDataset{ds =>
 
 		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, elevationIdx)
 
-		val dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension)
-		val lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension)
-		val latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension)
+		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar.dimName)
+		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar.dimName)
+		val latDimInd = ncVar.findDimensionIndex(variables.latVar.dimName)
 
 		val sizeLon = ncVar.getDimension(lonDimInd).getLength
 		val sizeLat = ncVar.getDimension(latDimInd).getLength
 		val latFirst = latDimInd < lonDimInd
 
-		val dateVar = ds.findVariable(variables.dateVariable)
+		val dateVar = ds.findVariable(variables.dateVar.name)
 
 		origin(dateDimInd) = dateTimeIdx
 		origin(lonDimInd) = 0
@@ -165,21 +156,19 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		val fullMin = MAMath.getMinimum(arrFullDim)
 		val fullMax = MAMath.getMaximum(arrFullDim)
 
-		val griddataset = new ucar.nc2.dt.grid.GridDataset(ds)
-		val latLonRect = griddataset.getBoundingBox()
+		val rect = Using(new ucar.nc2.dt.grid.GridDataset(ds))(_.getBoundingBox()).get
 
-		val latMin = latLonRect.getLatMin
-		val latMax = latLonRect.getLatMax
-		val lonMin = latLonRect.getLonMin
-		val lonMax = latLonRect.getLonMax
+		val bbox = BoundingBox(
+			latMin = rect.getLatMin,
+			latMax = rect.getLatMax,
+			lonMin = rect.getLonMin,
+			lonMax = rect.getLonMax
+		)
 
-		val latValues = ds.findVariable(variables.getLatVariable).read()
+		val latValues = ds.findVariable(variables.latVar.name).read()
 		val latSorted = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
 
-		griddataset.close()
-
-		RasterImpl(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, latMin, latMax, lonMin, lonMax)
-
+		Raster(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, bbox)
 	}
 
 	private def findVarPrepareSection(
@@ -197,17 +186,19 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 		val origin, size = Array.ofDim[Int](dimCount)
 
-		elevationIdxOpt.foreach{elevationIdx =>
-			if dimCount < 4 then throw new IllegalArgumentException(
+		for
+			elevationIdx <- elevationIdxOpt
+			_ = if dimCount < 4 then throw new IllegalArgumentException(
 				s"Variable $varName contains an illegal number of dimensions $dimCount (at least 4 are needed for elevations)"
 			)
-			val elevationDim = ds.findDimension(dimensions.elevationDimension)
+			elevVar <- variables.elevationVar
+		do
+			val elevationDim = ds.findDimension(elevVar.dimName)
 			if elevationIdx >= elevationDim.getLength then
 				throw new IndexOutOfBoundsException(s"Too big elevation index $elevationIdx")
-			val elevationDimInd = ncVar.findDimensionIndex(dimensions.getElevationDimension)
+			val elevationDimInd = ncVar.findDimensionIndex(elevVar.dimName)
 			origin(elevationDimInd) = elevationIdx
 			size(elevationDimInd) = 1
-		}
 
 		(ncVar, origin, size)
 	end findVarPrepareSection
@@ -219,14 +210,14 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, elevationIdx)
 
-		val dateDimInd = ncVar.findDimensionIndex(dimensions.getDateDimension)
-		val lonDimInd = ncVar.findDimensionIndex(dimensions.getLonDimension)
-		val latDimInd = ncVar.findDimensionIndex(dimensions.getLatDimension)
+		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar.dimName)
+		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar.dimName)
+		val latDimInd = ncVar.findDimensionIndex(variables.latVar.dimName)
 
 		val sizeDate = ncVar.getDimension(dateDimInd).getLength
 		val sizeLat = ncVar.getDimension(latDimInd).getLength
 
-		val latValues = ds.findVariable(variables.getLatVariable).read()
+		val latValues = ds.findVariable(variables.latVar.name).read()
 		val latSorted: Boolean = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
 
 		origin(dateDimInd) = 0

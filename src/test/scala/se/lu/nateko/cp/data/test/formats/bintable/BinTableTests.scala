@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.test.formats.bintable
 
 import org.scalatest.funsuite.AnyFunSuite
 import se.lu.nateko.cp.data.formats.bintable.*
-import se.lu.nateko.cp.data.formats.netcdf.PlainColumn
 import se.lu.nateko.cp.data.test.TestUtils.*
 
 class BinTableTest extends AnyFunSuite{
@@ -24,9 +23,9 @@ class BinTableTest extends AnyFunSuite{
 
 		val reader = new BinTableReader(file, schema)
 
-		val first = PlainColumn(reader.read(0, 0, n)).flatMap(_.asInt).get.values
-		val second = PlainColumn(reader.read(1, 0, n)).flatMap(_.asDouble).get.values
-		val third = PlainColumn(reader.read(2, 0, n)).flatMap(_.asFloat).get.values
+		val first = BinColumn(reader.read(0, 0, n)).flatMap(_.asInt).get.values
+		val second = BinColumn(reader.read(1, 0, n)).flatMap(_.asDouble).get.values
+		val third = BinColumn(reader.read(2, 0, n)).flatMap(_.asFloat).get.values
 
 		val size = first.zip(second).zip(third).size
 		reader.close()
@@ -51,9 +50,9 @@ class BinTableTest extends AnyFunSuite{
 		val reader = new BinTableReader(file, schema)
 
 		val tbl = for(
-			plain1 <- PlainColumn(reader.read(0));
+			plain1 <- BinColumn(reader.read(0));
 			int1 <- plain1.asInt;
-			plain2 <- PlainColumn(reader.read(1));
+			plain2 <- BinColumn(reader.read(1));
 			int2 <- plain2.asInt
 		) yield{
 			val stringCol = int2.map(reader.getStringForIndex)

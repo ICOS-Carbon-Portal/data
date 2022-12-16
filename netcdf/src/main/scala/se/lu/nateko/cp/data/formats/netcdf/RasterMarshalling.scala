@@ -9,11 +9,9 @@ import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import akka.http.scaladsl.model.*
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.data.formats.netcdf.viewing.Raster
 import spray.json.*
 
 case class RasterMessage(stats: Stats, boundingBox: BoundingBox, array: Array[Array[Double]])
-case class BoundingBox(latMin: Double, latMax: Double, lonMin: Double, lonMax: Double)
 case class Stats(min: Double, max: Double)
 
 object RasterMarshalling {
@@ -28,9 +26,8 @@ object RasterMarshalling {
 	)
 
 	private def getJson(raster: Raster) = {
-		val stats = Stats(raster.getMin, raster.getMax)
-		val box = BoundingBox(raster.getLatMin, raster.getLatMax, raster.getLonMin, raster.getLonMax)
-		val rasterMessage = RasterMessage(stats, box, raster.to2DArray)
+		val stats = Stats(raster.min, raster.max)
+		val rasterMessage = RasterMessage(stats, raster.box, raster.to2DArray)
 
 		HttpResponse(
 			entity = HttpEntity(
@@ -41,8 +38,8 @@ object RasterMarshalling {
 	}
 
 	private def getBinary(raster: Raster): HttpResponse = {
-		val nLon = raster.getSizeLon
-		val nLat = raster.getSizeLat
+		val nLon = raster.sizeLon
+		val nLat = raster.sizeLat
 
 		def makeBuffer(size: Int) =
 			ByteBuffer.allocate(size * 8).order(ByteOrder.BIG_ENDIAN)
@@ -62,12 +59,12 @@ object RasterMarshalling {
 		val headerNums = headerBytes.asDoubleBuffer
 		headerNums.put(nLat.toDouble)
 		headerNums.put(nLon.toDouble)
-		headerNums.put(raster.getMin)
-		headerNums.put(raster.getMax)
-		headerNums.put(raster.getLatMin)
-		headerNums.put(raster.getLatMax)
-		headerNums.put(raster.getLonMin)
-		headerNums.put(raster.getLonMax)
+		headerNums.put(raster.min)
+		headerNums.put(raster.max)
+		headerNums.put(raster.box.latMin)
+		headerNums.put(raster.box.latMax)
+		headerNums.put(raster.box.lonMin)
+		headerNums.put(raster.box.lonMax)
 
 		def rasterAsBinary: Iterator[ByteString] =
 			Iterator.single(ByteString(headerBytes)) ++
