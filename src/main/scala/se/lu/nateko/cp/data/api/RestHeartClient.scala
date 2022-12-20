@@ -1,24 +1,28 @@
 package se.lu.nateko.cp.data.api
 
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-import scala.util.Try
 import akka.Done
 import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
+import se.lu.nateko.cp.data.MongoDbIndex
+import se.lu.nateko.cp.data.RestHeartConfig
+import se.lu.nateko.cp.data.RestheartCollDef
 import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
-import spray.json.*
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import se.lu.nateko.cp.data.MongoDbIndex
 import se.lu.nateko.cp.meta.core.data.StaticCollection
+import spray.json.*
+
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.util.Try
+import se.lu.nateko.cp.meta.core.data.StaticObject
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
@@ -119,23 +123,29 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.map(_ => Done)
 
-	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] = {
+	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] =
 		val item = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"fileName" -> JsString(dobj.fileName),
 			"hash" -> JsString(dobj.hash.base64Url)
 		)
 		patchUserDoc(uid, "dobjDownloads", item, "data object download")
-	}
 
-	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] = {
+	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] =
 		val item = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"title" -> JsString(coll.title),
 			"uri" -> JsString(coll.res.toString)
 		)
 		patchUserDoc(uid, "collDownloads", item, "collection download")
-	}
+
+	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
+		val item = JsObject(
+			"time" -> JsString(java.time.Instant.now().toString),
+			"fileName" -> JsString(doc.fileName),
+			"hash" -> JsString(doc.hash.base64Url)
+		)
+		patchUserDoc(uid, "docDownloads", item, "document download")
 
 	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(implicit envri: Envri): Future[Done] = {
 		val updateItem = JsObject("$push" -> JsObject(arrayProp -> item))

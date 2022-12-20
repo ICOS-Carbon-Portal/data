@@ -226,7 +226,7 @@ class DownloadRouting(
 			post{ downloadLogging }
 		}
 
-	private def docAccessRoute(doc: DocObject, uid: Option[UserId])(using Envri): Route = {
+	private def docAccessRoute(doc: DocObject, uidOpt: Option[UserId])(using Envri): Route = {
 		val file = uploadService.getFile(doc)
 		if (file.exists) respondWithAttachment(doc.fileName){
 			getClientIp{ip =>
@@ -234,9 +234,14 @@ class DownloadRouting(
 					time = Instant.now(),
 					hashId = doc.hash.id,
 					ip = ip,
-					cpUser = uid.map(authRouting.anonymizeCpUser),
+					cpUser = uidOpt.map(authRouting.anonymizeCpUser),
 					doc = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 				)
+				for(uid <- uidOpt){
+					downloadService.restHeart.saveDownload(doc, uid).failed.foreach(
+						log.error(_, s"Failed saving download of document ${doc.accessUrl} to ${uid.email}'s user profile")
+					)
+				}
 				logClient.logDownload(dlInfo)
 				getFromFile(file, getContentType(doc.fileName))
 			}
