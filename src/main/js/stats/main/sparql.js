@@ -41,6 +41,7 @@ export function getContributorNames(contribUris){
 			}
 			optional{?contrib cpmeta:hasName ?orgName}
 			BIND(if(bound(?orgName), ?orgName, CONCAT(?firstName, " ", ?lastName)) AS ?name)
+			filter(bound(?name))
 		}`;
 	return sparqlLabels(query, "contrib", "name");
 }
