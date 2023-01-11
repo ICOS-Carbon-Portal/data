@@ -73,6 +73,7 @@ case class RestHeartConfig(
 	dbNames: Map[Envri, String],
 	activityLogUriBases: Map[Envri, URI],
 	usersCollection: String,
+	userDownloadsLogLength: Int,
 	portalUsage: RestheartCollDef,
 	skipInit: Boolean
 ){
@@ -123,7 +124,7 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
 	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
 	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	given RootJsonFormat[RestHeartConfig] = jsonFormat6(RestHeartConfig.apply)
+	given RootJsonFormat[RestHeartConfig] = jsonFormat7(RestHeartConfig.apply)
 	given RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
