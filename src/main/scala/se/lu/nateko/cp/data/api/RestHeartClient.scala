@@ -23,6 +23,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import se.lu.nateko.cp.meta.core.data.StaticObject
+import scala.concurrent.Await
+import akka.util.Timeout
+import scala.concurrent.duration._
+import spray.json.DefaultJsonProtocol._
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
@@ -123,13 +127,14 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.map(_ => Done)
 
-	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] =
-		val item = JsObject(
+	def getDownloadItem(obj: StaticObject) = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
-			"fileName" -> JsString(dobj.fileName),
-			"hash" -> JsString(dobj.hash.base64Url)
+			"fileName" -> JsString(obj.fileName),
+			"hash" -> JsString(obj.hash.base64Url)
 		)
-		patchUserDoc(uid, "dobjDownloads", item, "data object download")
+
+	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] =
+		patchUserDoc(uid, "dobjDownloads", getDownloadItem(dobj), "data object download")
 
 	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] =
 		val item = JsObject(
@@ -140,15 +145,19 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		patchUserDoc(uid, "collDownloads", item, "collection download")
 
 	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
-		val item = JsObject(
-			"time" -> JsString(java.time.Instant.now().toString),
-			"fileName" -> JsString(doc.fileName),
-			"hash" -> JsString(doc.hash.base64Url)
-		)
-		patchUserDoc(uid, "docDownloads", item, "document download")
+		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
+
+	private def patchRequest(uid: UserId, entity: RequestEntity)(using Envri) = 
+		http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
 
 	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(implicit envri: Envri): Future[Done] = {
-		val updateItem = JsObject("$push" -> JsObject(arrayProp -> item))
+		val MAX_ELEMENTS = 1000
+		val updateItem = JsObject("$push" -> 
+									JsObject("dobjDownloads" -> 
+										JsObject(
+											"$each" -> JsArray(item),
+											"$slice" -> JsNumber(-MAX_ELEMENTS))))
+
 		for(
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
