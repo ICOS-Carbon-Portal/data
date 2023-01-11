@@ -144,13 +144,11 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
 
 	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(using Envri): Future[Done] = {
-		val MAX_ELEMENTS = config.userDownloadsLogLength
-
 		val updateItem = JsObject(
 			"$push" -> JsObject(
 				arrayProp -> JsObject(
 					"$each" -> JsArray(item),
-					"$slice" -> JsNumber(-MAX_ELEMENTS))))
+					"$slice" -> JsNumber(-config.userDownloadsLogLength))))
 		for(
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
