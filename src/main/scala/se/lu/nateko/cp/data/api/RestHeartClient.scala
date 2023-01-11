@@ -1,24 +1,27 @@
 package se.lu.nateko.cp.data.api
 
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-import scala.util.Try
 import akka.Done
 import akka.http.scaladsl.HttpExt
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model.*
 import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.Materializer
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.{RestHeartConfig, RestheartCollDef}
+import se.lu.nateko.cp.data.MongoDbIndex
+import se.lu.nateko.cp.data.RestHeartConfig
+import se.lu.nateko.cp.data.RestheartCollDef
 import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
-import spray.json.*
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import se.lu.nateko.cp.data.MongoDbIndex
 import se.lu.nateko.cp.meta.core.data.StaticCollection
+import se.lu.nateko.cp.meta.core.data.StaticObject
+import spray.json.*
+
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
@@ -119,26 +122,33 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.map(_ => Done)
 
-	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] = {
-		val item = JsObject(
+	private def getDownloadItem(obj: StaticObject) =
+		JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
-			"fileName" -> JsString(dobj.fileName),
-			"hash" -> JsString(dobj.hash.base64Url)
+			"fileName" -> JsString(obj.fileName),
+			"hash" -> JsString(obj.hash.base64Url)
 		)
-		patchUserDoc(uid, "dobjDownloads", item, "data object download")
-	}
 
-	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] = {
+	def saveDownload(dobj: DataObject, uid: UserId)(using Envri): Future[Done] =
+		patchUserDoc(uid, "dobjDownloads", getDownloadItem(dobj), "data object download")
+
+	def saveDownload(coll: StaticCollection, uid: UserId)(using Envri): Future[Done] =
 		val item = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"title" -> JsString(coll.title),
 			"uri" -> JsString(coll.res.toString)
 		)
 		patchUserDoc(uid, "collDownloads", item, "collection download")
-	}
 
-	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(implicit envri: Envri): Future[Done] = {
-		val updateItem = JsObject("$push" -> JsObject(arrayProp -> item))
+	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
+		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
+
+	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(using Envri): Future[Done] = {
+		val updateItem = JsObject(
+			"$push" -> JsObject(
+				arrayProp -> JsObject(
+					"$each" -> JsArray(item),
+					"$slice" -> JsNumber(-config.userDownloadsLogLength))))
 		for(
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
@@ -146,7 +156,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield res
 	}
 
-	private def setupCollection(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = {
+	private def setupCollection(coll: RestheartCollDef)(using Envri): Future[Done] = {
 		for(
 			_ <- ensureCollExists(coll);
 			_ <- defineAggregations(coll);
@@ -154,7 +164,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield res
 	}
 
-	private def setupCollIndices(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = coll.indices.map { idxDefs =>
+	private def setupCollIndices(coll: RestheartCollDef)(using Envri): Future[Done] = coll.indices.map { idxDefs =>
 		val indexUri = {
 			val colUri = collUri(coll.name)
 			colUri.withPath(colUri.path / "_indexes")
