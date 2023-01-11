@@ -127,16 +127,17 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.map(_ => Done)
 
-	def getDownloadItem(obj: StaticObject) = JsObject(
+	private def getDownloadItem(obj: StaticObject) =
+		JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"fileName" -> JsString(obj.fileName),
 			"hash" -> JsString(obj.hash.base64Url)
 		)
 
-	def saveDownload(dobj: DataObject, uid: UserId)(implicit envri: Envri): Future[Done] =
+	def saveDownload(dobj: DataObject, uid: UserId)(using Envri): Future[Done] =
 		patchUserDoc(uid, "dobjDownloads", getDownloadItem(dobj), "data object download")
 
-	def saveDownload(coll: StaticCollection, uid: UserId)(implicit envri: Envri): Future[Done] =
+	def saveDownload(coll: StaticCollection, uid: UserId)(using Envri): Future[Done] =
 		val item = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"title" -> JsString(coll.title),
@@ -147,17 +148,13 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
 		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
 
-	private def patchRequest(uid: UserId, entity: RequestEntity)(using Envri) = 
-		http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
-
-	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(implicit envri: Envri): Future[Done] = {
+	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(using Envri): Future[Done] = {
 		val MAX_ELEMENTS = 1000
-		val updateItem = JsObject("$push" -> 
-									JsObject("dobjDownloads" -> 
-										JsObject(
-											"$each" -> JsArray(item),
-											"$slice" -> JsNumber(-MAX_ELEMENTS))))
-
+		val updateItem = JsObject(
+			"$push" -> JsObject(
+				arrayProp -> JsObject(
+					"$each" -> JsArray(item),
+					"$slice" -> JsNumber(-MAX_ELEMENTS))))
 		for(
 			entity <- Marshal(updateItem).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
@@ -165,7 +162,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield res
 	}
 
-	private def setupCollection(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = {
+	private def setupCollection(coll: RestheartCollDef)(using Envri): Future[Done] = {
 		for(
 			_ <- ensureCollExists(coll);
 			_ <- defineAggregations(coll);
@@ -173,7 +170,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		) yield res
 	}
 
-	private def setupCollIndices(coll: RestheartCollDef)(implicit envri: Envri): Future[Done] = coll.indices.map { idxDefs =>
+	private def setupCollIndices(coll: RestheartCollDef)(using Envri): Future[Done] = coll.indices.map { idxDefs =>
 		val indexUri = {
 			val colUri = collUri(coll.name)
 			colUri.withPath(colUri.path / "_indexes")
