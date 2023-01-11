@@ -17,16 +17,11 @@ import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.DocObject
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.StaticCollection
+import se.lu.nateko.cp.meta.core.data.StaticObject
 import spray.json.*
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import scala.util.Try
-import se.lu.nateko.cp.meta.core.data.StaticObject
-import scala.concurrent.Await
-import akka.util.Timeout
-import scala.concurrent.duration._
-import spray.json.DefaultJsonProtocol._
 
 class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
 
