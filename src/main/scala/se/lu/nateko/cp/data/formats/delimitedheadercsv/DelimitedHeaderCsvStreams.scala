@@ -17,6 +17,8 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 	def isNull(value: String, format: ValueFormat): Boolean = format match {
 		case FloatValue => value == "NaN" || value == "LOD" || value == ""
 		case IsoLikeLocalDateTime => value == "NaN"
+		case Iso8601Date => value == "N/A"
+		case IntValue => value == "N/A"
 		case _ => false
 	}
 
