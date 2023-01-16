@@ -26,7 +26,7 @@ lazy val netcdf = (project in file("netcdf"))
 		name := "data-netcdf",
 		version := "0.3.0",
 		libraryDependencies ++= Seq(
-			//repo.icos-cp.eu acts as proxy to https://artifacts.unidata.ucar.edu
+			//dependency comes from unidata-repo: https://artifacts.unidata.ucar.edu/repository/unidata-all (see project/repositories)
 			"edu.ucar"            % "cdm-core"                            % "5.5.3" excludeAll(
 				ExclusionRule(organization = "com.beust", name = "jcommander"),
 				ExclusionRule(organization = "com.google.protobuf", name = "protobuf-java"),
