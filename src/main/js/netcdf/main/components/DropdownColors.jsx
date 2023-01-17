@@ -66,9 +66,9 @@ const Button = ({dropdownOpen, clickAction, colorMap}) => {
 	const lbl = colorMap
 		? <img src={renderCanvas(120, 15, colorMap)} />
 		: <span>Select option</span>
-
+	const title = colorMap?.name
 	return (
-		<button className={btnCls} type="button" onClick={clickAction}>
+		<button className={btnCls} type="button" onClick={clickAction} title={title}>
 			{lbl} <span className="caret" />
 		</button>
 	);
@@ -78,13 +78,12 @@ const ListItem = ({onClick, colorMap, idx, selectedIdx}) => {
 	const style = selectedIdx === idx
 		? {backgroundColor: 'rgb(200,200,200)'}
 		: {};
-	const child = colorMap
-		? <img src={renderCanvas(120, 15, colorMap)} />
-		: cr.name;
 
 	return (
-		<li className="dropdown-item" style={style}>
-			<a onClick={onClick} style={{cursor:'pointer', display:'inline', verticalAlign:'super'}}>{child}</a>
+		<li className="dropdown-item" style={style} title={colorMap.name}>
+			<a onClick={onClick} style={{cursor:'pointer', display:'inline', verticalAlign:'super'}}>
+				<img src={renderCanvas(120, 15, colorMap)}/>
+			</a>
 		</li>
 	);
 };

@@ -1,6 +1,6 @@
 import { RGBA } from "icos-cp-spatial";
 
-export type RampDomain = Array<-1 | 0 | 1>
+export type RampDomain = Array<-1 | -0.5 | 0 | 0.5 | 1>
 
 export interface ColorRamp{
 	name: string
@@ -9,6 +9,11 @@ export interface ColorRamp{
 }
 
 const colorRampDefs: ColorRamp[] = [
+	{
+		name: 'seismic',
+		domain: [-1, -0.5, 0, 0.5, 1],
+		colors: [[0, 0, 76.5, 255], [0, 0, 255, 255], [255, 255, 255, 255], [255, 0, 0, 255], [128, 0, 0, 255]]
+	},
 	{
 		name: 'blueYellowRed',
 		domain: [-1, 0, 1],

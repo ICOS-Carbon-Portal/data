@@ -9,9 +9,8 @@ import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRaster } from 'icos-cp-backend';
-import Colormap from './models/Colormap';
+import { colorMaps } from './models/Colormap';
 import { RGBA } from 'icos-cp-spatial';
-import { colorRamps } from '../../common/main/models/colorRampDefs';
 
 
 export default function (state = stateProps.defaultState, action: NetCDFPlainAction) {
@@ -244,9 +243,9 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 
 	if ( isDiverging !== isDivergingData(state.raster) ) {
 		const gamma = state.controls.gammas.selected || defaultGammas.selected!
-		const suitableRamps = isDiverging ? colorRamps.filter(cr => cr.domain[0] < 0) : colorRamps.filter(cr => cr.domain[0] >= 0)
-		const colorMaps = new ColormapControl(suitableRamps.map(cr => new Colormap(cr, gamma)), 0)
-		update.controls = state.controls.copyWith({colorMaps})
+		const suitableMaps = colorMaps.filter(cm => cm.isForDivergingData == isDiverging)
+		const cmControl = new ColormapControl(suitableMaps.map(cm => cm.withGamma(gamma)), 0)
+		update.controls = state.controls.copyWith({colorMaps: cmControl})
 	}
 
 	if(minMax.min !== state.minMax?.min || minMax.max !== state.minMax?.max){

@@ -75,7 +75,7 @@ export default class Map extends Component<OurProps, OurState> {
 			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
-			const color = colorMaps.selected ? `color=${colorMaps.selected.ramp.name}` : undefined;
+			const color = colorMaps.selected ? `color=${colorMaps.selected.name}` : undefined;
 
 			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
