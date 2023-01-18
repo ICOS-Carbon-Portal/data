@@ -57,7 +57,7 @@ class CpbFetchRouting(
 		}
 	} ~ // end of the block to be removed
 	pathPrefix("cpb") { extractEnvri{envri ?=>
-		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting)
+		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
 		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
 			userOpt{uidOpt =>
 				ensureReferrerIsOwnApp{originInfo =>
@@ -83,7 +83,7 @@ class CpbFetchRouting(
 					complete(StatusCodes.OK)
 				}
 			} ~
-			complete(StatusCodes.OK)
+			complete(StatusCodes.BadRequest -> s"You are not a ${envri} own Web app")
 		}
 	}}
 

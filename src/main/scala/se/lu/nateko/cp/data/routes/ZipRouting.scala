@@ -68,7 +68,7 @@ class ZipRouting(
 		case Failure(e) => complete(StatusCodes.NotFound -> e)
 
 	val route = pathPrefix("zip") { extractEnvri{envri ?=>
-		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting)
+		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
 
 		get {
 			pathPrefix(Sha256Segment){ hash =>
@@ -91,10 +91,11 @@ class ZipRouting(
 								gracefulUnauth(s"$envri data portal login is required for zip entry downloads")
 							case Some(uid) =>
 									onSuccess(downloadService.licencesToAccept(Seq(hash), Some(uid))){licUris =>
-										if(licUris.isEmpty)
-											fetchEntry(res, filePath)
-										else
-											complete(StatusCodes.BadRequest -> s"Accepting the following licences is required for download: $licUris")
+										if licUris.isEmpty
+										then fetchEntry(res, filePath)
+										else gracefulForbid(
+											"Accepting the following licence(s) is required for download: " + licUris.mkString(", ")
+										)
 									}
 						}
 					}
@@ -112,7 +113,7 @@ class ZipRouting(
 					complete(StatusCodes.OK)
 				}
 			} ~
-			complete(StatusCodes.OK)
+			complete(StatusCodes.BadRequest -> s"You are not a ${envri} own Web app")
 		}
 	}}
 }

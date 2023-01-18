@@ -1,14 +1,14 @@
 package se.lu.nateko.cp.data.routes
 
-import se.lu.nateko.cp.meta.core.data.Envri
-import akka.http.scaladsl.model.headers.Referer
-// import akka.http.scaladsl.model.headers.*
-import akka.http.scaladsl.server.Directive1
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.model.headers.HttpOrigin
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.model.headers.HttpOrigin
+import akka.http.scaladsl.model.headers.Referer
 import akka.http.scaladsl.model.headers.*
+import akka.http.scaladsl.server.Directive1
+import akka.http.scaladsl.server.Directives.*
+import se.lu.nateko.cp.data.AuthConfig
+import se.lu.nateko.cp.meta.core.data.Envri
 
 object RoutingHelper {
 	/**
@@ -21,11 +21,11 @@ object RoutingHelper {
 	  * @param envri
 	  * @return The directive
 	  */
-	def ensureReferrerIsOwnAppDir(authRouting: AuthRouting)(using envri: Envri): Directive1[String] = 
+	def ensureReferrerIsOwnAppDir(authConf: AuthConfig)(using envri: Envri): Directive1[String] =
 		headerValueByType(Referer).tflatMap{
 		case Tuple1(Referer(uri)) =>
 			val hostStr = uri.authority.host.toString
-			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
+			if(authConf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
 				import Uri.Path.{Segment, Slash}
 				val subDomain = hostStr.takeWhile(_ != '.')
 				val originInfo = uri.path match{

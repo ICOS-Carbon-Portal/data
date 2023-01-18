@@ -93,7 +93,6 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			|	<$dobjUri> cpmeta:hasObjectSpec/cpmeta:hasFormat ?format
 			|}""".stripMargin
 
-		println(query)
 		sparql.selectMap(query)(
 			_.get("format").collect{
 				case BoundUri(format) => format
@@ -182,7 +181,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			_.get("lic").collect{ case BoundUri(uri) => uri }
 		)
 	}
-	
+
 	def withEnvriConfig[T](inner: EnvriConfig ?=> Future[T])(using envri: Envri): Future[T] =
 		envriConfs.get(envri).fold(
 			Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))
