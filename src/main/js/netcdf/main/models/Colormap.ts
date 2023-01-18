@@ -71,13 +71,13 @@ function rainbowColorize(normValue: number): RGBA {
 }
 
 function rainbowTurboColorize(normValue: number): RGBA{
-	let rbow = rainbowColorize(normValue)
-	const distFromEnd = Math.min(normValue, 1 - normValue)
-	if (distFromEnd < 0.15) {
-		const factor = 0.25 + 5 * distFromEnd
-		for(let i = 0; i < 3; i++) {
-			rbow[i] = factor * rbow[i]
-		}
+	const v = normValue * 1.4 - 0.2 // 40% stretch
+	if(v >= 0 && v <= 1) return rainbowColorize(v)
+	let rbow = v < 0 ? rainbowColorize(0) : rainbowColorize(1)
+	const distFromEnd = v < 0 ? -v : v - 1
+	const factor = 1 - 4 * distFromEnd
+	for(let i = 0; i < 3; i++) {
+		rbow[i] = factor * rbow[i]
 	}
 	return rbow
 }

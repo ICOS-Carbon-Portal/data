@@ -234,14 +234,14 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 		raster: payload.raster,
 		rasterFetchCount: state.rasterFetchCount + 1,
 		minMax,
-		fullMinMax: selectMinMax([globalMinMax, rasterMinMax]),
+		fullMinMax,
 		controls: state.controls,
 		colorMaker: state.colorMaker
 	}
 
-	const isDiverging = isDivergingData(payload.raster)
+	const isDiverging = isDivergingData(update)
 
-	if ( isDiverging !== isDivergingData(state.raster) ) {
+	if ( isDiverging !== isDivergingData(state) ) {
 		const gamma = state.controls.gammas.selected || defaultGammas.selected!
 		const suitableMaps = colorMaps.filter(cm => cm.isForDivergingData == isDiverging)
 		const cmControl = new ColormapControl(suitableMaps.map(cm => cm.withGamma(gamma)), 0)
@@ -254,7 +254,9 @@ const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
 	return update
 }
 
-function isDivergingData(raster: BinRaster | undefined): boolean | undefined{
+function isDivergingData(state: {raster?: BinRaster, fullMinMax?: MinMax}): boolean | undefined{
+	const {raster, fullMinMax} = state
+	if(fullMinMax !== undefined) return fullMinMax.min < 0 && fullMinMax.max > 0
 	if(raster === undefined) return
 	return raster.stats.min < 0 && raster.stats.max > 0
 }
