@@ -59,6 +59,8 @@ object Main extends App {
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
 
+	val zipRoute = new ZipRouting(downloadService, restHeart, portalLog, authRouting).route
+
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
@@ -92,6 +94,7 @@ object Main extends App {
 		downloadRouting.route ~
 		uploadRoute ~
 		tabularRoute ~
+		zipRoute ~
 		statsRoute.route ~
 		staticRoute ~
 		licenceRoute ~

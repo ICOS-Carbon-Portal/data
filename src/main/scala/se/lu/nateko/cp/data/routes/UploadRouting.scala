@@ -158,7 +158,7 @@ object UploadRouting{
 
 	val requireShaHash: Directive1[Sha256Sum] = path(Sha256Segment.?).flatMap{
 		case Some(hash) => provide(hash)
-		case None => complete(StatusCodes.BadRequest -> s"Expected base64Url- or hex-encoded SHA-256 hash")
+		case None => complete(StatusCodes.BadRequest -> "Expected base64Url- or hex-encoded SHA-256 hash")
 	}
 
 	type EnvriDirective = (Envri ?=> Route) => Route

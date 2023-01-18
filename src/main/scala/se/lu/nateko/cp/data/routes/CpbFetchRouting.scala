@@ -57,10 +57,10 @@ class CpbFetchRouting(
 		}
 	} ~ // end of the block to be removed
 	pathPrefix("cpb") { extractEnvri{envri ?=>
-		val controlOrigins = controlOriginsDir
+		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting)
 		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
 			userOpt{uidOpt =>
-				controlOrigins{originInfo =>
+				ensureReferrerIsOwnApp{originInfo =>
 					fetchCpbRoute(uidOpt, Some(originInfo))
 				} ~
 				uidOpt.fold[Route]{
@@ -74,7 +74,7 @@ class CpbFetchRouting(
 			}
 		} ~
 		options{
-			controlOrigins{_ =>
+			ensureReferrerIsOwnApp{_ =>
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.POST),
 					`Access-Control-Allow-Credentials`(true),
@@ -86,22 +86,6 @@ class CpbFetchRouting(
 			complete(StatusCodes.OK)
 		}
 	}}
-
-	private def controlOriginsDir(using envri: Envri): Directive1[String] = headerValueByType(Referer).tflatMap{
-		case Tuple1(Referer(uri)) =>
-			val hostStr = uri.authority.host.toString
-			if(authRouting.conf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
-				import Uri.Path.{Segment, Slash}
-				val subDomain = hostStr.takeWhile(_ != '.')
-				val originInfo = uri.path match{
-					case Slash(Segment(pathseg, _)) => s"$subDomain/$pathseg"
-					case _ => subDomain
-				}
-				val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
-				respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
-			} else reject
-		case null => reject
-	}
 
 	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(using Envri): Route =
 		entity(as[BinTableRequest]){ tableRequest =>
