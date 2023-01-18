@@ -57,7 +57,7 @@ export default class Colormap{
 	}
 
 	getColormapSelectColorMaker(minPixel: number, maxPixel: number): (value: number) => RGBA{
-		return this.getColorMaker(minPixel, maxPixel, true)
+		return this.withGamma(1).getColorMaker(minPixel, maxPixel, true)
 	}
 }
 
