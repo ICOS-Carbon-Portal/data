@@ -39,7 +39,7 @@ object Main extends App {
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
-	val portalLog = new PortalLogClient(config.restheart, http)
+	val portalLog = new PortalLogClient(config.restheart, http, system.log)
 
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
