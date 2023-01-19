@@ -235,7 +235,6 @@ class DownloadRouting(
 					hashId = doc.hash.id,
 					ip = ip,
 					cpUser = uidOpt.map(authRouting.anonymizeCpUser),
-					doc = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 				)
 				for(uid <- uidOpt){
 					downloadService.restHeart.saveDownload(doc, uid).failed.foreach(
@@ -286,7 +285,6 @@ class DownloadRouting(
 			ip = ip,
 			hashId = dobj.hash.id,
 			cpUser = uid.map(authRouting.anonymizeCpUser),
-			dobj = JsObject.empty, //not used, a temp dummy now, needed for js-deserialization
 			endUser = endUser,
 			distributor = thirdParty
 		)
@@ -300,7 +298,6 @@ class DownloadRouting(
 			ip = ip,
 			hashId = coll.res.getPath.split("/").last,
 			cpUser = uidOpt.map(authRouting.anonymizeCpUser),
-			coll = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 		)
 		logClient.logDownload(dlInfo)
 		for(uid <- uidOpt){

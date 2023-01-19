@@ -7,17 +7,25 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.*
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
+import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
+import akka.util.ByteString
+import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
+import se.lu.nateko.cp.cpauth.core.UserId
+import se.lu.nateko.cp.cpauth.core.ZipExtractionInfo
+import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.utils.akka.gracefulForbid
 import se.lu.nateko.cp.data.utils.akka.gracefulUnauth
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.StaticObject
 
 import java.io.InputStream
+import java.time.Instant
 import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -27,12 +35,6 @@ import scala.util.Try
 
 import DownloadRouting.{getClientIp, respondWithAttachment, getContentType}
 import UploadRouting.Sha256Segment
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import java.time.Instant
-import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
-import se.lu.nateko.cp.data.api.PortalLogClient
-import se.lu.nateko.cp.meta.core.data.Envri
 
 
 class ZipRouting(
@@ -54,15 +56,29 @@ class ZipRouting(
 		Try(zipFile.getInputStream(zipEntry))
 
 
-	def fetchEntry(res: Try[StaticObject], filePath: String)(using Envri) = res match
+	def fetchEntry(res: Try[StaticObject], filePath: String, hashId: String, uid: Option[UserId], localOrigin: Option[String])(using Envri) = res match
 		case Success(dobj) =>
 			extractFile(dobj, filePath) match {
-				case Success(in) => 
+				case Success(in) =>
 					val fileName = filePath.split("/").last
 
-					respondWithAttachment(fileName){
-						complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
-					}
+					getClientIp{ip =>
+							val dlInfo = ZipExtractionInfo(
+								time = Instant.now(),
+								ip = ip,
+								hashId = hashId,
+								zipEntryPath = filePath,
+								cpUser = uid.map(u => authRouting.anonymizeCpUser(u)),
+								localOrigin = localOrigin
+							)
+
+							logClient.logDownload(dlInfo)
+
+							respondWithAttachment(fileName){
+									complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
+							}
+						}
+
 				case Failure(exception) => complete(StatusCodes.BadRequest -> "Empty zip entry")
 			}
 		case Failure(e) => complete(StatusCodes.NotFound -> e)
@@ -84,7 +100,7 @@ class ZipRouting(
 				path("extractFile" / Remaining) { filePath =>
 					onComplete(upload.meta.lookupPackage(hash)) { res =>
 						ensureReferrerIsOwnApp{originInfo =>
-							fetchEntry(res, filePath)
+							fetchEntry(res, filePath, hash.id, None, Some(originInfo))
 						} ~
 						userOpt{
 							case None =>
@@ -92,7 +108,7 @@ class ZipRouting(
 							case Some(uid) =>
 									onSuccess(downloadService.licencesToAccept(Seq(hash), Some(uid))){licUris =>
 										if licUris.isEmpty
-										then fetchEntry(res, filePath)
+										then fetchEntry(res, filePath, hash.id, Some(uid), None)
 										else gracefulForbid(
 											"Accepting the following licence(s) is required for download: " + licUris.mkString(", ")
 										)
