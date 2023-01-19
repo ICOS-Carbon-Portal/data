@@ -269,6 +269,7 @@ class DownloadRouting(
 			uploadService.meta.lookupPackage(hash).transformWith{
 				case Success(dobj: DataObject) =>
 					logPublicDownloadInfo(dobj, ip, None, Some(thirdParty), endUser)
+					done
 				case Failure(err) =>
 					log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 					done
@@ -279,7 +280,7 @@ class DownloadRouting(
 
 	private def logPublicDownloadInfo(
 		dobj: DataObject, ip: String, uid: Option[UserId], thirdParty: Option[String] = None, endUser: Option[String] = None
-	)(using Envri): Future[Done] = {
+	)(using Envri): Unit =
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
 			ip = ip,
@@ -290,7 +291,7 @@ class DownloadRouting(
 		)
 
 		logClient.logDownload(dlInfo)
-	}
+
 
 	private def logCollDownload(coll: StaticCollection)(using Envri): ExtraBatchLog = (ip, uidOpt) => {
 		val dlInfo = CollectionDownloadInfo(
