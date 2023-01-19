@@ -56,32 +56,30 @@ class ZipRouting(
 		Try(zipFile.getInputStream(zipEntry))
 
 
-	def fetchEntry(res: Try[StaticObject], filePath: String, hashId: String, uid: Option[UserId], localOrigin: Option[String])(using Envri) = res match
-		case Success(dobj) =>
-			extractFile(dobj, filePath) match {
-				case Success(in) =>
-					val fileName = filePath.split("/").last
+	def fetchEntry(dobj: StaticObject, filePath: String, hashId: String, uid: Option[UserId], localOrigin: Option[String])(using Envri) =
+		extractFile(dobj, filePath) match
+			case Success(in) =>
+				val fileName = filePath.split("/").last
 
-					getClientIp{ip =>
-							val dlInfo = ZipExtractionInfo(
-								time = Instant.now(),
-								ip = ip,
-								hashId = hashId,
-								zipEntryPath = filePath,
-								cpUser = uid.map(u => authRouting.anonymizeCpUser(u)),
-								localOrigin = localOrigin
-							)
+				getClientIp{ip =>
+					val dlInfo = ZipExtractionInfo(
+						time = Instant.now(),
+						ip = ip,
+						hashId = hashId,
+						zipEntryPath = filePath,
+						cpUser = uid.map(u => authRouting.anonymizeCpUser(u)),
+						localOrigin = localOrigin
+					)
 
-							logClient.logDownload(dlInfo)
+					logClient.logDownload(dlInfo)
 
-							respondWithAttachment(fileName){
-									complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
-							}
-						}
+					respondWithAttachment(fileName){
+							complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
+					}
+				}
 
-				case Failure(exception) => complete(StatusCodes.BadRequest -> "Empty zip entry")
-			}
-		case Failure(e) => complete(StatusCodes.NotFound -> e)
+			case Failure(exception) => complete(StatusCodes.BadRequest -> "Empty zip entry")
+
 
 	val route = pathPrefix("zip") { extractEnvri{envri ?=>
 		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
@@ -98,22 +96,25 @@ class ZipRouting(
 					}
 				} ~
 				path("extractFile" / Remaining) { filePath =>
-					onComplete(upload.meta.lookupPackage(hash)) { res =>
-						ensureReferrerIsOwnApp{originInfo =>
-							fetchEntry(res, filePath, hash.id, None, Some(originInfo))
-						} ~
-						userOpt{
-							case None =>
-								gracefulUnauth(s"$envri data portal login is required for zip entry downloads")
-							case Some(uid) =>
-									onSuccess(downloadService.licencesToAccept(Seq(hash), Some(uid))){licUris =>
-										if licUris.isEmpty
-										then fetchEntry(res, filePath, hash.id, Some(uid), None)
-										else gracefulForbid(
-											"Accepting the following licence(s) is required for download: " + licUris.mkString(", ")
-										)
-									}
-						}
+					onComplete(upload.meta.lookupPackage(hash)) {
+						case Failure(e) => complete(StatusCodes.NotFound -> e)
+						case Success(dobj) =>
+							userOpt{uidOpt =>
+								ensureReferrerIsOwnApp{originInfo =>
+									fetchEntry(dobj, filePath, hash.id, uidOpt, Some(originInfo))
+								} ~
+								onSuccess(downloadService.licencesToAccept(Seq(hash), uidOpt)){licUris =>
+									if licUris.isEmpty then
+										fetchEntry(dobj, filePath, hash.id, uidOpt, None)
+
+									else if uidOpt.isEmpty then
+										gracefulUnauth(s"$envri data portal login is required for zip entry downloads")
+
+									else gracefulForbid(
+										"Accepting the following licence(s) is required for download: " + licUris.mkString(", ")
+									)
+								}
+							}
 					}
 				}
 			} ~
