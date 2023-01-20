@@ -23,8 +23,12 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.StaticObject
+import spray.json.JsNumber
+import spray.json.JsObject
+import spray.json.JsString
 
 import java.io.InputStream
+import java.net.URLDecoder
 import java.time.Instant
 import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
@@ -51,7 +55,8 @@ class ZipRouting(
 
 	def extractFile(dobj: StaticObject, filePath: String): Try[InputStream] =
 		val zipFile = ZipFile(upload.getFile(dobj).toPath.toString)
-		val zipEntry = zipFile.getEntry(filePath)
+		val decodedPath = URLDecoder.decode(filePath, "UTF-8")
+		val zipEntry = zipFile.getEntry(decodedPath)
 
 		Try(zipFile.getInputStream(zipEntry))
 
@@ -74,11 +79,11 @@ class ZipRouting(
 					logClient.logDownload(dlInfo)
 
 					respondWithAttachment(fileName){
-							complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
+						complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))
 					}
 				}
 
-			case Failure(exception) => complete(StatusCodes.BadRequest -> "Empty zip entry")
+			case Failure(exception) => complete(StatusCodes.BadRequest -> "Unknown zip entry")
 
 
 	val route = pathPrefix("zip") { extractEnvri{envri ?=>
@@ -92,7 +97,9 @@ class ZipRouting(
 						Future.fromTry(zip.listEntries(file))
 					}
 					onSuccess(entriesFut){entries =>
-						complete(entries.map(_.getName).mkString("\n"))
+						complete(entries.map(e => JsObject("name" -> JsString(e.getName.split("/").last),
+														   "path" -> JsString(e.getName),
+														   "size" -> JsNumber(e.getSize))).mkString("\n"))
 					}
 				} ~
 				path("extractFile" / Remaining) { filePath =>
@@ -116,7 +123,8 @@ class ZipRouting(
 								}
 							}
 					}
-				}
+				} ~
+				complete(StatusCodes.NotFound)
 			} ~
 			complete(StatusCodes.BadRequest -> "Expected base64Url- or hex-encoded SHA-256 hash")
 		} ~
