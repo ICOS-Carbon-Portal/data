@@ -104,7 +104,7 @@ class ZipRouting(
 								entries.map(e =>
 									JsObject(
 										"name" -> JsString(e.getName.split("/").last),
-										"path" -> JsString("/zip/extractFile/" + e.getName),
+										"path" -> JsString(s"/zip/${hash.base64Url}/extractFile/" + e.getName),
 										"size" -> JsNumber(e.getSize)
 									)
 								)*
