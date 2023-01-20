@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.routes
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpMethods
@@ -23,6 +24,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.StaticObject
+import spray.json.JsArray
 import spray.json.JsNumber
 import spray.json.JsObject
 import spray.json.JsString
@@ -83,7 +85,7 @@ class ZipRouting(
 					}
 				}
 
-			case Failure(exception) => complete(StatusCodes.BadRequest -> "Unknown zip entry")
+			case Failure(exception) => complete(StatusCodes.NotFound -> "Unknown zip entry")
 
 
 	val route = pathPrefix("zip") { extractEnvri{envri ?=>
@@ -97,9 +99,17 @@ class ZipRouting(
 						Future.fromTry(zip.listEntries(file))
 					}
 					onSuccess(entriesFut){entries =>
-						complete(entries.map(e => JsObject("name" -> JsString(e.getName.split("/").last),
-														   "path" -> JsString(e.getName),
-														   "size" -> JsNumber(e.getSize))).mkString("\n"))
+						complete(
+							JsArray(
+								entries.map(e =>
+									JsObject(
+										"name" -> JsString(e.getName.split("/").last),
+										"path" -> JsString("/zip/extractFile/" + e.getName),
+										"size" -> JsNumber(e.getSize)
+									)
+								)*
+							)
+						)
 					}
 				} ~
 				path("extractFile" / Remaining) { filePath =>
@@ -124,7 +134,7 @@ class ZipRouting(
 							}
 					}
 				} ~
-				complete(StatusCodes.NotFound)
+				complete(StatusCodes.NotFound -> "Only 'listContents' and 'extractFile' services are available for zipped objects")
 			} ~
 			complete(StatusCodes.BadRequest -> "Expected base64Url- or hex-encoded SHA-256 hash")
 		} ~
