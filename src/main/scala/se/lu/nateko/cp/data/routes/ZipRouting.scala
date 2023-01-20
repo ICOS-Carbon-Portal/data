@@ -55,16 +55,16 @@ class ZipRouting(
 
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
-	def extractFile(dobj: StaticObject, filePath: String): Try[InputStream] =
+	def extractFile(dobj: StaticObject, decodedPath: String): Try[InputStream] =
 		val zipFile = ZipFile(upload.getFile(dobj).toPath.toString)
-		val decodedPath = URLDecoder.decode(filePath, "UTF-8")
 		val zipEntry = zipFile.getEntry(decodedPath)
 
 		Try(zipFile.getInputStream(zipEntry))
 
 
 	def fetchEntry(dobj: StaticObject, filePath: String, hashId: String, uid: Option[UserId], localOrigin: Option[String])(using Envri) =
-		extractFile(dobj, filePath) match
+		val decodedPath = URLDecoder.decode(filePath, "UTF-8")
+		extractFile(dobj, decodedPath) match
 			case Success(in) =>
 				val fileName = filePath.split("/").last
 
@@ -73,8 +73,8 @@ class ZipRouting(
 						time = Instant.now(),
 						ip = ip,
 						hashId = hashId,
-						zipEntryPath = filePath,
-						cpUser = uid.map(u => authRouting.anonymizeCpUser(u)),
+						zipEntryPath = decodedPath,
+						cpUser = uid.map(authRouting.anonymizeCpUser),
 						localOrigin = localOrigin
 					)
 
