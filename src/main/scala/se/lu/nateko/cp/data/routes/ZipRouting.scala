@@ -99,17 +99,19 @@ class ZipRouting(
 						Future.fromTry(zip.listEntries(file))
 					}
 					onSuccess(entriesFut){entries =>
-						complete(
-							JsArray(
-								entries.map(e =>
-									JsObject(
-										"name" -> JsString(e.getName.split("/").last),
-										"path" -> JsString(s"/zip/${hash.base64Url}/extractFile/" + e.getName),
-										"size" -> JsNumber(e.getSize)
-									)
-								)*
+						respondWithHeader(`Access-Control-Allow-Origin`.`*`){
+							complete(
+								JsArray(
+									entries.map(e =>
+										JsObject(
+											"name" -> JsString(e.getName),
+											"path" -> JsString(s"/zip/${hash.base64Url}/extractFile/" + e.getName),
+											"size" -> JsNumber(e.getSize)
+										)
+									)*
+								)
 							)
-						)
+						}
 					}
 				} ~
 				path("extractFile" / Remaining) { filePath =>
