@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpMethods
@@ -28,10 +27,13 @@ import spray.json.JsArray
 import spray.json.JsNumber
 import spray.json.JsObject
 import spray.json.JsString
+import spray.json.JsValue
+import spray.json.JsonWriter
 
 import java.io.InputStream
 import java.net.URLDecoder
 import java.time.Instant
+import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -48,7 +50,7 @@ class ZipRouting(
 	restHeart: RestHeartClient,
 	logClient: PortalLogClient,
 	authRouting: AuthRouting
-)(using EnvriConfigs, ExecutionContext) {
+)(using EnvriConfigs, ExecutionContext) extends SprayRouting:
 
 	import authRouting.userOpt
 	import downloadService.upload
@@ -92,7 +94,7 @@ class ZipRouting(
 		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
 
 		get {
-			pathPrefix(Sha256Segment){ hash =>
+			pathPrefix(Sha256Segment){ implicit hash =>
 				path("listContents"){
 					val entriesFut = upload.meta.lookupObjFormat(hash).flatMap{ formatUri =>
 						val file = upload.getFile(Some(formatUri), hash)
@@ -100,17 +102,8 @@ class ZipRouting(
 					}
 					onSuccess(entriesFut){entries =>
 						respondWithHeader(`Access-Control-Allow-Origin`.`*`){
-							complete(
-								JsArray(
-									entries.map(e =>
-										JsObject(
-											"name" -> JsString(e.getName),
-											"path" -> JsString(s"/zip/${hash.base64Url}/extractFile/" + e.getName),
-											"size" -> JsNumber(e.getSize)
-										)
-									)*
-								)
-							)
+							import ZipRouting.zipEntryWriter
+							complete(entries)
 						}
 					}
 				} ~
@@ -153,4 +146,12 @@ class ZipRouting(
 			complete(StatusCodes.BadRequest -> s"You are not a ${envri} own Web app")
 		}
 	}}
-}
+end ZipRouting
+
+object ZipRouting:
+	given zipEntryWriter(using hash: Sha256Sum): JsonWriter[ZipEntry] with
+		def write(ze: ZipEntry): JsValue = JsObject(
+			"name" -> JsString(ze.getName),
+			"path" -> JsString(s"/zip/${hash.base64Url}/extractFile/" + ze.getName),
+			"size" -> JsNumber(ze.getSize)
+		)
