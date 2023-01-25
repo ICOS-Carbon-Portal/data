@@ -110,7 +110,7 @@ class ZipRouting(
 				path("extractFile" / Remaining) { filePath =>
 					onComplete(upload.meta.lookupPackage(hash)) {
 						case Failure(e) => complete(StatusCodes.NotFound -> e)
-						case Success(dobj) =>
+						case Success(dobj) => downloadService.inaccessibilityReason(dobj).fold{
 							userOpt{uidOpt =>
 								ensureReferrerIsOwnApp{originInfo =>
 									fetchEntry(dobj, filePath, hash.id, uidOpt, Some(originInfo))
@@ -127,6 +127,9 @@ class ZipRouting(
 									)
 								}
 							}
+						}{
+							problem => complete(StatusCodes.NotFound -> problem)
+						}
 					}
 				} ~
 				complete(StatusCodes.NotFound -> "Only 'listContents' and 'extractFile' services are available for zipped objects")
