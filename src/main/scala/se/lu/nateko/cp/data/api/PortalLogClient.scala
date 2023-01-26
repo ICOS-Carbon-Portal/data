@@ -16,22 +16,24 @@ import se.lu.nateko.cp.data.RestHeartConfig
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
+import akka.event.LoggingAdapter
+import scala.concurrent.duration.DurationInt
 
-class PortalLogClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer){
+class PortalLogClient(val config: RestHeartConfig, http: HttpExt, log: LoggingAdapter)(implicit m: Materializer){
 
 	import http.system.dispatcher
 
-	def logDownload(dlInfo: DownloadEventInfo)(implicit envri: Envri): Future[Done] = {
+	def logDownload(dlInfo: DownloadEventInfo)(using Envri): Unit = {
 		val logUri = Uri(config.downloadLogUri.toASCIIString)
 		val descr = dlInfo.getClass.getName
 		for(
 			entity <- Marshal(dlInfo).to[RequestEntity];
-			r <- http.singleRequest(HttpRequest(uri = logUri, method = HttpMethods.POST, entity = entity))
-		) yield {
-			r.discardEntityBytes()
-			if(r.status == StatusCodes.OK) done
-			else Future.failed(new Exception(s"Failed logging $descr download from ip ${dlInfo.ip} to the portal log at $logUri: ${r.status}"))
-		}
-	}.flatten
+			r <- http.singleRequest(HttpRequest(uri = logUri, method = HttpMethods.POST, entity = entity));
+			respStrict <- r.entity.toStrict(2.seconds)
+		) yield
+			if(r.status != StatusCodes.OK)
+				val respText = respStrict.data.utf8String
+				log.warning(s"Failed logging $descr download from ip ${dlInfo.ip} to the portal log at $logUri: ${r.status},\n$respText")
+	}
 
 }

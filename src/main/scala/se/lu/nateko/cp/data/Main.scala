@@ -39,7 +39,7 @@ object Main extends App {
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
 	val restHeart = new RestHeartClient(config.restheart, http)
-	val portalLog = new PortalLogClient(config.restheart, http)
+	val portalLog = new PortalLogClient(config.restheart, http, system.log)
 
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
@@ -58,6 +58,8 @@ object Main extends App {
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
 	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
+
+	val zipRoute = new ZipRouting(downloadService, restHeart, portalLog, authRouting).route
 
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 
@@ -92,6 +94,7 @@ object Main extends App {
 		downloadRouting.route ~
 		uploadRoute ~
 		tabularRoute ~
+		zipRoute ~
 		statsRoute.route ~
 		staticRoute ~
 		licenceRoute ~

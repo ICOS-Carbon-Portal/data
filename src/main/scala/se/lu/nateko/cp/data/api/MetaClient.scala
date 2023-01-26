@@ -86,6 +86,20 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 		}
 	}
 
+	def lookupObjFormat(dobj: Sha256Sum)(using Envri): Future[URI] = withEnvriConfig{
+		val dobjUri = staticObjLandingPage(dobj)
+		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+			|select * where{
+			|	<$dobjUri> cpmeta:hasObjectSpec/cpmeta:hasFormat ?format
+			|}""".stripMargin
+
+		sparql.selectMap(query)(
+			_.get("format").collect{
+				case BoundUri(format) => format
+			}
+		).map(_.headOption.getOrElse(throw new MetadataObjectNotFound(dobj)))
+	}
+
 	def userIsAllowedUpload(obj: StaticObject, user: UserId)(using Envri): Future[Unit] = {
 		val submitter = obj.submission.submitter
 		val submitterUri = submitter.self.uri.toString
@@ -155,21 +169,23 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 		)
 	}
 
-	def listLicences(objHashes: Seq[Sha256Sum])(using envri: Envri): Future[Seq[URI]] = envriConfs.get(envri)
-		.fold(Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))){conf =>
-			given EnvriConfig = conf
-
-			val query = s"""select distinct ?lic where{
+	def listLicences(objHashes: Seq[Sha256Sum])(using Envri): Future[Seq[URI]] = withEnvriConfig{
+		val query = s"""select distinct ?lic where{
 			|	values ?dobj {
 			|		${objHashes.map(CpMetaVocab.getDataObject).mkString("<", ">\n\t\t<", ">")}
 			|	}
 			|	?dobj <http://purl.org/dc/terms/license> ?lic
 			|}""".stripMargin
 
-			sparql.selectMap(query)(
-				_.get("lic").collect{ case BoundUri(uri) => uri }
-			)
-		}
+		sparql.selectMap(query)(
+			_.get("lic").collect{ case BoundUri(uri) => uri }
+		)
+	}
+
+	def withEnvriConfig[T](inner: EnvriConfig ?=> Future[T])(using envri: Envri): Future[T] =
+		envriConfs.get(envri).fold(
+			Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))
+		)(envriConf => inner(using envriConf))
 
 	private def extractIfSuccess[T](extractor: ResponseEntity => Future[T]) = extractResult(extractor)(PartialFunction.empty)
 

@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives.*
@@ -22,7 +21,9 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
-class EtcUploadRouting(auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService)(using mat: Materializer){
+class EtcUploadRouting(
+	auth: AuthRouting, config: EtcFacadeConfig, upload: UploadService
+)(using mat: Materializer) extends SprayRouting{
 	import EtcUploadRouting._
 	import mat.executionContext
 

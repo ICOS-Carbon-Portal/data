@@ -235,7 +235,6 @@ class DownloadRouting(
 					hashId = doc.hash.id,
 					ip = ip,
 					cpUser = uidOpt.map(authRouting.anonymizeCpUser),
-					doc = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 				)
 				for(uid <- uidOpt){
 					downloadService.restHeart.saveDownload(doc, uid).failed.foreach(
@@ -270,6 +269,7 @@ class DownloadRouting(
 			uploadService.meta.lookupPackage(hash).transformWith{
 				case Success(dobj: DataObject) =>
 					logPublicDownloadInfo(dobj, ip, None, Some(thirdParty), endUser)
+					done
 				case Failure(err) =>
 					log.error(err, s"Failed looking up ${hash} on the meta service while logging external downloads")
 					done
@@ -280,19 +280,18 @@ class DownloadRouting(
 
 	private def logPublicDownloadInfo(
 		dobj: DataObject, ip: String, uid: Option[UserId], thirdParty: Option[String] = None, endUser: Option[String] = None
-	)(using Envri): Future[Done] = {
+	)(using Envri): Unit =
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
 			ip = ip,
 			hashId = dobj.hash.id,
 			cpUser = uid.map(authRouting.anonymizeCpUser),
-			dobj = JsObject.empty, //not used, a temp dummy now, needed for js-deserialization
 			endUser = endUser,
 			distributor = thirdParty
 		)
 
 		logClient.logDownload(dlInfo)
-	}
+
 
 	private def logCollDownload(coll: StaticCollection)(using Envri): ExtraBatchLog = (ip, uidOpt) => {
 		val dlInfo = CollectionDownloadInfo(
@@ -300,7 +299,6 @@ class DownloadRouting(
 			ip = ip,
 			hashId = coll.res.getPath.split("/").last,
 			cpUser = uidOpt.map(authRouting.anonymizeCpUser),
-			coll = JsObject.empty //not used, a temp dummy now, needed for js-deserialization
 		)
 		logClient.logDownload(dlInfo)
 		for(uid <- uidOpt){

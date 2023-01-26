@@ -28,7 +28,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-object StatsRouting {
+object StatsRouting:
 	import DefaultJsonProtocol._
 
 	case class StatsQueryParams(
@@ -91,10 +91,12 @@ object StatsRouting {
 
 	def parsePointPosition(jsonStr: String): Option[PointPosition] =
 		Try{jsonStr.parseJson.convertTo[PointPosition]}.toOption
-}
 
-class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
-	import StatsRouting._
+end StatsRouting
+
+
+class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends SprayRouting:
+	import StatsRouting.*
 
 	given envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
 	val extractEnvri = UploadRouting.extractEnvriDirective
@@ -108,7 +110,7 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 			}
 		} ~
 		get{
-			import DefaultJsonProtocol._
+			import DefaultJsonProtocol.*
 			parameters(
 				"page".as[Int].?,
 				"pagesize".as[Int].?,
@@ -140,9 +142,6 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 			case _ => pass
 		}
 	}.or(pass)
-
-	given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = DefaultJsonProtocol.immIndexedSeqFormat
-	given [T: RootJsonWriter]: ToEntityMarshaller[T] = SprayJsonSupport.sprayJsonMarshaller
 
 	val route: Route = pathPrefix("stats" / "api") { extractEnvri{
 		((get | post) & setOriginHeader){
@@ -210,4 +209,4 @@ class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) {
 			}
 		}
 	}}
-}
+end StatsRouting

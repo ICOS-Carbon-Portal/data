@@ -1,6 +1,5 @@
 package se.lu.nateko.cp.data.routes
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.ToResponseMarshaller
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
@@ -9,15 +8,10 @@ import se.lu.nateko.cp.data.formats.netcdf.Raster
 import se.lu.nateko.cp.data.formats.netcdf.RasterMarshalling
 import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import spray.json.DefaultJsonProtocol
-import spray.json.JsonFormat
-import spray.json.JsonWriter
-import spray.json.RootJsonFormat
 
 import scala.concurrent.Future
 
-object NetcdfRoute extends DefaultJsonProtocol {
-	private given [T: JsonFormat]: RootJsonFormat[IndexedSeq[T]] = immIndexedSeqFormat
+object NetcdfRoute extends SprayRouting:
 	private given ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
 	def apply(factory: ViewServiceFactory): Route = {
@@ -102,4 +96,4 @@ object NetcdfRoute extends DefaultJsonProtocol {
 		}
 
 	}
-}
+end NetcdfRoute
