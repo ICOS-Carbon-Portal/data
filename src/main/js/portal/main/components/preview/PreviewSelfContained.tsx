@@ -47,6 +47,7 @@ function getHeight(previewType?: PreviewType): number {
 	switch(previewType){
 		case config.NETCDF: return window.innerHeight - 100;
 		case config.MAPGRAPH: return 1100;
+		case config.PHENOCAM: return 1100;
 		default: return 600;
 	}
 };

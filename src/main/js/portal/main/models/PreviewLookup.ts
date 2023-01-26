@@ -14,7 +14,7 @@ interface TimeSeriesPreviewInfo extends PreviewTypeInfo{
 }
 
 interface OtherPreviewInfo extends PreviewTypeInfo{
-	type: "NETCDF" | "MAPGRAPH"
+	type: "NETCDF" | "MAPGRAPH" | "PHENOCAM"
 }
 
 type Table = Record<string,PreviewInfo | undefined>
@@ -76,6 +76,8 @@ const getTable = (specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 		if (typeof spec === 'string' && typeof format === 'string') {
 			if (format === config.netCdfFormat)
 				table[spec] = { type: "NETCDF" };
+			else if(format === config.imageMultiZipFormat)
+				table[spec] = { type: "PHENOCAM"};
 			else if (
 				config.mapGraph.formats.includes(format) &&
 				specsWithLat.has(spec) && specsWithLon.has(spec)

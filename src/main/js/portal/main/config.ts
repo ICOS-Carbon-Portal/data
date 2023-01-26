@@ -1,11 +1,11 @@
-import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH} from '../../common/main/config';
+import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH, PHENOCAM} from '../../common/main/config';
 import {UrlStr} from "./backend/declarations";
 import {BaseMapId, BaseMapFilter, cirlcePointStyle, supportedSRIDsFriendlyNames, SupportedSRIDs} from 'icos-cp-ol';
 import {IndexedDBProps} from "./backend/IndexedDB";
 import Style from "ol/style/Style";
 
 export type Envri = typeof ICOS | typeof SITES;
-export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES
+export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES | typeof PHENOCAM
 
 type EnvriUrl = { [E in Envri]: UrlStr }
 type EnvriUrls = { [E in Envri]: UrlStr[] }
@@ -108,6 +108,7 @@ export default {
 	olMapSettings,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
+	imageMultiZipFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/multiImageZip',
 	mapGraph: {
 		latValueType: 'http://meta.icos-cp.eu/resources/cpmeta/latitude',
 		lonValueType: 'http://meta.icos-cp.eu/resources/cpmeta/longitude',
@@ -119,7 +120,8 @@ export default {
 	iFrameBaseUrl: {
 		TIMESERIES: '/dygraph-light/',
 		NETCDF: '/netcdf/',
-		MAPGRAPH: '/map-graph/'
+		MAPGRAPH: '/map-graph/',
+		PHENOCAM: '/imagezipview/'
 	},
 	restheartDbUrl: commonConfig.restheartDbUrl,
 	stepsize: 20,
@@ -307,6 +309,10 @@ export const iframeEmbedSize = {
 		height:"760"
 	},
 	MAPGRAPH: {
+		width: "1280",
+		height:"1280"
+	},
+	PHENOCAM: {
 		width: "1280",
 		height:"1280"
 	}
