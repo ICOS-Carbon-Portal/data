@@ -26,7 +26,10 @@ class StaticRouting()(using envriConfigs: EnvriConfigs) {
 	private val NetCdfProj = "netcdf"
 	private val MapGraphProj = "map-graph"
 
-	val projects = Set(NetCdfProj, "portal", "dygraph-light", "stats", "etcfacade", MapGraphProj, "dashboard", "lastDownloads")
+	val projects = Set(
+		NetCdfProj, "portal", "dygraph-light", "stats", "etcfacade", MapGraphProj,
+		"dashboard", "lastDownloads", "imagezipview"
+	)
 	private val jsAppFolder = "frontendapps"
 
 	private[this] val standardPageFactory: PageFactory = {
