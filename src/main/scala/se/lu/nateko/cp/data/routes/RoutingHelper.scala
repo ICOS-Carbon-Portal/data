@@ -9,8 +9,19 @@ import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.*
 import se.lu.nateko.cp.data.AuthConfig
 import se.lu.nateko.cp.meta.core.data.Envri
+import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 
 object RoutingHelper {
+
+	def respondWithAllowOriginHeader(hostStr: String, uri: Uri) =
+		import Uri.Path.{Segment, Slash}
+			val subDomain = hostStr.takeWhile(_ != '.')
+			val originInfo = uri.path match{
+				case Slash(Segment(pathseg, _)) => s"$subDomain/$pathseg"
+				case _ => subDomain
+			}
+			val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
+			respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
 	/**
 	  * Produces a directive that will controll HTTP header Referrer to claim that the request comes from an
 	  * "authorized" own (i.e. hosted on ENVRI's own domains) web app. Can be used to offer functionality that
@@ -26,16 +37,23 @@ object RoutingHelper {
 		case Tuple1(Referer(uri)) =>
 			val hostStr = uri.authority.host.toString
 			if(authConf.pub.get(envri).map(_.authCookieDomain).contains(hostStr.dropWhile(_ != '.'))){
-				import Uri.Path.{Segment, Slash}
-				val subDomain = hostStr.takeWhile(_ != '.')
-				val originInfo = uri.path match{
-					case Slash(Segment(pathseg, _)) => s"$subDomain/$pathseg"
-					case _ => subDomain
-				}
-				val origin = HttpOrigin(uri.scheme, Host(uri.authority.host, uri.authority.port))
-				respondWithHeader(`Access-Control-Allow-Origin`(origin)).tflatMap(_ => provide(originInfo))
+				respondWithAllowOriginHeader(hostStr, uri)
 			} else reject
 		case null =>
 			reject
 	}
+
+	def ensureReferrerIsDataHost(authConf: AuthConfig)(using envri: Envri, envriConfs: EnvriConfigs): Directive1[String] =
+		headerValueByType(Referer).tflatMap{
+			case Tuple1(Referer(uri)) =>
+				val hostStr = uri.authority.host.toString
+				val envriConf = envriConfs.get(envri).get
+
+				if(hostStr == envriConf.dataHost){
+					respondWithAllowOriginHeader(hostStr, uri)
+	
+			} else reject
+			case null =>
+				reject
+		}
 }

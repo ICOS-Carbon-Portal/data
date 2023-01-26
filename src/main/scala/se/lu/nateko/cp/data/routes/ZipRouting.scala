@@ -91,7 +91,7 @@ class ZipRouting(
 
 
 	val route = pathPrefix("zip") { extractEnvri{envri ?=>
-		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
+		val ensureReferrerIsDataHost = RoutingHelper.ensureReferrerIsDataHost(authRouting.conf)
 
 		get {
 			pathPrefix(Sha256Segment){ implicit hash =>
@@ -112,7 +112,7 @@ class ZipRouting(
 						case Failure(e) => complete(StatusCodes.NotFound -> e)
 						case Success(dobj) => downloadService.inaccessibilityReason(dobj).fold{
 							userOpt{uidOpt =>
-								ensureReferrerIsOwnApp{originInfo =>
+								ensureReferrerIsDataHost{originInfo =>
 									fetchEntry(dobj, filePath, hash.id, uidOpt, Some(originInfo))
 								} ~
 								onSuccess(downloadService.licencesToAccept(Seq(hash), uidOpt)){licUris =>
@@ -137,7 +137,7 @@ class ZipRouting(
 			complete(StatusCodes.BadRequest -> "Expected base64Url- or hex-encoded SHA-256 hash")
 		} ~
 		options{
-			ensureReferrerIsOwnApp{_ =>
+			ensureReferrerIsDataHost{_ =>
 				respondWithHeaders(
 					`Access-Control-Allow-Methods`(HttpMethods.GET),
 					`Access-Control-Allow-Credentials`(true),
