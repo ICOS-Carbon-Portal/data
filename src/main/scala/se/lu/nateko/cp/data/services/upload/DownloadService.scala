@@ -18,6 +18,8 @@ import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.SitesMetaVocab
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
+import se.lu.nateko.cp.data.utils.io.hostL2
+import se.lu.nateko.cp.data.utils.io.takeL2Domain
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
@@ -175,7 +177,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 					Some(s"Data object is not distributed by the Data Portal due to $envri policies")
 
 				case Some(url) =>
-					if(url.getHost != envriConf.dataHost)
+					if(url.hostL2 != takeL2Domain(envriConf.dataHost))
 						Some("Data object is distributed by third parties")
 
 					else if(!upload.getFile(obj).exists)

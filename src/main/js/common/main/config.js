@@ -4,6 +4,7 @@ export const SITES = "SITES";
 export const TIMESERIES = "TIMESERIES";
 export const NETCDF = "NETCDF";
 export const MAPGRAPH = "MAPGRAPH";
+export const PHENOCAM = "PHENOCAM";
 
 const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? SITES : ICOS;
 const metaBaseUri = `https://${window.envriConfig.metaHost}`;
@@ -25,6 +26,7 @@ export default {
 	previewTypes: {
 		TIMESERIES,
 		NETCDF,
-		MAPGRAPH
+		MAPGRAPH,
+		PHENOCAM
 	}
 };

@@ -1,6 +1,6 @@
 import React, { CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
-import config from "../../config";
+import config, {PreviewType} from "../../config";
 import CartItem from '../../models/CartItem';
 import { Value } from '../../models/SpecTable';
 
@@ -12,7 +12,7 @@ export type CheckedObject = {
 	nextVersion?: string
 }
 
-type PreviewTypes = ("TIMESERIES" | "NETCDF" | "MAPGRAPH" | undefined)[]
+type PreviewTypes = Array<PreviewType | undefined>
 
 interface Props {
 	datasets: Value[]
