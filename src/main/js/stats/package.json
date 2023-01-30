@@ -60,7 +60,7 @@
   "dependencies": {
     "@babel/runtime-corejs3": "^7.16.7",
     "deep-equal": "^2.0.5",
-    "icos-cp-backend": "0.4.7",
+    "icos-cp-backend": "0.5.1",
     "icos-cp-spatial": "^0.3.1",
     "icos-cp-toaster": "^0.6.4",
     "icos-cp-utils": "^0.1.6",
