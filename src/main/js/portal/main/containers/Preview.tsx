@@ -89,7 +89,7 @@ const PreviewRoute = (props: OurProps & { iframeSrcChange: (event: ChangeEvent<H
 		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'setPreviewYAxis', 'setPreviewY2Axis', 'iframeSrcChange');
 		return <PreviewTimeSerie {...tsProps} />;
 
-	} else if (previewType === config.NETCDF || previewType === config.MAPGRAPH){
+	} else if (previewType === config.NETCDF || previewType === config.MAPGRAPH || previewType === config.PHENOCAM){
 		const scProps = pick(props, 'preview', 'iframeSrcChange', 'iframeUrl');
 		return <>
 			<div className='row pb-3'>

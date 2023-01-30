@@ -76,7 +76,7 @@ const getTable = (specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 		if (typeof spec === 'string' && typeof format === 'string') {
 			if (format === config.netCdfFormat)
 				table[spec] = { type: "NETCDF" };
-			else if(format === config.imageMultiZipFormat)
+			else if(config.imageMultiZipFormats.includes(format))
 				table[spec] = { type: "PHENOCAM"};
 			else if (
 				config.mapGraph.formats.includes(format) &&

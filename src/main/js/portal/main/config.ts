@@ -108,7 +108,10 @@ export default {
 	olMapSettings,
 	...commonConfig.previewTypes,
 	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
-	imageMultiZipFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/multiImageZip',
+	imageMultiZipFormats: [
+		'http://meta.icos-cp.eu/ontologies/cpmeta/multiImageZip',
+		'https://meta.fieldsites.se/ontologies/sites/image'
+	],
 	mapGraph: {
 		latValueType: 'http://meta.icos-cp.eu/resources/cpmeta/latitude',
 		lonValueType: 'http://meta.icos-cp.eu/resources/cpmeta/longitude',

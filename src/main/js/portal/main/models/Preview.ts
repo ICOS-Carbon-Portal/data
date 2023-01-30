@@ -107,7 +107,7 @@ export default class Preview {
 						previewItems = items.map(i => i.withUrl(url) as PreviewItem);
 					}
 					return new Preview(previewItems, options.options, options.type, yAxis, y2Axis);
-			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH){
+			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM){
 				return new Preview(items, options.options, options.type, yAxis, y2Axis);
 			}
 		} else {

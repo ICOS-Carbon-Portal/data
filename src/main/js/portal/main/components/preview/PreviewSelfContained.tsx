@@ -2,6 +2,8 @@ import React, {ChangeEvent, Component, CSSProperties} from 'react';
 import config, {PreviewType} from '../../config';
 import {getLastSegmentInUrl} from "../../utils";
 import {State} from "../../models/State";
+import { PreviewItem } from '../../models/Preview';
+import { UrlStr } from '../../backend/declarations';
 
 
 interface OurProps {
@@ -20,28 +22,16 @@ export default class PreviewSelfContained extends Component<OurProps>{
 		const previewType = preview.type;
 		if (previewType === undefined) return null;
 
-		// Use preview.item.url if present since that one has all client changes recorded in history
-		const url = preview.item.url ? preview.item.url : preview.item.dobj;
-		const iFrameBaseUrl = config.iFrameBaseUrl[previewType];
-		const src = `${iFrameBaseUrl}${getLastSegmentInUrl(url)}`;
+		const src = getPreviewIframeUrl(previewType, preview.item)
 		const containerStyle: CSSProperties = { height: getHeight(preview.type) };
 
 		return (
 			<div className="row" style={containerStyle}>
-				<IframeIfPreview preview={preview} iframeSrcChange={iframeSrcChange} src={src} />
+				<iframe onLoad={iframeSrcChange} src={src} />
 			</div>
 		);
 	}
 }
-
-interface IframeProps extends OurProps {
-	src: string
-}
-const IframeIfPreview = ({ preview, iframeSrcChange, src }: IframeProps) => {
-	return preview
-		? <iframe onLoad={iframeSrcChange} src={src} />
-		: null;
-};
 
 function getHeight(previewType?: PreviewType): number {
 	switch(previewType){
@@ -50,4 +40,13 @@ function getHeight(previewType?: PreviewType): number {
 		case config.PHENOCAM: return 1100;
 		default: return 600;
 	}
-};
+}
+
+function getPreviewIframeUrl(previewType: PreviewType, item: PreviewItem): UrlStr{
+	const iFrameBaseUrl = config.iFrameBaseUrl[previewType]
+	// Use preview.item.url if present since that one has all client changes recorded in history
+	if(item.url) return iFrameBaseUrl + getLastSegmentInUrl(item.url)
+	const hashId = getLastSegmentInUrl(item.dobj)
+	if(previewType === config.PHENOCAM) return `${iFrameBaseUrl}?objId=${hashId}`
+	return iFrameBaseUrl + hashId
+}
