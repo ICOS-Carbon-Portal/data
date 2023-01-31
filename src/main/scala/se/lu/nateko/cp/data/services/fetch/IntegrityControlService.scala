@@ -24,11 +24,11 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.meta.getDobjStorageInfos(paging)
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
-			val tmpFile = Files.createTempFile(file, s"cpdataIntegr_${dobjStInfo.hash.id}_", "")
 
 			problem.fold[Future[Report]](Future.successful(new OkReport(dobjStInfo))){prob =>
 
 				if(fetchBaddiesFromRemote){
+					val tmpFile = Files.createTempFile(file.getParent(), s"cpdataIntegr_${dobjStInfo.hash.id}_", "")
 
 					uploader.getRemoteStorageSource(dobjStInfo.format, dobjStInfo.hash)
 						.viaMat(DigestFlow.sha256)(KeepFuture.right)
