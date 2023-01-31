@@ -1,16 +1,20 @@
 package se.lu.nateko.cp.data.services.fetch
 
+import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.upload.UploadService
-import scala.concurrent.Future
-import akka.stream.scaladsl.Source
-import scala.concurrent.ExecutionContext
-import akka.stream.scaladsl.FileIO
-import akka.stream.Materializer
+import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.KeepFuture
-import scala.concurrent.duration.DurationInt
-import java.nio.file.Path
+
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
 class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
 	import IntegrityControlService._
@@ -20,19 +24,38 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.meta.getDobjStorageInfos(paging)
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
+			val tmpFile = Files.createTempFile("cpdataIntegr", dobjStInfo.hash.base64Url)
 
 			problem.fold[Future[Report]](Future.successful(new OkReport(dobjStInfo))){prob =>
 
 				if(fetchBaddiesFromRemote){
+
 					uploader.getRemoteStorageSource(dobjStInfo.format, dobjStInfo.hash)
-						.toMat(FileIO.toPath(file))(KeepFuture.right)
+						.viaMat(DigestFlow.sha256)(KeepFuture.right)
+						.toMat(FileIO.toPath(tmpFile))(KeepFuture.both)
 						.run()
-						.map{iores =>
-							val extraProblem: Option[String] = if(iores.count == dobjStInfo.size) None
-								else Some(s"wrong byte count while fetching from remote (${iores.count} instead of ${dobjStInfo.size})")
-							extraProblem.fold(new ProblemReport(dobjStInfo, prob, true)){extraProb =>
+						.map{(hash, iores) =>
+							val extraProblem: Option[String] =
+								if iores.count != dobjStInfo.size then
+									Some(s"wrong byte count when fetching from remote (${iores.count} instead of ${dobjStInfo.size})")
+								else if hash != dobjStInfo.hash then
+									Some(s"Wrong SHA-256 hashsum when fetching from remote ($hash instead of ${dobjStInfo.hash}")
+								else None
+
+							extraProblem.fold{
+								Files.move(tmpFile, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+								new ProblemReport(dobjStInfo, prob, true)
+							}{extraProb =>
 								new ProblemReport(dobjStInfo, prob + "; " + extraProb, false)
 							}
+						}
+						.recover{
+							case err: Throwable =>
+								val extraProb = "Problem recovering from remote: " + err.getMessage()
+								new ProblemReport(dobjStInfo, prob + "; " + extraProb, false)
+						}
+						.andThen{
+							_ => Files.deleteIfExists(tmpFile)
 						}
 				} else Future.successful(new ProblemReport(dobjStInfo, prob, false))
 			}
@@ -84,11 +107,14 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		import dobjStInfo.{format, hash, size}
 		val file = uploader.getFile(format, hash)
 
-		val problem: Option[String] = {
-			if(!file.exists) Some("file missing")
-			else if(file.length != size) Some(s"expected size $size got ${file.length}")
+		val problem: Option[String] =
+			if dobjStInfo.isNotStored
+				then None
+			else if !file.exists
+				then Some("file missing")
+			else if file.length != size
+				then Some(s"expected size $size got ${file.length}")
 			else None
-		}
 		(file.toPath, problem)
 	}
 

@@ -269,7 +269,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			val landingPage = asResource(binding, "dobj")
 			val hash = dobjHash(landingPage)
 			val format = asResourceOpt(binding, "format")
-			new DobjStorageInfo(fileName, landingPage, hash, size, format)
+			DobjStorageInfo(fileName, landingPage, hash, size, format)
 		}.toOption)
 
 	def getSameFilenameInfo(fileName: String): Future[IndexedSeq[SameFilenameInfo]] =
@@ -294,7 +294,9 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 end MetaClient
 
 object MetaClient:
-	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: Option[URI])
+	class DobjStorageInfo(val fileName: String, val landingPage: URI, val hash: Sha256Sum, val size: Long, val format: Option[URI]):
+		def isNotStored = format.contains(CpMetaVocab.ObjectFormats.asciiWdcggTimeSer)
+
 	class Paging(val offset: Int = 0, val limit: Option[Int] = None){
 		def sparqlClauses: String = {
 			val offClause: Option[String] = if(offset > 0) Some(s"offset $offset") else None

@@ -6,15 +6,18 @@ import scala.concurrent.ExecutionContext
 import scala.util.Try
 import se.lu.nateko.cp.data.api.CpDataException
 
-object KeepFuture {
+object KeepFuture:
 
-	def right[L, R](implicit ctxt: ExecutionContext): (Future[L], Future[R]) => Future[R] =
-		merge[L, R, R]((lTry, rTry) => lTry.flatMap(_ => rTry))
+	def right[L, R](using ExecutionContext): (Future[L], Future[R]) => Future[R] =
+		merge((lTry, rTry) => lTry.flatMap(_ => rTry))
 
-	def left[L, R](implicit ctxt: ExecutionContext): (Future[L], Future[R]) => Future[L] =
-		merge[L, R, L]((lTry, rTry) => rTry.flatMap(_ => lTry))
+	def left[L, R](using ExecutionContext): (Future[L], Future[R]) => Future[L] =
+		merge((lTry, rTry) => rTry.flatMap(_ => lTry))
 
-	private def merge[L, R, O](tm: (Try[L], Try[R]) => Try[O])(implicit ctxt: ExecutionContext): (Future[L], Future[R]) => Future[O] =
+	def both[L, R](using ExecutionContext): (Future[L], Future[R]) => Future[(L, R)] =
+		merge((lTry, rTry) => for l <- lTry; r <- rTry yield l -> r)
+
+	private def merge[L, R, O](tm: (Try[L], Try[R]) => Try[O])(using ExecutionContext): (Future[L], Future[R]) => Future[O] =
 		(lf, rf) => {
 			lf.transformWith{lTry =>
 				rf.transform{rTry =>
@@ -25,4 +28,4 @@ object KeepFuture {
 				}
 			}
 		}
-}
+end KeepFuture
