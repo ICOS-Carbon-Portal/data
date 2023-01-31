@@ -24,7 +24,7 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 		.meta.getDobjStorageInfos(paging)
 		.mapAsync(2){dobjStInfo =>
 			val (file, problem) = localFileProblem(dobjStInfo)
-			val tmpFile = Files.createTempFile("cpdataIntegr", dobjStInfo.hash.base64Url)
+			val tmpFile = Files.createTempFile(file, s"cpdataIntegr_${dobjStInfo.hash.id}_", "")
 
 			problem.fold[Future[Report]](Future.successful(new OkReport(dobjStInfo))){prob =>
 
