@@ -2,6 +2,8 @@ package se.lu.nateko.cp.data.services.fetch
 
 import akka.stream.Materializer
 import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.services.upload.UploadService
@@ -16,18 +18,20 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
-class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionContext, mat: Materializer){
+class IntegrityControlService(uploader: UploadService)(using ExecutionContext, Materializer):
 	import IntegrityControlService._
 	import MetaClient.{DobjStorageInfo, Paging}
 
 	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging): ReportSource = uploader
 		.meta.getDobjStorageInfos(paging)
-		.mapAsync(2){dobjStInfo =>
-			val (file, problem) = localFileProblem(dobjStInfo)
+		.mapAsync(2){dobjStInfo => //keep parallelizm low to avoid thread starvation (may be using actor system's default)
+			val (file, localProblemFut) = localFileProblem(dobjStInfo)
 
-			problem.fold[Future[Report]](Future.successful(new OkReport(dobjStInfo))){prob =>
+			localProblemFut.flatMap{
+				case None =>
+					Future.successful(new OkReport(dobjStInfo))
 
-				if(fetchBaddiesFromRemote){
+				case Some(prob) if fetchBaddiesFromRemote =>
 					val tmpFile = Files.createTempFile(file.getParent(), s"cpdataIntegr_${dobjStInfo.hash.id}_", "")
 
 					uploader.getRemoteStorageSource(dobjStInfo.format, dobjStInfo.hash)
@@ -57,7 +61,8 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 						.andThen{
 							_ => Files.deleteIfExists(tmpFile)
 						}
-				} else Future.successful(new ProblemReport(dobjStInfo, prob, false))
+				case Some(prob) =>
+					Future.successful(new ProblemReport(dobjStInfo, prob, false))
 			}
 		}
 
@@ -78,21 +83,26 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 			uploader.b2SafeSourceExists(format, hash).flatMap{
 				case true =>
 					Future.successful(new OkReport(dobjStInfo))
-				case false =>
-					val (file, localProb) = localFileProblem(dobjStInfo)
-					val prob = "file absent in B2SAFE" + localProb.fold("")("; " + _)
 
-					if(uploadMissingToRemote && localProb.isEmpty){
-						uploader.uploadToB2Stage(format, hash, FileIO.fromPath(file)).map{_ =>
-							new ProblemReport(dobjStInfo, prob, true)
+				case false =>
+					val (file, localProbFut) = localFileProblem(dobjStInfo)
+
+					localProbFut.flatMap{localProb =>
+
+						val prob = "file absent in B2SAFE" + localProb.fold("")("; " + _)
+
+						if(uploadMissingToRemote && localProb.isEmpty){
+							uploader.uploadToB2Stage(format, hash, FileIO.fromPath(file)).map{_ =>
+								new ProblemReport(dobjStInfo, prob, true)
+							}
+							.recover{
+								case err: Throwable =>
+									new ProblemReport(dobjStInfo, prob + "; problem during upload attempt: " + err.getMessage, false)
+							}
 						}
-						.recover{
-							case err: Throwable =>
-								new ProblemReport(dobjStInfo, prob + "; problem during upload attempt: " + err.getMessage, false)
-						}
+						else
+							Future.successful(new ProblemReport(dobjStInfo, prob, false))
 					}
-					else
-						Future.successful(new ProblemReport(dobjStInfo, prob, false))
 			}
 			.recover{
 				case err: Throwable =>
@@ -103,24 +113,30 @@ class IntegrityControlService(uploader: UploadService)(implicit ctxt: ExecutionC
 	def getObjectsList(paging: Paging): ReportSource = uploader.meta.getDobjStorageInfos(paging)
 		.map(new OkReport(_)).throttle(10, 1.second)
 
-	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Option[String]) = {
+	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Future[Option[String]]) = {
 		import dobjStInfo.{format, hash, size}
 		val file = uploader.getFile(format, hash)
 
-		val problem: Option[String] =
+		val problem: Future[Option[String]] =
 			if dobjStInfo.isNotStored
-				then None
+				then Future.successful(None)
 			else if !file.exists
-				then Some("file missing")
+				then Future.successful(Some("file missing"))
 			else if file.length != size
-				then Some(s"expected size $size got ${file.length}")
-			else None
+				then Future.successful(Some(s"expected size $size got ${file.length}"))
+			else FileIO.fromPath(file.toPath)
+				.viaMat(DigestFlow.sha256)(KeepFuture.right)
+				.toMat(Sink.ignore)(Keep.left)
+				.run().map{ diskHash =>
+					if diskHash == hash then None
+					else Some(s"File on disk has wrong SHA-256 hash: ${diskHash.base64}")
+				}
 		(file.toPath, problem)
 	}
 
-}
+end IntegrityControlService
 
-object IntegrityControlService{
+object IntegrityControlService:
 	import MetaClient.DobjStorageInfo
 
 	type ReportSource = Source[Report, Any]
@@ -138,5 +154,3 @@ object IntegrityControlService{
 			s"$title: ${obj.landingPage}, ${obj.fileName} ($problem)"
 		}
 	}
-
-}
