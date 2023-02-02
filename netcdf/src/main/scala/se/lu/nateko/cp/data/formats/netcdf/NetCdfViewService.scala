@@ -113,14 +113,17 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 			}
 		}
 
-	private val expectedDimentionNames: Set[String] =
+	private val mandatoryDimentionNames: Set[String] =
 		import variables.*
-		(Seq(dateVar, latVar, lonVar) ++ elevationVar).map(_.dimName).toSet
+		Iterator(dateVar, latVar, lonVar).map(_.dimName).toSet
+
+	private val expectedDimentionNames: Set[String] =
+		mandatoryDimentionNames ++ variables.elevationVar.map(_.dimName)
 
 	private def isSpatiotempVar(v: Variable): Boolean =
-		v.getDimensions.asScala.map(_.getShortName).toSet == expectedDimentionNames
-
-
+		val dimNames = v.getDimensions.asScala.map(_.getShortName).toSet
+		mandatoryDimentionNames.forall(dimNames.contains) &&
+			dimNames.forall(expectedDimentionNames.contains)
 
 	def getVariables: IndexedSeq[String] = withDataset{ds =>
 		ds.getVariables.asScala.collect{
