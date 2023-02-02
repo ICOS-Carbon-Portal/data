@@ -97,15 +97,14 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 			const elevations = payload.elevations
 			let eIdx = -1
 			if(elevations.length > 0){
-				if(eIdx < 0 && state.lastElevation !== undefined){
-					const lastElevIdx = elevations.indexOf(state.lastElevation)
-					if(lastElevIdx >= 0) eIdx = lastElevIdx
+				if(state.lastElevation !== undefined){
+					eIdx = elevations.indexOf(state.lastElevation)
 				}
 				const initElev = state.initSearchParams.elevation
 				if(eIdx < 0 && initElev !== null){
-					const initElevIdx = elevations.indexOf(initElev)
-					if(initElevIdx >= 0) eIdx = initElevIdx
+					eIdx = elevations.indexOf(initElev)
 				}
+				if(eIdx < 0) eIdx = 0
 			}
 			const controls = state.controls.copyWith({elevations: new Control(elevations, eIdx)})
 
