@@ -37,6 +37,13 @@ class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
 
 
 object NetCdfViewService:
+	private class VarSpec(
+		val dateVar: OneDimVar, val latVar: OneDimVar,
+		val lonVar: OneDimVar, val potentialExtras: Seq[DiscriminatingDimension]
+	)
+
+	private case class OneDimVar(name: String, dimName: String)
+
 	def getDateParser(timeVar: Variable): Double => CalendarDate =
 		val unit = timeVar.attributes().findAttribute("units").getStringValue
 		val timeHelper = new CoordinateAxisTimeHelper(Calendar.gregorian, unit)
@@ -50,40 +57,46 @@ object NetCdfViewService:
 		}
 end NetCdfViewService
 
-class VarSpec(
-	val dateVar: OneDimVar, val latVar: OneDimVar,
-	val lonVar: OneDimVar, val elevationVar: Option[OneDimVar]
-)
-
-case class OneDimVar(name: String, dimName: String)
+case class DiscriminatingDimension(name: String, labels: IndexedSeq[String])
+case class VariableInfo(shortName: String, longName: String, extra: Option[DiscriminatingDimension])
 
 class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
+	import NetCdfViewService.*
 
-	private val singleDimVarsAndDims: Map[String, OneDimVar] = withDataset{ds =>
-		ds.getVariables.asScala.iterator.collect{
-			case v if v.getRank == 1 => v.getShortName -> OneDimVar(v.getShortName, v.getDimension(0).getShortName)
+	private val variables: IndexedSeq[VariableInfo] = withDataset{ds =>
+
+		//val dims = ds.getDimensions.asScala.iterator.map(_.getShortName).toIndexedSeq
+		val vars = ds.getVariables.asScala
+
+		val varsWithDims: Map[String, IndexedSeq[String]] = vars.iterator.map{v =>
+			v.getShortName -> v.getDimensions.asScala.iterator.map(_.getShortName).toIndexedSeq
 		}.toMap
+
+		val singleDimVarsAndDims: Map[String, OneDimVar] = varsWithDims.collect{
+			case (vname, dims) if dims.length == 1 => vname -> OneDimVar(vname, dims(0))
+		}
+
+		val simpleDescribedDims = singleDimVarsAndDims.valuesIterator.map(_.dimName).toSet
+
+		val maybeNcharDim = varsWithDims.valuesIterator.flatten //all dimensions
+			.filterNot(simpleDescribedDims.contains).toSet
+
+		val complexDescribedDims = varsWithDims.collect{
+				case (_, dims) if dims.length == 2 && maybeNcharDim.contains(dims(1)) => dims(0)
+			}.toIndexedSeq
+
+		def findOneDimVar(kind: String, options: Seq[String]): OneDimVar =
+			options.flatMap(singleDimVarsAndDims.get).headOption.getOrElse(
+				throw new Exception(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
+			)
+
+		val dateVar = findOneDimVar("date", conf.dateVars)
+		val latVar = findOneDimVar("latitude", conf.latitudeVars)
+		val lonVar = findOneDimVar("longitude", conf.longitudeVars)
+		//elevVar = findOneDimVar("elevation", conf.elevationVars).toOption
 	}
 
-	private def findOneDimVar(kind: String, options: Seq[String]): Try[OneDimVar] =
-		options.flatMap(singleDimVarsAndDims.get).headOption match
-			case None => Failure(
-				new Exception(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
-					with NoStackTrace
-			)
-			case Some(varNameAndDim) => Success(varNameAndDim)
-
-	val variables = (
-		for
-			dateVar <- findOneDimVar("date", conf.dateVars);
-			latVar <- findOneDimVar("latitude", conf.latitudeVars);
-			lonVar <- findOneDimVar("longitude", conf.longitudeVars);
-			elevVar = findOneDimVar("elevation", conf.elevationVars).toOption
-		yield
-			VarSpec(dateVar, latVar, lonVar, elevVar)
-	).get
-
-	private def withDataset[R](action: NetcdfDataset => R): R =
+	def withDataset[R](action: NetcdfDataset => R): R =
 		val pathStr = ncFile.toAbsolutePath.toString
 		Using(NetcdfDatasets.openDataset(pathStr))(action).fold({
 			case exc: Throwable =>
