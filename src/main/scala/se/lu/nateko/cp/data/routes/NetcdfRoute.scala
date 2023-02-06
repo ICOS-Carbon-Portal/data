@@ -12,6 +12,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import scala.concurrent.Future
 
 object NetcdfRoute extends SprayRouting:
+	import se.lu.nateko.cp.data.CpdataJsonProtocol.varInfoFormat
 	private given ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
 	def apply(factory: ViewServiceFactory): Route = {
@@ -28,11 +29,6 @@ object NetcdfRoute extends SprayRouting:
 			path("listVariables"){
 				parameter("service"){ service =>
 					complete(factory.getNetCdfViewService(service).getVariables)
-				}
-			} ~
-			path("listElevations"){
-				parameter("service", "varName"){ (service, varName) =>
-					complete(factory.getNetCdfViewService(service).getAvailableElevations(varName))
 				}
 			} ~
 			path("getSlice"){
@@ -72,11 +68,6 @@ object NetcdfRoute extends SprayRouting:
 			path("listVariables"){
 				parameter("service".as[Sha256Sum]){ hash =>
 					complete(factory.getNetCdfViewService(hash.id).getVariables)
-				}
-			} ~
-			path("listElevations"){
-				parameter("service".as[Sha256Sum], "varName"){ (hash, varName) =>
-					complete(factory.getNetCdfViewService(hash.id).getAvailableElevations(varName))
 				}
 			} ~
 			path("getSlice"){
