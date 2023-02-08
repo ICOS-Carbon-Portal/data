@@ -29,7 +29,10 @@ trait NetCdfViewServiceConfig:
 
 class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
 	def getNetCdfFiles(): IndexedSeq[String] =
-		folder.toFile.list((_, fn) => fn.endsWith(".nc")).toIndexedSeq
+		val file = folder.toFile
+		if !file.exists() || !file.isDirectory()
+		then throw new Exception(s"No folder on the server at path $folder") with NoStackTrace
+		file.list((_, fn) => fn.endsWith(".nc")).toIndexedSeq
 
 	def getNetCdfViewService(fileName: String) =
 		NetCdfViewService(folder.resolve(fileName), config)
@@ -39,11 +42,9 @@ object NetCdfViewService:
 	val MaxDiscrDimSize = 100
 
 	private class VarSpec(
-		val dateVar: OneDimVar, val latVar: OneDimVar,
-		val lonVar: OneDimVar, val previewables: IndexedSeq[VariableInfo]
+		val dateVar: String, val latVar: String,
+		val lonVar: String, val previewables: IndexedSeq[VariableInfo]
 	)
-
-	private case class OneDimVar(name: String, dimName: String)
 
 	def getDateParser(timeVar: Variable): Double => CalendarDate =
 		val unit = timeVar.attributes().findAttribute("units").getStringValue
@@ -66,11 +67,9 @@ object NetCdfViewService:
 			v.getShortName -> v.getDimensions.asScala.iterator.map(_.getShortName).toIndexedSeq
 		}.toMap
 
-		val singleDimVarsAndDims: Map[String, OneDimVar] = varsWithDims.collect{
-			case (vname, dims) if dims.length == 1 => vname -> OneDimVar(vname, dims(0))
-		}
-
-		val simpleDescribedDims = singleDimVarsAndDims.valuesIterator.map(_.dimName).toSet
+		val simpleDescribedDims: Set[String] = varsWithDims.collect{
+				case (vname, dims) if dims.length == 1 && dims(0) == vname => vname
+			}.toSet
 
 		val maybeNcharDim = varsWithDims.valuesIterator.flatten //all dimensions
 			.filterNot(simpleDescribedDims.contains).toSet
@@ -94,21 +93,8 @@ object NetCdfViewService:
 			else None
 		}
 
-		val simpleDiscrDims: Seq[DiscriminatingDimension] = vars.flatMap{v =>
-			singleDimVarsAndDims.get(v.getShortName).collect{
-				case oneDimVar if v.getShape()(0) <= MaxDiscrDimSize =>
-					val varr = v.read()
-					val idx = varr.getIndex()
-					val labels = for lidx <- 0 until idx.getShape()(0)
-						yield varr.getObject(idx.set(lidx)).toString
-					DiscriminatingDimension(oneDimVar.dimName, labels)
-			}
-		}
-
-		val discrDims = (charDiscrDims ++ simpleDiscrDims).toIndexedSeq
-
-		def findOneDimVar(kind: String, options: Seq[String]): OneDimVar =
-			options.flatMap(singleDimVarsAndDims.get).headOption.getOrElse(
+		def findOneDimVar(kind: String, options: Seq[String]): String =
+			options.find(simpleDescribedDims.contains).getOrElse(
 				throw new Exception(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
 			)
 
@@ -116,7 +102,23 @@ object NetCdfViewService:
 		val latVar = findOneDimVar("latitude", conf.latitudeVars)
 		val lonVar = findOneDimVar("longitude", conf.longitudeVars)
 
-		val mandatoryDimensionNames: Set[String] = Iterator(dateVar, latVar, lonVar).map(_.dimName).toSet
+		val mandatoryDimensionNames = Set(dateVar, latVar, lonVar)
+
+		val simpleDiscrDims: Seq[DiscriminatingDimension] = simpleDescribedDims.diff(mandatoryDimensionNames).toSeq.flatMap{vname =>
+			val v = ds.findVariable(vname)
+			val varSize = v.getShape()(0)
+			if varSize > MaxDiscrDimSize then None
+			else
+				val varr = v.read()
+				val idx = varr.getIndex()
+				val labels = (0 until varSize).map{lidx =>
+					varr.getObject(idx.set(lidx)).toString
+				}
+				Some(DiscriminatingDimension(vname, labels))
+		}
+
+		val discrDims = (charDiscrDims ++ simpleDiscrDims).toIndexedSeq
+
 		val previewableVars = vars.flatMap{v =>
 			val dimNames = varsWithDims.get(v.getShortName).iterator.flatten.toSet
 
@@ -128,7 +130,8 @@ object NetCdfViewService:
 					.toSeq.headOption
 
 				if discrDim.size == dimNames.size - mandatoryDimensionNames.size then
-					Some(VariableInfo(v.getShortName, v.getFullName, discrDim))
+					val longName = Option(v.findAttribute("long_name")).map(_.getStringValue)
+					Some(VariableInfo(v.getShortName, longName, discrDim))
 				else None
 			else None
 		}
@@ -139,7 +142,7 @@ end NetCdfViewService
 
 
 case class DiscriminatingDimension(name: String, labels: IndexedSeq[String])
-case class VariableInfo(shortName: String, longName: String, extra: Option[DiscriminatingDimension])
+case class VariableInfo(shortName: String, longName: Option[String], extra: Option[DiscriminatingDimension])
 
 
 class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
@@ -151,12 +154,12 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		val pathStr = ncFile.toAbsolutePath.toString
 		Using(NetcdfDatasets.openDataset(pathStr))(action).fold({
 			case exc: Throwable =>
-				throw new IOException(s"Problem reading netcdf $pathStr", exc)
+				throw new IOException(s"Problem reading netcdf ${ncFile.getFileName}: ${exc.getMessage}", exc)
 		}, identity)
 
 
 	def getAvailableDates: IndexedSeq[CalendarDate] = withDataset{ds =>
-		val timeVar = ds.findVariable(variables.dateVar.name)
+		val timeVar = ds.findVariable(variables.dateVar)
 		NetCdfViewService.readAllDates(timeVar)
 	}
 
@@ -166,15 +169,15 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, extraIdx)
 
-		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar.dimName)
-		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar.dimName)
-		val latDimInd = ncVar.findDimensionIndex(variables.latVar.dimName)
+		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar)
+		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar)
+		val latDimInd = ncVar.findDimensionIndex(variables.latVar)
 
 		val sizeLon = ncVar.getDimension(lonDimInd).getLength
 		val sizeLat = ncVar.getDimension(latDimInd).getLength
 		val latFirst = latDimInd < lonDimInd
 
-		val dateVar = ds.findVariable(variables.dateVar.name)
+		val dateVar = ds.findVariable(variables.dateVar)
 
 		origin(dateDimInd) = dateTimeIdx
 		origin(lonDimInd) = 0
@@ -185,7 +188,6 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		size(latDimInd) = sizeLat
 
 		val sec = new Section(origin, size)
-
 		val arrFullDim = ncVar.read(sec)
 		val fullMin = MAMath.getMinimum(arrFullDim)
 		val fullMax = MAMath.getMaximum(arrFullDim)
@@ -199,7 +201,7 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 			lonMax = rect.getLonMax
 		)
 
-		val latValues = ds.findVariable(variables.latVar.name).read()
+		val latValues = ds.findVariable(variables.latVar).read()
 		val latSorted = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
 
 		Raster(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, bbox)
@@ -242,19 +244,19 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 
 	def getTemporalCrossSection(
-		varName: String, latInd: Int, lonInd: Int, elevationIdx: Option[Int]
+		varName: String, latInd: Int, lonInd: Int, extraDimIdx: Option[Int]
 	): IndexedSeq[Double] = withDataset{ds =>
 
-		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, elevationIdx)
+		val (ncVar, origin, size) = findVarPrepareSection(ds, varName, extraDimIdx)
 
-		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar.dimName)
-		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar.dimName)
-		val latDimInd = ncVar.findDimensionIndex(variables.latVar.dimName)
+		val dateDimInd = ncVar.findDimensionIndex(variables.dateVar)
+		val lonDimInd = ncVar.findDimensionIndex(variables.lonVar)
+		val latDimInd = ncVar.findDimensionIndex(variables.latVar)
 
 		val sizeDate = ncVar.getDimension(dateDimInd).getLength
 		val sizeLat = ncVar.getDimension(latDimInd).getLength
 
-		val latValues = ds.findVariable(variables.latVar.name).read()
+		val latValues = ds.findVariable(variables.latVar).read()
 		val latSorted: Boolean = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
 
 		origin(dateDimInd) = 0

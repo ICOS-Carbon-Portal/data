@@ -1,4 +1,4 @@
-import { getRasterId, RasterRequest } from "../backend";
+import { getRasterId, RasterRequest, VariableInfo } from "../backend";
 import Colormap, { colorMaps } from "./Colormap";
 
 export class Control<T>{
@@ -33,17 +33,19 @@ export class ColormapControl extends Control<Colormap> {
 	}
 }
 
-const defaultControl = new Control([]);
+export const defaultControl = new Control([]);
 export const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const selectedGamma = defaultGammas.selected! //we selected one in the previous line
 const defaultColorMaps = new ColormapControl(colorMaps.map(cm => cm.withGamma(selectedGamma)), 0)
 const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
 
+type ControlsUpdate = {[K in keyof ControlsHelper]?: ControlsHelper[K]}
+
 export class ControlsHelper{
 	readonly services: Control<string> = defaultControl
-	readonly variables: Control<string> = defaultControl
+	readonly variables: Control<VariableInfo> = defaultControl
 	readonly dates: Control<string> = defaultControl
-	readonly elevations: Control<number> = defaultControl
+	readonly extraDim: Control<string> = defaultControl
 	readonly gammas: Control<number> = defaultGammas
 	readonly delays: Control<number> = defaultDelays
 	readonly colorMaps: ColormapControl = defaultColorMaps
@@ -52,11 +54,12 @@ export class ControlsHelper{
 		const service = this.services.selected
 		const variable = this.variables.selected
 		const dateIdx = this.dates.selectedIdx
-		const elevationIdx = this.elevations.selectedIdx
+		const extraDimIdx = this.extraDim.selectedIdx
 
 		return (
-			service === null || variable === null || dateIdx === null || dateIdx < 0 || elevationIdx === null
-		) ? undefined : {service, variable, dateIdx, elevationIdx}
+			service === null || variable === null || dateIdx === null || dateIdx < 0 ||
+			(variable.extra !== undefined && extraDimIdx === null)
+		) ? undefined : {service, variable: variable.shortName, dateIdx, extraDimIdx}
 	}
 
 	get rasterId(): string | undefined {
@@ -64,7 +67,7 @@ export class ControlsHelper{
 		return req ? getRasterId(req) : undefined
 	}
 
-	copyWith(update: {[K in keyof ControlsHelper]?: ControlsHelper[K]}): ControlsHelper{
+	copyWith(update: ControlsUpdate): ControlsHelper{
 		return Object.assign(Object.create(ControlsHelper.prototype), this, update)
 	}
 
@@ -89,8 +92,8 @@ export class ControlsHelper{
 		return this.copyWith({dates: this.dates.withSelected(newIdx)})
 	}
 
-	withSelectedElevation(idx: number){
-		return this.copyWith({elevations: this.elevations.withSelected(idx)})
+	withSelectedExtraDim(idx: number){
+		return this.copyWith({extraDim: this.extraDim.withSelected(idx)})
 	}
 
 	withSelectedGamma(idx: number){

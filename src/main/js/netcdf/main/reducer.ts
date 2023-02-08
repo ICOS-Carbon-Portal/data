@@ -1,10 +1,10 @@
 import {
-	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, ELEVATIONS_FETCHED, ELEVATION_SELECTED,
+	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, EXTRA_DIM_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, NetCDFPlainAction, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
 	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
-import {Control, ColormapControl, ControlsHelper, defaultGammas} from './models/ControlsHelper';
+import {Control, ColormapControl, ControlsHelper, defaultGammas, defaultControl} from './models/ControlsHelper';
 import * as Toaster from 'icos-cp-toaster';
 import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
@@ -33,7 +33,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		return update({
 			title,
 			metadata: md,
-			legendLabel: getLegendLabel(getVariableInfo(state.controls, md)),
+			legendLabel: getLegendLabel(state.controls, md),
 			variableEnhancer: getVariables(md)
 		});
 	}
@@ -72,58 +72,49 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof VARIABLES_AND_DATES_FETCHED) {
 		if (payload.service === state.controls.services.selected) {
 
-			let vIdx = payload.variables.indexOf(state.initSearchParams.varName)
+			let vIdx = payload.variables.findIndex(vinfo => vinfo.shortName == state.initSearchParams.varName)
 			if (vIdx < 0 && payload.variables.length > 0) vIdx = 0
 
 			let dIdx = payload.dates.indexOf(state.initSearchParams.date)
 			if (dIdx < 0 && payload.dates.length > 0) dIdx = 0
 
-			const controls = state.controls.copyWith({
+			let controls = state.controls.copyWith({
 				variables: new Control(payload.variables, vIdx),
-				dates: new Control(payload.dates, dIdx)
+				dates: new Control(payload.dates, dIdx),
 			})
+
+			if(vIdx >= 0){
+				const extra = controls.variables.selected?.extra
+				const extraDim = (extra && extra.labels.length > 0)
+					? new Control(extra.labels, 0)
+					: defaultControl
+				controls = controls.copyWith({extraDim})
+			}
 
 			return update({
 				controls,
-				legendLabel: getLegendLabel(getVariableInfo(controls, state.metadata))
+				legendLabel: getLegendLabel(controls, state.metadata)
 			});
 		} else {
 			return state;
 		}
 	}
 
-	else if (payload instanceof ELEVATIONS_FETCHED) {
-		if (isElevationsFetched(state, payload)) {
-			const elevations = payload.elevations
-			let eIdx = -1
-			if(elevations.length > 0){
-				if(state.lastElevation !== undefined){
-					eIdx = elevations.indexOf(state.lastElevation)
-				}
-				const initElev = state.initSearchParams.elevation
-				if(eIdx < 0 && initElev !== null){
-					eIdx = elevations.indexOf(initElev)
-				}
-				if(eIdx < 0) eIdx = 0
-			}
-			const controls = state.controls.copyWith({elevations: new Control(elevations, eIdx)})
-
-			return update({
-				lastElevation: eIdx >= 0 ? elevations[eIdx] : state.lastElevation,
-				controls
-			})
-		} else {
-			return state;
-		}
-	}
-
 	else if (payload instanceof VARIABLE_SELECTED) {
-		const newControls = state.controls.withSelectedVariable(payload.idx);
+		const oldVar = state.controls.variables.selected
+		let newControls = state.controls.withSelectedVariable(payload.idx)
+		const newVar = newControls.variables.selected
+
+		if(newVar == null || newVar.extra == undefined) {
+			newControls = newControls.copyWith({extraDim: defaultControl})
+		} else if(oldVar == null || oldVar.extra == undefined || oldVar.extra.name != newVar.extra.name){
+			newControls = newControls.copyWith({extraDim: new Control(newVar.extra.labels, 0)})
+		}
 
 		return update({
 			rangeFilter: stateProps.defaultRangeFilter,
 			controls: newControls,
-			legendLabel: getLegendLabel(getVariableInfo(newControls, state.metadata)),
+			legendLabel: getLegendLabel(newControls, state.metadata),
 			raster: undefined,
 			colorMaker: undefined
 		});
@@ -133,10 +124,9 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 		return update({ controls: state.controls.withSelectedDate(payload.idx) });
 	}
 
-	else if (payload instanceof ELEVATION_SELECTED) {
+	else if (payload instanceof EXTRA_DIM_SELECTED) {
 		return update({
-			lastElevation: state.controls.elevations.values[payload.idx],
-			controls: state.controls.withSelectedElevation(payload.idx)
+			controls: state.controls.withSelectedExtraDim(payload.idx)
 		});
 	}
 
@@ -314,7 +304,7 @@ function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VarM
 	const selectedVariable = controls?.variables?.selected;
 	if (!selectedVariable) return
 
-	return getVarMetas(metadata)?.find(v => v.label === selectedVariable);
+	return getVarMetas(metadata)?.find(v => v.label === selectedVariable.shortName);
 };
 
 function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): MinMax | undefined {
@@ -327,14 +317,15 @@ function getRangeFilterMinMax(rangeFilter: RangeFilter): Partial<MinMax> {
 	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange }
 }
 
-const getLegendLabel = (metaVar?: VarMeta) => {
+function getLegendLabel(controls?: ControlsHelper, metadata?: DataObject): string {
+	const metaVar = getVariableInfo(controls, metadata)
+
 	if (metaVar && metaVar.valueType.self.label) {
 		const unit = metaVar.valueType.unit ? ` [${metaVar.valueType.unit}]` : ""
 		return `${metaVar.valueType.self.label}${unit}`;
 	}
-
-	return 'Legend';
-};
+	return controls?.variables?.selected?.longName ?? 'Legend'
+}
 
 function getVariables(metadata?: DataObject): Record<string,string> | undefined {
 	return getVarMetas(metadata)?.reduce(
@@ -350,9 +341,4 @@ const getTimeserieData = (dates: string[], yValues: number[]): TimeserieData[] =
 	return dates.length === yValues.length
 		? dates.map((date: string, idx: number) => [new Date(date), yValues[idx]])
 		: [[0, 1]];
-};
-
-function isElevationsFetched(state: State, payload: ELEVATIONS_FETCHED){
-	return payload.service === state.controls.services.selected
-		&& payload.variable === state.controls.variables.selected
 }

@@ -15,10 +15,11 @@ import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
 import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
 import legendFactory from '../models/LegendFactory';
+import { VariableInfo } from '../backend';
 
 
 type OurProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
-	| 'elevationChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
+	| 'extraDimChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
 	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
 type OurState = {
 	height: number,
@@ -33,7 +34,7 @@ export default class Map extends Component<OurProps, OurState> {
 	private center: string[];
 	private zoom: string | number;
 	private objId?: string;
-	private prevVariables?: Control<string>;
+	private prevVariables?: Control<VariableInfo>;
 	private events: typeof Events;
 	private getRasterXYFromLatLng?: Function;
 	private legendDiv: HTMLDivElement;
@@ -62,22 +63,22 @@ export default class Map extends Component<OurProps, OurState> {
 
 	updateURL(){
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
-			const {dates, elevations, gammas, variables, colorMaps} = this.props.controls;
+			const {dates, extraDim, gammas, variables, colorMaps} = this.props.controls;
 			const variable = variables.selected
 			if (this.prevVariables === undefined || this.prevVariables.selected !== variable) {
 				this.prevVariables = variables
-				if (variable !== null) saveToRestheart(formatData({objId: this.objId, variable}))
+				if (variable !== null) saveToRestheart(formatData({objId: this.objId, variable: variable.shortName}))
 			}
 
 			const dateParam = dates.selected ? `date=${dates.selected}` : undefined;
-			const elevationParam = elevations.selected !== null ? `elevation=${elevations.selected}` : undefined;
+			const extraDimParam = extraDim.selected !== null ? `extraDim=${extraDim.selected}` : undefined;
 			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
 			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
 			const color = colorMaps.selected ? `color=${colorMaps.selected.name}` : undefined;
 
-			const searchParams = [varNameParam, dateParam, gammaParam, elevationParam, center, zoom, color];
+			const searchParams = [varNameParam, dateParam, gammaParam, extraDimParam, center, zoom, color];
 			const newSearch = '?' + searchParams.filter(sp => sp).join('&');
 
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
@@ -140,12 +141,12 @@ export default class Map extends Component<OurProps, OurState> {
 	timeserieMapClick(eventName: string, e: { latlng: Latlng}){
 		if (this.getRasterXYFromLatLng && this.props.fetchTimeSerie) {
 			const objId = this.props.controls.services.selected;
-			const variable = this.props.controls.variables.selected;
-			const elevation = this.props.controls.elevations.selected;
+			const variable = this.props.controls.variables.selected?.shortName;
+			const extraDimInd = this.props.controls.extraDim.selectedIdx;
 			const xy = this.getRasterXYFromLatLng(e.latlng);
 
-			if (xy && objId !== null && variable !== null) {
-				this.props.fetchTimeSerie({objId, variable, elevation, x: xy.x, y: xy.y, latlng: e.latlng});
+			if (xy && objId !== null && variable !== undefined) {
+				this.props.fetchTimeSerie({objId, variable, extraDimInd, x: xy.x, y: xy.y, latlng: e.latlng});
 				this.timeserieToggle(true);
 			}
 		}
@@ -224,7 +225,7 @@ export default class Map extends Component<OurProps, OurState> {
 						handleVarNameChange={props.variableChanged}
 						handleDateChange={props.dateChanged}
 						handleGammaChange={props.gammaChanged}
-						handleElevationChange={props.elevationChanged}
+						handleExtraDimChange={props.extraDimChanged}
 						handleColorRampChange={props.colorRampChanged}
 						isRangeFilterInputsActive={state.isRangeFilterInputsActive}
 						handleRangeFilterInputsChange={this.updateRangeFilterInputsVisibility.bind(this)}
@@ -233,7 +234,7 @@ export default class Map extends Component<OurProps, OurState> {
 					<Timeserie
 						isSites={props.isSites}
 						isActive={state.isShowTimeserieActive}
-						varName={props.controls.variables.selected}
+						varName={props.controls.variables.selected?.shortName}
 						timeserieData={props.timeserieData}
 						latlng={props.latlng}
 						showTSSpinner={props.showTSSpinner}
