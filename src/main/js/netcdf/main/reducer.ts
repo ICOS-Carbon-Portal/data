@@ -23,7 +23,8 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 
 	if (payload instanceof ERROR) {
 		return update({
-			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0])
+			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0]),
+			controls: new ControlsHelper().copyWith({services: state.controls.services.withSelected(-1)})
 		});
 	}
 
@@ -56,6 +57,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof SERVICE_SET) {
 		return update({
 			raster: undefined,
+			toasterData: undefined,
 			controls: state.controls.copyWith({services: new Control([payload.service], 0)})
 		});
 	}
@@ -63,6 +65,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	else if (payload instanceof SERVICE_SELECTED) {
 		return update({
 			raster: undefined,
+			toasterData: undefined,
 			colorMaker: undefined,
 			controls: state.controls.withSelectedService(payload.idx),
 			timeserieParams: undefined

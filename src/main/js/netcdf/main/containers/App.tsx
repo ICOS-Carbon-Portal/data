@@ -21,19 +21,17 @@ class App extends Component<AppProps> {
 	render() {
 		const props = this.props;
 
-		if (props.toasterData) {
-			return (
-				<AnimatedToasters
+		return <React.Fragment>
+			{props.toasterData
+				? <AnimatedToasters
 					autoCloseDelay={null}
 					fadeInTime={100}
 					fadeOutTime={400}
 					toasterData={props.toasterData}
 					maxWidth={400}
 				/>
-			);
-		}
-
-		return (
+				: null
+			}
 			<ErrorBoundary failWithError={props.failWithError}>
 				<Map
 					isSites={props.isSites}
@@ -69,8 +67,7 @@ class App extends Component<AppProps> {
 					setRangeFilter={props.setRangeFilter}
 				/>
 			</ErrorBoundary>
-			
-		);
+		</React.Fragment>
 	}
 }
 

@@ -31,12 +31,14 @@ class ViewServiceFactory(folder: Path, config: NetCdfViewServiceConfig):
 	def getNetCdfFiles(): IndexedSeq[String] =
 		val file = folder.toFile
 		if !file.exists() || !file.isDirectory()
-		then throw new Exception(s"No folder on the server at path $folder") with NoStackTrace
+		then fail(s"No folder on the server at path $folder")
 		file.list((_, fn) => fn.endsWith(".nc")).toIndexedSeq
 
 	def getNetCdfViewService(fileName: String) =
 		NetCdfViewService(folder.resolve(fileName), config)
 
+
+def fail(msg: String): Nothing = throw new Error(msg) with NoStackTrace
 
 object NetCdfViewService:
 	val MaxDiscrDimSize = 100
@@ -47,7 +49,10 @@ object NetCdfViewService:
 	)
 
 	def getDateParser(timeVar: Variable): Double => CalendarDate =
-		val unit = timeVar.attributes().findAttribute("units").getStringValue
+		val unitsAttr = timeVar.attributes().findAttribute("units")
+		if unitsAttr == null then
+			fail(s"No 'units' attribute on variable ${timeVar.getShortName}")
+		val unit = unitsAttr.getStringValue
 		val timeHelper = new CoordinateAxisTimeHelper(Calendar.gregorian, unit)
 		timeHelper.makeCalendarDateFromOffset
 
@@ -95,7 +100,7 @@ object NetCdfViewService:
 
 		def findOneDimVar(kind: String, options: Seq[String]): String =
 			options.find(simpleDescribedDims.contains).getOrElse(
-				throw new Exception(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
+				fail(s"No $kind one-dimensional variable found in NetCDF. Expected one of: ${options.mkString(", ")}")
 			)
 
 		val dateVar = findOneDimVar("date", conf.dateVars)
