@@ -70,7 +70,8 @@ export const getServices = () => {
 };
 
 export const getTimeserie = ({ objId, variable, extraDimInd, x, y }: TimeserieParams): Promise<number[]> => {
-	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}&extraDimInd=${extraDimInd}&lonInd=${x}&latInd=${y}`);
+	const extraDim = extraDimInd == null ? "" : `&extraDimInd=${extraDimInd}`
+	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}${extraDim}&lonInd=${x}&latInd=${y}`);
 };
 
 export const getMetadata = (objId: string): Promise<DataObject> => {

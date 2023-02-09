@@ -44,9 +44,11 @@ object Main extends App {
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
 
-	private def netcdfVcf(folder: Path) = ViewServiceFactory(folder, config.netcdf)
-	val netcdfRoute = NetcdfRoute(netcdfVcf(uploadService.folder.toPath.resolve("netcdf/"))).cp
-	val legacyNetcdfRoute = NetcdfRoute(netcdfVcf(Path.of(config.netcdf.folder))).plain
+	val netcdfRouting = NetcdfRoutes(
+		uploadService.folder.toPath.resolve("netcdf/"),
+		Path.of(config.netcdf.folder),
+		config.netcdf
+	)
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
@@ -88,8 +90,8 @@ object Main extends App {
 				redirect(s"/portal/$urlHash", StatusCodes.Found)
 			}
 		} ~
-		netcdfRoute ~
-		legacyNetcdfRoute ~
+		netcdfRouting.dataObjects ~
+		netcdfRouting.dataDemo ~
 		csvRouting.route ~
 		downloadRouting.route ~
 		uploadRoute ~

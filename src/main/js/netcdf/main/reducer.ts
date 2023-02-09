@@ -24,6 +24,8 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 	if (payload instanceof ERROR) {
 		return update({
 			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0]),
+			showTSSpinner: false,
+			isFetchingTimeserieData: false,
 			controls: new ControlsHelper().copyWith({services: state.controls.services.withSelected(-1)})
 		});
 	}

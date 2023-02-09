@@ -92,15 +92,21 @@ export const fetchTimeSerie = (params: TimeserieParams): NetCDFThunkAction<void>
 
 	const showSpinnerTimer = setTimeout(() => dispatch(new TOGGLE_TS_SPINNER(true)), 300);
 
-	getTimeserie(params).then(yValues => {
-		clearTimeout(showSpinnerTimer);
+	getTimeserie(params).then(
+		yValues => {
+			clearTimeout(showSpinnerTimer);
 
-		if (yValues.length > 0) {
-			dispatch(new TOGGLE_TS_SPINNER(false));
-			dispatch(new TIMESERIE_FETCHED(yValues, params));
+			if (yValues.length > 0) {
+				dispatch(new TOGGLE_TS_SPINNER(false));
+				dispatch(new TIMESERIE_FETCHED(yValues, params));
+			}
+		},
+		err => {
+			clearTimeout(showSpinnerTimer)
+			dispatch(failWithError(err))
 		}
-	});
-};
+	)
+}
 
 export const resetTimeserieData: NetCDFThunkAction<void> = dispatch => {
 	dispatch(new TIMESERIE_RESET());

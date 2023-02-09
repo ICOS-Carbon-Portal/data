@@ -51,7 +51,7 @@ object NetCdfViewService:
 	def getDateParser(timeVar: Variable): Double => CalendarDate =
 		val unitsAttr = timeVar.attributes().findAttribute("units")
 		if unitsAttr == null then
-			fail(s"No 'units' attribute on variable ${timeVar.getShortName}")
+			fail(s"No 'units' attribute on variable '${timeVar.getShortName}'")
 		val unit = unitsAttr.getStringValue
 		val timeHelper = new CoordinateAxisTimeHelper(Calendar.gregorian, unit)
 		timeHelper.makeCalendarDateFromOffset
