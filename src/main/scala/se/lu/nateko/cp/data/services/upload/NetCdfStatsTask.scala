@@ -48,7 +48,7 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 	private def readNetCdf(using ExecutionContext): Future[NetCdfExtract] =
 		Future{
 			val service = NetCdfViewService(file.toPath, config)
-			val availableVars = service.getVariables.toSet
+			val availableVars = service.getVariables.map(_.shortName).toSet
 			val missingVariables = varNames.filterNot(availableVars.contains)
 
 			if(!missingVariables.isEmpty) throw new CpDataParsingException({
@@ -63,8 +63,8 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 			//the following code block is to test readability and crash if the test fails
 			service.getAvailableDates
 			varNames.foreach{varName =>
-				val elevation0 = service.getAvailableElevations(varName).indices.headOption
-				service.getRaster(0, varName, elevation0)
+				val extraIdxOpt = service.getVariables.find(_.shortName == varName).flatMap(_.extra).map(_ => 0)
+				service.getRaster(0, varName, extraIdxOpt)
 			}
 
 			val varInfoFuts = varNames.map(NetcdfUtil.calcMinMax(file, _))

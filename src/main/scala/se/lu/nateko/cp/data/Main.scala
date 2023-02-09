@@ -45,8 +45,8 @@ object Main extends App {
 	val integrityService = new IntegrityControlService(uploadService)
 
 	private def netcdfVcf(folder: Path) = ViewServiceFactory(folder, config.netcdf)
-	val netcdfRoute = NetcdfRoute.cp(netcdfVcf(uploadService.folder.toPath.resolve("netcdf/")))
-	val legacyNetcdfRoute = NetcdfRoute(netcdfVcf(Path.of(config.netcdf.folder)))
+	val netcdfRoute = NetcdfRoute(netcdfVcf(uploadService.folder.toPath.resolve("netcdf/"))).cp
+	val legacyNetcdfRoute = NetcdfRoute(netcdfVcf(Path.of(config.netcdf.folder))).plain
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route

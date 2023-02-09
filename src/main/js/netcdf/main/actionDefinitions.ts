@@ -4,6 +4,7 @@ import { DataObject } from "../../common/main/metacore";
 import { RangeFilter, TimeserieParams } from "./models/State";
 import { ControlsHelper } from "./models/ControlsHelper";
 import { BinRaster } from "icos-cp-backend";
+import { VariableInfo } from "./backend";
 
 
 export abstract class ActionPayload { }
@@ -30,10 +31,7 @@ export class SERVICE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
 }
 export class VARIABLES_AND_DATES_FETCHED extends ActionPayload {
-	constructor(readonly service: string, readonly variables: string[], readonly dates: string[]) { super(); }
-}
-export class ELEVATIONS_FETCHED extends ActionPayload {
-	constructor(readonly service: string, readonly variable: string, readonly elevations: number[]) { super(); }
+	constructor(readonly service: string, readonly variables: VariableInfo[], readonly dates: string[]) { super(); }
 }
 export class VARIABLE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
@@ -41,7 +39,7 @@ export class VARIABLE_SELECTED extends ActionPayload {
 export class DATE_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
 }
-export class ELEVATION_SELECTED extends ActionPayload {
+export class EXTRA_DIM_SELECTED extends ActionPayload {
 	constructor(readonly idx: number) { super(); }
 }
 export class DELAY_SELECTED extends ActionPayload {

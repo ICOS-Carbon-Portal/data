@@ -59,7 +59,7 @@ export type TimeserieData = [Date | number, number]
 export type TimeserieParams = {
 	objId: string
 	variable: string
-	elevation: number | null,
+	extraDimInd: number | null,
 	x: number,
 	y: number,
 	latlng: Latlng
@@ -80,12 +80,10 @@ export interface State {
 		ts: number,
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
-	lastElevation?: number
 	initSearchParams: {
 		varName: string
 		date: string
 		gamma: string
-		elevation: number | null
 		center: string
 		zoom: string
 		color: string
@@ -102,8 +100,6 @@ export interface State {
 	showTSSpinner: boolean
 }
 
-const urlQueryElevation = Number.parseFloat(searchParams.elevation)
-
 const defaultState: State = {
 	isSites,
 	isPIDProvided,
@@ -119,12 +115,10 @@ const defaultState: State = {
 		ts: 0,
 		data: undefined
 	},
-	lastElevation: undefined,
 	initSearchParams: {
 		varName: searchParams.varName,
 		date: searchParams.date,
 		gamma: searchParams.gamma,
-		elevation: isNaN(urlQueryElevation) ? null : urlQueryElevation,
 		center: searchParams.center,
 		zoom: searchParams.zoom,
 		color: searchParams.color,

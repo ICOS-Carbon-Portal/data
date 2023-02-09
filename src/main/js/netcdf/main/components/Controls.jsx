@@ -14,15 +14,17 @@ export default class Controls extends Component {
 		};
 	}
 
-	variablePresenter(key){
-		return this.props.variableEnhancer[key] ?? key;
+	variablePresenter(v){
+		const lbl = v.shortName
+		return this.props.variableEnhancer[lbl] ?? lbl;
 	}
 
 	render(){
 		const props = this.props;
 		const controls = props.controls;
 
-		const elevationsStyle = controls.elevations.selected ? 'inline' : 'none';
+		const extraDimCaption = controls.variables.selected?.extra?.name ?? "Extra dimenstion"
+		const extraDimsStyle = controls.extraDim.selected ? 'inline' : 'none';
 		const playClass = `fas fa-${props.playingMovie ? 'pause' : 'play'}-circle`;
 		const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
 
@@ -43,6 +45,10 @@ export default class Controls extends Component {
 				}
 				<div className={getClassName(2, props.isPIDProvided)}>
 					<Selector className="variables" caption="Variable" presenter={this.variablePresenter.bind(this)} control={controls.variables} action={props.handleVarNameChange}/>
+				</div>
+
+				<div className="col-md-1" style={{display: extraDimsStyle}}>
+					<Selector caption={extraDimCaption} control={controls.extraDim} action={props.handleExtraDimChange}/>
 				</div>
 
 				<div className={getClassName(2, props.isPIDProvided)}>
@@ -68,12 +74,8 @@ export default class Controls extends Component {
 					<Selector className="delays" caption="Playback speed" presenter={delayPresenter} control={controls.delays} action={props.delayChanged}/>
 				</div>
 
-				<div className="col-md-1" style={{display: elevationsStyle}}>
-					<Selector className="elevations" caption="Elevations" control={controls.elevations} action={props.handleElevationChange}/>
-				</div>
-
 				<div className="col-md-1" style={{minWidth: 190}}>
-					<div style={{ fontWeight: 'bold' }}>Map color:</div>
+					<div style={{ fontWeight: 'bold' }}>Colormap:</div>
 					<DropdownColors control={controls.colorMaps} action={props.handleColorRampChange} />
 				</div>
 

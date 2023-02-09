@@ -9,8 +9,20 @@ export interface RasterRequest{
 	service: string
 	variable: string
 	dateIdx: number
-	elevationIdx: number | null
+	extraDimIdx: number | null
 }
+
+export interface VariableInfo{
+	shortName: string
+	longName?: string
+	extra?: DiscriminatingDimension
+}
+
+export interface DiscriminatingDimension{
+	name: string
+	labels: string[]
+}
+
 class RasterFetcher {
 	private _lastFetched: number;
 
@@ -34,9 +46,9 @@ export function getRasterId(req: RasterRequest): string {
 	const components: Array<string | number> = [
 		'service_', req.service, '_var_', req.variable, '_date_', req.dateIdx
 	]
-	if(req.elevationIdx !== null && req.elevationIdx >= 0){
-		components.push('_elevation_')
-		components.push(req.elevationIdx)
+	if(req.extraDimIdx !== null && req.extraDimIdx >= 0){
+		components.push('_extraDim_')
+		components.push(req.extraDimIdx)
 	}
 	return components.join("")
 }
@@ -47,22 +59,18 @@ export const getCountriesGeoJson = () => {
 };
 
 export function getVariablesAndDates(service: string){
-	const vars: Promise<string[]> = getJson('/netcdf/listVariables', ['service', service])
+	const vars: Promise<VariableInfo[]> = getJson('/netcdf/listVariables', ['service', service])
 	const dates: Promise<string[]> = getJson('/netcdf/listDates', ['service', service])
 
 	return Promise.all([vars, dates]).then(([variables, dates]) => ({variables, dates}))
-}
-
-export function getElevations(service: string, variable: string): Promise<number[]>{
-	return getJson('/netcdf/listElevations', ['service', service], ['varName', variable]);
 }
 
 export const getServices = () => {
 	return getJson('/netcdf/listNetCdfFiles');
 };
 
-export const getTimeserie = ({ objId, variable, elevation, x, y }: TimeserieParams): Promise<number[]> => {
-	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}&elevation=${elevation}&lonInd=${x}&latInd=${y}`);
+export const getTimeserie = ({ objId, variable, extraDimInd, x, y }: TimeserieParams): Promise<number[]> => {
+	return getJson(`/netcdf/getCrossSection?service=${objId}&varName=${variable}&extraDimInd=${extraDimInd}&lonInd=${x}&latInd=${y}`);
 };
 
 export const getMetadata = (objId: string): Promise<DataObject> => {
@@ -73,7 +81,7 @@ export const getMetadata = (objId: string): Promise<DataObject> => {
 
 function getRaster(req: RasterRequest): Promise<BinRaster> {
 
-	const {service, variable, dateIdx, elevationIdx} = req
+	const {service, variable, dateIdx, extraDimIdx} = req
 
 	const queryParts = new Array<[string, string]>(
 		['service', service],
@@ -81,8 +89,8 @@ function getRaster(req: RasterRequest): Promise<BinRaster> {
 		['dateInd', dateIdx.toString()]
 	)
 
-	if (elevationIdx !== null && elevationIdx >= 0){
-		queryParts.push(['elevationInd', elevationIdx.toString()])
+	if (extraDimIdx !== null && extraDimIdx >= 0){
+		queryParts.push(['extraDimInd', extraDimIdx.toString()])
 	}
 
 	return fetch(

@@ -1,11 +1,11 @@
 import {
-	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getElevations, getServices,
+	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getServices,
 	getTimeserie, getMetadata, getRasterId} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
 import { NetCDFDispatch, NetCDFThunkAction } from './store';
 import {
-	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, ELEVATIONS_FETCHED, ELEVATION_SELECTED,
+	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, EXTRA_DIM_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
 	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
@@ -80,26 +80,12 @@ const fetchVariablesAndDates: NetCDFThunkAction<void> = (dispatch, getState) => 
 	getVariablesAndDates(service).then(
 		({ variables, dates }) => {
 			dispatch(new VARIABLES_AND_DATES_FETCHED(service, variables, dates));
-			dispatch(fetchElevations);
-		},
-		err => dispatch(failWithError(err))
-	);
-};
-
-const fetchElevations: NetCDFThunkAction<void> = (dispatch, getState) => {
-	const {services, variables} = getState().controls;
-	const service = services.selected
-	const variable = variables.selected
-	if(service === null || variable === null) return
-
-	getElevations(service, variable).then(
-		elevations => {
-			dispatch(new ELEVATIONS_FETCHED(service, variable, elevations));
 			dispatch(fetchRasterData);
 		},
 		err => dispatch(failWithError(err))
 	);
 };
+
 
 export const fetchTimeSerie = (params: TimeserieParams): NetCDFThunkAction<void> => dispatch => {
 	dispatch(new FETCHING_TIMESERIE());
@@ -134,6 +120,7 @@ const fetchRasterData: NetCDFThunkAction<void> = (dispatch, getState) => {
 	const {controls, playingMovie} = getState()
 
 	const request = controls.rasterRequest
+
 	if(request === undefined) return
 
 	const delay = playingMovie ? (controls.delays.selected ?? 200) : 0
@@ -160,12 +147,13 @@ export const incrementIfNeeded: NetCDFThunkAction<void> = (dispatch, getState) =
 
 export const selectVariable = (idx: number): NetCDFThunkAction<void> => (dispatch, getState) => {
 	dispatch(new VARIABLE_SELECTED(idx));
-	dispatch(fetchElevations);
+	dispatch(fetchRasterData)
 
 	const {timeserieParams, controls} = getState();
+	const variable = controls.variables.selected?.shortName
 
-	if (timeserieParams) {
-		const params = Object.assign({}, timeserieParams, {variable: controls.variables.selected});
+	if (timeserieParams && variable) {
+		const params: TimeserieParams = Object.assign({}, timeserieParams, {variable});
 		dispatch(fetchTimeSerie(params));
 	}
 };
@@ -175,8 +163,8 @@ export const selectDate = (idx: number): NetCDFThunkAction<void> => dispatch => 
 	dispatch(fetchRasterData);
 };
 
-export const selectElevation = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new ELEVATION_SELECTED(idx));
+export const selectExtraDim = (idx: number): NetCDFThunkAction<void> => dispatch => {
+	dispatch(new EXTRA_DIM_SELECTED(idx));
 	dispatch(fetchRasterData);
 };
 

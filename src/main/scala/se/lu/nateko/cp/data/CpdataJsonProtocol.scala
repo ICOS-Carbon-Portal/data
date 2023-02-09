@@ -9,6 +9,8 @@ import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.crypto.JsonSupport.given
 import spray.json.*
 import DefaultJsonProtocol.*
+import se.lu.nateko.cp.data.formats.netcdf.VariableInfo
+import se.lu.nateko.cp.data.formats.netcdf.DiscriminatingDimension
 
 object CpdataJsonProtocol extends CommonJsonSupport {
 
@@ -49,4 +51,6 @@ object CpdataJsonProtocol extends CommonJsonSupport {
 	}
 
 	given RootJsonFormat[BinTableRequest] = jsonFormat5(BinTableRequest.apply)
+	given RootJsonFormat[DiscriminatingDimension] = jsonFormat2(DiscriminatingDimension.apply)
+	given varInfoFormat: RootJsonFormat[VariableInfo] = jsonFormat3(VariableInfo.apply)
 }

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import Map from '../components/Map';
-import {selectService, selectVariable, selectDate, selectElevation, selectGamma, selectDelay, pushPlayButton,
+import {selectService, selectVariable, selectDate, selectExtraDim, selectGamma, selectDelay, pushPlayButton,
 	incrementRasterData, fetchTimeSerie, resetTimeserieData, selectColorRamp, setRangeFilter, failWithError} from '../actions';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import { RangeFilter, State, TimeserieParams } from '../models/State';
@@ -47,7 +47,7 @@ class App extends Component<AppProps> {
 					countriesTopo={props.countriesTopo}
 					dateChanged={props.dateChanged}
 					delayChanged={props.delayChanged}
-					elevationChanged={props.elevationChanged}
+					extraDimChanged={props.extraDimChanged}
 					gammaChanged={props.gammaChanged}
 					colorRampChanged={props.colorRampChanged}
 					increment={props.increment}
@@ -83,7 +83,7 @@ const dispatchToProps = (dispatch: NetCDFDispatch) => {
 		serviceChanged: (newIdx: number) => dispatch(selectService(newIdx)),
 		variableChanged: (newIdx: number) => dispatch(selectVariable(newIdx)),
 		dateChanged: (newIdx: number) => dispatch(selectDate(newIdx)),
-		elevationChanged: (newIdx: number) => dispatch(selectElevation(newIdx)),
+		extraDimChanged: (newIdx: number) => dispatch(selectExtraDim(newIdx)),
 		delayChanged: (newIdx: number) => dispatch(selectDelay(newIdx)),
 		gammaChanged: (newIdx: number) => dispatch(selectGamma(newIdx)),
 		increment: (direction: number) => dispatch(incrementRasterData(direction)),
