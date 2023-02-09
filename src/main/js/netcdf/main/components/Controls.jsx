@@ -75,7 +75,7 @@ export default class Controls extends Component {
 				</div>
 
 				<div className="col-md-1" style={{minWidth: 190}}>
-					<div style={{ fontWeight: 'bold' }}>Map color:</div>
+					<div style={{ fontWeight: 'bold' }}>Colormap:</div>
 					<DropdownColors control={controls.colorMaps} action={props.handleColorRampChange} />
 				</div>
 

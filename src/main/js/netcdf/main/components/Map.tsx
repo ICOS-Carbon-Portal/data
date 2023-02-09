@@ -65,7 +65,7 @@ export default class Map extends Component<OurProps, OurState> {
 		if (this.props.isPIDProvided && this.props.rasterFetchCount > 0) {
 			const {dates, extraDim, gammas, variables, colorMaps} = this.props.controls;
 			const variable = variables.selected
-			if (this.prevVariables === undefined || this.prevVariables.selected !== variable) {
+			if (this.prevVariables === undefined || this.prevVariables.selected?.shortName !== variable?.shortName) {
 				this.prevVariables = variables
 				if (variable !== null) saveToRestheart(formatData({objId: this.objId, variable: variable.shortName}))
 			}
@@ -73,7 +73,7 @@ export default class Map extends Component<OurProps, OurState> {
 			const dateParam = dates.selected ? `date=${dates.selected}` : undefined;
 			const extraDimParam = extraDim.selected !== null ? `extraDim=${extraDim.selected}` : undefined;
 			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : undefined;
-			const varNameParam = variables.selected ? `varName=${variables.selected}` : undefined;
+			const varNameParam = variables.selected ? `varName=${variables.selected.shortName}` : undefined;
 			const center = this.center ? `center=${this.center}` : undefined;
 			const zoom = this.zoom ? `zoom=${this.zoom}` : undefined;
 			const color = colorMaps.selected ? `color=${colorMaps.selected.name}` : undefined;
