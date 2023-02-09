@@ -154,7 +154,8 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		val pathStr = ncFile.toAbsolutePath.toString
 		Using(NetcdfDatasets.openDataset(pathStr))(action).fold({
 			case exc: Throwable =>
-				throw new IOException(s"Problem reading netcdf ${ncFile.getFileName}: ${exc.getMessage}", exc)
+				val msg = s"Problem reading netcdf ${ncFile.getFileName}: ${exc.getMessage}"
+				throw new IOException(msg, exc) with NoStackTrace
 		}, identity)
 
 

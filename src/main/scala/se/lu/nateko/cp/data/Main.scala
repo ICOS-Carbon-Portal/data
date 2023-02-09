@@ -88,8 +88,8 @@ object Main extends App {
 				redirect(s"/portal/$urlHash", StatusCodes.Found)
 			}
 		} ~
-		legacyNetcdfRoute ~
 		netcdfRoute ~
+		legacyNetcdfRoute ~
 		csvRouting.route ~
 		downloadRouting.route ~
 		uploadRoute ~

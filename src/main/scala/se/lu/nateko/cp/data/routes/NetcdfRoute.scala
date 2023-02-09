@@ -18,7 +18,7 @@ class NetcdfRoute(factory: ViewServiceFactory) extends SprayRouting:
 	private given ToResponseMarshaller[Raster] = RasterMarshalling.marshaller
 
 	def cp: Route = route(netCdfDataObjService)
-	def plain: Route = route(netCdfPlainFileService)
+	def plain: Route = route(netCdfPlainFileService, showFiles = true)
 
 	def netCdfPlainFileService: Directive1[NetCdfViewService] =
 		parameter("service").map(factory.getNetCdfViewService)
@@ -30,10 +30,11 @@ class NetcdfRoute(factory: ViewServiceFactory) extends SprayRouting:
 		)
 		parameter("service".as[Sha256Sum]).map(hash => factory.getNetCdfViewService(hash.id))
 
-	private def route(extractNetcdfService: Directive1[NetCdfViewService]): Route =
+	private def route(extractNetcdfService: Directive1[NetCdfViewService], showFiles: Boolean = false): Route =
 		(get & pathPrefix("netcdf")){
 			path("listNetCdfFiles"){
-				complete(factory.getNetCdfFiles())
+				if !showFiles then reject
+				else complete(factory.getNetCdfFiles())
 			} ~
 			extractNetcdfService{service =>
 				path("listDates"){
