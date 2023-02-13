@@ -41,7 +41,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import DownloadRouting.{getClientIp, respondWithAttachment, getContentType}
+import DownloadRouting.{getClientIp, getUserAgent, respondWithAttachment, getContentType}
 import UploadRouting.Sha256Segment
 
 
@@ -70,14 +70,15 @@ class ZipRouting(
 			case Success(in) =>
 				val fileName = filePath.split("/").last
 
-				getClientIp{ip =>
+				(getClientIp & getUserAgent){(ip, agentOpt) =>
 					val dlInfo = ZipExtractionInfo(
 						time = Instant.now(),
 						ip = ip,
 						hashId = hashId,
 						zipEntryPath = decodedPath,
 						cpUser = uid.map(authRouting.anonymizeCpUser),
-						localOrigin = localOrigin
+						localOrigin = localOrigin,
+						userAgent = agentOpt
 					)
 
 					logClient.logDownload(dlInfo)

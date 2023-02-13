@@ -348,6 +348,8 @@ object DownloadRouting{
 		)
 	}
 
+	val getUserAgent: Directive1[Option[String]] = optionalHeaderValueByType(`User-Agent`).map(_.map(_.value))
+
 	def toGoodIpAddress(ip: String): Option[String] = {
 		val trimmed = ip.trim
 		if(trimmed.isEmpty) None else try{

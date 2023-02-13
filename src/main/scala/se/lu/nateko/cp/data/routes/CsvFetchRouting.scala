@@ -29,7 +29,7 @@ class CsvFetchRouting(
 	authRouting: AuthRouting
 )(implicit envriConf: EnvriConfigs) {
 	import UploadRouting.requireShaHash
-	import DownloadRouting.getClientIp
+	import DownloadRouting.{getClientIp, getUserAgent}
 	import authRouting.user
 	private val fetcher = new BinTableCsvReader(upload)
 
@@ -55,15 +55,14 @@ class CsvFetchRouting(
 			onSuccess(fetcher.csvSource(hash, onlyColumnsOpt, offsetOpt, limitOpt)){case (src, fileName) =>
 				val csvSelect = DownloadEventInfo.CsvSelect(onlyColumnsOpt.map(_.toIndexedSeq), offsetOpt, limitOpt)
 				val anonUser = Some(authRouting.anonymizeCpUser(uid))
-				val dlInfo = CsvDownloadInfo(Instant.now(), ip, hash.id, anonUser, csvSelect)
-				logClient.logDownload(dlInfo)
-				respondWithAttachment(fileName){
-					complete(
-						HttpEntity(
-							ContentTypes.`text/csv(UTF-8)`,
-							src.map(s => ByteString(s))
+				getUserAgent{agentOpt =>
+					val dlInfo = CsvDownloadInfo(Instant.now(), ip, hash.id, anonUser, agentOpt, csvSelect)
+					logClient.logDownload(dlInfo)
+					respondWithAttachment(fileName){
+						complete(
+							HttpEntity(ContentTypes.`text/csv(UTF-8)`, src.map(s => ByteString(s)))
 						)
-					)
+					}
 				}
 			}
 		}

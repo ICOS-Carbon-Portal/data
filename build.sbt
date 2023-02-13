@@ -76,9 +76,9 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.7.1",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.8.0",
 			metaCoreModule  excludeAll("io.spray"),
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.4",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.5",
 			"org.postgresql"      % "postgresql"                         % "42.2.12",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 

@@ -32,7 +32,7 @@ class CpbFetchRouting(
 	authRouting: AuthRouting
 )(using envriConf: EnvriConfigs) {
 
-	import DownloadRouting.getClientIp
+	import DownloadRouting.{getClientIp, getUserAgent}
 	import authRouting.userOpt
 
 	val extractEnvri = UploadRouting.extractEnvriDirective
@@ -89,7 +89,7 @@ class CpbFetchRouting(
 
 	private def fetchCpbRoute(uid: Option[UserId], localOrigin: Option[String])(using Envri): Route =
 		entity(as[BinTableRequest]){ tableRequest =>
-			getClientIp{ip =>
+			(getClientIp & getUserAgent){(ip, agentOpt) =>
 				val dlInfo = CpbDownloadInfo(
 					time = Instant.now(),
 					ip = ip,
@@ -99,7 +99,8 @@ class CpbFetchRouting(
 					slice = tableRequest.slice.map{bts =>
 						DownloadEventInfo.CpbSlice(bts.offset, bts.length)
 					},
-					localOrigin = localOrigin
+					localOrigin = localOrigin,
+					userAgent = agentOpt
 				)
 				logClient.logDownload(dlInfo)
 				returnBinary(tableRequest)
