@@ -86,16 +86,25 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 		}
 	}
 
-	def lookupObjFormat(dobj: Sha256Sum)(using Envri): Future[URI] = withEnvriConfig{
+	/**
+	 * returns Some(format) for data objects, None for document objects, fails for rest
+	*/
+	def lookupObjFormat(dobj: Sha256Sum)(using Envri): Future[Option[URI]] = withEnvriConfig{
 		val dobjUri = staticObjLandingPage(dobj)
 		val query = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 			|select * where{
-			|	<$dobjUri> cpmeta:hasObjectSpec/cpmeta:hasFormat ?format
+			|	{<$dobjUri> cpmeta:hasObjectSpec/cpmeta:hasFormat ?format}
+			|	UNION
+			|	{
+			|		<$dobjUri> a cpmeta:DocumentObject .
+			|		BIND ("" AS ?format)
+			|	}
 			|}""".stripMargin
 
 		sparql.selectMap(query)(
 			_.get("format").collect{
-				case BoundUri(format) => format
+				case BoundUri(format) => Some(format)
+				case BoundLiteral(_, _) => None
 			}
 		).map(_.headOption.getOrElse(throw new MetadataObjectNotFound(dobj)))
 	}
