@@ -43,6 +43,7 @@ import scala.util.Try
 
 import DownloadRouting.{getClientIp, getUserAgent, respondWithAttachment, getContentType}
 import UploadRouting.Sha256Segment
+import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 
 
 class ZipRouting(
@@ -97,9 +98,13 @@ class ZipRouting(
 		get {
 			pathPrefix(Sha256Segment){ implicit hash =>
 				path("listContents"){
-					val entriesFut = upload.meta.lookupObjFormat(hash).flatMap{ formatUri =>
-						val file = upload.getFile(Some(formatUri), hash)
-						Future.fromTry(zip.listEntries(file))
+					val entriesFut = upload.meta.lookupObjFormat(hash)
+					.transform{
+						case Failure(exception: MetadataObjectNotFound) => {
+							zip.listEntries(upload.getDoc(hash))
+						}
+						case Success(formatUri) =>
+							zip.listEntries(upload.getFile(Some(formatUri), hash))
 					}
 					onSuccess(entriesFut){entries =>
 						respondWithHeader(`Access-Control-Allow-Origin`.`*`){

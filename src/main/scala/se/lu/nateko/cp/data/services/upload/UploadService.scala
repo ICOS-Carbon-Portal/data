@@ -130,6 +130,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def getFile(dataObj: StaticObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
 	def getFile(format: Option[URI], hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
+	def getDoc(hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, "documents/" + fileName(hash)).toFile
 
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
