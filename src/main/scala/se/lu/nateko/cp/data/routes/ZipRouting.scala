@@ -34,7 +34,6 @@ import java.io.InputStream
 import java.net.URLDecoder
 import java.time.Instant
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
@@ -58,7 +57,7 @@ class ZipRouting(
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
 	def extractFile(dobj: StaticObject, decodedPath: String): Try[InputStream] =
-		val zipFile = ZipFile(upload.getFile(dobj).toPath.toString)
+		val zipFile = zip.open(upload.getFile(dobj))
 		val zipEntry = zipFile.getEntry(decodedPath)
 
 		Try(zipFile.getInputStream(zipEntry))

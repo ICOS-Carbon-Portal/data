@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.ExceptionHandler
@@ -78,7 +79,9 @@ object Main extends App {
 			val trace = traceWriter.toString
 			val exMsg = ex.getMessage
 			val msg = if(exMsg == null || exMsg.isEmpty) ex.getClass.getName else exMsg
-			complete((StatusCodes.InternalServerError, s"$msg\n$trace"))
+			respondWithHeader(`Access-Control-Allow-Origin`.`*`){
+				complete((StatusCodes.InternalServerError, s"$msg\n$trace"))
+			}
 	}
 
 	val route = handleExceptions(exceptionHandler){

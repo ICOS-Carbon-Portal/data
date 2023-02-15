@@ -5,8 +5,8 @@ import akka.stream.scaladsl.StreamConverters
 
 import java.io.File
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
+import se.lu.nateko.cp.data.formats.zip
 
 import ZipEntryFlow.{FileEntry, FileLikeSource}
 
@@ -14,11 +14,11 @@ object ZipEntrySource:
 
 	def fileEntry(zipFile: File, entry: ZipEntry)(using ExecutionContext): FileEntry =
 		val source: FileLikeSource = Source
-			.lazySingle(() => ZipFile(zipFile))
-			.flatMapConcat(zip =>
+			.lazySingle(() => zip.open(zipFile))
+			.flatMapConcat(zipFile =>
 				StreamConverters
-					.fromInputStream(() => zip.getInputStream(entry))
-					.mapMaterializedValue(_.onComplete(_ => zip.close()))
+					.fromInputStream(() => zipFile.getInputStream(entry))
+					.mapMaterializedValue(_.onComplete(_ => zipFile.close()))
 			)
 		val targetEntry = ZipEntry(entry.getName)
 		targetEntry.setTime(entry.getTime)

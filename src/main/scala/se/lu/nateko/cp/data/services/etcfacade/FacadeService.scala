@@ -23,6 +23,7 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntrySource
 import se.lu.nateko.cp.data.utils.akka.Debouncer
 import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.DataType
@@ -42,7 +43,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneOffset
-import java.util.zip.ZipFile
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
@@ -338,7 +338,7 @@ object FacadeService:
 			.run()
 
 	def setLastModifiedFromZipContents(zipFile: Path, log: LoggingAdapter): Unit =
-		Using(ZipFile(zipFile.toFile))(
+		Using(zip.open(zipFile.toFile))(
 			_.entries().nextElement().getLastModifiedTime
 		)
 		.map(Files.setLastModifiedTime(zipFile, _))
