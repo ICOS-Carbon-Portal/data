@@ -83,6 +83,7 @@ function getHeight(previewType?: PreviewType): number {
 function shouldUpdateHeight(previewType?: PreviewType): boolean {
 	switch (previewType) {
 		case config.NETCDF: return false;
+		case config.PHENOCAM: return false;
 		default: return true;
 	}
 }
