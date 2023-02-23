@@ -12,7 +12,6 @@ import CollectionBtn from '../buttons/CollectionBtn';
 
 const truncateStyle: CSSProperties = {
 	maxWidth: '100%',
-	whiteSpace: 'nowrap',
 	overflow: 'hidden',
 	textOverflow: 'ellipsis'
 };
@@ -130,7 +129,7 @@ const ExtendedInfoItem: React.FunctionComponent<ExtendedInfoItemProps> = ({ item
 
 	return (item && icon
 		? <span className="extended-info-item" title={title}>
-			<img src={icon} style={imgStyle}/> <span style={{verticalAlign: 'middle'}}>{item}</span>
+			<img src={icon} style={imgStyle}/> <span style={{verticalAlign: 'middle', overflowWrap: 'anywhere', whiteSpace: 'normal'}}>{item}</span>
 		</span>
 		: null
 	);
