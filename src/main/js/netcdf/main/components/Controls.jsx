@@ -36,27 +36,27 @@ export default class Controls extends Component {
 		const toPrevious = () => props.increment(-1);
 
 		return (
-			<div className="row" style={{marginTop: props.marginTop, marginBottom: 10}}>
+			<div className="d-flex gap-3 flex-wrap" style={{marginTop: props.marginTop, marginBottom: 10}}>
 				{!props.isPIDProvided
-					? <div className="col-md-3">
+					? <div>
 						<Selector className="variables" caption="Services" control={controls.services} action={props.handleServiceChange}/>
 					</div>
 					: null
 				}
-				<div className={getClassName(2, props.isPIDProvided)}>
+				<div>
 					<Selector className="variables" caption="Variable" presenter={this.variablePresenter.bind(this)} control={controls.variables} action={props.handleVarNameChange}/>
 				</div>
 
-				<div className="col-md-1" style={{display: extraDimsStyle}}>
+				<div style={{display: extraDimsStyle}}>
 					<Selector caption={extraDimCaption} control={controls.extraDim} action={props.handleExtraDimChange}/>
 				</div>
 
-				<div className={getClassName(2, props.isPIDProvided)}>
+				<div>
 					<Selector className="dates" caption="Date" control={controls.dates} action={props.handleDateChange} />
 				</div>
 
-				<div className="col-md-1" style={{minWidth: 120}}>
-					<div style={{fontWeight: 'bold'}}>Playback:</div>
+				<div>
+					<label className='form-label d-block fw-bold'>Playback</label>
 					<div className="btn-group" style={{minWidth: 120}}>
 						<button id="dateRev" className={btnCls} style={btnIconStyle} title="Reverse one time step" onClick={toPrevious}>
 							<span className="fas fa-caret-left" />
@@ -70,21 +70,21 @@ export default class Controls extends Component {
 					</div>
 				</div>
 
-				<div className="col-md-1" style={{ minWidth: 145 }}>
+				<div>
 					<Selector className="delays" caption="Playback speed" presenter={delayPresenter} control={controls.delays} action={props.delayChanged}/>
 				</div>
 
-				<div className="col-md-1" style={{minWidth: 190}}>
-					<div style={{ fontWeight: 'bold' }}>Colormap:</div>
+				<div>
+					<label className='form-label d-block fw-bold'>Colormap</label>
 					<DropdownColors control={controls.colorMaps} action={props.handleColorRampChange} />
 				</div>
 
-				<div className="col-md-1" style={{ minWidth: 110 }}>
+				<div>
 					<Selector className="gammas" caption="Color gamma" control={controls.gammas} action={props.handleGammaChange} />
 				</div>
 
-				<div className="col-md-1">
-					<div style={{fontWeight: 'bold'}}>Range:</div>
+				<div>
+					<label className='form-label d-block fw-bold'>Range</label>
 					<button className={btnCls} onClick={props.handleRangeFilterInputsChange}>
 						<span className={rangeFilterInputsBtnCls} />
 					</button>

@@ -83,6 +83,7 @@ export default class Map extends Component{
 				maxBounds: [[-90, -180],[90, 180]],
 				center: this.setInitCenterZoom ? this.initCenter : [0, 0],
 				zoom: this.setInitCenterZoom ? this.initZoom : 1,
+				scrollWheelZoom: false,
 				attributionControl: false
 			}
 		);

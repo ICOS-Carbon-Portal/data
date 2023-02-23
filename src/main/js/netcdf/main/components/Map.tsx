@@ -203,33 +203,34 @@ export default class Map extends Component<OurProps, OurState> {
 			props.initSearchParams.zoom,
 			raster
 		);
-		const containerHeight = state.height < minHeight ? minHeight : state.height;
+		const containerHeight = state.height < minHeight ? minHeight : state.height - 10;
 
 		return (
-			<div id="content" className="container-fluid">
+			<div id="content" className="container-fluid d-flex flex-column">
 				{!window.frameElement && props.title &&
 					<h2>{props.title}</h2>
 				}
 
-				<div id="map-container">
-					<Controls
-						isPIDProvided={props.isPIDProvided}
-						marginTop={5}
-						controls={props.controls}
-						variableEnhancer={props.variableEnhancer}
-						playingMovie={props.playingMovie}
-						increment={props.increment}
-						playPauseMovie={props.playPauseMovie}
-						delayChanged={props.delayChanged}
-						handleServiceChange={props.serviceChanged}
-						handleVarNameChange={props.variableChanged}
-						handleDateChange={props.dateChanged}
-						handleGammaChange={props.gammaChanged}
-						handleExtraDimChange={props.extraDimChanged}
-						handleColorRampChange={props.colorRampChanged}
-						isRangeFilterInputsActive={state.isRangeFilterInputsActive}
-						handleRangeFilterInputsChange={this.updateRangeFilterInputsVisibility.bind(this)}
-					/>
+				<Controls
+					isPIDProvided={props.isPIDProvided}
+					marginTop={5}
+					controls={props.controls}
+					variableEnhancer={props.variableEnhancer}
+					playingMovie={props.playingMovie}
+					increment={props.increment}
+					playPauseMovie={props.playPauseMovie}
+					delayChanged={props.delayChanged}
+					handleServiceChange={props.serviceChanged}
+					handleVarNameChange={props.variableChanged}
+					handleDateChange={props.dateChanged}
+					handleGammaChange={props.gammaChanged}
+					handleExtraDimChange={props.extraDimChanged}
+					handleColorRampChange={props.colorRampChanged}
+					isRangeFilterInputsActive={state.isRangeFilterInputsActive}
+					handleRangeFilterInputsChange={this.updateRangeFilterInputsVisibility.bind(this)}
+				/>
+
+				<div id="map-container" className='flex-grow-1'>
 
 					<Timeserie
 						isSites={props.isSites}

@@ -64,7 +64,7 @@ export class App extends Component {
 				/>
 
 				<div className="row">
-					<div className="col-md-9">
+					<div className="col-lg-9">
 						<div style={{position:'absolute', top:5, left:65, zIndex:999}}>
 							<Radio
 								horizontal={true}
@@ -85,7 +85,7 @@ export class App extends Component {
 						/>
 					</div>
 
-					<div className="col-md-3">
+					<div className="col-lg-3">
 						<Table
 							isTouchDevice={this.isTouchDevice}
 							binTableData={binTableData}

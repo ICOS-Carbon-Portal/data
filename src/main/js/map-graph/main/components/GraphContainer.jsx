@@ -5,12 +5,10 @@ import {debounce, Events} from 'icos-cp-utils';
 
 const errorStyle = {
 	display: 'none',
-	width:'99%',
-	height:'calc(55vh - 60px)',
+	height:'480px',
 	fontSize: '120%',
 	alignItems: 'center',
 	justifyContent: 'center',
-	position: 'absolute',
 	flexDirection: 'column'
 };
 
@@ -90,26 +88,20 @@ export default class GraphContainer extends Component{
 
 		return (
 			<Fragment>
-				<div className="row" style={{marginTop: 15}}>
-					<div className="col-md-10">
-						<Dropdown
-							buttonLbl="Select variable"
-							selectedItemKey={selectedItem1Key}
-							itemClickAction={selectVarY1}
-							selectOptions={selectOptions}
-						/>
+				<div className="d-flex flex-wrap justify-content-between" style={{marginTop: 15}}>
+					<Dropdown
+						buttonLbl="Select variable"
+						selectedItemKey={selectedItem1Key}
+						itemClickAction={selectVarY1}
+						selectOptions={selectOptions}
+					/>
 
-						<span ref={div => this.labelElement = div} style={{position:'absolute', bottom:10, marginLeft:10}} />
-					</div>
-
-					<div className="col-md-2">
-						<Dropdown
-							buttonLbl="Select variable"
-							selectedItemKey={selectedItem2Key}
-							itemClickAction={selectVarY2}
-							selectOptions={selectOptions}
-						/>
-					</div>
+					<Dropdown
+						buttonLbl="Select variable"
+						selectedItemKey={selectedItem2Key}
+						itemClickAction={selectVarY2}
+						selectOptions={selectOptions}
+					/>
 				</div>
 
 				<div className="row">
@@ -118,6 +110,8 @@ export default class GraphContainer extends Component{
 						<div ref={div => this.errorElement = div} style={errorStyle} />
 					</div>
 				</div>
+
+				<div ref={div => this.labelElement = div} style={{ margin: 10 }} />
 			</Fragment>
 		);
 	}

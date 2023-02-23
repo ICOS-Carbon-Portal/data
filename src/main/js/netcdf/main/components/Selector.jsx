@@ -21,7 +21,7 @@ export default class Selector extends Component {
 
 		return <div className={props.className} style={style}>
 
-			<span style={{fontWeight: 'bold'}}>{props.caption + ": "}</span>
+			<label className='form-label fw-bold text-nowrap'>{props.caption}</label>
 
 			<select value={optionTexter(selectedOption)} className="form-select" onChange={changeHandler}>{
 
