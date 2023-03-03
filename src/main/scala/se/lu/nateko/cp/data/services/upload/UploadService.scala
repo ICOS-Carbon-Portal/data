@@ -205,7 +205,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		val file = req.fold(_.file, getFile)
 		val isTryIngest = req.isLeft
 
-		if spec.isSpatiotemporal then
+		if spec.specificDatasetType == DatasetType.SpatioTemporal then
 			val varNames: Seq[String] = req.fold(
 				_.vars.toSeq.flatten,
 				_.specificInfo.left.toOption.flatMap(_.variables).toSeq.flatten.map(_.label)
@@ -215,12 +215,12 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
 
-		else if spec.format.uri == netCdfTimeSer && spec.isStationTimeSer then
+		else if spec.format.uri == netCdfTimeSer && spec.specificDatasetType == DatasetType.StationTimeSeries then
 			IngestionUploadTask.getColumnFormats(spec.self.uri, meta.sparql).map{colsMeta =>
 				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest)
 			}
 
-		else if spec.isStationTimeSer then
+		else if spec.specificDatasetType == DatasetType.StationTimeSeries then
 			val ingSpec = req.fold(
 				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
 				dobj => IngestionSpec(dobj)
