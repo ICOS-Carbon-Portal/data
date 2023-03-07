@@ -162,6 +162,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 						zipToArchive(filePackage, daily).flatMap{
 							(zipFile, hash) =>
+								log.info(s"ETC facade will upload object $hash for daily file $daily")
 								performEtcUpload(zipFile, daily, Some(hash)).andThen{
 									case Success(_) =>
 										fresh.foreach{(hhFn, _) =>
@@ -230,7 +231,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 				Future.failed(CpDataException(s"Not a daily file: $daily"))
 			)(dailyFormat =>
 				metaClient.getSameFilenameInfo(daily.toString).map(
-					_.foldLeft(Map.empty){(acc, sfi) =>
+					_.sortBy(_.submissionEnd).foldLeft(Map.empty){(acc, sfi) =>
 						if sfi.format != dailyFormat then acc
 						else
 							val zipFile = upload.getFile(Some(sfi.format), sfi.hash)

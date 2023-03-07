@@ -290,7 +290,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			|		cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime ;
 			|		cpmeta:hasObjectSpec/cpmeta:hasFormat ?format .
 			|	optional{?newDobj cpmeta:isNextVersionOf ?dobj}
-			|} order by desc(?submTime)""".stripMargin
+			|} order by ?submTime""".stripMargin
 
 		sparql.selectMap(query)(binding => Try{
 			val dobj = dobjHash(asResource(binding, "dobj"))

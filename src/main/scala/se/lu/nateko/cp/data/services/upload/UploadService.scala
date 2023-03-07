@@ -141,7 +141,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			tasks <- getUploadTasks(dObj);
 			_ <- Future.fromTry{
 				val lock = objLock.lock(dObj.hash)
-				log.info(s"Locking ${dObj.hash} for uploads...${if(lock.isSuccess) "OK" else "Problem!"}")
+				log.debug(s"Locking ${dObj.hash} for uploads...${if(lock.isSuccess) "OK" else "Problem!"}")
 				lock
 			}
 		) yield {
@@ -171,7 +171,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 				resFut.andThen{
 					case _ =>
-						log.info(s"Unlocking future uploads of ${dObj.hash} (getSpecificSink...resFut.andThen)")
+						log.debug(s"Unlocking future uploads of ${dObj.hash} (getSpecificSink...resFut.andThen)")
 						unlockUpload(dObj.hash)
 				}
 			}))

@@ -53,7 +53,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 					term.failed.foreach{err =>
 						log.error(err, s"Error while uploading $hashsum")
 					}
-					log.info(s"Unlocking future uploads of $hashsum (watchedFlow)")
+					log.debug(s"Unlocking future uploads of $hashsum (watchedFlow)")
 					uploadService.unlockUpload(hashsum)
 				}
 			}
@@ -62,7 +62,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 				.flatMap(req.entity.dataBytes.via(watchedFlow).runWith)
 				.andThen{
 					case _ =>
-						log.info(s"Unlocking future uploads of $hashsum (resFuture.andThen)")
+						log.debug(s"Unlocking future uploads of $hashsum (resFuture.andThen)")
 						uploadService.unlockUpload(hashsum)
 				}
 
