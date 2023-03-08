@@ -157,12 +157,14 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 					val filePackage = uploaded ++ fresh
 					val isFullPackage: Boolean = packageIsComplete(filePackage)
 
-					if(!Files.exists(file)) done
-					else if(isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)){
-
+					if !Files.exists(file) then done
+					else if isFullPackage && uploaded.isEmpty || forceDaily && isFromBeforeToday(daily)
+					then
 						zipToArchive(filePackage, daily).flatMap{
 							(zipFile, hash) =>
-								log.info(s"ETC facade will upload object $hash for daily file $daily")
+								if !uploaded.isEmpty then log.info(
+									s"ETC facade will upload a new-version object $hash for daily file $daily"
+								)
 								performEtcUpload(zipFile, daily, Some(hash)).andThen{
 									case Success(_) =>
 										fresh.foreach{(hhFn, _) =>
@@ -176,12 +178,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 										Files.deleteIfExists(srcPath)
 								}
 						}
-					}
 					else done //no uploads for incomplete or previously incomplete packages, unless forced
 				}
 			}
-
 		}.andThen(handleErrors(fn.toString))
+
 
 	private def performEtcUpload(
 		file: Path,
