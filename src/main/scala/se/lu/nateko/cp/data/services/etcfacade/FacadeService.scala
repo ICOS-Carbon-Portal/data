@@ -294,7 +294,7 @@ object FacadeService:
 		.toVector
 	}
 
-	def deleteOldEtcFiles(folder: Path): Unit = {
+	private def deleteOldEtcFiles(folder: Path): Unit = {
 		val now = LocalDateTime.now(ZoneOffset.UTC)
 
 		getEtcFiles(folder).foreach{

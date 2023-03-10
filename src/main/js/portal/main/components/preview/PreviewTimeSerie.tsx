@@ -101,7 +101,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const {preview} = this.props;
 		const verbatimMatch = preview.options.find(opt => opt.varTitle === actColName);
 		if(verbatimMatch) return verbatimMatch;
-		const regexMatch = preview.options.find((opt: PreviewOption) => wholeStringRegExp(opt.varTitle).test(actColName));
+		const regexMatch = preview.options.find((opt: PreviewOption) => testRegexColMatch(opt, actColName));
 		if(!regexMatch) return; //no preview for columns that are not in portal app's metadata (e.g. flag columns)
 		return {...regexMatch, varTitle: actColName};
 	}
@@ -305,4 +305,12 @@ function csvDownloadUrl(item: CartItem, tableFormat?: TableFormat): UrlStr {
 
 	const baseUri = new URL('/csv', document.baseURI).href
 	return `${baseUri}/${hashId}?${cols}`;
+}
+
+function testRegexColMatch(opt: PreviewOption, actColName: string): boolean {
+	try{
+		return wholeStringRegExp(opt.varTitle).test(actColName)
+	} catch {
+		return false
+	}
 }
