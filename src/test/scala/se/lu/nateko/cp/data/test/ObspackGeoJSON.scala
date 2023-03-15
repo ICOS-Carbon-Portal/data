@@ -1,4 +1,4 @@
-package se.lu.nateko.cp.data.test
+
 
 import org.scalatest.funspec.AnyFunSpec
 import se.lu.nateko.cp.meta.core.data.FeatureCollection
@@ -46,7 +46,7 @@ class ObspackGeoJSON extends AnyFunSpec:
 
 		it("prints geoJSON of stations"){
 			val siteLocations1 = ObspackGeoJSONWorkbench.getSiteLocations(baseDir + ncDir1)
-			val siteLocations2 = ObspackGeoJSONWorkbench.getSiteLocations(baseDir + ncDir1)
+			val siteLocations2 = ObspackGeoJSONWorkbench.getSiteLocations(baseDir + ncDir2)
 
 			println(siteLocations1)
 			println("-----------------------------------------------------------------")
