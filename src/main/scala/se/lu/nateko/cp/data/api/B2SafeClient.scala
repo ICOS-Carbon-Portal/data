@@ -27,6 +27,7 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.B2SafeConfig
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.SourceReceptacleAsSink
@@ -177,15 +178,13 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 	private def withAuth(origReq: HttpRequest): Future[HttpResponse] = {
 
 		def withRedirects(req: HttpRequest, visited: Set[Uri]): Future[HttpResponse] =
-			if(visited.contains(req.uri)) {
-				val msg = s"B2SAFE redirection loop, visited URLs: ${visited.mkString(", ")}"
-				Future.failed(new CpDataException(msg))
+			if visited.contains(req.uri) then
+				dataFail(s"B2SAFE redirection loop, visited URLs: ${visited.mkString(", ")}")
 
-			} else if(visited.size > 10) {
-				val msg = s"B2SAFE problem: too many redirects, visited URLs:\n${visited.mkString("\n")}"
-				Future.failed(new CpDataException(msg))
+			else if visited.size > 10 then
+				dataFail(s"B2SAFE problem: too many redirects, visited URLs:\n${visited.mkString("\n")}")
 
-			} else http.singleRequest(req.withEntity(HttpEntity.Empty)).flatMap{resp =>
+			else http.singleRequest(req.withEntity(HttpEntity.Empty)).flatMap{resp =>
 
 				if(resp.status.isRedirection){
 					resp.discardEntityBytes()

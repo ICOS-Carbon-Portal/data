@@ -68,7 +68,7 @@ class SparqlClient(url: URL)(using system: ActorSystem) {
 					Unmarshal(entity).to[SparqlSelectResult]
 				case _ =>
 					Utils.responseAsString(resp).flatMap{msg =>
-						Future.failed(new CpDataException(s"SPARQL server error: $msg"))
+						dataFail(s"SPARQL server error: $msg")
 					}
 			}
 		)

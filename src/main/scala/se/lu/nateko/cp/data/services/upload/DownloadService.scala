@@ -16,6 +16,7 @@ import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.SitesMetaVocab
+import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow.FileEntry
 import se.lu.nateko.cp.data.utils.io.hostL2
@@ -111,8 +112,8 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		.fold(Future.successful(false)){uid =>
 			mainLicences.get(envri) match{
 				case Some(`lic`) => restHeart.getUserLicenseAcceptance(uid)
-				case Some(_) => Future.failed(new CpDataException(s"Missing support for checking licence compliance for licence $lic"))
-				case None => Future.failed(new CpDataException(s"Missing support for checking licence compliance for ENVRI $envri"))
+				case Some(_) => dataFail(s"Missing support for checking licence compliance for licence $lic")
+				case None => dataFail(s"Missing support for checking licence compliance for ENVRI $envri")
 			}
 			
 		}

@@ -11,7 +11,6 @@ import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Source
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -193,7 +192,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 
 	def withEnvriConfig[T](inner: EnvriConfig ?=> Future[T])(using envri: Envri): Future[T] =
 		envriConfs.get(envri).fold(
-			Future.failed(new CpDataException(s"Config not found for ENVRI $envri"))
+			dataFail(s"Config not found for ENVRI $envri")
 		)(envriConf => inner(using envriConf))
 
 	private def extractIfSuccess[T](extractor: ResponseEntity => Future[T]) = extractResult(extractor)(PartialFunction.empty)
@@ -210,7 +209,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			}
 			else
 				Utils.responseAsString(resp)
-					.flatMap(msg => Future.failed(new CpDataException(s"Metadata server error: \n$msg")))
+					.flatMap(msg => dataFail(s"Metadata server error: \n$msg"))
 	}
 
 	def getDobjStorageInfos(paging: Paging = noPaging): Source[DobjStorageInfo, Any] = {

@@ -14,6 +14,7 @@ import se.lu.nateko.cp.data.EtcFacadeConfig
 import se.lu.nateko.cp.data.api.ChecksumError
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.Utils.iterateChildren
+import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.UploadResult
@@ -209,7 +210,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		.flatMap(FileIO.fromPath(srcPath).runWith)
 		.flatMap{res =>
 			res.makeReport.fold(
-				errMsg => Future.failed(new CpDataException(errMsg)),
+				errMsg => dataFail(errMsg),
 				_ => done
 			)
 		}
