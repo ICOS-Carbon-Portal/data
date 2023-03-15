@@ -488,6 +488,11 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 			valueFormatter: valueFormatter(day2ms, "date", formatLbl),
 			axisLabelFormatter: axisLabelFormatter(day2ms, "date")
 		};
+	} else if (isYearMonth(valueFormatX)) {
+		return {
+			valueFormatter: ((val: number) => val.toString().slice(0, 4) + "-" + val.toString().slice(4, 6)),
+			axisLabelFormatter: ((val: number) => val.toString().slice(0, 4))
+		};
 	} else if (isTime(valueFormatX)) {
 		return {
 			valueFormatter: valueFormatter(sec2ms, "hms", formatLbl),
@@ -517,6 +522,10 @@ const timeFormats = ['iso8601timeOfDay']
 const dateFormats = ['iso8601date', 'etcDate']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
 
+// Stored as YYYYMM
+const yearMonthFormat = ['iso8601month']
+	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+
 // Stored as milliseconds since epoch
 const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
 	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
@@ -526,6 +535,7 @@ const integerFormat = ['int32']
 
 const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
 const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
+const isYearMonth = (valueFormat: string) => yearMonthFormat.includes(valueFormat);
 const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
 const isInt = (valueFormat: string) => integerFormat.includes(valueFormat);
 

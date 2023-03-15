@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.formats.delimitedheadercsv
 
 import se.lu.nateko.cp.data.formats.*
 import java.time.temporal.ChronoUnit
-import java.time.{ Instant, LocalDateTime, LocalDate, LocalTime, ZoneOffset }
+import java.time.{ Instant, LocalDateTime, LocalDate, LocalTime, ZoneOffset, YearMonth }
 import java.time.format.DateTimeFormatter
 import ValueFormat.*
 
@@ -18,6 +18,7 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 		case FloatValue => value == "NaN" || value == "LOD" || value == ""
 		case IsoLikeLocalDateTime => value == "NaN"
 		case Iso8601Date => value == "N/A"
+		case Iso8601Month => value == "N/A"
 		case IntValue => value == "N/A"
 		case _ => false
 	}
@@ -26,6 +27,7 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 		.collect{
 			case IsoLikeLocalDateTime => LocalDateTime.parse(cells(0), isoLikeDateFormater)
 			case Iso8601Date          => LocalDate    .parse(cells(0)           ).atTime(LocalTime.MIN)
+			case Iso8601Month         => LocalDate    .parse(cells(0) +    "-01").atTime(LocalTime.MIN)
 			case IntValue             => LocalDate    .parse(cells(0) + "-01-01").atTime(LocalTime.MIN)
 		}
 		.map(_.toInstant(ZoneOffset.ofHours(1)))
@@ -36,6 +38,7 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 
 	override def acqIntervalTimeStep = timeStampValueFormat.collect{
 		case Iso8601Date => 1L -> ChronoUnit.DAYS
+		case Iso8601Month => 1L -> ChronoUnit.MONTHS
 		case IntValue => 1L -> ChronoUnit.YEARS
 	}
 

@@ -8,6 +8,7 @@ enum ValueFormat:
 	case Utf16CharValue, StringValue
 	case Iso8601Date, EtcDate
 	case Iso8601TimeOfDay
+	case Iso8601Month
 	case Iso8601DateTime, IsoLikeLocalDateTime, EtcLocalDateTime
 
 object ValueFormat{
@@ -22,6 +23,7 @@ object ValueFormat{
 		case `string` => StringValue
 		case `iso8601date` => Iso8601Date
 		case `etcDate` => EtcDate
+		case `iso8601month` => Iso8601Month
 		case `iso8601dateTime` => Iso8601DateTime
 		case `iso8601timeOfDay` => Iso8601TimeOfDay
 		case `isoLikeLocalDateTime` => IsoLikeLocalDateTime
