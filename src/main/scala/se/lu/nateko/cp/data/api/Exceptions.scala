@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.api
 
 import scala.util.control.NoStackTrace
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import scala.concurrent.Future
 
 sealed class CpDataException(val message: String) extends RuntimeException(
 	if(message == null) "" else message
@@ -25,3 +26,5 @@ sealed class CpDataParsingException(message: String) extends CpDataException(mes
 
 final class EcoCsvParsingException(message: String) extends CpDataParsingException(message)
 final class DailyCsvParsingException(message: String) extends CpDataParsingException(message)
+
+def dataFail[T](msg: String): Future[T] = Future.failed(CpDataException(msg))

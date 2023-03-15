@@ -55,7 +55,9 @@ object UploadTask{
 
 }
 
-class NotSupportedUploadTask(message: String) extends UploadTask{
-	override def sink = Sink.cancelled.mapMaterializedValue(_ => Future.successful(NotImplementedFailure(message)))
+class NoopTask(result: UploadTaskResult) extends UploadTask:
+	override def sink = Sink.cancelled.mapMaterializedValue(_ => Future.successful(result))
 	override def onComplete(ownResult: UploadTaskResult, otherTaskResults: Seq[UploadTaskResult]) = Future.successful(ownResult)
-}
+
+class NotSupportedUploadTask(message: String) extends NoopTask(NotImplementedFailure(message))
+object DummyNoopTask extends NoopTask(DummySuccess)
