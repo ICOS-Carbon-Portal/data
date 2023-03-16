@@ -47,7 +47,8 @@ object ValueFormatParser:
 			case Iso8601Date =>
 				encodeLocalDate(LocalDate.parse(value))
 			case Iso8601Month =>
-				Int.box(YearMonth.parse(value).toString.replace("-", "").toInt)
+				val ym = YearMonth.parse(value)
+				Int.box(ym.getYear * 12 + ym.getMonthValue - 1)
 			case EtcDate =>
 				encodeLocalDate(LocalDate.parse(value, etcDateFormatter))
 			case Iso8601DateTime =>
@@ -106,8 +107,10 @@ object ValueFormatParser:
 
 			case Iso8601Month =>
 				v => {
-					val (year, month) = v.asInstanceOf[Int].toString.splitAt(4)
-					YearMonth.of(year.toInt, month.toInt).toString
+					val num = v.asInstanceOf[Int]
+					val year = num / 12
+					val month = num % 12 + 1
+					YearMonth.of(year, month).toString
 				}
 
 			case Iso8601Date | EtcDate =>

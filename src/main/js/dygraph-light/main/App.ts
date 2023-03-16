@@ -490,8 +490,8 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 		};
 	} else if (isYearMonth(valueFormatX)) {
 		return {
-			valueFormatter: ((val: number) => val.toString().slice(0, 4) + "-" + val.toString().slice(4, 6)),
-			axisLabelFormatter: ((val: number) => val.toString().slice(0, 4))
+			valueFormatter: presentYearMonth,
+			axisLabelFormatter: presentYearMonth
 		};
 	} else if (isTime(valueFormatX)) {
 		return {
@@ -508,6 +508,12 @@ const getFormatters = (xlabel: string, valueFormatX: string, daysDisplayed = Inf
 	}
 };
 
+function presentYearMonth(val: number): string{
+	const year = Math.floor(val / 12)
+	const month = Math.round(val % 12) + 1
+	return `${year}-` + ('0' + month).slice(-2)
+}
+
 const getDateTimeFormat = (daysDisplayed: number) => {
 	if (daysDisplayed >= 7) return "date";
 	else if (daysDisplayed >= 1) return "date-hm";
@@ -515,29 +521,24 @@ const getDateTimeFormat = (daysDisplayed: number) => {
 };
 
 // Stored as seconds since midnight
-const timeFormats = ['iso8601timeOfDay']
-	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+const timeFormats = ['iso8601timeOfDay'].map(valFormatFromUriSegment)
 
 // Stored as days since epoch
-const dateFormats = ['iso8601date', 'etcDate']
-	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+const dateFormats = ['iso8601date', 'etcDate'].map(valFormatFromUriSegment)
 
-// Stored as YYYYMM
-const yearMonthFormat = ['iso8601month']
-	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+// Stored as 32-bit integer of format YYYY * 12 + MM - 1
+const yearMonthFormat = valFormatFromUriSegment('iso8601month')
 
 // Stored as milliseconds since epoch
-const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime']
-	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+const dateTimeFormats = ['iso8601dateTime', 'isoLikeLocalDateTime', 'etcLocalDateTime'].map(valFormatFromUriSegment)
 
-const integerFormat = ['int32']
-	.map(segm => 'http://meta.icos-cp.eu/ontologies/cpmeta/' + segm);
+const integerFormat = valFormatFromUriSegment('int32');
 
 const isTime = (valueFormat: string) => timeFormats.includes(valueFormat);
 const isDate = (valueFormat: string) => dateFormats.includes(valueFormat);
-const isYearMonth = (valueFormat: string) => yearMonthFormat.includes(valueFormat);
+const isYearMonth = (valueFormat: string) => yearMonthFormat === valueFormat
 const isDateTime = (valueFormat: string) => dateTimeFormats.includes(valueFormat);
-const isInt = (valueFormat: string) => integerFormat.includes(valueFormat);
+const isInt = (valueFormat: string) => integerFormat === valueFormat
 
 const fail = (message: string) => {
 	logError(config.previewTypes.TIMESERIES, message);
@@ -567,3 +568,7 @@ const formatData = (dataToSave: UrlSearchParams) => {
 		}
 	};
 };
+
+function valFormatFromUriSegment(lastSegment: string): string{
+	return `http://meta.icos-cp.eu/ontologies/cpmeta/${lastSegment}`
+}
