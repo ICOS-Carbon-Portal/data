@@ -39,6 +39,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val int32 = getRelative("int32")
 	val bmpChar = getRelative("bmpChar")
 	val string = getRelative("string")
+	val iso8601month = getRelative("iso8601month")
 	val iso8601date = getRelative("iso8601date")
 	val etcDate = getRelative("etcDate")
 	val iso8601dateTime = getRelative("iso8601dateTime")

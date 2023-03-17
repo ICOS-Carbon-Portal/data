@@ -34,11 +34,11 @@ object ValueFormatParser:
 	private def parseInner(value: String, format: ValueFormat): AnyRef =
 		if (value == null || value.trim.isEmpty) getNullRepresentation(format)
 		else format match {
-			case IntValue => 
+			case IntValue =>
 				Int.box(Integer.parseInt(value))
-			case FloatValue => 
+			case FloatValue =>
 				Float.box(parseFloat(value))
-			case DoubleValue => 
+			case DoubleValue =>
 				Double.box(parseDouble(value))
 			case Utf16CharValue =>
 				Character.valueOf(value.charAt(0))
@@ -46,6 +46,9 @@ object ValueFormatParser:
 				value
 			case Iso8601Date =>
 				encodeLocalDate(LocalDate.parse(value))
+			case Iso8601Month =>
+				val ym = YearMonth.parse(value)
+				Int.box(ym.getYear * 12 + ym.getMonthValue - 1)
 			case EtcDate =>
 				encodeLocalDate(LocalDate.parse(value, etcDateFormatter))
 			case Iso8601DateTime =>
@@ -80,6 +83,7 @@ object ValueFormatParser:
 		case DoubleValue => DataType.DOUBLE
 		case Utf16CharValue => DataType.CHAR
 		case StringValue => DataType.STRING
+		case Iso8601Month => DataType.INT
 		case Iso8601Date | EtcDate => DataType.INT
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => DataType.DOUBLE
 		case Iso8601TimeOfDay => DataType.INT
@@ -91,6 +95,7 @@ object ValueFormatParser:
 		case DoubleValue => Double.box(Double.NaN)
 		case Utf16CharValue => Character.valueOf(Character.MIN_VALUE)
 		case StringValue => ""
+		case Iso8601Month => Int.box(Int.MinValue)
 		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => Double.box(Double.NaN)
 		case Iso8601TimeOfDay => Int.box(Int.MinValue)
@@ -99,6 +104,14 @@ object ValueFormatParser:
 	def numCsvSerializer(format: ValueFormat): AnyVal => String = {
 
 		val ser: AnyVal => String = format match {
+
+			case Iso8601Month =>
+				v => {
+					val num = v.asInstanceOf[Int]
+					val year = num / 12
+					val month = num % 12 + 1
+					YearMonth.of(year, month).toString
+				}
 
 			case Iso8601Date | EtcDate =>
 				v => LocalDate.ofEpochDay(v.asInstanceOf[Int].toLong).toString
