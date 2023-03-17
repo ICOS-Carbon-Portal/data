@@ -25,7 +25,7 @@ class PointReducerTests extends AnyFunSuite {
 		}
 		val coverage = PointReducer.getCoverage(0.05d)(rs)
 		coverage match{
-			case Some(Position(50.0d, 10.0d, None, None)) => succeed
+			case Some(Position(50.0d, 10.0d, None, None, None)) => succeed
 			case Some(feat) => fail(s"Expected single point, got $feat")
 			case None => fail("Coverage could not be extracted")
 		}

@@ -143,12 +143,12 @@ object PointReducer {
 
 		if(err <= maxErrorFactor * bboxSizeEst) {
 			val points = state.latLongs.map{
-				case (lat, lon) => Position(lat, lon, None, None)
+				case (lat, lon) => Position.ofLatLon(lat, lon)
 			}.toIndexedSeq
 			points match{
 				case Seq() => None
 				case Seq(singlePoint) => Some(singlePoint)
-				case many => Some(GeoTrack(many, None))
+				case many => Some(GeoTrack(many, None, None))
 			}
 		} else None
 	}
