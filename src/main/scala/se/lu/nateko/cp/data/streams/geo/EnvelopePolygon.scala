@@ -311,6 +311,6 @@ object EnvelopePolygon{
 	}
 
 	def getGeoFeature(poly: EnvelopePolygon) = Polygon(
-		poly.vertices.toIndexedSeq.map(p => Position(lat = p.lat, lon = p.lon, alt = None, label = None)), None
+		poly.vertices.toIndexedSeq.map(p => Position.ofLatLon(p.lat,p.lon)), None, None
 	)
 }
