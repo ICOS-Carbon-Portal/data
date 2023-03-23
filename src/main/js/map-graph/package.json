@@ -65,7 +65,7 @@
     "babel-polyfill": "6.26.0",
     "deep-equal": "1.1.0",
     "dygraphs": "2.1.0",
-    "icos-cp-backend": "0.5.1",
+    "icos-cp-backend": "0.5.2",
     "icos-cp-leaflet-common": "0.2.3",
     "icos-cp-spatial": "0.2.1",
     "icos-cp-toaster": "0.5.1",
