@@ -33,10 +33,10 @@ object ObspackGeoJSONWorkbench:
 				val siteCode = ncfile.findGlobalAttribute("site_code").getStringValue()
 				val siteName = ncfile.findGlobalAttribute("site_name").getStringValue()
 
-				Position(lat.doubleValue, lon.doubleValue, Some(alt.floatValue), Some(s"$siteCode ($siteName)"))
+				Position(lat.doubleValue, lon.doubleValue, Some(alt.floatValue), Some(s"$siteCode ($siteName)"), None)
 			}.toOption
 		}
 
-		val coll = FeatureCollection(positions, None)
+		val coll = FeatureCollection(positions, None, None)
 
 		GeoJson.fromFeature(coll)
