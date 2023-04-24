@@ -41,6 +41,16 @@ export default function(state = initState, action){
 				stats: state.stats.withTimePeriod(action.timePeriod)
 			});
 
+		case actionTypes.SWITCH_HEIGHT:
+			return update({
+				stats: state.stats.withHeight(action.height)
+			});
+
+		case actionTypes.SWITCH_VALUETYPE:
+			return update({
+				stats: state.stats.withValueType(action.valueType)
+			});
+
 		default:
 			return state;
 	}

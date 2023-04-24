@@ -16,14 +16,21 @@ export default class Panel extends Component {
 		this.props.switchTimePeriod(newTimePeriod);
 	}
 
+	handleHeightChanged(event) {
+		this.props.switchHeight(event.target.value)
+	}
+
+	handleValueTypeChanged(event) {
+		this.props.switchValueType(event.target.value)
+	}
+
 	render(){
 		const {stats} = this.props;
 		if (!stats.isComplete) return null;
 
-		const {metadata, params, timePeriod, startStop} = stats;
+		const { metadata, params, timePeriod, startStop, columnNames, samplingHeights} = stats;
 		const {stationId, valueType, height} = params;
 		const {min, max, mean} = stats.calculatedStats;
-		const header = getHeader(timePeriod, startStop, stationId, valueType, height, metadata.station);
 		const unit = formatUnit(metadata.unit);
 		const meanTxt = isNaN(mean)
 			? "No data available"
@@ -38,8 +45,17 @@ export default class Panel extends Component {
 		return (
 			<div className="card" style={style}>
 
-				<div className="card-header py-1 px-3">
-					{header}
+				<div className="card-header d-flex justify-content-between py-1 px-3">
+					<Header
+						stationId={stationId}
+						valueType={valueType}
+						height={height}
+						station={metadata.station}
+						columnNames={columnNames}
+						samplingHeights={samplingHeights}
+						handleHeightChanged={this.handleHeightChanged.bind(this)}
+						handleValueTypeChanged={this.handleValueTypeChanged.bind(this)}
+					/>
 				</div>
 
 				<div className="card-body py-1 px-2">
@@ -111,12 +127,22 @@ const getDateStr = (timePeriod, startStop) => {
 	}
 };
 
-const getHeader = (timePeriod, startStop, stationId, valueType, height, station) => {
+const Header = ({ stationId, valueType, height, station, columnNames, samplingHeights, handleHeightChanged, handleValueTypeChanged }) => {
 	return (
 		<>
 			<a href={station} target="_blank" style={{color:'#337ab7'}}>{stationId}</a>
-			<span style={{marginLeft: 20}} title="Measurement height">{height}m</span>
-			<span style={{marginLeft: 20}} title="Measured type">{valueType}</span>
+			<span className="d-flex gap-1">
+				<select name="height" title="Measurement height" id="heightSelect" value={height} onChange={handleHeightChanged}>
+					{samplingHeights.map(sh =>
+						<option key={sh} value={sh}>{sh}m</option>
+					)}
+				</select>
+				<select name="valueType" title="Measured type" id="valueTypeSelect" value={valueType} onChange={handleValueTypeChanged}>
+					{columnNames.map(col =>
+						<option key={col} value={col}>{col}</option>
+					)}
+				</select>
+			</span>
 		</>);
 };
 

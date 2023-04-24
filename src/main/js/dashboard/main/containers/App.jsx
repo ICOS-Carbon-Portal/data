@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import {AnimatedToasters} from 'icos-cp-toaster';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import Panel from '../components/Panel.jsx';
-import {switchTimePeriod} from '../actions';
+import {switchTimePeriod, switchHeight, switchValueType} from '../actions';
 
 
 export class App extends Component {
@@ -32,14 +32,14 @@ export class App extends Component {
 }
 
 const AppRoute = props => {
-	const {displayMsg, stats, switchTimePeriod} = props;
+	const { displayMsg, stats, switchTimePeriod, switchHeight, switchValueType } = props;
 
 	if (displayMsg) return <DisplayMsg message={displayMsg} />;
 	if (stats.error) return <DisplayMsg message={stats.error} />;
 
 	return stats.isValidRequest
 		? <div className="container-fluid">
-			<Panel stats={stats} switchTimePeriod={switchTimePeriod} />
+			<Panel stats={stats} switchTimePeriod={switchTimePeriod} switchHeight={switchHeight} switchValueType={switchValueType} />
 		</div>
 		: <InvalidRequest />;
 };
@@ -79,7 +79,9 @@ function stateToProps(state){
 
 function dispatchToProps(dispatch){
 	return {
-		switchTimePeriod: timePeriod => dispatch(switchTimePeriod(timePeriod))
+		switchTimePeriod: timePeriod => dispatch(switchTimePeriod(timePeriod)),
+		switchHeight: height => dispatch(switchHeight(height)),
+		switchValueType: valueType => dispatch(switchValueType(valueType))
 	};
 }
 

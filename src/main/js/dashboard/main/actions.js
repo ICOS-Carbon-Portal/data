@@ -7,7 +7,9 @@ export const actionTypes = {
 	INIT: 'INIT',
 	STATION_MEASUREMENTS: 'STATION_MEASUREMENTS',
 	BINTABLE: 'BINTABLE',
-	SWITCH_TIMEPERIOD: 'SWITCH_TIMEPERIOD'
+	SWITCH_TIMEPERIOD: 'SWITCH_TIMEPERIOD',
+	SWITCH_HEIGHT: 'SWITCH_HEIGHT',
+	SWITCH_VALUETYPE: 'SWITCH_VALUETYPE'
 };
 
 
@@ -76,12 +78,19 @@ const getStationMeasurement = (stationId, valueType, dataLevel, height) => dispa
 			measurements
 		});
 
-		dispatch(getObjectSpecifications(measurements, dataLevel, valueType));
+		const objIds = getObjIds(measurements, valueType, height);
+
+		dispatch(getObjectSpecifications(objIds, dataLevel, valueType));
 	});
 };
 
-const getObjectSpecifications = (measurements, dataLevel, valueType) => dispatch => {
-	const objIds = measurements.map(m => m.dobj);
+const getObjIds = (measurements, valueType, height) => {
+	return measurements
+		.filter(m => m.columnName == valueType && m.samplingHeight == height)
+		.map(m => m.dobj);
+}
+
+const getObjectSpecifications = (objIds, dataLevel, valueType) => dispatch => {
 
 	fetchObjectSpecifications(objIds).then(objectSpecifications => {
 		if (objectSpecifications === undefined) {
@@ -126,4 +135,30 @@ export const switchTimePeriod = timePeriod => dispatch => {
 		type: actionTypes.SWITCH_TIMEPERIOD,
 		timePeriod
 	})
+};
+
+export const switchHeight = height => (dispatch, getState) => {
+	dispatch({
+		type: actionTypes.SWITCH_HEIGHT,
+		height
+	})
+
+	const stats = getState().stats
+	const objIds = getObjIds(stats.measurements, stats.params.valueType, height);
+
+	dispatch(getObjectSpecifications(objIds, 1, stats.params.valueType));
+	dispatch(getObjectSpecifications(objIds, 2, stats.params.valueType));
+};
+
+export const switchValueType = valueType => (dispatch, getState) => {
+	dispatch({
+		type: actionTypes.SWITCH_VALUETYPE,
+		valueType
+	})
+
+	const stats = getState().stats
+	const objIds = getObjIds(stats.measurements, valueType, stats.params.height);
+
+	dispatch(getObjectSpecifications(objIds, 1, valueType));
+	dispatch(getObjectSpecifications(objIds, 2, valueType));
 };

@@ -8,13 +8,14 @@ const emptyMetadata = {
 };
 
 export default class Stats {
-	constructor(timePeriod, params = {}, metadata = emptyMetadata, datasets = [], firstTimestamp, lastTimestamp){
+	constructor(timePeriod, params = {}, metadata = emptyMetadata, datasets = [], firstTimestamp, lastTimestamp, measurements = []){
 		this._timePeriod = timePeriod || 'day'; // day | month | year
 		this.params = params;
 		this.metadata = metadata;
 		this.datasets = datasets;
 		this.firstTimestamp = firstTimestamp;
 		this.lastTimestamp = lastTimestamp;
+		this.measurements = measurements;
 	}
 
 	get isValidRequest(){
@@ -144,8 +145,16 @@ export default class Stats {
 		}
 	}
 
+	get samplingHeights() {
+		return [...new Set(this.measurements.map(m => m.samplingHeight))].sort((a, b) => a - b);
+	}
+
+	get columnNames() {
+		return [...new Set(this.measurements.map(m => m.columnName))];
+	}
+
 	withParams(stationId, valueType, height){
-		return new Stats(this._timePeriod, {stationId, valueType, height}, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp);
+		return new Stats(this._timePeriod, { stationId, valueType, height }, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp, this.columnNames, this.samplingHeights, this.measurements);
 	}
 
 	withMeasurements(measurements){
@@ -153,11 +162,19 @@ export default class Stats {
 			? Object.assign({}, this.metadata, {station: measurements[0].station})
 			: this.metadata;
 
-		return new Stats(this._timePeriod, this.params, metadata, this.datasets, this.firstTimestamp, this.lastTimestamp);
+		return new Stats(this._timePeriod, this.params, metadata, this.datasets, this.firstTimestamp, this.lastTimestamp, measurements);
 	}
 
 	withTimePeriod(timePeriod){
-		return new Stats(timePeriod, this.params, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp);
+		return new Stats(timePeriod, this.params, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp, this.measurements);
+	}
+
+	withHeight(height) {
+		return new Stats(this._timePeriod, { ...this.params, height: height }, emptyMetadata, [], this.firstTimestamp, this.lastTimestamp, this.measurements);
+	}
+
+	withValueType(valueType) {
+		return new Stats(this._timePeriod, { ...this.params, valueType: valueType }, emptyMetadata, [], this.firstTimestamp, this.lastTimestamp, this.measurements);
 	}
 
 	withData({yCol, dataLevel, binTable, objSpec}){
@@ -167,7 +184,7 @@ export default class Stats {
 		const firstTimestamp = datasets.reduce((ts, ds) => Math.min(ts, ds.firstTimestamp), Date.now());
 		const lastTimestamp = datasets.reduce((ts, ds) => Math.max(ts, ds.lastTimestamp), 0);
 
-		return new Stats(this._timePeriod, this.params, metadata, datasets, firstTimestamp, lastTimestamp);
+		return new Stats(this._timePeriod, this.params, metadata, datasets, firstTimestamp, lastTimestamp, this.measurements);
 	}
 }
 
