@@ -163,7 +163,7 @@ const Row = ({style, children}) => {
 const getPreviewLnk = (metadata, valueType) => {
 	const ids = metadata.dobjs.map(dobj => dobj.split('/').pop()).join(',');
 
-	return `https://data.icos-cp.eu/dygraph-light/?objId=${ids}&x=TIMESTAMP&type=point&linking=overlap&y=${valueType}`;
+	return `/dygraph-light/?objId=${ids}&x=TIMESTAMP&type=point&linking=overlap&y=${valueType}`;
 };
 
 const getDownloadLnk = metadata => {
@@ -171,7 +171,7 @@ const getDownloadLnk = metadata => {
 	const ids = encodeURIComponent(JSON.stringify(dobjIds));
 	const fileName = encodeURIComponent('Near realtime data');
 
-	return `https://data.icos-cp.eu/objects?ids=${ids}&fileName=${fileName}`;
+	return `/objects?ids=${ids}&fileName=${fileName}`;
 };
 
 const formatUnit = unit => {

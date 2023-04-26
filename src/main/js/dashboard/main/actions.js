@@ -146,6 +146,8 @@ export const switchHeight = height => (dispatch, getState) => {
 	const objIds = getObjIds(stats.measurements, stats.params.valueType, height);
 
 	dispatch(getObjectSpecifications(objIds, stats.params.valueType));
+
+	updateUrlWithSearchParam("height", height);
 };
 
 export const switchValueType = valueType => (dispatch, getState) => {
@@ -158,4 +160,15 @@ export const switchValueType = valueType => (dispatch, getState) => {
 	const objIds = getObjIds(stats.measurements, valueType, stats.params.height);
 
 	dispatch(getObjectSpecifications(objIds, valueType));
+
+	updateUrlWithSearchParam("valueType", valueType);
 };
+
+const updateUrlWithSearchParam = (key, value) => {
+	if (window.location === window.parent.location) {
+		const searchParams = new URLSearchParams(window.location.search);
+		searchParams.set(key, value);
+		const newURL = location.origin + location.pathname + '?' + searchParams;
+		history.pushState({ urlPath: newURL }, "", newURL);
+	}
+}
