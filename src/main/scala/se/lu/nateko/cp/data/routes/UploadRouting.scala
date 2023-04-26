@@ -30,6 +30,8 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.meta.core.data.EnvriResolver
 
 class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, coreConf: MetaCoreConfig)(implicit mat: Materializer) {
 	import UploadRouting._
@@ -169,7 +171,7 @@ object UploadRouting{
 	def extractEnvriDirective(using EnvriConfigs): EnvriDirective = envriDirective(extractEnvriAkkaDirective)
 
 	def extractEnvriAkkaDirective(using EnvriConfigs): Directive1[Envri] = extractHost.flatMap{h =>
-		Envri.infer(h) match{
+		EnvriResolver.infer(h) match{
 			case None => complete(StatusCodes.BadRequest -> s"Unexpected host $h, cannot find corresponding ENVRI")
 			case Some(envri) => provide(envri)
 		}
@@ -177,7 +179,7 @@ object UploadRouting{
 
 	def extractEnvriDirectiveSoft(using EnvriConfigs) = envriDirective(
 		extractHost.flatMap{h =>
-			Envri.infer(h) match{
+			EnvriResolver.infer(h) match{
 				case None => reject
 				case Some(envri) => provide(envri)
 			}

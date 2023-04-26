@@ -20,7 +20,7 @@ import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.utils.akka.gracefulForbid
 import se.lu.nateko.cp.data.utils.akka.gracefulUnauth
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.Envri
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import spray.json.JsArray

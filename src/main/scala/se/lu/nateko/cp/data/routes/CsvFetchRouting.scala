@@ -13,7 +13,7 @@ import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.services.fetch.BinTableCsvReader
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.Envri
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 
 import java.time.Instant

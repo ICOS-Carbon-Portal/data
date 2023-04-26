@@ -15,7 +15,7 @@ import se.lu.nateko.cp.data.RestheartCollDef
 import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.DocObject
-import se.lu.nateko.cp.meta.core.data.Envri
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.data.StaticCollection
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import spray.json.*

@@ -8,8 +8,8 @@ import akka.http.scaladsl.model.headers.*
 import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.*
 import se.lu.nateko.cp.data.AuthConfig
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
+import eu.icoscp.envri.Envri
 
 object RoutingHelper {
 

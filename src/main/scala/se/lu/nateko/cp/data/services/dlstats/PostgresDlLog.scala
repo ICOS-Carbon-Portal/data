@@ -3,7 +3,7 @@ package se.lu.nateko.cp.data.services.dlstats
 import se.lu.nateko.cp.data.DownloadStatsConfig
 import se.lu.nateko.cp.data.CredentialsConfig
 import se.lu.nateko.cp.meta.core.data.Agent
-import se.lu.nateko.cp.meta.core.data.Envri
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.data.routes.StatsRouting.*
 import se.lu.nateko.cp.data.utils.akka.done

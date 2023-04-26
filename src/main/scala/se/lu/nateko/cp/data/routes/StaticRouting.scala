@@ -14,10 +14,10 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.PathMatcher1
 import play.twirl.api.Html
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 
 import scala.concurrent.Future
+import eu.icoscp.envri.Envri
 
 class StaticRouting()(using envriConfigs: EnvriConfigs) {
 	import StaticRouting.pageMarshaller

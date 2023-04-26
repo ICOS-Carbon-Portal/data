@@ -17,7 +17,6 @@ import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 import scala.concurrent.Await
@@ -27,6 +26,7 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
 import java.nio.file.Path
+import eu.icoscp.envri.Envri
 
 object Main extends App {
 

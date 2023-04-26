@@ -30,6 +30,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
+import eu.icoscp.envri.Envri
 
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(using Materializer) {
 

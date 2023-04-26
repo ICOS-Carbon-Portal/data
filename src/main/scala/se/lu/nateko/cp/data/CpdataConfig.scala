@@ -9,10 +9,10 @@ import java.net.URI
 import se.lu.nateko.cp.cpauth.core.PublicAuthConfig
 import se.lu.nateko.cp.meta.core.CommonJsonSupport
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewServiceConfig
 import spray.json.*
+import eu.icoscp.envri.Envri
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 

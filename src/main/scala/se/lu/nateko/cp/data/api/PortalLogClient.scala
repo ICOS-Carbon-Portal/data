@@ -14,7 +14,7 @@ import akka.http.scaladsl.model.Uri
 import akka.stream.Materializer
 import se.lu.nateko.cp.data.RestHeartConfig
 import se.lu.nateko.cp.data.utils.akka.done
-import se.lu.nateko.cp.meta.core.data.Envri
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 import akka.event.LoggingAdapter
 import scala.concurrent.duration.DurationInt

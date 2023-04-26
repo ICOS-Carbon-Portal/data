@@ -25,7 +25,6 @@ import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.DocObject
-import se.lu.nateko.cp.meta.core.data.Envri
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 
@@ -37,6 +36,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
+import eu.icoscp.envri.Envri
 
 class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val restHeart: RestHeartClient)(using ExecutionContext):
 
