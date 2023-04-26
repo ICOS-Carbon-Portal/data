@@ -23,7 +23,7 @@ export default function(state = initState, action){
 
 		case actionTypes.INIT:
 			return update({
-				stats: state.stats.withParams(action.stationId, action.valueType, action.height)
+				stats: state.stats.withParams(action.stationId, action.valueType, action.height, action.showControls)
 			});
 
 		case actionTypes.STATION_MEASUREMENTS:

@@ -153,8 +153,8 @@ export default class Stats {
 		return [...new Set(this.measurements.map(m => m.columnName))];
 	}
 
-	withParams(stationId, valueType, height){
-		return new Stats(this._timePeriod, { stationId, valueType, height }, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp, this.columnNames, this.samplingHeights, this.measurements);
+	withParams(stationId, valueType, height, showControls){
+		return new Stats(this._timePeriod, { stationId, valueType, height, showControls }, this.metadata, this.datasets, this.firstTimestamp, this.lastTimestamp, this.columnNames, this.samplingHeights, this.measurements);
 	}
 
 	withMeasurements(measurements){

@@ -29,7 +29,7 @@ export default class Panel extends Component {
 		if (!stats.isComplete) return null;
 
 		const { metadata, params, timePeriod, startStop, columnNames, samplingHeights} = stats;
-		const {stationId, valueType, height} = params;
+		const {stationId, valueType, height, showControls} = params;
 		const {min, max, mean} = stats.calculatedStats;
 		const unit = formatUnit(metadata.unit);
 		const meanTxt = isNaN(mean)
@@ -50,6 +50,7 @@ export default class Panel extends Component {
 						stationId={stationId}
 						valueType={valueType}
 						height={height}
+						showControls={showControls}
 						station={metadata.station}
 						columnNames={columnNames}
 						samplingHeights={samplingHeights}
@@ -127,21 +128,30 @@ const getDateStr = (timePeriod, startStop) => {
 	}
 };
 
-const Header = ({ stationId, valueType, height, station, columnNames, samplingHeights, handleHeightChanged, handleValueTypeChanged }) => {
+const Header = ({ stationId, valueType, height, showControls, station, columnNames, samplingHeights, handleHeightChanged, handleValueTypeChanged }) => {
 	return (
 		<>
 			<a href={station} target="_blank" style={{color:'#337ab7'}}>{stationId}</a>
 			<span className="d-flex gap-1">
-				<select name="height" title="Measurement height" id="heightSelect" value={height} onChange={handleHeightChanged}>
-					{samplingHeights.map(sh =>
-						<option key={sh} value={sh}>{sh}m</option>
-					)}
-				</select>
-				<select name="valueType" title="Measured type" id="valueTypeSelect" value={valueType} onChange={handleValueTypeChanged}>
-					{columnNames.map(col =>
-						<option key={col} value={col}>{col}</option>
-					)}
-				</select>
+				{showControls ?
+				<>
+					<select name="height" title="Measurement height" id="heightSelect" value={height} onChange={handleHeightChanged}>
+						{samplingHeights.map(sh =>
+							<option key={sh} value={sh}>{sh}m</option>
+						)}
+					</select>
+					<select name="valueType" title="Measured type" id="valueTypeSelect" value={valueType} onChange={handleValueTypeChanged}>
+						{columnNames.map(col =>
+							<option key={col} value={col}>{col}</option>
+						)}
+					</select>
+				</>
+				:
+				<>
+					<span style={{ marginLeft: 20 }} title="Measurement height">{height}m</span>
+					<span style={{ marginLeft: 20 }} title="Measured type">{valueType}</span>
+				</>
+				}
 			</span>
 		</>);
 };
