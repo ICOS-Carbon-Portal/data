@@ -3,8 +3,8 @@ import * as queries from './sparqlQueries';
 import config from '../../common/main/config';
 
 
-export const fetchStationMeasurement = (stationId, valueType, dataLevel, height) => {
-	const query = queries.listStationMeasurement(config, stationId, valueType, dataLevel, height);
+export const fetchStationMeasurement = (stationId, valueType) => {
+	const query = queries.listStationMeasurement(config, stationId);
 
 	return sparql({text: query}, config.sparqlEndpoint, true)
 		.then(sparqlResult => {
@@ -17,7 +17,8 @@ export const fetchStationMeasurement = (stationId, valueType, dataLevel, height)
 						dataEnd: new Date(binding.dataEnd.value),
 						dobj: binding.dobj.value,
 						columnName: binding.columnName.value,
-						samplingHeight: Number(binding.samplingHeight.value)
+						samplingHeight: Number(binding.samplingHeight.value),
+						level: Number(binding.level.value)
 					}
 				}))
 				: Promise.reject(new Error(`Could not get station measurements for stationId = ${stationId}, valueType = ${valueType}`));
@@ -38,6 +39,7 @@ export const fetchObjectSpecifications = objIds => {
 						nRows: parseInt(binding.nRows.value),
 						filename: binding.fileName.value,
 						specLabel: binding.specLabel.value,
+						level: parseInt(binding.level.value),
 						columnNames: binding.columnNames ? JSON.parse(binding.columnNames.value) : undefined,
 					}
 				}))

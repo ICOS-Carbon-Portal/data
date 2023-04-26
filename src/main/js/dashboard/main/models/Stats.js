@@ -177,8 +177,8 @@ export default class Stats {
 		return new Stats(this._timePeriod, { ...this.params, valueType: valueType }, emptyMetadata, [], this.firstTimestamp, this.lastTimestamp, this.measurements);
 	}
 
-	withData({yCol, dataLevel, binTable, objSpec}){
-		const dataset = new Dataset(dataLevel, binTable, objSpec);
+	withData({yCol, binTable, objSpec}){
+		const dataset = new Dataset(objSpec.level, binTable, objSpec);
 		const metadata = getMetadata(objSpec, this.metadata, yCol);
 		const datasets = this.datasets.concat([dataset]);
 		const firstTimestamp = datasets.reduce((ts, ds) => Math.min(ts, ds.firstTimestamp), Date.now());

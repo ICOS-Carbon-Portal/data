@@ -44,8 +44,7 @@ export const init = searchParams => dispatch => {
 	});
 
 	if (isValidRequest){
-		dispatch(getStationMeasurement(stationId, valueType, 1, height));
-		dispatch(getStationMeasurement(stationId, valueType, 2, height));
+		dispatch(getStationMeasurement(stationId, valueType, height));
 
 		saveToRestheart({
 			dashboard: {
@@ -72,9 +71,9 @@ const getWebHostUrl = () => {
 	return 'unknown';
 };
 
-const getStationMeasurement = (stationId, valueType, dataLevel, height) => dispatch => {
+const getStationMeasurement = (stationId, valueType, height) => dispatch => {
 
-	fetchStationMeasurement(stationId, valueType, dataLevel, height).then(measurements => {
+	fetchStationMeasurement(stationId, valueType).then(measurements => {
 		dispatch({
 			type: actionTypes.STATION_MEASUREMENTS,
 			measurements
@@ -82,7 +81,7 @@ const getStationMeasurement = (stationId, valueType, dataLevel, height) => dispa
 
 		const objIds = getObjIds(measurements, valueType, height);
 
-		dispatch(getObjectSpecifications(objIds, dataLevel, valueType));
+		dispatch(getObjectSpecifications(objIds, valueType));
 	});
 };
 
@@ -92,19 +91,18 @@ const getObjIds = (measurements, valueType, height) => {
 		.map(m => m.dobj);
 }
 
-const getObjectSpecifications = (objIds, dataLevel, valueType) => dispatch => {
+const getObjectSpecifications = (objIds, valueType) => dispatch => {
 
 	fetchObjectSpecifications(objIds).then(objectSpecifications => {
 		if (objectSpecifications === undefined) {
 			dispatch({
 				type: actionTypes.BINTABLE,
-				dataLevel,
 				objSpec: undefined,
 				binTable: undefined
 			});
 		} else {
 			objectSpecifications.forEach(objSpec => {
-				dispatch(getBinTable(dataLevel, valueType, objSpec));
+				dispatch(getBinTable(valueType, objSpec));
 			})
 		}
 	},
@@ -112,7 +110,7 @@ const getObjectSpecifications = (objIds, dataLevel, valueType) => dispatch => {
 	);
 };
 
-const getBinTable = (dataLevel, yCol, objSpec) => dispatch => {
+const getBinTable = (yCol, objSpec) => dispatch => {
 	const {id, tableFormat, nRows} = objSpec;
 	const columnIndexes = config.columnsToFetch.concat([yCol]).map(colName =>
 		tableFormat.getColumnIndex(colName)
@@ -123,7 +121,6 @@ const getBinTable = (dataLevel, yCol, objSpec) => dispatch => {
 		dispatch({
 			type: actionTypes.BINTABLE,
 			yCol,
-			dataLevel,
 			objSpec,
 			binTable
 		});
@@ -148,8 +145,7 @@ export const switchHeight = height => (dispatch, getState) => {
 	const stats = getState().stats
 	const objIds = getObjIds(stats.measurements, stats.params.valueType, height);
 
-	dispatch(getObjectSpecifications(objIds, 1, stats.params.valueType));
-	dispatch(getObjectSpecifications(objIds, 2, stats.params.valueType));
+	dispatch(getObjectSpecifications(objIds, stats.params.valueType));
 };
 
 export const switchValueType = valueType => (dispatch, getState) => {
@@ -161,6 +157,5 @@ export const switchValueType = valueType => (dispatch, getState) => {
 	const stats = getState().stats
 	const objIds = getObjIds(stats.measurements, valueType, stats.params.height);
 
-	dispatch(getObjectSpecifications(objIds, 1, valueType));
-	dispatch(getObjectSpecifications(objIds, 2, valueType));
+	dispatch(getObjectSpecifications(objIds, valueType));
 };
