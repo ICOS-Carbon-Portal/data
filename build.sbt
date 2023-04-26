@@ -2,7 +2,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 import IcosCpSbtFrontendPlugin.JarResourceImport
 
-ThisBuild / scalaVersion := "3.2.0"
+ThisBuild / scalaVersion := "3.2.2"
 
 lazy val commonSettings = Seq(
 	organization := "se.lu.nateko.cp",
@@ -63,7 +63,7 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.5.0",
+		version := "0.6.0",
 
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildScript := "./build.sh",
@@ -76,9 +76,9 @@ lazy val data = (project in file("."))
 			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.8.0",
+			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.9.0",
 			metaCoreModule  excludeAll("io.spray"),
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.6.7",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0",
 			"org.postgresql"      % "postgresql"                         % "42.2.12",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 
