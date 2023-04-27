@@ -142,7 +142,7 @@ object ObspackNcToBinTable:
 	private def readVal[N <: AnyRef](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
 		val ncArr = v.read()
 		var printedFillInfo = false
-		Option(v.findAttribute("_FillValue")).map(_.getNumericValue).fold{
+		Option(v.findAttribute(NetcdfUtil.FillValueAttrName)).map(_.getNumericValue).fold{
 			(i: Int) => getter(ncArr, i)
 		}{fill =>
 			(i: Int) =>

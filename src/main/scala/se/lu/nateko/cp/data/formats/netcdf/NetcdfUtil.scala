@@ -18,6 +18,8 @@ import scala.util.Using
 
 object NetcdfUtil{
 
+	val FillValueAttrName = "_FillValue"
+
 	def calcMinMax(file: File, varname: String)(using ExecutionContext): Future[VarInfo] = {
 		def ds = NetcdfDatasets.openDataset(file.getAbsolutePath, false, null)
 
@@ -28,7 +30,7 @@ object NetcdfUtil{
 			val minMaxFuts = sections.map{section =>
 				usingWithFuture(ds){ncd =>
 					val v = ncd.findVariable(varname)
-					val skipValue = Option(v.findAttribute("_FillValue"))
+					val skipValue = Option(v.findAttribute(FillValueAttrName))
 					Future{
 						//println(s"Reading $section (section size = ${section.computeSize}, var size = ${v.getSize})")
 						val data = v.read(section)
