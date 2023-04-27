@@ -57,7 +57,7 @@ class ZipRouting(
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
 	def extractFile(dobj: StaticObject, decodedPath: String): Try[InputStream] =
-		val zipFile = zip.open(upload.getFile(dobj))
+		val zipFile = zip.open(upload.getFile(dobj, true))
 		val zipEntry = zipFile.getEntry(decodedPath)
 
 		Try(zipFile.getInputStream(zipEntry))
@@ -97,7 +97,7 @@ class ZipRouting(
 			pathPrefix(Sha256Segment){ implicit hash =>
 				path("listContents"){
 					val entriesFut = upload.meta.lookupObjFormat(hash).flatMap{formatUriOpt =>
-						val file = upload.getFile(formatUriOpt, hash)
+						val file = upload.getFile(formatUriOpt, hash, true)
 						Future.fromTry(zip.listEntries(file))
 					}
 					onSuccess(entriesFut){entries =>

@@ -236,7 +236,7 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 					_.sortBy(_.submissionEnd).foldLeft(Map.empty){(acc, sfi) =>
 						if sfi.format != dailyFormat then acc
 						else
-							val zipFile = upload.getFile(Some(sfi.format), sfi.hash)
+							val zipFile = upload.getFile(Some(sfi.format), sfi.hash, true)
 							val halfHourlies = zip.listEntries(zipFile).get
 								.flatMap(zentry => EtcFilename.parse(zentry.getName).toOption.map(_ -> zentry))
 								.collect{

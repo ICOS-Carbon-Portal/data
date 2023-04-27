@@ -64,7 +64,7 @@ class BinTableCsvReader(upload: UploadService)(using envriConf: EnvriConfigs) {
 				val readSchema = TimeSeriesToBinTableConverter.getReadingSchema(onlyColumnNames, actualColNames, nRows, colsMeta)
 
 				val rowsSrc = if(offset >= nRows) Source.empty else {
-					val origFile = upload.getFile(Some(objFormat), hash)
+					val origFile = upload.getFile(Some(objFormat), hash, true)
 					val file = new File(origFile.getAbsolutePath + bintable.FileExtension)
 
 					new BinTableRowReader(file, readSchema.binSchema)

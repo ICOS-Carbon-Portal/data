@@ -131,7 +131,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		))
 
 	private def singleObjectSource(obj: StaticObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
-		val file = upload.getFile(obj)
+		val file = upload.getFile(obj, true)
 
 		val src = FileIO.fromPath(file.toPath).mapMaterializedValue(_.map(_.count))
 
@@ -181,7 +181,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 					if(url.hostL2 != takeL2Domain(envriConf.dataHost))
 						Some("Data object is distributed by third parties")
 
-					else if(!upload.getFile(obj).exists)
+					else if(!upload.getFile(obj, true).exists)
 						Some("File with object contents is missing on the server")
 					else
 						None

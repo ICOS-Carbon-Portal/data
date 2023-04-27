@@ -115,7 +115,7 @@ class IntegrityControlService(uploader: UploadService)(using ExecutionContext, M
 
 	private def localFileProblem(dobjStInfo: DobjStorageInfo): (Path, Future[Option[String]]) = {
 		import dobjStInfo.{format, hash, size}
-		val file = uploader.getFile(format, hash)
+		val file = uploader.getFile(format, hash, true)
 
 		val problem: Future[Option[String]] =
 			if dobjStInfo.isNotStored
