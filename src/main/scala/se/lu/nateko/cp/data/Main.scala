@@ -59,7 +59,7 @@ object Main extends App {
 	val downloadRouting = new DownloadRouting(authRouting, downloadService, portalLog, postgresLog, ConfigReader.metaCore)
 	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
 
-	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
+	val binTableFetcher = new FromBinTableFetcher(uploadService)
 	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
 
 	val zipRoute = new ZipRouting(downloadService, restHeart, portalLog, authRouting).route

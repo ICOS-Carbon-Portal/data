@@ -1,14 +1,15 @@
 package se.lu.nateko.cp.data.services.fetch
 
-import java.io.File
-
-import scala.concurrent.Future
-
+import akka.Done
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import akka.Done
+import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.data.formats.bintable.*
+import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+
+import java.io.File
+import scala.concurrent.Future
 
 case class BinTableRequest(
 	tableId: Sha256Sum,
@@ -18,15 +19,15 @@ case class BinTableRequest(
 	slice: Option[BinTableSlice]
 )
 
-class FromBinTableFetcher(folder: File){
-
-	assert(folder.isDirectory, "BinTable folder path must be a directory: " + folder.getAbsolutePath)
+class FromBinTableFetcher(upload: UploadService):
 
 	def getSource(request: BinTableRequest): Source[ByteString, Future[Done]] = {
 
 		assert(!request.schema.hasStringColumn, "Only numeric BinTables can be fetched as binary data.")
 
-		val file = new File(folder, request.subFolder + "/" + request.tableId.id + FileExtension)
+		val formatUri = CpMetaVocab.getRelative(request.subFolder)
+		val origFile = upload.getFile(Some(formatUri), request.tableId, true)
+		val file = File(origFile.getAbsolutePath + FileExtension)
 
 		assert(file.exists, s"File ${file.getName} not found on the server")
 
@@ -41,4 +42,3 @@ class FromBinTableFetcher(folder: File){
 			col.byteSize * nRows
 		}.sum
 	}
-}
