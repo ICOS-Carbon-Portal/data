@@ -8,10 +8,9 @@
   "description": "Carbon Portal Data Service",
   "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp buildWatch",
-    "gulp": "gulp"
+    "publish": "node esbuild.config.mjs --minify --target=es2020",
+    "watch": "node esbuild.config.mjs --watch",
+    "build": "node esbuild.config.mjs"
   },
   "repository": {
     "type": "git",
@@ -33,33 +32,8 @@
     "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
   },
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
-  "babel": {
-    "presets": [
-      "@babel/preset-env",
-      "@babel/typescript"
-    ],
-    "plugins": [
-      "@babel/proposal-class-properties",
-      "@babel/proposal-object-rest-spread"
-    ]
-  },
-  "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
-    "@babel/preset-typescript": "^7.3.3",
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/preset-react": "^7.0.0",
-    "@babel/register": "^7.4.4",
-    "browserify-css": "^0.15.0",
-    "del": "^3.0.0",
-    "gulp": "^4.0.1",
-    "gulp-babel": "^8.0.0"
-  },
   "dependencies": {
-    "deep-equal": "^1.0.1",
+    "esbuild": "0.17.18",
     "icos-cp-backend": "0.5.2",
     "icos-cp-toaster": "^0.5.1",
     "icos-cp-utils": "^0.1.5",

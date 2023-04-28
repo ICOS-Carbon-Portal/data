@@ -58,7 +58,7 @@ const InvalidRequest = _ => {
 				</ul>
 
 				<div style={{marginTop:30}}>
-					<a href="https://data.icos-cp.eu/dashboard/?stationId=GAT&valueType=co2&height=60">Example</a>
+					<a href="/dashboard/?stationId=GAT&valueType=co2&height=60">Example</a>
 				</div>
 			</div>
 		</div>
