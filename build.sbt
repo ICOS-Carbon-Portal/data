@@ -79,7 +79,7 @@ lazy val data = (project in file("."))
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.9.0",
 			metaCoreModule  excludeAll("io.spray"),
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0",
-			"org.postgresql"      % "postgresql"                         % "42.2.12",
+			"org.postgresql"      % "postgresql"                         % "42.6.0",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 
 			"org.openjfx"         % "javafx-base"      % "11" % "test" classifier osName,
