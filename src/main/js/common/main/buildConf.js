@@ -26,7 +26,16 @@ const applyProdEnvironment = cb => {
 	return cb();
 };
 
-const buildTarget = '../../../../target/scala-3.2.2/classes/frontendapps/';
+const scalaClassDir = process.env.SCALA_CLASS_DIR;
+if(!scalaClassDir){
+	console.error(
+		"SCALA_CLASS_DIR environment variable is not set. " +
+		"Use classDirectory setting from SBT to get the value to set it to."
+	);
+	process.exit(1);
+}
+
+const buildTarget = scalaClassDir +  '/frontendapps/';
 
 const watch = (filesToWatch, buildTask) => {
 	return function watch() {

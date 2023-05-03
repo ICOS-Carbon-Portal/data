@@ -66,7 +66,14 @@ lazy val data = (project in file("."))
 		version := "0.6.0",
 
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
-		cpFrontendBuildScript := "./build.sh",
+		cpFrontendBuildCommand := {
+			val targetDir = (Compile / classDirectory).value.getAbsolutePath
+			s"""export SCALA_CLASS_DIR="${targetDir}" && ./build.sh"""
+		},
+		cpFrontendPublishCommand := {
+			val targetDir = (Compile / classDirectory).value.getAbsolutePath
+			s"""export SCALA_CLASS_DIR="${targetDir}" && npm run publish"""
+		},
 		cpFrontendJarImports := Seq(
 			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")
 		),

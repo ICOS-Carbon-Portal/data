@@ -4,4 +4,4 @@ addSbtPlugin("com.typesafe.play" % "sbt-twirl" % "1.6.0-M7")
 
 addSbtPlugin("se.lu.nateko.cp" % "icoscp-sbt-deploy" % "0.3.2")
 
-addSbtPlugin("se.lu.nateko.cp" % "icoscp-sbt-frontend" % "0.1.1")
+addSbtPlugin("se.lu.nateko.cp" % "icoscp-sbt-frontend" % "0.1.2")
