@@ -106,6 +106,9 @@ lazy val data = (project in file("."))
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
 		cpDeployPreAssembly := Def.sequential(netcdf / Test / test, Test / test, cpFrontendPublish).value,
+		cpDeployPlaybook := "cities.yml",
+		cpDeployPermittedInventories := Some(Seq("staging", "cities")),
+		cpDeployInfraBranch := "cities-deployment",
 
 //		initialCommands in console := """
 //			import se.lu.nateko.cp.data.api.B2Playground._
