@@ -16,9 +16,6 @@ import akka.http.scaladsl.server.util.{Tuple => AkkaTuple}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import se.lu.nateko.cp.cpauth.core.CollectionDownloadInfo
-import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
-import se.lu.nateko.cp.cpauth.core.DocumentDownloadInfo
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
@@ -35,6 +32,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.data.*
 import spray.json.*
+import se.lu.nateko.cp.data.api.*
 
 import java.net.URI
 import java.time.Instant

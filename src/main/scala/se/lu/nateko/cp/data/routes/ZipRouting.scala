@@ -10,7 +10,6 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.cpauth.core.ZipExtractionInfo
 import se.lu.nateko.cp.data.api.PortalLogClient

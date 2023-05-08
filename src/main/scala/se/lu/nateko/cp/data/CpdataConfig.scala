@@ -13,6 +13,8 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewServiceConfig
 import spray.json.*
 import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.geoipclient.CpGeoConfig
+import se.lu.nateko.cp.cpauth.core.EmailConfig
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 
@@ -94,6 +96,16 @@ case class EtcFacadeConfig(
 	testStation: StationId
 )
 
+case class PostgresConfig(
+	hostname: String,
+	port: Int,
+	dbName: String,
+	writer: CredentialsConfig,
+	dbAccessPoolSize: Int
+)
+
+type PostgresConfigs = Map[Envri, PostgresConfig]
+
 case class CpdataConfig(
 	interface: String,
 	port: Int,
@@ -103,7 +115,10 @@ case class CpdataConfig(
 	meta: MetaServiceConfig,
 	restheart: RestHeartConfig,
 	downloads: DownloadStatsConfig,
-	etcFacade: EtcFacadeConfig
+	etcFacade: EtcFacadeConfig,
+	postgres: PostgresConfigs,
+	geoip: CpGeoConfig,
+	mailing: EmailConfig
 )
 
 object ConfigReader extends CommonJsonSupport{
@@ -127,7 +142,10 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
-	given RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
+	given RootJsonFormat[PostgresConfig] = jsonFormat5(PostgresConfig.apply)
+	given RootJsonFormat[CpGeoConfig] = jsonFormat3(CpGeoConfig.apply)
+	given RootJsonFormat[EmailConfig] = jsonFormat5(EmailConfig.apply)
+	given RootJsonFormat[CpdataConfig] = jsonFormat12(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val confFile = new java.io.File("application.conf").getAbsoluteFile
