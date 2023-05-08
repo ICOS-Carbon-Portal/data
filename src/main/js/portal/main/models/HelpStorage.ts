@@ -122,12 +122,18 @@ export class HelpItem {
 
 const {envri} = config;
 
-const projectDescr = envri === 'SITES'
-	? 'SITES Data Portal stores data from the following projects:'
-	: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:';
-const projectStr = envri === 'SITES'
-	? 'SITES'
-	: 'the Carbon Portal';
+const projectDescr: { [E in Envri]: string } = {
+	ICOS: 'In addition to the official ICOS data, Carbon Portal also stores data from various partner projects:',
+	SITES: 'SITES Data Portal stores data from the following projects:',
+	ICOSCities: 'ICOS Cities stores data from the following projects:'
+}
+
+const projectStrings: { [E in Envri]: string } = {
+	ICOS: 'the Carbon Portal',
+	SITES: 'SITES',
+	ICOSCities: 'ICOS Cities'
+}
+const projectStr = projectStrings[envri]
 
 const numberFilterList = [
 	{
@@ -146,7 +152,7 @@ const numberFilterList = [
 
 const initItems: HelpItem[] = [
 
-	new HelpItem('project', projectDescr, undefined, []),
+	new HelpItem('project', projectDescr[envri], undefined, []),
 
 	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
 		'Typically, all data except elaborated products have a station of origin.'),
@@ -172,7 +178,8 @@ const initItems: HelpItem[] = [
 		'ecosystem',
 		{
 			ICOS: 'Only applicable to measurement data from ecosystem stations where ecosystem-type information is available.',
-			SITES: 'Type of ecosystem. Each type is described individually in the drop down.'
+			SITES: 'Type of ecosystem. Each type is described individually in the drop down.',
+			ICOSCities: ''
 		}
 	),
 

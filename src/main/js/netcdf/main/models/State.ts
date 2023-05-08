@@ -1,12 +1,12 @@
 import { BinRaster } from "icos-cp-backend";
 import { RGBA } from "icos-cp-spatial";
-import config from "../../../common/main/config";
+import { envri } from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
 import { colorRamps } from "../../../common/main/models/colorRampDefs";
 import { ControlsHelper } from "./ControlsHelper";
 
 
-const isSites = config.envri === "SITES";
+const isSites = envri === "SITES";
 
 const pathName = window.location.pathname;
 const sections = pathName.split('/');

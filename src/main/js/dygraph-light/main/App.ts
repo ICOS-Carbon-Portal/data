@@ -2,7 +2,7 @@ import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
 import {logError, saveToRestheart} from '../../common/main/backend';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
-import config from '../../common/main/config';
+import config, {ICOS, ICOSCities, SITES, envri} from '../../common/main/config';
 import Dygraph from 'dygraphs';
 import './Dygraphs.css';
 import './custom.css';
@@ -170,14 +170,27 @@ export default class App {
 		if (isIframeInPortal)
 			return document.createElement("div");
 
-		const isIcos = config.envri === "ICOS";
-
 		const logo = document.createElement("img");
-		logo.src = isIcos ? "https://static.icos-cp.eu/images/Icos_cp_Logo.svg" : "https://static.icos-cp.eu/images/sites-logo.png";
-		logo.title = isIcos ? "View in Carbon Portal" : "View in SITES";
-		const logoStyle = isIcos
-			? "height:30px;vertical-align:middle;position:relative;top:-6px;"
-			: "height:19px;vertical-align:middle;";
+		let logoStyle = '';
+
+		switch(envri) {
+			case ICOS:
+				logo.src = "https://static.icos-cp.eu/images/Icos_cp_Logo.svg";
+				logo.title = "View in Carbon Portal";
+				logoStyle = "height:30px;vertical-align:middle;position:relative;top:-6px;";
+				break;
+			case SITES:
+				logo.src = "https://static.icos-cp.eu/images/sites-logo.png";
+				logo.title = "View in the SITES data portal";
+				logoStyle = "height:19px;vertical-align:middle;";
+				break;
+			case ICOSCities:
+				logo.src = "https://static.icos-cp.eu/images/Icos_cp_Logo.svg";
+				logo.title = "View in the ICOS Cities data portal";
+				logoStyle = "height:30px;vertical-align:middle;position:relative;top:-6px;";
+				break;
+		}
+
 		logo.setAttribute("style", logoStyle);
 
 		const lnk = document.createElement("a");

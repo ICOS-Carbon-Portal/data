@@ -37,7 +37,7 @@ class StaticRouting()(using envriConfigs: EnvriConfigs) {
 		case ("stats", envri) => views.html.StatsPage()(envri, envriConfigs(envri))
 		case ("etcfacade", envri) => views.html.EtcFacadePage()(envri, envriConfigs(envri))
 		case ("dygraph-light", envri) => views.html.DygraphLight()(envri, envriConfigs(envri))
-		case ("dashboard", envri) => views.html.Dashboard()(envriConfigs(envri))
+		case ("dashboard", envri) => views.html.Dashboard()(envri, envriConfigs(envri))
 	}
 
 	private def maybeDobjVis(proj: String): PathMatcher1[PageFactory] = proj match {
@@ -50,7 +50,7 @@ class StaticRouting()(using envriConfigs: EnvriConfigs) {
 			})
 		case MapGraphProj =>
 			(Slash ~ Sha256Segment).?.tmap(_ =>
-				Tuple1{case (MapGraphProj, envri) => views.html.MapGraph()(envriConfigs(envri))}
+				Tuple1{case (MapGraphProj, envri) => views.html.MapGraph()(envri, envriConfigs(envri))}
 			)
 		case _ =>
 			Neutral.tmap(_ => Tuple1(standardPageFactory))

@@ -1,74 +1,108 @@
-import commonConfig, {ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH, PHENOCAM} from '../../common/main/config';
+import commonConfig, {envri as untypedEnvri, ICOS, SITES, NETCDF, TIMESERIES, MAPGRAPH, PHENOCAM, ICOSCities} from '../../common/main/config';
 import {UrlStr} from "./backend/declarations";
 import {BaseMapId, BaseMapFilter, cirlcePointStyle, supportedSRIDsFriendlyNames, SupportedSRIDs} from 'icos-cp-ol';
 import {IndexedDBProps} from "./backend/IndexedDB";
 import Style from "ol/style/Style";
 
-export type Envri = typeof ICOS | typeof SITES;
+export type Envri = typeof ICOS | typeof SITES | typeof ICOSCities;
 export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES | typeof PHENOCAM
 
 type EnvriUrl = { [E in Envri]: UrlStr }
-type EnvriUrls = { [E in Envri]: UrlStr[] }
 
-const envri = commonConfig.envri as Envri;
+const envri = untypedEnvri as Envri;
 
 const objectUriPrefix: EnvriUrl = {
 	ICOS: 'https://meta.icos-cp.eu/objects/',
-	SITES: 'https://meta.fieldsites.se/objects/'
+	SITES: 'https://meta.fieldsites.se/objects/',
+	ICOSCities: 'https://citymeta.icos-cp.eu/objects/'
 };
 
 const metaResourceGraph: EnvriUrl = {
 	ICOS: 'http://meta.icos-cp.eu/resources/cpmeta/',
-	SITES: 'https://meta.fieldsites.se/resources/sites/'
+	SITES: 'https://meta.fieldsites.se/resources/sites/',
+	ICOSCities: 'https://citymeta.icos-cp.eu/resources/cpmeta/'
 };
 
 // in addition to metaResourceGraph, that is
-const additionalStationsGraphs: EnvriUrls = {
-	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/'],
-	SITES: []
+const additionalStationsGraphs: { [E in Envri]?: UrlStr[] } = {
+	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/']
 }
 
 const searchResultsCSVName = {
 	ICOS: 'Carbon Portal Search Result.csv',
-	SITES: 'SITES Data Portal Search Results.csv'
+	SITES: 'SITES Data Portal Search Results.csv',
+	ICOSCities: 'ICOS Cities Search Result.csv'
 }
+
+
+const defaultFeatureFlags = {
+	shortenDataTypeLabel: false,
+	displayStationInExtendedInfo: false,
+	displayFileNameInExtendedInfo: true,
+	displayDataLevel: true,
+	displayStationIds: true,
+	setMaxSamplingDateToToday: false
+};
 
 const featureFlags = {
 	ICOS: {
-		shortenDataTypeLabel: false,
-		displayStationInExtendedInfo: false,
-		displayFileNameInExtendedInfo: true,
-		displayDataLevel: true,
-		displayStationIds: true,
-		setMaxSamplingDateToToday: false
+		...defaultFeatureFlags
 	},
 	SITES: {
+		...defaultFeatureFlags,
 		shortenDataTypeLabel: true,
 		displayStationInExtendedInfo: true,
 		displayFileNameInExtendedInfo: false,
-		displayDataLevel: true,
 		displayStationIds: false,
 		setMaxSamplingDateToToday: true
+	},
+	ICOSCities: {
+		...defaultFeatureFlags,
 	}
 }
 
-const sridsInMap: Record<SupportedSRIDs, string> = envri === 'ICOS'
-	? {
+const sridsInMap: { [E in Envri]: Record<SupportedSRIDs, string> } = {
+	ICOS: {
 		'3035': supportedSRIDsFriendlyNames['3035'],
 		'54030': supportedSRIDsFriendlyNames['54030']
+	},
+	SITES: {
+		'3006': supportedSRIDsFriendlyNames['3006']
+	},
+	ICOSCities: {
+		'3035': supportedSRIDsFriendlyNames['3035']
 	}
-	: { '3006': supportedSRIDsFriendlyNames['3006'] };
-const defaultSRID: SupportedSRIDs = envri === 'ICOS' ? '3035' : '3006';
-const defaultBaseMap: BaseMapId = envri === 'ICOS' ? 'physical' : 'lmTopoGray';
-const baseMapFilter: BaseMapFilter = envri === 'SITES'
-	? _ => true
-	: bm => bm.isWorldWide;
-const includedStation = envri === 'ICOS'
-	? cirlcePointStyle('tomato', 'white', 6, 2)
-	: cirlcePointStyle('Magenta', 'white', 6, 2);
-const excludedStation = envri === 'ICOS'
-	? cirlcePointStyle('white', 'DarkRed', 4, 2)
-	: cirlcePointStyle('white', 'DarkMagenta', 4, 2);
+}
+
+const defaultSRID: { [E in Envri]: SupportedSRIDs } = {
+	ICOS: '3035',
+	SITES: '3006',
+	ICOSCities: '3035'
+}
+
+const defaultBaseMap: { [E in Envri]: BaseMapId } = {
+	ICOS: 'physical',
+	SITES: 'lmTopoGray',
+	ICOSCities: 'physical',
+}
+
+const baseMapFilter: { [E in Envri]: BaseMapFilter } = {
+	ICOS: bm => bm.isWorldWide,
+	SITES: _ => true,
+	ICOSCities: _ => true
+}
+
+const includedStation = {
+	ICOS: cirlcePointStyle('tomato', 'white', 6, 2),
+	SITES: cirlcePointStyle('Magenta', 'white', 6, 2),
+	ICOSCities: cirlcePointStyle('tomato', 'white', 6, 2)
+}
+
+const excludedStation = {
+	ICOS: cirlcePointStyle('white', 'DarkRed', 4, 2),
+	SITES: cirlcePointStyle('white', 'DarkMagenta', 4, 2),
+	ICOSCities: cirlcePointStyle('white', 'DarkRed', 4, 2)
+}
 
 export type OlMapSettings = {
 	sridsInMap: Record<SupportedSRIDs, string>
@@ -78,13 +112,13 @@ export type OlMapSettings = {
 	iconStyles: Record<string, Style>
 }
 const olMapSettings: OlMapSettings = {
-	sridsInMap,
-	defaultSRID,
-	defaultBaseMap,
-	baseMapFilter,
+	sridsInMap: sridsInMap[envri],
+	defaultSRID: defaultSRID[envri],
+	defaultBaseMap: defaultBaseMap[envri],
+	baseMapFilter: baseMapFilter[envri],
 	iconStyles: {
-		includedStation,
-		excludedStation
+		includedStation: includedStation[envri],
+		excludedStation: excludedStation[envri]
 	}
 };
 
@@ -174,6 +208,7 @@ export const numericFilterLabels: {[key in NumberFilterCategories]: string} = {
 export const placeholders: {[E in Envri]: CategoryNamesDict} = {
 	ICOS: defaultCategNames,
 	SITES: { ...defaultCategNames, station: 'Station', ecosystem: 'Ecosystem', project: 'Thematic programme', valType: 'Parameter'},
+	ICOSCities: defaultCategNames
 };
 
 export type CategPrefix = UrlStr | {prefix: string, value: UrlStr}[]
@@ -210,6 +245,22 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 		format: 'https://meta.fieldsites.se/ontologies/sites/',
 		valType: 'https://meta.fieldsites.se/resources/',
 		quantityKind: 'https://meta.fieldsites.se/resources/'
+	},
+	ICOSCities: {
+		project: 'https://citymeta.icos-cp.eu/resources/projects/',
+		theme: 'https://citymeta.icos-cp.eu/resources/themes/',
+		station: [
+			{ prefix: 'i', value: 'https://citymeta.icos-cp.eu/resources/stations/' }
+		],
+		ecosystem: 'https://citymeta.icos-cp.eu/ontologies/cpmeta/',
+		submitter: [
+			{ prefix: 'o', value: 'https://citymeta.icos-cp.eu/resources/organizations/' },
+			{ prefix: 's', value: 'https://citymeta.icos-cp.eu/resources/stations/' }
+		],
+		type: 'https://citymeta.icos-cp.eu/resources/cpmeta/',
+		format: 'https://citymeta.icos-cp.eu/ontologies/cpmeta/',
+		valType: 'https://citymeta.icos-cp.eu/resources/cpmeta/',
+		quantityKind: 'https://citymeta.icos-cp.eu/resources/cpmeta/'
 	}
 };
 
@@ -237,18 +288,22 @@ export const filters: IFilterCategories = {
 		{panelTitle: "Measurements", filterList: ['valType', 'variable']},
 		{panelTitle: "Sampling date", filterList: ['dataTime']},
 		{panelTitle: "Submission date", filterList: ['submission']},
+	],
+	ICOSCities: [
+		{ panelTitle: "Data origin", filterList: ['project', 'theme', 'station', 'stationclass', 'ecosystem', 'countryCode', 'submitter', 'samplingHeight'] },
+		{ panelTitle: "Data types", filterList: ['type', 'keywordFilter', 'level', 'format'] },
+		{ panelTitle: "Value types", filterList: ['valType', 'variable', 'quantityUnit', 'quantityKind'] },
+		{ panelTitle: "Sampling date", filterList: ['dataTime'] },
+		{ panelTitle: "Submission date", filterList: ['submission'] },
+		{ panelTitle: "Misc", filterList: ['fileSize'] }
 	]
 };
 
+const defaultTimezone = { offset: 0, label: "UTC" }
 export const timezone = {
-	ICOS: {
-		offset: 0,
-		label: "UTC"
-	},
-	SITES: {
-		offset: 1,
-		label: "UTC+1"
-	}
+	ICOS: defaultTimezone,
+	SITES: { offset: 1, label: "UTC+1" },
+	ICOSCities: defaultTimezone,
 };
 
 export const themeUris = {
@@ -299,7 +354,11 @@ export const breadcrumbs: { [E in Envri]: ReadonlyArray<Breadcrumb> } = {
 	SITES: [
 		{ label: "Home", url: "https://www.fieldsites.se" },
 		{ label: "Data catalogue", url: "/portal" }
-	]
+	],
+	ICOSCities: [
+		{ label: "Home", url: "https://icos-cities.eu/" },
+		{ label: "ICOS Cities Data Portal", url: "/portal" }
+	],
 };
 
 export const iframeEmbedSize = {

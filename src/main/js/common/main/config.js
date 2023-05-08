@@ -1,19 +1,24 @@
 
 export const ICOS = "ICOS";
 export const SITES = "SITES";
+export const ICOSCities = "ICOSCities";
 export const TIMESERIES = "TIMESERIES";
 export const NETCDF = "NETCDF";
 export const MAPGRAPH = "MAPGRAPH";
 export const PHENOCAM = "PHENOCAM";
+export const envri = window.envri
 
-const envri = typeof location !== 'undefined' && location.host.indexOf('fieldsites.se') >= 0 ? SITES : ICOS;
 const metaBaseUri = `https://${window.envriConfig.metaHost}`;
 const authBaseUri = `https://${window.envriConfig.authHost}`;
-const restheartDb = envri === SITES ? 'sitesdb' : 'db';
+const restheartDbUrls = {
+	ICOS: '//restheart.icos-cp.eu/db/',
+	SITES: '//restheart.icos-cp.eu/sitesdb/',
+	ICOSCities: '//cityrestheart1.icos-cp.eu/pauldb/'
+};
 
 export default {
 	sparqlEndpoint: metaBaseUri + '/sparql',
-	restheartDbUrl: `//restheart.icos-cp.eu/${restheartDb}/`,
+	restheartDbUrl: restheartDbUrls[envri],
 	restheartProfileBaseUrl: `${authBaseUri}/db/users`,
 	portalUseLogUrl: `${authBaseUri}/logs/portaluse`,
 	cpmetaOntoUri: 'http://meta.icos-cp.eu/ontologies/cpmeta/',
@@ -21,7 +26,6 @@ export default {
 	metaBaseUri,
 	authBaseUri,
 	cpmetaObjectUri: window.envriConfig.dataItemPrefix + 'objects/',
-	envri,
 	sparqlGraphFilter: window.envriConfig.metaItemPrefix,
 	previewTypes: {
 		TIMESERIES,

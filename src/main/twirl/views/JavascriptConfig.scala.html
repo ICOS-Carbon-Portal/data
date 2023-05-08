@@ -1,8 +1,10 @@
+@import eu.icoscp.envri.Envri
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
 @import se.lu.nateko.cp.data.utils.printEnvriConf
 
-@()(implicit conf: EnvriConfig)
+@()(implicit envri: Envri, conf: EnvriConfig)
 
 <script type="text/javascript">
+	window.envri = "@envri.shortName";
 	window.envriConfig = @Html(printEnvriConf(conf));
 </script>

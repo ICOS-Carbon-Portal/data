@@ -113,7 +113,7 @@ where{
 	return { text };
 }
 
-const stationGraphs = config.additionalStationsGraphs[config.envri].map(gr => `from <${gr}>\n`).join("");
+const stationGraphs = (config.additionalStationsGraphs[config.envri] ?? []).map(gr => `from <${gr}>\n`).join("");
 const fromOntoAndResAndStations =
 	`from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>
