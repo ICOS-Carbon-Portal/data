@@ -17,7 +17,6 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
@@ -49,7 +48,7 @@ import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 
 class DownloadRouting(
 	authRouting: AuthRouting, downloadService: DownloadService,
-	logClient: PortalLogClient, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
+	logClient: PostgisDlLogger, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
 )(using mat: Materializer) {
 
 	import DownloadRouting.*
@@ -231,7 +230,6 @@ class DownloadRouting(
 				val dlInfo = DocumentDownloadInfo(
 					time = Instant.now(),
 					hashId = doc.hash.id,
-					ip = ip,
 					cpUser = uidOpt.map(authRouting.anonymizeCpUser),
 				)
 				for(uid <- uidOpt){
@@ -239,7 +237,7 @@ class DownloadRouting(
 						log.error(_, s"Failed saving download of document ${doc.accessUrl} to ${uid.email}'s user profile")
 					)
 				}
-				logClient.logDownload(dlInfo)
+				logClient.logDl(dlInfo, ip)
 				getFromFile(file, getContentType(doc.fileName))
 			}
 		} else
@@ -281,24 +279,22 @@ class DownloadRouting(
 	)(using Envri): Unit =
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
-			ip = ip,
 			hashId = dobj.hash.id,
 			cpUser = uid.map(authRouting.anonymizeCpUser),
 			endUser = endUser,
 			distributor = thirdParty
 		)
 
-		logClient.logDownload(dlInfo)
+		logClient.logDl(dlInfo, ip)
 
 
 	private def logCollDownload(coll: StaticCollection)(using Envri): ExtraBatchLog = (ip, uidOpt) => {
 		val dlInfo = CollectionDownloadInfo(
 			time = Instant.now(),
-			ip = ip,
 			hashId = coll.res.getPath.split("/").last,
 			cpUser = uidOpt.map(authRouting.anonymizeCpUser),
 		)
-		logClient.logDownload(dlInfo)
+		logClient.logDl(dlInfo, ip)
 		for(uid <- uidOpt){
 			downloadService.restHeart.saveDownload(coll, uid).failed.foreach(
 				log.error(_, s"Failed saving download of collection ${coll.res} to ${uid.email}'s user profile")

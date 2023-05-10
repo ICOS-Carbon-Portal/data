@@ -1,55 +1,83 @@
 package se.lu.nateko.cp.data.api
 
-import se.lu.nateko.cp.cpauth.core.CoreUtils
-import se.lu.nateko.cp.cpauth.core.Crypto
-import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
-import se.lu.nateko.cp.cpauth.core.DownloadEventInfo.AnonId
-import se.lu.nateko.cp.cpauth.core.DownloadEventInfo.given_RootJsonFormat_Instant
-import se.lu.nateko.cp.cpauth.core.UserId
-import spray.json.*
-
 import java.time.Instant
+import spray.json.*
+import DownloadEventInfo.{CsvSelect, CpbSlice}
+import se.lu.nateko.cp.cpauth.core.AnonId
+import se.lu.nateko.cp.cpauth.core.UserId
+import se.lu.nateko.cp.cpauth.core.CoreUtils
 
 
-trait DlEventForPostgres extends DownloadEventInfo
+sealed trait DownloadEventInfo:
+	def time: Instant
+	def hashId: String
+	def cpUser: Option[AnonId]
+
+sealed trait DlEventForPostgres extends DownloadEventInfo
+sealed trait DlEventForMongo extends DownloadEventInfo:
+	def userAgent: Option[String]
 
 case class DataObjDownloadInfo(
 	time: Instant,
-	ip: String,
 	hashId: String,
 	cpUser: Option[AnonId],
 	distributor: Option[String],
 	endUser: Option[String]
 ) extends DlEventForPostgres
 
-case class CollectionDownloadInfo(time: Instant, ip: String, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres
-case class DocumentDownloadInfo(time: Instant, ip: String, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres
+case class CollectionDownloadInfo(time: Instant, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres
+case class DocumentDownloadInfo(time: Instant, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres
 
-object DownloadEventInfo extends DefaultJsonProtocol:
+case class CsvDownloadInfo(
+	time: Instant,
+	hashId: String,
+	cpUser: Option[AnonId],
+	userAgent: Option[String],
+	select: DownloadEventInfo.CsvSelect
+) extends DlEventForMongo
 
-	given RootJsonFormat[CollectionDownloadInfo] = jsonFormat4(CollectionDownloadInfo.apply)
-	given RootJsonFormat[DocumentDownloadInfo] = jsonFormat4(DocumentDownloadInfo.apply)
-	given RootJsonFormat[DataObjDownloadInfo] = jsonFormat6(DataObjDownloadInfo.apply)
+case class CpbDownloadInfo(
+	time: Instant,
+	hashId: String,
+	cpUser: Option[AnonId],
+	colNums: Seq[Int],
+	slice: Option[DownloadEventInfo.CpbSlice],
+	localOrigin: Option[String],
+	userAgent: Option[String]
+) extends DlEventForMongo
 
-	given RootJsonFormat[DlEventForPostgres] with {
 
-		override def write(obj: DlEventForPostgres): JsValue =
-			def withType[T : JsonWriter](typ: String, e: T) =
-				JsObject(e.toJson.asJsObject.fields + ("type" -> JsString(typ)))
+case class ZipExtractionInfo(
+	time: Instant,
+	hashId: String,
+	zipEntryPath: String,
+	cpUser: Option[AnonId],
+	localOrigin: Option[String],
+	userAgent: Option[String]
+) extends DlEventForMongo
 
-			obj match
-				case coll: CollectionDownloadInfo => withType("coll", coll)
-				case doc: DocumentDownloadInfo => withType("doc", doc)
-				case data: DataObjDownloadInfo => withType("dobj", data)
 
-		override def read(json: JsValue): DlEventForPostgres =
-			val obj = json.asJsObject("Expected DownloadEventInfo to be a JS object, not a plain value")
-			obj.fields.get("type").collect{case JsString(typ) => typ} match
-				case Some("dobj") => obj.convertTo[DataObjDownloadInfo]
-				case Some("coll") => obj.convertTo[CollectionDownloadInfo]
-				case Some("doc") => obj.convertTo[DocumentDownloadInfo]
-				case None =>
-					deserializationError("Missing field 'type' on JSON for DownloadEventInfo")
-				case Some(other) =>
-					deserializationError(s"Unsupported type of DownloadEventInfo: $other")
+object DownloadEventInfo extends DefaultJsonProtocol{
+
+	case class CsvSelect(columns: Option[Seq[String]], offset: Option[Long], limit: Option[Int])
+	case class CpbSlice(offset: Long, length: Int)
+
+	given RootJsonFormat[Instant] with {
+		def write(instant: Instant) = JsString(instant.toString)
+		def read(value: JsValue): Instant = value match{
+			case JsString(s) => Instant.parse(s)
+			case _ => deserializationError("String representation of a time instant is expected")
+		}
 	}
+
+	given JsonFormat[AnonId] with
+		def write(id: AnonId) = JsString(id)
+		def read(value: JsValue): AnonId = ??? //Do not expect to need
+
+	given RootJsonFormat[CsvSelect] = jsonFormat3(CsvSelect.apply)
+	given RootJsonFormat[CsvDownloadInfo] = jsonFormat5(CsvDownloadInfo.apply)
+	given RootJsonFormat[CpbSlice] = jsonFormat2(CpbSlice.apply)
+	given RootJsonFormat[CpbDownloadInfo] = jsonFormat7(CpbDownloadInfo.apply)
+	given RootJsonFormat[ZipExtractionInfo] = jsonFormat6(ZipExtractionInfo.apply)
+
+}

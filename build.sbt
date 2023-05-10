@@ -48,7 +48,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.12"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.12-SNAPSHOT"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
@@ -79,14 +79,11 @@ lazy val data = (project in file("."))
 		),
 
 		libraryDependencies ++= Seq(
-			"com.typesafe.akka"  %% "akka-http-spray-json"               % akkaHttpVersion excludeAll("io.spray") cross CrossVersion.for3Use2_13,
-			"com.typesafe.akka"  %% "akka-stream"                        % akkaVersion cross CrossVersion.for3Use2_13,
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.10.0-SNAPSHOT",
-			"se.lu.nateko.cp"	 %% "geoip-client"						 % "0.1.0-SNAPSHOT",
-			metaCoreModule  excludeAll("io.spray"),
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0",
+			"eu.icoscp"          %% "georestheart"                       % "0.1.0-SNAPSHOT",
+			metaCoreModule,
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0-SNAPSHOT",
 			"org.postgresql"      % "postgresql"                         % "42.6.0",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 

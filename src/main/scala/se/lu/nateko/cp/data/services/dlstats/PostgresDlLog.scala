@@ -1,6 +1,6 @@
 package se.lu.nateko.cp.data.services.dlstats
 
-import se.lu.nateko.cp.data.DownloadStatsConfig
+import se.lu.nateko.cp.data.PostgisConfig
 import se.lu.nateko.cp.data.CredentialsConfig
 import se.lu.nateko.cp.meta.core.data.Agent
 import eu.icoscp.envri.Envri
@@ -31,10 +31,10 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import java.sql.Date
 import scala.concurrent.ExecutionContextExecutor
 
-class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
+class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoCloseable{
 
-	private[this] val executor = {
-		val maxThreads = conf.dbAccessPoolSize * conf.dbNames.size
+	private val executor = {
+		val maxThreads = conf.dbAccessPoolSize
 		new ThreadPoolExecutor(
 			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
 		)
@@ -42,9 +42,9 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 
 	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
 
-	private[this] implicit val exeCtxt: ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
+	private given ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 
-	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
+	private val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
 		val pgDs = new PGConnectionPoolDataSource()
 		pgDs.setServerNames(Array(conf.hostname))
 		pgDs.setDatabaseName(dbName)

@@ -6,9 +6,8 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.util.ByteString
-import se.lu.nateko.cp.cpauth.core.CsvDownloadInfo
-import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
-import se.lu.nateko.cp.data.api.PortalLogClient
+import se.lu.nateko.cp.data.api.CsvDownloadInfo
+import se.lu.nateko.cp.data.api.DownloadEventInfo
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.services.fetch.BinTableCsvReader
 import se.lu.nateko.cp.data.services.upload.UploadService
@@ -25,7 +24,6 @@ import se.lu.nateko.cp.cpauth.core.UserId
 class CsvFetchRouting(
 	upload: UploadService,
 	restHeart: RestHeartClient,
-	logClient: PortalLogClient,
 	authRouting: AuthRouting
 )(implicit envriConf: EnvriConfigs) {
 	import UploadRouting.requireShaHash
@@ -56,8 +54,8 @@ class CsvFetchRouting(
 				val csvSelect = DownloadEventInfo.CsvSelect(onlyColumnsOpt.map(_.toIndexedSeq), offsetOpt, limitOpt)
 				val anonUser = Some(authRouting.anonymizeCpUser(uid))
 				getUserAgent{agentOpt =>
-					val dlInfo = CsvDownloadInfo(Instant.now(), ip, hash.id, anonUser, agentOpt, csvSelect)
-					logClient.logDownload(dlInfo)
+					val dlInfo = CsvDownloadInfo(Instant.now(), hash.id, anonUser, agentOpt, csvSelect)
+					restHeart.logDownloadEvent(dlInfo, ip)
 					respondWithAttachment(fileName){
 						complete(
 							HttpEntity(ContentTypes.`text/csv(UTF-8)`, src.map(s => ByteString(s)))

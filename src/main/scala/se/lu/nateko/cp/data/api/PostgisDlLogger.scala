@@ -2,9 +2,9 @@ package se.lu.nateko.cp.data.api
 
 import akka.actor.ActorSystem
 import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.data.PostgresConfigs
-import se.lu.nateko.cp.geoipclient.CpGeoClient
-import se.lu.nateko.cp.geoipclient.GeoIpInfo
+import se.lu.nateko.cp.data.PostgisConfig
+import eu.icoscp.geoipclient.CpGeoClient
+import eu.icoscp.geoipclient.GeoIpInfo
 import spray.json.JsObject
 import spray.json.JsString
 import spray.json.*
@@ -14,15 +14,15 @@ import scala.util.Success
 
 import CpGeoClient.given
 
-class PortalLogger(
-	geoClient: CpGeoClient, confPg: PostgresConfigs
+class PostgisDlLogger(
+	geoClient: CpGeoClient, confPg: PostgisConfig
 )(using system: ActorSystem):
 
 	import system.dispatcher
-	private val pgLogClient = new PostgresClient(confPg)
+	private val pgLogWriter = new PostgisEventWriter(confPg)
 
-	def logDl(entry: DlEventForPostgres)(using Envri): Unit = logInternally(entry.ip){ipinfo =>
-		pgLogClient.logDownload(entry, ipinfo).failed.foreach{err =>
+	def logDl(entry: DlEventForPostgres, ip: String)(using Envri): Unit = logInternally(ip){ipinfo =>
+		pgLogWriter.logDownload(entry, ipinfo).failed.foreach{err =>
 			system.log.error(err, "Could not log download to Postgres")
 		}
 	}

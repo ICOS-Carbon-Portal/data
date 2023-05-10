@@ -8,8 +8,8 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
-import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
+import se.lu.nateko.cp.data.api.PostgisDlLogger
 import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.data.routes.*
 import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
@@ -27,6 +27,8 @@ import scala.util.Failure
 import scala.util.Success
 import java.nio.file.Path
 import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.cpauth.core.EmailSender
+import eu.icoscp.geoipclient.CpGeoClient
 
 object Main extends App {
 
@@ -39,8 +41,12 @@ object Main extends App {
 
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
-	val restHeart = new RestHeartClient(config.restheart, http)
-	val portalLog = new PortalLogClient(config.restheart, config.postgres, config.geoip, config.mailing, http, system.log)
+
+	val geoClient =
+		val mailer = new EmailSender(config.mailing)
+		CpGeoClient(mailer)
+
+	val restHeart = new RestHeartClient(config.restheart, geoClient, http)
 
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
@@ -53,16 +59,17 @@ object Main extends App {
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val postgresLog = new PostgresDlLog(config.downloads, system.log)
+	val postgresLog = new PostgresDlLog(config.postgis, system.log)
+	val postgisLogger = new PostgisDlLogger(geoClient, config.postgis)
 
 	val downloadService = new DownloadService(ConfigReader.metaCore, uploadService, restHeart)
-	val downloadRouting = new DownloadRouting(authRouting, downloadService, portalLog, postgresLog, ConfigReader.metaCore)
-	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
+	val downloadRouting = new DownloadRouting(authRouting, downloadService, postgisLogger, postgresLog, ConfigReader.metaCore)
+	val csvRouting = new CsvFetchRouting(uploadService, restHeart, authRouting)
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
-	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
+	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, authRouting).route
 
-	val zipRoute = new ZipRouting(downloadService, restHeart, portalLog, authRouting).route
+	val zipRoute = new ZipRouting(downloadService, restHeart, authRouting).route
 
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 

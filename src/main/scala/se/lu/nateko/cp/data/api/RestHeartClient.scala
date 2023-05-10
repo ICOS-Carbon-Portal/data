@@ -22,75 +22,32 @@ import spray.json.*
 
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import eu.icoscp.geoipclient.CpGeoClient
+import eu.icoscp.georestheart.RestHeartClientBase
 
-class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Materializer) {
+class RestHeartClient(
+	val config: RestHeartConfig, geoClient: CpGeoClient, http: HttpExt
+)(using Materializer) extends RestHeartClientBase(config.base, geoClient, http):
 
 	import http.system.dispatcher
+	import config.base.collUri
 
-	def dbUri(implicit envri: Envri) = {
-		import config._
-		Uri(s"$baseUri/$dbName")
-	}
+	def logDownloadEvent(event: DlEventForMongo, ip: String)(using Envri): Future[Done] =
+		val (propName, js) = event match
+			case cpb: CpbDownloadInfo => "cpbDownload" -> cpb.toJson
+			case csv: CsvDownloadInfo => "csvDownload" -> csv.toJson
+			case zip: ZipExtractionInfo => "zipExtraction" -> zip.toJson
+		logPortalUsage(JsObject(propName -> js), ip)
 
-	def collUri(alias: String)(implicit envri: Envri) = {
-		val db = dbUri
-		db.withPath(db.path / alias)
-	}
-
-	def getUserUri(uid: UserId)(implicit envri: Envri): Uri = {
-		val users = collUri(config.usersCollection)
-		users.withPath(users.path / uid.email)
-	}
-
-	def getUserProps(uid: UserId, keys: String)(implicit envri: Envri): Future[JsObject] = {
-		val uri = getUserUri(uid).withQuery(Uri.Query("keys" -> keys))
-		for(
-			resp <- http.singleRequest(HttpRequest(uri = uri));
-			userObj <- Unmarshal(resp.entity.withContentType(ContentTypes.`application/json`)).to[JsValue]
-		) yield userObj.asJsObject("Expected a JSON object, got a JSON value")
-	}
-
-	def getUserLicenseAcceptance(uid: UserId)(implicit envri: Envri): Future[Boolean] =
-		getUserProps(uid, """{"profile.icosLicenceOk": 1}""").map(_
+	def getUserLicenseAcceptance(uid: UserId)(using Envri): Future[Boolean] =
+		getUserProps(uid, Seq("profile.icosLicenceOk")).map(_
 			.fields.get("profile")
 			.collect{case JsObject(fields) => fields.get("icosLicenceOk")}
 			.collect{case Some(JsBoolean(v)) => v}
 			.getOrElse(false)
 		)
 
-	def ensureCollExists(collDef: RestheartCollDef)(implicit envri: Envri): Future[Done] = ensureResourceExists(
-		collUri(collDef.name),
-		s"${collDef.description} ($envri)",
-		collDef.name + " collection"
-	)
-
-	def ensureDbExists(implicit envri: Envri): Future[Done] = ensureResourceExists(
-		dbUri,
-		s"DB for various Carbon Portal based apps for $envri",
-		"database"
-	)
-
-	private def ensureResourceExists(collUri: Uri, description: String, alias: String): Future[Done] = {
-		http.singleRequest(HttpRequest(uri = collUri)).flatMap{resp =>
-			resp.discardEntityBytes()
-			if(resp.status == StatusCodes.NotFound){
-				val collectionDescr = JsObject("comment" -> JsString(description))
-				for(
-					entity <- Marshal(collectionDescr).to[RequestEntity];
-					r <- http.singleRequest(HttpRequest(uri = collUri, method = HttpMethods.PUT, entity = entity));
-					done <- {
-						r.discardEntityBytes()
-						if(r.status == StatusCodes.Created) ok
-						else Future.failed[Done](new Exception(s"Failed creating ${alias} in RestHeart: ${r.status.defaultMessage}"))
-					}
-				) yield done
-			}
-			else if(resp.status == StatusCodes.OK) ok
-			else Future.failed[Done](new Exception(s"Unexpected response when checking for ${alias} in RestHeart : ${resp.status.defaultMessage}"))
-		}
-	}
-
-	def defineAggregations(collDef: RestheartCollDef)(implicit envri: Envri): Future[Done] = collDef.aggregations.map{aggrs =>
+	def defineAggregations(collDef: RestheartCollDef)(using envri: Envri): Future[Done] = collDef.aggregations.map{aggrs =>
 
 		def makeCacheForAggrs(aggrNames: List[String]): Future[Done] = aggrNames match {
 			case Nil => ok
@@ -99,7 +56,9 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		val log = http.system.log
 		for(
 			entity <- Marshal(aggrs.definitions).to[RequestEntity];
-			r <- http.singleRequest(HttpRequest(uri = collUri(collDef.name), method = HttpMethods.PUT, entity = entity));
+			uri = collUri(collDef.name);
+			req = HttpRequest(uri = uri, method = HttpMethods.PUT, entity = entity);
+			r <- singleRequest(req);
 			res <- handleWritingOutcome(r, s"defining aggregations for ${collDef.name} collection in RestHeart")
 		) yield {
 			if(!aggrs.cached.isEmpty){
@@ -114,13 +73,15 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 		}
 	}.getOrElse(ok)
 
-	def init: Future[Done] = if (config.skipInit) ok else Future.sequence{
-		config.dbNames.keys.map{implicit envri =>
-			ensureDbExists.flatMap{
-				_ => setupCollection(config.portalUsage)
-			}
-		}
-	}.map(_ => Done)
+	def init: Future[Done] =
+		if config.base.skipInit then ok
+		else createDbsAndColls.flatMap(_ =>
+			Future.sequence{
+				config.base.db.keys.map{implicit envri =>
+					setupCollection(config.portalUsage)
+				}
+			}.map(_ => Done)
+		)
 
 	private def getDownloadItem(obj: StaticObject) =
 		JsObject(
@@ -158,7 +119,6 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	private def setupCollection(coll: RestheartCollDef)(using Envri): Future[Done] = {
 		for(
-			_ <- ensureCollExists(coll);
 			_ <- defineAggregations(coll);
 			res <- setupCollIndices(coll)
 		) yield res
@@ -217,17 +177,17 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	}.getOrElse(ok)
 
 
-	private def aggregationUri(coll: RestheartCollDef, aggrName: String)(implicit envri: Envri): Uri = {
+	private def aggregationUri(coll: RestheartCollDef, aggrName: String)(using Envri): Uri = {
 		val theCollUri = collUri(coll.name)
 		theCollUri.withPath(theCollUri.path / "_aggrs" / aggrName)
 	}
 
-	private def makeCacheForAggregation(coll: RestheartCollDef, aggrName: String)(implicit envri: Envri): Future[Done] = {
+	private def makeCacheForAggregation(coll: RestheartCollDef, aggrName: String)(using Envri): Future[Done] = {
 
 		val cacheCollName = "cacheFor" + aggrName.capitalize
 		for(
 			aggrResults <- fetchAggregation(coll, aggrName);
-			_ <- ensureResourceExists(collUri(cacheCollName), "", cacheCollName);
+			_ <- createCollIfNotExists(collUri(cacheCollName), cacheCollName);
 			_ <- dropAllCollectionDocs(cacheCollName);
 			res <- bulkInsertDocs(cacheCollName, aggrResults)
 		) yield res
@@ -235,7 +195,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 
 	//curl 'http://127.0.0.1:8088/db/contributors?pageSize=1000&page=1&np'
 	//(plus paging)
-	private def fetchAggregation(coll: RestheartCollDef, aggrName: String)(implicit envri: Envri): Future[JsArray] = {
+	private def fetchAggregation(coll: RestheartCollDef, aggrName: String)(using Envri): Future[JsArray] = {
 		val pageSize = 1000
 		def getPage(n: Int): Future[JsArray] = {
 			val uri = aggregationUri(coll, aggrName).withQuery(Uri.Query("pagesize" -> pageSize.toString, "page" -> n.toString, "np" -> ""))
@@ -258,7 +218,7 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	}
 
 	//curl -X DELETE -G --data-urlencode 'filter={"_id": {"$exists": 1}}' 'http://127.0.0.1:8088/db/contributors/*'
-	private def dropAllCollectionDocs(collName: String)(implicit envri: Envri): Future[Done] = {
+	private def dropAllCollectionDocs(collName: String)(using Envri): Future[Done] = {
 		val theCollUri = collUri(collName)
 		val starUri = theCollUri.withPath(theCollUri.path / "*").withQuery(Uri.Query("filter" -> """{"_id": {"$exists": 1}}"""))
 		for(
@@ -268,10 +228,10 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 	}
 
 	//curl -X POST -H "Content-Type: application/json" --data '[{"a": 42}]' 'http://127.0.0.1:8088/db/contributors'
-	private def bulkInsertDocs(collName: String, docs: JsArray)(implicit envri: Envri): Future[Done] = {
+	private def bulkInsertDocs(collName: String, docs: JsArray)(using Envri): Future[Done] = {
 		val theUri = collUri(collName)
 		for(
-			_ <- ensureResourceExists(theUri, "", collName);
+			_ <- createCollIfNotExists(theUri, collName);
 			entity <- Marshal(docs).to[RequestEntity];
 			r <- http.singleRequest(HttpRequest(uri = theUri, method = HttpMethods.POST, entity = entity));
 			res <- handleWritingOutcome(r, "bulk-inserting documents to " + collName)
@@ -287,10 +247,9 @@ class RestHeartClient(val config: RestHeartConfig, http: HttpExt)(implicit m: Ma
 			Future.failed(new Exception(s"Failed $opInfo: $errMsg"))
 		}
 	}
-}
+end RestHeartClient
 
-object RestHeartClient extends DefaultJsonProtocol{
+object RestHeartClient extends DefaultJsonProtocol:
 	case class KeyInfo(_id: String, key: JsObject)
 
 	given keyInfoFormat: RootJsonFormat[KeyInfo] = jsonFormat2(KeyInfo.apply)
-}

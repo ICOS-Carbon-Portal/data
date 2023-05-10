@@ -5,8 +5,8 @@ import eu.icoscp.envri.Envri
 import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
 import org.postgresql.ds.PGConnectionPoolDataSource
 import se.lu.nateko.cp.data.CredentialsConfig
-import se.lu.nateko.cp.data.PostgresConfigs
-import se.lu.nateko.cp.geoipclient.GeoIpInfo
+import se.lu.nateko.cp.data.PostgisConfig
+import eu.icoscp.geoipclient.GeoIpInfo
 
 import java.sql.Connection
 import java.sql.PreparedStatement
@@ -20,9 +20,9 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-class PostgresClient(confs: PostgresConfigs) extends AutoCloseable:
+class PostgisEventWriter(conf: PostgisConfig) extends AutoCloseable:
 
-	private def conf(using e: Envri) = confs(e)
+	//private def conf(using e: Envri) = confs(e)
 
 	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = withTransaction(conf.writer){
 		"SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
@@ -74,17 +74,17 @@ class PostgresClient(confs: PostgresConfigs) extends AutoCloseable:
 
 
 	private[this] val executor =
-		val maxThreads = confs.values.map(_.dbAccessPoolSize).sum
+		val maxThreads = conf.dbAccessPoolSize
 		new ThreadPoolExecutor(
 			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
 		)
 
 	private given ExecutionContext = ExecutionContext.fromExecutor(executor)
 
-	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = confs.view.mapValues{ conf =>
+	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
 		val pgDs = new PGConnectionPoolDataSource()
 		pgDs.setServerNames(Array(conf.hostname))
-		pgDs.setDatabaseName(conf.dbName)
+		pgDs.setDatabaseName(dbName)
 		pgDs.setPortNumbers(Array(conf.port))
 		val ds = new SharedPoolDataSource()
 		ds.setMaxTotal(conf.dbAccessPoolSize)
@@ -121,4 +121,4 @@ class PostgresClient(confs: PostgresConfigs) extends AutoCloseable:
 			}
 		}
 
-end PostgresClient
+end PostgisEventWriter
