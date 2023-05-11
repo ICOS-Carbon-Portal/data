@@ -85,8 +85,7 @@ class AuthRouting(val conf: AuthConfig)(using EnvriConfigs) {
 		setCookie(cookie){complete(StatusCodes.OK)}
 	}}
 
-	def anonymizeCpUser(uid: UserId): DownloadEventInfo.AnonId =
-		DownloadEventInfo.anonymizeCpUser(uid, conf.userSecretSalt)
+	def anonymizeCpUser(uid: UserId): AnonId = AnonId(uid, conf.userSecretSalt)
 
 	private def toMessage(err: Throwable): String = {
 		val msg = err.getMessage

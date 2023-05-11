@@ -13,6 +13,10 @@ import se.lu.nateko.cp.meta.core.etcupload.StationId
 import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewServiceConfig
 import spray.json.*
 import eu.icoscp.envri.Envri
+import eu.icoscp.geoipclient.{CpGeoConfig, CpGeoClient}
+import se.lu.nateko.cp.cpauth.core.EmailConfig
+import eu.icoscp.georestheart.RestHeartDBConfig
+import eu.icoscp.georestheart.{RestHeartConfig => RHConfig}
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 
@@ -41,7 +45,7 @@ case class UploadConfig(
 	admins: Seq[String]
 )
 
-case class DownloadStatsConfig(
+case class PostgisConfig(
 	hostname: String,
 	dbNames: Map[Envri, String],
 	port: Int,
@@ -68,24 +72,10 @@ case class RestheartCollDef(
 )
 
 case class RestHeartConfig(
-	baseUri: String,
-	dbNames: Map[Envri, String],
-	activityLogUriBases: Map[Envri, URI],
-	usersCollection: String,
+	base: RHConfig,
 	userDownloadsLogLength: Int,
-	portalUsage: RestheartCollDef,
-	skipInit: Boolean
-){
-	def dbName(using envri: Envri) = dbNames(envri)
-
-	private def logUri(logType: String)(using envri: Envri): URI = {
-		val baseUri = activityLogUriBases(envri)
-		baseUri.resolve(logType)
-	}
-
-	def downloadLogUri(using Envri): URI = logUri("downloads")
-	def portaluseLogUri(using Envri): URI = logUri("portaluse")
-}
+	portalUsage: RestheartCollDef
+)
 
 case class EtcFacadeConfig(
 	folder: String,
@@ -102,8 +92,9 @@ case class CpdataConfig(
 	upload: UploadConfig,
 	meta: MetaServiceConfig,
 	restheart: RestHeartConfig,
-	downloads: DownloadStatsConfig,
-	etcFacade: EtcFacadeConfig
+	postgis: PostgisConfig,
+	etcFacade: EtcFacadeConfig,
+	mailing: EmailConfig
 )
 
 object ConfigReader extends CommonJsonSupport{
@@ -123,11 +114,12 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
 	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
 	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	given RootJsonFormat[RestHeartConfig] = jsonFormat7(RestHeartConfig.apply)
-	given RootJsonFormat[DownloadStatsConfig] = jsonFormat8(DownloadStatsConfig.apply)
+	given RootJsonFormat[PostgisConfig] = jsonFormat8(PostgisConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
-	given RootJsonFormat[CpdataConfig] = jsonFormat9(CpdataConfig.apply)
+	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}
+	given RootJsonFormat[RestHeartConfig] = jsonFormat3(RestHeartConfig.apply)
+	given RootJsonFormat[CpdataConfig] = jsonFormat10(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val confFile = new java.io.File("application.conf").getAbsoluteFile

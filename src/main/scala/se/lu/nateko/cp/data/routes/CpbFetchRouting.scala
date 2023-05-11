@@ -11,12 +11,11 @@ import akka.http.scaladsl.server.Directive1
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.StandardRoute
-import se.lu.nateko.cp.cpauth.core.CpbDownloadInfo
-import se.lu.nateko.cp.cpauth.core.DownloadEventInfo
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.CpdataJsonProtocol.given
-import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
+import se.lu.nateko.cp.data.api.CpbDownloadInfo
+import se.lu.nateko.cp.data.api.DownloadEventInfo
 import se.lu.nateko.cp.data.utils.akka.{gracefulBadReq, gracefulUnauth, gracefulForbid}
 import se.lu.nateko.cp.data.services.fetch.BinTableRequest
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
@@ -28,7 +27,6 @@ import java.time.Instant
 class CpbFetchRouting(
 	fetcher: FromBinTableFetcher,
 	restHeart: RestHeartClient,
-	logClient: PortalLogClient,
 	authRouting: AuthRouting
 )(using envriConf: EnvriConfigs) {
 
@@ -92,7 +90,6 @@ class CpbFetchRouting(
 			(getClientIp & getUserAgent){(ip, agentOpt) =>
 				val dlInfo = CpbDownloadInfo(
 					time = Instant.now(),
-					ip = ip,
 					hashId = tableRequest.tableId.id,
 					cpUser = uid.map(authRouting.anonymizeCpUser),
 					colNums = tableRequest.columnNumbers,
@@ -102,7 +99,7 @@ class CpbFetchRouting(
 					localOrigin = localOrigin,
 					userAgent = agentOpt
 				)
-				logClient.logDownload(dlInfo)
+				restHeart.logDownloadEvent(dlInfo, ip)
 				returnBinary(tableRequest)
 			}
 		} ~

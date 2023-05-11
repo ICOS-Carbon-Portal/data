@@ -8,11 +8,11 @@ import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.ExceptionHandler
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
-import se.lu.nateko.cp.data.api.PortalLogClient
 import se.lu.nateko.cp.data.api.RestHeartClient
+import se.lu.nateko.cp.data.api.PostgisDlLogger
 import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.data.routes.*
-import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.data.services.dlstats.PostgisDlAnalyzer
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.data.services.upload.DownloadService
@@ -27,8 +27,11 @@ import scala.util.Failure
 import scala.util.Success
 import java.nio.file.Path
 import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.cpauth.core.EmailSender
+import eu.icoscp.geoipclient.CpGeoClient
+import se.lu.nateko.cp.data.api.PostgisEventWriter
 
-object Main extends App {
+object Main extends App:
 
 	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
@@ -39,8 +42,12 @@ object Main extends App {
 
 	val http = Http()
 	val metaClient = new MetaClient(config.meta)
-	val restHeart = new RestHeartClient(config.restheart, http)
-	val portalLog = new PortalLogClient(config.restheart, http, system.log)
+
+	val geoClient =
+		val mailer = new EmailSender(config.mailing)
+		CpGeoClient(mailer)
+
+	val restHeart = new RestHeartClient(config.restheart, geoClient, http)
 
 	val uploadService = new UploadService(config.upload, config.netcdf, metaClient)
 	val integrityService = new IntegrityControlService(uploadService)
@@ -53,16 +60,18 @@ object Main extends App {
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val postgresLog = new PostgresDlLog(config.downloads, system.log)
+	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis)
+	val postgisWriter = new PostgisEventWriter(config.postgis, system.log)
+	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter)
 
 	val downloadService = new DownloadService(ConfigReader.metaCore, uploadService, restHeart)
-	val downloadRouting = new DownloadRouting(authRouting, downloadService, portalLog, postgresLog, ConfigReader.metaCore)
-	val csvRouting = new CsvFetchRouting(uploadService, restHeart, portalLog, authRouting)
+	val downloadRouting = new DownloadRouting(authRouting, downloadService, postgisLogger, postgisWriter, ConfigReader.metaCore)
+	val csvRouting = new CsvFetchRouting(uploadService, restHeart, authRouting)
 
 	val binTableFetcher = new FromBinTableFetcher(uploadService.folder)
-	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, portalLog, authRouting).route
+	val tabularRoute = new CpbFetchRouting(binTableFetcher, restHeart, authRouting).route
 
-	val zipRoute = new ZipRouting(downloadService, restHeart, portalLog, authRouting).route
+	val zipRoute = new ZipRouting(downloadService, restHeart, authRouting).route
 
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
 
@@ -70,7 +79,7 @@ object Main extends App {
 	val staticRoute = new StaticRouting().route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
-	val statsRoute = new StatsRouting(postgresLog, ConfigReader.metaCore)
+	val statsRoute = new StatsRouting(postgisLogAnalyzer, ConfigReader.metaCore)
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
@@ -111,18 +120,17 @@ object Main extends App {
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
-	restHeart.init.zip(postgresLog.initLogTables()).flatMap{_ =>
+	restHeart.init.zip(postgisWriter.initLogTables()).flatMap{_ =>
 		http.newServerAt(config.interface, config.port).bind(route)
 	}.onComplete{
 		case Success(binding) =>
 			sys.addShutdownHook{
-				try{
+				try
 					Await.result(binding.unbind(), 3.seconds)
 					println("'data' service has been successfully taken offline")
-				} finally{
-					postgresLog.close()
-					println("Postgres data object downloads log has been closed")
-				}
+				finally
+					shutdownPostgis()
+
 				println("'data' service shutdown successful")
 			}
 			system.log.info(s"Started data: $binding")
@@ -130,7 +138,11 @@ object Main extends App {
 		case Failure(err) =>
 			system.log.error(err, "Could not start 'data' service")
 			system.terminate()
-			postgresLog.close()
+			shutdownPostgis()
 	}
 
-}
+	private def shutdownPostgis(): Unit =
+		postgisWriter.close()
+		postgisLogAnalyzer.close()
+		println("Postgis clients have been shut down")
+end Main

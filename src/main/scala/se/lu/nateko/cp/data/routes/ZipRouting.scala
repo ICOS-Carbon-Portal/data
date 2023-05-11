@@ -10,10 +10,8 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.StreamConverters
 import akka.util.ByteString
-import se.lu.nateko.cp.cpauth.core.DataObjDownloadInfo
 import se.lu.nateko.cp.cpauth.core.UserId
-import se.lu.nateko.cp.cpauth.core.ZipExtractionInfo
-import se.lu.nateko.cp.data.api.PortalLogClient
+import se.lu.nateko.cp.data.api.ZipExtractionInfo
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.DownloadService
@@ -47,7 +45,6 @@ import UploadRouting.Sha256Segment
 class ZipRouting(
 	downloadService: DownloadService,
 	restHeart: RestHeartClient,
-	logClient: PortalLogClient,
 	authRouting: AuthRouting
 )(using EnvriConfigs, ExecutionContext) extends SprayRouting:
 
@@ -72,7 +69,6 @@ class ZipRouting(
 				(getClientIp & getUserAgent){(ip, agentOpt) =>
 					val dlInfo = ZipExtractionInfo(
 						time = Instant.now(),
-						ip = ip,
 						hashId = hashId,
 						zipEntryPath = decodedPath,
 						cpUser = uid.map(authRouting.anonymizeCpUser),
@@ -80,7 +76,7 @@ class ZipRouting(
 						userAgent = agentOpt
 					)
 
-					logClient.logDownload(dlInfo)
+					restHeart.logDownloadEvent(dlInfo, ip)
 
 					respondWithAttachment(fileName){
 						complete(HttpEntity(getContentType(fileName), StreamConverters.fromInputStream(() => in)))

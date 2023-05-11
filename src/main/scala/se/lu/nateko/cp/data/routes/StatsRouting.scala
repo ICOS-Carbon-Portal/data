@@ -20,7 +20,7 @@ import scala.util.Try
 import spray.json.DefaultJsonProtocol
 import spray.json.*
 
-import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.data.services.dlstats.PostgisDlAnalyzer
 import se.lu.nateko.cp.data.CpdataJsonProtocol.given
 import se.lu.nateko.cp.data.services.dlstats.DlItemType
 import eu.icoscp.envri.Envri
@@ -95,7 +95,7 @@ object StatsRouting:
 end StatsRouting
 
 
-class StatsRouting(pgClient: PostgresDlLog, coreConf: MetaCoreConfig) extends SprayRouting:
+class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extends SprayRouting:
 	import StatsRouting.*
 
 	given envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs
