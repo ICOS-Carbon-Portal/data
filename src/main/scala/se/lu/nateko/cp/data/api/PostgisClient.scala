@@ -23,12 +23,11 @@ abstract class PostgisClient(conf: PostgisConfig) extends AutoCloseable:
 
 	private val executor =
 		val maxThreads = conf.dbAccessPoolSize
-		new ThreadPoolExecutor(
-			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
-		)
+		val queue = new ArrayBlockingQueue[Runnable](maxThreads)
+		new ThreadPoolExecutor(0, maxThreads, 30, TimeUnit.SECONDS, queue)
 
 	protected given ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
-	
+
 	private val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
 		val pgDs = new PGConnectionPoolDataSource()
 		pgDs.setServerNames(Array(conf.hostname))
@@ -47,27 +46,23 @@ abstract class PostgisClient(conf: PostgisConfig) extends AutoCloseable:
 		executor.shutdown()
 		dataSources.valuesIterator.foreach{_.close()}
 
-	protected def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Future[Done] =
+	protected def execute(credentials: CredentialsConfig)(action: Connection => Unit)(using Envri): Future[Done] =
 		withConnection(credentials){conn =>
-			try {
+			try
 				action(conn)
 				conn.commit()
 				Done
-			} catch {
-				case ex: Throwable =>
-					conn.rollback()
-					throw ex
-			}
+			catch case ex: Throwable =>
+				conn.rollback()
+				throw ex
 		}
 
 	protected def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(using envri: Envri): Future[T] = Future{
-		val conn = dataSources(envri).getConnection(creds.username, creds.password)
+		val dSource = dataSources.getOrElse(envri, throw CpDataException(s"Postgis has not been configured for ENVRI $envri"))
+		val conn = dSource.getConnection(creds.username, creds.password)
 		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
-		try {
-			act(conn)
-		} finally{
-			conn.close()
-		}
+
+		try act(conn) finally conn.close()
 	}
 
 end PostgisClient

@@ -14,27 +14,27 @@ import scala.concurrent.Future
 
 class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 
-	def downloadsByCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsByCountry]] =
+	def downloadsByCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsByCountry]] =
 		runAnalyticalQuery("SELECT count, country_code FROM downloadsByCountry", Some(queryParams)){rs =>
 			DownloadsByCountry(rs.getInt("count"), rs.getString("country_code"))
 		}
 
-	def downloadsPerWeek(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerWeek]] =
+	def downloadsPerWeek(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerWeek]] =
 		runAnalyticalQuery("SELECT count, day, week FROM downloadsperweek", Some(queryParams)){rs =>
 			DownloadsPerWeek(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant, rs.getDouble("week"))
 		}
 
-	def downloadsPerMonth(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
+	def downloadsPerMonth(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
 		runAnalyticalQuery("SELECT count, day FROM downloadsPerMonth", Some(queryParams)){rs =>
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
-	def downloadsPerYear(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
+	def downloadsPerYear(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
 		runAnalyticalQuery("SELECT count, day FROM downloadsPerYear", Some(queryParams)){rs =>
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
-	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[DownloadStats] =
+	def downloadStats(queryParams: StatsQueryParams)(using Envri): Future[DownloadStats] =
 		val objStatsFut = runAnalyticalQuery("SELECT count, hash_id FROM downloadStats", Some(queryParams)){rs =>
 			DownloadObjStat(rs.getInt("count"), rs.getString("hash_id"))
 		}
@@ -46,37 +46,37 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 			case (stats, size) => DownloadStats(stats, size)
 		}
 
-	def specifications(implicit envri: Envri): Future[IndexedSeq[Specifications]] =
+	def specifications(using Envri): Future[IndexedSeq[Specifications]] =
 		runAnalyticalQuery("SELECT count, spec FROM specifications()"){rs =>
 			Specifications(rs.getInt("count"), rs.getString("spec"))
 		}
 
-	def contributors(implicit envri: Envri): Future[IndexedSeq[Contributors]] =
+	def contributors(using Envri): Future[IndexedSeq[Contributors]] =
 		runAnalyticalQuery("SELECT count, contributor FROM contributors()"){rs =>
 			Contributors(rs.getInt("count"), rs.getString("contributor"))
 		}
 
-	def submitters(implicit envri: Envri): Future[IndexedSeq[Submitters]] =
+	def submitters(using Envri): Future[IndexedSeq[Submitters]] =
 		runAnalyticalQuery("SELECT count, submitter FROM submitters()"){rs =>
 			Submitters(rs.getInt("count"), rs.getString("submitter"))
 		}
 
-	def stations(implicit envri: Envri): Future[IndexedSeq[Stations]] =
+	def stations(using Envri): Future[IndexedSeq[Stations]] =
 		runAnalyticalQuery("SELECT count, station FROM stations()"){rs =>
 			Stations(rs.getInt("count"), rs.getString("station"))
 		}
 
-	def dlfrom(implicit envri: Envri): Future[IndexedSeq[DownloadedFrom]] =
+	def dlfrom(using Envri): Future[IndexedSeq[DownloadedFrom]] =
 		runAnalyticalQuery("SELECT count, country_code FROM dlfrom()"){rs =>
 			DownloadedFrom(rs.getInt("count"), rs.getString("country_code"))
 		}
 
-	def downloadedCollections(implicit envri: Envri): Future[IndexedSeq[DateCount]] =
+	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
 			DateCount(rs.getString("month_start"), rs.getInt("count"))
 		}
 
-	def downloadCount(hashId: Sha256Sum)(implicit envri: Envri): Future[IndexedSeq[DownloadCount]] =
+	def downloadCount(hashId: Sha256Sum)(using Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"""
 				|SELECT COUNT(*) AS download_count
 				|FROM downloads
@@ -85,7 +85,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 			DownloadCount(rs.getInt("download_count"))
 	}
 
-	def lastDownloads(limit: Int, itemType: Option[DlItemType])(implicit envri: Envri): Future[IndexedSeq[Download]] =
+	def lastDownloads(limit: Int, itemType: Option[DlItemType])(using Envri): Future[IndexedSeq[Download]] =
 		val whereClause = itemType.fold("")(value => s"WHERE item_type = '$value'")
 		// Limit coordinates to 5 decimals in function ST_AsGeoJSON
 		val query = s"""
@@ -110,14 +110,14 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 			)
 		}
 
-	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
+	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
 		runAnalyticalQuery("SELECT year, country, downloads FROM customDownloadsPerYearCountry", Some(queryParams)){rs =>
 			CustomDownloadsPerYearCountry(rs.getInt("year"), rs.getString("country"), rs.getInt("downloads"))
 		}
 
 	def runAnalyticalQuery[T](
 		queryStr: String, params: Option[StatsQueryParams] = None
-	)(parser: ResultSet => T)(implicit envri: Envri): Future[IndexedSeq[T]] =
+	)(parser: ResultSet => T)(using Envri): Future[IndexedSeq[T]] =
 		withConnection(conf.reader){conn =>
 			val functionParams = """
 				|(_page:=?

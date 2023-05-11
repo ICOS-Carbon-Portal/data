@@ -18,12 +18,11 @@ import scala.io.Source
 
 class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
-	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
+	private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
-	override def close(): Unit = {
+	override def close(): Unit =
 		super.close()
 		scheduler.shutdown()
-	}
 
 	def initLogTables(): Future[Done] = if conf.skipInit then done else
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
@@ -43,14 +42,13 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}
 
-	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = execute(conf.writer)(conn =>
+	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = execute(conf.writer){conn =>
 		val logQuery = "SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
 		val st = conn.prepareStatement(logQuery)
 
-		def setOptVarchar(strOpt: Option[String], idx: Int): Unit = strOpt match{
+		def setOptVarchar(strOpt: Option[String], idx: Int): Unit = strOpt match
 			case Some(s) => st.setString(idx, s)
 			case None => st.setNull(idx, Types.VARCHAR)
-		}
 
 		val Seq(item_type, ts, hash_id, ip_idx, city, country_code, lon, lat, distributor_idx, endUser_idx) = 1 to 10
 
@@ -90,21 +88,21 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
 		st.execute()
-	)
+	}
 
-	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = execute(conf.writer)(conn =>
+	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
 		val dobjsQuery = """
 					|INSERT INTO dobjs(hash_id, spec, submitter, station)
 					|VALUES (?, ?, ?, ?)
 					|ON CONFLICT (hash_id) DO UPDATE
 					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
 					|""".stripMargin
-		
+
 		val dobjsSt = conn.prepareStatement(dobjsQuery)
 		val deleteContribSt = conn.prepareStatement("DELETE FROM contributors WHERE hash_id = ?")
 		val insertContribSt = conn.prepareStatement("INSERT INTO contributors(hash_id, contributor) VALUES (?, ?)")
 
-		try {
+		try
 			val Seq(hash_id, spec, submitter, station) = 1 to 4
 
 			val contribs: Seq[Agent] = (
@@ -133,24 +131,23 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 
 			insertContribSt.executeBatch()
 
-		} finally {
+		finally
 			dobjsSt.close()
 			deleteContribSt.close()
 			insertContribSt.close()
-		}
-	)
+	}
 
-	private def updateMatView(matView: String)(implicit envri: Envri): Unit =
+	private def updateMatView(matView: String)(using envri: Envri): Unit =
 		withConnection(conf.admin){conn =>
 			// Disable transactions
 			conn.setAutoCommit(true)
 			val st = conn.createStatement
-			try{
+			try
 				st.execute(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ;")
 				st.execute(s"VACUUM (ANALYZE) $matView ;")
-			}finally{
+			finally
 				st.close()
-			}
+
 		}.failed.foreach{
 			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
 		}

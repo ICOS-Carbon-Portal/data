@@ -31,7 +31,7 @@ import se.lu.nateko.cp.cpauth.core.EmailSender
 import eu.icoscp.geoipclient.CpGeoClient
 import se.lu.nateko.cp.data.api.PostgisEventWriter
 
-object Main extends App {
+object Main extends App:
 
 	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	system.log
@@ -125,13 +125,12 @@ object Main extends App {
 	}.onComplete{
 		case Success(binding) =>
 			sys.addShutdownHook{
-				try{
+				try
 					Await.result(binding.unbind(), 3.seconds)
 					println("'data' service has been successfully taken offline")
-				} finally{
-					postgisWriter.close()
-					println("Postgres data object downloads log has been closed")
-				}
+				finally
+					shutdownPostgis()
+
 				println("'data' service shutdown successful")
 			}
 			system.log.info(s"Started data: $binding")
@@ -139,7 +138,11 @@ object Main extends App {
 		case Failure(err) =>
 			system.log.error(err, "Could not start 'data' service")
 			system.terminate()
-			postgisWriter.close()
+			shutdownPostgis()
 	}
 
-}
+	private def shutdownPostgis(): Unit =
+		postgisWriter.close()
+		postgisLogAnalyzer.close()
+		println("Postgis clients have been shut down")
+end Main
