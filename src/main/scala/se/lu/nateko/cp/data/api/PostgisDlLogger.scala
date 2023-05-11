@@ -2,7 +2,6 @@ package se.lu.nateko.cp.data.api
 
 import akka.actor.ActorSystem
 import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.data.PostgisConfig
 import eu.icoscp.geoipclient.CpGeoClient
 import eu.icoscp.geoipclient.GeoIpInfo
 import spray.json.JsObject
@@ -15,11 +14,10 @@ import scala.util.Success
 import CpGeoClient.given
 
 class PostgisDlLogger(
-	geoClient: CpGeoClient, confPg: PostgisConfig
+	geoClient: CpGeoClient, pgLogWriter: PostgisEventWriter
 )(using system: ActorSystem):
 
 	import system.dispatcher
-	private val pgLogWriter = new PostgisEventWriter(confPg)
 
 	def logDl(entry: DlEventForPostgres, ip: String)(using Envri): Unit = logInternally(ip){ipinfo =>
 		pgLogWriter.logDownload(entry, ipinfo).failed.foreach{err =>

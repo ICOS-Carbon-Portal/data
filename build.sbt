@@ -17,7 +17,7 @@ lazy val commonSettings = Seq(
 	javacOptions ++= Seq("-Xlint:deprecation")
 )
 
-val akkaVersion = "2.6.18"
+val akkaVersion = "2.6.19"
 val akkaHttpVersion = "10.2.8"
 
 lazy val netcdf = (project in file("netcdf"))

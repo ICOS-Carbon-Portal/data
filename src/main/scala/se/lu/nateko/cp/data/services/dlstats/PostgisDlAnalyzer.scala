@@ -1,137 +1,18 @@
 package se.lu.nateko.cp.data.services.dlstats
 
-import se.lu.nateko.cp.data.PostgisConfig
-import se.lu.nateko.cp.data.CredentialsConfig
-import se.lu.nateko.cp.meta.core.data.Agent
 import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.data.PostgisConfig
+import se.lu.nateko.cp.data.api.PostgisClient
 import se.lu.nateko.cp.data.routes.StatsRouting.*
-import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-import akka.Done
-import akka.event.LoggingAdapter
-
-import scala.util.Try
-import scala.io.Source
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
-import java.sql.Connection
+import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Types
 import java.time.ZoneOffset
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.ArrayBlockingQueue
+import scala.concurrent.Future
 
-import org.postgresql.ds.PGConnectionPoolDataSource
-import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import java.sql.Date
-import scala.concurrent.ExecutionContextExecutor
-
-class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoCloseable{
-
-	private val executor = {
-		val maxThreads = conf.dbAccessPoolSize
-		new ThreadPoolExecutor(
-			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
-		)
-	}
-
-	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
-
-	private given ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
-
-	private val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
-		val pgDs = new PGConnectionPoolDataSource()
-		pgDs.setServerNames(Array(conf.hostname))
-		pgDs.setDatabaseName(dbName)
-		pgDs.setPortNumbers(Array(conf.port))
-		val ds = new SharedPoolDataSource()
-		ds.setMaxTotal(conf.dbAccessPoolSize)
-		ds.setDefaultMinIdle(1)
-		ds.setDefaultMaxIdle(2)
-		ds.setConnectionPoolDataSource(pgDs)
-		ds.setDefaultAutoCommit(false)
-		ds
-	}.toMap
-
-	override def close(): Unit = {
-		executor.shutdown()
-		scheduler.shutdown()
-		dataSources.valuesIterator.foreach{_.close()}
-	}
-
-	def initLogTables(): Future[Done] = if(conf.skipInit) done else {
-		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
-		val matViews = Seq(
-			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",
-			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv",
-			"submitters_mv"
-		)
-
-		val futs = conf.dbNames.keys.map{implicit envri =>
-			withConnection(conf.admin)(conn => {
-				conn.createStatement().execute(query)
-				conn.commit()
-			}).map{_ =>
-				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
-			}
-		}.toIndexedSeq
-		Future.sequence(futs).map{_ => Done}
-	}
-
-	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = {
-		execute(conf.writer)(conn => {
-			val dobjsQuery = """
-				|INSERT INTO dobjs(hash_id, spec, submitter, station)
-				|VALUES (?, ?, ?, ?)
-				|ON CONFLICT (hash_id) DO UPDATE
-				|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
-				|""".stripMargin
-			val dobjsSt = conn.prepareStatement(dobjsQuery)
-			val deleteContribSt = conn.prepareStatement("DELETE FROM contributors WHERE hash_id = ?")
-			val insertContribSt = conn.prepareStatement("INSERT INTO contributors(hash_id, contributor) VALUES (?, ?)")
-
-			try {
-				val Seq(hash_id, spec, submitter, station) = 1 to 4
-
-				val contribs: Seq[Agent] = (
-					dobj.references.authors.toSeq.flatten ++
-					dobj.production.toSeq.flatMap(prodInfo =>
-						prodInfo.contributors :+ prodInfo.creator
-					)
-				).distinct
-
-				dobjsSt.setString(hash_id, dobj.hash.id)
-				dobjsSt.setString(spec, dobj.specification.self.uri.toString)
-				dobjsSt.setString(submitter, dobj.submission.submitter.self.uri.toString)
-				dobj.specificInfo match {
-					case Left(_) => dobjsSt.setNull(station, Types.VARCHAR)
-					case Right(lessSpecific) => dobjsSt.setString(station, lessSpecific.acquisition.station.org.self.uri.toString)
-				}
-				dobjsSt.executeUpdate()
-
-				deleteContribSt.setString(1, dobj.hash.id)
-				deleteContribSt.executeUpdate()
-
-				for (contributor <- contribs.map(_.self.uri.toString).distinct){
-					insertContribSt.setString(1, dobj.hash.id)
-					insertContribSt.setString(2, contributor)
-					insertContribSt.addBatch()
-				}
-
-				insertContribSt.executeBatch()
-
-			} finally {
-				dobjsSt.close()
-				deleteContribSt.close()
-				insertContribSt.close()
-			}
-		})
-	}
+class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 
 	def downloadsByCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[DownloadsByCountry]] =
 		runAnalyticalQuery("SELECT count, country_code FROM downloadsByCountry", Some(queryParams)){rs =>
@@ -153,7 +34,7 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 			DownloadsPerTimeframe(rs.getInt("count"), rs.getDate("day").toLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant)
 		}
 
-	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[DownloadStats] = {
+	def downloadStats(queryParams: StatsQueryParams)(implicit envri: Envri): Future[DownloadStats] =
 		val objStatsFut = runAnalyticalQuery("SELECT count, hash_id FROM downloadStats", Some(queryParams)){rs =>
 			DownloadObjStat(rs.getInt("count"), rs.getString("hash_id"))
 		}
@@ -164,13 +45,11 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 		objStatsFut.zip(sizeFut).map{
 			case (stats, size) => DownloadStats(stats, size)
 		}
-	}
 
-	def specifications(implicit envri: Envri): Future[IndexedSeq[Specifications]] = {
+	def specifications(implicit envri: Envri): Future[IndexedSeq[Specifications]] =
 		runAnalyticalQuery("SELECT count, spec FROM specifications()"){rs =>
 			Specifications(rs.getInt("count"), rs.getString("spec"))
 		}
-	}
 
 	def contributors(implicit envri: Envri): Future[IndexedSeq[Contributors]] =
 		runAnalyticalQuery("SELECT count, contributor FROM contributors()"){rs =>
@@ -206,7 +85,7 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 			DownloadCount(rs.getInt("download_count"))
 	}
 
-	def lastDownloads(limit: Int, itemType: Option[DlItemType])(implicit envri: Envri): Future[IndexedSeq[Download]] = {
+	def lastDownloads(limit: Int, itemType: Option[DlItemType])(implicit envri: Envri): Future[IndexedSeq[Download]] =
 		val whereClause = itemType.fold("")(value => s"WHERE item_type = '$value'")
 		// Limit coordinates to 5 decimals in function ST_AsGeoJSON
 		val query = s"""
@@ -230,7 +109,6 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 				geoJson = Option(rs.getString("geojson")).flatMap(parsePointPosition)
 			)
 		}
-	}
 
 	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(implicit envri: Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
 		runAnalyticalQuery("SELECT year, country, downloads FROM customDownloadsPerYearCountry", Some(queryParams)){rs =>
@@ -257,20 +135,17 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 
 			val preparedSt = conn.prepareStatement(fullQueryString)
 
-			def initArray(idx: Int, arr: Option[Seq[String]]): Unit = arr match {
+			def initArray(idx: Int, arr: Option[Seq[String]]): Unit = arr match
 				case Some(values) => preparedSt.setArray(idx, conn.createArrayOf("varchar", values.toArray))
 				case None => preparedSt.setNull(idx, Types.ARRAY)
-			}
 
-			def initString(idx: Int, str: Option[String]): Unit = str match {
+			def initString(idx: Int, str: Option[String]): Unit = str match
 				case Some(value) => preparedSt.setString(idx, value)
 				case None => preparedSt.setNull(idx, Types.VARCHAR)
-			}
 
-			def initDate(idx: Int, str: Option[String]): Unit = str match {
+			def initDate(idx: Int, str: Option[String]): Unit = str match
 				case Some(value) => preparedSt.setDate(idx, Date.valueOf(value))
 				case None => preparedSt.setNull(idx, Types.DATE)
-			}
 
 			params.foreach{qp =>
 				preparedSt.setInt(	1, qp.page)
@@ -289,56 +164,12 @@ class PostgresDlLog(conf: PostgisConfig, log: LoggingAdapter) extends AutoClosea
 			consumeResultSet(preparedSt.executeQuery())(parser)
 		}
 
-	def consumeResultSet[T](resultSet: ResultSet)(fn: ResultSet => T): IndexedSeq[T] = {
+	def consumeResultSet[T](resultSet: ResultSet)(fn: ResultSet => T): IndexedSeq[T] =
 		val res = scala.collection.mutable.Buffer.empty[T]
 		while(resultSet.next()){
 			res += fn(resultSet)
 		}
 		resultSet.close()
 		res.toIndexedSeq
-	}
 
-	private def updateMatView(matView: String)(implicit envri: Envri): Unit =
-		withConnectionEager(conf.admin){conn =>
-			// Disable transactions
-			conn.setAutoCommit(true)
-			val st = conn.createStatement
-			try{
-				st.execute(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ;")
-				st.execute(s"VACUUM (ANALYZE) $matView ;")
-			}finally{
-				st.close()
-			}
-		}.failed.foreach{
-			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
-		}
-
-	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Future[T] = Future{
-		Future.fromTry(withConnectionEager(creds)(act))
-	}.flatten
-
-	private def withConnectionEager[T](creds: CredentialsConfig)(act: Connection => T)(implicit envri: Envri): Try[T] = Try{
-		val conn = dataSources(envri).getConnection(creds.username, creds.password)
-		try {
-			conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
-			act(conn)
-		} finally{
-			conn.close()
-		}
-	}
-
-	private def execute(credentials: CredentialsConfig)(action: Connection => Unit)(implicit envri: Envri): Future[Done] = {
-		withConnection(credentials){conn =>
-			try {
-				action(conn)
-				conn.commit()
-				Done
-			} catch {
-				case ex: Throwable =>
-					conn.rollback()
-					throw ex
-			}
-		}
-	}
-
-}
+end PostgisDlAnalyzer

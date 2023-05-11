@@ -1,32 +1,52 @@
 package se.lu.nateko.cp.data.api
 
 import akka.Done
+import akka.event.LoggingAdapter
 import eu.icoscp.envri.Envri
-import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
-import org.postgresql.ds.PGConnectionPoolDataSource
-import se.lu.nateko.cp.data.CredentialsConfig
-import se.lu.nateko.cp.data.PostgisConfig
 import eu.icoscp.geoipclient.GeoIpInfo
+import se.lu.nateko.cp.data.PostgisConfig
+import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.meta.core.data.Agent
+import se.lu.nateko.cp.meta.core.data.DataObject
 
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-import java.sql.Timestamp
 import java.sql.Types
-import java.time.Instant
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.io.Source
 
-class PostgisEventWriter(conf: PostgisConfig) extends AutoCloseable:
 
-	//private def conf(using e: Envri) = confs(e)
+class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
-	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = withTransaction(conf.writer){
-		"SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
-	}{st =>
+	private[this] val scheduler = Executors.newSingleThreadScheduledExecutor()
+
+	override def close(): Unit = {
+		super.close()
+		scheduler.shutdown()
+	}
+
+	def initLogTables(): Future[Done] = if conf.skipInit then done else
+		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
+		val matViews = Seq(
+			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",
+			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv",
+			"submitters_mv"
+		)
+
+		val futs = conf.dbNames.keys.map{implicit envri =>
+			withConnection(conf.admin)(conn =>
+				conn.createStatement().execute(query)
+				conn.commit()
+			).map{_ =>
+				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
+			}
+		}.toIndexedSeq
+		Future.sequence(futs).map{_ => Done}
+
+	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = execute(conf.writer)(conn =>
+		val logQuery = "SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
+		val st = conn.prepareStatement(logQuery)
+
 		def setOptVarchar(strOpt: Option[String], idx: Int): Unit = strOpt match{
 			case Some(s) => st.setString(idx, s)
 			case None => st.setNull(idx, Types.VARCHAR)
@@ -70,55 +90,69 @@ class PostgisEventWriter(conf: PostgisConfig) extends AutoCloseable:
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
 		st.execute()
-	}
+	)
 
+	def writeDobjInfo(dobj: DataObject)(implicit envri: Envri): Future[Done] = execute(conf.writer)(conn =>
+		val dobjsQuery = """
+					|INSERT INTO dobjs(hash_id, spec, submitter, station)
+					|VALUES (?, ?, ?, ?)
+					|ON CONFLICT (hash_id) DO UPDATE
+					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
+					|""".stripMargin
+		
+		val dobjsSt = conn.prepareStatement(dobjsQuery)
+		val deleteContribSt = conn.prepareStatement("DELETE FROM contributors WHERE hash_id = ?")
+		val insertContribSt = conn.prepareStatement("INSERT INTO contributors(hash_id, contributor) VALUES (?, ?)")
 
-	private[this] val executor =
-		val maxThreads = conf.dbAccessPoolSize
-		new ThreadPoolExecutor(
-			1, maxThreads, 30, TimeUnit.SECONDS, new ArrayBlockingQueue[Runnable](maxThreads)
-		)
-
-	private given ExecutionContext = ExecutionContext.fromExecutor(executor)
-
-	private[this] val dataSources: Map[Envri, SharedPoolDataSource] = conf.dbNames.view.mapValues{ dbName =>
-		val pgDs = new PGConnectionPoolDataSource()
-		pgDs.setServerNames(Array(conf.hostname))
-		pgDs.setDatabaseName(dbName)
-		pgDs.setPortNumbers(Array(conf.port))
-		val ds = new SharedPoolDataSource()
-		ds.setMaxTotal(conf.dbAccessPoolSize)
-		ds.setDefaultMinIdle(1)
-		ds.setDefaultMaxIdle(2)
-		ds.setConnectionPoolDataSource(pgDs)
-		ds.setDefaultAutoCommit(false)
-		ds
-	}.toMap
-
-	override def close(): Unit =
-		executor.shutdown()
-		dataSources.valuesIterator.foreach{_.close()}
-
-	private def withConnection[T](creds: CredentialsConfig)(act: Connection => T)(using envri: Envri): Future[T] = Future{
-		val conn = dataSources(envri).getConnection(creds.username, creds.password)
-		conn.setHoldability(ResultSet.CLOSE_CURSORS_AT_COMMIT)
 		try {
-			act(conn)
-		} finally{
-			conn.close()
-		}
-	}
+			val Seq(hash_id, spec, submitter, station) = 1 to 4
 
-	private def withTransaction(creds: CredentialsConfig)(query: String)(act: PreparedStatement => Unit)(using Envri): Future[Done] =
-		withConnection(creds){conn =>
-			val st = conn.prepareStatement(query)
+			val contribs: Seq[Agent] = (
+				dobj.references.authors.toSeq.flatten ++
+				dobj.production.toSeq.flatMap(prodInfo =>
+					prodInfo.contributors :+ prodInfo.creator
+				)
+			).distinct
+
+			dobjsSt.setString(hash_id, dobj.hash.id)
+			dobjsSt.setString(spec, dobj.specification.self.uri.toString)
+			dobjsSt.setString(submitter, dobj.submission.submitter.self.uri.toString)
+			dobj.specificInfo match
+				case Left(_) => dobjsSt.setNull(station, Types.VARCHAR)
+				case Right(lessSpecific) => dobjsSt.setString(station, lessSpecific.acquisition.station.org.self.uri.toString)
+			dobjsSt.executeUpdate()
+
+			deleteContribSt.setString(1, dobj.hash.id)
+			deleteContribSt.executeUpdate()
+
+			for (contributor <- contribs.map(_.self.uri.toString).distinct){
+				insertContribSt.setString(1, dobj.hash.id)
+				insertContribSt.setString(2, contributor)
+				insertContribSt.addBatch()
+			}
+
+			insertContribSt.executeBatch()
+
+		} finally {
+			dobjsSt.close()
+			deleteContribSt.close()
+			insertContribSt.close()
+		}
+	)
+
+	private def updateMatView(matView: String)(implicit envri: Envri): Unit =
+		withConnection(conf.admin){conn =>
+			// Disable transactions
+			conn.setAutoCommit(true)
+			val st = conn.createStatement
 			try{
-				act(st)
-				conn.commit()
-				Done
+				st.execute(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ;")
+				st.execute(s"VACUUM (ANALYZE) $matView ;")
 			}finally{
 				st.close()
 			}
+		}.failed.foreach{
+			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
 		}
 
 end PostgisEventWriter

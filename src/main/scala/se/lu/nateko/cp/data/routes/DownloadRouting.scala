@@ -20,7 +20,7 @@ import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.Utils
 import se.lu.nateko.cp.data.routes.LicenceRouting.FormLicenceProfile
-import se.lu.nateko.cp.data.services.dlstats.PostgresDlLog
+import se.lu.nateko.cp.data.services.dlstats.PostgisDlAnalyzer
 import se.lu.nateko.cp.data.services.upload.DownloadService
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.PrefetchedSource
@@ -48,7 +48,7 @@ import se.lu.nateko.cp.data.api.MetadataObjectNotFound
 
 class DownloadRouting(
 	authRouting: AuthRouting, downloadService: DownloadService,
-	logClient: PostgisDlLogger, pgClient: PostgresDlLog, coreConf: MetaCoreConfig
+	logClient: PostgisDlLogger, pgClient: PostgisEventWriter, coreConf: MetaCoreConfig
 )(using mat: Materializer) {
 
 	import DownloadRouting.*
