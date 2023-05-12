@@ -62,7 +62,7 @@ object Main extends App:
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
 	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis)
 	val postgisWriter = new PostgisEventWriter(config.postgis, system.log)
-	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter)
+	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter, config.postgis.ipsToIgnore)
 
 	val downloadService = new DownloadService(ConfigReader.metaCore, uploadService, restHeart)
 	val downloadRouting = new DownloadRouting(authRouting, downloadService, postgisLogger, postgisWriter, ConfigReader.metaCore)

@@ -14,7 +14,7 @@ import scala.util.Success
 import CpGeoClient.given
 
 class PostgisDlLogger(
-	geoClient: CpGeoClient, pgLogWriter: PostgisEventWriter
+	geoClient: CpGeoClient, pgLogWriter: PostgisEventWriter, ipsToIgnore: Seq[String]
 )(using system: ActorSystem):
 
 	import system.dispatcher
@@ -25,7 +25,7 @@ class PostgisDlLogger(
 		}
 	}
 
-	private def logInternally(ip: String)(logAction: Either[String, GeoIpInfo] => Unit): Unit =
+	private def logInternally(ip: String)(logAction: Either[String, GeoIpInfo] => Unit): Unit = if !ipsToIgnore.contains(ip) then
 		geoClient.lookup(ip).onComplete{
 			case Success(ipinfo) =>
 				logAction(Right(ipinfo))

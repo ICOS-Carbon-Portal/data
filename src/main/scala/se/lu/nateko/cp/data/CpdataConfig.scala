@@ -53,7 +53,8 @@ case class PostgisConfig(
 	reader: CredentialsConfig,
 	writer: CredentialsConfig,
 	dbAccessPoolSize: Int,
-	skipInit: Boolean
+	skipInit: Boolean,
+	ipsToIgnore: Seq[String]
 )
 
 case class MetaServiceConfig(
@@ -114,7 +115,7 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
 	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
 	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	given RootJsonFormat[PostgisConfig] = jsonFormat8(PostgisConfig.apply)
+	given RootJsonFormat[PostgisConfig] = jsonFormat9(PostgisConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}
