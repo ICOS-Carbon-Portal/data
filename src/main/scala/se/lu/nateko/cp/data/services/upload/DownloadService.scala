@@ -227,7 +227,8 @@ object DownloadService:
 
 	val mainLicences: Map[Envri, URI] = Map(
 		Envri.ICOS -> CpMetaVocab.ccby4,
-		Envri.SITES -> SitesMetaVocab.ccby4
+		Envri.SITES -> SitesMetaVocab.ccby4,
+		Envri.ICOSCities -> CpMetaVocab.ccby4
 	)
 
 	def makeFileName(base: String, idx: Int): String =
