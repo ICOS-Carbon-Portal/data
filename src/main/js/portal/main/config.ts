@@ -57,7 +57,7 @@ const featureFlags = {
 		setMaxSamplingDateToToday: true
 	},
 	ICOSCities: {
-		...defaultFeatureFlags,
+		...defaultFeatureFlags
 	}
 }
 
