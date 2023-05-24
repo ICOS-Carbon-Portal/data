@@ -24,6 +24,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import eu.icoscp.geoipclient.CpGeoClient
 import eu.icoscp.georestheart.RestHeartClientBase
+import scala.util.Failure
 
 class RestHeartClient(
 	val config: RestHeartConfig, geoClient: CpGeoClient, http: HttpExt
@@ -102,7 +103,10 @@ class RestHeartClient(
 		patchUserDoc(uid, "collDownloads", item, "collection download")
 
 	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
-		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
+		for(
+			_ <- createUserIfNew(uid, "", "");
+			res <- patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
+		) yield res
 
 	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(using Envri): Future[Done] = {
 		val updateItem = JsObject(
