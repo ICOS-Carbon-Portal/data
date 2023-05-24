@@ -34,7 +34,9 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn =>
-				conn.createStatement().execute(query)
+				val st = conn.createStatement()
+				st.execute(query)
+				st.close()
 				conn.commit()
 			).map{_ =>
 				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
@@ -88,6 +90,7 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
 		st.execute()
+		st.close()
 	}
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>

@@ -161,7 +161,9 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 				initDate(        	11, qp.dlEnd)
 			}
 
-			consumeResultSet(preparedSt.executeQuery())(parser)
+			val res = consumeResultSet(preparedSt.executeQuery())(parser)
+			preparedSt.close()
+			res
 		}
 
 	def consumeResultSet[T](resultSet: ResultSet)(fn: ResultSet => T): IndexedSeq[T] =
