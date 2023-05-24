@@ -10,7 +10,7 @@ import se.lu.nateko.cp.data.PostgisConfig
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.sql.ResultSet
-import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import scala.concurrent.ExecutionContext
@@ -22,9 +22,8 @@ import scala.util.Try
 abstract class PostgisClient(conf: PostgisConfig) extends AutoCloseable:
 
 	private val executor =
-		val maxThreads = conf.dbAccessPoolSize
-		val queue = new ArrayBlockingQueue[Runnable](maxThreads)
-		new ThreadPoolExecutor(0, maxThreads, 30, TimeUnit.SECONDS, queue)
+		val queue = new LinkedBlockingQueue[Runnable]()
+		new ThreadPoolExecutor(0, conf.dbAccessPoolSize, 30, TimeUnit.SECONDS, queue)
 
 	protected given ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 
