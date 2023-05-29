@@ -322,7 +322,7 @@ CREATE OR REPLACE FUNCTION public.downloadsPerWeek(
 	RETURNS TABLE(
 		count int,
 		day date,
-		week double precision
+		week numeric
 	)
 	LANGUAGE plpgsql
 	STABLE
