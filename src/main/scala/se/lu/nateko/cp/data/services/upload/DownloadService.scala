@@ -118,9 +118,13 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 			
 		}
 
-	private def licenceSource(implicit envri: Envri) = StreamConverters.fromInputStream(
-		() => getClass.getClassLoader.getResourceAsStream(s"${envri}-licence.pdf")
-	)
+	private def licenceSource(implicit envri: Envri) = StreamConverters.fromInputStream{() =>
+		val fileName = s"${envri}-licence.pdf"
+		val stream = getClass.getClassLoader.getResourceAsStream(fileName)
+		if stream == null then
+			throw CpDataException(s"File $fileName is not included in the server deployment package")
+		else stream
+	}
 
 	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
