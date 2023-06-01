@@ -152,8 +152,8 @@
 }
 
 @template = @{
-	if(envri == Envri.SITES) SitesPage(pageTitle, authHost = conf.authHost, dataHost = conf.dataHost) _
-	else CpCommonPage(pageTitle, authHost = conf.authHost, dataHost = conf.dataHost) _
+	if(envri == Envri.SITES) SitesPage(pageTitle) _
+	else CpCommonPage(pageTitle) _
 }
 
 @pageTitle = @{
