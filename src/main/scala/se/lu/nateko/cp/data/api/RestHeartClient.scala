@@ -25,6 +25,7 @@ import scala.concurrent.duration.DurationInt
 import eu.icoscp.geoipclient.CpGeoClient
 import eu.icoscp.georestheart.RestHeartClientBase
 import scala.util.Failure
+import akka.http.scaladsl.server.RouteResult.Complete
 
 class RestHeartClient(
 	val config: RestHeartConfig, geoClient: CpGeoClient, http: HttpExt
@@ -103,10 +104,7 @@ class RestHeartClient(
 		patchUserDoc(uid, "collDownloads", item, "collection download")
 
 	def saveDownload(doc: DocObject, uid: UserId)(using Envri): Future[Done] =
-		for(
-			_ <- createUserIfNew(uid, "", "");
-			res <- patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
-		) yield res
+		patchUserDoc(uid, "docDownloads", getDownloadItem(doc), "document download")
 
 	private def patchUserDoc(uid: UserId, arrayProp: String, item: JsObject, itemName: String)(using Envri): Future[Done] = {
 		val updateItem = JsObject(
@@ -114,11 +112,17 @@ class RestHeartClient(
 				arrayProp -> JsObject(
 					"$each" -> JsArray(item),
 					"$slice" -> JsNumber(-config.userDownloadsLogLength))))
-		for(
-			entity <- Marshal(updateItem).to[RequestEntity];
-			r <- http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = entity));
-			res <- handleWritingOutcome(r, s"saving $itemName to user profile")
-		) yield res
+
+		val entity = Marshal(updateItem).to[RequestEntity]
+		def req = entity.flatMap(e => http.singleRequest(HttpRequest(uri = getUserUri(uid), method = HttpMethods.PATCH, entity = e)))
+
+		req.flatMap{
+			case resp if resp.status.intValue == 404 =>
+				createUserIfNew(uid, "", "").flatMap(_ =>
+					req.flatMap(r => handleWritingOutcome(r, s"saving $itemName to user profile"))
+				)
+			case r => handleWritingOutcome(r, s"saving $itemName to user profile")
+		}
 	}
 
 	private def setupCollection(coll: RestheartCollDef)(using Envri): Future[Done] = {
