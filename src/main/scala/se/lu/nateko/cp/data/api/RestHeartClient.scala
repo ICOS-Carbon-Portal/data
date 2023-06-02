@@ -25,7 +25,6 @@ import scala.concurrent.duration.DurationInt
 import eu.icoscp.geoipclient.CpGeoClient
 import eu.icoscp.georestheart.RestHeartClientBase
 import scala.util.Failure
-import akka.http.scaladsl.server.RouteResult.Complete
 
 class RestHeartClient(
 	val config: RestHeartConfig, geoClient: CpGeoClient, http: HttpExt
