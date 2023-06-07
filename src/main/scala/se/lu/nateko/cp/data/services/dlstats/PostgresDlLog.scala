@@ -79,7 +79,7 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				val now = Instant.now()
 				val nextMidnight = now.atOffset(ZoneOffset.UTC).toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
 				val minsToMidnight = ChronoUnit.MINUTES.between(now, nextMidnight)
-				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), minsToMidnight, 1440, TimeUnit.MINUTES)
+				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), minsToMidnight + 37, 1440, TimeUnit.MINUTES)
 			}
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}
