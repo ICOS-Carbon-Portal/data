@@ -1,35 +1,34 @@
 package se.lu.nateko.cp.data.services.dlstats
 
-import se.lu.nateko.cp.data.DownloadStatsConfig
-import se.lu.nateko.cp.data.CredentialsConfig
-import se.lu.nateko.cp.meta.core.data.Agent
-import se.lu.nateko.cp.meta.core.data.Envri
-import se.lu.nateko.cp.meta.core.data.DataObject
-import se.lu.nateko.cp.data.routes.StatsRouting.*
-import se.lu.nateko.cp.data.utils.akka.done
-
 import akka.Done
 import akka.event.LoggingAdapter
-
-import scala.util.Try
-import scala.io.Source
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
+import org.postgresql.ds.PGConnectionPoolDataSource
+import se.lu.nateko.cp.data.CredentialsConfig
+import se.lu.nateko.cp.data.DownloadStatsConfig
+import se.lu.nateko.cp.data.routes.StatsRouting.*
+import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+import se.lu.nateko.cp.meta.core.data.Agent
+import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.Envri
 
 import java.sql.Connection
+import java.sql.Date
 import java.sql.ResultSet
 import java.sql.Types
+import java.time.Instant
 import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.ArrayBlockingQueue
-
-import org.postgresql.ds.PGConnectionPoolDataSource
-import org.apache.commons.dbcp2.datasources.SharedPoolDataSource
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import java.sql.Date
+import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.Future
+import scala.io.Source
+import scala.util.Try
 
 class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends AutoCloseable{
 
@@ -77,7 +76,10 @@ class PostgresDlLog(conf: DownloadStatsConfig, log: LoggingAdapter) extends Auto
 				conn.createStatement().execute(query)
 				conn.commit()
 			}).map{_ =>
-				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
+				val now = Instant.now()
+				val nextMidnight = now.atOffset(ZoneOffset.UTC).toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+				val minsToMidnight = ChronoUnit.MINUTES.between(now, nextMidnight)
+				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), minsToMidnight, 1440, TimeUnit.MINUTES)
 			}
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}
