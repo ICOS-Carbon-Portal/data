@@ -34,7 +34,7 @@ object AtcProdStreams:
 					replaceNullValues(acc.cells, acc.formats)
 				)
 			.alsoToMat(
-				digestSink(makeFlaskTsExtract)
+				digestSink(makeFlaskTsExtract(colsMeta))
 			)(KeepFuture.right)
 
 	def atcProdParser(format: ColumnsMetaWithTsCol, nRowsExplicit: Option[Int])(using ExecutionContext): RowParser =
@@ -70,7 +70,9 @@ object AtcProdStreams:
 		}
 	}
 
-	private def makeFlaskTsExtract(fl: FirstLastRows)(using ExecutionContext): Future[TimeSeriesExtract] =
+	private def makeFlaskTsExtract(colsMeta: ColumnsMeta)(
+		fl: FirstLastRows
+	)(using ExecutionContext): Future[TimeSeriesExtract] =
 		def parseInstant(row: TableRow, col: String): Instant =
 			val idx = row.header.columnNames.indexOf(col)
 			assert(idx >= 0, s"Column '$col' not found (expected in ATC/CAL flask dataset)")
@@ -81,7 +83,7 @@ object AtcProdStreams:
 				throw CpDataParsingException(s"Bad timestamp: $ts in row: $rowRender")
 		for f <- fl.first; l <- fl.last yield
 			val interval = TimeInterval(parseInstant(f, SampleStartCol), parseInstant(l, SampleEndCol))
-			val colNames = Some(l.header.columnNames.toIndexedSeq)
+			val colNames = Some(l.header.columnNames.filter(colsMeta.matchesColumn).toIndexedSeq)
 			TimeSeriesExtract(TabularIngestionExtract(colNames, interval), Some(l.header.nRows))
 
 end AtcProdStreams
