@@ -40,6 +40,9 @@ class IngestionUploadTask(
 			case `asciiAtcProdTimeSer` =>
 				makeIngestionSink(atcprod.AtcProdStreams.atcProdParser(defaultColumnFormats, ingSpec.nRows))
 
+			case `asciiAtcFlaskTimeSer` =>
+				makeIngestionSink(atcprod.AtcProdStreams.flaskParser(colsMeta, ingSpec.nRows))
+
 			case `asciiEtcTimeSer` =>
 				defaultStandardSink(ecocsv.EcoCsvStreams.ecoCsvParser)
 

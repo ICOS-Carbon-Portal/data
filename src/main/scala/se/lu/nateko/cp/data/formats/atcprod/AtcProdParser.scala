@@ -108,6 +108,7 @@ object AtcProdParser {
 		case FloatValue => value == "-999.990" || value == "-999.99" || value == "-9.99"
 		case IntValue => value == null
 		case Utf16CharValue => value == null
+		case Iso8601DateTime => value == ""
 		case vf => throw new Exception(s"Did not expect value format $vf in ATC product time series data")
 	}
 }

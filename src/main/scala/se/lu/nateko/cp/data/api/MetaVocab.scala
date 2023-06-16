@@ -17,6 +17,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	object ObjectFormats{
 		val asciiEtcTimeSer = getRelative("asciiEtcTimeSer")
 		val asciiAtcProdTimeSer = getRelative("asciiAtcProductTimeSer")
+		val asciiAtcFlaskTimeSer = getRelative("asciiAtcFlaskTimeSer")
 		val asciiEtcHalfHourlyProdTimeSer = getRelative("asciiEtcHalfHourlyProductTimeSer")
 		val asciiOtcSocatTimeSer = getRelative("asciiOtcSocatTimeSer")
 		val asciiOtcProductCsv = getRelative("asciiOtcProductCsv")

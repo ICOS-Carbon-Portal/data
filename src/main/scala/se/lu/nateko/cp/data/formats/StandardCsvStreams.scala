@@ -1,17 +1,18 @@
 package se.lu.nateko.cp.data.formats
 
-import scala.concurrent.ExecutionContext
 import akka.stream.scaladsl.Flow
-
-import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
-import scala.concurrent.Future
-import java.time.Instant
-import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 import akka.stream.scaladsl.Keep
-import java.time.temporal.ChronoUnit
+import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
+import se.lu.nateko.cp.data.services.upload.IngestionUploadTask.RowParser
 import se.lu.nateko.cp.data.streams.KeepFuture
+import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
-abstract class StandardCsvStreams {
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+
+trait StandardCsvStreams:
 	def isNull(value: String, format: ValueFormat): Boolean
 	def makeTimeStamp(cells: Array[String]): Instant
 
@@ -22,10 +23,7 @@ abstract class StandardCsvStreams {
 	 */
 	def acqIntervalTimeStep: Option[(Long, ChronoUnit)] = None
 
-	def standardCsvParser[T](
-		nRows: Int,
-		format: ColumnsMetaWithTsCol
-	)(implicit ctxt: ExecutionContext): Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
+	def standardCsvParser[T](nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser =
 
 		val parser = makeParser(format)
 
@@ -42,7 +40,7 @@ abstract class StandardCsvStreams {
 			.alsoToMat(
 				digestSink(getCompletionInfo(format.colsMeta, timeStep = acqIntervalTimeStep))
 			)(KeepFuture.right)
-	}
+	end standardCsvParser
 
 	private def replaceNullValues(acc: StandardParsingAcculumator): Array[String] = acc.cells.indices
 		.map{ i =>
@@ -53,4 +51,4 @@ abstract class StandardCsvStreams {
 		}
 		.toArray
 
-}
+end StandardCsvStreams

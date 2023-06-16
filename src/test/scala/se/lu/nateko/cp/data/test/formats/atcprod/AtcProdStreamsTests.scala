@@ -40,7 +40,7 @@ class AtcProdStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	private val rowsSource = StreamConverters
 		.fromInputStream(() => getClass.getResourceAsStream("/ICOS_ATC_NRT_GAT_2018-04-12CO2.csv"))
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
-		.via(atcProdParser(formats))
+		.via(atcProdParser(formats, None))
 
 	val binTableSink = BinTableSink(outFile("/atcCsvBinTest.cpb"), overwrite = true)
 
