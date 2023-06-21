@@ -61,6 +61,9 @@ INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('162.55.85.22
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.58.28.198', NULL, 'hyphen.earth collaboration');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.59.40.22', NULL, 'hyphen.earth collaboration');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('3.126.244.229', NULL, 'hyphen.earth collaboration');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.167.144.0/24', NULL, 'Bing bot');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('40.77.167.0/24', NULL, 'Bing bot');
+INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('207.46.13.0/24', NULL, 'Bing bot');
 
 
 CREATE TABLE IF NOT EXISTS public.contributors (
