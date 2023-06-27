@@ -10,6 +10,9 @@ import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.DataObject
 
 import java.sql.Types
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
@@ -39,7 +42,10 @@ class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends Postg
 				st.close()
 				conn.commit()
 			).map{_ =>
-				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), 3, 60, TimeUnit.MINUTES)
+				val now = Instant.now()
+				val nextMidnight = now.atOffset(ZoneOffset.UTC).toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
+				val minsToMidnight = ChronoUnit.MINUTES.between(now, nextMidnight)
+				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), minsToMidnight + 37, 1440, TimeUnit.MINUTES)
 			}
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}

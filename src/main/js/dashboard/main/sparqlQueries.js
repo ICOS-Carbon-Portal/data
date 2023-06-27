@@ -1,23 +1,24 @@
-export const listStationMeasurement = (config, stationId, valueType, dataLevel, height) => {
+export const listStationMeasurement = (config, stationId) => {
 	return `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 
-select ?station ?dobj ?dataEnd where{
+select ?station ?dobj ?dataEnd ?columnName ?samplingHeight ?level where{
 	?station cpmeta:hasStationId "${stationId}"^^xsd:string .
-	?column cpmeta:hasColumnTitle "${valueType}"^^xsd:string ;
+	?column cpmeta:hasColumnTitle ?columnName ;
 		cpmeta:hasValueType/cpmeta:hasUnit ?unit .
+	VALUES ?columnName { "co2" "ch4" "n2o" "co" }
 	?spec cpmeta:containsDataset/cpmeta:hasColumn ?column ;
-		cpmeta:hasDataLevel "${dataLevel}"^^xsd:integer ;
+		cpmeta:hasDataLevel ?level ;
 		cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/icos> .
+	VALUES ?level {"1"^^xsd:integer "2"^^xsd:integer}
 	?dobj cpmeta:hasObjectSpec ?spec .
 	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
 	?dobj cpmeta:wasAcquiredBy/prov:endedAtTime ?dataEnd .
 	?dobj cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?samplingHeight .
+	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	filter not exists {[] cpmeta:isNextVersionOf ?dobj}
-	filter (?samplingHeight = ${height}) .
 }
-order by desc(?dataEnd)
-limit 1`;
+order by desc(?dataEnd)`;
 };
 
 export const objectSpecifications = (config, objIds) => {
@@ -28,7 +29,8 @@ export const objectSpecifications = (config, objIds) => {
 	?dobj cpmeta:hasObjectSpec ?objSpec ;
 	cpmeta:hasNumberOfRows ?nRows ;
 	cpmeta:hasName ?fileName .
-	?objSpec rdfs:label ?specLabel .
+	?objSpec rdfs:label ?specLabel ;
+	cpmeta:hasDataLevel ?level .
 	OPTIONAL{?dobj cpmeta:hasActualColumnNames ?columnNames }
 	}`;
 };

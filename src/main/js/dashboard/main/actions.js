@@ -7,7 +7,9 @@ export const actionTypes = {
 	INIT: 'INIT',
 	STATION_MEASUREMENTS: 'STATION_MEASUREMENTS',
 	BINTABLE: 'BINTABLE',
-	SWITCH_TIMEPERIOD: 'SWITCH_TIMEPERIOD'
+	SWITCH_TIMEPERIOD: 'SWITCH_TIMEPERIOD',
+	SWITCH_HEIGHT: 'SWITCH_HEIGHT',
+	SWITCH_VALUETYPE: 'SWITCH_VALUETYPE'
 };
 
 
@@ -31,17 +33,18 @@ export const init = searchParams => dispatch => {
 	const stationId = searchParams.get('stationId');
 	const valueType = searchParams.get('valueType');
 	const height = searchParams.get('height');
+	const showControls = (String(searchParams.get('showControls')).toLowerCase() === 'true')
 
 	dispatch({
 		type: actionTypes.INIT,
 		stationId,
 		valueType,
-		height
+		height,
+		showControls
 	});
 
 	if (isValidRequest){
-		dispatch(getStationMeasurement(stationId, valueType, 1, height));
-		dispatch(getStationMeasurement(stationId, valueType, 2, height));
+		dispatch(getStationMeasurement(stationId, valueType, height));
 
 		saveToRestheart({
 			dashboard: {
@@ -68,32 +71,38 @@ const getWebHostUrl = () => {
 	return 'unknown';
 };
 
-const getStationMeasurement = (stationId, valueType, dataLevel, height) => dispatch => {
+const getStationMeasurement = (stationId, valueType, height) => dispatch => {
 
-	fetchStationMeasurement(stationId, valueType, dataLevel, height).then(measurements => {
+	fetchStationMeasurement(stationId, valueType).then(measurements => {
 		dispatch({
 			type: actionTypes.STATION_MEASUREMENTS,
 			measurements
 		});
 
-		dispatch(getObjectSpecifications(measurements, dataLevel, valueType));
+		const objIds = getObjIds(measurements, valueType, height);
+
+		dispatch(getObjectSpecifications(objIds, valueType));
 	});
 };
 
-const getObjectSpecifications = (measurements, dataLevel, valueType) => dispatch => {
-	const objIds = measurements.map(m => m.dobj);
+const getObjIds = (measurements, valueType, height) => {
+	return measurements
+		.filter(m => m.columnName == valueType && m.samplingHeight == height)
+		.map(m => m.dobj);
+}
+
+const getObjectSpecifications = (objIds, valueType) => dispatch => {
 
 	fetchObjectSpecifications(objIds).then(objectSpecifications => {
 		if (objectSpecifications === undefined) {
 			dispatch({
 				type: actionTypes.BINTABLE,
-				dataLevel,
 				objSpec: undefined,
 				binTable: undefined
 			});
 		} else {
 			objectSpecifications.forEach(objSpec => {
-				dispatch(getBinTable(dataLevel, valueType, objSpec));
+				dispatch(getBinTable(valueType, objSpec));
 			})
 		}
 	},
@@ -101,7 +110,7 @@ const getObjectSpecifications = (measurements, dataLevel, valueType) => dispatch
 	);
 };
 
-const getBinTable = (dataLevel, yCol, objSpec) => dispatch => {
+const getBinTable = (yCol, objSpec) => dispatch => {
 	const {id, tableFormat, nRows} = objSpec;
 	const columnIndexes = config.columnsToFetch.concat([yCol]).map(colName =>
 		tableFormat.getColumnIndex(colName)
@@ -112,7 +121,6 @@ const getBinTable = (dataLevel, yCol, objSpec) => dispatch => {
 		dispatch({
 			type: actionTypes.BINTABLE,
 			yCol,
-			dataLevel,
 			objSpec,
 			binTable
 		});
@@ -127,3 +135,40 @@ export const switchTimePeriod = timePeriod => dispatch => {
 		timePeriod
 	})
 };
+
+export const switchHeight = height => (dispatch, getState) => {
+	dispatch({
+		type: actionTypes.SWITCH_HEIGHT,
+		height
+	})
+
+	const stats = getState().stats
+	const objIds = getObjIds(stats.measurements, stats.params.valueType, height);
+
+	dispatch(getObjectSpecifications(objIds, stats.params.valueType));
+
+	updateUrlWithSearchParam("height", height);
+};
+
+export const switchValueType = valueType => (dispatch, getState) => {
+	dispatch({
+		type: actionTypes.SWITCH_VALUETYPE,
+		valueType
+	})
+
+	const stats = getState().stats
+	const objIds = getObjIds(stats.measurements, valueType, stats.params.height);
+
+	dispatch(getObjectSpecifications(objIds, valueType));
+
+	updateUrlWithSearchParam("valueType", valueType);
+};
+
+const updateUrlWithSearchParam = (key, value) => {
+	if (window.location === window.parent.location) {
+		const searchParams = new URLSearchParams(window.location.search);
+		searchParams.set(key, value);
+		const newURL = location.origin + location.pathname + '?' + searchParams;
+		history.pushState({ urlPath: newURL }, "", newURL);
+	}
+}

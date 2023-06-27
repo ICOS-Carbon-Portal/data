@@ -1,18 +1,19 @@
 package se.lu.nateko.cp.data.formats.ecocsv
 
-import java.time.*
-
-import scala.concurrent.{ ExecutionContext, Future }
-
-import akka.stream.scaladsl.{ Flow, Keep }
-import se.lu.nateko.cp.data.formats.*
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Keep
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams.*
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.services.upload.IngestionUploadTask.RowParser
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 
-object EcoCsvStreams {
+import java.time.*
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(implicit ctxt: ExecutionContext)
-	: Flow[String, TableRow, Future[IngestionMetadataExtract]] = {
+object EcoCsvStreams:
+
+	def ecoCsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser =
 		val parser = new EcoCsvParser
 
 		Flow.apply[String]
@@ -28,7 +29,7 @@ object EcoCsvStreams {
 			.alsoToMat(
 				digestSink(getCompletionInfo(format.colsMeta))
 			)(Keep.right)
-	}
+	end ecoCsvParser
 
 	private def makeTimeStamp(localDate: String, localTime: String, offsetFromUtc: Int): Instant = {
 		val date = ValueFormatParser.parse(localDate, ValueFormat.EtcDate).asInstanceOf[Int]
@@ -55,4 +56,4 @@ object EcoCsvStreams {
 		}
 	}
 
-}
+end EcoCsvStreams

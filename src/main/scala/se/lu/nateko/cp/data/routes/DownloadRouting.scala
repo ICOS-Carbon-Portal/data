@@ -95,7 +95,7 @@ class DownloadRouting(
 			val contentType = getContentType(dobj.fileName)
 			logDownload(dobj, ip, uid)
 			respondWithAttachment(dobj.fileName){
-				getFromFile(uploadService.getFile(dobj), contentType)
+				getFromFile(uploadService.getFile(dobj, true), contentType)
 			}
 		}{
 			problem => complete(StatusCodes.NotFound -> problem)
@@ -224,7 +224,7 @@ class DownloadRouting(
 		}
 
 	private def docAccessRoute(doc: DocObject, uidOpt: Option[UserId])(using Envri): Route = {
-		val file = uploadService.getFile(doc)
+		val file = uploadService.getFile(doc, true)
 		if (file.exists) respondWithAttachment(doc.fileName){
 			getClientIp{ip =>
 				val dlInfo = DocumentDownloadInfo(

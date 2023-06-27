@@ -23,7 +23,7 @@ export default function(state = initState, action){
 
 		case actionTypes.INIT:
 			return update({
-				stats: state.stats.withParams(action.stationId, action.valueType, action.height)
+				stats: state.stats.withParams(action.stationId, action.valueType, action.height, action.showControls)
 			});
 
 		case actionTypes.STATION_MEASUREMENTS:
@@ -39,6 +39,16 @@ export default function(state = initState, action){
 		case actionTypes.SWITCH_TIMEPERIOD:
 			return update({
 				stats: state.stats.withTimePeriod(action.timePeriod)
+			});
+
+		case actionTypes.SWITCH_HEIGHT:
+			return update({
+				stats: state.stats.withHeight(action.height)
+			});
+
+		case actionTypes.SWITCH_VALUETYPE:
+			return update({
+				stats: state.stats.withValueType(action.valueType)
 			});
 
 		default:

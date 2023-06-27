@@ -40,6 +40,7 @@ case class CredentialsConfig(username: String, password: String)
 
 case class UploadConfig(
 	folder: String,
+	readonlyFolder: Option[String],
 	b2safe: B2SafeConfig,
 	dlReporter: CredentialsConfig,
 	admins: Seq[String]
@@ -106,7 +107,7 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
 	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
-	given RootJsonFormat[UploadConfig] = jsonFormat4(UploadConfig.apply)
+	given RootJsonFormat[UploadConfig] = jsonFormat5(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
 

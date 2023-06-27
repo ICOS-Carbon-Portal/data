@@ -39,7 +39,9 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	import meta.{ dispatcher, system }
 
 	val log = system.log
-	val folder = new java.io.File(config.folder)
+	val folder = File(config.folder)
+	private val readonlyFolder: Option[File] = config.readonlyFolder.map(new File(_))
+
 	private[this] val objLock = new ObjectLock("is currently already being uploaded")
 
 	if(!folder.exists) {
@@ -105,7 +107,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 				throw new CpDataException("Reingestion is only supported for DataObjects, not any StaticObjects")
 			};
 			_ <- meta.userIsAllowedUpload(dataObj, user);
-			origFile = getFile(dataObj);
+			origFile = getFile(dataObj, false);
 			ingTask <- {
 				if(origFile.exists) ingestionTaskFut(Right(dataObj))
 				else Future.failed(new FileNotFoundException(
@@ -130,8 +132,20 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		meta.lookupPackage(hash).flatMap(getSpecificSink)
 	}
 
-	def getFile(dataObj: StaticObject) = Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
-	def getFile(format: Option[URI], hash: Sha256Sum) = Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
+	def getFile(dataObj: StaticObject, fallbackToReadonlyIfNotExists: Boolean): File =
+		filePicker(fallbackToReadonlyIfNotExists){ folder =>
+			Paths.get(folder.getAbsolutePath, filePathSuffix(dataObj)).toFile
+		}
+
+	def getFile(format: Option[URI], hash: Sha256Sum, fallbackToReadonlyIfNotExists: Boolean): File =
+		filePicker(fallbackToReadonlyIfNotExists){ folder =>
+			Paths.get(folder.getAbsolutePath, filePathSuffix(format, hash)).toFile
+		}
+
+	private def filePicker(fallbackToReadonlyIfNotExists: Boolean)(folderToFile: File => File): File =
+		val writeable = folderToFile(folder)
+		if ! fallbackToReadonlyIfNotExists || writeable.exists() then writeable
+		else readonlyFolder.fold(writeable)(folderToFile)
 
 	def getDownloadReporterPassword(username: String): Option[String] =
 		if(config.dlReporter.username == username) Some(config.dlReporter.password) else None
@@ -199,7 +213,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def ingestionTaskFut(req: Either[IngestRequest, DataObject]): Future[UploadTask] =
 		val spec: DataObjectSpec = req.fold(_.spec, _.specification)
-		val file = req.fold(_.file, getFile)
+		val file = req.fold(_.file, getFile(_, false))
 		val isTryIngest = req.isLeft
 
 		if spec.datasetSpec.isEmpty then
@@ -242,7 +256,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
 		B2SafeUploadTask(obj, b2) :+
-		new FileSavingUploadTask(getFile(obj))
+		new FileSavingUploadTask(getFile(obj, false))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =
 		Seq(new MetaCompletionPostUploadTask(obj.hash, meta))

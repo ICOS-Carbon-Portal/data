@@ -168,7 +168,7 @@ export default {
 	objectUriPrefix,
 	metaResourceGraph,
 	additionalStationsGraphs,
-	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP'],
+	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP', 'time'],
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,
 	searchResultsCSVName,
