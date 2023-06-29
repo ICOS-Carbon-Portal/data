@@ -48,7 +48,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.12-SNAPSHOT"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.12"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
@@ -81,9 +81,9 @@ lazy val data = (project in file("."))
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"eu.icoscp"          %% "georestheart"                       % "0.1.0-SNAPSHOT",
+			"eu.icoscp"          %% "georestheart"                       % "0.1.0",
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0-SNAPSHOT",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.0",
 			"org.postgresql"      % "postgresql"                         % "42.6.0",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",
 
@@ -104,9 +104,9 @@ lazy val data = (project in file("."))
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
 		cpDeployPreAssembly := Def.sequential(netcdf / Test / test, Test / test, cpFrontendPublish).value,
-		cpDeployPlaybook := "cities.yml",
+		cpDeployPlaybook := "core.yml",
 		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production")),
-		cpDeployInfraBranch := "cities-deployment",
+		cpDeployInfraBranch := "master",
 
 //		initialCommands in console := """
 //			import se.lu.nateko.cp.data.api.B2Playground._
