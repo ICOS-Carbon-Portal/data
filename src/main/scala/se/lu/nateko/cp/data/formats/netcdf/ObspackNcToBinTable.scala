@@ -20,7 +20,7 @@ import ucar.nc2.time.CalendarDate
 
 import java.nio.file.Path
 import java.time.Instant
-import scala.jdk.CollectionConverters.*
+import scala.jdk.CollectionConverters.ListHasAsScala
 import scala.collection.immutable.Iterable
 import scala.util.Failure
 import scala.util.Success

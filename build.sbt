@@ -63,7 +63,7 @@ lazy val data = (project in file("."))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data",
-		version := "0.6.0",
+		version := "0.6.1",
 
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildCommand := {

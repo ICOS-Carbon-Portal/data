@@ -6,7 +6,6 @@ import se.lu.nateko.cp.meta.core.data.Position
 import ucar.nc2.dataset.NetcdfDatasets
 
 import java.io.File
-import scala.jdk.CollectionConverters._
 import scala.util.Using
 
 object ObspackGeoJSONWorkbench:
