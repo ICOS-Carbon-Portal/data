@@ -20,7 +20,7 @@ import scala.util.Try
 import scala.util.Using
 import scala.util.control.NoStackTrace
 
-import collection.JavaConverters.asScalaBufferConverter
+import scala.jdk.CollectionConverters.ListHasAsScala
 
 trait NetCdfViewServiceConfig:
 	def dateVars: Seq[String]
