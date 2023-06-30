@@ -24,7 +24,7 @@ lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
 	.settings(
 		name := "data-netcdf",
-		version := "0.3.0",
+		version := "0.3.1",
 		libraryDependencies ++= Seq(
 			//dependency comes from unidata-repo: https://artifacts.unidata.ucar.edu/repository/unidata-all (see project/repositories)
 			"edu.ucar"            % "cdm-core"                            % "5.5.3" excludeAll(
