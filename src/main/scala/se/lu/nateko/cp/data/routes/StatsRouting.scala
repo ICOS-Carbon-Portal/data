@@ -27,6 +27,7 @@ import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.MetaCoreConfig
 import se.lu.nateko.cp.meta.core.data.EnvriConfig
+import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 
 object StatsRouting:
 	import DefaultJsonProtocol._
@@ -95,7 +96,7 @@ object StatsRouting:
 end StatsRouting
 
 
-class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extends SprayRouting:
+class StatsRouting(pgClient: PostgisDlAnalyzer, statsIndex: StatsIndex, coreConf: MetaCoreConfig) extends SprayRouting:
 	import StatsRouting.*
 
 	given envriConfs: Map[Envri,EnvriConfig] = coreConf.envriConfigs

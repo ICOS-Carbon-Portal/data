@@ -30,6 +30,7 @@ import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.EmailSender
 import eu.icoscp.geoipclient.CpGeoClient
 import se.lu.nateko.cp.data.api.PostgisEventWriter
+import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 
 object Main extends App:
 
@@ -60,6 +61,7 @@ object Main extends App:
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
+	val statsIndex = new StatsIndex
 	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis)
 	val postgisWriter = new PostgisEventWriter(config.postgis, system.log)
 	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter, config.postgis.ipsToIgnore)
@@ -79,7 +81,7 @@ object Main extends App:
 	val staticRoute = new StaticRouting().route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
-	val statsRoute = new StatsRouting(postgisLogAnalyzer, ConfigReader.metaCore)
+	val statsRoute = new StatsRouting(postgisLogAnalyzer, statsIndex, ConfigReader.metaCore)
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>

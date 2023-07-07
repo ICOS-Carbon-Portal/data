@@ -914,3 +914,47 @@ GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
 GRANT USAGE, SELECT ON SEQUENCE downloads_id_seq TO writer;
+
+
+
+-- Remove indices and materialized views
+DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
+DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
+-- DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
+DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
+DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
+DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
+DROP MATERIALIZED VIEW IF EXISTS stations_mv;
+DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
+
+-- DROP INDEX IF EXISTS idx_dobjs_hash_id;
+DROP INDEX IF EXISTS idx_dobjs_spec;
+-- DROP INDEX IF EXISTS idx_downloads_hash_id;
+DROP INDEX IF EXISTS idx_downloads_item_type;
+DROP INDEX IF EXISTS idx_downloads_has_distributor;
+DROP INDEX IF EXISTS idx_downloads_debounce;
+DROP INDEX IF EXISTS idx_downloads_country_mv_spec;
+DROP INDEX IF EXISTS idx_downloads_country_mv_submitter;
+DROP INDEX IF EXISTS idx_downloads_country_mv_station;
+DROP INDEX IF EXISTS idx_downloads_country_mv_contributors;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
+DROP INDEX IF EXISTS idx_dlstats_mv_spec;
+DROP INDEX IF EXISTS idx_dlstats_mv_submitter;
+DROP INDEX IF EXISTS idx_dlstats_mv_station;
+DROP INDEX IF EXISTS idx_dlstats_mv_contributors;
+DROP INDEX IF EXISTS idx_dlstats_mv_day_date;
+
+CREATE TABLE IF NOT EXISTS dobjs_extended AS
+	SELECT
+		dobjs.hash_id,
+		dobjs.spec,
+		dobjs.station,
+		dobjs.submitter,
+		jsonb_agg(contributors.contributor) AS contributors
+	FROM dobjs
+		INNER JOIN contributors ON dobjs.hash_id = contributors.hash_id
+	GROUP BY dobjs.hash_id, dobjs.spec, dobjs.station, dobjs.submitter;
