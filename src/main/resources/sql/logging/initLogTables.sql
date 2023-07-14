@@ -916,38 +916,7 @@ GRANT INSERT ON public.downloads TO writer;
 GRANT USAGE, SELECT ON SEQUENCE downloads_id_seq TO writer;
 
 
-
--- Remove indices and materialized views
-DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
-DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
--- DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
-DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
-DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
-DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
-DROP MATERIALIZED VIEW IF EXISTS stations_mv;
-DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
-
--- DROP INDEX IF EXISTS idx_dobjs_hash_id;
-DROP INDEX IF EXISTS idx_dobjs_spec;
--- DROP INDEX IF EXISTS idx_downloads_hash_id;
-DROP INDEX IF EXISTS idx_downloads_item_type;
-DROP INDEX IF EXISTS idx_downloads_has_distributor;
-DROP INDEX IF EXISTS idx_downloads_debounce;
-DROP INDEX IF EXISTS idx_downloads_country_mv_spec;
-DROP INDEX IF EXISTS idx_downloads_country_mv_submitter;
-DROP INDEX IF EXISTS idx_downloads_country_mv_station;
-DROP INDEX IF EXISTS idx_downloads_country_mv_contributors;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
-DROP INDEX IF EXISTS idx_dlstats_mv_spec;
-DROP INDEX IF EXISTS idx_dlstats_mv_submitter;
-DROP INDEX IF EXISTS idx_dlstats_mv_station;
-DROP INDEX IF EXISTS idx_dlstats_mv_contributors;
-DROP INDEX IF EXISTS idx_dlstats_mv_day_date;
-
+-- Create new table including contributors in the dobjs table
 CREATE TABLE IF NOT EXISTS dobjs_extended AS
 	SELECT
 		dobjs.hash_id,
@@ -956,5 +925,43 @@ CREATE TABLE IF NOT EXISTS dobjs_extended AS
 		dobjs.submitter,
 		jsonb_agg(contributors.contributor) AS contributors
 	FROM dobjs
-		INNER JOIN contributors ON dobjs.hash_id = contributors.hash_id
+		LEFT JOIN contributors ON dobjs.hash_id = contributors.hash_id
 	GROUP BY dobjs.hash_id, dobjs.spec, dobjs.station, dobjs.submitter;
+
+-- Create an index on the hash_id in the new table
+CREATE INDEX IF NOT EXISTS idx_dobjs_extended_hash_id ON dobjs_extended USING HASH(hash_id);
+
+-- Remove materialized views
+DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
+--DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;            -- Used by customDownloadsPerYearCountry in PostgisDlAnalyzer
+DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
+DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
+DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
+DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
+DROP MATERIALIZED VIEW IF EXISTS stations_mv;
+DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
+
+-- Remove indices
+DROP INDEX IF EXISTS idx_dobjs_hash_id;
+DROP INDEX IF EXISTS idx_dobjs_spec;
+--DROP INDEX IF EXISTS idx_downloads_hash_id;                        -- Used for joining dobjs_extended and downloads tables
+--DROP INDEX IF EXISTS idx_downloads_item_type;                      -- Used by lastDownloads in PostgisDlAnalyzer
+--DROP INDEX IF EXISTS idx_downloads_has_distributor;                -- Used by downloadCount in PostgisDlAnalyzer
+DROP INDEX IF EXISTS idx_downloads_debounce;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
+--DROP INDEX IF EXISTS contributors_pk;
+--DROP INDEX IF EXISTS dobjs_pkey;
+--DROP INDEX IF EXISTS downloads_pkey;
+--DROP INDEX IF EXISTS ;
+--DROP INDEX IF EXISTS ;
+--DROP INDEX IF EXISTS ;
+--DROP INDEX IF EXISTS ;
+
+-- Remove tables
+DROP TABLE IF EXISTS dobjs;
+DROP TABLE IF EXISTS contributors;
+--DROP TABLE IF EXISTS spatial_ref_sys

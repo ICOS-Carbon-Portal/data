@@ -6,6 +6,7 @@ import eu.icoscp.envri.Envri
 import eu.icoscp.geoipclient.GeoIpInfo
 import se.lu.nateko.cp.data.PostgisConfig
 import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.DataObject
 
@@ -19,7 +20,7 @@ import scala.concurrent.Future
 import scala.io.Source
 
 
-class PostgisEventWriter(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
+class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
 	private val scheduler = Executors.newSingleThreadScheduledExecutor()
 

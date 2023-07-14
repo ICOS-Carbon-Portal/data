@@ -1,16 +1,21 @@
 package se.lu.nateko.cp.data.services.dlstats
 
 import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import se.lu.nateko.cp.meta.core.data.CountryCode
+//import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+//import se.lu.nateko.cp.meta.core.data.CountryCode
 import se.lu.nateko.cp.data.routes.StatsRouting.*
 
 import java.net.URI
-import java.time.Instant
+import java.time.{Instant,LocalDate,ZoneId}
+import java.time.temporal.IsoFields
 import scala.collection.mutable
-import scala.concurrent.Future
+//import scala.concurrent.Future
 import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.buffer.{MutableRoaringBitmap,ImmutableRoaringBitmap,BufferFastAggregation}
+import java.util.concurrent.atomic.AtomicInteger
+import se.lu.nateko.cp.meta.core.data.CountryCode
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
+//import ucar.nc2.ft.point.remote.PointStreamProto.Station
 
 class StatsIndexEntry(
 	val dobj: Sha256Sum,
@@ -20,56 +25,10 @@ class StatsIndexEntry(
 	val submitter: URI,
 	val contributors: Seq[URI],
 	val dlCountry: CountryCode,
+	val itemType: DlItemType
 )
 
-case class QueryParams(
-	pageOpt: Option[Int],
-	pagesizeOpt: Option[Int],
-	hashId: Option[Sha256Sum],
-	objectSpecs: Option[Seq[URI]],
-	stations: Option[Seq[URI]],
-	contributors: Option[Seq[URI]],
-	submitters: Option[Seq[URI]],
-	dlCountries: Option[Seq[CountryCode]],
-	originStations: Option[Seq[URI]],
-	dlStart: Option[Instant],
-	dlEnd: Option[Instant]
-)
-
-case class Week(year: Int, month: Int, week: Int)
-case class Month(year: Int, month: Int)
-//case class ListResults(fileName: String, hashId: Sha256Sum, count: Int)
-case class DownloadsPerWeek(count: Int, week: Week)
-case class DownloadsPerMonth(count: Int, month: Month)
-case class DownloadsPerYear(count: Int, year: Int)
-
-case class DownloadsByCountry(count: Int, countryCode: CountryCode)
-//case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
-//case class DownloadsPerTimeframe(count: Int, ts: Instant)
-case class DownloadObjStat(count: Int, hashId: Sha256Sum)
-case class DownloadStats(stats: IndexedSeq[DownloadObjStat], size: Int)
-case class Specifications(count: Int, spec: String)
-case class Contributors(count: Int, contributor: String)
-case class Submitters(count: Int, submitter: String)
-case class Stations(count: Int, station: String)
-case class DownloadedFrom(count: Int, countryCode: String)
-case class DownloadCount(downloadCount: Int)
-case class DateCount(date: String, count: Int)
-case class PointPosition(`type`: String, coordinates: Tuple2[Double, Double])
-case class Download(
-	itemType: String,
-	ts: Instant,
-	hashId: Sha256Sum,
-	ip: String,
-	city: Option[String],
-	countryCode: Option[CountryCode],
-	endUser: Option[String],
-	geoJson: Option[PointPosition]
-)
-case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
-
-class StatsIndex:
-	private var idx: Int = 0
+class StatsIndex(sizeHint: Int):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
 
@@ -81,15 +40,25 @@ class StatsIndex:
 	val dlWeekIndices = mutable.Map.empty[Week, MutableRoaringBitmap]
 	val dlMonthIndices = mutable.Map.empty[Month, MutableRoaringBitmap]
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
-	//val dlTimeIndices = mutable.Map.empty[Instant, MutableRoaringBitmap]
+	val objects = mutable.HashSet.empty[Sha256Sum]
+	val downloadedObjects = new mutable.ArrayBuffer[Sha256Sum](sizeHint)
+
+	extension (bm: ImmutableRoaringBitmap)
+		def andCardinality(other: ImmutableRoaringBitmap): Int = ImmutableRoaringBitmap.andCardinality(bm, other)
 
 	extension [T](bmMap: BmMap[T])
 		def setBit(forKey: T): Unit =
-			bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(idx)
+			bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(downloadedObjects.length)
+	
+	extension (t: Instant)
+		def getWeek(): Int =
+			LocalDate.ofInstant(t, ZoneId.of("UTC")).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
+		def getMonth(): Int =
+			LocalDate.ofInstant(t, ZoneId.of("UTC")).getMonthValue
+		def getYear(): Int =
+			LocalDate.ofInstant(t, ZoneId.of("UTC")).getYear
 
-	/* Ingest entries from the table obtained by merging the dobjs and downloads data tables from postgis.
-	   Add entries one by one to the bitmaps. */
-	def initialize() = ???
+	// Reminder: use MutableRoaringBitmap.runOptimize to make sure that bitmaps are compressed in the end.
 
 	def add(entry: StatsIndexEntry): Unit =
 		specIndices.setBit(entry.objectSpec)
@@ -99,21 +68,26 @@ class StatsIndex:
 			contributorIndices.setBit(contributor)
 		submitterIndices.setBit(entry.submitter)
 		dlCountryIndices.setBit(entry.dlCountry)
-		//val dlTimeBm = dlTimeIndices.getOrElseUpdate(entry.dlTime, new MutableRoaringBitmap)
-		//dlTimeBm.add(idx)
-		idx += 1
-
-		// Reminder: use MutableRoaringBitmap.runOptimize to make sure that bitmaps are compressed in the end.
+		dlWeekIndices.setBit(Week(entry.dlTime.getYear(), entry.dlTime.getWeek()))
+		dlMonthIndices.setBit(Month(entry.dlTime.getYear(), entry.dlTime.getMonth()))
+		dlYearIndices.setBit(entry.dlTime.getYear())
+		val dobjIsNew = objects.add(entry.dobj)
+		val dobjInterned = if dobjIsNew then entry.dobj else objects.intersect(Set(entry.dobj)).head
+		downloadedObjects += dobjInterned
 	
-	def filter(qp: QueryParams): ImmutableRoaringBitmap =
+	private def filter(qp: StatsQueryParams): ImmutableRoaringBitmap =
 		def multiParamFilter[T](paramOptSeq: Option[Seq[T]], bmMap: BmMap[T]): Option[ImmutableRoaringBitmap] = paramOptSeq.map:
 			params => BufferFastAggregation.or(params.flatMap(bmMap.get)*)
 
-		val allStations: Option[Seq[URI]] = (qp.stations, qp.originStations) match
-			case (None, None) => None
-			case t => Some(t.toList.flatten.flatten.distinct)
-	
-		val specFilter = multiParamFilter(qp.objectSpecs, specIndices)
+		def combineSeq(seq1: Option[Seq[URI]], seq2: Option[Seq[URI]]): Option[Seq[URI]] =
+			(seq1, seq2) match
+				case (None, None) => None
+				case t => Some(t.toList.flatten.flatten.distinct)
+			
+		val allSpecs = combineSeq(qp.objectSpecs, qp.objectSpecsFromDataLevel)
+		val allStations = combineSeq(qp.stations, qp.originStations)
+
+		val specFilter = multiParamFilter(allSpecs, specIndices)
 		val stationFilter = multiParamFilter(allStations, stationIndices)
 		val contributorsFilter = multiParamFilter(qp.contributors, contributorIndices)
 		val submitterFilter = multiParamFilter(qp.submitters, submitterIndices)
@@ -121,43 +95,50 @@ class StatsIndex:
 		//val dlTimesBm = MutableRoaringBitmap.or(qp.dlTime.fold(Nil)(seqBms => seqBms.map(s => dlTimeIndices(s).toImmutableRoaringBitmap()))*)
 
 		val filters = Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter)
+		BufferFastAggregation.and(filters.flatten*)
 
-		BufferFastAggregation.and(filters.filter(_.nonEmpty).map(_.get)*)
+	def downloadsByCountry(qp: StatsQueryParams): IndexedSeq[DownloadsByCountry] = 
+		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq
 
-	def combineAndCount(filterBm: ImmutableRoaringBitmap, paramBm: ImmutableRoaringBitmap): Int =
-		ImmutableRoaringBitmap.andCardinality(filterBm, paramBm)
-		//BufferFastAggregation.and(filterBm, paramBm).getLongCardinality.toInt
+	def downloadsPerWeek(qp: StatsQueryParams): IndexedSeq[DownloadsPerWeek] = 
+		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week)).toIndexedSeq
 
-	def downloadByCountry(qp: QueryParams): List[DownloadsByCountry] = 
-		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(combineAndCount(filter(qp), countryBm), country)).toList
-
-	def downloadsPerWeek(qp: QueryParams): List[DownloadsPerWeek] = 
-		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(combineAndCount(filter(qp), dlWeekBm), week)).toList
-
-	def downloadsPerMonth(qp: QueryParams): List[DownloadsPerMonth] = 
-		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerMonth(combineAndCount(filter(qp), dlMonthBm), month)).toList
+	def downloadsPerMonth(qp: StatsQueryParams): IndexedSeq[DownloadsPerMonth] = 
+		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerMonth(filter(qp).andCardinality(dlMonthBm), month)).toIndexedSeq
 	
-	def downloadsPerYear(qp: QueryParams): List[DownloadsPerYear] = 
-		dlYearIndices.map((year, dlYearBm) => DownloadsPerYear(combineAndCount(filter(qp), dlYearBm), year)).toList
+	def downloadsPerYear(qp: StatsQueryParams): IndexedSeq[DownloadsPerYear] = 
+		dlYearIndices.map((year, dlYearBm) => DownloadsPerYear(filter(qp).andCardinality(dlYearBm), year)).toIndexedSeq
 
-	def downloadStats(qp: QueryParams): List[DownloadStats] = ???
+	def downloadStats(qp: StatsQueryParams): DownloadStats =
+		val counts = mutable.Map.empty[Sha256Sum, AtomicInteger]
+		filter(qp).forEach: i =>
+			val dlHash = downloadedObjects(i)
+			val count = counts.getOrElseUpdate(dlHash, AtomicInteger(0))
+			count.incrementAndGet()
+		val toSkip = qp.page * qp.pagesize
+		val statSize = counts.size
+		val statsToReturn = counts.toIndexedSeq.sortBy(- _._2.get).drop(toSkip).take(qp.pagesize).map: (hash, count) =>
+			DownloadObjStat(count.get, hash)
+		DownloadStats(statsToReturn, statSize)
 
-	//def downloadCount(hashId: Sha256Sum): List[DownloadCount] = ???
-
-	//def lastDownloads(): List[Download] = ???
-
-	//def specifications(): List[Specifications] = ???
+	def specifications(): IndexedSeq[Specifications] =
+		specIndices.map((spec, specBm) => Specifications(specBm.getCardinality, spec)).toIndexedSeq
 	
-	//def contributors(): List[Contributors] = ???
+	def contributors(): IndexedSeq[Contributors] =
+		contributorIndices.map((contributor, contributorBm) => Contributors(contributorBm.getCardinality, contributor)).toIndexedSeq
 
-	//def submitters(): List[Submitters] = ???
+	def submitters(): IndexedSeq[Submitters] =
+		submitterIndices.map((submitter, submitterBm) => Submitters(submitterBm.getCardinality, submitter)).toIndexedSeq
 
-	//def stations(): List[Stations] = ???
+	def stations(): IndexedSeq[Stations] =
+		stationIndices.map((station, stationBm) => Stations(stationBm.getCardinality, station)).toIndexedSeq
 
-	//def dlfrom() = ???
+	def dlfrom(): IndexedSeq[DownloadedFrom] =
+		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(dlCountryBm.getCardinality, dlCountry)).toIndexedSeq
 
-	//def downloadedCollections() = ???
-
-	//def customDownloadsPerYearCountry() = ???
+	def downloadCount(hashId: Sha256Sum, qp: StatsQueryParams): DownloadCount =
+		import scala.jdk.CollectionConverters.IteratorHasAsScala
+		val count = filter(qp).iterator().asScala.filter(downloadedObjects(_) == hashId).size
+		DownloadCount(count)
 
 end StatsIndex
