@@ -100,6 +100,8 @@ class StatsIndex(sizeHint: Int):
 	def downloadsByCountry(qp: StatsQueryParams): IndexedSeq[DownloadsByCountry] = 
 		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq
 
+	def downloadsByYearCountry(qp: StatsQueryParams): IndexedSeq[CustomDownloadsPerYearCountry] = ???
+
 	def downloadsPerWeek(qp: StatsQueryParams): IndexedSeq[DownloadsPerWeek] = 
 		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week)).toIndexedSeq
 

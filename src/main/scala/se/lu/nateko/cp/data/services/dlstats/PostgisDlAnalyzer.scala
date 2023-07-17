@@ -32,6 +32,9 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 	def downloadsByCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsByCountry]] =
 		statsIndex.map(_.downloadsByCountry(queryParams))
 
+	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
+		statsIndex.map(_.downloadsByYearCountry(queryParams))
+
 	def downloadsPerWeek(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerWeek]] =
 		statsIndex.map(_.downloadsPerWeek(queryParams))
 
@@ -67,8 +70,8 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 	def downloadCount(hashId: Sha256Sum)(using Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"""
 				|SELECT COUNT(*) AS download_count
-				|FROM downloads
-				|WHERE hash_id = '${hashId.id}' AND (distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist)))
+				|FROM white_downloads
+				|WHERE hash_id = '${hashId.id}'
 				|""".stripMargin){rs =>
 			DownloadCount(rs.getInt("download_count"))
 		}
@@ -96,11 +99,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 				endUser = Option(rs.getString("endUser")),
 				geoJson = Option(rs.getString("geojson")).flatMap(parsePointPosition)
 			)
-		}
-
-	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
-		runAnalyticalQuery("SELECT year, country, downloads FROM customDownloadsPerYearCountry", Some(queryParams)){rs =>
-			CustomDownloadsPerYearCountry(rs.getInt("year"), rs.getString("country"), rs.getInt("downloads"))
 		}
 
 	def runAnalyticalQuery[T](

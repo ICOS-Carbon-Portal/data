@@ -166,13 +166,11 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 		((get | post) & setOriginHeader){
 			get{
 				path("downloadCount"){
-					parameter("hashId") {hash =>
-						val hashId = Sha256Sum.fromString(hash).get
-
-						onSuccess(pgClient.downloadCount(hashId)){dbc =>
+					parameter("hashId".as[Sha256Sum]): hashId =>
+						onSuccess(pgClient.downloadCount(hashId)): dbc =>
 							complete(dbc)
-						}
-					}
+					~
+					complete(StatusCodes.BadRequest -> "Expected a Sha256Sum id as a URL parameter 'hashId'")
 				} ~
 				path("lastDownloads"){
 					parameters("limit".as[Int].?, "itemType".as[String].?) {(limitParam, itemTypeParam) =>

@@ -9,6 +9,7 @@ import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.DataObject
+import se.lu.nateko.cp.meta.core.data.Station
 
 import java.sql.Types
 import java.time.Instant
@@ -30,11 +31,6 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 
 	def initLogTables(): Future[Done] = if conf.skipInit then done else
 		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
-		val matViews = Seq(
-			"downloads_country_mv", "downloads_timebins_mv", "dlstats_mv",
-			"dlstats_full_mv", "specifications_mv", "contributors_mv", "stations_mv",
-			"submitters_mv"
-		)
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn =>
@@ -42,12 +38,7 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 				st.execute(query)
 				st.close()
 				conn.commit()
-			).map{_ =>
-				val now = Instant.now()
-				val nextMidnight = now.atOffset(ZoneOffset.UTC).toLocalDate().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC)
-				val minsToMidnight = ChronoUnit.MINUTES.between(now, nextMidnight)
-				scheduler.scheduleWithFixedDelay(() => matViews.foreach(updateMatView), minsToMidnight + 37, 1440, TimeUnit.MINUTES)
-			}
+			)
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}
 
@@ -102,64 +93,39 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
 		val dobjsQuery = """
-					|INSERT INTO dobjs(hash_id, spec, submitter, station)
+					|INSERT INTO dobjs_extended(hash_id, spec, submitter, station, contributors)
 					|VALUES (?, ?, ?, ?)
 					|ON CONFLICT (hash_id) DO UPDATE
 					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
 					|""".stripMargin
 
 		val dobjsSt = conn.prepareStatement(dobjsQuery)
-		val deleteContribSt = conn.prepareStatement("DELETE FROM contributors WHERE hash_id = ?")
-		val insertContribSt = conn.prepareStatement("INSERT INTO contributors(hash_id, contributor) VALUES (?, ?)")
 
 		try
-			val Seq(hash_id, spec, submitter, station) = 1 to 4
-
-			val contribs: Seq[Agent] = (
-				dobj.references.authors.toSeq.flatten ++
-				dobj.production.toSeq.flatMap(prodInfo =>
-					prodInfo.contributors :+ prodInfo.creator
-				)
-			).distinct
+			val Seq(hash_id, spec, submitter, station, contributors) = 1 to 5
 
 			dobjsSt.setString(hash_id, dobj.hash.id)
 			dobjsSt.setString(spec, dobj.specification.self.uri.toString)
 			dobjsSt.setString(submitter, dobj.submission.submitter.self.uri.toString)
-			dobj.specificInfo match
-				case Left(_) => dobjsSt.setNull(station, Types.VARCHAR)
-				case Right(lessSpecific) => dobjsSt.setString(station, lessSpecific.acquisition.station.org.self.uri.toString)
+
+			val stationOpt: Option[Station] = dobj.specificInfo.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
+			stationOpt match
+				case None => dobjsSt.setNull(station, Types.VARCHAR)
+				case Some(theStation) => dobjsSt.setString(station, theStation.org.self.uri.toString)
+
+			val contribUris: Array[Object] = (
+				dobj.references.authors.toSeq.flatten ++
+				dobj.production.toSeq.flatMap(prodInfo =>
+					prodInfo.contributors :+ prodInfo.creator
+				)
+			).map(_.self.uri.toString).distinct.toArray
+			val contribsArray = conn.createArrayOf("text", contribUris)
+			dobjsSt.setArray(contributors, contribsArray)
+
 			dobjsSt.executeUpdate()
-
-			deleteContribSt.setString(1, dobj.hash.id)
-			deleteContribSt.executeUpdate()
-
-			for (contributor <- contribs.map(_.self.uri.toString).distinct){
-				insertContribSt.setString(1, dobj.hash.id)
-				insertContribSt.setString(2, contributor)
-				insertContribSt.addBatch()
-			}
-
-			insertContribSt.executeBatch()
 
 		finally
 			dobjsSt.close()
-			deleteContribSt.close()
-			insertContribSt.close()
 	}
-
-	private def updateMatView(matView: String)(using envri: Envri): Unit =
-		withConnection(conf.admin){conn =>
-			// Disable transactions
-			conn.setAutoCommit(true)
-			val st = conn.createStatement
-			try
-				st.execute(s"REFRESH MATERIALIZED VIEW CONCURRENTLY $matView ;")
-				st.execute(s"VACUUM (ANALYZE) $matView ;")
-			finally
-				st.close()
-
-		}.failed.foreach{
-			err => log.error(err, s"Failed to update materialized view $matView for $envri (periodic background task)")
-		}
 
 end PostgisEventWriter
