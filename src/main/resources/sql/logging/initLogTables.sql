@@ -16,6 +16,22 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 
+-- Remove materialized views that are no longer needed
+DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
+DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
+DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
+DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
+DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
+DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
+DROP MATERIALIZED VIEW IF EXISTS stations_mv;
+DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
+
+-- Remove indices that are no longer needed
+DROP INDEX IF EXISTS idx_dobjs_hash_id;
+DROP INDEX IF EXISTS idx_dobjs_spec;
+DROP INDEX IF EXISTS idx_downloads_has_distributor;
+DROP INDEX IF EXISTS idx_downloads_debounce;
+
 -- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
 	hash_id text NOT NULL PRIMARY KEY,
@@ -23,8 +39,6 @@ CREATE TABLE IF NOT EXISTS public.dobjs (
 	submitter text NOT NULL,
 	station text NULL
 );
-CREATE INDEX IF NOT EXISTS idx_dobjs_hash_id ON public.dobjs USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS idx_dobjs_spec ON public.dobjs USING HASH(spec);
 
 CREATE TABLE IF NOT EXISTS public.downloads (
 	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -165,37 +179,7 @@ GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
 GRANT USAGE, SELECT ON SEQUENCE downloads_id_seq TO writer;
 
-
--- Remove materialized views
-DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
-DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
-DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
-DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
-DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
-DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
-DROP MATERIALIZED VIEW IF EXISTS stations_mv;
-DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
-
--- Remove indices
-DROP INDEX IF EXISTS idx_dobjs_hash_id;
-DROP INDEX IF EXISTS idx_dobjs_spec;
---DROP INDEX IF EXISTS idx_downloads_hash_id;                        -- Used for joining dobjs_extended and downloads tables
---DROP INDEX IF EXISTS idx_downloads_item_type;                      -- Used by lastDownloads in PostgisDlAnalyzer
-DROP INDEX IF EXISTS idx_downloads_has_distributor;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
-DROP INDEX IF EXISTS idx_downloads_debounce;
---DROP INDEX IF EXISTS contributors_pk;
---DROP INDEX IF EXISTS dobjs_pkey;
---DROP INDEX IF EXISTS downloads_pkey;
---DROP INDEX IF EXISTS ;
---DROP INDEX IF EXISTS ;
---DROP INDEX IF EXISTS ;
-
--- Remove tables
-DROP TABLE IF EXISTS dobjs;
-DROP TABLE IF EXISTS contributors;
+-- Remove redundant tables (uncomment later, when first stage of db migration is done)
+-- DROP TABLE IF EXISTS dobjs;
+-- DROP TABLE IF EXISTS contributors;
 --DROP TABLE IF EXISTS spatial_ref_sys
