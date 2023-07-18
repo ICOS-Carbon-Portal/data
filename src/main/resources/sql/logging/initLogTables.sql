@@ -137,11 +137,21 @@ CREATE TABLE IF NOT EXISTS dobjs_extended AS
 		GROUP BY hash_id) as contrs
 	ON dobjs.hash_id = contrs.hash_id;
 
--- Create a primary key and an index on the hash_id in the new table
--- TODO Adding primary key if it exists will result in error; do it only once.
--- ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
+-- Create a primary key (if not exists) and an index on the hash_id in the new table
+IF NOT EXISTS (
+	SELECT constraint_name FROM information_schema.table_constraints
+	WHERE table_name = 'dobjs_extended' AND constraint_type = 'PRIMARY KEY'
+) THEN
+	ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
+END IF;
 CREATE INDEX IF NOT EXISTS idx_dobjs_extended_hash_id ON dobjs_extended USING HASH(hash_id);
 
+CREATE VIEW IF NOT EXISTS statIndexEntries AS
+	SELECT wd.id, wd.hash_id, wd.ts, wd.country_code, ds.spec, ds.submitter, ds.station, ds.contributors
+	FROM white_dowloads wd
+	WHERE item_type = 'data'
+	INNER JOIN dobjs_extended ds
+	ON wd.hash_id = ds.hash_id;
 
 -- Set user rights
 GRANT USAGE ON SCHEMA public TO reader;

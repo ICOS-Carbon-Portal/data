@@ -18,8 +18,10 @@ import se.lu.nateko.cp.data.api.CpDataException
 import scala.util.Using
 import scala.util.Try
 import akka.Done
+import java.net.URI
+import akka.event.LoggingAdapter
 
-class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
+class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
@@ -166,8 +168,12 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
 				val resSet = preparedSt.executeQuery()
 				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
+				var nIngested: Long = 0
 				while resSet.next() do
 					index.add(parseIndexEntry(resSet).get)
+					nIngested += 1
+					if nIngested % 100000 == 0 then log.info(s"Ingested $nIngested StatsIndex entries")
+				index.runOptimize()
 				index
 		futTry.flatMap(Future.fromTry)
 
@@ -175,23 +181,19 @@ class PostgisDlAnalyzer(conf: PostgisConfig) extends PostgisClient(conf):
 end PostgisDlAnalyzer
 
 object PostgisDlAnalyzer:
-	val indexImportQuery = "SELECT ... "
+	val indexImportQuery = "SELECT * FROM statIndexEntries;"
 
-// class StatsIndexEntry(
-// 	val dobj: Sha256Sum,
-// 	val dlTime: Instant,
-// 	val objectSpec: URI,
-// 	val station: Option[URI],
-// 	val submitter: URI,
-// 	val contributors: Seq[URI],
-// 	val dlCountry: CountryCode,
-// 	val itemType: DlItemType
-// )
-
-	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] = ???
-		// for
-		// dobj <- Sha256Sum.fromBase64Url(rs.getString("hash_id"));
-		// dlTime = rs.getTimestamp("ts").toInstant();
-		// objectSpec = new URI(rs.getString("spec"));
-		// station = 
-		// ???
+	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
+		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
+			val ccodeStr = rs.getString("country_code");
+			val contribsArray = Option(rs.getArray("contributors")).fold(Array.emptyObjectArray)(_.getArray().asInstanceOf[Array[Object]])
+			StatsIndexEntry(
+				idx = rs.getInt("id"),
+				dobj = dobj,
+				dlTime = rs.getTimestamp("ts").toInstant(),
+				objectSpec = new URI(rs.getString("spec")),
+				station = Option(rs.getString("station")).map(new URI(_)),
+				submitter = new URI(rs.getString("submitter")),
+				contributors = contribsArray.map(o => new URI(o.toString)).toIndexedSeq,
+				dlCountry = CountryCode.unapply(ccodeStr).getOrElse(throw CpDataException(s"Bad country code: $ccodeStr"))
+			)

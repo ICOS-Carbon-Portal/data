@@ -35,7 +35,6 @@ import eu.icoscp.geoipclient.CpGeoClient
 object Main extends App:
 
 	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
-	system.log
 	import system.dispatcher
 
 	val config = ConfigReader.getDefault
@@ -61,7 +60,7 @@ object Main extends App:
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis)
+	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis, system.log)
 	val postgisWriter = new PostgisEventWriter(postgisLogAnalyzer.statsIndices, config.postgis, system.log)
 	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter, config.postgis.ipsToIgnore)
 

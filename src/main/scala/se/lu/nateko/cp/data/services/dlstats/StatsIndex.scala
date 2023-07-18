@@ -18,14 +18,14 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 //import ucar.nc2.ft.point.remote.PointStreamProto.Station
 
 class StatsIndexEntry(
+	val idx: Int,
 	val dobj: Sha256Sum,
 	val dlTime: Instant,
 	val objectSpec: URI,
 	val station: Option[URI],
 	val submitter: URI,
-	val contributors: Seq[URI],
-	val dlCountry: CountryCode,
-	val itemType: DlItemType
+	val contributors: IndexedSeq[URI],
+	val dlCountry: CountryCode
 )
 
 class StatsIndex(sizeHint: Int):
@@ -40,27 +40,16 @@ class StatsIndex(sizeHint: Int):
 	val dlWeekIndices = mutable.Map.empty[Week, MutableRoaringBitmap]
 	val dlMonthIndices = mutable.Map.empty[Month, MutableRoaringBitmap]
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
-	val objects = mutable.HashSet.empty[Sha256Sum]
+	private val objects = mutable.HashSet.empty[Sha256Sum]
 	val downloadedObjects = new mutable.ArrayBuffer[Sha256Sum](sizeHint)
 
-	extension (bm: ImmutableRoaringBitmap)
-		def andCardinality(other: ImmutableRoaringBitmap): Int = ImmutableRoaringBitmap.andCardinality(bm, other)
-
-	extension [T](bmMap: BmMap[T])
-		def setBit(forKey: T): Unit =
-			bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(downloadedObjects.length)
-	
-	extension (t: Instant)
-		def getWeek(): Int =
-			LocalDate.ofInstant(t, ZoneId.of("UTC")).get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)
-		def getMonth(): Int =
-			LocalDate.ofInstant(t, ZoneId.of("UTC")).getMonthValue
-		def getYear(): Int =
-			LocalDate.ofInstant(t, ZoneId.of("UTC")).getYear
-
-	// Reminder: use MutableRoaringBitmap.runOptimize to make sure that bitmaps are compressed in the end.
+	// TODO Reminder: use MutableRoaringBitmap.runOptimize to make sure that bitmaps are compressed in the end.
+	def runOptimize(): Unit = ()
 
 	def add(entry: StatsIndexEntry): Unit =
+		extension [T](bmMap: BmMap[T])
+			def setBit(forKey: T): Unit =
+				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.idx)
 		specIndices.setBit(entry.objectSpec)
 		for station <- entry.station do
 			stationIndices.setBit(station)
@@ -68,13 +57,13 @@ class StatsIndex(sizeHint: Int):
 			contributorIndices.setBit(contributor)
 		submitterIndices.setBit(entry.submitter)
 		dlCountryIndices.setBit(entry.dlCountry)
-		dlWeekIndices.setBit(Week(entry.dlTime.getYear(), entry.dlTime.getWeek()))
-		dlMonthIndices.setBit(Month(entry.dlTime.getYear(), entry.dlTime.getMonth()))
-		dlYearIndices.setBit(entry.dlTime.getYear())
+		dlWeekIndices.setBit(entry.dlTime.getYearWeek)
+		dlMonthIndices.setBit(entry.dlTime.getYearMonth)
+		dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
 		val dobjIsNew = objects.add(entry.dobj)
-		val dobjInterned = if dobjIsNew then entry.dobj else objects.intersect(Set(entry.dobj)).head
-		downloadedObjects += dobjInterned
-	
+		val hashInterned = if dobjIsNew then entry.dobj else objects.intersect(Set(entry.dobj)).head
+		downloadedObjects.insert(entry.idx, hashInterned)
+
 	private def filter(qp: StatsQueryParams): ImmutableRoaringBitmap =
 		def multiParamFilter[T](paramOptSeq: Option[Seq[T]], bmMap: BmMap[T]): Option[ImmutableRoaringBitmap] = paramOptSeq.map:
 			params => BufferFastAggregation.or(params.flatMap(bmMap.get)*)
@@ -144,3 +133,15 @@ class StatsIndex(sizeHint: Int):
 		DownloadCount(count)
 
 end StatsIndex
+
+extension (bm: ImmutableRoaringBitmap)
+	def andCardinality(other: ImmutableRoaringBitmap): Int = ImmutableRoaringBitmap.andCardinality(bm, other)
+
+extension (t: Instant)
+	def utcLocalDate = LocalDate.ofInstant(t, ZoneId.of("UTC"))
+	def getYearWeek =
+		val ld = t.utcLocalDate
+		Week(ld.getYear, ld.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR))
+	def getYearMonth =
+		val ld = t.utcLocalDate
+		Month(ld.getYear, ld.getMonthValue)

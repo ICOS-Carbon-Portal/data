@@ -24,10 +24,7 @@ class NetcdfRoutes(netcdfDobjsFolder: Path, dataDemoFolder: Path, config: NetCdf
 	private val demoFactory = ViewServiceFactory(dataDemoFolder, config)
 
 	private val netCdfDataObjService:  Directive1[NetCdfViewService] =
-		//TODO Look into changing Sha256Sum's json format in meta core from RootJsonFormat to non-Root
-		given Unmarshaller[String, Sha256Sum] = Unmarshaller(
-			_ => s => Future.fromTry(Sha256Sum.fromString(s))
-		)
+		import StatsRouting.{given Unmarshaller[String, Sha256Sum]}
 		parameter("service".as[Sha256Sum]).map(hash => dobjViewFactory.getNetCdfViewService(hash.id))
 
 	private val demoFileService: Directive1[NetCdfViewService] =
