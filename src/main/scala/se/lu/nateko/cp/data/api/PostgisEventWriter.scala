@@ -34,10 +34,10 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn =>
+				conn.setAutoCommit(true)
 				val st = conn.createStatement()
 				st.execute(query)
 				st.close()
-				conn.commit()
 			)
 		}.toIndexedSeq
 		Future.sequence(futs).map{_ => Done}
