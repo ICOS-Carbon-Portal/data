@@ -25,7 +25,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
-		val query = "SELECT COUNT(*) AS count FROM downloads"
+		val query = "SELECT COUNT(*) AS count FROM public.downloads;"
 		envri -> runAnalyticalQuery(query)(_.getInt("count")).flatMap(counts => initIndex(counts.head))
 
 	def statsIndex(using envri: Envri): Future[StatsIndex] =

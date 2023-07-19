@@ -30,13 +30,19 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 		scheduler.shutdown()
 
 	def initLogTables(): Future[Done] = if conf.skipInit then done else
-		val query = Source.fromResource("sql/logging/initLogTables.sql").mkString
+		val psqlScript = Source.fromResource("sql/logging/initLogTables.sql").mkString
 
 		val futs = conf.dbNames.keys.map{implicit envri =>
 			withConnection(conf.admin)(conn =>
 				conn.setAutoCommit(true)
 				val st = conn.createStatement()
-				st.execute(query)
+				psqlScript.split("--BREAK").foreach: command =>
+					try
+						st.execute(command)
+						//log.info(s"Executed PSQL command:$command")
+					catch case err: Throwable => throw CpDataException(
+						s"Database error: ${err.getMessage} while executing command:$command"
+					)
 				st.close()
 			)
 		}.toIndexedSeq

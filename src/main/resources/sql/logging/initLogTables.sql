@@ -31,7 +31,7 @@ DROP INDEX IF EXISTS idx_dobjs_hash_id;
 DROP INDEX IF EXISTS idx_dobjs_spec;
 DROP INDEX IF EXISTS idx_downloads_has_distributor;
 DROP INDEX IF EXISTS idx_downloads_debounce;
-
+DROP INDEX IF EXISTS idx_downloads_item_type;
 -- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
 	hash_id text NOT NULL PRIMARY KEY,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 	endUser text NULL
 );
 CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS idx_downloads_item_type ON public.downloads USING HASH(item_type);
+CREATE INDEX IF NOT EXISTS idx_downloads_item_type_btree ON public.downloads (item_type);
 
 CREATE TABLE IF NOT EXISTS public.downloads_graylist (
 	ip text NOT NULL,
@@ -84,8 +84,9 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
 );
 
-CREATE VIEW IF NOT EXISTS white_dowloads AS
-	SELECT * FROM public.downloads
+CREATE OR REPLACE VIEW white_dowloads AS
+	SELECT *
+	FROM public.downloads
 	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist));
 
 
@@ -100,7 +101,7 @@ CREATE OR REPLACE FUNCTION public.debounceDownload(_ip text, _hash_id text, _ts 
 AS $$
 -- Returns 1 if record should NOT be included in download statistics
 SELECT 1
-FROM (SELECT ts, ip, hash_id FROM downloads ORDER BY id DESC limit 1000) AS d
+FROM (SELECT ts, ip, hash_id FROM downloads ORDER BY id DESC LIMIT 1000) AS d
 WHERE AGE(_ts, d.ts) <= INTERVAL '1' MINUTE AND _ip = d.ip AND _hash_id = d.hash_id LIMIT 1;
 
 $$;
@@ -139,6 +140,8 @@ END;
 $$;
 
 
+--BREAK
+
 -- Create new table including contributors in the dobjs table
 CREATE TABLE IF NOT EXISTS dobjs_extended AS
 	SELECT
@@ -151,21 +154,29 @@ CREATE TABLE IF NOT EXISTS dobjs_extended AS
 		GROUP BY hash_id) as contrs
 	ON dobjs.hash_id = contrs.hash_id;
 
--- Create a primary key (if not exists) and an index on the hash_id in the new table
-IF NOT EXISTS (
-	SELECT constraint_name FROM information_schema.table_constraints
-	WHERE table_name = 'dobjs_extended' AND constraint_type = 'PRIMARY KEY'
-) THEN
-	ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
-END IF;
-CREATE INDEX IF NOT EXISTS idx_dobjs_extended_hash_id ON dobjs_extended USING HASH(hash_id);
+--BREAK
 
-CREATE VIEW IF NOT EXISTS statIndexEntries AS
+-- Create a primary key (if not exists) on the hash_id in the new dobjs table
+SELECT($$
+BEGIN
+	IF NOT EXISTS (
+		SELECT constraint_name FROM information_schema.table_constraints
+		WHERE table_name = 'dobjs_extended' AND constraint_type = 'PRIMARY KEY'
+	) THEN
+		ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
+	END IF;
+END;
+
+$$);
+--BREAK
+
+CREATE OR REPLACE VIEW statIndexEntries AS
 	SELECT wd.id, wd.hash_id, wd.ts, wd.country_code, ds.spec, ds.submitter, ds.station, ds.contributors
-	FROM white_dowloads wd
-	WHERE item_type = 'data'
+	FROM (SELECT * FROM white_dowloads WHERE item_type = 'data') AS wd
 	INNER JOIN dobjs_extended ds
 	ON wd.hash_id = ds.hash_id;
+
+--BREAK
 
 -- Set user rights
 GRANT USAGE ON SCHEMA public TO reader;
