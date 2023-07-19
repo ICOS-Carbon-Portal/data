@@ -155,7 +155,7 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 
 	private val variables: VarSpec = withDataset(getVarSpec(conf))
 
-	private def withDataset[R](action: NetcdfDataset => R): R =
+	def withDataset[R](action: NetcdfDataset => R): R =
 		val pathStr = ncFile.toAbsolutePath.toString
 		Using(NetcdfDatasets.openDataset(pathStr))(action).fold({
 			case exc: Throwable =>
