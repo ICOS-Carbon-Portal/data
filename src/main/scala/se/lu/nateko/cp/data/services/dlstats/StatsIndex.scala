@@ -25,7 +25,7 @@ class StatsIndexEntry(
 	val station: Option[URI],
 	val submitter: URI,
 	val contributors: IndexedSeq[URI],
-	val dlCountry: CountryCode
+	val dlCountry: Option[CountryCode]
 )
 
 class StatsIndex(sizeHint: Int):
@@ -41,7 +41,7 @@ class StatsIndex(sizeHint: Int):
 	val dlMonthIndices = mutable.Map.empty[Month, MutableRoaringBitmap]
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
 	private val objects = mutable.HashSet.empty[Sha256Sum]
-	val downloadedObjects = new mutable.ArrayBuffer[Sha256Sum](sizeHint)
+	val downloadedObjects = mutable.ArrayBuffer.fill[Sha256Sum](sizeHint)(null)
 
 	// TODO Reminder: use MutableRoaringBitmap.runOptimize to make sure that bitmaps are compressed in the end.
 	def runOptimize(): Unit = ()
@@ -56,12 +56,13 @@ class StatsIndex(sizeHint: Int):
 		for contributor <- entry.contributors do
 			contributorIndices.setBit(contributor)
 		submitterIndices.setBit(entry.submitter)
-		dlCountryIndices.setBit(entry.dlCountry)
+		entry.dlCountry.foreach(dlCountryIndices.setBit)
 		dlWeekIndices.setBit(entry.dlTime.getYearWeek)
 		dlMonthIndices.setBit(entry.dlTime.getYearMonth)
 		dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
 		val dobjIsNew = objects.add(entry.dobj)
 		val hashInterned = if dobjIsNew then entry.dobj else objects.intersect(Set(entry.dobj)).head
+		while downloadedObjects.size < entry.idx do downloadedObjects.append(null)
 		downloadedObjects.insert(entry.idx, hashInterned)
 
 	private def filter(qp: StatsQueryParams): ImmutableRoaringBitmap =

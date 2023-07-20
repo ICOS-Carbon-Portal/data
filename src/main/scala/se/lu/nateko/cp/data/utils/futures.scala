@@ -22,5 +22,5 @@ def usingWithFuture[T <: Closeable,O](maker: => T)(user: T => Future[O])(using E
 extension[T](fut: Future[T])
 	def contextualizeFailure(contextMessage: String)(using ExecutionContext): Future[T] = fut.transform(
 		identity,
-		err => CpDataException(s"$contextMessage: ${err.getMessage}")
+		err => Exception(s"$contextMessage: ${err.getMessage}", err)
 	)

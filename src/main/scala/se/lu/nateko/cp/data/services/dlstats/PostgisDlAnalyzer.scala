@@ -48,7 +48,17 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
 		val query = "SELECT COUNT(*) AS count FROM downloads"
-		envri -> initLogTables.flatMap(_ => runAnalyticalQuery(query)(_.getInt("count")).flatMap(counts => initIndex(counts.head)))
+		val indexFut =
+			for
+				_ <- initLogTables
+					.contextualizeFailure(s"initializing postgis db for ENVRI $envri")
+				counts <- runAnalyticalQuery(query)(_.getInt("count"))
+					.contextualizeFailure("getting the size of 'downloads' table")
+				size = counts.head
+				index <- initIndex(size)
+					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
+			yield index
+		envri -> indexFut
 
 	def statsIndex(using envri: Envri): Future[StatsIndex] =
 		statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
@@ -194,7 +204,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				while resSet.next() do
 					index.add(parseIndexEntry(resSet).get)
 					nIngested += 1
-					if nIngested % 100000 == 0 then log.info(s"Ingested $nIngested StatsIndex entries")
+					if nIngested % 100 == 0 then log.info(s"Ingested $nIngested StatsIndex entries")
 				index.runOptimize()
 				index
 		futTry.flatMap(Future.fromTry)
@@ -208,7 +218,8 @@ object PostgisDlAnalyzer:
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
 			val ccodeStr = rs.getString("country_code");
-			val contribsArray = Option(rs.getArray("contributors")).fold(Array.emptyObjectArray)(_.getArray().asInstanceOf[Array[Object]])
+			//TODO Uncomment the next-line code and make it work
+			val contribsArray = Array.empty[Object]//Option(rs.getArray("contributors")).fold(Array.emptyObjectArray)(_.getArray().asInstanceOf[Array[Object]])
 			StatsIndexEntry(
 				idx = rs.getInt("id"),
 				dobj = dobj,
@@ -217,5 +228,5 @@ object PostgisDlAnalyzer:
 				station = Option(rs.getString("station")).map(new URI(_)),
 				submitter = new URI(rs.getString("submitter")),
 				contributors = contribsArray.map(o => new URI(o.toString)).toIndexedSeq,
-				dlCountry = CountryCode.unapply(ccodeStr).getOrElse(throw CpDataException(s"Bad country code: $ccodeStr"))
+				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply)
 			)

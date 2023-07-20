@@ -17,7 +17,7 @@ REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 
 -- Remove table with typo in its name
-DROP VIEW IF EXISTS white_dowloads;
+DROP VIEW IF EXISTS white_dowloads CASCADE;
 
 -- Remove materialized views that are no longer needed
 DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
