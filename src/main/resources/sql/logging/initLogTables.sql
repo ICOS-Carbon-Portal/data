@@ -16,6 +16,9 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 
+-- Remove table with typo in its name
+DROP VIEW IF EXISTS white_dowloads;
+
 -- Remove materialized views that are no longer needed
 DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
 DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
@@ -84,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.contributors (
 	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
 );
 
-CREATE OR REPLACE VIEW white_dowloads AS
+CREATE OR REPLACE VIEW white_downloads AS
 	SELECT *
 	FROM public.downloads
 	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist));
@@ -172,7 +175,7 @@ $$);
 
 CREATE OR REPLACE VIEW statIndexEntries AS
 	SELECT wd.id, wd.hash_id, wd.ts, wd.country_code, ds.spec, ds.submitter, ds.station, ds.contributors
-	FROM (SELECT * FROM white_dowloads WHERE item_type = 'data') AS wd
+	FROM (SELECT * FROM white_downloads WHERE item_type = 'data') AS wd
 	INNER JOIN dobjs_extended ds
 	ON wd.hash_id = ds.hash_id;
 

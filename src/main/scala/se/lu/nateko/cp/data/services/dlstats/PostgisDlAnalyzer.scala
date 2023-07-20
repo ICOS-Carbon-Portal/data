@@ -6,6 +6,8 @@ import se.lu.nateko.cp.data.api.PostgisClient
 import se.lu.nateko.cp.data.routes.StatsRouting.*
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.CountryCode
+import se.lu.nateko.cp.data.utils.akka.done
+import se.lu.nateko.cp.data.utils.contextualizeFailure
 
 import java.sql.Date
 import java.sql.ResultSet
@@ -20,13 +22,33 @@ import scala.util.Try
 import akka.Done
 import java.net.URI
 import akka.event.LoggingAdapter
+import scala.io.Source
+import scala.concurrent.ExecutionContext
 
 class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
+	val initLogTables = if conf.skipInit then done else
+		val psqlScript = Source.fromResource("sql/logging/initLogTables.sql").mkString
+		val futs = conf.dbNames.keys.map{implicit envri =>
+			withConnection(conf.admin)(conn =>
+				conn.setAutoCommit(true)
+				val st = conn.createStatement()
+				psqlScript.split("--BREAK").foreach: command =>
+					try
+						st.execute(command)
+						//log.info(s"Executed PSQL command:$command")
+					catch case err: Throwable => throw CpDataException(
+						s"Database error: ${err.getMessage} while executing command:$command"
+					)
+				st.close()
+			)
+		}.toIndexedSeq
+		Future.sequence(futs).map{_ => Done}
+
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
-		val query = "SELECT COUNT(*) AS count FROM public.downloads;"
-		envri -> runAnalyticalQuery(query)(_.getInt("count")).flatMap(counts => initIndex(counts.head))
+		val query = "SELECT COUNT(*) AS count FROM downloads"
+		envri -> initLogTables.flatMap(_ => runAnalyticalQuery(query)(_.getInt("count")).flatMap(counts => initIndex(counts.head)))
 
 	def statsIndex(using envri: Envri): Future[StatsIndex] =
 		statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))

@@ -5,7 +5,6 @@ import akka.event.LoggingAdapter
 import eu.icoscp.envri.Envri
 import eu.icoscp.geoipclient.GeoIpInfo
 import se.lu.nateko.cp.data.PostgisConfig
-import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.DataObject
@@ -18,7 +17,6 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
-import scala.io.Source
 
 
 class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
@@ -28,25 +26,6 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 	override def close(): Unit =
 		super.close()
 		scheduler.shutdown()
-
-	def initLogTables(): Future[Done] = if conf.skipInit then done else
-		val psqlScript = Source.fromResource("sql/logging/initLogTables.sql").mkString
-
-		val futs = conf.dbNames.keys.map{implicit envri =>
-			withConnection(conf.admin)(conn =>
-				conn.setAutoCommit(true)
-				val st = conn.createStatement()
-				psqlScript.split("--BREAK").foreach: command =>
-					try
-						st.execute(command)
-						//log.info(s"Executed PSQL command:$command")
-					catch case err: Throwable => throw CpDataException(
-						s"Database error: ${err.getMessage} while executing command:$command"
-					)
-				st.close()
-			)
-		}.toIndexedSeq
-		Future.sequence(futs).map{_ => Done}
 
 	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = execute(conf.writer){conn =>
 		val logQuery = "SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"

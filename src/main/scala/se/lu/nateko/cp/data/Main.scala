@@ -120,7 +120,7 @@ object Main extends App:
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
-	restHeart.init.zip(postgisWriter.initLogTables()).flatMap{_ =>
+	restHeart.init.zip(postgisLogAnalyzer.initLogTables).flatMap{_ =>
 		http.newServerAt(config.interface, config.port).bind(route)
 	}.onComplete{
 		case Success(binding) =>
