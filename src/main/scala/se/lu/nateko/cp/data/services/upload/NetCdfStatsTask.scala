@@ -6,6 +6,7 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.formats.netcdf.NetCdfViewService
+import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 import se.lu.nateko.cp.meta.core.data.NetCdfExtract
 import se.lu.nateko.cp.meta.core.data.VarInfo
 import ucar.ma2.MAMath
@@ -13,6 +14,7 @@ import ucar.nc2.Variable
 import ucar.nc2.dataset.NetcdfDataset
 
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -21,7 +23,6 @@ import scala.util.Try
 import scala.util.Using
 
 import ExecutionContext.{global => ctxt}
-import se.lu.nateko.cp.data.formats.netcdf.NetcdfUtil
 
 class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, tryIngest: Boolean) extends UploadTask {
 
@@ -62,10 +63,10 @@ class NetCdfStatsTask(varNames: Seq[String], file: File, config: NetCdfConfig, t
 
 			//the following code block is to test readability and crash if the test fails
 			service.getAvailableDates
-			varNames.foreach{varName =>
+			varNames.foreach: varName =>
 				val extraIdxOpt = service.getVariables.find(_.shortName == varName).flatMap(_.extra).map(_ => 0)
-				service.getRaster(0, varName, extraIdxOpt)
-			}
+				try service.getRaster(0, varName, extraIdxOpt)
+				catch case err: Throwable => throw IOException(s"Failed trying to test-read first raster for variable $varName", err)
 
 			val varInfoFuts = varNames.map(NetcdfUtil.calcMinMax(file, _))
 			Future.sequence(varInfoFuts).map(NetCdfExtract(_))
