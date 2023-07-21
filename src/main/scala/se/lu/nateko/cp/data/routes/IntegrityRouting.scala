@@ -1,5 +1,18 @@
 package se.lu.nateko.cp.data.routes
 
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives.*
+import akka.http.scaladsl.server.StandardRoute
+import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Keep
+import akka.util.ByteString
+import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.data.UploadConfig
+import se.lu.nateko.cp.data.api.MetaClient.Paging
+import se.lu.nateko.cp.data.routes.UploadRouting.EnvriDirective
+import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
+
 import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -8,23 +21,11 @@ import java.nio.file.StandardOpenOption
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-
 import scala.concurrent.ExecutionContext
 import scala.util.Failure
 import scala.util.Success
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.StandardRoute
-import akka.stream.Materializer
-import akka.stream.scaladsl.FileIO
-import akka.stream.scaladsl.Keep
-import akka.util.ByteString
-import se.lu.nateko.cp.data.UploadConfig
-import se.lu.nateko.cp.data.api.MetaClient.Paging
-import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
-
-class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit mat: Materializer, ctxt: ExecutionContext){
+class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig, extractEnvri: EnvriDirective)(using Materializer, ExecutionContext){
 	import IntegrityControlService.ReportSource
 
 	def route(service: IntegrityControlService) = (pathPrefix("integrityControl") & authRouting.userRequired){ uid =>
@@ -57,26 +58,27 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig)(implicit 
 				complete(s"Integrity control '$prefix' started, logging to $reportPath")
 			}
 
-			path("local"){
-				produceReport("local", service.getReportOnLocal(_, paging))
-			} ~
-			path("remote"){
-				get {
-					produceReport("remote", service.getDataObjRemoteReport(_, paging))
+			extractEnvri:
+				path("local"){
+					produceReport("local", service.getReportOnLocal(_, paging))
 				} ~
-				post{
-					entity(as[String]){ent =>
-						val dobjs = ent.trim.split("\n").map(ustr => new URI(ustr.trim)).toSeq
-						produceReport("remoteselected", service.getDataObjRemoteReport(_, dobjs))
+				path("remote"){
+					get {
+						produceReport("remote", service.getDataObjRemoteReport(_, paging))
+					} ~
+					post{
+						entity(as[String]){ent =>
+							val dobjs = ent.trim.split("\n").map(ustr => new URI(ustr.trim)).toSeq
+							produceReport("remoteselected", service.getDataObjRemoteReport(_, dobjs))
+						}
 					}
+				} ~
+				path("remotedocs"){
+					produceReport("remotedocs", service.getDocObjRemoteReport)
+				} ~
+				path("objectslist"){
+					produceReport("objectslist", _ => service.getObjectsList(paging))
 				}
-			} ~
-			path("remotedocs"){
-				produceReport("remotedocs", service.getDocObjRemoteReport)
-			} ~
-			path("objectslist"){
-				produceReport("objectslist", _ => service.getObjectsList(paging))
-			}
 		}
 	}
 
