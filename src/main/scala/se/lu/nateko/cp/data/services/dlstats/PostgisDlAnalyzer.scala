@@ -47,14 +47,16 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
-		val query = "SELECT COUNT(*) AS count FROM downloads"
+		val query = "SELECT COUNT(*) AS count FROM white_downloads"
 		val indexFut =
 			for
 				_ <- initLogTables
 					.contextualizeFailure(s"initializing postgis db for ENVRI $envri")
+				_ = log.info("Will count 'white' downloads")
 				counts <- runAnalyticalQuery(query)(_.getInt("count"))
 					.contextualizeFailure("getting the size of 'downloads' table")
 				size = counts.head
+				_ = log.info(s"Found $size 'white' downloads for $envri")
 				index <- initIndex(size)
 					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
 			yield index
@@ -194,17 +196,21 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		resultSet.close()
 		res.toIndexedSeq
 
-	def initIndex(currentSize: Int)(using Envri): Future[StatsIndex] =
+	def initIndex(currentSize: Int)(using envri: Envri): Future[StatsIndex] =
 		import PostgisDlAnalyzer.*
 		val futTry = withConnection(conf.reader): conn =>
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
+				log.info(s"Will execute query to start streaming stas index entries for $envri...")
 				val resSet = preparedSt.executeQuery()
 				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
 				var nIngested: Long = 0
+				log.info(s"Stats index entries query for $envri executed, starting ingestion...")
 				while resSet.next() do
-					index.add(parseIndexEntry(resSet).get)
+					val entry = parseIndexEntry(resSet).get
+					//println(entry.idx)
+					index.add(entry)
 					nIngested += 1
-					if nIngested % 100 == 0 then log.info(s"Ingested $nIngested StatsIndex entries")
+					if nIngested % 1000 == 0 then log.info(s"Ingested $nIngested StatsIndex entries for $envri")
 				index.runOptimize()
 				index
 		futTry.flatMap(Future.fromTry)
@@ -213,7 +219,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 end PostgisDlAnalyzer
 
 object PostgisDlAnalyzer:
-	val indexImportQuery = "SELECT * FROM statIndexEntries;"
+	val indexImportQuery = "SELECT * FROM statIndexEntries ORDER BY id LIMIT 100000;"
 
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>

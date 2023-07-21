@@ -48,7 +48,7 @@ class StatsIndex(sizeHint: Int):
 
 	def add(entry: StatsIndexEntry): Unit =
 		extension [T](bmMap: BmMap[T])
-			def setBit(forKey: T): Unit =
+			inline def setBit(forKey: T): Unit =
 				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.idx)
 		specIndices.setBit(entry.objectSpec)
 		for station <- entry.station do
@@ -56,13 +56,15 @@ class StatsIndex(sizeHint: Int):
 		for contributor <- entry.contributors do
 			contributorIndices.setBit(contributor)
 		submitterIndices.setBit(entry.submitter)
-		entry.dlCountry.foreach(dlCountryIndices.setBit)
+		entry.dlCountry.foreach(cc => dlCountryIndices.setBit(cc))
 		dlWeekIndices.setBit(entry.dlTime.getYearWeek)
 		dlMonthIndices.setBit(entry.dlTime.getYearMonth)
 		dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
 		val dobjIsNew = objects.add(entry.dobj)
 		val hashInterned = if dobjIsNew then entry.dobj else objects.intersect(Set(entry.dobj)).head
-		while downloadedObjects.size < entry.idx do downloadedObjects.append(null)
+		if downloadedObjects.size < entry.idx then
+			val iter = Iterator.fill(entry.idx - downloadedObjects.size + 1000)(null)
+			downloadedObjects.appendAll(iter)
 		downloadedObjects.insert(entry.idx, hashInterned)
 
 	private def filter(qp: StatsQueryParams): ImmutableRoaringBitmap =

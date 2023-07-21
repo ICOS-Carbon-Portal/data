@@ -174,8 +174,8 @@ $$);
 --BREAK
 
 CREATE OR REPLACE VIEW statIndexEntries AS
-	SELECT wd.id, wd.hash_id, wd.ts, wd.country_code, ds.spec, ds.submitter, ds.station, ds.contributors
-	FROM (SELECT * FROM white_downloads WHERE item_type = 'data') AS wd
+	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
+	FROM (SELECT id, hash_id, ts, country_code FROM white_downloads WHERE item_type = 'data' ORDER BY id) AS wd
 	INNER JOIN dobjs_extended ds
 	ON wd.hash_id = ds.hash_id;
 
