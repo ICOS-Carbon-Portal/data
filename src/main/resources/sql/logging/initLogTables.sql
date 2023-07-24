@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.dobjs (
 	station text NULL
 );
 CREATE INDEX IF NOT EXISTS idx_dobjs_hash_id ON public.dobjs USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS idx_dobjs_spec ON public.dobjs USING HASH(spec);
+CREATE INDEX IF NOT EXISTS idx_dobjs_spec ON public.dobjs (spec);
 
 CREATE TABLE IF NOT EXISTS public.downloads (
 	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 	endUser text NULL
 );
 CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
-CREATE INDEX IF NOT EXISTS idx_downloads_item_type ON public.downloads USING HASH(item_type);
+DROP INDEX IF EXISTS idx_downloads_item_type;
+CREATE INDEX IF NOT EXISTS idx_downloads_item_type_btree ON public.downloads (item_type);
 CREATE INDEX IF NOT EXISTS idx_downloads_has_distributor ON public.downloads ((1)) WHERE distributor IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_downloads_debounce ON public.downloads (ip, hash_id);
 
@@ -90,9 +91,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_country_mv AS
 	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY 2, downloads.country_code, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_country_mv_id ON public.downloads_country_mv (id);
-CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_spec ON public.downloads_country_mv USING HASH(spec);
-CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_submitter ON public.downloads_country_mv USING HASH(submitter);
-CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_station ON public.downloads_country_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_spec ON public.downloads_country_mv (spec);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_submitter ON public.downloads_country_mv (submitter);
+CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_station ON public.downloads_country_mv (station);
 CREATE INDEX IF NOT EXISTS idx_downloads_country_mv_contributors ON public.downloads_country_mv USING gin (contributors);
 
 -- DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
@@ -114,10 +115,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS downloads_timebins_mv AS
 	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist))
 	GROUP BY country_code, year_start, month_start, week_start, day_date, dobjs.spec, dobjs.submitter, dobjs.station, contributors;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_downloads_timebins_mv_id ON public.downloads_timebins_mv (id);
-CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_country_code ON public.downloads_timebins_mv USING HASH(country_code);
-CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_spec ON public.downloads_timebins_mv USING HASH(spec);
-CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_submitter ON public.downloads_timebins_mv USING HASH(submitter);
-CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_station ON public.downloads_timebins_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_country_code ON public.downloads_timebins_mv (country_code);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_spec ON public.downloads_timebins_mv (spec);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_submitter ON public.downloads_timebins_mv (submitter);
+CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_station ON public.downloads_timebins_mv (station);
 CREATE INDEX IF NOT EXISTS idx_downloads_timebins_mv_contributors ON public.downloads_timebins_mv USING gin (contributors);
 
 -- DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
@@ -145,9 +146,9 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS dlstats_mv AS
 		) dl
 	INNER JOIN dobjs ON dl.hash_id = dobjs.hash_id;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_dlstats_mv_id ON public.dlstats_mv (id);
-CREATE INDEX IF NOT EXISTS idx_dlstats_mv_spec ON public.dlstats_mv USING HASH(spec);
-CREATE INDEX IF NOT EXISTS idx_dlstats_mv_submitter ON public.dlstats_mv USING HASH(submitter);
-CREATE INDEX IF NOT EXISTS idx_dlstats_mv_station ON public.dlstats_mv USING HASH(station);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_spec ON public.dlstats_mv (spec);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_submitter ON public.dlstats_mv (submitter);
+CREATE INDEX IF NOT EXISTS idx_dlstats_mv_station ON public.dlstats_mv (station);
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_contributors ON public.dlstats_mv USING gin (contributors);
 CREATE INDEX IF NOT EXISTS idx_dlstats_mv_day_date ON public.dlstats_mv (day_date);
 
