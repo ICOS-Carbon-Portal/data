@@ -85,10 +85,10 @@ object B2SafeUploadTask{
 
 	private def irodsData(folder: String, hash: Sha256Sum)(using envri: Envri): IrodsData =
 		val envriFolder = envri match
-			case Envri.ICOS | Envri.SITES => None
-			case Envri.ICOSCities => Some(IrodsColl("cities"))
+			case Envri.ICOS | Envri.SITES => B2SafeItem.Root
+			case Envri.ICOSCities => IrodsColl("cities")
 
-		val baseColl = IrodsColl(folder, envriFolder)
+		val baseColl = IrodsColl(folder, Some(envriFolder))
 		val coll = IrodsColl(hash.base64Url.take(2), Some(baseColl))
 		IrodsData(UploadService.fileName(hash), coll)
 
