@@ -28,6 +28,7 @@ import spray.json.*
 import DefaultJsonProtocol.*
 import akka.protobufv3.internal.Timestamp
 import java.time.{LocalDate, ZoneId}
+import java.time.Instant
 
 class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
@@ -69,23 +70,43 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def statsIndex(using envri: Envri): Future[StatsIndex] =
 		statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
 
+	def runQuery[T](qp: StatsQueryParams)(runner: (StatsIndex, StatsQuery) => T)(using Envri): Future[T] =
+		val eventIdsFut: Future[Option[Array[Int]]] = qp.hashId match
+			case Some(hashId) => ??? //the DB call to get the dl event ids
+			case None => Future.successful(None)
+		val queryFut = eventIdsFut.map: eventIds =>
+			StatsQuery(
+				page = qp.page,
+				pageSize = qp.pagesize,
+				dlEventIds = eventIds,
+				contributors = qp.contributors,
+				specs = qp.specs,
+				stations = qp.stations,
+				submitters = qp.submitters,
+				dlfrom = qp.dlfrom,
+				originStations = qp.originStations,
+				dlStart = qp.dlStart,
+				dlEnd = qp.dlEnd
+			)
+		for query <- queryFut; index <- statsIndex yield runner(index, query)
+
 	def downloadsByCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsByCountry]] =
-		statsIndex.map(_.downloadsByCountry(queryParams))
+		runQuery(queryParams)(_ downloadsByCountry _)
 
 	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
-		statsIndex.map(_.downloadsPerYearByCountry(queryParams))
+		runQuery(queryParams)(_ downloadsPerYearByCountry _)
 
 	def downloadsPerWeek(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerWeek]] =
-		statsIndex.map(_.downloadsPerWeek(queryParams))
+		runQuery(queryParams)(_ downloadsPerWeek _)
 
 	def downloadsPerMonth(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		statsIndex.map(_.downloadsPerMonth(queryParams))
+		runQuery(queryParams)(_ downloadsPerMonth _)
 
 	def downloadsPerYear(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		statsIndex.map(_.downloadsPerYear(queryParams))
+		runQuery(queryParams)(_ downloadsPerYear _)
 
 	def downloadStats(queryParams: StatsQueryParams)(using Envri): Future[DownloadStats] =
-		statsIndex.map(_.downloadStats(queryParams))
+		runQuery(queryParams)(_ downloadStats _)
 
 	def specifications(using Envri): Future[IndexedSeq[Specifications]] =
 		statsIndex.map(_.specifications())
@@ -102,9 +123,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def dlfrom(using Envri): Future[IndexedSeq[DownloadedFrom]] =
 		statsIndex.map(_.dlfrom())
 	
-	def downloadedObjects(using Envri): Future[IndexedSeq[DownloadedObject]] =
-		statsIndex.map(_.downloadedObjects.map(DownloadedObject(_)).toIndexedSeq)
-
 	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
 			DateCount(rs.getString("month_start"), rs.getInt("count"))

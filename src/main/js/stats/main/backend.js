@@ -8,9 +8,11 @@ export const getCountryCodesLookup = () => {
 	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
 };
 
-export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId, dlStart, dlEnd } = downloadStatsFilters;
+export const getSearchParams = (dlFilters, specLevelLookup) => {
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
 
+	const dlStart = dlFilters.dlStart ? (dlFilters.dlStart + "T00:00:00Z") : dlFilters.dlStart;
+	const dlEnd = dlFilters.dlEnd ? (dlFilters.dlEnd + "T00:00:00Z") : dlFilters.dlEnd;
 	const specSpecs = specification && specification.length ? specification : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
 	const combinedSpecs = specSpecs.concat(dataLevelSpecs);

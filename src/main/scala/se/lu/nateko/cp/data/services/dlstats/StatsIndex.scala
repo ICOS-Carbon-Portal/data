@@ -4,6 +4,7 @@ import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.CountryCode
 import se.lu.nateko.cp.data.routes.StatsRouting.*
+import se.lu.nateko.cp.data.utils.data.BufferWithDefault
 import se.lu.nateko.cp.meta.core.algo.HierarchicalBitmap
 import se.lu.nateko.cp.meta.core.algo.DatetimeHierarchicalBitmap
 
@@ -11,7 +12,6 @@ import java.net.URI
 import java.time.{Instant,LocalDate,ZoneId}
 import java.time.temporal.IsoFields
 import scala.collection.mutable
-//import scala.concurrent.Future
 import org.roaringbitmap.RoaringBitmap
 import org.roaringbitmap.buffer.{MutableRoaringBitmap,ImmutableRoaringBitmap,BufferFastAggregation}
 import java.util.concurrent.atomic.AtomicInteger
@@ -31,6 +31,20 @@ class StatsIndexEntry(
 	val dlCountry: Option[CountryCode]
 )
 
+case class StatsQuery(
+	page: Int,
+	pageSize: Int,
+	dlEventIds: Option[Array[Int]],
+	specs: Option[Seq[URI]],
+	stations: Option[Seq[URI]],
+	contributors: Option[Seq[URI]],
+	submitters: Option[Seq[URI]],
+	dlfrom: Option[Seq[CountryCode]],
+	originStations: Option[Seq[URI]],
+	dlStart: Option[Instant],
+	dlEnd: Option[Instant]
+)
+
 class StatsIndex(sizeHint: Int):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
@@ -44,10 +58,10 @@ class StatsIndex(sizeHint: Int):
 	val dlWeekIndices = mutable.Map.empty[Week, MutableRoaringBitmap]
 	val dlMonthIndices = mutable.Map.empty[Month, MutableRoaringBitmap]
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
-	val downloadedObjects = mutable.ArrayBuffer.fill[Sha256Sum](sizeHint)(null)
-	val downloadInstants = mutable.ArrayBuffer.fill[Long](sizeHint)(0)
-	var dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants)
-	val emptyFilter = new MutableRoaringBitmap
+	val downloadedObjects = BufferWithDefault[Sha256Sum](sizeHint, null)
+	val downloadInstants = BufferWithDefault[Long](sizeHint, -1L)
+	val dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants.apply)
+	val allDownloads = new MutableRoaringBitmap
 
 	def runOptimize(): Unit =
 		specIndices.foreach((uri, bm) => bm.runOptimize)
@@ -58,7 +72,7 @@ class StatsIndex(sizeHint: Int):
 		dlWeekIndices.foreach((uri, bm) => bm.runOptimize)
 		dlMonthIndices.foreach((uri, bm) => bm.runOptimize)
 		dlYearIndices.foreach((uri, bm) => bm.runOptimize)
-		emptyFilter.runOptimize
+		allDownloads.runOptimize
 
 	def add(entry: StatsIndexEntry)(using Timings): Unit =
 		import Timings.time
@@ -84,21 +98,19 @@ class StatsIndex(sizeHint: Int):
 			dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
 		time("dlTimeIndex"):
 			dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
-		time("add buffer to downloadedObjects"):
-			if downloadedObjects.size < entry.idx then
-				val iter = Iterator.fill(entry.idx - downloadedObjects.size + 1000)(null)
-				downloadedObjects.appendAll(iter)
-		time("add buffer to downloadInstants"):
-			if downloadInstants.size < entry.idx then
-				val iter = Iterator.fill(entry.idx - downloadInstants.size + 1000)(0L)
-				downloadInstants.appendAll(iter)
-				dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants)
 		time("insert object id"):
 			downloadedObjects.update(entry.idx, entry.dobj)
 			downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
-		emptyFilter.add(entry.idx)
+		allDownloads.add(entry.idx)
 
-	private def filter(qp: StatsQueryParams): ImmutableRoaringBitmap =
+	/**
+	  * Does not handle the single-object filtering. That one is left to the client code.
+	  *
+	  * @param qp
+	  * @return
+	  */
+	private def filter(qp: StatsQuery): Option[ImmutableRoaringBitmap] =
+
 		def multiParamFilter[T](paramOptSeq: Option[Seq[T]], bmMap: BmMap[T]): Option[ImmutableRoaringBitmap] = paramOptSeq.map:
 			params => BufferFastAggregation.or(params.flatMap(bmMap.get)*)
 
@@ -108,36 +120,41 @@ class StatsIndex(sizeHint: Int):
 				case t => Some(t.toList.flatten.flatten.distinct)
 
 		// Query the SQL database for hashsum filtering
-		val query = s"SELECT id FROM statIndexEntries WHERE hash_id=${qp.hashId}"
+		//val query = s"SELECT id FROM statIndexEntries WHERE hash_id=${qp.hashId}"
 			
 		val allStations = combineSeq(qp.stations, qp.originStations)
-		val dls = Instant.parse(qp.dlStart.fold("2017-03-10T11:40:00Z")(t => s"${t}T00:00:00Z"))   // Use Instant and change the frontend so that it returns the proper String format
-		val dle = qp.dlEnd.map(t => Instant.parse(s"${t}T00:00:00Z")).fold(Instant.now)(identity)  // Use semi-open intervals instead of hard-coding boundaries here
 
-		val specFilter = multiParamFilter(qp.specs, specIndices).getOrElse(emptyFilter)
-		val stationFilter = multiParamFilter(allStations, stationIndices).getOrElse(emptyFilter)
-		val contributorsFilter = multiParamFilter(qp.contributors, contributorIndices).getOrElse(emptyFilter)
-		val submitterFilter = multiParamFilter(qp.submitters, submitterIndices).getOrElse(emptyFilter)
-		val dlCountriesFilter = multiParamFilter(qp.dlfrom, dlCountryIndices).getOrElse(emptyFilter)
-		val dlTimeMinFilter = HierarchicalBitmap.MinFilter(dls.toEpochMilli, true)
-		val dlTimeMaxFilter = HierarchicalBitmap.MaxFilter(dle.toEpochMilli, true)
-		val dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants)
-		val dlTimeFilter = dlTimeIndex.filter(HierarchicalBitmap.IntervalFilter(dlTimeMinFilter, dlTimeMaxFilter))
+		val specFilter = multiParamFilter(qp.specs, specIndices)
+		val stationFilter = multiParamFilter(allStations, stationIndices)
+		val contributorsFilter = multiParamFilter(qp.contributors, contributorIndices)
+		val submitterFilter = multiParamFilter(qp.submitters, submitterIndices)
+		val dlCountriesFilter = multiParamFilter(qp.dlfrom, dlCountryIndices)
 
-		val filters = Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter)
-		//val filter = new MutableRoaringBitmap
-		//BufferFastAggregation.and(filters*).forEach: b =>
-		//	if downloadedObjects(b) == qp.hashId then
-		//		filter.add(b)
-		//	else
-		//		_
-		//filter
-		BufferFastAggregation.and(filters*)
+		import HierarchicalBitmap.{MinFilter, MaxFilter, IntervalFilter, FilterRequest}
+		// Use Instant and change the frontend so that it returns the proper String format
+		val dlMin = qp.dlStart.map(t => MinFilter(t.toEpochMilli, true))
+		val dlMax = qp.dlEnd.map(t => MaxFilter(t.toEpochMilli, true))
+
+		val dlTimeFilterReq: Option[FilterRequest[Long]] = (dlMin, dlMax) match
+			case (Some(min), Some(max)) => Some(IntervalFilter(min, max))
+			case (None, None) => None
+			case (Some(min), None) => Some(min)
+			case (None, Some(max)) => Some(max)
 		
-	def downloadsByCountry(qp: StatsQueryParams): IndexedSeq[DownloadsByCountry] = 
+		val dlTimeFilter = dlTimeFilterReq.map(dlTimeIndex.filter)
+		val dlEventsFilter = qp.dlEventIds.map: eventIds =>
+			val bm = new MutableRoaringBitmap()
+			bm.addN(eventIds, 0, eventIds.length)
+			bm
+
+		val filters = Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter, dlEventsFilter).flatten
+		if filters.isEmpty then None else Some(BufferFastAggregation.and(filters*))
+	end filter
+
+	def downloadsByCountry(qp: StatsQuery): IndexedSeq[DownloadsByCountry] =
 		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq.sortBy(- _._1)
 
-	def downloadsPerYearByCountry(qp: StatsQueryParams): IndexedSeq[CustomDownloadsPerYearCountry] =
+	def downloadsPerYearByCountry(qp: StatsQuery): IndexedSeq[CustomDownloadsPerYearCountry] =
 		val iterable =
 			for
 				(year, dlYearBm) <- dlYearIndices
@@ -147,24 +164,24 @@ class StatsIndex(sizeHint: Int):
 				CustomDownloadsPerYearCountry(year, country, filter(qp).andCardinality(filterYearCountry))
 		iterable.toIndexedSeq.sortBy(x => (- x._1, x._2.toString, - x._3))
 
-	def downloadsPerWeek(qp: StatsQueryParams): IndexedSeq[DownloadsPerWeek] = 
+	def downloadsPerWeek(qp: StatsQuery): IndexedSeq[DownloadsPerWeek] =
 		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week.toInstant, week.week)).toIndexedSeq.sortBy(_._2)
 
-	def downloadsPerMonth(qp: StatsQueryParams): IndexedSeq[DownloadsPerTimeframe] = 
+	def downloadsPerMonth(qp: StatsQuery): IndexedSeq[DownloadsPerTimeframe] =
 		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlMonthBm), month.toInstant)).toIndexedSeq.sortBy(_._2)
 	
-	def downloadsPerYear(qp: StatsQueryParams): IndexedSeq[DownloadsPerTimeframe] = 
+	def downloadsPerYear(qp: StatsQuery): IndexedSeq[DownloadsPerTimeframe] =
 		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.sortBy(_._2)
 
-	def downloadStats(qp: StatsQueryParams): DownloadStats =
+	def downloadStats(qp: StatsQuery): DownloadStats =
 		val counts = mutable.Map.empty[Sha256Sum, AtomicInteger]
-		filter(qp).forEach: i =>
+		filter(qp).getOrElse(allDownloads).forEach: i =>
 			val dlHash = downloadedObjects(i)
 			val count = counts.getOrElseUpdate(dlHash, AtomicInteger(0))
 			count.incrementAndGet()
 		val statSize = counts.size
-		val toSkip = (qp.page - 1) * qp.pagesize
-		val statsToReturn = counts.toIndexedSeq.sortBy(- _._2.get).drop(toSkip).take(qp.pagesize).map: (hash, count) =>
+		val toSkip = (qp.page - 1) * qp.pageSize
+		val statsToReturn = counts.toIndexedSeq.sortBy(- _._2.get).drop(toSkip).take(qp.pageSize).map: (hash, count) =>
 			DownloadObjStat(count.get, hash)
 		DownloadStats(statsToReturn, statSize)
 
@@ -184,15 +201,15 @@ class StatsIndex(sizeHint: Int):
 		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(dlCountryBm.getCardinality, dlCountry)).toIndexedSeq.sortBy(- _._1)
 
 	// Not used in PostgisDlAnalyzer
-	def downloadCount(hashId: Sha256Sum, qp: StatsQueryParams): DownloadCount =
-		import scala.jdk.CollectionConverters.IteratorHasAsScala
-		val count = filter(qp).iterator().asScala.filter(downloadedObjects(_) == hashId).size
+	def downloadCount(qp: StatsQuery): DownloadCount =
+		val count = filter(qp).getOrElse(allDownloads).getCardinality
 		DownloadCount(count)
 
 end StatsIndex
 
-extension (bm: ImmutableRoaringBitmap)
-	def andCardinality(other: ImmutableRoaringBitmap): Int = ImmutableRoaringBitmap.andCardinality(bm, other)
+extension (bmOpt: Option[ImmutableRoaringBitmap])
+	def andCardinality(other: ImmutableRoaringBitmap): Int =
+		bmOpt.fold(other.getCardinality)(ImmutableRoaringBitmap.andCardinality(_, other))
 
 extension (t: Instant)
 	def utcLocalDate = LocalDate.ofInstant(t, ZoneId.of("UTC"))
