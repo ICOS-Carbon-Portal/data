@@ -135,7 +135,7 @@ class StatsIndex(sizeHint: Int):
 		BufferFastAggregation.and(filters*)
 		
 	def downloadsByCountry(qp: StatsQueryParams): IndexedSeq[DownloadsByCountry] = 
-		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq.sortBy(- _._1)
+		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq.filter(_._1 != 0).sortBy(- _._1)
 
 	def downloadsPerYearByCountry(qp: StatsQueryParams): IndexedSeq[CustomDownloadsPerYearCountry] =
 		val iterable =
@@ -145,16 +145,16 @@ class StatsIndex(sizeHint: Int):
 			yield
 				val filterYearCountry = BufferFastAggregation.and(dlYearBm, dlCountryBm)
 				CustomDownloadsPerYearCountry(year, country, filter(qp).andCardinality(filterYearCountry))
-		iterable.toIndexedSeq.sortBy(x => (- x._1, x._2.toString, - x._3))
+		iterable.toIndexedSeq.sortBy(x => (- x._1, - x._3, x._2.toString))
 
 	def downloadsPerWeek(qp: StatsQueryParams): IndexedSeq[DownloadsPerWeek] = 
-		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week.toInstant, week.week)).toIndexedSeq.sortBy(_._2)
+		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week.toInstant, week.week)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
 	def downloadsPerMonth(qp: StatsQueryParams): IndexedSeq[DownloadsPerTimeframe] = 
-		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlMonthBm), month.toInstant)).toIndexedSeq.sortBy(_._2)
+		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlMonthBm), month.toInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 	
 	def downloadsPerYear(qp: StatsQueryParams): IndexedSeq[DownloadsPerTimeframe] = 
-		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.sortBy(_._2)
+		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
 	def downloadStats(qp: StatsQueryParams): DownloadStats =
 		val counts = mutable.Map.empty[Sha256Sum, AtomicInteger]
