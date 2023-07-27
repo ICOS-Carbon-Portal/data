@@ -40,26 +40,24 @@ object StatsRouting:
 		pageOpt: Option[Int],
 		pagesizeOpt: Option[Int],
 		hashId: Option[Sha256Sum],
-		objectSpecs: Option[Seq[URI]],
-		objectSpecsFromDataLevel: Option[Seq[URI]],
+		specs: Option[Seq[URI]],
 		stations: Option[Seq[URI]],
 		contributors: Option[Seq[URI]],
 		submitters: Option[Seq[URI]],
-		dlCountries: Option[Seq[CountryCode]],
+		dlfrom: Option[Seq[CountryCode]],
 		originStations: Option[Seq[URI]],
-		dlStart: Option[String],
+		dlStart: Option[String],     // Either use Instant or another specific temporal type, like LocalDate. It requires some changes in the frontend to work here.
 		dlEnd: Option[String]
 	){
-		def page = pageOpt.getOrElse(0)
+		def page = pageOpt.getOrElse(1)
 		def pagesize = Math.min(100000, pagesizeOpt.getOrElse(100))
 	}
 
 	case class Week(year: Int, week: Int)
 	case class Month(year: Int, month: Int)
-	case class DownloadsPerWeek(count: Int, week: Week)
-	case class DownloadsPerMonth(count: Int, month: Month)
-	case class DownloadsPerYear(count: Int, year: Int)
 	case class DownloadsByCountry(count: Int, countryCode: CountryCode)
+	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
+	case class DownloadsPerTimeframe(count: Int, ts: Instant)
 	case class DownloadObjStat(count: Int, hashId: Sha256Sum)
 	case class DownloadStats(stats: Seq[DownloadObjStat], size: Int)
 	case class Specifications(count: Int, spec: URI)
@@ -80,18 +78,16 @@ object StatsRouting:
 		endUser: Option[String],
 		geoJson: Option[PointPosition]
 	)
-	case class CustomDownloadsPerYearCountry(year: Int, country: String, downloads: Int)
+	case class CustomDownloadsPerYearCountry(year: Int, country: CountryCode, downloads: Int)
+	case class DownloadedObject(hashId: Sha256Sum)
 
-	given RootJsonFormat[Week] = jsonFormat2(Week.apply)
-	given RootJsonFormat[Month] = jsonFormat2(Month.apply)
 	import se.lu.nateko.cp.meta.core.crypto.JsonSupport.{given JsonFormat[Sha256Sum]}
 	export se.lu.nateko.cp.meta.core.data.JsonSupport.{given JsonFormat[CountryCode]}
-	given RootJsonFormat[StatsQueryParams] = jsonFormat12(StatsQueryParams.apply)
+	given RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams.apply)
 	given RootJsonFormat[PointPosition] = jsonFormat2(PointPosition.apply)
 	given RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry.apply)
-	given RootJsonFormat[DownloadsPerWeek] = jsonFormat2(DownloadsPerWeek.apply)
-	given RootJsonFormat[DownloadsPerMonth] = jsonFormat2(DownloadsPerMonth.apply)
-	given RootJsonFormat[DownloadsPerYear] = jsonFormat2(DownloadsPerYear.apply)
+	given RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek.apply)
+	given RootJsonFormat[DownloadsPerTimeframe] = jsonFormat2(DownloadsPerTimeframe.apply)
 	given RootJsonFormat[DownloadObjStat] = jsonFormat2(DownloadObjStat.apply)
 	given RootJsonFormat[DownloadStats] = jsonFormat2(DownloadStats.apply)
 	given RootJsonFormat[Specifications] = jsonFormat2(Specifications.apply)
@@ -103,6 +99,7 @@ object StatsRouting:
 	given RootJsonFormat[DateCount] = jsonFormat2(DateCount.apply)
 	given RootJsonFormat[Download] = jsonFormat8(Download.apply)
 	given RootJsonFormat[CustomDownloadsPerYearCountry] = jsonFormat3(CustomDownloadsPerYearCountry.apply)
+	given RootJsonFormat[DownloadedObject] = jsonFormat1(DownloadedObject.apply)
 
 	given FromStringUnmarshaller[Sha256Sum] = Unmarshaller: _ =>
 		str => Future.fromTry(Sha256Sum.fromString(str))
@@ -122,6 +119,8 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(using conv: T => ToResponseMarshallable): Route = path(lastSegm){
 		post{
 			entity(as[StatsQueryParams]){ qp =>
+				println("StatsQueryParams")
+				println(qp)
 				onSuccess(fetcher(qp)){res =>
 					complete(conv(res))
 				}
@@ -134,7 +133,6 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 				"pagesize".as[Int].?,
 				"hashId".as[Sha256Sum].?,
 				"specs".as[List[URI]].?,
-				"specsFromDataLevel".as[List[URI]].?,
 				"stations".as[List[URI]].?,
 				"submitters".as[List[URI]].?,
 				"contributors".as[List[URI]].?,
@@ -208,6 +206,11 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 				}
 			} ~
 			statsQuery("customDownloadsPerYearCountry", pgClient.customDownloadsPerYearCountry) ~
+			// Just for testing purpose
+			path("downloadedObjects"){
+				complete(pgClient.downloadedObjects)
+			} ~
+			//
 			complete(StatusCodes.NotFound)
 		} ~
 		(options & setOriginHeader){

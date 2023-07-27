@@ -24,6 +24,10 @@ import java.net.URI
 import akka.event.LoggingAdapter
 import scala.io.Source
 import scala.concurrent.ExecutionContext
+import spray.json.*
+import DefaultJsonProtocol.*
+import akka.protobufv3.internal.Timestamp
+import java.time.{LocalDate, ZoneId}
 
 class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
@@ -33,13 +37,14 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 			withConnection(conf.admin)(conn =>
 				conn.setAutoCommit(true)
 				val st = conn.createStatement()
-				psqlScript.split("--BREAK").foreach: command =>
-					try
-						st.execute(command)
-						//log.info(s"Executed PSQL command:$command")
-					catch case err: Throwable => throw CpDataException(
-						s"Database error: ${err.getMessage} while executing command:$command"
-					)
+				st.execute(psqlScript)
+				//psqlScript.split("--BREAK").foreach: command =>
+				//	try
+				//		st.execute(command)
+				//		//log.info(s"Executed PSQL command:$command")
+				//	catch case err: Throwable => throw CpDataException(
+				//		s"Database error: ${err.getMessage} while executing command:$command"
+				//	)
 				st.close()
 			)
 		}.toIndexedSeq
@@ -47,16 +52,15 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 
 	val statsIndices: Map[Envri, Future[StatsIndex]] = conf.dbNames.map: (envri, _) =>
 		given Envri = envri
-		val query = "SELECT COUNT(*) AS count FROM white_downloads"
+		val query = "SELECT COUNT(*) AS count FROM downloads"
 		val indexFut =
 			for
 				_ <- initLogTables
 					.contextualizeFailure(s"initializing postgis db for ENVRI $envri")
-				_ = log.info("Will count 'white' downloads")
 				counts <- runAnalyticalQuery(query)(_.getInt("count"))
 					.contextualizeFailure("getting the size of 'downloads' table")
 				size = counts.head
-				_ = log.info(s"Found $size 'white' downloads for $envri")
+				_ = log.info(s"Found $size 'white' and 'grey' downloads for $envri")
 				index <- initIndex(size)
 					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
 			yield index
@@ -69,15 +73,15 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		statsIndex.map(_.downloadsByCountry(queryParams))
 
 	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
-		statsIndex.map(_.downloadsByYearCountry(queryParams))
+		statsIndex.map(_.downloadsPerYearByCountry(queryParams))
 
 	def downloadsPerWeek(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerWeek]] =
 		statsIndex.map(_.downloadsPerWeek(queryParams))
 
-	def downloadsPerMonth(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerMonth]] =
+	def downloadsPerMonth(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
 		statsIndex.map(_.downloadsPerMonth(queryParams))
 
-	def downloadsPerYear(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerYear]] =
+	def downloadsPerYear(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
 		statsIndex.map(_.downloadsPerYear(queryParams))
 
 	def downloadStats(queryParams: StatsQueryParams)(using Envri): Future[DownloadStats] =
@@ -97,11 +101,17 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 
 	def dlfrom(using Envri): Future[IndexedSeq[DownloadedFrom]] =
 		statsIndex.map(_.dlfrom())
+	
+	def downloadedObjects(using Envri): Future[IndexedSeq[DownloadedObject]] =
+		statsIndex.map(_.downloadedObjects.map(DownloadedObject(_)).toIndexedSeq)
 
 	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
 			DateCount(rs.getString("month_start"), rs.getInt("count"))
 		}
+
+	//def downloadCount(hashId: Sha256Sum, queryParams: StatsQueryParams)(using Envri): Future[DownloadCount] =
+	//	statsIndex.map(_.downloadCount(hashId, queryParams))
 
 	def downloadCount(hashId: Sha256Sum)(using Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"""
@@ -172,11 +182,11 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 			params.foreach{qp =>
 				preparedSt.setInt(	1, qp.page)
 				preparedSt.setInt(	2, qp.pagesize)
-				initArray(        	3, qp.objectSpecs.map(s => s.map(_.toString)))
+				initArray(        	3, qp.specs.map(s => s.map(_.toString)))
 				initArray(        	4, qp.stations.map(s => s.map(_.toString)))
 				initArray(        	5, qp.submitters.map(s => s.map(_.toString)))
 				initArray(        	6, qp.contributors.map(s => s.map(_.toString)))
-				initArray(        	7, qp.dlCountries.map(s => s.map(_.toString)))
+				initArray(        	7, qp.dlfrom.map(s => s.map(_.toString)))
 				initArray(        	8, qp.originStations.map(s => s.map(_.toString)))
 				initString(        	9, qp.hashId.map(_.toString))
 				initDate(        	10, qp.dlStart.map(_.toString))
@@ -200,32 +210,36 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		import PostgisDlAnalyzer.*
 		val futTry = withConnection(conf.reader): conn =>
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
-				log.info(s"Will execute query to start streaming stas index entries for $envri...")
+				log.info(s"Will execute query to start streaming stats index entries for $envri...")
 				val resSet = preparedSt.executeQuery()
 				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
 				var nIngested: Long = 0
 				log.info(s"Stats index entries query for $envri executed, starting ingestion...")
+				given timings: Timings = Timings.empty
+				import Timings.{time, average}
 				while resSet.next() do
-					val entry = parseIndexEntry(resSet).get
-					//println(entry.idx)
-					index.add(entry)
+					val indexEntry = time("parseIndexEntry"):
+						parseIndexEntry(resSet).get
+					time("index.add"):
+						index.add(indexEntry)
 					nIngested += 1
-					if nIngested % 1000 == 0 then log.info(s"Ingested $nIngested StatsIndex entries for $envri")
+					if nIngested % 100000 == 0 then
+						log.info(s"Ingested $nIngested StatsIndex entries")
 				index.runOptimize()
+				timings.average.foreach: (name, time) =>
+					println(s"Operation: $name, time: $time ns")
 				index
 		futTry.flatMap(Future.fromTry)
-
 
 end PostgisDlAnalyzer
 
 object PostgisDlAnalyzer:
-	val indexImportQuery = "SELECT * FROM statIndexEntries ORDER BY id LIMIT 100000;"
+	val indexImportQuery = "SELECT * FROM statIndexEntries"
 
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
-			val ccodeStr = rs.getString("country_code");
-			//TODO Uncomment the next-line code and make it work
-			val contribsArray = Array.empty[Object]//Option(rs.getArray("contributors")).fold(Array.emptyObjectArray)(_.getArray().asInstanceOf[Array[Object]])
+			val ccodeStr = rs.getString("country_code")
+			val contribsArray = Option(rs.getArray("contributors")).fold(Array.empty[String])(_.getArray().asInstanceOf[Array[String]])
 			StatsIndexEntry(
 				idx = rs.getInt("id"),
 				dobj = dobj,
@@ -233,6 +247,6 @@ object PostgisDlAnalyzer:
 				objectSpec = new URI(rs.getString("spec")),
 				station = Option(rs.getString("station")).map(new URI(_)),
 				submitter = new URI(rs.getString("submitter")),
-				contributors = contribsArray.map(o => new URI(o.toString)).toIndexedSeq,
+				contributors = contribsArray.map(new URI(_)).toIndexedSeq,
 				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply)
 			)

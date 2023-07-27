@@ -152,7 +152,7 @@ CREATE TABLE IF NOT EXISTS dobjs_extended AS
 		contrs.contributors
 	FROM dobjs
 	LEFT JOIN (
-		SELECT hash_id, jsonb_agg(contributor) as contributors
+		SELECT hash_id, array_agg(contributor) as contributors
 		FROM public.contributors
 		GROUP BY hash_id) as contrs
 	ON dobjs.hash_id = contrs.hash_id;
