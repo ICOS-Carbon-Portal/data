@@ -46,8 +46,8 @@ object StatsRouting:
 		submitters: Option[Seq[URI]],
 		dlfrom: Option[Seq[CountryCode]],
 		originStations: Option[Seq[URI]],
-		dlStart: Option[String],     // Either use Instant or another specific temporal type, like LocalDate. It requires some changes in the frontend to work here.
-		dlEnd: Option[String]
+		dlStart: Option[Instant],
+		dlEnd: Option[Instant]
 	){
 		def page = pageOpt.getOrElse(1)
 		def pagesize = Math.min(100000, pagesizeOpt.getOrElse(100))
@@ -56,7 +56,7 @@ object StatsRouting:
 	case class Week(year: Int, week: Int)
 	case class Month(year: Int, month: Int)
 	case class DownloadsByCountry(count: Int, countryCode: CountryCode)
-	case class DownloadsPerWeek(count: Int, ts: Instant, week: Double)
+	case class DownloadsPerWeek(count: Int, ts: Instant, week: Int)
 	case class DownloadsPerTimeframe(count: Int, ts: Instant)
 	case class DownloadObjStat(count: Int, hashId: Sha256Sum)
 	case class DownloadStats(stats: Seq[DownloadObjStat], size: Int)
@@ -138,8 +138,8 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 				"contributors".as[List[URI]].?,
 				"dlfrom".as[List[CountryCode]].?,
 				"originStations".as[List[URI]].?,
-				"dlStart".as[String].?,
-				"dlEnd".as[String].?
+				"dlStart".as[Instant].?,
+				"dlEnd".as[Instant].?
 			).as(StatsQueryParams.apply _){qp =>
 				onSuccess(fetcher(qp)){res =>
 					complete(conv(res))
@@ -206,11 +206,6 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 				}
 			} ~
 			statsQuery("customDownloadsPerYearCountry", pgClient.customDownloadsPerYearCountry) ~
-			// Just for testing purpose
-			path("downloadedObjects"){
-				complete(pgClient.downloadedObjects)
-			} ~
-			//
 			complete(StatusCodes.NotFound)
 		} ~
 		(options & setOriginHeader){
