@@ -47,12 +47,7 @@ export default function Filters({ filters, downloadStats, resetFilters, updateTa
 }
 
 const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFilter, temporalFilterUpdate }) => {
-	if (hasHashIdFilter) {
-		return (
-			<>You are currently viewing statistics for a single data object. Clear filters to reset page.</>
-		);
-
-	} else if (filters && filters.length) {
+	if (filters && filters.length) {
 		const temporalFilters = {
 			name: 'dlDates',
 			values: downloadStats.temporalFilters

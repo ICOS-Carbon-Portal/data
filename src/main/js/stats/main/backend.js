@@ -21,6 +21,7 @@ export const getSearchParams = (dlFilters, specLevelLookup) => {
 	return hashId && hashId.length
 		? {
 			hashId: hashId[0],
+			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 			dlStart,
 			dlEnd
 		}

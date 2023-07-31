@@ -118,9 +118,7 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 
 	def statsQuery[T](lastSegm: String, fetcher: StatsQueryParams => Future[T])(using conv: T => ToResponseMarshallable): Route = path(lastSegm){
 		post{
-			entity(as[StatsQueryParams]){ qp =>
-				println("StatsQueryParams")
-				println(qp)
+			entity(as[StatsQueryParams]){qp =>
 				onSuccess(fetcher(qp)){res =>
 					complete(conv(res))
 				}

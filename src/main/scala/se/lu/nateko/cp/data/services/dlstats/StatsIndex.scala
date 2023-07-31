@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable.Buffer
 import java.time.format.DateTimeFormatter
 import akka.http.javadsl.model.headers.Date
-//import ucar.nc2.ft.point.remote.PointStreamProto.Station
 
 class StatsIndexEntry(
 	val idx: Int,
@@ -49,7 +48,6 @@ class StatsIndex(sizeHint: Int):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
 
-	// Measure size of bitmaps using the provided method.
 	val specIndices = mutable.Map.empty[URI, MutableRoaringBitmap]
 	val stationIndices = mutable.Map.empty[URI, MutableRoaringBitmap]
 	val contributorIndices = mutable.Map.empty[URI, MutableRoaringBitmap]
@@ -80,27 +78,17 @@ class StatsIndex(sizeHint: Int):
 		extension [T](bmMap: BmMap[T])
 			inline def setBit(forKey: T): Unit =
 				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.idx)
-		time("specIndices"):
-			specIndices.setBit(entry.objectSpec)
-		time("stationIndices"):
-			entry.station.foreach(s => stationIndices.setBit(s))
-		time("contributorIndices"):
-			entry.contributors.foreach(c => contributorIndices.setBit(c))
-		time("submitterIndices"):
-			submitterIndices.setBit(entry.submitter)
-		time("dlCountryIndices"):
-			entry.dlCountry.foreach(cc => dlCountryIndices.setBit(cc))
-		time("dlWeekIndices"):
-			dlWeekIndices.setBit(entry.dlTime.getYearWeek)
-		time("dlMonthIndices"):
-			dlMonthIndices.setBit(entry.dlTime.getYearMonth)
-		time("dlYearIndices"):
-			dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
-		time("dlTimeIndex"):
-			dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
-		time("insert object id"):
-			downloadedObjects.update(entry.idx, entry.dobj)
-			downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
+		specIndices.setBit(entry.objectSpec)
+		entry.station.foreach(s => stationIndices.setBit(s))
+		entry.contributors.foreach(c => contributorIndices.setBit(c))
+		submitterIndices.setBit(entry.submitter)
+		entry.dlCountry.foreach(cc => dlCountryIndices.setBit(cc))
+		dlWeekIndices.setBit(entry.dlTime.getYearWeek)
+		dlMonthIndices.setBit(entry.dlTime.getYearMonth)
+		dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
+		dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
+		downloadedObjects.update(entry.idx, entry.dobj)
+		downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
 		allDownloads.add(entry.idx)
 
 	/**
@@ -119,9 +107,6 @@ class StatsIndex(sizeHint: Int):
 				case (None, None) => None
 				case t => Some(t.toList.flatten.flatten.distinct)
 
-		// Query the SQL database for hashsum filtering
-		//val query = s"SELECT id FROM statIndexEntries WHERE hash_id=${qp.hashId}"
-			
 		val allStations = combineSeq(qp.stations, qp.originStations)
 
 		val specFilter = multiParamFilter(qp.specs, specIndices)
@@ -131,7 +116,7 @@ class StatsIndex(sizeHint: Int):
 		val dlCountriesFilter = multiParamFilter(qp.dlfrom, dlCountryIndices)
 
 		import HierarchicalBitmap.{MinFilter, MaxFilter, IntervalFilter, FilterRequest}
-		// Use Instant and change the frontend so that it returns the proper String format
+
 		val dlMin = qp.dlStart.map(t => MinFilter(t.toEpochMilli, true))
 		val dlMax = qp.dlEnd.map(t => MaxFilter(t.toEpochMilli, true))
 
@@ -200,7 +185,6 @@ class StatsIndex(sizeHint: Int):
 	def dlfrom(): IndexedSeq[DownloadedFrom] =
 		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(dlCountryBm.getCardinality, dlCountry)).toIndexedSeq.sortBy(- _._1)
 
-	// Not used in PostgisDlAnalyzer
 	def downloadCount(qp: StatsQuery): DownloadCount =
 		val count = filter(qp).getOrElse(allDownloads).getCardinality
 		DownloadCount(count)

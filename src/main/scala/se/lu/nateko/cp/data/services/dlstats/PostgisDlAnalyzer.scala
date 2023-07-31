@@ -29,6 +29,7 @@ import DefaultJsonProtocol.*
 import akka.protobufv3.internal.Timestamp
 import java.time.{LocalDate, ZoneId}
 import java.time.Instant
+import scala.collection.mutable.ArrayBuffer
 
 class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
@@ -39,13 +40,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				conn.setAutoCommit(true)
 				val st = conn.createStatement()
 				st.execute(psqlScript)
-				//psqlScript.split("--BREAK").foreach: command =>
-				//	try
-				//		st.execute(command)
-				//		//log.info(s"Executed PSQL command:$command")
-				//	catch case err: Throwable => throw CpDataException(
-				//		s"Database error: ${err.getMessage} while executing command:$command"
-				//	)
 				st.close()
 			)
 		}.toIndexedSeq
@@ -72,7 +66,9 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 
 	def runQuery[T](qp: StatsQueryParams)(runner: (StatsIndex, StatsQuery) => T)(using Envri): Future[T] =
 		val eventIdsFut: Future[Option[Array[Int]]] = qp.hashId match
-			case Some(hashId) => ??? //the DB call to get the dl event ids
+			case Some(hashId) =>
+				val query = s"SELECT id FROM statIndexEntries WHERE hash_id='${hashId.id}';"
+				runAnalyticalQuery(query)(rs => rs.getInt("id")).map(resQuery => Some(resQuery.toArray))
 			case None => Future.successful(None)
 		val queryFut = eventIdsFut.map: eventIds =>
 			StatsQuery(
@@ -127,9 +123,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
 			DateCount(rs.getString("month_start"), rs.getInt("count"))
 		}
-
-	//def downloadCount(hashId: Sha256Sum, queryParams: StatsQueryParams)(using Envri): Future[DownloadCount] =
-	//	statsIndex.map(_.downloadCount(hashId, queryParams))
 
 	def downloadCount(hashId: Sha256Sum)(using Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"""
@@ -236,10 +229,8 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				given timings: Timings = Timings.empty
 				import Timings.{time, average}
 				while resSet.next() do
-					val indexEntry = time("parseIndexEntry"):
-						parseIndexEntry(resSet).get
-					time("index.add"):
-						index.add(indexEntry)
+					val indexEntry = parseIndexEntry(resSet).get
+					index.add(indexEntry)
 					nIngested += 1
 					if nIngested % 100000 == 0 then
 						log.info(s"Ingested $nIngested StatsIndex entries")
