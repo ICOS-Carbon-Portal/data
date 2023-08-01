@@ -160,7 +160,7 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		Using(NetcdfDatasets.openDataset(pathStr))(action).fold({
 			case exc: Throwable =>
 				val msg = s"Problem reading netcdf ${ncFile.getFileName}: ${exc.getMessage}"
-				throw new IOException(msg, exc) with NoStackTrace
+				throw new IOException(msg, exc)
 		}, identity)
 
 
@@ -198,17 +198,21 @@ class NetCdfViewService(ncFile: Path, conf: NetCdfViewServiceConfig):
 		val fullMin = MAMath.getMinimum(arrFullDim)
 		val fullMax = MAMath.getMaximum(arrFullDim)
 
-		val rect = Using(new ucar.nc2.dt.grid.GridDataset(ds))(_.getBoundingBox()).get
-
-		val bbox = BoundingBox(
-			latMin = rect.getLatMin,
-			latMax = rect.getLatMax,
-			lonMin = rect.getLonMin,
-			lonMax = rect.getLonMax
-		)
+		val lonValues = ds.findVariable(variables.lonVar).read()
+		val lon0 = lonValues.getDouble(0)
+		val lonl = lonValues.getDouble(sizeLon - 1)
 
 		val latValues = ds.findVariable(variables.latVar).read()
-		val latSorted = latValues.getDouble(0) < latValues.getDouble(sizeLat - 1)
+		val lat0 = latValues.getDouble(0)
+		val latl = latValues.getDouble(sizeLat - 1)
+		val latSorted = lat0 < latl
+
+		val bbox = BoundingBox(
+			latMin = Math.min(lat0, latl),
+			latMax = Math.max(lat0, latl),
+			lonMin = Math.min(lon0, lonl),
+			lonMax = Math.max(lon0, lonl)
+		)
 
 		Raster(arrFullDim, sizeLon, sizeLat, fullMin, fullMax, latFirst, latSorted, bbox)
 	}

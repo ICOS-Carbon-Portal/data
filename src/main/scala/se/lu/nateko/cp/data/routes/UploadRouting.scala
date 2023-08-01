@@ -97,7 +97,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 						case Success(metaExtract) => metaExtract match
 							case me: IngestionMetadataExtract => complete(me.toJson)
 							case s: String => complete(s)
-						case Failure(err) => complete(StatusCodes.BadRequest -> err.getMessage)
+						case Failure(err) => reportError(StatusCodes.BadRequest, err, withDetails = true)
 					}
 				}
 			} ~
@@ -121,15 +121,20 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		//TODO Handle the case of data object metadata not found, and the case of metadata service being down
 		case authErr: UnauthorizedUpload => reportError(StatusCodes.Unauthorized, authErr)
 		case userErr: UploadUserError => reportError(StatusCodes.BadRequest, userErr)
-		case err => reportError(StatusCodes.InternalServerError, err)
+		case err => reportError(StatusCodes.InternalServerError, err, withDetails = true, withLog = true)
 	}
 
-	private def reportError(code: StatusCode, err: Throwable): Route = {
-		val plainError = complete(code -> err.getMessage)
+	private def reportError(code: StatusCode, err: Throwable, withDetails: Boolean = false, withLog: Boolean = false): Route =
+		if withLog then log.error(err, s"Server responded with status code $code because of an exception")
+		val msg = err.getMessage + (
+			if !withDetails then ""
+			else err.getStackTrace.map(_.toString).mkString("\n", "\n", "\n")
+		)
+		val plainError = complete(code -> msg)
 		extractEnvriSoft{
 			addAccessControlHeaders{plainError}
 		} ~ plainError
-	}
+
 
 	private def addAccessControlHeaders(using envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>

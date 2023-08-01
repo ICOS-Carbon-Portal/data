@@ -73,7 +73,8 @@ object Main extends App:
 
 	val zipRoute = new ZipRouting(downloadService, restHeart, authRouting).route
 
-	val integrityRoute = new IntegrityRouting(authRouting, config.upload).route(integrityService)
+	import downloadRouting.extractEnvri
+	val integrityRoute = new IntegrityRouting(authRouting, config.upload, extractEnvri).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
 	val staticRoute = new StaticRouting().route
@@ -95,7 +96,7 @@ object Main extends App:
 
 	val route = handleExceptions(exceptionHandler){
 		pathEndOrSingleSlash{
-			downloadRouting.extractEnvri{envri ?=>
+			extractEnvri{envri ?=>
 				val urlHash = if(envri == Envri.ICOS)
 					"""#{"filterCategories"%3A{"project"%3A["icos"]%2C"level"%3A[1%2C2]%2C"stationclass"%3A["ICOS"]}}"""
 				else ""

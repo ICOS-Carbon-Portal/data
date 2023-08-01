@@ -92,6 +92,7 @@ lazy val data = (project in file("."))
 			"org.openjfx"         % "javafx-fxml"      % "11" % "test" classifier osName,
 			"org.openjfx"         % "javafx-graphics"  % "11" % "test" classifier osName,
 			"org.gillius"         % "jfxutils"         % "1.0" % "test",
+			"org.locationtech.jts" % "jts-core"        % "1.19.0" % "test",
 			"org.scalatest"      %% "scalatest"        % "3.2.11" % "test"
 		),
 

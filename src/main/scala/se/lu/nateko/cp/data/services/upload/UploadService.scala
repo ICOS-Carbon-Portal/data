@@ -51,17 +51,17 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private val b2 = new B2SafeClient(config.b2safe, Http())
 
-	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum): Future[Boolean] = b2
+	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum)(using Envri): Future[Boolean] = b2
 		.getHashsum(B2SafeUploadTask.irodsData(format, hash))
 		.map(_.contains(hash))
 
-	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum): Source[ByteString, Future[Done]] =
+	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum)(using Envri): Source[ByteString, Future[Done]] =
 		b2.downloadObjectReusable(B2SafeUploadTask.irodsData(format, hash))
 
-	def uploadToB2Stage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any]): Future[Done] =
+	def uploadToB2Stage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any])(using Envri): Future[Done] =
 		B2SafeUploadTask(format, hash, b2).uploadObject(src)
 
-	def getSink(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[DataObjectSink] = {
+	def getSink(hash: Sha256Sum, user: UserId)(using Envri): Future[DataObjectSink] = {
 		for(
 			dObj <- meta.lookupPackage(hash);
 			_ <- meta.userIsAllowedUpload(dObj, user);
@@ -193,13 +193,13 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			}))
 		}
 
-	private def getUploadTasks(obj: StaticObject): Future[IndexedSeq[UploadTask]] = obj match {
+	private def getUploadTasks(obj: StaticObject)(using Envri): Future[IndexedSeq[UploadTask]] = obj match {
 		case dobj: DataObject => getDobjUploadTasks(dobj)
 		case doc: DocObject =>
 			Future.successful(defaultTasks(doc))
 	}
 
-	private def getDobjUploadTasks(dobj: DataObject): Future[IndexedSeq[UploadTask]] =
+	private def getDobjUploadTasks(dobj: DataObject)(using Envri): Future[IndexedSeq[UploadTask]] =
 		import dobj.{specification => spec}
 
 		if spec.dataLevel < 0 || spec.dataLevel > 3 then
@@ -254,7 +254,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		new ByteCountingTask
 	)
 
-	private def defaultTasks(obj: StaticObject) = mandatoryTasks(obj) :+
+	private def defaultTasks(obj: StaticObject)(using Envri) = mandatoryTasks(obj) :+
 		B2SafeUploadTask(obj, b2) :+
 		new FileSavingUploadTask(getFile(obj, false))
 

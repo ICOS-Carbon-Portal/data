@@ -17,12 +17,13 @@ import java.nio.file.StandardCopyOption
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import eu.icoscp.envri.Envri
 
 class IntegrityControlService(uploader: UploadService)(using ExecutionContext, Materializer):
 	import IntegrityControlService._
 	import MetaClient.{DobjStorageInfo, Paging}
 
-	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging): ReportSource = uploader
+	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging)(using Envri): ReportSource = uploader
 		.meta.getDobjStorageInfos(paging)
 		.mapAsync(2){dobjStInfo => //keep parallelizm low to avoid thread starvation (may be using actor system's default)
 			val (file, localProblemFut) = localFileProblem(dobjStInfo)
@@ -67,16 +68,16 @@ class IntegrityControlService(uploader: UploadService)(using ExecutionContext, M
 		}
 
 
-	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, paging: Paging): ReportSource =
+	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, paging: Paging)(using Envri): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(paging))
 
-	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, dobjs: Seq[URI]): ReportSource =
+	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, dobjs: Seq[URI])(using Envri): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(dobjs))
 
-	def getDocObjRemoteReport(uploadMissingToRemote: Boolean): ReportSource =
+	def getDocObjRemoteReport(uploadMissingToRemote: Boolean)(using Envri): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.docObjsStorageInfos)
 
-	private def getReportOnRemote(uploadMissingToRemote: Boolean, storage: Source[DobjStorageInfo, Any]): ReportSource = storage
+	private def getReportOnRemote(uploadMissingToRemote: Boolean, storage: Source[DobjStorageInfo, Any])(using Envri): ReportSource = storage
 		.mapAsync(3){dobjStInfo =>
 			import dobjStInfo.{format, hash}
 

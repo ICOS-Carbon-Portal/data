@@ -1,21 +1,22 @@
 package se.lu.nateko.cp.data.services.upload
 
-import java.net.URI
-
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-
 import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.data.api.B2SafeClient
+import se.lu.nateko.cp.data.api.B2SafeItem
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.StaticObject
+
+import java.net.URI
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2SafeClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
@@ -73,18 +74,22 @@ class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B
 
 object B2SafeUploadTask{
 
-	def apply(statObj: StaticObject, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
+	def apply(statObj: StaticObject, client: B2SafeClient)(using Envri, ExecutionContext) =
 		new B2SafeUploadTask(statObj.hash, irodsData(statObj), client)
 
-	def apply(format: Option[URI], hash: Sha256Sum, client: B2SafeClient)(implicit ctxt: ExecutionContext) =
+	def apply(format: Option[URI], hash: Sha256Sum, client: B2SafeClient)(using Envri, ExecutionContext) =
 		new B2SafeUploadTask(hash, irodsData(format, hash), client)
 
-	def irodsData(statObj: StaticObject): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
-	def irodsData(format: Option[URI], hash: Sha256Sum): IrodsData = irodsData(UploadService.fileFolder(format), hash)
+	def irodsData(statObj: StaticObject)(using Envri): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
+	def irodsData(format: Option[URI], hash: Sha256Sum)(using Envri): IrodsData = irodsData(UploadService.fileFolder(format), hash)
 
-	private def irodsData(folder: String, hash: Sha256Sum): IrodsData = {
-		val baseColl = IrodsColl(folder)//parent is root
+	private def irodsData(folder: String, hash: Sha256Sum)(using envri: Envri): IrodsData =
+		val envriFolder = envri match
+			case Envri.ICOS | Envri.SITES => B2SafeItem.Root
+			case Envri.ICOSCities => IrodsColl("cities")
+
+		val baseColl = IrodsColl(folder, Some(envriFolder))
 		val coll = IrodsColl(hash.base64Url.take(2), Some(baseColl))
 		IrodsData(UploadService.fileName(hash), coll)
-	}
+
 }
