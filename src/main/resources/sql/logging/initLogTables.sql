@@ -35,6 +35,25 @@ DROP INDEX IF EXISTS idx_dobjs_spec;
 DROP INDEX IF EXISTS idx_downloads_has_distributor;
 DROP INDEX IF EXISTS idx_downloads_debounce;
 DROP INDEX IF EXISTS idx_downloads_item_type;
+
+-- Remove functions that are no longer needed
+DROP FUNCTION IF EXISTS public.downloadsByCountry;
+DROP FUNCTION IF EXISTS public.downloads_timebins;
+DROP FUNCTION IF EXISTS public.downloadsPerWeek;
+DROP FUNCTION IF EXISTS public.downloadsPerMonth;
+DROP FUNCTION IF EXISTS public.downloadsPerYear;
+DROP FUNCTION IF EXISTS public.downloadStatsSize;
+DROP FUNCTION IF EXISTS public.downloadStats;
+DROP FUNCTION IF EXISTS public.specifications;
+DROP FUNCTION IF EXISTS public.contributors;
+DROP FUNCTION IF EXISTS public.stations;
+DROP FUNCTION IF EXISTS public.submitters;
+DROP FUNCTION IF EXISTS public.dlfrom;
+DROP FUNCTION IF EXISTS public.customDownloadsPerYearCountry;
+--DROP FUNCTION IF EXISTS public.downloadedCollections;        -- In use
+DROP FUNCTION IF EXISTS public.getMinMaxdate;
+DROP FUNCTION IF EXISTS public.getIndexSummary;
+
 -- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
 	hash_id text NOT NULL PRIMARY KEY,
@@ -143,7 +162,6 @@ END;
 $$;
 
 
---BREAK
 
 -- Create new table including contributors in the dobjs table
 CREATE TABLE IF NOT EXISTS dobjs_extended AS
@@ -157,7 +175,6 @@ CREATE TABLE IF NOT EXISTS dobjs_extended AS
 		GROUP BY hash_id) as contrs
 	ON dobjs.hash_id = contrs.hash_id;
 
---BREAK
 
 -- Create a primary key (if not exists) on the hash_id in the new dobjs table
 SELECT($$
@@ -171,15 +188,15 @@ BEGIN
 END;
 
 $$);
---BREAK
 
+
+-- Create view containing relevant download statistics information
 CREATE OR REPLACE VIEW statIndexEntries AS
 	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
 	FROM (SELECT id, hash_id, ts, country_code FROM white_downloads WHERE item_type = 'data' ORDER BY id) AS wd
 	INNER JOIN dobjs_extended ds
 	ON wd.hash_id = ds.hash_id;
 
---BREAK
 
 -- Set user rights
 GRANT USAGE ON SCHEMA public TO reader;
