@@ -17,7 +17,7 @@ REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 
 -- Remove table with typo in its name
-DROP VIEW IF EXISTS white_dowloads CASCADE;
+--DROP VIEW IF EXISTS white_dowloads CASCADE;
 
 -- Remove materialized views that are no longer needed
 DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
@@ -30,11 +30,33 @@ DROP MATERIALIZED VIEW IF EXISTS stations_mv;
 DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
 
 -- Remove indices that are no longer needed
+DROP INDEX IF EXISTS idx_contributors_mv;
+DROP INDEX IF EXISTS idx_dlstats_full_mv_hash_id_day_date;
+DROP INDEX IF EXISTS idx_dlstats_mv_contributors;
+DROP INDEX IF EXISTS idx_dlstats_mv_day_date;
+DROP INDEX IF EXISTS idx_dlstats_mv_id;
+DROP INDEX IF EXISTS idx_dlstats_mv_spec;
+DROP INDEX IF EXISTS idx_dlstats_mv_station;
+DROP INDEX IF EXISTS idx_dlstats_mv_submitter;
 DROP INDEX IF EXISTS idx_dobjs_hash_id;
 DROP INDEX IF EXISTS idx_dobjs_spec;
+DROP INDEX IF EXISTS idx_downloads_country_mv_contributors;
+DROP INDEX IF EXISTS idx_downloads_country_mv_id;
+DROP INDEX IF EXISTS idx_downloads_country_mv_spec;
+DROP INDEX IF EXISTS idx_downloads_country_mv_station;
+DROP INDEX IF EXISTS idx_downloads_country_mv_submitter;
 DROP INDEX IF EXISTS idx_downloads_has_distributor;
 DROP INDEX IF EXISTS idx_downloads_debounce;
 DROP INDEX IF EXISTS idx_downloads_item_type;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_id;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
+DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
+DROP INDEX IF EXISTS idx_specifications_mv;
+DROP INDEX IF EXISTS idx_stations_mv;
+DROP INDEX IF EXISTS idx_submitters_mv;
 
 -- Remove functions that are no longer needed
 DROP FUNCTION IF EXISTS public.downloadsByCountry;
@@ -53,6 +75,7 @@ DROP FUNCTION IF EXISTS public.customDownloadsPerYearCountry;
 --DROP FUNCTION IF EXISTS public.downloadedCollections;        -- In use
 DROP FUNCTION IF EXISTS public.getMinMaxdate;
 DROP FUNCTION IF EXISTS public.getIndexSummary;
+
 
 -- Create tables
 CREATE TABLE IF NOT EXISTS public.dobjs (
@@ -99,7 +122,6 @@ INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.167.144.0
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('40.77.167.0/24', NULL, 'Bing bot');
 INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('207.46.13.0/24', NULL, 'Bing bot');
 
-
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
 	contributor text NOT NULL,
@@ -111,9 +133,40 @@ CREATE OR REPLACE VIEW white_downloads AS
 	FROM public.downloads
 	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist));
 
+-- Create new table including contributors in the dobjs table
+CREATE TABLE IF NOT EXISTS dobjs_extended AS
+	SELECT
+		dobjs.*,
+		contrs.contributors
+	FROM dobjs
+	LEFT JOIN (
+		SELECT hash_id, array_agg(contributor) as contributors
+		FROM public.contributors
+		GROUP BY hash_id) as contrs
+	ON dobjs.hash_id = contrs.hash_id;
+
+-- Create a primary key (if not exists) on the hash_id in the new dobjs table
+DO $$
+BEGIN
+	IF NOT EXISTS (
+		SELECT constraint_name FROM information_schema.table_constraints
+		WHERE table_name = 'dobjs_extended' AND constraint_type = 'PRIMARY KEY'
+	) THEN
+		ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
+	END IF;
+END;
+$$;
+
+-- Create view containing relevant download statistics information
+CREATE OR REPLACE VIEW statIndexEntries AS
+	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
+	FROM (SELECT id, hash_id, ts, country_code FROM white_downloads WHERE item_type = 'data' ORDER BY id) AS wd
+	INNER JOIN dobjs_extended ds
+	ON wd.hash_id = ds.hash_id;
+
+
 
 --	Stored Procedures
-
 ---------------------
 DROP FUNCTION IF EXISTS public.debounceDownload;
 CREATE OR REPLACE FUNCTION public.debounceDownload(_ip text, _hash_id text, _ts timestamptz)
@@ -160,42 +213,6 @@ BEGIN
 END;
 
 $$;
-
-
-
--- Create new table including contributors in the dobjs table
-CREATE TABLE IF NOT EXISTS dobjs_extended AS
-	SELECT
-		dobjs.*,
-		contrs.contributors
-	FROM dobjs
-	LEFT JOIN (
-		SELECT hash_id, array_agg(contributor) as contributors
-		FROM public.contributors
-		GROUP BY hash_id) as contrs
-	ON dobjs.hash_id = contrs.hash_id;
-
-
--- Create a primary key (if not exists) on the hash_id in the new dobjs table
-SELECT($$
-BEGIN
-	IF NOT EXISTS (
-		SELECT constraint_name FROM information_schema.table_constraints
-		WHERE table_name = 'dobjs_extended' AND constraint_type = 'PRIMARY KEY'
-	) THEN
-		ALTER TABLE dobjs_extended ADD PRIMARY KEY (hash_id);
-	END IF;
-END;
-
-$$);
-
-
--- Create view containing relevant download statistics information
-CREATE OR REPLACE VIEW statIndexEntries AS
-	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
-	FROM (SELECT id, hash_id, ts, country_code FROM white_downloads WHERE item_type = 'data' ORDER BY id) AS wd
-	INNER JOIN dobjs_extended ds
-	ON wd.hash_id = ds.hash_id;
 
 
 -- Set user rights
