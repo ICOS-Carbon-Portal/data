@@ -46,6 +46,8 @@ case class UploadConfig(
 	admins: Seq[String]
 )
 
+case class GrayDownload(ip: String, hostname: Option[String], reason: String)
+
 case class PostgisConfig(
 	hostname: String,
 	dbNames: Map[Envri, String],
@@ -55,7 +57,8 @@ case class PostgisConfig(
 	writer: CredentialsConfig,
 	dbAccessPoolSize: Int,
 	skipInit: Boolean,
-	ipsToIgnore: Seq[String]
+	ipsToIgnore: Seq[String],
+	grayDownloads: Seq[GrayDownload]
 )
 
 case class MetaServiceConfig(
@@ -110,13 +113,14 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[UploadConfig] = jsonFormat5(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
+	given RootJsonFormat[GrayDownload] = jsonFormat3(GrayDownload.apply)
 
 	given RootJsonFormat[Envri] = enumFormat(Envri.valueOf, Envri.values)
 
 	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
 	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
 	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	given RootJsonFormat[PostgisConfig] = jsonFormat9(PostgisConfig.apply)
+	given RootJsonFormat[PostgisConfig] = jsonFormat10(PostgisConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}

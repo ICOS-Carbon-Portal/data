@@ -47,7 +47,8 @@ object StatsRouting:
 		dlfrom: Option[Seq[CountryCode]],
 		originStations: Option[Seq[URI]],
 		dlStart: Option[Instant],
-		dlEnd: Option[Instant]
+		dlEnd: Option[Instant],
+		includeGrayDl: Option[Boolean]
 	){
 		def page = pageOpt.getOrElse(1)
 		def pagesize = Math.min(100000, pagesizeOpt.getOrElse(100))
@@ -83,7 +84,7 @@ object StatsRouting:
 
 	import se.lu.nateko.cp.meta.core.crypto.JsonSupport.{given JsonFormat[Sha256Sum]}
 	export se.lu.nateko.cp.meta.core.data.JsonSupport.{given JsonFormat[CountryCode]}
-	given RootJsonFormat[StatsQueryParams] = jsonFormat11(StatsQueryParams.apply)
+	given RootJsonFormat[StatsQueryParams] = jsonFormat12(StatsQueryParams.apply)
 	given RootJsonFormat[PointPosition] = jsonFormat2(PointPosition.apply)
 	given RootJsonFormat[DownloadsByCountry] = jsonFormat2(DownloadsByCountry.apply)
 	given RootJsonFormat[DownloadsPerWeek] = jsonFormat3(DownloadsPerWeek.apply)
@@ -137,7 +138,8 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 				"dlfrom".as[List[CountryCode]].?,
 				"originStations".as[List[URI]].?,
 				"dlStart".as[Instant].?,
-				"dlEnd".as[Instant].?
+				"dlEnd".as[Instant].?,
+				"includeGrayDl".as[Boolean].?
 			).as(StatsQueryParams.apply _){qp =>
 				onSuccess(fetcher(qp)){res =>
 					complete(conv(res))

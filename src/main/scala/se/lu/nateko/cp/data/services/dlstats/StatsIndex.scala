@@ -27,7 +27,8 @@ class StatsIndexEntry(
 	val station: Option[URI],
 	val submitter: URI,
 	val contributors: IndexedSeq[URI],
-	val dlCountry: Option[CountryCode]
+	val dlCountry: Option[CountryCode],
+	val ip: String
 )
 
 case class StatsQuery(
@@ -41,10 +42,11 @@ case class StatsQuery(
 	dlfrom: Option[Seq[CountryCode]],
 	originStations: Option[Seq[URI]],
 	dlStart: Option[Instant],
-	dlEnd: Option[Instant]
+	dlEnd: Option[Instant],
+	includeGrayDl: Option[Boolean]
 )
 
-class StatsIndex(sizeHint: Int):
+class StatsIndex(sizeHint: Int, ipsGrayDownloads: Seq[String]):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
 
@@ -59,18 +61,20 @@ class StatsIndex(sizeHint: Int):
 	val downloadedObjects = BufferWithDefault[Sha256Sum](sizeHint, null)
 	val downloadInstants = BufferWithDefault[Long](sizeHint, -1L)
 	val dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants.apply)
+	val isWhiteDownload = new MutableRoaringBitmap
 	val allDownloads = new MutableRoaringBitmap
 
 	def runOptimize(): Unit =
-		specIndices.foreach((uri, bm) => bm.runOptimize)
-		stationIndices.foreach((uri, bm) => bm.runOptimize)
-		contributorIndices.foreach((uri, bm) => bm.runOptimize)
-		submitterIndices.foreach((uri, bm) => bm.runOptimize)
-		dlCountryIndices.foreach((uri, bm) => bm.runOptimize)
-		dlWeekIndices.foreach((uri, bm) => bm.runOptimize)
-		dlMonthIndices.foreach((uri, bm) => bm.runOptimize)
-		dlYearIndices.foreach((uri, bm) => bm.runOptimize)
-		allDownloads.runOptimize
+		specIndices.foreach((uri, bm) => bm.runOptimize())
+		stationIndices.foreach((uri, bm) => bm.runOptimize())
+		contributorIndices.foreach((uri, bm) => bm.runOptimize())
+		submitterIndices.foreach((uri, bm) => bm.runOptimize())
+		dlCountryIndices.foreach((uri, bm) => bm.runOptimize())
+		dlWeekIndices.foreach((uri, bm) => bm.runOptimize())
+		dlMonthIndices.foreach((uri, bm) => bm.runOptimize())
+		dlYearIndices.foreach((uri, bm) => bm.runOptimize())
+		isWhiteDownload.runOptimize()
+		allDownloads.runOptimize()
 
 	def add(entry: StatsIndexEntry)(using Timings): Unit =
 		import Timings.time
@@ -89,6 +93,7 @@ class StatsIndex(sizeHint: Int):
 		dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
 		downloadedObjects.update(entry.idx, entry.dobj)
 		downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
+		ipsGrayDownloads.find(_ == entry.ip).fold(isWhiteDownload.add(entry.idx))(_ => None)
 		allDownloads.add(entry.idx)
 
 	/**
@@ -132,7 +137,12 @@ class StatsIndex(sizeHint: Int):
 			bm.addN(eventIds, 0, eventIds.length)
 			bm
 
-		val filters = Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter, dlEventsFilter).flatten
+		val filters =
+			val includeGrayDl = qp.includeGrayDl.getOrElse(false)     // By default, do not include gray downloads.
+			if includeGrayDl then
+				Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter, dlEventsFilter).flatten
+			else
+				Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter, dlEventsFilter, Some(isWhiteDownload)).flatten
 		if filters.isEmpty then None else Some(BufferFastAggregation.and(filters*))
 	end filter
 

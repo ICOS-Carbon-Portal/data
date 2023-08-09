@@ -55,8 +55,8 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				counts <- runAnalyticalQuery(query)(_.getInt("count"))
 					.contextualizeFailure("getting the size of 'downloads' table")
 				size = counts.head
-				_ = log.info(s"Found $size 'white' and 'grey' downloads for $envri")
-				index <- initIndex(size)
+				_ = log.info(s"Found $size 'white' and 'gray' downloads for $envri")
+				index <- initIndex(size, conf.grayDownloads.map(_._1))
 					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
 			yield index
 		envri -> indexFut
@@ -82,7 +82,8 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				dlfrom = qp.dlfrom,
 				originStations = qp.originStations,
 				dlStart = qp.dlStart,
-				dlEnd = qp.dlEnd
+				dlEnd = qp.dlEnd,
+				includeGrayDl = qp.includeGrayDl
 			)
 		for query <- queryFut; index <- statsIndex yield runner(index, query)
 
@@ -127,7 +128,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def downloadCount(hashId: Sha256Sum)(using Envri): Future[IndexedSeq[DownloadCount]] =
 		runAnalyticalQuery(s"""
 				|SELECT COUNT(*) AS download_count
-				|FROM white_downloads
+				|FROM downloads
 				|WHERE hash_id = '${hashId.id}'
 				|""".stripMargin){rs =>
 			DownloadCount(rs.getInt("download_count"))
@@ -217,13 +218,13 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		resultSet.close()
 		res.toIndexedSeq
 
-	def initIndex(currentSize: Int)(using envri: Envri): Future[StatsIndex] =
+	def initIndex(currentSize: Int, ipsGrayDownloads: Seq[String])(using envri: Envri): Future[StatsIndex] =
 		import PostgisDlAnalyzer.*
 		val futTry = withConnection(conf.reader): conn =>
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
 				log.info(s"Will execute query to start streaming stats index entries for $envri...")
 				val resSet = preparedSt.executeQuery()
-				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
+				val index = StatsIndex((currentSize * 1.05 + 100).toInt, ipsGrayDownloads)
 				var nIngested: Long = 0
 				log.info(s"Stats index entries query for $envri executed, starting ingestion...")
 				given timings: Timings = Timings.empty
@@ -257,5 +258,6 @@ object PostgisDlAnalyzer:
 				station = Option(rs.getString("station")).map(new URI(_)),
 				submitter = new URI(rs.getString("submitter")),
 				contributors = contribsArray.map(new URI(_)).toIndexedSeq,
-				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply)
+				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply),
+				ip = rs.getString("ip")
 			)
