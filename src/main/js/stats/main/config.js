@@ -1,7 +1,7 @@
-import commonConfig from '../../common/main/config';
+import commonConfig, {envri} from '../../common/main/config';
 
 export default {
-	envri: commonConfig.envri,
+	envri: envri,
 	cpmetaObjectUri: commonConfig.cpmetaObjectUri,
 	sparqlEndpoint: commonConfig.sparqlEndpoint,
 	pagesize: 100
