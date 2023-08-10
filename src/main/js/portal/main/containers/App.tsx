@@ -102,7 +102,7 @@ const Title = (props: {route: Route, metadata?: State['metadata']}) => {
 		case 'search':
 			return (
 				<h1 className="col-md-9 mb-3">
-					{config.envri} data portal
+					{config.envriName} data portal
 					{config.envri === "ICOS" &&
 						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
 					}

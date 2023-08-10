@@ -10,6 +10,11 @@ export type PreviewType = typeof MAPGRAPH | typeof NETCDF | typeof TIMESERIES | 
 type EnvriUrl = { [E in Envri]: UrlStr }
 
 const envri = untypedEnvri as Envri;
+const envriName = {
+	ICOS: 'ICOS',
+	SITES: 'SITES',
+	ICOSCities: 'ICOS Cities'
+}
 
 const objectUriPrefix: EnvriUrl = {
 	ICOS: 'https://meta.icos-cp.eu/objects/',
@@ -138,6 +143,7 @@ const portalHistoryStateProps: IndexedDBProps = {
 
 export default {
 	envri,
+	envriName: envriName[envri],
 	portalHistoryStateProps,
 	olMapSettings,
 	...commonConfig.previewTypes,

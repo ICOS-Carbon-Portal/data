@@ -2,7 +2,7 @@
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 @()(implicit envri: Envri, conf: EnvriConfig)
-@template{
+@CommonPage(envri.shortName + " Statistics"){
 	<script type="text/javascript" src="//static.icos-cp.eu/constant/dygraph/2.0.0/dygraph.min.js"></script>
 
 	<link rel="stylesheet" href="../stats/css/react-widgets.css">
@@ -19,9 +19,4 @@
 	<div id="main"></div>
 	@JavascriptConfig()
 	<script src="stats.js"></script>
-}
-
-@template = @{
-	if(envri == Envri.SITES) SitesPage("SITES Statistics") _
-	else CpCommonPage("Carbon Portal's Statistics") _
 }

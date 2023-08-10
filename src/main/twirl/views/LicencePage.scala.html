@@ -7,7 +7,7 @@
 
 @(profile: LicenceProfile, loginUri: Option[Uri], handleProxies: HandleProxiesConfig)(implicit envri: Envri, envriConfigs: EnvriConfigs)
 
-@template{
+@CommonPage(pageTitle){
 	<style>@LicenceStyle()</style>
 
 	<script type="application/javascript">
@@ -151,17 +151,9 @@
 	</div>
 }
 
-@template = @{
-	if(envri == Envri.SITES) SitesPage(pageTitle) _
-	else CpCommonPage(pageTitle) _
-}
-
 @pageTitle = @{
 	if(envri == Envri.SITES) name + " Data Policy" else name + " Data Licence"
 }
 
-@name = @{
-	envri.toString
-}
-
+@name = @{envri.shortName}
 @conf = @{envriConfigs(envri)}
