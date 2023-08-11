@@ -55,7 +55,7 @@ const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFil
 
 		return (
 			<>
-				{filters.filter(f => f.values && f.values.length).map((filter, idx) =>
+				{filters.filter(f => f.values && f.values.length && (!hasHashIdFilter || f.displayFilterForSingleObject)).map((filter, idx) =>
 					<Row key={idx} filter={filter} downloadStats={downloadStats} updateTableWithFilter={updateTableWithFilter} />
 				)}
 				<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
