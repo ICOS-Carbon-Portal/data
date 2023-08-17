@@ -8,6 +8,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.data.CountryCode
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.data.utils.contextualizeFailure
+import se.lu.nateko.cp.data.utils.eager
 
 import java.sql.Date
 import java.sql.ResultSet
@@ -30,6 +31,7 @@ import akka.protobufv3.internal.Timestamp
 import java.time.{LocalDate, ZoneId}
 import java.time.Instant
 import scala.collection.mutable.ArrayBuffer
+import se.lu.nateko.cp.data.api.IpTest
 
 class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
@@ -56,22 +58,24 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 					.contextualizeFailure("getting the size of 'downloads' table")
 				size = counts.head
 				_ = log.info(s"Found $size 'white' and 'gray' downloads for $envri")
-				index <- initIndex(size, conf.grayDownloads.map(_._1))
+				index <- initIndex(size)
 					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
 			yield index
 		envri -> indexFut
 
 	def statsIndex(using envri: Envri): Future[StatsIndex] =
 		statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
+			.eager(s"Statindex for $envri is not ready yet. Try again in a minute.")
 
 	def runQuery[T](qp: StatsQueryParams)(runner: (StatsIndex, StatsQuery) => T)(using Envri): Future[T] =
-		val eventIdsFut: Future[Option[Array[Int]]] = qp.hashId match
-			case Some(hashId) =>
-				val query = s"SELECT id FROM statIndexEntries WHERE hash_id='${hashId.id}';"
-				runAnalyticalQuery(query)(rs => rs.getInt("id")).map(resQuery => Some(resQuery.toArray))
-			case None => Future.successful(None)
-		val queryFut = eventIdsFut.map: eventIds =>
-			StatsQuery(
+		for
+			index <- statsIndex
+			eventIds <- qp.hashId match
+				case Some(hashId) =>
+					val query = s"SELECT id FROM statIndexEntries WHERE hash_id='${hashId.id}';"
+					runAnalyticalQuery(query)(rs => rs.getInt("id")).map(resQuery => Some(resQuery.toArray))
+				case None => Future.successful(None)
+			query = StatsQuery(
 				page = qp.page,
 				pageSize = qp.pagesize,
 				dlEventIds = eventIds,
@@ -85,7 +89,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				dlEnd = qp.dlEnd,
 				includeGrayDl = qp.includeGrayDl
 			)
-		for query <- queryFut; index <- statsIndex yield runner(index, query)
+		yield runner(index, query)
 
 	def downloadsByCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsByCountry]] =
 		runQuery(queryParams)(_ downloadsByCountry _)
@@ -218,17 +222,16 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		resultSet.close()
 		res.toIndexedSeq
 
-	def initIndex(currentSize: Int, ipsGrayDownloads: Seq[String])(using envri: Envri): Future[StatsIndex] =
-		import PostgisDlAnalyzer.*
+	def initIndex(currentSize: Int)(using envri: Envri): Future[StatsIndex] =
 		val futTry = withConnection(conf.reader): conn =>
+			val indexImportQuery = "SELECT * FROM statIndexEntries"
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
 				log.info(s"Will execute query to start streaming stats index entries for $envri...")
+				preparedSt.setFetchSize(10000)
 				val resSet = preparedSt.executeQuery()
-				val index = StatsIndex((currentSize * 1.05 + 100).toInt, ipsGrayDownloads)
-				var nIngested: Long = 0
 				log.info(s"Stats index entries query for $envri executed, starting ingestion...")
-				given timings: Timings = Timings.empty
-				import Timings.{time, average}
+				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
+				var nIngested: Long = 0
 				while resSet.next() do
 					val indexEntry = parseIndexEntry(resSet).get
 					index.add(indexEntry)
@@ -236,15 +239,10 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 					if nIngested % 100000 == 0 then
 						log.info(s"Ingested $nIngested StatsIndex entries")
 				index.runOptimize()
-				timings.average.foreach: (name, time) =>
-					println(s"Operation: $name, time: $time ns")
 				index
 		futTry.flatMap(Future.fromTry)
 
-end PostgisDlAnalyzer
-
-object PostgisDlAnalyzer:
-	val indexImportQuery = "SELECT * FROM statIndexEntries"
+	private val ipTests: IndexedSeq[IpTest] = conf.grayDownloads.map(gdl => IpTest.parse(gdl.ip)).toIndexedSeq
 
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
@@ -259,5 +257,8 @@ object PostgisDlAnalyzer:
 				submitter = new URI(rs.getString("submitter")),
 				contributors = contribsArray.map(new URI(_)).toIndexedSeq,
 				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply),
-				ip = rs.getString("ip")
+				isGrayDownload =
+					val ip = rs.getString("ip")
+					ipTests.exists(_.test(ip))
 			)
+end PostgisDlAnalyzer

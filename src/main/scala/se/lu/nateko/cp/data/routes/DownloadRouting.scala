@@ -279,7 +279,7 @@ class DownloadRouting(
 	)(using Envri): Unit =
 		val dlInfo = DataObjDownloadInfo(
 			time = Instant.now(),
-			hashId = dobj.hash.id,
+			dobj = dobj,
 			cpUser = uid.map(authRouting.anonymizeCpUser),
 			endUser = endUser,
 			distributor = thirdParty

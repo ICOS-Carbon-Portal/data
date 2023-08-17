@@ -132,7 +132,11 @@ export default function(state = initState, action){
 					name: "dlDates",
 					values: new FilterTemporal(),
 					displayFilterForSingleObject: true
-				}]
+				}]/*, {
+					name: "includeGrayDl",
+					values: [true, false],
+					displayFilterForSingleObject: true
+				}]*/
 			});
 
 		case actionTypes.STATS_UPDATE:
@@ -143,6 +147,11 @@ export default function(state = initState, action){
 		case actionTypes.DOWNLOAD_DATES_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withTemporalFilters(action.filterTemporal)
+			});
+
+		case actionTypes.GRAY_DOWNLOADS_UPDATE:
+			return update({
+				downloadStats: state.downloadStats.withGrayDownloadFilter(action.filterGrayDownload)
 			});
 
 		case actionTypes.SET_SPEC_LEVEL_LOOKUP:

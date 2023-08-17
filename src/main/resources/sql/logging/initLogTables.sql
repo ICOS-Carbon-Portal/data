@@ -100,42 +100,11 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
 CREATE INDEX IF NOT EXISTS idx_downloads_item_type_btree ON public.downloads (item_type);
 
--- REMOVE HERE ---------------------------------------------------------------------------------------------------------------------------------------------------
---CREATE TABLE IF NOT EXISTS public.downloads_graylist (
---	ip text NOT NULL,
---	hostname text NULL,
---	reason text NULL
---);
---TRUNCATE TABLE public.downloads_graylist;
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.206.131.194', 'rx1-rm2-ru-unituscia.rm2.garr.net', 'Internal download from ETC');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.87', NULL, 'Internal download from ETC');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.215', NULL, 'Internal download from ETC');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('193.205.145.253', NULL, 'Internal download from ETC');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('188.40.107.37', 'static.37.107.40.188.clients.your-server.de', 'Unknown German user');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('94.130.9.183', 'mail.waldvogel.name', 'Unknown German user');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('114.119.128.0/18', NULL, 'Petalbot');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('140.172.0.0/16', NULL, 'NOAA downloads for their own distribution');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('162.55.85.220', NULL, 'BLEXBot');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.58.28.198', NULL, 'hyphen.earth collaboration');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.59.40.22', NULL, 'hyphen.earth collaboration');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('3.126.244.229', NULL, 'hyphen.earth collaboration');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('52.167.144.0/24', NULL, 'Bing bot');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('40.77.167.0/24', NULL, 'Bing bot');
---INSERT INTO public.downloads_graylist(ip, hostname, reason) VALUES('207.46.13.0/24', NULL, 'Bing bot');
-------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 CREATE TABLE IF NOT EXISTS public.contributors (
 	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
 	contributor text NOT NULL,
 	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
 );
-
--- REMOVE HERE -----------------------------------------------------------------------------------------------------
---CREATE OR REPLACE VIEW white_downloads AS
---	SELECT *
---	FROM public.downloads
---	WHERE distributor IS NOT NULL OR (ip <> '' AND NOT ip::inet <<= ANY(SELECT ip::inet FROM downloads_graylist));
---------------------------------------------------------------------------------------------------------------------
 
 -- Create new table including contributors in the dobjs table
 CREATE TABLE IF NOT EXISTS dobjs_extended AS
@@ -199,22 +168,27 @@ CREATE OR REPLACE FUNCTION public.addDownloadRecord(
 		_distributor text DEFAULT NULL,
 		_endUser text DEFAULT NULL
 	)
-	RETURNS void
+	RETURNS TABLE(id int8)
 	LANGUAGE plpgsql
 	VOLATILE
 AS $$
 
 BEGIN
-    IF (SELECT debounceDownload(_ip, _hash_id, _ts) IS NULL) THEN
+	IF (SELECT debounceDownload(_ip, _hash_id, _ts) IS NULL) THEN
 		IF (_lon IS NULL OR _lat IS NULL) THEN
-			INSERT INTO downloads(item_type, ts, hash_id, ip, city, country_code, distributor, endUser)
-			VALUES(_item_type, _ts, _hash_id, _ip, _city, _country_code, _distributor, _endUser);
+			RETURN QUERY
+				INSERT INTO downloads(item_type, ts, hash_id, ip, city, country_code, distributor, endUser)
+				VALUES(_item_type, _ts, _hash_id, _ip, _city, _country_code, _distributor, _endUser)
+				RETURNING downloads.id;
 		ELSE
-			INSERT INTO downloads(item_type, ts, hash_id, ip, city, country_code, pos, distributor, endUser)
-			VALUES(_item_type, _ts, _hash_id, _ip, _city, _country_code, ST_SetSRID(ST_MakePoint(_lon, _lat), 4326), _distributor, _endUser);
+			RETURN QUERY
+				INSERT INTO downloads(item_type, ts, hash_id, ip, city, country_code, pos, distributor, endUser)
+				VALUES(_item_type, _ts, _hash_id, _ip, _city, _country_code, ST_SetSRID(ST_MakePoint(_lon, _lat), 4326), _distributor, _endUser)
+				RETURNING downloads.id;
 		END IF;
+	ELSE RETURN QUERY SELECT -1::int8;
 	END IF;
-END;
+END
 
 $$;
 

@@ -9,7 +9,7 @@ export const getCountryCodesLookup = () => {
 };
 
 export const getSearchParams = (dlFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId, includeGrayDl} = dlFilters;
 
 	const dlStart = dlFilters.dlStart ? (dlFilters.dlStart + "T00:00:00Z") : dlFilters.dlStart;
 	const dlEnd = dlFilters.dlEnd ? (dlFilters.dlEnd + "T00:00:00Z") : dlFilters.dlEnd;
@@ -23,7 +23,8 @@ export const getSearchParams = (dlFilters, specLevelLookup) => {
 			hashId: hashId[0],
 			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 			dlStart,
-			dlEnd
+			dlEnd,
+			includeGrayDl
 		}
 		: {
 			specs,
@@ -33,7 +34,8 @@ export const getSearchParams = (dlFilters, specLevelLookup) => {
 			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 			originStations: originStations && originStations.length ? originStations : undefined,
 			dlStart,
-			dlEnd
+			dlEnd,
+			includeGrayDl
 		};
 };
 

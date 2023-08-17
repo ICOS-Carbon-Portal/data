@@ -23,7 +23,9 @@ abstract class PostgisClient(conf: PostgisConfig) extends AutoCloseable:
 
 	private val executor =
 		val queue = new LinkedBlockingQueue[Runnable]()
-		new ThreadPoolExecutor(0, conf.dbAccessPoolSize, 30, TimeUnit.SECONDS, queue)
+		val tpe = new ThreadPoolExecutor(conf.dbAccessPoolSize, conf.dbAccessPoolSize, 5, TimeUnit.MINUTES, queue)
+		tpe.allowCoreThreadTimeOut(true)
+		tpe
 
 	protected given ExecutionContextExecutor = ExecutionContext.fromExecutor(executor)
 

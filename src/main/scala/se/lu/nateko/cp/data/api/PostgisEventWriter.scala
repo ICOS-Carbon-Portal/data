@@ -72,14 +72,22 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 			case Some(endUser) => st.setString(endUser_idx, endUser)
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
-		st.execute()
+		val resultSet = st.executeQuery()
+		println("Download event written")
+
+		dlInfo match
+			case dobjDl: DataObjDownloadInfo =>
+				val newId = st.getResultSet().getLong(0)
+				println(s"New dl event id $newId")
+			case _ =>
+		resultSet.close()
 		st.close()
 	}
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
 		val dobjsQuery = """
 					|INSERT INTO dobjs_extended(hash_id, spec, submitter, station, contributors)
-					|VALUES (?, ?, ?, ?)
+					|VALUES (?, ?, ?, ?, ?)
 					|ON CONFLICT (hash_id) DO UPDATE
 					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
 					|""".stripMargin

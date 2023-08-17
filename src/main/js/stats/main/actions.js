@@ -11,6 +11,7 @@ export const actionTypes = {
 	FILTERS: 'FILTERS',
 	STATS_UPDATE: 'STATS_UPDATE',
 	DOWNLOAD_DATES_UPDATE: 'DOWNLOAD_DATES_UPDATE',
+	GRAY_DOWNLOADS_UPDATE: 'GRAY_DOWNLOADS_UPDATE',
 	STATS_UPDATED: 'STATS_UPDATED',
 	COUNTRIES_FETCHED: 'COUNTRIES_FETCHED',
 	DOWNLOAD_STATS_PER_DATE_FETCHED: 'DOWNLOAD_STATS_PER_DATE_FETCHED',
@@ -287,6 +288,15 @@ export const temporalFilterUpdate = (filterTemporal) => (dispatch) => {
 	dispatch({
 		type: actionTypes.DOWNLOAD_DATES_UPDATE,
 		filterTemporal
+	});
+
+	dispatch(fetchDownloadStats(1));
+};
+
+export const grayDownloadFilterUpdate = (filterGrayDownload) => (dispatch) => {
+	dispatch({
+		type: actionTypes.GRAY_DOWNLOADS_UPDATE,
+		filterGrayDownload
 	});
 
 	dispatch(fetchDownloadStats(1));

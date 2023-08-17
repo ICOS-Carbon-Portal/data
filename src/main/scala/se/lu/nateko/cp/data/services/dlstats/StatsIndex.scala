@@ -28,7 +28,7 @@ class StatsIndexEntry(
 	val submitter: URI,
 	val contributors: IndexedSeq[URI],
 	val dlCountry: Option[CountryCode],
-	val ip: String
+	val isGrayDownload: Boolean
 )
 
 case class StatsQuery(
@@ -46,7 +46,7 @@ case class StatsQuery(
 	includeGrayDl: Option[Boolean]
 )
 
-class StatsIndex(sizeHint: Int, ipsGrayDownloads: Seq[String]):
+class StatsIndex(sizeHint: Int):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
 
@@ -76,7 +76,7 @@ class StatsIndex(sizeHint: Int, ipsGrayDownloads: Seq[String]):
 		isWhiteDownload.runOptimize()
 		allDownloads.runOptimize()
 
-	def add(entry: StatsIndexEntry)(using Timings): Unit =
+	def add(entry: StatsIndexEntry): Unit =
 		import Timings.time
 	
 		extension [T](bmMap: BmMap[T])
@@ -93,7 +93,7 @@ class StatsIndex(sizeHint: Int, ipsGrayDownloads: Seq[String]):
 		dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
 		downloadedObjects.update(entry.idx, entry.dobj)
 		downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
-		ipsGrayDownloads.find(_ == entry.ip).fold(isWhiteDownload.add(entry.idx))(_ => None)
+		if !entry.isGrayDownload then isWhiteDownload.add(entry.idx)
 		allDownloads.add(entry.idx)
 
 	/**
