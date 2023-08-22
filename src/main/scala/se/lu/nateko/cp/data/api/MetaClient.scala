@@ -141,20 +141,6 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 		})
 	}
 
-	def getUtcOffset(station: StationId): Future[Int] = {
-		val url = Uri(s"$baseUrl$uploadApiPath/etc/utcOffset").withQuery(Uri.Query("stationId" -> station.id))
-		get(url, None).flatMap(extractIfSuccess(
-			Unmarshal(_).to[JsValue].map{
-				case JsNull =>
-					throw new CpDataException(s"Could not find UTC offset for station ${station.id}")
-				case JsNumber(value) =>
-					value.intValue
-				case js =>
-					throw new CpDataException(s"Expected UTC offset to be a number, got $js")
-			}
-		))
-	}
-
 	def getStationsWhereUserIsPi(user: UserId): Future[Seq[StationId]] = {
 		val stationVar = "stationId"
 

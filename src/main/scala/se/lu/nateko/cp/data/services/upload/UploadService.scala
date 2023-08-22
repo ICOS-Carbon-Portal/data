@@ -241,7 +241,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 		else if spec.specificDatasetType == DatasetType.StationTimeSeries then
 			val ingSpec = req.fold(
-				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, None),
+				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, Some(0)),// time zone offset is arbitrary for trying ingestion
 				dobj => IngestionSpec(dobj)
 			)
 			IngestionUploadTask.apply(ingSpec, file.toPath, meta)

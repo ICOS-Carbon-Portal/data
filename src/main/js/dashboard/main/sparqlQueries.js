@@ -12,6 +12,8 @@ select ?station ?dobj ?dataEnd ?columnName ?samplingHeight ?level where{
 		cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/icos> .
 	VALUES ?level {"1"^^xsd:integer "2"^^xsd:integer}
 	?dobj cpmeta:hasObjectSpec ?spec .
+	?spec cpmeta:hasFormat ?format .
+	VALUES ?format {<http://meta.icos-cp.eu/ontologies/cpmeta/asciiAtcProductTimeSer>}
 	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
 	?dobj cpmeta:wasAcquiredBy/prov:endedAtTime ?dataEnd .
 	?dobj cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?samplingHeight .

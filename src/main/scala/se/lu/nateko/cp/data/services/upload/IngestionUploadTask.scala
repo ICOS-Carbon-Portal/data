@@ -23,9 +23,8 @@ import se.lu.nateko.cp.data.utils.io.withSuffix
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
 	originalFile: Path,
-	colsMeta: ColumnsMeta,
-	utcOffset: Int
-)(implicit ctxt: ExecutionContext) extends UploadTask{
+	colsMeta: ColumnsMeta
+)(using ExecutionContext) extends UploadTask{
 	import IngestionUploadTask.{RowParser, IngestionSink}
 
 	val file = originalFile.withSuffix(FileExtension)
@@ -61,7 +60,9 @@ class IngestionUploadTask(
 					new delimitedheadercsv.SitesDelimitedHeaderCsvStreams(colsMeta).standardCsvParser(nRows, colFormats)
 				}
 
-			case `asciiEtcHalfHourlyProdTimeSer` =>
+			case `asciiEtcHalfHourlyProdTimeSer` => ingSpec.timeZoneOffset.fold(
+				failedSink(IncompleteMetadataFailure(ingSpec.label, "No time zone offset found for object's station"))
+			): utcOffset =>
 				defaultStandardSink(new etcprod.EtcHalfHourlyProductStreams(utcOffset).standardCsvParser)
 
 			case _ =>
@@ -135,7 +136,7 @@ class IngestionSpec(
 	val objSpec: DataObjectSpec,
 	val nRows: Option[Int],
 	val label: Option[String],
-	val stationId: Option[String]
+	val timeZoneOffset: Option[Int]
 )
 
 object IngestionSpec{
@@ -143,7 +144,7 @@ object IngestionSpec{
 		dobj.specification,
 		dobj.specificInfo.toOption.flatMap(_.nRows),
 		Some(dobj.hash.id),
-		dobj.specificInfo.toOption.map(_.acquisition.station.id)
+		dobj.specificInfo.toOption.flatMap(_.acquisition.station.timeZoneOffset)
 	)
 }
 
@@ -157,13 +158,8 @@ object IngestionUploadTask{
 
 		val formatsFut = getColumnFormats(ingSpec.objSpec.self.uri, meta.sparql)
 
-		val utcOffsetFut: Future[Int] = ingSpec.stationId.collect{
-			case StationId(stationId) if(ingSpec.objSpec.format.uri == asciiEtcHalfHourlyProdTimeSer) =>
-				meta.getUtcOffset(stationId)
-		}.getOrElse(Future.successful(0))
-
-		for(utcOffset <- utcOffsetFut; formats <- formatsFut) yield
-			new IngestionUploadTask(ingSpec, originalFile, formats, utcOffset)
+		for(formats <- formatsFut) yield
+			new IngestionUploadTask(ingSpec, originalFile, formats)
 	}
 
 	def getColumnFormats(objSpec: URI, sparql: SparqlClient)(implicit ctxt: ExecutionContext): Future[ColumnsMeta] = {

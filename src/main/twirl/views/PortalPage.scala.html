@@ -2,7 +2,7 @@
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
 @()(implicit envri: Envri, conf: EnvriConfig)
-@template{
+@CommonPage(envri.shortName + " data search"){
 	<link rel="stylesheet" href="../portal/css/portal.css">
 	<style type="text/css">
 		@if(envri == Envri.SITES){
@@ -15,9 +15,4 @@
 	<div id="main"></div>
 	@JavascriptConfig()
 	<script src="/portal/portal.js"></script>
-}
-
-@template = @{
-if(envri == Envri.SITES) SitesPage("SITES data search", bootstrapJavascript = false) _
-else CpCommonPage("ICOS data search") _
 }
