@@ -6,9 +6,13 @@ import eu.icoscp.envri.Envri
 import eu.icoscp.geoipclient.GeoIpInfo
 import se.lu.nateko.cp.data.PostgisConfig
 import se.lu.nateko.cp.data.services.dlstats.StatsIndex
+import se.lu.nateko.cp.data.services.dlstats.StatsIndexEntry
+import se.lu.nateko.cp.data.api.IpTest
 import se.lu.nateko.cp.meta.core.data.Agent
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.Station
+import se.lu.nateko.cp.meta.core.data.CountryCode
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 import java.sql.Types
 import java.time.Instant
@@ -19,7 +23,7 @@ import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
 
 
-class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
+class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
 
 	private val scheduler = Executors.newSingleThreadScheduledExecutor()
 
@@ -27,7 +31,7 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 		super.close()
 		scheduler.shutdown()
 
-	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Done] = execute(conf.writer){conn =>
+	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using envri: Envri): Future[Done] = execute(conf.writer){conn =>
 		val logQuery = "SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
 		val st = conn.prepareStatement(logQuery)
 
@@ -73,15 +77,41 @@ class PostgisEventWriter(indices: Map[Envri, Future[StatsIndex]], conf: PostgisC
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
 		val resultSet = st.executeQuery()
-		println("Download event written")
+
+		val statsIndex = statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
+
+		val ipTests: IndexedSeq[IpTest] = conf.grayDownloads.map(gdl => IpTest.parse(gdl.ip)).toIndexedSeq
 
 		dlInfo match
 			case dobjDl: DataObjDownloadInfo =>
-				val newId = st.getResultSet().getLong(0)
-				println(s"New dl event id $newId")
+				for index <- statsIndex do
+					resultSet.next()
+					val newId = resultSet.getLong(1)
+					if newId != -1 then
+						val newEntry = StatsIndexEntry(
+							newId.toInt,
+							Sha256Sum.fromString(dobjDl.hashId).get,
+							dobjDl.time,
+							dobjDl.dobj.specification.self.uri,
+							dobjDl.dobj.specificInfo.fold(_.station, stationSpec => Some(stationSpec.acquisition.station)) match
+								case None => None
+								case Some(station) => Some(station.org.self.uri)
+							,
+							dobjDl.dobj.submission.submitter.self.uri,
+							(
+								dobjDl.dobj.references.authors.toSeq.flatten ++
+								dobjDl.dobj.production.toSeq.flatMap: prodInfo =>
+									prodInfo.contributors :+ prodInfo.creator
+							).map(_.self.uri).distinct.toIndexedSeq,
+							ip.fold(ip => None, geo => geo.country_code.flatMap(CountryCode.unapply)),
+							!ipTests.forall(!_.test(ip.fold(identity, geo => geo.ip)))
+						)
+						index.add(newEntry)
+					resultSet.close()
+					st.close()
 			case _ =>
-		resultSet.close()
-		st.close()
+				resultSet.close()
+				st.close()
 	}
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>

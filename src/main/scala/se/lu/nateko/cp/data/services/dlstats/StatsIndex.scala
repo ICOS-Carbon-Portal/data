@@ -138,7 +138,8 @@ class StatsIndex(sizeHint: Int):
 			bm
 
 		val filters =
-			val includeGrayDl = qp.includeGrayDl.getOrElse(false)     // By default, do not include gray downloads.
+			// By default, do not include gray downloads.
+			val includeGrayDl = qp.includeGrayDl.getOrElse(false)
 			if includeGrayDl then
 				Seq(specFilter, stationFilter, contributorsFilter, submitterFilter, dlCountriesFilter, dlTimeFilter, dlEventsFilter).flatten
 			else
