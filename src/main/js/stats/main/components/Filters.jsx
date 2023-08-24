@@ -66,7 +66,7 @@ const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFil
 				<CheckButton
 					name={"includeGrayDl"}
 					grayDownloadFilterUpdate={grayDownloadFilterUpdate}
-					isChecked={downloadStats.getFilter("includeGrayDl")}
+					isChecked={downloadStats.grayDownloadFilter}
 					text={'Include gray listed IPs'}
 				/>
 			</>

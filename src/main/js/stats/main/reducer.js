@@ -132,11 +132,7 @@ export default function(state = initState, action){
 					name: "dlDates",
 					values: new FilterTemporal(),
 					displayFilterForSingleObject: true
-				}]/*, {
-					name: "includeGrayDl",
-					values: [true, false],
-					displayFilterForSingleObject: true
-				}]*/
+				}]
 			});
 
 		case actionTypes.STATS_UPDATE:

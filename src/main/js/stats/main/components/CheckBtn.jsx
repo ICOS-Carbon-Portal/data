@@ -2,7 +2,7 @@ import React, { Component} from 'react';
 
 export default class CheckBtn extends Component {
 	onClick() {
-		this.props.grayDownloadFilterUpdate(!this.props.isChecked)
+		this.props.grayDownloadFilterUpdate(!this.props.isChecked);
 	}
 	render(){
 		const isChecked = this.props.isChecked || false;
