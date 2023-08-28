@@ -181,6 +181,7 @@ export const resetFilters = () => dispatch => {
 	dispatch({
 		type: actionTypes.RESET_FILTERS
 	});
+	dispatch(fetchFilters);
 	dispatch(fetchDownloadStats())
 };
 
@@ -206,11 +207,21 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 };
 
 const fetchFilters = (dispatch, getState) => {
-	const { specLevelLookup } = getState();
+	const { downloadStats, specLevelLookup } = getState();
+
+	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
 
 	getCountryCodesLookup().then(
 		countryCodeLookup => {
-			Promise.all([getSpecsApi(), getContributorsApi(), getStationsApi(), getSubmittersApi(), postToApi('dlfrom'), getStationCountryCodes()]).then(
+			const promises = [
+				getSpecsApi(searchParams),
+				getContributorsApi(searchParams),
+				getStationsApi(searchParams),
+				getSubmittersApi(searchParams),
+				postToApi('dlfrom', searchParams),
+				getStationCountryCodes()
+			]
+			Promise.all(promises).then(
 				([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
 					const dataLevels = specifications.reduce((acc, curr) => {
 						const lvl = acc.find(l => l.id === curr.level);
@@ -281,6 +292,7 @@ export const statsUpdate = (varName, values) => (dispatch) => {
 		values
 	});
 
+	dispatch(fetchFilters)
 	dispatch(fetchDownloadStats(1));
 };
 

@@ -113,8 +113,8 @@ export const getDownloadStatsApi = (pageOpt, searchParams) => {
 		});
 };
 
-export const getSpecsApi = () => {
-	return postToApi('specifications')
+export const getSpecsApi = searchParams => {
+	return postToApi('specifications', searchParams)
 		.then(specifications => {
 			if (specifications.length === 0) {
 				return Promise.resolve(specifications);
@@ -133,8 +133,8 @@ export const getSpecsApi = () => {
 		});
 };
 
-export const getStationsApi = () => {
-	return postToApi('stations')
+export const getStationsApi = searchParams => {
+	return postToApi('stations', searchParams)
 		.then(stations => {
 			if (stations.length === 0) {
 				return Promise.resolve(stations);
@@ -152,8 +152,8 @@ export const getStationsApi = () => {
 		});
 };
 
-export const getContributorsApi = () => {
-	return postToApi('contributors')
+export const getContributorsApi = searchParams => {
+	return postToApi('contributors', searchParams)
 		.then(contributors => {
 			if (contributors.length === 0) {
 				return Promise.resolve(contributors);
@@ -171,8 +171,8 @@ export const getContributorsApi = () => {
 		});
 };
 
-export const getSubmittersApi = () => {
-	return postToApi('submitters')
+export const getSubmittersApi = searchParams => {
+	return postToApi('submitters', searchParams)
 		.then(submitters => {
 			if (submitters.length === 0) {
 				return Promise.resolve(submitters);

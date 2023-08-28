@@ -179,20 +179,20 @@ class StatsIndex(sizeHint: Int):
 			DownloadObjStat(count.get, hash)
 		DownloadStats(statsToReturn, statSize)
 
-	def specifications(): IndexedSeq[Specifications] =
-		specIndices.map((spec, specBm) => Specifications(specBm.getCardinality, spec)).toIndexedSeq.sortBy(- _._1)
+	def specifications(qp: StatsQuery): IndexedSeq[Specifications] =
+		specIndices.map((spec, specBm) => Specifications(filter(qp).andCardinality(specBm), spec)).toIndexedSeq.sortBy(- _._1)
 	
-	def contributors(): IndexedSeq[Contributors] =
-		contributorIndices.map((contributor, contributorBm) => Contributors(contributorBm.getCardinality, contributor)).toIndexedSeq.sortBy(- _._1)
+	def contributors(qp: StatsQuery): IndexedSeq[Contributors] =
+		contributorIndices.map((contributor, contributorBm) => Contributors(filter(qp).andCardinality(contributorBm), contributor)).toIndexedSeq.sortBy(- _._1)
 
-	def submitters(): IndexedSeq[Submitters] =
-		submitterIndices.map((submitter, submitterBm) => Submitters(submitterBm.getCardinality, submitter)).toIndexedSeq.sortBy(- _._1)
+	def submitters(qp: StatsQuery): IndexedSeq[Submitters] =
+		submitterIndices.map((submitter, submitterBm) => Submitters(filter(qp).andCardinality(submitterBm), submitter)).toIndexedSeq.sortBy(- _._1)
 
-	def stations(): IndexedSeq[Stations] =
-		stationIndices.map((station, stationBm) => Stations(stationBm.getCardinality, station)).toIndexedSeq.sortBy(- _._1)
+	def stations(qp: StatsQuery): IndexedSeq[Stations] =
+		stationIndices.map((station, stationBm) => Stations(filter(qp).andCardinality(stationBm), station)).toIndexedSeq.sortBy(- _._1)
 
-	def dlfrom(): IndexedSeq[DownloadedFrom] =
-		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(dlCountryBm.getCardinality, dlCountry)).toIndexedSeq.sortBy(- _._1)
+	def dlfrom(qp: StatsQuery): IndexedSeq[DownloadedFrom] =
+		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(filter(qp).andCardinality(dlCountryBm), dlCountry)).toIndexedSeq.sortBy(- _._1)
 
 	def downloadCount(qp: StatsQuery): DownloadCount =
 		val count = filter(qp).getOrElse(allDownloads).getCardinality

@@ -48,7 +48,7 @@ export default class Filter extends Component {
 							placeholder={placeholder}
 							valueField="id"
 							textField="label"
-							data={filter.values}
+							data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
 							value={value}
 							filter="contains"
 							onChange={this.handleSelectionChange.bind(this, filter)}

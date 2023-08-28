@@ -185,21 +185,11 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 			statsQuery("downloadsPerMonth", pgClient.downloadsPerMonth) ~
 			statsQuery("downloadsPerYear", pgClient.downloadsPerYear) ~
 			statsQuery("downloadStats", pgClient.downloadStats) ~
-			path("specifications"){
-				complete(pgClient.specifications)
-			} ~
-			path("contributors"){
-				complete(pgClient.contributors)
-			} ~
-			path("submitters"){
-				complete(pgClient.submitters)
-			} ~
-			path("stations"){
-				complete(pgClient.stations)
-			} ~
-			path("dlfrom"){
-				complete(pgClient.dlfrom)
-			} ~
+			statsQuery("specifications", pgClient.specifications) ~
+			statsQuery("contributors", pgClient.contributors) ~
+			statsQuery("submitters", pgClient.submitters) ~
+			statsQuery("stations", pgClient.stations) ~
+			statsQuery("dlfrom", pgClient.dlfrom) ~
 			path("downloadedCollections"){
 				onSuccess(pgClient.downloadedCollections){dbc =>
 					complete(dbc)

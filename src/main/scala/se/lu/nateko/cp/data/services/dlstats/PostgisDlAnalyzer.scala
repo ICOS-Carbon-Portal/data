@@ -109,20 +109,20 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def downloadStats(queryParams: StatsQueryParams)(using Envri): Future[DownloadStats] =
 		runQuery(queryParams)(_ downloadStats _)
 
-	def specifications(using Envri): Future[IndexedSeq[Specifications]] =
-		statsIndex.map(_.specifications())
+	def specifications(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Specifications]] =
+		runQuery(queryParams)(_ specifications _)
 
-	def contributors(using Envri): Future[IndexedSeq[Contributors]] =
-		statsIndex.map(_.contributors())
+	def contributors(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Contributors]] =
+		runQuery(queryParams)(_ contributors _)
 
-	def submitters(using Envri): Future[IndexedSeq[Submitters]] =
-		statsIndex.map(_.submitters())
+	def submitters(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Submitters]] =
+		runQuery(queryParams)(_ submitters _)
 
-	def stations(using Envri): Future[IndexedSeq[Stations]] =
-		statsIndex.map(_.stations())
+	def stations(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Stations]] =
+		runQuery(queryParams)(_ stations _)
 
-	def dlfrom(using Envri): Future[IndexedSeq[DownloadedFrom]] =
-		statsIndex.map(_.dlfrom())
+	def dlfrom(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadedFrom]] =
+		runQuery(queryParams)(_ dlfrom _)
 	
 	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
