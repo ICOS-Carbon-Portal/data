@@ -4,16 +4,15 @@ prefix prov: <http://www.w3.org/ns/prov#>
 
 select ?station ?dobj ?dataEnd ?columnName ?samplingHeight ?level where{
 	?station cpmeta:hasStationId "${stationId}"^^xsd:string .
+	VALUES ?columnName { "co2" "ch4" "n2o" "co" }
 	?column cpmeta:hasColumnTitle ?columnName ;
 		cpmeta:hasValueType/cpmeta:hasUnit ?unit .
-	VALUES ?columnName { "co2" "ch4" "n2o" "co" }
 	?spec cpmeta:containsDataset/cpmeta:hasColumn ?column ;
 		cpmeta:hasDataLevel ?level ;
+		cpmeta:hasFormat <http://meta.icos-cp.eu/ontologies/cpmeta/asciiAtcProductTimeSer> ;
 		cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/icos> .
 	VALUES ?level {"1"^^xsd:integer "2"^^xsd:integer}
 	?dobj cpmeta:hasObjectSpec ?spec .
-	?spec cpmeta:hasFormat ?format .
-	VALUES ?format {<http://meta.icos-cp.eu/ontologies/cpmeta/asciiAtcProductTimeSer>}
 	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .
 	?dobj cpmeta:wasAcquiredBy/prov:endedAtTime ?dataEnd .
 	?dobj cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?samplingHeight .
