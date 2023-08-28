@@ -242,8 +242,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				index
 		futTry.flatMap(Future.fromTry)
 
-	private val ipTests: IndexedSeq[IpTest] = conf.grayDownloads.map(gdl => IpTest.parse(gdl.ip)).toIndexedSeq
-
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
 			val ccodeStr = rs.getString("country_code")
@@ -259,6 +257,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				dlCountry = Option(ccodeStr).flatMap(CountryCode.unapply),
 				isGrayDownload =
 					val ip = rs.getString("ip")
-					ipTests.exists(_.test(ip))
+					conf.grayDownloads.exists(_.test(ip))
 			)
 end PostgisDlAnalyzer

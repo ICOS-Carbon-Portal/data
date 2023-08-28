@@ -17,6 +17,7 @@ import eu.icoscp.geoipclient.{CpGeoConfig, CpGeoClient}
 import se.lu.nateko.cp.cpauth.core.EmailConfig
 import eu.icoscp.georestheart.RestHeartDBConfig
 import eu.icoscp.georestheart.{RestHeartConfig => RHConfig}
+import se.lu.nateko.cp.data.api.IpTest
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 
@@ -46,8 +47,6 @@ case class UploadConfig(
 	admins: Seq[String]
 )
 
-case class GrayDownload(ip: String, hostname: Option[String], reason: String)
-
 case class PostgisConfig(
 	hostname: String,
 	dbNames: Map[Envri, String],
@@ -58,7 +57,7 @@ case class PostgisConfig(
 	dbAccessPoolSize: Int,
 	skipInit: Boolean,
 	ipsToIgnore: Seq[String],
-	grayDownloads: Seq[GrayDownload]
+	grayDownloads: Seq[IpTest]
 )
 
 case class MetaServiceConfig(
@@ -113,7 +112,17 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[UploadConfig] = jsonFormat5(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
-	given RootJsonFormat[GrayDownload] = jsonFormat3(GrayDownload.apply)
+	given RootJsonFormat[IpTest] with
+		override def write(obj: IpTest): JsValue = ??? //should not be needed
+		override def read(json: JsValue): IpTest =
+			val ipJs = json
+				.asJsObject("Expected a JSON object describing IpTest")
+				.fields
+				.getOrElse("ip", deserializationError(s"Expected an 'ip' property in an IpTest JSON ${json.prettyPrint}"))
+			ipJs match
+				case JsString(ip) => IpTest.parse(ip)
+				case _ => deserializationError(s"expected a JSON string for IpTest 'ip' property, got ${ipJs.prettyPrint}")
+
 
 	given RootJsonFormat[Envri] = enumFormat(Envri.valueOf, Envri.values)
 

@@ -21,6 +21,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
+import java.net.URI
 
 
 class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
@@ -48,7 +49,8 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 		st.setString(item_type, itemType)
 		st.setTimestamp(ts, java.sql.Timestamp.from(dlInfo.time))
 		st.setString(hash_id, dlInfo.hashId)
-		st.setString(ip_idx, ip.fold(identity, _.ip))
+		val ipAddr = ip.fold(identity, _.ip)
+		st.setString(ip_idx, ipAddr)
 
 		ip.fold(
 			ip => {
@@ -80,38 +82,29 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 
 		val statsIndex = statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
 
-		val ipTests: IndexedSeq[IpTest] = conf.grayDownloads.map(gdl => IpTest.parse(gdl.ip)).toIndexedSeq
-
 		dlInfo match
-			case dobjDl: DataObjDownloadInfo =>
+			case DataObjDownloadInfo(time, dobj, _, _, _) =>
 				for index <- statsIndex do
 					resultSet.next()
 					val newId = resultSet.getLong(1)
 					if newId != -1 then
 						val newEntry = StatsIndexEntry(
-							newId.toInt,
-							Sha256Sum.fromString(dobjDl.hashId).get,
-							dobjDl.time,
-							dobjDl.dobj.specification.self.uri,
-							dobjDl.dobj.specificInfo.fold(_.station, stationSpec => Some(stationSpec.acquisition.station)) match
-								case None => None
-								case Some(station) => Some(station.org.self.uri)
-							,
-							dobjDl.dobj.submission.submitter.self.uri,
-							(
-								dobjDl.dobj.references.authors.toSeq.flatten ++
-								dobjDl.dobj.production.toSeq.flatMap: prodInfo =>
-									prodInfo.contributors :+ prodInfo.creator
-							).map(_.self.uri).distinct.toIndexedSeq,
-							ip.fold(ip => None, geo => geo.country_code.flatMap(CountryCode.unapply)),
-							!ipTests.forall(!_.test(ip.fold(identity, geo => geo.ip)))
+							idx = newId.toInt,
+							dobj = dobj.hash,
+							dlTime = time,
+							objectSpec = dobj.specification.self.uri,
+							station = dobj.specificInfo
+								.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
+								.map(_.org.self.uri),
+							submitter = dobj.submission.submitter.self.uri,
+							contributors = getContributorUris(dobj),
+							dlCountry = ip.toOption.flatMap(_.country_code).flatMap(CountryCode.unapply),
+							isGrayDownload = conf.grayDownloads.exists(_.test(ipAddr))
 						)
 						index.add(newEntry)
-					resultSet.close()
-					st.close()
 			case _ =>
-				resultSet.close()
-				st.close()
+		resultSet.close()
+		st.close()
 	}
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
@@ -136,12 +129,7 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 				case None => dobjsSt.setNull(station, Types.VARCHAR)
 				case Some(theStation) => dobjsSt.setString(station, theStation.org.self.uri.toString)
 
-			val contribUris: Array[Object] = (
-				dobj.references.authors.toSeq.flatten ++
-				dobj.production.toSeq.flatMap(prodInfo =>
-					prodInfo.contributors :+ prodInfo.creator
-				)
-			).map(_.self.uri.toString).distinct.toArray
+			val contribUris: Array[Object] = getContributorUris(dobj).map(_.toString).toArray
 			val contribsArray = conn.createArrayOf("text", contribUris)
 			dobjsSt.setArray(contributors, contribsArray)
 
@@ -150,5 +138,12 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 		finally
 			dobjsSt.close()
 	}
+
+	private def getContributorUris(dobj: DataObject): IndexedSeq[URI] = (
+			dobj.references.authors.toSeq.flatten ++
+			dobj.production.toSeq.flatMap(prodInfo =>
+				prodInfo.contributors :+ prodInfo.creator
+			)
+		).map(_.self.uri).distinct.toIndexedSeq
 
 end PostgisEventWriter
