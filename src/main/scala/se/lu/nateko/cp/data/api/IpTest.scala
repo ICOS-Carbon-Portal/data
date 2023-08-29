@@ -4,6 +4,9 @@ sealed trait IpTest:
 	def test(ipv4: String): Boolean
 
 object IpTest:
+	val privNets = IndexedSeq("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8").map(IPv4Range(_))
+	def isPrivateNetwork(ipv4: String): Boolean = privNets.exists(_.test(ipv4))
+
 	def parse(ipOrRange: String): IpTest =
 		if ipOrRange.contains("/") then IPv4Range(ipOrRange) else PlainIPv4(ipOrRange)
 
@@ -34,3 +37,4 @@ object IpTest:
 		override def test(ipv4: String): Boolean =
 			try (parseIpV4(ipv4) & mask) == addr
 			catch case _ => false
+	end IPv4Range

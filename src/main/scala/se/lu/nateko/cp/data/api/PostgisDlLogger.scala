@@ -25,7 +25,7 @@ class PostgisDlLogger(
 
 
 	private def logInternally(ip: String)(logAction: Either[String, GeoIpInfo] => Unit): Unit = if !ipsToIgnore.contains(ip) then
-		if ip.startsWith("10.") || ip.startsWith("127.") then logAction(Left(ip))
+		if IpTest.isPrivateNetwork(ip) then logAction(Left(ip))
 		else geoClient.lookup(ip).onComplete{
 			case Success(ipinfo) =>
 				logAction(Right(ipinfo))
