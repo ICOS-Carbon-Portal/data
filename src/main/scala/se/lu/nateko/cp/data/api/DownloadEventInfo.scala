@@ -6,6 +6,7 @@ import DownloadEventInfo.{CsvSelect, CpbSlice}
 import se.lu.nateko.cp.cpauth.core.AnonId
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.cpauth.core.CoreUtils
+import se.lu.nateko.cp.meta.core.data.DataObject
 
 
 sealed trait DownloadEventInfo:
@@ -19,11 +20,12 @@ sealed trait DlEventForMongo extends DownloadEventInfo:
 
 case class DataObjDownloadInfo(
 	time: Instant,
-	hashId: String,
+	dobj: DataObject,
 	cpUser: Option[AnonId],
 	distributor: Option[String],
 	endUser: Option[String]
-) extends DlEventForPostgres
+) extends DlEventForPostgres:
+	def hashId: String = dobj.hash.id
 
 case class CollectionDownloadInfo(time: Instant, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres
 case class DocumentDownloadInfo(time: Instant, hashId: String, cpUser: Option[AnonId]) extends DlEventForPostgres

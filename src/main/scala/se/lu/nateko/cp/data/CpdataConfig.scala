@@ -17,6 +17,7 @@ import eu.icoscp.geoipclient.{CpGeoConfig, CpGeoClient}
 import se.lu.nateko.cp.cpauth.core.EmailConfig
 import eu.icoscp.georestheart.RestHeartDBConfig
 import eu.icoscp.georestheart.{RestHeartConfig => RHConfig}
+import se.lu.nateko.cp.data.api.IpTest
 
 case class AuthConfig(pub: Map[Envri, PublicAuthConfig], userSecretSalt: String)
 
@@ -55,7 +56,8 @@ case class PostgisConfig(
 	writer: CredentialsConfig,
 	dbAccessPoolSize: Int,
 	skipInit: Boolean,
-	ipsToIgnore: Seq[String]
+	ipsToIgnore: Seq[String],
+	grayDownloads: Seq[IpTest]
 )
 
 case class MetaServiceConfig(
@@ -110,13 +112,24 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[UploadConfig] = jsonFormat5(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
+	given RootJsonFormat[IpTest] with
+		override def write(obj: IpTest): JsValue = ??? //should not be needed
+		override def read(json: JsValue): IpTest =
+			val ipJs = json
+				.asJsObject("Expected a JSON object describing IpTest")
+				.fields
+				.getOrElse("ip", deserializationError(s"Expected an 'ip' property in an IpTest JSON ${json.prettyPrint}"))
+			ipJs match
+				case JsString(ip) => IpTest.parse(ip)
+				case _ => deserializationError(s"expected a JSON string for IpTest 'ip' property, got ${ipJs.prettyPrint}")
+
 
 	given RootJsonFormat[Envri] = enumFormat(Envri.valueOf, Envri.values)
 
 	given RootJsonFormat[MongoDbIndex] = jsonFormat3(MongoDbIndex.apply)
 	given RootJsonFormat[MongoDbAggregations] = jsonFormat3(MongoDbAggregations.apply)
 	given RootJsonFormat[RestheartCollDef] = jsonFormat4(RestheartCollDef.apply)
-	given RootJsonFormat[PostgisConfig] = jsonFormat9(PostgisConfig.apply)
+	given RootJsonFormat[PostgisConfig] = jsonFormat10(PostgisConfig.apply)
 	given RootJsonFormat[EtcFacadeConfig] = jsonFormat4(EtcFacadeConfig.apply)
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}

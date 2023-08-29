@@ -19,14 +19,14 @@ class PostgisDlLogger(
 
 	import system.dispatcher
 
-	def logDl(entry: DlEventForPostgres, ip: String)(using Envri): Unit = logInternally(ip){ipinfo =>
-		pgLogWriter.logDownload(entry, ipinfo).failed.foreach{err =>
+	def logDl(entry: DlEventForPostgres, ip: String)(using Envri): Unit = logInternally(ip): ipinfo =>
+		pgLogWriter.logDownload(entry, ipinfo).failed.foreach: err =>
 			system.log.error(err, "Could not log download to Postgres")
-		}
-	}
+
 
 	private def logInternally(ip: String)(logAction: Either[String, GeoIpInfo] => Unit): Unit = if !ipsToIgnore.contains(ip) then
-		geoClient.lookup(ip).onComplete{
+		if IpTest.isPrivateNetwork(ip) then logAction(Left(ip))
+		else geoClient.lookup(ip).onComplete{
 			case Success(ipinfo) =>
 				logAction(Right(ipinfo))
 			case Failure(err) =>

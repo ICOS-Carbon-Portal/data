@@ -94,34 +94,44 @@ export default function(state = initState, action){
 				countryCodeLookup,
 				filters: [{
 					name: "specification",
-					values: action.specifications
+					values: action.specifications,
+					displayFilterForSingleObject: false
 				}, {
 					name: "format",
-					values: action.formats
+					values: action.formats,
+					displayFilterForSingleObject: false
 				}, {
 					name: "dataLevel",
-					values: action.dataLevels
+					values: action.dataLevels,
+					displayFilterForSingleObject: false
 				}, {
 					name: "stations",
-					values: stations
+					values: stations,
+					displayFilterForSingleObject: false
 				}, {
 					name: "contributors",
-					values: action.contributors
+					values: action.contributors,
+					displayFilterForSingleObject: false
 				}, {
 					name: "themes",
-					values: action.themes
+					values: action.themes,
+					displayFilterForSingleObject: false
 				}, {
 					name: "submitters",
-					values: action.submitters
+					values: action.submitters,
+					displayFilterForSingleObject: false
 				}, {
 					name: "dlfrom",
-					values: dlFromValues
+					values: dlFromValues,
+					displayFilterForSingleObject: true
 				}, {
 					name: "dataOriginCountries",
-					values: dataOriginCountryValues
+					values: dataOriginCountryValues,
+					displayFilterForSingleObject: false
 				}, {
 					name: "dlDates",
-					values: new FilterTemporal()
+					values: new FilterTemporal(),
+					displayFilterForSingleObject: true
 				}]
 			});
 
@@ -133,6 +143,11 @@ export default function(state = initState, action){
 		case actionTypes.DOWNLOAD_DATES_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withTemporalFilters(action.filterTemporal)
+			});
+
+		case actionTypes.GRAY_DOWNLOADS_UPDATE:
+			return update({
+				downloadStats: state.downloadStats.withGrayDownloadFilter(action.filterGrayDownload)
 			});
 
 		case actionTypes.SET_SPEC_LEVEL_LOOKUP:

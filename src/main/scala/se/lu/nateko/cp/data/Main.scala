@@ -10,9 +10,11 @@ import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.RestHeartClient
 import se.lu.nateko.cp.data.api.PostgisDlLogger
+import se.lu.nateko.cp.data.api.PostgisEventWriter
 import se.lu.nateko.cp.data.formats.netcdf.ViewServiceFactory
 import se.lu.nateko.cp.data.routes.*
 import se.lu.nateko.cp.data.services.dlstats.PostgisDlAnalyzer
+import se.lu.nateko.cp.data.services.dlstats.StatsIndex
 import se.lu.nateko.cp.data.services.fetch.FromBinTableFetcher
 import se.lu.nateko.cp.data.services.fetch.IntegrityControlService
 import se.lu.nateko.cp.data.services.upload.DownloadService
@@ -29,12 +31,10 @@ import java.nio.file.Path
 import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.EmailSender
 import eu.icoscp.geoipclient.CpGeoClient
-import se.lu.nateko.cp.data.api.PostgisEventWriter
 
 object Main extends App:
 
 	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
-	system.log
 	import system.dispatcher
 
 	val config = ConfigReader.getDefault
@@ -60,8 +60,8 @@ object Main extends App:
 
 	val authRouting = new AuthRouting(config.auth)
 	val uploadRoute = new UploadRouting(authRouting, uploadService, ConfigReader.metaCore).route
-	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis)
-	val postgisWriter = new PostgisEventWriter(config.postgis, system.log)
+	val postgisLogAnalyzer = new PostgisDlAnalyzer(config.postgis, system.log)
+	val postgisWriter = new PostgisEventWriter(postgisLogAnalyzer.statsIndices, config.postgis, system.log)
 	val postgisLogger = new PostgisDlLogger(geoClient, postgisWriter, config.postgis.ipsToIgnore)
 
 	val downloadService = new DownloadService(ConfigReader.metaCore, uploadService, restHeart)
@@ -121,7 +121,7 @@ object Main extends App:
 		complete(StatusCodes.NotFound -> "Your request did not match any service")
 	}
 
-	restHeart.init.zip(postgisWriter.initLogTables()).flatMap{_ =>
+	restHeart.init.zip(postgisLogAnalyzer.initLogTables).flatMap{_ =>
 		http.newServerAt(config.interface, config.port).bind(route)
 	}.onComplete{
 		case Success(binding) =>

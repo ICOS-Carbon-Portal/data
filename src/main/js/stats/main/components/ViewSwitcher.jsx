@@ -34,6 +34,7 @@ const DownloadsView = props => {
 					filters={props.filters}
 					updateTableWithFilter={props.updateTableWithFilter}
 					temporalFilterUpdate={props.temporalFilterUpdate}
+					grayDownloadFilterUpdate={props.grayDownloadFilterUpdate}
 					resetFilters={props.resetFilters}
 					downloadStats={props.downloadStats}
 				/>

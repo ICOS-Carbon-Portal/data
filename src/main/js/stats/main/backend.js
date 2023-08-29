@@ -8,9 +8,12 @@ export const getCountryCodesLookup = () => {
 	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
 };
 
-export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId, dlStart, dlEnd } = downloadStatsFilters;
+export const getSearchParams = (dlFilters, specLevelLookup) => {
+	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
 
+	const dlStart = dlFilters.dlStart;
+	const dlEnd = dlFilters.dlEnd;
+	const includeGrayDl = dlFilters.grayDownloadFilter;
 	const specSpecs = specification && specification.length ? specification : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
 	const combinedSpecs = specSpecs.concat(dataLevelSpecs);
@@ -19,8 +22,10 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 	return hashId && hashId.length
 		? {
 			hashId: hashId[0],
+			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 			dlStart,
-			dlEnd
+			dlEnd,
+			includeGrayDl
 		}
 		: {
 			specs,
@@ -30,7 +35,8 @@ export const getSearchParams = (downloadStatsFilters, specLevelLookup) => {
 			dlfrom: dlfrom && dlfrom.length ? dlfrom : undefined,
 			originStations: originStations && originStations.length ? originStations : undefined,
 			dlStart,
-			dlEnd
+			dlEnd,
+			includeGrayDl
 		};
 };
 
@@ -107,8 +113,8 @@ export const getDownloadStatsApi = (pageOpt, searchParams) => {
 		});
 };
 
-export const getSpecsApi = () => {
-	return postToApi('specifications')
+export const getSpecsApi = searchParams => {
+	return postToApi('specifications', searchParams)
 		.then(specifications => {
 			if (specifications.length === 0) {
 				return Promise.resolve(specifications);
@@ -127,8 +133,8 @@ export const getSpecsApi = () => {
 		});
 };
 
-export const getStationsApi = () => {
-	return postToApi('stations')
+export const getStationsApi = searchParams => {
+	return postToApi('stations', searchParams)
 		.then(stations => {
 			if (stations.length === 0) {
 				return Promise.resolve(stations);
@@ -146,8 +152,8 @@ export const getStationsApi = () => {
 		});
 };
 
-export const getContributorsApi = () => {
-	return postToApi('contributors')
+export const getContributorsApi = searchParams => {
+	return postToApi('contributors', searchParams)
 		.then(contributors => {
 			if (contributors.length === 0) {
 				return Promise.resolve(contributors);
@@ -165,8 +171,8 @@ export const getContributorsApi = () => {
 		});
 };
 
-export const getSubmittersApi = () => {
-	return postToApi('submitters')
+export const getSubmittersApi = searchParams => {
+	return postToApi('submitters', searchParams)
 		.then(submitters => {
 			if (submitters.length === 0) {
 				return Promise.resolve(submitters);

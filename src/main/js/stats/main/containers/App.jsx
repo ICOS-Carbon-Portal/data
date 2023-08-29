@@ -7,7 +7,8 @@ import {
 	fetchDownloadStatsPerDateUnit,
 	setViewMode,
 	resetFilters,
-	temporalFilterUpdate
+	temporalFilterUpdate,
+	grayDownloadFilterUpdate
 } from '../actions';
 import Radio from "../components/Radio.jsx";
 import {ViewSwitcher} from "../components/ViewSwitcher.jsx";
@@ -77,6 +78,7 @@ function dispatchToProps(dispatch) {
 	return {
 		updateTableWithFilter: (varName, values) => dispatch(statsUpdate(varName, values)),
 		temporalFilterUpdate: (filterTemporal) => dispatch(temporalFilterUpdate(filterTemporal)),
+		grayDownloadFilterUpdate: (filterGrayDownload) => dispatch(grayDownloadFilterUpdate(filterGrayDownload)),
 		requestPage: page => dispatch(requestPage(page)),
 		fetchDownloadStatsPerDateUnit: dateUnit => dispatch(fetchDownloadStatsPerDateUnit(dateUnit)),
 		setViewMode: mode => dispatch(setViewMode(mode)),

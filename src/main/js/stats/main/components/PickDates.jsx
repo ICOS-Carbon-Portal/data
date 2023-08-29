@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
-import DatePicker from 'react-datepicker';
 
 export default class PickDates extends Component {
 
+	parseDate(dateString) {
+		let [year, month, day] = dateString.split('-');
+		return new Date(year, month - 1, day);
+	}
+
 	onDateSet(sender, date){
-		const selectedDate = date == null ? undefined : date;
+		const selectedDate = date === undefined ? undefined : this.parseDate(date);
 		const {filterTemporal, setFilterTemporal} = this.props;
 		let newFilter = undefined;
 
@@ -21,53 +25,25 @@ export default class PickDates extends Component {
 
 	render(){
 		const {from, to} = this.props.filterTemporal.fromTo;
-		const minDate = new Date('2017-01-01T00:00:00');
+		const minDate = "2017-01-01"
+		const now = Date.now()
+		const maxDate = new Date(now).toISOString().substring(0, 10);
+		const maxFromDate = to ? to.toISOString().substring(0, 10) : maxDate;
+		const minToDate = from ? new Date(from.getTime() + 172800000).toISOString().substring(0, 10) : minDate;
 
 		return (
 			<div className="row">
 				<div className="col-md-12">
 
 					<div className="row">
-						<div className="col-6">
-							<DatePicker
-								className="form-control"
-								selected={from}
-								onChange={(date) => this.onDateSet('from', Array.isArray(date) ? date[0] : date)}
-								selectsStart
-								startDate={from}
-								endDate={to}
-								minDate={minDate}
-								maxDate={to ?? new Date()}
-								calendarStartDay={1}
-								dateFormat="yyyy-MM-dd"
-								isClearable={true}
-								showMonthDropdown
-								showYearDropdown
-								dropdownMode="select"
-								dateFormatCalendar=" "
-								placeholderText="From"
-								/>
+						<div className="col-2">From</div>
+						<div className="col-4">
+							<input type="date" name="from" id="from" min={minDate} max={maxFromDate} onChange={date => this.onDateSet('from', date.target.value)} />
 						</div>
 
-						<div className="col-6">
-							<DatePicker
-								className="form-control"
-								selected={to}
-								onChange={(date) => this.onDateSet('to', Array.isArray(date) ? date[1] : date)}
-								selectsEnd
-								startDate={from}
-								endDate={to}
-								minDate={from ?? minDate}
-								maxDate={new Date()}
-								calendarStartDay={1}
-								dateFormat="yyyy-MM-dd"
-								isClearable={true}
-								showMonthDropdown
-								showYearDropdown
-								dropdownMode="select"
-								dateFormatCalendar=" "
-								placeholderText="To"
-								/>
+						<div className="col-2">To</div>
+						<div className="col-4">
+							<input type="date" name="to" id="to" min={minToDate} max={maxDate} onChange={date => this.onDateSet('to', date.target.value)} />
 						</div>
 					</div>
 				</div>

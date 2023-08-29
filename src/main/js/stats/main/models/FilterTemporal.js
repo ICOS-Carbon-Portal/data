@@ -49,7 +49,7 @@ export class FromToDates {
 
 	get fromDateStr() {
 		// Jasmine test cannot handle toLocaleDateString('se-SE')
-		return this._from ? this._from.toISOString().substr(0, 10) : undefined;
+		return this._from ? this._from.toISOString().substring(0, 10) : undefined;
 	}
 
 	get fromDateTimeStr() {
@@ -62,7 +62,7 @@ export class FromToDates {
 
 	get toDateStr() {
 		// Jasmine test cannot handle toLocaleDateString('se-SE')
-		return this._to ? this._to.toISOString().substr(0, 10) : undefined;
+		return this._to ? this._to.toISOString().substring(0, 10) : undefined;
 	}
 
 	get toDateTimeStr() {
