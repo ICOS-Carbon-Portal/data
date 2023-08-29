@@ -11,8 +11,8 @@ export const getCountryCodesLookup = () => {
 export const getSearchParams = (dlFilters, specLevelLookup) => {
 	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
 
-	const dlStart = dlFilters.dlStartd;
-	const dlEnd = dlFilters.dlEndd;
+	const dlStart = dlFilters.dlStart;
+	const dlEnd = dlFilters.dlEnd;
 	const includeGrayDl = dlFilters.grayDownloadFilter;
 	const specSpecs = specification && specification.length ? specification : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
