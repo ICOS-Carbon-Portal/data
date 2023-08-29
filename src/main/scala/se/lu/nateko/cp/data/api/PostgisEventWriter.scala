@@ -22,6 +22,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import scala.concurrent.Future
 import java.net.URI
+import scala.util.Using
 
 
 class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: PostgisConfig, log: LoggingAdapter) extends PostgisClient(conf):
@@ -78,33 +79,32 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 			case Some(endUser) => st.setString(endUser_idx, endUser)
 			case _             => st.setNull(endUser_idx, Types.VARCHAR)
 
-		val resultSet = st.executeQuery()
+		val newId: Int = Using(st.executeQuery()){resSet =>
+			resSet.next()
+			resSet.getLong(1).toInt
+		}.get
 
-		val statsIndex = statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
+		st.close()
 
 		dlInfo match
-			case DataObjDownloadInfo(time, dobj, _, _, _) =>
-				for index <- statsIndex do
-					resultSet.next()
-					val newId = resultSet.getLong(1)
-					if newId != -1 then
-						val newEntry = StatsIndexEntry(
-							idx = newId.toInt,
-							dobj = dobj.hash,
-							dlTime = time,
-							objectSpec = dobj.specification.self.uri,
-							station = dobj.specificInfo
-								.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
-								.map(_.org.self.uri),
-							submitter = dobj.submission.submitter.self.uri,
-							contributors = getContributorUris(dobj),
-							dlCountry = ip.toOption.flatMap(_.country_code).flatMap(CountryCode.unapply),
-							isGrayDownload = conf.grayDownloads.exists(_.test(ipAddr))
-						)
-						index.add(newEntry)
+			case DataObjDownloadInfo(time, dobj, _, _, _) if newId != -1 =>
+				val statsIndex = statsIndices.getOrElse(envri, Future.failed(CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
+				for index <- statsIndex do index.add(
+					StatsIndexEntry(
+						idx = newId,
+						dobj = dobj.hash,
+						dlTime = time,
+						objectSpec = dobj.specification.self.uri,
+						station = dobj.specificInfo
+							.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
+							.map(_.org.self.uri),
+						submitter = dobj.submission.submitter.self.uri,
+						contributors = getContributorUris(dobj),
+						dlCountry = ip.toOption.flatMap(_.country_code).flatMap(CountryCode.unapply),
+						isGrayDownload = conf.grayDownloads.exists(_.test(ipAddr))
+					)
+				)
 			case _ =>
-		resultSet.close()
-		st.close()
 	}
 
 	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
