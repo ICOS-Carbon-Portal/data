@@ -131,6 +131,7 @@ END;
 $$;
 
 -- Create view containing relevant download statistics information
+DROP VIEW statIndexEntries;
 CREATE OR REPLACE VIEW statIndexEntries AS
 	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
 	FROM (SELECT id, hash_id, ts, ip, country_code FROM downloads WHERE item_type = 'data' ORDER BY id) AS wd
