@@ -49,6 +49,8 @@ export default class StatsTable {
 	}
 
 	withoutFilter() {
+		document.getElementById("from").value = ""
+		document.getElementById("to").value = ""
 		return new StatsTable(this._stats, {}, this._page, this._stationCountryCodes);
 	}
 
@@ -60,8 +62,8 @@ export default class StatsTable {
 		return {
 			...this._filters,
 			grayDownloadFilter: this._grayDownloadFilter,
-			dlStart: this._temporalFilters.fromTo.fromDateStr,
-			dlEnd: this._temporalFilters.fromTo.toDateStr,
+			dlStart: this._temporalFilters.fromTo.fromDateTimeStr,
+			dlEnd: this._temporalFilters.fromTo.toDateTimeStr,
 			...{ originStations: getDataOriginStations(this._filters.dataOriginCountries, this._stationCountryCodes) }
 		};
 	}
