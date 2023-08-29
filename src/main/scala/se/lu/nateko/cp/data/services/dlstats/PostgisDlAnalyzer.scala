@@ -67,7 +67,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		statsIndices.getOrElse(envri, Future.failed(new CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
 			.eager(s"Statindex for $envri is not ready yet. Try again in a minute.")
 
-	def runQuery[T](qp: StatsQueryParams)(runner: (StatsIndex, StatsQuery) => T)(using Envri): Future[T] =
+	def runQuery[T](runner: (StatsIndex, StatsQuery) => T)(qp: StatsQueryParams)(using Envri): Future[T] =
 		for
 			index <- statsIndex
 			eventIds <- qp.hashId match
@@ -91,39 +91,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 			)
 		yield runner(index, query)
 
-	def downloadsByCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsByCountry]] =
-		runQuery(queryParams)(_ downloadsByCountry _)
-
-	def customDownloadsPerYearCountry(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[CustomDownloadsPerYearCountry]] =
-		runQuery(queryParams)(_ downloadsPerYearByCountry _)
-
-	def downloadsPerWeek(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerWeek]] =
-		runQuery(queryParams)(_ downloadsPerWeek _)
-
-	def downloadsPerMonth(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runQuery(queryParams)(_ downloadsPerMonth _)
-
-	def downloadsPerYear(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadsPerTimeframe]] =
-		runQuery(queryParams)(_ downloadsPerYear _)
-
-	def downloadStats(queryParams: StatsQueryParams)(using Envri): Future[DownloadStats] =
-		runQuery(queryParams)(_ downloadStats _)
-
-	def specifications(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Specifications]] =
-		runQuery(queryParams)(_ specifications _)
-
-	def contributors(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Contributors]] =
-		runQuery(queryParams)(_ contributors _)
-
-	def submitters(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Submitters]] =
-		runQuery(queryParams)(_ submitters _)
-
-	def stations(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[Stations]] =
-		runQuery(queryParams)(_ stations _)
-
-	def dlfrom(queryParams: StatsQueryParams)(using Envri): Future[IndexedSeq[DownloadedFrom]] =
-		runQuery(queryParams)(_ dlfrom _)
-	
 	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
 			DateCount(rs.getString("month_start"), rs.getInt("count"))

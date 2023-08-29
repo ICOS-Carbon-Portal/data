@@ -180,22 +180,22 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 					}
 				}
 			} ~
-			statsQuery("downloadsByCountry", pgClient.downloadsByCountry) ~
-			statsQuery("downloadsPerWeek", pgClient.downloadsPerWeek) ~
-			statsQuery("downloadsPerMonth", pgClient.downloadsPerMonth) ~
-			statsQuery("downloadsPerYear", pgClient.downloadsPerYear) ~
-			statsQuery("downloadStats", pgClient.downloadStats) ~
-			statsQuery("specifications", pgClient.specifications) ~
-			statsQuery("contributors", pgClient.contributors) ~
-			statsQuery("submitters", pgClient.submitters) ~
-			statsQuery("stations", pgClient.stations) ~
-			statsQuery("dlfrom", pgClient.dlfrom) ~
+			statsQuery("downloadsByCountry", pgClient.runQuery(_ downloadsByCountry _)) ~
+			statsQuery("downloadsPerWeek", pgClient.runQuery(_ downloadsPerWeek _)) ~
+			statsQuery("downloadsPerMonth", pgClient.runQuery(_ downloadsPerMonth _)) ~
+			statsQuery("downloadsPerYear", pgClient.runQuery(_ downloadsPerYear _)) ~
+			statsQuery("downloadStats", pgClient.runQuery(_ downloadStats _)) ~
+			statsQuery("specifications", pgClient.runQuery(_ specifications _)) ~
+			statsQuery("contributors", pgClient.runQuery(_ contributors _)) ~
+			statsQuery("submitters", pgClient.runQuery(_ submitters _)) ~
+			statsQuery("stations", pgClient.runQuery(_ stations _)) ~
+			statsQuery("dlfrom", pgClient.runQuery(_ dlfrom _)) ~
 			path("downloadedCollections"){
 				onSuccess(pgClient.downloadedCollections){dbc =>
 					complete(dbc)
 				}
 			} ~
-			statsQuery("customDownloadsPerYearCountry", pgClient.customDownloadsPerYearCountry) ~
+			statsQuery("customDownloadsPerYearCountry", pgClient.runQuery(_ downloadsPerYearByCountry _)) ~
 			complete(StatusCodes.NotFound)
 		} ~
 		(options & setOriginHeader){
