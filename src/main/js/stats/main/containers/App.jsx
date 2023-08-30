@@ -71,6 +71,7 @@ function stateToProps(state) {
 		mainRadio: state.mainRadio,
 		subRadio: state.subRadio,
 		variousStats: state.variousStats,
+		toasterData: state.toasterData
 	};
 }
 

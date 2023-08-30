@@ -24,7 +24,7 @@ export const actionTypes = {
 	VARIOUS_STATS_FETCHED: 'VARIOUS_STATS_FETCHED',
 }
 
-const failWithError = dispatch => error => {
+const failWithError = error => dispatch => {
 	console.log(error);
 	dispatch({
 		type: actionTypes.ERROR,
@@ -190,7 +190,6 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 	const page = newPage || 1;
 
 	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
-
 	Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
 		.then(([dlStats, countryStats]) => {
 			dispatch({
@@ -202,7 +201,8 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 				to: dlStats.stats.length,
 				objCount: dlStats.size
 			});
-		});
+		},
+		err => dispatch(failWithError(err)));
 	dispatch(fetchDownloadStatsPerDateUnit(dateUnit));
 };
 
@@ -219,7 +219,7 @@ const fetchFilters = (dispatch, getState) => {
 				getStationsApi(searchParams),
 				getSubmittersApi(searchParams),
 				postToApi('dlfrom', searchParams),
-				getStationCountryCodes()
+				getStationCountryCodes(),
 			]
 			Promise.all(promises).then(
 				([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
@@ -260,10 +260,10 @@ const fetchFilters = (dispatch, getState) => {
 							}, {})
 						})
 					}
-				}
+				},
+				err => dispatch(failWithError(err))
 			);
-		},
-		err => dispatch(failWithError(err))
+		}
 	);
 };
 
@@ -281,7 +281,8 @@ export const fetchDownloadStatsPerDateUnit = dateUnit => (dispatch, getState) =>
 				dateUnit,
 				downloadsPerDateUnit
 			});
-		});
+		},
+		err => dispatch(failWithError(err)));
 };
 
 export const statsUpdate = (varName, values) => (dispatch) => {
