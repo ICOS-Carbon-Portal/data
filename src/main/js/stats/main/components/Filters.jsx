@@ -63,12 +63,14 @@ const PanelBody = ({ hasHashIdFilter, filters, downloadStats, updateTableWithFil
 				<Filter placeholder="Download dates" filter={temporalFilters} value={[]}>
 					<PickDates filterTemporal={temporalFilters.values} setFilterTemporal={temporalFilterUpdate} />
 				</Filter>
-				<CheckButton
-					name={"includeGrayDl"}
-					grayDownloadFilterUpdate={grayDownloadFilterUpdate}
-					isChecked={downloadStats.grayDownloadFilter}
-					text={'Include gray listed IPs'}
-				/>
+				<Filter placeholder="Search options" filter="" value={[]}>
+					<CheckButton
+						name={"includeGrayDl"}
+						grayDownloadFilterUpdate={grayDownloadFilterUpdate}
+						isChecked={downloadStats.grayDownloadFilter}
+						text={'Include gray listed IPs'}
+					/>
+				</Filter>
 			</>
 		);
 
@@ -98,11 +100,9 @@ const ResetBtn = props => {
 
 const CheckButton = ({name, grayDownloadFilterUpdate, isChecked, text}) => {
 	return (
-		<div style={{marginTop:15, marginLeft:280}}>
-			<label>
-				<CheckBtn grayDownloadFilterUpdate={grayDownloadFilterUpdate} isChecked={isChecked} name={name} />
-				<span className='ms-2'>{text}</span>
-			</label>
-		</div>
+		<label className='col-form-label'>
+			<CheckBtn grayDownloadFilterUpdate={grayDownloadFilterUpdate} isChecked={isChecked} name={name} />
+			<span className='ms-2'>{text}</span>
+		</label>
 	);
 };

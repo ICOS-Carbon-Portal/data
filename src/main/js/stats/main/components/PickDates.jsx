@@ -34,16 +34,16 @@ export default class PickDates extends Component {
 		return (
 			<div className="row">
 				<div className="col-md-12">
-
-					<div className="row">
-						<div className="col-2">From</div>
-						<div className="col-4">
-							<input type="date" name="from" id="from" min={minDate} max={maxFromDate} onChange={date => this.onDateSet('from', date.target.value)} />
+					<div className="row mb-3">
+						<label htmlFor="from" className="col-lg-4 col-form-label">From</label>
+						<div className="col-lg-8">
+							<input className="form-control" type="date" name="from" id="from" min={minDate} max={maxFromDate} onChange={date => this.onDateSet('from', date.target.value)} />
 						</div>
-
-						<div className="col-2">To</div>
-						<div className="col-4">
-							<input type="date" name="to" id="to" min={minToDate} max={maxDate} onChange={date => this.onDateSet('to', date.target.value)} />
+					</div>
+					<div className="row mb-3">
+						<label htmlFor="to" className="col-lg-4 col-form-label">To</label>
+						<div className="col-lg-8">
+							<input className="form-control" type="date" name="to" id="to" min={minToDate} max={maxDate} onChange={date => this.onDateSet('to', date.target.value)} />
 						</div>
 					</div>
 				</div>

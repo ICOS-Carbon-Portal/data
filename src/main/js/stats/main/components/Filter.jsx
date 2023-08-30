@@ -39,8 +39,8 @@ export default class Filter extends Component {
 
 		return (
 			<div className="row mt-2" key={filter.name}>
-				<label className="col-md-4 col-form-label">{placeholder}</label>
-				<div className="col-md-8">
+				<label className="col-lg-4 col-form-label">{placeholder}</label>
+				<div className="col-lg-8">
 					{children
 						? children
 						: <Multiselect
