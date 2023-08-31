@@ -4,8 +4,7 @@
 */
 
 --DROP TABLE IF EXISTS public.downloads;
---DROP TABLE IF EXISTS public.contributors;
---DROP TABLE IF EXISTS public.dobjs;
+--DROP TABLE IF EXISTS public.dobjs_extended;
 
 SET work_mem to "32MB";
 
@@ -16,75 +15,8 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM reader;
 REVOKE ALL ON ALL TABLES IN SCHEMA public FROM writer;
 
--- Remove table with typo in its name
---DROP VIEW IF EXISTS white_dowloads CASCADE;
-
--- Remove materialized views that are no longer needed
-DROP MATERIALIZED VIEW IF EXISTS downloads_country_mv;
-DROP MATERIALIZED VIEW IF EXISTS downloads_timebins_mv;
-DROP MATERIALIZED VIEW IF EXISTS dlstats_mv;
-DROP MATERIALIZED VIEW IF EXISTS dlstats_full_mv;
-DROP MATERIALIZED VIEW IF EXISTS specifications_mv;
-DROP MATERIALIZED VIEW IF EXISTS contributors_mv;
-DROP MATERIALIZED VIEW IF EXISTS stations_mv;
-DROP MATERIALIZED VIEW IF EXISTS submitters_mv;
-
--- Remove indices that are no longer needed
-DROP INDEX IF EXISTS idx_contributors_mv;
-DROP INDEX IF EXISTS idx_dlstats_full_mv_hash_id_day_date;
-DROP INDEX IF EXISTS idx_dlstats_mv_contributors;
-DROP INDEX IF EXISTS idx_dlstats_mv_day_date;
-DROP INDEX IF EXISTS idx_dlstats_mv_id;
-DROP INDEX IF EXISTS idx_dlstats_mv_spec;
-DROP INDEX IF EXISTS idx_dlstats_mv_station;
-DROP INDEX IF EXISTS idx_dlstats_mv_submitter;
-DROP INDEX IF EXISTS idx_dobjs_hash_id;
-DROP INDEX IF EXISTS idx_dobjs_spec;
-DROP INDEX IF EXISTS idx_downloads_country_mv_contributors;
-DROP INDEX IF EXISTS idx_downloads_country_mv_id;
-DROP INDEX IF EXISTS idx_downloads_country_mv_spec;
-DROP INDEX IF EXISTS idx_downloads_country_mv_station;
-DROP INDEX IF EXISTS idx_downloads_country_mv_submitter;
-DROP INDEX IF EXISTS idx_downloads_has_distributor;
-DROP INDEX IF EXISTS idx_downloads_debounce;
-DROP INDEX IF EXISTS idx_downloads_item_type;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_contributors;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_country_code;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_id;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_spec;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_station;
-DROP INDEX IF EXISTS idx_downloads_timebins_mv_submitter;
-DROP INDEX IF EXISTS idx_specifications_mv;
-DROP INDEX IF EXISTS idx_stations_mv;
-DROP INDEX IF EXISTS idx_submitters_mv;
-
--- Remove functions that are no longer needed
-DROP FUNCTION IF EXISTS public.downloadsByCountry;
-DROP FUNCTION IF EXISTS public.downloads_timebins;
-DROP FUNCTION IF EXISTS public.downloadsPerWeek;
-DROP FUNCTION IF EXISTS public.downloadsPerMonth;
-DROP FUNCTION IF EXISTS public.downloadsPerYear;
-DROP FUNCTION IF EXISTS public.downloadStatsSize;
-DROP FUNCTION IF EXISTS public.downloadStats;
-DROP FUNCTION IF EXISTS public.specifications;
-DROP FUNCTION IF EXISTS public.contributors;
-DROP FUNCTION IF EXISTS public.stations;
-DROP FUNCTION IF EXISTS public.submitters;
-DROP FUNCTION IF EXISTS public.dlfrom;
-DROP FUNCTION IF EXISTS public.customDownloadsPerYearCountry;
---DROP FUNCTION IF EXISTS public.downloadedCollections;        -- In use
-DROP FUNCTION IF EXISTS public.getMinMaxdate;
-DROP FUNCTION IF EXISTS public.getIndexSummary;
-
 
 -- Create tables
-CREATE TABLE IF NOT EXISTS public.dobjs (
-	hash_id text NOT NULL PRIMARY KEY,
-	spec text NOT NULL,
-	submitter text NOT NULL,
-	station text NULL
-);
-
 CREATE TABLE IF NOT EXISTS public.downloads (
 	id int8 NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 	item_type text NOT NULL CHECK(item_type IN('document', 'data', 'collection')),
@@ -100,23 +32,13 @@ CREATE TABLE IF NOT EXISTS public.downloads (
 CREATE INDEX IF NOT EXISTS idx_downloads_hash_id ON public.downloads USING HASH(hash_id);
 CREATE INDEX IF NOT EXISTS idx_downloads_item_type_btree ON public.downloads (item_type);
 
-CREATE TABLE IF NOT EXISTS public.contributors (
-	hash_id text NOT NULL REFERENCES public.dobjs(hash_id),
-	contributor text NOT NULL,
-	CONSTRAINT contributors_pk PRIMARY KEY (hash_id, contributor)
+CREATE TABLE IF NOT EXISTS public.dobjs_extended (
+	hash_id text NOT NULL PRIMARY KEY,
+	spec text NOT NULL,
+	submitter text NOT NULL,
+	station text NULL,
+	contributors text[] NOT NULL
 );
-
--- Create new table including contributors in the dobjs table
-CREATE TABLE IF NOT EXISTS dobjs_extended AS
-	SELECT
-		dobjs.*,
-		contrs.contributors
-	FROM dobjs
-	LEFT JOIN (
-		SELECT hash_id, array_agg(contributor) as contributors
-		FROM public.contributors
-		GROUP BY hash_id) as contrs
-	ON dobjs.hash_id = contrs.hash_id;
 
 -- Create a primary key (if not exists) on the hash_id in the new dobjs table
 DO $$
@@ -200,14 +122,6 @@ GRANT USAGE ON SCHEMA public TO writer;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
 
-GRANT INSERT, UPDATE ON public.dobjs TO writer;
 GRANT INSERT, UPDATE ON public.dobjs_extended TO writer;
-GRANT INSERT, DELETE ON public.contributors TO writer;
 GRANT INSERT ON public.downloads TO writer;
 GRANT USAGE, SELECT ON SEQUENCE downloads_id_seq TO writer;
-
--- Remove redundant tables (uncomment later, when first stage of db migration is done)
--- DROP TABLE IF EXISTS dobjs;
--- DROP TABLE IF EXISTS contributors;
--- DROP TABLE IF EXISTS downloads_graylist;
---DROP TABLE IF EXISTS spatial_ref_sys
