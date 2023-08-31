@@ -288,8 +288,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 
 	const { table, varInfo } = jsonObj.previewLookup ?? {};
 	const previewLookup = table && varInfo
-		? new PreviewLookup(undefined, undefined, table, varInfo)
-		: new PreviewLookup(specTable, jsonObj.labelLookup);
+		? new PreviewLookup(table, varInfo)
+		: PreviewLookup.init(specTable, jsonObj.labelLookup);
 	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
 	const allStations = baseDobjStats.getAllColValues("station");
 	const spatialStationsFilter = restoreSpatialFilterFromMapProps(jsonObj.mapProps, allStations, jsonObj.stationPos4326Lookup);

@@ -16,6 +16,10 @@ export interface PreviewOption {
 	valTypeLabel: string
 }
 
+export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number{
+	return po1.varTitle.localeCompare(po2.varTitle)
+}
+
 export interface PreviewSerialized {
 	items: PreviewItemSerialized[]
 	options: PreviewOption[]
@@ -92,7 +96,7 @@ export default class Preview {
 		const options = objects[0].options;
 		objects.map(object => {
 			if(!deepEqual(options, object.options)) {
-				throw new Error('Cannot preview differently structure objects');
+				throw new Error('Cannot preview differently structured objects');
 			}
 		});
 

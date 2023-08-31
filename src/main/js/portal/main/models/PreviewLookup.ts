@@ -1,7 +1,7 @@
 import config, {PreviewType} from '../config';
 import CompositeSpecTable from './CompositeSpecTable';
 import {UrlStr} from '../backend/declarations';
-import { PreviewOption } from './Preview';
+import { PreviewOption, previewVarCompare } from './Preview';
 import { LabelLookup } from './State';
 
 interface PreviewTypeInfo{
@@ -23,24 +23,14 @@ type VarInfo = Record<string,boolean>
 export type PreviewInfo = TimeSeriesPreviewInfo | OtherPreviewInfo
 
 export default class PreviewLookup{
-	readonly table: Table = {};
-	readonly varInfo: VarInfo = {};
+	constructor(public readonly table: Table, public readonly varInfo: VarInfo) {}
 
-	constructor(specTable?: CompositeSpecTable, labelLookup?: LabelLookup, table?: Table, varInfo?: VarInfo) {
-		if (specTable && labelLookup) {
-			this.table = getTable(specTable, labelLookup);
-
-		} else if (table && varInfo) {
-			this.table = table;
-			this.varInfo = varInfo;
-
-		} else {
-			throw new Error("Illegal call to PreviewLookup");
-		}
+	static init(specTable: CompositeSpecTable, labelLookup: LabelLookup): PreviewLookup {
+		return new PreviewLookup(getTable(specTable, labelLookup), {})
 	}
 
 	withVarInfo(varInfo: VarInfo) {
-		return new PreviewLookup(undefined, undefined, this.table, varInfo);
+		return new PreviewLookup(this.table, varInfo);
 	}
 
 	forDataObjSpec(spec: UrlStr): PreviewInfo | undefined {
@@ -53,37 +43,48 @@ export default class PreviewLookup{
 
 }
 
-const getTable = (specTable: CompositeSpecTable, labelLookup: LabelLookup): Table => {
-	const table: Table = {};
+function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Table {
+
+	const specFormats: {[spec: string]: string} = {}
+	specTable.basics.rows.forEach(({ spec, format }) => {
+		if (typeof spec === 'string' && typeof format === 'string') {
+			specFormats[spec] = format
+		}
+	})
+
+	const table: Table = {}
+
+	Object.entries(specFormats).forEach(([spec, format]) => {
+		if (format === config.netCdfFormat)
+			table[spec] = { type: "NETCDF" };
+		else if(config.imageMultiZipFormats.includes(format))
+			table[spec] = { type: "PHENOCAM"};
+	});
+
+	const tsTable: {[x: string]: TimeSeriesPreviewInfo} = {};
 
 	const specsWithLat = new Set<string>();
 	const specsWithLon = new Set<string>();
 
 	specTable.columnMeta.rows.forEach(({ spec, varTitle, valType }) => {
-		if (typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string') {
-			let defaultInfo: TimeSeriesPreviewInfo = { type: "TIMESERIES", options: [] };
-			const currentInfo = table[spec];
-			const info = (currentInfo !== undefined && currentInfo.type === 'TIMESERIES') ? currentInfo : defaultInfo;
-			if (info === defaultInfo) table[spec] = info;
+		if (typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string' && !table[spec]) {
+			const pInfo = tsTable[spec] ?? { type: "TIMESERIES", options: [] };
+			tsTable[spec] = pInfo
 			const valTypeLabel = labelLookup[valType].label;
-			info.options.push({ varTitle, valTypeLabel });
+			pInfo.options.push({ varTitle, valTypeLabel });
 			if(valType === config.mapGraph.latValueType) specsWithLat.add(spec);
 			if(valType === config.mapGraph.lonValueType) specsWithLon.add(spec);
 		}
 	});
 
-	specTable.basics.rows.forEach(({ spec, format }) => {
-		if (typeof spec === 'string' && typeof format === 'string') {
-			if (format === config.netCdfFormat)
-				table[spec] = { type: "NETCDF" };
-			else if(config.imageMultiZipFormats.includes(format))
-				table[spec] = { type: "PHENOCAM"};
-			else if (
-				config.mapGraph.formats.includes(format) &&
-				specsWithLat.has(spec) && specsWithLon.has(spec)
-			) table[spec] = { type: "MAPGRAPH" };
-		}
+	Object.values(tsTable).forEach(pInfo => {
+		pInfo.options.sort(previewVarCompare)
 	});
 
-	return table;
+	Object.entries(specFormats).forEach(([spec, format]) => {
+		if (config.mapGraph.formats.includes(format) && specsWithLat.has(spec) && specsWithLon.has(spec))
+			table[spec] = { type: "MAPGRAPH" };
+	});
+
+	return {...table, ...tsTable};
 };

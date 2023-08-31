@@ -3,7 +3,7 @@ import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../..
 import config from '../../config';
 import {State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
-import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
+import Preview, {PreviewItem, PreviewOption, previewVarCompare} from "../../models/Preview";
 import { lastUrlPart, TableFormat } from 'icos-cp-backend';
 import { UrlStr } from '../../backend/declarations';
 import TableFormatCache from '../../../../common/main/TableFormatCache';
@@ -142,6 +142,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const options: PreviewOption[] = allItemsHaveColumnNames
 			? distinct(items.flatMap(item  => item.columnNames ?? []))
 				.flatMap(colName => this.makePreviewOption(colName) ?? [])
+				.sort(previewVarCompare)
 			: preview.options;
 
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;
