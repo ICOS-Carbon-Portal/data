@@ -2,9 +2,9 @@ import React, {ChangeEvent, Component, CSSProperties} from 'react';
 import config, {PreviewType} from '../../config';
 import {getLastSegmentInUrl} from "../../utils";
 import {State} from "../../models/State";
-import { PreviewItem } from '../../models/Preview';
 import { UrlStr } from '../../backend/declarations';
 import { debounce, Events } from 'icos-cp-utils';
+import CartItem from '../../models/CartItem';
 
 
 interface OurProps {
@@ -88,7 +88,7 @@ function shouldUpdateHeight(previewType?: PreviewType): boolean {
 	}
 }
 
-function getPreviewIframeUrl(previewType: PreviewType, item: PreviewItem): UrlStr{
+function getPreviewIframeUrl(previewType: PreviewType, item: CartItem): UrlStr{
 	const iFrameBaseUrl = config.iFrameBaseUrl[previewType]
 	// Use preview.item.url if present since that one has all client changes recorded in history
 	if(item.url) return iFrameBaseUrl + getLastSegmentInUrl(item.url)
