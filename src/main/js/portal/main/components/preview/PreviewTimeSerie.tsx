@@ -1,9 +1,9 @@
 import React, { ChangeEvent, Component } from 'react';
 import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../../utils'
 import config from '../../config';
-import {State, TsSetting} from "../../models/State";
+import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
-import Preview, {PreviewItem, PreviewOption} from "../../models/Preview";
+import Preview, {PreviewOption, previewVarCompare} from "../../models/Preview";
 import { lastUrlPart, TableFormat } from 'icos-cp-backend';
 import { UrlStr } from '../../backend/declarations';
 import TableFormatCache from '../../../../common/main/TableFormatCache';
@@ -24,6 +24,8 @@ interface OurProps {
 interface OurState {
 	tableFormat?: TableFormat
 }
+
+type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
 
 const iFrameBaseUrl = config.iFrameBaseUrl["TIMESERIES"];
 
@@ -111,12 +113,13 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const { tableFormat } = this.state;
 
 		// Add station information
-		const items: PreviewItem[] = preview.items.map((item: PreviewItem) => {
+		const items: PreviewItem[] = preview.items.map(cItem => {
+			const item: PreviewItem = cItem
 			const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === item.dobj);
-			item.station = extendedInfo ? extendedInfo.station : undefined;
-			item.stationId = extendedInfo ? extendedInfo.stationId : undefined;
-			item.samplingHeight = extendedInfo ? extendedInfo.samplingHeight : undefined;
-			item.columnNames = extendedInfo ? extendedInfo.columnNames : undefined;
+			item.station = extendedInfo?.station;
+			item.stationId = extendedInfo?.stationId;
+			item.samplingHeight = extendedInfo?.samplingHeight;
+			item.columnNames = extendedInfo?.columnNames;
 			return item;
 		});
 
@@ -142,6 +145,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const options: PreviewOption[] = allItemsHaveColumnNames
 			? distinct(items.flatMap(item  => item.columnNames ?? []))
 				.flatMap(colName => this.makePreviewOption(colName) ?? [])
+				.sort(previewVarCompare)
 			: preview.options;
 
 		const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;

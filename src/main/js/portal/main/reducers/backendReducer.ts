@@ -183,7 +183,7 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		baseDobjStats: specTable.origins,
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
-		previewLookup: new PreviewLookup(specTable, labelLookup),
+		previewLookup: PreviewLookup.init(specTable, labelLookup),
 		keywords: payload.info.keywords,
 		countryCodesLookup: payload.info.countryCodes,
 		stationPos4326Lookup: payload.info.stationPos4326Lookup

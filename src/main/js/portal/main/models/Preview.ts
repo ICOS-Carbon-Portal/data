@@ -8,16 +8,17 @@ import {ExtendedDobjInfo, ObjectsTable} from "./State";
 import {Sha256Str, UrlStr} from "../backend/declarations";
 
 
-export type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
-export type PreviewItemSerialized = CartItemSerialized & Partial<ExtendedDobjInfo>
-
 export interface PreviewOption {
 	varTitle: string
 	valTypeLabel: string
 }
 
+export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number{
+	return po1.varTitle.localeCompare(po2.varTitle)
+}
+
 export interface PreviewSerialized {
-	items: PreviewItemSerialized[]
+	items: CartItemSerialized[]
 	options: PreviewOption[]
 	type: PreviewType | undefined
 	yAxis: string | undefined
@@ -25,7 +26,7 @@ export interface PreviewSerialized {
 }
 
 export default class Preview {
-	public readonly items: PreviewItem[];
+	public readonly items: CartItem[];
 	public pids: Sha256Str[];
 	public readonly options: PreviewOption[];
 	public readonly type: PreviewType | undefined;
@@ -33,7 +34,7 @@ export default class Preview {
 	public y2Axis: string | undefined;
 
 
-	constructor(items?: PreviewItem[], options?: PreviewOption[], type?: PreviewType, yAxis?: string, y2Axis?: string){
+	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType, yAxis?: string, y2Axis?: string){
 		this.items = items ?? [];
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
@@ -53,7 +54,7 @@ export default class Preview {
 	}
 
 	static deserialize(jsonPreview: PreviewSerialized) {
-		const items: PreviewItem[] = jsonPreview.items.map(item => new CartItem(item.id, item.dataobject, item.type, item.url));
+		const items: CartItem[] = jsonPreview.items.map(item => new CartItem(item.id, item.dataobject, item.type, item.url));
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
 		const yAxis = jsonPreview.yAxis;
@@ -92,11 +93,11 @@ export default class Preview {
 		const options = objects[0].options;
 		objects.map(object => {
 			if(!deepEqual(options, object.options)) {
-				throw new Error('Cannot preview differently structure objects');
+				throw new Error('Cannot preview differently structured objects');
 			}
 		});
 
-		const items: PreviewItem[] = objects.map(o => o.item as PreviewItem).filter(isDefined);
+		const items: CartItem[] = objects.flatMap(o => o.item ?? [])
 
 		if (items.length){
 			if (options.type === 'TIMESERIES'){
@@ -104,7 +105,7 @@ export default class Preview {
 					const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
 					if(xAxis){
 						const url = getNewTimeseriesUrl(items, xAxis, yAxis, y2Axis);
-						previewItems = items.map(i => i.withUrl(url) as PreviewItem);
+						previewItems = items.map(i => i.withUrl(url));
 					}
 					return new Preview(previewItems, options.options, options.type, yAxis, y2Axis);
 			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM){
@@ -132,7 +133,7 @@ export default class Preview {
 	}
 
 	withItemUrl(url: UrlStr){
-		return new Preview(this.items.map(i => i.withUrl(url) as PreviewItem), this.options, this.type, this.yAxis, this.y2Axis);
+		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type, this.yAxis, this.y2Axis);
 	}
 
 	get hasPids(){
