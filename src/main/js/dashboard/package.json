@@ -6,12 +6,11 @@
   },
   "private": true,
   "description": "Carbon Portal Data Service",
-  "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "gulp publish",
-    "publish": "gulp publish",
-    "build": "gulp buildWatch",
-    "gulp": "gulp"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
   "repository": {
     "type": "git",
@@ -44,29 +43,24 @@
     ]
   },
   "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
-    "@babel/plugin-proposal-class-properties": "^7.4.4",
-    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
-    "@babel/preset-typescript": "^7.3.3",
-    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/preset-react": "^7.0.0",
-    "@babel/register": "^7.4.4",
-    "browserify-css": "^0.15.0",
-    "del": "^3.0.0",
-    "gulp": "^4.0.1",
-    "gulp-babel": "^8.0.0"
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react-swc": "^3.3.2",
+    "eslint": "^8.48.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "vite": "^4.4.9"
   },
   "dependencies": {
-    "deep-equal": "^1.0.1",
+    "deep-equal": "^2.2.2",
     "icos-cp-backend": "0.5.2",
-    "icos-cp-toaster": "^0.5.1",
-    "icos-cp-utils": "^0.1.5",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
-    "react-redux": "^5.0.7",
-    "redux": "^3.7.2",
-    "redux-thunk": "^2.2.0"
+    "icos-cp-toaster": "^0.6.4",
+    "icos-cp-utils": "^0.1.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^8.1.2",
+    "redux": "^4.2.1",
+    "redux-thunk": "^2.4.2"
   }
 }
