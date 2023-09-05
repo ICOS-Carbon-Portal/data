@@ -1,8 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, Literal, Type, TypeAlias, TypeVar
-from typing import TypeAlias
-from typing import Literal
+from typing import Optional, Literal, Type, TypeAlias, TypeVar, Any
 from dacite import Config, from_dict
 import json
 
@@ -442,8 +440,8 @@ DatasetType: TypeAlias = Literal["StationTimeSeries" , "SpatioTemporal"]
 
 CPJson = TypeVar('CPJson')
 
-def parse_cp_json(input_text: str, res_type: Type[CPJson]) -> CPJson:
-	def tuple_hook(d):
+def parse_cp_json(input_text: str, data_class: Type[CPJson]) -> CPJson:
+	def tuple_hook(d: dict[str, Any]) -> Any:
 		for k in d.keys():
 			if isinstance(d[k], list):
 					d[k] = tuple(d[k])
@@ -452,4 +450,4 @@ def parse_cp_json(input_text: str, res_type: Type[CPJson]) -> CPJson:
 
 	input_dict=json.JSONDecoder(object_hook=tuple_hook).decode(input_text)
 
-	return from_dict(data_class=res_type, data=input_dict, config=Config(cast=[list]))
+	return from_dict(data_class=data_class, data=input_dict, config=Config(cast=[list]))
