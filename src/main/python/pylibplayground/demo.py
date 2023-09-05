@@ -8,6 +8,10 @@ def get_cp_json(url: str, data_class: Type[CPJson]) -> CPJson:
 def get_data_object(url: str) -> DataObject:
 	return get_cp_json(url, DataObject)
 
+gtfStation = get_cp_json("https://meta.icos-cp.eu/resources/stations/ES_IE-GtF", Station)
+
+gtfId = gtfStation.id
+
 @dataclass
 class EnvriConfig:
 	sparql_endpoint: str
@@ -33,8 +37,11 @@ class DobjSpecLite:
 
 
 class DobjStats:
-	def _init_(self, stats: dict[DobjStatsKey, int]):
+	def _init_(self, stats: dict[DobjStatsKey, int], specs: list[DobjSpecLite]):
 		self._stats = stats
+		self._specs = specs
 
-	
+class MetadataClient:
+	def _init_(self, envri: EnvriConfig):
+		self._envri = envri
 
