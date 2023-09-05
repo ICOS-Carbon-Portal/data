@@ -34,6 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_downloads_item_type_btree ON public.downloads (it
 
 CREATE TABLE IF NOT EXISTS public.dobjs_extended (
 	hash_id text NOT NULL PRIMARY KEY,
+	dobj_id serial,
 	spec text NOT NULL,
 	submitter text NOT NULL,
 	station text NULL,
@@ -52,13 +53,16 @@ BEGIN
 END;
 $$;
 
+-- Add a column containing an auto-incremented integer ID to the dobjs_extended table
+ALTER TABLE dobjs_extended ADD COLUMN IF NOT EXISTS dobj_id serial;
+
 -- Create view containing relevant download statistics information
 DROP VIEW IF EXISTS statIndexEntries;
 CREATE OR REPLACE VIEW statIndexEntries AS
-	SELECT wd.*, ds.spec, ds.submitter, ds.station, ds.contributors
-	FROM (SELECT id, hash_id, ts, ip, country_code FROM downloads WHERE item_type = 'data' ORDER BY id) AS wd
+	SELECT dl.id, dl.ts, dl.ip, dl.country_code, ds.dobj_id, ds.spec, ds.submitter, ds.station, ds.contributors
+	FROM (SELECT id, hash_id, ts, ip, country_code FROM downloads WHERE item_type = 'data' ORDER BY id) AS dl
 	INNER JOIN dobjs_extended ds
-	ON wd.hash_id = ds.hash_id;
+	ON dl.hash_id = ds.hash_id;
 
 
 
