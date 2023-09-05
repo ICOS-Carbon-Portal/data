@@ -8,9 +8,9 @@ def get_cp_json(url: str, data_class: Type[CPJson]) -> CPJson:
 def get_data_object(url: str) -> DataObject:
 	return get_cp_json(url, DataObject)
 
-gtfStation = get_cp_json("https://meta.icos-cp.eu/resources/stations/ES_IE-GtF", Station)
+gtf = get_cp_json("https://meta.icos-cp.eu/resources/stations/ES_IE-GtF", Station)
 
-gtfId = gtfStation.id
+gtfId = gtf.id
 
 @dataclass
 class Role:
@@ -51,21 +51,21 @@ model = instr.model
 org = get_cp_json("https://meta.icos-cp.eu/resources/organizations/ATC", OrgWithStaff)
 
 # Station time series
-tsDobj = get_cp_json("https://meta.icos-cp.eu/objects/Z3k8iBGsFwnQkivriJ6BZgFH", DataObject)
+ts_dobj = get_cp_json("https://meta.icos-cp.eu/objects/Z3k8iBGsFwnQkivriJ6BZgFH", DataObject)
 
-if isinstance(tsDobj.specificInfo, StationTimeSeriesMeta):
-	geocov = tsDobj.specificInfo.coverage
+if isinstance(ts_dobj.specificInfo, StationTimeSeriesMeta):
+	geocov = ts_dobj.specificInfo.coverage or ts_dobj.specificInfo.acquisition.station.coverage
 
 # Spatiotemporal metadata
-spDobj = get_cp_json("https://meta.icos-cp.eu/objects/GOohD9UclUiztk6VuA_y5MZT", DataObject)
+sp_dobj = get_cp_json("https://meta.icos-cp.eu/objects/GOohD9UclUiztk6VuA_y5MZT", DataObject)
 
-if isinstance(spDobj.specificInfo, SpatioTemporalMeta):
-	spcov = spDobj.specificInfo.spatial
+if isinstance(sp_dobj.specificInfo, SpatioTemporalMeta):
+	spcov = sp_dobj.specificInfo.spatial
 
-stationWithStaff = get_cp_json("https://meta.icos-cp.eu/resources/stations/AS_ZSF", StationWithStaff)
-stationWithStaff.staff
+zsf = get_cp_json("https://meta.icos-cp.eu/resources/stations/AS_ZSF", StationWithStaff)
+zsf_staff = zsf.staff
 
 coll = get_cp_json("https://meta.icos-cp.eu/collections/unv31HYRKgullLjJ99O5YCsG", StaticCollection)
 
 nbr_of_members = len(coll.members)
-lic = coll.references
+coll_refs = coll.references
