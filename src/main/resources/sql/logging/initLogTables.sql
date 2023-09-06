@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.dobjs_extended (
 	station text NULL,
 	contributors text[] NOT NULL
 );
+CREATE INDEX IF NOT EXISTS idx_dobjs_extended_dobj_id ON public.dobjs_extended (dobj_id);
 
 -- Create a primary key (if not exists) on the hash_id in the new dobjs table
 DO $$
@@ -81,7 +82,7 @@ WHERE AGE(_ts, d.ts) <= INTERVAL '1' MINUTE AND _ip = d.ip AND _hash_id = d.hash
 
 $$;
 
----------------------
+
 DROP FUNCTION IF EXISTS public.addDownloadRecord;
 CREATE OR REPLACE FUNCTION public.addDownloadRecord(
 		_item_type text,
@@ -114,6 +115,37 @@ BEGIN
 				RETURNING downloads.id;
 		END IF;
 	ELSE RETURN QUERY SELECT -1::int8;
+	END IF;
+END
+
+$$;
+
+
+DROP FUNCTION IF EXISTS public.addOrUpdateDobjRecord;
+CREATE OR REPLACE FUNCTION public.addOrUpdateDobjRecord(
+		_hash_id text,
+		_spec text DEFAULT NULL,
+		_submitter text DEFAULT NULL,
+		_station text DEFAULT NULL,
+		_contributors text[] DEFAULT NULL
+	)
+	RETURNS TABLE(id integer)
+	LANGUAGE plpgsql
+	VOLATILE
+AS $$
+
+BEGIN
+	IF ((SELECT 1 FROM dobjs_extended WHERE hash_id = _hash_id) IS NULL) THEN
+		RETURN QUERY
+			INSERT INTO dobjs_extended(hash_id, spec, submitter, station, contributors)
+			VALUES(_hash_id, _spec, _submitter, _station, _contributors)
+			RETURNING dobjs_extended.dobj_id;
+	ELSE
+		RETURN QUERY
+			UPDATE dobjs_extended
+			SET spec = _spec, submitter = _submitter, station = _station
+			WHERE hash_id = _hash_id
+			RETURNING dobjs_extended.dobj_id;
 	END IF;
 END
 

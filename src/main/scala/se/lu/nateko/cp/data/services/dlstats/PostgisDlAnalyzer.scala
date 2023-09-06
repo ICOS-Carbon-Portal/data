@@ -94,15 +94,20 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def downloadStats(qp: StatsQueryParams)(using Envri): Future[DownloadStats] =
 		for
 			chartPage <- runQuery(_ downloadStats _)(qp)
+			t1 = System.nanoTime()
 			dobjIndices = chartPage.stats.map(_.dobjIdx).toSeq
+			t2 = System.nanoTime()
 			dobjIdxAndHashId <- dobjIdxToHashId(dobjIndices)
+			t3 = System.nanoTime()
 			lookupDobj = dobjIdxAndHashId.toMap
 			dobjCountStats = chartPage.stats.map(dobjDlCount => DownloadObjStat(dobjDlCount.count, lookupDobj(dobjDlCount.dobjIdx))).toSeq
+			t4 = System.nanoTime()
+			_ = println(s"\nTime to get indices: ${(t2 - t1)/1e6} ms\nTime to convert indices to hash IDs: ${(t3 - t2)/1e6} ms\nTime to create new stats table: ${(t4 - t3)/1e6} ms\nTotal preprocessing time: ${(t4 - t1)/1e6} ms\n\n")
 		yield
 			DownloadStats(dobjCountStats, chartPage.size)
 
 	def dobjIdxToHashId(indices: Seq[Int])(using Envri): Future[Seq[(Int, Sha256Sum)]] =
-		val query = s"SELECT dobj_id, hash_id FROM dobjs_extended WHERE ARRAY[dobj_id] && '${indices.mkString(", ")}'::int[]"
+		val query = s"SELECT dobj_id, hash_id FROM dobjs_extended WHERE dobj_id = ANY('{${indices.mkString(", ")}}'::int[])"
 		runAnalyticalQuery(query): rs =>
 			val dobjIdx = rs.getInt("dobj_id")
 			val hashStr = rs.getString("hash_id")
@@ -230,7 +235,8 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
 		Try:
 			val ccodeStr = rs.getString("country_code")
-			val contribsArray = Option(rs.getArray("contributors")).fold(Array.empty[String])(_.asInstanceOf[Array[String]])
+			val contribsArray = Option(rs.getString("contributors")).fold(Array.empty[String])(_.stripPrefix("{").stripSuffix("}").split(","))
+			//val contribsArray = Option(rs.getArray("contributors")).fold(Array.empty[String])(_.asInstanceOf[Array[String]])
 			StatsIndexEntry(
 				dlIdx = rs.getInt("id"),
 				dobjIdx = rs.getInt("dobj_id"),

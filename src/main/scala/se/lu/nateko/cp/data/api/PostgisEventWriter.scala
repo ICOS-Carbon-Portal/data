@@ -115,12 +115,7 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 	}
 
 	private def writeDobjInfo(dobj: DataObject)(using Envri): Future[Int] = execute(conf.writer){conn =>
-		val dobjsQuery = """
-					|INSERT INTO dobjs_extended(hash_id, spec, submitter, station, contributors)
-					|VALUES (?, ?, ?, ?, ?)
-					|ON CONFLICT (hash_id) DO UPDATE
-					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
-					|""".stripMargin
+		val dobjsQuery = "SELECT addDobjRecord(_hash_id:=?, _spec:=?, _submitter:=?, _station:=?, _contributors:=?)"
 
 		val dobjsSt = conn.prepareStatement(dobjsQuery)
 
@@ -140,8 +135,11 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 			val contribsArray = conn.createArrayOf("text", contribUris)
 			dobjsSt.setArray(contributors, contribsArray)
 
-			dobjsSt.executeUpdate()
-			???
+			val dobjId: Int = Using(dobjsSt.executeQuery()){resSet =>      // executeUpdate
+				resSet.next()
+				resSet.getInt(1)
+			}.get
+			dobjId
 
 		finally
 			dobjsSt.close()
