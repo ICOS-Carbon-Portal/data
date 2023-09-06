@@ -115,7 +115,7 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 	}
 
 	private def writeDobjInfo(dobj: DataObject)(using Envri): Future[Int] = execute(conf.writer){conn =>
-		val dobjsQuery = "SELECT addDobjRecord(_hash_id:=?, _spec:=?, _submitter:=?, _station:=?, _contributors:=?)"
+		val dobjsQuery = "SELECT addOrUpdateDobjRecord(_hash_id:=?, _spec:=?, _submitter:=?, _station:=?, _contributors:=?)"
 
 		val dobjsSt = conn.prepareStatement(dobjsQuery)
 

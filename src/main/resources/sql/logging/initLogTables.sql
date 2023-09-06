@@ -54,9 +54,6 @@ BEGIN
 END;
 $$;
 
--- Add a column containing an auto-incremented integer ID to the dobjs_extended table
-ALTER TABLE dobjs_extended ADD COLUMN IF NOT EXISTS dobj_id serial;
-
 -- Create view containing relevant download statistics information
 DROP VIEW IF EXISTS statIndexEntries;
 CREATE OR REPLACE VIEW statIndexEntries AS

@@ -173,20 +173,16 @@ class StatsIndex(sizeHint: Int):
 		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
 	def downloadStats(qp: StatsQuery): DobjDlChartPage =
-		val counts = Array.ofDim[Int](countDobj)
-		val t1 = System.nanoTime()
+		val counts = Array.ofDim[Int](countDobj + 1)
 		val filt = filter(qp).getOrElse(allDownloads)
-		val t2 = System.nanoTime()
 		filt.forEach: i =>
 			val dlObjId = downloadedObjects(i)
-			counts(dlObjId - 1) += 1
-		val t3 = System.nanoTime()
+			counts(dlObjId) += 1
 		val statSize = counts.filter(_ > 0).size
 		val toSkip = (qp.page - 1) * qp.pageSize
-		val statsToReturn = counts.indices.toArray.sortBy(i => - counts(i)).drop(toSkip).take(qp.pageSize).map: dobjIdx =>
+		val toDisplay = if statSize < qp.pageSize then statSize else qp.pageSize
+		val statsToReturn = counts.indices.toArray.sortBy(i => - counts(i)).drop(toSkip).take(toDisplay).map: dobjIdx =>
 			DobjDlCount(dobjIdx, counts(dobjIdx))
-		val t4 = System.nanoTime()
-		println(s"\nCreate filter: ${(t2 - t1)/1e6} ms\nCount downloads per object: ${(t3 - t2)/1e6} ms\nSort table: ${(t4 - t3)/1e6} ms\nTotal time: ${(t4 - t1)/1e6} ms")
 		DobjDlChartPage(statsToReturn, statSize)
 
 	def specifications(qp: StatsQuery): IndexedSeq[Specifications] =
