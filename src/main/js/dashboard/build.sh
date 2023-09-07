@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gulp buildWatch
+npm run dev

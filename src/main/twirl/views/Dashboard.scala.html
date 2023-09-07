@@ -8,6 +8,9 @@
 @pageBody = {
 <div id="main"></div>
 @JavascriptConfig()
+@*********************
+* dev setup *
+*********************@
 <script type="module">
   import RefreshRuntime from 'http://localhost:5173/@@react-refresh'
   RefreshRuntime.injectIntoGlobalHook(window)
@@ -17,6 +20,13 @@
 </script>
 <script type="module" src="http://localhost:5173/@@vite/client"></script>
 <script type="module" src="http://localhost:5173/main/main.jsx"></script>
+@*********************
+* end dev setup *
+*********************@
+@*********************
+* TODO: prod setup *
+*********************@
+}
 }
 
 @BarePage(pageTitle)(pageHeader)(pageBody)

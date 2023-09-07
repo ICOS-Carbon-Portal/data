@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
+import buildConf from '../common/main/buildConf.js'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,7 +10,10 @@ export default defineConfig({
     manifest: true,
     rollupOptions: {
       // overwrite default .html entry
-      input: '/portal',
+      input: 'main/main.jsx',
+      output: [{
+        dir: buildConf.buildTarget + 'dashboard/dashboard.js',
+      }]
     },
   },
   server: {

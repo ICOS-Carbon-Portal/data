@@ -1,3 +1,3 @@
 #!/bin/bash
 
-npx gulp publish
+npm run publish
