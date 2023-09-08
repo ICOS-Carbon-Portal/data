@@ -149,6 +149,23 @@ END
 $$;
 
 
+DROP FUNCTION IF EXISTS public.dobjIdAndHashId;
+CREATE OR REPLACE FUNCTION public.dobjIdAndHashId(
+		_dobj_ids int[]
+	)
+	RETURNS TABLE(dobj_id integer, hash_id text)
+	LANGUAGE plpgsql
+	VOLATILE
+AS $$
+
+BEGIN
+	SET seq_page_cost to "5";
+	RETURN QUERY SELECT d.dobj_id, d.hash_id FROM dobjs_extended as d WHERE d.dobj_id = ANY(_dobj_ids);
+END
+
+$$;
+
+
 -- Set user rights
 GRANT USAGE ON SCHEMA public TO reader;
 GRANT USAGE ON SCHEMA public TO writer;

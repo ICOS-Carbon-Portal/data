@@ -102,7 +102,7 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 			DownloadStats(dobjCountStats, chartPage.size)
 
 	def dobjIdxToHashId(indices: Seq[Int])(using Envri): Future[Seq[(Int, Sha256Sum)]] =
-		val query = s"SELECT dobj_id, hash_id FROM dobjs_extended WHERE dobj_id = ANY('{${indices.mkString(", ")}}'::int[])"
+		val query = s"SELECT dobj_id, hash_id FROM dobjIdAndHashId('{${indices.mkString(",")}}'::int[])"
 		runAnalyticalQuery(query): rs =>
 			val dobjIdx = rs.getInt("dobj_id")
 			val hashStr = rs.getString("hash_id")
