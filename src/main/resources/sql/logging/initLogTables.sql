@@ -140,7 +140,7 @@ BEGIN
 	ELSE
 		RETURN QUERY
 			UPDATE dobjs_extended
-			SET spec = _spec, submitter = _submitter, station = _station
+			SET spec = _spec, submitter = _submitter, station = _station, contributors = _contributors
 			WHERE hash_id = _hash_id
 			RETURNING dobjs_extended.dobj_id;
 	END IF;

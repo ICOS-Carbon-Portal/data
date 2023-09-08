@@ -132,10 +132,11 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 				case Some(theStation) => dobjsSt.setString(station, theStation.org.self.uri.toString)
 
 			val contribUris: Array[Object] = getContributorUris(dobj).map(_.toString).toArray
-			val contribsArray = conn.createArrayOf("text", contribUris)
-			dobjsSt.setArray(contributors, contribsArray)
+			if contribUris.size != 0 then
+				val contribsArray = conn.createArrayOf("text", contribUris)
+				dobjsSt.setArray(contributors, contribsArray)
 
-			val dobjId: Int = Using(dobjsSt.executeQuery()){resSet =>      // executeUpdate
+			val dobjId: Int = Using(dobjsSt.executeQuery()){resSet =>
 				resSet.next()
 				resSet.getInt(1)
 			}.get

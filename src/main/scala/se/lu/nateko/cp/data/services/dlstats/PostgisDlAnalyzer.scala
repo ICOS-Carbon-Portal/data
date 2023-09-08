@@ -231,7 +231,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		Try:
 			val ccodeStr = rs.getString("country_code")
 			val contribsArray = Option(rs.getString("contributors")).fold(Array.empty[String])(_.stripPrefix("{").stripSuffix("}").split(","))
-			//val contribsArray = Option(rs.getArray("contributors")).fold(Array.empty[String])(_.asInstanceOf[Array[String]])
 			StatsIndexEntry(
 				dlIdx = rs.getInt("id"),
 				dobjIdx = rs.getInt("dobj_id"),
