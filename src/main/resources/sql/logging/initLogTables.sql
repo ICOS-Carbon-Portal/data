@@ -175,3 +175,4 @@ GRANT SELECT ON ALL TABLES IN SCHEMA public TO writer;
 GRANT INSERT, UPDATE ON public.dobjs_extended TO writer;
 GRANT INSERT ON public.downloads TO writer;
 GRANT USAGE, SELECT ON SEQUENCE downloads_id_seq TO writer;
+GRANT USAGE, SELECT ON SEQUENCE dobjs_extended_dobj_id_seq TO writer;
