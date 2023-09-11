@@ -48,7 +48,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.15"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.16"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
@@ -75,7 +75,8 @@ lazy val data = (project in file("."))
 			s"""export SCALA_CLASS_DIR="${targetDir}" && npm run publish"""
 		},
 		cpFrontendJarImports := Seq(
-			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts")
+			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts"),
+			JarResourceImport(metaCoreModule, "metacore.py", cpFrontendCommonApp.value, "../../python/pylib/icoscp_core/metacore.py")
 		),
 
 		libraryDependencies ++= Seq(
