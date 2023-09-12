@@ -8,7 +8,8 @@ class EnvriConfig:
 	envri: Envri
 	sparql_endpoint: str
 	meta_instance_prefix: str
-	usage_report_url: str
+	auth_service_base_url: str
+	data_service_base_url: str
 	token_name: str
 	site_used: bool
 
@@ -16,7 +17,8 @@ ICOS_CONFIG = EnvriConfig(
 	envri = "ICOS",
 	sparql_endpoint = "https://meta.icos-cp.eu/sparql",
 	meta_instance_prefix = "http://meta.icos-cp.eu/",
-	usage_report_url = "https://cpauth.icos-cp.eu/logs/portaluse",
+	auth_service_base_url = "https://cpauth.icos-cp.eu/",
+	data_service_base_url = "https://data.icos-cp.eu",
 	token_name = "cpauthToken",
 	site_used = False
 )
@@ -24,8 +26,9 @@ ICOS_CONFIG = EnvriConfig(
 SITES_CONFIG = EnvriConfig(
 	envri = "SITES",
 	sparql_endpoint = "https://meta.fieldsites.se/sparql",
-	meta_instance_prefix = "https://meta.fieldsites.se",
-	usage_report_url = "https://auth.fieldsites.se/logs/portaluse",
+	meta_instance_prefix = "https://meta.fieldsites.se/",
+	auth_service_base_url = "https://auth.fieldsites.se/",
+	data_service_base_url = "https://data.fieldsites.se",
 	token_name = "fieldsitesToken",
 	site_used = True
 )
@@ -33,8 +36,9 @@ SITES_CONFIG = EnvriConfig(
 CITIES_CONFIG = EnvriConfig(
 	envri = "ICOSCities",
 	sparql_endpoint = "https://citymeta.icos-cp.eu/sparql",
-	meta_instance_prefix = "https://citymeta.icos-cp.eu/sparql",
-	usage_report_url = "https://cpauth.icos-cp.eu/logs/portaluse",
+	meta_instance_prefix = "https://citymeta.icos-cp.eu/",
+	auth_service_base_url = "https://cpauth.icos-cp.eu/",
+	data_service_base_url = "https://citydata.icos-cp.eu",
 	token_name = "cpauthToken",
 	site_used = False
 )
