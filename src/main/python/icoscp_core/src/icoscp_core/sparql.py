@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import TypeAlias, Optional, Any
 from dataclasses import dataclass
+import re
 import requests
 
 @dataclass
@@ -42,12 +43,16 @@ def as_int(varname: str, binding: Binding) -> int:
 	int_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#integer", binding)
 	return int(int_str)
 
+def as_long(varname: str, binding: Binding) -> int:
+	long_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#long", binding)
+	return int(long_str)
+
 def as_string(varname: str, binding: Binding) -> str:
 	return lookup_literal_value(varname, None, binding)
 
 def as_datetime(varname: str, binding: Binding) -> datetime:
 	dtStr = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#dateTime", binding)
-	return datetime.fromisoformat(dtStr)
+	return datetime.fromisoformat(re.sub(r'Z$', '+00:00', dtStr))
 
 
 def as_uri(varname: str, binding: Binding) -> str:
@@ -72,7 +77,8 @@ def get_sparql_select_json(endpoint: str, query: str, disable_cache: bool) -> An
 		headers["Cache-Control"] = "no-cache"
 		headers["Pragma"] = "no-cache"
 	res = requests.post(url = endpoint, headers=headers, data=bytes(query, "utf-8"))
-	res.raise_for_status()
+	if res.status_code != 200:
+		raise Exception(f"SPARQL SELECT problem, got response: {res.text}\nThe query was: {query}")
 	return res.json()
 
 def sparql_select(endpoint: str, query: str, disable_cache: bool) -> SparqlResults:

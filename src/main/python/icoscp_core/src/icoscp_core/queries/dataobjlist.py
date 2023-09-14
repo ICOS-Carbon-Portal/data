@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal, TypeAlias, TypedDict
 
-from ..sparql import Binding, as_int, as_uri, as_opt_uri, as_string, as_datetime
+from ..sparql import Binding, as_long, as_uri, as_opt_uri, as_string, as_datetime
 from ..metacore import UriResource
 
 
@@ -94,7 +94,7 @@ def dataobj_lite_list(
 	stationMandatory = "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station ."
 	stationLink = f"OPTIONAL{{ {stationMandatory} }}" if len(stationUris) == 0 else stationMandatory
 
-	filter_clauses = "\n".join([f.render() for f in filters])
+	filter_clauses = "FILTER(" + " && ".join([f.render() for f in filters]) + ")"
 
 	return f"""
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
@@ -111,7 +111,7 @@ where {{
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
-	{"FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}" if includeDeprecated else ""}
+	{"" if includeDeprecated else "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}"}
 	{filter_clauses}
 }}
 {_order_clause(orderBy)}offset {offset} limit {min(limit, 10000)}"""
@@ -120,7 +120,7 @@ def parse_dobj_lite(row: Binding) -> DataObjectLite:
 	return DataObjectLite(
 		uri = as_uri("dobj", row),
 		filename = as_string("fileName", row),
-		size_bytes = as_int("size", row),
+		size_bytes = as_long("size", row),
 		datatype_uri = as_uri("spec", row),
 		station_uri = as_opt_uri("station", row),
 		submission_time = as_datetime("submTime", row),
