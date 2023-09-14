@@ -9,7 +9,7 @@ from typing import TypeAlias, Literal, Optional
 
 import requests
 
-from envri import EnvriConfig
+from .envri import EnvriConfig
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)

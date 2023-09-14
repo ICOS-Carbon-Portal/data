@@ -1,9 +1,9 @@
-from envri import ICOS_CONFIG
-from auth import ConfigFileAuth
-from metaclient import MetadataClient
-from dataclient import DataClient
+from .envri import ICOS_CONFIG
+from .auth import ConfigFileAuth
+from .metaclient import MetadataClient
+from .dataclient import DataClient
 
-from queries.dataobjlist import TimeFilter
+from .queries.dataobjlist import TimeFilter
 
 auth = ConfigFileAuth(ICOS_CONFIG)
 

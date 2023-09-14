@@ -1,8 +1,8 @@
-from envri import EnvriConfig
-from sparql import SparqlResults, sparql_select as sparql_select_generic
-from queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpecLite
-from queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
-from queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
+from .envri import EnvriConfig
+from .sparql import SparqlResults, sparql_select as sparql_select_generic
+from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpecLite
+from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
+from .queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
 
 class MetadataClient:
 	def __init__(self, envri_conf: EnvriConfig):

@@ -3,8 +3,8 @@ import re
 import requests
 from urllib.parse import urlsplit, unquote
 
-from envri import EnvriConfig
-from auth import AuthTokenProvider
+from .envri import EnvriConfig
+from .auth import AuthTokenProvider
 
 
 class DataClient:
