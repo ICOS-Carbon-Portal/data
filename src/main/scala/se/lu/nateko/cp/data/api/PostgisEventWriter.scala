@@ -33,7 +33,34 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 		super.close()
 		scheduler.shutdown()
 
-	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using envri: Envri): Future[Done] = execute(conf.writer){conn =>
+	def logDownload(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using envri: Envri): Future[Done] = logDlEvent(dlInfo, ip).flatMap: newEventId =>
+		dlInfo match
+			case DataObjDownloadInfo(time, dobj, _, _, _) =>
+				val dobjWrite = writeDobjInfo(dobj)
+				dobjWrite.failed.foreach(log.error(_, s"Failed updating metadata inside postgis for data object ${dobj.hash.id}"))
+				dobjWrite.map: dobjIdx =>
+					if newEventId != -1 then
+						val statsIndex = statsIndices.getOrElse(envri, Future.failed(CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
+						val ipAddr: String = ip.fold(identity, _.ip)
+						for index <- statsIndex do index.add(
+							StatsIndexEntry(
+								dlIdx = newEventId,
+								dobjIdx = dobjIdx,
+								dlTime = time,
+								objectSpec = dobj.specification.self.uri,
+								station = dobj.specificInfo
+									.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
+									.map(_.org.self.uri),
+								submitter = dobj.submission.submitter.self.uri,
+								contributors = getContributorUris(dobj),
+								dlCountry = ip.toOption.flatMap(_.country_code).flatMap(CountryCode.unapply),
+								isGrayDownload = conf.grayDownloads.exists(_.test(ipAddr))
+							)
+						)
+					Done
+			case _ => Future.successful(Done)
+
+	private def logDlEvent(dlInfo: DlEventForPostgres, ip: Either[String, GeoIpInfo])(using Envri): Future[Int] = execute(conf.writer){conn =>
 		val logQuery = "SELECT addDownloadRecord(_item_type:=?, _ts:=?, _hash_id:=?, _ip:=?, _city:=?, _country_code:=?, _lon:=?, _lat:=?, _distributor:=?, _endUser:=?)"
 		val st = conn.prepareStatement(logQuery)
 
@@ -50,8 +77,7 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 		st.setString(item_type, itemType)
 		st.setTimestamp(ts, java.sql.Timestamp.from(dlInfo.time))
 		st.setString(hash_id, dlInfo.hashId)
-		val ipAddr = ip.fold(identity, _.ip)
-		st.setString(ip_idx, ipAddr)
+		st.setString(ip_idx, ip.fold(identity, _.ip))
 
 		ip.fold(
 			ip => {
@@ -85,35 +111,11 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 		}.get
 
 		st.close()
-
-		dlInfo match
-			case DataObjDownloadInfo(time, dobj, _, _, _) if newId != -1 =>
-				val statsIndex = statsIndices.getOrElse(envri, Future.failed(CpDataException(s"Postgis Analyzer was not configured for ENVRI $envri")))
-				for index <- statsIndex do index.add(
-					StatsIndexEntry(
-						idx = newId,
-						dobj = dobj.hash,
-						dlTime = time,
-						objectSpec = dobj.specification.self.uri,
-						station = dobj.specificInfo
-							.fold(_.station, stationSpec => Some(stationSpec.acquisition.station))
-							.map(_.org.self.uri),
-						submitter = dobj.submission.submitter.self.uri,
-						contributors = getContributorUris(dobj),
-						dlCountry = ip.toOption.flatMap(_.country_code).flatMap(CountryCode.unapply),
-						isGrayDownload = conf.grayDownloads.exists(_.test(ipAddr))
-					)
-				)
-			case _ =>
+		newId
 	}
 
-	def writeDobjInfo(dobj: DataObject)(using Envri): Future[Done] = execute(conf.writer){conn =>
-		val dobjsQuery = """
-					|INSERT INTO dobjs_extended(hash_id, spec, submitter, station, contributors)
-					|VALUES (?, ?, ?, ?, ?)
-					|ON CONFLICT (hash_id) DO UPDATE
-					|	SET spec = EXCLUDED.spec, submitter = EXCLUDED.submitter, station = EXCLUDED.station
-					|""".stripMargin
+	private def writeDobjInfo(dobj: DataObject)(using Envri): Future[Int] = execute(conf.writer){conn =>
+		val dobjsQuery = "SELECT addOrUpdateDobjRecord(_hash_id:=?, _spec:=?, _submitter:=?, _station:=?, _contributors:=?)"
 
 		val dobjsSt = conn.prepareStatement(dobjsQuery)
 
@@ -130,10 +132,15 @@ class PostgisEventWriter(statsIndices: Map[Envri, Future[StatsIndex]], conf: Pos
 				case Some(theStation) => dobjsSt.setString(station, theStation.org.self.uri.toString)
 
 			val contribUris: Array[Object] = getContributorUris(dobj).map(_.toString).toArray
-			val contribsArray = conn.createArrayOf("text", contribUris)
-			dobjsSt.setArray(contributors, contribsArray)
+			if contribUris.size != 0 then
+				val contribsArray = conn.createArrayOf("text", contribUris)
+				dobjsSt.setArray(contributors, contribsArray)
 
-			dobjsSt.executeUpdate()
+			val dobjId: Int = Using(dobjsSt.executeQuery()){resSet =>
+				resSet.next()
+				resSet.getInt(1)
+			}.get
+			dobjId
 
 		finally
 			dobjsSt.close()

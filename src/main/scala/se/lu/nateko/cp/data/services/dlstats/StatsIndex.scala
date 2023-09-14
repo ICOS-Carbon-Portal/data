@@ -20,8 +20,8 @@ import java.time.format.DateTimeFormatter
 import akka.http.javadsl.model.headers.Date
 
 class StatsIndexEntry(
-	val idx: Int,
-	val dobj: Sha256Sum,
+	val dlIdx: Int,
+	val dobjIdx: Int,
 	val dlTime: Instant,
 	val objectSpec: URI,
 	val station: Option[URI],
@@ -46,6 +46,9 @@ case class StatsQuery(
 	includeGrayDl: Option[Boolean]
 )
 
+case class DobjDlCount(dobjIdx: Int, count: Int)
+case class DobjDlChartPage(stats: Array[DobjDlCount], size: Int)
+
 class StatsIndex(sizeHint: Int):
 
 	type BmMap[T] = mutable.Map[T, MutableRoaringBitmap]
@@ -58,11 +61,12 @@ class StatsIndex(sizeHint: Int):
 	val dlWeekIndices = mutable.Map.empty[Week, MutableRoaringBitmap]
 	val dlMonthIndices = mutable.Map.empty[Month, MutableRoaringBitmap]
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
-	val downloadedObjects = BufferWithDefault[Sha256Sum](sizeHint, null)
+	val downloadedObjects = BufferWithDefault[Int](sizeHint, 0)
 	val downloadInstants = BufferWithDefault[Long](sizeHint, -1L)
 	val dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants.apply)
 	val isWhiteDownload = new MutableRoaringBitmap
 	val allDownloads = new MutableRoaringBitmap
+	var countDobj: Int = 0
 
 	def runOptimize(): Unit =
 		specIndices.foreach((uri, bm) => bm.runOptimize())
@@ -81,7 +85,7 @@ class StatsIndex(sizeHint: Int):
 	
 		extension [T](bmMap: BmMap[T])
 			inline def setBit(forKey: T): Unit =
-				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.idx)
+				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.dlIdx)
 		specIndices.setBit(entry.objectSpec)
 		entry.station.foreach(s => stationIndices.setBit(s))
 		entry.contributors.foreach(c => contributorIndices.setBit(c))
@@ -90,11 +94,12 @@ class StatsIndex(sizeHint: Int):
 		dlWeekIndices.setBit(entry.dlTime.getYearWeek)
 		dlMonthIndices.setBit(entry.dlTime.getYearMonth)
 		dlYearIndices.setBit(entry.dlTime.utcLocalDate.getYear)
-		dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.idx)
-		downloadedObjects.update(entry.idx, entry.dobj)
-		downloadInstants.update(entry.idx, entry.dlTime.toEpochMilli)
-		if !entry.isGrayDownload then isWhiteDownload.add(entry.idx)
-		allDownloads.add(entry.idx)
+		dlTimeIndex.add(entry.dlTime.toEpochMilli, entry.dlIdx)
+		downloadedObjects.update(entry.dlIdx, entry.dobjIdx)
+		downloadInstants.update(entry.dlIdx, entry.dlTime.toEpochMilli)
+		if !entry.isGrayDownload then isWhiteDownload.add(entry.dlIdx)
+		allDownloads.add(entry.dlIdx)
+		if entry.dobjIdx > countDobj then countDobj = entry.dobjIdx
 
 	/**
 	  * Does not handle the single-object filtering. That one is left to the client code.
@@ -167,17 +172,18 @@ class StatsIndex(sizeHint: Int):
 	def downloadsPerYear(qp: StatsQuery): IndexedSeq[DownloadsPerTimeframe] =
 		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
-	def downloadStats(qp: StatsQuery): DownloadStats =
-		val counts = mutable.Map.empty[Sha256Sum, AtomicInteger]
-		filter(qp).getOrElse(allDownloads).forEach: i =>
-			val dlHash = downloadedObjects(i)
-			val count = counts.getOrElseUpdate(dlHash, AtomicInteger(0))
-			count.incrementAndGet()
-		val statSize = counts.size
+	def downloadStats(qp: StatsQuery): DobjDlChartPage =
+		val counts = Array.ofDim[Int](countDobj + 1)
+		val filt = filter(qp).getOrElse(allDownloads)
+		filt.forEach: i =>
+			val dlObjId = downloadedObjects(i)
+			counts(dlObjId) += 1
+		val statSize = counts.filter(_ > 0).size
 		val toSkip = (qp.page - 1) * qp.pageSize
-		val statsToReturn = counts.toIndexedSeq.sortBy(- _._2.get).drop(toSkip).take(qp.pageSize).map: (hash, count) =>
-			DownloadObjStat(count.get, hash)
-		DownloadStats(statsToReturn, statSize)
+		val toDisplay = if statSize < qp.pageSize then statSize else qp.pageSize
+		val statsToReturn = counts.indices.toArray.sortBy(i => - counts(i)).drop(toSkip).take(toDisplay).map: dobjIdx =>
+			DobjDlCount(dobjIdx, counts(dobjIdx))
+		DobjDlChartPage(statsToReturn, statSize)
 
 	def specifications(qp: StatsQuery): IndexedSeq[Specifications] =
 		specIndices.map((spec, specBm) => Specifications(filter(qp).andCardinality(specBm), spec)).toIndexedSeq.sortBy(- _._1)

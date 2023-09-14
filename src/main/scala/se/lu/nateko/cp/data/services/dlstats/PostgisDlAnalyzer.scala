@@ -70,9 +70,9 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 	def runQuery[T](runner: (StatsIndex, StatsQuery) => T)(qp: StatsQueryParams)(using Envri): Future[T] =
 		for
 			index <- statsIndex
-			eventIds <- qp.hashId match
+			eventIds: Option[Array[Int]] <- qp.hashId match
 				case Some(hashId) =>
-					val query = s"SELECT id FROM statIndexEntries WHERE hash_id='${hashId.id}';"
+					val query = s"SELECT id FROM downloads WHERE hash_id='${hashId.id}';"
 					runAnalyticalQuery(query)(rs => rs.getInt("id")).map(resQuery => Some(resQuery.toArray))
 				case None => Future.successful(None)
 			query = StatsQuery(
@@ -90,6 +90,24 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				includeGrayDl = qp.includeGrayDl
 			)
 		yield runner(index, query)
+
+	def downloadStats(qp: StatsQueryParams)(using Envri): Future[DownloadStats] =
+		for
+			chartPage <- runQuery(_ downloadStats _)(qp)
+			dobjIndices = chartPage.stats.map(_.dobjIdx).toSeq
+			dobjIdxAndHashId <- dobjIdxToHashId(dobjIndices)
+			lookupDobj = dobjIdxAndHashId.toMap
+			dobjCountStats = chartPage.stats.map(dobjDlCount => DownloadObjStat(dobjDlCount.count, lookupDobj(dobjDlCount.dobjIdx))).toSeq
+		yield
+			DownloadStats(dobjCountStats, chartPage.size)
+
+	def dobjIdxToHashId(indices: Seq[Int])(using Envri): Future[Seq[(Int, Sha256Sum)]] =
+		val query = s"SELECT dobj_id, hash_id FROM dobjIdAndHashId('{${indices.mkString(",")}}'::int[])"
+		runAnalyticalQuery(query): rs =>
+			val dobjIdx = rs.getInt("dobj_id")
+			val hashStr = rs.getString("hash_id")
+			val hash = Sha256Sum.fromString(hashStr).getOrElse(throw CpDataException(s"Hash ID $hashStr cannot be parsed"))
+			dobjIdx -> hash
 
 	def downloadedCollections(using Envri): Future[IndexedSeq[DateCount]] =
 		runAnalyticalQuery("SELECT month_start, count FROM downloadedCollections()"){rs =>
@@ -210,12 +228,12 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		futTry.flatMap(Future.fromTry)
 
 	def parseIndexEntry(rs: ResultSet): Try[StatsIndexEntry] =
-		Sha256Sum.fromBase64Url(rs.getString("hash_id")).map: dobj =>
+		Try:
 			val ccodeStr = rs.getString("country_code")
-			val contribsArray = Option(rs.getArray("contributors")).fold(Array.empty[String])(_.getArray().asInstanceOf[Array[String]])
+			val contribsArray = Option(rs.getString("contributors")).fold(Array.empty[String])(_.stripPrefix("{").stripSuffix("}").split(","))
 			StatsIndexEntry(
-				idx = rs.getInt("id"),
-				dobj = dobj,
+				dlIdx = rs.getInt("id"),
+				dobjIdx = rs.getInt("dobj_id"),
 				dlTime = rs.getTimestamp("ts").toInstant(),
 				objectSpec = new URI(rs.getString("spec")),
 				station = Option(rs.getString("station")).map(new URI(_)),

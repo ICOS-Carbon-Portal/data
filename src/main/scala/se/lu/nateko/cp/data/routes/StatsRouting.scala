@@ -184,7 +184,7 @@ class StatsRouting(pgClient: PostgisDlAnalyzer, coreConf: MetaCoreConfig) extend
 			statsQuery("downloadsPerWeek", pgClient.runQuery(_ downloadsPerWeek _)) ~
 			statsQuery("downloadsPerMonth", pgClient.runQuery(_ downloadsPerMonth _)) ~
 			statsQuery("downloadsPerYear", pgClient.runQuery(_ downloadsPerYear _)) ~
-			statsQuery("downloadStats", pgClient.runQuery(_ downloadStats _)) ~
+			statsQuery("downloadStats", pgClient.downloadStats) ~
 			statsQuery("specifications", pgClient.runQuery(_ specifications _)) ~
 			statsQuery("contributors", pgClient.runQuery(_ contributors _)) ~
 			statsQuery("submitters", pgClient.runQuery(_ submitters _)) ~

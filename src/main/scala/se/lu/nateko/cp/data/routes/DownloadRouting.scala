@@ -245,10 +245,8 @@ class DownloadRouting(
 	}
 
 	private def logDownload(dobj: DataObject, ip: String, uidOpt: Option[UserId])(using Envri): Unit = {
-		pgClient.writeDobjInfo(dobj).failed.foreach(
-			log.error(_, s"Failed saving log to postgres for hash id ${dobj.hash.id}")
-		)
 		logPublicDownloadInfo(dobj, ip, uidOpt)
+
 		for(uid <- uidOpt){
 			downloadService.restHeart.saveDownload(dobj, uid).failed.foreach(
 				log.error(_, s"Failed saving download of ${dobj.hash} to ${uid.email}'s user profile")

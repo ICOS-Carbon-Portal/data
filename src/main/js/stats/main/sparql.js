@@ -5,7 +5,7 @@ import commonConfig from '../../common/main/config';
 export function getObjSpecInfo(specUris){
 	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select * where {
-		VALUES ?spec { <${specUris.join("> <")}> }
+		VALUES ?spec { <${specUris.filter(uri => uri != "").join("> <")}> }
 		?spec rdfs:label ?label .
 		?spec cpmeta:hasDataLevel ?level
 	}`;
@@ -15,7 +15,7 @@ export function getObjSpecInfo(specUris){
 export function getStationLabels(stationUris){
 	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select ?station ?label where{
-			values ?station { <${stationUris.join("> <")}> }
+			values ?station { <${stationUris.filter(uri => uri != "").join("> <")}> }
 			?station cpmeta:hasStationId ?id ; cpmeta:hasName ?name .
 			bind (concat("(", ?id, ") ", ?name) as ?label)
 		}`;
@@ -25,7 +25,7 @@ export function getStationLabels(stationUris){
 export function getFileNames(dobjUris){
 	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select * where{
-			values ?dobj { <${dobjUris.join("> <")}> }
+			values ?dobj { <${dobjUris.filter(uri => uri != "").join("> <")}> }
 			?dobj cpmeta:hasName ?fname .
 		}`;
 	return sparqlLabels(query, "dobj", "fname");
@@ -34,7 +34,7 @@ export function getFileNames(dobjUris){
 export function getContributorNames(contribUris){
 	const query = `prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 		select ?contrib ?name where{
-			values ?contrib { <${contribUris.join("> <")}> }
+			values ?contrib { <${contribUris.filter(uri => uri != "").join("> <")}> }
 			optional{
 				?contrib cpmeta:hasFirstName ?firstName .
 				?contrib cpmeta:hasLastName ?lastName .

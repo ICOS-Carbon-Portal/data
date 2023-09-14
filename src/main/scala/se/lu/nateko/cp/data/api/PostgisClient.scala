@@ -47,12 +47,12 @@ abstract class PostgisClient(conf: PostgisConfig) extends AutoCloseable:
 		executor.shutdown()
 		dataSources.valuesIterator.foreach{_.close()}
 
-	protected def execute(credentials: CredentialsConfig)(action: Connection => Unit)(using Envri): Future[Done] =
+	protected def execute[T](credentials: CredentialsConfig)(action: Connection => T)(using Envri): Future[T] =
 		withConnection(credentials){conn =>
 			try
-				action(conn)
+				val res = action(conn)
 				conn.commit()
-				Done
+				res
 			catch case ex: Throwable =>
 				conn.rollback()
 				throw ex
