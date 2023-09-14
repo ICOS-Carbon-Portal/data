@@ -23,12 +23,12 @@ class AuthToken:
 	cookie_value: str
 
 	def _willExpireIn(self, delta: timedelta) -> bool:
-		return (datetime.now() + delta) < self.expiry_time
+		return (datetime.now() + delta) > self.expiry_time
 
 	def isExpired(self) -> bool:
 		return self._willExpireIn(ExpiryMargin)
 	def isFresh(self) -> bool:
-		return self._willExpireIn(FreshnessMargin)
+		return not self._willExpireIn(FreshnessMargin)
 
 def parse_auth_token(cookie_value: str) -> AuthToken:
 	eq_idx = cookie_value.find("=")
