@@ -1,8 +1,9 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Generic, Literal, TypeAlias, TypeVar, TypedDict
+from typing import Literal, TypeAlias, TypedDict
 
-from icoscp_core.sparql import Binding, as_int, as_uri, as_string
+from ..sparql import Binding, as_int, as_uri, as_opt_uri, as_string, as_datetime
 from ..metacore import UriResource
 
 
@@ -17,57 +18,50 @@ class DataObjectLite:
 	time_start: datetime
 	time_end: datetime
 
-CategorySelector: TypeAlias = str | UriResource | list[str] | list[UriResource]
+CategorySelector: TypeAlias = str | UriResource | list[str] | list[UriResource] | None
 TemporalProp = Literal["submTime", "timeStart", "timeEnd"]
 IntegerProp = Literal["size"]
 StringProp = Literal["fileName"]
-SortByProp: TypeAlias = TemporalProp | IntegerProp | StringProp
+OrderByProp: TypeAlias = TemporalProp | IntegerProp | StringProp
+ExclusiveComparator: TypeAlias = Literal["<", ">"]
+Comparator: TypeAlias = ExclusiveComparator | Literal["<=", ">=", "="]
 
-ContPropName = TypeVar("ContPropName", bound = SortByProp, covariant = True)
-ContProp = TypeVar("ContProp", covariant = True)
+class Filter(ABC):
+	@abstractmethod
+	def render(self) -> str: pass
 
-class PropAction(TypedDict, Generic[ContPropName]):
-	by: ContPropName
+@dataclass
+class TimeFilter(Filter):
+	prop: TemporalProp
+	op: ExclusiveComparator
+	value: datetime | str
 
-class ContPropFilter(Generic[ContPropName, ContProp], PropAction[ContPropName], total = False):
-	min: ContProp
-	max: ContProp
-	eq: ContProp
-	exclusive: bool
+	def render(self) -> str:
+		v = self.value
+		dtStr = v.isoformat() if type(v) is datetime else str(v)
+		return f'?{self.prop} {self.op} "{dtStr}"^^xsd:dateTime'
 
-class TemporalFilter(ContPropFilter[TemporalProp, datetime]):
-	pass
+@dataclass
+class SizeFilter(Filter):
+	op: Comparator
+	value: int
 
-class IntegerFilter(ContPropFilter[IntegerProp, int]):
-	pass
+	def render(self) -> str:
+		return f'?size {self.op} "{self.value}"^^xsd:integer'
 
-Filtering: TypeAlias = TemporalFilter | IntegerFilter
-
-class Selection(TypedDict, total = False):
-	datatype: CategorySelector
-	station: CategorySelector
-	includeDeprecated: bool
-
-class Sorting(PropAction[SortByProp], total = False):
+class SortProp(TypedDict):
+	prop: OrderByProp
+class OrderBy(SortProp, total = False):
 	descending: bool
 
-class Limit(TypedDict):
-	limit: int
-
-class Paging(Limit, total = False):
-	offset: int
-
-def _order_clause(order: Sorting | None) -> str:
+def _order_clause(order: OrderBy | OrderByProp | None) -> str:
 	if order is None:
 		return ""
-	if order.get("descending"):
-		return f"order by desc(?{order['by']})\n"
-	else:
-		return f"order by ?{order['by']}\n"
-
-def _deprecated_filter(select: Selection) -> str:
-	if not select.get("includeDeprecated"):
-		return "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}"
+	if type(order) is str:
+		return f"order by ?{order}\n"
+	if type(order) is dict:
+		prop = order['prop']
+		return f"order by desc(?{prop})\n" if order.get("descending") else f"order by ?{prop}\n"
 	else:
 		return ""
 
@@ -77,7 +71,7 @@ def _selector_values_clause(varname: str, uris: list[str]) -> str:
 	else:
 		return f"VALUES ?{varname} {{ {'<' + '> <'.join(uris) + '>'} }}"
 
-def _get_uri_list(selector: CategorySelector | None) -> list[str]:
+def _get_uri_list(selector: CategorySelector) -> list[str]:
 	if selector is None: return []
 	def to_uri(uri_or_res: object) -> str:
 		return getattr(uri_or_res, "uri", None) or str(uri_or_res)
@@ -85,64 +79,22 @@ def _get_uri_list(selector: CategorySelector | None) -> list[str]:
 		return [to_uri(uri_or_res) for uri_or_res in selector]
 	return [to_uri(selector)]
 
-def _is_temporal(prop: SortByProp) -> bool:
-	match prop:
-		case "submTime": return True
-		case "timeStart": return True
-		case "timeEnd": return True
-		case "fileName": return False
-		case "size": return False
-
-def _is_integer(prop: SortByProp) -> bool:
-	match prop:
-		case "submTime": return False
-		case "timeStart": return False
-		case "timeEnd": return False
-		case "fileName": return False
-		case "size": return True
-
-def _filter_clause(f: Filtering) -> str:
-	min = f.get("min")
-	max = f.get("max")
-	eq = f.get("eq")
-	if (min is None) and (max is None) and (eq is None): return ""
-	conditions: list[str] = []
-	prop: IntegerProp | TemporalProp = f["by"]
-
-	def make_cond(op: str, compValue: datetime | int) -> str:
-		compValueStr: str
-		if _is_integer(prop) and type(compValue) is int:
-			compValueStr = f"\"{compValue}\"^^xsd:integer"
-		elif _is_temporal(prop) and type(compValue) is datetime:
-			compValueStr = f"\"{compValue.isoformat()}\"^^xsd:dateTime"
-		else: return ""
-		return f"?{prop} {op} {compValueStr}"
-
-	orEq = "=" if not f.get("exclusive") else ""
-	if not (eq is None):
-		conditions.append(make_cond("=", eq))
-	if not (min is None):
-		conditions.append(make_cond(f">{orEq}", min))
-	if not (max is None):
-		conditions.append(make_cond(f"<{orEq}", max))
-
-	conditions = [c for c in conditions if c != ""]
-	if len(conditions) == 0: return ""
-	return f"FILTER ({' && '.join(conditions)})"
-
 def dataobj_lite_list(
-	select: Selection,
-	filter: list[Filtering],
-	order: Sorting | None,
-	page: Paging
+	datatype: CategorySelector,
+	station: CategorySelector,
+	filters: list[Filter],
+	includeDeprecated: bool,
+	orderBy: OrderBy | OrderByProp | None,
+	limit: int,
+	offset: int
 ) -> str:
 
-	specUris =  _get_uri_list(select.get("datatype"))
-	stationUris = _get_uri_list(select.get("station"))
+	specUris =  _get_uri_list(datatype)
+	stationUris = _get_uri_list(station)
 	stationMandatory = "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station ."
 	stationLink = f"OPTIONAL{{ {stationMandatory} }}" if len(stationUris) == 0 else stationMandatory
 
-	filter_clauses = "\n".join(map(_filter_clause, filter))
+	filter_clauses = "\n".join([f.render() for f in filters])
 
 	return f"""
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
@@ -159,19 +111,19 @@ where {{
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
-	{_deprecated_filter(select)}
+	{"FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}" if includeDeprecated else ""}
 	{filter_clauses}
 }}
-{_order_clause(order)}offset {page.get('offset') or 0} limit {page['limit']}"""
+{_order_clause(orderBy)}offset {offset} limit {min(limit, 10000)}"""
 
 def parse_dobj_lite(row: Binding) -> DataObjectLite:
-	raise NotImplementedError
-	# return DataObjectLite(
-	# )
-
-testq = dataobj_lite_list(
-	select = {"datatype": "http://meta.icos-cp.eu/resources/cpmeta/atcCo2Product"},
-	filter = [{"by": "submTime", "min": datetime.fromisoformat("2023-05-05T12:00:00Z")}],
-	order = {"by": "size"},
-	page = {"limit": 100}
-)
+	return DataObjectLite(
+		uri = as_uri("dobj", row),
+		filename = as_string("fileName", row),
+		size_bytes = as_int("size", row),
+		datatype_uri = as_uri("spec", row),
+		station_uri = as_opt_uri("station", row),
+		submission_time = as_datetime("submTime", row),
+		time_start = as_datetime("timeStart", row),
+		time_end = as_datetime("timeEnd", row)
+	)

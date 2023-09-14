@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import TypeAlias, Optional, Any
 from dataclasses import dataclass
 import requests
@@ -21,7 +22,7 @@ class SparqlResults:
 	bindings: list[Binding]
 
 def lookup(varname: str, binding: Binding) -> BoundValue:
-	v = binding[varname]
+	v = binding.get(varname)
 	if not v:
 		raise ValueError(f"Variable {varname} had no bound values in SPARQL response")
 	else:
@@ -44,6 +45,11 @@ def as_int(varname: str, binding: Binding) -> int:
 def as_string(varname: str, binding: Binding) -> str:
 	return lookup_literal_value(varname, None, binding)
 
+def as_datetime(varname: str, binding: Binding) -> datetime:
+	dtStr = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#dateTime", binding)
+	return datetime.fromisoformat(dtStr)
+
+
 def as_uri(varname: str, binding: Binding) -> str:
 	bv = lookup(varname, binding)
 	if type(bv) is BoundUri:
@@ -51,6 +57,10 @@ def as_uri(varname: str, binding: Binding) -> str:
 	else:
 		raise _type_error(varname, "a uri value", bv)
 
+def as_opt_uri(varname: str, binding: Binding) -> str | None:
+	if varname in binding.keys():
+		return as_uri(varname, binding)
+	else: return None
 
 def _type_error(varname: str, expected: str, bv: BoundValue) -> ValueError:
 	msg = f"Was expecting {expected}, got value {bv} for variable {varname} in SPARQL results"
