@@ -37,3 +37,11 @@ class DataClient:
 		with open(save_path, "wb") as save_file:
 			save_file.write(resp.content)
 			return filename
+
+	def get_csv(self, dobj_uri: str, cols: list[str], limit: int, offset: int) -> bytes:
+		col_params = [f"col={c}" for c in cols]
+		params = "&".join(col_params) + f"&offset={offset}&limit={limit}"
+		url = self._conf.data_service_base_url + "/csv/" + dobj_uri + "?" + params
+		resp = requests.get(url = url, headers = {"Cookie": self._auth.get_token().cookie_value})
+
+		return resp.content
