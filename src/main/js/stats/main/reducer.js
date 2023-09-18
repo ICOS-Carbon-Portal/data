@@ -30,6 +30,7 @@ export const initState = {
 	mainRadio: undefined,
 	subRadio: undefined,
 	variousStats: undefined,
+	toasterData: undefined,
 };
 
 export default function(state = initState, action){
