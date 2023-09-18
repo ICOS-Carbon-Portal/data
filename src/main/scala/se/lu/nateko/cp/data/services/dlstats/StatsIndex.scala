@@ -180,7 +180,7 @@ class StatsIndex(sizeHint: Int):
 			counts(dlObjId) += 1
 		val statSize = counts.filter(_ > 0).size
 		val toSkip = (qp.page - 1) * qp.pageSize
-		val toDisplay = if statSize < qp.pageSize then statSize else qp.pageSize
+		val toDisplay = if statSize - toSkip < qp.pageSize then statSize - toSkip else qp.pageSize
 		val statsToReturn = counts.indices.toArray.sortBy(i => - counts(i)).drop(toSkip).take(toDisplay).map: dobjIdx =>
 			DobjDlCount(dobjIdx, counts(dobjIdx))
 		DobjDlChartPage(statsToReturn, statSize)
