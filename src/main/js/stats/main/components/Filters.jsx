@@ -5,6 +5,7 @@ import CheckBtn from "./CheckBtn";
 
 export const placeholders = {
 	specification: 'Data types',
+	project: 'Project',
 	dataLevel: 'Data level',
 	format: 'Format',
 	stations: 'Stations',

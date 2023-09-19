@@ -20,6 +20,7 @@ export const actionTypes = {
 	PREVIEW_DATA_FETCHED: 'PREVIEW_DATA_FETCHED',
 	RADIO_UPDATED: 'RADIO_UPDATED',
 	RESET_FILTERS: 'RESET_FILTERS',
+	SET_SPEC_PROJECT_LOOKUP: 'SET_SPEC_PROJECT_LOOKUP',
 	SET_SPEC_LEVEL_LOOKUP: 'SET_SPEC_LEVEL_LOOKUP',
 	VARIOUS_STATS_FETCHED: 'VARIOUS_STATS_FETCHED',
 }
@@ -186,10 +187,10 @@ export const resetFilters = () => dispatch => {
 };
 
 export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
-	const { downloadStats, specLevelLookup, dateUnit } = getState();
+	const { downloadStats, specProjectLookup, specLevelLookup, dateUnit } = getState();
 	const page = newPage || 1;
 
-	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
+	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specProjectLookup, specLevelLookup);
 	Promise.all([getDownloadStatsApi(page, searchParams), postToApi('downloadsByCountry', searchParams)])
 		.then(([dlStats, countryStats]) => {
 			dispatch({
@@ -207,9 +208,9 @@ export const fetchDownloadStats = (newPage) => (dispatch, getState) => {
 };
 
 const fetchFilters = (dispatch, getState) => {
-	const { downloadStats, specLevelLookup } = getState();
+	const { downloadStats, specProjectLookup, specLevelLookup } = getState();
 
-	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
+	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specProjectLookup, specLevelLookup);
 
 	getCountryCodesLookup().then(
 		countryCodeLookup => {
@@ -223,6 +224,22 @@ const fetchFilters = (dispatch, getState) => {
 			]
 			Promise.all(promises).then(
 				([specifications, contributors, stations, submitters, dlfrom, stationCountryCodes]) => {
+					const projects = specifications.reduce((acc, curr) => {
+						const prjct = acc.find(l => l.id === curr.project);
+						if (prjct === undefined) {
+							acc.push({
+								id: curr.project,
+								specs: [curr.id],
+								count: curr.count,
+								label: curr.projectLabel
+							})
+						} else {
+							prjct.count += curr.count;
+							prjct.specs.push(curr.id);
+						}
+						return acc;
+					}, []).sort(labelSorter);
+
 					const dataLevels = specifications.reduce((acc, curr) => {
 						const lvl = acc.find(l => l.id === curr.level);
 						if (lvl === undefined) {
@@ -242,6 +259,7 @@ const fetchFilters = (dispatch, getState) => {
 					dispatch({
 						type: actionTypes.FILTERS,
 						specifications,
+						projects,
 						dataLevels,
 						stations,
 						contributors,
@@ -250,6 +268,16 @@ const fetchFilters = (dispatch, getState) => {
 						dlfrom,
 						stationCountryCodes
 					});
+
+					if (specProjectLookup === undefined) {
+						dispatch({
+							type: actionTypes.SET_SPEC_PROJECT_LOOKUP,
+							specProjectLookup: projects.reduce((acc, dl) => {
+								acc[dl.id] = dl.specs;
+								return acc;
+							}, {})
+						})
+					}
 
 					if (specLevelLookup === undefined) {
 						dispatch({
@@ -268,10 +296,10 @@ const fetchFilters = (dispatch, getState) => {
 };
 
 export const fetchDownloadStatsPerDateUnit = dateUnit => (dispatch, getState) => {
-	const { specLevelLookup, downloadStats } = getState();
+	const { specProjectLookup, specLevelLookup, downloadStats } = getState();
 
 	const endpoint = 'downloadsPer' + dateUnit.slice(0, 1).toUpperCase() + dateUnit.slice(1);
-	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specLevelLookup);
+	const searchParams = getSearchParams(downloadStats.getSearchParamFilters(), specProjectLookup, specLevelLookup);
 	const parser = d => ({ ...d, ...{ date: new Date(d.ts) } })
 
 	postToApi(endpoint, searchParams, parser)
