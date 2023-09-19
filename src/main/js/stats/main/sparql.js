@@ -7,9 +7,9 @@ export function getObjSpecInfo(specUris){
 		select * where {
 		VALUES ?spec { <${specUris.filter(uri => uri != "").join("> <")}> }
 		?spec rdfs:label ?label .
-		?spec cpmeta:hasDataLevel ?level
+		?spec cpmeta:hasDataLevel ?level ; cpmeta:hasAssociatedProject ?project .
 	}`;
-	return sparqlParser(query, "spec", ["label", "level"]);
+	return sparqlParser(query, "spec", ["label", "level", "project"]);
 }
 
 export function getStationLabels(stationUris){
@@ -52,6 +52,23 @@ export function getStationCountryCodes(){
 			?station cpmeta:countryCode ?countryCode .
 		}`;
 	return sparqlLabels(query, "station", "countryCode");
+}
+
+export function projectLabelLookup(){
+	const query = `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+		select ?uri ?label
+		from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		from <http://meta.icos-cp.eu/resources/cpmeta/>
+		where {
+			?uri a ?class .
+			optional {?uri rdfs:label ?rdfsLabel }
+			optional {?uri cpmeta:hasName ?name}
+			bind(coalesce(?name, ?rdfsLabel) as ?label)
+			filter( ?class = cpmeta:Project )
+		}`;
+	return sparqlLabels(query, "uri", "label")
 }
 
 //Returns a Promise of a dictionary-object with labels

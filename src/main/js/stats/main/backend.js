@@ -1,22 +1,23 @@
 import { getJson, sparql, checkStatus } from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
-import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
+import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames, projectLabelLookup } from './sparql';
 import localConfig from './config';
 
 export const getCountryCodesLookup = () => {
 	return getJson('https://static.icos-cp.eu/constant/misc/countries.json');
 };
 
-export const getSearchParams = (dlFilters, specLevelLookup) => {
-	const { specification, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
+export const getSearchParams = (dlFilters, specProjectLookup, specLevelLookup) => {
+	const { specification, project, dataLevel, stations, submitters, contributors, dlfrom, originStations, hashId} = dlFilters;
 
 	const dlStart = dlFilters.dlStart;
 	const dlEnd = dlFilters.dlEnd;
 	const includeGrayDl = dlFilters.grayDownloadFilter;
 	const specSpecs = specification && specification.length ? specification : [];
+	const projectSpecs = project && project.length ? project.flatMap(prj => specProjectLookup[prj]) : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
-	const combinedSpecs = specSpecs.concat(dataLevelSpecs);
+	const combinedSpecs = specSpecs.concat(projectSpecs).concat(dataLevelSpecs);
 	const specs = combinedSpecs.length ? combinedSpecs : undefined;
 
 	return hashId && hashId.length
@@ -120,16 +121,20 @@ export const getSpecsApi = searchParams => {
 				return Promise.resolve(specifications);
 			}
 
-			return getObjSpecInfo(specifications.map(s => s.spec))
-				.then(specLabels =>
-					specifications.map(s => ({
-						id: s.spec,
-						count: s.count,
-						label: specLabels[s.spec] ? specLabels[s.spec].label : s.spec.split('/').pop(),
-						level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified'
-					}))
-						.sort((a, b) => a.label.localeCompare(b.label))
-				);
+			return projectLabelLookup().then(projectLookup =>
+				getObjSpecInfo(specifications.map(s => s.spec))
+					.then(specLabels =>
+						specifications.map(s => ({
+							id: s.spec,
+							count: s.count,
+							label: specLabels[s.spec] ? specLabels[s.spec].label : s.spec.split('/').pop(),
+							level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified',
+							project: specLabels[s.spec] ? specLabels[s.spec].project : 'Unspecified',
+							projectLabel: specLabels[s.spec] ? projectLookup[specLabels[s.spec].project] : 'Unspecified'
+						}))
+							.sort((a, b) => a.label.localeCompare(b.label))
+					)
+			);
 		});
 };
 

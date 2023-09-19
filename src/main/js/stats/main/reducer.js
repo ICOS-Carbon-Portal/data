@@ -14,6 +14,7 @@ export const initState = {
 	downloadStats: new StatsTable({}),
 	statsMap: new StatsMap(),
 	statsGraph: new StatsGraph(),
+	specProjectLookup: undefined,
 	specLevelLookup: undefined,
 	countryCodeLookup: undefined,
 	paging: {
@@ -102,6 +103,10 @@ export default function(state = initState, action){
 					values: action.formats,
 					displayFilterForSingleObject: false
 				}, {
+					name: "project",
+					values: action.projects,
+					displayFilterForSingleObject: false
+				}, {
 					name: "dataLevel",
 					values: action.dataLevels,
 					displayFilterForSingleObject: false
@@ -149,6 +154,11 @@ export default function(state = initState, action){
 		case actionTypes.GRAY_DOWNLOADS_UPDATE:
 			return update({
 				downloadStats: state.downloadStats.withGrayDownloadFilter(action.filterGrayDownload)
+			});
+
+		case actionTypes.SET_SPEC_PROJECT_LOOKUP:
+			return update({
+				specProjectLookup: action.specProjectLookup
 			});
 
 		case actionTypes.SET_SPEC_LEVEL_LOOKUP:
