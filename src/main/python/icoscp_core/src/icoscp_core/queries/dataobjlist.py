@@ -13,7 +13,7 @@ class DataObjectLite:
 	filename: str
 	size_bytes: int
 	datatype_uri: str
-	station_uri: str | None
+	# station_uri: str | None
 	submission_time: datetime
 	time_start: datetime
 	time_end: datetime
@@ -94,18 +94,18 @@ def dataobj_lite_list(
 	stationMandatory = "?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station ."
 	stationLink = f"OPTIONAL{{ {stationMandatory} }}" if len(stationUris) == 0 else stationMandatory
 
-	filter_clauses = "FILTER(" + " && ".join([f.render() for f in filters]) + ")"
+	filter_clauses = "" if len(filters) == 0 else "FILTER(" + " && ".join([f.render() for f in filters]) + ")"
 
 	return f"""
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-select ?dobj ?spec ?station ?fileName ?size ?submTime ?timeStart ?timeEnd
+select ?dobj ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {{
 	{_selector_values_clause('spec', specUris)}
 	?dobj cpmeta:hasObjectSpec ?spec .
 	{_selector_values_clause('station', stationUris)}
-	{stationLink}
+	# {stationLink}
 	?dobj cpmeta:hasSizeInBytes ?size .
 	?dobj cpmeta:hasName ?fileName .
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
@@ -122,7 +122,6 @@ def parse_dobj_lite(row: Binding) -> DataObjectLite:
 		filename = as_string("fileName", row),
 		size_bytes = as_long("size", row),
 		datatype_uri = as_uri("spec", row),
-		station_uri = as_opt_uri("station", row),
 		submission_time = as_datetime("submTime", row),
 		time_start = as_datetime("timeStart", row),
 		time_end = as_datetime("timeEnd", row)
