@@ -1,10 +1,10 @@
 import os
 import re
 import requests
+import io
 from urllib.parse import urlsplit, unquote
-from typing import Optional
+from typing import Optional, Iterator
 from .queries.dataobjlist import DataObjectLite
-from io import BytesIO
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
 
@@ -40,9 +40,18 @@ class DataClient:
 			save_file.write(resp.content)
 			return filename
 
-	def get_csv_bytes(self, dobj: str | DataObjectLite, cols: list[str] = [], limit: Optional[int] = None, offset: Optional[int] = None):
-		dobj_uri = dobj.uri if type(dobj) == DataObjectLite else dobj if type(dobj) == str else ""
-		dobj_hash = urlsplit(dobj_uri).path
+	def get_csv_byte_stream(
+		self,
+		dobj: str | DataObjectLite,
+		cols: list[str] = [],
+		limit: Optional[int] = None,
+		offset: Optional[int] = None
+	) -> io.BufferedReader:
+		dobj_uri: str
+		if type(dobj) == DataObjectLite: dobj_uri = dobj.uri
+		elif type(dobj) == str: dobj_uri = dobj
+		else: raise ValueError('dobj_uri must be a string or a DataObjectLite instance')
+		dobj_hash = dobj_uri.split('/')[-1]
 
 		params = {
 			"col": cols,
@@ -51,9 +60,27 @@ class DataClient:
 		}
 
 		url = self._conf.data_service_base_url + "/csv/" + dobj_hash
-		resp = requests.get(url = url, headers = {"Cookie": self._auth.get_token().cookie_value}, stream=True, params=params)
-		bytes = BytesIO(resp.content)
-		
-		resp.close()
 
-		return bytes
+		resp = requests.get(url = url, headers = {"Cookie": self._auth.get_token().cookie_value}, stream=True, params=params)
+		chunk_size = io.DEFAULT_BUFFER_SIZE
+		return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
+
+class HttpResponseStream(io.RawIOBase):
+	def __init__(self, resp: requests.Response, chunk_size: int):
+		self._http_resp = resp
+		self._iterable: Iterator[bytes] = resp.iter_content(chunk_size = chunk_size)
+		self.leftover: bytes | None = None
+	def readable(self):
+		return True
+	def readinto(self, b):
+		try:
+			l = len(b)
+			chunk = self.leftover or next(self._iterable)
+			output, self.leftover = chunk[:l], chunk[l:]
+			b[:len(output)] = output
+			return len(output)
+		except StopIteration:
+			return 0
+	def close(self) -> None:
+		self._http_resp.close()
+		return super().close()
