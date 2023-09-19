@@ -151,26 +151,31 @@ class StatsIndex(sizeHint: Int):
 	end filter
 
 	def downloadsByCountry(qp: StatsQuery): IndexedSeq[DownloadsByCountry] =
-		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filter(qp).andCardinality(countryBm), country)).toIndexedSeq.filter(_._1 != 0).sortBy(- _._1)
+		val filterQp = filter(qp)
+		dlCountryIndices.map((country, countryBm) => DownloadsByCountry(filterQp.andCardinality(countryBm), country)).toIndexedSeq.filter(_._1 != 0).sortBy(- _._1)
 
 	def downloadsPerYearByCountry(qp: StatsQuery): IndexedSeq[CustomDownloadsPerYearCountry] =
+		val filterQp = filter(qp)
 		val iterable =
 			for
 				(year, dlYearBm) <- dlYearIndices
 				(country, dlCountryBm) <- dlCountryIndices
 			yield
 				val filterYearCountry = BufferFastAggregation.and(dlYearBm, dlCountryBm)
-				CustomDownloadsPerYearCountry(year, country, filter(qp).andCardinality(filterYearCountry))
+				CustomDownloadsPerYearCountry(year, country, filterQp.andCardinality(filterYearCountry))
 		iterable.toIndexedSeq.sortBy(x => (- x._1, - x._3, x._2.toString))
 
 	def downloadsPerWeek(qp: StatsQuery): IndexedSeq[DownloadsPerWeek] =
-		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filter(qp).andCardinality(dlWeekBm), week.toInstant, week.week)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
+		val filterQp = filter(qp)
+		dlWeekIndices.map((week, dlWeekBm) => DownloadsPerWeek(filterQp.andCardinality(dlWeekBm), week.toInstant, week.week)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
 	def downloadsPerMonth(qp: StatsQuery): IndexedSeq[DownloadsPerTimeframe] =
-		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlMonthBm), month.toInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
+		val filterQp = filter(qp)
+		dlMonthIndices.map((month, dlMonthBm) => DownloadsPerTimeframe(filterQp.andCardinality(dlMonthBm), month.toInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 	
 	def downloadsPerYear(qp: StatsQuery): IndexedSeq[DownloadsPerTimeframe] =
-		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filter(qp).andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
+		val filterQp = filter(qp)
+		dlYearIndices.map((year, dlYearBm) => DownloadsPerTimeframe(filterQp.andCardinality(dlYearBm), year.yearToInstant)).toIndexedSeq.filter(_._1 != 0).sortBy(_._2)
 
 	def downloadStats(qp: StatsQuery): DobjDlChartPage =
 		val counts = Array.ofDim[Int](countDobj + 1)
@@ -186,19 +191,24 @@ class StatsIndex(sizeHint: Int):
 		DobjDlChartPage(statsToReturn, statSize)
 
 	def specifications(qp: StatsQuery): IndexedSeq[Specifications] =
-		specIndices.map((spec, specBm) => Specifications(filter(qp).andCardinality(specBm), spec)).toIndexedSeq.sortBy(- _._1)
+		val filterQp = filter(qp)
+		specIndices.map((spec, specBm) => Specifications(filterQp.andCardinality(specBm), spec)).toIndexedSeq.sortBy(- _._1)
 	
 	def contributors(qp: StatsQuery): IndexedSeq[Contributors] =
-		contributorIndices.map((contributor, contributorBm) => Contributors(filter(qp).andCardinality(contributorBm), contributor)).toIndexedSeq.sortBy(- _._1)
+		val filterQp = filter(qp)
+		contributorIndices.map((contributor, contributorBm) => Contributors(filterQp.andCardinality(contributorBm), contributor)).toIndexedSeq.sortBy(- _._1)
 
 	def submitters(qp: StatsQuery): IndexedSeq[Submitters] =
-		submitterIndices.map((submitter, submitterBm) => Submitters(filter(qp).andCardinality(submitterBm), submitter)).toIndexedSeq.sortBy(- _._1)
+		val filterQp = filter(qp)
+		submitterIndices.map((submitter, submitterBm) => Submitters(filterQp.andCardinality(submitterBm), submitter)).toIndexedSeq.sortBy(- _._1)
 
 	def stations(qp: StatsQuery): IndexedSeq[Stations] =
-		stationIndices.map((station, stationBm) => Stations(filter(qp).andCardinality(stationBm), station)).toIndexedSeq.sortBy(- _._1)
+		val filterQp = filter(qp)
+		stationIndices.map((station, stationBm) => Stations(filterQp.andCardinality(stationBm), station)).toIndexedSeq.sortBy(- _._1)
 
 	def dlfrom(qp: StatsQuery): IndexedSeq[DownloadedFrom] =
-		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(filter(qp).andCardinality(dlCountryBm), dlCountry)).toIndexedSeq.sortBy(- _._1)
+		val filterQp = filter(qp)
+		dlCountryIndices.map((dlCountry, dlCountryBm) => DownloadedFrom(filterQp.andCardinality(dlCountryBm), dlCountry)).toIndexedSeq.sortBy(- _._1)
 
 	def downloadCount(qp: StatsQuery): DownloadCount =
 		val count = filter(qp).getOrElse(allDownloads).getCardinality
