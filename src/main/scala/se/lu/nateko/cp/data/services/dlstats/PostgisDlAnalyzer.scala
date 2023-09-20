@@ -57,7 +57,6 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				counts <- runAnalyticalQuery(query)(_.getInt("count"))
 					.contextualizeFailure("getting the size of 'downloads' table")
 				size = counts.head
-				_ = log.info(s"Found $size 'white' and 'gray' downloads for $envri")
 				index <- initIndex(size)
 					.contextualizeFailure(s"initializing StatsIndex with size hint $size")
 			yield index
@@ -211,19 +210,16 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 		val futTry = withConnection(conf.reader): conn =>
 			val indexImportQuery = "SELECT * FROM statIndexEntries"
 			Using(conn.prepareStatement(indexImportQuery)): preparedSt =>
-				log.info(s"Will execute query to start streaming stats index entries for $envri...")
 				preparedSt.setFetchSize(10000)
 				val resSet = preparedSt.executeQuery()
-				log.info(s"Stats index entries query for $envri executed, starting ingestion...")
 				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
 				var nIngested: Long = 0
 				while resSet.next() do
 					val indexEntry = parseIndexEntry(resSet).get
 					index.add(indexEntry)
 					nIngested += 1
-					if nIngested % 100000 == 0 then
-						log.info(s"Ingested $nIngested StatsIndex entries")
 				index.runOptimize()
+				log.info(s"StatsIndex is ready for $envri")
 				index
 		futTry.flatMap(Future.fromTry)
 
