@@ -1,7 +1,7 @@
 import { getJson, sparql, checkStatus } from 'icos-cp-backend';
 import config from '../../common/main/config';
 import {feature} from 'topojson';
-import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames, projectLabelLookup } from './sparql';
+import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
 import localConfig from './config';
 
 export const getCountryCodesLookup = () => {
@@ -121,20 +121,18 @@ export const getSpecsApi = searchParams => {
 				return Promise.resolve(specifications);
 			}
 
-			return projectLabelLookup().then(projectLookup =>
-				getObjSpecInfo(specifications.map(s => s.spec))
-					.then(specLabels =>
-						specifications.map(s => ({
-							id: s.spec,
-							count: s.count,
-							label: specLabels[s.spec] ? specLabels[s.spec].label : s.spec.split('/').pop(),
-							level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified',
-							project: specLabels[s.spec] ? specLabels[s.spec].project : 'Unspecified',
-							projectLabel: specLabels[s.spec] ? projectLookup[specLabels[s.spec].project] : 'Unspecified'
-						}))
-							.sort((a, b) => a.label.localeCompare(b.label))
-					)
-			);
+			return getObjSpecInfo(specifications.map(s => s.spec))
+				.then(specLabels =>
+					specifications.map(s => ({
+						id: s.spec,
+						count: s.count,
+						label: specLabels[s.spec] ? specLabels[s.spec].specLabel : s.spec.split('/').pop(),
+						level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified',
+						project: specLabels[s.spec] ? specLabels[s.spec].project : 'Unspecified',
+						projectLabel: specLabels[s.spec] ? specLabels[s.spec].projectLabel : 'Unspecified'
+					}))
+						.sort((a, b) => a.label.localeCompare(b.label))
+				)
 		});
 };
 
