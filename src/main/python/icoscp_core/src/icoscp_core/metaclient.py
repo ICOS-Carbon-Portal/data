@@ -6,6 +6,7 @@ from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_l
 from .queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject, CPJson, parse_cp_json, DataObjectSpec
+from .rolemeta import StationWithStaff
 from typing import Type, Literal
 
 
@@ -78,7 +79,15 @@ class MetadataClient:
 		else: raise ValueError("Dobj must be either landing page URL or an instance of DataObjectLite")
 
 		return _get_json_meta(dobj_uri, DataObject)
+	
+	def get_station_meta(self, station: str | StationLite) -> StationWithStaff:
+		station_uri: str
 
+		if type(station) == str: station_uri = station
+		elif type(station) == StationLite: station_uri = station.uri
+		else: raise ValueError("Station must be either landing page URL or an instance of StationLite")
+
+		return _get_json_meta(station_uri, StationWithStaff)
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
 	resp = requests.get(url = url, headers={"Accept": "application/json"})
