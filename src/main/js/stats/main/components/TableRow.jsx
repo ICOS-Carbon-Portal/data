@@ -35,7 +35,7 @@ const RowValCount = ({ dobj }) => {
 };
 
 const RowDownloads = ({ dobj }) => {
-	const fileName = dobj.fileName || <i>Data object does no longer exist</i>;
+	const fileName = dobj.fileName || <i>Data object does not exist anymore</i>;
 
 	return (
 		<tr>
@@ -47,7 +47,7 @@ const RowDownloads = ({ dobj }) => {
 };
 
 const RowDownloadsWithLinks = ({ dobj, onFileNameClick }) => {
-	const fileName = dobj.fileName || <i>Data object does no longer exist</i>;
+	const fileName = dobj.fileName || <i>Data object does not exist anymore</i>;
 
 	return (
 		<tr>

@@ -122,16 +122,20 @@ export const getSpecsApi = searchParams => {
 			}
 
 			return getObjSpecInfo(specifications.map(s => s.spec))
-				.then(specLabels =>
-					specifications.map(s => ({
+				.then(specLabels => specifications
+					.flatMap(s => {
+						const specL = specLabels[s.spec]
+						return specL ? [{s, specL}] : []
+					})
+					.map(({s, specL}) => ({
 						id: s.spec,
 						count: s.count,
-						label: specLabels[s.spec] ? specLabels[s.spec].specLabel : s.spec.split('/').pop(),
-						level: specLabels[s.spec] ? specLabels[s.spec].level : 'Unspecified',
-						project: specLabels[s.spec] ? specLabels[s.spec].project : 'Unspecified',
-						projectLabel: specLabels[s.spec] ? specLabels[s.spec].projectLabel : 'Unspecified'
+						label: specL.specLabel,
+						level: specL.level,
+						project: specL.project,
+						projectLabel: specL.projectLabel
 					}))
-						.sort((a, b) => a.label.localeCompare(b.label))
+					.sort((a, b) => a.label.localeCompare(b.label))
 				)
 		});
 };
