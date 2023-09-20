@@ -17,16 +17,19 @@ class StationLite(UriResource):
 	geo_json: str | None
 
 def parse_station(row: Binding) -> StationLite:
+	station_name = as_string("stationName", row)
+	station_id = as_string("stId", row)
+
 	return StationLite(
 		uri = as_uri("station", row),
-		id = as_string("stId", row),
-		label = as_string("specLabel", row),
+		id = station_id,
 		type_uri = as_uri("stType", row),
-		name = as_string("stationName", row),
+		name = station_name,
 		country_code = as_string("cCode", row),
 		lat = as_opt_double("lat", row),
 		lon = as_opt_double("lon", row),
 		geo_json = as_opt_str("geoJson", row),
+		label = f"{station_name} ({station_id})",
 		comments = [],
 	)
 
@@ -37,7 +40,7 @@ def station_lite_list(station_type_uri: str | None, conf: EnvriConfig) -> str:
 		PREFIX cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		SELECT * WHERE{{
 			?stType rdfs:subClassOf* {top_station_class} . 
-			?station a ?stType ; cpmeta:hasStationId ?stId ; cpmeta:hasName ?stationName ; cpmeta:countryCode ?cCode ; rdfs:label ?specLabel .
+			?station a ?stType ; cpmeta:hasStationId ?stId ; cpmeta:hasName ?stationName ; cpmeta:countryCode ?cCode .
 			FILTER(strstarts(str(?station), "{conf.meta_instance_prefix}"))
 			OPTIONAL{{?station cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon}}
 			OPTIONAL{{?station cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?geoJson}}
