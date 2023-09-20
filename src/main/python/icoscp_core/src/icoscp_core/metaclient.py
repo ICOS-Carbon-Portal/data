@@ -4,6 +4,7 @@ from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpecLite
 from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
 from .queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
+from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject, CPJson, parse_cp_json, DataObjectSpec
 from typing import Type
 
@@ -54,6 +55,12 @@ class MetadataClient:
 		else: raise ValueError("Dobj must be either landing page URL or an instance of DataObjectLite")
 
 		return _get_json_meta(dobj_uri, DataObject)
+
+	def list_stations(self, station_type: str | None = None) -> list[StationLite]:
+		station_type_url = station_type if station_type else self._envri_conf.default_station_type_url
+		query = station_lite_list(station_type_url, self._envri_conf)
+		qres = self.sparql_select(query)
+		return [parse_station(b) for b in qres.bindings]
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
 	resp = requests.get(url = url, headers={"Accept": "application/json"})

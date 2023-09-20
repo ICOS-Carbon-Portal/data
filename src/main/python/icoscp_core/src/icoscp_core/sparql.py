@@ -43,6 +43,10 @@ def as_int(varname: str, binding: Binding) -> int:
 	int_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#integer", binding)
 	return int(int_str)
 
+def as_double(varname: str, binding: Binding) -> float:
+	long_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#double", binding)
+	return float(long_str)
+
 def as_long(varname: str, binding: Binding) -> int:
 	long_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#long", binding)
 	return int(long_str)
@@ -61,6 +65,16 @@ def as_uri(varname: str, binding: Binding) -> str:
 		return bv.uri
 	else:
 		raise _type_error(varname, "a uri value", bv)
+
+def as_opt_double(varname: str, binding: Binding) -> float | None:
+	if varname in binding.keys():
+		return as_double(varname, binding)
+	else: return None
+
+def as_opt_str(varname: str, binding: Binding) -> str | None:
+	if varname in binding.keys():
+		return as_string(varname, binding)
+	else: return None
 
 def as_opt_uri(varname: str, binding: Binding) -> str | None:
 	if varname in binding.keys():
