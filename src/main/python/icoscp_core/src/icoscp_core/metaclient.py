@@ -6,7 +6,8 @@ from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_l
 from .queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject, CPJson, parse_cp_json, DataObjectSpec
-from typing import Type
+from typing import Type, Literal
+
 
 class MetadataClient:
 	def __init__(self, envri_conf: EnvriConfig):
@@ -23,6 +24,28 @@ class MetadataClient:
 		query = dobj_spec_lite_list(self._envri_conf)
 		qres = self.sparql_select(query)
 		return [parse_dobj_spec_lite(b) for b in qres.bindings]
+
+	def list_stations(self, of_station_type_uri: str | None | Literal[False] = None ) -> list[StationLite]:
+		"""
+		List basic information about available stations. Presense of data from/for these stations is not guaranteed.
+
+		:param of_station_type_uri:
+			The URI of the type of interesting station (in RDF metadata, the rdf:type of the station resource, or a supertype of the interesting types).
+			If omitted, a default type specific to the ENVRI context is used (e.g. only the ICOS stations for ICOS ENVRI)
+			To get all stations without any filtering, use False.
+		:return:
+			The list of StationLite objects
+		"""
+
+		station_type: str | None = None
+		if of_station_type_uri is None:
+			station_type = self._envri_conf.default_station_type_url
+		elif type(of_station_type_uri) == str:
+			station_type = of_station_type_uri
+
+		query = station_lite_list(station_type, self._envri_conf)
+		qres = self.sparql_select(query)
+		return [parse_station(b) for b in qres.bindings]
 
 	def list_data_objects(
 		self,
@@ -56,11 +79,6 @@ class MetadataClient:
 
 		return _get_json_meta(dobj_uri, DataObject)
 
-	def list_stations(self, station_type: str | None = None) -> list[StationLite]:
-		station_type_url = station_type if station_type else self._envri_conf.default_station_type_url
-		query = station_lite_list(station_type_url, self._envri_conf)
-		qres = self.sparql_select(query)
-		return [parse_station(b) for b in qres.bindings]
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
 	resp = requests.get(url = url, headers={"Accept": "application/json"})

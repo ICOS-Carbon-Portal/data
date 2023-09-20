@@ -8,7 +8,7 @@ from typing import Optional, Iterator
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from typing import Tuple
+from typing import Tuple, Any
 
 
 class DataClient:
@@ -19,7 +19,7 @@ class DataClient:
 	def get_file_stream(self, dobj_uri: str) -> Tuple[str, io.BufferedReader]:
 		path = urlsplit(dobj_uri).path
 		url = self._conf.data_service_base_url + path
-		resp = requests.get(url = url, headers = {"Cookie": self._auth.get_token().cookie_value}, stream=True)
+		resp = self._auth_get(url)
 		if resp.status_code != 200:
 			raise Exception(f"Failed fetching data object from {url}, got response: {resp.text}")
 		disp_head = resp.headers["Content-Disposition"]
@@ -28,10 +28,7 @@ class DataClient:
 			raise Exception(f"No filename information in response from {url}, cannot save to folder")
 		filename = unquote(fn_match.group(1))
 
-		chunk_size = io.DEFAULT_BUFFER_SIZE
-		resp_buffer = io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
-
-		return filename, resp_buffer
+		return filename, response_as_reader(resp)
 
 	def save_to_folder(self, dobj_uri: str, folder_path: str) -> str:
 		"""
@@ -70,15 +67,17 @@ class DataClient:
 			"offset": offset,
 			"limit": limit
 		}
-
 		url = self._conf.data_service_base_url + "/csv/" + dobj_hash
-		resp = requests.get(url = url, headers = {"Cookie": self._auth.get_token().cookie_value}, stream=True, params=params)
-		
+		resp = self._auth_get(url, params)
+
 		if resp.status_code != 200:
 			raise Exception(f"Failed fetching data object from {url}, got response {resp.text}")
 
-		chunk_size = io.DEFAULT_BUFFER_SIZE
-		return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
+		return response_as_reader(resp)
+
+	def _auth_get(self, url: str, params: dict[str, Any] | None = None) -> requests.Response:
+		headers = {"Cookie": self._auth.get_token().cookie_value}
+		return requests.get(url=url, headers=headers, stream=True, params=params)
 
 class HttpResponseStream(io.RawIOBase):
 	def __init__(self, resp: requests.Response, chunk_size: int):
@@ -100,3 +99,7 @@ class HttpResponseStream(io.RawIOBase):
 	def close(self) -> None:
 		self._http_resp.close()
 		return super().close()
+
+def response_as_reader(resp: requests.Response) -> io.BufferedReader:
+	chunk_size = io.DEFAULT_BUFFER_SIZE
+	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)

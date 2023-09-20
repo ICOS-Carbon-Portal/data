@@ -45,4 +45,5 @@ def station_lite_list(station_type_uri: str | None, conf: EnvriConfig) -> str:
 			OPTIONAL{{?station cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon}}
 			OPTIONAL{{?station cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?geoJson}}
 		}}
+		ORDER BY ?stId
 		"""
