@@ -16,8 +16,4 @@ dependencies = [
 ]
 
 [project.urls]
-Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/pylib/icoscp_core"
-
-[projects.scripts]
-huedominance = "__main__:main"
-
+Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/icoscp_core"
