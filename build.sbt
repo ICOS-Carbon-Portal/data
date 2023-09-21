@@ -76,7 +76,7 @@ lazy val data = (project in file("."))
 		},
 		cpFrontendJarImports := Seq(
 			JarResourceImport(metaCoreModule, "metacore.d.ts", cpFrontendCommonApp.value, "main/metacore.ts"),
-			JarResourceImport(metaCoreModule, "metacore.py", cpFrontendCommonApp.value, "../../python/pylib/icoscp_core/metacore.py")
+			JarResourceImport(metaCoreModule, "metacore.py", cpFrontendCommonApp.value, "../../python/icoscp_core/src/icoscp_core/metacore.py")
 		),
 
 		libraryDependencies ++= Seq(

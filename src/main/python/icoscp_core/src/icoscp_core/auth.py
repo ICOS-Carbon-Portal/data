@@ -9,7 +9,7 @@ from typing import TypeAlias, Literal, Optional
 
 import requests
 
-from envri import EnvriConfig
+from .envri import EnvriConfig
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)
@@ -23,12 +23,12 @@ class AuthToken:
 	cookie_value: str
 
 	def _willExpireIn(self, delta: timedelta) -> bool:
-		return (datetime.now() + delta) < self.expiry_time
+		return (datetime.now() + delta) > self.expiry_time
 
 	def isExpired(self) -> bool:
 		return self._willExpireIn(ExpiryMargin)
 	def isFresh(self) -> bool:
-		return self._willExpireIn(FreshnessMargin)
+		return not self._willExpireIn(FreshnessMargin)
 
 def parse_auth_token(cookie_value: str) -> AuthToken:
 	eq_idx = cookie_value.find("=")
@@ -112,7 +112,7 @@ class PasswordAuth(AuthTokenProvider):
 	def load_from_file(file_path: str, conf: EnvriConfig) -> "PasswordAuth":
 		if not os.path.exists(file_path):
 			raise Exception(f"Config file does not exist (running init_config_file() " +
-				"on an instance of ConfigFileAuth may help): {file_path}")
+				f"on an instance of ConfigFileAuth may help): {file_path}")
 		with open(file_path, 'r') as conf_file:
 			js = json.load(conf_file)
 			user_id: str = js["user_id"]
