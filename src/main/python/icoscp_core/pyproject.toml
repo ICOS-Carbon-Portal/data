@@ -14,6 +14,8 @@ dynamic = ["version", "description"]
 dependencies = [
 	"dacite"
 ]
+[tool.flit.sdist]
+include = ["src/icoscp_core/metacore.py"]
 
 [project.urls]
 Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/icoscp_core"
