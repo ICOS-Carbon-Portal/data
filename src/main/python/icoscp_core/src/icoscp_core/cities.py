@@ -1,10 +1,4 @@
 from .envri import CITIES_CONFIG
-from .auth import ConfigFileAuth
-from .metaclient import MetadataClient
-from .dataclient import DataClient
+from .bootstrap import fromPasswordFile
 
-auth = ConfigFileAuth(CITIES_CONFIG)
-
-meta = MetadataClient(CITIES_CONFIG)
-
-data = DataClient(CITIES_CONFIG, auth)
+auth, meta, data = fromPasswordFile(CITIES_CONFIG)

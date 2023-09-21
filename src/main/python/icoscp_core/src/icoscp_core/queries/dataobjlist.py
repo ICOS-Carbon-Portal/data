@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal, TypeAlias, TypedDict
 
-from ..sparql import Binding, as_long, as_uri, as_opt_uri, as_string, as_datetime
+from ..sparql import Binding, as_long, as_uri, as_string, as_datetime
 from ..metacore import UriResource
 
 
@@ -83,8 +83,8 @@ def dataobj_lite_list(
 	datatype: CategorySelector,
 	station: CategorySelector,
 	filters: list[Filter],
-	includeDeprecated: bool,
-	orderBy: OrderBy | OrderByProp | None,
+	include_deprecated: bool,
+	order_by: OrderBy | OrderByProp | None,
 	limit: int,
 	offset: int
 ) -> str:
@@ -111,10 +111,10 @@ where {{
 	?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .
 	?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
-	{"" if includeDeprecated else "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}"}
+	{"" if include_deprecated else "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}"}
 	{filter_clauses}
 }}
-{_order_clause(orderBy)}offset {offset} limit {min(limit, 10000)}"""
+{_order_clause(order_by)}offset {offset} limit {min(limit, 10000)}"""
 
 def parse_dobj_lite(row: Binding) -> DataObjectLite:
 	return DataObjectLite(

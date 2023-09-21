@@ -3,7 +3,7 @@ from .envri import EnvriConfig
 from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpecLite
 from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
-from .queries.dataobjlist import OrderBy, OrderByProp, Filter, CategorySelector
+from .queries.dataobjlist import OrderBy, OrderByProp, Filter, TimeFilter, SizeFilter, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject, CPJson, parse_cp_json, DataObjectSpec
 from .rolemeta import StationWithStaff
@@ -53,12 +53,12 @@ class MetadataClient:
 		datatype: CategorySelector = None,
 		station: CategorySelector = None,
 		filters: list[Filter] = [],
-		includeDeprecated: bool = False,
-		orderBy: OrderBy | OrderByProp | None = {"prop": "submTime", "descending": True},
+		include_deprecated: bool = False,
+		order_by: OrderBy | OrderByProp | None = {"prop": "submTime", "descending": True},
 		limit: int = 100,
 		offset: int = 0
 	) -> list[DataObjectLite]:
-		query = dataobj_lite_list(datatype, station, filters, includeDeprecated, orderBy, limit, offset)
+		query = dataobj_lite_list(datatype, station, filters, include_deprecated, order_by, limit, offset)
 		qres = self.sparql_select(query)
 		return [parse_dobj_lite(b) for b in qres.bindings]
 	
