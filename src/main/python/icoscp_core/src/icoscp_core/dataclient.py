@@ -5,9 +5,11 @@ import io
 import shutil
 from urllib.parse import urlsplit, unquote
 from typing import Iterator
+from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
+from .metaclient import MetadataClient
 from typing import Tuple, Any
 
 
@@ -102,9 +104,64 @@ class DataClient:
 		return response_as_reader(resp)
 
 
+	def get_bin_byte_stream(
+		self,
+		dobj: str | DataObjectLite,
+		cols: list[str] = [],
+		dobj_meta: DataObject | None = None
+	) -> io.BufferedReader:
+
+		if dobj_meta is None:
+			md_client = MetadataClient(self._conf)
+			dobj_meta = md_client.get_dobj_meta(dobj)
+		dobj_cols = dobj_meta.specificInfo.columns
+
+		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
+
+		labels_cols = [col.label for col in dobj_cols]
+		cols_indexes = [labels_cols.index(col) for col in cols]
+		fmt_cols = [col.valueFormat for col in dobj_cols]
+
+		json = {
+			"tableId": dobj_hash,
+			"subFolder": dobj_meta.specification.format.uri.split("/")[-1],
+			"schema": {
+				"columns": [get_fmt(col) for col in fmt_cols],
+				"size": dobj_meta.specificInfo.nRows
+			},
+			"columnNumbers": cols_indexes
+		}
+
+		headers = {
+			"Accept": "application/octet-stream",
+			"Content-Type": "application/json"
+		}
+
+		resp = self._auth_post(self._conf.data_service_base_url + '/cpb', "fetching binary", headers, json)
+
+		return response_as_reader(resp)
+
+
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:
 		headers = {"Cookie": self._auth.get_token().cookie_value}
 		resp = requests.get(url=url, headers=headers, stream=True, params=params)
+		if resp.status_code != 200:
+			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
+		return resp
+
+
+	def _auth_post(
+		self,
+		url: str,
+		error_hint: str,
+		headers: dict | None = None,
+		json: dict | None = None
+	) -> requests.Response:
+		if headers:
+			headers["Cookie"] = self._auth.get_token().cookie_value
+		else:
+			headers = {"Cookie": self._auth.get_token().cookie_value}
+		resp = requests.post(url=url, headers=headers, stream=True, json=json)
 		if resp.status_code != 200:
 			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
 		return resp
@@ -139,3 +196,19 @@ def to_dobj_uri(dobj: str | DataObjectLite) -> str:
 def response_as_reader(resp: requests.Response) -> io.BufferedReader:
 	chunk_size = io.DEFAULT_BUFFER_SIZE
 	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
+
+def get_fmt(fmt_uri: str) -> str:
+	fmt_conv = {
+		'float32': 'FLOAT',
+		'float64': 'DOUBLE',
+		'bmpChar': 'CHAR',
+		'etcDate': 'INT',
+		'iso8601date':'INT',
+		'iso8601timeOfDay':'INT',
+		'iso8601dateTime': 'DOUBLE',
+		'isoLikeLocalDateTime' : 'DOUBLE',
+		'etcLocalDateTime': 'DOUBLE',
+		'int32':'INT',
+		'string':'STRING'
+	}
+	return fmt_conv[fmt_uri.split("/")[-1]]
