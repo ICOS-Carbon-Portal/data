@@ -4,22 +4,26 @@ from .metaclient import MetadataClient
 from .dataclient import DataClient
 from typing import Tuple
 
-def fromPasswordFile(
-	conf: EnvriConfig, conf_file_path: str | None = None
-) -> Tuple[ConfigFileAuth, MetadataClient, DataClient]:
-	auth = ConfigFileAuth(conf, conf_file_path)
-	meta = MetadataClient(conf)
-	data = DataClient(conf, auth)
-	return auth, meta, data
+class Bootstrap():
+	def __init__(self, conf: EnvriConfig) -> None:
+		self._conf = conf
 
-def fromCookieToken(token: str, conf: EnvriConfig) -> Tuple[MetadataClient, DataClient]:
-	auth = TokenAuth(token)
-	meta = MetadataClient(conf)
-	data = DataClient(conf, auth)
-	return meta, data
+	def fromPasswordFile(
+		self, conf_file_path: str | None = None
+	) -> Tuple[ConfigFileAuth, MetadataClient, DataClient]:
+		auth = ConfigFileAuth(self._conf, conf_file_path)
+		meta = MetadataClient(self._conf)
+		data = DataClient(self._conf, auth)
+		return auth, meta, data
 
-def fromCredentials(user_id: str, password: str, conf: EnvriConfig) -> Tuple[MetadataClient, DataClient]:
-	auth = PasswordAuth(user_id, password, conf)
-	meta = MetadataClient(conf)
-	data = DataClient(conf, auth)
-	return meta, data
+	def fromCookieToken(self, token: str) -> Tuple[MetadataClient, DataClient]:
+		auth = TokenAuth(token)
+		meta = MetadataClient(self._conf)
+		data = DataClient(self._conf, auth)
+		return meta, data
+
+	def fromCredentials(self, user_id: str, password: str) -> Tuple[MetadataClient, DataClient]:
+		auth = PasswordAuth(user_id, password, self._conf)
+		meta = MetadataClient(self._conf)
+		data = DataClient(self._conf, auth)
+		return meta, data

@@ -75,7 +75,7 @@ class TokenAuth(AuthTokenProvider):
 	def get_token(self) -> AuthToken:
 		t = self._token
 		if t.isExpired():
-			raise Exception(f"Authentication token expiration time is {t.expiry_time}, too late to use is")
+			raise Exception(f"Authentication token expiration time is {t.expiry_time}, too late to use it")
 		return t
 
 class PasswordAuth(AuthTokenProvider):

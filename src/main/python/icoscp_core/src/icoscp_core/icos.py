@@ -1,4 +1,5 @@
 from .envri import ICOS_CONFIG
-from .bootstrap import fromPasswordFile
+from .bootstrap import Bootstrap
 
-auth, meta, data = fromPasswordFile(ICOS_CONFIG)
+bootstrap = Bootstrap(ICOS_CONFIG)
+auth, meta, data = bootstrap.fromPasswordFile()

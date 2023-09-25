@@ -1,4 +1,6 @@
 from .envri import CITIES_CONFIG
-from .bootstrap import fromPasswordFile
+from .bootstrap import Bootstrap
 
-auth, meta, data = fromPasswordFile(CITIES_CONFIG)
+bootstrap = Bootstrap(CITIES_CONFIG)
+
+auth, meta, data = bootstrap.fromPasswordFile()
