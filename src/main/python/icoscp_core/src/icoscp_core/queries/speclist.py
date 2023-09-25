@@ -26,7 +26,8 @@ select * where{{
 	?spec rdfs:label ?specLabel ; cpmeta:hasDataTheme ?theme .
 	?theme rdfs:label ?themeLabel .
 	?project rdfs:label ?projectLabel .
-}}"""
+}}
+order by ?specLabel"""
 
 def parse_dobj_spec_lite(row: Binding) -> DobjSpecLite:
 	dsType: DatasetType

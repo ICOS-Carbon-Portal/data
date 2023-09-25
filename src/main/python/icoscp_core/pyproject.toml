@@ -5,6 +5,10 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "icoscp_core"
 authors = [{name = "Oleg Mirzov", email = "oleg.mirzov@nateko.lu.se"}]
+maintainers = [
+	{name = "Klara Broman", email = "klara.broman@nateko.lu.se"},
+	{name = "Jonathan Schenk", email = "jonathan.schenk@nateko.lu.se"},
+]
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["environment", "data access", "envri"]

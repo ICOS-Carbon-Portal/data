@@ -48,5 +48,5 @@ dobj_uri = 'https://meta.icos-cp.eu/objects/BbEO5i3rDLhS_vR-eNNLjp3Q'
 filename = data.save_to_folder(dobj_uri, '/myhome/icosdata/')
 
 csv_stream = data.get_csv_byte_stream(dobj_uri)
-df = pd.DataFrame(csv_stream)
+df = pd.read_csv(csv_stream)
 ```
