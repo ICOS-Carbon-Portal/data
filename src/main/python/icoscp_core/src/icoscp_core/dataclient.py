@@ -3,13 +3,15 @@ import re
 import requests
 import io
 import shutil
+import struct
+from array import array
 from urllib.parse import urlsplit, unquote
 from typing import Iterator
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .metaclient import MetadataClient
+from .cpb import SingleObjectCodec
 from typing import Tuple, Any
 
 
@@ -104,42 +106,40 @@ class DataClient:
 		return response_as_reader(resp)
 
 
-	def get_bin_byte_stream(
+	def get_cpb_as_dict(
 		self,
-		dobj: str | DataObjectLite,
+		dobj: str | DataObjectLite | DataObject,
 		cols: list[str] = [],
-		dobj_meta: DataObject | None = None
-	) -> io.BufferedReader:
+		offset: int | None = None,
+		length: int | None = None
+	) -> dict[str, Any]:
+		"""
+		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
 
-		if dobj_meta is None:
-			md_client = MetadataClient(self._conf)
-			dobj_meta = md_client.get_dobj_meta(dobj)
-		dobj_cols = dobj_meta.specificInfo.columns
+		:param dobj:
+			the landing page URI of the data object, a DataObjectLite instance or a DataObject instance
+		:param cols:
+			list of columns to be included; if omitted, all known columns will be returned
+		:param offset:
+			number of heading rows to skip; if omitted, does not skip any row
+		:param length:
+			number of rows to return; if omitted, return all rows
+		"""
 
-		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
-
-		labels_cols = [col.label for col in dobj_cols]
-		cols_indexes = [labels_cols.index(col) for col in cols]
-		fmt_cols = [col.valueFormat for col in dobj_cols]
-
-		json = {
-			"tableId": dobj_hash,
-			"subFolder": dobj_meta.specification.format.uri.split("/")[-1],
-			"schema": {
-				"columns": [get_fmt(col) for col in fmt_cols],
-				"size": dobj_meta.specificInfo.nRows
-			},
-			"columnNumbers": cols_indexes
-		}
-
-		headers = {
-			"Accept": "application/octet-stream",
-			"Content-Type": "application/json"
-		}
-
+		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
+		dobj_codec = SingleObjectCodec(self._conf, dobj)
+		json = dobj_codec.json_payload(cols, offset, length)
 		resp = self._auth_post(self._conf.data_service_base_url + '/cpb', "fetching binary", headers, json)
-
-		return response_as_reader(resp)
+		if len(cols) == 0: cols = dobj_codec.get_labels_meta_columns()
+		byte_size_cols = dobj_codec.get_info_columns(get_byte_size, cols)
+		format_char_cols = dobj_codec.get_info_columns(get_format_char, cols)
+		if length is None:
+			n_rows = json["schema"]["size"]
+			if offset is not None:
+				n_rows -= offset
+		else:
+			n_rows = length
+		return response_as_dict(resp, cols, byte_size_cols, format_char_cols, n_rows)
 
 
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:
@@ -154,8 +154,8 @@ class DataClient:
 		self,
 		url: str,
 		error_hint: str,
-		headers: dict | None = None,
-		json: dict | None = None
+		headers: dict[str, Any] | None = None,
+		json: dict[str, Any] | None = None
 	) -> requests.Response:
 		if headers:
 			headers["Cookie"] = self._auth.get_token().cookie_value
@@ -197,18 +197,42 @@ def response_as_reader(resp: requests.Response) -> io.BufferedReader:
 	chunk_size = io.DEFAULT_BUFFER_SIZE
 	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
 
-def get_fmt(fmt_uri: str) -> str:
-	fmt_conv = {
-		'float32': 'FLOAT',
-		'float64': 'DOUBLE',
-		'bmpChar': 'CHAR',
-		'etcDate': 'INT',
-		'iso8601date':'INT',
-		'iso8601timeOfDay':'INT',
-		'iso8601dateTime': 'DOUBLE',
-		'isoLikeLocalDateTime' : 'DOUBLE',
-		'etcLocalDateTime': 'DOUBLE',
-		'int32':'INT',
-		'string':'STRING'
+def response_as_dict(
+	resp: requests.Response,
+	cols: list[str],
+	byte_size_cols: list[int],
+	format_char_cols: list[str],
+	n_rows: int
+) -> dict[str, Any]:
+	data = response_as_reader(resp).read()
+	res: dict[str, array[Any]] = {col: array(format_char_cols[n]) for n, col in enumerate(cols)}
+	ind = 0
+	for n in range(len(cols)):
+		fmt = f">{n_rows}{format_char_cols[n]}"
+		col_length = n_rows*byte_size_cols[n]
+		res[cols[n]].extend(struct.unpack(fmt, data[ind:(ind+col_length)]))
+		ind += col_length
+	return res
+
+def get_byte_size(fmt: str) -> int:
+	byte_size = {
+		'INT': 4,
+		'FLOAT': 4,
+		'DOUBLE': 8,
+		'SHORT': 2,
+		'CHAR': 2,
+		'BYTE': 1,
+		'STRING': 4
 	}
-	return fmt_conv[fmt_uri.split("/")[-1]]
+	return byte_size[fmt]
+
+def get_format_char(fmt: str) -> str:
+	fmt_char = {
+		'INT': 'l',
+		'FLOAT': 'f',
+		'DOUBLE': 'd',
+		'SHORT': 'h',
+		'CHAR': 'u',
+		'BYTE': 'b',
+	}
+	return fmt_char[fmt]
