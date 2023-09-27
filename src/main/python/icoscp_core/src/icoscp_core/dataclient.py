@@ -3,16 +3,15 @@ import re
 import requests
 import io
 import shutil
-import struct
-from array import array
 from urllib.parse import urlsplit, unquote
 from typing import Iterator
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .cpb import SingleObjectCodec
+from .cpb import TableRequest, AnyArray, codec_from_dobj_meta
 from typing import Tuple, Any
+
 
 
 class DataClient:
@@ -106,13 +105,13 @@ class DataClient:
 		return response_as_reader(resp)
 
 
-	def get_cpb_as_dict(
+	def get_columns_as_arrays(
 		self,
-		dobj: str | DataObjectLite | DataObject,
-		cols: list[str] = [],
+		dobj: DataObject,
+		cols: list[str] | None = None,
 		offset: int | None = None,
 		length: int | None = None
-	) -> dict[str, Any]:
+	) -> dict[str, AnyArray]:
 		"""
 		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
 
@@ -127,19 +126,11 @@ class DataClient:
 		"""
 
 		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
-		dobj_codec = SingleObjectCodec(self._conf, dobj)
-		json = dobj_codec.json_payload(cols, offset, length)
-		resp = self._auth_post(self._conf.data_service_base_url + '/cpb', "fetching binary", headers, json)
-		if len(cols) == 0: cols = dobj_codec.get_labels_meta_columns()
-		byte_size_cols = dobj_codec.get_info_columns(get_byte_size, cols)
-		format_char_cols = dobj_codec.get_info_columns(get_format_char, cols)
-		if length is None:
-			n_rows = json["schema"]["size"]
-			if offset is not None:
-				n_rows -= offset
-		else:
-			n_rows = length
-		return response_as_dict(resp, cols, byte_size_cols, format_char_cols, n_rows)
+		req = TableRequest(desired_columns=cols, length=length, offset=offset)
+		codec = codec_from_dobj_meta(dobj, req)
+		url = self._conf.data_service_base_url + '/cpb'
+		resp = self._auth_post(url, "fetching binary", headers, codec.json_payload)
+		return codec.parse_cpb_response(response_as_reader(resp))
 
 
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:
@@ -175,7 +166,7 @@ class HttpResponseStream(io.RawIOBase):
 		self.leftover: bytes | None = None
 	def readable(self):
 		return True
-	def readinto(self, b):
+	def readinto(self, b: Any):
 		try:
 			l = len(b)
 			chunk = self.leftover or next(self._iterable)
@@ -197,42 +188,3 @@ def response_as_reader(resp: requests.Response) -> io.BufferedReader:
 	chunk_size = io.DEFAULT_BUFFER_SIZE
 	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
 
-def response_as_dict(
-	resp: requests.Response,
-	cols: list[str],
-	byte_size_cols: list[int],
-	format_char_cols: list[str],
-	n_rows: int
-) -> dict[str, Any]:
-	data = response_as_reader(resp).read()
-	res: dict[str, array[Any]] = {col: array(format_char_cols[n]) for n, col in enumerate(cols)}
-	ind = 0
-	for n in range(len(cols)):
-		fmt = f">{n_rows}{format_char_cols[n]}"
-		col_length = n_rows*byte_size_cols[n]
-		res[cols[n]].extend(struct.unpack(fmt, data[ind:(ind+col_length)]))
-		ind += col_length
-	return res
-
-def get_byte_size(fmt: str) -> int:
-	byte_size = {
-		'INT': 4,
-		'FLOAT': 4,
-		'DOUBLE': 8,
-		'SHORT': 2,
-		'CHAR': 2,
-		'BYTE': 1,
-		'STRING': 4
-	}
-	return byte_size[fmt]
-
-def get_format_char(fmt: str) -> str:
-	fmt_char = {
-		'INT': 'l',
-		'FLOAT': 'f',
-		'DOUBLE': 'd',
-		'SHORT': 'h',
-		'CHAR': 'u',
-		'BYTE': 'b',
-	}
-	return fmt_char[fmt]
