@@ -46,45 +46,50 @@ export default class PreviewLookup{
 function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Table {
 
 	const specFormats: {[spec: string]: string} = {}
+	const specToCols: {[spec: string]: Array<{varTitle: string, valType: string}>} = {}
+	const table: Table = {}
+
 	specTable.basics.rows.forEach(({ spec, format }) => {
 		if (typeof spec === 'string' && typeof format === 'string') {
 			specFormats[spec] = format
 		}
 	})
 
-	const table: Table = {}
-
-	Object.entries(specFormats).forEach(([spec, format]) => {
-		if (format === config.netCdfFormat)
-			table[spec] = { type: "NETCDF" };
-		else if(config.imageMultiZipFormats.includes(format))
-			table[spec] = { type: "PHENOCAM"};
-	});
-
-	const tsTable: {[x: string]: TimeSeriesPreviewInfo} = {};
-
-	const specsWithLat = new Set<string>();
-	const specsWithLon = new Set<string>();
-
 	specTable.columnMeta.rows.forEach(({ spec, varTitle, valType }) => {
-		if (typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string' && !table[spec]) {
-			const pInfo = tsTable[spec] ?? { type: "TIMESERIES", options: [] };
-			tsTable[spec] = pInfo
-			const valTypeLabel = labelLookup[valType].label;
-			pInfo.options.push({ varTitle, valTypeLabel });
-			if(valType === config.mapGraph.latValueType) specsWithLat.add(spec);
-			if(valType === config.mapGraph.lonValueType) specsWithLon.add(spec);
+		if (typeof spec === 'string' && typeof varTitle === 'string' && typeof valType === 'string') {
+			const oldCols = specToCols[spec]
+			const cols = oldCols ?? []
+			cols.push({varTitle, valType})
+			if(!oldCols) specToCols[spec] = cols
 		}
-	});
+	})
 
-	Object.values(tsTable).forEach(pInfo => {
-		pInfo.options.sort(previewVarCompare)
-	});
+	function latLonPresent(cols: Array<{varTitle: string, valType: string}>): boolean {
+		return !!cols.find(col => col.valType === config.mapGraph.latValueType || col.valType === config.mapGraph.lonValueType)
+	}
 
-	Object.entries(specFormats).forEach(([spec, format]) => {
-		if (config.mapGraph.formats.includes(format) && specsWithLat.has(spec) && specsWithLon.has(spec))
-			table[spec] = { type: "MAPGRAPH" };
-	});
+	Object.entries(specToCols).forEach(([spec, cols]) => {
 
-	return {...table, ...tsTable};
-};
+		const format = specFormats[spec]
+
+		if (format === config.netCdfFormat)
+			table[spec] = { type: "NETCDF" }
+
+		else if(config.imageMultiZipFormats.includes(format))
+			table[spec] = { type: "PHENOCAM"}
+
+		else if (config.mapGraph.formats.includes(format) && latLonPresent(cols))
+			table[spec] = { type: "MAPGRAPH" }
+
+		else {
+			const options = cols.map(({varTitle, valType}) => {
+				const valTypeLabel = labelLookup[valType].label
+				return { varTitle, valTypeLabel }
+			})
+			options.sort(previewVarCompare)
+			table[spec] = { type: "TIMESERIES", options}
+		}
+	})
+
+	return table
+}
