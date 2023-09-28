@@ -68,9 +68,9 @@ function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 		return !!cols.find(col => col.valType === config.mapGraph.latValueType || col.valType === config.mapGraph.lonValueType)
 	}
 
-	Object.entries(specToCols).forEach(([spec, cols]) => {
+	Object.entries(specFormats).forEach(([spec, format]) => {
 
-		const format = specFormats[spec]
+		const cols = specToCols[spec] ?? []
 
 		if (format === config.netCdfFormat)
 			table[spec] = { type: "NETCDF" }
@@ -81,7 +81,7 @@ function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 		else if (config.mapGraph.formats.includes(format) && latLonPresent(cols))
 			table[spec] = { type: "MAPGRAPH" }
 
-		else {
+		else if (cols.length > 0) {
 			const options = cols.map(({varTitle, valType}) => {
 				const valTypeLabel = labelLookup[valType].label
 				return { varTitle, valTypeLabel }
