@@ -3,12 +3,14 @@ import io
 import struct
 from typing import Any, TypeAlias
 from dataclasses import dataclass
+from datetime import datetime, time
 from .metacore import DataObject, StationTimeSeriesMeta, URI
 
 AnyArray: TypeAlias = Any # bad typing support for array.array
 
 @dataclass
 class ColumnInfo:
+	index: int
 	label: str
 	value_format_uri: str
 
@@ -32,8 +34,9 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	cols_meta = spec_info.columns
 	if cols_meta is None:
 		raise Exception(f"Metadata of object '{dobj.hash}' does not include any column information")
+	cols_meta.sort(key=lambda col: col.label)
 	cols_meta_parsed = [
-		ColumnInfo(label=col.label, value_format_uri=col.valueFormat) for col in cols_meta
+		ColumnInfo(index=ind, label=col.label, value_format_uri=col.valueFormat) for ind, col in enumerate(cols_meta)
 		if col.valueFormat is not None
 	]
 	if len(cols_meta_parsed) == 0:
@@ -54,16 +57,26 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 
 class Codec:
 	def __init__(self, ci: CodecInfo) -> None:
-		ci.columns.sort(key = lambda col: col.label)
-		sorted_labels = [col_info.label for col_info in ci.columns]
 		desired_indices: list[int]
 		try:
 			if ci.desired_columns is None:
-				desired_indices = list(range(len(sorted_labels)))
+				desired_indices = [col.index for col in ci.columns]
 			else:
-				desired_indices = [sorted_labels.index(desired_col) for desired_col in ci.desired_columns]
+				labels = [col_info.label for col_info in ci.columns]
+				tmp_indices = [labels.index(desired_col) for desired_col in ci.desired_columns]
+				desired_indices = [ci.columns[ind].index for ind in tmp_indices]
 		except ValueError:
 			raise ValueError(f'One of the columns desired to be fetched is not actually present in data object {ci.dobj_hash}')
+
+		# The following checks are needed because the backend does not return user-friendly error messages or results.
+		for param, val in [("offset", ci.offset), ("length", ci.length)]:
+			if val is not None and val > ci.n_rows:
+				raise ValueError(f"The value provided for the '{param}' parameter ({val}) is larger than the number of available rows ({ci.n_rows})")
+		if ci.offset is not None and ci.length is not None and ci.n_rows - ci.offset < ci.length:
+			raise ValueError(
+				f"The value provided for the 'length' parameter ({ci.length}) is larger than the number of available rows ({ci.n_rows}) "
+				f"minus the value provided for the 'offset' parameter ({ci.offset})"
+			)
 
 		json = {
 			"tableId": ci.dobj_hash,
@@ -89,10 +102,12 @@ class Codec:
 	def json_payload(self):
 		return self._json_payload
 
-	def parse_cpb_response(self, resp: io.BufferedReader) -> dict[str, AnyArray]:
+	def parse_cpb_response(self, resp: io.BufferedReader) -> dict[str, list[time | datetime] | AnyArray]:
 		res: dict[str, AnyArray] = {}
 		cols = self._ci.columns
 		n_rows = self._ci.n_rows
+		if self._ci.offset: n_rows -= self._ci.offset
+		if self._ci.length: n_rows = min(n_rows, self._ci.length)
 		for n in self._desired_indices:
 			fmt = _get_fmt(cols[n].value_format_uri)
 			fmt_char = _get_format_char(fmt)
@@ -103,8 +118,21 @@ class Codec:
 				raise IOError(f'Error while reading cpb response for column {cols[n].label} ({n_rows} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr: AnyArray = array(fmt_char)
 			arr.extend(struct.unpack(struct_fmt, col_bytes))
-			res[cols[n].label] = arr
+			res[cols[n].label] = self._type_converter(arr, cols[n].value_format_uri)
 		return res
+
+	def _type_converter(self, arr: AnyArray, fmt: URI) -> list[time | datetime] | AnyArray:
+		fmt_str = fmt.split("/")[-1]
+		if fmt_str == "bmpChar":
+			return array("u", [chr(v) for v in arr])
+		elif fmt_str == "iso8601timeOfDay":
+			return [time(v//3600, (v%3600)//60, (v%3600)%60) for v in arr]
+		elif fmt_str in ["etcDate", "iso8601date"]:
+			return [datetime.fromtimestamp(v*86400) for v in arr]
+		elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
+			return [datetime.fromtimestamp(v/1000) for v in arr]
+		else:
+			return arr
 
 _fmt_uri_to_fmt = {
 	'float32': 'FLOAT',

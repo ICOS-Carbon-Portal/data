@@ -18,10 +18,10 @@ def list_filtered_atc_co2():
 def list_all_stations_in_icos_cp():
 	return meta.list_stations(of_station_type_uri=False)
 
-def test_bin_fetch() -> pd.DataFrame:
+def test_bin_fetch(cols: list[str] | None = None, offset: int | None = None, length: int | None = None) -> pd.DataFrame:
 	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
 	dobj = meta.get_dobj_meta(uri)
-	raw = data.get_columns_as_arrays(dobj)
+	raw = data.get_columns_as_arrays(dobj, cols, offset, length)
 	df = pd.DataFrame(raw)
 	print(df.head())
 	return df

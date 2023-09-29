@@ -4,14 +4,12 @@ import requests
 import io
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator
+from typing import Iterator, Tuple, Any
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
 from .cpb import TableRequest, AnyArray, codec_from_dobj_meta
-from typing import Tuple, Any
-
 
 
 class DataClient:
@@ -118,11 +116,11 @@ class DataClient:
 		:param dobj:
 			the landing page URI of the data object, a DataObjectLite instance or a DataObject instance
 		:param cols:
-			list of columns to be included; if omitted, all known columns will be returned
+			list of columns to be included; if None, all known columns will be returned
 		:param offset:
-			number of heading rows to skip; if omitted, does not skip any row
+			number of heading rows to skip; if None, does not skip any row
 		:param length:
-			number of rows to return; if omitted, return all rows
+			number of rows to return; if None, return all rows
 		"""
 
 		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
