@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..sparql import Binding, as_int, as_uri, as_string
+from ..sparql import Binding, as_int, as_uri, as_string, as_opt_uri
 from ..envri import EnvriConfig
 from ..metacore import UriResource, DatasetType
 
@@ -9,6 +9,7 @@ from ..metacore import UriResource, DatasetType
 class DobjSpecLite(UriResource):
 	data_level: int
 	dataset_type: DatasetType
+	dataset_spec_uri: str | None
 	theme: UriResource
 	project: UriResource
 
@@ -26,6 +27,7 @@ select * where{{
 	?spec rdfs:label ?specLabel ; cpmeta:hasDataTheme ?theme .
 	?theme rdfs:label ?themeLabel .
 	?project rdfs:label ?projectLabel .
+	optional {{?spec cpmeta:containsDataset ?ds_spec_uri}}
 }}
 order by ?specLabel"""
 
@@ -54,5 +56,6 @@ def parse_dobj_spec_lite(row: Binding) -> DobjSpecLite:
 			label = as_string("themeLabel", row),
 			comments = []
 		),
-		dataset_type = dsType
+		dataset_type = dsType,
+		dataset_spec_uri = as_opt_uri("ds_spec_uri", row)
 	)
