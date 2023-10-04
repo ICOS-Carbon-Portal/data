@@ -65,7 +65,8 @@ function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 	})
 
 	function latLonPresent(cols: Array<{varTitle: string, valType: string}>): boolean {
-		return !!cols.find(col => col.valType === config.mapGraph.latValueType && col.valType === config.mapGraph.lonValueType)
+		return cols.some(col => col.valType === config.mapGraph.latValueType)
+			&& cols.some(col => col.valType === config.mapGraph.lonValueType)
 	}
 
 	Object.entries(specFormats).forEach(([spec, format]) => {
