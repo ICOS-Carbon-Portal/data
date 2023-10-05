@@ -4,11 +4,12 @@ import requests
 import io
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator
+from typing import Iterator, Iterable, Tuple, Any
+from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from typing import Tuple, Any
+from .cpb import Codec, TableRequest, AnyArray, codec_from_dobj_meta, codecs_from_dobjs, Dobj
 
 
 class DataClient:
@@ -85,6 +86,9 @@ class DataClient:
 			limits the number of table rows to be returned
 		:param offset:
 			number of rows to skip
+
+		:return:
+			io.BufferedReader with a stream of CSV bytes. Can be readily parsed with `pandas.read_csv`
 		"""
 
 		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
@@ -102,9 +106,83 @@ class DataClient:
 		return response_as_reader(resp)
 
 
+	def get_columns_as_arrays(
+		self,
+		dobj: DataObject,
+		columns: list[str] | None = None,
+		offset: int | None = None,
+		length: int | None = None
+	) -> dict[str, AnyArray]:
+		"""
+		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
+
+		:param dobj:
+			a DataObject instance with detailed data object metadata (obtainable from `MetaClient`'s method `get_dobj_meta`)
+		:param cols:
+			list of columns to be included; if None, all known columns will be returned
+		:param offset:
+			number of heading rows to skip; if None, does not skip any row
+		:param length:
+			number of rows to return; if None, return all rows
+
+		:return:
+			a dictionary mapping column names to either efficient Python arrays for basic numeric data types and single-character flags, or lists of date/time objects for temporal values. The dictionary can be readily sent to `pandas.DataFrame` constructor.
+		"""
+
+		req = TableRequest(desired_columns=columns, offset=offset, length=length)
+		codec = codec_from_dobj_meta(dobj, req)
+		return self._get_columns_as_arrays(codec)
+
+
+	def batch_get_columns_as_arrays(
+		self,
+		dobjs: list[Dobj],
+		columns: list[str] | None = None
+	) -> Iterable[Tuple[Dobj, dict[str, AnyArray]]]:
+		"""
+		Efficient batch-fetching version of `get_columns_as_arrays` method.
+
+		:param dobjs:
+			either a list of data object landing page URIs, or a list of `DataObjectLite` instances (obtainable from `MetaClient`'s method `list_data_objects`)
+
+		:param columns:
+			a list of names of columns to be fetched, or `None` for all preview-available columns in the data objects.
+
+		:return:
+			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to typed arrays or lists with data.
+		"""
+		req = TableRequest(columns, None, None)
+		for dobj, codec in codecs_from_dobjs(dobjs, req, self._conf):
+			yield (dobj, self._get_columns_as_arrays(codec))
+
+
+	def _get_columns_as_arrays(self, codec: Codec) -> dict[str, AnyArray]:
+		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
+		url = self._conf.data_service_base_url + '/cpb'
+		resp = self._auth_post(url, "fetching binary", headers, codec.json_payload)
+		return codec.parse_cpb_response(response_as_reader(resp))
+
+
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:
 		headers = {"Cookie": self._auth.get_token().cookie_value}
 		resp = requests.get(url=url, headers=headers, stream=True, params=params)
+		if resp.status_code != 200:
+			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
+		return resp
+
+
+	def _auth_post(
+		self,
+		url: str,
+		error_hint: str,
+		headers: dict[str, Any] | None = None,
+		json: dict[str, Any] | None = None
+	) -> requests.Response:
+		if headers:
+			headers["Cookie"] = self._auth.get_token().cookie_value
+		else:
+			headers = {"Cookie": self._auth.get_token().cookie_value}
+		resp = requests.post(url=url, headers=headers, stream=True, json=json)
 		if resp.status_code != 200:
 			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
 		return resp
@@ -118,7 +196,7 @@ class HttpResponseStream(io.RawIOBase):
 		self.leftover: bytes | None = None
 	def readable(self):
 		return True
-	def readinto(self, b):
+	def readinto(self, b: Any):
 		try:
 			l = len(b)
 			chunk = self.leftover or next(self._iterable)
@@ -139,3 +217,4 @@ def to_dobj_uri(dobj: str | DataObjectLite) -> str:
 def response_as_reader(resp: requests.Response) -> io.BufferedReader:
 	chunk_size = io.DEFAULT_BUFFER_SIZE
 	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
+

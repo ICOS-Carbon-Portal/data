@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
-from ..sparql import Binding, as_uri, as_string, as_opt_str, as_opt_double
+from ..sparql import Binding, as_uri, as_string, as_opt_str, as_opt_double, as_opt_float
 from ..envri import EnvriConfig
 from ..metacore import UriResource
 
@@ -13,6 +12,7 @@ class StationLite(UriResource):
 	country_code: str
 	lat: float | None
 	lon: float | None
+	elevation: float | None
 	geo_json: str | None
 
 def parse_station(row: Binding) -> StationLite:
@@ -27,6 +27,7 @@ def parse_station(row: Binding) -> StationLite:
 		country_code = as_string("cCode", row),
 		lat = as_opt_double("lat", row),
 		lon = as_opt_double("lon", row),
+		elevation = as_opt_float("elevation", row),
 		geo_json = as_opt_str("geoJson", row),
 		label = f"{station_name} ({station_id})",
 		comments = [],
@@ -42,6 +43,7 @@ def station_lite_list(station_type_uri: str | None, conf: EnvriConfig) -> str:
 			?station a ?stType ; cpmeta:hasStationId ?stId ; cpmeta:hasName ?stationName ; cpmeta:countryCode ?cCode .
 			FILTER(strstarts(str(?station), "{conf.meta_instance_prefix}"))
 			OPTIONAL{{?station cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon}}
+			OPTIONAL{{?station cpmeta:hasElevation ?elevation}}
 			OPTIONAL{{?station cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?geoJson}}
 		}}
 		ORDER BY ?stId

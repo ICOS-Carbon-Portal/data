@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypeAlias, Optional, Any
+from typing import TypeAlias, TypeVar, Optional, Any, Callable
 from dataclasses import dataclass
 import re
 import requests
@@ -22,64 +22,56 @@ class SparqlResults:
 	variable_names: list[str]
 	bindings: list[Binding]
 
-def lookup(varname: str, binding: Binding) -> BoundValue:
+def as_uri(varname: str, binding: Binding) -> str:
+	bv = _lookup(varname, binding)
+	if type(bv) is BoundUri:
+		return bv.uri
+	else:
+		raise _type_error(varname, "a uri value", bv)
+
+ResT = TypeVar('ResT')
+SparqlVarParser: TypeAlias = Callable[[str, Binding], ResT]
+
+def _as_type(xsd_type: str | None, parser: Callable[[str], ResT]) -> SparqlVarParser[ResT]:
+	return lambda varname, binding:(
+		parser(_lookup_literal_value(varname, xsd_type, binding))
+	)
+
+def _as_opt(plain: SparqlVarParser[ResT]) -> SparqlVarParser[ResT | None]:
+	return lambda varname, binding: plain(varname, binding) if varname in binding.keys() else None
+
+as_bool: SparqlVarParser[bool] = _as_type("boolean", lambda s: True if s.lower() == "true" else False)
+as_int: SparqlVarParser[int] = _as_type("integer", lambda s: int(s))
+as_double: SparqlVarParser[float] = _as_type("double", lambda s: float(s))
+as_float: SparqlVarParser[float] = _as_type("float", lambda s: float(s))
+as_long: SparqlVarParser[int] = _as_type("long", lambda s: int(s))
+as_string: SparqlVarParser[str] = _as_type(None, lambda s: s)
+as_datetime: SparqlVarParser[datetime] = _as_type(
+	xsd_type = "dateTime",
+	parser = lambda s: datetime.fromisoformat(re.sub(r'Z$', '+00:00', s))
+)
+as_opt_bool = _as_opt(as_bool)
+as_opt_double = _as_opt(as_double)
+as_opt_float = _as_opt(as_float)
+as_opt_str = _as_opt(as_string)
+as_opt_uri = _as_opt(as_uri)
+
+def _lookup(varname: str, binding: Binding) -> BoundValue:
 	v = binding.get(varname)
 	if not v:
 		raise ValueError(f"Variable {varname} had no bound values in SPARQL response")
 	else:
 		return v
 
-def lookup_literal_value(varname: str, datatype: Optional[str], binding: Binding) -> str:
-	bv = lookup(varname, binding)
+def _lookup_literal_value(varname: str, datatype: Optional[str], binding: Binding) -> str:
+	bv = _lookup(varname, binding)
 	if type(bv) is BoundLiteral:
-		if not(datatype) or bv.datatype == datatype:
+		if not(datatype) or bv.datatype == ("http://www.w3.org/2001/XMLSchema#" + datatype):
 			return bv.value
 		else:
 			raise _type_error(varname, f"literal datatype {datatype}", bv)
 	else:
 		raise _type_error(varname, "a literal", bv)
-
-def as_int(varname: str, binding: Binding) -> int:
-	int_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#integer", binding)
-	return int(int_str)
-
-def as_double(varname: str, binding: Binding) -> float:
-	long_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#double", binding)
-	return float(long_str)
-
-def as_long(varname: str, binding: Binding) -> int:
-	long_str = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#long", binding)
-	return int(long_str)
-
-def as_string(varname: str, binding: Binding) -> str:
-	return lookup_literal_value(varname, None, binding)
-
-def as_datetime(varname: str, binding: Binding) -> datetime:
-	dtStr = lookup_literal_value(varname, "http://www.w3.org/2001/XMLSchema#dateTime", binding)
-	return datetime.fromisoformat(re.sub(r'Z$', '+00:00', dtStr))
-
-
-def as_uri(varname: str, binding: Binding) -> str:
-	bv = lookup(varname, binding)
-	if type(bv) is BoundUri:
-		return bv.uri
-	else:
-		raise _type_error(varname, "a uri value", bv)
-
-def as_opt_double(varname: str, binding: Binding) -> float | None:
-	if varname in binding.keys():
-		return as_double(varname, binding)
-	else: return None
-
-def as_opt_str(varname: str, binding: Binding) -> str | None:
-	if varname in binding.keys():
-		return as_string(varname, binding)
-	else: return None
-
-def as_opt_uri(varname: str, binding: Binding) -> str | None:
-	if varname in binding.keys():
-		return as_uri(varname, binding)
-	else: return None
 
 def _type_error(varname: str, expected: str, bv: BoundValue) -> ValueError:
 	msg = f"Was expecting {expected}, got value {bv} for variable {varname} in SPARQL results"
