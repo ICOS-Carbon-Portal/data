@@ -11,7 +11,7 @@ maintainers = [
 ]
 license = {file = "LICENSE"}
 readme = "README.md"
-keywords = ["environment", "data access", "envri"]
+keywords = ["environment", "research", "infrastructure", "data access"]
 classifiers = ["License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"]
 requires-python = ">=3.10"
 dynamic = ["version", "description"]

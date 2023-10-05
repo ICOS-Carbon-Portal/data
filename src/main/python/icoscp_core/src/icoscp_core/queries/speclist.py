@@ -12,6 +12,9 @@ class DobjSpecLite(UriResource):
 	dataset_spec_uri: str | None
 	theme: UriResource
 	project: UriResource
+	@property
+	def has_data_access(self) -> bool:
+		return self.dataset_type == "StationTimeSeries" and self.dataset_spec_uri is not None
 
 def dobj_spec_lite_list(conf: EnvriConfig) -> str:
 	return f"""

@@ -5,7 +5,7 @@ from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpe
 from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
 from .queries.dataobjlist import Filter, OrderBy, OrderByProp, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
-from .metacore import DataObject, CPJson, parse_cp_json, DataObjectSpec
+from .metacore import DataObject, CPJson, parse_cp_json
 from .rolemeta import StationWithStaff
 from typing import Type, TypeAlias, Literal
 

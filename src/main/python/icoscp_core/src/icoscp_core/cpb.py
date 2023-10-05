@@ -2,14 +2,14 @@ from array import array
 import io
 import re
 import struct
-from typing import Any, TypeAlias, TypedDict, Tuple
+from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
 from dataclasses import dataclass
 from datetime import datetime, time
 from .envri import EnvriConfig
 from .metacore import DataObject, StationTimeSeriesMeta, URI
 from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.dataobjlist import DataObjectLite
-from .queries.cpbmeta import query_cpb_metadata, parse_cpb_metadata
+from .queries.cpbmeta import CpbMetaData, query_cpb_metadata, parse_cpb_metadata
 from .queries.datasetcols import DataSetCol, query_dataset_columns, parse_dataset_column
 
 AnyArray: TypeAlias = Any # bad typing support for array.array
@@ -20,7 +20,6 @@ class DatasetColumnInfo:
 	value_format_uri: URI
 @dataclass
 class ColumnInfo:
-	index: int
 	label: str
 	value_format_uri: URI
 
@@ -48,9 +47,8 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	cols_meta = spec_info.columns
 	if cols_meta is None:
 		raise Exception(f"Metadata of object '{dobj.hash}' does not include any column information")
-	cols_meta.sort(key=lambda col: col.label)
 	cols_meta_parsed = [
-		ColumnInfo(index=ind, label=col.label, value_format_uri=col.valueFormat) for ind, col in enumerate(cols_meta)
+		ColumnInfo(label=col.label, value_format_uri=col.valueFormat) for col in cols_meta
 		if col.valueFormat is not None
 	]
 	if len(cols_meta_parsed) == 0:
@@ -69,24 +67,30 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	)
 	return Codec(ci)
 
-def codecs_from_dobjs(dobjs: list[URI | DataObjectLite], request: TableRequest, conf: EnvriConfig) -> list[Tuple[URI, "Codec"]]:
+Dobj = TypeVar("Dobj", URI, DataObjectLite)
+
+def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfig) -> list[Tuple[Dobj, "Codec"]]:
 
 	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
 
-	dobj_uris = [dobj.uri if isinstance(dobj, DataObjectLite) else dobj for dobj in dobjs]
+	def dobj_uri(dobj: Dobj) -> URI:
+		return dobj.uri if isinstance(dobj, DataObjectLite) else dobj
+
+	dobj_uris = [dobj_uri(dobj) for dobj in dobjs]
 
 	qres_meta = sparql_select(conf, query_cpb_metadata(dobj_uris))
-	cpb_metas = [parse_cpb_metadata(binding) for binding in qres_meta.bindings]
+	cpb_metas: dict[URI, CpbMetaData] = {
+		cpb.dobj: cpb for cpb in [parse_cpb_metadata(binding) for binding in qres_meta.bindings]
+	}
 
-	dobjs_with_cpb_meta = set(cpb.dobj for cpb in cpb_metas)
-	missing_dobjs = [dobj for dobj in dobj_uris if not dobj in dobjs_with_cpb_meta]
+	missing_dobjs = [str(dobj) for dobj in dobjs if not dobj_uri(dobj) in cpb_metas]
 
 	if len(missing_dobjs) > 0: raise Exception(
 		"Some of the requested objects don't have required metadata to fetch them as tabular data: "
 		",\n".join(missing_dobjs)
 	)
 
-	dataset_specs = set(cpb.dataset_spec for cpb in cpb_metas)
+	dataset_specs = {cpb.dataset_spec for cpb in cpb_metas.values()}
 
 	if len(dataset_specs) > 1: raise Exception(
 		"When requesting data from several data objects, all data objects "
@@ -98,38 +102,39 @@ def codecs_from_dobjs(dobjs: list[URI | DataObjectLite], request: TableRequest, 
 	dataset_cols = [parse_dataset_column(binding) for binding in qres_ds_cols.bindings]
 	val_format_lookup = ColumnTitleToFormat(dataset_cols, dataset_spec)
 
-	# ds_cols = [DatasetColumnInfo(label=col.col_title, value_format_uri=col.val_format) for col in dataset_cols]
+	res: list[Tuple[Dobj, "Codec"]] = []
+	for dobj in dobjs:
+		cpb = cpb_metas[dobj_uri(dobj)]
+		cols_names = cpb.col_names or val_format_lookup.default_actual_cols
 
-	codecs: dict[str, "Codec"] = {}
-	for dobj in cpb_metas:
-		hash_id = dobj.dobj.split("/")[-1]
-		dobj_cols = dobj.col_names
+		cols_info = [
+			ColumnInfo(lbl, val_format)
+			for lbl, val_format in
+				[(lbl, val_format_lookup.lookup_value_format(lbl)) for lbl in cols_names]
+			if val_format is not None
+		]
 		ci = CodecInfo(
-			dobj_hash=hash_id,
-			obj_format_uri=dobj.obj_format,
-			columns=columns,
-			n_rows=dobj.n_rows,
-			desired_columns=available_desired_columns,
+			dobj_hash=cpb.dobj.split("/")[-1],
+			obj_format_uri=cpb.obj_format,
+			columns=cols_info,
+			n_rows=cpb.n_rows,
+			desired_columns=request.desired_columns,
 			offset=request.offset,
 			length=request.length
 		)
-		codecs[hash_id] = Codec(ci)
-	# if request.desired_columns is None:
-	# 	cols = dataset_cols
-	# else:
-	# 	cols = [col for col in request.desired_columns if col in dataset_cols]
-	return codecs
+		res.append((dobj, Codec(ci)))
+	return res
 
 class Codec:
 	def __init__(self, ci: CodecInfo) -> None:
 		desired_indices: list[int]
+		ci.columns.sort(key=lambda col: col.label)
 		try:
 			if ci.desired_columns is None:
-				desired_indices = [col.index for col in ci.columns]
+				desired_indices = [i for i in range(len(ci.columns))]
 			else:
 				labels = [col_info.label for col_info in ci.columns]
-				tmp_indices = [labels.index(desired_col) for desired_col in ci.desired_columns]
-				desired_indices = [ci.columns[ind].index for ind in tmp_indices]
+				desired_indices = [labels.index(desired_col) for desired_col in ci.desired_columns]
 		except ValueError:
 			raise ValueError(f'One of the columns desired to be fetched is not actually present in data object {ci.dobj_hash}')
 
@@ -183,21 +188,21 @@ class Codec:
 				raise IOError(f'Error while reading cpb response for column {cols[n].label} ({n_rows} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr: AnyArray = array(fmt_char)
 			arr.extend(struct.unpack(struct_fmt, col_bytes))
-			res[cols[n].label] = self._type_converter(arr, cols[n].value_format_uri)
+			res[cols[n].label] = _type_converter(arr, cols[n].value_format_uri)
 		return res
 
-	def _type_converter(self, arr: AnyArray, fmt: URI) -> list[time | datetime] | AnyArray:
-		fmt_str = fmt.split("/")[-1]
-		if fmt_str == "bmpChar":
-			return array("u", [chr(v) for v in arr])
-		elif fmt_str == "iso8601timeOfDay":
-			return [time(v//3600, (v%3600)//60, (v%3600)%60) for v in arr]
-		elif fmt_str in ["etcDate", "iso8601date"]:
-			return [datetime.fromtimestamp(v*86400) for v in arr]
-		elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
-			return [datetime.fromtimestamp(v/1000) for v in arr]
-		else:
-			return arr
+def _type_converter(arr: AnyArray, fmt: URI) -> list[time | datetime] | AnyArray:
+	fmt_str = fmt.split("/")[-1]
+	if fmt_str == "bmpChar":
+		return array("u", [chr(v) for v in arr])
+	elif fmt_str == "iso8601timeOfDay":
+		return [time(v//3600, (v%3600)//60, (v%3600)%60) for v in arr]
+	elif fmt_str in ["etcDate", "iso8601date"]:
+		return [datetime.fromtimestamp(v*86400) for v in arr]
+	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
+		return [datetime.fromtimestamp(v/1000) for v in arr]
+	else:
+		return arr
 
 class RegexCol(TypedDict):
 	regex: re.Pattern[str]

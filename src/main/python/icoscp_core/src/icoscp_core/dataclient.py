@@ -4,12 +4,12 @@ import requests
 import io
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator, Tuple, Any
+from typing import Iterator, Iterable, Tuple, Any
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .cpb import TableRequest, AnyArray, codec_from_dobj_meta
+from .cpb import Codec, TableRequest, AnyArray, codec_from_dobj_meta, codecs_from_dobjs, Dobj
 
 
 class DataClient:
@@ -86,6 +86,9 @@ class DataClient:
 			limits the number of table rows to be returned
 		:param offset:
 			number of rows to skip
+
+		:return:
+			io.BufferedReader with a stream of CSV bytes. Can be readily parsed with `pandas.read_csv`
 		"""
 
 		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
@@ -106,7 +109,7 @@ class DataClient:
 	def get_columns_as_arrays(
 		self,
 		dobj: DataObject,
-		cols: list[str] | None = None,
+		columns: list[str] | None = None,
 		offset: int | None = None,
 		length: int | None = None
 	) -> dict[str, AnyArray]:
@@ -114,18 +117,47 @@ class DataClient:
 		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
 
 		:param dobj:
-			the landing page URI of the data object, a DataObjectLite instance or a DataObject instance
+			a DataObject instance with detailed data object metadata (obtainable from `MetaClient`'s method `get_dobj_meta`)
 		:param cols:
 			list of columns to be included; if None, all known columns will be returned
 		:param offset:
 			number of heading rows to skip; if None, does not skip any row
 		:param length:
 			number of rows to return; if None, return all rows
+
+		:return:
+			a dictionary mapping column names to either efficient Python arrays for basic numeric data types and single-character flags, or lists of date/time objects for temporal values. The dictionary can be readily sent to `pandas.DataFrame` constructor.
 		"""
 
-		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
-		req = TableRequest(desired_columns=cols, length=length, offset=offset)
+		req = TableRequest(desired_columns=columns, offset=offset, length=length)
 		codec = codec_from_dobj_meta(dobj, req)
+		return self._get_columns_as_arrays(codec)
+
+
+	def batch_get_columns_as_arrays(
+		self,
+		dobjs: list[Dobj],
+		columns: list[str] | None = None
+	) -> Iterable[Tuple[Dobj, dict[str, AnyArray]]]:
+		"""
+		Efficient batch-fetching version of `get_columns_as_arrays` method.
+
+		:param dobjs:
+			either a list of data object landing page URIs, or a list of `DataObjectLite` instances (obtainable from `MetaClient`'s method `list_data_objects`)
+
+		:param columns:
+			a list of names of columns to be fetched, or `None` for all preview-available columns in the data objects.
+
+		:return:
+			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to typed arrays or lists with data.
+		"""
+		req = TableRequest(columns, None, None)
+		for dobj, codec in codecs_from_dobjs(dobjs, req, self._conf):
+			yield (dobj, self._get_columns_as_arrays(codec))
+
+
+	def _get_columns_as_arrays(self, codec: Codec) -> dict[str, AnyArray]:
+		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
 		url = self._conf.data_service_base_url + '/cpb'
 		resp = self._auth_post(url, "fetching binary", headers, codec.json_payload)
 		return codec.parse_cpb_response(response_as_reader(resp))
