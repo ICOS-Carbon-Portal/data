@@ -1,18 +1,28 @@
 from array import array
 import io
+import re
 import struct
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, TypedDict, Tuple
 from dataclasses import dataclass
 from datetime import datetime, time
+from .envri import EnvriConfig
 from .metacore import DataObject, StationTimeSeriesMeta, URI
+from .sparql import SparqlResults, sparql_select as sparql_select_generic
+from .queries.dataobjlist import DataObjectLite
+from .queries.cpbmeta import query_cpb_metadata, parse_cpb_metadata
+from .queries.datasetcols import DataSetCol, query_dataset_columns, parse_dataset_column
 
 AnyArray: TypeAlias = Any # bad typing support for array.array
 
 @dataclass
+class DatasetColumnInfo:
+	label: str
+	value_format_uri: URI
+@dataclass
 class ColumnInfo:
 	index: int
 	label: str
-	value_format_uri: str
+	value_format_uri: URI
 
 @dataclass
 class TableRequest:
@@ -26,6 +36,10 @@ class CodecInfo(TableRequest):
 	obj_format_uri: URI
 	columns: list[ColumnInfo]
 	n_rows: int
+
+def sparql_select(conf: EnvriConfig, query: str, disable_cache: bool = False) -> SparqlResults:
+	endpoint = conf.sparql_endpoint
+	return sparql_select_generic(endpoint, query, disable_cache)
 
 def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	spec_info = dobj.specificInfo
@@ -47,13 +61,64 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	ci = CodecInfo(
 		dobj_hash=dobj.hash,
 		obj_format_uri=dobj.specification.format.uri,
-		columns = cols_meta_parsed,
+		columns=cols_meta_parsed,
 		n_rows=n_rows,
 		desired_columns=request.desired_columns,
 		offset=request.offset,
 		length=request.length
 	)
 	return Codec(ci)
+
+def codecs_from_dobjs(dobjs: list[URI | DataObjectLite], request: TableRequest, conf: EnvriConfig) -> list[Tuple[URI, "Codec"]]:
+
+	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
+
+	dobj_uris = [dobj.uri if isinstance(dobj, DataObjectLite) else dobj for dobj in dobjs]
+
+	qres_meta = sparql_select(conf, query_cpb_metadata(dobj_uris))
+	cpb_metas = [parse_cpb_metadata(binding) for binding in qres_meta.bindings]
+
+	dobjs_with_cpb_meta = set(cpb.dobj for cpb in cpb_metas)
+	missing_dobjs = [dobj for dobj in dobj_uris if not dobj in dobjs_with_cpb_meta]
+
+	if len(missing_dobjs) > 0: raise Exception(
+		"Some of the requested objects don't have required metadata to fetch them as tabular data: "
+		",\n".join(missing_dobjs)
+	)
+
+	dataset_specs = set(cpb.dataset_spec for cpb in cpb_metas)
+
+	if len(dataset_specs) > 1: raise Exception(
+		"When requesting data from several data objects, all data objects "
+		"must have a common dataset specification"
+	)
+	dataset_spec = dataset_specs.pop()
+
+	qres_ds_cols = sparql_select(conf, query_dataset_columns(dataset_spec))
+	dataset_cols = [parse_dataset_column(binding) for binding in qres_ds_cols.bindings]
+	val_format_lookup = ColumnTitleToFormat(dataset_cols, dataset_spec)
+
+	# ds_cols = [DatasetColumnInfo(label=col.col_title, value_format_uri=col.val_format) for col in dataset_cols]
+
+	codecs: dict[str, "Codec"] = {}
+	for dobj in cpb_metas:
+		hash_id = dobj.dobj.split("/")[-1]
+		dobj_cols = dobj.col_names
+		ci = CodecInfo(
+			dobj_hash=hash_id,
+			obj_format_uri=dobj.obj_format,
+			columns=columns,
+			n_rows=dobj.n_rows,
+			desired_columns=available_desired_columns,
+			offset=request.offset,
+			length=request.length
+		)
+		codecs[hash_id] = Codec(ci)
+	# if request.desired_columns is None:
+	# 	cols = dataset_cols
+	# else:
+	# 	cols = [col for col in request.desired_columns if col in dataset_cols]
+	return codecs
 
 class Codec:
 	def __init__(self, ci: CodecInfo) -> None:
@@ -133,6 +198,36 @@ class Codec:
 			return [datetime.fromtimestamp(v/1000) for v in arr]
 		else:
 			return arr
+
+class RegexCol(TypedDict):
+	regex: re.Pattern[str]
+	value_format: URI
+
+class ColumnTitleToFormat:
+	def __init__(self, ds_cols: list[DataSetCol], ds_spec_uri: URI) -> None:
+		if len(ds_cols) == 0:
+			raise Exception(f"Dataset specification '{ds_spec_uri}' has no columns")
+		self._ds_spec_uri = ds_spec_uri
+		self._default_actual_cols: list[str] = [col.col_title for col in ds_cols if not (col.is_optional or col.is_regex)]
+		self._verbatim_lookup: dict[str, URI] = {col.col_title: col.val_format for col in ds_cols if not col.is_regex}
+		self._regex_cols: list[RegexCol] = [
+			{"regex": re.compile(col.col_title), "value_format": col.val_format}
+			for col in ds_cols if col.is_regex
+		]
+
+	@property
+	def default_actual_cols(self) -> list[str]:
+		res = self._default_actual_cols
+		if len(res) == 0:
+			raise Exception(f"No mandatory verbatim columns in dataset spec '{self._ds_spec_uri}'")
+		return res
+
+	def lookup_value_format(self, col_title: str) -> URI | None:
+		val_format = self._verbatim_lookup.get(col_title)
+		if val_format: return val_format
+		for re_col in self._regex_cols:
+			if re_col["regex"].match(col_title):
+				return re_col["value_format"]
 
 _fmt_uri_to_fmt = {
 	'float32': 'FLOAT',

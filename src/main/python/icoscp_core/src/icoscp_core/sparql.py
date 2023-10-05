@@ -40,6 +40,7 @@ def _as_type(xsd_type: str | None, parser: Callable[[str], ResT]) -> SparqlVarPa
 def _as_opt(plain: SparqlVarParser[ResT]) -> SparqlVarParser[ResT | None]:
 	return lambda varname, binding: plain(varname, binding) if varname in binding.keys() else None
 
+as_bool: SparqlVarParser[bool] = _as_type("boolean", lambda s: True if s.lower() == "true" else False)
 as_int: SparqlVarParser[int] = _as_type("integer", lambda s: int(s))
 as_double: SparqlVarParser[float] = _as_type("double", lambda s: float(s))
 as_float: SparqlVarParser[float] = _as_type("float", lambda s: float(s))
@@ -49,6 +50,7 @@ as_datetime: SparqlVarParser[datetime] = _as_type(
 	xsd_type = "dateTime",
 	parser = lambda s: datetime.fromisoformat(re.sub(r'Z$', '+00:00', s))
 )
+as_opt_bool = _as_opt(as_bool)
 as_opt_double = _as_opt(as_double)
 as_opt_float = _as_opt(as_float)
 as_opt_str = _as_opt(as_string)
