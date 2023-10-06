@@ -1,14 +1,42 @@
 # icoscp_core
 
-A foundational ICOS Carbon Portal core products Python library for metadata and data access, designed to work with multiple data repositories who use ICOS Data Portal stack to host and serve their data.
+A foundational ICOS Carbon Portal core products Python library for metadata and data access, designed to work with multiple data repositories who use ICOS Carbon Portal core server software stack to host and serve their data. At the moment, three repositories are supported: [ICOS](https://data.icos-cp.eu/portal/), [SITES](https://data.fieldsites.se/portal/), and [ICOS Cities](https://citydata.icos-cp.eu/portal/).
 
-# Getting started
+## Design goals
 
+- good alignment with the server APIs
+- offer basic functionality, but in a robust way, and without sacrifices in performance
+- depend only on the standard Python library (with the exception of one small library `dacite`), but aim for good integration with `pandas`
+- provide a solid foundation for future versions of [icoscp](https://pypi.org/project/icoscp/)&mdash;an ICOS-specific meta- and data access library developed by the Elaborated Products team
+- simultaneous support of three cross-cutting concerns:
+	- multiple repositories (ICOS, SITES, ICOS Cities)
+	- multiple ways of authentication
+	- data access through the HTTP API (on an arbitrary machine) and through file system (on a Jupyter notebook with "backdoor" data access); in the latter case the library is responsible for reporting the data usage event.
+
+## Getting started
+
+The library is available on PyPI, can be installed with `pip`:
 ```Bash
 $ pip install icoscp_core
 ```
 
-To initialize authentication on a local machine, run the following:
+**The code examples below are usually provided for ICOS. For other Repositories (SITES or ICOS Cities), in the import directives, use `icoscp_core.sites` or `icoscp_core.cities`, respectively, instead of `icoscp_core.icos`.**
+
+## Authentication
+
+Metadata access does not require authentication, and is achieved by a simple import:
+```Python
+from icoscp_core.icos import meta
+```
+When using the library on the [Jupyter notebook service hosted by the ICOS Carbon Portal](https://jupyter.icos-cp.eu/), authentication will not be required even for data access. 
+
+Authentication can be initialized in a number of ways.
+
+### Credentials and token cache file (default)
+
+This approach should only be used on machines the developer trusts.
+
+A username/password account with the respective authentication service (links for: [ICOS](https://cpauth.icos-cp.eu/), [SITES](https://auth.fieldsites.se/), [ICOS Cities](https://cityauth.icos-cp.eu/)) is required for this. Obfuscated (not readable by humans) password is stored in a file on the local machine in a default user-specific folder. To initialize this file, run the following code interactively (only needs to be once for every machine):
 
 ```Python
 from icoscp_core.icos import auth
@@ -16,11 +44,45 @@ from icoscp_core.icos import auth
 auth.init_config_file()
 ```
 
-(The authentication initialization step may not be required when using the library on the [Jupyter notebook service hosted by the ICOS Carbon Portal](https://jupyter.icos-cp.eu/))
+After the initialization step is done, access to the metadata and data services is achieved by a simple import:
+```Python
+from icoscp_core.icos import meta, data
+```
 
-**For other Repositories (SITES or ICOS Cities), in the import directives, use `sites` or `cities` instead of `icos`, respectively.**
+As an alternative, the developer may choose to use a specific file to store the credentials and token cache. In this scenario, `data` service needs to be initialized as follows:
 
-To browse metadata:
+```Python
+from icoscp_core.icos import bootstrap
+auth, meta, data = bootstrap.fromPasswordFile("<desired path to the file>")
+
+# the next line needs to be run interactively (only once per file)
+auth.init_config_file()
+```
+
+### Static authentication token (prototyping)
+
+This option is good for testing, on a public machine or in general. Its only disadvantage is that the tokens have limited period of validity (100000 seconds, less than 28 hours), but this is precisely what makes it acceptable to include them directly in the Python source code.
+
+The token can be obtained from the "My Account" page (links for: [ICOS](https://cpauth.icos-cp.eu/), [SITES](https://auth.fieldsites.se/), [ICOS Cities](https://cityauth.icos-cp.eu/)), which can be accessed by logging in using one of the supported authentication mechanisms (username/password, university sign-in, OAuth sign in). After this the bootstrapping can be done as follows:
+
+```Python
+from icoscp_core.icos import bootstrap
+cookie_token = 'cpauthToken=WzE2OTY2NzQ5OD...'
+meta, data = bootstrap.fromCookieToken(cookie_token)
+```
+
+### Explicit credentials (advanced option)
+
+The user may choose to use their own mechanism of providing the credentials to initialize the authentication. This should be considered as an advanced option. **(Please do not put your password as clear text in your Python code!)** This can be achieved as follows:
+
+```Python
+from icoscp_core.icos import bootstrap
+meta, data = bootstrap.fromCredentials(username_variable, password_containing_variable)
+```
+
+---
+
+## Metadata access
 
 ```Python
 from icoscp_core.icos import meta, ATMO_STATION
@@ -62,6 +124,9 @@ dobj_detailed_meta = meta.get_dobj_meta(dobj_uri)
 
 Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
 
+---
+
+## Data access
 To fetch data (after having located interesting data objects in the previous step):
 
 ```Python
