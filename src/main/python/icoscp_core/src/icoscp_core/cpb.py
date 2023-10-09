@@ -1,18 +1,15 @@
-from array import array
 import io
+import numpy as np
+from numpy.typing import NDArray
 import re
-import struct
 from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
 from dataclasses import dataclass
-from datetime import datetime, time
 from .envri import EnvriConfig
 from .metacore import DataObject, StationTimeSeriesMeta, URI
 from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.dataobjlist import DataObjectLite
 from .queries.cpbmeta import CpbMetaData, query_cpb_metadata, parse_cpb_metadata
 from .queries.datasetcols import DataSetCol, query_dataset_columns, parse_dataset_column
-
-AnyArray: TypeAlias = Any # bad typing support for array.array
 
 @dataclass
 class DatasetColumnInfo:
@@ -125,6 +122,8 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfi
 		res.append((dobj, Codec(ci)))
 	return res
 
+CbpNpArray: TypeAlias = NDArray[Any]
+
 class Codec:
 	def __init__(self, ci: CodecInfo) -> None:
 		desired_indices: list[int]
@@ -172,37 +171,21 @@ class Codec:
 	def json_payload(self):
 		return self._json_payload
 
-	def parse_cpb_response(self, resp: io.BufferedReader) -> dict[str, list[time | datetime] | AnyArray]:
-		res: dict[str, AnyArray] = {}
+	def parse_cpb_response(self, resp: io.BufferedReader) -> dict[str, CbpNpArray]:
+		res: dict[str, CbpNpArray] = {}
 		cols = self._ci.columns
 		n_rows = self._ci.n_rows
 		if self._ci.offset: n_rows -= self._ci.offset
 		if self._ci.length: n_rows = min(n_rows, self._ci.length)
 		for n in self._desired_indices:
 			fmt = _get_fmt(cols[n].value_format_uri)
-			fmt_char = _get_format_char(fmt)
-			struct_fmt = f">{n_rows}{fmt_char}"
 			must_read = _get_byte_size(fmt) * n_rows
 			col_bytes = resp.read(must_read)
 			if must_read > len(col_bytes):
 				raise IOError(f'Error while reading cpb response for column {cols[n].label} ({n_rows} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
-			arr: AnyArray = array(fmt_char)
-			arr.extend(struct.unpack(struct_fmt, col_bytes))
-			res[cols[n].label] = _type_converter(arr, cols[n].value_format_uri)
+			arr = np.frombuffer(col_bytes, dtype = _get_format_dtype(fmt))
+			res[cols[n].label] = _type_post_process(arr, cols[n].value_format_uri)
 		return res
-
-def _type_converter(arr: AnyArray, fmt: URI) -> list[time | datetime] | AnyArray:
-	fmt_str = fmt.split("/")[-1]
-	if fmt_str == "bmpChar":
-		return array("u", [chr(v) for v in arr])
-	elif fmt_str == "iso8601timeOfDay":
-		return [time(v//3600, (v%3600)//60, (v%3600)%60) for v in arr]
-	elif fmt_str in ["etcDate", "iso8601date"]:
-		return [datetime.fromtimestamp(v*86400) for v in arr]
-	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
-		return [datetime.fromtimestamp(v/1000) for v in arr]
-	else:
-		return arr
 
 class RegexCol(TypedDict):
 	regex: re.Pattern[str]
@@ -235,33 +218,51 @@ class ColumnTitleToFormat:
 				return re_col["value_format"]
 
 _fmt_uri_to_fmt = {
+	'int32':'INT',
 	'float32': 'FLOAT',
 	'float64': 'DOUBLE',
 	'bmpChar': 'CHAR',
+	'string': 'STRING',
+	'iso8601date': 'INT',
 	'etcDate': 'INT',
-	'iso8601date':'INT',
-	'iso8601timeOfDay':'INT',
+	'iso8601month': 'INT',
+	'iso8601timeOfDay': 'INT',
 	'iso8601dateTime': 'DOUBLE',
-	'isoLikeLocalDateTime' : 'DOUBLE',
-	'etcLocalDateTime': 'DOUBLE',
-	'int32':'INT',
-	'string':'STRING'
+	'isoLikeLocalDateTime': 'DOUBLE',
+	'etcLocalDateTime': 'DOUBLE'
 }
+
 def _get_fmt(fmt_uri: str) -> str:
 	return _fmt_uri_to_fmt[fmt_uri.split("/")[-1]]
 
-_fmt_to_fmt_char = {
-	'INT': 'l',
-	'FLOAT': 'f',
-	'DOUBLE': 'd',
-	'SHORT': 'h',
-	'CHAR': 'H',
-	'BYTE': 'b',
+def _type_post_process(arr: CbpNpArray, fmt: URI) -> CbpNpArray:
+	fmt_str = fmt.split("/")[-1]
+	if fmt_str == "bmpChar":
+		return arr.astype(np.uint32).view(dtype='U1')
+	elif fmt_str in ["iso8601date", "etcDate"]:
+		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[D]'))
+	elif fmt_str == "iso8601month":
+		return (arr - 1970 * 12).astype(np.int64).view(dtype=np.dtype('datetime64[M]'))
+	elif fmt_str == "iso8601timeOfDay":
+		return arr.astype(np.int64).view(dtype=np.dtype('timedelta64[s]'))
+	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
+		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[ms]'))
+	else:
+		return arr
+
+
+_fmt_to_dtype = {
+	'INT': np.dtype('>i4'),
+	'FLOAT': np.dtype('>f4'),
+	'DOUBLE': np.dtype('>f8'),
+	'SHORT': np.dtype('>i2'),
+	'CHAR': np.dtype('>u2'),
+	'BYTE': np.dtype('i8'),
 }
 
-def _get_format_char(fmt: str) -> str:
+def _get_format_dtype(fmt: str):
 	try:
-		return _fmt_to_fmt_char[fmt]
+		return _fmt_to_dtype[fmt]
 	except KeyError:
 		raise ValueError(f"Unsupported cpb value format {fmt}")
 
@@ -277,3 +278,4 @@ _fmt_to_byte_size = {
 
 def _get_byte_size(fmt: str) -> int:
 	return _fmt_to_byte_size[fmt]
+

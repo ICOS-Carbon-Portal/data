@@ -4,12 +4,13 @@ import requests
 import io
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator, Iterable, Tuple, Any
+#import time as tm
+from typing import Iterator, Tuple, Any
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .cpb import Codec, TableRequest, AnyArray, codec_from_dobj_meta, codecs_from_dobjs, Dobj
+from .cpb import Codec, TableRequest, CbpNpArray, codec_from_dobj_meta, codecs_from_dobjs, Dobj
 
 
 class DataClient:
@@ -112,7 +113,7 @@ class DataClient:
 		columns: list[str] | None = None,
 		offset: int | None = None,
 		length: int | None = None
-	) -> dict[str, AnyArray]:
+	) -> dict[str, CbpNpArray]:
 		"""
 		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
 
@@ -138,7 +139,7 @@ class DataClient:
 		self,
 		dobjs: list[Dobj],
 		columns: list[str] | None = None
-	) -> Iterable[Tuple[Dobj, dict[str, AnyArray]]]:
+	) -> Iterator[Tuple[Dobj, dict[str, CbpNpArray]]]:
 		"""
 		Efficient batch-fetching version of `get_columns_as_arrays` method.
 
@@ -153,14 +154,20 @@ class DataClient:
 		"""
 		req = TableRequest(columns, None, None)
 		for dobj, codec in codecs_from_dobjs(dobjs, req, self._conf):
-			yield (dobj, self._get_columns_as_arrays(codec))
+			yield dobj, self._get_columns_as_arrays(codec)
 
 
-	def _get_columns_as_arrays(self, codec: Codec) -> dict[str, AnyArray]:
+	def _get_columns_as_arrays(self, codec: Codec) -> dict[str, CbpNpArray]:
+		#start_time = tm.time()
 		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
 		url = self._conf.data_service_base_url + '/cpb'
 		resp = self._auth_post(url, "fetching binary", headers, codec.json_payload)
-		return codec.parse_cpb_response(response_as_reader(resp))
+		reader = response_as_reader(resp)
+		#parse_time = tm.time()
+		#print(f'Response from cpb service for {codec._ci.dobj_hash} in {(parse_time - start_time) * 1000} ms')
+		res = codec.parse_cpb_response(reader)
+		#print(f'Parsed binary for {codec._ci.dobj_hash} in {(tm.time() - parse_time) * 1000} ms')
+		return res
 
 
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:

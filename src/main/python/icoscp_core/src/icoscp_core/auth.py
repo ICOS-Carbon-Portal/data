@@ -143,7 +143,7 @@ class ConfigFileAuth(AuthTokenProvider):
 		else:
 			basedir = os.path.join(os.path.expanduser("~"), ".icoscp")
 			os.makedirs(basedir, exist_ok = True)
-			self._conf_file_path = os.path.join(basedir, conf.envri + "_auth_conf.json")
+			self._conf_file_path = os.path.join(basedir, conf.token_name + "_auth_conf.json")
 
 		self._provider: PasswordAuth | None = None
 
