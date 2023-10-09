@@ -41,7 +41,7 @@ def test_big_bin():
 	dobj_meta = meta.get_dobj_meta(uri)
 	print(f'Fetched detailed meta in {(tm.time() - start_time) * 1000} ms')
 	start_time = tm.time()
-	arrs = data.get_columns_as_arrays(dobj_meta, ["TIMESTAMP", "TA_F", "TA_F_QC"], length=5)
+	arrs = data.get_columns_as_arrays(dobj_meta)#, ["TIMESTAMP", "TA_F", "TA_F_QC"], length=5)
 	print(f'Fetched cols as arrays in {(tm.time() - start_time) * 1000} ms')
 	start_time = tm.time()
 	df = pd.DataFrame(arrs)

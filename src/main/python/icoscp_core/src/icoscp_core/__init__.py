@@ -3,4 +3,4 @@
 Python API for access to ICOS Carbon Portal-based data portals and their core services, such as authentication, metadata access, and data access.
 """
 
-__version__ = "0.2.0-M1"
+__version__ = "0.2.0-M2"

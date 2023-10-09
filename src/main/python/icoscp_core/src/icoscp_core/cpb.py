@@ -1,6 +1,7 @@
 import io
 import numpy as np
 from numpy.typing import NDArray
+import os
 import re
 from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
 from dataclasses import dataclass
@@ -122,20 +123,24 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfi
 		res.append((dobj, Codec(ci)))
 	return res
 
-CbpNpArray: TypeAlias = NDArray[Any]
+ArraysDict: TypeAlias = dict[str, NDArray[Any]]
 
 class Codec:
 	def __init__(self, ci: CodecInfo) -> None:
 		desired_indices: list[int]
 		ci.columns.sort(key=lambda col: col.label)
-		try:
-			if ci.desired_columns is None:
-				desired_indices = [i for i in range(len(ci.columns))]
-			else:
-				labels = [col_info.label for col_info in ci.columns]
-				desired_indices = [labels.index(desired_col) for desired_col in ci.desired_columns]
-		except ValueError:
-			raise ValueError(f'One of the columns desired to be fetched is not actually present in data object {ci.dobj_hash}')
+		if ci.desired_columns is None:
+			desired_indices = [i for i in range(len(ci.columns))]
+		else:
+			labels = [col_info.label for col_info in ci.columns]
+			def get_col_idx(col_lbl: str) -> int:
+				try:
+					return labels.index(col_lbl)
+				except ValueError:
+					raise ValueError(f'Column "{col_lbl}" is not actually present in data object {ci.dobj_hash}')
+			desired_indices = [get_col_idx(desired_col) for desired_col in ci.desired_columns]
+
+		desired_indices.sort()
 
 		# The following checks are needed because the backend does not return user-friendly error messages or results.
 		for param, val in [("offset", ci.offset), ("length", ci.length)]:
@@ -149,7 +154,7 @@ class Codec:
 
 		json = {
 			"tableId": ci.dobj_hash,
-			"subFolder": ci.obj_format_uri.split("/")[-1],
+			"subFolder": _subfolder_path(ci),
 			"schema": {
 				"columns": [_get_fmt(col_info.value_format_uri) for col_info in ci.columns],
 				"size": ci.n_rows
@@ -171,21 +176,63 @@ class Codec:
 	def json_payload(self):
 		return self._json_payload
 
-	def parse_cpb_response(self, resp: io.BufferedReader) -> dict[str, CbpNpArray]:
-		res: dict[str, CbpNpArray] = {}
+	def parse_cpb_response(self, resp: io.BufferedReader) -> ArraysDict:
+		return self._parse_from_buff(resp, None)
+
+	def parse_cpb_file(self, data_folder_path: str) -> ArraysDict:
+
+		file_path = os.path.join(
+			data_folder_path,
+			_subfolder_path(self._ci),
+			self._ci.dobj_hash[:24] + ".cpb"
+		)
+
+		col_offsets = _column_offsets(self._ci)
+
+		with open(file_path, "rb") as file:
+			return self._parse_from_buff(file, col_offsets)
+
+
+	def _parse_from_buff(self, buff: io.BufferedReader, col_offsets: list[int] | None) -> ArraysDict:
+		res: ArraysDict = {}
 		cols = self._ci.columns
-		n_rows = self._ci.n_rows
-		if self._ci.offset: n_rows -= self._ci.offset
-		if self._ci.length: n_rows = min(n_rows, self._ci.length)
+		n_fetch = _n_rows_to_fetch(self._ci)
 		for n in self._desired_indices:
-			fmt = _get_fmt(cols[n].value_format_uri)
-			must_read = _get_byte_size(fmt) * n_rows
-			col_bytes = resp.read(must_read)
+			col  = cols[n]
+			fmt = _get_fmt(col.value_format_uri)
+			must_read = _get_byte_size(fmt) * n_fetch
+			if col_offsets is not None:
+				buff.seek(col_offsets[n])
+			col_bytes = buff.read(must_read)
 			if must_read > len(col_bytes):
-				raise IOError(f'Error while reading cpb response for column {cols[n].label} ({n_rows} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
+				raise IOError(f'Error while reading cpb response for column {col.label} ({n_fetch} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr = np.frombuffer(col_bytes, dtype = _get_format_dtype(fmt))
-			res[cols[n].label] = _type_post_process(arr, cols[n].value_format_uri)
+			res[col.label] = _type_post_process(arr, col.value_format_uri)
 		return res
+
+
+def _column_offsets(ci: CodecInfo) -> list[int]:
+	col_cell_sizes: list[int] = [
+		_get_byte_size(_get_fmt(col.value_format_uri))
+		for col in ci.columns
+	]
+	col_offset: int = 0
+	col_offsets: list[int] = []
+	n_skip = ci.offset or 0
+	for cell_size in col_cell_sizes:
+		col_offsets.append(col_offset + n_skip * cell_size)
+		col_offset += cell_size * ci.n_rows
+	return col_offsets
+
+
+def _n_rows_to_fetch(ci: CodecInfo) -> int:
+	n_rows = ci.n_rows - (ci.offset or 0)
+	if ci.length: n_rows = min(n_rows, ci.length)
+	return n_rows
+
+
+def _subfolder_path(ci: CodecInfo) -> str:
+	return ci.obj_format_uri.split("/")[-1]
 
 class RegexCol(TypedDict):
 	regex: re.Pattern[str]
@@ -235,7 +282,7 @@ _fmt_uri_to_fmt = {
 def _get_fmt(fmt_uri: str) -> str:
 	return _fmt_uri_to_fmt[fmt_uri.split("/")[-1]]
 
-def _type_post_process(arr: CbpNpArray, fmt: URI) -> CbpNpArray:
+def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 	fmt_str = fmt.split("/")[-1]
 	if fmt_str == "bmpChar":
 		return arr.astype(np.uint32).view(dtype='U1')

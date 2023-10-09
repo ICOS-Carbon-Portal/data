@@ -10,13 +10,20 @@ from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .cpb import Codec, TableRequest, CbpNpArray, codec_from_dobj_meta, codecs_from_dobjs, Dobj
+from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs, Dobj
 
 
 class DataClient:
-	def __init__(self, conf: EnvriConfig, auth: AuthTokenProvider) -> None:
+	def __init__(
+		self,
+		conf: EnvriConfig,
+		auth: AuthTokenProvider,
+		data_folder_path: str | None
+	) -> None:
 		self._conf = conf
 		self._auth = auth
+		self._data_folder_path = data_folder_path
+
 
 	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, io.BufferedReader]:
 		"""
@@ -113,7 +120,7 @@ class DataClient:
 		columns: list[str] | None = None,
 		offset: int | None = None,
 		length: int | None = None
-	) -> dict[str, CbpNpArray]:
+	) -> ArraysDict:
 		"""
 		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
 
@@ -139,7 +146,7 @@ class DataClient:
 		self,
 		dobjs: list[Dobj],
 		columns: list[str] | None = None
-	) -> Iterator[Tuple[Dobj, dict[str, CbpNpArray]]]:
+	) -> Iterator[Tuple[Dobj, ArraysDict]]:
 		"""
 		Efficient batch-fetching version of `get_columns_as_arrays` method.
 
@@ -157,7 +164,9 @@ class DataClient:
 			yield dobj, self._get_columns_as_arrays(codec)
 
 
-	def _get_columns_as_arrays(self, codec: Codec) -> dict[str, CbpNpArray]:
+	def _get_columns_as_arrays(self, codec: Codec) -> ArraysDict:
+		if self._data_folder_path is not None:
+			return codec.parse_cpb_file(self._data_folder_path)
 		#start_time = tm.time()
 		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
 		url = self._conf.data_service_base_url + '/cpb'
