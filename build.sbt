@@ -105,7 +105,13 @@ lazy val data = (project in file("."))
 
 		cpDeployTarget := "cpdata",
 		cpDeployBuildInfoPackage := "se.lu.nateko.cp.cpdata",
-		cpDeployPreAssembly := Def.sequential(netcdf / Test / test, Test / test, cpFrontendPublish).value,
+		cpDeployPreAssembly := Def.sequential(
+			netcdf / clean,
+			clean,
+			netcdf / Test / test,
+			Test / test,
+			cpFrontendPublish
+		).value,
 		cpDeployPlaybook := "core.yml",
 		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production")),
 		cpDeployInfraBranch := "master",
