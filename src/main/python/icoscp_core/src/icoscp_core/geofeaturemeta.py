@@ -10,31 +10,31 @@ from .metacore import (
 	Pin
 )
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedFeatureCollection(FeatureCollection):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedPosition(Position):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedLatLonBox(LatLonBox):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedGeoTrack(GeoTrack):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedPolygon(Polygon):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedCircle(Circle):
     geo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class ExtendedPin(Pin):
     geo: Any
 

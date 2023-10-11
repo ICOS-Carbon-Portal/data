@@ -16,7 +16,7 @@ from .queries.dataobjlist import TimeFilter, SizeFilter, SamplingHeightFilter
 # and the following to suppress warnings about unused imports:
 _KnownFilters: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter
 
-@dataclass
+@dataclass(frozen=True)
 class DataObject(VanillaDataObject):
 	coverageGeo: Any
 

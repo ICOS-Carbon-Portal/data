@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from ..metacore import URI
 from ..sparql import Binding, as_uri, as_int, as_opt_str
 
-@dataclass
+@dataclass(frozen=True)
 class CpbMetaData:
 	dobj: URI
 	dataset_spec: URI

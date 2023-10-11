@@ -12,22 +12,22 @@ from .queries.dataobjlist import DataObjectLite
 from .queries.cpbmeta import CpbMetaData, query_cpb_metadata, parse_cpb_metadata
 from .queries.datasetcols import DataSetCol, query_dataset_columns, parse_dataset_column
 
-@dataclass
+@dataclass(frozen=True)
 class DatasetColumnInfo:
 	label: str
 	value_format_uri: URI
-@dataclass
+@dataclass(frozen=True)
 class ColumnInfo:
 	label: str
 	value_format_uri: URI
 
-@dataclass
+@dataclass(frozen=True)
 class TableRequest:
 	desired_columns: list[str] | None
 	offset: int | None
 	length: int | None
 
-@dataclass
+@dataclass(frozen=True)
 class CodecInfo(TableRequest):
 	dobj_hash_id: str
 	obj_format_uri: URI

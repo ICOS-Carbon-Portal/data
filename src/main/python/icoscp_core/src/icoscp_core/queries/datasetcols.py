@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from ..metacore import URI
 from ..sparql import Binding, as_string, as_uri, as_opt_bool
 
-@dataclass
+@dataclass(frozen=True)
 class DataSetCol:
 	col_title: str
 	val_format: URI
