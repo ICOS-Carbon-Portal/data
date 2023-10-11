@@ -20,7 +20,7 @@ _KnownFilters: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter
 class DataObject(VanillaDataObject):
 	coverageGeo: Any
 
-@dataclass
+@dataclass(frozen=True)
 class Station(StationWithStaff):
 	coverage: Optional[ExtendedGeoFeature]
 

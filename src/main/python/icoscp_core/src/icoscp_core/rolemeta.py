@@ -26,6 +26,6 @@ class Employee:
 class OrgWithStaff(Organization):
     staff: list[Employee]
 
-@dataclass
+@dataclass(frozen=True)
 class StationWithStaff(Station):
     staff: list[Employee]

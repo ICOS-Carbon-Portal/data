@@ -29,7 +29,7 @@ class TableRequest:
 
 @dataclass
 class CodecInfo(TableRequest):
-	dobj_hash: str
+	dobj_hash_id: str
 	obj_format_uri: URI
 	columns: list[ColumnInfo]
 	n_rows: int
@@ -55,7 +55,7 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	if n_rows is None:
 		raise Exception(f"Metadata of object '{dobj.hash}' does not include the number of table rows")
 	ci = CodecInfo(
-		dobj_hash=dobj.hash,
+		dobj_hash_id=dobj.hash[:24],
 		obj_format_uri=dobj.specification.format.uri,
 		columns=cols_meta_parsed,
 		n_rows=n_rows,
@@ -67,12 +67,12 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 
 Dobj = TypeVar("Dobj", URI, DataObjectLite)
 
+def dobj_uri(dobj: Dobj) -> URI:
+	return dobj.uri if isinstance(dobj, DataObjectLite) else dobj
+
 def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfig) -> list[Tuple[Dobj, "Codec"]]:
 
 	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
-
-	def dobj_uri(dobj: Dobj) -> URI:
-		return dobj.uri if isinstance(dobj, DataObjectLite) else dobj
 
 	dobj_uris = [dobj_uri(dobj) for dobj in dobjs]
 
@@ -112,7 +112,7 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfi
 			if val_format is not None
 		]
 		ci = CodecInfo(
-			dobj_hash=cpb.dobj.split("/")[-1],
+			dobj_hash_id=cpb.dobj.split("/")[-1],
 			obj_format_uri=cpb.obj_format,
 			columns=cols_info,
 			n_rows=cpb.n_rows,
@@ -137,7 +137,7 @@ class Codec:
 				try:
 					return labels.index(col_lbl)
 				except ValueError:
-					raise ValueError(f'Column "{col_lbl}" is not actually present in data object {ci.dobj_hash}')
+					raise ValueError(f'Column "{col_lbl}" is not actually present in data object {ci.dobj_hash_id}')
 			desired_indices = [get_col_idx(desired_col) for desired_col in ci.desired_columns]
 
 		desired_indices.sort()
@@ -153,7 +153,7 @@ class Codec:
 			)
 
 		json = {
-			"tableId": ci.dobj_hash,
+			"tableId": ci.dobj_hash_id,
 			"subFolder": _subfolder_path(ci),
 			"schema": {
 				"columns": [_get_fmt(col_info.value_format_uri) for col_info in ci.columns],
@@ -184,7 +184,7 @@ class Codec:
 		file_path = os.path.join(
 			data_folder_path,
 			_subfolder_path(self._ci),
-			self._ci.dobj_hash[:24] + ".cpb"
+			self._ci.dobj_hash_id + ".cpb"
 		)
 
 		col_offsets = _column_offsets(self._ci)

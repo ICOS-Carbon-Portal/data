@@ -1,6 +1,10 @@
+from .envri import ICOS_CONFIG
+from .bootstrap import Bootstrap
 from .icos import auth, meta, data
 from .sites import meta as smeta, data as sdata
-from .metaclient import TimeFilter, SizeFilter
+from .metaclient import Station, TimeFilter, SizeFilter, MetadataClient
+from .dataclient import DataClient
+import os
 import pandas as pd
 import time as tm
 from typing import Any
@@ -20,6 +24,9 @@ def list_filtered_atc_co2():
 def list_all_stations_in_icos_cp():
 	return meta.list_stations(of_station_type_uri=False)
 
+def get_station_meta() -> Station:
+	return meta.get_station_meta('http://meta.icos-cp.eu/resources/stations/ES_DE-HoH')
+
 def test_bin_fetch(cols: list[str] | None = None, offset: int | None = None, length: int | None = None) -> pd.DataFrame:
 	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
 	dobj = meta.get_dobj_meta(uri)
@@ -36,6 +43,9 @@ def test_csv_fetch() -> pd.DataFrame:
 	return df
 
 def test_big_bin():
+	return _test_big_bin(meta, data)
+
+def _test_big_bin(meta: MetadataClient, data: DataClient):
 	uri = 'https://meta.icos-cp.eu/objects/4F2-9d7QV9A0SlL2pIaRxsJP'
 	start_time = tm.time()
 	dobj_meta = meta.get_dobj_meta(uri)
@@ -63,3 +73,9 @@ def test_year_month_col():
 	df = pd.DataFrame(sdata.get_columns_as_arrays(dobj_meta))
 	print(df)
 	return df
+
+def test_local_access():
+	os.environ["PORTAL_DATA_PATH_ICOS"] = '/home/oleg/workspace/data/fileStorage/'
+	boot = Bootstrap(ICOS_CONFIG)
+	_, meta, data = boot.fromPasswordFile()
+	return _test_big_bin(meta, data)

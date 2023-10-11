@@ -10,7 +10,9 @@ from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
-from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs, Dobj
+from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
+from .cpb import Dobj, dobj_uri
+from .portaluse_client import report_cpb_file_read
 
 
 class DataClient:
@@ -139,7 +141,12 @@ class DataClient:
 
 		req = TableRequest(desired_columns=columns, offset=offset, length=length)
 		codec = codec_from_dobj_meta(dobj, req)
-		return self._get_columns_as_arrays(codec)
+		res = self._get_columns_as_arrays(codec)
+
+		if self._data_folder_path is not None:
+			report_cpb_file_read(self._conf, hashes = [dobj.hash[:24]], columns=columns)
+
+		return res
 
 
 	def batch_get_columns_as_arrays(
@@ -160,7 +167,13 @@ class DataClient:
 			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to typed arrays or lists with data.
 		"""
 		req = TableRequest(columns, None, None)
-		for dobj, codec in codecs_from_dobjs(dobjs, req, self._conf):
+		dobj_codecs = codecs_from_dobjs(dobjs, req, self._conf)
+
+		if self._data_folder_path is not None:
+			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
+			report_cpb_file_read(self._conf, hashes=hashes, columns=columns)
+
+		for dobj, codec in dobj_codecs:
 			yield dobj, self._get_columns_as_arrays(codec)
 
 

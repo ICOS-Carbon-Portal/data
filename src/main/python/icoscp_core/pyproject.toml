@@ -21,6 +21,7 @@ dependencies = [
 ]
 [tool.flit.sdist]
 include = ["src/icoscp_core/metacore.py"]
+exclude = ["src/icoscp_core/examples.py"]
 
 [project.urls]
 Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/icoscp_core"

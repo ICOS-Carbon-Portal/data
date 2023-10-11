@@ -8,7 +8,7 @@ from typing import Tuple
 class Bootstrap():
 	def __init__(self, conf: EnvriConfig) -> None:
 		self._conf = conf
-		data_path_var = "PORTAL_DATA_PATH_" + conf.envri.capitalize()
+		data_path_var = "PORTAL_DATA_PATH_" + conf.envri.upper()
 		data_path = os.environ.get(data_path_var)
 		self._data_path = data_path if data_path is not None and len(data_path) > 0 else None
 
