@@ -51,7 +51,7 @@
     "icos-cp-draggable": "^0.0.2",
     "icos-cp-leaflet-common": "^1.0.1",
     "icos-cp-legend": "1.1.1",
-    "icos-cp-netcdfmap": "2.1.0",
+    "icos-cp-netcdfmap": "2.1.1",
     "icos-cp-spatial": "0.4.0",
     "icos-cp-spinner": "^0.1.5",
     "icos-cp-toaster": "^0.7.2",
