@@ -3,7 +3,7 @@ import * as condition from 'ol/events/condition';
 import { Collection, Feature } from 'ol';
 import {LabelLookup, MapProps, State, StationPos4326Lookup} from './State';
 import { UrlStr } from '../backend/declarations';
-import {difference} from '../utils';
+import {difference, throwError} from '../utils';
 import {Filter, Value} from './SpecTable';
 import config from '../config';
 import { Coordinate } from 'ol/coordinate';
@@ -11,6 +11,7 @@ import Point from 'ol/geom/Point';
 import VectorLayer from 'ol/layer/Vector';
 import { CountriesTopo, getCountriesGeoJson } from '../backend';
 import { DrawFeature, StationFilterControl } from './StationFilterControl';
+import Control from 'ol/control/Control';
 import Map from 'ol/Map';
 import {
 	BaseMapId, Copyright, countryBorderStyle, countryStyle,
@@ -28,6 +29,8 @@ import {
 	Popup, ProjectionControl,
 	SupportedSRIDs
 } from "icos-cp-ol";
+import VectorSource from 'ol/source/Vector';
+import Geometry from 'ol/geom/Geometry';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
@@ -86,7 +89,7 @@ export default class InitMap {
 			? olMapSettings.defaultSRID
 			: persistedMapProps.srid;
 		this.appEPSGCode = `EPSG:${srid}` as EpsgCode;
-		const projection = getProjection(this.appEPSGCode);
+		const projection = getProjection(this.appEPSGCode) ?? throwError(`Projection ${this.appEPSGCode} not found`);
 
 		this.mapOptions = {
 			center: persistedMapProps.center,
@@ -99,7 +102,7 @@ export default class InitMap {
 		const tileLayers = getBaseMapLayers(selectedBaseMap, olMapSettings.baseMapFilter);
 		this.popup = new Popup('popover');
 
-		const controls = getDefaultControls(projection);
+		const controls: Control[] = getDefaultControls(projection);
 
 		const pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode)
 		this.getStationPosLookup = () => this.allStations.reduce<StationPosLookup>(
@@ -174,7 +177,7 @@ export default class InitMap {
 		// countriesTopo has geometric problems in SWEREF99 TM so skip it for SITES
 		if (config.envri === 'SITES')
 			return;
-		
+
 		this.countriesTopo = await getCountriesGeoJson();
 
 		const countriesTopoBM: LayerWrapper = this.getLayerWrapper({
@@ -285,7 +288,7 @@ export default class InitMap {
 		return () => {
 			if (self.map === undefined)
 				return;
-			
+
 			self.layersDiv.innerHTML = '';
 			const baseMaps = self.baseMaps;
 			const toggles = self.toggles;
@@ -324,7 +327,7 @@ export default class InitMap {
 			}
 
 			if (toggles.length) {
-				const addToggleLayer = (toggleLayer: VectorLayer) => {
+				const addToggleLayer = (toggleLayer: VectorLayer<VectorSource<Geometry>>) => {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
@@ -342,7 +345,7 @@ export default class InitMap {
 
 					if (legendItem) {
 						const legendItemContainer = document.createElement('span');
-						legendItemContainer.setAttribute('style', 'display:table-cell; width:21px; text-align:center;');						
+						legendItemContainer.setAttribute('style', 'display:table-cell; width:21px; text-align:center;');
 						legendItem.id = id.replace('toggle', 'canvas');
 						legendItem.setAttribute('style', 'vertical-align:sub; margin-right:unset;');
 						legendItemContainer.appendChild(legendItem);
@@ -373,10 +376,10 @@ export default class InitMap {
 
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Geometry>>));
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Geometry>>));
 
 				self.layersDiv.appendChild(root);
 			}

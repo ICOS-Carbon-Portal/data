@@ -57,11 +57,7 @@ export class App extends Component {
 
 		return (
 			<div className="container-fluid">
-				<AnimatedToasters
-					autoCloseDelay={5000}
-					toasterData={toasterData}
-					maxWidth={400}
-				/>
+				<AnimatedToasters toasterData={toasterData} />
 
 				<div className="row">
 					<div className="col-lg-9">

@@ -1,0 +1,5 @@
+/* Override style coming from react-widgets */
+
+.rw-multiselect-tag-btn svg {
+	vertical-align: -2px;
+}

@@ -1,14 +1,13 @@
-import 'babel-polyfill';
 import {getTableFormatNrows, getBinTable} from './backend';
 import {logError, saveToRestheart} from '../../common/main/backend';
 import UrlSearchParams from '../../common/main/models/UrlSearchParams';
 import config, {ICOS, ICOSCities, SITES, envri} from '../../common/main/config';
-import Dygraph from 'dygraphs';
+import Dygraph, { dygraphs } from 'dygraphs';
 import './Dygraphs.css';
 import './custom.css';
 import CollapsibleSection from './CollapsibleSection';
 import {Spinner} from 'icos-cp-spinner';
-import {getCssText} from '../../common/main/style';
+import { Styles } from './CollapsibleSection'
 import {BinTable} from "icos-cp-backend";
 import LegendData = dygraphs.LegendData;
 import SeriesLegendData = dygraphs.SeriesLegendData;
@@ -40,8 +39,8 @@ const invalidReqMsg = `
 	</div>
 </div>`;
 
-const stylesCollapsibleSection = {
-	details: getCssText({
+const stylesCollapsibleSection: Styles = {
+	details: {
 		position: 'absolute',
 		zIndex: 9999,
 		backgroundColor: 'white',
@@ -49,14 +48,14 @@ const stylesCollapsibleSection = {
 		padding: 5,
 		borderRadius: 5,
 		boxShadow: '9px 8px 20px -18px rgba(0,0,0,0.75)'
-	}),
-	summary: getCssText({
+	},
+	summary: {
 		fontWeight: 'bold',
 		cursor: 'pointer'
-	}),
-	anchor: getCssText({
+	},
+	anchor: {
 		marginTop: 7
-	})
+	}
 };
 
 type BinTableLike = Pick<BinTable, 'nCols' | 'values' | 'length'>

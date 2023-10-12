@@ -1,17 +1,14 @@
 {
   "name": "cpdata-dygraph-light",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "engines": {
-    "npm": ">=6.12.0"
+    "node": ">=18"
   },
   "private": true,
   "description": "Carbon Portal Data Service",
-  "main": "gulpfile.babel.js",
   "scripts": {
-    "default": "./publish.sh",
-    "publish": "./publish.sh",
-    "build": "./build.sh",
-    "gulp": "gulp"
+    "publish": "webpack --mode=production",
+    "build": "webpack watch --mode=development"
   },
   "repository": {
     "type": "git",
@@ -34,37 +31,19 @@
     "url": "https://github.com/ICOS-Carbon-Portal/data/issues"
   },
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
-  "babel": {
-    "presets": [
-      "@babel/preset-env"
-    ],
-    "plugins": [
-      "@babel/proposal-class-properties",
-      "@babel/proposal-object-rest-spread"
-    ]
-  },
   "devDependencies": {
-    "@babel/cli": "^7.12.10",
-    "@babel/core": "^7.12.10",
-    "@babel/plugin-proposal-class-properties": "^7.12.1",
-    "@babel/plugin-proposal-object-rest-spread": "^7.12.1",
-    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
-    "@babel/preset-env": "^7.12.11",
-    "@babel/preset-react": "^7.12.10",
-    "@babel/preset-typescript": "^7.12.7",
-    "@babel/register": "^7.12.10",
-    "@types/dygraphs": "^1.1.12",
-    "browserify-css": "^0.15.0",
-    "del": "^3.0.0",
-    "gulp": "^4.0.2",
-    "gulp-replace": "^1.0.0",
-    "react": "17.0.1",
-    "typescript": "4.1.3"
+    "@types/dygraphs": "^2.1.5",
+    "css-loader": "^6.8.1",
+    "react": "18.2.0",
+    "style-loader": "^3.3.3",
+    "ts-loader": "^9.5.0",
+    "typescript": "5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "babel-polyfill": "^6.26.0",
-    "dygraphs": "^2.1.0",
-    "icos-cp-backend": "0.5.2",
-    "icos-cp-spinner": "^0.1.4"
+    "dygraphs": "^2.2.1",
+    "icos-cp-backend": "0.5.3",
+    "icos-cp-spinner": "^0.1.6"
   }
 }

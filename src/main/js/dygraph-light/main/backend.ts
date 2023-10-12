@@ -1,8 +1,9 @@
 import {sparql, getBinaryTable, TableFormat} from 'icos-cp-backend';
 import {objectSpecification, ObjectSpecConfig} from '../../common/main/sparqlQueries';
 import TableFormatCache from "../../common/main/TableFormatCache";
+import { MetaWithTableFormat } from './LabelMaker'
 
-export function getTableFormatNrows(config: ObjectSpecConfig, objIds: string[]){
+export function getTableFormatNrows(config: ObjectSpecConfig, objIds: string[]): Promise<MetaWithTableFormat[]> {
 	const query = objectSpecification(config, objIds);
 	const tfCache = new TableFormatCache(config);
 
@@ -25,7 +26,7 @@ export function getTableFormatNrows(config: ObjectSpecConfig, objIds: string[]){
 					: Promise.reject(new Error(`Data object ${objIds.join()} does not exist or is not an ingested time series`));
 			}
 		)
-		.then(objects => Promise
+		.then(objects  => Promise
 			.all(objects.map(object => tfCache.getTableFormat(object.objSpec)))
 			.then(tableFormats =>
 				objects.map((object, index) => {

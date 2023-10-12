@@ -46,11 +46,7 @@ export class App extends Component<AppProps> {
 		return (
 			<div>
 
-				<AnimatedToasters
-					autoCloseDelay={5000}
-					toasterData={props.toasterData}
-					maxWidth={400}
-				/>
+				<AnimatedToasters toasterData={props.toasterData} />
 
 				<div className="row">
 

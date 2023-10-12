@@ -1,7 +1,7 @@
-import React, { Component } from 'react';
+import React, { Component, ReactNode } from 'react';
 import { AppProps } from '../containers/App';
 
-type OurProps = Pick<AppProps, 'failWithError'>
+type OurProps = Pick<AppProps, 'failWithError'> & { children: ReactNode }
 type OurState = {
 	hasError: boolean
 }

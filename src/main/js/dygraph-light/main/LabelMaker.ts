@@ -1,9 +1,10 @@
 import UrlSearchParams from "../../common/main/models/UrlSearchParams";
 import {ColumnInfo, TableFormat} from "icos-cp-backend";
+import { dygraphs } from "dygraphs";
 import PerSeriesOptions = dygraphs.PerSeriesOptions;
 import LegendData = dygraphs.LegendData;
 
-type MetaWithTableFormat = {
+export type MetaWithTableFormat = {
 	id: string
 	objSpec: string
 	nRows: number
@@ -185,7 +186,7 @@ class Metadata {
 		const legendLabels = getLegendLabelsFromParams(params, 'legendLabels');
 		const yLabel = getFinalLabel(linking, legendLabels, lblIdx, object, params.get('y'), postfix);
 
-		let y2Label = undefined;
+		let y2Label: string | undefined = undefined;
 
 		if (hasY2) {
 			const legendLabelsY2 = getLegendLabelsFromParams(params, 'legendLabelsY2');

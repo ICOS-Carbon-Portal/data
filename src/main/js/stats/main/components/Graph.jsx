@@ -4,6 +4,7 @@ import deepEqual from 'deep-equal';
 import FileDownload from './FileDownload.jsx';
 import {placeholders} from "./Filters";
 import config from '../config';
+import Dygraph from 'dygraphs';
 
 export default class Graph extends Component{
 	constructor(props){

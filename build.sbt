@@ -68,7 +68,7 @@ lazy val data = (project in file("."))
 		cpFrontendApps := Seq("dygraph-light", "map-graph", "netcdf", "portal", "stats", "dashboard"),
 		cpFrontendBuildCommand := {
 			val targetDir = (Compile / classDirectory).value.getAbsolutePath
-			s"""export SCALA_CLASS_DIR="${targetDir}" && ./build.sh"""
+			s"""export SCALA_CLASS_DIR="${targetDir}" && npm run build"""
 		},
 		cpFrontendPublishCommand := {
 			val targetDir = (Compile / classDirectory).value.getAbsolutePath

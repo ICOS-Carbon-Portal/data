@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import {colorMaker} from '../models/colorMaker';
 import CanvasLegend from '../legend/CanvasLegend';
 import {legendCtrl} from '../legend/LegendCtrl';

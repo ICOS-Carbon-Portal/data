@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
-import '../../../../node_modules/leaflet/dist/leaflet.css';//path from within tsTarget ts compiler output
+import 'leaflet/dist/leaflet.css';
 import * as LCommon from 'icos-cp-leaflet-common';
 import PointReducer from '../models/PointReducer';
 import {colorMaker} from "../models/colorMaker";

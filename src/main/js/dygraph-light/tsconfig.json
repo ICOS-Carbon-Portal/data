@@ -8,9 +8,9 @@
 		// Specify what file to store incremental build information in.
 		"tsBuildInfoFile": "./tsTarget/tsBuildInfoFile",
 		"skipLibCheck": true,
-		"jsx": "preserve",
 		// Target latest version of ECMAScript.
-		"target": "esnext",
+		"target": "ES2021",
+		"module": "ES2020",
 		// Search under node_modules for non-relative imports.
 		"moduleResolution": "node",
 		// Process & infer types from .js files.

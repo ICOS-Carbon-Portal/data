@@ -21,7 +21,7 @@ export default class FileDownload extends Component{
 
 	render(){
 		return (
-			<a ref={a => this.link = a} style={{display:'none'}}>Download</a>
+			<a style={{display:'none'}}>Download</a>
 		);
 	}
 }

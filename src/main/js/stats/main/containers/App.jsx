@@ -33,11 +33,8 @@ export class App extends Component {
 
 		return (
 			<div style={{marginTop: 10}}>
-				<AnimatedToasters
-					autoCloseDelay={5000}
-					toasterData={props.toasterData}
-					maxWidth={400}
-				/>
+
+				<AnimatedToasters toasterData={props.toasterData} />
 
 				<div className="page-header">
 					<h2>

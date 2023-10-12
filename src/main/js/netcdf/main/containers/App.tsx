@@ -23,13 +23,7 @@ class App extends Component<AppProps> {
 
 		return <React.Fragment>
 			{props.toasterData
-				? <AnimatedToasters
-					autoCloseDelay={null}
-					fadeInTime={100}
-					fadeOutTime={400}
-					toasterData={props.toasterData}
-					maxWidth={400}
-				/>
+				? <AnimatedToasters autoClose={false} toasterData={props.toasterData} />
 				: null
 			}
 			<ErrorBoundary failWithError={props.failWithError}>

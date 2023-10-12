@@ -22,6 +22,6 @@ export default class CanvasWrapper extends Component {
 	}
 
 	render(){
-		return <canvas ref={el => this.canvasElement = el} style={this.props.style} />;
+		return <canvas style={this.props.style} />;
 	}
 }

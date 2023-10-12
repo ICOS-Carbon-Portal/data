@@ -17,11 +17,7 @@ export class App extends Component {
 		return (
 			<div style={{marginTop: 10}}>
 
-				<AnimatedToasters
-					autoCloseDelay={5000}
-					toasterData={toasterData}
-					maxWidth={400}
-				/>
+				<AnimatedToasters toasterData={toasterData} />
 
 				<ErrorBoundary failWithError={failWithError}>
 					<AppRoute {...this.props} />

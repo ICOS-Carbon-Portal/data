@@ -1,9 +1,9 @@
-import {Style} from "../../common/main/style";
+import { Style, getCssText } from "../../common/main/style";
 
-type Styles = {
-	details: string
-	summary: string
-	anchor: string
+export type Styles = {
+	details: Style
+	summary: Style
+	anchor: Style
 }
 
 export default class CollapsibleSection {
@@ -14,18 +14,18 @@ export default class CollapsibleSection {
 	constructor(anchorId: string, title: string, styles: Styles, isClosed: boolean, setHidden = false){
 		this.details = document.createElement('details');
 		if (isClosed === null) this.details.setAttribute('open', '');
-		this.details.setAttribute('style', styles.details);
+		this.details.setAttribute('style', getCssText(styles.details));
 		if (setHidden) this.hide();
 
 		this.summary = document.createElement('summary');
-		this.summary.setAttribute('style', styles.summary);
+		this.summary.setAttribute('style', getCssText(styles.summary));
 		this.summary.innerText = title;
 		this.details.appendChild(this.summary);
 
 		// Move anchor element into details element
 		const anchorElement = document.getElementById(anchorId)!;
 		this.content = anchorElement.cloneNode() as HTMLElement;
-		this.content.setAttribute('style', styles.anchor);
+		this.content.setAttribute('style', getCssText(styles.anchor));
 		anchorElement.removeAttribute('id');
 
 		anchorElement.appendChild(this.details);

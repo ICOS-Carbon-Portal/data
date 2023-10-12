@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
-import NetCDFMap, {getTileHelper} from 'icos-cp-netcdfmap';
-import '.../../../../../node_modules/icos-cp-netcdfmap/dist/leaflet.css';
+import NetCDFMap, { getTileHelper, getLatLngBounds } from 'icos-cp-netcdfmap';
+import 'leaflet/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls';
@@ -203,6 +203,7 @@ export default class Map extends Component<OurProps, OurState> {
 			props.initSearchParams.zoom,
 			raster
 		);
+
 		const containerHeight = state.height < minHeight ? minHeight : state.height - 10;
 
 		return (
@@ -321,15 +322,6 @@ const getRasterXYFromLatLng = (raster: BinRaster) => {
 			}
 			: undefined;
 	}
-};
-
-const getLatLngBounds = (rasterFetchCount: number, initCenter: string, initZoom: string, raster?: BinRaster) => {
-	return rasterFetchCount === 1 && initCenter === undefined && initZoom === undefined && raster && raster.boundingBox
-		? window.L.latLngBounds(
-			window.L.latLng(raster.boundingBox.latMin, raster.boundingBox.lonMin),
-			window.L.latLng(raster.boundingBox.latMax, raster.boundingBox.lonMax)
-		)
-		: undefined;
 };
 
 const formatData = (dataToSave: { objId?: string, variable: string }) => {

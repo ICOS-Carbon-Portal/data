@@ -1,5 +1,5 @@
 import D from 'dygraphs';
-import '../../../../../common/main/Dygraphs.css';
+import '../../../common/main/Dygraphs.css';
 
 export const drawGraph = (timeserieData, varName, latlng) => {
 	if (!document.getElementById('graph')) return;

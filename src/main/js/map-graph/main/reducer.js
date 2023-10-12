@@ -17,6 +17,8 @@ const initState = {
 
 export default function(state = initState, action){
 
+	let y1, y2, map, radios;
+
 	switch(action.type){
 
 		case ERROR:
@@ -25,10 +27,10 @@ export default function(state = initState, action){
 			});
 
 		case HASH_STATE_UPDATED:
-			let {y1, y2, map} = action.hashState;
+			({y1, y2, map} = action.hashState);
 			const center = getCenter(action.hashState.center) || state.center;
 			const zoom = Number.isInteger(action.hashState.zoom) ? action.hashState.zoom : undefined;
-			let radios = [
+			radios = [
 				getRadioData(state.binTableData, y1, map === y1),
 				getRadioData(state.binTableData, y2, map === y2)
 			];

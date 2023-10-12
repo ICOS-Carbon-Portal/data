@@ -20,4 +20,4 @@ export type ExtractPrototypes<C extends IdxSig<any>> = {
 	[Key in keyof C['prototype']]: C['prototype'][Key]
 }
 
-export type PickClassFunctions<C> = Omit<ExtractPrototypes<C>, keyof Component | keyof ComponentLifecycle<never, never>>;
+export type PickClassFunctions<C extends IdxSig<any, string>> = Omit<ExtractPrototypes<C>, keyof Component | keyof ComponentLifecycle<never, never>>;

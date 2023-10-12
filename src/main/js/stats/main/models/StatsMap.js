@@ -1,5 +1,3 @@
-import {undef} from "browserify-css/config/jshint";
-
 export default class StatsMap {
 	constructor(countryStats, countriesTopo, isReadyForMapUpdate){
 		this._countryStats = countryStats;

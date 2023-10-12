@@ -32,13 +32,14 @@ module.exports = {
 		filename: '[name].js',
 		clean: true,
 	},
+	devtool: 'source-map',
 	plugins: [
 		new FileManagerPlugin({
 			events: {
 				onEnd: {
 					delete: filesInDestinationToClean,
 					copy: [
-						{ source: buildFolder + '/*.js', destination: destinationFolderJs },
+						{ source: buildFolder + '/*.(js|js.map)', destination: destinationFolderJs },
 						{ source: buildFolder + '/*.(css|gif)', destination: destinationFolderStyle },
 					],
 				},

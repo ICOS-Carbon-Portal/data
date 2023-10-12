@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
-import Multiselect from 'react-widgets/lib/Multiselect';
+import Multiselect from 'react-widgets/Multiselect';
+import 'react-widgets/styles.css';
 
 
 export default class Filter extends Component {
@@ -36,7 +37,6 @@ export default class Filter extends Component {
 		const { open } = this.state;
 		const { placeholder, filter, value, children } = this.props;
 
-
 		return (
 			<div className="row mt-2" key={filter.name}>
 				<label className="col-lg-4 col-form-label">{placeholder}</label>
@@ -46,7 +46,7 @@ export default class Filter extends Component {
 						: <Multiselect
 							open={open}
 							placeholder={placeholder}
-							valueField="id"
+							dataKey="id"
 							textField="label"
 							data={value == "" ? filter.values.filter(f => f.count > 0) : filter.values}
 							value={value}
