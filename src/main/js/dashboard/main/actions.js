@@ -33,7 +33,7 @@ export const init = searchParams => dispatch => {
 	const stationId = searchParams.get('stationId');
 	const valueType = searchParams.get('valueType');
 	const height = searchParams.get('height');
-	const showControls = (String(searchParams.get('showControls')).toLowerCase() === 'true')
+	const showControls = (String(searchParams.get('showControls')).toLowerCase() !== 'false')
 
 	dispatch({
 		type: actionTypes.INIT,
