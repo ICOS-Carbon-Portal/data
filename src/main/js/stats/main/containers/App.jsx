@@ -36,16 +36,15 @@ export class App extends Component {
 
 				<AnimatedToasters toasterData={props.toasterData} />
 
-				<div className="page-header">
-					<h2>
-						{config.envri} Data Usage Statistics
+				<div className="d-flex justify-content-between flex-wrap">
+					<h1 className='mb-3'>{config.envri} Data Usage Statistics</h1>
+					<div className='mb-3'>
 						<Radio
 							horizontal={true}
-							containerStyle={{ display: 'inline', float: 'right' }}
 							radios={this.viewModes}
 							action={props.setViewMode}
 						/>
-					</h2>
+					</div>
 				</div>
 
 				<ViewSwitcher {...props} />
