@@ -1,5 +1,5 @@
 import React from 'react';
-import {render} from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import Root from './containers/Root';
 
 import './portal.scss';
@@ -10,7 +10,7 @@ import '../node_modules/ol/ol.css';
 import 'react-datepicker/dist/react-datepicker.css';
 
 
-render(
-	<Root />,
-	document.getElementById('main')
-);
+const container = document.getElementById('main');
+const root = createRoot(container!);
+
+root.render(<Root />);
