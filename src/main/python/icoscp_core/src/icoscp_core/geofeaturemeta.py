@@ -11,40 +11,36 @@ from .metacore import (
 )
 
 @dataclass(frozen=True)
-class ExtendedFeatureCollection(FeatureCollection):
-    geo: Any
+class GeoJsonHolder:
+	geo: Any
 
 @dataclass(frozen=True)
-class ExtendedPosition(Position):
-    geo: Any
+class FeatureCollectionWithGeo(FeatureCollection, GeoJsonHolder): pass
 
 @dataclass(frozen=True)
-class ExtendedLatLonBox(LatLonBox):
-    geo: Any
+class PositionWithGeo(Position, GeoJsonHolder): pass
 
 @dataclass(frozen=True)
-class ExtendedGeoTrack(GeoTrack):
-    geo: Any
+class LatLonBoxWithGeo(LatLonBox, GeoJsonHolder): pass
 
 @dataclass(frozen=True)
-class ExtendedPolygon(Polygon):
-    geo: Any
+class GeoTrackWithGeo(GeoTrack, GeoJsonHolder): pass
 
 @dataclass(frozen=True)
-class ExtendedCircle(Circle):
-    geo: Any
+class PolygonWithGeo(Polygon, GeoJsonHolder): pass
 
 @dataclass(frozen=True)
-class ExtendedPin(Pin):
-    geo: Any
+class CircleWithGeo(Circle, GeoJsonHolder): pass
 
+@dataclass(frozen=True)
+class PinWithGeo(Pin, GeoJsonHolder): pass
 
-ExtendedGeoFeature: TypeAlias = (
-    ExtendedFeatureCollection |
-    ExtendedPosition |
-    ExtendedLatLonBox |
-    ExtendedGeoTrack |
-    ExtendedPolygon |
-    ExtendedCircle |
-    ExtendedPin
+GeoFeatureWithGeo: TypeAlias = (
+	FeatureCollectionWithGeo |
+	PositionWithGeo |
+	LatLonBoxWithGeo |
+	GeoTrackWithGeo |
+	PolygonWithGeo |
+	CircleWithGeo |
+	PinWithGeo
 )

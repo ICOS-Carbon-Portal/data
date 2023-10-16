@@ -7,7 +7,7 @@ from .queries.dataobjlist import Filter, OrderBy, OrderByProp, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject as VanillaDataObject, CPJson, parse_cp_json
 from .rolemeta import StationWithStaff
-from .geofeaturemeta import ExtendedGeoFeature
+from .geofeaturemeta import GeoFeatureWithGeo
 from typing import Type, TypeAlias, Literal, Any, Optional
 from dataclasses import dataclass
 
@@ -22,7 +22,7 @@ class DataObject(VanillaDataObject):
 
 @dataclass(frozen=True)
 class Station(StationWithStaff):
-	coverage: Optional[ExtendedGeoFeature]
+	coverage: Optional[GeoFeatureWithGeo]
 
 
 class MetadataClient:
