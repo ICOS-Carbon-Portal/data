@@ -6,6 +6,8 @@ import shutil
 from urllib.parse import urlsplit, unquote
 #import time as tm
 from typing import Iterator, Tuple, Any
+
+from icoscp_core.metaclient import MetadataClient
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
@@ -24,8 +26,12 @@ class DataClient:
 	) -> None:
 		self._conf = conf
 		self._auth = auth
+		self._meta = MetadataClient(conf)
 		self._data_folder_path = data_folder_path
 
+	@property
+	def meta(self) -> MetadataClient:
+		return self._meta
 
 	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, io.BufferedReader]:
 		"""
@@ -167,7 +173,7 @@ class DataClient:
 			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to numpy arrays.
 		"""
 		req = TableRequest(columns, None, None)
-		dobj_codecs = codecs_from_dobjs(dobjs, req, self._conf)
+		dobj_codecs = codecs_from_dobjs(dobjs, req, self._meta)
 
 		if self._data_folder_path is not None:
 			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
