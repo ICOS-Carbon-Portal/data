@@ -1,6 +1,6 @@
 import { getJson, sparql, checkStatus } from 'icos-cp-backend';
 import config from '../../common/main/config';
-import {feature} from 'topojson';
+import {feature} from 'topojson-client';
 import { getFileNames, getStationLabels, getObjSpecInfo, getContributorNames } from './sparql';
 import localConfig from './config';
 

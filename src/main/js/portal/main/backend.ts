@@ -16,7 +16,7 @@ import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
 import {getJson, sparql} from 'icos-cp-backend';
-import { feature } from 'topojson';
+import { feature } from 'topojson-client';
 import { GeometryCollection } from "topojson-specification";
 import { PersistedMapPropsExtended } from './models/InitMap';
 import {HelpStorageListEntry} from "./models/HelpStorage";
