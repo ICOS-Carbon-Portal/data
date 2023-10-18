@@ -3,6 +3,7 @@ import numpy as np
 from numpy.typing import NDArray
 import os
 import re
+import sys
 from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
 from dataclasses import dataclass
 from .metaclient import MetadataClient
@@ -201,7 +202,11 @@ class Codec:
 			if must_read > len(col_bytes):
 				raise IOError(f'Error while reading cpb response for column {col.label} ({n_fetch} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr = np.frombuffer(col_bytes, dtype = _get_format_dtype(fmt))
-			res[col.label] = _type_post_process(arr, col.value_format_uri)
+			arr = _type_post_process(arr, col.value_format_uri)
+			# cpb files are all big-endian
+			if sys.byteorder == 'little':
+				arr = arr.byteswap().newbyteorder()
+			res[col.label] = arr
 		return res
 
 
