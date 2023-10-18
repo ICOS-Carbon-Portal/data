@@ -4,11 +4,11 @@ from dataclasses import dataclass
 import re
 import requests
 
-@dataclass
+@dataclass(frozen=True)
 class BoundUri:
 	uri: str
 
-@dataclass
+@dataclass(frozen=True)
 class BoundLiteral:
 	value: str
 	datatype: Optional[str]
@@ -17,7 +17,7 @@ BoundValue: TypeAlias = BoundUri | BoundLiteral
 
 Binding: TypeAlias = dict[str, BoundValue]
 
-@dataclass
+@dataclass(frozen=True)
 class SparqlResults:
 	variable_names: list[str]
 	bindings: list[Binding]

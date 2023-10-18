@@ -6,6 +6,8 @@ import shutil
 from urllib.parse import urlsplit, unquote
 #import time as tm
 from typing import Iterator, Tuple, Any
+
+from icoscp_core.metaclient import MetadataClient
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
@@ -24,8 +26,12 @@ class DataClient:
 	) -> None:
 		self._conf = conf
 		self._auth = auth
+		self._meta = MetadataClient(conf)
 		self._data_folder_path = data_folder_path
 
+	@property
+	def meta(self) -> MetadataClient:
+		return self._meta
 
 	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, io.BufferedReader]:
 		"""
@@ -124,7 +130,7 @@ class DataClient:
 		length: int | None = None
 	) -> ArraysDict:
 		"""
-		Fetches a binary tabular data object and returns it as a dictionary of typed arrays.
+		Fetches a binary tabular data object and returns it as a dictionary of numpy arrays.
 
 		:param dobj:
 			a DataObject instance with detailed data object metadata (obtainable from `MetaClient`'s method `get_dobj_meta`)
@@ -136,7 +142,7 @@ class DataClient:
 			number of rows to return; if None, return all rows
 
 		:return:
-			a dictionary mapping column names to either efficient Python arrays for basic numeric data types and single-character flags, or lists of date/time objects for temporal values. The dictionary can be readily sent to `pandas.DataFrame` constructor.
+			a dictionary mapping column names to numpy arrays. The dictionary can be readily sent to `pandas.DataFrame` constructor.
 		"""
 
 		req = TableRequest(desired_columns=columns, offset=offset, length=length)
@@ -164,10 +170,10 @@ class DataClient:
 			a list of names of columns to be fetched, or `None` for all preview-available columns in the data objects.
 
 		:return:
-			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to typed arrays or lists with data.
+			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to numpy arrays.
 		"""
 		req = TableRequest(columns, None, None)
-		dobj_codecs = codecs_from_dobjs(dobjs, req, self._conf)
+		dobj_codecs = codecs_from_dobjs(dobjs, req, self._meta)
 
 		if self._data_folder_path is not None:
 			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]

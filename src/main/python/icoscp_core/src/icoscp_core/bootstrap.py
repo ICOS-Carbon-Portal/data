@@ -17,18 +17,15 @@ class Bootstrap():
 		self, conf_file_path: str | None = None
 	) -> Tuple[ConfigFileAuth, MetadataClient, DataClient]:
 		auth = ConfigFileAuth(self._conf, conf_file_path)
-		meta = MetadataClient(self._conf)
 		data = DataClient(self._conf, auth, self._data_path)
-		return auth, meta, data
+		return auth, data.meta, data
 
 	def fromCookieToken(self, token: str) -> Tuple[MetadataClient, DataClient]:
 		auth = TokenAuth(token)
-		meta = MetadataClient(self._conf)
 		data = DataClient(self._conf, auth, self._data_path)
-		return meta, data
+		return data.meta, data
 
 	def fromCredentials(self, user_id: str, password: str) -> Tuple[MetadataClient, DataClient]:
 		auth = PasswordAuth(user_id, password, self._conf)
-		meta = MetadataClient(self._conf)
 		data = DataClient(self._conf, auth, self._data_path)
-		return meta, data
+		return data.meta, data

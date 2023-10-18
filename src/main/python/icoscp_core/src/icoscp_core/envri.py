@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 Envri: TypeAlias = Literal["ICOS", "SITES", "ICOSCities"]
 
-@dataclass
+@dataclass(frozen=True)
 class EnvriConfig:
 	envri: Envri
 	sparql_endpoint: str

@@ -5,7 +5,7 @@ from ..envri import EnvriConfig
 from ..metacore import UriResource, DatasetType
 
 
-@dataclass
+@dataclass(frozen=True)
 class DobjSpecLite(UriResource):
 	data_level: int
 	dataset_type: DatasetType

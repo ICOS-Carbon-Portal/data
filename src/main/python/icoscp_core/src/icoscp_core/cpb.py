@@ -3,40 +3,32 @@ import numpy as np
 from numpy.typing import NDArray
 import os
 import re
+import sys
 from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
 from dataclasses import dataclass
-from .envri import EnvriConfig
+from .metaclient import MetadataClient
 from .metacore import DataObject, StationTimeSeriesMeta, URI
-from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.dataobjlist import DataObjectLite
-from .queries.cpbmeta import CpbMetaData, query_cpb_metadata, parse_cpb_metadata
-from .queries.datasetcols import DataSetCol, query_dataset_columns, parse_dataset_column
+from .queries.cpbmeta import CpbMetaData, DatasetCol, get_cpb_meta, get_dataset_cols
 
-@dataclass
-class DatasetColumnInfo:
-	label: str
-	value_format_uri: URI
-@dataclass
+@dataclass(frozen=True)
 class ColumnInfo:
 	label: str
 	value_format_uri: URI
+	flag_col: str | None = None
 
-@dataclass
+@dataclass(frozen=True)
 class TableRequest:
 	desired_columns: list[str] | None
 	offset: int | None
 	length: int | None
 
-@dataclass
+@dataclass(frozen=True)
 class CodecInfo(TableRequest):
 	dobj_hash_id: str
 	obj_format_uri: URI
 	columns: list[ColumnInfo]
 	n_rows: int
-
-def sparql_select(conf: EnvriConfig, query: str, disable_cache: bool = False) -> SparqlResults:
-	endpoint = conf.sparql_endpoint
-	return sparql_select_generic(endpoint, query, disable_cache)
 
 def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	spec_info = dobj.specificInfo
@@ -70,18 +62,17 @@ Dobj = TypeVar("Dobj", URI, DataObjectLite)
 def dobj_uri(dobj: Dobj) -> URI:
 	return dobj.uri if isinstance(dobj, DataObjectLite) else dobj
 
-def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfig) -> list[Tuple[Dobj, "Codec"]]:
+def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataClient) -> list[Tuple[Dobj, "Codec"]]:
 
 	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
 
 	dobj_uris = [dobj_uri(dobj) for dobj in dobjs]
 
-	qres_meta = sparql_select(conf, query_cpb_metadata(dobj_uris))
 	cpb_metas: dict[URI, CpbMetaData] = {
-		cpb.dobj: cpb for cpb in [parse_cpb_metadata(binding) for binding in qres_meta.bindings]
+		cpb.dobj: cpb for cpb in get_cpb_meta(dobj_uris, meta)
 	}
 
-	missing_dobjs = [str(dobj) for dobj in dobjs if not dobj_uri(dobj) in cpb_metas]
+	missing_dobjs = [str(dobj) for dobj in dobjs if dobj_uri(dobj) not in cpb_metas]
 
 	if len(missing_dobjs) > 0: raise Exception(
 		"Some of the requested objects don't have required metadata to fetch them as tabular data: "
@@ -96,20 +87,19 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, conf: EnvriConfi
 	)
 	dataset_spec = dataset_specs.pop()
 
-	qres_ds_cols = sparql_select(conf, query_dataset_columns(dataset_spec))
-	dataset_cols = [parse_dataset_column(binding) for binding in qres_ds_cols.bindings]
-	val_format_lookup = ColumnTitleToFormat(dataset_cols, dataset_spec)
+	dataset_cols = get_dataset_cols(dataset_spec, meta)
+	col_lookup = ColumnLookupByLabel(dataset_cols, dataset_spec)
 
 	res: list[Tuple[Dobj, "Codec"]] = []
 	for dobj in dobjs:
 		cpb = cpb_metas[dobj_uri(dobj)]
-		cols_names = cpb.col_names or val_format_lookup.default_actual_cols
+		cols_names = cpb.col_names or col_lookup.default_actual_cols
 
 		cols_info = [
-			ColumnInfo(lbl, val_format)
-			for lbl, val_format in
-				[(lbl, val_format_lookup.lookup_value_format(lbl)) for lbl in cols_names]
-			if val_format is not None
+			ColumnInfo(lbl, col.val_format, col.flag_col)
+			for lbl, col in
+				[(lbl, col_lookup.lookup_column(lbl)) for lbl in cols_names]
+			if col is not None
 		]
 		ci = CodecInfo(
 			dobj_hash_id=cpb.dobj.split("/")[-1],
@@ -138,9 +128,14 @@ class Codec:
 					return labels.index(col_lbl)
 				except ValueError:
 					raise ValueError(f'Column "{col_lbl}" is not actually present in data object {ci.dobj_hash_id}')
-			desired_indices = [get_col_idx(desired_col) for desired_col in ci.desired_columns]
-
-		desired_indices.sort()
+			expl_desired_indices = {get_col_idx(desired_col) for desired_col in ci.desired_columns}
+			flag_indices = {
+				get_col_idx(flag_col)
+				for flag_col in [ci.columns[i].flag_col for i in expl_desired_indices]
+				if flag_col is not None
+			}
+			desired_indices = [i for i in expl_desired_indices | flag_indices]
+			desired_indices.sort()
 
 		# The following checks are needed because the backend does not return user-friendly error messages or results.
 		for param, val in [("offset", ci.offset), ("length", ci.length)]:
@@ -207,7 +202,11 @@ class Codec:
 			if must_read > len(col_bytes):
 				raise IOError(f'Error while reading cpb response for column {col.label} ({n_fetch} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr = np.frombuffer(col_bytes, dtype = _get_format_dtype(fmt))
-			res[col.label] = _type_post_process(arr, col.value_format_uri)
+			arr = _type_post_process(arr, col.value_format_uri)
+			# cpb files are all big-endian
+			if sys.byteorder == 'little':
+				arr = arr.byteswap().newbyteorder()
+			res[col.label] = arr
 		return res
 
 
@@ -236,17 +235,17 @@ def _subfolder_path(ci: CodecInfo) -> str:
 
 class RegexCol(TypedDict):
 	regex: re.Pattern[str]
-	value_format: URI
+	col: DatasetCol
 
-class ColumnTitleToFormat:
-	def __init__(self, ds_cols: list[DataSetCol], ds_spec_uri: URI) -> None:
+class ColumnLookupByLabel:
+	def __init__(self, ds_cols: list[DatasetCol], ds_spec_uri: URI) -> None:
 		if len(ds_cols) == 0:
 			raise Exception(f"Dataset specification '{ds_spec_uri}' has no columns")
 		self._ds_spec_uri = ds_spec_uri
 		self._default_actual_cols: list[str] = [col.col_title for col in ds_cols if not (col.is_optional or col.is_regex)]
-		self._verbatim_lookup: dict[str, URI] = {col.col_title: col.val_format for col in ds_cols if not col.is_regex}
+		self._verbatim_lookup: dict[str, DatasetCol] = {col.col_title: col for col in ds_cols if not col.is_regex}
 		self._regex_cols: list[RegexCol] = [
-			{"regex": re.compile(col.col_title), "value_format": col.val_format}
+			{"regex": re.compile(col.col_title), "col": col}
 			for col in ds_cols if col.is_regex
 		]
 
@@ -257,12 +256,12 @@ class ColumnTitleToFormat:
 			raise Exception(f"No mandatory verbatim columns in dataset spec '{self._ds_spec_uri}'")
 		return res
 
-	def lookup_value_format(self, col_title: str) -> URI | None:
-		val_format = self._verbatim_lookup.get(col_title)
+	def lookup_column(self, col_label: str) -> DatasetCol | None:
+		val_format = self._verbatim_lookup.get(col_label)
 		if val_format: return val_format
 		for re_col in self._regex_cols:
-			if re_col["regex"].match(col_title):
-				return re_col["value_format"]
+			if re_col["regex"].match(col_label):
+				return re_col["col"]
 
 _fmt_uri_to_fmt = {
 	'int32':'INT',

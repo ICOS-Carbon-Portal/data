@@ -7,7 +7,7 @@ from ..sparql import Binding, as_long, as_uri, as_opt_uri, as_string, as_datetim
 from ..metacore import UriResource
 
 
-@dataclass
+@dataclass(frozen=True)
 class DataObjectLite:
 	uri: str
 	filename: str
@@ -31,7 +31,7 @@ class Filter(ABC):
 	@abstractmethod
 	def render(self) -> str: pass
 
-@dataclass
+@dataclass(frozen=True)
 class TimeFilter(Filter):
 	prop: TemporalProp
 	op: ExclusiveComparator
@@ -42,7 +42,7 @@ class TimeFilter(Filter):
 		dtStr = v.isoformat() if type(v) is datetime else str(v)
 		return f'?{self.prop} {self.op} "{dtStr}"^^xsd:dateTime'
 
-@dataclass
+@dataclass(frozen=True)
 class SizeFilter(Filter):
 	op: Comparator
 	value: int
@@ -50,7 +50,7 @@ class SizeFilter(Filter):
 	def render(self) -> str:
 		return f'?size {self.op} "{self.value}"^^xsd:integer'
 
-@dataclass
+@dataclass(frozen=True)
 class SamplingHeightFilter(Filter):
 	op: Comparator
 	value: float

@@ -2,30 +2,32 @@ from dataclasses import dataclass
 from typing import Optional
 from .metacore import UriResource, Person, Organization, Station
 
-@dataclass
-class Role:
-    role: UriResource
+@dataclass(frozen=True)
+class RoleDetails:
+	role: UriResource
+	start: Optional[str]
+	end: Optional[str]
+	weight: Optional[int]
+	extra: Optional[str]
 
-@dataclass
-class Membership:
-    org: UriResource
-    role: Role
-    startDate: Optional[str]
-    endDate: Optional[str]
+@dataclass(frozen=True)
+class PersonRole:
+	org: UriResource
+	role: RoleDetails
 
-@dataclass
+@dataclass(frozen=True)
 class PersonWithRoles(Person):
-    roles: list[Membership]
+	roles: list[PersonRole]
 
-@dataclass
-class Employee:
-    person: Person
-    role: Role
+@dataclass(frozen=True)
+class Membership:
+	person: Person
+	role: RoleDetails
 
-@dataclass
+@dataclass(frozen=True)
 class OrgWithStaff(Organization):
-    staff: list[Employee]
+	staff: list[Membership]
 
 @dataclass(frozen=True)
 class StationWithStaff(Station):
-    staff: list[Employee]
+	staff: list[Membership]

@@ -3,7 +3,7 @@ from ..sparql import Binding, as_uri, as_string, as_opt_str, as_opt_double, as_o
 from ..envri import EnvriConfig
 from ..metacore import UriResource
 
-@dataclass
+@dataclass(frozen=True)
 class StationLite(UriResource):
 	uri: str
 	id: str

@@ -79,3 +79,7 @@ def test_local_access():
 	boot = Bootstrap(ICOS_CONFIG)
 	_, meta, data = boot.fromPasswordFile()
 	return _test_big_bin(meta, data)
+
+def test_flag_col_injection():
+	dobjs = ['https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN']
+	return [arrs for _, arrs in data.batch_get_columns_as_arrays(dobjs, ['co2', 'TIMESTAMP'])]
