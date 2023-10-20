@@ -1,3 +1,4 @@
+from icoscp_core.cpb import ArraysDict
 from .envri import ICOS_CONFIG
 from .bootstrap import Bootstrap
 from .icos import auth, meta, data
@@ -80,6 +81,16 @@ def test_local_access():
 	_, meta, data = boot.fromPasswordFile()
 	return _test_big_bin(meta, data)
 
-def test_flag_col_injection():
-	dobjs = ['https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN']
-	return [arrs for _, arrs in data.batch_get_columns_as_arrays(dobjs, ['co2', 'TIMESTAMP'])]
+def test_flag_col_injection(batch_mode: bool) -> ArraysDict:
+	dobj = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
+	cols = ['co2', 'TIMESTAMP']
+	if batch_mode:
+		return [arrs for _, arrs in data.batch_get_columns_as_arrays([dobj], cols)][0]
+	else:
+		dobj_meta = meta.get_dobj_meta(dobj)
+		return data.get_columns_as_arrays(dobj_meta, cols)
+
+def test_bad_value_reset(keep_bad: bool) -> ArraysDict:
+	dobj = 'https://meta.icos-cp.eu/objects/vTB9m0Wdb8b18cqGD9OeEhOq'
+	dobj_meta = meta.get_dobj_meta(dobj)
+	return data.get_columns_as_arrays(dobj_meta, columns=['GPP_DT_VUT_REF'], keep_bad_data=keep_bad)

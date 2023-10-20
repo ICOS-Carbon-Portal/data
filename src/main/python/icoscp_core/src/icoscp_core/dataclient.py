@@ -35,7 +35,7 @@ class DataClient:
 
 	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, io.BufferedReader]:
 		"""
-		Fetches the original verbatim content of a data- or document object.
+		Fetches the original verbatim content of a data- or document object. The method is HTTP-backed and always requires authentication.
 
 		:param dobj:
 			the landing page URI of the object, or a DataObjectLite instance
@@ -66,6 +66,8 @@ class DataClient:
 		and saves it to a folder in a file named according to object's metadata.
 		If the file already exists, it gets overwritten.
 
+		Requires authentication for data object downloads, even on a Jupyter notebook with data storage folder access.
+
 		:param dobj_uri:
 			the landing page URI of the object, or a DataObjectLite instance
 		:param folder_path:
@@ -93,6 +95,8 @@ class DataClient:
 	) -> io.BufferedReader:
 		"""
 		Fetches a standardized plain CSV serialization of a tabular data object (that has columnar metadata and has been ingested by the data portal).
+
+		This method always requires authentication, even if used from a Jupyter notebook with access to the data storage folder.
 
 		:param dobj:
 			the landing page URI of the data object, or a DataObjectLite instance
@@ -126,6 +130,7 @@ class DataClient:
 		self,
 		dobj: DataObject,
 		columns: list[str] | None = None,
+		keep_bad_data: bool = False,
 		offset: int | None = None,
 		length: int | None = None
 	) -> ArraysDict:
@@ -135,7 +140,9 @@ class DataClient:
 		:param dobj:
 			a DataObject instance with detailed data object metadata (obtainable from `MetaClient`'s method `get_dobj_meta`)
 		:param cols:
-			list of columns to be included; if None, all known columns will be returned
+			list of columns to be included; if None, all known columns will be returned; if the requested columns have accompanying quality flag columns, the latter will be automatically included.
+		:param keep_bad_data:
+			flag to force including numeric values that have been flagged as not good in corresponding quality flag columns; by default these values are set to NaN
 		:param offset:
 			number of heading rows to skip; if None, does not skip any row
 		:param length:
@@ -147,7 +154,7 @@ class DataClient:
 
 		req = TableRequest(desired_columns=columns, offset=offset, length=length)
 		codec = codec_from_dobj_meta(dobj, req)
-		res = self._get_columns_as_arrays(codec)
+		res = self._get_columns_as_arrays(codec, keep_bad_data)
 
 		if self._data_folder_path is not None:
 			report_cpb_file_read(self._conf, hashes = [dobj.hash[:24]], columns=columns)
@@ -158,16 +165,20 @@ class DataClient:
 	def batch_get_columns_as_arrays(
 		self,
 		dobjs: list[Dobj],
-		columns: list[str] | None = None
+		columns: list[str] | None = None,
+		keep_bad_data: bool = False
 	) -> Iterator[Tuple[Dobj, ArraysDict]]:
 		"""
-		Efficient batch-fetching version of `get_columns_as_arrays` method.
+		Efficient batch-fetching version of `get_columns_as_arrays` method. Can only be used with groups of data objects of the same data type, or whose data types share a dataset specification.
 
 		:param dobjs:
 			either a list of data object landing page URIs, or a list of `DataObjectLite` instances (obtainable from `MetaClient`'s method `list_data_objects`)
 
 		:param columns:
-			a list of names of columns to be fetched, or `None` for all preview-available columns in the data objects.
+			a list of names of columns to be fetched, or `None` for all preview-available columns in the data objects. If the requested columns have accompanying quality flag columns, the latter will be automatically included.
+
+		:param keep_bad_data:
+			flag to force including numeric values that have been flagged as not good in corresponding quality flag columns; by default these values are set to NaN
 
 		:return:
 			a lazy iterable of pairs of the data objects (echoed back from the `dobjs` input) and a dictionary mapping column names to numpy arrays.
@@ -180,12 +191,12 @@ class DataClient:
 			report_cpb_file_read(self._conf, hashes=hashes, columns=columns)
 
 		for dobj, codec in dobj_codecs:
-			yield dobj, self._get_columns_as_arrays(codec)
+			yield dobj, self._get_columns_as_arrays(codec, keep_bad_data)
 
 
-	def _get_columns_as_arrays(self, codec: Codec) -> ArraysDict:
+	def _get_columns_as_arrays(self, codec: Codec, keep_bad_data: bool) -> ArraysDict:
 		if self._data_folder_path is not None:
-			return codec.parse_cpb_file(self._data_folder_path)
+			return codec.parse_cpb_file(self._data_folder_path, keep_bad_data)
 		#start_time = tm.time()
 		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
 		url = self._conf.data_service_base_url + '/cpb'
@@ -193,7 +204,7 @@ class DataClient:
 		reader = response_as_reader(resp)
 		#parse_time = tm.time()
 		#print(f'Response from cpb service for {codec._ci.dobj_hash} in {(parse_time - start_time) * 1000} ms')
-		res = codec.parse_cpb_response(reader)
+		res = codec.parse_cpb_response(reader, keep_bad_data)
 		#print(f'Parsed binary for {codec._ci.dobj_hash} in {(tm.time() - parse_time) * 1000} ms')
 		return res
 

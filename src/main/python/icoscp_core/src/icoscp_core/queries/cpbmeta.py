@@ -70,10 +70,11 @@ def get_dataset_cols(dataset_spec: URI, meta: MetadataClient) -> list[DatasetCol
 	]
 
 def get_good_flags_per_spec(obj_specs: list[URI], meta: MetadataClient) -> dict[URI, list[str]]:
+	uniq_obj_specs = [spec for spec in {spec for spec in obj_specs}]
 	query = f"""
 		prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 		select ?objFormat (group_concat(?goodFlag; separator=";") as ?goodFlags) where{{
-			values ?spec {{ <{'> <'.join(obj_specs)}> }}
+			values ?spec {{ <{'> <'.join(uniq_obj_specs)}> }}
 			?spec cpmeta:hasFormat ?objFormat .
 			optional {{?objFormat cpmeta:hasGoodFlagValue ?goodFlag}}
 		}}

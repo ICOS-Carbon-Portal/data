@@ -30,7 +30,7 @@ Metadata access does not require authentication, and is achieved by a simple imp
 ```Python
 from icoscp_core.icos import meta
 ```
-When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal (e.g. https://jupyter.icos-cp.eu/), authentication will not be required even for data access.
+When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal (https://exploretest.icos-cp.eu/ at the time of this writing), authentication is not required for certain kinds of data access (specifically methods `get_columns_as_arrays` and `batch_get_columns_as_arrays`).
 
 Authentication can be initialized in a number of ways.
 

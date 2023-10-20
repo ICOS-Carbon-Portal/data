@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from .metaclient import MetadataClient
 from .metacore import DataObject, StationTimeSeriesMeta, URI
 from .queries.dataobjlist import DataObjectLite
-from .queries.cpbmeta import CpbMetaData, DatasetCol, get_cpb_meta, get_dataset_cols
+from .queries.cpbmeta import CpbMetaData, DatasetCol, get_cpb_meta, get_dataset_cols, get_good_flags_per_spec
 
 @dataclass(frozen=True)
 class ColumnInfo:
@@ -29,6 +29,7 @@ class CodecInfo(TableRequest):
 	obj_format_uri: URI
 	columns: list[ColumnInfo]
 	n_rows: int
+	good_flags: list[str] | None
 
 def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	spec_info = dobj.specificInfo
@@ -37,8 +38,18 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	cols_meta = spec_info.columns
 	if cols_meta is None:
 		raise Exception(f"Metadata of object '{dobj.hash}' does not include any column information")
+	col_flags: dict[URI, str] = {
+		flagged_col: col.label
+		for col in cols_meta if col.isFlagFor is not None
+		for flagged_col in col.isFlagFor
+	}
 	cols_meta_parsed = [
-		ColumnInfo(label=col.label, value_format_uri=col.valueFormat) for col in cols_meta
+		ColumnInfo(
+			label=col.label,
+			value_format_uri=col.valueFormat,
+			flag_col=col_flags.get(col.model.uri)
+		)
+		for col in cols_meta
 		if col.valueFormat is not None
 	]
 	if len(cols_meta_parsed) == 0:
@@ -48,9 +59,10 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 		raise Exception(f"Metadata of object '{dobj.hash}' does not include the number of table rows")
 	ci = CodecInfo(
 		dobj_hash_id=dobj.hash[:24],
-		obj_format_uri=dobj.specification.format.uri,
+		obj_format_uri=dobj.specification.format.self.uri,
 		columns=cols_meta_parsed,
 		n_rows=n_rows,
+		good_flags=dobj.specification.format.goodFlagValues,
 		desired_columns=request.desired_columns,
 		offset=request.offset,
 		length=request.length
@@ -90,6 +102,9 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataCl
 	dataset_cols = get_dataset_cols(dataset_spec, meta)
 	col_lookup = ColumnLookupByLabel(dataset_cols, dataset_spec)
 
+	dobj_specs = [cpb.obj_spec for cpb in cpb_metas.values()]
+	good_flags_lookup: dict[URI, list[str]] = get_good_flags_per_spec(dobj_specs, meta)
+
 	res: list[Tuple[Dobj, "Codec"]] = []
 	for dobj in dobjs:
 		cpb = cpb_metas[dobj_uri(dobj)]
@@ -105,6 +120,7 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataCl
 			dobj_hash_id=cpb.dobj.split("/")[-1],
 			obj_format_uri=cpb.obj_format,
 			columns=cols_info,
+			good_flags=good_flags_lookup.get(cpb.obj_spec),
 			n_rows=cpb.n_rows,
 			desired_columns=request.desired_columns,
 			offset=request.offset,
@@ -171,10 +187,10 @@ class Codec:
 	def json_payload(self):
 		return self._json_payload
 
-	def parse_cpb_response(self, resp: io.BufferedReader) -> ArraysDict:
-		return self._parse_from_buff(resp, None)
+	def parse_cpb_response(self, resp: io.BufferedReader, keep_bad_data: bool) -> ArraysDict:
+		return self._parse_from_buff(resp, None, keep_bad_data)
 
-	def parse_cpb_file(self, data_folder_path: str) -> ArraysDict:
+	def parse_cpb_file(self, data_folder_path: str, keep_bad_data: bool) -> ArraysDict:
 
 		file_path = os.path.join(
 			data_folder_path,
@@ -185,10 +201,10 @@ class Codec:
 		col_offsets = _column_offsets(self._ci)
 
 		with open(file_path, "rb") as file:
-			return self._parse_from_buff(file, col_offsets)
+			return self._parse_from_buff(file, col_offsets, keep_bad_data)
 
 
-	def _parse_from_buff(self, buff: io.BufferedReader, col_offsets: list[int] | None) -> ArraysDict:
+	def _parse_from_buff(self, buff: io.BufferedReader, col_offsets: list[int] | None, keep_bad_data: bool) -> ArraysDict:
 		res: ArraysDict = {}
 		cols = self._ci.columns
 		n_fetch = _n_rows_to_fetch(self._ci)
@@ -203,10 +219,31 @@ class Codec:
 				raise IOError(f'Error while reading cpb response for column {col.label} ({n_fetch} values), reached end of data, but got only {len(col_bytes)} bytes instead of {must_read}')
 			arr = np.frombuffer(col_bytes, dtype = _get_format_dtype(fmt))
 			arr = _type_post_process(arr, col.value_format_uri)
-			# cpb files are all big-endian
+
 			if sys.byteorder == 'little':
+				# cpb files are all big-endian, fixing for Pandas compatibility on little endian systems:
 				arr = arr.byteswap().newbyteorder()
 			res[col.label] = arr
+
+		if not keep_bad_data and self._ci.good_flags:
+			flag_masks: dict[str, NDArray[Any]] = {}
+			desired_cols = [cols[n] for n in self._desired_indices]
+			flag_cols = [
+				flag for flag in { # to make the list unique
+					col.flag_col
+					for col in desired_cols
+					if col.flag_col
+				}
+			]
+			good_flags = self._ci.good_flags
+			for flag in flag_cols:
+				flag_arr = res[flag]
+				submasks = [flag_arr == good_flag for good_flag in good_flags]
+				flag_masks[flag] = ~np.logical_or.reduce(submasks)
+			for col in desired_cols:
+				if col.flag_col:
+					arr = res[col.label]
+					arr[flag_masks[col.flag_col]] = np.NAN
 		return res
 
 
