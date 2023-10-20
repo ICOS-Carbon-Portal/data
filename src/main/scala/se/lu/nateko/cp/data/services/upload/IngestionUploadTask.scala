@@ -32,7 +32,7 @@ class IngestionUploadTask(
 	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
-		val format = ingSpec.objSpec.format
+		val format = ingSpec.objSpec.format.self
 
 		val ingestionSink = format.uri match {
 

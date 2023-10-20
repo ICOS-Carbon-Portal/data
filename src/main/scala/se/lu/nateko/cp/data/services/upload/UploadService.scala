@@ -217,7 +217,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		val isTryIngest = req.isLeft
 
 		if spec.datasetSpec.isEmpty then
-			if isNonIngestedZip(spec.format.uri) then
+			if isNonIngestedZip(spec.format.self.uri) then
 				Future.successful(new ZipValidatingUploadTask)
 			else
 				if isTryIngest then
@@ -234,7 +234,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 			else
 				Future.successful(new NetCdfStatsTask(varNames, file, netcdfConf, isTryIngest))
 
-		else if spec.format.uri == netCdfTimeSer && spec.specificDatasetType == DatasetType.StationTimeSeries then
+		else if spec.format.self.uri == netCdfTimeSer && spec.specificDatasetType == DatasetType.StationTimeSeries then
 			IngestionUploadTask.getColumnFormats(spec.self.uri, meta.sparql).map{colsMeta =>
 				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest)
 			}
@@ -277,7 +277,7 @@ object UploadService{
 	def fileFolder(format: Option[URI]): String = format.fold("documents")(_.toString.stripSuffix("/").split('/').last)
 
 	def fileFolder(obj: StaticObject): String = fileFolder(obj match{
-		case dobj: DataObject => Some(dobj.specification.format.uri)
+		case dobj: DataObject => Some(dobj.specification.format.self.uri)
 		case _: DocObject => None
 	})
 
