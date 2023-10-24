@@ -17,8 +17,8 @@ export const getSearchParams = (dlFilters, specProjectLookup, specLevelLookup) =
 	const specSpecs = specification && specification.length ? specification : [];
 	const projectSpecs = project && project.length ? project.flatMap(prj => specProjectLookup[prj]) : [];
 	const dataLevelSpecs = dataLevel && dataLevel.length ? dataLevel.flatMap(dl => specLevelLookup[dl]) : [];
-	const combinedSpecs = specSpecs.concat(projectSpecs).concat(dataLevelSpecs);
-	const specs = combinedSpecs.length ? combinedSpecs : undefined;
+	const allSpecs = [specSpecs, projectSpecs, dataLevelSpecs].filter(a => a.length);
+	const specs = allSpecs.length ? allSpecs.reduce((p, c) => p.filter(e => c.includes(e))) : undefined;
 
 	return hashId && hashId.length
 		? {
