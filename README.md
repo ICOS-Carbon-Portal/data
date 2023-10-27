@@ -106,7 +106,10 @@ All the URL parameters are optional. When none are present, all the columns know
 
 ### Python library for data and metadata access
 
-The APIs described above are HTTP-based and programming language agnostic, therefore can be used from arbitrary programming language. For Python users, there exists a [dedicated library](https://icos-carbon-portal.github.io/pylib/) that provides a high-level API for Carbon Portal data and metadata access.
+The APIs described above are HTTP-based and programming language agnostic, therefore can be used from arbitrary programming language. For Python users, there currently exist two dedicated libraries:
+
+- a very new foundational library [icoscp-core](https://pypi.org/project/icoscp_core/) offering best performance and consistency with the server APIs, and suitable for all meta/data repositories based on the ICOS Carbon Portal technology stack (currently ICOS, SITES, and ICOS Cities); it is meant to provide the basic features with a relatively low-level API, which can be sufficient and preferrable for many applications.
+- a legacy library [icoscp](https://icos-carbon-portal.github.io/pylib/) that provides a higher-level API and has a series of features that `icoscp-core` lacks, but at the same time has a number of limitations and some shortcomings; it will be maintained to support the existing code based on it, but is planned to be superceeded by a new high-level library being built on top of `icoscp-core`.
 
 ### (Internal use) HTTP access to ingested tabular time series in binary format
 
