@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TypeAlias, Literal, Optional
 
-import requests
-
 from .envri import EnvriConfig
+from .http import http_request, HTTPResponse
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)
@@ -52,10 +51,15 @@ def parse_auth_token(cookie_value: str) -> AuthToken:
 def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToken:
 	url = conf.auth_service_base_url + "password/login"
 	data = {'mail': user_id, 'password': password}
-	resp = requests.post(url = url, data = data)
-	if resp.status_code != 200:
-		raise Exception(f"Could not fetch auth token from {url}, got response: {resp.text}")
-	cookie_value = resp.headers["Set-Cookie"].split()[0]
+	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+	resp: HTTPResponse = http_request(url=url, method="POST", headers=headers, data=data)
+	if resp.status != 200:
+		raise Exception(f"Could not fetch auth token from {url}, got response: {resp.msg}")
+	cookie = resp.getheader("Set-Cookie") or None
+	if cookie is None:
+		raise Exception(f"Could not fetch auth token from {url}\nMissing value for header 'Set-Cookie'")
+	else:
+		cookie_value = cookie.split()[0]
 	return parse_auth_token(cookie_value)
 
 class AuthTokenProvider(ABC):

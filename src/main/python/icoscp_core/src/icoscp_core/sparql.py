@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import TypeAlias, TypeVar, Optional, Any, Callable
 from dataclasses import dataclass
 import re
-import requests
+import json
+
+from .http import http_request, HTTPResponse
 
 @dataclass(frozen=True)
 class BoundUri:
@@ -82,10 +84,10 @@ def get_sparql_select_json(endpoint: str, query: str, disable_cache: bool) -> An
 	if disable_cache:
 		headers["Cache-Control"] = "no-cache"
 		headers["Pragma"] = "no-cache"
-	res = requests.post(url = endpoint, headers=headers, data=bytes(query, "utf-8"))
-	if res.status_code != 200:
-		raise Exception(f"SPARQL SELECT problem, got response: {res.text}\nThe query was: {query}")
-	return res.json()
+	resp: HTTPResponse = http_request(url=endpoint, method="POST", headers=headers, data=query)
+	if resp.status != 200:
+		raise Exception(f"SPARQL SELECT problem, got response: {resp.msg}\nThe query was: {query}")
+	return json.loads(resp.read(-1))
 
 def sparql_select(endpoint: str, query: str, disable_cache: bool) -> SparqlResults:
 	js = get_sparql_select_json(endpoint, query, disable_cache)

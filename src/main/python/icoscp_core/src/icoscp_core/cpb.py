@@ -209,7 +209,7 @@ class Codec:
 		cols = self._ci.columns
 		n_fetch = _n_rows_to_fetch(self._ci)
 		for n in self._desired_indices:
-			col  = cols[n]
+			col = cols[n]
 			fmt = _get_fmt(col.value_format_uri)
 			must_read = _get_byte_size(fmt) * n_fetch
 			if col_offsets is not None:

@@ -1,13 +1,11 @@
 import os
 import re
-import requests
 import io
 import shutil
 from urllib.parse import urlsplit, unquote
-#import time as tm
 from typing import Iterator, Tuple, Any
 
-from icoscp_core.metaclient import MetadataClient
+from .metaclient import MetadataClient
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
@@ -15,6 +13,7 @@ from .auth import AuthTokenProvider
 from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
 from .cpb import Dobj, dobj_uri
 from .portaluse_client import report_cpb_file_read
+from .http import http_request, HTTPResponse
 
 
 class DataClient:
@@ -47,18 +46,19 @@ class DataClient:
 		dobj_uri = to_dobj_uri(dobj)
 		url = self._conf.data_service_base_url + urlsplit(dobj_uri).path
 		resp = self._auth_get(url, 'fetching data object')
+		reader = io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
 
 		filename: str
 		if type(dobj) is DataObjectLite:
 			filename = dobj.filename
 		else:
-			disp_head = resp.headers["Content-Disposition"]
+			disp_head = resp.getheader("Content-Disposition") or ""
 			fn_match = re.search(r'filename="(.*)"', disp_head)
 			if not fn_match:
 				raise Exception(f"No filename information in response from {url}")
 			filename = unquote(fn_match.group(1))
 
-		return filename, response_as_reader(resp)
+		return filename, reader
 
 	def save_to_folder(self, dobj_uri: str | DataObjectLite, folder_path: str) -> str:
 		"""
@@ -123,7 +123,7 @@ class DataClient:
 			}
 		)
 
-		return response_as_reader(resp)
+		return io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
 
 
 	def get_columns_as_arrays(
@@ -197,70 +197,29 @@ class DataClient:
 	def _get_columns_as_arrays(self, codec: Codec, keep_bad_data: bool) -> ArraysDict:
 		if self._data_folder_path is not None:
 			return codec.parse_cpb_file(self._data_folder_path, keep_bad_data)
-		#start_time = tm.time()
-		headers = {"Accept": "application/octet-stream", "Content-Type": "application/json"}
+		headers = {
+			"Accept": "application/octet-stream",
+			"Content-Type": "application/json",
+			"Cookie": self._auth.get_token().cookie_value
+		}
 		url = self._conf.data_service_base_url + '/cpb'
-		resp = self._auth_post(url, "fetching binary", headers, codec.json_payload)
-		reader = response_as_reader(resp)
-		#parse_time = tm.time()
-		#print(f'Response from cpb service for {codec._ci.dobj_hash} in {(parse_time - start_time) * 1000} ms')
+		resp: HTTPResponse = http_request(url=url, method="POST", headers=headers, data=codec.json_payload)
+		if resp.status != 200:
+			raise Exception(f"Failed fetching binary from {url}, got response: {resp.msg}")
+		reader = io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
 		res = codec.parse_cpb_response(reader, keep_bad_data)
-		#print(f'Parsed binary for {codec._ci.dobj_hash} in {(tm.time() - parse_time) * 1000} ms')
 		return res
 
 
-	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> requests.Response:
+	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> HTTPResponse:
 		headers = {"Cookie": self._auth.get_token().cookie_value}
-		resp = requests.get(url=url, headers=headers, stream=True, params=params)
-		if resp.status_code != 200:
-			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
+		resp = http_request(url=url, method="GET", headers=headers, data=params)
+		if resp.status != 200:
+			raise Exception(f"Failed {error_hint} from {url}, got response: {resp.msg}")
 		return resp
 
-
-	def _auth_post(
-		self,
-		url: str,
-		error_hint: str,
-		headers: dict[str, Any] | None = None,
-		json: dict[str, Any] | None = None
-	) -> requests.Response:
-		if headers:
-			headers["Cookie"] = self._auth.get_token().cookie_value
-		else:
-			headers = {"Cookie": self._auth.get_token().cookie_value}
-		resp = requests.post(url=url, headers=headers, stream=True, json=json)
-		if resp.status_code != 200:
-			raise Exception(f"Failed {error_hint} from {url}, got response {resp.text}")
-		return resp
-
-
-class HttpResponseStream(io.RawIOBase):
-	def __init__(self, resp: requests.Response, chunk_size: int):
-		self._http_resp = resp
-		self._chunk_size = chunk_size
-		self._iterable: Iterator[bytes] = resp.iter_content(chunk_size = chunk_size)
-		self.leftover: bytes | None = None
-	def readable(self):
-		return True
-	def readinto(self, b: Any):
-		try:
-			l = len(b)
-			chunk = self.leftover or next(self._iterable)
-			output, self.leftover = chunk[:l], chunk[l:]
-			b[:len(output)] = output
-			return len(output)
-		except StopIteration:
-			return 0
-	def close(self) -> None:
-		self._http_resp.close()
-		return super().close()
 
 def to_dobj_uri(dobj: str | DataObjectLite) -> str:
 	if type(dobj) == DataObjectLite: return dobj.uri
 	elif type(dobj) == str: return dobj
 	else: raise ValueError('dobj_uri must be a string or a DataObjectLite instance')
-
-def response_as_reader(resp: requests.Response) -> io.BufferedReader:
-	chunk_size = io.DEFAULT_BUFFER_SIZE
-	return io.BufferedReader(HttpResponseStream(resp, chunk_size), chunk_size)
-

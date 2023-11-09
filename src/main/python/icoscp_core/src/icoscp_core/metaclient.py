@@ -1,4 +1,3 @@
-import requests
 from .envri import EnvriConfig
 from .sparql import SparqlResults, sparql_select as sparql_select_generic
 from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpecLite
@@ -8,6 +7,7 @@ from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject as VanillaDataObject, CPJson, parse_cp_json
 from .rolemeta import StationWithStaff
 from .geofeaturemeta import GeoFeatureWithGeo
+from .http import http_request, HTTPResponse
 from typing import Type, TypeAlias, Literal, Any, Optional
 from dataclasses import dataclass
 
@@ -132,5 +132,5 @@ class MetadataClient:
 		return _get_json_meta(station_uri, Station)
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
-	resp = requests.get(url = url, headers={"Accept": "application/json"})
-	return parse_cp_json(resp.text, data_class=data_class)
+	resp: HTTPResponse = http_request(url=url, method="GET", headers={"Accept": "application/json"})
+	return parse_cp_json(resp.read(-1).decode("utf-8"), data_class=data_class)
