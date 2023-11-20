@@ -5,10 +5,10 @@ from .icos import auth, meta, data
 from .sites import auth as sauth, meta as smeta, data as sdata
 from .metaclient import Station, TimeFilter, SizeFilter, MetadataClient
 from .dataclient import DataClient
+from .sparql import as_string, as_uri
 import os
 import pandas as pd
 import time as tm
-from typing import Any
 
 def init_authentication_icos() -> None:
 	return auth.init_config_file()
@@ -41,10 +41,16 @@ def test_bin_fetch(cols: list[str] | None = None, offset: int | None = None, len
 
 def test_csv_fetch() -> pd.DataFrame:
 	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
-	csv_stream: Any = data.get_csv_byte_stream(uri)
+	csv_stream = data.get_csv_byte_stream(uri)
 	df = pd.read_csv(filepath_or_buffer=csv_stream)
 	print(df.head())
 	return df
+
+def test_save_to_folder() -> None:
+	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
+	folder = "./"
+	fn = data.save_to_folder(uri, folder)
+	print(f"Wrote file {fn} to {folder}")
 
 def test_big_bin():
 	return _test_big_bin(meta, data)
@@ -98,3 +104,21 @@ def test_bad_value_reset(keep_bad: bool) -> ArraysDict:
 	dobj = 'https://meta.icos-cp.eu/objects/vTB9m0Wdb8b18cqGD9OeEhOq'
 	dobj_meta = meta.get_dobj_meta(dobj)
 	return data.get_columns_as_arrays(dobj_meta, columns=['GPP_DT_VUT_REF'], keep_bad_data=keep_bad)
+
+def test_doc_sparql():
+	query = """prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		select *
+		from <http://meta.icos-cp.eu/documents/>
+		where{
+			?doc a cpmeta:DocumentObject .
+			FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?doc}
+			?doc cpmeta:hasName ?fileName .
+			?doc cpmeta:hasDoi ?doi .
+		}"""
+	return [
+		{
+			"uri": as_uri("doc", row),
+			"name": as_string("fileName", row),
+			"doi": as_string("doi", row)
+		} for row in meta.sparql_select(query).bindings
+	]

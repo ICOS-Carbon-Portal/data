@@ -7,7 +7,7 @@ from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject as VanillaDataObject, CPJson, parse_cp_json
 from .rolemeta import StationWithStaff
 from .geofeaturemeta import GeoFeatureWithGeo
-from .http import http_request, HTTPResponse
+from .http import http_request
 from typing import Type, TypeAlias, Literal, Any, Optional
 from dataclasses import dataclass
 
@@ -30,6 +30,16 @@ class MetadataClient:
 		self._envri_conf = envri_conf
 
 	def sparql_select(self, query: str, disable_cache: bool = False) -> SparqlResults:
+		"""
+		Runs a SPARQL SELECT query against the SPARQL endpoint exposed by the Repository.
+
+		:param `query`:
+			A string containing the query
+		:param `disable_cache`:
+			A boolean flag indicating whether to accept cached SPARQL responses or disable the cache. By default the cache is enabled.
+		:return:
+			An instance of `SparqlResults` data class, declared in `sparql` module of this library.
+		"""
 		endpoint = self._envri_conf.sparql_endpoint
 		return sparql_select_generic(endpoint, query, disable_cache)
 
@@ -132,5 +142,6 @@ class MetadataClient:
 		return _get_json_meta(station_uri, Station)
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
-	resp: HTTPResponse = http_request(url=url, method="GET", headers={"Accept": "application/json"})
-	return parse_cp_json(resp.read(-1).decode("utf-8"), data_class=data_class)
+	headers = {"Accept": "application/json"}
+	resp = http_request(url, f"Fetching JSON metadata from {url}", headers=headers)
+	return parse_cp_json(resp.read().decode(), data_class=data_class)

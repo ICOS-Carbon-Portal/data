@@ -1,6 +1,5 @@
 import os
 import re
-import io
 import shutil
 from urllib.parse import urlsplit, unquote
 from typing import Iterator, Tuple, Any
@@ -32,21 +31,20 @@ class DataClient:
 	def meta(self) -> MetadataClient:
 		return self._meta
 
-	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, io.BufferedReader]:
+	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, HTTPResponse]:
 		"""
 		Fetches the original verbatim content of a data- or document object. The method is HTTP-backed and always requires authentication.
 
 		:param dobj:
 			the landing page URI of the object, or a DataObjectLite instance
 		:returns:
-			a tuple of object filename and a file-like object (io.BufferedReader) with contents,
+			a tuple of object filename and the HTTPResponse with contents,
 			which can be either saved to disk or directly sent for processing
 		"""
 
 		dobj_uri = to_dobj_uri(dobj)
 		url = self._conf.data_service_base_url + urlsplit(dobj_uri).path
 		resp = self._auth_get(url, 'fetching data object')
-		reader = io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
 
 		filename: str
 		if type(dobj) is DataObjectLite:
@@ -58,7 +56,7 @@ class DataClient:
 				raise Exception(f"No filename information in response from {url}")
 			filename = unquote(fn_match.group(1))
 
-		return filename, reader
+		return filename, resp
 
 	def save_to_folder(self, dobj_uri: str | DataObjectLite, folder_path: str) -> str:
 		"""
@@ -92,7 +90,7 @@ class DataClient:
 		cols: list[str] = [],
 		limit: int | None = None,
 		offset: int | None = None
-	) -> io.BufferedReader:
+	) -> HTTPResponse:
 		"""
 		Fetches a standardized plain CSV serialization of a tabular data object (that has columnar metadata and has been ingested by the data portal).
 
@@ -108,12 +106,12 @@ class DataClient:
 			number of rows to skip
 
 		:return:
-			io.BufferedReader with a stream of CSV bytes. Can be readily parsed with `pandas.read_csv`
+			HTTPResponse with a stream of CSV bytes. Can be readily parsed with `pandas.read_csv`
 		"""
 
 		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
 
-		resp = self._auth_get(
+		return self._auth_get(
 			url = self._conf.data_service_base_url + "/csv/" + dobj_hash,
 			error_hint = 'fetching CSV',
 			params = {
@@ -122,8 +120,6 @@ class DataClient:
 				"limit": limit
 			}
 		)
-
-		return io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
 
 
 	def get_columns_as_arrays(
@@ -203,20 +199,13 @@ class DataClient:
 			"Cookie": self._auth.get_token().cookie_value
 		}
 		url = self._conf.data_service_base_url + '/cpb'
-		resp: HTTPResponse = http_request(url=url, method="POST", headers=headers, data=codec.json_payload)
-		if resp.status != 200:
-			raise Exception(f"Failed fetching binary from {url}, got response: {resp.msg}")
-		reader = io.BufferedReader(resp, io.DEFAULT_BUFFER_SIZE)
-		res = codec.parse_cpb_response(reader, keep_bad_data)
-		return res
+		resp = http_request(url, "Fetching binary from " + url, "POST", headers, codec.json_payload)
+		return codec.parse_cpb_response(resp.fp, keep_bad_data)
 
 
 	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> HTTPResponse:
 		headers = {"Cookie": self._auth.get_token().cookie_value}
-		resp = http_request(url=url, method="GET", headers=headers, data=params)
-		if resp.status != 200:
-			raise Exception(f"Failed {error_hint} from {url}, got response: {resp.msg}")
-		return resp
+		return http_request(url, f"{error_hint} from {url}", "GET", headers, params)
 
 
 def to_dobj_uri(dobj: str | DataObjectLite) -> str:

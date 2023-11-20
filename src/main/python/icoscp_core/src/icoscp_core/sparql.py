@@ -4,7 +4,7 @@ from dataclasses import dataclass
 import re
 import json
 
-from .http import http_request, HTTPResponse
+from .http import http_request
 
 @dataclass(frozen=True)
 class BoundUri:
@@ -84,10 +84,8 @@ def get_sparql_select_json(endpoint: str, query: str, disable_cache: bool) -> An
 	if disable_cache:
 		headers["Cache-Control"] = "no-cache"
 		headers["Pragma"] = "no-cache"
-	resp: HTTPResponse = http_request(url=endpoint, method="POST", headers=headers, data=query)
-	if resp.status != 200:
-		raise Exception(f"SPARQL SELECT problem, got response: {resp.msg}\nThe query was: {query}")
-	return json.loads(resp.read(-1))
+	resp = http_request(endpoint, "SPARQL SELECT", "POST", headers, query)
+	return json.loads(resp.read())
 
 def sparql_select(endpoint: str, query: str, disable_cache: bool) -> SparqlResults:
 	js = get_sparql_select_json(endpoint, query, disable_cache)

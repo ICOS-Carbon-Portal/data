@@ -102,6 +102,7 @@ atmo_stations = meta.list_stations(ATMO_STATION)
 all_known_stations = meta.list_stations(False)
 
 # list data objects; a contrived, complicated example to demonstrate the possibilities
+# all the arguments are optional; see Python help for the method for more details
 filtered_atc_co2 = meta.list_data_objects(
 	datatype = [
 		"http://meta.icos-cp.eu/resources/cpmeta/atcCo2L2DataObject",
@@ -153,3 +154,30 @@ multi_df = ( (dobj, pd.DataFrame(arrs)) for dobj, arrs in multi_dobjs)
 
 
 Downloading the original object is possible for all data objects. Structured data access, however, is limited to data objects whose data types' `has_data_access` property equals `True`.
+
+## Advanced metadata access (SPARQL)
+
+For specialized metadata enquiries not offered by the API explicitly, it is often possible to design a SPARQL query that would provide the required information. The query can be run with `sparql_select` method of `MetadataClient`, and the output of the latter can be parsed, for example as
+
+```Python
+from icoscp_core.icos import meta
+from icoscp_core.sparql import as_string, as_uri
+
+query = """prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	select *
+	from <http://meta.icos-cp.eu/documents/>
+	where{
+		?doc a cpmeta:DocumentObject .
+		FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?doc}
+		?doc cpmeta:hasDoi ?doi .
+		?doc cpmeta:hasName ?filename .
+	}"""
+latest_docs_with_dois = [
+	{
+		"uri": as_uri("doc", row),
+		"filename": as_string("filename", row),
+		"doi": as_string("doi", row)
+	}
+	for row in meta.sparql_select(query).bindings
+]
+```

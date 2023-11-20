@@ -1,14 +1,15 @@
 import json
 from urllib.request import Request, HTTPError, urlopen
 from urllib.parse import urlencode
-from typing import TypeAlias, Any
+from http.client import HTTPResponse
+from typing import Any, Literal
 
-
-HTTPResponse: TypeAlias = Any
+Method = Literal["GET", "POST"]
 
 def http_request(
 	url: str,
-	method: str = "GET",
+	error_hint: str,
+	method: Method = "GET",
 	headers: dict[str, str] = {},
 	data: str | dict[str, Any] | None = None
 ) -> HTTPResponse:
@@ -28,4 +29,6 @@ def http_request(
 	try:
 		return urlopen(req)
 	except HTTPError as err:
-			return err.fp
+		resp_text = err.read().decode()
+		msg = f"{error_hint} problem, HTTP response code: {err.status}, response: {resp_text}"
+		raise Exception(msg) from None
