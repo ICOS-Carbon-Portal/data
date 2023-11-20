@@ -30,7 +30,8 @@ const metaResourceGraph: EnvriUrl = {
 
 // in addition to metaResourceGraph, that is
 const additionalStationsGraphs: { [E in Envri]?: UrlStr[] } = {
-	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/']
+	ICOS: ['http://meta.icos-cp.eu/resources/icos/', 'http://meta.icos-cp.eu/resources/extrastations/'],
+	ICOSCities: ['https://citymeta.icos-cp.eu/resources/citymeta/']
 }
 
 const searchResultsCSVName = {
