@@ -321,15 +321,15 @@ def _get_fmt(fmt_uri: str) -> str:
 def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 	fmt_str = fmt.split("/")[-1]
 	if fmt_str == "bmpChar":
-		return arr.astype(np.uint32).view(dtype='U1')
+		return arr.astype('>u4').view(dtype='>U1')
 	elif fmt_str in ["iso8601date", "etcDate"]:
-		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[D]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[D]'))
 	elif fmt_str == "iso8601month":
-		return (arr - 1970 * 12).astype(np.int64).view(dtype=np.dtype('datetime64[M]'))
+		return (arr - 1970 * 12).astype('>i8').view(dtype=np.dtype('>datetime64[M]'))
 	elif fmt_str == "iso8601timeOfDay":
-		return arr.astype(np.int64).view(dtype=np.dtype('timedelta64[s]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>timedelta64[s]'))
 	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
-		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[ms]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[ms]'))
 	else:
 		return arr
 
