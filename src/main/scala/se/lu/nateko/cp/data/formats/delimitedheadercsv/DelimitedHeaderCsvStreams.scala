@@ -19,7 +19,7 @@ class SitesDelimitedHeaderCsvStreams(colsMeta: ColumnsMeta) extends StandardCsvS
 		case IsoLikeLocalDateTime => value == "NaN"
 		case Iso8601Date => value == "N/A"
 		case Iso8601Month => value == "N/A"
-		case IntValue => value == "N/A"
+		case IntValue => value == "N/A" || value == "LOD"
 		case _ => false
 	}
 
