@@ -122,6 +122,12 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		case authErr: UnauthorizedUpload => reportError(StatusCodes.Unauthorized, authErr)
 		case userErr: UploadUserError => reportError(StatusCodes.BadRequest, userErr)
 		case err => reportError(StatusCodes.InternalServerError, err, withDetails = true, withLog = true)
+	}.andThen{ errHandler =>
+		extractEnvriSoft{
+			addAccessControlHeaders{
+				errHandler
+			}
+		}
 	}
 
 	private def reportError(code: StatusCode, err: Throwable, withDetails: Boolean = false, withLog: Boolean = false): Route =
@@ -130,11 +136,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			if !withDetails then ""
 			else err.getStackTrace.map(_.toString).mkString("\n", "\n", "\n")
 		)
-		val plainError = complete(code -> msg)
-		extractEnvriSoft{
-			addAccessControlHeaders{plainError}
-		} ~ plainError
-
+		complete(code -> msg)
 
 	private def addAccessControlHeaders(using envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
