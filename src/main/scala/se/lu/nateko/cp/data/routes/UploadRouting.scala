@@ -117,12 +117,18 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			}
 		}
 
-	private val errHandler = ExceptionHandler{
+	private val errHandlerPF = ExceptionHandler{
 		//TODO Handle the case of data object metadata not found, and the case of metadata service being down
 		case authErr: UnauthorizedUpload => reportError(StatusCodes.Unauthorized, authErr)
 		case userErr: UploadUserError => reportError(StatusCodes.BadRequest, userErr)
 		case err => reportError(StatusCodes.InternalServerError, err, withDetails = true, withLog = true)
-	}
+	}.andThen: route =>
+		extractEnvriSoft{
+			addAccessControlHeaders:
+				route
+		} ~
+		route
+
 
 	private def reportError(code: StatusCode, err: Throwable, withDetails: Boolean = false, withLog: Boolean = false): Route =
 		if withLog then log.error(err, s"Server responded with status code $code because of an exception")
@@ -130,11 +136,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 			if !withDetails then ""
 			else err.getStackTrace.map(_.toString).mkString("\n", "\n", "\n")
 		)
-		val plainError = complete(code -> msg)
-		extractEnvriSoft{
-			addAccessControlHeaders{plainError}
-		} ~ plainError
-
+		complete(code -> msg)
 
 	private def addAccessControlHeaders(using envri: Envri): Directive0 = optionalHeaderValueByType(Origin).flatMap{
 		case Some(origin) if origin.value.contains(envriConfs(envri).metaHost) =>
@@ -144,7 +146,7 @@ class UploadRouting(authRouting: AuthRouting, uploadService: UploadService, core
 		case _ => pass
 	}
 
-	val route = handleExceptions(errHandler){
+	val route = handleExceptions(errHandlerPF){
 		pathPrefix(objectPathPrefix.stripSuffix("/")){
 			withRequestTimeout(3.minutes){
 				put{ upload } ~
