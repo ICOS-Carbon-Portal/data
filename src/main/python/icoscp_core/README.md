@@ -157,7 +157,7 @@ Downloading the original object is possible for all data objects. Structured dat
 
 ## Advanced metadata access (SPARQL)
 
-For specialized metadata enquiries not offered by the API explicitly, it is often possible to design a SPARQL query that would provide the required information. The query can be run with `sparql_select` method of `MetadataClient`, and the output of the latter can be parsed, for example as
+For specialized metadata enquiries not offered by the API explicitly, it is often possible to design a SPARQL query that would provide the required information. The query can be run with `sparql_select` method of `MetadataClient`, and the output of the latter can be parsed using "`as_<rdf_datatype>`"-named methods in `icoscp_core.sparql` module. For example:
 
 ```Python
 from icoscp_core.icos import meta
