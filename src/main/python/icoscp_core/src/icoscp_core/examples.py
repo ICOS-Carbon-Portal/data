@@ -1,17 +1,20 @@
-from icoscp_core.cpb import ArraysDict
+from .cpb import ArraysDict
 from .envri import ICOS_CONFIG
 from .bootstrap import Bootstrap
 from .icos import auth, meta, data
-from .sites import meta as smeta, data as sdata
+from .sites import auth as sauth, meta as smeta, data as sdata
 from .metaclient import Station, TimeFilter, SizeFilter, MetadataClient
 from .dataclient import DataClient
+from .sparql import as_string, as_uri
 import os
 import pandas as pd
 import time as tm
-from typing import Any
 
-def init_authentication() -> None:
+def init_authentication_icos() -> None:
 	return auth.init_config_file()
+
+def init_authentication_sites() -> None:
+	return sauth.init_config_file()
 
 def list_filtered_atc_co2():
 	return meta.list_data_objects(
@@ -31,17 +34,23 @@ def get_station_meta() -> Station:
 def test_bin_fetch(cols: list[str] | None = None, offset: int | None = None, length: int | None = None) -> pd.DataFrame:
 	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
 	dobj = meta.get_dobj_meta(uri)
-	raw = data.get_columns_as_arrays(dobj, cols, offset, length)
+	raw = data.get_columns_as_arrays(dobj, columns=cols, offset=offset, length=length)
 	df = pd.DataFrame(raw)
 	print(df.head())
 	return df
 
 def test_csv_fetch() -> pd.DataFrame:
 	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
-	csv_stream: Any = data.get_csv_byte_stream(uri)
+	csv_stream = data.get_csv_byte_stream(uri)
 	df = pd.read_csv(filepath_or_buffer=csv_stream)
 	print(df.head())
 	return df
+
+def test_save_to_folder() -> None:
+	uri = 'https://meta.icos-cp.eu/objects/Vc1PlzeIRsIwVddwPHDDeCiN'
+	folder = "./"
+	fn = data.save_to_folder(uri, folder)
+	print(f"Wrote file {fn} to {folder}")
 
 def test_big_bin():
 	return _test_big_bin(meta, data)
@@ -76,7 +85,8 @@ def test_year_month_col():
 	return df
 
 def test_local_access():
-	os.environ["PORTAL_DATA_PATH_ICOS"] = '/home/oleg/workspace/data/fileStorage/'
+	#os.environ["PORTAL_DATA_PATH_ICOS"] = '/home/oleg/workspace/data/fileStorage/'
+	os.environ["PORTAL_DATA_PATH_ICOS"] = '/home/jonathan-schenk/Documents/icos-cp/fileStorage/'
 	boot = Bootstrap(ICOS_CONFIG)
 	_, meta, data = boot.fromPasswordFile()
 	return _test_big_bin(meta, data)
@@ -94,3 +104,21 @@ def test_bad_value_reset(keep_bad: bool) -> ArraysDict:
 	dobj = 'https://meta.icos-cp.eu/objects/vTB9m0Wdb8b18cqGD9OeEhOq'
 	dobj_meta = meta.get_dobj_meta(dobj)
 	return data.get_columns_as_arrays(dobj_meta, columns=['GPP_DT_VUT_REF'], keep_bad_data=keep_bad)
+
+def test_doc_sparql():
+	query = """prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		select *
+		from <http://meta.icos-cp.eu/documents/>
+		where{
+			?doc a cpmeta:DocumentObject .
+			FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?doc}
+			?doc cpmeta:hasName ?fileName .
+			?doc cpmeta:hasDoi ?doi .
+		}"""
+	return [
+		{
+			"uri": as_uri("doc", row),
+			"name": as_string("fileName", row),
+			"doi": as_string("doi", row)
+		} for row in meta.sparql_select(query).bindings
+	]

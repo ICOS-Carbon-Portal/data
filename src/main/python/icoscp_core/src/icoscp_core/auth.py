@@ -7,9 +7,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TypeAlias, Literal, Optional
 
-import requests
-
 from .envri import EnvriConfig
+from .http import http_request
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)
@@ -22,13 +21,13 @@ class AuthToken:
 	expiry_time: datetime
 	cookie_value: str
 
-	def _willExpireIn(self, delta: timedelta) -> bool:
+	def _will_expire_in(self, delta: timedelta) -> bool:
 		return (datetime.now() + delta) > self.expiry_time
 
-	def isExpired(self) -> bool:
-		return self._willExpireIn(ExpiryMargin)
-	def isFresh(self) -> bool:
-		return not self._willExpireIn(FreshnessMargin)
+	def is_expired(self) -> bool:
+		return self._will_expire_in(ExpiryMargin)
+	def is_fresh(self) -> bool:
+		return not self._will_expire_in(FreshnessMargin)
 
 def parse_auth_token(cookie_value: str) -> AuthToken:
 	eq_idx = cookie_value.find("=")
@@ -52,10 +51,13 @@ def parse_auth_token(cookie_value: str) -> AuthToken:
 def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToken:
 	url = conf.auth_service_base_url + "password/login"
 	data = {'mail': user_id, 'password': password}
-	resp = requests.post(url = url, data = data)
-	if resp.status_code != 200:
-		raise Exception(f"Could not fetch auth token from {url}, got response: {resp.text}")
-	cookie_value = resp.headers["Set-Cookie"].split()[0]
+	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+	resp = http_request(url, f"Fetching auth token from {url}", "POST", headers, data)
+	cookie = resp.getheader("Set-Cookie") or None
+	if cookie is None:
+		raise Exception(f"Could not fetch auth token from {url}\nMissing value for header 'Set-Cookie'")
+	else:
+		cookie_value = cookie.split()[0]
 	return parse_auth_token(cookie_value)
 
 class AuthTokenProvider(ABC):
@@ -74,7 +76,7 @@ class TokenAuth(AuthTokenProvider):
 
 	def get_token(self) -> AuthToken:
 		t = self._token
-		if t.isExpired():
+		if t.is_expired():
 			raise Exception(f"Authentication token expiration time is {t.expiry_time}, too late to use it")
 		return t
 
@@ -87,11 +89,11 @@ class PasswordAuth(AuthTokenProvider):
 
 	@property
 	def has_fresh_token(self) -> bool:
-		return (not not self._token) and self._token.isFresh()
+		return (not not self._token) and self._token.is_fresh()
 
 	def get_token(self) -> AuthToken:
 		t = self._token
-		if t and t.isFresh():
+		if t and t.is_fresh():
 			return t
 		else:
 			self._token = fetch_auth_token(self._user_id, self._password, self._conf)

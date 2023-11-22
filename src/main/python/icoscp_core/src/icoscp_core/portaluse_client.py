@@ -1,10 +1,10 @@
 import logging
-import requests
 import threading
 from typing import Any
 from . import __version__ as icoscp_core_version
 
 from .envri import EnvriConfig
+from .http import http_request
 
 def report_cpb_file_read(conf: EnvriConfig, hashes: list[str], columns: list[str] | None) -> None:
 	access_info: dict[str, Any] = {
@@ -21,6 +21,8 @@ def report_cpb_file_read(conf: EnvriConfig, hashes: list[str], columns: list[str
 
 def _report_sync(conf: EnvriConfig, payload: dict[str, Any]) -> None:
 	url = conf.auth_service_base_url + 'logs/portaluse'
-	res = requests.post(url = url, json = payload)
-	if res.status_code != 200:
-		logging.warning(f"Failed reporting data usage event to {url}: {res.text}")
+	headers = {"Content-Type": "application/json"}
+	try:
+		http_request(url, f"Reporting data usage event to {url}", "POST", headers, payload)
+	except Exception as err:
+		logging.warning(str(err))

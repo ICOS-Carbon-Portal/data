@@ -209,7 +209,7 @@ class Codec:
 		cols = self._ci.columns
 		n_fetch = _n_rows_to_fetch(self._ci)
 		for n in self._desired_indices:
-			col  = cols[n]
+			col = cols[n]
 			fmt = _get_fmt(col.value_format_uri)
 			must_read = _get_byte_size(fmt) * n_fetch
 			if col_offsets is not None:
@@ -321,15 +321,15 @@ def _get_fmt(fmt_uri: str) -> str:
 def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 	fmt_str = fmt.split("/")[-1]
 	if fmt_str == "bmpChar":
-		return arr.astype(np.uint32).view(dtype='U1')
+		return arr.astype('>u4').view(dtype='>U1')
 	elif fmt_str in ["iso8601date", "etcDate"]:
-		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[D]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[D]'))
 	elif fmt_str == "iso8601month":
-		return (arr - 1970 * 12).astype(np.int64).view(dtype=np.dtype('datetime64[M]'))
+		return (arr - 1970 * 12).astype('>i8').view(dtype=np.dtype('>datetime64[M]'))
 	elif fmt_str == "iso8601timeOfDay":
-		return arr.astype(np.int64).view(dtype=np.dtype('timedelta64[s]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>timedelta64[s]'))
 	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
-		return arr.astype(np.int64).view(dtype=np.dtype('datetime64[ms]'))
+		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[ms]'))
 	else:
 		return arr
 
