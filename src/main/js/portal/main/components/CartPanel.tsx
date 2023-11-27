@@ -46,8 +46,6 @@ export default class CartPanel extends Component<Props, State> {
 		const objectText = props.checkedObjectsInCart.length <= 1 ? "object" : "objects";
 		const checkedObjects = props.cart.items
 			.filter(item => props.checkedObjectsInCart.includes(item.dobj));
-		const datasets = checkedObjects.map(obj => obj.dataset);
-		const previewTypes = checkedObjects.map(obj => obj.type);
 
 		return (
 			<div className="card">
@@ -75,8 +73,7 @@ export default class CartPanel extends Component<Props, State> {
 							<PreviewBtn
 								style={{}}
 								checkedObjects={checkedObjects}
-								datasets={datasets}
-								previewTypes={previewTypes}
+								previewLookup={props.previewLookup}
 								clickAction={this.handlePreview.bind(this)}
 							/>
 							<CartBtn

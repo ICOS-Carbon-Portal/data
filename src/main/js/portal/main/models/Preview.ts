@@ -6,6 +6,7 @@ import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
 import {ExtendedDobjInfo, ObjectsTable} from "./State";
 import {Sha256Str, UrlStr} from "../backend/declarations";
+import { Value } from './SpecTable';
 
 
 export interface PreviewOption {
@@ -149,4 +150,62 @@ export default class Preview {
 
 		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
 	}
+}
+
+export type PreviewAvailable = {
+	previewType: PreviewType
+}
+
+export type PreviewNotAvailable = {
+	previewType: null
+	previewAbsenceReason: string
+}
+
+export type PreviewAvailability = PreviewAvailable | PreviewNotAvailable
+
+function noPreview(reason: string): PreviewNotAvailable{
+	return {previewType: null, previewAbsenceReason: reason}
+}
+
+export function previewAvailability(
+	lookup: PreviewLookup | undefined, obj: {spec: string, dobj: string, submTime: Date}
+): PreviewAvailability{
+
+	if(obj.submTime.getTime() > Date.now())
+		return noPreview("This data object is under moratorium")
+
+	if(!lookup) return noPreview("Preview information has not loaded")
+
+	const previewType = lookup.forDataObjSpec(obj.spec)?.type
+
+	if(!previewType) return noPreview("This data object cannot be previewed")
+
+	if(previewType === "NETCDF" && !(lookup.hasVarInfo(obj.dobj)))
+		return noPreview("This NetCDF object cannot be previewed")
+
+	return {previewType}
+}
+
+const onlyUniform = noPreview("Batch previews are only available for data of same type")
+
+export function batchPreviewAvailability(
+	lookup: PreviewLookup | undefined,
+	objs: {spec: string, dobj: string, submTime: Date, dataset: Value}[]
+): PreviewAvailability {
+	if (!objs.length) return noPreview("No data objects selected")
+	if (objs.length === 1) return previewAvailability(lookup, objs[0])
+
+	const previewTypes = new Set<PreviewType>()
+
+	if (!objs.every(obj => obj.dataset === objs[0].dataset)) return onlyUniform
+
+	for(let i = 0; i < objs.length; i++){
+		let preview = previewAvailability(lookup, objs[i])
+		if (!preview.previewType) return noPreview("You have selected a data object that cannot be previewed")
+		previewTypes.add(preview.previewType)
+		if(previewTypes.size > 1) return onlyUniform
+		if (i > 0 && preview.previewType !== config.TIMESERIES)
+			return noPreview("You can only batch-preview plain time series data objects")
+	}
+	return {previewType: previewTypes.values().next().value}
 }

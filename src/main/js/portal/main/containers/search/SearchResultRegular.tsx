@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import { connect } from 'react-redux';
-import { ObjectsTable, State, ExtendedDobjInfo} from "../../models/State";
+import { ObjectsTable, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
 import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
 import {UrlStr} from "../../backend/declarations";
@@ -40,12 +40,8 @@ class SearchResultRegular extends Component<OurProps> {
 			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = this.props;
 
 		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-		const checkedObjects = checkedObjectsInSearch.reduce<ObjectsTable[]>((acc, uri) => {
-			return acc.concat(objectsTable.filter(o => o.dobj === uri));
-		}, []);
-		const datasets = checkedObjects.map((obj: ObjectsTable) => obj.dataset);
-		const previewTypes = previewLookup ? checkedObjects.map(obj => previewLookup.forDataObjSpec(obj.spec)?.type) : [];
-		const isL3Previewable = previewLookup ? checkedObjects.map(obj => previewLookup.hasVarInfo(obj.dobj) ?? false) : [];
+		const checkedUriSet = new Set<string>(checkedObjectsInSearch)
+		const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj))
 
 		return (
 			<div className="card">
@@ -95,9 +91,7 @@ class SearchResultRegular extends Component<OurProps> {
 							<PreviewBtn
 								style={{ marginRight: 10 }}
 								checkedObjects={checkedObjects}
-								isL3Previewable={isL3Previewable}
-								datasets={datasets}
-								previewTypes={previewTypes}
+								previewLookup={previewLookup}
 								clickAction={handlePreview}
 							/>
 

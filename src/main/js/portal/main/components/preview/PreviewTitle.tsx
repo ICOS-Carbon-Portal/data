@@ -24,7 +24,7 @@ class PreviewTitle extends Component<OurProps>{
 		const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
 
 		const allowCartAdd = items
-			.map(item => addingToCartProhibition({ level: item.level, theme: item.theme, hasNextVersion: item.hasNextVersion }))
+			.map(addingToCartProhibition)
 			.every(cartProhibition => cartProhibition.allowCartAdd);
 		const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
 

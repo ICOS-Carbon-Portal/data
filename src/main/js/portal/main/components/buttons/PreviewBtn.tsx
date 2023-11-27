@@ -3,6 +3,8 @@ import { UrlStr } from '../../backend/declarations';
 import config, {PreviewType} from "../../config";
 import CartItem from '../../models/CartItem';
 import { Value } from '../../models/SpecTable';
+import PreviewLookup from '../../models/PreviewLookup';
+import { batchPreviewAvailability } from '../../models/Preview';
 
 
 export type CheckedObject = {
@@ -10,61 +12,35 @@ export type CheckedObject = {
 	dobj: UrlStr
 	spec: UrlStr
 	nextVersion?: string
+	submTime: Date
 }
-
-type PreviewTypes = Array<PreviewType | undefined>
 
 interface Props {
-	datasets: Value[]
-	previewTypes: PreviewTypes
 	checkedObjects: (CartItem | CheckedObject)[]
+	previewLookup: PreviewLookup | undefined
 	style: CSSProperties
 	clickAction: (objInfo: string[]) => void
-	isL3Previewable?: boolean[]
 }
 
-const PreviewBtn: React.FunctionComponent<Props> = ({ datasets, previewTypes, isL3Previewable = [false], checkedObjects, style, clickAction }) => {
+const PreviewBtn: React.FunctionComponent<Props> = ({ previewLookup, checkedObjects, style, clickAction }) => {
 	const handlePreviewClick = () => {
 		if (clickAction)
 			clickAction(checkedObjects.flatMap(co => co.dobj));
 	};
 
-	const [enabled, title] = isPreviewEnabled(datasets, previewTypes, isL3Previewable);
-	const className = "btn btn-outline-secondary " + (enabled ? "" : "disabled");
-	const btnStyle: CSSProperties = title.length ? { pointerEvents: 'auto' } : {};
+	const preview = batchPreviewAvailability(previewLookup, checkedObjects)
+	const disabled = preview.previewType === null
+	const className = "btn btn-outline-secondary " + (disabled ? "disabled" : "")
+	const title = disabled ? preview.previewAbsenceReason : ""
+	const btnStyle: CSSProperties = disabled ? { pointerEvents: 'auto' } : {}
 
 	return (
 		<div style={style}>
-			<button id="preview-button" onClick={handlePreviewClick} className={className} title={title} style={btnStyle} disabled={!enabled}>
+			<button id="preview-button" onClick={handlePreviewClick} className={className} title={title} style={btnStyle} disabled={disabled}>
 				Preview
 			</button>
 		</div>
 	);
 }
-
-const isPreviewEnabled = (datasets: Value[], previewTypes: PreviewTypes, isL3Previewable: boolean[]): [boolean, string] => {
-	if (!datasets.length || !previewTypes.length)
-		return [false, ""];
-
-	if (previewTypes.length !== datasets.length)
-		throw new Error("Unexpected error in PreviewBtn:isPreviewEnabled");
-
-	if (previewTypes.includes(undefined))
-		return [false, "You have selected a data object that cannot be previewed"];
-
-	if (!datasets.every(dataset => dataset === datasets[0]))
-		return [false, "Multiple previews are only available for data of same type"];
-
-	if (previewTypes.length > 1 && previewTypes.every(type => type === config.NETCDF))
-		return [false, "You can only preview one NetCDF at a time"];
-
-	if (previewTypes.length > 1 && previewTypes.every(type => type === config.MAPGRAPH))
-		return [false, "You can only preview one shipping line at a time"];
-	
-	if (previewTypes.length === 1 && previewTypes[0] === config.NETCDF && !isL3Previewable[0])
-		return [false, "This NetCDF cannot be previewed"];
-
-	return [true, ""];
-};
 
 export default PreviewBtn;

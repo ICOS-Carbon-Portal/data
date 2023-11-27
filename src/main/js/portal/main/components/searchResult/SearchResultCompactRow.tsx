@@ -4,7 +4,7 @@ import PreviewIcon from '../buttons/PreviewIcon';
 import { formatBytes, formatDateWithOptionalTime, pick, getUrlWithEnvironmentPrefix } from '../../utils';
 import { ExtendedDobjInfo, ObjectsTable, WhoAmI } from "../../models/State";
 import config, { timezone } from '../../config';
-import Preview from '../../models/Preview';
+import Preview, { previewAvailability } from '../../models/Preview';
 import PreviewLookup from '../../models/PreviewLookup';
 import { UrlStr } from '../../backend/declarations';
 import CollectionBtn from '../buttons/CollectionBtn';
@@ -29,10 +29,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
-		const preview = props.preview;
-		const previewItem = preview.item;
-		const previewType = props.lookup?.forDataObjSpec(objInfo.spec)?.type;
-		const isL3Previewable = props.lookup?.hasVarInfo(objInfo.dobj) ?? false;
+		const previewItem = props.preview.item;
 		const className = previewItem && previewItem.dobj === objInfo.dobj
 			? "list-group-item-info"
 			: "";
@@ -49,8 +46,7 @@ export default class SearchResultCompactRow extends Component<Props> {
 				}
 				<PreviewIcon
 					style={{ marginRight: 10 }}
-					previewType={previewType}
-					isL3Previewable={isL3Previewable}
+					preview={previewAvailability(props.lookup, objInfo)}
 					clickAction={this.handlePreviewClick.bind(this)}
 				/>
 				<CollectionLinks extendedDobjInfo={props.extendedDobjInfo} dobj={objInfo.dobj} />

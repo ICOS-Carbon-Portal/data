@@ -1,17 +1,16 @@
 import React from 'react';
 import {styles} from '../styles';
-import { PreviewType } from '../../config';
+import { PreviewAvailability } from '../../models/Preview';
 
 
 type Props = {
 	clickAction(): void
-	previewType: PreviewType | undefined
-	isL3Previewable: boolean
+	preview: PreviewAvailability
 	style: React.CSSProperties
 }
 
-export default function PreviewIcon({ previewType, isL3Previewable, style, clickAction}: Props){
-	if ((previewType === "NETCDF" && isL3Previewable) || (previewType !== "NETCDF" && previewType)) {
+export default function PreviewIcon({ preview, style, clickAction}: Props){
+	if (preview.previewType) {
 		return (
 			<span style={style}>
 				<span
@@ -27,7 +26,7 @@ export default function PreviewIcon({ previewType, isL3Previewable, style, click
 			<span style={style}>
 				<span
 					style={styles.disabledClickIcon}
-					title="No preview available for this data object"
+					title={preview.previewAbsenceReason}
 					className="fas fa-eye text-muted"
 				/>
 			</span>
