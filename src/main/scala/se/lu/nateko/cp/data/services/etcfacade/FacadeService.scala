@@ -295,15 +295,12 @@ object FacadeService:
 		.toVector
 	}
 
-	private def deleteOldEtcFiles(folder: Path): Unit = {
-		val now = LocalDateTime.now(ZoneOffset.UTC)
-
-		getEtcFiles(folder).foreach{
-			(path, filename) =>
-				val age = Duration.between(LocalDateTime.of(filename.date, LocalTime.MAX), now)
-				if(age.compareTo(OldFileMaxAge) > 0) Files.deleteIfExists(path)
-		}
-	}
+	private def deleteOldEtcFiles(folder: Path): Unit =
+		val now = Instant.now()
+		getEtcFiles(folder).foreach: (path, filename) =>
+			val fileLmt = Files.getLastModifiedTime(path).toInstant
+			val age = Duration.between(fileLmt, now)
+			if(age.compareTo(OldFileMaxAge) > 0) Files.deleteIfExists(path)
 
 	def getZippableDailies(folder: Path, dailyFile: EtcFilename): DailyPackage =
 		getEtcFiles(folder).collect{
