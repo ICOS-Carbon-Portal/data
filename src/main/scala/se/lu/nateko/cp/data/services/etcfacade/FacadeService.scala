@@ -24,7 +24,6 @@ import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipEntrySource
 import se.lu.nateko.cp.data.utils.akka.Debouncer
 import se.lu.nateko.cp.data.utils.akka.done
-import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.meta.core.crypto.Md5Sum
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import se.lu.nateko.cp.meta.core.etcupload.DataType
@@ -38,6 +37,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 import java.nio.file.StandardOpenOption
+import java.nio.file.attribute.BasicFileAttributes
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -298,7 +298,7 @@ object FacadeService:
 	private def deleteOldEtcFiles(folder: Path): Unit =
 		val now = Instant.now()
 		getEtcFiles(folder).foreach: (path, filename) =>
-			val fileLmt = Files.getLastModifiedTime(path).toInstant
+			val fileLmt = Files.readAttributes(path, classOf[BasicFileAttributes]).creationTime().toInstant
 			val age = Duration.between(fileLmt, now)
 			if(age.compareTo(OldFileMaxAge) > 0) Files.deleteIfExists(path)
 
