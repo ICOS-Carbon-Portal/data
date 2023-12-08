@@ -9,6 +9,8 @@ trait TextFormatParser {
 trait StandardParsingAcculumator extends ParsingAccumulator {
 	def header: StandardHeader
 	def cells: Array[String]
+	def lineNumber: Int
+	def lineNumber_=(n: Int): Unit
 }
 
 class StandardHeader(val colNames: Array[String], val formats: Array[Option[ValueFormat]], val error: Option[Throwable])

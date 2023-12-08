@@ -34,7 +34,6 @@ object TimeSeriesStreams {
 	def linesFromUtf8Binary: Flow[ByteString, String, NotUsed] = Framing
 		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
 		.map(_.utf8String.trim)
-		.filter(_.nonEmpty)
 
 	def getCompletionInfo(
 		columnsMeta: ColumnsMeta,

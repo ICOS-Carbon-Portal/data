@@ -37,6 +37,7 @@ class SimpleCsvParser(columnsMeta: ColumnsMeta, separator: String) extends TextF
 object SimpleCsvParser{
 
 	case class Accumulator(header: StandardHeader, cells: Array[String]) extends StandardParsingAcculumator {
+		var lineNumber: Int = 0
 		override def isOnData = !cells.isEmpty
 		override def error = header.error
 	}
