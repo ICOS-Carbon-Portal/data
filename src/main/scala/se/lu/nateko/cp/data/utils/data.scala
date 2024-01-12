@@ -9,7 +9,7 @@ object data:
 		export buffer.apply
 
 		def update(idx: Int, v: T): Unit =
-			if buffer.size < idx then
+			if buffer.size < idx + 1 then
 				val iter = Iterator.fill(idx - buffer.size)(defaultValue)
 				buffer.appendAll(iter)
 			buffer.update(idx, v)
