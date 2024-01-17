@@ -33,6 +33,7 @@ def parse_station(row: Binding) -> StationLite:
 		comments = [],
 	)
 
+# TODO Change rdfs:subClassOf* into a/rdfs:subClassOf* (or equivalent) to fix a bug
 def station_lite_list(station_type_uri: str | None, conf: EnvriConfig) -> str:
 	top_station_class = '<' + station_type_uri + '>' if station_type_uri else 'cpmeta:Station'
 	return f"""

@@ -73,7 +73,7 @@ function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 
 		const cols = specToCols[spec] ?? []
 
-		if (format === config.netCdfFormat)
+		if (format === config.netCdf.format)
 			table[spec] = { type: "NETCDF" }
 
 		else if(config.imageMultiZipFormats.includes(format))

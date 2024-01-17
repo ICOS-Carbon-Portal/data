@@ -148,7 +148,10 @@ export default {
 	portalHistoryStateProps,
 	olMapSettings,
 	...commonConfig.previewTypes,
-	netCdfFormat: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
+	netCdf: {
+		format: 'http://meta.icos-cp.eu/ontologies/cpmeta/netcdf',
+		cfSpec: 'http://meta.icos-cp.eu/resources/cpmeta/arbitraryCfNetcdf'
+	},
 	imageMultiZipFormats: [
 		'http://meta.icos-cp.eu/ontologies/cpmeta/multiImageZip',
 		'https://meta.fieldsites.se/ontologies/sites/image'

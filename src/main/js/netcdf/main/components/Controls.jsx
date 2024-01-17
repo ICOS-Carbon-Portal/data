@@ -16,7 +16,7 @@ export default class Controls extends Component {
 
 	variablePresenter(v){
 		const lbl = v.shortName
-		return this.props.variableEnhancer[lbl] ?? lbl;
+		return (this.props.variableEnhancer && this.props.variableEnhancer[lbl]) ?? lbl;
 	}
 
 	render(){

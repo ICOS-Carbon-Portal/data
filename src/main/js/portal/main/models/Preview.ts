@@ -180,7 +180,7 @@ export function previewAvailability(
 
 	if(!previewType) return noPreview("This data object cannot be previewed")
 
-	if(previewType === "NETCDF" && !(lookup.hasVarInfo(obj.dobj)))
+	if(previewType === "NETCDF" && obj.spec !== config.netCdf.cfSpec && !(lookup.hasVarInfo(obj.dobj)))
 		return noPreview("This NetCDF object cannot be previewed")
 
 	return {previewType}
