@@ -4,13 +4,6 @@
 @()(implicit envri: Envri, conf: EnvriConfig)
 @CommonPage(envri.shortName + " data search"){
 	<link rel="stylesheet" href="../portal/css/portal.css">
-	<style type="text/css">
-		@if(envri == Envri.SITES){
-			.sites-page {
-				max-width: 1400px;
-			}
-		} else {}
-	</style>
 }{
 	<div id="main"></div>
 	@JavascriptConfig()
