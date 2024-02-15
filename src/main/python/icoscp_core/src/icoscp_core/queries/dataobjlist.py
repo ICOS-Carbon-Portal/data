@@ -9,6 +9,26 @@ from ..metacore import UriResource
 
 @dataclass(frozen=True)
 class DataObjectLite:
+	"""
+	Dataclass for basic metadata of a data object.
+
+	Attributes:
+		`uri` (string): landing page URI
+		`filename` (string): file name
+		`size_bytes` (int): size of the data object in bytes
+		`datatype_uri` (string): URI of the data type of this data
+			object, internally referred to as data object spec
+		`station_uri` (string | None): URI of the station that acquired
+			the data (if applicable)
+		`sampling_height` (float | None): sampling height in meters, if
+			applicable
+		`submission_time` (datetime): time stamp of the end of data
+			submission
+		`time_start` (datetime): time stamp of the beginning of the
+			object's temporal coverage
+		`time_end` (datetime): time stamp of the end of the object's
+			temporal coverage
+	"""
 	uri: str
 	filename: str
 	size_bytes: int

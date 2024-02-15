@@ -17,8 +17,7 @@ requires-python = ">=3.10"
 dynamic = ["version", "description"]
 dependencies = [
 	"dacite==1.8.1",
-	"numpy>=1.23",
-	"requests==2.31"
+	"numpy>=1.23"
 ]
 [tool.flit.sdist]
 include = ["src/icoscp_core/metacore.py"]

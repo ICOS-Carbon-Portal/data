@@ -30,7 +30,11 @@ Metadata access does not require authentication, and is achieved by a simple imp
 ```Python
 from icoscp_core.icos import meta
 ```
-When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal (https://exploretest.icos-cp.eu/ at the time of this writing), authentication is not required for certain kinds of data access (specifically methods `get_columns_as_arrays` and `batch_get_columns_as_arrays`).
+When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal, authentication is not required when using two of the data access methods:
+- `get_columns_as_arrays`
+- `batch_get_columns_as_arrays`
+
+available on `data` import from `icoscp_core.icos` package. When using other data access methods, or when running the code outside ICOS Jupyter environment, or if the Jupyter environment has not been provisioned with filesystem data access to your Repository, all data access methods require authentication.
 
 Authentication can be initialized in a number of ways.
 
@@ -86,6 +90,18 @@ meta, data = bootstrap.fromCredentials(username_variable, password_containing_va
 
 ## Metadata access
 
+Metadata access requires no authentication, and is performed using an instance of `MetadataClient` class easily obtainable through an import:
+```Python
+from icoscp_core.icos import meta
+```
+
+An important background information is that all the metadata-represented entities (data objects, data types, documents, collections, measurement stations, people, etc) are identified by URIs. The metadata-access methods usually accept these URIs as input arguments, and the returned values tend to be instances of [Python dataclasses](https://peps.python.org/pep-0557/), which brings:
+ - better syntax in comparison with generic dictionaries (dot-notation attribute access instead of dictionary value access, for example `dobj_meta.specification.project.self.uri` instead of `dobj_meta["specification"]["project"]["self"]["uri"]`)
+ - autocomplete of the dataclass attributes (works even in Jupyter notebooks)
+ - type checking, when developing with type annotations and a type checker (typically available from an IDE, but not from Jupyter)
+
+The following code showcases the main metadata access methods.
+
 ```Python
 from icoscp_core.icos import meta, ATMO_STATION
 from icoscp_core.metaclient import TimeFilter, SizeFilter, SamplingHeightFilter
@@ -96,13 +112,19 @@ all_datatypes = meta.list_datatypes()
 # data types with structured data access
 previewable_datatypes = [dt for dt in all_datatypes if dt.has_data_access]
 
-# fetch lists of stations
+# fetch lists of stations, with basic metadata
 icos_stations = meta.list_stations()
 atmo_stations = meta.list_stations(ATMO_STATION)
 all_known_stations = meta.list_stations(False)
 
-# list data objects; a contrived, complicated example to demonstrate the possibilities
-# all the arguments are optional; see Python help for the method for more details
+# get detailed metadata for a station
+htm_uri = 'http://meta.icos-cp.eu/resources/stations/AS_HTM'
+htm_station_meta = meta.get_station_meta(htm_uri)
+
+# list data objects with basic metadata
+# a contrived, complicated example to demonstrate the possibilities
+# all the arguments are optional
+# see the Python help for the method for more details
 filtered_atc_co2 = meta.list_data_objects(
 	datatype = [
 		"http://meta.icos-cp.eu/resources/cpmeta/atcCo2L2DataObject",
@@ -120,44 +142,79 @@ filtered_atc_co2 = meta.list_data_objects(
 	limit = 50
 )
 
-# get detailed metadata for a data object
+# get detailed metadata for a single data object
 dobj_uri = 'https://meta.icos-cp.eu/objects/BbEO5i3rDLhS_vR-eNNLjp3Q'
-dobj_detailed_meta = meta.get_dobj_meta(dobj_uri)
+dobj_meta = meta.get_dobj_meta(dobj_uri)
 ```
 
 Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
 
+### Repository-specific functionality
+
+The majority of functionality of the library is common to all the supported data Repositories. However, in some cases Repository-specific reusable code may be useful. Such code is planned to be placed into corresponding packages. There is only one example of such code at the moment:
+```Python
+from icoscp_core.icos import station_class_lookup
+htm_uri = 'http://meta.icos-cp.eu/resources/stations/AS_HTM'
+htm_class = station_class_lookup()[htm_uri]
+```
+
 ---
 
 ## Data access
-To fetch data (after having located interesting data objects in the previous step):
 
+After having identified an interesting data object or a list of objects in the previous step, one can access their data content in a few ways. Data access is provided by an instance of `DataClient` class most easily obtained by import
 ```Python
 from icoscp_core.icos import data
-import pandas as pd
+```
 
-# save the original data object contents to a folder on your machine
+The following are code examples showcasing the main data access methods.
+
+### Downloading original data object content
+Given basic data object metadata (or just the URI id) one can download the original data to a folder like so:
+```Python
 filename = data.save_to_folder(dobj_uri, '/myhome/icosdata/')
+```
+The method requires authentication, even on ICOS Jupyter instances. Works on all data objects (all kinds, and regardless of variable metadata availability)
 
-# get CSV representation of all previewable columns, parse it with pandas
-csv_stream = data.get_csv_byte_stream(dobj_uri)
-df = pd.read_csv(csv_stream)
+### Station-specific time series
+Station-specific time series, that have variable metadata associated with them, enjoy a higher level of support. The variables with metadata representation (which may be only a subset of the variables present in the original data) can be efficiently accessed using this library. For single-object access, a complete data object metadata is required. The output can be readily converted to a pandas `DataFrame`, but can be used as is (a dictionary of numpy arrays).  It is possible to explicitly limit variables for access, and to slice the time series.
 
+ Authentication may be optional on ICOS Jupyter instances.
+
+```Python
+import pandas as pd
 # get dataset columns as typed arrays, ready to be imported into pandas
-dobj_arrays = data.get_columns_as_arrays(dobj_detailed_meta)
+dobj_arrays = data.get_columns_as_arrays(dobj_meta, ['TIMESTAMP', 'co2'])
 df = pd.DataFrame(dobj_arrays)
+```
+One way to distinguish the objects with structured data access is that their data types (used for filtering the data objects, see the metadata access section) have `has_data_access` property equal to `True`.
 
-# efficiently batch-fetch multiple data objects
-multi_dobjs = data.batch_get_columns_as_arrays(filtered_atc_co2)
+### Batch data access
+In many scripting scenarios, data objects are processed in batches of uniform data types. In this case, rather than using `get_columns_as_arrays` method in a loop, it is much more efficient to use a special batch-access method. This will significantly reduce the number of round trips to the HTTP metadata service, greatly speeding up the operation:
+```Python
+multi_dobjs = data.batch_get_columns_as_arrays(filtered_atc_co2, ['TIMESTAMP', 'co2'])
+```
+where `filtered_atc_co2` is a either a list from the metadata examples above, or just a list of plain data object URI IDs. The returned value is a generator of pairs, where first value is the basic data object metadata (or just a plain URI id, depending on what was used as the argument), and the second value is the same as the return value from `get_columns_as_arrays` method (a dictionary of numpy arrays, with variable names as keys)
+
+If it is desirable to convert the data to pandas `DataFrame`s, it can be done like so:
+
+```Python
+import pandas as pd
 multi_df = ( (dobj, pd.DataFrame(arrs)) for dobj, arrs in multi_dobjs)
 ```
 
-
-Downloading the original object is possible for all data objects. Structured data access, however, is limited to data objects whose data types' `has_data_access` property equals `True`.
+### CSV representation access
+The data server offers (partial) CSV representations for fully-supported time series datasets. That service can be used from this library as follows:
+```Python
+import pandas as pd
+csv_stream = data.get_csv_byte_stream(dobj_uri)
+df = pd.read_csv(csv_stream)
+```
+but using `get_columns_as_arrays` and `batch_get_columns_as_arrays` is to be preferred for performance reasons, especially on ICOS Jupyter instances. Authentication is always required to use this method.
 
 ## Advanced metadata access (SPARQL)
 
-For specialized metadata enquiries not offered by the API explicitly, it is often possible to design a SPARQL query that would provide the required information. The query can be run with `sparql_select` method of `MetadataClient`, and the output of the latter can be parsed using "`as_<rdf_datatype>`"-named methods in `icoscp_core.sparql` module. For example:
+For general metadata enquiries not offered by the API explicitly, it is often possible to design a SPARQL query that would provide the required information. The query can be run with `sparql_select` method of `MetadataClient`, and the output of the latter can be parsed using "`as_<rdf_datatype>`"-named methods in `icoscp_core.sparql` module. For example:
 
 ```Python
 from icoscp_core.icos import meta

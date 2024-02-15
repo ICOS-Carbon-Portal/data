@@ -113,7 +113,7 @@ class PasswordAuth(AuthTokenProvider):
 	@staticmethod
 	def load_from_file(file_path: str, conf: EnvriConfig) -> "PasswordAuth":
 		if not os.path.exists(file_path):
-			raise Exception(f"Config file does not exist (running init_config_file() " +
+			raise Exception(f"Authentication config file not found (running init_config_file() " +
 				f"on an instance of ConfigFileAuth may help): {file_path}")
 		with open(file_path, 'r') as conf_file:
 			js = json.load(conf_file)
