@@ -10,6 +10,7 @@ object data:
 
 		def update(idx: Int, v: T): Unit =
 			if buffer.size < idx + 1 then
-				val iter = Iterator.fill(idx - buffer.size)(defaultValue)
+				val extensionSize = 0.1 * buffer.size
+				val iter = Iterator.fill(extensionSize.toInt)(defaultValue)
 				buffer.appendAll(iter)
 			buffer.update(idx, v)
