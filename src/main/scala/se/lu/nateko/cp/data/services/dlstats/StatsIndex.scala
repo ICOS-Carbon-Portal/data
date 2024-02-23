@@ -81,8 +81,6 @@ class StatsIndex(sizeHint: Int):
 		allDownloads.runOptimize()
 
 	def add(entry: StatsIndexEntry): Unit =
-		import Timings.time
-	
 		extension [T](bmMap: BmMap[T])
 			inline def setBit(forKey: T): Unit =
 				bmMap.getOrElseUpdate(forKey, new MutableRoaringBitmap).add(entry.dlIdx)

@@ -213,11 +213,9 @@ class PostgisDlAnalyzer(conf: PostgisConfig, log: LoggingAdapter) extends Postgi
 				preparedSt.setFetchSize(10000)
 				val resSet = preparedSt.executeQuery()
 				val index = StatsIndex((currentSize * 1.05 + 100).toInt)
-				var nIngested: Long = 0
 				while resSet.next() do
 					val indexEntry = parseIndexEntry(resSet).get
 					index.add(indexEntry)
-					nIngested += 1
 				index.runOptimize()
 				log.info(s"StatsIndex is ready for $envri")
 				index
