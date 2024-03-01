@@ -1,16 +1,12 @@
 import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import stateUtils, {MapProps, Profile, Route, StationPos4326Lookup, WhoAmI} from "../models/State";
+import stateUtils, {Profile, Route, WhoAmI} from "../models/State";
 import {getProfile, getWhoIam, logOut} from "../backend";
 import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
 import bootstrapSearch from "./search";
 import {failWithError, loadFromError} from "./common";
 import {Sha256Str} from "../backend/declarations";
-import {Coordinate} from "ol/coordinate";
-import {EpsgCode, getProjection, getTransformPointFn, isPointInRectangle} from "icos-cp-ol";
-import {Filter, Value} from "../models/SpecTable";
-import {drawRectBoxToCoords} from "../utils";
 
 
 export const init: PortalThunkAction<void> = dispatch => {
@@ -75,22 +71,3 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 	};
 }
 
-export function restoreSpatialFilterFromMapProps(mapProps: MapProps, allStations: Value[], posLookup: StationPos4326Lookup): Filter{
-	if (mapProps.rects === undefined || mapProps.rects.length === 0)
-		return null;
-
-	const coords = mapProps.rects.map(drawRectBoxToCoords);
-	const destEpsgCode = `EPSG:${mapProps.srid}` as EpsgCode;
-	// Register selected projection is case it's a projection not available by default in Proj4
-	getProjection(`EPSG:${mapProps.srid}` as EpsgCode);
-	const pointTransformer = getTransformPointFn("EPSG:4326", destEpsgCode);
-
-	return allStations
-		.filter(Value.isString)
-		.filter(stationUri => {
-			const latLon = posLookup[stationUri]
-			if(!latLon) return false;
-			const pos: Coordinate = pointTransformer(latLon.lon, latLon.lat);
-			return isPointInRectangle(coords, pos);
-		});
-}

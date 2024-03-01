@@ -32,7 +32,6 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
-import { restoreSpatialFilterFromMapProps } from "./main";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
@@ -96,7 +95,7 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 };
 
 const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
-	const { specTable, paging, sorting, spatialStationsFilter } = state;
+	const { specTable, paging, sorting } = state;
 	const filters = getFilters(state);
 	const useOnlyPidFilter = filters.some(f => f.category === "pids" && f.pids !== null);
 
@@ -121,7 +120,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 			specTable.basics.getColumnValuesFilter("type"),
 			specTable.columnMeta.getColumnValuesFilter("spec")
 		]),
-		stations: Filter.and([originsStationFilter, spatialStationsFilter]),
+		stations: originsStationFilter,
 		sites: specTable.getColumnValuesFilter('site'),
 		submitters: specTable.getFilter('submitter')
 	});
@@ -205,18 +204,6 @@ export function specFilterUpdate(varName: ColNames | 'keywordFilter', values: Va
 	};
 }
 
-const spatialFilterUpdate: PortalThunkAction<void> = (dispatch, getState) => {
-	const s = getState()
-	const newFilter = restoreSpatialFilterFromMapProps(s.mapProps, s.baseDobjStats.getAllColValues("station"), s.stationPos4326Lookup)
-
-	if(Filter.areEqual(getState().spatialStationsFilter, newFilter)) return
-
-	dispatch(new Payloads.BackendUpdateSpatialFilter(newFilter))
-	dispatch(new Payloads.BackendOriginsTable(getState().baseDobjStats, false))
-	dispatch(getFilteredDataObjects)
-}
-
-
 export function toggleSort(varName: string): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new Payloads.UiToggleSorting(varName));
@@ -232,8 +219,8 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const {filterTemporal, filterNumbers, specTable, filterKeywords, spatialStationsFilter} = getState();
-	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0 || spatialStationsFilter;
+	const {filterTemporal, filterNumbers, specTable, filterKeywords} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0;
 
 	dispatch(new Payloads.MiscResetFilters());
 
@@ -290,7 +277,7 @@ export function setMapProps(persistedMapProps: PersistedMapPropsExtended): Porta
 	return (dispatch) => {
 		savePersistedMapProps(persistedMapProps)
 		dispatch(new Payloads.MiscUpdateMapProps(persistedMapProps));
-		dispatch(spatialFilterUpdate)
+		dispatch(getOriginsThenDobjList);
 	};
 }
 

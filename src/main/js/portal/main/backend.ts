@@ -393,7 +393,7 @@ export const savePersistedMapProps = (persistedMapProps: PersistedMapPropsExtend
 	sessionStorage.setItem(persistedMapPropsSessStorageKey, JSON.stringify(mapProps));
 };
 
-export const getPersistedMapProps = (): PersistedMapPropsExtended | undefined => {
+export function getPersistedMapProps(): PersistedMapPropsExtended | undefined {
 	const sessStorageMapProps = sessionStorage.getItem(persistedMapPropsSessStorageKey);
 
 	if (sessStorageMapProps){

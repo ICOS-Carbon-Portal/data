@@ -89,7 +89,6 @@ const resetFilters = (state: State): Partial<State> => {
 
 	return {
 		specTable,
-		spatialStationsFilter: defaultState.spatialStationsFilter,
 		mapProps: defaultState.mapProps,
 		...getNewPaging(state.paging, state.page, specTable, true),
 		filterCategories: {},

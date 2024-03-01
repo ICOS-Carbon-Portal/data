@@ -167,7 +167,7 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),

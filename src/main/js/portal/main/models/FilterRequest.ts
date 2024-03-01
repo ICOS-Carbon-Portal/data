@@ -3,7 +3,7 @@ import {FilterNumber} from "./FilterNumbers";
 import { UrlStr } from "../backend/declarations";
 
 export type FilterRequest = PidFilterRequest | TemporalFilterRequest | DeprecatedFilterRequest |
-	NumberFilterRequest | VariableFilterRequest | KeywordFilterRequest
+	NumberFilterRequest | VariableFilterRequest | KeywordFilterRequest | GeoFilterRequest
 
 export interface PidFilterRequest{
 	category: "pids"
@@ -35,6 +35,11 @@ export interface KeywordFilterRequest{
 	specs: UrlStr[]
 }
 
+export interface GeoFilterRequest{
+	category: "geo"
+	wktGeo: string
+}
+
 export function isPidFilter(filter: FilterRequest): filter is PidFilterRequest{
 	return filter.category === "pids";
 }
@@ -57,4 +62,8 @@ export function isVariableFilter(filter: FilterRequest): filter is VariableFilte
 
 export function isKeywordsFilter(filter: FilterRequest): filter is KeywordFilterRequest{
 	return filter.category === "keywords";
+}
+
+export function isGeoFilter(filter: FilterRequest): filter is GeoFilterRequest{
+	return filter.category === "geo";
 }

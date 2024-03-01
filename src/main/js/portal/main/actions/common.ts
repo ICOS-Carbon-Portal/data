@@ -1,9 +1,10 @@
 import stateUtils, {
+	MapProps,
 	ObjectsTable,
 	Profile,
 	Route,
 	State,
-	StateSerialized, StationPos4326Lookup,
+	StateSerialized,
 	WhoAmI
 } from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
@@ -19,7 +20,7 @@ import Cart, { restoreCart } from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FilterRequest} from "../models/FilterRequest";
+import {FilterRequest, GeoFilterRequest} from "../models/FilterRequest";
 import {isInPidFilteringMode} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
@@ -30,7 +31,9 @@ import keywordsInfo from "../backend/keywordsInfo";
 import {SPECCOL} from "../sparqlQueries";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import commonConfig from '../../../common/main/config';
-import { getLastSegmentsInUrls } from "../utils";
+import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
+import { EpsgCode, getProjection, getTransformPointFn } from "icos-cp-ol";
+import { Coordinate } from "ol/coordinate";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -102,10 +105,39 @@ export function getFilters(state: State, forStatCountsQuery: boolean = false): F
 			filters.push({category: 'keywords', dobjKeywords, specs});
 		}
 
+		const geoFilter = getGeoFilter(state.mapProps)
+		if(geoFilter) filters.push(geoFilter)
+
 		filters = filters.concat(filterNumbers.validFilters);
 	}
 
 	return filters;
+}
+
+function getGeoFilter(mapProps: MapProps): GeoFilterRequest | null {
+	const rects = mapProps.rects
+	if (!rects || rects.length === 0) return null
+
+	const srcEpsgCode = `EPSG:${mapProps.srid}` as EpsgCode
+	// Register selected projection is case it's a projection not available by default in Proj4
+	getProjection(srcEpsgCode)
+
+	const pointTransformer = getTransformPointFn(srcEpsgCode, "EPSG:4326")
+	const coordTransformer = (c: Coordinate) => pointTransformer(c[0], c[1]).join(' ')
+
+	const wktPolygons: string[] = rects.map(bbox => {
+		const coords = drawRectBoxToCoords(bbox).map(coordTransformer).join(', ')
+		return '((' + coords + '))'
+	});
+
+	const wktGeo = wktPolygons.length === 1
+		? 'POLYGON ' + wktPolygons[0]
+		: 'MULTIPOLYGON (' + wktPolygons.join(', ') + ')'
+
+	return {
+		category: 'geo',
+		wktGeo
+	}
 }
 
 export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];

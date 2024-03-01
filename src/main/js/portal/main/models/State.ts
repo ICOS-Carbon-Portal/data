@@ -22,7 +22,6 @@ import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import { KeywordsInfo } from "../backend/keywordsInfo";
 import {SupportedSRIDs} from "icos-cp-ol";
-import {restoreSpatialFilterFromMapProps} from "../actions/main";
 import PortalHistoryState from "../backend/PortalHistoryState";
 
 
@@ -148,7 +147,6 @@ export interface State {
 	stationPos4326Lookup: StationPos4326Lookup
 	specTable: CompositeSpecTable
 	baseDobjStats: SpecTable<OriginsColNames> //without spatial filtering
-	spatialStationsFilter: Filter
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
@@ -210,7 +208,6 @@ export const defaultState: State = {
 	stationPos4326Lookup: {},
 	specTable: emptyCompositeSpecTable,
 	baseDobjStats: new SpecTable<OriginsColNames>([], [], {}),
-	spatialStationsFilter: null,
 	mapProps: {
 		srid: config.olMapSettings.defaultSRID,
 		rects: []
@@ -273,7 +270,6 @@ const serialize = (state: State) => {
 		filterNumbers: state.filterNumbers.serialize,
 		specTable: state.specTable.serialize,
 		baseDobjStats: state.baseDobjStats.serialize,
-		spatialStationsFilter: undefined,
 		paging: state.paging.serialize,
 		cart: undefined,
 		preview: state.preview.serialize,
@@ -291,8 +287,6 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		? new PreviewLookup(table, varInfo)
 		: PreviewLookup.init(specTable, jsonObj.labelLookup);
 	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
-	const allStations = baseDobjStats.getAllColValues("station");
-	const spatialStationsFilter = restoreSpatialFilterFromMapProps(jsonObj.mapProps, allStations, jsonObj.stationPos4326Lookup);
 
 	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
@@ -300,7 +294,6 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		previewLookup,
 		specTable,
 		baseDobjStats,
-		spatialStationsFilter,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
 		preview: Preview.deserialize(jsonObj.preview),

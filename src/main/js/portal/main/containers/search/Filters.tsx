@@ -26,12 +26,11 @@ type OurProps = StateProps & DispatchProps & incommingProps;
 class Filters extends Component<OurProps> {
 	render(){
 		const {specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset, setFilterTemporal, filterPids,
-			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, spatialStationsFilter, countryCodesLookup} = this.props;
+			setNumberFilter, filterNumbers, keywords, filterKeywords, setKeywordFilter, countryCodesLookup} = this.props;
 
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
 			|| filterNumbers.hasFilters
-			|| spatialStationsFilter !== null
 			|| filterKeywords.length > 0
 			|| filterPids !== null;
 
@@ -94,7 +93,6 @@ function stateToProps(state: State){
 		keywords: state.keywords,
 		filterKeywords: state.filterKeywords,
 		filterPids: state.filterPids,
-		spatialStationsFilter: state.spatialStationsFilter
 	};
 }
 

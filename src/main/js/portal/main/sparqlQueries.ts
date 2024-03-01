@@ -9,7 +9,7 @@ import {
 	isTemporalFilter,
 	isDeprecatedFilter,
 	isNumberFilter, NumberFilterRequest,
-	VariableFilterRequest, isVariableFilter, isKeywordsFilter
+	VariableFilterRequest, isVariableFilter, isKeywordsFilter, isGeoFilter
 } from './models/FilterRequest';
 import { Value } from "./models/SpecTable";
 import { Sha256Str, UrlStr } from './backend/declarations';
@@ -87,6 +87,7 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ?spec ?countryCode ?submitter ?count ?station ?ecosystem ?location ?site ?stationclass
 where{
 	{
@@ -254,6 +255,7 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
 where {
 	${pidListFilter}${specsValues}
@@ -298,7 +300,12 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
 	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
 
-	return deprFilterStr.concat(filterStr, varNameFilterStr, getKeywordFilter(allFilters));
+	const geoFilter = allFilters.find(isGeoFilter)
+	const geoStr = geoFilter
+		? `?dobj geo:sfIntersects/geo:asWKT "${geoFilter.wktGeo}"^^geo:wktLiteral .\n`
+		: ""
+
+	return deprFilterStr.concat(filterStr, varNameFilterStr, geoStr, getKeywordFilter(allFilters));
 }
 
 function getKeywordFilter(allFilters: FilterRequest[]): string {

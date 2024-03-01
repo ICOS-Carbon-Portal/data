@@ -101,7 +101,7 @@ function stateToProps(state: State) {
 
 function dispatchToProps(dispatch: PortalDispatch) {
 	return {
-		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
+		failWithError: (error: Error) => failWithError(dispatch)(error),
 	};
 }
 

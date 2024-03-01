@@ -11,8 +11,7 @@ import {
 	BackendTsSettings,
 	BackendBatchDownload,
 	BackendUpdateCart,
-	BackendExportQuery,
-	BackendUpdateSpatialFilter
+	BackendExportQuery
 } from "./actionpayloads";
 import stateUtils, {CategFilters, ObjectsTable, State} from "../models/State";
 import config, {CategoryType} from "../config";
@@ -39,10 +38,6 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendOriginsTable){
 		return stateUtils.updateAndSave(state, handleOriginsTable(state, payload));
-	}
-
-	if (payload instanceof BackendUpdateSpatialFilter){
-		return stateUtils.updateAndSave(state, {spatialStationsFilter: payload.stations});
 	}
 
 	if (payload instanceof BackendUpdateSpecFilter){
@@ -143,16 +138,18 @@ const handleSpecFilterUpdate = (state: State, payload: BackendUpdateSpecFilter) 
 
 const handleOriginsTable = (state: State, payload: BackendOriginsTable) => {
 
-	const specTable = state.specTable.withOriginsTable(
-		payload.table.withFilter("station", state.spatialStationsFilter).filteredSubtable
-	);
+	const specTable = state.specTable.withOriginsTable(payload.table)
 
 	if (isInPidFilteringMode(state.tabs, state.filterPids)) return {specTable};
+
+	let baseDobjStats = state.baseDobjStats
+	if (!state.mapProps.rects || state.mapProps.rects.length == 0)
+		baseDobjStats = payload.table
 
 	return {
 		specTable,
 		...getNewPaging(state.paging, state.page, specTable, payload.resetPaging),
-		baseDobjStats: payload.table
+		baseDobjStats
 	}
 };
 

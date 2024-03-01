@@ -71,10 +71,6 @@ export class BackendUpdateSpecFilter extends BackendPayload{
 	constructor(readonly varName: ColNames | 'keywordFilter', readonly filter: Filter){super();}
 }
 
-export class BackendUpdateSpatialFilter extends BackendPayload{
-	constructor(readonly stations: Filter){super();}
-}
-
 export class BackendObjectMetadataId extends BackendPayload{
 	constructor(readonly id: UrlStr){super();}
 }
