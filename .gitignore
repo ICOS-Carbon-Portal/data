@@ -12,6 +12,7 @@ node_modules/
 /src/main/python/icoscp_core/.venv
 tsTarget/
 dist/
+src/main/python/portalusage/venv
 
 # sbt specific
 target/
