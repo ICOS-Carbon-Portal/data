@@ -34,7 +34,7 @@
   "homepage": "https://github.com/ICOS-Carbon-Portal/data#readme",
   "devDependencies": {
     "@types/linkify-it": "3.0.3",
-    "@types/proj4": "^2.5.3",
+    "@types/proj4": "^2.5.5",
     "@types/react-datepicker": "^4.15.2",
     "@types/react-dom": "18.2.13",
     "@types/react-redux": "7.1.27",
@@ -65,7 +65,7 @@
     "icos-cp-utils": "0.2.0",
     "linkify-it": "4.0.1",
     "ol": "^8.1.0",
-    "proj4": "^2.9.0",
+    "proj4": "^2.10.0",
     "react": "18.2.0",
     "react-bootstrap": "2.9.0",
     "react-datepicker": "^4.20.0",
