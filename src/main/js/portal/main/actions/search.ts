@@ -219,8 +219,12 @@ export function requestStep(direction: -1 | 1): PortalThunkAction<void> {
 }
 
 export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
-	const {filterTemporal, filterNumbers, specTable, filterKeywords} = getState();
-	const shouldRefetchCounts = filterTemporal.hasFilter || filterNumbers.hasFilters || varNamesAreFiltered(specTable) || filterKeywords.length > 0;
+	const {filterTemporal, filterNumbers, specTable, filterKeywords, mapProps} = getState();
+	const shouldRefetchCounts = filterTemporal.hasFilter
+		|| filterNumbers.hasFilters
+		|| varNamesAreFiltered(specTable)
+		|| filterKeywords.length > 0
+		|| (!!(mapProps.rects) && mapProps.rects.length > 0)
 
 	dispatch(new Payloads.MiscResetFilters());
 
