@@ -44,3 +44,14 @@ GeoFeatureWithGeo: TypeAlias = (
 	CircleWithGeo |
 	PinWithGeo
 )
+
+# geo filter classes
+@dataclass
+class Point:
+	lat: int
+	lon: int
+
+@dataclass
+class GeoFilterBox:
+	min: Point
+	max: Point
