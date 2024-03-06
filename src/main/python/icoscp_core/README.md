@@ -102,15 +102,18 @@ An important background information is that all the metadata-represented entitie
 
 The following code showcases the main metadata access methods.
 
+### Discover data types
 ```Python
-from icoscp_core.icos import meta, ATMO_STATION
-from icoscp_core.metaclient import TimeFilter, SizeFilter, SamplingHeightFilter
-
 # fetches the list of known data types, including metadata associated with them
 all_datatypes = meta.list_datatypes()
 
 # data types with structured data access
 previewable_datatypes = [dt for dt in all_datatypes if dt.has_data_access]
+```
+
+### Discover stations
+```Python
+from icoscp_core.icos import meta, ATMO_STATION
 
 # fetch lists of stations, with basic metadata
 icos_stations = meta.list_stations()
@@ -120,6 +123,12 @@ all_known_stations = meta.list_stations(False)
 # get detailed metadata for a station
 htm_uri = 'http://meta.icos-cp.eu/resources/stations/AS_HTM'
 htm_station_meta = meta.get_station_meta(htm_uri)
+```
+
+### Find data objects
+
+```Python
+from icoscp_core.metaclient import TimeFilter, SizeFilter, SamplingHeightFilter
 
 # list data objects with basic metadata
 # a contrived, complicated example to demonstrate the possibilities
@@ -141,15 +150,30 @@ filtered_atc_co2 = meta.list_data_objects(
 	order_by = "fileName",
 	limit = 50
 )
+```
 
-# get detailed metadata for a single data object
+### Geospatial filtering of data objects
+Similarly to `TimeFilter` and `SizeFilter`, `GeoIntersectFilter` is available to filter the data objects by their geospatial coverage. It has a list of `Point`s as the only constructor argument `polygon`. For convenience of creation standard rectangular lat/lon bounding boxes, there is a helper method.
+```Python
+from .queries.dataobjlist import box_intersect
+from .metaclient import GeoIntersectFilter
+
+australian_model_archives = meta.list_data_objects(
+	datatype="http://meta.icos-cp.eu/resources/cpmeta/modelDataArchive",
+	filters=[box_intersect(Point(-40, 145), Point(-25, 155))]
+)
+
+```
+
+### Fetch detailed metadata for a single data object
+```Python
 dobj_uri = 'https://meta.icos-cp.eu/objects/BbEO5i3rDLhS_vR-eNNLjp3Q'
 dobj_meta = meta.get_dobj_meta(dobj_uri)
 ```
 
 Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
 
-### Repository-specific functionality
+## Repository-specific functionality
 
 The majority of functionality of the library is common to all the supported data Repositories. However, in some cases Repository-specific reusable code may be useful. Such code is planned to be placed into corresponding packages. There is only one example of such code at the moment:
 ```Python

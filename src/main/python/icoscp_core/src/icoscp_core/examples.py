@@ -3,13 +3,14 @@ from .envri import ICOS_CONFIG
 from .bootstrap import Bootstrap
 from .icos import auth, meta, data
 from .sites import auth as sauth, meta as smeta, data as sdata
-from .metaclient import Station, TimeFilter, SizeFilter, GeoFilter, MetadataClient
+from .metaclient import Station, TimeFilter, SizeFilter, MetadataClient
 from .dataclient import DataClient
 from .sparql import as_string, as_uri
 import os
 import pandas as pd
 import time as tm
-from .geofeaturemeta import GeoFilterBox, Point
+from .geofeaturemeta import Point
+from .queries.dataobjlist import box_intersect
 
 def init_authentication_icos() -> None:
 	return auth.init_config_file()
@@ -27,10 +28,10 @@ def list_filtered_atc_co2():
 	)
 
 def list_filtered_geo_info():
-    return meta.list_data_objects(
-        filters=[GeoFilter("geo:sfIntersects/geo:asWKT",
-			GeoFilterBox(Point(-90, -180), Point(90, 180)))]
-    )
+	return meta.list_data_objects(
+		datatype="http://meta.icos-cp.eu/resources/cpmeta/modelDataArchive",
+		filters=[box_intersect(Point(-40, 145), Point(-25, 155))]
+	)
 
 def list_all_stations_in_icos_cp():
 	return meta.list_stations(of_station_type_uri=False)

@@ -5,7 +5,7 @@ from typing import Literal, TypeAlias, TypedDict
 
 from ..sparql import Binding, as_long, as_uri, as_opt_uri, as_string, as_datetime, as_opt_float
 from ..metacore import UriResource
-from ..geofeaturemeta import GeoFilterBox
+from ..geofeaturemeta import Point
 
 
 @dataclass(frozen=True)
@@ -47,7 +47,6 @@ StringProp = Literal["fileName"]
 OrderByProp: TypeAlias = TemporalProp | IntegerProp | StringProp
 ExclusiveComparator: TypeAlias = Literal["<", ">"]
 Comparator: TypeAlias = ExclusiveComparator | Literal["<=", ">=", "="]
-GeoFilterProp: TypeAlias = Literal["geo:sfIntersects/geo:asWKT"]
 
 class Filter(ABC):
 	@abstractmethod
@@ -74,22 +73,32 @@ class SizeFilter(Filter):
 
 @dataclass(frozen=True)
 class SamplingHeightFilter(Filter):
-    op: Comparator
-    value: float
+	op: Comparator
+	value: float
 
-    def render(self) -> str:
-        return f'?samplingHeight {self.op} "{self.value}"^^xsd:float'
+	def render(self) -> str:
+		return f'?samplingHeight {self.op} "{self.value}"^^xsd:float'
 
-def latlonbox_to_polygon(box: GeoFilterBox) -> str:
-	return f"POLYGON(({box.min.lon} {box.max.lat}, {box.min.lon} {box.min.lat}, {box.max.lon} {box.min.lat}, {box.max.lon} {box.max.lat}, {box.min.lon} {box.max.lat}))"
+def polygon_to_wkt(poly: list[Point]) -> str:
+	full_poly = poly
+	if len(poly) >= 3 and poly[0] != poly[-1]:
+		full_poly = list(poly)
+		full_poly.append(poly[1])
+	coord_list = ", ".join([f"{p.lon} {p.lat}" for p in full_poly])
+	return f"POLYGON(({coord_list}))"
+
+def box_intersect(min: Point, max: Point) -> 'GeoIntersectFilter':
+	assert min.lat < max.lat and min.lon < max.lon, "Lat/lon region-of-interest box must have positive area"
+	poly = [min, Point(max.lat, min.lon), max, Point(min.lat, max.lon), min]
+	return GeoIntersectFilter(poly)
 
 @dataclass(frozen=True)
-class GeoFilter(Filter):
-    op: GeoFilterProp
-    value: GeoFilterBox
+class GeoIntersectFilter(Filter):
+	polygon: list[Point]
 
-    def render(self) -> str:
-        return f'{self.op} "{latlonbox_to_polygon(self.value)}"^^geo:wktLiteral .'
+	def render(self) -> str:
+		assert len(self.polygon) >= 3, "polygon must have at least 3 points"
+		return f'geo:sfIntersects/geo:asWKT "{polygon_to_wkt(self.polygon)}"^^geo:wktLiteral .'
 
 class SortProp(TypedDict):
 	prop: OrderByProp
@@ -139,11 +148,14 @@ def dataobj_lite_list(
 	heightMandatory = "?dobj cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?samplingHeight ."
 	heightLink = heightMandatory if samplingHeightPresent else  f"OPTIONAL{{ {heightMandatory} }}"
 
-	non_geo_filters = [f for f in filters if not isinstance(f, GeoFilter)]
+	non_geo_filters = [f for f in filters if not isinstance(f, GeoIntersectFilter)]
+	geo_filters = [f for f in filters if isinstance(f, GeoIntersectFilter)]
+
 	filter_clauses = "" if len(non_geo_filters) == 0 else "FILTER(" + " && ".join([
 							f.render() for f in non_geo_filters
 						]) + ")"
-	geo_filters = "?dobj " + "\n".join([f.render() for f in filters if isinstance(f, GeoFilter)])
+	geo_clause = "" if len(geo_filters) == 0 else "\n".join(["?dobj " + f.render() for f in geo_filters])
+
 	geo_prefix = "prefix geo: <http://www.opengis.net/ont/geosparql#>" if len(geo_filters) > 0 else ""
 
 	return f"""
@@ -166,7 +178,7 @@ where {{
 	?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .
 	{"" if include_deprecated else "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}"}
 	{filter_clauses}
-	{geo_filters}
+	{geo_clause}
 }}
 {_order_clause(order_by)}offset {offset} limit {min(limit, 10000)}"""
 

@@ -12,9 +12,9 @@ from typing import Type, TypeAlias, Literal, Any, Optional
 from dataclasses import dataclass
 
 # the following are needed for convenient re-export by the end user
-from .queries.dataobjlist import TimeFilter, SizeFilter, SamplingHeightFilter, GeoFilter
+from .queries.dataobjlist import TimeFilter, SizeFilter, SamplingHeightFilter, GeoIntersectFilter
 # and the following to suppress warnings about unused imports:
-_KnownFilters: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter | GeoFilter
+_KnownFilters: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter | GeoIntersectFilter
 
 @dataclass(frozen=True)
 class DataObject(VanillaDataObject):

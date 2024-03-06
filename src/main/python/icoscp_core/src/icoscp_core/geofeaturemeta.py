@@ -48,10 +48,6 @@ GeoFeatureWithGeo: TypeAlias = (
 # geo filter classes
 @dataclass
 class Point:
-	lat: int
-	lon: int
+	lat: float
+	lon: float
 
-@dataclass
-class GeoFilterBox:
-	min: Point
-	max: Point
