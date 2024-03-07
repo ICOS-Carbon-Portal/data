@@ -83,7 +83,7 @@ def polygon_to_wkt(poly: list[Point]) -> str:
 	full_poly = poly
 	if len(poly) >= 3 and poly[0] != poly[-1]:
 		full_poly = list(poly)
-		full_poly.append(poly[1])
+		full_poly.append(poly[0])
 	coord_list = ", ".join([f"{p.lon} {p.lat}" for p in full_poly])
 	return f"POLYGON(({coord_list}))"
 
