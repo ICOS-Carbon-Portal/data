@@ -3,14 +3,12 @@ from .envri import ICOS_CONFIG
 from .bootstrap import Bootstrap
 from .icos import auth, meta, data
 from .sites import auth as sauth, meta as smeta, data as sdata
-from .metaclient import Station, TimeFilter, SizeFilter, MetadataClient
+from .metaclient import Station, TimeFilter, SizeFilter, GeoIntersectFilter, MetadataClient, Point, box_intersect
 from .dataclient import DataClient
 from .sparql import as_string, as_uri
 import os
 import pandas as pd
 import time as tm
-from .geofeaturemeta import Point
-from .queries.dataobjlist import box_intersect, GeoIntersectFilter
 
 def init_authentication_icos() -> None:
 	return auth.init_config_file()
@@ -27,13 +25,13 @@ def list_filtered_atc_co2():
 		limit = 100
 	)
 
-def list_filtered_geo_info():
+def sydney_model_data_archives():
 	return meta.list_data_objects(
 		datatype="http://meta.icos-cp.eu/resources/cpmeta/modelDataArchive",
 		filters=[box_intersect(Point(-40, 145), Point(-25, 155))]
 	)
 
-def la_reunion_atc():
+def la_reunion_co2_nrt():
 	return meta.list_data_objects(
 		datatype="http://meta.icos-cp.eu/resources/cpmeta/atcCo2NrtDataObject",
 		filters=[

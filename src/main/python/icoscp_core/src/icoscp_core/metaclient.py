@@ -6,15 +6,17 @@ from .queries.dataobjlist import Filter, OrderBy, OrderByProp, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
 from .metacore import DataObject as VanillaDataObject, CPJson, parse_cp_json
 from .rolemeta import StationWithStaff
-from .geofeaturemeta import GeoFeatureWithGeo
+from .geofeaturemeta import GeoFeatureWithGeo, Point
 from .http import http_request
 from typing import Type, TypeAlias, Literal, Any, Optional
 from dataclasses import dataclass
 
 # the following are needed for convenient re-export by the end user
 from .queries.dataobjlist import TimeFilter, SizeFilter, SamplingHeightFilter, GeoIntersectFilter
+from .queries.dataobjlist import box_intersect
 # and the following to suppress warnings about unused imports:
-_KnownFilters: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter | GeoIntersectFilter
+_needed_classes: TypeAlias = TimeFilter | SizeFilter | SamplingHeightFilter | GeoIntersectFilter | Point
+_needed_method = box_intersect
 
 @dataclass(frozen=True)
 class DataObject(VanillaDataObject):
