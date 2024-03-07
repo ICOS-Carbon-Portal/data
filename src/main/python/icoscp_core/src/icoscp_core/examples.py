@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import time as tm
 from .geofeaturemeta import Point
-from .queries.dataobjlist import box_intersect
+from .queries.dataobjlist import box_intersect, GeoIntersectFilter
 
 def init_authentication_icos() -> None:
 	return auth.init_config_file()
@@ -31,6 +31,18 @@ def list_filtered_geo_info():
 	return meta.list_data_objects(
 		datatype="http://meta.icos-cp.eu/resources/cpmeta/modelDataArchive",
 		filters=[box_intersect(Point(-40, 145), Point(-25, 155))]
+	)
+
+def la_reunion_atc():
+	return meta.list_data_objects(
+		datatype="http://meta.icos-cp.eu/resources/cpmeta/atcCo2NrtDataObject",
+		filters=[
+			GeoIntersectFilter([
+				Point(-21.46555, 54.90857),
+				Point(-20.65176, 55.423563),
+				Point(-21.408027, 56.231058)
+			])
+		]
 	)
 
 def list_all_stations_in_icos_cp():

@@ -1,6 +1,6 @@
 import os
 from .envri import EnvriConfig
-from .auth import ConfigFileAuth, PasswordAuth, TokenAuth
+from .auth import AuthTokenProvider, ConfigFileAuth, PasswordAuth, TokenAuth
 from .metaclient import MetadataClient
 from .dataclient import DataClient
 from typing import Tuple
@@ -29,3 +29,6 @@ class Bootstrap():
 		auth = PasswordAuth(user_id, password, self._conf)
 		data = DataClient(self._conf, auth, self._data_path)
 		return data.meta, data
+
+	def fromAuthProvider(self, auth: AuthTokenProvider) -> DataClient:
+		return DataClient(self._conf, auth, self._data_path)
