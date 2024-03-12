@@ -59,18 +59,12 @@ case class ZipExtractionInfo(
 ) extends DlEventForMongo
 
 
-object DownloadEventInfo extends DefaultJsonProtocol{
+object DownloadEventInfo extends DefaultJsonProtocol:
+	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[Instant]}
 
 	case class CsvSelect(columns: Option[Seq[String]], offset: Option[Long], limit: Option[Int])
 	case class CpbSlice(offset: Long, length: Int)
 
-	given RootJsonFormat[Instant] with {
-		def write(instant: Instant) = JsString(instant.toString)
-		def read(value: JsValue): Instant = value match{
-			case JsString(s) => Instant.parse(s)
-			case _ => deserializationError("String representation of a time instant is expected")
-		}
-	}
 
 	given JsonFormat[AnonId] with
 		def write(id: AnonId) = JsString(id)
@@ -81,5 +75,3 @@ object DownloadEventInfo extends DefaultJsonProtocol{
 	given RootJsonFormat[CpbSlice] = jsonFormat2(CpbSlice.apply)
 	given RootJsonFormat[CpbDownloadInfo] = jsonFormat7(CpbDownloadInfo.apply)
 	given RootJsonFormat[ZipExtractionInfo] = jsonFormat6(ZipExtractionInfo.apply)
-
-}
