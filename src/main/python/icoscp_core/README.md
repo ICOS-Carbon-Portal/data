@@ -190,6 +190,16 @@ dobj_uri = 'https://meta.icos-cp.eu/objects/BbEO5i3rDLhS_vR-eNNLjp3Q'
 dobj_meta = meta.get_dobj_meta(dobj_uri)
 ```
 
+### Fetch metadata for a collection
+Some data objects belong to collections. Collections can also contain other collections. Collections can be discovered on the data portal app, or from individual data object metadata (as parent collections), for example:
+```Python
+dobj = meta.get_dobj_meta('https://meta.icos-cp.eu/objects/hujSGCfmNIRdxtOcEvEJLxGM')
+coll_uri = dobj.parentCollections[0].uri
+coll_meta = meta.get_collection_meta(coll_uri)
+```
+
+### Note
+
 Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
 
 ## Repository-specific functionality
