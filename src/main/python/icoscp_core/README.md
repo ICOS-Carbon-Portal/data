@@ -5,7 +5,7 @@ A foundational ICOS Carbon Portal (CP) core products Python library for metadata
 ## Design goals
 
 - offer basic functionality with good performance
-- good alignment with the server APIs
+- good alignment with the server APIs and ICOS metadata model
 - minimise dependencies (only depend on `numpy` and `dacite`)
 - aim for good integration with `pandas` without depending on this package
 - provide a solid foundation for future versions of [icoscp](https://pypi.org/project/icoscp/)&mdash;an ICOS-specific meta- and data access library developed by the CP Elaborated Products team
@@ -31,11 +31,13 @@ Metadata access does not require authentication, and is achieved by a simple imp
 ```Python
 from icoscp_core.icos import meta
 ```
-When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal, authentication is not required when using two of the data access methods:
+Additionally, when using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal, authentication is not required when using two of the data access methods:
 - `get_columns_as_arrays`
 - `batch_get_columns_as_arrays`
 
-available on `data` import from `icoscp_core.icos` package. When using other data access methods, or when running the code outside ICOS Jupyter environment, or if the Jupyter environment has not been provisioned with filesystem data access to your Repository, all data access methods require authentication.
+available on `data` import from `icoscp_core.icos` package.
+
+When using other data access methods, or when running the code outside ICOS Jupyter environment, or if the Jupyter environment has not been provisioned with file access to your Repository, authentication is required for the data access.
 
 Authentication can be initialized in a number of ways.
 
