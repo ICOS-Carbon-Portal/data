@@ -5,7 +5,7 @@ A foundational ICOS Carbon Portal (CP) core products Python library for metadata
 ## Design goals
 
 - offer basic functionality with good performance
-- good alignment with the server APIs
+- good alignment with the server APIs and ICOS metadata model
 - minimise dependencies (only depend on `numpy` and `dacite`)
 - aim for good integration with `pandas` without depending on this package
 - provide a solid foundation for future versions of [icoscp](https://pypi.org/project/icoscp/)&mdash;an ICOS-specific meta- and data access library developed by the CP Elaborated Products team
@@ -31,11 +31,13 @@ Metadata access does not require authentication, and is achieved by a simple imp
 ```Python
 from icoscp_core.icos import meta
 ```
-When using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal, authentication is not required when using two of the data access methods:
+Additionally, when using the library on an accordingly configured Jupyter notebook service hosted by the ICOS Carbon Portal, authentication is not required when using two of the data access methods:
 - `get_columns_as_arrays`
 - `batch_get_columns_as_arrays`
 
-available on `data` import from `icoscp_core.icos` package. When using other data access methods, or when running the code outside ICOS Jupyter environment, or if the Jupyter environment has not been provisioned with filesystem data access to your Repository, all data access methods require authentication.
+available on `data` import from `icoscp_core.icos` package.
+
+When using other data access methods, or when running the code outside ICOS Jupyter environment, or if the Jupyter environment has not been provisioned with file access to your Repository, authentication is required for the data access.
 
 Authentication can be initialized in a number of ways.
 
@@ -154,16 +156,32 @@ filtered_atc_co2 = meta.list_data_objects(
 ```
 
 ### Geospatial filtering of data objects
-Similarly to `TimeFilter` and `SizeFilter`, `GeoIntersectFilter` is available to filter the data objects by their geospatial coverage. It has a list of `Point`s as the only constructor argument `polygon`. For convenience of creation standard rectangular lat/lon bounding boxes, there is a helper method.
-```Python
-from .queries.dataobjlist import box_intersect
-from .metaclient import GeoIntersectFilter
+Similarly to `TimeFilter` and `SizeFilter`, `GeoIntersectFilter` is available to filter the data objects by their geospatial coverage, specifically by filtering the objects whose geo covarage intersects a region of interest, which can be represented by a polygon. `GeoIntersectFilter` has a list of `Point`s as the only constructor argument `polygon`.
 
-australian_model_archives = meta.list_data_objects(
+```Python
+from icoscp_core.metaclient import Point, GeoIntersectFilter
+
+la_reunion_co2 = meta.list_data_objects(
+	datatype="http://meta.icos-cp.eu/resources/cpmeta/atcCo2Product",
+	filters=[
+		GeoIntersectFilter([
+			Point(-21.46555, 54.90857),
+			Point(-20.65176, 55.423563),
+			Point(-21.408027, 56.231058)
+		])
+	]
+)
+```
+
+For convenience of creation standard rectangular lat/lon bounding boxes, there is a helper method `box_intersect` that takes two points as arguments (south-western and north-eastern corners of the box):
+
+```Python
+from icoscp_core.metaclient import Point, box_intersect
+
+sydney_model_data_archives = meta.list_data_objects(
 	datatype="http://meta.icos-cp.eu/resources/cpmeta/modelDataArchive",
 	filters=[box_intersect(Point(-40, 145), Point(-25, 155))]
 )
-
 ```
 
 ### Fetch detailed metadata for a single data object
@@ -171,6 +189,16 @@ australian_model_archives = meta.list_data_objects(
 dobj_uri = 'https://meta.icos-cp.eu/objects/BbEO5i3rDLhS_vR-eNNLjp3Q'
 dobj_meta = meta.get_dobj_meta(dobj_uri)
 ```
+
+### Fetch metadata for a collection
+Some data objects belong to collections. Collections can also contain other collections. Collections can be discovered on the data portal app, or from individual data object metadata (as parent collections), for example:
+```Python
+dobj = meta.get_dobj_meta('https://meta.icos-cp.eu/objects/hujSGCfmNIRdxtOcEvEJLxGM')
+coll_uri = dobj.parentCollections[0].uri
+coll_meta = meta.get_collection_meta(coll_uri)
+```
+
+### Note
 
 Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
 

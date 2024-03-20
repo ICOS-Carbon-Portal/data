@@ -45,9 +45,14 @@ GeoFeatureWithGeo: TypeAlias = (
 	PinWithGeo
 )
 
-# geo filter classes
 @dataclass
 class Point:
+	"""
+	Geographical point
+
+	Attributes:
+		`lat` (float): WGS-84 latitude
+		`lon` (float): WGS-84 longitude
+	"""
 	lat: float
 	lon: float
-
