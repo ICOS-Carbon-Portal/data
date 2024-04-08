@@ -328,7 +328,7 @@ def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 		return (arr - 1970 * 12).astype('>i8').view(dtype=np.dtype('>datetime64[M]'))
 	elif fmt_str == "iso8601timeOfDay":
 		return arr.astype('>i8').view(dtype=np.dtype('>timedelta64[s]'))
-	elif fmt_str in ["iso8601dateTime", "iso8601LocalDateTime", "etcLocalDateTime"]:
+	elif fmt_str in ["iso8601dateTime", "isoLikeLocalDateTime", "etcLocalDateTime"]:
 		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[ms]'))
 	else:
 		return arr
