@@ -8,17 +8,17 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
-enum NcResult:
-	case Valid, Invalid, NoData
+object NetCdfValidator extends FileFormatValidator[NetCdfValidator.Result]:
+	enum Result:
+		case Valid, Invalid, NoData
 
-object NetCdfValidator extends FileFormatValidator[NcResult]:
-	import NcResult.*
-
+	val noDataResult = Result.NoData
+	val invalidResult = Result.Invalid
 	val MagicLength = 4
-	val MagicDict = Map(
-		parseHex("43444601") -> Valid, // hex for CDF01
-		parseHex("43444602") -> Valid, // hex for CDF02, netcdf v2 files
-		parseHex("43444603") -> Valid, // hex for CDF03, netcdf v3 files
-		parseHex("43444603") -> Valid, // hex for CDF04, netcdf v3 files
-		parseHex("89484446") -> Valid  // HDF format
-	)
+	val MagicDict = Seq(
+		parseHex("43444601"), // hex for CDF01
+		parseHex("43444602"), // hex for CDF02, netcdf v2 files
+		parseHex("43444603"), // hex for CDF03, netcdf v3 files
+		parseHex("43444603"), // hex for CDF04, netcdf v3 files
+		parseHex("89484446")  // HDF format
+	).map(_ -> Result.Valid).toMap

@@ -5,18 +5,17 @@ import akka.util.ByteString
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ZipValidator
-import se.lu.nateko.cp.data.streams.ZipResult.*
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import ZipValidator.*
+import ZipValidator.Result.*
 
 
 class ZipValidatingUploadTask(using ExecutionContext) extends UploadTask{
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = ZipValidator
-		.assertFormat(NoData, Invalid).mapMaterializedValue{
+		.assertFormat.mapMaterializedValue{
 			_.map{
 				case Valid => DummySuccess
 				case Invalid => zipFailure("Not a ZIP file")

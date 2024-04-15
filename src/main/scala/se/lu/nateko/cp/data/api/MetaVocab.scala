@@ -28,8 +28,9 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 		val etcRawTimeSerMultiZip = getRelative("etcRawTimeSerMultiZip")
 		val multiImageZip = getRelative("multiImageZip")
 		val arbitraryZip = getRelative("zipArchive")
+		val excel = getRelative("excel")
 
-		def isNonIngestedZip(objFormat: URI): Boolean = objFormat == arbitraryZip
+		def isNonIngestedZip(objFormat: URI): Boolean = objFormat == arbitraryZip || objFormat == excel
 		def isNetCdfSpatial(objFormat: URI): Boolean = objFormat == netCdfSpatial
 	}
 

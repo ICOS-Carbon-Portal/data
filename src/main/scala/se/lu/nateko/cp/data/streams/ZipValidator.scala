@@ -15,12 +15,16 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-enum ZipResult:
-	case Valid, Invalid, SpannedZip, EmptyZip, NoData
 
-object ZipValidator extends FileFormatValidator[ZipResult]:
-	import ZipResult.*
+object ZipValidator extends FileFormatValidator[ZipValidator.Result]:
+	enum Result:
+		case Valid, Invalid, SpannedZip, EmptyZip, NoData
+
 	import ZipEntryFlow.Unzipper
+	import Result.*
+
+	val noDataResult = NoData
+	val invalidResult = Invalid
 	val MagicLength = 4
 	val MagicDict = Map(
 		parseHex("504B0304") -> Valid,
@@ -28,7 +32,7 @@ object ZipValidator extends FileFormatValidator[ZipResult]:
 		parseHex("504B0708") -> SpannedZip
 	)
 
-	private type ValidatedZipChunk = (ByteString, ZipResult)
+	private type ValidatedZipChunk = (ByteString, Result)
 	private val ValidationZero: ValidatedZipChunk = ByteString.empty -> NoData
 
 	private val zipWithValidation: Flow[ByteString, ValidatedZipChunk, NotUsed] = Flow[ByteString]
