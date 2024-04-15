@@ -19,6 +19,7 @@ import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.meta.core.etcupload.StationId
 import java.net.URI
 import se.lu.nateko.cp.data.utils.io.withSuffix
+import se.lu.nateko.cp.data.streams.NetCdfValidator
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,

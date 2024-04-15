@@ -30,6 +30,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 		val arbitraryZip = getRelative("zipArchive")
 
 		def isNonIngestedZip(objFormat: URI): Boolean = objFormat == arbitraryZip
+		def isNetCdfSpatial(objFormat: URI): Boolean = objFormat == netCdfSpatial
 	}
 
 	def getDataObject(hash: Sha256Sum)(using envri: EnvriConfig) =

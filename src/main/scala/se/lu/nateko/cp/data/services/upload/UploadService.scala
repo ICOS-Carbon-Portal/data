@@ -31,6 +31,7 @@ import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.isNetCdfSpatial
 
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(using Materializer) {
 
@@ -219,6 +220,8 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		if spec.datasetSpec.isEmpty then
 			if isNonIngestedZip(spec.format.self.uri) then
 				Future.successful(new ZipValidatingUploadTask)
+			else if isNetCdfSpatial(spec.format.self.uri) then
+				Future.successful(new NetCdfValidatingUploadTask)
 			else
 				if isTryIngest then
 					dataFail(s"Data obj spec ${spec.self.uri} has no dataset spec, cannot ingest it")
