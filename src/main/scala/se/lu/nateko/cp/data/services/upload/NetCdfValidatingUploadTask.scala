@@ -9,9 +9,7 @@ import scala.concurrent.Future
 
 import NetCdfValidator.Result.*
 
-class NetCdfValidatingUploadTask(using ExecutionContext) extends ValidatingUploadTask[NetCdfValidator.Result]:
-
-	override def validator = NetCdfValidator
+class NetCdfValidatingUploadTask(using ExecutionContext) extends ValidatingUploadTask(NetCdfValidator):
 
 	override def validateResult(result: NetCdfValidator.Result) = result match
 		case Valid   => DummySuccess

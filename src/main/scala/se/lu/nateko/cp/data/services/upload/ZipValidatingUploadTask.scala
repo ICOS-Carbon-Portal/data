@@ -10,9 +10,7 @@ import scala.concurrent.Future
 import ZipValidator.Result.*
 
 
-class ZipValidatingUploadTask(using ExecutionContext) extends ValidatingUploadTask[ZipValidator.Result]:
-
-	override def validator = ZipValidator
+class ZipValidatingUploadTask(using ExecutionContext) extends ValidatingUploadTask(ZipValidator):
 
 	override def validateResult(result: ZipValidator.Result) = result match
 		case Valid => DummySuccess

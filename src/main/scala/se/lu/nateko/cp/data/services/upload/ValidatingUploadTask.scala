@@ -9,9 +9,7 @@ import se.lu.nateko.cp.data.streams.FileFormatValidator
 import scala.concurrent.ExecutionContext
 
 
-abstract class ValidatingUploadTask[T](using ExecutionContext) extends UploadTask:
-
-	def validator: FileFormatValidator[T]
+trait ValidatingUploadTask[T](validator: FileFormatValidator[T])(using ExecutionContext) extends UploadTask:
 
 	def validateResult(result: T): UploadTaskResult
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = validator.assertFormat.mapMaterializedValue(_.map(validateResult))
