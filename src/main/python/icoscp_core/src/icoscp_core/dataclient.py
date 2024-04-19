@@ -31,6 +31,10 @@ class DataClient:
 	def meta(self) -> MetadataClient:
 		return self._meta
 
+	@property
+	def auth(self) -> AuthTokenProvider:
+		return self._auth
+
 	def get_file_stream(self, dobj: str | DataObjectLite) -> Tuple[str, HTTPResponse]:
 		"""
 		Fetches the original verbatim content of a data- or document
