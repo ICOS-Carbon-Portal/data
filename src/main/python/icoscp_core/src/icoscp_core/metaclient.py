@@ -131,9 +131,10 @@ class MetadataClient:
 
 		:param `filters`: a list of filters, each filter being either
 		`TimeFilter` for filtering by submission time, or data start- or
-		stop time, `SizeFilter` for filtering by file size, or
+		stop time, `SizeFilter` for filtering by file size,
 		`SamplingHeightFilter` for filtering by sampling height
-		(applicable only to data objects with sampling height metadata);
+		(applicable only to data objects with sampling height metadata),
+		or `GeoIntersectFilter` for geospatial filtering;
 		the list is empty by default.
 
 		:param `include_deprecated`: boolean flag to include deprecated
