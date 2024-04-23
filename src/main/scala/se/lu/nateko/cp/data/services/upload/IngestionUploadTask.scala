@@ -14,8 +14,7 @@ import se.lu.nateko.cp.data.api.SitesMetaVocab.*
 import se.lu.nateko.cp.data.api.SparqlClient
 import se.lu.nateko.cp.data.formats.*
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.bintable.FileExtension
-import se.lu.nateko.cp.data.formats.bintable.MoratoriumExtension
+import se.lu.nateko.cp.data.formats.bintable.CpbHandler
 import se.lu.nateko.cp.data.streams.KeepFuture
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
 import se.lu.nateko.cp.data.streams.ZipValidator
@@ -41,9 +40,9 @@ class IngestionUploadTask(
 )(using ExecutionContext) extends UploadTask{
 	import IngestionUploadTask.{RowParser, IngestionSink}
 
-	val file = originalFile.withSuffix(FileExtension)
 	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
 	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
+	private val targetFile = CpbHandler.getCpbFileForWriting(originalFile, ingSpec.objInfo.flatMap(_.submission.stop))
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = ingSpec.objSpec.format.self
@@ -99,18 +98,11 @@ class IngestionUploadTask(
 			nRows => makeIngestionSink(parserFactory(nRows))
 		}
 
-	private def writeMoratoriumMetaFile(date: Instant) =
-		val metaFile = new File(file.withSuffix(MoratoriumExtension).toString)
-		val writer = new PrintWriter(metaFile)
-
-		writer.write(date.toString)
-		writer.close()
-
 	private def makeIngestionSink(
 		rowParser: RowParser,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary,
 	): IngestionSink =
-		val tmpFile = file.withSuffix(".working")
+		val tmpFile = CpbHandler.cpbWriteStagingFile(originalFile)
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.map(binTableConverter.parseRow)
@@ -118,12 +110,7 @@ class IngestionUploadTask(
 			.mapMaterializedValue(
 				_.map{ingMeta =>
 					import java.nio.file.StandardCopyOption.*
-
-					ingSpec.objInfo.foreach: dobj =>
-						dobj.submission.stop.foreach: date =>
-							writeMoratoriumMetaFile(date)
-
-					Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
+					Files.move(tmpFile, targetFile, ATOMIC_MOVE, REPLACE_EXISTING)
 					IngestionSuccess(ingMeta)
 				}.recover{
 					case exc: Throwable =>
@@ -151,7 +138,7 @@ class IngestionUploadTask(
 		}
 
 		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
-			Files.deleteIfExists(file)
+			Files.deleteIfExists(targetFile)
 			Done
 		})
 	}

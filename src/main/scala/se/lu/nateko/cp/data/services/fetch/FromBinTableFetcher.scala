@@ -11,9 +11,7 @@ import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 import java.io.File
 import java.nio.file.Files
 import java.time.Instant
-import java.time.format.DateTimeFormatter
 import scala.concurrent.Future
-import scala.io.Source as FileSource
 import se.lu.nateko.cp.data.api.CpDataException
 
 case class BinTableRequest(
@@ -27,29 +25,19 @@ case class BinTableRequest(
 class FromBinTableFetcher(upload: UploadService):
 
 	private def parseMoratoriumDate(metaFile: File): Instant =
-		val moratoriumStr = FileSource.fromFile(metaFile.toPath().toString(), "utf-8").getLines.mkString
-		Instant.from(DateTimeFormatter.ISO_INSTANT.parse(moratoriumStr))
+		val moratoriumStr = Files.readString(metaFile.toPath)
+		Instant.parse(moratoriumStr)
 
-	def getSource(request: BinTableRequest): Source[ByteString, Future[Done]] = {
+	def getSource(request: BinTableRequest): Source[ByteString, Future[Done]] =
 
 		assert(!request.schema.hasStringColumn, "Only numeric BinTables can be fetched as binary data.")
 
 		val formatUri = CpMetaVocab.getRelative(request.subFolder)
 		val origFile = upload.getFile(Some(formatUri), request.tableId, true)
-		val file = File(origFile.getAbsolutePath + FileExtension)
-
-		assert(file.exists, s"File ${file.getName} not found on the server")
-
-		val metaFile = File(origFile.getAbsolutePath + FileExtension + MoratoriumExtension)
-
-		if metaFile.exists then
-			if Instant.now().isAfter(parseMoratoriumDate(metaFile)) then
-				Files.delete(metaFile.toPath())
-			else
-				throw new CpDataException("Cannot download file under moratorium")
+		val file = CpbHandler.getCpbFileForReading(origFile.toPath).get.toFile
 
 		BinTableSource(file, request.schema, request.columnNumbers, request.slice)
-	}
+
 
 	def getResponseSize(request: BinTableRequest): Long = {
 

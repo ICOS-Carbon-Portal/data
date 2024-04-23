@@ -7,12 +7,13 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.ColumnsMeta
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.bintable.FileExtension
+import se.lu.nateko.cp.data.formats.bintable.CpbHandler
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
 import se.lu.nateko.cp.data.utils.io.withSuffix
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
@@ -20,7 +21,7 @@ import scala.concurrent.Future
 import UploadTask.FUTR
 
 class ObspackNetCdfIngestionTask(
-	origFile: Path, colsMeta: ColumnsMeta, tryIngest: Boolean
+	origFile: Path, colsMeta: ColumnsMeta, tryIngest: Boolean, submEnd: Option[Instant]
 )(using mat: Materializer) extends UploadTask:
 	import mat.executionContext
 
@@ -33,8 +34,8 @@ class ObspackNetCdfIngestionTask(
 		failIfOthersFailed(otherTaskResults){
 			val parserFut = Future(ObspackNcToBinTable(origFile, colsMeta)).flatMap(Future.fromTry)
 			parserFut.flatMap{parser =>
-				val file = origFile.withSuffix(FileExtension)
-				val tmpFile = file.withSuffix(".working")
+				val file = CpbHandler.getCpbFileForWriting(origFile, submEnd)
+				val tmpFile = CpbHandler.cpbWriteStagingFile(origFile)
 				Source(parser.readRows())
 					.runWith(BinTableSink(tmpFile.toFile, true))
 					.map{_ =>

@@ -239,7 +239,8 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 		else if spec.format.self.uri == netCdfTimeSer && spec.specificDatasetType == DatasetType.StationTimeSeries then
 			IngestionUploadTask.getColumnFormats(spec.self.uri, meta.sparql).map{colsMeta =>
-				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest)
+				val submEnd = req.toOption.flatMap(_.submission.stop)
+				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest, submEnd)
 			}
 
 		else if spec.specificDatasetType == DatasetType.StationTimeSeries then

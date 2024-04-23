@@ -12,7 +12,7 @@ import se.lu.nateko.cp.data.formats.ValueFormat.Iso8601DateTime
 import se.lu.nateko.cp.data.formats.ValueFormat.Utf16CharValue
 import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
 import se.lu.nateko.cp.data.formats.bintable.BinTableSink
-import se.lu.nateko.cp.data.formats.bintable.FileExtension
+import se.lu.nateko.cp.data.formats.bintable.CpbHandler
 import se.lu.nateko.cp.data.formats.netcdf.ObspackNcToBinTable
 import se.lu.nateko.cp.data.utils.io.withSuffix
 
@@ -32,7 +32,7 @@ class ObspackNcToBinTableTest extends AsyncFunSpec {
 		import ObspackNcToBinTable.TypedVar
 
 		val parser = ObspackNcToBinTable(path, columnsMeta).get
-		val tmpFile = path.withSuffix(FileExtension).withSuffix(".working")
+		val tmpFile = CpbHandler.cpbWriteStagingFile(path)
 		
 		var resFut = Source(parser.readRows()).runWith(BinTableSink(tmpFile.toFile, true))
 			.flatMap{_ =>
