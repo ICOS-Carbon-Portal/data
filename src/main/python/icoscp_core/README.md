@@ -101,7 +101,7 @@ from icoscp_core.icos import meta
 An important background information is that all the metadata-represented entities (data objects, data types, documents, collections, measurement stations, people, etc) are identified by URIs. The metadata-access methods usually accept these URIs as input arguments, and the returned values tend to be instances of [Python dataclasses](https://peps.python.org/pep-0557/), which brings:
  - better syntax in comparison with generic dictionaries (dot-notation attribute access instead of dictionary value access, for example `dobj_meta.specification.project.self.uri` instead of `dobj_meta["specification"]["project"]["self"]["uri"]`)
  - autocomplete of the dataclass attributes (works even in Jupyter notebooks)
- - type checking, when developing with type annotations and a type checker (typically available from an IDE, but not from Jupyter)
+ - type checking, when developing with type annotations and a type checker (typically available from an IDE, but can also be made to work in Jupyter with the help of [`nb-mypy`](https://pypi.org/project/nb-mypy/) library)
 
 The following code showcases the main metadata access methods.
 
