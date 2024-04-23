@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.formats.bintable
 
 val FileExtension = ".cpb"
+val MoratoriumExtension = ".moratorium"
 
 /*
  * LONG has been omitted intentionally as it cannot be represented exactly in Javascript
