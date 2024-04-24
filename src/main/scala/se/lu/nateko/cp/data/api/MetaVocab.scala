@@ -31,7 +31,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 		val excel = getRelative("excel")
 
 		def isNonIngestedZip(objFormat: URI): Boolean = objFormat == arbitraryZip || objFormat == excel
-		def isNetCdfSpatial(objFormat: URI): Boolean = objFormat == netCdfSpatial
+		def isNetCdf(objFormat: URI): Boolean = objFormat == netCdfSpatial || objFormat == netCdfTimeSer
 	}
 
 	def getDataObject(hash: Sha256Sum)(using envri: EnvriConfig) =
