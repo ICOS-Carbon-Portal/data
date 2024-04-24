@@ -8,6 +8,7 @@ import akka.stream.scaladsl.FileIO
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.UploadConfig
@@ -30,13 +31,11 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
-import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.isNetCdfSpatial
 
 class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: MetaClient)(using Materializer) {
 
 	import UploadService.*
-	import ObjectFormats.{isNonIngestedZip, netCdfTimeSer}
+	import ObjectFormats.{isNonIngestedZip, isNetCdf, netCdfTimeSer}
 	import meta.{ dispatcher, system }
 
 	val log = system.log
@@ -220,7 +219,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 		if spec.datasetSpec.isEmpty then
 			if isNonIngestedZip(spec.format.self.uri) then
 				Future.successful(new ZipValidatingUploadTask)
-			else if isNetCdfSpatial(spec.format.self.uri) then
+			else if isNetCdf(spec.format.self.uri) then
 				Future.successful(new NetCdfValidatingUploadTask)
 			else
 				if isTryIngest then
@@ -239,12 +238,13 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 		else if spec.format.self.uri == netCdfTimeSer && spec.specificDatasetType == DatasetType.StationTimeSeries then
 			IngestionUploadTask.getColumnFormats(spec.self.uri, meta.sparql).map{colsMeta =>
-				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest)
+				val submEnd = req.toOption.flatMap(_.submission.stop)
+				ObspackNetCdfIngestionTask(file.toPath, colsMeta, isTryIngest, submEnd)
 			}
 
 		else if spec.specificDatasetType == DatasetType.StationTimeSeries then
 			val ingSpec = req.fold(
-				ir => new IngestionSpec(spec, ir.nRows, spec.self.label, Some(0)),// time zone offset is arbitrary for trying ingestion
+				ir => new IngestionSpec(spec, ir.nRows, None, Some(0)),// time zone offset is arbitrary for trying ingestion
 				dobj => IngestionSpec(dobj)
 			)
 			IngestionUploadTask.apply(ingSpec, file.toPath, meta)

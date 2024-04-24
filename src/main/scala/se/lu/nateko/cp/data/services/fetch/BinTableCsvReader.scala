@@ -2,6 +2,7 @@ package se.lu.nateko.cp.data.services.fetch
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.data.api.MetaClient.asLiteral
 import se.lu.nateko.cp.data.api.MetaClient.asLiteralOpt
 import se.lu.nateko.cp.data.api.MetaClient.asResource
@@ -9,6 +10,7 @@ import se.lu.nateko.cp.data.api.Utils.dropFileExtension
 import se.lu.nateko.cp.data.formats.TimeSeriesToBinTableConverter
 import se.lu.nateko.cp.data.formats.bintable
 import se.lu.nateko.cp.data.formats.bintable.BinTableRowReader
+import se.lu.nateko.cp.data.formats.bintable.CpbHandler
 import se.lu.nateko.cp.data.services.upload.IngestionUploadTask
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
@@ -18,7 +20,6 @@ import se.lu.nateko.cp.meta.core.data.staticObjLandingPage
 import java.io.File
 import java.net.URI
 import scala.concurrent.Future
-import eu.icoscp.envri.Envri
 
 class BinTableCsvReader(upload: UploadService)(using envriConf: EnvriConfigs) {
 
@@ -65,7 +66,7 @@ class BinTableCsvReader(upload: UploadService)(using envriConf: EnvriConfigs) {
 
 				val rowsSrc = if(offset >= nRows) Source.empty else {
 					val origFile = upload.getFile(Some(objFormat), hash, true)
-					val file = new File(origFile.getAbsolutePath + bintable.FileExtension)
+					val file = CpbHandler.getCpbFileForReading(origFile.toPath).get.toFile
 
 					new BinTableRowReader(file, readSchema.binSchema)
 						.rows(readSchema.fetchIndices, offset, limit)

@@ -1,24 +1,37 @@
 package se.lu.nateko.cp.data.services.upload
 
-import java.nio.file.{Path, Files}
-
-import akka.{Done, NotUsed}
-import akka.stream.scaladsl.{Flow, Keep, Sink}
+import akka.Done
+import akka.NotUsed
+import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.util.ByteString
-import se.lu.nateko.cp.data.api.{CpDataException, SparqlClient}
+import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats.*
-import se.lu.nateko.cp.data.api.SitesMetaVocab.*
-import se.lu.nateko.cp.data.formats.*
-import se.lu.nateko.cp.data.formats.bintable.{BinTableSink, FileExtension}
-import se.lu.nateko.cp.data.streams.{KeepFuture, ZipEntryFlow, ZipValidator}
-import se.lu.nateko.cp.meta.core.data.*
-import se.lu.nateko.cp.meta.core.sparql.{BoundLiteral, BoundUri}
-
-import scala.concurrent.{ExecutionContext, Future}
 import se.lu.nateko.cp.data.api.MetaClient
-import se.lu.nateko.cp.meta.core.etcupload.StationId
-import java.net.URI
+import se.lu.nateko.cp.data.api.SitesMetaVocab.*
+import se.lu.nateko.cp.data.api.SparqlClient
+import se.lu.nateko.cp.data.formats.*
+import se.lu.nateko.cp.data.formats.bintable.BinTableSink
+import se.lu.nateko.cp.data.formats.bintable.CpbHandler
+import se.lu.nateko.cp.data.streams.KeepFuture
+import se.lu.nateko.cp.data.streams.ZipEntryFlow
+import se.lu.nateko.cp.data.streams.ZipValidator
 import se.lu.nateko.cp.data.utils.io.withSuffix
+import se.lu.nateko.cp.meta.core.data.*
+import se.lu.nateko.cp.meta.core.etcupload.StationId
+import se.lu.nateko.cp.meta.core.sparql.BoundLiteral
+import se.lu.nateko.cp.meta.core.sparql.BoundUri
+
+import java.io.File
+import java.io.PrintWriter
+import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Path
+import java.time.Instant
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
 class IngestionUploadTask(
 	ingSpec: IngestionSpec,
@@ -27,9 +40,9 @@ class IngestionUploadTask(
 )(using ExecutionContext) extends UploadTask{
 	import IngestionUploadTask.{RowParser, IngestionSink}
 
-	val file = originalFile.withSuffix(FileExtension)
 	private val binTableConverter = new TimeSeriesToBinTableConverter(colsMeta)
 	private val defaultColumnFormats = ColumnsMetaWithTsCol(colsMeta, "TIMESTAMP")
+	private val targetFile = CpbHandler.getCpbFileForWriting(originalFile, ingSpec.objInfo.flatMap(_.submission.stop))
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = {
 		val format = ingSpec.objSpec.format.self
@@ -88,8 +101,8 @@ class IngestionUploadTask(
 	private def makeIngestionSink(
 		rowParser: RowParser,
 		lineParser: Flow[ByteString, String, NotUsed] = TimeSeriesStreams.linesFromUtf8Binary,
-	): IngestionSink = {
-		val tmpFile = file.withSuffix(".working")
+	): IngestionSink =
+		val tmpFile = CpbHandler.cpbWriteStagingFile(originalFile)
 		lineParser
 			.viaMat(rowParser)(Keep.right)
 			.map(binTableConverter.parseRow)
@@ -97,7 +110,7 @@ class IngestionUploadTask(
 			.mapMaterializedValue(
 				_.map{ingMeta =>
 					import java.nio.file.StandardCopyOption.*
-					Files.move(tmpFile, file, ATOMIC_MOVE, REPLACE_EXISTING)
+					Files.move(tmpFile, targetFile, ATOMIC_MOVE, REPLACE_EXISTING)
 					IngestionSuccess(ingMeta)
 				}.recover{
 					case exc: Throwable =>
@@ -105,7 +118,6 @@ class IngestionUploadTask(
 						IngestionFailure(exc)
 				}
 			)
-	}
 
 	private def makeEncodingSpecificFlow(encoding: UriResource): ZipEntryFlow.Unzipper = {
 		import se.lu.nateko.cp.data.api.CpMetaVocab.{plainFile, zipEncoding}
@@ -126,7 +138,7 @@ class IngestionUploadTask(
 		}
 
 		UploadTask.revertOnAnyFailure(ownResult, relevantOtherErrors, () => Future{
-			Files.deleteIfExists(file)
+			Files.deleteIfExists(targetFile)
 			Done
 		})
 	}
@@ -135,15 +147,19 @@ class IngestionUploadTask(
 class IngestionSpec(
 	val objSpec: DataObjectSpec,
 	val nRows: Option[Int],
-	val label: Option[String],
+	val objInfo: Option[DataObject],
 	val timeZoneOffset: Option[Int]
-)
+):
+	def label: String = objInfo match
+		case Some(dobj) => s"${dobj.fileName} (${dobj.hash.id})"
+		case None => objSpec.self.label.getOrElse(objSpec.self.uri.toString)
+	
 
 object IngestionSpec{
 	def apply(dobj: DataObject): IngestionSpec = new IngestionSpec(
 		dobj.specification,
 		dobj.specificInfo.toOption.flatMap(_.nRows),
-		Some(dobj.hash.id),
+		Some(dobj),
 		dobj.specificInfo.toOption.flatMap(_.acquisition.station.timeZoneOffset)
 	)
 }
