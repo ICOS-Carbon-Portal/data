@@ -81,7 +81,7 @@ object NetCdfViewService:
 
 		val charDiscrDims: Seq[DiscriminatingDimension] = vars.flatMap{v =>
 			val dt = v.getDataType
-			 if dt == DataType.CHAR || dt == DataType.STRING then
+			if dt == DataType.CHAR || dt == DataType.STRING then
 				val shape = v.getShape
 				if shape.length == 2 && shape(0) <= MaxDiscrDimSize && shape(1) < 500 then
 					varsWithDims.get(v.getShortName).collect{
