@@ -48,7 +48,24 @@ object ObspackNcToBinTable:
 	type TypedVar = (Variable, ValueFormat)
 	private val log = LoggerFactory.getLogger(getClass)
 
-	def makeObspackNcToBinTable(netCdfDataset: NetcdfDataset, colsMeta: ColumnsMeta) =
+	def apply(file: Path, colsMeta: ColumnsMeta): Try[ObspackNcToBinTable] = Try:
+
+		val netCdfDataset =
+			try
+				NetcdfDatasets.openDataset(file.toAbsolutePath.toString, false, null)
+			catch
+				case error => throw new CpDataException(s"Not a valid NetCDF file: ${error.getMessage}")
+
+		try
+			makeObspackNcToBinTable(netCdfDataset, colsMeta)
+		catch
+			case exception =>
+				netCdfDataset.close()
+				log.debug(s"NetCDF dataset ($file) closed, probably due to invalid contents")
+				throw exception
+	end apply
+
+	private def makeObspackNcToBinTable(netCdfDataset: NetcdfDataset, colsMeta: ColumnsMeta) =
 		val allVars = netCdfDataset.getVariables().asScala.toIndexedSeq
 		val varNames = allVars.map(_.getShortName).toSeq
 		val missingVars = colsMeta.findMissingColumns(varNames).map(_.toString)
@@ -136,23 +153,7 @@ object ObspackNcToBinTable:
 			TimeSeriesExtract(ingestionExtract, Some(nRows.toInt)),
 			schema
 		)
-
-	def apply(file: Path, colsMeta: ColumnsMeta): Try[ObspackNcToBinTable] = Try:
-
-		val netCdfDataset =
-			try
-				NetcdfDatasets.openDataset(file.toAbsolutePath.toString, false, null)
-			catch
-				case error => throw new CpDataException(s"Not a valid NetCDF file: ${error.getMessage}")
-
-		try
-			makeObspackNcToBinTable(netCdfDataset, colsMeta)
-		catch
-			case exception =>
-				netCdfDataset.close()
-				log.debug("NetCDF dataset closed")
-				throw exception
-	end apply
+	end makeObspackNcToBinTable
 
 	private def readVal[N <: AnyRef](v: Variable, nullValue: AnyRef, getter: (ucar.ma2.Array, Int) => N): Int => AnyRef =
 		val ncArr = v.read()
