@@ -36,11 +36,10 @@ When developing client code for data upload, one may wish to test data objects f
 With curl, the test can be performed for example as follows:
 
 ```bash
-curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject" \
---upload-file ICOS_ATC_NRT_MTO.zip https://data.icos-cp.eu/tryingest
+curl --upload-file ICOS_ATC_NRT_MTO.zip 'https://data.icos-cp.eu/tryingest?specUri=http://meta.icos-cp.eu/resources/cpmeta/atcMtoL2DataObject'
 ```
 
-or
+or (may not work depending on the curl version or operating system):
 
 ```bash
 curl -G --data-urlencode "specUri=http://meta.icos-cp.eu/resources/cpmeta/inversionModelingSpatial" \
