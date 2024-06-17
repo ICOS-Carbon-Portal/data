@@ -38,7 +38,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 	import config.{ baseUrl, sparqlEndpointPath, uploadApiPath }
 	import MetaClient._
 
-	val sparql = new SparqlClient(new java.net.URL(baseUrl + sparqlEndpointPath))
+	val sparql = new SparqlClient(new java.net.URI(baseUrl + sparqlEndpointPath))
 	def log = system.log
 
 	private def get(uri: Uri, host: Option[String]): Future[HttpResponse] = {

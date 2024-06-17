@@ -3,26 +3,29 @@ package se.lu.nateko.cp.data.api
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.*
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
-import akka.http.scaladsl.model.headers.{Accept, `Cache-Control`, CacheDirectives}
+import akka.http.scaladsl.model.*
+import akka.http.scaladsl.model.headers.Accept
+import akka.http.scaladsl.model.headers.CacheDirectives
+import akka.http.scaladsl.model.headers.`Cache-Control`
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import scala.concurrent.duration.Duration
-import scala.concurrent.Future
-import scala.collection.immutable.Iterable
-import se.lu.nateko.cp.meta.core.sparql.Binding
-import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
-import se.lu.nateko.cp.meta.core.sparql.JsonSupport.given
-import java.net.URL
-import akka.stream.scaladsl.Source
 import akka.stream.scaladsl.Flow
+import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.csv.CsvParser
+import se.lu.nateko.cp.meta.core.sparql.Binding
+import se.lu.nateko.cp.meta.core.sparql.JsonSupport.given
+import se.lu.nateko.cp.meta.core.sparql.SparqlSelectResult
+
+import java.net.URI
+import scala.collection.immutable.Iterable
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
-class SparqlClient(url: URL)(using system: ActorSystem) {
+class SparqlClient(url: URI)(using system: ActorSystem) {
 	import SparqlClient._
 	import system.dispatcher
 
