@@ -13,7 +13,7 @@ const authBaseUri = `https://${window.envriConfig.authHost}`;
 const restheartDbUrls = {
 	ICOS: '//restheart.icos-cp.eu/db/',
 	SITES: '//restheart.icos-cp.eu/sitesdb/',
-	ICOSCities: '//cityrestheart1.icos-cp.eu/pauldb/'
+	ICOSCities: '//cityrestheart.icos-cp.eu/pauldb/'
 };
 
 export default {
