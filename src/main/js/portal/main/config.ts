@@ -264,6 +264,7 @@ export const prefixes: {[key in Envri]: PrefixConfig} = {
 		],
 		ecosystem: 'https://citymeta.icos-cp.eu/ontologies/cpmeta/',
 		submitter: [
+			{ prefix: 'i', value: 'http://meta.icos-cp.eu/resources/organizations/' },
 			{ prefix: 'o', value: 'https://citymeta.icos-cp.eu/resources/organizations/' },
 			{ prefix: 's', value: 'https://citymeta.icos-cp.eu/resources/stations/' }
 		],
