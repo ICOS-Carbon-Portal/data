@@ -73,7 +73,7 @@ class DataCart extends Component<DataCartProps> {
 										<input type="hidden" name="fileName" value={fileName} />
 										<input type="hidden" name="ids" value={hashes} />
 
-										<button className="btn btn-primary" style={{marginBottom: 15, whiteSpace: 'normal'}}>
+										<button className="btn btn-warning" style={{marginBottom: 15, whiteSpace: 'normal'}}>
 											<span className="fas fa-download" style={{marginRight:9}} />Download
 										</button>
 									</form>

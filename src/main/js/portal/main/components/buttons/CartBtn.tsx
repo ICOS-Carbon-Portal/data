@@ -22,7 +22,7 @@ export default class CartBtn extends Component<Props> {
 	render(){
 		const {style, enabled, type, title} = this.props;
 		const btnText = (type === 'remove') ? 'Remove from cart' : 'Add to cart';
-		const btnType = (type === 'remove') ? 'btn-outline-secondary' : 'btn-primary';
+		const btnType = (type === 'remove' || !enabled) ? 'btn-outline-secondary' : 'btn-warning';
 		const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
 		const btnStyle: CSSProperties = enabled ? {} : {pointerEvents: 'auto', cursor: 'not-allowed'};
 

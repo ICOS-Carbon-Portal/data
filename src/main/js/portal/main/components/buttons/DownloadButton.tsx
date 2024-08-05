@@ -14,7 +14,8 @@ export default class DownloadButton extends Component<Props> {
 	render() {
 		const { style, enabled, checkedObjects } = this.props;
 		const link = enabled ? getDownloadLink(checkedObjects) : undefined;
-		const className = `btn btn-primary ${enabled ? "" : "disabled"}`;
+		const btnType = !enabled ? 'btn-outline-secondary' : 'btn-warning';
+		const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
 		const btnStyle: CSSProperties = enabled ? {} : { pointerEvents: 'auto', cursor: 'not-allowed' };
 
 		return (
