@@ -183,9 +183,6 @@ export function addingToCartProhibition(
 	if(dobj.submTime.getTime() > Date.now())
 		return {allowCartAdd: false, uiMessage: "This data object is under moratorium"}
 
-	if (dobj.hasNextVersion)
-		return { allowCartAdd: false, uiMessage: "You should download the newest version" };
-
 	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric)
 		return { allowCartAdd: false, uiMessage: "Raw atmospheric data are only available on request at the moment" };
 
