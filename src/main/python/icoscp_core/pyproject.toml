@@ -6,7 +6,7 @@ build-backend = "flit_core.buildapi"
 name = "icoscp_core"
 authors = [{name = "Oleg Mirzov", email = "oleg.mirzov@nateko.lu.se"}]
 maintainers = [
-	{name = "Klara Broman", email = "klara.broman@nateko.lu.se"},
+	{name = "Oleg Mirzov", email = "oleg.mirzov@nateko.lu.se"},
 	{name = "Jonathan Schenk", email = "jonathan.schenk@nateko.lu.se"},
 ]
 license = {file = "LICENSE"}
@@ -17,7 +17,7 @@ requires-python = ">=3.10"
 dynamic = ["version", "description"]
 dependencies = [
 	"dacite==1.8.1",
-	"numpy>=1.23"
+	"numpy >= 1.23, < 2"
 ]
 [tool.flit.sdist]
 include = ["src/icoscp_core/metacore.py"]
