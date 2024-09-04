@@ -35,25 +35,14 @@ class CpbFetchRouting(
 
 	val extractEnvri = UploadRouting.extractEnvriDirective
 
-	val route = path("portal" / "tabular"){ //to be removed, for data licence compliance
-		post{
-			entity(as[BinTableRequest]){ tableRequest =>
-				respondWithHeaders(`Access-Control-Allow-Origin`.*){
-					returnBinary(tableRequest)
-				}
-			} ~
-			gracefulBadReq(s"Expected a proper binary table request")
-		} ~
-		options{
-			respondWithHeaders(
-				`Access-Control-Allow-Origin`.*,
-				`Access-Control-Allow-Methods`(HttpMethods.POST),
-				`Access-Control-Allow-Headers`("Content-Type")
-			){
-				complete(StatusCodes.OK)
-			}
-		}
-	} ~ // end of the block to be removed
+	val route = path("portal" / "tabular"){
+		complete(
+			StatusCodes.NotFound -> (
+				"Legacy binary access has been discontinued. " +
+				"Please uprade to the latest version of the Python library."
+			)
+		)
+	} ~
 	pathPrefix("cpb") { extractEnvri{envri ?=>
 		val ensureReferrerIsOwnApp = RoutingHelper.ensureReferrerIsOwnAppDir(authRouting.conf)
 		(post & respondWithHeader(`Access-Control-Allow-Credentials`(true))){
