@@ -7,17 +7,18 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport.*
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.marshalling.ToEntityMarshaller
 import akka.http.scaladsl.model.*
+import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.http.scaladsl.unmarshalling.FromEntityUnmarshaller
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.scaladsl.Source
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.MetaServiceConfig
 import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
-import eu.icoscp.envri.Envri
+import se.lu.nateko.cp.meta.core.data.*
 import se.lu.nateko.cp.meta.core.data.EnvriConfigs
 import se.lu.nateko.cp.meta.core.data.JsonSupport.given
-import se.lu.nateko.cp.meta.core.data.*
 import se.lu.nateko.cp.meta.core.etcupload.EtcUploadMetadata
 import se.lu.nateko.cp.meta.core.etcupload.JsonSupport.given
 import se.lu.nateko.cp.meta.core.etcupload.StationId
@@ -28,10 +29,10 @@ import spray.json.JsNumber
 import spray.json.JsValue
 
 import java.net.URI
+import java.time.Instant
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.util.Try
-import java.time.Instant
 
 class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envriConfs: EnvriConfigs):
 	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
@@ -46,7 +47,8 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			HttpRequest(
 				uri = uri,
 				headers = headers.Accept(MediaTypes.`application/json`) :: host.map(headers.Host(_)).toList
-			)
+			),
+			settings = ConnectionPoolSettings(system).withMaxOpenRequests(10000)
 		)
 	}
 
