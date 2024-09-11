@@ -102,11 +102,21 @@ class DownloadRouting(
 		}
 	}
 
+	private def collectCollObjectHashes(collHash: Sha256Sum)(using Envri): Future[(StaticCollection, Seq[Sha256Sum])] =
+		uploadService.meta.lookupCollection(collHash).flatMap: coll =>
+			Future
+				.sequence:
+					coll.members.map:
+						case pso: PlainStaticObject => Future.successful(Seq(pso.hash))
+						case psc: PlainStaticCollection =>
+							collectCollObjectHashes(psc.hash).map(_._2)
+				.map(_.flatten)
+				.map(coll -> _)
+
+
 	private val collectionDownload: Route = requireShaHash{ hashsum =>
 		extractEnvri{
-			onSuccess(uploadService.meta.lookupCollection(hashsum)){ coll =>
-
-				val hashes = collectMembers(coll).map(_.hash)
+			onSuccess(collectCollObjectHashes(hashsum)){ (coll, hashes) =>
 
 				val licenceCheck = batchLicenceCheck(hashes, _.contains(hashsum)){licUris =>
 					//TODO Make the licence-accept redirect convey the list of licences
@@ -360,11 +370,6 @@ object DownloadRouting{
 
 	def withBestAvailableIp(userProvidedIp: Option[String]): Directive1[String] =
 		userProvidedIp.flatMap(toGoodIpAddress).fold(getClientIp)(provide)
-
-	def collectMembers(item: StaticDataItem): Seq[PlainStaticObject] = item match{
-		case pso: PlainStaticObject => Seq(pso)
-		case coll: StaticCollection => coll.members.flatMap(collectMembers)
-	}
 
 	private val extractHashsums: Directive1[Seq[Sha256Sum]] = extractStrictEntity(1.second).flatMap{entity =>
 		try{

@@ -63,7 +63,9 @@ class StatsIndex(sizeHint: Int):
 	val dlYearIndices = mutable.Map.empty[Int, MutableRoaringBitmap]
 	val downloadedObjects = BufferWithDefault[Int](sizeHint, 0)
 	val downloadInstants = BufferWithDefault[Long](sizeHint, -1L)
-	val dlTimeIndex = DatetimeHierarchicalBitmap(downloadInstants.apply)
+	val dlTimeIndex =
+		val dtGeo = DatetimeHierarchicalBitmap.DateTimeGeo(downloadInstants.apply)
+		DatetimeHierarchicalBitmap(dtGeo)
 	val isWhiteDownload = new MutableRoaringBitmap
 	val allDownloads = new MutableRoaringBitmap
 	var countDobj: Int = 0
