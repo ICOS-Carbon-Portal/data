@@ -4,7 +4,8 @@ from .queries.speclist import dobj_spec_lite_list, parse_dobj_spec_lite, DobjSpe
 from .queries.dataobjlist import DataObjectLite, parse_dobj_lite, dataobj_lite_list
 from .queries.dataobjlist import Filter, OrderBy, OrderByProp, CategorySelector
 from .queries.stationlist import station_lite_list, parse_station, StationLite
-from .metacore import DataObject as VanillaDataObject, CPJson, StaticCollection, parse_cp_json
+from .metacore import CPJson, parse_cp_json
+from .metacore import DataObject as VanillaDataObject, StaticCollection as VanillaStaticCollection
 from .rolemeta import StationWithStaff
 from .geofeaturemeta import GeoFeatureWithGeo, Point
 from .http import http_request
@@ -20,12 +21,15 @@ _needed_method = box_intersect
 
 @dataclass(frozen=True)
 class DataObject(VanillaDataObject):
-	coverageGeo: Any
+	coverageGeo: dict[str, Any]
+
+@dataclass(frozen=True)
+class StaticCollection(VanillaStaticCollection):
+	coverage: Optional[GeoFeatureWithGeo]
 
 @dataclass(frozen=True)
 class Station(StationWithStaff):
 	coverage: Optional[GeoFeatureWithGeo]
-
 
 class MetadataClient:
 	def __init__(self, envri_conf: EnvriConfig):

@@ -2,6 +2,15 @@
 
 A foundational ICOS Carbon Portal (CP) core products Python library for metadata and data access, designed to work with multiple data repositories who use ICOS Carbon Portal core server software stack to host and serve their data. At the moment, three repositories are supported: [ICOS](https://data.icos-cp.eu/portal/), [SITES](https://data.fieldsites.se/portal/), and [ICOS Cities](https://citydata.icos-cp.eu/portal/).
 
+## Release notes
+
+### Version 0.3.6
+Update to support collection metadata enhancements
+- `parentCollections` property added to `StaticCollection` class (through automatic code import from meta-core Scala lib jar)
+- `coverage` property added to `StaticCollection` (manually re-declared as `Optional[GeoFeatureWithGeo]` to include GeoJSON)
+- code examples for `meta.get_collection_meta` updated accordingly
+- `StaticCollection.members` property content has been made more lightweight in the case of presence of sub-collections (server change, applied to this library through automatic code import). The values can now be either `PlainStaticObject` or `PlainStaticCollection`, both lightweight classes. They have different fields (`name` vs `title`, respectively), so should be tested at runtime, as collections can contain both objects and other collections.
+
 ## Design goals
 
 - offer basic functionality with good performance
@@ -191,16 +200,31 @@ dobj_meta = meta.get_dobj_meta(dobj_uri)
 ```
 
 ### Fetch metadata for a collection
-Some data objects belong to collections. Collections can also contain other collections. Collections can be discovered on the data portal app, or from individual data object metadata (as parent collections), for example:
+Some data objects belong to collections. Collections can also contain other collections. Collections can be discovered on the data portal app, or from individual data object metadata (as parent collections), and then traversed to the top of the collection hierarchy, for example:
 ```Python
 dobj = meta.get_dobj_meta('https://meta.icos-cp.eu/objects/hujSGCfmNIRdxtOcEvEJLxGM')
-coll_uri = dobj.parentCollections[0].uri
-coll_meta = meta.get_collection_meta(coll_uri)
+coll_info = dobj.parentCollections[0]
+coll_label = coll_info.label
+coll_2010 = meta.get_collection_meta(coll_info.uri)
+coll_evapo_info = coll_2010.parentCollections[0]
+coll_evapo = meta.get_collection_meta(coll_evapo_info.uri)
+evapo_years = coll_evapo.members
+top_coll_info = coll_evapo.parentCollections[0]
+top_coll = meta.get_collection_meta(top_coll_info.uri)
+top_subcols = top_coll.members
+```
+
+Collections contain optional geo-coverage information in a property `coverage`. The value is from a custom `GeoFeature` class hierarchy, ehnanced with a GeoJSON-containing property `geo`, for example:
+
+```Python
+tukuma_coll = meta.get_collection_meta("https://meta.icos-cp.eu/collections/iCa6EQA8ClDKSvXgQMuwFAon")
+tukuma_geo = tubuma_coll.coverage
+tukuma_geojson = tukuma_geo.geo
 ```
 
 ### Note
 
-Detailed help on the available metadata access methods can be obtained from `help(meta)` call.
+Detailed help on the available metadata access methods can be obtained from `help(meta)` call, and then by calling help on the input and return types of the methods of interest.
 
 ## Repository-specific functionality
 

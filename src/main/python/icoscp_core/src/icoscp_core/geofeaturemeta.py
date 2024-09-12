@@ -12,7 +12,7 @@ from .metacore import (
 
 @dataclass(frozen=True)
 class GeoJsonHolder:
-	geo: Any
+	geo: dict[str, Any]
 
 @dataclass(frozen=True)
 class FeatureCollectionWithGeo(FeatureCollection, GeoJsonHolder): pass
