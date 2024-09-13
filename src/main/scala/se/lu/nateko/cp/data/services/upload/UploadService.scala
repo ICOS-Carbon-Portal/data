@@ -63,7 +63,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def getSink(hash: Sha256Sum, user: UserId)(using Envri): Future[DataObjectSink] = {
 		for(
-			dObj <- meta.lookupPackage(hash);
+			dObj <- meta.lookupObject(hash);
 			_ <- meta.userIsAllowedUpload(dObj, user);
 			sink <- getSpecificSink(dObj) //dObj has a complete hash (not truncated)
 		) yield sink
@@ -102,7 +102,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def reingest(hash: Sha256Sum, user: UserId)(implicit envri: Envri): Future[Done] =
 		for(
-			obj <- meta.lookupPackage(hash);
+			obj <- meta.lookupObject(hash);
 			dataObj = obj.asDataObject.getOrElse{
 				throw new CpDataException("Reingestion is only supported for DataObjects, not any StaticObjects")
 			};
@@ -129,7 +129,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	def getEtcSink(hash: Sha256Sum): Future[DataObjectSink] = {
 		implicit val envri = Envri.ICOS
-		meta.lookupPackage(hash).flatMap(getSpecificSink)
+		meta.lookupObject(hash).flatMap(getSpecificSink)
 	}
 
 	def getFile(dataObj: StaticObject, fallbackToReadonlyIfNotExists: Boolean): File =

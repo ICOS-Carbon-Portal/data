@@ -50,7 +50,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		val destiniesSource: Source[FileDestiny, NotUsed] = Source(hashes.toList)
 			.flatMapConcat{
 				hash => Source.future(
-					upload.meta.lookupPackage(hash).andThen{
+					upload.meta.lookupObject(hash).andThen{
 						case Failure(err) =>
 							log.error(err, s"Could not retrieve metadata for ${hash.id}")
 					}

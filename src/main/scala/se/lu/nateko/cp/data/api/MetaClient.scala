@@ -63,11 +63,8 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 	private def hostOpt(using envri: Envri): Option[String] =
 		envriConfs.get(envri).map(_.metaHost)
 
-	def lookupPackage(hash: Sha256Sum)(using Envri): Future[StaticObject] =
+	def lookupObject(hash: Sha256Sum)(using Envri): Future[StaticObject] =
 		lookupItem[StaticObject](hash, objectPathPrefix)
-
-	def lookupCollection(hash: Sha256Sum)(using Envri): Future[StaticCollection] =
-		lookupItem[StaticCollection](hash, collectionPathPrefix)
 
 	private def lookupItem[T](hash: Sha256Sum, pathPrefix: String)(using Envri, FromEntityUnmarshaller[T]): Future[T] = {
 		val url = baseUrl + pathPrefix + hash.id
@@ -86,6 +83,46 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 			extractIfSuccess(Unmarshal(_).to[DataObjectSpec])
 		}
 	}
+
+	/**
+	  * Looks up lightweight representation for a collection and its descendants (direct and indirect members).
+	  * Runs two parallel SPARQL queries.
+
+	  * @param hash the Sha256Sum id of the collection
+	  * @return Future with a tuple of PlainStaticCollection and a sequence of PlainStaticItem for the descendants
+	  */
+	def lookupCollection(hash: Sha256Sum)(using Envri): Future[(PlainStaticCollection, Seq[PlainStaticItem])] =
+		withEnvriConfig:
+			val collUri = staticCollLandingPage(hash)
+			val titleQuery = s"""prefix dcterms: <http://purl.org/dc/terms/>
+				|select * where{
+				|	<$collUri> dcterms:title ?title
+				|}""".stripMargin
+			val collFut = sparql.selectMap(titleQuery)(
+				_.get("title").collect:
+					case BoundLiteral(title, _) => PlainStaticCollection(collUri, hash, title)
+			).map(_.head)
+			val descendantsQuery = s"""prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+				|prefix dcterms: <http://purl.org/dc/terms/>
+				|select * where{
+				|	<$collUri> dcterms:hasPart+ ?desc .
+				|	{
+				|		{?desc a cpmeta:DataObject ; cpmeta:hasName ?name} UNION
+				|		{?desc a cpmeta:Collection ; dcterms:title ?title}
+				|	}
+				|}""".stripMargin
+			val membersFut = sparql.selectMap(descendantsQuery): binding =>
+				val membUri = binding.get("desc").collect{case BoundUri(uri) => uri}.get
+				val membHash = Sha256Sum.fromBase64Url(membUri.getPath.split("/").last).get
+
+				binding.get("name")
+					.collect:
+						case BoundLiteral(name, _) => PlainStaticObject(membUri, membHash, name)
+					.orElse:
+						binding.get("title").collect:
+							case BoundLiteral(title, _) => PlainStaticCollection(membUri, membHash, title)
+			collFut.zip(membersFut)
+	end lookupCollection
 
 	/**
 	 * returns Some(format) for data objects, None for document objects, fails for rest
@@ -168,7 +205,7 @@ class MetaClient(config: MetaServiceConfig)(using val system: ActorSystem, envri
 	def listLicences(objHashes: Seq[Sha256Sum])(using Envri): Future[Seq[URI]] = withEnvriConfig{
 		val query = s"""select distinct ?lic where{
 			|	values ?dobj {
-			|		${objHashes.map(CpMetaVocab.getDataObject).mkString("<", ">\n\t\t<", ">")}
+			|		${objHashes.map(staticObjLandingPage).mkString("<", ">\n\t\t<", ">")}
 			|	}
 			|	?dobj <http://purl.org/dc/terms/license> ?lic
 			|}""".stripMargin

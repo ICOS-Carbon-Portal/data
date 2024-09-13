@@ -104,7 +104,7 @@ class ZipRouting(
 					}
 				} ~
 				path("extractFile" / Remaining) { filePath =>
-					onComplete(upload.meta.lookupPackage(hash)) {
+					onComplete(upload.meta.lookupObject(hash)) {
 						case Failure(e) => complete(StatusCodes.NotFound -> e)
 						case Success(dobj) => downloadService.inaccessibilityReason(dobj).fold{
 							userOpt{uidOpt =>

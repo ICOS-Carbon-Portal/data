@@ -16,7 +16,7 @@ import se.lu.nateko.cp.data.utils.akka.{done => ok}
 import se.lu.nateko.cp.meta.core.data.DataObject
 import se.lu.nateko.cp.meta.core.data.DocObject
 import eu.icoscp.envri.Envri
-import se.lu.nateko.cp.meta.core.data.StaticCollection
+import se.lu.nateko.cp.meta.core.data.PlainStaticCollection
 import se.lu.nateko.cp.meta.core.data.StaticObject
 import spray.json.*
 
@@ -94,7 +94,7 @@ class RestHeartClient(
 	def saveDownload(dobj: DataObject, uid: UserId)(using Envri): Future[Done] =
 		patchUserDoc(uid, "dobjDownloads", getDownloadItem(dobj), "data object download")
 
-	def saveDownload(coll: StaticCollection, uid: UserId)(using Envri): Future[Done] =
+	def saveDownload(coll: PlainStaticCollection, uid: UserId)(using Envri): Future[Done] =
 		val item = JsObject(
 			"time" -> JsString(java.time.Instant.now().toString),
 			"title" -> JsString(coll.title),

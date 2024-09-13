@@ -45,6 +45,7 @@ import LicenceRouting.LicenceCookieName
 import LicenceRouting.UriLicenceProfile
 import LicenceRouting.parseLicenceCookie
 import se.lu.nateko.cp.data.api.MetadataObjectNotFound
+import se.lu.nateko.cp.data.Main.metaClient
 
 class DownloadRouting(
 	authRouting: AuthRouting, downloadService: DownloadService,
@@ -66,7 +67,7 @@ class DownloadRouting(
 	private val objectDownload: Route = requireShaHash{ hashsum =>
 		extractEnvri{
 			userOpt{uidOpt =>
-				onComplete(uploadService.meta.lookupPackage(hashsum)){
+				onComplete(uploadService.meta.lookupObject(hashsum)){
 					case Success(dobj: DataObject) =>
 						licenceCookieHashsums{ hashes =>
 							deleteCookie(LicenceCookieName){
@@ -102,21 +103,11 @@ class DownloadRouting(
 		}
 	}
 
-	private def collectCollObjectHashes(collHash: Sha256Sum)(using Envri): Future[(StaticCollection, Seq[Sha256Sum])] =
-		uploadService.meta.lookupCollection(collHash).flatMap: coll =>
-			Future
-				.sequence:
-					coll.members.map:
-						case pso: PlainStaticObject => Future.successful(Seq(pso.hash))
-						case psc: PlainStaticCollection =>
-							collectCollObjectHashes(psc.hash).map(_._2)
-				.map(_.flatten)
-				.map(coll -> _)
-
-
 	private val collectionDownload: Route = requireShaHash{ hashsum =>
 		extractEnvri{
-			onSuccess(collectCollObjectHashes(hashsum)){ (coll, hashes) =>
+			onSuccess(metaClient.lookupCollection(hashsum)){ (coll, members) =>
+				val hashes = members.collect:
+					case pso: PlainStaticObject => pso.hash
 
 				val licenceCheck = batchLicenceCheck(hashes, _.contains(hashsum)){licUris =>
 					//TODO Make the licence-accept redirect convey the list of licences
@@ -270,7 +261,7 @@ class DownloadRouting(
 		("distributor" -> thirdParty) :: endUser.filterNot(_.trim.isEmpty).map{"endUser" -> _}.toList
 
 		Utils.runSequentially(hashes.distinct){hash =>
-			uploadService.meta.lookupPackage(hash).transformWith{
+			uploadService.meta.lookupObject(hash).transformWith{
 				case Success(dobj: DataObject) =>
 					logPublicDownloadInfo(dobj, ip, None, Some(thirdParty), endUser)
 					done
@@ -296,7 +287,7 @@ class DownloadRouting(
 		logClient.logDl(dlInfo, ip)
 
 
-	private def logCollDownload(coll: StaticCollection)(using Envri): ExtraBatchLog = (ip, uidOpt) => {
+	private def logCollDownload(coll: PlainStaticCollection)(using Envri): ExtraBatchLog = (ip, uidOpt) => {
 		val dlInfo = CollectionDownloadInfo(
 			time = Instant.now(),
 			hashId = coll.res.getPath.split("/").last,
