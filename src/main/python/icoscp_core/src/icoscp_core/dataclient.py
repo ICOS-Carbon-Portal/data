@@ -2,7 +2,7 @@ import os
 import re
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator, Tuple, Any
+from typing import Iterator, Tuple
 
 from .metaclient import MetadataClient
 from .metacore import DataObject

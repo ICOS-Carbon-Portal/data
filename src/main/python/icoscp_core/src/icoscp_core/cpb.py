@@ -334,7 +334,7 @@ def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 		return arr
 
 
-_fmt_to_dtype = {
+_fmt_to_dtype: dict[str, np.dtype[Any]] = {
 	'INT': np.dtype('>i4'),
 	'FLOAT': np.dtype('>f4'),
 	'DOUBLE': np.dtype('>f8'),
@@ -343,7 +343,7 @@ _fmt_to_dtype = {
 	'BYTE': np.dtype('i8'),
 }
 
-def _get_format_dtype(fmt: str):
+def _get_format_dtype(fmt: str) -> np.dtype[Any]:
 	try:
 		return _fmt_to_dtype[fmt]
 	except KeyError:
