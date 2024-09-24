@@ -21,8 +21,7 @@ def report_cpb_file_read(conf: EnvriConfig, hashes: list[str], columns: list[str
 
 def _report_sync(conf: EnvriConfig, payload: dict[str, Any]) -> None:
 	url = conf.auth_service_base_url + 'logs/portaluse'
-	headers = {"Content-Type": "application/json"}
 	try:
-		http_request(url, f"Reporting data usage event to {url}", "POST", headers, payload)
+		http_request(url, "Reporting data usage event", "POST", data=payload)
 	except Exception as err:
 		logging.warning(str(err))

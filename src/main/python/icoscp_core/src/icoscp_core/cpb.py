@@ -163,7 +163,7 @@ class Codec:
 				f"minus the value provided for the 'offset' parameter ({ci.offset})"
 			)
 
-		json = {
+		json: dict[str, Any] = {
 			"tableId": ci.dobj_hash_id,
 			"subFolder": _subfolder_path(ci),
 			"schema": {

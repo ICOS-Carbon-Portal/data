@@ -12,7 +12,7 @@ from .auth import AuthTokenProvider
 from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
 from .cpb import Dobj, dobj_uri
 from .portaluse_client import report_cpb_file_read
-from .http import http_request, HTTPResponse
+from .http import http_auth_request, HTTPResponse
 
 
 class DataClient:
@@ -52,7 +52,7 @@ class DataClient:
 
 		dobj_uri = to_dobj_uri(dobj)
 		url = self._conf.data_service_base_url + urlsplit(dobj_uri).path
-		resp = self._auth_get(url, 'fetching data object')
+		resp = http_auth_request(url, 'fetching data object', self._auth)
 
 		filename: str
 		if type(dobj) is DataObjectLite:
@@ -128,10 +128,11 @@ class DataClient:
 
 		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
 
-		return self._auth_get(
+		return http_auth_request(
 			url = self._conf.data_service_base_url + "/csv/" + dobj_hash,
 			error_hint = 'fetching CSV',
-			params = {
+			auth=self._auth,
+			data={
 				"col": cols,
 				"offset": offset,
 				"limit": limit
@@ -231,19 +232,16 @@ class DataClient:
 	def _get_columns_as_arrays(self, codec: Codec, keep_bad_data: bool) -> ArraysDict:
 		if self._data_folder_path is not None:
 			return codec.parse_cpb_file(self._data_folder_path, keep_bad_data)
-		headers = {
-			"Accept": "application/octet-stream",
-			"Content-Type": "application/json",
-			"Cookie": self._auth.get_token().cookie_value
-		}
-		url = self._conf.data_service_base_url + '/cpb'
-		resp = http_request(url, "Fetching binary from " + url, "POST", headers, codec.json_payload)
+
+		resp = http_auth_request(
+			url=self._conf.data_service_base_url + '/cpb',
+			error_hint="Fetching binary",
+			auth=self._auth,
+			method="POST",
+			headers={"Accept": "application/octet-stream"},
+			data=codec.json_payload
+		)
 		return codec.parse_cpb_response(resp.fp, keep_bad_data)
-
-
-	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> HTTPResponse:
-		headers = {"Cookie": self._auth.get_token().cookie_value}
-		return http_request(url, f"{error_hint} from {url}", "GET", headers, params)
 
 
 def to_dobj_uri(dobj: str | DataObjectLite) -> str:
