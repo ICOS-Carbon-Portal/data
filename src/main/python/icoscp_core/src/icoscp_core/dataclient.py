@@ -181,7 +181,7 @@ class DataClient:
 		res = self._get_columns_as_arrays(codec, keep_bad_data)
 
 		if self._data_folder_path is not None:
-			report_cpb_file_read(self._conf, hashes = [dobj.hash[:24]], columns=columns)
+			report_cpb_file_read(self._conf, self._auth, hashes = [dobj.hash[:24]], columns=columns)
 
 		return res
 
@@ -223,7 +223,7 @@ class DataClient:
 
 		if self._data_folder_path is not None:
 			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
-			report_cpb_file_read(self._conf, hashes=hashes, columns=columns)
+			report_cpb_file_read(self._conf, self._auth, hashes=hashes, columns=columns)
 
 		for dobj, codec in dobj_codecs:
 			yield dobj, self._get_columns_as_arrays(codec, keep_bad_data)
