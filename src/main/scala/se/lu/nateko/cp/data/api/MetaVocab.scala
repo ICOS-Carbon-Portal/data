@@ -54,12 +54,6 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
 
-	object ObjectFormats{
-		val communityProjects = getRelative("communityProjects")
-
-		def isNonIngestedZip(objFormat: URI): Boolean = objFormat == communityProjects
-	}
-
 	val sitesDelimitedHeaderCsvTimeSer = getRelative("delimitedHeaderCsv")
 	val ccby4 = getRelative("sitesLicence")
 }
