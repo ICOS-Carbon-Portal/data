@@ -77,7 +77,9 @@ export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "s
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	const siteQueries = config.envri === "SITES"
-		? `?site cpmeta:hasEcosystemType ?ecosystem .\n\t?site cpmeta:hasSpatialCoverage ?location .`
+		? `BIND (COALESCE(?site, <http://dummy>) as ?boundSite)
+	OPTIONAL {?boundSite cpmeta:hasEcosystemType ?ecosystem}
+	OPTIONAL {?boundSite cpmeta:hasSpatialCoverage ?location}`
 		: `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
 	OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
 	OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}
