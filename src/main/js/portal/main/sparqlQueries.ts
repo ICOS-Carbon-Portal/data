@@ -130,6 +130,10 @@ prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
 select ?uri ?label ?comment ?stationId ?webpage
 ${fromOntoAndResAndStations}where {
+	?class a owl:Class .
+	filter (?class not in (cpmeta:DataObject, cpmeta:DataSubmission, cpmeta:DataAcquisition, cpmeta:DataProduction,
+		cpmeta:DocumentObject, cpmeta:Instrument, cpmeta:Membership, cpmeta:SpatialCoverage, owl:Thing)
+	)
 	?uri a ?class .
 	optional {?uri rdfs:label ?rdfsLabel }
 	optional {?uri cpmeta:hasName ?name}
