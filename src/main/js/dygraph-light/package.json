@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "dygraphs": "^2.2.1",
-    "icos-cp-backend": "0.5.3",
+    "icos-cp-backend": "^0.5.4",
     "icos-cp-spinner": "^0.1.6"
   }
 }
