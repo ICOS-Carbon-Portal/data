@@ -132,7 +132,7 @@ select ?uri ?label ?comment ?stationId ?webpage
 ${fromOntoAndResAndStations}where {
 	?class a owl:Class .
 	filter (?class not in (cpmeta:DataObject, cpmeta:DataSubmission, cpmeta:DataAcquisition, cpmeta:DataProduction,
-		cpmeta:DocumentObject, cpmeta:Instrument, cpmeta:Membership, cpmeta:SpatialCoverage, owl:Thing)
+		cpmeta:DocumentObject, cpmeta:Instrument, cpmeta:Membership, owl:Thing)
 	)
 	?uri a ?class .
 	optional {?uri rdfs:label ?rdfsLabel }
