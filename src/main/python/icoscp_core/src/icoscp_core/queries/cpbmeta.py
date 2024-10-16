@@ -55,7 +55,7 @@ def get_dataset_cols(dataset_spec: URI, meta: MetadataClient) -> list[DatasetCol
 			optional{{?col cpmeta:isRegexColumn ?isRegex}}
 			optional{{
 				?flagCol cpmeta:isQualityFlagFor ?col ; cpmeta:hasColumnTitle ?flagColTitle .
-				filter exists {{ <{dataset_spec}> cpmeta:hasColumn ?flagCol }}
+				<{dataset_spec}> cpmeta:hasColumn ?flagCol .
 			}}
 		}}"""
 	return [
