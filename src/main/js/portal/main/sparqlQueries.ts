@@ -203,10 +203,7 @@ VALUES ?dobj { ${values} }
 ?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
 BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-OPTIONAL {
-	BIND ("true"^^xsd:boolean as ?hasVarInfo)
-	filter exists{?dobj cpmeta:hasActualVariable [] }
-}
+BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 }`;
 
 	return { text };
@@ -488,7 +485,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 	OPTIONAL{ ?dobj dcterms:title ?title }
 	OPTIONAL{ ?dobj dcterms:description ?description }
 	OPTIONAL{ ?dobj cpmeta:hasActualColumnNames ?columnNames }
-	OPTIONAL{ ?dobj cpmeta:hasActualVariable [].BIND ("true"^^xsd:boolean as ?hasVarInfo) }
+	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 	OPTIONAL{ ?dobj cpmeta:hasBiblioInfo ?biblioInfo}
 }`;
 
