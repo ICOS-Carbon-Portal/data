@@ -121,7 +121,8 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 			specTable.columnMeta.getColumnValuesFilter("spec")
 		]),
 		stations: originsStationFilter,
-		sites: specTable.getColumnValuesFilter('site'),
+		sites: specTable.origins
+			.filteredColumns.every(col => col == "location") ? specTable.getColumnValuesFilter('site') : null,
 		submitters: specTable.getFilter('submitter')
 	});
 };
