@@ -122,7 +122,7 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 		]),
 		stations: originsStationFilter,
 		sites: specTable.origins
-			.filteredColumns.every(col => col == "location") ? specTable.getColumnValuesFilter('site') : null,
+			.filteredColumns.includes("location") ? specTable.getColumnValuesFilter('site') : null,
 		submitters: specTable.getFilter('submitter')
 	});
 };
