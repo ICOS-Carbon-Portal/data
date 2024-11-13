@@ -477,7 +477,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 			}
 			OPTIONAL{
 				?coll dcterms:hasPart ?dobj ; cpmeta:hasDoi ?doi .
-				filter not exists{
+				optional{
 					?newerColl cpmeta:isNextVersionOf ?coll .
 					{
 						{?newerColl cpmeta:hasDoi ?doi }
@@ -485,6 +485,7 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 						{?newerColl dcterms:hasPart ?dobj ; cpmeta:hasDoi []}
 					}
 				}
+				filter(!bound(?newerColl))
 			}
 			OPTIONAL{ ?dobj cpmeta:hasObjectSpec/rdfs:comment ?specComment }
 		}
