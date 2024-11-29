@@ -71,31 +71,28 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		HttpRequest(uri = collUri, method = HttpMethods.POST, entity = form.toEntity)
 	}.flatMap(failIfNotSuccess)
 
+	//TODO Use hashsum from the response directly, if available, when available, instead of fetching with an extra round-trip
 	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Sha256Sum] =
 		if(config.dryRun)
 			source.viaMat(DigestFlow.sha256)(Keep.right).to(Sink.ignore).run()
 		else
 			withAuth(objUploadHttpRequest(obj, source))
 				.flatMap(discardPayloadFailIfNotSuccess)
-				.flatMap{resp =>
-					Future.fromTry(extractHashsum(resp))
-				}
+				.flatMap(_ => getHashsum(obj))
 
-	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] = {
-		val in = Flow.apply[UploadRequest[T]].map(ur => objUploadHttpRequest(ur.obj, ur.src) -> ur.context)
+	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] =
+		val in = Flow.apply[UploadRequest[T]].map: ur =>
+			objUploadHttpRequest(ur.obj, ur.src) -> (ur.context, ur.obj)
 
-		val out = innerReqFlow[T].mapAsyncUnordered(1){
-			case (respTry, context) =>
+		val out = innerReqFlow[(T, IrodsData)].mapAsyncUnordered(1):
+			case (respTry, (context, obj)) =>
 				Future.fromTry(respTry)
 					.flatMap(discardPayloadFailIfNotSuccess)
-					.transform{
-						(respTry: Try[HttpResponse]) => Success(
-							new UploadResponse[T](context, respTry.flatMap(extractHashsum))
-						)
-					}
-		}
+					.flatMap(_ => getHashsum(obj))
+					.transform:
+						hashTry => Success(new UploadResponse[T](context, hashTry))
 		in via out
-	}
+
 
 	private def innerReqFlow[T]: Flow[(HttpRequest, T), (Try[HttpResponse], T), Any] = {
 		val auth = Uri(config.baseUrl).authority
@@ -112,15 +109,6 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
 		val entity = Multipart.FormData(op, lpath, bytes).toEntity()
 		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = entity)
-
-
-	// private def extractHashsum(resp: HttpResponse): Try[Sha256Sum] = resp.headers
-	// 	.collectFirst:
-	// 		case header if header.is("x-checksum") =>
-	// 			Sha256Sum.fromBase64(header.value.stripPrefix("sha2:"))
-	// 	.getOrElse:
-	// 		val msg = s"No X-Checksum header in ${resp.status.intValue} HTTP response from B2SAFE"
-	// 		Failure(new CpDataException(msg))
 
 
 	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))
@@ -175,21 +163,26 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 					resp.status.isSuccess()
 
 
-	def getHashsum(data: IrodsData): Future[Option[Sha256Sum]] =
-		if(config.dryRun)
-			Future.successful(None)
+	def getHashsumOpt(data: IrodsData): Future[Option[Sha256Sum]] =
+		if config.dryRun then Future.successful(None)
 		else
-			val q = Uri.Query("op" -> "calculate_checksum", "lpath" -> data.path)
-			withAuth(HttpRequest(uri = objUri.withQuery(q))).flatMap: resp =>
+			requestHashsum(data).flatMap: resp =>
 				if resp.status == StatusCodes.NotFound then
 					resp.discardEntityBytes()
 					Future.successful(None)
-				else analyzeResponse(resp): resp =>
-					Unmarshal(resp).to[Checksum].flatMap: cs =>
-						Future.fromTry:
-							Sha256Sum.fromBase64(cs.checksum.stripPrefix("sha2:"))
-								.map(Option(_))
+				else parseHashsum(resp).map(Option(_))
 
+	def getHashsum(data: IrodsData): Future[Sha256Sum] = requestHashsum(data).flatMap(parseHashsum(_))
+
+	private def requestHashsum(data: IrodsData): Future[HttpResponse] =
+		val q = Uri.Query("op" -> "calculate_checksum", "lpath" -> data.path)
+		withAuth(HttpRequest(uri = objUri.withQuery(q)))
+
+	private def parseHashsum(resp: HttpResponse): Future[Sha256Sum] =
+		analyzeResponse(resp):
+			Unmarshal(_).to[Checksum].flatMap: cs =>
+				Future.fromTry:
+					Sha256Sum.fromBase64(cs.checksum.stripPrefix("sha2:"))
 
 	private val basicAuthHeader = headers.Authorization(
 		BasicHttpCredentials(config.username, config.password)
