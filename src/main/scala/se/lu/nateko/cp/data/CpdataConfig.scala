@@ -37,6 +37,13 @@ case class B2SafeConfig(
 	dryRun: Boolean
 )
 
+case class IRODSConfig(
+	baseUrl: String,
+	username: String,
+	password: String,
+	dryRun: Boolean
+)
+
 case class CredentialsConfig(username: String, password: String)
 
 case class UploadConfig(
