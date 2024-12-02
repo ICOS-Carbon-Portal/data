@@ -21,7 +21,10 @@ trait ParsingAccumulator {
 }
 
 case class TableRowHeader(columnNames: Array[String], nRows: Int)
-case class TableRow(header: TableRowHeader, cells: Array[String])
+case class TableRow(header: TableRowHeader, cells: Array[String]):
+	override def toString(): String = header.columnNames.zip(cells)
+		.map((col, value) => s"$col -> $value")
+		.mkString("[", ", ", "]")
 
 object TableRow{
 	def empty(nRows: Int) = TableRow(TableRowHeader(Array.empty, nRows), Array.empty)
