@@ -20,7 +20,7 @@ import scala.concurrent.Future
 
 class B2SafeUploadTask private (hash: Sha256Sum, irodsData: IrodsData, client: B2SafeClient)(implicit ctxt: ExecutionContext) extends UploadTask{
 
-	private[this] val existsFut: Future[Boolean] = client.getHashsum(irodsData).flatMap{
+	private val existsFut: Future[Boolean] = client.getHashsum(irodsData).flatMap{
 		case Some(`hash`) => Future.successful(true)
 		case _ => client.create(irodsData.parent).map(_ => false)
 	}

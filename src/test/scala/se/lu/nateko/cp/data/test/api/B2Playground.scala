@@ -1,41 +1,47 @@
 package se.lu.nateko.cp.data.test.api
 
-import se.lu.nateko.cp.data.api.*
-import akka.util.ByteString
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import scala.concurrent.Future
+import akka.util.ByteString
+import se.lu.nateko.cp.data.ConfigReader
+import se.lu.nateko.cp.data.api.*
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
 
-object B2Playground{
-	import akka.actor.ActorSystem
-	import akka.stream.Materializer
-	import scala.concurrent.Await
-	import scala.concurrent.duration.DurationInt
-	import se.lu.nateko.cp.data.ConfigReader
+object B2Playground:
 
-	implicit private val system: ActorSystem = ActorSystem("B2StageClient")
+	private given system: ActorSystem = ActorSystem("B2StageClient")
 	system.log
-	implicit val dispatcher: ExecutionContextExecutor = system.dispatcher
+	given ExecutionContextExecutor = system.dispatcher
 	private val http = akka.http.scaladsl.Http()
 
 	def stop() = system.terminate()
 
-	val b2config = ConfigReader.getDefault.upload.b2safe.copy(dryRun = false)
-	val default = new B2SafeClient(b2config, http)
+	val uplConfig = ConfigReader.getDefault.upload
+	//val b2config = uplConfig.b2safe.copy(dryRun = false)
+	val irodsConfig = uplConfig.irods.copy(dryRun = false)
+	val default = new IRODSClient(irodsConfig, http)//new B2SafeClient(b2config, http)
 
 	def list(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
-		items.runForeach(println)
+		//items.runForeach(println)
+		items.foreach(println)
 	}
 
 	def listRoot() = {
 		val items = Await.result(default.list(B2SafeItem.Root), 5.seconds)
-		items.runForeach(println)
+		//items.runForeach(println)
+		items.foreach(println)
 	}
 
 	def countItems(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)): Future[Int] = {
-		default.list(IrodsColl(path, parent)).flatMap{
-			_.runFold(0)((sum, _) => sum + 1)
+		default.list(IrodsColl(path, parent)).map{
+			//_.runFold(0)((sum, _) => sum + 1)
+			_.size
 		}
 	}
 
@@ -82,4 +88,4 @@ object B2Playground{
 //		val sumSink = Sink.fold[Int, Int](0)(_ + _)
 //		Source.fromIterator(() => Iterator.fill(42)(42)).wireTapMat(asyncSink)(Keep.right).toMat(sumSink)(Keep.both).run()
 //	}
-}
+end B2Playground

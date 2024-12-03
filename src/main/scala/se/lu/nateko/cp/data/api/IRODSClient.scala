@@ -45,11 +45,11 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	import mat.executionContext
 	import IRODSClient.{_, given}
 
-	private var authToken: Future[String] = fetchToken()
-
 	val objUri = getUri("/data-objects")
 	val collUri = getUri("/collections")
 	val authUri = getUri("/authenticate")
+
+	private var authToken: Future[String] = fetchToken()
 
 	private def getUri(pathSuffix: String) = Uri(config.baseUrl + pathSuffix)
 	private def getUri(item: B2SafeItem): Uri = item match
@@ -62,7 +62,7 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			.flatMap(resp => Unmarshal(resp).to[EntryList])
 			.map(_.entries)
 
-	def create(coll: IrodsColl, withIntermediates: Boolean = false): Future[Done] = if(config.dryRun) done else withAuth{
+	def create(coll: IrodsColl, withIntermediates: Boolean): Future[Done] = if(config.dryRun) done else withAuth{
 		val form = FormData(
 			"op" -> "create",
 			"lpath" -> coll.path,
