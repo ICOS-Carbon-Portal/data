@@ -42,6 +42,7 @@ import akka.http.scaladsl.model.FormData
 import akka.http.scaladsl.model.Multipart
 import akka.http.scaladsl.model.HttpEntity.IndefiniteLength
 import akka.http.scaladsl.model.HttpEntity.Strict
+import akka.http.scaladsl.model.ContentType
 
 class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
@@ -127,14 +128,24 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = entity)
 
 	private def objEagerUploadHttpRequest(obj: IrodsData, source: ByteString): HttpRequest =
-		val bytesEntity = HttpEntity(ContentTypes.`application/octet-stream`, source)
 
-		val op    = Multipart.FormData.BodyPart.Strict("op", HttpEntity("write"))
-		val lpathbp = Multipart.FormData.BodyPart.Strict("lpath", HttpEntity(lpath(obj)))
-		val bytes = Multipart.FormData.BodyPart.Strict("bytes", bytesEntity)
+		def bpart(name: String, ent: HttpEntity.Strict) =
+			Multipart.FormData.BodyPart.Strict(name, ent.withContentType(ContentTypes.NoContentType))
+
+		val op      = bpart("op",    HttpEntity("write"))
+		val lpathbp = bpart("lpath", HttpEntity(lpath(obj)))
+		val bytes   = bpart("bytes", HttpEntity(source))
 
 		val formData: Multipart.FormData.Strict = Multipart.FormData(op, lpathbp, bytes)
-		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = formData.toEntity)
+		val formEntity = formData.toEntity//("-----blablaboundaryblaa-----", mat.system.log)
+		println("Request payload:")
+		println(formEntity.data.utf8String)
+
+		HttpRequest(
+			uri = objUri,
+			method = HttpMethods.POST,
+			entity = formEntity
+		)
 
 
 	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))

@@ -11,6 +11,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import java.nio.charset.StandardCharsets
 
 object B2Playground:
 
@@ -45,32 +46,41 @@ object B2Playground:
 		}
 	}
 
+	def testEagerUpload(name: String, text: String, parent: IrodsColl = B2SafeItem.Root) =
+		val data = ByteString(text.getBytes(StandardCharsets.UTF_8))
+		val dobj = IrodsData(name, parent)
+		awaitAndReport(default.uploadEagerObject(dobj, data)): (hash, ms) =>
+			println(s"SHA256 = $hash, elapsed $ms ms")
+
 	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) = {
 		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 		val dobj = IrodsData(name, parent)
 
 		val src = Source.repeat(mb).take(nMb)//.delay(200.milli, OverflowStrategy.backpressure)
 
-		val start = System.currentTimeMillis
-
-		val hash = if(viaSink)
-			Await.result(src.runWith(default.objectSink(dobj)), 3.minute)
+		val hashFut = if viaSink then
+			src.runWith(default.objectSink(dobj))
 		else
-			Await.result(default.uploadObject(dobj, src), 3.minute)
+			default.uploadObject(dobj, src)
 
-		val elapsed = System.currentTimeMillis - start
-		println(s"SHA256 = $hash, elapsed $elapsed ms")
+		awaitAndReport(hashFut): (hash, ms) =>
+			println(s"SHA256 = $hash, elapsed $ms ms")
 	}
 
-	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit = {
+	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
 		val lfut = default.downloadObjectOnce(IrodsData(name, parent)).flatMap(
 			_.runFold(0L)((sum, bs) => {println(sum); sum + bs.length})
 		)
+		awaitAndReport(lfut): (size, ms) =>
+			println(s"Size $size, elapsed $ms ms")
+
+
+	def awaitAndReport[T](fut: Future[T])(reporterMs: (T, Long) => Unit): Unit =
 		val start = System.currentTimeMillis
-		val size = Await.result(lfut, 3.minute)
+		val res = Await.result(fut, 3.minute)
 		val elapsed = System.currentTimeMillis - start
-		println(s"Size $size, elapsed $elapsed ms")
-	}
+		reporterMs(res, elapsed)
+
 
 //	val sinkFut: Future[Sink[Int, String]] = Future.failed(new Exception("kaboom"))
 //
