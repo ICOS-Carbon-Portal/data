@@ -46,12 +46,6 @@ object B2Playground:
 		}
 	}
 
-	def testEagerUpload(name: String, text: String, parent: IrodsColl = B2SafeItem.Root) =
-		val data = ByteString(text.getBytes(StandardCharsets.UTF_8))
-		val dobj = IrodsData(name, parent)
-		awaitAndReport(default.uploadEagerObject(dobj, data)): (hash, ms) =>
-			println(s"SHA256 = $hash, elapsed $ms ms")
-
 	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) = {
 		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 		val dobj = IrodsData(name, parent)
@@ -69,7 +63,7 @@ object B2Playground:
 
 	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
 		val lfut = default.downloadObjectOnce(IrodsData(name, parent)).flatMap(
-			_.runFold(0L)((sum, bs) => {println(sum); sum + bs.length})
+			_.runFold(0L)((sum, bs) => {/*println(sum);*/ sum + bs.length})
 		)
 		awaitAndReport(lfut): (size, ms) =>
 			println(s"Size $size, elapsed $ms ms")

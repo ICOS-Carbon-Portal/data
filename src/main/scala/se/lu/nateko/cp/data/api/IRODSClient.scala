@@ -43,6 +43,8 @@ import akka.http.scaladsl.model.Multipart
 import akka.http.scaladsl.model.HttpEntity.IndefiniteLength
 import akka.http.scaladsl.model.HttpEntity.Strict
 import akka.http.scaladsl.model.ContentType
+import akka.http.scaladsl.model.MediaRanges
+import akka.http.scaladsl.model.headers.ProductVersion
 
 class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
@@ -80,22 +82,20 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			HttpRequest(uri = collUri, method = HttpMethods.POST, entity = form.toEntity)
 		.flatMap(failIfNotSuccess)
 
-	//TODO Use hashsum from the response directly, if available, when available, instead of fetching with an extra round-trip
-	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Sha256Sum] =
+	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Done] =
 		if config.dryRun then
-			source.viaMat(DigestFlow.sha256)(Keep.right).to(Sink.ignore).run()
+			source.toMat(Sink.ignore)(Keep.right).run()
 		else
-			withAuth(objUploadHttpRequest(obj, source))
-				.flatMap(failIfNotSuccess)
-				.flatMap(_ => getHashsum(obj))
-
-	def uploadEagerObject(obj: IrodsData, source: ByteString): Future[Sha256Sum] =
-		if config.dryRun then
-			Source.single(source).viaMat(DigestFlow.sha256)(Keep.right).to(Sink.ignore).run()
-		else
-			withAuth(objEagerUploadHttpRequest(obj, source))
-				.flatMap(failIfNotSuccess)
-				.flatMap(_ => getHashsum(obj))
+			val minFrameSize = 1 << 25 // 32 MB
+			source
+				.via(Flow[ByteString].groupedWeighted(minFrameSize)(_.size))
+				.map(concatByteStrings)
+				.scan(0L -> ByteString.empty):
+					case ((offset, bs0), bs1) => (offset + bs0.size) -> bs1
+				.runFoldAsync[Done](Done):
+					case (_, (offset, bs)) =>
+						withAuth(pagedUploadRequest(obj, bs, offset))
+							.flatMap(failIfNotSuccess)
 
 	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] =
 		val in = Flow.apply[UploadRequest[T]].map: ur =>
@@ -120,35 +120,33 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	private def objUploadHttpRequest(obj: IrodsData, source: Source[ByteString, Any]): HttpRequest =
 		val bytesEntity = IndefiniteLength(ContentTypes.`application/octet-stream`, source)
 
-		val op    = Multipart.FormData.BodyPart("op", HttpEntity("write"))
+		val op      = Multipart.FormData.BodyPart("op",    HttpEntity("write"))
 		val lpathbp = Multipart.FormData.BodyPart("lpath", HttpEntity(lpath(obj)))
-		val bytes = Multipart.FormData.BodyPart("bytes", bytesEntity)
+		val bytes   = Multipart.FormData.BodyPart("bytes", bytesEntity)
 
 		val entity = Multipart.FormData(op, lpathbp, bytes).toEntity()
 		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = entity)
 
-	private def objEagerUploadHttpRequest(obj: IrodsData, source: ByteString): HttpRequest =
 
-		def bpart(name: String, ent: HttpEntity.Strict) =
-			Multipart.FormData.BodyPart.Strict(name, ent.withContentType(ContentTypes.NoContentType))
+	private def pagedUploadRequest(obj: IrodsData, source: ByteString, offset: Long): HttpRequest =
 
-		val op      = bpart("op",    HttpEntity("write"))
-		val lpathbp = bpart("lpath", HttpEntity(lpath(obj)))
-		val bytes   = bpart("bytes", HttpEntity(source))
+		def bpart(name: String, ent: HttpEntity.Strict) = Multipart.FormData.BodyPart.Strict(name, ent)
 
-		val formData: Multipart.FormData.Strict = Multipart.FormData(op, lpathbp, bytes)
-		val formEntity = formData.toEntity//("-----blablaboundaryblaa-----", mat.system.log)
-		println("Request payload:")
-		println(formEntity.data.utf8String)
+		val op       = bpart("op",     HttpEntity("write"))
+		val lpathbp  = bpart("lpath",  HttpEntity(lpath(obj)))
+		val offsetbp = bpart("offset", HttpEntity(offset.toString))
+		val bytes    = bpart("bytes",  HttpEntity(source))
+
+		val formData: Multipart.FormData.Strict = Multipart.FormData(op, lpathbp, offsetbp, bytes)
 
 		HttpRequest(
 			uri = objUri,
 			method = HttpMethods.POST,
-			entity = formEntity
+			entity = formData.toEntity
 		)
 
 
-	def objectSink(obj: IrodsData): Sink[ByteString, Future[Sha256Sum]] = SourceReceptacleAsSink(uploadObject(obj, _))
+	def objectSink(obj: IrodsData): Sink[ByteString, Future[Done]] = SourceReceptacleAsSink(uploadObject(obj, _))
 
 	def downloadObjectOnce(obj: IrodsData): Future[Source[ByteString, Any]] =
 		val q = Uri.Query("op" -> "read", "lpath" -> lpath(obj))
@@ -187,7 +185,12 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	private def deleteHttpRequest(item: B2SafeItem) = HttpRequest(
 		uri = getUri(item),
 		method = HttpMethods.POST,
-		entity = FormData("op" -> "remove", "lpath" -> lpath(item), "no-trash" -> "1").toEntity
+		entity = FormData(
+			"op" -> "remove",
+			"lpath" -> lpath(item),
+			"no-trash" -> "1",
+			"catalog-only" -> "0"
+		).toEntity
 	)
 
 	def exists(item: B2SafeItem): Future[Boolean] =
@@ -212,8 +215,8 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	def getHashsum(data: IrodsData): Future[Sha256Sum] = requestHashsum(data).flatMap(parseHashsum(_))
 
 	private def requestHashsum(data: IrodsData): Future[HttpResponse] =
-		val q = Uri.Query("op" -> "calculate_checksum", "lpath" -> lpath(data))
-		withAuth(HttpRequest(uri = objUri.withQuery(q)))
+		val form = FormData("op" -> "calculate_checksum", "lpath" -> lpath(data))
+		withAuth(HttpRequest(uri = objUri, method = HttpMethods.POST, entity = form.toEntity))
 
 	private def parseHashsum(resp: HttpResponse): Future[Sha256Sum] =
 		analyzeResponse(resp): respJs =>
@@ -226,7 +229,7 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
 	def fetchToken(): Future[String] =
 		val req = HttpRequest(uri = authUri, headers = Seq(basicAuthHeader), method = HttpMethods.POST)
-		http.singleRequest(req).flatMap(Unmarshal(_).to[String]).map(_.trim)
+		http.singleRequest(req).flatMap(extractTextResponse)
 
 	private def withAuth(origReq: HttpRequest): Future[HttpResponse] =
 		authToken.value.foreach: res =>
@@ -247,6 +250,14 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
 	private def failIfNotSuccess(resp: HttpResponse): Future[Done] =
 		analyzeResponse(resp)(_ => Done)
+
+	private def extractTextResponse(resp: HttpResponse): Future[String] =
+		Unmarshal(resp).to[String].flatMap: body =>
+			if resp.status.isSuccess && !resp.status.isRedirection then
+				Future.successful(body.trim)
+			else
+				val msg = if body.trim.isEmpty then resp.status.value else body.trim
+				Future.failed(new CpDataException(s"iRODS error (HTTP ${resp.status.intValue}): $msg"))
 
 	private def analyzeResponse[T](resp: HttpResponse)(payloadParser: JsValue => T): Future[T] =
 		Unmarshal(resp).to[String].flatMap: body =>
@@ -283,5 +294,6 @@ object IRODSClient extends DefaultJsonProtocol:
 	private given RootJsonFormat[Status]    = jsonFormat2(Status.apply)
 	private given RootJsonFormat[Response]  = jsonFormat1(Response.apply)
 
-
+	def concatByteStrings(bss: Seq[ByteString]): ByteString =
+		bss.foldLeft(ByteString.newBuilder)(_ ++= _).result
 
