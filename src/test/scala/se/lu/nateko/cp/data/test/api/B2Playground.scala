@@ -12,6 +12,9 @@ import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import akka.stream.scaladsl.FileIO
+import java.nio.file.Paths
 
 object B2Playground:
 
@@ -33,36 +36,46 @@ object B2Playground:
 		items.foreach(println)
 	}
 
-	def listRoot() = {
+	def listRoot() =
 		val items = Await.result(default.list(B2SafeItem.Root), 5.seconds)
 		//items.runForeach(println)
 		items.foreach(println)
-	}
 
-	def countItems(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)): Future[Int] = {
-		default.list(IrodsColl(path, parent)).map{
+
+	def countItems(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)): Future[Int] =
+		default.list(IrodsColl(path, parent)).map:
 			//_.runFold(0)((sum, _) => sum + 1)
 			_.size
-		}
-	}
 
-	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) = {
+
+	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) =
 		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 		val dobj = IrodsData(name, parent)
 
 		val src = Source.repeat(mb).take(nMb)//.delay(200.milli, OverflowStrategy.backpressure)
 
-		val hashFut = if viaSink then
+		if viaSink then
 			src.runWith(default.objectSink(dobj))
 		else
 			default.uploadObject(dobj, src)
 
-		awaitAndReport(hashFut): (hash, ms) =>
-			println(s"SHA256 = $hash, elapsed $ms ms")
-	}
+	def uploadFile(filePath: String, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
+		val file = Paths.get(filePath)
+		val dobj = IrodsData(file.getFileName.toString, parent)
+		default.uploadObject(dobj, FileIO.fromPath(file))
+
+	def downloadFile(targetPath: String, name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+		val doneFut = default.downloadObject(IrodsData(name, parent)).flatMap: src =>
+			src.runWith(FileIO.toPath(Paths.get(targetPath)))
+		awaitAndReport(doneFut): (res, ms) =>
+			println(s"$res , done in $ms ms")
+
+	def getHashsum(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+		awaitAndReport(default.getHashsum(IrodsData(name, parent))): (hash, ms) =>
+			println(s"Hash $hash, elapsed $ms ms")
 
 	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
-		val lfut = default.downloadObjectOnce(IrodsData(name, parent)).flatMap(
+		val lfut = default.downloadObject(IrodsData(name, parent)).flatMap(
 			_.runFold(0L)((sum, bs) => {/*println(sum);*/ sum + bs.length})
 		)
 		awaitAndReport(lfut): (size, ms) =>
@@ -71,7 +84,7 @@ object B2Playground:
 
 	def awaitAndReport[T](fut: Future[T])(reporterMs: (T, Long) => Unit): Unit =
 		val start = System.currentTimeMillis
-		val res = Await.result(fut, 3.minute)
+		val res = Await.result(fut, 60.minutes)
 		val elapsed = System.currentTimeMillis - start
 		reporterMs(res, elapsed)
 

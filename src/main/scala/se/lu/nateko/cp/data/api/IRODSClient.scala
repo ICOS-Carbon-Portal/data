@@ -55,9 +55,6 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	val collUri = getUri("/collections")
 	val authUri = getUri("/authenticate")
 
-	private var authToken: Future[String] =
-		Future.failed(new CpDataException("not initialized yet"))
-
 	def lpath(item: B2SafeItem): String = config.homePath + item.path
 
 	private def getUri(pathSuffix: String) = Uri(config.baseUrl + pathSuffix)
@@ -82,20 +79,24 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			HttpRequest(uri = collUri, method = HttpMethods.POST, entity = form.toEntity)
 		.flatMap(failIfNotSuccess)
 
-	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Done] =
+	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Seq[(Long, Int)]] =
 		if config.dryRun then
-			source.toMat(Sink.ignore)(Keep.right).run()
+			source.toMat(Sink.ignore)(Keep.right).run().map(_ => Nil)
 		else
-			val minFrameSize = 1 << 25 // 32 MB
 			source
-				.via(Flow[ByteString].groupedWeighted(minFrameSize)(_.size))
+				.via(Flow[ByteString].groupedWeighted(ChunkSize)(_.size))
 				.map(concatByteStrings)
 				.scan(0L -> ByteString.empty):
 					case ((offset, bs0), bs1) => (offset + bs0.size) -> bs1
-				.runFoldAsync[Done](Done):
-					case (_, (offset, bs)) =>
+				.filter:
+					case (offset, bs) => bs.size > 0
+				.mapAsync(1):
+					case (offset, bs) =>
+						println(s"Will upload ${bs.size} bytes with offset $offset")
 						withAuth(pagedUploadRequest(obj, bs, offset))
 							.flatMap(failIfNotSuccess)
+							.map(_ => offset -> bs.size)
+				.runWith(Sink.seq)
 
 	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] =
 		val in = Flow.apply[UploadRequest[T]].map: ur =>
@@ -146,10 +147,23 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		)
 
 
-	def objectSink(obj: IrodsData): Sink[ByteString, Future[Done]] = SourceReceptacleAsSink(uploadObject(obj, _))
+	def objectSink(obj: IrodsData): Sink[ByteString, Future[Seq[(Long, Int)]]] = SourceReceptacleAsSink(uploadObject(obj, _))
 
-	def downloadObjectOnce(obj: IrodsData): Future[Source[ByteString, Any]] =
-		val q = Uri.Query("op" -> "read", "lpath" -> lpath(obj))
+	def downloadObject(obj: IrodsData): Future[Source[ByteString, Any]] =
+		getStats(obj).map(stats => downloadObject(obj, stats.size))
+
+	def downloadObject(obj: IrodsData, size: Long): Source[ByteString, Any] = Source
+		.fromIterator(() => readPages(size, ChunkSize))
+		.flatMapConcat: (offset, count) =>
+			Source.lazyFutureSource(() => downloadObjectChunk(obj, offset, count))
+
+	private def downloadObjectChunk(obj: IrodsData, offset: Long, count: Int): Future[Source[ByteString, Any]] =
+		val q = Uri.Query(
+			"op" -> "read",
+			"lpath" -> lpath(obj),
+			"offset" -> offset.toString,
+			"count" -> count.toString
+		)
 		withAuth(HttpRequest(uri = objUri.withQuery(q))).flatMap: resp =>
 			resp.status match
 				case StatusCodes.OK =>
@@ -157,10 +171,6 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 				case _ =>
 					failIfNotSuccess(resp).map(_ => Source.empty)
 
-
-	def downloadObjectReusable(obj: IrodsData): Source[ByteString, Future[Done]] = Source
-		.lazyFutureSource(() => downloadObjectOnce(obj))
-		.mapMaterializedValue(_.map(_ => Done))
 
 	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
 		withAuth(deleteHttpRequest(item)).flatMap(failIfNotSuccess)
@@ -214,6 +224,11 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
 	def getHashsum(data: IrodsData): Future[Sha256Sum] = requestHashsum(data).flatMap(parseHashsum(_))
 
+	def getStats(data: IrodsData): Future[DobjStats] =
+		val q = Uri.Query("op" -> "stat", "lpath" -> lpath(data))
+		withAuth(HttpRequest(uri = objUri.withQuery(q))).flatMap:
+			analyzeResponse(_)(_.convertTo[DobjStats])
+
 	private def requestHashsum(data: IrodsData): Future[HttpResponse] =
 		val form = FormData("op" -> "calculate_checksum", "lpath" -> lpath(data))
 		withAuth(HttpRequest(uri = objUri, method = HttpMethods.POST, entity = form.toEntity))
@@ -230,6 +245,9 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	def fetchToken(): Future[String] =
 		val req = HttpRequest(uri = authUri, headers = Seq(basicAuthHeader), method = HttpMethods.POST)
 		http.singleRequest(req).flatMap(extractTextResponse)
+
+	private var authToken: Future[String] =
+		Future.failed(new CpDataException("not initialized yet"))
 
 	private def withAuth(origReq: HttpRequest): Future[HttpResponse] =
 		authToken.value.foreach: res =>
@@ -274,8 +292,11 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 end IRODSClient
 
 object IRODSClient extends DefaultJsonProtocol:
+	val ChunkSize = 1 << 25 // 32 MB
+
 	class UploadRequest[T](val context: T, val obj: IrodsData, val src: Source[ByteString, Any])
 	class UploadResponse[T](val context: T, val result: Try[Sha256Sum])
+	case class DobjStats(`type`: String, size: Long, checksum: String)
 	private case class EntryList(entries: Seq[String])
 	private case class Checksum(checksum: String)
 	private case class Status(status_code: Int, status_message: Option[String])
@@ -293,7 +314,20 @@ object IRODSClient extends DefaultJsonProtocol:
 	private given RootJsonFormat[Checksum]  = jsonFormat1(Checksum.apply)
 	private given RootJsonFormat[Status]    = jsonFormat2(Status.apply)
 	private given RootJsonFormat[Response]  = jsonFormat1(Response.apply)
+	private given RootJsonFormat[DobjStats] = jsonFormat3(DobjStats.apply)
 
 	def concatByteStrings(bss: Seq[ByteString]): ByteString =
 		bss.foldLeft(ByteString.newBuilder)(_ ++= _).result
 
+	def readPages(size: Long, chunkSize: Int): Iterator[(Long, Int)] =
+		assert(size > 0, "file size must be positive")
+		(Iterator
+			.iterate(0L)(_ + chunkSize)
+			.takeWhile(_ < size)
+			++ Iterator.single(size)
+		)
+		.sliding(2)
+		.map: pair =>
+			pair(0) -> (pair(1) - pair(0)).toInt
+
+end IRODSClient
