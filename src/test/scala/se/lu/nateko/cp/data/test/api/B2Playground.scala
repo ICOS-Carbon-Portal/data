@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.test.api
 
 import akka.actor.ActorSystem
+import akka.Done
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
@@ -59,10 +60,17 @@ object B2Playground:
 		else
 			default.uploadObject(dobj, src)
 
-	def uploadFile(filePath: String, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
+	def uploadFile(filePath: String, parallelism: Int = 1, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
 		val file = Paths.get(filePath)
 		val dobj = IrodsData(file.getFileName.toString, parent)
-		default.uploadObject(dobj, FileIO.fromPath(file))
+		default.uploadObject(dobj, FileIO.fromPath(file), parallelism)
+
+	def deleteFile(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+		awaitAndReport(default.delete(IrodsData(name, parent))): (done, ms) =>
+			println(s"File deleted in $ms ms")
+
+	def parWriteShutdown(handle: String): Future[Done] =
+		default.parWriteShutdown(IRODSClient.ParWriteHandle(handle))
 
 	def downloadFile(targetPath: String, name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
 		val doneFut = default.downloadObject(IrodsData(name, parent)).flatMap: src =>

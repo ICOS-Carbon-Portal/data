@@ -79,24 +79,44 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			HttpRequest(uri = collUri, method = HttpMethods.POST, entity = form.toEntity)
 		.flatMap(failIfNotSuccess)
 
-	def uploadObject(obj: IrodsData, source: Source[ByteString, Any]): Future[Seq[(Long, Int)]] =
+	def uploadObject(obj: IrodsData, source: Source[ByteString, Any], parallelism: Int = 1): Future[Seq[(Long, Int)]] =
+		def chunks: Source[(Long, ByteString), Any] = source
+			.via(Flow[ByteString].groupedWeighted(ChunkSize)(_.size))
+			.map(concatByteStrings)
+			.scan(0L -> ByteString.empty):
+				case ((offset, bs0), bs1) => (offset + bs0.size) -> bs1
+			.filter:
+				case (offset, bs) => bs.size > 0
+
 		if config.dryRun then
 			source.toMat(Sink.ignore)(Keep.right).run().map(_ => Nil)
-		else
-			source
-				.via(Flow[ByteString].groupedWeighted(ChunkSize)(_.size))
-				.map(concatByteStrings)
-				.scan(0L -> ByteString.empty):
-					case ((offset, bs0), bs1) => (offset + bs0.size) -> bs1
-				.filter:
-					case (offset, bs) => bs.size > 0
-				.mapAsync(1):
-					case (offset, bs) =>
-						println(s"Will upload ${bs.size} bytes with offset $offset")
-						withAuth(pagedUploadRequest(obj, bs, offset))
-							.flatMap(failIfNotSuccess)
-							.map(_ => offset -> bs.size)
-				.runWith(Sink.seq)
+		else if parallelism > 1 then
+			parWriteInit(obj, parallelism).flatMap: handle =>
+				println(s"Got parallel write handle: ${handle.parallel_write_handle}")
+				chunks
+					.zipWithIndex
+					.mapAsyncUnordered(parallelism):
+						case ((offset, bs), idx) =>
+							val strIdx = (idx % parallelism).toInt
+							println(s"Will upload ${bs.size} bytes with offset $offset using stream $strIdx")
+							withAuth(pagedUploadRequest(obj, bs, offset, Some(handle -> strIdx)))
+								.flatMap(failIfNotSuccess)
+								.map(_ => offset -> bs.size)
+					.runWith(Sink.seq)
+					.transformWith: resTry =>
+						val shutFut = Future.successful(Done)//parWriteShutdown(handle).map(_ => {println(s"parallel write shutdown ok for $handle");Done})
+						resTry match
+							case Success(res) => shutFut.map(_ => res)
+							case _ => Future.fromTry(resTry)
+		else chunks
+			.mapAsync(1): (offset, bs) =>
+				println(s"Will upload ${bs.size} bytes with offset $offset")
+				withAuth(pagedUploadRequest(obj, bs, offset))
+					.flatMap(failIfNotSuccess)
+					.map(_ => offset -> bs.size)
+			.runWith(Sink.seq)
+	end uploadObject
+
 
 	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] =
 		val in = Flow.apply[UploadRequest[T]].map: ur =>
@@ -111,6 +131,29 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 						hashTry => Success(new UploadResponse[T](context, hashTry))
 		in via out
 
+	private def parWriteInit(data: IrodsData, nStreams: Int): Future[ParWriteHandle] =
+		val req = HttpRequest(
+			uri = objUri,
+			method = HttpMethods.POST,
+			entity = FormData(
+				"op" -> "parallel_write_init",
+				"lpath" -> lpath(data),
+				"stream-count" -> nStreams.toString
+			).toEntity
+		)
+		withAuth(req).flatMap:
+			analyzeResponse(_)(_.convertTo[ParWriteHandle])
+
+	def parWriteShutdown(handle: ParWriteHandle): Future[Done] =
+		val req = HttpRequest(
+			uri = objUri,
+			method = HttpMethods.POST,
+			entity = FormData(
+				"op" -> "parallel_write_shutdown",
+				"parallel_write_handle" -> handle.parallel_write_handle
+			).toEntity
+		)
+		withAuth(req).flatMap(failIfNotSuccess)
 
 	private def innerReqFlow[T]: Flow[(HttpRequest, T), (Try[HttpResponse], T), Any] = {
 		val auth = Uri(config.baseUrl).authority
@@ -129,16 +172,28 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = entity)
 
 
-	private def pagedUploadRequest(obj: IrodsData, source: ByteString, offset: Long): HttpRequest =
+	private def pagedUploadRequest(
+		obj: IrodsData,
+		source: ByteString,
+		offset: Long,
+		streamId: Option[(ParWriteHandle, Int)] = None
+	): HttpRequest =
 
 		def bpart(name: String, ent: HttpEntity.Strict) = Multipart.FormData.BodyPart.Strict(name, ent)
+		val truncation = if offset == 0 && streamId.isEmpty then "1" else "0"
+		val bParts = Seq(
+			bpart("op",                    HttpEntity("write")),
+			bpart("truncate",              HttpEntity(truncation)),
+			bpart("lpath",                 HttpEntity(lpath(obj))),
+			bpart("offset",                HttpEntity(offset.toString)),
+			bpart("bytes",                 HttpEntity(source))
+		) ++ streamId.fold(Nil): (handle, streamIdx) =>
+			Seq(
+				bpart("stream-index",          HttpEntity(streamIdx.toString)),
+				bpart("parallel-write-handle", HttpEntity(handle.parallel_write_handle))
+			)
 
-		val op       = bpart("op",     HttpEntity("write"))
-		val lpathbp  = bpart("lpath",  HttpEntity(lpath(obj)))
-		val offsetbp = bpart("offset", HttpEntity(offset.toString))
-		val bytes    = bpart("bytes",  HttpEntity(source))
-
-		val formData: Multipart.FormData.Strict = Multipart.FormData(op, lpathbp, offsetbp, bytes)
+		val formData: Multipart.FormData.Strict = Multipart.FormData(bParts*)
 
 		HttpRequest(
 			uri = objUri,
@@ -301,6 +356,7 @@ object IRODSClient extends DefaultJsonProtocol:
 	private case class Checksum(checksum: String)
 	private case class Status(status_code: Int, status_message: Option[String])
 	private case class Response(irods_response: Status)
+	case class ParWriteHandle(parallel_write_handle: String)
 
 	private val vanillaStrSeqFmt = summon[RootJsonFormat[Seq[String]]]
 
@@ -315,6 +371,7 @@ object IRODSClient extends DefaultJsonProtocol:
 	private given RootJsonFormat[Status]    = jsonFormat2(Status.apply)
 	private given RootJsonFormat[Response]  = jsonFormat1(Response.apply)
 	private given RootJsonFormat[DobjStats] = jsonFormat3(DobjStats.apply)
+	private given RootJsonFormat[ParWriteHandle] = jsonFormat1(ParWriteHandle.apply)
 
 	def concatByteStrings(bss: Seq[ByteString]): ByteString =
 		bss.foldLeft(ByteString.newBuilder)(_ ++= _).result
