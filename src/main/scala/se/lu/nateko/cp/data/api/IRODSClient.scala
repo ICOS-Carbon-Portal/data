@@ -91,6 +91,9 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		if config.dryRun then
 			source.toMat(Sink.ignore)(Keep.right).run().map(_ => Nil)
 		else if parallelism > 1 then
+			// TODO Remove this if-branch when parallel uploads are working
+			Future.failed(CpDataException("Parallel iRODS uploads are not working yet, therefore disabled"))
+		else if parallelism > 1 then
 			parWriteInit(obj, parallelism).flatMap: handle =>
 				println(s"Got parallel write handle: ${handle.parallel_write_handle}")
 				chunks
@@ -103,33 +106,20 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 								.flatMap(failIfNotSuccess)
 								.map(_ => offset -> bs.size)
 					.runWith(Sink.seq)
-					.transformWith: resTry =>
-						val shutFut = Future.successful(Done)//parWriteShutdown(handle).map(_ => {println(s"parallel write shutdown ok for $handle");Done})
-						resTry match
-							case Success(res) => shutFut.map(_ => res)
-							case _ => Future.fromTry(resTry)
+					.andThen:
+						// shut down the parralel write even in the case of failure
+						case Failure(_) => parWriteShutdown(handle)
+					.flatMap: res =>
+						// expose parWriteShutdown error, should it occur
+						parWriteShutdown(handle).map(_ => res)
 		else chunks
 			.mapAsync(1): (offset, bs) =>
-				println(s"Will upload ${bs.size} bytes with offset $offset")
 				withAuth(pagedUploadRequest(obj, bs, offset))
 					.flatMap(failIfNotSuccess)
 					.map(_ => offset -> bs.size)
 			.runWith(Sink.seq)
 	end uploadObject
 
-
-	def uploadFlow[T]: Flow[UploadRequest[T], UploadResponse[T], NotUsed] =
-		val in = Flow.apply[UploadRequest[T]].map: ur =>
-			objUploadHttpRequest(ur.obj, ur.src) -> (ur.context, ur.obj)
-
-		val out = innerReqFlow[(T, IrodsData)].mapAsyncUnordered(1):
-			case (respTry, (context, obj)) =>
-				Future.fromTry(respTry)
-					.flatMap(failIfNotSuccess)
-					.flatMap(_ => getHashsum(obj))
-					.transform:
-						hashTry => Success(new UploadResponse[T](context, hashTry))
-		in via out
 
 	private def parWriteInit(data: IrodsData, nStreams: Int): Future[ParWriteHandle] =
 		val req = HttpRequest(
@@ -154,22 +144,6 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			).toEntity
 		)
 		withAuth(req).flatMap(failIfNotSuccess)
-
-	private def innerReqFlow[T]: Flow[(HttpRequest, T), (Try[HttpResponse], T), Any] = {
-		val auth = Uri(config.baseUrl).authority
-		val port = if(auth.port == 0) 443 else auth.port
-		http.cachedHostConnectionPoolHttps[T](auth.host.toString, port)
-	}
-
-	private def objUploadHttpRequest(obj: IrodsData, source: Source[ByteString, Any]): HttpRequest =
-		val bytesEntity = IndefiniteLength(ContentTypes.`application/octet-stream`, source)
-
-		val op      = Multipart.FormData.BodyPart("op",    HttpEntity("write"))
-		val lpathbp = Multipart.FormData.BodyPart("lpath", HttpEntity(lpath(obj)))
-		val bytes   = Multipart.FormData.BodyPart("bytes", bytesEntity)
-
-		val entity = Multipart.FormData(op, lpathbp, bytes).toEntity()
-		HttpRequest(uri = objUri, method = HttpMethods.POST, entity = entity)
 
 
 	private def pagedUploadRequest(
@@ -200,6 +174,7 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			method = HttpMethods.POST,
 			entity = formData.toEntity
 		)
+	end pagedUploadRequest
 
 
 	def objectSink(obj: IrodsData): Sink[ByteString, Future[Seq[(Long, Int)]]] = SourceReceptacleAsSink(uploadObject(obj, _))
@@ -228,44 +203,32 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 
 
 	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
-		withAuth(deleteHttpRequest(item)).flatMap(failIfNotSuccess)
-
-	def deleteFlow: Flow[IrodsData, Try[Done], NotUsed] =
-		if(config.dryRun)
-			Flow.apply[IrodsData].map(_ => Success(Done))
-		else {
-			val in = Flow.apply[IrodsData].map{obj =>
-				deleteHttpRequest(obj) -> obj
-			}
-
-			val out = innerReqFlow[IrodsData].mapAsyncUnordered(1){
-				case (resp, _) =>
-					Future.fromTry(resp).flatMap(failIfNotSuccess).transform{
-						doneTry => Success(doneTry)
-					}
-			}
-			in via out
-		}
-
-	private def deleteHttpRequest(item: B2SafeItem) = HttpRequest(
-		uri = getUri(item),
-		method = HttpMethods.POST,
-		entity = FormData(
+		val commonFields = Map(
 			"op" -> "remove",
 			"lpath" -> lpath(item),
-			"no-trash" -> "1",
-			"catalog-only" -> "0"
-		).toEntity
-	)
+			"no-trash" -> "1"
+		)
+		val formFields = item match
+			case _: IrodsData => commonFields + ("catalog-only" -> "0")
+			case _: IrodsColl => commonFields
+
+		val req = HttpRequest(
+			uri = getUri(item),
+			method = HttpMethods.POST,
+			entity = FormData(formFields).toEntity
+		)
+		withAuth(req).flatMap(failIfNotSuccess)
+
 
 	def exists(item: B2SafeItem): Future[Boolean] =
 		if config.dryRun then Future.successful(false)
 		else
 			val q = Uri.Query("op" -> "stat", "lpath" -> lpath(item))
 			withAuth(HttpRequest(uri = getUri(item).withQuery(q)))
-				.map: resp =>
-					resp.discardEntityBytes()
-					resp.status.isSuccess()
+				.flatMap(failIfNotSuccess)
+				.transform:
+					case Success(_) => Success(true)
+					case Failure(_) => Success(false)
 
 
 	def getHashsumOpt(data: IrodsData): Future[Option[Sha256Sum]] =
@@ -349,8 +312,6 @@ end IRODSClient
 object IRODSClient extends DefaultJsonProtocol:
 	val ChunkSize = 1 << 25 // 32 MB
 
-	class UploadRequest[T](val context: T, val obj: IrodsData, val src: Source[ByteString, Any])
-	class UploadResponse[T](val context: T, val result: Try[Sha256Sum])
 	case class DobjStats(`type`: String, size: Long, checksum: String)
 	private case class EntryList(entries: Seq[String])
 	private case class Checksum(checksum: String)
