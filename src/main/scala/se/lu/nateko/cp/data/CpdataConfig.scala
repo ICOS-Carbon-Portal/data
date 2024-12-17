@@ -37,12 +37,22 @@ case class B2SafeConfig(
 	dryRun: Boolean
 )
 
+case class IRODSConfig(
+	baseUrl: String,
+	username: String,
+	password: String,
+	homePath: String,
+	resource: Option[String],
+	dryRun: Boolean
+)
+
 case class CredentialsConfig(username: String, password: String)
 
 case class UploadConfig(
 	folder: String,
 	readonlyFolder: Option[String],
 	b2safe: B2SafeConfig,
+	irods: IRODSConfig,
 	dlReporter: CredentialsConfig,
 	admins: Seq[String]
 )
@@ -109,7 +119,8 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
 	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
-	given RootJsonFormat[UploadConfig] = jsonFormat5(UploadConfig.apply)
+	given RootJsonFormat[IRODSConfig] = jsonFormat6(IRODSConfig.apply)
+	given RootJsonFormat[UploadConfig] = jsonFormat6(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)
 	given RootJsonFormat[IpTest] with
