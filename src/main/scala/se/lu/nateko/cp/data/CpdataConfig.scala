@@ -42,6 +42,7 @@ case class IRODSConfig(
 	username: String,
 	password: String,
 	homePath: String,
+	resource: Option[String],
 	dryRun: Boolean
 )
 
@@ -118,7 +119,7 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[NetCdfConfig] = jsonFormat5(NetCdfConfig.apply)
 	given RootJsonFormat[B2SafeConfig] = jsonFormat5(B2SafeConfig.apply)
 	given RootJsonFormat[CredentialsConfig] = jsonFormat2(CredentialsConfig.apply)
-	given RootJsonFormat[IRODSConfig] = jsonFormat5(IRODSConfig.apply)
+	given RootJsonFormat[IRODSConfig] = jsonFormat6(IRODSConfig.apply)
 	given RootJsonFormat[UploadConfig] = jsonFormat6(UploadConfig.apply)
 	given RootJsonFormat[MetaServiceConfig] = jsonFormat3(MetaServiceConfig.apply)
 	given RootJsonFormat[PublicAuthConfig] = jsonFormat4(PublicAuthConfig.apply)

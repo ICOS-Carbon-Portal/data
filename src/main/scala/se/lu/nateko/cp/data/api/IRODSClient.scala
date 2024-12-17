@@ -166,6 +166,11 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 				bpart("stream-index",          HttpEntity(streamIdx.toString)),
 				bpart("parallel-write-handle", HttpEntity(handle.parallel_write_handle))
 			)
+		++ config.resource
+			// TODO Remove the filter when parallel writes work and support resource selection
+			.filter(_ => streamId.isEmpty)
+			.map: res =>
+				bpart("resource", HttpEntity(res))
 
 		val formData: Multipart.FormData.Strict = Multipart.FormData(bParts*)
 
