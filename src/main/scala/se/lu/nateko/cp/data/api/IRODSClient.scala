@@ -243,7 +243,8 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 				if resp.status == StatusCodes.NotFound then
 					resp.discardEntityBytes()
 					Future.successful(None)
-				else parseHashsum(resp).map(Option(_))
+				else parseHashsum(resp).map(Option(_)).recover:
+					case _: Throwable => None
 
 	def getHashsum(data: IrodsData): Future[Sha256Sum] = requestHashsum(data).flatMap(parseHashsum(_))
 
