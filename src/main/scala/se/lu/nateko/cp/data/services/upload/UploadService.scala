@@ -16,6 +16,7 @@ import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats
+import se.lu.nateko.cp.data.api.IRODSClient
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.streams.SinkCombiner
@@ -50,6 +51,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
 	private val b2 = new B2SafeClient(config.b2safe, Http())
+	private val irods = new IRODSClient(config.irods, Http())
 
 	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum)(using Envri): Future[Boolean] = b2
 		.getHashsum(B2SafeUploadTask.irodsData(format, hash))
@@ -259,6 +261,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 
 	private def defaultTasks(obj: StaticObject)(using Envri) = mandatoryTasks(obj) :+
 		B2SafeUploadTask(obj, b2) :+
+		IrodsUploadTask(obj, irods) :+
 		new FileSavingUploadTask(getFile(obj, false))
 
 	private def getPostUploadTasks(obj: StaticObject)(implicit envri: Envri): Seq[PostUploadTask] =
