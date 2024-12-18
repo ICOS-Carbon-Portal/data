@@ -260,7 +260,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	)
 
 	private def defaultTasks(obj: StaticObject)(using Envri) = mandatoryTasks(obj) :+
-		B2SafeUploadTask(obj, b2) :+
+		//B2SafeUploadTask(obj, b2) :+
 		IrodsUploadTask(obj, irods) :+
 		new FileSavingUploadTask(getFile(obj, false))
 
