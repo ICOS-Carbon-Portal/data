@@ -39,28 +39,10 @@ class IrodsUploadTask private (
 					_.flatMap(_ => client.getHashsum(irodsData)).map: resHash =>
 						if(resHash == hash) B2SafeSuccess
 						else B2SafeFailure(hashError(resHash))
-				
-
 
 		Sink.lazyFutureSink(() => sinkFut).mapMaterializedValue:
 			_.flatten.recover:
 				case err => B2SafeFailure(err)
-
-
-	def uploadObject(src: Source[ByteString, Any]): Future[Done] = existsFut.flatMap:
-		case true =>
-			done
-		case false =>
-			val res = client
-				.uploadObject(irodsData, src)
-				.flatMap(_ => client.getHashsum(irodsData))
-				.flatMap: resHash =>
-					if(resHash == hash) done
-					else Future.failed(hashError(resHash))
-
-			res.failed.foreach(_ => client.delete(irodsData))
-			res
-
 
 	private def hashError(actual: Sha256Sum) = new CpDataException(s"IRODS returned SHA256 $actual instead of $hash")
 
