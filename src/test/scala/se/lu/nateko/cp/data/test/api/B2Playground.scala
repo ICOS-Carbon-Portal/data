@@ -42,25 +42,25 @@ object B2Playground:
 	//val default = new B2SafeClient(b2config, http)
 	val default = new IRODSClient(irodsConfig, http)
 
-	def list(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)) = {
+	def list(path: String, parent: Option[IrodsColl] = Some(IrodsItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
 		//items.runForeach(println)
 		items.foreach(println)
 	}
 
 	def listRoot() =
-		val items = Await.result(default.list(B2SafeItem.Root), 5.seconds)
+		val items = Await.result(default.list(IrodsItem.Root), 5.seconds)
 		//items.runForeach(println)
 		items.foreach(println)
 
 
-	def countItems(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)): Future[Int] =
+	def countItems(path: String, parent: Option[IrodsColl] = Some(IrodsItem.Root)): Future[Int] =
 		default.list(IrodsColl(path, parent)).map:
 			//_.runFold(0)((sum, _) => sum + 1)
 			_.size
 
 
-	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = B2SafeItem.Root) =
+	def testUpload(name: String, nMb: Long, viaSink: Boolean, parent: IrodsColl = IrodsItem.Root) =
 		val mb = ByteString(Array.ofDim[Byte](1 << 20))
 		val dobj = IrodsData(name, parent)
 
@@ -71,7 +71,7 @@ object B2Playground:
 		else
 			default.uploadObject(dobj, src)
 
-	def uploadFile(filePath: String, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
+	def uploadFile(filePath: String, parent: IrodsColl = IrodsItem.Root): Future[Seq[(Long, Int)]] =
 		val file = Paths.get(filePath)
 		val dobj = IrodsData(file.getFileName.toString, parent)
 		default.uploadObject(dobj, FileIO.fromPath(file))
@@ -84,24 +84,24 @@ object B2Playground:
 			val task = IrodsUploadTask(Some(formatUri), hash, default)
 			FileIO.fromPath(path).runWith(task.sink)
 
-	def deleteFile(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+	def deleteFile(name: String, parent: IrodsColl = IrodsItem.Root): Unit =
 		awaitAndReport(default.delete(IrodsData(name, parent))): (done, ms) =>
 			println(s"File deleted in $ms ms")
 
 	def parWriteShutdown(handle: String): Future[Done] =
 		default.parWriteShutdown(IRODSClient.ParWriteHandle(handle))
 
-	def downloadFile(targetPath: String, name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+	def downloadFile(targetPath: String, name: String, parent: IrodsColl = IrodsItem.Root): Unit =
 		val doneFut = default.downloadObject(IrodsData(name, parent)).flatMap: src =>
 			src.runWith(FileIO.toPath(Paths.get(targetPath)))
 		awaitAndReport(doneFut): (res, ms) =>
 			println(s"$res , done in $ms ms")
 
-	def getHashsum(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+	def getHashsum(name: String, parent: IrodsColl = IrodsItem.Root): Unit =
 		awaitAndReport(default.getHashsum(IrodsData(name, parent))): (hash, ms) =>
 			println(s"Hash $hash, elapsed $ms ms")
 
-	def testDownload(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
+	def testDownload(name: String, parent: IrodsColl = IrodsItem.Root): Unit =
 		val lfut = default.downloadObject(IrodsData(name, parent)).flatMap(
 			_.runFold(0L)((sum, bs) => {/*println(sum);*/ sum + bs.length})
 		)

@@ -41,7 +41,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 	import mat.executionContext
 	import B2SafeClient._
 
-	def getUri(item: B2SafeItem): Uri = {
+	def getUri(item: IrodsItem): Uri = {
 		val pathPrefix = item match{
 			case _: IrodsData => "/objects"
 			case _: IrodsColl => "/collections"
@@ -49,7 +49,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 		getUri(pathPrefix, item)
 	}
 
-	private def getUri(pathPrefix: String, item: B2SafeItem) =
+	private def getUri(pathPrefix: String, item: IrodsItem) =
 		Uri(config.host + pathPrefix + config.homePath + item.path)
 
 
@@ -57,7 +57,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 		BasicHttpCredentials(config.username, config.password)
 	)
 
-	def list(coll: IrodsColl): Future[Source[B2SafeItem, Any]] =
+	def list(coll: IrodsColl): Future[Source[IrodsItem, Any]] =
 		withAuth(HttpRequest(uri = getUri(coll)))
 			.flatMap(parseItemsIfOk)
 
@@ -128,7 +128,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 		.lazyFutureSource(() => downloadObjectOnce(obj))
 		.mapMaterializedValue(_.map(_ => Done))
 
-	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
+	def delete(item: IrodsItem): Future[Done] = if(config.dryRun) done else
 		withAuth(objDeleteHttpRequest(item)).flatMap(failIfNotSuccess)
 
 	def deleteFlow: Flow[IrodsData, Try[Done], NotUsed] =
@@ -148,10 +148,10 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 			in via out
 		}
 
-	private def objDeleteHttpRequest(item: B2SafeItem) =
+	private def objDeleteHttpRequest(item: IrodsItem) =
 		HttpRequest(uri = getUri(item).withRawQueryString("notrash"), method = HttpMethods.DELETE)
 
-	def exists(item: B2SafeItem): Future[Boolean] =
+	def exists(item: IrodsItem): Future[Boolean] =
 		if(config.dryRun) Future.successful(false)
 		else withAuth(HttpRequest(uri = getUri(item), method = HttpMethods.HEAD))
 			.map{resp =>
@@ -223,7 +223,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 		)
 	}
 
-	private def parseItemsIfOk(resp: HttpResponse): Future[Source[B2SafeItem, Any]] = analyzeResponse(resp){_ =>
+	private def parseItemsIfOk(resp: HttpResponse): Future[Source[IrodsItem, Any]] = analyzeResponse(resp){_ =>
 		import spray.json._
 		val resStream = resp.entity.withoutSizeLimit.dataBytes
 			.via(Framing.delimiter(ByteString("\n"), 8000))
@@ -251,9 +251,9 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 			}
 	}
 
-	private def toB2SafeItem(item: ApiResponseItem): B2SafeItem = {
+	private def toB2SafeItem(item: ApiResponseItem): IrodsItem = {
 		def makeColl(segments: List[String]): IrodsColl = segments match{
-			case Nil => B2SafeItem.Root
+			case Nil => IrodsItem.Root
 			case head :: tail => IrodsColl(head, Some(makeColl(tail)))
 		}
 
@@ -263,7 +263,7 @@ class B2SafeClient(config: B2SafeConfig, http: HttpExt)(using mat: Materializer)
 
 		val coll = makeColl(collPathSegments)
 
-		item.dataName.fold[B2SafeItem](coll)(IrodsData(_, coll))
+		item.dataName.fold[IrodsItem](coll)(IrodsData(_, coll))
 	}
 }
 

@@ -90,7 +90,7 @@ class IntegrityControlService(uploader: UploadService)(using ExecutionContext, M
 
 					localProbFut.flatMap{localProb =>
 
-						val prob = "file absent in B2SAFE" + localProb.fold("")("; " + _)
+						val prob = "file absent on the remote repo" + localProb.fold("")("; " + _)
 
 						if(uploadMissingToRemote && localProb.isEmpty){
 							uploader.uploadToRemoteStorage(format, hash, FileIO.fromPath(file)).map{_ =>

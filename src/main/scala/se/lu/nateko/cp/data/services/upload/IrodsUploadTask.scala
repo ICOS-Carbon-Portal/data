@@ -7,7 +7,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import eu.icoscp.envri.Envri
 import scala.concurrent.duration.DurationInt
-import se.lu.nateko.cp.data.api.B2SafeItem
+import se.lu.nateko.cp.data.api.IrodsItem
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
@@ -34,17 +34,17 @@ class IrodsUploadTask private (
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = 
 		val sinkFut: Future[Sink[ByteString, Future[UploadTaskResult]]] = existsFut.map:
 			case true => Sink.cancelled.mapMaterializedValue:
-					_ => Future.successful(B2SafeSuccess)
+					_ => Future.successful(IrodsSuccess(hash))
 
 			case false =>
 				client.objectSink(irodsData).mapMaterializedValue:
 					_.flatMap(_ => checkHashsum()).map: resHash =>
-						if(resHash == hash) B2SafeSuccess
-						else B2SafeFailure(hashError(resHash))
+						if(resHash == hash) IrodsSuccess(hash)
+						else IrodsFailure(hashError(resHash))
 
 		Sink.lazyFutureSink(() => sinkFut).mapMaterializedValue:
 			_.flatten.recover:
-				case err => B2SafeFailure(err)
+				case err => IrodsFailure(err)
 
 	private def checkHashsum(): Future[Sha256Sum] = akka.pattern.retry(
 		() => client.getHashsum(irodsData), 5, 500.millis
@@ -81,7 +81,7 @@ object IrodsUploadTask:
 
 	private def irodsData(folder: String, hash: Sha256Sum)(using envri: Envri): IrodsData =
 		val envriFolder = envri match
-			case Envri.ICOS | Envri.SITES => B2SafeItem.Root
+			case Envri.ICOS | Envri.SITES => IrodsItem.Root
 			case Envri.ICOSCities => IrodsColl("cities")
 
 		val baseColl = IrodsColl(folder, Some(envriFolder))

@@ -55,10 +55,10 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 	val collUri = getUri("/collections")
 	val authUri = getUri("/authenticate")
 
-	def lpath(item: B2SafeItem): String = config.homePath + item.path
+	def lpath(item: IrodsItem): String = config.homePath + item.path
 
 	private def getUri(pathSuffix: String) = Uri(config.baseUrl + pathSuffix)
-	private def getUri(item: B2SafeItem): Uri = item match
+	private def getUri(item: IrodsItem): Uri = item match
 		case _: IrodsColl => collUri
 		case _: IrodsData => objUri
 
@@ -207,7 +207,7 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 					failIfNotSuccess(resp).map(_ => Source.empty)
 
 
-	def delete(item: B2SafeItem): Future[Done] = if(config.dryRun) done else
+	def delete(item: IrodsItem): Future[Done] = if(config.dryRun) done else
 		val commonFields = Map(
 			"op" -> "remove",
 			"lpath" -> lpath(item),
@@ -225,7 +225,7 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 		withAuth(req).flatMap(failIfNotSuccess)
 
 
-	def exists(item: B2SafeItem): Future[Boolean] =
+	def exists(item: IrodsItem): Future[Boolean] =
 		if config.dryRun then Future.successful(false)
 		else
 			val q = Uri.Query("op" -> "stat", "lpath" -> lpath(item))

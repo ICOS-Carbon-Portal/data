@@ -6,7 +6,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.data.api.B2SafeClient
-import se.lu.nateko.cp.data.api.B2SafeItem
+import se.lu.nateko.cp.data.api.IrodsItem
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
 import se.lu.nateko.cp.data.api.IrodsData
