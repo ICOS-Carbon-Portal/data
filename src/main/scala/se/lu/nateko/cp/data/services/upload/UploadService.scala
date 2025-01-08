@@ -1,5 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
+import akka.actor.Scheduler
 import akka.Done
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.Uri
@@ -38,6 +39,7 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	import UploadService.*
 	import ObjectFormats.{isNonIngestedZip, isNetCdf, netCdfTimeSer}
 	import meta.{ dispatcher, system }
+	given Scheduler = system.scheduler
 
 	val log = system.log
 	val folder = File(config.folder)

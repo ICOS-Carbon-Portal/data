@@ -1,27 +1,37 @@
 package se.lu.nateko.cp.data.test.api
 
-import akka.actor.ActorSystem
 import akka.Done
+import akka.actor.ActorSystem
+import akka.actor.Scheduler
 import akka.stream.Materializer
+import akka.stream.scaladsl.FileIO
+import akka.stream.scaladsl.Keep
+import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.data.ConfigReader
 import se.lu.nateko.cp.data.api.*
+import se.lu.nateko.cp.data.services.upload.IrodsUploadTask
+import se.lu.nateko.cp.data.services.upload.UploadTaskResult
+import se.lu.nateko.cp.data.streams.DigestFlow
+import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
+import java.net.URI
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.nio.file.Paths
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
-import akka.stream.scaladsl.FileIO
-import java.nio.file.Paths
 
 object B2Playground:
 
 	private given system: ActorSystem = ActorSystem("B2StageClient")
 	system.log
 	given ExecutionContextExecutor = system.dispatcher
+	given Scheduler = system.scheduler
 	private val http = akka.http.scaladsl.Http()
 
 	def stop() = system.terminate()
@@ -29,7 +39,8 @@ object B2Playground:
 	val uplConfig = ConfigReader.getDefault.upload
 	//val b2config = uplConfig.b2safe.copy(dryRun = false)
 	val irodsConfig = uplConfig.irods.copy(dryRun = false)
-	val default = new IRODSClient(irodsConfig, http)//new B2SafeClient(b2config, http)
+	//val default = new B2SafeClient(b2config, http)
+	val default = new IRODSClient(irodsConfig, http)
 
 	def list(path: String, parent: Option[IrodsColl] = Some(B2SafeItem.Root)) = {
 		val items = Await.result(default.list(IrodsColl(path, parent)), 5.seconds)
@@ -60,10 +71,18 @@ object B2Playground:
 		else
 			default.uploadObject(dobj, src)
 
-	def uploadFile(filePath: String, parallelism: Int = 1, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
+	def uploadFile(filePath: String, parent: IrodsColl = B2SafeItem.Root): Future[Seq[(Long, Int)]] =
 		val file = Paths.get(filePath)
 		val dobj = IrodsData(file.getFileName.toString, parent)
-		default.uploadObject(dobj, FileIO.fromPath(file), parallelism)
+		default.uploadObject(dobj, FileIO.fromPath(file))
+
+	def uploadToCitiesThroughTask(filePath: String, formatSuffix: String): Future[UploadTaskResult] =
+		given Envri = Envri.ICOSCities
+		val path = Paths.get(filePath)
+		FileIO.fromPath(path).viaMat(DigestFlow.sha256)(Keep.right).to(Sink.ignore).run().flatMap: hash =>
+			val formatUri = URI(s"https://meta.icos-cp.eu/resources/$formatSuffix")
+			val task = IrodsUploadTask(Some(formatUri), hash, default)
+			FileIO.fromPath(path).runWith(task.sink)
 
 	def deleteFile(name: String, parent: IrodsColl = B2SafeItem.Root): Unit =
 		awaitAndReport(default.delete(IrodsData(name, parent))): (done, ms) =>

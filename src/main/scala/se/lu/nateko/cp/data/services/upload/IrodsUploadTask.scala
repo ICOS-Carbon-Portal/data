@@ -1,10 +1,12 @@
 package se.lu.nateko.cp.data.services.upload
 
+import akka.actor.Scheduler
 import akka.Done
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import eu.icoscp.envri.Envri
+import scala.concurrent.duration.DurationInt
 import se.lu.nateko.cp.data.api.B2SafeItem
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.IrodsColl
@@ -22,7 +24,7 @@ class IrodsUploadTask private (
 	hash: Sha256Sum,
 	irodsData: IrodsData,
 	client: IRODSClient
-)(using ExecutionContext) extends UploadTask:
+)(using ExecutionContext, Scheduler) extends UploadTask:
 
 	private val existsFut: Future[Boolean] = client.getHashsumOpt(irodsData).flatMap:
 		case Some(`hash`) => Future.successful(true)
@@ -36,13 +38,17 @@ class IrodsUploadTask private (
 
 			case false =>
 				client.objectSink(irodsData).mapMaterializedValue:
-					_.flatMap(_ => client.getHashsum(irodsData)).map: resHash =>
+					_.flatMap(_ => checkHashsum()).map: resHash =>
 						if(resHash == hash) B2SafeSuccess
 						else B2SafeFailure(hashError(resHash))
 
 		Sink.lazyFutureSink(() => sinkFut).mapMaterializedValue:
 			_.flatten.recover:
 				case err => B2SafeFailure(err)
+
+	private def checkHashsum(): Future[Sha256Sum] = akka.pattern.retry(
+		() => client.getHashsum(irodsData), 5, 500.milliseconds
+	)
 
 	private def hashError(actual: Sha256Sum) = new CpDataException(s"IRODS returned SHA256 $actual instead of $hash")
 
@@ -60,8 +66,8 @@ end IrodsUploadTask
 
 object IrodsUploadTask:
 
-	def apply(statObj: StaticObject, client: IRODSClient)(using Envri, ExecutionContext) =
+	def apply(statObj: StaticObject, client: IRODSClient)(using Envri, ExecutionContext, Scheduler) =
 		new IrodsUploadTask(statObj.hash, B2SafeUploadTask.irodsData(statObj), client)
 
-	def apply(format: Option[URI], hash: Sha256Sum, client: IRODSClient)(using Envri, ExecutionContext) =
+	def apply(format: Option[URI], hash: Sha256Sum, client: IRODSClient)(using Envri, ExecutionContext, Scheduler) =
 		new IrodsUploadTask(hash, B2SafeUploadTask.irodsData(format, hash), client)
