@@ -47,8 +47,12 @@ class IrodsUploadTask private (
 				case err => B2SafeFailure(err)
 
 	private def checkHashsum(): Future[Sha256Sum] = akka.pattern.retry(
-		() => client.getHashsum(irodsData), 5, 500.milliseconds
-	)
+		() => client.getHashsum(irodsData), 5, 500.millis
+	).transform(identity, err => CpDataException(s"iRODS hashsum checking failure for ${irodsData.path}: ${err.getMessage}"))
+
+	private def createCollection(): Future[Done] = akka.pattern.retry(
+		() => client.create(irodsData.parent, true), 3, 500.millis
+	).transform(identity, err => CpDataException(s"iRODS collection creation failure for ${irodsData.parent.path}: ${err.getMessage}"))
 
 	private def hashError(actual: Sha256Sum) = new CpDataException(s"IRODS returned SHA256 $actual instead of $hash")
 
