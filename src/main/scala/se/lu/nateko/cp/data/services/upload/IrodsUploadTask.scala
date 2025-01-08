@@ -28,7 +28,7 @@ class IrodsUploadTask private (
 
 	private val existsFut: Future[Boolean] = client.getHashsumOpt(irodsData).flatMap:
 		case Some(`hash`) => Future.successful(true)
-		case _ => client.create(irodsData.parent, true).map(_ => false)
+		case _ => createCollection().map(_ => false)
 
 
 	def sink: Sink[ByteString, Future[UploadTaskResult]] = 
