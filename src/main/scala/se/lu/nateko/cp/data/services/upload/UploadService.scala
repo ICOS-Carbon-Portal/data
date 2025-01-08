@@ -13,7 +13,6 @@ import eu.icoscp.envri.Envri
 import se.lu.nateko.cp.cpauth.core.UserId
 import se.lu.nateko.cp.data.NetCdfConfig
 import se.lu.nateko.cp.data.UploadConfig
-import se.lu.nateko.cp.data.api.B2SafeClient
 import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.data.api.CpDataParsingException
 import se.lu.nateko.cp.data.api.CpMetaVocab.ObjectFormats
@@ -52,18 +51,22 @@ class UploadService(config: UploadConfig, netcdfConf: NetCdfConfig, val meta: Me
 	}
 	assert(folder.isDirectory, "File storage service must be initialized with a directory path")
 
-	private val b2 = new B2SafeClient(config.b2safe, Http())
 	private val irods = new IRODSClient(config.irods, Http())
 
-	def b2SafeSourceExists(format: Option[URI], hash: Sha256Sum)(using Envri): Future[Boolean] = b2
-		.getHashsum(B2SafeUploadTask.irodsData(format, hash))
+	def remoteSourceExists(format: Option[URI], hash: Sha256Sum)(using Envri): Future[Boolean] = irods
+		.getHashsumOpt(IrodsUploadTask.irodsData(format, hash))
 		.map(_.contains(hash))
 
-	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum)(using Envri): Source[ByteString, Future[Done]] =
-		b2.downloadObjectReusable(B2SafeUploadTask.irodsData(format, hash))
+	def getRemoteStorageSource(format: Option[URI], hash: Sha256Sum)(using Envri): Source[ByteString, Future[Any]] =
+		val srcFut = irods.downloadObject(IrodsUploadTask.irodsData(format, hash))
+		Source.lazyFutureSource(() => srcFut)
 
-	def uploadToB2Stage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any])(using Envri): Future[Done] =
-		B2SafeUploadTask(format, hash, b2).uploadObject(src)
+	def uploadToRemoteStorage(format: Option[URI], hash: Sha256Sum, src: Source[ByteString, Any])(using Envri): Future[Done] =
+		val sink = IrodsUploadTask(format, hash, irods).sink.mapMaterializedValue:
+			_.flatMap:
+				case f: UploadTaskFailure => Future.failed(f.error)
+				case _ => Future.successful(Done)
+		src.runWith(sink)
 
 	def getSink(hash: Sha256Sum, user: UserId)(using Envri): Future[DataObjectSink] = {
 		for(

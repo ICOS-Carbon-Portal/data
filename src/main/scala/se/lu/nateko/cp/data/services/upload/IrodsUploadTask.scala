@@ -71,7 +71,19 @@ end IrodsUploadTask
 object IrodsUploadTask:
 
 	def apply(statObj: StaticObject, client: IRODSClient)(using Envri, ExecutionContext, Scheduler) =
-		new IrodsUploadTask(statObj.hash, B2SafeUploadTask.irodsData(statObj), client)
+		new IrodsUploadTask(statObj.hash, irodsData(statObj), client)
 
 	def apply(format: Option[URI], hash: Sha256Sum, client: IRODSClient)(using Envri, ExecutionContext, Scheduler) =
-		new IrodsUploadTask(hash, B2SafeUploadTask.irodsData(format, hash), client)
+		new IrodsUploadTask(hash, irodsData(format, hash), client)
+
+	def irodsData(statObj: StaticObject)(using Envri): IrodsData = irodsData(UploadService.fileFolder(statObj), statObj.hash)
+	def irodsData(format: Option[URI], hash: Sha256Sum)(using Envri): IrodsData = irodsData(UploadService.fileFolder(format), hash)
+
+	private def irodsData(folder: String, hash: Sha256Sum)(using envri: Envri): IrodsData =
+		val envriFolder = envri match
+			case Envri.ICOS | Envri.SITES => B2SafeItem.Root
+			case Envri.ICOSCities => IrodsColl("cities")
+
+		val baseColl = IrodsColl(folder, Some(envriFolder))
+		val coll = IrodsColl(hash.base64Url.take(2), Some(baseColl))
+		IrodsData(UploadService.fileName(hash), coll)
