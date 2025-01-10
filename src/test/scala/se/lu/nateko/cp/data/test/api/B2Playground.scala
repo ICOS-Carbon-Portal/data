@@ -1,6 +1,7 @@
 package se.lu.nateko.cp.data.test.api
 
 import akka.Done
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.actor.Scheduler
 import akka.stream.Materializer
@@ -15,6 +16,7 @@ import se.lu.nateko.cp.data.api.*
 import se.lu.nateko.cp.data.services.upload.IrodsUploadTask
 import se.lu.nateko.cp.data.services.upload.UploadTaskResult
 import se.lu.nateko.cp.data.streams.DigestFlow
+import se.lu.nateko.cp.data.utils.akka.done
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 import java.net.URI
@@ -25,12 +27,6 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
-import akka.stream.scaladsl.FileIO
-import java.nio.file.Paths
-import se.lu.nateko.cp.data.utils.akka.done
-import akka.NotUsed
 
 object B2Playground:
 	case class MoveRequest(from: IrodsData, to: IrodsData)
@@ -171,22 +167,22 @@ object B2Playground:
 				val suffix = path.split("/").last
 				parser(suffix)
 
-	def testMergeMove(from: IrodsColl, to: IrodsColl): Future[Done] =
-		mergeMove(from, to).runForeach(println)
-
 	// Assuming we want to move files from ../to_merge/both_places/name/ to ../name/
-	def testMoveFromTempFolder(name: String): Future[Done] =
+	def mergeMoveFromTempFolder(name: String): Future[Done] =
 		val toMerge = IrodsColl("to_merge")
 		val bothPlaces = IrodsColl("both_places", Some(toMerge))
 		val from = IrodsColl(name, Some(bothPlaces))
 		val to = IrodsColl(name)
-		println(from.path)
-		println(to.path)
-		mergeMove(from, to)//.take(3) // TODO remove take
+		println(s"Merge-moving ${from.path} --> ${to.path}")
+		mergeMove(from, to)//.take(3)
 			.wireTap(printMoveAction)
 			.mapAsyncUnordered(5)(act => doMoveAction(act).map(_ => act))
 			.runWith(Sink.ignore)
-	end testMoveFromTempFolder
+	end mergeMoveFromTempFolder
+
+	def mergeMultiFolders(): Future[Done] =
+		val names: Seq[String] = Seq("asciiEtcRawTimeSer", "asciiEtcHalfHourlyProductTimeSer", "asciiAtcTimeSer", "asciiAtcProductTimeSer")
+		names.foldLeft(done)((soFar, name) => soFar.flatMap(_ => mergeMoveFromTempFolder(name)))
 
 	private def doMoveAction(action: MoveAction): Future[Done] =
 		val (coll, requests) = action
