@@ -25,8 +25,16 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContextExecutor
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import akka.stream.scaladsl.FileIO
+import java.nio.file.Paths
+import se.lu.nateko.cp.data.utils.akka.done
+import akka.NotUsed
 
 object B2Playground:
+	case class MoveRequest(from: IrodsData, to: IrodsData)
+	type MoveAction = (IrodsColl, Seq[MoveRequest])
 
 	private given system: ActorSystem = ActorSystem("B2StageClient")
 	system.log
@@ -115,6 +123,85 @@ object B2Playground:
 		val elapsed = System.currentTimeMillis - start
 		reporterMs(res, elapsed)
 
+	def testMove(name: String, parentFrom: IrodsColl, parentTo: IrodsColl) =
+		inline def data(coll: IrodsColl) = IrodsData(name, coll)
+		default.moveObject(data(parentFrom), data(parentTo))
+
+	def testRename(fromName: String, toName: String, parent: IrodsColl) =
+		inline def data(name: String) = IrodsData(name, parent)
+		default.moveObject(data(fromName), data(toName))
+
+	def mergeMove(from: IrodsColl, to: IrodsColl): Source[MoveAction, Any] =
+		val presentInTarget: Future[Set[IrodsData]] =
+			Source.future(listContentsAsColls(to))
+				.mapConcat(identity)
+				.mapAsyncUnordered(5)(listContentsAsObjs)
+				.mapConcat(identity)
+				.runWith(Sink.seq)
+				.map(_.toSet)
+
+		def srcFut: Future[Source[MoveAction, NotUsed]] = presentInTarget.map: present =>
+			Source.future(listContentsAsColls(from))
+				.mapConcat(identity)
+				.mapAsyncUnordered(5): coll =>
+					listContentsAsObjs(coll).map: dobjs =>
+						val targetColl = coll.copy(parent = Some(to))
+						val requests = dobjs
+							.map: orig =>
+								MoveRequest(orig, orig.copy(parent = targetColl))
+							.filterNot(req => present.contains(req.to))
+						(targetColl, requests)
+				.filterNot:
+					(_, requests) => requests.isEmpty
+
+		Source.lazyFutureSource(() => srcFut)
+	end mergeMove
+
+	// Assuming that coll has only one level of sub colls, and that there are no data files directly below coll.
+	def listContentsAsColls(coll: IrodsColl): Future[Seq[IrodsColl]] =
+		parseCollContents(coll, IrodsColl(_, Some(coll)))
+
+	// Assuming that coll has no sub colls, only data (files).
+	def listContentsAsObjs(coll: IrodsColl): Future[Seq[IrodsData]] =
+		parseCollContents(coll, IrodsData(_, coll))
+
+	private def parseCollContents[T](coll: IrodsColl, parser: String => T): Future[Seq[T]] =
+		default.list(coll).map: paths =>
+			paths.map: path =>
+				val suffix = path.split("/").last
+				parser(suffix)
+
+	def testMergeMove(from: IrodsColl, to: IrodsColl): Future[Done] =
+		mergeMove(from, to).runForeach(println)
+
+	// Assuming we want to move files from ../to_merge/both_places/name/ to ../name/
+	def testMoveFromTempFolder(name: String): Future[Done] =
+		val toMerge = IrodsColl("to_merge")
+		val bothPlaces = IrodsColl("both_places", Some(toMerge))
+		val from = IrodsColl(name, Some(bothPlaces))
+		val to = IrodsColl(name)
+		println(from.path)
+		println(to.path)
+		mergeMove(from, to)//.take(3) // TODO remove take
+			.wireTap(printMoveAction)
+			.mapAsyncUnordered(5)(act => doMoveAction(act).map(_ => act))
+			.runWith(Sink.ignore)
+	end testMoveFromTempFolder
+
+	private def doMoveAction(action: MoveAction): Future[Done] =
+		val (coll, requests) = action
+		default.create(coll, false).flatMap: _ =>
+			Source(requests)
+				.mapAsyncUnordered(5): req =>
+					default.moveObject(req.from, req.to)
+				.runWith(Sink.ignore)
+
+	private def printMoveAction(action: MoveAction): Unit =
+		val (coll, requests) = action
+		println(s"Creating folder ${coll.path}")
+		requests.foreach:
+			case MoveRequest(from, to) =>
+				println(s"Move from ${from.path} to ${to.path}")
 
 //	val sinkFut: Future[Sink[Int, String]] = Future.failed(new Exception("kaboom"))
 //

@@ -120,6 +120,20 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 			.runWith(Sink.seq)
 	end uploadObject
 
+	def moveObject(from: IrodsData, to: IrodsData) : Future[Done] =
+		if config.dryRun then done
+		else
+			val req = HttpRequest(
+				uri = objUri,
+				method = HttpMethods.POST,
+				entity = FormData(
+					"op" -> "rename",
+					"old-lpath" -> lpath(from),
+					"new-lpath" -> lpath(to)
+				).toEntity
+			)
+			withAuth(req).flatMap(failIfNotSuccess)
+	end moveObject
 
 	private def parWriteInit(data: IrodsData, nStreams: Int): Future[ParWriteHandle] =
 		val req = HttpRequest(
