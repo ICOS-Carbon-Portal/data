@@ -60,7 +60,7 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig, extractEn
 
 			extractEnvri:
 				path("local"){
-					produceReport("local", service.getReportOnLocal(_, paging))
+					produceReport("local", service.getDataObjLocalReport(_, paging))
 				} ~
 				path("remote"){
 					get {
@@ -72,6 +72,9 @@ class IntegrityRouting(authRouting: AuthRouting, config: UploadConfig, extractEn
 							produceReport("remoteselected", service.getDataObjRemoteReport(_, dobjs))
 						}
 					}
+				} ~
+				path("localdocs"){
+					produceReport("localdocs", service.getDocObjLocalReport)
 				} ~
 				path("remotedocs"){
 					produceReport("remotedocs", service.getDocObjRemoteReport)

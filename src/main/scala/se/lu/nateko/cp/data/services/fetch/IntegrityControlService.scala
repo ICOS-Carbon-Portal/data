@@ -23,8 +23,7 @@ class IntegrityControlService(uploader: UploadService)(using ExecutionContext, M
 	import IntegrityControlService._
 	import MetaClient.{DobjStorageInfo, Paging}
 
-	def getReportOnLocal(fetchBaddiesFromRemote: Boolean, paging: Paging)(using Envri): ReportSource = uploader
-		.meta.getDobjStorageInfos(paging)
+	private def getReportOnLocal(fetchBaddiesFromRemote: Boolean, storage: Source[DobjStorageInfo, Any])(using Envri): ReportSource = storage
 		.mapAsync(2){dobjStInfo => //keep parallelizm low to avoid thread starvation (may be using actor system's default)
 			val (file, localProblemFut) = localFileProblem(dobjStInfo)
 
@@ -67,6 +66,11 @@ class IntegrityControlService(uploader: UploadService)(using ExecutionContext, M
 			}
 		}
 
+	def getDataObjLocalReport(fetchBaddiesFromRemote: Boolean, paging: Paging)(using Envri): ReportSource =
+		getReportOnLocal(fetchBaddiesFromRemote, uploader.meta.getDobjStorageInfos(paging))
+
+	def getDocObjLocalReport(fetchBaddiesFromRemote: Boolean)(using Envri): ReportSource =
+		getReportOnLocal(fetchBaddiesFromRemote, uploader.meta.docObjsStorageInfos)
 
 	def getDataObjRemoteReport(uploadMissingToRemote: Boolean, paging: Paging)(using Envri): ReportSource =
 		getReportOnRemote(uploadMissingToRemote, uploader.meta.getDobjStorageInfos(paging))
