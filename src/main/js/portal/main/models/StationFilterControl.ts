@@ -41,7 +41,7 @@ const iconStyle = new Style({
 	text: new Text({
 		offsetX: delIconOffsetX,
 		offsetY: delIconOffsetY,
-		font: '18px "Font Awesome 5 Free"',
+		font: '18px "Font Awesome 6 Free"',
 		text: '\uf2ed',
 		padding: [-2, -1, 0, 1],
 		backgroundFill: new Fill({ color: 'WhiteSmoke' })
