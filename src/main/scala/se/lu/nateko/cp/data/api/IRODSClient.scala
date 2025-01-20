@@ -260,7 +260,9 @@ class IRODSClient(config: IRODSConfig, http: HttpExt)(using mat: Materializer):
 				else parseHashsum(resp).map(Option(_)).recover:
 					case _: Throwable => None
 
-	def getHashsum(data: IrodsData): Future[Sha256Sum] = requestHashsum(data).flatMap(parseHashsum(_))
+	def getHashsum(data: IrodsData): Future[Sha256Sum] =
+		if config.dryRun then Future.fromTry(Sha256Sum.fromBase64Url(data.name))
+		else requestHashsum(data).flatMap(parseHashsum(_))
 
 	def getStats(data: IrodsData): Future[DobjStats] =
 		val q = Uri.Query("op" -> "stat", "lpath" -> lpath(data))
