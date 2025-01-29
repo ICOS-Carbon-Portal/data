@@ -52,13 +52,13 @@ def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToke
 	url = conf.auth_service_base_url + "password/login"
 	data = {'mail': user_id, 'password': password}
 	headers = {"Content-Type": "application/x-www-form-urlencoded"}
-	resp = http_request(url, f"Fetching auth token from {url}", "POST", headers, data)
-	cookie = resp.getheader("Set-Cookie") or None
+	resp = http_request(url, "Fetching auth token", "POST", headers, data)
+	cookie = resp.getheader("Set-Cookie")
 	if cookie is None:
 		raise Exception(f"Could not fetch auth token from {url}\nMissing value for header 'Set-Cookie'")
 	else:
 		cookie_value = cookie.split()[0]
-	return parse_auth_token(cookie_value)
+		return parse_auth_token(cookie_value)
 
 class AuthTokenProvider(ABC):
 	@abstractmethod

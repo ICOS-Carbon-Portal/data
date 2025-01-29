@@ -2,7 +2,7 @@ import os
 import re
 import shutil
 from urllib.parse import urlsplit, unquote
-from typing import Iterator, Tuple, Any
+from typing import Iterator, Tuple
 
 from .metaclient import MetadataClient
 from .metacore import DataObject
@@ -10,9 +10,9 @@ from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
 from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
-from .cpb import Dobj, dobj_uri
+from .cpb import Dobj, to_dobj_uri
 from .portaluse_client import report_cpb_file_read
-from .http import http_request, HTTPResponse
+from .http import http_auth_request, HTTPResponse
 
 
 class DataClient:
@@ -52,7 +52,7 @@ class DataClient:
 
 		dobj_uri = to_dobj_uri(dobj)
 		url = self._conf.data_service_base_url + urlsplit(dobj_uri).path
-		resp = self._auth_get(url, 'fetching data object')
+		resp = http_auth_request(url, 'Fetching data object', self._auth)
 
 		filename: str
 		if type(dobj) is DataObjectLite:
@@ -128,10 +128,11 @@ class DataClient:
 
 		dobj_hash = to_dobj_uri(dobj).split('/')[-1]
 
-		return self._auth_get(
+		return http_auth_request(
 			url = self._conf.data_service_base_url + "/csv/" + dobj_hash,
-			error_hint = 'fetching CSV',
-			params = {
+			error_hint = 'Fetching CSV',
+			auth=self._auth,
+			data={
 				"col": cols,
 				"offset": offset,
 				"limit": limit
@@ -180,7 +181,7 @@ class DataClient:
 		res = self._get_columns_as_arrays(codec, keep_bad_data)
 
 		if self._data_folder_path is not None:
-			report_cpb_file_read(self._conf, hashes = [dobj.hash[:24]], columns=columns)
+			report_cpb_file_read(self._conf, self._auth, hashes = [dobj.hash[:24]], columns=columns)
 
 		return res
 
@@ -221,8 +222,8 @@ class DataClient:
 		dobj_codecs = codecs_from_dobjs(dobjs, req, self._meta)
 
 		if self._data_folder_path is not None:
-			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
-			report_cpb_file_read(self._conf, hashes=hashes, columns=columns)
+			hashes = [to_dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
+			report_cpb_file_read(self._conf, self._auth, hashes=hashes, columns=columns)
 
 		for dobj, codec in dobj_codecs:
 			yield dobj, self._get_columns_as_arrays(codec, keep_bad_data)
@@ -231,22 +232,13 @@ class DataClient:
 	def _get_columns_as_arrays(self, codec: Codec, keep_bad_data: bool) -> ArraysDict:
 		if self._data_folder_path is not None:
 			return codec.parse_cpb_file(self._data_folder_path, keep_bad_data)
-		headers = {
-			"Accept": "application/octet-stream",
-			"Content-Type": "application/json",
-			"Cookie": self._auth.get_token().cookie_value
-		}
-		url = self._conf.data_service_base_url + '/cpb'
-		resp = http_request(url, "Fetching binary from " + url, "POST", headers, codec.json_payload)
+
+		resp = http_auth_request(
+			url=self._conf.data_service_base_url + '/cpb',
+			error_hint="Fetching binary",
+			auth=self._auth,
+			method="POST",
+			headers={"Accept": "application/octet-stream"},
+			data=codec.json_payload
+		)
 		return codec.parse_cpb_response(resp.fp, keep_bad_data)
-
-
-	def _auth_get(self, url: str, error_hint: str, params: dict[str, Any] | None = None) -> HTTPResponse:
-		headers = {"Cookie": self._auth.get_token().cookie_value}
-		return http_request(url, f"{error_hint} from {url}", "GET", headers, params)
-
-
-def to_dobj_uri(dobj: str | DataObjectLite) -> str:
-	if type(dobj) == DataObjectLite: return dobj.uri
-	elif type(dobj) == str: return dobj
-	else: raise ValueError('dobj_uri must be a string or a DataObjectLite instance')

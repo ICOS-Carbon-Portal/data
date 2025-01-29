@@ -220,5 +220,5 @@ class MetadataClient:
 
 def _get_json_meta(url: str, data_class: Type[CPJson]) -> CPJson:
 	headers = {"Accept": "application/json"}
-	resp = http_request(url, f"Fetching JSON metadata from {url}", headers=headers)
+	resp = http_request(url, "Fetching JSON metadata", headers=headers)
 	return parse_cp_json(resp.read().decode(), data_class=data_class)
