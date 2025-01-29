@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from typing import TypeAlias, Literal, Optional
 
 from .envri import EnvriConfig
-from .http import http_request
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)
@@ -28,37 +27,6 @@ class AuthToken:
 		return self._will_expire_in(ExpiryMargin)
 	def is_fresh(self) -> bool:
 		return not self._will_expire_in(FreshnessMargin)
-
-def parse_auth_token(cookie_value: str) -> AuthToken:
-	eq_idx = cookie_value.find("=")
-
-	if eq_idx < 0 or eq_idx > 100:
-		raise ValueError(f"Authentication token cookie value must contain '=' sign " +
-			"close to the start of the string, but it was {cookie_value}")
-
-	token_base64 = cookie_value[eq_idx + 1:]
-	token_bin = base64.b64decode(token_base64)
-	sep_idx = token_bin.index(ord('\x1e'))
-
-	if sep_idx < 0:
-		raise ValueError(f"Bad auth cookie format, missing expected separator byte 0x1e in: {token_base64}")
-
-	ts_millis, user_id, auth_source = json.loads(token_bin[0:sep_idx].decode())
-
-	expiry_time = datetime.fromtimestamp(ts_millis / 1000)
-	return AuthToken(user_id, auth_source, expiry_time, cookie_value)
-
-def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToken:
-	url = conf.auth_service_base_url + "password/login"
-	data = {'mail': user_id, 'password': password}
-	headers = {"Content-Type": "application/x-www-form-urlencoded"}
-	resp = http_request(url, "Fetching auth token", "POST", headers, data)
-	cookie = resp.getheader("Set-Cookie")
-	if cookie is None:
-		raise Exception(f"Could not fetch auth token from {url}\nMissing value for header 'Set-Cookie'")
-	else:
-		cookie_value = cookie.split()[0]
-		return parse_auth_token(cookie_value)
 
 class AuthTokenProvider(ABC):
 	@abstractmethod
@@ -169,3 +137,36 @@ class ConfigFileAuth(AuthTokenProvider):
 		inner = PasswordAuth(user_id, password, self._conf)
 		inner.save_to_file(self._conf_file_path)
 		self._provider = inner
+
+def parse_auth_token(cookie_value: str) -> AuthToken:
+	eq_idx = cookie_value.find("=")
+
+	if eq_idx < 0 or eq_idx > 100:
+		raise ValueError(f"Authentication token cookie value must contain '=' sign " +
+			"close to the start of the string, but it was {cookie_value}")
+
+	token_base64 = cookie_value[eq_idx + 1:]
+	token_bin = base64.b64decode(token_base64)
+	sep_idx = token_bin.index(ord('\x1e'))
+
+	if sep_idx < 0:
+		raise ValueError(f"Bad auth cookie format, missing expected separator byte 0x1e in: {token_base64}")
+
+	ts_millis, user_id, auth_source = json.loads(token_bin[0:sep_idx].decode())
+
+	expiry_time = datetime.fromtimestamp(ts_millis / 1000)
+	return AuthToken(user_id, auth_source, expiry_time, cookie_value)
+
+from .http import http_request
+
+def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToken:
+	url = conf.auth_service_base_url + "password/login"
+	data = {'mail': user_id, 'password': password}
+	headers = {"Content-Type": "application/x-www-form-urlencoded"}
+	resp = http_request(url, "Fetching auth token", "POST", headers, data)
+	cookie = resp.getheader("Set-Cookie")
+	if cookie is None:
+		raise Exception(f"Could not fetch auth token from {url}\nMissing value for header 'Set-Cookie'")
+	else:
+		cookie_value = cookie.split()[0]
+		return parse_auth_token(cookie_value)
