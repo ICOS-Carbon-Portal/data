@@ -4,7 +4,7 @@ from numpy.typing import NDArray
 import os
 import re
 import sys
-from typing import Any, TypeAlias, TypeVar, TypedDict, Tuple
+from typing import Any, TypeAlias, TypedDict, Tuple
 from dataclasses import dataclass
 from .metaclient import MetadataClient
 from .metacore import DataObject, StationTimeSeriesMeta, URI
@@ -69,25 +69,27 @@ def codec_from_dobj_meta(dobj: DataObject, request: TableRequest) -> "Codec":
 	)
 	return Codec(ci)
 
-Dobj = TypeVar("Dobj", URI, DataObjectLite)
+Dobj: TypeAlias = URI | DataObjectLite
 
-def dobj_uri(dobj: Dobj) -> URI:
-	return dobj.uri if isinstance(dobj, DataObjectLite) else dobj
+def to_dobj_uri(dobj: Dobj) -> URI:
+	if isinstance(dobj, DataObjectLite): return dobj.uri
+	elif isinstance(dobj, URI): return dobj
+	else: raise ValueError('dobj must be a string or a DataObjectLite instance')
 
 def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataClient) -> list[Tuple[Dobj, "Codec"]]:
 
 	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
 
-	dobj_uris = [dobj_uri(dobj) for dobj in dobjs]
+	dobj_uris = [to_dobj_uri(dobj) for dobj in dobjs]
 
 	cpb_metas: dict[URI, CpbMetaData] = {
 		cpb.dobj: cpb for cpb in get_cpb_meta(dobj_uris, meta)
 	}
 
-	missing_dobjs = [str(dobj) for dobj in dobjs if dobj_uri(dobj) not in cpb_metas]
+	missing_dobjs = [str(dobj) for dobj in dobjs if to_dobj_uri(dobj) not in cpb_metas]
 
 	if len(missing_dobjs) > 0: raise Exception(
-		"Some of the requested objects don't have required metadata to fetch them as tabular data: "
+		"Some of the requested objects don't have required metadata to fetch them as tabular data: " +
 		",\n".join(missing_dobjs)
 	)
 
@@ -107,7 +109,7 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataCl
 
 	res: list[Tuple[Dobj, "Codec"]] = []
 	for dobj in dobjs:
-		cpb = cpb_metas[dobj_uri(dobj)]
+		cpb = cpb_metas[to_dobj_uri(dobj)]
 		cols_names = cpb.col_names or col_lookup.default_actual_cols
 
 		cols_info = [

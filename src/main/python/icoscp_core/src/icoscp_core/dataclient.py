@@ -10,7 +10,7 @@ from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
 from .auth import AuthTokenProvider
 from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
-from .cpb import Dobj, dobj_uri
+from .cpb import Dobj, to_dobj_uri
 from .portaluse_client import report_cpb_file_read
 from .http import http_auth_request, HTTPResponse
 
@@ -52,7 +52,7 @@ class DataClient:
 
 		dobj_uri = to_dobj_uri(dobj)
 		url = self._conf.data_service_base_url + urlsplit(dobj_uri).path
-		resp = http_auth_request(url, 'fetching data object', self._auth)
+		resp = http_auth_request(url, 'Fetching data object', self._auth)
 
 		filename: str
 		if type(dobj) is DataObjectLite:
@@ -130,7 +130,7 @@ class DataClient:
 
 		return http_auth_request(
 			url = self._conf.data_service_base_url + "/csv/" + dobj_hash,
-			error_hint = 'fetching CSV',
+			error_hint = 'Fetching CSV',
 			auth=self._auth,
 			data={
 				"col": cols,
@@ -222,7 +222,7 @@ class DataClient:
 		dobj_codecs = codecs_from_dobjs(dobjs, req, self._meta)
 
 		if self._data_folder_path is not None:
-			hashes = [dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
+			hashes = [to_dobj_uri(dobj).split('/')[-1] for dobj, _ in dobj_codecs]
 			report_cpb_file_read(self._conf, self._auth, hashes=hashes, columns=columns)
 
 		for dobj, codec in dobj_codecs:
@@ -242,9 +242,3 @@ class DataClient:
 			data=codec.json_payload
 		)
 		return codec.parse_cpb_response(resp.fp, keep_bad_data)
-
-
-def to_dobj_uri(dobj: str | DataObjectLite) -> str:
-	if type(dobj) == DataObjectLite: return dobj.uri
-	elif type(dobj) == str: return dobj
-	else: raise ValueError('dobj_uri must be a string or a DataObjectLite instance')
