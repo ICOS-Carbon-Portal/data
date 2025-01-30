@@ -308,6 +308,7 @@ _fmt_uri_to_fmt = {
 	'float64': 'DOUBLE',
 	'bmpChar': 'CHAR',
 	'string': 'STRING',
+	'boolean': 'BYTE',
 	'iso8601date': 'INT',
 	'etcDate': 'INT',
 	'iso8601month': 'INT',
@@ -332,6 +333,8 @@ def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 		return arr.astype('>i8').view(dtype=np.dtype('>timedelta64[s]'))
 	elif fmt_str in ["iso8601dateTime", "isoLikeLocalDateTime", "etcLocalDateTime"]:
 		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[ms]'))
+	elif fmt_str == "boolean":
+		return bool(arr)
 	else:
 		return arr
 
