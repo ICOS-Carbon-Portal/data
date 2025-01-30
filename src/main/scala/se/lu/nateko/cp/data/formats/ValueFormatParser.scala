@@ -65,7 +65,7 @@ object ValueFormatParser:
 			case EtcLocalDateTime =>
 				localDateTimeToBin(value, etcDateTimeFormatter)
 			case BooleanValue =>
-				Byte.box(if (value.toBoolean) 1.toByte else 0.toByte)
+				Byte.box(if value.toBoolean then 1 else 0)
 		}
 
 	private def isoTimeOfDayToBin(time: String): Integer = encodeLocalTime(LocalTime.parse(time))

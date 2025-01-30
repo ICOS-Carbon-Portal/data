@@ -333,8 +333,6 @@ def _type_post_process(arr: NDArray[Any], fmt: URI) -> NDArray[Any]:
 		return arr.astype('>i8').view(dtype=np.dtype('>timedelta64[s]'))
 	elif fmt_str in ["iso8601dateTime", "isoLikeLocalDateTime", "etcLocalDateTime"]:
 		return arr.astype('>i8').view(dtype=np.dtype('>datetime64[ms]'))
-	elif fmt_str == "boolean":
-		return bool(arr)
 	else:
 		return arr
 
@@ -345,7 +343,7 @@ _fmt_to_dtype: dict[str, np.dtype[Any]] = {
 	'DOUBLE': np.dtype('>f8'),
 	'SHORT': np.dtype('>i2'),
 	'CHAR': np.dtype('>u2'),
-	'BYTE': np.dtype('i8'),
+	'BYTE': np.dtype('i1'),
 }
 
 def _get_format_dtype(fmt: str) -> np.dtype[Any]:
