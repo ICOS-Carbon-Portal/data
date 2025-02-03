@@ -27,7 +27,7 @@ class ValueParserTests extends AnyFunSpec{
 			it("supports non-zero-padded-hours"){
 				assert(parser.parse("0:01:00", Iso8601TimeOfDay) === 60)
 			}
-	
+
 			it("supports non-standard time of day between 24 and 25 hours"){
 				assert(parser.parse("24:01:01", Iso8601TimeOfDay) === 24 * 3600 + 61)
 			}
@@ -48,6 +48,24 @@ class ValueParserTests extends AnyFunSpec{
 				assertThrows[CpDataParsingException]{
 					parser.parse("1,48348", FloatValue)
 				}
+			}
+		}
+
+		describe("Boolean parsing") {
+			it("parses True as 1"){
+				assert(parser.parse("True", BooleanValue) === 1)
+			}
+
+			it("parses true as 1"){
+				assert(parser.parse("true", BooleanValue) === 1)
+			}
+
+			it("parses False as 0"){
+				assert(parser.parse("False", BooleanValue) === 0)
+			}
+
+			it("parses false as 0"){
+				assert(parser.parse("false", BooleanValue) === 0)
 			}
 		}
 	}

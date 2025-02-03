@@ -5,7 +5,7 @@ import se.lu.nateko.cp.data.api.CpDataException
 
 enum ValueFormat:
 	case IntValue, FloatValue, DoubleValue
-	case Utf16CharValue, StringValue
+	case Utf16CharValue, StringValue, BooleanValue
 	case Iso8601Date, EtcDate
 	case Iso8601TimeOfDay
 	case Iso8601Month
@@ -28,6 +28,7 @@ object ValueFormat{
 		case `iso8601timeOfDay` => Iso8601TimeOfDay
 		case `isoLikeLocalDateTime` => IsoLikeLocalDateTime
 		case `etcLocalDateTime` => EtcLocalDateTime
+		case `boolean` => BooleanValue
 		case _ => throw new CpDataException(s"Unsupported value format $uri")
 	}
 }

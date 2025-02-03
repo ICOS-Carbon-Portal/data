@@ -46,6 +46,7 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val iso8601timeOfDay = getRelative("iso8601timeOfDay")
 	val isoLikeLocalDateTime = getRelative("isoLikeLocalDateTime")
 	val etcLocalDateTime = getRelative("etcLocalDateTime")
+	val boolean = getRelative("boolean")
 
 	val zipEncoding = getRelative("zipEncoding")
 	val plainFile = getRelative("plainFileEncoding")

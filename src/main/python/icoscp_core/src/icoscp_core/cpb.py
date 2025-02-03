@@ -308,6 +308,7 @@ _fmt_uri_to_fmt = {
 	'float64': 'DOUBLE',
 	'bmpChar': 'CHAR',
 	'string': 'STRING',
+	'boolean': 'BYTE',
 	'iso8601date': 'INT',
 	'etcDate': 'INT',
 	'iso8601month': 'INT',
@@ -342,7 +343,7 @@ _fmt_to_dtype: dict[str, np.dtype[Any]] = {
 	'DOUBLE': np.dtype('>f8'),
 	'SHORT': np.dtype('>i2'),
 	'CHAR': np.dtype('>u2'),
-	'BYTE': np.dtype('i8'),
+	'BYTE': np.dtype('i1'),
 }
 
 def _get_format_dtype(fmt: str) -> np.dtype[Any]:

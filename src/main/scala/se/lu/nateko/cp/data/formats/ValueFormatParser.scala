@@ -64,6 +64,8 @@ object ValueFormatParser:
 				localDateTimeToBin(value, isoLikeDateFormater)
 			case EtcLocalDateTime =>
 				localDateTimeToBin(value, etcDateTimeFormatter)
+			case BooleanValue =>
+				Byte.box(if value.toBoolean then 1 else 0)
 		}
 
 	private def isoTimeOfDayToBin(time: String): Integer = encodeLocalTime(LocalTime.parse(time))
@@ -83,6 +85,7 @@ object ValueFormatParser:
 		case DoubleValue => DataType.DOUBLE
 		case Utf16CharValue => DataType.CHAR
 		case StringValue => DataType.STRING
+		case BooleanValue => DataType.BYTE
 		case Iso8601Month => DataType.INT
 		case Iso8601Date | EtcDate => DataType.INT
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => DataType.DOUBLE
@@ -95,6 +98,7 @@ object ValueFormatParser:
 		case DoubleValue => Double.box(Double.NaN)
 		case Utf16CharValue => Character.valueOf(Character.MIN_VALUE)
 		case StringValue => ""
+		case BooleanValue => Byte.box(Byte.MinValue)
 		case Iso8601Month => Int.box(Int.MinValue)
 		case Iso8601Date | EtcDate => Int.box(Int.MinValue)
 		case Iso8601DateTime | IsoLikeLocalDateTime | EtcLocalDateTime => Double.box(Double.NaN)
@@ -122,7 +126,7 @@ object ValueFormatParser:
 			case Iso8601TimeOfDay =>
 				v => LocalTime.ofSecondOfDay(v.asInstanceOf[Int].toLong % 86400).toString
 
-			case Utf16CharValue | IntValue | StringValue | FloatValue | DoubleValue =>
+			case Utf16CharValue | IntValue | StringValue | FloatValue | DoubleValue | BooleanValue =>
 				v => v.toString
 		}
 
