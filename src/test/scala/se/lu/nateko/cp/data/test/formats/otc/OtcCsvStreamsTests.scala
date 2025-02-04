@@ -27,6 +27,7 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 	def outFile(fileName: String) = new File(getClass.getResource("/").getFile + fileName)
 	val nRows = 526
+	val qualityFlagRows = 10
 
 	val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
@@ -45,6 +46,11 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 		.via(TimeSeriesStreams.linesFromUtf8Binary)
 		.viaMat(socatTsvParser(nRows, formats))(KeepFuture.left)
 
+	private val qualityFlagRowsSource = StreamConverters
+		.fromInputStream(() => getClass.getResourceAsStream("/otc_quality_flags.tab"))
+		.via(TimeSeriesStreams.linesFromUtf8Binary)
+		.viaMat(socatTsvParser(qualityFlagRows, formats))(KeepFuture.left)
+
 	val binTableSink = BinTableSink(outFile("/socatTsvBinTest.cpb"), overwrite = true)
 
 	test("Parsing of an example Socat time series data set"){
@@ -54,6 +60,15 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
 		assert(rows.size === nRows)
 		assert(rows(2).cells(3) === "-42.94501") //stick-test
+	}
+
+	test("Parsing of an example time series data set with lat lon quality flag"){
+
+		val rowsFut = qualityFlagRowsSource.toMat(Sink.seq)(KeepFuture.right).run()
+		val rows = Await.result(rowsFut, 3.second)
+		val rowsWithFlag = 3
+
+		assert(rows.size === qualityFlagRows - rowsWithFlag)
 	}
 
 	test("Parsing of an example Socat time series data set and streaming to BinTable"){

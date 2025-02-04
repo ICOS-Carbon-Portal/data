@@ -23,7 +23,9 @@ import scala.util.Try
 object OtcCsvStreams {
 
 	val LonColName = "Longitude"
+	val LonFlagColName = "Longitude QC Flag"
 	val LatColName = "Latitude"
+	val LatFlagColName = "Latitude QC Flag"
 	private val csvParser = CsvParser.default
 
 	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser = Flow[String]
@@ -42,6 +44,7 @@ object OtcCsvStreams {
 				}
 		}
 		.drop(2)
+		.filter(row => !hasLatLonQualityFlag(row))
 		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
 	def otcProductParser(nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser = Flow[String]
@@ -107,4 +110,18 @@ object OtcCsvStreams {
 					parseFail(s"Problem parsing lat/lon values in row $row\nError message: ${err.getMessage}")
 
 	def parseFail(msg: String) = scala.util.Failure(new CpDataParsingException(msg))
+
+	private def hasLatLonQualityFlag(row: TableRow): Boolean =
+		val lonQualityFlagPos = row.header.columnNames.indexOf(LonFlagColName)
+		val latQualityFlagPos = row.header.columnNames.indexOf(LatFlagColName)
+		val hasLonQualityFlag = hasPresentFieldValue(row, lonQualityFlagPos)
+		val hasLatQualityFlag = hasPresentFieldValue(row, latQualityFlagPos)
+		hasLonQualityFlag || hasLatQualityFlag
+
+	private def hasPresentFieldValue(row: TableRow, fieldPosition: Int): Boolean =
+		if (fieldPosition < 0)
+			false
+		else
+			val fieldValue = row.cells(fieldPosition).toString
+			!fieldValue.replaceAll("\"", "").trim.isEmpty
 }
