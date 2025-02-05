@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "deep-equal": "2.2.2",
-    "icos-cp-backend": "^0.5.4",
+    "icos-cp-backend": "^0.5.5",
     "icos-cp-copyright": "^0.0.2",
     "icos-cp-draggable": "0.0.2",
     "icos-cp-ol": "4.2.0",
