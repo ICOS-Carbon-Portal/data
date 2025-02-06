@@ -19,13 +19,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Success
 import scala.util.Try
+import java.net.URI
+import se.lu.nateko.cp.data.api.CpMetaVocab
 
 object OtcCsvStreams {
 
-	val LonColName = "Longitude"
-	val LonFlagColName = "Longitude QC Flag"
-	val LatColName = "Latitude"
-	val LatFlagColName = "Latitude QC Flag"
+	// TODO Read these from the ontology
+	val GoodFlagValues = Set("2", "9")
+
 	private val csvParser = CsvParser.default
 
 	def socatTsvParser(nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser = Flow[String]
@@ -44,7 +45,6 @@ object OtcCsvStreams {
 				}
 		}
 		.drop(2)
-		.filter(row => !hasLatLonQualityFlag(row))
 		.alsoToMat(uploadCompletionSink(format.colsMeta))(Keep.right)
 
 	def otcProductParser(nRows: Int, format: ColumnsMetaWithTsCol)(using ExecutionContext): RowParser = Flow[String]
@@ -67,39 +67,45 @@ object OtcCsvStreams {
 	def uploadCompletionSink(columnsMeta: ColumnsMeta)(using ExecutionContext): Sink[TableRow, Future[IngestionMetadataExtract]] = {
 		val tabularExtractSink = digestSink(getCompletionInfo(columnsMeta))
 
-		if(columnsMeta.matchesColumn(LatColName) && columnsMeta.matchesColumn(LonColName))
-			Flow.apply[TableRow]
+		val latLonColsOpt = for
+			latCol <- columnsMeta.lookupSinglePlainColumn(CpMetaVocab.latitudeValType)
+			lonCol <- columnsMeta.lookupSinglePlainColumn(CpMetaVocab.longitudeValType)
+		yield (latCol, lonCol)
+
+		latLonColsOpt match
+
+			case None => Flow.apply[TableRow].toMat(tabularExtractSink)(Keep.right)
+
+			case Some((latCol, lonCol)) => Flow.apply[TableRow]
 				.alsoToMat(tabularExtractSink)(Keep.right)
-				.toMat(coverageSink(ignoreErrors = true)) { (tsUplComplFut, coverageFut) =>
+				.toMat(coverageSink(latCol, lonCol)): (tsUplComplFut, coverageFut) =>
 					for (
 						tsUplCompl <- tsUplComplFut;
 						coverage <- coverageFut
 					) yield
 						SpatialTimeSeriesExtract(tsUplCompl.tabular, coverage)
-				}
-		else
-			Flow.apply[TableRow].toMat(tabularExtractSink)(Keep.right)
 	}
 
-	def coverageSink(ignoreErrors: Boolean)(using ExecutionContext): Sink[TableRow, Future[GeoFeature]] = {
+	private def coverageSink(latCol: PlainColumn, lonCol: PlainColumn)(using ExecutionContext): Sink[TableRow, Future[GeoFeature]] =
+		val filter = Flow.apply[TableRow].filterNot(getBadGeoFlagTest(latCol, lonCol))
 		val pointsParser: Flow[TableRow, Point, NotUsed] =
-			if(ignoreErrors) Flow.apply[TableRow].mapConcat(parseLatLon(_).toOption)
-			else Flow.apply[TableRow].map(parseLatLon(_).get)
+			val parser = getLatLonParser(latCol, lonCol)
+			filter.mapConcat(parser(_).toOption)
 
 		pointsParser.toMat(GeoFeaturePointSink.sink)(Keep.right)
-	}
+
 
 	private def makeSocatTimeStamp(timestamp: String): Instant = {
 		val timestampFormatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 		LocalDateTime.parse(timestamp, timestampFormatter).toInstant(ZoneOffset.UTC)
 	}
 
-	def parseLatLon(row: TableRow): Try[Point] =
-		val lonPos = row.header.columnNames.indexOf(LonColName)
-		val latPos = row.header.columnNames.indexOf(LatColName)
+	def getLatLonParser(latCol: PlainColumn, lonCol: PlainColumn): TableRow => Try[Point] = row =>
+		val latPos = row.header.columnNames.indexOf(latCol.title)
+		val lonPos = row.header.columnNames.indexOf(lonCol.title)
 
 		if (lonPos < 0 || latPos < 0)
-			parseFail(s"Expected both $LonColName and $LatColName columns to be present in row $row")
+			parseFail(s"Expected both longitude and latitude columns to be present in row $row")
 		else
 			try
 				val lon = row.cells(lonPos).toDouble
@@ -111,17 +117,11 @@ object OtcCsvStreams {
 
 	def parseFail(msg: String) = scala.util.Failure(new CpDataParsingException(msg))
 
-	private def hasLatLonQualityFlag(row: TableRow): Boolean =
-		val lonQualityFlagPos = row.header.columnNames.indexOf(LonFlagColName)
-		val latQualityFlagPos = row.header.columnNames.indexOf(LatFlagColName)
-		val hasLonQualityFlag = hasPresentFieldValue(row, lonQualityFlagPos)
-		val hasLatQualityFlag = hasPresentFieldValue(row, latQualityFlagPos)
-		hasLonQualityFlag || hasLatQualityFlag
+	private def getBadGeoFlagTest(latCol: PlainColumn, lonCol: PlainColumn): TableRow => Boolean =
+		val flagColNames = Seq(latCol, lonCol).flatMap(_.flagColumnTitle)
+		if flagColNames.isEmpty then row => false
+		else row => flagColNames.exists: flagColName =>
+			val pos = row.header.columnNames.indexOf(flagColName)
+			if pos < 0 then false else !GoodFlagValues.contains(row.cells(pos))
 
-	private def hasPresentFieldValue(row: TableRow, fieldPosition: Int): Boolean =
-		if (fieldPosition < 0)
-			false
-		else
-			val fieldValue = row.cells(fieldPosition).toString
-			!fieldValue.replaceAll("\"", "").trim.isEmpty
 }

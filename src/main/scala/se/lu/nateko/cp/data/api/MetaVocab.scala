@@ -51,6 +51,9 @@ object CpMetaVocab extends MetaVocab(new URI("http://meta.icos-cp.eu/ontologies/
 	val zipEncoding = getRelative("zipEncoding")
 	val plainFile = getRelative("plainFileEncoding")
 	val ccby4 = getRelative("icosLicence")
+
+	val longitudeValType = getRelative("longitude")
+	val latitudeValType = getRelative("latitude")
 }
 
 object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/ontologies/sites/")) {
