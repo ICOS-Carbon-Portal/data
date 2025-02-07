@@ -16,11 +16,11 @@ import se.lu.nateko.cp.data.streams.KeepFuture
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import java.net.URI
-import se.lu.nateko.cp.data.api.CpMetaVocab
 import se.lu.nateko.cp.meta.core.data.SpatialTimeSeriesExtract
 import se.lu.nateko.cp.meta.core.data.IngestionMetadataExtract
 import se.lu.nateko.cp.meta.core.data.GeoTrack
 import se.lu.nateko.cp.meta.core.data.Position
+import se.lu.nateko.cp.data.api.CpMetaResourcesVocab
 
 class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 
@@ -38,8 +38,8 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	val formats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
 			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false, dummyURI, None),
-			PlainColumn(DoubleValue, "Latitude", isOptional = false, CpMetaVocab.latitudeValType, Some("Latitude QC Flag")),
-			PlainColumn(DoubleValue, "Longitude", isOptional = false, CpMetaVocab.longitudeValType, Some("Longitude QC Flag")),
+			PlainColumn(DoubleValue, "Latitude", isOptional = false, CpMetaResourcesVocab.latitudeValType, Some("Latitude QC Flag")),
+			PlainColumn(DoubleValue, "Longitude", isOptional = false, CpMetaResourcesVocab.longitudeValType, Some("Longitude QC Flag")),
 			PlainColumn(FloatValue, "Depth water [m]", isOptional = false, dummyURI, None),
 			PlainColumn(FloatValue, "Temp [°C]", isOptional = false, dummyURI, None),
 			PlainColumn(FloatValue, "fCO2water_SST_wet [µatm] (Recomputed after SOCAT (Pfeil...)", isOptional = false, dummyURI, None),
@@ -90,8 +90,8 @@ class OtcCsvStreamsTests extends AnyFunSuite with BeforeAndAfterAll{
 	val otcFormats = ColumnsMetaWithTsCol(
 		new ColumnsMeta(Seq(
 			PlainColumn(Iso8601DateTime, "TIMESTAMP", isOptional = false, dummyURI, None),
-			PlainColumn(DoubleValue, "Latitude", isOptional = false, CpMetaVocab.latitudeValType, Some("Latitude QC Flag")),
-			PlainColumn(DoubleValue, "Longitude", isOptional = false, CpMetaVocab.longitudeValType, Some("Longitude QC Flag")),
+			PlainColumn(DoubleValue, "Latitude", isOptional = false, CpMetaResourcesVocab.latitudeValType, Some("Latitude QC Flag")),
+			PlainColumn(DoubleValue, "Longitude", isOptional = false, CpMetaResourcesVocab.longitudeValType, Some("Longitude QC Flag")),
 			PlainColumn(FloatValue, "Depth [m]", isOptional = false, dummyURI, None),
 		)),
 		"TIMESTAMP"

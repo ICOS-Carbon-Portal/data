@@ -20,7 +20,7 @@ import scala.concurrent.Future
 import scala.util.Success
 import scala.util.Try
 import java.net.URI
-import se.lu.nateko.cp.data.api.CpMetaVocab
+import se.lu.nateko.cp.data.api.CpMetaResourcesVocab
 
 object OtcCsvStreams {
 
@@ -68,8 +68,8 @@ object OtcCsvStreams {
 		val tabularExtractSink = digestSink(getCompletionInfo(columnsMeta))
 
 		val latLonColsOpt = for
-			latCol <- columnsMeta.lookupSinglePlainColumn(CpMetaVocab.latitudeValType)
-			lonCol <- columnsMeta.lookupSinglePlainColumn(CpMetaVocab.longitudeValType)
+			latCol <- columnsMeta.lookupSinglePlainColumn(CpMetaResourcesVocab.latitudeValType)
+			lonCol <- columnsMeta.lookupSinglePlainColumn(CpMetaResourcesVocab.longitudeValType)
 		yield (latCol, lonCol)
 
 		latLonColsOpt match
