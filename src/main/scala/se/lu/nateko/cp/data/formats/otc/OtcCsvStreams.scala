@@ -87,12 +87,11 @@ object OtcCsvStreams {
 	}
 
 	private def coverageSink(latCol: PlainColumn, lonCol: PlainColumn)(using ExecutionContext): Sink[TableRow, Future[GeoFeature]] =
-		val filter = Flow.apply[TableRow].filterNot(getBadGeoFlagTest(latCol, lonCol))
-		val pointsParser: Flow[TableRow, Point, NotUsed] =
-			val parser = getLatLonParser(latCol, lonCol)
-			filter.mapConcat(parser(_).toOption)
+		val parser = getLatLonParser(latCol, lonCol)
 
-		pointsParser.toMat(GeoFeaturePointSink.sink)(Keep.right)
+		Flow.apply[TableRow].filterNot(getBadGeoFlagTest(latCol, lonCol))
+			.mapConcat(tableRow => parser(tableRow).toOption)
+			.toMat(GeoFeaturePointSink.sink)(Keep.right)
 
 
 	private def makeSocatTimeStamp(timestamp: String): Instant = {
