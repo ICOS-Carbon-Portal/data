@@ -115,14 +115,15 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 			? null
 			: specTable.origins.getColumnValuesFilter('station');
 
+	const sitesFilters = ['location', 'ecosystem'] as const;
+
 	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
 		specs: Filter.and([
 			specTable.basics.getColumnValuesFilter("type"),
 			specTable.columnMeta.getColumnValuesFilter("spec")
 		]),
 		stations: originsStationFilter,
-		sites: specTable.origins
-			.filteredColumns.includes("location") ? specTable.getColumnValuesFilter('site') : null,
+		sites: sitesFilters.some(f => specTable.origins.filteredColumns.includes(f)) ? specTable.getColumnValuesFilter('site') : null,
 		submitters: specTable.getFilter('submitter')
 	});
 };
