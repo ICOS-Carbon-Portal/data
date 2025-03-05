@@ -5,23 +5,22 @@
     <title>Multi-image ZIP preview</title>
     <link rel="stylesheet" href="https://static.icos-cp.eu/css/bootstrap/5.3.3/icos-bootstrap.css" />
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.7.2/css/all.css">
-    <style type="text/css"></style>
   </head>
   <body>
     <div class="m-2">
-      <div class="d-flex mb-2 align-items-center">
-        <button title="To previous image" type="button" id="previous-button"
-            class="btn btn-outline-secondary me-2" style="width:50px; height:50px;" disabled="">
-          <i class="fas fa-chevron-left"></i>
-        </button>
-        <button title="To next image" type="button" id="next-button"
-            class="btn btn-outline-secondary me-2" style="width:50px; height:50px;" disabled="">
-          <i class="fas fa-chevron-right"></i>
-        </button>
-        <span class="me-2">Viewing file:</span>
+      <div class="d-flex mb-2 align-items-center justify-content-between w-100">
+        <div class="btn-group">
+          <button title="To previous image" type="button" id="previous-button"
+              class="btn btn-outline-secondary" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button title="To next image" type="button" id="next-button"
+              class="btn btn-outline-secondary me-2" disabled>
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
         <select id="zipimageselect" class="form-select col" style="max-width: fit-content;"></select>
       </div>
-
       <img id="multiimagezipframe" class="mw-100" />
     </div>
     <script type="text/javascript" src="./imagezipview.js"></script>

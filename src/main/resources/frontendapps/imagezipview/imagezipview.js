@@ -10,11 +10,10 @@
 	function updateDisplayedImage(step=0) {
 		if(zipEntries.length === 0) return;
 
-		// use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
+		// Use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
 		let idx = select.selectedIndex;
 		idx += step;
 
-		// enforce bounds on idx of 0 to zipEntries.length-1
 		if(idx < 0) {
 			idx = 0;
 		} else if (idx >= zipEntries.length) {
@@ -25,7 +24,6 @@
 		
 		image.src = zipEntries[idx].path;
 			
-		// disable/enable previous and next buttons
 		previous.disabled = idx <= 0;
 		next.disabled = idx >= zipEntries.length - 1;
 	}
@@ -34,16 +32,15 @@
 	previous.addEventListener('click', _ => updateDisplayedImage(-1));
 	next.addEventListener('click', _ => updateDisplayedImage(1));
 
-	// add left/right arrow controls, once inside iframe
 	document.addEventListener("keydown", event => {
+		if (event.target.id === "zipimageselect") return;
 		if (event.key === "ArrowLeft") {
 			updateDisplayedImage(-1);
-		  } else if (event.key === "ArrowRight") {
+		} else if (event.key === "ArrowRight") {
 			updateDisplayedImage(1);
-		  }
-	})
+		}
+	});
 
-	// fetch contents of zip and build zipEntries for valid extracted files
 	fetch(`/zip/${urlParams.get('objId')}/listContents`)
 		.then(resp => resp.json())
 		.then(json => {
