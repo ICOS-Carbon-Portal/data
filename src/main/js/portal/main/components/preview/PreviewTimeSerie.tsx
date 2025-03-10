@@ -155,7 +155,8 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const yParam = yAxis ? `&y=${yAxis}` : '';
 		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
 		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
-		const iframeUrl = `${window.document.location.protocol}//${window.document.location.host}${iFrameBaseUrl}?objId=${objIds}&x=${xAxis}${yParam}${y2Param}&type=${type}&linking=${linking}${legendLabelsParams}`;
+		const legendLabelsY2Params = y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '';
+		const iframeUrl = `${window.document.location.protocol}//${window.document.location.host}${iFrameBaseUrl}?objId=${objIds}&x=${xAxis}${yParam}${y2Param}&type=${type}&linking=${linking}${legendLabelsParams}${legendLabelsY2Params}`;
 
 		if (!preview)
 			return null;
