@@ -83,11 +83,11 @@ export default class LabelMaker {
 			if (this.linking === 'concatenate'){
 				this.labels = this.hasY2
 					? [this.xlabel].concat(this.metadata[0].labels.y).concat(this.metadata[0].labels.y2!)
-					: [this.xlabel].concat(this.metadata[0].labels.y)
+					: [this.xlabel].concat(this.metadata[0].labels.y);
 			} else {
 				this.labels = this.hasY2
 					? [this.xlabel].concat(this.metadata.flatMap(dobj => [dobj.labels.y,dobj.labels.y2!]))
-					: [this.xlabel].concat(this.metadata.map(dobj => dobj.labels.y))
+					: [this.xlabel].concat(this.metadata.map(dobj => dobj.labels.y));
 			}
 		}
 	}
@@ -140,7 +140,7 @@ export default class LabelMaker {
 	}
 }
 
-const getLegendDataIndexes = (linking: Linking, ids: string[], hasY2: boolean): LegendDataSerieIndexes => {
+function getLegendDataIndexes(linking: Linking, ids: string[], hasY2: boolean): LegendDataSerieIndexes {
 	if (linking === 'concatenate'){
 		if (hasY2) {
 			return {
@@ -153,24 +153,23 @@ const getLegendDataIndexes = (linking: Linking, ids: string[], hasY2: boolean): 
 				y2: []
 			};
 		}
-
 	} else {
-		const length = hasY2 ? ids.length * 2 : ids.length;
-		const indexes = Array.from({length}, (_, i) => i);
+        const length = hasY2 ? ids.length * 2 : ids.length;
+        const indexes = Array.from({length}, (_, i) => i);
 
-		if (hasY2) {
-			return {
-				y: indexes.filter(idx => idx % 2 === 0),
-				y2: indexes.filter(idx => idx % 2 !== 0)
-			};
-		} else {
-			return {
-				y: indexes,
-				y2: []
-			};
-		}
-	}
-};
+        if (hasY2) {
+            return {
+                y: indexes.filter(idx => idx % 2 === 0),
+                y2: indexes.filter(idx => idx % 2 !== 0)
+            };
+        } else {
+            return {
+                y: indexes,
+                y2: []
+            };
+        }
+    }
+}
 
 class Metadata {
 	readonly labels: {y: string, y2?: string};
@@ -195,11 +194,11 @@ class Metadata {
 		this.labels = {
 			y: yLabel,
 			y2: y2Label
-		}
+		};
 	}
 }
 
-const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabel: string, object: MetaWithTableFormat, colName: string, postfix: string = '') => {
+function getFinalLabel(linking: 'overlap' | 'concatenate', requestedLabel: string, object: MetaWithTableFormat, colName: string, postfix: string = '') {
 	if (requestedLabel) return requestedLabel + postfix;
 
 	if (linking === 'concatenate'){
@@ -208,9 +207,9 @@ const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabel: strin
 	const filename = object.filename;
 
 	return filename.slice(0, filename.lastIndexOf('.')) + postfix;
-};
+}
 
-const getLegendLabelFromParams = (params: UrlSearchParams, name: string, objId: string) => {
+function getLegendLabelFromParams(params: UrlSearchParams, name: string, objId: string) {
 	const labels: string[] = params.has(name) ? params.get(name).split(',') : [];
 	const ids: string[] = params.has('objId') ? params.get('objId').split(',') : [];
 	
@@ -219,19 +218,19 @@ const getLegendLabelFromParams = (params: UrlSearchParams, name: string, objId: 
 	const idx = ids.findIndex(id => objId.includes(id));
 
 	return (idx !== -1 && labels[idx]) ? labels[idx] : '';
-};
+}
 
-const isColNameValid = (tableFormat: TableFormat, colName: string) => {
+function isColNameValid(tableFormat: TableFormat, colName: string) {
 	return tableFormat.getColumnIndex(colName) >= 0;
-};
+}
 
-const getLabel = (tableFormat: TableFormat, colName: string) => {
+function getLabel(tableFormat: TableFormat, colName: string) {
 	const unit = getColInfoParam(tableFormat, colName, 'unit');
 	const label = getColInfoParam(tableFormat, colName, 'label');
 
 	return unit === '?' ? label : `${label} [${unit}]`;
-};
+}
 
 function getColInfoParam<T extends keyof ColumnInfo>(tableFormat: TableFormat, colName: string, param: T) {
 	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
-};
+}
