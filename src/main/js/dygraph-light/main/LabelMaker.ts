@@ -1,26 +1,31 @@
 import UrlSearchParams from "../../common/main/models/UrlSearchParams";
-import {ColumnInfo, TableFormat} from "icos-cp-backend";
+import { ColumnInfo, TableFormat } from "icos-cp-backend";
 import { dygraphs } from "dygraphs";
 import PerSeriesOptions = dygraphs.PerSeriesOptions;
 import LegendData = dygraphs.LegendData;
 
 export type MetaWithTableFormat = {
-	id: string
-	objSpec: string
-	nRows: number
-	filename: string
-	specLabel: string
-	startedAtTime: string
-	columnNames: string[] | undefined
-	tableFormat: TableFormat
+	id: string;
+	objSpec: string;
+	nRows: number;
+	filename: string;
+	specLabel: string;
+	startedAtTime: string;
+	columnNames: string[] | undefined;
+	tableFormat: TableFormat;
 }
 
 type LegendDataSerieIndexes = {
-	y: number[],
-	y2: number[]
+	y: number[];
+	y2: number[];
 }
-type Linking = 'overlap' | 'concatenate'
-type LegendTitles = {y: string, y2: string}
+
+type Linking = 'overlap' | 'concatenate';
+
+type LegendTitles = {
+	y: string;
+	y2: string;
+}
 
 export default class LabelMaker {
 	readonly ids: string[];
@@ -29,11 +34,11 @@ export default class LabelMaker {
 	public metadata?: Metadata[];
 	readonly legendLabels: string[] = [];
 	public chartTitle?: string;
-	public xlabel: string = '';
-	public xLegendLabel: string = '';
-	public valueFormatX: string = '';
-	public ylabel: string = '';
-	public y2label: string = '';
+	public xlabel = '';
+	public xLegendLabel = '';
+	public valueFormatX = '';
+	public ylabel = '';
+	public y2label = '';
 	public labels: string[] = [];
 	public object?: MetaWithTableFormat;
 	public tableFormat?: TableFormat;
@@ -41,7 +46,7 @@ export default class LabelMaker {
 	public readonly legendTitles: LegendTitles;
 
 	constructor(private params: UrlSearchParams) {
-		this.ids = params.has('objId') ? params.get('objId').split(',') as string[] : [];
+		this.ids = params.has('objId') ? params.get('objId').split(',') : [];
 		this.linking = params.get('linking') === 'concatenate' ? 'concatenate' : 'overlap';
 		this.hasY2 = params.has('y2');
 
@@ -55,7 +60,7 @@ export default class LabelMaker {
 		};
 	}
 
-	set objects(objects: MetaWithTableFormat[]){
+	set objects(objects: MetaWithTableFormat[]) {
 		const sortedObjects = objects.sort((obj1, obj2) =>
 			new Date(obj1.startedAtTime).getTime() - new Date(obj2.startedAtTime).getTime()
 		);
@@ -80,36 +85,35 @@ export default class LabelMaker {
 			if (this.hasY2)
 				this.y2label = getLabel(this.object.tableFormat, this.params.get('y2'));
 
-			if (this.linking === 'concatenate'){
+			if (this.linking === 'concatenate') {
 				this.labels = this.hasY2
 					? [this.xlabel].concat(this.metadata[0].labels.y).concat(this.metadata[0].labels.y2!)
-					: [this.xlabel].concat(this.metadata[0].labels.y)
+					: [this.xlabel].concat(this.metadata[0].labels.y);
 			} else {
 				this.labels = this.hasY2
 					? [this.xlabel].concat(this.metadata.flatMap(dobj => [dobj.labels.y,dobj.labels.y2!]))
-					: [this.xlabel].concat(this.metadata.map(dobj => dobj.labels.y))
+					: [this.xlabel].concat(this.metadata.map(dobj => dobj.labels.y));
 			}
 		}
 	}
 
-	get title(){
+	get title() {
 		return !window.frameElement && this.chartTitle || ' ';
 	}
 
-	get series(){
+	get series() {
 		if (!this.hasY2 || !this.metadata || this.metadata.some(dobj => dobj.labels.y2 === undefined))
 			return {};
 
 		// Use a single scale if y and y2 have the same value type
-		if (this.object){
-			const mwtf = this.object;//to keep the compiler happy
+		if (this.object) {
 			const yColInfo = (ycol: 'y' | 'y2', key: keyof ColumnInfo) => {
-				return getColInfoParam(mwtf.tableFormat, this.params.get(ycol), key);
-			}
+				return getColInfoParam(this.object!.tableFormat, this.params.get(ycol), key);
+			};
 
 			const sameValueType = (['label', 'unit'] as const).every(key =>
 				yColInfo('y', key) === yColInfo('y2', key)
-			)
+			);
 			if(sameValueType) return {};
 		}
 
@@ -121,7 +125,7 @@ export default class LabelMaker {
 		}, {});
 	}
 
-	legendData(data: LegendData){
+	legendData(data: LegendData) {
 		return {
 			y: this.legendDataSerieIndexes.y.map(i => data.series[i]),
 			y2: this.legendDataSerieIndexes.y2.map(i => data.series[i])
@@ -141,7 +145,7 @@ export default class LabelMaker {
 }
 
 const getLegendDataIndexes = (linking: Linking, ids: string[], hasY2: boolean): LegendDataSerieIndexes => {
-	if (linking === 'concatenate'){
+	if (linking === 'concatenate') {
 		if (hasY2) {
 			return {
 				y: [0],
@@ -173,7 +177,7 @@ const getLegendDataIndexes = (linking: Linking, ids: string[], hasY2: boolean): 
 };
 
 class Metadata {
-	readonly labels: {y: string, y2?: string};
+	readonly labels: { y: string; y2?: string };
 
 	constructor(linking: Linking, readonly object: MetaWithTableFormat, idx: number, params: UrlSearchParams) {
 		const hasY2 = params.has('y2');
@@ -195,16 +199,16 @@ class Metadata {
 		this.labels = {
 			y: yLabel,
 			y2: y2Label
-		}
+		};
 	}
 }
 
 const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabel: string, object: MetaWithTableFormat, colName: string, postfix: string = '') => {
 	if (requestedLabel) return requestedLabel + postfix;
 
-	if (linking === 'concatenate'){
+	if (linking === 'concatenate') {
 		return getLabel(object.tableFormat, colName) + postfix;
-	} 
+	}
 	const filename = object.filename;
 
 	return filename.slice(0, filename.lastIndexOf('.')) + postfix;
@@ -213,7 +217,7 @@ const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabel: strin
 const getLegendLabelFromParams = (params: UrlSearchParams, name: string, objId: string) => {
 	const labels: string[] = params.has(name) ? params.get(name).split(',') : [];
 	const ids: string[] = params.has('objId') ? params.get('objId').split(',') : [];
-	
+
 	if (labels.length === 0 || ids.length === 0) return '';
 	
 	const idx = ids.findIndex(id => objId.includes(id));
@@ -234,4 +238,4 @@ const getLabel = (tableFormat: TableFormat, colName: string) => {
 
 function getColInfoParam<T extends keyof ColumnInfo>(tableFormat: TableFormat, colName: string, param: T) {
 	return tableFormat.columns[tableFormat.getColumnIndex(colName)][param];
-};
+}
