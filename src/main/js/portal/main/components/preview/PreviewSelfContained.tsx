@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useState, useEffect, useRef } from 'react';
+import React, { ChangeEvent, useState, useEffect, useRef, KeyboardEvent } from 'react';
 import config, { PreviewType } from '../../config';
 import { getLastSegmentInUrl } from "../../utils";
 import { State } from "../../models/State";
@@ -23,10 +23,18 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 		}
 	});
 
+	const handleKeydown = (event: KeyboardEvent) => {
+		if(event.target instanceof Element && event.target.tagName === "INPUT") return;
+
+		iframeRef.current?.contentWindow?.postMessage({keydown: event.key});
+	};
+
 	useEffect(() => {
 		events.current.addToTarget(window, "resize", handleResize);
+		events.current.addToTarget(document, "keydown", handleKeydown);
 		return () => {
 			events.current.removeFromTarget(window, "resize", handleResize);
+			events.current.removeFromTarget(document, "keydown", handleKeydown);
 		};
 	}, []);
 
