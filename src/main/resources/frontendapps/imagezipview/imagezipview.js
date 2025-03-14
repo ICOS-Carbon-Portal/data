@@ -1,4 +1,4 @@
-(function(){
+(() => {
 	const select = document.getElementById('zipimageselect');
 	const image =  document.getElementById('multiimagezipframe');
 	const urlParams = new URLSearchParams(window.location.search);
@@ -86,4 +86,4 @@
 			});
 		})
 		.then(() => updateDisplayedImage(), err => console.error(err));
-})()
+})();

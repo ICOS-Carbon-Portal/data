@@ -1,9 +1,9 @@
-import React, { ChangeEvent, useState, useEffect, useRef, KeyboardEvent } from 'react';
+import React, { ChangeEvent, useState, useEffect, useRef, useCallback } from 'react';
 import config, { PreviewType } from '../../config';
 import { getLastSegmentInUrl } from "../../utils";
 import { State } from "../../models/State";
 import { UrlStr } from '../../backend/declarations';
-import { debounce, Events } from 'icos-cp-utils';
+import { debounce } from 'icos-cp-utils';
 import CartItem from '../../models/CartItem';
 
 
@@ -14,53 +14,50 @@ interface OurProps {
 
 export default function PreviewSelfContained({ preview, iframeSrcChange }: OurProps) {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
-	const events = useRef(new Events());
+
 	const [height, setHeight] = useState<number>(() => getInitialHeight(preview.type));
 
-	const handleResize = debounce(() => {
+	const handleResize = useCallback(debounce(() => {
 		if (iframeRef.current) {
 			updateHeight(iframeRef.current);
 		}
-	});
+	}), []);
 
 	const handleKeydown = (event: KeyboardEvent) => {
-		if(event.target instanceof Element && event.target.tagName === "INPUT") return;
+		if (event.target instanceof HTMLInputElement) return;
 
 		iframeRef.current?.contentWindow?.postMessage({keydown: event.key});
 	};
 
 	useEffect(() => {
-		events.current.addToTarget(window, "resize", handleResize);
-		events.current.addToTarget(document, "keydown", handleKeydown);
+		window.addEventListener("resize", handleResize);
+		document.addEventListener("keydown", handleKeydown);
 		return () => {
-			events.current.removeFromTarget(window, "resize", handleResize);
-			events.current.removeFromTarget(document, "keydown", handleKeydown);
+			window.removeEventListener("resize", handleResize);
+			document.removeEventListener("keydown", handleKeydown);
 		};
-	}, []);
+	}, [handleResize, handleKeydown]);
 
 	const updateHeight = (iframe: HTMLIFrameElement) => {
-		if (shouldUpdateHeight(preview.type)) {
-			setTimeout(() => {
-				if (iframe.contentWindow) {
-					setHeight(iframe.contentWindow.document.body.scrollHeight + 25);
-				}
-			}, 300);
+		if (shouldUpdateHeight(preview.type) && iframe.contentWindow) {
+			setHeight(iframe.contentWindow.document.body.scrollHeight + 25);
 		}
 	};
 
 	const handleLoad = (event: ChangeEvent<HTMLIFrameElement>) => {
 		iframeSrcChange(event);
-		updateHeight(event.target);
+		setTimeout(() => updateHeight(event.target), 300);
 	};
 
-	const previewType = preview.type;
-	if (previewType === undefined) return null;
+	if (!preview?.type) {
+		return null;
+	}
 
-	const src = getPreviewIframeUrl(previewType, preview.item);
+	const src = getPreviewIframeUrl(preview.type, preview.item);
 
 	return (
 		<div className="row" style={{ height }}>
-			<iframe ref={iframeRef} onLoad={handleLoad} src={src} />
+			<iframe ref={iframeRef} onLoad={handleLoad} src={src} loading="lazy" />
 		</div>
 	);
 
