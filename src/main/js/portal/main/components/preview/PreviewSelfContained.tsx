@@ -64,7 +64,7 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 }
 
 function getInitialHeight(previewType?: PreviewType): number {
-	switch(previewType) {
+	switch(previewType){
 		case config.NETCDF: return Math.max(window.innerHeight - 100, 480);
 		case config.MAPGRAPH: return 1100;
 		case config.PHENOCAM: return 1100;
