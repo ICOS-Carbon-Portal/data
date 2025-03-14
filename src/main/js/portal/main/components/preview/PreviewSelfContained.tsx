@@ -1,7 +1,7 @@
-import React, { ChangeEvent, useState, useEffect, useRef, useCallback } from 'react';
-import config, { PreviewType } from '../../config';
-import { getLastSegmentInUrl } from "../../utils";
-import { State } from "../../models/State";
+import React, {ChangeEvent, useState, useEffect, useRef, useCallback} from 'react';
+import config, {PreviewType} from '../../config';
+import {getLastSegmentInUrl} from "../../utils";
+import {State} from "../../models/State";
 import { UrlStr } from '../../backend/declarations';
 import { debounce } from 'icos-cp-utils';
 import CartItem from '../../models/CartItem';
@@ -64,7 +64,7 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 }
 
 function getInitialHeight(previewType?: PreviewType): number {
-	switch (previewType) {
+	switch(previewType) {
 		case config.NETCDF: return Math.max(window.innerHeight - 100, 480);
 		case config.MAPGRAPH: return 1100;
 		case config.PHENOCAM: return 1100;
@@ -83,8 +83,12 @@ function shouldUpdateHeight(previewType?: PreviewType): boolean {
 function getPreviewIframeUrl(previewType: PreviewType, item: CartItem): UrlStr {
 	const iFrameBaseUrl = config.iFrameBaseUrl[previewType];
 	// Use preview.item.url if present since that one has all client changes recorded in history
-	if (item.url) return iFrameBaseUrl + getLastSegmentInUrl(item.url);
+	if (item.url) {
+		return iFrameBaseUrl + getLastSegmentInUrl(item.url);
+	}
 	const hashId = getLastSegmentInUrl(item.dobj);
-	if (previewType === config.PHENOCAM) return `${iFrameBaseUrl}?objId=${hashId}`;
+	if (previewType === config.PHENOCAM) {
+		return `${iFrameBaseUrl}?objId=${hashId}`;
+	}
 	return iFrameBaseUrl + hashId;
 }

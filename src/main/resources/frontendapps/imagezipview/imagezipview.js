@@ -29,18 +29,19 @@
 	}
 
 	function handleKeydown(event) {
-		if (event.target?.id === "zipimageselect") return;
-		switch (event.key) {
-			case "ArrowLeft":
-			case "A":
-			case "a":
-				updateDisplayedImage(-1);
-				break;
-			case "ArrowRight":
-			case "D":
-			case "d":
-				updateDisplayedImage(1);
-				break;
+		if (event.target?.id !== "zipimageselect") {
+			switch (event.key) {
+				case "ArrowLeft":
+				case "A":
+				case "a":
+					updateDisplayedImage(-1);
+					break;
+				case "ArrowRight":
+				case "D":
+				case "d":
+					updateDisplayedImage(1);
+					break;
+			}
 		}
 	}
 
