@@ -7,6 +7,12 @@
 	const next = document.getElementById("next-button");
 	let zipEntries = [];
 
+	const fullScreen = (window.self === window.top);
+
+	if(fullScreen) {
+		document.getElementById("container").className += " m-2"
+	}
+
 	function updateDisplayedImage(step=0) {
 		if(zipEntries.length === 0) return;
 
