@@ -177,20 +177,19 @@ class Metadata {
 
 	constructor(linking: Linking, readonly object: MetaWithTableFormat, idx: number, params: UrlSearchParams) {
 		const hasY2 = params.has('y2');
-		const lblIdx = linking === 'concatenate' ? 0 : idx;
 
 		// Labels must be unique in dygraphs
 		const postfix = hasY2 && linking !== 'concatenate' ? ' '.repeat(idx + 2) : '';
 		const postfixY2 = linking === 'concatenate' ? '' : ' ';
 
-		const legendLabels = getLegendLabelsFromParams(params, 'legendLabels');
-		const yLabel = getFinalLabel(linking, legendLabels, lblIdx, object, params.get('y'), postfix);
+		const paramsYLabel = getLegendLabelFromParams(params, 'legendLabels', object.id);
+		const yLabel = getFinalLabel(linking, paramsYLabel, object, params.get('y'), postfix);
 
 		let y2Label: string | undefined = undefined;
 
 		if (hasY2) {
-			const legendLabelsY2 = getLegendLabelsFromParams(params, 'legendLabelsY2');
-			y2Label = getFinalLabel(linking, legendLabelsY2, lblIdx, object, params.get('y2'), postfixY2);
+			const paramsY2Label = getLegendLabelFromParams(params, 'legendLabelsY2', object.id);
+			y2Label = getFinalLabel(linking, paramsY2Label, object, params.get('y2'), postfixY2);
 		}
 
 		this.labels = {
@@ -200,25 +199,26 @@ class Metadata {
 	}
 }
 
-const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabels: string[], lblIdx: number, object: MetaWithTableFormat, colName: string, postfix: string = '') => {
+const getFinalLabel = (linking: 'overlap' | 'concatenate', requestedLabel: string, object: MetaWithTableFormat, colName: string, postfix: string = '') => {
+	if (requestedLabel) return requestedLabel + postfix;
+
 	if (linking === 'concatenate'){
-		return (requestedLabels.length > lblIdx && requestedLabels[lblIdx].length
-			? requestedLabels[lblIdx]
-			: getLabel(object.tableFormat, colName)) + postfix;
+		return getLabel(object.tableFormat, colName) + postfix;
+	} 
+	const filename = object.filename;
 
-	} else {
-		const filename = object.filename;
-
-		return (requestedLabels.length > lblIdx && requestedLabels[lblIdx].length
-			? requestedLabels[lblIdx]
-			: filename.slice(0, filename.lastIndexOf('.'))) + postfix;
-	}
+	return filename.slice(0, filename.lastIndexOf('.')) + postfix;
 };
 
-const getLegendLabelsFromParams = (params: UrlSearchParams, name: string) => {
-	return params.has(name)
-		? params.get(name).split(',') as string[]
-		: [];
+const getLegendLabelFromParams = (params: UrlSearchParams, name: string, objId: string) => {
+	const labels: string[] = params.has(name) ? params.get(name).split(',') : [];
+	const ids: string[] = params.has('objId') ? params.get('objId').split(',') : [];
+	
+	if (labels.length === 0 || ids.length === 0) return '';
+	
+	const idx = ids.findIndex(id => objId.includes(id));
+
+	return (idx !== -1 && labels[idx]) ? labels[idx] : '';
 };
 
 const isColNameValid = (tableFormat: TableFormat, colName: string) => {
