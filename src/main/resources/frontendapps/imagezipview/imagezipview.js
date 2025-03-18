@@ -1,4 +1,4 @@
-(function(){
+(() => {
 	const select = document.getElementById('zipimageselect');
 	const image =  document.getElementById('multiimagezipframe');
 	const urlParams = new URLSearchParams(window.location.search);
@@ -6,6 +6,12 @@
 	const previous = document.getElementById("previous-button");
 	const next = document.getElementById("next-button");
 	let zipEntries = [];
+
+	const fullScreen = (window.self === window.top);
+
+	if(fullScreen) {
+		document.getElementById("container").className += " m-2"
+	}
 
 	function updateDisplayedImage(step=0) {
 		if(zipEntries.length === 0) return;
@@ -28,18 +34,47 @@
 		next.disabled = idx >= zipEntries.length - 1;
 	}
 
-	select.addEventListener('change', _ => updateDisplayedImage());
-	previous.addEventListener('click', _ => updateDisplayedImage(-1));
-	next.addEventListener('click', _ => updateDisplayedImage(1));
-
-	document.addEventListener("keydown", event => {
-		if (event.target.id === "zipimageselect") return;
-		if (event.key === "ArrowLeft") {
-			updateDisplayedImage(-1);
-		} else if (event.key === "ArrowRight") {
-			updateDisplayedImage(1);
+	function handleKeydown(event) {
+		if (event.target?.id !== "zipimageselect") {
+			switch (event.key) {
+				case "ArrowLeft":
+				case "A":
+				case "a":
+					updateDisplayedImage(-1);
+					break;
+				case "ArrowRight":
+				case "D":
+				case "d":
+					updateDisplayedImage(1);
+					break;
+			}
 		}
-	});
+	}
+
+	function handleMessage(event) {
+		if(event.isTrusted && event.data.keydown) {
+			handleKeydown(new KeyboardEvent("keydown", {key: event.data.keydown}));
+		}
+	}
+
+	function handleImgLoad(event) {
+		const img = event.target;
+		if(event.type === "error") {
+			img.alt = "This image could not be loaded; it may be missing or corrupt. Check the original data source for more information.";
+		} else {
+			img.alt = "";
+		}
+	}
+
+	select.addEventListener('change', () => updateDisplayedImage());
+	previous.addEventListener('click', () => updateDisplayedImage(-1));
+	next.addEventListener('click', () => updateDisplayedImage(1));
+
+	document.addEventListener("keydown", handleKeydown);
+	window.addEventListener("message", handleMessage);
+
+	image.addEventListener("load", handleImgLoad);
+	image.addEventListener("error", handleImgLoad);
 
 	fetch(`/zip/${urlParams.get('objId')}/listContents`)
 		.then(resp => resp.json())
@@ -57,5 +92,5 @@
 				select.appendChild(option);
 			});
 		})
-		.then(_ => updateDisplayedImage(), err => console.log(err));
-})()
+		.then(() => updateDisplayedImage(), err => console.error(err));
+})();
