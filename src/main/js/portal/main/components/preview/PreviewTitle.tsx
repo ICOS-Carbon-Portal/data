@@ -5,7 +5,7 @@ import { UrlStr } from '../../backend/declarations';
 import CartItem, { addingToCartProhibition } from '../../models/CartItem';
 import { State } from '../../models/State';
 import { PortalDispatch } from '../../store';
-import { getUrlWithEnvironmentPrefix, specLabelDisplay, stationSpecificTitle } from '../../utils';
+import { getUrlWithEnvironmentPrefix, specLabelDisplay } from '../../utils';
 import CartBtn from '../buttons/CartBtn';
 import DownloadButton from '../buttons/DownloadButton';
 
@@ -19,7 +19,7 @@ class PreviewTitle extends Component<OurProps>{
 		const { items, extendedDobjInfo, labelLookup, cart } = this.props;
 		if (items.length == 0 || items[0].type == undefined) return null;
 		const specLabel = labelLookup[items[0].spec]?.label ?? "Undefined data type";
-		const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? stationSpecificTitle(extendedDobjInfo[0], items[0].level, specLabel);
+		const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? extendedDobjInfo[0].biblioInfo?.title ?? items[0].fileName;
 		const subtitle = items.length == 1 ? <div className="fs-3 text-muted">{extendedDobjInfo[0].biblioInfo?.temporalCoverageDisplay}</div> : null;
 		const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
 

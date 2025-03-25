@@ -1,6 +1,6 @@
-import React, { Component, MouseEvent, CSSProperties } from 'react';
+import React, { Component, CSSProperties } from 'react';
 import CheckBtn from '../buttons/CheckBtn';
-import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix, stationSpecificTitle } from '../../utils';
+import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix } from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
@@ -47,8 +47,7 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }
-		const specLabel = props.labelLookup[objInfo.spec]?.label ?? "Undefined data type";
-		const title = extendedInfo.title ?? stationSpecificTitle(extendedInfo, objInfo.level, specLabel);
+		const title = extendedInfo.title ?? extendedInfo.biblioInfo?.title ?? objInfo.fileName;
 		const samplingHeight = extendedInfo.samplingHeight ? extendedInfo.samplingHeight + ' meters' : undefined;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 		const checkBtnTitle = uiMessage ?? `Select to preview or download`;

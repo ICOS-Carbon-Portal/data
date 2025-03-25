@@ -191,10 +191,3 @@ export const specLabelDisplay = (specLabel: String) => (config.features.shortenD
 	? specLabel.substring(0, specLabel.indexOf(','))
 	: specLabel;
 
-export function stationSpecificTitle(extendedInfo: ExtendedDobjInfo, dataLevel: number, specLabel: String): string {
-	const location = extendedInfo.samplingPoint ?? extendedInfo.site ?? extendedInfo.station?.trim();
-	const spec = specLabelDisplay(specLabel);
-	const preposition = (config.envri === 'ICOS' && dataLevel > 2) ? "for" : "from";
-
-	return `${spec} ${preposition} ${location}`
-}
