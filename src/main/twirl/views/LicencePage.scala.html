@@ -49,7 +49,7 @@
 </div>
 
 <p class="pt-5 pb-3">
-	@name data is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence.</a>
+	@envri.shortName data is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 international licence.</a>
 	<img src="https://www.icos-cp.eu/sites/default/files/inline-images/creativecommons.png" class="ps-2" style="vertical-align: -1px" />
 </p>
 
@@ -152,8 +152,5 @@
 }
 
 @pageTitle = @{
-	if(envri == Envri.SITES) name + " Data Policy" else name + " Data Licence"
+	if(envri == Envri.SITES) "Data Policy" else "Data Licence"
 }
-
-@name = @{envri.shortName}
-@conf = @{envriConfigs(envri)}
