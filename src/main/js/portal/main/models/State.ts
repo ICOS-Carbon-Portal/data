@@ -110,7 +110,7 @@ export interface TabsState {tabName?: string, selectedTabId?: string, searchTab?
 //TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
 export type CategFilters = {[key in CategoryType]?: string[] | null}
 
-export type TsSetting = { 'x': string } & { 'y': string } & { 'type': 'line' | 'scatter' }
+export type TsSetting = { 'x': string } & { 'y': string } & { 'y2': string } & { 'type': 'line' | 'scatter' }
 export type TsSettings = {
 	[key: string]: TsSetting
 }

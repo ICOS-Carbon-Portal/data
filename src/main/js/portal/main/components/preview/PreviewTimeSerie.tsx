@@ -108,8 +108,21 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		return {...regexMatch, varTitle: actColName};
 	}
 
+	private syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}: Axes, specSettings: TsSetting) {
+		const { preview, storeTsPreviewSetting } = this.props;
+
+		if (yAxis && specSettings.y != yAxis)
+			storeTsPreviewSetting(preview.item.spec, 'y', yAxis);
+		if (xAxis && specSettings.x != xAxis)
+			storeTsPreviewSetting(preview.item.spec, 'x', xAxis);
+		if (y2Axis && specSettings.y2 != y2Axis)
+			storeTsPreviewSetting(preview.item.spec, 'y2', y2Axis);
+		if (type && specSettings.type != type)
+			storeTsPreviewSetting(preview.item.spec, 'type', type);
+	}
+
 	render(){
-		const { preview, extendedDobjInfo, tsSettings, storeTsPreviewSetting } = this.props;
+		const { preview, extendedDobjInfo, tsSettings } = this.props;
 		const { tableFormat } = this.state;
 
 		// Add station information
@@ -161,8 +174,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		if (!preview)
 			return null;
 
-		if (yAxis && specSettings.y != yAxis)
-			storeTsPreviewSetting(preview.item.spec, 'y', yAxis);
+		this.syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 
 		return (
 			<>
@@ -248,7 +260,7 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 		? {
 			xAxis: preview.item.getUrlSearchValue('x') || getColName(specSettings.x),
 			yAxis: preview.item.getUrlSearchValue('y') || getColName(specSettings.y),
-			y2Axis: preview.item.getUrlSearchValue('y2'),
+			y2Axis: preview.item.getUrlSearchValue('y2')  || getColName(specSettings.y2),
 			type: specSettings.type || preview.item.getUrlSearchValue('type') as Axes['type']
 		}
 		: { xAxis: undefined, yAxis: undefined, y2Axis: undefined, type: undefined};
