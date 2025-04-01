@@ -165,7 +165,9 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
-		const excludeChartType = previewExcludeChartType.specs.includes(preview.item.spec);
+		const excludeChartType = items.reduce((acc: boolean, curr: PreviewItem) => {
+			return acc || previewExcludeChartType.specs.includes(curr.spec);
+		}, false);
 
 		const yParam = yAxis ? `&y=${yAxis}` : '';
 		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
