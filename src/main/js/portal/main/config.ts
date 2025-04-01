@@ -392,7 +392,7 @@ export const iframeEmbedSize = {
 	}
 }
 
-export const excludeLineOption = {
+export const previewExcludeChartType = {
 	specs: [
 		"http://meta.icos-cp.eu/resources/cpmeta/icosOtcFosL1Product",
 		"http://meta.icos-cp.eu/resources/cpmeta/icosOtcFosL2Product",

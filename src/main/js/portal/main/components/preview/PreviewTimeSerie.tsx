@@ -1,6 +1,6 @@
 import React, { ChangeEvent, Component } from 'react';
 import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../../utils'
-import config, { excludeLineOption } from '../../config';
+import config, { previewExcludeChartType } from '../../config';
 import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
 import Preview, {PreviewOption, previewVarCompare} from "../../models/Preview";
@@ -165,7 +165,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
-		const excludeScatterLineSwap = excludeLineOption.specs.includes(preview.item.spec);
+		const excludeChartType = previewExcludeChartType.specs.includes(preview.item.spec);
 
 		const yParam = yAxis ? `&y=${yAxis}` : '';
 		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
@@ -203,7 +203,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 					</div>
 					}
 					{yAxis &&
-					 !excludeScatterLineSwap &&
+					 !excludeChartType &&
 						<PreviewControls
 							iframeUrl={iframeUrl}
 							previewType={TIMESERIES}
