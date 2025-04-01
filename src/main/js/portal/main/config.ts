@@ -391,3 +391,10 @@ export const iframeEmbedSize = {
 		height:"1280"
 	}
 }
+
+export const excludeLineOption = {
+	specs: [
+		"http://meta.icos-cp.eu/resources/cpmeta/icosOtcFosL1Product",
+		"http://meta.icos-cp.eu/resources/cpmeta/icosOtcFosL2Product",
+	]
+}
