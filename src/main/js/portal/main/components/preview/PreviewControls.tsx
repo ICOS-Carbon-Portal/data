@@ -10,18 +10,19 @@ interface OurProps {
 	csvDownloadUrl?: string
 	chartType?: 'line' | 'scatter'
 	chartTypeAction?: (type: 'line' | 'scatter') => void
+	showChartTypeControl?: boolean
 }
 
 export default class PreviewControls extends Component<OurProps>{
 
 	render() {
-		const { iframeUrl, previewType, csvDownloadUrl, chartType, chartTypeAction } = this.props;
+		const { iframeUrl, previewType, csvDownloadUrl, chartType, chartTypeAction, showChartTypeControl } = this.props;
 		const { width, height } = iframeEmbedSize[previewType]
 		const codeToEmbed = `<iframe width="${width}" height="${height}" frameborder="0" src="${iframeUrl}"></iframe>`;
 
 		return(
 			<div className="col-auto ms-auto d-flex gap-2">
-				{chartType && chartTypeAction &&
+				{chartType && chartTypeAction && showChartTypeControl &&
 					<div className="btn-group" role="group" aria-label="Toggle between scatter and line charts">
 						<input type="radio" className="btn-check" name="chart-type" id="scatter-chart" autoComplete="off" onChange={() => chartTypeAction('line')} checked={chartType == 'scatter'} />
 						<label className="btn btn-outline-secondary d-flex align-items-center" htmlFor="scatter-chart" title="View scatter chart">

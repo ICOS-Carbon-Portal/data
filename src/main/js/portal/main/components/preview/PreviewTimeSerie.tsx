@@ -1,6 +1,6 @@
 import React, { ChangeEvent, Component } from 'react';
 import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../../utils'
-import config from '../../config';
+import config, { previewExcludeChartType } from '../../config';
 import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
 import Preview, {PreviewOption, previewVarCompare} from "../../models/Preview";
@@ -165,6 +165,8 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
+		const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
+
 		const yParam = yAxis ? `&y=${yAxis}` : '';
 		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
 		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
@@ -207,6 +209,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 							csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
 							chartType={type}
 							chartTypeAction={this.handleChartTypeAction.bind(this)}
+							showChartTypeControl={showChartTypeControl}
 						/>
 					}
 				</div>
