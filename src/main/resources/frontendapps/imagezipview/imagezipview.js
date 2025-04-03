@@ -31,7 +31,6 @@
 
 		// Use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
 		let idx = select.selectedIndex;
-
 		idx += step;
 
 		if (idx < 0) {
@@ -48,7 +47,7 @@
 		select.selectedIndex = idx;
 
 		image.src = zipEntries[idx].path;
-			
+
 		previous.disabled = idx <= 0;
 		next.disabled = idx >= zipEntries.length - 1;
 	}
