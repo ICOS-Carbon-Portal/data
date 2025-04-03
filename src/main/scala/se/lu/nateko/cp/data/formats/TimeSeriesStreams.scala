@@ -32,7 +32,7 @@ object TimeSeriesStreams {
 	}
 
 	def linesFromUtf8Binary: Flow[ByteString, String, NotUsed] = Framing
-		.delimiter(ByteString("\n"), maximumFrameLength = 8192, allowTruncation = true)
+		.delimiter(ByteString("\n"), maximumFrameLength = 16384, allowTruncation = true)
 		.map(_.utf8String.trim)
 
 	def getCompletionInfo(
