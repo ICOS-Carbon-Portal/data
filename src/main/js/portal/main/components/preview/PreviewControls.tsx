@@ -5,12 +5,12 @@ import HelpButton from '../../containers/help/HelpButton';
 import CopyValue from '../controls/CopyValue';
 
 interface OurProps {
-	iframeUrl: UrlStr | '';
-	previewType: PreviewType;
-	csvDownloadUrl?: string;
-	chartType?: 'line' | 'scatter';
-	chartTypeAction?: (type: 'line' | 'scatter') => void;
-	showChartTypeControl?: boolean;
+	iframeUrl: UrlStr | ''
+	previewType: PreviewType
+	csvDownloadUrl?: string
+	chartType?: 'line' | 'scatter'
+	chartTypeAction?: (type: 'line' | 'scatter') => void
+	showChartTypeControl?: boolean
 }
 
 export default class PreviewControls extends Component<OurProps>{
