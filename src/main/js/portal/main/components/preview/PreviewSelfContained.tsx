@@ -16,10 +16,7 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 
 	const [height, setHeight] = useState<number>(() => getInitialHeight(preview.type));
-	const src = useRef<string>((() => {
-		if (!preview.type) return "";
-		return getPreviewIframeUrl(preview.type, preview.item);
-	})());
+	const src = useRef<string>(preview.type ? getPreviewIframeUrl(preview.type, preview.item) : "");
 
 	const handleResize = useCallback(debounce(() => {
 		if (iframeRef.current) {
