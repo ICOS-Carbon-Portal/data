@@ -165,9 +165,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
 		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
-		const excludeChartType = items.reduce((acc: boolean, curr: PreviewItem) => {
-			return acc || previewExcludeChartType.specs.includes(curr.spec);
-		}, false);
+		const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 
 		const yParam = yAxis ? `&y=${yAxis}` : '';
 		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
@@ -205,13 +203,13 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 					</div>
 					}
 					{yAxis &&
-					 !excludeChartType &&
 						<PreviewControls
 							iframeUrl={iframeUrl}
 							previewType={TIMESERIES}
 							csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
 							chartType={type}
 							chartTypeAction={this.handleChartTypeAction.bind(this)}
+							showChartTypeControl={showChartTypeControl}
 						/>
 					}
 				</div>
