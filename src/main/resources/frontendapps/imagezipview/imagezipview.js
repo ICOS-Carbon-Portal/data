@@ -9,45 +9,48 @@
 
 	const fullScreen = (window.self === window.top);
 
-	if(fullScreen) {
+	if (fullScreen) {
 		document.getElementById("container").className += " m-2"
 	}
 
-	function updateDisplayedImage(step=0, imgIndex=null) {
-		if(zipEntries.length === 0) return;
+	function getCurrentURL() {
+		return `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
+	}
 
-		// Use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
-		let idx = select.selectedIndex;
-		console.log(imgIndex);
-
-		if (imgIndex !== null) {
-			select.selectedIndex = parseInt(imgIndex);
-			idx = select.selectedIndex;
-		} else {
-			idx += step;
-
-			if (idx < 0) {
-				idx = 0;
-			} else if (idx >= zipEntries.length) {
-				idx = zipEntries.length-1;
-			}
-
-			if (idx !== select.selectedIndex && !fullScreen) {
-				urlParams.set("img", idx);
-				notifySrcChanged();
-			}
-			select.selectedIndex = idx;
-
-		}
-		
+	function setInitialImage(imgIndex=0) {
+		select.selectedIndex = parseInt(imgIndex);
+		const idx = select.selectedIndex;
 		image.src = zipEntries[idx].path;
 			
 		previous.disabled = idx <= 0;
 		next.disabled = idx >= zipEntries.length - 1;
 	}
 
-	function notifySrcChanged(imageIndex) {
-		window.parent.postMessage(`${window.location.origin}${window.location.pathname}?${urlParams.toString()}`);
+	function updateDisplayedImage(step=0) {
+		if (zipEntries.length === 0) return;
+
+		// Use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
+		let idx = select.selectedIndex;
+
+		idx += step;
+
+		if (idx < 0) {
+			idx = 0;
+		} else if (idx >= zipEntries.length) {
+			idx = zipEntries.length-1;
+		}
+
+		if (idx !== select.selectedIndex && !fullScreen) {
+			urlParams.set("img", idx);
+			window.parent.postMessage(getCurrentURL());
+		}
+
+		select.selectedIndex = idx;
+
+		image.src = zipEntries[idx].path;
+			
+		previous.disabled = idx <= 0;
+		next.disabled = idx >= zipEntries.length - 1;
 	}
 
 	function handleKeydown(event) {
@@ -75,7 +78,7 @@
 
 	function handleImgLoad(event) {
 		const img = event.target;
-		if(event.type === "error") {
+		if (event.type === "error") {
 			img.alt = "This image could not be loaded; it may be missing or corrupt. Check the original data source for more information.";
 		} else {
 			img.alt = "";
@@ -108,5 +111,5 @@
 				select.appendChild(option);
 			});
 		})
-		.then(() => updateDisplayedImage(0, urlParams.get("img")), err => console.error(err));
+		.then(() => setInitialImage(urlParams.get("img")), err => console.error(err));
 })();
