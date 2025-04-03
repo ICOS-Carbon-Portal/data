@@ -391,3 +391,9 @@ export const iframeEmbedSize = {
 		height:"1280"
 	}
 }
+
+export const previewExcludeChartType = {
+	datasets: [
+		"http://meta.icos-cp.eu/resources/cpmeta/otcFosDataset",
+	],
+};
