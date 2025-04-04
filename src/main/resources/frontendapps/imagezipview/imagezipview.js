@@ -41,10 +41,10 @@
 
 		if (idx !== select.selectedIndex) {
 			urlParams.set("img", idx);
-			if(!fullScreen) {
-				window.parent.postMessage(getCurrentURL());
-			} else {
+			if (fullScreen) {
 				history.replaceState(null, "", getCurrentURL());
+			} else {
+				window.parent.postMessage(getCurrentURL());
 			}
 		}
 
