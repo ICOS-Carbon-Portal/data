@@ -16,6 +16,7 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 
 	const [height, setHeight] = useState<number>(() => getInitialHeight(preview.type));
+	const src = useRef<string>(preview.type ? getPreviewIframeUrl(preview.type, preview.item) : "");
 
 	const handleResize = useCallback(debounce(() => {
 		if (iframeRef.current) {
@@ -49,15 +50,9 @@ export default function PreviewSelfContained({ preview, iframeSrcChange }: OurPr
 		setTimeout(() => updateHeight(event.target), 300);
 	};
 
-	if (!preview?.type) {
-		return null;
-	}
-
-	const src = getPreviewIframeUrl(preview.type, preview.item);
-
 	return (
 		<div className="row" style={{ height }}>
-			<iframe ref={iframeRef} onLoad={handleLoad} src={src} loading="lazy" />
+			<iframe ref={iframeRef} onLoad={handleLoad} src={src.current} loading="lazy" />
 		</div>
 	);
 

@@ -9,27 +9,49 @@
 
 	const fullScreen = (window.self === window.top);
 
-	if(fullScreen) {
-		document.getElementById("container").className += " m-2"
+	if (fullScreen) {
+		document.getElementById("container").className += " m-2";
+	}
+
+	function getCurrentURL() {
+		return `${window.location.origin}${window.location.pathname}?${urlParams.toString()}`;
+	}
+
+	function setInitialImage(imgIndex=0) {
+		select.selectedIndex = parseInt(imgIndex);
+		const idx = select.selectedIndex;
+		image.src = zipEntries[idx].path;
+			
+		previous.disabled = idx <= 0;
+		next.disabled = idx >= zipEntries.length - 1;
 	}
 
 	function updateDisplayedImage(step=0) {
-		if(zipEntries.length === 0) return;
+		if (zipEntries.length === 0) return;
 
 		// Use local idx variable to prevent auto-wrap to 0 on incrementing over bounds
 		let idx = select.selectedIndex;
 		idx += step;
 
-		if(idx < 0) {
+		if (idx < 0) {
 			idx = 0;
 		} else if (idx >= zipEntries.length) {
 			idx = zipEntries.length-1;
 		}
 
+		if (idx !== select.selectedIndex) {
+			urlParams.set("img", idx);
+			if (fullScreen) {
+				history.replaceState(null, "", getCurrentURL());
+			} else {
+				window.parent.postMessage(getCurrentURL());
+			}
+		}
+
 		select.selectedIndex = idx;
-		
+
 		image.src = zipEntries[idx].path;
-			
+
 		previous.disabled = idx <= 0;
 		next.disabled = idx >= zipEntries.length - 1;
 	}
@@ -52,14 +74,14 @@
 	}
 
 	function handleMessage(event) {
-		if(event.isTrusted && event.data.keydown) {
+		if (event.isTrusted && event.data.keydown) {
 			handleKeydown(new KeyboardEvent("keydown", {key: event.data.keydown}));
 		}
 	}
 
 	function handleImgLoad(event) {
 		const img = event.target;
-		if(event.type === "error") {
+		if (event.type === "error") {
 			img.alt = "This image could not be loaded; it may be missing or corrupt. Check the original data source for more information.";
 		} else {
 			img.alt = "";
@@ -92,5 +114,5 @@
 				select.appendChild(option);
 			});
 		})
-		.then(() => updateDisplayedImage(), err => console.error(err));
+		.then(() => setInitialImage(urlParams.get("img")), err => console.error(err));
 })();
