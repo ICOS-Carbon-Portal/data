@@ -39,9 +39,13 @@
 			idx = zipEntries.length-1;
 		}
 
-		if (idx !== select.selectedIndex && !fullScreen) {
+		if (idx !== select.selectedIndex) {
 			urlParams.set("img", idx);
-			window.parent.postMessage(getCurrentURL());
+			if(!fullScreen) {
+				window.parent.postMessage(getCurrentURL());
+			} else {
+				history.replaceState(null, "", getCurrentURL());
+			}
 		}
 
 		select.selectedIndex = idx;
