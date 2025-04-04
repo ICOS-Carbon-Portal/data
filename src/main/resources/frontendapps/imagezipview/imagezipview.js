@@ -74,7 +74,7 @@
 	}
 
 	function handleMessage(event) {
-		if(event.isTrusted && event.data.keydown) {
+		if (event.isTrusted && event.data.keydown) {
 			handleKeydown(new KeyboardEvent("keydown", {key: event.data.keydown}));
 		}
 	}
