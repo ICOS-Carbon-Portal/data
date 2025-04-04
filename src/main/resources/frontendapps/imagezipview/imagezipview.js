@@ -10,7 +10,7 @@
 	const fullScreen = (window.self === window.top);
 
 	if (fullScreen) {
-		document.getElementById("container").className += " m-2"
+		document.getElementById("container").className += " m-2";
 	}
 
 	function getCurrentURL() {
