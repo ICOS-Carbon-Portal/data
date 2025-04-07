@@ -39,7 +39,7 @@
 			idx = zipEntries.length-1;
 		}
 
-		if (idx !== select.selectedIndex) {
+		if (parseInt(urlParams.get("img")) !== idx) {
 			urlParams.set("img", idx);
 			if (fullScreen) {
 				history.replaceState(null, "", getCurrentURL());
