@@ -11,15 +11,14 @@ import { PreviewSettings } from '../../models/Preview';
 interface OurProps {
 	preview: State['preview'];
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void;
-	iframeUrl: UrlStr
 	previewSettings: PreviewSettings
 }
 
-export default function PreviewSelfContained({ preview, iframeSrcChange, iframeUrl, previewSettings }: OurProps) {
+export default function PreviewSelfContained({ preview, iframeSrcChange, previewSettings }: OurProps) {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 
 	const [height, setHeight] = useState<number>(() => getInitialHeight(preview.type));
-	const src = useRef<string>(preview.type ? getPreviewIframeUrl(preview.type, preview.item, iframeUrl, previewSettings) : "");
+	const src = useRef<string>(preview.type ? getPreviewIframeUrl(preview.type, preview.item, previewSettings) : "");
 
 	const handleResize = useCallback(debounce(() => {
 		if (iframeRef.current) {
@@ -87,7 +86,7 @@ function settingsToHash(objId: Sha256Str, previewSettings: PreviewSettings): str
 	return encodeURIComponent(decodeURIComponent(JSON.stringify({ objId, ...previewSettings})));
 }
 
-function getPreviewIframeUrl(previewType: PreviewType, item: CartItem, iframeUrl: UrlStr, previewSettings: PreviewSettings): UrlStr {
+function getPreviewIframeUrl(previewType: PreviewType, item: CartItem, previewSettings: PreviewSettings): UrlStr {
 	const iFrameBaseUrl = config.iFrameBaseUrl[previewType];
 	// Use preview.item.url if present since that one has all client changes recorded in history
 	if (item.url) {
