@@ -64,7 +64,7 @@ export interface PreviewSerialized {
 	items: CartItemSerialized[]
 	options: PreviewOption[]
 	type: PreviewType | undefined
-	iframeParams: PreviewSettings
+	previewSettings: PreviewSettings
 }
 
 export default class Preview {
@@ -79,14 +79,14 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = this.item?.urlParams ? Preview.sanitizeIframeParams(this.item.urlParams) : {};
+		this.previewSettings = this.item?.urlParams ? Preview.sanitizePreviewSettings(this.item.urlParams) : {};
 	}
 
-	static sanitizeIframeParams(iframeParams: IdxSig): PreviewSettings {
+	static sanitizePreviewSettings(urlParams: IdxSig): PreviewSettings {
 		const sanitizedParams: PreviewSettings = {};
-		for (const key in iframeParams) {
+		for (const key in urlParams) {
 			if (previewSettingsKeys.includes(key)) {
-				sanitizedParams[key as keyof PreviewSettings] = iframeParams[key];
+				sanitizedParams[key as keyof PreviewSettings] = urlParams[key];
 			}
 		}
 		return sanitizedParams;
@@ -97,7 +97,7 @@ export default class Preview {
 			items: this.items.map(item => item.serialize),
 			options: this.options,
 			type: this.type,
-			iframeParams: this.previewSettings,
+			previewSettings: this.previewSettings,
 		};
 	}
 
