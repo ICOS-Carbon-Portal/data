@@ -7,12 +7,12 @@ import {DrawRectBbox, ExtendedDobjInfo} from "./models/State";
 import {Coordinate} from "ol/coordinate";
 import { PreviewSettings } from "./models/Preview";
 
-export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, iframeParams: PreviewSettings) => {
+export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, previewSettings: PreviewSettings) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
-		...iframeParams
+		...previewSettings
 	});
 };
 
