@@ -8,7 +8,7 @@ import {Route, State} from "../models/State";
 import {UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
 import { addToCart, removeFromCart, setPreviewUrl, updateRoute } from "../actions/common";
-import { storeTsPreviewSetting, setPreviewYAxis, setPreviewY2Axis } from "../actions/preview";
+import { storeTsPreviewSetting } from "../actions/preview";
 import { pick } from "../utils";
 import PreviewControls from '../components/preview/PreviewControls';
 import Message from '../components/ui/Message';
@@ -86,11 +86,11 @@ const PreviewRoute = (props: OurProps & { iframeSrcChange: (event: ChangeEvent<H
 	const previewType = props.preview.type;
 
 	if (previewType === config.TIMESERIES){
-		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'setPreviewYAxis', 'setPreviewY2Axis', 'iframeSrcChange');
+		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'iframeSrcChange',  'previewSettings');
 		return <PreviewTimeSerie {...tsProps} />;
 
 	} else if (previewType === config.NETCDF || previewType === config.MAPGRAPH || previewType === config.PHENOCAM){
-		const scProps = pick(props, 'preview', 'iframeSrcChange', 'iframeUrl');
+		const scProps = pick(props, 'preview', 'iframeSrcChange', 'iframeUrl', 'previewSettings');
 		return <>
 			<div className='row pb-3'>
 				<PreviewControls iframeUrl={props.iframeUrl} previewType={previewType} />
@@ -112,6 +112,7 @@ function stateToProps(state: State){
 		preview: state.preview,
 		extendedDobjInfo: state.extendedDobjInfo,
 		tsSettings: state.tsSettings,
+		previewSettings: state.previewSettings,
 	};
 }
 
@@ -119,8 +120,6 @@ function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),
-		setPreviewYAxis: (y?: string) => dispatch(setPreviewYAxis(y)),
-		setPreviewY2Axis: (y2?: string) => dispatch(setPreviewY2Axis(y2)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),

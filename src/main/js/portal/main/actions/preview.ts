@@ -9,7 +9,7 @@ import {getUrlsFromPids} from "../utils";
 
 export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {tsSettings, specTable, labelLookup, cart, itemsToAddToCart} = getState();
+		const {tsSettings, specTable, labelLookup, cart, itemsToAddToCart, previewSettings} = getState();
 
 		// specTable and labelLookup must be fetched from backend if app begins with a preview route
 		const specTablesPromise = specTable.isInitialized
@@ -31,7 +31,7 @@ export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): Porta
 		]);
 
 		promises.then(([knownDataObjInfos, extendedDataObjInfo, specTables, labelLookup]) => {
-				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup));
+				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup, previewSettings));
 				if (itemsToAddToCart) {
 					dispatch(addToCart(getUrlsFromPids(itemsToAddToCart)))
 				}
@@ -59,17 +59,5 @@ export function storeTsPreviewSetting(spec: string, type: string, val: string): 
 		saveTsSetting(user.email, spec, type, val).then(tsSettings => {
 			dispatch(new Payloads.BackendTsSettings(tsSettings));
 		});
-	};
-}
-
-export function setPreviewYAxis(y?: string): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewYAxis(y))
-	};
-}
-
-export function setPreviewY2Axis(y2?: string): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewY2Axis(y2))
 	};
 }
