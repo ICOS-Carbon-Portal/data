@@ -79,17 +79,17 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = this.item?.urlParams ? Preview.sanitizePreviewSettings(this.item.urlParams) : {};
+		this.previewSettings = this.item?.urlParams ? Preview.allowlistPreviewSettings(this.item.urlParams) : {};
 	}
 
-	static sanitizePreviewSettings(urlParams: IdxSig): PreviewSettings {
-		const sanitizedParams: PreviewSettings = {};
+	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
+		const allowedPreviewSettings: PreviewSettings = {};
 		for (const key in urlParams) {
 			if (previewSettingsKeys.includes(key)) {
-				sanitizedParams[key as keyof PreviewSettings] = urlParams[key];
+				allowedPreviewSettings[key as keyof PreviewSettings] = urlParams[key as keyof PreviewSettings];
 			}
 		}
-		return sanitizedParams;
+		return allowedPreviewSettings;
 	}
 
 	get serialize(): PreviewSerialized {

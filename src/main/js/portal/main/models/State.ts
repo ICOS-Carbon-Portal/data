@@ -314,7 +314,7 @@ const getStateFromHash = () => {
 //No # in the beginning!
 const parseHash = (hash: string) => {
 	try {
-		return sanitizeJsonHash(JSON.parse(hash));
+		return allowlistJsonHash(JSON.parse(hash));
 	} catch(err) {
 		return {};
 	}
@@ -362,9 +362,9 @@ type JsonHashState = {
 	itemsToAddToCart?: Sha256Str[]
 }
 
-const sanitizeJsonHash = (hash: any): JsonHashState => {
-	const sanitizedHash : JsonHashState = {};
-	const ps: PreviewSettings = {}
+const allowlistJsonHash = (hash: any): JsonHashState => {
+	const allowedHash: JsonHashState = {};
+	const ps: PreviewSettings = {};
 
 	for (const key in hash) {
 		if (key === "yAxis") {
@@ -372,14 +372,14 @@ const sanitizeJsonHash = (hash: any): JsonHashState => {
 		} else if (key === "y2Axis") {
 			ps.y2 = hash[key];
 		} else if (hashKeys.includes(key)) {
-			sanitizedHash[key as keyof JsonHashState] = hash[key];
+			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	sanitizedHash.previewSettings = (sanitizedHash.previewSettings ?
-		{ ...sanitizedHash.previewSettings, ...ps } :
-		ps)
+	allowedHash.previewSettings = (allowedHash.previewSettings ?
+		{ ...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps } :
+		ps);
 
-	return sanitizedHash;
+	return allowedHash;
 }
 
 const jsonToState = (state0: JsonHashState) => {
