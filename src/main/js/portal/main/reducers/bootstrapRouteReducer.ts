@@ -58,7 +58,7 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 	}))
 
 	const preview = state.preview
-			.withPids(payload.pids)
+			.withPids(payload.pids, payload.previewSettings)
 			.restore(previewLookup, cart, objectsTable);
 
 	const newPartialState: BootstrapState = {

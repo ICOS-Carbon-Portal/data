@@ -57,15 +57,21 @@ export default class CartItem {
 	deconstructURL(url: string | undefined) {
 		if (url === undefined) return {};
 
-		const search = url.split('?').pop() || '';
-		const searchStr = search.replace(/^\?/, '');
-		const keyValpairs = searchStr.split('&');
+		if (url.includes("?")) {
+			const searchStr = url.split('?').pop() || '';
+			const keyValpairs = searchStr.split('&');
 
-		return keyValpairs.reduce<IdxSig>((acc, curr) => {
-			const p = curr.split('=');
-			acc[p[0]] = p[1];
-			return acc;
-		}, {});
+			return keyValpairs.reduce<IdxSig>((acc, curr) => {
+				const p = curr.split('=');
+				acc[p[0]] = p[1];
+				return acc;
+			}, {});
+		}
+
+		if (url.includes("#")) {
+			const hashStr = url.split("#").pop() || '';
+			return JSON.parse(decodeURIComponent(hashStr));
+		}
 	}
 
 	get hasKeyValPairs(){
@@ -142,6 +148,10 @@ export default class CartItem {
 
 	get submTime(){
 		return new Date(this._dataobject?.submTime ?? "");
+	}
+
+	get urlParams() {
+		return this._keyValPairs;
 	}
 
 	getUrlSearchValue(key: string) {
