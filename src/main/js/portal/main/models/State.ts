@@ -15,7 +15,6 @@ import deepequal from 'deep-equal';
 import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects} from "../backend";
-import {DataObject} from "./CartItem";
 import {DataObject as DO, References} from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
@@ -72,25 +71,45 @@ export interface User extends WhoAmI {
 	profile: Profile | {}
 }
 
-type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
 export type ExtendedDobjInfo = {
 	dobj: UrlStr
-	station: string | undefined
-	stationId: string | undefined
-	samplingHeight: number | undefined
-	samplingPoint: string | undefined
-	theme: string | undefined
-	themeIcon: string | undefined
-	title: string | undefined
-	description: string | undefined
-	specComments: string | undefined
-	columnNames: string[] | undefined
-	site: string | undefined
-	hasVarInfo: boolean | undefined
-	dois: UrlStr[] | undefined
-	biblioInfo: References | undefined
+	station?: string
+	stationId?: string
+	samplingHeight?: number
+	samplingPoint?: string
+	theme?: string
+	themeIcon?: string
+	title?: string
+	description?: string
+	specComments?: string
+	columnNames?: string[]
+	site?: string
+	hasVarInfo?: boolean
+	dois?: UrlStr[]
+	biblioInfo?: References
 }
-export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
+
+export type DataObject = {
+	dobj: string,
+	hasNextVersion: boolean,
+	hasVarInfo?: boolean,
+	dataset: string,
+	fileName: string,
+	format: string,
+	formatLabel?: string,
+	level: number,
+	size: string,
+	spec: string,
+	specLabel?: string,
+	submTime: Date,
+	theme: string,
+	themeLabel?: string,
+	timeEnd: Date,
+	timeStart: Date,
+	type?: string, //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	temporalResolution?: string,
+	extendedDobjInfo?: ExtendedDobjInfo,
+}
 
 export interface MetaData extends DO {
 	id: UrlStr
@@ -150,7 +169,7 @@ export interface State {
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
-	objectsTable: ObjectsTable[]
+	objectsTable: DataObject[]
 	sorting: {
 		varName: string,
 		ascending: boolean

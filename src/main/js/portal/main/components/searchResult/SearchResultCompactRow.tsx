@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import CartIcon from '../buttons/CartIcon';
 import PreviewIcon from '../buttons/PreviewIcon';
 import { formatBytes, formatDateWithOptionalTime, pick, getUrlWithEnvironmentPrefix } from '../../utils';
-import { ExtendedDobjInfo, ObjectsTable, WhoAmI } from "../../models/State";
+import { ExtendedDobjInfo, DataObject, WhoAmI } from "../../models/State";
 import config, { timezone } from '../../config';
 import Preview, { previewAvailability } from '../../models/Preview';
 import PreviewLookup from '../../models/PreviewLookup';
@@ -10,7 +10,7 @@ import { UrlStr } from '../../backend/declarations';
 import CollectionBtn from '../buttons/CollectionBtn';
 
 type Props =  {
-	objInfo: ObjectsTable,
+	objInfo: DataObject,
 	isAddedToCart: boolean,
 	preview: Preview,
 	extendedDobjInfo?: (ExtendedDobjInfo | undefined)[]

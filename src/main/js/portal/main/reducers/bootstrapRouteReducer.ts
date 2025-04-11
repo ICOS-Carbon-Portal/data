@@ -1,4 +1,4 @@
-import stateUtils, {State, ObjectsTable} from "../models/State";
+import stateUtils, {State, DataObject} from "../models/State";
 import {
 	BootstrapRouteCart,
 	BootstrapRouteMetadata,
@@ -39,7 +39,7 @@ export default function(state: State, payload: BootstrapRoutePayload): State {
 }
 
 const getObjectsTable = (specTable: CompositeSpecTable, objectsTable: ObjectsTableLike) => {
-	return (objectsTable as ObjectsTable[]).map(ot => {
+	return (objectsTable as DataObject[]).map(ot => {
 		const spec = specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 		return {...ot, ...spec};
 	});

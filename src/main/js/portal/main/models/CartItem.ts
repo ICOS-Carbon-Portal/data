@@ -1,25 +1,6 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
-
-export interface DataObject {
-	dobj: string,
-	hasNextVersion: boolean,
-	dataset: string,
-	fileName: string,
-	format: string,
-	formatLabel: string,
-	level: number,
-	size: string,
-	spec: string,
-	specLabel: string,
-	submTime: string,
-	theme: string,
-	themeLabel: string,
-	timeEnd: string,
-	timeStart: string,
-	type: PreviewType | undefined,
-	temporalResolution: string
-}
+import { DataObject } from "./State";
 
 export interface CartItemSerialized {
 	id: string
@@ -176,9 +157,7 @@ export type CartProhibition = {
 	allowCartAdd: boolean
 	uiMessage?: string
 }
-export function addingToCartProhibition(
-	dobj: {theme: UrlStr, level: number, hasNextVersion: boolean, submTime: Date}
-): CartProhibition {
+export function addingToCartProhibition(dobj: DataObject | CartItem): CartProhibition {
 
 	if(dobj.submTime.getTime() > Date.now())
 		return {allowCartAdd: false, uiMessage: "This data object is under moratorium"}

@@ -1,6 +1,6 @@
 import stateUtils, {
 	MapProps,
-	ObjectsTable,
+	DataObject,
 	Profile,
 	Route,
 	State,
@@ -25,7 +25,7 @@ import {isInPidFilteringMode} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
-import { DataObject } from "../../../common/main/metacore";
+import {DataObject as DO} from "../../../common/main/metacore";
 import {Filter, Value} from "../models/SpecTable";
 import keywordsInfo from "../backend/keywordsInfo";
 import {SPECCOL} from "../sparqlQueries";
@@ -214,7 +214,7 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 
 		if (user.email) {
 			const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
-				const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
+				const objInfo: DataObject | undefined = objectsTable.find(o => o.dobj === id);
 
 				if (objInfo === undefined)
 					throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
@@ -248,7 +248,7 @@ export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
 
 function fetchMetadataItem(id: UrlStr): PortalThunkAction<void> {
 	return (dispatch) => {
-		fetchJson<DataObject>(`${id}?format=json`).then(metadata => {
+		fetchJson<DO>(`${id}?format=json`).then(metadata => {
 			const metadataWithId = { ...metadata, id };
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
@@ -280,7 +280,7 @@ export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<
 		getError(errorId).then(response => {
 			if (response && response.error && response.error.state) {
 				const stateJSON = JSON.parse(response.error.state);
-				const objectsTable = stateJSON.objectsTable.map((ot: ObjectsTable) => {
+				const objectsTable = stateJSON.objectsTable.map((ot: DataObject) => {
 					return Object.assign(ot, {
 						submTime: new Date(ot.submTime),
 						timeStart: new Date(ot.timeStart),

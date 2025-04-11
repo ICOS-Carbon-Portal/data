@@ -13,7 +13,7 @@ import {
 	BackendUpdateCart,
 	BackendExportQuery
 } from "./actionpayloads";
-import stateUtils, {CategFilters, ObjectsTable, State} from "../models/State";
+import stateUtils, {CategFilters, DataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
 import CompositeSpecTable, { ColNames } from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
@@ -105,7 +105,7 @@ const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObj
 };
 
 const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
-	const objectsTable = payload.objectsTable as ObjectsTable[];
+	const objectsTable = payload.objectsTable as DataObject[];
 	const extendedObjectsTable = objectsTable.map(ot => {
 		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 		return {...ot, ...spec};
