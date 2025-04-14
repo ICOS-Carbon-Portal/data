@@ -78,12 +78,12 @@ function shouldUpdateHeight(previewType?: PreviewType): boolean {
 }
 
 function settingsToQueryParams(previewSettings: PreviewSettings): string {
-	let queryParams = Object.keys(previewSettings).map((key) => `${key}=${previewSettings[key as keyof PreviewSettings]}`).join("&");
-	return queryParams;
+	const remapKey = (key: string) => `${key}=${previewSettings[key as keyof PreviewSettings]}`;
+	return Object.keys(previewSettings).map(remapKey).join("&");
 }
 
 function settingsToHash(objId: Sha256Str, previewSettings: PreviewSettings): string {
-	return encodeURIComponent(decodeURIComponent(JSON.stringify({ objId, ...previewSettings})));
+	return encodeURIComponent(decodeURIComponent(JSON.stringify({objId, ...previewSettings})));
 }
 
 function getPreviewIframeUrl(previewType: PreviewType, item: CartItem, previewSettings: PreviewSettings): UrlStr {

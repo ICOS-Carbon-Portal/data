@@ -54,24 +54,21 @@ export default class CartItem {
 		};
 	}
 
-	deconstructURL(url: string | undefined) {
+	deconstructURL(url?: string) {
 		if (url === undefined) return {};
 
-		if (url.includes("?")) {
-			const searchStr = url.split('?').pop() || '';
-			const keyValpairs = searchStr.split('&');
+		const webUrl = new URL(url);
 
-			return keyValpairs.reduce<IdxSig>((acc, curr) => {
-				const p = curr.split('=');
-				acc[p[0]] = p[1];
-				return acc;
-			}, {});
+		const searchParams = Object.fromEntries(webUrl.searchParams);
+		if (Object.keys(searchParams).length !== 0) {
+			return searchParams;
 		}
 
-		if (url.includes("#")) {
-			const hashStr = url.split("#").pop() || '';
-			return JSON.parse(decodeURIComponent(hashStr));
+		if (webUrl.hash) {
+			return JSON.parse(decodeURIComponent(webUrl.hash));
 		}
+
+		return {};
 	}
 
 	get hasKeyValPairs(){
