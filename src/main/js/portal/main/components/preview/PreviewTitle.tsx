@@ -49,6 +49,7 @@ class PreviewTitle extends Component<OurProps>{
 					<DownloadButton
 						style={{}}
 						checkedObjects={items.map((item: CartItem) => item.dobj)}
+						checkedObjectsInfo={items.flatMap((item: CartItem, idx: number) => item.item ? [{...item.item, extendedDobjInfo: extendedDobjInfo[idx]}] : [])}
 						enabled={allowCartAdd}
 					/>
 				</div>
