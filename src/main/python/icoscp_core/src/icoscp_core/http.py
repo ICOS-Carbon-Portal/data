@@ -4,7 +4,6 @@ from urllib.request import Request, HTTPError, urlopen
 from urllib.parse import urlencode
 from http.client import HTTPResponse, HTTPMessage
 from typing import Any, Literal, IO
-from .auth import AuthTokenProvider
 
 Method = Literal["GET", "POST"]
 
@@ -50,14 +49,3 @@ def http_request(
 		msg = f"{error_hint} at {url} problem, HTTP response code: {err.status}, response: {resp_text}"
 		raise Exception(msg) from None
 
-def http_auth_request(
-	url: str,
-	error_hint: str,
-	auth: AuthTokenProvider,
-	method: Method = "GET",
-	headers: dict[str, str] = {},
-	data: str | dict[str, Any] | None = None
-) -> HTTPResponse:
-	h = headers.copy()
-	h['Cookie'] = auth.get_token().cookie_value
-	return http_request(url, error_hint, method, h, data)
