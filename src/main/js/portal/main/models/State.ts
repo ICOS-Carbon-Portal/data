@@ -90,25 +90,25 @@ export type ExtendedDobjInfo = {
 }
 
 export type DataObject = {
-	dobj: string,
-	hasNextVersion: boolean,
-	hasVarInfo?: boolean,
-	dataset: string,
-	fileName: string,
-	format: string,
-	formatLabel?: string,
-	level: number,
-	size: string,
-	spec: string,
-	specLabel?: string,
-	submTime: Date,
-	theme: string,
-	themeLabel?: string,
-	timeEnd: Date,
-	timeStart: Date,
-	type?: string, //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
-	temporalResolution?: string,
-	extendedDobjInfo?: ExtendedDobjInfo,
+	dobj: string
+	hasNextVersion: boolean
+	hasVarInfo?: boolean
+	dataset: string
+	fileName: string
+	format: string
+	formatLabel?: string
+	level: number
+	size: string
+	spec: string
+	specLabel?: string
+	submTime: Date
+	theme: string
+	themeLabel?: string
+	timeEnd: Date
+	timeStart: Date
+	type?: string //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	temporalResolution?: string
+	extendedDobjInfo?: ExtendedDobjInfo
 }
 
 export interface MetaData extends DO {
