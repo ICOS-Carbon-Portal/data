@@ -109,6 +109,9 @@ class SearchResultRegular extends Component<OurProps> {
 								style={{}}
 								checkedObjects={checkedObjectsInSearch}
 								enabled={checkedObjectsInSearch.length > 0}
+								objectsTable={objectsTable}
+								extendedDobjInfo={extendedDobjInfo}
+								labelLookup={labelLookup}
 							/>
 
 						</div>
