@@ -54,18 +54,21 @@ export default class CartItem {
 		};
 	}
 
-	deconstructURL(url: string | undefined) {
+	deconstructURL(url?: string) {
 		if (url === undefined) return {};
 
-		const search = url.split('?').pop() || '';
-		const searchStr = search.replace(/^\?/, '');
-		const keyValpairs = searchStr.split('&');
+		const webUrl = new URL(url);
 
-		return keyValpairs.reduce<IdxSig>((acc, curr) => {
-			const p = curr.split('=');
-			acc[p[0]] = p[1];
-			return acc;
-		}, {});
+		const searchParams = Object.fromEntries(webUrl.searchParams);
+		if (Object.keys(searchParams).length !== 0) {
+			return searchParams;
+		}
+
+		if (webUrl.hash) {
+			return JSON.parse(decodeURIComponent(webUrl.hash));
+		}
+
+		return {};
 	}
 
 	get hasKeyValPairs(){
@@ -142,6 +145,10 @@ export default class CartItem {
 
 	get submTime(){
 		return new Date(this._dataobject?.submTime ?? "");
+	}
+
+	get urlParams() {
+		return this._keyValPairs;
 	}
 
 	getUrlSearchValue(key: string) {

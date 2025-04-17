@@ -5,15 +5,14 @@ import {CSSProperties} from "react";
 import CartItem from "./models/CartItem";
 import {DrawRectBbox, ExtendedDobjInfo} from "./models/State";
 import {Coordinate} from "ol/coordinate";
+import { PreviewSettings } from "./models/Preview";
 
-export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, yAxis?: string, y2Axis?: string) => {
+export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, previewSettings: PreviewSettings) => {
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
-		...(yAxis && {y: yAxis}),
-		...(y2Axis && {y2: y2Axis}),
-		type: 'scatter'
+		...previewSettings
 	});
 };
 

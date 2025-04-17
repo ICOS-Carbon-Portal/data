@@ -7,7 +7,7 @@
     "noImplicitAny": true,
     "esModuleInterop": true,
     "module": "ESNext",
-    "lib": [ "ESNext", "DOM" ],
+    "lib": [ "ESNext", "DOM", "DOM.Iterable" ],
     "target": "ESNext",
     "allowJs": true,
     "jsx": "react",

@@ -16,8 +16,6 @@ interface OurProps {
 	extendedDobjInfo: State['extendedDobjInfo']
 	tsSettings: State['tsSettings']
 	storeTsPreviewSetting: (spec: string, type: string, val: string) => void
-	setPreviewYAxis: (y?: string) => void
-	setPreviewY2Axis: (y2?: string) => void
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
@@ -52,7 +50,7 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 	}
 
 	handleSelectAction(ev: ChangeEvent<HTMLSelectElement>){
-		const { preview, iframeSrcChange, storeTsPreviewSetting, setPreviewYAxis, setPreviewY2Axis } = this.props;
+		const { preview, iframeSrcChange, storeTsPreviewSetting } = this.props;
 		const {name, selectedIndex, options} = ev.target;
 
 		if ((selectedIndex > 0 || name === 'y2') && iframeSrcChange) {
@@ -71,13 +69,6 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 
 			if (selectedIndex > 0)
 				storeTsPreviewSetting(preview.item.spec, name, options[selectedIndex].value);
-
-			const value = selectedIndex > 0 ? options[selectedIndex].value : undefined;
-			if (name === 'y') {
-				setPreviewYAxis(value)
-			} else if (name === 'y2') {
-				setPreviewY2Axis(value)
-			}
 		}
 	}
 
@@ -167,14 +158,17 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 
 		const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 
-		const yParam = yAxis ? `&y=${yAxis}` : '';
-		const y2Param = y2Axis ? `&y2=${y2Axis}` : '';
-		const legendLabelsParams = legendLabels ? `&legendLabels=${legendLabels}` : '';
-		const legendLabelsY2Params = y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '';
-		const iframeUrl = `${window.document.location.protocol}//${window.document.location.host}${iFrameBaseUrl}?objId=${objIds}&x=${xAxis}${yParam}${y2Param}&type=${type}&linking=${linking}${legendLabelsParams}${legendLabelsY2Params}`;
+		const iframeParams = [`?objId=${objIds}`];
+		iframeParams.push(`&x=${xAxis}`);
+		iframeParams.push(yAxis ? `&y=${yAxis}` : '');
+		iframeParams.push(y2Axis ? `&y2=${y2Axis}` : '');
+		iframeParams.push(`&linking=${linking}`);
+		iframeParams.push(legendLabels ? `&legendLabels=${legendLabels}` : '');
+		iframeParams.push(y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '');
+		iframeParams.push(type ? `&type=${type}` : '');
 
-		if (!preview)
-			return null;
+		const iframeUrl = `${window.document.location.protocol}//${window.document.location.host}`
+							+ `${iFrameBaseUrl}${iframeParams.join('')}`;
 
 		this.syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 
@@ -264,7 +258,7 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 			xAxis: preview.item.getUrlSearchValue('x') || getColName(specSettings.x),
 			yAxis: preview.item.getUrlSearchValue('y') || getColName(specSettings.y),
 			y2Axis: preview.item.getUrlSearchValue('y2')  || getColName(specSettings.y2),
-			type: specSettings.type || preview.item.getUrlSearchValue('type') as Axes['type']
+			type: specSettings.type || preview.item.getUrlSearchValue('type') as Axes['type'] || "scatter"
 		}
 		: { xAxis: undefined, yAxis: undefined, y2Axis: undefined, type: undefined};
 };
