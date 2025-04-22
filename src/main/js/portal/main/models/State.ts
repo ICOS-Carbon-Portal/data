@@ -422,6 +422,7 @@ const specialCases = (state: Partial<StateSerialized>) => {
 		};
 	} else {
 		delete state.preview;
+		delete state.previewSettings;
 	}
 
 	if (state.route === 'cart'){
