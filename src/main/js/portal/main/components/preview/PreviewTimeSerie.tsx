@@ -1,4 +1,4 @@
-import React, { ChangeEvent, Component } from 'react';
+import React, { ChangeEvent, useRef, useState, useEffect } from 'react';
 import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../../utils'
 import config, { previewExcludeChartType } from '../../config';
 import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
@@ -19,42 +19,31 @@ interface OurProps {
 	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 }
 
-interface OurState {
-	tableFormat?: TableFormat
-}
-
 type PreviewItem = CartItem & Partial<ExtendedDobjInfo>
 
 const iFrameBaseUrl = config.iFrameBaseUrl["TIMESERIES"];
 
-export default class PreviewTimeSerie extends Component<OurProps, OurState> {
-	private iframe: HTMLIFrameElement | null = null;
-	private tfCache: TableFormatCache = new TableFormatCache(commonConfig);
+export default function PreviewTimeSerie(props: OurProps) {
+	const { preview, extendedDobjInfo, tsSettings,
+		storeTsPreviewSetting, iframeSrcChange } = props;
 
-	constructor(props: OurProps){
-		super(props);
+	const iframeRef = useRef<HTMLIFrameElement>(null);
+	
+	const tfCache: TableFormatCache = new TableFormatCache(commonConfig);
+	const [tableFormat, setTableFormat] = useState<TableFormat>();
+	
 
-		this.state = {
-			tableFormat: undefined
-		};
-
-		this.getTableFormat();
-	}
-
-	getTableFormat(idx: number = 0) {
-		const preview = this.props.preview;
-		if (preview.items.length === 0 || this.tfCache.isInCache(preview.items[idx].spec)) return;
-
-		this.tfCache.getTableFormat(preview.items[idx].spec)
-			.then(tableFormat => this.setState({ tableFormat }));
-	}
-
-	handleSelectAction(ev: ChangeEvent<HTMLSelectElement>){
-		const { preview, iframeSrcChange, storeTsPreviewSetting } = this.props;
+	useEffect(() => {
+		if (preview.items.length > 0 && !tfCache.isInCache(preview.item.spec)) {
+			tfCache.getTableFormat(preview.item.spec).then(tf => setTableFormat(tf));
+		}
+	}, [preview.item.spec]);
+	
+	const handleSelectAction = (ev: ChangeEvent<HTMLSelectElement>) => {
 		const {name, selectedIndex, options} = ev.target;
 
 		if ((selectedIndex > 0 || name === 'y2') && iframeSrcChange) {
-			if (selectedIndex === 0){
+			if (selectedIndex === 0) {
 				preview.item.deleteKeyValPair(name);
 			}
 			const keyVal = selectedIndex === 0
@@ -63,8 +52,8 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 			const newUrl = preview.item.getNewUrl(keyVal);
 			iframeSrcChange({target: {src: newUrl}} as ChangeEvent<HTMLIFrameElement>);
 
-			if (this.iframe && this.iframe.contentWindow) {
-				this.iframe.contentWindow.postMessage(newUrl, "*");
+			if (iframeRef.current?.contentWindow) {
+				iframeRef.current.contentWindow.postMessage(newUrl, "*");
 			}
 
 			if (selectedIndex > 0)
@@ -72,35 +61,28 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 		}
 	}
 
-	handleChartTypeAction(currentChartType: 'line' | 'scatter'){
-		const { preview, iframeSrcChange, storeTsPreviewSetting } = this.props;
-		const value = currentChartType == 'scatter' ? 'line' : 'scatter';
+	const handleChartTypeAction = (currentChartType: 'line' | 'scatter') => {
+		const value = currentChartType === 'scatter' ? 'line' : 'scatter';
 		const newUrl = preview.item.getNewUrl({ ['type']: value});
 		iframeSrcChange({ target: { src: newUrl } } as ChangeEvent<HTMLIFrameElement>);
 
-		if (this.iframe && this.iframe.contentWindow) {
-			this.iframe.contentWindow.postMessage(newUrl, "*");
+		if (iframeRef.current?.contentWindow) {
+			iframeRef.current.contentWindow.postMessage(newUrl, "*");
 		}
 
 		storeTsPreviewSetting(preview.item.spec, 'type', value);
-
 	}
 
-	shouldComponentUpdate(nextProps: OurProps, nextState: OurState) {
-		return !!nextState.tableFormat || (this.props.extendedDobjInfo.length === 0 && nextProps.extendedDobjInfo.length > 0);
-	}
-
-	private makePreviewOption(actColName: string): PreviewOption | undefined {
-		const {preview} = this.props;
+	const makePreviewOption = (actColName: string): PreviewOption | undefined => {
 		const verbatimMatch = preview.options.find(opt => opt.varTitle === actColName);
-		if(verbatimMatch) return verbatimMatch;
+		if (verbatimMatch) return verbatimMatch;
 		const regexMatch = preview.options.find((opt: PreviewOption) => testRegexColMatch(opt, actColName));
-		if(!regexMatch) return; //no preview for columns that are not in portal app's metadata (e.g. flag columns)
+		if (!regexMatch) return; // no preview for columns that are not in portal app's metadata (e.g. flag columns)
 		return {...regexMatch, varTitle: actColName};
 	}
 
-	private syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}: Axes, specSettings: TsSetting) {
-		const { preview, storeTsPreviewSetting } = this.props;
+	const syncTsSettingStoreWithUrl = (axes: Axes, specSettings: TsSetting) => {
+		const {xAxis, yAxis, y2Axis, type} = axes;
 
 		if (yAxis && specSettings.y != yAxis)
 			storeTsPreviewSetting(preview.item.spec, 'y', yAxis);
@@ -112,136 +94,131 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 			storeTsPreviewSetting(preview.item.spec, 'type', type);
 	}
 
-	render(){
-		const { preview, extendedDobjInfo, tsSettings } = this.props;
-		const { tableFormat } = this.state;
+	// Add station information
+	const items: PreviewItem[] = preview.items.map(cItem => {
+		const item: PreviewItem = cItem
+		const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === item.dobj);
+		item.station = extendedInfo?.station;
+		item.stationId = extendedInfo?.stationId;
+		item.samplingHeight = extendedInfo?.samplingHeight;
+		item.columnNames = extendedInfo?.columnNames;
+		return item;
+	});
 
-		// Add station information
-		const items: PreviewItem[] = preview.items.map(cItem => {
-			const item: PreviewItem = cItem
-			const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === item.dobj);
-			item.station = extendedInfo?.station;
-			item.stationId = extendedInfo?.stationId;
-			item.samplingHeight = extendedInfo?.samplingHeight;
-			item.columnNames = extendedInfo?.columnNames;
-			return item;
-		});
+	// Determine if curves should concatenate or overlap
+	const linking: string = items.reduce((acc: string, curr: PreviewItem) => {
+		return items.reduce((acc2: string, curr2: PreviewItem) => {
+			if ((curr.dobj !== curr2.dobj) &&
+				(curr.station === curr2.station) &&
+				(curr.site && curr2.site && curr.site === curr2.site) &&
+				((curr.timeEnd < curr2.timeStart) ||
+				(curr.timeStart > curr2.timeEnd)) &&
+				(!curr.samplingHeight || curr.samplingHeight === curr2.samplingHeight)) {
+				return 'concatenate';
+			}
+			return acc2;
+		}, 'overlap');
+	}, '');
 
-		// Determine if curves should concatenate or overlap
-		const linking: string = items.reduce((acc: string, curr: PreviewItem) => {
-			return items.reduce((acc2: string, curr2: PreviewItem) => {
-				if ((curr.dobj !== curr2.dobj) &&
-					(curr.station === curr2.station) &&
-					(curr.site && curr2.site && curr.site === curr2.site) &&
-					((curr.timeEnd < curr2.timeStart) ||
-					(curr.timeStart > curr2.timeEnd)) &&
-					(!curr.samplingHeight || curr.samplingHeight === curr2.samplingHeight)) {
-					return 'concatenate';
-				}
-				return acc2;
-			}, 'overlap');
-		}, '');
+	const allItemsHaveColumnNames = items.every((cur: PreviewItem) => !!(cur.columnNames));
 
-		const allItemsHaveColumnNames = items.every((cur: PreviewItem) => !!(cur.columnNames));
+	const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
 
-		const legendLabels = extendedDobjInfo.length > 0 ? getLegendLabels(items) : undefined;
+	const options: PreviewOption[] = allItemsHaveColumnNames
+		? distinct(items.flatMap(item  => item.columnNames ?? []))
+			.flatMap(colName => makePreviewOption(colName) ?? [])
+			.sort(previewVarCompare)
+		: preview.options;
 
-		const options: PreviewOption[] = allItemsHaveColumnNames
-			? distinct(items.flatMap(item  => item.columnNames ?? []))
-				.flatMap(colName => this.makePreviewOption(colName) ?? [])
-				.sort(previewVarCompare)
-			: preview.options;
+	const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;
+	const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
+	const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
-		const specSettings: TsSetting = tsSettings[preview.item.spec] || {} as TsSetting;
-		const {xAxis, yAxis, y2Axis, type} = getAxes(options, preview, specSettings);
-		const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
+	const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 
-		const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
+	const iframeParams = [`?objId=${objIds}`,
+		`&x=${xAxis}`,
+		yAxis ? `&y=${yAxis}` : '',
+		y2Axis ? `&y2=${y2Axis}` : '',
+		`&linking=${linking}`,
+		legendLabels ? `&legendLabels=${legendLabels}` : '',
+		y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '',
+		type ? `&type=${type}` : '',
+	];
 
-		const iframeParams = [`?objId=${objIds}`,
-			`&x=${xAxis}`,
-			yAxis ? `&y=${yAxis}` : '',
-			y2Axis ? `&y2=${y2Axis}` : '',
-			`&linking=${linking}`,
-			legendLabels ? `&legendLabels=${legendLabels}` : '',
-			y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '',
-			type ? `&type=${type}` : '',
-		];
+	const iframeUrl = encodeURI(`${window.document.location.protocol}//`
+		+ `${window.document.location.host}`
+		+ `${iFrameBaseUrl}`
+		+ `${iframeParams.join('')}`);
 
-		const iframeUrl = encodeURI(`${window.document.location.protocol}//`
-			+ `${window.document.location.host}`
-			+ `${iFrameBaseUrl}`
-			+ `${iframeParams.join('')}`);
+	syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 
-		this.syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
-
-		return (
-			<>
-				<div className="row pb-2 gy-2">
-					<div className="col-md-3">
-						<Selector
-							name="y"
-							label="Y axis"
-							selected={yAxis}
-							options={options}
-							selectAction={this.handleSelectAction.bind(this)}
-						/>
-					</div>
-					{yAxis &&
-					<div className="col-md-3">
-						<Selector
-							name="y2"
-							label="Y2 axis"
-							selected={y2Axis}
-							options={options}
-							selectAction={this.handleSelectAction.bind(this)}
-							defaultOptionLabel="Select a second parameter"
-						/>
-					</div>
-					}
-					{yAxis &&
-						<PreviewControls
-							iframeUrl={iframeUrl}
-							previewType={TIMESERIES}
-							csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
-							chartType={type}
-							chartTypeAction={this.handleChartTypeAction.bind(this)}
-							showChartTypeControl={showChartTypeControl}
-						/>
-					}
+	return (
+		<>
+			<div className="row pb-2 gy-2">
+				<div className="col-md-3">
+					<Selector
+						name="y"
+						label="Y axis"
+						selected={yAxis}
+						options={options}
+						selectAction={handleSelectAction}
+					/>
 				</div>
+				{yAxis &&
+				<div className="col-md-3">
+					<Selector
+						name="y2"
+						label="Y2 axis"
+						selected={y2Axis}
+						options={options}
+						selectAction={handleSelectAction}
+						defaultOptionLabel="Select a second parameter"
+					/>
+				</div>
+				}
+				{yAxis &&
+					<PreviewControls
+						iframeUrl={iframeUrl}
+						previewType={TIMESERIES}
+						csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
+						chartType={type}
+						chartTypeAction={handleChartTypeAction}
+						showChartTypeControl={showChartTypeControl}
+					/>
+				}
+			</div>
 
-				{yAxis ?
-				<>
-					<div className="row mb-4">
-						<div className="col">
-							<div style={{ position: 'relative', padding: '20%' }}>
-								<iframe ref={iframe => this.iframe = iframe} onLoad={this.props.iframeSrcChange}
-									style={{ border: '1px solid #eee', position: 'absolute', top: 5, left: 0, width: '100%', height: '100%' }}
-									src={iframeUrl}
-								/>
-							</div>
-						</div>
-					</div>
-
-					<div className="row">
-						<div className="col-md-3 ms-auto me-auto">
-							<Selector
-								name="x"
-								label="X axis"
-								selected={xAxis}
-								options={options}
-								selectAction={this.handleSelectAction.bind(this)}
+			{yAxis ?
+			<>
+				<div className="row mb-4">
+					<div className="col">
+						<div style={{ position: 'relative', padding: '20%' }}>
+							<iframe ref={iframeRef} onLoad={iframeSrcChange}
+								style={{ border: '1px solid #eee', position: 'absolute', top: 5, left: 0, width: '100%', height: '100%' }}
+								src={iframeUrl}
 							/>
 						</div>
 					</div>
-				</>
-				:
-				<div className="py-2"></div>
-				}
+				</div>
+
+				<div className="row">
+					<div className="col-md-3 ms-auto me-auto">
+						<Selector
+							name="x"
+							label="X axis"
+							selected={xAxis}
+							options={options}
+							selectAction={handleSelectAction}
+						/>
+					</div>
+				</div>
 			</>
-		);
-	}
+			:
+			<div className="py-2"></div>
+			}
+		</>
+	);
 }
 
 type Axes = {
