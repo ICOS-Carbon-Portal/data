@@ -228,8 +228,8 @@ The example reports download of two data objects (PIDs are separated with `\n`) 
 - Clone this repository: `git clone git@github.com:ICOS-Carbon-Portal/data.git`
 - `cd data`
 - Run sbt
-- In the sbt console, run `frontend` to list the apps available
-- Run `~frontend build <jsApp>` for continuous build of the app
+- In the sbt console, run `cpFrontendApps` to list the apps available
+- Run `~cpFrontend build <jsApp>` for continuous build of the app
 
 ### Getting started with the back-end part
 
