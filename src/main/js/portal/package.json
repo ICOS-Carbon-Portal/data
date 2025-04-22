@@ -47,6 +47,7 @@
     "eslint": "^9.24.0",
     "filemanager-webpack-plugin": "^8.0.0",
     "mini-css-extract-plugin": "^2.7.6",
+    "prettier": "3.5.3",
     "sass": "^1.69.2",
     "sass-loader": "^13.3.2",
     "style-loader": "^3.3.3",
