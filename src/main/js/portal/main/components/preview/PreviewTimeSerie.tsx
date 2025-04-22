@@ -31,7 +31,6 @@ export default function PreviewTimeSerie(props: OurProps) {
 	
 	const tfCache: TableFormatCache = new TableFormatCache(commonConfig);
 	const [tableFormat, setTableFormat] = useState<TableFormat>();
-	
 
 	useEffect(() => {
 		if (preview.items.length > 0 && !tfCache.isInCache(preview.item.spec)) {
@@ -146,10 +145,12 @@ export default function PreviewTimeSerie(props: OurProps) {
 		type ? `&type=${type}` : '',
 	];
 
-	const iframeUrl = encodeURI(`${window.document.location.protocol}//`
+	const currentIframeUrl = encodeURI(`${window.document.location.protocol}//`
 		+ `${window.document.location.host}`
 		+ `${iFrameBaseUrl}`
 		+ `${iframeParams.join('')}`);
+
+	const initialIframeUrl = useRef<string>(currentIframeUrl);
 
 	syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 
@@ -179,7 +180,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 				}
 				{yAxis &&
 					<PreviewControls
-						iframeUrl={iframeUrl}
+						iframeUrl={currentIframeUrl}
 						previewType={TIMESERIES}
 						csvDownloadUrl={csvDownloadUrl(preview.item, tableFormat)}
 						chartType={type}
@@ -196,7 +197,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 						<div style={{ position: 'relative', padding: '20%' }}>
 							<iframe ref={iframeRef} onLoad={iframeSrcChange}
 								style={{ border: '1px solid #eee', position: 'absolute', top: 5, left: 0, width: '100%', height: '100%' }}
-								src={iframeUrl}
+								src={initialIframeUrl.current}
 							/>
 						</div>
 					</div>
@@ -227,6 +228,7 @@ type Axes = {
 	y2Axis?: string
 	type?: 'line' | 'scatter'
 }
+
 const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSetting): Axes => {
 	const getColName = (colName: string) => {
 		const option = options.some((opt: PreviewOption) => opt.varTitle === colName);
@@ -251,6 +253,7 @@ type SelectorProps = {
 	defaultOptionLabel?: string
 	selectAction: (event: ChangeEvent<HTMLSelectElement>) => void
 }
+
 const Selector = (props: SelectorProps) => {
 	const value = props.selected ? decodeURIComponent(props.selected) : '0';
 	const defaultOptionLabel = props.defaultOptionLabel ?? "Select a parameter";
