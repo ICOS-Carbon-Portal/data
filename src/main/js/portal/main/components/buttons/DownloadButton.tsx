@@ -1,6 +1,5 @@
-import React, { CSSProperties, useEffect, useMemo, useState } from 'react';
+import React, { CSSProperties, useMemo, useState } from 'react';
 import { DataObject, ExtendedDobjInfo, LabelLookup } from '../../models/State';
-import { updateCheckedObjectsInCart } from '../../actions/cart';
 
 type Props = {
 	style: CSSProperties
@@ -23,24 +22,28 @@ export default function DownloadButton(props: Props) {
 
 	const [checkedInfoCache, setCheckedInfoCache] = useState<CheckedInfoCache>({});
 
-	useEffect(() => {
-		const newCache: CheckedInfoCache = {};
-		for (const checkedObject of checkedObjects) {
-			if (checkedInfoCache[checkedObject]) {
-				newCache[checkedObject] = checkedInfoCache[checkedObject];
-			} else {
-				const spec = objectsTable.find((dataObject) => (dataObject.dobj === checkedObject))?.spec;
-				const stationId = extendedDobjInfo.find((edobj) => edobj.dobj === checkedObject)?.stationId;
-				newCache[checkedObject] = {spec, stationId};
-			}
+	const newCache: CheckedInfoCache = {};
+	let shouldSetCache = false;
+	for (const checkedObject of checkedObjects) {
+		if (!checkedInfoCache[checkedObject]) {
+			const spec = objectsTable.find((dataObject) => dataObject.dobj === checkedObject)?.spec;
+			const stationId = extendedDobjInfo.find((edobj) => edobj.dobj === checkedObject)?.stationId;
+			newCache[checkedObject] = {spec, stationId};
+			shouldSetCache = true;
 		}
+	}
 
-		const newKeys = Object.keys(newCache).sort();
-		const oldKeys = Object.keys(checkedInfoCache).sort();
-		if (JSON.stringify(newKeys) !== JSON.stringify(oldKeys)) {
-			setCheckedInfoCache(newCache);
+	if (shouldSetCache) {
+		setCheckedInfoCache({ ...checkedInfoCache, ...newCache });
+	}
+
+	const checkedObjectsInfo: CheckedInfoCache = useMemo(() => {
+		const checkedInfo: CheckedInfoCache = {};
+		for (const checkedObject of checkedObjects) {
+			checkedInfo[checkedObject] = checkedInfoCache[checkedObject];
 		}
-	}, [checkedObjects]);
+		return checkedInfo;
+	}, [checkedInfoCache]);
 
 	const filename: string = useMemo(() => {
 		const separator = "_";
@@ -58,11 +61,11 @@ export default function DownloadButton(props: Props) {
 
 		const timestamp = (`${year}-${month}-${day}_${hour}${minute}`);
 
-		const stationIdsArr: string[] = Object.values(checkedInfoCache).flatMap((info) => info.stationId ? [info.stationId] : []);
+		const stationIdsArr: string[] = Object.values(checkedObjectsInfo).flatMap((info) => info.stationId ? [info.stationId] : []);
 		const stationIdsSet = new Set(stationIdsArr);
 		const stationId = stationIdsSet.size === 1 ? stationIdsArr[0] : "";
 		
-		const specsArr: string[] = Object.values(checkedInfoCache).flatMap((info) => info.spec ? [info.spec] : []);
+		const specsArr: string[] = Object.values(checkedObjectsInfo).flatMap((info) => info.spec ? [info.spec] : []);
 		const specsSet = new Set(specsArr);
 		const spec = specsSet.size === 1 ? specsArr[0] : "";
 
@@ -70,12 +73,12 @@ export default function DownloadButton(props: Props) {
 		const postfix = (specLabel || stationId) ? "" : "downloaded_data";
 		const filenameArr = [timestamp, specLabel, stationId ?? "", postfix];
 		const filename = (filenameArr.join(separator)
-									.replaceAll(/[^0-9a-zA-Z\-._]/g, separator)
-									.replaceAll(multiSeparatorRegExp, separator))
-									.replace(endSeparatorRegExp, "");
+		                             .replaceAll(/[^0-9a-zA-Z\-._]/g, separator)
+		                             .replaceAll(multiSeparatorRegExp, separator))
+		                             .replace(endSeparatorRegExp, "");
 
 		return filename;
-	}, [checkedInfoCache]);
+	}, [checkedObjectsInfo]);
 
 	const downloadLink = useMemo(() => {
 		const dobjIds = checkedObjects.map(dobj => dobj.split('/').pop());
