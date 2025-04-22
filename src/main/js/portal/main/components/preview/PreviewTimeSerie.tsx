@@ -3,7 +3,7 @@ import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../..
 import config, { previewExcludeChartType } from '../../config';
 import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
-import Preview, {PreviewOption, previewVarCompare} from "../../models/Preview";
+import Preview, {PreviewOption, PreviewSettings, previewVarCompare} from "../../models/Preview";
 import { lastUrlPart, TableFormat } from 'icos-cp-backend';
 import { UrlStr } from '../../backend/declarations';
 import TableFormatCache from '../../../../common/main/TableFormatCache';
@@ -135,21 +135,43 @@ export default function PreviewTimeSerie(props: OurProps) {
 
 	const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 
-	const iframeParams = [`?objId=${objIds}`,
-		`&x=${xAxis}`,
-		yAxis ? `&y=${yAxis}` : '',
-		y2Axis ? `&y2=${y2Axis}` : '',
-		`&linking=${linking}`,
-		legendLabels ? `&legendLabels=${legendLabels}` : '',
-		y2Axis && legendLabels ? `&legendLabelsY2=${legendLabels}` : '',
-		type ? `&type=${type}` : '',
-	];
+	let params: PreviewSettings & { objId: string } = {
+		objId: objIds,
+		x: xAxis,
+		linking,
+		type,
+	};
 
-	const currentIframeUrl = yAxis ? encodeURI(window.document.location.origin
-		+ iFrameBaseUrl
-		+ iframeParams.join('')) : '';
+	if (yAxis) {
+		params.y = yAxis;
+	}
+
+	if (y2Axis) {
+		params.y2 = y2Axis;
+	}
+
+	if (legendLabels) {
+		params.legendLabels = legendLabels;
+	}
+
+	if (y2Axis && legendLabels) {
+		params.legendLabelsY2 = legendLabels;
+	}
+
+	const iframeParamsStr = Object.entries(params)
+		.map((param) => param.join('='))
+		.join("&");
+
+	const currentIframeUrl = yAxis ? 
+		encodeURI(
+			window.document.location.origin
+			+ iFrameBaseUrl
+			+ "?"
+			+ iframeParamsStr)
+		: '';
 
 	const initialIframeUrl = useRef<string>(currentIframeUrl);
+	
 	if (currentIframeUrl && !initialIframeUrl.current) {
 		initialIframeUrl.current = currentIframeUrl;
 	}
