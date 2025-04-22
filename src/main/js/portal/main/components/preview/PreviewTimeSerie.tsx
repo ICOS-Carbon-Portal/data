@@ -145,11 +145,14 @@ export default function PreviewTimeSerie(props: OurProps) {
 		type ? `&type=${type}` : '',
 	];
 
-	const currentIframeUrl = encodeURI(window.document.location.origin
+	const currentIframeUrl = yAxis ? encodeURI(window.document.location.origin
 		+ iFrameBaseUrl
-		+ iframeParams.join(''));
+		+ iframeParams.join('')) : '';
 
 	const initialIframeUrl = useRef<string>(currentIframeUrl);
+	if (currentIframeUrl && !initialIframeUrl.current) {
+		initialIframeUrl.current = currentIframeUrl;
+	}
 
 	syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 
