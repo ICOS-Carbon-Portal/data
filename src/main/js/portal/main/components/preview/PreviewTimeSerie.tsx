@@ -145,10 +145,9 @@ export default function PreviewTimeSerie(props: OurProps) {
 		type ? `&type=${type}` : '',
 	];
 
-	const currentIframeUrl = encodeURI(`${window.document.location.protocol}//`
-		+ `${window.document.location.host}`
-		+ `${iFrameBaseUrl}`
-		+ `${iframeParams.join('')}`);
+	const currentIframeUrl = encodeURI(window.document.location.origin
+		+ iFrameBaseUrl
+		+ iframeParams.join(''));
 
 	const initialIframeUrl = useRef<string>(currentIframeUrl);
 
