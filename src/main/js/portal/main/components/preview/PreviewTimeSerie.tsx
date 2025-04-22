@@ -168,10 +168,10 @@ export default class PreviewTimeSerie extends Component<OurProps, OurState> {
 			type ? `&type=${type}` : '',
 		];
 
-		const iframeUrl = `${window.document.location.protocol}//`
+		const iframeUrl = encodeURI(`${window.document.location.protocol}//`
 			+ `${window.document.location.host}`
 			+ `${iFrameBaseUrl}`
-			+ `${iframeParams.join('')}`;
+			+ `${iframeParams.join('')}`);
 
 		this.syncTsSettingStoreWithUrl({xAxis, yAxis, y2Axis, type}, specSettings);
 

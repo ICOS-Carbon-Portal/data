@@ -447,7 +447,7 @@ const hashUpdater = (store: Store) => () => {
 	const oldHash = getCurrentHash();
 
 	if (newHash !== oldHash) {
-		newHash = newHash === '' ? '' : "#" + newHash;
+		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
 		portalHistoryState.replaceState(serialize(state), window.location.href.split('#')[0] + newHash).then(
 			_ => _,
 			reason => console.log(`Failed to add value to indexed database because ${reason}`)
