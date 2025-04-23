@@ -5,6 +5,7 @@ import { QueryParameters } from "./actions/types";
 import {
 	FilterRequest,
 	TemporalFilterRequest,
+	KeywordFilterRequest,
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
@@ -320,25 +321,30 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		? `?dobj geo:sfIntersects/geo:asWKT "${geoFilter.wktGeo}"^^geo:wktLiteral .\n`
 		: ""
 
-	return deprFilterStr.concat(filterStr, varNameFilterStr, geoStr, getKeywordFilter(allFilters));
+	return deprFilterStr.concat(
+		filterStr, 
+		varNameFilterStr, 
+		geoStr, 
+		renderKeywordFilters(allFilters.filter(isKeywordsFilter))
+	);
 }
 
-function getKeywordFilter(allFilters: FilterRequest[]): string {
-	const requests = allFilters.filter(isKeywordsFilter);
-	if (requests.length === 0) return '';
-	if (requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
+function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
+	const keywordValues = 
+		requests
+		.flatMap(req => 
+			 req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`)
+		)
+		.join(' ')
 
-	const req = requests[0];
-	const keywordValues = req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`)
-
-	if (keywordValues.length > 0) {
-		return [
-			`VALUES ?keyword {${keywordValues.join(' ')}}`,
-			`?dobj cpmeta:hasKeyword ?keyword`
-		].join('\n');
-	} else {
+	if (keywordValues == '') {
 		return '';
 	}
+
+	return [
+		`VALUES ?keyword {${keywordValues}}`,
+		`?dobj cpmeta:hasKeyword ?keyword`
+	].join('\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
