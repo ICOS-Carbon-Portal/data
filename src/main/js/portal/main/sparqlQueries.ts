@@ -327,23 +327,18 @@ function getKeywordFilter(allFilters: FilterRequest[]): string {
 	const requests = allFilters.filter(isKeywordsFilter);
 	if (requests.length === 0) return '';
 	if (requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
+
 	const req = requests[0];
+	const keywordValues = req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`)
 
-	const noDobjKws = req.dobjKeywords.length === 0;
-	const noSpecs = req.specs.length === 0;
-
-	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <')}>}`;
-	const dobjKwsFilter = noDobjKws ? '' :
-		`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
-	?dobj cpmeta:hasKeyword ?keyword`;
-
-	return noDobjKws && noSpecs ? '' : `
-		` + (noDobjKws ? specsFilter : noSpecs ? dobjKwsFilter : `{
-			{${specsFilter}}
-			UNION
-			{${dobjKwsFilter}}
-		}`
-	);
+	if (keywordValues.length > 0) {
+		return [
+			`VALUES ?keyword {${keywordValues.join(' ')}}`,
+			`?dobj cpmeta:hasKeyword ?keyword`
+		].join('\n');
+	} else {
+		return '';
+	}
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
