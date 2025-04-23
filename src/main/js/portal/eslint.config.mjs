@@ -24,6 +24,7 @@ export default tseslint.config(
 			// base
 			"no-prototype-builtins": "error",
 			"prefer-const": "warn",
+			"curly": ["error", "always"],
 
 			// functional - from tseslint.configs.recommended-type-checked
 			"@typescript-eslint/no-unsafe-argument": "error",
