@@ -18,29 +18,6 @@ export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): numbe
 	return po1.varTitle.localeCompare(po2.varTitle)
 }
 
-export type PreviewSettings = {
-	// dygraph-light - Time Series
-	x?: string
-	y?: string
-	y2?: string
-	type?: string
-	legendLabels?: string
-	legendLabelsY2?: string
-	linking?: string
-	// imagezipview - Phenocam/multi-image zip
-	img?: string
-	// netcdf
-	varName?: string
-	extraDim?: string
-	date?: string
-	gamma?: string
-	center?: string
-	zoom?: string
-	color?: string
-	// map-graph - uses y2 and center as well
-	y1?: string
-	map?: string
-}
 
 const previewSettingsKeys = [
 	'x',
@@ -60,7 +37,9 @@ const previewSettingsKeys = [
 	'color',
 	'y1',
 	'map'
-]
+] as readonly string[];
+
+export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
 
 export interface PreviewSerialized {
 	items: CartItemSerialized[]
@@ -88,7 +67,7 @@ export default class Preview {
 		const allowedPreviewSettings: PreviewSettings = {};
 		for (const key in urlParams) {
 			if (previewSettingsKeys.includes(key)) {
-				allowedPreviewSettings[key as keyof PreviewSettings] = urlParams[key as keyof PreviewSettings];
+				allowedPreviewSettings[key] = urlParams[key];
 			}
 		}
 		return allowedPreviewSettings;
