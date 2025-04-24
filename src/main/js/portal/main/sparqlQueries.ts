@@ -331,18 +331,16 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 
 function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
 	const keywordValues =
-		requests
-		.flatMap(req =>
+		requests.flatMap(req =>
 			 req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`)
 		)
-		.join(' ')
 
-	if (keywordValues === '') {
+	if (keywordValues.length === 0) {
 		return '';
 	}
 
 	return [
-		`VALUES ?keyword {${keywordValues}}`,
+		`VALUES ?keyword {${keywordValues.join(' ')}}`,
 		`?dobj cpmeta:hasKeyword ?keyword`
 	].join('\n');
 }
