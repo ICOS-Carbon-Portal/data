@@ -31,6 +31,7 @@ export type PreviewSettings = {
 	img?: string
 	// netcdf
 	varName?: string
+	extraDim?: string
 	date?: string
 	gamma?: string
 	center?: string
@@ -51,6 +52,7 @@ const previewSettingsKeys = [
 	'linking',
 	'img',
 	'varName',
+	'extraDim',
 	'date',
 	'gamma',
 	'center',
