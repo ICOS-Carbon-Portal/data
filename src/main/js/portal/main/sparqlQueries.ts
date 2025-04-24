@@ -322,22 +322,22 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		: ""
 
 	return deprFilterStr.concat(
-		filterStr, 
-		varNameFilterStr, 
-		geoStr, 
+		filterStr,
+		varNameFilterStr,
+		geoStr,
 		renderKeywordFilters(allFilters.filter(isKeywordsFilter))
 	);
 }
 
 function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
-	const keywordValues = 
+	const keywordValues =
 		requests
-		.flatMap(req => 
+		.flatMap(req =>
 			 req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`)
 		)
 		.join(' ')
 
-	if (keywordValues == '') {
+	if (keywordValues === '') {
 		return '';
 	}
 
