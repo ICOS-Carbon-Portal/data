@@ -55,8 +55,9 @@ export default function PreviewTimeSerie(props: OurProps) {
 				iframeRef.current.contentWindow.postMessage(newUrl, "*");
 			}
 
-			if (selectedIndex > 0)
+			if (selectedIndex > 0 && name !== 'y2') {
 				storeTsPreviewSetting(preview.item.spec, name, options[selectedIndex].value);
+			}
 		}
 	}
 
@@ -81,14 +82,12 @@ export default function PreviewTimeSerie(props: OurProps) {
 	}
 
 	const syncTsSettingStoreWithUrl = (axes: Axes, specSettings: TsSetting) => {
-		const {xAxis, yAxis, y2Axis, type} = axes;
+		const {xAxis, yAxis, type} = axes;
 
 		if (yAxis && specSettings.y != yAxis)
 			storeTsPreviewSetting(preview.item.spec, 'y', yAxis);
 		if (xAxis && specSettings.x != xAxis)
 			storeTsPreviewSetting(preview.item.spec, 'x', xAxis);
-		if (y2Axis && specSettings.y2 != y2Axis)
-			storeTsPreviewSetting(preview.item.spec, 'y2', y2Axis);
 		if (type && specSettings.type != type)
 			storeTsPreviewSetting(preview.item.spec, 'type', type);
 	}
@@ -263,7 +262,7 @@ const getAxes = (options: PreviewOption[], preview: Preview, specSettings: TsSet
 		? {
 			xAxis: preview.item.getUrlSearchValue('x') || getColName(specSettings.x),
 			yAxis: preview.item.getUrlSearchValue('y') || getColName(specSettings.y),
-			y2Axis: preview.item.getUrlSearchValue('y2')  || getColName(specSettings.y2),
+			y2Axis: preview.item.getUrlSearchValue('y2') ?? undefined,
 			type: specSettings.type || preview.item.getUrlSearchValue('type') as Axes['type'] || "scatter"
 		}
 		: { xAxis: undefined, yAxis: undefined, y2Axis: undefined, type: undefined};
