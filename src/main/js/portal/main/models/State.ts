@@ -450,7 +450,11 @@ const hashUpdater = (store: Store) => () => {
 
 	if (newHash !== oldHash) {
 		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
-		if (state.route !== hashToState().route) {
+		const prevRoute = hashToState().route;
+		if (state.route !== prevRoute) {
+			if (prevRoute === "preview") {
+				state.previewSettings = {};
+			}
 			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0] + newHash).then(
 				_ => _,
 				reason => console.log(`Failed to add value to indexed database because ${reason}`)
