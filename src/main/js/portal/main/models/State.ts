@@ -1,4 +1,4 @@
-import Preview from "./Preview";
+import Preview, { PreviewSettings } from "./Preview";
 import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
 import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";
 import PreviewLookup from "./PreviewLookup";
@@ -39,12 +39,13 @@ const hashKeys = [
 	'filterKeywords',
 	'tabs',
 	'page',
-	'id',
 	'preview',
-	'searchOptions',
-	'mapProps',
+	'previewSettings',
+	'id',
 	'yAxis',
 	'y2Axis',
+	'searchOptions',
+	'mapProps',
 	'itemsToAddToCart'
 ];
 
@@ -161,8 +162,7 @@ export interface State {
 	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
 	preview: Preview
-	yAxis: string | undefined
-	y2Axis: string | undefined
+	previewSettings: PreviewSettings
 	itemsToAddToCart: Sha256Str[] | undefined
 	toasterData: {} | undefined
 	batchDownloadStatus: {
@@ -225,8 +225,7 @@ export const defaultState: State = {
 	metadata: undefined,
 	station: undefined,
 	preview: new Preview(),
-	yAxis: undefined,
-	y2Axis: undefined,
+	previewSettings: {},
 	itemsToAddToCart: undefined,
 	toasterData: undefined,
 	batchDownloadStatus: {
@@ -287,6 +286,7 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		? new PreviewLookup(table, varInfo)
 		: PreviewLookup.init(specTable, jsonObj.labelLookup);
 	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
+	const preview = Preview.deserialize(jsonObj.preview)
 
 	const props: State = {...jsonObj,
 		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
@@ -296,7 +296,8 @@ const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 		baseDobjStats,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
-		preview: Preview.deserialize(jsonObj.preview),
+		preview: preview,
+		previewSettings: preview.previewSettings,
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
 		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery}
 	};
@@ -313,7 +314,7 @@ const getStateFromHash = () => {
 //No # in the beginning!
 const parseHash = (hash: string) => {
 	try {
-		return JSON.parse(hash);
+		return allowlistJsonHash(JSON.parse(hash));
 	} catch(err) {
 		return {};
 	}
@@ -346,14 +347,41 @@ type JsonHashState = {
 	route?: Route
 	filterCategories?: CategFilters
 	filterTemporal?: SerializedFilterTemporal
+	filterPids?: Sha256Str
 	filterNumbers?: FilterNumberSerialized[]
+	filterKeywords?: string[]
 	tabs?: State['tabs']
 	page?: number
 	preview?: Sha256Str[]
+	previewSettings?: PreviewSettings
 	id?: UrlStr
 	yAxis?: string
 	y2Axis?: string
+	searchOptions?: SearchOptions
+	mapProps?: MapProps
+	itemsToAddToCart?: Sha256Str[]
 }
+
+const allowlistJsonHash = (hash: any): JsonHashState => {
+	const allowedHash: JsonHashState = {};
+	const ps: PreviewSettings = {};
+
+	for (const key in hash) {
+		if (key === "yAxis") {
+			ps.y = hash[key];
+		} else if (key === "y2Axis") {
+			ps.y2 = hash[key];
+		} else if (hashKeys.includes(key)) {
+			allowedHash[key as keyof JsonHashState] = hash[key];
+		}
+	}
+	allowedHash.previewSettings = (allowedHash.previewSettings ?
+		{ ...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps } :
+		ps);
+
+	return allowedHash;
+}
+
 const jsonToState = (state0: JsonHashState) => {
 	const state = {...defaultState, ...state0};
 
@@ -364,9 +392,9 @@ const jsonToState = (state0: JsonHashState) => {
 		if (state0.filterNumbers){
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
-		state.preview = new Preview().withPids(state0.preview ?? []);
-		state.preview.yAxis = state0.yAxis
-		state.preview.y2Axis = state0.y2Axis
+
+		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings ?? {});
+
 		if (state0.id){
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
@@ -389,12 +417,12 @@ const specialCases = (state: Partial<StateSerialized>) => {
 		return {
 			route: state.route,
 			preview: state.preview,
-			yAxis: state.yAxis,
-			y2Axis: state.y2Axis,
+			previewSettings: state.previewSettings,
 			itemsToAddToCart: state.itemsToAddToCart
 		};
 	} else {
 		delete state.preview;
+		delete state.previewSettings;
 	}
 
 	if (state.route === 'cart'){
@@ -416,17 +444,22 @@ function getCurrentHash(){
 
 const hashUpdater = (store: Store) => () => {
 	const state: State = store.getState();
-	const newHash = stateToHash(state);
+	let newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
+	
 
 	if (newHash !== oldHash) {
-		if (newHash === '') {
-			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0]).then(
+		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
+		if (state.route !== hashToState().route) {
+			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0] + newHash).then(
 				_ => _,
 				reason => console.log(`Failed to add value to indexed database because ${reason}`)
 			);
 		} else {
-			window.location.hash = encodeURIComponent(newHash);
+			portalHistoryState.replaceState(serialize(state), window.location.href.split('#')[0] + newHash).then(
+				_ => _,
+				reason => console.log(`Failed to add value to indexed database because ${reason}`)
+			);
 		}
 	}
 };

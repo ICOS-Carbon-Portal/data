@@ -57,7 +57,7 @@ export const updateURL = store => () => {
 			//Let calling page (through iframe) know what current url is
 			window.top.postMessage(newURL, '*');
 		} else {
-			history.pushState({urlPath: newURL}, "", newURL);
+			history.replaceState({urlPath: newURL}, "", newURL);
 		}
 	}
 };
