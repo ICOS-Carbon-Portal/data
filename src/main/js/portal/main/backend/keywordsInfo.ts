@@ -24,10 +24,6 @@ export default{
 	allKeywords: function(info: KeywordsInfo): string[]{
 		return distinct(Object.keys(info.specLookup).concat(info.dobjKeywords))
 			.sort((a, b) => a.localeCompare(b));
-	},
-
-	lookupSpecs(info: KeywordsInfo, keywords: string[]): UrlStr[]{
-		return distinct(keywords.flatMap(kw => info.specLookup[kw] || []));
 	}
 }
 

@@ -93,16 +93,7 @@ export function getFilters(state: State, forStatCountsQuery: boolean = false): F
 		}
 
 		if (filterKeywords.length > 0){
-			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
-			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
-			let specs = kwSpecs;
-
-			if (!forStatCountsQuery){
-				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
-				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
-			}
-
-			filters.push({category: 'keywords', dobjKeywords, specs});
+			filters.push({category: 'keywords', keywords: filterKeywords});
 		}
 
 		const geoFilter = getGeoFilter(state.mapProps)
