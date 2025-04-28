@@ -31,8 +31,7 @@ export interface VariableFilterRequest{
 
 export interface KeywordFilterRequest{
 	category: "keywords"
-	dobjKeywords: string[]
-	specs: UrlStr[]
+	keywords: string[]
 }
 
 export interface GeoFilterRequest{
