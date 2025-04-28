@@ -82,9 +82,12 @@ export default function DownloadButton(props: Props) {
 
 	const downloadLink = useMemo(() => {
 		const dobjIds = checkedObjects.map(dobj => dobj.split('/').pop());
-		const ids = encodeURIComponent(JSON.stringify(dobjIds));
-
-		return `/objects?ids=${ids}&fileName=${encodeURIComponent(filename)}`;
+		if (dobjIds.length == 1) {
+			return `/objects/${dobjIds[0]}`;
+		} else {
+			const ids = encodeURIComponent(JSON.stringify(dobjIds));
+			return `/objects?ids=${ids}&fileName=${encodeURIComponent(filename)}`;
+		}
 	}, [checkedObjects, filename]);
 
 	const link = enabled ? downloadLink : undefined;
