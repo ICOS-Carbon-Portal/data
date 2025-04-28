@@ -5,6 +5,7 @@ import { QueryParameters } from "./actions/types";
 import {
 	FilterRequest,
 	TemporalFilterRequest,
+	KeywordFilterRequest,
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
@@ -320,30 +321,28 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		? `?dobj geo:sfIntersects/geo:asWKT "${geoFilter.wktGeo}"^^geo:wktLiteral .\n`
 		: ""
 
-	return deprFilterStr.concat(filterStr, varNameFilterStr, geoStr, getKeywordFilter(allFilters));
+	return deprFilterStr.concat(
+		filterStr,
+		varNameFilterStr,
+		geoStr,
+		renderKeywordFilters(allFilters.filter(isKeywordsFilter))
+	);
 }
 
-function getKeywordFilter(allFilters: FilterRequest[]): string {
-	const requests = allFilters.filter(isKeywordsFilter);
-	if (requests.length === 0) return '';
-	if (requests.length > 1) throw new Error("Got multiple KeywordFilterRequests, expected at most one");
-	const req = requests[0];
+function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
+	const keywordValues =
+		requests.flatMap((req) =>
+			 req.dobjKeywords.map((kw) => `"${kw}"^^xsd:string`)
+		);
 
-	const noDobjKws = req.dobjKeywords.length === 0;
-	const noSpecs = req.specs.length === 0;
+	if (keywordValues.length === 0) {
+		return '';
+	}
 
-	const specsFilter = noSpecs ? '' : `VALUES ?${SPECCOL} {<${req.specs.join('> <')}>}`;
-	const dobjKwsFilter = noDobjKws ? '' :
-		`VALUES ?keyword {${req.dobjKeywords.map(kw => `"${kw}"^^xsd:string`).join(' ')}}
-	?dobj cpmeta:hasKeyword ?keyword`;
-
-	return noDobjKws && noSpecs ? '' : `
-		` + (noDobjKws ? specsFilter : noSpecs ? dobjKwsFilter : `{
-			{${specsFilter}}
-			UNION
-			{${dobjKwsFilter}}
-		}`
-	);
+	return [
+		`VALUES ?keyword {${keywordValues.join(' ')}}`,
+		'?dobj cpmeta:hasKeyword ?keyword'
+	].join('\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
