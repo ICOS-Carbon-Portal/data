@@ -8,11 +8,11 @@ from .metaclient import MetadataClient
 from .metacore import DataObject
 from .queries.dataobjlist import DataObjectLite
 from .envri import EnvriConfig
-from .auth import AuthTokenProvider
+from .auth import AuthTokenProvider, http_auth_request
 from .cpb import Codec, TableRequest, ArraysDict, codec_from_dobj_meta, codecs_from_dobjs
 from .cpb import Dobj, to_dobj_uri
 from .portaluse_client import report_cpb_file_read
-from .http import http_auth_request, HTTPResponse
+from .http import HTTPResponse
 
 
 class DataClient:

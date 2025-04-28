@@ -5,9 +5,11 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import TypeAlias, Literal, Optional
+from http.client import HTTPResponse
+from typing import TypeAlias, Literal, Optional, Any
 
 from .envri import EnvriConfig
+from .http import http_request, Method
 
 AuthSource: TypeAlias = Literal["Password", "Saml", "Orcid", "Facebook", "AtmoAccess"]
 FreshnessMargin: timedelta = timedelta(hours = 1)
@@ -157,7 +159,6 @@ def parse_auth_token(cookie_value: str) -> AuthToken:
 	expiry_time = datetime.fromtimestamp(ts_millis / 1000)
 	return AuthToken(user_id, auth_source, expiry_time, cookie_value)
 
-from .http import http_request
 
 def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToken:
 	url = conf.auth_service_base_url + "password/login"
@@ -170,3 +171,15 @@ def fetch_auth_token(user_id: str, password: str, conf: EnvriConfig) -> AuthToke
 	else:
 		cookie_value = cookie.split()[0]
 		return parse_auth_token(cookie_value)
+
+def http_auth_request(
+	url: str,
+	error_hint: str,
+	auth: AuthTokenProvider,
+	method: Method = "GET",
+	headers: dict[str, str] = {},
+	data: str | dict[str, Any] | None = None
+) -> HTTPResponse:
+	h = headers.copy()
+	h['Cookie'] = auth.get_token().cookie_value
+	return http_request(url, error_hint, method, h, data)

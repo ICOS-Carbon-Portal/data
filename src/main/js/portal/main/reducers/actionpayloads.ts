@@ -14,6 +14,7 @@ import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import { PreviewSettings } from "../models/Preview";
 
 
 export abstract class ActionPayload{}
@@ -39,7 +40,8 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 		readonly objectsTable: ObjectsTableLike,
 		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>,
 		readonly specTables?: SpecTableSerialized,
-		readonly labelLookup?: LabelLookup
+		readonly labelLookup?: LabelLookup,
+		readonly previewSettings?: PreviewSettings,
 	){super();}
 }
 
@@ -145,14 +147,6 @@ export class SetPreviewFromCart extends PreviewPayload{
 
 export class SetPreviewUrl extends PreviewPayload{
 	constructor(readonly url: UrlStr){super();}
-}
-
-export class SetPreviewYAxis extends PreviewPayload {
-	constructor(readonly yAxis?: string) { super(); }
-}
-
-export class SetPreviewY2Axis extends PreviewPayload {
-	constructor(readonly y2Axis?: string) { super(); }
 }
 
 export class UiToggleSorting extends UiPayload{
