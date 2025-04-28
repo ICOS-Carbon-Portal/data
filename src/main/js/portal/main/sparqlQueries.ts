@@ -341,7 +341,7 @@ function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
 
 	return [
 		`VALUES ?keyword {${keywordValues.join(' ')}}`,
-		`?dobj cpmeta:hasKeyword ?keyword`
+		'?dobj cpmeta:hasKeyword ?keyword'
 	].join('\n');
 }
 
