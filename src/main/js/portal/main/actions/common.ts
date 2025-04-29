@@ -138,9 +138,9 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
 }
 
-export function getBackendTables(filters: FilterRequest[], queryParams: QueryParameters): PortalThunkAction<Promise<void>> {
+export function getBackendTables(queryParams: QueryParameters): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return fetchBoostrapData(filters, queryParams).then(allTables => {
+		return fetchBoostrapData(queryParams).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)

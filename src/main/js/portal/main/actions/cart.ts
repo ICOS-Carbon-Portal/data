@@ -31,7 +31,7 @@ export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
 
 			const specTableHandler = (state.specTable.isInitialized || state.cart.items.length === 0)
 				? Promise.resolve()
-				: dispatch(getBackendTables([], queryParams));
+				: dispatch(getBackendTables(queryParams));
 
 			const labelLookupPromise = Object.keys(state.labelLookup).length
 				? Promise.resolve(undefined)

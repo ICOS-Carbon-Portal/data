@@ -17,12 +17,11 @@ export interface KeywordsInfo{
 export default{
 	fetch: function(query: QueryParameters): Promise<KeywordsInfo>{
 		return Promise.all([getUniqueKeywords(query)]).then(
-			([dobjKeywords]) => ({ filteredKeywords: dobjKeywords })
+			([filteredKeywords]) => ({ filteredKeywords })
 		);
 	},
 
 	allKeywords: function(info: KeywordsInfo): string[]{
-		console.log(`keywords: ${info.filteredKeywords}`);
 		return info.filteredKeywords
 	}
 }

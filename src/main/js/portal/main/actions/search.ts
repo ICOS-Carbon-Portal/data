@@ -40,8 +40,7 @@ export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThu
 		const state = getState();
 		const queryParams = getOptions(state);
 
-		const filters = getFilters(getState());
-		dispatch(getBackendTables(filters, queryParams)).then(_ => {
+		dispatch(getBackendTables(queryParams)).then(_ => {
 			dispatch(getFilteredDataObjects);
 		});
 
