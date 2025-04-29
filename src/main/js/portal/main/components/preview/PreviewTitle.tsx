@@ -16,7 +16,7 @@ type OurProps = StateProps & DispatchProps;
 class PreviewTitle extends Component<OurProps>{
 	render() {
 
-		const { items, extendedDobjInfo, labelLookup, cart } = this.props;
+		const { items, extendedDobjInfo, labelLookup, cart, objectsTable } = this.props;
 		if (items.length == 0 || items[0].type == undefined) return null;
 		const specLabel = labelLookup[items[0].spec]?.label ?? "Undefined data type";
 		const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? extendedDobjInfo[0].biblioInfo?.title ?? items[0].fileName;
@@ -50,6 +50,9 @@ class PreviewTitle extends Component<OurProps>{
 						style={{}}
 						checkedObjects={items.map((item: CartItem) => item.dobj)}
 						enabled={allowCartAdd}
+						objectsTable={objectsTable}
+						extendedDobjInfo={extendedDobjInfo}
+						labelLookup={labelLookup}
 					/>
 				</div>
 				<div className="col-md-12">
@@ -97,6 +100,7 @@ class PreviewTitle extends Component<OurProps>{
 function stateToProps(state: State) {
 	return {
 		items: state.preview.items,
+		objectsTable: state.objectsTable,
 		extendedDobjInfo: state.extendedDobjInfo,
 		labelLookup: state.labelLookup,
 		cart: state.cart,

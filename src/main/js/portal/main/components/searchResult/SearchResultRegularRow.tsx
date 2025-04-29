@@ -3,7 +3,7 @@ import CheckBtn from '../buttons/CheckBtn';
 import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix } from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
-import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
+import { DataObject, ExtendedDobjInfo, LabelLookup } from "../../models/State";
 import Preview from '../../models/Preview';
 import CartItem, { addingToCartProhibition } from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
@@ -29,12 +29,12 @@ const iconLevel = [
 ];
 
 interface OurProps {
-	objInfo: ObjectsTable | CartItem
+	objInfo: DataObject | CartItem
 	extendedInfo: ExtendedDobjInfo
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
-	checkedObjects?: ObjectsTable[]
+	checkedObjects?: DataObject[]
 	labelLookup: LabelLookup
 	isCartView: Boolean
 }
