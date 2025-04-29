@@ -42,7 +42,6 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>,
 		readonly specTables?: SpecTableSerialized,
 		readonly labelLookup?: LabelLookup,
-		readonly previewSettings?: PreviewSettings,
 	){super();}
 }
 

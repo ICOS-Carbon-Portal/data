@@ -9,7 +9,7 @@ import {getUrlsFromPids} from "../utils";
 
 export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {tsSettings, specTable, labelLookup, cart, itemsToAddToCart, previewSettings} = getState();
+		const {tsSettings, specTable, labelLookup, cart, itemsToAddToCart} = getState();
 
 		// specTable and labelLookup must be fetched from backend if app begins with a preview route
 		const specTablesPromise = specTable.isInitialized
@@ -31,7 +31,7 @@ export default function bootstrapPreview(user: WhoAmI, pids: Sha256Str[]): Porta
 		]);
 
 		promises.then(([knownDataObjInfos, extendedDataObjInfo, specTables, labelLookup]) => {
-				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup, previewSettings));
+				dispatch(new Payloads.BootstrapRoutePreview(pids, knownDataObjInfos.rows, extendedDataObjInfo, specTables, labelLookup));
 				if (itemsToAddToCart) {
 					dispatch(addToCart(getUrlsFromPids(itemsToAddToCart)))
 				}
