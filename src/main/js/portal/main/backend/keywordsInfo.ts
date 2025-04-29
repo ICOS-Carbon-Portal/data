@@ -5,51 +5,26 @@ import {sparqlFetchAndParse} from './SparqlFetch'
 import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
-
+import {objectFilterClauses, objectFilterPrefixes} from '../sparqlQueries';
+import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
 
 export interface KeywordsInfo{
-	specLookup: SpecLookupByKeyword,
-	dobjKeywords: string[]
+	filteredKeywords: string[]
 }
 
 export default{
-	fetch: function(): Promise<KeywordsInfo>{
-		return Promise.all([getSpecLookup(), getDobjLevelKeywords()]).then(
-			([specLookup, dobjKeywords]) => ({ specLookup, dobjKeywords })
+	fetch: function(query: QueryParameters): Promise<KeywordsInfo>{
+		return Promise.all([getUniqueKeywords(query)]).then(
+			([dobjKeywords]) => ({ filteredKeywords: dobjKeywords })
 		);
 	},
 
 	allKeywords: function(info: KeywordsInfo): string[]{
-		return distinct(Object.keys(info.specLookup).concat(info.dobjKeywords))
-			.sort((a, b) => a.localeCompare(b));
+		console.log(`keywords: ${info.filteredKeywords}`);
+		return info.filteredKeywords
 	}
-}
-
-function getSpecLookup(): Promise<SpecLookupByKeyword> {
-	return sparqlFetchAndParse(
-		specKeywordsQuery(),
-		commonConfig.sparqlEndpoint,
-		b => ({
-			spec: sparqlParsers.fromUrl(b.spec),
-			keywords: sparqlParsers.fromCommaSepListString(b.keywords)
-		})
-	).then(res => res.rows
-		.flatMap(r => r.keywords.map(kw => [kw, r.spec]))
-		.reduce(
-			(acc, pair) => {
-				const [keyword, spec] = pair;
-				const specs: UrlStr[] = acc[keyword] || [];
-				if(!specs.includes(spec)) {
-					specs.push(spec);
-					acc[keyword] = specs;
-				}
-				return acc;
-			},
-			{} as SpecLookupByKeyword
-		)
-	)
 }
 
 
@@ -72,9 +47,9 @@ where{
 	return {text};
 }
 
-function getDobjLevelKeywords(): Promise<string[]>{
+function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 	return sparqlFetchAndParse(
-		dobjLevelKeywordsQuery(),
+		filteredKeywordsQuery(query),
 		commonConfig.sparqlEndpoint,
 		b => ({
 			keywords: sparqlParsers.fromCommaSepListString(b.keywords)
@@ -82,12 +57,11 @@ function getDobjLevelKeywords(): Promise<string[]>{
 	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
 }
 
-function dobjLevelKeywordsQuery(): Query<'keywords', never>{
-	const text = `# data(/doc)-object-specific keywords
-prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-select distinct ?keywords where{
-	?dobj cpmeta:hasKeywords ?keywords .
-	FILTER(strstarts(str(?dobj), "${config.objectUriPrefix[config.envri]}"))
+function filteredKeywordsQuery(query: QueryParameters): Query<'keywords', never>{
+	const text = `# filteredKeywordsQuery
+${objectFilterPrefixes}
+select (cpmeta:distinct_keywords() as ?keywords) where{
+	${objectFilterClauses(query)}
 }`;
 	return {text};
 }

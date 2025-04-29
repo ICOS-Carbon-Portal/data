@@ -138,12 +138,12 @@ export type BootstrapData = {
 	stationPos4326Lookup: StationPos4326Lookup
 }
 
-export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
+export function fetchBoostrapData(filters: FilterRequest[], queryParams: QueryParameters): Promise<BootstrapData> {
 
 	return Promise.all([
 		fetchSpecTableData(filters),
 		fetchLabelLookup(),
-		keywordsInfo.fetch(),
+		keywordsInfo.fetch(queryParams),
 		fetchStationPositions(),
 		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
