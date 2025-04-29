@@ -57,8 +57,9 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 		return new CartItem(id, objInfo);
 	}))
 
+	const previewSettings = state.route !== "preview" ? {} : payload.previewSettings;
 	const preview = state.preview
-			.withPids(payload.pids, payload.previewSettings)
+			.withPids(payload.pids, previewSettings)
 			.restore(previewLookup, cart, objectsTable);
 
 	const newPartialState: BootstrapState = {
@@ -69,6 +70,7 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 		extendedDobjInfo: payload.extendedDobjInfo,
 		preview,
 		previewLookup,
+		previewSettings,
 		cart,
 		isRunningInit: false
 	};
