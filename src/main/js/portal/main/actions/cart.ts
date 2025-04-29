@@ -7,6 +7,7 @@ import {failWithError, fetchCart, getBackendTables} from "./common";
 import {saveToRestheart} from "../../../common/main/backend";
 import {WhoAmI} from "../models/State";
 import { getLastSegmentInUrl } from "../utils";
+import {QueryParameters} from "./types";
 
 
 export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
@@ -18,9 +19,19 @@ export default function bootstrapCart(user: WhoAmI): PortalThunkAction<void> {
 		cartHandler.then(_ => {
 			const state = getState()
 
+			const queryParams: QueryParameters = {
+				specs: null,
+				stations: null,
+				sites: null,
+				submitters: null,
+				sorting: state.sorting,
+				paging: state.paging,
+				filters: []
+			};
+
 			const specTableHandler = (state.specTable.isInitialized || state.cart.items.length === 0)
 				? Promise.resolve()
-				: dispatch(getBackendTables([]));
+				: dispatch(getBackendTables([], queryParams));
 
 			const labelLookupPromise = Object.keys(state.labelLookup).length
 				? Promise.resolve(undefined)

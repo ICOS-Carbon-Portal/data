@@ -238,7 +238,7 @@ export const defaultState: State = {
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
-	keywords: {specLookup: {}, dobjKeywords: []},
+	keywords: {filteredKeywords: []},
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,

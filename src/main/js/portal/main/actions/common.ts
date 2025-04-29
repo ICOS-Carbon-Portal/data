@@ -34,6 +34,7 @@ import commonConfig from '../../../common/main/config';
 import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
 import { EpsgCode, getProjection, getTransformPointFn } from "icos-cp-ol";
 import { Coordinate } from "ol/coordinate";
+import {QueryParameters} from "./types";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -137,9 +138,9 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
 }
 
-export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
+export function getBackendTables(filters: FilterRequest[], queryParams: QueryParameters): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return fetchBoostrapData(filters).then(allTables => {
+		return fetchBoostrapData(filters, queryParams).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)

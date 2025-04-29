@@ -37,8 +37,11 @@ import {PersistedMapPropsExtended} from "../models/InitMap";
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 
+		const state = getState();
+		const queryParams = getOptions(state);
+
 		const filters = getFilters(getState());
-		dispatch(getBackendTables(filters)).then(_ => {
+		dispatch(getBackendTables(filters, queryParams)).then(_ => {
 			dispatch(getFilteredDataObjects);
 		});
 
