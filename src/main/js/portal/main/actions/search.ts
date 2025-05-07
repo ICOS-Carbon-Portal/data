@@ -62,21 +62,12 @@ export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAnd
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const state = getState();
-		const queryParams = getOptions(state);
-		const filters = queryParams.filters;
+		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
 				const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
 				dispatch(new Payloads.BackendOriginsTable(tbl, true));
-
-				keywordsInfo.fetch(queryParams).then(
-					(payload) => {
-						dispatch(new Payloads.BackendKeywordsFetched(payload))
-					}
-				)
-
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
 
 			},
@@ -96,9 +87,14 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
 	dataObjectsFetcher.fetch(options).then(
-		({rows, cacheSize, isDataEndReached}) => {
+		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
+			keywordsInfo.fetch(options).then(
+				(payload) => {
+					dispatch(new Payloads.BackendKeywordsFetched(payload))
+				}
+			)
 		},
 		failWithError(dispatch)
 	);
