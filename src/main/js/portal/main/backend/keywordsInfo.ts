@@ -16,13 +16,9 @@ export interface KeywordsInfo{
 
 export default{
 	fetch: function(query: QueryParameters): Promise<KeywordsInfo>{
-		return Promise.all([getUniqueKeywords(query)]).then(
-			([filteredKeywords]) => ({ filteredKeywords })
+		return getUniqueKeywords(query).then(
+			(filteredKeywords) => ({ filteredKeywords })
 		);
-	},
-
-	allKeywords: function(info: KeywordsInfo): string[]{
-		return info.filteredKeywords
 	}
 }
 

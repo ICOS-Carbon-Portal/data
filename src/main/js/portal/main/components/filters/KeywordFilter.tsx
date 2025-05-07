@@ -17,11 +17,11 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {keywords, filterKeywords, setKeywordFilter} = props;
 
 	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
-	const data: Item[] = keywordsInfo.allKeywords(keywords)
+	const data: Item[] = keywords.filteredKeywords
 		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
 		.filter(item => !value.some(v => v.value == item.value));
 	const placeholder = data.length === 1
-		? `${data[0]}`
+		? `${data[0].text}`
 		: `(${data.length} items)`;
 	
 	return (
