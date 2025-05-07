@@ -102,7 +102,7 @@ export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }
 
-export class BackendKeywordsFetched extends BackendPayload{
+export class BackendKeywordsFetched extends BackendPayload {
 	constructor(readonly keywordsInfo: KeywordsInfo){super();}
 }
 
