@@ -1,5 +1,5 @@
 import React from "react";
-import keywordsInfo, {KeywordsInfo} from "../../backend/keywordsInfo";
+import { KeywordsInfo } from "../../backend/keywordsInfo";
 import { Value } from "../../models/SpecTable";
 import { isDefined } from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
