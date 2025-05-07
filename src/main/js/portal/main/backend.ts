@@ -133,24 +133,20 @@ export function fetchLabelLookup(): Promise<LabelLookup> {
 export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
-	keywords: KeywordsInfo
 	countryCodes: Record<string, string>
 	stationPos4326Lookup: StationPos4326Lookup
 }
 
-export function fetchBoostrapData(params: QueryParameters): Promise<BootstrapData> {
-
+export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 	return Promise.all([
-		fetchSpecTableData(params.filters),
+		fetchSpecTableData(filters),
 		fetchLabelLookup(),
-		keywordsInfo.fetch(params),
 		fetchStationPositions(),
 		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([specTables, labelLookup, keywords, stationPos4326Lookup, countryCodes]) => ({
+		([specTables, labelLookup, stationPos4326Lookup, countryCodes]) => ({
 			specTables,
 			labelLookup,
-			keywords,
 			countryCodes,
 			stationPos4326Lookup
 		})

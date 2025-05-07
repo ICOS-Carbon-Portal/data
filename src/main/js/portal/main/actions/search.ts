@@ -39,9 +39,8 @@ export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThu
 	return (dispatch, getState) => {
 
 		const state = getState();
-		const queryParams = getOptions(state);
-
-		dispatch(getBackendTables(queryParams)).then(_ => {
+		const filters = getFilters(getState());
+		dispatch(getBackendTables(filters)).then(_ => {
 			dispatch(getFilteredDataObjects);
 		});
 
@@ -303,7 +302,6 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 }
 
 export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<void> {
-
 	return (dispatch) => {
 		dispatch(new FiltersNumber(numberFilter));
 		dispatch(getOriginsThenDobjList);
