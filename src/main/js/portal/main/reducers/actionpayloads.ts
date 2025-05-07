@@ -16,6 +16,7 @@ import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 import { PreviewSettings } from "../models/Preview";
+import { KeywordsInfo } from "../backend/keywordsInfo";
 
 
 export abstract class ActionPayload{}
@@ -99,6 +100,10 @@ export class BackendBatchDownload extends BackendPayload{
 export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | DataObject[];
 export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+}
+
+export class BackendKeywordsFetched extends BackendPayload{
+	constructor(readonly keywordsInfo: KeywordsInfo){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {

@@ -32,6 +32,7 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import keywordsInfo from "../backend/keywordsInfo";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
@@ -58,14 +59,23 @@ const dataObjectsFetcher = config.useDataObjectsCache
 
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
 
+
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const filters = getFilters(getState(), true);
+		const state = getState();
+		const queryParams = getOptions(state);
+		const filters = queryParams.filters;
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
 				const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
 				dispatch(new Payloads.BackendOriginsTable(tbl, true));
+
+				keywordsInfo.fetch(queryParams).then(
+					(payload) => {
+						dispatch(new Payloads.BackendKeywordsFetched(payload))
+					}
+				)
 
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
 
@@ -297,6 +307,7 @@ export function setFilterTemporal(filterTemporal: FilterTemporal): PortalThunkAc
 }
 
 export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<void> {
+
 	return (dispatch) => {
 		dispatch(new FiltersNumber(numberFilter));
 		dispatch(getOriginsThenDobjList);

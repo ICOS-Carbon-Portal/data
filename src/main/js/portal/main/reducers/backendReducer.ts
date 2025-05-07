@@ -7,6 +7,7 @@ import {
 	BackendOriginsTable,
 	BackendUpdateSpecFilter,
 	BackendObjectsFetched,
+	BackendKeywordsFetched,
 	BackendExtendedDataObjInfo,
 	BackendTsSettings,
 	BackendBatchDownload,
@@ -57,6 +58,12 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendObjectsFetched){
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
+	}
+
+	if (payload instanceof BackendKeywordsFetched){
+		return stateUtils.update(state, {
+			keywords: payload.keywordsInfo
+		});
 	}
 
 	if (payload instanceof BackendExportQuery) {
