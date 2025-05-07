@@ -233,7 +233,6 @@ const getPidListFilter = (pidsList: (string | null)[]) => {
 };
 
 export function objectFilterClauses(query: QueryParameters): String {
-	console.log(JSON.stringify(query));
 	const { specs, stations, submitters, sites, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
