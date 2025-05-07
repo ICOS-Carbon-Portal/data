@@ -1,5 +1,5 @@
 import stateUtils, {defaultState} from '../src/main/models/State';
-import {fetchBoostrapData} from '../src/main/backend';
+import {fetchBootstrapData} from '../src/main/backend';
 import 'isomorphic-fetch';
 import flatMap from 'array.prototype.flatmap';
 import deepEqual from 'deep-equal';
@@ -58,7 +58,7 @@ describe("Testing State", () => {
 
 	it("produces a correct round trip from URI -> shortened URI -> URI", (done) => {
 
-		fetchBoostrapData([]).then(
+		fetchBootstrapData([]).then(
 			allTables => {
 				const specTable = new CompositeSpecTable.deserialize(allTables.specTables);
 				const categories = {};

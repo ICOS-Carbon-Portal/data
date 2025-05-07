@@ -137,7 +137,7 @@ export type BootstrapData = {
 	stationPos4326Lookup: StationPos4326Lookup
 }
 
-export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
+export function fetchBootstrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 	return Promise.all([
 		fetchSpecTableData(filters),
 		fetchLabelLookup(),

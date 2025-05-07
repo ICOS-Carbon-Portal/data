@@ -9,7 +9,7 @@ import stateUtils, {
 } from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
 import {
-	fetchBoostrapData,
+	fetchBootstrapData,
 	fetchKnownDataObjects,
 	getCart,
 	getError,
@@ -138,7 +138,7 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return fetchBoostrapData(filters).then(allTables => {
+		return fetchBootstrapData(filters).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)
