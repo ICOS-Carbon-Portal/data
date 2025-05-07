@@ -297,7 +297,6 @@ offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 	return { text };
 };
 
-
 function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
 	const deprFilter = allFilters.find(isDeprecatedFilter);
 	const deprFilterStr = (deprFilter && deprFilter.allow) ? '' : deprecatedFilterClause.concat('\n');
