@@ -5,7 +5,7 @@ import {sparqlFetchAndParse} from './SparqlFetch'
 import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
-import {objectFilterClauses, objectFilterPrefixes} from '../sparqlQueries';
+import { objectFilterClauses, objectFilterPrefixes } from '../sparqlQueries';
 import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}

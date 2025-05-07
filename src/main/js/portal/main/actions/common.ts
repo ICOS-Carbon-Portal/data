@@ -26,7 +26,7 @@ import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
 import { DataObject } from "../../../common/main/metacore";
-import {Value} from "../models/SpecTable";
+import { Value } from "../models/SpecTable";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import commonConfig from '../../../common/main/config';
 import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
