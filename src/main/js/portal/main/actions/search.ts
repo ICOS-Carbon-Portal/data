@@ -56,7 +56,6 @@ const dataObjectsFetcher = config.useDataObjectsCache
 
 export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAndCounts(true);
 
-
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const filters = getFilters(getState());
