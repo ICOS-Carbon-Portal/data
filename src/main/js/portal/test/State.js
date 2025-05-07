@@ -1,5 +1,5 @@
 import stateUtils, {defaultState} from '../src/main/models/State';
-import {fetchBootstrapData} from '../src/main/backend';
+import { fetchBootstrapData } from '../src/main/backend';
 import 'isomorphic-fetch';
 import flatMap from 'array.prototype.flatmap';
 import deepEqual from 'deep-equal';
