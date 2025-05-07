@@ -32,7 +32,6 @@ import commonConfig from '../../../common/main/config';
 import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
 import { EpsgCode, getProjection, getTransformPointFn } from "icos-cp-ol";
 import { Coordinate } from "ol/coordinate";
-import {QueryParameters} from "./types";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));

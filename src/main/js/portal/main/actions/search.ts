@@ -37,8 +37,6 @@ import keywordsInfo from "../backend/keywordsInfo";
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-
-		const state = getState();
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			dispatch(getFilteredDataObjects);
@@ -85,15 +83,17 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
+	keywordsInfo.fetch(options).then(
+		(keywordsInfo) => {
+			dispatch(new Payloads.BackendKeywordsFetched(keywordsInfo))
+		},
+		failWithError(dispatch)
+	)
+
 	dataObjectsFetcher.fetch(options).then(
 		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
-			keywordsInfo.fetch(options).then(
-				(payload) => {
-					dispatch(new Payloads.BackendKeywordsFetched(payload))
-				}
-			)
 		},
 		failWithError(dispatch)
 	);
