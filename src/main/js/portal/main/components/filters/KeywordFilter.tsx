@@ -7,16 +7,16 @@ import MultiSelectFilter from "./MultiSelectFilter";
 
 
 interface OurProps {
-	keywords: string[]
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
-	const {keywords, filterKeywords, setKeywordFilter} = props;
+	const {scopedKeywords, filterKeywords, setKeywordFilter} = props;
 
 	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
-	const data: Item[] = keywords
+	const data: Item[] = scopedKeywords
 		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
 		.filter(item => !value.some(v => v.value == item.value));
 	const placeholder = data.length === 1

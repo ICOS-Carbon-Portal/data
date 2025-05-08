@@ -174,7 +174,7 @@ export interface State {
 	page: number
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
-	keywords: string[]
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	exportQuery: ExportQuery
 }
@@ -237,7 +237,7 @@ export const defaultState: State = {
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
-	keywords: [],
+	scopedKeywords: [],
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,

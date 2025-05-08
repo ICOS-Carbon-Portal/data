@@ -101,7 +101,7 @@ export class BackendObjectsFetched extends BackendPayload{
 }
 
 export class BackendKeywordsFetched extends BackendPayload {
-	constructor(readonly keywordsInfo: string[]){super();}
+	constructor(readonly scopedKeywords: string[]){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {
@@ -189,7 +189,7 @@ export class FiltersNumber extends FiltersPayload{
 }
 
 export class FilterKeywords extends FiltersPayload{
-	constructor(readonly keywords: string[]){super();}
+	constructor(readonly filterKeywords: string[]){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{

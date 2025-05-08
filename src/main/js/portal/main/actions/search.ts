@@ -32,7 +32,7 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
-import keywordsInfo from "../backend/keywordsInfo";
+import scopedKeywords from "../backend/keywordsInfo";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
@@ -82,9 +82,9 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
-	keywordsInfo.fetch(options).then(
-		(keywordsInfo) => {
-			dispatch(new Payloads.BackendKeywordsFetched(keywordsInfo))
+	scopedKeywords.fetch(options).then(
+		(scopedKeywords) => {
+			dispatch(new Payloads.BackendKeywordsFetched(scopedKeywords))
 		},
 		failWithError(dispatch)
 	)

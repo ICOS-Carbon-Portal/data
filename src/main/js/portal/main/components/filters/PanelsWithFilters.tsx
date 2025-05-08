@@ -27,7 +27,7 @@ interface CommonProps {
 interface PanelsWithMultiselects extends CommonProps {
 	filterNumbers: FilterNumbers
 	helpStorage: HelpStorage
-	keywords: string[]
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
@@ -37,7 +37,7 @@ const availableFilters = filters[config.envri];
 
 export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
-		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
+		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 
 	return (
 		<>
@@ -55,7 +55,7 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
-					keywords={keywords}
+					scopedKeywords={scopedKeywords}
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={startCollapsed}
@@ -70,7 +70,7 @@ interface Panel extends CommonProps {
 	helpStorage: HelpStorage
 	filterList: ReadonlyArray<FilterName>
 	filterNumbers: FilterNumbers
-	keywords: string[]
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
@@ -78,7 +78,7 @@ interface Panel extends CommonProps {
 
 const Panel: React.FunctionComponent<Panel> = props => {
 	const { header, filterList, specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, countryCodesLookup,
-		startCollapsed = false, filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter } = props;
+		startCollapsed = false, filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter } = props;
 	if (filterList.length === 0) return null;
 
 	return (
@@ -96,7 +96,7 @@ const Panel: React.FunctionComponent<Panel> = props => {
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
-					keywords={keywords}
+					scopedKeywords={scopedKeywords}
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 				/>
@@ -109,14 +109,14 @@ interface FilterCtrl extends CommonProps {
 	filterName: FilterName
 	filterNumbers: FilterNumbers
 	helpItem?: HelpItem
-	keywords: string[]
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	const { filterName, specTable, labelLookup, helpItem, updateFilter, setNumberFilter, filterNumbers,
-		filterTemporal, setFilterTemporal, keywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
+		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 	const filterNumber: FilterNumber | undefined = filterNumbers.getFilter(filterName as NumberFilterCategories);
 
 	if (filterNumber !== undefined){
@@ -141,7 +141,7 @@ const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {
 	} else if (filterName === "keywordFilter") {
 		return (
 			<KeywordFilter
-				keywords={keywords}
+				scopedKeywords={scopedKeywords}
 				filterKeywords={filterKeywords}
 				setKeywordFilter={setKeywordFilter}
 			/>

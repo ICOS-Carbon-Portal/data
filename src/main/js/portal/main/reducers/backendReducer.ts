@@ -62,7 +62,7 @@ export default function(state: State, payload: BackendPayload): State {
 
 	if (payload instanceof BackendKeywordsFetched){
 		return stateUtils.update(state, {
-			keywords: payload.keywordsInfo
+			scopedKeywords: payload.scopedKeywords
 		});
 	}
 

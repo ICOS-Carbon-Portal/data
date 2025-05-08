@@ -27,7 +27,7 @@ class Filters extends Component<OurProps> {
 	render(){
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset,
-			setFilterTemporal, filterPids, setNumberFilter, filterNumbers, keywords, filterKeywords,
+			setFilterTemporal, filterPids, setNumberFilter, filterNumbers, scopedKeywords, filterKeywords,
 			setKeywordFilter, countryCodesLookup, spatialRects
 		} = this.props;
 
@@ -52,7 +52,7 @@ class Filters extends Component<OurProps> {
 					setNumberFilter={setNumberFilter}
 					filterTemporal={filterTemporal}
 					setFilterTemporal={setFilterTemporal}
-					keywords={keywords}
+					scopedKeywords={scopedKeywords}
 					filterKeywords={filterKeywords}
 					setKeywordFilter={setKeywordFilter}
 					startCollapsed={false}
@@ -94,7 +94,7 @@ function stateToProps(state: State){
 		helpStorage: state.helpStorage,
 		labelLookup: state.labelLookup,
 		countryCodesLookup: state.countryCodesLookup,
-		keywords: state.keywords,
+		scopedKeywords: state.scopedKeywords,
 		filterKeywords: state.filterKeywords,
 		filterPids: state.filterPids,
 		spatialRects: state.mapProps.rects
