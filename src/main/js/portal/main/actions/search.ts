@@ -32,7 +32,7 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
-import scopedKeywords from "../backend/keywordsInfo";
+import scopedKeywords from "../backend/scopedKeywords";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
