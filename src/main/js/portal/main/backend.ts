@@ -11,7 +11,6 @@ import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLo
 import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
-import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
@@ -133,24 +132,20 @@ export function fetchLabelLookup(): Promise<LabelLookup> {
 export type BootstrapData = {
 	specTables: SpecTableSerialized
 	labelLookup: LabelLookup
-	keywords: KeywordsInfo
 	countryCodes: Record<string, string>
 	stationPos4326Lookup: StationPos4326Lookup
 }
 
-export function fetchBoostrapData(filters: FilterRequest[]): Promise<BootstrapData> {
-
+export function fetchBootstrapData(filters: FilterRequest[]): Promise<BootstrapData> {
 	return Promise.all([
 		fetchSpecTableData(filters),
 		fetchLabelLookup(),
-		keywordsInfo.fetch(),
 		fetchStationPositions(),
 		getJson('https://static.icos-cp.eu/constant/misc/countries.json')
 	]).then(
-		([specTables, labelLookup, keywords, stationPos4326Lookup, countryCodes]) => ({
+		([specTables, labelLookup, stationPos4326Lookup, countryCodes]) => ({
 			specTables,
 			labelLookup,
-			keywords,
 			countryCodes,
 			stationPos4326Lookup
 		})

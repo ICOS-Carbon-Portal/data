@@ -9,7 +9,7 @@ import stateUtils, {
 } from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
 import {
-	fetchBoostrapData,
+	fetchBootstrapData,
 	fetchKnownDataObjects,
 	getCart,
 	getError,
@@ -26,9 +26,7 @@ import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
 import { DataObject } from "../../../common/main/metacore";
-import {Filter, Value} from "../models/SpecTable";
-import keywordsInfo from "../backend/keywordsInfo";
-import {SPECCOL} from "../sparqlQueries";
+import { Value } from "../models/SpecTable";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import commonConfig from '../../../common/main/config';
 import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
@@ -70,8 +68,8 @@ export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThun
 	};
 }
 
-export function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
-	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
+export function getFilters(state: State): FilterRequest[] {
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable} = state;
 	let filters: FilterRequest[] = [];
 
 	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
@@ -139,7 +137,7 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return fetchBoostrapData(filters).then(allTables => {
+		return fetchBootstrapData(filters).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)
