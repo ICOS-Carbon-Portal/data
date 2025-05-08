@@ -268,7 +268,7 @@ export function objectFilterClauses(query: QueryParameters): String {
 	${getFilterClauses(filters, false)}`;
 }
 
-export const objectFilterPrefixes : String = `prefix cpmeta: <${config.cpmetaOntoUri}>
+export const objectFilterPrefixes: string = `prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>`
