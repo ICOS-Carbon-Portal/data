@@ -10,15 +10,10 @@ import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
 
-export interface KeywordsInfo{
-	filteredKeywords: string[]
-}
 
 export default{
-	fetch: function(query: QueryParameters): Promise<KeywordsInfo>{
-		return getUniqueKeywords(query).then(
-			(filteredKeywords) => ({ filteredKeywords })
-		);
+	fetch: function(query: QueryParameters): Promise<string[]>{
+		return getUniqueKeywords(query);
 	}
 }
 

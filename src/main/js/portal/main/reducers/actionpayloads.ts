@@ -15,8 +15,6 @@ import FilterTemporal from "../models/FilterTemporal";
 import {SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
 import {PersistedMapPropsExtended} from "../models/InitMap";
-import { PreviewSettings } from "../models/Preview";
-import { KeywordsInfo } from "../backend/keywordsInfo";
 
 
 export abstract class ActionPayload{}
@@ -103,7 +101,7 @@ export class BackendObjectsFetched extends BackendPayload{
 }
 
 export class BackendKeywordsFetched extends BackendPayload {
-	constructor(readonly keywordsInfo: KeywordsInfo){super();}
+	constructor(readonly keywordsInfo: string[]){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {

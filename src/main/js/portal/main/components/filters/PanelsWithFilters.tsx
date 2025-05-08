@@ -9,7 +9,6 @@ import NumberFilter from "./NumberFilter";
 import {FilterNumber, FilterNumbers} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
 import PickDates from "./PickDates";
-import {KeywordsInfo} from "../../backend/keywordsInfo";
 import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
@@ -28,7 +27,7 @@ interface CommonProps {
 interface PanelsWithMultiselects extends CommonProps {
 	filterNumbers: FilterNumbers
 	helpStorage: HelpStorage
-	keywords: KeywordsInfo
+	keywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
@@ -71,7 +70,7 @@ interface Panel extends CommonProps {
 	helpStorage: HelpStorage
 	filterList: ReadonlyArray<FilterName>
 	filterNumbers: FilterNumbers
-	keywords: KeywordsInfo
+	keywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
@@ -110,7 +109,7 @@ interface FilterCtrl extends CommonProps {
 	filterName: FilterName
 	filterNumbers: FilterNumbers
 	helpItem?: HelpItem
-	keywords: KeywordsInfo
+	keywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 }

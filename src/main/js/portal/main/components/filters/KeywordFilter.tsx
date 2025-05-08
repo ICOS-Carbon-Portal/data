@@ -1,5 +1,4 @@
 import React from "react";
-import { KeywordsInfo } from "../../backend/keywordsInfo";
 import { Value } from "../../models/SpecTable";
 import { isDefined } from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
@@ -8,7 +7,7 @@ import MultiSelectFilter from "./MultiSelectFilter";
 
 
 interface OurProps {
-	keywords: KeywordsInfo
+	keywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
 }
@@ -17,7 +16,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {keywords, filterKeywords, setKeywordFilter} = props;
 
 	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
-	const data: Item[] = keywords.filteredKeywords
+	const data: Item[] = keywords
 		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
 		.filter(item => !value.some(v => v.value == item.value));
 	const placeholder = data.length === 1

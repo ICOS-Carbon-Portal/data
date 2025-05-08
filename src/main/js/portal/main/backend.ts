@@ -11,7 +11,6 @@ import { Profile, ExtendedDobjInfo, TsSetting, TsSettings, User, WhoAmI, LabelLo
 import {getLastSegmentInUrl, throwError, uppercaseFirstChar} from './utils';
 import {ObjInfoQuery} from "./sparqlQueries";
 import {Filter} from "./models/SpecTable";
-import keywordsInfo, { KeywordsInfo } from "./backend/keywordsInfo";
 import {QueryParameters} from "./actions/types";
 import { SpecTableSerialized } from './models/CompositeSpecTable';
 import { References } from '../../common/main/metacore';
