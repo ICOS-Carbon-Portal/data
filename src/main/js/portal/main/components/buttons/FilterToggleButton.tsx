@@ -39,7 +39,7 @@ export default function FilterToggleButton({enabled, title, firstSelected, optio
 	];
 
 	return <button type="button" style={style} title={title} onClick={() => toggle(!firstSelected)}>
-			<span style={{...defaultToggleStyle, ...toggleStyles[0]}}>{options[0]}</span>
-			<span style={{...defaultToggleStyle, ...toggleStyles[1]}}>{options[1]}</span>
-		</button>;
+		<span style={{...defaultToggleStyle, ...toggleStyles[0]}}>{options[0]}</span>
+		<span style={{...defaultToggleStyle, ...toggleStyles[1]}}>{options[1]}</span>
+	</button>;
 }
