@@ -340,7 +340,7 @@ const getStateFromStore = (storeState: State & Record<string,any>) => {
 
 const simplifyState = (state: State) => {
 	return Object.assign(state, {
-		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
+		filterTemporal: state.filterTemporal.serialize,
 		filterNumbers: state.filterNumbers.serialize,
 		preview: state.preview.pids
 	});
@@ -352,7 +352,7 @@ type JsonHashState = {
 	filterTemporal?: SerializedFilterTemporal
 	filterPids?: Sha256Str
 	filterNumbers?: FilterNumberSerialized[]
-	filterKeywords?: string[]
+	filterKeywords?: FilterKeyword
 	tabs?: State['tabs']
 	page?: number
 	preview?: Sha256Str[]
@@ -394,6 +394,13 @@ const jsonToState = (state0: JsonHashState) => {
 		}
 		if (state0.filterNumbers){
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
+		}
+
+		if (state0.filterKeywords) {
+			state.filterKeywords = {
+				keywords: state0.filterKeywords.keywords,
+				andOperator: state0.filterKeywords.andOperator === undefined ? true : state0.filterKeywords.andOperator
+			};
 		}
 
 		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings ?? {});
@@ -450,7 +457,7 @@ const hashUpdater = (store: Store) => () => {
 	let newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
 	
-
+	console.log(newHash);
 	if (newHash !== oldHash) {
 		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
 		if (state.route !== hashToState().route) {
@@ -494,9 +501,17 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 };
 
 const stateToHash = (state: State) => {
+	console.log("stateToHash state.filterKeywords")
+	console.log(state.filterKeywords);
 	const currentStoreState = getStateFromStore(state);
+	console.log("currentStoreState.filterKeywords")
+	console.log(currentStoreState.filterKeywords);
 	const simplifiedStoreState = simplifyState(currentStoreState as State);
+	console.log("simplifiedStoreState.filterKeywords")
+	console.log(simplifiedStoreState.filterKeywords);
 	const reducedStoreState = reduceState(simplifiedStoreState);
+	console.log("reducedStoreState");
+	console.log(reducedStoreState);
 	handleRoute(reducedStoreState as Partial<StateSerialized>);
 	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
 	const final = shortenUrls(withSpecialCases);
@@ -578,10 +593,14 @@ const reduceState = (state: Record<string,any>) => {
 
 		} else if (typeof val === 'object') {
 			const part = reduceState(val);
+			console.log("key = " + key)
+			console.log(val)
+			console.log(part)
 
 			if (Object.keys(part).length) {
 				acc[key] = part;
 			}
+			console.log(acc[key])
 
 		} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0){
 			acc[key] = getLastSegmentInUrl(val);
@@ -595,7 +614,9 @@ const reduceState = (state: Record<string,any>) => {
 		} else if (key === 'showDeprecated' && val) {
 			acc[key] = val;
 
-		}
+		} else if (key === "andOperator" && val === false) {
+			acc[key] = val;
+		} 
 
 		return acc;
 	}, {});
