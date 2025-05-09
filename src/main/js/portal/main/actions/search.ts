@@ -307,12 +307,12 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
-export function setKeywordFilter(filterKeywords: string[], reset: boolean = false): PortalThunkAction<void> {
+export function setKeywordFilter(filterKeywords: string[], filterKeywordsOperator?: "AND" | "OR", reset: boolean = false): PortalThunkAction<void> {
 	return (dispatch) => {
 		if (reset) {
 			dispatch(new Payloads.MiscResetFilters());
 		}
-		dispatch(new Payloads.FilterKeywords(filterKeywords));
+		dispatch(new Payloads.FilterKeywords(filterKeywords, filterKeywordsOperator));
 		dispatch(getOriginsThenDobjList);
 	};
 }
