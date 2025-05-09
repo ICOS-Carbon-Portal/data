@@ -32,6 +32,7 @@ export interface VariableFilterRequest{
 export interface KeywordFilterRequest{
 	category: "keywords"
 	keywords: string[]
+	operator: "AND" | "OR"
 }
 
 export interface GeoFilterRequest{

@@ -332,20 +332,11 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		filterStr,
 		varNameFilterStr,
 		geoStr,
-		renderKeywordFilters(allFilters.filter(isKeywordsFilter), 'OR')
+		renderKeywordFilters(allFilters.filter(isKeywordsFilter))
 	);
 }
 
-function renderKeywordFilters(requests: KeywordFilterRequest[], queryType: 'AND' | 'OR'): string {
-	if(queryType === 'AND') {
-		return requests
-			.flatMap((req) =>
-				req.keywords.map((keyword) =>
-			`?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
-			)
-		).join(' .\n');
-	}
-
+function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
 	const keywordValues =
 		requests.flatMap((req) =>
 			req.keywords.map((kw) => `"${kw}"^^xsd:string`)
@@ -353,6 +344,12 @@ function renderKeywordFilters(requests: KeywordFilterRequest[], queryType: 'AND'
 
 	if (keywordValues.length === 0) {
 		return '';
+	}
+
+	if (requests[0].operator === 'AND') {
+		return keywordValues
+			.map((kw) => `?dobj cpmeta:hasKeyword ${kw}`)
+			.join(' .\n');
 	}
 
 	return [

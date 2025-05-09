@@ -176,6 +176,7 @@ export interface State {
 	helpStorage: HelpStorage
 	scopedKeywords: string[]
 	filterKeywords: string[]
+	filterKeywordsOperator: "AND" | "OR"
 	exportQuery: ExportQuery
 }
 
@@ -239,6 +240,7 @@ export const defaultState: State = {
 	helpStorage: new HelpStorage(),
 	scopedKeywords: [],
 	filterKeywords: [],
+	filterKeywordsOperator: "AND",
 	exportQuery: {
 		isFetchingCVS: false,
 		sparqClientQuery: ''
