@@ -332,14 +332,23 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		filterStr,
 		varNameFilterStr,
 		geoStr,
-		renderKeywordFilters(allFilters.filter(isKeywordsFilter))
+		renderKeywordFilters(allFilters.filter(isKeywordsFilter), 'OR')
 	);
 }
 
-function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
+function renderKeywordFilters(requests: KeywordFilterRequest[], queryType: 'AND' | 'OR'): string {
+	if(queryType === 'AND') {
+		return requests
+			.flatMap((req) =>
+				req.keywords.map((keyword) =>
+			`?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
+			)
+		).join(' .\n');
+	}
+
 	const keywordValues =
 		requests.flatMap((req) =>
-			 req.keywords.map((kw) => `"${kw}"^^xsd:string`)
+			req.keywords.map((kw) => `"${kw}"^^xsd:string`)
 		);
 
 	if (keywordValues.length === 0) {
