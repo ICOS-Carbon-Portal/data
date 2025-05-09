@@ -4,18 +4,16 @@ import { isDefined } from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
 import { Item } from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
-import FilterToggleButton from "../buttons/FilterToggleButton";
 
 
 interface OurProps {
 	scopedKeywords: string[]
 	filterKeywords: string[]
-	filterKeywordsOperator: "AND" | "OR"
-	setKeywordFilter: (filterKeywords: string[], filterKeywordsOperator?: "AND" | "OR") => void
+	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
-	const {scopedKeywords, filterKeywords, setKeywordFilter, filterKeywordsOperator} = props;
+	const {scopedKeywords, filterKeywords, setKeywordFilter} = props;
 
 	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
 	const data: Item[] = scopedKeywords
@@ -34,17 +32,6 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 					</div>
 
 					<div>
-						<FilterToggleButton
-							enabled={value.length > 0}
-							options={
-								[{text: "ALL", selected: filterKeywordsOperator === "AND"},
-								{text: "ANY", selected: filterKeywordsOperator === "OR"}]
-							}
-							filterName="keywordFilter"
-							title="Reset this filter"
-							baseStyle={{fontSize: 16, marginLeft: 12}}
-							toggle={() => setKeywordFilter(filterKeywords, filterKeywordsOperator === "AND" ? "OR" : "AND")}
-						/>
 						<FilterOperationBtn
 							enabled={value.length > 0}
 							filterName="keywordFilter"

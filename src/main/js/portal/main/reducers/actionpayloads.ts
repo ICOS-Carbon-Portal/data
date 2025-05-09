@@ -189,7 +189,7 @@ export class FiltersNumber extends FiltersPayload{
 }
 
 export class FilterKeywords extends FiltersPayload{
-	constructor(readonly filterKeywords: string[], readonly filterKeywordsOperator?: "AND" | "OR"){super();}
+	constructor(readonly filterKeywords: string[]){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{
