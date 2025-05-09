@@ -5,6 +5,7 @@ import FilterOperationBtn from "../buttons/FilterOperationBtn";
 import { Item } from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
 import { FilterKeyword } from "../../actions/types";
+import FilterToggleButton from "../buttons/FilterToggleButton";
 
 
 interface OurProps {
@@ -33,6 +34,13 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 					</div>
 
 					<div>
+						<FilterToggleButton
+							enabled={value.length > 0}
+							title="Show objects matching ALL keywords or ANY keyword"
+							firstSelected={filterKeywords.andOperator}
+							toggle={(operator) => setKeywordFilter({ keywords: filterKeywords.keywords, andOperator: operator })}
+							options={["ALL","ANY"]}
+						/>
 						<FilterOperationBtn
 							enabled={value.length > 0}
 							filterName="keywordFilter"
