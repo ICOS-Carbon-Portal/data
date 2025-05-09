@@ -69,7 +69,7 @@ export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThun
 }
 
 export function getFilters(state: State): FilterRequest[] {
-	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, filterKeywordsOperator, searchOptions, specTable} = state;
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable} = state;
 	let filters: FilterRequest[] = [];
 
 	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
@@ -90,8 +90,8 @@ export function getFilters(state: State): FilterRequest[] {
 			}
 		}
 
-		if (filterKeywords.length > 0){
-			filters.push({category: 'keywords', keywords: filterKeywords, operator: filterKeywordsOperator});
+		if (filterKeywords.keywords.length > 0){
+			filters.push({category: 'keywords', ...filterKeywords});
 		}
 
 		const geoFilter = getGeoFilter(state.mapProps)

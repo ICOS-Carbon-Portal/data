@@ -4,18 +4,19 @@ import { isDefined } from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
 import { Item } from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
+import { FilterKeyword } from "../../actions/types";
 
 
 interface OurProps {
 	scopedKeywords: string[]
-	filterKeywords: string[]
-	setKeywordFilter: (filterKeywords: string[]) => void
+	filterKeywords: FilterKeyword
+	setKeywordFilter: (filterKeywords: FilterKeyword) => void
 }
 
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {scopedKeywords, filterKeywords, setKeywordFilter} = props;
 
-	const value: Item[] = filterKeywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
+	const value: Item[] = filterKeywords.keywords.map(kw => ({text: kw, value: kw, helpStorageListEntry: []}));
 	const data: Item[] = scopedKeywords
 		.map(txt => ({text: txt, value: txt, helpStorageListEntry: []}))
 		.filter(item => !value.some(v => v.value == item.value));
@@ -38,7 +39,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 							title="Reset this filter"
 							baseStyle={{fontSize: 16, marginLeft: 12}}
 							iconCls="fas fa-times-circle"
-							action={() => setKeywordFilter([])}
+							action={() => setKeywordFilter({ keywords: [], andOperator: true })}
 						/>
 					</div>
 				</div>
@@ -49,7 +50,10 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 						name={"keywordFilter"}
 						shouldUseExternalListEntry={false}
 						search={{}}
-						updateFilter={(_: any, keywords: Value[]) => setKeywordFilter(keywords.filter(isDefined).map(kw => kw + ''))}
+						updateFilter={(_: any, keywords: Value[]) =>
+							setKeywordFilter({ keywords: keywords.filter(isDefined).map(kw => kw + ''),
+								andOperator: filterKeywords.andOperator})
+						}
 						placeholder={placeholder}
 						data={data}
 						value={value}

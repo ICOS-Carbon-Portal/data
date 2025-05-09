@@ -96,7 +96,7 @@ const resetFilters = (state: State): Partial<State> => {
 		checkedObjectsInSearch: [],
 		filterTemporal: new FilterTemporal(),
 		filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
-		filterKeywords: []
+		filterKeywords: { keywords: [], andOperator: true }
 	};
 };
 

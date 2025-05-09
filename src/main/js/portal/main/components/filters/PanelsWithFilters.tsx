@@ -13,29 +13,30 @@ import {KeywordFilter} from "./KeywordFilter";
 import { LabelLookup } from '../../models/State';
 import HelpStorage, {HelpItem} from "../../models/HelpStorage";
 import {isDefined} from "../../utils";
+import { FilterKeyword } from '../../actions/types';
 
 interface CommonProps {
 	specTable: CompositeSpecTable
 	labelLookup: LabelLookup
 	countryCodesLookup: Record<string, string>
 	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
+	filterNumbers: FilterNumbers
 	setNumberFilter: (validation: FilterNumber) => void
 	filterTemporal: FilterTemporal
 	setFilterTemporal: (filterTemporal: FilterTemporal) => void
+	scopedKeywords: string[]
+	filterKeywords: FilterKeyword
+	setKeywordFilter: (filterKeywords: FilterKeyword) => void
 }
 
-interface PanelsWithMultiselects extends CommonProps {
-	filterNumbers: FilterNumbers
+interface PanelsWithFilters extends CommonProps {
 	helpStorage: HelpStorage
-	scopedKeywords: string[]
-	filterKeywords: string[]
-	setKeywordFilter: (filterKeywords: string[]) => void
 	startCollapsed?: boolean
 }
 
 const availableFilters = filters[config.envri];
 
-export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> = props => {
+export const PanelsWithFilters: React.FunctionComponent<PanelsWithFilters> = props => {
 	const {specTable, labelLookup, helpStorage, updateFilter, setNumberFilter, filterNumbers, startCollapsed = false,
 		filterTemporal, setFilterTemporal, scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup} = props;
 
@@ -67,12 +68,8 @@ export const PanelsWithFilters: React.FunctionComponent<PanelsWithMultiselects> 
 
 interface Panel extends CommonProps {
 	header: string
-	helpStorage: HelpStorage
 	filterList: ReadonlyArray<FilterName>
-	filterNumbers: FilterNumbers
-	scopedKeywords: string[]
-	filterKeywords: string[]
-	setKeywordFilter: (filterKeywords: string[]) => void
+	helpStorage: HelpStorage
 	startCollapsed?: boolean
 }
 
@@ -107,11 +104,7 @@ const Panel: React.FunctionComponent<Panel> = props => {
 
 interface FilterCtrl extends CommonProps {
 	filterName: FilterName
-	filterNumbers: FilterNumbers
 	helpItem?: HelpItem
-	scopedKeywords: string[]
-	filterKeywords: string[]
-	setKeywordFilter: (filterKeywords: string[]) => void
 }
 
 const FilterCtrl: React.FunctionComponent<FilterCtrl> = props => {

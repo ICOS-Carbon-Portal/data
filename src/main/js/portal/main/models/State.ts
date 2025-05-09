@@ -22,6 +22,7 @@ import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import {SupportedSRIDs} from "icos-cp-ol";
 import PortalHistoryState from "../backend/PortalHistoryState";
+import { FilterKeyword } from "../actions/types";
 
 
 export const portalHistoryState = new PortalHistoryState(config.portalHistoryStateProps);
@@ -175,8 +176,7 @@ export interface State {
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
 	scopedKeywords: string[]
-	filterKeywords: string[]
-	filterKeywordsOperator: "AND" | "OR"
+	filterKeywords: FilterKeyword
 	exportQuery: ExportQuery
 }
 
@@ -239,8 +239,10 @@ export const defaultState: State = {
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
 	scopedKeywords: [],
-	filterKeywords: [],
-	filterKeywordsOperator: "AND",
+	filterKeywords: {
+		keywords: [],
+		andOperator: true
+	},
 	exportQuery: {
 		isFetchingCVS: false,
 		sparqClientQuery: ''

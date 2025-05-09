@@ -18,3 +18,8 @@ export type SearchOption = {
 	name: keyof SearchOptions
 	value: boolean
 }
+
+export type FilterKeyword = {
+	keywords: string[]
+	andOperator: boolean
+}

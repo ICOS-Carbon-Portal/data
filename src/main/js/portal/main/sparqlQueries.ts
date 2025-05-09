@@ -346,7 +346,7 @@ function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
 		return '';
 	}
 
-	if (requests[0].operator === 'AND') {
+	if (requests[0].andOperator) {
 		return keywordValues
 			.map((kw) => `?dobj cpmeta:hasKeyword ${kw}`)
 			.join(' .\n');

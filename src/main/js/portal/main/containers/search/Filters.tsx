@@ -13,6 +13,7 @@ import {
 import {PanelsWithFilters} from "../../components/filters/PanelsWithFilters";
 import {FilterNumber} from "../../models/FilterNumbers";
 import FilterTemporal from "../../models/FilterTemporal";
+import { FilterKeyword } from '../../actions/types';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -34,7 +35,7 @@ class Filters extends Component<OurProps> {
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
 			|| filterNumbers.hasFilters
-			|| filterKeywords.length > 0
+			|| filterKeywords.keywords.length > 0
 			|| filterPids !== null
 			|| (!!spatialRects && spatialRects.length > 0)
 
@@ -106,7 +107,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 		updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
-		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),
+		setKeywordFilter: (filterKeywords: FilterKeyword) => dispatch(setKeywordFilter(filterKeywords)),
 	};
 }
 

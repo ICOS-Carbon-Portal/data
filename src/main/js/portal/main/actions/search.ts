@@ -20,7 +20,7 @@ import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
 import {saveToRestheart} from "../../../common/main/backend";
-import {QueryParameters, SearchOption} from "./types";
+import {FilterKeyword, QueryParameters, SearchOption} from "./types";
 import {
 	failWithError, fetchCart, getBackendTables,
 	getFilters,
@@ -180,7 +180,7 @@ const logPortalUsage = (state: State) => {
 	const effectiveFilterPids = isInPidFilteringMode(state.tabs, state.filterPids) ? state.filterPids : [];
 	const categNames = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
-	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.length > 0 || effectiveFilterPids !== null) {
+	if (categNames.length || filterTemporal.hasFilter || filterNumbers.hasFilters || filterKeywords.keywords.length > 0 || effectiveFilterPids !== null) {
 
 		const filters = categNames.reduce<any>((acc, columnName) => {
 			acc[columnName] = specTable.getFilter(columnName);
@@ -190,7 +190,7 @@ const logPortalUsage = (state: State) => {
 		if (filterTemporal.hasFilter) filters.filterTemporal = filterTemporal.serialize;
 		if (filterNumbers.hasFilters) filters.filterNumbers = filterNumbers.serialize;
 		if (effectiveFilterPids !== null) filters.filterPids = effectiveFilterPids;
-		if (filterKeywords.length > 0) filters.filterKeywords = filterKeywords;
+		if (filterKeywords.keywords.length > 0) filters.filterKeywords = filterKeywords;
 		filters.searchOptions = searchOptions;
 
 		saveToRestheart({
@@ -231,7 +231,7 @@ export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
 	const shouldRefetchCounts = filterTemporal.hasFilter
 		|| filterNumbers.hasFilters
 		|| varNamesAreFiltered(specTable)
-		|| filterKeywords.length > 0
+		|| filterKeywords.keywords.length > 0
 		|| (!!(mapProps.rects) && mapProps.rects.length > 0)
 
 	dispatch(new Payloads.MiscResetFilters());
@@ -307,7 +307,7 @@ export function setNumberFilter(numberFilter: FilterNumber): PortalThunkAction<v
 	};
 }
 
-export function setKeywordFilter(filterKeywords: string[], reset: boolean = false): PortalThunkAction<void> {
+export function setKeywordFilter(filterKeywords: FilterKeyword, reset: boolean = false): PortalThunkAction<void> {
 	return (dispatch) => {
 		if (reset) {
 			dispatch(new Payloads.MiscResetFilters());

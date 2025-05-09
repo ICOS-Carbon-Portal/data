@@ -12,7 +12,7 @@ import {DataObject} from "../models/CartItem";
 import {HelpItem} from "../models/HelpStorage";
 import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
-import {SearchOption} from "../actions/types";
+import {FilterKeyword, SearchOption} from "../actions/types";
 import {FilterNumber} from "../models/FilterNumbers";
 import {PersistedMapPropsExtended} from "../models/InitMap";
 
@@ -189,7 +189,7 @@ export class FiltersNumber extends FiltersPayload{
 }
 
 export class FilterKeywords extends FiltersPayload{
-	constructor(readonly filterKeywords: string[]){super();}
+	constructor(readonly filterKeywords: FilterKeyword){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{
