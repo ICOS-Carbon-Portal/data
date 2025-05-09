@@ -457,7 +457,6 @@ const hashUpdater = (store: Store) => () => {
 	let newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
 	
-	console.log(newHash);
 	if (newHash !== oldHash) {
 		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
 		if (state.route !== hashToState().route) {
@@ -501,17 +500,9 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 };
 
 const stateToHash = (state: State) => {
-	console.log("stateToHash state.filterKeywords")
-	console.log(state.filterKeywords);
 	const currentStoreState = getStateFromStore(state);
-	console.log("currentStoreState.filterKeywords")
-	console.log(currentStoreState.filterKeywords);
 	const simplifiedStoreState = simplifyState(currentStoreState as State);
-	console.log("simplifiedStoreState.filterKeywords")
-	console.log(simplifiedStoreState.filterKeywords);
 	const reducedStoreState = reduceState(simplifiedStoreState);
-	console.log("reducedStoreState");
-	console.log(reducedStoreState);
 	handleRoute(reducedStoreState as Partial<StateSerialized>);
 	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
 	const final = shortenUrls(withSpecialCases);
@@ -593,14 +584,10 @@ const reduceState = (state: Record<string,any>) => {
 
 		} else if (typeof val === 'object') {
 			const part = reduceState(val);
-			console.log("key = " + key)
-			console.log(val)
-			console.log(part)
 
 			if (Object.keys(part).length) {
 				acc[key] = part;
 			}
-			console.log(acc[key])
 
 		} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0){
 			acc[key] = getLastSegmentInUrl(val);
