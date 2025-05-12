@@ -40,6 +40,13 @@ const previewSettingsKeys = [
 ] as readonly string[];
 
 export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
+export type PreviewSettings2 = Record<string, string | undefined>;
+
+// Asserts that PreviewSettings and PreviewSettings2 are equal. Stolen from StackOverflow, but verified to work.
+type static_assert<T extends true> = never;
+type _check = static_assert<PreviewSettings extends PreviewSettings2 ? true : false>;
+type _check2 = static_assert<PreviewSettings2 extends PreviewSettings ? true : false>;
+
 
 export interface PreviewSerialized {
 	items: CartItemSerialized[]
@@ -60,10 +67,14 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
+		Preview.allowlistPreviewSettings({}); // Should this compile?
+		Preview.allowlistPreviewSettings({something: "yep"}); // This compiles. Probably shouldn't.
+		Preview.allowlistPreviewSettings({something: 123}); // This doesn't compile. Expected since value is not a string.
+
 		this.previewSettings = this.item?.urlParams ? Preview.allowlistPreviewSettings(this.item.urlParams) : {};
 	}
 
-	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
+	static allowlistPreviewSettings(urlParams: PreviewSettings): PreviewSettings {
 		const allowedPreviewSettings: PreviewSettings = {};
 		for (const key in urlParams) {
 			if (previewSettingsKeys.includes(key)) {
