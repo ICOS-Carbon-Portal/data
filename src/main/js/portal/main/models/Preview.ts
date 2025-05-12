@@ -19,23 +19,23 @@ export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): numbe
 }
 
 export type PreviewSettings = {
-	x: string,
-	y: string,
-	y2: string,
-	type: string,
-	legendLabels: string,
-	legendLabelsY2: string,
-	linking: string,
-	img: string,
-	varName: string,
-	extraDim: string,
-	date: string,
-	gamma: string,
-	center: string,
-	zoom: string,
-	color: string,
-	y1: string,
-	map: string
+	x: string | undefined,
+	y: string | undefined,
+	y2: string | undefined,
+	type: string | undefined,
+	legendLabels: string | undefined,
+	legendLabelsY2: string | undefined,
+	linking: string | undefined,
+	img: string | undefined,
+	varName: string | undefined,
+	extraDim: string | undefined,
+	date: string | undefined,
+	gamma: string | undefined,
+	center: string | undefined,
+	zoom: string | undefined,
+	color: string | undefined,
+	y1: string | undefined,
+	map: string | undefined
 };
 
 
