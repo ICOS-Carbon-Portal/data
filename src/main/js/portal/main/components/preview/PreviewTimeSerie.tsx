@@ -3,7 +3,7 @@ import {distinct, getLastSegmentInUrl, isDefined, wholeStringRegExp} from '../..
 import config, { previewExcludeChartType } from '../../config';
 import {ExtendedDobjInfo, State, TsSetting} from "../../models/State";
 import CartItem from "../../models/CartItem";
-import Preview, {PreviewOption, PreviewSettings, previewVarCompare} from "../../models/Preview";
+import Preview, {PreviewOption, previewVarCompare} from "../../models/Preview";
 import { lastUrlPart, TableFormat } from 'icos-cp-backend';
 import { UrlStr } from '../../backend/declarations';
 import TableFormatCache from '../../../../common/main/TableFormatCache';
@@ -134,7 +134,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 
 	const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 
-	let params: PreviewSettings & { objId: string } = {
+	let params: Record<string, string | undefined> = {
 		objId: objIds,
 		x: xAxis,
 		linking,
@@ -161,7 +161,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 		.map((param) => param.join('='))
 		.join("&");
 
-	const currentIframeUrl = yAxis ? 
+	const currentIframeUrl = yAxis ?
 		encodeURI(
 			window.document.location.origin
 			+ iFrameBaseUrl
