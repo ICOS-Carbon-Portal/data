@@ -61,7 +61,7 @@ export default class Preview {
 		this.previewSettings = Preview.parsePreviewSettings(this.item?.urlParams || {});
 	}
 
-	static parsePreviewSettings(params: Record<string, string>): PreviewSettings {
+	static parsePreviewSettings(params: Record<string, string | undefined>): PreviewSettings {
 		return {
 			x: params['x'],
 			y: params['y'],
@@ -163,7 +163,7 @@ export default class Preview {
 		}
 	}
 
-	withPids(pids: Sha256Str[], previewSettings: PreviewSettings){
+	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
 		this.previewSettings = previewSettings ?? Preview.parsePreviewSettings({});
 		return this;
