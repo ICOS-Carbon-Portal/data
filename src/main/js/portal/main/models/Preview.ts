@@ -1,11 +1,11 @@
-import CartItem, { CartItemSerialized } from './CartItem';
-import { getNewTimeseriesUrl, getLastSegmentInUrl, isDefined } from '../utils';
-import config, { PreviewType } from "../config";
+import CartItem, {CartItemSerialized} from './CartItem';
+import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
+import config, {PreviewType} from "../config";
 import deepEqual from 'deep-equal';
-import PreviewLookup, { PreviewInfo } from "./PreviewLookup";
+import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
-import { ExtendedDobjInfo, ObjectsTable } from "./State";
-import { IdxSig, Sha256Str, UrlStr } from "../backend/declarations";
+import {ExtendedDobjInfo, ObjectsTable} from "./State";
+import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
 import { Value } from './SpecTable';
 
 
@@ -14,7 +14,7 @@ export interface PreviewOption {
 	valTypeLabel: string
 }
 
-export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number {
+export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): number{
 	return po1.varTitle.localeCompare(po2.varTitle)
 }
 
@@ -43,7 +43,6 @@ function isPreviewSetting(key: string): key is keyof PreviewSettings {
 	return previewSettingsKeys.includes(key as keyof PreviewSettings);
 }
 
-
 export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
 
 export interface PreviewSerialized {
@@ -57,6 +56,7 @@ export const fromEntries = Object.fromEntries as <K extends string, V>(
 	entries: [K, V][],
 ) => Record<K, V>;
 
+
 export default class Preview {
 	public readonly items: CartItem[];
 	public pids: Sha256Str[];
@@ -64,7 +64,7 @@ export default class Preview {
 	public readonly type: PreviewType | undefined;
 	public previewSettings: PreviewSettings;
 
-	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType) {
+	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
@@ -116,36 +116,36 @@ export default class Preview {
 					: undefined;
 
 			const options: OptionWithType = previewInfo == undefined
-				? { type: undefined, options: [] }
+				? {type: undefined, options: []}
 				: previewInfo.type === "TIMESERIES"
 					? previewInfo
-					: { type: previewInfo.type, options: [] };
+					: {type: previewInfo.type, options: []};
 
 			const item = cart.hasItem(id)
 				? cart.item(id)
 				: objInfo ? new CartItem(id, objInfo, options.type) : undefined;
-			return { options, item };
+			return {options, item};
 		});
 
 		const options = objects[0].options;
 		objects.map(object => {
-			if (!deepEqual(options, object.options)) {
+			if(!deepEqual(options, object.options)) {
 				throw new Error('Cannot preview differently structured objects');
 			}
 		});
 
 		const items: CartItem[] = objects.flatMap(o => o.item ?? [])
 
-		if (items.length) {
-			if (options.type === 'TIMESERIES') {
-				let previewItems = items;
-				const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
-				if (xAxis) {
-					const url = getNewTimeseriesUrl(items, xAxis, this.previewSettings);
-					previewItems = items.map(i => i.withUrl(url));
-				}
-				return new Preview(previewItems, options.options, options.type);
-			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM) {
+		if (items.length){
+			if (options.type === 'TIMESERIES'){
+					let previewItems = items;
+					const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
+					if(xAxis){
+						const url = getNewTimeseriesUrl(items, xAxis, this.previewSettings);
+						previewItems = items.map(i => i.withUrl(url));
+					}
+					return new Preview(previewItems, options.options, options.type);
+			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM){
 				return new Preview(items, options.options, options.type);
 			}
 		} else {
@@ -163,17 +163,17 @@ export default class Preview {
 		}
 	}
 
-	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings) {
+	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
 		this.previewSettings = previewSettings ?? {};
 		return this;
 	}
 
-	withItemUrl(url: UrlStr) {
+	withItemUrl(url: UrlStr){
 		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type);
 	}
 
-	get hasPids() {
+	get hasPids(){
 		return this.pids.length > 0;
 	}
 
@@ -181,7 +181,7 @@ export default class Preview {
 		return this.items[0];
 	}
 
-	get hasAllItems() {
+	get hasAllItems(){
 		const itemPids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 
 		return this.hasPids && this.pids.every(pid => itemPids.includes(pid));
@@ -199,34 +199,34 @@ export type PreviewNotAvailable = {
 
 export type PreviewAvailability = PreviewAvailable | PreviewNotAvailable
 
-function noPreview(reason: string): PreviewNotAvailable {
-	return { previewType: null, previewAbsenceReason: reason }
+function noPreview(reason: string): PreviewNotAvailable{
+	return {previewType: null, previewAbsenceReason: reason}
 }
 
 export function previewAvailability(
-	lookup: PreviewLookup | undefined, obj: { spec: string, dobj: string, submTime: Date }
-): PreviewAvailability {
+	lookup: PreviewLookup | undefined, obj: {spec: string, dobj: string, submTime: Date}
+): PreviewAvailability{
 
-	if (obj.submTime.getTime() > Date.now())
+	if(obj.submTime.getTime() > Date.now())
 		return noPreview("This data object is under moratorium")
 
-	if (!lookup) return noPreview("Preview information has not loaded")
+	if(!lookup) return noPreview("Preview information has not loaded")
 
 	const previewType = lookup.forDataObjSpec(obj.spec)?.type
 
-	if (!previewType) return noPreview("This data object cannot be previewed")
+	if(!previewType) return noPreview("This data object cannot be previewed")
 
-	if (previewType === "NETCDF" && obj.spec !== config.netCdf.cfSpec && !(lookup.hasVarInfo(obj.dobj)))
+	if(previewType === "NETCDF" && obj.spec !== config.netCdf.cfSpec && !(lookup.hasVarInfo(obj.dobj)))
 		return noPreview("This NetCDF object cannot be previewed")
 
-	return { previewType }
+	return {previewType}
 }
 
 const onlyUniform = noPreview("Batch previews are only available for data of same type")
 
 export function batchPreviewAvailability(
 	lookup: PreviewLookup | undefined,
-	objs: { spec: string, dobj: string, submTime: Date, dataset: Value }[]
+	objs: {spec: string, dobj: string, submTime: Date, dataset: Value}[]
 ): PreviewAvailability {
 	if (!objs.length) return noPreview("No data objects selected")
 	if (objs.length === 1) return previewAvailability(lookup, objs[0])
@@ -235,13 +235,13 @@ export function batchPreviewAvailability(
 
 	if (!objs.every(obj => obj.dataset === objs[0].dataset)) return onlyUniform
 
-	for (let i = 0; i < objs.length; i++) {
+	for(let i = 0; i < objs.length; i++){
 		let preview = previewAvailability(lookup, objs[i])
 		if (!preview.previewType) return noPreview("You have selected a data object that cannot be previewed")
 		previewTypes.add(preview.previewType)
-		if (previewTypes.size > 1) return onlyUniform
+		if(previewTypes.size > 1) return onlyUniform
 		if (i > 0 && preview.previewType !== config.TIMESERIES)
 			return noPreview("You can only batch-preview plain time series data objects")
 	}
-	return { previewType: previewTypes.values().next().value! }
+	return {previewType: previewTypes.values().next().value!}
 }
