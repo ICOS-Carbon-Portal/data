@@ -7,6 +7,7 @@ import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
 import { objectFilterClauses, objectFilterPrefixes } from '../sparqlQueries';
 import { QueryParameters } from "../actions/types";
+import { isKeywordsFilter } from "../models/FilterRequest";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
 
@@ -48,10 +49,19 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 }
 
 function filteredKeywordsQuery(query: QueryParameters): Query<'keywords', never>{
+	const keywordFilters = query.filters.filter(isKeywordsFilter);
+	let modifiedQuery = { ...query };
+
+	if(keywordFilters[0]?.andOperator === false) {
+		modifiedQuery.filters = query.filters.filter((filter) => !isKeywordsFilter(filter));
+	}
+	console.log("filteredKeywordsQuery:")
+	console.log(modifiedQuery)
+
 	const text = `# filteredKeywordsQuery
 ${objectFilterPrefixes}
 select (cpmeta:distinct_keywords() as ?keywords) where{
-	${objectFilterClauses(query)}
+	${objectFilterClauses(modifiedQuery)}
 }`;
 	return {text};
 }
