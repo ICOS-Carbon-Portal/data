@@ -158,7 +158,8 @@ export default function PreviewTimeSerie(props: OurProps) {
 	}
 
 	const iframeParamsStr = Object.entries(params)
-		.flatMap((param) => param[1] ? [param.join('=')] : [])
+		.filter((param) => param[1])
+		.map((param) => param.join('='))
 		.join("&");
 
 	const currentIframeUrl = yAxis ? 
