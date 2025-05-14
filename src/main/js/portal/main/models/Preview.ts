@@ -52,9 +52,9 @@ export interface PreviewSerialized {
 	previewSettings: PreviewSettings
 }
 
-export const fromEntries = Object.fromEntries as <K extends string, V>(
-	entries: [K, V][],
-) => Record<K, V>;
+function fromEntries<K extends string, V>(entries: [K, V][]): Record<K, V> {
+	return Object.fromEntries(entries) as Record<K, V>;
+}
 
 
 export default class Preview {
@@ -69,10 +69,10 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = this.previewSettings = Preview.allowlistPreviewSettings(this.item?.urlParams ?? {});
+		this.previewSettings = Preview.allowlistPreviewSettings(this.item?.urlParams);
 	}
 
-	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
+	static allowlistPreviewSettings(urlParams?: IdxSig | PreviewSettings): PreviewSettings {
 		const allowedPreviewSettings: PreviewSettings = fromEntries(previewSettingsKeys.map(k => [k, undefined]));
 
 		for (const key in urlParams) {
@@ -165,7 +165,7 @@ export default class Preview {
 
 	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
-		this.previewSettings = previewSettings ?? {};
+		this.previewSettings = Preview.allowlistPreviewSettings(previewSettings);
 		return this;
 	}
 

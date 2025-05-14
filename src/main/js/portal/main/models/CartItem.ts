@@ -1,5 +1,6 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
+import { PreviewSettings } from "./Preview";
 
 export interface DataObject {
 	dobj: string,
@@ -167,15 +168,18 @@ export default class CartItem {
 		return this._keyValPairs[key];
 	}
 
-	getNewUrl(keyVal: IdxSig){
+	getNewUrl(keyVal: IdxSig | PreviewSettings){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
 		if (newKeyVal.hasOwnProperty('y2') && newKeyVal.hasOwnProperty('legendLabels'))
 			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
 		const host = new URL('/dygraph-light', document.baseURI).href;
 
 		return `${host}/?` + Object.keys(newKeyVal)
-			.map(key => `${key}=${encodeURIComponent(decodeURIComponent(newKeyVal[key]))}`)
-			.join('&');
+			.flatMap((key) => {
+				return newKeyVal[key]
+				? [`${key}=${encodeURIComponent(decodeURIComponent(newKeyVal[key]))}`]
+				: [];
+			}).join('&');
 	}
 }
 
