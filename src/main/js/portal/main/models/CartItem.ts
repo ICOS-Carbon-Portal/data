@@ -176,7 +176,7 @@ export default class CartItem {
 
 		return `${host}/?` + Object.keys(newKeyVal)
 			.filter((key) => newKeyVal[key])
-			.map((key) => [`${key}=${encodeURIComponent(decodeURIComponent(newKeyVal[key]))}`])
+			.map((key) => `${key}=${encodeURIComponent(decodeURIComponent(newKeyVal[key]))}`)
 			.join('&');
 	}
 }
