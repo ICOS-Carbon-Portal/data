@@ -5,7 +5,7 @@ import {sparqlFetchAndParse} from './SparqlFetch'
 import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
-import { objectFilterClauses, objectFilterPrefixes } from '../sparqlQueries';
+import { filteredObjectsQuery } from '../sparqlQueries';
 import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
@@ -47,11 +47,9 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
 }
 
-function filteredKeywordsQuery(query: QueryParameters): Query<'keywords', never>{
-	const text = `# filteredKeywordsQuery
-${objectFilterPrefixes}
-select (cpmeta:distinct_keywords() as ?keywords) where{
-	${objectFilterClauses(query)}
-}`;
-	return {text};
+function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
+	return {
+		text: `# filteredKeywordsQuery
+				${filteredObjectsQuery(params, "(cpmeta:distinct_keywords() as ?keywords)")}`
+	};
 }
