@@ -258,7 +258,7 @@ function objectFilterClauses(query: QueryParameters): String {
 		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
 				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
-	return `\
+	return `
 		${pidListFilter}${specsValues}
 		?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 		BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
@@ -270,7 +270,7 @@ function objectFilterClauses(query: QueryParameters): String {
 }
 
 export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
-	const prefixes: string = `\
+	const prefixes: string = `
 		prefix cpmeta: <${config.cpmetaOntoUri}>
 		prefix prov: <http://www.w3.org/ns/prov#>
 		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -296,7 +296,7 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 }
 
 export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
-	const selections = "?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd";
+	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
 	return {
 		text: `# listFilteredDataObjects
 				${filteredObjectsQuery(params, selections)}`
