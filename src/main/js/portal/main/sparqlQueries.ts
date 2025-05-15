@@ -232,9 +232,8 @@ const getPidListFilter = (pidsList: (string | null)[]) => {
 	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 };
 
-export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
-
-	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
+function objectFilterClauses(query: QueryParameters): String {
+	const { specs, stations, submitters, sites, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = getPidListFilter(pidsList);
@@ -259,6 +258,25 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
 				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
+	return `
+		${pidListFilter}${specsValues}
+		?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+		BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
+		${stationSearch}
+		${siteSearch}
+		${submitterSearch}
+		${standardDobjPropsDef}
+		${getFilterClauses(filters, false)}`;
+}
+
+export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
+	const prefixes: string = `
+		prefix cpmeta: <${config.cpmetaOntoUri}>
+		prefix prov: <http://www.w3.org/ns/prov#>
+		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+		prefix geo: <http://www.opengis.net/ont/geosparql#>`
+
+	const { sorting, paging } = params;
 	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
@@ -267,26 +285,22 @@ export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery =>
 		)
 		: '';
 
-	const text = `# listFilteredDataObjects
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>
-select ?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
-where {
-	${pidListFilter}${specsValues}
-	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
-	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-	${stationSearch}
-	${siteSearch}
-	${submitterSearch}
-	${standardDobjPropsDef}
-	${getFilterClauses(filters, false)}
+	return `
+			${prefixes}
+			select ${selections}
+			where {
+				${objectFilterClauses(params)}
+			}
+			${orderBy}
+			offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 }
-${orderBy}
-offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 
-	return { text };
+export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
+	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
+	return {
+		text: `# listFilteredDataObjects
+				${filteredObjectsQuery(params, selections)}`
+	};
 };
 
 function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {

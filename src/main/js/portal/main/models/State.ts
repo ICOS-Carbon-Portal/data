@@ -20,7 +20,6 @@ import {DataObject as DO, References} from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
-import { KeywordsInfo } from "../backend/keywordsInfo";
 import {SupportedSRIDs} from "icos-cp-ol";
 import PortalHistoryState from "../backend/PortalHistoryState";
 
@@ -175,7 +174,7 @@ export interface State {
 	page: number
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
-	keywords: KeywordsInfo
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	exportQuery: ExportQuery
 }
@@ -238,7 +237,7 @@ export const defaultState: State = {
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
-	keywords: {specLookup: {}, dobjKeywords: []},
+	scopedKeywords: [],
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,
