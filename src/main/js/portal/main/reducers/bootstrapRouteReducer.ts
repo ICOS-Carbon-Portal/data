@@ -9,6 +9,7 @@ import CompositeSpecTable from "../models/CompositeSpecTable";
 import PreviewLookup from "../models/PreviewLookup";
 import Cart from "../models/Cart";
 import CartItem from "../models/CartItem";
+import Preview from "../models/Preview";
 
 // Make sure state updates here forces isRunningInit to false
 type BootstrapState = Partial<State> & {isRunningInit: false}
@@ -56,8 +57,9 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 		const objInfo = objectsTable.find(o => o.dobj === id);
 		return new CartItem(id, objInfo);
 	}))
-
-	const previewSettings = state.route === "preview" ? state.previewSettings : {};
+	const previewSettings = state.route === "preview"
+		? state.previewSettings
+		: Preview.allowlistPreviewSettings();
 	const preview = state.preview
 			.withPids(payload.pids, previewSettings)
 			.restore(previewLookup, cart, objectsTable);

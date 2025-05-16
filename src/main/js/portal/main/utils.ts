@@ -11,8 +11,8 @@ export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, previewSet
 	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
 	return items[0].getNewUrl({
 		objId: objIds,
-		x: xAxis,
-		...previewSettings
+		...previewSettings,
+		x: previewSettings.x ?? xAxis
 	});
 };
 

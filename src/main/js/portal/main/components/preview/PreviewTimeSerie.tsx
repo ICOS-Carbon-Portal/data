@@ -133,9 +133,9 @@ export default function PreviewTimeSerie(props: OurProps) {
 	const objIds = preview.items.map((i: CartItem) => getLastSegmentInUrl(i.dobj)).join();
 
 	const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
-
 	let params: PreviewSettings & { objId: string } = {
 		objId: objIds,
+		...Preview.allowlistPreviewSettings(),
 		x: xAxis,
 		linking,
 		type,
@@ -158,6 +158,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 	}
 
 	const iframeParamsStr = Object.entries(params)
+		.filter((param) => param[1])
 		.map((param) => param.join('='))
 		.join("&");
 
