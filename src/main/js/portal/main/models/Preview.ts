@@ -1,11 +1,11 @@
 import CartItem, {CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
+import {getNewTimeseriesUrl, getLastSegmentInUrl} from '../utils';
 import config, {PreviewType} from "../config";
 import deepEqual from 'deep-equal';
 import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
-import {ExtendedDobjInfo, ObjectsTable} from "./State";
-import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
+import {ObjectsTable} from "./State";
+import {Sha256Str, UrlStr} from "../backend/declarations";
 import { Value } from './SpecTable';
 
 
@@ -18,28 +18,26 @@ export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): numbe
 	return po1.varTitle.localeCompare(po2.varTitle)
 }
 
+export type PreviewSettings = {
+	x: string | undefined,
+	y: string | undefined,
+	y2: string | undefined,
+	type: string | undefined,
+	legendLabels: string | undefined,
+	legendLabelsY2: string | undefined,
+	linking: string | undefined,
+	img: string | undefined,
+	varName: string | undefined,
+	extraDim: string | undefined,
+	date: string | undefined,
+	gamma: string | undefined,
+	center: string | undefined,
+	zoom: string | undefined,
+	color: string | undefined,
+	y1: string | undefined,
+	map: string | undefined
+};
 
-const previewSettingsKeys = [
-	'x',
-	'y',
-	'y2',
-	'type',
-	'legendLabels',
-	'legendLabelsY2',
-	'linking',
-	'img',
-	'varName',
-	'extraDim',
-	'date',
-	'gamma',
-	'center',
-	'zoom',
-	'color',
-	'y1',
-	'map'
-] as readonly string[];
-
-export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
 
 export interface PreviewSerialized {
 	items: CartItemSerialized[]
@@ -60,17 +58,29 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = this.item?.urlParams ? Preview.allowlistPreviewSettings(this.item.urlParams) : {};
+		this.previewSettings = Preview.parsePreviewSettings(this.item?.urlParams || {});
 	}
 
-	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
-		const allowedPreviewSettings: PreviewSettings = {};
-		for (const key in urlParams) {
-			if (previewSettingsKeys.includes(key)) {
-				allowedPreviewSettings[key] = urlParams[key];
-			}
-		}
-		return allowedPreviewSettings;
+	static parsePreviewSettings(params: Record<string, string | undefined>): PreviewSettings {
+		return {
+			x: params['x'],
+			y: params['y'],
+			y2: params['y2'],
+			type: params['type'],
+			legendLabels: params['legendLabels'],
+			legendLabelsY2: params['legendLabelsY2'],
+			linking: params['linking'],
+			img: params['img'],
+			varName: params['varName'],
+			extraDim: params['extraDim'],
+			date: params['date'],
+			gamma: params['gamma'],
+			center: params['gamma'],
+			zoom: params['zoom'],
+			color: params['color'],
+			y1: params['y1'],
+			map: params['map']
+		};
 	}
 
 	get serialize(): PreviewSerialized {
@@ -155,7 +165,7 @@ export default class Preview {
 
 	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
-		this.previewSettings = previewSettings ?? {};
+		this.previewSettings = previewSettings ?? Preview.parsePreviewSettings({});
 		return this;
 	}
 
