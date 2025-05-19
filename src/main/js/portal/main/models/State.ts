@@ -225,7 +225,7 @@ export const defaultState: State = {
 	metadata: undefined,
 	station: undefined,
 	preview: new Preview(),
-	previewSettings: Preview.allowlistPreviewSettings(),
+	previewSettings: Preview.buildPreviewSettings(),
 	itemsToAddToCart: undefined,
 	toasterData: undefined,
 	batchDownloadStatus: {
@@ -375,7 +375,7 @@ const allowlistJsonHash = (hash: any): JsonHashState => {
 			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	allowedHash.previewSettings = { ...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps };
+	allowedHash.previewSettings = { ...Preview.buildPreviewSettings(allowedHash.previewSettings), ...ps };
 
 	return allowedHash;
 }

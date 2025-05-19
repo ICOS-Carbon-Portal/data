@@ -59,7 +59,7 @@ const handleRoutePreview = (state: State, payload: BootstrapRoutePreview): State
 	}))
 	const previewSettings = state.route === "preview"
 		? state.previewSettings
-		: Preview.allowlistPreviewSettings();
+		: Preview.buildPreviewSettings();
 	const preview = state.preview
 			.withPids(payload.pids, previewSettings)
 			.restore(previewLookup, cart, objectsTable);

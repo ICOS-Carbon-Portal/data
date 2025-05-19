@@ -63,7 +63,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 
 	const handleChartTypeAction = (currentChartType: 'line' | 'scatter') => {
 		const value = currentChartType === 'scatter' ? 'line' : 'scatter';
-		const newUrl = preview.item.getNewUrl({ ['type']: value});
+		const newUrl = preview.item.getNewUrl({ type: value });
 		iframeSrcChange({ target: { src: newUrl } } as ChangeEvent<HTMLIFrameElement>);
 
 		if (iframeRef.current?.contentWindow) {
@@ -135,7 +135,7 @@ export default function PreviewTimeSerie(props: OurProps) {
 	const showChartTypeControl = !previewExcludeChartType.datasets.includes(preview.item.dataset!);
 	let params: PreviewSettings & { objId: string } = {
 		objId: objIds,
-		...Preview.allowlistPreviewSettings(),
+		...Preview.buildPreviewSettings(),
 		x: xAxis,
 		linking,
 		type,

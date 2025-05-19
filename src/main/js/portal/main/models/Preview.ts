@@ -69,10 +69,10 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = Preview.allowlistPreviewSettings(this.item?.urlParams);
+		this.previewSettings = Preview.buildPreviewSettings(this.item?.urlParams);
 	}
 
-	static allowlistPreviewSettings(urlParams?: IdxSig | PreviewSettings): PreviewSettings {
+	static buildPreviewSettings(urlParams?: Partial<PreviewSettings>): PreviewSettings {
 		const allowedPreviewSettings: PreviewSettings = fromEntries(previewSettingsKeys.map(k => [k, undefined]));
 
 		for (const key in urlParams) {
@@ -165,7 +165,7 @@ export default class Preview {
 
 	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
-		this.previewSettings = Preview.allowlistPreviewSettings(previewSettings);
+		this.previewSettings = Preview.buildPreviewSettings(previewSettings);
 		return this;
 	}
 

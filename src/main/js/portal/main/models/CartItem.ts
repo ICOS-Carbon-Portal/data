@@ -27,7 +27,7 @@ export interface CartItemSerialized {
 	dataobject: DataObject | undefined
 	type: PreviewType | undefined
 	url: UrlStr | undefined
-	keyValPairs: IdxSig
+	keyValPairs: Record<string, string | undefined>
 }
 
 export default class CartItem {
@@ -35,7 +35,7 @@ export default class CartItem {
 	private readonly _dataobject: DataObject | undefined;
 	private readonly _type: PreviewType | undefined;
 	private readonly _url: UrlStr | undefined;
-	private readonly _keyValPairs: IdxSig;
+	private readonly _keyValPairs: Record<string, string | undefined>;
 
 	constructor(id: string, dataobject?: DataObject, type?: PreviewType, url?: string){
 		this._id = id;
@@ -168,15 +168,20 @@ export default class CartItem {
 		return this._keyValPairs[key];
 	}
 
-	getNewUrl(keyVal: IdxSig | PreviewSettings){
+	getNewUrl(keyVal: Record<string, string | undefined>){
 		const newKeyVal = Object.assign(this._keyValPairs, keyVal);
-		if (newKeyVal.hasOwnProperty('y2') && newKeyVal.hasOwnProperty('legendLabels'))
+		if (newKeyVal.hasOwnProperty('y2')
+			&& newKeyVal['y2'] !== undefined
+			&& newKeyVal.hasOwnProperty('legendLabels')
+			&& newKeyVal['legendLabels'] !== undefined) {
 			Object.assign(newKeyVal, {legendLabelsY2: newKeyVal.legendLabels});
+		}
+
 		const host = new URL('/dygraph-light', document.baseURI).href;
 
-		return `${host}/?` + Object.keys(newKeyVal)
-			.filter((key) => newKeyVal[key])
-			.map((key) => `${key}=${encodeURIComponent(decodeURIComponent(newKeyVal[key]))}`)
+		return `${host}/?` + Object.entries(newKeyVal)
+			.filter((param): param is [string, string] => param[1] !== undefined)
+			.map((param) => `${param[0]}=${encodeURIComponent(decodeURIComponent(param[1]))}`)
 			.join('&');
 	}
 }
