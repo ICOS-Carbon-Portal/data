@@ -76,6 +76,8 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
+const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	let siteQueries: string
 	switch(config.envri){
@@ -109,6 +111,7 @@ prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ?spec ?countryCode ?submitter ?count ?station ?ecosystem ?location ?site ?stationclass ?stationNetwork
+${envriFilteringFromClauses}
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -121,7 +124,6 @@ where{
 		}
 		group by ?spec ?submitter ?station ?site
 	}
-	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${siteQueries}
 	}`;
@@ -240,7 +242,6 @@ function objectFilterClauses(query: QueryParameters): String {
 
 	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
-			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
 			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
 
@@ -288,6 +289,7 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 	return `
 			${prefixes}
 			select ${selections}
+			${envriFilteringFromClauses}
 			where {
 				${objectFilterClauses(params)}
 			}

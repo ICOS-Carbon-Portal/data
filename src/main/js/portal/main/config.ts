@@ -34,6 +34,8 @@ const additionalStationsGraphs: { [E in Envri]?: UrlStr[] } = {
 	ICOSCities: ['https://citymeta.icos-cp.eu/resources/citymeta/']
 }
 
+const envriFilteringFromGraphs = [metaResourceGraph[envri]].concat(additionalStationsGraphs[envri] ?? [])
+
 const searchResultsCSVName = {
 	ICOS: 'Carbon Portal Search Result.csv',
 	SITES: 'SITES Data Portal Search Results.csv',
@@ -177,6 +179,7 @@ export default {
 	dobjExtendedCacheFetchLimit: 20,
 	objectUriPrefix,
 	metaResourceGraph,
+	envriFilteringFromGraphs,
 	additionalStationsGraphs,
 	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP', 'time'],
 	historyStateMaxAge: (1000 * 3600 * 24),
