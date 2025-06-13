@@ -1,11 +1,11 @@
 import { Query } from "icos-cp-backend";
-import config from '../config';
+import localConfig from '../config';
 import commonConfig from '../../../common/main/config';
 import {sparqlFetchAndParse} from './SparqlFetch'
 import { sparqlParsers } from "./sparql";
 import { UrlStr } from "./declarations";
 import {distinct} from '../utils';
-import { filteredObjectsQuery } from '../sparqlQueries';
+import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
 import { QueryParameters } from "../actions/types";
 
 export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
@@ -16,7 +16,7 @@ export default{
 		return getUniqueKeywords(query);
 	}
 }
-
+const config = Object.assign(commonConfig, localConfig);
 
 //proj keywords are inherited
 export function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
@@ -48,8 +48,18 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 }
 
 function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
-	return {
-		text: `# filteredKeywordsQuery
-				${filteredObjectsQuery(params, "(cpmeta:distinct_keywords() as ?keywords)")}`
+	const prefixes: string = `
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>`
+
+	return {text: `# filteredKeywordsQuery
+${prefixes}
+select (cpmeta:distinct_keywords() as ?keywords)
+${envriFilteringFromClauses}
+where {
+	${objectFilterClauses(params)}
+}`
 	};
 }
