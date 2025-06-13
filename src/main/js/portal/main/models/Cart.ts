@@ -6,7 +6,7 @@ export default class Cart {
 	readonly _ts: string;
 
 	constructor(name: string | undefined = undefined, items: CartItem[] | undefined = undefined){
-		this._name = name || 'My data cart';
+		this._name = name || "";
 		this._items = items || [];
 		this._ts = (items ? Date.now() + '' : '0');
 	}

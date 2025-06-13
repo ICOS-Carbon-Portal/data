@@ -8,91 +8,96 @@ import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
 import {removeFromCart, updateRoute} from "../actions/common";
 import Message from '../components/ui/Message';
-
+import DownloadButton from '../components/buttons/DownloadButton';
+import { useDownloadInfo } from '../hooks/useDownloadInfo';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 export type DataCartProps = StateProps & DispatchProps;
 
 
-class DataCart extends Component<DataCartProps> {
+function DataCart(props: DataCartProps) {
 
-	handlePreview(urls: UrlStr[]){
-		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
+	function handlePreview(urls: UrlStr[]){
+		props.updateRoute('preview', getLastSegmentsInUrls(urls));
 	}
 
-	handleRouteClick(newRoute: Route){
-		this.props.updateCheckedObjectsInCart([]);
-		this.props.updateRoute(newRoute);
+	function handleRouteClick(newRoute: Route){
+		props.updateCheckedObjectsInCart([]);
+		props.updateRoute(newRoute);
 	}
 
-	handleAllCheckboxesChange() {
-		if (this.props.checkedObjectsInCart.length > 0) {
-			this.props.updateCheckedObjectsInCart([]);
+	function handleAllCheckboxesChange() {
+		if (props.checkedObjectsInCart.length > 0) {
+			props.updateCheckedObjectsInCart([]);
 		} else {
-			const checkedObjects = this.props.cart.items.map(item => item.dobj);
-			this.props.updateCheckedObjectsInCart(checkedObjects);
+			const checkedObjects = props.cart.items.map(item => item.dobj);
+			props.updateCheckedObjectsInCart(checkedObjects);
 		}
 	}
 
-	handleFormSubmit(){
-		const {name, pids} = this.props.cart;
+	const {preview, user, updateCheckedObjectsInCart, extendedDobjInfo, labelLookup} = props;
+	const localObjectsTable = props.cart.items.flatMap((x) => x.knownDataObject ? [x.knownDataObject] : [])
+	const downloadInfo = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj), objectsTable: localObjectsTable, extendedDobjInfo, labelLookup});
+
+	function handleDownloadLog() {
+		const {name, pids} = props.cart;
 		logCartDownloadClick(name, pids);
+		// only do if cart download successful:
+		//props.removeFromCart(localObjectsTable.map((x) => x.dobj));
 	}
 
-	render(){
-		const {preview, user, cart, updateCheckedObjectsInCart} = this.props;
-		const previewitemId = preview.item ? preview.item.dobj : undefined;
-		const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
-			? 'Download cart content'
-			: 'Accept license and download cart content';
-		const fileName = cart.name;
-		const hashes = JSON.stringify(cart.pids);
+	const cart = props.cart.name ? props.cart : props.cart.withName(downloadInfo.filename);
 
-		return (
-			<div>
-				{!cart.isInitialized || cart.count > 0 ?
-					<div className="row">
-						<div className="col-sm-8 col-lg-9">
-							<CartPanel
-								previewitemId={previewitemId}
-								previewItemAction={this.handlePreview.bind(this)}
-								updateCheckedObjects={updateCheckedObjectsInCart}
-								handleAllCheckboxesChange={this.handleAllCheckboxesChange.bind(this)}
-								{...this.props}
-							/>
-						</div>
-						<div className="col-sm-4 col-lg-3">
-							<div className="card">
-								<div className="card-header">
-									{downloadTitle}
-								</div>
-								<div className="card-body text-center">
+	const previewitemId = preview.item ? preview.item.dobj : undefined;
+	const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
+		? 'Download cart content'
+		: 'Accept license and download cart content';
+	const hashes = JSON.stringify(cart.pids);
 
-									<form action="/objects" method="post" onSubmit={this.handleFormSubmit.bind(this)} target="_blank">
-										<input type="hidden" name="fileName" value={fileName} />
-										<input type="hidden" name="ids" value={hashes} />
+	console.log(props.cart.items)
 
-										<button className="btn btn-warning" style={{marginBottom: 15, whiteSpace: 'normal'}}>
-											<span className="fas fa-download" style={{marginRight:9}} />Download
-										</button>
-									</form>
-
-									<div style={{textAlign: 'center', fontSize:'90%'}}>
-										Total size: {formatBytes(cart.size)} (uncompressed)
-									</div>
+	return (
+		<div>
+			{!cart.isInitialized || cart.count > 0 ?
+				<div className="row">
+					<div className="col-sm-8 col-lg-9">
+						<CartPanel
+							previewitemId={previewitemId}
+							previewItemAction={handlePreview}
+							updateCheckedObjects={updateCheckedObjectsInCart}
+							handleAllCheckboxesChange={handleAllCheckboxesChange}
+							{...props}
+							cart={cart}
+						/>
+					</div>
+					<div className="col-sm-4 col-lg-3">
+						<div className="card">
+							<div className="card-header">
+								{downloadTitle}
+							</div>
+							<div className="card-body text-center">
+								<DownloadButton
+									style={{}}
+									readyObjectIds={props.cart.items.flatMap((x) => x.knownDataObject ? [x.knownDataObject.dobj] : [])}
+									enabled={props.cart.items.length > 0}
+									filename={cart.name}
+									onSubmitAsForm={handleDownloadLog}
+								/>
+								<div style={{textAlign: 'center', fontSize:'90%'}}>
+									Total size: {formatBytes(cart.size)} (uncompressed)
 								</div>
 							</div>
 						</div>
 					</div>
-					:
-					<Message
-						title="Your cart is empty"
-						onclick={this.handleRouteClick.bind(this, 'search')} />
-				}
-			</div>
-		);
-	}
+				</div>
+				:
+				<Message
+					title="Your cart is empty"
+					onclick={() => (handleRouteClick('search'))} />
+			}
+		</div>
+	);
 }
 
 function stateToProps(state: State){

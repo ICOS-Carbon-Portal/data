@@ -1,5 +1,5 @@
 import {Action} from "redux";
-import { LabelLookup, MetaData, MetaDataWStats, StateSerialized, DataObject, TsSettings, WhoAmI} from "../models/State";
+import { LabelLookup, MetaData, MetaDataWStats, StateSerialized, KnownDataObject, TsSettings, WhoAmI} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchKnownDataObjects,
@@ -96,7 +96,7 @@ export class BackendBatchDownload extends BackendPayload{
 	constructor(readonly isBatchDownloadOk: boolean, readonly user: WhoAmI){super();}
 }
 
-export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | DataObject[];
+export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | KnownDataObject[];
 export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
 }

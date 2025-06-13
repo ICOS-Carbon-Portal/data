@@ -15,7 +15,7 @@ import deepequal from 'deep-equal';
 import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
 import {Store} from "redux";
 import {fetchKnownDataObjects} from "../backend";
-import {DataObject as DO, References} from "../../../common/main/metacore";
+import {DataObject, References} from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
@@ -90,7 +90,7 @@ export type ExtendedDobjInfo = {
 	biblioInfo?: References
 }
 
-export type DataObject = {
+export type KnownDataObject = {
 	dobj: string
 	hasNextVersion: boolean
 	hasVarInfo?: boolean
@@ -112,7 +112,7 @@ export type DataObject = {
 	extendedDobjInfo?: ExtendedDobjInfo
 }
 
-export interface MetaData extends DO {
+export interface MetaData extends DataObject {
 	id: UrlStr
 }
 
@@ -170,7 +170,7 @@ export interface State {
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
-	objectsTable: DataObject[]
+	objectsTable: KnownDataObject[]
 	sorting: {
 		varName: string,
 		ascending: boolean

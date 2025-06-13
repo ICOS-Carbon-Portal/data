@@ -1,10 +1,10 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
-import { DataObject } from "./State";
+import { KnownDataObject } from "./State";
 
 export interface CartItemSerialized {
 	id: string
-	dataobject: DataObject | undefined
+	dataobject: KnownDataObject | undefined
 	type: PreviewType | undefined
 	url: UrlStr | undefined
 	keyValPairs: IdxSig
@@ -12,12 +12,12 @@ export interface CartItemSerialized {
 
 export default class CartItem {
 	private readonly _id: UrlStr;
-	private readonly _dataobject: DataObject | undefined;
+	private readonly _dataobject: KnownDataObject | undefined;
 	private readonly _type: PreviewType | undefined;
 	private readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: IdxSig;
 
-	constructor(id: string, dataobject?: DataObject, type?: PreviewType, url?: string){
+	constructor(id: string, dataobject?: KnownDataObject, type?: PreviewType, url?: string){
 		this._id = id;
 		this._dataobject = dataobject;
 		this._type = type;
@@ -58,6 +58,10 @@ export default class CartItem {
 
 	get dobj() {
 		return this._id;
+	}
+
+	get knownDataObject() {
+		return this._dataobject;
 	}
 
 	get hasNextVersion() {
@@ -164,7 +168,7 @@ export type CartProhibition = {
 	allowCartAdd: boolean
 	uiMessage?: string
 }
-export function addingToCartProhibition(dobj: DataObject | CartItem): CartProhibition {
+export function addingToCartProhibition(dobj: KnownDataObject | CartItem): CartProhibition {
 
 	if(dobj.submTime.getTime() > Date.now())
 		return {allowCartAdd: false, uiMessage: "This data object is under moratorium"}
