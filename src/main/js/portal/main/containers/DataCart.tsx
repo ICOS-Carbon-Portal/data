@@ -1,7 +1,8 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
-import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick, emptyCart, restoreLastCart} from '../actions/cart';
+import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, 
+		logCartDownloadClick, emptyCart, restoreLastCart} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
@@ -43,8 +44,6 @@ function DataCart(props: DataCartProps) {
 	function handleDownloadLog() {
 		const {name, pids} = props.cart;
 		logCartDownloadClick(name, pids);
-		// only do if cart download successful:
-		//props.removeFromCart(localObjectsTable.map((x) => x.dobj));
 		props.emptyCart();
 	}
 

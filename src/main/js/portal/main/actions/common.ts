@@ -280,11 +280,11 @@ export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<
 		getError(errorId).then(response => {
 			if (response && response.error && response.error.state) {
 				const stateJSON = JSON.parse(response.error.state);
-				const objectsTable = stateJSON.objectsTable.map((ot: KnownDataObject) => {
-					return Object.assign(ot, {
-						submTime: new Date(ot.submTime),
-						timeStart: new Date(ot.timeStart),
-						timeEnd: new Date(ot.timeEnd)
+				const objectsTable = stateJSON.objectsTable.map((dobj: KnownDataObject) => {
+					return Object.assign(dobj, {
+						submTime: new Date(dobj.submTime),
+						timeStart: new Date(dobj.timeStart),
+						timeEnd: new Date(dobj.timeEnd)
 					});
 				});
 				const cart = restoreCart({cart: stateJSON.cart});

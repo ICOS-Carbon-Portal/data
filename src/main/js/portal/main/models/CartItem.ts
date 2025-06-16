@@ -168,8 +168,11 @@ export type CartProhibition = {
 	allowCartAdd: boolean
 	uiMessage?: string
 }
-export function addingToCartProhibition(dobj: KnownDataObject | CartItem): CartProhibition {
+export function addingToCartProhibition(dobj: KnownDataObject | undefined): CartProhibition {
 
+	if(dobj === undefined) {
+		return { allowCartAdd: false, uiMessage: "This data object has not yet been loaded" }
+	}
 	if(dobj.submTime.getTime() > Date.now())
 		return {allowCartAdd: false, uiMessage: "This data object is under moratorium"}
 

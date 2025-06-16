@@ -1,4 +1,4 @@
-import React, {Component, useState} from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { KnownDataObject, State} from "../../models/State";
 import {PortalDispatch} from "../../store";

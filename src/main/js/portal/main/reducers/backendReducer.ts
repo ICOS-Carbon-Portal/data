@@ -88,9 +88,7 @@ export default function(state: State, payload: BackendPayload): State {
 		});
 	}
 
-	if (payload instanceof BackendUpdateLastCart){
-		console.log("presumably updating state with lastCart")
-		console.log(payload);
+	if (payload instanceof BackendUpdateLastCart) {
 		return stateUtils.update(state,{
 			lastCart: payload.cart,
 			checkedObjectsInCart: []

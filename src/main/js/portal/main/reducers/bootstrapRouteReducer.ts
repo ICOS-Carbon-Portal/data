@@ -39,9 +39,9 @@ export default function(state: State, payload: BootstrapRoutePayload): State {
 }
 
 const getObjectsTable = (specTable: CompositeSpecTable, objectsTable: ObjectsTableLike) => {
-	return (objectsTable as KnownDataObject[]).map(ot => {
-		const spec = specTable.getTableRows('basics').find(r => r.spec === ot.spec);
-		return {...ot, ...spec};
+	return (objectsTable as KnownDataObject[]).map(dobj => {
+		const spec = specTable.getTableRows('basics').find(r => r.spec === dobj.spec);
+		return {...dobj, ...spec};
 	});
 };
 

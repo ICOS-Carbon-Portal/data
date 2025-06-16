@@ -74,20 +74,20 @@ export interface User extends WhoAmI {
 
 export type ExtendedDobjInfo = {
 	dobj: UrlStr
-	station?: string
-	stationId?: string
-	samplingHeight?: number
-	samplingPoint?: string
-	theme?: string
-	themeIcon?: string
-	title?: string
-	description?: string
-	specComments?: string
-	columnNames?: string[]
-	site?: string
-	hasVarInfo?: boolean
-	dois?: UrlStr[]
-	biblioInfo?: References
+	station: string | undefined
+	stationId: string | undefined
+	samplingHeight: number | undefined
+	samplingPoint: string | undefined
+	theme: string | undefined
+	themeIcon: string | undefined
+	title: string | undefined
+	description: string | undefined
+	specComments: string | undefined
+	columnNames: string[] | undefined
+	site: string | undefined
+	hasVarInfo: boolean | undefined
+	dois: UrlStr[] | undefined
+	biblioInfo: References | undefined
 }
 
 export type KnownDataObject = {

@@ -29,7 +29,7 @@ const iconLevel = [
 ];
 
 interface OurProps {
-	objInfo: KnownDataObject | CartItem
+	objInfo: KnownDataObject | undefined
 	extendedInfo: ExtendedDobjInfo
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
@@ -44,6 +44,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		if (objInfo === undefined) {
+			return;
+		}
 		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }

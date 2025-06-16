@@ -52,9 +52,9 @@ export function setCartName(newName: string): PortalThunkAction<void> {
 }
 
 function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
-	return dispatch => saveCart(email, cart).then(() => {
+	return dispatch => saveCart(email, cart).then(() =>
 		dispatch(new Payloads.BackendUpdateCart(cart))
-});
+	);
 }
 
 function updateLastCart(cart: Cart): PortalThunkAction<void> {
