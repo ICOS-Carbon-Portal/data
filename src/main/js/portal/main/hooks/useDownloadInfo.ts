@@ -73,7 +73,7 @@ export function useDownloadInfo(props: Props) {
 		const stationIdsArr: string[] = Object.values(readyObjectsInfo)
 			.flatMap((info) => info.stationId ? [info.stationId] : [""]);
 		const stationId = (new Set(stationIdsArr)).size === 1 ? stationIdsArr[0] : "";
-		
+
 		const specsArr: string[] = Object.values(readyObjectsInfo)
 			.flatMap((info) => info.spec ? [info.spec] : [""]);
 		const spec = (new Set(specsArr)).size === 1 ? specsArr[0] : "";
@@ -85,8 +85,6 @@ export function useDownloadInfo(props: Props) {
 			.replaceAll(/[^0-9a-zA-Z\-._]/g, separator)
 			.replaceAll(multiSeparatorRegExp, separator)
 			.replace(endSeparatorRegExp, "");
-
-		console.log(filenameArr);
 
 		return filename;
 	}, [readyObjectsInfo]);

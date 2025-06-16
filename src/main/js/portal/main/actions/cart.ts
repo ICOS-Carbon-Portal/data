@@ -52,9 +52,15 @@ export function setCartName(newName: string): PortalThunkAction<void> {
 }
 
 function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
-	return dispatch => saveCart(email, cart).then(() =>
+	return dispatch => saveCart(email, cart).then(() => {
 		dispatch(new Payloads.BackendUpdateCart(cart))
-	);
+});
+}
+
+function updateLastCart(cart: Cart): PortalThunkAction<void> {
+	return dispatch => {
+		dispatch(new Payloads.BackendUpdateLastCart(cart))
+	};
 }
 
 export function logCartDownloadClick(fileName: string, pids: string[]) {
@@ -78,4 +84,19 @@ export function updateCheckedObjectsInCart(checkedObjectInCart: UrlStr | UrlStr[
 	return (dispatch) => {
 		dispatch(new Payloads.UiUpdateCheckedObjsInCart(checkedObjectInCart));
 	};
+}
+
+export function emptyCart(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		dispatch(updateLastCart(state.cart));
+		dispatch(updateCart(state.user.email, new Cart()));
+	}
+}
+
+export function restoreLastCart(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		dispatch(updateCart(state.user.email, state.lastCart ?? state.cart));
+	}
 }

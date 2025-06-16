@@ -176,7 +176,8 @@ export interface State {
 		ascending: boolean
 	}
 	paging: Paging
-	cart: Cart
+	cart: Cart 
+	lastCart: Cart | undefined
 	id: UrlStr | undefined
 	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
@@ -240,6 +241,7 @@ export const defaultState: State = {
 	},
 	paging: new Paging({objCount: 0}),
 	cart: new Cart(),
+	lastCart: undefined,
 	id: undefined,
 	metadata: undefined,
 	station: undefined,
@@ -290,6 +292,7 @@ const serialize = (state: State) => {
 		baseDobjStats: state.baseDobjStats.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
+		lastCart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
 	};

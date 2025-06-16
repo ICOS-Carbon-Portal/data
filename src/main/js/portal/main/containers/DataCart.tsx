@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
-import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick} from '../actions/cart';
+import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick, emptyCart, restoreLastCart} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
@@ -45,6 +45,11 @@ function DataCart(props: DataCartProps) {
 		logCartDownloadClick(name, pids);
 		// only do if cart download successful:
 		//props.removeFromCart(localObjectsTable.map((x) => x.dobj));
+		props.emptyCart();
+	}
+
+	function handleRestore() {
+		props.restoreLastCart();
 	}
 
 	const cart = props.cart.name ? props.cart : props.cart.withName(downloadInfo.filename);
@@ -54,8 +59,6 @@ function DataCart(props: DataCartProps) {
 		? 'Download cart content'
 		: 'Accept license and download cart content';
 	const hashes = JSON.stringify(cart.pids);
-
-	console.log(props.cart.items)
 
 	return (
 		<div>
@@ -94,7 +97,8 @@ function DataCart(props: DataCartProps) {
 				:
 				<Message
 					title="Your cart is empty"
-					onclick={() => (handleRouteClick('search'))} />
+					onclick={() => (handleRouteClick('search'))} 
+					onclickSecondary={props.lastCart ? handleRestore : undefined}/>
 			}
 		</div>
 	);
@@ -103,6 +107,7 @@ function DataCart(props: DataCartProps) {
 function stateToProps(state: State){
 	return {
 		cart: state.cart,
+		lastCart: state.lastCart,
 		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		user: state.user,
@@ -119,6 +124,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		emptyCart: () => dispatch(emptyCart()),
+		restoreLastCart: () => dispatch(restoreLastCart()),
 	};
 }
 

@@ -11,6 +11,7 @@ import {
 	BackendTsSettings,
 	BackendBatchDownload,
 	BackendUpdateCart,
+	BackendUpdateLastCart,
 	BackendExportQuery
 } from "./actionpayloads";
 import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
@@ -84,6 +85,15 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state,{
 			cart: payload.cart,
 			checkedObjectsInCart: state.checkedObjectsInCart.filter(uri => payload.cart.ids.includes(uri))
+		});
+	}
+
+	if (payload instanceof BackendUpdateLastCart){
+		console.log("presumably updating state with lastCart")
+		console.log(payload);
+		return stateUtils.update(state,{
+			lastCart: payload.cart,
+			checkedObjectsInCart: []
 		});
 	}
 

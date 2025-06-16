@@ -40,7 +40,7 @@ function PreviewTitle(props: OurProps) {
 	const buttonAction = areItemsInCart ? handleRemoveFromCart : handleAddToCart;
 
 	const localObjectsTable = items.flatMap((x) => x.knownDataObject ? [x.knownDataObject] : [])
-	const { filename } = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj), objectsTable: localObjectsTable, 	
+	const { filename } = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj), objectsTable: localObjectsTable,
 			extendedDobjInfo, labelLookup});
 
 	return (

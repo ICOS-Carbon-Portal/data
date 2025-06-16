@@ -92,6 +92,10 @@ export class BackendUpdateCart extends BackendPayload{
 	constructor(readonly cart: Cart){super();}
 }
 
+export class BackendUpdateLastCart extends BackendPayload{
+	constructor(readonly cart: Cart){super();}
+}
+
 export class BackendBatchDownload extends BackendPayload{
 	constructor(readonly isBatchDownloadOk: boolean, readonly user: WhoAmI){super();}
 }
