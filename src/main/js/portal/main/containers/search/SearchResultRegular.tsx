@@ -32,122 +32,120 @@ const dropdownLookup = {
 	submTime: 'Submission time'
 };
 
-class SearchResultRegular extends Component<OurProps> {
-	render(){
-		const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
-			toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
-			updateCheckedObjects, handlePreview, handleAddToCart,
-			handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = this.props;
+function SearchResultRegular(props: OurProps) {
+	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
+		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
+		updateCheckedObjects, handlePreview, handleAddToCart,
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = props;
 
-		const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-		const checkedUriSet = new Set<string>(checkedObjectsInSearch)
-		const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj))
+	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
+	const checkedUriSet = new Set<string>(checkedObjectsInSearch)
+	const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj))
 
-		return (
-			<div className="card">
-				<Paging
-					searchOptions={searchOptions}
-					type="header"
-					paging={paging}
-					requestStep={requestStep}
-					getAllFilteredDataObjects={getAllFilteredDataObjects}
-					exportQuery={exportQuery}
-				/>
+	return (
+		<div className="card">
+			<Paging
+				searchOptions={searchOptions}
+				type="header"
+				paging={paging}
+				requestStep={requestStep}
+				getAllFilteredDataObjects={getAllFilteredDataObjects}
+				exportQuery={exportQuery}
+			/>
 
-				<div className="card-body">
+			<div className="card-body">
 
-					<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
-						<div className="d-flex mb-2">
-							<CheckAllBoxes
-								checkCount={checkedObjectsInSearch.length}
-								totalCount={paging.pageCount}
-								onChange={handleAllCheckboxesChange}
-								disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
+				<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
+					<div className="d-flex mb-2">
+						<CheckAllBoxes
+							checkCount={checkedObjectsInSearch.length}
+							totalCount={paging.pageCount}
+							onChange={handleAllCheckboxesChange}
+							disabled={objectsTable.every(o => !addingToCartProhibition(o).allowCartAdd)} />
 
-							<Dropdown
-								isSorter={true}
-								isEnabled={true}
-								selectedItemKey={sorting.varName}
-								isAscending={sorting.ascending}
-								itemClickAction={toggleSort}
-								lookup={dropdownLookup}
-							/>
+						<Dropdown
+							isSorter={true}
+							isEnabled={true}
+							selectedItemKey={sorting.varName}
+							isAscending={sorting.ascending}
+							itemClickAction={toggleSort}
+							lookup={dropdownLookup}
+						/>
 
-							{checkedObjectsInSearch.length > 0 &&
-								<span style={{ marginLeft: 12, marginTop: 7 }}>{checkedObjectsInSearch.length} {objectText} selected</span>
-							}
-						</div>
-
-						<div className="d-flex mb-3">
-
-							<div style={{position:'relative', top:7, margin: '0 10px'}}>
-								<HelpButton
-									name={'preview'}
-									title="View help about Preview"
-									overrideStyles={{ paddingLeft: 0 }}
-								/>
-							</div>
-
-							<PreviewBtn
-								style={{ marginRight: 10 }}
-								checkedObjects={checkedObjects}
-								previewLookup={previewLookup}
-								clickAction={handlePreview}
-							/>
-
-							{user.email &&
-								<CartBtn
-									style={{ marginRight: 10 }}
-									checkedObjects={checkedObjectsInSearch}
-									clickAction={handleAddToCart}
-									enabled={checkedObjectsInSearch.length > 0}
-									type='add'
-								/>
-							}
-
-							<DownloadButton
-								style={{}}
-								checkedObjects={checkedObjectsInSearch}
-								enabled={checkedObjectsInSearch.length > 0}
-							/>
-
-						</div>
-
-					</div>
-
-					<div>
-						{
-							objectsTable.map((objInfo: KnownDataObject, i) => {
-								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
-
-								return extendedInfo && (
-									<SearchResultRegularRow
-										labelLookup={labelLookup}
-										extendedInfo={extendedInfo}
-										preview={preview}
-										objInfo={objInfo}
-										key={'dobj_' + i}
-										updateCheckedObjects={updateCheckedObjects}
-										isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
-										checkedObjects={checkedObjects}
-										isCartView={false}
-									/>
-								);
-							})
+						{checkedObjectsInSearch.length > 0 &&
+							<span style={{ marginLeft: 12, marginTop: 7 }}>{checkedObjectsInSearch.length} {objectText} selected</span>
 						}
 					</div>
+
+					<div className="d-flex mb-3">
+
+						<div style={{position:'relative', top:7, margin: '0 10px'}}>
+							<HelpButton
+								name={'preview'}
+								title="View help about Preview"
+								overrideStyles={{ paddingLeft: 0 }}
+							/>
+						</div>
+
+						<PreviewBtn
+							style={{ marginRight: 10 }}
+							checkedObjects={checkedObjects}
+							previewLookup={previewLookup}
+							clickAction={handlePreview}
+						/>
+
+						{user.email &&
+							<CartBtn
+								style={{ marginRight: 10 }}
+								checkedObjects={checkedObjectsInSearch}
+								clickAction={handleAddToCart}
+								enabled={checkedObjectsInSearch.length > 0}
+								type='add'
+							/>
+						}
+
+						<DownloadButton
+							style={{}}
+							checkedObjects={checkedObjectsInSearch}
+							enabled={checkedObjectsInSearch.length > 0}
+						/>
+
+					</div>
+
 				</div>
-				<Paging
-					searchOptions={undefined}
-					type="footer"
-					paging={paging}
-					requestStep={requestStep}
-					getAllFilteredDataObjects={getAllFilteredDataObjects}
-					exportQuery={exportQuery}
-				/>
+
+				<div>
+					{
+						objectsTable.map((objInfo: KnownDataObject, i) => {
+							const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+
+							return extendedInfo && (
+								<SearchResultRegularRow
+									labelLookup={labelLookup}
+									extendedInfo={extendedInfo}
+									preview={preview}
+									objInfo={objInfo}
+									key={'dobj_' + i}
+									updateCheckedObjects={updateCheckedObjects}
+									isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
+									checkedObjects={checkedObjects}
+									isCartView={false}
+								/>
+							);
+						})
+					}
+				</div>
 			</div>
-		);
-	}
+			<Paging
+				searchOptions={undefined}
+				type="footer"
+				paging={paging}
+				requestStep={requestStep}
+				getAllFilteredDataObjects={getAllFilteredDataObjects}
+				exportQuery={exportQuery}
+			/>
+		</div>
+	);
 }
 
 function stateToProps(state: State){
