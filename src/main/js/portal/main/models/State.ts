@@ -12,11 +12,9 @@ import config, {
 	numberFilterKeys
 } from "../config";
 import deepequal from 'deep-equal';
-import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
+import { UrlStr, Sha256Str } from "../backend/declarations";
 import {Store} from "redux";
-import {fetchKnownDataObjects} from "../backend";
-import {DataObject} from "./CartItem";
-import {DataObject as DO, References} from "../../../common/main/metacore";
+import { DataObject, References } from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
@@ -72,7 +70,28 @@ export interface User extends WhoAmI {
 	profile: Profile | {}
 }
 
-type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
+export type KnownDataObject = {
+	dobj: string
+	hasNextVersion: boolean
+	hasVarInfo?: boolean
+	dataset: string
+	fileName: string
+	format: string
+	formatLabel?: string
+	level: number
+	size: string
+	spec: string
+	specLabel?: string
+	submTime: Date
+	theme: string
+	themeLabel?: string
+	timeEnd: Date
+	timeStart: Date
+	type?: string //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	temporalResolution?: string
+	extendedDobjInfo?: ExtendedDobjInfo
+}
+
 export type ExtendedDobjInfo = {
 	dobj: UrlStr
 	station: string | undefined
@@ -90,9 +109,8 @@ export type ExtendedDobjInfo = {
 	dois: UrlStr[] | undefined
 	biblioInfo: References | undefined
 }
-export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
-export interface MetaData extends DO {
+export interface MetaData extends DataObject {
 	id: UrlStr
 }
 
@@ -150,7 +168,7 @@ export interface State {
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
-	objectsTable: ObjectsTable[]
+	objectsTable: KnownDataObject[]
 	sorting: {
 		varName: string,
 		ascending: boolean

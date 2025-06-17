@@ -1,6 +1,6 @@
 import stateUtils, {
 	MapProps,
-	ObjectsTable,
+	KnownDataObject,
 	Profile,
 	Route,
 	State,
@@ -203,7 +203,7 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 
 		if (user.email) {
 			const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
-				const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
+				const objInfo: KnownDataObject | undefined = objectsTable.find(o => o.dobj === id);
 
 				if (objInfo === undefined)
 					throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
@@ -269,11 +269,11 @@ export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<
 		getError(errorId).then(response => {
 			if (response && response.error && response.error.state) {
 				const stateJSON = JSON.parse(response.error.state);
-				const objectsTable = stateJSON.objectsTable.map((ot: ObjectsTable) => {
-					return Object.assign(ot, {
-						submTime: new Date(ot.submTime),
-						timeStart: new Date(ot.timeStart),
-						timeEnd: new Date(ot.timeEnd)
+				const objectsTable = stateJSON.objectsTable.map((kdobj: KnownDataObject) => {
+					return Object.assign(kdobj, {
+						submTime: new Date(kdobj.submTime),
+						timeStart: new Date(kdobj.timeStart),
+						timeEnd: new Date(kdobj.timeEnd)
 					});
 				});
 				const cart = restoreCart({cart: stateJSON.cart});
