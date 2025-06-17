@@ -87,18 +87,18 @@ export default class CartPanel extends Component<Props, State> {
 					</div>
 
 					{
-						props.cart.items.map((objInfo, i) => {
-							const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+						props.cart.items.map((cartItem, i) => {
+							const extendedInfo = props.extendedDobjInfo.find(ext => ext.dobj === cartItem.dobj);
 							if (extendedInfo === undefined) return null;
 
-							const isChecked = props.checkedObjectsInCart.includes(objInfo.dobj);
+							const isChecked = props.checkedObjectsInCart.includes(cartItem.dobj);
 
 							return (
 								<SearchResultRegularRow
 									labelLookup={props.labelLookup}
 									extendedInfo={extendedInfo}
 									preview={props.preview}
-									objInfo={objInfo}
+									objInfo={cartItem.knownDataObject}
 									key={'dobj_' + i}
 									updateCheckedObjects={props.updateCheckedObjects}
 									isChecked={isChecked}
