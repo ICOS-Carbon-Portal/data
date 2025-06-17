@@ -76,7 +76,7 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
-const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	let siteQueries: string
@@ -198,12 +198,12 @@ const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
 
-const standardDobjPropsDef =
-	`?dobj cpmeta:hasSizeInBytes ?size .
-?dobj cpmeta:hasName ?fileName .
-${submTimeDef}
-${timeStartDef}
-${timeEndDef}`;
+const standardDobjPropsDef = `
+	?dobj cpmeta:hasSizeInBytes ?size .
+	?dobj cpmeta:hasName ?fileName .
+	${submTimeDef}
+	${timeStartDef}
+	${timeEndDef}`;
 
 export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
 
@@ -214,11 +214,11 @@ prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?hasNextVersion ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
 where {
-VALUES ?dobj { ${values} }
-?dobj cpmeta:hasObjectSpec ?spec .
+	VALUES ?dobj { ${values} }
+	?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
-BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
+	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
+	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 }`;
 
 	return { text };
@@ -234,7 +234,7 @@ const getPidListFilter = (pidsList: (string | null)[]) => {
 	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 };
 
-function objectFilterClauses(query: QueryParameters): String {
+export function objectFilterClauses(query: QueryParameters): String {
 	const { specs, stations, submitters, sites, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
@@ -242,40 +242,40 @@ function objectFilterClauses(query: QueryParameters): String {
 
 	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
-			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
+	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
 
 	const submitterSearch = submitters == null ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
-			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
+	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
 		? ''
 		: `VALUES ?station {<${stations.filter(Value.isDefined).join('> <')}>}
-			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
+	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
 
 	const siteSearch = sites == null || sites.filter(Value.isDefined).length === 0
 		? ''
 		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
-				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
+	?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
 	return `
-		${pidListFilter}${specsValues}
-		?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
-		BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-		${stationSearch}
-		${siteSearch}
-		${submitterSearch}
-		${standardDobjPropsDef}
-		${getFilterClauses(filters, false)}`;
+	${pidListFilter}${specsValues}
+	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
+	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
+	${stationSearch}
+	${siteSearch}
+	${submitterSearch}
+	${standardDobjPropsDef}
+	${getFilterClauses(filters, false)}`;
 }
 
 export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
 	const prefixes: string = `
-		prefix cpmeta: <${config.cpmetaOntoUri}>
-		prefix prov: <http://www.w3.org/ns/prov#>
-		prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-		prefix geo: <http://www.opengis.net/ont/geosparql#>`
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>`
 
 	const { sorting, paging } = params;
 	const orderBy = (sorting && sorting.varName)
@@ -287,21 +287,21 @@ export function filteredObjectsQuery(params: QueryParameters, selections: string
 		: '';
 
 	return `
-			${prefixes}
-			select ${selections}
-			${envriFilteringFromClauses}
-			where {
-				${objectFilterClauses(params)}
-			}
-			${orderBy}
-			offset ${paging.offset || 0} limit ${paging.limit || 20}`;
+${prefixes}
+select ${selections}
+${envriFilteringFromClauses}
+where {
+${objectFilterClauses(params)}
+}
+${orderBy}
+offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 }
 
 export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
 	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
 	return {
 		text: `# listFilteredDataObjects
-				${filteredObjectsQuery(params, selections)}`
+${filteredObjectsQuery(params, selections)}`
 	};
 };
 
