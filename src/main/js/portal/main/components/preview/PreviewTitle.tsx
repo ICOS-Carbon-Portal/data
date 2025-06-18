@@ -21,10 +21,10 @@ function PreviewTitle(props: OurProps) {
 	const subtitle = items.length == 1 ? <div className="fs-3 text-muted">{extendedDobjInfo[0].biblioInfo?.temporalCoverageDisplay}</div> : null;
 	const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
 
-		const allowCartAdd = items
-			.map((cartItem) => addingToCartProhibition(cartItem.knownDataObject))
-			.every(cartProhibition => cartProhibition.allowCartAdd);
-		const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
+	const allowCartAdd = items
+		.map((cartItem) => addingToCartProhibition(cartItem.knownDataObject))
+		.every(cartProhibition => cartProhibition.allowCartAdd);
+	const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
 
 	const areItemsInCart: boolean = items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
 	const actionButtonType = areItemsInCart ? 'remove' : 'add';
