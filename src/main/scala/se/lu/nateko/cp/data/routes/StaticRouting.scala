@@ -65,7 +65,7 @@ class StaticRouting()(using envriConfigs: EnvriConfigs) {
 				redirect("/" + proj + "/", StatusCodes.Found)
 			} ~
 			rawPathPrefix(maybeDobjVis(proj)){pageFactory =>
-				val caches = Seq(headers.CacheDirectives.public, headers.CacheDirectives.`max-age`(86400))
+				val caches = Seq(headers.CacheDirectives.public, headers.CacheDirectives.`max-age`(3600))
 				respondWithHeader(headers.`Cache-Control`(caches)){
 					pathEndOrSingleSlash{
 						if(pageFactory.isDefinedAt(prEnvri)) complete(pageFactory(prEnvri))
