@@ -271,11 +271,6 @@ export function objectFilterClauses(query: QueryParameters): String {
 }
 
 export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
-	const prefixes: string = `
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>`
 
 	const { sorting, paging } = params;
 	const orderBy = (sorting && sorting.varName)
@@ -285,12 +280,20 @@ prefix geo: <http://www.opengis.net/ont/geosparql#>`
 				: `order by desc(?${sorting.varName})`
 		)
 		: '';
+	// presense of pid filters makes query to bind ?dobj to known URIs, which disables our SPARQL magic;
+	// when the magic is disabled, the FROM clauses are treated SPARQL-correctly, which is a problem,
+	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
+	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
+	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
+	const fromClauses = hasKnownObjects ? '' : (envriFilteringFromClauses + '\n')
 
 	return `
-${prefixes}
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ${selections}
-${envriFilteringFromClauses}
-where {
+${fromClauses}where {
 ${objectFilterClauses(params)}
 }
 ${orderBy}
@@ -300,8 +303,7 @@ offset ${paging.offset || 0} limit ${paging.limit || 20}`;
 export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
 	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
 	return {
-		text: `# listFilteredDataObjects
-${filteredObjectsQuery(params, selections)}`
+		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections)}`
 	};
 };
 
