@@ -62,7 +62,7 @@ class Preview extends Component<OurProps, OurState> {
 			return(
 				<Message
 					title="No data found"
-					onclick={this.handleSearchRouteClick.bind(this)} />
+					findData={this.handleSearchRouteClick.bind(this)} />
 			)
 		} else {
 			return (

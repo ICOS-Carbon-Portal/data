@@ -114,10 +114,10 @@ function SearchResultRegular(props: OurProps) {
 
 				</div>
 
-					<div>
-						{
-							objectsTable.map((objInfo: KnownDataObject, i) => {
-								const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
+				<div>
+					{
+						objectsTable.map((objInfo: KnownDataObject, i) => {
+							const extendedInfo = extendedDobjInfo.find(ext => ext.dobj === objInfo.dobj);
 
 							return extendedInfo && (
 								<SearchResultRegularRow

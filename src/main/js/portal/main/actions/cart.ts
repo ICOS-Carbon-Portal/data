@@ -3,7 +3,7 @@ import * as Payloads from "../reducers/actionpayloads";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
 import {fetchKnownDataObjects, fetchLabelLookup, getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
-import {failWithError, fetchCart, getBackendTables} from "./common";
+import {failWithError, fetchCart, getBackendTables, updateCart} from "./common";
 import {saveToRestheart} from "../../../common/main/backend";
 import {WhoAmI} from "../models/State";
 import { getLastSegmentInUrl } from "../utils";
@@ -51,10 +51,10 @@ export function setCartName(newName: string): PortalThunkAction<void> {
 	};
 }
 
-function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
-	return dispatch => saveCart(email, cart).then(() =>
-		dispatch(new Payloads.BackendUpdateCart(cart))
-	);
+function updatePriorCart(cart: Cart): PortalThunkAction<void> {
+	return dispatch => {
+		dispatch(new Payloads.BackendUpdatePriorCart(cart));
+	};
 }
 
 export function logCartDownloadClick(fileName: string, pids: string[]) {
@@ -78,4 +78,19 @@ export function updateCheckedObjectsInCart(checkedObjectInCart: UrlStr | UrlStr[
 	return (dispatch) => {
 		dispatch(new Payloads.UiUpdateCheckedObjsInCart(checkedObjectInCart));
 	};
+}
+
+export function emptyCart(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		dispatch(updatePriorCart(state.cart));
+		dispatch(updateCart(state.user.email, new Cart(undefined, [])));
+	}
+}
+
+export function restorePriorCart(): PortalThunkAction<void> {
+	return (dispatch, getState) => {
+		const state = getState();
+		dispatch(updateCart(state.user.email, state.priorCart ?? state.cart));
+	}
 }
