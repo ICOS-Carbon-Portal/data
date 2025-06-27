@@ -5,7 +5,7 @@ import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
 import { KnownDataObject, ExtendedDobjInfo, LabelLookup } from "../../models/State";
 import Preview from '../../models/Preview';
-import CartItem, { addingToCartProhibition } from '../../models/CartItem';
+import { addingToCartProhibition } from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
 import CollectionBtn from '../buttons/CollectionBtn';
 

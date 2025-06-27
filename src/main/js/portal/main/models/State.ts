@@ -15,7 +15,7 @@ import deepequal from 'deep-equal';
 import { UrlStr, Sha256Str } from "../backend/declarations";
 import {Store} from "redux";
 import { DataObject, References } from "../../../common/main/metacore";
-import SpecTable, {Filter, Row} from "./SpecTable";
+import SpecTable from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import {SupportedSRIDs} from "icos-cp-ol";

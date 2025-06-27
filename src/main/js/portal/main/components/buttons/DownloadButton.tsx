@@ -1,36 +1,50 @@
-import React, { Component, CSSProperties } from 'react';
+import React, { CSSProperties, useMemo } from 'react';
 
 type Props = {
 	style: CSSProperties
-	checkedObjects: string[]
+	filename: string
+	readyObjectIds: string[]
 	enabled: boolean
+	onSubmitAsForm?: () => void
 }
 
-export default function DownloadButton({ style, enabled, checkedObjects }: Props) {
-	
-	const link = enabled ? getDownloadLink(checkedObjects) : undefined;
-	const btnType = !enabled ? 'btn-outline-secondary' : 'btn-warning';
+export default function DownloadButton(props: Props) {
+	const { style, filename, enabled, readyObjectIds, onSubmitAsForm } = props;
+
+	const dobjIds = readyObjectIds.map(dobj => dobj.split('/').pop());
+
+	const downloadLink = useMemo(() => {
+		if (dobjIds.length == 1) {
+			return `/objects/${dobjIds[0]}`;
+		} else {
+			const ids = encodeURIComponent(JSON.stringify(dobjIds));
+			return `/objects?ids=${ids}&fileName=${encodeURIComponent(filename)}`;
+		}
+	}, [dobjIds, filename]);
+
+	const link = enabled ? downloadLink : undefined;
+	const btnType = enabled ? 'btn-warning' : 'btn-outline-secondary';
 	const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
 	const btnStyle: CSSProperties = enabled ? {} : { pointerEvents: 'auto', cursor: 'not-allowed' };
 
-	return (
-		<div style={style}>
-			<a href={link} id="download-button" className={className} style={btnStyle}>
-				Download
-			</a>
-		</div>
-	);
-}
+	if (onSubmitAsForm) {
+		return (
+			<form action="/objects" method="post" onSubmit={onSubmitAsForm} target="_blank">
+				<input type="hidden" name="fileName" value={encodeURIComponent(filename)} />
+				<input type="hidden" name="ids" value={JSON.stringify(dobjIds)} />
 
-const getDownloadLink = (objs: string[]): string => {
-	const dobjIds = objs.map(dobj => dobj.split('/').pop());
-
-	if (dobjIds.length == 1) {
-		return `/objects/${dobjIds[0]}`;
+				<button className={className} style={btnStyle}>
+					<span className="fas fa-download" style={{marginRight:9}} />Download
+				</button>
+			</form>
+		);
 	} else {
-		const ids = encodeURIComponent(JSON.stringify(dobjIds));
-		const fileName = encodeURIComponent('My data cart');
-
-		return `/objects?ids=${ids}&fileName=${fileName}`;
+		return (
+			<div style={style}>
+				<a href={link} id="download-button" className={className} style={btnStyle}>
+					Download
+				</a>
+			</div>
+		);
 	}
-};
+}
