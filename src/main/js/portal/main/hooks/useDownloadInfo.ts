@@ -10,7 +10,7 @@ type ReadyInfo = {
 type InfoCache = Record<string, ReadyInfo>;
 
 interface Props {
-	readyObjectIds: string[];
+	readyObjectIds: string[]
 	objectsTable: KnownDataObject[]
 	extendedDobjInfo: ExtendedDobjInfo[]
 	labelLookup: LabelLookup
