@@ -2,6 +2,7 @@ import React, { Component, CSSProperties, RefObject } from 'react';
 
 type Props = {
 	editValue: string
+	defaultShownValue?: string
 	saveValueAction: (newName: string) => void
 	iconEditClass: string
 	iconEditTooltip: string
@@ -39,14 +40,15 @@ export default class EditablePanelHeading extends Component<Props, State>{
 
 	render(){
 		const {editMode} = this.state;
-		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass, iconSaveTooltip } = this.props;
+		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass,
+			iconSaveTooltip, defaultShownValue } = this.props;
 		const style: CSSProperties = { position: 'absolute', top: 0, left: -20, margin: '0 20px' };
-
+		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue + " (default, click to edit)" : editValue;
 		return (
 			<>
 				{ editMode ?
 					<div className="card-header">
-						<span className="card-title">{editValue}</span>
+						<span className="card-title">{cardTitle}</span>
 						<form className="input-group" style={style} onSubmit={this.handleSaveClick.bind(this)}>
 							<input
 								ref={this.editCtrl}
@@ -62,7 +64,7 @@ export default class EditablePanelHeading extends Component<Props, State>{
 					</div>
 					:
 					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
-						<span className="card-title">{editValue}</span>
+						<span className="card-title">{cardTitle}</span>
 						<span
 							className={iconEditClass}
 							style={{float: 'left', margin: '3px 5px'}}

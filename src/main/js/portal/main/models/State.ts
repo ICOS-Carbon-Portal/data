@@ -15,7 +15,7 @@ import deepequal from 'deep-equal';
 import { UrlStr, Sha256Str } from "../backend/declarations";
 import {Store} from "redux";
 import { DataObject, References } from "../../../common/main/metacore";
-import SpecTable, {Filter, Row} from "./SpecTable";
+import SpecTable from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
 import {SupportedSRIDs} from "icos-cp-ol";
@@ -175,6 +175,7 @@ export interface State {
 	}
 	paging: Paging
 	cart: Cart
+	priorCart: Cart | undefined
 	id: UrlStr | undefined
 	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
@@ -238,6 +239,7 @@ export const defaultState: State = {
 	},
 	paging: new Paging({objCount: 0}),
 	cart: new Cart(),
+	priorCart: undefined,
 	id: undefined,
 	metadata: undefined,
 	station: undefined,
@@ -288,6 +290,7 @@ const serialize = (state: State) => {
 		baseDobjStats: state.baseDobjStats.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
+		priorCart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
 	};

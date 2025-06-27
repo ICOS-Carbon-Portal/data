@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from "react-redux";
 import { addToCart, removeFromCart } from '../../actions/common';
 import { UrlStr } from '../../backend/declarations';
@@ -8,6 +8,7 @@ import { PortalDispatch } from '../../store';
 import { getUrlWithEnvironmentPrefix, specLabelDisplay } from '../../utils';
 import CartBtn from '../buttons/CartBtn';
 import DownloadButton from '../buttons/DownloadButton';
+import { useDownloadInfo } from '../../hooks/useDownloadInfo';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -30,6 +31,10 @@ function PreviewTitle(props: OurProps) {
 	const actionButtonType = areItemsInCart ? 'remove' : 'add';
 	const buttonAction = areItemsInCart ? handleRemoveFromCart : handleAddToCart;
 
+	const localObjectsTable = items.flatMap((x) => x.knownDataObject ? [x.knownDataObject] : [])
+	const { filename } = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj), objectsTable: localObjectsTable,
+			extendedDobjInfo, labelLookup});
+
 	return (
 		<>
 			<h1 className="col-md-8">
@@ -46,7 +51,8 @@ function PreviewTitle(props: OurProps) {
 				/>
 				<DownloadButton
 					style={{}}
-					checkedObjects={items.map((item: CartItem) => item.dobj)}
+					filename={filename}
+					readyObjectIds={items.map((item: CartItem) => item.dobj)}
 					enabled={allowCartAdd}
 				/>
 			</div>
