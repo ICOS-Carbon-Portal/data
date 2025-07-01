@@ -92,7 +92,7 @@ function DataCart(props: DataCartProps) {
 									filename={filename}
 									readyObjectIds={hashes}
 									enabled={true}
-									onSubmitAsForm={handleDownload}
+									onSubmitHandler={handleDownload}
 								/>
 								<div style={{textAlign: 'center', fontSize:'90%'}}>
 									Total size: {formatBytes(cart.size)} (uncompressed)
