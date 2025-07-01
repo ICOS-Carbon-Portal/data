@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function useDownloadInfo(props: Props) {
-    const { readyObjectIds, objectsTable, extendedDobjInfo, labelLookup } = props;
+	const { readyObjectIds, objectsTable, extendedDobjInfo, labelLookup } = props;
 	const [infoCache, setInfoCache] = useState<InfoCache>({});
 
 	useEffect(() => {
