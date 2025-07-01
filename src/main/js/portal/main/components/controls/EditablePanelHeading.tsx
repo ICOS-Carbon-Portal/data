@@ -66,11 +66,11 @@ export default class EditablePanelHeading extends Component<Props, State>{
 					</div>
 					:
 					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
-						<div className="d-inline-block mt-1">
-							<span className={iconEditClass + " me-2"}/>
+						<div className="d-inline-block mt-2">
 							<span className="card-title">{cardTitle}</span>
 						</div>
-						<button className="btn btn-primary float-end" title={iconEditTooltip}>
+						<button className="btn btn-outline-secondary float-end" title={iconEditTooltip}>
+							<span className={iconEditClass + " me-2"}/>
 							{iconEditTooltip}
 						</button>
 					</div>
