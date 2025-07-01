@@ -1,4 +1,4 @@
-import React, { Component, CSSProperties, RefObject } from 'react';
+import React, { Component, CSSProperties, FormEvent, RefObject } from 'react';
 
 type Props = {
 	editValue: string
@@ -31,11 +31,12 @@ export default class EditablePanelHeading extends Component<Props, State>{
 		this.setState({editMode: true});
 	}
 
-	handleSaveClick(){
+	handleSaveClick(event: FormEvent){
 		if (this.editCtrl.current && this.editCtrl.current.value !== this.props.editValue) {
 			this.props.saveValueAction(this.editCtrl.current.value);
 		}
 		this.setState({editMode: false});
+		event.preventDefault();
 	}
 
 	render(){
@@ -43,7 +44,7 @@ export default class EditablePanelHeading extends Component<Props, State>{
 		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass,
 			iconSaveTooltip, defaultShownValue } = this.props;
 		const style: CSSProperties = { position: 'absolute', top: 0, left: -20, margin: '0 20px' };
-		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue + " (default, click to edit)" : editValue;
+		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue : editValue;
 		return (
 			<>
 				{ editMode ?
@@ -55,20 +56,23 @@ export default class EditablePanelHeading extends Component<Props, State>{
 								type="text"
 								className="form-control"
 								defaultValue={editValue}
+								placeholder={cardTitle}
 								autoFocus
 							/>
-							<button className="btn btn-primary" onClick={this.handleSaveClick.bind(this)} title={iconSaveTooltip}>
+							<button type="submit" className="btn btn-primary" title={iconSaveTooltip}>
 								<span className={iconSaveClass} />
 							</button>
 						</form>
 					</div>
 					:
 					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
-						<span className="card-title">{cardTitle}</span>
-						<span
-							className={iconEditClass}
-							style={{float: 'left', margin: '3px 5px'}}
-						/>
+						<div className="d-inline-block mt-1">
+							<span className={iconEditClass + " me-2"}/>
+							<span className="card-title">{cardTitle}</span>
+						</div>
+						<button className="btn btn-primary float-end" title={iconEditTooltip}>
+							{iconEditTooltip}
+						</button>
 					</div>
 				}
 			</>
