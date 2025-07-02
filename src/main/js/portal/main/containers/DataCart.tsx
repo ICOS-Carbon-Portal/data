@@ -1,7 +1,14 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
-import {setCartName, fetchIsBatchDownloadOk, updateCheckedObjectsInCart, logCartDownloadClick} from '../actions/cart';
+import {
+	setCartName,
+	fetchIsBatchDownloadOk,
+	updateCheckedObjectsInCart,
+	logCartDownloadClick,
+	emptyCart,
+	restorePriorCart
+} from '../actions/cart';
 import {formatBytes, getLastSegmentsInUrls} from '../utils';
 import {Sha256Str, UrlStr} from "../backend/declarations";
 import {PortalDispatch} from "../store";
@@ -35,22 +42,28 @@ function DataCart(props: DataCartProps) {
 		}
 	}
 
-	function handleFormSubmit(){
+	function handleDownload() {
 		const {name, pids} = props.cart;
 		logCartDownloadClick(name, pids);
+		props.emptyCart();
 	}
 
-	const {preview, user, cart, updateCheckedObjectsInCart} = props;
+	function handleRestore() {
+		props.restorePriorCart();
+	}
+
+	const {preview, user, cart, priorCart, updateCheckedObjectsInCart} = props;
 	const previewitemId = preview.item ? preview.item.dobj : undefined;
 	const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
 		? 'Download cart content'
 		: 'Accept license and download cart content';
-	const fileName = cart.name;
-	const hashes = JSON.stringify(cart.pids);
+	const fileName = cart.count == 0 && priorCart ? priorCart.name : cart.name;
+	const hashes = cart.count == 0 && priorCart ? JSON.stringify(priorCart.pids) : JSON.stringify(cart.pids);
+	const showCartPanel = !cart.isInitialized || cart.count > 0;
 
 	return (
-		<div>
-			{!cart.isInitialized || cart.count > 0 ?
+		<>
+			<div style={ showCartPanel ? {} : {display: "none"}}>
 				<div className="row">
 					<div className="col-sm-8 col-lg-9">
 						<CartPanel
@@ -68,7 +81,7 @@ function DataCart(props: DataCartProps) {
 							</div>
 							<div className="card-body text-center">
 
-								<form action="/objects" method="post" onSubmit={handleFormSubmit} target="_blank">
+								<form action="/objects" method="post" onSubmit={handleDownload} target="_blank">
 									<input type="hidden" name="fileName" value={fileName} />
 									<input type="hidden" name="ids" value={hashes} />
 
@@ -84,18 +97,22 @@ function DataCart(props: DataCartProps) {
 						</div>
 					</div>
 				</div>
-				:
+			</div>
+			<div style={ showCartPanel ? {display: "none"} : {}}>
 				<Message
 					title="Your cart is empty"
-					onclick={() => handleRouteClick('search')} />
-			}
-		</div>
+					findData={() => handleRouteClick('search')}
+					restorePriorCart={props.priorCart ? handleRestore : undefined}
+				/>
+			</div>
+		</>
 	);
 }
 
 function stateToProps(state: State){
 	return {
 		cart: state.cart,
+		priorCart: state.priorCart,
 		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
 		user: state.user,
@@ -112,6 +129,8 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
+		emptyCart: () => dispatch(emptyCart()),
+		restorePriorCart: () => dispatch(restorePriorCart())
 	};
 }
 
