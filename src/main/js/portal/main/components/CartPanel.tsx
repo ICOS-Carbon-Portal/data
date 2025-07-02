@@ -61,7 +61,7 @@ export default class CartPanel extends Component<Props, State> {
 					iconSaveTooltip="Save new cart name"
 				/>
 
-				<div className="card-body">
+				<div className="card-body pb-0">
 					<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
 						<div className="d-flex mb-2">
 							<CheckAllBoxes

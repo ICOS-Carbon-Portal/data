@@ -94,7 +94,7 @@ function DataCart(props: DataCartProps) {
 									enabled={true}
 									onSubmitHandler={handleDownload}
 								/>
-								<div style={{textAlign: 'center', fontSize:'90%'}}>
+								<div className='mt-2' style={{textAlign: 'center', fontSize:'90%'}}>
 									Total size: {formatBytes(cart.size)} (uncompressed)
 								</div>
 							</div>

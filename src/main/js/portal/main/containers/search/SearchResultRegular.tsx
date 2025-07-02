@@ -57,7 +57,7 @@ function SearchResultRegular(props: OurProps) {
 				exportQuery={exportQuery}
 			/>
 
-			<div className="card-body">
+			<div className="card-body pb-0">
 
 				<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
 					<div className="d-flex mb-2">

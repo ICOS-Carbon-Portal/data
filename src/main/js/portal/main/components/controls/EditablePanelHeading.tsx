@@ -43,14 +43,12 @@ export default class EditablePanelHeading extends Component<Props, State>{
 		const {editMode} = this.state;
 		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass,
 			iconSaveTooltip, defaultShownValue } = this.props;
-		const style: CSSProperties = { position: 'absolute', top: 0, left: -20, margin: '0 20px' };
 		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue : editValue;
 		return (
 			<>
 				{ editMode ?
 					<div className="card-header">
-						<span className="card-title">{cardTitle}</span>
-						<form className="input-group" style={style} onSubmit={this.handleSaveClick.bind(this)}>
+						<form className="input-group" onSubmit={this.handleSaveClick.bind(this)}>
 							<input
 								ref={this.editCtrl}
 								type="text"
