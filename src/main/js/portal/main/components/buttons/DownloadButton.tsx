@@ -24,7 +24,7 @@ export default function DownloadButton(props: Props) {
 
 	const link = enabled ? downloadLink : undefined;
 	const btnType = enabled ? 'btn-warning' : 'btn-outline-secondary';
-	const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
+	const className = `btn ${btnType}${enabled ? "" : " disabled"}`;
 	const btnStyle: CSSProperties = enabled ? {} : { pointerEvents: 'auto', cursor: 'not-allowed' };
 
 	return (
