@@ -1,7 +1,8 @@
-import React, { Component, CSSProperties, RefObject } from 'react';
+import React, { Component, CSSProperties, FormEvent, RefObject } from 'react';
 
 type Props = {
 	editValue: string
+	defaultShownValue?: string
 	saveValueAction: (newName: string) => void
 	iconEditClass: string
 	iconEditTooltip: string
@@ -30,43 +31,46 @@ export default class EditablePanelHeading extends Component<Props, State>{
 		this.setState({editMode: true});
 	}
 
-	handleSaveClick(){
+	handleSaveClick(event: FormEvent){
 		if (this.editCtrl.current && this.editCtrl.current.value !== this.props.editValue) {
 			this.props.saveValueAction(this.editCtrl.current.value);
 		}
 		this.setState({editMode: false});
+		event.preventDefault();
 	}
 
 	render(){
 		const {editMode} = this.state;
-		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass, iconSaveTooltip } = this.props;
-		const style: CSSProperties = { position: 'absolute', top: 0, left: -20, margin: '0 20px' };
-
+		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass,
+			iconSaveTooltip, defaultShownValue } = this.props;
+		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue : editValue;
 		return (
 			<>
 				{ editMode ?
 					<div className="card-header">
-						<span className="card-title">{editValue}</span>
-						<form className="input-group" style={style} onSubmit={this.handleSaveClick.bind(this)}>
+						<form className="input-group" onSubmit={this.handleSaveClick.bind(this)}>
 							<input
 								ref={this.editCtrl}
 								type="text"
 								className="form-control"
 								defaultValue={editValue}
+								placeholder={cardTitle}
 								autoFocus
 							/>
-							<button className="btn btn-primary" onClick={this.handleSaveClick.bind(this)} title={iconSaveTooltip}>
+							<button type="submit" className="btn btn-primary" title={iconSaveTooltip}>
 								<span className={iconSaveClass} />
 							</button>
 						</form>
 					</div>
 					:
 					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
-						<span className="card-title">{editValue}</span>
-						<span
-							className={iconEditClass}
-							style={{float: 'left', margin: '3px 5px'}}
-						/>
+						<div className="d-inline-block mt-2">
+							<span className="card-title">{cardTitle}</span>
+						</div>
+						<button className="btn btn-outline-secondary float-end" title={iconEditTooltip}>
+							<span className={iconEditClass + " me-2"}/>
+							{iconEditTooltip}
+						</button>
 					</div>
 				}
 			</>

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { KnownDataObject, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
@@ -13,6 +13,7 @@ import HelpButton from "../help/HelpButton";
 import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
 import { addingToCartProhibition } from '../../models/CartItem';
 import DownloadButton from '../../components/buttons/DownloadButton';
+import { useDownloadInfo } from '../../hooks/useDownloadInfo';
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -39,8 +40,11 @@ function SearchResultRegular(props: OurProps) {
 		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
-	const checkedUriSet = new Set<string>(checkedObjectsInSearch)
-	const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj))
+	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
+	const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj));
+
+	const { filename } = useDownloadInfo({readyObjectIds: checkedObjectsInSearch, objectsTable,
+		extendedDobjInfo, labelLookup});
 
 	return (
 		<div className="card">
@@ -53,7 +57,7 @@ function SearchResultRegular(props: OurProps) {
 				exportQuery={exportQuery}
 			/>
 
-			<div className="card-body">
+			<div className="card-body pb-0">
 
 				<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
 					<div className="d-flex mb-2">
@@ -106,7 +110,8 @@ function SearchResultRegular(props: OurProps) {
 
 						<DownloadButton
 							style={{}}
-							checkedObjects={checkedObjectsInSearch}
+							filename={filename}
+							readyObjectIds={checkedObjectsInSearch}
 							enabled={checkedObjectsInSearch.length > 0}
 						/>
 

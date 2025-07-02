@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import CartPanel from '../components/CartPanel';
 import {
@@ -15,7 +15,8 @@ import {PortalDispatch} from "../store";
 import {Profile, Route, State} from "../models/State";
 import {removeFromCart, updateRoute} from "../actions/common";
 import Message from '../components/ui/Message';
-
+import DownloadButton from '../components/buttons/DownloadButton';
+import { useDownloadInfo } from '../hooks/useDownloadInfo';
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -43,22 +44,27 @@ function DataCart(props: DataCartProps) {
 	}
 
 	function handleDownload() {
-		const {name, pids} = props.cart;
-		logCartDownloadClick(name, pids);
-		props.emptyCart();
+		logCartDownloadClick(filename, hashes);
+		props.emptyCart(filename);
 	}
 
 	function handleRestore() {
 		props.restorePriorCart();
 	}
 
-	const {preview, user, cart, priorCart, updateCheckedObjectsInCart} = props;
+	const {preview, user, cart, priorCart, updateCheckedObjectsInCart, extendedDobjInfo, labelLookup} = props;
+	const localObjectsTable = props.cart.items.flatMap((x) => x.knownDataObject ? [x.knownDataObject] : [])
+	const downloadInfo = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj),
+		objectsTable: localObjectsTable, extendedDobjInfo, labelLookup});
+
 	const previewitemId = preview.item ? preview.item.dobj : undefined;
+
 	const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
 		? 'Download cart content'
 		: 'Accept license and download cart content';
-	const fileName = cart.count == 0 && priorCart ? priorCart.name : cart.name;
-	const hashes = cart.count == 0 && priorCart ? JSON.stringify(priorCart.pids) : JSON.stringify(cart.pids);
+
+	const filename = cart.count == 0 && priorCart ? priorCart.name : (cart.name ? cart.name : downloadInfo.filename);
+	const hashes = cart.count == 0 && priorCart ? priorCart.pids : cart.pids;
 	const showCartPanel = !cart.isInitialized || cart.count > 0;
 
 	return (
@@ -71,6 +77,7 @@ function DataCart(props: DataCartProps) {
 							previewItemAction={handlePreview}
 							updateCheckedObjects={updateCheckedObjectsInCart}
 							handleAllCheckboxesChange={handleAllCheckboxesChange}
+							downloadInfo={downloadInfo}
 							{...props}
 						/>
 					</div>
@@ -80,17 +87,14 @@ function DataCart(props: DataCartProps) {
 								{downloadTitle}
 							</div>
 							<div className="card-body text-center">
-
-								<form action="/objects" method="post" onSubmit={handleDownload} target="_blank">
-									<input type="hidden" name="fileName" value={fileName} />
-									<input type="hidden" name="ids" value={hashes} />
-
-									<button className="btn btn-warning" style={{marginBottom: 15, whiteSpace: 'normal'}}>
-										<span className="fas fa-download" style={{marginRight:9}} />Download
-									</button>
-								</form>
-
-								<div style={{textAlign: 'center', fontSize:'90%'}}>
+								<DownloadButton
+									style={{}}
+									filename={filename}
+									readyObjectIds={hashes}
+									enabled={true}
+									onSubmitHandler={handleDownload}
+								/>
+								<div className='mt-2' style={{textAlign: 'center', fontSize:'90%'}}>
 									Total size: {formatBytes(cart.size)} (uncompressed)
 								</div>
 							</div>
@@ -102,7 +106,7 @@ function DataCart(props: DataCartProps) {
 				<Message
 					title="Your cart is empty"
 					findData={() => handleRouteClick('search')}
-					restorePriorCart={props.priorCart ? handleRestore : undefined}
+					restorePriorCart={priorCart ? handleRestore : undefined}
 				/>
 			</div>
 		</>
@@ -129,7 +133,7 @@ function dispatchToProps(dispatch: PortalDispatch | Function){
 		fetchIsBatchDownloadOk: () => dispatch(fetchIsBatchDownloadOk),
 		updateCheckedObjectsInCart: (ids: UrlStr[]) => dispatch(updateCheckedObjectsInCart(ids)),
 		removeFromCart: (ids: UrlStr[]) => dispatch(removeFromCart(ids)),
-		emptyCart: () => dispatch(emptyCart()),
+		emptyCart: (filename: string) => dispatch(emptyCart(filename)),
 		restorePriorCart: () => dispatch(restorePriorCart())
 	};
 }

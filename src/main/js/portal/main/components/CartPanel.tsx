@@ -5,12 +5,14 @@ import SearchResultRegularRow from './searchResult/SearchResultRegularRow';
 import CartBtn from './buttons/CartBtn';
 import CheckAllBoxes from './controls/CheckAllBoxes';
 import { DataCartProps } from '../containers/DataCart';
+import { useDownloadInfo } from '../hooks/useDownloadInfo';
 
 type Props = {
 	previewitemId?: string
 	previewItemAction: (urls: string[]) => void
 	updateCheckedObjects: (urls: any) => any
 	handleAllCheckboxesChange: () => void
+	downloadInfo: ReturnType<typeof useDownloadInfo>
 } & DataCartProps
 
 type State = {
@@ -51,6 +53,7 @@ export default class CartPanel extends Component<Props, State> {
 			<div className="card">
 				<EditablePanelHeading
 					editValue={props.cart.name}
+					defaultShownValue={props.downloadInfo.filename}
 					saveValueAction={this.handleSaveCartName.bind(this)}
 					iconEditClass="fas fa-edit"
 					iconEditTooltip="Edit download name"
@@ -58,7 +61,7 @@ export default class CartPanel extends Component<Props, State> {
 					iconSaveTooltip="Save new cart name"
 				/>
 
-				<div className="card-body">
+				<div className="card-body pb-0">
 					<div className="panel-srollable-controls d-flex justify-content-between flex-wrap">
 						<div className="d-flex mb-2">
 							<CheckAllBoxes

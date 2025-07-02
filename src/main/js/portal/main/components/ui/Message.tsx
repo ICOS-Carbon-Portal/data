@@ -9,7 +9,7 @@ type Props = {
 export default class Message extends Component<Props>{
 	render() {
 		const buttonRestorePriorCart = this.props.restorePriorCart ? 
-			(<button className="btn btn-lg btn-outline-secondary m-3 mr-auto"
+			(<button className="btn btn-lg btn-outline-secondary m-3"
 				onClick={this.props.restorePriorCart}>
 				Restore previous cart
 			</button>) :

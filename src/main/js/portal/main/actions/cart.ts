@@ -2,7 +2,7 @@ import {PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
 import {UrlStr} from "../backend/declarations";
 import Cart from "../models/Cart";
-import {fetchKnownDataObjects, fetchLabelLookup, getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam, saveCart} from "../backend";
+import {fetchKnownDataObjects, fetchLabelLookup, getExtendedDataObjInfo, getIsBatchDownloadOk, getWhoIam} from "../backend";
 import {failWithError, fetchCart, getBackendTables, updateCart} from "./common";
 import {saveToRestheart} from "../../../common/main/backend";
 import {WhoAmI} from "../models/State";
@@ -80,10 +80,11 @@ export function updateCheckedObjectsInCart(checkedObjectInCart: UrlStr | UrlStr[
 	};
 }
 
-export function emptyCart(): PortalThunkAction<void> {
+export function emptyCart(filename: string): PortalThunkAction<void> {
 	return (dispatch, getState) => {
 		const state = getState();
-		dispatch(updatePriorCart(state.cart));
+		const priorCart = state.cart.name ? state.cart : state.cart.withName(filename);
+		dispatch(updatePriorCart(priorCart));
 		dispatch(updateCart(state.user.email, new Cart(undefined, [])));
 	}
 }
