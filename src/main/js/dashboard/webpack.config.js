@@ -10,6 +10,7 @@ module.exports = {
 		filename: 'dashboard.js',
 		clean: true,
 	},
+	devtool: 'source-map',
 	module: {
 		rules: [
 			{
