@@ -46,14 +46,14 @@ export const init = searchParams => dispatch => {
 	if (isValidRequest){
 		dispatch(getStationMeasurement(stationId, valueType, height));
 
-		saveToRestheart({
-			dashboard: {
-				webHostUrl: getWebHostUrl(),
-				stationId,
-				valueType,
-				height
-			}
-		});
+		//saveToRestheart({
+		//	dashboard: {
+		//		webHostUrl: getWebHostUrl(),
+		//		stationId,
+		//		valueType,
+		//		height
+		//	}
+		//});
 	}
 };
 
