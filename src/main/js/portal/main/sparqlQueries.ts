@@ -348,13 +348,17 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 }
 
 function renderKeywordFilters(filters: KeywordFilterRequest[]): string {
-	return filters
-				.flatMap(filter =>
-					filter.dobjKeywords.map(keyword =>
-					 `?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
-					)
-				)
-				.join('.\n');
+	const keywordQueries = filters.flatMap(filter =>
+		filter.keywords.map(keyword =>
+			`?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
+		)
+	)
+
+	if (keywordQueries.length === 0) {
+		return "";
+	}
+
+	return keywordQueries.join('.\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
