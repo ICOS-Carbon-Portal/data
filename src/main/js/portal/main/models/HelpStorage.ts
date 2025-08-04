@@ -243,6 +243,9 @@ const initItems: HelpItem[] = [
 			[{ txt: 'Read more about data levels', url: 'https://www.icos-cp.eu/data-services/data-collection/data-levels-quality' }]
 	),
 
+	new HelpItem('keywordFilter', 'Keywords associated with the data objects. Note that, unlike other filter selections, keyword selection will find ' + 
+		'data objects containing ALL keywords (boolean "AND"), not those containing ANY keyword (boolean "OR").'),
+
 	new HelpItem('format', 'Technical file format, indicating which software module is needed to read the data'),
 
 	new HelpItem('variable', 'Variable used in the actual data objects, such as column name in a tabular time-series dataset. ' +

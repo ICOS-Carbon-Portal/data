@@ -4,6 +4,7 @@ import { isDefined } from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
 import { Item } from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
+import HelpButton from "../../containers/help/HelpButton";
 
 
 interface OurProps {
@@ -29,6 +30,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 				<div className="col d-flex justify-content-between">
 					<div>
 						<label>Keyword</label>
+						<HelpButton name={"keywordFilter"} />
 					</div>
 
 					<div>

@@ -347,20 +347,18 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 	);
 }
 
-function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
-	const keywordValues =
-		requests.flatMap((req) =>
-			 req.keywords.map((kw) => `"${kw}"^^xsd:string`)
-		);
+function renderKeywordFilters(filters: KeywordFilterRequest[]): string {
+	const keywordQueries = filters.flatMap(filter =>
+		filter.keywords.map(keyword =>
+			`?dobj cpmeta:hasKeyword "${keyword}"^^xsd:string`
+		)
+	)
 
-	if (keywordValues.length === 0) {
-		return '';
+	if (keywordQueries.length === 0) {
+		return "";
 	}
 
-	return [
-		`VALUES ?keyword {${keywordValues.join(' ')}}`,
-		'?dobj cpmeta:hasKeyword ?keyword'
-	].join('\n');
+	return keywordQueries.join('.\n');
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
