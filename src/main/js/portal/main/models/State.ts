@@ -244,7 +244,7 @@ export const defaultState: State = {
 	metadata: undefined,
 	station: undefined,
 	preview: new Preview(),
-	previewSettings: {},
+	previewSettings: Preview.buildPreviewSettings(),
 	itemsToAddToCart: undefined,
 	toasterData: undefined,
 	batchDownloadStatus: {
@@ -384,7 +384,7 @@ type JsonHashState = {
 
 const allowlistJsonHash = (hash: any): JsonHashState => {
 	const allowedHash: JsonHashState = {};
-	const ps: PreviewSettings = {};
+	const ps: Partial<PreviewSettings> = {};
 
 	for (const key in hash) {
 		if (key === "yAxis") {
@@ -395,9 +395,7 @@ const allowlistJsonHash = (hash: any): JsonHashState => {
 			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	allowedHash.previewSettings = (allowedHash.previewSettings ?
-		{ ...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps } :
-		ps);
+	allowedHash.previewSettings = { ...Preview.buildPreviewSettings(allowedHash.previewSettings), ...ps };
 
 	return allowedHash;
 }
@@ -413,7 +411,7 @@ const jsonToState = (state0: JsonHashState) => {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
-		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings ?? {});
+		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings);
 
 		if (state0.id){
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
