@@ -1,6 +1,6 @@
 import stateUtils, {
 	MapProps,
-	ObjectsTable,
+	KnownDataObject,
 	Profile,
 	Route,
 	State,
@@ -9,7 +9,7 @@ import stateUtils, {
 } from "../models/State";
 import {PortalDispatch, PortalThunkAction} from "../store";
 import {
-	fetchBoostrapData,
+	fetchBootstrapData,
 	fetchKnownDataObjects,
 	getCart,
 	getError,
@@ -26,9 +26,7 @@ import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
 import {bootstrapRoute, init, loadApp} from "./main";
 import { DataObject } from "../../../common/main/metacore";
-import {Filter, Value} from "../models/SpecTable";
-import keywordsInfo from "../backend/keywordsInfo";
-import {SPECCOL} from "../sparqlQueries";
+import { Value } from "../models/SpecTable";
 import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
 import commonConfig from '../../../common/main/config';
 import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
@@ -70,8 +68,8 @@ export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThun
 	};
 }
 
-export function getFilters(state: State, forStatCountsQuery: boolean = false): FilterRequest[] {
-	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable, keywords} = state;
+export function getFilters(state: State): FilterRequest[] {
+	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable} = state;
 	let filters: FilterRequest[] = [];
 
 	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
@@ -93,16 +91,7 @@ export function getFilters(state: State, forStatCountsQuery: boolean = false): F
 		}
 
 		if (filterKeywords.length > 0){
-			const dobjKeywords = filterKeywords.filter(kw => keywords.dobjKeywords.includes(kw));
-			const kwSpecs = keywordsInfo.lookupSpecs(keywords, filterKeywords);
-			let specs = kwSpecs;
-
-			if (!forStatCountsQuery){
-				const specsFilt = specTable.basics.getDistinctColValues(SPECCOL);
-				specs = (Filter.and([kwSpecs, specsFilt]) || []).filter(Value.isString);
-			}
-
-			filters.push({category: 'keywords', dobjKeywords, specs});
+			filters.push({category: 'keywords', keywords: filterKeywords});
 		}
 
 		const geoFilter = getGeoFilter(state.mapProps)
@@ -148,7 +137,7 @@ export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
 	return (dispatch) => {
-		return fetchBoostrapData(filters).then(allTables => {
+		return fetchBootstrapData(filters).then(allTables => {
 				dispatch(new Payloads.BootstrapInfo(allTables));
 			},
 			failWithError(dispatch)
@@ -166,7 +155,7 @@ export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
 	};
 }
 
-function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
+export function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
 	const cartLinks = document.querySelectorAll('.cart-link');
 	cartLinks.forEach(link => {
 		const num = link.querySelector('.items-number')
@@ -214,7 +203,7 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 
 		if (user.email) {
 			const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
-				const objInfo: ObjectsTable | undefined = objectsTable.find(o => o.dobj === id);
+				const objInfo: KnownDataObject | undefined = objectsTable.find(o => o.dobj === id);
 
 				if (objInfo === undefined)
 					throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
@@ -280,11 +269,11 @@ export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<
 		getError(errorId).then(response => {
 			if (response && response.error && response.error.state) {
 				const stateJSON = JSON.parse(response.error.state);
-				const objectsTable = stateJSON.objectsTable.map((ot: ObjectsTable) => {
-					return Object.assign(ot, {
-						submTime: new Date(ot.submTime),
-						timeStart: new Date(ot.timeStart),
-						timeEnd: new Date(ot.timeEnd)
+				const objectsTable = stateJSON.objectsTable.map((kdobj: KnownDataObject) => {
+					return Object.assign(kdobj, {
+						submTime: new Date(kdobj.submTime),
+						timeStart: new Date(kdobj.timeStart),
+						timeEnd: new Date(kdobj.timeEnd)
 					});
 				});
 				const cart = restoreCart({cart: stateJSON.cart});

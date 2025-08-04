@@ -327,7 +327,7 @@ export default class InitMap {
 			}
 
 			if (toggles.length) {
-				const addToggleLayer = (toggleLayer: VectorLayer<VectorSource<Geometry>>) => {
+				const addToggleLayer = (toggleLayer: VectorLayer<VectorSource<Feature<Geometry>>>) => {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
@@ -376,10 +376,10 @@ export default class InitMap {
 
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Geometry>>));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Feature<Geometry>>>));
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Geometry>>));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Feature<Geometry>>>));
 
 				self.layersDiv.appendChild(root);
 			}

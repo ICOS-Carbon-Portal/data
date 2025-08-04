@@ -13,7 +13,7 @@ import { ToSparqlClient } from '../../components/ToSparqlClient';
 import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
 import { getFilters } from '../../actions/common';
-import { specKeywordsQuery } from '../../backend/keywordsInfo';
+import { specKeywordsQuery } from '../../backend/scopedKeywords';
 import FilterByFileName from "../../components/filters/FilterByFileName";
 
 type StateProps = ReturnType<typeof stateToProps>;

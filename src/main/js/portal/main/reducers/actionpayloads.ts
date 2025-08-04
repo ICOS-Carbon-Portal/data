@@ -1,5 +1,13 @@
 import {Action} from "redux";
-import { LabelLookup, MetaData, MetaDataWStats, StateSerialized, StationPos4326Lookup, TsSettings, WhoAmI} from "../models/State";
+import {
+	KnownDataObject,
+	LabelLookup,
+	MetaData,
+	MetaDataWStats,
+	StateSerialized,
+	TsSettings,
+	WhoAmI
+} from "../models/State";
 import {Sha256Str, AsyncResult, UrlStr} from "../backend/declarations";
 import {
 	fetchKnownDataObjects,
@@ -8,7 +16,6 @@ import {
 } from "../backend";
 import {ColNames, OriginsColNames, SpecTableSerialized} from "../models/CompositeSpecTable";
 import SpecTable, {Filter} from "../models/SpecTable";
-import {DataObject} from "../models/CartItem";
 import {HelpItem} from "../models/HelpStorage";
 import Cart from "../models/Cart";
 import FilterTemporal from "../models/FilterTemporal";
@@ -40,7 +47,7 @@ export class BootstrapRoutePreview extends BootstrapRoutePayload{
 		readonly objectsTable: ObjectsTableLike,
 		readonly extendedDobjInfo: AsyncResult<typeof getExtendedDataObjInfo>,
 		readonly specTables?: SpecTableSerialized,
-		readonly labelLookup?: LabelLookup
+		readonly labelLookup?: LabelLookup,
 	){super();}
 }
 
@@ -91,13 +98,21 @@ export class BackendUpdateCart extends BackendPayload{
 	constructor(readonly cart: Cart){super();}
 }
 
+export class BackendUpdatePriorCart extends BackendPayload{
+	constructor(readonly cart: Cart){super();}
+}
+
 export class BackendBatchDownload extends BackendPayload{
 	constructor(readonly isBatchDownloadOk: boolean, readonly user: WhoAmI){super();}
 }
 
-export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | DataObject[];
+export type ObjectsTableLike = AsyncResult<typeof fetchKnownDataObjects>['rows'] | KnownDataObject[];
 export class BackendObjectsFetched extends BackendPayload{
 	constructor(readonly objectsTable: ObjectsTableLike, readonly isDataEndReached: boolean){super();}
+}
+
+export class BackendKeywordsFetched extends BackendPayload {
+	constructor(readonly scopedKeywords: string[]){super();}
 }
 
 export class BackendExportQuery extends BackendPayload {
@@ -148,14 +163,6 @@ export class SetPreviewUrl extends PreviewPayload{
 	constructor(readonly url: UrlStr){super();}
 }
 
-export class SetPreviewYAxis extends PreviewPayload {
-	constructor(readonly yAxis?: string) { super(); }
-}
-
-export class SetPreviewY2Axis extends PreviewPayload {
-	constructor(readonly y2Axis?: string) { super(); }
-}
-
 export class UiToggleSorting extends UiPayload{
 	constructor(readonly varName: string){super();}
 }
@@ -193,7 +200,7 @@ export class FiltersNumber extends FiltersPayload{
 }
 
 export class FilterKeywords extends FiltersPayload{
-	constructor(readonly keywords: string[]){super();}
+	constructor(readonly filterKeywords: string[]){super();}
 }
 
 export class FiltersUpdatePids extends FiltersPayload{

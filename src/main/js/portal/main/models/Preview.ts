@@ -4,8 +4,8 @@ import config, {PreviewType} from "../config";
 import deepEqual from 'deep-equal';
 import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
-import {ExtendedDobjInfo, ObjectsTable} from "./State";
-import {Sha256Str, UrlStr} from "../backend/declarations";
+import {ExtendedDobjInfo, KnownDataObject} from "./State";
+import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
 import { Value } from './SpecTable';
 
 
@@ -18,12 +18,34 @@ export function previewVarCompare(po1: PreviewOption, po2: PreviewOption): numbe
 	return po1.varTitle.localeCompare(po2.varTitle)
 }
 
+
+const previewSettingsKeys = [
+	'x',
+	'y',
+	'y2',
+	'type',
+	'legendLabels',
+	'legendLabelsY2',
+	'linking',
+	'img',
+	'varName',
+	'extraDim',
+	'date',
+	'gamma',
+	'center',
+	'zoom',
+	'color',
+	'y1',
+	'map'
+] as readonly string[];
+
+export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
+
 export interface PreviewSerialized {
 	items: CartItemSerialized[]
 	options: PreviewOption[]
 	type: PreviewType | undefined
-	yAxis: string | undefined
-	y2Axis: string | undefined
+	previewSettings: PreviewSettings
 }
 
 export default class Preview {
@@ -31,17 +53,24 @@ export default class Preview {
 	public pids: Sha256Str[];
 	public readonly options: PreviewOption[];
 	public readonly type: PreviewType | undefined;
-	public yAxis: string | undefined;
-	public y2Axis: string | undefined;
+	public previewSettings: PreviewSettings;
 
-
-	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType, yAxis?: string, y2Axis?: string){
+	constructor(items?: CartItem[], options?: PreviewOption[], type?: PreviewType){
 		this.items = items ?? [];
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.yAxis = yAxis;
-		this.y2Axis = y2Axis;
+		this.previewSettings = this.item?.urlParams ? Preview.allowlistPreviewSettings(this.item.urlParams) : {};
+	}
+
+	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
+		const allowedPreviewSettings: PreviewSettings = {};
+		for (const key in urlParams) {
+			if (previewSettingsKeys.includes(key)) {
+				allowedPreviewSettings[key] = urlParams[key];
+			}
+		}
+		return allowedPreviewSettings;
 	}
 
 	get serialize(): PreviewSerialized {
@@ -49,8 +78,7 @@ export default class Preview {
 			items: this.items.map(item => item.serialize),
 			options: this.options,
 			type: this.type,
-			yAxis: this.yAxis,
-			y2Axis: this.y2Axis
+			previewSettings: this.previewSettings,
 		};
 	}
 
@@ -58,13 +86,11 @@ export default class Preview {
 		const items: CartItem[] = jsonPreview.items.map(item => new CartItem(item.id, item.dataobject, item.type, item.url));
 		const options = jsonPreview.options;
 		const type = jsonPreview.type;
-		const yAxis = jsonPreview.yAxis;
-		const y2Axis = jsonPreview.y2Axis;
 
-		return new Preview(items, options, type, yAxis, y2Axis);
+		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[], yAxis?: string, y2Axis?: string) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 
@@ -105,12 +131,12 @@ export default class Preview {
 					let previewItems = items;
 					const xAxis = config.previewXaxisCols.find(x => options.options.some(op => op.varTitle === x));
 					if(xAxis){
-						const url = getNewTimeseriesUrl(items, xAxis, yAxis, y2Axis);
+						const url = getNewTimeseriesUrl(items, xAxis, this.previewSettings);
 						previewItems = items.map(i => i.withUrl(url));
 					}
-					return new Preview(previewItems, options.options, options.type, yAxis, y2Axis);
+					return new Preview(previewItems, options.options, options.type);
 			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM){
-				return new Preview(items, options.options, options.type, yAxis, y2Axis);
+				return new Preview(items, options.options, options.type);
 			}
 		} else {
 			return new Preview(ids.map(id => new CartItem(id)));
@@ -119,22 +145,22 @@ export default class Preview {
 		throw new Error('Could not initialize Preview');
 	}
 
-	restore(lookup: PreviewLookup, cart: Cart, objectsTable: ObjectsTable[]) {
+	restore(lookup: PreviewLookup, cart: Cart, objectsTable: KnownDataObject[]) {
 		if (this.hasPids) {
-			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable, this.yAxis, this.y2Axis);
+			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
 		} else {
 			return this;
 		}
 	}
 
-
-	withPids(pids: Sha256Str[]){
+	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
+		this.previewSettings = previewSettings ?? {};
 		return this;
 	}
 
 	withItemUrl(url: UrlStr){
-		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type, this.yAxis, this.y2Axis);
+		return new Preview(this.items.map(i => i.withUrl(url)), this.options, this.type);
 	}
 
 	get hasPids(){
@@ -207,5 +233,5 @@ export function batchPreviewAvailability(
 		if (i > 0 && preview.previewType !== config.TIMESERIES)
 			return noPreview("You can only batch-preview plain time series data objects")
 	}
-	return {previewType: previewTypes.values().next().value}
+	return {previewType: previewTypes.values().next().value!}
 }

@@ -53,9 +53,9 @@ export class StationFilterControl extends Control {
 	private controlButton: HTMLButtonElement;
 	private drawSource: VectorSource;
 	private draw: Draw;
-	private drawLayer: VectorLayer<VectorSource<Geometry>>;
+	private drawLayer: VectorLayer<VectorSource<Feature<Geometry>>>;
 	private deleteRectBtnSource: VectorSource;
-	private deleteRectBtnLayer: VectorLayer<VectorSource<Geometry>>;
+	private deleteRectBtnLayer: VectorLayer<VectorSource<Feature<Geometry>>>;
 	private isActive: boolean = false;
 	private selects: Record<string, Select> = {};
 	private drawFeatures: DrawFeature[] = [];

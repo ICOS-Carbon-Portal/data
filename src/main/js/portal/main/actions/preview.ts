@@ -61,15 +61,3 @@ export function storeTsPreviewSetting(spec: string, type: string, val: string): 
 		});
 	};
 }
-
-export function setPreviewYAxis(y?: string): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewYAxis(y))
-	};
-}
-
-export function setPreviewY2Axis(y2?: string): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new Payloads.SetPreviewY2Axis(y2))
-	};
-}
