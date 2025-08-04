@@ -6,26 +6,20 @@ type Props = {
 	enabled: boolean
 }
 
-export default class DownloadButton extends Component<Props> {
-	constructor(props: Props) {
-		super(props);
-	}
+export default function DownloadButton({ style, enabled, checkedObjects }: Props) {
+	
+	const link = enabled ? getDownloadLink(checkedObjects) : undefined;
+	const btnType = !enabled ? 'btn-outline-secondary' : 'btn-warning';
+	const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
+	const btnStyle: CSSProperties = enabled ? {} : { pointerEvents: 'auto', cursor: 'not-allowed' };
 
-	render() {
-		const { style, enabled, checkedObjects } = this.props;
-		const link = enabled ? getDownloadLink(checkedObjects) : undefined;
-		const btnType = !enabled ? 'btn-outline-secondary' : 'btn-warning';
-		const className = `btn ${btnType} ${enabled ? "" : "disabled"}`;
-		const btnStyle: CSSProperties = enabled ? {} : { pointerEvents: 'auto', cursor: 'not-allowed' };
-
-		return (
-			<div style={style}>
-				<a href={link} id="download-button" className={className} style={btnStyle}>
-					Download
-				</a>
-			</div>
-		);
-	}
+	return (
+		<div style={style}>
+			<a href={link} id="download-button" className={className} style={btnStyle}>
+				Download
+			</a>
+		</div>
+	);
 }
 
 const getDownloadLink = (objs: string[]): string => {

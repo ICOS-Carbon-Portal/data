@@ -32,11 +32,11 @@ import Paging from "../models/Paging";
 import { listFilteredDataObjects } from '../sparqlQueries';
 import { sparqlFetchBlob } from "../backend";
 import {PersistedMapPropsExtended} from "../models/InitMap";
+import scopedKeywords from "../backend/scopedKeywords";
 
 
 export default function bootstrapSearch(user: WhoAmI,tabs: TabsState): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-
 		const filters = getFilters(getState());
 		dispatch(getBackendTables(filters)).then(_ => {
 			dispatch(getFilteredDataObjects);
@@ -58,13 +58,12 @@ export const getOriginsThenDobjList: PortalThunkAction<void> = getDobjOriginsAnd
 
 function getDobjOriginsAndCounts(fetchObjListWhenDone: boolean): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const filters = getFilters(getState(), true);
+		const filters = getFilters(getState());
 
 		fetchDobjOriginsAndCounts(filters).then(
 			dobjOriginsAndCounts => {
 				const tbl = new SpecTable<OriginsColNames>(dobjOriginsAndCounts.colNames, dobjOriginsAndCounts.rows, {});
 				dispatch(new Payloads.BackendOriginsTable(tbl, true));
-
 				if(fetchObjListWhenDone) dispatch(getFilteredDataObjects);
 
 			},
@@ -83,8 +82,15 @@ export const getFilteredDataObjects: PortalThunkAction<void>  = (dispatch, getSt
 
 	dispatch(new Payloads.BackendExportQuery(false, sparqClientQuery));
 
+	scopedKeywords.fetch(options).then(
+		(scopedKeywords) => {
+			dispatch(new Payloads.BackendKeywordsFetched(scopedKeywords))
+		},
+		failWithError(dispatch)
+	)
+
 	dataObjectsFetcher.fetch(options).then(
-		({rows, cacheSize, isDataEndReached}) => {
+		({rows, isDataEndReached}) => {
 			dispatch(fetchExtendedDataObjInfo(rows.map((d) => d.dobj)));
 			dispatch(new Payloads.BackendObjectsFetched(rows, isDataEndReached));
 		},

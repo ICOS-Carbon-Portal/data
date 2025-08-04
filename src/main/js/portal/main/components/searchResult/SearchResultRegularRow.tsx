@@ -3,7 +3,7 @@ import CheckBtn from '../buttons/CheckBtn';
 import { isSmallDevice, getLastSegmentInUrl, linesToShowStyle, getUrlWithEnvironmentPrefix } from '../../utils';
 import {LinkifyText} from '../LinkifyText';
 import config from '../../config';
-import { ObjectsTable, ExtendedDobjInfo, LabelLookup } from "../../models/State";
+import { KnownDataObject, ExtendedDobjInfo, LabelLookup } from "../../models/State";
 import Preview from '../../models/Preview';
 import CartItem, { addingToCartProhibition } from '../../models/CartItem';
 import { UrlStr } from '../../backend/declarations';
@@ -29,12 +29,12 @@ const iconLevel = [
 ];
 
 interface OurProps {
-	objInfo: ObjectsTable | CartItem
+	objInfo: KnownDataObject | undefined
 	extendedInfo: ExtendedDobjInfo
 	preview: Preview
 	updateCheckedObjects: (ids: string) => void
 	isChecked: boolean
-	checkedObjects?: ObjectsTable[]
+	checkedObjects?: KnownDataObject[]
 	labelLookup: LabelLookup
 	isCartView: Boolean
 }
@@ -44,6 +44,9 @@ export default class SearchResultRegularRow extends Component<OurProps> {
 	render(){
 		const props = this.props;
 		const objInfo = props.objInfo;
+		if (objInfo === undefined) {
+			return;
+		}
 		const extendedInfo = props.extendedInfo.theme && props.extendedInfo.themeIcon
 				? props.extendedInfo
 				: { ...props.extendedInfo, theme: 'Other data', themeIcon: 'https://static.icos-cp.eu/images/themes/oth.svg' }

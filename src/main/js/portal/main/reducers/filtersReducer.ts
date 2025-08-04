@@ -41,7 +41,7 @@ export default function(state: State, payload: FiltersPayload): State{
 	}
 
 	if (payload instanceof FilterKeywords){
-		return stateUtils.update(state, {filterKeywords: payload.keywords});
+		return stateUtils.update(state, {filterKeywords: payload.filterKeywords});
 	}
 
 	return state;

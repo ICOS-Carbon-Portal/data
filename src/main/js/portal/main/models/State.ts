@@ -12,15 +12,12 @@ import config, {
 	numberFilterKeys
 } from "../config";
 import deepequal from 'deep-equal';
-import {AsyncResult, UrlStr, Sha256Str} from "../backend/declarations";
+import { UrlStr, Sha256Str } from "../backend/declarations";
 import {Store} from "redux";
-import {fetchKnownDataObjects} from "../backend";
-import {DataObject} from "./CartItem";
-import {DataObject as DO, References} from "../../../common/main/metacore";
+import { DataObject, References } from "../../../common/main/metacore";
 import SpecTable, {Filter, Row} from "./SpecTable";
 import {getLastSegmentInUrl, pick} from "../utils";
 import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
-import { KeywordsInfo } from "../backend/keywordsInfo";
 import {SupportedSRIDs} from "icos-cp-ol";
 import PortalHistoryState from "../backend/PortalHistoryState";
 
@@ -73,7 +70,28 @@ export interface User extends WhoAmI {
 	profile: Profile | {}
 }
 
-type KnownDataObject = AsyncResult<typeof fetchKnownDataObjects>['rows'][0]
+export type KnownDataObject = {
+	dobj: string
+	hasNextVersion: boolean
+	hasVarInfo?: boolean
+	dataset: string
+	fileName: string
+	format: string
+	formatLabel?: string
+	level: number
+	size: string
+	spec: string
+	specLabel?: string
+	submTime: Date
+	theme: string
+	themeLabel?: string
+	timeEnd: Date
+	timeStart: Date
+	type?: string //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	temporalResolution?: string
+	extendedDobjInfo?: ExtendedDobjInfo
+}
+
 export type ExtendedDobjInfo = {
 	dobj: UrlStr
 	station: string | undefined
@@ -91,9 +109,8 @@ export type ExtendedDobjInfo = {
 	dois: UrlStr[] | undefined
 	biblioInfo: References | undefined
 }
-export type ObjectsTable = KnownDataObject & ExtendedDobjInfo & DataObject & Row<BasicsColNames>;
 
-export interface MetaData extends DO {
+export interface MetaData extends DataObject {
 	id: UrlStr
 }
 
@@ -151,13 +168,14 @@ export interface State {
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
-	objectsTable: ObjectsTable[]
+	objectsTable: KnownDataObject[]
 	sorting: {
 		varName: string,
 		ascending: boolean
 	}
 	paging: Paging
 	cart: Cart
+	priorCart: Cart | undefined
 	id: UrlStr | undefined
 	metadata?: MetaData | MetaDataWStats
 	station: {} | undefined
@@ -175,7 +193,7 @@ export interface State {
 	page: number
 	tsSettings: TsSettings
 	helpStorage: HelpStorage
-	keywords: KeywordsInfo
+	scopedKeywords: string[]
 	filterKeywords: string[]
 	exportQuery: ExportQuery
 }
@@ -221,6 +239,7 @@ export const defaultState: State = {
 	},
 	paging: new Paging({objCount: 0}),
 	cart: new Cart(),
+	priorCart: undefined,
 	id: undefined,
 	metadata: undefined,
 	station: undefined,
@@ -238,7 +257,7 @@ export const defaultState: State = {
 	page: 0,
 	tsSettings: {},
 	helpStorage: new HelpStorage(),
-	keywords: {specLookup: {}, dobjKeywords: []},
+	scopedKeywords: [],
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,
@@ -271,6 +290,7 @@ const serialize = (state: State) => {
 		baseDobjStats: state.baseDobjStats.serialize,
 		paging: state.paging.serialize,
 		cart: undefined,
+		priorCart: undefined,
 		preview: state.preview.serialize,
 		helpStorage: state.helpStorage.serialize
 	};

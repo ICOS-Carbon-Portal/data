@@ -76,6 +76,8 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
+export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	let siteQueries: string
 	switch(config.envri){
@@ -109,6 +111,7 @@ prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 prefix geo: <http://www.opengis.net/ont/geosparql#>
 select ?spec ?countryCode ?submitter ?count ?station ?ecosystem ?location ?site ?stationclass ?stationNetwork
+${envriFilteringFromClauses}
 where{
 	{
 		select ?station ?site ?submitter ?spec (count(?dobj) as ?count) where{
@@ -121,7 +124,6 @@ where{
 		}
 		group by ?spec ?submitter ?station ?site
 	}
-	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
 	${siteQueries}
 	}`;
@@ -196,12 +198,12 @@ const submTimeDef = "?dobj cpmeta:wasSubmittedBy/prov:endedAtTime ?submTime .";
 const timeStartDef = "?dobj cpmeta:hasStartTime | (cpmeta:wasAcquiredBy / prov:startedAtTime) ?timeStart .";
 const timeEndDef = "?dobj cpmeta:hasEndTime | (cpmeta:wasAcquiredBy / prov:endedAtTime) ?timeEnd .";
 
-const standardDobjPropsDef =
-	`?dobj cpmeta:hasSizeInBytes ?size .
-?dobj cpmeta:hasName ?fileName .
-${submTimeDef}
-${timeStartDef}
-${timeEndDef}`;
+const standardDobjPropsDef = `
+	?dobj cpmeta:hasSizeInBytes ?size .
+	?dobj cpmeta:hasName ?fileName .
+	${submTimeDef}
+	${timeStartDef}
+	${timeEndDef}`;
 
 export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
 
@@ -212,11 +214,11 @@ prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?dobj ?hasNextVersion ?spec ?fileName ?size ?submTime ?timeStart ?timeEnd ?hasVarInfo
 where {
-VALUES ?dobj { ${values} }
-?dobj cpmeta:hasObjectSpec ?spec .
+	VALUES ?dobj { ${values} }
+	?dobj cpmeta:hasObjectSpec ?spec .
 ${standardDobjPropsDef}
-BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
-BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
+	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
+	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 }`;
 
 	return { text };
@@ -232,48 +234,32 @@ const getPidListFilter = (pidsList: (string | null)[]) => {
 	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 };
 
-export const listFilteredDataObjects = (query: QueryParameters): ObjInfoQuery => {
-
-	const { specs, stations, submitters, sites, sorting, paging, filters } = query;
+export function objectFilterClauses(query: QueryParameters): String {
+	const { specs, stations, submitters, sites, filters } = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = getPidListFilter(pidsList);
 
 	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
-			FILTER(STRSTARTS(str(?${SPECCOL}), "${config.sparqlGraphFilter}"))
-			FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
+	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
 		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
 
 	const submitterSearch = submitters == null ? ''
 		: `VALUES ?submitter {<${submitters.join('> <')}>}
-			?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
+	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
 		? ''
 		: `VALUES ?station {<${stations.filter(Value.isDefined).join('> <')}>}
-			?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
+	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
 
 	const siteSearch = sites == null || sites.filter(Value.isDefined).length === 0
 		? ''
 		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
-				?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
+	?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
-	const orderBy = (sorting && sorting.varName)
-		? (
-			sorting.ascending
-				? `order by ?${sorting.varName}`
-				: `order by desc(?${sorting.varName})`
-		)
-		: '';
-
-	const text = `# listFilteredDataObjects
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>
-select ?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd
-where {
+	return `
 	${pidListFilter}${specsValues}
 	?dobj cpmeta:hasObjectSpec ?${SPECCOL} .
 	BIND(EXISTS{[] cpmeta:isNextVersionOf ?dobj} AS ?hasNextVersion)
@@ -281,12 +267,44 @@ where {
 	${siteSearch}
 	${submitterSearch}
 	${standardDobjPropsDef}
-	${getFilterClauses(filters, false)}
+	${getFilterClauses(filters, false)}`;
+}
+
+export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
+
+	const { sorting, paging } = params;
+	const orderBy = (sorting && sorting.varName)
+		? (
+			sorting.ascending
+				? `order by ?${sorting.varName}`
+				: `order by desc(?${sorting.varName})`
+		)
+		: '';
+	// presense of pid filters makes query to bind ?dobj to known URIs, which disables our SPARQL magic;
+	// when the magic is disabled, the FROM clauses are treated SPARQL-correctly, which is a problem,
+	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
+	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
+	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
+	const fromClauses = hasKnownObjects ? '' : (envriFilteringFromClauses + '\n')
+
+	return `
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix prov: <http://www.w3.org/ns/prov#>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+prefix geo: <http://www.opengis.net/ont/geosparql#>
+select ${selections}
+${fromClauses}where {
+${objectFilterClauses(params)}
 }
 ${orderBy}
 offset ${paging.offset || 0} limit ${paging.limit || 20}`;
+}
 
-	return { text };
+export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
+	const selections = `?dobj ?hasNextVersion ?${SPECCOL} ?fileName ?size ?submTime ?timeStart ?timeEnd`;
+	return {
+		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections)}`
+	};
 };
 
 function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {

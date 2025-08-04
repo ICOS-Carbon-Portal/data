@@ -4,7 +4,7 @@ import config, {PreviewType} from "../config";
 import deepEqual from 'deep-equal';
 import PreviewLookup, {PreviewInfo} from "./PreviewLookup";
 import Cart from "./Cart";
-import {ExtendedDobjInfo, ObjectsTable} from "./State";
+import {ExtendedDobjInfo, KnownDataObject} from "./State";
 import {IdxSig, Sha256Str, UrlStr} from "../backend/declarations";
 import { Value } from './SpecTable';
 
@@ -100,7 +100,7 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: ObjectsTable[], yAxis?: string, y2Axis?: string) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 
@@ -155,7 +155,7 @@ export default class Preview {
 		throw new Error('Could not initialize Preview');
 	}
 
-	restore(lookup: PreviewLookup, cart: Cart, objectsTable: ObjectsTable[]) {
+	restore(lookup: PreviewLookup, cart: Cart, objectsTable: KnownDataObject[]) {
 		if (this.hasPids) {
 			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
 		} else {

@@ -1,30 +1,10 @@
 import {IdxSig, UrlStr} from "../backend/declarations";
 import { PreviewType, themeUris } from "../config";
-import { PreviewSettings } from "./Preview";
-
-export interface DataObject {
-	dobj: string,
-	hasNextVersion: boolean,
-	dataset: string,
-	fileName: string,
-	format: string,
-	formatLabel: string,
-	level: number,
-	size: string,
-	spec: string,
-	specLabel: string,
-	submTime: string,
-	theme: string,
-	themeLabel: string,
-	timeEnd: string,
-	timeStart: string,
-	type: PreviewType | undefined,
-	temporalResolution: string
-}
+import { KnownDataObject} from "./State";
 
 export interface CartItemSerialized {
 	id: string
-	dataobject: DataObject | undefined
+	dataobject: KnownDataObject | undefined
 	type: PreviewType | undefined
 	url: UrlStr | undefined
 	keyValPairs: Record<string, string | undefined>
@@ -32,12 +12,12 @@ export interface CartItemSerialized {
 
 export default class CartItem {
 	private readonly _id: UrlStr;
-	private readonly _dataobject: DataObject | undefined;
+	private readonly _dataobject: KnownDataObject | undefined;
 	private readonly _type: PreviewType | undefined;
 	private readonly _url: UrlStr | undefined;
 	private readonly _keyValPairs: Record<string, string | undefined>;
 
-	constructor(id: string, dataobject?: DataObject, type?: PreviewType, url?: string){
+	constructor(id: string, dataobject?: KnownDataObject, type?: PreviewType, url?: string){
 		this._id = id;
 		this._dataobject = dataobject;
 		this._type = type;
@@ -78,6 +58,10 @@ export default class CartItem {
 
 	get dobj() {
 		return this._id;
+	}
+
+	get knownDataObject() {
+		return this._dataobject;
 	}
 
 	get hasNextVersion() {
@@ -190,15 +174,19 @@ export type CartProhibition = {
 	allowCartAdd: boolean
 	uiMessage?: string
 }
-export function addingToCartProhibition(
-	dobj: {theme: UrlStr, level: number, hasNextVersion: boolean, submTime: Date}
-): CartProhibition {
 
-	if(dobj.submTime.getTime() > Date.now())
-		return {allowCartAdd: false, uiMessage: "This data object is under moratorium"}
+export function addingToCartProhibition(dobj: KnownDataObject | undefined): CartProhibition {
+	if(dobj === undefined) {
+		return { allowCartAdd: false, uiMessage: "This data object has not yet been loaded" }
+	}
 
-	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric)
+	if(dobj.submTime.getTime() > Date.now()) {
+		return { allowCartAdd: false, uiMessage: "This data object is under moratorium" }
+	}
+
+	if (dobj.level === 0 && dobj.theme === themeUris.atmospheric) {
 		return { allowCartAdd: false, uiMessage: "Raw atmospheric data are only available on request at the moment" };
+	}
 
 	return { allowCartAdd: true };
 }

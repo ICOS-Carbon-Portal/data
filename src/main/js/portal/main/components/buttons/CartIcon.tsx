@@ -1,12 +1,12 @@
 import React, { Component, CSSProperties } from 'react';
 import { UrlStr } from '../../backend/declarations';
 import { addingToCartProhibition } from '../../models/CartItem';
-import { ObjectsTable } from '../../models/State';
+import { KnownDataObject } from '../../models/State';
 import { styles } from '../styles';
 
 type Props = {
 	style: CSSProperties
-	objInfo: ObjectsTable
+	objInfo: KnownDataObject
 	addToCart: (ids: UrlStr[]) => void
 	removeFromCart: (ids: UrlStr[]) => void
 	isAddedToCart: boolean

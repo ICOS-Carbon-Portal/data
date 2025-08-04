@@ -13,84 +13,81 @@ type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
 type OurProps = StateProps & DispatchProps;
 
-class PreviewTitle extends Component<OurProps>{
-	render() {
+function PreviewTitle(props: OurProps) {
+	const { items, extendedDobjInfo, labelLookup, cart } = props;
+	if (items.length == 0 || items[0].type == undefined) return null;
+	const specLabel = labelLookup[items[0].spec]?.label ?? "Undefined data type";
+	const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? extendedDobjInfo[0].biblioInfo?.title ?? items[0].fileName;
+	const subtitle = items.length == 1 ? <div className="fs-3 text-muted">{extendedDobjInfo[0].biblioInfo?.temporalCoverageDisplay}</div> : null;
+	const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
 
-		const { items, extendedDobjInfo, labelLookup, cart } = this.props;
-		if (items.length == 0 || items[0].type == undefined) return null;
-		const specLabel = labelLookup[items[0].spec]?.label ?? "Undefined data type";
-		const title = items.length > 1 ? specLabelDisplay(specLabel) : extendedDobjInfo[0].title ?? extendedDobjInfo[0].biblioInfo?.title ?? items[0].fileName;
-		const subtitle = items.length == 1 ? <div className="fs-3 text-muted">{extendedDobjInfo[0].biblioInfo?.temporalCoverageDisplay}</div> : null;
-		const metadataButton = items.length == 1 ? getUrlWithEnvironmentPrefix(items[0].dobj) : '';
+	const allowCartAdd = items
+		.map((cartItem) => addingToCartProhibition(cartItem.knownDataObject))
+		.every(cartProhibition => cartProhibition.allowCartAdd);
+	const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
 
-		const allowCartAdd = items
-			.map(addingToCartProhibition)
-			.every(cartProhibition => cartProhibition.allowCartAdd);
-		const uiMessage = allowCartAdd ? "" : "One or more data objects in this preview cannot be downloaded";
+	const areItemsInCart: boolean = items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
+	const actionButtonType = areItemsInCart ? 'remove' : 'add';
+	const buttonAction = areItemsInCart ? handleRemoveFromCart : handleAddToCart;
 
-		const areItemsInCart: boolean = items.reduce((prevVal: boolean, item: CartItem) => cart.hasItem(item.dobj), false);
-		const actionButtonType = areItemsInCart ? 'remove' : 'add';
-		const buttonAction = areItemsInCart ? this.handleRemoveFromCart.bind(this) : this.handleAddToCart.bind(this);
+	return (
+		<>
+			<h1 className="col-md-8">
+				{title}
+			</h1>
+			<div className='col-auto ms-md-auto d-flex gap-1 py-2'>
+				<CartBtn
+					style={{}}
+					checkedObjects={items.map((item: CartItem) => item.dobj)}
+					clickAction={buttonAction}
+					enabled={allowCartAdd}
+					title={uiMessage}
+					type={actionButtonType}
+				/>
+				<DownloadButton
+					style={{}}
+					checkedObjects={items.map((item: CartItem) => item.dobj)}
+					enabled={allowCartAdd}
+				/>
+			</div>
+			<div className="col-md-12">
+				<div className='d-sm-flex justify-content-between align-items-end mb-4 pb-2'>
+					<div>{subtitle}</div>
 
-		return (
-			<>
-				<h1 className="col-md-8">
-					{title}
-				</h1>
-				<div className='col-auto ms-md-auto d-flex gap-1 py-2'>
-					<CartBtn
-						style={{}}
-						checkedObjects={items.map((item: CartItem) => item.dobj)}
-						clickAction={buttonAction}
-						enabled={allowCartAdd}
-						title={uiMessage}
-						type={actionButtonType}
-					/>
-					<DownloadButton
-						style={{}}
-						checkedObjects={items.map((item: CartItem) => item.dobj)}
-						enabled={allowCartAdd}
-					/>
 				</div>
-				<div className="col-md-12">
-					<div className='d-sm-flex justify-content-between align-items-end mb-4 pb-2'>
-						<div>{subtitle}</div>
+				<ul className="nav nav-tabs">
+					<li className="nav-item">
+						{items.length == 1 ?
+							<a className="nav-link" href={metadataButton}>Metadata</a>
+							:
+							<details className="nav-link dropdown-details">
+								<summary>Metadata</summary>
+								<div className='dropdown' style={{ width: 'auto', left: 0, padding: '0.5rem 0' }}>
+									{items.map(item => {
+										return(
+											<a key={item.dobj} className='dropdown-item py-1 px-3' href={getUrlWithEnvironmentPrefix(item.dobj)}>
+												<div>{item.itemName}</div>
+											</a>
+										);
+									})}
+								</div>
+							</details>
+						}
+					</li>
+					<li className="nav-item">
+						<a className="nav-link active" aria-current="page" href="#">Preview</a>
+					</li>
+				</ul>
+			</div>
+		</>
+	);
 
-					</div>
-					<ul className="nav nav-tabs">
-						<li className="nav-item">
-							{items.length == 1 ?
-								<a className="nav-link" href={metadataButton}>Metadata</a>
-								:
-								<details className="nav-link dropdown-details">
-									<summary>Metadata</summary>
-									<div className='dropdown' style={{ width: 'auto', left: 0, padding: '0.5rem 0' }}>
-										{items.map(item => {
-											return(
-												<a key={item.dobj} className='dropdown-item py-1 px-3' href={getUrlWithEnvironmentPrefix(item.dobj)}>
-													<div>{item.itemName}</div>
-												</a>
-											);
-										})}
-									</div>
-								</details>
-							}
-						</li>
-						<li className="nav-item">
-							<a className="nav-link active" aria-current="page" href="#">Preview</a>
-						</li>
-					</ul>
-				</div>
-			</>
-		);
+	function handleAddToCart(objInfo: UrlStr[]) {
+		props.addToCart(objInfo);
 	}
 
-	handleAddToCart(objInfo: UrlStr[]) {
-		this.props.addToCart(objInfo);
-	}
-
-	handleRemoveFromCart(objInfo: UrlStr[]) {
-		this.props.removeFromCart(objInfo);
+	function handleRemoveFromCart(objInfo: UrlStr[]) {
+		props.removeFromCart(objInfo);
 	}
 }
 

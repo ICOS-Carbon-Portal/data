@@ -7,13 +7,15 @@ import {
 	BackendOriginsTable,
 	BackendUpdateSpecFilter,
 	BackendObjectsFetched,
+	BackendKeywordsFetched,
 	BackendExtendedDataObjInfo,
 	BackendTsSettings,
 	BackendBatchDownload,
 	BackendUpdateCart,
+	BackendUpdatePriorCart,
 	BackendExportQuery
 } from "./actionpayloads";
-import stateUtils, {CategFilters, ObjectsTable, State} from "../models/State";
+import stateUtils, {CategFilters, KnownDataObject, State} from "../models/State";
 import config, {CategoryType} from "../config";
 import CompositeSpecTable, { ColNames } from "../models/CompositeSpecTable";
 import Paging from "../models/Paging";
@@ -59,6 +61,12 @@ export default function(state: State, payload: BackendPayload): State {
 		return stateUtils.update(state, handleObjectsFetched(state, payload));
 	}
 
+	if (payload instanceof BackendKeywordsFetched){
+		return stateUtils.update(state, {
+			scopedKeywords: payload.scopedKeywords
+		});
+	}
+
 	if (payload instanceof BackendExportQuery) {
 		return stateUtils.update(state, {
 			exportQuery: payload
@@ -87,6 +95,13 @@ export default function(state: State, payload: BackendPayload): State {
 		});
 	}
 
+	if (payload instanceof BackendUpdatePriorCart) {
+		return stateUtils.update(state,{
+			priorCart: payload.cart,
+			checkedObjectsInCart: []
+		});
+	}
+
 	return state;
 
 };
@@ -105,7 +120,7 @@ const handleExtendedDataObjInfo = (state: State, payload: BackendExtendedDataObj
 };
 
 const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
-	const objectsTable = payload.objectsTable as ObjectsTable[];
+	const objectsTable = payload.objectsTable as KnownDataObject[];
 	const extendedObjectsTable = objectsTable.map(ot => {
 		const spec = state.specTable.getTableRows('basics').find(r => r.spec === ot.spec);
 		return {...ot, ...spec};
@@ -181,7 +196,6 @@ function bootstrapInfoUpdates(state: State, payload: BootstrapInfo): Partial<Sta
 		labelLookup,
 		...getNewPaging(state.paging, state.page, specTable, false),
 		previewLookup: PreviewLookup.init(specTable, labelLookup),
-		keywords: payload.info.keywords,
 		countryCodesLookup: payload.info.countryCodes,
 		stationPos4326Lookup: payload.info.stationPos4326Lookup
 	}
