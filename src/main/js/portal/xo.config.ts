@@ -19,7 +19,7 @@ const xoConfig: FlatXoConfig = [
 				"singleline": {"delimiter": "comma", "requireLast": true}
 			}],
 			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
-			"unicorn/prevent-abbreviations": ["off"],
+			"unicorn/prevent-abbreviations": "off",
 			"@typescript-eslint/naming-convention": ["error", 
 				{"selector": "default", "format": ["camelCase", "PascalCase"]},
 				{"selector": "typeLike", "format": ["PascalCase"]},
@@ -30,6 +30,7 @@ const xoConfig: FlatXoConfig = [
 				"pascalCase": true, "camelCase": true
 			}}],
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
+			"promise/prefer-await-to-then": "off",
 		}
 	},
 ];
