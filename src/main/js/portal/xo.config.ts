@@ -2,7 +2,14 @@ import {type FlatXoConfig} from 'xo';
 
 const xoConfig: FlatXoConfig = [
 	{
-		files: ["**/*.tsx", "**/*.ts"],
+		ignores: [
+			'tsTarget/**',
+			'node_modules/**',
+			'external-modules/**'
+		]
+	},
+	{
+		files: ["**/*.tsx", "**/*.ts", "**/*.js", "**/*.jsx"],
 		rules: {
 			"@stylistic/quotes": ["error", "double", {"allowTemplateLiterals": "always"}],
 			"import-x/extensions": ["error", "never", { "fix": true }],
@@ -24,7 +31,7 @@ const xoConfig: FlatXoConfig = [
 			}}],
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
 		}
-	}
+	},
 ];
 
 export default xoConfig;
