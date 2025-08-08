@@ -16,7 +16,7 @@ const xoConfig: FlatXoConfig = [
 			"@stylistic/no-multiple-empty-lines": ["error", {"max": 2}],
 			"@stylistic/member-delimiter-style": ["error", {
 				"multiline": {"delimiter": "none", "requireLast": true},
-				"singleline": {"delimiter": "comma", "requireLast": true}
+				"singleline": {"delimiter": "comma", "requireLast": false}
 			}],
 			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
 			"unicorn/prevent-abbreviations": "off",
@@ -32,8 +32,8 @@ const xoConfig: FlatXoConfig = [
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
 			"promise/prefer-await-to-then": "off",
 			"@stylistic/comma-dangle": ["error", {
-				"arrays": "always-multiline",
-				"objects": "always-multiline",
+				"arrays": "only-multiline",
+				"objects": "only-multiline",
 				"imports": "never",
 				"exports": "never",
 				"functions": "never",
@@ -43,6 +43,9 @@ const xoConfig: FlatXoConfig = [
 				"generics": "never",
 				"tuples": "only-multiline",
 			}],
+			"prefer-destructuring": "off",
+			"@typescript-eslint/no-restricted-types": "off",
+			"no-warning-comments": "off",
 		}
 	},
 ];
