@@ -31,6 +31,18 @@ const xoConfig: FlatXoConfig = [
 			}}],
 			"@stylistic/jsx-quotes": ["error", "prefer-double"],
 			"promise/prefer-await-to-then": "off",
+			"@stylistic/comma-dangle": ["error", {
+				"arrays": "always-multiline",
+				"objects": "always-multiline",
+				"imports": "never",
+				"exports": "never",
+				"functions": "never",
+				"importAttributes": "never",
+				"dynamicImports": "never",
+				"enums": "only-multiline",
+				"generics": "never",
+				"tuples": "only-multiline",
+			}],
 		}
 	},
 ];
