@@ -1,29 +1,30 @@
-import React, { Component } from 'react';
-import { HelpItemName } from '../../models/HelpStorage';
+import React, {Component} from "react";
+import {type HelpItemName} from "../../models/HelpStorage";
 
 type Props = {
 	btnText: string
 	copyHelpText: string
 	valToCopy: string
 	helpButtonName?: HelpItemName
-}
+};
 
 export default class CopyValue extends Component<Props> {
-	urlInput?: HTMLInputElement | null
+	urlInput?: HTMLInputElement | null;
 
 	copyUrl() {
-		if (this.urlInput)
+		if (this.urlInput) {
 			this.urlInput.select();
+		}
 
-		document.execCommand('copy');
+		document.execCommand("copy");
 		this.setState({showCopy: false});
 	}
 
-	render(){
+	render() {
 		const {copyHelpText, valToCopy, helpButtonName} = this.props;
 
-		return(
-			<span className='fs-6'>
+		return (
+			<span className="fs-6">
 				<CopyCtr
 					self={this}
 					valToCopy={valToCopy}
@@ -40,12 +41,13 @@ type CopyCtrProps = {
 	valToCopy: string
 	copyHelpText: string
 	copyClick: () => void
-}
+};
 
-const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick}: CopyCtrProps) => {
+const CopyCtr = ({self, valToCopy, copyHelpText, copyClick}: CopyCtrProps) => {
 	const inputClick = () => {
-		if (self.urlInput)
+		if (self.urlInput) {
 			self.urlInput.select();
+		}
 	};
 
 	return (
@@ -58,7 +60,7 @@ const CopyCtr = ({ self, valToCopy, copyHelpText, copyClick}: CopyCtrProps) => {
 				value={valToCopy}
 				readOnly
 			/>
-			<button className="btn btn-outline-secondary" style={{ borderColor: '#ced4da' }} onClick={copyClick} title={copyHelpText}>
+			<button className="btn btn-outline-secondary" style={{borderColor: "#ced4da"}} onClick={copyClick} title={copyHelpText}>
 				<span className="fas fa-copy" />
 			</button>
 		</span>

@@ -1,15 +1,15 @@
-import React, { Component } from 'react';
+import React, {Component} from "react";
 
 type Props = {
 	failWithError: (err: Error) => void
-}
+};
 
 type State = {
 	hasError: boolean
-}
+};
 
-export default class ErrorBoundary extends Component<Props, State>{
-	constructor(props: Props){
+export default class ErrorBoundary extends Component<Props, State> {
+	constructor(props: Props) {
 		super(props);
 
 		this.state = {
@@ -19,7 +19,9 @@ export default class ErrorBoundary extends Component<Props, State>{
 
 	componentDidCatch(error: Error) {
 		this.setState({hasError: true});
-		if (this.props.failWithError) this.props.failWithError(error);
+		if (this.props.failWithError) {
+			this.props.failWithError(error);
+		}
 	}
 
 	render() {

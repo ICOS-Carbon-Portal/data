@@ -1,9 +1,9 @@
+import deepEqual from "deep-equal";
 import LinearCache from "./models/LinearCache";
 import {fetchFilteredDataObjects} from "./backend";
-import deepEqual from 'deep-equal';
-import config from './config';
-import {AsyncResult} from "./backend/declarations";
-import {QueryParameters} from "./actions/types";
+import config from "./config";
+import {type AsyncResult} from "./backend/declarations";
+import {type QueryParameters} from "./actions/types";
 
 
 type FetchFilteredDataObjects = AsyncResult<typeof fetchFilteredDataObjects>;
@@ -12,27 +12,27 @@ type FetchedDataObjs = Promise<{
 	rows: Rows
 	cacheSize: number
 	isDataEndReached: boolean
-}>
+}>;
 
-export class CachedDataObjectsFetcher{
+export class CachedDataObjectsFetcher {
 	private cacheId?: {};
-	private linearCache? : LinearCache;
+	private linearCache?: LinearCache;
 
-	constructor(public readonly fetchLimit: number){
+	constructor(public readonly fetchLimit: number) {
 		this.fetchLimit = fetchLimit;
 		this.cacheId = undefined;
 		this.linearCache = undefined;
 	}
 
-	fetch(options: QueryParameters): FetchedDataObjs {
-		const cacheId = Object.assign({}, options, {paging: null});
+	async fetch(options: QueryParameters): FetchedDataObjs {
+		const cacheId = {...options, paging: null};
 		const {offset, limit}: {offset: number, limit: number} = options.paging;
 
-		if(!deepEqual(this.cacheId, cacheId)){
+		if (!deepEqual(this.cacheId, cacheId)) {
 			this.cacheId = cacheId;
 			this.linearCache = new LinearCache(
-				(offset: number, limit: number) => {
-					const opts = Object.assign({}, options, {paging:{offset, limit}});
+				async (offset: number, limit: number) => {
+					const opts = {...options, paging: {offset, limit}};
 
 					return fetchFilteredDataObjects(opts).then((res: FetchFilteredDataObjects) => res.rows);
 				},
@@ -49,14 +49,12 @@ export class CachedDataObjectsFetcher{
 	}
 }
 
-export class DataObjectsFetcher{
-	fetch(options: QueryParameters): FetchedDataObjs {
-		return fetchFilteredDataObjects(options).then(({rows}) => {
-			return {
-				rows,
-				cacheSize: 0,
-				isDataEndReached: rows.length < config.stepsize
-			};
-		});
+export class DataObjectsFetcher {
+	async fetch(options: QueryParameters): FetchedDataObjs {
+		return fetchFilteredDataObjects(options).then(({rows}) => ({
+			rows,
+			cacheSize: 0,
+			isDataEndReached: rows.length < config.stepsize
+		}));
 	}
 }

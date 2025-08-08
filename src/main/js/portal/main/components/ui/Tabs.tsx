@@ -1,21 +1,21 @@
-import React, { Component, ReactNode } from 'react';
+import React, {Component, type ReactNode} from "react";
 
 type Props = {
 	tabName: string
 	selectedTabId?: number
 	switchTab: (tabName: string, selectedTabId: number) => void
-} & { children: ReactNode[] }
+} & {children: ReactNode[]};
 
 type TabState = {
 	id: number
 	tabHeader: string
 	isActive: boolean
-}
+};
 
-export default class Tabs extends Component<Props>{
-	private tabState: TabState[]
+export default class Tabs extends Component<Props> {
+	private readonly tabState: TabState[];
 
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 
 		const selectedTabId = props.selectedTabId ?? 0;
@@ -28,22 +28,26 @@ export default class Tabs extends Component<Props>{
 		));
 	}
 
-	componentWillUpdate(nextProps: Props){
+	componentWillUpdate(nextProps: Props) {
 		this.setActiveTab(nextProps.selectedTabId);
 	}
 
-	setActiveTab(tabId = 0){
-		this.tabState.forEach(tab => tab.isActive = tab.id === tabId);
+	setActiveTab(tabId = 0) {
+		for (const tab of this.tabState) {
+			tab.isActive = tab.id === tabId;
+		}
 	}
 
-	onTabClick(selectedTabId: number){
+	onTabClick(selectedTabId: number) {
 		const {tabName, switchTab} = this.props;
-		if (tabName && switchTab) switchTab(tabName, selectedTabId);
+		if (tabName && switchTab) {
+			switchTab(tabName, selectedTabId);
+		}
 	}
 
-	render(){
+	render() {
 		const {children} = this.props;
-		const border = '1px solid #ddd';
+		const border = "1px solid #ddd";
 		const tabContentStyle = {
 			borderLeft: border,
 			borderRight: border,
@@ -55,12 +59,11 @@ export default class Tabs extends Component<Props>{
 				<div className="card-header">
 					<ul className="nav nav-tabs card-header-tabs">{
 						this.tabState.map(tab =>
-							<li key={'tabHeader' + tab.id} className={'nav-item'}>
-								<a style={{cursor: 'pointer'}} className={tab.isActive ? 'nav-link active' : 'nav-link'} onClick={this.onTabClick.bind(this, tab.id)}>{
+							<li key={"tabHeader" + tab.id} className={"nav-item"}>
+								<a style={{cursor: "pointer"}} className={tab.isActive ? "nav-link active" : "nav-link"} onClick={this.onTabClick.bind(this, tab.id)}>{
 									tab.tabHeader
 								}</a>
-							</li>
-						)
+							</li>)
 					}</ul>
 				</div>
 

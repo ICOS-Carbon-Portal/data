@@ -1,23 +1,23 @@
-import React, {ChangeEvent, Component} from "react";
+import React, {type ChangeEvent, Component} from "react";
 import HelpButton from "../../containers/help/HelpButton";
-import {FilterNumber} from "../../models/FilterNumbers";
-import { numericFilterLabels } from "../../config";
+import {type FilterNumber} from "../../models/FilterNumbers";
+import {numericFilterLabels} from "../../config";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
 
 
-interface OurProps {
+type OurProps = {
 	isEnabled?: boolean
 	filterNumber: FilterNumber
 	action: (val: FilterNumber) => void
-}
+};
 
-interface OurState {
+type OurState = {
 	isValid: boolean
 	val?: string
-}
+};
 
 export default class NumberFilter extends Component<OurProps, OurState> {
-	constructor(props: OurProps){
+	constructor(props: OurProps) {
 		super(props);
 
 		this.state = {
@@ -39,23 +39,26 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 		}
 	}
 
-	resetFilter(){
+	resetFilter() {
 		const filterNumber = this.props.filterNumber.validate("");
 		this.setState({val: "", isValid: true});
 		this.props.action(filterNumber);
 	}
 
-	componentDidUpdate(prevProps: OurProps){
-		if (prevProps.filterNumber.txt !== "" && this.props.filterNumber.txt === "")
+	componentDidUpdate(prevProps: OurProps) {
+		if (prevProps.filterNumber.txt !== "" && this.props.filterNumber.txt === "") {
 			this.setState({val: undefined, isValid: true});
+		}
 	}
 
 	render() {
 		const {isEnabled = true, filterNumber} = this.props;
-		if (!isEnabled) return null;
+		if (!isEnabled) {
+			return null;
+		}
 
 		const {isValid, val} = this.state;
-		const style = isValid ? {} : {backgroundColor: '#ebccd1'};
+		const style = isValid ? {} : {backgroundColor: "#ebccd1"};
 		const value = val ?? filterNumber.txt;
 
 		return (
@@ -67,7 +70,7 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 
 							<HelpButton name={filterNumber.category}/>
 						</div>
-	
+
 						<div>
 							<FilterOperationBtn
 								enabled={value.length > 0}
@@ -94,4 +97,4 @@ export default class NumberFilter extends Component<OurProps, OurState> {
 			</>
 		);
 	}
-};
+}

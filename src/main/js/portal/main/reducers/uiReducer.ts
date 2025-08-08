@@ -1,54 +1,53 @@
-import stateUtils, {State} from "../models/State";
+import stateUtils, {type State} from "../models/State";
+import config from "../config";
+import {type UrlStr} from "../backend/declarations";
 import {
 	UiInactivateAllHelp,
-	UiPayload,
+	type UiPayload,
 	UiStepRequested,
 	UiSwitchTab,
 	UiToggleSorting, UiUpdateCheckedObjsInCart, UiUpdateCheckedObjsInSearch,
 	UiUpdateHelpInfo
 } from "./actionpayloads";
-import config from "../config";
 import {isInPidFilteringMode} from "./utils";
-import {UrlStr} from "../backend/declarations";
 
-export default function(state: State, payload: UiPayload): State{
-
-	if (payload instanceof UiToggleSorting){
+export default function (state: State, payload: UiPayload): State {
+	if (payload instanceof UiToggleSorting) {
 		return stateUtils.update(state, handleToggleSorting(state, payload));
 	}
 
-	if (payload instanceof UiStepRequested){
-		return stateUtils.update(state,{
+	if (payload instanceof UiStepRequested) {
+		return stateUtils.update(state, {
 			objectsTable: [],
 			paging: state.paging.withDirection(payload.direction),
 			page: state.page + payload.direction
 		});
 	}
 
-	if (payload instanceof UiSwitchTab){
+	if (payload instanceof UiSwitchTab) {
 		return stateUtils.update(state, handleSwitchTab(state, payload));
 	}
 
-	if (payload instanceof UiUpdateHelpInfo){
-		return stateUtils.update(state,{
+	if (payload instanceof UiUpdateHelpInfo) {
+		return stateUtils.update(state, {
 			helpStorage: state.helpStorage.withItem(payload.helpItem)
 		});
 	}
 
-	if (payload instanceof UiInactivateAllHelp){
-		return stateUtils.update(state,{
+	if (payload instanceof UiInactivateAllHelp) {
+		return stateUtils.update(state, {
 			helpStorage: state.helpStorage.setAllInactive()
 		});
 	}
 
-	if (payload instanceof UiUpdateCheckedObjsInSearch){
-		return stateUtils.updateAndSave(state,{
+	if (payload instanceof UiUpdateCheckedObjsInSearch) {
+		return stateUtils.updateAndSave(state, {
 			checkedObjectsInSearch: updateCheckedObjects(state.checkedObjectsInSearch, payload.checkedObjectInSearch)
 		});
 	}
 
-	if (payload instanceof UiUpdateCheckedObjsInCart){
-		return stateUtils.update(state,{
+	if (payload instanceof UiUpdateCheckedObjsInCart) {
+		return stateUtils.update(state, {
 			checkedObjectsInCart: updateCheckedObjects(state.checkedObjectsInCart, payload.checkedObjectInCart)
 		});
 	}
@@ -72,7 +71,7 @@ const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
 	const hasPidSearchResult = isInPidFilteringMode(tabs, state.filterPids);
 	const offset = hasPidSearchResult ? 0 : state.paging.offset;
 
-	return stateUtils.update(state,{
+	return stateUtils.update(state, {
 		tabs,
 		paging: state.paging
 			.withFiltersEnabled(hasPidSearchResult)
@@ -82,11 +81,11 @@ const handleSwitchTab = (state: State, payload: UiSwitchTab) => {
 };
 
 const updateCheckedObjects = (existingObjs: UrlStr[], newObj: UrlStr | UrlStr[]) => {
-	if (Array.isArray(newObj)){
+	if (Array.isArray(newObj)) {
 		return newObj.length === 0 ? [] : newObj;
 	}
 
 	return existingObjs.includes(newObj)
 		? existingObjs.filter(o => o !== newObj)
-		: existingObjs.concat([newObj]);
+		: [...existingObjs, newObj];
 };

@@ -1,38 +1,39 @@
-import React, { Component } from 'react';
-import { SlideIn } from '../ui/SlideIn';
-import HelpText from './HelpText';
-import HelpStorage, { HelpItem } from '../../models/HelpStorage.js';
+import React, {Component} from "react";
+import {SlideIn} from "../ui/SlideIn";
+import {type HelpItem} from "../../models/HelpStorage";
+import type HelpStorage from "../../models/HelpStorage";
+import HelpText from "./HelpText";
 
 
 const closeBtnStyle: React.CSSProperties = {
-	float: 'right',
+	float: "right",
 	top: -5,
 	fontSize: 26,
-	cursor: 'pointer'
+	cursor: "pointer"
 };
 
 const panelBodyStyle: React.CSSProperties = {
-	width: '100%',
+	width: "100%",
 	padding: 10,
 	minHeight: 400,
 	maxHeight: 600,
-	overflowY: 'auto',
-	backgroundColor: 'rgba(255, 254, 151, 0.36)'
+	overflowY: "auto",
+	backgroundColor: "rgba(255, 254, 151, 0.36)"
 };
 
 type HelpState = {
-	helpItem: HelpItem | undefined,
+	helpItem: HelpItem | undefined
 	isOpen: boolean
-}
+};
 
 type HelpProps = {
-	width: number,
-	helpStorage: HelpStorage,
+	width: number
+	helpStorage: HelpStorage
 	onHelpClose(): void
-}
+};
 
-export default class HelpSection extends Component<HelpProps, HelpState>{
-	constructor(props: HelpProps){
+export default class HelpSection extends Component<HelpProps, HelpState> {
+	constructor(props: HelpProps) {
 		super(props);
 
 		this.state = {
@@ -43,11 +44,14 @@ export default class HelpSection extends Component<HelpProps, HelpState>{
 
 	componentWillReceiveProps(nextProps: HelpProps) {
 		const helpItem = nextProps.helpStorage.visibleHelpItem;
-		if(helpItem) this.setState({helpItem, isOpen: true})
-		else this.setState({isOpen: false});
+		if (helpItem) {
+			this.setState({helpItem, isOpen: true});
+		} else {
+			this.setState({isOpen: false});
+		}
 	}
 
-	onCloseBtnClick(){
+	onCloseBtnClick() {
 		this.setState({isOpen: false});
 		this.props.onHelpClose();
 	}
@@ -57,7 +61,7 @@ export default class HelpSection extends Component<HelpProps, HelpState>{
 		const {width} = this.props;
 
 		return (
-			<div style={{overflow:'hidden'}}>
+			<div style={{overflow: "hidden"}}>
 				<SlideIn isOpen={isOpen} width={width}>
 					<div className="card" style={{marginBottom: 0, width}}>
 

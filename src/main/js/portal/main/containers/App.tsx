@@ -1,19 +1,19 @@
-import React, { Component, ReactNode, MouseEvent } from 'react';
-import { connect } from 'react-redux';
-import {AnimatedToasters} from 'icos-cp-toaster';
-import Search from './search/Search';
-import DataCart from './DataCart';
-import Preview from './Preview';
-import ErrorBoundary from '../components/ErrorBoundary';
-import {updateCheckedObjectsInCart} from '../actions/cart';
-import config, {breadcrumbs, Breadcrumb} from '../config';
-import {Route, State} from "../models/State";
-import {UrlStr} from "../backend/declarations";
-import {PortalDispatch} from "../store";
+import React, {Component, type ReactNode, type MouseEvent} from "react";
+import {connect} from "react-redux";
+import {AnimatedToasters} from "icos-cp-toaster";
+import ErrorBoundary from "../components/ErrorBoundary";
+import {updateCheckedObjectsInCart} from "../actions/cart";
+import config, {breadcrumbs, type Breadcrumb} from "../config";
+import {Route, type State} from "../models/State";
+import {type UrlStr} from "../backend/declarations";
+import {type PortalDispatch} from "../store";
 import {failWithError, updateRoute} from "../actions/common";
-import HelpSection from '../components/help/HelpSection';
-import { UiInactivateAllHelp } from '../reducers/actionpayloads';
-import PreviewTitle from '../components/preview/PreviewTitle';
+import HelpSection from "../components/help/HelpSection";
+import {UiInactivateAllHelp} from "../reducers/actionpayloads";
+import PreviewTitle from "../components/preview/PreviewTitle";
+import Preview from "./Preview";
+import DataCart from "./DataCart";
+import Search from "./search/Search";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -21,11 +21,11 @@ type DispatchProps = ReturnType<typeof dispatchToProps>;
 export type AppProps = StateProps & DispatchProps;
 
 export class App extends Component<AppProps> {
-	constructor(props: AppProps){
+	constructor(props: AppProps) {
 		super(props);
 	}
 
-	handleRouteClick(newRoute: string){
+	handleRouteClick(newRoute: string) {
 		this.props.updateCheckedObjectsInCart([]);
 		this.props.updateRoute(newRoute as Route);
 	}
@@ -36,7 +36,7 @@ export class App extends Component<AppProps> {
 		}
 	}
 
-	render(){
+	render() {
 		const props = this.props;
 
 		if (!props.route || !props.bootstrapDataArrived) {
@@ -58,8 +58,12 @@ export class App extends Component<AppProps> {
 
 				<ErrorBoundary failWithError={props.failWithError}>
 					<Route route={props.route}>
-						<div style={{ position: 'absolute', top: -20, right: 15, bottom: 0 }}>
-							<div style={{ position: 'sticky', top: 2, padding: 0, zIndex: 9999 }}>
+						<div style={{
+							position: "absolute", top: -20, right: 15, bottom: 0
+						}}>
+							<div style={{
+								position: "sticky", top: 2, padding: 0, zIndex: 9999
+							}}>
 								<HelpSection width={300} onHelpClose={this.props.onHelpClose} helpStorage={this.props.helpStorage} />
 							</div>
 						</div>
@@ -70,70 +74,76 @@ export class App extends Component<AppProps> {
 	}
 }
 
-const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route}) => {
-	return (
-		<nav role="navigation" aria-label="breadcrumb">
-			<ol className="breadcrumb bg-light p-2">
-				{breadcrumbs[config.envri].map(b => BreadcrumbItem(b, props.handleRouteClick, props.route))}
-			</ol>
-		</nav>
-	)
-}
+const Breadcrumbs = (props: {handleRouteClick: (newRoute: string) => void, route: Route}) => (
+	<nav role="navigation" aria-label="breadcrumb">
+		<ol className="breadcrumb bg-light p-2">
+			{breadcrumbs[config.envri].map(b => BreadcrumbItem(b, props.handleRouteClick, props.route))}
+		</ol>
+	</nav>
+);
 
 const BreadcrumbItem = (item: Breadcrumb, handleRouteClick: (newRoute: string) => void, route: Route) => {
-	const onclick: (event: MouseEvent<HTMLAnchorElement>) => void =
-		(item.url == "/portal") ? (e: MouseEvent) => {
-			e.preventDefault()
-			handleRouteClick('search')
-		} : _ => _;
+	const onclick: (event: MouseEvent<HTMLAnchorElement>) => void
+		= (item.url == "/portal")
+			? (e: MouseEvent) => {
+				e.preventDefault();
+				handleRouteClick("search");
+			}
+			: _ => _;
 
-	return ((item.url == "/portal" && route == 'search') ?
-		<li key={item.label} className="breadcrumb-item active">{item.label}</li> :
-		<li key={item.label} className="breadcrumb-item"><a onClick={onclick} href={item.url}>{item.label}</a></li>)
-}
+	return ((item.url == "/portal" && route == "search")
+		? <li key={item.label} className="breadcrumb-item active">{item.label}</li>
+		: <li key={item.label} className="breadcrumb-item"><a onClick={onclick} href={item.url}>{item.label}</a></li>);
+};
 
-const Title = (props: {route: Route, metadata?: State['metadata']}) => {
-
-	switch(props.route) {
-		case 'search':
+const Title = (props: {route: Route, metadata?: State["metadata"]}) => {
+	switch (props.route) {
+		case "search": {
 			return (
 				<h1 className="col-md-9 mb-3">
 					{config.envriName} data portal
-					{config.envri === "ICOS" &&
-						<span className="fs-3 text-secondary"> Search, preview, download data objects</span>
+					{config.envri === "ICOS"
+						&& <span className="fs-3 text-secondary"> Search, preview, download data objects</span>
 					}
 				</h1>
 			);
+		}
 
-		case 'preview':
+		case "preview": {
 			return <PreviewTitle />;
+		}
 
-		default:
+		default: {
 			return <div className="col-md-9" />;
+		}
 	}
 };
 
-const Route = ({ route, children }: { route: Route, children: ReactNode }) => {
-	switch(route){
-		case 'search':
+const Route = ({route, children}: {route: Route, children: ReactNode}) => {
+	switch (route) {
+		case "search": {
 			return (
 				<Search HelpSection={children} />
 			);
+		}
 
-		case 'cart':
+		case "cart": {
 			return <DataCart />;
+		}
 
-		case 'preview':
+		case "preview": {
 			return (
 				<Preview HelpSection={children} />
 			);
+		}
 
-		case 'metadata':
+		case "metadata": {
 			return <React.Fragment />;
+		}
 	}
 };
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		route: state.route,
 		toasterData: state.toasterData,
@@ -141,10 +151,10 @@ function stateToProps(state: State){
 		metadata: state.metadata,
 		helpStorage: state.helpStorage,
 		bootstrapDataArrived: Object.keys(state.labelLookup).length > 0
-	}
+	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch | Function) {
 	return {
 		failWithError: (error: Error) => failWithError(dispatch as PortalDispatch)(error),
 		updateRoute: (route: Route) => dispatch(updateRoute(route)),

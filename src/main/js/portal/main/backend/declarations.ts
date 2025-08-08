@@ -1,4 +1,4 @@
-import {Component, ComponentLifecycle} from "react";
+import {type Component, type ComponentLifecycle} from "react";
 
 /** Absolute URL as string */
 export type UrlStr = string;
@@ -7,9 +7,7 @@ export type UrlStr = string;
 export type Sha256Str = string;
 
 /** Index signature for objects	*/
-export type IdxSig<Value = string, Keys extends string | number | symbol = string> = {
-	[Key in Keys]: Value
-}
+export type IdxSig<Value = string, Keys extends string | number | symbol = string> = Record<Keys, Value>;
 
 export type PromiseTypeParam<T> = T extends Promise<infer U> ? U : never;
 
@@ -17,7 +15,7 @@ export type PromiseTypeParam<T> = T extends Promise<infer U> ? U : never;
 export type AsyncResult<F extends (...args: any[]) => Promise<any>> = F extends (...args: any[]) => Promise<infer R> ? R : never;
 
 export type ExtractPrototypes<C extends IdxSig<any>> = {
-	[Key in keyof C['prototype']]: C['prototype'][Key]
-}
+	[Key in keyof C["prototype"]]: C["prototype"][Key]
+};
 
-export type PickClassFunctions<C extends IdxSig<any, string>> = Omit<ExtractPrototypes<C>, keyof Component | keyof ComponentLifecycle<never, never>>;
+export type PickClassFunctions<C extends IdxSig<any>> = Omit<ExtractPrototypes<C>, keyof Component | keyof ComponentLifecycle<never, never>>;

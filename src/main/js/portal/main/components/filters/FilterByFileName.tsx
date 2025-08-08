@@ -1,12 +1,12 @@
-import React, {ChangeEvent, Component} from "react";
-import {debounce} from 'icos-cp-utils';
+import React, {type ChangeEvent, Component} from "react";
+import {debounce} from "icos-cp-utils";
 import HelpButton from "../../containers/help/HelpButton";
 
-interface OurProps {
+type OurProps = {
 	filterFileName: string
 	updateFileName: (name: string) => void
-	showDeprecated: Boolean
-}
+	showDeprecated: boolean
+};
 
 export default class FilterByFileName extends Component<OurProps> {
 	private readonly makeQueryDebounced: (ev: ChangeEvent<HTMLInputElement>) => void;
@@ -17,7 +17,7 @@ export default class FilterByFileName extends Component<OurProps> {
 		this.makeQueryDebounced = debounce(this.makeQuery.bind(this));
 	}
 
-	private makeQuery(ev: ChangeEvent<HTMLInputElement>){
+	private makeQuery(ev: ChangeEvent<HTMLInputElement>) {
 		const fileName = ev.target.value;
 
 		this.props.updateFileName(fileName);

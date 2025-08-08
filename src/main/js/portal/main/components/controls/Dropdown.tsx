@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from "react";
 
 type Props = {
 	isSorter: boolean
@@ -6,19 +6,19 @@ type Props = {
 	selectedItemKey: string
 	isAscending: boolean
 	itemClickAction: (varName: string) => void
-	lookup: Record<string,string>
+	lookup: Record<string, string>
 	defaultLbl?: string
-}
+};
 
 type State = {
 	dropdownOpen: boolean
-}
+};
 
-export default class Dropdown extends Component<Props, State>{
-	private outsideClickHandler: (e: any) => void
-	private node: HTMLSpanElement | null = null
+export default class Dropdown extends Component<Props, State> {
+	private readonly outsideClickHandler: (e: any) => void;
+	private node: HTMLSpanElement | null = null;
 
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 
 		this.state = {
@@ -26,37 +26,42 @@ export default class Dropdown extends Component<Props, State>{
 		};
 
 		this.outsideClickHandler = this.handleOutsideClick.bind(this);
-		document.addEventListener('click', this.outsideClickHandler, false);
+		document.addEventListener("click", this.outsideClickHandler, false);
 	}
 
 	handleOutsideClick(e: MouseEvent) {
-		if (!this.node) return;
-		if (e.target === null) return;
+		if (!this.node) {
+			return;
+		}
+
+		if (e.target === null) {
+			return;
+		}
 
 		if (!this.node.contains(e.target as Node) && this.state.dropdownOpen) {
 			this.setState({dropdownOpen: false});
 		}
 	}
 
-	onDropdownClick(){
+	onDropdownClick() {
 		this.setState({dropdownOpen: !this.state.dropdownOpen});
 	}
 
-	onDropDownItemClick(selectedItemKey: string){
+	onDropDownItemClick(selectedItemKey: string) {
 		if (this.props.itemClickAction) {
 			this.setState({dropdownOpen: !this.state.dropdownOpen});
 			this.props.itemClickAction(selectedItemKey);
 		}
 	}
 
-	componentWillUnmount(){
-		document.removeEventListener('click', this.outsideClickHandler, false);
+	componentWillUnmount() {
+		document.removeEventListener("click", this.outsideClickHandler, false);
 	}
 
-	render(){
+	render() {
 		const {dropdownOpen} = this.state;
 		const {isEnabled, isSorter, selectedItemKey, isAscending, lookup, defaultLbl} = this.props;
-		const menuCls = dropdownOpen ? 'dropdown-menu show' : 'dropdown-menu';
+		const menuCls = dropdownOpen ? "dropdown-menu show" : "dropdown-menu";
 
 		return (
 			<span ref={span => this.node = span} className="dropdown" style={{marginLeft: 8}}>
@@ -80,10 +85,10 @@ export default class Dropdown extends Component<Props, State>{
 
 				<ul className={menuCls}>{
 					Object.keys(lookup).map((key, idx) => {
-						const glyphCls = key == selectedItemKey ? 'fas fa-sort' : '';
+						const glyphCls = key == selectedItemKey ? "fas fa-sort" : "";
 						return (
-							<li key={'ddl' + idx} className="dropdown-item" onClick={this.onDropDownItemClick.bind(this, key)} style={{ cursor: 'pointer' }}>
-								<span className={glyphCls} style={{ display: 'inline-block', width: 14, margin: '5px 5px 0 -5px' }}/> {lookup[key]}
+							<li key={"ddl" + idx} className="dropdown-item" onClick={this.onDropDownItemClick.bind(this, key)} style={{cursor: "pointer"}}>
+								<span className={glyphCls} style={{display: "inline-block", width: 14, margin: "5px 5px 0 -5px"}}/> {lookup[key]}
 							</li>
 						);
 					})
@@ -93,14 +98,14 @@ export default class Dropdown extends Component<Props, State>{
 	}
 }
 
-type SortButtonProps = Pick<Props, 'selectedItemKey' | 'isAscending' | 'lookup' | 'defaultLbl'> & { clickAction: () => void }
+type SortButtonProps = Pick<Props, "selectedItemKey" | "isAscending" | "lookup" | "defaultLbl"> & {clickAction: () => void};
 
-const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, defaultLbl = 'Sort by' }: SortButtonProps) => {
+const SortButton = ({selectedItemKey, isAscending, clickAction, lookup, defaultLbl = "Sort by"}: SortButtonProps) => {
 	const glyphCls = selectedItemKey
-		? isAscending
-			? 'fas fa-sort-amount-down-alt'
-			: 'fas fa-sort-amount-down'
-		: '';
+		? (isAscending
+			? "fas fa-sort-amount-down-alt"
+			: "fas fa-sort-amount-down")
+		: "";
 
 	const lbl = selectedItemKey
 		? lookup[selectedItemKey]
@@ -113,9 +118,9 @@ const SortButton = ({ selectedItemKey, isAscending, clickAction, lookup, default
 	);
 };
 
-type ButtonProps = Pick<Props, 'selectedItemKey' | 'isEnabled' | 'lookup' | 'defaultLbl'> & { clickAction: () => void }
+type ButtonProps = Pick<Props, "selectedItemKey" | "isEnabled" | "lookup" | "defaultLbl"> & {clickAction: () => void};
 
-const Button = ({ isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 'Select option' }: ButtonProps) => {
+const Button = ({isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = "Select option"}: ButtonProps) => {
 	if (isEnabled) {
 		const lbl = selectedItemKey
 			? lookup[selectedItemKey]
@@ -126,12 +131,11 @@ const Button = ({ isEnabled, selectedItemKey, clickAction, lookup, defaultLbl = 
 				<span>{lbl}</span> <span className="caret" />
 			</button>
 		);
-	} else {
-		return (
-			<button className="btn btn-outline-secondary dropdown-toggle disabled" type="button">
-				<span>{defaultLbl}</span> <span className="caret"/>
-			</button>
-		);
 	}
 
+	return (
+		<button className="btn btn-outline-secondary dropdown-toggle disabled" type="button">
+			<span>{defaultLbl}</span> <span className="caret"/>
+		</button>
+	);
 };

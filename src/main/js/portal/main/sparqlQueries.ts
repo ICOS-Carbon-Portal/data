@@ -1,26 +1,26 @@
-import commonConfig from '../../common/main/config';
-import localConfig from './config';
-import { Query } from 'icos-cp-backend';
-import { QueryParameters } from "./actions/types";
+import {type Query} from "icos-cp-backend";
+import commonConfig from "../../common/main/config";
+import localConfig from "./config";
+import {type QueryParameters} from "./actions/types";
 import {
-	FilterRequest,
-	TemporalFilterRequest,
-	KeywordFilterRequest,
+	type FilterRequest,
+	type TemporalFilterRequest,
+	type KeywordFilterRequest,
 	isPidFilter,
 	isTemporalFilter,
 	isDeprecatedFilter,
-	isNumberFilter, NumberFilterRequest,
-	VariableFilterRequest, isVariableFilter, isKeywordsFilter, isGeoFilter
-} from './models/FilterRequest';
-import { Value } from "./models/SpecTable";
-import { Sha256Str, UrlStr } from './backend/declarations';
+	isNumberFilter, type NumberFilterRequest,
+	type VariableFilterRequest, isVariableFilter, isKeywordsFilter, isGeoFilter
+} from "./models/FilterRequest";
+import {Value} from "./models/SpecTable";
+import {type Sha256Str, type UrlStr} from "./backend/declarations";
 
 
 const config = Object.assign(commonConfig, localConfig);
 
-export const SPECCOL = 'spec';
+export const SPECCOL = "spec";
 
-export type SpecBasicsQuery = Query<"spec" | "project" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">
+export type SpecBasicsQuery = Query<"spec" | "project" | "type" | "level" | "format" | "theme", "dataset" | "temporalResolution">;
 
 export function specBasics(): SpecBasicsQuery {
 	const text = `# specBasics
@@ -39,10 +39,10 @@ where{
 	?spec cpmeta:hasFormat ?format .
 }`;
 
-	return { text };
+	return {text};
 }
 
-export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType" | "quantityUnit", "quantityKind">
+export type SpecVarMetaQuery = Query<"spec" | "variable" | "varTitle" | "valType" | "quantityUnit", "quantityKind">;
 
 export function specColumnMeta(): SpecVarMetaQuery {
 	const text = `# specColumnMeta
@@ -71,22 +71,24 @@ where{
 	OPTIONAL{?valType cpmeta:hasQuantityKind ?quantityKind }
 }`;
 
-	return { text };
+	return {text};
 }
 
-export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
+export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">;
 
-export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n");
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
-	let siteQueries: string
-	switch(config.envri){
-		case "SITES":
+	let siteQueries: string;
+	switch (config.envri) {
+		case "SITES": {
 			siteQueries = `BIND (COALESCE(?site, <http://dummy>) as ?boundSite)
 				OPTIONAL {?boundSite cpmeta:hasEcosystemType ?ecosystem}
-				OPTIONAL {?boundSite cpmeta:hasSpatialCoverage ?location}`
-			break
-		case "ICOS":
+				OPTIONAL {?boundSite cpmeta:hasSpatialCoverage ?location}`;
+			break;
+		}
+
+		case "ICOS": {
 			siteQueries = `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
 				OPTIONAL {?boundStation cpmeta:hasEcosystemType ?ecosystem}
 				OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}
@@ -95,14 +97,16 @@ export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCo
 					bound(?stClassOpt),
 					IF(strstarts(?stClassOpt, "Ass"), "Associated", "ICOS"),
 					IF(bound(?station), "Other", ?stClassOpt)
-				) as ?stationclass)`
-			break
-		case "ICOSCities":
+				) as ?stationclass)`;
+			break;
+		}
+
+		case "ICOSCities": {
 			siteQueries = `BIND (COALESCE(?station, <http://dummy>) as ?boundStation)
 				OPTIONAL {?boundStation cpmeta:belongsToNetwork ?stationNetwork}
-				OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}`
-			break
-
+				OPTIONAL {?boundStation cpmeta:countryCode ?countryCode}`;
+			break;
+		}
 	}
 
 	const text = `# dobjOriginsAndCounts
@@ -128,17 +132,16 @@ where{
 	${siteQueries}
 	}`;
 
-	return { text };
+	return {text};
 }
 
 const stationGraphs = (config.additionalStationsGraphs[config.envri] ?? []).map(gr => `from <${gr}>\n`).join("");
-const fromOntoAndResAndStations =
-	`from <http://meta.icos-cp.eu/ontologies/cpmeta/>
+const fromOntoAndResAndStations
+	= `from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>
 ${stationGraphs}`;
 
-export function labelLookup(): Query<'uri' | 'label' , 'stationId' | 'comment' | 'webpage'> {
-
+export function labelLookup(): Query<"uri" | "label", "stationId" | "comment" | "webpage"> {
 	const text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -162,23 +165,23 @@ ${fromOntoAndResAndStations}where {
 	optional {?uri rdfs:comment ?comment }
 	optional {?uri rdfs:seeAlso ?webpage}
 }`;
-	return { text };
+	return {text};
 }
 
-export function findDobjByUrlId(id: Sha256Str, showDeprecated: Boolean): Query<"dobj", never> {
+export function findDobjByUrlId(id: Sha256Str, showDeprecated: boolean): Query<"dobj", never> {
 	const text = `# findDobjByUrlId
 prefix cpmeta: <${config.cpmetaOntoUri}>
 SELECT ?dobj WHERE{
 	BIND(<${config.cpmetaObjectUri + id}> as ?dobj)
 	?dobj cpmeta:hasObjectSpec ?spec.
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	${showDeprecated ? '' : deprecatedFilterClause}
+	${showDeprecated ? "" : deprecatedFilterClause}
 }`;
 
-	return { text };
+	return {text};
 }
 
-export function getDobjByFileName(fileName: string, showDeprecated: Boolean): Query<"dobj", never> {
+export function getDobjByFileName(fileName: string, showDeprecated: boolean): Query<"dobj", never> {
 	const text = `# getDobjByFileName
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?dobj
@@ -187,10 +190,10 @@ where {
 	?dobj cpmeta:hasObjectSpec ?spec .
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	${showDeprecated ? '' : deprecatedFilterClause}
+	${showDeprecated ? "" : deprecatedFilterClause}
 }`;
 
-	return { text };
+	return {text};
 }
 
 const deprecatedFilterClause = "FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}";
@@ -205,10 +208,10 @@ const standardDobjPropsDef = `
 	${timeStartDef}
 	${timeEndDef}`;
 
-export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo" | "hasNextVersion", never>
+export type ObjInfoQuery = Query<"dobj" | "hasNextVersion" | "spec" | "fileName" | "size" | "submTime" | "timeStart" | "timeEnd" | "hasVarInfo", never>;
 
 export const listKnownDataObjects = (dobjs: string[]): ObjInfoQuery => {
-	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(' ');
+	const values = dobjs.map(d => `<${config.cpmetaObjectUri}${d}>`).join(" ");
 	const text = `# listKnownDataObjects
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -221,21 +224,23 @@ ${standardDobjPropsDef}
 	BIND(EXISTS{?dobj cpmeta:hasActualVariable [] } AS ?hasVarInfo)
 }`;
 
-	return { text };
+	return {text};
 };
 
-const getPidListFilter = (pidsList: (string | null)[]) => {
-	if (pidsList.length === 1 && pidsList[0] === null)
-		return '';
+const getPidListFilter = (pidsList: Array<string | null>) => {
+	if (pidsList.length === 1 && pidsList[0] === null) {
+		return "";
+	}
 
-	if (pidsList.length === 0)
-		return 'VALUES ?dobj { <http://dummy> }\n';
+	if (pidsList.length === 0) {
+		return "VALUES ?dobj { <http://dummy> }\n";
+	}
 
 	return `VALUES ?dobj { ${pidsList.map(fr => `<${config.cpmetaObjectUri}${fr}>`).join(" ")} }\n`;
 };
 
-export function objectFilterClauses(query: QueryParameters): String {
-	const { specs, stations, submitters, sites, filters } = query;
+export function objectFilterClauses(query: QueryParameters): string {
+	const {specs, stations, submitters, sites, filters} = query;
 	const pidsList = filters.filter(isPidFilter).flatMap(filter => filter.pids);
 
 	const pidListFilter = getPidListFilter(pidsList);
@@ -243,20 +248,21 @@ export function objectFilterClauses(query: QueryParameters): String {
 	const specsValues = specs == null
 		? `?${SPECCOL} cpmeta:hasDataLevel [] .
 	FILTER NOT EXISTS {?${SPECCOL} cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}`
-		: `VALUES ?${SPECCOL} {<${specs.join('> <')}>}`;
+		: `VALUES ?${SPECCOL} {<${specs.join("> <")}>}`;
 
-	const submitterSearch = submitters == null ? ''
-		: `VALUES ?submitter {<${submitters.join('> <')}>}
+	const submitterSearch = submitters == null
+		? ""
+		: `VALUES ?submitter {<${submitters.join("> <")}>}
 	?dobj cpmeta:wasSubmittedBy/prov:wasAssociatedWith ?submitter .`;
 
 	const stationSearch = stations == null || stations.filter(Value.isDefined).length === 0
-		? ''
-		: `VALUES ?station {<${stations.filter(Value.isDefined).join('> <')}>}
+		? ""
+		: `VALUES ?station {<${stations.filter(Value.isDefined).join("> <")}>}
 	?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station .`;
 
 	const siteSearch = sites == null || sites.filter(Value.isDefined).length === 0
-		? ''
-		: `VALUES ?site {<${sites.filter(Value.isDefined).join('> <')}>}
+		? ""
+		: `VALUES ?site {<${sites.filter(Value.isDefined).join("> <")}>}
 	?dobj cpmeta:wasAcquiredBy/cpmeta:wasPerformedAt ?site .`;
 
 	return `
@@ -271,21 +277,20 @@ export function objectFilterClauses(query: QueryParameters): String {
 }
 
 export function filteredObjectsQuery(params: QueryParameters, selections: string): string {
-
-	const { sorting, paging } = params;
+	const {sorting, paging} = params;
 	const orderBy = (sorting && sorting.varName)
 		? (
 			sorting.ascending
 				? `order by ?${sorting.varName}`
 				: `order by desc(?${sorting.varName})`
 		)
-		: '';
-	// presense of pid filters makes query to bind ?dobj to known URIs, which disables our SPARQL magic;
+		: "";
+	// Presense of pid filters makes query to bind ?dobj to known URIs, which disables our SPARQL magic;
 	// when the magic is disabled, the FROM clauses are treated SPARQL-correctly, which is a problem,
 	// because the FROM clauses do not include the RDF graph that the object's own triples belong to;
 	// in contrast, the magic part of query execution uses the FROM clauses solely to determine the ENVRI
-	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0
-	const fromClauses = hasKnownObjects ? '' : (envriFilteringFromClauses + '\n')
+	const hasKnownObjects = params.filters.filter(isPidFilter).flatMap(f => f.pids || []).length > 0;
+	const fromClauses = hasKnownObjects ? "" : (envriFilteringFromClauses + "\n");
 
 	return `
 prefix cpmeta: <${config.cpmetaOntoUri}>
@@ -305,11 +310,11 @@ export function listFilteredDataObjects(params: QueryParameters): ObjInfoQuery {
 	return {
 		text: `# listFilteredDataObjects${filteredObjectsQuery(params, selections)}`
 	};
-};
+}
 
 function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): string {
 	const deprFilter = allFilters.find(isDeprecatedFilter);
-	const deprFilterStr = (deprFilter && deprFilter.allow) ? '' : deprecatedFilterClause.concat('\n');
+	const deprFilterStr = (deprFilter?.allow) ? "" : deprecatedFilterClause.concat("\n");
 
 	const tempFilters = allFilters.filter(isTemporalFilter);
 	const numFilters = allFilters.filter(isNumberFilter);
@@ -323,21 +328,21 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 		.map(getTempFilterConds)
 		.filter(tf => tf.length)
 		.map(tf => `FILTER( ${tf} ) `)
-		.join('\n');
+		.join("\n");
 
 	const numFilterStr = numFilters
 		.map(getNumberFilterConds)
 		.map(nf => `FILTER( ${nf} )`)
-		.join('\n');
+		.join("\n");
 
 	const filterConds: string[] = [tempFilterStr].concat(numFilterStr);
-	const filterStr = filterConds.length ? `${varDefStr}${filterConds.join('\n')}` : '';
-	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join('');
+	const filterStr = filterConds.length > 0 ? `${varDefStr}${filterConds.join("\n")}` : "";
+	const varNameFilterStr = allFilters.filter(isVariableFilter).map(getVarFilter).join("");
 
-	const geoFilter = allFilters.find(isGeoFilter)
+	const geoFilter = allFilters.find(isGeoFilter);
 	const geoStr = geoFilter
 		? `?dobj geo:sfIntersects/geo:asWKT "${geoFilter.wktGeo}"^^geo:wktLiteral .\n`
-		: ""
+		: "";
 
 	return deprFilterStr.concat(
 		filterStr,
@@ -348,128 +353,156 @@ function getFilterClauses(allFilters: FilterRequest[], supplyVarDefs: boolean): 
 }
 
 function renderKeywordFilters(requests: KeywordFilterRequest[]): string {
-	const keywordValues =
-		requests.flatMap((req) =>
-			 req.keywords.map((kw) => `"${kw}"^^xsd:string`)
-		);
+	const keywordValues
+		= requests.flatMap(req =>
+			req.keywords.map(kw => `"${kw}"^^xsd:string`));
 
 	if (keywordValues.length === 0) {
-		return '';
+		return "";
 	}
 
 	return [
-		`VALUES ?keyword {${keywordValues.join(' ')}}`,
-		'?dobj cpmeta:hasKeyword ?keyword'
-	].join('\n');
+		`VALUES ?keyword {${keywordValues.join(" ")}}`,
+		"?dobj cpmeta:hasKeyword ?keyword"
+	].join("\n");
 }
 
 function getNumberFilterConds(numberFilter: NumberFilterRequest): string {
 	const varName = getNumVarName(numberFilter);
 	const xsdType = getXsdType(numberFilter);
-	const { type, vals, cmp } = numberFilter;
+	const {type, vals, cmp} = numberFilter;
 
 	function cond(op: string, val: number): string {
 		return `?${varName} ${op} "${val}"^^xsd:${xsdType}`;
 	}
 
 	switch (type) {
-		case "limit":
+		case "limit": {
 			return cond(cmp[0], vals[0]);
+		}
 
-		case "span":
-			return [cond(cmp[0], vals[0]), cond(cmp[1], vals[1])].join(' && ');
+		case "span": {
+			return [cond(cmp[0], vals[0]), cond(cmp[1], vals[1])].join(" && ");
+		}
 
-		case "list":
-			return vals.map((val, i) => cond(cmp[i], val)).join(' || ');
+		case "list": {
+			return vals.map((val, i) => cond(cmp[i], val)).join(" || ");
+		}
 
-		default:
-			return '';
+		default: {
+			return "";
+		}
 	}
 }
 
 function getNumVarDefs(filter: NumberFilterRequest): string[] {
 	switch (filter.category) {
-		case "fileSize": return [];
-		case "samplingHeight": return ["?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight ."];
+		case "fileSize": {return [];
+		}
+
+		case "samplingHeight": {return ["?dobj cpmeta:wasAcquiredBy / cpmeta:hasSamplingHeight ?samplingHeight ."];
+		}
 	}
 }
 
 function getXsdType(filter: NumberFilterRequest): string {
 	switch (filter.category) {
-		case "fileSize": return "long";
-		case "samplingHeight": return "float";
+		case "fileSize": {return "long";
+		}
+
+		case "samplingHeight": {return "float";
+		}
 	}
 }
 
 function getNumVarName(filter: NumberFilterRequest): string {
 	switch (filter.category) {
-		case "fileSize": return "size";
-		case "samplingHeight": return filter.category;
+		case "fileSize": {return "size";
+		}
+
+		case "samplingHeight": {return filter.category;
+		}
 	}
 }
 
 function getTempVarDefs(filter: TemporalFilterRequest): string[] {
 	const res: string[] = [];
 	switch (filter.category) {
-		case "dataTime":
+		case "dataTime": {
 			if (filter.fromDateTimeStr || filter.toDateTimeStr) {
-				res.push(timeEndDef);
-				res.push(timeStartDef);
+				res.push(timeEndDef, timeStartDef);
 			}
+
 			break;
-		case "submission":
-			if (filter.fromDateTimeStr || filter.toDateTimeStr) res.push(submTimeDef);
+		}
+
+		case "submission": {
+			if (filter.fromDateTimeStr || filter.toDateTimeStr) {
+				res.push(submTimeDef);
+			}
+		}
 	}
+
 	return res;
 }
 
 function getTempFilterConds(filter: TemporalFilterRequest): string {
-	const { category, fromDateTimeStr, toDateTimeStr } = filter;
+	const {category, fromDateTimeStr, toDateTimeStr} = filter;
 
-	if (category === "dataTime" && fromDateTimeStr && toDateTimeStr)
+	if (category === "dataTime" && fromDateTimeStr && toDateTimeStr) {
 		return `!(?timeStart > '${toDateTimeStr}'^^xsd:dateTime || ?timeEnd < '${fromDateTimeStr}'^^xsd:dateTime)`;
+	}
 
-	else if (category === "dataTime" && fromDateTimeStr)
+	if (category === "dataTime" && fromDateTimeStr) {
 		return `'${fromDateTimeStr}'^^xsd:dateTime <= ?timeEnd`;
+	}
 
-	else if (category === "dataTime" && toDateTimeStr)
+	if (category === "dataTime" && toDateTimeStr) {
 		return `'${toDateTimeStr}'^^xsd:dateTime >= ?timeStart`;
+	}
 
-	else if (category === "submission" && fromDateTimeStr && toDateTimeStr)
+	if (category === "submission" && fromDateTimeStr && toDateTimeStr) {
 		return `?submTime >= '${fromDateTimeStr}'^^xsd:dateTime && ?submTime <= '${toDateTimeStr}'^^xsd:dateTime`;
+	}
 
-	else if (category === "submission" && fromDateTimeStr)
+	if (category === "submission" && fromDateTimeStr) {
 		return `?submTime >= '${fromDateTimeStr}'^^xsd:dateTime`;
+	}
 
-	else if (category === "submission" && toDateTimeStr)
+	if (category === "submission" && toDateTimeStr) {
 		return `?submTime <= '${toDateTimeStr}'^^xsd:dateTime`;
+	}
 
-	else
-		return '';
+	return "";
 }
 
 function getVarFilter(filter: VariableFilterRequest): string {
 	function cond(varName: string): string {
 		if (varName.startsWith("^") && varName.endsWith("$")) {
-			const patt = varName.replace(/\\/gi, '\\\\');
-			return `regex(?varName, "${patt}")`
-		} else
-			return `?varName = "${varName}"`
+			const patt = varName.replaceAll(/\\/gi, "\\\\");
+			return `regex(?varName, "${patt}")`;
+		}
+
+		return `?varName = "${varName}"`;
 	}
-	if (filter.names.length == 0) return '';
+
+	if (filter.names.length === 0) {
+		return "";
+	}
+
 	return `
 	{
 		{FILTER NOT EXISTS {?dobj cpmeta:hasVariableName ?varName}}
 		UNION
 		{
 			?dobj cpmeta:hasVariableName ?varName
-			FILTER (${filter.names.map(cond).join(' || ')})
+			FILTER (${filter.names.map(cond).join(" || ")})
 		}
 	}`;
 }
 
 export const extendedDataObjectInfo = (dobjs: UrlStr[]): Query<"dobj", "station" | "stationId" | "samplingHeight" | "samplingPoint" | "theme" | "themeIcon" | "title" | "description" | "specComments" | "columnNames" | "site" | "hasVarInfo" | "dois" | "biblioInfo"> => {
-	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(' ');
+	const dobjsList = dobjs.map(dobj => `<${dobj}>`).join(" ");
 	const text = `# extendedDataObjectInfo
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
@@ -519,18 +552,26 @@ select distinct ?dobj ?station ?stationId ?samplingHeight ?samplingPoint ?theme 
 	OPTIONAL{ ?dobj cpmeta:hasBiblioInfo ?biblioInfo}
 }`;
 
-	return { text };
+	return {text};
 };
 
 export const stationPositions = (): Query<"station" | "lat" | "lon", never> => {
-	function envriFilter(){
-		switch(config.envri){
-			case "SITES": return "filter exists {?station a <https://meta.fieldsites.se/ontologies/sites/Station>}"
-			case "ICOS": return "filter not exists {?station a <https://meta.fieldsites.se/ontologies/sites/Station>}"
-			case "ICOSCities": return ""
-			default: return ""
+	function envriFilter() {
+		switch (config.envri) {
+			case "SITES": {return "filter exists {?station a <https://meta.fieldsites.se/ontologies/sites/Station>}";
+			}
+
+			case "ICOS": {return "filter not exists {?station a <https://meta.fieldsites.se/ontologies/sites/Station>}";
+			}
+
+			case "ICOSCities": {return "";
+			}
+
+			default: {return "";
+			}
 		}
 	}
+
 	const text = `# stationPositions
 PREFIX prov: <http://www.w3.org/ns/prov#>
 PREFIX cpmeta: <${config.cpmetaOntoUri}>
@@ -542,17 +583,17 @@ WHERE {
 	?station cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon .
 }`;
 
-	return { text };
+	return {text};
 };
 
 export const resourceHelpInfo = (uriList: UrlStr[]): Query<"uri" | "label", "comment" | "webpage"> => {
 	const text = `select * where{
-	VALUES ?uri { ${uriList.map(uri => '<' + uri + '>').join(' ')} }
+	VALUES ?uri { ${uriList.map(uri => "<" + uri + ">").join(" ")} }
 	?uri rdfs:label ?label .
 	OPTIONAL{?uri rdfs:comment ?comment}
 	OPTIONAL{?uri rdfs:seeAlso ?webpage}
 }
 order by ?label`;
 
-	return { text };
+	return {text};
 };

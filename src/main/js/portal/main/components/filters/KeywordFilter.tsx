@@ -1,16 +1,16 @@
 import React from "react";
-import { Value } from "../../models/SpecTable";
-import { isDefined } from "../../utils";
+import {type Value} from "../../models/SpecTable";
+import {isDefined} from "../../utils";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
-import { Item } from "./MultiselectCtrl";
+import {type Item} from "./MultiselectCtrl";
 import MultiSelectFilter from "./MultiSelectFilter";
 
 
-interface OurProps {
+type OurProps = {
 	scopedKeywords: string[]
 	filterKeywords: string[]
 	setKeywordFilter: (filterKeywords: string[]) => void
-}
+};
 
 export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const {scopedKeywords, filterKeywords, setKeywordFilter} = props;
@@ -22,7 +22,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 	const placeholder = data.length === 1
 		? `${data[0].text}`
 		: `(${data.length} items)`;
-	
+
 	return (
 		<>
 			<div className="row" style={{marginTop: 10}}>
@@ -49,7 +49,7 @@ export const KeywordFilter: React.FunctionComponent<OurProps> = props => {
 						name={"keywordFilter"}
 						shouldUseExternalListEntry={false}
 						search={{}}
-						updateFilter={(_: any, keywords: Value[]) => setKeywordFilter(keywords.filter(isDefined).map(kw => kw + ''))}
+						updateFilter={(_: any, keywords: Value[]) => setKeywordFilter(keywords.filter(isDefined).map(kw => kw + ""))}
 						placeholder={placeholder}
 						data={data}
 						value={value}

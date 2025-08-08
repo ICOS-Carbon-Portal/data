@@ -1,9 +1,11 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { KnownDataObject, State} from "../../models/State";
-import {PortalDispatch} from "../../store";
-import {getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch} from "../../actions/search";
-import {UrlStr} from "../../backend/declarations";
+import React from "react";
+import {connect} from "react-redux";
+import {type KnownDataObject, type State} from "../../models/State";
+import {type PortalDispatch} from "../../store";
+import {
+	getAllFilteredDataObjects, requestStep, toggleSort, updateCheckedObjectsInSearch
+} from "../../actions/search";
+import {type UrlStr} from "../../backend/declarations";
 import {Paging} from "../../components/buttons/Paging";
 import CheckAllBoxes from "../../components/controls/CheckAllBoxes";
 import Dropdown from "../../components/controls/Dropdown";
@@ -11,9 +13,9 @@ import CartBtn from "../../components/buttons/CartBtn";
 import PreviewBtn from "../../components/buttons/PreviewBtn";
 import HelpButton from "../help/HelpButton";
 import SearchResultRegularRow from "../../components/searchResult/SearchResultRegularRow";
-import { addingToCartProhibition } from '../../models/CartItem';
-import DownloadButton from '../../components/buttons/DownloadButton';
-import { useDownloadInfo } from '../../hooks/useDownloadInfo';
+import {addingToCartProhibition} from "../../models/CartItem";
+import DownloadButton from "../../components/buttons/DownloadButton";
+import {useDownloadInfo} from "../../hooks/useDownloadInfo";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -22,29 +24,33 @@ type IncomingActions = {
 	handlePreview: (id: UrlStr[]) => void
 	handleAddToCart: (objInfo: UrlStr[]) => void
 	handleAllCheckboxesChange: () => void
-}
+};
 type OurProps = StateProps & DispatchProps & IncomingActions & {tabHeader: string};
 
 const dropdownLookup = {
-	fileName: 'File name',
-	size: 'File size',
-	timeStart: 'Data start date',
-	timeEnd: 'Data end date',
-	submTime: 'Submission time'
+	fileName: "File name",
+	size: "File size",
+	timeStart: "Data start date",
+	timeEnd: "Data end date",
+	submTime: "Submission time"
 };
 
 function SearchResultRegular(props: OurProps) {
-	const {preview, objectsTable, previewLookup, paging, sorting, searchOptions,
+	const {
+		preview, objectsTable, previewLookup, paging, sorting, searchOptions,
 		toggleSort, requestStep, labelLookup, checkedObjectsInSearch, extendedDobjInfo,
 		updateCheckedObjects, handlePreview, handleAddToCart,
-		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user } = props;
+		handleAllCheckboxesChange, getAllFilteredDataObjects, exportQuery, user
+	} = props;
 
 	const objectText = checkedObjectsInSearch.length <= 1 ? "object" : "objects";
 	const checkedUriSet = new Set<string>(checkedObjectsInSearch);
 	const checkedObjects = objectsTable.filter(o => checkedUriSet.has(o.dobj));
 
-	const { filename } = useDownloadInfo({readyObjectIds: checkedObjectsInSearch, objectsTable,
-		extendedDobjInfo, labelLookup});
+	const {filename} = useDownloadInfo({
+		readyObjectIds: checkedObjectsInSearch, objectsTable,
+		extendedDobjInfo, labelLookup
+	});
 
 	return (
 		<div className="card">
@@ -76,35 +82,35 @@ function SearchResultRegular(props: OurProps) {
 							lookup={dropdownLookup}
 						/>
 
-						{checkedObjectsInSearch.length > 0 &&
-							<span style={{ marginLeft: 12, marginTop: 7 }}>{checkedObjectsInSearch.length} {objectText} selected</span>
+						{checkedObjectsInSearch.length > 0
+							&& <span style={{marginLeft: 12, marginTop: 7}}>{checkedObjectsInSearch.length} {objectText} selected</span>
 						}
 					</div>
 
 					<div className="d-flex mb-3">
 
-						<div style={{position:'relative', top:7, margin: '0 10px'}}>
+						<div style={{position: "relative", top: 7, margin: "0 10px"}}>
 							<HelpButton
-								name={'preview'}
+								name={"preview"}
 								title="View help about Preview"
-								overrideStyles={{ paddingLeft: 0 }}
+								overrideStyles={{paddingLeft: 0}}
 							/>
 						</div>
 
 						<PreviewBtn
-							style={{ marginRight: 10 }}
+							style={{marginRight: 10}}
 							checkedObjects={checkedObjects}
 							previewLookup={previewLookup}
 							clickAction={handlePreview}
 						/>
 
-						{user.email &&
-							<CartBtn
-								style={{ marginRight: 10 }}
+						{user.email
+							&& <CartBtn
+								style={{marginRight: 10}}
 								checkedObjects={checkedObjectsInSearch}
 								clickAction={handleAddToCart}
 								enabled={checkedObjectsInSearch.length > 0}
-								type='add'
+								type="add"
 							/>
 						}
 
@@ -130,7 +136,7 @@ function SearchResultRegular(props: OurProps) {
 									extendedInfo={extendedInfo}
 									preview={preview}
 									objInfo={objInfo}
-									key={'dobj_' + i}
+									key={"dobj_" + i}
 									updateCheckedObjects={updateCheckedObjects}
 									isChecked={checkedObjectsInSearch.includes(objInfo.dobj)}
 									checkedObjects={checkedObjects}
@@ -153,7 +159,7 @@ function SearchResultRegular(props: OurProps) {
 	);
 }
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		previewLookup: state.previewLookup,
 		labelLookup: state.labelLookup,
@@ -170,7 +176,7 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch){
+function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		updateCheckedObjects: (ids: UrlStr[] | UrlStr) => dispatch(updateCheckedObjectsInSearch(ids)),
 		toggleSort: (varName: string) => dispatch(toggleSort(varName)),

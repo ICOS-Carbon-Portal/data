@@ -1,24 +1,24 @@
-interface IndexedDBIndex {
+type IndexedDBIndex = {
 	indexName: string
-		keyPath: string
-		isUnique: boolean
-}
-export interface IndexedDBOptions {
+	keyPath: string
+	isUnique: boolean
+};
+export type IndexedDBOptions = {
 	keyPath?: string
 	indexes?: IndexedDBIndex[]
-}
-export interface IndexedDBProps {
+};
+export type IndexedDBProps = {
 	dbName: string
 	storeName: string
 	version: number
 	options: IndexedDBOptions
-}
-export default class IndexedDB{
+};
+export default class IndexedDB {
 	private db?: IDBDatabase;
-	private dbName: string;
-	private storeName: string;
-	private version: number;
-	private options: IndexedDBOptions;
+	private readonly dbName: string;
+	private readonly storeName: string;
+	private readonly version: number;
+	private readonly options: IndexedDBOptions;
 
 	constructor({dbName, storeName, version, options}: IndexedDBProps) {
 		this.dbName = dbName;
@@ -27,63 +27,63 @@ export default class IndexedDB{
 		this.options = options;
 	}
 
-	init(): Promise<boolean>{
-		if (!IndexedDB.isIndexedDbAvailable)
-			return Promise.resolve(false);
+	async init(): Promise<boolean> {
+		if (!IndexedDB.isIndexedDbAvailable) {
+			return false;
+		}
 
-		return this.createDB().then(
-			createdDB => {
-				this.db = createdDB;
-				return Promise.resolve(true);
-			},
-			_ => Promise.resolve(false)
-		);
+		return this.createDB().catch(async _ => false).then(createdDB => {
+			this.db = createdDB;
+			return true;
+		});
 	}
 
 	static get isIndexedDbAvailable() {
-		return 'indexedDB' in window;
+		return "indexedDB" in globalThis;
 	}
 
-	private createDB(): Promise<IDBDatabase> {
+	private async createDB(): Promise<IDBDatabase> {
 		const {dbName, storeName, version, options, createStore} = this;
 
-		return new Promise(function(resolve, reject) {
-			const request = window.indexedDB.open(dbName, version);
+		return new Promise((resolve, reject) => {
+			const request = globalThis.indexedDB.open(dbName, version);
 
-			request.onupgradeneeded = function(event) {
+			request.onupgradeneeded = function (event) {
 				const {oldVersion, newVersion} = event;
 				const {keyPath, indexes = []} = options;
 				const storeParams: IDBObjectStoreParameters = {keyPath};
 
 				const idb = request.result;
 
-				if (newVersion !== null && oldVersion > 0 && newVersion > oldVersion && idb.objectStoreNames.contains(storeName))
+				if (newVersion !== null && oldVersion > 0 && newVersion > oldVersion && idb.objectStoreNames.contains(storeName)) {
 					idb.deleteObjectStore(storeName);
-				
-				createStore(idb, storeName, storeParams, indexes);
-			}
+				}
 
-			request.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result)
+				createStore(idb, storeName, storeParams, indexes);
+			};
+
+			request.onsuccess = event => resolve((event.target as IDBOpenDBRequest).result);
 
 			request.onerror = () => reject(`Could not open database due to ${request.error}`);
 		});
 	}
 
-	private createStore(db: IDBDatabase, storeName: string, storeParams: IDBObjectStoreParameters, indexes: IndexedDBIndex[]){
+	private createStore(db: IDBDatabase, storeName: string, storeParams: IDBObjectStoreParameters, indexes: IndexedDBIndex[]) {
 		const objectStore = db.createObjectStore(storeName, storeParams);
 
-		indexes.forEach(idx =>
-			objectStore.createIndex(idx.indexName, idx.keyPath, {unique: idx.isUnique})
-		);
+		for (const idx of indexes) {
+			objectStore.createIndex(idx.indexName, idx.keyPath, {unique: idx.isUnique});
+		}
 	}
 
-	getValue<T>(key: IDBValidKey): Promise<T | undefined> {
+	async getValue<T>(key: IDBValidKey): Promise<T | undefined> {
 		const {db, storeName} = this;
 
-		if (db === undefined)
-			return Promise.reject("Database is not initialized (happened in getValue)");
+		if (db === undefined) {
+			throw "Database is not initialized (happened in getValue)";
+		}
 
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			const trans = db.transaction(storeName, "readonly");
 			const store = trans.objectStore(storeName);
 			const request = store.get(key);
@@ -96,13 +96,14 @@ export default class IndexedDB{
 		});
 	}
 
-	addValue(value: Record<string, any>): Promise<IDBValidKey> {
+	async addValue(value: Record<string, any>): Promise<IDBValidKey> {
 		const {db, storeName} = this;
 
-		if (db === undefined)
-			return Promise.reject("Database is not initialized (happened in addValue)");
+		if (db === undefined) {
+			throw "Database is not initialized (happened in addValue)";
+		}
 
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			const trans = db.transaction(storeName, "readwrite");
 			const store = trans.objectStore(storeName);
 			const request = store.put(value);
@@ -115,13 +116,14 @@ export default class IndexedDB{
 		});
 	}
 
-	deleteValue(key: IDBValidKey): Promise<boolean>{
+	async deleteValue(key: IDBValidKey): Promise<boolean> {
 		const {db, storeName} = this;
 
-		if (db === undefined)
-			return Promise.reject("Database is not initialized (happened in deleteValue)");
-		
-		return new Promise(function(resolve, reject) {
+		if (db === undefined) {
+			throw "Database is not initialized (happened in deleteValue)";
+		}
+
+		return new Promise((resolve, reject) => {
 			const trans = db.transaction(storeName, "readwrite");
 			const store = trans.objectStore(storeName);
 			const request = store.delete(key);
@@ -134,11 +136,12 @@ export default class IndexedDB{
 		});
 	}
 
-	clearStore(){
+	clearStore() {
 		const {db, storeName} = this;
 
-		if (db === undefined)
+		if (db === undefined) {
 			return;
+		}
 
 		if (db.objectStoreNames.contains(storeName)) {
 			const trans = db.transaction(storeName, "readwrite");
@@ -154,21 +157,23 @@ export default class IndexedDB{
 	}
 
 	getKeyPath(db: IDBDatabase, storeName: string): string | string[] {
-		if (db === undefined)
+		if (db === undefined) {
 			return "Database is not initialized (happened in getKeyPath)";
+		}
 
 		const trans = db.transaction(storeName, "readonly");
 		const store = trans.objectStore(storeName);
 		return store.keyPath;
 	}
 
-	getAllKeys(): Promise<IDBValidKey[]> {
+	async getAllKeys(): Promise<IDBValidKey[]> {
 		const {db, storeName} = this;
 
-		if (db === undefined)
-			return Promise.reject("Database is not initialized (happened in getAllKeys)");
+		if (db === undefined) {
+			throw "Database is not initialized (happened in getAllKeys)";
+		}
 
-		return new Promise(function(resolve, reject) {
+		return new Promise((resolve, reject) => {
 			const trans = db.transaction(storeName, "readonly");
 			const store = trans.objectStore(storeName);
 			const request = store.getAllKeys();

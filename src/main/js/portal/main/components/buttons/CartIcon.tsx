@@ -1,8 +1,8 @@
-import React, { Component, CSSProperties } from 'react';
-import { UrlStr } from '../../backend/declarations';
-import { addingToCartProhibition } from '../../models/CartItem';
-import { KnownDataObject } from '../../models/State';
-import { styles } from '../styles';
+import React, {Component, type CSSProperties} from "react";
+import {type UrlStr} from "../../backend/declarations";
+import {addingToCartProhibition} from "../../models/CartItem";
+import {type KnownDataObject} from "../../models/State";
+import {styles} from "../styles";
 
 type Props = {
 	style: CSSProperties
@@ -10,30 +10,34 @@ type Props = {
 	addToCart: (ids: UrlStr[]) => void
 	removeFromCart: (ids: UrlStr[]) => void
 	isAddedToCart: boolean
-}
+};
 
 export default class CartIcon extends Component<Props> {
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 	}
 
-	handleAddToCartClick(){
-		const { objInfo, addToCart} = this.props;
-		if (addToCart) addToCart([objInfo.dobj]);
+	handleAddToCartClick() {
+		const {objInfo, addToCart} = this.props;
+		if (addToCart) {
+			addToCart([objInfo.dobj]);
+		}
 	}
 
-	handleRemoveFromCartClick(){
-		const { objInfo, removeFromCart} = this.props;
-		if (removeFromCart) removeFromCart([objInfo.dobj]);
+	handleRemoveFromCartClick() {
+		const {objInfo, removeFromCart} = this.props;
+		if (removeFromCart) {
+			removeFromCart([objInfo.dobj]);
+		}
 	}
 
-	render(){
+	render() {
 		const {isAddedToCart, objInfo, style} = this.props;
 		const {allowCartAdd, uiMessage} = addingToCartProhibition(objInfo);
 
-		return(
+		return (
 			<span style={style}>{allowCartAdd
-				? isAddedToCart
+				? (isAddedToCart
 					? <span
 						style={styles.clickIcon}
 						title="Remove from data cart"
@@ -45,7 +49,7 @@ export default class CartIcon extends Component<Props> {
 						title="Add to data cart"
 						className="fas fa-plus-circle text-primary"
 						onClick={this.handleAddToCartClick.bind(this)}
-					/>
+					/>)
 				: <span
 					style={styles.disabledClickIcon}
 					title={uiMessage}

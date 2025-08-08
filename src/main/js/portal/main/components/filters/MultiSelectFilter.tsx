@@ -1,33 +1,33 @@
-import React, {Component} from 'react';
-import { RenderItemProp } from 'react-widgets/esm/List';
-import Multiselect from 'react-widgets/Multiselect';
+import React, {Component} from "react";
+import {type RenderItemProp} from "react-widgets/esm/List";
+import Multiselect from "react-widgets/Multiselect";
 import HelpButton from "../../containers/help/HelpButton";
-import { ColNames } from '../../models/CompositeSpecTable';
-import { HelpItemName } from '../../models/HelpStorage';
-import { Value } from '../../models/SpecTable';
-import { Item } from './MultiselectCtrl';
+import {type ColNames} from "../../models/CompositeSpecTable";
+import {type HelpItemName} from "../../models/HelpStorage";
+import {type Value} from "../../models/SpecTable";
+import {type Item} from "./MultiselectCtrl";
 
 type Props = {
-	name: ColNames | 'keywordFilter'
+	name: ColNames | "keywordFilter"
 	shouldUseExternalListEntry: boolean
 	search: Record<string, string>
-	updateFilter: (name: ColNames | 'keywordFilter', values: Value[]) => void
+	updateFilter: (name: ColNames | "keywordFilter", values: Value[]) => void
 	placeholder: string
 	data: Item[]
 	value: Item[]
-}
+};
 
 type State = {
 	open: boolean
-}
+};
 
 type RenderItem = Parameters<RenderItemProp<Item>>[0];
 
 export default class MultiSelectFilter extends Component<Props, State> {
-	private search: Record<ColNames | 'keywordFilter', string>;
+	private search: Record<ColNames | "keywordFilter", string>;
 	private itemCount?: number;
 
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 
 		this.search = props.search;
@@ -38,13 +38,13 @@ export default class MultiSelectFilter extends Component<Props, State> {
 		};
 	}
 
-	handleChange(name: ColNames | 'keywordFilter', items: Item[]){
+	handleChange(name: ColNames | "keywordFilter", items: Item[]) {
 		this.itemCount = items.length;
 		this.props.updateFilter(name, items.map(item => item.value));
 		this.setState({open: false});
 	}
 
-	handleToggle(items: Item[]){
+	handleToggle(items: Item[]) {
 		const open = this.itemCount === items.length - 1
 			? false
 			: !this.state.open;
@@ -52,14 +52,14 @@ export default class MultiSelectFilter extends Component<Props, State> {
 		this.setState({open});
 	}
 
-	handleSearch(name: ColNames | 'keywordFilter', value: string){
+	handleSearch(name: ColNames | "keywordFilter", value: string) {
 		this.search[name] = value;
 	}
 
-	renderListItem(name: ColNames | 'keywordFilter', shouldUseExternalListEntry: boolean, { item }: RenderItem){
+	renderListItem(name: ColNames | "keywordFilter", shouldUseExternalListEntry: boolean, {item}: RenderItem) {
 		const {text} = item;
-		const searchStr = this.search[name] ? this.search[name].toLowerCase() : '';
-		const start = searchStr === ''
+		const searchStr = this.search[name] ? this.search[name].toLowerCase() : "";
+		const start = searchStr === ""
 			? -1
 			: text.toLowerCase().indexOf(searchStr);
 
@@ -70,47 +70,49 @@ export default class MultiSelectFilter extends Component<Props, State> {
 					{this.helpBtn(name, shouldUseExternalListEntry, item)}
 				</>
 			);
-		} else if (start === 0) {
+		}
+
+		if (start === 0) {
 			return (
 				<>
-					<strong>{text.slice(start, start + searchStr.length)}</strong>
-					<span>{text.slice(start + searchStr.length)}</span>
-					{this.helpBtn(name, shouldUseExternalListEntry, item)}
-				</>
-			);
-		} else {
-			return (
-				<>
-					<span>{text.slice(0, start)}</span>
 					<strong>{text.slice(start, start + searchStr.length)}</strong>
 					<span>{text.slice(start + searchStr.length)}</span>
 					{this.helpBtn(name, shouldUseExternalListEntry, item)}
 				</>
 			);
 		}
+
+		return (
+			<>
+				<span>{text.slice(0, start)}</span>
+				<strong>{text.slice(start, start + searchStr.length)}</strong>
+				<span>{text.slice(start + searchStr.length)}</span>
+				{this.helpBtn(name, shouldUseExternalListEntry, item)}
+			</>
+		);
 	}
 
-	helpBtn(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, item: Item){
+	helpBtn(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, item: Item) {
 		const {text, value, helpStorageListEntry} = item;
 
-		return shouldUseExternalListEntry && helpStorageListEntry.length
-			? <HelpButton url={value + ''} name={name} helpContent={{url: value + '', main: text, helpStorageListEntry}} />
+		return shouldUseExternalListEntry && helpStorageListEntry.length > 0
+			? <HelpButton url={value + ""} name={name} helpContent={{url: value + "", main: text, helpStorageListEntry}} />
 			: null;
 	}
 
-	renderTagValue(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, props: {item: Item}){
+	renderTagValue(name: ColNames | HelpItemName, shouldUseExternalListEntry: boolean, props: {item: Item}) {
 		const {text, presentWithCurrentFilters} = props.item;
 
 		// Key word filter is not affected by other filters
 		return presentWithCurrentFilters || name === "keywordFilter"
 			? <><span>{text}</span>{this.helpBtn(name, shouldUseExternalListEntry, props.item)}</>
 			: <>
-				<span style={{color: 'gray'}} title="Not present with current filters">{text}</span>
+				<span style={{color: "gray"}} title="Not present with current filters">{text}</span>
 				{this.helpBtn(name, shouldUseExternalListEntry, props.item)}
 			</>;
 	}
 
-	render(){
+	render() {
 		const {open} = this.state;
 		const {placeholder, data, value, name, shouldUseExternalListEntry} = this.props;
 

@@ -1,32 +1,24 @@
-import React, { Component } from 'react'
-import { Provider } from 'react-redux'
-import getStore from '../store';
-import App from './App';
-import stateUtils, {portalHistoryState} from '../models/State';
+import React, {Component} from "react";
+import {Provider} from "react-redux";
+import getStore from "../store";
+import stateUtils, {portalHistoryState} from "../models/State";
 import {restoreFromHistory} from "../actions/common";
+import App from "./App";
 
 const store = getStore();
 store.subscribe(stateUtils.hashUpdater(store));
 
 export default class Root extends Component {
-
 	componentDidMount() {
-		window.addEventListener('popstate', _ => {
-
+		globalThis.addEventListener("popstate", _ => {
 			if (history.state) {
-				portalHistoryState.getState().then(
-					stateInIndexedDB => {
-						if (stateInIndexedDB !== undefined)
-							store.dispatch(restoreFromHistory(stateInIndexedDB));
-					},
-					reason => console.error(reason)
-				);
-
+				portalHistoryState.getState().catch(error => console.error(error)).then(stateInIndexedDB => {
+					if (stateInIndexedDB !== undefined) {
+						store.dispatch(restoreFromHistory(stateInIndexedDB));
+					}
+				});
 			} else {
-				portalHistoryState.replaceState(stateUtils.serialize(store.getState()), window.location.href).then(
-					_ => _,
-					reason => console.error(reason)
-				);
+				portalHistoryState.replaceState(stateUtils.serialize(store.getState()), globalThis.location.href).catch(error => console.error(error)).then(_ => _);
 			}
 		});
 	}

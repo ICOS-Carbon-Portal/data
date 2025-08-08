@@ -1,35 +1,37 @@
-import React, {Component, ReactNode} from 'react';
-import { connect } from 'react-redux';
-import {debounce, Events} from 'icos-cp-utils';
-import Tabs from '../../components/ui/Tabs';
-import SearchResultRegular from './SearchResultRegular';
-import {updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps} from '../../actions/search';
-import {getLastSegmentsInUrls, isSmallDevice} from '../../utils';
-import {Sha256Str, UrlStr} from "../../backend/declarations";
-import {PortalDispatch} from "../../store";
-import {Route, State} from "../../models/State";
+import React, {Component, type ReactNode} from "react";
+import {connect} from "react-redux";
+import {debounce, Events} from "icos-cp-utils";
+import {type SupportedSRIDs} from "icos-cp-ol";
+import Tabs from "../../components/ui/Tabs";
+import {
+	updateCheckedObjectsInSearch, switchTab, filtersReset, setMapProps
+} from "../../actions/search";
+import {getLastSegmentsInUrls, isSmallDevice} from "../../utils";
+import {type Sha256Str, type UrlStr} from "../../backend/declarations";
+import {type PortalDispatch} from "../../store";
+import {type Route, type State} from "../../models/State";
 import {addToCart, updateRoute} from "../../actions/common";
+import config from "../../config";
+import {type PersistedMapPropsExtended} from "../../models/InitMap";
+import {getPersistedMapProps} from "../../backend";
+import {addingToCartProhibition} from "../../models/CartItem";
 import Filters from "./Filters";
 import SearchResultCompact from "./SearchResultCompact";
 import Advanced from "./Advanced";
-import SearchResultMap from './SearchResultMap';
-import { SupportedSRIDs } from 'icos-cp-ol';
-import config from '../../config';
-import { PersistedMapPropsExtended } from '../../models/InitMap';
-import { getPersistedMapProps } from '../../backend';
-import { addingToCartProhibition } from '../../models/CartItem';
+import SearchResultMap from "./SearchResultMap";
+import SearchResultRegular from "./SearchResultRegular";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode };
+type OurProps = StateProps & DispatchProps & {HelpSection: ReactNode};
 type OurState = {
 	expandedFilters: boolean
 	srid?: SupportedSRIDs
 };
 
 class Search extends Component<OurProps, OurState> {
-	private events: typeof Events;
-	private handleResize: Function;
+	private readonly events: typeof Events;
+	private readonly handleResize: Function;
 	private persistedMapProps: PersistedMapPropsExtended;
 
 	constructor(props: OurProps) {
@@ -43,7 +45,7 @@ class Search extends Component<OurProps, OurState> {
 				: true;
 			this.setState({expandedFilters: expanded});
 		});
-		this.events.addToTarget(window, "resize", this.handleResize);
+		this.events.addToTarget(globalThis, "resize", this.handleResize);
 
 		this.persistedMapProps = getPersistedMapProps() ?? {
 			baseMap: config.olMapSettings.defaultBaseMap,
@@ -56,8 +58,8 @@ class Search extends Component<OurProps, OurState> {
 		};
 	}
 
-	handlePreview(urls: UrlStr[]){
-		this.props.updateRoute('preview', getLastSegmentsInUrls(urls));
+	handlePreview(urls: UrlStr[]) {
+		this.props.updateRoute("preview", getLastSegmentsInUrls(urls));
 	}
 
 	handleAddToCart(objInfo: UrlStr[]) {
@@ -82,43 +84,43 @@ class Search extends Component<OurProps, OurState> {
 	}
 
 	updatePersistedMapProps(persistedMapProps: PersistedMapPropsExtended) {
-		this.persistedMapProps = { ...this.persistedMapProps, ...persistedMapProps };
+		this.persistedMapProps = {...this.persistedMapProps, ...persistedMapProps};
 		this.props.setMapProps(this.persistedMapProps);
 	}
 
 	updateMapSelectedSRID(srid: SupportedSRIDs) {
-		const { isStationFilterCtrlActive, baseMap, visibleToggles } = this.persistedMapProps;
-		this.persistedMapProps = { 
+		const {isStationFilterCtrlActive, baseMap, visibleToggles} = this.persistedMapProps;
+		this.persistedMapProps = {
 			isStationFilterCtrlActive,
 			baseMap,
 			visibleToggles,
 			srid
 		};
 		// Using srid as key for SearchResultMap forces React to recreate the component when it changes
-		this.setState({ srid });
+		this.setState({srid});
 	}
 
 	toggleFilters() {
 		this.setState({expandedFilters: !this.state.expandedFilters});
 	}
 
-	componentWillUnmount(){
+	componentWillUnmount() {
 		this.events.clear();
 	}
 
-	render(){
-		const { HelpSection, tabs, switchTab } = this.props;
-		const { srid } = this.state;
-		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: 'hidden'};
+	render() {
+		const {HelpSection, tabs, switchTab} = this.props;
+		const {srid} = this.state;
+		const expandedFilters = this.state.expandedFilters ? {} : {height: 0, overflow: "hidden"};
 		const filterIconClass = this.state.expandedFilters ? "fas fa-angle-up float-end" : "fas fa-angle-down float-end";
 
 		return (
-			<div className="row" style={{ position: 'relative' }}>
-				<div style={{ display:'inline-block' }}>
+			<div className="row" style={{position: "relative"}}>
+				<div style={{display: "inline-block"}}>
 					{HelpSection}
 				</div>
 
-				<div className="col-sm-4 col-md-3" style={{ marginBottom: 20 }}>
+				<div className="col-sm-4 col-md-3" style={{marginBottom: 20}}>
 
 					<button className="btn btn-outline-secondary w-100 d-block d-sm-none" type="button" onClick={this.toggleFilters.bind(this)} style={{marginBottom: 10}}>
 						Filters<span className={filterIconClass} aria-hidden="true" style={{marginTop: 2}} />
@@ -159,7 +161,7 @@ class Search extends Component<OurProps, OurState> {
 	}
 }
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		checkedObjectsInSearch: state.checkedObjectsInSearch,
 		objectsTable: state.objectsTable,
@@ -167,7 +169,7 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch){
+function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		updateRoute: (route: Route, previewPids: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		addToCart: (ids: UrlStr[]) => dispatch(addToCart(ids)),

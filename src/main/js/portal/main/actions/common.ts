@@ -1,13 +1,15 @@
+import {EpsgCode, getProjection, getTransformPointFn} from "icos-cp-ol";
+import {type Coordinate} from "ol/coordinate";
 import stateUtils, {
-	MapProps,
-	KnownDataObject,
-	Profile,
-	Route,
-	State,
-	StateSerialized,
-	WhoAmI
+	type MapProps,
+	type KnownDataObject,
+	type Profile,
+	type Route,
+	type State,
+	type StateSerialized,
+	type WhoAmI
 } from "../models/State";
-import {PortalDispatch, PortalThunkAction} from "../store";
+import {type PortalDispatch, type PortalThunkAction} from "../store";
 import {
 	fetchBootstrapData,
 	fetchKnownDataObjects,
@@ -16,22 +18,22 @@ import {
 	fetchJson,
 	saveCart
 } from "../backend";
-import Cart, { restoreCart } from "../models/Cart";
+import type Cart from "../models/Cart";
+import {restoreCart} from "../models/Cart";
 import * as Payloads from "../reducers/actionpayloads";
 import config from "../config";
-import {Sha256Str, UrlStr} from "../backend/declarations";
-import {FilterRequest, GeoFilterRequest} from "../models/FilterRequest";
+import {type Sha256Str, type UrlStr} from "../backend/declarations";
+import {type FilterRequest, type GeoFilterRequest} from "../models/FilterRequest";
 import {isInPidFilteringMode} from "../reducers/utils";
 import {saveToRestheart} from "../../../common/main/backend";
 import CartItem from "../models/CartItem";
+import {type DataObject} from "../../../common/main/metacore";
+import {Value} from "../models/SpecTable";
+import {type ColNames} from "../models/CompositeSpecTable";
+import type CompositeSpecTable from "../models/CompositeSpecTable";
+import commonConfig from "../../../common/main/config";
+import {drawRectBoxToCoords, getLastSegmentsInUrls} from "../utils";
 import {bootstrapRoute, init, loadApp} from "./main";
-import { DataObject } from "../../../common/main/metacore";
-import { Value } from "../models/SpecTable";
-import CompositeSpecTable, {ColNames} from "../models/CompositeSpecTable";
-import commonConfig from '../../../common/main/config';
-import { drawRectBoxToCoords, getLastSegmentsInUrls } from "../utils";
-import { EpsgCode, getProjection, getTransformPointFn } from "icos-cp-ol";
-import { Coordinate } from "ol/coordinate";
 
 export const failWithError: (dispatch: PortalDispatch) => (error: Error) => void = dispatch => error => {
 	dispatch(new Payloads.MiscError(error));
@@ -49,16 +51,16 @@ function logError(error: Error): PortalThunkAction<void> {
 
 		saveToRestheart({
 			error: {
-				app: 'portal',
+				app: "portal",
 				message: error.message,
-				state: JSON.stringify(Object.assign({}, stateUtils.serialize(state), {
-					user: userName,
+				state: JSON.stringify({
+					...stateUtils.serialize(state), user: userName,
 					cart: state.cart
-				})),
-				url: decodeURI(window.location.href)
+				}),
+				url: decodeURI(globalThis.location.href)
 			}
 		});
-	}
+	};
 }
 
 export function updateRoute(route: Route, previewPids?: Sha256Str[]): PortalThunkAction<void> {
@@ -72,30 +74,32 @@ export function getFilters(state: State): FilterRequest[] {
 	const {tabs, filterTemporal, filterPids, filterNumbers, filterKeywords, searchOptions, specTable} = state;
 	let filters: FilterRequest[] = [];
 
-	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
+	filters.push({category: "deprecated", allow: searchOptions.showDeprecated});
 
-	if (isInPidFilteringMode(tabs, filterPids)){
-		filters.push({category: 'pids', pids: filterPids});
+	if (isInPidFilteringMode(tabs, filterPids)) {
+		filters.push({category: "pids", pids: filterPids});
 	} else {
-		filters.push({category: 'pids', pids: null});
+		filters.push({category: "pids", pids: null});
 
-		if (filterTemporal.hasFilter){
+		if (filterTemporal.hasFilter) {
 			filters = filters.concat(filterTemporal.filters);
 		}
 
-		if (varNamesAreFiltered(specTable)){
-			const titles = specTable.getColumnValuesFilter('varTitle')
-			if(titles != null){
-				filters.push({category:'variableNames', names: titles.filter(Value.isString)})
+		if (varNamesAreFiltered(specTable)) {
+			const titles = specTable.getColumnValuesFilter("varTitle");
+			if (titles != null) {
+				filters.push({category: "variableNames", names: titles.filter(Value.isString)});
 			}
 		}
 
-		if (filterKeywords.length > 0){
-			filters.push({category: 'keywords', keywords: filterKeywords});
+		if (filterKeywords.length > 0) {
+			filters.push({category: "keywords", keywords: filterKeywords});
 		}
 
-		const geoFilter = getGeoFilter(state.mapProps)
-		if(geoFilter) filters.push(geoFilter)
+		const geoFilter = getGeoFilter(state.mapProps);
+		if (geoFilter) {
+			filters.push(geoFilter);
+		}
 
 		filters = filters.concat(filterNumbers.validFilters);
 	}
@@ -104,69 +108,64 @@ export function getFilters(state: State): FilterRequest[] {
 }
 
 function getGeoFilter(mapProps: MapProps): GeoFilterRequest | null {
-	const rects = mapProps.rects
-	if (!rects || rects.length === 0) return null
+	const rects = mapProps.rects;
+	if (!rects || rects.length === 0) {
+		return null;
+	}
 
-	const srcEpsgCode = `EPSG:${mapProps.srid}` as EpsgCode
+	const srcEpsgCode = `EPSG:${mapProps.srid}`;
 	// Register selected projection is case it's a projection not available by default in Proj4
-	getProjection(srcEpsgCode)
+	getProjection(srcEpsgCode);
 
-	const pointTransformer = getTransformPointFn(srcEpsgCode, "EPSG:4326")
-	const coordTransformer = (c: Coordinate) => pointTransformer(c[0], c[1]).join(' ')
+	const pointTransformer = getTransformPointFn(srcEpsgCode, "EPSG:4326");
+	const coordTransformer = (c: Coordinate) => pointTransformer(c[0], c[1]).join(" ");
 
 	const wktPolygons: string[] = rects.map(bbox => {
-		const coords = drawRectBoxToCoords(bbox).map(coordTransformer).join(', ')
-		return '((' + coords + '))'
+		const coords = drawRectBoxToCoords(bbox).map(coordTransformer).join(", ");
+		return "((" + coords + "))";
 	});
 
 	const wktGeo = wktPolygons.length === 1
-		? 'POLYGON ' + wktPolygons[0]
-		: 'MULTIPOLYGON (' + wktPolygons.join(', ') + ')'
+		? "POLYGON " + wktPolygons[0]
+		: "MULTIPOLYGON (" + wktPolygons.join(", ") + ")";
 
 	return {
-		category: 'geo',
+		category: "geo",
 		wktGeo
-	}
+	};
 }
 
-export const varNameAffectingCategs: ReadonlyArray<ColNames> = ['variable', 'valType'];
+export const varNameAffectingCategs: readonly ColNames[] = ["variable", "valType"];
 
-export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean{
+export function varNamesAreFiltered(specTable: CompositeSpecTable): boolean {
 	return varNameAffectingCategs.some(cat => specTable.getFilter(cat) !== null);
 }
 
 export function getBackendTables(filters: FilterRequest[]): PortalThunkAction<Promise<void>> {
-	return (dispatch) => {
-		return fetchBootstrapData(filters).then(allTables => {
-				dispatch(new Payloads.BootstrapInfo(allTables));
-			},
-			failWithError(dispatch)
-		);
-	};
+	return async dispatch => fetchBootstrapData(filters).catch(failWithError(dispatch)).then(allTables => {
+		dispatch(new Payloads.BootstrapInfo(allTables));
+	});
 }
 
 export function fetchCart(user: WhoAmI): PortalThunkAction<Promise<void>> {
-	return (dispatch) => {
-		return getCart(user.email).then(restheartCart => {
-			const cart = restoreCart(restheartCart);
+	return async dispatch => getCart(user.email).then(async restheartCart => {
+		const cart = restoreCart(restheartCart);
 
-			return dispatch(updateCart(user.email, cart));
-		});
-	};
+		return dispatch(updateCart(user.email, cart));
+	});
 }
 
 export function updateCart(email: string | null, cart: Cart): PortalThunkAction<Promise<any>> {
-	const cartLinks = document.querySelectorAll('.cart-link');
-	cartLinks.forEach(link => {
-		const num = link.querySelector('.items-number')
+	const cartLinks = document.querySelectorAll(".cart-link");
+	for (const link of cartLinks) {
+		const num = link.querySelector(".items-number");
 		if (num) {
 			num.textContent = cart.count.toString();
 		}
-	});
+	}
 
-	return dispatch => saveCart(email, cart).then(() =>
-		dispatch(new Payloads.BackendUpdateCart(cart))
-	);
+	return async dispatch => saveCart(email, cart).then(() =>
+		dispatch(new Payloads.BackendUpdateCart(cart)));
 }
 
 export function removeFromCart(ids: UrlStr[]): PortalThunkAction<void> {
@@ -179,36 +178,36 @@ export function removeFromCart(ids: UrlStr[]): PortalThunkAction<void> {
 }
 
 export function getKnownDataObjInfo(dobjs: string[], cb?: Function): PortalThunkAction<void> {
-	return (dispatch) => {
-		fetchKnownDataObjects(dobjs).then(result => {
-				dispatch(new Payloads.BackendObjectsFetched(result.rows, true));
+	return dispatch => {
+		fetchKnownDataObjects(dobjs).catch(failWithError(dispatch)).then(result => {
+			dispatch(new Payloads.BackendObjectsFetched(result.rows, true));
 
-				if (cb) dispatch(cb);
-			},
-			failWithError(dispatch)
-		);
+			if (cb) {
+				dispatch(cb);
+			}
+		});
 	};
 }
 
 export function setPreviewUrl(url: UrlStr): PortalThunkAction<void> {
-	return (dispatch) => {
+	return dispatch => {
 		dispatch(new Payloads.SetPreviewUrl(url));
 	};
 }
 
 export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-
 		const {previewLookup, objectsTable, user, cart} = getState();
 
 		if (user.email) {
 			const newItems = ids.filter(id => !cart.hasItem(id)).map(id => {
 				const objInfo: KnownDataObject | undefined = objectsTable.find(o => o.dobj === id);
 
-				if (objInfo === undefined)
+				if (objInfo === undefined) {
 					throw new Error(`Could not find objTable with id=${id} in ${objectsTable}`);
+				}
 
-				const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type
+				const previewType = previewLookup?.forDataObjSpec(objInfo.spec)?.type;
 
 				return new CartItem(objInfo.dobj, objInfo, previewType);
 			});
@@ -220,32 +219,32 @@ export function addToCart(ids: UrlStr[]): PortalThunkAction<void> {
 			}
 		} else {
 			dispatch(new Payloads.MiscUpdateAddToCart(getLastSegmentsInUrls(ids)));
-			const url = window.location;
+			const url = globalThis.location;
 			url.hash = stateUtils.stateToHash(getState());
 			dispatch(new Payloads.MiscUpdateAddToCart(undefined));
-			window.location.href = `${commonConfig.authBaseUri}/login/?targetUrl=${encodeURIComponent(url.href)}`;
+			globalThis.location.href = `${commonConfig.authBaseUri}/login/?targetUrl=${encodeURIComponent(url.href)}`;
 		}
 	};
 }
 
 export function setMetadataItem(id: UrlStr): PortalThunkAction<void> {
-	return (dispatch) => {
+	return dispatch => {
 		dispatch(new Payloads.BackendObjectMetadataId(id));
 		dispatch(fetchMetadataItem(id));
 	};
 }
 
 function fetchMetadataItem(id: UrlStr): PortalThunkAction<void> {
-	return (dispatch) => {
+	return dispatch => {
 		fetchJson<DataObject>(`${id}?format=json`).then(metadata => {
-			const metadataWithId = { ...metadata, id };
+			const metadataWithId = {...metadata, id};
 			dispatch(new Payloads.BackendObjectMetadata(metadataWithId));
 		});
 	};
 }
 
 export function restoreFromHistory(historyState: StateSerialized): PortalThunkAction<void> {
-	return (dispatch) => {
+	return dispatch => {
 		const ts = historyState.ts ?? Date.now();
 
 		if (Date.now() - ts < config.historyStateMaxAge) {
@@ -260,30 +259,28 @@ export function restoreFromHistory(historyState: StateSerialized): PortalThunkAc
 const addStateMissingInHistory: PortalThunkAction<void> = (dispatch, getState) => {
 	const {route, metadata, id} = getState();
 
-	if (route === 'metadata' && metadata && id !== undefined && metadata.id !== id)
+	if (route === "metadata" && metadata && id !== undefined && metadata.id !== id) {
 		dispatch(setMetadataItem(id));
+	}
 };
 
 export function loadFromError(user: WhoAmI, errorId: string): PortalThunkAction<void> {
-	return (dispatch) => {
+	return dispatch => {
 		getError(errorId).then(response => {
-			if (response && response.error && response.error.state) {
+			if (response?.error?.state) {
 				const stateJSON = JSON.parse(response.error.state);
-				const objectsTable = stateJSON.objectsTable.map((kdobj: KnownDataObject) => {
-					return Object.assign(kdobj, {
-						submTime: new Date(kdobj.submTime),
-						timeStart: new Date(kdobj.timeStart),
-						timeEnd: new Date(kdobj.timeEnd)
-					});
-				});
+				const objectsTable = stateJSON.objectsTable.map((kdobj: KnownDataObject) => Object.assign(kdobj, {
+					submTime: new Date(kdobj.submTime),
+					timeStart: new Date(kdobj.timeStart),
+					timeEnd: new Date(kdobj.timeEnd)
+				}));
 				const cart = restoreCart({cart: stateJSON.cart});
-				const state: StateSerialized = Object.assign({},
-					stateJSON,
-					{objectsTable, ts: undefined, user: {}}
-				);
+				const state: StateSerialized = {
+					...stateJSON,
+					objectsTable, ts: undefined, user: {}
+				};
 
 				dispatch(new Payloads.MiscLoadError(state, cart));
-
 			} else {
 				dispatch(loadApp(user));
 			}

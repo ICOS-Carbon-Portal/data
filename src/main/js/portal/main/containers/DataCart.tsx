@@ -1,6 +1,6 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import CartPanel from '../components/CartPanel';
+import React from "react";
+import {connect} from "react-redux";
+import CartPanel from "../components/CartPanel";
 import {
 	setCartName,
 	fetchIsBatchDownloadOk,
@@ -8,15 +8,15 @@ import {
 	logCartDownloadClick,
 	emptyCart,
 	restorePriorCart
-} from '../actions/cart';
-import {formatBytes, getLastSegmentsInUrls} from '../utils';
-import {Sha256Str, UrlStr} from "../backend/declarations";
-import {PortalDispatch} from "../store";
-import {Profile, Route, State} from "../models/State";
+} from "../actions/cart";
+import {formatBytes, getLastSegmentsInUrls} from "../utils";
+import {type Sha256Str, type UrlStr} from "../backend/declarations";
+import {type PortalDispatch} from "../store";
+import {type Profile, type Route, type State} from "../models/State";
 import {removeFromCart, updateRoute} from "../actions/common";
-import Message from '../components/ui/Message';
-import DownloadButton from '../components/buttons/DownloadButton';
-import { useDownloadInfo } from '../hooks/useDownloadInfo';
+import Message from "../components/ui/Message";
+import DownloadButton from "../components/buttons/DownloadButton";
+import {useDownloadInfo} from "../hooks/useDownloadInfo";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -24,12 +24,11 @@ export type DataCartProps = StateProps & DispatchProps;
 
 
 function DataCart(props: DataCartProps) {
-
-	function handlePreview(urls: UrlStr[]){
-		props.updateRoute('preview', getLastSegmentsInUrls(urls));
+	function handlePreview(urls: UrlStr[]) {
+		props.updateRoute("preview", getLastSegmentsInUrls(urls));
 	}
 
-	function handleRouteClick(newRoute: Route){
+	function handleRouteClick(newRoute: Route) {
 		props.updateCheckedObjectsInCart([]);
 		props.updateRoute(newRoute);
 	}
@@ -53,15 +52,17 @@ function DataCart(props: DataCartProps) {
 	}
 
 	const {preview, user, cart, priorCart, updateCheckedObjectsInCart, extendedDobjInfo, labelLookup} = props;
-	const localObjectsTable = props.cart.items.flatMap((x) => x.knownDataObject ? [x.knownDataObject] : [])
-	const downloadInfo = useDownloadInfo({readyObjectIds: localObjectsTable.map((x) => x.dobj),
-		objectsTable: localObjectsTable, extendedDobjInfo, labelLookup});
+	const localObjectsTable = props.cart.items.flatMap(x => x.knownDataObject ? [x.knownDataObject] : []);
+	const downloadInfo = useDownloadInfo({
+		readyObjectIds: localObjectsTable.map(x => x.dobj),
+		objectsTable: localObjectsTable, extendedDobjInfo, labelLookup
+	});
 
 	const previewitemId = preview.item ? preview.item.dobj : undefined;
 
 	const downloadTitle = user.email && (user.profile as Profile).icosLicenceOk
-		? 'Download cart content'
-		: 'Accept license and download cart content';
+		? "Download cart content"
+		: "Accept license and download cart content";
 
 	const filename = cart.count == 0 && priorCart ? priorCart.name : (cart.name ? cart.name : downloadInfo.filename);
 	const hashes = cart.count == 0 && priorCart ? priorCart.pids : cart.pids;
@@ -94,7 +95,7 @@ function DataCart(props: DataCartProps) {
 									enabled={true}
 									onSubmitHandler={handleDownload}
 								/>
-								<div className='mt-2' style={{textAlign: 'center', fontSize:'90%'}}>
+								<div className="mt-2" style={{textAlign: "center", fontSize: "90%"}}>
 									Total size: {formatBytes(cart.size)} (uncompressed)
 								</div>
 							</div>
@@ -105,7 +106,7 @@ function DataCart(props: DataCartProps) {
 			<div style={ showCartPanel ? {display: "none"} : {}}>
 				<Message
 					title="Your cart is empty"
-					findData={() => handleRouteClick('search')}
+					findData={() => handleRouteClick("search")}
 					restorePriorCart={priorCart ? handleRestore : undefined}
 				/>
 			</div>
@@ -113,7 +114,7 @@ function DataCart(props: DataCartProps) {
 	);
 }
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		cart: state.cart,
 		priorCart: state.priorCart,
@@ -126,7 +127,7 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch | Function){
+function dispatchToProps(dispatch: PortalDispatch | Function) {
 	return {
 		updateRoute: (route: Route, previewPids?: Sha256Str[]) => dispatch(updateRoute(route, previewPids)),
 		setCartName: (newName: string) => dispatch(setCartName(newName)),

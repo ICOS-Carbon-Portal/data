@@ -1,41 +1,43 @@
-import React, {ChangeEvent, Component, ReactNode} from 'react';
+import React, {type ChangeEvent, Component, type ReactNode} from "react";
 import {connect} from "react-redux";
-import PreviewTimeSerie from '../components/preview/PreviewTimeSerie';
-import PreviewSelfContained from '../components/preview/PreviewSelfContained';
-import config from '../config';
-import {Events} from 'icos-cp-utils';
-import {Route, State} from "../models/State";
-import {UrlStr} from "../backend/declarations";
-import {PortalDispatch} from "../store";
-import { addToCart, removeFromCart, setPreviewUrl, updateRoute } from "../actions/common";
-import { storeTsPreviewSetting } from "../actions/preview";
-import { pick } from "../utils";
-import PreviewControls from '../components/preview/PreviewControls';
-import Message from '../components/ui/Message';
+import {Events} from "icos-cp-utils";
+import PreviewTimeSerie from "../components/preview/PreviewTimeSerie";
+import PreviewSelfContained from "../components/preview/PreviewSelfContained";
+import config from "../config";
+import {type Route, type State} from "../models/State";
+import {type UrlStr} from "../backend/declarations";
+import {type PortalDispatch} from "../store";
+import {
+	addToCart, removeFromCart, setPreviewUrl, updateRoute
+} from "../actions/common";
+import {storeTsPreviewSetting} from "../actions/preview";
+import {pick} from "../utils";
+import PreviewControls from "../components/preview/PreviewControls";
+import Message from "../components/ui/Message";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
-type OurProps = StateProps & DispatchProps & { HelpSection: ReactNode }
-interface OurState {
-	iframeSrc: UrlStr | ''
-}
+type OurProps = StateProps & DispatchProps & {HelpSection: ReactNode};
+type OurState = {
+	iframeSrc: UrlStr | ""
+};
 
 class Preview extends Component<OurProps, OurState> {
-	private events: typeof Events = null;
+	private readonly events: typeof Events = null;
 
-	constructor(props: OurProps){
+	constructor(props: OurProps) {
 		super(props);
 
 		this.state = {
-			iframeSrc: '',
+			iframeSrc: "",
 		};
 
 		this.events = new Events();
-		this.events.addToTarget(window, "message", this.handleIframeSrcChange.bind(this));
+		this.events.addToTarget(globalThis, "message", this.handleIframeSrcChange.bind(this));
 	}
 
-	handleIframeSrcChange(event: ChangeEvent<HTMLIFrameElement> | MessageEvent){
+	handleIframeSrcChange(event: ChangeEvent<HTMLIFrameElement> | MessageEvent) {
 		const iframeSrc = event instanceof MessageEvent
 			? event.data
 			: event.target.src;
@@ -47,67 +49,67 @@ class Preview extends Component<OurProps, OurState> {
 	}
 
 	handleSearchRouteClick() {
-		this.props.updateRoute('search');
+		this.props.updateRoute("search");
 	}
 
-	componentWillUnmount(){
+	componentWillUnmount() {
 		this.events.clear();
 	}
 
-	render(){
-		const { HelpSection, preview } = this.props;
-		const { iframeSrc } = this.state;
+	render() {
+		const {HelpSection, preview} = this.props;
+		const {iframeSrc} = this.state;
 
-		if (!preview || preview.type === undefined) {
-			return(
+		if (preview?.type === undefined) {
+			return (
 				<Message
 					title="No data found"
 					findData={this.handleSearchRouteClick.bind(this)} />
-			)
-		} else {
-			return (
-				<>
-					<div style={{ display: 'inline-block' }}>
-						{HelpSection}
-					</div>
-
-					<PreviewRoute
-						iframeSrcChange={this.handleIframeSrcChange.bind(this)}
-						iframeUrl={iframeSrc}
-						{...this.props}
-					/>
-				</>
 			);
 		}
+
+		return (
+			<>
+				<div style={{display: "inline-block"}}>
+					{HelpSection}
+				</div>
+
+				<PreviewRoute
+					iframeSrcChange={this.handleIframeSrcChange.bind(this)}
+					iframeUrl={iframeSrc}
+					{...this.props}
+				/>
+			</>
+		);
 	}
 }
 
-const PreviewRoute = (props: OurProps & { iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement> | MessageEvent) => void, iframeUrl: UrlStr }) => {
+const PreviewRoute = (props: OurProps & {iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement> | MessageEvent) => void, iframeUrl: UrlStr}) => {
 	const previewType = props.preview.type;
 
-	if (previewType === config.TIMESERIES){
-		const tsProps = pick(props, 'preview', 'extendedDobjInfo', 'tsSettings', 'storeTsPreviewSetting', 'iframeSrcChange',  'previewSettings');
+	if (previewType === config.TIMESERIES) {
+		const tsProps = pick(props, "preview", "extendedDobjInfo", "tsSettings", "storeTsPreviewSetting", "iframeSrcChange", "previewSettings");
 		return <PreviewTimeSerie {...tsProps} />;
+	}
 
-	} else if (previewType === config.NETCDF || previewType === config.MAPGRAPH || previewType === config.PHENOCAM){
-		const scProps = pick(props, 'preview', 'iframeSrcChange', 'previewSettings');
+	if (previewType === config.NETCDF || previewType === config.MAPGRAPH || previewType === config.PHENOCAM) {
+		const scProps = pick(props, "preview", "iframeSrcChange", "previewSettings");
 		return <>
-			<div className='row pb-3'>
+			<div className="row pb-3">
 				<PreviewControls iframeUrl={props.iframeUrl} previewType={previewType} />
 			</div>
 			<PreviewSelfContained {...scProps} />
 		</>;
-
-	} else {
-		const msg = props.preview.items.length
-			? "This type of preview is not yet implemented"
-			: "Fetching data for preview...";
-
-		return <div className="card-body">{msg}</div>;
 	}
+
+	const msg = props.preview.items.length > 0
+		? "This type of preview is not yet implemented"
+		: "Fetching data for preview...";
+
+	return <div className="card-body">{msg}</div>;
 };
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		preview: state.preview,
 		extendedDobjInfo: state.extendedDobjInfo,
@@ -116,7 +118,7 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch){
+function dispatchToProps(dispatch: PortalDispatch) {
 	return {
 		setPreviewUrl: (url: UrlStr) => dispatch(setPreviewUrl(url)),
 		storeTsPreviewSetting: (spec: string, type: string, val: string) => dispatch(storeTsPreviewSetting(spec, type, val)),

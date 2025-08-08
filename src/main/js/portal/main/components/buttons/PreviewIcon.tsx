@@ -1,15 +1,15 @@
-import React from 'react';
-import {styles} from '../styles';
-import { PreviewAvailability } from '../../models/Preview';
+import React from "react";
+import {styles} from "../styles";
+import {type PreviewAvailability} from "../../models/Preview";
 
 
 type Props = {
 	clickAction(): void
 	preview: PreviewAvailability
 	style: React.CSSProperties
-}
+};
 
-export default function PreviewIcon({ preview, style, clickAction}: Props){
+export default function PreviewIcon({preview, style, clickAction}: Props) {
 	if (preview.previewType) {
 		return (
 			<span style={style}>
@@ -21,15 +21,15 @@ export default function PreviewIcon({ preview, style, clickAction}: Props){
 				/>
 			</span>
 		);
-	} else {
-		return (
-			<span style={style}>
-				<span
-					style={styles.disabledClickIcon}
-					title={preview.previewAbsenceReason}
-					className="fas fa-eye text-muted"
-				/>
-			</span>
-		);
 	}
+
+	return (
+		<span style={style}>
+			<span
+				style={styles.disabledClickIcon}
+				title={preview.previewAbsenceReason}
+				className="fas fa-eye text-muted"
+			/>
+		</span>
+	);
 }

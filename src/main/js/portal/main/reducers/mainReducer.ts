@@ -1,42 +1,48 @@
-import { Reducer } from 'redux';
-import backendReducer from './backendReducer';
-import miscReducer from './miscReducer';
-import previewReducer from './previewReducer';
-import uiReducer from './uiReducer';
-import filtersReducer from './filtersReducer';
+import {type Reducer} from "redux";
+import {type State, defaultState} from "../models/State";
+import backendReducer from "./backendReducer";
+import miscReducer from "./miscReducer";
+import previewReducer from "./previewReducer";
+import uiReducer from "./uiReducer";
+import filtersReducer from "./filtersReducer";
 import {
 	BackendPayload,
-	PortalPlainAction,
+	type PortalPlainAction,
 	MiscPayload,
 	PreviewPayload,
 	UiPayload,
 	FiltersPayload,
 	BootstrapRoutePayload
 } from "./actionpayloads";
-import {State, defaultState} from "../models/State";
 import bootstrapRouteReducer from "./bootstrapRouteReducer";
 
 
 const reducer: Reducer<State, PortalPlainAction> = (state: State = defaultState, action: PortalPlainAction) => {
 	const payload = action.payload;
 
-	if (payload instanceof BootstrapRoutePayload)
+	if (payload instanceof BootstrapRoutePayload) {
 		return bootstrapRouteReducer(state, payload);
+	}
 
-	if (payload instanceof BackendPayload)
+	if (payload instanceof BackendPayload) {
 		return backendReducer(state, payload);
+	}
 
-	if (payload instanceof MiscPayload)
+	if (payload instanceof MiscPayload) {
 		return miscReducer(state, payload);
+	}
 
-	if (payload instanceof PreviewPayload)
+	if (payload instanceof PreviewPayload) {
 		return previewReducer(state, payload);
+	}
 
-	if (payload instanceof UiPayload)
+	if (payload instanceof UiPayload) {
 		return uiReducer(state, payload);
+	}
 
-	if (payload instanceof FiltersPayload)
+	if (payload instanceof FiltersPayload) {
 		return filtersReducer(state, payload);
+	}
 
 	return state;
 };

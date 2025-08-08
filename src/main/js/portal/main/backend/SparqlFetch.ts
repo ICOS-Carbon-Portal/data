@@ -1,11 +1,12 @@
-import {sparql, SparqlResultBinding, SparqlResult, Query} from 'icos-cp-backend';
+import {
+	sparql, type SparqlResultBinding, type SparqlResult, type Query
+} from "icos-cp-backend";
 
-export function sparqlFetchAndParse<Mandatories extends string, Optionals extends string, Res extends Row<Mandatories, Optionals>>(
+export async function sparqlFetchAndParse<Mandatories extends string, Optionals extends string, Res extends Row<Mandatories, Optionals>>(
 	query: Query<Mandatories, Optionals>,
 	sparqlEndpoint: string,
 	parser: (resp: SparqlResultBinding<Mandatories, Optionals>) => Res
-): Promise<{colNames: (Mandatories | Optionals)[], rows: Res[]}> {
-
+): Promise<{colNames: Array<Mandatories | Optionals>, rows: Res[]}> {
 	return sparql(query, sparqlEndpoint, true)
 		.then((sparqlRes: SparqlResult<Mandatories, Optionals>) => {
 			try {
@@ -13,54 +14,56 @@ export function sparqlFetchAndParse<Mandatories extends string, Optionals extend
 					colNames: sparqlRes.head.vars,
 					rows: sparqlRes.results.bindings.map(parser)
 				};
-
-			} catch (err) {
-				let message = (err instanceof Error) ? err.message : 'unspecified error';
+			} catch (error) {
+				const message = (error instanceof Error) ? error.message : "unspecified error";
 				throw new Error("Failed to parse SPARQL response: " + message);
 			}
 		});
-};
+}
 
-export type SparqlResponseType = 'JSON' | 'CSV' | 'XML' | 'TSV or Turtle'
+export type SparqlResponseType = "JSON" | "CSV" | "XML" | "TSV or Turtle";
 
-export function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResponseType: SparqlResponseType, acceptCachedResults?: boolean): Promise<Response> {
+export async function sparqlFetch(queryTxt: string, sparqlEndpoint: string, sparqlResponseType: SparqlResponseType, acceptCachedResults?: boolean): Promise<Response> {
 	const getType = (): string => {
 		switch (sparqlResponseType) {
-			case 'JSON': return 'application/json';
-			case 'CSV': return 'text/csv';
-			case 'XML': return 'application/xml';
-			case 'TSV or Turtle': return 'text/plain';
+			case "JSON": {return "application/json";
+			}
+
+			case "CSV": {return "text/csv";
+			}
+
+			case "XML": {return "application/xml";
+			}
+
+			case "TSV or Turtle": {return "text/plain";
+			}
 		}
 	};
 
 	const cacheHeader: HeadersInit = acceptCachedResults
-		? {} //expecting default cache behaviour from the server
-		: { 'Cache-Control': 'no-cache'};
+		? {} // Expecting default cache behaviour from the server
+		: {"Cache-Control": "no-cache"};
 	const headers: HeadersInit = {
-		'Accept': getType(),
-		'Content-Type': 'text/plain'
+		Accept: getType(),
+		"Content-Type": "text/plain"
 	};
 
 	return fetch(sparqlEndpoint, {
-		method: 'post',
-		headers: new Headers({ ...cacheHeader, ...headers }),
+		method: "post",
+		headers: new Headers({...cacheHeader, ...headers}),
 		body: queryTxt
 	})
-		.then(resp => {
+		.then(async resp => {
 			if (resp.ok) {
 				return resp;
-			} else {
-				return resp.text().then(txt =>
-					Promise.reject(new Error(txt || resp.statusText || "Ajax response status: " + resp.status))
-				);
 			}
+
+			return resp.text().then(async txt => {
+				throw new Error(txt || resp.statusText || "Ajax response status: " + resp.status);
+			});
 		});
 }
 
 type Parsed = string | string[] | number | boolean | Date;
 
-type Row<Mandatories extends string, Optionals extends string> = {
-	[v in Mandatories]: Parsed
-} & {
-	[v in Optionals]: Parsed | undefined
-}
+type Row<Mandatories extends string, Optionals extends string> = Record<Mandatories, Parsed> & Record<Optionals, Parsed | undefined>;

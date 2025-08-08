@@ -1,70 +1,72 @@
-import {
-	MiscError, MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
-	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart
-} from "./actionpayloads";
-import stateUtils, {CategFilters, defaultState, DrawRectBbox, MapProps, State} from "../models/State";
-import * as Toaster from 'icos-cp-toaster';
-import {getObjCount} from "./utils";
+import * as Toaster from "icos-cp-toaster";
+import stateUtils, {
+	type CategFilters, defaultState, type DrawRectBbox, type MapProps, type State
+} from "../models/State";
 import Paging from "../models/Paging";
 import FilterTemporal from "../models/FilterTemporal";
-import config, {CategoryType, numberFilterKeys} from "../config";
-import CompositeSpecTable from "../models/CompositeSpecTable";
-import {getNewPaging} from "./backendReducer";
+import config, {type CategoryType, numberFilterKeys} from "../config";
+import type CompositeSpecTable from "../models/CompositeSpecTable";
 import {FilterNumber, FilterNumbers} from "../models/FilterNumbers";
-import {DrawFeature} from "../models/StationFilterControl";
+import {type DrawFeature} from "../models/StationFilterControl";
 import {round} from "../utils";
+import {getObjCount} from "./utils";
+import {getNewPaging} from "./backendReducer";
+import {
+	MiscError, type MiscPayload, MiscUpdateSearchOption, MiscResetFilters, MiscRestoreFromHistory,
+	MiscLoadError, MiscRestoreFilters, MiscUpdateMapProps, MiscUpdateAddToCart
+} from "./actionpayloads";
 
-export default function(state: State, payload: MiscPayload): State{
-
-	if (payload instanceof MiscRestoreFromHistory){
+export default function (state: State, payload: MiscPayload): State {
+	if (payload instanceof MiscRestoreFromHistory) {
 		return stateUtils.deserialize(payload.historyState, state.cart);
 	}
 
-	if (payload instanceof MiscError){
+	if (payload instanceof MiscError) {
 		console.log(payload.error);
 		return stateUtils.update(state, {
-			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0])
+			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split("\n")[0])
 		});
 	}
 
-	if (payload instanceof MiscUpdateSearchOption){
+	if (payload instanceof MiscUpdateSearchOption) {
 		return stateUtils.update(state, handleMiscUpdateSearchOption(state, payload));
 	}
 
-	if (payload instanceof MiscResetFilters){
+	if (payload instanceof MiscResetFilters) {
 		return stateUtils.update(state, resetFilters(state));
 	}
 
-	if (payload instanceof MiscRestoreFilters){
+	if (payload instanceof MiscRestoreFilters) {
 		return stateUtils.update(state, restoreFilters(state));
 	}
 
-	if (payload instanceof MiscUpdateMapProps){
+	if (payload instanceof MiscUpdateMapProps) {
 		return stateUtils.update(state, handleUpdateMapProps(state, payload));
 	}
 
-	if (payload instanceof MiscLoadError){
+	if (payload instanceof MiscLoadError) {
 		return stateUtils.deserialize(payload.state, payload.cart);
 	}
 
 	if (payload instanceof MiscUpdateAddToCart) {
-		return stateUtils.update(state, { itemsToAddToCart: payload.addToCart });
+		return stateUtils.update(state, {itemsToAddToCart: payload.addToCart});
 	}
 
 	return state;
+}
 
-};
 
 const handleUpdateMapProps = (state: State, payload: MiscUpdateMapProps): Partial<State> => {
 	const persistedMapProps = payload.persistedMapProps;
 	const srid = persistedMapProps.srid ?? config.olMapSettings.defaultSRID;
-	const rounder = srid === '4326'
+	const rounder = srid === "4326"
 		? (val: number) => round(val, 5)
 		: (val: number) => Math.round(val);
 	const coordHandler = (df: DrawFeature): DrawRectBbox => {
 		const rect = df.coords[0];
 		return rect[0].concat(rect[2]).map(rounder) as DrawRectBbox;
 	};
+
 	const mapProps: MapProps = {
 		srid,
 		rects: persistedMapProps.drawFeatures?.map(coordHandler) ?? state.mapProps.rects ?? []
@@ -76,7 +78,7 @@ const handleUpdateMapProps = (state: State, payload: MiscUpdateMapProps): Partia
 };
 
 const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOption): Partial<State> => {
-	const searchOptions = {...state.searchOptions, ...{[payload.newSearchOption.name]: payload.newSearchOption.value}};
+	const searchOptions = {...state.searchOptions, [payload.newSearchOption.name]: payload.newSearchOption.value};
 
 	return {
 		searchOptions,
@@ -114,13 +116,12 @@ const restoreFilters = (state: State): Partial<State> => {
 
 
 function getSpecTable(startTable: CompositeSpecTable, filterCategories: CategFilters): CompositeSpecTable {
-
 	const categoryTypes: CategoryType[] = Object.keys(filterCategories) as Array<keyof typeof filterCategories>;
 
 	return categoryTypes.reduce(
 		(specTable, categType) => {
 			const filter = filterCategories[categType];
-			return filter === undefined ? specTable : specTable.withFilter(categType, filter)
+			return filter === undefined ? specTable : specTable.withFilter(categType, filter);
 		},
 		startTable
 	);

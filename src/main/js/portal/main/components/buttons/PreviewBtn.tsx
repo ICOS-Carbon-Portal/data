@@ -1,10 +1,10 @@
-import React, { CSSProperties } from 'react';
-import { UrlStr } from '../../backend/declarations';
+import React, {type CSSProperties} from "react";
+import {type UrlStr} from "../../backend/declarations";
 import config, {PreviewType} from "../../config";
-import CartItem from '../../models/CartItem';
-import { Value } from '../../models/SpecTable';
-import PreviewLookup from '../../models/PreviewLookup';
-import { batchPreviewAvailability } from '../../models/Preview';
+import type CartItem from "../../models/CartItem";
+import {type Value} from "../../models/SpecTable";
+import type PreviewLookup from "../../models/PreviewLookup";
+import {batchPreviewAvailability} from "../../models/Preview";
 
 
 export type CheckedObject = {
@@ -13,26 +13,27 @@ export type CheckedObject = {
 	spec: UrlStr
 	nextVersion?: string
 	submTime: Date
-}
+};
 
-interface Props {
-	checkedObjects: (CartItem | CheckedObject)[]
+type Props = {
+	checkedObjects: Array<CartItem | CheckedObject>
 	previewLookup: PreviewLookup | undefined
 	style: CSSProperties
 	clickAction: (objInfo: string[]) => void
-}
+};
 
-const PreviewBtn: React.FunctionComponent<Props> = ({ previewLookup, checkedObjects, style, clickAction }) => {
+const PreviewBtn: React.FunctionComponent<Props> = ({previewLookup, checkedObjects, style, clickAction}) => {
 	const handlePreviewClick = () => {
-		if (clickAction)
+		if (clickAction) {
 			clickAction(checkedObjects.flatMap(co => co.dobj));
+		}
 	};
 
-	const preview = batchPreviewAvailability(previewLookup, checkedObjects)
-	const disabled = preview.previewType === null
-	const className = "btn btn-outline-secondary " + (disabled ? "disabled" : "")
-	const title = disabled ? preview.previewAbsenceReason : ""
-	const btnStyle: CSSProperties = disabled ? { pointerEvents: 'auto' } : {}
+	const preview = batchPreviewAvailability(previewLookup, checkedObjects);
+	const disabled = preview.previewType === null;
+	const className = "btn btn-outline-secondary " + (disabled ? "disabled" : "");
+	const title = disabled ? preview.previewAbsenceReason : "";
+	const btnStyle: CSSProperties = disabled ? {pointerEvents: "auto"} : {};
 
 	return (
 		<div style={style}>
@@ -41,6 +42,6 @@ const PreviewBtn: React.FunctionComponent<Props> = ({ previewLookup, checkedObje
 			</button>
 		</div>
 	);
-}
+};
 
 export default PreviewBtn;

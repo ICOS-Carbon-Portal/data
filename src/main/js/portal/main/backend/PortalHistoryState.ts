@@ -1,29 +1,29 @@
-import IndexedDB, {IndexedDBProps} from "./IndexedDB";
-import {StateSerialized} from "../models/State";
+import {type StateSerialized} from "../models/State";
 import config from "../config";
+import IndexedDB, {type IndexedDBProps} from "./IndexedDB";
 
 const sessionKey = config.portalHistoryStateProps.dbName;
 const sessionValue = config.portalHistoryStateProps.storeName;
 const signalQuestion = "?";
 const signalReply = "!";
 
-export default class PortalHistoryState{
+export default class PortalHistoryState {
 	private readonly idb?: IndexedDB;
-	private isIdbInitialized: boolean = false;
+	private isIdbInitialized = false;
 
 	constructor(props: IndexedDBProps) {
 		this.idb = IndexedDB.isIndexedDbAvailable
 			? new IndexedDB(props)
 			: undefined;
 
-		if (this.idb !== undefined){
+		if (this.idb !== undefined) {
 			this.registerTabSync();
 			this.init(this.idb);
 		}
 	}
 
-	private registerTabSync(){
-		window.addEventListener('storage', storageTransfer, false);
+	private registerTabSync() {
+		globalThis.addEventListener("storage", storageTransfer, false);
 
 		if (isSessionStorageEmpty()) {
 			signalViaLocalStorage(signalQuestion);
@@ -31,23 +31,24 @@ export default class PortalHistoryState{
 		}
 	}
 
-	private async init(idb: IndexedDB){
+	private async init(idb: IndexedDB) {
 		const isIdbInitialized = await idb.init();
 		this.isIdbInitialized = isIdbInitialized;
 	}
 
-	private cleanUpIndexedDB(){
+	private cleanUpIndexedDB() {
 		// Check sessionStorage again. It might have been set when other tab answered question.
 		if (isSessionStorageEmpty()) {
 			this.clearStore();
-			// this.prune(12 * 3600 * 1000);
+			// This.prune(12 * 3600 * 1000);
 			sessionStorage.setItem(sessionKey, sessionValue);
 		}
 	}
 
-	private async prune(maxAge: number){
-		if (this.idb === undefined)
+	private async prune(maxAge: number) {
+		if (this.idb === undefined) {
 			return;
+		}
 
 		const keys = await this.idb.getAllKeys() ?? [];
 		const now = Date.now();
@@ -56,48 +57,50 @@ export default class PortalHistoryState{
 			const state = await this.idb!.getValue<StateSerialized>(key);
 			const ts = state?.ts ?? now;
 
-			if (now - ts > maxAge)
+			if (now - ts > maxAge) {
 				this.deleteState(key);
+			}
 		});
 	}
 
-	getState(): Promise<StateSerialized | undefined> {
-		if (this.idb === undefined){
-			return Promise.resolve(history.state);
-		} else {
-			return this.idb.getValue<StateSerialized>(history.state);
+	async getState(): Promise<StateSerialized | undefined> {
+		if (this.idb === undefined) {
+			return history.state;
 		}
+
+		return this.idb.getValue<StateSerialized>(history.state);
 	}
 
-	async pushState(state: StateSerialized, url: string): Promise<IDBValidKey | undefined>  {
-		if (this.idb === undefined){
-			history.pushState(state, '', url);
+	async pushState(state: StateSerialized, url: string): Promise<IDBValidKey | undefined> {
+		if (this.idb === undefined) {
+			history.pushState(state, "", url);
 		} else {
-			history.pushState(url, '', url);
+			history.pushState(url, "", url);
 			return this.idb.addValue({...state, url});
 		}
 	}
 
-	async replaceState(state: StateSerialized, url: string): Promise<IDBValidKey | undefined>  {
-		if (this.idb === undefined){
-			history.replaceState(state, '', url);
-
+	async replaceState(state: StateSerialized, url: string): Promise<IDBValidKey | undefined> {
+		if (this.idb === undefined) {
+			history.replaceState(state, "", url);
 		} else {
-			history.replaceState(url, '', url);
+			history.replaceState(url, "", url);
 			return this.idb.addValue({...state, url});
 		}
 	}
 
-	deleteState(key: IDBValidKey){
-		if (this.idb === undefined)
+	deleteState(key: IDBValidKey) {
+		if (this.idb === undefined) {
 			return;
-		
+		}
+
 		this.idb.deleteValue(key);
 	}
 
 	clearStore() {
-		if (this.idb !== undefined)
+		if (this.idb !== undefined) {
 			this.idb.clearStore();
+		}
 	}
 }
 
@@ -112,8 +115,10 @@ const storageTransfer = (event: StorageEvent) => {
 	// Use localStorage to signal between tabs/windows
 	const {key, newValue} = event;
 
-	if (!newValue) return;
-	
+	if (!newValue) {
+		return;
+	}
+
 	if (key === sessionKey && newValue === signalQuestion) {
 		// Tab/window ask
 		signalViaLocalStorage(signalReply);

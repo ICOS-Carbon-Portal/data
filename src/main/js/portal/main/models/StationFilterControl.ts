@@ -1,37 +1,37 @@
-import Control, { Options } from 'ol/control/Control';
-import Map from 'ol/Map';
-import Draw, { createBox, DrawEvent } from 'ol/interaction/Draw';
-import VectorSource from 'ol/source/Vector';
-import VectorLayer from 'ol/layer/Vector';
-import * as condition from 'ol/events/condition';
-import Select, { SelectEvent } from 'ol/interaction/Select';
-import { Collection, Feature } from 'ol';
-import Point from 'ol/geom/Point';
-import Style from 'ol/style/Style';
-import Text from 'ol/style/Text';
-import Fill from 'ol/style/Fill';
-import Geometry from 'ol/geom/Geometry';
-import { PersistedMapPropsExtended } from './InitMap';
-import Polygon from 'ol/geom/Polygon';
-import { Coordinate } from 'ol/coordinate';
-import { MapProps} from './State';
-import { drawRectBoxToCoords } from '../utils';
+import Control, {type Options} from "ol/control/Control";
+import type Map from "ol/Map";
+import Draw, {createBox, DrawEvent} from "ol/interaction/Draw";
+import VectorSource from "ol/source/Vector";
+import VectorLayer from "ol/layer/Vector";
+import * as condition from "ol/events/condition";
+import Select, {type SelectEvent} from "ol/interaction/Select";
+import {type Collection, Feature} from "ol";
+import Point from "ol/geom/Point";
+import Style from "ol/style/Style";
+import Text from "ol/style/Text";
+import Fill from "ol/style/Fill";
+import type Geometry from "ol/geom/Geometry";
+import Polygon from "ol/geom/Polygon";
+import {type Coordinate} from "ol/coordinate";
+import {drawRectBoxToCoords} from "../utils";
+import {type MapProps} from "./State";
+import {type PersistedMapPropsExtended} from "./InitMap";
 
-export interface DrawFeature {
-	id: Symbol
+export type DrawFeature = {
+	id: symbol
 	type: string
 	coords: Coordinate[][]
-}
+};
 
-export interface StationFilterControlOptions extends Options {
+export type StationFilterControlOptions = {
 	isActive: boolean
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
-}
+} & Options;
 
 enum DrawEventType {
-	DRAWSTART = 'drawstart',
-	DRAWEND = 'drawend',
-	DRAWABORT = 'drawabort',
+	DRAWSTART = "drawstart",
+	DRAWEND = "drawend",
+	DRAWABORT = "drawabort",
 }
 
 const delIconOffsetX = -13;
@@ -41,28 +41,27 @@ const iconStyle = new Style({
 	text: new Text({
 		offsetX: delIconOffsetX,
 		offsetY: delIconOffsetY,
-		font: '18px "Font Awesome 6 Free"',
-		text: '\uf2ed',
+		font: "18px \"Font Awesome 6 Free\"",
+		text: "\uF2ED",
 		padding: [-2, -1, 0, 1],
-		backgroundFill: new Fill({ color: 'WhiteSmoke' })
+		backgroundFill: new Fill({color: "WhiteSmoke"})
 	}),
 
 });
 
 export class StationFilterControl extends Control {
-	private controlButton: HTMLButtonElement;
-	private drawSource: VectorSource;
-	private draw: Draw;
-	private drawLayer: VectorLayer<VectorSource<Feature<Geometry>>>;
-	private deleteRectBtnSource: VectorSource;
-	private deleteRectBtnLayer: VectorLayer<VectorSource<Feature<Geometry>>>;
-	private isActive: boolean = false;
-	private selects: Record<string, Select> = {};
+	private readonly controlButton: HTMLButtonElement;
+	private readonly drawSource: VectorSource;
+	private readonly draw: Draw;
+	private readonly drawLayer: VectorLayer<VectorSource>;
+	private readonly deleteRectBtnSource: VectorSource;
+	private readonly deleteRectBtnLayer: VectorLayer<VectorSource>;
+	private isActive = false;
+	private readonly selects: Record<string, Select> = {};
 	private drawFeatures: DrawFeature[] = [];
-	private updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
+	private readonly updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void;
 
 	constructor(options: StationFilterControlOptions) {
-
 		super({
 			element: options.element,
 			target: options.target,
@@ -80,20 +79,20 @@ export class StationFilterControl extends Control {
 			zIndex: 410
 		});
 
-		this.drawSource = new VectorSource({ wrapX: false });
-		this.drawLayer = new VectorLayer({ source: this.drawSource, zIndex: 400 });
+		this.drawSource = new VectorSource({wrapX: false});
+		this.drawLayer = new VectorLayer({source: this.drawSource, zIndex: 400});
 		this.draw = new Draw({
 			source: this.drawSource,
-			type: 'Circle',
+			type: "Circle",
 			geometryFunction: createBox(),
 		});
-		this.draw.on('drawend', this.addDrawFeatureAndUpdate.bind(this));
+		this.draw.on("drawend", this.addDrawFeatureAndUpdate.bind(this));
 
 		this.initSelects();
 	}
 
 	private updateApp() {
-		this.updatePersistedMapProps({ drawFeatures: this.drawFeatures });
+		this.updatePersistedMapProps({drawFeatures: this.drawFeatures});
 	}
 
 	private initSelects() {
@@ -103,27 +102,25 @@ export class StationFilterControl extends Control {
 			multi: true,
 			hitTolerance: 2
 		});
-		this.selects.drawSelect.on('select', ev => {
+		this.selects.drawSelect.on("select", ev => {
 			const map = this.getMap();
 			const style = (map?.getTarget() as HTMLElement).style;
-			const { features, numberOfFeatures } = this.initSelectEvent(ev);
+			const {features, numberOfFeatures} = this.initSelectEvent(ev);
 
 			if (numberOfFeatures === 0) {
-				style.cursor = 'default';
+				style.cursor = "default";
 				map?.addInteraction(this.draw);
-
 			} else if (numberOfFeatures === 1) {
-				style.cursor = 'default';
+				style.cursor = "default";
 				map?.removeInteraction(this.draw);
-
 			} else {
 				map?.removeInteraction(this.draw);
-				features.forEach(feature => {
-					if (feature.get('type') !== 'stationFilterRect') {
-						style.cursor = 'pointer';
+				for (const feature of features) {
+					if (feature.get("type") !== "stationFilterRect") {
+						style.cursor = "pointer";
 						feature.setStyle(iconStyle);
 					}
-				});
+				}
 			}
 		});
 
@@ -134,20 +131,21 @@ export class StationFilterControl extends Control {
 			style: iconStyle,
 			hitTolerance: 2
 		});
-		this.selects.deleteRectSelect.on('select', ev => {
-			const { features } = this.initSelectEvent(ev);
+		this.selects.deleteRectSelect.on("select", ev => {
+			const {features} = this.initSelectEvent(ev);
 
-			features.forEach(delBtnFeature => {
-				const rectFeatures = this.drawSource.getFeatures().filter(drawRect => drawRect.get('id') === delBtnFeature.get('id'));
+			for (const delBtnFeature of features) {
+				const rectFeatures = this.drawSource.getFeatures().filter(drawRect => drawRect.get("id") === delBtnFeature.get("id"));
 
-				if (rectFeatures.length < 1)
-					return;
+				if (rectFeatures.length === 0) {
+					continue;
+				}
 
 				const rectFeature = rectFeatures[0];
 				this.drawSource.removeFeature(rectFeature);
 				this.deleteRectBtnSource.removeFeature(delBtnFeature);
-				this.removeDrawFeature(rectFeature.get('id'));
-			});
+				this.removeDrawFeature(rectFeature.get("id"));
+			}
 		});
 	}
 
@@ -160,24 +158,26 @@ export class StationFilterControl extends Control {
 	}
 
 	reDrawFeaturesFromMapProps(mapProps: MapProps) {
-		if (mapProps.rects === undefined || mapProps.rects.length === this.drawFeatures.length) return;
+		if (mapProps.rects === undefined || mapProps.rects.length === this.drawFeatures.length) {
+			return;
+		}
 
 		this.removeAllDrawFeatures();
 		this.removeAllDeleteRectBtns();
 		this.drawFeatures = [];
 
-		mapProps.rects.forEach(rect => {
+		for (const rect of mapProps.rects) {
 			const geometry = new Polygon([drawRectBoxToCoords(rect)]);
-			const feature = new Feature({ geometry });
+			const feature = new Feature({geometry});
 			this.drawSource.addFeature(feature);
 			this.addDrawFeature(new DrawEvent(DrawEventType.DRAWEND, feature));
-		});
+		}
 
 		this.setActiveState(this.isActive);
 	}
 
 	private addDrawFeature(ev: DrawEvent) {
-		ev.feature.setProperties({ id: Symbol(), type: 'stationFilterRect' });
+		ev.feature.setProperties({id: Symbol(), type: "stationFilterRect"});
 		this.addDeleteFilterRectBtn(ev.feature);
 		const drawFeature = featureToDrawFeature(ev.feature);
 		this.drawFeatures.push(drawFeature);
@@ -196,7 +196,7 @@ export class StationFilterControl extends Control {
 		this.drawSource.clear(true);
 	}
 
-	private removeDrawFeature(id: Symbol) {
+	private removeDrawFeature(id: symbol) {
 		const idx = this.drawFeatures.findIndex(f => f.id === id);
 		this.drawFeatures.splice(idx, 1);
 		this.updateApp();
@@ -212,30 +212,32 @@ export class StationFilterControl extends Control {
 	}
 
 	private drawCtrlBtn() {
-		const controlButton = document.createElement('button');
-		controlButton.onclick = this.onBtnClick.bind(this);
+		const controlButton = document.createElement("button");
+		controlButton.addEventListener("click", this.onBtnClick.bind(this));
 
-		const btnIcon = document.createElement('i');
-		btnIcon.className = 'fa fa-solid fa-draw-polygon';
+		const btnIcon = document.createElement("i");
+		btnIcon.className = "fa fa-solid fa-draw-polygon";
 		controlButton.append(btnIcon);
 
-		this.element.appendChild(controlButton);
+		this.element.append(controlButton);
 		return controlButton;
 	}
 
 	private setTooltip() {
-		const tooltip = `Tool for drawing rectangles to filter stations is ${this.isActive ? 'ON' : 'OFF'}`;
-		this.controlButton.setAttribute('title', tooltip);
+		const tooltip = `Tool for drawing rectangles to filter stations is ${this.isActive ? "ON" : "OFF"}`;
+		this.controlButton.setAttribute("title", tooltip);
 	}
 
-	private addDeleteFilterRectBtn(feature: Feature<Geometry>) {
+	private addDeleteFilterRectBtn(feature: Feature) {
 		const extent = feature.getGeometry()?.getExtent();
-		if (extent === undefined) return;
+		if (extent === undefined) {
+			return;
+		}
 
 		const iconFeature = new Feature({
 			geometry: new Point(extent.slice(2))
 		});
-		iconFeature.set('id', feature.get('id'));
+		iconFeature.set("id", feature.get("id"));
 
 		iconFeature.setStyle(iconStyle);
 		this.deleteRectBtnSource.addFeature(iconFeature);
@@ -243,7 +245,7 @@ export class StationFilterControl extends Control {
 
 	private onBtnClick(ev: MouseEvent) {
 		this.setActiveState(!this.isActive);
-		this.updatePersistedMapProps({ isStationFilterCtrlActive: this.isActive });
+		this.updatePersistedMapProps({isStationFilterCtrlActive: this.isActive});
 		this.setTooltip();
 	}
 
@@ -252,13 +254,12 @@ export class StationFilterControl extends Control {
 
 		if (newActiveState) {
 			map?.addInteraction(this.draw);
-			this.controlButton.setAttribute('style', 'background-color:DodgerBlue;');
+			this.controlButton.setAttribute("style", "background-color:DodgerBlue;");
 			map?.addInteraction(this.selects.drawSelect);
-
 		} else {
 			this.draw.abortDrawing();
 			map?.removeInteraction(this.draw);
-			this.controlButton.removeAttribute('style');
+			this.controlButton.removeAttribute("style");
 			map?.removeInteraction(this.selects.drawSelect);
 		}
 
@@ -266,13 +267,13 @@ export class StationFilterControl extends Control {
 	}
 }
 
-function featureToDrawFeature(feature: Feature<Geometry>): DrawFeature {
-	const geom = <Polygon>feature.getGeometry();
+function featureToDrawFeature(feature: Feature): DrawFeature {
+	const geom = feature.getGeometry() as Polygon;
 	const coords = geom.getCoordinates();
 
 	return {
-		id: feature.get('id'),
-		type: feature.get('type'),
+		id: feature.get("id"),
+		type: feature.get("type"),
 		coords
 	};
 }

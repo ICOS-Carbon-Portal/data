@@ -1,25 +1,25 @@
-import { Query } from "icos-cp-backend";
-import localConfig from '../config';
-import commonConfig from '../../../common/main/config';
-import {sparqlFetchAndParse} from './SparqlFetch'
-import { sparqlParsers } from "./sparql";
-import { UrlStr } from "./declarations";
-import {distinct} from '../utils';
-import { envriFilteringFromClauses, objectFilterClauses } from "../sparqlQueries";
-import { QueryParameters } from "../actions/types";
+import {type Query} from "icos-cp-backend";
+import localConfig from "../config";
+import commonConfig from "../../../common/main/config";
+import {distinct} from "../utils";
+import {envriFilteringFromClauses, objectFilterClauses} from "../sparqlQueries";
+import {type QueryParameters} from "../actions/types";
+import {sparqlFetchAndParse} from "./SparqlFetch";
+import {sparqlParsers} from "./sparql";
+import {type UrlStr} from "./declarations";
 
-export type SpecLookupByKeyword = {[keyword: string]: UrlStr[] | undefined}
+export type SpecLookupByKeyword = Record<string, UrlStr[] | undefined>;
 
 
-export default{
-	fetch: function(query: QueryParameters): Promise<string[]>{
+export default {
+	async fetch(query: QueryParameters): Promise<string[]> {
 		return getUniqueKeywords(query);
 	}
-}
+};
 const config = Object.assign(commonConfig, localConfig);
 
-//proj keywords are inherited
-export function specKeywordsQuery(): Query<'spec' | 'keywords', never>{
+// Proj keywords are inherited
+export function specKeywordsQuery(): Query<"spec" | "keywords", never> {
 	const text = `# spec keywords
 prefix cpmeta: <${commonConfig.cpmetaOntoUri}>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -37,7 +37,7 @@ where{
 	return {text};
 }
 
-function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
+async function getUniqueKeywords(query: QueryParameters): Promise<string[]> {
 	return sparqlFetchAndParse(
 		filteredKeywordsQuery(query),
 		commonConfig.sparqlEndpoint,
@@ -47,14 +47,15 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 	).then(res => distinct(res.rows.flatMap(r => r.keywords)));
 }
 
-function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
-	const prefixes: string = `
+function filteredKeywordsQuery(params: QueryParameters): Query<"keywords", never> {
+	const prefixes = `
 prefix cpmeta: <${config.cpmetaOntoUri}>
 prefix prov: <http://www.w3.org/ns/prov#>
 prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>`
+prefix geo: <http://www.opengis.net/ont/geosparql#>`;
 
-	return {text: `# filteredKeywordsQuery
+	return {
+		text: `# filteredKeywordsQuery
 ${prefixes}
 select (cpmeta:distinct_keywords() as ?keywords)
 ${envriFilteringFromClauses}

@@ -1,15 +1,15 @@
-import React, { Component, CSSProperties, RefObject } from 'react';
-import {debounce, Events} from 'icos-cp-utils';
+import React, {Component, type CSSProperties, type RefObject} from "react";
+import {debounce, Events} from "icos-cp-utils";
 
 
 const defaultIconStyle: CSSProperties = {
 	fontSize: 14,
-	position: 'absolute',
-	float: 'right',
+	position: "absolute",
+	float: "right",
 	top: -35,
 	right: 8,
-	cursor: 'pointer',
-	color: '#666',
+	cursor: "pointer",
+	color: "#666",
 	padding: 10
 };
 
@@ -20,27 +20,27 @@ type Props = {
 	openClsName?: string
 	closedClsName?: string
 	title?: string
-}
+};
 
 type State = {
 	isOpen: boolean
 	height?: number
 	isOpening: boolean
-}
+};
 
-export default class Slider extends Component<Props, State>{
-	private rootStyle: CSSProperties
-	private iconStyle: CSSProperties
-	private events: any
-	private handleResize: () => void
-	private content: RefObject<HTMLDivElement>
+export default class Slider extends Component<Props, State> {
+	private readonly rootStyle: CSSProperties;
+	private readonly iconStyle: CSSProperties;
+	private readonly events: any;
+	private readonly handleResize: () => void;
+	private readonly content: RefObject<HTMLDivElement>;
 
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 
 		this.content = React.createRef<HTMLDivElement>();
-		this.rootStyle = { ...{ position: 'relative' }, ...props.rootStyle };
-		this.iconStyle = { ...defaultIconStyle, ...props.iconStyle };
+		this.rootStyle = {position: "relative", ...props.rootStyle};
+		this.iconStyle = {...defaultIconStyle, ...props.iconStyle};
 
 		this.state = {
 			isOpen: props.startCollapsed === undefined ? true : !props.startCollapsed,
@@ -53,10 +53,10 @@ export default class Slider extends Component<Props, State>{
 			// Trigger a rerender on resize so it adjusts height
 			this.setState({height: this.state.height});
 		});
-		this.events.addToTarget(window, "resize", this.handleResize);
+		this.events.addToTarget(globalThis, "resize", this.handleResize);
 	}
 
-	onClick(){
+	onClick() {
 		const isOpen = !this.state.isOpen;
 
 		this.setState({
@@ -71,31 +71,31 @@ export default class Slider extends Component<Props, State>{
 		}
 	}
 
-	componentWillUnmount(){
+	componentWillUnmount() {
 		this.events.clear();
 	}
 
-	transitionEnded(){
+	transitionEnded() {
 		this.setState({isOpening: false});
 	}
 
-	render(){
+	render() {
 		const state = this.state;
 		const isOpen = state.isOpen;
 		const isOpening = state.isOpening;
 		const height = isOpen
-			? this.content ? getHeight(this.content) : state.height
+			? (this.content ? getHeight(this.content) : state.height)
 			: 0;
 		const {children, openClsName, closedClsName, title} = this.props;
 		const iconCls = isOpen
-			? openClsName || 'fas fa-angle-up'
-			: closedClsName || 'fas fa-angle-down';
+			? openClsName || "fas fa-angle-up"
+			: closedClsName || "fas fa-angle-down";
 		const baseStyle: CSSProperties = {
-			transition: 'height 0.3s ease-in-out',
+			transition: "height 0.3s ease-in-out",
 			height
 		};
 		const contentStyle = !isOpen || isOpening
-			? Object.assign({}, baseStyle, {overflow:'hidden'})
+			? ({...baseStyle, overflow: "hidden"})
 			: baseStyle;
 
 		return (
@@ -108,19 +108,17 @@ export default class Slider extends Component<Props, State>{
 		);
 	}
 
-	setHeight(){
+	setHeight() {
 		this.setState({height: getHeight(this.content)});
 	}
 
-	componentDidMount(){
+	componentDidMount() {
 		this.setHeight();
 
 		this.events.addToTarget(this.content.current, "transitionend", this.transitionEnded.bind(this));
 	}
 }
 
-const getHeight = (content: RefObject<HTMLDivElement>) => {
-	return content.current
-		? Array.from(content.current.childNodes).reduce((acc, curr) => acc + (curr as HTMLElement).clientHeight, 0)
-		: 0;
-};
+const getHeight = (content: RefObject<HTMLDivElement>) => content.current
+	? [...content.current.childNodes].reduce((acc, curr) => acc + (curr as HTMLElement).clientHeight, 0)
+	: 0;

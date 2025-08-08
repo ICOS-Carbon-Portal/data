@@ -1,27 +1,27 @@
-import React, { Component, ReactNode } from 'react';
+import React, {Component, ReactNode} from "react";
 
 type Props = {
 	title: string
 	findData: () => void
 	restorePriorCart?: () => void
-}
+};
 
-export default class Message extends Component<Props>{
+export default class Message extends Component<Props> {
 	render() {
-		const buttonRestorePriorCart = this.props.restorePriorCart ? 
-			(<button className="btn btn-lg btn-outline-secondary m-3"
+		const buttonRestorePriorCart = this.props.restorePriorCart
+			? (<button className="btn btn-lg btn-outline-secondary m-3"
 				onClick={this.props.restorePriorCart}>
 				Restore previous cart
-			</button>) :
-			<></>;
+			</button>)
+			: <></>;
 		return (
-			<div className="text-center" style={{ margin: '5vh 0' }}>
-				<h1 className='pb-3'>{this.props.title}</h1>
+			<div className="text-center" style={{margin: "5vh 0"}}>
+				<h1 className="pb-3">{this.props.title}</h1>
 				<button className="btn btn-lg btn-primary" onClick={this.props.findData}>
 					Find data
 				</button>
 				{ buttonRestorePriorCart }
 			</div>
-		)
+		);
 	}
 }

@@ -1,20 +1,22 @@
-import React, {ChangeEvent, useState, useEffect, useRef, useCallback} from 'react';
-import config, {PreviewType} from '../../config';
+import React, {
+	type ChangeEvent, useState, useEffect, useRef, useCallback
+} from "react";
+import {debounce} from "icos-cp-utils";
+import config, {type PreviewType} from "../../config";
 import {getLastSegmentInUrl} from "../../utils";
-import {State} from "../../models/State";
-import { Sha256Str, UrlStr } from '../../backend/declarations';
-import { debounce } from 'icos-cp-utils';
-import CartItem from '../../models/CartItem';
-import { PreviewSettings } from '../../models/Preview';
+import {type State} from "../../models/State";
+import {type Sha256Str, type UrlStr} from "../../backend/declarations";
+import type CartItem from "../../models/CartItem";
+import {type PreviewSettings} from "../../models/Preview";
 
 
-interface OurProps {
-	preview: State['preview'];
-	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void;
+type OurProps = {
+	preview: State["preview"]
+	iframeSrcChange: (event: ChangeEvent<HTMLIFrameElement>) => void
 	previewSettings: PreviewSettings
-}
+};
 
-export default function PreviewSelfContained({ preview, iframeSrcChange, previewSettings }: OurProps) {
+export default function PreviewSelfContained({preview, iframeSrcChange, previewSettings}: OurProps) {
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 
 	const [height, setHeight] = useState<number>(() => getInitialHeight(preview.type));
@@ -27,7 +29,9 @@ export default function PreviewSelfContained({ preview, iframeSrcChange, preview
 	}), []);
 
 	const handleKeydown = (event: KeyboardEvent) => {
-		if (event.target instanceof HTMLInputElement) return;
+		if (event.target instanceof HTMLInputElement) {
+			return;
+		}
 
 		iframeRef.current?.contentWindow?.postMessage({keydown: event.key});
 	};
@@ -53,32 +57,43 @@ export default function PreviewSelfContained({ preview, iframeSrcChange, preview
 	};
 
 	return (
-		<div className="row" style={{ height }}>
+		<div className="row" style={{height}}>
 			<iframe ref={iframeRef} onLoad={handleLoad} src={src.current} loading="lazy" />
 		</div>
 	);
-
 }
 
 function getInitialHeight(previewType?: PreviewType): number {
-	switch(previewType){
-		case config.NETCDF: return Math.max(window.innerHeight - 100, 480);
-		case config.MAPGRAPH: return 1100;
-		case config.PHENOCAM: return 1100;
-		default: return 600;
+	switch (previewType) {
+		case config.NETCDF: {return Math.max(window.innerHeight - 100, 480);
+		}
+
+		case config.MAPGRAPH: {return 1100;
+		}
+
+		case config.PHENOCAM: {return 1100;
+		}
+
+		default: {return 600;
+		}
 	}
 }
 
 function shouldUpdateHeight(previewType?: PreviewType): boolean {
 	switch (previewType) {
-		case config.NETCDF: return false;
-		case config.PHENOCAM: return false;
-		default: return true;
+		case config.NETCDF: {return false;
+		}
+
+		case config.PHENOCAM: {return false;
+		}
+
+		default: {return true;
+		}
 	}
 }
 
 function settingsToQueryParams(previewSettings: PreviewSettings): string {
-	const remapKey = (key: string) => `${key}=${previewSettings[key as keyof PreviewSettings]}`;
+	const remapKey = (key: string) => `${key}=${previewSettings[key]}`;
 	return Object.keys(previewSettings).map(remapKey).join("&");
 }
 
@@ -92,14 +107,21 @@ function getPreviewIframeUrl(previewType: PreviewType, item: CartItem, previewSe
 	if (item.url) {
 		return iFrameBaseUrl + getLastSegmentInUrl(item.url);
 	}
+
 	const hashId = getLastSegmentInUrl(item.dobj);
 	switch (previewType) {
-		case config.PHENOCAM:
-			return `${iFrameBaseUrl}?objId=${hashId}${previewSettings.img ? `&img=${previewSettings.img}` : ''}`;
-		case config.MAPGRAPH:
+		case config.PHENOCAM: {
+			return `${iFrameBaseUrl}?objId=${hashId}${previewSettings.img ? `&img=${previewSettings.img}` : ""}`;
+		}
+
+		case config.MAPGRAPH: {
 			return `${iFrameBaseUrl}${hashId}#${settingsToHash(hashId, previewSettings)}`;
-		case config.NETCDF:
+		}
+
+		case config.NETCDF: {
 			return `${iFrameBaseUrl}${hashId}?${settingsToQueryParams(previewSettings)}`;
+		}
 	}
+
 	return iFrameBaseUrl + hashId;
 }

@@ -1,54 +1,54 @@
-import Preview, { PreviewSettings } from "./Preview";
-import FilterTemporal, {SerializedFilterTemporal} from "./FilterTemporal";
-import CompositeSpecTable, {BasicsColNames, VariableMetaColNames, OriginsColNames} from "./CompositeSpecTable";
+import deepequal from "deep-equal";
+import {type Store} from "redux";
+import {type SupportedSRIDs} from "icos-cp-ol";
+import config, {
+	prefixes,
+	type CategoryType,
+	type CategPrefix,
+	numberFilterKeys
+} from "../config";
+import {type UrlStr, type Sha256Str} from "../backend/declarations";
+import {type DataObject, type References} from "../../../common/main/metacore";
+import {getLastSegmentInUrl, pick} from "../utils";
+import PortalHistoryState from "../backend/PortalHistoryState";
+import Preview, {type PreviewSettings} from "./Preview";
+import FilterTemporal, {type SerializedFilterTemporal} from "./FilterTemporal";
+import CompositeSpecTable, {type BasicsColNames, type VariableMetaColNames, type OriginsColNames} from "./CompositeSpecTable";
 import PreviewLookup from "./PreviewLookup";
 import Cart from "./Cart";
 import Paging from "./Paging";
-import HelpStorage, {HelpStorageListEntry} from './HelpStorage';
-import config, {
-	prefixes,
-	CategoryType,
-	CategPrefix,
-	numberFilterKeys
-} from "../config";
-import deepequal from 'deep-equal';
-import { UrlStr, Sha256Str } from "../backend/declarations";
-import {Store} from "redux";
-import { DataObject, References } from "../../../common/main/metacore";
+import HelpStorage, {type HelpStorageListEntry} from "./HelpStorage";
 import SpecTable from "./SpecTable";
-import {getLastSegmentInUrl, pick} from "../utils";
-import {FilterNumber, FilterNumbers, FilterNumberSerialized} from "./FilterNumbers";
-import {SupportedSRIDs} from "icos-cp-ol";
-import PortalHistoryState from "../backend/PortalHistoryState";
+import {FilterNumber, FilterNumbers, type FilterNumberSerialized} from "./FilterNumbers";
 
 
 export const portalHistoryState = new PortalHistoryState(config.portalHistoryStateProps);
 
-// hashKeys objects are automatically represented in the URL hash (with some special cases).
+// HashKeys objects are automatically represented in the URL hash (with some special cases).
 // Changes to any of these objects are automatically saved in browser history state
 // If other objects needs to be saved in browser history, use method 'updateAndSave'
 const hashKeys = [
-	'route',
-	'filterCategories',
-	'filterTemporal',
-	'filterPids',
-	'filterNumbers',
-	'filterKeywords',
-	'tabs',
-	'page',
-	'preview',
-	'previewSettings',
-	'id',
-	'yAxis',
-	'y2Axis',
-	'searchOptions',
-	'mapProps',
-	'itemsToAddToCart'
+	"route",
+	"filterCategories",
+	"filterTemporal",
+	"filterPids",
+	"filterNumbers",
+	"filterKeywords",
+	"tabs",
+	"page",
+	"preview",
+	"previewSettings",
+	"id",
+	"yAxis",
+	"y2Axis",
+	"searchOptions",
+	"mapProps",
+	"itemsToAddToCart"
 ];
 
-export type Route = 'search' | 'metadata' | 'preview' | 'cart';
+export type Route = "search" | "metadata" | "preview" | "cart";
 
-export interface Profile {
+export type Profile = {
 	icosLicenceOk: boolean
 	givenName: string
 	surname: string
@@ -63,12 +63,14 @@ export interface Profile {
 	country: string
 	gender: "Male" | "Female"
 	birthYear: string
-}
+};
 
-export interface WhoAmI {email: string | null}
-export interface User extends WhoAmI {
+export type WhoAmI = {
+	email: string | null
+};
+export type User = {
 	profile: Profile | {}
-}
+} & WhoAmI;
 
 export type KnownDataObject = {
 	dobj: string
@@ -87,10 +89,10 @@ export type KnownDataObject = {
 	themeLabel?: string
 	timeEnd: Date
 	timeStart: Date
-	type?: string //this is currently always the same as spec, but maybe was supposed to be PreviewType at some point
+	type?: string // This is currently always the same as spec, but maybe was supposed to be PreviewType at some point
 	temporalResolution?: string
 	extendedDobjInfo?: ExtendedDobjInfo
-}
+};
 
 export type ExtendedDobjInfo = {
 	dobj: UrlStr
@@ -108,47 +110,47 @@ export type ExtendedDobjInfo = {
 	hasVarInfo: boolean | undefined
 	dois: UrlStr[] | undefined
 	biblioInfo: References | undefined
-}
+};
 
-export interface MetaData extends DataObject {
+export type MetaData = {
 	id: UrlStr
-}
+} & DataObject;
 
-export interface MetaDataWStats extends MetaData {
-	downloadCount: number,
+export type MetaDataWStats = {
+	downloadCount: number
 	previewCount: number
-}
+} & MetaData;
 
-export interface SearchOptions {
+export type SearchOptions = {
 	showDeprecated: boolean
-}
+};
 
-export interface TabsState {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
+export type TabsState = {
+	tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number
+};
 
-//TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
-export type CategFilters = {[key in CategoryType]?: string[] | null}
+// TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
+export type CategFilters = Partial<Record<CategoryType, string[] | null>>;
 
-export type TsSetting = { 'x': string } & { 'y': string } & { 'y2': string } & { 'type': 'line' | 'scatter' }
-export type TsSettings = {
-	[key: string]: TsSetting
-}
+export type TsSetting = {x: string} & {y: string} & {y2: string} & {type: "line" | "scatter"};
+export type TsSettings = Record<string, TsSetting>;
 
 export type ExportQuery = {
 	isFetchingCVS: boolean
 	sparqClientQuery: string
-}
+};
 
-export type StationPos4326Lookup = Record<UrlStr, { lon: number, lat: number }>
+export type StationPos4326Lookup = Record<UrlStr, {lon: number, lat: number}>;
 export type LabelLookup = Record<string, {label: string, list: HelpStorageListEntry[]}>;
 
 // 0=lower left X (lon), 1=lower left Y (lat), 2=upper right X (lon), 3=upper right Y (lat)
-export type DrawRectBbox = [number, number, number, number]
+export type DrawRectBbox = [number, number, number, number];
 export type MapProps = {
 	srid: SupportedSRIDs
 	rects?: DrawRectBbox[]
-}
+};
 
-export interface State {
+export type State = {
 	ts: number | undefined
 	isRunningInit: boolean
 	searchOptions: SearchOptions
@@ -160,17 +162,17 @@ export interface State {
 	filterNumbers: FilterNumbers
 	filterFileName: string
 	user: User
-	previewLookup: PreviewLookup | undefined;
-	labelLookup: LabelLookup;
+	previewLookup: PreviewLookup | undefined
+	labelLookup: LabelLookup
 	stationPos4326Lookup: StationPos4326Lookup
 	specTable: CompositeSpecTable
-	baseDobjStats: SpecTable<OriginsColNames> //without spatial filtering
+	baseDobjStats: SpecTable<OriginsColNames> // Without spatial filtering
 	mapProps: MapProps
 	extendedDobjInfo: ExtendedDobjInfo[]
 	formatToRdfGraph: {}
 	objectsTable: KnownDataObject[]
 	sorting: {
-		varName: string,
+		varName: string
 		ascending: boolean
 	}
 	paging: Paging
@@ -184,7 +186,7 @@ export interface State {
 	itemsToAddToCart: Sha256Str[] | undefined
 	toasterData: {} | undefined
 	batchDownloadStatus: {
-		isAllowed: boolean,
+		isAllowed: boolean
 		ts: number
 	}
 	checkedObjectsInSearch: UrlStr[]
@@ -196,7 +198,7 @@ export interface State {
 	scopedKeywords: string[]
 	filterKeywords: string[]
 	exportQuery: ExportQuery
-}
+};
 
 export const emptyCompositeSpecTable = new CompositeSpecTable(
 	new SpecTable<BasicsColNames>([], [], {}),
@@ -261,62 +263,57 @@ export const defaultState: State = {
 	filterKeywords: [],
 	exportQuery: {
 		isFetchingCVS: false,
-		sparqClientQuery: ''
+		sparqClientQuery: ""
 	}
 };
 
-const update = (state: State, updates: Partial<State>): State => {
-	return Object.assign({}, state, updates, {ts: Date.now()});
-};
+const update = (state: State, updates: Partial<State>): State => ({...state, ...updates, ts: Date.now()});
 
-// history state is only automatically updated when URL changes. Use this method to force
+// History state is only automatically updated when URL changes. Use this method to force
 // history to store current state.
 const updateAndSave = (state: State, updates: any) => {
 	const newState = update(state, updates);
 
-	portalHistoryState.replaceState(serialize(newState), window.location.href).then(
-		_ => _,
-		reason => console.error(`Failed to add value to indexed database because ${reason}`)
-	);
+	portalHistoryState.replaceState(serialize(newState), globalThis.location.href).catch(error => console.error(`Failed to add value to indexed database because ${error}`)).then(_ => _);
 
 	return newState;
 };
 
-const serialize = (state: State) => {
-	return {...state,
-		filterTemporal: state.filterTemporal.serialize,
-		filterNumbers: state.filterNumbers.serialize,
-		specTable: state.specTable.serialize,
-		baseDobjStats: state.baseDobjStats.serialize,
-		paging: state.paging.serialize,
-		cart: undefined,
-		priorCart: undefined,
-		preview: state.preview.serialize,
-		helpStorage: state.helpStorage.serialize
-	};
-};
+const serialize = (state: State) => ({
+	...state,
+	filterTemporal: state.filterTemporal.serialize,
+	filterNumbers: state.filterNumbers.serialize,
+	specTable: state.specTable.serialize,
+	baseDobjStats: state.baseDobjStats.serialize,
+	paging: state.paging.serialize,
+	cart: undefined,
+	priorCart: undefined,
+	preview: state.preview.serialize,
+	helpStorage: state.helpStorage.serialize
+});
 
-export type StateSerialized = ReturnType<typeof serialize>
+export type StateSerialized = ReturnType<typeof serialize>;
 
 const deserialize = (jsonObj: StateSerialized, cart: Cart) => {
 	const specTable = CompositeSpecTable.deserialize(jsonObj.specTable);
 
-	const { table, varInfo } = jsonObj.previewLookup ?? {};
+	const {table, varInfo} = jsonObj.previewLookup ?? {};
 	const previewLookup = table && varInfo
 		? new PreviewLookup(table, varInfo)
 		: PreviewLookup.init(specTable, jsonObj.labelLookup);
-	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats)
-	const preview = Preview.deserialize(jsonObj.preview)
+	const baseDobjStats = SpecTable.deserialize(jsonObj.baseDobjStats);
+	const preview = Preview.deserialize(jsonObj.preview);
 
-	const props: State = {...jsonObj,
-		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal as SerializedFilterTemporal),
-		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers as FilterNumberSerialized[]),
+	const props: State = {
+		...jsonObj,
+		filterTemporal: FilterTemporal.deserialize(jsonObj.filterTemporal),
+		filterNumbers: FilterNumbers.deserialize(jsonObj.filterNumbers),
 		previewLookup,
 		specTable,
 		baseDobjStats,
 		paging: Paging.deserialize(jsonObj.paging),
 		cart,
-		preview: preview,
+		preview,
 		previewSettings: preview.previewSettings,
 		helpStorage: HelpStorage.deserialize(jsonObj.helpStorage),
 		exportQuery: {isFetchingCVS: false, sparqClientQuery: jsonObj.exportQuery.sparqClientQuery}
@@ -331,11 +328,11 @@ const getStateFromHash = () => {
 	return extendUrls(state as State) as State;
 };
 
-//No # in the beginning!
+// No # in the beginning!
 const parseHash = (hash: string) => {
 	try {
 		return allowlistJsonHash(JSON.parse(hash));
-	} catch(err) {
+	} catch {
 		return {};
 	}
 };
@@ -343,25 +340,21 @@ const parseHash = (hash: string) => {
 const hashToState = () => {
 	try {
 		return JSON.parse(getCurrentHash());
-	} catch(err) {
+	} catch {
 		return {};
 	}
 };
 
-const getStateFromStore = (storeState: State & Record<string,any>) => {
-	return hashKeys.reduce((acc: Record<string,any>, key: string) => {
-		acc[key] = storeState[key];
-		return acc;
-	}, {});
-};
+const getStateFromStore = (storeState: State & Record<string, any>) => hashKeys.reduce((acc: Record<string, any>, key: string) => {
+	acc[key] = storeState[key];
+	return acc;
+}, {});
 
-const simplifyState = (state: State) => {
-	return Object.assign(state, {
-		filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
-		filterNumbers: state.filterNumbers.serialize,
-		preview: state.preview.pids
-	});
-};
+const simplifyState = (state: State) => Object.assign(state, {
+	filterTemporal: state.filterTemporal ? state.filterTemporal.serialize : {},
+	filterNumbers: state.filterNumbers.serialize,
+	preview: state.preview.pids
+});
 
 type JsonHashState = {
 	route?: Route
@@ -370,7 +363,7 @@ type JsonHashState = {
 	filterPids?: Sha256Str
 	filterNumbers?: FilterNumberSerialized[]
 	filterKeywords?: string[]
-	tabs?: State['tabs']
+	tabs?: State["tabs"]
 	page?: number
 	preview?: Sha256Str[]
 	previewSettings?: PreviewSettings
@@ -380,7 +373,7 @@ type JsonHashState = {
 	searchOptions?: SearchOptions
 	mapProps?: MapProps
 	itemsToAddToCart?: Sha256Str[]
-}
+};
 
 const allowlistJsonHash = (hash: any): JsonHashState => {
 	const allowedHash: JsonHashState = {};
@@ -395,31 +388,33 @@ const allowlistJsonHash = (hash: any): JsonHashState => {
 			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	allowedHash.previewSettings = (allowedHash.previewSettings ?
-		{ ...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps } :
-		ps);
+
+	allowedHash.previewSettings = (allowedHash.previewSettings
+		? {...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps}
+		: ps);
 
 	return allowedHash;
-}
+};
 
 const jsonToState = (state0: JsonHashState) => {
 	const state = {...defaultState, ...state0};
 
 	try {
-		if (state0.filterTemporal){
+		if (state0.filterTemporal) {
 			state.filterTemporal = new FilterTemporal().restore(state0.filterTemporal);
 		}
-		if (state0.filterNumbers){
+
+		if (state0.filterNumbers) {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
 		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings ?? {});
 
-		if (state0.id){
+		if (state0.id) {
 			state.id = config.objectUriPrefix[config.envri] + state0.id;
 		}
-	} catch(err) {
-		console.error({state, state0, err});
+	} catch (error) {
+		console.error({state, state0, err: error});
 		throw new Error("Could not convert json to state");
 	}
 
@@ -427,78 +422,76 @@ const jsonToState = (state0: JsonHashState) => {
 };
 
 const handleRoute = (storeState: Partial<StateSerialized>) => {
-	if (storeState.route === 'search'){
+	if (storeState.route === "search") {
 		delete storeState.route;
 	}
 };
 
 const specialCases = (state: Partial<StateSerialized>) => {
-	if (state.route === 'preview') {
+	if (state.route === "preview") {
 		return {
 			route: state.route,
 			preview: state.preview,
 			previewSettings: state.previewSettings,
 			itemsToAddToCart: state.itemsToAddToCart
 		};
-	} else {
-		delete state.preview;
-		delete state.previewSettings;
 	}
 
-	if (state.route === 'cart'){
+	delete state.preview;
+	delete state.previewSettings;
+
+
+	if (state.route === "cart") {
 		return {
 			route: state.route
-		}
+		};
 	}
 
-	if (state.route === 'search'){
+	if (state.route === "search") {
 		delete state.route;
 	}
 
 	return state;
 };
 
-function getCurrentHash(){
-	return decodeURIComponent(window.location.hash.substring(1));
+function getCurrentHash() {
+	return decodeURIComponent(globalThis.location.hash.slice(1));
 }
 
 const hashUpdater = (store: Store) => () => {
 	const state: State = store.getState();
 	let newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
-	
+
 
 	if (newHash !== oldHash) {
-		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);
-		if (state.route !== hashToState().route) {
-			portalHistoryState.pushState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
-				reason => console.log(`Failed to add value to indexed database because ${reason}`)
-			);
+		newHash = newHash === "" ? "" : "#" + encodeURIComponent(newHash);
+		if (state.route === hashToState().route) {
+			portalHistoryState.replaceState(serialize(state), globalThis.location.href.split("#")[0] + newHash).catch(error => console.log(`Failed to add value to indexed database because ${error}`)).then(_ => _);
 		} else {
-			portalHistoryState.replaceState(serialize(state), window.location.href.split('#')[0] + newHash).then(
-				_ => _,
-				reason => console.log(`Failed to add value to indexed database because ${reason}`)
-			);
+			portalHistoryState.pushState(serialize(state), globalThis.location.href.split("#")[0] + newHash).catch(error => console.log(`Failed to add value to indexed database because ${error}`)).then(_ => _);
 		}
 	}
 };
 
-const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Function) => {
+const storeOverwatch = (store: Store, stateKeys: Array<keyof State>, onChange: Function) => {
 	let currentState: State;
 
 	const handleChange = () => {
 		const nextState = pick(store.getState(), ...stateKeys);
-		if (currentState === undefined)
+		if (currentState === undefined) {
 			currentState = nextState;
+		}
 
 		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
-			if (!deepequal(currentState[key], nextState[key]))
+			if (!deepequal(currentState[key], nextState[key])) {
 				acc[key] = nextState[key];
+			}
+
 			return acc;
 		}, {});
 
-		if (Object.keys(changes).length) {
+		if (Object.keys(changes).length > 0) {
 			onChange(currentState, nextState, changes, (state: State) => pick(state, ...stateKeys));
 			currentState = nextState;
 		}
@@ -517,106 +510,117 @@ const stateToHash = (state: State) => {
 	handleRoute(reducedStoreState as Partial<StateSerialized>);
 	const withSpecialCases = specialCases(reducedStoreState as Partial<StateSerialized>);
 	const final = shortenUrls(withSpecialCases);
-	return Object.keys(final).length ? JSON.stringify(final) : '';
+	return Object.keys(final).length > 0 ? JSON.stringify(final) : "";
 };
 
-const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSerialized>)) => {
-	return managePrefixes(state,
-		(prefix: any, value: string) => {
-			if (Array.isArray(prefix)){
-				// TODO: remove prefix handling since wdcgg is no longer present
-				const prefixObj = prefix.find(p => value.startsWith(p.value) || p.prefix === 'i');
-				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-				return prefixObj.prefix + value.slice(prefixObj.value.length);
-			} else {
-				return value.slice(prefix.length);
+const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSerialized>)) => managePrefixes(
+	state,
+	(prefix: any, value: string) => {
+		if (Array.isArray(prefix)) {
+			// TODO: remove prefix handling since wdcgg is no longer present
+			const prefixObj = prefix.find(p => value.startsWith(p.value) || p.prefix === "i");
+			if (prefixObj === undefined) {
+				throw new Error(`Could not find prefix for ${value}`);
 			}
-		});
-};
 
-const extendUrls = (state: State) => {
-	return managePrefixes(state,
-		(prefix: CategPrefix, value: string) => {
-			if (value.startsWith('http://') || value.startsWith('https://')) return value;
-			if (Array.isArray(prefix)){
-				const pLetter = value.slice(0, 1);
-				const prefixObj = prefix.find(p => p.prefix === pLetter);
+			return prefixObj.prefix + value.slice(prefixObj.value.length);
+		}
 
-				if (prefixObj === undefined) throw new Error(`Could not find prefix for ${value}`);
-				return prefixObj.value + value.slice(1);
-			} else {
-				return prefix + value;
+		return value.slice(prefix.length);
+	}
+);
+
+const extendUrls = (state: State) => managePrefixes(
+	state,
+	(prefix: CategPrefix, value: string) => {
+		if (value.startsWith("http://") || value.startsWith("https://")) {
+			return value;
+		}
+
+		if (Array.isArray(prefix)) {
+			const pLetter = value.slice(0, 1);
+			const prefixObj = prefix.find(p => p.prefix === pLetter);
+
+			if (prefixObj === undefined) {
+				throw new Error(`Could not find prefix for ${value}`);
 			}
-		});
-};
+
+			return prefixObj.value + value.slice(1);
+		}
+
+		return prefix + value;
+	}
+);
 
 const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial<StateSerialized>), transform: (pref: CategPrefix, value: string) => string) => {
-	if (Object.keys(state).length === 0) return state;
-	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) return state;
+	if (Object.keys(state).length === 0) {
+		return state;
+	}
+
+	if (state.filterCategories === undefined || Object.keys(state.filterCategories).length === 0) {
+		return state;
+	}
 
 	const categories: CategoryType[] = Object.keys(state.filterCategories) as Array<keyof typeof state.filterCategories>;
 	const appPrefixes = prefixes[config.envri];
 	const fc = state.filterCategories;
 
 	return {
-		...state, ...{
-			filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
-				const filterVals = fc[category];
+		...state,
+		filterCategories: categories.reduce<CategFilters>((acc: CategFilters, category: CategoryType) => {
+			const filterVals = fc[category];
 
-				if (filterVals) acc[category] = filterVals.map((value: string) => {
+			if (filterVals) {
+				acc[category] = filterVals.map((value: string) => {
 					if (appPrefixes[category]) {
 						const prefix = appPrefixes[category];
-						if (prefix === undefined) return value;
+						if (prefix === undefined) {
+							return value;
+						}
 
 						return transform(prefix, value);
-					} else {
-						return value;
 					}
-				});
 
-				return acc;
-			}, {})
-		}
+					return value;
+				});
+			}
+
+			return acc;
+		}, {})
+
 	};
 };
 
-const reduceState = (state: Record<string,any>) => {
-	return Object.keys(state).reduce((acc: Record<string,any>, key: string) => {
-
-		const val = state[key];
-		if (val == null) return acc;
-
-		if (key === 'mapProps'){
-			if ((val as MapProps).rects?.length)
-				acc[key] = val;
-
-		} else if (Array.isArray(val) && val.length){
-			acc[key] = val;
-
-		} else if (typeof val === 'object') {
-			const part = reduceState(val);
-
-			if (Object.keys(part).length) {
-				acc[key] = part;
-			}
-
-		} else if (state.route === 'metadata' && key === 'id' && val && val.length > 0){
-			acc[key] = getLastSegmentInUrl(val);
-
-		} else if (typeof val === 'string'){
-			acc[key] = val;
-
-		} else if (typeof val === 'number' && val !== 0){
-			acc[key] = val;
-
-		} else if (key === 'showDeprecated' && val) {
-			acc[key] = val;
-
-		}
-
+const reduceState = (state: Record<string, any>) => Object.keys(state).reduce((acc: Record<string, any>, key: string) => {
+	const val = state[key];
+	if (val == null) {
 		return acc;
-	}, {});
-};
+	}
+
+	if (key === "mapProps") {
+		if ((val as MapProps).rects?.length) {
+			acc[key] = val;
+		}
+	} else if (Array.isArray(val) && val.length > 0) {
+		acc[key] = val;
+	} else if (typeof val === "object") {
+		const part = reduceState(val);
+
+		if (Object.keys(part).length > 0) {
+			acc[key] = part;
+		}
+	} else if (state.route === "metadata" && key === "id" && val && val.length > 0) {
+		acc[key] = getLastSegmentInUrl(val);
+	} else if (typeof val === "string") {
+		acc[key] = val;
+	} else if (typeof val === "number" && val !== 0) {
+		acc[key] = val;
+	} else if (key === "showDeprecated" && val) {
+		acc[key] = val;
+	}
+
+	return acc;
+}, {});
 
 export default {
 	update,

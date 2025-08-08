@@ -1,11 +1,12 @@
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { State } from "../../models/State";
-import InitMap, { PersistedMapPropsExtended, UpdateMapSelectedSRID } from '../../models/InitMap';
-import { PortalDispatch } from '../../store';
-import { failWithError } from '../../actions/common';
-import { Value } from '../../models/SpecTable';
-import { Copyright } from 'icos-cp-copyright';
+import React, {Component} from "react";
+import {connect} from "react-redux";
+import {Copyright} from "icos-cp-copyright";
+import {type State} from "../../models/State";
+import {type PersistedMapPropsExtended, type UpdateMapSelectedSRID} from "../../models/InitMap";
+import type InitMap from "../../models/InitMap";
+import {type PortalDispatch} from "../../store";
+import {failWithError} from "../../actions/common";
+import {Value} from "../../models/SpecTable";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -15,8 +16,8 @@ type incommingProps = {
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (mapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
-}
-type OurProps = StateProps & DispatchProps & incommingProps
+};
+type OurProps = StateProps & DispatchProps & incommingProps;
 
 class SearchResultMap extends Component<OurProps> {
 	private initMap?: InitMap = undefined;
@@ -25,8 +26,10 @@ class SearchResultMap extends Component<OurProps> {
 		super(props);
 	}
 
-	componentDidUpdate(){
-		if (this.initMap === undefined) return;
+	componentDidUpdate() {
+		if (this.initMap === undefined) {
+			return;
+		}
 
 		this.initMap.incomingPropsUpdated({
 			allStations: this.props.allStations,
@@ -37,10 +40,10 @@ class SearchResultMap extends Component<OurProps> {
 
 	render() {
 		return (
-			<div id="map" style={{ width: '100%', height: '90vh', position:'relative' }} tabIndex={1}>
-				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{ top: 70, fontSize: 20 }}></div>
+			<div id="map" style={{width: "100%", height: "90vh", position: "relative"}} tabIndex={1}>
+				<div id="stationFilterCtrl" className="ol-control ol-layer-control-ur" style={{top: 70, fontSize: 20}}></div>
 				<div id="popover" className="ol-popup"></div>
-				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{ zIndex: 99, marginRight: 10, padding: 0 }}></div>
+				<div id="projSwitchCtrl" className="ol-layer-control ol-layer-control-lr" style={{zIndex: 99, marginRight: 10, padding: 0}}></div>
 				<div id="layerCtrl" className="ol-layer-control ol-layer-control-ur"></div>
 				<div id="attribution" className="ol-attribution ol-unselectable ol-control ol-uncollapsible" style={{right: 15}}>
 					<ul>
@@ -58,13 +61,12 @@ class SearchResultMap extends Component<OurProps> {
 
 	componentDidMount() {
 		(async () => {
-			const { default: InitMap } = await import(
+			const {default: InitMap} = await import(
 				/* webpackMode: "lazy" */
 				/* webpackChunkName: "init-map" */
-				'../../models/InitMap'
-			);
+				"../../models/InitMap");
 			this.initMap = new InitMap({
-				mapRootElement: document.getElementById('map')!,
+				mapRootElement: document.querySelector("#map")!,
 				allStations: this.props.allStations,
 				stationPos4326Lookup: this.props.stationPos4326Lookup,
 				persistedMapProps: this.props.persistedMapProps,
@@ -73,7 +75,7 @@ class SearchResultMap extends Component<OurProps> {
 				updatePersistedMapProps: this.props.updatePersistedMapProps,
 				labelLookup: this.props.labelLookup,
 				selectedStations: this.props.selectedStations
-			})
+			});
 		})()
 			.catch(error => {
 				this.props.failWithError(error);

@@ -1,28 +1,28 @@
-import React from 'react';
-import config, {CategoryType, placeholders} from "../../config";
-import {ColNames} from "../../models/CompositeSpecTable";
-import {Value} from "../../models/SpecTable";
+import React from "react";
+import config, {type CategoryType, placeholders} from "../../config";
+import {type ColNames} from "../../models/CompositeSpecTable";
+import {type Value} from "../../models/SpecTable";
 import HelpButton from "../../containers/help/HelpButton";
-import MultiSelectFilter from "./MultiSelectFilter";
-import {HelpItem, HelpStorageListEntry} from "../../models/HelpStorage";
+import {type HelpItem, type HelpStorageListEntry} from "../../models/HelpStorage";
 import FilterOperationBtn from "../buttons/FilterOperationBtn";
+import MultiSelectFilter from "./MultiSelectFilter";
 
-interface OurProps {
+type OurProps = {
 	name: CategoryType
 	data: Item[]
 	value: Item[]
 	helpItem?: HelpItem
-	updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => void
-}
+	updateFilter: (varName: ColNames | "keywordFilter", values: Value[]) => void
+};
 
-const search: { [C in CategoryType]?: string } = {}; //values are set by MultiSelectFilter
+const search: Partial<Record<CategoryType, string>> = {}; // Values are set by MultiSelectFilter
 
 export type Item = {
 	value: Value
 	text: string
 	helpStorageListEntry: HelpStorageListEntry[]
 	presentWithCurrentFilters?: boolean
-}
+};
 
 export const MultiselectCtrl: React.FunctionComponent<OurProps> = props => {
 	const {name, data, value, helpItem, updateFilter} = props;

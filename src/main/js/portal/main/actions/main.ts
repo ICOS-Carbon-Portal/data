@@ -1,22 +1,24 @@
-import {PortalThunkAction} from "../store";
+import {type PortalThunkAction} from "../store";
 import * as Payloads from "../reducers/actionpayloads";
-import stateUtils, {Profile, Route, WhoAmI} from "../models/State";
+import stateUtils, {type Profile, type Route, type WhoAmI} from "../models/State";
 import {getProfile, getWhoIam, logOut} from "../backend";
+import {type Sha256Str} from "../backend/declarations";
 import bootstrapPreview from "./preview";
 import bootstrapCart from "./cart";
 import bootstrapSearch from "./search";
 import {failWithError, loadFromError} from "./common";
-import {Sha256Str} from "../backend/declarations";
 
 
 export const init: PortalThunkAction<void> = dispatch => {
 	const stateFromHash = stateUtils.hashToState();
 
 	getWhoIam().then((user: WhoAmI) => {
-		if (stateFromHash.error){
-			if (user.email) logOut();
-			dispatch(loadFromError(user, stateFromHash.error));
+		if (stateFromHash.error) {
+			if (user.email) {
+				logOut();
+			}
 
+			dispatch(loadFromError(user, stateFromHash.error));
 		} else {
 			dispatch(loadApp(user));
 		}
@@ -25,9 +27,8 @@ export const init: PortalThunkAction<void> = dispatch => {
 
 export function loadApp(user: WhoAmI): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-
 		const {route, preview} = getState();
-		dispatch(bootstrapRoute(user, route ?? 'search', preview.pids));
+		dispatch(bootstrapRoute(user, route ?? "search", preview.pids));
 
 		type LoggedIn = {_id: string, profile: Profile | {}};
 
@@ -44,29 +45,37 @@ export function bootstrapRoute(user: WhoAmI, route: Route, previewPids?: Sha256S
 		const {id, tabs} = getState();
 
 		switch (route) {
-			case 'search':
+			case "search": {
 				dispatch(bootstrapSearch(user, tabs));
 				break;
+			}
 
-			case 'preview':
-				if (previewPids === undefined || previewPids.length === 0){
-					failWithError(dispatch)(new Error('Preview cannot be initialized'));
+			case "preview": {
+				if (previewPids === undefined || previewPids.length === 0) {
+					failWithError(dispatch)(new Error("Preview cannot be initialized"));
 					break;
 				}
+
 				dispatch(bootstrapPreview(user, previewPids));
 				break;
+			}
 
-			case 'cart':
+			case "cart": {
 				dispatch(bootstrapCart(user));
 				break;
+			}
 
-			case 'metadata':
-				if (id)
-					window.location.href = id;
+			case "metadata": {
+				if (id) {
+					globalThis.location.href = id;
+				}
+
 				break;
+			}
 
-			default:
+			default: {
 				failWithError(dispatch)(new Error(`Argument for route '${route}' is not managed`));
+			}
 		}
 	};
 }

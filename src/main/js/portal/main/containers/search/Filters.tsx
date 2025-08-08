@@ -1,9 +1,9 @@
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import {Value} from "../../models/SpecTable";
-import {State} from "../../models/State";
-import {PortalDispatch} from "../../store";
-import {ColNames} from "../../models/CompositeSpecTable";
+import React, {Component} from "react";
+import {connect} from "react-redux";
+import {type Value} from "../../models/SpecTable";
+import {type State} from "../../models/State";
+import {type PortalDispatch} from "../../store";
+import {type ColNames} from "../../models/CompositeSpecTable";
 import {
 	setNumberFilter,
 	setFilterTemporal,
@@ -11,8 +11,8 @@ import {
 	setKeywordFilter
 } from "../../actions/search";
 import {PanelsWithFilters} from "../../components/filters/PanelsWithFilters";
-import {FilterNumber} from "../../models/FilterNumbers";
-import FilterTemporal from "../../models/FilterTemporal";
+import {type FilterNumber} from "../../models/FilterNumbers";
+import type FilterTemporal from "../../models/FilterTemporal";
 
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -20,11 +20,11 @@ type DispatchProps = ReturnType<typeof dispatchToProps>;
 type incommingProps = {
 	tabHeader: string
 	handleFilterReset: () => void
-}
+};
 type OurProps = StateProps & DispatchProps & incommingProps;
 
 class Filters extends Component<OurProps> {
-	render(){
+	render() {
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset,
 			setFilterTemporal, filterPids, setNumberFilter, filterNumbers, scopedKeywords, filterKeywords,
@@ -36,7 +36,7 @@ class Filters extends Component<OurProps> {
 			|| filterNumbers.hasFilters
 			|| filterKeywords.length > 0
 			|| filterPids !== null
-			|| (!!spatialRects && spatialRects.length > 0)
+			|| (Boolean(spatialRects) && spatialRects.length > 0);
 
 		return (
 			<div>
@@ -63,30 +63,30 @@ class Filters extends Component<OurProps> {
 	}
 }
 
-interface ResetBtn {
-	resetFiltersAction: Function,
+type ResetBtn = {
+	resetFiltersAction: Function
 	enabled: boolean
-}
+};
 
-const ResetBtn = ({ resetFiltersAction, enabled }: ResetBtn) => {
+const ResetBtn = ({resetFiltersAction, enabled}: ResetBtn) => {
 	const onClick = () => enabled ? resetFiltersAction() : {};
-	const baseStyle = {margin: '7px', fontSize: 14};
+	const baseStyle = {margin: "7px", fontSize: 14};
 	const style = enabled
-		? {...baseStyle, cursor: 'pointer'}
+		? {...baseStyle, cursor: "pointer"}
 		: {...baseStyle, opacity: 0.5};
 	const title = enabled ? "Reset all filters" : "No active filters";
 
 	return (
 		<div className="d-flex justify-content-end">
 			<span className="fa-stack fa-1x" onClick={onClick} title={title} style={style}>
-		 		<i className="fas fa-filter fa-stack-1x" />
-	 			<i className="fas fa-ban fa-stack-2x" />
+				<i className="fas fa-filter fa-stack-1x" />
+				<i className="fas fa-ban fa-stack-2x" />
 			</span>
 		</div>
 	);
 };
 
-function stateToProps(state: State){
+function stateToProps(state: State) {
 	return {
 		filterTemporal: state.filterTemporal,
 		filterNumbers: state.filterNumbers,
@@ -101,9 +101,9 @@ function stateToProps(state: State){
 	};
 }
 
-function dispatchToProps(dispatch: PortalDispatch){
+function dispatchToProps(dispatch: PortalDispatch) {
 	return {
-		updateFilter: (varName: ColNames | 'keywordFilter', values: Value[]) => dispatch(specFilterUpdate(varName, values)),
+		updateFilter: (varName: ColNames | "keywordFilter", values: Value[]) => dispatch(specFilterUpdate(varName, values)),
 		setFilterTemporal: (filterTemporal: FilterTemporal) => dispatch(setFilterTemporal(filterTemporal)),
 		setNumberFilter: (numberFilter: FilterNumber) => dispatch(setNumberFilter(numberFilter)),
 		setKeywordFilter: (filterKeywords: string[]) => dispatch(setKeywordFilter(filterKeywords)),

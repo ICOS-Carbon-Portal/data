@@ -1,14 +1,14 @@
-import {Sha256Str, UrlStr} from "./backend/declarations";
+import {type CSSProperties} from "react";
+import {type Coordinate} from "ol/coordinate";
+import commonConfig from "../../common/main/config";
+import {type Sha256Str, type UrlStr} from "./backend/declarations";
 import config from "./config";
-import commonConfig from '../../common/main/config';
-import {CSSProperties} from "react";
-import CartItem from "./models/CartItem";
-import {DrawRectBbox, ExtendedDobjInfo} from "./models/State";
-import {Coordinate} from "ol/coordinate";
-import { PreviewSettings } from "./models/Preview";
+import type CartItem from "./models/CartItem";
+import {type DrawRectBbox, ExtendedDobjInfo} from "./models/State";
+import {type PreviewSettings} from "./models/Preview";
 
 export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, previewSettings: PreviewSettings) => {
-	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join();
+	const objIds = items.map((item: CartItem) => getLastSegmentInUrl(item.dobj)).join(",");
 	return items[0].getNewUrl({
 		objId: objIds,
 		x: xAxis,
@@ -17,35 +17,47 @@ export const getNewTimeseriesUrl = (items: CartItem[], xAxis: string, previewSet
 };
 
 export const formatBytes = (bytes: number, decimals = 2) => {
-	if (isNaN(bytes)) return "";
-	if(bytes === 0) return '0 Bytes';
+	if (isNaN(bytes)) {
+		return "";
+	}
 
-	const k = 1024,
-		sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-		i = Math.floor(Math.log(bytes) / Math.log(k));
-	return parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + ' ' + sizes[i];
+	if (bytes === 0) {
+		return "0 Bytes";
+	}
+
+	const k = 1024;
+	const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return Number.parseFloat((bytes / k ** i).toFixed(decimals)) + " " + sizes[i];
 };
 
 export const varType = (variable: any) => {
-	const isString = typeof variable === 'string';
-	if (isString) return 'string';
+	const isString = typeof variable === "string";
+	if (isString) {
+		return "string";
+	}
 
 	const isArray = Array.isArray(variable);
-	if (isArray) return 'array';
+	if (isArray) {
+		return "array";
+	}
 
-	const isPlainObject = variable !== null && typeof variable === 'object' && !Array.isArray(variable);
-	if (isPlainObject) return 'object';
+	const isPlainObject = variable !== null && typeof variable === "object" && !Array.isArray(variable);
+	if (isPlainObject) {
+		return "object";
+	}
 
-	return 'unknown';
+	return "unknown";
 };
 
-export const isSmallDevice = () => {
-	return window.innerWidth <= 768;
-};
+export const isSmallDevice = () => window.innerWidth <= 768;
 
 export const formatDateWithOptionalTime = (d: Date, offset = 0) => {
 	// TODO: date can come in as string if it comes from cart view
-	if (!d || !d.getUTCFullYear) return '';
+	if (!d?.getUTCFullYear) {
+		return "";
+	}
+
 	d.setUTCHours(d.getUTCHours() + offset);
 
 	const date = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
@@ -54,46 +66,46 @@ export const formatDateWithOptionalTime = (d: Date, offset = 0) => {
 	return time === "00:00" ? `${date}` : `${date} ${time}`;
 };
 
-const pad2 = (s: number | string) => {
-	return ("0" + s).substr(-2, 2);
-};
+const pad2 = (s: number | string) => ("0" + s).substr(-2, 2);
 
-export const pick = <T extends Object, K extends keyof T>(source: T, ...keys: K[]): Pick<T, K> => {
+export const pick = <T extends object, K extends keyof T>(source: T, ...keys: K[]): Pick<T, K> => {
 	const target: any = {};
 
-	keys.forEach((key) => {
+	for (const key of keys) {
 		if (source.hasOwnProperty(key)) {
 			target[key as string] = source[key];
 		}
-	});
+	}
 
 	return target;
 };
 
-export function throwError(msg: string): never{
+export function throwError(msg: string): never {
 	throw new Error(msg);
 }
 
 export function wholeStringRegExp(anyRegex: string): RegExp {
-	const prologue = anyRegex.startsWith('^') ? '' : '^';
-	const epilogue = anyRegex.endsWith("$") ? '' : '$';
+	const prologue = anyRegex.startsWith("^") ? "" : "^";
+	const epilogue = anyRegex.endsWith("$") ? "" : "$";
 
-	return new RegExp([prologue, anyRegex, epilogue].join(''));
+	return new RegExp([prologue, anyRegex, epilogue].join(""));
 }
 
-export function isDefined<T>(x: T | undefined): x is T{
+export function isDefined<T>(x: T | undefined): x is T {
 	return x !== undefined;
 }
 
-export function getLastSegmentInUrl(url: UrlStr): string | Sha256Str {
+export function getLastSegmentInUrl(url: UrlStr): string {
 	// Return everything after the last slash (usually an object id) in the URL
-	const idx = url.lastIndexOf('/');
-	if (idx === -1) throw new Error(`Cannot get last segment from '${url}'`);
+	const idx = url.lastIndexOf("/");
+	if (idx === -1) {
+		throw new Error(`Cannot get last segment from '${url}'`);
+	}
 
-	return url.substring(idx + 1);
+	return url.slice(Math.max(0, idx + 1));
 }
 
-export function getLastSegmentsInUrls(urls: UrlStr[]): (string | Sha256Str)[] {
+export function getLastSegmentsInUrls(urls: UrlStr[]): string[] {
 	// Convert an array of URLs to an array of last URL segments (usually object ids)
 	return urls.map(url => getLastSegmentInUrl(url));
 }
@@ -106,77 +118,74 @@ export function getUrlsFromPids(pids: Sha256Str[]): UrlStr[] {
 	return pids.map(pid => getUrlFromPid(pid));
 }
 
-export const pidRegexp = /^(?:https?\:\/\/(?:hdl\.handle\.net|doi\.org)\/)?(?:[\d\.]+\d\/)?([a-zA-Z0-9\-_]{24})$/
+export const pidRegexp = /^(?:https?:\/\/(?:hdl\.handle\.net|doi\.org)\/)?(?:[\d.]+\d\/)?([\w\-]{24})$/;
 
 export function getUrlWithEnvironmentPrefix(dobj: UrlStr) {
-	return commonConfig.metaBaseUri + '/objects/' + dobj.split('/').pop()
+	return commonConfig.metaBaseUri + "/objects/" + dobj.split("/").pop();
 }
 
-export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O)
+export type OptFunction<I, O> = <IOPT extends I | undefined>(io: IOPT) => (IOPT extends undefined ? undefined : O);
 
-//converts a regular single-argument function to a function that accepts optional value and returns optional result
-export function liftToOptional<I, O>(f: (i:I) => O): OptFunction<I, O> {
+// Converts a regular single-argument function to a function that accepts optional value and returns optional result
+export function liftToOptional<I, O>(f: (i: I) => O): OptFunction<I, O> {
 	return io0 => {
-		const io: I | undefined = io0
-		if(io === undefined) return undefined as any
-		return f(io)
-	}
+		const io: I | undefined = io0;
+		if (io === undefined) {
+			return undefined as any;
+		}
+
+		return f(io);
+	};
 }
 
 export const linesToShowStyle = (linesToShow: number): CSSProperties => ({
-	overflow: 'hidden',
-	textOverflow: 'ellipsis',
-	display: '-webkit-box',
+	overflow: "hidden",
+	textOverflow: "ellipsis",
+	display: "-webkit-box",
 	WebkitLineClamp: linesToShow,
-	WebkitBoxOrient: 'vertical'
+	WebkitBoxOrient: "vertical"
 });
 
 export const areEqual = <T>(arr1: T[], arr2: T[]) => {
-	if (arr1.length !== arr2.length)
+	if (arr1.length !== arr2.length) {
 		return false;
+	}
 
-	for (let i = 0; i < arr1.length; i++){
-		if (arr1[i] !== arr2[i])
+	for (const [i, element] of arr1.entries()) {
+		if (element !== arr2[i]) {
 			return false;
+		}
 	}
 
 	return true;
 };
 
-export const distinct = <T>(...arrs: T[][]): T[] => {
-	return [...new Set(arrs.flatMap(arr => arr))];
-};
+export const distinct = <T>(...arrs: T[][]): T[] => [...new Set(arrs.flat())];
 
-type SetOperation = <T>(arr1: T[], arr2: T[]) => T[]
+type SetOperation = <T>(arr1: T[], arr2: T[]) => T[];
 export const intersection: SetOperation = (arr1, arr2) => {
 	// All elements that are in both arr1 and arr2
-	const set2 = new Set(arr2)
+	const set2 = new Set(arr2);
 	return arr1.filter(val => set2.has(val));
 };
 
 export const difference: SetOperation = (arr1, arr2) => {
 	// All elements from arr1 that are not in arr2
-	const set2 = new Set(arr2)
-	return arr1.filter(val => !set2.has(val))
-}
+	const set2 = new Set(arr2);
+	return arr1.filter(val => !set2.has(val));
+};
 
-export const symmetricalDifference: SetOperation = (arr1, arr2) => {
+export const symmetricalDifference: SetOperation = (arr1, arr2) =>
 	// All elements from arr1 that are not in arr2 and all element from arr2 that are not in arr1
-	return difference(arr1, arr2).concat(difference(arr2, arr1));
-};
-
-export const union: SetOperation = (arr1, arr2) => {
+	difference(arr1, arr2).concat(difference(arr2, arr1));
+export const union: SetOperation = (arr1, arr2) =>
 	// All unique elements from arr1 and arr2
-	return distinct(arr1, arr2);
-};
-
-export const uppercaseFirstChar = (txt: string) => {
-	return txt.charAt(0).toUpperCase() + txt.slice(1);
-};
+	distinct(arr1, arr2);
+export const uppercaseFirstChar = (txt: string) => txt.charAt(0).toUpperCase() + txt.slice(1);
 
 export const round = (num: number, decimals: number) => +num.toFixed(decimals);
 
-export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[]{
+export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[] {
 	return [
 		[rect[0], rect[1]],
 		[rect[2], rect[1]],
@@ -186,7 +195,7 @@ export function drawRectBoxToCoords(rect: DrawRectBbox): Coordinate[]{
 	];
 }
 
-export const specLabelDisplay = (specLabel: String) => (config.features.shortenDataTypeLabel && specLabel.includes(','))
-	? specLabel.substring(0, specLabel.indexOf(','))
+export const specLabelDisplay = (specLabel: string) => (config.features.shortenDataTypeLabel && specLabel.includes(","))
+	? specLabel.slice(0, Math.max(0, specLabel.indexOf(",")))
 	: specLabel;
 

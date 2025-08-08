@@ -1,4 +1,6 @@
-import React, { Component, CSSProperties, FormEvent, RefObject } from 'react';
+import React, {
+	Component, CSSProperties, type FormEvent, type RefObject
+} from "react";
 
 type Props = {
 	editValue: string
@@ -8,16 +10,16 @@ type Props = {
 	iconEditTooltip: string
 	iconSaveClass: string
 	iconSaveTooltip: string
-}
+};
 
 type State = {
 	editMode: boolean
-}
+};
 
-export default class EditablePanelHeading extends Component<Props, State>{
-	private editCtrl: RefObject<HTMLInputElement>;
+export default class EditablePanelHeading extends Component<Props, State> {
+	private readonly editCtrl: RefObject<HTMLInputElement>;
 
-	constructor(props: Props){
+	constructor(props: Props) {
 		super(props);
 
 		this.editCtrl = React.createRef<HTMLInputElement>();
@@ -27,27 +29,30 @@ export default class EditablePanelHeading extends Component<Props, State>{
 		};
 	}
 
-	handleIconClick(){
+	handleIconClick() {
 		this.setState({editMode: true});
 	}
 
-	handleSaveClick(event: FormEvent){
+	handleSaveClick(event: FormEvent) {
 		if (this.editCtrl.current && this.editCtrl.current.value !== this.props.editValue) {
 			this.props.saveValueAction(this.editCtrl.current.value);
 		}
+
 		this.setState({editMode: false});
 		event.preventDefault();
 	}
 
-	render(){
+	render() {
 		const {editMode} = this.state;
-		const { editValue, iconEditClass, iconEditTooltip, iconSaveClass,
-			iconSaveTooltip, defaultShownValue } = this.props;
+		const {
+			editValue, iconEditClass, iconEditTooltip, iconSaveClass,
+			iconSaveTooltip, defaultShownValue
+		} = this.props;
 		const cardTitle = (defaultShownValue && !editValue) ? defaultShownValue : editValue;
 		return (
 			<>
-				{ editMode ?
-					<div className="card-header">
+				{ editMode
+					? <div className="card-header">
 						<form className="input-group" onSubmit={this.handleSaveClick.bind(this)}>
 							<input
 								ref={this.editCtrl}
@@ -62,8 +67,7 @@ export default class EditablePanelHeading extends Component<Props, State>{
 							</button>
 						</form>
 					</div>
-					:
-					<div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: 'pointer'}} title={iconEditTooltip}>
+					: <div className="card-header" onClick={this.handleIconClick.bind(this)} style={{cursor: "pointer"}} title={iconEditTooltip}>
 						<div className="d-inline-block mt-2">
 							<span className="card-title">{cardTitle}</span>
 						</div>
