@@ -39,7 +39,7 @@ const xoConfig: FlatXoConfig = [
 				"singleline": {"delimiter": "comma", "requireLast": false}
 			}],
 			"unicorn/prevent-abbreviations": "off",
-			"@stylistic/max-len": ["warn", {"code": 110}],
+			"@stylistic/max-len": ["warn", {"code": 120}],
 			"unicorn/filename-case": ["error", {"cases": {
 				"pascalCase": true, "camelCase": true
 			}}],
@@ -72,6 +72,7 @@ const xoConfig: FlatXoConfig = [
 				{"selector": "default", "format": ["camelCase", "PascalCase"]},
 				{"selector": "typeLike", "format": ["PascalCase"]},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
+				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["readonly"], "leadingUnderscore": "allow"},
 			],
 			"@typescript-eslint/no-restricted-types": "off",
 		}
