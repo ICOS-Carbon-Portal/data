@@ -1,18 +1,34 @@
-import {type FlatXoConfig} from 'xo';
+import {type FlatXoConfig} from "xo";
+
+const tsExtensions = ['ts', 'tsx', 'cts', 'mts'];
+const jsExtensions = ['js', 'jsx', 'mjs', 'cjs'];
+const allExtensions = [...jsExtensions, ...tsExtensions];
+
+const allExtensionsGlob = `*.{${allExtensions.join(',')}}`;
+const tsExtensionsGlob = `*.{${tsExtensions.join(',')}}`;
 
 const xoConfig: FlatXoConfig = [
 	{
 		ignores: [
-			'tsTarget/**',
-			'node_modules/**',
-			'external-modules/**'
+			"tsTarget/**",
+			"node_modules/**",
+			"external-modules/**",
+			"test/**",
+			allExtensionsGlob,
+			`main/${allExtensionsGlob}`,
+			`main/actions/**/${allExtensionsGlob}`,
+			`main/backend/**/${allExtensionsGlob}`,
+			`main/components/**/${allExtensionsGlob}`,
+			`main/containers/**/${allExtensionsGlob}`,
+			`main/hooks/**/${allExtensionsGlob}`,
+			//`main/models/**/${allExtensionsGlob}`,
+			`main/reducers/**/${allExtensionsGlob}`,
 		],
-		react: true,
 	},
 	{
-		//files: ["**/*.tsx", "**/*.ts", "**/*.js", "**/*.jsx"],
+		react: true,
 		files: [
-			"main/models/*.ts",
+			`main/models/**/${allExtensionsGlob}`,
 		],
 		rules: {
 			"@stylistic/quotes": ["error", "double", {"allowTemplateLiterals": "always"}],
@@ -22,13 +38,7 @@ const xoConfig: FlatXoConfig = [
 				"multiline": {"delimiter": "none", "requireLast": true},
 				"singleline": {"delimiter": "comma", "requireLast": false}
 			}],
-			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
 			"unicorn/prevent-abbreviations": "off",
-			"@typescript-eslint/naming-convention": ["error", 
-				{"selector": "default", "format": ["camelCase", "PascalCase"]},
-				{"selector": "typeLike", "format": ["PascalCase"]},
-				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
-			],
 			"@stylistic/max-len": ["warn", {"code": 110}],
 			"unicorn/filename-case": ["error", {"cases": {
 				"pascalCase": true, "camelCase": true
@@ -48,8 +58,22 @@ const xoConfig: FlatXoConfig = [
 				"tuples": "only-multiline",
 			}],
 			"prefer-destructuring": "off",
-			"@typescript-eslint/no-restricted-types": "off",
 			"no-warning-comments": "off",
+		}
+	},
+	{
+		react: true,
+		files: [
+			`main/models/**/${tsExtensionsGlob}`,
+		],
+		rules: {
+			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
+			"@typescript-eslint/naming-convention": ["error", 
+				{"selector": "default", "format": ["camelCase", "PascalCase"]},
+				{"selector": "typeLike", "format": ["PascalCase"]},
+				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
+			],
+			"@typescript-eslint/no-restricted-types": "off",
 		}
 	},
 ];
