@@ -73,8 +73,12 @@ const xoConfig: FlatXoConfig = [
 				{"selector": "typeLike", "format": ["PascalCase"]},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["readonly"], "leadingUnderscore": "allow"},
+				{"selector": "parameter", "format": ["camelCase"], "modifiers":["unused"], "leadingUnderscore": "allow"},
 			],
 			"@typescript-eslint/no-restricted-types": "off",
+			"@typescript-eslint/member-ordering": "off",
+			"@typescript-eslint/no-unused-vars": "warn",
+			"@typescript-eslint/no-redeclare": "off",
 		}
 	},
 ];
