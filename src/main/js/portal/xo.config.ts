@@ -6,10 +6,14 @@ const xoConfig: FlatXoConfig = [
 			'tsTarget/**',
 			'node_modules/**',
 			'external-modules/**'
-		]
+		],
+		react: true,
 	},
 	{
-		files: ["**/*.tsx", "**/*.ts", "**/*.js", "**/*.jsx"],
+		//files: ["**/*.tsx", "**/*.ts", "**/*.js", "**/*.jsx"],
+		files: [
+			"main/models/*.ts",
+		],
 		rules: {
 			"@stylistic/quotes": ["error", "double", {"allowTemplateLiterals": "always"}],
 			"import-x/extensions": ["error", "never", { "fix": true }],
