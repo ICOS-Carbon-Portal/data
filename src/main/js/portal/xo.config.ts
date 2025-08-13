@@ -75,6 +75,8 @@ const xoConfig: FlatXoConfig = [
 			"unicorn/filename-case": ["error", {"cases": {
 				"pascalCase": true, "camelCase": true
 			}}],
+			"unicorn/no-array-reduce": "off",
+			"unicorn/prefer-query-selector": "off",
 			"unicorn/prevent-abbreviations": "off",
 			"unicorn/switch-case-braces": "off",
 		}
