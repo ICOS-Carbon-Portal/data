@@ -53,6 +53,7 @@ const xoConfig: FlatXoConfig = [
 			"@stylistic/no-multiple-empty-lines": ["error", {"max": 2}],
 			"@stylistic/padding-line-between-statements": "off",
 			"@stylistic/quotes": "off",
+			"capitalized-comments": "off",
 			"import-x/extensions": ["error", "never", { "fix": true }],
 			"import-x/order": "off",
 			"no-warning-comments": "off",
