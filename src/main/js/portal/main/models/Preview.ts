@@ -1,11 +1,11 @@
 import CartItem, {type CartItemSerialized} from './CartItem';
-import {getNewTimeseriesUrl, getLastSegmentInUrl, isDefined} from '../utils';
+import {getNewTimeseriesUrl, getLastSegmentInUrl} from '../utils';
 import config, {type PreviewType} from "../config";
 import deepEqual from 'deep-equal';
 import {type PreviewInfo} from "./PreviewLookup";
 import type PreviewLookup from "./PreviewLookup";
 import type Cart from "./Cart";
-import {ExtendedDobjInfo, type KnownDataObject} from "./State";
+import {type KnownDataObject} from "./State";
 import {type IdxSig, type Sha256Str, type UrlStr} from "../backend/declarations";
 import {type Value} from './SpecTable';
 
@@ -91,7 +91,7 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[]) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 
@@ -106,7 +106,7 @@ export default class Preview {
 					? lookup.forDataObjSpec(cart.item(id)!.spec)
 					: undefined);
 
-			const options: OptionWithType = previewInfo == undefined
+			const options: OptionWithType = previewInfo === undefined
 				? {type: undefined, options: []}
 				: (previewInfo.type === "TIMESERIES"
 					? previewInfo
@@ -119,7 +119,7 @@ export default class Preview {
 		});
 
 		const options = objects[0].options;
-		objects.map(object => {
+		objects.forEach(object => {
 			if (!deepEqual(options, object.options)) {
 				throw new Error('Cannot preview differently structured objects');
 			}
@@ -136,7 +136,8 @@ export default class Preview {
 					previewItems = items.map(i => i.withUrl(url));
 				}
 				return new Preview(previewItems, options.options, options.type);
-			} if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM) {
+			}
+			if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM) {
 				return new Preview(items, options.options, options.type);
 			}
 		} else {

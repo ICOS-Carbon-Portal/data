@@ -24,12 +24,12 @@ export default class Paging {
 
 	constructor({objCount, offset, limit, pageCount, filtersEnabled, cacheOffset, isDataEndReached}: Props) {
 		this._objCount = objCount;
-		this._offset = offset || 0;
+		this._offset = offset ?? 0;
 		this._pageCount = pageCount ?? config.stepsize;
 		this._limit = limit ?? config.stepsize;
-		this._filtersEnabled = filtersEnabled || false;
+		this._filtersEnabled = filtersEnabled ?? false;
 		this._cacheOffset = cacheOffset ?? this._offset;
-		this._isDataEndReached = isDataEndReached || false;
+		this._isDataEndReached = isDataEndReached ?? false;
 	}
 
 	get serialize() {
@@ -89,7 +89,8 @@ export default class Paging {
 				cacheOffset: Math.min(offset, this._cacheOffset),
 				isDataEndReached: this._isDataEndReached
 			});
-		} if (direction > 0) {
+		}
+		if (direction > 0) {
 			if (this._offset + this._limit >= this._objCount) {
 				return this;
 			}
@@ -100,7 +101,8 @@ export default class Paging {
 				cacheOffset: this._cacheOffset,
 				isDataEndReached: this._isDataEndReached
 			});
-		} return this;
+		}
+		return this;
 	}
 
 	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached}: WithProps) {

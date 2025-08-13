@@ -95,7 +95,7 @@ export default class CartItem {
 	}
 
 	get size() {
-		return Number.parseInt(this._dataobject?.size || '0');
+		return Number.parseInt(this._dataobject?.size ?? '0', 10);
 	}
 
 	get item() {

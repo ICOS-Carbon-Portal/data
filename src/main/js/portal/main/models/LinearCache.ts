@@ -38,17 +38,17 @@ export default class LinearCache {
 
 			if (this.length === 0 || offset === this.offset + this.length) {
 				// ====----
-				this.cache = this.cache.concat(arr);
+				this.cache = [...this.cache, ...arr];
 			} else if (offset > this.offset && offset < this.offset + this.length) {
 				// ==≡≡--
-				this.cache = this.cache.slice(0, offset - this.offset).concat(arr);
+				this.cache = [...this.cache.slice(0, offset - this.offset), ...arr];
 			} else if (offset < this.offset && offset + limit === this.offset + 1) {
 				// ----====
-				this.cache = arr.concat(this.cache.slice(limit));
+				this.cache = [...arr, ...this.cache.slice(limit)];
 				this.offset = offset;
 			} else if (offset + fetchingLimit > this.offset && offset + fetchingLimit < this.offset + this.length) {
 				// --≡≡==
-				this.cache = arr.concat(this.cache.slice(this.startLimit - limit));
+				this.cache = [...arr, ...this.cache.slice(this.startLimit - limit)];
 				this.offset = offset;
 			} else if (offset + fetchingLimit < this.offset
 				|| (offset < this.offset && offset + fetchingLimit >= this.offset + this.length)
@@ -58,7 +58,7 @@ export default class LinearCache {
 				this.offset = offset;
 			} else if (offset < this.offset && offset + limit === this.offset) {
 				// ----====
-				this.cache = arr.concat(this.cache);
+				this.cache = [...arr, ...this.cache];
 				this.offset = offset;
 			} else if (offset === 0 && arr.length === this.length) {
 				// ≡≡≡≡

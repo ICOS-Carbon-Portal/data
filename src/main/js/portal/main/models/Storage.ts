@@ -7,7 +7,6 @@ export default class Storage {
 	private state: IdxSig<any> = {};
 
 	get length() {
-		const t = this.key(2 as Int);
 		return Object.keys(this.state).length;
 	}
 

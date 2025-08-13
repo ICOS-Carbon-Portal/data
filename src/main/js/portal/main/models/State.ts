@@ -126,7 +126,10 @@ export type SearchOptions = {
 };
 
 export type TabsState = {
-	tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number
+	tabName?: string
+	selectedTabId?: string
+	searchTab?: number
+	resultTab?: number
 };
 
 // TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
@@ -482,9 +485,7 @@ const storeOverwatch = (store: Store, stateKeys: (keyof State)[], onChange: Func
 
 	const handleChange = () => {
 		const nextState = pick(store.getState(), ...stateKeys);
-		if (currentState === undefined) {
-			currentState = nextState;
-		}
+		currentState ??= nextState;
 
 		const changes = stateKeys.reduce<Partial<typeof nextState>>((acc, key) => {
 			if (!deepequal(currentState[key], nextState[key])) {
@@ -584,7 +585,7 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial
 
 const reduceState = (state: Record<string, any>) => Object.keys(state).reduce((acc: Record<string, any>, key: string) => {
 	const val = state[key];
-	if (val == null) {
+	if (val === null) {
 		return acc;
 	}
 

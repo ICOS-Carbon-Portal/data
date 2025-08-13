@@ -270,7 +270,7 @@ const initItems: HelpItem[] = [
 
 	new HelpItem(
 		'preview',
-		'How \"Preview\" and \"Add to cart\" buttons work:',
+		'How "Preview" and "Add to cart" buttons work:',
 		undefined,
 		[
 			{
@@ -292,7 +292,7 @@ const initItems: HelpItem[] = [
 			},
 			{
 				label: 'adding to cart (logged-in users)',
-				comment: 'select one or more data objects, click the \"Add to cart\" button; all the objects on the page can be selected using the \"Select all\" tickbox'
+				comment: 'select one or more data objects, click the "Add to cart" button; all the objects on the page can be selected using the "Select all" tickbox'
 			}
 		]
 	),

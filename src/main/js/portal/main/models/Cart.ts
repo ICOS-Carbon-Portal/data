@@ -6,9 +6,9 @@ export default class Cart {
 	readonly _ts: string;
 
 	constructor(name: string | undefined = undefined, items: CartItem[] | undefined = undefined) {
-		this._name = name || '';
-		this._items = items || [];
-		this._ts = (items ? Date.now() + '' : '0');
+		this._name = name ?? '';
+		this._items = items ?? [];
+		this._ts = (items ? String(Date.now()) : '0');
 	}
 
 	get serialize() {
@@ -20,7 +20,7 @@ export default class Cart {
 	}
 
 	addItem(cartItem: CartItem[]) {
-		return new Cart(this._name, this._items.concat(cartItem));
+		return new Cart(this._name, [...this._items, ...cartItem]);
 	}
 
 	removeItems(ids: string[]) {
@@ -56,7 +56,7 @@ export default class Cart {
 	}
 
 	hasItem(id: string) {
-		return Boolean(this._items.find(item => item.dobj === id));
+		return this._items.some(item => item.dobj === id);
 	}
 
 	get name() {

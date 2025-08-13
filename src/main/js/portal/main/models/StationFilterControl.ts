@@ -10,7 +10,6 @@ import Point from 'ol/geom/Point';
 import Style from 'ol/style/Style';
 import Text from 'ol/style/Text';
 import Fill from 'ol/style/Fill';
-import type Geometry from 'ol/geom/Geometry';
 import {type PersistedMapPropsExtended} from './InitMap';
 import Polygon from 'ol/geom/Polygon';
 import {type Coordinate} from 'ol/coordinate';
@@ -177,7 +176,7 @@ export class StationFilterControl extends Control {
 	}
 
 	private addDrawFeature(ev: DrawEvent) {
-		ev.feature.setProperties({id: Symbol(), type: 'stationFilterRect'});
+		ev.feature.setProperties({id: Symbol("stationFilterRect id"), type: 'stationFilterRect'});
 		this.addDeleteFilterRectBtn(ev.feature);
 		const drawFeature = featureToDrawFeature(ev.feature);
 		this.drawFeatures.push(drawFeature);

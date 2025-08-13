@@ -26,7 +26,7 @@ export default class CompositeSpecTable {
 	public readonly id: symbol;
 
 	constructor(readonly basics: SpecTable<BasicsColNames>, readonly columnMeta: SpecTable<VariableMetaColNames>, readonly origins: SpecTable<OriginsColNames>) {
-		this.id = Symbol();
+		this.id = Symbol("CompositeSpecTable id");
 	}
 
 	static fromTables(tables: SpecTable[]) {
@@ -121,7 +121,7 @@ export default class CompositeSpecTable {
 		];
 
 		function specFilterJoin(excludedIdx: number): Filter {
-			const chosenFilts = specFilters.filter((_, idx) => idx != excludedIdx);
+			const chosenFilts = specFilters.filter((_, idx) => idx !== excludedIdx);
 			const specFilter0 = Filter.and(chosenFilts);
 			return specFilter0 === null
 				? null

@@ -1,4 +1,4 @@
-import {type NumberFilterCategories, numberFilterKeys} from "../config";
+import {type NumberFilterCategories} from "../config";
 import {defaultState} from "./State";
 
 
@@ -149,7 +149,7 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 					txt: value,
 					type: 'list',
 					isValid: acc.isValid,
-					vals: acc.vals.concat(Number.parseFloat(num[1])),
+					vals: [...acc.vals, Number.parseFloat(num[1])],
 					cmp: [...acc.cmp, '=']
 				};
 			}

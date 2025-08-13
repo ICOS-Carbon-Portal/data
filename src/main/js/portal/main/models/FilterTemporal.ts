@@ -9,8 +9,8 @@ export default class FilterTemporal {
 	private readonly _submission: FromToDates;
 
 	constructor(dataTime?: FromToDates, submission?: FromToDates) {
-		this._dataTime = dataTime || new FromToDates(undefined, undefined, defaultMaxSamplingDate);
-		this._submission = submission || new FromToDates(undefined, undefined, new Date());
+		this._dataTime = dataTime ?? new FromToDates(undefined, undefined, defaultMaxSamplingDate);
+		this._submission = submission ?? new FromToDates(undefined, undefined, new Date());
 	}
 
 	get serialize() {

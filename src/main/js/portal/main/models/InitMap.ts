@@ -87,9 +87,7 @@ export default class InitMap {
 		this.allStations = props.allStations;
 		this.selectedStations = props.selectedStations;
 
-		const srid = persistedMapProps.srid === undefined
-			? olMapSettings.defaultSRID
-			: persistedMapProps.srid;
+		const srid = persistedMapProps.srid ?? olMapSettings.defaultSRID;
 		this.appEPSGCode = `EPSG:${srid}`;
 		const projection = getProjection(this.appEPSGCode) ?? throwError(`Projection ${this.appEPSGCode} not found`);
 
