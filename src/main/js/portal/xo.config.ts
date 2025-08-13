@@ -31,20 +31,6 @@ const xoConfig: FlatXoConfig = [
 			`main/models/**/${allExtensionsGlob}`,
 		],
 		rules: {
-			"@stylistic/quotes": ["error", "double", {"allowTemplateLiterals": "always"}],
-			"import-x/extensions": ["error", "never", { "fix": true }],
-			"@stylistic/no-multiple-empty-lines": ["error", {"max": 2}],
-			"@stylistic/member-delimiter-style": ["error", {
-				"multiline": {"delimiter": "none", "requireLast": true},
-				"singleline": {"delimiter": "comma", "requireLast": false}
-			}],
-			"unicorn/prevent-abbreviations": "off",
-			"@stylistic/max-len": ["warn", {"code": 120}],
-			"unicorn/filename-case": ["error", {"cases": {
-				"pascalCase": true, "camelCase": true
-			}}],
-			"@stylistic/jsx-quotes": ["error", "prefer-double"],
-			"promise/prefer-await-to-then": "off",
 			"@stylistic/comma-dangle": ["error", {
 				"arrays": "only-multiline",
 				"objects": "only-multiline",
@@ -57,28 +43,67 @@ const xoConfig: FlatXoConfig = [
 				"generics": "never",
 				"tuples": "only-multiline",
 			}],
-			"prefer-destructuring": "off",
+			"@stylistic/function-paren-newline": ["error", "consistent"],
+			"@stylistic/jsx-quotes": ["error", "prefer-double"],
+			"@stylistic/max-len": ["off", {"code": 120}], // Temporarily disabled
+			"@stylistic/member-delimiter-style": ["error", {
+				"multiline": {"delimiter": "none", "requireLast": true},
+				"singleline": {"delimiter": "comma", "requireLast": false}
+			}],
+			"@stylistic/no-multiple-empty-lines": ["error", {"max": 2}],
+			"@stylistic/padding-line-between-statements": "off",
+			"@stylistic/quotes": "off",
+			"import-x/extensions": ["error", "never", { "fix": true }],
+			"import-x/order": "off",
 			"no-warning-comments": "off",
+			"prefer-destructuring": "off",
+			"promise/prefer-await-to-then": "off",
+			"react-hooks/exhaustive-deps": "off",
+			"react/boolean-prop-naming": "off",
+			"react/iframe-missing-sandbox": "off",
+			"react/jsx-boolean-value": ["error", "always"],
+			"react/jsx-closing-bracket-location": "off", // Conflicts, works inconsistently with ternary operators
+			"react/jsx-closing-tag-location": "off", // Conflicts, works inconsistently with ternary operators
+			"react/jsx-curly-newline": "off",
+			"react/jsx-indent-props": ["error", { indentMode: "tab", ignoreTernaryOperator: true}],
+			"react/jsx-no-bind": "warn",
+			"react/jsx-sort-props": "off",
+			"react/jsx-tag-spacing": ["error", {"beforeSelfClosing": "allow"}],
+			"react/prefer-read-only-props": "off",
+			"react/require-default-props": "off",
+			"unicorn/filename-case": ["error", {"cases": {
+				"pascalCase": true, "camelCase": true
+			}}],
+			"unicorn/prevent-abbreviations": "off",
+			"unicorn/switch-case-braces": "off",
 		}
 	},
 	{
-		react: true,
 		files: [
 			`main/models/**/${tsExtensionsGlob}`,
 		],
 		rules: {
-			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
+			"@typescript-eslint/array-type": "off",
+			"@typescript-eslint/member-ordering": "off",
 			"@typescript-eslint/naming-convention": ["error", 
 				{"selector": "default", "format": ["camelCase", "PascalCase"]},
 				{"selector": "typeLike", "format": ["PascalCase"]},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["private"], "leadingUnderscore": "allow"},
 				{"selector": "memberLike", "format": ["camelCase"], "modifiers":["readonly"], "leadingUnderscore": "allow"},
 				{"selector": "parameter", "format": ["camelCase"], "modifiers":["unused"], "leadingUnderscore": "allow"},
-			],
-			"@typescript-eslint/no-restricted-types": "off",
-			"@typescript-eslint/member-ordering": "off",
-			"@typescript-eslint/no-unused-vars": "warn",
+			],			"@typescript-eslint/no-confusing-void-expression": ["error", {"ignoreArrowShorthand": true}],
 			"@typescript-eslint/no-redeclare": "off",
+			"@typescript-eslint/no-restricted-types": "off",
+			"@typescript-eslint/no-unsafe-assignment": "off",
+			"@typescript-eslint/no-unsafe-call": "off",
+			"@typescript-eslint/no-unused-vars": "warn",
+			"@typescript-eslint/switch-exhaustiveness-check": ["error",
+				{
+					"allowDefaultCaseForExhaustiveSwitch": false,
+					"considerDefaultExhaustiveForUnions": true,
+					"requireDefaultForNonUnion": true,
+				}
+			],
 		}
 	},
 ];
