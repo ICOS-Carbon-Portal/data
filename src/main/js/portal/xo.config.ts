@@ -55,6 +55,7 @@ const xoConfig: FlatXoConfig = [
 			"@stylistic/quotes": "off",
 			"capitalized-comments": "off",
 			"import-x/extensions": ["error", "never", { "fix": true }],
+			"import-x/no-anonymous-default-export": "off",
 			"import-x/order": "off",
 			"no-warning-comments": "off",
 			"prefer-destructuring": "off",
