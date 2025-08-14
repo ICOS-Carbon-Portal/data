@@ -218,7 +218,7 @@ export class StationFilterControl extends Control {
 		btnIcon.className = 'fa fa-solid fa-draw-polygon';
 		controlButton.append(btnIcon);
 
-		this.element.append(controlButton);
+		this.element.appendChild(controlButton);
 		return controlButton;
 	}
 

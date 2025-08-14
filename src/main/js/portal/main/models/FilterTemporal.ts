@@ -58,27 +58,28 @@ export default class FilterTemporal {
 	restore(dates?: SerializedFilterTemporal) {
 		if (dates === undefined) {
 			return this;
+		} else {
+			const self = this;
+
+			return Object.keys(dates).reduce<FilterTemporal>((acc, key) => {
+				switch (key) {
+					case 'df':
+						return acc.withDataTimeFrom(new Date(dates[key]!));
+
+					case 'dt':
+						return acc.withDataTimeTo(new Date(dates[key]!));
+
+					case 'sf':
+						return acc.withSubmissionFrom(new Date(dates[key]!));
+
+					case 'st':
+						return acc.withSubmissionTo(new Date(dates[key]!));
+
+					default:
+						return self;
+				}
+			}, self);
 		}
-		const self = this;
-
-		return Object.keys(dates).reduce<FilterTemporal>((acc, key) => {
-			switch (key) {
-				case 'df':
-					return acc.withDataTimeFrom(new Date(dates[key]!));
-
-				case 'dt':
-					return acc.withDataTimeTo(new Date(dates[key]!));
-
-				case 'sf':
-					return acc.withSubmissionFrom(new Date(dates[key]!));
-
-				case 'st':
-					return acc.withSubmissionTo(new Date(dates[key]!));
-
-				default:
-					return self;
-			}
-		}, self);
 	}
 
 	get dataTime() {

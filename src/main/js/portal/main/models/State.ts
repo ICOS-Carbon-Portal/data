@@ -393,9 +393,9 @@ const allowlistJsonHash = (hash: any): JsonHashState => {
 			allowedHash[key as keyof JsonHashState] = hash[key];
 		}
 	}
-	allowedHash.previewSettings = (allowedHash.previewSettings
-		? {...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps}
-		: ps);
+	allowedHash.previewSettings = (allowedHash.previewSettings ?
+		{...Preview.allowlistPreviewSettings(allowedHash.previewSettings), ...ps} :
+		ps);
 
 	return allowedHash;
 };
@@ -438,10 +438,10 @@ const specialCases = (state: Partial<StateSerialized>) => {
 			previewSettings: state.previewSettings,
 			itemsToAddToCart: state.itemsToAddToCart
 		};
+	} else {
+		delete state.preview;
+		delete state.previewSettings;
 	}
-	delete state.preview;
-	delete state.previewSettings;
-
 
 	if (state.route === 'cart') {
 		return {
@@ -525,8 +525,9 @@ const shortenUrls = (state: Partial<StateSerialized> = ({} as Partial<StateSeria
 				throw new Error(`Could not find prefix for ${value}`);
 			}
 			return prefixObj.prefix + value.slice(prefixObj.value.length);
+		} else {
+			return value.slice(prefix.length);
 		}
-		return value.slice(prefix.length);
 	});
 
 const extendUrls = (state: State) => managePrefixes(state,
@@ -542,8 +543,9 @@ const extendUrls = (state: State) => managePrefixes(state,
 				throw new Error(`Could not find prefix for ${value}`);
 			}
 			return prefixObj.value + value.slice(1);
+		} else {
+			return prefix + value;
 		}
-		return prefix + value;
 	});
 
 const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial<StateSerialized>), transform: (pref: CategPrefix, value: string) => string) => {
@@ -572,8 +574,9 @@ const managePrefixes = (state: State | Partial<StateSerialized> = ({} as Partial
 						}
 
 						return transform(prefix, value);
+					} else {
+						return value;
 					}
-					return value;
 				});
 			}
 

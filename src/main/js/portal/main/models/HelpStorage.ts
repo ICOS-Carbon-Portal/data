@@ -155,8 +155,8 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('project', projectDescr[envri], undefined, []),
 
-	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. '
-		+ 'Typically, all data except elaborated products have a station of origin.'),
+	new HelpItem('station', 'If applicable, the research station that produced the original data for this data object. ' +
+		'Typically, all data except elaborated products have a station of origin.'),
 
 	new HelpItem(
 		'stationclass',
@@ -184,13 +184,13 @@ const initItems: HelpItem[] = [
 		}
 	),
 
-	new HelpItem('submitter', 'Organization credited for submission of the data object. '
-		+ 'Acquisition and production are credited independently of submission.'),
+	new HelpItem('submitter', 'Organization credited for submission of the data object. ' +
+		'Acquisition and production are credited independently of submission.'),
 
-	new HelpItem('type', 'Kind of data object. Encompasses most of characteristics related to data content, '
-		+ 'that can be shared by multiple data objects, namely: '
-		+ `${titles.project}, ${titles.theme}, ${titles.level}, ${titles.format}, and `
-		+ '(in the case of tabular data with well-defined content) the list of columns.'),
+	new HelpItem('type', 'Kind of data object. Encompasses most of characteristics related to data content, ' +
+		'that can be shared by multiple data objects, namely: ' +
+		`${titles.project}, ${titles.theme}, ${titles.level}, ${titles.format}, and ` +
+		'(in the case of tabular data with well-defined content) the list of columns.'),
 
 	new HelpItem(
 		'level',
@@ -200,32 +200,32 @@ const initItems: HelpItem[] = [
 			? [
 				{
 					label: 0 as Int,
-					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in'
-						+ ` subsequent processing. Stored internally but not distributed by ${projectStr}.Data are in physical units either directly provided`
-						+ ' by the instruments or converted from engineer units.'
+					comment: 'Unprocessed instrument or digtalized data at full time resolution with all available supplemental information to be used in' +
+						` subsequent processing. Stored internally but not distributed by ${projectStr}.Data are in physical units either directly provided` +
+						' by the instruments or converted from engineer units.'
 				},
 				{
 					label: 1 as Int,
-					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are'
-						+ ' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of'
-						+ ` intended for internal use  and normally not distributed by ${projectStr}.`
+					comment: 'Calibrated, quality filtered internal working data in physical units. In case L0 data are already calibrated, L0 and L1 are' +
+						' identical. L1 is internal working data that is generated as intermediate steps in the data processing for Level 2. Level 1 data is of' +
+						` intended for internal use  and normally not distributed by ${projectStr}.`
 				},
 				{
 					label: 2 as Int,
-					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,'
-						+ ` and within SITES community agreed, spatial and temporal output units and resolution. Distributed by ${projectStr}.`
+					comment: 'Quality checked SITES data product. It is calibrated, quality filtered data in physical units, a aggregated to appropariate,' +
+						` and within SITES community agreed, spatial and temporal output units and resolution. Distributed by ${projectStr}.`
 				},
 				{
 					label: 3 as Int,
-					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from'
-						+ ` SITES L1 or L2 data  Distributed by ${projectStr}.`
+					comment: 'Environmental variables or products produced by SITES or anywere in the scientific community. The product is derived from' +
+						` SITES L1 or L2 data  Distributed by ${projectStr}.`
 				}
 			]
 			: [
 				{
 					label: 0 as Int,
-					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to'
-						+ ' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
+					comment: 'Data in physical units either directly provided by the instruments or converted from engineer units (e.g. mV, mA, Ω) to' +
+						' physical units at the Thematic Centre. They may have been filtered by a quality check (e.g. thresholds).',
 				},
 				{
 					label: 1 as Int,
@@ -233,8 +233,8 @@ const initItems: HelpItem[] = [
 				},
 				{
 					label: 2 as Int,
-					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is`
-						+ ' the ICOS-data product and free available for users.',
+					comment: `The final quality checked ICOS RI data set, published by the CFs, to be distributed through ${projectStr}. This level is` +
+						' the ICOS-data product and free available for users.',
 				},
 				{
 					label: 3 as Int,
@@ -246,24 +246,24 @@ const initItems: HelpItem[] = [
 
 	new HelpItem('format', 'Technical file format, indicating which software module is needed to read the data'),
 
-	new HelpItem('variable', 'Variable used in the actual data objects, such as column name in a tabular time-series dataset. '
-		+ 'Usually a plain variable name, but can also refer to a group of variables using a regular expression. '
-		+ 'May be defined as optional, in which case explicitly selecting the variable is necessary to find the data objects that actually do contain it.'),
+	new HelpItem('variable', 'Variable used in the actual data objects, such as column name in a tabular time-series dataset. ' +
+		'Usually a plain variable name, but can also refer to a group of variables using a regular expression. ' +
+		'May be defined as optional, in which case explicitly selecting the variable is necessary to find the data objects that actually do contain it.'),
 
-	new HelpItem('valType', 'A specific kind of physical quantity used in a certain scientific field. '
-		+ 'When applicable, is associated with a fixed unit of measurement and/or a single quantity kind.'),
+	new HelpItem('valType', 'A specific kind of physical quantity used in a certain scientific field. ' +
+		'When applicable, is associated with a fixed unit of measurement and/or a single quantity kind.'),
 
 	new HelpItem(
 		'quantityUnit',
-		'Unit of measurement of the physical quantity behind the variable in question. '
-		+ nonStrictnessWarning(titles.quantityUnit)
+		'Unit of measurement of the physical quantity behind the variable in question. ' +
+		nonStrictnessWarning(titles.quantityUnit)
 	),
 
 	new HelpItem(
 		'quantityKind',
-		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. '
-		+ 'Implies an associated physical quantity dimension but does not have a fixed unit of measurement. '
-		+ nonStrictnessWarning(titles.quantityKind),
+		'A general kind of physical quantity, for example volume, length, concentration. Can be basic or derived, standard or non-standard. ' +
+		'Implies an associated physical quantity dimension but does not have a fixed unit of measurement. ' +
+		nonStrictnessWarning(titles.quantityKind),
 		undefined,
 		[]
 	),
@@ -287,8 +287,8 @@ const initItems: HelpItem[] = [
 			},
 			{
 				label: 'multi-object preview',
-				comment: 'tabular objects of the same data type can be previewed simultaneously; if coming from the same station and from disjoint time intervals, '
-					+ 'the datasets are concatenated, otherwise, presented as different plot lines'
+				comment: 'tabular objects of the same data type can be previewed simultaneously; if coming from the same station and from disjoint time intervals, ' +
+					'the datasets are concatenated, otherwise, presented as different plot lines'
 			},
 			{
 				label: 'adding to cart (logged-in users)',
@@ -299,16 +299,16 @@ const initItems: HelpItem[] = [
 
 	new HelpItem(
 		'samplingHeight',
-		'Only applicable for data sampled at various heights (mostly atmospheric data). The filter accepts decimal numbers, using "." as decimal character and'
-		+ ' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
+		'Only applicable for data sampled at various heights (mostly atmospheric data). The filter accepts decimal numbers, using "." as decimal character and' +
+		' can be specified in three different ways. All filtering is inclusive. The filter "<50" will return data objects sampled at height 50 or less.',
 		undefined,
 		numberFilterList
 	),
 
 	new HelpItem(
 		'fileSize',
-		'The filter accepts decimal numbers, using "." as decimal character and can be specified in three different ways. All filtering is inclusive. '
-		+ 'The filter "<50000" will return data objects with a file size of 50 000 or less.',
+		'The filter accepts decimal numbers, using "." as decimal character and can be specified in three different ways. All filtering is inclusive. ' +
+		'The filter "<50000" will return data objects with a file size of 50 000 or less.',
 		undefined,
 		numberFilterList
 	),
@@ -335,8 +335,8 @@ const initItems: HelpItem[] = [
 			comment: 'you can only download the tabular data as CSV if you are logged in with the portal and have accepted the license agreement in your user profile'
 		}, {
 			label: 'disclaimer',
-			comment: `CSV download is an extra service offered by ${projectStr} on a best-effort basis; `
-				+ 'the CSV is typically an abridged (some columns may not be available) and transformed version of the original (even if the latter is a CSV)'
+			comment: `CSV download is an extra service offered by ${projectStr} on a best-effort basis; ` +
+				'the CSV is typically an abridged (some columns may not be available) and transformed version of the original (even if the latter is a CSV)'
 		}]
 	),
 
@@ -346,11 +346,11 @@ const initItems: HelpItem[] = [
 	),
 
 	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
-	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, `
-		+ 'or just the suffix (24 characters). Full URLs including the PID/DOI web resolver gateways (doi.org or hdl.handle.net) are permitted as well.'),
+	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, ` +
+		'or just the suffix (24 characters). Full URLs including the PID/DOI web resolver gateways (doi.org or hdl.handle.net) are permitted as well.'),
 ];
 
 function nonStrictnessWarning(title: string): string {
-	return `Note that ${title} selection does not filter data objects strictly, there may be false positives in the results. `
-		+ `To avoid them, also filter by either ${titles.valType} or ${titles.variable}.`;
+	return `Note that ${title} selection does not filter data objects strictly, there may be false positives in the results. ` +
+		`To avoid them, also filter by either ${titles.valType} or ${titles.variable}.`;
 }

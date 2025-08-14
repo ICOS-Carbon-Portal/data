@@ -91,7 +91,7 @@ export default class Preview {
 		return new Preview(items, options, type);
 	}
 
-	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[]) {
+	initPreview(lookup: PreviewLookup, cart: Cart, ids: UrlStr[], objectsTable: KnownDataObject[], yAxis?: string, y2Axis?: string) {
 		const objects = ids.map(id => {
 			const objInfo = objectsTable.find(ot => ot.dobj.endsWith(id));
 
@@ -136,8 +136,7 @@ export default class Preview {
 					previewItems = items.map(i => i.withUrl(url));
 				}
 				return new Preview(previewItems, options.options, options.type);
-			}
-			if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM) {
+			} else if (options.type === config.NETCDF || options.type === config.MAPGRAPH || options.type === config.PHENOCAM) {
 				return new Preview(items, options.options, options.type);
 			}
 		} else {
@@ -148,10 +147,7 @@ export default class Preview {
 	}
 
 	restore(lookup: PreviewLookup, cart: Cart, objectsTable: KnownDataObject[]) {
-		if (this.hasPids) {
-			return this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable);
-		}
-		return this;
+		return this.hasPids ? this.initPreview(lookup, cart, this.pids.map(pid => config.objectUriPrefix[config.envri] + pid), objectsTable) : this;
 	}
 
 	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings) {

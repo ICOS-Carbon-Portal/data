@@ -58,6 +58,7 @@ const xoConfig: FlatXoConfig = [
 			"import-x/extensions": ["error", "never", { "fix": true }],
 			"import-x/no-anonymous-default-export": "off",
 			"import-x/order": "off",
+			"no-else-return": "off",
 			"no-warning-comments": "off",
 			"prefer-destructuring": "off",
 			"promise/prefer-await-to-then": "off",

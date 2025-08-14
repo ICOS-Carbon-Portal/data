@@ -2,7 +2,7 @@ import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
 import {type Collection, type Feature} from 'ol';
 import {
-	type LabelLookup, type MapProps, State, type StationPos4326Lookup
+	type LabelLookup, type MapProps, type StationPos4326Lookup
 } from './State';
 import {type UrlStr} from '../backend/declarations';
 import {difference, throwError} from '../utils';
@@ -32,7 +32,6 @@ import {
 	type SupportedSRIDs
 } from "icos-cp-ol";
 import type VectorSource from 'ol/source/Vector';
-import type Geometry from 'ol/geom/Geometry';
 
 
 export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void;
@@ -307,7 +306,7 @@ export default class InitMap {
 				root.setAttribute('class', 'ol-layer-control-basemaps');
 				const lbl = document.createElement('label');
 				lbl.innerHTML = 'Base maps';
-				root.append(lbl);
+				root.appendChild(lbl);
 
 				baseMaps.forEach(bm => {
 					const row = document.createElement('div');
@@ -322,17 +321,17 @@ export default class InitMap {
 						radio.setAttribute('checked', 'true');
 					}
 					radio.addEventListener('change', () => self.toggleBaseMaps(bm.get('id')));
-					row.append(radio);
+					row.appendChild(radio);
 
 					const lbl = document.createElement('label');
 					lbl.setAttribute('for', id);
 					lbl.innerHTML = bm.get('label');
-					row.append(lbl);
+					row.appendChild(lbl);
 
-					root.append(row);
+					root.appendChild(row);
 				});
 
-				self.layersDiv.append(root);
+				self.layersDiv.appendChild(root);
 			}
 
 			if (toggles.length > 0) {
@@ -350,19 +349,19 @@ export default class InitMap {
 						toggle.setAttribute('checked', 'true');
 					}
 					toggle.addEventListener('change', () => self.toggleLayers(toggleLayer.get('id'), toggle.checked));
-					row.append(toggle);
+					row.appendChild(toggle);
 
 					if (legendItem) {
 						const legendItemContainer = document.createElement('span');
 						legendItemContainer.setAttribute('style', 'display:table-cell; width:21px; text-align:center;');
 						legendItem.id = id.replace('toggle', 'canvas');
 						legendItem.setAttribute('style', 'vertical-align:sub; margin-right:unset;');
-						legendItemContainer.append(legendItem);
-						row.append(legendItemContainer);
+						legendItemContainer.appendChild(legendItem);
+						row.appendChild(legendItemContainer);
 					} else {
 						const emptyCell = document.createElement('span');
 						emptyCell.setAttribute('style', 'display:table-cell; width:5px;');
-						row.append(emptyCell);
+						row.appendChild(emptyCell);
 					}
 
 					const lbl = document.createElement('label');
@@ -371,17 +370,17 @@ export default class InitMap {
 
 					const lblTxt = document.createElement('span');
 					lblTxt.innerHTML = toggleLayer.get('label');
-					lbl.append(lblTxt);
-					row.append(lbl);
+					lbl.appendChild(lblTxt);
+					row.appendChild(lbl);
 
-					root.append(row);
+					root.appendChild(row);
 				};
 
 				const root = document.createElement('div');
 				root.setAttribute('class', 'ol-layer-control-toggles');
 				const lbl = document.createElement('label');
 				lbl.innerHTML = 'Layers';
-				root.append(lbl);
+				root.appendChild(lbl);
 
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
@@ -390,7 +389,7 @@ export default class InitMap {
 					.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
 					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource>));
 
-				self.layersDiv.append(root);
+				self.layersDiv.appendChild(root);
 			}
 		};
 	}

@@ -143,7 +143,16 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 		return list.reduce<NumberFilterValidation>((acc, curr) => {
 			const num = /^(-?\d+\.?\d*)$/.exec(curr);
 
-			if (num !== null) {
+			if (num === null) {
+				return {
+					category,
+					txt: value,
+					type: 'list',
+					isValid: false,
+					vals: [],
+					cmp: []
+				};
+			} else {
 				return {
 					category,
 					txt: value,
@@ -153,14 +162,6 @@ const validate = (category: NumberFilterCategories, value: string): NumberFilter
 					cmp: [...acc.cmp, '=']
 				};
 			}
-			return {
-				category,
-				txt: value,
-				type: 'list',
-				isValid: false,
-				vals: [],
-				cmp: []
-			};
 		}, {
 			category,
 			txt: value,

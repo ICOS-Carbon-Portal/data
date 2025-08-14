@@ -89,8 +89,7 @@ export default class Paging {
 				cacheOffset: Math.min(offset, this._cacheOffset),
 				isDataEndReached: this._isDataEndReached
 			});
-		}
-		if (direction > 0) {
+		} else if (direction > 0) {
 			if (this._offset + this._limit >= this._objCount) {
 				return this;
 			}
@@ -101,8 +100,9 @@ export default class Paging {
 				cacheOffset: this._cacheOffset,
 				isDataEndReached: this._isDataEndReached
 			});
+		} else {
+			return this;
 		}
-		return this;
 	}
 
 	withObjCount({objCount, pageCount, filtersEnabled, isDataEndReached}: WithProps) {
