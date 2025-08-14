@@ -9,7 +9,7 @@
   "scripts": {
     "publish": "webpack --config webpack.prod.js",
     "build": "webpack --config webpack.dev.js",
-    "test": "karma start"
+    "test": "xo && karma start"
   },
   "repository": {
     "type": "git",
@@ -53,7 +53,8 @@
     "typescript": "5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
-    "webpack-merge": "^5.9.0"
+    "webpack-merge": "^5.9.0",
+    "xo": "^1.2.1"
   },
   "dependencies": {
     "deep-equal": "2.2.2",

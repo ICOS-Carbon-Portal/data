@@ -1,62 +1,63 @@
 import Select from 'ol/interaction/Select';
 import * as condition from 'ol/events/condition';
-import { Collection, Feature } from 'ol';
-import {LabelLookup, MapProps, State, StationPos4326Lookup} from './State';
-import { UrlStr } from '../backend/declarations';
-import {difference, throwError} from '../utils';
-import {Filter, Value} from './SpecTable';
-import config from '../config';
-import { Coordinate } from 'ol/coordinate';
-import Point from 'ol/geom/Point';
-import VectorLayer from 'ol/layer/Vector';
-import { CountriesTopo, getCountriesGeoJson } from '../backend';
-import { DrawFeature, StationFilterControl } from './StationFilterControl';
-import Control from 'ol/control/Control';
-import Map from 'ol/Map';
+import {type Collection, type Feature} from 'ol';
 import {
-	BaseMapId, Copyright, countryBorderStyle, countryStyle,
-	EpsgCode, getLayerWrapper,
+	type LabelLookup, type MapProps, type StationPos4326Lookup
+} from './State';
+import {type UrlStr} from '../backend/declarations';
+import {difference, throwError} from '../utils';
+import {Filter, type Value} from './SpecTable';
+import config from '../config';
+import {type Coordinate} from 'ol/coordinate';
+import type Point from 'ol/geom/Point';
+import type VectorLayer from 'ol/layer/Vector';
+import {type CountriesTopo, getCountriesGeoJson} from '../backend';
+import {type DrawFeature, StationFilterControl} from './StationFilterControl';
+import type Control from 'ol/control/Control';
+import type Map from 'ol/Map';
+import {
+	type BaseMapId, Copyright, countryBorderStyle, countryStyle,
+	type EpsgCode, getLayerWrapper,
 	esriBaseMapNames,
 	getBaseMapLayers,
 	getDefaultControls,
 	getESRICopyRight, getLayerIcon, getLayerVisibility,
 	getProjection,
 	getTransformPointFn,
-	LayerControl, LayerWrapper, LayerWrapperArgs,
-	MapOptions,
+	LayerControl, type LayerWrapper, type LayerWrapperArgs,
+	type MapOptions,
 	OLWrapper,
-	PersistedMapProps, PointData,
+	type PersistedMapProps, type PointData,
 	Popup, ProjectionControl,
-	SupportedSRIDs
+	type SupportedSRIDs
 } from "icos-cp-ol";
-import VectorSource from 'ol/source/Vector';
-import Geometry from 'ol/geom/Geometry';
+import type VectorSource from 'ol/source/Vector';
 
 
-export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void
-export type TransformPointFn = (lon: number, lat: number) => number[]
-interface MapOptionsExpanded extends Partial<MapOptions> {
+export type UpdateMapSelectedSRID = (srid: SupportedSRIDs) => void;
+export type TransformPointFn = (lon: number, lat: number) => number[];
+type MapOptionsExpanded = {
 	center?: Coordinate
 	hitTolerance: number
-}
-export interface PersistedMapPropsExtended<BMN = BaseMapId> extends PersistedMapProps<BMN> {
+} & Partial<MapOptions>;
+export type PersistedMapPropsExtended<BMN = BaseMapId> = {
 	drawFeatures?: DrawFeature[]
 	isStationFilterCtrlActive?: boolean
-}
-interface Props extends UpdateProps {
+} & PersistedMapProps<BMN>;
+type Props = {
 	stationPos4326Lookup: StationPos4326Lookup
 	labelLookup: LabelLookup
 	mapRootElement: HTMLElement
 	persistedMapProps: PersistedMapPropsExtended
 	updatePersistedMapProps: (persistedMapProps: PersistedMapPropsExtended) => void
 	updateMapSelectedSRID: UpdateMapSelectedSRID
-}
-interface UpdateProps {
+} & UpdateProps;
+type UpdateProps = {
 	allStations: UrlStr[]
 	selectedStations: UrlStr[]
 	mapProps: MapProps
-}
-export type StationPosLookup = Record<UrlStr, { coord: number[], stationLbl: string }>
+};
+export type StationPosLookup = Record<UrlStr, {coord: number[], stationLbl: string}>;
 
 const countryBordersId = 'countryBorders';
 const olMapSettings = config.olMapSettings;
@@ -64,17 +65,17 @@ const isIncludedStation = 'isIncluded';
 
 export default class InitMap {
 	public readonly olWrapper: OLWrapper;
-	private appEPSGCode: EpsgCode;
-	private mapOptions: MapOptionsExpanded;
-	private popup: Popup;
+	private readonly appEPSGCode: EpsgCode;
+	private readonly mapOptions: MapOptionsExpanded;
+	private readonly popup: Popup;
 	private readonly layerControl: LayerControl;
 	private readonly stationFilterControl: StationFilterControl;
-	private allStations: UrlStr[]
-	private selectedStations: UrlStr[]
-	private stationPosLookup: StationPosLookup
+	private allStations: UrlStr[];
+	private selectedStations: UrlStr[];
+	private stationPosLookup: StationPosLookup;
 	private countriesTopo?: CountriesTopo;
-	private persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
-	private readonly getStationPosLookup: () => StationPosLookup
+	private readonly persistedMapProps: PersistedMapPropsExtended<BaseMapId | 'Countries'>;
+	private readonly getStationPosLookup: () => StationPosLookup;
 
 	constructor(props: Props) {
 		const {mapRootElement, persistedMapProps, updatePersistedMapProps} = props;
@@ -82,13 +83,11 @@ export default class InitMap {
 		this.persistedMapProps = persistedMapProps;
 		this.fetchCountriesTopo();
 
-		this.allStations = props.allStations
-		this.selectedStations = props.selectedStations
+		this.allStations = props.allStations;
+		this.selectedStations = props.selectedStations;
 
-		const srid = persistedMapProps.srid === undefined
-			? olMapSettings.defaultSRID
-			: persistedMapProps.srid;
-		this.appEPSGCode = `EPSG:${srid}` as EpsgCode;
+		const srid = persistedMapProps.srid ?? olMapSettings.defaultSRID;
+		this.appEPSGCode = `EPSG:${srid}`;
 		const projection = getProjection(this.appEPSGCode) ?? throwError(`Projection ${this.appEPSGCode} not found`);
 
 		this.mapOptions = {
@@ -104,20 +103,22 @@ export default class InitMap {
 
 		const controls: Control[] = getDefaultControls(projection);
 
-		const pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode)
+		const pointTransformer = getTransformPointFn("EPSG:4326", this.appEPSGCode);
 		this.getStationPosLookup = () => this.allStations.reduce<StationPosLookup>(
 			(acc, st) => {
 				const latLon = props.stationPos4326Lookup[st];
-				if(latLon) acc[st] = {
-					coord: pointTransformer(latLon.lon, latLon.lat),
-					stationLbl: props.labelLookup[st]?.label ?? st
-				};
+				if (latLon) {
+					acc[st] = {
+						coord: pointTransformer(latLon.lon, latLon.lat),
+						stationLbl: props.labelLookup[st]?.label ?? st
+					};
+				}
 				return acc;
 			},
 			{}
-		)
+		);
 
-		this.stationPosLookup = this.getStationPosLookup()
+		this.stationPosLookup = this.getStationPosLookup();
 
 		this.stationFilterControl = new StationFilterControl({
 			element: document.getElementById('stationFilterCtrl') ?? undefined,
@@ -140,8 +141,9 @@ export default class InitMap {
 		});
 		controls.push(this.layerControl);
 
-		if (Object.keys(olMapSettings.sridsInMap).length > 1)
+		if (Object.keys(olMapSettings.sridsInMap).length > 1) {
 			controls.push(this.createProjectionControl(persistedMapProps, props.updateMapSelectedSRID));
+		}
 
 		const olProps = {
 			mapRootElement,
@@ -159,24 +161,27 @@ export default class InitMap {
 		this.olWrapper.map.on("moveend", e => {
 			const map = e.target as Map;
 			const view = map.getView();
-			updatePersistedMapProps({ center: view.getCenter(), zoom: view.getZoom() });
+			updatePersistedMapProps({center: view.getCenter(), zoom: view.getZoom()});
 		});
 
 		const minWidth = 600;
 		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
-		if (width < minWidth) return;
+		if (width < minWidth) {
+			return;
+		}
 
 		getESRICopyRight(esriBaseMapNames).then(attributions => {
 			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 		});
 
-		this.updatePoints(props.mapProps)
+		this.updatePoints(props.mapProps);
 	}
 
 	private async fetchCountriesTopo() {
 		// countriesTopo has geometric problems in SWEREF99 TM so skip it for SITES
-		if (config.envri === 'SITES')
+		if (config.envri === 'SITES') {
 			return;
+		}
 
 		this.countriesTopo = await getCountriesGeoJson();
 
@@ -207,7 +212,7 @@ export default class InitMap {
 
 	private toggleLayerVisibility(layerId: string): boolean {
 		const visibleToggles = this.persistedMapProps.visibleToggles;
-		return visibleToggles === undefined || visibleToggles.includes(layerId)
+		return visibleToggles === undefined || visibleToggles.includes(layerId);
 	}
 
 	private createProjectionControl(persistedMapProps: PersistedMapPropsExtended, updateMapSelectedSRID: UpdateMapSelectedSRID) {
@@ -220,7 +225,7 @@ export default class InitMap {
 	}
 
 	private updatePoints(mapProps: MapProps) {
-		const excludedUris = difference(this.allStations, this.selectedStations)
+		const excludedUris = difference(this.allStations, this.selectedStations);
 		const excludedStations = createPointData(excludedUris, this.stationPosLookup, {[isIncludedStation]: false});
 		const includedStations = createPointData(this.selectedStations, this.stationPosLookup, {[isIncludedStation]: true});
 
@@ -247,7 +252,7 @@ export default class InitMap {
 
 		this.olWrapper.addToggleLayers([includedStationsToggle, excludedStationsToggle]);
 		this.layerControl.updateCtrl();
-		this.stationFilterControl.reDrawFeaturesFromMapProps(mapProps)
+		this.stationFilterControl.reDrawFeaturesFromMapProps(mapProps);
 	}
 
 	getLayerWrapper({id, label, layerType, geoType, data, style, zIndex, interactive}: Omit<LayerWrapperArgs, 'visible'>): LayerWrapper {
@@ -269,31 +274,34 @@ export default class InitMap {
 	}
 
 	incomingPropsUpdated(props: UpdateProps): void {
-		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations)
-		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations)
+		const stationListIsSame = Filter.areEqual(this.allStations, props.allStations);
+		const spatFilterIsSame = Filter.areEqual(this.selectedStations, props.selectedStations);
 
-		if(stationListIsSame && spatFilterIsSame) return
-
-		this.allStations = props.allStations
-		this.selectedStations = props.selectedStations
-
-		if(!stationListIsSame){
-			this.stationPosLookup = this.getStationPosLookup()
+		if (stationListIsSame && spatFilterIsSame) {
+			return;
 		}
 
-		this.updatePoints(props.mapProps)
+		this.allStations = props.allStations;
+		this.selectedStations = props.selectedStations;
+
+		if (!stationListIsSame) {
+			this.stationPosLookup = this.getStationPosLookup();
+		}
+
+		this.updatePoints(props.mapProps);
 	}
 
 	updateLayerCtrl(self: LayerControl): () => void {
 		return () => {
-			if (self.map === undefined)
+			if (self.map === undefined) {
 				return;
+			}
 
 			self.layersDiv.innerHTML = '';
 			const baseMaps = self.baseMaps;
 			const toggles = self.toggles;
 
-			if (baseMaps.length) {
+			if (baseMaps.length > 0) {
 				const root = document.createElement('div');
 				root.setAttribute('class', 'ol-layer-control-basemaps');
 				const lbl = document.createElement('label');
@@ -326,8 +334,8 @@ export default class InitMap {
 				self.layersDiv.appendChild(root);
 			}
 
-			if (toggles.length) {
-				const addToggleLayer = (toggleLayer: VectorLayer<VectorSource<Feature<Geometry>>>) => {
+			if (toggles.length > 0) {
+				const addToggleLayer = (toggleLayer: VectorLayer<VectorSource>) => {
 					const legendItem = getLayerIcon(toggleLayer);
 					const row = document.createElement('div');
 					row.setAttribute('style', 'display:table;');
@@ -376,10 +384,10 @@ export default class InitMap {
 
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Feature<Geometry>>>));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource>));
 				toggles
 					.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
-					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource<Feature<Geometry>>>));
+					.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource>));
 
 				self.layersDiv.appendChild(root);
 			}
@@ -400,7 +408,9 @@ export default class InitMap {
 		map.addInteraction(select);
 
 		select.on('select', e => {
-			if (popupOverlay === undefined) return;
+			if (popupOverlay === undefined) {
+				return;
+			}
 
 			const features: Collection<Feature<Point>> = e.target.getFeatures();
 			const numberOfFeatures = features.getLength();
@@ -416,11 +426,11 @@ export default class InitMap {
 					Name: name
 				});
 
-				if (numberOfFeatures > 1)
+				if (numberOfFeatures > 1) {
 					popup.addTxtToContent(`Zoom in to see ${numberOfFeatures - 1} more`);
+				}
 
 				popupOverlay.setPosition(feature.getGeometry()?.getCoordinates() ?? e.mapBrowserEvent.coordinate);
-
 			} else {
 				popupOverlay.setPosition(undefined);
 			}
@@ -435,9 +445,9 @@ export default class InitMap {
 function createPointData(stations: Value[], stationPosLookup: StationPosLookup, additionalAttributes: PointData['attributes'] = {}): PointData[] {
 	return stations.reduce<PointData[]>((acc, st) => {
 		if (st && stationPosLookup[st]) {
-			const { coord, ...attributes } = stationPosLookup[st];
+			const {coord, ...attributes} = stationPosLookup[st];
 			acc.push({
-				coord: coord,
+				coord,
 				attributes: {
 					id: st,
 					...attributes,
@@ -447,4 +457,4 @@ function createPointData(stations: Value[], stationPosLookup: StationPosLookup, 
 		}
 		return acc;
 	}, []);
-};
+}

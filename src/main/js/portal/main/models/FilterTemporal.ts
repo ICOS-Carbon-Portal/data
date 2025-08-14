@@ -1,7 +1,7 @@
-import { TemporalFilterRequest } from "./FilterRequest";
+import {type TemporalFilterRequest} from "./FilterRequest";
 import config from "../config";
 
-export type SerializedFilterTemporal = { df?: string, dt?: string, sf?: string, st?: string }
+export type SerializedFilterTemporal = {df?: string, dt?: string, sf?: string, st?: string};
 const defaultMaxSamplingDate = config.features.setMaxSamplingDateToToday ? new Date() : undefined;
 
 export default class FilterTemporal {
@@ -9,17 +9,25 @@ export default class FilterTemporal {
 	private readonly _submission: FromToDates;
 
 	constructor(dataTime?: FromToDates, submission?: FromToDates) {
-		this._dataTime = dataTime || new FromToDates(undefined, undefined, defaultMaxSamplingDate);
-		this._submission = submission || new FromToDates(undefined, undefined, new Date());
+		this._dataTime = dataTime ?? new FromToDates(undefined, undefined, defaultMaxSamplingDate);
+		this._submission = submission ?? new FromToDates(undefined, undefined, new Date());
 	}
 
 	get serialize() {
 		const res: SerializedFilterTemporal = {};
 
-		if (this._dataTime.from) res.df = this._dataTime.fromDateStr;
-		if (this._dataTime.to) res.dt = this._dataTime.toDateStr;
-		if (this._submission.from) res.sf = this._submission.fromDateStr;
-		if (this._submission.to) res.st = this._submission.toDateStr;
+		if (this._dataTime.from) {
+			res.df = this._dataTime.fromDateStr;
+		}
+		if (this._dataTime.to) {
+			res.dt = this._dataTime.toDateStr;
+		}
+		if (this._submission.from) {
+			res.sf = this._submission.fromDateStr;
+		}
+		if (this._submission.to) {
+			res.st = this._submission.toDateStr;
+		}
 
 		return res;
 	}
@@ -29,7 +37,7 @@ export default class FilterTemporal {
 			new FromToDates(jsonFilterTemporal.df, jsonFilterTemporal.dt, defaultMaxSamplingDate),
 			new FromToDates(jsonFilterTemporal.sf, jsonFilterTemporal.st, new Date())
 		);
-	};
+	}
 
 	withDataTimeFrom(from: PotentialDate) {
 		return new FilterTemporal(this._dataTime.withFrom(from), this._submission);
@@ -56,16 +64,16 @@ export default class FilterTemporal {
 			return Object.keys(dates).reduce<FilterTemporal>((acc, key) => {
 				switch (key) {
 					case 'df':
-						return acc.withDataTimeFrom(new Date(dates[key] as string));
+						return acc.withDataTimeFrom(new Date(dates[key]!));
 
 					case 'dt':
-						return acc.withDataTimeTo(new Date(dates[key] as string));
+						return acc.withDataTimeTo(new Date(dates[key]!));
 
 					case 'sf':
-						return acc.withSubmissionFrom(new Date(dates[key] as string));
+						return acc.withSubmissionFrom(new Date(dates[key]!));
 
 					case 'st':
-						return acc.withSubmissionTo(new Date(dates[key] as string));
+						return acc.withSubmissionTo(new Date(dates[key]!));
 
 					default:
 						return self;
@@ -98,11 +106,11 @@ export default class FilterTemporal {
 				to: this._submission.to,
 				toDateTimeStr: this._submission.toDateTimeStr
 			}
-		]
+		];
 	}
 
 	get hasFilter() {
-		return !!this._dataTime.from || !!this._dataTime.to || !!this._submission.from || !!this._submission.to;
+		return Boolean(this._dataTime.from) || Boolean(this._dataTime.to) || Boolean(this._submission.from) || Boolean(this._submission.to);
 	}
 }
 
@@ -133,7 +141,7 @@ export class FromToDates {
 
 	get fromDateStr() {
 		// Jasmine test cannot handle toLocaleDateString('se-SE')
-		return this._from ? this._from.toISOString().substr(0, 10) : undefined;
+		return this._from ? this._from.toISOString().slice(0, 10) : undefined;
 	}
 
 	get fromDateTimeStr() {
@@ -146,7 +154,7 @@ export class FromToDates {
 
 	get toDateStr() {
 		// Jasmine test cannot handle toLocaleDateString('se-SE')
-		return this._to ? this._to.toISOString().substr(0, 10) : undefined;
+		return this._to ? this._to.toISOString().slice(0, 10) : undefined;
 	}
 
 	get toDateTimeStr() {
@@ -159,7 +167,9 @@ export class FromToDates {
 }
 
 const createDate = (potentialDate: PotentialDate) => {
-	if (potentialDate === undefined) return undefined;
+	if (potentialDate === undefined) {
+		return undefined;
+	}
 
 	return potentialDate instanceof Date
 		? potentialDate
