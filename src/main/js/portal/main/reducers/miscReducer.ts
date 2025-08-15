@@ -80,6 +80,7 @@ const handleMiscUpdateSearchOption = (state: State, payload: MiscUpdateSearchOpt
 
 	return {
 		searchOptions,
+		checkedObjectsInSearch: [],
 		...getNewPaging(state.paging, state.page, state.specTable, true),
 	};
 };

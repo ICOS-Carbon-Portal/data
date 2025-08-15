@@ -24,24 +24,30 @@ export default function(state: State, payload: FiltersPayload): State{
 			filterPids: payload.selectedPids,
 			paging: state.paging
 				.withFiltersEnabled(isInPidFilteringMode(state.tabs, state.filterPids))
-				.withOffset(0)
+				.withOffset(0),
+			checkedObjectsInSearch: []
 		});
 	}
 
 	if (payload instanceof FiltersUpdateFileName) {
 		return stateUtils.update(state, {
-			filterFileName: payload.fileName
+			filterFileName: payload.fileName,
+			checkedObjectsInSearch: []
 		});
 	}
 
 	if (payload instanceof FiltersNumber){
 		return stateUtils.update(state, {
-			filterNumbers: state.filterNumbers.withFilter(payload.numberFilter)
+			filterNumbers: state.filterNumbers.withFilter(payload.numberFilter),
+			checkedObjectsInSearch: []
 		});
 	}
 
 	if (payload instanceof FilterKeywords){
-		return stateUtils.update(state, {filterKeywords: payload.filterKeywords});
+		return stateUtils.update(state, {
+			filterKeywords: payload.filterKeywords,
+			checkedObjectsInSearch: []
+		});
 	}
 
 	return state;
