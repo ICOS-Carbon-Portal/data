@@ -126,10 +126,13 @@ const handleObjectsFetched = (state: State, payload: BackendObjectsFetched) => {
 		return {...ot, ...spec};
 	});
 
+	const filtersEnabled = isInPidFilteringMode(state.tabs, state.filterPids);
+	const objCount = filtersEnabled && state.filterPids ? state.filterPids.length : getObjCount(state.specTable);
+
 	const paging = state.paging.withObjCount({
-		objCount: getObjCount(state.specTable),
+		objCount,
 		pageCount: payload.objectsTable.length,
-		filtersEnabled: isInPidFilteringMode(state.tabs, state.filterPids),
+		filtersEnabled,
 		isDataEndReached: payload.isDataEndReached
 	});
 
