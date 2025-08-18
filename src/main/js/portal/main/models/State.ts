@@ -459,6 +459,8 @@ const specialCases = (state: Partial<StateSerialized>) => {
 
 	if (state.filterFileName === "") {
 		delete state.filterFileName;
+	} else {
+		delete state.filterPids;
 	}
 
 	return state;
