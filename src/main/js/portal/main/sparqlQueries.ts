@@ -448,7 +448,7 @@ function getTempFilterConds(filter: TemporalFilterRequest): string {
 
 function getVarFilter(filter: VariableFilterRequest): string {
 	function cond(varName: string): string {
-		if (varName.startsWith("^") && varName.endsWith("$")) {
+		if (varName.startsWith("^") || varName.endsWith("$") || varName.includes("\\")) {
 			const patt = varName.replace(/\\/gi, '\\\\');
 			return `regex(?varName, "${patt}")`
 		} else
