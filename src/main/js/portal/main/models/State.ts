@@ -30,6 +30,7 @@ export const portalHistoryState = new PortalHistoryState(config.portalHistorySta
 const hashKeys = [
 	'route',
 	'filterCategories',
+	'filterFileName',
 	'filterTemporal',
 	'filterPids',
 	'filterNumbers',
@@ -366,6 +367,7 @@ const simplifyState = (state: State) => {
 type JsonHashState = {
 	route?: Route
 	filterCategories?: CategFilters
+	filterFileName?: string
 	filterTemporal?: SerializedFilterTemporal
 	filterPids?: Sha256Str
 	filterNumbers?: FilterNumberSerialized[]
@@ -455,6 +457,12 @@ const specialCases = (state: Partial<StateSerialized>) => {
 		delete state.route;
 	}
 
+	if (state.filterFileName === "") {
+		delete state.filterFileName;
+	} else {
+		delete state.filterPids;
+	}
+
 	return state;
 };
 
@@ -466,7 +474,6 @@ const hashUpdater = (store: Store) => () => {
 	const state: State = store.getState();
 	let newHash = stateToHash(state);
 	const oldHash = getCurrentHash();
-	
 
 	if (newHash !== oldHash) {
 		newHash = newHash === '' ? '' : "#" + encodeURIComponent(newHash);

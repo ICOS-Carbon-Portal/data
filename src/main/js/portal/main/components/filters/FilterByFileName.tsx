@@ -15,6 +15,9 @@ export default class FilterByFileName extends Component<OurProps> {
 		super(props);
 
 		this.makeQueryDebounced = debounce(this.makeQuery.bind(this));
+		if (this.props.filterFileName) {
+			this.props.updateFileName(this.props.filterFileName);
+		}
 	}
 
 	private makeQuery(ev: ChangeEvent<HTMLInputElement>){
