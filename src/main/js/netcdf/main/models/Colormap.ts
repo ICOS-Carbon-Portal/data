@@ -10,7 +10,7 @@ export default class Colormap{
 	readonly colorize: (normalizedValue: number) => RGBA
 
 	constructor(
-		readonly name: String,
+		readonly name: string,
 		readonly colorizePlainly: (normalizedValue: number) => RGBA,
 		readonly isForDivergingData: boolean,
 		readonly gamma: number = 1

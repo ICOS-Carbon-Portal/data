@@ -81,12 +81,13 @@ export interface State {
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
 	initSearchParams: {
-		varName: string
-		date: string
-		gamma: string
-		center: string
-		zoom: string
-		color: string
+		varName?: string
+		date?: string
+		gamma?: string
+		center?: string
+		zoom?: string
+		color?: string
+		extraDim?: string
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
@@ -122,6 +123,7 @@ const defaultState: State = {
 		center: searchParams.center,
 		zoom: searchParams.zoom,
 		color: searchParams.color,
+		extraDim: searchParams.extraDim,
 	},
 	playingMovie: false,
 	rasterFetchCount: 0,
