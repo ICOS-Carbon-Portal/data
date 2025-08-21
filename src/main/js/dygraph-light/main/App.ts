@@ -322,7 +322,7 @@ export default class App {
 						return this.labelMaker.hasY2
 							? [new Date(subrow[0]), subrow[1], subrow[2]]
 							: [new Date(subrow[0]), subrow[1]];
-					}));
+					})).filter(d => !Number.isNaN(d[0]));
 
 				} else {
 					return binTables.flatMap(binTable => binTable.values(colIndices, subrow => {
@@ -333,7 +333,8 @@ export default class App {
 							allY2ValsAreNaN = allY2ValsAreNaN && isNaN(subrow[2] as number);
 
 						return subrow as number[];
-					})).sort((d1, d2) => d1[0] - d2[0]);
+					})).sort((d1, d2) => d1[0] - d2[0])
+						.filter(d => !Number.isNaN(d[0]));
 				}
 
 			} else {
@@ -359,7 +360,10 @@ export default class App {
 					});
 				});
 
-				return Array.from(dateList).map(([k, v]) => [k].concat(v.flat(1))).sort((d1, d2) => d1[0] - d2[0]);
+				return Array.from(dateList)
+					.map(([k, v]) => [k].concat(v.flat(1)))
+					.sort((d1, d2) => d1[0] - d2[0])
+					.filter(d => !Number.isNaN(d[0]));
 			}
 		};
 
