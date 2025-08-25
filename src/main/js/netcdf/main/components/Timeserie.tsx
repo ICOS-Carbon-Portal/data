@@ -1,5 +1,5 @@
-import React, { Component, CSSProperties, useState } from 'react';
-import Draggable from './Draggable';
+import React, { CSSProperties, useState } from 'react';
+import Draggable from 'icos-cp-draggable';
 import {drawGraph} from '../models/Dygraphs';
 import deepequal from 'deep-equal';
 import {ReactSpinner} from 'icos-cp-spinner';
@@ -61,7 +61,7 @@ const isEmpty = (timeserieData: TimeserieData[] | undefined) => {
 
 function initialPos(draggableStyle: CSSProperties, parentElementId: string) {
 	return (draggableRoot: HTMLElement) => {
-		if (draggableStyle) {
+		if ("left" in draggableStyle) {
 			return draggableStyle;
 		}
 
