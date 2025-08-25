@@ -37,7 +37,11 @@ const previewSettingsKeys = [
 	'color',
 	'y1',
 	'map'
-] as readonly string[];
+] as const;
+
+function isPreviewSetting(key: string): key is keyof PreviewSettings {
+	return previewSettingsKeys.includes(key as keyof PreviewSettings);
+}
 
 export type PreviewSettings = Record<typeof previewSettingsKeys[number], string | undefined>;
 
@@ -47,6 +51,11 @@ export interface PreviewSerialized {
 	type: PreviewType | undefined
 	previewSettings: PreviewSettings
 }
+
+function fromEntries<K extends string, V>(entries: [K, V][]): Record<K, V> {
+	return Object.fromEntries(entries) as Record<K, V>;
+}
+
 
 export default class Preview {
 	public readonly items: CartItem[];
@@ -60,13 +69,14 @@ export default class Preview {
 		this.pids = this.items.map(item => getLastSegmentInUrl(item.dobj));
 		this.options = options ?? [];
 		this.type = type;
-		this.previewSettings = this.item?.urlParams ? Preview.allowlistPreviewSettings(this.item.urlParams) : {};
+		this.previewSettings = Preview.buildPreviewSettings(this.item?.urlParams);
 	}
 
-	static allowlistPreviewSettings(urlParams: IdxSig | PreviewSettings): PreviewSettings {
-		const allowedPreviewSettings: PreviewSettings = {};
+	static buildPreviewSettings(urlParams?: Partial<PreviewSettings>): PreviewSettings {
+		const allowedPreviewSettings: PreviewSettings = fromEntries(previewSettingsKeys.map(k => [k, undefined]));
+
 		for (const key in urlParams) {
-			if (previewSettingsKeys.includes(key)) {
+			if (isPreviewSetting(key)) {
 				allowedPreviewSettings[key] = urlParams[key];
 			}
 		}
@@ -155,7 +165,7 @@ export default class Preview {
 
 	withPids(pids: Sha256Str[], previewSettings?: PreviewSettings){
 		this.pids = pids;
-		this.previewSettings = previewSettings ?? {};
+		this.previewSettings = Preview.buildPreviewSettings(previewSettings);
 		return this;
 	}
 
