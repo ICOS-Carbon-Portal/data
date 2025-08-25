@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ColormapControl } from '../models/ControlsHelper';
 import Colormap from '../models/Colormap';
 
@@ -8,11 +8,7 @@ type DropdownColorsProps = {
 };
 
 export default function DropdownColors(props: DropdownColorsProps) {
-	function handleOutsideClick(e: PointerEvent) {
-		if (node.current && !node.current.contains(e.target as Node) && dropdownOpen) {
-			setDropdownOpen(false);
-		}
-	}
+
 
 	function onDropdownClick(e: React.MouseEvent<HTMLButtonElement>) {
 		setDropdownOpen(!dropdownOpen);
@@ -25,13 +21,19 @@ export default function DropdownColors(props: DropdownColorsProps) {
 		}
 	}
 
-	function componentWillUnmount(){
-		document.removeEventListener('click', handleOutsideClick, false);
-	}
-
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 
-	document.addEventListener('click', handleOutsideClick, false);
+	useEffect(() => {
+		function handleOutsideClick(e: Event) {
+			if (node.current && !node.current.contains(e.target as Node) && dropdownOpen) {
+				setDropdownOpen(false);
+			}
+		}
+
+		document.addEventListener('click', handleOutsideClick, false);
+		return () => document.removeEventListener('click', handleOutsideClick, false);
+	});
+
 	const {control} = props;
 	const dropDownMenuCls = `dropdown-menu${dropdownOpen ? ' show' : ''}`;
 	const colorMap = control.selected

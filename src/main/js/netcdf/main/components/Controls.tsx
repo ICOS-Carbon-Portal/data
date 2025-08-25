@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import Selector from './Selector.jsx';
-import DropdownColors from "./DropdownColors.jsx";
-import { ControlsHelper } from '../models/ControlsHelper.js';
-import { VariableInfo } from '../backend.js';
+import Selector from './Selector';
+import DropdownColors from "./DropdownColors";
+import { ControlsHelper } from '../models/ControlsHelper';
+import { VariableInfo } from '../backend';
 
 const btnCls = 'btn btn-outline-secondary';
 const btnIconStyle = {fontSize: '150%', margin: 0, padding: 0};

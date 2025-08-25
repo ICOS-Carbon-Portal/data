@@ -1,10 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import NetCDFMap, { getTileHelper, getLatLngBounds } from 'icos-cp-netcdfmap';
 import 'leaflet/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls';
-import {throttle, Events, debounce} from 'icos-cp-utils';
+import {throttle, debounce} from 'icos-cp-utils';
 import {defaultGamma, Latlng, RangeValues} from '../models/State';
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie';
@@ -21,11 +21,6 @@ import { VariableInfo } from '../backend';
 type MapProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
 	| 'extraDimChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
 	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
-type OurState = {
-	height: number,
-	isShowTimeserieActive: boolean,
-	isRangeFilterInputsActive: boolean
-}
 
 const minHeight = 300;
 
@@ -41,11 +36,21 @@ export default function Map(props: MapProps) {
 	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
 	let prevVariables: Control<VariableInfo> | undefined = undefined;
 
-	const events = new Events();
-	events.addToTarget(window, "resize", throttle(updateHeight, 300));
+	useEffect(() => {
+		const throttledUpdateHeight = throttle(updateHeight, 300);
+		window.addEventListener("resize", throttledUpdateHeight);
 
-	let getXYFromLatLng: Function | undefined = getRasterXYFromLatLng(props.raster);
+		return () => window.removeEventListener("resize", throttledUpdateHeight);
+	}, []);
+
 	const legendDiv = useRef<HTMLDivElement | null>(null);
+	console.log(props);
+
+	updateURL();
+
+	if (props.raster && height === 0) {
+		updateHeight();
+	}
 
 	function updateURL() {
 		if (props.isPIDProvided && props.rasterFetchCount > 0) {
@@ -81,30 +86,9 @@ export default function Map(props: MapProps) {
 	}
 
 	function updateHeight() {
-		if(legendDiv.current) {
+		if (legendDiv.current) {
 			setHeight(legendDiv.current.clientHeight);
 		}
-	}
-
-	function componentWillReceiveProps(nextProps: MapProps) {
-		if (nextProps.raster) {
-			if (height === 0) updateHeight();
-
-			getXYFromLatLng = getRasterXYFromLatLng(nextProps.raster);
-
-			// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
-			if (props.controls.services.selected !== nextProps.controls.services.selected) {
-				closeTimeserie();
-			}
-		}
-	}
-
-	function componentDidUpdate(nextProps: MapProps) {
-		updateURL();
-	}
-
-	function componentWillUnmount() {
-		events.clear();
 	}
 
 	function mapEventCallback(event: string, payload: { center: Latlng, zoom: number }) {
@@ -128,19 +112,31 @@ export default function Map(props: MapProps) {
 		timeserieToggle(false);
 	}
 
-	function timeserieMapClick(eventName: string, e: {latlng: Latlng}) {
-		if (getXYFromLatLng && props.fetchTimeSerie) {
+	// Because of the way NetCDFMap tracks events, we need to wrap timeserieMapClick in a ref, and then
+	// provide a stable function that uses the current version of timeserieMapClick stored in the ref.
+	const timeserieMapClick = (eventName: string, e: {latlng: Latlng | null}) => {
+		if (props.raster && props.fetchTimeSerie) {
 			const objId = props.controls.services.selected;
 			const variable = props.controls.variables.selected?.shortName;
 			const extraDimInd = props.controls.extraDim.selectedIdx;
-			const xy = getXYFromLatLng(e.latlng);
+			const xy = e.latlng ? getRasterXYFromLatLng(props.raster, e.latlng) : null;
 
-			if (xy && objId !== null && variable !== undefined) {
+			if (xy && objId !== null && variable !== undefined && e.latlng !== null) {
 				props.fetchTimeSerie({objId, variable, extraDimInd, x: xy.x, y: xy.y, latlng: e.latlng});
 				timeserieToggle(true);
 			}
 		}
 	}
+
+	const timeserieMapClickRef = useRef(timeserieMapClick);
+
+	useEffect(() => {
+		timeserieMapClickRef.current = timeserieMapClick;
+	}, [timeserieMapClick]);
+
+	const stableMapClickHandler = useCallback((eventName: string, e: {latlng: Latlng | null}) =>
+		timeserieMapClickRef.current(eventName, e)
+	, []);
 
 	function updateRangeFilterInputsVisibility() {
 		setIsRangeFilterInputsActive(!isRangeFilterInputsActive);
@@ -199,7 +195,6 @@ export default function Map(props: MapProps) {
 			{!window.frameElement && props.title &&
 				<h2>{props.title}</h2>
 			}
-
 			<Controls
 				isPIDProvided={props.isPIDProvided}
 				marginTop={5}
@@ -209,7 +204,11 @@ export default function Map(props: MapProps) {
 				increment={props.increment}
 				playPauseMovie={props.playPauseMovie}
 				delayChanged={props.delayChanged}
-				handleServiceChange={props.serviceChanged}
+				handleServiceChange={(newIdx) => {
+					props.serviceChanged(newIdx);
+					// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
+					closeTimeserie();
+				}}
 				handleVarNameChange={props.variableChanged}
 				handleDateChange={props.dateChanged}
 				handleGammaChange={props.gammaChanged}
@@ -256,7 +255,7 @@ export default function Map(props: MapProps) {
 							{
 								event: 'click',
 								fn: (leafletMap: L.Map, e: Event) => e,
-								callback: timeserieMapClick
+								callback: stableMapClickHandler
 							}
 						]}
 					/>
@@ -296,23 +295,17 @@ export default function Map(props: MapProps) {
 	);
 }
 
-const getRasterXYFromLatLng = (raster: BinRaster | undefined) => {
-	if (raster === undefined) {
-		return undefined;
-	}
-
+const getRasterXYFromLatLng = (raster: BinRaster, latlng: Latlng) => {
 	const tileHelper = getTileHelper(raster);
 
-	return (latlng: Latlng) => {
-		const xy = tileHelper.lookupPixel(latlng.lng, latlng.lat);
+	const xy = tileHelper.lookupPixel(latlng.lng, latlng.lat);
 
-		return xy
-			? {
-				x: Math.round(xy.x - 0.5),
-				y: Math.round(xy.y - 0.5)
-			}
-			: undefined;
-	}
+	return xy
+		? {
+			x: Math.round(xy.x - 0.5),
+			y: Math.round(xy.y - 0.5)
+		}
+		: undefined;
 };
 
 const formatData = (dataToSave: { objId?: string, variable: string }) => {
