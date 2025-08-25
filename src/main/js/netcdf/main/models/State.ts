@@ -87,7 +87,6 @@ export interface State {
 		center?: string
 		zoom?: string
 		color?: string
-		extraDim?: string
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
@@ -123,7 +122,6 @@ const defaultState: State = {
 		center: searchParams.center,
 		zoom: searchParams.zoom,
 		color: searchParams.color,
-		extraDim: searchParams.extraDim,
 	},
 	playingMovie: false,
 	rasterFetchCount: 0,
