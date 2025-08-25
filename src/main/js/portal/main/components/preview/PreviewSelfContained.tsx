@@ -78,10 +78,9 @@ function shouldUpdateHeight(previewType?: PreviewType): boolean {
 }
 
 function settingsToQueryParams(previewSettings: PreviewSettings): string {
-	const remapKey = (key: string) => `${key}=${previewSettings[key as keyof PreviewSettings]}`;
 	return Object.keys(previewSettings)
 		.filter((key) => previewSettings[key as keyof PreviewSettings] !== undefined)
-		.map(remapKey)
+		.map((key: string) => `${key}=${previewSettings[key as keyof PreviewSettings]}`)
 		.join("&");
 }
 
