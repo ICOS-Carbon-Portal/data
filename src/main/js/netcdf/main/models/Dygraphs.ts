@@ -51,8 +51,6 @@ const toISOString = (ms: number) => {
 		':' + pad(date.getUTCSeconds());
 };
 
-
-
 const formatLegend = (pos: string) => {
 	return (data: dygraphs.LegendData) => {
 		const {color, dashHTML, labelHTML, yHTML} = data.series[0];
