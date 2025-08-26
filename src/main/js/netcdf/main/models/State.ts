@@ -81,12 +81,12 @@ export interface State {
 		data?: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
 	}
 	initSearchParams: {
-		varName?: string
-		date?: string
-		gamma?: string
-		center?: string
-		zoom?: string
-		color?: string
+		varName: string
+		date: string
+		gamma: string
+		center: string
+		zoom: string
+		color: string
 	}
 	playingMovie: boolean
 	rasterFetchCount: number

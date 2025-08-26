@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Selector from './Selector';
 import DropdownColors from "./DropdownColors";
 import { ControlsHelper } from '../models/ControlsHelper';
@@ -11,7 +11,7 @@ type ControlsProps = {
 	isPIDProvided: boolean
 	marginTop: number
 	controls: ControlsHelper
-	variableEnhancer: Record<string, string>
+	variableEnhancer?: Record<string, string>
 	playingMovie: boolean
 	increment: (direction: number) => void
 	playPauseMovie: () => void
@@ -27,11 +27,9 @@ type ControlsProps = {
 }
 
 export default function Controls(props: ControlsProps) {
-	const [colorRamps, setColorRamps] = useState([]);
-
 	function variablePresenter(v: VariableInfo) {
-		const lbl = typeof v === "string" ? v : v.shortName;
-		return (props.variableEnhancer && props.variableEnhancer[lbl]) ?? lbl;
+		const lbl = v.shortName;
+		return props.variableEnhancer ? props.variableEnhancer[lbl] ?? lbl : lbl;
 	}
  
 	const controls = props.controls;
@@ -143,11 +141,6 @@ export default function Controls(props: ControlsProps) {
 		</div>
 	);
 }
-
-const getClassName = (defaultWidth: number, isPIDProvided: boolean) => {
-	const width = isPIDProvided ? defaultWidth : defaultWidth - 1;
-	return 'col-md-' + width;
-};
 
 function delayPresenter(delay: number) {
 	switch (delay){

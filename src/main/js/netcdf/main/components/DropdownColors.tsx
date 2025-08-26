@@ -8,8 +8,6 @@ type DropdownColorsProps = {
 };
 
 export default function DropdownColors(props: DropdownColorsProps) {
-
-
 	function onDropdownClick(e: React.MouseEvent<HTMLButtonElement>) {
 		setDropdownOpen(!dropdownOpen);
 	}
@@ -32,12 +30,12 @@ export default function DropdownColors(props: DropdownColorsProps) {
 
 		document.addEventListener('click', handleOutsideClick, false);
 		return () => document.removeEventListener('click', handleOutsideClick, false);
-	});
+	}, []);
 
 	const {control} = props;
 	const dropDownMenuCls = `dropdown-menu${dropdownOpen ? ' show' : ''}`;
-	const colorMap = control.selected
-	const node = useRef<HTMLSpanElement | null>(null);
+	const colorMap = control.selected;
+	const node = useRef<HTMLSpanElement>(null);
 
 	return (
 		<span ref={node} className="dropdown" style={{display: 'inline-block', zIndex: 750}}>
@@ -83,7 +81,7 @@ type ListItemProps = {
 	selectedIdx: number | null
 	colorMap: Colormap
 	onClick: React.MouseEventHandler
-}
+};
 
 const ListItem = ({onClick, colorMap, idx, selectedIdx}: ListItemProps) => {
 	const style = selectedIdx === idx
@@ -100,7 +98,7 @@ const ListItem = ({onClick, colorMap, idx, selectedIdx}: ListItemProps) => {
 };
 
 const renderCanvas = (width: number, height: number, colorMap: Colormap) => {
-	const colorMaker = colorMap.getColormapSelectColorMaker(0, width - 1)
+	const colorMaker = colorMap.getColormapSelectColorMaker(0, width - 1);
 
 	const canvas = document.createElement("canvas");
 

@@ -80,7 +80,7 @@ export default function (state = stateProps.defaultState, action: NetCDFPlainAct
 			let vIdx = payload.variables.findIndex(vinfo => vinfo.shortName == state.initSearchParams.varName)
 			if (vIdx < 0 && payload.variables.length > 0) vIdx = 0
 
-			let dIdx = payload.dates.indexOf(state.initSearchParams.date ?? "")
+			let dIdx = payload.dates.indexOf(state.initSearchParams.date)
 			if (dIdx < 0 && payload.dates.length > 0) dIdx = 0
 
 			let controls = state.controls.copyWith({
