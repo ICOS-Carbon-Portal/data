@@ -2,6 +2,7 @@
 	"compilerOptions": {
 		"outDir": "./tsTarget/",
 		"removeComments": true,
+		"build": true,
 		// Enable incremental compilation by reading/writing information from prior compilations to a file on disk. This file is controlled by the --tsBuildInfoFile flag.
 		"incremental": true,
 		// Specify what file to store incremental build information in.
