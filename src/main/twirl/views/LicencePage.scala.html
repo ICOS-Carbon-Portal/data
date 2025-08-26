@@ -101,6 +101,12 @@
 					conditions.
 				</label>
 			</div>
+			<div class="form-check">
+				<input id="saveLicenceChkBx" class="form-check-input" type="checkbox">
+				<label class="form-check-label" for="saveLicenceChkBx">
+					Save my acceptance locally for 30 days, bypassing this page.
+				</label>
+			</div>
 			</div>
 		</div>
 	</div>
@@ -132,6 +138,15 @@
 				}
 			}
 
+			function saveLicenceAcceptance() {
+				if (document.getElementById("saveLicenceChkBx").checked &&
+					document.getElementById("agreementChkBx").checked) {
+					localStorage.setItem("licenceAcceptanceTime", String(Date.now()));
+				} else if(!document.getElementById("agreementChkBx").checked) {
+					localStorage.removeItem("licenceAcceptanceTime");
+				}
+			}
+
 			window.addEventListener("load", () => {
 				downloadBtn.innerHTML = "Download";
 
@@ -142,6 +157,12 @@
 				agreementChkBx.classList.remove('d-none');
 				agreementChkBx.addEventListener("click", function(){
 					toggleBtn(!this.checked);
+					saveLicenceAcceptance();
+				});
+
+				const saveLicenceChkBx = document.getElementById("saveLicenceChkBx");
+				saveLicenceChkBx.addEventListener("click", function() {
+					saveLicenceAcceptance();
 				});
 
 				toggleBtn(!agreementChkBx.checked);
