@@ -1,10 +1,5 @@
-import React, { ChangeEvent, Component, CSSProperties } from 'react';
+import React, { ChangeEvent, CSSProperties } from 'react';
 import { Control } from '../models/ControlsHelper';
-import { VariableInfo } from '../backend';
-
-type ControlData = {
-
-}
 
 type SelectorProps<T> = {
 	className?: string
@@ -19,10 +14,10 @@ export default function Selector<T>(props: SelectorProps<T>) {
 
 	const style: CSSProperties = {visibility: (control.values.length > 0) ? "visible" : "hidden"};
 
-	const selectedOption = control.selected === null ? props.caption : control.selected;
-
 	function changeHandler(event: ChangeEvent<HTMLSelectElement>) {
-		if(props.action) props.action(event.target.selectedIndex);
+		if(props.action) {
+			props.action(event.target.selectedIndex);
+		}
 	}
 
 	return <div className={props.className} style={style}>

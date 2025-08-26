@@ -78,12 +78,10 @@ function initialPos(draggableStyle: CSSProperties, parentElementId: string) {
 				height: draggableRect.height
 			};
 		}
-		console.log("Running initialPos created function")
-		console.log("Returning position")
-		console.log(position);
+
 		return position;
 	}
-};
+}
 
 type PanelProps = {
 	isSites: boolean
