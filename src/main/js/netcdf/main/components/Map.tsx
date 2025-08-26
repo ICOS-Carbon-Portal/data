@@ -30,11 +30,11 @@ export default function Map(props: MapProps) {
 	const [isRangeFilterInputsActive, setIsRangeFilterInputsActive] = useState(false);
 
 	const countriesTs = Date.now();
-	let center = props.initSearchParams.center && props.initSearchParams.center.split(',') || ['52.5', '10'];
+	let center = props.initSearchParams.center ? props.initSearchParams.center.split(',') : ['52.5', '10'];
 	let zoom: string | number = props.initSearchParams.zoom ?? 2;
 
 	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
-	let prevVariables: Control<VariableInfo> | undefined = undefined;
+	const [prevVariables, setPrevVariables] = useState<Control<VariableInfo> | undefined>(undefined);
 
 	useEffect(() => {
 		const throttledUpdateHeight = throttle(updateHeight, 300);
@@ -43,8 +43,7 @@ export default function Map(props: MapProps) {
 		return () => window.removeEventListener("resize", throttledUpdateHeight);
 	}, []);
 
-	const legendDiv = useRef<HTMLDivElement | null>(null);
-	console.log(props);
+	const legendDiv = useRef<HTMLDivElement>(null);
 
 	updateURL();
 
@@ -55,28 +54,35 @@ export default function Map(props: MapProps) {
 	function updateURL() {
 		if (props.isPIDProvided && props.rasterFetchCount > 0) {
 			const {dates, extraDim, gammas, variables, colorMaps} = props.controls;
-			const variable = variables.selected;
-			if (prevVariables === undefined || prevVariables.selected?.shortName !== variable?.shortName) {
-				prevVariables = variables
-				if (variable !== null) saveToRestheart(formatData({objId: objId, variable: variable.shortName}))
+			const selectedVariable = variables.selected;
+			if (prevVariables === undefined || prevVariables.selected?.shortName !== selectedVariable?.shortName) {
+				setPrevVariables(variables);
+				if (selectedVariable !== null) {
+					saveToRestheart(formatData({objId: objId, variable: selectedVariable.shortName}));
+				}
 			}
 
-			const dateParam = dates.selected ? `date=${dates.selected}` : "";
-			const extraDimParam = extraDim.selected !== null ? `extraDim=${extraDim.selected}` : "";
-			const gammaParam = gammas.selected !== defaultGamma ? `gamma=${gammas.selected}` : "";
-			const varNameParam = variables.selected ? `varName=${variables.selected.shortName}` : "";
-			const centerParam = center ? `center=${center}` : "";
-			const zoomParam = zoom ? `zoom=${zoom}` : "";
-			const colorParam = colorMaps.selected ? `color=${colorMaps.selected.name}` : "";
+			const searchParams: {k: string, v: string | null | undefined}[] = [
+				{k: "date", v: dates.selected},
+				{k: "extraDim", v: extraDim.selected},
+				{k: "gamma", v: (gammas.selected ?? defaultGamma).toString(10)},
+				{k: "varName", v: variables.selected?.shortName},
+				{k: "center", v: center.join(",")},
+				{k: "zoom", v: zoom.toString(10)},
+				{k: "color", v: colorMaps.selected?.name},
+			];
 
-			const searchParams = [varNameParam, dateParam, gammaParam, extraDimParam, centerParam, zoomParam, colorParam];
-			const newSearch = '?' + searchParams.filter(sp => sp !== "").join('&');
+			const newSearch = "?" +
+				searchParams
+					.filter(({k, v}) => v !== undefined && v !== null)
+					.map(({k, v}) => `${k}=${v}`)
+					.join("&");
 
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
 				const newURL = location.origin + location.pathname + newSearch;
 
 				if (window.frameElement) {
-					//Let calling page (through iframe) know what current url is
+					// Let calling page (through iframe) know what current url is
 					window.top!.postMessage(newURL, '*');
 				} else {
 					history.replaceState({urlPath: newURL}, "", newURL);
@@ -126,7 +132,7 @@ export default function Map(props: MapProps) {
 				timeserieToggle(true);
 			}
 		}
-	}
+	};
 
 	const timeserieMapClickRef = useRef(timeserieMapClick);
 
@@ -134,9 +140,9 @@ export default function Map(props: MapProps) {
 		timeserieMapClickRef.current = timeserieMapClick;
 	}, [timeserieMapClick]);
 
-	const stableMapClickHandler = useCallback((eventName: string, e: {latlng: Latlng | null}) =>
+	const stableMapClickHandler = useCallback((eventName: string, e: {latlng: Latlng | null}) => {
 		timeserieMapClickRef.current(eventName, e)
-	, []);
+	}, []);
 
 	function updateRangeFilterInputsVisibility() {
 		setIsRangeFilterInputsActive(!isRangeFilterInputsActive);
@@ -163,7 +169,6 @@ export default function Map(props: MapProps) {
 		props.setRangeFilter({ rangeValues, valueFilter });
 	}
 
-	
 	const { gammas, colorMaps } = props.controls;
 	const { rangeValues, valueFilter } = props.rangeFilter;
 
