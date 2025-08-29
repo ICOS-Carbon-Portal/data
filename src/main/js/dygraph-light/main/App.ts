@@ -79,7 +79,7 @@ export default class App {
 		this.lastDateFormat = undefined;
 		this.labelMaker = new LabelMaker(params);
 
-		const isSites = config.envri === "SITES";
+		const isSites = envri === "SITES";
 		this.spinner = new Spinner(isSites);
 
 		if (window.frameElement) {
