@@ -1,340 +1,276 @@
-import {
-	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, EXTRA_DIM_SELECTED,
-	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, NetCDFPlainAction, PUSH_PLAY,
-	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
-	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
-} from './actionDefinitions';
 import {Control, ColormapControl, ControlsHelper, defaultGammas, defaultControl} from './models/ControlsHelper';
 import * as Toaster from 'icos-cp-toaster';
-import stateProps, { MinMax, RangeFilter, State, TimeserieData } from './models/State';
+import stateProps, { MinMax, RangeFilter, TimeserieData, TimeserieParams } from './models/State';
 import { DataObject, SpatioTemporalMeta, StationTimeSeriesMeta, VarMeta } from '../../common/main/metacore';
 import { BinRaster } from 'icos-cp-backend';
 import { colorMaps } from './models/Colormap';
 import { RGBA } from 'icos-cp-spatial';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { VariableInfo } from './backend';
 
+type CountriesFetchedPayload = {
+	timestamp: number
+	countriesTopo: GeoJSON.Feature<GeoJSON.Point, GeoJSON.GeoJsonProperties>
+}
 
-export default function (state = stateProps.defaultState, action: NetCDFPlainAction) {
-	const payload = action.payload;
+type VariablesAndDatesFetchedPayload = {
+	service: string
+	variables: VariableInfo[]
+	dates: string[]
+}
 
-	function update(updates: Partial<State> | null | undefined): State{
-		if(!updates || Object.keys(updates).length === 0) return state
-		else return { ...state, ...updates }
-	}
+type TimeseriesFetchedPayload = {
+	yValues: number[]
+	timeserieParams: TimeserieParams
+}
 
-	if (payload instanceof ERROR) {
-		return update({
-			toasterData: new Toaster.ToasterData(Toaster.TOAST_ERROR, payload.error.message.split('\n')[0]),
-			showTSSpinner: false,
-			isFetchingTimeserieData: false,
-			controls: new ControlsHelper().copyWith({services: state.controls.services.withSelected(-1)})
-		});
-	}
+const appSlice = createSlice({
+	name: 'app',
+	initialState: stateProps.defaultState,
+	reducers: {
+		error: (state, action: PayloadAction<Error>) => {
+			state.toasterData = new Toaster.ToasterData(Toaster.TOAST_ERROR, action.payload.message.split('\n')[0]);
+			state.showTSSpinner = false;
+			state.isFetchingTimeserieData = false;
+			state.controls = new ControlsHelper().copyWith({services: state.controls.services.withSelected(-1)});
+		},
+		metadataFetched: (state, action: PayloadAction<DataObject>) => {
+			const md = action.payload
+			const title = window.frameElement ? undefined : md.references.title || md.specification.self.label
 
-	else if (payload instanceof METADATA_FETCHED) {
-		const md = payload.metadata
-		const title = window.frameElement ? undefined : md.references.title || md.specification.self.label
-		return update({
-			title,
-			metadata: md,
-			legendLabel: getLegendLabel(state.controls, md),
-			variableEnhancer: getVariables(md)
-		});
-	}
+			state.title = title
+			state.metadata = md;
+			state.legendLabel = getLegendLabel(state.controls, md);
+			state.variableEnhancer = getVariables(md)!; //TODO: Figure out if all typing is correct here
+		},
+		countriesFetched: (state, action: PayloadAction<CountriesFetchedPayload>) => {
+			state.countriesTopo = {
+				ts: action.payload.timestamp,
+				data: action.payload.countriesTopo
+			};
+		},
+		servicesFetched: (state, action: PayloadAction<string[]>) => {
+			state.controls.services = new Control(action.payload);
+		},
+		serviceSet: (state, action: PayloadAction<string>) => {
+			state.raster = undefined;
+			state.toasterData = undefined;
+			state.controls.services = new Control([action.payload], 0);
+		},
+		serviceSelected: (state, action: PayloadAction<number>) => {
+			state.raster = undefined;
+			state.toasterData = undefined;
+			state.colorMaker = undefined;
+			state.timeserieParams = undefined;
+			state.controls = state.controls.withSelectedService(action.payload);
+		},
+		variablesAndDatesFetched: (state, action: PayloadAction<VariablesAndDatesFetchedPayload>) => {
+			const payload = action.payload;
+			if (payload.service === state.controls.services.selected) {
+				let vIdx = payload.variables.findIndex(vinfo => vinfo.shortName == state.initSearchParams.varName);
+				if (vIdx < 0 && payload.variables.length > 0) {
+					vIdx = 0;
+				}
 
-	else if (payload instanceof COUNTRIES_FETCHED) {
-		return update({
-			countriesTopo: {
-				ts: Date.now(),
-				data: payload.countriesTopo
+				let dIdx = payload.dates.indexOf(state.initSearchParams.date);
+				if (dIdx < 0 && payload.dates.length > 0) {
+					dIdx = 0;
+				}
+
+				state.controls.variables = new Control(payload.variables, vIdx);
+				state.controls.dates = new Control(payload.dates, dIdx);
+
+				if(vIdx >= 0) {
+					const extra = state.controls.variables.selected?.extra;
+					state.controls.extraDim = (extra && extra.labels.length > 0)
+						? new Control(extra.labels, 0)
+						: defaultControl;
+				}
+
+				state.legendLabel = getLegendLabel(state.controls, state.metadata);
 			}
-		});
-	}
+		},
+		variableSelected: (state, action: PayloadAction<number>) => {
+			const oldVar = state.controls.variables.selected;
+			state.controls.variables.selectedIdx = action.payload;
+			const newVar = state.controls.variables.values[action.payload];
 
-	else if (payload instanceof SERVICES_FETCHED) {
-		return update({
-			controls: state.controls.copyWith({services: new Control(payload.services)})
-		})
-	}
-
-	else if (payload instanceof SERVICE_SET) {
-		return update({
-			raster: undefined,
-			toasterData: undefined,
-			controls: state.controls.copyWith({services: new Control([payload.service], 0)})
-		});
-	}
-
-	else if (payload instanceof SERVICE_SELECTED) {
-		return update({
-			raster: undefined,
-			toasterData: undefined,
-			colorMaker: undefined,
-			controls: state.controls.withSelectedService(payload.idx),
-			timeserieParams: undefined
-		});
-	}
-
-	else if (payload instanceof VARIABLES_AND_DATES_FETCHED) {
-		if (payload.service === state.controls.services.selected) {
-
-			let vIdx = payload.variables.findIndex(vinfo => vinfo.shortName == state.initSearchParams.varName)
-			if (vIdx < 0 && payload.variables.length > 0) vIdx = 0
-
-			let dIdx = payload.dates.indexOf(state.initSearchParams.date)
-			if (dIdx < 0 && payload.dates.length > 0) dIdx = 0
-
-			let controls = state.controls.copyWith({
-				variables: new Control(payload.variables, vIdx),
-				dates: new Control(payload.dates, dIdx),
-			})
-
-			if(vIdx >= 0){
-				const extra = controls.variables.selected?.extra
-				const extraDim = (extra && extra.labels.length > 0)
-					? new Control(extra.labels, 0)
-					: defaultControl
-				controls = controls.copyWith({extraDim})
+			if (newVar === null || newVar.extra === undefined) {
+				state.controls.extraDim = defaultControl;
+			} else if(oldVar == null || oldVar.extra == undefined || oldVar.extra.name != newVar.extra.name) {
+				state.controls.extraDim = new Control(newVar.extra.labels, 0);
 			}
 
-			return update({
-				controls,
-				legendLabel: getLegendLabel(controls, state.metadata)
-			});
-		} else {
-			return state;
-		}
+			state.rangeFilter = stateProps.defaultRangeFilter;
+			state.legendLabel = getLegendLabel(state.controls, state.metadata);
+			state.raster = undefined;
+			state.colorMaker = undefined;
+		},
+		dateSelected: (state, action: PayloadAction<number>) => {
+			state.controls.dates.selectedIdx = action.payload;
+		},
+		extraDimSelected: (state, action: PayloadAction<number>) => {
+			state.controls.extraDim.selectedIdx = action.payload;
+		},
+		delaySelected: (state, action: PayloadAction<number>) => {
+			state.controls.delays.selectedIdx = action.payload;
+		},
+		setRangeFilter: (state, action: PayloadAction<RangeFilter>) => {
+			const rangeMm = getRangeFilterMinMax(action.payload);
+			const minMax = selectMinMax([rangeMm, state.fullMinMax]);
+			state.minMax = minMax;
+			state.rangeFilter = action.payload;
+			state.colorMaker = getColorMaker(minMax, state.controls.colorMaps);
+		},
+		rasterFetched: (state, action: PayloadAction<BinRaster>) => {
+			if (action.payload.id !== state.controls.rasterId) {
+				return;
+			}
+
+			const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
+			const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
+			const rasterMinMax = action.payload.stats;
+
+			const fullMinMax = selectMinMax([globalMinMax, rasterMinMax]);
+			const minMax = selectMinMax([rangeFilterMinMax, fullMinMax]) || rasterMinMax;
+
+			const isDiverging = isDivergingData({raster: action.payload, fullMinMax: fullMinMax});
+			const wasDiverging = isDivergingData({raster: state.raster, fullMinMax: state.fullMinMax});
+
+			if (isDiverging !== wasDiverging) {
+				const gamma = state.controls.gammas.selected ?? defaultGammas.selected!;
+				const suitableMaps = colorMaps.filter(cm => cm.isForDivergingData === isDiverging);
+				const cmControl = new ColormapControl(suitableMaps.map(cm => cm.withGamma(gamma)), 0)
+				state.controls.colorMaps = cmControl;
+			}
+
+			
+			if (minMax.min !== state.minMax?.min || minMax.max !== state.minMax?.max) {
+				state.colorMaker = getColorMaker(minMax, state.controls.colorMaps);
+			}
+
+			state.raster = action.payload;
+			state.rasterFetchCount += 1;
+			state.minMax = minMax;
+			state.fullMinMax = fullMinMax;
+		},
+		gammaSelected: (state, action: PayloadAction<number>) => {
+			if (state.controls.gammas.values[action.payload] === null) {
+				return;
+			}
+
+			state.controls.gammas.selectedIdx = action.payload;
+			state.controls.colorMaps = state.controls.colorMaps.withGamma(state.controls.gammas.values[action.payload]);
+			state.colorMaker = getColorMaker(state.minMax, state.controls.colorMaps);
+		},
+		colorrampSelected: (state, action: PayloadAction<number>) => {
+			const colorMaps = state.controls.colorMaps.withSelected(action.payload);
+	
+			if (colorMaps.selected === null) {
+				return;
+			}
+
+			state.controls.colorMaps = colorMaps;
+			state.colorMaker = getColorMaker(state.minMax, state.controls.colorMaps);
+		},
+		fetchingTimeserie: (state, action: PayloadAction) => {
+			state.isFetchingTimeserieData = true;
+			state.timeserieData = [];
+		},
+		timeserieFetched: (state, action: PayloadAction<TimeseriesFetchedPayload>) => {
+			state.isFetchingTimeserieData = false;
+			state.timeserieData = getTimeserieData(state.controls.dates.values, action.payload.yValues);
+			state.timeserieParams = action.payload.timeserieParams;
+			state.latlng = action.payload.timeserieParams.latlng;
+		},
+		timeserieReset: (state, action: PayloadAction) => {
+			state.timeserieData = [];
+			state.timeserieParams = undefined;
+		},
+		toggleTsSpinner: (state, action: PayloadAction<boolean>) => {
+			state.showTSSpinner = action.payload;
+		},
+		pushPlay: (state, action: PayloadAction) => {
+			const request = state.controls.rasterRequest
+			if (request) { 
+				state.playingMovie = !state.playingMovie;
+			}
+		},
+		incrementRaster: (state, action: PayloadAction<number>) => {
+			const controls = state.controls.withIncrementedDate(action.payload);
+			if (state.controls.rasterRequest === undefined) {
+				state.playingMovie = false;
+			} else {
+				state.controls.dates.selectedIdx = controls.dates.selectedIdx;
+			}
+		},
 	}
+});
 
-	else if (payload instanceof VARIABLE_SELECTED) {
-		const oldVar = state.controls.variables.selected
-		let newControls = state.controls.withSelectedVariable(payload.idx)
-		const newVar = newControls.variables.selected
-
-		if(newVar == null || newVar.extra == undefined) {
-			newControls = newControls.copyWith({extraDim: defaultControl})
-		} else if(oldVar == null || oldVar.extra == undefined || oldVar.extra.name != newVar.extra.name){
-			newControls = newControls.copyWith({extraDim: new Control(newVar.extra.labels, 0)})
-		}
-
-		return update({
-			rangeFilter: stateProps.defaultRangeFilter,
-			controls: newControls,
-			legendLabel: getLegendLabel(newControls, state.metadata),
-			raster: undefined,
-			colorMaker: undefined
-		});
+function isDivergingData(state: {raster?: Omit<BinRaster, '_data'>, fullMinMax?: MinMax}): boolean | undefined {
+	const {raster, fullMinMax} = state;
+	if (fullMinMax !== undefined) {
+		return fullMinMax.min < 0 && fullMinMax.max > 0;
 	}
-
-	else if (payload instanceof DATE_SELECTED) {
-		return update({ controls: state.controls.withSelectedDate(payload.idx) });
+	if (raster === undefined) {
+		return undefined;
 	}
-
-	else if (payload instanceof EXTRA_DIM_SELECTED) {
-		return update({
-			controls: state.controls.withSelectedExtraDim(payload.idx)
-		});
-	}
-
-	else if (payload instanceof DELAY_SELECTED) {
-		return update({controls: state.controls.withSelectedDelay(payload.idx)})
-	}
-
-	else if (payload instanceof SET_RANGEFILTER) {
-		const rangeMm = getRangeFilterMinMax(payload.rangeFilter)
-		const minMax = selectMinMax([rangeMm, state.fullMinMax])
-		return update({
-			minMax,
-			rangeFilter: payload.rangeFilter,
-			colorMaker: getColorMaker(minMax, state.controls.colorMaps)
-		})
-	}
-
-	else if (payload instanceof RASTER_FETCHED) {
-		return update(handleRasterFetched(state, payload));
-	}
-
-	else if (payload instanceof GAMMA_SELECTED) {
-		return update(handleGammaSelected(state, payload));
-	}
-
-	else if (payload instanceof COLORRAMP_SELECTED) {
-		return update(handleColorrampSelected(state, payload));
-	}
-
-	else if (payload instanceof FETCHING_TIMESERIE) {
-		return update({
-			isFetchingTimeserieData: true,
-			timeserieData: []
-		});
-	}
-
-	else if (payload instanceof TIMESERIE_FETCHED) {
-		return update({
-			isFetchingTimeserieData: false,
-			timeserieData: getTimeserieData(state.controls.dates.values, payload.yValues),
-			timeserieParams: payload.timeserieParams,
-			latlng: payload.timeserieParams.latlng
-			// latlng: {
-			// 	lat: payload.timeserieParams.latlng.lat.toFixed(3),
-			// 	lng: payload.timeserieParams.latlng.lng.toFixed(3)
-			// }
-		});
-	}
-
-	else if (payload instanceof TIMESERIE_RESET) {
-		return update({
-			timeserieData: [],
-			timeserieParams: undefined
-		});
-	}
-
-	else if (payload instanceof TOGGLE_TS_SPINNER) {
-		return update({
-			showTSSpinner: payload.showTSSpinner
-		});
-	}
-
-	else if (payload instanceof PUSH_PLAY) {
-		const request = state.controls.rasterRequest
-		if(request === undefined) return state
-		const playingMovie = !state.playingMovie;
-		return update({playingMovie})
-	}
-
-	else if (payload instanceof INCREMENT_RASTER) {
-		const controls = state.controls.withIncrementedDate(payload.increment)
-		const request = controls.rasterRequest
-		if(request === undefined) return update({playingMovie: false})
-		return update({ controls})
-	}
-
-	else return state
-
+	return raster.stats.min < 0 && raster.stats.max > 0;
 }
 
-type UpdateFactory<A> = (state: State, payload: A) => (Partial<State> | null)
-
-const handleRasterFetched: UpdateFactory<RASTER_FETCHED> = (state, payload) => {
-	if(payload.raster.id !== state.controls.rasterId) return null
-
-	const rangeFilterMinMax = getRangeFilterMinMax(state.rangeFilter);
-	const globalMinMax = getGlobalMinMax(state.controls, state.metadata);
-	const rasterMinMax = payload.raster.stats
-
-	const fullMinMax = selectMinMax([globalMinMax, rasterMinMax])
-	const minMax = selectMinMax([rangeFilterMinMax, fullMinMax]) || rasterMinMax
-
-	const update = {
-		raster: payload.raster,
-		rasterFetchCount: state.rasterFetchCount + 1,
-		minMax,
-		fullMinMax,
-		controls: state.controls,
-		colorMaker: state.colorMaker
+function getColorMaker(minMax: MinMax | undefined, control: ColormapControl): ((v: number) => RGBA) | undefined {
+	if (minMax === undefined || control.selected === null) {
+		return undefined;
 	}
-
-	const isDiverging = isDivergingData(update)
-
-	if ( isDiverging !== isDivergingData(state) ) {
-		const gamma = state.controls.gammas.selected || defaultGammas.selected!
-		const suitableMaps = colorMaps.filter(cm => cm.isForDivergingData == isDiverging)
-		const cmControl = new ColormapControl(suitableMaps.map(cm => cm.withGamma(gamma)), 0)
-		update.controls = state.controls.copyWith({colorMaps: cmControl})
-	}
-
-	if(minMax.min !== state.minMax?.min || minMax.max !== state.minMax?.max){
-		update.colorMaker = getColorMaker(minMax, update.controls.colorMaps)
-	}
-	return update
+	return control.selected.getColorMaker(minMax.min, minMax.max);
 }
 
-function isDivergingData(state: {raster?: BinRaster, fullMinMax?: MinMax}): boolean | undefined{
-	const {raster, fullMinMax} = state
-	if(fullMinMax !== undefined) return fullMinMax.min < 0 && fullMinMax.max > 0
-	if(raster === undefined) return
-	return raster.stats.min < 0 && raster.stats.max > 0
-}
+function selectMinMax(mms: [Partial<MinMax> | undefined, Partial<MinMax> | undefined]): MinMax | undefined {
+	const [first, second] = mms;
+	const min = first?.min ?? second?.min;
+	const max = first?.max ?? second?.max;
 
-const handleGammaSelected: UpdateFactory<GAMMA_SELECTED> = (state, payload) => {
-	let controls = state.controls.withSelectedGamma(payload.idx);
-	const selectedGamma = controls.gammas.selected
-	if(selectedGamma === null) return null
-
-	controls = controls.copyWith({colorMaps: controls.colorMaps.withGamma(selectedGamma)})
-	return {
-		controls,
-		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
-	}
-}
-
-const handleColorrampSelected: UpdateFactory<COLORRAMP_SELECTED> = (state, payload) => {
-
-	const colorMaps = state.controls.colorMaps.withSelected(payload.idx)
-	const colorMap = colorMaps.selected
-	if(colorMap === null) return null
-
-	const controls = state.controls.copyWith({colorMaps})
-	return {
-		controls,
-		colorMaker: getColorMaker(state.minMax, controls.colorMaps)
-	}
-}
-
-function getColorMaker(minMax: MinMax | undefined, control: ColormapControl): ((v: number) => RGBA) | undefined{
-	if(minMax === undefined) return
-	const cm = control.selected
-	if(cm === null) return
-	return cm.getColorMaker(minMax.min, minMax.max)
-}
-
-function selectMinMax(mms: Array<Partial<MinMax> | undefined>): MinMax | undefined {
-
-	const pickVal = (key: 'min' | 'max') =>
-		mms.map(mm => mm?.[key]).find(mm => mm !== undefined)
-
-	const min = pickVal('min')
-	const max = pickVal('max')
-
-	return (min === undefined || max === undefined) ? undefined : {min, max}
+	return (min === undefined || max === undefined) ? undefined : {min, max};
 }
 
 function getVarMetas(dobj?: DataObject): VarMeta[] | undefined {
 	return dobj
-		? ((dobj.specificInfo as SpatioTemporalMeta).variables || (dobj.specificInfo as StationTimeSeriesMeta).columns)
+		? ((dobj.specificInfo as SpatioTemporalMeta).variables
+			|| (dobj.specificInfo as StationTimeSeriesMeta).columns)
 		: undefined;
 }
 
 function getVariableInfo(controls?: ControlsHelper, metadata?: DataObject): VarMeta | undefined {
-
 	const selectedVariable = controls?.variables?.selected;
-	if (!selectedVariable) return
+	if (!selectedVariable) {
+		return undefined;
+	}
 
 	return getVarMetas(metadata)?.find(v => v.label === selectedVariable.shortName);
-};
+}
 
 function getGlobalMinMax(controls?: ControlsHelper, metadata?: DataObject): MinMax | undefined {
-	const minMax = getVariableInfo(controls, metadata)?.minMax
-	if(minMax === undefined) return
-	return { min: minMax[0], max: minMax[1] }
+	const minMax = getVariableInfo(controls, metadata)?.minMax;
+	return minMax !== undefined ? {min: minMax[0], max: minMax[1]}: undefined;
 }
 
 function getRangeFilterMinMax(rangeFilter: RangeFilter): Partial<MinMax> {
-	return { min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange }
+	return {min: rangeFilter.rangeValues.minRange, max: rangeFilter.rangeValues.maxRange};
 }
 
 function getLegendLabel(controls?: ControlsHelper, metadata?: DataObject): string {
-	const metaVar = getVariableInfo(controls, metadata)
+	const metaVar = getVariableInfo(controls, metadata);
 
 	if (metaVar && metaVar.valueType.self.label) {
-		const unit = metaVar.valueType.unit ? ` [${metaVar.valueType.unit}]` : ""
+		const unit = metaVar.valueType.unit ? ` [${metaVar.valueType.unit}]` : "";
 		return `${metaVar.valueType.self.label}${unit}`;
 	}
-	return controls?.variables?.selected?.longName ?? 'Legend'
+	return controls?.variables?.selected?.longName ?? 'Legend';
 }
 
-function getVariables(metadata?: DataObject): Record<string,string> | undefined {
+function getVariables(metadata?: DataObject): Record<string, string> | undefined {
 	return getVarMetas(metadata)?.reduce(
-		(acc: Record<string,string>, v: VarMeta) => {
+		(acc: Record<string, string>, v: VarMeta) => {
 			acc[v.label] = `${v.valueType.self.label} (${v.label})`;
 			return acc;
 		},
@@ -342,8 +278,16 @@ function getVariables(metadata?: DataObject): Record<string,string> | undefined 
 	);
 }
 
-const getTimeserieData = (dates: string[], yValues: number[]): TimeserieData[] => {
+function getTimeserieData(dates: string[], yValues: number[]): TimeserieData[] {
 	return dates.length === yValues.length
 		? dates.map((date: string, idx: number) => [new Date(date), yValues[idx]])
 		: [[0, 1]];
 }
+
+export const { error, metadataFetched, countriesFetched, servicesFetched, serviceSet, serviceSelected,
+	variablesAndDatesFetched, variableSelected, dateSelected, extraDimSelected, delaySelected,
+	setRangeFilter, rasterFetched, gammaSelected, colorrampSelected, fetchingTimeserie, timeserieFetched,
+	timeserieReset, toggleTsSpinner, pushPlay, incrementRaster } = appSlice.actions;
+
+export default appSlice.reducer;
+

@@ -83,13 +83,16 @@ export class ControlsHelper{
 		return this.copyWith({dates: this.dates.withSelected(idx)})
 	}
 
-	withIncrementedDate(increment: number){
+	getIncrementedDate(increment: number) {
 		const suggestedIdx = (this.dates.selectedIdx ?? 0) + increment;
 		const newIdx = suggestedIdx >= 0 && suggestedIdx < this.dates.values.length
 			? suggestedIdx
 			: 0;
+		return newIdx;
+	}
 
-		return this.copyWith({dates: this.dates.withSelected(newIdx)})
+	withIncrementedDate(increment: number){
+		return this.copyWith({dates: this.dates.withSelected(this.getIncrementedDate(increment))})
 	}
 
 	withSelectedExtraDim(idx: number){

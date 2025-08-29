@@ -2,7 +2,6 @@ import { BinRaster } from "icos-cp-backend";
 import { RGBA } from "icos-cp-spatial";
 import { envri } from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
-import { colorRamps } from "../../../common/main/models/colorRampDefs";
 import { ControlsHelper } from "./ControlsHelper";
 
 
@@ -11,7 +10,7 @@ const isSites = envri === "SITES";
 const pathName = window.location.pathname;
 const sections = pathName.split('/');
 const pidIdx = sections.indexOf('netcdf') + 1;
-const pid = sections[pidIdx];
+export const pid = sections[pidIdx];
 const isPIDProvided = pid !== '';
 
 const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
@@ -24,13 +23,6 @@ const searchParams = keyValpairs.reduce<Record<string,string>>((acc, curr) => {
 
 const controls = new ControlsHelper();
 export const defaultGamma = 1;
-const gammaIdx = searchParams.gamma
-	? controls.gammas.values.indexOf(parseFloat(searchParams.gamma))
-	: controls.gammas.values.indexOf(defaultGamma);
-let colorIdx = searchParams.color
-	? colorRamps.findIndex(color => color.name === searchParams.color)
-	: 0;
-colorIdx = colorIdx === -1 ? 0 : colorIdx;
 
 export type RangeValues = {
 	minRange?: number
@@ -41,7 +33,8 @@ export interface RangeFilter {
 	rangeValues: RangeValues
 	valueFilter: (v: number) => number
 }
-const defaultRangeFilter: RangeFilter = {
+
+export const defaultRangeFilter: RangeFilter = {
 	rangeValues: {},
 	valueFilter: v => v
 };
@@ -87,6 +80,9 @@ export interface State {
 		center: string
 		zoom: string
 		color: string
+		extraDim: string
+		rangeMin: string
+		rangeMax: string
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
@@ -100,7 +96,7 @@ export interface State {
 	showTSSpinner: boolean
 }
 
-const defaultState: State = {
+export const defaultState: State = {
 	isSites,
 	isPIDProvided,
 	metadata: undefined,
@@ -118,10 +114,13 @@ const defaultState: State = {
 	initSearchParams: {
 		varName: searchParams.varName,
 		date: searchParams.date,
-		gamma: searchParams.gamma,
+		gamma: searchParams.gamma ?? defaultGamma.toString(10),
 		center: searchParams.center,
 		zoom: searchParams.zoom,
-		color: searchParams.color,
+		color: searchParams.color ?? "rainbow",
+		extraDim: searchParams.extraDim,
+		rangeMin: searchParams.rangeMin,
+		rangeMax: searchParams.rangeMax,
 	},
 	playingMovie: false,
 	rasterFetchCount: 0,
@@ -133,14 +132,4 @@ const defaultState: State = {
 	timeserieParams: undefined,
 	latlng: undefined,
 	showTSSpinner: false
-};
-
-export default {
-	defaultState,
-	defaultRangeFilter,
-	controls,
-	gammaIdx,
-	colorIdx,
-	isPIDProvided,
-	pid
 };

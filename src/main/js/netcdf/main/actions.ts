@@ -3,14 +3,60 @@ import {
 	getTimeserie, getMetadata, getRasterId} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
-import { NetCDFDispatch, NetCDFThunkAction } from './store';
+//import { NetCDFDispatch, NetCDFThunkAction } from './store';
 import {
 	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, EXTRA_DIM_SELECTED,
 	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, PUSH_PLAY,
 	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
 	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
 } from './actionDefinitions';
-import stateProps, { RangeFilter, TimeserieParams } from './models/State';
+import stateProps, { defaultGamma, RangeFilter, TimeserieParams } from './models/State';
+import type { ThunkAction } from '@reduxjs/toolkit';
+import type { RootState } from './store';
+import type { Action } from 'redux';
+import { colorRamps } from "../../common/main/models/colorRampDefs";
+
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  unknown,
+  Action<string>
+>;
+
+export const init = (): AppThunk => (dispatch, getState) => {
+	const state = getState();
+
+	const searchParams = state.initSearchParams;
+	const gammaIdx = searchParams.gamma;
+	let colorIdx = searchParams.color
+		? colorRamps.findIndex(color => color.name === searchParams.color)
+		: 0;
+	colorIdx = colorIdx === -1 ? 0 : colorIdx;
+
+	const pathName = window.location.pathname;
+	const sections = pathName.split('/');
+	const pidIdx = sections.indexOf('netcdf') + 1;
+	const pid = sections[pidIdx];
+	const isPIDProvided = pid !== '';
+
+
+	dispatch(fetchCountriesTopo());
+	dispatch(selectGamma(parseInt(gammaIdx, 10)));
+	dispatch(selectColorRamp(colorIdx));
+
+	if (state.isPIDProvided) {
+		dispatch(fetchMetadata(pid));
+
+		if (!pid) {
+			dispatch(failWithError(new Error('The request is missing a pid')));
+		} else {
+			dispatch(setService(stateProps.pid));
+		}
+	} else {
+		dispatch(fetchServices());
+	}
+};
+
 
 export const failWithError = (error: Error): NetCDFThunkAction<void> => dispatch => {
 	console.log(error);

@@ -30,8 +30,8 @@ export default function Map(props: MapProps) {
 	const [isRangeFilterInputsActive, setIsRangeFilterInputsActive] = useState(false);
 
 	const countriesTs = Date.now();
-	let center = props.initSearchParams.center ? props.initSearchParams.center.split(',') : ['52.5', '10'];
-	let zoom: string | number = props.initSearchParams.zoom ?? 2;
+	const [center, setCenter] = useState(props.initSearchParams.center ? props.initSearchParams.center.split(',') : ['52.5', '10']);
+	const [zoom, setZoom] = useState<string | number>(props.initSearchParams.zoom ?? 2);
 
 	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
 	const [prevVariables, setPrevVariables] = useState<Control<VariableInfo> | undefined>(undefined);
@@ -70,6 +70,8 @@ export default function Map(props: MapProps) {
 				{k: "center", v: center.join(",")},
 				{k: "zoom", v: zoom.toString(10)},
 				{k: "color", v: colorMaps.selected?.name},
+				{k: "rangeMin", v: props.rangeFilter.rangeValues.minRange?.toString(10)},
+				{k: "rangeMax", v: props.rangeFilter.rangeValues.maxRange?.toString(10)},
 			];
 
 			const newSearch = "?" +
@@ -100,8 +102,8 @@ export default function Map(props: MapProps) {
 	function mapEventCallback(event: string, payload: { center: Latlng, zoom: number }) {
 		if (event === 'moveend' && payload && payload.center && payload.zoom) {
 			const decimals = 5;
-			center = [payload.center.lat.toFixed(decimals), payload.center.lng.toFixed(decimals)];
-			zoom = payload.zoom;
+			setCenter([payload.center.lat.toFixed(decimals), payload.center.lng.toFixed(decimals)]);
+			setZoom(payload.zoom);
 			updateURL();
 		}
 	}
@@ -175,21 +177,21 @@ export default function Map(props: MapProps) {
 	const mapId = props.raster
 		? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
 			`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
-		: undefined
+		: undefined;
 
-	const needReset = !props.raster || !props.colorMaker
-	const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
+	const needReset = !props.raster || !props.colorMaker;
+	const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId);
 
 	const showSpinner = props.countriesTopo.ts > countriesTs && props.rasterFetchCount === 0;
-	const colorMap = colorMaps.selected
+	const colorMap = colorMaps.selected;
 	const getLegend = (props.minMax === undefined || colorMap === null)
 		? undefined
-		: legendFactory(props.minMax, colorMap)
+		: legendFactory(props.minMax, colorMap);
 
 	const latLngBounds = getLatLngBounds(
 		props.rasterFetchCount,
-		props.initSearchParams.center,
-		props.initSearchParams.zoom,
+		center,
+		zoom,
 		raster
 	);
 
