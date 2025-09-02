@@ -1,13 +1,16 @@
-import D from 'dygraphs';
+import Dygraph, {dygraphs} from 'dygraphs';
 import '../../../common/main/Dygraphs.css';
+import { Latlng, TimeserieData } from './State';
 
-export const drawGraph = (timeserieData, varName, latlng) => {
-	if (!document.getElementById('graph')) return;
+export const drawGraph = (timeserieData: TimeserieData[] | undefined, varName: string | undefined, latlng: Latlng | undefined) => {
+	if (!document.getElementById('graph') || latlng === undefined || timeserieData === undefined || varName === undefined) {
+		return;
+	}
 
 	const pos = `Lat: ${latlng.lat}, Lng: ${latlng.lng}`;
 	const legendFormatter = formatLegend(pos);
 
-	new D(
+	new Dygraph(
 		'graph',
 		timeserieData,
 		{
@@ -30,10 +33,10 @@ export const drawGraph = (timeserieData, varName, latlng) => {
 	);
 };
 
-const toISOString = ms => {
+const toISOString = (ms: number) => {
 	const date = new Date(ms);
 
-	function pad(number) {
+	function pad(number: number) {
 		if (number < 10) {
 			return '0' + number;
 		}
@@ -48,8 +51,8 @@ const toISOString = ms => {
 		':' + pad(date.getUTCSeconds());
 };
 
-const formatLegend = (pos) => {
-	return data => {
+const formatLegend = (pos: string) => {
+	return (data: dygraphs.LegendData) => {
 		const {color, dashHTML, labelHTML, yHTML} = data.series[0];
 
 		return data.x === undefined
