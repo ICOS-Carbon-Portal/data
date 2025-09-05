@@ -1,5 +1,5 @@
 import { linearInterpolation, RGBA } from "icos-cp-spatial";
-import Colormap from "./Colormap";
+import { Colormap, colormapColorMaker } from "./Colormap";
 import { MinMax } from "./State";
 
 export interface Legend{
@@ -11,7 +11,7 @@ export interface Legend{
 }
 
 export default function legendFactory(mm: MinMax, cm: Colormap): (pixelMin: number, pixelMax: number) => Legend {
-	const colorMaker = cm.getColorMaker(mm.min, mm.max)
+	const colorMaker = colormapColorMaker(cm, mm.min, mm.max)
 
 	const isDiverging = cm.isForDivergingData && mm.min < 0 && mm.max > 0
 

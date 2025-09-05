@@ -1,7 +1,59 @@
+import { control } from "leaflet";
 import { getRasterId, RasterRequest, VariableInfo } from "../backend";
-import Colormap, { colorMaps } from "./Colormap";
+import { Colormap, allColormaps } from "./Colormap";
 
-export class Control<T>{
+export type Control<T> = {
+	values: T[]
+	selectedIdx: number | null
+};
+
+export function getSelectedControl<T>(control: Control<T>): T | null {
+	return control.selectedIdx !== null && control.selectedIdx >= 0 && control.selectedIdx < control.values.length
+		? control.values[control.selectedIdx]
+		: null;
+}
+
+export function colormapControlWithGamma(control: Control<Colormap>, newGamma: number): Control<Colormap> {
+	return {
+		values: control.values.map(cm => {return {...cm, gamma: newGamma}}),
+		selectedIdx: control.selectedIdx
+	}
+}
+
+export function emptyControl(): Control<any> {
+	return {values: [], selectedIdx: null};
+}
+
+export type ControlsHelper = {
+	services: Control<string>
+	variables: Control<VariableInfo>
+	dates: Control<string>
+	extraDim: Control<string>
+	gammas: Control<number>
+	delays: Control<number>
+	colorMaps: Control<Colormap>;
+};
+
+export function getRasterRequest(controlsHelper: ControlsHelper): RasterRequest | undefined {
+	const service = getSelectedControl(controlsHelper.services);
+	const variable = getSelectedControl(controlsHelper.variables);
+	const dateIdx = controlsHelper.dates.selectedIdx;
+	const extraDimIdx = controlsHelper.extraDim.selectedIdx;
+
+	return (
+		service === null || variable === null || dateIdx === null || dateIdx < 0 ||
+		(variable.extra !== undefined && extraDimIdx === null)
+	) ? undefined
+		: {service, variable: variable.shortName, dateIdx, extraDimIdx}
+}
+
+export function getRasterRequestId(controlsHelper: ControlsHelper): string | undefined {
+	const req = getRasterRequest(controlsHelper);
+	return req ? getRasterId(req) : undefined;
+}
+
+/*
+export class ControlClass<T>{
 
 	constructor(
 		readonly values: T[],
@@ -15,12 +67,12 @@ export class Control<T>{
 	}
 
 	withSelected(selectedIdx: number){
-		return new Control(this.values, selectedIdx);
+		return new ControlClass(this.values, selectedIdx);
 	}
-}
+} 
 
-export class ColormapControl extends Control<Colormap> {
-	constructor(colorMaps: Colormap[], selectedIdx: number | null = null) {
+export class ColormapControlClass extends ControlClass<ColormapClass> {
+	constructor(colorMaps: ColormapClass[], selectedIdx: number | null = null) {
 		super(colorMaps, selectedIdx)
 	}
 
@@ -32,22 +84,22 @@ export class ColormapControl extends Control<Colormap> {
 		return new ColormapControl(this.values, selectedIdx)
 	}
 }
-
-export const defaultControl = new Control([]);
-export const defaultGammas = new Control([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
+export const defaultControl = new ControlClass([]);
+export const defaultGammas = new ControlClass([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
 const selectedGamma = defaultGammas.selected! //we selected one in the previous line
 const defaultColorMaps = new ColormapControl(colorMaps.map(cm => cm.withGamma(selectedGamma)), 0)
-const defaultDelays = new Control([0, 50, 100, 200, 500, 1000, 3000], 3);
+const defaultDelays = new ControlClass([0, 50, 100, 200, 500, 1000, 3000], 3);
+
 
 type ControlsUpdate = {[K in keyof ControlsHelper]?: ControlsHelper[K]}
 
-export class ControlsHelper{
-	readonly services: Control<string> = defaultControl
-	readonly variables: Control<VariableInfo> = defaultControl
-	readonly dates: Control<string> = defaultControl
-	readonly extraDim: Control<string> = defaultControl
-	readonly gammas: Control<number> = defaultGammas
-	readonly delays: Control<number> = defaultDelays
+export class ControlsHelperClass{
+	readonly services: ControlClass<string> = defaultControl
+	readonly variables: ControlClass<VariableInfo> = defaultControl
+	readonly dates: ControlClass<string> = defaultControl
+	readonly extraDim: ControlClass<string> = defaultControl
+	readonly gammas: ControlClass<number> = defaultGammas
+	readonly delays: ControlClass<number> = defaultDelays
 	readonly colorMaps: ColormapControl = defaultColorMaps
 
 	get rasterRequest(): RasterRequest | undefined {
@@ -111,3 +163,4 @@ export class ControlsHelper{
 		return this.copyWith({colorMaps: this.colorMaps.withSelected(idx)})
 	}
 }
+*/

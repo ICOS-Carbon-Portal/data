@@ -45,12 +45,12 @@ export const rasterFetcher = new RasterFetcher(3)
 export function getRasterId(req: RasterRequest): string {
 	const components: Array<string | number> = [
 		'service_', req.service, '_var_', req.variable, '_date_', req.dateIdx
-	]
-	if(req.extraDimIdx !== null && req.extraDimIdx >= 0){
-		components.push('_extraDim_')
-		components.push(req.extraDimIdx)
+	];
+	if (req.extraDimIdx !== null && req.extraDimIdx >= 0) {
+		components.push('_extraDim_');
+		components.push(req.extraDimIdx);
 	}
-	return components.join("")
+	return components.join("");
 }
 
 export const getCountriesGeoJson = () => {

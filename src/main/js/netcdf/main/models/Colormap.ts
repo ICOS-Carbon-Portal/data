@@ -1,12 +1,136 @@
 import { linearInterpolation, RGBA, rgbaInterpolation } from "icos-cp-spatial";
-import { ColorRamp, colorRamps } from "../../../common/main/models/colorRampDefs";
+import { colorRamps } from "../../../common/main/models/colorRampDefs";
+import { MinMax } from "./State";
+import { Control, getSelectedControl } from "./ControlsHelper";
 
 const noValue: RGBA = [255, 255, 255, 0]
+export const defaultGamma = 1;
+export type Colormap = {
+	name: string
+	isForDivergingData: boolean
+	gamma: number
+};
 
-export default class Colormap{
+export function colormapColorize(colormap: Colormap): (normalizedValue: number) => RGBA {
+	if (colormap.gamma === 1) {
+		return colorizePlainly(colormap);
+	}
+	return (normalizedValue: number) => {
+		const gammaCorrected = normalizedValue >= 0
+			? Math.pow(normalizedValue, colormap.gamma)
+			: - Math.pow(- normalizedValue, colormap.gamma);
+
+		return colorizePlainly(colormap)(gammaCorrected);
+	};
+}
+
+function colorizePlainly(colormap: Colormap): (normalizedValue: number) => RGBA {
+	switch (colormap.name) {
+		case "rainbow":
+			return rainbowColorize;
+		case "rainbow_turbo":
+			return rainbowTurboColorize;
+		default:
+			const ramp = colorRamps.find((cr) => (cr.name === colormap.name))!;
+			return rgbaInterpolation(ramp.domain, ramp.colors);
+	}
+}
+
+export const allColormaps: Colormap[] = [
+	{name: "rainbow", isForDivergingData: false, gamma: defaultGamma},
+	{name: "rainbow_turbo", isForDivergingData: false, gamma: defaultGamma},
+	...(colorRamps.map((cr) => { return {name: cr.name, isForDivergingData: false, gamma: defaultGamma}}))
+];
+
+function rainbowColorize(normValue: number): RGBA {
+	let redFactor = Math.abs(normValue * 2 - 0.5);
+	if (redFactor > 1) {
+		redFactor = 1;
+	}
+	const red = 255 * redFactor;
+	const green = 255 * Math.sin(normValue * Math.PI);
+	const blue = 255 * Math.cos(normValue * Math.PI / 2);
+	return [red, green, blue, 255];
+}
+
+function rainbowTurboColorize(normValue: number): RGBA{
+	const v = normValue * 1.4 - 0.2; // 40% stretch
+	if (v >= 0 && v <= 1) {
+		return rainbowColorize(v);
+	}
+	let rbow = v < 0 ? rainbowColorize(0) : rainbowColorize(1);
+	const distFromEnd = v < 0 ? -v : v - 1;
+	const factor = 1 - 4 * distFromEnd;
+	for (let i = 0; i < 3; i++) {
+		rbow[i] = factor * rbow[i];
+	}
+	return rbow;
+}
+
+export function colormapColorMaker(colormap: Colormap, min: number, max: number, treatAsFullRange: boolean = false): (value: number) => RGBA {
+	const midPoint = (min < 0 && max > 0) ? 0 : (min + max) / 2;
+
+	let normalizer = linearInterpolation([min, max], [0, 1]);
+	if (colormap.isForDivergingData) {
+		if (treatAsFullRange) {
+			normalizer = linearInterpolation([min, midPoint, max], [-1, 0, 1]);
+		} else if(!treatAsFullRange) {
+			if (max <= 0) {
+				normalizer = linearInterpolation([min, max], [-1, 0]);
+			} else if (min < 0) {
+				normalizer = linearInterpolation([min, 0, max], [-1, 0, 1]);
+			}
+		}
+	}
+	/*
+	const normalizer = treatAsFullRange
+		? (colormap.isForDivergingData
+			? linearInterpolation([min, midPoint, max], [-1, 0, 1]) // UNIQUE: treatAsFullRange && colormap.isForDivergingData
+			: linearInterpolation([min, max], [0, 1]) // DEFAULT: treatAsFullRange && !colormap.isForDivergingData
+		) : (colormap.isForDivergingData 
+			? (max <= 0
+				? linearInterpolation([min, max], [-1, 0]) // UNIQUE: !treatAsFullRange && colormap.isForDivergingData && max <= 0
+				: (min >= 0
+					? linearInterpolation([min, max], [0, 1])	// DEFAULT: !treatAsFullRange && colormap.isForDivergingData && max > 0 && min >= 0
+					: linearInterpolation([min, 0, max], [-1, 0, 1]) // UNIQUE: !treatAsFullRange && colormap.isForDivergingData && max > 0 && min < 0
+				)
+			) : linearInterpolation([min, max], [0, 1]) // DEFAULT: !treatAsFullRange && !colormap.isForDivergingData
+		) */
+
+	return (v: number) => {
+		if (isNaN(v)) {
+			return noValue;
+		}
+		return colormapColorize(colormap)(normalizer(v));
+	}
+}
+
+export function getColormapSelectColorMaker(colormap: Colormap, minPixel: number, maxPixel: number): (value: number) => RGBA{
+	return colormapColorMaker({...colormap, gamma: 1}, minPixel, maxPixel, true);
+}
+
+export function getColorMaker(minMax: MinMax | undefined, control: Control<Colormap>): ((v: number) => RGBA) | undefined {
+	const selectedColorMap = getSelectedControl(control);
+	if (minMax === undefined || selectedColorMap === null) {
+		return undefined;
+	}
+	return colormapColorMaker(selectedColorMap, minMax.min, minMax.max);
+}
+
+
+/*
+function fromRamp(ramp: ColorRamp){
+	const colorizePlainly = rgbaInterpolation(ramp.domain, ramp.colors)
+	const isForDivergingData = ramp.domain[0] < 0
+	return new ColormapClass(ramp.name, colorizePlainly, isForDivergingData)
+}
+*/
+/*
+export default class ColormapClass{
 	/**
 	 * normalizedValue shall have range [0, 1] for non-divergent and [-1, 0, 1] for divergent data
 	*/
+	/*
 	readonly colorize: (normalizedValue: number) => RGBA
 
 	constructor(
@@ -27,70 +151,23 @@ export default class Colormap{
 			}
 	}
 
-	withGamma(newGamma: number): Colormap{
+	withGamma(newGamma: number): ColormapClass{
 		return newGamma == this.gamma
 			? this
-			: new Colormap(this.name, this.colorizePlainly, this.isForDivergingData, newGamma)
+			: new ColormapClass(this.name, this.colorizePlainly, this.isForDivergingData, newGamma)
 	}
 
-	getColorMaker(min: number, max: number, treatAsFullRange: boolean = false): (value: number) => RGBA {
-		const midPoint = (min < 0 && max > 0) ? 0 : (min + max) / 2
 
-		const normalizer = treatAsFullRange
-			? this.isForDivergingData
-				? linearInterpolation([min, midPoint, max], [-1, 0, 1])
-				: linearInterpolation([min, max], [0, 1])
-			: this.isForDivergingData
-				? max <= 0
-					? linearInterpolation([min, max], [-1, 0])
-					: min >= 0
-						? linearInterpolation([min, max], [0, 1])
-						: linearInterpolation([min, 0, max], [-1, 0, 1])
-				: linearInterpolation([min, max], [0, 1])
-
-		const colorizer = this.colorize
-
-		return (v: number) => {
-			if (isNaN(v)) return noValue
-			return colorizer(normalizer(v))
-		}
-	}
-
-	getColormapSelectColorMaker(minPixel: number, maxPixel: number): (value: number) => RGBA{
-		return this.withGamma(1).getColorMaker(minPixel, maxPixel, true)
-	}
 }
 
-function rainbowColorize(normValue: number): RGBA {
-	let redFactor = Math.abs(normValue * 2 - 0.5)
-	if(redFactor > 1) redFactor = 1
-	const red = 255 * redFactor
-	const green = 255 * Math.sin(normValue * Math.PI)
-	const blue = 255 * Math.cos(normValue * Math.PI / 2)
-	return [red, green, blue, 255]
-}
 
-function rainbowTurboColorize(normValue: number): RGBA{
-	const v = normValue * 1.4 - 0.2 // 40% stretch
-	if(v >= 0 && v <= 1) return rainbowColorize(v)
-	let rbow = v < 0 ? rainbowColorize(0) : rainbowColorize(1)
-	const distFromEnd = v < 0 ? -v : v - 1
-	const factor = 1 - 4 * distFromEnd
-	for(let i = 0; i < 3; i++) {
-		rbow[i] = factor * rbow[i]
-	}
-	return rbow
-}
+*/
 
-function fromRamp(ramp: ColorRamp){
-	const colorizePlainly = rgbaInterpolation(ramp.domain, ramp.colors)
-	const isForDivergingData = ramp.domain[0] < 0
-	return new Colormap(ramp.name, colorizePlainly, isForDivergingData)
-}
-
+/*
 export const colorMaps = [
-	new Colormap("rainbow", rainbowColorize, false),
-	new Colormap("rainbow_turbo", rainbowTurboColorize, false)
+	new ColormapClass("rainbow", rainbowColorize, false),
+	new ColormapClass("rainbow_turbo", rainbowTurboColorize, false)
 ].concat(
 	colorRamps.map(fromRamp)
 )
+*/

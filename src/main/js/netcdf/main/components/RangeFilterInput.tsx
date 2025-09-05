@@ -1,5 +1,5 @@
 import React, { useState, useEffect, CSSProperties, ChangeEvent } from 'react';
-import { MinMax, RangeValues, State } from '../models/State';
+import { MinMax, RangeFilter, State } from '../models/State';
 
 const numberReg = /^-?\d+(\.\d+|\.\d+[eE]-?\d+|[eE]-?\d+)?$/;
 const resetLnkStyle = { marginLeft: 10, cursor: 'pointer' };
@@ -9,7 +9,7 @@ type OurProps = {
 	onClose: () => void
 	minMax: State['minMax']
 	fullMinMax: State['fullMinMax']
-	rangeValues: RangeValues
+	rangeValues: RangeFilter
 	rangeFilterChanged: (numericRangeValues: NumericRangeValues) => void
 }
 type ErrorMessages = {
@@ -46,7 +46,7 @@ export default function RangeFilterInput(props: OurProps) {
 
 	}, [rangeValues, isActive]);
 
-	const toStr = (rangeValues: RangeValues) => ({
+	const toStr = (rangeValues: RangeFilter) => ({
 		minRange: rangeValues.minRange ? rangeValues.minRange + '' : undefined,
 		maxRange: rangeValues.maxRange ? rangeValues.maxRange + '' : undefined
 	});
@@ -59,7 +59,7 @@ export default function RangeFilterInput(props: OurProps) {
 		rangeValueChanged('maxRange', ev.target.valueAsNumber);
 	};
 
-	const rangeValueChanged = (key: keyof RangeValues, value?: number) => {
+	const rangeValueChanged = (key: keyof RangeFilter, value?: number) => {
 		const rangeValues = { ...ourRangeValues };
 
 		// Kepp values as strings in the front end form

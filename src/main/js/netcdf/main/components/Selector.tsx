@@ -1,5 +1,5 @@
 import React, { ChangeEvent, CSSProperties } from 'react';
-import { Control } from '../models/ControlsHelper';
+import { Control, getSelectedControl } from '../models/ControlsHelper';
 
 type SelectorProps<T> = {
 	className?: string
@@ -15,7 +15,7 @@ export default function Selector<T>(props: SelectorProps<T>) {
 	const style: CSSProperties = {visibility: (control.values.length > 0) ? "visible" : "hidden"};
 
 	function changeHandler(event: ChangeEvent<HTMLSelectElement>) {
-		if(props.action) {
+		if (props.action) {
 			props.action(event.target.selectedIndex);
 		}
 	}
@@ -24,7 +24,7 @@ export default function Selector<T>(props: SelectorProps<T>) {
 
 		<label className='form-label fw-bold text-nowrap'>{props.caption}</label>
 
-		<select value={control.selected ? props.presenter(control.selected) : props.caption} className="form-select" onChange={changeHandler}>{
+		<select value={getSelectedControl(control) ? props.presenter(getSelectedControl(control)!) : props.caption} className="form-select" onChange={changeHandler}>{
 
 			control.values.map(function(optionValue, i){
 				return <option key={i}>{props.presenter(optionValue)}</option>;

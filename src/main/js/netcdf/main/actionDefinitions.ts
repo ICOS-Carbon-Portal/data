@@ -1,4 +1,4 @@
-import { Action } from "redux";
+/*import { Action } from "redux";
 import * as GeoJSON from "geojson";
 import { DataObject } from "../../common/main/metacore";
 import { RangeFilter, TimeserieParams } from "./models/State";
@@ -69,3 +69,4 @@ export class PUSH_PLAY extends ActionPayload { }
 export class INCREMENT_RASTER extends ActionPayload {
 	constructor(readonly increment: number) { super(); }
 }
+*/

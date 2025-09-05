@@ -1,70 +1,67 @@
 import {
 	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getServices,
-	getTimeserie, getMetadata, getRasterId} from './backend';
+	getTimeserie, getMetadata} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
-//import { NetCDFDispatch, NetCDFThunkAction } from './store';
-import {
-	COLORRAMP_SELECTED, COUNTRIES_FETCHED, DATE_SELECTED, DELAY_SELECTED, EXTRA_DIM_SELECTED,
-	ERROR, FETCHING_TIMESERIE, GAMMA_SELECTED, INCREMENT_RASTER, METADATA_FETCHED, PUSH_PLAY,
-	RASTER_FETCHED, SERVICES_FETCHED, SERVICE_SELECTED, SERVICE_SET, SET_RANGEFILTER, TIMESERIE_FETCHED,
-	TIMESERIE_RESET, TOGGLE_TS_SPINNER, VARIABLES_AND_DATES_FETCHED, VARIABLE_SELECTED
-} from './actionDefinitions';
-import stateProps, { defaultGamma, RangeFilter, TimeserieParams } from './models/State';
+//import { NetCDFDispatch, AppThunk } from './store';
+import { defaultColormaps, defaultDelays, defaultGammas, State, TimeserieParams } from './models/State';
 import type { ThunkAction } from '@reduxjs/toolkit';
-import type { RootState } from './store';
 import type { Action } from 'redux';
-import { colorRamps } from "../../common/main/models/colorRampDefs";
+import { colorrampSelected, countriesFetched, dateSelected, delaySelected, errorOccurred, extraDimSelected,
+	gammaSelected, incrementRaster, metadataFetched, pushPlay, rasterFetched,
+	serviceSelected, serviceSet, servicesFetched,variablesAndDatesFetched, variableSelected } from './reducer';
+import { getRasterRequest, getSelectedControl } from './models/ControlsHelper';
+import { allColormaps } from './models/Colormap';
 
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
-  RootState,
+  State,
   unknown,
   Action<string>
 >;
 
-export const init = (): AppThunk => (dispatch, getState) => {
-	const state = getState();
+export function fetchInitialData(): AppThunk { 
+	return (dispatch, getState) => {
+		const state = getState();
 
-	const searchParams = state.initSearchParams;
-	const gammaIdx = searchParams.gamma;
-	let colorIdx = searchParams.color
-		? colorRamps.findIndex(color => color.name === searchParams.color)
-		: 0;
-	colorIdx = colorIdx === -1 ? 0 : colorIdx;
+		const searchParams = state.initSearchParams;
+		let gammaIdx = defaultGammas.values.findIndex(gamma => gamma === parseFloat(searchParams.gamma));
+		gammaIdx = gammaIdx === -1 ? 4 : gammaIdx;
+		let colorIdx = defaultColormaps.values.findIndex(color => color.name === searchParams.color);
+		colorIdx = colorIdx === -1 ? 0 : colorIdx;
 
-	const pathName = window.location.pathname;
-	const sections = pathName.split('/');
-	const pidIdx = sections.indexOf('netcdf') + 1;
-	const pid = sections[pidIdx];
-	const isPIDProvided = pid !== '';
+		const pathName = window.location.pathname;
+		const sections = pathName.split('/');
+		const pidIdx = sections.indexOf('netcdf') + 1;
+		const pid = sections[pidIdx];
 
+		dispatch(fetchCountriesTopo());
+		dispatch(gammaSelected(gammaIdx));
+		dispatch(colorrampSelected(colorIdx));
 
-	dispatch(fetchCountriesTopo());
-	dispatch(selectGamma(parseInt(gammaIdx, 10)));
-	dispatch(selectColorRamp(colorIdx));
+		if (state.isPIDProvided) {
+			dispatch(fetchMetadata(pid));
 
-	if (state.isPIDProvided) {
-		dispatch(fetchMetadata(pid));
-
-		if (!pid) {
-			dispatch(failWithError(new Error('The request is missing a pid')));
+			if (!pid) {
+				dispatch(failWithError(new Error('The request is missing a pid')));
+			} else {
+				dispatch(setService(pid));
+			}
 		} else {
-			dispatch(setService(stateProps.pid));
+			dispatch(fetchServices());
 		}
-	} else {
-		dispatch(fetchServices());
 	}
-};
+}
 
 
-export const failWithError = (error: Error): NetCDFThunkAction<void> => dispatch => {
+export const failWithError = (error: Error): AppThunk => ((dispatch, getState) => {
 	console.log(error);
 
 	logError(config.previewTypes.NETCDF, error.message);
-	dispatch(new ERROR(error));
-}
+	dispatch(errorOccurred(error));
+});
 
+/*
 export const init = (dispatch: NetCDFDispatch) => {
 	dispatch(fetchCountriesTopo);
 	dispatch(selectGamma(stateProps.gammaIdx));
@@ -82,69 +79,74 @@ export const init = (dispatch: NetCDFDispatch) => {
 		dispatch(fetchServices);
 	}
 };
-
-export const fetchMetadata: (pid: string) => NetCDFThunkAction<void> = pid => dispatch => {
+*/
+export const fetchMetadata: (pid: string) => AppThunk<void> = pid => dispatch => {
 	getMetadata(pid).then(
-		metadata => dispatch(new METADATA_FETCHED(metadata)),
+		metadata => dispatch(metadataFetched(metadata)),
 		err => dispatch(failWithError(err))
 	)
 }
 
-export const fetchServices: NetCDFThunkAction<void> = dispatch => {
+export const fetchServices: () => AppThunk<void> = () => dispatch => {
 	getServices().then(
 		services => {
-			dispatch(new SERVICES_FETCHED(services));
+			dispatch(servicesFetched(services));
 			dispatch(selectService(0));
 		},
 		err => dispatch(failWithError(err))
 	);
 };
 
-export const fetchCountriesTopo: NetCDFThunkAction<void> = dispatch => {
+export const fetchCountriesTopo: () => AppThunk<void> = () => dispatch => {
+	console.log("action fetchCountriesTopo")
 	getCountriesGeoJson().then(
-		countriesTopo => dispatch(new COUNTRIES_FETCHED(countriesTopo)),
+		countriesTopo => dispatch(countriesFetched({timestamp: Date.now(), countriesTopo})),
 		err => dispatch(failWithError(err))
 	);
 };
 
-export const setService: (pid: string) => NetCDFThunkAction<void> = pid => dispatch => {
-	dispatch(new SERVICE_SET(pid))
+export const setService: (pid: string) => AppThunk<void> = pid => dispatch => {
+	console.log("action setService")
+	dispatch(serviceSet(pid));
 	dispatch(fetchVariablesAndDates);
 }
 
-export const selectService: (idx: number) => NetCDFThunkAction<void> = idx => dispatch => {
-	dispatch(new SERVICE_SELECTED(idx));
+export const selectService: (idx: number) => AppThunk<void> = idx => dispatch => {
+	dispatch(serviceSelected(idx));
 	dispatch(fetchVariablesAndDates);
 }
 
-const fetchVariablesAndDates: NetCDFThunkAction<void> = (dispatch, getState) => {
+const fetchVariablesAndDates: AppThunk<void> = (dispatch, getState) => {
+	console.log("action fetchVariablesAndDates")
+	console.log(getState());
 	const services = getState().controls.services;
 
-	const service = services.selected
-	if(service === null) return
+	const service = getSelectedControl(services);
+	if (service === null) {
+		return;
+	}
 
 	getVariablesAndDates(service).then(
 		({ variables, dates }) => {
-			dispatch(new VARIABLES_AND_DATES_FETCHED(service, variables, dates));
-			dispatch(fetchRasterData);
+			dispatch(variablesAndDatesFetched({service, variables, dates}));
 		},
 		err => dispatch(failWithError(err))
 	);
 };
 
+/*
+export const fetchTimeSerie = (params: TimeserieParams): AppThunk<void> => dispatch => {
+	dispatch(fetchingTimeserie());
 
-export const fetchTimeSerie = (params: TimeserieParams): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new FETCHING_TIMESERIE());
-
-	const showSpinnerTimer = setTimeout(() => dispatch(new TOGGLE_TS_SPINNER(true)), 300);
+	const showSpinnerTimer = setTimeout(() => dispatch(toggleTsSpinner(true)), 300);
 
 	getTimeserie(params).then(
 		yValues => {
 			clearTimeout(showSpinnerTimer);
 
 			if (yValues.length > 0) {
-				dispatch(new TOGGLE_TS_SPINNER(false));
-				dispatch(new TIMESERIE_FETCHED(yValues, params));
+				dispatch(toggleTsSpinner(false));
+				dispatch(timeserieFetched({yValues, timeserieParams: params}));
 			}
 		},
 		err => {
@@ -153,40 +155,18 @@ export const fetchTimeSerie = (params: TimeserieParams): NetCDFThunkAction<void>
 		}
 	)
 }
-
-export const resetTimeserieData: NetCDFThunkAction<void> = dispatch => {
-	dispatch(new TIMESERIE_RESET());
-};
-
-export const pushPlayButton: NetCDFThunkAction<void> = (dispatch, getState) => {
-	dispatch(new PUSH_PLAY())
+*/
+export const pushPlayButton: AppThunk<void> = (dispatch, getState) => {
+	dispatch(pushPlay())
 	dispatch(incrementIfNeeded)
 }
 
-export const incrementRasterData = (increment: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new INCREMENT_RASTER(increment));
-	dispatch(fetchRasterData);
+export const incrementRasterData = (increment: number): AppThunk<void> => dispatch => {
+	dispatch(incrementRaster(increment));
+	//dispatch(fetchRasterData);
 };
 
-const fetchRasterData: NetCDFThunkAction<void> = (dispatch, getState) => {
-	const {controls, playingMovie} = getState()
-
-	const request = controls.rasterRequest
-
-	if(request === undefined) return
-
-	const delay = playingMovie ? (controls.delays.selected ?? 200) : 0
-
-	rasterFetcher.fetch(request, delay).then(
-		raster => {
-			dispatch(new RASTER_FETCHED(raster));
-			dispatch(incrementIfNeeded);
-		},
-		err => dispatch(failWithError(err))
-	)
-}
-
-export const incrementIfNeeded: NetCDFThunkAction<void> = (dispatch, getState) => {
+export const incrementIfNeeded: AppThunk<void> = (dispatch, getState) => {
 	setTimeout(
 		() => {
 			if(getState().playingMovie) {
@@ -197,41 +177,14 @@ export const incrementIfNeeded: NetCDFThunkAction<void> = (dispatch, getState) =
 	)//a tiny delay to improve interface's responsiveness
 };
 
-export const selectVariable = (idx: number): NetCDFThunkAction<void> => (dispatch, getState) => {
-	dispatch(new VARIABLE_SELECTED(idx));
-	dispatch(fetchRasterData)
-
-	const {timeserieParams, controls} = getState();
-	const variable = controls.variables.selected?.shortName
-
-	if (timeserieParams && variable) {
-		const params: TimeserieParams = Object.assign({}, timeserieParams, {variable});
-		dispatch(fetchTimeSerie(params));
-	}
+export const selectVariable = (idx: number): AppThunk<void> => (dispatch, getState) => {
+	dispatch(variableSelected(idx));
 };
 
-export const selectDate = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new DATE_SELECTED(idx));
-	dispatch(fetchRasterData);
+export const selectDate = (idx: number): AppThunk<void> => dispatch => {
+	dispatch(dateSelected(idx));
 };
 
-export const selectExtraDim = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new EXTRA_DIM_SELECTED(idx));
-	dispatch(fetchRasterData);
-};
-
-export const selectGamma = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new GAMMA_SELECTED(idx));
-};
-
-export const selectDelay = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new DELAY_SELECTED(idx));
-};
-
-export const selectColorRamp = (idx: number): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new COLORRAMP_SELECTED(idx));
-};
-
-export const setRangeFilter = (rangeFilter: RangeFilter): NetCDFThunkAction<void> => dispatch => {
-	dispatch(new SET_RANGEFILTER(rangeFilter));
+export const selectExtraDim = (idx: number): AppThunk<void> => dispatch => {
+	dispatch(extraDimSelected(idx));
 };

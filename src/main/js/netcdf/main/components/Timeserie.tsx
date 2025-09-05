@@ -1,9 +1,10 @@
-import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import Draggable from 'icos-cp-draggable';
 import {drawGraph} from '../models/Dygraphs';
 import deepequal from 'deep-equal';
 import {ReactSpinner} from 'icos-cp-spinner';
 import { Latlng, TimeserieData } from '../models/State';
+import { useAppSelector } from '../store';
 
 
 const panelBodyHeight = 200;
@@ -11,32 +12,40 @@ const panelBodyHeight = 200;
 type TimeserieProps = {
 	isSites: boolean
 	isActive: boolean
-	varName?: string
-	timeserieData?: TimeserieData[]
-	latlng?: Latlng
-	showTSSpinner: boolean
+	varName: string | undefined
+	timeserieData: TimeserieData[] | undefined
 	isFetchingTimeserieData: boolean
+	latlng?: Latlng
 	closeTimeserie: () => void
 };
 
 export default function Timeserie(props: TimeserieProps) {
-	const [prevData, setPrevData] = useState(props.timeserieData);
+	const {isSites, isActive, timeserieData, varName, closeTimeserie, isFetchingTimeserieData, latlng} = props;
 
 	let [draggableStyle, setDraggableStyle] = useState<CSSProperties>({});
-	const hasData = props.varName && props.timeserieData?.length && props.latlng;
 
-	if (hasData && !deepequal(props.timeserieData, prevData)) {
-		setPrevData(props.timeserieData);
-		drawGraph(props.timeserieData, props.varName, props.latlng);
-	}
+	const graphDiv = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		console.log("Timeserie UE");
+		console.log(timeserieData);
+		console.log(latlng)
+		if (varName && timeserieData?.length && latlng && graphDiv.current) {
+			console.log("we are calling drawGraph")
+			drawGraph(timeserieData, varName, latlng);
+		}
+	}, [timeserieData, varName, latlng, graphDiv.current]);
 
 	function onStopDrag(style: CSSProperties) {
 		// save style in case the draggable is closed (for position)
 		setDraggableStyle(style);
 	}
-
-	const {isSites, isActive, isFetchingTimeserieData, timeserieData, showTSSpinner, closeTimeserie} = props;
-	const showDivNoData = !showTSSpinner && !isFetchingTimeserieData && isEmpty(timeserieData);
+	const showDivNoData = !isFetchingTimeserieData && timeserieData !== undefined && isEmpty(timeserieData);
+	const defaultGraphStyle = {border:'none', width:'100%', height:'100%'};
+	const graphStyle: CSSProperties = isFetchingTimeserieData || showDivNoData
+		? {...defaultGraphStyle, visibility:'hidden'}
+		: defaultGraphStyle;
+	const textStyle: CSSProperties = {textAlign:'center', position:'relative', top:'40%'};
 
 	return isActive
 		?	<Draggable
@@ -44,19 +53,24 @@ export default function Timeserie(props: TimeserieProps) {
 				initialPos={initialPos(draggableStyle, 'map')}
 				onStopDrag={onStopDrag}
 			>
-				<Panel
-					isFetchingTimeserieData={isFetchingTimeserieData}
-					showDivNoData={showDivNoData}
-					isSites={isSites}
-					showSpinner={showTSSpinner}
-					closeTimeserie={closeTimeserie}
-				/>
+				<div className="card" style={{margin:0}}>
+					<div id="cp-drag-element" className="card-header">
+						<span id="graphLegend">&nbsp;</span>
+						<CloseBtn closeTimeserie={closeTimeserie} />
+					</div>
+
+					<div className="card-body" style={{padding:'5px 2px', height: panelBodyHeight}}>
+						{showDivNoData ? <div style={textStyle}>No data found at that location</div> : <></>}
+						<div ref={graphDiv} id="graph" style={graphStyle} />
+						<ReactSpinner isSites={isSites} show={isFetchingTimeserieData} />
+					</div>
+				</div>
 			</Draggable>
 		: null;
 }
 
-const isEmpty = (timeserieData: TimeserieData[] | undefined) => {
-	return !timeserieData || timeserieData.length === 0 || timeserieData.every(d => d[1] === 0 || d[1] === null);
+const isEmpty = (timeserieData: TimeserieData[]) => {
+	return timeserieData.length === 0 || timeserieData.every(d => d[1] === 0 || d[1] === null);
 };
 
 function initialPos(draggableStyle: CSSProperties, parentElementId: string) {
@@ -82,37 +96,6 @@ function initialPos(draggableStyle: CSSProperties, parentElementId: string) {
 		return position;
 	}
 }
-
-type PanelProps = {
-	isSites: boolean
-	isFetchingTimeserieData: boolean
-	showDivNoData: boolean
-	showSpinner: boolean
-	closeTimeserie: () => void
-};
-
-const Panel = ({isSites, isFetchingTimeserieData, showDivNoData, showSpinner, closeTimeserie}: PanelProps) => {
-	const defaultGraphStyle = {border:'none', width:'100%', height:'100%'};
-	const graphStyle = isFetchingTimeserieData || showDivNoData || showSpinner
-		? Object.assign({}, defaultGraphStyle, {visibility:'hidden'})
-		: defaultGraphStyle;
-	const style: CSSProperties = {textAlign:'center', position:'relative', top:'40%'};
-
-	return (
-		<div className="card" style={{margin:0}}>
-			<div id="cp-drag-element" className="card-header">
-				<span id="graphLegend">&nbsp;</span>
-				<CloseBtn closeTimeserie={closeTimeserie} />
-			</div>
-
-			<div className="card-body" style={{padding:'5px 2px', height: panelBodyHeight}}>
-				{showDivNoData && <div style={style}>No data found at that location</div>}
-				<div id="graph" style={graphStyle} />
-				<ReactSpinner isSites={isSites} show={showSpinner} />
-			</div>
-		</div>
-	);
-};
 
 const CloseBtn = ({closeTimeserie}: {closeTimeserie: () => void}) => {
 	const style: CSSProperties = {float:'right', fontSize:22, cursor:'pointer'};

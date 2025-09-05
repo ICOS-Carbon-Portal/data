@@ -1,38 +1,57 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import NetCDFMap, { getTileHelper, getLatLngBounds } from 'icos-cp-netcdfmap';
 import 'leaflet/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
 import Legend from 'icos-cp-legend';
 import Controls from './Controls';
 import {throttle, debounce} from 'icos-cp-utils';
-import {defaultGamma, Latlng, RangeValues} from '../models/State';
+import {Latlng, RangeFilter, TimeserieData, TimeserieParams} from '../models/State';
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie';
 import RangeFilterInput from './RangeFilterInput';
-import { AppProps } from '../containers/App';
-import { Control } from '../models/ControlsHelper';
+//import { AppProps } from '../containers/App';
+import { Control, getRasterRequest, getRasterRequestId, getSelectedControl } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
 import { withChangedIdIfNeeded } from '../models/BinRasterHelper';
 import legendFactory from '../models/LegendFactory';
-import { VariableInfo } from '../backend';
+import { getTimeserie, rasterFetcher, VariableInfo } from '../backend';
+import { useAppDispatch, useAppSelector } from '../store';
+import { rangeFilterSet, rasterFetched, serviceSelected } from '../reducer';
+import { failWithError, incrementIfNeeded } from '../actions';
+import { defaultGamma, getColorMaker } from '../models/Colormap';
 
 
-type MapProps = Pick<AppProps, 'isSites' | 'isPIDProvided' | 'minMax' | 'fullMinMax' | 'legendLabel' | 'colorMaker' | 'controls' | 'variableEnhancer' | 'countriesTopo' | 'dateChanged' | 'delayChanged'
-	| 'extraDimChanged' | 'gammaChanged' | 'colorRampChanged' | 'increment' | 'playingMovie' | 'playPauseMovie' | 'rasterFetchCount' | 'raster' | 'serviceChanged' | 'title'
-	| 'variableChanged' | 'initSearchParams' | 'fetchTimeSerie' | 'timeserieData' | 'latlng' | 'showTSSpinner' | 'resetTimeserieData' | 'isFetchingTimeserieData' | 'rangeFilter' | 'setRangeFilter'>
+export default function Map() {
+	const dispatch = useAppDispatch();
 
-const minHeight = 300;
+	const initSearchParams = useAppSelector(state => state.initSearchParams);
+	const controls = useAppSelector(state => state.controls);
+	const { services, variables, dates, extraDim, gammas, delays, colorMaps } = controls;
+	const playingMovie = useAppSelector(state => state.playingMovie);
+	const isPIDProvided = useAppSelector(state => state.isPIDProvided);
+	const rasterFetchCount = useAppSelector(state => state.rasterFetchCount);
+	const rangeFilter = useAppSelector(state => state.rangeFilter);
+	const minMax = useAppSelector(state => state.minMax);
+	const fullMinMax = useAppSelector(state => state.fullMinMax);
+	const countriesTopo = useAppSelector(state => state.countriesTopo);
+	const title = useAppSelector(state => state.title);
+	const variableEnhancer = useAppSelector(state => state.variableEnhancer);
+	const isSites = useAppSelector(state => state.isSites);
+	const legendLabel = useAppSelector(state => state.legendLabel);
 
-export default function Map(props: MapProps) {
+	// TODO reorganize; group all State variables together, group useEffects, group functions, etc.
 	const [height, setHeight] = useState(0);
 	const [isShowTimeserieActive, setIsShowTimeserieActive] = useState(false);
 	const [isRangeFilterInputsActive, setIsRangeFilterInputsActive] = useState(false);
+	const [center, setCenter] = useState(initSearchParams.center ? initSearchParams.center.split(',') : ['52.5', '10']);
+	const [zoom, setZoom] = useState<string | number>(initSearchParams.zoom ?? 2);
 
-	const countriesTs = Date.now();
-	const [center, setCenter] = useState(props.initSearchParams.center ? props.initSearchParams.center.split(',') : ['52.5', '10']);
-	const [zoom, setZoom] = useState<string | number>(props.initSearchParams.zoom ?? 2);
+	const [isFetchingTs, setIsFetchingTs] = useState(false);
+	const [data, setData] = useState<TimeserieData[]>();
+	const [latlng, setLatlng] = useState<Latlng>();
 
+	// this is a skeevy way of getting PID. I don't really like it
 	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
 	const [prevVariables, setPrevVariables] = useState<Control<VariableInfo> | undefined>(undefined);
 
@@ -45,17 +64,39 @@ export default function Map(props: MapProps) {
 
 	const legendDiv = useRef<HTMLDivElement>(null);
 
+	const countriesTs = Date.now();
+	const minHeight = 300;
+
 	updateURL();
 
-	if (props.raster && height === 0) {
+	const [raster, setRaster] = useState<BinRaster>();
+
+	useEffect(() => {
+		const request = getRasterRequest(controls);
+	
+		if (request === undefined) {
+			return;
+		}
+	
+		const delay = playingMovie ? (getSelectedControl(delays) ?? 200) : 0;
+		rasterFetcher.fetch(request, delay).then(
+			fetchedRaster => {
+				setRaster(fetchedRaster);
+				dispatch(rasterFetched({id: fetchedRaster.id, stats: fetchedRaster.stats}));
+				dispatch(incrementIfNeeded);
+			},
+			err => dispatch(failWithError(err))
+		)
+	}, [controls, playingMovie] );
+
+	if (raster && height === 0) {
 		updateHeight();
 	}
 
 	function updateURL() {
-		if (props.isPIDProvided && props.rasterFetchCount > 0) {
-			const {dates, extraDim, gammas, variables, colorMaps} = props.controls;
-			const selectedVariable = variables.selected;
-			if (prevVariables === undefined || prevVariables.selected?.shortName !== selectedVariable?.shortName) {
+		if (isPIDProvided && rasterFetchCount > 0) {
+			const selectedVariable = getSelectedControl(variables);
+			if (prevVariables === undefined || getSelectedControl(prevVariables)?.shortName !== selectedVariable?.shortName) {
 				setPrevVariables(variables);
 				if (selectedVariable !== null) {
 					saveToRestheart(formatData({objId: objId, variable: selectedVariable.shortName}));
@@ -63,15 +104,15 @@ export default function Map(props: MapProps) {
 			}
 
 			const searchParams: {k: string, v: string | null | undefined}[] = [
-				{k: "date", v: dates.selected},
-				{k: "extraDim", v: extraDim.selected},
-				{k: "gamma", v: (gammas.selected ?? defaultGamma).toString(10)},
-				{k: "varName", v: variables.selected?.shortName},
+				{k: "date", v: getSelectedControl(dates)},
+				{k: "extraDim", v: getSelectedControl(extraDim)},
+				{k: "gamma", v: (getSelectedControl(gammas) ?? defaultGamma).toString(10)},
+				{k: "varName", v: getSelectedControl(variables)?.shortName},
 				{k: "center", v: center.join(",")},
 				{k: "zoom", v: zoom.toString(10)},
-				{k: "color", v: colorMaps.selected?.name},
-				{k: "rangeMin", v: props.rangeFilter.rangeValues.minRange?.toString(10)},
-				{k: "rangeMax", v: props.rangeFilter.rangeValues.maxRange?.toString(10)},
+				{k: "color", v: getSelectedControl(colorMaps)?.name},
+				{k: "rangeMin", v: rangeFilter.minRange?.toString(10)},
+				{k: "rangeMax", v: rangeFilter.maxRange?.toString(10)},
 			];
 
 			const newSearch = "?" +
@@ -79,7 +120,7 @@ export default function Map(props: MapProps) {
 					.filter(({k, v}) => v !== undefined && v !== null)
 					.map(({k, v}) => `${k}=${v}`)
 					.join("&");
-
+			// TODO we should probably not be doing this here?
 			if (newSearch.length > 1 && newSearch !== window.decodeURIComponent(window.location.search)) {
 				const newURL = location.origin + location.pathname + newSearch;
 
@@ -108,34 +149,56 @@ export default function Map(props: MapProps) {
 		}
 	}
 
-	function timeserieToggle(isShowTimeserieActive: boolean) {
-		setIsShowTimeserieActive(isShowTimeserieActive);
-
-		if (!isShowTimeserieActive) {
-			props.resetTimeserieData();
-		}
-	}
-
 	function closeTimeserie() {
-		timeserieToggle(false);
+		setIsFetchingTs(false);
+		setIsShowTimeserieActive(false);
+		setData(undefined);
 	}
 
 	// Because of the way NetCDFMap tracks events, we need to wrap timeserieMapClick in a ref, and then
 	// provide a stable function that uses the current version of timeserieMapClick stored in the ref.
-	const timeserieMapClick = (eventName: string, e: {latlng: Latlng | null}) => {
-		if (props.raster && props.fetchTimeSerie) {
-			const objId = props.controls.services.selected;
-			const variable = props.controls.variables.selected?.shortName;
-			const extraDimInd = props.controls.extraDim.selectedIdx;
-			const xy = e.latlng ? getRasterXYFromLatLng(props.raster, e.latlng) : null;
+	const timeserieMapClick = useCallback((eventName: string, e: {latlng: Latlng | null}) => {
+		console.log("timeserieMapClick was called");
+		if (raster) {
+			const objId = getSelectedControl(services);
+			const variable = getSelectedControl(variables)?.shortName;
+			const extraDimInd = extraDim.selectedIdx;
+			const xy = e.latlng ? getRasterXYFromLatLng(raster, e.latlng) : null;
 
 			if (xy && objId !== null && variable !== undefined && e.latlng !== null) {
-				props.fetchTimeSerie({objId, variable, extraDimInd, x: xy.x, y: xy.y, latlng: e.latlng});
-				timeserieToggle(true);
+				if (e.latlng !== latlng) {
+					setLatlng(e.latlng);
+				}
+				setIsFetchingTs(true);
+				setIsShowTimeserieActive(true);
+				const params = {objId, variable, extraDimInd, x: xy.x, y: xy.y, latlng: e.latlng};
+				updateTimeserieData(params);
 			}
 		}
-	};
+	}, [services, variables, extraDim, raster]);
 
+	function updateTimeserieData(params: TimeserieParams) {
+		getTimeserie(params).then(
+			yValues => {
+				console.log("updateTimeserieData: getTimeserie success")
+				console.log(yValues);
+				setIsFetchingTs(false);
+				if (yValues.length > 0) {
+					setData(dates.values.length === yValues.length
+						? dates.values.map((date: string, idx: number) => [new Date(date), yValues[idx]])
+						: [[0, 1]]);
+				} else {
+					setData(undefined);
+				}
+			},
+			err => {
+				setIsFetchingTs(false);
+				dispatch(failWithError(err));
+			}
+		);
+	}
+
+	//TODO test if we can just pass in timeserieMapClick now, with a useCallback wrapper
 	const timeserieMapClickRef = useRef(timeserieMapClick);
 
 	useEffect(() => {
@@ -146,50 +209,40 @@ export default function Map(props: MapProps) {
 		timeserieMapClickRef.current(eventName, e)
 	}, []);
 
+	// timeserieData should also be updated when variable is changed, if it is open
+	useEffect(() => {
+		timeserieMapClick("changed", {latlng: latlng ?? null});
+	}, [variables, latlng])
+
 	function updateRangeFilterInputsVisibility() {
 		setIsRangeFilterInputsActive(!isRangeFilterInputsActive);
 	}
 
-	function rangeFilterChanged(rangeValueChanges: RangeValues) {
-		const rangeValues = { ...props.rangeFilter.rangeValues, ...rangeValueChanges};
-
-		const valueFilter = (v: number) => {
-			if (rangeValues.minRange === undefined && rangeValues.maxRange === undefined)
-				return v;
-
-			if (rangeValues.minRange !== undefined && v < rangeValues.minRange) {
-				return rangeValues.minRange;
-
-			} else if (rangeValues.maxRange !== undefined && v > rangeValues.maxRange) {
-				return rangeValues.maxRange;
-
-			} else {
-				return v;
-			}
-		};
-
-		props.setRangeFilter({ rangeValues, valueFilter });
+	// TODO: move to action in its own right, since all info is in payload or state
+	function rangeFilterChanged(rangeValueChanges: RangeFilter) {
+		dispatch(rangeFilterSet(rangeValueChanges));
 	}
 
-	const { gammas, colorMaps } = props.controls;
-	const { rangeValues, valueFilter } = props.rangeFilter;
-
-	const mapId = props.raster
-		? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
-			`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
+	const mapId = raster
+		? (`${raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
+			`_min_${rangeFilter.minRange ?? "?"}_max_${rangeFilter.maxRange ?? "?"}`)
 		: undefined;
 
-	const needReset = !props.raster || !props.colorMaker;
-	const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId);
+	const colorMaker = useMemo(() => {
+		return getColorMaker(minMax, colorMaps);
+	}, [minMax, colorMaps]);
 
-	const showSpinner = props.countriesTopo.ts > countriesTs && props.rasterFetchCount === 0;
-	const colorMap = colorMaps.selected;
-	const getLegend = (props.minMax === undefined || colorMap === null)
+	const needReset = !raster || !colorMaker;
+	const renderedRaster = needReset ? undefined : withChangedIdIfNeeded(raster, mapId);
+
+	const showSpinner = countriesTopo.ts > countriesTs && rasterFetchCount === 0;
+	const colorMap = getSelectedControl(colorMaps);
+	const getLegend = (minMax === undefined || colorMap === null)
 		? undefined
-		: legendFactory(props.minMax, colorMap);
+		: legendFactory(minMax, colorMap);
 
 	const latLngBounds = getLatLngBounds(
-		props.rasterFetchCount,
+		rasterFetchCount,
 		center,
 		zoom,
 		raster
@@ -197,30 +250,37 @@ export default function Map(props: MapProps) {
 
 	const containerHeight = height < minHeight ? minHeight : height - 10;
 
+	const valueFilter = useCallback(
+		((v: number) => {
+			if (rangeFilter.minRange === undefined && rangeFilter.maxRange === undefined)
+				return v;
+	
+			if (rangeFilter.minRange !== undefined && v < rangeFilter.minRange) {
+				return rangeFilter.minRange;
+	
+			} else if (rangeFilter.maxRange !== undefined && v > rangeFilter.maxRange) {
+				return rangeFilter.maxRange;
+	
+			} else {
+				return v;
+			}
+		}), [rangeFilter]);
+
 	return (
 		<div id="content" className="container-fluid d-flex flex-column">
-			{!window.frameElement && props.title &&
-				<h2>{props.title}</h2>
+			{!window.frameElement && title &&
+				<h2>{title}</h2>
 			}
 			<Controls
-				isPIDProvided={props.isPIDProvided}
+				isPIDProvided={isPIDProvided}
 				marginTop={5}
-				controls={props.controls}
-				variableEnhancer={props.variableEnhancer}
-				playingMovie={props.playingMovie}
-				increment={props.increment}
-				playPauseMovie={props.playPauseMovie}
-				delayChanged={props.delayChanged}
+				variableEnhancer={variableEnhancer}
+				playingMovie={playingMovie}
 				handleServiceChange={(newIdx) => {
-					props.serviceChanged(newIdx);
+					dispatch(serviceSelected(newIdx));
 					// https://data.icos-cp.eu/netcdf/ allows "browsing". Close time serie in case it's open
 					closeTimeserie();
 				}}
-				handleVarNameChange={props.variableChanged}
-				handleDateChange={props.dateChanged}
-				handleGammaChange={props.gammaChanged}
-				handleExtraDimChange={props.extraDimChanged}
-				handleColorRampChange={props.colorRampChanged}
 				isRangeFilterInputsActive={isRangeFilterInputsActive}
 				handleRangeFilterInputsChange={updateRangeFilterInputsVisibility}
 			/>
@@ -228,14 +288,13 @@ export default function Map(props: MapProps) {
 			<div id="map-container" className='flex-grow-1'>
 
 				<Timeserie
-					isSites={props.isSites}
+					isSites={isSites}
 					isActive={isShowTimeserieActive}
-					varName={props.controls.variables.selected?.shortName}
-					timeserieData={props.timeserieData}
-					latlng={props.latlng}
-					showTSSpinner={props.showTSSpinner}
-					isFetchingTimeserieData={props.isFetchingTimeserieData}
+					varName={getSelectedControl(variables)?.shortName}
 					closeTimeserie={closeTimeserie}
+					timeserieData={data}
+					isFetchingTimeserieData={isFetchingTs}
+					latlng={latlng}
 				/>
 
 				<div id="map">
@@ -245,11 +304,11 @@ export default function Map(props: MapProps) {
 							zoom: zoom,
 							forceCenter: [52.5, 10]
 						}}
-						raster={raster}
+						raster={renderedRaster}
 						reset={needReset}
-						colorMaker={props.colorMaker}
+						colorMaker={colorMaker}
 						valueFilter={valueFilter}
-						geoJson={props.countriesTopo.data}
+						geoJson={countriesTopo.data}
 						latLngBounds={latLngBounds}
 						events={[
 							{
@@ -277,10 +336,10 @@ export default function Map(props: MapProps) {
 							margin={7}
 							getLegend={getLegend}
 							legendId={mapId}
-							legendText={props.legendLabel}
+							legendText={legendLabel}
 							decimals={3}
 							useRangeValueFilters={true}
-							rangeValues={rangeValues}
+							rangeValues={rangeFilter}
 							rangeFilterChanged={rangeFilterChanged}
 						/>
 						: null
@@ -289,14 +348,14 @@ export default function Map(props: MapProps) {
 				<RangeFilterInput
 					isActive={isRangeFilterInputsActive}
 					onClose={updateRangeFilterInputsVisibility}
-					minMax={props.minMax}
-					fullMinMax={props.fullMinMax}
-					rangeValues={rangeValues}
+					minMax={minMax}
+					fullMinMax={fullMinMax}
+					rangeValues={rangeFilter}
 					rangeFilterChanged={debounce(rangeFilterChanged, 500)}
 				/>
 			</div>
 
-			<ReactSpinner isSites={props.isSites} show={showSpinner} />
+			<ReactSpinner isSites={isSites} show={showSpinner} />
 
 		</div>
 	);

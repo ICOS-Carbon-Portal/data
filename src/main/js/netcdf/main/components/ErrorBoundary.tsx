@@ -1,12 +1,17 @@
 import React, { Component, ReactNode } from 'react';
-import { AppProps } from '../containers/App';
+import store from '../store';
+import { failWithError } from '../actions';
 
-type OurProps = Pick<AppProps, 'failWithError'> & { children: ReactNode }
+type OurProps = {
+	children: ReactNode
+};
+
 type OurState = {
 	hasError: boolean
-}
+	error?: Error
+};
 
-export default class ErrorBoundary extends Component<OurProps, OurState>{
+export default class ErrorBoundary extends Component<OurProps, OurState> {
 	constructor(props: OurProps){
 		super(props);
 
@@ -14,10 +19,12 @@ export default class ErrorBoundary extends Component<OurProps, OurState>{
 			hasError: false
 		};
 	}
+	static getDerivedStateFromError(error: Error) {
+		return { hasError: true, error };
+	}
 
 	componentDidCatch(error: Error) {
-		this.setState({hasError: true});
-		if (this.props.failWithError) this.props.failWithError(error);
+		store.dispatch(failWithError(error));
 	}
 
 	render() {

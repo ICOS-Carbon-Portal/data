@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { ColormapControl } from '../models/ControlsHelper';
-import Colormap from '../models/Colormap';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Control, getSelectedControl } from '../models/ControlsHelper';
+import {Colormap, getColormapSelectColorMaker} from '../models/Colormap';
 
 type DropdownColorsProps = {
-	control: ColormapControl
+	control: Control<Colormap>
 	action: (newIdx: number) => void
 };
 
@@ -12,12 +12,12 @@ export default function DropdownColors(props: DropdownColorsProps) {
 		setDropdownOpen(!dropdownOpen);
 	}
 
-	function onDropDownItemClick(selectedIdx: number) {
+	const onDropDownItemClick = useCallback((selectedIdx: number) => {
 		if (props.action) {
 			setDropdownOpen(!dropdownOpen);
 			props.action(selectedIdx);
 		}
-	}
+	}, [props.action]);
 
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function DropdownColors(props: DropdownColorsProps) {
 
 	const {control} = props;
 	const dropDownMenuCls = `dropdown-menu${dropdownOpen ? ' show' : ''}`;
-	const colorMap = control.selected;
+	const colorMap = getSelectedControl(control);
 	const node = useRef<HTMLSpanElement>(null);
 
 	return (
@@ -45,7 +45,7 @@ export default function DropdownColors(props: DropdownColorsProps) {
 				control.values.map((cm, idx) => {
 					return (
 						<ListItem
-							key={idx}
+							key={cm.name}
 							idx={idx}
 							selectedIdx={control.selectedIdx}
 							onClick={() => onDropDownItemClick(idx)}
@@ -83,22 +83,24 @@ type ListItemProps = {
 	onClick: React.MouseEventHandler
 };
 
-const ListItem = ({onClick, colorMap, idx, selectedIdx}: ListItemProps) => {
+function ListItem({onClick, colorMap, idx, selectedIdx}: ListItemProps) {
 	const style = selectedIdx === idx
 		? {backgroundColor: 'rgb(200,200,200)'}
 		: {};
 
+	const imgSrc = useMemo(() => renderCanvas(120, 15, colorMap), [colorMap]);
+
 	return (
 		<li className="dropdown-item" style={style} title={colorMap.name}>
 			<a onClick={onClick} style={{cursor:'pointer', display:'inline', verticalAlign:'super'}}>
-				<img src={renderCanvas(120, 15, colorMap)}/>
+				<img src={imgSrc}/>
 			</a>
 		</li>
 	);
 };
 
-const renderCanvas = (width: number, height: number, colorMap: Colormap) => {
-	const colorMaker = colorMap.getColormapSelectColorMaker(0, width - 1);
+function renderCanvas(width: number, height: number, colormap: Colormap) {
+	const colorMaker = getColormapSelectColorMaker(colormap, 0, width - 1);
 
 	const canvas = document.createElement("canvas");
 

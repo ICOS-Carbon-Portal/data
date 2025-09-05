@@ -1,8 +1,8 @@
 import { BinRaster } from "icos-cp-backend";
-import { RGBA } from "icos-cp-spatial";
 import { envri } from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
-import { ControlsHelper } from "./ControlsHelper";
+import { Control, ControlsHelper, emptyControl } from "./ControlsHelper";
+import { Colormap, allColormaps, defaultGamma } from "./Colormap";
 
 
 const isSites = envri === "SITES";
@@ -21,23 +21,12 @@ const searchParams = keyValpairs.reduce<Record<string,string>>((acc, curr) => {
 	return acc;
 }, {});
 
-const controls = new ControlsHelper();
-export const defaultGamma = 1;
-
-export type RangeValues = {
+export type RangeFilter = {
 	minRange?: number
 	maxRange?: number
 }
 
-export interface RangeFilter {
-	rangeValues: RangeValues
-	valueFilter: (v: number) => number
-}
-
-export const defaultRangeFilter: RangeFilter = {
-	rangeValues: {},
-	valueFilter: v => v
-};
+export const defaultRangeFilter: RangeFilter = {};
 
 export type MinMax = {
 	min: number
@@ -58,6 +47,26 @@ export type TimeserieParams = {
 	latlng: Latlng
 }
 
+export const defaultGammas: Control<number> = {
+	values: [0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0],
+	selectedIdx: 4
+};
+
+export const defaultColormaps: Control<Colormap> = {
+	values: allColormaps,
+	selectedIdx: 0
+};
+
+export const defaultDelays: Control<number> = {
+	values: [0, 50, 100, 200, 500, 1000, 3000],
+	selectedIdx: 3
+};
+
+const initialRangeFilter: RangeFilter = {
+	minRange: searchParams.rangeMin ? parseFloat(searchParams.rangeMin) : undefined,
+	maxRange: searchParams.rangeMax ? parseFloat(searchParams.rangeMax) : undefined
+};
+
 export interface State {
 	isSites: boolean
 	isPIDProvided: boolean
@@ -66,7 +75,6 @@ export interface State {
 	fullMinMax?: MinMax
 	rangeFilter: RangeFilter
 	legendLabel: string
-	colorMaker?: (value: number) => RGBA
 	controls: ControlsHelper
 	variableEnhancer: Record<string,string>
 	countriesTopo: {
@@ -86,14 +94,10 @@ export interface State {
 	}
 	playingMovie: boolean
 	rasterFetchCount: number
-	raster?: BinRaster
+	isDiverging: boolean
+	//raster?: BinRaster // CLASS
 	title?: string
 	toasterData?: {}
-	isFetchingTimeserieData: boolean
-	timeserieData?: TimeserieData[]
-	timeserieParams?: TimeserieParams
-	latlng?: Latlng
-	showTSSpinner: boolean
 }
 
 export const defaultState: State = {
@@ -102,10 +106,19 @@ export const defaultState: State = {
 	metadata: undefined,
 	minMax: undefined,
 	fullMinMax: undefined,
-	rangeFilter: defaultRangeFilter,
+	rangeFilter: initialRangeFilter.maxRange !== undefined || initialRangeFilter.minRange !== undefined
+		? initialRangeFilter
+		: defaultRangeFilter,
 	legendLabel: 'Legend',
-	colorMaker: undefined,
-	controls,
+	controls: {
+		services: emptyControl(),
+		variables: emptyControl(),
+		dates: emptyControl(),
+		extraDim: emptyControl(),
+		gammas: defaultGammas,
+		delays: defaultDelays,
+		colorMaps: defaultColormaps
+	},
 	variableEnhancer: {},
 	countriesTopo: {
 		ts: 0,
@@ -124,12 +137,8 @@ export const defaultState: State = {
 	},
 	playingMovie: false,
 	rasterFetchCount: 0,
-	raster: undefined,
+	isDiverging: false,
+	//raster: undefined,
 	title: undefined,
-	toasterData: undefined,
-	isFetchingTimeserieData: false,
-	timeserieData: [],
-	timeserieParams: undefined,
-	latlng: undefined,
-	showTSSpinner: false
+	toasterData: undefined
 };

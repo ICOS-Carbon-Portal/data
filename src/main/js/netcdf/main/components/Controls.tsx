@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import Selector from './Selector';
 import DropdownColors from "./DropdownColors";
-import { ControlsHelper } from '../models/ControlsHelper';
+import { ControlsHelper, getSelectedControl } from '../models/ControlsHelper';
 import { VariableInfo } from '../backend';
+import { useAppDispatch, useAppSelector } from '../store';
+import { incrementRasterData } from '../actions';
+import { colorrampSelected, dateSelected, delaySelected, extraDimSelected, gammaSelected, pushPlay, variableSelected } from '../reducer';
 
 const btnCls = 'btn btn-outline-secondary';
 const btnIconStyle = {fontSize: '150%', margin: 0, padding: 0};
@@ -10,18 +13,9 @@ const btnIconStyle = {fontSize: '150%', margin: 0, padding: 0};
 type ControlsProps = {
 	isPIDProvided: boolean
 	marginTop: number
-	controls: ControlsHelper
 	variableEnhancer?: Record<string, string>
 	playingMovie: boolean
-	increment: (direction: number) => void
-	playPauseMovie: () => void
-	delayChanged: (newIdx: number) => void
 	handleServiceChange: (newIdx: number) => void
-	handleVarNameChange: (newIdx: number) => void
-	handleDateChange: (newIdx: number) => void
-	handleGammaChange: (newIdx: number) => void
-	handleExtraDimChange: (newIdx: number) => void
-	handleColorRampChange: (newIdx: number) => void
 	isRangeFilterInputsActive: boolean
 	handleRangeFilterInputsChange: () => void
 }
@@ -31,11 +25,15 @@ export default function Controls(props: ControlsProps) {
 		const lbl = v.shortName;
 		return props.variableEnhancer ? props.variableEnhancer[lbl] ?? lbl : lbl;
 	}
- 
-	const controls = props.controls;
 
-	const extraDimCaption = controls.variables.selected?.extra?.name ?? "Extra dimension"
-	const extraDimsStyle = controls.extraDim.selected ? 'inline' : 'none';
+	const dispatch = useAppDispatch();
+ 
+	const controls = useAppSelector(state => state.controls);
+	const { services, variables, dates, extraDim, gammas, delays } = controls;
+	const colorMaps = useAppSelector(state => state.controls.colorMaps);
+
+	const extraDimCaption = getSelectedControl(variables)?.extra?.name ?? "Extra dimension"
+	const extraDimsStyle = getSelectedControl(extraDim) ? 'inline' : 'none';
 	const playClass = `fas fa-${props.playingMovie ? 'pause' : 'play'}-circle`;
 	const playTitle = props.playingMovie ? 'Pause playback' : 'Play';
 
@@ -43,8 +41,11 @@ export default function Controls(props: ControlsProps) {
 		? 'fas fa-filter text-primary'
 		: 'fas fa-filter';
 
-	const toNext = () => props.increment(1);
-	const toPrevious = () => props.increment(-1);
+	const toNext = () => dispatch(incrementRasterData(1));
+	const toPrevious = () => dispatch(incrementRasterData(-1));
+	const toggleMoviePlaying = () => dispatch(pushPlay());
+
+	const ddColorChanged = useCallback((newIdx: number) => dispatch(colorrampSelected(newIdx)), []);
 
 	return (
 		<div className="d-flex gap-3 flex-wrap" style={{marginTop: props.marginTop, marginBottom: 10}}>
@@ -54,7 +55,7 @@ export default function Controls(props: ControlsProps) {
 						className="variables"
 						caption="Services"
 						presenter={v => v}
-						control={controls.services}
+						control={services}
 						action={props.handleServiceChange}
 					/>
 				</div>
@@ -65,8 +66,8 @@ export default function Controls(props: ControlsProps) {
 					className="variables"
 					caption="Variable"
 					presenter={variablePresenter}
-					control={controls.variables}
-					action={props.handleVarNameChange}
+					control={variables}
+					action={(newIdx) => dispatch(variableSelected(newIdx))}
 				/>
 			</div>
 
@@ -74,8 +75,8 @@ export default function Controls(props: ControlsProps) {
 				<Selector
 					caption={extraDimCaption}
 					presenter={v => v}
-					control={controls.extraDim}
-					action={props.handleExtraDimChange}
+					control={extraDim}
+					action={(newIdx) => dispatch(extraDimSelected(newIdx))}
 				/>
 			</div>
 
@@ -84,8 +85,8 @@ export default function Controls(props: ControlsProps) {
 					className="dates"
 					caption="Date"
 					presenter={v => v}
-					control={controls.dates}
-					action={props.handleDateChange}
+					control={dates}
+					action={(newIdx) => dispatch(dateSelected(newIdx))}
 				/>
 			</div>
 
@@ -95,7 +96,7 @@ export default function Controls(props: ControlsProps) {
 					<button id="dateRev" className={btnCls} style={btnIconStyle} title="Reverse one time step" onClick={toPrevious}>
 						<span className="fas fa-caret-left" />
 					</button>
-					<button id="datePlayPause" className={btnCls} style={btnIconStyle} title={playTitle} onClick={props.playPauseMovie}>
+					<button id="datePlayPause" className={btnCls} style={btnIconStyle} title={playTitle} onClick={toggleMoviePlaying}>
 						<span className={playClass} />
 					</button>
 					<button id="dateAdv" className={btnCls} style={btnIconStyle} title="Advance one time step" onClick={toNext}>
@@ -109,16 +110,16 @@ export default function Controls(props: ControlsProps) {
 					className="delays"
 					caption="Playback speed"
 					presenter={delayPresenter}
-					control={controls.delays}
-					action={props.delayChanged}
+					control={delays}
+					action={(newIdx) => dispatch(delaySelected(newIdx))}
 				/>
 			</div>
 
 			<div>
 				<label className='form-label d-block fw-bold'>Colormap</label>
 				<DropdownColors
-					control={controls.colorMaps}
-					action={props.handleColorRampChange}
+					control={colorMaps}
+					action={ddColorChanged}
 				/>
 			</div>
 
@@ -127,8 +128,8 @@ export default function Controls(props: ControlsProps) {
 					className="gammas"
 					caption="Color gamma"
 					presenter={v => v.toString(10)}
-					control={controls.gammas}
-					action={props.handleGammaChange}
+					control={gammas}
+					action={(newIdx) => dispatch(gammaSelected(newIdx))}
 				/>
 			</div>
 
