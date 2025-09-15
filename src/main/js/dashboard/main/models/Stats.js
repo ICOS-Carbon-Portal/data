@@ -76,12 +76,12 @@ export default class Stats {
 	get calculatedStats(){
 		// binTable contains three columns on each row; TIMESTAMP (ms), data value and quality flag
 		const startStop = this.startStop;
-		if (startStop === undefined || this.datasets.length < 2) {
+		if (startStop === undefined || this.datasets.length === 0) {
 			return {min: 0, max: 0, mean: 0};
 		}
 
 		const getRows = dataset => {
-			if (dataset.binTable === undefined) return [];
+			if (dataset === undefined || dataset.binTable === undefined) return [];
 
 			const columnIndices = Array.from({length: dataset.binTable.nCols}, (_, i) => i);
 			return dataset.binTable
@@ -136,11 +136,11 @@ export default class Stats {
 	}
 
 	get isComplete(){
-		return this.metadata.dobjs.length > 0 && this.startStop !== undefined && this.datasets.length === 2;
+		return this.metadata.dobjs.length > 0 && this.startStop !== undefined && this.datasets.length > 0;
 	}
 
 	get error(){
-		if (this.datasets.length === 2 && this.metadata.dobjs.length === 0) {
+		if (this.datasets.length > 0 && this.metadata.dobjs.length === 0) {
 			return 'No data could be found. Check URL.';
 		}
 	}
