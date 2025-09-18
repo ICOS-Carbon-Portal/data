@@ -71,13 +71,13 @@ class DownloadRouting(
 					case Success(dobj: DataObject) =>
 						licenceCookieHashsums{ hashes =>
 							deleteCookie(LicenceCookieName){
-								if(hashes.contains(dobj.hash)) singleObjRoute(dobj, uidOpt)
+								if(hashes.contains(dobj.hash)) batchDownload(Seq(hashsum), dobj.fileName.replaceAll("\\.[^.]*$", ""))
 								else reject
 							}
 						} ~
 						onSuccess(downloadService.licenceToAccept(dobj, uidOpt)){
 							case None =>
-								singleObjRoute(dobj, uidOpt)
+								batchDownload(Seq(hashsum), dobj.fileName.replaceAll("\\.[^.]*$", ""))
 							case Some(licUri) =>
 								redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
 						}
@@ -88,18 +88,6 @@ class DownloadRouting(
 						complete(StatusCodes.NotFound -> err.getMessage())
 				}
 			}
-		}
-	}
-
-	private def singleObjRoute(dobj: DataObject, uid: Option[UserId])(using Envri): Route = getClientIp{ip =>
-		downloadService.inaccessibilityReason(dobj).fold{
-			val contentType = getContentType(dobj.fileName)
-			logDownload(dobj, ip, uid)
-			respondWithAttachment(dobj.fileName){
-				getFromFile(uploadService.getFile(dobj, true), contentType)
-			}
-		}{
-			problem => complete(StatusCodes.NotFound -> problem)
 		}
 	}
 
