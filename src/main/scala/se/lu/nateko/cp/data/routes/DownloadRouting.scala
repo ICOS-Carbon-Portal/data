@@ -80,7 +80,7 @@ class DownloadRouting(
 							case None =>
 								batchDownload(Seq(hashsum), fileName)
 							case Some(licUri) =>
-								redirect(new UriLicenceProfile(Seq(hashsum), Some(fileName), false).licenceUri, StatusCodes.Found)
+								redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
 						}
 
 					case Success(doc: DocObject) =>
