@@ -69,17 +69,18 @@ class DownloadRouting(
 			userOpt{uidOpt =>
 				onComplete(uploadService.meta.lookupObject(hashsum)){
 					case Success(dobj: DataObject) =>
+						val fileName = dobj.fileName.replaceAll("\\.[^.]*$", "")
 						licenceCookieHashsums{ hashes =>
 							deleteCookie(LicenceCookieName){
-								if(hashes.contains(dobj.hash)) batchDownload(Seq(hashsum), dobj.fileName.replaceAll("\\.[^.]*$", ""))
+								if(hashes.contains(dobj.hash)) batchDownload(Seq(hashsum), fileName)
 								else reject
 							}
 						} ~
 						onSuccess(downloadService.licenceToAccept(dobj, uidOpt)){
 							case None =>
-								batchDownload(Seq(hashsum), dobj.fileName.replaceAll("\\.[^.]*$", ""))
+								batchDownload(Seq(hashsum), fileName)
 							case Some(licUri) =>
-								redirect(new UriLicenceProfile(Seq(hashsum), None, false).licenceUri, StatusCodes.Found)
+								redirect(new UriLicenceProfile(Seq(hashsum), Some(fileName), false).licenceUri, StatusCodes.Found)
 						}
 
 					case Success(doc: DocObject) =>
