@@ -125,7 +125,8 @@ def _selector_values_clause(varname: str, uris: list[str]) -> str:
 def _get_uri_list(selector: CategorySelector) -> list[str]:
 	if selector is None: return []
 	def to_uri(uri_or_res: object) -> str:
-		return getattr(uri_or_res, "uri", None) or str(uri_or_res)
+		uri = getattr(uri_or_res, "uri", None) or str(uri_or_res)
+		return uri.replace("https://", "http://")
 	if type(selector) is list:
 		return [to_uri(uri_or_res) for uri_or_res in selector]
 	return [to_uri(selector)]
