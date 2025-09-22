@@ -39,7 +39,7 @@ export default function Timeserie(props: TimeserieProps) {
 	const showDivNoData = !showTSSpinner && !isFetchingTimeserieData && isEmpty(timeserieData);
 
 	return isActive
-		?	<Draggable
+		? <Draggable
 				dragElementId="cp-drag-element"
 				initialPos={initialPos(draggableStyle, 'map')}
 				onStopDrag={onStopDrag}
@@ -93,8 +93,8 @@ type PanelProps = {
 
 const Panel = ({isSites, isFetchingTimeserieData, showDivNoData, showSpinner, closeTimeserie}: PanelProps) => {
 	const defaultGraphStyle = {border:'none', width:'100%', height:'100%'};
-	const graphStyle = isFetchingTimeserieData || showDivNoData || showSpinner
-		? Object.assign({}, defaultGraphStyle, {visibility:'hidden'})
+	const graphStyle: CSSProperties = isFetchingTimeserieData || showDivNoData || showSpinner
+		? {...defaultGraphStyle, visibility: 'hidden'}
 		: defaultGraphStyle;
 	const style: CSSProperties = {textAlign:'center', position:'relative', top:'40%'};
 
