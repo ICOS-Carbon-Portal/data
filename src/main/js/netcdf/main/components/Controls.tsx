@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import Selector from './Selector';
 import DropdownColors from "./DropdownColors";
-import { ControlsHelper, getSelectedControl } from '../models/ControlsHelper';
+import { getSelectedControl } from '../models/ControlsHelper';
 import { VariableInfo } from '../backend';
 import { useAppDispatch, useAppSelector } from '../store';
 import { incrementRasterData } from '../actions';

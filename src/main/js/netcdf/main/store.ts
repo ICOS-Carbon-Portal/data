@@ -4,7 +4,10 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { State } from './models/State';
 
 
-const store = configureStore({reducer});
+const store = configureStore({
+	reducer,
+	middleware: getDefaultMiddleware => getDefaultMiddleware({ serializableCheck: false})
+});
 
 export type AppDispatch = typeof store.dispatch;
 
