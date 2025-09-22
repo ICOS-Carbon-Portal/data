@@ -1,17 +1,13 @@
-import {
-	getCountriesGeoJson, rasterFetcher, getVariablesAndDates, getServices,
-	getTimeserie, getMetadata} from './backend';
+import {getCountriesGeoJson, getVariablesAndDates, getServices, getMetadata} from './backend';
 import {logError} from "../../common/main/backend";
 import config from '../../common/main/config';
-//import { NetCDFDispatch, AppThunk } from './store';
-import { defaultColormaps, defaultDelays, defaultGammas, State, TimeserieParams } from './models/State';
+import { defaultColormaps, defaultGammas, State } from './models/State';
 import type { ThunkAction } from '@reduxjs/toolkit';
 import type { Action } from 'redux';
-import { colorrampSelected, countriesFetched, dateSelected, delaySelected, errorOccurred, extraDimSelected,
-	gammaSelected, incrementRaster, metadataFetched, pushPlay, rasterFetched,
-	serviceSelected, serviceSet, servicesFetched,variablesAndDatesFetched, variableSelected } from './reducer';
-import { getRasterRequest, getSelectedControl } from './models/ControlsHelper';
-import { allColormaps } from './models/Colormap';
+import { colorrampSelected, countriesFetched, dateSelected, errorOccurred, extraDimSelected, gammaSelected,
+	incrementRaster, metadataFetched, pushPlay, serviceSelected, serviceSet, servicesFetched,
+	variablesAndDatesFetched, variableSelected } from './reducer';
+import { getSelectedControl } from './models/ControlsHelper';
 
 export type AppThunk<ReturnType = void> = ThunkAction<
   ReturnType,
@@ -51,7 +47,7 @@ export function fetchInitialData(): AppThunk {
 			dispatch(fetchServices());
 		}
 	}
-}
+};
 
 
 export const failWithError = (error: Error): AppThunk => ((dispatch, getState) => {
@@ -61,31 +57,12 @@ export const failWithError = (error: Error): AppThunk => ((dispatch, getState) =
 	dispatch(errorOccurred(error));
 });
 
-/*
-export const init = (dispatch: NetCDFDispatch) => {
-	dispatch(fetchCountriesTopo);
-	dispatch(selectGamma(stateProps.gammaIdx));
-	dispatch(selectColorRamp(stateProps.colorIdx));
-
-	if (stateProps.isPIDProvided) {
-		dispatch(fetchMetadata(stateProps.pid));
-
-		if (stateProps.pid) {
-			dispatch(setService(stateProps.pid));
-		} else {
-			dispatch(failWithError(new Error('The request is missing a pid')));
-		}
-	} else {
-		dispatch(fetchServices);
-	}
-};
-*/
 export const fetchMetadata: (pid: string) => AppThunk<void> = pid => dispatch => {
 	getMetadata(pid).then(
 		metadata => dispatch(metadataFetched(metadata)),
 		err => dispatch(failWithError(err))
 	)
-}
+};
 
 export const fetchServices: () => AppThunk<void> = () => dispatch => {
 	getServices().then(
@@ -109,12 +86,12 @@ export const setService: (pid: string) => AppThunk<void> = pid => dispatch => {
 	console.log("action setService")
 	dispatch(serviceSet(pid));
 	dispatch(fetchVariablesAndDates);
-}
+};
 
 export const selectService: (idx: number) => AppThunk<void> = idx => dispatch => {
 	dispatch(serviceSelected(idx));
 	dispatch(fetchVariablesAndDates);
-}
+};
 
 const fetchVariablesAndDates: AppThunk<void> = (dispatch, getState) => {
 	console.log("action fetchVariablesAndDates")
@@ -134,28 +111,6 @@ const fetchVariablesAndDates: AppThunk<void> = (dispatch, getState) => {
 	);
 };
 
-/*
-export const fetchTimeSerie = (params: TimeserieParams): AppThunk<void> => dispatch => {
-	dispatch(fetchingTimeserie());
-
-	const showSpinnerTimer = setTimeout(() => dispatch(toggleTsSpinner(true)), 300);
-
-	getTimeserie(params).then(
-		yValues => {
-			clearTimeout(showSpinnerTimer);
-
-			if (yValues.length > 0) {
-				dispatch(toggleTsSpinner(false));
-				dispatch(timeserieFetched({yValues, timeserieParams: params}));
-			}
-		},
-		err => {
-			clearTimeout(showSpinnerTimer)
-			dispatch(failWithError(err))
-		}
-	)
-}
-*/
 export const pushPlayButton: AppThunk<void> = (dispatch, getState) => {
 	dispatch(pushPlay())
 	dispatch(incrementIfNeeded)
@@ -163,7 +118,6 @@ export const pushPlayButton: AppThunk<void> = (dispatch, getState) => {
 
 export const incrementRasterData = (increment: number): AppThunk<void> => dispatch => {
 	dispatch(incrementRaster(increment));
-	//dispatch(fetchRasterData);
 };
 
 export const incrementIfNeeded: AppThunk<void> = (dispatch, getState) => {

@@ -9,8 +9,7 @@ import {Latlng, RangeFilter, TimeserieData, TimeserieParams} from '../models/Sta
 import {saveToRestheart} from '../../../common/main/backend';
 import Timeserie from './Timeserie';
 import RangeFilterInput from './RangeFilterInput';
-//import { AppProps } from '../containers/App';
-import { Control, getRasterRequest, getRasterRequestId, getSelectedControl } from '../models/ControlsHelper';
+import { Control, getRasterRequest, getSelectedControl } from '../models/ControlsHelper';
 import { Copyright } from 'icos-cp-copyright';
 import { BinRaster } from 'icos-cp-backend';
 import { withChangedIdIfNeeded } from '../models/BinRasterHelper';

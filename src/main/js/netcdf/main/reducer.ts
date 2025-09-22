@@ -17,11 +17,6 @@ type VariablesAndDatesFetchedPayload = {
 	dates: string[]
 }
 
-type TimeseriesFetchedPayload = {
-	yValues: number[]
-	timeserieParams: TimeserieParams
-}
-
 const appSlice = createSlice({
 	name: 'app',
 	initialState: defaultState,
@@ -101,7 +96,6 @@ const appSlice = createSlice({
 
 			state.rangeFilter = defaultRangeFilter;
 			state.legendLabel = getLegendLabel(state.controls, state.metadata);
-			//state.raster = undefined;
 		},
 		dateSelected: (state, action: PayloadAction<number>) => {
 			state.controls.dates.selectedIdx = action.payload;
@@ -117,7 +111,6 @@ const appSlice = createSlice({
 			const minMax = selectMinMax([rangeMm, state.fullMinMax]);
 			state.minMax = minMax;
 			state.rangeFilter = action.payload;
-			//state.colorMaker = getColorMaker(minMax, state.controls.colorMaps);
 		},
 		rasterFetched: (state, action: PayloadAction<{id: string, stats: MinMax}>) => {
 			if (action.payload.id !== getRasterRequestId(state.controls)) {
@@ -141,7 +134,6 @@ const appSlice = createSlice({
 				state.isDiverging = isDiverging === undefined ? false : isDiverging;
 			}
 
-			//state.raster = action.payload;
 			state.rasterFetchCount += 1;
 			state.minMax = minMax;
 			state.fullMinMax = fullMinMax;
@@ -250,15 +242,8 @@ function getVariables(metadata?: DataObject): Record<string, string> | undefined
 	);
 }
 
-function getTimeserieData(dates: string[], yValues: number[]): TimeserieData[] {
-	return dates.length === yValues.length
-		? dates.map((date: string, idx: number) => [new Date(date), yValues[idx]])
-		: [[0, 1]];
-}
-
 export const { errorOccurred, metadataFetched, countriesFetched, servicesFetched, serviceSet, serviceSelected,
 	variablesAndDatesFetched, variableSelected, dateSelected, extraDimSelected, delaySelected,
 	rangeFilterSet, rasterFetched, gammaSelected, colorrampSelected, pushPlay, incrementRaster } = appSlice.actions;
 
 export default appSlice.reducer;
-

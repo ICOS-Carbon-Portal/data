@@ -82,20 +82,6 @@ export function colormapColorMaker(colormap: Colormap, min: number, max: number,
 			}
 		}
 	}
-	/*
-	const normalizer = treatAsFullRange
-		? (colormap.isForDivergingData
-			? linearInterpolation([min, midPoint, max], [-1, 0, 1]) // UNIQUE: treatAsFullRange && colormap.isForDivergingData
-			: linearInterpolation([min, max], [0, 1]) // DEFAULT: treatAsFullRange && !colormap.isForDivergingData
-		) : (colormap.isForDivergingData 
-			? (max <= 0
-				? linearInterpolation([min, max], [-1, 0]) // UNIQUE: !treatAsFullRange && colormap.isForDivergingData && max <= 0
-				: (min >= 0
-					? linearInterpolation([min, max], [0, 1])	// DEFAULT: !treatAsFullRange && colormap.isForDivergingData && max > 0 && min >= 0
-					: linearInterpolation([min, 0, max], [-1, 0, 1]) // UNIQUE: !treatAsFullRange && colormap.isForDivergingData && max > 0 && min < 0
-				)
-			) : linearInterpolation([min, max], [0, 1]) // DEFAULT: !treatAsFullRange && !colormap.isForDivergingData
-		) */
 
 	return (v: number) => {
 		if (isNaN(v)) {
@@ -116,58 +102,3 @@ export function getColorMaker(minMax: MinMax | undefined, control: Control<Color
 	}
 	return colormapColorMaker(selectedColorMap, minMax.min, minMax.max);
 }
-
-
-/*
-function fromRamp(ramp: ColorRamp){
-	const colorizePlainly = rgbaInterpolation(ramp.domain, ramp.colors)
-	const isForDivergingData = ramp.domain[0] < 0
-	return new ColormapClass(ramp.name, colorizePlainly, isForDivergingData)
-}
-*/
-/*
-export default class ColormapClass{
-	/**
-	 * normalizedValue shall have range [0, 1] for non-divergent and [-1, 0, 1] for divergent data
-	*/
-	/*
-	readonly colorize: (normalizedValue: number) => RGBA
-
-	constructor(
-		readonly name: string,
-		readonly colorizePlainly: (normalizedValue: number) => RGBA,
-		readonly isForDivergingData: boolean,
-		readonly gamma: number = 1
-	){
-		this.colorize = gamma == 1
-			? colorizePlainly
-			: (normalizedValue: number) => {
-
-				const gammaCorrected = normalizedValue >= 0
-					? Math.pow(normalizedValue, gamma)
-					: - Math.pow(- normalizedValue, gamma)
-
-				return colorizePlainly(gammaCorrected)
-			}
-	}
-
-	withGamma(newGamma: number): ColormapClass{
-		return newGamma == this.gamma
-			? this
-			: new ColormapClass(this.name, this.colorizePlainly, this.isForDivergingData, newGamma)
-	}
-
-
-}
-
-
-*/
-
-/*
-export const colorMaps = [
-	new ColormapClass("rainbow", rainbowColorize, false),
-	new ColormapClass("rainbow_turbo", rainbowTurboColorize, false)
-].concat(
-	colorRamps.map(fromRamp)
-)
-*/

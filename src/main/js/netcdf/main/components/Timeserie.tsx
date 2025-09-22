@@ -1,10 +1,8 @@
 import React, { CSSProperties, useEffect, useRef, useState } from 'react';
 import Draggable from 'icos-cp-draggable';
 import {drawGraph} from '../models/Dygraphs';
-import deepequal from 'deep-equal';
 import {ReactSpinner} from 'icos-cp-spinner';
 import { Latlng, TimeserieData } from '../models/State';
-import { useAppSelector } from '../store';
 
 
 const panelBodyHeight = 200;
@@ -48,7 +46,7 @@ export default function Timeserie(props: TimeserieProps) {
 	const textStyle: CSSProperties = {textAlign:'center', position:'relative', top:'40%'};
 
 	return isActive
-		?	<Draggable
+		? <Draggable
 				dragElementId="cp-drag-element"
 				initialPos={initialPos(draggableStyle, 'map')}
 				onStopDrag={onStopDrag}

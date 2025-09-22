@@ -1,6 +1,5 @@
-import { sparql, getJson, checkStatus, getUrlQuery, BinRaster} from 'icos-cp-backend';
+import { getJson, checkStatus, getUrlQuery, BinRaster} from 'icos-cp-backend';
 import {feature} from 'topojson-client';
-import config from '../../common/main/config';
 import { TimeserieParams } from './models/State';
 import { DataObject } from '../../common/main/metacore';
 import {ensureDelay, retryPromise} from 'icos-cp-utils';

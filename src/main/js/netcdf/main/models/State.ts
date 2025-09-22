@@ -1,4 +1,3 @@
-import { BinRaster } from "icos-cp-backend";
 import { envri } from "../../../common/main/config";
 import { DataObject } from "../../../common/main/metacore";
 import { Control, ControlsHelper, emptyControl } from "./ControlsHelper";
@@ -95,9 +94,8 @@ export interface State {
 	playingMovie: boolean
 	rasterFetchCount: number
 	isDiverging: boolean
-	//raster?: BinRaster // CLASS
 	title?: string
-	toasterData?: {}
+	toasterData?: {} // TODO: Make toasterData non-serializable
 }
 
 export const defaultState: State = {
@@ -138,7 +136,6 @@ export const defaultState: State = {
 	playingMovie: false,
 	rasterFetchCount: 0,
 	isDiverging: false,
-	//raster: undefined,
 	title: undefined,
 	toasterData: undefined
 };

@@ -1,6 +1,6 @@
 import { control } from "leaflet";
 import { getRasterId, RasterRequest, VariableInfo } from "../backend";
-import { Colormap, allColormaps } from "./Colormap";
+import { Colormap } from "./Colormap";
 
 export type Control<T> = {
 	values: T[]
@@ -31,7 +31,7 @@ export type ControlsHelper = {
 	extraDim: Control<string>
 	gammas: Control<number>
 	delays: Control<number>
-	colorMaps: Control<Colormap>;
+	colorMaps: Control<Colormap>
 };
 
 export function getRasterRequest(controlsHelper: ControlsHelper): RasterRequest | undefined {
@@ -44,123 +44,10 @@ export function getRasterRequest(controlsHelper: ControlsHelper): RasterRequest 
 		service === null || variable === null || dateIdx === null || dateIdx < 0 ||
 		(variable.extra !== undefined && extraDimIdx === null)
 	) ? undefined
-		: {service, variable: variable.shortName, dateIdx, extraDimIdx}
+		: {service, variable: variable.shortName, dateIdx, extraDimIdx};
 }
 
 export function getRasterRequestId(controlsHelper: ControlsHelper): string | undefined {
 	const req = getRasterRequest(controlsHelper);
 	return req ? getRasterId(req) : undefined;
 }
-
-/*
-export class ControlClass<T>{
-
-	constructor(
-		readonly values: T[],
-		readonly selectedIdx: number | null = null
-	){}
-
-	get selected(): T | null {
-		return (this.selectedIdx === null || this.selectedIdx < 0 || this.selectedIdx >= this.values.length)
-			? null
-			: this.values[this.selectedIdx]
-	}
-
-	withSelected(selectedIdx: number){
-		return new ControlClass(this.values, selectedIdx);
-	}
-} 
-
-export class ColormapControlClass extends ControlClass<ColormapClass> {
-	constructor(colorMaps: ColormapClass[], selectedIdx: number | null = null) {
-		super(colorMaps, selectedIdx)
-	}
-
-	withGamma(newGamma: number){
-		return new ColormapControl(this.values.map(cm => cm.withGamma(newGamma)), this.selectedIdx)
-	}
-
-	withSelected(selectedIdx: number): ColormapControl {
-		return new ColormapControl(this.values, selectedIdx)
-	}
-}
-export const defaultControl = new ControlClass([]);
-export const defaultGammas = new ControlClass([0.1, 0.2, 0.3, 0.5, 1.0, 2.0, 3.0, 5.0], 4);
-const selectedGamma = defaultGammas.selected! //we selected one in the previous line
-const defaultColorMaps = new ColormapControl(colorMaps.map(cm => cm.withGamma(selectedGamma)), 0)
-const defaultDelays = new ControlClass([0, 50, 100, 200, 500, 1000, 3000], 3);
-
-
-type ControlsUpdate = {[K in keyof ControlsHelper]?: ControlsHelper[K]}
-
-export class ControlsHelperClass{
-	readonly services: ControlClass<string> = defaultControl
-	readonly variables: ControlClass<VariableInfo> = defaultControl
-	readonly dates: ControlClass<string> = defaultControl
-	readonly extraDim: ControlClass<string> = defaultControl
-	readonly gammas: ControlClass<number> = defaultGammas
-	readonly delays: ControlClass<number> = defaultDelays
-	readonly colorMaps: ColormapControl = defaultColorMaps
-
-	get rasterRequest(): RasterRequest | undefined {
-		const service = this.services.selected
-		const variable = this.variables.selected
-		const dateIdx = this.dates.selectedIdx
-		const extraDimIdx = this.extraDim.selectedIdx
-
-		return (
-			service === null || variable === null || dateIdx === null || dateIdx < 0 ||
-			(variable.extra !== undefined && extraDimIdx === null)
-		) ? undefined : {service, variable: variable.shortName, dateIdx, extraDimIdx}
-	}
-
-	get rasterId(): string | undefined {
-		const req = this.rasterRequest
-		return req ? getRasterId(req) : undefined
-	}
-
-	copyWith(update: ControlsUpdate): ControlsHelper{
-		return Object.assign(Object.create(ControlsHelper.prototype), this, update)
-	}
-
-	withSelectedService(idx: number){
-		return this.copyWith({services: this.services.withSelected(idx)})
-	}
-
-	withSelectedVariable(idx: number){
-		return this.copyWith({variables: this.variables.withSelected(idx)})
-	}
-
-	withSelectedDate(idx: number){
-		return this.copyWith({dates: this.dates.withSelected(idx)})
-	}
-
-	getIncrementedDate(increment: number) {
-		const suggestedIdx = (this.dates.selectedIdx ?? 0) + increment;
-		const newIdx = suggestedIdx >= 0 && suggestedIdx < this.dates.values.length
-			? suggestedIdx
-			: 0;
-		return newIdx;
-	}
-
-	withIncrementedDate(increment: number){
-		return this.copyWith({dates: this.dates.withSelected(this.getIncrementedDate(increment))})
-	}
-
-	withSelectedExtraDim(idx: number){
-		return this.copyWith({extraDim: this.extraDim.withSelected(idx)})
-	}
-
-	withSelectedGamma(idx: number){
-		return this.copyWith({gammas: this.gammas.withSelected(idx)})
-	}
-
-	withSelectedDelay(idx: number){
-		return this.copyWith({delays: this.delays.withSelected(idx)})
-	}
-
-	withSelectedColorRamp(idx: number){
-		return this.copyWith({colorMaps: this.colorMaps.withSelected(idx)})
-	}
-}
-*/
