@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import NetCDFMap, { getTileHelper, getLatLngBounds } from 'icos-cp-netcdfmap';
 import 'leaflet/dist/leaflet.css';
 import {ReactSpinner} from 'icos-cp-spinner';
@@ -28,15 +28,42 @@ export default function Map(props: MapProps) {
 	const [height, setHeight] = useState(0);
 	const [isShowTimeserieActive, setIsShowTimeserieActive] = useState(false);
 	const [isRangeFilterInputsActive, setIsRangeFilterInputsActive] = useState(false);
+	const [prevVariables, setPrevVariables] = useState<Control<VariableInfo> | undefined>(undefined);
 
 	const countriesTs = Date.now();
+
+	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
+
+	const { gammas, colorMaps } = props.controls;
+	const { rangeValues, valueFilter } = props.rangeFilter;
+
+	const mapId = props.raster
+		? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
+			`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
+		: undefined;
+
+	const needReset = !props.raster || !props.colorMaker;
+	const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId);
+
+	const showSpinner = props.countriesTopo.ts > countriesTs && props.rasterFetchCount === 0;
+	const colorMap = colorMaps.selected;
+	const getLegend = (props.minMax === undefined || colorMap === null)
+		? undefined
+		: legendFactory(props.minMax, colorMap);
+
+	const latLngBounds = getLatLngBounds(
+		props.rasterFetchCount,
+		props.initSearchParams.center,
+		props.initSearchParams.zoom,
+		raster
+	);
+
+	const containerHeight = height < minHeight ? minHeight : height - 10;
+
 	let center = props.initSearchParams.center ? props.initSearchParams.center.split(',') : ['52.5', '10'];
 	let zoom: string | number = props.initSearchParams.zoom ?? 2;
 
-	const objId = location.pathname.split('/').filter(part => part.length > 20).pop();
-	const [prevVariables, setPrevVariables] = useState<Control<VariableInfo> | undefined>(undefined);
-
-	useEffect(() => {
+	useLayoutEffect(() => {
 		const throttledUpdateHeight = throttle(updateHeight, 300);
 		window.addEventListener("resize", throttledUpdateHeight);
 
@@ -118,9 +145,7 @@ export default function Map(props: MapProps) {
 		timeserieToggle(false);
 	}
 
-	// Because of the way NetCDFMap tracks events, we need to wrap timeserieMapClick in a ref, and then
-	// provide a stable function that uses the current version of timeserieMapClick stored in the ref.
-	const timeserieMapClick = (eventName: string, e: {latlng: Latlng | null}) => {
+	const timeserieMapClick = useEventCallback((eventName: string, e: {latlng: Latlng | null}) => {
 		if (props.raster && props.fetchTimeSerie) {
 			const objId = props.controls.services.selected;
 			const variable = props.controls.variables.selected?.shortName;
@@ -132,17 +157,7 @@ export default function Map(props: MapProps) {
 				timeserieToggle(true);
 			}
 		}
-	};
-
-	const timeserieMapClickRef = useRef(timeserieMapClick);
-
-	useEffect(() => {
-		timeserieMapClickRef.current = timeserieMapClick;
-	}, [timeserieMapClick]);
-
-	const stableMapClickHandler = useCallback((eventName: string, e: {latlng: Latlng | null}) => {
-		timeserieMapClickRef.current(eventName, e)
-	}, []);
+	});
 
 	function updateRangeFilterInputsVisibility() {
 		setIsRangeFilterInputsActive(!isRangeFilterInputsActive);
@@ -168,32 +183,6 @@ export default function Map(props: MapProps) {
 
 		props.setRangeFilter({ rangeValues, valueFilter });
 	}
-
-	const { gammas, colorMaps } = props.controls;
-	const { rangeValues, valueFilter } = props.rangeFilter;
-
-	const mapId = props.raster
-		? (`${props.raster.id}_gamm_${gammas.selectedIdx}_palett_${colorMaps.selectedIdx ?? "?"}` +
-			`_min_${rangeValues.minRange ?? "?"}_max_${rangeValues.maxRange ?? "?"}`)
-		: undefined
-
-	const needReset = !props.raster || !props.colorMaker
-	const raster = needReset ? undefined : withChangedIdIfNeeded(props.raster, mapId)
-
-	const showSpinner = props.countriesTopo.ts > countriesTs && props.rasterFetchCount === 0;
-	const colorMap = colorMaps.selected
-	const getLegend = (props.minMax === undefined || colorMap === null)
-		? undefined
-		: legendFactory(props.minMax, colorMap)
-
-	const latLngBounds = getLatLngBounds(
-		props.rasterFetchCount,
-		props.initSearchParams.center,
-		props.initSearchParams.zoom,
-		raster
-	);
-
-	const containerHeight = height < minHeight ? minHeight : height - 10;
 
 	return (
 		<div id="content" className="container-fluid d-flex flex-column">
@@ -260,7 +249,7 @@ export default function Map(props: MapProps) {
 							{
 								event: 'click',
 								fn: (leafletMap: L.Map, e: Event) => e,
-								callback: stableMapClickHandler
+								callback: timeserieMapClick
 							}
 						]}
 					/>
@@ -323,3 +312,18 @@ const formatData = (dataToSave: { objId?: string, variable: string }) => {
 		}
 	}
 };
+
+// useEventCallback provides a stable function reference, for use with NetCDFMap,
+// while allowing the function that is called to change; otherwise, the function reference
+// changes and NetCDFMap does not update itself properly.
+function useEventCallback<T extends (...args: any[]) => any>(fn: T): T {
+  const ref = useRef(fn);
+
+  useEffect(() => {
+    ref.current = fn;
+  }, [fn]);
+
+  return useCallback((...args: Parameters<T>) => {
+    return ref.current(...args);
+  }, []) as T;
+}
