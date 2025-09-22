@@ -48,7 +48,7 @@ lazy val netcdf = (project in file("netcdf"))
 		credentials += Credentials(Path.userHome / ".ivy2" / ".credentials")
 	)
 
-val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.20"
+val metaCoreModule: ModuleID = "se.lu.nateko.cp" %% "meta-core" % "0.7.23"
 
 val osName: String = System.getProperty("os.name") match {
 	case name if name.startsWith("Linux") => "linux"
@@ -84,7 +84,7 @@ lazy val data = (project in file("."))
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
 			"eu.icoscp"          %% "georestheart"                       % "0.1.0",
 			metaCoreModule,
-			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.16",
+			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.17",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.10.1", //to force newer version
 			"org.postgresql"      % "postgresql"                         % "42.6.0",
 			"org.apache.commons"  % "commons-dbcp2"                      % "2.7.0",

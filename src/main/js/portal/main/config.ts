@@ -181,7 +181,7 @@ export default {
 	metaResourceGraph,
 	envriFilteringFromGraphs,
 	additionalStationsGraphs,
-	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP', 'time'],
+	previewXaxisCols: ['TIME', 'Date', 'UTC_TIMESTAMP', 'TIMESTAMP', 'time', 'SamplingStart'],
 	historyStateMaxAge: (1000 * 3600 * 24),
 	exportCSVLimit: 20_000,
 	searchResultsCSVName,
