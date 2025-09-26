@@ -224,7 +224,7 @@ class Codec:
 
 			if sys.byteorder == 'little':
 				# cpb files are all big-endian, fixing for Pandas compatibility on little endian systems:
-				arr = arr.byteswap().newbyteorder()
+				arr = arr.view(arr.dtype.newbyteorder()).byteswap()
 			res[col.label] = arr
 
 		if not keep_bad_data and self._ci.good_flags:
@@ -245,7 +245,7 @@ class Codec:
 			for col in desired_cols:
 				if col.flag_col:
 					arr = res[col.label]
-					arr[flag_masks[col.flag_col]] = np.NAN
+					arr[flag_masks[col.flag_col]] = np.nan
 		return res
 
 

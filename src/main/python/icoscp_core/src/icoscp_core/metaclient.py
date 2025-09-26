@@ -203,7 +203,7 @@ class MetadataClient:
 		elif type(station) == StationLite: station_uri = station.uri
 		else: raise ValueError("Station must be either landing page URL or an instance of StationLite")
 
-		return _get_json_meta(station_uri, Station)
+		return _get_json_meta(station_uri.replace("http://", "https://"), Station)
 
 	def get_collection_meta(self, coll_uri: str) -> StaticCollection:
 		"""
