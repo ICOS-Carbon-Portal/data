@@ -18,8 +18,16 @@
 	}
 
 	function setInitialImage(imgIndex=0) {
+		if (zipEntries.length === 0) {
+			console.error("No images found in zip file");
+			image.alt = "No images found";
+			previous.disabled = true;
+			next.disabled = true;
+			return;
+		}
 		select.selectedIndex = parseInt(imgIndex);
 		const idx = select.selectedIndex;
+
 		image.src = zipEntries[idx].path;
 			
 		previous.disabled = idx <= 0;
