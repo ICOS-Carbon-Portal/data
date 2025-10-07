@@ -27,9 +27,8 @@
 		}
 		select.selectedIndex = parseInt(imgIndex);
 		const idx = select.selectedIndex;
-
 		image.src = zipEntries[idx].path;
-			
+
 		previous.disabled = idx <= 0;
 		next.disabled = idx >= zipEntries.length - 1;
 	}
