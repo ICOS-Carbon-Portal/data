@@ -19,8 +19,10 @@
 
 	function setInitialImage(imgIndex=0) {
 		if (zipEntries.length === 0) {
-			console.error("No images found in zip file");
-			image.alt = "No images found";
+			const infoDiv = document.createElement("div");
+			infoDiv.innerText = "No images contained in this archive."
+			image.parentElement.appendChild(infoDiv);
+			image.parentElement.removeChild(image);
 			previous.disabled = true;
 			next.disabled = true;
 			return;
