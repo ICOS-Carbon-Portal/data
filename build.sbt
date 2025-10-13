@@ -82,7 +82,7 @@ lazy val data = (project in file("."))
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
-			"eu.icoscp"          %% "georestheart"                       % "0.1.0",
+			"eu.icoscp"          %% "georestheart"                       % "0.1.1",
 			metaCoreModule,
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.7.17",
 			"se.lu.nateko.cp"    %% "cpauth-core"                        % "0.10.1", //to force newer version
