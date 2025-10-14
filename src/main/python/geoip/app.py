@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+import IP2Location
 import time
 from py.DB import DB
 from py.QueryIpstack import query_ip
@@ -66,7 +67,14 @@ def get_location(ip, cols, days_limit):
 		query_cols = set(verified_cols + min_cols)
 		db_location = DB().get_location(ip, query_cols, days_limit)
 
-		if 'latitude' and 'longitude' in db_location:
+		database = IP2Location.IP2Location(os.path.join("DB", "IP2LOCATION-LITE-DB1.BIN"))
+		rec = database.get_all(ip)
+
+		if rec.country_short:
+			rec.country_code = rec.country_short
+			return filter_result(vars(rec), verified_cols)
+
+		elif 'latitude' and 'longitude' in db_location:
 			return filter_result(db_location, verified_cols)
 
 		else:
