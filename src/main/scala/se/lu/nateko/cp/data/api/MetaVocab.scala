@@ -66,4 +66,5 @@ object SitesMetaVocab extends MetaVocab(new URI("https://meta.fieldsites.se/onto
 
 object CcMetaVocab extends MetaVocab(new URI("https://creativecommons.org/")){
 	val cc0 = getRelative("publicdomain/zero/1.0/")
+	val ccbync4 = getRelative("licenses/by-nc/4.0")
 }

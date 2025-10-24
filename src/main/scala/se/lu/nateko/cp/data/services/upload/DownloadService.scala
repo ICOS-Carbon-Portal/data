@@ -128,11 +128,21 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 
 	private def destinyToAuxSourcesFlow(implicit envri: Envri): Flow[FileDestiny, FileEntry, NotUsed] = Flow.apply[FileDestiny]
 		.fold(Vector.empty[FileDestiny])(_ :+ _)
-		.map{dests =>
-			ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests)
-		}.concat(Source.single(
-			ZipEntry("!LICENCE.pdf") -> licenceSource
-		))
+		.flatMapConcat{dests =>
+			val baseSource = Source.single(ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests))
+
+			val shouldIncludeLincensePdf = dests.exists(
+				_.obj.references.licence.exists(
+					_.toString().contains("creativecommons.org/licenses/by/4.0")
+				)
+			)
+
+			if (shouldIncludeLincensePdf) {
+				baseSource.concat(Source.single(ZipEntry("!LICENCE.pdf") -> licenceSource))
+			} else {
+				baseSource
+			}
+		}
 
 	private def singleObjectSource(obj: StaticObject, downloadLogger: DataObject => Unit): Source[ByteString, NotUsed] = {
 		val file = upload.getFile(obj, true)
@@ -150,7 +160,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 	}
 
 	private def destiniesToTocFileSource(dests: immutable.Seq[FileDestiny])(using Envri): Source[ByteString, NotUsed] = {
-		val lines = "Included,File name,PID,Landing page,Omission reason (if any)\n" +: dests.map{dest =>
+		val lines = "Included,File name,PID,Landing page,License,Omission reason (if any)\n" +: dests.map{dest =>
 
 			val presense = if(dest.omissionReason.isEmpty) "Yes" else "No"
 			val omissionReason = dest.omissionReason.getOrElse("")
@@ -163,7 +173,8 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 				val hdlProxy = if(dest.obj.doi.isDefined) prox.doi else prox.basic
 				s"$hdlProxy$pid"
 			}
-			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$omissionReason\n"
+			val license = if (!dest.obj.references.licence.isEmpty) dest.obj.references.licence.get.name else ""
+			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$license,$omissionReason\n"
 		}
 		Source(lines.map(ByteString.apply))
 	}
@@ -227,7 +238,7 @@ private object ZeroDestiny extends Destiny{
 
 object DownloadService:
 
-	val publicDomainLicences = Set(CcMetaVocab.cc0)
+	val publicDomainLicences = Set(CcMetaVocab.cc0, CcMetaVocab.ccbync4)
 
 	val mainLicences: Map[Envri, URI] = Map(
 		Envri.ICOS -> CpMetaVocab.ccby4,
