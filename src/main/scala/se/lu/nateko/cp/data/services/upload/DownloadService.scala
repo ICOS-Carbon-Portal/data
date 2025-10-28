@@ -173,7 +173,7 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 				val hdlProxy = if(dest.obj.doi.isDefined) prox.doi else prox.basic
 				s"$hdlProxy$pid"
 			}
-			val license = if (!dest.obj.references.licence.isEmpty) dest.obj.references.licence.get.name else ""
+			val license = dest.obj.references.licence.fold("")(_.name)
 			s"$presense,${dest.fileName},${pidOpt.getOrElse("")},$landingPage,$license,$omissionReason\n"
 		}
 		Source(lines.map(ByteString.apply))
