@@ -92,17 +92,19 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		}
 	}
 
-	def licencesToAccept(hashes: Seq[Sha256Sum], uidOpt: Option[UserId])(using Envri): Future[Seq[URI]] = {
-		upload.meta.listLicences(hashes).flatMap{allLic =>
-			val toAccept: Seq[URI] = allLic.distinct.filterNot(publicDomainLicences.contains)
-			Future.sequence(
-				toAccept.map{lic =>
-					checkLicenceAcceptance(lic, uidOpt).map(lic -> _)
+	def licencesToAccept(hashes: Seq[Sha256Sum], uidOpt: Option[UserId])(using envri: Envri): Future[Seq[URI]] = {
+		mainLicences.get(envri)
+			.map { mainLicence =>
+				upload.meta.listLicences(hashes).flatMap { allLicences =>
+					if (allLicences.contains(mainLicence)) {
+						checkLicenceAcceptance(mainLicence, uidOpt).map { accepted =>
+							if (accepted) Seq.empty else Seq(mainLicence)
+						}
+						} else {
+							Future.successful(Seq.empty)
+						}
 				}
-			).map{
-				_.collect{case (lic, false) => lic}
-			}
-		}
+			}.getOrElse(Future.successful(Seq.empty))
 	}
 
 	def inaccessibilityReason(dobj: StaticObject)(using Envri): Option[String] =
