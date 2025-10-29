@@ -133,11 +133,11 @@ class DownloadService(coreConf: MetaCoreConfig, val upload: UploadService, val r
 		.flatMapConcat{dests =>
 			val baseSource = Source.single(ZipEntry("!TOC.csv") -> destiniesToTocFileSource(dests))
 
-			val shouldIncludeLincensePdf = dests.exists(
-				_.obj.references.licence.exists(
-					_.toString().contains("creativecommons.org/licenses/by/4.0")
-				)
-			)
+			val shouldIncludeLincensePdf = mainLicences.get(envri).exists { expectedUri =>
+				dests.exists { d =>
+					d.obj.references.licence.exists(_.url == expectedUri)
+				}
+			}
 
 			if (shouldIncludeLincensePdf) {
 				baseSource.concat(Source.single(ZipEntry("!LICENCE.pdf") -> licenceSource))
