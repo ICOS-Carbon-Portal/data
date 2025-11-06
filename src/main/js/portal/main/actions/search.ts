@@ -123,15 +123,19 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 
 	const sitesFilters = ['location', 'ecosystem'] as const;
 
-	return useOnlyPidFilter ? pidFilterQparams : Object.assign(pidFilterQparams, {
-		specs: Filter.and([
-			specTable.basics.getColumnValuesFilter("type"),
-			specTable.columnMeta.getColumnValuesFilter("spec")
-		]),
-		stations: originsStationFilter,
-		sites: sitesFilters.some(f => specTable.origins.filteredColumns.includes(f)) ? specTable.getColumnValuesFilter('site') : null,
-		submitters: specTable.getFilter('submitter')
-	});
+	return useOnlyPidFilter ?
+		{...pidFilterQparams,
+			filters: getFilters({...state, searchOptions: { showDeprecated: true}})
+		} :
+		{...pidFilterQparams,
+			specs: Filter.and([
+				specTable.basics.getColumnValuesFilter("type"),
+				specTable.columnMeta.getColumnValuesFilter("spec")
+			]),
+			stations: originsStationFilter,
+			sites: sitesFilters.some(f => specTable.origins.filteredColumns.includes(f)) ? specTable.getColumnValuesFilter('site') : null,
+			submitters: specTable.getFilter('submitter')
+		};
 };
 
 export const makeQuerySubmittable = (orgQuery: string) => {
