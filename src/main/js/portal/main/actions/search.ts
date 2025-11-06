@@ -253,7 +253,7 @@ const updatePidsFromFileName: PortalThunkAction<void> = (dispatch, getState) => 
 	const { filterFileName } = getState();
 	if (filterFileName.length) {
 		const { searchOptions } = getState();
-		searchDobjByFileName(filterFileName, searchOptions.showDeprecated).then(dobjs => {
+		searchDobjByFileName(filterFileName).then(dobjs => {
 			dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
 		});
 	} else {

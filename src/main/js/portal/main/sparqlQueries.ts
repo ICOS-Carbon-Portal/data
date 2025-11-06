@@ -178,7 +178,7 @@ SELECT ?dobj WHERE{
 	return { text };
 }
 
-export function getDobjByFileName(fileName: string, showDeprecated: Boolean): Query<"dobj", never> {
+export function getDobjByFileName(fileName: string): Query<"dobj", never> {
 	const text = `# getDobjByFileName
 prefix cpmeta: <${config.cpmetaOntoUri}>
 select ?dobj
@@ -187,7 +187,6 @@ where {
 	?dobj cpmeta:hasObjectSpec ?spec .
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
-	${showDeprecated ? '' : deprecatedFilterClause}
 }`;
 
 	return { text };
