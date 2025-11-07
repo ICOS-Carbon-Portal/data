@@ -124,10 +124,12 @@ const getOptions = (state: State, customPaging?: Paging): QueryParameters => {
 	const sitesFilters = ['location', 'ecosystem'] as const;
 
 	return useOnlyPidFilter ?
-		{...pidFilterQparams,
+		{
+			...pidFilterQparams,
 			filters: getFilters({...state, searchOptions: { showDeprecated: true}})
 		} :
-		{...pidFilterQparams,
+		{
+			...pidFilterQparams,
 			specs: Filter.and([
 				specTable.basics.getColumnValuesFilter("type"),
 				specTable.columnMeta.getColumnValuesFilter("spec")
