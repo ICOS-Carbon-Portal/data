@@ -121,9 +121,9 @@ export default class Preview {
 					? previewInfo
 					: {type: previewInfo.type, options: []};
 
-			const item = cart.hasItem(id)
-				? cart.item(id)
-				: objInfo ? new CartItem(id, objInfo, options.type) : undefined;
+			const item = objInfo ?
+				new CartItem(id, objInfo, options.type) :
+				undefined;
 			return {options, item};
 		});
 
