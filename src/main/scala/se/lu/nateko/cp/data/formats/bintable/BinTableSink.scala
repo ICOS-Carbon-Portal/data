@@ -58,7 +58,8 @@ private class BinTableSink(file: File, overwrite: Boolean) extends GraphStageWit
 						pull(in)
 						writeRow(nextRow)
 					}else failBinTable(
-						new IndexOutOfBoundsException(s"Have already written $count rows, can not accept more")
+						new IndexOutOfBoundsException(s"You have specified that the file would contain $count rows, and the file you sent contains more. " +
+							s"Please adjust the number of rows to expect or verify that the file is correct.")
 					)
 				}
 
