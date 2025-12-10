@@ -36,6 +36,7 @@ nohup.out
 /src/main/python/update-restheart/badRecords.txt
 /src/main/python/geoip/DB/ip.sqlite
 /src/main/python/geoip/DB/IP2LOCATION-LITE-DB1.BIN
+/src/main/python/geoip/DB/IP2LOCATION-LITE-DB5.BIN
 /src/main/python/geoip/venv/
 /src/main/python/mongo-to-pg/database.ini
 /src/main/python/mongo-to-pg/venv/

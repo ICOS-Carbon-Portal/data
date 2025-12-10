@@ -1,21 +1,22 @@
 import sqlite3
 import os
+from IP2Location.database import IP2LocationRecord
+from sqlite3 import Cursor, Row
+from typing import LiteralString
 
 
 PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__ + '/../'))
 DATABASE = os.path.join(PROJECT_ROOT, 'DB', 'ip.sqlite')
 
 
-def dict_factory(cursor, row):
-	d = {}
+def dict_factory(cursor: Cursor, row: Row):
+	d: dict[str, str | int] = {}
 	for idx, col in enumerate(cursor.description):
 		d[col[0]] = row[idx]
 	return d
 
 
 class DB(object):
-	_conn = None
-	_cur = None
 
 	def __init__(self):
 		self._conn = sqlite3.connect(DATABASE, timeout=3, detect_types=sqlite3.PARSE_DECLTYPES)
@@ -27,7 +28,7 @@ class DB(object):
 	def __del__(self):
 		self._conn.close()
 
-	def get_location(self, ip, cols, days_limit):
+	def get_location(self, ip: str, cols: set[LiteralString], days_limit: int) -> dict[str, str] | None:
 		if days_limit < 0:
 			return self.select_dict(
 				"""
@@ -51,47 +52,29 @@ class DB(object):
 				{'ip': ip, 'days_limit': days_limit}
 			)
 
-	def save_location(self, resp):
-		ip = resp['ip']
-		latitude = resp['latitude']
-		longitude = resp['longitude']
-		continent_code = resp['continent_code']
-		continent_name = resp['continent_name']
-		country_code = resp['country_code']
-		country_name = resp['country_name']
-		region_code = resp['region_code']
-		region_name = resp['region_name']
-		city = resp['city']
-		zip = resp['zip']
-		is_eu = resp['location']['is_eu']
-
+	def save_location(self, rec: IP2LocationRecord) -> None:
 		self.execute(
 			'INSERT INTO ips\
-				(ip, latitude, longitude, continent_code, continent_name, country_code, country_name, region_code, region_name, city, zip, is_eu)\
+				(ip, latitude, longitude, country_code, country_name, region_name, city)\
 				VALUES\
-				(:ip, :latitude, :longitude, :continent_code, :continent_name, :country_code, :country_name, :region_code, :region_name, :city, :zip, :is_eu)',
+				(:ip, :latitude, :longitude, :country_code, :country_name, :region_name, :city)',
 			{
-				'ip': ip,
-				'latitude': latitude,
-				'longitude': longitude,
-				'continent_code': continent_code,
-				'continent_name': continent_name,
-				'country_code': country_code,
-				'country_name': country_name,
-				'region_code': region_code,
-				'region_name': region_name,
-				'city': city,
-				'zip': zip,
-				'is_eu': is_eu
+				'ip': rec.ip,
+				'latitude': rec.latitude,
+				'longitude': rec.longitude,
+				'country_code': rec.country_short,
+				'country_name': rec.country_long,
+				'region_name': rec.region,
+				'city': rec.city
 			}
 		)
 
-	def select_dict(self, sql, params = ()):
+	def select_dict(self, sql: str, params: dict[str, str | int] = {}) -> dict[str, str] | None:
 		self._dict_cur.execute(sql, params)
 		res = self._dict_cur.fetchall()
 
-		return (res[0] if res else None) if len(res) == 1 else res
+		return res[0] if len(res) > 0 else None
 
-	def execute(self, sql, params = ()):
+	def execute(self, sql: str, params: dict[str, str | int | float | None] = {}) -> None:
 		self._cur.execute(sql, params)
 		self._conn.commit()

@@ -1,30 +1,25 @@
 from flask import Flask, jsonify
 import IP2Location
-import time
+from IP2Location.database import IP2LocationRecord
+from typing import LiteralString, TypeAlias
 from py.DB import DB
-from py.QueryIpstack import query_ip
-from py.config import min_cols, default_cols, all_cols, access_key
+from py.config import min_cols, default_cols, all_cols
 import os
+
+
+IpInfo: TypeAlias = dict[str, str | int | float | None]
 
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-try:
-	with open(os.path.join(APP_ROOT, 'py', 'access_key'), 'r') as key_file:
-		ipstack_access_key = key_file.readline()
 
-except:
-	ipstack_access_key = access_key
-
-
-LOOKUP = {}
 app = Flask(__name__)
 
 
 @app.route('/all/<ip>', methods=['GET'])
 @app.route('/all/<ip>/<int:days_limit>', methods=['GET'])
-def lookup_ip_all(ip, days_limit=-1):
-	return jsonify(resolve_ip(ip, all_cols, days_limit))
+def lookup_ip_all(ip: str, days_limit: int = -1):
+	return jsonify(get_location(ip, all_cols, days_limit))
 
 
 @app.route('/ip/<ip>', methods=['GET'])
@@ -35,76 +30,67 @@ def lookup_ip_all(ip, days_limit=-1):
 @app.route('/<ip>/<int:days_limit>', methods=['GET'])
 @app.route('/<ip>/<cols>', methods=['GET'])
 @app.route('/<ip>/<cols>/<int:days_limit>', methods=['GET'])
-def lookup_ip(ip, cols=None, days_limit=-1):
+def lookup_ip(ip: str, cols: LiteralString | None = None, days_limit: int = -1):
 	requested_cols = default_cols if cols is None else cols.replace(' ', '').split(',')
-	return jsonify(resolve_ip(ip, requested_cols, days_limit))
+	return jsonify(get_location(ip, requested_cols, days_limit))
 
 
-def resolve_ip(ip, cols, days_limit):
-	sleep_time = 0.5
-	max_retries = 30 / sleep_time  # spend max 30 seconds waiting on other resolving
-	current_try = 0
-
-	while ip in LOOKUP:
-		current_try = current_try + 1
-
-		if current_try <= max_retries:
-			time.sleep(sleep_time)
-		else:
-			if ip in LOOKUP: del LOOKUP[ip]
-			return {'error': 'It took too long waiting on other resolving of IP ' + ip}
-
-	resolved_ip = get_location(ip, cols, days_limit)
-
-	if ip in LOOKUP: del LOOKUP[ip]
-	return resolved_ip
-
-
-def get_location(ip, cols, days_limit):
+def get_location(ip: str, cols: list[LiteralString], days_limit: int) -> IpInfo:
 	verified_cols = verify_cols(cols)
 
 	try:
 		query_cols = set(verified_cols + min_cols)
 		db_location = DB().get_location(ip, query_cols, days_limit)
 
-		database = IP2Location.IP2Location(os.path.join("DB", "IP2LOCATION-LITE-DB1.BIN"))
-		rec = database.get_all(ip)
-
-		if rec.country_short:
-			rec.country_code = rec.country_short
-			return filter_result(vars(rec), verified_cols)
-
-		elif 'latitude' and 'longitude' in db_location:
+		if db_location is not None:
 			return filter_result(db_location, verified_cols)
-
 		else:
-			req = query_ip(ip, ipstack_access_key)
-			req_resp = req.json()
+			try:
+				database = IP2Location.IP2Location(
+					os.path.join('DB', 'IP2LOCATION-LITE-DB5.BIN'), 'SHARED_MEMORY')
+				rec = database.get_all(ip)
+			except:
+				return {'error': (
+					'Failure while trying to connect to IP2LOCATION database or while fetching'
+					' information about IP address ' + ip + ' in IP2LOCATION database')}
 
-			if req.status_code == 200:
-				if 'latitude' and 'longitude' in req_resp and \
-						req_resp['latitude'] is not None and req_resp['longitude'] is not None:
-					DB().save_location(req_resp)
-					return filter_result(req_resp, verified_cols)
-
-				elif 'error' in req_resp:
-					return req_resp
-
-				else:
-					return {'error': 'Could not find location for ' + ip + ' in DB or through external service'}
-			else:
-				return req_resp
+			if not isinstance(rec, IP2LocationRecord):
+				return {'error': f'No record was found in IP2LOCATION database for IP address {ip}'}
+			if rec.ip is None or rec.country_short == 'INVALID IP ADDRESS':
+				return {'error': 'Invalid IP address: ' + ip}
+			DB().save_location(rec)
+			return filter_ip2location_record(rec, verified_cols)
 
 	except Exception as e:
 		return {'error': ','.join(e.args)}
 
 
-def verify_cols(requested_cols):
+def verify_cols(requested_cols: list[LiteralString]) -> list[LiteralString]:
 	return list(set(requested_cols).intersection(all_cols))
 
 
-def filter_result(result, cols):
+def filter_result(result: dict[str, str], cols: list[LiteralString]) -> IpInfo:
 	return { key: result[key] for key in cols }
+
+
+def filter_ip2location_record(record: IP2LocationRecord, cols: list[LiteralString]):
+	rec_dict: IpInfo = {}
+	for key in cols:
+		if key == 'country_code':
+			attr = 'country_short'
+		elif key == 'country_name':
+			attr = 'country_long'
+		elif key == 'region_name':
+			attr = 'region'
+		else:
+			attr = key
+		try:
+			val = record.__getattribute__(attr)
+		except AttributeError:
+			continue
+		if val != 'This parameter is unavailable in selected .BIN data file. Please upgrade data file.':
+			rec_dict[key] = val
+	return rec_dict
 
 
 if __name__ == "__main__":
