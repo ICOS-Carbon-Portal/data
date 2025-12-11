@@ -1,10 +1,8 @@
-from flask import Flask, jsonify
 import IP2Location
+import os
+from flask import Flask, jsonify
 from IP2Location.database import IP2LocationRecord
 from typing import LiteralString, TypeAlias
-from py.DB import DB
-from py.config import min_cols, default_cols, all_cols
-import os
 
 
 IpInfo: TypeAlias = dict[str, str | int | float | None]
@@ -14,6 +12,10 @@ APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 app = Flask(__name__)
+
+
+all_cols = 'ip,latitude,longitude,country_code,country_name,region_name,city'.split(',')
+default_cols = 'ip,country_code'.split(',')
 
 
 @app.route('/all/<ip>', methods=['GET'])
@@ -36,52 +38,40 @@ def lookup_ip(ip: str, cols: LiteralString | None = None, days_limit: int = -1):
 
 
 def get_location(ip: str, cols: list[LiteralString], days_limit: int) -> IpInfo:
-	verified_cols = verify_cols(cols)
-
 	try:
-		query_cols = set(verified_cols + min_cols)
-		db_location = DB().get_location(ip, query_cols, days_limit)
+		database = IP2Location.IP2Location(
+			os.path.join('DB', 'IP2LOCATION-LITE-DB5.BIN'), 'SHARED_MEMORY')
+		rec = database.get_all(ip)
+	except:
+		return {'error': (
+			'Failure while trying to connect to IP2LOCATION database or while fetching'
+			' information about IP address ' + ip + ' in IP2LOCATION database')}
 
-		if db_location is not None:
-			return filter_result(db_location, verified_cols)
-		else:
-			try:
-				database = IP2Location.IP2Location(
-					os.path.join('DB', 'IP2LOCATION-LITE-DB5.BIN'), 'SHARED_MEMORY')
-				rec = database.get_all(ip)
-			except:
-				return {'error': (
-					'Failure while trying to connect to IP2LOCATION database or while fetching'
-					' information about IP address ' + ip + ' in IP2LOCATION database')}
+	if not isinstance(rec, IP2LocationRecord):
+		return {'error': f'No record was found in IP2LOCATION database for IP address {ip}'}
+	if rec.country_short == 'INVALID IP ADDRESS':
+		return {'error': 'Invalid IP address: ' + ip}
+	if rec.country_short == 'IPV6 ADDRESS MISSING IN IPV4 BIN':
+		return {'error': 'IPv6 address ' + ip + ' is missing in the IP2LOCATION database.'}
+	if rec.country_short == '-':
+		return {'error': f'Empty record in IP2LOCATION database for IP address {ip}'}
 
-			if not isinstance(rec, IP2LocationRecord):
-				return {'error': f'No record was found in IP2LOCATION database for IP address {ip}'}
-			if rec.ip is None or rec.country_short == 'INVALID IP ADDRESS':
-				return {'error': 'Invalid IP address: ' + ip}
-			DB().save_location(rec)
-			return filter_ip2location_record(rec, verified_cols)
-
-	except Exception as e:
-		return {'error': ','.join(e.args)}
+	return filter_record(rec, verify_cols(cols))
 
 
 def verify_cols(requested_cols: list[LiteralString]) -> list[LiteralString]:
 	return list(set(requested_cols).intersection(all_cols))
 
 
-def filter_result(result: dict[str, str], cols: list[LiteralString]) -> IpInfo:
-	return { key: result[key] for key in cols }
-
-
-def filter_ip2location_record(record: IP2LocationRecord, cols: list[LiteralString]):
+def filter_record(record: IP2LocationRecord, cols: list[LiteralString]):
 	rec_dict: IpInfo = {}
+	attr_lookup = {
+		'country_code': 'country_short',
+		'country_name': 'country_long',
+		'region_name': 'region'}
 	for key in cols:
-		if key == 'country_code':
-			attr = 'country_short'
-		elif key == 'country_name':
-			attr = 'country_long'
-		elif key == 'region_name':
-			attr = 'region'
+		if key in attr_lookup:
+			attr = attr_lookup[key]
 		else:
 			attr = key
 		try:
