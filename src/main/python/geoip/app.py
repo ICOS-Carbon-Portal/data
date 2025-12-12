@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 
 all_cols = 'ip,latitude,longitude,country_code,country_name,region_name,city'.split(',')
-default_cols = 'ip,country_code'.split(',')
+default_cols = 'ip,latitude,longitude,country_code,city'.split(',')
 
 
 @app.route('/all/<ip>', methods=['GET'])
@@ -79,7 +79,10 @@ def filter_record(record: IP2LocationRecord, cols: list[LiteralString]):
 		except AttributeError:
 			continue
 		if val != 'This parameter is unavailable in selected .BIN data file. Please upgrade data file.':
-			rec_dict[key] = val
+			if key in ['latitude', 'longitude']:
+				rec_dict[key] = float(val)
+			else:
+				rec_dict[key] = val
 	return rec_dict
 
 
