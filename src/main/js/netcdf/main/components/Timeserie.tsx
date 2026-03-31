@@ -23,9 +23,8 @@ export default function Timeserie(props: TimeserieProps) {
 	const [prevData, setPrevData] = useState(props.timeserieData);
 
 	let [draggableStyle, setDraggableStyle] = useState<CSSProperties>({});
-	const hasData = props.varName && props.timeserieData?.length && props.latlng;
 
-	if (hasData && !deepequal(props.timeserieData, prevData)) {
+	if (props.varName && props.timeserieData?.length && props.latlng && !deepequal(props.timeserieData, prevData)) {
 		setPrevData(props.timeserieData);
 		drawGraph(props.timeserieData, props.varName, props.latlng);
 	}

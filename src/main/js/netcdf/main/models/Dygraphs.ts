@@ -2,8 +2,8 @@ import Dygraph, {dygraphs} from 'dygraphs';
 import '../../../common/main/Dygraphs.css';
 import { Latlng, TimeserieData } from './State';
 
-export const drawGraph = (timeserieData: TimeserieData[] | undefined, varName: string | undefined, latlng: Latlng | undefined) => {
-	if (!document.getElementById('graph') || latlng === undefined || timeserieData === undefined || varName === undefined) {
+export const drawGraph = (timeserieData: TimeserieData[], varName: string, latlng: Latlng) => {
+	if (!document.getElementById('graph')) {
 		return;
 	}
 
