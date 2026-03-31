@@ -27,7 +27,7 @@ module.exports = defineConfig(({ mode }) => ({
 		preprocessorOptions: {
 			scss: {
 				implementation: require('sass'),
-				silenceDeprecations: ['import', 'color-functions', 'global-builtin'],
+				silenceDeprecations: ['import', 'color-functions', 'global-builtin', 'if-function'],
 			}
 		}
 	}
