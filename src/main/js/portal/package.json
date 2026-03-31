@@ -7,9 +7,8 @@
   "private": true,
   "description": "Carbon Portal Data Service",
   "scripts": {
-    "publish": "vite build",
+    "publish": "tsc --noEmit && vite build",
     "build": "vite build --watch --mode development",
-    "typecheck": "tsc --noEmit",
     "test": "karma start"
   },
   "repository": {
