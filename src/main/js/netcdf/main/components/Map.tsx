@@ -109,7 +109,7 @@ export default function Map(props: MapProps) {
 				const newURL = location.origin + location.pathname + newSearch;
 
 				if (window.frameElement) {
-					// Let calling page (through iframe) know what current url is
+					// Send current URL to parent page (which contains this page in an iframe)
 					window.top!.postMessage(newURL, '*');
 				} else {
 					history.replaceState({urlPath: newURL}, "", newURL);
