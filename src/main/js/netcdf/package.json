@@ -48,7 +48,7 @@
   "dependencies": {
     "deep-equal": "^2.2.2",
     "dygraphs": "^2.2.1",
-    "icos-cp-backend": "^0.5.4",
+    "icos-cp-backend": "^0.5.6",
     "icos-cp-copyright": "^0.0.2",
     "icos-cp-draggable": "^0.0.2",
     "icos-cp-leaflet-common": "^1.0.1",
