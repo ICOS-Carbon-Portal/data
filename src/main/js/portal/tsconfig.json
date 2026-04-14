@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "outDir": "./tsTarget/",
-    // Cannot remove comments here if we want to use magic comments for code splitting in webpack
     "removeComments": false,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": true,
