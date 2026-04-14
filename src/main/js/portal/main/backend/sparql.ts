@@ -9,7 +9,7 @@ function resultIsLiteralValue(v: SparqlResultValue): v is SparqlResultLiteralVal
 type LiteralDatatype = SparqlResultLiteralValue['datatype']
 
 
-function makeParser<T>(dt: LiteralDatatype | undefined, parser: (vs: string) => T): OptFunction<SparqlResultValue, T> {
+function makeParser<T>(dt: LiteralDatatype | "http://www.w3.org/2001/XMLSchema#int" | "http://www.w3.org/2001/XMLSchema#decimal" | undefined, parser: (vs: string) => T): OptFunction<SparqlResultValue, T> {
 	return liftToOptional((v: SparqlResultValue) => {
 		if(!resultIsLiteralValue(v)) throw new Error(`SPARQL result parsing error, ${v} was not literal`)
 		if(dt !== undefined && v.datatype !== dt) throw new Error(`SPARQL result parsing error, expected ${v.value} to be ${dt} but it was ${v.datatype}`)
