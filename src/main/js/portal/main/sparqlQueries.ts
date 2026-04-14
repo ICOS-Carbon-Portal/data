@@ -142,6 +142,7 @@ export function labelLookup(): Query<'uri' | 'label' , 'stationId' | 'comment' |
 	const text = `# labelLookup
 prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+prefix owl:  <http://www.w3.org/2002/07/owl#>
 
 select ?uri ?label ?comment ?stationId ?webpage
 ${fromOntoAndResAndStations}where {

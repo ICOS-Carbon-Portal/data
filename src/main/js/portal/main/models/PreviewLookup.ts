@@ -84,8 +84,13 @@ function getTable(specTable: CompositeSpecTable, labelLookup: LabelLookup): Tabl
 
 		else if (cols.length > 0) {
 			const options = cols.map(({varTitle, valType}) => {
-				const valTypeLabel = labelLookup[valType].label
-				return { varTitle, valTypeLabel }
+				const lookup = labelLookup[valType];
+				if (lookup) {
+					const valTypeLabel = lookup.label
+					return { varTitle, valTypeLabel }
+				} else {
+					return { varTitle, valTypeLabel: "dummyLabel" }
+				}
 			})
 			options.sort(previewVarCompare)
 			table[spec] = { type: "TIMESERIES", options}
