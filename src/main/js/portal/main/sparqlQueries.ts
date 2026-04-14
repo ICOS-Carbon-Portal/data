@@ -76,7 +76,8 @@ where{
 
 export type DobjOriginsAndCountsQuery = Query<"spec" | "submitter" | "count", "station" | "countryCode" | "ecosystem" | "location" | "site" | "stationclass" | "stationNetwork">
 
-export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+// export const envriFilteringFromClauses = config.envriFilteringFromGraphs.map(g => `from <${g}>`).join("\n")
+export const envriFilteringFromClauses = "";
 
 export function dobjOriginsAndCounts(filters: FilterRequest[]): DobjOriginsAndCountsQuery {
 	let siteQueries: string
@@ -132,10 +133,13 @@ where{
 }
 
 const stationGraphs = (config.additionalStationsGraphs[config.envri] ?? []).map(gr => `from <${gr}>\n`).join("");
+const fromOntoAndResAndStations = "";
+/*
 const fromOntoAndResAndStations =
 	`from <http://meta.icos-cp.eu/ontologies/cpmeta/>
 from <${config.metaResourceGraph[config.envri]}>
 ${stationGraphs}`;
+*/
 
 export function labelLookup(): Query<'uri' | 'label' , 'stationId' | 'comment' | 'webpage'> {
 
