@@ -23,9 +23,9 @@ function fromUrl(v: SparqlResultValue): UrlStr {
 }
 
 export const sparqlParsers = {
-	fromInt: makeParser("http://www.w3.org/2001/XMLSchema#integer", parseInt),
+	fromInt: makeParser("http://www.w3.org/2001/XMLSchema#int", parseInt),
 	fromLong: makeParser("http://www.w3.org/2001/XMLSchema#long", parseInt),
-	fromFloat: makeParser("http://www.w3.org/2001/XMLSchema#float", parseFloat),
+	fromFloat: makeParser("http://www.w3.org/2001/XMLSchema#decimal", parseFloat),
 	fromDouble: makeParser("http://www.w3.org/2001/XMLSchema#double", parseFloat),
 	fromDateTime: makeParser("http://www.w3.org/2001/XMLSchema#dateTime", s => new Date(s)),
 	fromBoolean: makeParser("http://www.w3.org/2001/XMLSchema#boolean", s => (s.toLowerCase() === "true")),

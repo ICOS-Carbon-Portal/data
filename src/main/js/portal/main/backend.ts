@@ -186,7 +186,7 @@ const fetchAndParseDataObjects = (query: ObjInfoQuery) => {
 		hasNextVersion: sparqlParsers.fromBoolean(b.hasNextVersion),
 		spec: sparqlParsers.fromUrl(b.spec),
 		fileName: sparqlParsers.fromString(b.fileName),
-		size: sparqlParsers.fromLong(b.size),
+		size: sparqlParsers.fromInt(b.size),
 		submTime: sparqlParsers.fromDateTime(b.submTime),
 		timeStart: sparqlParsers.fromDateTime(b.timeStart),
 		timeEnd: sparqlParsers.fromDateTime(b.timeEnd),
