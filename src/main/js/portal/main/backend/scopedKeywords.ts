@@ -48,18 +48,10 @@ function getUniqueKeywords(query: QueryParameters): Promise<string[]>{
 }
 
 function filteredKeywordsQuery(params: QueryParameters): Query<'keywords', never>{
-	const prefixes: string = `
-prefix cpmeta: <${config.cpmetaOntoUri}>
-prefix prov: <http://www.w3.org/ns/prov#>
-prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-prefix geo: <http://www.opengis.net/ont/geosparql#>`
-
-	return {text: `# filteredKeywordsQuery
-${prefixes}
-select (cpmeta:distinct_keywords() as ?keywords)
-${envriFilteringFromClauses}
-where {
-	${objectFilterClauses(params)}
-}`
+	return {text: `
+		prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+		select distinct ?keywords where{
+			?dobj cpmeta:hasKeywords ?keywords .
+		}`
 	};
 }
