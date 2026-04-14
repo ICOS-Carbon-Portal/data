@@ -73,7 +73,7 @@ export class App extends Component<AppProps> {
 const Breadcrumbs = (props: { handleRouteClick: (newRoute: string) => void, route: Route}) => {
 	return (
 		<nav role="navigation" aria-label="breadcrumb">
-			<ol className="breadcrumb bg-light p-2">
+			<ol className="breadcrumb">
 				{breadcrumbs[config.envri].map(b => BreadcrumbItem(b, props.handleRouteClick, props.route))}
 			</ol>
 		</nav>
