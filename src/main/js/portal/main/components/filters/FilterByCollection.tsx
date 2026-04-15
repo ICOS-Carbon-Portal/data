@@ -1,11 +1,6 @@
-import React, {ChangeEvent, Component, useState} from "react";
-import {debounce} from 'icos-cp-utils';
+import React, {ChangeEvent, useEffect, useState} from "react";
 import HelpButton from "../../containers/help/HelpButton";
 import { pidRegexp } from "../../utils";
-import commonConfig from '../../../../common/main/config';
-import localConfig from '../../config';
-
-const config = Object.assign(commonConfig, localConfig);
 
 interface OurProps {
 	filterCollection: string
@@ -13,18 +8,18 @@ interface OurProps {
 	showDeprecated: Boolean
 }
 
-interface CollectionFilterState{
-	message?: string
-	validityClass: string
-}
-
 export default function FilterByCollection(props: OurProps) {
 
 	const [message, setMessage] = useState<string>("");
 	const [validityClass, setValidityClass] = useState<string>("");
 
+	useEffect(() => updateFilter(props.filterCollection), [])
+
 	function handleSearch(ev: ChangeEvent<HTMLInputElement>) {
-		const collection = ev.target.value;
+		updateFilter(ev.target.value);		
+	}
+
+	function updateFilter(collection: string) {
 		if (collection.length === 0) {
 			if (validityClass.length > 0) {
 				props.updateCollection("");
@@ -33,9 +28,10 @@ export default function FilterByCollection(props: OurProps) {
 			setValidityClass("");
 			return;
 		}
+
 		const pidMatch = collection.match(pidRegexp);
 		if (pidMatch) {
-			props.updateCollection(config.cpmetaCollectionUri + pidMatch[1]);
+			props.updateCollection(pidMatch[1]);
 			setMessage("");
 			setValidityClass(" is-valid");
 		} else {
