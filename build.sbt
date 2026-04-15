@@ -128,7 +128,7 @@ lazy val data = (project in file("."))
 			cpFrontendPublish
 		).value,
 		cpDeployPlaybook := "core.yml",
-		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production")),
+		cpDeployPermittedInventories := Some(Seq("staging", "cities", "production", "test-fs4")),
 		cpDeployInfraBranch := "master",
 
 //		initialCommands in console := """
