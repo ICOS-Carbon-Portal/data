@@ -207,6 +207,10 @@ export class FiltersUpdatePids extends FiltersPayload{
 	constructor(readonly selectedPids: Sha256Str[] | null){super();}
 }
 
+export class FiltersUpdateCollection extends FiltersPayload {
+	constructor(readonly collection: string) { super(); }
+}
+
 export class FiltersUpdateFileName extends FiltersPayload {
 	constructor(readonly fileName: string) { super(); }
 }

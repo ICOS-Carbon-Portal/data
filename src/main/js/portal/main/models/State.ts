@@ -30,6 +30,7 @@ export const portalHistoryState = new PortalHistoryState(config.portalHistorySta
 const hashKeys = [
 	'route',
 	'filterCategories',
+	'filterCollection',
 	'filterFileName',
 	'filterTemporal',
 	'filterPids',
@@ -159,6 +160,7 @@ export interface State {
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
 	filterNumbers: FilterNumbers
+	filterCollection: string
 	filterFileName: string
 	user: User
 	previewLookup: PreviewLookup | undefined;
@@ -217,6 +219,7 @@ export const defaultState: State = {
 	filterTemporal: new FilterTemporal(),
 	filterPids: null,
 	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
+	filterCollection: "",
 	filterFileName: "",
 	user: {
 		profile: {},
@@ -367,6 +370,7 @@ const simplifyState = (state: State) => {
 type JsonHashState = {
 	route?: Route
 	filterCategories?: CategFilters
+	filterCollection?: string
 	filterFileName?: string
 	filterTemporal?: SerializedFilterTemporal
 	filterPids?: Sha256Str
@@ -455,8 +459,15 @@ const specialCases = (state: Partial<StateSerialized>) => {
 		delete state.route;
 	}
 
-	if (state.filterFileName === "") {
+	if (state.filterFileName === "" && state.filterCollection === "") {
 		delete state.filterFileName;
+		delete state.filterCollection;
+	} else if (state.filterFileName === "") {
+		delete state.filterFileName;
+		delete state.filterPids;
+	} else if (state.filterCollection === "") {
+		delete state.filterCollection;
+		delete state.filterPids;
 	} else {
 		delete state.filterPids;
 	}

@@ -2,7 +2,7 @@ import React, { ChangeEventHandler, Component, CSSProperties } from 'react';
 import { connect } from 'react-redux';
 import {State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {makeQuerySubmittable, updateFileName, updateSearchOption, updateSelectedPids} from "../../actions/search";
+import {makeQuerySubmittable, updateCollection, updateFileName, updateSearchOption, updateSelectedPids} from "../../actions/search";
 import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
 import FilterByPid from "../../components/filters/FilterByPid";
@@ -14,6 +14,7 @@ import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
 import { getFilters } from '../../actions/common';
 import { specKeywordsQuery } from '../../backend/scopedKeywords';
+import FilterByCollection from "../../components/filters/FilterByCollection";
 import FilterByFileName from "../../components/filters/FilterByFileName";
 
 type StateProps = ReturnType<typeof stateToProps>;
@@ -22,7 +23,7 @@ type OurProps = StateProps & DispatchProps & {tabHeader: string};
 
 class Advanced extends Component<OurProps> {
 	render(){
-		const { searchOptions, filterPids, filterFileName, updateSearchOption, updateSelectedPids, updateFileName, getPublicQuery } = this.props;
+		const { searchOptions, filterPids, filterFileName, filterCollection, updateSearchOption, updateSelectedPids, updateFileName, updateCollection, getPublicQuery } = this.props;
 		const {showDeprecated} = searchOptions;
 
 		return (
@@ -30,6 +31,7 @@ class Advanced extends Component<OurProps> {
 				<FilterPanel header="Text filters">
 					<FilterByPid {...{filterPids, filterFileName, updateSelectedPids, showDeprecated}} />
 					<FilterByFileName {...{showDeprecated, updateFileName, filterFileName}} />
+					<FilterByCollection {...{showDeprecated, updateCollection, filterCollection}} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">
@@ -113,6 +115,7 @@ function stateToProps(state: State) {
 	return {
 		filterPids: state.filterPids,
 		filterFileName: state.filterFileName,
+		filterCollection: state.filterCollection,
 		searchOptions: state.searchOptions,
 		getPublicQuery: getQueryBuilder(state)
 	};
@@ -122,6 +125,7 @@ function dispatchToProps(dispatch: PortalDispatch){
 	return {
 		updateSelectedPids: (pids: Sha256Str[] | null) => dispatch(updateSelectedPids(pids)),
 		updateFileName: (name: string) => dispatch(updateFileName(name)),
+		updateCollection: (collection: string) => dispatch(updateCollection(collection)),
 		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption))
 	};
 }

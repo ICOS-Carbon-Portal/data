@@ -4,6 +4,7 @@ import {
 	FiltersNumber,
 	FiltersTemporal,
 	FiltersUpdatePids,
+	FiltersUpdateCollection,
 	FiltersUpdateFileName,
 	FilterKeywords
 } from "./actionpayloads";
@@ -25,6 +26,13 @@ export default function(state: State, payload: FiltersPayload): State{
 			paging: state.paging
 				.withFiltersEnabled(isInPidFilteringMode(state.tabs, state.filterPids))
 				.withOffset(0),
+			checkedObjectsInSearch: []
+		});
+	}
+
+	if (payload instanceof FiltersUpdateCollection) {
+		return stateUtils.update(state, {
+			filterCollection: payload.collection,
 			checkedObjectsInSearch: []
 		});
 	}

@@ -11,6 +11,7 @@ const titles = {
 	previewCsvDownload: "CSV download",
 	previewURL: "Preview chart URL",
 	keywordFilter: "Keyword",
+	collectionFilter: "Collection",
 	fileNameFilter: "Filename",
 	pidFilter: "PID"
 };
@@ -347,6 +348,7 @@ const initItems: HelpItem[] = [
 		'Useful for sharing the chart with a colleague, or for embedding it in a Web page as an HTML <iframe>'
 	),
 
+	new HelpItem('collectionFilter', `Paste in ${envri} Data Portal's collection PID or URL to find objects contained within that collection.`),
 	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
 	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, ` +
 		'or just the suffix (24 characters). Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'),

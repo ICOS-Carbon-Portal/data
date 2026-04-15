@@ -11,11 +11,12 @@ import {
 	getExtendedDataObjInfo,
 	makeHelpStorageListItem,
 	savePersistedMapProps,
+	searchDobjByCollection,
 	searchDobjByFileName
 } from "../backend";
 import {ColNames, OriginsColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import { FiltersNumber, FiltersUpdatePids, FiltersUpdateFileName, UiInactivateAllHelp} from "../reducers/actionpayloads";
+import { FiltersNumber, FiltersUpdatePids, FiltersUpdateCollection, FiltersUpdateFileName, UiInactivateAllHelp} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
@@ -255,6 +256,25 @@ export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThun
 	};
 }
 
+const updatePidsFromCollection: PortalThunkAction<void> = (dispatch, getState) => {
+	const { filterCollection } = getState();
+	if (filterCollection.length) {
+		const { searchOptions } = getState();
+		searchDobjByCollection(filterCollection, searchOptions.showDeprecated).then(dobjs => {
+			dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
+		});
+	} else {
+		dispatch(updateSelectedPids(null));
+	}
+}
+
+export function updateCollection(collection: string): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersUpdateCollection(collection));
+		dispatch(updatePidsFromCollection);
+	};
+}
+
 const updatePidsFromFileName: PortalThunkAction<void> = (dispatch, getState) => {
 	const { filterFileName } = getState();
 	if (filterFileName.length) {
@@ -266,6 +286,7 @@ const updatePidsFromFileName: PortalThunkAction<void> = (dispatch, getState) => 
 		dispatch(updateSelectedPids(null));
 	}
 }
+
 
 export function updateFileName(fileName: string): PortalThunkAction<void> {
 	return (dispatch) => {
