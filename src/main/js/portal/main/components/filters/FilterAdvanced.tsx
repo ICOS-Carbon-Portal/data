@@ -85,6 +85,7 @@ export default function FilterAdvanced(props: OurProps) {
 	return (
 		<div className="row" style={{marginTop: 10}}>
 			<div className="col-md-12">
+				<div className="mb-1"><em>Note: all text filters match <strong>exact text only</strong></em></div>
 				<div className="form-check">
 					<input
 						type="radio"
