@@ -1,5 +1,4 @@
-import React, {ChangeEvent, useEffect, useRef, useState} from "react";
-import HelpButton from "../../containers/help/HelpButton";
+import React, {ChangeEvent, useEffect, useState} from "react";
 import { pidRegexp } from "../../utils";
 import { AdvancedFilter } from "../../models/State";
 
@@ -85,7 +84,6 @@ export default function FilterAdvanced(props: OurProps) {
 	return (
 		<div className="row" style={{marginTop: 10}}>
 			<div className="col-md-12">
-				<div className="mb-1"><em>Note: all text filters match <strong>exact text only</strong></em></div>
 				<div className="form-check">
 					<input
 						type="radio"
@@ -96,7 +94,7 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label className="form-check-label" htmlFor="advancedFilterDobj">Data object PID</label><HelpButton name="pidFilter" />
+					<label className="form-check-label" htmlFor="advancedFilterDobj">Data object PID</label>
 				</div>
 				<div className="form-check">
 					<input
@@ -108,7 +106,7 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label className="form-check-label" htmlFor="advancedFilterCollection">Collection PID</label><HelpButton name="collectionFilter" />
+					<label className="form-check-label" htmlFor="advancedFilterCollection">Collection PID</label>
 				</div>
 				<div className="form-check">
 					<input
@@ -120,7 +118,7 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label className="form-check-label" htmlFor="advancedFilterFilename">File name</label><HelpButton name="filenameFilter" />
+					<label className="form-check-label" htmlFor="advancedFilterFilename">File name</label>
 				</div>
 				<input
 					type="text"
@@ -130,6 +128,7 @@ export default function FilterAdvanced(props: OurProps) {
 					onChange={handleTextChange}
 					defaultValue={props.filterAdvancedText}
 				/>
+				<div className="fs-xs">All text filters find exact matches only</div>
 			</div>
 		</div>
 	);
