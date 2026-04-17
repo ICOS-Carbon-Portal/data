@@ -74,7 +74,7 @@ export function getFilters(state: State): FilterRequest[] {
 
 	filters.push({category: 'deprecated', allow: searchOptions.showDeprecated});
 
-	if (isInPidFilteringMode(tabs, filterPids)){
+	if (isInPidFilteringMode(tabs, filterPids)){ // TODO this will probably break
 		filters.push({category: 'pids', pids: filterPids});
 	} else {
 		filters.push({category: 'pids', pids: null});

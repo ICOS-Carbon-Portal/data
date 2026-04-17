@@ -27,15 +27,15 @@ class Filters extends Component<OurProps> {
 	render(){
 		const {
 			specTable, filterTemporal, helpStorage, labelLookup, updateFilter, handleFilterReset,
-			setFilterTemporal, filterPids, setNumberFilter, filterNumbers, scopedKeywords, filterKeywords,
-			setKeywordFilter, countryCodesLookup, spatialRects
+			setFilterTemporal, filterAdvancedText, filterAdvancedType, setNumberFilter, filterNumbers,
+			scopedKeywords, filterKeywords, setKeywordFilter, countryCodesLookup, spatialRects
 		} = this.props;
 
 		const resetBtnEnabled = filterTemporal.hasFilter
 			|| specTable.hasActiveFilters
 			|| filterNumbers.hasFilters
 			|| filterKeywords.length > 0
-			|| filterPids !== null
+			|| filterAdvancedText.length > 0
 			|| (!!spatialRects && spatialRects.length > 0)
 
 		return (
@@ -96,7 +96,8 @@ function stateToProps(state: State){
 		countryCodesLookup: state.countryCodesLookup,
 		scopedKeywords: state.scopedKeywords,
 		filterKeywords: state.filterKeywords,
-		filterPids: state.filterPids,
+		filterAdvancedText: state.filterAdvancedText,
+		filterAdvancedType: state.filterAdvancedType,
 		spatialRects: state.mapProps.rects
 	};
 }
