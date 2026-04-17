@@ -377,7 +377,7 @@ type JsonHashState = {
 	filterAdvancedType?: AdvancedFilter
 	filterFileName?: string
 	filterTemporal?: SerializedFilterTemporal
-	filterPids?: Sha256Str // TODO investigate if this is violated by arrays at runtime
+	filterPids?: Sha256Str
 	filterNumbers?: FilterNumberSerialized[]
 	filterKeywords?: string[]
 	tabs?: State['tabs']
@@ -421,8 +421,8 @@ const jsonToState = (state0: JsonHashState) => {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
-		if (state0.filterPids) {
-			state.filterAdvancedText = state.filterPids?.[0] ?? "";
+		if (state.filterPids) {
+			state.filterAdvancedText = state0.filterPids ?? "";
 		}
 
 		if (state.filterFileName) {
