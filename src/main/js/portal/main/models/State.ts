@@ -421,6 +421,7 @@ const jsonToState = (state0: JsonHashState) => {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
+		// For backwards compatibility with URLs with "filterPids" and "filterFilename" in hash
 		if (state.filterPids) {
 			state.filterAdvancedText = state0.filterPids ?? "";
 		}
