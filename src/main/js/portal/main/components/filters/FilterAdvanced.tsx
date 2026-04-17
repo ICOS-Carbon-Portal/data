@@ -85,9 +85,7 @@ export default function FilterAdvanced(props: OurProps) {
 	return (
 		<div className="row" style={{marginTop: 10}}>
 			<div className="col-md-12">
-				<label style={{marginBottom: 0}}>Select a filter type:</label>
-				<HelpButton name="collectionFilter" />
-				<div class="form-check">
+				<div className="form-check">
 					<input
 						type="radio"
 						name="advancedFilterType"
@@ -97,9 +95,9 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label class="form-check-label" for="advancedFilterDobj">Data object PID</label>
+					<label className="form-check-label" htmlFor="advancedFilterDobj">Data object PID</label><HelpButton name="pidFilter" />
 				</div>
-				<div class="form-check">
+				<div className="form-check">
 					<input
 						type="radio"
 						name="advancedFilterType"
@@ -109,9 +107,9 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label class="form-check-label" for="advancedFilterCollection">Collection PID</label>
+					<label className="form-check-label" htmlFor="advancedFilterCollection">Collection PID</label><HelpButton name="collectionFilter" />
 				</div>
-				<div class="form-check">
+				<div className="form-check">
 					<input
 						type="radio"
 						name="advancedFilterType"
@@ -121,7 +119,7 @@ export default function FilterAdvanced(props: OurProps) {
 						onChange={handleFilterTypeChange}
 						className="form-check-input"
 					/>
-					<label class="form-check-label" for="advancedFilterFilename">File name</label>
+					<label className="form-check-label" htmlFor="advancedFilterFilename">File name</label><HelpButton name="filenameFilter" />
 				</div>
 				<input
 					type="text"
