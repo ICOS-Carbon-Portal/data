@@ -27,7 +27,7 @@ class Advanced extends Component<OurProps> {
 		return (
 			<>
 				<FilterPanel header="Text filters" helpItemName="textFilters">
-					<FilterAdvanced {...{filterAdvancedText, filterAdvancedType, updateAdvanced, showDeprecated}} />
+					<FilterAdvanced {...{filterAdvancedText, filterAdvancedType, updateAdvanced}} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">

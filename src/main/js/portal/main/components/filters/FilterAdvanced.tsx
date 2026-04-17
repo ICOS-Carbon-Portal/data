@@ -6,7 +6,6 @@ interface OurProps {
 	filterAdvancedText: string
 	filterAdvancedType: AdvancedFilter
 	updateAdvanced: (text: string, filter: AdvancedFilter) => void
-	showDeprecated: boolean
 }
 
 type ValidationResults = {
@@ -119,7 +118,7 @@ export default function FilterAdvanced(props: OurProps) {
 					title={message}
 					placeholder={getPlaceholder()}
 					onChange={handleTextChange}
-					defaultValue={props.filterAdvancedText}
+					value={filterText}
 				/>
 				<div className="fs-xs">All text filters find exact matches only</div>
 			</div>
