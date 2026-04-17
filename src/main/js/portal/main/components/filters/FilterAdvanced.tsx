@@ -18,24 +18,17 @@ export default function FilterAdvanced(props: OurProps) {
 
 	const [filterText, setFilterText] = useState<string>(props.filterAdvancedText);
 	const [filterType, setFilterType] = useState<AdvancedFilter>(props.filterAdvancedType);
-	const [wasValid, setWasValid] = useState<boolean>(false);
+	const [pidFilterActive, setPidFilterActive] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (filterText.length === 0) {
-			if (wasValid) {
-				setWasValid(false);
-				props.updateAdvanced("", filterType);
-			}
-		} else if (filterType === "dobj" || filterType === "collection") {
+		if (filterType === "dobj" || filterType === "collection") {
 			const pidMatch = filterText.match(pidRegexp);
 			if (pidMatch) {
+				setPidFilterActive(true);
 				props.updateAdvanced(pidMatch[1], filterType);
-				setWasValid(true);
-			} else {
-				if (wasValid) {
-					setWasValid(false);
-					props.updateAdvanced("", filterType);
-				}
+			} else if (pidFilterActive) {
+				setPidFilterActive(false);
+				props.updateAdvanced("", filterType);
 			}
 		} else if (filterType === "filename") {
 			props.updateAdvanced(filterText, filterType);
