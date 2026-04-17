@@ -1,11 +1,11 @@
 import React, { ChangeEventHandler, Component, CSSProperties } from 'react';
 import { connect } from 'react-redux';
-import {State} from "../../models/State";
+import {AdvancedFilter, State} from "../../models/State";
 import {PortalDispatch} from "../../store";
-import {makeQuerySubmittable, updateFileName, updateSearchOption, updateSelectedPids} from "../../actions/search";
+import {makeQuerySubmittable, updateSearchOption, updateAdvanced} from "../../actions/search";
 import {Sha256Str} from "../../backend/declarations";
 import {SearchOption} from "../../actions/types";
-import FilterByPid from "../../components/filters/FilterByPid";
+import FilterAdvanced from "../../components/filters/FilterAdvanced";
 import {Style} from "../../../../common/main/style";
 import CheckBtn from "../../components/buttons/CheckBtn";
 import {FilterPanel} from "../../components/filters/FilterPanel";
@@ -14,7 +14,6 @@ import { publicQueries, QueryName } from '../../config';
 import * as queries from '../../sparqlQueries';
 import { getFilters } from '../../actions/common';
 import { specKeywordsQuery } from '../../backend/scopedKeywords';
-import FilterByFileName from "../../components/filters/FilterByFileName";
 
 type StateProps = ReturnType<typeof stateToProps>;
 type DispatchProps = ReturnType<typeof dispatchToProps>;
@@ -22,14 +21,13 @@ type OurProps = StateProps & DispatchProps & {tabHeader: string};
 
 class Advanced extends Component<OurProps> {
 	render(){
-		const { searchOptions, filterPids, filterFileName, updateSearchOption, updateSelectedPids, updateFileName, getPublicQuery } = this.props;
+		const { searchOptions, filterAdvancedText, filterAdvancedType, updateSearchOption, updateAdvanced, getPublicQuery } = this.props;
 		const {showDeprecated} = searchOptions;
 
 		return (
 			<>
-				<FilterPanel header="Text filters">
-					<FilterByPid {...{filterPids, filterFileName, updateSelectedPids, showDeprecated}} />
-					<FilterByFileName {...{showDeprecated, updateFileName, filterFileName}} />
+				<FilterPanel header="Text filters" helpItemName="textFilters">
+					<FilterAdvanced {...{filterAdvancedText, filterAdvancedType, updateAdvanced}} />
 				</FilterPanel>
 
 				<FilterPanel header="Search options">
@@ -111,8 +109,8 @@ function getQueryBuilder(state: State): (queryName: QueryName) => string {
 
 function stateToProps(state: State) {
 	return {
-		filterPids: state.filterPids,
-		filterFileName: state.filterFileName,
+		filterAdvancedText: state.filterAdvancedText,
+		filterAdvancedType: state.filterAdvancedType,
 		searchOptions: state.searchOptions,
 		getPublicQuery: getQueryBuilder(state)
 	};
@@ -120,8 +118,7 @@ function stateToProps(state: State) {
 
 function dispatchToProps(dispatch: PortalDispatch){
 	return {
-		updateSelectedPids: (pids: Sha256Str[] | null) => dispatch(updateSelectedPids(pids)),
-		updateFileName: (name: string) => dispatch(updateFileName(name)),
+		updateAdvanced: (filterText: string, filterType: AdvancedFilter) => dispatch(updateAdvanced(filterText, filterType)),
 		updateSearchOption: (searchOption: SearchOption) => dispatch(updateSearchOption(searchOption))
 	};
 }

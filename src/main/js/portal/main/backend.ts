@@ -212,6 +212,14 @@ export function searchDobjByFileName(fileName: string, showDeprecated: Boolean):
 	})).then(res => res.rows);
 }
 
+export function searchDobjByCollection(collection: string, showDeprecated: Boolean): Promise<{dobj: Sha256Str}[]> {
+	const query = queries.getDobjByCollection(collection, showDeprecated);
+
+	return sparqlFetchAndParse(query, config.sparqlEndpoint, b => ({
+		dobj: getLastSegmentInUrl(sparqlParsers.fromUrl(b.dobj)) || throwError(`Expected a data object URL, got ${b.dobj.value}`)
+	})).then(res => res.rows);
+}
+
 export const saveCart = (email: string | null, cart: Cart): Promise<void> => {
 	if (email){
 		updatePersonalRestheart(email, {cart});

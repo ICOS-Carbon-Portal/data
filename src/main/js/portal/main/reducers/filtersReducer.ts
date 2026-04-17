@@ -4,8 +4,8 @@ import {
 	FiltersNumber,
 	FiltersTemporal,
 	FiltersUpdatePids,
-	FiltersUpdateFileName,
-	FilterKeywords
+	FilterKeywords,
+	FiltersUpdateAdvanced
 } from "./actionpayloads";
 import {isInPidFilteringMode} from "./utils";
 
@@ -29,9 +29,10 @@ export default function(state: State, payload: FiltersPayload): State{
 		});
 	}
 
-	if (payload instanceof FiltersUpdateFileName) {
+	if (payload instanceof FiltersUpdateAdvanced) {
 		return stateUtils.update(state, {
-			filterFileName: payload.fileName,
+			filterAdvancedText: payload.filterAdvancedText,
+			filterAdvancedType: payload.filterAdvancedType,
 			checkedObjectsInSearch: []
 		});
 	}

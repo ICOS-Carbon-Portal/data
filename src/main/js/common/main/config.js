@@ -26,6 +26,7 @@ export default {
 	metaBaseUri,
 	authBaseUri,
 	cpmetaObjectUri: window.envriConfig.dataItemPrefix + 'objects/',
+	cpmetaCollectionUri: window.envriConfig.dataItemPrefix + 'collections/',
 	sparqlGraphFilter: window.envriConfig.metaItemPrefix,
 	previewTypes: {
 		TIMESERIES,
