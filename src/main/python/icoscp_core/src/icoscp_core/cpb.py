@@ -76,6 +76,15 @@ def to_dobj_uri(dobj: Dobj) -> URI:
 	elif isinstance(dobj, URI): return dobj
 	else: raise ValueError('dobj must be a string or a DataObjectLite instance')
 
+def _resolve_flag_col(flag_col: str | None, actual_cols: list[str]) -> str | None:
+	if flag_col is None or flag_col in actual_cols:
+		return flag_col
+	pattern = re.compile(flag_col)
+	for col in actual_cols:
+		if pattern.match(col):
+			return col
+	return None
+
 def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataClient) -> list[Tuple[Dobj, "Codec"]]:
 
 	if len(dobjs) == 0: raise Exception("Got an empty list of data objects")
@@ -113,7 +122,7 @@ def codecs_from_dobjs(dobjs: list[Dobj], request: TableRequest, meta: MetadataCl
 		cols_names = cpb.col_names or col_lookup.default_actual_cols
 
 		cols_info = [
-			ColumnInfo(lbl, col.val_format, col.flag_col)
+			ColumnInfo(lbl, col.val_format, _resolve_flag_col(col.flag_col, cols_names))
 			for lbl, col in
 				[(lbl, col_lookup.lookup_column(lbl)) for lbl in cols_names]
 			if col is not None
