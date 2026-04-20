@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.headers.`Access-Control-Allow-Origin`
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives.*
 import akka.http.scaladsl.server.ExceptionHandler
+import io.sentry.Sentry
 import se.lu.nateko.cp.cpdata.BuildInfo
 import se.lu.nateko.cp.data.api.MetaClient
 import se.lu.nateko.cp.data.api.RestHeartClient
@@ -33,11 +34,12 @@ import se.lu.nateko.cp.cpauth.core.EmailSender
 import eu.icoscp.geoipclient.CpGeoClient
 
 object Main extends App:
+	val config = ConfigReader.getDefault
+	initSentry(config)
 
 	given system: ActorSystem = ActorSystem("cpdata", config = Some(ConfigReader.appConfig))
 	import system.dispatcher
 
-	val config = ConfigReader.getDefault
 	given Map[Envri,EnvriConfig] = ConfigReader.metaCore.envriConfigs
 
 	val http = Http()
@@ -84,6 +86,7 @@ object Main extends App:
 
 	val exceptionHandler = ExceptionHandler{
 		case ex =>
+			Sentry.captureException(ex)
 			val traceWriter = new java.io.StringWriter()
 			ex.printStackTrace(new java.io.PrintWriter(traceWriter))
 			val trace = traceWriter.toString
@@ -137,10 +140,16 @@ object Main extends App:
 			system.log.info(s"Started data: $binding")
 
 		case Failure(err) =>
+			Sentry.captureException(err)
 			system.log.error(err, "Could not start 'data' service")
 			system.terminate()
 			shutdownPostgis()
 	}
+
+	private def initSentry(config: CpdataConfig): Unit =
+		val dsn = config.sentry.dsn.trim
+		if dsn.nonEmpty then
+			Sentry.init(options => options.setDsn(dsn))
 
 	private def shutdownPostgis(): Unit =
 		postgisWriter.close()
