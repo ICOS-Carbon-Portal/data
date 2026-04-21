@@ -98,6 +98,8 @@ case class EtcFacadeConfig(
 	testStation: StationId
 )
 
+case class SentryConfig(dsn: String)
+
 case class CpdataConfig(
 	interface: String,
 	port: Int,
@@ -108,6 +110,7 @@ case class CpdataConfig(
 	restheart: RestHeartConfig,
 	postgis: PostgisConfig,
 	etcFacade: EtcFacadeConfig,
+	sentry: SentryConfig,
 	mailing: EmailConfig
 )
 
@@ -145,7 +148,8 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}
 	given RootJsonFormat[RestHeartConfig] = jsonFormat3(RestHeartConfig.apply)
-	given RootJsonFormat[CpdataConfig] = jsonFormat10(CpdataConfig.apply)
+	given RootJsonFormat[SentryConfig] = jsonFormat1(SentryConfig.apply)
+	given RootJsonFormat[CpdataConfig] = jsonFormat11(CpdataConfig.apply)
 
 	val appConfig: Config = {
 		val confFile = new java.io.File("application.conf").getAbsoluteFile

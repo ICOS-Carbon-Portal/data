@@ -19,6 +19,7 @@ lazy val commonSettings = Seq(
 
 val akkaVersion = "2.6.19"
 val akkaHttpVersion = "10.2.8"
+val sentryVersion = "8.39.1"
 
 lazy val netcdf = (project in file("netcdf"))
 	.settings(commonSettings: _*)
@@ -82,6 +83,8 @@ lazy val data = (project in file("."))
 		libraryDependencies ++= Seq(
 			"com.typesafe.akka"  %% "akka-slf4j"                         % akkaVersion cross CrossVersion.for3Use2_13,
 			"ch.qos.logback"      % "logback-classic"                    % "1.1.3",
+			"io.sentry"           % "sentry"                             % sentryVersion,
+			"io.sentry"           % "sentry-logback"                     % sentryVersion,
 			"eu.icoscp"          %% "georestheart"                       % "0.1.1",
 			metaCoreModule,
 			"se.lu.nateko.cp"    %% "views-core"                         % "0.8.3",
