@@ -7,6 +7,11 @@
     </encoder>
   </appender>
 
+  <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+    <minimumEventLevel>ERROR</minimumEventLevel>
+    <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
+  </appender>
+
   <logger name="org.irods.jargon" level="warn" />
   <!-- <logger name="se.lu.nateko.cp.data.streams.OutputStreamWithCleanup" level="debug" />
   <logger name="se.lu.nateko.cp.data.streams.ByteStringBuffer" level="debug" />
@@ -14,6 +19,7 @@
 
   <root level="info">
     <appender-ref ref="STDOUT" />
+    <appender-ref ref="SENTRY" />
   </root>
 
 </configuration>
