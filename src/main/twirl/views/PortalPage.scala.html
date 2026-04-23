@@ -1,11 +1,12 @@
 @import eu.icoscp.envri.Envri
 @import se.lu.nateko.cp.meta.core.data.EnvriConfig
 
-@()(implicit envri: Envri, conf: EnvriConfig)
+@(sentryDsn: String)(implicit envri: Envri, conf: EnvriConfig)
 @CommonPage("Data portal"){
 	<link rel="stylesheet" href="../portal/css/portal.css">
 }{
 	<div id="main"></div>
 	@JavascriptConfig()
+	<script type="text/javascript">window.sentryDsn = "@sentryDsn";</script>
 	<script type="module" src="/portal/portal.js"></script>
 }

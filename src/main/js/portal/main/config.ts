@@ -35,7 +35,7 @@ const additionalStationsGraphs: { [E in Envri]?: UrlStr[] } = {
 }
 
 const envriFilteringFromGraphs = [metaResourceGraph[envri]].concat(additionalStationsGraphs[envri] ?? [])
-const sentryDsn = import.meta.env.VITE_SENTRY_DSN ?? '';
+const sentryDsn = (window as any).sentryDsn ?? '';
 
 const searchResultsCSVName = {
 	ICOS: 'Carbon Portal Search Result.csv',
@@ -188,7 +188,7 @@ export default {
 	searchResultsCSVName,
 	features: featureFlags[envri],
 	sentry: {
-		dsn: sentryDsn
+		dsn: sentryDsn,
 	},
 	doiBaseUrl: "https://doi.org/"
 };

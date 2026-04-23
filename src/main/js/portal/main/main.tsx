@@ -14,6 +14,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 if (config.sentry.dsn) {
 	Sentry.init({
 		dsn: config.sentry.dsn,
+		allowUrls: [
+			/^https:\/\/([a-z0-9-]+\.)+icos-cp\.eu\//i,
+			/^https:\/\/([a-z0-9-]+\.)+fieldsites\.se\//i,
+		],
 	});
 }
 

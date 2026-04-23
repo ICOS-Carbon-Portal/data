@@ -98,7 +98,7 @@ case class EtcFacadeConfig(
 	testStation: StationId
 )
 
-case class SentryConfig(dsn: String)
+case class SentryConfig(backendDsn: String, portalDsn: String)
 
 case class CpdataConfig(
 	interface: String,
@@ -148,7 +148,7 @@ object ConfigReader extends CommonJsonSupport{
 	given RootJsonFormat[AuthConfig] = jsonFormat2(AuthConfig.apply)
 	import se.lu.nateko.cp.cpauth.core.JsonSupport.{given RootJsonFormat[EmailConfig]}
 	given RootJsonFormat[RestHeartConfig] = jsonFormat3(RestHeartConfig.apply)
-	given RootJsonFormat[SentryConfig] = jsonFormat1(SentryConfig.apply)
+	given RootJsonFormat[SentryConfig] = jsonFormat2(SentryConfig.apply)
 	given RootJsonFormat[CpdataConfig] = jsonFormat11(CpdataConfig.apply)
 
 	val appConfig: Config = {
