@@ -187,7 +187,7 @@ prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 select ?dobj
 where {
 	VALUES ?coll { <${config.cpmetaCollectionUri}${collection}> }
-	?coll dcterms:hasPart ?dobj .
+	?coll dcterms:hasPart+ ?dobj .
 	?dobj cpmeta:hasObjectSpec ?spec .
 	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
 	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
