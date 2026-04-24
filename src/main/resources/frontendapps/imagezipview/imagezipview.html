@@ -20,8 +20,17 @@
           </button>
         </div>
         <select id="zipimageselect" class="form-select col" style="max-width: fit-content;"></select>
+        <button title="Enhance contrast (2–98th percentile stretch with YlGnBu colormap)" type="button"
+            id="enhance-button" class="btn btn-outline-secondary ms-2">
+          <i class="fas fa-wand-magic-sparkles"></i> Enhance
+        </button>
       </div>
-      <img id="multiimagezipframe" class="mw-100" />
+      <canvas id="multiimagezipframe" class="mw-100"></canvas>
+      <div id="colorbar-container" style="display: none;" class="mt-1 d-flex align-items-center gap-2">
+        <span id="colorbar-min" class="text-muted small"></span>
+        <canvas id="colorbar-canvas" width="200" height="16" style="border: 1px solid #ccc; flex-shrink: 0;"></canvas>
+        <span id="colorbar-max" class="text-muted small"></span>
+      </div>
     </div>
     <script type="text/javascript" src="./imagezipview.js"></script>
   </body>
