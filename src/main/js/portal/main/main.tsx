@@ -1,5 +1,5 @@
 import React from 'react';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/react';
 import { createRoot } from 'react-dom/client';
 import config from './config';
 import Root from './containers/Root';
