@@ -1,5 +1,4 @@
-import React, {ChangeEvent, useEffect, useState} from "react";
-import { pidRegexp } from "../../utils";
+import React, {ChangeEvent, useEffect, useMemo, useState} from "react";
 import { AdvancedFilter } from "../../models/State";
 
 interface OurProps {
@@ -14,38 +13,35 @@ type ValidationResults = {
 }
 
 export default function FilterAdvanced(props: OurProps) {
-
 	const [filterText, setFilterText] = useState<string>(props.filterAdvancedText);
 	const [filterType, setFilterType] = useState<AdvancedFilter>(props.filterAdvancedType);
-	const [pidFilterActive, setPidFilterActive] = useState<boolean>(false);
 
-	useEffect(() => {
+	// Non-specific pid-regexp to capture PID alone or PID suffix of any URL
+	const pidRegexp = /(?:.*\/|^)([a-zA-Z0-9\-_]{24})$/;
+
+	function extractFilterText(): string {
 		if (filterType === "dobj" || filterType === "collection") {
 			const pidMatch = filterText.match(pidRegexp);
-			if (pidMatch) {
-				setPidFilterActive(true);
-				props.updateAdvanced(pidMatch[1], filterType);
-			} else if (pidFilterActive) {
-				setPidFilterActive(false);
-				props.updateAdvanced("", filterType);
-			}
-		} else if (filterType === "filename") {
-			props.updateAdvanced(filterText, filterType);
+			return pidMatch ? pidMatch[1] : "";
 		}
-	}, [filterText, filterType]);
+		return filterText;
+	}
+
+	const extractedFilterText = useMemo(extractFilterText, [filterText, filterType]);
+
+	useEffect(() => {
+		props.updateAdvanced(extractedFilterText, filterType);
+	}, [extractedFilterText, filterType]);
 
 	function validateFilterText(): ValidationResults {
 		if (filterType === "dobj" || filterType === "collection") {
 			if (filterText.length === 0) {
 				return {message: "", validityClass: ""};
 			}
-			const pidMatch = filterText.match(pidRegexp);
-
-			if (pidMatch) {
+			if (extractedFilterText) {
 				return {message: "", validityClass: " is-valid"};
-			} else {
-				return {message: "Not a valid PID", validityClass: " is-invalid"};
 			}
+			return {message: "Not a valid PID", validityClass: " is-invalid"};
 		}
 		return {message: "", validityClass: ""};
 	}
