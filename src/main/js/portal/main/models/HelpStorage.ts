@@ -11,8 +11,7 @@ const titles = {
 	previewCsvDownload: "CSV download",
 	previewURL: "Preview chart URL",
 	keywordFilter: "Keyword",
-	fileNameFilter: "Filename",
-	pidFilter: "PID"
+	textFilters: "Advanced: Text filters"
 };
 
 type HelpId = HelpItemName | UrlStr
@@ -347,9 +346,23 @@ const initItems: HelpItem[] = [
 		'Useful for sharing the chart with a colleague, or for embedding it in a Web page as an HTML <iframe>'
 	),
 
-	new HelpItem('fileNameFilter', 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'),
-	new HelpItem('pidFilter', `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, ` +
-		'or just the suffix (24 characters). Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'),
+	new HelpItem(
+		'textFilters',
+		'Allows users to filter data based on explicit exact matches of text/PID.',
+		undefined,
+		[{
+			label: 'Data object PID',
+			comment: `Paste in ${envri} Data Portal's PID of a data object, either complete with prefix, or just the suffix (24 characters).` +
+			'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
+		},{
+			label: 'Collection PID',
+			comment: `Paste in ${envri} Data Portal's PID of a collection, either complete with prefix, or just the suffix (24 characters).` +
+			'Full URLs including the PID web resolver gateway (hdl.handle.net) are permitted as well.'
+		}, {
+			label: 'File name',
+			comment: 'Paste in a complete filename, with extension. This filter does not search for partial filenames.'
+		}]
+	),
 ];
 
 function nonStrictnessWarning(title: String): string{

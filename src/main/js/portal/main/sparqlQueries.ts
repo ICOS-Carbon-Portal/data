@@ -178,6 +178,25 @@ SELECT ?dobj WHERE{
 	return { text };
 }
 
+export function getDobjByCollection(collection: string, showDeprecated: Boolean): Query<"dobj", never> {
+	const text = `# getDobjByCollection
+prefix cpmeta: <${config.cpmetaOntoUri}>
+prefix dcterms: <http://purl.org/dc/terms/>
+prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select ?dobj
+where {
+	VALUES ?coll { <${config.cpmetaCollectionUri}${collection}> }
+	?coll dcterms:hasPart+ ?dobj .
+	?dobj cpmeta:hasObjectSpec ?spec .
+	FILTER(STRSTARTS(str(?spec), "${config.sparqlGraphFilter}"))
+	FILTER NOT EXISTS {?spec cpmeta:hasAssociatedProject/cpmeta:hasHideFromSearchPolicy "true"^^xsd:boolean}
+	${showDeprecated ? '' : deprecatedFilterClause}
+}`;
+
+	return { text };
+}
+
 export function getDobjByFileName(fileName: string, showDeprecated: Boolean): Query<"dobj", never> {
 	const text = `# getDobjByFileName
 prefix cpmeta: <${config.cpmetaOntoUri}>

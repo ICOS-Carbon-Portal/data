@@ -1,6 +1,6 @@
 import {PortalThunkAction} from "../store";
 import SpecTable, {Filter, Value} from "../models/SpecTable";
-import {State, TabsState, WhoAmI} from "../models/State";
+import {AdvancedFilter, State, TabsState, WhoAmI} from "../models/State";
 import * as Payloads from "../reducers/actionpayloads";
 import {isInPidFilteringMode} from "../reducers/utils";
 import config from "../config";
@@ -11,11 +11,12 @@ import {
 	getExtendedDataObjInfo,
 	makeHelpStorageListItem,
 	savePersistedMapProps,
+	searchDobjByCollection,
 	searchDobjByFileName
 } from "../backend";
 import {ColNames, OriginsColNames} from "../models/CompositeSpecTable";
 import {Sha256Str, UrlStr} from "../backend/declarations";
-import { FiltersNumber, FiltersUpdatePids, FiltersUpdateFileName, UiInactivateAllHelp} from "../reducers/actionpayloads";
+import { FiltersNumber, FiltersUpdatePids, UiInactivateAllHelp, FiltersUpdateAdvanced} from "../reducers/actionpayloads";
 import FilterTemporal from "../models/FilterTemporal";
 import {FiltersTemporal} from "../reducers/actionpayloads";
 import {HelpStorageListEntry, HelpItem, HelpItemName} from "../models/HelpStorage";
@@ -248,29 +249,40 @@ export const filtersReset: PortalThunkAction<void> = (dispatch, getState) => {
 		dispatch(getFilteredDataObjects);
 };
 
+const updatePidsAdvanced: PortalThunkAction<void> = (dispatch, getState) => {
+	const { filterAdvancedText, filterAdvancedType, searchOptions } = getState();
+	if (filterAdvancedText.length === 0) {
+		dispatch(updateSelectedPids(null));
+	} else {
+		switch(filterAdvancedType) {
+			case "dobj":
+				dispatch(updateSelectedPids([filterAdvancedText]));
+				break;
+			case "collection":
+				searchDobjByCollection(filterAdvancedText, searchOptions.showDeprecated).then(dobjs => {
+					dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
+				});
+				break;
+			case "filename":
+				searchDobjByFileName(filterAdvancedText, searchOptions.showDeprecated).then(dobjs => {
+					dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
+				});
+				break;
+		}
+	}
+}
+
+export function updateAdvanced(filterText: string, filterType: AdvancedFilter): PortalThunkAction<void> {
+	return (dispatch) => {
+		dispatch(new FiltersUpdateAdvanced(filterText, filterType));
+		dispatch(updatePidsAdvanced);
+	};
+}
+
 export function updateSelectedPids(selectedPids: Sha256Str[] | null): PortalThunkAction<void> {
 	return (dispatch) => {
 		dispatch(new FiltersUpdatePids(selectedPids));
 		dispatch(getFilteredDataObjects);
-	};
-}
-
-const updatePidsFromFileName: PortalThunkAction<void> = (dispatch, getState) => {
-	const { filterFileName } = getState();
-	if (filterFileName.length) {
-		const { searchOptions } = getState();
-		searchDobjByFileName(filterFileName, searchOptions.showDeprecated).then(dobjs => {
-			dispatch(updateSelectedPids(dobjs.map(d => d.dobj)));
-		});
-	} else {
-		dispatch(updateSelectedPids(null));
-	}
-}
-
-export function updateFileName(fileName: string): PortalThunkAction<void> {
-	return (dispatch) => {
-		dispatch(new FiltersUpdateFileName(fileName));
-		dispatch(updatePidsFromFileName);
 	};
 }
 
@@ -284,10 +296,9 @@ export function switchTab(tabName: string, selectedTabId: number): PortalThunkAc
 	return (dispatch, getState) => {
 		dispatch(new Payloads.UiSwitchTab(tabName, selectedTabId));
 
-		if (tabName === 'searchTab' && getState().filterPids !== null){
-			dispatch(getFilteredDataObjects);
+		if (tabName === 'searchTab' && getState().filterAdvancedText !== null){
+			dispatch(updatePidsAdvanced);
 		}
-
 	};
 }
 
@@ -377,15 +388,15 @@ export function setFilterHelpInfo(name: ColNames | HelpItemName, helpContent: He
 
 export function updateSearchOption(searchOption: SearchOption): PortalThunkAction<void> {
 	return (dispatch, getState) => {
-		const {searchOptions, tabs, filterPids, filterFileName} = getState();
+		const {searchOptions, tabs, filterPids, filterAdvancedText} = getState();
 
 		dispatch(new Payloads.MiscUpdateSearchOption(searchOption));
 
 		const mustFetchCounts = (searchOption.name === 'showDeprecated') && (searchOption.value !== searchOptions.showDeprecated);
 		const mustFetchObjs = !isInPidFilteringMode(tabs, filterPids) || mustFetchCounts;
-		const mustFetchPIDs = mustFetchCounts && filterFileName.length;
+		const mustFetchPIDs = mustFetchCounts && filterAdvancedText.length > 0;
 
-		if(mustFetchPIDs) dispatch(updatePidsFromFileName)
+		if(mustFetchPIDs) dispatch(updatePidsAdvanced)
 		else if(mustFetchCounts) dispatch(getDobjOriginsAndCounts(mustFetchObjs))
 		else if (mustFetchObjs) dispatch(getFilteredDataObjects);
 	};

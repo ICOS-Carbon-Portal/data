@@ -30,6 +30,8 @@ export const portalHistoryState = new PortalHistoryState(config.portalHistorySta
 const hashKeys = [
 	'route',
 	'filterCategories',
+	'filterAdvancedText',
+	'filterAdvancedType',
 	'filterFileName',
 	'filterTemporal',
 	'filterPids',
@@ -126,6 +128,8 @@ export interface SearchOptions {
 
 export interface TabsState {tabName?: string, selectedTabId?: string, searchTab?: number, resultTab?: number}
 
+export type AdvancedFilter = "dobj" | "collection" | "filename";
+
 //TODO Investigate whether the type should be Filter, and whether Value needs to have 'number' on the list of types
 export type CategFilters = {[key in CategoryType]?: string[] | null}
 
@@ -159,7 +163,8 @@ export interface State {
 	filterTemporal: FilterTemporal
 	filterPids: Sha256Str[] | null
 	filterNumbers: FilterNumbers
-	filterFileName: string
+	filterAdvancedText: string
+	filterAdvancedType: AdvancedFilter
 	user: User
 	previewLookup: PreviewLookup | undefined;
 	labelLookup: LabelLookup;
@@ -217,7 +222,8 @@ export const defaultState: State = {
 	filterTemporal: new FilterTemporal(),
 	filterPids: null,
 	filterNumbers: new FilterNumbers(numberFilterKeys.map(cat => new FilterNumber(cat))),
-	filterFileName: "",
+	filterAdvancedText: "",
+	filterAdvancedType: "dobj",
 	user: {
 		profile: {},
 		email: null
@@ -367,6 +373,8 @@ const simplifyState = (state: State) => {
 type JsonHashState = {
 	route?: Route
 	filterCategories?: CategFilters
+	filterAdvancedText?: string
+	filterAdvancedType?: AdvancedFilter
 	filterFileName?: string
 	filterTemporal?: SerializedFilterTemporal
 	filterPids?: Sha256Str
@@ -413,6 +421,18 @@ const jsonToState = (state0: JsonHashState) => {
 			state.filterNumbers = defaultState.filterNumbers.restore(state0.filterNumbers);
 		}
 
+		// For backwards compatibility with URLs with "filterPids" and "filterFileName" in hash
+		if (state.filterPids) {
+			state.filterAdvancedText = state0.filterPids ?? "";
+		}
+
+		if (state.filterFileName) {
+			state.filterAdvancedText = state.filterFileName;
+			state.filterAdvancedType = "filename";
+			delete state.filterFileName;
+			state.filterPids = null;
+		}
+
 		state.preview = new Preview().withPids(state0.preview ?? [], state0.previewSettings);
 
 		if (state0.id){
@@ -455,8 +475,9 @@ const specialCases = (state: Partial<StateSerialized>) => {
 		delete state.route;
 	}
 
-	if (state.filterFileName === "") {
-		delete state.filterFileName;
+	if (state.filterAdvancedText === "") {
+		delete state.filterAdvancedText;
+		delete state.filterAdvancedType;
 	} else {
 		delete state.filterPids;
 	}
