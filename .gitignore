@@ -43,3 +43,4 @@ nohup.out
 /src/main/python/portalusage/build/
 /src/main/python/portalusage/*.spec
 __pycache__/
+/src/main/js/portal/.env.sentry-build-plugin
