@@ -79,7 +79,7 @@ object Main extends App:
 	val integrityRoute = new IntegrityRouting(authRouting, config.upload, extractEnvri).route(integrityService)
 
 	val licenceRoute = new LicenceRouting(authRouting.userOpt, ConfigReader.metaCore.handleProxies).route
-	val staticRoute = new StaticRouting().route
+	val staticRoute = new StaticRouting(config.sentry.portalDsn).route
 	val etcUploadRoute = new EtcUploadRouting(authRouting, config.etcFacade, uploadService).route
 
 	val statsRoute = new StatsRouting(postgisLogAnalyzer, ConfigReader.metaCore)
@@ -147,7 +147,7 @@ object Main extends App:
 	}
 
 	private def initSentry(config: CpdataConfig): Unit =
-		val dsn = config.sentry.dsn.trim
+		val dsn = config.sentry.backendDsn.trim
 		if dsn.nonEmpty then
 			Sentry.init(options => options.setDsn(dsn))
 
