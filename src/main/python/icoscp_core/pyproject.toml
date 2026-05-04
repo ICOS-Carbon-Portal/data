@@ -23,6 +23,7 @@ dependencies = [
 
 [project.urls]
 Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/icoscp_core"
+Changelog = "https://icos-carbon-portal.github.io/pylib/icoscp/changelogs/icoscp_core"
 
 [tool.hatch.version]
 path = "src/icoscp_core/__init__.py"
