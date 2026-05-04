@@ -341,15 +341,9 @@ StaticObject: TypeAlias = DataObject | DocObject
 
 FunderIdType: TypeAlias = Literal["Crossref Funder ID" , "GRID" , "ISNI" , "ROR" , "Other"]
 
-CityNetwork: TypeAlias = Literal["Munich" , "Paris" , "Zurich" , "Barcelona" , "Bologna" , "Milano" , "Unspecified"]
+CityNetwork: TypeAlias = Literal["Munich" , "Paris" , "Zurich" , "Barcelona" , "Unspecified"]
 
 IcosStationClass: TypeAlias = Literal["1" , "2" , "Associated"]
-
-@dataclass(frozen=True)
-class Network:
-	self: UriResource
-	website: Optional[URI]
-
 
 @dataclass(frozen=True)
 class Station:
@@ -362,7 +356,6 @@ class Station:
 	specificInfo: StationSpecifics
 	countryCode: Optional[CountryCode]
 	funding: Optional[list[Funding]]
-	networks: list[Network]
 
 
 @dataclass(frozen=True)
@@ -483,6 +476,16 @@ def parse_cp_json(input_text: str, data_class: Type[CPJson]) -> CPJson:
 
 		return d
 
+	def empty_dict_to_none(data: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
+		for key, value in data.items():
+			if isinstance(value, dict) and not value:
+				data[key] = None
+			elif isinstance(value, dict):
+				empty_dict_to_none(value)
+		return data
+
 	input_dict=json.JSONDecoder(object_hook=tuple_hook).decode(input_text)
 
-	return from_dict(data_class=data_class, data=input_dict, config=Config(cast=[list]))
+	processed_input_dict = empty_dict_to_none(input_dict)
+
+	return from_dict(data_class=data_class, data=processed_input_dict, config=Config(cast=[list]))

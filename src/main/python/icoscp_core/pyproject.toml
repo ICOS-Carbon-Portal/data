@@ -1,27 +1,51 @@
 [build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "icoscp_core"
+description = "Python API for access to ICOS Carbon Portal-based data portals and their core services, such as authentication, metadata access, and data access."
 authors = [{name = "Oleg Mirzov", email = "oleg.mirzov@nateko.lu.se"}]
 maintainers = [
-	{name = "Oleg Mirzov", email = "oleg.mirzov@nateko.lu.se"},
-	{name = "Jonathan Schenk", email = "jonathan.schenk@nateko.lu.se"},
+    {name = "Jonathan Schenk", email = "jonathan.schenk@mgeo.lu.se"},
+    {name = "Zois Zogopoulos", email = "zois.zogopoulos@mgeo.lu.se"},
 ]
 license = {file = "LICENSE"}
 readme = "README.md"
 keywords = ["environment", "research", "infrastructure", "data access"]
 classifiers = ["License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)"]
 requires-python = ">=3.10"
-dynamic = ["version", "description"]
+dynamic = ["version"]
 dependencies = [
 	"dacite==1.8.1",
 	"numpy>=1.23"
 ]
-[tool.flit.sdist]
-include = ["src/icoscp_core/metacore.py"]
-exclude = ["src/icoscp_core/examples.py"]
 
 [project.urls]
 Source = "https://github.com/ICOS-Carbon-Portal/data/tree/master/src/main/python/icoscp_core"
+
+[tool.hatch.version]
+path = "src/icoscp_core/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/icoscp_core"]
+exclude = [
+	"src/icoscp_core/examples.py"
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+	"src/icoscp_core"
+]
+exclude = [
+	"src/icoscp_core/examples.py"
+]
+
+[tool.hatch.publish.index.repos]
+main = "https://upload.pypi.org/legacy/"
+test = "https://test.pypi.org/legacy/"
+
+[tool.hatch.envs.default.scripts]
+clean = [
+	"rm -rf dist"
+]
