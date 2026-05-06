@@ -2,15 +2,6 @@
 
 A foundational ICOS Carbon Portal (CP) core products Python library for metadata and data access, designed to work with multiple data repositories who use ICOS Carbon Portal core server software stack to host and serve their data. At the moment, three repositories are supported: [ICOS](https://data.icos-cp.eu/portal/), [SITES](https://data.fieldsites.se/portal/), and [ICOS Cities](https://citydata.icos-cp.eu/portal/).
 
-## Release notes
-
-### Version 0.3.6
-Update to support collection metadata enhancements
-- `parentCollections` property added to `StaticCollection` class (through automatic code import from meta-core Scala lib jar)
-- `coverage` property added to `StaticCollection` (manually re-declared as `Optional[GeoFeatureWithGeo]` to include GeoJSON)
-- code examples for `meta.get_collection_meta` updated accordingly
-- `StaticCollection.members` property content has been made more lightweight in the case of presence of sub-collections (server change, applied to this library through automatic code import). The values can now be either `PlainStaticObject` or `PlainStaticCollection`, both lightweight classes. They have different fields (`name` vs `title`, respectively), so should be tested at runtime, as collections can contain both objects and other collections.
-
 ## Design goals
 
 - offer basic functionality with good performance
