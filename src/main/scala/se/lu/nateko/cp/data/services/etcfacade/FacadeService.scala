@@ -18,6 +18,7 @@ import se.lu.nateko.cp.data.api.dataFail
 import se.lu.nateko.cp.data.formats.TimeSeriesStreams
 import se.lu.nateko.cp.data.formats.zip
 import se.lu.nateko.cp.data.services.upload.UploadResult
+import se.lu.nateko.cp.data.services.upload.UploadAlreadyInProgress
 import se.lu.nateko.cp.data.services.upload.UploadService
 import se.lu.nateko.cp.data.streams.DigestFlow
 import se.lu.nateko.cp.data.streams.ZipEntryFlow
@@ -202,10 +203,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		.flatMap{etcMeta =>
 			val srcPath = getObjectSource(fn.station, etcMeta.hashSum)
 			Files.move(file, srcPath, REPLACE_EXISTING)
-			uploadDataObject(srcPath, fn.station, etcMeta.hashSum)
+			uploadDataObject(srcPath, fn.station, etcMeta.hashSum, "live")
 		}
 
-	private def uploadDataObject(srcPath: Path, station: StationId, hash: Sha256Sum): Future[Done] = upload
+	private def uploadDataObject(srcPath: Path, station: StationId, hash: Sha256Sum, source: String): Future[Done] =
+		log.info(s"ETC facade internal upload attempt source=$source station=${station.id} hash=${hash.id} path=${srcPath.getFileName}")
+		upload
 		.getEtcSink(hash)
 		.flatMap(FileIO.fromPath(srcPath).runWith)
 		.flatMap{res =>
@@ -216,12 +219,12 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 		}
 		.transform(
 			ok => {Files.delete(srcPath); ok},
-			err => new Exception(s"ETC facade failure during internal object upload. Station $station, object $hash", err)
+			err => new Exception(s"ETC facade failure during internal object upload. source=$source station=$station, object $hash", err)
 		)
 
 	private[etcfacade] def uploadDataObjectHandleErrors(station: StationId, hash: Sha256Sum): Future[Done] =
 		val srcPath = getObjectSource(station, hash)
-		uploadDataObject(srcPath, station, hash).andThen(
+		uploadDataObject(srcPath, station, hash, "retry").andThen(
 			handleErrors(hash.base64Url)
 		)
 
@@ -259,8 +262,11 @@ class FacadeService(val config: EtcFacadeConfig, upload: UploadService)(using ma
 
 	private def handleErrors(uploadedObj: String): PartialFunction[Try[Done], Unit] =
 		case Failure(err) =>
-			appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
-			log.error(err, s"ETC facade error while uploading $uploadedObj")
+			if FacadeService.isAlreadyUploading(err) then
+				log.info(s"ETC facade upload for $uploadedObj is already in progress, skipping duplicate attempt")
+			else
+				appendError(s"Error while uploading $uploadedObj : " + UploadResult.extractMessage(err))
+				log.error(err, s"ETC facade error while uploading $uploadedObj")
 
 end FacadeService
 
@@ -354,5 +360,10 @@ object FacadeService:
 
 	private def packageIsComplete(pack: DailyPackage): Boolean =
 		pack.keysIterator.flatMap(_.slot).toSet.size == 48
+
+	def isAlreadyUploading(err: Throwable): Boolean = err match
+		case null => false
+		case _: UploadAlreadyInProgress => true
+		case _ => isAlreadyUploading(err.getCause)
 
 end FacadeService

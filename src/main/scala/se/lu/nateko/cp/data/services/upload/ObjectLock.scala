@@ -1,7 +1,6 @@
 package se.lu.nateko.cp.data.services.upload
 
 import akka.Done
-import se.lu.nateko.cp.data.api.CpDataException
 import se.lu.nateko.cp.meta.core.crypto.Sha256Sum
 
 import scala.collection.mutable.Set
@@ -14,7 +13,7 @@ private[upload] class ObjectLock(msg: String) {
 	private[this] val locked = Set.empty[Sha256Sum]
 
 	def lock(hash: Sha256Sum): Try[Done] = synchronized{
-		if(locked.contains(hash)) Failure(new CpDataException(s"Object ${hash.id} $msg"))
+		if(locked.contains(hash)) Failure(new UploadAlreadyInProgress(s"Object ${hash.id} $msg"))
 		else{
 			locked.add(hash)
 			Success(Done)
@@ -26,3 +25,5 @@ private[upload] class ObjectLock(msg: String) {
 		Done
 	}
 }
+
+class UploadAlreadyInProgress(message: String) extends Exception(message)
