@@ -12,8 +12,10 @@ import '../node_modules/ol/ol.css';
 import 'react-datepicker/dist/react-datepicker.css';
 
 if (config.sentry.dsn) {
+	const release = import.meta.env.VITE_SENTRY_RELEASE || undefined;
 	Sentry.init({
 		dsn: config.sentry.dsn,
+		release,
 		allowUrls: [
 			/^https:\/\/([a-z0-9-]+\.)+icos-cp\.eu\//i,
 			/^https:\/\/([a-z0-9-]+\.)+fieldsites\.se\//i,

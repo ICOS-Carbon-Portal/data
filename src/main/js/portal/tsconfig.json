@@ -14,7 +14,7 @@
     "skipLibCheck": true,
     "strict": true
   },
-  "files": [ "main/main.tsx" ],
+  "files": [ "main/main.tsx", "main/vite-env.d.ts" ],
   "include": [
     "main/**/*.ts*",
     "../common/main/**/*.js",

@@ -10,20 +10,33 @@ const outDir = path.resolve(buildConf.buildTarget, appName);
 module.exports = defineConfig(({ mode }) => {
 	const env = loadEnv(mode, __dirname, '');
 	const authToken = env.SENTRY_AUTH_TOKEN;
-	if (mode === 'production' && !authToken) {
-		throw new Error('SENTRY_AUTH_TOKEN is required for portal publish builds. Define it in src/main/js/portal/.env.production.local');
+	const shouldUploadSourcemaps = mode === 'production' && env.SENTRY_UPLOAD === 'true';
+	const release = env.RELEASE;
+
+	if (shouldUploadSourcemaps && !authToken) {
+		throw new Error('SENTRY_AUTH_TOKEN is required when SENTRY_UPLOAD=true. Define it in src/main/js/portal/.env.production.local');
+	}
+
+	if (shouldUploadSourcemaps && !release) {
+		throw new Error('RELEASE is required when SENTRY_UPLOAD=true. It is normally set by SBT cpFrontendPublish.');
 	}
 
 	return {
 		plugins: [
 			react(),
-			...(authToken ? [sentryVitePlugin({
+			...(shouldUploadSourcemaps ? [sentryVitePlugin({
 				authToken,
 				org: 'icos-cp',
 				project: 'data-portal',
 				url: 'https://sentry.icos-cp.eu/',
+				release: {
+					name: release,
+				},
 			})] : []),
 		],
+		define: {
+			'import.meta.env.VITE_SENTRY_RELEASE': JSON.stringify(release || ''),
+		},
 	build: {
 		outDir,
 		emptyOutDir: true,
