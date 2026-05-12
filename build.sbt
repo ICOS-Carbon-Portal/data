@@ -75,9 +75,9 @@ lazy val data = (project in file("."))
 			val targetDir = (Compile / classDirectory).value.getAbsolutePath
 			val sentryUpload = sys.props.getOrElse("cp.deploy.sentryUpload", "false")
 			Seq(
-				s"""export SCALA_CLASS_DIR="${targetDir}""",
-				s"""export SENTRY_UPLOAD="${sentryUpload}""",
-				"""export RELEASE="$${RELEASE:-$$(git rev-parse --short=12 HEAD)}""",
+				s"export SCALA_CLASS_DIR='${targetDir}'",
+				s"export SENTRY_UPLOAD='${sentryUpload}'",
+				"export RELEASE='$${RELEASE:-$$(git rev-parse --short=12 HEAD)}'",
 				"npm run publish"
 			).mkString(" && ")
 		},
