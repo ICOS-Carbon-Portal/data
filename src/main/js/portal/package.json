@@ -10,7 +10,9 @@
     "publish": "tsc --noEmit && vite build",
     "build": "vite build --watch --mode development",
     "typecheck": "tsc --noEmit",
-    "test": "karma start"
+    "test": "karma start",
+    "fix": "xo --fix",
+    "lint": "xo"
   },
   "repository": {
     "type": "git",
@@ -44,7 +46,8 @@
     "@vitejs/plugin-react": "^6.0.1",
     "sass": "^1.69.2",
     "typescript": "5.2.2",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "xo": "^2.0.2"
   },
   "dependencies": {
     "@sentry/react": "^10.50.0",
